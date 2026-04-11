@@ -155,6 +155,78 @@ export type ResolvedFrameGenerationContext = {
   locationRefsForApi: ResolvedLocationForFrames[]
 }
 
+/**
+ * Prefer scene-assigned or scene-matched wardrobe still (full body / headshot) over the default headshot
+ * when resolving references for Quick Generate — aligns with scene image generation behavior.
+ */
+export function pickReferenceUrlForCharacter(projectChar: any, scene: any): string | undefined {
+  const base = projectChar?.referenceImage
+  const wardrobes = projectChar?.wardrobes
+  if (!Array.isArray(wardrobes) || wardrobes.length === 0) return base
+
+  const charId = projectChar?.id || projectChar?.name
+  const sceneWardrobes = scene?.characterWardrobes
+  let resolved: any = null
+
+  if (Array.isArray(sceneWardrobes) && charId) {
+    const override = sceneWardrobes.find(
+      (cw: any) => cw.characterId === charId || cw.characterId === projectChar?.id
+    )
+    if (override?.wardrobeId) {
+      resolved = wardrobes.find((w: any) => w.id === override.wardrobeId)
+    }
+  }
+
+  const sceneNum = typeof scene?.sceneNumber === 'number' ? scene.sceneNumber : undefined
+  if (!resolved && sceneNum != null) {
+    resolved = wardrobes.find(
+      (w: any) => Array.isArray(w.sceneNumbers) && w.sceneNumbers.includes(sceneNum)
+    )
+  }
+
+  if (!resolved) {
+    resolved = wardrobes.find((w: any) => w.isDefault)
+  }
+
+  const fromWardrobe =
+    resolved?.fullBodyUrl || resolved?.headshotUrl || resolved?.previewImageUrl
+  return (typeof fromWardrobe === 'string' && fromWardrobe.trim()) ? fromWardrobe.trim() : base
+}
+
+/** Wardrobe description for the resolved outfit (for text prompts), if any */
+function pickWardrobeDescriptionForCharacter(projectChar: any, scene: any): string | undefined {
+  const wardrobes = projectChar?.wardrobes
+  if (!Array.isArray(wardrobes) || wardrobes.length === 0) {
+    return projectChar?.defaultWardrobe || projectChar?.wardrobe
+  }
+
+  const charId = projectChar?.id || projectChar?.name
+  const sceneWardrobes = scene?.characterWardrobes
+  let resolved: any = null
+
+  if (Array.isArray(sceneWardrobes) && charId) {
+    const override = sceneWardrobes.find(
+      (cw: any) => cw.characterId === charId || cw.characterId === projectChar?.id
+    )
+    if (override?.wardrobeId) {
+      resolved = wardrobes.find((w: any) => w.id === override.wardrobeId)
+    }
+  }
+
+  const sceneNum = typeof scene?.sceneNumber === 'number' ? scene.sceneNumber : undefined
+  if (!resolved && sceneNum != null) {
+    resolved = wardrobes.find(
+      (w: any) => Array.isArray(w.sceneNumbers) && w.sceneNumbers.includes(sceneNum)
+    )
+  }
+  if (!resolved) {
+    resolved = wardrobes.find((w: any) => w.isDefault)
+  }
+
+  if (resolved?.description) return resolved.description as string
+  return projectChar?.defaultWardrobe || projectChar?.wardrobe
+}
+
 function dialogueSpeakerFallback(segment: ResolveFrameGenerationContextArgs['segment'], projectCharacters: any[]) {
   const names = new Set<string>()
   for (const line of segment.dialogueLines || []) {
@@ -221,10 +293,10 @@ export function resolveFrameGenerationContext(args: ResolveFrameGenerationContex
   const charactersPayload: FrameGenerationCharacterPayload[] = sorted.map(c => ({
     name: c.name,
     appearance: c.appearanceDescription || c.description,
-    referenceUrl: c.referenceImage,
+    referenceUrl: pickReferenceUrlForCharacter(c, scene),
     ethnicity: c.ethnicity,
     age: c.age,
-    wardrobe: c.defaultWardrobe || c.wardrobe,
+    wardrobe: pickWardrobeDescriptionForCharacter(c, scene),
   }))
 
   const detectedObjects = findSceneObjects(sceneMatchText, objectReferences as any[], sceneNumber)

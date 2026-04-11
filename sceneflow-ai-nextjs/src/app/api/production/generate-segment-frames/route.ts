@@ -242,6 +242,25 @@ function isStaticCamera(cameraMovement?: string): boolean {
     m.includes('subtle') || m.includes('steady') || m === ''
 }
 
+const NO_TALENT_SCENE_TOKENS = [
+  'n/a', 'no on-screen talent', 'no talent', 'no actors', 'no characters',
+  'no people', 'abstract', 'title sequence', 'text only', 'graphics only',
+  'vfx only', 'visual effects only', 'no performers',
+] as const
+
+/** Shared with start + end frame paths — skip portrait refs for abstract / no-talent scenes */
+function isNoTalentFromSceneDirection(sceneDirection: DetailedSceneDirection | null | undefined): boolean {
+  if (!sceneDirection?.talent) return false
+  const talentStr =
+    typeof sceneDirection.talent === 'string'
+      ? sceneDirection.talent
+      : (sceneDirection.talent.blocking || sceneDirection.talent.emotionalBeat || '')
+  const lower = talentStr.toLowerCase()
+  return NO_TALENT_SCENE_TOKENS.some(x => lower.includes(x))
+}
+
+const MAX_GEMINI_REFERENCE_IMAGES = 5
+
 /**
  * Generate Segment Frames API
  * 
@@ -518,18 +537,7 @@ export async function POST(req: NextRequest) {
       const allReferenceImages: Array<{ imageUrl: string; name: string }> = []
       
       // CRITICAL: Detect no-talent scenes (title sequences, abstract visuals, VFX-only)
-      // When detected, skip character portrait references entirely — even with a correct
-      // text prompt, sending portrait photos causes the model to draw those people
-      const isNoTalentSegment = (() => {
-        if (!sceneDirection?.talent) return false
-        const talentStr = typeof sceneDirection.talent === 'string' 
-          ? sceneDirection.talent 
-          : (sceneDirection.talent.blocking || sceneDirection.talent.emotionalBeat || '')
-        const lower = talentStr.toLowerCase()
-        return ['n/a', 'no on-screen talent', 'no talent', 'no actors', 'no characters',
-                'no people', 'abstract', 'title sequence', 'text only', 'graphics only',
-                'vfx only', 'visual effects only', 'no performers'].some(x => lower.includes(x))
-      })()
+      const isNoTalentSegment = isNoTalentFromSceneDirection(sceneDirection)
       
       // Determine reference image budget allocation:
       // - Location references get 1 guaranteed slot (environment consistency is high-value)
@@ -555,7 +563,7 @@ export async function POST(req: NextRequest) {
       // Add location reference images (1 guaranteed slot)
       const locationRefs = locationReferences.filter(l => l.imageUrl).slice(0, 1)
       for (const loc of locationRefs) {
-        if (allReferenceImages.length < 5) {
+        if (allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
           allReferenceImages.push({
             imageUrl: loc.imageUrl!,
             name: `Location: ${loc.name}`
@@ -564,7 +572,7 @@ export async function POST(req: NextRequest) {
       }
       
       // Add scene/frame reference if available
-      if (referenceImageUrl && allReferenceImages.length < 5) {
+      if (referenceImageUrl && allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
         allReferenceImages.push({
           imageUrl: referenceImageUrl,
           name: 'Scene Reference'
@@ -574,7 +582,7 @@ export async function POST(req: NextRequest) {
       // Add prop/object reference images (critical and important props with images)
       const propRefs = objectReferences
         .filter(obj => obj.imageUrl && (obj.importance === 'critical' || obj.importance === 'important'))
-        .slice(0, 5 - allReferenceImages.length) // Fill remaining slots up to 5
+        .slice(0, MAX_GEMINI_REFERENCE_IMAGES - allReferenceImages.length)
       for (const prop of propRefs) {
         allReferenceImages.push({
           imageUrl: prop.imageUrl!,
@@ -778,52 +786,79 @@ Render this scene in ${selectedStyle.name} style.`
         endFramePrompt = `${endFramePrompt}\n\nAvoid: ${negativePrompt}`
       }
       
-      // Prepare reference images for end frame
-      // The start frame already contains characters in context - use it as the SINGLE reference
-      // Adding separate character portrait refs is redundant and exceeds the 2-ref limit for 16:9
-      // Build reference images for end frame - start frame as primary SUBJECT reference
-      // Phase 11: Use start frame as SUBJECT reference (strict composition preservation)
-      // for static cameras, STYLE reference for dynamic cameras
+      // End frame refs: start frame (composition baseline) + up to 2 character identity/wardrobe URLs
+      // + props into remaining slots (max MAX_GEMINI_REFERENCE_IMAGES). Skipped for no-talent scenes.
       const cameraMovement = segmentContent?.cameraMovement || segmentDir?.cameraMovement || 'Static'
       const useStrictRef = isStaticCamera(cameraMovement)
-      
+      const isNoTalentForEnd = isNoTalentFromSceneDirection(sceneDirection)
+
       const endReferenceImages: Array<{ imageUrl: string; name: string }> = [
         {
           imageUrl: startFrameReference,
           name: useStrictRef
-            ? 'Start Frame — SAME composition, SAME person, SAME scene. This is the SUBJECT to preserve.'
-            : 'Start Frame — SAME person and scene, but camera has moved. Match identity, allow composition shift.'
-        }
+            ? 'START frame — baseline composition, environment, lighting, and pose for this segment.'
+            : 'START frame — baseline identity and scene; composition may shift if the action requires camera movement.',
+        },
       ]
-      
-      // Add prop/object reference images (critical and important props with images)
-      // This ensures prop consistency between start and end frames
+
+      const endRefUrlsSeen = new Set<string>([String(startFrameReference)])
+
+      if (!isNoTalentForEnd) {
+        const maxCharAnchors = 2
+        let charAnchorsAdded = 0
+        for (const c of characters) {
+          if (!c.referenceUrl || charAnchorsAdded >= maxCharAnchors) break
+          const url = c.referenceUrl
+          if (endRefUrlsSeen.has(url) || url === startFrameReference) continue
+          endRefUrlsSeen.add(url)
+          endReferenceImages.push({
+            imageUrl: url,
+            name: `Identity & wardrobe anchor: ${c.name} — match face, skin, hair, and clothing; do NOT copy this image’s background, lighting, or pose.`,
+          })
+          charAnchorsAdded++
+        }
+      }
+
+      const remainingForProps = Math.max(0, MAX_GEMINI_REFERENCE_IMAGES - endReferenceImages.length)
       const endPropRefs = objectReferences
         .filter(obj => obj.imageUrl && (obj.importance === 'critical' || obj.importance === 'important'))
-        .slice(0, 4) // Leave room for start frame reference (max 5 total)
+        .slice(0, remainingForProps)
+
       for (const prop of endPropRefs) {
+        const url = prop.imageUrl!
+        if (endRefUrlsSeen.has(url)) continue
+        endRefUrlsSeen.add(url)
         endReferenceImages.push({
-          imageUrl: prop.imageUrl!,
-          name: `Prop: ${prop.name}`
+          imageUrl: url,
+          name: `Prop: ${prop.name}`,
         })
       }
-      
-      console.log('[Generate Frames] End frame using Gemini Studio with start frame as reference')
-      console.log(`[Generate Frames] End frame refs: ${endReferenceImages.map(r => r.name).join(', ')}`)
+
+      console.log(
+        `[Generate Frames] End frame: ${endReferenceImages.length} ref image(s) (cap ${MAX_GEMINI_REFERENCE_IMAGES}): ${endReferenceImages.map(r => r.name).join(' | ')}`
+      )
       
       // Build enhanced prompt for end frame
       // CRITICAL: For non-photorealistic styles, we must enforce style transformation
       let geminiEndPrompt: string
       
+      const endFrameReferenceRoles = `REFERENCE IMAGE ROLES:
+- The FIRST image is the START frame of this segment: use it as the temporal and compositional baseline (environment, lighting, blocking, current pose).
+- Any FOLLOWING people references are identity and wardrobe anchors only: lock face, skin tone, hair, facial hair, glasses, and outfit to them; do NOT copy their background, studio, lighting, or neutral pose from those anchor images.
+- Any prop references are for object shape/color only.
+
+`
+
       if (!isPhotorealistic) {
         // Non-photorealistic: Style transformation + content-aware transition
         geminiEndPrompt = `MANDATORY ART STYLE: ${selectedStyle.name.toUpperCase()}
 Style specification: ${selectedStyle.promptSuffix}
 
-Generate the ENDING frame for a ${duration}-second segment in ${selectedStyle.name} style.
+${endFrameReferenceRoles}Generate the ENDING frame for a ${duration}-second segment in ${selectedStyle.name} style.
 
 CHARACTER CONTINUITY:
-- The character(s) in the start frame reference must appear in this end frame
+- The same character(s) from the START frame must appear in this end frame
+- Use any additional identity/wardrobe anchor images to prevent drift in face and clothing
 - Preserve character IDENTITY: face shape, ethnicity, age, distinguishing features
 - Maintain the SAME ${selectedStyle.name} artistic rendering as the start frame
 
@@ -832,17 +867,17 @@ ${endFramePrompt}
 
 CRITICAL REQUIREMENTS:
 - Output MUST be ${selectedStyle.name} style: ${selectedStyle.promptSuffix}
-- Show DELIBERATE differences from start frame reflecting the action
+- Show DELIBERATE differences from the start frame reflecting the action
 - Match the artistic style of the start frame reference
 - Do NOT output photorealistic images`
       } else {
         // Photorealistic: Exact appearance matching + content-aware transition
-        geminiEndPrompt = `Generate the ending frame for a ${duration}-second scene segment.
+        geminiEndPrompt = `${endFrameReferenceRoles}Generate the ending frame for a ${duration}-second scene segment.
 
 CRITICAL — THIS IS THE SAME SCENE, SAME MOMENT:
-- The reference image is the START of this ${duration}s segment
+- The FIRST reference is the START of this ${duration}s segment — baseline shot and pose
 - You are generating what the scene looks like at the END
-- The person(s) MUST be the SAME PERSON(S) — identical face, skin tone, hair, clothing
+- The person(s) MUST be the SAME PERSON(S) — identical face, skin tone, hair, clothing; use extra identity/wardrobe references to hold detail if the pose changes
 - The environment MUST be the SAME LOCATION with the SAME lighting
 
 WHAT HAS CHANGED (the ${duration}s of action):

@@ -24,7 +24,6 @@ import {
   AlertCircle,
   Check,
   ChevronRight,
-  Film,
   Clock,
   MessageSquare,
   BookOpen,
@@ -34,7 +33,6 @@ import {
   ArrowRight,
   RefreshCw,
   Wand2,
-  Play,
   Eye,
   Edit3,
   AlertTriangle,
@@ -43,8 +41,9 @@ import {
   FileText,
   CheckCircle2,
   Clapperboard,
-  Camera,
   Video,
+  Diamond,
+  Mic2,
 } from 'lucide-react'
 import {
   SceneSegment,
@@ -85,104 +84,227 @@ const getSegmentValidation = async () => {
 }
 
 // ============================================================================
-// Movie Set Production Overlay
+// Segment / keyframe generation overlay (aligned to real pipeline steps)
 // ============================================================================
 
-const PRODUCTION_STAGES = [
-  { id: 'setup', label: 'Setting up the scene...', icon: 'clapperboard', duration: 1500 },
-  { id: 'lighting', label: 'Adjusting lights...', icon: 'lightbulb', duration: 1500 },
-  { id: 'camera', label: 'Positioning camera...', icon: 'camera', duration: 1500 },
-  { id: 'rolling', label: 'Rolling camera...', icon: 'video', duration: 2000 },
-  { id: 'action', label: 'Action! Capturing takes...', icon: 'film', duration: 3000 },
-  { id: 'processing', label: 'Processing footage...', icon: 'sparkles', duration: 0 }, // 0 = until complete
-]
+type OverlayJob = 'directions' | 'video_prompts'
 
-function ProductionOverlay({ isVisible, currentStage }: { isVisible: boolean; currentStage: number }) {
-  if (!isVisible) return null
+const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
 
-  const stage = PRODUCTION_STAGES[Math.min(currentStage, PRODUCTION_STAGES.length - 1)]
+type OverlayStepDef = {
+  id: string
+  label: string
+  sublabel?: string
+  /** Determinate fill 0–1; null = indeterminate while the network request runs */
+  progress: number | null
+  icon: 'book' | 'audio' | 'sparkles' | 'layers' | 'wand'
+}
+
+const OVERLAY_PIPELINES: Record<OverlayJob, OverlayStepDef[]> = {
+  directions: [
+    {
+      id: 'direction',
+      label: 'Reading scene direction',
+      sublabel: 'Camera, lighting, talent, environment from your director notes',
+      progress: 0.14,
+      icon: 'book',
+    },
+    {
+      id: 'timeline',
+      label: 'Aligning with the audio timeline',
+      sublabel: 'Dialogue, VO, and duration context for each beat',
+      progress: 0.32,
+      icon: 'audio',
+    },
+    {
+      id: 'segments',
+      label: 'Generating segments & keyframe copy',
+      sublabel: 'Shot breakdown plus start/end frame descriptions per segment',
+      progress: null,
+      icon: 'sparkles',
+    },
+    {
+      id: 'timeline-build',
+      label: 'Building the segment timeline',
+      sublabel: 'Stitching durations and transitions',
+      progress: 0.94,
+      icon: 'layers',
+    },
+  ],
+  video_prompts: [
+    {
+      id: 'load',
+      label: 'Loading shots & keyframe descriptions',
+      sublabel: 'Using approved directions from step 1',
+      progress: 0.18,
+      icon: 'layers',
+    },
+    {
+      id: 'veo',
+      label: 'Writing Veo video prompts',
+      sublabel: 'Long scenes may be processed in batches — stay on this step until done',
+      progress: null,
+      icon: 'wand',
+    },
+    {
+      id: 'merge',
+      label: 'Merging prompts into segments',
+      sublabel: 'Attaching cinematic motion text to each segment',
+      progress: 0.97,
+      icon: 'sparkles',
+    },
+  ],
+}
+
+function SegmentKeyframeIllustration({ activeStepIndex, totalSteps }: { activeStepIndex: number; totalSteps: number }) {
+  const n = 6
+  const pulseCutoff = Math.min(activeStepIndex + 2, n)
+  return (
+    <div className="relative flex flex-col items-center gap-3">
+      <div className="flex items-end justify-center gap-1 sm:gap-1.5" aria-hidden>
+        {Array.from({ length: n }, (_, i) => {
+          const h = 28 + (i % 3) * 10 + (i === 2 ? 8 : 0)
+          const isLit = i < pulseCutoff
+          return (
+            <div key={i} className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-0.5">
+                <Diamond
+                  className={cn(
+                    'w-2.5 h-2.5 sm:w-3 sm:h-3 transition-colors duration-300',
+                    isLit ? 'text-cyan-400 fill-cyan-500/30' : 'text-zinc-600 fill-transparent'
+                  )}
+                  strokeWidth={2}
+                />
+                <Diamond
+                  className={cn(
+                    'w-2.5 h-2.5 sm:w-3 sm:h-3 transition-colors duration-300',
+                    isLit ? 'text-amber-400 fill-amber-500/25' : 'text-zinc-600 fill-transparent'
+                  )}
+                  strokeWidth={2}
+                />
+              </div>
+              <div
+                className={cn(
+                  'w-6 sm:w-8 rounded-t-md border transition-all duration-500',
+                  isLit
+                    ? 'bg-gradient-to-t from-cyan-950/80 via-zinc-800 to-zinc-600 border-cyan-500/35 shadow-[0_0_12px_rgba(34,211,238,0.12)]'
+                    : 'bg-gradient-to-t from-zinc-900 to-zinc-800 border-zinc-700/80'
+                )}
+                style={{ height: h }}
+              />
+            </div>
+          )
+        })}
+      </div>
+      <p className="text-[10px] sm:text-xs text-zinc-500 text-center max-w-xs leading-snug">
+        <span className="text-cyan-400/90">Cyan</span> = start keyframe ·{' '}
+        <span className="text-amber-400/90">Amber</span> = end keyframe · Bars = segments on the timeline
+      </p>
+      <div className="flex gap-1">
+        {Array.from({ length: totalSteps }, (_, i) => (
+          <div
+            key={i}
+            className={cn(
+              'h-1 rounded-full transition-all duration-300',
+              i < activeStepIndex ? 'w-6 bg-amber-500' : i === activeStepIndex ? 'w-8 bg-amber-400 animate-pulse' : 'w-3 bg-zinc-700'
+            )}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function StepIcon({ kind }: { kind: OverlayStepDef['icon'] }) {
+  const cls = 'w-6 h-6 shrink-0 text-amber-400'
+  switch (kind) {
+    case 'book':
+      return <BookOpen className={cls} />
+    case 'audio':
+      return <Mic2 className={cls} />
+    case 'sparkles':
+      return <Sparkles className={cn(cls, 'animate-pulse')} />
+    case 'layers':
+      return <Layers className={cls} />
+    case 'wand':
+      return <Wand2 className={cn(cls, 'animate-pulse')} />
+    default:
+      return <Clapperboard className={cls} />
+  }
+}
+
+function ProductionOverlay({
+  isVisible,
+  job,
+  stepIndex,
+}: {
+  isVisible: boolean
+  job: OverlayJob | null
+  stepIndex: number
+}) {
+  if (!isVisible || !job) return null
+
+  const pipeline = OVERLAY_PIPELINES[job]
+  const safeIdx = Math.min(Math.max(0, stepIndex), pipeline.length - 1)
+  const step = pipeline[safeIdx]
+  const determinate = step.progress != null
+  const pct = determinate ? Math.round((step.progress as number) * 100) : null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
-      <div className="relative flex flex-col items-center gap-8 p-12">
-        {/* Animated spotlight effect */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-radial from-amber-500/10 via-transparent to-transparent animate-pulse" />
-          <div className="absolute top-0 left-1/4 w-2 h-32 bg-gradient-to-b from-amber-400/50 to-transparent rotate-12 animate-[pulse_2s_ease-in-out_infinite]" />
-          <div className="absolute top-0 right-1/4 w-2 h-32 bg-gradient-to-b from-amber-400/50 to-transparent -rotate-12 animate-[pulse_2s_ease-in-out_infinite_0.5s]" />
+      <div className="relative flex flex-col items-center gap-6 sm:gap-8 px-6 py-10 sm:p-12 max-w-lg w-full">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(90vw,520px)] h-[520px] rounded-full bg-gradient-radial from-cyan-500/8 from-30% via-amber-500/5 via-50% to-transparent animate-pulse" />
         </div>
 
-        {/* Clapperboard animation */}
-        <div className="relative">
-          <div className="relative w-32 h-32">
-            {/* Clapper base */}
-            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-lg border-2 border-zinc-700 flex items-center justify-center overflow-hidden">
-              <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,transparent,transparent_10px,rgba(255,255,255,0.03)_10px,rgba(255,255,255,0.03)_20px)]" />
-              <Film className="w-10 h-10 text-amber-500/60" />
+        <SegmentKeyframeIllustration activeStepIndex={safeIdx} totalSteps={pipeline.length} />
+
+        <div className="relative flex flex-col items-center gap-3 text-center">
+          <div className="flex items-start justify-center gap-3 text-amber-100">
+            <StepIcon kind={step.icon} />
+            <div className="text-left">
+              <p className="text-lg sm:text-xl font-semibold tracking-tight leading-snug">{step.label}</p>
+              {step.sublabel && <p className="text-sm text-zinc-400 mt-1 max-w-md">{step.sublabel}</p>}
             </div>
-            {/* Clapper top (animated) */}
-            <div 
-              className={cn(
-                "absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-zinc-700 to-zinc-800 rounded-t-lg border-2 border-zinc-600 origin-bottom transition-transform duration-300",
-                currentStage >= 3 ? "animate-[clap_0.3s_ease-in-out]" : ""
+          </div>
+
+          <div className="w-full max-w-sm mx-auto mt-1">
+            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden relative">
+              {determinate ? (
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-600 via-amber-500 to-amber-400 transition-[width] duration-700 ease-out rounded-full"
+                  style={{ width: `${pct}%` }}
+                />
+              ) : (
+                <div className="absolute inset-0 overflow-hidden rounded-full">
+                  <div className="absolute inset-y-0 w-[42%] rounded-full bg-gradient-to-r from-transparent via-amber-500/95 to-transparent segment-overlay-scan" />
+                </div>
               )}
-              style={{
-                background: 'repeating-linear-gradient(45deg, #18181b, #18181b 8px, #27272a 8px, #27272a 16px)'
-              }}
-            />
+            </div>
+            <p className="text-[11px] text-zinc-500 mt-1.5 tabular-nums">
+              {determinate ? `Step ${safeIdx + 1} of ${pipeline.length} · ~${pct}%` : `Step ${safeIdx + 1} of ${pipeline.length} · waiting on AI`}
+            </p>
           </div>
         </div>
 
-        {/* Stage indicator */}
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex items-center gap-3 text-amber-400">
-            {stage.icon === 'clapperboard' && <Clapperboard className="w-6 h-6 animate-bounce" />}
-            {stage.icon === 'lightbulb' && <div className="w-6 h-6 rounded-full bg-amber-400 animate-pulse shadow-[0_0_20px_rgba(251,191,36,0.6)]" />}
-            {stage.icon === 'camera' && <Camera className="w-6 h-6 animate-[wiggle_0.5s_ease-in-out_infinite]" />}
-            {stage.icon === 'video' && <Video className="w-6 h-6 text-red-500 animate-pulse" />}
-            {stage.icon === 'film' && <Film className="w-6 h-6 animate-spin" style={{ animationDuration: '3s' }} />}
-            {stage.icon === 'sparkles' && <Sparkles className="w-6 h-6 animate-pulse" />}
-            <span className="text-xl font-semibold tracking-wide">{stage.label}</span>
-          </div>
-
-          {/* Progress bar */}
-          <div className="w-64 h-2 bg-zinc-800 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-500 ease-out"
-              style={{ width: `${((currentStage + 1) / PRODUCTION_STAGES.length) * 100}%` }}
-            />
-          </div>
-
-          {/* Stage dots */}
-          <div className="flex items-center gap-2">
-            {PRODUCTION_STAGES.map((s, idx) => (
-              <div
-                key={s.id}
-                className={cn(
-                  "w-2 h-2 rounded-full transition-all duration-300",
-                  idx < currentStage ? "bg-amber-500" :
-                  idx === currentStage ? "bg-amber-400 scale-150 animate-pulse" :
-                  "bg-zinc-700"
-                )}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Production quote */}
-        <p className="text-zinc-500 text-sm italic mt-4">
-          "Quiet on set... and... ACTION!"
+        <p className="text-zinc-500 text-xs sm:text-sm italic text-center">
+          Scene direction drives segments; each segment carries start/end keyframe descriptions for the Frame step.
         </p>
       </div>
 
-      <style jsx>{`
-        @keyframes clap {
-          0%, 100% { transform: rotate(0deg); }
-          50% { transform: rotate(-25deg); }
+      <style jsx global>{`
+        @keyframes segment-overlay-scan {
+          0% {
+            transform: translateX(-100%);
+            opacity: 0.85;
+          }
+          100% {
+            transform: translateX(280%);
+            opacity: 0.85;
+          }
         }
-        @keyframes wiggle {
-          0%, 100% { transform: rotate(-3deg); }
-          50% { transform: rotate(3deg); }
+        .segment-overlay-scan {
+          animation: segment-overlay-scan 1.35s ease-in-out infinite;
         }
       `}</style>
     </div>
@@ -493,7 +615,8 @@ export function SegmentBuilder({
   
   // Production overlay state
   const [showProductionOverlay, setShowProductionOverlay] = useState(false)
-  const [productionStage, setProductionStage] = useState(0)
+  const [productionOverlayJob, setProductionOverlayJob] = useState<OverlayJob | null>(null)
+  const [productionStepIndex, setProductionStepIndex] = useState(0)
   
   /** null = Auto (API: segmentDurationAuto); number = fixed preferredDuration 4–8 */
   const [segmentDurationTarget, setSegmentDurationTarget] = useState<number | null>(null)
@@ -630,16 +753,23 @@ export function SegmentBuilder({
   // Handlers
   // -------------------------------------------------------------------------
 
-  // Progress through production stages
-  const runProductionAnimation = useCallback(async () => {
+  /** Real prep steps before the network call; API step stays until fetch settles */
+  const runDirectionsOverlayPreamble = useCallback(async () => {
+    setProductionOverlayJob('directions')
+    setProductionStepIndex(0)
     setShowProductionOverlay(true)
-    setProductionStage(0)
-    
-    for (let i = 0; i < PRODUCTION_STAGES.length - 1; i++) {
-      await new Promise(resolve => setTimeout(resolve, PRODUCTION_STAGES[i].duration))
-      setProductionStage(i + 1)
-    }
-    // Stay on final stage until generation completes
+    await sleep(280)
+    setProductionStepIndex(1)
+    await sleep(300)
+    setProductionStepIndex(2)
+  }, [])
+
+  const runVideoPromptsOverlayPreamble = useCallback(async () => {
+    setProductionOverlayJob('video_prompts')
+    setProductionStepIndex(0)
+    setShowProductionOverlay(true)
+    await sleep(260)
+    setProductionStepIndex(1)
   }, [])
 
   // Phase 1: Generate segment directions for user review
@@ -655,8 +785,7 @@ export function SegmentBuilder({
     setIsAnalyzing(true)
     setError(null)
     
-    // Start production animation
-    runProductionAnimation()
+    await runDirectionsOverlayPreamble()
 
     try {
       // NEW: Phase 1 - Get directions only (faster, user reviews before prompts)
@@ -763,6 +892,9 @@ export function SegmentBuilder({
       setLastGeneratedHash(sceneBible.contentHash)
 
       toast.success(`Created ${finalSegments.length} segments — add keyframes, then generate Veo prompts (or skip).`)
+
+      setProductionStepIndex(3)
+      await sleep(220)
     } catch (err: any) {
       console.error('[SegmentBuilder] Analysis error:', err)
       setError(err.message || 'Failed to analyze scene')
@@ -770,7 +902,8 @@ export function SegmentBuilder({
     } finally {
       setIsAnalyzing(false)
       setShowProductionOverlay(false)
-      setProductionStage(0)
+      setProductionOverlayJob(null)
+      setProductionStepIndex(0)
     }
   }, [
     sceneId,
@@ -785,7 +918,7 @@ export function SegmentBuilder({
     audioMetadata,
     sceneBible.contentHash,
     hasSceneDirection,
-    runProductionAnimation,
+    runDirectionsOverlayPreamble,
   ])
 
   const finalizeAndClose = useCallback(
@@ -814,7 +947,7 @@ export function SegmentBuilder({
 
     setIsAnalyzing(true)
     setError(null)
-    runProductionAnimation()
+    await runVideoPromptsOverlayPreamble()
 
     try {
       const response = await fetch(`/api/scenes/${sceneId}/generate-segments`, {
@@ -858,6 +991,8 @@ export function SegmentBuilder({
       }
 
       const merged = mergeVideoPromptsIntoStaged(stagedSegments, data.segments as SceneSegment[])
+      setProductionStepIndex(2)
+      await sleep(200)
       finalizeAndClose(merged)
       toast.success(`Generated Veo prompts for ${merged.length} segments`)
     } catch (err: any) {
@@ -867,7 +1002,8 @@ export function SegmentBuilder({
     } finally {
       setIsAnalyzing(false)
       setShowProductionOverlay(false)
-      setProductionStage(0)
+      setProductionOverlayJob(null)
+      setProductionStepIndex(0)
     }
   }, [
     sceneId,
@@ -883,7 +1019,7 @@ export function SegmentBuilder({
     stagedSegments,
     videoPromptNotes,
     keyframesConfirmed,
-    runProductionAnimation,
+    runVideoPromptsOverlayPreamble,
     finalizeAndClose,
   ])
 
@@ -894,7 +1030,7 @@ export function SegmentBuilder({
   return (
     <div className="flex flex-col h-full bg-background overflow-hidden">
       {/* Production Overlay */}
-      <ProductionOverlay isVisible={showProductionOverlay} currentStage={productionStage} />
+      <ProductionOverlay isVisible={showProductionOverlay} job={productionOverlayJob} stepIndex={productionStepIndex} />
       
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700/50 bg-gray-900/60">
