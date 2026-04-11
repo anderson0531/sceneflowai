@@ -205,7 +205,17 @@ export async function generateVideoWithVeo(
   // Vertex endpoint: https://LOCATION-aiplatform.googleapis.com/v1/projects/PROJECT_ID/locations/LOCATION/publishers/google/models/MODEL:predictLongRunning
   const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:predictLongRunning`
   console.log(`[Veo Video] Generating video with ${model} (quality: ${quality}) on Vertex AI...`)
-  console.log('[Veo Video] Prompt:', prompt.substring(0, 200))
+  {
+    const len = prompt.length
+    const head = 380
+    const tail = 280
+    const excerpt =
+      len <= head + tail
+        ? prompt
+        : `${prompt.slice(0, head)} ... [${len - head - tail} chars omitted] ... ${prompt.slice(-tail)}`
+    console.log('[Veo Video] Prompt length:', len)
+    console.log('[Veo Video] Prompt excerpt:', excerpt)
+  }
   console.log('[Veo Video] Options:', JSON.stringify({
     aspectRatio: options.aspectRatio || '16:9',
     resolution: options.resolution || '720p',

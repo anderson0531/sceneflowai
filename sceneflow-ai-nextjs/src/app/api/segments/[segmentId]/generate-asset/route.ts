@@ -19,6 +19,7 @@ import {
 } from '@/lib/vision/intelligentMethodSelection'
 import { getQualityForMethod } from '@/lib/config/modelConfig'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
+import { getVideoDurationFromBuffer } from '@/lib/video/serverVideoDuration'
 import { separateAudioStemsWithRetry, type StemSeparationResult } from '@/lib/audio/stemSeparation'
 import { computeSourceHash } from '@/lib/audio/stemJobs'
 
@@ -132,6 +133,9 @@ export async function POST(
     let veoVideoRefExpiry: string | undefined = undefined  // ISO timestamp when veoVideoRef expires (48 hours)
     let methodSelectionResult: MethodSelectionResult | undefined = undefined  // Store method selection details
     let stemSeparation: StemSeparationResult | undefined = undefined
+    /** Filled after successful video download when ffprobe is available */
+    let actualVideoDurationSeconds: number | null = null
+    let requestedVideoDurationSeconds: number | undefined = undefined
 
     if (genType === 'T2V' || genType === 'I2V') {
       // Video generation using Veo 3.1 (platform credentials)
@@ -217,6 +221,7 @@ export async function POST(
       }
       
       console.log(`[Segment Asset Generation] personGeneration: ${videoOptions.personGeneration} (method: ${method}, isImageBased: ${isImageBasedMethod})`)
+      requestedVideoDurationSeconds = effectiveDuration
       console.log(`[Segment Asset Generation] durationSeconds: ${effectiveDuration} (requested: ${duration || 'default'})`)
       console.log(`[Segment Asset Generation] quality tier: ${effectiveQualityTier} (requested: ${qualityTier || 'auto'}, method: ${method})`)
       
@@ -290,35 +295,20 @@ export async function POST(
         // If user wants I2V with character consistency, they should use I2V mode without referenceImages
       }
       
-      // PRE-FLIGHT SANITIZATION: Auto-replace known trigger words before sending to Veo
-      // This runs server-side to catch triggers the client may have missed
-      // or that were introduced by AI-generated prompts (narration beat analyzer, etc.)
-      const { sanitizedPrompt: sanitizedVideoPrompt, wasModified: promptWasSanitized, changes: sanitizationChanges } = autoSanitizePrompt(prompt, { logChanges: true })
-      if (promptWasSanitized) {
-        console.log(`[Segment Asset Generation] Pre-flight sanitized ${sanitizationChanges.length} trigger term(s):`, sanitizationChanges.join(', '))
-      }
+      // Send the user's text to Vertex as-is. Optional word substitutions are offered only
+      // after a content-policy failure (see catch handler) — reference/start/end frames often
+      // trigger filters even when the prompt is clean.
 
       // Enhance prompt with guidePrompt for Veo 3.1 native voice/dialogue/SFX generation
-      // The guidePrompt contains properly formatted audio cues from GuidePromptEditor:
-      // - Dialogue with voice anchors: CHARACTER says with [voice type]: "dialogue text"
-      // - Narration with voice anchors: Narrator in [voice type] says: "narration text"
-      // - SFX/Ambience: Ambient: sound description
-      let enhancedPrompt = sanitizedVideoPrompt
+      let enhancedPrompt = prompt
       if (guidePrompt && guidePrompt.trim()) {
-        // Sanitize guidePrompt independently — it can contain dialogue/SFX cues with trigger words
-        // e.g. "explosion sound effect", "gunshot ambience", "nuclear alarm"
-        const { sanitizedPrompt: sanitizedGuide, wasModified: guideWasSanitized, changes: guideChanges } = autoSanitizePrompt(guidePrompt, { logChanges: true })
-        if (guideWasSanitized) {
-          console.log(`[Segment Asset Generation] Sanitized guidePrompt — ${guideChanges.length} trigger term(s):`, guideChanges.join(', '))
-        }
-        // IMPORTANT: Use sanitizedVideoPrompt (not original `prompt`) to preserve pre-flight sanitization
-        enhancedPrompt = `${sanitizedVideoPrompt}\n\n${sanitizedGuide}`
-        console.log('[Segment Asset Generation] Enhanced prompt with guidePrompt for voice/SFX generation')
+        enhancedPrompt = `${prompt}\n\n${guidePrompt.trim()}`
+        enhancedPrompt += '\n\nInclude native synchronized audio (dialogue, ambience, music, and SFX) matching the descriptions above unless the scene should be silent.'
+        console.log('[Segment Asset Generation] Enhanced prompt with guidePrompt for voice/SFX (raw text, no pre-sanitize)')
         console.log('[Segment Asset Generation] Guide prompt length:', guidePrompt.length, 'chars')
       }
       
       // Additional atmospheric guidance from audioContext (legacy support)
-      // Veo 3.1 supports voice and SFX, so we can guide the atmosphere
       if (audioContext) {
         const atmosphericGuidance: string[] = []
         
@@ -329,7 +319,6 @@ export async function POST(
           atmosphericGuidance.push(`Visual mood: ${audioContext.suggestedAtmosphere}`)
         }
         if (audioContext.hasNarration && audioContext.narrationText) {
-          // Add a subtle note about the narration context without overwhelming the visual prompt
           atmosphericGuidance.push(`Scene accompanies narration about: ${audioContext.narrationText.slice(0, 100)}...`)
         }
         if (audioContext.dialogueBeat) {
@@ -337,17 +326,17 @@ export async function POST(
         }
         
         if (atmosphericGuidance.length > 0) {
-          // Sanitize the combined atmospheric text — narrationText and dialogueBeat can carry trigger words
           const atmosphericText = `[Audio-Visual Sync Context]\n${atmosphericGuidance.join('\n')}`
-          const { sanitizedPrompt: sanitizedAtmospheric, wasModified: atmosphericWasSanitized, changes: atmosphericChanges } = autoSanitizePrompt(atmosphericText, { logChanges: true })
-          if (atmosphericWasSanitized) {
-            console.log(`[Segment Asset Generation] Sanitized audioContext — ${atmosphericChanges.length} trigger term(s):`, atmosphericChanges.join(', '))
-          }
-          // IMPORTANT: Build on top of enhancedPrompt (not original `prompt`) to preserve all prior sanitization
-          enhancedPrompt = `${enhancedPrompt}\n\n${sanitizedAtmospheric}`
+          enhancedPrompt = `${enhancedPrompt}\n\n${atmosphericText}`
           console.log('[Segment Asset Generation] Enhanced prompt with audio context')
         }
       }
+
+      console.log(
+        '[Segment Asset Generation] Full Veo prompt length:',
+        enhancedPrompt.length,
+        'chars (visual+motion + guide + context)'
+      )
       
       // Trigger video generation using Production Video Client
       // IMPORTANT: For EXT mode with sourceVideo, we MUST use Gemini API
@@ -408,13 +397,9 @@ export async function POST(
           if (isContentPolicyError) {
             console.log('[Segment Asset Generation] Vertex AI content policy error - no alternative video API available')
             console.log('[Segment Asset Generation] Original error:', finalResult.error)
-            
-            // Return a helpful error message since Gemini API doesn't support video generation
             throw new Error(
-              `Content Policy Violation: The video prompt was rejected by Vertex AI's safety filters. ` +
-              `Please try rephrasing the prompt to remove any potentially sensitive content. ` +
-              `Tip: Avoid words related to violence, medical conditions, or explicit content. ` +
-              `Original error: ${finalResult.error}`
+              `Content Policy Violation: Vertex AI blocked this video request (see safety filters). ` +
+                `Details: ${finalResult.error}`
             )
           }
         }
@@ -445,8 +430,25 @@ export async function POST(
         }
       }
 
+      const probeAndLogDuration = async (buf: Buffer) => {
+        const sec = await getVideoDurationFromBuffer(buf)
+        if (sec != null) {
+          actualVideoDurationSeconds = sec
+          if (
+            requestedVideoDurationSeconds != null &&
+            Math.abs(sec - requestedVideoDurationSeconds) > 0.75
+          ) {
+            console.warn(
+              '[Segment Asset Generation] Output duration differs from request:',
+              { actualSeconds: sec, requestedSeconds: requestedVideoDurationSeconds }
+            )
+          }
+        }
+      }
+
       // Upload video to blob storage
       if (videoBuffer) {
+        await probeAndLogDuration(videoBuffer)
         console.log('[Segment Asset Generation] Uploading video buffer to blob storage...')
         assetUrl = await uploadVideoToBlob(
           videoBuffer,
@@ -476,8 +478,10 @@ export async function POST(
         }
         const videoArrayBuffer = await videoResponse.arrayBuffer()
         console.log('[Segment Asset Generation] Downloaded video size:', videoArrayBuffer.byteLength, 'bytes')
+        const fetchedBuf = Buffer.from(videoArrayBuffer)
+        await probeAndLogDuration(fetchedBuf)
         assetUrl = await uploadVideoToBlob(
-          Buffer.from(videoArrayBuffer),
+          fetchedBuf,
           `segments/${segmentId}-${Date.now()}.mp4`
         )
       } else {
@@ -602,6 +606,8 @@ export async function POST(
       veoVideoRefExpiry,  // ISO timestamp when veoVideoRef expires (48 hours from generation)
       status: assetType === 'video' && assetUrl.startsWith('job:') ? 'QUEUED' : 'COMPLETE',
       jobId: assetType === 'video' && assetUrl.startsWith('job:') ? assetUrl.replace('job:', '') : undefined,
+      requestedDurationSeconds: requestedVideoDurationSeconds,
+      actualDurationSeconds: actualVideoDurationSeconds ?? undefined,
       // Method selection info for UI feedback
       methodSelection: methodSelectionResult ? {
         method: methodSelectionResult.method,
@@ -649,20 +655,74 @@ export async function POST(
     const isFTVMethod = effectiveGenerationMethod === 'FTV'
     const hasMultipleFrames = !!(requestBody.startFrameUrl && requestBody.endFrameUrl)
     
-    if (errorMessage.includes('Content Safety Filter') || 
-        errorMessage.includes('filtered') || 
+    const errLow = errorMessage.toLowerCase()
+    if (errorMessage.includes('Content Safety Filter') ||
+        errorMessage.includes('Content Policy') ||
+        errLow.includes('safety filter') ||
+        errorMessage.includes('filtered') ||
         errorMessage.includes('violate') ||
         errorMessage.includes('usage guidelines')) {
       statusCode = 422 // Unprocessable Entity - indicates content issue, not server error
-      
-      // FTV (two-image interpolation) is prone to false-positive content policy violations
-      // because the model hallucinates worst-case transitions between the two frames.
-      // Suggest I2V retry which uses only the start frame and avoids this issue.
-      if (isFTVMethod || hasMultipleFrames) {
-        errorMessage = 'Content Policy Violation: Frame-to-Video (FTV) interpolation was rejected by safety filters. This commonly happens when the AI model interprets the transition between two frames as potentially sensitive content. Try regenerating with Image-to-Video (I2V) mode using just your start frame — this preserves your prompt direction while avoiding the two-frame hallucination trigger.'
-      } else {
-        errorMessage = 'Content Policy Violation: Your prompt was flagged by Google\'s safety filters. This often happens with medical, violent, or graphic terms. Use the "Auto-Fix" button in the editor to rephrase with cinematic alternatives, or try the "AI Rephrase" feature for a complete rewrite.'
+
+      const hints: string[] = [
+        'Vertex reviews the full request: your text plus any start frame, end frame, or reference images. Dramatic abstract visuals are sometimes misread as explosions or harm—even when the frames were AI-generated.',
+        'If you used Frame-to-Video, try Image-to-Video with only the start frame, or swap one of the keyframes.',
+        'If you used reference images, try Text-to-Video without them.',
+        'You were not charged for a completed clip when the request is blocked; optional wording fixes below are suggestions only.',
+      ]
+
+      const optionalSanitized: { prompt?: string; guidePrompt?: string } = {}
+      const changeAcc: string[] = []
+      if (requestBody.prompt?.trim()) {
+        const sp = autoSanitizePrompt(requestBody.prompt, { logChanges: false })
+        if (sp.wasModified) {
+          optionalSanitized.prompt = sp.sanitizedPrompt
+          changeAcc.push(...sp.changes)
+        }
       }
+      if (requestBody.guidePrompt?.trim()) {
+        const sg = autoSanitizePrompt(requestBody.guidePrompt, { logChanges: false })
+        if (sg.wasModified) {
+          optionalSanitized.guidePrompt = sg.sanitizedPrompt
+          changeAcc.push(...sg.changes)
+        }
+      }
+      const sanitizationChanges = changeAcc.length > 0 ? changeAcc : undefined
+      const optionalSanitizedOut =
+        optionalSanitized.prompt || optionalSanitized.guidePrompt ? optionalSanitized : undefined
+
+      if (isFTVMethod || hasMultipleFrames) {
+        errorMessage =
+          'Content policy: Vertex blocked this generation. For Frame-to-Video, filters often react to the pair of images or the imagined transition—not only your text. Try Image-to-Video with the start frame, change a keyframe, or use optional wording suggestions if they help.'
+      } else {
+        errorMessage =
+          'Content policy: Vertex blocked this generation. The trigger may be your text or a reference/start image. Try optional wording suggestions, remove reference images, or simplify the prompt.'
+      }
+
+      return NextResponse.json(
+        {
+          error: errorMessage,
+          retryAfter,
+          isRateLimited: false,
+          code: 'CONTENT_POLICY_VIOLATION',
+          generationMethod: effectiveGenerationMethod,
+          isFTVRelated: isFTVMethod || hasMultipleFrames,
+          suggestion: isFTVMethod || hasMultipleFrames ? 'RETRY_I2V' : 'REPHRASE_PROMPT',
+          retryI2VData:
+            (isFTVMethod || hasMultipleFrames) && requestBody.startFrameUrl
+              ? {
+                  startFrameUrl: requestBody.startFrameUrl,
+                  prompt: requestBody.prompt,
+                }
+              : undefined,
+          hints,
+          optionalSanitized: optionalSanitizedOut,
+          sanitizationChanges,
+          vertexDetails: originalErrorMessage,
+          details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined,
+        },
+        { status: 422 }
+      )
     } else if (errorMessage.includes('Invalid JSON payload') || errorMessage.includes('INVALID_ARGUMENT')) {
       errorMessage = 'API Error: Invalid request format. Please try a different generation method.'
     } else if (errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED')) {
@@ -676,19 +736,6 @@ export async function POST(
         error: errorMessage,
         retryAfter,
         isRateLimited: statusCode === 429,
-        // Structured content policy violation data for client-side recovery UI
-        ...(statusCode === 422 && {
-          code: 'CONTENT_POLICY_VIOLATION',
-          generationMethod: effectiveGenerationMethod,
-          isFTVRelated: isFTVMethod || hasMultipleFrames,
-          suggestion: (isFTVMethod || hasMultipleFrames) ? 'RETRY_I2V' : 'REPHRASE_PROMPT',
-          retryI2VData: (isFTVMethod || hasMultipleFrames) && requestBody.startFrameUrl ? {
-            startFrameUrl: requestBody.startFrameUrl,
-            prompt: requestBody.prompt, // Original prompt (pre-sanitization) for user review
-          } : undefined,
-        }),
-        // Include original Vertex AI error details (with support codes) for content policy violations
-        vertexDetails: statusCode === 422 ? originalErrorMessage : undefined,
         details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined,
       },
       { status: statusCode }

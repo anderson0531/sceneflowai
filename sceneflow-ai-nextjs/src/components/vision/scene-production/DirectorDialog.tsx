@@ -62,7 +62,6 @@ import {
   Users,
   X,
   Plus,
-  ShieldAlert,
   ImageOff,
 } from 'lucide-react'
 import type { 
@@ -139,8 +138,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   // Direction Dialog state
   const [isDirectionDialogOpen, setIsDirectionDialogOpen] = useState(false)
   
-  // Content policy pre-flight & post-failure state
-  const [preflightModerationResult, setPreflightModerationResult] = useState<ModerationResult | null>(null)
+  // Content policy post-failure state (after Vertex rejects a generation)
   const [postFailureModerationResult, setPostFailureModerationResult] = useState<ModerationResult | null>(null)
   const [promptFixApplied, setPromptFixApplied] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
@@ -397,7 +395,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       setResolution(autoConfig.resolution)
       setDuration(autoConfig.duration)
       // Reset content policy state on open
-      setPreflightModerationResult(null)
       setPostFailureModerationResult(null)
       setPromptFixApplied(false)
       setLocalError(null)
@@ -419,11 +416,38 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       if (isContentPolicy) {
         const currentPrompt = mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt
         const isImageBasedMethod = mode === 'FRAME_TO_VIDEO' || mode === 'IMAGE_TO_VIDEO' || mode === 'REFERENCE_IMAGES'
-        
-        if (currentPrompt) {
+        const fromServer = segment.lastContentPolicyFailure
+        const hintLines = fromServer?.hints?.length
+          ? fromServer.hints
+          : []
+
+        if (fromServer?.optionalSanitized?.prompt) {
+          setImageTriggered(false)
+          setPostFailureModerationResult({
+            isClean: false,
+            severity: 'low',
+            flaggedTerms: [],
+            suggestedPrompt: fromServer.optionalSanitized.prompt,
+            warnings: [
+              ...hintLines,
+              'Optional: Auto-Fix updates your main video prompt (and guide/audio text if suggestions exist).',
+            ],
+          })
+        } else if (fromServer?.optionalSanitized?.guidePrompt && currentPrompt) {
+          setImageTriggered(false)
+          setPostFailureModerationResult({
+            isClean: false,
+            severity: 'low',
+            flaggedTerms: [],
+            suggestedPrompt: currentPrompt,
+            warnings: [
+              ...hintLines,
+              'Optional: Auto-Fix will apply softer wording to your audio/SFX guide only.',
+            ],
+          })
+        } else if (currentPrompt) {
           const modResult = moderatePrompt(currentPrompt)
           if (modResult.isClean && isImageBasedMethod) {
-            // Prompt is clean + image-based method = IMAGE likely triggered the violation
             setImageTriggered(true)
             setPostFailureModerationResult({
               isClean: false,
@@ -431,10 +455,10 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               flaggedTerms: [],
               suggestedPrompt: currentPrompt,
               warnings: [
-                'Your prompt passed local moderation, but Vertex AI rejected the request. ' +
-                'Since this used an image-based method (FTV/I2V), the reference image likely triggered the safety filter. ' +
-                'Try "Retry as Text-to-Video" below to generate without the reference image.'
-              ]
+                ...hintLines,
+                'Your prompt passed local checks, but Vertex still blocked the request. With start/end frames or a reference image, the visuals—not the text—often cause the block.',
+                'Try Image-to-Video with only the start frame, adjust keyframes, or use "Retry as Text-to-Video" below.',
+              ],
             })
           } else if (modResult.isClean) {
             setImageTriggered(false)
@@ -443,11 +467,17 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
               severity: 'medium',
               flaggedTerms: [],
               suggestedPrompt: currentPrompt,
-              warnings: ['Vertex AI rejected this prompt but no specific trigger words were found locally. Try AI Rephrase for a complete rewrite.']
+              warnings: [
+                ...hintLines,
+                'Vertex rejected the request but no local trigger words were found. Try AI Rephrase or optional wording after a retry.',
+              ],
             })
           } else {
             setImageTriggered(false)
-            setPostFailureModerationResult(modResult)
+            setPostFailureModerationResult({
+              ...modResult,
+              warnings: [...hintLines, ...modResult.warnings],
+            })
           }
         }
       } else {
@@ -458,7 +488,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       setPostFailureModerationResult(null)
       setImageTriggered(false)
     }
-  }, [segment.status, segment.errorMessage, mode, motionPrompt, visualPrompt])
+  }, [segment.status, segment.errorMessage, segment.lastContentPolicyFailure, mode, motionPrompt, visualPrompt])
   
   const handleSave = () => {
     const method = modeToMethod[mode]
@@ -498,13 +528,13 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prompt: originalPrompt,
-        flaggedTerms: (postFailureModerationResult || preflightModerationResult)?.flaggedTerms.map(ft => ft.term) || []
+        flaggedTerms: postFailureModerationResult?.flaggedTerms.map(ft => ft.term) || []
       })
     })
     if (!response.ok) throw new Error('Failed to rephrase prompt')
     const data = await response.json()
     return data.rephrasedPrompt || data.prompt || originalPrompt
-  }, [postFailureModerationResult, preflightModerationResult])
+  }, [postFailureModerationResult])
 
   // Apply content policy fix — updates the active prompt
   const handleApplyContentFix = useCallback((fixedPrompt: string) => {
@@ -513,13 +543,16 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     } else {
       setVisualPrompt(fixedPrompt)
     }
-    setPreflightModerationResult(null)
+    const g = segment.lastContentPolicyFailure?.optionalSanitized?.guidePrompt
+    if (g) {
+      setGuidePrompt(g)
+    }
     setPostFailureModerationResult(null)
     setLocalError(null)
     setImageTriggered(false)
     setPromptFixApplied(true)
     setTimeout(() => setPromptFixApplied(false), 5000)
-  }, [mode])
+  }, [mode, segment.lastContentPolicyFailure])
 
   // Retry as T2V — fallback when reference image triggers content policy
   const handleRetryAsT2V = useCallback(() => {
@@ -561,21 +594,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   }, [mode, motionPrompt, visualPrompt, negativePrompt, guidePrompt, aspectRatio, resolution, duration, autoConfig.confidence, qualityTier, onSaveConfig, onGenerate, segment.segmentId, onClose])
 
   // Handle generate - saves config AND triggers generation
-  const handleGenerate = (forceOverride = false) => {
+  const handleGenerate = () => {
     const method = modeToMethod[mode]
     const finalPrompt = method === 'FTV' ? motionPrompt : visualPrompt
-
-    // Pre-flight content policy check (skip if user clicked "Generate Anyway")
-    if (!forceOverride && finalPrompt) {
-      const modResult = moderatePrompt(finalPrompt)
-      if (!modResult.isClean) {
-        setPreflightModerationResult(modResult)
-        return // Block generation — show ContentPolicyAlert
-      }
-    }
-
-    // Clear any prior preflight warning since we're proceeding
-    setPreflightModerationResult(null)
 
     // Use directly resolved frame URLs (not from autoConfig which may be stale)
     const resolvedStartFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || null
@@ -1054,30 +1075,6 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             {promptFixApplied && (
               <div className="mt-3">
                 <PolicyFixedBanner onDismiss={() => setPromptFixApplied(false)} />
-              </div>
-            )}
-
-            {/* Pre-flight Content Policy Warning */}
-            {preflightModerationResult && !preflightModerationResult.isClean && (
-              <div className="mt-3 space-y-2">
-                <ContentPolicyAlert
-                  moderationResult={preflightModerationResult}
-                  onApplyFix={handleApplyContentFix}
-                  onDismiss={() => setPreflightModerationResult(null)}
-                  enableAIRegeneration={true}
-                  onRegenerateWithAI={handleAIRephrase}
-                />
-                {preflightModerationResult.severity === 'low' && (
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => handleGenerate(true)}
-                      className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 px-2 py-1 rounded border border-amber-700/50 hover:border-amber-600 transition-colors"
-                    >
-                      <ShieldAlert className="w-3.5 h-3.5" />
-                      Generate Anyway
-                    </button>
-                  </div>
-                )}
               </div>
             )}
 

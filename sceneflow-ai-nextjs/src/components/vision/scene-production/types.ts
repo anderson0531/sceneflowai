@@ -536,6 +536,20 @@ export interface SceneSegment {
   userInstruction?: string
   // Error message - stored when generation fails for detailed display
   errorMessage?: string
+
+  /** Structured metadata when Vertex returns a content / safety rejection (set by client after API 422) */
+  lastContentPolicyFailure?: {
+    method?: string
+    isFTVRelated?: boolean
+    timestamp?: string
+    hints?: string[]
+    /** Optional wording fixes (same as pre-flight Auto-Fix); user chooses to apply */
+    optionalSanitized?: {
+      prompt?: string
+      guidePrompt?: string
+    }
+    sanitizationChanges?: string[]
+  }
   
   // Segment Direction - approved direction metadata from the AI segmentation phase
   // Contains characters, isNoTalent, shotType, etc. from the user-approved direction

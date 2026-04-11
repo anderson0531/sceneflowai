@@ -196,20 +196,26 @@ export function ContentPolicyAlert({
             Flagged terms ({moderationResult.flaggedTerms.length}):
           </div>
           <div className="space-y-1.5">
-            {moderationResult.flaggedTerms.map((ft, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-xs">
-                <span className={cn(
-                  'px-1.5 py-0.5 rounded bg-current/10 font-mono',
-                  styles.text
-                )}>
-                  {ft.term}
-                </span>
-                <span className="opacity-50">→</span>
-                <span className="text-green-700 dark:text-green-400 font-medium">
-                  {ft.alternatives.slice(0, 2).join(' / ')}
-                </span>
-              </div>
-            ))}
+            {moderationResult.flaggedTerms.length === 0 ? (
+              <p className={cn('text-xs opacity-70', styles.text)}>
+                No local keyword matches. The block may come from a start/end frame, a reference image, or how the model reads the transition—not only visible text.
+              </p>
+            ) : (
+              moderationResult.flaggedTerms.map((ft, idx) => (
+                <div key={idx} className="flex items-center gap-2 text-xs">
+                  <span className={cn(
+                    'px-1.5 py-0.5 rounded bg-current/10 font-mono',
+                    styles.text
+                  )}>
+                    {ft.term}
+                  </span>
+                  <span className="opacity-50">→</span>
+                  <span className="text-green-700 dark:text-green-400 font-medium">
+                    {(ft.alternatives?.length ? ft.alternatives : ['(see suggested prompt)']).slice(0, 2).join(' / ')}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
           
           {/* Suggested prompt preview */}

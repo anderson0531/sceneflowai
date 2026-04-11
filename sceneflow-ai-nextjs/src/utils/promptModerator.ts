@@ -415,6 +415,12 @@ export function getContentPolicyMessage(result: ModerationResult): string {
     return 'Your prompt looks good!';
   }
 
+  if (result.flaggedTerms.length === 0) {
+    const hint = result.warnings?.filter(Boolean).join(' ') || ''
+    return hint.trim() ||
+      'Generation was blocked by safety filters. Optional Auto-Fix applies softer wording if available; the issue may also be a reference or keyframe image—not only text.';
+  }
+
   const termList = result.flaggedTerms
     .slice(0, 3) // Show max 3 terms
     .map(ft => `"${ft.term}" → "${ft.alternatives[0]}"`)
@@ -466,10 +472,10 @@ Rephrased prompt:`;
 }
 
 /**
- * Auto-sanitize a prompt for API submission.
- * Silently applies safe alternatives without user intervention.
- * Use this for server-side automatic moderation before Vertex AI calls.
- * 
+ * Auto-sanitize a prompt using cinematic alternatives.
+ * Prefer offering the result as an **optional** user action after a policy failure,
+ * not as mandatory pre-flight rewriting (Vertex charges are not incurred on blocked runs).
+ *
  * @param prompt - The original prompt
  * @param options - Sanitization options
  * @returns The sanitized prompt (or original if already clean)

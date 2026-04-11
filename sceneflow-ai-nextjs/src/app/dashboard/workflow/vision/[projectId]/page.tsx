@@ -2635,6 +2635,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               isFTVRelated: errorData?.isFTVRelated || false,
               suggestion: errorData?.suggestion || 'REPHRASE_PROMPT',
               retryI2VData: errorData?.retryI2VData,
+              hints: errorData?.hints,
+              optionalSanitized: errorData?.optionalSanitized,
+              sanitizationChanges: errorData?.sanitizationChanges,
             }
             throw err
           }
@@ -2678,6 +2681,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const segments = current.segments.map((segment) => {
             if (segment.segmentId !== segmentId) return segment
 
+            const measuredDuration =
+              typeof data.actualDurationSeconds === 'number' && !Number.isNaN(data.actualDurationSeconds)
+                ? data.actualDurationSeconds
+                : undefined
+            if (
+              measuredDuration != null &&
+              typeof data.requestedDurationSeconds === 'number' &&
+              Math.abs(measuredDuration - data.requestedDurationSeconds) > 0.75
+            ) {
+              console.warn('[Segment Generate] Video duration vs request:', {
+                requested: data.requestedDurationSeconds,
+                actual: measuredDuration,
+              })
+            }
+
             const newTake = {
               id: `${segmentId}-take-${Date.now()}`,
               createdAt: new Date().toISOString(),
@@ -2685,7 +2703,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               // For images, use the image itself as thumbnail. For videos, use the extracted last frame.
               thumbnailUrl: data.assetType === 'image' ? data.assetUrl : (lastFrameUrl || undefined),
               status: data.status === 'COMPLETE' ? 'COMPLETE' : 'GENERATING',
-              durationSec: segment.endTime - segment.startTime,
+              durationSec: measuredDuration ?? segment.endTime - segment.startTime,
               // Store Veo video reference for future video extension
               veoVideoRef: data.veoVideoRef,
               stemSeparation: data.stemSeparation
@@ -2702,6 +2720,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               status: data.status === 'COMPLETE' ? 'COMPLETE' : 'GENERATING',
               assetType: data.assetType,
               activeAssetUrl: data.assetUrl,
+              ...(data.assetType === 'video' && measuredDuration != null
+                ? { actualVideoDuration: measuredDuration }
+                : {}),
+              lastContentPolicyFailure: undefined,
+              errorMessage: undefined,
               takes: [newTake, ...(segment.takes || [])],
               references: {
                 ...segment.references,
@@ -2809,6 +2832,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   method: contentPolicyData.generationMethod,
                   isFTVRelated: contentPolicyData.isFTVRelated,
                   timestamp: new Date().toISOString(),
+                  hints: contentPolicyData.hints,
+                  optionalSanitized: contentPolicyData.optionalSanitized,
+                  sanitizationChanges: contentPolicyData.sanitizationChanges,
                 }
               }),
             } : segment
@@ -2821,6 +2847,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const { toast } = require('sonner')
           // Detect content policy violations (multiple patterns)
           const isContentPolicy = errorMessage.includes('Content Policy') ||
+            errorMessage.includes('Content policy') ||
             errorMessage.includes('Content Safety Filter') ||
             errorMessage.includes('violate') ||
             errorMessage.includes('usage guidelines') ||
