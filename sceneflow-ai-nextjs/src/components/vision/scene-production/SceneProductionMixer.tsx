@@ -100,6 +100,7 @@ import type {
   AudioTrackConfig,
   MixerAudioTracks,
 } from './types'
+import { SCENEFLOW_WATERMARK_STORAGE_KEY } from './sceneRenderBurnInPayload'
 
 export type { ProductionTarget, TextOverlay, TextOverlayStyle, TextOverlayPosition, TextOverlayTiming, AudioTrackConfig, MixerAudioTracks }
 
@@ -369,8 +370,7 @@ const TRACK_COLORS = {
   music: { icon: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30', slider: 'bg-green-500' },
 }
 
-// LocalStorage keys for persisting mixer settings
-const WATERMARK_STORAGE_KEY = 'sceneflow-watermark-config'
+// LocalStorage keys for persisting mixer settings (watermark key shared with sceneRenderBurnInPayload)
 const MIXER_SETTINGS_STORAGE_KEY = 'sceneflow-mixer-settings'
 
 // ============================================================================
@@ -2345,7 +2345,7 @@ export function SceneProductionMixer({
     // Initialize from localStorage if available
     if (typeof window !== 'undefined') {
       try {
-        const stored = localStorage.getItem(WATERMARK_STORAGE_KEY)
+        const stored = localStorage.getItem(SCENEFLOW_WATERMARK_STORAGE_KEY)
         if (stored) {
           const parsed = JSON.parse(stored)
           // Merge with defaults to handle any new fields
@@ -2403,7 +2403,7 @@ export function SceneProductionMixer({
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem(WATERMARK_STORAGE_KEY, JSON.stringify(watermarkConfig))
+        localStorage.setItem(SCENEFLOW_WATERMARK_STORAGE_KEY, JSON.stringify(watermarkConfig))
       } catch (e) {
         console.warn('[SceneProductionMixer] Failed to save watermark config to localStorage:', e)
       }

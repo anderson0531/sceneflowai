@@ -443,6 +443,20 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
     audio_clips_with_files = [c for c in audio_clips if c.get('localFile')]
     log(f"Downloaded {len(audio_clips_with_files)} audio clips")
     
+    # Download image watermark asset (text watermarks need no extra file)
+    wm_for_cmd = watermark
+    if watermark and watermark.get('type') == 'image' and watermark.get('imageUrl'):
+        wm_file = download_asset(watermark['imageUrl'], 'image', 997)
+        if wm_file:
+            wm_for_cmd = dict(watermark)
+            wm_for_cmd['localFile'] = wm_file
+            log(f"Downloaded watermark image -> {wm_file}")
+        else:
+            log("Watermark image download failed; falling back to text watermark", 'WARN')
+            wm_for_cmd = dict(watermark)
+            wm_for_cmd['type'] = 'text'
+            wm_for_cmd['text'] = wm_for_cmd.get('text') or 'SceneFlow AI Studio'
+    
     send_callback(callback_url, job_id, 'PROCESSING', 50)
     
     # Build and run FFmpeg command for video concatenation
@@ -464,7 +478,7 @@ def render_video_concatenation(job_id: str, video_segments: list, audio_clips: l
         include_segment_audio=include_segment_audio,
         segment_audio_volume=segment_audio_volume,
         text_overlays=text_overlays,
-        watermark=watermark,
+        watermark=wm_for_cmd,
     )
     
     log(f"FFmpeg command length: {len(ffmpeg_cmd)} args")

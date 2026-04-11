@@ -331,7 +331,7 @@ def build_text_overlay_filters(
     return filters
 
 
-def build_watermark_filter(
+def build_watermark_text_filter(
     watermark: Dict[str, Any],
     input_label: str,
     output_label: str,
@@ -339,28 +339,11 @@ def build_watermark_filter(
     height: int = 1080,
 ) -> str:
     """
-    Build FFmpeg drawtext filter for a watermark (applied to entire video).
-    
-    Args:
-        watermark: Watermark specification dict
-        input_label: Input stream label (e.g., "[outv]")
-        output_label: Output stream label (e.g., "[wm]")
-        width: Video width in pixels
-        height: Video height in pixels
-    
-    Returns:
-        FFmpeg filter string for the watermark
+    Build FFmpeg drawtext filter for a text watermark (applied to entire video).
     """
-    wm_type = watermark.get('type', 'text')
-    
-    if wm_type == 'image':
-        # Image watermark requires overlay filter (not implemented here)
-        # For now, skip image watermarks
-        print(f"[FFmpeg] Warning: Image watermarks not yet supported in FFmpeg renderer")
-        return ""
-    
-    # Text watermark using drawtext
-    text = escape_drawtext(watermark.get('text', 'SceneFlow AI'))
+    # .get('text', default) returns None if JSON had "text": null — coalesce for a visible burn-in
+    raw_text = watermark.get('text') or 'SceneFlow AI Studio'
+    text = escape_drawtext(str(raw_text))
     anchor = watermark.get('anchor', 'bottom-right')
     padding = watermark.get('padding', 60)
     
@@ -422,9 +405,49 @@ def build_watermark_filter(
     # Build the filter string
     filter_str = f"{input_label}drawtext={':'.join(filter_parts)}{output_label}"
     
-    print(f"[FFmpeg] Watermark filter: text='{watermark.get('text', '')[:30]}', anchor={anchor}, fontSize={font_size}")
+    print(f"[FFmpeg] Watermark text filter: text='{str(raw_text)[:30]}', anchor={anchor}, fontSize={font_size}")
     
     return filter_str
+
+
+def build_image_watermark_filters(
+    wm_input_idx: int,
+    input_label: str,
+    output_label: str,
+    anchor: str,
+    padding: int,
+    wm_width_px: int,
+    opacity: float,
+) -> List[str]:
+    """
+    Scale a watermark image input and overlay it on the video (full duration).
+    Expects PNG/WebP with alpha when possible; opacity is applied via colorchannelmixer.
+    """
+    a = min(max(float(opacity), 0.0), 1.0)
+    scale_f = (
+        f"[{wm_input_idx}:v]scale={wm_width_px}:-1,format=rgba,"
+        f"colorchannelmixer=aa={a}[wm_scaled]"
+    )
+    pos_x = {
+        'top-left': str(padding),
+        'top-center': '(W-w)/2',
+        'top-right': f'W-w-{padding}',
+        'bottom-left': str(padding),
+        'bottom-center': '(W-w)/2',
+        'bottom-right': f'W-w-{padding}',
+    }
+    pos_y = {
+        'top-left': str(padding),
+        'top-center': str(padding),
+        'top-right': str(padding),
+        'bottom-left': f'H-h-{padding}',
+        'bottom-center': f'H-h-{padding}',
+        'bottom-right': f'H-h-{padding}',
+    }
+    x = pos_x.get(anchor, f'W-w-{padding}')
+    y = pos_y.get(anchor, f'H-h-{padding}')
+    ol = f"{input_label}[wm_scaled]overlay={x}:{y}:format=auto{output_label}"
+    return [scale_f, ol]
 
 
 def build_ken_burns_filter(
@@ -729,8 +752,20 @@ def build_concat_ffmpeg_command(
             cmd.extend(['-i', voiceover_path])
             voiceover_input_map[i] = video_input_count + len(voiceover_input_map)
     
-    # Add overlay audio input files (music, sfx, etc.)
-    audio_inputs_start = video_input_count + len(voiceover_input_map)
+    vo_count = len(voiceover_input_map)
+    base_after_videos = video_input_count + vo_count
+    wm_input_idx = None
+    if (
+        watermark
+        and watermark.get('type') == 'image'
+        and watermark.get('localFile')
+    ):
+        wm_path = os.path.join(temp_dir, 'assets', watermark['localFile'])
+        cmd.extend(['-i', wm_path])
+        wm_input_idx = base_after_videos
+    
+    # Add overlay audio input files (music, sfx, etc.) — after video, voiceover, optional watermark image
+    audio_inputs_start = base_after_videos + (1 if wm_input_idx is not None else 0)
     for i, clip in enumerate(audio_clips):
         audio_path = os.path.join(temp_dir, 'assets', clip['localFile'])
         cmd.extend(['-i', audio_path])
@@ -817,17 +852,40 @@ def build_concat_ffmpeg_command(
     
     # Apply watermark to the video stream (after text overlays)
     if watermark and watermark.get('type'):
-        print(f"[FFmpeg] Adding watermark: type={watermark.get('type')}, text={watermark.get('text', '')[:30]}")
-        wm_filter = build_watermark_filter(
-            watermark=watermark,
-            input_label=video_output,
-            output_label="[wmv]",
-            width=width,
-            height=height,
-        )
-        if wm_filter:
-            filter_parts.append(wm_filter)
+        wm_type = watermark.get('type')
+        if wm_type == 'image' and wm_input_idx is not None:
+            ist = watermark.get('imageStyle') or {}
+            wm_w = max(8, int((ist.get('width', 10) / 100.0) * width))
+            opacity = float(ist.get('opacity', 0.7))
+            pad = int(watermark.get('padding', 60))
+            anchor = str(watermark.get('anchor', 'bottom-right'))
+            print(f"[FFmpeg] Adding image watermark: anchor={anchor}, widthPx={wm_w}, opacity={opacity}")
+            img_filters = build_image_watermark_filters(
+                wm_input_idx=wm_input_idx,
+                input_label=video_output,
+                output_label="[wmv]",
+                anchor=anchor,
+                padding=pad,
+                wm_width_px=wm_w,
+                opacity=opacity,
+            )
+            filter_parts.extend(img_filters)
             video_output = "[wmv]"
+        elif wm_type == 'text':
+            tprev = str((watermark.get('text') or ''))[:30]
+            print(f"[FFmpeg] Adding text watermark: text={tprev!r}...")
+            wm_filter = build_watermark_text_filter(
+                watermark=watermark,
+                input_label=video_output,
+                output_label="[wmv]",
+                width=width,
+                height=height,
+            )
+            if wm_filter:
+                filter_parts.append(wm_filter)
+                video_output = "[wmv]"
+        else:
+            print(f"[FFmpeg] Skipping watermark: type={wm_type!r}, imageInputOk={wm_input_idx is not None}")
     
     # Initialize audio tracking
     src_audio_output = None

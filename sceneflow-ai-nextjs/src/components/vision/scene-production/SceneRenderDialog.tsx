@@ -47,6 +47,7 @@ import {
 } from 'lucide-react'
 import type { SceneSegment, SceneProductionData, AnimaticRenderSettings } from './types'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
+import { getBurnInPayloadForSceneRenderApi } from './sceneRenderBurnInPayload'
 
 // Audio track configuration with timing
 interface AudioTrackConfig {
@@ -382,6 +383,8 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
       setStatus('uploading')
       setProgress(10)
 
+      const { textOverlays, watermark } = getBurnInPayloadForSceneRenderApi(productionData)
+
       // Call scene render API
       const response = await fetch(`/api/scene/${sceneId}/render`, {
         method: 'POST',
@@ -406,6 +409,8 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
           },
           segments: segmentData,
           audioTracks,
+          textOverlays,
+          watermark,
         }),
       })
 

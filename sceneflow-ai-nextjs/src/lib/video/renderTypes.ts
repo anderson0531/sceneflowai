@@ -498,4 +498,6 @@ export interface CreateSceneRenderJobRequest {
       fadeOutMs: number
     }
   }>
+  /** Burn-in watermark (same shape as Scene Production Mixer POST body) */
+  watermark?: SceneRenderWatermark | null
 }
