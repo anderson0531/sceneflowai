@@ -3169,22 +3169,32 @@ export function SceneProductionMixer({
     try {
       const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
       const segmentsForLocal = sourceSegments.map(seg => {
-        const duration = seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
+        // Animatic: match ScenePreviewPlayer — imageDuration + end-frame crossfade in LocalRenderService
+        const duration = renderingAnimatic
+          ? (() => {
+              const raw =
+                seg.imageDuration ?? seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
+              return !Number.isFinite(raw) || raw <= 0 ? 4 : raw
+            })()
+          : (seg.actualVideoDuration ?? (seg.endTime - seg.startTime))
         const audioConfig = segmentAudioConfigs[seg.segmentId]
         const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
         // Include video audio if: config says includeAudio=true (default), OR config doesn't exist (default to include)
         const includeVideoAudio = !renderingAnimatic && (audioConfig?.includeAudio ?? true) && (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)
         const localAssetType: 'video' | 'image' =
           renderingAnimatic ? 'image' : ((seg.assetType || 'video') as 'video' | 'image')
+        const endFrameUrl = renderingAnimatic ? animaticEndFrameUrl(seg) || undefined : undefined
         console.log('[LocalRender] Segment config:', {
           segmentId: seg.segmentId,
           actualVideoDuration: seg.actualVideoDuration,
+          imageDuration: seg.imageDuration,
           startTime: seg.startTime,
           endTime: seg.endTime,
           calculatedDuration: duration,
           isUserUpload: seg.isUserUpload,
           assetType: localAssetType,
           includeVideoAudio,
+          hasEndFrame: !!endFrameUrl,
           volume: audioConfig?.volume ?? 1.0,
         })
         return {
@@ -3193,6 +3203,7 @@ export function SceneProductionMixer({
           assetType: localAssetType,
           startTime: seg.startTime,
           duration,
+          endFrameUrl,
           volume: (audioConfig?.volume ?? 1.0) * masterSegmentVolume,
           includeVideoAudio, // Pass through to LocalRenderService for video audio extraction
         }
@@ -3426,7 +3437,7 @@ export function SceneProductionMixer({
       }
       
       onRenderComplete?.(persistentUrl, selectedLanguage, productionTarget.streamType, {
-        durationSeconds: totalDuration,
+        durationSeconds: renderResult.duration ?? totalDuration,
       })
       
     } catch (err) {

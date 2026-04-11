@@ -45,6 +45,8 @@ export interface LocalRenderSegment {
   startTime: number
   /** Duration in the final composition (seconds) */
   duration: number
+  /** Optional end keyframe URL — animatic crossfade matches ScenePreviewPlayer (image segments) */
+  endFrameUrl?: string
   /** Volume for this segment (0-1) */
   volume?: number
   /** Include the video's audio track in the render */
@@ -391,11 +393,15 @@ export class LocalRenderService {
         return adjustedSegment
       })
       
+      // Keep composition length aligned with mixer: audio/elastic timeline can exceed visual segments.
+      // Previously we only used sum(segment durations), so narration/music at 6s produced a 4s WebM while UI showed 6s.
+      const compositionDuration = Math.max(adjustedTotalDuration, config.totalDuration)
+
       // Update config with adjusted segments and total duration
       const adjustedConfig: LocalRenderConfig = {
         ...config,
         segments: adjustedSegments,
-        totalDuration: adjustedTotalDuration,
+        totalDuration: compositionDuration,
       }
       
       console.log('[LocalRender] Duration adjustment:', {
@@ -810,6 +816,26 @@ export class LocalRenderService {
           })
           
           assets.set(segment.segmentId, img)
+
+          if (segment.endFrameUrl && segment.endFrameUrl !== segment.assetUrl) {
+            const endKey = `${segment.segmentId}__end`
+            const endImg = new Image()
+            endImg.crossOrigin = 'anonymous'
+            await new Promise<void>((resolve, reject) => {
+              endImg.onload = () => {
+                console.log('[LocalRender] End frame loaded:', segment.segmentId)
+                resolve()
+              }
+              endImg.onerror = () => {
+                console.warn('[LocalRender] End frame failed, using start-only:', segment.segmentId)
+                resolve()
+              }
+              endImg.src = segment.endFrameUrl!
+            })
+            if (endImg.complete && endImg.naturalWidth > 0) {
+              assets.set(endKey, endImg)
+            }
+          }
         }
       })
     )
@@ -1042,6 +1068,46 @@ export class LocalRenderService {
     }
   }
   
+  /**
+   * Animatic still crossfade + subtle push-in (matches ScenePreviewPlayer image-sequence).
+   */
+  private drawAnimaticStillPair(
+    ctx: CanvasRenderingContext2D,
+    canvasW: number,
+    canvasH: number,
+    startImg: HTMLImageElement,
+    endImg: HTMLImageElement | undefined,
+    progress: number
+  ): void {
+    const p = Math.max(0, Math.min(1, progress))
+    const scalePush = 1 + p * 0.02
+
+    const drawLayer = (img: HTMLImageElement, alpha: number) => {
+      if (alpha <= 0) return
+      ctx.save()
+      ctx.globalAlpha = alpha
+      const aw = img.naturalWidth || img.width
+      const ah = img.naturalHeight || img.height
+      if (aw <= 0 || ah <= 0) {
+        ctx.restore()
+        return
+      }
+      const baseScale = Math.max(canvasW / aw, canvasH / ah)
+      const s = baseScale * scalePush
+      const sw = aw * s
+      const sh = ah * s
+      const x = (canvasW - sw) / 2
+      const y = (canvasH - sh) / 2
+      ctx.drawImage(img, x, y, sw, sh)
+      ctx.restore()
+    }
+
+    drawLayer(startImg, 1)
+    if (endImg && endImg.naturalWidth > 0) {
+      drawLayer(endImg, p)
+    }
+  }
+
   private async drawFrame(
     currentTime: number,
     config: LocalRenderConfig,
@@ -1058,10 +1124,21 @@ export class LocalRenderService {
     ctx.fillStyle = '#000000'
     ctx.fillRect(0, 0, width, height)
     
-    // Find the current segment
-    const segment = config.segments.find(
-      (s) => currentTime >= s.startTime && currentTime < s.startTime + s.duration
-    )
+    const t = Math.min(Math.max(0, currentTime), Math.max(0, config.totalDuration - 1e-4))
+    const segs = config.segments
+
+    let segment = segs.find((s) => t >= s.startTime && t < s.startTime + s.duration)
+    let localTime = segment ? t - segment.startTime : 0
+
+    // Hold last visual frame while audio continues past segment timeline (mixer preview behavior)
+    if (!segment && segs.length > 0) {
+      const last = segs[segs.length - 1]
+      const visualEnd = last.startTime + last.duration
+      if (t >= visualEnd && t < config.totalDuration) {
+        segment = last
+        localTime = last.duration
+      }
+    }
     
     // Debug logging for first frame and every 10 seconds
     if (currentTime === 0 || Math.floor(currentTime) % 10 === 0) {
@@ -1070,7 +1147,7 @@ export class LocalRenderService {
         start: s.startTime,
         duration: s.duration,
         end: s.startTime + s.duration
-      })), 'found segment:', segment?.segmentId)
+      })), 'found segment:', segment?.segmentId, 'localTime:', localTime)
     }
     
     if (!segment) return
@@ -1078,7 +1155,33 @@ export class LocalRenderService {
     const asset = assets.get(segment.segmentId)
     if (!asset) return
     
-    // Calculate position to fit and center
+    // If video, seek to correct time and WAIT for seek to complete
+    if (asset instanceof HTMLVideoElement) {
+      const dur = segment.duration
+      const localSeek = Math.min(
+        Math.max(localTime, 0),
+        Math.max(0, dur - 0.001)
+      )
+      if (Math.abs(asset.currentTime - localSeek) > 0.04) {
+        await new Promise<void>((resolve) => {
+          let resolved = false
+          const onSeeked = () => {
+            if (resolved) return
+            resolved = true
+            asset.removeEventListener('seeked', onSeeked)
+            resolve()
+          }
+          const timeout = setTimeout(onSeeked, 500)
+          asset.addEventListener('seeked', () => {
+            clearTimeout(timeout)
+            onSeeked()
+          })
+          asset.currentTime = localSeek
+        })
+      }
+    }
+    
+    // Calculate position to fit and center (video uses post-seek dimensions; image uses bitmap)
     const assetWidth = asset instanceof HTMLVideoElement ? asset.videoWidth : asset.width
     const assetHeight = asset instanceof HTMLVideoElement ? asset.videoHeight : asset.height
     
@@ -1088,37 +1191,16 @@ export class LocalRenderService {
     const x = (width - scaledWidth) / 2
     const y = (height - scaledHeight) / 2
     
-    // Store content bounds for watermark positioning
-    // This ensures watermarks appear on the actual video content, not black bars
     this.contentBounds = { x, y, width: scaledWidth, height: scaledHeight }
     
-    // If video, seek to correct time and WAIT for seek to complete
     if (asset instanceof HTMLVideoElement) {
-      const localTime = currentTime - segment.startTime
-      // Only seek if we're more than 1 frame off (at 30fps, ~0.033s)
-      if (Math.abs(asset.currentTime - localTime) > 0.04) {
-        // Wait for video to seek to the correct frame
-        await new Promise<void>((resolve) => {
-          let resolved = false
-          const onSeeked = () => {
-            if (resolved) return
-            resolved = true
-            asset.removeEventListener('seeked', onSeeked)
-            resolve()
-          }
-          // Add timeout to prevent hanging if seeked never fires (500ms for long videos)
-          const timeout = setTimeout(onSeeked, 500)
-          asset.addEventListener('seeked', () => {
-            clearTimeout(timeout)
-            onSeeked()
-          })
-          asset.currentTime = localTime
-        })
-      }
+      ctx.drawImage(asset, x, y, scaledWidth, scaledHeight)
+    } else {
+      const endImg = assets.get(`${segment.segmentId}__end`) as HTMLImageElement | undefined
+      const progress =
+        segment.duration > 0 ? Math.max(0, Math.min(1, localTime / segment.duration)) : 0
+      this.drawAnimaticStillPair(ctx, width, height, asset, endImg, progress)
     }
-    
-    // Draw the asset to hidden canvas
-    ctx.drawImage(asset, x, y, scaledWidth, scaledHeight)
   }
   
   private drawTextOverlays(
