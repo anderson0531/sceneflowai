@@ -146,6 +146,28 @@ export function buildDialogueLineSegmentTimeWindows(
  * used to collapse all clips at t=0 because `0 ?? cursor` keeps 0. After the first clip,
  * values before the sequential cursor are treated as unset and the cursor is used.
  */
+/** Seconds from API fields; matches ScriptPanel / SegmentBuilder ms heuristic. */
+function normalizeAudioDurationSeconds(raw: unknown): number | null {
+  if (typeof raw !== 'number' || !Number.isFinite(raw) || raw <= 0) return null
+  let v = raw
+  if (v > 600 && v < 3_600_000) v /= 1000
+  if (v > 0 && v < 7200) return v
+  return null
+}
+
+function dialogueClipDurationFromSource(audio: {
+  duration?: unknown
+  durationSeconds?: unknown
+  audioDuration?: unknown
+}): number {
+  return (
+    normalizeAudioDurationSeconds(audio.duration) ??
+    normalizeAudioDurationSeconds(audio.durationSeconds) ??
+    normalizeAudioDurationSeconds(audio.audioDuration) ??
+    3
+  )
+}
+
 function pickDialogueStartTime(
   explicit: unknown,
   clipIndex: number,
@@ -189,11 +211,15 @@ export function buildAudioTracksForLanguage(
   const narrationUrl = narrationAudio?.url || scene.narrationAudioUrl
   
   if (narrationUrl && typeof narrationUrl === 'string' && narrationUrl.trim()) {
+    const narrDur =
+      normalizeAudioDurationSeconds(narrationAudio?.duration) ??
+      normalizeAudioDurationSeconds(scene.narrationDuration) ??
+      0
     tracks.voiceover = {
       id: 'vo-scene',
       url: narrationUrl,
       startTime: 0, // Narration always starts at 0 seconds
-      duration: narrationAudio?.duration || scene.narrationDuration || 0,
+      duration: narrDur,
       label: 'Narration',
       volume: 1,
       language,
@@ -263,7 +289,7 @@ export function buildAudioTracksForLanguage(
           console.warn(`[audioTrackBuilder] Stale dialogue audio at index ${idx}: ${staleReason}`)
         }
         
-        const duration = audio.duration || 3
+        const duration = dialogueClipDurationFromSource(audio)
         const dialogueIndex = audio.dialogueIndex ?? idx
         dialogueClips.push({
           id: `dialogue-${idx}`,
@@ -290,7 +316,7 @@ export function buildAudioTracksForLanguage(
     scene.dialogue.forEach((d: any, idx: number) => {
       const url = d.audioUrl || d.url
       if (url && typeof url === 'string' && url.trim()) {
-        const duration = d.audioDuration || d.duration || 3
+        const duration = dialogueClipDurationFromSource(d)
         dialogueClips.push({
           id: `dialogue-${idx}`,
           url,
@@ -318,10 +344,9 @@ export function buildAudioTracksForLanguage(
         const w = windows.get(dialogueLineIdForIndex(idx))
         if (w) {
           clip.startTime = w.start
-          const slotLen = w.end - w.start
-          if (slotLen > 0.05) {
-            clip.duration = Math.min(clip.duration, slotLen)
-          }
+          // Keep full asset duration for playback/timeline parity with script UI.
+          // Segment windows only anchor start time; capping to slot length caused
+          // short bars and early cutoffs vs real dialogue audio length.
         }
       }
     }

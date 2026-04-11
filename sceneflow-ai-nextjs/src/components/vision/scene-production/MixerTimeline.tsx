@@ -422,15 +422,15 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
         </div>
       </div>
 
-      {/* Scrollable Timeline Content */}
+      {/* Scrollable timeline body — legend stays in footer below so it is always visible */}
       <div 
         ref={scrollContainerRef}
         className="overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
-        style={{ maxHeight: 'min(420px, 70vh)' }}
+        style={{ maxHeight: 'min(520px, 78vh)' }}
       >
         <div 
           ref={containerRef} 
-          className="relative px-3 py-3"
+          className="relative px-3 pt-3 pb-2"
           style={{ width: `${effectiveWidth + 48}px`, minWidth: '100%' }}
         >
           {/* Playhead */}
@@ -679,26 +679,26 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Legend */}
-          <div className="mt-3 pt-2 border-t border-gray-700/30 flex items-center gap-4 text-[9px] text-gray-500">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'rgba(168, 85, 247, 0.3)', borderLeft: '2px solid #a855f7' }} />
-              <span>AI Video</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'rgba(34, 197, 94, 0.3)', borderLeft: '2px solid #22c55e' }} />
-              <span>Uploaded</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-0.5 h-3 bg-red-500" />
-              <span>Playhead</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-2 rounded-sm border-r border-dashed" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', borderColor: 'rgba(168, 85, 247, 0.5)' }} />
-              <span>Extends video</span>
-            </div>
-          </div>
+      {/* Legend — outside vertical scroll so it remains visible */}
+      <div className="px-3 py-2.5 border-t border-gray-700/40 bg-gray-900/40 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[9px] text-gray-500">
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'rgba(168, 85, 247, 0.3)', borderLeft: '2px solid #a855f7' }} />
+          <span>AI Video</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-2 rounded-sm" style={{ backgroundColor: 'rgba(34, 197, 94, 0.3)', borderLeft: '2px solid #22c55e' }} />
+          <span>Uploaded</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-0.5 h-3 bg-red-500" />
+          <span>Playhead</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-2 rounded-sm border-r border-dashed" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', borderColor: 'rgba(168, 85, 247, 0.5)' }} />
+          <span>Extends video</span>
         </div>
       </div>
     </div>
