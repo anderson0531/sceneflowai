@@ -661,7 +661,7 @@ export function ProductionStreamsPanel({
       {selectedStreamType === 'animatic' && (
         <div className="p-3 bg-gray-800/25 rounded-lg border border-gray-700/60">
           <p className="text-xs text-gray-400 text-center">
-            New animatic exports: use <span className="text-purple-300 font-medium">Render</span> in the Scene Production Mixer footer. This list shows completed outputs for preview and download.
+            New animatic exports: use <span className="text-purple-300 font-medium">Render</span> in the Production Mixer footer. This list shows completed outputs for preview and download.
           </p>
         </div>
       )}
@@ -669,7 +669,7 @@ export function ProductionStreamsPanel({
       {selectedStreamType === 'video' && videoGenerationAvailable && (
         <div className="p-3 bg-gray-800/25 rounded-lg border border-gray-700/60">
           <p className="text-xs text-gray-400 text-center">
-            New stitched video exports: use <span className="text-indigo-300 font-medium">Render</span> in the Scene Production Mixer footer. This list shows completed outputs for preview and download.
+            New stitched video exports: use <span className="text-indigo-300 font-medium">Render</span> in the Production Mixer footer. This list shows completed outputs for preview and download.
           </p>
         </div>
       )}

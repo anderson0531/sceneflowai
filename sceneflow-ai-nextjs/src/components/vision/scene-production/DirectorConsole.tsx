@@ -53,6 +53,7 @@ import {
   Shield,
   ShieldCheck,
   CloudUpload,
+  ListVideo,
 } from 'lucide-react'
 import type { 
   SceneSegment, 
@@ -84,6 +85,7 @@ const SceneRenderDialog = dynamic(
 )
 import { AddSpecialSegmentDialog, type FilmContext, type AdjacentSceneContext } from './AddSpecialSegmentDialog'
 import { ProductionStreamsPanel } from './ProductionStreamsPanel'
+import { ProductionSectionHeader } from './ProductionSectionHeader'
 // Dynamic import for SceneProductionMixer to avoid TDZ with LocalRenderService chain
 const SceneProductionMixer = dynamic(
   () => import('./SceneProductionMixer').then(mod => ({ default: mod.SceneProductionMixer })),
@@ -160,6 +162,20 @@ interface DirectorConsoleProps {
   isGeneratingAudio?: boolean
 }
 
+/** Slots for splitting Video / Mixer / Streams across parent section cards (ScriptPanel). */
+export type DirectorWorkflowSlots = {
+  videoSection: React.ReactNode
+  mixerBody: React.ReactNode
+  streamsBody: React.ReactNode
+  streamCount: number
+  mixerCollapsed: boolean
+  setMixerCollapsed: React.Dispatch<React.SetStateAction<boolean>>
+}
+
+export type DirectorWorkflowProps = DirectorConsoleProps & {
+  children: (slots: DirectorWorkflowSlots) => React.ReactNode
+}
+
 // Method badge colors and labels
 const methodBadgeConfig: Record<VideoGenerationMethod, { label: string; className: string }> = {
   FTV: { label: 'INTERP', className: 'bg-purple-500/20 text-purple-300 border-purple-500/50' },
@@ -179,7 +195,7 @@ const statusBadgeConfig = {
   'error': { label: 'Error', className: 'bg-red-500/20 text-red-300 border-red-500/50', icon: AlertCircle },
 }
 
-export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
+function DirectorConsoleRoot({
   sceneId,
   sceneNumber,
   projectId,
@@ -195,7 +211,10 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   onGenerateSceneAudio,
   onGenerateAllAudio,
   isGeneratingAudio,
-}) => {
+  children,
+}: DirectorConsoleProps & {
+  children?: (slots: DirectorWorkflowSlots) => React.ReactNode
+}) {
   // Use stable EMPTY_SEGMENTS constant to prevent TDZ render loops
   // productionData?.segments || [] creates a new array reference each render
   const segments = productionData?.segments ?? EMPTY_SEGMENTS
@@ -699,7 +718,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     const item = queue.find(q => q.segmentId === id)
     return item && item.config.approvalStatus !== 'locked'
   }).length
-  
+
   // No segments state
   if (segments.length === 0) {
     return (
@@ -713,408 +732,441 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
     )
   }
 
-  return (
-    <TooltipProvider>
-    <div className="space-y-6">
-      {/* Video Generation Header - FTV Mode Ready style */}
-      <div className="p-4 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-lg">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <button 
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-3 transition-colors group"
-          >
-            {isExpanded ? <ChevronDown className="w-4 h-4 text-indigo-400 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 text-indigo-400 flex-shrink-0" />}
-            <Clapperboard className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-            <span className="text-indigo-300 font-medium">Video Generation</span>
-            <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
-              {statusCounts.rendered}/{statusCounts.total} rendered
-            </Badge>
-            <span className="text-indigo-400/70 text-sm hidden sm:inline ml-2">Generate video clips from keyframes using AI</span>
-          </button>
-          
-          <div className="flex gap-3 items-center">
-            {isRendering ? (
+  const streamsBody = (
+    <ProductionStreamsPanel
+      productionStreams={productionStreams}
+      selectedLanguage={productionTarget.language}
+      onRenderAnimatic={handleRenderAnimatic}
+      onDeleteStream={handleDeleteStream}
+      onReRenderStream={handleReRenderStream}
+      onPreviewStream={handlePreviewStream}
+      onDownloadStream={handleDownloadStream}
+      isRendering={!!renderingStreamId}
+      renderingStreamId={renderingStreamId}
+      renderProgress={streamRenderProgress}
+      hasSegmentChanges={false}
+      videoGenerationAvailable={videoGenerationAvailable}
+      disabled={isRendering}
+    />
+  )
+
+  const mixerBody =
+    segments.length > 0 && sceneId ? (
+      <SceneProductionMixer
+        sceneId={sceneId}
+        sceneNumber={sceneNumber}
+        projectId={projectId}
+        segments={segments}
+        productionData={productionData}
+        audioAssets={{
+          narrationAudioUrl: scene?.narrationAudioUrl,
+          narrationAudio: scene?.narrationAudio,
+          narration: scene?.narration,
+          dialogueAudio: scene?.dialogueAudio,
+          dialogue: scene?.dialogue,
+          musicAudio: scene?.musicAudio,
+          music: scene?.music,
+          sfx: scene?.sfx,
+        }}
+        textOverlays={textOverlays}
+        onTextOverlaysChange={handleTextOverlaysChange}
+        sceneIndex={sceneIndex}
+        onGenerateSceneAudio={onGenerateSceneAudio}
+        onGenerateAllAudio={onGenerateAllAudio}
+        isGeneratingAudio={isGeneratingAudio}
+        productionTarget={productionTarget}
+        onProductionTargetChange={setProductionTarget}
+        videoGenerationAvailable={videoGenerationAvailable}
+        onRenderComplete={(downloadUrl, language, streamType = productionTarget.streamType, meta) => {
+          setRenderedSceneUrl(downloadUrl)
+          const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
+          const st = streamType === 'animatic' ? 'animatic' : 'video'
+          const updatedStreams = (() => {
+            const prev = productionStreams
+            const v = getNextProductionStreamVersion(prev, language, st)
+            const id = `stream-${st}-${language}-v${v}-${Date.now()}`
+            return [
+              ...prev,
+              {
+                id,
+                language,
+                languageLabel: languageInfo?.name || language,
+                status: 'complete' as const,
+                streamType: st,
+                streamVersion: v,
+                mp4Url: downloadUrl,
+                completedAt: new Date().toISOString(),
+                duration:
+                  typeof meta?.durationSeconds === 'number' &&
+                  Number.isFinite(meta.durationSeconds) &&
+                  meta.durationSeconds > 0
+                    ? meta.durationSeconds
+                    : undefined,
+              } satisfies ProductionStream,
+            ]
+          })()
+          setProductionStreams(updatedStreams)
+          if (onRenderedSceneUrlChange) {
+            onRenderedSceneUrlChange(downloadUrl)
+          }
+          if (onProductionDataChange) {
+            const baseData = productionData || { isSegmented: false, segments: [] }
+            onProductionDataChange({
+              ...baseData,
+              renderedSceneUrl: downloadUrl,
+              renderedAt: new Date().toISOString(),
+              productionStreams: updatedStreams,
+            } as SceneProductionData)
+          }
+        }}
+        onProductionStreamsChange={(streams) => {
+          setProductionStreams(streams)
+        }}
+        isGeneratingSegments={isRendering}
+      />
+    ) : null
+
+  const generateControls = (
+    <div className="flex flex-wrap gap-2 justify-end">
+      {isRendering ? (
+        <>
+          <div className="flex items-center gap-2 text-sm text-slate-400">
+            {isRateLimitPaused ? (
               <>
-                <div className="flex items-center gap-2 text-sm text-slate-400">
-                  {isRateLimitPaused ? (
-                    <>
-                      <span className="text-amber-400 font-medium">⏸ Rate Limited</span>
-                      <span className="text-amber-300">Resuming in {rateLimitCountdown}s...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Rendering {completedCount + 1} of {queue.length}...</span>
-                    </>
-                  )}
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={cancelRendering}
-                  className="bg-slate-800 border-slate-700 text-slate-300"
-                >
-                  Cancel
-                </Button>
+                <span className="text-amber-400 font-medium">⏸ Rate Limited</span>
+                <span className="text-amber-300">Resuming in {rateLimitCountdown}s...</span>
               </>
             ) : (
               <>
-                {/* Generate button - renders selected unlocked segments */}
-                <Button 
-                  size="sm"
-                  onClick={handleRenderSelected}
-                  disabled={selectedUnlockedCount === 0}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                >
-                  <Play className="w-4 h-4 mr-2" />
-                  Generate ({selectedUnlockedCount})
-                </Button>
-                {statusCounts.rendered > 0 && (
-                  <Button 
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsScenePlayerOpen(true)}
-                    className="bg-emerald-600/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-600/30"
-                  >
-                    <Film className="w-4 h-4 mr-2" />
-                    Play Segments ({statusCounts.rendered})
-                  </Button>
-                )}
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>
+                  Rendering {completedCount + 1} of {queue.length}...
+                </span>
               </>
             )}
           </div>
-        </div>
-      </div>
-      
-      {/* Collapsible Content */}
-      {isExpanded && (
-      <>
-      {/* Progress Bar (visible during rendering) */}
-      {isRendering && (
-        <div className="space-y-2">
-          <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-            <div 
-              className={`h-full transition-all duration-300 ${isRateLimitPaused ? 'bg-amber-500 animate-pulse' : 'bg-indigo-500'}`}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-slate-500">
-            <span>{completedCount} completed</span>
-            {isRateLimitPaused && <span className="text-amber-400">⏸ Paused ({rateLimitCountdown}s)</span>}
-            {failedCount > 0 && <span className="text-red-400">{failedCount} failed</span>}
-            <span>{progress}%</span>
-          </div>
-        </div>
+          <Button variant="outline" size="sm" onClick={cancelRendering} className="bg-slate-800 border-slate-700 text-slate-300">
+            Cancel
+          </Button>
+        </>
+      ) : (
+        <>
+          <Button
+            size="sm"
+            onClick={handleRenderSelected}
+            disabled={selectedUnlockedCount === 0}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
+            <Play className="w-4 h-4 mr-2" />
+            Generate ({selectedUnlockedCount})
+          </Button>
+          {statusCounts.rendered > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsScenePlayerOpen(true)}
+              className="bg-emerald-600/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-600/30"
+            >
+              <Film className="w-4 h-4 mr-2" />
+              Play Segments ({statusCounts.rendered})
+            </Button>
+          )}
+        </>
       )}
+    </div>
+  )
 
-      {/* Segment Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {queue.map((item) => {
-          const segment = segments.find(s => s.segmentId === item.segmentId)
-          if (!segment) return null
-          
-          // Fallback to defaults if config values are not recognized
-          const methodConfig = methodBadgeConfig[item.config.mode] || methodBadgeConfig['I2V']
-          const statusConfig = statusBadgeConfig[item.config.approvalStatus] || statusBadgeConfig['auto-ready']
-          const StatusIcon = statusConfig.icon
-          const isCurrentlyRendering = currentSegmentId === item.segmentId
-          
-          return (
-            <div 
-              key={item.segmentId}
-              className={`
+  const videoSection = (
+    <div id={`director-console-${sceneId}`} className="scroll-mt-4 space-y-4">
+      <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 p-2 sm:p-3 border-b border-gray-700/40">
+          <ProductionSectionHeader
+            icon={Film}
+            title="Video Generation"
+            badge={`${statusCounts.rendered}/${statusCounts.total}`}
+            collapsible
+            expanded={isExpanded}
+            onToggle={() => setIsExpanded(!isExpanded)}
+            rightHint="Generate video clips from keyframes using AI"
+            className="flex-1 min-w-0 border-0 p-0 hover:bg-transparent"
+          />
+          <div className="flex-shrink-0 px-1 sm:px-0">{generateControls}</div>
+        </div>
+        {isExpanded && (
+          <div className="px-4 pb-4 pt-3 space-y-4 border-t border-gray-700/50">
+            {isRendering && (
+              <div className="space-y-2">
+                <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${isRateLimitPaused ? 'bg-amber-500 animate-pulse' : 'bg-indigo-500'}`}
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>{completedCount} completed</span>
+                  {isRateLimitPaused && <span className="text-amber-400">⏸ Paused ({rateLimitCountdown}s)</span>}
+                  {failedCount > 0 && <span className="text-red-400">{failedCount} failed</span>}
+                  <span>{progress}%</span>
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {queue.map((item) => {
+                const segment = segments.find(s => s.segmentId === item.segmentId)
+                if (!segment) return null
+                const methodConfig = methodBadgeConfig[item.config.mode] || methodBadgeConfig['I2V']
+                const statusConfig = statusBadgeConfig[item.config.approvalStatus] || statusBadgeConfig['auto-ready']
+                const StatusIcon = statusConfig.icon
+                const isCurrentlyRendering = currentSegmentId === item.segmentId
+                return (
+                  <div
+                    key={item.segmentId}
+                    className={`
                 border rounded-lg p-4 transition-all 
                 hover:border-indigo-500/70 hover:bg-slate-800/50
-                ${item.config.approvalStatus === 'user-approved' 
-                  ? 'bg-indigo-900/10 border-indigo-500/30' 
-                  : 'bg-slate-800/30 border-slate-700/50'
-                }
+                ${item.config.approvalStatus === 'user-approved' ? 'bg-indigo-900/10 border-indigo-500/30' : 'bg-slate-800/30 border-slate-700/50'}
                 ${selectedSegmentIds.has(item.segmentId) ? 'ring-4 ring-amber-500 bg-amber-500/10' : ''}
                 ${isCurrentlyRendering ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900' : ''}
               `}
-            >
-              <div className="flex gap-4">
-                {/* Selection Checkbox */}
-                <div className="flex-shrink-0 flex items-start pt-1">
-                  <Checkbox
-                    checked={selectedSegmentIds.has(item.segmentId)}
-                    onCheckedChange={(checked) => toggleSegmentSelection(item.segmentId, checked === true)}
-                    className="border-slate-500"
-                  />
-                </div>
-                
-                {/* Thumbnail Preview */}
-                <div className="w-32 aspect-video bg-black rounded overflow-hidden relative flex-shrink-0">
-                  {item.thumbnailUrl ? (
-                    <img 
-                      src={item.thumbnailUrl} 
-                      alt={`Segment ${item.sequenceIndex + 1}`}
-                      className="w-full h-full object-cover" 
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-slate-800">
-                      <Film className="w-8 h-8 text-slate-600" />
-                    </div>
-                  )}
-                  
-                  {/* Method Badge */}
-                  <Badge 
-                    variant="outline"
-                    className={`absolute bottom-1 right-1 text-[10px] px-1.5 py-0 ${methodConfig.className}`}
                   >
-                    {methodConfig.label}
-                  </Badge>
-                  
-                  {/* Rendering Overlay */}
-                  {isCurrentlyRendering && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
-                    </div>
-                  )}
-                  
-                  {/* Complete Overlay with Play Button */}
-                  {item.status === 'complete' && !isCurrentlyRendering && (
-                    <>
-                      <div className="absolute top-1 left-1 flex items-center gap-1">
-                        <Badge className="bg-emerald-500/80 text-white text-[10px] px-1.5 py-0">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Done
-                        </Badge>
-                        {segment.isUserUpload && (
-                          <Badge className="bg-sky-500/80 text-white text-[10px] px-1.5 py-0">
-                            <CloudUpload className="w-3 h-3 mr-1" />
-                            Uploaded
-                          </Badge>
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0 flex items-start pt-1">
+                        <Checkbox
+                          checked={selectedSegmentIds.has(item.segmentId)}
+                          onCheckedChange={(checked) => toggleSegmentSelection(item.segmentId, checked === true)}
+                          className="border-slate-500"
+                        />
+                      </div>
+                      <div className="w-32 aspect-video bg-black rounded overflow-hidden relative flex-shrink-0">
+                        {item.thumbnailUrl ? (
+                          <img src={item.thumbnailUrl} alt={`Segment ${item.sequenceIndex + 1}`} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-slate-800">
+                            <Film className="w-8 h-8 text-slate-600" />
+                          </div>
                         )}
-                        {item.config.approvalStatus === 'locked' && (
-                          <Badge className="bg-amber-500/80 text-white text-[10px] px-1.5 py-0">
-                            <ShieldCheck className="w-3 h-3" />
-                          </Badge>
+                        <Badge variant="outline" className={`absolute bottom-1 right-1 text-[10px] px-1.5 py-0 ${methodConfig.className}`}>
+                          {methodConfig.label}
+                        </Badge>
+                        {isCurrentlyRendering && (
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                            <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+                          </div>
+                        )}
+                        {item.status === 'complete' && !isCurrentlyRendering && (
+                          <>
+                            <div className="absolute top-1 left-1 flex items-center gap-1">
+                              <Badge className="bg-emerald-500/80 text-white text-[10px] px-1.5 py-0">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Done
+                              </Badge>
+                              {segment.isUserUpload && (
+                                <Badge className="bg-sky-500/80 text-white text-[10px] px-1.5 py-0">
+                                  <CloudUpload className="w-3 h-3 mr-1" />
+                                  Uploaded
+                                </Badge>
+                              )}
+                              {item.config.approvalStatus === 'locked' && (
+                                <Badge className="bg-amber-500/80 text-white text-[10px] px-1.5 py-0">
+                                  <ShieldCheck className="w-3 h-3" />
+                                </Badge>
+                              )}
+                            </div>
+                            <button
+                              className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors group"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                const segmentIndex = segments.findIndex(s => s.segmentId === item.segmentId)
+                                if (segmentIndex >= 0) {
+                                  setPlayFromSegmentIndex(segmentIndex)
+                                  setIsScenePlayerOpen(true)
+                                }
+                              }}
+                              title="Play segment video"
+                            >
+                              <PlayCircle className="w-10 h-10 text-white/0 group-hover:text-white/90 transition-colors drop-shadow-lg" />
+                            </button>
+                          </>
                         )}
                       </div>
-                      {/* Play Button Overlay */}
-                      <button
-                        className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors group"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          // Open SceneVideoPlayer starting at this segment
-                          const segmentIndex = segments.findIndex(s => s.segmentId === item.segmentId)
-                          if (segmentIndex >= 0) {
-                            setPlayFromSegmentIndex(segmentIndex)
-                            setIsScenePlayerOpen(true)
-                          }
-                        }}
-                        title="Play segment video"
-                      >
-                        <PlayCircle className="w-10 h-10 text-white/0 group-hover:text-white/90 transition-colors drop-shadow-lg" />
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                {/* Text Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start gap-2">
-                    <span className="font-semibold text-slate-200">
-                      Segment {item.sequenceIndex + 1}
-                    </span>
-                    <Badge 
-                      variant="outline" 
-                      className={`flex items-center gap-1 text-[10px] ${statusConfig.className}`}
-                    >
-                      <StatusIcon className={`w-3 h-3 ${item.config.approvalStatus === 'rendering' ? 'animate-spin' : ''}`} />
-                      {statusConfig.label}
-                    </Badge>
-                  </div>
-                  
-                  <p className="text-xs text-slate-400 mt-2 line-clamp-2">
-                    {item.config.prompt || 'No prompt configured'}
-                  </p>
-                  
-                  <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
-                    {segment.isUserUpload ? (
-                      // Uploaded video: show actual duration and upload indicator
-                      <>
-                        <span className="text-sky-400 font-medium">
-                          {segment.actualVideoDuration 
-                            ? `${Math.round(segment.actualVideoDuration)}s` 
-                            : `${item.config.duration}s`
-                          }
-                        </span>
-                        <span>•</span>
-                        <span>{item.config.aspectRatio}</span>
-                        <span>•</span>
-                        <span className="text-sky-400">User Upload</span>
-                      </>
-                    ) : (
-                      // AI-generated video: show configured duration and confidence
-                      <>
-                        <span>{item.config.duration}s</span>
-                        <span>•</span>
-                        <span>{item.config.aspectRatio}</span>
-                        <span>•</span>
-                        <span>{item.config.confidence}% confidence</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Action Icons */}
-                <div className="flex-shrink-0 flex items-center gap-1">
-                  {/* Upload Video Button - Disabled when protected */}
-                  {onSegmentUpload && (
-                    <>
-                      <input
-                        type="file"
-                        accept="video/*"
-                        className="hidden"
-                        id={`upload-video-${item.segmentId}`}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) {
-                            onSegmentUpload(item.segmentId, file)
-                          }
-                          e.target.value = '' // Reset for re-upload
-                        }}
-                        disabled={item.config.approvalStatus === 'locked'}
-                      />
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className={item.config.approvalStatus === 'locked' 
-                              ? "text-slate-600 cursor-not-allowed opacity-50" 
-                              : "text-slate-500 hover:text-slate-300"
-                            }
-                            disabled={item.config.approvalStatus === 'locked'}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (item.config.approvalStatus === 'locked') {
-                                import('sonner').then(({ toast }) => {
-                                  toast.error('Segment is protected', {
-                                    description: 'Unprotect this segment first to upload a new video',
-                                  })
-                                })
-                                return
-                              }
-                              document.getElementById(`upload-video-${item.segmentId}`)?.click()
-                            }}
-                          >
-                            <Upload className="w-4 h-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {item.config.approvalStatus === 'locked' 
-                            ? 'Unprotect segment to upload' 
-                            : 'Upload Video'
-                          }
-                        </TooltipContent>
-                      </Tooltip>
-                    </>
-                  )}
-                  
-                  {/* Copy Prompt Button - For external generation */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="text-slate-500 hover:text-amber-400"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const prompt = item.config.prompt || segment.userEditedPrompt || segment.generatedPrompt || ''
-                          if (prompt) {
-                            navigator.clipboard.writeText(prompt)
-                            import('sonner').then(({ toast }) => {
-                              toast.success('Prompt copied to clipboard!', {
-                                description: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
-                              })
-                            })
-                          } else {
-                            import('sonner').then(({ toast }) => {
-                              toast.error('No prompt available for this segment')
-                            })
-                          }
-                        }}
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Copy Prompt for External Generation</TooltipContent>
-                  </Tooltip>
-                  
-                  {/* Take Button - Opens DirectorDialog for generation/regeneration */}
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="text-xs bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 px-2"
-                    onClick={() => setSelectedSegment(segment)}
-                  >
-                    <Settings2 className="w-3.5 h-3.5 mr-1" />
-                    Take ({segment.takes?.length || 1})
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Protect Action for completed segments */}
-              {item.status === 'complete' && (
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/50">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        variant={item.config.approvalStatus === 'locked' ? 'default' : 'outline'}
-                        size="sm"
-                        className={item.config.approvalStatus === 'locked' 
-                          ? 'flex-1 bg-amber-600 hover:bg-amber-700 text-white' 
-                          : 'flex-1 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
-                        }
-                        onClick={() => handleToggleLock(item.segmentId)}
-                      >
-                        {item.config.approvalStatus === 'locked' ? (
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start gap-2">
+                          <span className="font-semibold text-slate-200">Segment {item.sequenceIndex + 1}</span>
+                          <Badge variant="outline" className={`flex items-center gap-1 text-[10px] ${statusConfig.className}`}>
+                            <StatusIcon className={`w-3 h-3 ${item.config.approvalStatus === 'rendering' ? 'animate-spin' : ''}`} />
+                            {statusConfig.label}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-2 line-clamp-2">{item.config.prompt || 'No prompt configured'}</p>
+                        <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
+                          {segment.isUserUpload ? (
+                            <>
+                              <span className="text-sky-400 font-medium">
+                                {segment.actualVideoDuration ? `${Math.round(segment.actualVideoDuration)}s` : `${item.config.duration}s`}
+                              </span>
+                              <span>•</span>
+                              <span>{item.config.aspectRatio}</span>
+                              <span>•</span>
+                              <span className="text-sky-400">User Upload</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>{item.config.duration}s</span>
+                              <span>•</span>
+                              <span>{item.config.aspectRatio}</span>
+                              <span>•</span>
+                              <span>{item.config.confidence}% confidence</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0 flex items-center gap-1">
+                        {onSegmentUpload && (
                           <>
-                            <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
-                            Protected
-                          </>
-                        ) : (
-                          <>
-                            <Shield className="w-3.5 h-3.5 mr-1.5" />
-                            Protect
+                            <input
+                              type="file"
+                              accept="video/*"
+                              className="hidden"
+                              id={`upload-video-${item.segmentId}`}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  onSegmentUpload(item.segmentId, file)
+                                }
+                                e.target.value = ''
+                              }}
+                              disabled={item.config.approvalStatus === 'locked'}
+                            />
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={
+                                    item.config.approvalStatus === 'locked'
+                                      ? 'text-slate-600 cursor-not-allowed opacity-50'
+                                      : 'text-slate-500 hover:text-slate-300'
+                                  }
+                                  disabled={item.config.approvalStatus === 'locked'}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (item.config.approvalStatus === 'locked') {
+                                      import('sonner').then(({ toast }) => {
+                                        toast.error('Segment is protected', {
+                                          description: 'Unprotect this segment first to upload a new video',
+                                        })
+                                      })
+                                      return
+                                    }
+                                    document.getElementById(`upload-video-${item.segmentId}`)?.click()
+                                  }}
+                                >
+                                  <Upload className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {item.config.approvalStatus === 'locked' ? 'Unprotect segment to upload' : 'Upload Video'}
+                              </TooltipContent>
+                            </Tooltip>
                           </>
                         )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {item.config.approvalStatus === 'locked' 
-                        ? 'Unprotect to allow replacement' 
-                        : 'Protect this segment from batch operations'}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              )}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-slate-500 hover:text-amber-400"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                const prompt = item.config.prompt || segment.userEditedPrompt || segment.generatedPrompt || ''
+                                if (prompt) {
+                                  navigator.clipboard.writeText(prompt)
+                                  import('sonner').then(({ toast }) => {
+                                    toast.success('Prompt copied to clipboard!', {
+                                      description: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
+                                    })
+                                  })
+                                } else {
+                                  import('sonner').then(({ toast }) => {
+                                    toast.error('No prompt available for this segment')
+                                  })
+                                }
+                              }}
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Copy Prompt for External Generation</TooltipContent>
+                        </Tooltip>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700 px-2"
+                          onClick={() => setSelectedSegment(segment)}
+                        >
+                          <Settings2 className="w-3.5 h-3.5 mr-1" />
+                          Take ({segment.takes?.length || 1})
+                        </Button>
+                      </div>
+                    </div>
+                    {item.status === 'complete' && (
+                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700/50">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant={item.config.approvalStatus === 'locked' ? 'default' : 'outline'}
+                              size="sm"
+                              className={
+                                item.config.approvalStatus === 'locked'
+                                  ? 'flex-1 bg-amber-600 hover:bg-amber-700 text-white'
+                                  : 'flex-1 bg-slate-800 border-slate-600 text-slate-300 hover:bg-slate-700'
+                              }
+                              onClick={() => handleToggleLock(item.segmentId)}
+                            >
+                              {item.config.approvalStatus === 'locked' ? (
+                                <>
+                                  <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
+                                  Protected
+                                </>
+                              ) : (
+                                <>
+                                  <Shield className="w-3.5 h-3.5 mr-1.5" />
+                                  Protect
+                                </>
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {item.config.approvalStatus === 'locked'
+                              ? 'Unprotect to allow replacement'
+                              : 'Protect this segment from batch operations'}
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
-          )
-        })}
+          </div>
+        )}
       </div>
-      </>
-      )}
+    </div>
+  )
 
-      
-      {/* Scene Production Mixer - Unified render workflow (Collapsible) */}
+  const defaultWorkflowLayout = (
+    <div className="space-y-4">
+      {videoSection}
       {segments.length > 0 && sceneId && (
-        <div className="mt-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg overflow-hidden">
-          {/* Mixer Header - Collapsible */}
-          <button
-            onClick={() => setMixerCollapsed(!mixerCollapsed)}
-            className="w-full p-4 hover:bg-purple-500/5 transition-colors flex items-center gap-3"
-          >
-            {mixerCollapsed ? <ChevronRight className="w-4 h-4 text-purple-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-purple-400 flex-shrink-0" />}
-            <Clapperboard className="w-4 h-4 text-purple-400 flex-shrink-0" />
-            <span className="text-purple-300 font-medium">Scene Production Mixer</span>
-            <span className="text-purple-400/70 text-sm ml-auto">Render final scene with audio</span>
-          </button>
-          
-          {/* Collapsible Content */}
+        <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
+          <ProductionSectionHeader
+            icon={Clapperboard}
+            title="Production Mixer"
+            rightHint="Render final scene with audio"
+            collapsible
+            expanded={!mixerCollapsed}
+            onToggle={() => setMixerCollapsed((c) => !c)}
+          />
           <AnimatePresence>
             {!mixerCollapsed && (
               <motion.div
@@ -1122,113 +1174,40 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                className="border-t border-purple-500/20"
+                className="border-t border-gray-700/50"
               >
-        <SceneProductionMixer
-          sceneId={sceneId}
-          sceneNumber={sceneNumber}
-          projectId={projectId}
-          segments={segments}
-          productionData={productionData}
-          audioAssets={{
-            narrationAudioUrl: scene?.narrationAudioUrl,
-            narrationAudio: scene?.narrationAudio,
-            narration: scene?.narration,
-            dialogueAudio: scene?.dialogueAudio,
-            dialogue: scene?.dialogue,
-            musicAudio: scene?.musicAudio,
-            music: scene?.music,
-            sfx: scene?.sfx,
-          }}
-          textOverlays={textOverlays}
-          onTextOverlaysChange={handleTextOverlaysChange}
-          sceneIndex={sceneIndex}
-          onGenerateSceneAudio={onGenerateSceneAudio}
-          onGenerateAllAudio={onGenerateAllAudio}
-          isGeneratingAudio={isGeneratingAudio}
-          productionTarget={productionTarget}
-          onProductionTargetChange={setProductionTarget}
-          videoGenerationAvailable={videoGenerationAvailable}
-          onRenderComplete={(downloadUrl, language, streamType = productionTarget.streamType, meta) => {
-            // Update the rendered scene URL
-            setRenderedSceneUrl(downloadUrl)
-            
-            // Append a new versioned stream (do not replace prior exports)
-            const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
-            const st = streamType === 'animatic' ? 'animatic' : 'video'
-            const updatedStreams = (() => {
-              const prev = productionStreams
-              const v = getNextProductionStreamVersion(prev, language, st)
-              const id = `stream-${st}-${language}-v${v}-${Date.now()}`
-              return [
-                ...prev,
-                {
-                  id,
-                  language,
-                  languageLabel: languageInfo?.name || language,
-                  status: 'complete' as const,
-                  streamType: st,
-                  streamVersion: v,
-                  mp4Url: downloadUrl,
-                  completedAt: new Date().toISOString(),
-                  duration:
-                    typeof meta?.durationSeconds === 'number' &&
-                    Number.isFinite(meta.durationSeconds) &&
-                    meta.durationSeconds > 0
-                      ? meta.durationSeconds
-                      : undefined,
-                } satisfies ProductionStream,
-              ]
-            })()
-            
-            setProductionStreams(updatedStreams)
-            
-            // Persist to database - both URL and production streams
-            if (onRenderedSceneUrlChange) {
-              onRenderedSceneUrlChange(downloadUrl)
-            }
-            
-            // Persist production streams to database
-            // Always call with the new data, even if productionData was initially undefined
-            if (onProductionDataChange) {
-              const baseData = productionData || { isSegmented: false, segments: [] }
-              onProductionDataChange({
-                ...baseData,
-                renderedSceneUrl: downloadUrl,
-                renderedAt: new Date().toISOString(),
-                productionStreams: updatedStreams,
-              } as SceneProductionData)
-            }
-          }}
-          onProductionStreamsChange={(streams) => {
-            setProductionStreams(streams)
-          }}
-          isGeneratingSegments={isRendering}
-        />
+                {mixerBody}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       )}
-      
-      {/* Production Streams Panel - View & manage animatic/video renders */}
-      <div className="mt-4 p-4 bg-slate-800/50 rounded-lg border border-purple-500/30">
-        <ProductionStreamsPanel
-          productionStreams={productionStreams}
-          selectedLanguage={productionTarget.language}
-          onRenderAnimatic={handleRenderAnimatic}
-          onDeleteStream={handleDeleteStream}
-          onReRenderStream={handleReRenderStream}
-          onPreviewStream={handlePreviewStream}
-          onDownloadStream={handleDownloadStream}
-          isRendering={!!renderingStreamId}
-          renderingStreamId={renderingStreamId}
-          renderProgress={streamRenderProgress}
-          hasSegmentChanges={false}
-          videoGenerationAvailable={videoGenerationAvailable}
-          disabled={isRendering}
+      <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
+        <ProductionSectionHeader
+          icon={ListVideo}
+          title="Production Streams"
+          badge={productionStreams.length}
+          rightHint="Animatic and stitched video exports"
         />
+        <div className="border-t border-gray-700/50 px-3 pb-3 pt-2">{streamsBody}</div>
       </div>
+    </div>
+  )
+
+  return (
+    <TooltipProvider>
+      {children ? (
+        children({
+          videoSection,
+          mixerBody,
+          streamsBody,
+          streamCount: productionStreams.length,
+          mixerCollapsed,
+          setMixerCollapsed,
+        })
+      ) : (
+        defaultWorkflowLayout
+      )}
 
       {/* DirectorDialog Modal */}
       {selectedSegment && (
@@ -1436,9 +1415,16 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           tone: scene?.tone,
         }}
       />
-    </div>
     </TooltipProvider>
   )
+}
+
+export function DirectorWorkflow(props: DirectorWorkflowProps) {
+  return <DirectorConsoleRoot {...props} />
+}
+
+export function DirectorConsole(props: DirectorConsoleProps) {
+  return <DirectorConsoleRoot {...props} />
 }
 
 export default DirectorConsole

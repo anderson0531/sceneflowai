@@ -14,12 +14,13 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import { SceneProductionDirector } from './scene-production/SceneProductionDirector'
 import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
+import { ProductionSectionHeader } from './scene-production/ProductionSectionHeader'
 import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
 import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
 
@@ -29,8 +30,8 @@ const SegmentBuilder = dynamic(
   () => import('./scene-production/SegmentBuilder').then(mod => ({ default: mod.SegmentBuilder })),
   { ssr: false, loading: () => <div className="p-4 text-center text-zinc-500">Loading Segment Builder...</div> }
 )
-const DirectorConsole = dynamic(
-  () => import('./scene-production/DirectorConsole').then(mod => ({ default: mod.DirectorConsole })),
+const DirectorWorkflow = dynamic(
+  () => import('./scene-production/DirectorConsole').then(mod => ({ default: mod.DirectorWorkflow })),
   { ssr: false, loading: () => <div className="p-4 text-center text-zinc-500">Loading Director Console...</div> }
 )
 import { AUDIO_ALIGNMENT_BUFFERS, getLanguagePlaybackOffset, calculateSuggestedOffset } from './scene-production/audioTrackBuilder'
@@ -6638,24 +6639,16 @@ function SceneCard({
                     {/* ==================== STORYBOARD BUILDER CONTAINER ==================== */}
                     {/* Groups: Keyframe Generation + Storyboard Editor - simplified to 2-step workflow */}
                     {sceneProductionData?.isSegmented && sceneProductionData.segments?.length > 0 && (
-                      <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg overflow-hidden">
-                        {/* Storyboard Builder Header */}
-                        <button 
-                          onClick={() => setStoryboardBuilderCollapsed(!storyboardBuilderCollapsed)}
-                          className="w-full p-4 hover:bg-cyan-500/5 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            {storyboardBuilderCollapsed ? <ChevronRight className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />}
-                            <div className="flex items-center justify-center w-5 h-5 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-bold flex-shrink-0">1</div>
-                            <Layers className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                            <div className="text-left">
-                              <p className="text-cyan-300 font-medium">Keyframe Builder</p>
-                            </div>
-                            <span className="text-cyan-400/70 text-sm ml-auto hidden sm:inline">Build keyframes and preview your Animatic</span>
-                          </div>
-                        </button>
-                        
-                        {/* Collapsible Content - contained within the card */}
+                      <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
+                        <ProductionSectionHeader
+                          icon={Layers}
+                          title="KeyFrame Production"
+                          badge={sceneProductionData.segments?.length ?? 0}
+                          rightHint="Build keyframes and preview your animatic"
+                          collapsible
+                          expanded={!storyboardBuilderCollapsed}
+                          onToggle={() => setStoryboardBuilderCollapsed(!storyboardBuilderCollapsed)}
+                        />
                         <AnimatePresence>
                           {!storyboardBuilderCollapsed && (
                             <motion.div
@@ -6663,7 +6656,7 @@ function SceneCard({
                               animate={{ opacity: 1, height: 'auto' }}
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.2 }}
-                              className="px-4 pb-4 space-y-4 border-t border-cyan-500/20"
+                              className="px-4 pb-4 space-y-4 border-t border-gray-700/50"
                             >
                         
                         {/* Keyframe Generation */}
@@ -6790,31 +6783,12 @@ function SceneCard({
                         />
                     
                     {sceneProductionData?.segments && sceneProductionData.segments.length > 0 && (
-                      <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-                          <div className="flex items-start gap-3 min-w-0">
-                            <Clapperboard className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-cyan-300 font-medium text-sm">Scene production mixer</p>
-                              <p className="text-cyan-400/80 text-xs mt-1 leading-snug">
-                                Edit timing, audio mix, overlays, and render animatic or video in one place—open Video Production below.
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const anchorId = `director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`
-                              setVideoProductionCollapsed(false)
-                              requestAnimationFrame(() => {
-                                document.getElementById(anchorId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                              })
-                            }}
-                            className="shrink-0 px-3 py-2 rounded-lg text-xs font-medium bg-cyan-500/20 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/30 transition-colors"
-                          >
-                            Open Scene Production Mixer
-                          </button>
-                        </div>
+                      <div className="p-3 bg-gray-800/40 border border-gray-700/50 rounded-lg">
+                        <p className="text-xs text-gray-400 leading-snug">
+                          After keyframes are ready, use{' '}
+                          <span className="text-purple-300 font-medium">Video Production</span> for segment video, then{' '}
+                          <span className="text-purple-300 font-medium">Production Mixer</span> to composite audio and render.
+                        </p>
                       </div>
                     )}
                             </motion.div>
@@ -6823,71 +6797,104 @@ function SceneCard({
                       </div>
                     )}
                     
-                    {/* ==================== VIDEO PRODUCTION CONTAINER ==================== */}
-                    {/* Groups: Video Generation (DirectorConsole) + Video Editor */}
-                    {sceneProductionData?.segments && sceneProductionData.segments.length > 0 && (
-                      <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-lg overflow-hidden">
-                        {/* Video Production Header */}
-                        <button 
-                          onClick={() => setVideoProductionCollapsed(!videoProductionCollapsed)}
-                          className="w-full p-4 hover:bg-indigo-500/5 transition-colors"
+                    {/* ==================== VIDEO + MIXER + STREAMS (DirectorWorkflow) ==================== */}
+                    {sceneProductionData?.segments && sceneProductionData.segments.length > 0 && (() => {
+                      const workflowSceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+                      return (
+                        <DirectorWorkflow
+                          sceneId={workflowSceneId}
+                          sceneNumber={sceneNumber}
+                          projectId={projectId ?? ''}
+                          productionData={sceneProductionData ?? null}
+                          sceneImageUrl={scene.imageUrl}
+                          scene={{
+                            ...scene,
+                            filmTitle: projectTitle || script?.title,
+                            logline: projectLogline || script?.logline,
+                            genre: script?.genre,
+                            tone: script?.tone,
+                            visualStyle: visualStyle,
+                            sceneHeading: scene.sceneHeading,
+                          }}
+                          onGenerate={onSegmentGenerate || (async () => {})}
+                          onSegmentUpload={onSegmentUpload ? (segmentId, file) => onSegmentUpload(workflowSceneId, segmentId, file) : undefined}
+                          onLockSegment={onLockSegment ? (segmentId, locked) => onLockSegment(workflowSceneId, segmentId, locked) : undefined}
+                          onRenderedSceneUrlChange={onRenderedSceneUrlChange ? (url) => onRenderedSceneUrlChange(workflowSceneId, url) : undefined}
+                          onProductionDataChange={onProductionDataChange ? (data) => onProductionDataChange(workflowSceneId, data) : undefined}
+                          sceneIndex={sceneIdx}
+                          onGenerateSceneAudio={onGenerateSceneAudio ? (idx, audioType, characterName, dialogueIndex, language) => onGenerateSceneAudio(idx, audioType, characterName, dialogueIndex, language) : undefined}
+                          onGenerateAllAudio={onGenerateAllAudio}
+                          isGeneratingAudio={isGeneratingAudio}
                         >
-                          <div className="flex items-center gap-3">
-                            {videoProductionCollapsed ? <ChevronRight className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />}
-                            <div className="flex items-center justify-center w-5 h-5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold flex-shrink-0">2</div>
-                            <Film className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                            <div className="text-left">
-                              <p className="text-indigo-300 font-medium">Video Production</p>
+                          {(slots) => (
+                            <div className="space-y-4">
+                              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
+                                <ProductionSectionHeader
+                                  icon={Film}
+                                  title="Video Production"
+                                  rightHint="Generate AI videos and edit your final cut"
+                                  collapsible
+                                  expanded={!videoProductionCollapsed}
+                                  onToggle={() => setVideoProductionCollapsed(!videoProductionCollapsed)}
+                                />
+                                <AnimatePresence>
+                                  {!videoProductionCollapsed && (
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: 'auto' }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      transition={{ duration: 0.2 }}
+                                      className="border-t border-gray-700/50 px-4 pb-4 pt-2"
+                                    >
+                                      {slots.videoSection}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+
+                              {slots.mixerBody != null && (
+                                <div
+                                  id={`production-mixer-${workflowSceneId}`}
+                                  className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden scroll-mt-4"
+                                >
+                                  <ProductionSectionHeader
+                                    icon={Clapperboard}
+                                    title="Production Mixer"
+                                    rightHint="Render final scene with audio"
+                                    collapsible
+                                    expanded={!slots.mixerCollapsed}
+                                    onToggle={() => slots.setMixerCollapsed((c) => !c)}
+                                  />
+                                  <AnimatePresence>
+                                    {!slots.mixerCollapsed && (
+                                      <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="border-t border-gray-700/50"
+                                      >
+                                        {slots.mixerBody}
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+                              )}
+
+                              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
+                                <ProductionSectionHeader
+                                  icon={ListVideo}
+                                  title="Production Streams"
+                                  badge={slots.streamCount}
+                                  rightHint="Animatic and stitched video exports"
+                                />
+                                <div className="border-t border-gray-700/50 px-3 pb-3 pt-2">{slots.streamsBody}</div>
+                              </div>
                             </div>
-                            <span className="text-indigo-400/70 text-sm ml-auto hidden sm:inline">Generate AI videos and edit your final cut</span>
-                          </div>
-                        </button>
-                        
-                        {/* Collapsible Content - contained within the card */}
-                        <AnimatePresence>
-                          {!videoProductionCollapsed && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="px-4 pb-4 space-y-4 border-t border-indigo-500/20"
-                            >
-                        
-                        {/* Video Generation */}
-                        <div id={`director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`} className="scroll-mt-4 pt-4">
-                          <DirectorConsole
-                            sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
-                            sceneNumber={sceneNumber}
-                            projectId={projectId ?? ''}
-                            productionData={sceneProductionData ?? null}
-                            sceneImageUrl={scene.imageUrl}
-                            scene={{
-                              ...scene,
-                              // Pass film-level context for cinematic element generation
-                              filmTitle: projectTitle || script?.title,
-                              logline: projectLogline || script?.logline,
-                              genre: script?.genre,
-                              tone: script?.tone,
-                              visualStyle: visualStyle,
-                              sceneHeading: scene.sceneHeading,
-                            }}
-                            onGenerate={onSegmentGenerate || (async () => {})}
-                            onSegmentUpload={onSegmentUpload ? (segmentId, file) => onSegmentUpload(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, file) : undefined}
-                            onLockSegment={onLockSegment ? (segmentId, locked) => onLockSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId, locked) : undefined}
-                            onRenderedSceneUrlChange={onRenderedSceneUrlChange ? (url) => onRenderedSceneUrlChange(scene.sceneId || scene.id || `scene-${sceneIdx}`, url) : undefined}
-                            onProductionDataChange={onProductionDataChange ? (data) => onProductionDataChange(scene.sceneId || scene.id || `scene-${sceneIdx}`, data) : undefined}
-                            sceneIndex={sceneIdx}
-                            onGenerateSceneAudio={onGenerateSceneAudio ? (idx, audioType, characterName, dialogueIndex, language) => onGenerateSceneAudio(idx, audioType, characterName, dialogueIndex, language) : undefined}
-                            onGenerateAllAudio={onGenerateAllAudio}
-                            isGeneratingAudio={isGeneratingAudio}
-                          />
-                        </div>
-                        </motion.div>
                           )}
-                        </AnimatePresence>
-                      </div>
-                    )}
+                        </DirectorWorkflow>
+                      )
+                    })()}
                     
                     {/* Fallback: SceneProductionDirector when no segments yet */}
                     {!(sceneProductionData?.segments && sceneProductionData.segments.length > 0) && (

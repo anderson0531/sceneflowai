@@ -72,6 +72,7 @@ import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSele
 import { cn } from '@/lib/utils'
 import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
 import { MixerTimeline } from './MixerTimeline'
+import { ProductionSectionHeader } from './ProductionSectionHeader'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import type { AudioClipInfo } from './MixerTimeline'
 
@@ -3864,7 +3865,7 @@ export function SceneProductionMixer({
             <Film className="w-5 h-5 text-purple-400" />
           </div>
           <div>
-            <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Scene Production Mixer</h3>
+            <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Production Mixer</h3>
             <p className="text-xs text-gray-400">
               Mix segment video or animatic keyframes with narration, dialogue, music, and SFX — then export from the footer.
             </p>
@@ -4665,28 +4666,27 @@ export function SceneProductionMixer({
               {/* Language Streams Status — shows available languages and their audio status */}
               {availableLanguages.length > 1 && (
                 <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg">
-                  <div className="flex items-center justify-between p-3">
-                    <div className="flex items-center gap-2">
-                      <Languages className="w-4 h-4 text-purple-400" />
-                      <span className="text-sm font-medium text-white">Language Streams</span>
-                      <Badge variant="outline" className="text-[10px] text-purple-300 border-purple-500/30">
-                        {availableLanguages.length}
-                      </Badge>
-                    </div>
-                    {onGenerateAllAudio && (
-                      <button
-                        onClick={() => {
-                          const lang = productionTarget.language === 'en' ? 'es' : productionTarget.language
-                          onGenerateAllAudio(lang)
-                        }}
-                        disabled={isRendering || isGeneratingAudio || isGeneratingLanguageAudio}
-                        className="text-[11px] text-purple-400 hover:text-purple-300 disabled:opacity-50"
-                        title="Generate audio for all scenes in a new language"
-                      >
-                        + Add Language
-                      </button>
-                    )}
-                  </div>
+                  <ProductionSectionHeader
+                    icon={Languages}
+                    title="Language Streams"
+                    badge={availableLanguages.length}
+                    rightAction={
+                      onGenerateAllAudio ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const lang = productionTarget.language === 'en' ? 'es' : productionTarget.language
+                            onGenerateAllAudio(lang)
+                          }}
+                          disabled={isRendering || isGeneratingAudio || isGeneratingLanguageAudio}
+                          className="text-[11px] text-purple-400 hover:text-purple-300 disabled:opacity-50"
+                          title="Generate audio for all scenes in a new language"
+                        >
+                          + Add Language
+                        </button>
+                      ) : undefined
+                    }
+                  />
                   <div className="px-3 pb-3 flex flex-wrap gap-1.5">
                     {(availableLanguages.length <= 5 ? availableLanguages : availableLanguages.slice(0, 4)).map(langCode => {
                       const langInfo = SUPPORTED_LANGUAGES.find(l => l.code === langCode)
