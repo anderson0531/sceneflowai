@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
+import { safeParseJsonFromText } from '@/lib/safeJson'
 import { moderatePrompt, getUserModerationContext, createBlockedResponse } from '@/lib/moderation'
 import { SegmentDirection, detectNoTalentSegment } from '@/types/scene-direction'
 
@@ -1506,6 +1507,27 @@ Return ONLY valid JSON array. No markdown code blocks, no explanatory text.
 `
 }
 
+/** Smart quotes, trailing commas — fixes many Gemini JSON mode slips without full repair. */
+function repairModelJsonSurface(s: string): string {
+  return s
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/,\s*([}\]])/g, '$1')
+}
+
+/** Model sometimes returns `{ "segments": [...] }` instead of a bare array. */
+function coerceTopLevelJsonArray(v: unknown): any[] | null {
+  if (Array.isArray(v) && v.length > 0) return v
+  if (v && typeof v === 'object') {
+    const o = v as Record<string, unknown>
+    for (const k of ['segments', 'directions', 'items', 'data', 'results'] as const) {
+      const a = o[k]
+      if (Array.isArray(a) && a.length > 0) return a
+    }
+  }
+  return null
+}
+
 async function callGeminiForIntelligentSegmentation(prompt: string): Promise<IntelligentSegment[]> {
   console.log(`[Scene Segmentation] Calling Vertex AI Gemini...`)
   
@@ -1537,7 +1559,8 @@ function parseGeminiResponseText(text: string): IntelligentSegment[] {
   try {
     // Remove markdown code blocks if present
     let cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-    
+    cleanedText = repairModelJsonSurface(cleanedText)
+
     // Try to repair truncated JSON arrays
     if (!cleanedText.endsWith(']')) {
       console.warn('[Scene Segmentation] JSON appears truncated, attempting repair...')
@@ -1561,7 +1584,39 @@ function parseGeminiResponseText(text: string): IntelligentSegment[] {
   } catch (parseError) {
     console.error('[Scene Segmentation] JSON parse error:', parseError)
     console.error('[Scene Segmentation] Response text:', text.substring(0, 1500))
-    throw new Error('Failed to parse segments JSON')
+    const cleaned = repairModelJsonSurface(
+      text.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim()
+    )
+    let segmentsFromFallback: IntelligentSegment[] | null = null
+    try {
+      const v = safeParseJsonFromText(cleaned)
+      const arr = coerceTopLevelJsonArray(v)
+      if (arr && arr.length > 0) {
+        console.warn('[Scene Segmentation] Recovered via safeParseJsonFromText fallback')
+        segmentsFromFallback = arr as IntelligentSegment[]
+      }
+    } catch {
+      /* continue to slice parse */
+    }
+    if (segmentsFromFallback) {
+      segments = segmentsFromFallback
+    } else {
+      const slices = extractJsonArrayObjectSlices(cleaned)
+      const recovered: IntelligentSegment[] = []
+      for (const sl of slices) {
+        try {
+          recovered.push(JSON.parse(sl) as IntelligentSegment)
+        } catch {
+          /* skip */
+        }
+      }
+      if (recovered.length > 0) {
+        console.warn(`[Scene Segmentation] Recovered ${recovered.length} segment(s) via slice parse`)
+        segments = recovered
+      } else {
+        throw new Error('Failed to parse segments JSON')
+      }
+    }
   }
 
   // Validate segments
@@ -1762,6 +1817,12 @@ ${directorNotes}
 **CONSTRAINTS:**
 ${scopeConstraints}
 
+**VALID JSON — CRITICAL (parse failures break generation):**
+- Return one JSON array only, no markdown fences, no commentary.
+- Inside string values, escape every double quote as \\" . Do not put raw " characters inside a JSON string.
+- Do not use unescaped line breaks inside strings — use spaces instead.
+- If dialogue text contains quotes, escape them or shorten the quoted phrase.
+
 **OUTPUT FORMAT:**
 Return a JSON array. Each segment direction object MUST have ALL these fields:
 
@@ -1787,14 +1848,14 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
    - Specific physical action (not just emotion)
    - What their hands are doing
 
-2. **keyframe_start_description** (CRITICAL): A complete 50-80 word image generation prompt describing the OPENING FRAME:
+2. **keyframe_start_description** (CRITICAL): A complete 40-70 word image generation prompt describing the OPENING FRAME:
    - Shot type and lens
    - Subject with full appearance (face, hair, skin, build, wardrobe)
    - Exact pose, expression, hand position
    - Lighting setup with direction and quality
    - Background elements
 
-3. **keyframe_end_description** (CRITICAL): A complete 50-80 word image generation prompt describing the CLOSING FRAME:
+3. **keyframe_end_description** (CRITICAL): A complete 40-70 word image generation prompt describing the CLOSING FRAME:
    - What has CHANGED from the start frame
    - New pose, expression, position
    - Same lighting setup and technical specs
@@ -1832,35 +1893,131 @@ Return ONLY valid JSON array. No markdown code blocks, no explanatory text.
 async function callGeminiForSegmentDirections(prompt: string): Promise<any[]> {
   const result = await generateText(prompt, {
     temperature: 0.5, // Lower temperature for more consistent structure
-    maxOutputTokens: 8192, // Directions are much smaller than full prompts
+    // Long scenes: many segments × long keyframe strings — 8k often truncates mid-string (invalid JSON)
+    maxOutputTokens: 32768,
     responseMimeType: 'application/json',
     // Match route maxDuration (120s): long audio timelines need more than 55s for Vertex global endpoint
     timeoutMs: 110000,
     maxRetries: 1, // Avoid stacking multiple full timeouts inside the serverless window
     thinkingLevel: 'minimal',
   })
-  return parseDirectionsResponse(result.text)
+  return parseDirectionsResponse(result.text, result.finishReason)
 }
 
-function parseDirectionsResponse(text: string): any[] {
+/**
+ * Pull top-level `{...}` objects from a JSON array string, respecting strings and \\ escapes.
+ * Used when JSON.parse fails (unterminated string, bad quote in one object, etc.).
+ */
+function extractJsonArrayObjectSlices(raw: string): string[] {
+  const s = raw.trim()
+  const firstBracket = s.indexOf('[')
+  if (firstBracket === -1) return []
+
+  const slices: string[] = []
+  let i = firstBracket + 1
+  let depth = 0
+  let objStart = -1
+  let inString = false
+  let escape = false
+
+  for (; i < s.length; i++) {
+    const ch = s[i]
+    if (escape) {
+      escape = false
+      continue
+    }
+    if (inString) {
+      if (ch === '\\') {
+        escape = true
+        continue
+      }
+      if (ch === '"') inString = false
+      continue
+    }
+    if (ch === '"') {
+      inString = true
+      continue
+    }
+    if (ch === '{') {
+      if (depth === 0) objStart = i
+      depth++
+      continue
+    }
+    if (ch === '}') {
+      depth--
+      if (depth === 0 && objStart >= 0) {
+        slices.push(s.slice(objStart, i + 1))
+        objStart = -1
+      }
+    }
+  }
+  return slices
+}
+
+function parseDirectionsResponse(text: string, finishReason?: string): any[] {
   if (!text) throw new Error('No response for directions')
-  
-  let cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-  
-  // Repair truncated JSON
+
+  let cleanedText = repairModelJsonSurface(
+    text.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim()
+  )
+
+  const tryParseArray = (t: string): any[] | null => {
+    try {
+      const v = JSON.parse(t)
+      const arr = coerceTopLevelJsonArray(v)
+      return arr
+    } catch {
+      return null
+    }
+  }
+
+  let directions = tryParseArray(cleanedText)
+  if (directions) return directions
+
   if (!cleanedText.endsWith(']')) {
     const lastComplete = cleanedText.lastIndexOf('},')
     if (lastComplete > 0) {
-      cleanedText = cleanedText.substring(0, lastComplete + 1) + ']'
+      const repaired = cleanedText.substring(0, lastComplete + 1) + ']'
+      directions = tryParseArray(repaired)
+      if (directions) {
+        console.warn('[parseDirectionsResponse] Parsed after truncating to last complete object')
+        return directions
+      }
     }
   }
-  
-  const directions = JSON.parse(cleanedText)
-  if (!Array.isArray(directions) || directions.length === 0) {
-    throw new Error('Invalid directions format')
+
+  const slices = extractJsonArrayObjectSlices(cleanedText)
+  const recovered: any[] = []
+  for (const sl of slices) {
+    try {
+      recovered.push(JSON.parse(sl))
+    } catch {
+      // skip unparseable slice
+    }
   }
-  
-  return directions
+  if (recovered.length > 0) {
+    console.warn(
+      `[parseDirectionsResponse] Recovered ${recovered.length}/${slices.length} direction objects via slice parse` +
+        (finishReason === 'MAX_TOKENS' ? ' (MAX_TOKENS)' : '')
+    )
+    return recovered
+  }
+
+  try {
+    const v = safeParseJsonFromText(cleanedText)
+    const arr = coerceTopLevelJsonArray(v)
+    if (arr && arr.length > 0) {
+      console.warn('[parseDirectionsResponse] Recovered via safeParseJsonFromText')
+      return arr
+    }
+  } catch {
+    /* final error below */
+  }
+
+  console.error('[parseDirectionsResponse] Raw response prefix:', cleanedText.substring(0, 2000))
+  throw new Error(
+    'Failed to parse directions JSON (model output was not valid JSON). Try again, or shorten scene/keyframe detail.'
+  )
 }
 
 // ============================================================================

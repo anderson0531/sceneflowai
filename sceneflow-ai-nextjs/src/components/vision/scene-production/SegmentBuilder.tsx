@@ -657,12 +657,21 @@ export function SegmentBuilder({
         }),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to analyze scene')
+      const responseText = await response.text()
+      let data: any
+      try {
+        data = JSON.parse(responseText)
+      } catch {
+        throw new Error(
+          response.ok
+            ? 'Invalid JSON from segment API'
+            : `Segment API error (${response.status}): ${responseText.slice(0, 280)}`
+        )
       }
 
-      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data?.error || data?.message || 'Failed to analyze scene')
+      }
       
       // Transform API directions to ProposedDirections
       const directions: ProposedDirection[] = data.directions.map((dir: any, idx: number) => ({

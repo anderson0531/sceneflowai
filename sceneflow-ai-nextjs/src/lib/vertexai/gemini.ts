@@ -134,8 +134,8 @@ export async function generateText(
     generation_config: {
       temperature: options.temperature ?? 0.7,
       top_p: 0.95,
-      max_output_tokens: 8192,
-      response_mime_type: "application/json",
+      max_output_tokens: options.maxOutputTokens ?? 8192,
+      response_mime_type: options.responseMimeType ?? 'application/json',
       ...(isMinimal ? {} : { thinking_config })
     },
     safety_settings: [
