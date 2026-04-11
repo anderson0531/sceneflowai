@@ -83,8 +83,76 @@ function isNoTalentScene(
   return false
 }
 
+/** How segment clip lengths are chosen (Veo only allows 4 / 6 / 8 s per clip). */
+export interface SegmentDurationConfig {
+  mode: 'auto' | 'fixed'
+  /** When mode is fixed, user-chosen target in 4–8s */
+  fixedSeconds: number | null
+  /** Soft average from audio ÷ min segments — guides auto mode copy only */
+  hintSeconds: number
+}
+
+const VEO_VALID_DURATIONS = [4, 6, 8] as const
+
+/**
+ * Snap a duration to the nearest valid Veo 3.1 duration (4, 6, or 8 seconds).
+ * Always rounds down to stay within limits, with a floor of 4s.
+ */
+function snapToVeoDuration(duration: number): number {
+  if (duration <= 5) return 4
+  if (duration <= 7) return 6
+  return 8
+}
+
+function resolveSegmentDurationConfig(
+  body: GenerateSegmentsRequest,
+  effectiveAudioDuration: number,
+  minimumSegmentsRequired: number
+): SegmentDurationConfig {
+  const hintSeconds = snapToVeoDuration(
+    Math.round(effectiveAudioDuration / Math.max(minimumSegmentsRequired, 1))
+  )
+  if (body.segmentDurationAuto === true) {
+    return { mode: 'auto', fixedSeconds: null, hintSeconds }
+  }
+  if (typeof body.preferredDuration === 'number' && body.preferredDuration > 0) {
+    const fixed = snapToVeoDuration(Math.round(body.preferredDuration))
+    return { mode: 'fixed', fixedSeconds: fixed, hintSeconds: fixed }
+  }
+  return { mode: 'auto', fixedSeconds: null, hintSeconds }
+}
+
+function targetSegmentDurationForResponse(config: SegmentDurationConfig): number {
+  return config.mode === 'fixed' && config.fixedSeconds != null ? config.fixedSeconds : config.hintSeconds
+}
+
+/** Prompt copy: Veo only allows 4 / 6 / 8 s; auto lets the model pick per segment. */
+function segmentDurationPromptSection(config: SegmentDurationConfig): string {
+  if (config.mode === 'auto') {
+    return `
+**DURATION (AUTO — PER SEGMENT):** Veo 3.1 accepts **only 4, 6, or 8 seconds** per generated clip (no other durations). For **each** segment, set \`estimated_duration\` to **exactly 4, 6, or 8** based on dialogue timing, breath pauses, and action cut points — **different segments may use different values**. A soft planning average from total audio ÷ minimum clip count is ~${config.hintSeconds}s; use that as a guide, not a hard target. **Never exceed 8s** for any segment. **Minimum 4s** per segment when possible.
+**WHEN TO SPLIT:** Split or shorten a segment when the audio and action assigned to it would need **more than 8s** to play naturally; combine adjacent lines in the **same** visual setup when they fit within **one** 4/6/8s clip.
+`
+  }
+  const t = config.fixedSeconds ?? 6
+  return `
+**DURATION (FIXED TARGET):** Prefer **${t}s** per segment (\`estimated_duration\` must still be **exactly 4, 6, or 8** — use **${t}s** as the default choice). **Never exceed 8s.** Combine lines in the same setup when their total fits; split when combined audio would require **more than 8s**.
+`
+}
+
+/** Strengthen seamless stitch when dialogue/performance crosses a segment boundary. */
+const SEAMLESS_CONTINUATION_PROMPT = `
+**SEAMLESS CONTINUATION (MANDATORY):** When the **same** dialogue line, beat, or continuous performance spans **segment N and segment N+1** (or you split for the 8s cap), segment **N+1** MUST begin from the **exact** visual state at the end of segment **N**:
+- \`reference_strategy.start_frame_description\` (Phase 2 / legacy) MUST match segment N's \`end_frame_description\` (same pose, expression, wardrobe, props, lighting, framing) — the **last frame of clip N is the first frame of clip N+1**.
+- In Phase 1 directions, \`keyframe_start_description\` for segment N+1 MUST match segment N's \`keyframe_end_description\` for the same continuity.
+Do **not** reset the character to a new neutral pose between parts of the same line unless the script calls for a deliberate cut.
+`
+
 interface GenerateSegmentsRequest {
-  preferredDuration: number
+  /** Target seconds when not using auto (typically 4–8). Omit or ≤0 with segmentDurationAuto for auto. */
+  preferredDuration?: number
+  /** When true, AI picks 4/6/8s per segment from dialogue and action cuts (default in Segment Builder). */
+  segmentDurationAuto?: boolean
   sceneId?: string
   projectId?: string
   focusMode?: string
@@ -145,7 +213,6 @@ export async function POST(
     const { sceneId } = await params
     const body: GenerateSegmentsRequest = await req.json()
     const { 
-      preferredDuration, 
       projectId, 
       focusMode, 
       customInstructions,
@@ -172,13 +239,6 @@ export async function POST(
     if (!sceneId || !projectId) {
       return NextResponse.json(
         { error: 'Missing required fields: sceneId and projectId' },
-        { status: 400 }
-      )
-    }
-
-    if (!preferredDuration || preferredDuration <= 0) {
-      return NextResponse.json(
-        { error: 'preferredDuration must be a positive number' },
         { status: 400 }
       )
     }
@@ -292,8 +352,12 @@ export async function POST(
     const MAX_SEGMENT_SECONDS = 8
     const effectiveAudioDuration = totalAudioDurationSeconds || sceneData.estimatedTotalDuration
     const minimumSegmentsRequired = Math.ceil(effectiveAudioDuration / MAX_SEGMENT_SECONDS)
+    const durationConfig = resolveSegmentDurationConfig(body, effectiveAudioDuration, minimumSegmentsRequired)
+    const targetSegmentDurationResponse = targetSegmentDurationForResponse(durationConfig)
     
-    console.log(`[Scene Segmentation] Audio duration: ${effectiveAudioDuration}s, min segments required: ${minimumSegmentsRequired}, phase: ${phase}`)
+    console.log(
+      `[Scene Segmentation] Audio duration: ${effectiveAudioDuration}s, min segments: ${minimumSegmentsRequired}, phase: ${phase}, segmentDuration: ${durationConfig.mode} (hint ${durationConfig.hintSeconds}s)`
+    )
     
     // ============================================================================
     // PHASE 1: DIRECTIONS ONLY
@@ -303,7 +367,7 @@ export async function POST(
       console.log(`[Scene Segmentation] Phase 1: Generating directions only for user review`)
       
       // Generate directions-only prompt (faster, smaller output)
-      const directionsPrompt = generateDirectionsOnlyPrompt(sceneData, preferredDuration, minimumSegmentsRequired, {
+      const directionsPrompt = generateDirectionsOnlyPrompt(sceneData, durationConfig, minimumSegmentsRequired, {
         focusMode,
         customInstructions,
         totalDurationTarget,
@@ -360,7 +424,8 @@ export async function POST(
         success: true,
         phase: 'directions',
         directions: segmentDirections,
-        targetSegmentDuration: preferredDuration,
+        targetSegmentDuration: targetSegmentDurationResponse,
+        segmentDurationAuto: durationConfig.mode === 'auto',
         sceneData: {
           heading: sceneData.heading,
           dialogueCount: sceneData.dialogue.length,
@@ -379,7 +444,7 @@ export async function POST(
       console.log(`[Scene Segmentation] Phase 2: Generating prompts from ${approvedDirections.length} approved directions`)
       
       // Generate prompts based on approved directions
-      const promptsFromDirections = generatePromptsFromDirectionsPrompt(sceneData, approvedDirections, preferredDuration)
+      const promptsFromDirections = generatePromptsFromDirectionsPrompt(sceneData, approvedDirections, durationConfig)
       
       // Pre-screen content
       const moderationContext = await getUserModerationContext('anonymous', projectId)
@@ -410,7 +475,8 @@ export async function POST(
         success: true,
         phase: 'prompts',
         segments: transformedSegments,
-        targetSegmentDuration: preferredDuration,
+        targetSegmentDuration: targetSegmentDurationResponse,
+        segmentDurationAuto: durationConfig.mode === 'auto',
         previewMode,
         sceneBibleHash: sceneData.visualDescriptionHash || '',
       })
@@ -422,7 +488,7 @@ export async function POST(
     console.log(`[Scene Segmentation] Legacy flow: Generating full segments in one call`)
     
     // Generate intelligent segmentation prompt
-    const prompt = generateIntelligentSegmentationPrompt(sceneData, preferredDuration, minimumSegmentsRequired)
+    const prompt = generateIntelligentSegmentationPrompt(sceneData, durationConfig, minimumSegmentsRequired)
 
     // Pre-screen prompt content before generation to prevent unfunded credits
     // This runs at 100% coverage - text moderation is ~$0.0005/1K chars
@@ -569,7 +635,8 @@ export async function POST(
     return NextResponse.json({
       success: true,
       segments: transformedSegments,
-      targetSegmentDuration: preferredDuration,
+      targetSegmentDuration: targetSegmentDurationResponse,
+      segmentDurationAuto: durationConfig.mode === 'auto',
       // Preview mode indicator - segments are proposals, not committed
       previewMode,
       // Include scene bible hash for staleness detection on finalize
@@ -1047,7 +1114,7 @@ function detectEmotionalTone(text: string): string {
 
 function generateIntelligentSegmentationPrompt(
   sceneData: ComprehensiveSceneData,
-  preferredDuration: number,
+  durationConfig: SegmentDurationConfig,
   minimumSegmentsRequired: number = 1
 ): string {
   // CRITICAL: Check if this is a no-talent scene (title sequence, abstract, etc.)
@@ -1116,7 +1183,7 @@ For EVERY segment featuring a character with a reference image:
 2. Describe character positions, expressions, and camera angles precisely
 3. For action sequences, describe the exact motion state at frame boundaries
 4. Include lighting continuity notes (e.g., "warm sunset glow from left")
-5. The start_frame_description should match the previous segment's end_frame_description
+5. The start_frame_description MUST match the previous segment's end_frame_description (same instant — seamless stitch)
 `
     : ''
 
@@ -1152,9 +1219,9 @@ This means:
 
   return `
 **SYSTEM ROLE:** You are an AI Video Director and Editor optimized for Veo 3.1 generation workflows. Your goal is to translate a linear script and scene description into distinct, generation-ready video segments with RICH CINEMATIC PROMPTS.
-${noTalentInstructions}${referenceInstructions}${transitionInstructions}${p2VoiceoverNote}${minimumSegmentInstruction}
+${noTalentInstructions}${referenceInstructions}${transitionInstructions}${SEAMLESS_CONTINUATION_PROMPT}${p2VoiceoverNote}${minimumSegmentInstruction}
 **OPERATIONAL CONSTRAINTS:**
-1. **Duration:** Target ${preferredDuration} seconds per segment (8 seconds absolute max for Veo 3.1). **MINIMUM 4 seconds per segment** unless absolutely necessary for a dramatic cut.
+1. ${segmentDurationPromptSection(durationConfig).trim()}
 2. **Continuity:** You must utilize specific **Methods** to ensure consistency (matching lighting, character appearance, and room tone).
 3. **Lookahead:** Each segment must define the "End Frame State" to prepare for the *next* segment's generation method.
 4. **Audio Integration:** Veo 3.1 generates speech from text. For 🗣️ DIALOGUE lines, include character dialogue directly in prompts as: Character speaks, "text". For 🎙️ VOICEOVER lines, create backdrop visuals (do NOT include narration text in video prompts).
@@ -1198,7 +1265,7 @@ ${Math.round(sceneData.estimatedTotalDuration)} seconds total
 
 **LOGIC WORKFLOW:**
 1. **Analyze Triggers:** Scan script for MAJOR changes in Action, Location, or dramatic emotional shift. These are your "Cut Points." **DO NOT create a new segment just because the speaker changes** - dialogue between characters in the same location should be combined into one segment when possible.
-2. **Estimate Timing:** Assign estimated seconds to dialogue (approx. 2.5 words/sec) and action. **Combine short dialogue lines (under 3 seconds each) with adjacent dialogue in the same segment.** Only split into Part A and Part B if the combined duration exceeds ${preferredDuration} seconds.
+2. **Estimate Timing:** Assign estimated seconds to dialogue (approx. 2.5 words/sec) and action. **Combine short dialogue lines with adjacent dialogue in the same segment** when they fit in **one** Veo clip (4/6/8s). Split only when the combined audio/action for one clip would **exceed 8s** or when there is a **major** visual/camera change.
 3. **Aim for Efficiency:** Target 3-6 segments for most scenes. If you have more than 8 segments, reconsider whether some can be combined.
 4. **Select Method:**
    - **FTV (Frame-to-Video):** DEFAULT method. Uses start and end keyframe images to generate video between them. Use for ALL segments except segment 1 with scene frame.
@@ -1413,7 +1480,7 @@ function parseGeminiResponseText(text: string): IntelligentSegment[] {
  */
 function generateDirectionsOnlyPrompt(
   sceneData: ComprehensiveSceneData,
-  preferredDuration: number,
+  durationConfig: SegmentDurationConfig,
   minimumSegmentsRequired: number,
   scopeControls?: {
     focusMode?: string
@@ -1467,7 +1534,10 @@ function generateDirectionsOnlyPrompt(
   // Calculate the authoritative duration — narration/audio duration is the hard ceiling
   const authoritativeDuration = totalDurationTarget || sceneData.narrationDurationSeconds || sceneData.estimatedTotalDuration
   
-  let scopeConstraints = `- Target ${preferredDuration}s per segment (8s absolute max for Veo 3.1)\n`
+  let scopeConstraints =
+    durationConfig.mode === 'auto'
+      ? `- **Segment length (AUTO):** Each segment \`estimated_duration\` must be **exactly 4, 6, or 8** seconds (Veo only). Pick per segment from dialogue/action cuts; soft average ~${durationConfig.hintSeconds}s. **Never exceed 8s** per segment.\n`
+      : `- **Segment length (FIXED):** Target **${durationConfig.fixedSeconds ?? 6}s** per segment (\`estimated_duration\` must be **exactly 4, 6, or 8** — prefer **${durationConfig.fixedSeconds ?? 6}s**). **Never exceed 8s.**\n`
   scopeConstraints += `- **HARD CONSTRAINT: Total segment durations MUST sum to exactly ~${authoritativeDuration}s (narration/audio duration)**\n`
   scopeConstraints += `- **REQUIRED SEGMENT COUNT: exactly ${minimumSegmentsRequired} segments** (${authoritativeDuration}s ÷ ${8}s max = ${minimumSegmentsRequired} segments)\n`
   scopeConstraints += `- DO NOT create more segments than required. DO NOT exceed ${authoritativeDuration}s total duration.\n`
@@ -1589,7 +1659,7 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
 1. Split at MAJOR visual changes only (angle, location, emotional shift)
 2. Combine consecutive audio lines in same shot setup — especially adjacent narration sentences
 3. Each audio timeline index (dialogue_indices) appears in exactly ONE segment
-4. **DURATION RULE (CRITICAL):** Total segment durations MUST sum to EXACTLY the audio timeline duration (~${Math.round(totalTimelineDuration)}s). Do NOT exceed this. Each segment should be 5-8 seconds (8s max).
+4. **DURATION RULE (CRITICAL):** Total segment durations MUST sum to EXACTLY the audio timeline duration (~${Math.round(totalTimelineDuration)}s). Do NOT exceed this. Each segment \`estimated_duration\` must be **exactly 4, 6, or 8** (Veo quantization).
 5. **SEGMENT COUNT RULE:** Create exactly ${minimumSegmentsRequired} segments — no more, no fewer (unless overridden above).
 6. keyframe_start_description and keyframe_end_description are MANDATORY for every segment
 7. **VOICEOVER SEGMENTS:** When a segment covers 🎙️ VOICEOVER lines, the talent_action should describe atmospheric/environmental action — NOT a character speaking. Show backdrop visuals.
@@ -1597,10 +1667,10 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
 9. **MIXED SEGMENTS:** When a segment covers both voiceover AND dialogue lines, prioritize the DIALOGUE character as the visual focus, with backdrop elements that complement the narration.
 
 **CONTINUITY RULES (CRITICAL FOR VISUAL FLOW):**
-7. For segments 2+, the keyframe_start_description MUST describe the SAME visual state as the previous segment's keyframe_end_description (same character pose, position, expression, lighting, wardrobe)
+7. For segments 2+, keyframe_start_description MUST describe the **same** visual instant as the previous segment's keyframe_end_description (seamless stitch — **last frame of N = first frame of N+1**)
 8. Default transition_in to "continue" for consecutive segments in the same location/angle. Only use "cut" when the camera angle or location changes dramatically.
 9. continuity_notes MUST list all visual elements that carry over: wardrobe, hair, props held, lighting setup, background elements
-10. When dialogue spans across segments, the character's position and state at the end of segment N must match their position and state at the start of segment N+1
+10. When dialogue or one continuous performance spans segments N and N+1, segment N+1 MUST open on the **exact** end state of segment N (pose, mouth position for mid-line splits, hands, gaze) — no reset between parts of the same line
 
 **GENERATION METHOD RULES:**
 11. Default generation_method is "FTV" (Frame-to-Video) — generates video between start and end keyframes
@@ -1659,7 +1729,7 @@ function parseDirectionsResponse(text: string): any[] {
 function generatePromptsFromDirectionsPrompt(
   sceneData: ComprehensiveSceneData,
   approvedDirections: SegmentDirection[],
-  preferredDuration: number
+  durationConfig: SegmentDurationConfig
 ): string {
   // Check scene-level no-talent with semantic context
   const sceneLevelNoTalent = isNoTalentScene(sceneData.sceneDirection.talent, {
@@ -1754,6 +1824,7 @@ For each approved direction, generate a RICH cinematic video prompt (80-150 word
 **PROMPT FORMULA:**
 [Shot Type] + [Lens/Focal Length] + [Subject with FULL visual description including face, hair, body, wardrobe] + [Specific Physical Action] + [DIALOGUE if any: Name speaks, "exact text"] + [Camera Movement with speed] + [Lighting setup with direction and quality] + [Depth of Field and focus target] + [Color palette/grading] + [Atmosphere/texture details]
 
+${segmentDurationPromptSection(durationConfig)}
 **CRITICAL RULES:**
 1. FOLLOW the approved shot_type, camera_movement, camera_angle, and lens EXACTLY
 2. INCLUDE the specified talent_action and emotional_beat
@@ -1761,7 +1832,8 @@ For each approved direction, generate a RICH cinematic video prompt (80-150 word
 4. **PER-SEGMENT NO-TALENT ENFORCEMENT:** For ANY segment where \`is_no_talent: true\` in the approved directions, you MUST NOT include any people, characters, faces, human figures, or dialogue in that segment's prompt — regardless of the CHARACTERS or DIALOGUE sections above. Focus ONLY on environment, VFX, abstract visuals, text/graphics, and atmosphere for those segments.
 5. EVERY character mentioned in a talent segment MUST have their FULL appearance description (face, hair, skin, build, wardrobe)
 6. Narration is a SEPARATE audio voiceover — NEVER include narration text in prompts
-7. Start frame description MUST logically follow previous segment's end frame for continuity
+7. Frame continuity between segments (mandatory):
+${SEAMLESS_CONTINUATION_PROMPT}
 8. Describe specific depth-of-field: what's in focus, what's bokeh
 9. Include color temperature and mood (warm amber, cool blue, desaturated, etc.)
 10. Minimum 80 words per prompt — more detail = better Veo 3.1 results
@@ -1820,22 +1892,6 @@ async function callGeminiForPromptsFromDirections(prompt: string): Promise<Intel
     thinkingLevel: 'minimal',
   })
   return parseGeminiResponseText(result.text)
-}
-
-// ============================================================================
-// VEO DURATION QUANTIZATION — valid Veo 3.1 durations
-// ============================================================================
-
-const VEO_VALID_DURATIONS = [4, 6, 8] as const
-
-/**
- * Snap a duration to the nearest valid Veo 3.1 duration (4, 6, or 8 seconds).
- * Always rounds down to stay within limits, with a floor of 4s.
- */
-function snapToVeoDuration(duration: number): number {
-  if (duration <= 5) return 4
-  if (duration <= 7) return 6
-  return 8
 }
 
 // ============================================================================

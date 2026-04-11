@@ -456,8 +456,8 @@ export function SegmentBuilder({
   const [showProductionOverlay, setShowProductionOverlay] = useState(false)
   const [productionStage, setProductionStage] = useState(0)
   
-  // Generation options
-  const [targetDuration, setTargetDuration] = useState(6) // 4-8 seconds
+  /** null = Auto (API: segmentDurationAuto); number = fixed preferredDuration 4–8 */
+  const [segmentDurationTarget, setSegmentDurationTarget] = useState<number | null>(null)
   const [narrationDriven, setNarrationDriven] = useState(false)
   const [totalDurationTarget, setTotalDurationTarget] = useState<number | null>(null) // null = let AI decide
   const [segmentCountTarget, setSegmentCountTarget] = useState<number | null>(null) // null = let AI decide
@@ -495,6 +495,16 @@ export function SegmentBuilder({
     return extractAudioMetadata(scene)
   }, [scene])
 
+  /** Soft average for UI copy when duration is Auto (matches server hint). */
+  const segmentDurationHintSeconds = useMemo(() => {
+    const total = audioMetadata.totalAudioDurationSeconds || 0
+    const minSeg = Math.max(1, Math.ceil(total / 8))
+    const raw = Math.round(total / minSeg)
+    if (raw <= 5) return 4
+    if (raw <= 7) return 6
+    return 8
+  }, [audioMetadata.totalAudioDurationSeconds])
+
   // Intelligently auto-determine settings based on audio metadata
   useEffect(() => {
     // 1. Narration Driven
@@ -515,13 +525,6 @@ export function SegmentBuilder({
       recommendedFocusMode = 'action-focused'
     }
     setFocusMode(recommendedFocusMode)
-
-    // 3. Target Duration
-    if (recommendedFocusMode === 'action-focused') {
-      setTargetDuration(4) // Faster pacing for action
-    } else {
-      setTargetDuration(6) // Standard 6s for dialogue/balanced
-    }
   }, [audioMetadata])
 
   // Detect when narration (text or audio) is removed and call server to clear
@@ -622,7 +625,9 @@ export function SegmentBuilder({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          preferredDuration: targetDuration,
+          ...(segmentDurationTarget == null
+            ? { segmentDurationAuto: true }
+            : { segmentDurationAuto: false, preferredDuration: segmentDurationTarget }),
           projectId,
           focusMode,
           narrationDriven,
@@ -650,7 +655,11 @@ export function SegmentBuilder({
       const directions: ProposedDirection[] = data.directions.map((dir: any, idx: number) => ({
         id: `dir_${sceneId}_${idx + 1}`,
         sequenceIndex: idx,
-        estimatedDuration: dir.estimated_duration || dir.estimatedDuration || targetDuration,
+        estimatedDuration:
+          dir.estimated_duration ||
+          dir.estimatedDuration ||
+          segmentDurationTarget ||
+          segmentDurationHintSeconds,
         shotType: dir.shot_type || dir.shotType || 'Medium Shot',
         talentAction: dir.talent_action || dir.talentAction || '',
         dialogueLineIds: dir.dialogue_indices || dir.dialogueLineIds || [],
@@ -730,7 +739,21 @@ export function SegmentBuilder({
       setShowProductionOverlay(false)
       setProductionStage(0)
     }
-  }, [sceneId, projectId, targetDuration, narrationDriven, totalDurationTarget, segmentCountTarget, focusMode, customInstructions, audioMetadata, sceneBible.contentHash, hasSceneDirection, runProductionAnimation])
+  }, [
+    sceneId,
+    projectId,
+    segmentDurationTarget,
+    segmentDurationHintSeconds,
+    narrationDriven,
+    totalDurationTarget,
+    segmentCountTarget,
+    focusMode,
+    customInstructions,
+    audioMetadata,
+    sceneBible.contentHash,
+    hasSceneDirection,
+    runProductionAnimation,
+  ])
 
   // Phase 2: Generate prompts from approved directions
   
@@ -818,7 +841,12 @@ export function SegmentBuilder({
                       </div>
                       <div className="flex-1 space-y-1">
                         <p className="text-sm text-slate-200">
-                          Based on an estimated audio duration of <strong>~{Math.ceil(audioMetadata.totalAudioDurationSeconds)}s</strong> with <strong>{audioMetadata.dialogueDurations.length}</strong> dialogue line{audioMetadata.dialogueDurations.length !== 1 ? 's' : ''}, the AI recommends a <strong className="capitalize text-cyan-400">{focusMode.replace('-', ' ')}</strong> approach with segments averaging <strong>{targetDuration}s</strong>.
+                          Based on an estimated audio duration of <strong>~{Math.ceil(audioMetadata.totalAudioDurationSeconds)}s</strong> with <strong>{audioMetadata.dialogueDurations.length}</strong> dialogue line{audioMetadata.dialogueDurations.length !== 1 ? 's' : ''}, the AI recommends a <strong className="capitalize text-cyan-400">{focusMode.replace('-', ' ')}</strong> approach
+                          {segmentDurationTarget == null ? (
+                            <> with <strong>Auto</strong> clip length (4–8s per segment from cuts; ~<strong>{segmentDurationHintSeconds}s</strong> typical).</>
+                          ) : (
+                            <> targeting <strong>~{segmentDurationTarget}s</strong> per segment (Veo uses 4, 6, or 8s clips).</>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -838,21 +866,35 @@ export function SegmentBuilder({
                       <div className="p-4 space-y-6 border-t border-slate-700/50 bg-slate-900/30">
                         {/* Duration Setting */}
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-gray-300">Target Segment Duration</label>
+                          <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-300">Target Segment Duration</label>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs text-gray-500 hover:text-gray-300"
+                              onClick={() => setSegmentDurationTarget(null)}
+                            >
+                              {segmentDurationTarget != null ? 'Clear' : 'Auto'}
+                            </Button>
+                          </div>
                           <div className="flex items-center gap-2">
                             <input
                               type="range"
                               min={4}
                               max={8}
-                              step={1}
-                              value={targetDuration}
-                              onChange={e => setTargetDuration(parseInt(e.target.value))}
+                              step={2}
+                              value={segmentDurationTarget ?? segmentDurationHintSeconds}
+                              onChange={e => setSegmentDurationTarget(parseInt(e.target.value, 10))}
                               className="flex-1"
                             />
-                            <span className="text-sm font-mono w-12 text-slate-300">{targetDuration}s</span>
+                            <span className="text-sm font-mono w-14 text-right text-slate-300">
+                              {segmentDurationTarget != null ? `${segmentDurationTarget}s` : 'Auto'}
+                            </span>
                           </div>
                           <p className="text-xs text-gray-500">
-                            Segments will be up to {targetDuration} seconds (Veo 3.1 optimal range: 4-8s)
+                            {segmentDurationTarget == null
+                              ? `Auto: each clip is 4, 6, or 8s from dialogue and action cuts (~${segmentDurationHintSeconds}s planning average). Drag the slider to set a fixed target.`
+                              : `Prefer ~${segmentDurationTarget}s clips (Veo 3.1 uses only 4, 6, or 8s).`}
                           </p>
                         </div>
 
