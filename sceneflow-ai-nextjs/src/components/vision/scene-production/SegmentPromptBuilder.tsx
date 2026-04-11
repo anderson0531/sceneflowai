@@ -14,6 +14,8 @@ import { VisualReference, type LocationReference } from '@/types/visionReference
 import { resolveFrameGenerationContext, isNoTalentSceneForFrames } from '@/lib/vision/frameGenerationContext'
 import { cn } from '@/lib/utils'
 import { ContentPolicyAlert, PolicyFixedBanner } from './ContentPolicyAlert'
+import { ImageEditModal } from '@/components/vision/ImageEditModal'
+import { AnalyzeKeyframeRiskPanel } from './AnalyzeKeyframeRiskPanel'
 import { moderatePrompt, type ModerationResult } from '@/utils/promptModerator'
 import { 
   CINEMATIC_ELEMENT_TYPES, 
@@ -111,6 +113,8 @@ interface SegmentPromptBuilderProps {
   sceneNarration?: string
   frameResolverScene?: any | null
   locationReferences?: LocationReference[]
+  /** After AI keyframe edit in this dialog — persist new image URL */
+  onSaveEditedKeyframe?: (frameType: 'start' | 'end', newFrameUrl: string) => void
 }
 
 export interface GeneratePromptData {
@@ -162,6 +166,7 @@ export function SegmentPromptBuilder({
   sceneNarration,
   frameResolverScene = null,
   locationReferences = [],
+  onSaveEditedKeyframe,
 }: SegmentPromptBuilderProps) {
   const [activeTab, setActiveTab] = useState<'guided' | 'advanced'>('guided')
   
@@ -200,6 +205,8 @@ export function SegmentPromptBuilder({
   
   // Track if the last content policy failure was FTV-related
   const [isFTVContentPolicyFailure, setIsFTVContentPolicyFailure] = useState(false)
+
+  const [keyframeEdit, setKeyframeEdit] = useState<{ frameType: 'start' | 'end'; url: string } | null>(null)
   
   // Watch for segment status changes after generation starts
   // Note: We don't auto-close on success - user may want to generate multiple takes
@@ -270,6 +277,7 @@ export function SegmentPromptBuilder({
       setPostFailureModerationResult(null)
       setPreflightModerationResult(null)
       setPromptFixApplied(false)
+      setKeyframeEdit(null)
     }
   }, [open])
   
@@ -978,7 +986,14 @@ export function SegmentPromptBuilder({
     }
   }
 
+  const keyframeSubjectRef = useMemo(() => {
+    const c = availableCharacters.find((x) => x.referenceImage)
+    if (!c?.referenceImage) return undefined
+    return { imageUrl: c.referenceImage, description: c.name || 'character' }
+  }, [availableCharacters])
+
   return (
+    <>
     <Dialog open={open} onOpenChange={(value) => {
       // Prevent closing while generating
       if (isGenerating && !value) return
@@ -1086,6 +1101,14 @@ export function SegmentPromptBuilder({
                       </button>
                     </div>
                   </div>
+                )}
+                {mode === 'video' && (startFrameUrl || endFrameUrl) && (
+                  <AnalyzeKeyframeRiskPanel
+                    startFrameUrl={startFrameUrl}
+                    endFrameUrl={endFrameUrl}
+                    promptExcerpt={getRawPrompt() || ''}
+                    emphasizeImageHypothesis={isFTVContentPolicyFailure}
+                  />
                 )}
                 {/* Actionable ContentPolicyAlert with Auto-Fix and AI Rephrase */}
                 <ContentPolicyAlert
@@ -1280,11 +1303,25 @@ export function SegmentPromptBuilder({
                         </button>
                       </div>
                       {startFrameUrl && (
-                        <div className="aspect-video rounded-lg border border-blue-500 overflow-hidden relative">
-                          <img src={startFrameUrl} alt="Selected start" className="w-full h-full object-cover" />
-                          <button onClick={() => setStartFrameUrl(null)} className="absolute top-1 right-1 p-1 bg-black/60 rounded hover:bg-black/80">
-                            <X className="w-3 h-3" />
-                          </button>
+                        <div className="space-y-1">
+                          <div className="aspect-video rounded-lg border border-blue-500 overflow-hidden relative">
+                            <img src={startFrameUrl} alt="Selected start" className="w-full h-full object-cover" />
+                            <button onClick={() => setStartFrameUrl(null)} className="absolute top-1 right-1 p-1 bg-black/60 rounded hover:bg-black/80">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                          {onSaveEditedKeyframe && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="w-full border-purple-500/40 text-purple-200 hover:bg-purple-950/40"
+                              onClick={() => setKeyframeEdit({ frameType: 'start', url: startFrameUrl })}
+                            >
+                              <Wand2 className="w-3.5 h-3.5 mr-2" />
+                              AI edit start frame
+                            </Button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1303,11 +1340,28 @@ export function SegmentPromptBuilder({
                         className="w-full aspect-video rounded-lg border border-dashed border-gray-700 flex flex-col items-center justify-center hover:border-gray-600 cursor-pointer"
                       >
                         {endFrameUrl ? (
-                          <div className="relative w-full h-full">
-                            <img src={endFrameUrl} alt="End" className="w-full h-full object-cover rounded-lg" />
-                            <button onClick={(e) => { e.stopPropagation(); setEndFrameUrl(null) }} className="absolute top-1 right-1 p-1 bg-black/60 rounded hover:bg-black/80">
-                              <X className="w-3 h-3" />
-                            </button>
+                          <div className="relative w-full h-full flex flex-col gap-1">
+                            <div className="relative flex-1 min-h-0">
+                              <img src={endFrameUrl} alt="End" className="w-full h-full object-cover rounded-lg" />
+                              <button onClick={(e) => { e.stopPropagation(); setEndFrameUrl(null) }} className="absolute top-1 right-1 p-1 bg-black/60 rounded hover:bg-black/80">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                            {onSaveEditedKeyframe && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="shrink-0 border-purple-500/40 text-purple-200 hover:bg-purple-950/40 text-[10px] h-7"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setKeyframeEdit({ frameType: 'end', url: endFrameUrl })
+                                }}
+                              >
+                                <Wand2 className="w-3 h-3 mr-1" />
+                                AI edit end
+                              </Button>
+                            )}
                           </div>
                         ) : (
                           <>
@@ -2354,5 +2408,25 @@ export function SegmentPromptBuilder({
         </DialogContent>
       </Dialog>
     </Dialog>
+
+    {keyframeEdit && onSaveEditedKeyframe && (
+      <ImageEditModal
+        open={!!keyframeEdit}
+        onOpenChange={(o) => {
+          if (!o) setKeyframeEdit(null)
+        }}
+        imageUrl={keyframeEdit.url}
+        imageType="scene"
+        title={`Edit ${keyframeEdit.frameType === 'start' ? 'Start' : 'End'} Frame`}
+        subjectReference={keyframeSubjectRef}
+        onSave={(newUrl) => {
+          onSaveEditedKeyframe(keyframeEdit.frameType, newUrl)
+          if (keyframeEdit.frameType === 'start') setStartFrameUrl(newUrl)
+          else setEndFrameUrl(newUrl)
+          setKeyframeEdit(null)
+        }}
+      />
+    )}
+    </>
   )
 }

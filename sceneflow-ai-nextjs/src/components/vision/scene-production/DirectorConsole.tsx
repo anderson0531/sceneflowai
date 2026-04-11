@@ -160,6 +160,13 @@ interface DirectorConsoleProps {
   onGenerateAllAudio?: (language?: string) => void | Promise<void>
   /** Whether audio generation is in progress */
   isGeneratingAudio?: boolean
+  /** Persist keyframe after AI edit (DirectorDialog / pre-flight) */
+  onSaveEditedKeyframe?: (
+    sceneId: string,
+    segmentId: string,
+    frameType: 'start' | 'end',
+    newFrameUrl: string
+  ) => void
 }
 
 /** Slots for splitting Video / Mixer / Streams across parent section cards (ScriptPanel). */
@@ -211,6 +218,7 @@ function DirectorConsoleRoot({
   onGenerateSceneAudio,
   onGenerateAllAudio,
   isGeneratingAudio,
+  onSaveEditedKeyframe,
   children,
 }: DirectorConsoleProps & {
   children?: (slots: DirectorWorkflowSlots) => React.ReactNode
@@ -1213,12 +1221,14 @@ function DirectorConsoleRoot({
       {selectedSegment && (
         <DirectorDialog 
           segment={selectedSegment}
+          sceneId={sceneId}
           sceneImageUrl={sceneImageUrl}
           scene={scene}
           isOpen={!!selectedSegment}
           onClose={() => setSelectedSegment(null)}
           onSaveConfig={handleSaveConfig}
           onGenerate={handleGenerateFromDialog}
+          onSaveEditedKeyframe={onSaveEditedKeyframe}
         />
       )}
       

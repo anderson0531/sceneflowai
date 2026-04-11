@@ -290,7 +290,7 @@ export function SegmentPairCard({
                   
                   {/* Floating Action Buttons Overlay */}
                   {!isGenerating && (
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 backdrop-blur-[1px]">
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors flex flex-wrap items-center justify-center gap-2 opacity-0 group-hover:opacity-100 backdrop-blur-[1px] p-2">
                       {/* Generate / Regenerate */}
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -309,6 +309,26 @@ export function SegmentPairCard({
                         <TooltipContent>{true ? 'Regenerate' : 'Quick Generate'}</TooltipContent>
                       </Tooltip>
                       
+                      {/* AI Edit keyframe (same flow as Edit Character Image) */}
+                      {onEditFrame && startFrameUrl && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-10 w-10 rounded-full p-0 bg-purple-600/90 hover:bg-purple-500 text-white shadow-lg border border-purple-400/50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onEditFrame('start', startFrameUrl)
+                              }}
+                            >
+                              <Wand2 className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>AI edit start frame</TooltipContent>
+                        </Tooltip>
+                      )}
+
                       {/* Advanced Settings */}
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -529,7 +549,7 @@ export function SegmentPairCard({
                   
                   {/* Floating Action Buttons Overlay */}
                   {!isGenerating && (
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 backdrop-blur-[1px]">
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors flex flex-wrap items-center justify-center gap-2 opacity-0 group-hover:opacity-100 backdrop-blur-[1px] p-2">
                       {/* Generate / Regenerate */}
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -547,6 +567,25 @@ export function SegmentPairCard({
                         </TooltipTrigger>
                         <TooltipContent>{true ? 'Regenerate' : 'Quick Generate'}</TooltipContent>
                       </Tooltip>
+
+                      {onEditFrame && endFrameUrl && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="h-10 w-10 rounded-full p-0 bg-purple-600/90 hover:bg-purple-500 text-white shadow-lg border border-purple-400/50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onEditFrame('end', endFrameUrl)
+                              }}
+                            >
+                              <Wand2 className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>AI edit end frame</TooltipContent>
+                        </Tooltip>
+                      )}
                       
                       {/* Advanced Settings */}
                       <Tooltip>

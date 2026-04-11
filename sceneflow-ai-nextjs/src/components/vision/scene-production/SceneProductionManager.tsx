@@ -92,6 +92,13 @@ interface SceneProductionManagerProps {
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
   // Image editing (reuses ImageEditModal from Frame step)
   onEditImage?: (imageUrl: string) => void
+  /** Persist a keyframe URL after AI edit (same as ScriptPanel handleEditFrame) */
+  onEditSegmentFrame?: (
+    sceneId: string,
+    segmentId: string,
+    frameType: 'start' | 'end',
+    newFrameUrl: string
+  ) => void
   // Establishing Shot support
   onAddEstablishingShot?: (sceneId: string, style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => Promise<void>
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'single-shot' | 'beat-matched' | 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
@@ -141,6 +148,7 @@ export function SceneProductionManager({
   onAudioClipChange,
   onReorderSegments,
   onEditImage,
+  onEditSegmentFrame,
   onAddEstablishingShot,
   onEstablishingShotStyleChange,
   onSelectTake,
@@ -1901,6 +1909,12 @@ Example format:
               onToggleDialogue={handleToggleDialogue}
               onKeyframeChange={handleKeyframeChange}
               onEditImage={onEditImage}
+              onEditSegmentFrame={
+                onEditSegmentFrame
+                  ? (segmentId, frameType, newUrl) =>
+                      onEditSegmentFrame(sceneId, segmentId, frameType, newUrl)
+                  : undefined
+              }
               onAddEstablishingShot={onAddEstablishingShot && !segments.some(s => s.isEstablishingShot) ? handleAddEstablishingShotWrapper : undefined}
               onEstablishingShotStyleChange={onEstablishingShotStyleChange ? handleEstablishingShotStyleChangeWrapper : undefined}
               onSelectTake={onSelectTake ? handleSelectTakeWrapper : undefined}

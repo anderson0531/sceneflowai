@@ -63,6 +63,13 @@ interface SceneGalleryProps {
     guidePrompt?: string
   }) => Promise<void>
   onSegmentUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
+  /** Persist keyframe after AI edit (gallery production panel) */
+  onEditSegmentFrame?: (
+    sceneId: string,
+    segmentId: string,
+    frameType: 'start' | 'end',
+    newFrameUrl: string
+  ) => void
   onOpenAssets?: () => void
   onOpenPreview?: () => void
   /** Object/prop references from the reference library for consistent image generation */
@@ -101,6 +108,7 @@ export function SceneGallery({
   onSegmentPromptChange,
   onSegmentGenerate,
   onSegmentUpload,
+  onEditSegmentFrame,
   onOpenAssets,
   onOpenPreview,
   objectReferences,
@@ -652,6 +660,7 @@ export function SceneGallery({
                   onSegmentPromptChange={onSegmentPromptChange}
                   onSegmentGenerate={onSegmentGenerate}
                   onSegmentUpload={onSegmentUpload}
+                  onEditSegmentFrame={onEditSegmentFrame}
                   characters={characters}
                   objectReferences={objectReferences}
                   showDragHandle={!!onReorderScenes}
@@ -753,6 +762,12 @@ interface SceneCardProps {
     guidePrompt?: string
   }) => Promise<void>
   onSegmentUpload: (sceneId: string, segmentId: string, file: File) => Promise<void>
+  onEditSegmentFrame?: (
+    sceneId: string,
+    segmentId: string,
+    frameType: 'start' | 'end',
+    newFrameUrl: string
+  ) => void
   /** All project characters for reference status checking */
   characters?: any[]
   /** Object/prop references from reference library */
@@ -828,6 +843,7 @@ function SceneCard({
   onSegmentPromptChange,
   onSegmentGenerate,
   onSegmentUpload,
+  onEditSegmentFrame,
   characters = [],
   objectReferences = [],
   showDragHandle = false,
@@ -1207,6 +1223,7 @@ function SceneCard({
               onPromptChange={onSegmentPromptChange}
               onGenerate={onSegmentGenerate}
               onUpload={onSegmentUpload}
+              onEditSegmentFrame={onEditSegmentFrame}
             />
           </div>
         ) : null}

@@ -2883,6 +2883,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onMarkWorkflowComplete={onMarkWorkflowComplete}
                       onDismissStaleWarning={onDismissStaleWarning}
                       onGenerateSegmentFrames={onGenerateSegmentFrames}
+                      onEditFrame={onEditFrame}
                       generatingFrameForSegment={generatingFrameForSegment}
                       generatingFramePhase={generatingFramePhase}
                       bookmarkedSceneIndex={bookmarkedSceneIndex}
@@ -3492,6 +3493,7 @@ interface SceneCardProps {
   onDismissStaleWarning?: (sceneIdx: number, stepKey: string) => void
   // Keyframe State Machine - Frame step handlers
   onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both', options?: { customPrompt?: string; negativePrompt?: string; usePreviousEndFrame?: boolean }) => Promise<void>
+  onEditFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onOpenFrameEditModal?: (sceneId: string, sceneIdx: number, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => void
   generatingFrameForSegment?: string | null
@@ -3640,6 +3642,7 @@ function SceneCard({
   onSelectTake,
   onDeleteTake,
   onGenerateSegmentFrames,
+  onEditFrame,
   onOpenFrameEditModal,
   onUploadFrame,
   generatingFrameForSegment,
@@ -6825,6 +6828,7 @@ function SceneCard({
                           onGenerateSceneAudio={onGenerateSceneAudio ? (idx, audioType, characterName, dialogueIndex, language) => onGenerateSceneAudio(idx, audioType, characterName, dialogueIndex, language) : undefined}
                           onGenerateAllAudio={onGenerateAllAudio}
                           isGeneratingAudio={isGeneratingAudio}
+                          onSaveEditedKeyframe={onEditFrame}
                         >
                           {(slots) => (
                             <div className="space-y-4">

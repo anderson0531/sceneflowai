@@ -72,6 +72,12 @@ interface SegmentStudioProps {
   onKeyframeChange?: (settings: SegmentKeyframeSettings) => void
   // Image editing (reuses same modal as Frame step)
   onEditImage?: (imageUrl: string) => void
+  /** After AI keyframe edit — persist new URL (parent calls handleEditFrame / API) */
+  onEditSegmentFrame?: (
+    segmentId: string,
+    frameType: 'start' | 'end',
+    newFrameUrl: string
+  ) => void
   // Generate Backdrop Video handler (replaces Add Establishing Shot)
   onGenerateBackdrop?: () => void
   // Establishing Shot handlers (legacy - kept for existing establishing shots)
@@ -126,6 +132,7 @@ export function SegmentStudio({
   onToggleDialogue,
   onKeyframeChange,
   onEditImage,
+  onEditSegmentFrame,
   onGenerateBackdrop,
   onAddEstablishingShot,
   onEstablishingShotStyleChange,
@@ -1544,6 +1551,12 @@ export function SegmentStudio({
           sceneNarration={sceneNarration}
           frameResolverScene={visionScene ?? null}
           locationReferences={locationReferences}
+          onSaveEditedKeyframe={
+            onEditSegmentFrame && segment
+              ? (frameType, newUrl) =>
+                  onEditSegmentFrame(segment.segmentId, frameType, newUrl)
+              : undefined
+          }
         />
       )}
 

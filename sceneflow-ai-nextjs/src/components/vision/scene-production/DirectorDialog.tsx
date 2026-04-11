@@ -74,16 +74,26 @@ import { GuidePromptEditor, type SceneAudioData } from './GuidePromptEditor'
 import { DirectionDialog } from './DirectionDialog'
 import { cn } from '@/lib/utils'
 import { ContentPolicyAlert, PolicyFixedBanner } from './ContentPolicyAlert'
+import { ImageEditModal } from '@/components/vision/ImageEditModal'
+import { AnalyzeKeyframeRiskPanel } from './AnalyzeKeyframeRiskPanel'
 import { moderatePrompt, type ModerationResult } from '@/utils/promptModerator'
 
 interface DirectorDialogProps {
   segment: SceneSegment
+  sceneId: string
   sceneImageUrl?: string
   scene?: SceneAudioData
   isOpen: boolean
   onSaveConfig: (config: VideoGenerationConfig) => void
   onGenerate?: (segmentId: string, config: VideoGenerationConfig) => void
   onClose: () => void
+  /** Persist keyframe after AI edit (same as vision handleEditFrame) */
+  onSaveEditedKeyframe?: (
+    sceneId: string,
+    segmentId: string,
+    frameType: 'start' | 'end',
+    newFrameUrl: string
+  ) => void
 }
 
 // Map internal mode names to VideoGenerationMethod
@@ -101,16 +111,19 @@ const methodToMode: Record<VideoGenerationMethod, string> = {
   'FTV': 'FRAME_TO_VIDEO',
   'EXT': 'EXTEND',
   'REF': 'REFERENCE_IMAGES',
+  'CIN': 'CINEMATIC',
 }
 
 export const DirectorDialog: React.FC<DirectorDialogProps> = ({ 
   segment, 
+  sceneId,
   sceneImageUrl,
   scene,
   isOpen, 
   onSaveConfig,
   onGenerate,
-  onClose 
+  onClose,
+  onSaveEditedKeyframe,
 }) => {
   // Get auto-drafted config
   const { config: autoConfig, methodLabel, methodReason } = useSegmentConfig(segment, sceneImageUrl)
@@ -146,6 +159,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   
   // FTV prompt options
   const [skipAnchoringPhrase, setSkipAnchoringPhrase] = useState(false)
+
+  const [keyframeEdit, setKeyframeEdit] = useState<{ frameType: 'start' | 'end'; url: string } | null>(null)
   // Quality tier state - default to 'fast' for all modes (cost-optimized)
   // Users can manually select 'premium' when higher quality is needed
   const [qualityTier, setQualityTier] = useState<'fast' | 'premium'>('fast')
@@ -399,6 +414,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
       setPromptFixApplied(false)
       setLocalError(null)
       setImageTriggered(false)
+      setKeyframeEdit(null)
     }
   }, [isOpen, autoConfig])
 
@@ -667,6 +683,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   }
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 text-white border-slate-700">
         
@@ -775,7 +792,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             {/* Visual Logic based on Mode */}
             {mode === 'FRAME_TO_VIDEO' && startFrameUrl && endFrameUrl ? (
               <div className="flex items-center gap-4 p-4 w-full">
-                <div className="flex-1 relative">
+                <div className="flex-1 relative space-y-1.5">
                   <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
                     <img 
                       src={startFrameUrl} 
@@ -784,11 +801,23 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                     />
                   </div>
                   <Badge className="absolute top-2 left-2 bg-slate-800">Start</Badge>
+                  {onSaveEditedKeyframe && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-[10px] h-7 border-purple-500/40 text-purple-200 hover:bg-purple-950/40"
+                      onClick={() => setKeyframeEdit({ frameType: 'start', url: startFrameUrl })}
+                    >
+                      <Wand2 className="w-3 h-3 mr-1" />
+                      AI edit start
+                    </Button>
+                  )}
                 </div>
                 <div className="flex items-center justify-center flex-shrink-0">
                   <ArrowRight className="w-6 h-6 text-indigo-400" />
                 </div>
-                <div className="flex-1 relative">
+                <div className="flex-1 relative space-y-1.5">
                   <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
                     <img 
                       src={endFrameUrl} 
@@ -797,6 +826,18 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                     />
                   </div>
                   <Badge className="absolute top-2 left-2 bg-slate-800">End</Badge>
+                  {onSaveEditedKeyframe && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="w-full text-[10px] h-7 border-purple-500/40 text-purple-200 hover:bg-purple-950/40"
+                      onClick={() => setKeyframeEdit({ frameType: 'end', url: endFrameUrl })}
+                    >
+                      <Wand2 className="w-3 h-3 mr-1" />
+                      AI edit end
+                    </Button>
+                  )}
                 </div>
               </div>
             ) : mode === 'REFERENCE_IMAGES' ? (
@@ -871,15 +912,27 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 <Badge className="absolute top-2 left-2 bg-slate-800">Source Video</Badge>
               </div>
             ) : (startFrameUrl || sceneImageUrl) ? (
-              <div className="p-4 w-full">
-                <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
+              <div className="p-4 w-full space-y-2">
+                <div className="aspect-video w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-700 relative">
                   <img 
                     src={startFrameUrl || sceneImageUrl} 
                     alt="Reference Frame"
                     className="w-full h-full object-cover" 
                   />
+                  <Badge className="absolute top-2 left-2 bg-slate-800">Reference Image</Badge>
                 </div>
-                <Badge className="absolute top-2 left-2 bg-slate-800">Reference Image</Badge>
+                {onSaveEditedKeyframe && startFrameUrl && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="w-full text-[10px] h-7 border-purple-500/40 text-purple-200 hover:bg-purple-950/40"
+                    onClick={() => setKeyframeEdit({ frameType: 'start', url: startFrameUrl })}
+                  >
+                    <Wand2 className="w-3 h-3 mr-1" />
+                    AI edit start frame
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center text-slate-500 p-8">
@@ -1106,6 +1159,14 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                         <button onClick={() => { setLocalError(null); setPostFailureModerationResult(null); setImageTriggered(false) }} className={imageTriggered ? 'text-amber-400 hover:text-amber-300' : 'text-red-400 hover:text-red-300'}><X className="w-4 h-4" /></button>
                       </div>
                     </div>
+                    {(startFrameUrl || endFrameUrl) && (
+                      <AnalyzeKeyframeRiskPanel
+                        startFrameUrl={startFrameUrl}
+                        endFrameUrl={endFrameUrl}
+                        promptExcerpt={mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt}
+                        emphasizeImageHypothesis={imageTriggered || mode === 'FRAME_TO_VIDEO'}
+                      />
+                    )}
                     {imageTriggered ? (
                       <div className="flex flex-col gap-2">
                         <button
@@ -1180,6 +1241,23 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         />
       </DialogContent>
     </Dialog>
+
+    {keyframeEdit && onSaveEditedKeyframe && (
+      <ImageEditModal
+        open={!!keyframeEdit}
+        onOpenChange={(o) => {
+          if (!o) setKeyframeEdit(null)
+        }}
+        imageUrl={keyframeEdit.url}
+        imageType="scene"
+        title={`Edit ${keyframeEdit.frameType === 'start' ? 'Start' : 'End'} Frame`}
+        onSave={(newUrl) => {
+          onSaveEditedKeyframe(sceneId, segment.segmentId, keyframeEdit.frameType, newUrl)
+          setKeyframeEdit(null)
+        }}
+      />
+    )}
+    </>
   )
 }
 

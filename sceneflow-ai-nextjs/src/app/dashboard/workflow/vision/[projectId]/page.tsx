@@ -10849,6 +10849,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onSegmentUpload={(sceneId, segmentId, file) =>
                               handleSegmentUpload(sceneId, segmentId, file)
                             }
+                            onEditSegmentFrame={handleEditFrame}
                             onOpenAssets={openGenerateAudio}
                             onOpenPreview={() => setIsPlayerOpen(true)}
                             onOpenGenerateAudio={openGenerateAudio}
