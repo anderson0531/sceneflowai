@@ -354,7 +354,12 @@ def build_watermark_text_filter(
     
     text_style = watermark.get('textStyle', {})
     font_family = text_style.get('fontFamily', 'Montserrat')
-    font_size = text_style.get('fontSize', 32)  # Already converted to pixels by API
+    # Pixels from API; clamp so drawtext never gets fontsize=0 (invisible) or absurd values
+    try:
+        font_size = int(text_style.get('fontSize', 32))
+    except (TypeError, ValueError):
+        font_size = 32
+    font_size = max(12, min(font_size, height))
     font_weight = text_style.get('fontWeight', 400)
     color = text_style.get('color', '#FFFFFF')
     opacity = float(text_style.get('opacity', 0.7))
@@ -393,7 +398,8 @@ def build_watermark_text_filter(
         x_expr = f'w-tw-{padding}'
         y_expr = f'h-th-{padding}'
     
-    # Build drawtext filter parts
+    # Build drawtext filter parts (match text overlays: no fix_bounds — some FFmpeg builds
+    # mis-handle fix_bounds with labeled filter_complex chains, which can drop the watermark)
     filter_parts = [
         f"fontfile='{font_file}'" if os.path.exists(font_file) else f"font='{font_file}'",
         f"text='{text}'",
@@ -401,7 +407,6 @@ def build_watermark_text_filter(
         f"fontcolor={fontcolor}",
         f"x={x_expr}",
         f"y={y_expr}",
-        "fix_bounds=1",
     ]
     
     # Add text shadow for better visibility

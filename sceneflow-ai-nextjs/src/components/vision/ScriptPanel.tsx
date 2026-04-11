@@ -5924,8 +5924,8 @@ function SceneCard({
                       </div>
                       {!sfxCollapsed && (
                         <p className="text-xs text-amber-800/80 dark:text-amber-200/70 mb-2">
-                          Add clips with <span className="font-medium">Upload</span> or{' '}
-                          <span className="font-medium">Browse sounds</span> (in-app library).
+                          Add clips with <span className="font-medium">Browse sounds</span> (in-app library) or{' '}
+                          <span className="font-medium">Upload</span>.
                         </p>
                       )}
                       {!sfxCollapsed && (
@@ -5997,11 +5997,11 @@ function SceneCard({
                                       className="h-8 bg-amber-600 hover:bg-amber-700 text-white border-0"
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        uploadAudio?.(sceneIdx, 'sfx', sfxIdx)
+                                        onOpenSfxLibrary?.(sfxIdx, sfxQuery)
                                       }}
                                     >
-                                      <Upload className="w-3.5 h-3.5 mr-1" />
-                                      Replace file
+                                      <Library className="w-3.5 h-3.5 mr-1" />
+                                      Browse sounds
                                     </Button>
                                     <Button
                                       type="button"
@@ -6010,11 +6010,11 @@ function SceneCard({
                                       className="h-8 border-amber-600/50 text-amber-800 dark:text-amber-200"
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        onOpenSfxLibrary?.(sfxIdx, sfxQuery)
+                                        uploadAudio?.(sceneIdx, 'sfx', sfxIdx)
                                       }}
                                     >
-                                      <Library className="w-3.5 h-3.5 mr-1" />
-                                      Browse sounds
+                                      <Upload className="w-3.5 h-3.5 mr-1" />
+                                      Replace file
                                     </Button>
                                   </>
                                 ) : (
@@ -6025,11 +6025,11 @@ function SceneCard({
                                       className="h-8 bg-amber-600 hover:bg-amber-700 text-white border-0"
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        uploadAudio?.(sceneIdx, 'sfx', sfxIdx)
+                                        onOpenSfxLibrary?.(sfxIdx, sfxQuery)
                                       }}
                                     >
-                                      <Upload className="w-3.5 h-3.5 mr-1" />
-                                      Upload
+                                      <Library className="w-3.5 h-3.5 mr-1" />
+                                      Browse sounds
                                     </Button>
                                     <Button
                                       type="button"
@@ -6038,11 +6038,11 @@ function SceneCard({
                                       className="h-8 border-amber-600/50 text-amber-800 dark:text-amber-200"
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        onOpenSfxLibrary?.(sfxIdx, sfxQuery)
+                                        uploadAudio?.(sceneIdx, 'sfx', sfxIdx)
                                       }}
                                     >
-                                      <Library className="w-3.5 h-3.5 mr-1" />
-                                      Browse sounds
+                                      <Upload className="w-3.5 h-3.5 mr-1" />
+                                      Upload
                                     </Button>
                                     <button
                                       type="button"

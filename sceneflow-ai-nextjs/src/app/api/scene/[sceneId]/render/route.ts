@@ -358,20 +358,27 @@ export async function POST(
     // Process watermark config if provided
     // Convert percentage-based values to pixels for FFmpeg
     let watermark: SceneRenderWatermark | undefined
-    if (body.watermark && body.watermark.type) {
+    const wmType = body.watermark?.type
+    if (body.watermark && (wmType === 'text' || wmType === 'image')) {
       const wmPadding = body.watermark.padding || 60
-      // Font size is percentage of video height, convert to pixels
-      const wmFontSize = body.watermark.textStyle?.fontSize 
-        ? Math.round((body.watermark.textStyle.fontSize / 100) * resolution.height)
-        : Math.round(resolution.height * 0.03) // Default 3% of height
+      // Font size is percentage of video height, convert to pixels (avoid falsy 0 skipping default)
+      const pct = body.watermark.textStyle?.fontSize
+      const wmFontSizeRaw =
+        typeof pct === 'number' && Number.isFinite(pct) && pct > 0
+          ? Math.round((pct / 100) * resolution.height)
+          : Math.round(resolution.height * 0.03) // Default 3% of height
+      const wmFontSize = Math.max(12, Math.min(wmFontSizeRaw, resolution.height))
       // Image width is percentage of video width
       const wmImageWidth = body.watermark.imageStyle?.width
         ? Math.round((body.watermark.imageStyle.width / 100) * resolution.width)
         : Math.round(resolution.width * 0.1) // Default 10% of width
       
       watermark = {
-        type: body.watermark.type,
-        text: body.watermark.text,
+        type: wmType,
+        text:
+          wmType === 'text'
+            ? (body.watermark.text?.trim() || 'SceneFlow AI Studio')
+            : body.watermark.text,
         imageUrl: body.watermark.imageUrl,
         anchor: body.watermark.anchor as SceneRenderWatermark['anchor'],
         padding: wmPadding,
