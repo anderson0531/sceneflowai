@@ -94,6 +94,76 @@ export function detectAvailableLanguages(scene: any): string[] {
   return Array.from(languages).sort()
 }
 
+/** Stable id for a dialogue script line index (matches segment dialogueLineIds). */
+export function dialogueLineIdForIndex(dialogueIndex: number): string {
+  return `dialogue-${dialogueIndex}`
+}
+
+/**
+ * Min/max timeline span across segments that assign each dialogue line id.
+ * Used to place dialogue clips at the start of their covered segment range.
+ */
+export function buildDialogueLineSegmentTimeWindows(
+  scene: any
+): Map<string, { start: number; end: number }> {
+  const segments = Array.isArray(scene?.segments) ? scene.segments : []
+  if (segments.length === 0) return new Map()
+
+  const sorted = [...segments].sort((a: any, b: any) => {
+    const ai = a.sequenceIndex ?? 0
+    const bi = b.sequenceIndex ?? 0
+    if (ai !== bi) return ai - bi
+    return (a.startTime ?? 0) - (b.startTime ?? 0)
+  })
+
+  const acc = new Map<string, { minS: number; maxE: number }>()
+  for (const seg of sorted) {
+    const ids: string[] = Array.isArray(seg.dialogueLineIds) ? seg.dialogueLineIds : []
+    if (ids.length === 0) continue
+    const s = typeof seg.startTime === 'number' && Number.isFinite(seg.startTime) ? seg.startTime : 0
+    const endFromTimes =
+      typeof seg.endTime === 'number' && Number.isFinite(seg.endTime)
+        ? seg.endTime
+        : s + (typeof seg.duration === 'number' && Number.isFinite(seg.duration) ? seg.duration : 0)
+    if (!Number.isFinite(endFromTimes) || endFromTimes < s) continue
+    for (const id of ids) {
+      if (!id || typeof id !== 'string') continue
+      const cur = acc.get(id)
+      if (!cur) acc.set(id, { minS: s, maxE: endFromTimes })
+      else {
+        cur.minS = Math.min(cur.minS, s)
+        cur.maxE = Math.max(cur.maxE, endFromTimes)
+      }
+    }
+  }
+  return new Map(
+    [...acc.entries()].map(([k, v]) => [k, { start: v.minS, end: v.maxE }])
+  )
+}
+
+/**
+ * Resolve dialogue clip start time. Explicit `startTime: 0` on every line from the API
+ * used to collapse all clips at t=0 because `0 ?? cursor` keeps 0. After the first clip,
+ * values before the sequential cursor are treated as unset and the cursor is used.
+ */
+function pickDialogueStartTime(
+  explicit: unknown,
+  clipIndex: number,
+  sequentialCursor: number
+): number {
+  if (typeof explicit !== 'number' || Number.isNaN(explicit)) {
+    return sequentialCursor
+  }
+  if (clipIndex === 0) {
+    return explicit
+  }
+  const ALIGN_EPS = 0.02
+  if (explicit + ALIGN_EPS < sequentialCursor) {
+    return sequentialCursor
+  }
+  return explicit
+}
+
 /**
  * Build audio tracks from scene data for a specific language.
  * Returns null for missing audio instead of stale URLs.
@@ -194,10 +264,11 @@ export function buildAudioTracksForLanguage(
         }
         
         const duration = audio.duration || 3
+        const dialogueIndex = audio.dialogueIndex ?? idx
         dialogueClips.push({
           id: `dialogue-${idx}`,
           url,
-          startTime: audio.startTime ?? currentTime,
+          startTime: pickDialogueStartTime(audio.startTime, idx, currentTime),
           duration,
           label: audio.character || audio.speaker || audio.characterName || `Line ${idx + 1}`,
           volume: 1,
@@ -205,7 +276,7 @@ export function buildAudioTracksForLanguage(
           source: 'scene' as AudioClipSource,
           scenePropertyPath: `dialogueAudio.${language}[${idx}].url`,
           characterName: audio.character || audio.speaker || audio.characterName,
-          dialogueIndex: audio.dialogueIndex ?? idx,
+          dialogueIndex,
           isStale: !!staleReason,
           staleReason: staleReason || undefined,
         })
@@ -223,7 +294,7 @@ export function buildAudioTracksForLanguage(
         dialogueClips.push({
           id: `dialogue-${idx}`,
           url,
-          startTime: d.startTime ?? currentTime,
+          startTime: pickDialogueStartTime(d.startTime, idx, currentTime),
           duration,
           label: d.character || `Line ${idx + 1}`,
           volume: 1,
@@ -237,7 +308,30 @@ export function buildAudioTracksForLanguage(
       }
     })
   }
-  
+
+  if (dialogueClips.length > 0) {
+    const windows = buildDialogueLineSegmentTimeWindows(scene)
+    if (windows.size > 0) {
+      for (const clip of dialogueClips) {
+        const idx = clip.dialogueIndex
+        if (typeof idx !== 'number' || Number.isNaN(idx)) continue
+        const w = windows.get(dialogueLineIdForIndex(idx))
+        if (w) {
+          clip.startTime = w.start
+          const slotLen = w.end - w.start
+          if (slotLen > 0.05) {
+            clip.duration = Math.min(clip.duration, slotLen)
+          }
+        }
+      }
+    }
+    dialogueClips.sort((a, b) => {
+      const dt = a.startTime - b.startTime
+      if (Math.abs(dt) > 1e-3) return dt
+      return (a.dialogueIndex ?? 0) - (b.dialogueIndex ?? 0)
+    })
+  }
+
   tracks.dialogue = dialogueClips
   
   // Build music track
@@ -401,7 +495,8 @@ export function buildAudioTracksWithBaselineTiming(
     }
   }
   
-  // Dialogue: Use baseline positions but SHIFT by narration delta + use actual durations
+  // Dialogue: preserve baseline timeline layout (segment-aligned + sequential), shift by
+  // narration anchor delta so dub lines hit the same scene times as the baseline language.
   const { NARRATION_BUFFER, INTER_CLIP_BUFFER } = AUDIO_ALIGNMENT_BUFFERS
   const targetDialogueMap = new Map<number, typeof targetTracks.dialogue[0]>()
   targetTracks.dialogue.forEach(clip => {
@@ -409,12 +504,15 @@ export function buildAudioTracksWithBaselineTiming(
       targetDialogueMap.set(clip.dialogueIndex, clip)
     }
   })
-  
-  // Running cursor for dialogue positioning (starts after narration + buffer + shift)
-  let dialogueCursor = targetNarrationDuration > 0 
-    ? targetNarrationDuration + NARRATION_BUFFER 
-    : (baselineNarrationDuration > 0 ? baselineNarrationDuration + NARRATION_BUFFER : 0)
-  
+
+  const anchorEndBaseline = baselineTracks.voiceover
+    ? baselineNarrationDuration + NARRATION_BUFFER
+    : 0
+  const anchorEndTarget = targetTracks.voiceover
+    ? targetNarrationDuration + NARRATION_BUFFER
+    : 0
+  const dialogueTimelineShift = anchorEndTarget - anchorEndBaseline
+
   baselineTracks.dialogue.forEach((baselineClip, idx) => {
     const targetClip = targetDialogueMap.get(baselineClip.dialogueIndex ?? idx)
     
@@ -424,21 +522,24 @@ export function buildAudioTracksWithBaselineTiming(
       const durationDelta = targetDuration - baselineDuration
       
       result.dialogue.push({
-        ...baselineClip,                      // Keep baseline metadata
+        ...baselineClip,                      // Keep baseline metadata + startTime layout
         url: targetClip.url,                  // Use target language URL
-        startTime: dialogueCursor,            // Position sequentially after shift
+        startTime: baselineClip.startTime + dialogueTimelineShift,
         duration: targetDuration,             // Use ACTUAL target duration
         language: targetLanguage,
         baselineDuration,
         durationDelta,
         actualDuration: targetDuration,
       })
-      
-      // Advance cursor by target duration + buffer
-      dialogueCursor += targetDuration + INTER_CLIP_BUFFER
     }
   })
-  
+
+  let appendCursor = anchorEndTarget
+  if (result.dialogue.length > 0) {
+    appendCursor =
+      Math.max(...result.dialogue.map(d => d.startTime + d.duration)) + INTER_CLIP_BUFFER
+  }
+
   // Handle extra dialogue clips in target that don't exist in baseline
   targetTracks.dialogue.forEach(targetClip => {
     const existsInResult = result.dialogue.some(
@@ -447,13 +548,19 @@ export function buildAudioTracksWithBaselineTiming(
     if (!existsInResult && targetClip.url) {
       result.dialogue.push({
         ...targetClip,
-        startTime: dialogueCursor,
+        startTime: appendCursor,
         language: targetLanguage,
         baselineDuration: 0,  // No baseline reference
         durationDelta: targetClip.duration,  // Entire duration is "extra"
       })
-      dialogueCursor += targetClip.duration + INTER_CLIP_BUFFER
+      appendCursor += targetClip.duration + INTER_CLIP_BUFFER
     }
+  })
+
+  result.dialogue.sort((a, b) => {
+    const dt = a.startTime - b.startTime
+    if (Math.abs(dt) > 1e-3) return dt
+    return (a.dialogueIndex ?? 0) - (b.dialogueIndex ?? 0)
   })
   
   // SFX: Shift by narration delta (SFX anchors to post-narration)
@@ -465,6 +572,18 @@ export function buildAudioTracksWithBaselineTiming(
   })
   
   return result
+}
+
+/**
+ * Dialogue clips with segment-slot layout, stacked-zero fix, and baseline dub timing.
+ * Use this (or full `buildAudioTracksWithBaselineTiming`) from timeline and mixer so layout matches.
+ */
+export function getResolvedDialogueClipsForScene(
+  scene: any,
+  language: string
+): AudioTrackClipV2[] {
+  const baseline = determineBaselineLanguage(scene)
+  return buildAudioTracksWithBaselineTiming(scene, language, baseline).dialogue
 }
 
 /**

@@ -242,7 +242,7 @@ interface ScriptPanelProps {
   /** Apply intelligent auto-alignment of keyframes to audio anchors */
   onApplyIntelligentAlignment?: (sceneId: string, language?: string) => void
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
-  onAudioClipChange?: (sceneIndex: number, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
+  onAudioClipChange?: (sceneIdOrIndex: string | number, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
   onCleanupStaleAudioUrl?: (sceneId: string, staleUrl: string) => void
   onAddEstablishingShot?: (sceneId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
@@ -3429,7 +3429,7 @@ interface SceneCardProps {
   /** Apply intelligent auto-alignment of keyframes to audio anchors */
   onApplyIntelligentAlignment?: (sceneId: string, language?: string) => void
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
-  onAudioClipChange?: (sceneIndex: number, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
+  onAudioClipChange?: (sceneIdOrIndex: string | number, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
   onCleanupStaleAudioUrl?: (sceneId: string, staleUrl: string) => void
   onAddEstablishingShot?: (sceneId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void
   onEstablishingShotStyleChange?: (sceneId: string, segmentId: string, style: 'scale-switch' | 'living-painting' | 'b-roll-cutaway') => void

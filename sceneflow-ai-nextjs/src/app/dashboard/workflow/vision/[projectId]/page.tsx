@@ -3968,10 +3968,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Handle audio clip changes (start time, duration) with persistence
   const handleAudioClipChange = useCallback(
-    (sceneIndex: number, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => {
-      // Validate scene index upfront
-      if (typeof sceneIndex !== 'number' || sceneIndex < 0) {
-        console.error('[Audio Clip Change] Invalid scene index:', sceneIndex)
+    (sceneIdOrIndex: string | number, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => {
+      const sceneIndex =
+        typeof sceneIdOrIndex === 'number' && sceneIdOrIndex >= 0
+          ? sceneIdOrIndex
+          : scenes.findIndex((s, i) => getSceneProductionKey(s as Scene, i) === String(sceneIdOrIndex))
+
+      if (sceneIndex < 0) {
+        console.error('[Audio Clip Change] Scene not found:', sceneIdOrIndex)
         return
       }
       
@@ -3988,17 +3992,34 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             if (changes.duration !== undefined) updatedScene.narrationDuration = changes.duration
           }
         } else if (trackType === 'dialogue') {
-          if (updatedScene.dialogueAudio?.en) {
-            const dialogueIdx = parseInt(clipId.replace('dialogue-', ''))
-            if (!isNaN(dialogueIdx) && updatedScene.dialogueAudio.en[dialogueIdx]) {
-              updatedScene.dialogueAudio = {
-                ...updatedScene.dialogueAudio,
-                en: updatedScene.dialogueAudio.en.map((d: any, i: number) => 
-                  i === dialogueIdx 
-                    ? { ...d, startTime: changes.startTime ?? d.startTime, duration: changes.duration ?? d.duration }
-                    : d
-                )
-              }
+          const dialogueIdx = parseInt(clipId.replace(/^dialogue-/, ''), 10)
+          if (
+            !isNaN(dialogueIdx) &&
+            updatedScene.dialogueAudio &&
+            typeof updatedScene.dialogueAudio === 'object' &&
+            !Array.isArray(updatedScene.dialogueAudio)
+          ) {
+            updatedScene.dialogueAudio = { ...updatedScene.dialogueAudio }
+            for (const lang of Object.keys(updatedScene.dialogueAudio)) {
+              const arr = updatedScene.dialogueAudio[lang]
+              if (!Array.isArray(arr)) continue
+              updatedScene.dialogueAudio[lang] = arr.map((d: any, i: number) => {
+                const di = typeof d.dialogueIndex === 'number' ? d.dialogueIndex : i
+                if (di !== dialogueIdx) return d
+                const next = { ...d }
+                if (changes.startTime !== undefined) {
+                  // Persisted 0 on lines after the first re-triggers stacked-at-zero layout; omit so builder uses slots/sequence.
+                  if (changes.startTime === 0 && dialogueIdx > 0) {
+                    delete next.startTime
+                  } else {
+                    next.startTime = changes.startTime
+                  }
+                }
+                if (changes.duration !== undefined) {
+                  next.duration = changes.duration
+                }
+                return next
+              })
             }
           }
         } else if (trackType === 'sfx') {
@@ -4090,7 +4111,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       console.log('[Audio Clip Change]', { sceneIndex, trackType, clipId, changes })
     },
-    [project?.id, project?.metadata]
+    [project?.id, project?.metadata, scenes]
   )
   
   // Track stale URLs pending cleanup - used to avoid race conditions with regeneration

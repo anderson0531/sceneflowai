@@ -101,8 +101,15 @@ import type {
   MixerAudioTracks,
 } from './types'
 import { SCENEFLOW_WATERMARK_STORAGE_KEY } from './sceneRenderBurnInPayload'
+import { getResolvedDialogueClipsForScene } from './audioTrackBuilder'
 
 export type { ProductionTarget, TextOverlay, TextOverlayStyle, TextOverlayPosition, TextOverlayTiming, AudioTrackConfig, MixerAudioTracks }
+
+/** Treat 0 as a valid dialogue start time (unlike `||` fallbacks). */
+function mixerDialogueStart(clip: { startTime?: number }, idx: number, fallbackStep: number): number {
+  if (clip.startTime != null && Number.isFinite(clip.startTime)) return clip.startTime
+  return idx * fallbackStep
+}
 
 // Duplicate constant to avoid module-level import (keep in sync with LocalRenderService.ts)
 const LOCAL_RENDER_MAX_DURATION = 300
@@ -746,7 +753,8 @@ function ScenePreviewPlayer({
             ? audioTracks.narration.startOffset + (currentAudioUrls.dialogue[0]?.duration || totalDuration)
             : 0,
           ...(audioTracks.dialogue.enabled 
-            ? currentAudioUrls.dialogue.map(d => (d.startTime || 0) + (d.duration || 0))
+            ? currentAudioUrls.dialogue.map((d, i) =>
+                mixerDialogueStart(d, i, 3) + (d.duration ?? 0))
             : [0]),
           audioTracks.music.enabled && currentAudioUrls.music ? totalDuration : 0
         )
@@ -866,7 +874,7 @@ function ScenePreviewPlayer({
         
         audioEl.volume = isMuted ? 0 : audioTracks.dialogue.volume
         // Offset clip timing by dialogue track start segment
-        const clipStart = dialogueStartTime + (clip.startTime || (idx * 3))
+        const clipStart = dialogueStartTime + mixerDialogueStart(clip, idx, 3)
         const clipEnd = clipStart + (clip.duration || 3)
         
         if (isPlaying && currentTime >= clipStart && currentTime < clipEnd) {
@@ -1875,7 +1883,7 @@ function DialogueLineControls({
       id: clipId,
       enabled: true,
       volume: globalVolume,
-      startTime: dialogueClips[index].startTime || 0,
+      startTime: dialogueClips[index].startTime ?? 0,
       duration: dialogueClips[index].duration || 3,
     }
     onConfigChange({
@@ -1897,7 +1905,7 @@ function DialogueLineControls({
           id: clipId,
           enabled: true,
           volume: globalVolume,
-          startTime: clip.startTime || 0,
+          startTime: clip.startTime ?? 0,
           duration: clip.duration || 3,
         }
         const isPlaying = playingIndex === index
@@ -2562,23 +2570,73 @@ export function SceneProductionMixer({
     return Array.from(langs)
   }, [audioAssets])
 
+  /** Minimal scene shape for shared audio layout (segment dialogueLineIds + multi-lang audio). */
+  const mixerAudioSceneStub = useMemo(
+    () => ({
+      segments,
+      dialogueAudio: audioAssets.dialogueAudio,
+      narrationAudio: audioAssets.narrationAudio,
+      narrationAudioUrl: audioAssets.narrationAudioUrl,
+      dialogue: audioAssets.dialogue ?? [],
+      musicAudio: audioAssets.musicAudio,
+      sfxAudio: audioAssets.sfx?.map(s => s.audioUrl).filter((u): u is string => !!u) ?? [],
+      sfx: audioAssets.sfx,
+    }),
+    [segments, audioAssets]
+  )
+
+  const resolvedDialogueClips = useMemo(
+    () => getResolvedDialogueClipsForScene(mixerAudioSceneStub, selectedLanguage),
+    [mixerAudioSceneStub, selectedLanguage]
+  )
+
+  const dialogueLayoutSignature = useMemo(
+    () =>
+      JSON.stringify(
+        resolvedDialogueClips.map(c => [
+          c.id,
+          c.url,
+          c.startTime,
+          c.duration,
+          c.dialogueIndex,
+        ])
+      ),
+    [resolvedDialogueClips]
+  )
+
   // Get audio URLs for selected language
   const currentAudioUrls = useMemo(() => {
     const narrationUrl = audioAssets.narrationAudio?.[selectedLanguage]?.url 
       || audioAssets.narrationAudio?.en?.url 
       || audioAssets.narrationAudioUrl
     
-    const dialogueEntries = (audioAssets.dialogueAudio?.[selectedLanguage] 
-      || audioAssets.dialogueAudio?.en 
-      || []).filter(Boolean)
-      .map((d, index) => ({
-        id: `dialogue-${index}-${d.character}`,
-        audioUrl: d.audioUrl,
-        character: d.character,
-        text: d.text,
-        startTime: d.startTime,
-        duration: d.duration,
-      }))
+    const rawDialogue =
+      audioAssets.dialogueAudio?.[selectedLanguage] ||
+      audioAssets.dialogueAudio?.en ||
+      []
+
+    const dialogueEntries = resolvedDialogueClips
+      .filter(c => c.url)
+      .map(clip => {
+        const di = clip.dialogueIndex
+        const raw = (Array.isArray(rawDialogue)
+          ? rawDialogue.find(
+              (r: { dialogueIndex?: number }) =>
+                typeof r?.dialogueIndex === 'number' && r.dialogueIndex === di
+            )
+          : undefined) ??
+          rawDialogue[typeof di === 'number' ? di : 0] as
+          | { audioUrl?: string; character?: string; line?: string; text?: string }
+          | undefined
+        return {
+          id: clip.id,
+          audioUrl: clip.url ?? undefined,
+          character: clip.characterName ?? raw?.character,
+          text: raw?.line ?? raw?.text,
+          startTime: clip.startTime,
+          duration: clip.duration,
+        }
+      })
     
     const musicUrl = audioAssets.musicAudio
     
@@ -2591,9 +2649,9 @@ export function SceneProductionMixer({
       music: musicUrl,
       sfx: sfxEntries,
     }
-  }, [audioAssets, selectedLanguage])
+  }, [audioAssets, selectedLanguage, resolvedDialogueClips])
 
-  // Initialize editable dialogue clips from audio assets
+  // Initialize editable dialogue clips from layout engine (updates when segments / language / audio change)
   useEffect(() => {
     if (currentAudioUrls.dialogue && currentAudioUrls.dialogue.length > 0) {
       const clips: AudioClipInfo[] = currentAudioUrls.dialogue.map(clip => ({
@@ -2608,7 +2666,21 @@ export function SceneProductionMixer({
     } else {
       setEditableDialogueClips([])
     }
-  }, [currentAudioUrls.dialogue])
+    // dialogueLayoutSignature encodes clip ids, urls, timing; omit currentAudioUrls from deps to avoid resetting after drag edits
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync only when layout engine output changes
+  }, [dialogueLayoutSignature])
+
+  /** Dialogue start/duration from timeline drags override layout engine for preview + render. */
+  const playbackAudioUrls = useMemo(() => {
+    const byId = new Map(editableDialogueClips.map(c => [c.id, c]))
+    if (currentAudioUrls.dialogue.length === 0) return currentAudioUrls
+    const dialogue = currentAudioUrls.dialogue.map(d => {
+      const ed = byId.get(d.id)
+      if (!ed) return d
+      return { ...d, startTime: ed.startTime, duration: ed.duration }
+    })
+    return { ...currentAudioUrls, dialogue }
+  }, [currentAudioUrls, editableDialogueClips])
   
   // === Preview State ===
   const [isMuted, setIsMuted] = useState(false)
@@ -2704,15 +2776,15 @@ export function SceneProductionMixer({
     let maxDuration = 0
     
     // Narration duration
-    if (audioTracks.narration.enabled && currentAudioUrls.narration) {
-      maxDuration = Math.max(maxDuration, audioTracks.narration.startOffset + (currentAudioUrls.narrationDuration ?? 0))
+    if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
+      maxDuration = Math.max(maxDuration, audioTracks.narration.startOffset + (playbackAudioUrls.narrationDuration ?? 0))
     }
     
     // Dialogue duration - sum of all clips or last clip end time
-    if (audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0) {
-      const dialogueEndTimes = currentAudioUrls.dialogue.map((clip, idx) => {
-        const startTime = clip.startTime || (idx * 3) // Default spacing if no startTime
-        const duration = clip.duration || 3
+    if (audioTracks.dialogue.enabled && playbackAudioUrls.dialogue.length > 0) {
+      const dialogueEndTimes = playbackAudioUrls.dialogue.map((clip, idx) => {
+        const startTime = mixerDialogueStart(clip, idx, 3)
+        const duration = clip.duration ?? 3
         return startTime + duration
       })
       maxDuration = Math.max(maxDuration, ...dialogueEndTimes)
@@ -2720,17 +2792,17 @@ export function SceneProductionMixer({
     
     // Music typically loops, so doesn't extend duration
     // SFX duration
-    if (audioTracks.sfx.enabled && currentAudioUrls.sfx.length > 0) {
-      const sfxEndTimes = currentAudioUrls.sfx.map(clip => {
-        const startTime = clip.startTime || 0
-        const duration = clip.duration || 2
+    if (audioTracks.sfx.enabled && playbackAudioUrls.sfx.length > 0) {
+      const sfxEndTimes = playbackAudioUrls.sfx.map(clip => {
+        const startTime = clip.startTime ?? 0
+        const duration = clip.duration ?? 2
         return startTime + duration
       })
       maxDuration = Math.max(maxDuration, ...sfxEndTimes)
     }
     
     return maxDuration
-  }, [audioTracks, currentAudioUrls])
+  }, [audioTracks, playbackAudioUrls])
   
   // Total duration = max of video and audio (Elastic Timing)
   const totalDuration = useMemo(() => {
@@ -2871,40 +2943,40 @@ export function SceneProductionMixer({
       // Build audio tracks payload
       const audioTracksPayload: Record<string, Array<{ url: string; startTime: number; duration: number; volume: number; character?: string }>> = {}
       
-      if (audioTracks.narration.enabled && currentAudioUrls.narration) {
+      if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
         audioTracksPayload.narration = [{
-          url: currentAudioUrls.narration,
+          url: playbackAudioUrls.narration,
           startTime: audioTracks.narration.startOffset,
-          duration: currentAudioUrls.narrationDuration || totalDuration,
+          duration: playbackAudioUrls.narrationDuration || totalDuration,
           volume: audioTracks.narration.volume,
         }]
       }
       
-      if (audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0) {
-        audioTracksPayload.dialogue = currentAudioUrls.dialogue
+      if (audioTracks.dialogue.enabled && playbackAudioUrls.dialogue.length > 0) {
+        audioTracksPayload.dialogue = playbackAudioUrls.dialogue
           .filter(d => d?.audioUrl)
           .map((d, i) => ({
             url: d.audioUrl!,
-            startTime: audioTracks.dialogue.startOffset + (i * 2),
+            startTime: audioTracks.dialogue.startOffset + mixerDialogueStart(d, i, 2),
             duration: (d as any).duration || 3,
             volume: audioTracks.dialogue.volume,
             character: (d as any).character,
           }))
       }
       
-      if (audioTracks.music.enabled && currentAudioUrls.music) {
+      if (audioTracks.music.enabled && playbackAudioUrls.music) {
         audioTracksPayload.music = [{
-          url: currentAudioUrls.music,
+          url: playbackAudioUrls.music,
           startTime: audioTracks.music.startOffset,
           duration: totalDuration,
           volume: audioTracks.music.volume,
         }]
       }
       
-      if (audioTracks.sfx.enabled && currentAudioUrls.sfx.length > 0) {
-        audioTracksPayload.sfx = currentAudioUrls.sfx.filter(s => s?.audioUrl).map(s => ({
+      if (audioTracks.sfx.enabled && playbackAudioUrls.sfx.length > 0) {
+        audioTracksPayload.sfx = playbackAudioUrls.sfx.filter(s => s?.audioUrl).map(s => ({
           url: s.audioUrl!,
-          startTime: audioTracks.sfx.startOffset + (s.startTime || 0),
+          startTime: audioTracks.sfx.startOffset + (s.startTime ?? 0),
           duration: s.duration || 5,
           volume: audioTracks.sfx.volume,
         }))
@@ -2999,7 +3071,7 @@ export function SceneProductionMixer({
       overlayStore.hide()
     }
   }, [
-    renderedSegments, segmentAudioConfigs, audioTracks, currentAudioUrls,
+    renderedSegments, segmentAudioConfigs, audioTracks, playbackAudioUrls,
     totalDuration, sceneId, projectId, sceneNumber, resolution, selectedLanguage,
     textOverlays, masterSegmentVolume, watermarkConfig, overlayStore
   ])
@@ -3214,21 +3286,21 @@ export function SceneProductionMixer({
       
       const audioClips: LocalRenderConfig['audioClips'] = []
       
-      if (audioTracks.narration.enabled && currentAudioUrls.narration) {
+      if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
         audioClips.push({
-          url: currentAudioUrls.narration,
+          url: playbackAudioUrls.narration,
           startTime: audioTracks.narration.startOffset,
-          duration: currentAudioUrls.narrationDuration || Math.max(0, totalDuration - audioTracks.narration.startOffset),
+          duration: playbackAudioUrls.narrationDuration || Math.max(0, totalDuration - audioTracks.narration.startOffset),
           volume: audioTracks.narration.volume,
           type: 'narration',
         })
       }
       
-      if (audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0) {
-        currentAudioUrls.dialogue.forEach((clip, idx) => {
+      if (audioTracks.dialogue.enabled && playbackAudioUrls.dialogue.length > 0) {
+        playbackAudioUrls.dialogue.forEach((clip, idx) => {
           if (!clip.audioUrl) return
           const clipConfig = dialogueClipConfigs[clip.clipId || `clip-${idx}`]
-          const startTime = audioTracks.dialogue.startOffset + (clip.startTime || idx * 2)
+          const startTime = audioTracks.dialogue.startOffset + mixerDialogueStart(clip, idx, 2)
           audioClips.push({
             url: clip.audioUrl,
             startTime,
@@ -3239,9 +3311,9 @@ export function SceneProductionMixer({
         })
       }
       
-      if (audioTracks.music.enabled && currentAudioUrls.music) {
+      if (audioTracks.music.enabled && playbackAudioUrls.music) {
         audioClips.push({
-          url: currentAudioUrls.music,
+          url: playbackAudioUrls.music,
           startTime: audioTracks.music.startOffset,
           duration: Math.max(0, totalDuration - audioTracks.music.startOffset),
           volume: audioTracks.music.volume,
@@ -3249,10 +3321,10 @@ export function SceneProductionMixer({
         })
       }
       
-      if (audioTracks.sfx.enabled && currentAudioUrls.sfx.length > 0) {
-        currentAudioUrls.sfx.forEach(s => {
+      if (audioTracks.sfx.enabled && playbackAudioUrls.sfx.length > 0) {
+        playbackAudioUrls.sfx.forEach(s => {
           if (!s.audioUrl) return
-          const startTime = audioTracks.sfx.startOffset + (s.startTime || 0)
+          const startTime = audioTracks.sfx.startOffset + (s.startTime ?? 0)
           audioClips.push({
             url: s.audioUrl,
             startTime,
@@ -3448,7 +3520,7 @@ export function SceneProductionMixer({
       overlayStore.hide()
     }
   }, [
-    productionTarget.streamType, previewSegments, videoSegments, segments, segmentAudioConfigs, audioTracks, currentAudioUrls,
+    productionTarget.streamType, previewSegments, videoSegments, segments, segmentAudioConfigs, audioTracks, playbackAudioUrls,
     totalDuration, videoTotalDuration, maxAudioDuration, resolution, selectedLanguage, 
     textOverlays, masterSegmentVolume, localRenderSupported, localRenderSupportCheck.reason,
     dialogueClipConfigs, sceneNumber, onRenderComplete, watermarkConfig, overlayStore
@@ -3498,21 +3570,21 @@ export function SceneProductionMixer({
         type: 'narration' | 'dialogue' | 'music' | 'sfx'
       }> = []
       
-      if (audioTracks.narration.enabled && currentAudioUrls.narration) {
+      if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
         audioClips.push({
-          url: currentAudioUrls.narration,
+          url: playbackAudioUrls.narration,
           startTime: audioTracks.narration.startOffset,
-          duration: currentAudioUrls.narrationDuration || Math.max(0, totalDuration - audioTracks.narration.startOffset),
+          duration: playbackAudioUrls.narrationDuration || Math.max(0, totalDuration - audioTracks.narration.startOffset),
           volume: audioTracks.narration.volume,
           type: 'narration',
         })
       }
       
-      if (audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0) {
-        currentAudioUrls.dialogue.forEach((clip, idx) => {
+      if (audioTracks.dialogue.enabled && playbackAudioUrls.dialogue.length > 0) {
+        playbackAudioUrls.dialogue.forEach((clip, idx) => {
           if (!clip.audioUrl) return
           const clipConfig = dialogueClipConfigs[clip.clipId || `clip-${idx}`]
-          const startTime = audioTracks.dialogue.startOffset + (clip.startTime || idx * 2)
+          const startTime = audioTracks.dialogue.startOffset + mixerDialogueStart(clip, idx, 2)
           audioClips.push({
             url: clip.audioUrl,
             startTime,
@@ -3523,9 +3595,9 @@ export function SceneProductionMixer({
         })
       }
       
-      if (audioTracks.music.enabled && currentAudioUrls.music) {
+      if (audioTracks.music.enabled && playbackAudioUrls.music) {
         audioClips.push({
-          url: currentAudioUrls.music,
+          url: playbackAudioUrls.music,
           startTime: audioTracks.music.startOffset,
           duration: Math.max(0, totalDuration - audioTracks.music.startOffset),
           volume: audioTracks.music.volume,
@@ -3533,10 +3605,10 @@ export function SceneProductionMixer({
         })
       }
       
-      if (audioTracks.sfx.enabled && currentAudioUrls.sfx.length > 0) {
-        currentAudioUrls.sfx.forEach(s => {
+      if (audioTracks.sfx.enabled && playbackAudioUrls.sfx.length > 0) {
+        playbackAudioUrls.sfx.forEach(s => {
           if (!s.audioUrl) return
-          const startTime = audioTracks.sfx.startOffset + (s.startTime || 0)
+          const startTime = audioTracks.sfx.startOffset + (s.startTime ?? 0)
           audioClips.push({
             url: s.audioUrl,
             startTime,
@@ -3643,7 +3715,7 @@ export function SceneProductionMixer({
       overlayStore.hide()
     }
   }, [
-    videoSegments, segmentAudioConfigs, audioTracks, currentAudioUrls,
+    videoSegments, segmentAudioConfigs, audioTracks, playbackAudioUrls,
     totalDuration, resolution, textOverlays, masterSegmentVolume,
     dialogueClipConfigs, watermarkConfig, overlayStore
   ])
@@ -3823,7 +3895,7 @@ export function SceneProductionMixer({
                 segments={previewSegments}
                 playbackKind={previewPlaybackKind}
                 audioTracks={audioTracks}
-                currentAudioUrls={currentAudioUrls}
+                currentAudioUrls={playbackAudioUrls}
                 totalDuration={totalDuration}
                 isMuted={isMuted}
                 onToggleMute={() => setIsMuted(prev => !prev)}
@@ -3863,10 +3935,10 @@ export function SceneProductionMixer({
                       audioTracks={audioTracks}
                       onTrackChange={updateTrackConfig}
                       videoTotalDuration={videoTotalDuration}
-                      narrationDuration={currentAudioUrls.narrationDuration}
-                      dialogueDuration={currentAudioUrls.dialogue.reduce((sum, d) => sum + ((d as { duration?: number }).duration || 3), 0)}
+                      narrationDuration={playbackAudioUrls.narrationDuration}
+                      dialogueDuration={playbackAudioUrls.dialogue.reduce((sum, d) => sum + ((d as { duration?: number }).duration || 3), 0)}
                       musicDuration={audioTracks.music.duration ?? videoTotalDuration}
-                      sfxDuration={currentAudioUrls.sfx.reduce((sum, s) => sum + (s.duration || 2), 0)}
+                      sfxDuration={playbackAudioUrls.sfx.reduce((sum, s) => sum + (s.duration || 2), 0)}
                       dialogueClips={editableDialogueClips}
                       onDialogueClipChange={handleDialogueClipChange}
                       textOverlays={textOverlays}
@@ -4676,12 +4748,12 @@ export function SceneProductionMixer({
                 icon={Mic2}
                 config={audioTracks.narration}
                 onConfigChange={(c) => updateTrackConfig('narration', c)}
-                audioUrl={currentAudioUrls.narration}
-                audioDuration={currentAudioUrls.narrationDuration}
+                audioUrl={playbackAudioUrls.narration}
+                audioDuration={playbackAudioUrls.narrationDuration}
                 videoTotalDuration={videoTotalDuration}
                 segmentCount={previewSegments.length}
                 subtitle={audioAssets.narration ? `"${audioAssets.narration.slice(0, 60)}..."` : undefined}
-                hasAudio={!!currentAudioUrls.narration}
+                hasAudio={!!playbackAudioUrls.narration}
                 disabled={isRendering}
                 isCollapsed={collapsedSections.narration}
                 onToggleCollapse={() => toggleSection('narration')}
@@ -4695,17 +4767,17 @@ export function SceneProductionMixer({
                 icon={MessageSquare}
                 config={audioTracks.dialogue}
                 onConfigChange={(c) => updateTrackConfig('dialogue', c)}
-                audioUrl={currentAudioUrls.dialogue[0]?.audioUrl}
+                audioUrl={playbackAudioUrls.dialogue[0]?.audioUrl}
                 videoTotalDuration={videoTotalDuration}
                 segmentCount={previewSegments.length}
-                clipCount={currentAudioUrls.dialogue.length}
-                subtitle={currentAudioUrls.dialogue.length > 0 
-                  ? `${currentAudioUrls.dialogue.length} clip${currentAudioUrls.dialogue.length > 1 ? 's' : ''} • ${languageLabel}`
+                clipCount={playbackAudioUrls.dialogue.length}
+                subtitle={playbackAudioUrls.dialogue.length > 0 
+                  ? `${playbackAudioUrls.dialogue.length} clip${playbackAudioUrls.dialogue.length > 1 ? 's' : ''} • ${languageLabel}`
                   : undefined
                 }
-                hasAudio={currentAudioUrls.dialogue.length > 0}
+                hasAudio={playbackAudioUrls.dialogue.length > 0}
                 disabled={isRendering}
-                dialogueClips={currentAudioUrls.dialogue}
+                dialogueClips={playbackAudioUrls.dialogue}
                 dialogueClipConfigs={dialogueClipConfigs}
                 onDialogueClipConfigChange={setDialogueClipConfigs}
                 isCollapsed={collapsedSections.dialogue}
@@ -4720,14 +4792,14 @@ export function SceneProductionMixer({
                 icon={Sparkles}
                 config={audioTracks.sfx}
                 onConfigChange={(c) => updateTrackConfig('sfx', c)}
-                audioUrl={currentAudioUrls.sfx[0]?.audioUrl}
+                audioUrl={playbackAudioUrls.sfx[0]?.audioUrl}
                 segmentCount={previewSegments.length}
-                clipCount={currentAudioUrls.sfx.length}
-                subtitle={currentAudioUrls.sfx.length > 0 
-                  ? currentAudioUrls.sfx.map(s => s.description).filter(Boolean).join(', ').slice(0, 50)
+                clipCount={playbackAudioUrls.sfx.length}
+                subtitle={playbackAudioUrls.sfx.length > 0 
+                  ? playbackAudioUrls.sfx.map(s => s.description).filter(Boolean).join(', ').slice(0, 50)
                   : undefined
                 }
-                hasAudio={currentAudioUrls.sfx.length > 0}
+                hasAudio={playbackAudioUrls.sfx.length > 0}
                 disabled={isRendering}
                 isCollapsed={collapsedSections.sfx}
                 onToggleCollapse={() => toggleSection('sfx')}
@@ -4739,7 +4811,7 @@ export function SceneProductionMixer({
                 icon={Music}
                 config={audioTracks.music}
                 onConfigChange={(c) => updateTrackConfig('music', c)}
-                audioUrl={currentAudioUrls.music}
+                audioUrl={playbackAudioUrls.music}
                 videoTotalDuration={videoTotalDuration}
                 audioDuration={30}
                 segmentCount={previewSegments.length}
@@ -4747,7 +4819,7 @@ export function SceneProductionMixer({
                   ? audioAssets.music.slice(0, 50) 
                   : audioAssets.music?.description?.slice(0, 50)
                 }
-                hasAudio={!!currentAudioUrls.music}
+                hasAudio={!!playbackAudioUrls.music}
                 disabled={isRendering}
                 showMusicDuration={true}
                 isCollapsed={collapsedSections.music}
