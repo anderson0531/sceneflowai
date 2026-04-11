@@ -183,10 +183,34 @@ export function getVeoIncludeRaiReason(): boolean {
 
 type JsonObject = Record<string, unknown>
 
+/**
+ * Vertex often returns only `{ code, message }` with no safetyRatings; support IDs are inside message.
+ */
+export function extractVertexErrorDetailLines(message: string): string[] {
+  if (!message || typeof message !== 'string') return []
+  const lines: string[] = []
+  const sc = message.match(/support codes?:\s*([\d,\s]+)/i)
+  if (sc) {
+    const raw = sc[1].replace(/\s+/g, ' ').trim()
+    lines.push(`Vertex support code(s): ${raw}`)
+    lines.push(
+      'Quote this code in Google Cloud / Vertex feedback if you report a false positive; it is more specific than “usage guidelines”.'
+    )
+  }
+  const rid = message.match(/request\s+id[:\s]+([a-zA-Z0-9-]+)/i)
+  if (rid) lines.push(`Request ID: ${rid[1]}`)
+  return lines
+}
+
 function collectRaiLines(obj: unknown, depth: number, lines: string[]): void {
   if (obj == null || depth > 8) return
   if (typeof obj !== 'object') return
   const o = obj as JsonObject
+
+  // gRPC-style API error: { code: 3, message: "… Support codes: 29310472" }
+  if (typeof o.code === 'number' && typeof o.message === 'string') {
+    lines.push(...extractVertexErrorDetailLines(o.message))
+  }
 
   const pf = o.promptFeedback
   if (pf && typeof pf === 'object') {
@@ -260,6 +284,9 @@ export function formatVeoRaiDetailsFromPayload(payload: unknown): string | null 
  */
 export function extractVeoRaiDetailsFromErrorString(message: string): string | null {
   if (!message || typeof message !== 'string') return null
+  const fromPlainText = extractVertexErrorDetailLines(message)
+  const plainBlock = fromPlainText.length > 0 ? fromPlainText.join('\n') : null
+
   const tryParse = (s: string): string | null => {
     try {
       return formatVeoRaiDetailsFromPayload(JSON.parse(s))
@@ -268,13 +295,19 @@ export function extractVeoRaiDetailsFromErrorString(message: string): string | n
     }
   }
   const direct = tryParse(message)
-  if (direct) return direct
   const jsonMatch = message.match(/\{[\s\S]*\}/)
-  if (jsonMatch) {
-    const fromEmbed = tryParse(jsonMatch[0])
-    if (fromEmbed) return fromEmbed
+  const fromEmbed = jsonMatch ? tryParse(jsonMatch[0]) : null
+  const fromJson = direct || fromEmbed
+
+  if (fromJson && plainBlock) {
+    const parts = [fromJson]
+    for (const line of plainBlock.split('\n')) {
+      const t = line.trim()
+      if (t && !fromJson.includes(t)) parts.push(t)
+    }
+    return parts.join('\n')
   }
-  return null
+  return fromJson || plainBlock
 }
 
 // =============================================================================
