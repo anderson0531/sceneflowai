@@ -129,10 +129,20 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
     return Math.max(MIN_PPS, Math.min(MAX_PPS, Math.round(idealPPS)))
   })
 
-  // Duration map
+  // Duration map — do not invent narration length when absent (was causing a fake ~5s "ghost" narr clip).
+  // Dialogue extent = latest clip end (absolute timeline), not sum of durations.
+  const dialogueEndFromClips =
+    dialogueClips.length > 0
+      ? Math.max(...dialogueClips.map(c => (c.startTime || 0) + (c.duration || 0)))
+      : 0
   const durations: Record<keyof MixerAudioTracks, number> = {
-    narration: narrationDuration || 5,
-    dialogue: dialogueDuration || 5,
+    narration: narrationDuration != null && narrationDuration > 0 ? narrationDuration : 0,
+    dialogue:
+      dialogueEndFromClips > 0
+        ? dialogueEndFromClips
+        : dialogueDuration != null && dialogueDuration > 0
+          ? dialogueDuration
+          : 0,
     music: musicDuration || 10,
     sfx: sfxDuration || 3,
   }
@@ -151,6 +161,12 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
           // Music is capped to video duration
           continue
         }
+        if (key === 'narration' && (durations.narration || 0) <= 0) {
+          continue
+        }
+        if (key === 'dialogue' && (durations.dialogue || 0) <= 0 && (!dialogueClips || dialogueClips.length === 0)) {
+          continue
+        }
         maxEnd = Math.max(maxEnd, track.startOffset + (durations[key] || 0))
       }
     }
@@ -161,7 +177,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
     }
     // Minimum of 5 seconds or video duration (no artificial cap)
     return Math.max(maxEnd, Math.max(5, videoTotalDuration))
-  }, [audioTracks, videoTotalDuration, durations, textOverlays])
+  }, [audioTracks, videoTotalDuration, durations, textOverlays, dialogueClips])
 
   // Generate ruler ticks - adaptive intervals for any duration
   const ticks = useMemo(() => {
@@ -409,8 +425,8 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
       {/* Scrollable Timeline Content */}
       <div 
         ref={scrollContainerRef}
-        className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
-        style={{ maxHeight: '280px' }}
+        className="overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
+        style={{ maxHeight: 'min(420px, 70vh)' }}
       >
         <div 
           ref={containerRef} 
@@ -497,7 +513,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                   
                   {/* Track content area */}
                   <div className="ml-12 h-full relative">
-                    {config.enabled && (
+                    {config.enabled && duration > 0 && (
                       <div
                         className={`
                           absolute top-1 bottom-1 rounded-sm flex items-center gap-1 px-1.5
@@ -508,7 +524,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                         `}
                         style={{
                           left: `${startPercent}%`,
-                          width: `${Math.max(widthPercent, 3)}%`,
+                          width: `${Math.max(widthPercent, 0.5)}%`,
                           backgroundColor: visual.bgColor,
                           borderLeft: `2px solid ${visual.color}`,
                           borderRight: extendsVideo ? `1px dashed ${visual.color}` : undefined,
@@ -537,12 +553,17 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                   </div>
                 </div>
                 
-                {/* Dialogue clips container */}
-                <div className="relative scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900" style={{ maxHeight: '80px', overflowY: 'auto' }}>
-                  <div className="relative" style={{ minHeight: `${Math.max(20 * dialogueClips.length, 20)}px` }}>
+                {/* Dialogue clips container — clip.startTime is already absolute on the scene timeline */}
+                <div
+                  className="relative scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 overscroll-y-contain pr-0.5"
+                  style={{
+                    maxHeight: `${Math.min(220, Math.max(100, 28 * dialogueClips.length + 12))}px`,
+                    overflowY: 'auto',
+                  }}
+                >
+                  <div className="relative" style={{ minHeight: `${Math.max(26 * dialogueClips.length, 26)}px` }}>
                     {dialogueClips.map((clip, idx) => {
-                      const narrationOffset = audioTracks.narration.enabled ? audioTracks.narration.startOffset + narrationDuration : 0;
-                      const startTime = clip.startTime + narrationOffset;
+                      const startTime = clip.startTime
                       const startPercent = (startTime / totalDuration) * 100
                       const widthPercent = (clip.duration / totalDuration) * 100
                       const isDragging = draggingClipId === clip.id
@@ -561,8 +582,8 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                           style={{
                             left: `${startPercent}%`,
                             width: `${Math.max(widthPercent, 3)}%`,
-                            top: `${idx * 20}px`,
-                            height: '20px',
+                            top: `${idx * 26}px`,
+                            height: '24px',
                             backgroundColor: 'rgba(167, 139, 250, 0.4)',
                             borderLeft: '1px solid #a855f7',
                             borderRadius: '3px',

@@ -557,7 +557,8 @@ function ScenePreviewPlayer({
   audioTracks: MixerAudioTracks
   currentAudioUrls: {
     narration?: string
-    dialogue: Array<{ audioUrl?: string; duration?: number; startTime?: number }>
+    narrationDuration?: number
+    dialogue: Array<{ id?: string; audioUrl?: string; duration?: number; startTime?: number }>
     music?: string
     sfx: Array<{ audioUrl?: string; duration?: number; startTime?: number }>
   }
@@ -576,7 +577,7 @@ function ScenePreviewPlayer({
   const videoRef = useRef<HTMLVideoElement>(null)
   const narrationRef = useRef<HTMLAudioElement>(null)
   const musicRef = useRef<HTMLAudioElement>(null)
-  const dialogueRefs = useRef<(HTMLAudioElement | null)[]>([])
+  const dialogueRefsById = useRef<Map<string, HTMLAudioElement | null>>(new Map())
   
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -748,14 +749,24 @@ function ScenePreviewPlayer({
         setCurrentSegmentIndex(prev => prev + 1)
       } else {
         // Last segment ended - check if audio extends beyond video
+        const dialogueStartBase = getSegmentStartTime(audioTracks.dialogue.startSegment)
+        const dialogueEnds =
+          audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0
+            ? currentAudioUrls.dialogue.map((d, i) => {
+                const t0 = dialogueStartBase + mixerDialogueStart(d, i, 3)
+                return t0 + (d.duration ?? 0)
+              })
+            : [0]
+        const narrEnd =
+          audioTracks.narration.enabled &&
+          currentAudioUrls.narration &&
+          (currentAudioUrls.narrationDuration ?? 0) > 0
+            ? getSegmentStartTime(audioTracks.narration.startSegment) +
+              (currentAudioUrls.narrationDuration ?? 0)
+            : 0
         const audioEndTime = Math.max(
-          audioTracks.narration.enabled && currentAudioUrls.narration 
-            ? audioTracks.narration.startOffset + (currentAudioUrls.dialogue[0]?.duration || totalDuration)
-            : 0,
-          ...(audioTracks.dialogue.enabled 
-            ? currentAudioUrls.dialogue.map((d, i) =>
-                mixerDialogueStart(d, i, 3) + (d.duration ?? 0))
-            : [0]),
+          narrEnd,
+          ...dialogueEnds,
           audioTracks.music.enabled && currentAudioUrls.music ? totalDuration : 0
         )
         
@@ -815,21 +826,19 @@ function ScenePreviewPlayer({
   
   // Sync audio tracks with video playback
   useEffect(() => {
-    // Helper to get effective end segment
-    const getEffectiveEndSegment = (config: { endSegment: number }) => 
-      config.endSegment === -1 ? segments.length - 1 : Math.min(config.endSegment, segments.length - 1)
-    
-    // Narration sync - uses segment range
-    if (narrationRef.current && audioTracks.narration.enabled) {
+    // Narration sync — only when a real narration URL exists (avoids enabled + empty track)
+    if (
+      narrationRef.current &&
+      audioTracks.narration.enabled &&
+      currentAudioUrls.narration
+    ) {
       narrationRef.current.volume = isMuted ? 0 : audioTracks.narration.volume
       const narrationStartTime = getSegmentStartTime(audioTracks.narration.startSegment)
-      const narrationEndSegment = getEffectiveEndSegment(audioTracks.narration)
-      const narrationVideoEndTime = getSegmentEndTime(narrationEndSegment)
       
-      // Play from segment start, continue even if audio extends beyond video segment
       if (isPlaying && currentTime >= narrationStartTime) {
         const narrationLocalTime = currentTime - narrationStartTime
-        if (Math.abs(narrationRef.current.currentTime - narrationLocalTime) > 0.5) {
+        const drift = Math.abs(narrationRef.current.currentTime - narrationLocalTime)
+        if (drift > 0.85) {
           narrationRef.current.currentTime = narrationLocalTime
         }
         if (narrationRef.current.paused) {
@@ -849,7 +858,7 @@ function ScenePreviewPlayer({
       
       if (isPlaying && currentTime >= musicStartTime) {
         const musicLocalTime = currentTime - musicStartTime
-        if (Math.abs(musicRef.current.currentTime - musicLocalTime) > 0.5) {
+        if (Math.abs(musicRef.current.currentTime - musicLocalTime) > 0.85) {
           musicRef.current.currentTime = musicLocalTime
         }
         if (musicRef.current.paused) {
@@ -862,38 +871,37 @@ function ScenePreviewPlayer({
       musicRef.current.pause()
     }
     
-    // Dialogue sync - uses segment range, play clips within range
+    // Dialogue sync — refs keyed by clip id so order matches layout after sort/regeneration
     if (audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0) {
       const dialogueStartTime = getSegmentStartTime(audioTracks.dialogue.startSegment)
-      const dialogueEndSegment = getEffectiveEndSegment(audioTracks.dialogue)
-      const dialogueVideoEndTime = getSegmentEndTime(dialogueEndSegment)
-      
+      const EPS = 0.03
+
       currentAudioUrls.dialogue.forEach((clip, idx) => {
-        const audioEl = dialogueRefs.current[idx]
+        const clipKey = clip.id ?? `__dialogue_${idx}`
+        const audioEl = dialogueRefsById.current.get(clipKey)
         if (!audioEl || !clip.audioUrl) return
-        
+
         audioEl.volume = isMuted ? 0 : audioTracks.dialogue.volume
-        // Offset clip timing by dialogue track start segment
         const clipStart = dialogueStartTime + mixerDialogueStart(clip, idx, 3)
-        const clipEnd = clipStart + (clip.duration || 3)
-        
+        const clipEnd = clipStart + (clip.duration || 3) + EPS
+
         if (isPlaying && currentTime >= clipStart && currentTime < clipEnd) {
-          const clipLocalTime = currentTime - clipStart
-          if (Math.abs(audioEl.currentTime - clipLocalTime) > 0.5) {
+          const clipLocalTime = Math.max(0, currentTime - clipStart)
+          const drift = Math.abs(audioEl.currentTime - clipLocalTime)
+          if (drift > 0.85) {
             audioEl.currentTime = clipLocalTime
           }
           if (audioEl.paused) {
             audioEl.play().catch(() => {})
           }
-        } else {
+        } else if (!audioEl.paused) {
           audioEl.pause()
         }
       })
     } else {
-      // Pause all dialogue
-      dialogueRefs.current.forEach(el => el?.pause())
+      dialogueRefsById.current.forEach(el => el?.pause())
     }
-  }, [isPlaying, currentTime, audioTracks, currentAudioUrls, isMuted, segments, getSegmentStartTime, getSegmentEndTime])
+  }, [isPlaying, currentTime, audioTracks, currentAudioUrls, isMuted, getSegmentStartTime])
   
   // Load new segment video when segment index changes
   useEffect(() => {
@@ -937,12 +945,13 @@ function ScenePreviewPlayer({
         musicRef.current.pause()
         musicRef.current.src = ''
       }
-      dialogueRefs.current.forEach(el => {
+      dialogueRefsById.current.forEach(el => {
         if (el) {
           el.pause()
           el.src = ''
         }
       })
+      dialogueRefsById.current.clear()
       
       // Clear loaded URL ref
       loadedVideoUrlRef.current = null
@@ -973,7 +982,7 @@ function ScenePreviewPlayer({
       video.pause()
       narrationRef.current?.pause()
       musicRef.current?.pause()
-      dialogueRefs.current.forEach(el => el?.pause())
+      dialogueRefsById.current.forEach(el => el?.pause())
       if (audioTimerRef.current) {
         clearInterval(audioTimerRef.current)
         audioTimerRef.current = null
@@ -1456,14 +1465,21 @@ function ScenePreviewPlayer({
         <audio ref={musicRef} src={currentAudioUrls.music} preload="auto" loop />
       )}
       {/* Dialogue audio elements - one per clip */}
-      {currentAudioUrls.dialogue.map((clip, idx) => clip?.audioUrl && (
-        <audio 
-          key={idx} 
-          ref={el => { dialogueRefs.current[idx] = el }} 
-          src={clip.audioUrl} 
-          preload="auto" 
-        />
-      ))}
+      {currentAudioUrls.dialogue.map((clip, idx) => {
+        if (!clip?.audioUrl) return null
+        const clipKey = clip.id ?? `__dialogue_${idx}`
+        return (
+          <audio
+            key={clipKey}
+            ref={el => {
+              if (el) dialogueRefsById.current.set(clipKey, el)
+              else dialogueRefsById.current.delete(clipKey)
+            }}
+            src={clip.audioUrl}
+            preload="auto"
+          />
+        )
+      })}
     </div>
   )
 }
