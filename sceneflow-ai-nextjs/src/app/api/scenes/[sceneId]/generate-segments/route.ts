@@ -4,7 +4,8 @@ import { safeParseJsonFromText } from '@/lib/safeJson'
 import { moderatePrompt, getUserModerationContext, createBlockedResponse } from '@/lib/moderation'
 import { SegmentDirection, detectNoTalentSegment } from '@/types/scene-direction'
 
-export const maxDuration = 120
+/** Vercel: match `vercel.json` for this route — long Gemini JSON on global endpoint. */
+export const maxDuration = 300
 export const runtime = 'nodejs'
 
 // Simple hash function for staleness detection
@@ -1535,7 +1536,8 @@ async function callGeminiForIntelligentSegmentation(prompt: string): Promise<Int
     temperature: 0.7,
     maxOutputTokens: 32768, // Increased for complex segmentation responses
     responseMimeType: 'application/json',
-    timeoutMs: 100000, // 100s timeout (buffer for Vercel's 120s limit)
+    timeoutMs: 280000, // Aligned with route maxDuration 300s (project fetch + moderation + LLM)
+    maxRetries: 0, // One full-window attempt; stacked retries exceed serverless budget
     thinkingLevel: 'minimal', // Disable deep thinking to reduce latency
   })
   
@@ -1896,9 +1898,8 @@ async function callGeminiForSegmentDirections(prompt: string): Promise<any[]> {
     // Long scenes: many segments × long keyframe strings — 8k often truncates mid-string (invalid JSON)
     maxOutputTokens: 32768,
     responseMimeType: 'application/json',
-    // Match route maxDuration (120s): long audio timelines need more than 55s for Vertex global endpoint
-    timeoutMs: 110000,
-    maxRetries: 1, // Avoid stacking multiple full timeouts inside the serverless window
+    timeoutMs: 280000, // gemini-3 global + large JSON can exceed 110s; route allows 300s
+    maxRetries: 0,
     thinkingLevel: 'minimal',
   })
   return parseDirectionsResponse(result.text, result.finishReason)
@@ -2189,7 +2190,8 @@ async function callGeminiForPromptsFromDirections(prompt: string): Promise<Intel
     temperature: 0.7,
     maxOutputTokens: 32768,
     responseMimeType: 'application/json',
-    timeoutMs: 100000,
+    timeoutMs: 280000,
+    maxRetries: 0,
     thinkingLevel: 'minimal',
   })
   return parseGeminiResponseText(result.text)

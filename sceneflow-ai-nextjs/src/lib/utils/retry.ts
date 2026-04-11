@@ -56,26 +56,30 @@ export function isRetryableError(error: any, status?: number): boolean {
   if (status === 429 || status === 503 || status === 502) {
     return true
   }
+
+  if (error?.code === 'TIMEOUT' || error?.code === 'ETIMEDOUT') {
+    return true
+  }
   
   // Check error message patterns
   const message = error?.message || String(error) || ''
+  const lower = message.toLowerCase()
   const retryablePatterns = [
     '429',
     'RESOURCE_EXHAUSTED',
     'rate limit',
     'quota',
-    'Too Many Requests',
+    'too many requests',
     'temporarily unavailable',
     'UNAVAILABLE',
     'DEADLINE_EXCEEDED',
+    'timed out', // fetchWithRetry uses "timed out" (not substring of "timeout")
     'timeout',
     'ECONNRESET',
     'ETIMEDOUT',
   ]
   
-  return retryablePatterns.some(pattern => 
-    message.toLowerCase().includes(pattern.toLowerCase())
-  )
+  return retryablePatterns.some(pattern => lower.includes(pattern.toLowerCase()))
 }
 
 /**
