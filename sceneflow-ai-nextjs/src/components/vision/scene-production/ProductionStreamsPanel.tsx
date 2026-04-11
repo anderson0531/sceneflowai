@@ -560,14 +560,14 @@ export function ProductionStreamsPanel({
   
   return (
     <div className="space-y-4">
-      {/* Header — match main section titles (e.g. Stream Selection / mixer) */}
+      {/* Header — align with ProductionSectionHeader (KeyFrame / Video / Mixer cards) */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-center gap-3 min-w-0">
-          <Film className="w-5 h-5 text-purple-400 flex-shrink-0" />
+        <div className="flex items-center gap-2 min-w-0">
+          <Film className="w-4 h-4 text-purple-400 flex-shrink-0" aria-hidden />
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg font-semibold text-slate-100 tracking-tight">
-                Scene Production Streams
+              <h3 className="text-sm font-medium text-white tracking-tight">
+                Production Streams
               </h3>
               {productionStreams.length > 0 && (
                 <span className="px-2 py-0.5 text-xs font-medium bg-purple-500/20 text-purple-200 rounded-md border border-purple-500/25">

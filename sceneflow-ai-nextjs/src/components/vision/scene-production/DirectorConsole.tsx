@@ -177,6 +177,8 @@ export type DirectorWorkflowSlots = {
   streamCount: number
   mixerCollapsed: boolean
   setMixerCollapsed: React.Dispatch<React.SetStateAction<boolean>>
+  streamsCollapsed: boolean
+  setStreamsCollapsed: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 export type DirectorWorkflowProps = DirectorConsoleProps & {
@@ -281,8 +283,8 @@ function DirectorConsoleRoot({
   // Scene video player modal state
   const [isScenePlayerOpen, setIsScenePlayerOpen] = useState(false)
   
-  // Collapsible state - default closed when segments are generated
-  const [isExpanded, setIsExpanded] = useState(false)
+  // Production Streams panel collapsed by default (expand when user needs exports)
+  const [streamsCollapsed, setStreamsCollapsed] = useState(true)
   
   // Scene Production Mixer collapsed state with localStorage persistence (default: collapsed)
   const [mixerCollapsed, setMixerCollapsed] = useState(() => {
@@ -892,16 +894,12 @@ function DirectorConsoleRoot({
             icon={Film}
             title="Video Generation"
             badge={`${statusCounts.rendered}/${statusCounts.total}`}
-            collapsible
-            expanded={isExpanded}
-            onToggle={() => setIsExpanded(!isExpanded)}
             rightHint="Generate video clips from keyframes using AI"
-            className="flex-1 min-w-0 border-0 p-0 hover:bg-transparent"
+            className="flex-1 min-w-0 border-0 p-0"
           />
           <div className="flex-shrink-0 px-1 sm:px-0">{generateControls}</div>
         </div>
-        {isExpanded && (
-          <div className="px-4 pb-4 pt-3 space-y-4 border-t border-gray-700/50">
+        <div className="px-4 pb-4 pt-3 space-y-4 border-t border-gray-700/50">
             {isRendering && (
               <div className="space-y-2">
                 <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
@@ -1156,8 +1154,7 @@ function DirectorConsoleRoot({
                 )
               })}
             </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   )
@@ -1196,8 +1193,23 @@ function DirectorConsoleRoot({
           title="Production Streams"
           badge={productionStreams.length}
           rightHint="Animatic and stitched video exports"
+          collapsible
+          expanded={!streamsCollapsed}
+          onToggle={() => setStreamsCollapsed((c) => !c)}
         />
-        <div className="border-t border-gray-700/50 px-3 pb-3 pt-2">{streamsBody}</div>
+        <AnimatePresence>
+          {!streamsCollapsed && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="border-t border-gray-700/50 px-3 pb-3 pt-2 overflow-hidden"
+            >
+              {streamsBody}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )
@@ -1212,6 +1224,8 @@ function DirectorConsoleRoot({
           streamCount: productionStreams.length,
           mixerCollapsed,
           setMixerCollapsed,
+          streamsCollapsed,
+          setStreamsCollapsed,
         })
       ) : (
         defaultWorkflowLayout

@@ -9,9 +9,6 @@ import {
   Clock,
   Image as ImageIcon,
   Video,
-  ChevronDown,
-  ChevronUp,
-  ChevronRight,
   Layers,
   RefreshCw,
   Settings2,
@@ -242,12 +239,7 @@ export function SegmentFrameTimeline({
   adjacentSceneContext,
   filmContext,
 }: SegmentFrameTimelineProps) {
-  // Calculate stats first to determine initial expanded state
   const stats = useMemo(() => calculateTimelineStats(segments), [segments])
-  
-  // Auto-collapse when status is "All Ready" or "FTV Mode Ready"
-  const isAllReady = stats.fullyAnchored === stats.total && stats.total > 0
-  const [isExpanded, setIsExpanded] = useState(!isAllReady)
   
   // Frame prompt dialog state
   const [framePromptDialogOpen, setFramePromptDialogOpen] = useState(false)
@@ -421,20 +413,16 @@ export function SegmentFrameTimeline({
 
   return (
     <div className="space-y-4">
-      {/* Keyframe Generation Header - FTV Mode Ready style */}
+      {/* Keyframe toolbar (no nested collapse — parent KeyFrame Production section toggles visibility) */}
       <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-lg">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <button 
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-3 transition-colors group"
-          >
-            {isExpanded ? <ChevronDown className="w-4 h-4 text-cyan-400 flex-shrink-0" /> : <ChevronRight className="w-4 h-4 text-cyan-400 flex-shrink-0" />}
+          <div className="flex items-center gap-3 min-w-0">
             <ImageIcon className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-            <span className="text-cyan-300 font-medium">Keyframe Generation</span>
+            <span className="text-sm font-medium text-cyan-300">Keyframe Generation</span>
             <Badge variant="secondary" className="text-[10px] bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
               {stats.fullyAnchored}/{stats.total} ready
             </Badge>
-          </button>
+          </div>
           
           <div className="flex items-center gap-3">
             {/* Progress Bar - Compact */}
@@ -488,8 +476,7 @@ export function SegmentFrameTimeline({
         </div>
         
         {/* Stats Row - Inline */}
-        {isExpanded && (
-        <div className="flex items-center gap-4 px-4 py-2 text-xs border-t border-cyan-500/10 bg-gray-900/30">
+        <div className="flex items-center gap-4 px-4 py-2 text-xs border-t border-cyan-500/10 bg-gray-900/30 mt-3">
           <span className="flex items-center gap-1.5 text-slate-400">
             <Clock className="w-3.5 h-3.5" />
             {stats.totalDuration.toFixed(1)}s total
@@ -518,11 +505,9 @@ export function SegmentFrameTimeline({
             </>
           )}
         </div>
-        )}
       </div>
         
       {/* Segment Cards with Shot Grouping */}
-      {isExpanded && (
         <div className="space-y-2">
           {segments.map((segment, index) => {
             const isContinuationGroup = segment.transitionType === 'CONTINUE'
@@ -570,7 +555,6 @@ export function SegmentFrameTimeline({
             )
           })}
         </div>
-      )}
       
       {/* FTV Mode Ready Banner */}
       {stats.fullyAnchored > 0 && (

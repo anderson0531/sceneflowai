@@ -6891,8 +6891,23 @@ function SceneCard({
                                   title="Production Streams"
                                   badge={slots.streamCount}
                                   rightHint="Animatic and stitched video exports"
+                                  collapsible
+                                  expanded={!slots.streamsCollapsed}
+                                  onToggle={() => slots.setStreamsCollapsed((c) => !c)}
                                 />
-                                <div className="border-t border-gray-700/50 px-3 pb-3 pt-2">{slots.streamsBody}</div>
+                                <AnimatePresence>
+                                  {!slots.streamsCollapsed && (
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: 'auto' }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      transition={{ duration: 0.2 }}
+                                      className="border-t border-gray-700/50 px-3 pb-3 pt-2 overflow-hidden"
+                                    >
+                                      {slots.streamsBody}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
                               </div>
                             </div>
                           )}
