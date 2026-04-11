@@ -2612,9 +2612,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (response.status === 422) {
             // Content policy violation — include vertexDetails for full error context
             const vertexDetails = errorData?.vertexDetails
-            const enrichedMessage = vertexDetails 
+            const vertexRaiDetails = errorData?.vertexRaiDetails as string | undefined
+            let enrichedMessage = vertexDetails
               ? `${errorMessage}\n\nVertex AI Details: ${vertexDetails}`
               : errorMessage
+            if (vertexRaiDetails?.trim()) {
+              enrichedMessage += `\n\nRAI / safety (from Vertex): ${vertexRaiDetails}`
+            }
             // Attach structured error data for the catch handler to use
             const err = new Error(enrichedMessage) as any
             err.contentPolicyData = {
@@ -2626,6 +2630,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               hints: errorData?.hints,
               optionalSanitized: errorData?.optionalSanitized,
               sanitizationChanges: errorData?.sanitizationChanges,
+              vertexRaiDetails: vertexRaiDetails || undefined,
             }
             throw err
           }
@@ -2823,6 +2828,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   hints: contentPolicyData.hints,
                   optionalSanitized: contentPolicyData.optionalSanitized,
                   sanitizationChanges: contentPolicyData.sanitizationChanges,
+                  vertexRaiDetails: contentPolicyData.vertexRaiDetails,
                 }
               }),
             } : segment

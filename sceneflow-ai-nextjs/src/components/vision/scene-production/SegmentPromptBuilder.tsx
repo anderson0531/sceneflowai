@@ -1046,6 +1046,16 @@ export function SegmentPromptBuilder({
                           ? 'Frame-to-Video (FTV) interpolation between two images triggered a content policy violation. This is a common false positive — the AI model interprets the transition between frames as potentially sensitive. Retry with Image-to-Video (I2V) using just your start frame.'
                           : 'The video prompt was rejected by Vertex AI\u0027s safety filters. Use Auto-Fix for quick replacements or AI Rephrase for a complete rewrite.'}
                       </p>
+                      {segment.lastContentPolicyFailure?.vertexRaiDetails ? (
+                        <details className="mt-2 rounded border border-red-800/50 bg-black/20 px-2 py-1.5">
+                          <summary className="text-[11px] text-red-200/90 cursor-pointer select-none">
+                            Show Vertex RAI / safety details
+                          </summary>
+                          <pre className="mt-2 max-h-40 overflow-y-auto text-[10px] text-red-100/80 whitespace-pre-wrap font-mono leading-snug">
+                            {segment.lastContentPolicyFailure.vertexRaiDetails}
+                          </pre>
+                        </details>
+                      ) : null}
                     </div>
                   </div>
                 </div>

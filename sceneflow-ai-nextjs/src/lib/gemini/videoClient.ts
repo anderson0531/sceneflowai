@@ -1,6 +1,11 @@
 import { JWT } from 'google-auth-library';
 import { getVeoModel, DEFAULT_VIDEO_QUALITY } from '@/lib/config/modelConfig';
-import { getVeoSafetySetting, getImagenPersonGeneration } from '@/lib/vertexai/safety';
+import {
+  getVeoSafetySetting,
+  getVeoIncludeRaiReason,
+  getImagenPersonGeneration,
+  formatVeoRaiDetailsFromPayload,
+} from '@/lib/vertexai/safety'
 
 /**
  * Get Google OAuth2 Bearer token for Vertex AI
@@ -152,7 +157,7 @@ interface VideoGenerationOptions {
   durationSeconds?: 4 | 6 | 8
   negativePrompt?: string
   personGeneration?: 'allow_adult' | 'allow_all' | 'dont_allow'
-  safetySetting?: 'block_most' | 'block_some' | 'block_few' | 'block_only_high' // Safety filter threshold
+  safetySetting?: 'block_most' | 'block_some' | 'block_few' | 'block_only_high' | 'block_none' // Vertex safetySetting
   startFrame?: string // Base64 or URL for I2V
   lastFrame?: string // For interpolation
   referenceImages?: ReferenceImage[] // Up to 3 for Veo 3.1
@@ -291,10 +296,18 @@ export async function generateVideoWithVeo(
     // FTV requires exactly 8s duration for stability
     durationSeconds: isFTV ? 8 : (options.durationSeconds || 8),
     personGeneration: personGeneration,
-    safetySetting: safetySetting
+    safetySetting: safetySetting,
+    // Return RAI categories / support codes in errors and operations (Vertex VideoGenerationModelParams)
+    includeRaiReason: getVeoIncludeRaiReason(),
   }
-  
-  console.log('[Veo Video] Safety settings:', { safetySetting, personGeneration, isImageToVideo, isFTV })
+
+  console.log('[Veo Video] Safety settings:', {
+    safetySetting,
+    includeRaiReason: parameters.includeRaiReason,
+    personGeneration,
+    isImageToVideo,
+    isFTV,
+  })
 
   // Add resolution - FTV requires 720p for stability, others can use 1080p
   if (isFTV) {
@@ -411,23 +424,34 @@ export async function generateVideoWithVeo(
     })
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Veo Video] Error response:', errorText);
+      const errorText = await response.text()
+      console.error('[Veo Video] Error response:', errorText)
+      let errorMsg = `Vertex AI error ${response.status}: ${errorText}`
+      try {
+        const parsed = JSON.parse(errorText) as unknown
+        const rai = formatVeoRaiDetailsFromPayload(parsed)
+        if (rai) errorMsg += `\n\nResponsible AI / safety detail:\n${rai}`
+      } catch {
+        /* not JSON */
+      }
       return {
         status: 'FAILED',
-        error: `Vertex AI error ${response.status}: ${errorText}`
-      };
+        error: errorMsg,
+      }
     }
 
-    const data = await response.json();
-    console.log('[Veo Video] Response:', JSON.stringify(data).substring(0, 500));
+    const data = await response.json()
+    console.log('[Veo Video] Response:', JSON.stringify(data).substring(0, 500))
 
     // Check for immediate error in response
     if (data.error) {
+      let errMsg = data.error.message || 'Unknown Vertex AI error'
+      const rai = formatVeoRaiDetailsFromPayload(data)
+      if (rai) errMsg += `\n\nResponsible AI / safety detail:\n${rai}`
       return {
         status: 'FAILED',
-        error: data.error.message || 'Unknown Vertex AI error'
-      };
+        error: errMsg,
+      }
     }
 
     // Vertex AI returns an operation for async processing
@@ -537,16 +561,21 @@ export async function checkVideoGenerationStatus(
       // Check for error in completed operation (e.g., content policy violation)
       // Vertex AI returns { done: true, error: { code: 3, message: "..." } } for policy violations
       if (data.error) {
+        let errMsg = data.error.message || 'Generation failed'
+        const rai = formatVeoRaiDetailsFromPayload(data)
+        if (rai) errMsg += `\n\nResponsible AI / safety detail:\n${rai}`
         return {
           status: 'FAILED',
-          error: data.error.message || 'Generation failed'
+          error: errMsg,
         }
       }
     } else if (data.error) {
-      // Error on an operation that hasn't completed yet (non-done error)
+      let errMsg = data.error.message || 'Generation failed'
+      const rai = formatVeoRaiDetailsFromPayload(data)
+      if (rai) errMsg += `\n\nResponsible AI / safety detail:\n${rai}`
       return {
         status: 'FAILED',
-        error: data.error.message || 'Generation failed'
+        error: errMsg,
       }
     }
 
@@ -556,15 +585,20 @@ export async function checkVideoGenerationStatus(
       const raiFilteredCount = data.response?.raiMediaFilteredCount
       const raiReasons = data.response?.raiMediaFilteredReasons
       if (raiFilteredCount && raiFilteredCount > 0) {
-        const reason = raiReasons?.[0] || 'Content was filtered by safety policies'
+        const reason =
+          Array.isArray(raiReasons) && raiReasons.length > 0
+            ? raiReasons.map(String).join('; ')
+            : 'Content was filtered by safety policies'
         console.error('[Veo Video] Content filtered by RAI:', reason)
-        
-        // Build helpful error message with recommendations
-        const errorMessage = buildRAIFilteredErrorMessage(reason)
-        
+
+        const extra = formatVeoRaiDetailsFromPayload(data)
+        const errorMessage =
+          buildRAIFilteredErrorMessage(reason) +
+          (extra && !extra.includes(reason) ? `\n\nResponsible AI / safety detail:\n${extra}` : '')
+
         return {
           status: 'FAILED',
-          error: errorMessage
+          error: errorMessage,
         }
       }
 

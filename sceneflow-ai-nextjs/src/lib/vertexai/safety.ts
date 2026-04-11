@@ -142,26 +142,139 @@ export function getImagenPersonGeneration(): ImagenPersonGeneration {
 // =============================================================================
 
 /**
- * Veo safety settings
- * block_only_high: Least restrictive (recommended for cinematic content)
- * block_few: Low filtering
- * block_some: Moderate filtering
- * block_most: Strict filtering (default if not configured)
+ * Veo safety settings (maps to Vertex `parameters.safetySetting`)
+ * block_none: Minimal blocking — use only when policy allows (may still be restricted by Google)
+ * block_only_high: Least restrictive common tier — reduces false positives (recommended default)
+ * block_few / block_some / block_most: progressively stricter
  */
-export type VeoSafetySetting = 'block_only_high' | 'block_few' | 'block_some' | 'block_most'
+export type VeoSafetySetting =
+  | 'block_none'
+  | 'block_only_high'
+  | 'block_few'
+  | 'block_some'
+  | 'block_most'
 
 /**
  * Get the configured Veo safety setting from environment
- * Default: block_only_high (least restrictive for cinematic content)
+ * Default: block_only_high (reduces false positives vs block_some/most)
  */
 export function getVeoSafetySetting(): VeoSafetySetting {
   const envSetting = process.env.VEO_SAFETY_SETTING
-  
-  if (envSetting && ['block_only_high', 'block_few', 'block_some', 'block_most'].includes(envSetting)) {
+
+  if (
+    envSetting &&
+    ['block_none', 'block_only_high', 'block_few', 'block_some', 'block_most'].includes(envSetting)
+  ) {
     return envSetting as VeoSafetySetting
   }
-  
+
   return 'block_only_high'
+}
+
+/**
+ * Request Responsible AI filter reasons / categories in Veo responses (Vertex `parameters.includeRaiReason`).
+ * Default true so users see support codes instead of guessing. Set VEO_INCLUDE_RAI_REASON=false to disable.
+ */
+export function getVeoIncludeRaiReason(): boolean {
+  const v = process.env.VEO_INCLUDE_RAI_REASON
+  if (v === '0' || v === 'false' || v === 'off') return false
+  return true
+}
+
+type JsonObject = Record<string, unknown>
+
+function collectRaiLines(obj: unknown, depth: number, lines: string[]): void {
+  if (obj == null || depth > 8) return
+  if (typeof obj !== 'object') return
+  const o = obj as JsonObject
+
+  const pf = o.promptFeedback
+  if (pf && typeof pf === 'object') {
+    const p = pf as JsonObject
+    if (p.blockReason != null) lines.push(`Prompt block reason: ${String(p.blockReason)}`)
+    if (typeof p.blockReasonMessage === 'string' && p.blockReasonMessage.trim())
+      lines.push(p.blockReasonMessage.trim())
+  }
+
+  const sr = o.safetyRatings
+  if (Array.isArray(sr)) {
+    for (const r of sr) {
+      if (!r || typeof r !== 'object') continue
+      const x = r as JsonObject
+      const cat = x.category != null ? String(x.category) : 'category'
+      const prob = x.probability != null ? String(x.probability) : ''
+      const sev = x.severity != null ? ` severity=${String(x.severity)}` : ''
+      const score = x.probabilityScore != null ? ` score=${String(x.probabilityScore)}` : ''
+      if (prob || score) lines.push(`Safety rating: ${cat} — ${prob}${score}${sev}`)
+    }
+  }
+
+  const reasons = o.raiMediaFilteredReasons
+  if (Array.isArray(reasons) && reasons.length > 0) {
+    lines.push(`RAI filter: ${reasons.map((x) => String(x)).join('; ')}`)
+  }
+  if (typeof o.raiMediaFilteredCount === 'number' && o.raiMediaFilteredCount > 0) {
+    lines.push(`RAI filtered media count: ${o.raiMediaFilteredCount}`)
+  }
+
+  const details = o.details
+  if (Array.isArray(details)) {
+    for (const d of details) {
+      if (!d || typeof d !== 'object') continue
+      const di = d as JsonObject
+      const fvs = di.fieldViolations
+      if (Array.isArray(fvs)) {
+        for (const fv of fvs) {
+          if (!fv || typeof fv !== 'object') continue
+          const f = fv as JsonObject
+          if (typeof f.description === 'string' && f.description.trim()) {
+            lines.push(f.description.trim())
+          }
+        }
+      }
+    }
+  }
+
+  const err = o.error
+  if (err && typeof err === 'object') collectRaiLines(err, depth + 1, lines)
+
+  const response = o.response
+  if (response && typeof response === 'object') collectRaiLines(response, depth + 1, lines)
+
+  const gen = (o as JsonObject).generateVideoResponse
+  if (gen && typeof gen === 'object') collectRaiLines(gen, depth + 1, lines)
+}
+
+/**
+ * Human-readable RAI / safety lines from a Vertex or Gemini JSON error/operation payload.
+ */
+export function formatVeoRaiDetailsFromPayload(payload: unknown): string | null {
+  const lines: string[] = []
+  collectRaiLines(payload, 0, lines)
+  const uniq = [...new Set(lines.map((l) => l.trim()).filter(Boolean))]
+  return uniq.length ? uniq.join('\n') : null
+}
+
+/**
+ * Try to parse JSON from a Vertex error string (often embeds `{...}`) and extract RAI details.
+ */
+export function extractVeoRaiDetailsFromErrorString(message: string): string | null {
+  if (!message || typeof message !== 'string') return null
+  const tryParse = (s: string): string | null => {
+    try {
+      return formatVeoRaiDetailsFromPayload(JSON.parse(s))
+    } catch {
+      return null
+    }
+  }
+  const direct = tryParse(message)
+  if (direct) return direct
+  const jsonMatch = message.match(/\{[\s\S]*\}/)
+  if (jsonMatch) {
+    const fromEmbed = tryParse(jsonMatch[0])
+    if (fromEmbed) return fromEmbed
+  }
+  return null
 }
 
 // =============================================================================
@@ -236,6 +349,7 @@ export function logSafetyConfiguration(): void {
   console.log('  Imagen filter level:', getImagenSafetyFilterLevel())
   console.log('  Imagen person generation:', getImagenPersonGeneration())
   console.log('  Veo safety setting:', getVeoSafetySetting())
+  console.log('  Veo includeRaiReason:', getVeoIncludeRaiReason())
 }
 
 /**

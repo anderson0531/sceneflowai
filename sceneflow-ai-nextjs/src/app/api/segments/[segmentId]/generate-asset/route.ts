@@ -22,6 +22,7 @@ import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { getVideoDurationFromBuffer } from '@/lib/video/serverVideoDuration'
 import { separateAudioStemsWithRetry, type StemSeparationResult } from '@/lib/audio/stemSeparation'
 import { computeSourceHash } from '@/lib/audio/stemJobs'
+import { extractVeoRaiDetailsFromErrorString } from '@/lib/vertexai/safety'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -666,6 +667,7 @@ export async function POST(
 
       const hints: string[] = [
         'Vertex reviews the full request: your text plus any start frame, end frame, or reference images. Dramatic abstract visuals are sometimes misread as explosions or harm—even when the frames were AI-generated.',
+        'Preflight may show Low Risk while Vertex still blocks — different classifiers. Server uses VEO_SAFETY_SETTING (default block_only_high). Expand “Vertex RAI / safety details” when present to see categories and probabilities.',
         'If you used Frame-to-Video, try Image-to-Video with only the start frame, or swap one of the keyframes.',
         'If you used reference images, try Text-to-Video without them.',
         'You were not charged for a completed clip when the request is blocked; optional wording fixes below are suggestions only.',
@@ -699,6 +701,8 @@ export async function POST(
           'Content policy: Vertex blocked this generation. The trigger may be your text or a reference/start image. Try optional wording suggestions, remove reference images, or simplify the prompt.'
       }
 
+      const vertexRaiDetails = extractVeoRaiDetailsFromErrorString(originalErrorMessage) || undefined
+
       return NextResponse.json(
         {
           error: errorMessage,
@@ -719,6 +723,8 @@ export async function POST(
           optionalSanitized: optionalSanitizedOut,
           sanitizationChanges,
           vertexDetails: originalErrorMessage,
+          /** Parsed categories / probabilities when includeRaiReason is enabled on Veo */
+          vertexRaiDetails,
           details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined,
         },
         { status: 422 }

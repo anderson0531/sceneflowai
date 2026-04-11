@@ -21,6 +21,11 @@
  */
 
 import { getVeoModel, DEFAULT_VIDEO_QUALITY } from '@/lib/config/modelConfig'
+import {
+  getVeoSafetySetting,
+  getVeoIncludeRaiReason,
+  formatVeoRaiDetailsFromPayload,
+} from '@/lib/vertexai/safety'
 
 // ============================================================================
 // Types
@@ -249,7 +254,10 @@ export async function generateVideoWithGeminiStudio(
   } else {
     parameters.sampleCount = 1
   }
-  
+
+  parameters.safetySetting = getVeoSafetySetting()
+  parameters.includeRaiReason = getVeoIncludeRaiReason()
+
   // Add source video for EXT mode (true video extension)
   // This uses a Veo-generated video reference from Gemini's Files API (valid for 2 days)
   // Note: sourceVideo is mutually exclusive with startFrame - you either extend a video OR use an image
@@ -445,6 +453,13 @@ export async function generateVideoWithGeminiStudio(
       } catch {
         // Not JSON, keep raw error
       }
+      let errOut = `Gemini API error ${response.status}: ${errorText}`
+      try {
+        const rai = formatVeoRaiDetailsFromPayload(JSON.parse(errorText))
+        if (rai) errOut += `\n\nResponsible AI / safety detail:\n${rai}`
+      } catch {
+        /* not json */
+      }
       
       // Handle specific error codes
       if (response.status === 429) {
@@ -457,10 +472,9 @@ export async function generateVideoWithGeminiStudio(
         }
       }
       if (response.status === 400) {
-        // Include the full error for debugging
         return {
           status: 'FAILED',
-          error: `Bad request (400): ${errorText.substring(0, 500)}`
+          error: errOut.length > 1200 ? `${errOut.slice(0, 1200)}…` : errOut,
         }
       }
       if (response.status === 403) {
@@ -472,7 +486,7 @@ export async function generateVideoWithGeminiStudio(
       
       return {
         status: 'FAILED',
-        error: `Gemini API error ${response.status}: ${errorText}`
+        error: errOut.length > 1200 ? `${errOut.slice(0, 1200)}…` : errOut,
       }
     }
     
@@ -481,9 +495,12 @@ export async function generateVideoWithGeminiStudio(
     
     // Check for immediate error
     if (data.error) {
+      let errMsg = data.error.message || 'Unknown Gemini API error'
+      const rai = formatVeoRaiDetailsFromPayload(data)
+      if (rai) errMsg += `\n\nResponsible AI / safety detail:\n${rai}`
       return {
         status: 'FAILED',
-        error: data.error.message || 'Unknown Gemini API error'
+        error: errMsg,
       }
     }
     
@@ -568,9 +585,12 @@ export async function checkGeminiVideoStatus(
     
     // Check for error
     if (data.error) {
+      let errMsg = data.error.message || 'Generation failed'
+      const rai = formatVeoRaiDetailsFromPayload(data)
+      if (rai) errMsg += `\n\nResponsible AI / safety detail:\n${rai}`
       return {
         status: 'FAILED',
-        error: data.error.message || 'Generation failed'
+        error: errMsg,
       }
     }
     
@@ -588,11 +608,17 @@ export async function checkGeminiVideoStatus(
     const raiFilteredCount = generateVideoResponse?.raiMediaFilteredCount
     const raiReasons = generateVideoResponse?.raiMediaFilteredReasons
     if (raiFilteredCount && raiFilteredCount > 0) {
-      const reason = raiReasons?.[0] || 'Content was filtered by safety policies'
+      const reason =
+        Array.isArray(raiReasons) && raiReasons.length > 0
+          ? raiReasons.map(String).join('; ')
+          : 'Content was filtered by safety policies'
       console.error('[Gemini Studio Video] Content filtered by RAI:', reason)
+      const extra = formatVeoRaiDetailsFromPayload(data)
       return {
         status: 'FAILED',
-        error: buildRAIFilteredErrorMessage(reason)
+        error:
+          buildRAIFilteredErrorMessage(reason) +
+          (extra && !extra.includes(reason) ? `\n\nResponsible AI / safety detail:\n${extra}` : ''),
       }
     }
     

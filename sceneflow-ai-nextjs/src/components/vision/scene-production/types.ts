@@ -549,6 +549,8 @@ export interface SceneSegment {
       guidePrompt?: string
     }
     sanitizationChanges?: string[]
+    /** Structured RAI lines from Vertex when includeRaiReason is enabled */
+    vertexRaiDetails?: string
   }
   
   // Segment Direction - approved direction metadata from the AI segmentation phase
