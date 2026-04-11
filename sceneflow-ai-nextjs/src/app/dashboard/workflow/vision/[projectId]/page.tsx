@@ -8460,7 +8460,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
-    // Estimate duration: ~30 seconds per scene for all audio types (narration + dialogue + music + SFX)
+    // Estimate duration: ~30 seconds per scene for narration + dialogue + music (SFX added per scene, not here)
     const estimatedDuration = Math.max(60, sceneCount * 30) // Minimum 60 seconds
 
     setIsGeneratingAudio(true)
@@ -8474,7 +8474,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           body: JSON.stringify({ 
             projectId,
             includeMusic: true,
-            includeSFX: true,
+            includeSFX: false,
             deleteAllAudioFirst: true, // Delete all existing audio before generating new
             language, // Pass language for multi-language translation support
           }),
@@ -8571,7 +8571,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       },
       {
-        message: `Generating all audio for ${sceneCount} scenes (narration, dialogue, music, and SFX)`,
+        message: `Generating all audio for ${sceneCount} scenes (narration, dialogue, and music)`,
         estimatedDuration,
         operationType: 'audio-generation'
       }
@@ -9591,12 +9591,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log(`[Update Scene Audio] Music generated for Scene ${sceneIndex + 1}`)
   }
   
-  // Generate SFX for a scene (used by handleUpdateSceneAudio)
-  const generateSFXForScene = async (sceneIndex: number, sfxIndex: number, scene: any) => {
-    try { const { toast } = require('sonner'); toast.error('SFX generation is temporarily disabled.') } catch {}
-    return
-  }
-
   // Update all scene audio - clears existing audio and regenerates sequentially
   const handleUpdateSceneAudio = async (sceneIndex: number) => {
     if (!script?.script?.scenes?.[sceneIndex]) {
@@ -9654,7 +9648,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         // Now build list of audio to generate based on CLEANED scene content
         // Include TTS audio (description, narration, dialogue) and also music/SFX
-        const generationTasks: Array<{type: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', character?: string, dialogueIndex?: number, sfxIndex?: number, label: string}> = []
+        const generationTasks: Array<{type: 'description' | 'narration' | 'dialogue' | 'music', character?: string, dialogueIndex?: number, label: string}> = []
         
         // Add description if scene has visual content
         if (cleanedScene.visualDescription || cleanedScene.action || cleanedScene.summary) {
@@ -9688,20 +9682,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           generationTasks.push({ type: 'music', label: 'background music' })
         }
         
-        // Add all SFX
-        if (cleanedScene.sfx && cleanedScene.sfx.length > 0) {
-          cleanedScene.sfx.forEach((sfx: any, idx: number) => {
-            const sfxDescription = typeof sfx === 'string' ? sfx : sfx.description
-            if (sfxDescription) {
-              generationTasks.push({
-                type: 'sfx',
-                sfxIndex: idx,
-                label: `SFX ${idx + 1}`
-              })
-            }
-          })
-        }
-        
+        // SFX: use Browse sounds / Upload in the scene card (not regenerated here)
+
         if (generationTasks.length === 0) {
           toast.info(`No audio content to generate for Scene ${sceneIndex + 1}`)
           return
@@ -9717,8 +9699,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               await handleGenerateSceneAudio(sceneIndex, task.type, task.character, task.dialogueIndex, undefined, cleanedScene)
             } else if (task.type === 'music') {
               await generateMusicForScene(sceneIndex, cleanedScene)
-            } else if (task.type === 'sfx' && task.sfxIndex !== undefined) {
-              await generateSFXForScene(sceneIndex, task.sfxIndex, cleanedScene)
             }
             successCount++
           } catch (error) {
@@ -9841,6 +9821,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             return { ...s, audioUrl: undefined }
           })
         }
+        delete updatedScene.sfxSourceMeta
       } else if (sfxIndex !== undefined) {
         if (updatedScene.sfxAudio?.[sfxIndex]) {
           urlsToDelete.push(updatedScene.sfxAudio[sfxIndex])
@@ -9853,6 +9834,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const newSfx = [...(updatedScene.sfx || [])]
           newSfx[sfxIndex] = { ...newSfx[sfxIndex], audioUrl: undefined }
           updatedScene.sfx = newSfx
+        }
+        if (Array.isArray(updatedScene.sfxSourceMeta) && updatedScene.sfxSourceMeta.length > sfxIndex) {
+          const meta = [...updatedScene.sfxSourceMeta]
+          meta[sfxIndex] = null
+          updatedScene.sfxSourceMeta = meta
         }
       }
     }

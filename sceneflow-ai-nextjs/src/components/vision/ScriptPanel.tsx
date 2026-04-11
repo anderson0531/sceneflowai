@@ -14,7 +14,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -62,6 +62,8 @@ import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
 import { getKenBurnsConfig, generateKenBurnsKeyframes, type KenBurnsIntensity } from '@/lib/animation/kenBurns'
 import { SceneDirectionProvider } from '@/contexts/SceneDirectionContext'
 import { GenerateAudioDialog } from './GenerateAudioDialog'
+import { FreesoundBrowseModal } from './FreesoundBrowseModal'
+import { sfxSearchQuery } from '@/lib/audio/sfxSearchQuery'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { useAudioPlayerContext, type Track } from '@/context/AudioPlayerProvider'
@@ -771,7 +773,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [showProductionScenes, setShowProductionScenes] = useState(false)
   
   // Audio features state
-  const [generatingSFX, setGeneratingSFX] = useState<{sceneIdx: number, sfxIdx: number} | null>(null)
+  const [freesoundPicker, setFreesoundPicker] = useState<{
+    sceneIdx: number
+    sfxIdx: number
+    query: string
+  } | null>(null)
   const [generatingMusic, setGeneratingMusic] = useState<number | null>(null)
   const [audioTracks, setAudioTracks] = useState<AudioTrack[]>([])
   const [isPlayingMixed, setIsPlayingMixed] = useState(false)
@@ -1033,17 +1039,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     const includeSceneImages = options?.generateSceneImages ?? false
     const forceRegenerateImages = options?.forceRegenerateImages ?? false
 
-    // If all types are selected, use the batch generation API (includes music and SFX)
-    if (audioTypes.narration && audioTypes.dialogue && audioTypes.music && audioTypes.sfx) {
-      if (onGenerateAllAudio) {
-        setDialogGenerationProgress(null)
-        setDialogGenerationMode('foreground')
-        generationModeRef.current = 'foreground'
-        backgroundRequestedRef.current = false
-        await onGenerateAllAudio(language) // Pass language for translation support
-        setGenerateAudioDialogOpen(false)
-        return
-      }
+    // Batch API covers narration, dialogue, and music only (not SFX — use Browse / Upload per scene).
+    if (audioTypes.narration && audioTypes.dialogue && audioTypes.music && onGenerateAllAudio) {
+      setDialogGenerationProgress(null)
+      setDialogGenerationMode('foreground')
+      generationModeRef.current = 'foreground'
+      backgroundRequestedRef.current = false
+      await onGenerateAllAudio(language)
+      setGenerateAudioDialogOpen(false)
+      return
     }
 
     if (!onGenerateSceneAudio) {
@@ -1072,19 +1076,19 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       ? scenes.filter((scene: any) => scene?.music || typeof scene?.music === 'string').length
       : 0
 
-    // Count SFX items across all scenes
-    const totalSfxItems = audioTypes.sfx
-      ? scenes.reduce((sum: number, scene: any) => {
-          if (!Array.isArray(scene.sfx)) return sum
-          return sum + scene.sfx.length
-        }, 0)
-      : 0
-
     const totalSceneSteps = audioTypes.narration ? scenes.length : 0
     const totalCharacters = includeCharacters ? (characters?.length || 0) : 0
     const totalImages = includeSceneImages ? scenes.length : 0
-    const totalSteps = totalSceneSteps + totalDialogueLines + totalMusicScenes + totalSfxItems + totalCharacters + totalImages
+    const totalSteps = totalSceneSteps + totalDialogueLines + totalMusicScenes + totalCharacters + totalImages
     const audioTasksSelected = audioTypes.narration || audioTypes.dialogue || audioTypes.music || audioTypes.sfx
+
+    if (audioTypes.sfx && !audioTypes.narration && !audioTypes.dialogue && !audioTypes.music && !includeCharacters && !includeSceneImages) {
+      toast.info(
+        'Sound effects are added per scene: use Browse sounds or Upload in the scene card.',
+        { style: toastVisualStyle }
+      )
+      return
+    }
 
     if (totalSteps === 0) {
       toast.info('Select at least one generation option.', { style: toastVisualStyle })
@@ -1137,7 +1141,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       currentMusic: 0,
       totalMusic: totalMusicScenes,
       currentSfx: 0,
-      totalSfx: totalSfxItems,
+      totalSfx: 0,
       currentCharacter: 0,
       totalCharacters,
       currentImage: 0,
@@ -1274,43 +1278,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         }
         if (processedMusic > 0) {
           tasksCompleted.push('music')
-        }
-      }
-
-      // Generate SFX for scenes that have sound effects
-      if (audioTypes.sfx) {
-        let processedSfx = 0
-        for (let sceneIdx = 0; sceneIdx < scenes.length; sceneIdx++) {
-          const scene = scenes[sceneIdx]
-          if (!Array.isArray(scene.sfx)) continue
-
-          for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
-            // Always regenerate SFX regardless of existing audio
-            processedSfx += 1
-            updateDialogProgress((prev) => prev ? {
-              ...prev,
-              phase: 'sfx',
-              currentScene: sceneIdx + 1,
-              currentSfx: processedSfx,
-              message: `Generating sound effect ${processedSfx} of ${totalSfxItems} (Scene ${sceneIdx + 1})`,
-            } : prev)
-
-            try {
-              await generateSFX(sceneIdx, sfxIdx)
-            } catch (error) {
-              console.error(`[SFX Generation] Error for scene ${sceneIdx}, sfx ${sfxIdx}:`, error)
-            }
-
-            completedSteps += 1
-            updateDialogProgress((prev) => prev ? {
-              ...prev,
-              completedSteps,
-              currentSfx: processedSfx,
-            } : prev)
-          }
-        }
-        if (processedSfx > 0) {
-          tasksCompleted.push('sfx')
         }
       }
 
@@ -1857,11 +1824,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   }
 
   // Audio generation functions
-  const generateSFX = async (sceneIdx: number, sfxIdx: number, skipOverlay?: boolean) => {
-    if (!skipOverlay) overlayStore?.hide()
-    toast.info('Auto SFX generation is disabled. Upload curated SFX audio (MP3/WAV) for this slot.')
-  }
-
   const generateMusic = async (sceneIdx: number, skipOverlay?: boolean) => {
     const scene = scenes[sceneIdx]
     const music = scene?.music
@@ -1940,7 +1902,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         
         // Handle different audio types
         if (type === 'sfx' || type === 'music') {
-          await saveSceneAudio(sceneIdx, type, audioUrl, sfxIdx)
+          await saveSceneAudio(
+            sceneIdx,
+            type,
+            audioUrl,
+            sfxIdx,
+            type === 'sfx' ? null : undefined
+          )
         } else if (type === 'description') {
           // Update description audio
           const updatedScenes = [...scenes]
@@ -1998,7 +1966,13 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     input.click()
   }
 
-  const saveSceneAudio = async (sceneIdx: number, audioType: 'sfx' | 'music', audioUrl: string, sfxIdx?: number) => {
+  const saveSceneAudio = async (
+    sceneIdx: number,
+    audioType: 'sfx' | 'music',
+    audioUrl: string,
+    sfxIdx?: number,
+    sfxAttribution?: Record<string, unknown> | null
+  ) => {
     // CRITICAL FIX: Use atomic server update instead of stale client state
     // The old approach used local `scenes` state which was stale and overwrote server-saved dialogue audio
     
@@ -2011,18 +1985,21 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     })
     
     try {
+      const atomicAudioUpdate: Record<string, unknown> = {
+        sceneIndex: sceneIdx,
+        audioType,
+        audioUrl,
+        sfxIndex: sfxIdx,
+      }
+      if (audioType === 'sfx' && sfxIdx !== undefined && sfxAttribution !== undefined) {
+        atomicAudioUpdate.sfxAttribution = sfxAttribution
+      }
+
       // Make atomic update to database via PATCH endpoint
       const response = await fetch(`/api/projects/${projectId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          atomicAudioUpdate: {
-            sceneIndex: sceneIdx,
-            audioType,
-            audioUrl,
-            sfxIndex: sfxIdx
-          }
-        })
+        body: JSON.stringify({ atomicAudioUpdate })
       })
       
       if (!response.ok) {
@@ -2796,14 +2773,15 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       }}
                       generatingMusic={generatingMusic}
                       setGeneratingMusic={setGeneratingMusic}
-                      generatingSFX={generatingSFX}
-                      setGeneratingSFX={setGeneratingSFX}
                       generateMusic={generateMusic}
-                      generateSFX={generateSFX}
+                      uploadAudio={uploadAudio}
+                      onOpenSfxLibrary={(sfxIdx: number, query: string) =>
+                        setFreesoundPicker({ sceneIdx: idx, sfxIdx, query })
+                      }
                       onGenerateSceneDirection={onGenerateSceneDirection}
                       generatingDirectionFor={generatingDirectionFor}
                       isOptimizingDirection={isOptimizingDirection}
-                      onOpenDirectionOptimize={(sceneIdx) => {
+                      onOpenDirectionOptimize={(sceneIdx: number) => {
                         setDirectionOptimizeSceneIdx(sceneIdx)
                         setDirectionOptimizeDialogOpen(true)
                       }}
@@ -3119,6 +3097,26 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         mode={dialogGenerationMode}
         onRunInBackground={isDialogGenerating && dialogGenerationMode === 'foreground' ? handleRunGenerationInBackground : undefined}
       />
+
+      {projectId && freesoundPicker ? (
+        <FreesoundBrowseModal
+          open
+          onOpenChange={(open) => {
+            if (!open) setFreesoundPicker(null)
+          }}
+          initialQuery={freesoundPicker.query}
+          projectId={projectId}
+          onImported={(url, attribution) => {
+            void saveSceneAudio(
+              freesoundPicker.sceneIdx,
+              'sfx',
+              url,
+              freesoundPicker.sfxIdx,
+              attribution as Record<string, unknown>
+            )
+          }}
+        />
+      ) : null}
       
       {/* Translation Import Modal */}
       <Dialog open={translationImportOpen} onOpenChange={setTranslationImportOpen}>
@@ -3336,6 +3334,13 @@ interface SceneCardProps {
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
   // NEW: Delete specific audio from scene
   onDeleteSceneAudio?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', dialogueIndex?: number, sfxIndex?: number) => void
+  uploadAudio?: (
+    sceneIdx: number,
+    type: 'description' | 'narration' | 'dialogue' | 'sfx' | 'music',
+    sfxIdx?: number,
+    dialogueIdx?: number,
+    characterName?: string
+  ) => void
   // NEW: Enhance scene context with AI-generated beat, character arc, and thematic context
   onEnhanceSceneContext?: (sceneIndex: number) => Promise<void>
   // NEW: Audio start time offset controls
@@ -3350,11 +3355,10 @@ interface SceneCardProps {
   // NEW: Music and SFX generation props
   generatingMusic?: number | null
   setGeneratingMusic?: (state: number | null) => void
-  generatingSFX?: {sceneIdx: number, sfxIdx: number} | null
-  setGeneratingSFX?: (state: {sceneIdx: number, sfxIdx: number} | null) => void
   // Functions for generating and saving audio
   generateMusic?: (sceneIdx: number) => Promise<void>
-  generateSFX?: (sceneIdx: number, sfxIdx: number) => Promise<void>
+  /** Open in-app Freesound browser for this SFX slot */
+  onOpenSfxLibrary?: (sfxIdx: number, initialQuery: string) => void
   // NEW: Scene direction generation props
   onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
   generatingDirectionFor?: number | null
@@ -3543,10 +3547,9 @@ function SceneCard({
   onOpenSceneReview,
   generatingMusic,
   setGeneratingMusic,
-  generatingSFX,
-  setGeneratingSFX,
   generateMusic,
-  generateSFX,
+  onOpenSfxLibrary,
+  uploadAudio,
   onGenerateSceneDirection,
   generatingDirectionFor,
   isOptimizingDirection,
@@ -5031,12 +5034,7 @@ function SceneCard({
                                   if (scene.music) {
                                     await generateMusic(sceneIdx, true)
                                   }
-                                  // Generate all SFX
-                                  if (Array.isArray(scene.sfx)) {
-                                    for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
-                                      await generateSFX(sceneIdx, sfxIdx, true)
-                                    }
-                                  }
+                                  // SFX: add via Upload or Browse sounds in the scene card (no batch generation)
                                   overlayStore?.hide()
                                 } catch (error) {
                                   console.error('[ScriptPanel] Generate all failed:', error)
@@ -5354,7 +5352,7 @@ function SceneCard({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                uploadAudio(sceneIdx, 'narration')
+                                uploadAudio?.(sceneIdx, 'narration')
                               }}
                               className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
                               title="Upload Narration Audio"
@@ -5391,7 +5389,7 @@ function SceneCard({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                uploadAudio(sceneIdx, 'narration')
+                                uploadAudio?.(sceneIdx, 'narration')
                               }}
                               className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
                               title="Upload Narration Audio"
@@ -5706,7 +5704,7 @@ function SceneCard({
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    uploadAudio(sceneIdx, 'dialogue', undefined, i, d.character)
+                                    uploadAudio?.(sceneIdx, 'dialogue', undefined, i, d.character)
                                   }}
                                   className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
                                   title="Upload Dialogue Audio"
@@ -5753,7 +5751,7 @@ function SceneCard({
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  uploadAudio(sceneIdx, 'dialogue', undefined, i, d.character)
+                                  uploadAudio?.(sceneIdx, 'dialogue', undefined, i, d.character)
                                 }}
                                 className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
                                 title="Upload Dialogue Audio"
@@ -5853,7 +5851,7 @@ function SceneCard({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                uploadAudio(sceneIdx, 'music')
+                                uploadAudio?.(sceneIdx, 'music')
                               }}
                               className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
                               title="Upload Music Audio"
@@ -5890,7 +5888,7 @@ function SceneCard({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                uploadAudio(sceneIdx, 'music')
+                                uploadAudio?.(sceneIdx, 'music')
                               }}
                               className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
                               title="Upload Music Audio"
@@ -5925,14 +5923,27 @@ function SceneCard({
                         </button>
                       </div>
                       {!sfxCollapsed && (
+                        <p className="text-xs text-amber-800/80 dark:text-amber-200/70 mb-2">
+                          Add clips with <span className="font-medium">Upload</span> or{' '}
+                          <span className="font-medium">Browse sounds</span> (in-app library).
+                        </p>
+                      )}
+                      {!sfxCollapsed && (
                         <div className="space-y-2">
                         {scene.sfx.map((sfx: any, sfxIdx: number) => {
                         const sfxAudio = scene.sfxAudio?.[sfxIdx]
+                        const sfxDesc = typeof sfx === 'string' ? sfx : sfx.description
+                        const sfxQuery = sfxSearchQuery(sfx)
+                        const sfxMeta = Array.isArray(scene.sfxSourceMeta) ? scene.sfxSourceMeta[sfxIdx] : null
+                        const creditLine =
+                          sfxMeta && typeof sfxMeta === 'object' && 'creditLine' in sfxMeta
+                            ? String((sfxMeta as { creditLine?: string }).creditLine || '')
+                            : ''
                         return (
                           <div key={sfxIdx} className="p-3 bg-amber-100/50 dark:bg-amber-950/30 rounded-lg border border-amber-300/50 dark:border-amber-700/50">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                                 <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">SFX {sfxIdx + 1}</span>
                                 {sfxAudio && (
                                   <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
@@ -5941,117 +5952,131 @@ function SceneCard({
                                   </span>
                                 )}
                               </div>
-                              {sfxAudio ? (
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      onPlayAudio?.(sfxAudio, `sfx-${sfxIdx}`)
-                                    }}
-                                    className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
-                                    title="Play SFX"
-                                  >
-                                    {playingAudio === sfxAudio ? (
-                                      <Pause className="w-4 h-4" />
-                                    ) : (
-                                      <Play className="w-4 h-4" />
-                                    )}
-                                  </button>
-                                  <button
-                                    onClick={async (e) => {
-                                      e.stopPropagation()
-                                      setGeneratingSFX?.({ sceneIdx, sfxIdx })
-                                      try {
-                                        await generateSFX?.(sceneIdx, sfxIdx)
-                                      } catch (error) {
-                                        console.error('[ScriptPanel] SFX regeneration failed:', error)
-                                      } finally {
-                                        setGeneratingSFX?.(null)
-                                      }
-                                    }}
-                                    disabled={generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx}
-                                    className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded disabled:opacity-50"
-                                    title="Regenerate SFX"
-                                  >
-                                    {generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx ? (
-                                      <Loader className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                      <RefreshCw className="w-4 h-4" />
-                                    )}
-                                  </button>
-                                  <a
-                                    href={sfxAudio}
-                                    download
-                                    className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
-                                    title="Download SFX"
-                                  >
-                                    <Download className="w-4 h-4" />
-                                  </a>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      if (confirm('Delete this sound effect? You can regenerate it later.')) {
-                                        onDeleteSceneAudio?.(sceneIdx, 'sfx', undefined, sfxIdx)
-                                      }
-                                    }}
-                                    className="p-1 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
-                                    title="Delete SFX Audio"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      uploadAudio(sceneIdx, 'sfx', sfxIdx)
-                                    }}
-                                    className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
-                                    title="Upload SFX Audio"
-                                  >
-                                    <Upload className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={async (e) => {
-                                      e.stopPropagation()
-                                      setGeneratingSFX?.({ sceneIdx, sfxIdx })
-                                      try {
-                                        await generateSFX?.(sceneIdx, sfxIdx)
-                                      } catch (error) {
-                                        console.error('[ScriptPanel] SFX generation failed:', error)
-                                      } finally {
-                                        setGeneratingSFX?.(null)
-                                      }
-                                    }}
-                                    disabled={generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx}
-                                    className="text-xs px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded disabled:opacity-50"
-                                  >
-                                    {generatingSFX?.sceneIdx === sceneIdx && generatingSFX?.sfxIdx === sfxIdx ? (
-                                      <div className="flex items-center gap-1">
-                                        <Loader className="w-3 h-3 animate-spin" />
-                                        Generating...
-                                      </div>
-                                    ) : (
-                                      'Generate'
-                                    )}
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      uploadAudio(sceneIdx, 'sfx', sfxIdx)
-                                    }}
-                                    className="p-1 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
-                                    title="Upload SFX Audio"
-                                  >
-                                    <Upload className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              )}
+                              <div className="flex flex-wrap items-center gap-2">
+                                {sfxAudio ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        onPlayAudio?.(sfxAudio, `sfx-${sfxIdx}`)
+                                      }}
+                                      className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
+                                      title="Play SFX"
+                                    >
+                                      {playingAudio === sfxAudio ? (
+                                        <Pause className="w-4 h-4" />
+                                      ) : (
+                                        <Play className="w-4 h-4" />
+                                      )}
+                                    </button>
+                                    <a
+                                      href={sfxAudio}
+                                      download
+                                      className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-800 rounded inline-flex"
+                                      title="Download SFX"
+                                    >
+                                      <Download className="w-4 h-4" />
+                                    </a>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (confirm('Delete this sound effect? You can add a new file or pick from Browse sounds.')) {
+                                          onDeleteSceneAudio?.(sceneIdx, 'sfx', undefined, sfxIdx)
+                                        }
+                                      }}
+                                      className="p-1.5 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
+                                      title="Delete SFX Audio"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      className="h-8 bg-amber-600 hover:bg-amber-700 text-white border-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        uploadAudio?.(sceneIdx, 'sfx', sfxIdx)
+                                      }}
+                                    >
+                                      <Upload className="w-3.5 h-3.5 mr-1" />
+                                      Replace file
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-8 border-amber-600/50 text-amber-800 dark:text-amber-200"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        onOpenSfxLibrary?.(sfxIdx, sfxQuery)
+                                      }}
+                                    >
+                                      <Library className="w-3.5 h-3.5 mr-1" />
+                                      Browse sounds
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      className="h-8 bg-amber-600 hover:bg-amber-700 text-white border-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        uploadAudio?.(sceneIdx, 'sfx', sfxIdx)
+                                      }}
+                                    >
+                                      <Upload className="w-3.5 h-3.5 mr-1" />
+                                      Upload
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-8 border-amber-600/50 text-amber-800 dark:text-amber-200"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        onOpenSfxLibrary?.(sfxIdx, sfxQuery)
+                                      }}
+                                    >
+                                      <Library className="w-3.5 h-3.5 mr-1" />
+                                      Browse sounds
+                                    </Button>
+                                    <button
+                                      type="button"
+                                      onClick={async (e) => {
+                                        e.stopPropagation()
+                                        const t = sfxQuery
+                                        if (!t) {
+                                          toast.info('Nothing to copy for this slot.')
+                                          return
+                                        }
+                                        try {
+                                          await navigator.clipboard.writeText(t)
+                                          toast.success('Search text copied')
+                                        } catch {
+                                          toast.error('Could not copy')
+                                        }
+                                      }}
+                                      className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
+                                      title="Copy search text"
+                                    >
+                                      <Copy className="w-4 h-4" />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
                             </div>
                             <div className="text-sm text-gray-700 dark:text-gray-300 italic">
-                              {typeof sfx === 'string' ? sfx : sfx.description}
+                              {sfxDesc}
                             </div>
+                            {creditLine ? (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-snug whitespace-pre-wrap">
+                                {creditLine}
+                              </p>
+                            ) : null}
                           </div>
                         )
                       })}

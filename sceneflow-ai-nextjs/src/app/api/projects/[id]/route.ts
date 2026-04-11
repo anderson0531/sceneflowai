@@ -598,7 +598,7 @@ export async function PATCH(
     
     // Handle atomic audio update
     if (body.atomicAudioUpdate) {
-      const { sceneIndex, audioType, audioUrl, sfxIndex } = body.atomicAudioUpdate
+      const { sceneIndex, audioType, audioUrl, sfxIndex, sfxAttribution } = body.atomicAudioUpdate
       
       console.log('[Projects PATCH] Atomic audio update:', {
         projectId: id,
@@ -650,6 +650,18 @@ export async function PATCH(
             scene.sfx[sfxIndex].audioUrl = audioUrl
           }
         }
+
+        // Parallel attribution metadata (plain-text export / compliance; not shown as hyperlinks in SFX UI)
+        if (sfxAttribution !== undefined) {
+          if (!Array.isArray(scene.sfxSourceMeta)) {
+            scene.sfxSourceMeta = []
+          }
+          while (scene.sfxSourceMeta.length <= sfxIndex) {
+            scene.sfxSourceMeta.push(null)
+          }
+          scene.sfxSourceMeta[sfxIndex] = sfxAttribution
+        }
+
         console.log(`[Projects PATCH] Updated sfxAudio[${sfxIndex}] for scene ${sceneIndex}`)
       }
       
