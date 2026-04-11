@@ -999,30 +999,53 @@ export function SceneProductionManager({
     setGenerationProgress(50)
     
     try {
-      // Use scene audio duration, or default to 8 seconds (Veo 3.1 max)
-      const bypassDuration = Math.min(8, totalAudioDurationSeconds || scene?.duration || 8)
-      
-      // Create a single segment covering the entire scene
-      const bypassSegment: SceneSegment = {
-        segmentId: `seg-${sceneId}-bypass-${Date.now()}`,
-        sequenceIndex: 0,
-        startTime: 0,
-        endTime: bypassDuration,
-        status: 'DRAFT',
-        assetType: null,
-        references: {
-          characterIds: [],
-          sceneRefIds: [],
-          objectRefIds: [],
-        },
-        takes: [],
-        generatedPrompt: `Scene ${sceneNumber} - Full scene segment (${bypassDuration}s). Ready for image or video upload.`,
+      // Full scene length from audio or scene.duration (never cap at 8s — that forced one bogus 8s block).
+      const fullDuration = Math.max(
+        totalAudioDurationSeconds || 0,
+        typeof scene?.duration === 'number' ? scene.duration : 0,
+        8
+      )
+      const chunkDurations: number[] = []
+      let left = fullDuration
+      while (left > 8.01) {
+        chunkDurations.push(8)
+        left -= 8
       }
-      
-      // Call onInitialize with pre-parsed segment to bypass API generation
-      await onInitialize(sceneId, { 
-        targetDuration: bypassDuration, 
-        segments: [bypassSegment]
+      if (left > 0.25) {
+        if (left < 4 && chunkDurations.length > 0) {
+          const prev = chunkDurations[chunkDurations.length - 1]!
+          if (prev + left <= 8.01) chunkDurations[chunkDurations.length - 1] = prev + left
+          else chunkDurations.push(left)
+        } else {
+          chunkDurations.push(left)
+        }
+      }
+      if (chunkDurations.length === 0) chunkDurations.push(Math.min(8, fullDuration))
+
+      let t = 0
+      const bypassSegments: SceneSegment[] = chunkDurations.map((dur, i) => {
+        const seg: SceneSegment = {
+          segmentId: `seg-${sceneId}-bypass-${Date.now()}-${i}`,
+          sequenceIndex: i,
+          startTime: t,
+          endTime: t + dur,
+          status: 'DRAFT',
+          assetType: null,
+          references: {
+            characterIds: [],
+            sceneRefIds: [],
+            objectRefIds: [],
+          },
+          takes: [],
+          generatedPrompt: `Scene ${sceneNumber} - Segment ${i + 1}/${chunkDurations.length} (${dur.toFixed(1)}s). Ready for image or video upload.`,
+        }
+        t += dur
+        return seg
+      })
+
+      await onInitialize(sceneId, {
+        targetDuration: 8,
+        segments: bypassSegments,
       })
       
       setGenerationProgress(100)

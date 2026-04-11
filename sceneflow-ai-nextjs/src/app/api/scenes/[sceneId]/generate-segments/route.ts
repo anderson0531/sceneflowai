@@ -350,8 +350,21 @@ export async function POST(
     // Calculate minimum segments required based on total audio duration
     // Each segment can be max 8 seconds (Veo 3.1 constraint)
     const MAX_SEGMENT_SECONDS = 8
-    const effectiveAudioDuration = totalAudioDurationSeconds || sceneData.estimatedTotalDuration
-    const minimumSegmentsRequired = Math.ceil(effectiveAudioDuration / MAX_SEGMENT_SECONDS)
+    const timelineAudioSum = sceneData.combinedAudioTimeline.reduce(
+      (acc, l) => acc + (typeof l.estimatedDuration === 'number' ? l.estimatedDuration : 0),
+      0
+    )
+    const clientAudioSeconds =
+      typeof totalAudioDurationSeconds === 'number' && !Number.isNaN(totalAudioDurationSeconds)
+        ? totalAudioDurationSeconds
+        : 0
+    // Never let a bogus small client value shrink the plan below timeline or script estimate.
+    const effectiveAudioDuration = Math.max(
+      sceneData.estimatedTotalDuration,
+      timelineAudioSum,
+      clientAudioSeconds
+    )
+    const minimumSegmentsRequired = Math.max(1, Math.ceil(effectiveAudioDuration / MAX_SEGMENT_SECONDS))
     const durationConfig = resolveSegmentDurationConfig(body, effectiveAudioDuration, minimumSegmentsRequired)
     const targetSegmentDurationResponse = targetSegmentDurationForResponse(durationConfig)
     
@@ -386,8 +399,18 @@ export async function POST(
       }
       
       // Call Gemini for directions only
-      const directions = await callGeminiForSegmentDirections(directionsPrompt)
-      
+      const rawDirections = await callGeminiForSegmentDirections(directionsPrompt)
+      const directions = expandDirectionsForTimelineAudioBudget(
+        rawDirections,
+        sceneData,
+        MAX_SEGMENT_SECONDS
+      )
+      if (directions.length !== rawDirections.length) {
+        console.log(
+          `[Scene Segmentation] Phase 1 audio-aware direction split: ${rawDirections.length} → ${directions.length} directions`
+        )
+      }
+
       // Transform to SegmentDirection objects
       const segmentDirections: SegmentDirection[] = directions.map((dir: any, idx: number) => ({
         shotType: dir.shot_type || 'Medium Shot',
@@ -460,8 +483,8 @@ export async function POST(
       // Call Gemini with approved directions to generate full prompts
       const rawSegments = await callGeminiForPromptsFromDirections(promptsFromDirections)
       
-      // Post-LLM enforcement: split any segments exceeding max duration
-      const segments = enforceMaxSegmentDuration(rawSegments, MAX_SEGMENT_SECONDS, sceneData)
+      const withAudioAwareDuration = applyAssignedAudioDurationToSegments(rawSegments, sceneData)
+      const segments = enforceMaxSegmentDuration(withAudioAwareDuration, MAX_SEGMENT_SECONDS, sceneData)
       if (segments.length !== rawSegments.length) {
         console.log(`[Scene Segmentation] Post-LLM split: ${rawSegments.length} → ${segments.length} segments`)
       }
@@ -510,8 +533,8 @@ export async function POST(
     // Call Gemini for intelligent segmentation
     const rawSegments = await callGeminiForIntelligentSegmentation(prompt)
 
-    // Post-LLM enforcement: split any segments exceeding max duration
-    const segments = enforceMaxSegmentDuration(rawSegments, MAX_SEGMENT_SECONDS, sceneData)
+    const withAudioAwareDuration = applyAssignedAudioDurationToSegments(rawSegments, sceneData)
+    const segments = enforceMaxSegmentDuration(withAudioAwareDuration, MAX_SEGMENT_SECONDS, sceneData)
     if (segments.length !== rawSegments.length) {
       console.log(`[Scene Segmentation] Post-LLM split: ${rawSegments.length} → ${segments.length} segments`)
     }
@@ -652,6 +675,111 @@ export async function POST(
       { status: 500 }
     )
   }
+}
+
+/** Normalize dialogue audio blobs from scene (en vs en-US vs array). */
+function getDialogueAudioEntriesFromScene(scene: any): any[] {
+  const da = scene?.dialogueAudio
+  if (!da) return []
+  if (Array.isArray(da)) return da
+  const keyed =
+    da.en ||
+    da['en-US'] ||
+    da.en_US ||
+    da['en-GB'] ||
+    null
+  if (Array.isArray(keyed)) return keyed
+  const first = Object.values(da).find((v): v is any[] => Array.isArray(v) && v.length > 0)
+  return Array.isArray(first) ? first : []
+}
+
+/** Seconds from a dialogue audio entry; supports ms heuristics. */
+function durationFromAudioEntry(entry: any, fallbackSeconds: number): number {
+  if (!entry || typeof entry !== 'object') return fallbackSeconds
+  const raw = entry.duration ?? entry.durationSeconds
+  if (typeof raw !== 'number' || raw <= 0 || Number.isNaN(raw)) return fallbackSeconds
+  if (raw > 600 && raw < 3_600_000) return raw / 1000
+  return raw
+}
+
+/** Before max-duration split: if assigned audio is longer than estimated_duration, extend it. */
+function applyAssignedAudioDurationToSegments(
+  segments: IntelligentSegment[],
+  sceneData: ComprehensiveSceneData
+): IntelligentSegment[] {
+  const tl = sceneData.combinedAudioTimeline
+  return segments.map(seg => {
+    const idxs = seg.assigned_dialogue_indices || []
+    if (idxs.length === 0) return seg
+    const audioSum = idxs.reduce((acc, i) => {
+      const line = tl[i]
+      return acc + (typeof line?.estimatedDuration === 'number' ? line.estimatedDuration : 0)
+    }, 0)
+    const est = typeof seg.estimated_duration === 'number' ? seg.estimated_duration : 0
+    if (audioSum <= est + 0.2) return seg
+    return { ...seg, estimated_duration: audioSum }
+  })
+}
+
+/** Phase 1: split raw direction rows when assigned timeline audio exceeds Veo max (mirrors segment split). */
+function expandDirectionsForTimelineAudioBudget(
+  rawDirections: any[],
+  sceneData: ComprehensiveSceneData,
+  maxDuration: number
+): any[] {
+  const tl = sceneData.combinedAudioTimeline
+  const result: any[] = []
+
+  for (const dir of rawDirections) {
+    const dialogueIndices: number[] = dir.dialogue_indices || []
+    const audioSum = dialogueIndices.reduce((acc, i) => {
+      const line = tl[i]
+      return acc + (typeof line?.estimatedDuration === 'number' ? line.estimatedDuration : 0)
+    }, 0)
+    const est = typeof dir.estimated_duration === 'number' ? dir.estimated_duration : 0
+    const originalDuration = Math.max(est, audioSum)
+
+    if (originalDuration <= maxDuration + 0.2) {
+      result.push(dir)
+      continue
+    }
+
+    const numParts = Math.ceil(originalDuration / maxDuration)
+    const rawPartDuration = originalDuration / numParts
+    const subDurations: number[] = []
+    let remaining = originalDuration
+    for (let i = 0; i < numParts; i++) {
+      if (i === numParts - 1) {
+        subDurations.push(snapToVeoDuration(remaining))
+      } else {
+        const snapped = snapToVeoDuration(rawPartDuration)
+        subDurations.push(snapped)
+        remaining -= snapped
+      }
+    }
+
+    const dialoguePerPart =
+      dialogueIndices.length <= 1 ? 1 : Math.ceil(dialogueIndices.length / numParts)
+
+    for (let i = 0; i < numParts; i++) {
+      const partDialogue =
+        dialogueIndices.length === 1
+          ? [...dialogueIndices]
+          : dialogueIndices.slice(i * dialoguePerPart, (i + 1) * dialoguePerPart)
+
+      result.push({
+        ...dir,
+        estimated_duration: subDurations[i],
+        dialogue_indices: partDialogue,
+        trigger_reason:
+          i === 0
+            ? dir.trigger_reason
+            : `Continuation ${i + 1}/${numParts} — ${dir.trigger_reason || 'split for audio length'}`,
+      })
+    }
+  }
+
+  return result
 }
 
 interface ComprehensiveSceneData {
@@ -850,20 +978,36 @@ function buildComprehensiveSceneData(
     }
   }
   
+  const dialogueAudioEntries = getDialogueAudioEntriesFromScene(scene)
+
   // Interleave dialogue lines after narration
   // In most scenes, narration plays OVER the scene while dialogue is interspersed
-  for (const d of dialogue) {
+  dialogue.forEach((d: { character: string; text: string; emotion?: string | null }, di: number) => {
+    const wordEst =
+      Math.round(((d.text || '').split(/\s+/).filter(Boolean).length / 2.5) * 10) / 10
+    const entry =
+      dialogueAudioEntries.find((e: any) => e.dialogueIndex === di) ?? dialogueAudioEntries[di]
+    const estimatedDuration = Math.round(durationFromAudioEntry(entry, wordEst) * 10) / 10
+
     combinedAudioTimeline.push({
       index: combinedAudioTimeline.length,
       type: 'dialogue',
       character: d.character,
       text: d.text,
       emotion: d.emotion || undefined,
-      estimatedDuration: Math.round((d.text.split(/\s+/).length / 2.5) * 10) / 10,
+      estimatedDuration,
     })
-  }
-  
-  console.log(`[buildComprehensiveSceneData] Combined audio timeline: ${combinedAudioTimeline.length} lines (${combinedAudioTimeline.filter(l => l.type === 'narration').length} narration, ${combinedAudioTimeline.filter(l => l.type === 'dialogue').length} dialogue)`)
+  })
+
+  const timelineSum = combinedAudioTimeline.reduce(
+    (acc, l) => acc + (typeof l.estimatedDuration === 'number' ? l.estimatedDuration : 0),
+    0
+  )
+  estimatedTotalDuration = Math.max(estimatedTotalDuration, timelineSum)
+
+  console.log(
+    `[buildComprehensiveSceneData] Combined audio timeline: ${combinedAudioTimeline.length} lines (${combinedAudioTimeline.filter(l => l.type === 'narration').length} narration, ${combinedAudioTimeline.filter(l => l.type === 'dialogue').length} dialogue), ~${Math.round(timelineSum)}s audio`
+  )
 
   return {
     heading,
@@ -1942,8 +2086,9 @@ function enforceMaxSegmentDuration(
       }
     }
 
-    // Distribute dialogue indices across sub-segments proportionally
-    const dialoguePerPart = Math.ceil(dialogueIndices.length / numParts)
+    // Distribute dialogue indices across sub-segments proportionally (or repeat single long line)
+    const dialoguePerPart =
+      dialogueIndices.length <= 1 ? 1 : Math.ceil(dialogueIndices.length / numParts)
 
     console.log(
       `[Segment Split] Splitting segment seq=${seg.sequence} ` +
@@ -1953,10 +2098,10 @@ function enforceMaxSegmentDuration(
     )
 
     for (let i = 0; i < numParts; i++) {
-      const partDialogue = dialogueIndices.slice(
-        i * dialoguePerPart,
-        (i + 1) * dialoguePerPart
-      )
+      const partDialogue =
+        dialogueIndices.length === 1
+          ? [...dialogueIndices]
+          : dialogueIndices.slice(i * dialoguePerPart, (i + 1) * dialoguePerPart)
 
       // Build dialogue context for the prompt suffix
       const partDialogueTexts = partDialogue
@@ -1968,9 +2113,12 @@ function enforceMaxSegmentDuration(
       const isLastPart = i === numParts - 1
 
       // Build a refined prompt that specifies which portion this covers
-      const splitPromptSuffix = partDialogueTexts.length > 0
-        ? `\n\n[This segment covers the following dialogue: ${partDialogueTexts.join(' / ')}]`
-        : ''
+      const splitPromptSuffix =
+        partDialogueTexts.length > 0
+          ? dialogueIndices.length === 1 && numParts > 1
+            ? `\n\n[Continuation ${i + 1}/${numParts} of the same audio line — seamless with prior clip; dialogue: ${partDialogueTexts.join(' / ')}]`
+            : `\n\n[This segment covers the following dialogue: ${partDialogueTexts.join(' / ')}]`
+          : ''
 
       const partTriggerReason = isFirstPart
         ? seg.trigger_reason

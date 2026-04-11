@@ -220,7 +220,10 @@ interface ScriptPanelProps {
   // NEW: Scene production props
   sceneProductionData?: Record<string, SceneProductionData>
   sceneProductionReferences?: Record<string, SceneProductionReferences>
-  onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number; segments?: any[] }) => Promise<void>
+  onInitializeSceneProduction?: (
+    sceneId: string,
+    options: { targetDuration: number; segments?: any[]; generationOptions?: Record<string, unknown> }
+  ) => Promise<void>
   onSegmentPromptChange?: (sceneId: string, segmentId: string, prompt: string) => void
   onSegmentKeyframeChange?: (sceneId: string, segmentId: string, keyframeSettings: SegmentKeyframeSettings) => void
   onSegmentDialogueAssignmentChange?: (sceneId: string, segmentId: string, dialogueLineIds: string[]) => void
@@ -452,6 +455,40 @@ function calculateSceneDuration(scene: any): number {
   
   // Round up to nearest multiple of 8 (for 8-second video clips)
   return Math.ceil(sceneDuration / 8) * 8
+}
+
+/** Resolved dialogue/narration duration for generate-segments (en vs en-US vs flat array + word fallback). */
+function computeSceneTotalAudioSecondsForSegmentation(scene: any): number {
+  const nar = Number(
+    scene.narrationAudio?.en?.duration ??
+      scene.narrationAudio?.['en-US']?.duration ??
+      scene.narrationDuration ??
+      0
+  )
+  const da = scene.dialogueAudio
+  const arr: any[] = Array.isArray(da)
+    ? da
+    : da?.en ||
+      da?.['en-US'] ||
+      (Object.values(da || {}).find(
+        (v): v is any[] => Array.isArray(v) && v.length > 0
+      ) ?? [])
+  let dialogueSum = 0
+  if (Array.isArray(arr) && arr.length > 0) {
+    dialogueSum = arr.reduce((acc: number, d: any) => {
+      const raw = d?.duration ?? d?.durationSeconds
+      if (typeof raw !== 'number' || raw <= 0) return acc
+      if (raw > 600 && raw < 3_600_000) return acc + raw / 1000
+      return acc + raw
+    }, 0)
+  }
+  if (dialogueSum < 0.5 && Array.isArray(scene.dialogue)) {
+    dialogueSum = scene.dialogue.reduce((acc: number, d: any) => {
+      const t = d.line || d.text || d.dialogue || ''
+      return acc + t.split(/\s+/).filter(Boolean).length / 2.5
+    }, 0)
+  }
+  return Math.max(nar, dialogueSum, 1) + 2
 }
 
 // Format duration as MM:SS
@@ -3370,7 +3407,10 @@ interface SceneCardProps {
   // Optional slot renderer to place content below Dashboard (e.g., Storyboard header)
   // Provides helper to open the Generate Audio dialog from parent section
   belowDashboardSlot?: (helpers: { openGenerateAudio: () => void }) => React.ReactNode
-  onInitializeSceneProduction?: (sceneId: string, options: { targetDuration: number; segments?: any[] }) => Promise<void>
+  onInitializeSceneProduction?: (
+    sceneId: string,
+    options: { targetDuration: number; segments?: any[]; generationOptions?: Record<string, unknown> }
+  ) => Promise<void>
   onSegmentPromptChange?: (sceneId: string, segmentId: string, prompt: string) => void
   onSegmentKeyframeChange?: (sceneId: string, segmentId: string, keyframeSettings: SegmentKeyframeSettings) => void
   onSegmentDialogueAssignmentChange?: (sceneId: string, segmentId: string, dialogueLineIds: string[]) => void
@@ -6304,22 +6344,20 @@ function SceneCard({
                         } : undefined}
                         // Regenerate segments via API with audio duration for proper segment count
                         onResegment={onInitializeSceneProduction ? async () => {
-                          // Calculate total audio duration for proper segment count
-                          const narrationDuration = scene.narrationAudio?.en?.duration || scene.narrationDuration || 0
-                          const dialogueArray = scene.dialogueAudio?.en || scene.dialogueAudio || []
-                          const dialogueDuration = Array.isArray(dialogueArray) 
-                            ? dialogueArray.reduce((acc: number, d: any) => acc + (d.duration || 3), 0)
-                            : 0
-                          const totalAudioDuration = Math.max(narrationDuration, dialogueDuration) + 2
-                          
+                          const totalAudioDuration = computeSceneTotalAudioSecondsForSegmentation(scene)
+                          const narrationDuration =
+                            scene.narrationAudio?.en?.duration ||
+                            scene.narrationAudio?.['en-US']?.duration ||
+                            scene.narrationDuration ||
+                            0
                           await onInitializeSceneProduction(
                             scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                            { 
+                            {
                               targetDuration: Math.max(scene.duration || 8, totalAudioDuration),
                               generationOptions: {
                                 totalAudioDurationSeconds: totalAudioDuration,
-                                narrationDriven: narrationDuration > 0
-                              }
+                                narrationDriven: Number(narrationDuration) > 0,
+                              },
                             }
                           )
                         } : undefined}
@@ -6338,10 +6376,15 @@ function SceneCard({
                             </div>
                             <Button
                               size="sm"
-                              onClick={() => onInitializeSceneProduction(
-                                scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                                { targetDuration: scene.duration || 8 }
-                              )}
+                              onClick={() => {
+                                const totalAudio = computeSceneTotalAudioSecondsForSegmentation(scene)
+                                onInitializeSceneProduction(scene.sceneId || scene.id || `scene-${sceneIdx}`, {
+                                  targetDuration: Math.max(scene.duration || 8, totalAudio),
+                                  generationOptions: {
+                                    totalAudioDurationSeconds: totalAudio,
+                                  },
+                                })
+                              }}
                               className="bg-indigo-600 hover:bg-indigo-700 text-white"
                             >
                               <Layers className="w-4 h-4 mr-2" />
@@ -6727,22 +6770,20 @@ function SceneCard({
                           } : undefined}
                           // Regenerate segments via API with audio duration for proper segment count
                           onResegment={onInitializeSceneProduction ? async () => {
-                            // Calculate total audio duration for proper segment count
-                            const narrationDuration = scene.narrationAudio?.en?.duration || scene.narrationDuration || 0
-                            const dialogueArray = scene.dialogueAudio?.en || scene.dialogueAudio || []
-                            const dialogueDuration = Array.isArray(dialogueArray) 
-                              ? dialogueArray.reduce((acc: number, d: any) => acc + (d.duration || 3), 0)
-                              : 0
-                            const totalAudioDuration = Math.max(narrationDuration, dialogueDuration) + 2
-                            
+                            const totalAudioDuration = computeSceneTotalAudioSecondsForSegmentation(scene)
+                            const narrationDuration =
+                              scene.narrationAudio?.en?.duration ||
+                              scene.narrationAudio?.['en-US']?.duration ||
+                              scene.narrationDuration ||
+                              0
                             await onInitializeSceneProduction(
                               scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                              { 
+                              {
                                 targetDuration: Math.max(scene.duration || 8, totalAudioDuration),
                                 generationOptions: {
                                   totalAudioDurationSeconds: totalAudioDuration,
-                                  narrationDriven: narrationDuration > 0
-                                }
+                                  narrationDriven: Number(narrationDuration) > 0,
+                                },
                               }
                             )
                           } : undefined}

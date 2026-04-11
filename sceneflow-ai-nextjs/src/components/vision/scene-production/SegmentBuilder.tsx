@@ -304,7 +304,11 @@ function extractAudioMetadata(scene: any, selectedLanguage = 'en-US'): {
   totalAudioDurationSeconds: number
 } {
   // Extract narration metadata (safely filter out visual-description masquerading as narration)
-  const narrationAudio = scene.narrationAudio?.[selectedLanguage] || scene.narrationAudio?.['en-US'] || {}
+  const narrationAudio =
+    scene.narrationAudio?.[selectedLanguage] ||
+    scene.narrationAudio?.['en-US'] ||
+    scene.narrationAudio?.en ||
+    {}
   const hasNarrationAudio = Boolean(narrationAudio?.url || scene.narrationUrl)
   const narrationText = isLikelyNarration(scene) ? scene.narration : null
   const narrationAudioUrl = hasNarrationAudio ? (scene.narrationUrl || narrationAudio.url || null) : null
@@ -312,20 +316,29 @@ function extractAudioMetadata(scene: any, selectedLanguage = 'en-US'): {
     ? (scene.narrationDuration || narrationAudio.duration || (hasNarrationAudio ? 10 : null) || null)
     : null
 
-  // Extract dialogue durations
-  const dialogueAudioArray = Array.isArray(scene.dialogueAudio)
-    ? scene.dialogueAudio
-    : (scene.dialogueAudio?.[selectedLanguage] || [])
-  
+  // Extract dialogue durations (match ScriptPanel: en vs en-US vs flat array)
+  const da = scene.dialogueAudio
+  const dialogueAudioArray: any[] = Array.isArray(da)
+    ? da
+    : da?.[selectedLanguage] ||
+      da?.['en-US'] ||
+      da?.en ||
+      (typeof da === 'object' && da
+        ? (Object.values(da).find((v): v is any[] => Array.isArray(v) && v.length > 0) ?? [])
+        : [])
+
   const dialogueDurations = (scene.dialogue || []).map((d: any, idx: number) => {
-    const audioData = dialogueAudioArray[idx] || {}
+    const audioData =
+      dialogueAudioArray.find((a: any) => a?.dialogueIndex === idx) ?? dialogueAudioArray[idx] ?? {}
     const text = d.text || d.dialogue || d.line || ''
-    // Estimate: ~2.5 words per second if no duration available
-    const estimatedDuration = text.split(/\s+/).length / 2.5
+    const wordEst = text.split(/\s+/).filter(Boolean).length / 2.5
+    const raw = audioData.duration ?? audioData.durationSeconds
+    let fromAudio = typeof raw === 'number' && raw > 0 ? raw : 0
+    if (fromAudio > 600 && fromAudio < 3_600_000) fromAudio /= 1000
     return {
       character: d.character || d.name || 'UNKNOWN',
       text,
-      durationSeconds: audioData.duration || estimatedDuration,
+      durationSeconds: fromAudio || wordEst,
     }
   })
 
