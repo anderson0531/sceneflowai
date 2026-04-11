@@ -112,6 +112,14 @@ function mixerDialogueStart(clip: { startTime?: number }, idx: number, fallbackS
   return idx * fallbackStep
 }
 
+/** Decoded file length can exceed stored DB duration; correct above this delta (seconds). */
+const DIALOGUE_DURATION_METADATA_DELTA_SEC = 0.5
+
+/** Stable key for per-line mixer state (must match audioTrackBuilder clip ids). */
+function dialogueClipConfigKey(clip: { id?: string; clipId?: string }, idx: number): string {
+  return clip.id ?? clip.clipId ?? `dialogue-${idx}`
+}
+
 // Duplicate constant to avoid module-level import (keep in sync with LocalRenderService.ts)
 const LOCAL_RENDER_MAX_DURATION = 300
 
@@ -553,6 +561,7 @@ function ScenePreviewPlayer({
   onDeleteOverlay,
   watermarkConfig,
   playbackKind = 'video',
+  dialogueClipConfigs,
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -573,6 +582,8 @@ function ScenePreviewPlayer({
   watermarkConfig?: WatermarkConfig
   /** Keyframe / still preview timed by segment metadata (animatic target) */
   playbackKind?: 'video' | 'image-sequence'
+  /** Per-line volume / enable; keys match dialogue clip ids from the layout engine */
+  dialogueClipConfigs?: Record<string, AudioClipConfig>
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -754,6 +765,8 @@ function ScenePreviewPlayer({
         const dialogueEnds =
           audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0
             ? currentAudioUrls.dialogue.map((d, i) => {
+                const cfg = dialogueClipConfigs?.[dialogueClipConfigKey(d, i)]
+                if (cfg?.enabled === false) return 0
                 const t0 = dialogueStartBase + mixerDialogueStart(d, i, 3)
                 return t0 + (d.duration ?? 0)
               })
@@ -820,6 +833,7 @@ function ScenePreviewPlayer({
     isVideoFrozen,
     audioTracks,
     currentAudioUrls,
+    dialogueClipConfigs,
     totalDuration,
     timelineVideoDuration,
     currentTime,
@@ -882,7 +896,13 @@ function ScenePreviewPlayer({
         const audioEl = dialogueRefsById.current.get(clipKey)
         if (!audioEl || !clip.audioUrl) return
 
-        audioEl.volume = isMuted ? 0 : audioTracks.dialogue.volume
+        const lineCfg = dialogueClipConfigs?.[dialogueClipConfigKey(clip, idx)]
+        if (lineCfg?.enabled === false) {
+          audioEl.pause()
+          return
+        }
+        const lineVol = lineCfg?.volume ?? 1
+        audioEl.volume = isMuted ? 0 : lineVol * audioTracks.dialogue.volume
         const clipStart = dialogueStartTime + mixerDialogueStart(clip, idx, 3)
         const clipEnd = clipStart + (clip.duration || 3) + EPS
 
@@ -902,7 +922,7 @@ function ScenePreviewPlayer({
     } else {
       dialogueRefsById.current.forEach(el => el?.pause())
     }
-  }, [isPlaying, currentTime, audioTracks, currentAudioUrls, isMuted, getSegmentStartTime])
+  }, [isPlaying, currentTime, audioTracks, currentAudioUrls, dialogueClipConfigs, isMuted, getSegmentStartTime])
   
   // Load new segment video when segment index changes
   useEffect(() => {
@@ -1506,7 +1526,6 @@ function AudioTrackRow({
   dialogueClips,
   dialogueClipConfigs,
   onDialogueClipConfigChange,
-  showMusicDuration,
   isCollapsed = false,
   onToggleCollapse,
   onRegenerate,
@@ -1527,6 +1546,7 @@ function AudioTrackRow({
   disabled?: boolean
   // New props
   dialogueClips?: Array<{
+    id?: string
     audioUrl?: string
     duration?: number
     startTime?: number
@@ -1535,7 +1555,6 @@ function AudioTrackRow({
   }>
   dialogueClipConfigs?: Record<string, AudioClipConfig>
   onDialogueClipConfigChange?: (configs: Record<string, AudioClipConfig>) => void
-  showMusicDuration?: boolean
   isCollapsed?: boolean
   onToggleCollapse?: () => void
   onRegenerate?: () => void
@@ -1754,62 +1773,6 @@ function AudioTrackRow({
             </span>
           </div>
           
-          {/* Start Time (Delay) */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-gray-500 uppercase w-16">Start At</span>
-            <div className="flex items-center gap-1 flex-1">
-              <Input
-                type="text"
-                value={formatTimeWithMs(config.startOffset)}
-                onChange={(e) => {
-                  const seconds = parseTime(e.target.value)
-                  if (!isNaN(seconds)) {
-                    onConfigChange({ ...config, startOffset: seconds })
-                  }
-                }}
-                onBlur={(e) => {
-                  // Reformat on blur to normalize input
-                  const seconds = parseTime(e.target.value)
-                  if (!isNaN(seconds)) {
-                    onConfigChange({ ...config, startOffset: seconds })
-                  }
-                }}
-                placeholder="0:00"
-                className="w-20 h-7 text-xs font-mono bg-gray-800 border-gray-600 text-center"
-                disabled={disabled}
-              />
-              <span className="text-[10px] text-gray-500">(m:ss)</span>
-            </div>
-            {/* Quick offset buttons */}
-            <div className="flex gap-1">
-              <button
-                onClick={() => onConfigChange({ ...config, startOffset: Math.max(0, config.startOffset - 1) })}
-                disabled={disabled || config.startOffset <= 0}
-                className="w-6 h-6 rounded bg-gray-700 hover:bg-gray-600 text-gray-400 text-xs disabled:opacity-40"
-              >
-                -1
-              </button>
-              <button
-                onClick={() => onConfigChange({ ...config, startOffset: config.startOffset + 1 })}
-                disabled={disabled}
-                className="w-6 h-6 rounded bg-gray-700 hover:bg-gray-600 text-gray-400 text-xs disabled:opacity-40"
-              >
-                +1
-              </button>
-            </div>
-          </div>
-          
-          {/* Music Duration Control */}
-          {type === 'music' && showMusicDuration && videoTotalDuration && (
-            <MusicDurationControl
-              config={config}
-              onConfigChange={onConfigChange}
-              videoTotalDuration={videoTotalDuration}
-              audioDuration={audioDuration}
-              disabled={disabled}
-            />
-          )}
-          
           {/* Individual Dialogue Line Controls */}
           {type === 'dialogue' && dialogueClips && dialogueClips.length > 1 && dialogueClipConfigs && onDialogueClipConfigChange && (
             <DialogueLineControls
@@ -1851,6 +1814,7 @@ function DialogueLineControls({
   disabled,
 }: {
   dialogueClips: Array<{
+    id?: string
     audioUrl?: string
     duration?: number
     startTime?: number
@@ -1882,7 +1846,9 @@ function DialogueLineControls({
         audioRefs.current[playingIndex]?.pause()
       }
       audio.currentTime = 0
-      audio.volume = (clipConfigs[`dialogue-${index}`]?.volume ?? globalVolume) 
+      const clip = dialogueClips[index]
+      const key = dialogueClipConfigKey(clip, index)
+      audio.volume = (clipConfigs[key]?.volume ?? globalVolume) 
       audio.play().catch(() => {})
       setPlayingIndex(index)
     }
@@ -1895,13 +1861,14 @@ function DialogueLineControls({
   }
   
   const updateClipConfig = (index: number, updates: Partial<AudioClipConfig>) => {
-    const clipId = `dialogue-${index}`
+    const clip = dialogueClips[index]
+    const clipId = dialogueClipConfigKey(clip, index)
     const current = clipConfigs[clipId] || {
       id: clipId,
       enabled: true,
       volume: globalVolume,
-      startTime: dialogueClips[index].startTime ?? 0,
-      duration: dialogueClips[index].duration || 3,
+      startTime: clip.startTime ?? 0,
+      duration: clip.duration || 3,
     }
     onConfigChange({
       ...clipConfigs,
@@ -1917,13 +1884,15 @@ function DialogueLineControls({
       </div>
       
       {dialogueClips.map((clip, index) => {
-        const clipId = `dialogue-${index}`
+        const clipId = dialogueClipConfigKey(clip, index)
+        const startT = clip.startTime ?? 0
+        const dur = clip.duration || 3
         const config = clipConfigs[clipId] || {
           id: clipId,
           enabled: true,
           volume: globalVolume,
-          startTime: clip.startTime ?? 0,
-          duration: clip.duration || 3,
+          startTime: startT,
+          duration: dur,
         }
         const isPlaying = playingIndex === index
         
@@ -1965,7 +1934,7 @@ function DialogueLineControls({
                     {clip.character || `Line ${index + 1}`}
                   </span>
                   <span className="text-[10px] text-gray-500">
-                    {formatTime(config.startTime)} - {formatTime(config.startTime + config.duration)}
+                    {formatTime(startT)} - {formatTime(startT + dur)}
                   </span>
                 </div>
                 {clip.line && (
@@ -2000,40 +1969,6 @@ function DialogueLineControls({
                     {Math.round(config.volume * 100)}%
                   </span>
                 </div>
-                
-                {/* Start Time Control */}
-                <div className="flex items-center gap-2">
-                  <Clock className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                  <Input
-                    type="text"
-                    value={formatTimeWithMs(config.startTime)}
-                    onChange={(e) => {
-                      const seconds = parseTime(e.target.value)
-                      if (!isNaN(seconds)) {
-                        updateClipConfig(index, { startTime: seconds })
-                      }
-                    }}
-                    placeholder="0:00"
-                    className="w-16 h-6 text-[10px] font-mono bg-gray-800 border-gray-600 text-center px-1"
-                    disabled={disabled}
-                  />
-                  <div className="flex gap-0.5">
-                    <button
-                      onClick={() => updateClipConfig(index, { startTime: Math.max(0, config.startTime - 0.5) })}
-                      disabled={disabled || config.startTime <= 0}
-                      className="w-5 h-5 rounded bg-gray-700 hover:bg-gray-600 text-gray-400 text-[9px] disabled:opacity-40"
-                    >
-                      -
-                    </button>
-                    <button
-                      onClick={() => updateClipConfig(index, { startTime: config.startTime + 0.5 })}
-                      disabled={disabled}
-                      className="w-5 h-5 rounded bg-gray-700 hover:bg-gray-600 text-gray-400 text-[9px] disabled:opacity-40"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
               </div>
             )}
             
@@ -2049,84 +1984,6 @@ function DialogueLineControls({
           </div>
         )
       })}
-    </div>
-  )
-}
-
-/**
- * MusicDurationControl - Control for adjusting background music duration
- */
-function MusicDurationControl({
-  config,
-  onConfigChange,
-  videoTotalDuration,
-  audioDuration,
-  disabled,
-}: {
-  config: AudioTrackConfig
-  onConfigChange: (config: AudioTrackConfig) => void
-  videoTotalDuration: number
-  audioDuration?: number
-  disabled?: boolean
-}) {
-  const effectiveDuration = config.duration ?? videoTotalDuration
-  
-  return (
-    <div className="flex items-center gap-2 pt-2 border-t border-gray-700/50">
-      <span className="text-[10px] text-gray-500 uppercase w-16">Duration</span>
-      <div className="flex items-center gap-1 flex-1">
-        <Input
-          type="text"
-          value={formatTimeWithMs(effectiveDuration)}
-          onChange={(e) => {
-            const seconds = parseTime(e.target.value)
-            if (!isNaN(seconds)) {
-              onConfigChange({ ...config, duration: seconds })
-            }
-          }}
-          placeholder={formatTime(videoTotalDuration)}
-          className="w-24 h-7 text-xs font-mono bg-gray-800 border-gray-600 text-center"
-          disabled={disabled}
-        />
-        <span className="text-[10px] text-gray-500">(m:ss)</span>
-      </div>
-      {/* Quick duration presets */}
-      <div className="flex gap-1">
-        <button
-          onClick={() => onConfigChange({ ...config, duration: videoTotalDuration })}
-          disabled={disabled}
-          className={`px-2 h-6 rounded text-[10px] transition-colors ${
-            effectiveDuration === videoTotalDuration 
-              ? 'bg-green-600/40 text-green-300 border border-green-500/50' 
-              : 'bg-gray-700 hover:bggray-600 text-gray-400'
-          }`}
-          title="Match video duration"
-        >
-          Video
-        </button>
-        <button
-          onClick={() => onConfigChange({ ...config, duration: undefined })}
-          disabled={disabled}
-          className={`px-2 h-6 rounded text-[10px] transition-colors ${
-            config.duration === undefined 
-              ? 'bg-green-600/40 text-green-300 border border-green-500/50' 
-              : 'bg-gray-700 hover:bg-gray-600 text-gray-400'
-          }`}
-          title="Loop until video ends"
-        >
-          Loop
-        </button>
-        {audioDuration && audioDuration !== effectiveDuration && (
-          <button
-            onClick={() => onConfigChange({ ...config, duration: audioDuration })}
-            disabled={disabled}
-            className="px-2 h-6 rounded bg-gray-700 hover:bg-gray-600 text-gray-400"
-            title={`Original: ${formatTime(audioDuration)}`}
-          >
-            Full
-          </button>
-        )}
-      </div>
     </div>
   )
 }
@@ -2698,6 +2555,69 @@ export function SceneProductionMixer({
     })
     return { ...currentAudioUrls, dialogue }
   }, [currentAudioUrls, editableDialogueClips])
+
+  const dialogueAudioProbeKey = useMemo(
+    () =>
+      playbackAudioUrls.dialogue
+        .filter(d => d.audioUrl && d.id)
+        .map(d => `${d.id}:${d.audioUrl}`)
+        .join('|'),
+    [playbackAudioUrls.dialogue]
+  )
+
+  useEffect(() => {
+    if (!dialogueAudioProbeKey) return
+    const clips = playbackAudioUrls.dialogue.filter(
+      (d): d is typeof d & { audioUrl: string; id: string } => !!d.audioUrl && !!d.id
+    )
+    const cleaners: Array<() => void> = []
+    for (const clip of clips) {
+      const audio = document.createElement('audio')
+      audio.preload = 'metadata'
+      audio.src = clip.audioUrl
+      const clipId = clip.id
+      const onMeta = () => {
+        const decoded = audio.duration
+        if (!Number.isFinite(decoded) || decoded <= 0) return
+        setEditableDialogueClips(prev =>
+          prev.map(c => {
+            if (c.id !== clipId) return c
+            const stored = c.duration ?? 0
+            if (decoded <= stored + DIALOGUE_DURATION_METADATA_DELTA_SEC) return c
+            return { ...c, duration: decoded }
+          })
+        )
+      }
+      audio.addEventListener('loadedmetadata', onMeta)
+      cleaners.push(() => {
+        audio.removeEventListener('loadedmetadata', onMeta)
+        audio.removeAttribute('src')
+        audio.load()
+      })
+    }
+    return () => cleaners.forEach(fn => fn())
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- probe only when id:url set changes; clip list matches key
+  }, [dialogueAudioProbeKey])
+
+  useEffect(() => {
+    if (!currentAudioUrls.dialogue?.length) return
+    setDialogueClipConfigs(prev => {
+      const next = { ...prev }
+      let changed = false
+      currentAudioUrls.dialogue.forEach((d, idx) => {
+        const key = dialogueClipConfigKey(d, idx)
+        for (const legacyKey of [`dialogue-${idx}`, `clip-${idx}`] as const) {
+          if (legacyKey !== key && next[key] === undefined && next[legacyKey] !== undefined) {
+            next[key] = next[legacyKey]
+            delete next[legacyKey]
+            changed = true
+          }
+        }
+      })
+      return changed ? next : prev
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- migrate when layout-derived dialogue list identity changes
+  }, [dialogueLayoutSignature])
   
   // === Preview State ===
   const [isMuted, setIsMuted] = useState(false)
@@ -2800,6 +2720,7 @@ export function SceneProductionMixer({
     // Dialogue duration - sum of all clips or last clip end time
     if (audioTracks.dialogue.enabled && playbackAudioUrls.dialogue.length > 0) {
       const dialogueEndTimes = playbackAudioUrls.dialogue.map((clip, idx) => {
+        if (dialogueClipConfigs[dialogueClipConfigKey(clip, idx)]?.enabled === false) return 0
         const startTime = mixerDialogueStart(clip, idx, 3)
         const duration = clip.duration ?? 3
         return startTime + duration
@@ -2819,7 +2740,7 @@ export function SceneProductionMixer({
     }
     
     return maxDuration
-  }, [audioTracks, playbackAudioUrls])
+  }, [audioTracks, playbackAudioUrls, dialogueClipConfigs])
   
   // Total duration = max of video and audio (Elastic Timing)
   const totalDuration = useMemo(() => {
@@ -2972,12 +2893,16 @@ export function SceneProductionMixer({
       if (audioTracks.dialogue.enabled && playbackAudioUrls.dialogue.length > 0) {
         audioTracksPayload.dialogue = playbackAudioUrls.dialogue
           .filter(d => d?.audioUrl)
-          .map((d, i) => ({
+          .map((d, i) => ({ d, i }))
+          .filter(({ d, i }) => dialogueClipConfigs[dialogueClipConfigKey(d, i)]?.enabled !== false)
+          .map(({ d, i }) => ({
             url: d.audioUrl!,
             startTime: audioTracks.dialogue.startOffset + mixerDialogueStart(d, i, 2),
-            duration: (d as any).duration || 3,
-            volume: audioTracks.dialogue.volume,
-            character: (d as any).character,
+            duration: (d as { duration?: number }).duration || 3,
+            volume:
+              (dialogueClipConfigs[dialogueClipConfigKey(d, i)]?.volume ?? 1) *
+              audioTracks.dialogue.volume,
+            character: (d as { character?: string }).character,
           }))
       }
       
@@ -3089,6 +3014,7 @@ export function SceneProductionMixer({
     }
   }, [
     renderedSegments, segmentAudioConfigs, audioTracks, playbackAudioUrls,
+    dialogueClipConfigs,
     totalDuration, sceneId, projectId, sceneNumber, resolution, selectedLanguage,
     textOverlays, masterSegmentVolume, watermarkConfig, overlayStore
   ])
@@ -3316,7 +3242,8 @@ export function SceneProductionMixer({
       if (audioTracks.dialogue.enabled && playbackAudioUrls.dialogue.length > 0) {
         playbackAudioUrls.dialogue.forEach((clip, idx) => {
           if (!clip.audioUrl) return
-          const clipConfig = dialogueClipConfigs[clip.clipId || `clip-${idx}`]
+          const clipConfig = dialogueClipConfigs[dialogueClipConfigKey(clip, idx)]
+          if (clipConfig?.enabled === false) return
           const startTime = audioTracks.dialogue.startOffset + mixerDialogueStart(clip, idx, 2)
           audioClips.push({
             url: clip.audioUrl,
@@ -3600,13 +3527,14 @@ export function SceneProductionMixer({
       if (audioTracks.dialogue.enabled && playbackAudioUrls.dialogue.length > 0) {
         playbackAudioUrls.dialogue.forEach((clip, idx) => {
           if (!clip.audioUrl) return
-          const clipConfig = dialogueClipConfigs[clip.clipId || `clip-${idx}`]
+          const clipConfig = dialogueClipConfigs[dialogueClipConfigKey(clip, idx)]
+          if (clipConfig?.enabled === false) return
           const startTime = audioTracks.dialogue.startOffset + mixerDialogueStart(clip, idx, 2)
           audioClips.push({
             url: clip.audioUrl,
             startTime,
             duration: clip.duration || Math.max(0, totalDuration - startTime),
-            volume: audioTracks.dialogue.volume,
+            volume: (clipConfig?.volume ?? 1.0) * audioTracks.dialogue.volume,
             type: 'dialogue',
           })
         })
@@ -3913,6 +3841,7 @@ export function SceneProductionMixer({
                 playbackKind={previewPlaybackKind}
                 audioTracks={audioTracks}
                 currentAudioUrls={playbackAudioUrls}
+                dialogueClipConfigs={dialogueClipConfigs}
                 totalDuration={totalDuration}
                 isMuted={isMuted}
                 onToggleMute={() => setIsMuted(prev => !prev)}
@@ -4837,7 +4766,6 @@ export function SceneProductionMixer({
                 }
                 hasAudio={!!playbackAudioUrls.music}
                 disabled={isRendering}
-                showMusicDuration={true}
                 isCollapsed={collapsedSections.music}
                 onToggleCollapse={() => toggleSection('music')}
               />
