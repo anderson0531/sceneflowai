@@ -1620,7 +1620,9 @@ async function callGeminiForSegmentDirections(prompt: string): Promise<any[]> {
     temperature: 0.5, // Lower temperature for more consistent structure
     maxOutputTokens: 8192, // Directions are much smaller than full prompts
     responseMimeType: 'application/json',
-    timeoutMs: 55000, // 55s — allows headroom for model fallback (3.0->2.5) within Vercel 60s limit
+    // Match route maxDuration (120s): long audio timelines need more than 55s for Vertex global endpoint
+    timeoutMs: 110000,
+    maxRetries: 1, // Avoid stacking multiple full timeouts inside the serverless window
     thinkingLevel: 'minimal',
   })
   return parseDirectionsResponse(result.text)
