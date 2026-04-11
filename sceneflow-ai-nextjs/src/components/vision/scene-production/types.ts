@@ -914,6 +914,8 @@ export interface SceneProductionReferences {
   characters: any[]
   sceneReferences: VisualReference[]
   objectReferences: VisualReference[]
+  /** Optional location library refs (when present, used for frame / prompt resolver) */
+  locationReferences?: import('@/types/visionReferences').LocationReference[]
 }
 
 // ============================================================================
@@ -1597,7 +1599,7 @@ export interface ProposedSegment {
 /**
  * Workflow phase for the builder
  */
-export type BuilderPhase = 'analyze'
+export type BuilderPhase = 'analyze' | 'video_prompts'
 
 // ============================================================================
 // Lean Multi-Language (LML) Elastic Segment Types

@@ -89,6 +89,9 @@ interface SegmentStudioProps {
   sceneHeading?: string
   sceneDescription?: string
   sceneNarration?: string
+  /** Full vision scene for reference resolution in SegmentPromptBuilder */
+  visionScene?: any
+  locationReferences?: import('@/types/visionReferences').LocationReference[]
   // Backdrop Video Modal data
   sceneForBackdrop?: SceneForBackdrop
   charactersForBackdrop?: CharacterForBackdrop[]
@@ -133,6 +136,8 @@ export function SegmentStudio({
   sceneHeading,
   sceneDescription,
   sceneNarration,
+  visionScene,
+  locationReferences = [],
   sceneForBackdrop,
   charactersForBackdrop = [],
   onBackdropVideoGenerated,
@@ -1537,6 +1542,8 @@ export function SegmentStudio({
           sceneHeading={sceneHeading}
           sceneDescription={sceneDescription}
           sceneNarration={sceneNarration}
+          frameResolverScene={visionScene ?? null}
+          locationReferences={locationReferences}
         />
       )}
 

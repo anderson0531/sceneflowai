@@ -10,7 +10,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare, AlertCircle, RotateCcw, Eye, Type, Scissors, MapPin, Coffee, CreditCard, ShieldAlert, RefreshCw } from 'lucide-react'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { SceneSegment, SceneSegmentTake } from './types'
-import { VisualReference } from '@/types/visionReferences'
+import { VisualReference, type LocationReference } from '@/types/visionReferences'
+import { resolveFrameGenerationContext, isNoTalentSceneForFrames } from '@/lib/vision/frameGenerationContext'
 import { cn } from '@/lib/utils'
 import { ContentPolicyAlert, PolicyFixedBanner } from './ContentPolicyAlert'
 import { moderatePrompt, type ModerationResult } from '@/utils/promptModerator'
@@ -108,6 +109,8 @@ interface SegmentPromptBuilderProps {
   sceneHeading?: string
   sceneDescription?: string
   sceneNarration?: string
+  frameResolverScene?: any | null
+  locationReferences?: LocationReference[]
 }
 
 export interface GeneratePromptData {
@@ -157,6 +160,8 @@ export function SegmentPromptBuilder({
   sceneHeading,
   sceneDescription,
   sceneNarration,
+  frameResolverScene = null,
+  locationReferences = [],
 }: SegmentPromptBuilderProps) {
   const [activeTab, setActiveTab] = useState<'guided' | 'advanced'>('guided')
   
@@ -550,19 +555,52 @@ export function SegmentPromptBuilder({
     }
   }, [open, segment, previousSegmentLastFrame, sceneImageUrl, mode, isBackdropMode, sceneHeading, sceneDescription, sceneNarration])
 
-  // Auto-detect characters from segment
+  // Auto-detect characters from segment (resolver when vision scene is available)
   useEffect(() => {
-    if (open && segment && availableCharacters.length > 0) {
-      const segmentText = segment.action || segment.subject || ''
-      const detectedChars = availableCharacters
-        .filter(char => segmentText.toLowerCase().includes(char.name.toLowerCase()))
-        .map(char => char.name)
-      
-      if (detectedChars.length > 0) {
-        setStructure(prev => ({ ...prev, characters: detectedChars }))
+    if (!open || !segment || availableCharacters.length === 0) return
+
+    if (frameResolverScene) {
+      try {
+        const resolved = resolveFrameGenerationContext({
+          scene: frameResolverScene,
+          segment: {
+            userEditedPrompt: segment.userEditedPrompt,
+            generatedPrompt: segment.generatedPrompt,
+            action: segment.action,
+            dialogueLines: segment.dialogueLines,
+            segmentDirection: segment.segmentDirection as any,
+          },
+          projectCharacters: availableCharacters.map(c => ({
+            ...c,
+            name: c.name,
+            appearanceDescription: c.appearanceDescription || c.description,
+            referenceImage: c.referenceImage,
+          })) as any[],
+          objectReferences: objectReferences as any[],
+          locationReferences: locationReferences as any[],
+        })
+        if (isNoTalentSceneForFrames(frameResolverScene)) {
+          setStructure(prev => ({ ...prev, characters: [] }))
+          return
+        }
+        if (resolved.charactersPayload.length > 0) {
+          setStructure(prev => ({ ...prev, characters: resolved.charactersPayload.map(c => c.name) }))
+          return
+        }
+      } catch (e) {
+        console.warn('[SegmentPromptBuilder] frameResolverScene resolution failed', e)
       }
     }
-  }, [open, segment, availableCharacters])
+
+    const segmentText = segment.action || segment.subject || ''
+    const detectedChars = availableCharacters
+      .filter(char => segmentText.toLowerCase().includes(char.name.toLowerCase()))
+      .map(char => char.name)
+
+    if (detectedChars.length > 0) {
+      setStructure(prev => ({ ...prev, characters: detectedChars }))
+    }
+  }, [open, segment, availableCharacters, frameResolverScene, objectReferences, locationReferences])
 
   // Helper: Build action-focused prompt for I2V/FTV modes
   // Strips static scene descriptions and focuses on temporal changes/motion

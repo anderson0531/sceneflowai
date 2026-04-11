@@ -1906,6 +1906,11 @@ Example format:
               onSelectTake={onSelectTake ? handleSelectTakeWrapper : undefined}
               onDeleteTake={onDeleteTake ? handleDeleteTakeWrapper : undefined}
               onOpenReferences={onOpenReferences}
+              sceneHeading={heading}
+              sceneDescription={scene?.visualDescription ?? scene?.action}
+              sceneNarration={scene?.narration}
+              visionScene={scene}
+              locationReferences={references.locationReferences}
               sceneDirection={scene?.sceneDirection || scene?.direction || ''}
               sceneForBackdrop={sceneForBackdrop}
               charactersForBackdrop={charactersForBackdrop}

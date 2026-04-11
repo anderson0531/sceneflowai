@@ -172,10 +172,14 @@ interface GenerateSegmentsRequest {
   totalAudioDurationSeconds?: number
   // NEW: Preview mode - returns proposals without committing
   previewMode?: boolean
-  // NEW: Two-phase workflow
-  phase?: 'directions' | 'prompts'
-  // NEW: User-approved directions for phase 2
+  // NEW: Multi-phase workflow — keyframe_prompts mirrors directions; video_prompts mirrors prompts with optional keyframe gate
+  phase?: 'directions' | 'prompts' | 'video_prompts' | 'keyframe_prompts'
+  // NEW: User-approved directions for phase 2 / video_prompts
   approvedDirections?: SegmentDirection[]
+  /** Optional notes from production (e.g. locked wardrobe) for video_prompts */
+  keyframeSummary?: string
+  /** When true, prompt stresses alignment with finalized keyframes */
+  keyframesConfirmed?: boolean
   // NEW: Scope controls
   totalDurationTarget?: number    // Total scene duration target in seconds
   segmentCountTarget?: number     // Target number of segments
@@ -233,9 +237,11 @@ export async function POST(
       // NEW: Scope controls
       totalDurationTarget,
       segmentCountTarget,
-      // NEW: Two-phase workflow
+      // NEW: Multi-phase workflow
       phase = 'prompts', // Default to legacy behavior (full prompts)
       approvedDirections,
+      keyframeSummary,
+      keyframesConfirmed,
     } = body
 
     if (!sceneId || !projectId) {
@@ -378,8 +384,11 @@ export async function POST(
     // PHASE 1: DIRECTIONS ONLY
     // Returns lightweight segment directions for user review before prompt generation
     // ============================================================================
-    if (phase === 'directions') {
-      console.log(`[Scene Segmentation] Phase 1: Generating directions only for user review`)
+    if (phase === 'directions' || phase === 'keyframe_prompts') {
+      console.log(
+        `[Scene Segmentation] Phase 1: Generating directions only for user review` +
+          (phase === 'keyframe_prompts' ? ' (keyframe_prompts)' : '')
+      )
       
       // Generate directions-only prompt (faster, smaller output)
       const directionsPrompt = generateDirectionsOnlyPrompt(sceneData, durationConfig, minimumSegmentsRequired, {
@@ -415,6 +424,10 @@ export async function POST(
 
       // Transform to SegmentDirection objects
       const segmentDirections: SegmentDirection[] = directions.map((dir: any, idx: number) => ({
+        estimatedDuration:
+          typeof dir.estimated_duration === 'number' && dir.estimated_duration > 0
+            ? dir.estimated_duration
+            : durationConfig.hintSeconds,
         shotType: dir.shot_type || 'Medium Shot',
         cameraMovement: dir.camera_movement || 'Static',
         cameraAngle: dir.camera_angle || 'Eye-Level',
@@ -447,7 +460,7 @@ export async function POST(
       
       return NextResponse.json({
         success: true,
-        phase: 'directions',
+        phase: phase === 'keyframe_prompts' ? 'keyframe_prompts' : 'directions',
         directions: segmentDirections,
         targetSegmentDuration: targetSegmentDurationResponse,
         segmentDurationAuto: durationConfig.mode === 'auto',
@@ -462,43 +475,85 @@ export async function POST(
     }
     
     // ============================================================================
-    // PHASE 2: PROMPTS FROM APPROVED DIRECTIONS
-    // Generates full video prompts using user-approved directions
+    // PHASE 2 / VIDEO_PROMPTS: Full Veo prompts from approved directions (batched if 10+)
     // ============================================================================
-    if (phase === 'prompts' && approvedDirections && approvedDirections.length > 0) {
-      console.log(`[Scene Segmentation] Phase 2: Generating prompts from ${approvedDirections.length} approved directions`)
-      
-      // Generate prompts based on approved directions
-      const promptsFromDirections = generatePromptsFromDirectionsPrompt(sceneData, approvedDirections, durationConfig)
-      
-      // Pre-screen content
-      const moderationContext = await getUserModerationContext('anonymous', projectId)
-      const promptModeration = await moderatePrompt(promptsFromDirections, moderationContext)
-      
-      if (!promptModeration.allowed) {
-        return NextResponse.json(
-          { error: 'Content policy violation', flaggedCategories: promptModeration.result?.flaggedCategories || [] },
-          { status: 403 }
-        )
+    if (
+      (phase === 'prompts' || phase === 'video_prompts') &&
+      approvedDirections &&
+      approvedDirections.length > 0
+    ) {
+      console.log(
+        `[Scene Segmentation] Phase 2 (${phase}): Generating prompts from ${approvedDirections.length} approved directions`
+      )
+
+      const promptExtras = {
+        keyframeSummary: typeof keyframeSummary === 'string' ? keyframeSummary : undefined,
+        keyframesConfirmed: keyframesConfirmed === true,
       }
-      
-      // Call Gemini with approved directions to generate full prompts
-      const rawSegments = await callGeminiForPromptsFromDirections(promptsFromDirections)
-      
+
+      const PROMPT_BATCH = 10
+      const moderationContext = await getUserModerationContext('anonymous', projectId)
+
+      let rawSegments: IntelligentSegment[] = []
+
+      if (approvedDirections.length <= PROMPT_BATCH) {
+        const promptsFromDirections = generatePromptsFromDirectionsPrompt(
+          sceneData,
+          approvedDirections,
+          durationConfig,
+          undefined,
+          promptExtras
+        )
+        const promptModeration = await moderatePrompt(promptsFromDirections, moderationContext)
+        if (!promptModeration.allowed) {
+          return NextResponse.json(
+            { error: 'Content policy violation', flaggedCategories: promptModeration.result?.flaggedCategories || [] },
+            { status: 403 }
+          )
+        }
+        rawSegments = await callGeminiForPromptsFromDirections(promptsFromDirections)
+      } else {
+        console.log(
+          `[Scene Segmentation] Batching Phase 2: ${approvedDirections.length} directions in chunks of ${PROMPT_BATCH}`
+        )
+        for (let offset = 0; offset < approvedDirections.length; offset += PROMPT_BATCH) {
+          const batch = approvedDirections.slice(offset, offset + PROMPT_BATCH)
+          const promptsFromDirections = generatePromptsFromDirectionsPrompt(
+            sceneData,
+            batch,
+            durationConfig,
+            {
+              globalSequenceStart: offset + 1,
+              totalDirectionCount: approvedDirections.length,
+            },
+            promptExtras
+          )
+          const promptModeration = await moderatePrompt(promptsFromDirections, moderationContext)
+          if (!promptModeration.allowed) {
+            return NextResponse.json(
+              { error: 'Content policy violation', flaggedCategories: promptModeration.result?.flaggedCategories || [] },
+              { status: 403 }
+            )
+          }
+          const part = await callGeminiForPromptsFromDirections(promptsFromDirections)
+          rawSegments.push(...part)
+        }
+        rawSegments.sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
+      }
+
       const withAudioAwareDuration = applyAssignedAudioDurationToSegments(rawSegments, sceneData)
       const segments = enforceMaxSegmentDuration(withAudioAwareDuration, MAX_SEGMENT_SECONDS, sceneData)
       if (segments.length !== rawSegments.length) {
         console.log(`[Scene Segmentation] Post-LLM split: ${rawSegments.length} → ${segments.length} segments`)
       }
-      
-      // Transform to full segment structure (same as legacy flow)
+
       const transformedSegments = transformSegmentsToOutput(segments, sceneData, sceneId, scene, approvedDirections)
-      
+
       console.log(`[Scene Segmentation] Phase 2 complete: ${transformedSegments.length} segments with prompts`)
-      
+
       return NextResponse.json({
         success: true,
-        phase: 'prompts',
+        phase: phase === 'video_prompts' ? 'video_prompts' : 'prompts',
         segments: transformedSegments,
         targetSegmentDuration: targetSegmentDurationResponse,
         segmentDurationAuto: durationConfig.mode === 'auto',
@@ -2031,7 +2086,9 @@ function parseDirectionsResponse(text: string, finishReason?: string): any[] {
 function generatePromptsFromDirectionsPrompt(
   sceneData: ComprehensiveSceneData,
   approvedDirections: SegmentDirection[],
-  durationConfig: SegmentDurationConfig
+  durationConfig: SegmentDurationConfig,
+  batchMeta?: { globalSequenceStart: number; totalDirectionCount: number },
+  promptExtras?: { keyframeSummary?: string; keyframesConfirmed?: boolean }
 ): string {
   // Check scene-level no-talent with semantic context
   const sceneLevelNoTalent = isNoTalentScene(sceneData.sceneDirection.talent, {
@@ -2063,8 +2120,23 @@ function generatePromptsFromDirectionsPrompt(
         return `[${line.index}] ${typeTag} | ${line.character}${emotionTag}: "${line.text}" (~${line.estimatedDuration}s)`
       }).join('\n')
   
+  const startSeq = batchMeta?.globalSequenceStart ?? 1
+  const batchNote = batchMeta
+    ? `\n**BATCH CONTEXT:** Return exactly ${approvedDirections.length} objects in the JSON array. They are global segments ${startSeq}–${startSeq + approvedDirections.length - 1} of ${batchMeta.totalDirectionCount}. Field "sequence" must be ${startSeq}, ${startSeq + 1}, … in order.\n`
+    : ''
+  const kfNote = [
+    promptExtras?.keyframesConfirmed
+      ? '**PRODUCTION STATUS:** User indicated keyframe stills are finalized or approved — align video_generation_prompt with keyframe_start_description / keyframe_end_description in each direction where present.'
+      : '',
+    promptExtras?.keyframeSummary
+      ? `**Keyframe / on-set notes:**\n${promptExtras.keyframeSummary}`
+      : '',
+  ]
+    .filter(Boolean)
+    .join('\n\n')
+
   const directionsJson = approvedDirections.map((dir, idx) => ({
-    sequence: idx + 1,
+    sequence: startSeq + idx,
     shot_type: dir.shotType,
     camera_movement: dir.cameraMovement,
     camera_angle: dir.cameraAngle,
@@ -2091,6 +2163,7 @@ function generatePromptsFromDirectionsPrompt(
   return `
 **SYSTEM ROLE:** You are an expert Video Director and Cinematographer generating professional-grade video prompts for Veo 3.1.
 The user has APPROVED a shot breakdown. Your job is to write RICH, CINEMATIC VIDEO PROMPTS that will produce stunning results.
+${batchNote}${kfNote ? `\n${kfNote}\n` : ''}
 
 **SCENE DATA:**
 Heading: ${sceneData.heading}
@@ -2345,6 +2418,10 @@ function transformSegmentsToOutput(
     
     // Include approved direction metadata if available
     const approvedDir = approvedDirections?.[idx]
+    const rawTransitionIn = String(approvedDir?.transitionIn || '').toLowerCase()
+    let transitionType: 'CUT' | 'CONTINUE' = idx === 0 ? 'CUT' : 'CONTINUE'
+    if (rawTransitionIn === 'cut') transitionType = 'CUT'
+    else if (rawTransitionIn === 'continue') transitionType = 'CONTINUE'
 
     const generationPlan = {
       recommendedMethod: generatedMethod,
@@ -2385,6 +2462,7 @@ function transformSegmentsToOutput(
         sceneNumber: scene.sceneNumber || (typeof sceneId === 'string' ? parseInt(sceneId) : undefined),
       },
       isStale: false,
+      transitionType,
       // NEW: Include approved direction for reference
       segmentDirection: approvedDir || null,
       references: {

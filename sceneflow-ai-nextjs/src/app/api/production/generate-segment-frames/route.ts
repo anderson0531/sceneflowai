@@ -767,6 +767,11 @@ Render this scene in ${selectedStyle.name} style.`
       }
       
       console.log('[Generate Frames] End frame prompt:', endFramePrompt.substring(0, 150))
+
+      if (transitionType === 'CONTINUE') {
+        endFramePrompt =
+          `TEMPORAL CONTINUITY: This end frame must be a direct continuation of the reference start image — preserve wardrobe, props, and set dressing unless the beat explicitly changes them.\n\n${endFramePrompt}`
+      }
       
       // Append negative prompt to end frame prompt as well
       if (negativePrompt) {

@@ -84,7 +84,8 @@ import ScriptReviewModal, { type CinematicScenePlan } from '@/components/vision/
 import { SceneEditorModal } from '@/components/vision/SceneEditorModalV2'
 import { NavigationWarningDialog } from '@/components/workflow/NavigationWarningDialog'
 import { FilmTreatmentReviewModal } from '@/components/vision/FilmTreatmentReviewModal'
-import { findSceneCharacters, findSceneObjects } from '../../../../../lib/character/matching'
+import { findSceneCharacters } from '../../../../../lib/character/matching'
+import { resolveFrameGenerationContext } from '@/lib/vision/frameGenerationContext'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { v4 as uuidv4 } from 'uuid'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
@@ -2081,18 +2082,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           previousEndFrameUrl = prevSeg?.endFrameUrl || prevSeg?.references?.endFrameUrl
         }
         
-        // Auto-detect objects from segment text for prop consistency
-        const segmentText = [
-          segment.userEditedPrompt || segment.generatedPrompt || segment.action || '',
-          scene?.action || '',
-          scene?.visualDescription || ''
-        ].join(' ')
-        
-        const detectedObjects = findSceneObjects(
-          segmentText,
-          objectReferences as any[],
-          scene?.sceneNumber
-        )
+        const fromDialog = options?.fromDialog === true
+        const resolvedAuto = fromDialog
+          ? null
+          : resolveFrameGenerationContext({
+              scene,
+              segment: segment as any,
+              projectCharacters: characters,
+              objectReferences,
+              locationReferences,
+            })
 
         const response = await fetch('/api/production/generate-segment-frames', {
           method: 'POST',
@@ -2151,8 +2150,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // Character data for identity lock
             // CRITICAL FIX: When fromDialog=true, the user explicitly chose which characters
             // to include (even if none). Only auto-populate for batch generation (fromDialog=false).
-            characters: options?.fromDialog
-              // Dialog-driven: use EXACTLY what the user selected (empty = none)
+            characters: fromDialog
               ? (options.selectedCharacters || []).map(selected => {
                   const fullChar = characters.find(c => c.name === selected.name)
                   return {
@@ -2164,8 +2162,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     wardrobe: (fullChar as any)?.defaultWardrobe || (fullChar as any)?.wardrobe,
                   }
                 })
-              // Batch generation: auto-populate with all characters sorted by role
-              : options?.selectedCharacters?.length 
+              : options?.selectedCharacters?.length
                 ? options.selectedCharacters.map(selected => {
                     const fullChar = characters.find(c => c.name === selected.name)
                     return {
@@ -2177,19 +2174,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       wardrobe: (fullChar as any)?.defaultWardrobe || (fullChar as any)?.wardrobe,
                     }
                   })
-                : [...characters]
-                  .filter(c => c.type === 'character' || !c.type)
-                  .sort((a, b) => {
-                    const roleOrder: Record<string, number> = { protagonist: 0, main: 1, supporting: 2 }
-                    return (roleOrder[a.role || 'supporting'] || 2) - (roleOrder[b.role || 'supporting'] || 2)
-                  })
-                  .map(c => ({
+                : (resolvedAuto?.charactersPayload || []).map(c => ({
                     name: c.name,
-                    appearance: c.appearanceDescription || c.description,
-                    referenceUrl: c.referenceImage,
-                    ethnicity: (c as any).ethnicity,
-                    age: (c as any).age,
-                    wardrobe: (c as any).defaultWardrobe || (c as any).wardrobe,
+                    appearance: c.appearance,
+                    referenceUrl: c.referenceUrl,
+                    ethnicity: c.ethnicity,
+                    age: c.age,
+                    wardrobe: c.wardrobe,
                   })),
             sceneContext: {
               heading: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,
@@ -2201,8 +2192,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // Object references for prop consistency
             // CRITICAL FIX: When fromDialog=true, use EXACTLY what user selected (empty = none).
             // Only auto-detect for batch generation (fromDialog=false).
-            objectReferences: options?.fromDialog
-              // Dialog-driven: use EXACTLY what the user selected (empty = none)
+            objectReferences: fromDialog
               ? (options.selectedObjectReferences || []).map(obj => ({
                   name: obj.name,
                   description: obj.description,
@@ -2210,7 +2200,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   importance: 'critical' as const,
                   imageUrl: obj.imageUrl
                 }))
-              // Batch generation: auto-detect or use explicit selections
               : options?.selectedObjectReferences?.length
                 ? options.selectedObjectReferences.map(obj => ({
                     name: obj.name,
@@ -2219,21 +2208,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     importance: 'critical' as const,
                     imageUrl: obj.imageUrl
                   }))
-                : detectedObjects.map(obj => ({
-                    name: obj.name,
-                    description: obj.description,
-                    category: obj.category,
-                    importance: obj.importance,
-                    imageUrl: obj.imageUrl
-                  })),
-            // Location references for environment consistency (from dialog selection)
-            locationReferences: options?.fromDialog
+                : resolvedAuto?.objectRefsForApi || [],
+            locationReferences: fromDialog
               ? (options.selectedLocationReferences || []).map(loc => ({
                   name: loc.name,
                   description: loc.description,
                   imageUrl: loc.imageUrl
                 }))
-              : undefined
+              : resolvedAuto?.locationRefsForApi?.length
+                ? resolvedAuto.locationRefsForApi.map(loc => ({
+                    name: loc.name,
+                    description: loc.description,
+                    imageUrl: loc.imageUrl
+                  }))
+                : undefined
           })
         })
 
@@ -2278,7 +2266,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setGeneratingFramePhase(null)
       }
     },
-    [script?.script?.scenes, sceneProductionState, characters, applySceneProductionUpdate]
+    [script?.script?.scenes, sceneProductionState, characters, objectReferences, locationReferences, applySceneProductionUpdate]
   )
 
   const handleInitializeSceneProduction = useCallback(
@@ -10672,6 +10660,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     characters,
                     sceneReferences,
                     objectReferences,
+                    locationReferences,
                   }
                   
                   // Build references object for all scenes in the script

@@ -276,6 +276,24 @@ export function SegmentFrameTimeline({
     const prevSegment = segments[index - 1]
     return prevSegment?.endFrameUrl || prevSegment?.references?.endFrameUrl || null
   }, [segments])
+
+  const frameResolverScene = useMemo(() => {
+    const h = sceneHeading || sceneData?.heading
+    const headingText = typeof h === 'string' ? h : (h as { text?: string } | undefined)?.text
+    return {
+      heading: headingText,
+      action: sceneData?.action,
+      visualDescription: (sceneData as { visualDescription?: string })?.visualDescription,
+      narration: sceneData?.narration,
+      dialogue: (sceneData?.dialogue || []).map((d: { character?: string; line?: string; text?: string }) => ({
+        character: d.character,
+        text: d.text || d.line,
+        line: d.line,
+      })),
+      sceneDirection: sceneDirection ?? sceneData?.sceneDirection,
+      sceneNumber,
+    }
+  }, [sceneHeading, sceneData, sceneDirection, sceneNumber])
   
   // Open the frame prompt dialog instead of generating directly
   const openFramePromptDialog = useCallback((
@@ -594,6 +612,7 @@ export function SegmentFrameTimeline({
         objectReferences={objectReferences}
         locationReferences={locationReferences}
         sceneHeading={sceneHeading}
+        frameResolverScene={frameResolverScene}
       />
       
       {/* Regenerate All Segments Confirmation Dialog */}

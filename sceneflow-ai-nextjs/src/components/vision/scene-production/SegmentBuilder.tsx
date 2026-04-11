@@ -52,7 +52,6 @@ import {
   SceneProductionReferences,
   ValidationResult,
   SceneBible,
-  ProposedDirection,
   ProposedSegment,
   BuilderPhase,
 } from './types'
@@ -60,6 +59,9 @@ import {
 // SegmentValidation is dynamically imported to avoid circular dependency TDZ
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import type { SegmentDirection } from '@/types/scene-direction'
 import {
   Select,
   SelectContent,
@@ -441,6 +443,26 @@ function enforceClientMaxDuration(segments: ProposedSegment[]): ProposedSegment[
   return result
 }
 
+function mergeVideoPromptsIntoStaged(
+  staged: SceneSegment[],
+  withPrompts: SceneSegment[]
+): SceneSegment[] {
+  const bySeq = new Map(withPrompts.map(s => [s.sequenceIndex, s]))
+  return staged.map(seg => {
+    const w = bySeq.get(seg.sequenceIndex)
+    if (!w) return seg
+    return {
+      ...seg,
+      generatedPrompt: w.generatedPrompt || seg.generatedPrompt,
+      userEditedPrompt: w.userEditedPrompt ?? seg.userEditedPrompt,
+      segmentDirection: w.segmentDirection ?? seg.segmentDirection,
+      transitionType: w.transitionType ?? seg.transitionType,
+      triggerReason: w.triggerReason ?? seg.triggerReason,
+      emotionalBeat: w.emotionalBeat || seg.emotionalBeat,
+    }
+  })
+}
+
 // ============================================================================
 // Main Component
 // ============================================================================
@@ -461,6 +483,10 @@ export function SegmentBuilder({
   // -------------------------------------------------------------------------
   const [phase, setPhase] = useState<BuilderPhase>('analyze')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [pendingApprovedDirections, setPendingApprovedDirections] = useState<SegmentDirection[] | null>(null)
+  const [stagedSegments, setStagedSegments] = useState<SceneSegment[] | null>(null)
+  const [videoPromptNotes, setVideoPromptNotes] = useState('')
+  const [keyframesConfirmed, setKeyframesConfirmed] = useState(false)
   
   // NEW: Phase 1 - Proposed directions for user review
       const [error, setError] = useState<string | null>(null)
@@ -673,53 +699,40 @@ export function SegmentBuilder({
         throw new Error(data?.error || data?.message || 'Failed to analyze scene')
       }
       
-      // Transform API directions to ProposedDirections
-      const directions: ProposedDirection[] = data.directions.map((dir: any, idx: number) => ({
-        id: `dir_${sceneId}_${idx + 1}`,
-        sequenceIndex: idx,
-        estimatedDuration:
-          dir.estimated_duration ||
-          dir.estimatedDuration ||
-          segmentDurationTarget ||
-          segmentDurationHintSeconds,
-        shotType: dir.shot_type || dir.shotType || 'Medium Shot',
-        talentAction: dir.talent_action || dir.talentAction || '',
-        dialogueLineIds: dir.dialogue_indices || dir.dialogueLineIds || [],
-        generationMethod: dir.generation_method || dir.generationMethod || 'FTV',
-        triggerReason: dir.trigger_reason || dir.triggerReason || 'AI-determined cut point',
-        confidence: dir.confidence || 90,
-        // Map the new image prompts
-        keyframeStartDescription: dir.keyframe_start_prompt || dir.keyframeStartDescription || '',
-        keyframeEndDescription: dir.keyframe_end_prompt || dir.keyframeEndDescription || '',
-        isApproved: true, // Auto-approve
-        isUserEdited: false,
-      }))
+      const approvedDirs = data.directions as SegmentDirection[]
 
-      let currentTime = 0;
-      const finalSegments: SceneSegment[] = directions.map((dir, idx) => {
-        const startTime = currentTime;
-        const endTime = currentTime + dir.estimatedDuration;
-        currentTime = endTime;
-        
+      let currentTime = 0
+      const finalSegments: SceneSegment[] = approvedDirs.map((dir, idx) => {
+        const est =
+          dir.estimatedDuration || segmentDurationTarget || segmentDurationHintSeconds
+        const startTime = currentTime
+        const endTime = currentTime + est
+        currentTime = endTime
+
+        const rawT = String(dir.transitionIn || '').toLowerCase()
+        const transitionType: 'CUT' | 'CONTINUE' =
+          rawT === 'cut' ? 'CUT' : rawT === 'continue' ? 'CONTINUE' : idx === 0 ? 'CUT' : 'CONTINUE'
+
         return {
-          segmentId: dir.id,
+          segmentId: `dir_${sceneId}_${idx + 1}`,
           sequenceIndex: idx,
           startTime,
           endTime,
           status: 'READY' as const,
-          generatedPrompt: '', // F2V prompt starts empty, generated in Step 2
-          startFramePrompt: dir.keyframeStartDescription,
-          endFramePrompt: dir.keyframeEndDescription,
+          generatedPrompt: '',
+          startFramePrompt: dir.keyframeStartDescription || '',
+          endFramePrompt: dir.keyframeEndDescription || '',
           userEditedPrompt: null,
           activeAssetUrl: null,
           assetType: null,
           generationMethod: dir.generationMethod,
           triggerReason: dir.triggerReason,
-          emotionalBeat: '', // omitted from simplified format
-          dialogueLineIds: dir.dialogueLineIds,
-          // Map talentAction and shotType so the prompt builder has something to start with
+          emotionalBeat: dir.emotionalBeat || '',
+          dialogueLineIds: dir.dialogueLineIds || [],
           action: dir.talentAction,
           shotType: dir.shotType,
+          transitionType,
+          segmentDirection: dir,
           references: {
             startFrameUrl: null,
             endFrameUrl: null,
@@ -728,12 +741,10 @@ export function SegmentBuilder({
             characterIds: [],
             sceneRefIds: [],
             objectRefIds: [],
-            // Map the Image Gen Prompts!
-            startFrameDescription: dir.keyframeStartDescription,
-            endFrameDescription: dir.keyframeEndDescription,
+            startFrameDescription: dir.keyframeStartDescription || '',
+            endFrameDescription: dir.keyframeEndDescription || '',
           },
           takes: [],
-          // Prompt context for staleness detection
           promptContext: {
             dialogueHash: '',
             visualDescriptionHash: sceneBible.contentHash,
@@ -744,14 +755,14 @@ export function SegmentBuilder({
         }
       })
 
-      onSegmentsFinalized(finalSegments)
+      setPendingApprovedDirections(approvedDirs)
+      setStagedSegments(finalSegments)
+      setVideoPromptNotes('')
+      setKeyframesConfirmed(false)
+      setPhase('video_prompts')
       setLastGeneratedHash(sceneBible.contentHash)
 
-      toast.success(`Generated ${finalSegments.length} segments - Ready for Key Frames`)
-      
-      if (onClose) {
-        onClose()
-      }
+      toast.success(`Created ${finalSegments.length} segments — add keyframes, then generate Veo prompts (or skip).`)
     } catch (err: any) {
       console.error('[SegmentBuilder] Analysis error:', err)
       setError(err.message || 'Failed to analyze scene')
@@ -777,8 +788,105 @@ export function SegmentBuilder({
     runProductionAnimation,
   ])
 
-  // Phase 2: Generate prompts from approved directions
-  
+  const finalizeAndClose = useCallback(
+    (segments: SceneSegment[]) => {
+      onSegmentsFinalized(segments)
+      setPendingApprovedDirections(null)
+      setStagedSegments(null)
+      setPhase('analyze')
+      setVideoPromptNotes('')
+      setKeyframesConfirmed(false)
+      onClose?.()
+    },
+    [onSegmentsFinalized, onClose]
+  )
+
+  const handleSkipVideoPrompts = useCallback(() => {
+    if (!stagedSegments?.length) return
+    finalizeAndClose(stagedSegments)
+    toast.message('Segments saved without Veo prompts', {
+      description: 'You can generate video prompts later from the segment workflow if needed.',
+    })
+  }, [stagedSegments, finalizeAndClose])
+
+  const handleGenerateVideoPrompts = useCallback(async () => {
+    if (!pendingApprovedDirections?.length || !stagedSegments?.length) return
+
+    setIsAnalyzing(true)
+    setError(null)
+    runProductionAnimation()
+
+    try {
+      const response = await fetch(`/api/scenes/${sceneId}/generate-segments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...(segmentDurationTarget == null
+            ? { segmentDurationAuto: true }
+            : { segmentDurationAuto: false, preferredDuration: segmentDurationTarget }),
+          projectId,
+          focusMode,
+          narrationDriven,
+          narrationDurationSeconds: audioMetadata.narrationDurationSeconds,
+          narrationText: audioMetadata.narrationText,
+          narrationAudioUrl: audioMetadata.narrationAudioUrl,
+          totalAudioDurationSeconds: audioMetadata.totalAudioDurationSeconds,
+          totalDurationTarget: totalDurationTarget || undefined,
+          segmentCountTarget: segmentCountTarget || undefined,
+          customInstructions: customInstructions.trim() || undefined,
+          phase: 'video_prompts',
+          approvedDirections: pendingApprovedDirections,
+          keyframeSummary: videoPromptNotes.trim() || undefined,
+          keyframesConfirmed,
+        }),
+      })
+
+      const responseText = await response.text()
+      let data: any
+      try {
+        data = JSON.parse(responseText)
+      } catch {
+        throw new Error(
+          response.ok
+            ? 'Invalid JSON from segment API'
+            : `Segment API error (${response.status}): ${responseText.slice(0, 280)}`
+        )
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.error || data?.message || 'Failed to generate video prompts')
+      }
+
+      const merged = mergeVideoPromptsIntoStaged(stagedSegments, data.segments as SceneSegment[])
+      finalizeAndClose(merged)
+      toast.success(`Generated Veo prompts for ${merged.length} segments`)
+    } catch (err: any) {
+      console.error('[SegmentBuilder] Video prompts error:', err)
+      setError(err.message || 'Failed to generate video prompts')
+      toast.error('Failed to generate video prompts')
+    } finally {
+      setIsAnalyzing(false)
+      setShowProductionOverlay(false)
+      setProductionStage(0)
+    }
+  }, [
+    sceneId,
+    projectId,
+    segmentDurationTarget,
+    focusMode,
+    narrationDriven,
+    audioMetadata,
+    totalDurationTarget,
+    segmentCountTarget,
+    customInstructions,
+    pendingApprovedDirections,
+    stagedSegments,
+    videoPromptNotes,
+    keyframesConfirmed,
+    runProductionAnimation,
+    finalizeAndClose,
+  ])
+
   // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
@@ -806,6 +914,87 @@ export function SegmentBuilder({
         {/* Center Panel: Timeline & Segments */}
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
           {/* Phase: Analyze */}
+          {phase === 'video_prompts' && stagedSegments && (
+            <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
+              <Card className="w-full max-w-lg bg-gray-900/60 border-gray-700/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-white">
+                    <Video className="w-5 h-5 text-cyan-400" />
+                    Video prompts (step 2)
+                  </CardTitle>
+                  <CardDescription className="text-gray-400">
+                    {stagedSegments.length} segments are staged with keyframe copy. Generate full Veo prompts after you are
+                    happy with keyframes, or skip and fill prompts later.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">Keyframe / on-set notes (optional)</Label>
+                    <Textarea
+                      value={videoPromptNotes}
+                      onChange={e => setVideoPromptNotes(e.target.value)}
+                      placeholder="e.g. Locked wardrobe, practicals on desk, talent blocking approved on set…"
+                      className="min-h-[88px] bg-gray-800/50 border-gray-700 text-gray-200 text-sm"
+                      maxLength={1200}
+                    />
+                  </div>
+                  <div className="flex items-start gap-2 rounded-md border border-gray-700/60 bg-gray-800/40 p-3">
+                    <Checkbox
+                      id="keyframes-confirmed"
+                      checked={keyframesConfirmed}
+                      onCheckedChange={v => setKeyframesConfirmed(v === true)}
+                      className="mt-0.5"
+                    />
+                    <Label htmlFor="keyframes-confirmed" className="text-sm text-gray-300 leading-snug cursor-pointer">
+                      Keyframes are finalized or approved — bias prompts toward the locked stills.
+                    </Label>
+                  </div>
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="w-4 h-4" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      onClick={handleGenerateVideoPrompts}
+                      disabled={isAnalyzing}
+                      className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white"
+                      size="lg"
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Generating video prompts…
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="w-4 h-4 mr-2" />
+                          Generate Veo prompts
+                        </>
+                      )}
+                    </Button>
+                    <Button variant="outline" onClick={handleSkipVideoPrompts} disabled={isAnalyzing} className="w-full border-gray-600">
+                      Skip — save segments without prompts
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setPhase('analyze')
+                        setError(null)
+                      }}
+                      disabled={isAnalyzing}
+                      className="text-gray-500"
+                    >
+                      Back to settings
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {phase === 'analyze' && (
             <div className="flex-1 flex items-center justify-center p-8">
               <Card className="w-full max-w-md bg-gray-900/60 border-gray-700/50">

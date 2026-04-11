@@ -59,6 +59,10 @@ import { prioritizeCharacterReferences } from './defaults'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { findSceneCharacters, findSceneObjects } from '@/lib/character/matching'
 import {
+  resolveFrameGenerationContext,
+  isNoTalentSceneForFrames,
+} from '@/lib/vision/frameGenerationContext'
+import {
   LocationSettingSection,
   CharacterSelectionSection,
   PropSelectionSection,
@@ -129,6 +133,8 @@ export interface FramePromptDialogProps {
   }>
   /** Scene heading for location parsing */
   sceneHeading?: string
+  /** Vision scene fields for the same reference resolver as Quick Generate */
+  frameResolverScene?: Record<string, unknown> | null
 }
 
 export interface FrameGenerationOptions {
@@ -195,6 +201,7 @@ export function FramePromptDialog({
   objectReferences = [],
   locationReferences = [],
   sceneHeading,
+  frameResolverScene = null,
 }: FramePromptDialogProps) {
   // Try to get scene direction from context if not passed as prop
   const contextDirection = useSceneDirectionOptional()
@@ -346,6 +353,57 @@ export function FramePromptDialog({
     ]
     const isAbstractSpace = abstractIndicators.some(ind => segmentTextForLocation.includes(ind))
 
+    let skipCharacterAuto = false
+    let skipObjectAuto = false
+    let skipLocationAuto = false
+
+    if (frameResolverScene) {
+      try {
+        const resolved = resolveFrameGenerationContext({
+          scene: frameResolverScene,
+          segment: {
+            userEditedPrompt: segment.userEditedPrompt,
+            generatedPrompt: segment.generatedPrompt,
+            action: segment.action,
+            dialogueLines: segment.dialogueLines,
+            segmentDirection: segment.segmentDirection as any,
+          },
+          projectCharacters: characters.map(c => ({
+            ...c,
+            appearanceDescription: c.appearance,
+            referenceImage: c.referenceImage,
+          })) as any[],
+          objectReferences: objectReferences as any[],
+          locationReferences: locationReferences as any[],
+        })
+        const sceneNoTalent = isNoTalentSceneForFrames(frameResolverScene)
+        if (sceneNoTalent) {
+          setIsNoTalentSegment(true)
+          setSelectedCharacterNames([])
+          skipCharacterAuto = true
+        } else if (resolved.charactersPayload.length > 0) {
+          setIsNoTalentSegment(false)
+          setSelectedCharacterNames(resolved.charactersPayload.map(c => c.name))
+          skipCharacterAuto = true
+        }
+        if (resolved.matchedObjectRefIds.length > 0) {
+          setSelectedObjectRefIds(resolved.matchedObjectRefIds)
+          setAutoDetectedObjectIds(new Set(resolved.matchedObjectRefIds))
+          setPropsSectionCollapsed(false)
+          skipObjectAuto = true
+        }
+        if (resolved.locationRefsForApi.length > 0 && !isAbstractSpace) {
+          const ids = resolved.locationRefsForApi.map(l => l.id)
+          setSelectedLocationRefIds(ids)
+          setAutoMatchedLocationRefIds(new Set(ids))
+          setLocationSectionCollapsed(false)
+          skipLocationAuto = true
+        }
+      } catch (e) {
+        console.warn('[FramePromptDialog] frameResolverScene resolution failed', e)
+      }
+    }
+
     // Initialize visual setup from scene direction
     if (sceneDirection) {
       const setup = { ...visualSetup }
@@ -440,9 +498,11 @@ export function FramePromptDialog({
     
     // 3. Determine if this segment should have characters
     const shouldSkipCharacters = segmentIsNoTalent || isNoTalentScene
-    setIsNoTalentSegment(shouldSkipCharacters)
+    if (!skipCharacterAuto) {
+      setIsNoTalentSegment(shouldSkipCharacters)
+    }
     
-    if (!shouldSkipCharacters && characters.length > 0) {
+    if (!skipCharacterAuto && !shouldSkipCharacters && characters.length > 0) {
       // If segment has explicit character assignments, use those
       if (segmentHasCharacters && segmentCharacterNames.length > 0) {
         // Match segment character names to available characters (case-insensitive)
@@ -481,7 +541,7 @@ export function FramePromptDialog({
         setSelectedCharacterNames(detected.map(c => c.name))
         // NO FALLBACK — if nobody detected, nobody selected (matches ScenePromptBuilder behavior)
       }
-    } else if (shouldSkipCharacters) {
+    } else if (!skipCharacterAuto && shouldSkipCharacters) {
       setSelectedCharacterNames([])
       // Keep talent section collapsed for no-talent segments but still visible
       setTalentSectionCollapsed(true)
@@ -489,7 +549,7 @@ export function FramePromptDialog({
     }
 
     // Auto-detect props/objects from segment text
-    if (objectReferences.length > 0) {
+    if (!skipObjectAuto && objectReferences.length > 0) {
       const segmentText = segment.action || segment.subject || segment.actionPrompt || ''
       const detected = findSceneObjects(segmentText, objectReferences.map(o => ({
         id: o.id,
@@ -500,7 +560,7 @@ export function FramePromptDialog({
     }
 
     // Auto-match location references from scene heading
-    if (!isAbstractSpace && locationReferences.length > 0 && sceneHeading) {
+    if (!skipLocationAuto && !isAbstractSpace && locationReferences.length > 0 && sceneHeading) {
       // Parse location from heading: "INT. LOCATION - TIME"
       const headingStr = typeof sceneHeading === 'string' ? sceneHeading : ''
       const headingLower = headingStr.toLowerCase()
@@ -547,7 +607,7 @@ export function FramePromptDialog({
         talentBlocking: sceneDirection.talent?.blocking || prev.talentBlocking,
       }))
     }
-  }, [segment, open, previousEndFrameUrl, frameType, sceneDirection, sceneHeading, characters, locationReferences])
+  }, [segment, open, previousEndFrameUrl, frameType, sceneDirection, sceneHeading, characters, locationReferences, objectReferences, frameResolverScene])
 
   // Build intelligent prompt using keyframe prompt builder
   // Priority: 1. Pasted prompts, 2. Segment direction keyframe descriptions, 3. Generic builder
