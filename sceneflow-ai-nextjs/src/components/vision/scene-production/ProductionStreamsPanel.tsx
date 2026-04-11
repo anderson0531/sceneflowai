@@ -26,6 +26,7 @@ import type {
   ProductionStreamType,
   AnimaticRenderSettings,
 } from './types'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 // ============================================================================
 // Types & Props
@@ -36,8 +37,6 @@ interface ProductionStreamsPanelProps {
   productionStreams: ProductionStream[]
   /** Currently selected language for audio tracks (synced with mixer output target) */
   selectedLanguage: string
-  /** When set, Animatic / Video tab is controlled by parent (e.g. mixer output) */
-  streamTypeTab?: ProductionStreamType
   /** Callback to render a new animatic production stream */
   onRenderAnimatic?: (language: string, resolution: '720p' | '1080p' | '4K', settings: AnimaticRenderSettings) => Promise<void>
   /** Legacy callback for backwards compatibility - renders as animatic */
@@ -205,6 +204,9 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
               <streamTypeConfig.Icon className="w-4 h-4" />
               {streamTypeConfig.label}
             </span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-600/60 text-slate-200">
+              v{stream.streamVersion ?? 1}
+            </span>
             {stream.resolution && (
               <span className="text-xs text-slate-400">{stream.resolution}</span>
             )}
@@ -334,6 +336,9 @@ function ProductionStreamCard({
               <streamTypeConfig.Icon className="w-4 h-4" />
               {streamTypeConfig.label}
             </span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-600/50 text-slate-300 font-medium">
+              Version {stream.streamVersion ?? 1}
+            </span>
             <span className={`flex items-center gap-1 text-xs ${statusConfig.className}`}>
               <statusConfig.Icon className={`w-4 h-4 ${statusConfig.iconClassName || ''}`} />
               {statusConfig.label}
@@ -399,7 +404,7 @@ function ProductionStreamCard({
               onClick={onReRender}
               disabled={disabled || isRendering}
               className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-gray-700"
-              title="Re-render"
+              title="New version (keeps this export; adds another render)"
             >
               <RefreshCw className="w-4 h-4" />
             </Button>
@@ -445,7 +450,6 @@ function ProductionStreamCard({
 export function ProductionStreamsPanel({
   productionStreams,
   selectedLanguage: _selectedLanguage,
-  streamTypeTab,
   onRenderAnimatic: _onRenderAnimatic,
   onRenderProduction: _onRenderProduction, // Legacy - maps to onRenderAnimatic
   onDeleteStream,
@@ -459,7 +463,9 @@ export function ProductionStreamsPanel({
   videoGenerationAvailable = false,
   disabled = false
 }: ProductionStreamsPanelProps) {
-  const selectedStreamType: ProductionStreamType = streamTypeTab ?? 'animatic'
+  /** Independent of Scene Production Mixer — browse all animatic vs video exports */
+  const [streamsPanelTab, setStreamsPanelTab] = useState<ProductionStreamType>('animatic')
+  const selectedStreamType = streamsPanelTab
 
   // Inline video preview state
   const [previewingStreamId, setPreviewingStreamId] = useState<string | null>(null)
@@ -506,49 +512,83 @@ export function ProductionStreamsPanel({
     [productionStreams]
   )
   
-  const currentStreams = selectedStreamType === 'animatic' ? animaticStreams : videoStreams
+  const currentStreams = useMemo(() => {
+    const list = selectedStreamType === 'animatic' ? animaticStreams : videoStreams
+    return [...list].sort((a, b) => {
+      const lang = a.language.localeCompare(b.language)
+      if (lang !== 0) return lang
+      const dv = (b.streamVersion ?? 1) - (a.streamVersion ?? 1)
+      if (dv !== 0) return dv
+      return new Date(b.completedAt || b.createdAt || 0).getTime() - new Date(a.completedAt || a.createdAt || 0).getTime()
+    })
+  }, [animaticStreams, videoStreams, selectedStreamType])
   
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Film className="w-4 h-4 text-purple-400" />
-          <h4 className="text-sm font-medium text-gray-200">Production Streams</h4>
-          {productionStreams.length > 0 && (
-            <span className="px-1.5 py-0.5 text-xs bg-purple-500/20 text-purple-300 rounded">
-              {productionStreams.length}
-            </span>
-          )}
+      {/* Header — match main section titles (e.g. Stream Selection / mixer) */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <Film className="w-5 h-5 text-purple-400 flex-shrink-0" />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-lg font-semibold text-slate-100 tracking-tight">
+                Scene Production Streams
+              </h3>
+              {productionStreams.length > 0 && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-purple-500/20 text-purple-200 rounded-md border border-purple-500/25">
+                  {productionStreams.length} total
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 mt-1 max-w-2xl">
+              Finished exports for this scene by language and type. Versions stack for the same language (Animatic English v1, v2…). In Final Cut, pick Animatic vs Video and the stream version per scene.
+            </p>
+          </div>
         </div>
         {hasSegmentChanges && productionStreams.length > 0 && (
-          <span className="flex items-center gap-1 text-xs text-amber-400">
-            <AlertCircle className="w-3 h-3" />
-            Segments changed - re-render recommended
+          <span className="flex items-center gap-1 text-xs text-amber-400 shrink-0">
+            <AlertCircle className="w-3.5 h-3.5" />
+            Segments changed — new render recommended
           </span>
         )}
       </div>
-      
-      {/* Stream Type Tabs */}
-      <p className="text-[11px] text-gray-500">
-        Library of finished exports for this scene. View follows the same Animatic vs Video choice as the Scene Production Mixer above.
-      </p>
-      <div className="flex items-center gap-2 text-xs">
+
+      {/* Animatic / Video toggle (independent of mixer output target) */}
+      <Tabs
+        value={streamsPanelTab}
+        onValueChange={(v) => setStreamsPanelTab(v as ProductionStreamType)}
+        className="w-full"
+      >
+        <TabsList className="grid w-full max-w-md grid-cols-2 h-10 p-1 bg-slate-900/80 border border-slate-600/80 rounded-lg">
+          <TabsTrigger
+            value="animatic"
+            className="gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=inactive]:text-slate-400 rounded-md"
+          >
+            <Clapperboard className="w-4 h-4" />
+            Animatic
+            <span className="text-[10px] opacity-80 tabular-nums">({animaticStreams.length})</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="video"
+            className="gap-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=inactive]:text-slate-400 rounded-md"
+          >
+            <VideoIcon className="w-4 h-4" />
+            Video
+            <span className="text-[10px] opacity-80 tabular-nums">({videoStreams.length})</span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <div className="flex items-center gap-2 text-xs text-slate-400">
         {selectedStreamType === 'animatic' ? (
           <>
-            <Clapperboard className="w-3.5 h-3.5 text-purple-300" />
-            <span className="text-purple-200">Showing Animatic exports</span>
-            <span className="px-1.5 py-0.5 text-[11px] bg-purple-500/20 text-purple-300 rounded">
-              {animaticStreams.length}
-            </span>
+            <Clapperboard className="w-3.5 h-3.5 text-purple-400" />
+            <span>Showing <span className="text-purple-200 font-medium">Animatic</span> exports for this scene</span>
           </>
         ) : (
           <>
-            <VideoIcon className="w-3.5 h-3.5 text-indigo-300" />
-            <span className="text-indigo-200">Showing Video exports</span>
-            <span className="px-1.5 py-0.5 text-[11px] bg-indigo-500/20 text-indigo-300 rounded">
-              {videoStreams.length}
-            </span>
+            <VideoIcon className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Showing <span className="text-indigo-200 font-medium">Video</span> exports for this scene</span>
           </>
         )}
       </div>

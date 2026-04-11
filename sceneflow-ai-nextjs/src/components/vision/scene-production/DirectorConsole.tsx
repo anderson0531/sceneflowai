@@ -92,6 +92,7 @@ const SceneProductionMixer = dynamic(
 import { useVideoQueue } from '@/hooks/useVideoQueue'
 import type { SceneAudioData } from './GuidePromptEditor'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
+import { getNextProductionStreamVersion } from './defaults'
 
 // Default audio track selection state
 const DEFAULT_AUDIO_TRACKS: SelectedAudioTracks = {
@@ -517,10 +518,12 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   const handleRenderAnimatic = useCallback(
     async (language: string, resolution: '720p' | '1080p' | '4K', settings: AnimaticRenderSettings) => {
       const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
-      const streamId = `stream-animatic-${language}-${Date.now()}`
+      const nextVer = getNextProductionStreamVersion(productionStreams, language, 'animatic')
+      const streamId = `stream-animatic-${language}-v${nextVer}-${Date.now()}`
       const newStream: ProductionStream = {
         id: streamId,
         streamType: 'animatic',
+        streamVersion: nextVer,
         language,
         languageLabel: languageInfo?.name || language,
         status: 'rendering',
@@ -570,15 +573,25 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   const handleReRenderStream = useCallback(async (streamId: string) => {
     const stream = productionStreams.find(s => s.id === streamId)
     if (!stream) return
-    
-    // Update stream status to rendering
-    const updatedStreams = productionStreams.map(s => 
-      s.id === streamId 
-        ? { ...s, status: 'rendering' as const, mp4Url: undefined }
-        : s
-    )
+
+    const st = stream.streamType || 'animatic'
+    const nextVer = getNextProductionStreamVersion(productionStreams, stream.language, st)
+    const newId = `stream-${st}-${stream.language}-v${nextVer}-${Date.now()}`
+    const newStream: ProductionStream = {
+      ...stream,
+      id: newId,
+      streamVersion: nextVer,
+      status: 'rendering',
+      mp4Url: undefined,
+      completedAt: undefined,
+      startedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      error: undefined,
+      renderJobId: undefined,
+    }
+    const updatedStreams = [...productionStreams, newStream]
     setProductionStreams(updatedStreams)
-    setRenderingStreamId(streamId)
+    setRenderingStreamId(newId)
     setStreamRenderProgress(0)
     setProductionTarget(prev => ({ ...prev, streamType: stream.streamType, language: stream.language }))
     setRenderDialogMode(stream.streamType === 'video' ? 'video' : 'animatic')
@@ -601,7 +614,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
         productionStreams: updatedStreams,
       })
     }
-    
+
     setIsRenderDialogOpen(true)
   }, [productionStreams, productionData, onProductionDataChange])
   
@@ -616,11 +629,13 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   
   // Download a production stream
   const handleDownloadStream = useCallback((streamId: string, mp4Url: string, language: string) => {
+    const stream = productionStreams.find(s => s.id === streamId)
+    const v = stream?.streamVersion ?? 1
     const link = document.createElement('a')
     link.href = mp4Url
-    link.download = `scene-${sceneNumber}-${language}.mp4`
+    link.download = `scene-${sceneNumber}-${language}-v${v}.mp4`
     link.click()
-  }, [sceneNumber])
+  }, [sceneNumber, productionStreams])
   
   // Update stream when render completes
   const handleRenderComplete = useCallback((downloadUrl: string, streamType?: 'video' | 'animatic') => {
@@ -1127,30 +1142,26 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
             // Update the rendered scene URL
             setRenderedSceneUrl(downloadUrl)
             
-            // Update or add the completed stream
+            // Append a new versioned stream (do not replace prior exports)
             const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
+            const st = streamType === 'animatic' ? 'animatic' : 'video'
             const updatedStreams = (() => {
               const prev = productionStreams
-              // Check if there's an existing stream for this language and stream type
-              const existingIndex = prev.findIndex(s => s.language === language && (s.streamType || 'animatic') === streamType)
-              if (existingIndex >= 0) {
-                // Update existing stream to complete
-                return prev.map((s, i) => 
-                  i === existingIndex 
-                    ? { ...s, status: 'complete' as const, streamType, mp4Url: downloadUrl, completedAt: new Date().toISOString() }
-                    : s
-                )
-              }
-              // Add new completed stream
-              return [...prev, {
-                id: `stream-${language}-${Date.now()}`,
-                language,
-                languageLabel: languageInfo?.name || language,
-                status: 'complete' as const,
-                streamType,
-                mp4Url: downloadUrl,
-                completedAt: new Date().toISOString(),
-              }]
+              const v = getNextProductionStreamVersion(prev, language, st)
+              const id = `stream-${st}-${language}-v${v}-${Date.now()}`
+              return [
+                ...prev,
+                {
+                  id,
+                  language,
+                  languageLabel: languageInfo?.name || language,
+                  status: 'complete' as const,
+                  streamType: st,
+                  streamVersion: v,
+                  mp4Url: downloadUrl,
+                  completedAt: new Date().toISOString(),
+                } satisfies ProductionStream,
+              ]
             })()
             
             setProductionStreams(updatedStreams)
@@ -1188,7 +1199,6 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
         <ProductionStreamsPanel
           productionStreams={productionStreams}
           selectedLanguage={productionTarget.language}
-          streamTypeTab={productionTarget.streamType}
           onRenderAnimatic={handleRenderAnimatic}
           onDeleteStream={handleDeleteStream}
           onReRenderStream={handleReRenderStream}

@@ -12,6 +12,7 @@ import type {
   CharacterReference,
   CharacterReferencePrioritization,
   ProductionStream,
+  ProductionStreamType,
   AnimaticRenderSettings,
   VideoRenderSettings,
   SmartPromptSettings,
@@ -176,4 +177,41 @@ export const DEFAULT_LML_CONFIG: LMLConfig = {
   kenBurnsEndScale: 1.01,
   gainRampDownDuration: 0.05,
   maxExtensionPerSegment: 8.0,
+}
+
+// ============================================================================
+// Production stream versioning (scene + language + streamType)
+// ============================================================================
+
+/**
+ * Next 1-based version for a new render in the same scene bucket (language + animatic|video).
+ */
+export function getNextProductionStreamVersion(
+  streams: ProductionStream[],
+  language: string,
+  streamType: ProductionStreamType
+): number {
+  const normalized: ProductionStreamType = streamType === 'video' ? 'video' : 'animatic'
+  const same = streams.filter(
+    (s) => s.language === language && (s.streamType || 'animatic') === normalized
+  )
+  let max = 0
+  for (const s of same) {
+    const v = s.streamVersion ?? 1
+    if (v > max) max = v
+  }
+  return max + 1
+}
+
+/**
+ * Latest completed stream (highest version, then most recent completedAt).
+ */
+export function pickLatestCompleteStream(streams: ProductionStream[]): ProductionStream | null {
+  const complete = streams.filter((s) => s.status === 'complete' && s.mp4Url)
+  if (complete.length === 0) return null
+  return [...complete].sort((a, b) => {
+    const dv = (b.streamVersion ?? 1) - (a.streamVersion ?? 1)
+    if (dv !== 0) return dv
+    return new Date(b.completedAt || 0).getTime() - new Date(a.completedAt || 0).getTime()
+  })[0]
 }

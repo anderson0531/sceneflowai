@@ -73,6 +73,8 @@ export {
   DEFAULT_ANIMATIC_SETTINGS,
   DEFAULT_VIDEO_SETTINGS,
   createDefaultSmartPromptSettings,
+  getNextProductionStreamVersion,
+  pickLatestCompleteStream,
 } from './defaults'
 
 // Prompt utilities - explicit exports only (no `export *` to avoid TDZ module graph issues)

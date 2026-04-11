@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useCallback } from 'react'
+import React, { useMemo, useCallback, useEffect, useRef } from 'react'
 import { 
   Clapperboard, 
   Video, 
@@ -19,6 +19,7 @@ import type {
   DEFAULT_FINAL_CUT_SETTINGS 
 } from '@/types/productionStreams'
 import type { ProductionStream, ProductionStreamType } from '@/components/vision/scene-production/types'
+import { pickLatestCompleteStream } from '@/components/vision/scene-production/defaults'
 
 // ============================================================================
 // Types
@@ -57,37 +58,38 @@ interface FinalCutStreamSelectorProps {
 // Helper Functions
 // ============================================================================
 
+function matchesStreamType(s: ProductionStream, preferredType: ProductionStreamType): boolean {
+  const t = s.streamType || 'animatic'
+  return t === preferredType
+}
+
 /**
- * Find the best available stream for a scene matching the criteria
+ * Find the best available stream for a scene matching the criteria.
+ * When multiple versions exist (same language + type), prefers the latest version.
  */
 function findBestStream(
   streams: ProductionStream[],
   preferredType: ProductionStreamType,
   preferredLanguage: string
 ): ProductionStream | null {
-  // First try exact match: type + language
-  const exactMatch = streams.find(
-    s => s.streamType === preferredType && 
-         s.language === preferredLanguage && 
-         s.status === 'complete'
+  const exactCandidates = streams.filter(
+    s =>
+      matchesStreamType(s, preferredType) &&
+      s.language === preferredLanguage &&
+      s.status === 'complete'
   )
-  if (exactMatch) return exactMatch
-  
-  // Try same type, any language
-  const sameType = streams.find(
-    s => s.streamType === preferredType && s.status === 'complete'
-  )
-  if (sameType) return sameType
-  
-  // Try same language, any type
-  const sameLanguage = streams.find(
-    s => s.language === preferredLanguage && s.status === 'complete'
-  )
-  if (sameLanguage) return sameLanguage
-  
-  // Any complete stream
-  const anyComplete = streams.find(s => s.status === 'complete')
-  return anyComplete || null
+  const exact = pickLatestCompleteStream(exactCandidates)
+  if (exact) return exact
+
+  const sameType = streams.filter(s => matchesStreamType(s, preferredType) && s.status === 'complete')
+  const typePick = pickLatestCompleteStream(sameType)
+  if (typePick) return typePick
+
+  const sameLanguage = streams.filter(s => s.language === preferredLanguage && s.status === 'complete')
+  const langPick = pickLatestCompleteStream(sameLanguage)
+  if (langPick) return langPick
+
+  return pickLatestCompleteStream(streams.filter(s => s.status === 'complete'))
 }
 
 /**
@@ -139,9 +141,17 @@ function SceneRow({
   // Get current stream details
   const currentStreams = selection.streamType === 'video' ? videoStreams : animaticStreams
   const selectedStream = currentStreams.find(s => s.id === selection.streamId)
-  
-  // Available languages for current stream type
-  const availableLanguages = currentStreams.map(s => s.language)
+
+  const streamsForSelectedLang = useMemo(
+    () =>
+      currentStreams
+        .filter(s => s.language === selection.language && s.status === 'complete')
+        .sort((a, b) => (b.streamVersion ?? 1) - (a.streamVersion ?? 1)),
+    [currentStreams, selection.language]
+  )
+
+  // Available languages for current stream type (unique codes)
+  const availableLanguages = [...new Set(currentStreams.map(s => s.language))]
   
   const handleTypeChange = (type: ProductionStreamType) => {
     const streams = type === 'video' ? videoStreams : animaticStreams
@@ -158,15 +168,41 @@ function SceneRow({
   
   const handleLanguageChange = (language: string) => {
     const streams = selection.streamType === 'video' ? videoStreams : animaticStreams
-    const matchingStream = streams.find(s => s.language === language)
-    
+    const matches = streams.filter(s => s.language === language && s.status === 'complete')
+    const best = pickLatestCompleteStream(matches)
+
     onSelectionChange({
       ...selection,
       language,
-      streamId: matchingStream?.id,
-      isValid: !!matchingStream
+      streamId: best?.id,
+      isValid: !!best
     })
   }
+
+  const handleVersionChange = (streamId: string) => {
+    const s = streamsForSelectedLang.find(x => x.id === streamId)
+    onSelectionChange({
+      ...selection,
+      streamId,
+      isValid: !!s
+    })
+  }
+
+  const selectionRef = useRef(selection)
+  selectionRef.current = selection
+
+  // If the selected stream id was removed (e.g. deleted), fall back to latest for this language
+  useEffect(() => {
+    if (streamsForSelectedLang.length === 0) return
+    const sel = selectionRef.current
+    const ok = sel.streamId && streamsForSelectedLang.some(s => s.id === sel.streamId)
+    if (!ok) {
+      const best = pickLatestCompleteStream(streamsForSelectedLang)
+      if (best) {
+        onSelectionChange({ ...sel, streamId: best.id, isValid: true })
+      }
+    }
+  }, [streamsForSelectedLang, onSelectionChange])
   
   return (
     <div className={`flex items-center gap-4 p-3 rounded-lg border ${
@@ -235,7 +271,7 @@ function SceneRow({
       </div>
       
       {/* Language selection */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-[140px]">
         {hasAny && availableLanguages.length > 0 ? (
           <GroupedLanguageSelector
             value={selection.language}
@@ -249,6 +285,29 @@ function SceneRow({
           <span className="text-xs text-gray-500">No streams</span>
         )}
       </div>
+
+      {hasAny && streamsForSelectedLang.length > 1 && (
+        <div className="flex flex-col gap-0.5 min-w-[150px]">
+          <span className="text-[10px] uppercase tracking-wide text-gray-500">Version</span>
+          <select
+            value={
+              selection.streamId && streamsForSelectedLang.some(s => s.id === selection.streamId)
+                ? selection.streamId
+                : streamsForSelectedLang[0]?.id ?? ''
+            }
+            onChange={(e) => handleVersionChange(e.target.value)}
+            disabled={disabled}
+            className="text-xs bg-gray-800 border border-gray-600 rounded px-2 py-1.5 text-gray-200 w-full"
+          >
+            {streamsForSelectedLang.map((s) => (
+              <option key={s.id} value={s.id}>
+                v{s.streamVersion ?? 1}
+                {s.completedAt ? ` · ${new Date(s.completedAt).toLocaleDateString()}` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       
       {/* Status indicator */}
       <div className="w-6">
@@ -321,14 +380,19 @@ export function FinalCutStreamSelector({
     <div className="space-y-4">
       {/* Header with global controls */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Film className="w-5 h-5 text-purple-400" />
-          <h3 className="text-lg font-medium text-gray-200">Stream Selection</h3>
-          <span className={`px-2 py-0.5 text-xs rounded ${
-            allValid ? 'bg-green-500/20 text-green-300' : 'bg-amber-500/20 text-amber-300'
-          }`}>
-            {validCount}/{scenes.length} ready
-          </span>
+        <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
+          <div className="flex items-center gap-3">
+            <Film className="w-5 h-5 text-purple-400" />
+            <h3 className="text-lg font-semibold text-gray-200">Stream Selection</h3>
+            <span className={`px-2 py-0.5 text-xs rounded ${
+              allValid ? 'bg-green-500/20 text-green-300' : 'bg-amber-500/20 text-amber-300'
+            }`}>
+              {validCount}/{scenes.length} ready
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 sm:ml-2 max-w-xl">
+            Per scene: choose Animatic or Video, language, then version if you have multiple exports (e.g. Animatic English v2 vs v3). Defaults favor the latest version.
+          </p>
         </div>
         
         <div className="flex items-center gap-3">

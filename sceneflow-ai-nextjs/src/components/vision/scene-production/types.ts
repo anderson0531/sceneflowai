@@ -793,6 +793,11 @@ export interface ProductionStream {
   id: string
   /** Stream type: animatic (Ken Burns) or video (AI-generated) */
   streamType: ProductionStreamType
+  /**
+   * Version index for this scene + language + streamType (1-based).
+   * New renders append a row instead of replacing; omitted on legacy data (= 1 for display).
+   */
+  streamVersion?: number
   /** Language code (e.g., 'en', 'th', 'es') */
   language: string
   /** Human-readable language name (e.g., 'English', 'Thai', 'Spanish') */
