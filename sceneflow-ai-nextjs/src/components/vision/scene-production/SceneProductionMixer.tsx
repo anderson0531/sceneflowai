@@ -335,7 +335,12 @@ interface SceneProductionMixerProps {
   /** Callback when text overlays change */
   onTextOverlaysChange?: (overlays: TextOverlay[]) => void
   /** Callback when render completes successfully */
-  onRenderComplete?: (downloadUrl: string, language: string, streamType?: ProductionStreamType) => void
+  onRenderComplete?: (
+    downloadUrl: string,
+    language: string,
+    streamType?: ProductionStreamType,
+    meta?: { durationSeconds?: number }
+  ) => void
   /** Callback to update production streams in parent */
   onProductionStreamsChange?: (streams: ProductionStream[]) => void
   /** Whether segment generation is in progress */
@@ -3070,7 +3075,9 @@ export function SceneProductionMixer({
             console.warn('[ServerRender] Failed to cache video to IndexedDB:', cacheError)
           }
           
-          onRenderComplete?.(persistentUrl, selectedLanguage, productionTarget.streamType)
+          onRenderComplete?.(persistentUrl, selectedLanguage, productionTarget.streamType, {
+            durationSeconds: totalDuration,
+          })
           return
         }
         
@@ -3418,7 +3425,9 @@ export function SceneProductionMixer({
         console.warn('[SceneProductionMixer] Failed to cache video to IndexedDB:', cacheError)
       }
       
-      onRenderComplete?.(persistentUrl, selectedLanguage, productionTarget.streamType)
+      onRenderComplete?.(persistentUrl, selectedLanguage, productionTarget.streamType, {
+        durationSeconds: totalDuration,
+      })
       
     } catch (err) {
       console.error('[SceneProductionMixer] Local render error:', err)
@@ -3668,7 +3677,9 @@ export function SceneProductionMixer({
             console.warn('[HeadlessRender] Failed to cache video to IndexedDB:', cacheError)
           }
           
-          onRenderComplete?.(persistentUrl, selectedLanguage, productionTarget.streamType)
+          onRenderComplete?.(persistentUrl, selectedLanguage, productionTarget.streamType, {
+            durationSeconds: totalDuration,
+          })
           return
         }
         
@@ -3687,7 +3698,15 @@ export function SceneProductionMixer({
     }
     
     throw new Error('Headless render job timed out')
-  }, [onRenderComplete, selectedLanguage])
+  }, [
+    onRenderComplete,
+    selectedLanguage,
+    totalDuration,
+    productionTarget.streamType,
+    overlayStore,
+    projectId,
+    sceneId,
+  ])
   
   // === Smart Render Handler (routes to local, server, or headless) ===
   const handleSmartRender = useCallback(async () => {

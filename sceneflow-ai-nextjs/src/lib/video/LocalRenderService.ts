@@ -427,10 +427,23 @@ export class LocalRenderService {
       // Setup MediaRecorder
       onProgress?.({ phase: 'rendering', progress: 40 })
       let mimeType = getMediaRecorderMimeType()!
-      // Use captureStream(0) for manual frame capture - this ensures all drawing
-      // (including overlays and watermarks) is complete before frame is captured
-      const stream = this.canvas.captureStream(0)
-      // Get video track for manual frame requests
+      // Image-only animatics: use timed captureStream(fps). With captureStream(0) + requestFrame(),
+      // Chromium VP9 often collapses identical canvas pixels into a single encoded frame, so the
+      // output shows one frozen frame while audio plays for the full duration.
+      // Video segments still use manual requestFrame() after each seek for frame-accurate capture.
+      const allSegmentsAreImages =
+        adjustedConfig.segments.length > 0 &&
+        adjustedConfig.segments.every((s) => s.assetType === 'image')
+      const captureFps = Math.min(60, Math.max(1, Math.round(adjustedConfig.fps)))
+      const stream = allSegmentsAreImages
+        ? this.canvas.captureStream(captureFps)
+        : this.canvas.captureStream(0)
+      if (allSegmentsAreImages) {
+        console.log(
+          `[LocalRender] Using captureStream(${captureFps}) for image-only animatic (avoids single-frame WebM)`
+        )
+      }
+      // Get video track for manual frame requests (video path only)
       const canvasVideoTrack = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack | undefined
       
       // ===========================================================================
@@ -692,8 +705,8 @@ export class LocalRenderService {
         // This microtask delay ensures the buffer state is registered
         await new Promise(resolve => setTimeout(resolve, 0))
         
-        // Step 7: Request frame capture AFTER atomic commit, flush, and tick
-        if (canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
+        // Step 7: Request frame capture (video segments only; image animatic uses timed captureStream)
+        if (!allSegmentsAreImages && canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
           canvasVideoTrack.requestFrame()
         }
         
@@ -713,7 +726,7 @@ export class LocalRenderService {
       // Stop recording
       onProgress?.({ phase: 'encoding', progress: 95 })
       // Final flush: request one more frame and allow recorder to emit trailing chunk.
-      if (canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
+      if (!allSegmentsAreImages && canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
         canvasVideoTrack.requestFrame()
       }
       await this.sleep(150, signal)

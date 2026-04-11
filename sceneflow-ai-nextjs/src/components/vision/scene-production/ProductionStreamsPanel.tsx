@@ -141,6 +141,16 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
+
+  const timelineDuration = useMemo(() => {
+    if (Number.isFinite(duration) && duration > 0 && !Number.isNaN(duration)) {
+      return duration
+    }
+    if (typeof stream.duration === 'number' && stream.duration > 0 && Number.isFinite(stream.duration)) {
+      return stream.duration
+    }
+    return 0
+  }, [duration, stream.duration])
   
   const flag = FLAG_EMOJIS[stream.language] || '🌐'
   const streamTypeConfig = STREAM_TYPE_CONFIG[stream.streamType || 'animatic']
@@ -160,22 +170,46 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
     }
   }, [])
   
+  const applyDurationFromVideo = useCallback(() => {
+    if (!videoRef.current) return
+    const d = videoRef.current.duration
+    const fallback =
+      typeof stream.duration === 'number' && stream.duration > 0 ? stream.duration : 0
+    if (Number.isFinite(d) && d > 0 && !Number.isNaN(d)) {
+      setDuration(d)
+    } else if (fallback > 0) {
+      setDuration(fallback)
+    } else {
+      setDuration(0)
+    }
+  }, [stream.duration])
+
   const handleLoadedMetadata = useCallback(() => {
     if (videoRef.current) {
-      setDuration(videoRef.current.duration)
+      applyDurationFromVideo()
       setIsLoaded(true)
     }
-  }, [])
+  }, [applyDurationFromVideo])
+
+  const handleDurationChange = useCallback(() => {
+    applyDurationFromVideo()
+  }, [applyDurationFromVideo])
   
   const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = parseFloat(e.target.value)
+    const raw = parseFloat(e.target.value)
+    const cap = timelineDuration > 0 ? timelineDuration : duration
+    const newTime =
+      Number.isFinite(cap) && cap > 0 ? Math.min(Math.max(0, raw), cap) : Math.max(0, raw)
     if (videoRef.current) {
       videoRef.current.currentTime = newTime
       setCurrentTime(newTime)
     }
-  }, [])
+  }, [timelineDuration, duration])
   
   const formatTime = (seconds: number) => {
+    if (!Number.isFinite(seconds) || seconds < 0 || Number.isNaN(seconds)) {
+      return '0:00'
+    }
     const mins = Math.floor(seconds / 60)
     const secs = Math.floor(seconds % 60)
     return `${mins}:${secs.toString().padStart(2, '0')}`
@@ -247,6 +281,7 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
           onPause={() => setIsPlaying(false)}
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
+          onDurationChange={handleDurationChange}
           onEnded={() => setIsPlaying(false)}
           playsInline
         />
@@ -275,7 +310,7 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
         <input
           type="range"
           min={0}
-          max={duration || 100}
+          max={timelineDuration > 0 ? timelineDuration : 100}
           value={currentTime}
           onChange={handleSeek}
           className="flex-1 h-1 bg-slate-700 rounded-full appearance-none cursor-pointer
@@ -285,7 +320,7 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
         />
         
         <span className="text-xs text-slate-400 min-w-[40px] text-right">
-          {formatTime(duration)}
+          {formatTime(timelineDuration)}
         </span>
       </div>
     </div>

@@ -79,7 +79,11 @@ interface SceneRenderDialogProps {
     sfxUrl?: string
     sfxDuration?: number
   }
-  onRenderComplete?: (downloadUrl: string, streamType?: 'video' | 'animatic') => void
+  onRenderComplete?: (
+    downloadUrl: string,
+    streamType?: 'video' | 'animatic',
+    meta?: { durationSeconds?: number }
+  ) => void
   /** Sync language when dialog opens (from production stream / mixer target) */
   initialLanguage?: string
   /** Optional animatic export settings (Ken Burns, transitions) merged into the animatic API payload */
@@ -460,7 +464,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
           setStatus('complete')
           setProgress(100)
           setDownloadUrl(url)
-          onRenderComplete?.(url, 'animatic')
+          onRenderComplete?.(url, 'animatic', { durationSeconds: totalDuration })
           return
         }
 
@@ -498,7 +502,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
           setStatus('complete')
           setProgress(100)
           setDownloadUrl(data.downloadUrl)
-          onRenderComplete?.(data.downloadUrl, 'video')
+          onRenderComplete?.(data.downloadUrl, 'video', { durationSeconds: totalDuration })
           return
         }
 

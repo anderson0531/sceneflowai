@@ -638,11 +638,21 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
   }, [sceneNumber, productionStreams])
   
   // Update stream when render completes
-  const handleRenderComplete = useCallback((downloadUrl: string, streamType?: 'video' | 'animatic') => {
+  const handleRenderComplete = useCallback((
+    downloadUrl: string,
+    streamType?: 'video' | 'animatic',
+    meta?: { durationSeconds?: number }
+  ) => {
     console.log('[DirectorConsole] Scene render complete:', downloadUrl)
     setRenderedSceneUrl(downloadUrl)
     
     if (renderingStreamId) {
+      const dur =
+        typeof meta?.durationSeconds === 'number' &&
+        Number.isFinite(meta.durationSeconds) &&
+        meta.durationSeconds > 0
+          ? meta.durationSeconds
+          : undefined
       const updatedStreams = productionStreams.map(s => 
         s.id === renderingStreamId 
           ? { 
@@ -651,6 +661,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
               mp4Url: downloadUrl,
               completedAt: new Date().toISOString(),
               streamType: streamType === 'animatic' ? 'animatic' as const : 'video' as const,
+              ...(dur !== undefined ? { duration: dur } : {}),
             }
           : s
       )
@@ -1138,7 +1149,7 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
           productionTarget={productionTarget}
           onProductionTargetChange={setProductionTarget}
           videoGenerationAvailable={videoGenerationAvailable}
-          onRenderComplete={(downloadUrl, language, streamType = productionTarget.streamType) => {
+          onRenderComplete={(downloadUrl, language, streamType = productionTarget.streamType, meta) => {
             // Update the rendered scene URL
             setRenderedSceneUrl(downloadUrl)
             
@@ -1160,6 +1171,12 @@ export const DirectorConsole: React.FC<DirectorConsoleProps> = ({
                   streamVersion: v,
                   mp4Url: downloadUrl,
                   completedAt: new Date().toISOString(),
+                  duration:
+                    typeof meta?.durationSeconds === 'number' &&
+                    Number.isFinite(meta.durationSeconds) &&
+                    meta.durationSeconds > 0
+                      ? meta.durationSeconds
+                      : undefined,
                 } satisfies ProductionStream,
               ]
             })()
