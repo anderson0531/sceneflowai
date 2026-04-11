@@ -33,8 +33,10 @@ FONT_MAP = {
     'Lora': 'Lora',
 }
 
-# Default fallback font
+# Default fallback font (fontconfig name)
 DEFAULT_FONT = 'DejaVu Sans'
+# Absolute path — reliable when fontconfig name resolution fails in drawtext
+DEJAVU_SANS_TTF = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
 
 
 def escape_drawtext(text: str) -> str:
@@ -122,7 +124,8 @@ def get_font_file(font_family: str, font_weight: int = 400) -> str:
     font_base_name = font_name_map.get(font_family, font_family)
     
     if not font_dir:
-        # Return fontconfig name for fallback
+        if os.path.exists(DEJAVU_SANS_TTF):
+            return DEJAVU_SANS_TTF
         return DEFAULT_FONT
     
     # Try to find the font file with the right weight
@@ -146,7 +149,9 @@ def get_font_file(font_family: str, font_weight: int = 400) -> str:
         elif os.path.exists(regular_file):
             return regular_file
         else:
-            print(f"[FFmpeg] Warning: Font file not found for {font_family}-{weight_name}, using fontconfig")
+            print(f"[FFmpeg] Warning: Font file not found for {font_family}-{weight_name}, falling back")
+            if os.path.exists(DEJAVU_SANS_TTF):
+                return DEJAVU_SANS_TTF
             return FONT_MAP.get(font_family, DEFAULT_FONT)
 
 
@@ -352,15 +357,19 @@ def build_watermark_text_filter(
     font_size = text_style.get('fontSize', 32)  # Already converted to pixels by API
     font_weight = text_style.get('fontWeight', 400)
     color = text_style.get('color', '#FFFFFF')
-    opacity = text_style.get('opacity', 0.7)
+    opacity = float(text_style.get('opacity', 0.7))
+    opacity = min(max(opacity, 0.0), 1.0)
     text_shadow = text_style.get('textShadow', True)
     
     # Get font file path
     font_file = get_font_file(font_family, font_weight)
     
-    # Convert hex color to FFmpeg format with opacity
-    fontcolor = hex_to_ffmpeg_color(color, opacity)
-    
+    # Same as text overlays: bundled alpha in fontcolor via hex_to_ffmpeg_color (requires explicit fontfile when possible).
+    color_hex = str(color).lstrip('#')
+    if len(color_hex) < 6 or not all(c in '0123456789abcdefABCDEF' for c in color_hex[:6]):
+        color_hex = 'FFFFFF'
+    fontcolor = hex_to_ffmpeg_color(color_hex[:6], opacity)
+
     # Calculate position based on anchor
     if anchor == 'top-left':
         x_expr = str(padding)
@@ -392,6 +401,7 @@ def build_watermark_text_filter(
         f"fontcolor={fontcolor}",
         f"x={x_expr}",
         f"y={y_expr}",
+        "fix_bounds=1",
     ]
     
     # Add text shadow for better visibility
