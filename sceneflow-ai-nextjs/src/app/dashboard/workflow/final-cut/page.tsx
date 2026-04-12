@@ -170,7 +170,9 @@ const getDemoSceneDescription = (sceneNumber: number): string => {
 export default function FinalCutPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { currentProject, updateProject } = useStore()
+  const currentProject = useStore((s) => s.currentProject)
+  const setCurrentProject = useStore((s) => s.setCurrentProject)
+  const updateProject = useStore((s) => s.updateProject)
   
   // Check for demo mode
   const isDemo = searchParams.get('demo') === 'true'
@@ -182,57 +184,13 @@ export default function FinalCutPage() {
   const [selectedStreamId, setSelectedStreamId] = useState<string | null>(null)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   
-  // Get project ID from URL or current project
-  const projectId = searchParams.get('projectId') || currentProject?.id || (isDemo ? 'demo-project' : undefined)
-  
-  // ============================================================================
-  // Initialize from project data
-  // ============================================================================
-  
-  useEffect(() => {
-    // Demo mode - load demo stream
-    if (isDemo) {
-      const demoStream = createDemoStream()
-      setStreams([demoStream])
-      setSelectedStreamId(demoStream.id)
-      setIsLoading(false)
-      return
-    }
-    
-    // Normal mode - require currentProject
-    if (!currentProject) {
-      router.push('/dashboard')
-      return
-    }
-    
-    const initializeStreams = async () => {
-      setIsLoading(true)
-      
-      try {
-        // Check if project has existing Final Cut streams
-        const existingStreams = (currentProject.metadata as any)?.finalCutStreams as FinalCutStream[] | undefined
-        
-        if (existingStreams && existingStreams.length > 0) {
-          setStreams(existingStreams)
-          setSelectedStreamId(existingStreams[0].id)
-        } else {
-          // Create default stream from scene production data
-          const defaultStream = createDefaultStream(currentProject)
-          if (defaultStream) {
-            setStreams([defaultStream])
-            setSelectedStreamId(defaultStream.id)
-          }
-        }
-      } catch (error) {
-        console.error('Failed to initialize Final Cut:', error)
-        toast.error('Failed to load project data')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    
-    initializeStreams()
-  }, [currentProject, router, isDemo])
+  const searchProjectIdRaw = searchParams.get('projectId')
+  const searchProjectId =
+    searchProjectIdRaw && searchProjectIdRaw.trim() !== '' ? searchProjectIdRaw.trim() : undefined
+
+  // URL wins; else global store (Production often keeps project only in local state until we fetch here)
+  const projectId =
+    searchProjectId || currentProject?.id || (isDemo ? 'demo-project' : undefined)
   
   // ============================================================================
   // Create default stream from project data
@@ -320,6 +278,86 @@ export default function FinalCutPage() {
       exports: []
     }
   }, [])
+
+  // ============================================================================
+  // Initialize from project data (after createDefaultStream — avoids TDZ on deps)
+  // ============================================================================
+
+  useEffect(() => {
+    if (isDemo) {
+      const demoStream = createDemoStream()
+      setStreams([demoStream])
+      setSelectedStreamId(demoStream.id)
+      setIsLoading(false)
+      return
+    }
+
+    const targetId = searchProjectId || useStore.getState().currentProject?.id
+    if (!targetId) {
+      setIsLoading(false)
+      router.replace('/dashboard')
+      return
+    }
+
+    let cancelled = false
+
+    ;(async () => {
+      let project = useStore.getState().currentProject
+      if (project?.id !== targetId) {
+        setIsLoading(true)
+        try {
+          const res = await fetch(`/api/projects/${targetId}`, { cache: 'no-store' })
+          if (!res.ok) {
+            const detail = await res.text().catch(() => res.statusText)
+            throw new Error(detail || `HTTP ${res.status}`)
+          }
+          const data = await res.json()
+          project = data.project ?? data
+          if (cancelled) return
+          setCurrentProject(project)
+        } catch (err) {
+          if (!cancelled) {
+            console.error('[FinalCut] Failed to load project:', err)
+            toast.error('Could not open Final Cut. Return to Production and try again.')
+            router.replace('/dashboard')
+            setIsLoading(false)
+          }
+          return
+        }
+      }
+
+      if (cancelled || !project) return
+
+      setIsLoading(true)
+      try {
+        const existingStreams = (project.metadata as any)?.finalCutStreams as FinalCutStream[] | undefined
+
+        if (existingStreams && existingStreams.length > 0) {
+          setStreams(existingStreams)
+          setSelectedStreamId(existingStreams[0].id)
+        } else {
+          const defaultStream = createDefaultStream(project)
+          if (defaultStream) {
+            setStreams([defaultStream])
+            setSelectedStreamId(defaultStream.id)
+          } else {
+            setStreams([])
+            setSelectedStreamId(null)
+            toast.error('No scenes found for this project. Complete script and Production first.')
+          }
+        }
+      } catch (error) {
+        console.error('Failed to initialize Final Cut:', error)
+        toast.error('Failed to load project data')
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isDemo, searchProjectId, router, setCurrentProject, createDefaultStream])
   
   // ============================================================================
   // Stream Management

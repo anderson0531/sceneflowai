@@ -5586,6 +5586,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       const proj = data.project || data
       setProject(proj)
+      // Keep global store in sync so Final Cut / sidebar links that rely on `currentProject` work
+      useStore.getState().setCurrentProject(proj)
       
       // Fetch series info if project belongs to a series
       if (proj.series_id) {

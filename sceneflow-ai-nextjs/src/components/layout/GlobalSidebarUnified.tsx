@@ -98,7 +98,14 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   
   // Get sidebar config based on current path
   const config = useMemo(() => getSidebarConfigForPath(pathname), [pathname])
-  const projectId = useMemo(() => getProjectIdFromPath(pathname) || params?.projectId, [pathname, params?.projectId])
+  const projectId = useMemo(
+    () =>
+      getProjectIdFromPath(pathname) ||
+      (typeof params?.projectId === 'string' ? params.projectId : undefined) ||
+      currentProject?.id ||
+      null,
+    [pathname, params?.projectId, currentProject?.id]
+  )
   
   // Section toggle state - initialize from config defaults
   const [sectionsOpen, setSectionsOpen] = useState<Record<keyof SectionVisibility, boolean>>({
