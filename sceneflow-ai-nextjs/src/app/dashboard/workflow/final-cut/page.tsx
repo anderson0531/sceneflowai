@@ -30,6 +30,22 @@ import type {
 } from '@/lib/types/finalCut'
 import { getLanguageName } from '@/constants/languages'
 
+/** Save rendered video to the user's Downloads folder (same-origin blob; reliable for WebM). */
+function downloadBlobAsFile(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  try {
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.rel = 'noopener'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -611,11 +627,15 @@ export default function FinalCutPage() {
       if (!result.success || !result.blobUrl || !result.blob) {
         throw new Error(result.error || 'Unknown render error')
       }
+
+      const filename = `final-cut-${currentProject.id}-${selectedStreamId}-${Date.now()}.webm`
+
+      // Save to Downloads immediately so YouTube upload is obvious (upload below is a backup URL)
+      downloadBlobAsFile(result.blob, filename)
       
-      toast.loading('Render complete! Uploading to secure cloud storage...', { id: toastId })
+      toast.loading('Render complete! Uploading a copy for Screening Room…', { id: toastId })
       
       // Upload to Blob storage
-      const filename = `final-cut-${currentProject.id}-${selectedStreamId}-${Date.now()}.webm`
       const videoFile = new File([result.blob], filename, { type: result.mimeType || 'video/webm' })
       
       const uploadedBlob = await upload(
@@ -641,14 +661,17 @@ export default function FinalCutPage() {
         metadata: updatedMetadata
       })
       
-      toast.success('Final Cut exported successfully! Ready for Screening Room.', { 
-        id: toastId,
-        duration: 10000,
-        action: {
-          label: 'Open Screening Room',
-          onClick: () => window.open(`/screening-room`, '_blank')
+      toast.success(
+        `Saved to Downloads as ${filename}. Use "Download last export" in the header if you need the link again.`,
+        {
+          id: toastId,
+          duration: 14000,
+          action: {
+            label: 'Open file link',
+            onClick: () => window.open(uploadedBlob.url, '_blank', 'noopener,noreferrer'),
+          },
         }
-      })
+      )
       
     } catch (error) {
       console.error('Final Cut Export Error:', error)
@@ -669,6 +692,9 @@ export default function FinalCutPage() {
       0
     )
   }, [streams, selectedStreamId])
+
+  const lastExportUrl = (currentProject?.metadata as { exportedVideoUrl?: string } | undefined)
+    ?.exportedVideoUrl
   
   // ============================================================================
   // Render
@@ -755,6 +781,15 @@ export default function FinalCutPage() {
                 Save
               </Button>
           
+              {lastExportUrl ? (
+                <Button variant="outline" size="sm" asChild className="border-emerald-600/50 text-emerald-400 hover:bg-emerald-950/40 hover:text-emerald-300">
+                  <a href={lastExportUrl} target="_blank" rel="noopener noreferrer" download>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download last export
+                  </a>
+                </Button>
+              ) : null}
+
               <Button
                 variant="ghost"
                 size="sm"

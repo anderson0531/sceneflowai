@@ -354,8 +354,8 @@ export function ExportDialog({
 
         {/* Actions */}
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-700/50">
-          <p className="text-[11px] text-gray-500 max-w-[240px]">
-            Export renders all scenes with transitions and audio into a single MP4 file.
+          <p className="text-[11px] text-gray-500 max-w-[260px]">
+            Combines all scenes into one video. When the render finishes, the file is saved to your Downloads folder (WebM). You can upload that file to YouTube. A link is also stored for re-download from Final Cut.
           </p>
           <div className="flex items-center gap-3">
             <Button
