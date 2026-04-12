@@ -637,9 +637,7 @@ export function SceneProductionManager({
       }
       if (onSegmentResize && segments.length > 0 && scene) {
         const baseline = determineBaselineLanguage(scene)
-        const tracks = buildAudioTracksWithBaselineTiming(scene, selectedLanguage, baseline, {
-          packDialogueToSegmentTimeline: selectedLanguage !== baseline,
-        })
+        const tracks = buildAudioTracksWithBaselineTiming(scene, selectedLanguage, baseline)
         const next = repackSegmentsFromAssignedDialogue(segments, tracks)
         for (const seg of next) {
           const old = segments.find(s => s.segmentId === seg.segmentId)

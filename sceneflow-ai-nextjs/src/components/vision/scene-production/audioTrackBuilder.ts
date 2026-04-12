@@ -129,18 +129,31 @@ function computeSceneTimelineSpanFromSegments(scene: any, segmentPlaybackOffsetS
   return sum
 }
 
+/** Default AI video segment length on the timeline (seconds). */
+export const DEFAULT_SEGMENT_DURATION_SECONDS = 8
+
 /**
- * Repack segment `startTime`/`endTime` in play order so span matches assigned dialogue clip durations.
- * Call after dialogue audio exists (e.g. with intelligent alignment).
+ * Repack segment `startTime`/`endTime` in play order using a uniform segment duration (default 8s).
+ * Keeps the video row aligned with product rules; dialogue is matched via assignments + pack-to-segment, not by shrinking segments to clip length.
+ * Set `opts.sizeFromAssignedDialogue: true` to restore legacy width-from-dialogue-durations behavior.
  */
 export function repackSegmentsFromAssignedDialogue(
   segments: any[],
   tracks: AudioTracksDataV2,
-  opts?: { minSeconds?: number; maxSeconds?: number; interLineGap?: number }
+  opts?: {
+    minSeconds?: number
+    maxSeconds?: number
+    interLineGap?: number
+    segmentDurationSeconds?: number
+    /** When true, segment width = sum of assigned dialogue durations (old behavior). */
+    sizeFromAssignedDialogue?: boolean
+  }
 ): any[] {
   const minS = opts?.minSeconds ?? 4
   const maxS = opts?.maxSeconds ?? 120
   const gap = opts?.interLineGap ?? 0.25
+  const standardSeg = opts?.segmentDurationSeconds ?? DEFAULT_SEGMENT_DURATION_SECONDS
+  const sizeFromDialogue = opts?.sizeFromAssignedDialogue === true
 
   const clipForLineIndex = (lineIndex: number) =>
     tracks.dialogue.find(
@@ -164,12 +177,15 @@ export function repackSegmentsFromAssignedDialogue(
   let t = 0
   return sorted.map((seg: any) => {
     const ids: string[] = Array.isArray(seg.dialogueLineIds) ? seg.dialogueLineIds : []
-    let dur =
-      ids.length > 0
-        ? ids.reduce((acc, id) => acc + durForLineId(id), 0) + gap * Math.max(0, ids.length - 1)
-        : getSegmentBaseDurationSeconds(seg)
-    if (ids.length > 0) {
+    let dur: number
+    if (sizeFromDialogue && ids.length > 0) {
+      dur =
+        ids.reduce((acc, id) => acc + durForLineId(id), 0) + gap * Math.max(0, ids.length - 1)
       dur = Math.min(maxS, Math.max(minS, dur))
+    } else if (ids.length > 0) {
+      dur = Math.min(maxS, Math.max(minS, standardSeg))
+    } else {
+      dur = Math.min(maxS, Math.max(minS, getSegmentBaseDurationSeconds(seg) || standardSeg))
     }
     const next = { ...seg, startTime: t, endTime: t + dur }
     t += dur
@@ -567,15 +583,15 @@ export function buildAudioTracksWithBaselineTiming(
   // Determine baseline language if not specified
   const effectiveBaseline = baselineLanguage || determineBaselineLanguage(scene)
   
-  // If target is same as baseline, just build normally (no cumulative pack — generation timing wins)
+  // Pack dialogue to cumulative segment grid by default (timeline/video alignment). Pass packDialogueToSegmentTimeline: false to opt out.
+  const packDialogueToSegmentTimeline = options?.packDialogueToSegmentTimeline !== false
+
   if (targetLanguage === effectiveBaseline) {
     return buildAudioTracksForLanguage(scene, targetLanguage, {
       ...options,
-      packDialogueToSegmentTimeline: false,
+      packDialogueToSegmentTimeline,
     })
   }
-
-  const packDialogueToSegmentTimeline = options?.packDialogueToSegmentTimeline ?? true
 
   // Build baseline tracks first (for timing reference)
   const baselineTracks = buildAudioTracksForLanguage(scene, effectiveBaseline, {
@@ -1006,10 +1022,9 @@ export function buildTimelineAudioState(
   
   // Build tracks for all available languages
   const tracks: MultiLanguageAudioTracks = {}
-  const baseline = determineBaselineLanguage(scene)
   availableLanguages.forEach(lang => {
     tracks[lang] = buildAudioTracksForLanguage(scene, lang, {
-      packDialogueToSegmentTimeline: lang !== baseline,
+      packDialogueToSegmentTimeline: true,
     })
   })
   

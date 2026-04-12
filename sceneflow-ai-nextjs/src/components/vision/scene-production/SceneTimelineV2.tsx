@@ -13,7 +13,7 @@
  * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
  */
 
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { 
   Play, Pause, Volume2, VolumeX, Mic, Music, Zap, 
@@ -117,6 +117,28 @@ function formatTimeShort(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
+/** Stack overlapping SFX clips into horizontal lanes (non-overlapping intervals share lane 0). */
+function assignSfxLanes(
+  clips: { id: string; startTime: number; duration: number }[]
+): { laneById: Record<string, number>; laneCount: number } {
+  if (clips.length === 0) return { laneById: {}, laneCount: 1 }
+  const ordered = [...clips].sort((a, b) => {
+    if (Math.abs(a.startTime - b.startTime) > 1e-6) return a.startTime - b.startTime
+    return a.duration - b.duration
+  })
+  const laneEnds: number[] = []
+  const laneById: Record<string, number> = {}
+  for (const c of ordered) {
+    const end = c.startTime + c.duration
+    let L = 0
+    while (L < laneEnds.length && laneEnds[L] > c.startTime + 0.02) L++
+    if (L === laneEnds.length) laneEnds.push(end)
+    else laneEnds[L] = Math.max(laneEnds[L], end)
+    laneById[c.id] = L
+  }
+  return { laneById, laneCount: Math.max(1, laneEnds.length) }
+}
+
 // Language display handled by GroupedLanguageSelector and getLanguageName()
 
 // ============================================================================
@@ -204,7 +226,8 @@ export function SceneTimelineV2({
   const audioTracks = useMemo(() => {
     return buildAudioTracksWithBaselineTiming(scene, selectedLanguage, baselineLanguage, {
       segmentPlaybackOffsetSeconds,
-      packDialogueToSegmentTimeline: selectedLanguage !== baselineLanguage,
+      // Align dialogue blocks to cumulative segment boundaries (same grid as video row).
+      packDialogueToSegmentTimeline: true,
     })
   }, [scene, selectedLanguage, baselineLanguage, segmentPlaybackOffsetSeconds])
   
@@ -333,9 +356,9 @@ export function SceneTimelineV2({
   // Audio Snap feature - snap segment edges to audio clip boundaries
   const [enableAudioSnap, setEnableAudioSnap] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('sceneflow-audio-snap') === 'true'
+      return localStorage.getItem('sceneflow-audio-snap') !== 'false'
     }
-    return false
+    return true
   })
   
   // Persist audio snap preference
@@ -544,6 +567,8 @@ export function SceneTimelineV2({
   
   // Debounce timer for persisting changes
   const persistTimerRef = useRef<NodeJS.Timeout | null>(null)
+  /** Latest drag deltas (mousemove); mouseup must read this — not React state — to avoid stale closures. */
+  const dragDeltasRef = useRef<{ startDelta: number; durationDelta: number }>({ startDelta: 0, durationDelta: 0 })
   
   // Get effective clip values (base + local offsets)
   const getEffectiveClipValues = useCallback((clipId: string, baseStart: number, baseDuration: number) => {
@@ -586,6 +611,37 @@ export function SceneTimelineV2({
     
     return nearestBoundary
   }, [enableAudioSnap, allAudioClips])
+
+  const findNearestSegmentBoundary = useCallback(
+    (time: number): number | null => {
+      if (!enableAudioSnap) return null
+      const boundaries: number[] = [0, sceneDuration]
+      for (const c of visualClips) {
+        boundaries.push(c.startTime)
+        boundaries.push(c.startTime + c.duration)
+      }
+      let nearest: number | null = null
+      let best = SNAP_THRESHOLD
+      for (const b of boundaries) {
+        const d = Math.abs(time - b)
+        if (d < best) {
+          best = d
+          nearest = b
+        }
+      }
+      return nearest
+    },
+    [enableAudioSnap, visualClips, sceneDuration]
+  )
+
+  const snapDragTime = useCallback(
+    (time: number, trackType: 'visual' | AudioTrackType): number | null => {
+      if (!enableAudioSnap) return null
+      if (trackType === 'visual') return findNearestAudioBoundary(time)
+      return findNearestSegmentBoundary(time)
+    },
+    [enableAudioSnap, findNearestAudioBoundary, findNearestSegmentBoundary]
+  )
   
   // ============================================================================
   // Drag Handlers
@@ -614,32 +670,30 @@ export function SceneTimelineV2({
   
   useEffect(() => {
     if (!dragState) return
-    
+
+    dragDeltasRef.current = { startDelta: 0, durationDelta: 0 }
+
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - dragState.startX
       const deltaTime = deltaX / pixelsPerSecond
-      
+
       let startDelta = 0
       let durationDelta = 0
-      
+
       if (dragState.type === 'move') {
         startDelta = deltaTime
-        
-        // Apply audio snap for segment moves (only for visual track)
-        if (enableAudioSnap && dragState.trackType === 'visual') {
+        if (enableAudioSnap) {
           const proposedStart = dragState.originalStart + startDelta
-          const snappedStart = findNearestAudioBoundary(proposedStart)
+          const snappedStart = snapDragTime(proposedStart, dragState.trackType)
           if (snappedStart !== null) {
             startDelta = snappedStart - dragState.originalStart
           }
         }
       } else if (dragState.type === 'resize-left') {
         startDelta = Math.max(-dragState.originalStart, Math.min(deltaTime, dragState.originalDuration - 0.5))
-        
-        // Snap left edge to audio boundary
-        if (enableAudioSnap && dragState.trackType === 'visual') {
+        if (enableAudioSnap) {
           const proposedStart = dragState.originalStart + startDelta
-          const snappedStart = findNearestAudioBoundary(proposedStart)
+          const snappedStart = snapDragTime(proposedStart, dragState.trackType)
           if (snappedStart !== null) {
             startDelta = snappedStart - dragState.originalStart
           }
@@ -647,63 +701,67 @@ export function SceneTimelineV2({
         durationDelta = -startDelta
       } else if (dragState.type === 'resize-right') {
         durationDelta = Math.max(0.5 - dragState.originalDuration, deltaTime)
-        
-        // Snap right edge to audio boundary
-        if (enableAudioSnap && dragState.trackType === 'visual') {
+        if (enableAudioSnap) {
           const proposedEnd = dragState.originalStart + dragState.originalDuration + durationDelta
-          const snappedEnd = findNearestAudioBoundary(proposedEnd)
+          const snappedEnd = snapDragTime(proposedEnd, dragState.trackType)
           if (snappedEnd !== null) {
             durationDelta = snappedEnd - dragState.originalStart - dragState.originalDuration
           }
         }
       }
-      
-      // Update local state immediately for responsive feedback
+
+      dragDeltasRef.current = { startDelta, durationDelta }
       setLocalClipOffsets(prev => ({
         ...prev,
-        [dragState.clipId]: { startDelta, durationDelta }
+        [dragState.clipId]: { startDelta, durationDelta },
       }))
     }
-    
+
     const handleMouseUp = () => {
-      // Persist the changes after drag ends
-      const offset = localClipOffsets[dragState.clipId]
-      if (offset && (offset.startDelta !== 0 || offset.durationDelta !== 0)) {
-        const newStart = Math.max(0, dragState.originalStart + offset.startDelta)
-        const newDuration = Math.max(0.5, dragState.originalDuration + offset.durationDelta)
-        
-        // Debounce persistence
-        if (persistTimerRef.current) clearTimeout(persistTimerRef.current)
-        persistTimerRef.current = setTimeout(() => {
-          if (dragState.trackType === 'visual') {
-            onVisualClipChange?.(dragState.clipId, { startTime: newStart, duration: newDuration })
-          } else {
-            onAudioClipChange?.(dragState.trackType as AudioTrackType, dragState.clipId, { startTime: newStart, duration: newDuration })
-          }
-        }, 50) // Reduced from 100ms for faster persistence
+      const { startDelta, durationDelta } = dragDeltasRef.current
+      if (startDelta !== 0 || durationDelta !== 0) {
+        const newStart = Math.max(0, dragState.originalStart + startDelta)
+        const newDuration = Math.max(0.5, dragState.originalDuration + durationDelta)
+
+        const changes: { startTime?: number; duration?: number } = {}
+        if (Math.abs(newStart - dragState.originalStart) > 1e-3) {
+          changes.startTime = newStart
+        }
+        if (Math.abs(newDuration - dragState.originalDuration) > 1e-3) {
+          changes.duration = newDuration
+        }
+
+        if (changes.startTime !== undefined || changes.duration !== undefined) {
+          if (persistTimerRef.current) clearTimeout(persistTimerRef.current)
+          persistTimerRef.current = setTimeout(() => {
+            if (dragState.trackType === 'visual') {
+              onVisualClipChange?.(dragState.clipId, { startTime: newStart, duration: newDuration })
+            } else {
+              onAudioClipChange?.(dragState.trackType as AudioTrackType, dragState.clipId, changes)
+            }
+          }, 50)
+        }
       }
-      
-      // Clear local offsets after a longer delay to prevent snap-back
-      // Wait for prop update to complete before clearing optimistic state
+
       setTimeout(() => {
         setLocalClipOffsets(prev => {
           const next = { ...prev }
           delete next[dragState.clipId]
           return next
         })
-      }, 500) // Increased from 200ms to 500ms
-      
+      }, 500)
+
       setDragState(null)
     }
-    
+
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
-    
+
     return () => {
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [dragState, pixelsPerSecond, localClipOffsets, onVisualClipChange, onAudioClipChange])
+  }, [dragState, pixelsPerSecond, enableAudioSnap, snapDragTime, onVisualClipChange, onAudioClipChange])
   
   // ============================================================================
   // Segment Reordering (DnD)
@@ -816,8 +874,18 @@ export function SceneTimelineV2({
               let audioTime = elapsed - clipStart + trim
               if (clip.id.startsWith('music-')) {
                 const key = `${clip.id}:${clip.url}`
+                const fromElement =
+                  audio.duration &&
+                  Number.isFinite(audio.duration) &&
+                  !Number.isNaN(audio.duration) &&
+                  audio.duration > 0.05
+                    ? audio.duration
+                    : 0
                 const fileLen =
-                  clip.actualDuration || actualDurations[key] || clip.duration
+                  fromElement ||
+                  actualDurations[key] ||
+                  clip.actualDuration ||
+                  30
                 if (fileLen > 0.05) {
                   audioTime = ((audioTime % fileLen) + fileLen) % fileLen
                 }
@@ -913,13 +981,25 @@ export function SceneTimelineV2({
     },
     trackType: 'visual' | AudioTrackType,
     color: string,
-    showThumbnail: boolean = false
+    showThumbnail: boolean = false,
+    laneLayout?: { lane: number; laneCount: number; rowContentHeight: number }
   ) => {
     const { startTime, duration } = getEffectiveClipValues(clip.id, clip.startTime, clip.duration)
     const left = startTime * pixelsPerSecond
     const width = Math.max(duration * pixelsPerSecond, 20)
     const isSelected = trackType === 'visual' && clip.id === selectedSegmentId
     const isDragging = dragState?.clipId === clip.id
+
+    const sliceH =
+      laneLayout && laneLayout.laneCount > 1
+        ? Math.max(11, (laneLayout.rowContentHeight - 6) / laneLayout.laneCount - 2)
+        : null
+    const topPx =
+      sliceH != null && laneLayout ? 2 + laneLayout.lane * (sliceH + 2) : 2
+    const posStyle: CSSProperties =
+      sliceH != null
+        ? { left, width, top: topPx, height: sliceH }
+        : { left, width, top: 2, bottom: 2 }
     
     return (
       <div
@@ -931,10 +1011,11 @@ export function SceneTimelineV2({
           isDragging && "opacity-80 shadow-lg z-20",
           !isDragging && "hover:shadow-md"
         )}
-        style={{ left, width, top: '2px', bottom: '2px' }}
+        style={posStyle}
         onMouseDown={(e) => {
           if (trackType === 'visual') onSegmentSelect(clip.id)
-          handleClipMouseDown(e, trackType, clip.id, 'move', clip.startTime, clip.duration)
+          const eff = getEffectiveClipValues(clip.id, clip.startTime, clip.duration)
+          handleClipMouseDown(e, trackType, clip.id, 'move', eff.startTime, eff.duration)
         }}
       >
         {/* Background with thumbnail(s) */}
@@ -997,13 +1078,23 @@ export function SceneTimelineV2({
         {/* Left resize handle */}
         <div
           className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 hover:bg-white/20"
-          onMouseDown={(e) => handleClipMouseDown(e, trackType, clip.id, 'resize-left', clip.startTime, clip.duration)}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+            const eff = getEffectiveClipValues(clip.id, clip.startTime, clip.duration)
+            handleClipMouseDown(e, trackType, clip.id, 'resize-left', eff.startTime, eff.duration)
+          }}
         />
         
         {/* Right resize handle */}
         <div
           className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize z-20 hover:bg-white/20"
-          onMouseDown={(e) => handleClipMouseDown(e, trackType, clip.id, 'resize-right', clip.startTime, clip.duration)}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+            const eff = getEffectiveClipValues(clip.id, clip.startTime, clip.duration)
+            handleClipMouseDown(e, trackType, clip.id, 'resize-right', eff.startTime, eff.duration)
+          }}
         />
         
         <div className="relative z-10 h-full flex items-center justify-between px-1 pointer-events-none">
@@ -1060,12 +1151,32 @@ export function SceneTimelineV2({
     label: string,
     icon: React.ReactNode,
     clips: AudioTrackClipV2[],
-    color: string
+    color: string,
+    stackSfxLanes: boolean = false
   ) => {
     const isEnabled = trackEnabled[trackType] ?? true
+    const baseRowPx = isTimelineExpanded ? 56 : 40
+    const effectiveForLanes = clips.map(c => {
+      const v = getEffectiveClipValues(c.id, c.startTime, c.duration)
+      return { id: c.id, startTime: v.startTime, duration: v.duration }
+    })
+    const { laneById, laneCount } = stackSfxLanes
+      ? assignSfxLanes(effectiveForLanes)
+      : { laneById: {} as Record<string, number>, laneCount: 1 }
+    const rowMinH =
+      stackSfxLanes && laneCount > 1
+        ? Math.max(baseRowPx, 12 + laneCount * 18)
+        : baseRowPx
+    const laneStackInnerH = Math.max(20, rowMinH - 10)
     
     return (
-      <div className={cn("flex items-stretch border-t border-gray-200 dark:border-gray-700 transition-all duration-200", isTimelineExpanded ? "h-14" : "h-10")}>
+      <div
+        className={cn(
+          'flex items-stretch border-t border-gray-200 dark:border-gray-700 transition-all duration-200',
+          !stackSfxLanes && (isTimelineExpanded ? 'h-14' : 'h-10')
+        )}
+        style={stackSfxLanes ? { minHeight: rowMinH } : undefined}
+      >
         <div 
           className="flex-shrink-0 flex items-center justify-between px-3 bg-gray-100 dark:bg-gray-800 z-30 border-r border-gray-200 dark:border-gray-700"
           style={{ width: TRACK_LABEL_WIDTH, position: 'sticky', left: 0, marginLeft: -TRACK_LABEL_WIDTH }}
@@ -1088,18 +1199,28 @@ export function SceneTimelineV2({
           </button>
         </div>
         
-        <div className="flex-1 relative bg-gray-50 dark:bg-gray-900/50">
-          {clips.map(clip => renderClip(
-            { 
-              id: clip.id, 
-              startTime: clip.startTime, 
-              duration: clip.duration, 
-              label: clip.label || clip.characterName,
-              url: clip.url || undefined,
-            },
-            trackType,
-            color
-          ))}
+        <div className="flex-1 relative bg-gray-50 dark:bg-gray-900/50" style={stackSfxLanes ? { minHeight: rowMinH } : undefined}>
+          {clips.map(clip =>
+            renderClip(
+              {
+                id: clip.id,
+                startTime: clip.startTime,
+                duration: clip.duration,
+                label: clip.label || clip.characterName,
+                url: clip.url || undefined,
+              },
+              trackType,
+              color,
+              false,
+              stackSfxLanes && laneCount > 1
+                ? {
+                    lane: laneById[clip.id] ?? 0,
+                    laneCount,
+                    rowContentHeight: laneStackInnerH,
+                  }
+                : undefined
+            )
+          )}
           
           {clips.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -1389,7 +1510,11 @@ export function SceneTimelineV2({
               enableAudioSnap && "bg-cyan-600 hover:bg-cyan-700 text-white"
             )}
             onClick={() => setEnableAudioSnap(!enableAudioSnap)}
-            title={enableAudioSnap ? 'Disable audio snap (segments snap to audio boundaries)' : 'Enable audio snap (segments snap to audio boundaries)'}
+            title={
+              enableAudioSnap
+                ? 'Disable snap (video ↔ audio edges; dialogue/SFX ↔ segment edges)'
+                : 'Enable snap (video ↔ audio; dialogue/SFX ↔ segment boundaries)'
+            }
           >
             <Link2 className="w-3 h-3" />
             Snap
@@ -1657,7 +1782,8 @@ export function SceneTimelineV2({
           'SFX',
           <Zap className="w-4 h-4 text-red-500" />,
           filteredAudioTracks.sfx,
-          'bg-gradient-to-r from-red-500 to-red-600'
+          'bg-gradient-to-r from-red-500 to-red-600',
+          true
         )}
         
         {/* Segment coverage warning - show when segments don't cover audio duration */}
@@ -1741,7 +1867,7 @@ export function SceneTimelineV2({
           }}
           src={clip.url}
           preload="auto"
-          loop={clip.id.startsWith('music-') || clip.loop === true}
+          loop={clip.loop === true && !clip.id.startsWith('music-')}
           onLoadedMetadata={(e) => {
             const audio = e.currentTarget
             if (audio.duration && audio.duration !== Infinity) {
