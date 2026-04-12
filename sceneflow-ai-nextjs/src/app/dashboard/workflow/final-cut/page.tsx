@@ -29,6 +29,7 @@ import type {
   ProductionLanguage,
   ProductionFormat
 } from '@/lib/types/finalCut'
+import { getLanguageName } from '@/constants/languages'
 
 function mapExportResolutionStringToLocal(resolution: string): LocalRenderResolution {
   const r = resolution.toLowerCase()
@@ -36,7 +37,63 @@ function mapExportResolutionStringToLocal(resolution: string): LocalRenderResolu
   if (r.includes('1280') && r.includes('720')) return '720p'
   return '1080p'
 }
-import { getLanguageName } from '@/constants/languages'
+
+/** Resolve production segment row from project metadata (Final Cut segments may omit assetUrl). */
+function pickProductionSegment(
+  sceneProductionState: Record<string, unknown>,
+  sourceSceneId: string,
+  seg: StreamSegment
+): Record<string, unknown> | null {
+  const pd = sceneProductionState[sourceSceneId] as { segments?: unknown } | undefined
+  const list = Array.isArray(pd?.segments) ? (pd!.segments as Record<string, unknown>[]) : []
+  if (list.length === 0) return null
+  if (seg.sourceSegmentId) {
+    const hit = list.find((s) => s.segmentId === seg.sourceSegmentId)
+    if (hit) return hit
+  }
+  const byId = list.find((s) => s.segmentId === seg.id)
+  if (byId) return byId
+  return list[seg.sequenceIndex] ?? null
+}
+
+function mediaUrlFromProductionSegment(prodSeg: Record<string, unknown> | null): string {
+  if (!prodSeg) return ''
+  const takes = Array.isArray(prodSeg.takes) ? (prodSeg.takes as Record<string, unknown>[]) : []
+  const lastTake = takes.length ? takes[takes.length - 1] : null
+  const fromTake =
+    (typeof lastTake?.videoUrl === 'string' && lastTake.videoUrl.trim()) ||
+    (typeof lastTake?.assetUrl === 'string' && lastTake.assetUrl.trim()) ||
+    ''
+  const s = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
+  const refs = prodSeg.references as Record<string, unknown> | undefined
+  return (
+    s(prodSeg.activeAssetUrl) ||
+    fromTake ||
+    s(refs?.endFrameUrl) ||
+    s(refs?.startFrameUrl) ||
+    s(prodSeg.visualFrame)
+  )
+}
+
+function resolveStreamSegmentMediaForExport(
+  seg: StreamSegment,
+  sourceSceneId: string,
+  sceneProductionState: Record<string, unknown>
+): { assetUrl: string; assetType: 'video' | 'image' } | null {
+  let url = (seg.assetUrl || '').trim()
+  let assetType: 'video' | 'image' = seg.assetType === 'video' ? 'video' : 'image'
+
+  if (!url) {
+    const prodSeg = pickProductionSegment(sceneProductionState, sourceSceneId, seg)
+    const resolved = mediaUrlFromProductionSegment(prodSeg)
+    if (!resolved) return null
+    url = resolved
+    const at = prodSeg?.assetType
+    if (at === 'video' || at === 'image') assetType = at
+  }
+
+  return { assetUrl: url, assetType }
+}
 
 /** Save rendered video to the user's Downloads folder (same-origin blob; reliable for WebM). */
 function downloadBlobAsFile(blob: Blob, filename: string) {
@@ -557,18 +614,30 @@ export default function FinalCutPage() {
       const configSegments: any[] = []
       const configAudioClips: any[] = []
       const configTextOverlays: any[] = []
+
+      const liveProject = useStore.getState().currentProject
+      const projectForExport =
+        liveProject?.id === currentProject.id ? liveProject : currentProject
+      const sceneProductionState =
+        ((projectForExport.metadata as Record<string, unknown> | undefined)?.sceneProductionState as
+          | Record<string, unknown>
+          | undefined) || {}
       
       // Map Final Cut timeline into LocalRenderService config
       for (const scene of selectedStream.scenes) {
         for (const seg of scene.segments) {
-          if (!seg.assetUrl) continue
+          const media = resolveStreamSegmentMediaForExport(seg, scene.sourceSceneId, sceneProductionState)
+          if (!media) continue
+
+          // StreamSegment startTime is seconds within the scene (see createDefaultStream); scene times are seconds.
+          const segmentStartSec = scene.startTime + seg.startTime
           
           // 1. Video/Image segment
           configSegments.push({
             segmentId: seg.id,
-            assetUrl: seg.assetUrl,
-            assetType: seg.assetType,
-            startTime: scene.startTime + (seg.startTime / 1000),
+            assetUrl: media.assetUrl,
+            assetType: media.assetType,
+            startTime: segmentStartSec,
             duration: seg.durationMs / 1000,
             includeVideoAudio: true // Could be based on seg settings
           })
@@ -579,7 +648,7 @@ export default function FinalCutPage() {
               if (!track.sourceUrl) continue
               configAudioClips.push({
                 url: track.sourceUrl,
-                startTime: scene.startTime + (seg.startTime / 1000) + (track.startOffset / 1000),
+                startTime: segmentStartSec + track.startOffset / 1000,
                 duration: track.duration / 1000,
                 volume: (track.volume ?? 100) / 100,
                 type: track.type
@@ -587,7 +656,7 @@ export default function FinalCutPage() {
             }
           }
           
-          // 3. Overlays for the segment
+          // 3. Overlays for the segment (overlay times are ms relative to segment)
           if (seg.overlays) {
             for (const overlay of seg.overlays) {
               if (overlay.type === 'text') {
@@ -603,7 +672,7 @@ export default function FinalCutPage() {
                     textShadow: true
                   },
                   timing: {
-                    startTime: scene.startTime + (seg.startTime / 1000) + (overlay.startTime / 1000),
+                    startTime: segmentStartSec + overlay.startTime / 1000,
                     duration: overlay.duration / 1000,
                     fadeInMs: 200,
                     fadeOutMs: 200
@@ -613,6 +682,12 @@ export default function FinalCutPage() {
             }
           }
         }
+      }
+
+      if (configSegments.length === 0) {
+        throw new Error(
+          'No segment video or image URLs were found. Saved Final Cut data may be missing media links — open Production, render segments, use Save on Final Cut, then export again.'
+        )
       }
       
       const config: LocalRenderConfig = {
@@ -854,9 +929,17 @@ export default function FinalCutPage() {
       {/* Export Dialog */}
       {(() => {
         const selectedStream = streams.find(s => s.id === selectedStreamId)
-        const hasRenderedScenes = selectedStream?.scenes?.some(s =>
-          s.segments?.some(seg => seg.assetUrl && seg.assetType === 'video')
-        ) ?? false
+        const prodMeta =
+          ((currentProject?.metadata as Record<string, unknown> | undefined)?.sceneProductionState as
+            | Record<string, unknown>
+            | undefined) || {}
+        const hasRenderedScenes =
+          selectedStream?.scenes?.some((s) =>
+            s.segments?.some((seg) => {
+              const m = resolveStreamSegmentMediaForExport(seg, s.sourceSceneId, prodMeta)
+              return !!m && m.assetType === 'video'
+            })
+          ) ?? false
         return (
           <ExportDialog
             open={exportDialogOpen}
