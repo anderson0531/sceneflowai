@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,8 @@ import {
   Loader2,
   Copy,
   ExternalLink,
+  Upload,
+  X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -57,6 +59,8 @@ export interface ExportSettings {
   includeBurnedCaptions: boolean
   watermark: boolean
   containerFormat: 'mp4' | 'webm'
+  /** One local video per timeline scene (scene 1, then 2, …) — bypasses cloud URLs */
+  localSceneFiles?: File[]
 }
 
 interface ExportDialogProps {
@@ -215,6 +219,15 @@ export function ExportDialog({
   const [includeBurnedCaptions, setIncludeBurnedCaptions] = useState(false)
   const [watermark, setWatermark] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [manualSceneFiles, setManualSceneFiles] = useState<File[]>([])
+  const manualFileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!open) setManualSceneFiles([])
+  }, [open])
+
+  const stitchReady =
+    sceneCount > 0 && manualSceneFiles.length === sceneCount
 
   const preset = useMemo(
     () => EXPORT_PRESETS.find(p => p.id === selectedPreset) || EXPORT_PRESETS[0],
@@ -243,6 +256,7 @@ export function ExportDialog({
         includeBurnedCaptions,
         watermark,
         containerFormat: preset.containerFormat ?? 'webm',
+        localSceneFiles: stitchReady ? manualSceneFiles : undefined,
       })
     } finally {
       setIsExporting(false)
@@ -282,20 +296,20 @@ export function ExportDialog({
         </div>
 
         {/* No media at all — export will fail or be empty */}
-        {!hasExportableMedia && (
+        {!hasExportableMedia && !stitchReady && (
           <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg mt-2">
             <Info className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm text-amber-200 font-medium">No segment media found</p>
               <p className="text-xs text-amber-200/70 mt-0.5">
-                Nothing on this timeline resolves to a video or image URL yet. Open Production, generate or upload segment media, save the project, then return to Final Cut (or Save here so Production links sync).
+                Nothing on this timeline resolves to a video or image URL yet. Open Production, generate or upload segment media, save the project, then return to Final Cut (or Save here so Production links sync). You can also stitch local scene files below.
               </p>
             </div>
           </div>
         )}
 
         {/* Stills / animatic — not an error */}
-        {hasExportableMedia && !hasVideoClipSegments && (
+        {hasExportableMedia && !hasVideoClipSegments && !stitchReady && (
           <div className="flex items-start gap-3 p-3 bg-sky-500/10 border border-sky-500/25 rounded-lg mt-2">
             <Info className="w-5 h-5 text-sky-400 flex-shrink-0 mt-0.5" />
             <div>
@@ -304,6 +318,87 @@ export function ExportDialog({
                 No video clips were detected — export uses still frames (and Ken Burns on images where configured). Render video in Production if you want full-motion clips in the file.
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Manual stitch: local MP4s per scene */}
+        {sceneCount > 0 && (
+          <div className="mt-4 p-3 rounded-lg border border-gray-600/80 bg-gray-800/50">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2">
+                <Upload className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-gray-200">Stitch local scene videos</p>
+                  <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">
+                    Choose exactly <span className="text-gray-400">{sceneCount} files</span> in{' '}
+                    <span className="text-gray-400">timeline order</span> (scene 1, then 2, …). Uses files from your
+                    computer instead of Production URLs — audio in each file is kept. Timeline overlays are skipped for
+                    this path.
+                  </p>
+                </div>
+              </div>
+              {manualSceneFiles.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setManualSceneFiles([])
+                    if (manualFileInputRef.current) manualFileInputRef.current.value = ''
+                  }}
+                  className="text-gray-500 hover:text-white p-1 rounded"
+                  aria-label="Clear selected files"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <input
+              ref={manualFileInputRef}
+              type="file"
+              accept="video/*,.mp4,.webm,.mov,.m4v"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const list = e.target.files ? Array.from(e.target.files) : []
+                setManualSceneFiles(list)
+              }}
+            />
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-gray-600 text-gray-200 hover:bg-gray-700"
+                onClick={() => manualFileInputRef.current?.click()}
+              >
+                <Upload className="w-3.5 h-3.5 mr-1.5" />
+                Choose videos…
+              </Button>
+              <span className="text-[11px] text-gray-500">
+                {manualSceneFiles.length === 0
+                  ? 'No files selected'
+                  : `${manualSceneFiles.length} / ${sceneCount} selected`}
+              </span>
+              {stitchReady && (
+                <span className="text-[11px] text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Ready to stitch
+                </span>
+              )}
+            </div>
+            {manualSceneFiles.length > 0 && manualSceneFiles.length !== sceneCount && (
+              <p className="text-[11px] text-amber-400/90 mt-2">
+                Need exactly {sceneCount} videos to match your scenes. Re-select in order or clear and try again.
+              </p>
+            )}
+            {manualSceneFiles.length > 0 && (
+              <ul className="mt-2 max-h-24 overflow-y-auto text-[10px] text-gray-500 space-y-0.5 font-mono">
+                {manualSceneFiles.map((f, i) => (
+                  <li key={`${f.name}-${i}`}>
+                    {i + 1}. {f.name}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
 

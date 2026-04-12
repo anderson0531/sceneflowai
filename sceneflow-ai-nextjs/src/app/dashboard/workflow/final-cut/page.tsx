@@ -103,6 +103,30 @@ function resolveStreamSegmentMediaForExport(
 }
 
 /** Save rendered video to the user's Downloads folder (same-origin blob; reliable for WebM). */
+function probeVideoDurationFromUrl(blobUrl: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const v = document.createElement('video')
+    v.preload = 'metadata'
+    v.muted = true
+    v.playsInline = true
+    const cleanup = () => {
+      v.removeAttribute('src')
+      v.load()
+    }
+    v.onloadedmetadata = () => {
+      const d = v.duration
+      cleanup()
+      if (Number.isFinite(d) && d > 0) resolve(d)
+      else reject(new Error('Could not read duration from video file'))
+    }
+    v.onerror = () => {
+      cleanup()
+      reject(new Error('Could not open video file (unsupported or corrupt)'))
+    }
+    v.src = blobUrl
+  })
+}
+
 function downloadBlobAsFile(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
   try {
@@ -606,21 +630,26 @@ export default function FinalCutPage() {
     if (!selectedStream) return
     
     setExportDialogOpen(false)
-    const toastId = toast.loading(`Starting Final Cut export (${settings.resolution} @ ${settings.frameRate}fps)...`)
-    
+    const toastId = toast.loading(
+      settings.localSceneFiles?.length
+        ? `Stitching ${settings.localSceneFiles.length} local videos (${settings.resolution} @ ${settings.frameRate}fps)…`
+        : `Starting Final Cut export (${settings.resolution} @ ${settings.frameRate}fps)...`
+    )
+
+    const blobUrlsToRevoke: string[] = []
+
     try {
       const { LocalRenderService } = await import('@/lib/video/LocalRenderService')
       const { upload } = await import('@vercel/blob/client')
       
-      // Calculate total duration across all scenes
-      const totalDuration = selectedStream.scenes.reduce((max, scene) => 
-        Math.max(max, scene.endTime), 
+      const timelineTotalDuration = selectedStream.scenes.reduce(
+        (max, scene) => Math.max(max, scene.endTime),
         0
       )
-      
-      const configSegments: any[] = []
-      const configAudioClips: any[] = []
-      const configTextOverlays: any[] = []
+
+      const configSegments: LocalRenderConfig['segments'] = []
+      const configAudioClips: LocalRenderConfig['audioClips'] = []
+      const configTextOverlays: NonNullable<LocalRenderConfig['textOverlays']> = []
 
       const liveProject = useStore.getState().currentProject
       const projectForExport =
@@ -629,72 +658,97 @@ export default function FinalCutPage() {
         ((projectForExport.metadata as Record<string, unknown> | undefined)?.sceneProductionState as
           | Record<string, unknown>
           | undefined) || {}
-      
-      // Map Final Cut timeline into LocalRenderService config
-      for (const scene of selectedStream.scenes) {
-        for (const seg of scene.segments) {
-          const media = resolveStreamSegmentMediaForExport(seg, scene.sourceSceneId, sceneProductionState)
-          if (!media) continue
 
-          // StreamSegment startTime is seconds within the scene (see createDefaultStream); scene times are seconds.
-          const segmentStartSec = scene.startTime + seg.startTime
-          
-          // 1. Video/Image segment
+      const manualFiles = settings.localSceneFiles
+      let totalDuration = timelineTotalDuration
+
+      if (manualFiles && manualFiles.length > 0) {
+        const sceneCount = selectedStream.scenes.length
+        if (manualFiles.length !== sceneCount) {
+          throw new Error(
+            `Local stitch needs exactly ${sceneCount} videos (one per scene in timeline order). You selected ${manualFiles.length}.`
+          )
+        }
+        let compositionT = 0
+        for (let i = 0; i < manualFiles.length; i++) {
+          const file = manualFiles[i]
+          const blobUrl = URL.createObjectURL(file)
+          blobUrlsToRevoke.push(blobUrl)
+          const durationSec = await probeVideoDurationFromUrl(blobUrl)
           configSegments.push({
-            segmentId: seg.id,
-            assetUrl: media.assetUrl,
-            assetType: media.assetType,
-            startTime: segmentStartSec,
-            duration: seg.durationMs / 1000,
-            includeVideoAudio: true // Could be based on seg settings
+            segmentId: `manual-scene-${i}-${file.name.replace(/\W+/g, '_').slice(0, 40)}`,
+            assetUrl: blobUrl,
+            assetType: 'video',
+            startTime: compositionT,
+            duration: durationSec,
+            includeVideoAudio: true,
           })
-          
-          // 2. Audio tracks for the segment
-          if (seg.audioTracks) {
-            for (const track of seg.audioTracks) {
-              if (!track.sourceUrl) continue
-              configAudioClips.push({
-                url: track.sourceUrl,
-                startTime: segmentStartSec + track.startOffset / 1000,
-                duration: track.duration / 1000,
-                volume: (track.volume ?? 100) / 100,
-                type: track.type
-              })
-            }
-          }
-          
-          // 3. Overlays for the segment (overlay times are ms relative to segment)
-          if (seg.overlays) {
-            for (const overlay of seg.overlays) {
-              if (overlay.type === 'text') {
-                configTextOverlays.push({
-                  id: overlay.id,
-                  text: overlay.content,
-                  position: { x: overlay.position.x, y: overlay.position.y, anchor: 'center' },
-                  style: {
-                    fontFamily: overlay.style.fontFamily || 'Inter',
-                    fontSize: overlay.style.fontSize || 36,
-                    fontWeight: 700,
-                    color: overlay.style.color || '#ffffff',
-                    textShadow: true
-                  },
-                  timing: {
-                    startTime: segmentStartSec + overlay.startTime / 1000,
-                    duration: overlay.duration / 1000,
-                    fadeInMs: 200,
-                    fadeOutMs: 200
-                  }
+          compositionT += durationSec
+        }
+        totalDuration = compositionT
+      } else {
+        // Map Final Cut timeline into LocalRenderService config
+        for (const scene of selectedStream.scenes) {
+          for (const seg of scene.segments) {
+            const media = resolveStreamSegmentMediaForExport(seg, scene.sourceSceneId, sceneProductionState)
+            if (!media) continue
+
+            const segmentStartSec = scene.startTime + seg.startTime
+
+            configSegments.push({
+              segmentId: seg.id,
+              assetUrl: media.assetUrl,
+              assetType: media.assetType,
+              startTime: segmentStartSec,
+              duration: seg.durationMs / 1000,
+              includeVideoAudio: true,
+            })
+
+            if (seg.audioTracks) {
+              for (const track of seg.audioTracks) {
+                if (!track.sourceUrl) continue
+                configAudioClips.push({
+                  url: track.sourceUrl,
+                  startTime: segmentStartSec + track.startOffset / 1000,
+                  duration: track.duration / 1000,
+                  volume: (track.volume ?? 100) / 100,
+                  type: track.type,
                 })
+              }
+            }
+
+            if (seg.overlays) {
+              for (const overlay of seg.overlays) {
+                if (overlay.type === 'text') {
+                  configTextOverlays.push({
+                    id: overlay.id,
+                    text: overlay.content,
+                    position: { x: overlay.position.x, y: overlay.position.y, anchor: 'center' },
+                    style: {
+                      fontFamily: overlay.style.fontFamily || 'Inter',
+                      fontSize: overlay.style.fontSize || 36,
+                      fontWeight: 700,
+                      color: overlay.style.color || '#ffffff',
+                      textShadow: true,
+                    },
+                    timing: {
+                      startTime: segmentStartSec + overlay.startTime / 1000,
+                      duration: overlay.duration / 1000,
+                      fadeInMs: 200,
+                      fadeOutMs: 200,
+                    },
+                  })
+                }
               }
             }
           }
         }
-      }
 
-      if (configSegments.length === 0) {
-        throw new Error(
-          'No segment video or image URLs were found. Saved Final Cut data may be missing media links — open Production, render segments, use Save on Final Cut, then export again.'
-        )
+        if (configSegments.length === 0) {
+          throw new Error(
+            'No segment video or image URLs were found. Use “Stitch local scene videos” in Export, or fix Production links and save.'
+          )
+        }
       }
       
       const config: LocalRenderConfig = {
@@ -776,6 +830,14 @@ export default function FinalCutPage() {
     } catch (error) {
       console.error('Final Cut Export Error:', error)
       toast.error(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: toastId, duration: 8000 })
+    } finally {
+      for (const u of blobUrlsToRevoke) {
+        try {
+          URL.revokeObjectURL(u)
+        } catch {
+          /* ignore */
+        }
+      }
     }
   }, [currentProject, streams, selectedStreamId, updateProject])
   
