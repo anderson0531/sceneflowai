@@ -16,26 +16,66 @@ export interface OptimizedText {
   isSpeakable: boolean  // NEW: indicates if text contains speakable content
 }
 
+/** Fullwidth / CJK-style brackets often pasted from docs; normalize so [] stripping works. */
+function normalizePerformanceBracketChars(text: string): string {
+  return text
+    .replace(/\uFF3B/g, '[')
+    .replace(/\uFF3D/g, ']')
+}
+
 /**
  * Removes stage directions and audio tags from text
- * Removes [bracket] audio tags since eleven_turbo_v2_5 doesn't support them
- * and would read them aloud as text instead of interpreting them as instructions
- * Also removes traditional parentheses stage directions
+ * Removes [bracket] tags (Google/Gemini TTS reads them aloud if left in).
+ * Uses [\s\S] so multi-line directions inside one pair of brackets are removed.
  */
 function removeStageDirections(text: string): string {
-  let cleaned = text
-  
-  // Remove audio tags in square brackets [instruction]
-  // ElevenLabs Turbo v2.5 doesn't support these, so remove to prevent them being spoken
-  cleaned = cleaned.replace(/\[([^\]]+)\]/g, '')
-  
-  // Remove traditional stage directions in parentheses (instruction)
-  cleaned = cleaned.replace(/\(([^)]+)\)/g, '')
-  
-  // Clean up extra whitespace from removed tags
+  let cleaned = normalizePerformanceBracketChars(text)
+
+  // Square brackets (performance / delivery notes)
+  cleaned = cleaned.replace(/\[[\s\S]*?\]/g, '')
+
+  // Traditional parenthetical stage directions (single pair; multiline-safe)
+  cleaned = cleaned.replace(/\([\s\S]*?\)/g, '')
+
   cleaned = cleaned.replace(/\s+/g, ' ').trim()
-  
   return cleaned
+}
+
+/** Turn *emphasis* into plain words so TTS does not say "asterisk". */
+function unwrapMarkdownEmphasis(text: string): string {
+  return text.replace(/\*([^*]+)\*/g, '$1')
+}
+
+/**
+ * Gemini (and other TTS) sometimes appends a copy of the opening phrase at the end.
+ * If the tail matches the head (length 20–120), drop the redundant tail once.
+ */
+export function trimEchoedPrefixTail(text: string): string {
+  const t = text.trim()
+  if (t.length < 40) return t
+  const maxN = Math.min(120, Math.floor(t.length / 2))
+  for (let n = maxN; n >= 20; n--) {
+    const head = t.slice(0, n)
+    const tail = t.slice(-n)
+    if (head.toLowerCase() === tail.toLowerCase()) {
+      return t.slice(0, -n).replace(/\s+$/, '').trim()
+    }
+  }
+  return t
+}
+
+/**
+ * Last pass before Google TTS: defense in depth on already-optimized script text.
+ */
+export function finalizeTextForGoogleTts(text: string): string {
+  let s = normalizePerformanceBracketChars(text)
+  s = s.replace(/\[[\s\S]*?\]/g, '')
+  s = s.replace(/\([\s\S]*?\)/g, '')
+  s = unwrapMarkdownEmphasis(s)
+  s = s.replace(/\*/g, '')
+  s = s.replace(/\s+/g, ' ').trim()
+  s = trimEchoedPrefixTail(s)
+  return s
 }
 
 /**
@@ -85,11 +125,14 @@ export function optimizeTextForTTS(input: string): OptimizedText {
   // Extract emotion cues before removing stage directions
   const cues = extractEmotionCues(input)
   
-  // Remove stage directions
+  // Remove stage directions and performance markup
   let optimized = removeStageDirections(input)
+  optimized = unwrapMarkdownEmphasis(optimized)
+  optimized = optimized.replace(/\*/g, '')
   
   // Normalize whitespace
   optimized = normalizeWhitespace(optimized)
+  optimized = trimEchoedPrefixTail(optimized)
   
   const optimizedLength = optimized.length
   
@@ -108,7 +151,8 @@ export function optimizeTextForTTS(input: string): OptimizedText {
   }
   
   return {
-    text: isSpeakable ? optimized : input, // Fallback to original if empty
+    // Never fall back to raw input for TTS — if empty, callers skip synthesis
+    text: optimized,
     cues,
     originalLength,
     optimizedLength,

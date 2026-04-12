@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
-import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
+import { optimizeTextForTTS, finalizeTextForGoogleTts } from '../../../../lib/tts/textOptimizer'
 import { getAudioDurationFromBuffer } from '../../../../lib/audio/serverAudioDuration'
 import { translateWithVertexAI } from '../../../../lib/vertexai/translate'
 import { getVertexAIAuthToken } from '../../../../lib/vertexai/client'
@@ -67,7 +67,12 @@ export async function POST(req: NextRequest) {
     // Check for direction-only dialogue (lines that only contain stage directions)
     // These should not have audio generated - they belong in the action field
     if (audioType === 'dialogue') {
-      const withoutBrackets = text.replace(/\[[^\]]*\]/g, '').trim()
+      const withoutBrackets = text
+        .replace(/\uFF3B/g, '[')
+        .replace(/\uFF3D/g, ']')
+        .replace(/\[[\s\S]*?\]/g, '')
+        .replace(/\([\s\S]*?\)/g, '')
+        .trim()
       if (withoutBrackets.length === 0) {
         console.warn(`[Scene Audio] ⚠️ Skipping direction-only dialogue (no spoken content): "${text.substring(0, 100)}"`)
         return NextResponse.json({
@@ -158,7 +163,7 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Audio] Text length:', optimized.text.length)
     console.log('[Scene Audio] ==================== END TTS INPUT DEBUG ====================')
     
-    const audioBuffer = await generateAudio(optimized.text, finalVoiceConfig, language)
+    const audioBuffer = await generateAudio(optimized.text, finalVoiceConfig, language, audioType)
 
     // Step 5: Get actual audio duration from buffer
     let audioDuration: number | null = null
@@ -260,18 +265,26 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function generateAudio(text: string, voiceConfig: VoiceConfig, language: string = 'en'): Promise<Buffer> {
-  return await generateGoogleAudio(text, voiceConfig, language)
+async function generateAudio(
+  text: string,
+  voiceConfig: VoiceConfig,
+  language: string = 'en',
+  audioType: AudioGenerationRequest['audioType'] = 'narration'
+): Promise<Buffer> {
+  return await generateGoogleAudio(text, voiceConfig, language, audioType)
 }
 
-async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig, language: string = 'en'): Promise<Buffer> {
+async function generateGoogleAudio(
+  text: string,
+  voiceConfig: VoiceConfig,
+  language: string = 'en',
+  audioType: AudioGenerationRequest['audioType'] = 'narration'
+): Promise<Buffer> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
   let accessToken: string | null = null
 
-  // Gemini TTS doesn't natively support bracketed emotion tags like ElevenLabs.
-  // Remove them to prevent hallucinations where it reads them aloud or stutters.
-  // Also remove asterisks (*) used for markdown emphasis, as Gemini sometimes reads the word "asterisk" aloud.
-  const sanitizedText = text.replace(/\[.*?\]/g, '').replace(/\*/g, '').trim()
+  // Final sanitize: multiline/unicode brackets, markdown emphasis, echoed tail (see textOptimizer).
+  const sanitizedText = finalizeTextForGoogleTts(text)
   
   if (!sanitizedText) {
     throw new Error('Text is empty after removing bracketed tags')
@@ -349,9 +362,18 @@ async function generateGoogleAudio(text: string, voiceConfig: VoiceConfig, langu
   if (isGemini) {
     payload.voice.modelName = 'gemini-2.5-flash-tts'
     if (voiceConfig.prompt) {
-      // Gemini TTS sometimes reads the prompt aloud if it's too descriptive.
-      // We prepend a strict instruction to prevent this.
-      payload.input.prompt = `INSTRUCTION: You are a voice actor. Do not read this instruction aloud. Adopt the following voice profile precisely: ${voiceConfig.prompt}`
+      if (audioType === 'dialogue') {
+        // Long character "voice profile" prompts often get echoed or blended into dialogue.
+        // Timbre is already selected via voice.name; keep a minimal guard only.
+        payload.input.prompt =
+          'Speak only the words supplied in the main text. Do not read instructions aloud, do not add narrator commentary, and do not repeat the opening sentence at the end.'
+      } else {
+        // Gemini TTS sometimes reads the prompt aloud if it's too descriptive.
+        payload.input.prompt = `INSTRUCTION: You are a voice actor. Do not read this instruction aloud. Adopt the following voice profile precisely: ${voiceConfig.prompt}`
+      }
+    } else if (audioType === 'dialogue') {
+      payload.input.prompt =
+        'Speak only the words supplied in the main text. Do not repeat phrases or add filler at the end.'
     }
   }
 
