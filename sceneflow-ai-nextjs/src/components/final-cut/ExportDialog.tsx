@@ -20,10 +20,12 @@ import {
   CheckCircle2,
   Info,
   Loader2,
-  Copy,
-  ExternalLink,
   Upload,
   X,
+  Clock,
+  Clapperboard,
+  Languages,
+  Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -199,6 +201,15 @@ function formatDuration(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500 mb-2.5">{children}</p>
+  )
+}
+
+const MP4_PRESETS = EXPORT_PRESETS.filter((p) => p.containerFormat === 'mp4')
+const WEBM_PRESETS = EXPORT_PRESETS.filter((p) => p.containerFormat === 'webm')
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -263,273 +274,294 @@ export function ExportDialog({
     }
   }
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2 text-xl">
-            <Download className="w-5 h-5 text-purple-400" />
-            Export Film
-          </DialogTitle>
-          <DialogDescription className="text-gray-400">
-            Export <span className="text-white font-medium">{streamName}</span> as a final video file.
-            MP4 uses the browser&apos;s MediaRecorder (H.264 when supported); otherwise export falls back to WebM automatically.
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* Stream Info Summary */}
-        <div className="flex items-center gap-4 mt-2 p-3 bg-gray-800/60 rounded-lg border border-gray-700/50">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">Duration</span>
-            <span className="text-sm font-medium text-white">{formatDuration(totalDuration)}</span>
+  const renderPresetCard = (p: ExportPreset) => {
+    const isSelected = selectedPreset === p.id
+    return (
+      <button
+        key={p.id}
+        type="button"
+        onClick={() => setSelectedPreset(p.id)}
+        className={cn(
+          'flex items-start gap-3 p-3 rounded-xl border text-left transition-all duration-150',
+          isSelected
+            ? 'border-violet-400/70 bg-violet-500/15 shadow-[0_0_0_1px_rgba(139,92,246,0.25)]'
+            : 'border-zinc-700/80 bg-zinc-900/40 hover:border-zinc-600 hover:bg-zinc-800/50'
+        )}
+      >
+        <div
+          className={cn(
+            'flex-shrink-0 mt-0.5 p-1.5 rounded-lg',
+            isSelected ? 'bg-violet-500/20 text-violet-300' : 'bg-zinc-800 text-zinc-500'
+          )}
+        >
+          {p.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={cn('text-sm font-medium', isSelected ? 'text-white' : 'text-zinc-200')}>{p.label}</span>
+            {p.recommended && (
+              <Badge variant="secondary" className="bg-violet-500/25 text-violet-200 text-[10px] px-1.5 py-0 border-0">
+                Recommended
+              </Badge>
+            )}
           </div>
-          <div className="w-px h-4 bg-gray-700" />
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">Scenes</span>
-            <span className="text-sm font-medium text-white">{sceneCount}</span>
-          </div>
-          <div className="w-px h-4 bg-gray-700" />
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">Language</span>
-            <span className="text-sm font-medium text-white">{streamLanguage}</span>
+          <p className="text-[11px] text-zinc-500 mt-1 leading-snug">{p.description}</p>
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-400 font-medium">
+              {(p.containerFormat ?? 'webm').toUpperCase()}
+            </span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-400">{p.resolution}</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-zinc-800 text-zinc-400">{p.frameRate}fps</span>
           </div>
         </div>
+        {isSelected && <CheckCircle2 className="w-4 h-4 text-violet-400 flex-shrink-0 mt-1" />}
+      </button>
+    )
+  }
 
-        {/* No media at all — export will fail or be empty */}
-        {!hasExportableMedia && !stitchReady && (
-          <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg mt-2">
-            <Info className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm text-amber-200 font-medium">No segment media found</p>
-              <p className="text-xs text-amber-200/70 mt-0.5">
-                Nothing on this timeline resolves to a video or image URL yet. Open Production, generate or upload segment media, save the project, then return to Final Cut (or Save here so Production links sync). You can also stitch local scene files below.
-              </p>
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[92vh] overflow-hidden flex flex-col p-0 gap-0 border-zinc-700/80 bg-zinc-950 text-zinc-100 shadow-2xl sm:rounded-2xl">
+        <div className="relative overflow-y-auto flex-1 px-6 pt-6 pb-4">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-violet-950/40 to-transparent rounded-t-2xl" />
+
+          <DialogHeader className="relative text-left space-y-1 pr-8">
+            <DialogTitle className="text-xl font-semibold tracking-tight text-white flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600/20 text-violet-300 ring-1 ring-violet-500/30">
+                <Clapperboard className="w-5 h-5" />
+              </span>
+              Export master
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400 text-sm leading-relaxed">
+              <span className="text-zinc-200 font-medium">{streamName}</span>
+              <span className="text-zinc-500"> · </span>
+              {streamLanguage}
+              <span className="block text-xs text-zinc-500 mt-1.5">
+                Browser encode: MP4 (H.264) when supported, otherwise WebM. Saves to Downloads and stores a link for
+                re-download.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Stats */}
+          <div className="relative mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-3 flex items-center gap-2.5">
+              <Clock className="w-4 h-4 text-emerald-400/90 shrink-0" />
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">Duration</p>
+                <p className="text-sm font-semibold text-white tabular-nums">{formatDuration(totalDuration)}</p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-3 flex items-center gap-2.5">
+              <Film className="w-4 h-4 text-amber-400/90 shrink-0" />
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">Scenes</p>
+                <p className="text-sm font-semibold text-white tabular-nums">{sceneCount}</p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-3 flex items-center gap-2.5">
+              <Languages className="w-4 h-4 text-sky-400/90 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">Language</p>
+                <p className="text-sm font-semibold text-white truncate">{streamLanguage}</p>
+              </div>
             </div>
           </div>
-        )}
 
-        {/* Stills / animatic — not an error */}
-        {hasExportableMedia && !hasVideoClipSegments && !stitchReady && (
-          <div className="flex items-start gap-3 p-3 bg-sky-500/10 border border-sky-500/25 rounded-lg mt-2">
-            <Info className="w-5 h-5 text-sky-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm text-sky-100 font-medium">Image-based timeline</p>
-              <p className="text-xs text-sky-100/75 mt-0.5">
-                No video clips were detected — export uses still frames (and Ken Burns on images where configured). Render video in Production if you want full-motion clips in the file.
-              </p>
+          {/* Local files first — primary workaround */}
+          {sceneCount > 0 && (
+            <div className="relative mt-6">
+              <SectionLabel>
+                <span className="inline-flex items-center gap-1.5">
+                  <Upload className="w-3 h-3" />
+                  Local merge
+                </span>
+              </SectionLabel>
+              <div className="rounded-xl border border-violet-500/25 bg-gradient-to-br from-violet-950/50 to-zinc-900/80 p-4 ring-1 ring-violet-500/10">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-white">Use scene files from your computer</p>
+                    <p className="text-xs text-zinc-400 mt-1 leading-relaxed max-w-xl">
+                      Select <strong className="text-zinc-200">{sceneCount} videos</strong> in timeline order (scene 1 →{' '}
+                      {sceneCount}). Skips cloud URLs; keeps audio from each file. Final Cut overlays are not applied on
+                      this path.
+                    </p>
+                  </div>
+                  {manualSceneFiles.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setManualSceneFiles([])
+                        if (manualFileInputRef.current) manualFileInputRef.current.value = ''
+                      }}
+                      className="text-zinc-500 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800 shrink-0"
+                      aria-label="Clear selected files"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={manualFileInputRef}
+                  type="file"
+                  accept="video/*,.mp4,.webm,.mov,.m4v"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const list = e.target.files ? Array.from(e.target.files) : []
+                    setManualSceneFiles(list)
+                  }}
+                />
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-violet-500/40 bg-violet-600/10 text-violet-100 hover:bg-violet-600/20 hover:text-white"
+                    onClick={() => manualFileInputRef.current?.click()}
+                  >
+                    <Upload className="w-3.5 h-3.5 mr-2" />
+                    Choose videos
+                  </Button>
+                  <span className="text-xs text-zinc-500">
+                    {manualSceneFiles.length === 0
+                      ? 'No files yet'
+                      : `${manualSceneFiles.length} / ${sceneCount} selected`}
+                  </span>
+                  {stitchReady && (
+                    <span className="text-xs text-emerald-400 flex items-center gap-1 font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Ready — export will stitch these files
+                    </span>
+                  )}
+                </div>
+                {manualSceneFiles.length > 0 && manualSceneFiles.length !== sceneCount && (
+                  <p className="text-xs text-amber-400/95 mt-2">
+                    Pick exactly {sceneCount} files to match scenes (re-order in the file picker if needed).
+                  </p>
+                )}
+                {manualSceneFiles.length > 0 && (
+                  <ul className="mt-3 max-h-28 overflow-y-auto rounded-lg border border-zinc-800 bg-black/20 px-3 py-2 text-[11px] text-zinc-400 space-y-1 font-mono">
+                    {manualSceneFiles.map((f, i) => (
+                      <li key={`${f.name}-${i}`} className="truncate">
+                        <span className="text-zinc-600 mr-2">{i + 1}.</span>
+                        {f.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Manual stitch: local MP4s per scene */}
-        {sceneCount > 0 && (
-          <div className="mt-4 p-3 rounded-lg border border-gray-600/80 bg-gray-800/50">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-start gap-2">
-                <Upload className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+          {/* Timeline status */}
+          <div className="relative mt-5 space-y-3">
+            {!hasExportableMedia && !stitchReady && (
+              <div className="flex gap-3 rounded-xl border border-amber-500/25 bg-amber-950/20 p-3.5">
+                <Info className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-gray-200">Stitch local scene videos</p>
-                  <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">
-                    Choose exactly <span className="text-gray-400">{sceneCount} files</span> in{' '}
-                    <span className="text-gray-400">timeline order</span> (scene 1, then 2, …). Uses files from your
-                    computer instead of Production URLs — audio in each file is kept. Timeline overlays are skipped for
-                    this path.
+                  <p className="text-sm font-medium text-amber-100">Timeline has no linked media</p>
+                  <p className="text-xs text-amber-200/70 mt-1 leading-relaxed">
+                    Production URLs are not resolving on this timeline. Save the project from Production, use{' '}
+                    <strong className="text-amber-100/90">Local merge</strong> above with your scene MP4s, or fix links
+                    and Save Final Cut.
                   </p>
                 </div>
               </div>
-              {manualSceneFiles.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setManualSceneFiles([])
-                    if (manualFileInputRef.current) manualFileInputRef.current.value = ''
-                  }}
-                  className="text-gray-500 hover:text-white p-1 rounded"
-                  aria-label="Clear selected files"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+            )}
+            {hasExportableMedia && !hasVideoClipSegments && !stitchReady && (
+              <div className="flex gap-3 rounded-xl border border-sky-500/20 bg-sky-950/15 p-3.5">
+                <Sparkles className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-sky-100">Stills / animatic</p>
+                  <p className="text-xs text-sky-100/70 mt-1 leading-relaxed">
+                    Export will use images and Ken Burns where set. Render video in Production for full-motion clips.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Presets */}
+          <div className="relative mt-6">
+            <SectionLabel>MP4 output</SectionLabel>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">{MP4_PRESETS.map(renderPresetCard)}</div>
+          </div>
+
+          <div className="relative mt-5">
+            <SectionLabel>WebM & social</SectionLabel>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">{WEBM_PRESETS.map(renderPresetCard)}</div>
+          </div>
+
+          {/* Options */}
+          <div className="relative mt-6 rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
+            <SectionLabel>Options</SectionLabel>
+            <div className="space-y-3">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={includeSubtitles}
+                  onChange={(e) => setIncludeSubtitles(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/30"
+                />
+                <div>
+                  <span className="text-sm text-zinc-200 group-hover:text-white">Subtitle track (SRT)</span>
+                  <p className="text-[11px] text-zinc-500">Bundled when supported</p>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={includeBurnedCaptions}
+                  onChange={(e) => setIncludeBurnedCaptions(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/30"
+                />
+                <div>
+                  <span className="text-sm text-zinc-200 group-hover:text-white">Burn-in captions</span>
+                  <p className="text-[11px] text-zinc-500">Rendered on picture</p>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={watermark}
+                  onChange={(e) => setWatermark(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-zinc-600 bg-zinc-900 text-violet-500 focus:ring-violet-500/30"
+                />
+                <div>
+                  <span className="text-sm text-zinc-200 group-hover:text-white">SceneFlow watermark</span>
+                  <p className="text-[11px] text-zinc-500">Corner branding</p>
+                </div>
+              </label>
             </div>
-            <input
-              ref={manualFileInputRef}
-              type="file"
-              accept="video/*,.mp4,.webm,.mov,.m4v"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                const list = e.target.files ? Array.from(e.target.files) : []
-                setManualSceneFiles(list)
-              }}
-            />
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="border-gray-600 text-gray-200 hover:bg-gray-700"
-                onClick={() => manualFileInputRef.current?.click()}
-              >
-                <Upload className="w-3.5 h-3.5 mr-1.5" />
-                Choose videos…
-              </Button>
-              <span className="text-[11px] text-gray-500">
-                {manualSceneFiles.length === 0
-                  ? 'No files selected'
-                  : `${manualSceneFiles.length} / ${sceneCount} selected`}
+          </div>
+
+          {/* Summary */}
+          <div className="relative mt-5 rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">Est. size</span>
+              <span className="text-white font-medium tabular-nums">{estimatedFileSize}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm gap-2">
+              <span className="text-zinc-500 shrink-0">Output</span>
+              <span className="text-zinc-200 text-right text-xs sm:text-sm font-medium truncate">
+                {(preset.containerFormat ?? 'webm').toUpperCase()} · {preset.resolution} · {preset.frameRate}fps
               </span>
-              {stitchReady && (
-                <span className="text-[11px] text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Ready to stitch
-                </span>
-              )}
             </div>
-            {manualSceneFiles.length > 0 && manualSceneFiles.length !== sceneCount && (
-              <p className="text-[11px] text-amber-400/90 mt-2">
-                Need exactly {sceneCount} videos to match your scenes. Re-select in order or clear and try again.
-              </p>
-            )}
-            {manualSceneFiles.length > 0 && (
-              <ul className="mt-2 max-h-24 overflow-y-auto text-[10px] text-gray-500 space-y-0.5 font-mono">
-                {manualSceneFiles.map((f, i) => (
-                  <li key={`${f.name}-${i}`}>
-                    {i + 1}. {f.name}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-
-        {/* Platform Presets */}
-        <div className="mt-4">
-          <h3 className="text-sm font-medium text-gray-300 mb-3">Platform Preset</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {EXPORT_PRESETS.map((p) => {
-              const isSelected = selectedPreset === p.id
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => setSelectedPreset(p.id)}
-                  className={cn(
-                    "flex items-start gap-3 p-3 rounded-lg border text-left transition-all",
-                    isSelected
-                      ? 'border-purple-500 bg-purple-500/10 ring-1 ring-purple-500/30'
-                      : 'border-gray-700 bg-gray-800/40 hover:border-gray-600 hover:bg-gray-800/60'
-                  )}
-                >
-                  <div className={cn(
-                    "flex-shrink-0 mt-0.5",
-                    isSelected ? 'text-purple-400' : 'text-gray-500'
-                  )}>
-                    {p.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={cn(
-                        "text-sm font-medium",
-                        isSelected ? 'text-white' : 'text-gray-300'
-                      )}>
-                        {p.label}
-                      </span>
-                      {p.recommended && (
-                        <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 text-[10px] px-1.5 py-0">
-                          Recommended
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-gray-500 mt-0.5">{p.description}</p>
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400">
-                        {(p.containerFormat ?? 'webm').toUpperCase()}
-                      </span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400">{p.resolution}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400">{p.aspectRatio}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400">{p.frameRate}fps</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400">{p.codec.toUpperCase()}</span>
-                    </div>
-                  </div>
-                  {isSelected && (
-                    <CheckCircle2 className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
-                  )}
-                </button>
-              )
-            })}
           </div>
         </div>
 
-        {/* Options */}
-        <div className="mt-4 space-y-3">
-          <h3 className="text-sm font-medium text-gray-300">Options</h3>
-          
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={includeSubtitles}
-              onChange={(e) => setIncludeSubtitles(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-500 focus:ring-purple-500/30"
-            />
-            <div>
-              <span className="text-sm text-gray-300 group-hover:text-white transition-colors">Include subtitle track (SRT)</span>
-              <p className="text-[11px] text-gray-500">Separate subtitle file included in export package</p>
-            </div>
-          </label>
-
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={includeBurnedCaptions}
-              onChange={(e) => setIncludeBurnedCaptions(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-500 focus:ring-purple-500/30"
-            />
-            <div>
-              <span className="text-sm text-gray-300 group-hover:text-white transition-colors">Burn-in captions</span>
-              <p className="text-[11px] text-gray-500">Hard-coded captions rendered directly on the video</p>
-            </div>
-          </label>
-
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={watermark}
-              onChange={(e) => setWatermark(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-500 focus:ring-purple-500/30"
-            />
-            <div>
-              <span className="text-sm text-gray-300 group-hover:text-white transition-colors">SceneFlow watermark</span>
-              <p className="text-[11px] text-gray-500">Adds a subtle SceneFlow branding in the corner</p>
-            </div>
-          </label>
-        </div>
-
-        {/* Export Summary */}
-        <div className="mt-4 p-3 bg-gray-800/60 rounded-lg border border-gray-700/50">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-400">Estimated file size</span>
-            <span className="text-white font-medium">{estimatedFileSize}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm mt-1">
-            <span className="text-gray-400">Format</span>
-            <span className="text-white font-medium">
-              {(preset.containerFormat ?? 'webm').toUpperCase()} • {preset.resolution} • {preset.codec.toUpperCase()} • {preset.frameRate}fps
-            </span>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-700/50">
-          <p className="text-[11px] text-gray-500 max-w-[260px]">
-            Combines all scenes into one video. When the render finishes, the file is saved to your Downloads folder
-            {(preset.containerFormat ?? 'webm') === 'mp4' ? ' (MP4, or WebM if your browser cannot record MP4)' : ' (WebM)'}.
-            A link is also stored for re-download from Final Cut.
+        {/* Sticky actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-sm px-6 py-4">
+          <p className="text-[11px] text-zinc-500 max-w-md leading-relaxed order-2 sm:order-1">
+            One continuous file. MP4 may fall back to WebM in some browsers — both work in YouTube and most editors.
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-end gap-2 order-1 sm:order-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onOpenChange(false)}
-              className="text-gray-400 hover:text-white"
+              className="text-zinc-400 hover:text-white hover:bg-zinc-800"
             >
               Cancel
             </Button>
@@ -537,17 +569,17 @@ export function ExportDialog({
               size="sm"
               onClick={handleExport}
               disabled={isExporting}
-              className="bg-purple-600 hover:bg-purple-700 text-white min-w-[120px]"
+              className="bg-violet-600 hover:bg-violet-500 text-white min-w-[140px] h-9 shadow-lg shadow-violet-900/30"
             >
               {isExporting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Exporting...
+                  Exporting…
                 </>
               ) : (
                 <>
                   <Download className="w-4 h-4 mr-2" />
-                  Export Film
+                  Export
                 </>
               )}
             </Button>

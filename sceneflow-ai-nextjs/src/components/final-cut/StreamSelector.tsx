@@ -97,7 +97,7 @@ export function StreamSelector({
           <Button
             variant="outline"
             disabled={disabled}
-            className="min-w-[200px] justify-between bg-gray-800 border-gray-700 hover:bg-gray-700"
+            className="min-w-[180px] sm:min-w-[220px] justify-between bg-zinc-900/80 border-zinc-700/80 hover:bg-zinc-800 hover:border-zinc-600 text-zinc-100"
           >
             <span className="flex items-center gap-2">
               {selectedStream ? (

@@ -864,10 +864,10 @@ export default function FinalCutPage() {
   
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-center text-white">
-          <Loader2 className="w-8 h-8 animate-spin text-sf-primary mx-auto mb-4" />
-          <p className="text-gray-400">Loading Final Cut...</p>
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="text-center text-zinc-100">
+          <Loader2 className="w-8 h-8 animate-spin text-violet-500 mx-auto mb-4" />
+          <p className="text-zinc-500 text-sm">Loading Final Cut…</p>
         </div>
       </div>
     )
@@ -875,11 +875,11 @@ export default function FinalCutPage() {
   
   if (!currentProject && !isDemo) {
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
-        <div className="text-center text-white">
-          <AlertCircle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">No Project Selected</h2>
-          <p className="text-gray-400 mb-4">Please select a project from the dashboard.</p>
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+        <div className="text-center text-zinc-100 max-w-sm">
+          <AlertCircle className="w-12 h-12 text-amber-400/90 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">No project selected</h2>
+          <p className="text-zinc-500 mb-4 text-sm">Choose a project from the dashboard.</p>
           <Link href="/dashboard">
             <Button>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -892,40 +892,48 @@ export default function FinalCutPage() {
   }
   
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col">
+    <div className="min-h-screen bg-zinc-950 flex flex-col text-zinc-100">
       {/* Demo Mode Banner */}
       {isDemo && (
-        <div className="bg-amber-500/20 border-b border-amber-500/30 px-4 py-2">
-          <div className="flex items-center justify-center gap-2 text-amber-400 text-sm">
-            <Film className="w-4 h-4" />
-            <span className="font-medium">Demo Mode</span>
-            <span className="text-amber-400/70">- Viewing 10-scene test project. No data will be saved.</span>
+        <div className="bg-amber-500/15 border-b border-amber-500/25 px-4 py-2.5">
+          <div className="flex items-center justify-center gap-2 text-amber-200/95 text-sm">
+            <Film className="w-4 h-4 shrink-0" />
+            <span className="font-medium">Demo mode</span>
+            <span className="text-amber-200/60 hidden sm:inline">10-scene sample · nothing is saved</span>
           </div>
         </div>
       )}
-      
+
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-gray-900">
-        <div className="flex items-center gap-4">
+      <header className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b border-white/[0.06] bg-zinc-950/90 backdrop-blur-md supports-[backdrop-filter]:bg-zinc-950/75">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <Link href={isDemo ? '/dashboard' : `/dashboard/workflow/vision/${projectId}`}>
-            <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {isDemo ? 'Exit Demo' : 'Back to Production'}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-zinc-400 hover:text-white hover:bg-zinc-800/80 -ml-1"
+            >
+              <ArrowLeft className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">{isDemo ? 'Exit demo' : 'Production'}</span>
             </Button>
           </Link>
-          
-          <div className="h-6 w-px bg-gray-700" />
-          
-          <div className="flex items-center gap-2">
-            <Film className="w-5 h-5 text-purple-400" />
-            <div>
-              <h1 className="text-lg font-semibold text-white">Final Cut</h1>
-              <p className="text-xs text-gray-500">{isDemo ? 'Demo Project' : currentProject?.title}</p>
+
+          <div className="h-8 w-px bg-zinc-800 hidden sm:block" />
+
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600/15 ring-1 ring-violet-500/25">
+              <Film className="w-5 h-5 text-violet-300" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-semibold tracking-tight text-white truncate">Final Cut</h1>
+              <p className="text-[11px] sm:text-xs text-zinc-500 truncate">
+                {isDemo ? 'Demo project' : currentProject?.title ?? 'Project'}
+              </p>
             </div>
           </div>
         </div>
-        
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
           {!isDemo && (
             <>
               <Button
@@ -933,62 +941,61 @@ export default function FinalCutPage() {
                 size="sm"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="text-gray-400 hover:text-white"
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800/80"
               >
                 {isSaving ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 sm:mr-2 animate-spin" />
                 ) : (
-                  <Save className="w-4 h-4 mr-2" />
+                  <Save className="w-4 h-4 sm:mr-2" />
                 )}
-                Save
+                <span className="hidden sm:inline">Save</span>
               </Button>
-          
+
               {lastExportUrl ? (
-                <Button variant="outline" size="sm" asChild className="border-emerald-600/50 text-emerald-400 hover:bg-emerald-950/40 hover:text-emerald-300">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-emerald-500/35 text-emerald-400 hover:bg-emerald-950/50 hover:text-emerald-300"
+                  asChild
+                >
                   <a href={lastExportUrl} target="_blank" rel="noopener noreferrer" download>
-                    <Download className="w-4 h-4 mr-2" />
-                    Download last export
+                    <Download className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Last export</span>
                   </a>
                 </Button>
               ) : null}
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-400 hover:text-white"
-              >
+              <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-zinc-300 hidden md:inline-flex">
                 <Share2 className="w-4 h-4 mr-2" />
                 Share
               </Button>
-          
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-400 hover:text-white"
-              >
+
+              <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-zinc-300 hidden md:inline-flex">
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </Button>
-          
+
               <Button
                 size="sm"
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-violet-600 hover:bg-violet-500 text-white shadow-md shadow-violet-950/40"
                 onClick={() => setExportDialogOpen(true)}
               >
-                <Download className="w-4 h-4 mr-2" />
+                <Download className="w-4 h-4 sm:mr-2" />
                 Export
               </Button>
-          
-              <div className="h-6 w-px bg-gray-700" />
+
+              <div className="h-6 w-px bg-zinc-800 hidden sm:block" />
             </>
           )}
-          
+
           <Link href={`/dashboard/workflow/premiere?projectId=${projectId}${isDemo ? '&demo=true' : ''}`}>
             <Button
               size="sm"
-              className="bg-sf-primary hover:bg-sf-accent"
+              variant="outline"
+              className="border-zinc-600 bg-zinc-900/50 text-zinc-100 hover:bg-zinc-800 hover:border-zinc-500"
             >
-              Continue to Premiere
+              <span className="hidden sm:inline">Premiere</span>
+              <span className="sm:hidden">Next</span>
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>
@@ -1029,7 +1036,7 @@ export default function FinalCutPage() {
       })()}
 
       {/* Main Content - Timeline */}
-      <main className="flex-1">
+      <main className="flex-1 min-h-0 flex flex-col border-t border-white/[0.04]">
         <FinalCutTimeline
           projectId={projectId || ''}
           streams={streams}

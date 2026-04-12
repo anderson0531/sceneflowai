@@ -74,11 +74,11 @@ export function SceneBlock({
   return (
     <div
       className={cn(
-        "absolute top-1 bottom-1 rounded overflow-hidden cursor-pointer transition-all",
+        "absolute top-1 bottom-1 rounded-lg overflow-hidden cursor-pointer transition-all duration-150",
         "border-2",
         isSelected 
-          ? "border-blue-500 ring-2 ring-blue-500/30 z-10" 
-          : "border-gray-600 hover:border-gray-500"
+          ? "border-violet-500 ring-2 ring-violet-500/25 z-10 shadow-lg shadow-violet-950/40" 
+          : "border-zinc-700/90 hover:border-zinc-500"
       )}
       style={{ 
         left: `${left}px`, 
@@ -96,7 +96,7 @@ export function SceneBlock({
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
         </div>
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/50 to-indigo-900/50" />
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-950/60 to-zinc-900" />
       )}
       
       {/* Scene Info Overlay */}
