@@ -187,6 +187,36 @@ function pickDialogueStartTime(
 }
 
 /**
+ * Segment windows set each line's start to the earliest assigned keyframe segment.
+ * Full TTS duration is preserved for playback, so a long line can extend past the
+ * next line's segment start and overlap on the timeline (and in the player).
+ * Shift later lines forward in script order so clips do not overlap, matching
+ * sequential dialogue (same buffer as INTER_CLIP_BUFFER elsewhere).
+ */
+function staggerAnchoredDialogueClips(
+  clips: AudioTrackClipV2[],
+  interClipBuffer: number
+): void {
+  const ordered = [...clips].sort(
+    (a, b) => (a.dialogueIndex ?? 0) - (b.dialogueIndex ?? 0)
+  )
+  let prevEnd = 0
+  for (let i = 0; i < ordered.length; i++) {
+    const clip = ordered[i]
+    const minStart =
+      typeof clip.startTime === 'number' && Number.isFinite(clip.startTime) ? clip.startTime : 0
+    const dur =
+      typeof clip.duration === 'number' && Number.isFinite(clip.duration) && clip.duration > 0
+        ? clip.duration
+        : 0
+    const nextStart =
+      i === 0 ? minStart : Math.max(minStart, prevEnd + interClipBuffer)
+    clip.startTime = nextStart
+    prevEnd = nextStart + dur
+  }
+}
+
+/**
  * Build audio tracks from scene data for a specific language.
  * Returns null for missing audio instead of stale URLs.
  */
@@ -344,11 +374,11 @@ export function buildAudioTracksForLanguage(
         const w = windows.get(dialogueLineIdForIndex(idx))
         if (w) {
           clip.startTime = w.start
-          // Keep full asset duration for playback/timeline parity with script UI.
-          // Segment windows only anchor start time; capping to slot length caused
-          // short bars and early cutoffs vs real dialogue audio length.
+          // Keep full asset duration for playback. Without staggering, long lines
+          // overlap the next clip when segment keyframes are shorter than audio.
         }
       }
+      staggerAnchoredDialogueClips(dialogueClips, INTER_CLIP_BUFFER)
     }
     dialogueClips.sort((a, b) => {
       const dt = a.startTime - b.startTime
