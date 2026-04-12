@@ -20,6 +20,11 @@ import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
 import { cn } from '@/lib/utils'
 import {
+  buildAudioTracksWithBaselineTiming,
+  determineBaselineLanguage,
+  repackSegmentsFromAssignedDialogue,
+} from './audioTrackBuilder'
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -630,8 +635,25 @@ export function SceneProductionManager({
       if (onApplyIntelligentAlignment) {
         onApplyIntelligentAlignment(sceneId, selectedLanguage)
       }
+      if (onSegmentResize && segments.length > 0 && scene) {
+        const baseline = determineBaselineLanguage(scene)
+        const tracks = buildAudioTracksWithBaselineTiming(scene, selectedLanguage, baseline, {
+          packDialogueToSegmentTimeline: selectedLanguage !== baseline,
+        })
+        const next = repackSegmentsFromAssignedDialogue(segments, tracks)
+        for (const seg of next) {
+          const old = segments.find(s => s.segmentId === seg.segmentId)
+          if (!old) continue
+          const oldStart = typeof old.startTime === 'number' ? old.startTime : 0
+          const oldDur = (old.endTime ?? 0) - oldStart
+          const newDur = seg.endTime - seg.startTime
+          if (Math.abs(oldStart - seg.startTime) > 0.05 || Math.abs(oldDur - newDur) > 0.05) {
+            onSegmentResize(sceneId, seg.segmentId, { startTime: seg.startTime, duration: newDur })
+          }
+        }
+      }
     },
-    [sceneId, onApplyIntelligentAlignment, selectedLanguage]
+    [sceneId, onApplyIntelligentAlignment, selectedLanguage, onSegmentResize, segments, scene]
   )
   
   // V2 Timeline: Audio clip change wrapper with AudioTrackType

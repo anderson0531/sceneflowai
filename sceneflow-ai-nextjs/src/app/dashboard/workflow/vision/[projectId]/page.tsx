@@ -3886,7 +3886,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const { determineBaselineLanguage, buildAudioTracksWithBaselineTiming } = await import('@/components/vision/scene-production/audioTrackBuilder')
       // Use baseline timing to ensure consistent positions across languages
       const baselineLanguage = determineBaselineLanguage(scene)
-      const audioTracks = buildAudioTracksWithBaselineTiming(scene, language, baselineLanguage)
+      const audioTracks = buildAudioTracksWithBaselineTiming(scene, language, baselineLanguage, {
+        packDialogueToSegmentTimeline: language !== baselineLanguage,
+      })
       
       // Calculate total audio duration from narration + dialogue
       let totalAudioDuration = 0

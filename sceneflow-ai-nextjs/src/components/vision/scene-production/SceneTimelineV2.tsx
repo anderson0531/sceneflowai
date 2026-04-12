@@ -204,6 +204,7 @@ export function SceneTimelineV2({
   const audioTracks = useMemo(() => {
     return buildAudioTracksWithBaselineTiming(scene, selectedLanguage, baselineLanguage, {
       segmentPlaybackOffsetSeconds,
+      packDialogueToSegmentTimeline: selectedLanguage !== baselineLanguage,
     })
   }, [scene, selectedLanguage, baselineLanguage, segmentPlaybackOffsetSeconds])
   
@@ -248,13 +249,17 @@ export function SceneTimelineV2({
   // Flatten to array for playback, using actual durations when available
   const allAudioClips = useMemo(() => {
     const clips = flattenAudioTracks(filteredAudioTracks)
-    // Apply actual durations from loaded audio metadata
     return clips.map(clip => {
       const key = `${clip.id}:${clip.url}`
       const actualDuration = actualDurations[key]
-      if (actualDuration && actualDuration > 0 && Math.abs(actualDuration - clip.duration) > 0.1) {
-        // Use actual duration if significantly different
-        return { ...clip, duration: actualDuration }
+      if (actualDuration && actualDuration > 0) {
+        // Music: keep timeline `duration` (full scene bar); store file length for loop math
+        if (clip.id.startsWith('music-')) {
+          return { ...clip, actualDuration }
+        }
+        if (Math.abs(actualDuration - clip.duration) > 0.1) {
+          return { ...clip, duration: actualDuration }
+        }
       }
       return clip
     })
@@ -410,9 +415,8 @@ export function SceneTimelineV2({
     if (!onApplyIntelligentAlignment) return
     if (hasAutoAligned && prevAudioHashRef.current === audioHash) return
     
-    const hasAnyAudio = filteredAudioTracks.voiceover || 
-                        filteredAudioTracks.dialogue.length > 0 ||
-                        filteredAudioTracks.description
+    const hasAnyAudio =
+      filteredAudioTracks.dialogue.length > 0 || filteredAudioTracks.description
     
     if (hasAnyAudio && audioHash !== prevAudioHashRef.current) {
       console.log('[SceneTimelineV2] Auto-applying intelligent alignment for new audio')
@@ -808,7 +812,16 @@ export function SceneTimelineV2({
             const clipEnd = clip.startTime + clip.duration
             
             if (elapsed >= clipStart && elapsed < clipEnd) {
-              const audioTime = elapsed - clipStart + (clip.trimStart || 0)
+              const trim = clip.trimStart || 0
+              let audioTime = elapsed - clipStart + trim
+              if (clip.id.startsWith('music-')) {
+                const key = `${clip.id}:${clip.url}`
+                const fileLen =
+                  clip.actualDuration || actualDurations[key] || clip.duration
+                if (fileLen > 0.05) {
+                  audioTime = ((audioTime % fileLen) + fileLen) % fileLen
+                }
+              }
               if (audio.paused) {
                 audio.currentTime = audioTime
                 audio.play().catch(() => {})
@@ -829,7 +842,7 @@ export function SceneTimelineV2({
       }
       animationRef.current = requestAnimationFrame(animate)
     }
-  }, [isPlaying, currentTime, sceneDuration, getCurrentVisualClip, allAudioClips, trackEnabled, trackVolumes, onPlayheadChange])
+  }, [isPlaying, currentTime, sceneDuration, getCurrentVisualClip, allAudioClips, trackEnabled, trackVolumes, onPlayheadChange, actualDurations])
   
   // Seek control
   const handleTimelineClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -1728,6 +1741,7 @@ export function SceneTimelineV2({
           }}
           src={clip.url}
           preload="auto"
+          loop={clip.id.startsWith('music-') || clip.loop === true}
           onLoadedMetadata={(e) => {
             const audio = e.currentTarget
             if (audio.duration && audio.duration !== Infinity) {

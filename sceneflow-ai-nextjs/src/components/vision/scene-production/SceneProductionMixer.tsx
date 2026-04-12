@@ -24,7 +24,6 @@ import {
   VolumeX,
   Globe,
   Film,
-  Mic2,
   MessageSquare,
   Music,
   Sparkles,
@@ -4687,25 +4686,6 @@ export function SceneProductionMixer({
               )}
               
               {/* Audio Track Controls */}
-              <AudioTrackRow
-                type="narration"
-                label="Narration"
-                icon={Mic2}
-                config={audioTracks.narration}
-                onConfigChange={(c) => updateTrackConfig('narration', c)}
-                audioUrl={playbackAudioUrls.narration}
-                audioDuration={playbackAudioUrls.narrationDuration}
-                videoTotalDuration={videoTotalDuration}
-                segmentCount={previewSegments.length}
-                subtitle={audioAssets.narration ? `"${audioAssets.narration.slice(0, 60)}..."` : undefined}
-                hasAudio={!!playbackAudioUrls.narration}
-                disabled={isRendering}
-                isCollapsed={collapsedSections.narration}
-                onToggleCollapse={() => toggleSection('narration')}
-                onRegenerate={onGenerateSceneAudio ? () => onGenerateSceneAudio(effectiveSceneIdx, 'narration', undefined, undefined, selectedLanguage) : undefined}
-                isRegenerating={isGeneratingAudio || isGeneratingLanguageAudio}
-              />
-              
               <AudioTrackRow
                 type="dialogue"
                 label="Dialogue"

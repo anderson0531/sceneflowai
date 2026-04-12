@@ -439,7 +439,9 @@ export function FullscreenPlayer({
   
   const audioTracks = useMemo(() => {
     if (!scene) return null
-    return buildAudioTracksWithBaselineTiming(scene, language, baselineLanguage)
+    return buildAudioTracksWithBaselineTiming(scene, language, baselineLanguage, {
+      packDialogueToSegmentTimeline: language !== baselineLanguage,
+    })
   }, [scene, language, baselineLanguage])
   
   // ============================================================================

@@ -33,7 +33,9 @@ describe('dialogue audio vs video segment alignment (cumulative timeline)', () =
       ],
     }
 
-    const tracks = buildAudioTracksForLanguage(scene, 'en')
+    const tracks = buildAudioTracksForLanguage(scene, 'en', {
+      packDialogueToSegmentTimeline: true,
+    })
     expect(tracks.dialogue.length).toBe(2)
     const byIdx = [...tracks.dialogue].sort(
       (a, b) => (a.dialogueIndex ?? 0) - (b.dialogueIndex ?? 0)
@@ -41,6 +43,43 @@ describe('dialogue audio vs video segment alignment (cumulative timeline)', () =
     // Segment durations 8s + 8s → line0 at 0s, line1 at 8s (matches purple video row)
     expect(byIdx[0].startTime).toBeCloseTo(0, 5)
     expect(byIdx[1].startTime).toBeCloseTo(8, 5)
+  })
+
+  it('baseline language keeps sequential dialogue starts when pack is off (generation timing)', () => {
+    const scene = {
+      dialogue: [
+        { character: 'DOC', text: 'First' },
+        { character: 'DOC', text: 'Second' },
+      ],
+      dialogueAudio: {
+        en: [
+          { audioUrl: 'https://example.com/d0.mp3', duration: 25, dialogueIndex: 0 },
+          { audioUrl: 'https://example.com/d1.mp3', duration: 31, dialogueIndex: 1 },
+        ],
+      },
+      segments: [
+        {
+          sequenceIndex: 0,
+          startTime: 15,
+          endTime: 23,
+          dialogueLineIds: ['dialogue-0'],
+        },
+        {
+          sequenceIndex: 1,
+          startTime: 18,
+          endTime: 26,
+          dialogueLineIds: ['dialogue-1'],
+        },
+      ],
+    }
+
+    const tracks = buildAudioTracksForLanguage(scene, 'en')
+    const byIdx = [...tracks.dialogue].sort(
+      (a, b) => (a.dialogueIndex ?? 0) - (b.dialogueIndex ?? 0)
+    )
+    expect(byIdx[0].startTime).toBeCloseTo(0, 5)
+    // 25s first clip + INTER_CLIP_BUFFER (2s) from AUDIO_ALIGNMENT_BUFFERS
+    expect(byIdx[1].startTime).toBeCloseTo(27, 5)
   })
 
   it('buildDialogueLineIdToCumulativeTimelineStart adds playback offset per segment', () => {

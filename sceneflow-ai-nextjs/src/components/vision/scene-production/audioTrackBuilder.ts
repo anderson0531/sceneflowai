@@ -99,13 +99,86 @@ export function dialogueLineIdForIndex(dialogueIndex: number): string {
   return `dialogue-${dialogueIndex}`
 }
 
+/** Narration audio is merged into the dialogue track as a NARRATOR clip (no separate voiceover row). */
+export const DIALOGUE_NARRATION_CLIP_ID = 'dialogue-narration'
+
 /** Match SceneTimelineV2 visual clip duration for one segment. */
-function segmentBaseDurationSeconds(seg: any): number {
+export function getSegmentBaseDurationSeconds(seg: any): number {
   const s = typeof seg.startTime === 'number' && Number.isFinite(seg.startTime) ? seg.startTime : 0
   const e = typeof seg.endTime === 'number' && Number.isFinite(seg.endTime) ? seg.endTime : NaN
   if (Number.isFinite(e) && e > s) return e - s
   const d = typeof seg.duration === 'number' && Number.isFinite(seg.duration) && seg.duration > 0 ? seg.duration : 0
   return Math.max(0, d)
+}
+
+/** Cumulative scene length from segment row (matches timeline video track). */
+function computeSceneTimelineSpanFromSegments(scene: any, segmentPlaybackOffsetSeconds: number): number {
+  const segments = Array.isArray(scene?.segments) ? scene.segments : []
+  if (segments.length === 0) return 0
+  const sorted = [...segments].sort((a: any, b: any) => {
+    const ai = a.sequenceIndex ?? 0
+    const bi = b.sequenceIndex ?? 0
+    if (ai !== bi) return ai - bi
+    return (a.startTime ?? 0) - (b.startTime ?? 0)
+  })
+  const off = Math.max(0, segmentPlaybackOffsetSeconds)
+  let sum = 0
+  for (const seg of sorted) {
+    sum += getSegmentBaseDurationSeconds(seg) + off
+  }
+  return sum
+}
+
+/**
+ * Repack segment `startTime`/`endTime` in play order so span matches assigned dialogue clip durations.
+ * Call after dialogue audio exists (e.g. with intelligent alignment).
+ */
+export function repackSegmentsFromAssignedDialogue(
+  segments: any[],
+  tracks: AudioTracksDataV2,
+  opts?: { minSeconds?: number; maxSeconds?: number; interLineGap?: number }
+): any[] {
+  const minS = opts?.minSeconds ?? 4
+  const maxS = opts?.maxSeconds ?? 120
+  const gap = opts?.interLineGap ?? 0.25
+
+  const clipForLineIndex = (lineIndex: number) =>
+    tracks.dialogue.find(
+      d => d.dialogueIndex === lineIndex && d.id !== DIALOGUE_NARRATION_CLIP_ID
+    )
+
+  const durForLineId = (id: string): number => {
+    const m = /^dialogue-(\d+)$/.exec(id)
+    if (!m) return 0
+    const c = clipForLineIndex(parseInt(m[1], 10))
+    return c && typeof c.duration === 'number' && c.duration > 0 ? c.duration : 0
+  }
+
+  const sorted = [...segments].sort((a: any, b: any) => {
+    const ai = a.sequenceIndex ?? 0
+    const bi = b.sequenceIndex ?? 0
+    if (ai !== bi) return ai - bi
+    return (a.startTime ?? 0) - (b.startTime ?? 0)
+  })
+
+  let t = 0
+  return sorted.map((seg: any) => {
+    const ids: string[] = Array.isArray(seg.dialogueLineIds) ? seg.dialogueLineIds : []
+    let dur =
+      ids.length > 0
+        ? ids.reduce((acc, id) => acc + durForLineId(id), 0) + gap * Math.max(0, ids.length - 1)
+        : getSegmentBaseDurationSeconds(seg)
+    if (ids.length > 0) {
+      dur = Math.min(maxS, Math.max(minS, dur))
+    }
+    const next = { ...seg, startTime: t, endTime: t + dur }
+    t += dur
+    return next
+  })
+}
+
+function findMergedNarrationClip(tracks: AudioTracksDataV2): AudioTrackClipV2 | undefined {
+  return tracks.dialogue.find(c => c.id === DIALOGUE_NARRATION_CLIP_ID)
 }
 
 /**
@@ -131,7 +204,7 @@ export function buildDialogueLineIdToCumulativeTimelineStart(
   const offset = Math.max(0, segmentPlaybackOffsetSeconds)
 
   for (const seg of sorted) {
-    const base = segmentBaseDurationSeconds(seg)
+    const base = getSegmentBaseDurationSeconds(seg)
     const display = base + offset
     const ids: string[] = Array.isArray(seg.dialogueLineIds) ? seg.dialogueLineIds : []
     for (const id of ids) {
@@ -194,6 +267,12 @@ function pickDialogueStartTime(
 export type BuildAudioTracksOptions = {
   /** Per-segment extra duration when computing cumulative layout (dub / LML offset); must match SceneTimelineV2. */
   segmentPlaybackOffsetSeconds?: number
+  /**
+   * When true, dialogue starts snap to cumulative segment boundaries (packed video row).
+   * Baseline language (e.g. English) should keep this false so segment-generation timing stays authoritative.
+   * Use true for dubs / non-baseline languages so dialogue aligns with the extended segment layout.
+   */
+  packDialogueToSegmentTimeline?: boolean
 }
 
 /**
@@ -217,37 +296,38 @@ export function buildAudioTracksForLanguage(
   
   const tracks: AudioTracksDataV2 = { ...emptyTracks }
   
-  // Build voiceover/narration track
+  // Narration → merged into dialogue as NARRATOR (no separate voiceover track)
   const narrationAudio = scene.narrationAudio?.[language] || scene.narrationAudio?.en
   const narrationUrl = narrationAudio?.url || scene.narrationAudioUrl
-  
+  let narrationAsDialogue: AudioTrackClipV2 | null = null
   if (narrationUrl && typeof narrationUrl === 'string' && narrationUrl.trim()) {
     const narrDur =
       normalizeAudioDurationSeconds(narrationAudio?.duration) ??
       normalizeAudioDurationSeconds(scene.narrationDuration) ??
       0
-    tracks.voiceover = {
-      id: 'vo-scene',
+    narrationAsDialogue = {
+      id: DIALOGUE_NARRATION_CLIP_ID,
       url: narrationUrl,
-      startTime: 0, // Narration always starts at 0 seconds
+      startTime: 0,
       duration: narrDur,
-      label: 'Narration',
+      label: 'NARRATOR',
+      characterName: 'NARRATOR',
+      dialogueIndex: -1,
       volume: 1,
       language,
       source: 'scene' as AudioClipSource,
       scenePropertyPath: `narrationAudio.${language}.url`,
     }
   }
-  
+  tracks.voiceover = null
+
   // Description track removed - description is scene context for user, not production audio
-  // Users who want scene description narrated can include it in their narration text
-  
+
   // Build dialogue tracks - check multiple sources
-  // Use AUDIO_ALIGNMENT_BUFFERS for consistent timing with segment generation
   const { NARRATION_BUFFER, INTER_CLIP_BUFFER } = AUDIO_ALIGNMENT_BUFFERS
   const dialogueClips: AudioTrackClipV2[] = []
-  let currentTime = tracks.voiceover 
-    ? (tracks.voiceover.startTime + tracks.voiceover.duration + NARRATION_BUFFER) 
+  let currentTime = narrationAsDialogue
+    ? narrationAsDialogue.startTime + narrationAsDialogue.duration + NARRATION_BUFFER
     : 0
   
   // Get current dialogue lines for validation
@@ -347,76 +427,88 @@ export function buildAudioTracksForLanguage(
   }
 
   if (dialogueClips.length > 0) {
-    const cumulativeStarts = buildDialogueLineIdToCumulativeTimelineStart(
-      scene,
-      options?.segmentPlaybackOffsetSeconds ?? 0
-    )
-    if (cumulativeStarts.size > 0) {
-      for (const clip of dialogueClips) {
-        const idx = clip.dialogueIndex
-        if (typeof idx !== 'number' || Number.isNaN(idx)) continue
-        const t0 = cumulativeStarts.get(dialogueLineIdForIndex(idx))
-        if (t0 !== undefined) {
-          clip.startTime = t0
+    if (options?.packDialogueToSegmentTimeline) {
+      const cumulativeStarts = buildDialogueLineIdToCumulativeTimelineStart(
+        scene,
+        options?.segmentPlaybackOffsetSeconds ?? 0
+      )
+      if (cumulativeStarts.size > 0) {
+        for (const clip of dialogueClips) {
+          const idx = clip.dialogueIndex
+          if (typeof idx !== 'number' || Number.isNaN(idx) || idx < 0) continue
+          const t0 = cumulativeStarts.get(dialogueLineIdForIndex(idx))
+          if (t0 !== undefined) {
+            clip.startTime = t0
+          }
         }
       }
+    }
+    if (narrationAsDialogue) {
+      dialogueClips.unshift(narrationAsDialogue)
     }
     dialogueClips.sort((a, b) => {
       const dt = a.startTime - b.startTime
       if (Math.abs(dt) > 1e-3) return dt
       return (a.dialogueIndex ?? 0) - (b.dialogueIndex ?? 0)
     })
+  } else if (narrationAsDialogue) {
+    dialogueClips.push(narrationAsDialogue)
   }
 
   tracks.dialogue = dialogueClips
-  
-  // Build music track
+
+  const segmentOffset = options?.segmentPlaybackOffsetSeconds ?? 0
+  const timelineSpan = computeSceneTimelineSpanFromSegments(scene, segmentOffset)
+
   const musicUrl = scene.musicAudio || scene.music?.url || scene.musicUrl
   if (musicUrl && typeof musicUrl === 'string' && musicUrl.trim()) {
+    const fileDur =
+      normalizeAudioDurationSeconds(scene.musicDuration) ??
+      normalizeAudioDurationSeconds(scene.music?.duration) ??
+      30
+    const barDur = timelineSpan > 0 ? Math.max(timelineSpan, fileDur) : fileDur
     tracks.music = {
       id: 'music-scene',
       url: musicUrl,
       startTime: scene.musicStartTime || 0,
-      duration: scene.musicDuration || 60, // Default to 60s for background music
+      duration: barDur,
       label: scene.music?.name || 'Background Music',
       volume: 0.6,
-      language: 'all', // Music is language-independent
+      language: 'all',
       source: 'scene' as AudioClipSource,
       scenePropertyPath: 'musicAudio',
+      loop: true,
+      actualDuration: fileDur,
     }
   }
-  
-  // Build SFX tracks
-  // SFX should start after narration ends (same anchor as dialogue)
-  // This ensures consistent timing behavior across all audio types
-  const sfxAnchorTime = tracks.voiceover 
-    ? tracks.voiceover.startTime + tracks.voiceover.duration + AUDIO_ALIGNMENT_BUFFERS.NARRATION_BUFFER
-    : 0  // Fallback to scene start if no narration
-  
+
+  const sfxAnchorTime = narrationAsDialogue
+    ? narrationAsDialogue.startTime + narrationAsDialogue.duration + AUDIO_ALIGNMENT_BUFFERS.NARRATION_BUFFER
+    : 0
+  let sfxCursor = sfxAnchorTime
   if (Array.isArray(scene.sfxAudio)) {
     scene.sfxAudio.forEach((sfxUrl: string, idx: number) => {
       if (sfxUrl && typeof sfxUrl === 'string' && sfxUrl.trim()) {
         const sfxDef = scene.sfx?.[idx]
-        // Use explicit time if set (from user edits), otherwise position relative to anchor
-        // Note: VisionPage writes to 'time' property, so we read from that
-        const explicitStartTime = sfxDef?.time ?? sfxDef?.startTime // Support both for backwards compatibility
-        const defaultStartTime = sfxAnchorTime + (idx * AUDIO_ALIGNMENT_BUFFERS.INTER_CLIP_BUFFER) // Space SFX apart using buffer
-        
+        const explicitStartTime = sfxDef?.time ?? sfxDef?.startTime
+        const clipDur = typeof sfxDef?.duration === 'number' && sfxDef.duration > 0 ? sfxDef.duration : 2
+        const startTime = typeof explicitStartTime === 'number' ? explicitStartTime : sfxCursor
         tracks.sfx.push({
           id: `sfx-${idx}`,
           url: sfxUrl,
-          startTime: explicitStartTime ?? defaultStartTime,
-          duration: sfxDef?.duration || 2,
+          startTime,
+          duration: clipDur,
           label: sfxDef?.name || sfxDef?.description || `SFX ${idx + 1}`,
           volume: 0.8,
-          language: 'all', // SFX is language-independent
+          language: 'all',
           source: 'scene' as AudioClipSource,
           scenePropertyPath: `sfxAudio[${idx}]`,
         })
+        sfxCursor = startTime + clipDur + INTER_CLIP_BUFFER
       }
     })
   }
-  
+
   return tracks
 }
 
@@ -475,50 +567,43 @@ export function buildAudioTracksWithBaselineTiming(
   // Determine baseline language if not specified
   const effectiveBaseline = baselineLanguage || determineBaselineLanguage(scene)
   
-  // If target is same as baseline, just build normally
+  // If target is same as baseline, just build normally (no cumulative pack — generation timing wins)
   if (targetLanguage === effectiveBaseline) {
-    return buildAudioTracksForLanguage(scene, targetLanguage, options)
+    return buildAudioTracksForLanguage(scene, targetLanguage, {
+      ...options,
+      packDialogueToSegmentTimeline: false,
+    })
   }
-  
+
+  const packDialogueToSegmentTimeline = options?.packDialogueToSegmentTimeline ?? true
+
   // Build baseline tracks first (for timing reference)
-  const baselineTracks = buildAudioTracksForLanguage(scene, effectiveBaseline, options)
-  
+  const baselineTracks = buildAudioTracksForLanguage(scene, effectiveBaseline, {
+    ...options,
+    packDialogueToSegmentTimeline,
+  })
+
   // Build target tracks (for URLs and actual durations)
-  const targetTracks = buildAudioTracksForLanguage(scene, targetLanguage, options)
+  const targetTracks = buildAudioTracksForLanguage(scene, targetLanguage, {
+    ...options,
+    packDialogueToSegmentTimeline,
+  })
   
-  // Calculate narration duration delta
-  const baselineNarrationDuration = baselineTracks.voiceover?.duration || 0
-  const targetNarrationDuration = targetTracks.voiceover?.duration || 0
+  const baselineNarrClip = findMergedNarrationClip(baselineTracks)
+  const targetNarrClip = findMergedNarrationClip(targetTracks)
+  const baselineNarrationDuration = baselineNarrClip?.duration || 0
+  const targetNarrationDuration = targetNarrClip?.duration || 0
   const narrationDurationDelta = targetNarrationDuration - baselineNarrationDuration
-  
-  // When target narration is longer, shift dialogue/sfx start times
   const dialogueShift = Math.max(0, narrationDurationDelta)
-  
-  // Create result with smart timing
+
   const result: AudioTracksDataV2 = {
     voiceover: null,
     description: null,
     dialogue: [],
-    music: baselineTracks.music,  // Music is language-independent
+    music: baselineTracks.music,
     sfx: [],
   }
-  
-  // Voiceover: Use target URL and ACTUAL duration (allows freeze-frame on segment)
-  if (targetTracks.voiceover?.url) {
-    result.voiceover = {
-      ...targetTracks.voiceover,              // Use target's actual timing
-      startTime: 0,                            // Narration always starts at 0
-      language: targetLanguage,
-      // Store delta info for segment extension calculation
-      baselineDuration: baselineNarrationDuration,
-      durationDelta: narrationDurationDelta,
-      actualDuration: targetNarrationDuration,
-    }
-  } else if (baselineTracks.voiceover && !targetTracks.voiceover?.url) {
-    // Baseline has voiceover but target doesn't - this is unusual but handle gracefully
-    result.voiceover = null
-  }
-  
+
   // Description: Same pattern as voiceover
   if (targetTracks.description?.url) {
     const baselineDescDuration = baselineTracks.description?.duration || 0
@@ -542,27 +627,24 @@ export function buildAudioTracksWithBaselineTiming(
     }
   })
 
-  const anchorEndBaseline = baselineTracks.voiceover
-    ? baselineNarrationDuration + NARRATION_BUFFER
-    : 0
-  const anchorEndTarget = targetTracks.voiceover
-    ? targetNarrationDuration + NARRATION_BUFFER
-    : 0
+  const anchorEndBaseline = baselineNarrClip ? baselineNarrationDuration + NARRATION_BUFFER : 0
+  const anchorEndTarget = targetNarrClip ? targetNarrationDuration + NARRATION_BUFFER : 0
   const dialogueTimelineShift = anchorEndTarget - anchorEndBaseline
 
   baselineTracks.dialogue.forEach((baselineClip, idx) => {
-    const targetClip = targetDialogueMap.get(baselineClip.dialogueIndex ?? idx)
-    
+    const di = baselineClip.dialogueIndex ?? idx
+    const targetClip = targetDialogueMap.get(di)
+
     if (targetClip?.url) {
       const baselineDuration = baselineClip.duration
       const targetDuration = targetClip.duration
       const durationDelta = targetDuration - baselineDuration
-      
+
       result.dialogue.push({
-        ...baselineClip,                      // Keep baseline metadata + startTime layout
-        url: targetClip.url,                  // Use target language URL
+        ...baselineClip,
+        url: targetClip.url,
         startTime: baselineClip.startTime + dialogueTimelineShift,
-        duration: targetDuration,             // Use ACTUAL target duration
+        duration: targetDuration,
         language: targetLanguage,
         baselineDuration,
         durationDelta,
@@ -577,18 +659,15 @@ export function buildAudioTracksWithBaselineTiming(
       Math.max(...result.dialogue.map(d => d.startTime + d.duration)) + INTER_CLIP_BUFFER
   }
 
-  // Handle extra dialogue clips in target that don't exist in baseline
   targetTracks.dialogue.forEach(targetClip => {
-    const existsInResult = result.dialogue.some(
-      d => d.dialogueIndex === targetClip.dialogueIndex
-    )
+    const existsInResult = result.dialogue.some(d => d.dialogueIndex === targetClip.dialogueIndex)
     if (!existsInResult && targetClip.url) {
       result.dialogue.push({
         ...targetClip,
         startTime: appendCursor,
         language: targetLanguage,
-        baselineDuration: 0,  // No baseline reference
-        durationDelta: targetClip.duration,  // Entire duration is "extra"
+        baselineDuration: 0,
+        durationDelta: targetClip.duration,
       })
       appendCursor += targetClip.duration + INTER_CLIP_BUFFER
     }
@@ -665,10 +744,10 @@ export function calculateSegmentTimingForLanguage(
     return results
   }
   
-  // Get narration delta (if narration is longer than baseline)
-  const narrationDelta = audioTracks.voiceover?.durationDelta || 0
-  const narrationDuration = audioTracks.voiceover?.duration || 0
-  const baselineNarrationDuration = audioTracks.voiceover?.baselineDuration || narrationDuration
+  const narrClip = findMergedNarrationClip(audioTracks)
+  const narrationDelta = narrClip?.durationDelta || 0
+  const narrationDuration = narrClip?.duration || 0
+  const baselineNarrationDuration = narrClip?.baselineDuration || narrationDuration
   
   // Calculate cumulative segment times from baseline
   let cumulativeTime = 0
@@ -735,7 +814,8 @@ export function calculateSegmentTimingForLanguage(
   // If dialogue is longer than baseline, extend that segment
   audioTracks.dialogue.forEach((dialogueClip) => {
     const durationDelta = dialogueClip.durationDelta || 0
-    if (durationDelta > 0 && dialogueClip.dialogueIndex !== undefined) {
+    const di = dialogueClip.dialogueIndex
+    if (durationDelta > 0 && di !== undefined && di >= 0) {
       // Dialogue segments typically start after narration segments
       // The mapping is: segment (narrationEndSegmentIndex + 1 + dialogueIndex)
       // But this depends on scene structure. For now, we extend based on timing.
@@ -926,8 +1006,11 @@ export function buildTimelineAudioState(
   
   // Build tracks for all available languages
   const tracks: MultiLanguageAudioTracks = {}
+  const baseline = determineBaselineLanguage(scene)
   availableLanguages.forEach(lang => {
-    tracks[lang] = buildAudioTracksForLanguage(scene, lang)
+    tracks[lang] = buildAudioTracksForLanguage(scene, lang, {
+      packDialogueToSegmentTimeline: lang !== baseline,
+    })
   })
   
   // Calculate hash from the selected language's tracks
