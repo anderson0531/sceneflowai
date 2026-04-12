@@ -99,13 +99,23 @@ export function dialogueLineIdForIndex(dialogueIndex: number): string {
   return `dialogue-${dialogueIndex}`
 }
 
+/** Match SceneTimelineV2 visual clip duration for one segment. */
+function segmentBaseDurationSeconds(seg: any): number {
+  const s = typeof seg.startTime === 'number' && Number.isFinite(seg.startTime) ? seg.startTime : 0
+  const e = typeof seg.endTime === 'number' && Number.isFinite(seg.endTime) ? seg.endTime : NaN
+  if (Number.isFinite(e) && e > s) return e - s
+  const d = typeof seg.duration === 'number' && Number.isFinite(seg.duration) && seg.duration > 0 ? seg.duration : 0
+  return Math.max(0, d)
+}
+
 /**
- * Min/max timeline span across segments that assign each dialogue line id.
- * Used to place dialogue clips at the start of their covered segment range.
+ * Maps each dialogueLineId to the cumulative timeline start (seconds) of the first segment
+ * (in play order) that assigns it — same horizontal origin as purple video blocks in SceneTimelineV2.
  */
-export function buildDialogueLineSegmentTimeWindows(
-  scene: any
-): Map<string, { start: number; end: number }> {
+export function buildDialogueLineIdToCumulativeTimelineStart(
+  scene: any,
+  segmentPlaybackOffsetSeconds: number = 0
+): Map<string, number> {
   const segments = Array.isArray(scene?.segments) ? scene.segments : []
   if (segments.length === 0) return new Map()
 
@@ -116,29 +126,24 @@ export function buildDialogueLineSegmentTimeWindows(
     return (a.startTime ?? 0) - (b.startTime ?? 0)
   })
 
-  const acc = new Map<string, { minS: number; maxE: number }>()
+  let cumulative = 0
+  const lineToStart = new Map<string, number>()
+  const offset = Math.max(0, segmentPlaybackOffsetSeconds)
+
   for (const seg of sorted) {
+    const base = segmentBaseDurationSeconds(seg)
+    const display = base + offset
     const ids: string[] = Array.isArray(seg.dialogueLineIds) ? seg.dialogueLineIds : []
-    if (ids.length === 0) continue
-    const s = typeof seg.startTime === 'number' && Number.isFinite(seg.startTime) ? seg.startTime : 0
-    const endFromTimes =
-      typeof seg.endTime === 'number' && Number.isFinite(seg.endTime)
-        ? seg.endTime
-        : s + (typeof seg.duration === 'number' && Number.isFinite(seg.duration) ? seg.duration : 0)
-    if (!Number.isFinite(endFromTimes) || endFromTimes < s) continue
     for (const id of ids) {
       if (!id || typeof id !== 'string') continue
-      const cur = acc.get(id)
-      if (!cur) acc.set(id, { minS: s, maxE: endFromTimes })
-      else {
-        cur.minS = Math.min(cur.minS, s)
-        cur.maxE = Math.max(cur.maxE, endFromTimes)
+      if (!lineToStart.has(id)) {
+        lineToStart.set(id, cumulative)
       }
     }
+    cumulative += display
   }
-  return new Map(
-    [...acc.entries()].map(([k, v]) => [k, { start: v.minS, end: v.maxE }])
-  )
+
+  return lineToStart
 }
 
 /**
@@ -186,34 +191,9 @@ function pickDialogueStartTime(
   return explicit
 }
 
-/**
- * Segment windows set each line's start to the earliest assigned keyframe segment.
- * Full TTS duration is preserved for playback, so a long line can extend past the
- * next line's segment start and overlap on the timeline (and in the player).
- * Shift later lines forward in script order so clips do not overlap, matching
- * sequential dialogue (same buffer as INTER_CLIP_BUFFER elsewhere).
- */
-function staggerAnchoredDialogueClips(
-  clips: AudioTrackClipV2[],
-  interClipBuffer: number
-): void {
-  const ordered = [...clips].sort(
-    (a, b) => (a.dialogueIndex ?? 0) - (b.dialogueIndex ?? 0)
-  )
-  let prevEnd = 0
-  for (let i = 0; i < ordered.length; i++) {
-    const clip = ordered[i]
-    const minStart =
-      typeof clip.startTime === 'number' && Number.isFinite(clip.startTime) ? clip.startTime : 0
-    const dur =
-      typeof clip.duration === 'number' && Number.isFinite(clip.duration) && clip.duration > 0
-        ? clip.duration
-        : 0
-    const nextStart =
-      i === 0 ? minStart : Math.max(minStart, prevEnd + interClipBuffer)
-    clip.startTime = nextStart
-    prevEnd = nextStart + dur
-  }
+export type BuildAudioTracksOptions = {
+  /** Per-segment extra duration when computing cumulative layout (dub / LML offset); must match SceneTimelineV2. */
+  segmentPlaybackOffsetSeconds?: number
 }
 
 /**
@@ -222,7 +202,8 @@ function staggerAnchoredDialogueClips(
  */
 export function buildAudioTracksForLanguage(
   scene: any,
-  language: string = 'en'
+  language: string = 'en',
+  options?: BuildAudioTracksOptions
 ): AudioTracksDataV2 {
   const emptyTracks: AudioTracksDataV2 = {
     voiceover: null,
@@ -366,19 +347,19 @@ export function buildAudioTracksForLanguage(
   }
 
   if (dialogueClips.length > 0) {
-    const windows = buildDialogueLineSegmentTimeWindows(scene)
-    if (windows.size > 0) {
+    const cumulativeStarts = buildDialogueLineIdToCumulativeTimelineStart(
+      scene,
+      options?.segmentPlaybackOffsetSeconds ?? 0
+    )
+    if (cumulativeStarts.size > 0) {
       for (const clip of dialogueClips) {
         const idx = clip.dialogueIndex
         if (typeof idx !== 'number' || Number.isNaN(idx)) continue
-        const w = windows.get(dialogueLineIdForIndex(idx))
-        if (w) {
-          clip.startTime = w.start
-          // Keep full asset duration for playback. Without staggering, long lines
-          // overlap the next clip when segment keyframes are shorter than audio.
+        const t0 = cumulativeStarts.get(dialogueLineIdForIndex(idx))
+        if (t0 !== undefined) {
+          clip.startTime = t0
         }
       }
-      staggerAnchoredDialogueClips(dialogueClips, INTER_CLIP_BUFFER)
     }
     dialogueClips.sort((a, b) => {
       const dt = a.startTime - b.startTime
@@ -478,7 +459,8 @@ export function determineBaselineLanguage(scene: any): string {
 export function buildAudioTracksWithBaselineTiming(
   scene: any,
   targetLanguage: string = 'en',
-  baselineLanguage?: string
+  baselineLanguage?: string,
+  options?: BuildAudioTracksOptions
 ): AudioTracksDataV2 {
   const emptyTracks: AudioTracksDataV2 = {
     voiceover: null,
@@ -495,14 +477,14 @@ export function buildAudioTracksWithBaselineTiming(
   
   // If target is same as baseline, just build normally
   if (targetLanguage === effectiveBaseline) {
-    return buildAudioTracksForLanguage(scene, targetLanguage)
+    return buildAudioTracksForLanguage(scene, targetLanguage, options)
   }
   
   // Build baseline tracks first (for timing reference)
-  const baselineTracks = buildAudioTracksForLanguage(scene, effectiveBaseline)
+  const baselineTracks = buildAudioTracksForLanguage(scene, effectiveBaseline, options)
   
   // Build target tracks (for URLs and actual durations)
-  const targetTracks = buildAudioTracksForLanguage(scene, targetLanguage)
+  const targetTracks = buildAudioTracksForLanguage(scene, targetLanguage, options)
   
   // Calculate narration duration delta
   const baselineNarrationDuration = baselineTracks.voiceover?.duration || 0
@@ -630,7 +612,7 @@ export function buildAudioTracksWithBaselineTiming(
 }
 
 /**
- * Dialogue clips with segment-slot layout, stacked-zero fix, and baseline dub timing.
+ * Dialogue clips with segment-aligned cumulative timeline and baseline dub timing.
  * Use this (or full `buildAudioTracksWithBaselineTiming`) from timeline and mixer so layout matches.
  */
 export function getResolvedDialogueClipsForScene(

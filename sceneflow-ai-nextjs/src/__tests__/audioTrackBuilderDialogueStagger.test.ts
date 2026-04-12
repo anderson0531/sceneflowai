@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { buildAudioTracksForLanguage, AUDIO_ALIGNMENT_BUFFERS } from '@/components/vision/scene-production/audioTrackBuilder'
+import {
+  buildAudioTracksForLanguage,
+  buildDialogueLineIdToCumulativeTimelineStart,
+} from '@/components/vision/scene-production/audioTrackBuilder'
 
-describe('buildAudioTracksForLanguage dialogue stagger after segment anchors', () => {
-  it('does not overlap consecutive lines when segment windows are tighter than TTS duration', () => {
+describe('dialogue audio vs video segment alignment (cumulative timeline)', () => {
+  it('snaps dialogue starts to cumulative segment boundaries, not raw scene startTime', () => {
     const scene = {
       dialogue: [
         { character: 'DOC', text: 'First' },
@@ -32,8 +35,23 @@ describe('buildAudioTracksForLanguage dialogue stagger after segment anchors', (
 
     const tracks = buildAudioTracksForLanguage(scene, 'en')
     expect(tracks.dialogue.length).toBe(2)
-    const [a, b] = tracks.dialogue
-    const buf = AUDIO_ALIGNMENT_BUFFERS.INTER_CLIP_BUFFER
-    expect(a.startTime + a.duration + buf).toBeLessThanOrEqual(b.startTime + 1e-6)
+    const byIdx = [...tracks.dialogue].sort(
+      (a, b) => (a.dialogueIndex ?? 0) - (b.dialogueIndex ?? 0)
+    )
+    // Segment durations 8s + 8s → line0 at 0s, line1 at 8s (matches purple video row)
+    expect(byIdx[0].startTime).toBeCloseTo(0, 5)
+    expect(byIdx[1].startTime).toBeCloseTo(8, 5)
+  })
+
+  it('buildDialogueLineIdToCumulativeTimelineStart adds playback offset per segment', () => {
+    const scene = {
+      segments: [
+        { sequenceIndex: 0, startTime: 0, endTime: 4, dialogueLineIds: ['dialogue-0'] },
+        { sequenceIndex: 1, startTime: 4, endTime: 8, dialogueLineIds: ['dialogue-1'] },
+      ],
+    }
+    const map = buildDialogueLineIdToCumulativeTimelineStart(scene, 0.5)
+    expect(map.get('dialogue-0')).toBe(0)
+    expect(map.get('dialogue-1')).toBeCloseTo(4.5, 5)
   })
 })

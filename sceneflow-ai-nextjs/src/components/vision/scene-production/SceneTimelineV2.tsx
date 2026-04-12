@@ -194,12 +194,18 @@ export function SceneTimelineV2({
   
   // Determine baseline language (English if available, else first language with audio)
   const baselineLanguage = useMemo(() => determineBaselineLanguage(scene), [scene])
+
+  /** Must match visualClips: extended segment width when dub offset is applied */
+  const segmentPlaybackOffsetSeconds =
+    selectedLanguage !== baselineLanguage ? playbackOffset : 0
   
   // Build audio tracks with baseline timing (English positions) but target language URLs
   // This ensures timeline positions stay consistent when switching languages
   const audioTracks = useMemo(() => {
-    return buildAudioTracksWithBaselineTiming(scene, selectedLanguage, baselineLanguage)
-  }, [scene, selectedLanguage, baselineLanguage])
+    return buildAudioTracksWithBaselineTiming(scene, selectedLanguage, baselineLanguage, {
+      segmentPlaybackOffsetSeconds,
+    })
+  }, [scene, selectedLanguage, baselineLanguage, segmentPlaybackOffsetSeconds])
   
   const audioHash = useMemo(() => hashAudioUrls(audioTracks), [audioTracks])
   
