@@ -206,6 +206,8 @@ interface IntelligentSegment {
   emotional_beat: string
   // Phase 8: AI-assigned dialogue coverage
   assigned_dialogue_indices?: number[] // 0-based indices of dialogue lines covered by this segment
+  /** True when this row is an extra Veo clip continuing the same timeline line (>8s audio) */
+  veoTimelineContinuation?: boolean
   // NEW: AI-recommended generation plan
   generation_plan?: {
     confidence: number
@@ -431,16 +433,18 @@ export async function POST(
           { status: 422 }
         )
       }
-      const directions = expandDirectionsForTimelineAudioBudget(
+      const expandedDirections = expandDirectionsForTimelineAudioBudget(
         repairedDirections,
         sceneData,
         MAX_SEGMENT_SECONDS
       )
-      if (directions.length !== repairedDirections.length) {
+      if (expandedDirections.length !== repairedDirections.length) {
         console.log(
-          `[Scene Segmentation] Phase 1 audio-aware direction split: ${repairedDirections.length} → ${directions.length} directions`
+          `[Scene Segmentation] Phase 1 audio-aware direction split: ${repairedDirections.length} → ${expandedDirections.length} directions`
         )
       }
+      // Re-repair after Veo-length splits so continuation rows (empty dialogue_indices) do not steal timeline slots
+      const directions = repairPhase1DirectionsTimeline(expandedDirections, timelineLen, sceneId)
 
       // Transform to SegmentDirection objects
       const segmentDirections: SegmentDirection[] = directions.map((dir: any, idx: number) => {
@@ -467,6 +471,7 @@ export async function POST(
           timelineIdxs,
           sceneData.combinedAudioTimeline
         ),
+        veoTimelineContinuation: dir.veoTimelineContinuation === true,
         isApproved: false,
         isUserEdited: false,
         generationMethod: dir.generation_method || 'FTV',
@@ -577,10 +582,15 @@ export async function POST(
       )
 
       const withAudioAwareDuration = applyAssignedAudioDurationToSegments(rawSegments, sceneData)
-      const segments = enforceMaxSegmentDuration(withAudioAwareDuration, MAX_SEGMENT_SECONDS, sceneData)
+      let segments = enforceMaxSegmentDuration(withAudioAwareDuration, MAX_SEGMENT_SECONDS, sceneData)
       if (segments.length !== rawSegments.length) {
         console.log(`[Scene Segmentation] Post-LLM split: ${rawSegments.length} → ${segments.length} segments`)
       }
+      segments = validateAndRepairTimelineDialogueCoverage(
+        segments,
+        sceneData.combinedAudioTimeline.length,
+        sceneId
+      )
 
       const transformedSegments = transformSegmentsToOutput(segments, sceneData, sceneId, scene, approvedDirections)
 
@@ -632,10 +642,15 @@ export async function POST(
     )
 
     const withAudioAwareDuration = applyAssignedAudioDurationToSegments(rawSegments, sceneData)
-    const segments = enforceMaxSegmentDuration(withAudioAwareDuration, MAX_SEGMENT_SECONDS, sceneData)
+    let segments = enforceMaxSegmentDuration(withAudioAwareDuration, MAX_SEGMENT_SECONDS, sceneData)
     if (segments.length !== rawSegments.length) {
       console.log(`[Scene Segmentation] Post-LLM split: ${rawSegments.length} → ${segments.length} segments`)
     }
+    segments = validateAndRepairTimelineDialogueCoverage(
+      segments,
+      sceneData.combinedAudioTimeline.length,
+      sceneId
+    )
 
     // Transform segments to match our enhanced data structure
     const transformedSegments = segments.map((seg: IntelligentSegment, idx: number) => {
@@ -863,15 +878,20 @@ function expandDirectionsForTimelineAudioBudget(
       dialogueIndices.length <= 1 ? 1 : Math.ceil(dialogueIndices.length / numParts)
 
     for (let i = 0; i < numParts; i++) {
+      // One timeline line longer than 8s → multiple Veo clips: only the first clip owns the index;
+      // later parts are continuations (same audio) and must not duplicate the index (breaks coverage repair).
       const partDialogue =
         dialogueIndices.length === 1
-          ? [...dialogueIndices]
+          ? i === 0
+            ? [...dialogueIndices]
+            : []
           : dialogueIndices.slice(i * dialoguePerPart, (i + 1) * dialoguePerPart)
 
       result.push({
         ...dir,
         estimated_duration: subDurations[i],
         dialogue_indices: partDialogue,
+        veoTimelineContinuation: dialogueIndices.length === 1 && numParts > 1 && i > 0,
         trigger_reason:
           i === 0
             ? dir.trigger_reason
@@ -1926,8 +1946,9 @@ function generateDirectionsOnlyPrompt(
       ? `- **Segment length (AUTO):** Each segment \`estimated_duration\` must be **exactly 4, 6, or 8** seconds (Veo only). Pick per segment from dialogue/action cuts; soft average ~${durationConfig.hintSeconds}s. **Never exceed 8s** per segment.\n`
       : `- **Segment length (FIXED):** Target **${durationConfig.fixedSeconds ?? 6}s** per segment (\`estimated_duration\` must be **exactly 4, 6, or 8** — prefer **${durationConfig.fixedSeconds ?? 6}s**). **Never exceed 8s.**\n`
   scopeConstraints += `- **HARD CONSTRAINT: Total segment durations MUST sum to exactly ~${authoritativeDuration}s (narration/audio duration)**\n`
-  scopeConstraints += `- **REQUIRED SEGMENT COUNT: exactly ${minimumSegmentsRequired} segments** (${authoritativeDuration}s ÷ ${8}s max = ${minimumSegmentsRequired} segments)\n`
-  scopeConstraints += `- DO NOT create more segments than required. DO NOT exceed ${authoritativeDuration}s total duration.\n`
+  scopeConstraints += `- **MINIMUM SEGMENT COUNT:** At least **${minimumSegmentsRequired}** segments (${authoritativeDuration}s ÷ ${8}s max per clip). Use **more** segments only when distinct shots are needed or a single audio line exceeds 8s (then you are effectively continuing the same line across clips).\n`
+  scopeConstraints += `- **NO REDUNDANT ESTABLISHING SHOTS:** Use **one** backdrop/establishing beat for contiguous 🎙️ voiceover unless duration forces a required continuation. Do not output multiple segments that repeat the same audio timeline index.\n`
+  scopeConstraints += `- Do not exceed ${authoritativeDuration}s total duration across segments.\n`
   
   if (segmentCountTarget) {
     scopeConstraints += `- **OVERRIDE SEGMENT COUNT: ${segmentCountTarget} segments**\n`
@@ -2053,7 +2074,7 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
 2. Combine consecutive audio lines in same shot setup — especially adjacent narration sentences
 3. **UNIQUE TIMELINE COVERAGE (CRITICAL):** Each index [0] through [${Math.max(0, sceneData.combinedAudioTimeline.length - 1)}] from the Audio Timeline MUST appear in exactly ONE segment's dialogue_indices. The same index MUST NOT appear in two different segments. Omitting an index is an error.
 4. **DURATION RULE (CRITICAL):** Total segment durations MUST sum to EXACTLY the audio timeline duration (~${Math.round(totalTimelineDuration)}s). Do NOT exceed this. Each segment \`estimated_duration\` must be **exactly 4, 6, or 8** (Veo quantization).
-5. **SEGMENT COUNT RULE:** Create exactly ${minimumSegmentsRequired} segments — no more, no fewer (unless overridden above).
+5. **SEGMENT COUNT:** At least ${minimumSegmentsRequired} segments for duration; use **fewer only if** you still cover every timeline index without exceeding 8s per clip. Never pad with duplicate shots for the same audio index.
 6. keyframe_start_description and keyframe_end_description are MANDATORY for every segment
 7. **VOICEOVER SEGMENTS:** When a segment covers 🎙️ VOICEOVER lines, the talent_action should describe atmospheric/environmental action — NOT a character speaking. Show backdrop visuals.
 8. **DIALOGUE SEGMENTS:** When a segment covers 🗣️ DIALOGUE lines, the talent_action MUST show the character speaking with lip-sync action.
@@ -2266,7 +2287,12 @@ function generatePromptsFromDirectionsPrompt(
     .filter(Boolean)
     .join('\n\n')
 
-  const directionsJson = approvedDirections.map((dir, idx) => ({
+  const directionsJson = approvedDirections.map((dir, idx) => {
+    const timelineForPrompt =
+      dir.veoTimelineContinuation && idx > 0
+        ? audioTimelineIndicesForPhase2Prompts(approvedDirections[idx - 1]!)
+        : audioTimelineIndicesForPhase2Prompts(dir)
+    return {
     sequence: startSeq + idx,
     shot_type: dir.shotType,
     camera_movement: dir.cameraMovement,
@@ -2277,7 +2303,8 @@ function generatePromptsFromDirectionsPrompt(
     characters: dir.characters,
     is_no_talent: dir.isNoTalent,
     lighting_mood: dir.lightingMood,
-    dialogue_indices: audioTimelineIndicesForPhase2Prompts(dir),
+    dialogue_indices: timelineForPrompt,
+    veo_continuation_of_prior_audio: dir.veoTimelineContinuation === true,
     generation_method: dir.generationMethod,
     transition_in: (dir as any).transitionIn || 'cut',
     start_frame_description: (dir as any).startFrameDescription || '',
@@ -2289,7 +2316,8 @@ function generatePromptsFromDirectionsPrompt(
     environment_description: (dir as any).environmentDescription || '',
     color_palette: (dir as any).colorPalette || '',
     depth_of_field: (dir as any).depthOfField || '',
-  }))
+  }
+  })
 
   return `
 **SYSTEM ROLE:** You are an expert Video Director and Cinematographer generating professional-grade video prompts for Veo 3.1.
@@ -2310,6 +2338,7 @@ ${noTalentScene && !p2dAudioTimeline ? 'NO AUDIO - voiceover only' : p2dAudioTim
 **AUDIO LINE RULES:**
 - 🗣️ DLG lines: Include character dialogue in video_generation_prompt as: Character speaks, "text"
 - 🎙️ VO lines: Do NOT include narration text in video_generation_prompt — create backdrop visuals
+- When \`veo_continuation_of_prior_audio\` is true, this segment continues the **same** timeline audio as the previous segment (second Veo clip for one long line) — keep visual continuity; do not treat as a new dialogue line.
 - dialogue_indices reference the [index] numbers from the Audio Timeline above
 
 **DIRECTOR'S NOTES:**
@@ -2460,26 +2489,37 @@ function enforceMaxSegmentDuration(
       `distributing ${dialogueIndices.length} dialogue line(s)`
     )
 
+    const tl = sceneData.combinedAudioTimeline
+
     for (let i = 0; i < numParts; i++) {
       const partDialogue =
         dialogueIndices.length === 1
-          ? [...dialogueIndices]
+          ? i === 0
+            ? [...dialogueIndices]
+            : []
           : dialogueIndices.slice(i * dialoguePerPart, (i + 1) * dialoguePerPart)
 
-      // Build audio line context for the prompt suffix (indices are COMBINED timeline, not script dialogue rows)
-      const tl = sceneData.combinedAudioTimeline
-      const partDialogueTexts = partDialogue
-        .map((ti) => {
-          const line = tl[ti]
-          if (!line?.text) return null
-          return `${line.character}: "${line.text}"`
-        })
-        .filter((s): s is string => Boolean(s))
+      const partDialogueTexts =
+        partDialogue.length > 0
+          ? partDialogue
+              .map((ti) => {
+                const line = tl[ti]
+                if (!line?.text) return null
+                return `${line.character}: "${line.text}"`
+              })
+              .filter((s): s is string => Boolean(s))
+          : dialogueIndices.length === 1 && numParts > 1
+            ? (() => {
+                const line = tl[dialogueIndices[0]]
+                return line?.text
+                  ? [`${line.character}: "${line.text}"`]
+                  : []
+              })()
+            : []
 
       const isFirstPart = i === 0
       const isLastPart = i === numParts - 1
 
-      // Build a refined prompt that specifies which portion this covers
       const splitPromptSuffix =
         partDialogueTexts.length > 0
           ? dialogueIndices.length === 1 && numParts > 1
@@ -2498,6 +2538,7 @@ function enforceMaxSegmentDuration(
         trigger_reason: partTriggerReason,
         video_generation_prompt: seg.video_generation_prompt + splitPromptSuffix,
         assigned_dialogue_indices: partDialogue,
+        veoTimelineContinuation: dialogueIndices.length === 1 && numParts > 1 && i > 0,
         emotional_beat: isFirstPart
           ? seg.emotional_beat
           : `${seg.emotional_beat} (continued)`,

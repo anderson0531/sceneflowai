@@ -37,6 +37,7 @@ export function repairPhase1DirectionsTimeline<T extends { dialogue_indices?: un
   const mapped = directions.map((d, i) => ({
     sequence: i + 1,
     assigned_dialogue_indices: normalizeTimelineIndices(d.dialogue_indices, timelineLength),
+    veoTimelineContinuation: (d as { veoTimelineContinuation?: boolean }).veoTimelineContinuation === true,
   }))
   const repaired = validateAndRepairTimelineDialogueCoverage(mapped, timelineLength, sceneId)
   const merged = directions.map((dir, i) => ({
@@ -46,7 +47,9 @@ export function repairPhase1DirectionsTimeline<T extends { dialogue_indices?: un
 
   return merged.filter((d, i) => {
     const idxs = (d as { dialogue_indices?: number[] }).dialogue_indices
-    if (!Array.isArray(idxs) || idxs.length === 0) {
+    const continuation =
+      (d as { veoTimelineContinuation?: boolean }).veoTimelineContinuation === true
+    if ((!Array.isArray(idxs) || idxs.length === 0) && !continuation) {
       console.warn(
         `[Scene Segmentation] Phase 1: dropping direction ${i} with no audio indices after timeline repair (scene=${sceneId})`
       )
@@ -61,7 +64,12 @@ export function repairPhase1DirectionsTimeline<T extends { dialogue_indices?: un
  * @param sceneId - for logs only
  */
 export function validateAndRepairTimelineDialogueCoverage<
-  T extends { sequence?: number; assigned_dialogue_indices?: number[] },
+  T extends {
+    sequence?: number
+    assigned_dialogue_indices?: number[]
+    /** When true, this row is a Veo duration continuation of the prior clip for the same audio — do not assign “missing” timeline indices here */
+    veoTimelineContinuation?: boolean
+  },
 >(segments: T[], timelineLength: number, sceneId: string): T[] {
   if (timelineLength <= 0 || segments.length === 0) {
     return segments
@@ -106,14 +114,21 @@ export function validateAndRepairTimelineDialogueCoverage<
   }
 
   for (const idx of missing) {
-    let bestSi = 0
+    let bestSi = -1
     let bestLoad = Number.POSITIVE_INFINITY
     for (let si = 0; si < ordered.length; si++) {
+      if (ordered[si].veoTimelineContinuation) continue
       const load = ordered[si].assigned_dialogue_indices?.length ?? 0
       if (load < bestLoad) {
         bestLoad = load
         bestSi = si
       }
+    }
+    if (bestSi < 0) {
+      console.warn(
+        `[Scene Segmentation] Dialogue timeline repair scene=${sceneId}: no non-continuation segment for missing index ${idx} — attaching to segment 0`
+      )
+      bestSi = 0
     }
     const seg = ordered[bestSi]
     const next = [...(seg.assigned_dialogue_indices || []), idx]

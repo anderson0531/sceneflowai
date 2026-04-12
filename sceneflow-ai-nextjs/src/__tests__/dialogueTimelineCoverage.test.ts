@@ -41,6 +41,18 @@ describe('dialogueTimelineCoverage', () => {
     expect(normalizeTimelineIndices(['0', 1, '2', 99, -1], 3)).toEqual([0, 1, 2])
   })
 
+  it('does not assign missing timeline indices to veoTimelineContinuation rows', () => {
+    const segments = [
+      { sequence: 1, assigned_dialogue_indices: [0] },
+      { sequence: 2, assigned_dialogue_indices: [], veoTimelineContinuation: true },
+    ]
+    const out = validateAndRepairTimelineDialogueCoverage(segments, 2, 'test-scene')
+    const all = out.flatMap((s) => s.assigned_dialogue_indices || [])
+    expect([...all].sort((x, y) => x - y)).toEqual([0, 1])
+    expect(out[1].assigned_dialogue_indices?.length ?? 0).toBe(0)
+    expect(out[0].assigned_dialogue_indices?.slice().sort((x, y) => x - y)).toEqual([0, 1])
+  })
+
   it('repairPhase1DirectionsTimeline dedupes duplicate rows and covers missing last index', () => {
     const raw = [
       { dialogue_indices: [0, 1, 2], id: 'a' },
