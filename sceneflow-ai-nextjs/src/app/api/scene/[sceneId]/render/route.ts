@@ -263,7 +263,7 @@ export async function POST(
       for (const track of body.audioTracks.dialogue) {
         const pr = track.playbackRate
         const playbackRate =
-          pr != null && Number.isFinite(pr) && pr > 0 ? Math.min(2, Math.max(0.5, pr)) : undefined
+          pr != null && Number.isFinite(pr) && pr > 0 ? Math.min(1.5, Math.max(0.5, pr)) : undefined
         audioClips.push({
           url: track.url,
           startTime: track.startTime,

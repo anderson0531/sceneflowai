@@ -95,7 +95,7 @@ function formatTime(secs: number): string {
 function dialogueClipWallSeconds(clip: AudioClipInfo): number {
   const src = clip.duration || 0
   const r = clip.playbackRate
-  const rate = r == null || !Number.isFinite(r) || r <= 0 ? 1 : Math.min(2, Math.max(0.5, r))
+  const rate = r == null || !Number.isFinite(r) || r <= 0 ? 1 : Math.min(1.5, Math.max(0.5, r))
   return src / rate
 }
 

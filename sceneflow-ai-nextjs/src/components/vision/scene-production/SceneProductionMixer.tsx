@@ -122,7 +122,9 @@ function dialogueClipConfigKey(clip: { id?: string; clipId?: string }, idx: numb
 }
 
 const DIALOGUE_PLAYBACK_RATE_MIN = 0.5
-const DIALOGUE_PLAYBACK_RATE_MAX = 2
+const DIALOGUE_PLAYBACK_RATE_MAX = 1.5
+
+const DIALOGUE_SPEED_PRESETS = [0.5, 0.75, 1, 1.25, 1.5] as const
 
 function clampDialoguePlaybackRate(r: number | undefined): number {
   if (r == null || !Number.isFinite(r) || r <= 0) return 1
@@ -2014,15 +2016,15 @@ function DialogueLineControls({
                       <Gauge className="w-3 h-3 flex-shrink-0" />
                       <span className="text-[10px]">Speed</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      {([0.85, 1, 2] as const).map((preset) => (
+                    <div className="flex flex-wrap items-center justify-end gap-1 max-w-[220px] sm:max-w-none">
+                      {DIALOGUE_SPEED_PRESETS.map((preset) => (
                         <button
                           key={preset}
                           type="button"
                           disabled={disabled}
                           onClick={() => updateClipConfig(index, { playbackRate: preset })}
                           className={cn(
-                            'px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors',
+                            'px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors tabular-nums',
                             Math.abs((config.playbackRate ?? 1) - preset) < 0.02
                               ? 'bg-blue-600 text-white'
                               : 'bg-gray-700/80 text-gray-300 hover:bg-gray-600'
@@ -2053,7 +2055,7 @@ function DialogueLineControls({
                         })
                       }
                       min={50}
-                      max={200}
+                      max={150}
                       step={5}
                       className="flex-1"
                       disabled={disabled}

@@ -494,7 +494,7 @@ export class LocalRenderService {
               clip.playbackRate != null &&
               Number.isFinite(clip.playbackRate) &&
               clip.playbackRate > 0
-                ? Math.min(2, Math.max(0.5, clip.playbackRate))
+                ? Math.min(1.5, Math.max(0.5, clip.playbackRate))
                 : 1
             source.playbackRate.value = rate
             
@@ -896,7 +896,7 @@ export class LocalRenderService {
         clip.playbackRate != null &&
         Number.isFinite(clip.playbackRate) &&
         clip.playbackRate > 0
-          ? Math.min(2, Math.max(0.5, clip.playbackRate))
+          ? Math.min(1.5, Math.max(0.5, clip.playbackRate))
           : 1
       source.playbackRate.value = rate
       
