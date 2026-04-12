@@ -110,6 +110,9 @@ export interface LocalRenderWatermark {
   }
 }
 
+/** Output size for canvas + encoder bitrate selection */
+export type LocalRenderResolution = '720p' | '1080p' | '4K'
+
 export interface LocalRenderConfig {
   /** Video segments to composite */
   segments: LocalRenderSegment[]
@@ -120,11 +123,16 @@ export interface LocalRenderConfig {
   /** Watermark to burn in */
   watermark?: LocalRenderWatermark
   /** Output resolution */
-  resolution: '720p' | '1080p'
+  resolution: LocalRenderResolution
   /** Frames per second */
   fps: number
   /** Total duration in seconds */
   totalDuration: number
+  /**
+   * Browser container: `mp4` prefers H.264/AAC via MediaRecorder when supported; otherwise WebM.
+   * Default `webm` preserves legacy scene-mixer behavior when omitted.
+   */
+  exportFormat?: 'mp4' | 'webm'
 }
 
 export interface LocalRenderProgress {
@@ -151,6 +159,8 @@ export interface LocalRenderResult {
   blob?: Blob
   /** MIME type of output */
   mimeType?: string
+  /** mp4 vs webm actually used (may differ from requested if browser lacks MP4 recorder) */
+  containerUsed?: 'mp4' | 'webm'
   /** Duration in seconds */
   duration?: number
   /** Error message if failed */
@@ -161,16 +171,79 @@ export interface LocalRenderResult {
 // Constants
 // =============================================================================
 
-const RESOLUTIONS = {
+const RESOLUTIONS: Record<LocalRenderResolution, { width: number; height: number }> = {
   '720p': { width: 1280, height: 720 },
   '1080p': { width: 1920, height: 1080 },
-} as const
+  '4K': { width: 3840, height: 2160 },
+}
 
 /** Max duration for local rendering (seconds) - supports longer user uploads */
 export const LOCAL_RENDER_MAX_DURATION = 300
 
 /** Max resolution for local rendering */
-export const LOCAL_RENDER_MAX_RESOLUTION = '1080p'
+export const LOCAL_RENDER_MAX_RESOLUTION: LocalRenderResolution = '4K'
+
+function videoBitrateForResolution(resolution: LocalRenderResolution): number {
+  if (resolution === '4K') return 24_000_000
+  if (resolution === '1080p') return 8_000_000
+  return 5_000_000
+}
+
+const WEBM_RECORDER_TYPES = [
+  'video/webm;codecs=vp9,opus',
+  'video/webm;codecs=vp8,opus',
+  'video/webm;codecs=vp9',
+  'video/webm;codecs=vp8',
+  'video/webm',
+] as const
+
+const MP4_RECORDER_WITH_AUDIO = [
+  'video/mp4;codecs=avc1.640029,mp4a.40.2',
+  'video/mp4;codecs=avc1.640028,mp4a.40.2',
+  'video/mp4;codecs=avc1.4D401E,mp4a.40.2',
+  'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+  'video/mp4;codecs=h264,aac',
+  'video/mp4',
+] as const
+
+const MP4_RECORDER_VIDEO_ONLY = [
+  'video/mp4;codecs=avc1.640029',
+  'video/mp4;codecs=avc1.42E01E',
+  'video/mp4',
+] as const
+
+function firstSupportedMime(candidates: readonly string[]): string | null {
+  if (typeof window === 'undefined' || !window.MediaRecorder) return null
+  for (const t of candidates) {
+    if (MediaRecorder.isTypeSupported(t)) return t
+  }
+  return null
+}
+
+/**
+ * Pick a MediaRecorder mime type for the requested browser container.
+ */
+export function getMediaRecorderMimeTypeForExport(
+  format: 'mp4' | 'webm',
+  hasAudio: boolean
+): string | null {
+  if (format === 'mp4') {
+    const withA = firstSupportedMime(MP4_RECORDER_WITH_AUDIO)
+    if (hasAudio && withA) return withA
+    const vo = firstSupportedMime(MP4_RECORDER_VIDEO_ONLY)
+    if (vo) return vo
+    return firstSupportedMime(WEBM_RECORDER_TYPES)
+  }
+  return firstSupportedMime(WEBM_RECORDER_TYPES) ?? firstSupportedMime(MP4_RECORDER_WITH_AUDIO)
+}
+
+/** True if this browser can record MP4 (H.264) with MediaRecorder */
+export function isMp4MediaRecorderSupported(): boolean {
+  return (
+    firstSupportedMime(MP4_RECORDER_WITH_AUDIO) != null ||
+    firstSupportedMime(MP4_RECORDER_VIDEO_ONLY) != null
+  )
+}
 
 // =============================================================================
 // Feature Detection
@@ -188,25 +261,10 @@ export function isWebCodecsAvailable(): boolean {
  * Check if MediaRecorder supports the desired format
  */
 export function getMediaRecorderMimeType(): string | null {
-  if (typeof window === 'undefined' || !window.MediaRecorder) return null
-  
-  // Prefer WebM VP9 for better quality, fallback to VP8, then MP4
-  const mimeTypes = [
-    'video/webm;codecs=vp9,opus',
-    'video/webm;codecs=vp8,opus',
-    'video/webm;codecs=vp9',
-    'video/webm;codecs=vp8',
-    'video/webm',
-    'video/mp4',
-  ]
-  
-  for (const mimeType of mimeTypes) {
-    if (MediaRecorder.isTypeSupported(mimeType)) {
-      return mimeType
-    }
-  }
-  
-  return null
+  return (
+    getMediaRecorderMimeTypeForExport('webm', true) ??
+    getMediaRecorderMimeTypeForExport('mp4', true)
+  )
 }
 
 /**
@@ -311,7 +369,7 @@ export class LocalRenderService {
       // Setup canvas with Double-Buffer pattern for reliable overlay rendering
       // This fixes race conditions in GCP/headless environments where captureStream
       // may capture frames before overlays are fully committed to the GPU buffer
-      const { width, height } = RESOLUTIONS[config.resolution]
+      const { width, height } = RESOLUTIONS[config.resolution] ?? RESOLUTIONS['1080p']
       
       // Hidden canvas: All draw operations happen here first
       this.hiddenCanvas = document.createElement('canvas')
@@ -434,7 +492,7 @@ export class LocalRenderService {
       
       // Setup MediaRecorder
       onProgress?.({ phase: 'rendering', progress: 40 })
-      let mimeType = getMediaRecorderMimeType()!
+      const exportFormat = adjustedConfig.exportFormat ?? 'webm'
       // Image-only animatics: use timed captureStream(fps). With captureStream(0) + requestFrame(),
       // Chromium VP9 often collapses identical canvas pixels into a single encoded frame, so the
       // output shows one frozen frame while audio plays for the full duration.
@@ -575,6 +633,10 @@ export class LocalRenderService {
         }
       }
       const hasAudioTrack = stream.getAudioTracks().length > 0
+      let mimeType = getMediaRecorderMimeTypeForExport(exportFormat, hasAudioTrack)
+      if (!mimeType) {
+        throw new Error('No supported MediaRecorder MIME type in this browser')
+      }
       if (!hasAudioTrack && mimeType.includes('opus')) {
         // Image-only animatic renders may not have an audio track.
         // Prefer a video-only mime to avoid empty recordings.
@@ -588,11 +650,16 @@ export class LocalRenderService {
           mimeType = fallbackMime
         }
       }
-      
+      const containerUsed: 'mp4' | 'webm' = mimeType.startsWith('video/mp4') ? 'mp4' : 'webm'
+      if (exportFormat === 'mp4' && containerUsed === 'webm') {
+        console.warn('[LocalRender] MP4 MediaRecorder not available; encoded WebM instead')
+      }
+
       this.recordedChunks = []
+      const videoBitsPerSecond = videoBitrateForResolution(adjustedConfig.resolution)
       this.mediaRecorder = new MediaRecorder(stream, {
         mimeType,
-        videoBitsPerSecond: adjustedConfig.resolution === '1080p' ? 8000000 : 5000000,
+        videoBitsPerSecond,
       })
       
       this.mediaRecorder.ondataavailable = (event) => {
@@ -759,6 +826,7 @@ export class LocalRenderService {
         blobUrl,
         blob,
         mimeType,
+        containerUsed,
         duration: adjustedConfig.totalDuration,
       }
       
@@ -1035,8 +1103,10 @@ export class LocalRenderService {
       console.log('[LocalRender] No watermark image to preload (type:', watermark?.type, ')')
       return
     }
+
+    const imageUrl = watermark.imageUrl
     
-    console.log('[LocalRender] Preloading watermark image:', watermark.imageUrl)
+    console.log('[LocalRender] Preloading watermark image:', imageUrl)
     
     const img = new Image()
     img.crossOrigin = 'anonymous'
@@ -1061,7 +1131,7 @@ export class LocalRenderService {
         
         img.onerror = () => {
           cleanup()
-          reject(new Error(`Failed to load watermark image: ${watermark.imageUrl}`))
+          reject(new Error(`Failed to load watermark image: ${imageUrl}`))
         }
         
         if (signal.aborted) {
@@ -1070,7 +1140,7 @@ export class LocalRenderService {
           return
         }
         
-        img.src = watermark.imageUrl
+        img.src = imageUrl
       })
       
       // Use decode() for additional guarantee the image is ready for rendering

@@ -42,6 +42,8 @@ export interface ExportPreset {
   bitrate: string
   recommended?: boolean
   platform?: string
+  /** Browser MediaRecorder output; MP4 uses H.264 when the browser supports it */
+  containerFormat?: 'mp4' | 'webm'
 }
 
 export interface ExportSettings {
@@ -54,6 +56,7 @@ export interface ExportSettings {
   includeSubtitles: boolean
   includeBurnedCaptions: boolean
   watermark: boolean
+  containerFormat: 'mp4' | 'webm'
 }
 
 interface ExportDialogProps {
@@ -74,65 +77,109 @@ interface ExportDialogProps {
 
 const EXPORT_PRESETS: ExportPreset[] = [
   {
-    id: 'youtube-1080',
-    label: 'YouTube / Vimeo',
+    id: 'mp4-1080p',
+    label: 'MP4 · 1080p',
     icon: <Youtube className="w-5 h-5" />,
-    description: '1080p HD optimized for streaming platforms',
+    description: '1920×1080 H.264 — best default for sharing and desktop editors',
+    resolution: '1920x1080',
+    aspectRatio: '16:9',
+    frameRate: 30,
+    codec: 'h264',
+    bitrate: '8 Mbps',
+    recommended: true,
+    platform: 'mp4-1080',
+    containerFormat: 'mp4',
+  },
+  {
+    id: 'mp4-720p',
+    label: 'MP4 · 720p',
+    icon: <Monitor className="w-5 h-5" />,
+    description: '1280×720 — faster export and smaller files',
+    resolution: '1280x720',
+    aspectRatio: '16:9',
+    frameRate: 30,
+    codec: 'h264',
+    bitrate: '5 Mbps',
+    platform: 'mp4-720',
+    containerFormat: 'mp4',
+  },
+  {
+    id: 'mp4-4k',
+    label: 'MP4 · 4K UHD',
+    icon: <Film className="w-5 h-5" />,
+    description: '3840×2160 — highest quality; longer render and larger files',
+    resolution: '3840x2160',
+    aspectRatio: '16:9',
+    frameRate: 30,
+    codec: 'h264',
+    bitrate: '24 Mbps',
+    platform: 'mp4-4k',
+    containerFormat: 'mp4',
+  },
+  {
+    id: 'youtube-1080',
+    label: 'YouTube / Vimeo (WebM)',
+    icon: <Youtube className="w-5 h-5" />,
+    description: '1080p WebM — legacy browser encode path',
     resolution: '1920x1080',
     aspectRatio: '16:9',
     frameRate: 24,
     codec: 'h264',
     bitrate: '12 Mbps',
-    recommended: true,
     platform: 'youtube',
+    containerFormat: 'webm',
   },
   {
     id: 'social-vertical',
     label: 'TikTok / Reels / Shorts',
     icon: <Smartphone className="w-5 h-5" />,
-    description: '1080x1920 vertical format for short-form',
+    description: '1080x1920 vertical — output is 16:9 canvas (letterboxed)',
     resolution: '1080x1920',
     aspectRatio: '9:16',
     frameRate: 30,
     codec: 'h264',
     bitrate: '8 Mbps',
     platform: 'social-vertical',
+    containerFormat: 'webm',
   },
   {
     id: 'social-square',
     label: 'Instagram / Facebook',
     icon: <Monitor className="w-5 h-5" />,
-    description: '1080x1080 square format for feed posts',
+    description: '1080x1080 square — output is 16:9 canvas (letterboxed)',
     resolution: '1080x1080',
     aspectRatio: '1:1',
     frameRate: 30,
     codec: 'h264',
     bitrate: '8 Mbps',
     platform: 'social-square',
+    containerFormat: 'webm',
   },
   {
     id: 'cinema-4k',
-    label: 'Cinema / Festival',
+    label: 'Cinema 4K (WebM)',
     icon: <Film className="w-5 h-5" />,
-    description: '4K UHD for large-screen presentation',
+    description: '3840×2160 WebM — use MP4 · 4K for H.264 when supported',
     resolution: '3840x2160',
     aspectRatio: '16:9',
     frameRate: 24,
     codec: 'h265',
     bitrate: '35 Mbps',
     platform: 'cinema',
+    containerFormat: 'webm',
   },
   {
     id: 'broadcast-hd',
-    label: 'Broadcast / TV',
+    label: 'Broadcast / TV (WebM)',
     icon: <Tv className="w-5 h-5" />,
-    description: '1080p broadcast-safe with ProRes codec',
+    description: '1080p WebM — server/ProRes workflows use Production export',
     resolution: '1920x1080',
     aspectRatio: '16:9',
     frameRate: 24,
     codec: 'prores',
     bitrate: '45 Mbps',
     platform: 'broadcast',
+    containerFormat: 'webm',
   },
 ]
 
@@ -160,7 +207,7 @@ export function ExportDialog({
   onExport,
   hasRenderedScenes,
 }: ExportDialogProps) {
-  const [selectedPreset, setSelectedPreset] = useState<string>('youtube-1080')
+  const [selectedPreset, setSelectedPreset] = useState<string>('mp4-1080p')
   const [includeSubtitles, setIncludeSubtitles] = useState(false)
   const [includeBurnedCaptions, setIncludeBurnedCaptions] = useState(false)
   const [watermark, setWatermark] = useState(false)
@@ -192,6 +239,7 @@ export function ExportDialog({
         includeSubtitles,
         includeBurnedCaptions,
         watermark,
+        containerFormat: preset.containerFormat ?? 'webm',
       })
     } finally {
       setIsExporting(false)
@@ -208,6 +256,7 @@ export function ExportDialog({
           </DialogTitle>
           <DialogDescription className="text-gray-400">
             Export <span className="text-white font-medium">{streamName}</span> as a final video file.
+            MP4 uses the browser&apos;s MediaRecorder (H.264 when supported); otherwise export falls back to WebM automatically.
           </DialogDescription>
         </DialogHeader>
 
@@ -280,7 +329,10 @@ export function ExportDialog({
                       )}
                     </div>
                     <p className="text-[11px] text-gray-500 mt-0.5">{p.description}</p>
-                    <div className="flex items-center gap-2 mt-1.5">
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400">
+                        {(p.containerFormat ?? 'webm').toUpperCase()}
+                      </span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400">{p.resolution}</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400">{p.aspectRatio}</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-700/50 text-gray-400">{p.frameRate}fps</span>
@@ -348,14 +400,18 @@ export function ExportDialog({
           </div>
           <div className="flex items-center justify-between text-sm mt-1">
             <span className="text-gray-400">Format</span>
-            <span className="text-white font-medium">{preset.resolution} • {preset.codec.toUpperCase()} • {preset.frameRate}fps</span>
+            <span className="text-white font-medium">
+              {(preset.containerFormat ?? 'webm').toUpperCase()} • {preset.resolution} • {preset.codec.toUpperCase()} • {preset.frameRate}fps
+            </span>
           </div>
         </div>
 
         {/* Actions */}
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-700/50">
           <p className="text-[11px] text-gray-500 max-w-[260px]">
-            Combines all scenes into one video. When the render finishes, the file is saved to your Downloads folder (WebM). You can upload that file to YouTube. A link is also stored for re-download from Final Cut.
+            Combines all scenes into one video. When the render finishes, the file is saved to your Downloads folder
+            {(preset.containerFormat ?? 'webm') === 'mp4' ? ' (MP4, or WebM if your browser cannot record MP4)' : ' (WebM)'}.
+            A link is also stored for re-download from Final Cut.
           </p>
           <div className="flex items-center gap-3">
             <Button

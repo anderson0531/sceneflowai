@@ -3304,12 +3304,7 @@ export function SceneProductionMixer({
       return
     }
     
-    if (resolution === '4K') {
-      setRenderError('Local rendering does not support 4K. Use server rendering instead.')
-      return
-    }
-    
-    const localResolution: '720p' | '1080p' = resolution === '4K' ? '1080p' : resolution
+    const localResolution = resolution
     
     setRenderStatus('preparing')
     setActiveRenderMode('local')

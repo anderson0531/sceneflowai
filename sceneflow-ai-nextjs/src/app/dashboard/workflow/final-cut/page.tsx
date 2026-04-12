@@ -19,6 +19,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { FinalCutTimeline } from '@/components/final-cut/FinalCutTimeline'
 import { ExportDialog, type ExportSettings } from '@/components/final-cut/ExportDialog'
+import type { LocalRenderConfig, LocalRenderResolution } from '@/lib/video/LocalRenderService'
 import type {
   FinalCutStream,
   StreamScene,
@@ -28,6 +29,13 @@ import type {
   ProductionLanguage,
   ProductionFormat
 } from '@/lib/types/finalCut'
+
+function mapExportResolutionStringToLocal(resolution: string): LocalRenderResolution {
+  const r = resolution.toLowerCase()
+  if (r.includes('3840') || r.includes('2160')) return '4K'
+  if (r.includes('1280') && r.includes('720')) return '720p'
+  return '1080p'
+}
 import { getLanguageName } from '@/constants/languages'
 
 /** Save rendered video to the user's Downloads folder (same-origin blob; reliable for WebM). */
@@ -607,14 +615,15 @@ export default function FinalCutPage() {
         }
       }
       
-      const config = {
+      const config: LocalRenderConfig = {
         segments: configSegments,
         audioClips: configAudioClips,
         textOverlays: configTextOverlays,
-        resolution: settings.resolution.includes('4K') || settings.resolution.includes('1080') ? '1080p' : '720p',
+        resolution: mapExportResolutionStringToLocal(settings.resolution),
         fps: settings.frameRate || 30,
         totalDuration,
-      } as const
+        exportFormat: settings.containerFormat,
+      }
       
       const renderService = new LocalRenderService()
       
@@ -628,7 +637,11 @@ export default function FinalCutPage() {
         throw new Error(result.error || 'Unknown render error')
       }
 
-      const filename = `final-cut-${currentProject.id}-${selectedStreamId}-${Date.now()}.webm`
+      const ext =
+        result.containerUsed === 'mp4' || (result.mimeType && result.mimeType.includes('mp4'))
+          ? 'mp4'
+          : 'webm'
+      const filename = `final-cut-${currentProject.id}-${selectedStreamId}-${Date.now()}.${ext}`
 
       // Save to Downloads immediately so YouTube upload is obvious (upload below is a backup URL)
       downloadBlobAsFile(result.blob, filename)
@@ -660,9 +673,14 @@ export default function FinalCutPage() {
         ...currentProject,
         metadata: updatedMetadata
       })
-      
+
+      const webmFallbackNote =
+        settings.containerFormat === 'mp4' && result.containerUsed === 'webm'
+          ? ' Your browser encoded WebM instead of MP4; the file still works in YouTube and most editors.'
+          : ''
+
       toast.success(
-        `Saved to Downloads as ${filename}. Use "Download last export" in the header if you need the link again.`,
+        `Saved to Downloads as ${filename}.${webmFallbackNote} Use "Download last export" in the header if you need the link again.`,
         {
           id: toastId,
           duration: 14000,

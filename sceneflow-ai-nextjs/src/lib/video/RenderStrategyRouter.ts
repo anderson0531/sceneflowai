@@ -26,7 +26,7 @@
 const LOCAL_RENDER_MAX_DURATION = 300
 
 /** Max resolution for local rendering - MUST match LocalRenderService.ts */
-const LOCAL_RENDER_MAX_RESOLUTION = '1080p'
+const LOCAL_RENDER_MAX_RESOLUTION = '4K'
 
 /**
  * Check if local rendering is supported in this browser
@@ -375,7 +375,8 @@ function calculateComplexityScore(context: RenderContext): number {
   }
   
   // Resolution
-  if (context.resolution === '1080p') score += 1
+  if (context.resolution === '4K') score += 2
+  else if (context.resolution === '1080p') score += 1
   
   return score
 }
@@ -429,10 +430,10 @@ export function getRenderModeOptions(context: RenderContext): Array<{
   return [
     {
       mode: 'local',
-      label: '720/1080 Fast',
+      label: 'Browser (MP4/WebM)',
       description:
-        'Browser WebM (720/1080) • Fastest • Timing and overlays can vary by device',
-      available: localSupport.supported && context.duration <= LOCAL_RENDER_MAX_DURATION && context.resolution !== '4K',
+        'Local render up to 4K • MP4 when the browser supports H.264 recording, else WebM',
+      available: localSupport.supported && context.duration <= LOCAL_RENDER_MAX_DURATION,
       recommended: decision.mode === 'local',
       badge: decision.mode === 'local' ? 'Recommended' : undefined,
     },
