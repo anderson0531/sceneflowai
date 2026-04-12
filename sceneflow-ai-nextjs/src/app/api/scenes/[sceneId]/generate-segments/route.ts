@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { moderatePrompt, getUserModerationContext, createBlockedResponse } from '@/lib/moderation'
-import { validateAndRepairTimelineDialogueCoverage } from '@/lib/scene/dialogueTimelineCoverage'
+import {
+  validateAndRepairTimelineDialogueCoverage,
+  repairPhase1DirectionsTimeline,
+} from '@/lib/scene/dialogueTimelineCoverage'
 import { SegmentDirection, detectNoTalentSegment } from '@/types/scene-direction'
 
 /** Vercel: match `vercel.json` for this route — long Gemini JSON on global endpoint. */
@@ -412,14 +415,30 @@ export async function POST(
       
       // Call Gemini for directions only
       const rawDirections = await callGeminiForSegmentDirections(directionsPrompt)
+      const timelineLen = sceneData.combinedAudioTimeline.length
+      const repairedDirections = repairPhase1DirectionsTimeline(rawDirections, timelineLen, sceneId)
+      if (repairedDirections.length !== rawDirections.length) {
+        console.log(
+          `[Scene Segmentation] Phase 1 timeline repair: ${rawDirections.length} → ${repairedDirections.length} directions (deduped empty rows)`
+        )
+      }
+      if (repairedDirections.length === 0) {
+        return NextResponse.json(
+          {
+            error:
+              'No valid segment directions after audio timeline repair. Try again, or reduce keyframe detail if the model response was truncated.',
+          },
+          { status: 422 }
+        )
+      }
       const directions = expandDirectionsForTimelineAudioBudget(
-        rawDirections,
+        repairedDirections,
         sceneData,
         MAX_SEGMENT_SECONDS
       )
-      if (directions.length !== rawDirections.length) {
+      if (directions.length !== repairedDirections.length) {
         console.log(
-          `[Scene Segmentation] Phase 1 audio-aware direction split: ${rawDirections.length} → ${directions.length} directions`
+          `[Scene Segmentation] Phase 1 audio-aware direction split: ${repairedDirections.length} → ${directions.length} directions`
         )
       }
 
@@ -2032,7 +2051,7 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
 **RULES:**
 1. Split at MAJOR visual changes only (angle, location, emotional shift)
 2. Combine consecutive audio lines in same shot setup — especially adjacent narration sentences
-3. Each audio timeline index (dialogue_indices) appears in exactly ONE segment
+3. **UNIQUE TIMELINE COVERAGE (CRITICAL):** Each index [0] through [${Math.max(0, sceneData.combinedAudioTimeline.length - 1)}] from the Audio Timeline MUST appear in exactly ONE segment's dialogue_indices. The same index MUST NOT appear in two different segments. Omitting an index is an error.
 4. **DURATION RULE (CRITICAL):** Total segment durations MUST sum to EXACTLY the audio timeline duration (~${Math.round(totalTimelineDuration)}s). Do NOT exceed this. Each segment \`estimated_duration\` must be **exactly 4, 6, or 8** (Veo quantization).
 5. **SEGMENT COUNT RULE:** Create exactly ${minimumSegmentsRequired} segments — no more, no fewer (unless overridden above).
 6. keyframe_start_description and keyframe_end_description are MANDATORY for every segment

@@ -3,6 +3,59 @@
  * after LLM segmentation (handles duplicates and gaps deterministically).
  */
 
+/** Coerce model output (numbers, numeric strings) to valid 0..timelineLength-1 indices. */
+export function normalizeTimelineIndices(raw: unknown, timelineLength: number): number[] {
+  if (!Array.isArray(raw) || timelineLength <= 0) return []
+  const out: number[] = []
+  for (const x of raw) {
+    let n: number
+    if (typeof x === 'number' && Number.isFinite(x)) {
+      n = Math.trunc(x)
+    } else if (typeof x === 'string') {
+      const p = parseInt(x.trim(), 10)
+      n = Number.isFinite(p) ? p : NaN
+    } else {
+      continue
+    }
+    if (n < 0 || n >= timelineLength) continue
+    out.push(n)
+  }
+  return out
+}
+
+/**
+ * Phase 1 (directions): same coverage rules as Phase 2 — each combined-audio index in exactly one row.
+ * Drops rows that end up with no indices after deduping duplicates (duplicate "shots" from the model).
+ */
+export function repairPhase1DirectionsTimeline<T extends { dialogue_indices?: unknown }>(
+  directions: T[],
+  timelineLength: number,
+  sceneId: string
+): T[] {
+  if (timelineLength <= 0 || directions.length === 0) return directions
+
+  const mapped = directions.map((d, i) => ({
+    sequence: i + 1,
+    assigned_dialogue_indices: normalizeTimelineIndices(d.dialogue_indices, timelineLength),
+  }))
+  const repaired = validateAndRepairTimelineDialogueCoverage(mapped, timelineLength, sceneId)
+  const merged = directions.map((dir, i) => ({
+    ...dir,
+    dialogue_indices: repaired[i]?.assigned_dialogue_indices ?? [],
+  }))
+
+  return merged.filter((d, i) => {
+    const idxs = (d as { dialogue_indices?: number[] }).dialogue_indices
+    if (!Array.isArray(idxs) || idxs.length === 0) {
+      console.warn(
+        `[Scene Segmentation] Phase 1: dropping direction ${i} with no audio indices after timeline repair (scene=${sceneId})`
+      )
+      return false
+    }
+    return true
+  })
+}
+
 /**
  * @param timelineLength - `combinedAudioTimeline.length` from scene build
  * @param sceneId - for logs only
