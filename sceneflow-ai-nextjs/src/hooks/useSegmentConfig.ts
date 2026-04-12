@@ -20,6 +20,17 @@
 import { useMemo } from 'react'
 import type { SceneSegment, VideoGenerationMethod } from '@/components/vision/scene-production/types'
 import type { VideoGenerationConfig, ApprovalStatus } from '@/components/vision/scene-production/types'
+import {
+  buildDefaultBatchGuidePrompt,
+  type GuideCharacterDemographic,
+  type GuidePromptSceneContext,
+} from '@/lib/scene/segmentGuidePrompt'
+
+/** Scene script + audio fields used to auto-build Veo guide text for batch generate */
+export type SegmentGuideContext = {
+  scene: GuidePromptSceneContext
+  characters?: GuideCharacterDemographic[]
+}
 
 /**
  * FTV-SPECIFIC: Removes motion language that conflicts with end-frame anchoring
@@ -484,7 +495,8 @@ export interface SegmentConfigResult {
  */
 export function useSegmentConfig(
   segment: SceneSegment,
-  sceneImageUrl?: string
+  sceneImageUrl?: string,
+  guideContext?: SegmentGuideContext
 ): SegmentConfigResult {
   return useMemo(() => {
     const method = detectRecommendedMethod(segment)
@@ -497,6 +509,15 @@ export function useSegmentConfig(
     
     // Choose primary prompt based on method
     const prompt = method === 'FTV' ? motionPrompt : visualPrompt
+
+    const guidePrompt =
+      guideContext?.scene && (segment.dialogueLineIds?.length ?? 0) > 0
+        ? buildDefaultBatchGuidePrompt(
+            segment,
+            guideContext.scene,
+            guideContext.characters ?? []
+          )
+        : ''
     
     const config: VideoGenerationConfig = {
       mode: method,
@@ -509,6 +530,7 @@ export function useSegmentConfig(
       negativePrompt: '',
       approvalStatus,
       confidence,
+      guidePrompt: guidePrompt || undefined,
       // Asset URLs for generation
       startFrameUrl: segment.startFrameUrl || segment.references?.startFrameUrl || null,
       endFrameUrl: segment.endFrameUrl || segment.references?.endFrameUrl || null,
@@ -540,7 +562,7 @@ export function useSegmentConfig(
       methodLabel: methodLabels[method],
       methodReason: methodReasons[method],
     }
-  }, [segment, sceneImageUrl])
+  }, [segment, sceneImageUrl, guideContext])
 }
 
 /**
@@ -552,7 +574,8 @@ export function useSegmentConfig(
 export function useSegmentConfigs(
   segments: SceneSegment[],
   sceneImageUrl?: string,
-  skip?: boolean
+  skip?: boolean,
+  guideContext?: SegmentGuideContext
 ): Map<string, SegmentConfigResult> {
   return useMemo(() => {
     // QUARANTINE GUARD: Skip all processing if told to
@@ -576,6 +599,15 @@ export function useSegmentConfigs(
       const motionPrompt = generateMotionPrompt(segment)
       const visualPrompt = generateVisualPrompt(segment, sceneImageUrl)
       const prompt = method === 'FTV' ? motionPrompt : visualPrompt
+
+      const guidePrompt =
+        guideContext?.scene && (segment.dialogueLineIds?.length ?? 0) > 0
+          ? buildDefaultBatchGuidePrompt(
+              segment,
+              guideContext.scene,
+              guideContext.characters ?? []
+            )
+          : ''
       
       const config: VideoGenerationConfig = {
         mode: method,
@@ -588,6 +620,7 @@ export function useSegmentConfigs(
         negativePrompt: '',
         approvalStatus,
         confidence,
+        guidePrompt: guidePrompt || undefined,
         startFrameUrl: segment.startFrameUrl || segment.references?.startFrameUrl || null,
         endFrameUrl: segment.endFrameUrl || segment.references?.endFrameUrl || null,
         sourceVideoUrl: segment.activeAssetUrl && segment.assetType === 'video' ? segment.activeAssetUrl : null,
@@ -619,7 +652,7 @@ export function useSegmentConfigs(
     }
     
     return configMap
-  }, [segments, sceneImageUrl, skip])
+  }, [segments, sceneImageUrl, skip, guideContext])
 }
 
 export default useSegmentConfig

@@ -93,6 +93,20 @@ const SceneProductionMixer = dynamic(
 )
 import { useVideoQueue } from '@/hooks/useVideoQueue'
 import type { SceneAudioData } from './GuidePromptEditor'
+import type { GuideCharacterDemographic } from '@/lib/scene/segmentGuidePrompt'
+import type { SegmentGuideContext } from '@/hooks/useSegmentConfig'
+
+function normalizeGuideCharacters(raw: unknown): GuideCharacterDemographic[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((c: Record<string, unknown>) => ({
+      name: String(c.name ?? c.id ?? ''),
+      age: c.age != null ? String(c.age) : undefined,
+      gender: c.gender != null ? String(c.gender) : undefined,
+      ethnicity: c.ethnicity != null ? String(c.ethnicity) : undefined,
+    }))
+    .filter((c) => c.name.length > 0)
+}
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { getNextProductionStreamVersion } from './defaults'
 
@@ -167,6 +181,8 @@ interface DirectorConsoleProps {
     frameType: 'start' | 'end',
     newFrameUrl: string
   ) => void
+  /** Character demographics for auto guide / Director dialog (falls back to scene.characters) */
+  guideCharacters?: GuideCharacterDemographic[]
 }
 
 /** Slots for splitting Video / Mixer / Streams across parent section cards (ScriptPanel). */
@@ -221,6 +237,7 @@ function DirectorConsoleRoot({
   onGenerateAllAudio,
   isGeneratingAudio,
   onSaveEditedKeyframe,
+  guideCharacters,
   children,
 }: DirectorConsoleProps & {
   children?: (slots: DirectorWorkflowSlots) => React.ReactNode
@@ -228,6 +245,29 @@ function DirectorConsoleRoot({
   // Use stable EMPTY_SEGMENTS constant to prevent TDZ render loops
   // productionData?.segments || [] creates a new array reference each render
   const segments = productionData?.segments ?? EMPTY_SEGMENTS
+
+  const effectiveGuideCharacters = useMemo(
+    () =>
+      guideCharacters ??
+      normalizeGuideCharacters((scene as { characters?: unknown } | undefined)?.characters),
+    [guideCharacters, scene]
+  )
+
+  const segmentGuideContext = useMemo<SegmentGuideContext | undefined>(() => {
+    if (!scene) return undefined
+    return {
+      scene: {
+        dialogue: scene.dialogue,
+        sceneDirection: scene.sceneDirection,
+        visualDescription: scene.visualDescription,
+        action: scene.action,
+        narration: scene.narration,
+        music: scene.music,
+        sfx: scene.sfx,
+      },
+      characters: effectiveGuideCharacters,
+    }
+  }, [scene, effectiveGuideCharacters])
 
   const videoGenerationAvailable = useMemo(
     () => segments.some(s => s.activeAssetUrl && s.status === 'COMPLETE'),
@@ -247,7 +287,7 @@ function DirectorConsoleRoot({
     updateConfig,
     processQueue,
     cancelRendering,
-  } = useVideoQueue(segments, sceneId, sceneImageUrl, onGenerate)
+  } = useVideoQueue(segments, sceneId, sceneImageUrl, onGenerate, segmentGuideContext)
   
   // Selected segment for DirectorDialog
   const [selectedSegment, setSelectedSegment] = useState<SceneSegment | null>(null)
@@ -1243,6 +1283,7 @@ function DirectorConsoleRoot({
           onSaveConfig={handleSaveConfig}
           onGenerate={handleGenerateFromDialog}
           onSaveEditedKeyframe={onSaveEditedKeyframe}
+          guideCharacters={effectiveGuideCharacters}
         />
       )}
       

@@ -69,8 +69,12 @@ import type {
   VideoGenerationMethod, 
   VideoGenerationConfig 
 } from './types'
-import { useSegmentConfig } from '@/hooks/useSegmentConfig'
+import { useSegmentConfig, type SegmentGuideContext } from '@/hooks/useSegmentConfig'
 import { GuidePromptEditor, type SceneAudioData } from './GuidePromptEditor'
+import {
+  buildDefaultBatchGuidePrompt,
+  type GuideCharacterDemographic,
+} from '@/lib/scene/segmentGuidePrompt'
 import { DirectionDialog } from './DirectionDialog'
 import { cn } from '@/lib/utils'
 import { ContentPolicyAlert, PolicyFixedBanner } from './ContentPolicyAlert'
@@ -94,6 +98,8 @@ interface DirectorDialogProps {
     frameType: 'start' | 'end',
     newFrameUrl: string
   ) => void
+  /** Character demographics for guide / batch voice anchoring */
+  guideCharacters?: GuideCharacterDemographic[]
 }
 
 // Map internal mode names to VideoGenerationMethod
@@ -124,9 +130,27 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   onGenerate,
   onClose,
   onSaveEditedKeyframe,
+  guideCharacters = [],
 }) => {
-  // Get auto-drafted config
-  const { config: autoConfig, methodLabel, methodReason } = useSegmentConfig(segment, sceneImageUrl)
+  const segmentGuideContext = useMemo<SegmentGuideContext | undefined>(() => {
+    if (!scene) return undefined
+    return { scene, characters: guideCharacters }
+  }, [scene, guideCharacters])
+
+  // Get auto-drafted config (includes batch guidePrompt when dialogue is assigned)
+  const { config: autoConfig, methodLabel, methodReason } = useSegmentConfig(
+    segment,
+    sceneImageUrl,
+    segmentGuideContext
+  )
+
+  const batchGuideSeed = useMemo(
+    () =>
+      scene && (segment.dialogueLineIds?.length ?? 0) > 0
+        ? buildDefaultBatchGuidePrompt(segment, scene, guideCharacters)
+        : '',
+    [scene, segment, guideCharacters]
+  )
   
   // Local state initialized with auto-drafted values
   const [mode, setMode] = useState<string>(methodToMode[autoConfig.mode])
@@ -700,13 +724,30 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
         {/* Guide Prompt Editor - Audio & Scene Direction Context */}
         {scene && (
-          <GuidePromptEditor
-            segment={segment}
-            scene={scene}
-            onGuidePromptChange={setGuidePrompt}
-            onNegativePromptChange={setNegativePrompt}
-            className="mt-2"
-          />
+          <div className="mt-2 space-y-2">
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-xs border-slate-600 text-slate-300"
+                onClick={() => setGuidePrompt(batchGuideSeed)}
+                disabled={!batchGuideSeed}
+              >
+                Reset to segment dialogue
+              </Button>
+            </div>
+            <GuidePromptEditor
+              segment={segment}
+              scene={scene}
+              characters={guideCharacters}
+              defaultElementsMode={
+                segment.dialogueLineIds && segment.dialogueLineIds.length > 0 ? 'batch' : 'interactive'
+              }
+              onGuidePromptChange={setGuidePrompt}
+              onNegativePromptChange={setNegativePrompt}
+            />
+          </div>
         )}
 
         <div className="grid grid-cols-12 gap-6 mt-4">

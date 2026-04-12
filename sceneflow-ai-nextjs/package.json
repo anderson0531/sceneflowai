@@ -18,9 +18,10 @@
                 "ci:smoke": "bash scripts/ci/ai-smoke.sh",
                 "ci:circular": "bash scripts/ci/check-circular-deps.sh",
                 "setup:database": "echo 'Database setup scripts removed during cleanup'",
-                "test": "echo 'Test scripts removed during cleanup'",
+                "test": "vitest run",
                 "gcp:deploy": "echo 'Deploy via Vercel (cloud export handled server-side).'",
-                "compliance-check": "node scripts/fastspring-compliance-check.js"
+                "compliance-check": "node scripts/fastspring-compliance-check.js",
+                "test:watch": "vitest"
         },
         "dependencies": {
                 "@ai-sdk/google": "^3.0.57",
@@ -129,6 +130,7 @@
                 "tailwindcss": "^3.4.17",
                 "ts-node": "^10.9.2",
                 "typescript": "^5",
-                "vercel": "^32.0.1"
+                "vercel": "^32.0.1",
+                "vitest": "^3.2.4"
         }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import { moderatePrompt, getUserModerationContext, createBlockedResponse } from '@/lib/moderation'
+import { validateAndRepairTimelineDialogueCoverage } from '@/lib/scene/dialogueTimelineCoverage'
 import { SegmentDirection, detectNoTalentSegment } from '@/types/scene-direction'
 
 /** Vercel: match `vercel.json` for this route — long Gemini JSON on global endpoint. */
@@ -541,6 +542,12 @@ export async function POST(
         rawSegments.sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
       }
 
+      rawSegments = validateAndRepairTimelineDialogueCoverage(
+        rawSegments,
+        sceneData.combinedAudioTimeline.length,
+        sceneId
+      )
+
       const withAudioAwareDuration = applyAssignedAudioDurationToSegments(rawSegments, sceneData)
       const segments = enforceMaxSegmentDuration(withAudioAwareDuration, MAX_SEGMENT_SECONDS, sceneData)
       if (segments.length !== rawSegments.length) {
@@ -558,7 +565,7 @@ export async function POST(
         targetSegmentDuration: targetSegmentDurationResponse,
         segmentDurationAuto: durationConfig.mode === 'auto',
         previewMode,
-        sceneBibleHash: sceneData.visualDescriptionHash || '',
+        sceneBibleHash: simpleHash(sceneData.visualDescription || ''),
       })
     }
     
@@ -588,7 +595,13 @@ export async function POST(
     }
 
     // Call Gemini for intelligent segmentation
-    const rawSegments = await callGeminiForIntelligentSegmentation(prompt)
+    let rawSegments = await callGeminiForIntelligentSegmentation(prompt)
+
+    rawSegments = validateAndRepairTimelineDialogueCoverage(
+      rawSegments,
+      sceneData.combinedAudioTimeline.length,
+      sceneId
+    )
 
     const withAudioAwareDuration = applyAssignedAudioDurationToSegments(rawSegments, sceneData)
     const segments = enforceMaxSegmentDuration(withAudioAwareDuration, MAX_SEGMENT_SECONDS, sceneData)
@@ -720,7 +733,7 @@ export async function POST(
       // Preview mode indicator - segments are proposals, not committed
       previewMode,
       // Include scene bible hash for staleness detection on finalize
-      sceneBibleHash: sceneData.visualDescriptionHash || '',
+      sceneBibleHash: simpleHash(sceneData.visualDescription || ''),
     })
   } catch (error: any) {
     console.error('[Scene Segmentation] Error:', error)
@@ -1011,11 +1024,11 @@ function buildComprehensiveSceneData(
     // Split narration into sentences
     const narrationSentences = narrationTextForTimeline
       .split(/(?<=[.!?])\s+/)
-      .map(s => s.trim())
-      .filter(s => s.length > 0)
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0)
     
     // Calculate narration duration per sentence
-    const narrationTotalWords = narrationSentences.reduce((acc, s) => acc + s.split(/\s+/).length, 0)
+    const narrationTotalWords = narrationSentences.reduce((acc: number, s: string) => acc + s.split(/\s+/).length, 0)
     const narrationDur = options?.narrationDurationSeconds || estimatedTotalDuration
     
     for (const sentence of narrationSentences) {

@@ -6819,6 +6819,12 @@ function SceneCard({
                             visualStyle: visualStyle,
                             sceneHeading: scene.sceneHeading,
                           }}
+                          guideCharacters={(characters || []).map((c) => ({
+                            name: c.name,
+                            age: (c as { age?: string }).age,
+                            gender: (c as { gender?: string }).gender,
+                            ethnicity: (c as { ethnicity?: string }).ethnicity,
+                          }))}
                           onGenerate={onSegmentGenerate || (async () => {})}
                           onSegmentUpload={onSegmentUpload ? (segmentId, file) => onSegmentUpload(workflowSceneId, segmentId, file) : undefined}
                           onLockSegment={onLockSegment ? (segmentId, locked) => onLockSegment(workflowSceneId, segmentId, locked) : undefined}
