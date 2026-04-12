@@ -2015,7 +2015,7 @@ function DialogueLineControls({
                       <span className="text-[10px]">Speed</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      {([0.85, 1, 1.1] as const).map((preset) => (
+                      {([0.85, 1, 2] as const).map((preset) => (
                         <button
                           key={preset}
                           type="button"
