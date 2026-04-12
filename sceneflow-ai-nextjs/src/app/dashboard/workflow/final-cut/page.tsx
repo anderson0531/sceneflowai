@@ -75,6 +75,13 @@ function mediaUrlFromProductionSegment(prodSeg: Record<string, unknown> | null):
   )
 }
 
+function refineAssetTypeFromUrl(url: string, assetType: 'video' | 'image'): 'video' | 'image' {
+  const path = url.split('?')[0].toLowerCase()
+  if (/\.(mp4|webm|mov|m4v|mkv)$/.test(path)) return 'video'
+  if (/\.(png|jpe?g|gif|webp|avif|bmp|svg)$/.test(path)) return 'image'
+  return assetType
+}
+
 function resolveStreamSegmentMediaForExport(
   seg: StreamSegment,
   sourceSceneId: string,
@@ -92,7 +99,7 @@ function resolveStreamSegmentMediaForExport(
     if (at === 'video' || at === 'image') assetType = at
   }
 
-  return { assetUrl: url, assetType }
+  return { assetUrl: url, assetType: refineAssetTypeFromUrl(url, assetType) }
 }
 
 /** Save rendered video to the user's Downloads folder (same-origin blob; reliable for WebM). */
@@ -933,13 +940,17 @@ export default function FinalCutPage() {
           ((currentProject?.metadata as Record<string, unknown> | undefined)?.sceneProductionState as
             | Record<string, unknown>
             | undefined) || {}
-        const hasRenderedScenes =
-          selectedStream?.scenes?.some((s) =>
-            s.segments?.some((seg) => {
-              const m = resolveStreamSegmentMediaForExport(seg, s.sourceSceneId, prodMeta)
-              return !!m && m.assetType === 'video'
-            })
-          ) ?? false
+        let hasExportableMedia = false
+        let hasVideoClipSegments = false
+        for (const s of selectedStream?.scenes ?? []) {
+          for (const seg of s.segments ?? []) {
+            const m = resolveStreamSegmentMediaForExport(seg, s.sourceSceneId, prodMeta)
+            if (m) {
+              hasExportableMedia = true
+              if (m.assetType === 'video') hasVideoClipSegments = true
+            }
+          }
+        }
         return (
           <ExportDialog
             open={exportDialogOpen}
@@ -949,7 +960,8 @@ export default function FinalCutPage() {
             totalDuration={totalDuration}
             sceneCount={selectedStream?.scenes?.length || 0}
             onExport={handleExportWithSettings}
-            hasRenderedScenes={hasRenderedScenes}
+            hasExportableMedia={hasExportableMedia}
+            hasVideoClipSegments={hasVideoClipSegments}
           />
         )
       })()}

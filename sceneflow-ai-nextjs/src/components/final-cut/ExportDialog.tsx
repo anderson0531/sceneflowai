@@ -67,8 +67,10 @@ interface ExportDialogProps {
   totalDuration: number
   sceneCount: number
   onExport: (settings: ExportSettings) => Promise<void>
-  /** Whether there are rendered scenes available */
-  hasRenderedScenes: boolean
+  /** Any segment has a resolvable image or video URL (timeline + Production metadata) */
+  hasExportableMedia: boolean
+  /** At least one segment resolves to a video clip (not image-only) */
+  hasVideoClipSegments: boolean
 }
 
 // ============================================================================
@@ -205,7 +207,8 @@ export function ExportDialog({
   totalDuration,
   sceneCount,
   onExport,
-  hasRenderedScenes,
+  hasExportableMedia,
+  hasVideoClipSegments,
 }: ExportDialogProps) {
   const [selectedPreset, setSelectedPreset] = useState<string>('mp4-1080p')
   const [includeSubtitles, setIncludeSubtitles] = useState(false)
@@ -278,14 +281,27 @@ export function ExportDialog({
           </div>
         </div>
 
-        {/* Warning: No rendered scenes */}
-        {!hasRenderedScenes && (
+        {/* No media at all — export will fail or be empty */}
+        {!hasExportableMedia && (
           <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg mt-2">
             <Info className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm text-amber-200 font-medium">No rendered scenes detected</p>
+              <p className="text-sm text-amber-200 font-medium">No segment media found</p>
               <p className="text-xs text-amber-200/70 mt-0.5">
-                Return to Production to render each scene before exporting. Scenes without renders will use keyframe images with Ken Burns animation.
+                Nothing on this timeline resolves to a video or image URL yet. Open Production, generate or upload segment media, save the project, then return to Final Cut (or Save here so Production links sync).
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Stills / animatic — not an error */}
+        {hasExportableMedia && !hasVideoClipSegments && (
+          <div className="flex items-start gap-3 p-3 bg-sky-500/10 border border-sky-500/25 rounded-lg mt-2">
+            <Info className="w-5 h-5 text-sky-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-sky-100 font-medium">Image-based timeline</p>
+              <p className="text-xs text-sky-100/75 mt-0.5">
+                No video clips were detected — export uses still frames (and Ken Burns on images where configured). Render video in Production if you want full-motion clips in the file.
               </p>
             </div>
           </div>
