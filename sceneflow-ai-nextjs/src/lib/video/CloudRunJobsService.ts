@@ -443,6 +443,9 @@ export async function createSceneRenderJob(
     
     if (request.audioConfig.includeDialogue && request.audioTracks.dialogue) {
       for (const track of request.audioTracks.dialogue) {
+        const pr = track.playbackRate
+        const playbackRate =
+          pr != null && Number.isFinite(pr) && pr > 0 ? Math.min(2, Math.max(0.5, pr)) : undefined
         audioClips.push({
           url: track.url,
           startTime: track.startTime,
@@ -450,6 +453,7 @@ export async function createSceneRenderJob(
           volume: 0.9,
           type: 'dialogue',
           character: track.character,
+          ...(playbackRate != null && Math.abs(playbackRate - 1) > 1e-4 ? { playbackRate } : {}),
         })
       }
     }

@@ -25,6 +25,32 @@ RESOLUTIONS = {
 # We scale images 2x to allow for pan/zoom headroom
 SCALE_FACTOR = 2
 
+
+def build_atempo_filter_chain(rate: float) -> str:
+    """
+    Chain FFmpeg atempo filters so each stays in the stable 0.5–2.0 range.
+    atempo=2.0 doubles speed (halves output duration); atempo=0.5 halves speed.
+    """
+    try:
+        rate = float(rate)
+    except (TypeError, ValueError):
+        rate = 1.0
+    if rate <= 0:
+        rate = 1.0
+    if abs(rate - 1.0) < 1e-5:
+        return ""
+    parts: List[str] = []
+    remaining = rate
+    while remaining > 2.0 + 1e-9:
+        parts.append("atempo=2.0")
+        remaining /= 2.0
+    while remaining < 0.5 - 1e-9:
+        parts.append("atempo=0.5")
+        remaining /= 0.5
+    parts.append(f"atempo={remaining:.6f}")
+    return ",".join(parts)
+
+
 # Font mapping for text overlays (maps UI font names to system font names)
 FONT_MAP = {
     'Montserrat': 'Montserrat',
@@ -622,9 +648,13 @@ def build_ffmpeg_command(
             delay_ms = int(clip.get('startTime', 0) * 1000)
             duration = clip.get('duration', 10)
             volume = clip.get('volume', 1.0)
-            
-            # Apply delay and volume adjustment
-            audio_filter = f"[{input_idx}:a]adelay={delay_ms}|{delay_ms},volume={volume}[a{i}]"
+            pr = clip.get('playbackRate', 1.0) or 1.0
+            tempo = build_atempo_filter_chain(float(pr))
+            chain = [f"adelay={delay_ms}|{delay_ms}"]
+            if tempo:
+                chain.append(tempo)
+            chain.append(f"volume={volume}")
+            audio_filter = f"[{input_idx}:a]{','.join(chain)}[a{i}]"
             filter_parts.append(audio_filter)
             audio_mix_inputs.append(f"[a{i}]")
         
@@ -924,9 +954,13 @@ def build_concat_ffmpeg_command(
             delay_ms = int(clip.get('startTime', 0) * 1000)
             duration = clip.get('duration', 10)
             volume = clip.get('volume', 1.0)
-            
-            # Apply delay and volume adjustment
-            audio_filter = f"[{input_idx}:a]adelay={delay_ms}|{delay_ms},volume={volume}[overlay_a{i}]"
+            pr = clip.get('playbackRate', 1.0) or 1.0
+            tempo = build_atempo_filter_chain(float(pr))
+            chain = [f"adelay={delay_ms}|{delay_ms}"]
+            if tempo:
+                chain.append(tempo)
+            chain.append(f"volume={volume}")
+            audio_filter = f"[{input_idx}:a]{','.join(chain)}[overlay_a{i}]"
             filter_parts.append(audio_filter)
             all_audio_inputs.append(f"[overlay_a{i}]")
     

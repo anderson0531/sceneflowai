@@ -261,6 +261,9 @@ export async function POST(
     // Add dialogue
     if (body.audioConfig.includeDialogue && body.audioTracks.dialogue) {
       for (const track of body.audioTracks.dialogue) {
+        const pr = track.playbackRate
+        const playbackRate =
+          pr != null && Number.isFinite(pr) && pr > 0 ? Math.min(2, Math.max(0.5, pr)) : undefined
         audioClips.push({
           url: track.url,
           startTime: track.startTime,
@@ -268,6 +271,7 @@ export async function POST(
           volume: dialogueVolume,
           type: 'dialogue',
           character: track.character,
+          ...(playbackRate != null && Math.abs(playbackRate - 1) > 1e-4 ? { playbackRate } : {}),
         })
       }
     }

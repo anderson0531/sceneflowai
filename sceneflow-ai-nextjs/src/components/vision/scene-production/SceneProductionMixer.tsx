@@ -53,6 +53,7 @@ import {
   RefreshCw,
   Clapperboard,
   Mic,
+  Gauge,
 } from 'lucide-react'
 import { upload } from '@vercel/blob/client'
 import { Button } from '@/components/ui/Button'
@@ -118,6 +119,20 @@ const DIALOGUE_DURATION_METADATA_DELTA_SEC = 0.5
 /** Stable key for per-line mixer state (must match audioTrackBuilder clip ids). */
 function dialogueClipConfigKey(clip: { id?: string; clipId?: string }, idx: number): string {
   return clip.id ?? clip.clipId ?? `dialogue-${idx}`
+}
+
+const DIALOGUE_PLAYBACK_RATE_MIN = 0.5
+const DIALOGUE_PLAYBACK_RATE_MAX = 2
+
+function clampDialoguePlaybackRate(r: number | undefined): number {
+  if (r == null || !Number.isFinite(r) || r <= 0) return 1
+  return Math.min(DIALOGUE_PLAYBACK_RATE_MAX, Math.max(DIALOGUE_PLAYBACK_RATE_MIN, r))
+}
+
+/** Wall-clock span for a dialogue file played at `playbackRate` (source seconds / rate). */
+function dialogueClipWallDuration(sourceSeconds: number | undefined, playbackRate: number | undefined): number {
+  const src = sourceSeconds ?? 3
+  return src / clampDialoguePlaybackRate(playbackRate)
 }
 
 // Duplicate constant to avoid module-level import (keep in sync with LocalRenderService.ts)
@@ -294,6 +309,8 @@ export interface AudioClipConfig {
   volume: number
   startTime: number
   duration: number
+  /** 1 = normal; >1 faster/shorter on timeline, <1 slower/longer (dub alignment). */
+  playbackRate?: number
 }
 
 export interface SceneAudioAssets {
@@ -768,7 +785,7 @@ function ScenePreviewPlayer({
                 const cfg = dialogueClipConfigs?.[dialogueClipConfigKey(d, i)]
                 if (cfg?.enabled === false) return 0
                 const t0 = dialogueStartBase + mixerDialogueStart(d, i, 3)
-                return t0 + (d.duration ?? 0)
+                return t0 + dialogueClipWallDuration(d.duration, cfg?.playbackRate)
               })
             : [0]
         const narrEnd =
@@ -902,12 +919,15 @@ function ScenePreviewPlayer({
           return
         }
         const lineVol = lineCfg?.volume ?? 1
+        const rate = clampDialoguePlaybackRate(lineCfg?.playbackRate)
+        audioEl.playbackRate = rate
         audioEl.volume = isMuted ? 0 : lineVol * audioTracks.dialogue.volume
         const clipStart = dialogueStartTime + mixerDialogueStart(clip, idx, 3)
-        const clipEnd = clipStart + (clip.duration || 3) + EPS
+        const wallDur = dialogueClipWallDuration(clip.duration, lineCfg?.playbackRate)
+        const clipEnd = clipStart + wallDur + EPS
 
         if (isPlaying && currentTime >= clipStart && currentTime < clipEnd) {
-          const clipLocalTime = Math.max(0, currentTime - clipStart)
+          const clipLocalTime = Math.max(0, (currentTime - clipStart) * rate)
           const drift = Math.abs(audioEl.currentTime - clipLocalTime)
           if (drift > 0.85) {
             audioEl.currentTime = clipLocalTime
@@ -1828,6 +1848,15 @@ function DialogueLineControls({
 }) {
   const audioRefs = useRef<(HTMLAudioElement | null)[]>([])
   const [playingIndex, setPlayingIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (playingIndex === null) return
+    const audio = audioRefs.current[playingIndex]
+    if (!audio) return
+    const clip = dialogueClips[playingIndex]
+    const key = dialogueClipConfigKey(clip, playingIndex)
+    audio.playbackRate = clampDialoguePlaybackRate(clipConfigs[key]?.playbackRate)
+  }, [clipConfigs, playingIndex, dialogueClips])
   
   if (!dialogueClips || dialogueClips.length === 0) {
     return null
@@ -1848,7 +1877,8 @@ function DialogueLineControls({
       audio.currentTime = 0
       const clip = dialogueClips[index]
       const key = dialogueClipConfigKey(clip, index)
-      audio.volume = (clipConfigs[key]?.volume ?? globalVolume) 
+      audio.volume = (clipConfigs[key]?.volume ?? globalVolume)
+      audio.playbackRate = clampDialoguePlaybackRate(clipConfigs[key]?.playbackRate)
       audio.play().catch(() => {})
       setPlayingIndex(index)
     }
@@ -1869,6 +1899,7 @@ function DialogueLineControls({
       volume: globalVolume,
       startTime: clip.startTime ?? 0,
       duration: clip.duration || 3,
+      playbackRate: 1,
     }
     onConfigChange({
       ...clipConfigs,
@@ -1882,17 +1913,22 @@ function DialogueLineControls({
         <span className="text-[10px] text-gray-500 uppercase tracking-wide">Individual Dialogue Lines</span>
         <span className="text-[10px] text-gray-500">{dialogueClips.length} clips</span>
       </div>
+      <p className="text-[10px] text-gray-500 leading-snug -mt-1 mb-2">
+        Speed fits each line to the cut. English from Veo is already time-fit per segment; use this mainly for translated dubs.
+      </p>
       
       {dialogueClips.map((clip, index) => {
         const clipId = dialogueClipConfigKey(clip, index)
         const startT = clip.startTime ?? 0
         const dur = clip.duration || 3
+        const wallDur = dialogueClipWallDuration(dur, clipConfigs[clipId]?.playbackRate)
         const config = clipConfigs[clipId] || {
           id: clipId,
           enabled: true,
           volume: globalVolume,
           startTime: startT,
           duration: dur,
+          playbackRate: 1,
         }
         const isPlaying = playingIndex === index
         
@@ -1934,7 +1970,10 @@ function DialogueLineControls({
                     {clip.character || `Line ${index + 1}`}
                   </span>
                   <span className="text-[10px] text-gray-500">
-                    {formatTime(startT)} - {formatTime(startT + dur)}
+                    {formatTime(startT)} – {formatTime(startT + wallDur)}
+                    {Math.abs((config.playbackRate ?? 1) - 1) > 0.02 && (
+                      <span className="text-gray-600"> · {dur.toFixed(1)}s src</span>
+                    )}
                   </span>
                 </div>
                 {clip.line && (
@@ -1968,6 +2007,61 @@ function DialogueLineControls({
                   <span className="text-[10px] text-gray-400 w-8 text-right">
                     {Math.round(config.volume * 100)}%
                   </span>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-gray-500">
+                      <Gauge className="w-3 h-3 flex-shrink-0" />
+                      <span className="text-[10px]">Speed</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {([0.85, 1, 1.1] as const).map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => updateClipConfig(index, { playbackRate: preset })}
+                          className={cn(
+                            'px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors',
+                            Math.abs((config.playbackRate ?? 1) - preset) < 0.02
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-700/80 text-gray-300 hover:bg-gray-600'
+                          )}
+                        >
+                          {preset}×
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        disabled={disabled || Math.abs((config.playbackRate ?? 1) - 1) < 0.02}
+                        onClick={() => updateClipConfig(index, { playbackRate: 1 })}
+                        className="text-[9px] text-gray-500 hover:text-gray-300 px-1 disabled:opacity-40"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Slider
+                      value={[Math.round((config.playbackRate ?? 1) * 100)]}
+                      onValueChange={([v]) =>
+                        updateClipConfig(index, {
+                          playbackRate: Math.min(
+                            DIALOGUE_PLAYBACK_RATE_MAX,
+                            Math.max(DIALOGUE_PLAYBACK_RATE_MIN, v / 100)
+                          ),
+                        })
+                      }
+                      min={50}
+                      max={200}
+                      step={5}
+                      className="flex-1"
+                      disabled={disabled}
+                    />
+                    <span className="text-[10px] text-gray-400 w-11 text-right tabular-nums">
+                      {Math.round((config.playbackRate ?? 1) * 100)}%
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
@@ -2557,6 +2651,16 @@ export function SceneProductionMixer({
     return { ...currentAudioUrls, dialogue }
   }, [currentAudioUrls, editableDialogueClips])
 
+  /** Timeline bars reflect wall-clock span (source duration / playback rate). */
+  const dialogueClipsForTimeline = useMemo(() => {
+    return editableDialogueClips.map((c, idx) => ({
+      ...c,
+      playbackRate: clampDialoguePlaybackRate(
+        dialogueClipConfigs[dialogueClipConfigKey(c, idx)]?.playbackRate
+      ),
+    }))
+  }, [editableDialogueClips, dialogueClipConfigs])
+
   const dialogueAudioProbeKey = useMemo(
     () =>
       playbackAudioUrls.dialogue
@@ -2723,8 +2827,8 @@ export function SceneProductionMixer({
       const dialogueEndTimes = playbackAudioUrls.dialogue.map((clip, idx) => {
         if (dialogueClipConfigs[dialogueClipConfigKey(clip, idx)]?.enabled === false) return 0
         const startTime = mixerDialogueStart(clip, idx, 3)
-        const duration = clip.duration ?? 3
-        return startTime + duration
+        const rate = dialogueClipConfigs[dialogueClipConfigKey(clip, idx)]?.playbackRate
+        return startTime + dialogueClipWallDuration(clip.duration, rate)
       })
       maxDuration = Math.max(maxDuration, ...dialogueEndTimes)
     }
@@ -2902,7 +3006,17 @@ export function SceneProductionMixer({
       })
       
       // Build audio tracks payload
-      const audioTracksPayload: Record<string, Array<{ url: string; startTime: number; duration: number; volume: number; character?: string }>> = {}
+      const audioTracksPayload: Record<
+        string,
+        Array<{
+          url: string
+          startTime: number
+          duration: number
+          volume: number
+          character?: string
+          playbackRate?: number
+        }>
+      > = {}
       
       if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
         audioTracksPayload.narration = [{
@@ -2926,6 +3040,9 @@ export function SceneProductionMixer({
               (dialogueClipConfigs[dialogueClipConfigKey(d, i)]?.volume ?? 1) *
               audioTracks.dialogue.volume,
             character: (d as { character?: string }).character,
+            playbackRate: clampDialoguePlaybackRate(
+              dialogueClipConfigs[dialogueClipConfigKey(d, i)]?.playbackRate
+            ),
           }))
       }
       
@@ -3268,12 +3385,14 @@ export function SceneProductionMixer({
           const clipConfig = dialogueClipConfigs[dialogueClipConfigKey(clip, idx)]
           if (clipConfig?.enabled === false) return
           const startTime = audioTracks.dialogue.startOffset + mixerDialogueStart(clip, idx, 2)
+          const pr = clampDialoguePlaybackRate(clipConfig?.playbackRate)
           audioClips.push({
             url: clip.audioUrl,
             startTime,
             duration: clip.duration || Math.max(0, totalDuration - startTime),
             volume: (clipConfig?.volume ?? 1.0) * audioTracks.dialogue.volume,
             type: 'dialogue',
+            playbackRate: pr,
           })
         })
       }
@@ -3535,6 +3654,7 @@ export function SceneProductionMixer({
         duration: number
         volume: number
         type: 'narration' | 'dialogue' | 'music' | 'sfx'
+        playbackRate?: number
       }> = []
       
       if (audioTracks.narration.enabled && playbackAudioUrls.narration) {
@@ -3553,12 +3673,14 @@ export function SceneProductionMixer({
           const clipConfig = dialogueClipConfigs[dialogueClipConfigKey(clip, idx)]
           if (clipConfig?.enabled === false) return
           const startTime = audioTracks.dialogue.startOffset + mixerDialogueStart(clip, idx, 2)
+          const pr = clampDialoguePlaybackRate(clipConfig?.playbackRate)
           audioClips.push({
             url: clip.audioUrl,
             startTime,
             duration: clip.duration || Math.max(0, totalDuration - startTime),
             volume: (clipConfig?.volume ?? 1.0) * audioTracks.dialogue.volume,
             type: 'dialogue',
+            playbackRate: pr,
           })
         })
       }
@@ -3908,7 +4030,7 @@ export function SceneProductionMixer({
                       dialogueDuration={playbackAudioUrls.dialogue.reduce((sum, d) => sum + ((d as { duration?: number }).duration || 3), 0)}
                       musicDuration={audioTracks.music.duration ?? videoTotalDuration}
                       sfxDuration={playbackAudioUrls.sfx.reduce((sum, s) => sum + (s.duration || 2), 0)}
-                      dialogueClips={editableDialogueClips}
+                      dialogueClips={dialogueClipsForTimeline}
                       onDialogueClipChange={handleDialogueClipChange}
                       textOverlays={textOverlays}
                       onTextOverlayChange={updateOverlay}

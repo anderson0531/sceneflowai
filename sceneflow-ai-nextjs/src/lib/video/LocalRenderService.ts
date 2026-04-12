@@ -64,6 +64,8 @@ export interface LocalRenderAudioClip {
   volume: number
   /** Type for debugging */
   type: 'narration' | 'dialogue' | 'music' | 'sfx'
+  /** 1 = normal; dialogue time-stretch for dub alignment */
+  playbackRate?: number
 }
 
 export interface LocalRenderTextOverlay {
@@ -488,6 +490,13 @@ export class LocalRenderService {
             
             const source = offlineCtx.createBufferSource()
             source.buffer = buffer
+            const rate =
+              clip.playbackRate != null &&
+              Number.isFinite(clip.playbackRate) &&
+              clip.playbackRate > 0
+                ? Math.min(2, Math.max(0.5, clip.playbackRate))
+                : 1
+            source.playbackRate.value = rate
             
             const gainNode = offlineCtx.createGain()
             gainNode.gain.value = clip.volume
@@ -498,7 +507,8 @@ export class LocalRenderService {
             // Schedule at the correct time offset within the composition
             const startTime = Math.max(0, clip.startTime)
             const maxDuration = Math.max(0, adjustedConfig.totalDuration - startTime)
-            source.start(startTime, 0, Math.min(clip.duration, maxDuration))
+            const srcLen = Math.min(clip.duration, buffer.duration)
+            source.start(startTime, 0, Math.min(srcLen, maxDuration * rate))
           })
           
           // Pre-render video audio from video elements
@@ -882,6 +892,13 @@ export class LocalRenderService {
       
       const source = this.audioContext!.createBufferSource()
       source.buffer = buffer
+      const rate =
+        clip.playbackRate != null &&
+        Number.isFinite(clip.playbackRate) &&
+        clip.playbackRate > 0
+          ? Math.min(2, Math.max(0.5, clip.playbackRate))
+          : 1
+      source.playbackRate.value = rate
       
       const gainNode = this.audioContext!.createGain()
       gainNode.gain.value = clip.volume
@@ -891,7 +908,8 @@ export class LocalRenderService {
       
       // Schedule playback
       const startTime = this.audioContext!.currentTime + clip.startTime
-      source.start(startTime, 0, clip.duration)
+      const srcLen = Math.min(clip.duration, buffer.duration)
+      source.start(startTime, 0, srcLen)
     })
   }
   

@@ -33,6 +33,8 @@ export interface AudioClipInfo {
   duration: number
   audioUrl?: string
   character?: string
+  /** When set, bar width uses duration / playbackRate (wall-clock). */
+  playbackRate?: number
 }
 
 interface MixerTimelineProps {
@@ -90,6 +92,13 @@ function formatTime(secs: number): string {
   return `${m}:${s < 10 ? '0' : ''}${s}`
 }
 
+function dialogueClipWallSeconds(clip: AudioClipInfo): number {
+  const src = clip.duration || 0
+  const r = clip.playbackRate
+  const rate = r == null || !Number.isFinite(r) || r <= 0 ? 1 : Math.min(2, Math.max(0.5, r))
+  return src / rate
+}
+
 // ============================================================================
 // MixerTimeline Component
 // ============================================================================
@@ -133,7 +142,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
   // Dialogue extent = latest clip end (absolute timeline), not sum of durations.
   const dialogueEndFromClips =
     dialogueClips.length > 0
-      ? Math.max(...dialogueClips.map(c => (c.startTime || 0) + (c.duration || 0)))
+      ? Math.max(...dialogueClips.map(c => (c.startTime || 0) + dialogueClipWallSeconds(c)))
       : 0
   const durations: Record<keyof MixerAudioTracks, number> = {
     narration: narrationDuration != null && narrationDuration > 0 ? narrationDuration : 0,
@@ -564,8 +573,9 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                   <div className="relative" style={{ minHeight: `${Math.max(26 * dialogueClips.length, 26)}px` }}>
                     {dialogueClips.map((clip, idx) => {
                       const startTime = clip.startTime
+                      const wallDur = dialogueClipWallSeconds(clip)
                       const startPercent = (startTime / totalDuration) * 100
-                      const widthPercent = (clip.duration / totalDuration) * 100
+                      const widthPercent = (wallDur / totalDuration) * 100
                       const isDragging = draggingClipId === clip.id
                       const characterLabel = clip.character || clip.label || `Dialogue ${idx + 1}`
                       
@@ -589,7 +599,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                             borderRadius: '3px',
                           }}
                           onMouseDown={(e) => handleClipDragStart(e, clip.id, clip.startTime, 'dialogue', 'move')}
-                          title={`${characterLabel}\n${formatTime(clip.startTime)} - ${formatTime(clip.startTime + clip.duration)}\n${clip.duration.toFixed(1)}s`}
+                          title={`${characterLabel}\n${formatTime(clip.startTime)} – ${formatTime(clip.startTime + wallDur)} (${wallDur.toFixed(1)}s on timeline${Math.abs((clip.playbackRate ?? 1) - 1) > 0.02 ? `, ${clip.duration.toFixed(1)}s file @ ${(clip.playbackRate ?? 1).toFixed(2)}×` : ''})`}
                         >
                           {/* Left Resize Handle */}
                           <div
@@ -603,7 +613,11 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                           />
                           <span className="text-[8px] font-medium truncate flex-1">
                             <span className="font-mono text-gray-500 mr-1.5">D{idx + 1}</span>
-                            {characterLabel} {clip.duration > 0 ? `${clip.duration.toFixed(1)}s` : ''}
+                            {characterLabel}{' '}
+                            {wallDur > 0 ? `${wallDur.toFixed(1)}s` : ''}
+                            {Math.abs((clip.playbackRate ?? 1) - 1) > 0.02 ? (
+                              <span className="text-gray-400"> @{(clip.playbackRate ?? 1).toFixed(2)}×</span>
+                            ) : null}
                           </span>
                         </div>
                       )

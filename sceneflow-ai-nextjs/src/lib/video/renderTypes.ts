@@ -337,6 +337,11 @@ export interface SceneRenderAudioClip {
   type: 'narration' | 'dialogue' | 'music' | 'sfx'
   /** Character name (for dialogue) */
   character?: string
+  /**
+   * Playback speed for time-stretching (1 = normal). Uses source `duration` as file length;
+   * wall-clock span is duration / playbackRate.
+   */
+  playbackRate?: number
 }
 
 /**
@@ -472,7 +477,13 @@ export interface CreateSceneRenderJobRequest {
   /** Audio tracks with timing */
   audioTracks: {
     narration?: Array<{ url: string; startTime: number; duration: number }>
-    dialogue?: Array<{ url: string; startTime: number; duration: number; character?: string }>
+    dialogue?: Array<{
+      url: string
+      startTime: number
+      duration: number
+      character?: string
+      playbackRate?: number
+    }>
     music?: Array<{ url: string; startTime: number; duration: number }>
     sfx?: Array<{ url: string; startTime: number; duration: number }>
   }
