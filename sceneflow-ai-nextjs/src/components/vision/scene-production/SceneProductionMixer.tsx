@@ -52,6 +52,7 @@ import {
   Languages,
   RefreshCw,
   Clapperboard,
+  Mic,
 } from 'lucide-react'
 import { upload } from '@vercel/blob/client'
 import { Button } from '@/components/ui/Button'
@@ -2164,6 +2165,7 @@ export function SceneProductionMixer({
 }: SceneProductionMixerProps) {
   const selectedLanguage = productionTarget.language
   const [isGeneratingLanguageAudio, setIsGeneratingLanguageAudio] = useState(false)
+  const [isRegeneratingNarration, setIsRegeneratingNarration] = useState(false)
   const [resolution, setResolution] = useState<'720p' | '1080p' | '4K'>('1080p')
   
   // === Theater Mode State ===
@@ -2831,6 +2833,28 @@ export function SceneProductionMixer({
       setIsGeneratingLanguageAudio(false)
     }
   }, [onGenerateSceneAudio, effectiveSceneIdx, audioAssets, sceneNumber])
+
+  const handleRegenerateNarration = useCallback(async () => {
+    if (!onGenerateSceneAudio || !audioAssets.narration) return
+    setIsRegeneratingNarration(true)
+    try {
+      toast.info('Generating narration audio…', { duration: 3000 })
+      await onGenerateSceneAudio(effectiveSceneIdx, 'narration', undefined, undefined, selectedLanguage)
+      toast.success('Narration audio updated')
+    } catch (err) {
+      console.error('[SceneProductionMixer] Narration regeneration error:', err)
+      toast.error(
+        `Failed to generate narration: ${err instanceof Error ? err.message : 'Unknown error'}`
+      )
+    } finally {
+      setIsRegeneratingNarration(false)
+    }
+  }, [
+    onGenerateSceneAudio,
+    effectiveSceneIdx,
+    audioAssets.narration,
+    selectedLanguage,
+  ])
   
   // === Handlers ===
   
@@ -4686,6 +4710,36 @@ export function SceneProductionMixer({
               )}
               
               {/* Audio Track Controls */}
+              <AudioTrackRow
+                type="narration"
+                label="Narration"
+                icon={Mic}
+                config={audioTracks.narration}
+                onConfigChange={(c) => updateTrackConfig('narration', c)}
+                audioUrl={playbackAudioUrls.narration}
+                audioDuration={playbackAudioUrls.narrationDuration}
+                videoTotalDuration={videoTotalDuration}
+                segmentCount={previewSegments.length}
+                subtitle={
+                  playbackAudioUrls.narration
+                    ? languageLabel
+                    : audioAssets.narration
+                      ? 'Generate audio to preview'
+                      : undefined
+                }
+                hasAudio={!!playbackAudioUrls.narration}
+                disabled={isRendering}
+                isCollapsed={collapsedSections.narration}
+                onToggleCollapse={() => toggleSection('narration')}
+                onRegenerate={
+                  onGenerateSceneAudio && audioAssets.narration
+                    ? handleRegenerateNarration
+                    : undefined
+                }
+                isRegenerating={
+                  isGeneratingAudio || isGeneratingLanguageAudio || isRegeneratingNarration
+                }
+              />
               <AudioTrackRow
                 type="dialogue"
                 label="Dialogue"

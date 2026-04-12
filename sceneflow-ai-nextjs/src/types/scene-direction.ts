@@ -174,8 +174,13 @@ export interface SegmentDirection {
   lightingMood?: string
   /** Key props visible in this segment */
   keyProps?: string[]
-  /** Dialogue line IDs covered by this segment (for reference) */
+  /** Dialogue line IDs covered by this segment (script lines: dialogue-0, …; plus dialogue-narration when VO timeline lines are included) */
   dialogueLineIds?: string[]
+  /**
+   * Combined audio timeline indices from segment generation (narration sentences first, then dialogue).
+   * Required for Phase 2 prompts; do not infer from dialogueLineIds alone once narration exists.
+   */
+  audioTimelineIndices?: number[]
   /** User has reviewed/approved this direction */
   isApproved: boolean
   /** User has edited this direction (vs AI-generated default) */

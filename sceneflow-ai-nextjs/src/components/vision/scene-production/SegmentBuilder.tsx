@@ -581,6 +581,9 @@ function mergeVideoPromptsIntoStaged(
       transitionType: w.transitionType ?? seg.transitionType,
       triggerReason: w.triggerReason ?? seg.triggerReason,
       emotionalBeat: w.emotionalBeat || seg.emotionalBeat,
+      ...(Array.isArray(w.dialogueLineIds) && w.dialogueLineIds.length > 0
+        ? { dialogueLineIds: w.dialogueLineIds }
+        : {}),
     }
   })
 }

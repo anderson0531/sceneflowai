@@ -424,7 +424,11 @@ export async function POST(
       }
 
       // Transform to SegmentDirection objects
-      const segmentDirections: SegmentDirection[] = directions.map((dir: any, idx: number) => ({
+      const segmentDirections: SegmentDirection[] = directions.map((dir: any, idx: number) => {
+        const timelineIdxs: number[] = Array.isArray(dir.dialogue_indices)
+          ? dir.dialogue_indices.filter((n: unknown) => typeof n === 'number' && n >= 0)
+          : []
+        return {
         estimatedDuration:
           typeof dir.estimated_duration === 'number' && dir.estimated_duration > 0
             ? dir.estimated_duration
@@ -439,7 +443,11 @@ export async function POST(
         isNoTalent: dir.is_no_talent || detectNoTalentSegment(sceneData.sceneDirection.talent),
         lightingMood: dir.lighting_mood,
         keyProps: dir.key_props || [],
-        dialogueLineIds: (dir.dialogue_indices || []).map((i: number) => `dialogue-${i}`),
+        audioTimelineIndices: timelineIdxs,
+        dialogueLineIds: dialogueLineIdsFromAssignedTimelineIndices(
+          timelineIdxs,
+          sceneData.combinedAudioTimeline
+        ),
         isApproved: false,
         isUserEdited: false,
         generationMethod: dir.generation_method || 'FTV',
@@ -455,7 +463,8 @@ export async function POST(
         environmentDescription: dir.environment_description || '',
         colorPalette: dir.color_palette || '',
         depthOfField: dir.depth_of_field || '',
-      }))
+      }
+      })
       
       console.log(`[Scene Segmentation] Phase 1 complete: ${segmentDirections.length} directions generated`)
       
@@ -631,8 +640,8 @@ export async function POST(
         ? sceneData.sceneFrameUrl 
         : null
 
-      // Phase 8: Timeline indices → script dialogueLineIds (dialogue-0 = first scene.dialogue line)
-      const dialogueLineIds = assignedTimelineIndicesToDialogueLineIds(
+      // Phase 8: Timeline indices → script dialogueLineIds + dialogue-narration when VO lines assigned
+      const dialogueLineIds = dialogueLineIdsFromAssignedTimelineIndices(
         seg.assigned_dialogue_indices,
         sceneData.combinedAudioTimeline
       )
@@ -909,6 +918,8 @@ interface ComprehensiveSceneData {
  * Persisted segment.dialogueLineIds must use SCRIPT indices: dialogue-0 → first scene.dialogue line.
  * Narration timeline entries are skipped (narration is not a script dialogue line id).
  */
+const NARRATION_CLIP_LINE_ID = 'dialogue-narration'
+
 function assignedTimelineIndicesToDialogueLineIds(
   assignedDialogueIndices: number[] | undefined,
   combinedAudioTimeline: ComprehensiveSceneData['combinedAudioTimeline']
@@ -926,6 +937,48 @@ function assignedTimelineIndicesToDialogueLineIds(
     }
   }
   return out
+}
+
+function assignedTimelineIndicesIncludeNarration(
+  assigned: number[] | undefined,
+  combinedAudioTimeline: ComprehensiveSceneData['combinedAudioTimeline']
+): boolean {
+  if (!assigned?.length) return false
+  for (const ti of assigned) {
+    const line = combinedAudioTimeline[ti]
+    if (line?.type === 'narration') return true
+  }
+  return false
+}
+
+/** Persisted segment dialogueLineIds: script dialogue ids + merged VO clip id when any assigned line is narration. */
+function dialogueLineIdsFromAssignedTimelineIndices(
+  assigned: number[] | undefined,
+  combinedAudioTimeline: ComprehensiveSceneData['combinedAudioTimeline']
+): string[] {
+  const scriptIds = assignedTimelineIndicesToDialogueLineIds(assigned, combinedAudioTimeline)
+  if (!assignedTimelineIndicesIncludeNarration(assigned, combinedAudioTimeline)) {
+    return scriptIds
+  }
+  const out = [...scriptIds]
+  if (!out.includes(NARRATION_CLIP_LINE_ID)) out.push(NARRATION_CLIP_LINE_ID)
+  return out
+}
+
+/** Phase 2: timeline indices carried on approved directions (preferred over parsing dialogueLineIds). */
+function audioTimelineIndicesForPhase2Prompts(dir: SegmentDirection): number[] {
+  const fromField = dir.audioTimelineIndices
+  if (Array.isArray(fromField) && fromField.length > 0) {
+    return [...fromField]
+  }
+  const ids = dir.dialogueLineIds || []
+  return ids
+    .filter((id): id is string => typeof id === 'string' && id.length > 0 && id !== NARRATION_CLIP_LINE_ID)
+    .map((id) => {
+      const m = /^dialogue-(\d+)$/.exec(id)
+      return m ? parseInt(m[1], 10) : NaN
+    })
+    .filter((n) => !Number.isNaN(n))
 }
 
 function dialogueLinesForAssignedTimelineIndices(
@@ -2205,7 +2258,7 @@ function generatePromptsFromDirectionsPrompt(
     characters: dir.characters,
     is_no_talent: dir.isNoTalent,
     lighting_mood: dir.lightingMood,
-    dialogue_indices: dir.dialogueLineIds?.map(id => parseInt(id.replace('dialogue-', ''))) || [],
+    dialogue_indices: audioTimelineIndicesForPhase2Prompts(dir),
     generation_method: dir.generationMethod,
     transition_in: (dir as any).transitionIn || 'cut',
     start_frame_description: (dir as any).startFrameDescription || '',
@@ -2394,11 +2447,15 @@ function enforceMaxSegmentDuration(
           ? [...dialogueIndices]
           : dialogueIndices.slice(i * dialoguePerPart, (i + 1) * dialoguePerPart)
 
-      // Build dialogue context for the prompt suffix
+      // Build audio line context for the prompt suffix (indices are COMBINED timeline, not script dialogue rows)
+      const tl = sceneData.combinedAudioTimeline
       const partDialogueTexts = partDialogue
-        .map(idx => sceneData.dialogue[idx])
-        .filter(Boolean)
-        .map(d => `${d.character}: "${d.text}"`)
+        .map((ti) => {
+          const line = tl[ti]
+          if (!line?.text) return null
+          return `${line.character}: "${line.text}"`
+        })
+        .filter((s): s is string => Boolean(s))
 
       const isFirstPart = i === 0
       const isLastPart = i === numParts - 1
@@ -2466,7 +2523,7 @@ function transformSegmentsToOutput(
     const useSceneFrame = seg.reference_strategy?.use_scene_frame ?? isFirstSegment
     const startFrameUrl = (isFirstSegment && useSceneFrame && sceneData.sceneFrameUrl) ? sceneData.sceneFrameUrl : null
 
-    const dialogueLineIds = assignedTimelineIndicesToDialogueLineIds(
+    const dialogueLineIds = dialogueLineIdsFromAssignedTimelineIndices(
       seg.assigned_dialogue_indices,
       sceneData.combinedAudioTimeline
     )
