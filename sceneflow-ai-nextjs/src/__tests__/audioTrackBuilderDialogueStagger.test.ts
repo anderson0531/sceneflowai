@@ -82,6 +82,31 @@ describe('dialogue audio vs video segment alignment (cumulative timeline)', () =
     expect(byIdx[1].startTime).toBeCloseTo(27, 5)
   })
 
+  it('remaps legacy dialogueLineIds that used combined-timeline indices (after narration sentences)', () => {
+    const scene = {
+      narration: 'First sentence. Second sentence.',
+      dialogue: [{ character: 'DOC', text: 'Line' }],
+      dialogueAudio: {
+        en: [{ audioUrl: 'https://example.com/d0.mp3', duration: 10, dialogueIndex: 0 }],
+      },
+      segments: [
+        { sequenceIndex: 0, startTime: 0, endTime: 8, dialogueLineIds: [] },
+        {
+          sequenceIndex: 1,
+          startTime: 8,
+          endTime: 16,
+          // Buggy persistence: timeline index 2 for first script line (2 VO lines precede dialogue in combined timeline)
+          dialogueLineIds: ['dialogue-2'],
+        },
+      ],
+    }
+    const tracks = buildAudioTracksForLanguage(scene, 'en', {
+      packDialogueToSegmentTimeline: true,
+    })
+    const d0 = tracks.dialogue.find(c => c.dialogueIndex === 0)
+    expect(d0?.startTime).toBeCloseTo(8, 5)
+  })
+
   it('buildDialogueLineIdToCumulativeTimelineStart adds playback offset per segment', () => {
     const scene = {
       segments: [

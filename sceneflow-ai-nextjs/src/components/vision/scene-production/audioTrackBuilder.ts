@@ -185,7 +185,8 @@ export function repackSegmentsFromAssignedDialogue(
     } else if (ids.length > 0) {
       dur = Math.min(maxS, Math.max(minS, standardSeg))
     } else {
-      dur = Math.min(maxS, Math.max(minS, getSegmentBaseDurationSeconds(seg) || standardSeg))
+      // Uniform grid: segments without script dialogue ids still use standard duration (e.g. VO-only shots)
+      dur = Math.min(maxS, Math.max(minS, standardSeg))
     }
     const next = { ...seg, startTime: t, endTime: t + dur }
     t += dur
@@ -233,6 +234,18 @@ export function buildDialogueLineIdToCumulativeTimelineStart(
   }
 
   return lineToStart
+}
+
+/** Matches generate-segments `combinedAudioTimeline`: narration sentences are listed before dialogue. */
+function inferNarrationTimelinePrefixCount(scene: any): number {
+  const nt = String(
+    scene?.narration ?? scene?.narrationText ?? scene?.sceneNarration ?? ''
+  ).trim()
+  if (!nt) return 0
+  return nt
+    .split(/(?<=[.!?])\s+/)
+    .map((s: string) => s.trim())
+    .filter((s: string) => s.length > 0).length
 }
 
 /**
@@ -449,10 +462,16 @@ export function buildAudioTracksForLanguage(
         options?.segmentPlaybackOffsetSeconds ?? 0
       )
       if (cumulativeStarts.size > 0) {
+        const narrPrefix = inferNarrationTimelinePrefixCount(scene)
         for (const clip of dialogueClips) {
           const idx = clip.dialogueIndex
           if (typeof idx !== 'number' || Number.isNaN(idx) || idx < 0) continue
-          const t0 = cumulativeStarts.get(dialogueLineIdForIndex(idx))
+          const key = dialogueLineIdForIndex(idx)
+          let t0 = cumulativeStarts.get(key)
+          // Legacy segments: dialogueLineIds used combined-timeline indices (dialogue-2 = first script line when 2 VO lines)
+          if (t0 === undefined && narrPrefix > 0) {
+            t0 = cumulativeStarts.get(`dialogue-${narrPrefix + idx}`)
+          }
           if (t0 !== undefined) {
             clip.startTime = t0
           }

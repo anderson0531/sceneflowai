@@ -631,14 +631,17 @@ export async function POST(
         ? sceneData.sceneFrameUrl 
         : null
 
-      // Phase 8: Transform dialogue indices to dialogue line IDs
-      const dialogueLineIds = (seg.assigned_dialogue_indices || []).map((index: number) => 
-        `dialogue-${index}`
+      // Phase 8: Timeline indices → script dialogueLineIds (dialogue-0 = first scene.dialogue line)
+      const dialogueLineIds = assignedTimelineIndicesToDialogueLineIds(
+        seg.assigned_dialogue_indices,
+        sceneData.combinedAudioTimeline
       )
 
       // Build prompt context for staleness detection
-      const assignedDialogue = sceneData.dialogue
-        .filter((_, didx) => (seg.assigned_dialogue_indices || []).includes(didx))
+      const assignedDialogue = dialogueLinesForAssignedTimelineIndices(
+        seg.assigned_dialogue_indices,
+        sceneData
+      )
       const dialogueText = assignedDialogue.map(d => `${d.character}:${d.text}`).join('|')
       const dialogueHash = simpleHash(dialogueText)
       const visualDescriptionHash = simpleHash(sceneData.visualDescription || '')
@@ -896,7 +899,49 @@ interface ComprehensiveSceneData {
     emotion?: string
     estimatedDuration: number
     visualNote?: string // For narration: what visuals to show
+    /** When type === 'dialogue', index into scene.dialogue (script line for dialogue-*) */
+    dialogueScriptIndex?: number
   }>
+}
+
+/**
+ * Gemini returns assigned_dialogue_indices as COMBINED timeline indices (narration lines first, then dialogue).
+ * Persisted segment.dialogueLineIds must use SCRIPT indices: dialogue-0 → first scene.dialogue line.
+ * Narration timeline entries are skipped (narration is not a script dialogue line id).
+ */
+function assignedTimelineIndicesToDialogueLineIds(
+  assignedDialogueIndices: number[] | undefined,
+  combinedAudioTimeline: ComprehensiveSceneData['combinedAudioTimeline']
+): string[] {
+  if (!assignedDialogueIndices?.length) return []
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const ti of assignedDialogueIndices) {
+    const line = combinedAudioTimeline[ti]
+    if (!line || line.type !== 'dialogue' || typeof line.dialogueScriptIndex !== 'number') continue
+    const id = `dialogue-${line.dialogueScriptIndex}`
+    if (!seen.has(id)) {
+      seen.add(id)
+      out.push(id)
+    }
+  }
+  return out
+}
+
+function dialogueLinesForAssignedTimelineIndices(
+  assignedDialogueIndices: number[] | undefined,
+  sceneData: ComprehensiveSceneData
+): Array<{ character: string; text: string }> {
+  if (!assignedDialogueIndices?.length) return []
+  const tl = sceneData.combinedAudioTimeline
+  const out: Array<{ character: string; text: string }> = []
+  for (const ti of assignedDialogueIndices) {
+    const line = tl[ti]
+    if (!line || line.type !== 'dialogue' || typeof line.dialogueScriptIndex !== 'number') continue
+    const d = sceneData.dialogue[line.dialogueScriptIndex]
+    if (d) out.push(d)
+  }
+  return out
 }
 
 function buildComprehensiveSceneData(
@@ -1066,6 +1111,7 @@ function buildComprehensiveSceneData(
       text: d.text,
       emotion: d.emotion || undefined,
       estimatedDuration,
+      dialogueScriptIndex: di,
     })
   })
 
@@ -2420,8 +2466,11 @@ function transformSegmentsToOutput(
     const useSceneFrame = seg.reference_strategy?.use_scene_frame ?? isFirstSegment
     const startFrameUrl = (isFirstSegment && useSceneFrame && sceneData.sceneFrameUrl) ? sceneData.sceneFrameUrl : null
 
-    const dialogueLineIds = (seg.assigned_dialogue_indices || []).map((index: number) => `dialogue-${index}`)
-    const assignedDialogue = sceneData.dialogue.filter((_, didx) => (seg.assigned_dialogue_indices || []).includes(didx))
+    const dialogueLineIds = assignedTimelineIndicesToDialogueLineIds(
+      seg.assigned_dialogue_indices,
+      sceneData.combinedAudioTimeline
+    )
+    const assignedDialogue = dialogueLinesForAssignedTimelineIndices(seg.assigned_dialogue_indices, sceneData)
     const dialogueText = assignedDialogue.map(d => `${d.character}:${d.text}`).join('|')
     const dialogueHash = simpleHash(dialogueText)
     const visualDescriptionHash = simpleHash(sceneData.visualDescription || '')
