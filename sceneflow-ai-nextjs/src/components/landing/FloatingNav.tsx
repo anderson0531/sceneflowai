@@ -3,26 +3,21 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  AlertTriangle, 
+  Clock3, 
   Shield, 
   Sparkles, 
-  Cpu, 
-  Zap,
+  Rocket,
   Film, 
-  Quote,
   DollarSign, 
   HelpCircle
 } from 'lucide-react'
 
-// Updated to match actual section IDs in landing-page.tsx
 const sections = [
-  { id: 'problem', label: 'Problem', icon: AlertTriangle },
+  { id: 'comparison', label: 'Compare', icon: Clock3 },
   { id: 'how-it-works', label: 'How It Works', icon: Sparkles },
-  { id: 'solution', label: 'Solution', icon: Shield },
-  { id: 'architecture', label: 'Tech', icon: Cpu },
-  { id: 'automation', label: 'Automation', icon: Zap },
-  { id: 'features', label: 'Features', icon: Film },
-  { id: 'testimonials', label: 'Stories', icon: Quote },
+  { id: 'use-cases', label: 'Use Cases', icon: Rocket },
+  { id: 'feature-storyboard', label: 'Storyboard', icon: Film },
+  { id: 'engineering', label: 'Platform', icon: Shield },
   { id: 'pricing', label: 'Pricing', icon: DollarSign },
   { id: 'faq', label: 'FAQ', icon: HelpCircle },
 ]

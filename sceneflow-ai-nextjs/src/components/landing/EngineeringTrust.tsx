@@ -19,11 +19,11 @@ const trustPillars = [
   {
     icon: Cpu,
     title: 'Enterprise Architecture',
-    description: 'Built on Google Cloud\'s Vertex AI infrastructure with automatic scaling, load balancing, and 99.9% uptime SLA.',
+    description: 'Built on Google Cloud infrastructure with scalable orchestration for production workloads and growing teams.',
     highlights: [
-      'Vertex AI Gemini 3.0 Pro',
-      'Veo 3 video synthesis',
-      'Imagen 4 image generation',
+      'Vertex AI for generation workflows',
+      'Veo video synthesis',
+      'Imagen image generation',
       'ElevenLabs TTS integration'
     ],
     gradient: 'from-cyan-500 to-blue-600',
@@ -34,9 +34,9 @@ const trustPillars = [
   {
     icon: Shield,
     title: 'Security & Privacy',
-    description: 'Your creative assets are protected with enterprise-grade security, encryption at rest, and strict data isolation.',
+    description: 'Creative assets stay protected with encryption at rest, access controls, and privacy-first handling.',
     highlights: [
-      'SOC 2 Type II compliant infra',
+      'Enterprise-ready cloud controls',
       'AES-256 encryption',
       'GDPR-ready data handling',
       'No training on user content'
@@ -49,7 +49,7 @@ const trustPillars = [
   {
     icon: Globe,
     title: 'Scale & Reliability',
-    description: 'Global edge network ensures fast renders regardless of location. Built to handle production workloads.',
+    description: 'Global cloud delivery supports reliable render and review pipelines as your volume grows.',
     highlights: [
       'Multi-region deployment',
       'CDN-accelerated delivery',
@@ -65,7 +65,7 @@ const trustPillars = [
 
 const metrics = [
   { value: '99.9%', label: 'Uptime SLA', icon: Server },
-  { value: '<2s', label: 'Avg. API Latency', icon: Zap },
+  { value: 'Global', label: 'Cloud Regions', icon: Zap },
   { value: '256-bit', label: 'Encryption', icon: Lock },
   { value: '24/7', label: 'Monitoring', icon: Clock }
 ];
@@ -93,7 +93,7 @@ export function EngineeringTrust() {
             </span>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Enterprise-grade infrastructure trusted by professional creators who demand uptime, speed, and data security.
+            Startup-friendly architecture with Google Cloud components that support security, scale, and practical production delivery.
           </p>
         </motion.div>
 
@@ -189,7 +189,7 @@ export function EngineeringTrust() {
                   <h4 className="font-semibold text-white">Data Privacy</h4>
                 </div>
                 <p className="text-sm text-gray-400">
-                  Your scripts and creative assets are <span className="text-emerald-400 font-medium">never used for AI training</span>. Google&apos;s enterprise ToS guarantees your IP stays yours.
+                  Your scripts and creative assets are <span className="text-emerald-400 font-medium">not used to train shared models</span>, helping protect your IP and client work.
                 </p>
               </div>
               
@@ -199,10 +199,10 @@ export function EngineeringTrust() {
                   <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
                     <Zap className="w-5 h-5 text-amber-400" />
                   </div>
-                  <h4 className="font-semibold text-white">No Generation Queues</h4>
+                  <h4 className="font-semibold text-white">Built for Reliable Throughput</h4>
                 </div>
                 <p className="text-sm text-gray-400">
-                  Enterprise-grade infrastructure means <span className="text-amber-400 font-medium">instant API access</span>—no waiting in line behind consumer users during peak hours.
+                  Production-oriented infrastructure helps maintain stable generation workflows during high-demand cycles.
                 </p>
               </div>
               
@@ -212,10 +212,10 @@ export function EngineeringTrust() {
                   <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
                     <Database className="w-5 h-5 text-purple-400" />
                   </div>
-                  <h4 className="font-semibold text-white">Frame-Anchored Precision</h4>
+                  <h4 className="font-semibold text-white">Reference-Aware Consistency</h4>
                 </div>
                 <p className="text-sm text-gray-400">
-                  Unlike Sora or Runway, our Vertex AI integration supports <span className="text-purple-400 font-medium">reference image anchoring</span>—ensuring character consistency that competitors can&apos;t match.
+                  SceneFlow uses reference-aware generation to improve consistency across characters, locations, and props from scene to scene.
                 </p>
               </div>
             </div>
@@ -239,11 +239,14 @@ export function EngineeringTrust() {
               className="opacity-90"
             />
             <span className="text-gray-300 text-sm">
-              Powered by <span className="text-white font-medium">Google Cloud</span> Vertex AI
+              Powered by <span className="text-white font-medium">Google Cloud</span> with Vertex AI, Cloud Storage, and translation tooling
             </span>
           </div>
           <p className="text-gray-500 text-xs mt-3 max-w-lg mx-auto">
-            SceneFlow AI runs on Google&apos;s enterprise infrastructure, leveraging the same AI models used by Fortune 500 companies.
+            SceneFlow AI runs on scalable Google Cloud infrastructure designed for startup growth and enterprise expectations.
+          </p>
+          <p className="text-gray-500 text-xs mt-2">
+            Google Startups application contact: <span className="text-gray-300">brian@sfai.studio</span>
           </p>
         </motion.div>
 

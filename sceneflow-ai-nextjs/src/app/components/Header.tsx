@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { Menu, X, User, LogOut, Shield, Calculator, Sparkles, ChevronDown, LayoutDashboard, Settings, Pen, Image as ImageIcon, Film, BarChart3, Building2, Workflow, ArrowRight, Clapperboard } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Pen, Image as ImageIcon, Film, BarChart3, Building2, Workflow, ArrowRight, Clapperboard } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { AuthModal } from '@/components/auth/AuthModal'
@@ -105,14 +105,6 @@ export function Header() {
     setIsMobileMenuOpen(false)
   }
 
-  const scrollToPricing = () => {
-    const element = document.getElementById('pricing')
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' })
-    }
-    setIsMobileMenuOpen(false)
-  }
-
   const openAuthModal = (mode: 'login' | 'signup') => {
     setAuthMode(mode)
     setIsAuthModalOpen(true)
@@ -203,7 +195,7 @@ export function Header() {
                     return (
                       <DropdownMenuItem
                         key={product.id}
-                        onClick={() => scrollToSection(`module-${product.id}`)}
+                        onClick={() => scrollToSection('use-cases')}
                         className="flex items-start gap-3 p-3 rounded-lg cursor-pointer"
                       >
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${product.bgColor}`}>
@@ -230,7 +222,7 @@ export function Header() {
 
               {/* The Workflow Link */}
               <button
-                onClick={() => scrollToSection('unified-workflow')}
+                onClick={() => scrollToSection('how-it-works')}
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <Workflow className="w-4 h-4" />
@@ -261,12 +253,8 @@ export function Header() {
                   <DropdownMenuItem onClick={() => scrollToSection('use-cases')}>
                     Use Cases
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => scrollToSection('value-calculator')}>
-                    <Calculator className="w-4 h-4 mr-2 text-emerald-400" />
-                    Value Calculator
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => scrollToSection('testimonials')}>
-                    Testimonials
+                  <DropdownMenuItem onClick={() => scrollToSection('engineering')}>
+                    Platform & Trust
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => scrollToSection('faq')}>
@@ -384,7 +372,7 @@ export function Header() {
                     return (
                       <button
                         key={product.id}
-                        onClick={() => scrollToSection(`module-${product.id}`)}
+                        onClick={() => scrollToSection('use-cases')}
                         className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg"
                       >
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${product.bgColor}`}>
@@ -402,7 +390,7 @@ export function Header() {
                   <div className="border-t border-gray-800/50 my-2" />
                   
                   {/* Primary Navigation */}
-                  <button onClick={() => scrollToSection('unified-workflow')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                  <button onClick={() => scrollToSection('how-it-works')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Workflow className="w-4 h-4" />
                     The Workflow
                   </button>
@@ -412,16 +400,6 @@ export function Header() {
                   </button>
                   <button onClick={() => scrollToSection('how-it-works')} className="text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">How it Works</button>
                   <button onClick={() => scrollToSection('use-cases')} className="text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">Use Cases</button>
-                  
-                  {/* Featured: Value Calculator */}
-                  <button 
-                    onClick={() => { scrollToSection('value-calculator'); setIsMobileMenuOpen(false); }} 
-                    className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer font-semibold text-base text-left py-3 px-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20"
-                  >
-                    <Calculator className="w-4 h-4" />
-                    Calculate Your Savings
-                    <Sparkles className="w-3 h-3" />
-                  </button>
                   
                   <button onClick={() => scrollToSection('faq')} className="text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">FAQ</button>
                   

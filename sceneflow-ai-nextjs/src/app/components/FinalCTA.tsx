@@ -1,8 +1,6 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { DemoVideoModal } from './DemoVideoModal'
-import { trackCta } from '@/lib/analytics'
 import { Button } from '@/components/ui/Button'
 import { ArrowRight } from 'lucide-react'
 
@@ -24,10 +22,10 @@ export function FinalCTA() {
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
-            Ready to move from "Prompter" to "Director"?
+            Ready to remove production barriers?
           </h2>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">
-            Join thousands of businesses, schools, and creators who are building the future of long-form video.
+            Launch real-estate showcases, education videos, podcasts, news formats, or cinematic projects with one production workflow.
           </p>
           <Button href="/dashboard" size="xl" className="w-full sm:w-auto">
             Launch Your Studio for $9

@@ -7,33 +7,18 @@ import { HeroSection } from './components/HeroSection'
 import { TrustSignals } from './components/TrustSignals'
 import { EngineeringTrust } from '@/components/landing/EngineeringTrust'
 
-// New "Living Pipeline" Ecosystem Sections
-const ModularShowcase = dynamic(() => import('@/components/landing/ModularShowcase'), { ssr: false })
-const UnifiedWorkflow = dynamic(() => import('@/components/landing/UnifiedWorkflow'), { ssr: false })
 const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
 
-// Value Proposition Sections - Streamlined for clarity and conversion
 const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachineSection'), { ssr: false })
 const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
-// Storyteller Mode - Audio-first creator targeting
-const CreatorFastTrackHero = dynamic(() => import('@/components/landing/CreatorFastTrackHero').then(m => m.CreatorFastTrackHero), { ssr: false })
-const FinancialFirewallSection = dynamic(() => import('@/components/landing/FinancialFirewallSection'), { ssr: false })
-const ProductivityValueSection = dynamic(() => import('./components/ProductivityValueSection'), { ssr: false })
-const FrameAnchoredSection = dynamic(() => import('@/components/landing/FrameAnchoredSection'), { ssr: false })
-const AutomationSection = dynamic(() => import('@/components/landing/AutomationSection'), { ssr: false })
-const FeatureHighlight = dynamic(() => import('./components/FeatureHighlight').then(m => m.FeatureHighlight), { ssr: false })
-const TestimonialsSection = dynamic(() => import('@/components/landing/TestimonialsSection'), { ssr: false })
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
 const FeatureStoryboardSection = dynamic(() => import('@/components/landing/FeatureStoryboardSection'), { ssr: false })
-const TemplatesGallery = dynamic(() => import('@/components/landing/TemplatesGallery'), { ssr: false })
 const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
 const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
 const ExitIntentPopup = dynamic(() => import('@/components/landing/ExitIntentPopup'), { ssr: false })
 import { FAQ } from './components/FAQ'
 import { FinalCTA } from './components/FinalCTA'
 import { Footer } from './components/Footer'
-import { ThreePillars } from '@/components/landing/ThreePillars'
-import { OutcomeGallery } from '@/components/landing/OutcomeGallery'
 
 export default function LandingPage() {
   return (
@@ -46,44 +31,34 @@ export default function LandingPage() {
       {/* 1. Hero: "Your Vision, Rendered. Without the Friction." */}
       <HeroSection />
       
-      {/* 2. Trust: Powered by Google Cloud credibility */}
+      {/* 2. Trust strip */}
       <TrustSignals />
-      
-      {/* 3. The "Three Pillars": Creator, Business, Educator */}
-      <ThreePillars />
 
-      {/* 4. The "Invisible Studio" - Business Protections */}
-      <FinancialFirewallSection /> {/* Reframed as "Budget Certainty" */}
-      <FrameAnchoredSection /> {/* Reframed as "Brand Protection" */}
-
-      {/* 5. "Stop Gambling. Start Producing." (Previously SlotMachineSection) */}
+      {/* 3. Traditional vs SceneFlow barrier comparison */}
       <SlotMachineSection />
 
-      {/* 6. Outcome Gallery: Real Results */}
-      <OutcomeGallery />
-      
-      {/* 7. How It Works - Moved down */}
+      {/* 4. How it works in plain language */}
       <HowItWorks />
-      
-      {/* 8. Testimonials: Social Proof */}
-      <TestimonialsSection />
 
-      {/* 9. Use Cases */}
+      {/* 5. Broad use cases */}
       <UseCasesSection />
 
-      {/* 10. Feature storyboard with placeholders */}
+      {/* 6. Feature storyboard with short-segment placeholders */}
       <FeatureStoryboardSection />
 
-      {/* 11. Pricing */}
+      {/* 7. Platform trust for startups and enterprise reviewers */}
+      <EngineeringTrust />
+
+      {/* 8. Pricing and budget control */}
       <PricingCredits />
 
-      {/* 12. FAQ: Objection handling */}
+      {/* 9. FAQ */}
       <FAQ />
       
-      {/* 13. Final CTA: "From Prompter to Director" */}
+      {/* 10. Final CTA */}
       <FinalCTA />
       
-      {/* 14. Footer: Navigation */}
+      {/* 11. Footer */}
       <Footer />
     </div>
   )

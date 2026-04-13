@@ -11,8 +11,8 @@ interface DemoVideoModalProps {
   poster?: string
 }
 
-// YouTube video ID
-const YOUTUBE_VIDEO_ID = 'M01EwOKyfcw'
+// Longform "What's Possible Reel" YouTube video ID
+const YOUTUBE_VIDEO_ID = 'Rp5kMYYdU50'
 
 export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
   const [isLoading, setIsLoading] = useState(true)
@@ -87,7 +87,7 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
               {/* YouTube iframe embed */}
               <iframe
                 src={youtubeEmbedUrl}
-                title="SceneFlow AI Demo"
+                title="SceneFlow AI What's Possible Reel"
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                 allowFullScreen
@@ -98,7 +98,7 @@ export function DemoVideoModal({ open, onClose }: DemoVideoModalProps) {
             
             {/* Subtle branding */}
             <p className="text-center text-gray-500 text-xs mt-3">
-              SceneFlow AI • AI-Powered Virtual Production Studio
+              SceneFlow AI Studio • What&apos;s Possible Reel
             </p>
           </motion.div>
         </motion.div>

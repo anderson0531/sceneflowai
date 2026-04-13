@@ -56,7 +56,7 @@ export function FAQ() {
     {
       question: 'How does the Explorer Plan work?',
       answer:
-        'For just $9.99, you get 3,000 credits to explore the full platform. That\'s enough to generate scripts, create character portraits, produce video clips, and add voice acting. No subscription required—just a one-time payment to see what SceneFlow can do for your creative projects.',
+        'For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan.',
     },
     {
       question: 'Do I need technical skills or video editing experience?',

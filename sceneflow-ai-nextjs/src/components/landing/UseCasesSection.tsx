@@ -38,19 +38,19 @@ const personas: UseCasePersona[] = [
     bgGradient: 'from-amber-500/10 to-orange-600/10',
     challenge: {
       title: 'The "B-Roll" Bottleneck',
-      description: 'You have a world-class script, but you\'re stuck spending 40+ hours hunting for mediocre stock footage or "gambling" your monthly budget on AI rerolls that don\'t match. Every time your character changes face between scenes, your audience\'s immersion breaks—and your retention drops.',
+      description: 'You have a strong script, but most of your time goes to finding footage, coordinating edits, and chasing consistency between scenes. That delay slows publishing cadence and weakens audience retention.',
     },
     solution: {
       title: 'The Automated Storyteller',
-      description: 'Transform your script into a 4K visual narrative in under 30 minutes. Use Frame-Anchored Precision™ to keep your historical figures or protagonists visually consistent from the first frame to the last.',
+      description: 'Turn scripts into production-ready visuals quickly while keeping character and style continuity from first scene to final cut.',
       features: [
-        'Retention-Optimized visuals that match your script beat-by-beat',
+        'Visuals that map cleanly to script beats',
         'Consistent Protagonists across every scene',
-        'Showrunner Engine™—scale to 40+ episode series with shared Reference Library',
+        'Scale to episode series with a shared reference library',
       ],
     },
-    win: 'Go from monthly uploads to launching a full YouTube franchise. Your script becomes a series, automatically.',
-    keyPhrases: ['Retention-Optimized', 'Consistent Protagonists', 'Showrunner Engine™'],
+    win: 'Move from occasional uploads to a reliable production cadence with less overhead.',
+    keyPhrases: ['Faster Turnaround', 'Consistent Characters', 'Series-Ready Workflow'],
     videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_34s_202512231713_zzqmk.mp4',
   },
   {
@@ -62,19 +62,19 @@ const personas: UseCasePersona[] = [
     bgGradient: 'from-cyan-500/10 to-blue-600/10',
     challenge: {
       title: 'High-Stakes Spec Work',
-      description: 'Winning the contract requires a "Sizzle Reel," but spending $5,000 on pre-vis for a project that isn\'t greenlit yet is a massive financial risk. Traditional AI tools are too "random" for brand guidelines, and manual storyboarding is too slow for 48-hour pitch windows.',
+      description: 'Pitch deadlines are tight, and pre-production costs can escalate before a client approves direction. Teams need speed while still keeping brand and quality controls.',
     },
     solution: {
       title: 'The "Locked" Concept Engine',
-      description: 'Build a pitch-ready director\'s treatment with 100% brand styling control. Use the Financial Firewall™ to iterate on the client\'s feedback for free in the "Visualizer" layer. Only spend credits on the final 4K render once the client approves the animatic.',
+      description: 'Build pitch-ready treatments with practical brand controls, iterate quickly with client feedback, and push to high-resolution outputs once direction is approved.',
       features: [
-        'Budget Protection—iterate for free until approval',
-        'Fixed Brand Guidelines—every frame on-brand',
-        'Zero-Risk Pre-Vis—no credits until locked',
+        'Budget visibility through every iteration',
+        'Brand-safe visual controls',
+        'Fast pre-visualization for short approval windows',
       ],
     },
-    win: 'Win more pitches with 90% lower upfront costs. Move from "Concept" to "Approved" while your competitors are still sketching storyboards.',
-    keyPhrases: ['Budget Protection', 'Fixed Brand Guidelines', 'Zero-Risk Pre-Vis'],
+    win: 'Deliver faster pitch cycles and reduce up-front production risk for client work.',
+    keyPhrases: ['Budget Predictability', 'Brand Consistency', 'Faster Approvals'],
     videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_24s_202512231746_xzz58.mp4',
   },
 ];
@@ -318,18 +318,18 @@ export default function UseCasesSection() {
         >
           <div className="inline-flex items-center px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full mb-6">
             <User className="w-4 h-4 text-purple-400 mr-2" />
-            <span className="text-purple-300 text-sm font-medium">Choose Your Path</span>
+            <span className="text-purple-300 text-sm font-medium">Production Applications</span>
           </div>
           
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Production Certainty for{' '}
+            Whatever Video You Can Imagine,{' '}
             <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-cyan-400 bg-clip-text text-transparent">
-              Every Creator
+              Build It in SceneFlow
             </span>
           </h2>
           
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">
-            Whether you're fighting a clock or fighting a budget, SceneFlow gives you control.
+            Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories all run through one production workflow.
           </p>
         </motion.div>
 

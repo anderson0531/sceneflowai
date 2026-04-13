@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, X, Calculator } from 'lucide-react';
+import { ArrowRight, X, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 
 export default function FloatingCTA() {
@@ -49,12 +49,12 @@ export default function FloatingCTA() {
             <div className="flex items-center gap-2 max-w-md mx-auto">
               <button
                 onClick={() => {
-                  document.getElementById('value-calculator')?.scrollIntoView({ behavior: 'smooth' });
+                  document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-400 font-semibold rounded-xl transition-all"
               >
-                <Calculator className="w-4 h-4" />
-                <span className="text-sm">See Savings</span>
+                <DollarSign className="w-4 h-4" />
+                <span className="text-sm">See Pricing</span>
               </button>
               <Link
                 href="/?signup=1"

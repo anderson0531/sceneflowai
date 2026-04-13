@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { DemoVideoModal } from './DemoVideoModal'
 import { Play, ArrowRight, ExternalLink } from 'lucide-react'
 
-/** 60s commercial: Anya discovers SceneFlow */
+/** Longform "What's Possible Reel" */
 const HERO_COMMERCIAL_VIDEO_ID = 'Rp5kMYYdU50'
 const HERO_COMMERCIAL_EMBED_SRC = `https://www.youtube-nocookie.com/embed/${HERO_COMMERCIAL_VIDEO_ID}?rel=0&modestbranding=1&playsinline=1`
 const HERO_COMMERCIAL_WATCH_URL = `https://www.youtube.com/watch?v=${HERO_COMMERCIAL_VIDEO_ID}`
@@ -40,7 +40,7 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              SceneFlow is the world’s first AI Video Studio designed for the Director, not the Prompter. Whether you’re launching a real-estate empire, a corporate training series, or the next viral YouTube documentary—focus on your story. We’ll handle the pixels.
+              Plan and produce real videos without a full production team. From real-estate showcases and training to podcasts, news, and cinema-style stories, SceneFlow helps non-technical creators move from idea to publish-ready output.
             </motion.p>
             
             {/* New CTAs */}
@@ -66,7 +66,7 @@ export function HeroSection() {
             </motion.div>
           </div>
 
-          {/* 60s commercial: Anya discovers SceneFlow (YouTube) */}
+          {/* Longform What's Possible Reel (YouTube) */}
           <motion.div
             className="relative max-w-4xl mx-auto mt-16"
             initial={{ opacity: 0, y: 20 }}
@@ -79,7 +79,7 @@ export function HeroSection() {
               <div className="relative aspect-video w-full">
                 <iframe
                   src={HERO_COMMERCIAL_EMBED_SRC}
-                  title="Anya discovers SceneFlow — 60 second commercial"
+                  title="SceneFlow What's Possible Reel"
                   className="absolute inset-0 h-full w-full"
                   allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                   allowFullScreen
@@ -89,7 +89,7 @@ export function HeroSection() {
             </div>
 
             <p className="mt-4 text-center text-sm text-gray-400">
-              60-second spot: Anya discovers SceneFlow
+              Longform feature walkthrough: What&apos;s Possible with SceneFlow
             </p>
             <p className="mt-1 text-center">
               <a

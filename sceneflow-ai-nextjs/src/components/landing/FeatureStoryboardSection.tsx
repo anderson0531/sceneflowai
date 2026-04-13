@@ -7,8 +7,8 @@ type FeatureStoryboardItem = {
   id: number;
   title: string;
   description: string;
-  videoPlaceholder: string;
-  screenshotPlaceholder: string;
+  videoSlot: string;
+  screenshotSlot: string;
 };
 
 const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
@@ -17,80 +17,80 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Intuitive UX + Full Creator Control',
     description:
       'Start fast with guided automation, then edit every generated output so teams keep creative control without losing speed.',
-    screenshotPlaceholder: 'Screenshot: Blueprint editor with editable generated sections',
-    videoPlaceholder: 'Video Placeholder (00:30): UX flow from concept to editable output',
+    screenshotSlot: 'Insert screenshot: Blueprint editor with editable generated sections',
+    videoSlot: 'Insert 00:30 clip: UX flow from concept to editable output',
   },
   {
     id: 2,
     title: 'Credit Budget Tracking + Vertex AI BYOK',
     description:
       'Track credit usage in real time, set practical production guardrails, and use Vertex AI BYOK for enterprise governance.',
-    screenshotPlaceholder: 'Screenshot: credit usage panel and BYOK settings screen',
-    videoPlaceholder: 'Video Placeholder (00:30): budget dashboard and key configuration',
+    screenshotSlot: 'Insert screenshot: credit usage panel and BYOK settings',
+    videoSlot: 'Insert 00:30 clip: budget dashboard and key configuration',
   },
   {
     id: 3,
     title: 'Any Concept, One Production Workflow',
     description:
       'Use one reliable pipeline for training, podcasts, news, home sales videos, and cinematic content.',
-    screenshotPlaceholder: 'Screenshot: project templates and concept examples',
-    videoPlaceholder: 'Video Placeholder (00:30): create project from multiple concept types',
+    screenshotSlot: 'Insert screenshot: project templates and concept examples',
+    videoSlot: 'Insert 00:30 clip: create project from multiple concept types',
   },
   {
     id: 4,
     title: 'Concept to Episode Series Automation',
     description:
       'Scale from single concept to episodic production with audience resonance insights guiding each iteration.',
-    screenshotPlaceholder: 'Screenshot: series and episode workspace with resonance panel',
-    videoPlaceholder: 'Video Placeholder (00:30): concept converted into episode series',
+    screenshotSlot: 'Insert screenshot: series and episode workspace with resonance panel',
+    videoSlot: 'Insert 00:30 clip: concept converted into episode series',
   },
   {
     id: 5,
     title: 'Concept or Episode to Blueprint',
     description:
       'Build a production-ready blueprint with characters, beats, and constraints, then optimize with resonance recommendations.',
-    screenshotPlaceholder: 'Screenshot: blueprint sections for characters and story beats',
-    videoPlaceholder: 'Video Placeholder (00:30): blueprint generation and optimization pass',
+    screenshotSlot: 'Insert screenshot: blueprint sections for characters and story beats',
+    videoSlot: 'Insert 00:30 clip: blueprint generation and optimization pass',
   },
   {
     id: 6,
     title: 'Blueprint to Production in One Click',
     description:
       'Generate scene-by-scene script, dialogue, and direction, then refine with script-level and scene-level resonance feedback.',
-    screenshotPlaceholder: 'Screenshot: generated scene cards and script review',
-    videoPlaceholder: 'Video Placeholder (00:30): one-click start production and script generation',
+    screenshotSlot: 'Insert screenshot: generated scene cards and script review',
+    videoSlot: 'Insert 00:30 clip: one-click start production and script generation',
   },
   {
     id: 7,
     title: 'Shared Reference Library for Continuity',
     description:
       'Maintain consistent characters, wardrobe, voices, locations, and props across scenes and episodes with reusable references.',
-    screenshotPlaceholder: 'Screenshot: reference library with characters, voices, and props',
-    videoPlaceholder: 'Video Placeholder (00:30): reference reuse across multiple scenes',
+    screenshotSlot: 'Insert screenshot: reference library with characters, voices, and props',
+    videoSlot: 'Insert 00:30 clip: reference reuse across multiple scenes',
   },
   {
     id: 8,
     title: '76+ Languages + Adaptive Translation',
     description:
       'Localize content at scale while preserving narrative intent and timeline alignment for multilingual delivery.',
-    screenshotPlaceholder: 'Screenshot: language selector and translated timeline tracks',
-    videoPlaceholder: 'Video Placeholder (00:30): generate multilingual output and alignment',
+    screenshotSlot: 'Insert screenshot: language selector and translated timeline tracks',
+    videoSlot: 'Insert 00:30 clip: generate multilingual output and alignment',
   },
   {
     id: 9,
     title: 'Storyboard to Veo-Aligned Scene Production',
     description:
       'Create a quick audiovisual storyboard, then produce scenes with automated segmentation aligned to Veo 3.1 durations.',
-    screenshotPlaceholder: 'Screenshot: storyboard preview and segment breakdown',
-    videoPlaceholder: 'Video Placeholder (00:30): storyboard to segmented scene generation',
+    screenshotSlot: 'Insert screenshot: storyboard preview and segment breakdown',
+    videoSlot: 'Insert 00:30 clip: storyboard to segmented scene generation',
   },
   {
     id: 10,
     title: 'Final Cut + Screening Room + Cloud Scale',
     description:
       'Edit with precision in Final Cut, validate with Screening Room feedback, and run on scalable Google Cloud infrastructure.',
-    screenshotPlaceholder: 'Screenshot: Final Cut timeline, Screening Room feedback metrics',
-    videoPlaceholder: 'Video Placeholder (00:30): final polish, screening, and publish readiness',
+    screenshotSlot: 'Insert screenshot: Final Cut timeline and Screening Room feedback',
+    videoSlot: 'Insert 00:30 clip: final polish, screening, and publish readiness',
   },
 ];
 
@@ -119,7 +119,7 @@ function StoryboardCard({ item }: { item: FeatureStoryboardItem }) {
             Screenshot
           </p>
           <div className="aspect-video rounded-lg border border-white/10 bg-slate-900/70 p-3 text-xs text-slate-400">
-            {item.screenshotPlaceholder}
+            {item.screenshotSlot}
           </div>
         </div>
 
@@ -129,7 +129,7 @@ function StoryboardCard({ item }: { item: FeatureStoryboardItem }) {
             Feature Video
           </p>
           <div className="aspect-video rounded-lg border border-white/10 bg-slate-900/70 p-3 text-xs text-slate-400">
-            {item.videoPlaceholder}
+            {item.videoSlot}
           </div>
         </div>
       </div>
@@ -156,7 +156,7 @@ export default function FeatureStoryboardSection() {
             Feature Storyboard (10 x 30s Blocks)
           </h2>
           <p className="mt-4 text-base text-slate-300">
-            A practical, screen-capture-ready structure with dedicated placeholders for screenshot proof and feature demo clips.
+            A practical structure for the 5-minute reel, with ready slots for screenshot evidence and short feature clips.
           </p>
         </motion.div>
 
