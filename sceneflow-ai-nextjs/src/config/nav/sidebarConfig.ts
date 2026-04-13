@@ -96,14 +96,17 @@ export interface WorkflowSidebarConfig {
 }
 
 // ============================================================================
-// SHARED WORKFLOW STEPPER (canonical 3-phase pipeline)
+// SHARED WORKFLOW STEPPER (canonical 4-phase pipeline)
 // ============================================================================
 
-function makeWorkflowSteps(currentPhase: 'blueprint' | 'production' | 'final-cut'): WorkflowStep[] {
+function makeWorkflowSteps(
+  currentPhase: 'blueprint' | 'production' | 'final-cut' | 'premiere'
+): WorkflowStep[] {
   const phases: { id: string; label: string; href: (pid: string) => string }[] = [
     { id: 'blueprint', label: 'Blueprint', href: (pid) => `/dashboard/studio/${pid}` },
     { id: 'production', label: 'Production', href: (pid) => `/dashboard/workflow/vision/${pid}` },
     { id: 'final-cut', label: 'Final Cut', href: (pid) => `/dashboard/workflow/final-cut?projectId=${pid}` },
+    { id: 'premiere', label: 'Premiere', href: (pid) => `/dashboard/workflow/premiere?projectId=${pid}` },
   ]
   const currentIndex = phases.findIndex((p) => p.id === currentPhase)
   return phases.map((p, i) => ({
@@ -249,6 +252,11 @@ export const finalCutSidebarConfig: WorkflowSidebarConfig = {
   },
 }
 
+export const premiereSidebarConfig: WorkflowSidebarConfig = {
+  ...finalCutSidebarConfig,
+  workflowSteps: makeWorkflowSteps('premiere'),
+}
+
 // ============================================================================
 // DASHBOARD CONFIG (default when not in a workflow)
 // ============================================================================
@@ -296,9 +304,11 @@ export function getSidebarConfigForPath(pathname: string): WorkflowSidebarConfig
   if (pathname.includes('/dashboard/workflow/vision/')) {
     return productionSidebarConfig
   }
+  if (pathname.includes('/dashboard/workflow/premiere')) {
+    return premiereSidebarConfig
+  }
   if (pathname.includes('/dashboard/workflow/generation/') ||
-      pathname.includes('/dashboard/workflow/final-cut') ||
-      pathname.includes('/dashboard/workflow/premiere')) {
+      pathname.includes('/dashboard/workflow/final-cut')) {
     return finalCutSidebarConfig
   }
   if (pathname.includes('/dashboard/studio/') || pathname.includes('/dashboard/workflow/ideation/')) {
