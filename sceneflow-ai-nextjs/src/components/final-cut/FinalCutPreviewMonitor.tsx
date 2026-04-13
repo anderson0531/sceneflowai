@@ -10,6 +10,59 @@ import {
   resolveSceneLevelPreviewVideo,
 } from '@/lib/final-cut/resolveSegmentMedia'
 
+/** Wait until dimensions / duration are known so currentTime seeks are reliable */
+function waitLoadedMetadata(video: HTMLVideoElement): Promise<void> {
+  if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+    return Promise.resolve()
+  }
+  return new Promise((resolve) => {
+    const onMeta = () => {
+      video.removeEventListener('error', onErr)
+      resolve()
+    }
+    const onErr = () => {
+      video.removeEventListener('loadedmetadata', onMeta)
+      resolve()
+    }
+    video.addEventListener('loadedmetadata', onMeta, { once: true })
+    video.addEventListener('error', onErr, { once: true })
+  })
+}
+
+/** Seek and wait for the decoder; avoids playing the wrong frame at scene / URL boundaries */
+function seekToTimeAndSettle(video: HTMLVideoElement, seconds: number): Promise<void> {
+  return new Promise((resolve) => {
+    if (!Number.isFinite(seconds)) {
+      resolve()
+      return
+    }
+    const target = Math.max(0, seconds)
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      window.clearTimeout(timer)
+      video.removeEventListener('seeked', onSeeked)
+      resolve()
+    }
+    const onSeeked = () => finish()
+    video.addEventListener('seeked', onSeeked, { once: true })
+    const timer = window.setTimeout(finish, 1000)
+    try {
+      video.currentTime = target
+    } catch {
+      finish()
+      return
+    }
+    requestAnimationFrame(() => {
+      if (settled) return
+      if (!video.seeking && Math.abs(video.currentTime - target) < 0.08) {
+        finish()
+      }
+    })
+  })
+}
+
 function resolvedVideoUrl(
   seg: StreamSegment,
   sourceSceneId: string,
@@ -163,16 +216,49 @@ export function FinalCutPreviewMonitor({
 }: FinalCutPreviewMonitorProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [previewMuted, setPreviewMuted] = useState(false)
+  const isPlayingRef = useRef(isPlaying)
+  const playbackRateRef = useRef(playbackRate)
+  const previewMutedRef = useRef(previewMuted)
+  const masterVolumeRef = useRef(masterVolume)
+  const resyncGeneration = useRef(0)
 
   const clip = useMemo(
     () => findPreviewClipAtTime(selectedStream, currentTime, sceneProductionState),
     [selectedStream, currentTime, sceneProductionState]
   )
 
+  const clipRef = useRef(clip)
+  clipRef.current = clip
+
+  const clipSourceKey = useMemo(() => {
+    if (!clip || clip.media.assetType !== 'video') return ''
+    return `${clip.scene.id}|${clip.media.assetUrl}|${clip.usesSceneLevelVideo ? 'scene' : clip.segment.id}`
+  }, [
+    clip?.scene.id,
+    clip?.media.assetUrl,
+    clip?.media.assetType,
+    clip?.usesSceneLevelVideo,
+    clip?.segment.id,
+  ])
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying
+  }, [isPlaying])
+  useEffect(() => {
+    playbackRateRef.current = playbackRate
+  }, [playbackRate])
+  useEffect(() => {
+    previewMutedRef.current = previewMuted
+  }, [previewMuted])
+  useEffect(() => {
+    masterVolumeRef.current = masterVolume
+  }, [masterVolume])
+
   const seekVideoToClip = useCallback(() => {
     const v = videoRef.current
-    if (!v || !clip || clip.media.assetType !== 'video') return
-    const target = clip.localTimeSec
+    const c = clipRef.current
+    if (!v || !c || c.media.assetType !== 'video') return
+    const target = c.localTimeSec
     if (!Number.isFinite(target)) return
     if (Math.abs(v.currentTime - target) > 0.12) {
       try {
@@ -181,24 +267,56 @@ export function FinalCutPreviewMonitor({
         /* seek may throw if no data */
       }
     }
-  }, [clip])
+  }, [])
 
-  // New file / segment: seek once metadata is ready
+  // New URL or scene: load metadata, seek, then play — avoids starting before the file is ready
   useEffect(() => {
     const v = videoRef.current
-    if (!v || !clip || clip.media.assetType !== 'video') return
-    const t = clip.localTimeSec
-    const apply = () => {
-      if (Number.isFinite(t)) v.currentTime = t
+    const c = clipRef.current
+    if (!v || !c || c.media.assetType !== 'video' || !clipSourceKey) return
+
+    const gen = ++resyncGeneration.current
+    let cancelled = false
+
+    const run = async () => {
+      v.pause()
+      v.muted = previewMutedRef.current
+      v.volume = Math.max(0, Math.min(100, masterVolumeRef.current)) / 100
+
+      await waitLoadedMetadata(v)
+      if (cancelled || gen !== resyncGeneration.current) return
+
+      const targetClip = clipRef.current
+      if (!targetClip || targetClip.media.assetType !== 'video') return
+      await seekToTimeAndSettle(v, targetClip.localTimeSec)
+      if (cancelled || gen !== resyncGeneration.current) return
+
+      v.playbackRate = playbackRateRef.current
+      v.muted = previewMutedRef.current
+      if (isPlayingRef.current) {
+        try {
+          await v.play()
+        } catch {
+          setPreviewMuted(true)
+          v.muted = true
+          v.play().catch(() => {})
+        }
+      }
     }
-    v.addEventListener('loadedmetadata', apply, { once: true })
-    if (v.readyState >= 1) apply()
-  }, [clip?.media.assetUrl, clip?.segment.id, clip?.media.assetType])
 
-  // Play / pause + rate (avoid depending on full `clip` — it updates every scrub frame)
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [clipSourceKey])
+
+  // Play / pause when only transport changes (same video source; new source handled by resync)
   useEffect(() => {
     const v = videoRef.current
-    if (!v || !clip || clip.media.assetType !== 'video') return
+    const c = clipRef.current
+    if (!v || !c || c.media.assetType !== 'video' || !clipSourceKey) return
+    if (v.readyState < HTMLMediaElement.HAVE_METADATA) return
+
     v.playbackRate = playbackRate
     if (isPlaying) {
       seekVideoToClip()
@@ -211,19 +329,16 @@ export function FinalCutPreviewMonitor({
       v.pause()
       seekVideoToClip()
     }
-  }, [
-    isPlaying,
-    playbackRate,
-    clip?.segment.id,
-    clip?.media.assetUrl,
-    clip?.media.assetType,
-    seekVideoToClip,
-  ])
+  }, [isPlaying, playbackRate, clipSourceKey, seekVideoToClip])
 
-  // Scrub / timeline drift
+  // Scrub / timeline drift (same source)
   useEffect(() => {
+    const v = videoRef.current
+    const c = clipRef.current
+    if (!v || !c || c.media.assetType !== 'video') return
+    if (v.readyState < HTMLMediaElement.HAVE_METADATA) return
     seekVideoToClip()
-  }, [currentTime, seekVideoToClip])
+  }, [currentTime, seekVideoToClip, clipSourceKey])
 
   useEffect(() => {
     const v = videoRef.current
@@ -300,7 +415,7 @@ export function FinalCutPreviewMonitor({
               className="h-full w-full object-contain"
               playsInline
               muted={previewMuted}
-              preload="metadata"
+              preload="auto"
             />
           ) : (
             <img
