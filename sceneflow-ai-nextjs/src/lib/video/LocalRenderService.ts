@@ -297,6 +297,152 @@ export function isLocalRenderSupported(): { supported: boolean; reason?: string 
   return { supported: true }
 }
 
+/** Per-segment cap so a hung URL fails fast instead of blocking export indefinitely */
+const VIDEO_PRELOAD_TIMEOUT_MS = 180_000
+
+/**
+ * Resolve when the element can provide a decodable video frame, or reject on error/timeout.
+ * Relying only on `loadeddata` hangs when many `<video>` elements load in parallel (connection limits)
+ * or when some browsers omit that event for certain encodings.
+ */
+function waitForVideoPreload(
+  video: HTMLVideoElement,
+  segmentId: string,
+  assetUrl: string,
+  signal: AbortSignal
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let settled = false
+    let abortListener: (() => void) | null = null
+
+    const cleanup = () => {
+      clearTimeout(timer)
+      video.removeEventListener('loadeddata', onLoadedData)
+      video.removeEventListener('canplay', onCanPlay)
+      video.removeEventListener('loadedmetadata', onLoadedMetadata)
+      video.removeEventListener('progress', onProgress)
+      video.removeEventListener('error', onError)
+      video.removeEventListener('stalled', onStalled)
+      if (abortListener) signal.removeEventListener('abort', abortListener)
+    }
+
+    const finish = (ok: boolean, err?: Error) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      if (ok) resolve()
+      else reject(err ?? new Error(`Video preload failed: ${segmentId}`))
+    }
+
+    const tryResolveIfPlayable = (): boolean => {
+      if (
+        video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+        video.videoWidth > 0 &&
+        video.videoHeight > 0
+      ) {
+        console.log(
+          '[LocalRender] Video loaded:',
+          segmentId,
+          video.videoWidth,
+          'x',
+          video.videoHeight
+        )
+        finish(true)
+        return true
+      }
+      return false
+    }
+
+    const onLoadedData = () => {
+      if (!tryResolveIfPlayable()) {
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
+          console.log(
+            '[LocalRender] Video loaded:',
+            segmentId,
+            video.videoWidth,
+            'x',
+            video.videoHeight
+          )
+          finish(true)
+        }
+      }
+    }
+
+    const onCanPlay = () => {
+      tryResolveIfPlayable()
+    }
+
+    const onLoadedMetadata = () => {
+      tryResolveIfPlayable()
+    }
+
+    const onProgress = () => {
+      tryResolveIfPlayable()
+    }
+
+    const onError = () => {
+      const code = video.error?.code ?? '?'
+      const message = video.error?.message ?? ''
+      console.error(
+        '[LocalRender] Video load failed:',
+        segmentId,
+        'code',
+        code,
+        message,
+        assetUrl?.slice(0, 120)
+      )
+      finish(
+        false,
+        new Error(
+          `Failed to load video ${segmentId} (media error ${code}). Check the file URL and CORS.`
+        )
+      )
+    }
+
+    const onStalled = () => {
+      console.warn('[LocalRender] Video stalled (slow network?):', segmentId)
+    }
+
+    video.addEventListener('loadeddata', onLoadedData)
+    video.addEventListener('canplay', onCanPlay)
+    video.addEventListener('loadedmetadata', onLoadedMetadata)
+    video.addEventListener('progress', onProgress)
+    video.addEventListener('error', onError)
+    video.addEventListener('stalled', onStalled)
+
+    const timer = setTimeout(() => {
+      console.error(
+        '[LocalRender] Video preload timeout:',
+        segmentId,
+        'readyState=',
+        video.readyState,
+        'networkState=',
+        video.networkState,
+        assetUrl?.slice(0, 100)
+      )
+      finish(
+        false,
+        new Error(
+          `Timed out loading video (${Math.round(VIDEO_PRELOAD_TIMEOUT_MS / 1000)}s): ${segmentId}. ` +
+            'Your connection may be slow or too many clips are loading at once — try again or export fewer segments.'
+        )
+      )
+    }, VIDEO_PRELOAD_TIMEOUT_MS)
+
+    abortListener = () => {
+      finish(false, new DOMException('Aborted', 'AbortError'))
+    }
+    if (signal.aborted) {
+      finish(false, new DOMException('Aborted', 'AbortError'))
+      return
+    }
+    signal.addEventListener('abort', abortListener)
+
+    video.src = assetUrl
+    queueMicrotask(() => tryResolveIfPlayable())
+  })
+}
+
 // =============================================================================
 // Local Render Service
 // =============================================================================
@@ -867,76 +1013,82 @@ export class LocalRenderService {
     signal: AbortSignal
   ): Promise<Map<string, HTMLImageElement | HTMLVideoElement>> {
     const assets = new Map<string, HTMLImageElement | HTMLVideoElement>()
-    
-    console.log('[LocalRender] Preloading assets for', segments.length, 'segments:', 
-      segments.map(s => ({ id: s.segmentId, type: s.assetType, url: s.assetUrl?.substring(0, 80) })))
-    
-    await Promise.all(
-      segments.map(async (segment) => {
-        if (signal.aborted) return
-        
-        if (segment.assetType === 'video') {
+
+    console.log(
+      '[LocalRender] Preloading assets for',
+      segments.length,
+      'segments:',
+      segments.map((s) => ({ id: s.segmentId, type: s.assetType, url: s.assetUrl?.substring(0, 80) }))
+    )
+
+    const videoSegments = segments.filter((s) => s.assetType === 'video')
+    const imageSegments = segments.filter((s) => s.assetType === 'image')
+
+    // Fewer parallel video fetches avoids silent stalls when the browser limits connections per host.
+    const VIDEO_LOAD_CONCURRENCY = 4
+    for (let i = 0; i < videoSegments.length; i += VIDEO_LOAD_CONCURRENCY) {
+      if (signal.aborted) break
+      const batch = videoSegments.slice(i, i + VIDEO_LOAD_CONCURRENCY)
+      await Promise.all(
+        batch.map(async (segment) => {
+          if (signal.aborted) return
           console.log('[LocalRender] Loading video asset:', segment.segmentId)
           const video = document.createElement('video')
           video.crossOrigin = 'anonymous'
           video.preload = 'auto'
-          video.muted = true // We handle audio separately
-          
-          await new Promise<void>((resolve, reject) => {
-            video.onloadeddata = () => {
-              console.log('[LocalRender] Video loaded:', segment.segmentId, video.videoWidth, 'x', video.videoHeight)
-              resolve()
-            }
-            video.onerror = (e) => {
-              console.error('[LocalRender] Video load failed (CORS issue?):', segment.segmentId, e)
-              reject(new Error(`Failed to load video: ${segment.assetUrl}`))
-            }
-            video.src = segment.assetUrl
-          })
-          
+          video.muted = true
+          video.playsInline = true
+          video.setAttribute('playsinline', '')
+          await waitForVideoPreload(video, segment.segmentId, segment.assetUrl, signal)
           assets.set(segment.segmentId, video)
-        } else {
-          console.log('[LocalRender] Loading image asset:', segment.segmentId)
-          const img = new Image()
-          img.crossOrigin = 'anonymous'
-          
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => {
-              console.log('[LocalRender] Image loaded:', segment.segmentId, img.width, 'x', img.height)
+        })
+      )
+    }
+
+    await Promise.all(
+      imageSegments.map(async (segment) => {
+        if (signal.aborted) return
+
+        console.log('[LocalRender] Loading image asset:', segment.segmentId)
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => {
+            console.log('[LocalRender] Image loaded:', segment.segmentId, img.width, 'x', img.height)
+            resolve()
+          }
+          img.onerror = (e) => {
+            console.error('[LocalRender] Image load failed (CORS issue?):', segment.segmentId, e)
+            reject(new Error(`Failed to load image: ${segment.assetUrl}`))
+          }
+          img.src = segment.assetUrl
+        })
+
+        assets.set(segment.segmentId, img)
+
+        if (segment.endFrameUrl && segment.endFrameUrl !== segment.assetUrl) {
+          const endKey = `${segment.segmentId}__end`
+          const endImg = new Image()
+          endImg.crossOrigin = 'anonymous'
+          await new Promise<void>((resolve) => {
+            endImg.onload = () => {
+              console.log('[LocalRender] End frame loaded:', segment.segmentId)
               resolve()
             }
-            img.onerror = (e) => {
-              console.error('[LocalRender] Image load failed (CORS issue?):', segment.segmentId, e)
-              reject(new Error(`Failed to load image: ${segment.assetUrl}`))
+            endImg.onerror = () => {
+              console.warn('[LocalRender] End frame failed, using start-only:', segment.segmentId)
+              resolve()
             }
-            img.src = segment.assetUrl
+            endImg.src = segment.endFrameUrl!
           })
-          
-          assets.set(segment.segmentId, img)
-
-          if (segment.endFrameUrl && segment.endFrameUrl !== segment.assetUrl) {
-            const endKey = `${segment.segmentId}__end`
-            const endImg = new Image()
-            endImg.crossOrigin = 'anonymous'
-            await new Promise<void>((resolve, reject) => {
-              endImg.onload = () => {
-                console.log('[LocalRender] End frame loaded:', segment.segmentId)
-                resolve()
-              }
-              endImg.onerror = () => {
-                console.warn('[LocalRender] End frame failed, using start-only:', segment.segmentId)
-                resolve()
-              }
-              endImg.src = segment.endFrameUrl!
-            })
-            if (endImg.complete && endImg.naturalWidth > 0) {
-              assets.set(endKey, endImg)
-            }
+          if (endImg.complete && endImg.naturalWidth > 0) {
+            assets.set(endKey, endImg)
           }
         }
       })
     )
-    
+
     return assets
   }
   
