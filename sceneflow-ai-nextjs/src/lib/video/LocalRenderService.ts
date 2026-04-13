@@ -18,6 +18,15 @@
 'use client'
 
 // =============================================================================
+// Canvas capture (video/mixed exports)
+// =============================================================================
+
+/** Manual frame capture when using canvas.captureStream(0) */
+interface CanvasCaptureMediaStreamTrack extends MediaStreamTrack {
+  requestFrame(): void
+}
+
+// =============================================================================
 // Types
 // =============================================================================
 
@@ -645,18 +654,25 @@ export class LocalRenderService {
       // Setup MediaRecorder
       onProgress?.({ phase: 'rendering', progress: 40 })
       const exportFormat = adjustedConfig.exportFormat ?? 'webm'
-      // Always use timed captureStream(fps). With captureStream(0) + requestFrame(), Chromium
-      // timestamps each frame from *wall-clock gaps* between requests; slow seeks/draws (~70–100ms)
-      // collapse to ~10fps so the video track becomes 3–4× longer than the composition while
-      // pre-rendered audio stays correct — slow-motion picture vs normal sound.
-      // Timed capture emits frames on a steady clock matching export fps (see adaptive pacing below).
+      // Image-only: timed captureStream(fps) so VP9 gets steady samples (avoids single-frame WebM).
+      // Video/mixed: captureStream(0) + requestFrame() once per *composition* frame only.
+      // Timed captureStream(fps) on video runs for the whole wall-clock render; the browser keeps
+      // sampling at fps while the loop only updates the canvas ~totalFrames times → thousands of
+      // duplicate timeline ticks → multi-minute file with slow-motion picture vs ~48s audio.
       const allSegmentsAreImages =
         adjustedConfig.segments.length > 0 &&
         adjustedConfig.segments.every((s) => s.assetType === 'image')
       const captureFps = Math.min(60, Math.max(1, Math.round(adjustedConfig.fps)))
-      const stream = this.canvas.captureStream(captureFps)
+      const stream = allSegmentsAreImages
+        ? this.canvas.captureStream(captureFps)
+        : this.canvas.captureStream(0)
+      const canvasVideoTrack = !allSegmentsAreImages
+        ? (stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack | undefined)
+        : undefined
       console.log(
-        `[LocalRender] Using captureStream(${captureFps}) for uniform frame timing (${allSegmentsAreImages ? 'image animatic' : 'video / mixed'})`
+        allSegmentsAreImages
+          ? `[LocalRender] captureStream(${captureFps}) — image animatic`
+          : '[LocalRender] captureStream(0) + requestFrame — one sample per composition frame'
       )
       
       // ===========================================================================
@@ -872,14 +888,13 @@ export class LocalRenderService {
         }))
       })
 
-      const renderClockStart =
-        typeof performance !== 'undefined' ? performance.now() : 0
-
       for (let frame = 0; frame < totalFrames; frame++) {
         if (signal.aborted) {
           this.mediaRecorder.stop()
           throw new Error('Render aborted')
         }
+
+        const iterStart = typeof performance !== 'undefined' ? performance.now() : 0
 
         const currentTime = frame / adjustedConfig.fps
 
@@ -938,6 +953,11 @@ export class LocalRenderService {
         // This microtask delay ensures the buffer state is registered
         await new Promise(resolve => setTimeout(resolve, 0))
 
+        // One encoded video sample per composition frame (video/mixed path)
+        if (!allSegmentsAreImages && canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
+          canvasVideoTrack.requestFrame()
+        }
+
         // Report progress
         const progress = 40 + Math.round((frame / totalFrames) * 50)
         onProgress?.({
@@ -947,17 +967,24 @@ export class LocalRenderService {
           totalFrames,
         })
 
-        // Pace to wall-clock ≈ composition length: each frame should end by (frame+1)*frameDuration
-        // from render start. Slow seeks skip extra sleep when behind; fast frames wait to realign.
-        const now = typeof performance !== 'undefined' ? performance.now() : 0
-        const targetEnd = renderClockStart + (frame + 1) * frameDuration
-        const wait = Math.max(0, targetEnd - now)
+        // Keep average wall time per frame ≈ frameDuration so MediaRecorder timeline matches audio.
+        // (Timed captureStream alone cannot do this — it keeps sampling for the whole long render.)
+        const elapsed =
+          typeof performance !== 'undefined' ? performance.now() - iterStart : 0
+        if (!allSegmentsAreImages && elapsed > frameDuration * 1.35) {
+          console.warn(
+            `[LocalRender] Frame ${frame} took ${elapsed.toFixed(0)}ms (budget ${frameDuration.toFixed(0)}ms) — export may drift; lower resolution or fps if A/V desyncs`
+          )
+        }
+        const wait = Math.max(0, frameDuration - elapsed)
         await this.sleep(wait, signal)
       }
 
       // Stop recording
       onProgress?.({ phase: 'encoding', progress: 95 })
-      // Let timed captureStream pull one more stable frame before stop
+      if (!allSegmentsAreImages && canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
+        canvasVideoTrack.requestFrame()
+      }
       await this.sleep(Math.max(150, frameDuration * 2), signal)
       this.mediaRecorder.stop()
       
