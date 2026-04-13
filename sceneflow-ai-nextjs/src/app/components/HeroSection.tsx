@@ -7,7 +7,7 @@ import { DemoVideoModal } from './DemoVideoModal'
 import { Play, ArrowRight, ExternalLink } from 'lucide-react'
 
 /** 60s commercial: Anya discovers SceneFlow */
-const HERO_COMMERCIAL_VIDEO_ID = 'L_YTRIbT0yk'
+const HERO_COMMERCIAL_VIDEO_ID = 'Rp5kMYYdU50'
 const HERO_COMMERCIAL_EMBED_SRC = `https://www.youtube-nocookie.com/embed/${HERO_COMMERCIAL_VIDEO_ID}?rel=0&modestbranding=1&playsinline=1`
 const HERO_COMMERCIAL_WATCH_URL = `https://www.youtube.com/watch?v=${HERO_COMMERCIAL_VIDEO_ID}`
 
