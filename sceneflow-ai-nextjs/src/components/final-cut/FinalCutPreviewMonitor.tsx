@@ -162,7 +162,7 @@ export function FinalCutPreviewMonitor({
   className,
 }: FinalCutPreviewMonitorProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [previewMuted, setPreviewMuted] = useState(true)
+  const [previewMuted, setPreviewMuted] = useState(false)
 
   const clip = useMemo(
     () => findPreviewClipAtTime(selectedStream, currentTime, sceneProductionState),
