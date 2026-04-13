@@ -3,6 +3,7 @@
  * 
  * Components for the Final Cut timeline assembly phase:
  * - FinalCutTimeline: Main multi-track timeline editor
+ * - FinalCutStreamsPanel: Project-level stream list (Animatic / Video)
  * - StreamSelector: Language/format stream picker
  * - OverlayEditor: Text/image overlay configuration
  * - TransitionPanel: Scene transition settings
@@ -10,6 +11,7 @@
  */
 
 export { FinalCutTimeline } from './FinalCutTimeline'
+export { FinalCutStreamsPanel } from './FinalCutStreamsPanel'
 export { StreamSelector } from './StreamSelector'
 export { OverlayEditor } from './OverlayEditor'
 export { TransitionPanel } from './TransitionPanel'

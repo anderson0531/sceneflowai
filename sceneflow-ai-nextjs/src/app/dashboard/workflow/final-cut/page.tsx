@@ -18,6 +18,8 @@ import {
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { FinalCutTimeline } from '@/components/final-cut/FinalCutTimeline'
+import { FinalCutStreamsPanel } from '@/components/final-cut/FinalCutStreamsPanel'
+import { ScreeningRoomDashboard } from '@/components/screening-room/ScreeningRoomDashboard'
 import { ExportDialog, type ExportSettings } from '@/components/final-cut/ExportDialog'
 import type { LocalRenderConfig, LocalRenderResolution } from '@/lib/video/LocalRenderService'
 import type {
@@ -857,6 +859,56 @@ export default function FinalCutPage() {
 
   const lastExportUrl = (currentProject?.metadata as { exportedVideoUrl?: string } | undefined)
     ?.exportedVideoUrl
+
+  const finalCutScreenings = useMemo(() => {
+    if (!projectId) return []
+
+    const items: Array<{
+      id: string
+      title: string
+      streamId?: string
+      videoUrl?: string
+      createdAt: string
+      status: 'draft' | 'active' | 'completed' | 'expired'
+      viewerCount: number
+      averageCompletion: number
+    }> = []
+
+    const exported = (
+      (currentProject?.metadata as { exportedVideoUrl?: string } | undefined)?.exportedVideoUrl || ''
+    ).trim()
+    if (exported) {
+      items.push({
+        id: `project-export-${projectId}`,
+        title: 'Latest project export',
+        videoUrl: exported,
+        createdAt: new Date().toISOString(),
+        status: 'draft',
+        viewerCount: 0,
+        averageCompletion: 0,
+      })
+    }
+
+    for (const stream of streams) {
+      for (const ex of stream.exports ?? []) {
+        const url = (ex.outputUrl || '').trim()
+        if (!url) continue
+        const done = ex.status === 'complete'
+        items.push({
+          id: ex.id,
+          title: `Export · ${stream.name}`,
+          streamId: stream.id,
+          videoUrl: url,
+          createdAt: ex.completedAt || ex.createdAt,
+          status: done ? 'active' : 'draft',
+          viewerCount: 0,
+          averageCompletion: 0,
+        })
+      }
+    }
+
+    return items
+  }, [projectId, currentProject?.metadata, streams])
   
   // ============================================================================
   // Render
@@ -1035,21 +1087,54 @@ export default function FinalCutPage() {
         )
       })()}
 
-      {/* Main Content - Timeline */}
-      <main className="flex-1 min-h-0 flex flex-col border-t border-white/[0.04]">
-        <FinalCutTimeline
-          projectId={projectId || ''}
-          streams={streams}
-          selectedStreamId={selectedStreamId}
-          onStreamSelect={handleStreamSelect}
-          onCreateStream={handleCreateStream}
-          onSceneReorder={handleSceneReorder}
-          onTransitionUpdate={handleTransitionUpdate}
-          onOverlayUpdate={handleOverlayUpdate}
-          onExport={handleExport}
-          totalDuration={totalDuration}
-          isProcessing={isSaving}
-        />
+      {/* Streams + Mixer + Screening Room */}
+      <main className="flex-1 min-h-0 flex flex-col gap-4 px-4 sm:px-5 py-4 overflow-y-auto border-t border-white/[0.04]">
+        <div className="shrink-0">
+          <FinalCutStreamsPanel
+            streams={streams}
+            selectedStreamId={selectedStreamId}
+            onSelectStream={handleStreamSelect}
+            onCreateStream={handleCreateStream}
+            disabled={isDemo || isSaving || (!isDemo && !currentProject)}
+          />
+        </div>
+
+        <div className="flex-1 min-h-0 flex flex-col min-h-[min(60vh,520px)]">
+          <FinalCutTimeline
+            projectId={projectId || ''}
+            streams={streams}
+            selectedStreamId={selectedStreamId}
+            onSceneReorder={handleSceneReorder}
+            onTransitionUpdate={handleTransitionUpdate}
+            onOverlayUpdate={handleOverlayUpdate}
+            onExport={handleExport}
+            totalDuration={totalDuration}
+            isProcessing={isSaving}
+          />
+        </div>
+
+        {projectId ? (
+          <div className="shrink-0 pb-2">
+            <ScreeningRoomDashboard
+              variant="finalCutOnly"
+              projectId={projectId}
+              projectName={isDemo ? 'Demo project' : currentProject?.title}
+              finalCutScreenings={finalCutScreenings}
+              screeningCredits={100}
+              onCreateScreening={() => {
+                toast.message('Screenings', {
+                  description: 'Screening creation will connect to the Premiere workflow in a future update.',
+                })
+              }}
+              onUploadExternal={async () => {
+                toast.message('Upload', {
+                  description: 'External screening upload is not wired yet.',
+                })
+                throw new Error('Not implemented')
+              }}
+            />
+          </div>
+        ) : null}
       </main>
     </div>
   )

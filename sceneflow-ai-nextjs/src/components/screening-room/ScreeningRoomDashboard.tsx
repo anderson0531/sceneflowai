@@ -65,6 +65,9 @@ interface ScreeningRoomDashboardProps {
   onViewAnalytics?: (screeningId: string) => void
   onConfigureABTest?: (screeningId: string) => void
   onUploadExternal?: (file: File) => Promise<string>
+
+  /** Embedded on Final Cut page: Final Cut tab + external upload only */
+  variant?: 'full' | 'finalCutOnly'
 }
 
 interface ScreeningItem {
@@ -123,8 +126,10 @@ export function ScreeningRoomDashboard({
   onViewAnalytics,
   onConfigureABTest,
   onUploadExternal,
+  variant = 'full',
 }: ScreeningRoomDashboardProps) {
-  const [activeTab, setActiveTab] = useState<string>('storyboard')
+  const isFinalCutOnly = variant === 'finalCutOnly'
+  const [activeTab, setActiveTab] = useState<string>(isFinalCutOnly ? 'final-cut' : 'storyboard')
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [dragOver, setDragOver] = useState(false)
@@ -317,24 +322,30 @@ export function ScreeningRoomDashboard({
   // Render: Empty State
   // ============================================================================
   
-  const renderEmptyState = () => {
-    const tabConfig = TABS.find(t => t.id === activeTab)
+  const renderEmptyState = (tabOverride?: ScreeningType) => {
+    const tabId = (tabOverride ?? activeTab) as ScreeningType
+    const tabConfig = TABS.find((t) => t.id === tabId)
     if (!tabConfig) return null
-    
+
     const Icon = tabConfig.icon
-    
+
     return (
-      <div className="text-center py-16">
-        <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Icon className="w-8 h-8 text-gray-500" />
+      <div className={cn('text-center', isFinalCutOnly ? 'py-10' : 'py-16')}>
+        <div
+          className={cn(
+            'bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4',
+            isFinalCutOnly ? 'w-14 h-14' : 'w-16 h-16'
+          )}
+        >
+          <Icon className={cn('text-gray-500', isFinalCutOnly ? 'w-7 h-7' : 'w-8 h-8')} />
         </div>
-        <h3 className="text-lg font-semibold text-white mb-2">
+        <h3 className={cn('font-semibold text-white mb-2', isFinalCutOnly ? 'text-base' : 'text-lg')}>
           No {tabConfig.label} Screenings
         </h3>
-        <p className="text-gray-400 mb-6 max-w-md mx-auto">
+        <p className="text-gray-400 mb-6 max-w-md mx-auto text-sm">
           {tabConfig.description}. Create your first screening to start collecting audience insights.
         </p>
-        <Button onClick={() => onCreateScreening?.(activeTab as ScreeningType)}>
+        <Button onClick={() => onCreateScreening?.(tabId)}>
           <Plus className="w-4 h-4 mr-2" />
           Create Screening
         </Button>
@@ -421,7 +432,47 @@ export function ScreeningRoomDashboard({
   // ============================================================================
   
   const screenings = getScreeningsForTab()
-  
+
+  if (isFinalCutOnly) {
+    const finalCutList = finalCutScreenings
+    return (
+      <div className="space-y-4 rounded-xl border border-slate-700/60 bg-slate-900/35 p-4 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+              <Video className="w-4 h-4 text-violet-400 shrink-0" />
+              Final Cut screenings
+            </h2>
+            {projectName ? <p className="text-xs text-slate-500 mt-1 truncate">{projectName}</p> : null}
+            <p className="text-xs text-slate-500 mt-2 max-w-2xl leading-relaxed">
+              Share exports and external uploads for feedback. Linked videos appear below.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
+            <div className="px-2.5 py-1.5 bg-gray-800/90 rounded-lg border border-gray-700 text-xs">
+              <span className="text-gray-400">Credits:</span>
+              <span className="text-white font-semibold ml-2">{screeningCredits}</span>
+            </div>
+            <Button size="sm" onClick={() => onCreateScreening?.('final-cut')}>
+              <Plus className="w-4 h-4 mr-2" />
+              New screening
+            </Button>
+          </div>
+        </div>
+
+        {renderExternalUpload()}
+
+        {finalCutList.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {finalCutList.map(renderScreeningCard)}
+          </div>
+        ) : (
+          renderEmptyState('final-cut')
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 p-6">
       {/* Header */}

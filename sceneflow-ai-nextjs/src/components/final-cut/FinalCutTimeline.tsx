@@ -12,7 +12,6 @@ import {
   ZoomIn,
   ZoomOut,
   Grid3X3,
-  ChevronLeft,
   ChevronRight,
   Volume2,
   Settings,
@@ -30,8 +29,8 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
-import { StreamSelector } from './StreamSelector'
 import { SceneBlock } from './SceneBlock'
+import { ProductionSectionHeader } from '@/components/vision/scene-production/ProductionSectionHeader'
 import { TimelineRuler } from './TimelineRuler'
 import { TimelinePlayhead } from './TimelinePlayhead'
 import { TransitionPanel } from './TransitionPanel'
@@ -43,9 +42,7 @@ import type {
   Overlay,
   TransitionEffect,
   TimelineState,
-  TimelineEditMode,
-  ProductionLanguage,
-  ProductionFormat
+  TimelineEditMode
 } from '@/lib/types/finalCut'
 
 // ============================================================================
@@ -59,10 +56,6 @@ export interface FinalCutTimelineProps {
   streams: FinalCutStream[]
   /** Currently selected stream ID */
   selectedStreamId: string | null
-  /** Callback when stream selection changes */
-  onStreamSelect: (streamId: string) => void
-  /** Callback to create a new stream */
-  onCreateStream: (language: ProductionLanguage, format: ProductionFormat) => Promise<void>
   /** Callback when scene order changes */
   onSceneReorder: (sceneIds: string[]) => void
   /** Callback when a scene transition is updated */
@@ -97,8 +90,6 @@ export function FinalCutTimeline({
   projectId,
   streams,
   selectedStreamId,
-  onStreamSelect,
-  onCreateStream,
   onSceneReorder,
   onTransitionUpdate,
   onOverlayUpdate,
@@ -304,23 +295,39 @@ export function FinalCutTimeline({
   // ============================================================================
   
   return (
-    <div 
+    <div
       className={cn(
-        "flex flex-col h-full min-h-0 bg-zinc-950 text-zinc-100",
-        isFullscreen && "fixed inset-0 z-50"
+        'flex flex-col flex-1 min-h-0 rounded-xl border border-purple-500/30 bg-zinc-950/60 text-zinc-100 overflow-hidden shadow-[inset_0_1px_0_0_rgba(168,85,247,0.06)]',
+        isFullscreen && 'fixed inset-0 z-50 rounded-none border-0 shadow-none'
       )}
     >
+      <div className="shrink-0 border-b border-purple-500/25 bg-zinc-950/90">
+        <ProductionSectionHeader
+          icon={Film}
+          title="Final Cut Mixer"
+          badge={selectedStream ? selectedStream.scenes.length : 0}
+          rightHint="Project assembly — scenes, transitions, overlays"
+        />
+      </div>
+
+      <div className="flex flex-col flex-1 min-h-0 bg-zinc-950">
       {/* Top Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-3 px-4 py-2.5 border-b border-white/[0.06] bg-zinc-900/40">
-        {/* Left: Stream Selector */}
+        {/* Left: current stream (selection lives in Final Cut Streams panel) */}
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-          <StreamSelector
-            streams={streams}
-            selectedStreamId={selectedStreamId}
-            onStreamSelect={onStreamSelect}
-            onCreateStream={onCreateStream}
-          />
-          
+          <div
+            className="flex items-center gap-2 min-w-0 max-w-[min(100%,320px)] rounded-lg border border-zinc-700/80 bg-zinc-900/70 px-3 py-2"
+            title={selectedStream?.name ?? 'Choose a stream above'}
+          >
+            <Film className="w-4 h-4 text-violet-400 shrink-0" aria-hidden />
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-wider text-zinc-500 leading-none">Current stream</p>
+              <p className="text-sm font-medium text-zinc-100 truncate mt-0.5">
+                {selectedStream?.name ?? 'None selected'}
+              </p>
+            </div>
+          </div>
+
           <div className="h-7 w-px bg-zinc-800 hidden sm:block" />
           
           {/* Timecode Display */}
@@ -708,6 +715,7 @@ export function FinalCutTimeline({
           }}
         />
       )}
+      </div>
     </div>
   )
 }

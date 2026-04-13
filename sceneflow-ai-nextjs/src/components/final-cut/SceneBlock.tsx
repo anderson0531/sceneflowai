@@ -24,6 +24,8 @@ export interface SceneBlockProps {
   onTransitionClick: () => void
   /** Current edit mode */
   editMode: TimelineEditMode
+  /** When true, hide per-segment divider lines (scene-first timeline) */
+  hideSegmentDividers?: boolean
 }
 
 // ============================================================================
@@ -52,7 +54,8 @@ export function SceneBlock({
   isSelected,
   onSelect,
   onTransitionClick,
-  editMode
+  editMode,
+  hideSegmentDividers = true,
 }: SceneBlockProps) {
   // Calculate position and width
   const left = scene.startTime * pixelsPerSecond
@@ -134,10 +137,10 @@ export function SceneBlock({
         </div>
       )}
       
-      {/* Segment Dividers */}
-      {scene.segments.length > 1 && (
+      {/* Segment dividers (optional; hidden by default for scene-first assembly) */}
+      {!hideSegmentDividers && scene.segments.length > 1 && (
         <div className="absolute inset-0 pointer-events-none">
-          {scene.segments.slice(1).map((segment, i) => {
+          {scene.segments.slice(1).map((segment) => {
             const segmentLeft = ((segment.startTime - scene.startTime) / (scene.endTime - scene.startTime)) * 100
             return (
               <div
