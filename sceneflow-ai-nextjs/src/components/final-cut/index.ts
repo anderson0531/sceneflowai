@@ -11,6 +11,8 @@
  */
 
 export { FinalCutTimeline } from './FinalCutTimeline'
+export { FinalCutEditorWorkspace } from './FinalCutEditorWorkspace'
+export { FinalCutMediaBrowser } from './FinalCutMediaBrowser'
 export { FinalCutStreamsPanel } from './FinalCutStreamsPanel'
 export { StreamSelector } from './StreamSelector'
 export { OverlayEditor } from './OverlayEditor'

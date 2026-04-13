@@ -14,13 +14,11 @@ import {
   Loader2,
   Film,
   AlertCircle,
-  Users,
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { FinalCutTimeline } from '@/components/final-cut/FinalCutTimeline'
-import { FinalCutStreamsPanel } from '@/components/final-cut/FinalCutStreamsPanel'
-import { ScreeningRoomDashboard } from '@/components/screening-room/ScreeningRoomDashboard'
+import { FinalCutMediaBrowser } from '@/components/final-cut/FinalCutMediaBrowser'
 import { ExportDialog, type ExportSettings } from '@/components/final-cut/ExportDialog'
 import type { LocalRenderConfig, LocalRenderResolution } from '@/lib/video/LocalRenderService'
 import type {
@@ -37,10 +35,11 @@ import { getLanguageName } from '@/constants/languages'
 import { resolveStreamSegmentMediaForExport } from '@/lib/final-cut/resolveSegmentMedia'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
 import { ProductionSectionHeader } from '@/components/vision/scene-production/ProductionSectionHeader'
+import { cn } from '@/lib/utils'
 
 const LS_SECTION_STREAMS = 'finalCut.section.streams'
 const LS_SECTION_MIXER = 'finalCut.section.mixer'
-const LS_SECTION_SCREENINGS = 'finalCut.section.screenings'
+const LS_MOBILE_PANE = 'finalCut.section.mobilePane'
 
 function mapExportResolutionStringToLocal(resolution: string): LocalRenderResolution {
   const r = resolution.toLowerCase()
@@ -244,7 +243,7 @@ export default function FinalCutPage() {
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [streamsExpanded, setStreamsExpanded] = useState(true)
   const [mixerExpanded, setMixerExpanded] = useState(true)
-  const [screeningExpanded, setScreeningExpanded] = useState(true)
+  const [mobilePane, setMobilePane] = useState<'library' | 'edit'>('edit')
 
   const searchProjectIdRaw = searchParams.get('projectId')
   const searchProjectId =
@@ -260,8 +259,8 @@ export default function FinalCutPage() {
       if (s !== null) setStreamsExpanded(s === 'true')
       const m = localStorage.getItem(LS_SECTION_MIXER)
       if (m !== null) setMixerExpanded(m === 'true')
-      const scr = localStorage.getItem(LS_SECTION_SCREENINGS)
-      if (scr !== null) setScreeningExpanded(scr === 'true')
+      const pane = localStorage.getItem(LS_MOBILE_PANE)
+      if (pane === 'library' || pane === 'edit') setMobilePane(pane)
     } catch {
       /* ignore */
     }
@@ -271,11 +270,11 @@ export default function FinalCutPage() {
     try {
       localStorage.setItem(LS_SECTION_STREAMS, String(streamsExpanded))
       localStorage.setItem(LS_SECTION_MIXER, String(mixerExpanded))
-      localStorage.setItem(LS_SECTION_SCREENINGS, String(screeningExpanded))
+      localStorage.setItem(LS_MOBILE_PANE, mobilePane)
     } catch {
       /* ignore */
     }
-  }, [streamsExpanded, mixerExpanded, screeningExpanded])
+  }, [streamsExpanded, mixerExpanded, mobilePane])
 
   const productionVisionHref = projectId
     ? `/dashboard/workflow/vision/${projectId}${isDemo ? '?demo=true' : ''}`
@@ -1085,83 +1084,70 @@ export default function FinalCutPage() {
         )
       })()}
 
-      {/* Streams + Mixer + Screening Room */}
-      <main className="flex-1 min-h-0 flex flex-col gap-4 px-4 sm:px-5 py-4 overflow-y-auto border-t border-white/[0.04]">
-        <div className="shrink-0 rounded-xl border border-slate-700/60 bg-slate-900/40 overflow-hidden">
-          <ProductionSectionHeader
-            icon={Film}
-            title="Final Cut Streams"
-            badge={streams.length > 0 ? streams.length : undefined}
-            collapsible
-            expanded={streamsExpanded}
-            onToggle={() => setStreamsExpanded((e) => !e)}
-            className="bg-slate-900/50 border-b border-white/[0.06]"
-          />
-          {streamsExpanded ? (
-            <FinalCutStreamsPanel
-              streams={streams}
-              selectedStreamId={selectedStreamId}
-              onSelectStream={handleStreamSelect}
-              onCreateStream={handleCreateStream}
-              disabled={isDemo || isSaving || (!isDemo && !currentProject)}
-              productionHref={productionVisionHref}
-              showProductionLink={!!productionVisionHref}
-              suppressOuterTitle
-              embeddedInSection
-            />
-          ) : null}
+      {/* Library column + editor workspace (iMovie-style); Screenings live under Share in the library */}
+      <main className="flex-1 min-h-0 flex flex-col gap-3 sm:gap-4 px-4 sm:px-5 py-4 overflow-hidden border-t border-white/[0.04]">
+        <div
+          className="flex lg:hidden shrink-0 rounded-lg border border-white/[0.08] bg-zinc-900/50 p-1 gap-1"
+          role="tablist"
+          aria-label="Final Cut layout"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobilePane === 'library'}
+            onClick={() => setMobilePane('library')}
+            className={cn(
+              'flex-1 rounded-md py-2 text-xs font-medium transition-colors',
+              mobilePane === 'library'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80'
+            )}
+          >
+            Library
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobilePane === 'edit'}
+            onClick={() => setMobilePane('edit')}
+            className={cn(
+              'flex-1 rounded-md py-2 text-xs font-medium transition-colors',
+              mobilePane === 'edit'
+                ? 'bg-violet-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80'
+            )}
+          >
+            Edit
+          </button>
         </div>
 
-        <div className="flex-1 min-h-0 flex flex-col min-h-[min(60vh,520px)] rounded-xl border border-purple-500/30 bg-zinc-950/60 overflow-hidden shadow-[inset_0_1px_0_0_rgba(168,85,247,0.06)]">
-          <ProductionSectionHeader
-            icon={Film}
-            title="Final Cut Mixer"
-            badge={
-              streams.find((s) => s.id === selectedStreamId)?.scenes.length ?? undefined
-            }
-            rightHint="Assembly timeline — select scenes and trim"
-            collapsible
-            expanded={mixerExpanded}
-            onToggle={() => setMixerExpanded((e) => !e)}
-            className="bg-zinc-950/90 border-b border-purple-500/25"
-          />
-          {mixerExpanded ? (
-            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-              <FinalCutTimeline
-                projectId={projectId || ''}
-                streams={streams}
-                selectedStreamId={selectedStreamId}
-                onSceneReorder={handleSceneReorder}
-                onTransitionUpdate={handleTransitionUpdate}
-                onOverlayUpdate={handleOverlayUpdate}
-                onExport={handleExport}
-                totalDuration={totalDuration}
-                isProcessing={isSaving}
-                sceneProductionState={sceneProductionState}
-                productionVisionHref={productionVisionHref}
-                onStreamSettingsChange={handleStreamSettingsChange}
-                hideMixerSectionHeader
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)] gap-3 sm:gap-4 min-h-[min(55vh,480px)]">
+          <section
+            className={cn(
+              'min-h-0 flex flex-col overflow-hidden',
+              mobilePane === 'edit' && 'hidden lg:flex'
+            )}
+          >
+            <div className="flex flex-col flex-1 min-h-0 rounded-xl border border-slate-700/60 bg-slate-900/40 overflow-hidden">
+              <ProductionSectionHeader
+                icon={Film}
+                title="Project media"
+                badge={streams.length > 0 ? streams.length : undefined}
+                collapsible
+                expanded={streamsExpanded}
+                onToggle={() => setStreamsExpanded((e) => !e)}
+                className="bg-slate-900/50 border-b border-white/[0.06] shrink-0"
               />
-            </div>
-          ) : null}
-        </div>
-
-        {projectId ? (
-          <div className="shrink-0 pb-2 rounded-xl border border-slate-700/60 bg-slate-900/35 overflow-hidden">
-            <ProductionSectionHeader
-              icon={Users}
-              title="Screenings"
-              badge={finalCutScreenings.length > 0 ? finalCutScreenings.length : undefined}
-              collapsible
-              expanded={screeningExpanded}
-              onToggle={() => setScreeningExpanded((e) => !e)}
-              className="border-b border-white/[0.06]"
-            />
-            {screeningExpanded ? (
-              <div className="p-4 sm:p-5">
-                <ScreeningRoomDashboard
-                  variant="finalCutOnly"
-                  hideFinalCutChrome
+              {streamsExpanded ? (
+                <FinalCutMediaBrowser
+                  className="flex-1 min-h-0 rounded-none border-0 shadow-none bg-slate-900/25"
+                  streams={streams}
+                  selectedStreamId={selectedStreamId}
+                  onSelectStream={handleStreamSelect}
+                  onCreateStream={handleCreateStream}
+                  disabled={isDemo || isSaving || (!isDemo && !currentProject)}
+                  productionHref={productionVisionHref}
+                  showProductionLink={!!productionVisionHref}
                   projectId={projectId}
                   projectName={isDemo ? 'Demo project' : currentProject?.title}
                   finalCutScreenings={finalCutScreenings}
@@ -1172,17 +1158,58 @@ export default function FinalCutPage() {
                         'Screening creation will connect to the Premiere workflow in a future update.',
                     })
                   }}
-                  onUploadExternal={async () => {
+                  onUploadExternal={async (_file: File) => {
                     toast.message('Upload', {
                       description: 'External screening upload is not wired yet.',
                     })
                     throw new Error('Not implemented')
                   }}
                 />
-              </div>
-            ) : null}
-          </div>
-        ) : null}
+              ) : null}
+            </div>
+          </section>
+
+          <section
+            className={cn(
+              'min-h-0 flex flex-col overflow-hidden min-h-[min(50vh,440px)]',
+              mobilePane === 'library' && 'hidden lg:flex'
+            )}
+          >
+            <div className="flex flex-col flex-1 min-h-0 rounded-xl border border-purple-500/30 bg-zinc-950/60 overflow-hidden shadow-[inset_0_1px_0_0_rgba(168,85,247,0.06)]">
+              <ProductionSectionHeader
+                icon={Film}
+                title="Final Cut Mixer"
+                badge={
+                  streams.find((s) => s.id === selectedStreamId)?.scenes.length ?? undefined
+                }
+                rightHint="Program monitor and assembly timeline"
+                collapsible
+                expanded={mixerExpanded}
+                onToggle={() => setMixerExpanded((e) => !e)}
+                className="bg-zinc-950/90 border-b border-purple-500/25 shrink-0"
+              />
+              {mixerExpanded ? (
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                  <FinalCutTimeline
+                    projectId={projectId || ''}
+                    streams={streams}
+                    selectedStreamId={selectedStreamId}
+                    onSceneReorder={handleSceneReorder}
+                    onTransitionUpdate={handleTransitionUpdate}
+                    onOverlayUpdate={handleOverlayUpdate}
+                    onExport={handleExport}
+                    totalDuration={totalDuration}
+                    isProcessing={isSaving}
+                    sceneProductionState={sceneProductionState}
+                    productionVisionHref={productionVisionHref}
+                    onStreamSettingsChange={handleStreamSettingsChange}
+                    hideMixerSectionHeader
+                  />
+                </div>
+              ) : null}
+            </div>
+          </section>
+        </div>
       </main>
     </div>
   )

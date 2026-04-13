@@ -101,6 +101,23 @@ export function SceneBlock({
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-violet-950/60 to-zinc-900" />
       )}
+
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-1.5 opacity-50 z-[1]"
+        style={{
+          background:
+            'repeating-linear-gradient(90deg, transparent 0 5px, rgba(255,255,255,0.14) 5px 6px)',
+        }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-1.5 opacity-50 z-[1]"
+        style={{
+          background:
+            'repeating-linear-gradient(90deg, transparent 0 5px, rgba(255,255,255,0.14) 5px 6px)',
+        }}
+        aria-hidden
+      />
       
       {/* Scene Info Overlay */}
       <div className="relative h-full flex flex-col justify-between p-1.5 z-10">
