@@ -33,6 +33,7 @@ import type {
 } from '@/lib/types/finalCut'
 import { getLanguageName } from '@/constants/languages'
 import { resolveStreamSegmentMediaForExport } from '@/lib/final-cut/resolveSegmentMedia'
+import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
 
 function mapExportResolutionStringToLocal(resolution: string): LocalRenderResolution {
   const r = resolution.toLowerCase()
@@ -258,7 +259,7 @@ export default function FinalCutPage() {
     }
     
     // Get production data for each scene
-    const sceneProductionState = project?.metadata?.sceneProductionState || {}
+    const sceneProductionState = getSceneProductionStateFromMetadata(project?.metadata)
     
     // Build stream scenes
     let currentTime = 0
@@ -593,10 +594,7 @@ export default function FinalCutPage() {
       const liveProject = useStore.getState().currentProject
       const projectForExport =
         liveProject?.id === currentProject.id ? liveProject : currentProject
-      const sceneProductionState =
-        ((projectForExport.metadata as Record<string, unknown> | undefined)?.sceneProductionState as
-          | Record<string, unknown>
-          | undefined) || {}
+      const sceneProductionState = getSceneProductionStateFromMetadata(projectForExport.metadata)
 
       const manualFiles = settings.localSceneFiles
       let totalDuration = timelineTotalDuration
@@ -796,13 +794,10 @@ export default function FinalCutPage() {
     )
   }, [streams, selectedStreamId])
 
-  const sceneProductionState = useMemo((): Record<string, unknown> => {
-    const meta = currentProject?.metadata as Record<string, unknown> | undefined
-    const raw = meta?.sceneProductionState
-    return raw && typeof raw === 'object' && !Array.isArray(raw)
-      ? (raw as Record<string, unknown>)
-      : {}
-  }, [currentProject?.metadata])
+  const sceneProductionState = useMemo(
+    () => getSceneProductionStateFromMetadata(currentProject?.metadata),
+    [currentProject?.metadata]
+  )
 
   const lastExportUrl = (currentProject?.metadata as { exportedVideoUrl?: string } | undefined)
     ?.exportedVideoUrl
@@ -1004,10 +999,7 @@ export default function FinalCutPage() {
       {/* Export Dialog */}
       {(() => {
         const selectedStream = streams.find(s => s.id === selectedStreamId)
-        const prodMeta =
-          ((currentProject?.metadata as Record<string, unknown> | undefined)?.sceneProductionState as
-            | Record<string, unknown>
-            | undefined) || {}
+        const prodMeta = getSceneProductionStateFromMetadata(currentProject?.metadata)
         let hasExportableMedia = false
         let hasVideoClipSegments = false
         for (const s of selectedStream?.scenes ?? []) {
