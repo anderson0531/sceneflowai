@@ -698,6 +698,8 @@ export default function FinalCutPage() {
         fps: settings.frameRate || 30,
         totalDuration,
         exportFormat: settings.containerFormat,
+        // Probed blob durations are authoritative; avoids HTMLVideoElement.duration inflation (slow/frozen picture vs normal audio).
+        trustSegmentDurations: !!(manualFiles && manualFiles.length > 0),
       }
       
       const renderService = new LocalRenderService()

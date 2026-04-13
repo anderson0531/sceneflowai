@@ -133,6 +133,12 @@ export interface LocalRenderConfig {
    * Default `webm` preserves legacy scene-mixer behavior when omitted.
    */
   exportFormat?: 'mp4' | 'webm'
+  /**
+   * When true, each segment's `duration` is treated as authoritative (e.g. probed local files).
+   * Skips extending segments using `HTMLVideoElement.duration`, which is often inflated vs real
+   * media length and causes multi-minute slow / frozen video with normal-length audio.
+   */
+  trustSegmentDurations?: boolean
 }
 
 export interface LocalRenderProgress {
@@ -429,21 +435,34 @@ export class LocalRenderService {
         throw new Error('Render aborted')
       }
       
-      // CRITICAL: Update segment durations based on actual video durations
-      // This fixes cases where actualVideoDuration wasn't saved during upload
+      // Segment duration adjustment:
+      // - Local file stitch: trust probed durations (trustSegmentDurations) — do not extend from
+      //   video.duration, which often lies (VFR / bad moov) and yields 5–10× long exports with
+      //   normal-speed audio from decodeAudioData.
+      // - Otherwise: only shrink when the file is shorter than the timeline; never extend when
+      //   video.duration is much longer than segment.duration (same inflated-metadata issue).
       let adjustedTotalDuration = 0
-      const adjustedSegments = config.segments.map((segment, idx) => {
+      const trustSeg = config.trustSegmentDurations === true
+      const adjustedSegments = config.segments.map((segment) => {
         const asset = assets.get(segment.segmentId)
         let actualDuration = segment.duration
-        
-        if (asset instanceof HTMLVideoElement && isFinite(asset.duration) && asset.duration > 0) {
-          const videoDuration = asset.duration
-          if (Math.abs(videoDuration - segment.duration) > 0.5) {
-            console.log(`[LocalRender] Segment ${segment.segmentId}: correcting duration from ${segment.duration}s to ${videoDuration}s (actual video)`)
-            actualDuration = videoDuration
+
+        if (!trustSeg && asset instanceof HTMLVideoElement && isFinite(asset.duration) && asset.duration > 0) {
+          const vd = asset.duration
+          const sd = segment.duration
+          if (vd + 0.05 < sd) {
+            console.log(
+              `[LocalRender] Segment ${segment.segmentId}: shortening duration from ${sd}s to ${vd}s (video shorter than timeline)`
+            )
+            actualDuration = vd
+          } else if (sd > 0.25 && vd > sd * 2) {
+            console.warn(
+              `[LocalRender] Segment ${segment.segmentId}: ignoring inflated video.duration ${vd}s vs timeline ${sd}s — keeping timeline length`
+            )
+            actualDuration = sd
           }
         }
-        
+
         const adjustedSegment = {
           ...segment,
           startTime: adjustedTotalDuration,
