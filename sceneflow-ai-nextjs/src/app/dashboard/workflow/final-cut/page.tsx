@@ -13,7 +13,8 @@ import {
   Settings,
   Loader2,
   Film,
-  AlertCircle
+  AlertCircle,
+  Users,
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -26,6 +27,7 @@ import type {
   FinalCutStream,
   StreamScene,
   StreamSegment,
+  StreamSettings,
   TransitionEffect,
   Overlay,
   ProductionLanguage,
@@ -34,6 +36,11 @@ import type {
 import { getLanguageName } from '@/constants/languages'
 import { resolveStreamSegmentMediaForExport } from '@/lib/final-cut/resolveSegmentMedia'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
+import { ProductionSectionHeader } from '@/components/vision/scene-production/ProductionSectionHeader'
+
+const LS_SECTION_STREAMS = 'finalCut.section.streams'
+const LS_SECTION_MIXER = 'finalCut.section.mixer'
+const LS_SECTION_SCREENINGS = 'finalCut.section.screenings'
 
 function mapExportResolutionStringToLocal(resolution: string): LocalRenderResolution {
   const r = resolution.toLowerCase()
@@ -235,7 +242,10 @@ export default function FinalCutPage() {
   const [streams, setStreams] = useState<FinalCutStream[]>([])
   const [selectedStreamId, setSelectedStreamId] = useState<string | null>(null)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
-  
+  const [streamsExpanded, setStreamsExpanded] = useState(true)
+  const [mixerExpanded, setMixerExpanded] = useState(true)
+  const [screeningExpanded, setScreeningExpanded] = useState(true)
+
   const searchProjectIdRaw = searchParams.get('projectId')
   const searchProjectId =
     searchProjectIdRaw && searchProjectIdRaw.trim() !== '' ? searchProjectIdRaw.trim() : undefined
@@ -243,6 +253,33 @@ export default function FinalCutPage() {
   // URL wins; else global store (Production often keeps project only in local state until we fetch here)
   const projectId =
     searchProjectId || currentProject?.id || (isDemo ? 'demo-project' : undefined)
+
+  useEffect(() => {
+    try {
+      const s = localStorage.getItem(LS_SECTION_STREAMS)
+      if (s !== null) setStreamsExpanded(s === 'true')
+      const m = localStorage.getItem(LS_SECTION_MIXER)
+      if (m !== null) setMixerExpanded(m === 'true')
+      const scr = localStorage.getItem(LS_SECTION_SCREENINGS)
+      if (scr !== null) setScreeningExpanded(scr === 'true')
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_SECTION_STREAMS, String(streamsExpanded))
+      localStorage.setItem(LS_SECTION_MIXER, String(mixerExpanded))
+      localStorage.setItem(LS_SECTION_SCREENINGS, String(screeningExpanded))
+    } catch {
+      /* ignore */
+    }
+  }, [streamsExpanded, mixerExpanded, screeningExpanded])
+
+  const productionVisionHref = projectId
+    ? `/dashboard/workflow/vision/${projectId}${isDemo ? '?demo=true' : ''}`
+    : undefined
   
   // ============================================================================
   // Create default stream from project data
@@ -532,6 +569,24 @@ export default function FinalCutPage() {
     
     toast.success('Overlays updated')
   }, [selectedStreamId])
+
+  const handleStreamSettingsChange = useCallback(
+    (updates: Partial<StreamSettings>) => {
+      if (!selectedStreamId) return
+      setStreams((prev) =>
+        prev.map((stream) =>
+          stream.id === selectedStreamId
+            ? {
+                ...stream,
+                settings: { ...stream.settings, ...updates },
+                updatedAt: new Date().toISOString(),
+              }
+            : stream
+        )
+      )
+    },
+    [selectedStreamId]
+  )
   
   // ============================================================================
   // Save & Export
@@ -598,6 +653,8 @@ export default function FinalCutPage() {
 
       const manualFiles = settings.localSceneFiles
       let totalDuration = timelineTotalDuration
+      const masterGain =
+        Math.max(0, Math.min(100, selectedStream.settings?.masterVolume ?? 100)) / 100
 
       if (manualFiles && manualFiles.length > 0) {
         const sceneCount = selectedStream.scenes.length
@@ -619,6 +676,7 @@ export default function FinalCutPage() {
             startTime: compositionT,
             duration: durationSec,
             includeVideoAudio: true,
+            volume: masterGain,
           })
           compositionT += durationSec
         }
@@ -639,6 +697,7 @@ export default function FinalCutPage() {
               startTime: segmentStartSec,
               duration: seg.durationMs / 1000,
               includeVideoAudio: true,
+              volume: masterGain,
             })
 
             if (seg.audioTracks) {
@@ -648,7 +707,7 @@ export default function FinalCutPage() {
                   url: track.sourceUrl,
                   startTime: segmentStartSec + track.startOffset / 1000,
                   duration: track.duration / 1000,
-                  volume: (track.volume ?? 100) / 100,
+                  volume: ((track.volume ?? 100) / 100) * masterGain,
                   type: track.type,
                 })
               }
@@ -1028,51 +1087,100 @@ export default function FinalCutPage() {
 
       {/* Streams + Mixer + Screening Room */}
       <main className="flex-1 min-h-0 flex flex-col gap-4 px-4 sm:px-5 py-4 overflow-y-auto border-t border-white/[0.04]">
-        <div className="shrink-0">
-          <FinalCutStreamsPanel
-            streams={streams}
-            selectedStreamId={selectedStreamId}
-            onSelectStream={handleStreamSelect}
-            onCreateStream={handleCreateStream}
-            disabled={isDemo || isSaving || (!isDemo && !currentProject)}
+        <div className="shrink-0 rounded-xl border border-slate-700/60 bg-slate-900/40 overflow-hidden">
+          <ProductionSectionHeader
+            icon={Film}
+            title="Final cut streams"
+            badge={streams.length > 0 ? streams.length : undefined}
+            collapsible
+            expanded={streamsExpanded}
+            onToggle={() => setStreamsExpanded((e) => !e)}
+            className="bg-slate-900/50 border-b border-white/[0.06]"
           />
+          {streamsExpanded ? (
+            <FinalCutStreamsPanel
+              streams={streams}
+              selectedStreamId={selectedStreamId}
+              onSelectStream={handleStreamSelect}
+              onCreateStream={handleCreateStream}
+              disabled={isDemo || isSaving || (!isDemo && !currentProject)}
+              productionHref={productionVisionHref}
+              showProductionLink={!!productionVisionHref}
+              suppressOuterTitle
+              embeddedInSection
+            />
+          ) : null}
         </div>
 
-        <div className="flex-1 min-h-0 flex flex-col min-h-[min(60vh,520px)]">
-          <FinalCutTimeline
-            projectId={projectId || ''}
-            streams={streams}
-            selectedStreamId={selectedStreamId}
-            onSceneReorder={handleSceneReorder}
-            onTransitionUpdate={handleTransitionUpdate}
-            onOverlayUpdate={handleOverlayUpdate}
-            onExport={handleExport}
-            totalDuration={totalDuration}
-            isProcessing={isSaving}
-            sceneProductionState={sceneProductionState}
+        <div className="flex-1 min-h-0 flex flex-col min-h-[min(60vh,520px)] rounded-xl border border-purple-500/30 bg-zinc-950/60 overflow-hidden shadow-[inset_0_1px_0_0_rgba(168,85,247,0.06)]">
+          <ProductionSectionHeader
+            icon={Film}
+            title="Final cut mixer"
+            badge={
+              streams.find((s) => s.id === selectedStreamId)?.scenes.length ?? undefined
+            }
+            rightHint="Assembly timeline — select scenes and trim"
+            collapsible
+            expanded={mixerExpanded}
+            onToggle={() => setMixerExpanded((e) => !e)}
+            className="bg-zinc-950/90 border-b border-purple-500/25"
           />
+          {mixerExpanded ? (
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+              <FinalCutTimeline
+                projectId={projectId || ''}
+                streams={streams}
+                selectedStreamId={selectedStreamId}
+                onSceneReorder={handleSceneReorder}
+                onTransitionUpdate={handleTransitionUpdate}
+                onOverlayUpdate={handleOverlayUpdate}
+                onExport={handleExport}
+                totalDuration={totalDuration}
+                isProcessing={isSaving}
+                sceneProductionState={sceneProductionState}
+                productionVisionHref={productionVisionHref}
+                onStreamSettingsChange={handleStreamSettingsChange}
+                hideMixerSectionHeader
+              />
+            </div>
+          ) : null}
         </div>
 
         {projectId ? (
-          <div className="shrink-0 pb-2">
-            <ScreeningRoomDashboard
-              variant="finalCutOnly"
-              projectId={projectId}
-              projectName={isDemo ? 'Demo project' : currentProject?.title}
-              finalCutScreenings={finalCutScreenings}
-              screeningCredits={100}
-              onCreateScreening={() => {
-                toast.message('Screenings', {
-                  description: 'Screening creation will connect to the Premiere workflow in a future update.',
-                })
-              }}
-              onUploadExternal={async () => {
-                toast.message('Upload', {
-                  description: 'External screening upload is not wired yet.',
-                })
-                throw new Error('Not implemented')
-              }}
+          <div className="shrink-0 pb-2 rounded-xl border border-slate-700/60 bg-slate-900/35 overflow-hidden">
+            <ProductionSectionHeader
+              icon={Users}
+              title="Screenings"
+              badge={finalCutScreenings.length > 0 ? finalCutScreenings.length : undefined}
+              collapsible
+              expanded={screeningExpanded}
+              onToggle={() => setScreeningExpanded((e) => !e)}
+              className="border-b border-white/[0.06]"
             />
+            {screeningExpanded ? (
+              <div className="p-4 sm:p-5">
+                <ScreeningRoomDashboard
+                  variant="finalCutOnly"
+                  hideFinalCutChrome
+                  projectId={projectId}
+                  projectName={isDemo ? 'Demo project' : currentProject?.title}
+                  finalCutScreenings={finalCutScreenings}
+                  screeningCredits={100}
+                  onCreateScreening={() => {
+                    toast.message('Screenings', {
+                      description:
+                        'Screening creation will connect to the Premiere workflow in a future update.',
+                    })
+                  }}
+                  onUploadExternal={async () => {
+                    toast.message('Upload', {
+                      description: 'External screening upload is not wired yet.',
+                    })
+                    throw new Error('Not implemented')
+                  }}
+                />
+              </div>
+            ) : null}
           </div>
         ) : null}
       </main>

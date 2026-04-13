@@ -9,7 +9,9 @@ import {
   Check,
   Clock,
   Layers,
+  ExternalLink,
 } from 'lucide-react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -33,6 +35,13 @@ export interface FinalCutStreamsPanelProps {
   onSelectStream: (streamId: string) => void
   onCreateStream: (language: ProductionLanguage, format: ProductionFormat) => Promise<void>
   disabled?: boolean
+  /** Vision / Production hub for scene renders and segment work */
+  productionHref?: string
+  showProductionLink?: boolean
+  /** Hide the large “Final Cut Streams” title when the page supplies a section header */
+  suppressOuterTitle?: boolean
+  /** Inside a parent card: drop duplicate border/background */
+  embeddedInSection?: boolean
 }
 
 function streamDurationSec(stream: FinalCutStream): number {
@@ -52,6 +61,10 @@ export function FinalCutStreamsPanel({
   onSelectStream,
   onCreateStream,
   disabled = false,
+  productionHref,
+  showProductionLink = true,
+  suppressOuterTitle = false,
+  embeddedInSection = false,
 }: FinalCutStreamsPanelProps) {
   const [tab, setTab] = useState<'animatic' | 'full-video'>('full-video')
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -91,36 +104,64 @@ export function FinalCutStreamsPanel({
   }, [onCreateStream, newLanguage, newFormat])
 
   return (
-    <div className="space-y-4 rounded-xl border border-slate-700/60 bg-slate-900/40 p-4 sm:p-5">
+    <div
+      className={cn(
+        'space-y-4',
+        embeddedInSection
+          ? 'px-4 py-4 sm:px-5 sm:py-5'
+          : 'rounded-xl border border-slate-700/60 bg-slate-900/40 p-4 sm:p-5'
+      )}
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-center gap-2 min-w-0">
-          <Film className="w-4 h-4 text-purple-400 shrink-0" aria-hidden />
+        <div className="flex items-start gap-2 min-w-0">
+          {!suppressOuterTitle ? (
+            <Film className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" aria-hidden />
+          ) : null}
           <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-sm font-semibold text-white tracking-tight">Final Cut Streams</h2>
-              {streams.length > 0 && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-purple-500/20 text-purple-200 rounded-md border border-purple-500/25">
-                  {streams.length} total
-                </span>
-              )}
-            </div>
+            {!suppressOuterTitle ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm font-semibold text-white tracking-tight">Final Cut streams</h2>
+                {streams.length > 0 && (
+                  <span className="px-2 py-0.5 text-xs font-medium bg-purple-500/20 text-purple-200 rounded-md border border-purple-500/25">
+                    {streams.length} total
+                  </span>
+                )}
+              </div>
+            ) : null}
             <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
-              Project-level timelines by language: Animatic (stills + motion) or Video (full motion). Select a stream to
-              edit it in the mixer below.
+              Assembly timelines by language and format. For new scene renders and segment edits, use Production
+              (Vision). Select a stream to edit assembly in the mixer below.
             </p>
           </div>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={disabled}
-          className="border-purple-500/40 text-purple-200 hover:bg-purple-500/10 shrink-0"
-          onClick={() => setShowCreateDialog(true)}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          New stream
-        </Button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+          {showProductionLink && productionHref ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={disabled}
+              className="border-purple-500/40 text-purple-200 hover:bg-purple-500/10"
+              asChild
+            >
+              <Link href={productionHref}>
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Open Production
+              </Link>
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={disabled}
+            className="border-purple-500/40 text-purple-200 hover:bg-purple-500/10 shrink-0"
+            onClick={() => setShowCreateDialog(true)}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add assembly stream
+          </Button>
+        </div>
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as 'animatic' | 'full-video')} className="w-full">
@@ -213,16 +254,18 @@ export function FinalCutStreamsPanel({
               : 'border-indigo-700/40 bg-indigo-950/20 text-indigo-200/80'
           )}
         >
-          No {tab === 'animatic' ? 'Animatic' : 'Video'} streams yet. Create one with <strong>New stream</strong>.
+          No {tab === 'animatic' ? 'Animatic' : 'Video'} streams yet. Use <strong>Add assembly stream</strong> or refine
+          scenes in Production.
         </div>
       )}
 
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="bg-zinc-900 border-zinc-700 text-zinc-100">
           <DialogHeader>
-            <DialogTitle>Create Final Cut stream</DialogTitle>
+            <DialogTitle>Add assembly stream</DialogTitle>
             <DialogDescription className="text-zinc-400">
-              Add a language and format combination for this project timeline.
+              Add a language and format for this project&apos;s assembly timeline. For new scene renders, use Open
+              Production.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -278,7 +321,7 @@ export function FinalCutStreamsPanel({
               Cancel
             </Button>
             <Button onClick={handleCreate} disabled={isCreating} className="bg-violet-600 hover:bg-violet-500">
-              {isCreating ? 'Creating…' : 'Create stream'}
+              {isCreating ? 'Creating…' : 'Add stream'}
             </Button>
           </DialogFooter>
         </DialogContent>

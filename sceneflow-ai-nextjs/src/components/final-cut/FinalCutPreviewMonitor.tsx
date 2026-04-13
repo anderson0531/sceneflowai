@@ -117,6 +117,8 @@ export interface FinalCutPreviewMonitorProps {
   isPlaying: boolean
   playbackRate: number
   sceneProductionState: Record<string, unknown>
+  /** 0–100 assembly master level; scales preview video element volume when unmuted */
+  masterVolume?: number
   className?: string
 }
 
@@ -126,6 +128,7 @@ export function FinalCutPreviewMonitor({
   isPlaying,
   playbackRate,
   sceneProductionState,
+  masterVolume = 100,
   className,
 }: FinalCutPreviewMonitorProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -196,6 +199,13 @@ export function FinalCutPreviewMonitor({
     const v = videoRef.current
     if (v) v.muted = previewMuted
   }, [previewMuted])
+
+  const volumeScale = Math.max(0, Math.min(100, masterVolume)) / 100
+
+  useEffect(() => {
+    const v = videoRef.current
+    if (v) v.volume = volumeScale
+  }, [volumeScale, clip?.media.assetUrl])
 
   const heading = clip?.scene.heading || `Scene ${clip?.scene.sceneNumber ?? ''}`
 

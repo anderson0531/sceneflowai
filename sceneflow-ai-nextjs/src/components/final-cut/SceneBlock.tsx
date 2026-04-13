@@ -160,10 +160,6 @@ export function SceneBlock({
           <div className="absolute right-0 top-0 bottom-0 w-2 bg-blue-500/50 cursor-ew-resize hover:bg-blue-500/80" />
         </>
       )}
-      
-      {editMode === 'razor' && (
-        <div className="absolute inset-0 cursor-crosshair" />
-      )}
     </div>
   )
 }

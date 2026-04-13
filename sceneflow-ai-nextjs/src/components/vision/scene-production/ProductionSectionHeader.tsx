@@ -72,7 +72,12 @@ export function ProductionSectionHeader({
 
   if (collapsible && onToggle) {
     return (
-      <button type="button" onClick={onToggle} className={rowClass}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className={rowClass}
+        aria-expanded={expanded}
+      >
         {inner}
       </button>
     )

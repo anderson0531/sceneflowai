@@ -68,6 +68,8 @@ interface ScreeningRoomDashboardProps {
 
   /** Embedded on Final Cut page: Final Cut tab + external upload only */
   variant?: 'full' | 'finalCutOnly'
+  /** When true with finalCutOnly, omit outer card title row (page supplies section header) */
+  hideFinalCutChrome?: boolean
 }
 
 interface ScreeningItem {
@@ -127,6 +129,7 @@ export function ScreeningRoomDashboard({
   onConfigureABTest,
   onUploadExternal,
   variant = 'full',
+  hideFinalCutChrome = false,
 }: ScreeningRoomDashboardProps) {
   const isFinalCutOnly = variant === 'finalCutOnly'
   const [activeTab, setActiveTab] = useState<string>(isFinalCutOnly ? 'final-cut' : 'storyboard')
@@ -436,29 +439,36 @@ export function ScreeningRoomDashboard({
   if (isFinalCutOnly) {
     const finalCutList = finalCutScreenings
     return (
-      <div className="space-y-4 rounded-xl border border-slate-700/60 bg-slate-900/35 p-4 sm:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
-              <Video className="w-4 h-4 text-violet-400 shrink-0" />
-              Final Cut screenings
-            </h2>
-            {projectName ? <p className="text-xs text-slate-500 mt-1 truncate">{projectName}</p> : null}
-            <p className="text-xs text-slate-500 mt-2 max-w-2xl leading-relaxed">
-              Share exports and external uploads for feedback. Linked videos appear below.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
-            <div className="px-2.5 py-1.5 bg-gray-800/90 rounded-lg border border-gray-700 text-xs">
-              <span className="text-gray-400">Credits:</span>
-              <span className="text-white font-semibold ml-2">{screeningCredits}</span>
+      <div
+        className={cn(
+          'space-y-4',
+          !hideFinalCutChrome && 'rounded-xl border border-slate-700/60 bg-slate-900/35 p-4 sm:p-5'
+        )}
+      >
+        {!hideFinalCutChrome ? (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+                <Video className="w-4 h-4 text-violet-400 shrink-0" />
+                Final Cut screenings
+              </h2>
+              {projectName ? <p className="text-xs text-slate-500 mt-1 truncate">{projectName}</p> : null}
+              <p className="text-xs text-slate-500 mt-2 max-w-2xl leading-relaxed">
+                Share exports and external uploads for feedback. Linked videos appear below.
+              </p>
             </div>
-            <Button size="sm" onClick={() => onCreateScreening?.('final-cut')}>
-              <Plus className="w-4 h-4 mr-2" />
-              New screening
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
+              <div className="px-2.5 py-1.5 bg-gray-800/90 rounded-lg border border-gray-700 text-xs">
+                <span className="text-gray-400">Credits:</span>
+                <span className="text-white font-semibold ml-2">{screeningCredits}</span>
+              </div>
+              <Button size="sm" onClick={() => onCreateScreening?.('final-cut')}>
+                <Plus className="w-4 h-4 mr-2" />
+                New screening
+              </Button>
+            </div>
           </div>
-        </div>
+        ) : null}
 
         {renderExternalUpload()}
 
