@@ -7,6 +7,42 @@ import { cn } from '@/lib/utils'
 import type { FinalCutStream, StreamScene, StreamSegment } from '@/lib/types/finalCut'
 import { resolveStreamSegmentMediaForExport } from '@/lib/final-cut/resolveSegmentMedia'
 
+function resolvedVideoUrl(
+  seg: StreamSegment,
+  sourceSceneId: string,
+  sceneProductionState: Record<string, unknown>
+): string {
+  const m = resolveStreamSegmentMediaForExport(seg, sourceSceneId, sceneProductionState)
+  return m?.assetType === 'video' && m.assetUrl ? m.assetUrl : ''
+}
+
+/**
+ * When Production splits a scene into segments that all point at the same video file
+ * (one continuous render), seeking with segment-local time restarts at 0 every segment (~8s).
+ * Use time since the start of the contiguous same-URL block instead.
+ */
+function previewSeekSecondsInMedia(
+  scene: StreamScene,
+  segmentIndex: number,
+  localInScene: number,
+  mediaUrl: string,
+  sceneProductionState: Record<string, unknown>
+): number {
+  const segments = [...scene.segments].sort((a, b) => a.sequenceIndex - b.sequenceIndex)
+  const seg = segments[segmentIndex]
+  if (!seg || !mediaUrl) return Math.max(0, localInScene - seg.startTime)
+
+  let j = segmentIndex
+  while (j > 0) {
+    const prevUrl = resolvedVideoUrl(segments[j - 1], scene.sourceSceneId, sceneProductionState)
+    const currUrl = resolvedVideoUrl(segments[j], scene.sourceSceneId, sceneProductionState)
+    if (!currUrl || currUrl !== mediaUrl || prevUrl !== mediaUrl) break
+    j--
+  }
+  const blockStartSceneLocal = segments[j].startTime
+  return Math.max(0, localInScene - blockStartSceneLocal)
+}
+
 export interface PreviewClip {
   scene: StreamScene
   segment: StreamSegment
@@ -29,12 +65,16 @@ export function findPreviewClipAtTime(
 
     const localInScene = t - scene.startTime
     const segments = [...scene.segments].sort((a, b) => a.sequenceIndex - b.sequenceIndex)
-    for (const seg of segments) {
+    for (let si = 0; si < segments.length; si++) {
+      const seg = segments[si]
       if (localInScene < seg.startTime || localInScene >= seg.endTime) continue
       const media = resolveStreamSegmentMediaForExport(seg, scene.sourceSceneId, sceneProductionState)
       if (!media?.assetUrl) return null
-      const localInSegment = localInScene - seg.startTime
-      return { scene, segment: seg, media, localTimeSec: Math.max(0, localInSegment) }
+      const localTimeSec =
+        media.assetType === 'video'
+          ? previewSeekSecondsInMedia(scene, si, localInScene, media.assetUrl, sceneProductionState)
+          : Math.max(0, localInScene - seg.startTime)
+      return { scene, segment: seg, media, localTimeSec }
     }
     return null
   }
@@ -43,14 +83,27 @@ export function findPreviewClipAtTime(
   const lastScene = stream.scenes[stream.scenes.length - 1]
   if (lastScene && t >= lastScene.endTime && lastScene.segments.length > 0) {
     const segments = [...lastScene.segments].sort((a, b) => a.sequenceIndex - b.sequenceIndex)
-    const seg = segments[segments.length - 1]
+    const lastIdx = segments.length - 1
+    const seg = segments[lastIdx]
     const media = resolveStreamSegmentMediaForExport(seg, lastScene.sourceSceneId, sceneProductionState)
     if (media?.assetUrl) {
+      const sceneSpan = lastScene.endTime - lastScene.startTime
+      const localInSceneEnd = Math.max(0, sceneSpan - 0.04)
+      const localTimeSec =
+        media.assetType === 'video'
+          ? previewSeekSecondsInMedia(
+              lastScene,
+              lastIdx,
+              localInSceneEnd,
+              media.assetUrl,
+              sceneProductionState
+            )
+          : Math.max(0, seg.endTime - seg.startTime - 0.04)
       return {
         scene: lastScene,
         segment: seg,
         media,
-        localTimeSec: Math.max(0, seg.endTime - seg.startTime - 0.04),
+        localTimeSec,
       }
     }
   }
