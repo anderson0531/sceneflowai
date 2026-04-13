@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
 import { SceneBlock } from './SceneBlock'
+import { FinalCutPreviewMonitor } from './FinalCutPreviewMonitor'
 import { ProductionSectionHeader } from '@/components/vision/scene-production/ProductionSectionHeader'
 import { TimelineRuler } from './TimelineRuler'
 import { TimelinePlayhead } from './TimelinePlayhead'
@@ -68,6 +69,8 @@ export interface FinalCutTimelineProps {
   totalDuration: number
   /** Whether any operation is in progress */
   isProcessing?: boolean
+  /** Production segment metadata (for resolving preview / export URLs) */
+  sceneProductionState?: Record<string, unknown>
 }
 
 // ============================================================================
@@ -95,7 +98,8 @@ export function FinalCutTimeline({
   onOverlayUpdate,
   onExport,
   totalDuration,
-  isProcessing = false
+  isProcessing = false,
+  sceneProductionState = {}
 }: FinalCutTimelineProps) {
   // ============================================================================
   // State
@@ -512,9 +516,17 @@ export function FinalCutTimeline({
           </Button>
         </div>
       </div>
+
+      <FinalCutPreviewMonitor
+        selectedStream={selectedStream}
+        currentTime={timelineState.currentTime}
+        isPlaying={timelineState.isPlaying}
+        playbackRate={timelineState.playbackRate}
+        sceneProductionState={sceneProductionState}
+      />
       
       {/* Main Content Area */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden min-h-[200px]">
         {/* Timeline Tracks */}
         <div 
           ref={timelineRef}
