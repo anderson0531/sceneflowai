@@ -24,6 +24,7 @@ const AutomationSection = dynamic(() => import('@/components/landing/AutomationS
 const FeatureHighlight = dynamic(() => import('./components/FeatureHighlight').then(m => m.FeatureHighlight), { ssr: false })
 const TestimonialsSection = dynamic(() => import('@/components/landing/TestimonialsSection'), { ssr: false })
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
+const FeatureStoryboardSection = dynamic(() => import('@/components/landing/FeatureStoryboardSection'), { ssr: false })
 const TemplatesGallery = dynamic(() => import('@/components/landing/TemplatesGallery'), { ssr: false })
 const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
 const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
@@ -70,16 +71,19 @@ export default function LandingPage() {
       {/* 9. Use Cases */}
       <UseCasesSection />
 
-      {/* 10. Pricing */}
+      {/* 10. Feature storyboard with placeholders */}
+      <FeatureStoryboardSection />
+
+      {/* 11. Pricing */}
       <PricingCredits />
 
-      {/* 11. FAQ: Objection handling */}
+      {/* 12. FAQ: Objection handling */}
       <FAQ />
       
-      {/* 12. Final CTA: "From Prompter to Director" */}
+      {/* 13. Final CTA: "From Prompter to Director" */}
       <FinalCTA />
       
-      {/* 13. Footer: Navigation */}
+      {/* 14. Footer: Navigation */}
       <Footer />
     </div>
   )
