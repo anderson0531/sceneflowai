@@ -4,14 +4,19 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { useState } from 'react'
 import { DemoVideoModal } from './DemoVideoModal'
-import { Play, ArrowRight, Video } from 'lucide-react'
+import { Play, ArrowRight, ExternalLink } from 'lucide-react'
+
+/** 60s commercial: Anya discovers SceneFlow */
+const HERO_COMMERCIAL_VIDEO_ID = 'L_YTRIbT0yk'
+const HERO_COMMERCIAL_EMBED_SRC = `https://www.youtube-nocookie.com/embed/${HERO_COMMERCIAL_VIDEO_ID}?rel=0&modestbranding=1&playsinline=1`
+const HERO_COMMERCIAL_WATCH_URL = `https://www.youtube.com/watch?v=${HERO_COMMERCIAL_VIDEO_ID}`
 
 export function HeroSection() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   return (
     <>
-      <DemoVideoModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <DemoVideoModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
       <section className="relative bg-gray-950 text-white pt-24 pb-20 sm:pt-32 sm:pb-28 lg:pt-40 lg:pb-36">
         <div className="absolute inset-0 bg-grid-pattern opacity-[0.07]" />
         <div className="absolute inset-0 bg-gradient-to-b from-gray-950 via-gray-950/80 to-transparent" />
@@ -61,7 +66,7 @@ export function HeroSection() {
             </motion.div>
           </div>
 
-          {/* New Video Placeholder */}
+          {/* 60s commercial: Anya discovers SceneFlow (YouTube) */}
           <motion.div
             className="relative max-w-4xl mx-auto mt-16"
             initial={{ opacity: 0, y: 20 }}
@@ -69,20 +74,34 @@ export function HeroSection() {
             transition={{ duration: 0.8, delay: 0.8 }}
           >
             <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-3xl blur-2xl" />
-            
-            <div className="relative rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl">
-              <div className="aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-                <div className="text-center">
-                  <Video className="w-16 h-16 mx-auto text-gray-500" />
-                  <p className="mt-4 text-lg font-semibold text-gray-400">
-                    [VIDEO_PLACEHOLDER: A 30-second high-energy montage of diverse outputs]
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    (Cinematic home walkthrough, digital teacher, sci-fi series)
-                  </p>
-                </div>
+
+            <div className="relative rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black">
+              <div className="relative aspect-video w-full">
+                <iframe
+                  src={HERO_COMMERCIAL_EMBED_SRC}
+                  title="Anya discovers SceneFlow — 60 second commercial"
+                  className="absolute inset-0 h-full w-full"
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                  allowFullScreen
+                  loading="eager"
+                />
               </div>
             </div>
+
+            <p className="mt-4 text-center text-sm text-gray-400">
+              60-second spot: Anya discovers SceneFlow
+            </p>
+            <p className="mt-1 text-center">
+              <a
+                href={HERO_COMMERCIAL_WATCH_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-violet-400 hover:text-violet-300 transition-colors"
+              >
+                <ExternalLink className="w-4 h-4 shrink-0" aria-hidden />
+                Watch on YouTube
+              </a>
+            </p>
           </motion.div>
         </div>
       </section>
