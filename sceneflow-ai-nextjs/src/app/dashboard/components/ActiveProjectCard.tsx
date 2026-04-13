@@ -256,9 +256,9 @@ export function ActiveProjectCard({
             </div>
           </div>
 
-          {/* Column 3: Next Step */}
+          {/* Column 3: Current Step */}
           <div>
-            <h4 className="text-xs uppercase tracking-wider text-gray-500 mb-3">Next Step</h4>
+            <h4 className="text-xs uppercase tracking-wider text-gray-500 mb-3">Current Step</h4>
             <NextStepPanel nextStep={nextStep} />
           </div>
         </div>

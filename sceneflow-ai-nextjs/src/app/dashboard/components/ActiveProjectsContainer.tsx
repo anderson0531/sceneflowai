@@ -64,31 +64,62 @@ function transformProject(project: DashboardProject, index: number) {
   // Determine next step based on current step
   const getNextStep = () => {
     const stepConfig: Record<string, { name: string; description: string; url: string }> = {
-      'blueprint': { 
+      blueprint: { 
         name: 'Production', 
         description: 'Create visual storyboard for each scene',
         url: `/dashboard/workflow/vision/${project.id}`
       },
-      'vision': { 
+      vision: { 
         name: 'Final Cut', 
-        description: 'Define camera angles, lighting & movement',
-        url: `/dashboard/workflow/direction/${project.id}`
+        description: 'Edit scenes, timing, and mix in Final Cut',
+        url: `/dashboard/workflow/final-cut?projectId=${project.id}`
       },
-      'creation': { 
+      creation: { 
         name: 'Premiere', 
-        description: 'Generate video from your scenes',
-        url: `/dashboard/workflow/video-generation?project=${project.id}`
+        description: 'Finalize review in Screening Room',
+        url: `/dashboard/workflow/premiere?projectId=${project.id}`
       },
-      'polish': { 
+      polish: { 
         name: 'Premiere', 
-        description: 'Export your finished video',
-        url: `/dashboard/workflow/export/${project.id}`
+        description: 'Finalize review in Screening Room',
+        url: `/dashboard/workflow/premiere?projectId=${project.id}`
       },
-      'launch': { 
+      launch: { 
         name: 'Complete', 
         description: 'Project is ready for distribution',
         url: `/dashboard/projects/${project.id}`
-      }
+      },
+      // Backward-compat aliases for older step keys
+      ideation: {
+        name: 'Production',
+        description: 'Create visual storyboard for each scene',
+        url: `/dashboard/workflow/vision/${project.id}`,
+      },
+      storyboard: {
+        name: 'Production',
+        description: 'Create visual storyboard for each scene',
+        url: `/dashboard/workflow/vision/${project.id}`,
+      },
+      'scene-direction': {
+        name: 'Final Cut',
+        description: 'Edit scenes, timing, and mix in Final Cut',
+        url: `/dashboard/workflow/final-cut?projectId=${project.id}`,
+      },
+      'video-generation': {
+        name: 'Final Cut',
+        description: 'Edit scenes, timing, and mix in Final Cut',
+        url: `/dashboard/workflow/final-cut?projectId=${project.id}`,
+      },
+      review: {
+        name: 'Premiere',
+        description: 'Finalize review in Screening Room',
+        url: `/dashboard/workflow/premiere?projectId=${project.id}`,
+      },
+      optimization: {
+        name: 'Premiere',
+        description: 'Finalize review in Screening Room',
+        url: `/dashboard/workflow/premiere?projectId=${project.id}`,
+      },
     }
     
     const config = stepConfig[project.currentStep] || stepConfig['blueprint']

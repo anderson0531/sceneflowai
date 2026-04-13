@@ -445,19 +445,22 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
   const getResumeRoute = (): string => {
     const { currentStep, id } = project
     
-    // Map workflow steps to correct routes
+    // Map workflow steps to current routes (plus legacy aliases)
     const routeMap: Record<string, string> = {
-      // Phase 1 - Pre-Production
-      'ideation': `/dashboard/studio/${id}`,
-      'start': `/dashboard/studio/${id}`,
-      'storyboard': `/dashboard/workflow/vision/${id}`, // Route to new Vision page
-      'vision': `/dashboard/workflow/vision/${id}`,     // Route to new Vision page
-      'scene-direction': `/dashboard/workflow/video-generation?project=${id}`,
-      
-      // Phase 2 - Production
-      'video-generation': `/dashboard/workflow/video-generation?project=${id}`,
-      'review': `/dashboard/workflow/review?project=${id}`,
-      'optimization': `/dashboard/workflow/optimization?project=${id}`
+      // Canonical enhanced steps
+      blueprint: `/dashboard/studio/${id}`,
+      vision: `/dashboard/workflow/vision/${id}`,
+      creation: `/dashboard/workflow/final-cut?projectId=${id}`,
+      polish: `/dashboard/workflow/premiere?projectId=${id}`,
+      launch: `/dashboard/workflow/premiere?projectId=${id}`,
+      // Legacy aliases
+      ideation: `/dashboard/studio/${id}`,
+      start: `/dashboard/studio/${id}`,
+      storyboard: `/dashboard/workflow/vision/${id}`,
+      'scene-direction': `/dashboard/workflow/final-cut?projectId=${id}`,
+      'video-generation': `/dashboard/workflow/final-cut?projectId=${id}`,
+      review: `/dashboard/workflow/premiere?projectId=${id}`,
+      optimization: `/dashboard/workflow/premiere?projectId=${id}`,
     }
     
     return routeMap[currentStep] || `/dashboard/studio/${id}`

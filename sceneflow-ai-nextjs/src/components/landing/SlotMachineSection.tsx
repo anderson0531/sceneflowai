@@ -1,68 +1,41 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { Clock, DollarSign, Layers, User, Users, Volume2, VolumeX, Maximize2 } from 'lucide-react';
+import { Clock, DollarSign, Layers, User, Users, ImageIcon } from 'lucide-react';
 
-const ProductionComparisonVideo = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isMuted, setIsMuted] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-      setIsMuted(!isMuted);
-    }
-  };
-
+const ProductionComparisonVisual = () => {
   return (
-    <div className={`relative w-full mx-auto transition-all duration-300 ${isExpanded ? 'max-w-3xl' : 'max-w-md'}`}>
+    <div className="relative w-full mx-auto max-w-2xl">
       <motion.div
-        className="relative rounded-2xl overflow-hidden border-2 border-cyan-500/30 shadow-2xl"
+        className="relative rounded-2xl overflow-hidden border border-cyan-500/30 shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
-        layout
       >
         <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500/20 via-violet-500/20 to-emerald-500/20 rounded-2xl blur-xl -z-10" />
-        
-        {/* Video */}
-        <div className="aspect-[4/3] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
-          <video
-            ref={videoRef}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            className="w-full h-full object-cover"
-          >
-            <source src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/slot-machine-illustration.mp4#t=0.1" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-          
-          <div className="absolute bottom-3 right-3 flex items-center gap-2">
-            <button
-              onClick={toggleMute}
-              className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
-              title={isMuted ? 'Unmute' : 'Mute'}
-            >
-              {isMuted ? (
-                <VolumeX className="w-4 h-4 text-white/80" />
-              ) : (
-                <Volume2 className="w-4 h-4 text-white/80" />
-              )}
-            </button>
-            
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
-              title={isExpanded ? 'Shrink' : 'Expand'}
-            >
-              <Maximize2 className="w-4 h-4 text-white/80" />
-            </button>
+        <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
+          <div className="flex items-center gap-2 text-cyan-300 mb-4">
+            <ImageIcon className="w-4 h-4" />
+            <p className="text-sm font-medium">Recommended replacement images</p>
+          </div>
+          <div className="grid gap-3">
+            <div className="rounded-lg border border-white/10 bg-slate-950/70 p-4">
+              <p className="text-xs uppercase tracking-wider text-slate-400">Image 1</p>
+              <p className="text-sm text-white mt-1">Agent welcoming viewers at property exterior</p>
+              <p className="text-xs text-slate-400 mt-1">Use a branded, daylight front-elevation shot with agent likeness.</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-slate-950/70 p-4">
+              <p className="text-xs uppercase tracking-wider text-slate-400">Image 2</p>
+              <p className="text-sm text-white mt-1">Room-by-room highlights (kitchen, living, primary suite)</p>
+              <p className="text-xs text-slate-400 mt-1">Use clean composition, natural lighting, and clear feature focus.</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-slate-950/70 p-4">
+              <p className="text-xs uppercase tracking-wider text-slate-400">Image 3</p>
+              <p className="text-sm text-white mt-1">Lifestyle/location context (neighborhood + amenities)</p>
+              <p className="text-xs text-slate-400 mt-1">Use map-friendly landmarks to support local and out-of-state buyers.</p>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -193,7 +166,7 @@ export default function SlotMachineSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            <ProductionComparisonVideo />
+            <ProductionComparisonVisual />
           </motion.div>
         </div>
       </div>

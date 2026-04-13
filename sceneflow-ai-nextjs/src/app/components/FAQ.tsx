@@ -8,81 +8,50 @@ export function FAQ() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   const faqs = [
-    // AI-Guided Production FAQs
     {
-      question: 'How does AI-guided production work for ideas, scripts, and videos?',
+      question: 'How does the SceneFlow workflow run from idea to publish-ready video?',
       answer:
-        'SceneFlow AI guides you through a seamless 5-phase workflow: Series → Blueprint → Production → Final Cut → Premiere. Start by describing your concept in plain language, and our AI generates a professional screenplay with proper formatting, scene breakdowns, and character arcs. From there, it creates visual storyboards for each scene and produces video with AI-generated imagery and voice acting. The AI handles all technical complexity while you focus on creative decisions.',
+        'SceneFlow uses a structured workflow: Series (optional) -> Blueprint -> Production -> Final Cut -> Premiere (Screening Room). Blueprint defines story and target audience, Production generates scenes/audio, Final Cut refines pacing, and Premiere handles review feedback before publishing.',
     },
     {
-      question: 'Can I customize the AI-generated scripts and storyboards?',
+      question: 'Can I edit AI-generated scripts, visuals, and audio?',
       answer:
-        'Absolutely! Every AI output is fully editable. Refine dialogue, adjust scene pacing, modify character descriptions, or completely rewrite sections. SceneFlow AI treats your edits as creative direction—the system learns your preferences and adapts future suggestions accordingly. You maintain complete creative control while the AI accelerates your workflow.',
-    },
-    // AI Editing Tools FAQs
-    {
-      question: 'What AI editing tools are available for frames and video?',
-      answer:
-        'SceneFlow AI provides powerful frame-by-frame and video editing tools: regenerate individual frames with refined prompts, adjust timing and pacing, swap voice actors, modify scene transitions, and fine-tune visual consistency. The AI Segment Editor lets you isolate and regenerate specific portions of your video without affecting the rest. All edits preserve your character consistency and visual style.',
+        'Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific segments, tune voiceover, and refine timing in Final Cut. SceneFlow accelerates production, but creators keep final control.',
     },
     {
-      question: "How do I fix a single frame or video segment I don't like?",
+      question: 'How does Target Audience Resonance work now?',
       answer:
-        'Use the Segment Editor to select any frame or video clip you want to change. Describe what you want different—"make the lighting warmer," "change the character\'s expression to surprised," or "add rain to the background." The AI regenerates just that segment while maintaining continuity with surrounding frames. You can iterate as many times as needed until it\'s perfect.',
-    },
-    // Screening Room FAQs
-    {
-      question: 'What is the Screening Room for storyboard and video reviews?',
-      answer:
-        'The Screening Room is your collaborative review hub. Share your storyboards and video drafts with team members, clients, or stakeholders via secure shareable links. Reviewers can leave timestamped comments on specific frames or scenes, suggest edits, and approve final cuts. All feedback is centralized in one place, eliminating scattered email threads and version confusion.',
+        'Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering.',
     },
     {
-      question: 'How does collaborative feedback work in the Screening Room?',
+      question: 'Can I produce multilingual listing or marketing videos?',
       answer:
-        'Invite reviewers by sharing a unique link—no account required for viewers. They can watch your video, pause at any moment, and leave comments tied to specific timecodes. You\'ll see all feedback in a threaded format, can respond to comments, mark them as resolved, and track which suggestions have been addressed. It\'s like Google Docs collaboration, but for video.',
-    },
-    // Director Scoring FAQs
-    {
-      question: 'How does Director and Audience scoring work?',
-      answer:
-        'SceneFlow AI provides two scoring perspectives: Director Score evaluates technical craft (pacing, visual consistency, audio quality, narrative structure) while Audience Score predicts emotional engagement and entertainment value. Both scores update in real-time as you edit, helping you balance artistic vision with audience appeal. See exactly which scenes need work and why.',
+        'Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences.',
     },
     {
-      question: 'How does scoring integrate with AI editing tools?',
+      question: 'What does Premiere do if Screening Room is the review phase?',
       answer:
-        'Scores aren\'t just numbers—they\'re actionable. Click on any low-scoring scene to see specific AI recommendations: "This scene\'s pacing feels rushed—consider adding 2 seconds to the emotional beat" or "Audio levels drop here—regenerate with clearer voice acting." One-click applies the AI\'s suggested fix, or use it as guidance for your own edits. The system learns what works for your style.',
+        'Premiere is the release-readiness phase powered by Screening Room. Share cuts, collect stakeholder feedback, review ratings/engagement signals, and make final revisions before publishing.',
     },
-    // General Platform FAQs
+    {
+      question: 'Do I need technical or editing experience?',
+      answer:
+        'No. SceneFlow is built for non-technical creators and teams. You can start from plain-language prompts, then use guided tools to edit and approve results at each phase.',
+    },
     {
       question: 'How does the Explorer Plan work?',
       answer:
         'For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan.',
     },
     {
-      question: 'Do I need technical skills or video editing experience?',
+      question: 'How are credits and BYOK handled?',
       answer:
-        'Not at all! SceneFlow AI handles all the technical complexity. If you can describe your idea in words, you can create professional videos. Our AI manages script formatting, visual consistency, voice synthesis, and video assembly automatically. The interface is designed for creators, not engineers.',
-    },
-    // Billing & Credits FAQs
-    {
-      question: 'What is your refund policy?',
-      answer:
-        'We offer a 14-day money-back guarantee on all subscription plans. If you\'re not satisfied with SceneFlow AI, contact our support team within 14 days of your purchase for a full refund. Credit packs are non-refundable once credits have been used, but unused credit packs can be refunded within 7 days of purchase.',
+        'Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts.',
     },
     {
-      question: 'Can I cancel my subscription anytime?',
+      question: 'What can I realistically create with SceneFlow?',
       answer:
-        'Absolutely! You can cancel your subscription at any time from your account settings. When you cancel, you\'ll retain access to all features until the end of your current billing period. Your projects and generated content remain accessible even after cancellation.',
-    },
-    {
-      question: 'Do unused credits roll over to the next month?',
-      answer:
-        'Yes! All unused credits from your monthly allocation roll over for up to 3 months. This gives you flexibility to save credits for larger projects. Bonus credits from promotions typically expire after 30 days, but your core subscription credits are protected.',
-    },
-    {
-      question: 'What happens if I run out of credits?',
-      answer:
-        'No worries—your projects are never at risk. If you run out of credits mid-project, you can purchase additional credit packs instantly or upgrade your plan. We\'ll notify you when you\'re running low (at 20% remaining) so you can plan ahead. Your work-in-progress is always saved.',
+        'Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production.',
     },
   ]
 
