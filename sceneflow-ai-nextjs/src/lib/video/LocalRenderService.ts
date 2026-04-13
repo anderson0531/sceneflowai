@@ -18,19 +18,6 @@
 'use client'
 
 // =============================================================================
-// Canvas Capture Interface
-// =============================================================================
-
-/**
- * Extended MediaStreamTrack interface for canvas capture streams.
- * The requestFrame() method allows manual frame capture instead of automatic intervals.
- */
-interface CanvasCaptureMediaStreamTrack extends MediaStreamTrack {
-  /** Request a new frame to be captured from the canvas */
-  requestFrame(): void
-}
-
-// =============================================================================
 // Types
 // =============================================================================
 
@@ -658,24 +645,19 @@ export class LocalRenderService {
       // Setup MediaRecorder
       onProgress?.({ phase: 'rendering', progress: 40 })
       const exportFormat = adjustedConfig.exportFormat ?? 'webm'
-      // Image-only animatics: use timed captureStream(fps). With captureStream(0) + requestFrame(),
-      // Chromium VP9 often collapses identical canvas pixels into a single encoded frame, so the
-      // output shows one frozen frame while audio plays for the full duration.
-      // Video segments still use manual requestFrame() after each seek for frame-accurate capture.
+      // Always use timed captureStream(fps). With captureStream(0) + requestFrame(), Chromium
+      // timestamps each frame from *wall-clock gaps* between requests; slow seeks/draws (~70–100ms)
+      // collapse to ~10fps so the video track becomes 3–4× longer than the composition while
+      // pre-rendered audio stays correct — slow-motion picture vs normal sound.
+      // Timed capture emits frames on a steady clock matching export fps (see adaptive pacing below).
       const allSegmentsAreImages =
         adjustedConfig.segments.length > 0 &&
         adjustedConfig.segments.every((s) => s.assetType === 'image')
       const captureFps = Math.min(60, Math.max(1, Math.round(adjustedConfig.fps)))
-      const stream = allSegmentsAreImages
-        ? this.canvas.captureStream(captureFps)
-        : this.canvas.captureStream(0)
-      if (allSegmentsAreImages) {
-        console.log(
-          `[LocalRender] Using captureStream(${captureFps}) for image-only animatic (avoids single-frame WebM)`
-        )
-      }
-      // Get video track for manual frame requests (video path only)
-      const canvasVideoTrack = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack | undefined
+      const stream = this.canvas.captureStream(captureFps)
+      console.log(
+        `[LocalRender] Using captureStream(${captureFps}) for uniform frame timing (${allSegmentsAreImages ? 'image animatic' : 'video / mixed'})`
+      )
       
       // ===========================================================================
       // PRE-RENDER AUDIO using OfflineAudioContext
@@ -889,19 +871,22 @@ export class LocalRenderService {
           assetUrl: s.assetUrl?.substring(0, 50) + '...'
         }))
       })
-      
+
+      const renderClockStart =
+        typeof performance !== 'undefined' ? performance.now() : 0
+
       for (let frame = 0; frame < totalFrames; frame++) {
         if (signal.aborted) {
           this.mediaRecorder.stop()
           throw new Error('Render aborted')
         }
-        
+
         const currentTime = frame / adjustedConfig.fps
-        
+
         // === DOUBLE-BUFFER PATTERN ===
         // All drawing happens on hiddenCtx first, then atomically copied to output
         // This fixes race conditions where captureStream captures incomplete frames
-        
+
         // Step 1: Draw base video frame to hidden buffer
         await this.drawFrame(currentTime, adjustedConfig, assets)
         
@@ -952,12 +937,7 @@ export class LocalRenderService {
         // Step 6: SOFTWARE TICK - Allow browser task runner to catch up
         // This microtask delay ensures the buffer state is registered
         await new Promise(resolve => setTimeout(resolve, 0))
-        
-        // Step 7: Request frame capture (video segments only; image animatic uses timed captureStream)
-        if (!allSegmentsAreImages && canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
-          canvasVideoTrack.requestFrame()
-        }
-        
+
         // Report progress
         const progress = 40 + Math.round((frame / totalFrames) * 50)
         onProgress?.({
@@ -966,18 +946,19 @@ export class LocalRenderService {
           currentFrame: frame,
           totalFrames,
         })
-        
-        // Wait for next frame timing (use full frameDuration for proper pacing)
-        await this.sleep(frameDuration, signal)
+
+        // Pace to wall-clock ≈ composition length: each frame should end by (frame+1)*frameDuration
+        // from render start. Slow seeks skip extra sleep when behind; fast frames wait to realign.
+        const now = typeof performance !== 'undefined' ? performance.now() : 0
+        const targetEnd = renderClockStart + (frame + 1) * frameDuration
+        const wait = Math.max(0, targetEnd - now)
+        await this.sleep(wait, signal)
       }
-      
+
       // Stop recording
       onProgress?.({ phase: 'encoding', progress: 95 })
-      // Final flush: request one more frame and allow recorder to emit trailing chunk.
-      if (!allSegmentsAreImages && canvasVideoTrack && 'requestFrame' in canvasVideoTrack) {
-        canvasVideoTrack.requestFrame()
-      }
-      await this.sleep(150, signal)
+      // Let timed captureStream pull one more stable frame before stop
+      await this.sleep(Math.max(150, frameDuration * 2), signal)
       this.mediaRecorder.stop()
       
       // Wait for blob
