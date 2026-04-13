@@ -120,7 +120,7 @@ export function FinalCutStreamsPanel({
           <div className="min-w-0">
             {!suppressOuterTitle ? (
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-sm font-semibold text-white tracking-tight">Final Cut streams</h2>
+                <h2 className="text-sm font-semibold text-white tracking-tight">Final Cut Streams</h2>
                 {streams.length > 0 && (
                   <span className="px-2 py-0.5 text-xs font-medium bg-purple-500/20 text-purple-200 rounded-md border border-purple-500/25">
                     {streams.length} total

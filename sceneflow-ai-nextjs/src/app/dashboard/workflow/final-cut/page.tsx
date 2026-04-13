@@ -1090,7 +1090,7 @@ export default function FinalCutPage() {
         <div className="shrink-0 rounded-xl border border-slate-700/60 bg-slate-900/40 overflow-hidden">
           <ProductionSectionHeader
             icon={Film}
-            title="Final cut streams"
+            title="Final Cut Streams"
             badge={streams.length > 0 ? streams.length : undefined}
             collapsible
             expanded={streamsExpanded}
@@ -1115,7 +1115,7 @@ export default function FinalCutPage() {
         <div className="flex-1 min-h-0 flex flex-col min-h-[min(60vh,520px)] rounded-xl border border-purple-500/30 bg-zinc-950/60 overflow-hidden shadow-[inset_0_1px_0_0_rgba(168,85,247,0.06)]">
           <ProductionSectionHeader
             icon={Film}
-            title="Final cut mixer"
+            title="Final Cut Mixer"
             badge={
               streams.find((s) => s.id === selectedStreamId)?.scenes.length ?? undefined
             }

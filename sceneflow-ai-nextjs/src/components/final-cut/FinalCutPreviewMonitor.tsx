@@ -5,7 +5,10 @@ import { Film, Image as ImageIcon, MonitorPlay, Volume2, VolumeX } from 'lucide-
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import type { FinalCutStream, StreamScene, StreamSegment } from '@/lib/types/finalCut'
-import { resolveStreamSegmentMediaForExport } from '@/lib/final-cut/resolveSegmentMedia'
+import {
+  resolveStreamSegmentMediaForExport,
+  resolveSceneLevelPreviewVideo,
+} from '@/lib/final-cut/resolveSegmentMedia'
 
 function resolvedVideoUrl(
   seg: StreamSegment,
@@ -49,6 +52,8 @@ export interface PreviewClip {
   media: { assetUrl: string; assetType: 'video' | 'image' }
   /** Seconds into the segment timeline (0 … segment duration) */
   localTimeSec: number
+  /** True when preview uses full-scene render URL; keeps one `<video>` per scene on the timeline */
+  usesSceneLevelVideo?: boolean
 }
 
 export function findPreviewClipAtTime(
@@ -65,6 +70,19 @@ export function findPreviewClipAtTime(
 
     const localInScene = t - scene.startTime
     const segments = [...scene.segments].sort((a, b) => a.sequenceIndex - b.sequenceIndex)
+
+    const sceneVideoUrl = resolveSceneLevelPreviewVideo(sceneProductionState, scene.sourceSceneId)
+    if (sceneVideoUrl && segments.length > 0) {
+      const refSeg = segments[0]
+      return {
+        scene,
+        segment: refSeg,
+        media: { assetUrl: sceneVideoUrl, assetType: 'video' },
+        localTimeSec: Math.max(0, localInScene),
+        usesSceneLevelVideo: true,
+      }
+    }
+
     for (let si = 0; si < segments.length; si++) {
       const seg = segments[si]
       if (localInScene < seg.startTime || localInScene >= seg.endTime) continue
@@ -85,10 +103,22 @@ export function findPreviewClipAtTime(
     const segments = [...lastScene.segments].sort((a, b) => a.sequenceIndex - b.sequenceIndex)
     const lastIdx = segments.length - 1
     const seg = segments[lastIdx]
+    const sceneSpan = lastScene.endTime - lastScene.startTime
+    const localInSceneEnd = Math.max(0, sceneSpan - 0.04)
+
+    const endSceneVideo = resolveSceneLevelPreviewVideo(sceneProductionState, lastScene.sourceSceneId)
+    if (endSceneVideo) {
+      return {
+        scene: lastScene,
+        segment: seg,
+        media: { assetUrl: endSceneVideo, assetType: 'video' },
+        localTimeSec: localInSceneEnd,
+        usesSceneLevelVideo: true,
+      }
+    }
+
     const media = resolveStreamSegmentMediaForExport(seg, lastScene.sourceSceneId, sceneProductionState)
     if (media?.assetUrl) {
-      const sceneSpan = lastScene.endTime - lastScene.startTime
-      const localInSceneEnd = Math.max(0, sceneSpan - 0.04)
       const localTimeSec =
         media.assetType === 'video'
           ? previewSeekSecondsInMedia(
@@ -219,7 +249,7 @@ export function FinalCutPreviewMonitor({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="flex items-center gap-2 text-xs text-zinc-500 min-w-0">
           <MonitorPlay className="w-4 h-4 text-violet-400 shrink-0" aria-hidden />
-          <span className="font-medium text-zinc-300 truncate">Program preview</span>
+          <span className="font-medium text-zinc-300 truncate">Program Preview</span>
           {clip ? (
             <span className="text-zinc-500 truncate hidden md:inline">· {heading}</span>
           ) : null}
@@ -260,7 +290,11 @@ export function FinalCutPreviewMonitor({
             </div>
           ) : clip.media.assetType === 'video' ? (
             <video
-              key={`${clip.segment.id}-${clip.media.assetUrl}`}
+              key={
+                clip.usesSceneLevelVideo
+                  ? `scene-${clip.scene.id}-${clip.media.assetUrl}`
+                  : `${clip.segment.id}-${clip.media.assetUrl}`
+              }
               ref={videoRef}
               src={clip.media.assetUrl}
               className="h-full w-full object-contain"

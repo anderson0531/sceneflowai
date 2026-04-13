@@ -44,6 +44,43 @@ export function refineAssetTypeFromUrl(url: string, assetType: 'video' | 'image'
   return assetType
 }
 
+/**
+ * Full-scene assembled video for program preview (not per-segment director clips).
+ * Prefer `renderedSceneUrl`, then latest completed `productionStreams` entry with `mp4Url`.
+ */
+export function resolveSceneLevelPreviewVideo(
+  sceneProductionState: Record<string, unknown>,
+  sourceSceneId: string
+): string | null {
+  const pd = sceneProductionState[sourceSceneId] as Record<string, unknown> | undefined
+  if (!pd || typeof pd !== 'object') return null
+
+  const rendered = typeof pd.renderedSceneUrl === 'string' ? pd.renderedSceneUrl.trim() : ''
+  if (rendered && refineAssetTypeFromUrl(rendered, 'video') === 'video') {
+    return rendered
+  }
+
+  const streams = Array.isArray(pd.productionStreams)
+    ? (pd.productionStreams as Record<string, unknown>[])
+    : []
+  const completed = streams.filter((s) => {
+    const url = typeof s?.mp4Url === 'string' ? (s.mp4Url as string).trim() : ''
+    return url.length > 0 && s?.status === 'complete'
+  })
+  if (completed.length === 0) return null
+
+  const preferVideo = completed.filter((s) => s.streamType === 'video')
+  const pool = preferVideo.length > 0 ? preferVideo : completed
+  const pick = pool.reduce<Record<string, unknown>>((best, cur) => {
+    const bv = Number(best?.streamVersion) || 1
+    const cv = Number(cur?.streamVersion) || 1
+    return cv >= bv ? cur : best
+  })
+
+  const url = typeof pick?.mp4Url === 'string' ? pick.mp4Url.trim() : ''
+  return url && refineAssetTypeFromUrl(url, 'video') === 'video' ? url : null
+}
+
 export function resolveStreamSegmentMediaForExport(
   seg: StreamSegment,
   sourceSceneId: string,

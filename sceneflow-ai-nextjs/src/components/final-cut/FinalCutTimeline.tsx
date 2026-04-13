@@ -321,7 +321,7 @@ export function FinalCutTimeline({
         <div className="shrink-0 border-b border-purple-500/25 bg-zinc-950/90">
           <ProductionSectionHeader
             icon={Film}
-            title="Final Cut mixer"
+            title="Final Cut Mixer"
             badge={selectedStream ? selectedStream.scenes.length : 0}
             rightHint="Assembly timeline — select scenes and trim"
           />
