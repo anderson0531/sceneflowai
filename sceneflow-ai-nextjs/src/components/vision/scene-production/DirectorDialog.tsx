@@ -16,7 +16,7 @@
 
 'use client'
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -81,6 +81,7 @@ import { ContentPolicyAlert, PolicyFixedBanner } from './ContentPolicyAlert'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { AnalyzeKeyframeRiskPanel } from './AnalyzeKeyframeRiskPanel'
 import { moderatePrompt, type ModerationResult } from '@/utils/promptModerator'
+import { shouldInitializeDirectorDialogState } from '@/lib/vision/directorDialogState'
 
 interface DirectorDialogProps {
   segment: SceneSegment
@@ -188,6 +189,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   // Quality tier state - default to 'fast' for all modes (cost-optimized)
   // Users can manually select 'premium' when higher quality is needed
   const [qualityTier, setQualityTier] = useState<'fast' | 'premium'>('fast')
+  const wasOpenRef = useRef(false)
+  const lastInitializedSegmentIdRef = useRef<string | null>(null)
   
   // Intelligent prompt modification handler
   const handleModifyPrompt = useCallback(async () => {
@@ -422,25 +425,44 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     }
   }, [segment])
   
-  // Reset state when dialog opens with new segment
+  const initializeDialogState = useCallback(() => {
+    setMode(methodToMode[autoConfig.mode])
+    setPrompt(autoConfig.prompt)
+    setMotionPrompt(autoConfig.motionPrompt)
+    setVisualPrompt(autoConfig.visualPrompt)
+    setNegativePrompt(autoConfig.negativePrompt)
+    setAspectRatio(autoConfig.aspectRatio)
+    setResolution(autoConfig.resolution)
+    setDuration(autoConfig.duration)
+    setGuidePrompt('')
+    // Reset content policy state on open
+    setPostFailureModerationResult(null)
+    setPromptFixApplied(false)
+    setLocalError(null)
+    setImageTriggered(false)
+    setKeyframeEdit(null)
+  }, [autoConfig])
+
+  // Initialize state only on open transition or segment change while open.
   useEffect(() => {
-    if (isOpen) {
-      setMode(methodToMode[autoConfig.mode])
-      setPrompt(autoConfig.prompt)
-      setMotionPrompt(autoConfig.motionPrompt)
-      setVisualPrompt(autoConfig.visualPrompt)
-      setNegativePrompt(autoConfig.negativePrompt)
-      setAspectRatio(autoConfig.aspectRatio)
-      setResolution(autoConfig.resolution)
-      setDuration(autoConfig.duration)
-      // Reset content policy state on open
-      setPostFailureModerationResult(null)
-      setPromptFixApplied(false)
-      setLocalError(null)
-      setImageTriggered(false)
-      setKeyframeEdit(null)
+    const shouldInit = shouldInitializeDirectorDialogState({
+      isOpen,
+      wasOpen: wasOpenRef.current,
+      currentSegmentId: segment.segmentId,
+      lastInitializedSegmentId: lastInitializedSegmentIdRef.current,
+    })
+
+    if (shouldInit) {
+      initializeDialogState()
+      lastInitializedSegmentIdRef.current = segment.segmentId
     }
-  }, [isOpen, autoConfig])
+
+    if (!isOpen) {
+      lastInitializedSegmentIdRef.current = null
+    }
+
+    wasOpenRef.current = isOpen
+  }, [isOpen, segment.segmentId, initializeDialogState])
 
   // Detect post-failure content policy errors when segment status changes
   useEffect(() => {
