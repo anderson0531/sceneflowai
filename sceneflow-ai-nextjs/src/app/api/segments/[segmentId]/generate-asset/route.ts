@@ -23,6 +23,7 @@ import { getVideoDurationFromBuffer } from '@/lib/video/serverVideoDuration'
 import { separateAudioStemsWithRetry, type StemSeparationResult } from '@/lib/audio/stemSeparation'
 import { computeSourceHash } from '@/lib/audio/stemJobs'
 import { extractVeoRaiDetailsFromErrorString } from '@/lib/vertexai/safety'
+import { appendFtvTransitionStabilityTokens } from '@/lib/vision/ftvTransitionStability'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -332,6 +333,8 @@ export async function POST(
           console.log('[Segment Asset Generation] Enhanced prompt with audio context')
         }
       }
+
+      enhancedPrompt = appendFtvTransitionStabilityTokens(enhancedPrompt, method, segmentIndex)
 
       console.log(
         '[Segment Asset Generation] Full Veo prompt length:',

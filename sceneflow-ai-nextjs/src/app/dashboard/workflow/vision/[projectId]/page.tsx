@@ -2550,6 +2550,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!segment) {
           throw new Error('Segment not found')
         }
+        const segmentIndexForApi = currentProduction?.segments.findIndex((s) => s.segmentId === segmentId) ?? -1
+        const totalSegmentsForApi = currentProduction?.segments.length ?? 0
 
         // Use prompt from options (from prompt builder) or fall back to segment prompt
         const prompt = options?.prompt || segment.userEditedPrompt || segment.generatedPrompt || ''
@@ -2589,6 +2591,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             resolution: options?.resolution,
             // Pass guidePrompt containing voice/dialogue/SFX for Veo 3.1 audio generation
             guidePrompt: options?.guidePrompt,
+            segmentIndex: segmentIndexForApi,
+            totalSegments: totalSegmentsForApi,
             existingStemSourceAudioUrl: segment.stemSeparation?.sourceAudioUrl,
             existingStemSourceHash: segment.stemSeparation?.sourceHash,
             existingStemStatus: segment.stemSeparation?.status,
@@ -2878,6 +2882,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     })
                     
                     toast.loading('Retrying with I2V (start frame only)...', { id: 'retry-i2v' })
+                    const retryProduction = sceneProductionState[sceneId]
+                    const retrySegmentIndexForApi =
+                      retryProduction?.segments?.findIndex((s: any) => s.segmentId === segmentId) ?? -1
+                    const retryTotalSegmentsForApi = retryProduction?.segments?.length ?? 0
                     
                     // Retry with I2V: same prompt, same start frame, no end frame
                     // Use direct fetch (matching Auto-Fix & Retry pattern) to avoid useCallback circular reference
@@ -2898,10 +2906,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         aspectRatio: options?.aspectRatio,
                         resolution: options?.resolution,
                         guidePrompt: options?.guidePrompt,
-                        existingStemSourceAudioUrl: segment.stemSeparation?.sourceAudioUrl,
-                        existingStemSourceHash: segment.stemSeparation?.sourceHash,
-                        existingStemStatus: segment.stemSeparation?.status,
-                        existingStemJobId: segment.stemSeparation?.jobId,
+                        segmentIndex: retrySegmentIndexForApi,
+                        totalSegments: retryTotalSegmentsForApi,
+                        existingStemSourceAudioUrl: segment?.stemSeparation?.sourceAudioUrl,
+                        existingStemSourceHash: segment?.stemSeparation?.sourceHash,
+                        existingStemStatus: segment?.stemSeparation?.status,
+                        existingStemJobId: segment?.stemSeparation?.jobId,
                       }),
                     }).then(async (retryResponse) => {
                       toast.dismiss('retry-i2v')
@@ -3061,6 +3071,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     // Retry generation with sanitized prompt
                     // Note: We re-call the API directly instead of handleSegmentGenerate to avoid circular deps
                     toast.loading('Retrying with sanitized prompt...', { id: 'retry-sanitized' })
+                    const retryProduction = sceneProductionState[sceneId]
+                    const retrySegmentIndexForApi =
+                      retryProduction?.segments?.findIndex((s: any) => s.segmentId === segmentId) ?? -1
+                    const retryTotalSegmentsForApi = retryProduction?.segments?.length ?? 0
                     fetch(`/api/segments/${encodeURIComponent(segmentId)}/generate-asset`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
@@ -3080,10 +3094,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         aspectRatio: options?.aspectRatio,
                         resolution: options?.resolution,
                         guidePrompt: options?.guidePrompt,
-                        existingStemSourceAudioUrl: segment.stemSeparation?.sourceAudioUrl,
-                        existingStemSourceHash: segment.stemSeparation?.sourceHash,
-                        existingStemStatus: segment.stemSeparation?.status,
-                        existingStemJobId: segment.stemSeparation?.jobId,
+                        segmentIndex: retrySegmentIndexForApi,
+                        totalSegments: retryTotalSegmentsForApi,
+                        existingStemSourceAudioUrl: segment?.stemSeparation?.sourceAudioUrl,
+                        existingStemSourceHash: segment?.stemSeparation?.sourceHash,
+                        existingStemStatus: segment?.stemSeparation?.status,
+                        existingStemJobId: segment?.stemSeparation?.jobId,
                       }),
                     }).then(async (retryResponse) => {
                       toast.dismiss('retry-sanitized')
