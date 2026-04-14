@@ -41,6 +41,18 @@ function removeStageDirections(text: string): string {
   return cleaned
 }
 
+/**
+ * Strip `[...]` delivery / direction notes for word-count and duration estimation only.
+ * Does not remove parenthetical stage directions — use `optimizeTextForTTS` for full TTS cleanup.
+ * Handles multiline brackets and fullwidth square brackets (same as TTS normalization).
+ */
+export function stripDirectionBracketsForTiming(text: string): string {
+  let s = normalizePerformanceBracketChars(text || '')
+  s = s.replace(/\[[\s\S]*?\]/g, '')
+  s = s.replace(/\s+/g, ' ').trim()
+  return s
+}
+
 /** Turn *emphasis* into plain words so TTS does not say "asterisk". */
 function unwrapMarkdownEmphasis(text: string): string {
   return text.replace(/\*([^*]+)\*/g, '$1')

@@ -19,6 +19,7 @@ import { AudioAssetsDialog, AudioTrackClip } from './AudioAssetsDialog'
 import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
 import { cn } from '@/lib/utils'
+import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import {
   buildAudioTracksWithBaselineTiming,
   determineBaselineLanguage,
@@ -306,7 +307,9 @@ export function SceneProductionManager({
       // Estimate from text if no audio metadata
       dialogueDuration = scene.dialogue.reduce((acc: number, d: any) => {
         const text = d.text || d.line || ''
-        return acc + (d.duration || text.split(/\s+/).length / 2.5) // ~2.5 words per second
+        const spoken = stripDirectionBracketsForTiming(text)
+        const wordEst = spoken.split(/\s+/).filter(Boolean).length / 2.5
+        return acc + (d.duration || wordEst) // ~2.5 words per second on spoken text only
       }, 0)
     }
     

@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDuration'
+import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import {
   Sparkles,
   Loader2,
@@ -456,7 +457,8 @@ function extractAudioMetadata(scene: any, selectedLanguage = 'en-US'): {
     const audioData =
       dialogueAudioArray.find((a: any) => a?.dialogueIndex === idx) ?? dialogueAudioArray[idx] ?? {}
     const text = d.text || d.dialogue || d.line || ''
-    const wordEst = text.split(/\s+/).filter(Boolean).length / 2.5
+    const spokenForTiming = stripDirectionBracketsForTiming(text)
+    const wordEst = spokenForTiming.split(/\s+/).filter(Boolean).length / 2.5
     const raw = audioData.duration ?? audioData.durationSeconds
     let fromAudio = typeof raw === 'number' && raw > 0 ? raw : 0
     if (fromAudio > 600 && fromAudio < 3_600_000) fromAudio /= 1000

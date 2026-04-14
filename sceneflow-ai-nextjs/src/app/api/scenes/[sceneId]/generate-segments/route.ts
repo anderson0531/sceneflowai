@@ -7,6 +7,7 @@ import {
   repairPhase1DirectionsTimeline,
 } from '@/lib/scene/dialogueTimelineCoverage'
 import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDuration'
+import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { SegmentDirection, detectNoTalentSegment } from '@/types/scene-direction'
 
 /** Vercel: match `vercel.json` for this route — long Gemini JSON on global endpoint. */
@@ -1103,8 +1104,11 @@ function buildComprehensiveSceneData(
     console.log(`[buildComprehensiveSceneData] No-talent scene detected — suppressing character extraction`)
   }
 
-  // Estimate duration based on dialogue (approx 2.5 words per second) + action
-  const dialogueWords = dialogue.reduce((acc: number, d: any) => acc + (d.text?.split(' ').length || 0), 0)
+  // Estimate duration based on spoken dialogue only (ignore `[...]` delivery notes)
+  const dialogueWords = dialogue.reduce((acc: number, d: any) => {
+    const spoken = stripDirectionBracketsForTiming(d.text || d.line || '')
+    return acc + spoken.split(/\s+/).filter(Boolean).length
+  }, 0)
   const dialogueDuration = dialogueWords / 2.5
   const actionDuration = Math.max(5, visualDescription.split(' ').length / 5) // Rough estimate
   
@@ -1168,8 +1172,9 @@ function buildComprehensiveSceneData(
   // Interleave dialogue lines after narration
   // In most scenes, narration plays OVER the scene while dialogue is interspersed
   dialogue.forEach((d: { character: string; text: string; emotion?: string | null }, di: number) => {
+    const spokenForTiming = stripDirectionBracketsForTiming(d.text || '')
     const wordEst =
-      Math.round(((d.text || '').split(/\s+/).filter(Boolean).length / 2.5) * 10) / 10
+      Math.round((spokenForTiming.split(/\s+/).filter(Boolean).length / 2.5) * 10) / 10
     const entry =
       dialogueAudioEntries.find((e: any) => e.dialogueIndex === di) ?? dialogueAudioEntries[di]
     const estimatedDuration = Math.round(durationFromAudioEntry(entry, wordEst) * 10) / 10

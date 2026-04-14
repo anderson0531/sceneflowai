@@ -73,6 +73,7 @@ import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
 import { cleanupScriptAudio } from '@/lib/audio/cleanupAudio'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
+import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { useCredits } from '@/contexts/CreditsContext'
 import { ProjectCostCalculator } from '@/components/credits/ProjectCostCalculator'
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog'
@@ -427,8 +428,10 @@ function calculateSceneDuration(scene: any): number {
   // Count words in dialogue
   if (scene.dialogue && Array.isArray(scene.dialogue)) {
     scene.dialogue.forEach((d: any) => {
-      if (d.line) {
-        totalWords += d.line.split(/\s+/).filter((w: string) => w.length > 0).length
+      const raw = d.line || d.text || d.dialogue || ''
+      if (raw) {
+        const spoken = stripDirectionBracketsForTiming(raw)
+        totalWords += spoken.split(/\s+/).filter((w: string) => w.length > 0).length
       }
     })
   }
@@ -486,7 +489,8 @@ function computeSceneTotalAudioSecondsForSegmentation(scene: any): number {
   if (dialogueSum < 0.5 && Array.isArray(scene.dialogue)) {
     dialogueSum = scene.dialogue.reduce((acc: number, d: any) => {
       const t = d.line || d.text || d.dialogue || ''
-      return acc + t.split(/\s+/).filter(Boolean).length / 2.5
+      const spoken = stripDirectionBracketsForTiming(t)
+      return acc + spoken.split(/\s+/).filter(Boolean).length / 2.5
     }, 0)
   }
   return Math.max(nar, dialogueSum, 1) + 2

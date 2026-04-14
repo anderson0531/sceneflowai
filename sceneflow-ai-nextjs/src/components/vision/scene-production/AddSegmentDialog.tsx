@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import {
   Film,
   Camera,
@@ -265,12 +266,12 @@ function estimateDuration(
 
   // Count dialogue words from edited texts
   for (const [id, editedText] of selectedDialogueTexts) {
-    totalWords += editedText.split(/\s+/).length
+    totalWords += stripDirectionBracketsForTiming(editedText).split(/\s+/).filter(Boolean).length
   }
 
   // Count narration words (now included in prompt as voiceover)
   if (includeNarration && editedNarrationText) {
-    totalWords += editedNarrationText.split(/\s+/).length
+    totalWords += stripDirectionBracketsForTiming(editedNarrationText).split(/\s+/).filter(Boolean).length
   }
 
   // Estimate: words / 2.5 words per second, with minimum of 4s and max of 8s
