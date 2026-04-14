@@ -110,13 +110,32 @@ export function getCharacterVoiceStyle(age?: string, gender?: string): string {
 export function getTextPortion(text: string, startPercent: number, endPercent: number): string {
   if (!text) return ''
 
-  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text]
-  const totalSentences = sentences.length
+  const normalized = text.trim()
+  if (!normalized) return ''
 
-  const startIdx = Math.floor((startPercent / 100) * totalSentences)
-  const endIdx = Math.ceil((endPercent / 100) * totalSentences)
+  const clampedStart = Math.max(0, Math.min(100, startPercent))
+  const clampedEnd = Math.max(clampedStart, Math.min(100, endPercent))
 
-  return sentences.slice(startIdx, endIdx).join(' ').trim()
+  // Fast-path: full range.
+  if (clampedStart <= 0 && clampedEnd >= 100) {
+    return normalized
+  }
+
+  // Word-aware slicing so one long sentence can still be trimmed.
+  const words = normalized.match(/\S+/g) || []
+  if (words.length <= 1) {
+    const startChar = Math.floor((clampedStart / 100) * normalized.length)
+    const endChar = Math.ceil((clampedEnd / 100) * normalized.length)
+    return normalized.slice(startChar, endChar).trim()
+  }
+
+  const startWord = Math.floor((clampedStart / 100) * words.length)
+  const endWord = Math.ceil((clampedEnd / 100) * words.length)
+
+  const safeStart = Math.max(0, Math.min(words.length - 1, startWord))
+  const safeEnd = Math.max(safeStart + 1, Math.min(words.length, endWord))
+
+  return words.slice(safeStart, safeEnd).join(' ').trim()
 }
 
 export function extractCoreVisualAction(text: string, maxLength: number = 250): string {

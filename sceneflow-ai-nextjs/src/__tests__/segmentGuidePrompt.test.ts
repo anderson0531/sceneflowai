@@ -3,6 +3,7 @@ import {
   composeGuidePromptFromElements,
   buildDefaultBatchGuidePrompt,
   getSegmentDialogueLines,
+  getTextPortion,
   type GuideAudioElement,
 } from '@/lib/scene/segmentGuidePrompt'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
@@ -93,5 +94,16 @@ describe('segmentGuidePrompt', () => {
     expect(lines).toHaveLength(1)
     expect(lines[0].character).toBe('CAROL')
     expect(lines[0].line).toBe('Fallback line.')
+  })
+
+  it('clips long single-line dialogue by slider range', () => {
+    const line =
+      "And to truly understand the architects of this future, to see beyond the immediate horizon, I am delighted to welcome a mind whose contributions forged its very foundation."
+
+    const middlePortion = getTextPortion(line, 25, 75)
+    expect(middlePortion.length).toBeGreaterThan(0)
+    expect(middlePortion).not.toBe(line)
+    expect(middlePortion).not.toContain('And to truly understand')
+    expect(middlePortion).not.toContain('forged its very foundation.')
   })
 })
