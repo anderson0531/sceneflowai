@@ -42,6 +42,7 @@ interface ActiveProjectCardProps {
   nextStep: NextStep
   cueTip?: CueTip
   estimatedCredits: number
+  creditsUsed?: number
   lastActive: string
   budgetStatus: 'on-track' | 'near-limit' | 'over-budget'
   collaborators?: number
@@ -102,6 +103,7 @@ export function ActiveProjectCard({
   nextStep,
   cueTip,
   estimatedCredits,
+  creditsUsed: creditsUsedProp = 0,
   lastActive,
   budgetStatus,
   collaborators,
@@ -127,7 +129,7 @@ export function ActiveProjectCard({
   }
 
   const budgetBadge = getBudgetBadge()
-  const creditsUsed = Number(metadata?.creditsUsed ?? 0)
+  const creditsUsed = Number.isFinite(Number(creditsUsedProp)) ? Number(creditsUsedProp) : 0
   const creditsBudget = Number(metadata?.creditsBudget ?? 0)
   const hasBudgetTarget = creditsBudget > 0
   const remainingCredits = hasBudgetTarget ? Math.max(creditsBudget - creditsUsed, 0) : null

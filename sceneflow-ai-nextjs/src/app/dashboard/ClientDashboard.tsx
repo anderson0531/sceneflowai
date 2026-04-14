@@ -12,6 +12,16 @@ import { useEnhancedStore } from '@/store/enhancedStore'
 import { Loader2 } from 'lucide-react'
 import { useEffect, useCallback } from 'react'
 
+function getProjectCreditsUsed(metadata: Record<string, any> | undefined): number {
+  const rawValue =
+    metadata?.creditsUsed ??
+    metadata?.creationHub?.metrics?.creditsUsed ??
+    metadata?.productionCosts?.totalCredits ??
+    0
+  const parsedValue = Number(rawValue)
+  return Number.isFinite(parsedValue) ? parsedValue : 0
+}
+
 export default function ClientDashboard() {
   const { credits, subscription, projects, isLoading, refresh } = useDashboardData()
   const { selectedProjectId, setSelectedProjectId } = useEnhancedStore()
@@ -52,7 +62,7 @@ export default function ClientDashboard() {
 
   // Calculate projects near budget limit
   const projectsNearLimit = projects.filter(p => {
-    const creditsUsed = p.metadata?.creditsUsed || 0
+    const creditsUsed = getProjectCreditsUsed(p.metadata)
     const estimated = (p.metadata?.visionPhase?.script?.script?.scenes?.length || 5) * 100
     return creditsUsed > estimated * 0.75
   }).length

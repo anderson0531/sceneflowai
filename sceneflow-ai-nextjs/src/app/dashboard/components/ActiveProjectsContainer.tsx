@@ -27,6 +27,16 @@ interface ActiveProjectsContainerProps {
   onProjectUpdated?: () => void
 }
 
+function getProjectCreditsUsed(metadata: Record<string, any> | undefined): number {
+  const rawValue =
+    metadata?.creditsUsed ??
+    metadata?.creationHub?.metrics?.creditsUsed ??
+    metadata?.productionCosts?.totalCredits ??
+    0
+  const parsedValue = Number(rawValue)
+  return Number.isFinite(parsedValue) ? parsedValue : 0
+}
+
 // Transform API project to ActiveProjectCard props
 function transformProject(project: DashboardProject, index: number) {
   const currentStep = getStepNumber(project.currentStep)
@@ -134,7 +144,7 @@ function transformProject(project: DashboardProject, index: number) {
   }
 
   // Determine budget status
-  const creditsUsed = project.metadata?.creditsUsed || 0
+  const creditsUsed = getProjectCreditsUsed(project.metadata)
   const estimatedTotal = scenes.length * 100 || 500
   const budgetStatus = creditsUsed > estimatedTotal ? 'over-budget' 
     : creditsUsed > estimatedTotal * 0.75 ? 'near-limit' 
@@ -154,6 +164,7 @@ function transformProject(project: DashboardProject, index: number) {
     estimatedCredits: scenes.length * 50 || 250,
     lastActive: formatRelativeTime(project.updatedAt),
     budgetStatus: budgetStatus as 'on-track' | 'near-limit' | 'over-budget',
+    creditsUsed,
     index,
     genre: project.genre || project.metadata?.genre,
     metadata: project.metadata
