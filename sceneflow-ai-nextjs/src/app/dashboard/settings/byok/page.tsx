@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { motion } from 'framer-motion'
-import { Key, CheckCircle, XCircle, Loader, AlertCircle, ExternalLink } from 'lucide-react'
+import { Key, CheckCircle, XCircle, Loader, AlertCircle, ExternalLink, Trash2 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -12,109 +12,89 @@ import { toast } from 'sonner'
 export default function BYOKPage() {
   const { data: session } = useSession()
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState<Record<string, boolean>>({})
-  const [providers, setProviders] = useState<Record<string, { configured: boolean; apiKey: string }>>({})
-  const [localApiKeys, setLocalApiKeys] = useState<Record<string, string>>({})
+  const [saving, setSaving] = useState(false)
+  const [removing, setRemoving] = useState(false)
+  const [vertexApiKey, setVertexApiKey] = useState('')
+  const [vertexConfig, setVertexConfig] = useState<{
+    configured: boolean
+    keyHint?: string
+    updatedAt?: string
+  }>({ configured: false })
 
   useEffect(() => {
     if (session?.user) {
-      fetchProviderConfigs()
+      fetchVertexConfig()
     }
   }, [session])
 
-  const fetchProviderConfigs = async () => {
+  const fetchVertexConfig = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/settings/providers')
+      const response = await fetch('/api/settings/byok/vertex')
       if (response.ok) {
         const data = await response.json()
-        // Initialize providers state
-        const providerState: Record<string, { configured: boolean; apiKey: string }> = {}
-        if (data.providers) {
-          data.providers.forEach((p: any) => {
-            providerState[p.provider] = {
-              configured: p.is_valid || false,
-              apiKey: p.is_valid ? '••••••••' : '',
-            }
-          })
-        }
-        setProviders(providerState)
+        setVertexConfig({
+          configured: Boolean(data.configured),
+          keyHint: data.keyHint,
+          updatedAt: data.updatedAt,
+        })
       }
     } catch (error) {
-      console.error('Failed to fetch provider configs:', error)
+      console.error('Failed to fetch Vertex config:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSaveProvider = async (provider: string, apiKey: string) => {
-    setSaving(prev => ({ ...prev, [provider]: true }))
+  const handleSaveVertexKey = async () => {
+    setSaving(true)
     try {
-      const response = await fetch('/api/settings/providers', {
+      const response = await fetch('/api/settings/byok/vertex', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider,
-          credentials: { apiKey },
-        }),
+        body: JSON.stringify({ apiKey: vertexApiKey }),
       })
 
       const data = await response.json()
       if (response.ok) {
-        toast.success(`${provider} API key configured successfully`)
-        setProviders(prev => ({
-          ...prev,
-          [provider]: { configured: true, apiKey: '••••••••' },
-        }))
+        toast.success('Vertex AI key saved securely')
+        setVertexApiKey('')
+        setVertexConfig({
+          configured: true,
+          keyHint: data.keyHint,
+          updatedAt: data.updatedAt,
+        })
       } else {
-        toast.error(data.error || `Failed to configure ${provider}`)
+        toast.error(data.error || 'Failed to save Vertex AI key')
       }
     } catch (error) {
-      console.error(`Failed to save ${provider}:`, error)
-      toast.error(`Failed to configure ${provider}`)
+      console.error('Failed to save Vertex AI key:', error)
+      toast.error('Failed to save Vertex AI key')
     } finally {
-      setSaving(prev => ({ ...prev, [provider]: false }))
+      setSaving(false)
     }
   }
 
-  const providerConfigs = [
-    {
-      name: 'Google Gemini',
-      key: 'google-gemini',
-      description: 'LLM and text analysis',
-      getKeyUrl: 'https://console.cloud.google.com/apis/credentials',
-    },
-    {
-      name: 'OpenAI',
-      key: 'openai',
-      description: 'LLM and DALL-E image generation',
-      getKeyUrl: 'https://platform.openai.com/api-keys',
-    },
-    {
-      name: 'Anthropic Claude',
-      key: 'anthropic',
-      description: 'LLM and analysis',
-      getKeyUrl: 'https://console.anthropic.com/settings/keys',
-    },
-    {
-      name: 'Google Veo',
-      key: 'google-veo',
-      description: 'Video generation',
-      getKeyUrl: 'https://console.cloud.google.com/apis/credentials',
-    },
-    {
-      name: 'Runway',
-      key: 'runway',
-      description: 'Video generation',
-      getKeyUrl: 'https://app.runwayml.com/account/settings',
-    },
-    {
-      name: 'Stability AI',
-      key: 'stability-ai',
-      description: 'Image generation',
-      getKeyUrl: 'https://platform.stability.ai/account/keys',
-    },
-  ]
+  const handleRemoveVertexKey = async () => {
+    setRemoving(true)
+    try {
+      const response = await fetch('/api/settings/byok/vertex', {
+        method: 'DELETE',
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to remove key')
+      }
+      setVertexConfig({ configured: false })
+      setVertexApiKey('')
+      toast.success('Vertex AI key removed')
+    } catch (error) {
+      console.error('Failed to remove Vertex AI key:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to remove key')
+    } finally {
+      setRemoving(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -140,7 +120,7 @@ export default function BYOKPage() {
             <div>
               <CardTitle className="text-xl font-semibold">Bring Your Own Key (BYOK)</CardTitle>
               <CardDescription className="text-gray-400">
-                Configure your own API keys to use with SceneFlow AI services
+                Configure your Vertex AI key for SceneFlow generation
               </CardDescription>
             </div>
           </div>
@@ -152,94 +132,101 @@ export default function BYOKPage() {
               <div className="text-sm text-blue-200">
                 <p className="font-semibold mb-1">Why use BYOK?</p>
                 <p className="text-blue-300">
-                  Using your own API keys allows you to pay directly to providers and may reduce costs. 
-                  SceneFlow charges a 20% platform fee when using BYOK.
+                  Your key is encrypted at rest and never returned to the client after saving.
+                  SceneFlow only stores masked key metadata for status display.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="space-y-4">
-            {providerConfigs.map((provider) => {
-              const config = providers[provider.key] || { configured: false, apiKey: '' }
-              const localApiKey = localApiKeys[provider.key] || ''
-              const isSaving = saving[provider.key] || false
-
-              return (
-                <div
-                  key={provider.key}
-                  className="p-4 bg-dark-bg rounded-lg border border-dark-border"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-white font-semibold">{provider.name}</h3>
-                        {config.configured ? (
-                          <CheckCircle className="w-4 h-4 text-green-400" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-gray-500" />
-                        )}
-                      </div>
-                      <p className="text-gray-400 text-sm">{provider.description}</p>
-                    </div>
-                    {config.configured && (
-                      <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
-                        Configured
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="space-y-3">
-                    <div>
-                      <label htmlFor={`${provider.key}-key`} className="text-sm font-medium text-dark-text block">
-                        API Key
-                      </label>
-                      <div className="flex gap-2 mt-1">
-                        <Input
-                          id={`${provider.key}-key`}
-                          type="password"
-                          value={config.configured ? config.apiKey : localApiKey}
-                          onChange={(e) => setLocalApiKeys(prev => ({ ...prev, [provider.key]: e.target.value }))}
-                          placeholder={config.configured ? '••••••••' : 'Enter your API key'}
-                          disabled={config.configured}
-                          className="bg-dark-bg border-dark-border text-white"
-                        />
-                        <Button
-                          type="button"
-                          onClick={() => handleSaveProvider(provider.key, localApiKey)}
-                          disabled={isSaving || config.configured || !localApiKey}
-                          className="bg-sf-primary hover:bg-sf-accent text-white flex items-center gap-2"
-                        >
-                          {isSaving ? (
-                            <>
-                              <Loader className="w-4 h-4 animate-spin" />
-                              Saving...
-                            </>
-                          ) : config.configured ? (
-                            'Update'
-                          ) : (
-                            'Save'
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
-                      <span>Get your API key:</span>
-                      <a
-                        href={provider.getKeyUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sf-primary hover:underline flex items-center gap-1"
-                      >
-                        {provider.name} Dashboard
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  </div>
+          <div className="p-4 bg-dark-bg rounded-lg border border-dark-border">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-white font-semibold">Vertex AI</h3>
+                  {vertexConfig.configured ? (
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <XCircle className="w-4 h-4 text-gray-500" />
+                  )}
                 </div>
-              )
-            })}
+                <p className="text-gray-400 text-sm">Google Vertex-powered generation key</p>
+              </div>
+              {vertexConfig.configured && (
+                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
+                  Configured
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label htmlFor="vertex-api-key" className="text-sm font-medium text-dark-text block">
+                  Vertex AI API Key
+                </label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    id="vertex-api-key"
+                    type="password"
+                    value={vertexApiKey}
+                    onChange={(e) => setVertexApiKey(e.target.value)}
+                    placeholder={vertexConfig.configured ? 'Enter a new key to rotate' : 'Enter your Vertex AI API key'}
+                    className="bg-dark-bg border-dark-border text-white"
+                    autoComplete="off"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleSaveVertexKey}
+                    disabled={saving || !vertexApiKey.trim()}
+                    className="bg-sf-primary hover:bg-sf-accent text-white flex items-center gap-2"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save'
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {vertexConfig.configured && (
+                <div className="text-xs text-gray-400 space-y-1">
+                  <p>Stored key: <span className="text-gray-300">{vertexConfig.keyHint || 'Configured'}</span></p>
+                  {vertexConfig.updatedAt && (
+                    <p>Last updated: {new Date(vertexConfig.updatedAt).toLocaleString()}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between text-xs text-gray-400">
+                <div className="flex items-center gap-2">
+                  <span>Get your API key:</span>
+                  <a
+                    href="https://console.cloud.google.com/apis/credentials"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sf-primary hover:underline flex items-center gap-1"
+                  >
+                    Google Cloud Console
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+                {vertexConfig.configured && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={handleRemoveVertexKey}
+                    disabled={removing}
+                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 px-2"
+                  >
+                    {removing ? <Loader className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

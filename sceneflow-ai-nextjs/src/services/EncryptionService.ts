@@ -3,8 +3,9 @@ import crypto from 'crypto'
 export class EncryptionService {
   private static readonly ALGORITHM = 'aes-256-gcm'
   private static readonly KEY_LENGTH = 32 // 256 bits
-  private static readonly IV_LENGTH = 16 // 128 bits
+  private static readonly IV_LENGTH = 12 // 96 bits for GCM
   private static readonly TAG_LENGTH = 16 // 128 bits
+  private static readonly VERSION = 'v2'
 
   /**
    * Encrypts sensitive data using AES-256-GCM
@@ -15,7 +16,7 @@ export class EncryptionService {
     try {
       const encryptionKey = this.getEncryptionKey()
       const iv = crypto.randomBytes(this.IV_LENGTH)
-      const cipher = crypto.createCipher(this.ALGORITHM, encryptionKey)
+      const cipher = crypto.createCipheriv(this.ALGORITHM, encryptionKey, iv)
       
       cipher.setAAD(Buffer.from('SceneFlow AI Credentials', 'utf8'))
       
@@ -24,8 +25,8 @@ export class EncryptionService {
       
       const tag = cipher.getAuthTag()
       
-      // Return format: iv:tag:encryptedData
-      return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`
+      // Return format: v2:iv:tag:encryptedData
+      return `${this.VERSION}:${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`
     } catch (error) {
       console.error('Encryption failed:', error)
       throw new Error('Failed to encrypt credentials')
@@ -41,24 +42,38 @@ export class EncryptionService {
     try {
       const encryptionKey = this.getEncryptionKey()
       const parts = encryptedData.split(':')
-      
-      if (parts.length !== 3) {
-        throw new Error('Invalid encrypted data format')
+
+      if (parts.length === 4 && parts[0] === this.VERSION) {
+        const [, ivHex, tagHex, encryptedHex] = parts
+        const iv = Buffer.from(ivHex, 'hex')
+        const tag = Buffer.from(tagHex, 'hex')
+        const encrypted = Buffer.from(encryptedHex, 'hex')
+
+        const decipher = crypto.createDecipheriv(this.ALGORITHM, encryptionKey, iv)
+        decipher.setAAD(Buffer.from('SceneFlow AI Credentials', 'utf8'))
+        decipher.setAuthTag(tag)
+
+        let decrypted = decipher.update(encrypted, undefined, 'utf8')
+        decrypted += decipher.final('utf8')
+        return decrypted
       }
-      
-      const [ivHex, tagHex, encryptedHex] = parts
-      const iv = Buffer.from(ivHex, 'hex')
-      const tag = Buffer.from(tagHex, 'hex')
-      const encrypted = Buffer.from(encryptedHex, 'hex')
-      
-      const decipher = crypto.createDecipher(this.ALGORITHM, encryptionKey)
-      decipher.setAAD(Buffer.from('SceneFlow AI Credentials', 'utf8'))
-      decipher.setAuthTag(tag)
-      
-      let decrypted = decipher.update(encrypted, undefined, 'utf8')
-      decrypted += decipher.final('utf8')
-      
-      return decrypted
+
+      // Legacy format fallback: iv:tag:encryptedData
+      if (parts.length === 3) {
+        const [, tagHex, encryptedHex] = parts
+        const tag = Buffer.from(tagHex, 'hex')
+        const encrypted = Buffer.from(encryptedHex, 'hex')
+
+        const decipher = crypto.createDecipher(this.ALGORITHM, encryptionKey)
+        decipher.setAAD(Buffer.from('SceneFlow AI Credentials', 'utf8'))
+        decipher.setAuthTag(tag)
+
+        let decrypted = decipher.update(encrypted, undefined, 'utf8')
+        decrypted += decipher.final('utf8')
+        return decrypted
+      }
+
+      throw new Error('Invalid encrypted data format')
     } catch (error) {
       console.error('Decryption failed:', error)
       throw new Error('Failed to decrypt credentials')
