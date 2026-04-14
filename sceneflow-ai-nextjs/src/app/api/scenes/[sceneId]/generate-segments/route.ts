@@ -94,7 +94,7 @@ function isNoTalentScene(
 /** How segment clip lengths are chosen (Veo only allows 4 / 6 / 8 s per clip). */
 export interface SegmentDurationConfig {
   mode: 'auto' | 'fixed'
-  /** When mode is fixed, user-chosen target in 4–8s */
+  /** When mode is fixed, user-chosen target in 4–12s */
   fixedSeconds: number | null
   /** Soft average from audio ÷ min segments — guides auto mode copy only */
   hintSeconds: number
@@ -122,23 +122,23 @@ function targetSegmentDurationForResponse(config: SegmentDurationConfig): number
   return config.mode === 'fixed' && config.fixedSeconds != null ? config.fixedSeconds : config.hintSeconds
 }
 
-/** Prompt copy: Veo only allows 4 / 6 / 8 s; auto lets the model pick per segment. */
+/** Prompt copy: Veo durations are chosen per segment in auto mode. */
 function segmentDurationPromptSection(config: SegmentDurationConfig): string {
   if (config.mode === 'auto') {
     return `
-**DURATION (AUTO — PER SEGMENT):** Veo 3.1 accepts **only 4, 6, or 8 seconds** per generated clip (no other durations). For **each** segment, set \`estimated_duration\` to **exactly 4, 6, or 8** based on dialogue timing, breath pauses, and action cut points — **different segments may use different values**. A soft planning average from total audio ÷ minimum clip count is ~${config.hintSeconds}s; use that as a guide, not a hard target. **Never exceed 8s** for any segment. **Minimum 4s** per segment when possible.
-**WHEN TO SPLIT:** Split or shorten a segment when the audio and action assigned to it would need **more than 8s** to play naturally; combine adjacent lines in the **same** visual setup when they fit within **one** 4/6/8s clip.
+**DURATION (AUTO — PER SEGMENT):** Veo 3.1 supports **4, 6, 8, 10, or 12 seconds** per generated clip. For **each** segment, set \`estimated_duration\` to one of these values based on dialogue timing, breath pauses, and action cut points — **different segments may use different values**. A soft planning average from total audio ÷ minimum clip count is ~${config.hintSeconds}s; use that as a guide, not a hard target. **Never exceed 12s** for any segment. **Minimum 4s** per segment when possible.
+**WHEN TO SPLIT:** Split or shorten a segment when the audio and action assigned to it would need **more than 12s** to play naturally; combine adjacent lines in the **same** visual setup when they fit within **one** 4/6/8/10/12s clip.
 `
   }
   const t = config.fixedSeconds ?? 6
   return `
-**DURATION (FIXED TARGET):** Prefer **${t}s** per segment (\`estimated_duration\` must still be **exactly 4, 6, or 8** — use **${t}s** as the default choice). **Never exceed 8s.** Combine lines in the same setup when their total fits; split when combined audio would require **more than 8s**.
+**DURATION (FIXED TARGET):** Prefer **${t}s** per segment (\`estimated_duration\` must still be **exactly 4, 6, 8, 10, or 12** — use **${t}s** as the default choice). **Never exceed 12s.** Combine lines in the same setup when their total fits; split when combined audio would require **more than 12s**.
 `
 }
 
 /** Strengthen seamless stitch when dialogue/performance crosses a segment boundary. */
 const SEAMLESS_CONTINUATION_PROMPT = `
-**SEAMLESS CONTINUATION (MANDATORY):** When the **same** dialogue line, beat, or continuous performance spans **segment N and segment N+1** (or you split for the 8s cap), segment **N+1** MUST begin from the **exact** visual state at the end of segment **N**:
+**SEAMLESS CONTINUATION (MANDATORY):** When the **same** dialogue line, beat, or continuous performance spans **segment N and segment N+1** (or you split for the 12s cap), segment **N+1** MUST begin from the **exact** visual state at the end of segment **N**:
 - \`reference_strategy.start_frame_description\` (Phase 2 / legacy) MUST match segment N's \`end_frame_description\` (same pose, expression, wardrobe, props, lighting, framing) — the **last frame of clip N is the first frame of clip N+1**.
 - In Phase 1 directions, \`keyframe_start_description\` for segment N+1 MUST match segment N's \`keyframe_end_description\` for the same continuity.
 Do **not** reset the character to a new neutral pose between parts of the same line unless the script calls for a deliberate cut.
@@ -147,7 +147,7 @@ Do **not** reset the character to a new neutral pose between parts of the same l
 interface GenerateSegmentsRequest {
   /** Target seconds when not using auto (typically 4–8). Omit or ≤0 with segmentDurationAuto for auto. */
   preferredDuration?: number
-  /** When true, AI picks 4/6/8s per segment from dialogue and action cuts (default in Segment Builder). */
+  /** When true, AI picks per-segment durations from dialogue and action cuts (default in Segment Builder). */
   segmentDurationAuto?: boolean
   sceneId?: string
   projectId?: string
@@ -196,7 +196,7 @@ interface IntelligentSegment {
   emotional_beat: string
   // Phase 8: AI-assigned dialogue coverage
   assigned_dialogue_indices?: number[] // 0-based indices of dialogue lines covered by this segment
-  /** True when this row is an extra Veo clip continuing the same timeline line (>8s audio) */
+  /** True when this row is an extra Veo clip continuing the same timeline line (>12s audio) */
   veoTimelineContinuation?: boolean
   // NEW: AI-recommended generation plan
   generation_plan?: {
@@ -352,8 +352,8 @@ export async function POST(
     })
     
     // Calculate minimum segments required based on total audio duration
-    // Each segment can be max 8 seconds (Veo 3.1 constraint)
-    const MAX_SEGMENT_SECONDS = 8
+    // Each segment can be max 12 seconds (Veo 3.1 constraint)
+    const MAX_SEGMENT_SECONDS = 12
     const timelineAudioSum = sceneData.combinedAudioTimeline.reduce(
       (acc, l) => acc + (typeof l.estimatedDuration === 'number' ? l.estimatedDuration : 0),
       0
@@ -757,7 +757,7 @@ function expandDirectionsForTimelineAudioBudget(
       dialogueIndices.length <= 1 ? 1 : Math.ceil(dialogueIndices.length / numParts)
 
     for (let i = 0; i < numParts; i++) {
-      // One timeline line longer than 8s → multiple Veo clips: only the first clip owns the index;
+      // One timeline line longer than 12s → multiple Veo clips: only the first clip owns the index;
       // later parts are continuations (same audio) and must not duplicate the index (breaks coverage repair).
       const partDialogue =
         dialogueIndices.length === 1
@@ -1134,8 +1134,8 @@ function analyzeNarrationBeats(
     return []
   }
   
-  // Veo 3.1 constraint: max 8 seconds per segment
-  const MAX_SEGMENT_DURATION = 8.0
+  // Veo 3.1 constraint: max 12 seconds per segment
+  const MAX_SEGMENT_DURATION = 12.0
   const TARGET_SEGMENT_DURATION = 6.0 // Target 6 seconds to leave room for timing variance
   const MIN_SEGMENT_DURATION = 3.0 // Minimum segment to avoid too-short clips
   
@@ -1500,7 +1500,7 @@ ${Math.round(sceneData.estimatedTotalDuration)} seconds total
 
 **LOGIC WORKFLOW:**
 1. **Analyze Triggers:** Scan script for MAJOR changes in Action, Location, or dramatic emotional shift. These are your "Cut Points." **DO NOT create a new segment just because the speaker changes** - dialogue between characters in the same location should be combined into one segment when possible.
-2. **Estimate Timing:** Assign estimated seconds to dialogue (approx. 2.5 words/sec) and action. **Combine short dialogue lines with adjacent dialogue in the same segment** when they fit in **one** Veo clip (4/6/8s). Split only when the combined audio/action for one clip would **exceed 8s** or when there is a **major** visual/camera change.
+2. **Estimate Timing:** Assign estimated seconds to dialogue (approx. 2.5 words/sec) and action. **Combine short dialogue lines with adjacent dialogue in the same segment** when they fit in **one** Veo clip (4/6/8/10/12s). Split only when the combined audio/action for one clip would **exceed 12s** or when there is a **major** visual/camera change.
 3. **Aim for Efficiency:** Target 3-6 segments for most scenes. If you have more than 8 segments, reconsider whether some can be combined.
 4. **Select Method:**
    - **FTV (Frame-to-Video):** DEFAULT method. Uses start and end keyframe images to generate video between them. Use for ALL segments except segment 1 with scene frame.
@@ -1826,10 +1826,10 @@ function generateDirectionsOnlyPrompt(
   
   let scopeConstraints =
     durationConfig.mode === 'auto'
-      ? `- **Segment length (AUTO):** Each segment \`estimated_duration\` must be **exactly 4, 6, or 8** seconds (Veo only). Pick per segment from dialogue/action cuts; soft average ~${durationConfig.hintSeconds}s. **Never exceed 8s** per segment.\n`
-      : `- **Segment length (FIXED):** Target **${durationConfig.fixedSeconds ?? 6}s** per segment (\`estimated_duration\` must be **exactly 4, 6, or 8** — prefer **${durationConfig.fixedSeconds ?? 6}s**). **Never exceed 8s.**\n`
+      ? `- **Segment length (AUTO):** Each segment \`estimated_duration\` must be **exactly 4, 6, 8, 10, or 12** seconds (Veo only). Pick per segment from dialogue/action cuts; soft average ~${durationConfig.hintSeconds}s. **Never exceed 12s** per segment.\n`
+      : `- **Segment length (FIXED):** Target **${durationConfig.fixedSeconds ?? 6}s** per segment (\`estimated_duration\` must be **exactly 4, 6, 8, 10, or 12** — prefer **${durationConfig.fixedSeconds ?? 6}s**). **Never exceed 12s.**\n`
   scopeConstraints += `- **HARD CONSTRAINT: Total segment durations MUST sum to exactly ~${authoritativeDuration}s (narration/audio duration)**\n`
-  scopeConstraints += `- **MINIMUM SEGMENT COUNT:** At least **${minimumSegmentsRequired}** segments (${authoritativeDuration}s ÷ ${8}s max per clip). Use **more** segments only when distinct shots are needed or a single audio line exceeds 8s (then you are effectively continuing the same line across clips).\n`
+  scopeConstraints += `- **MINIMUM SEGMENT COUNT:** At least **${minimumSegmentsRequired}** segments (${authoritativeDuration}s ÷ ${8}s max per clip). Use **more** segments only when distinct shots are needed or a single audio line exceeds 12s (then you are effectively continuing the same line across clips).\n`
   scopeConstraints += `- **NO REDUNDANT ESTABLISHING SHOTS:** Use **one** backdrop/establishing beat for contiguous 🎙️ voiceover unless duration forces a required continuation. Do not output multiple segments that repeat the same audio timeline index.\n`
   scopeConstraints += `- Do not exceed ${authoritativeDuration}s total duration across segments.\n`
   
@@ -1956,8 +1956,8 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
 1. Split at MAJOR visual changes only (angle, location, emotional shift)
 2. Combine consecutive audio lines in same shot setup — especially adjacent narration sentences
 3. **UNIQUE TIMELINE COVERAGE (CRITICAL):** Each index [0] through [${Math.max(0, sceneData.combinedAudioTimeline.length - 1)}] from the Audio Timeline MUST appear in exactly ONE segment's dialogue_indices. The same index MUST NOT appear in two different segments. Omitting an index is an error.
-4. **DURATION RULE (CRITICAL):** Total segment durations MUST sum to EXACTLY the audio timeline duration (~${Math.round(totalTimelineDuration)}s). Do NOT exceed this. Each segment \`estimated_duration\` must be **exactly 4, 6, or 8** (Veo quantization).
-5. **SEGMENT COUNT:** At least ${minimumSegmentsRequired} segments for duration; use **fewer only if** you still cover every timeline index without exceeding 8s per clip. Never pad with duplicate shots for the same audio index.
+4. **DURATION RULE (CRITICAL):** Total segment durations MUST sum to EXACTLY the audio timeline duration (~${Math.round(totalTimelineDuration)}s). Do NOT exceed this. Each segment \`estimated_duration\` must be **exactly 4, 6, 8, 10, or 12** (Veo quantization).
+5. **SEGMENT COUNT:** At least ${minimumSegmentsRequired} segments for duration; use **fewer only if** you still cover every timeline index without exceeding 12s per clip. Never pad with duplicate shots for the same audio index.
 6. keyframe_start_description and keyframe_end_description are MANDATORY for every segment
 7. **VOICEOVER SEGMENTS:** When a segment covers 🎙️ VOICEOVER lines, the talent_action should describe atmospheric/environmental action — NOT a character speaking. Show backdrop visuals.
 8. **DIALOGUE SEGMENTS:** When a segment covers 🗣️ DIALOGUE lines, the talent_action MUST show the character speaking with lip-sync action.
@@ -2327,7 +2327,7 @@ async function callGeminiForPromptsFromDirections(prompt: string): Promise<Intel
  */
 function enforceMaxSegmentDuration(
   segments: IntelligentSegment[],
-  maxDuration: number = 8,
+  maxDuration: number = 12,
   sceneData: ComprehensiveSceneData
 ): IntelligentSegment[] {
   const result: IntelligentSegment[] = []
@@ -2342,7 +2342,7 @@ function enforceMaxSegmentDuration(
     const originalDuration = seg.estimated_duration
     const dialogueIndices = seg.assigned_dialogue_indices || []
 
-    // Keep the minimum required split count and allocate 8s-first where feasible.
+    // Keep the minimum required split count and allocate 12s-first where feasible.
     const subDurations = allocateVeoSplitDurations(originalDuration, maxDuration)
     const numParts = subDurations.length
 

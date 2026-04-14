@@ -274,7 +274,7 @@ function estimateDuration(
     totalWords += stripDirectionBracketsForTiming(editedNarrationText).split(/\s+/).filter(Boolean).length
   }
 
-  // Estimate: words / 2.5 words per second, with minimum of 4s and max of 8s
+  // Estimate: words / 2.5 words per second, with minimum of 4s and max of 12s
   const estimated = Math.ceil(totalWords / WORDS_PER_SECOND)
   return Math.max(4, Math.min(8, estimated || 6))
 }
@@ -709,7 +709,7 @@ export function AddSegmentDialog({
                                 onClick={(e) => e.stopPropagation()}
                               />
                               <p className="text-[10px] text-muted-foreground mt-1">
-                                Edit to use only the portion needed for this segment (&lt;8s)
+                                Edit to use only the portion needed for this segment (&lt;12s)
                               </p>
                             </div>
                           )}

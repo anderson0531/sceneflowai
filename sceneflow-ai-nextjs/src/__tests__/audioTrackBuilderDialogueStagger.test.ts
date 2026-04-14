@@ -40,7 +40,7 @@ describe('dialogue audio vs video segment alignment (cumulative timeline)', () =
     const byIdx = [...tracks.dialogue].sort(
       (a, b) => (a.dialogueIndex ?? 0) - (b.dialogueIndex ?? 0)
     )
-    // Segment durations 8s + 8s → line0 at 0s, line1 at 8s (matches purple video row)
+    // Segment durations 12s + 12s → line0 at 0s, line1 at 12s (matches purple video row)
     expect(byIdx[0].startTime).toBeCloseTo(0, 5)
     expect(byIdx[1].startTime).toBeCloseTo(8, 5)
   })

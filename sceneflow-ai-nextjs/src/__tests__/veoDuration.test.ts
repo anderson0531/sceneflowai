@@ -15,7 +15,7 @@ describe('veoDuration helpers', () => {
     expect(out.reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(16.2)
   })
 
-  it('prefers 8s when feasible and avoids unnecessary 4s', () => {
+  it('prefers 12s when feasible and avoids unnecessary 4s', () => {
     expect(allocateVeoSplitDurations(15.1, 8)).toEqual([8, 8])
     expect(allocateVeoSplitDurations(17.1, 8)).toEqual([8, 6, 4])
   })

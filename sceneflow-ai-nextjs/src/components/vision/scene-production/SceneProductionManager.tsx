@@ -1030,7 +1030,7 @@ export function SceneProductionManager({
     setGenerationProgress(50)
     
     try {
-      // Full scene length from audio or scene.duration (never cap at 8s — that forced one bogus 8s block).
+      // Full scene length from audio or scene.duration (never cap at 12s — that forced one bogus 12s block).
       const fullDuration = Math.max(
         totalAudioDurationSeconds || 0,
         typeof scene?.duration === 'number' ? scene.duration : 0,
@@ -1375,7 +1375,7 @@ export function SceneProductionManager({
                   <span className="text-xs text-gray-500">seconds</span>
                 </div>
                 <p className="text-xs text-gray-400">
-                  4-8s recommended for Veo 3.1
+                  4-12s recommended for Veo 3.1
                 </p>
               </div>
 

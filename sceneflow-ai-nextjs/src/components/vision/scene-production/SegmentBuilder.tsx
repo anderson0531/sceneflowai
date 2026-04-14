@@ -496,7 +496,7 @@ function extractAudioMetadata(scene: any, selectedLanguage = 'en-US'): {
 // Client-Side Segment Duration Enforcement (Safety Net)
 // ============================================================================
 
-const CLIENT_MAX_SEGMENT_DURATION = 8 // Veo 3.1 max
+const CLIENT_MAX_SEGMENT_DURATION = 12 // Veo 3.1 max
 
 /**
  * Client-side safety net: split any ProposedSegments that exceed the max duration.
@@ -1185,9 +1185,9 @@ export function SegmentBuilder({
                         <p className="text-sm text-slate-200">
                           Based on an estimated audio duration of <strong>~{Math.ceil(audioMetadata.totalAudioDurationSeconds)}s</strong> with <strong>{audioMetadata.dialogueDurations.length}</strong> dialogue line{audioMetadata.dialogueDurations.length !== 1 ? 's' : ''}, the AI recommends a <strong className="capitalize text-cyan-400">{focusMode.replace('-', ' ')}</strong> approach
                           {segmentDurationTarget == null ? (
-                            <> with <strong>Auto</strong> clip length (4–8s per segment from cuts; ~<strong>{segmentDurationHintSeconds}s</strong> typical).</>
+                            <> with <strong>Auto</strong> clip length (4–12s per segment from cuts; ~<strong>{segmentDurationHintSeconds}s</strong> typical).</>
                           ) : (
-                            <> targeting <strong>~{segmentDurationTarget}s</strong> per segment (Veo uses 4, 6, or 8s clips).</>
+                            <> targeting <strong>~{segmentDurationTarget}s</strong> per segment (Veo uses 4, 6, 8, 10, or 12s clips).</>
                           )}
                         </p>
                       </div>
@@ -1235,8 +1235,8 @@ export function SegmentBuilder({
                           </div>
                           <p className="text-xs text-gray-500">
                             {segmentDurationTarget == null
-                              ? `Auto: each clip is 4, 6, or 8s from dialogue and action cuts (~${segmentDurationHintSeconds}s planning average). Drag the slider to set a fixed target.`
-                              : `Prefer ~${segmentDurationTarget}s clips (Veo 3.1 uses only 4, 6, or 8s).`}
+                              ? `Auto: each clip is 4, 6, 8, 10, or 12s from dialogue and action cuts (~${segmentDurationHintSeconds}s planning average). Drag the slider to set a fixed target.`
+                              : `Prefer ~${segmentDurationTarget}s clips (Veo 3.1 uses only 4, 6, 8, 10, or 12s).`}
                           </p>
                         </div>
 

@@ -3905,7 +3905,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       // Calculate minimum segments required (max 8s per video segment)
-      const MAX_SEGMENT_SECONDS = 8
+      const MAX_SEGMENT_SECONDS = 12
       const minimumSegmentsRequired = Math.max(1, Math.ceil(totalAudioDuration / MAX_SEGMENT_SECONDS))
       
       console.log(`[Auto-Align] Audio duration: ${totalAudioDuration.toFixed(1)}s, minimum segments: ${minimumSegmentsRequired}`)

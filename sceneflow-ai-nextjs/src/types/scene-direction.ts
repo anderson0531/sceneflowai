@@ -181,7 +181,7 @@ export interface SegmentDirection {
    * Required for Phase 2 prompts; do not infer from dialogueLineIds alone once narration exists.
    */
   audioTimelineIndices?: number[]
-  /** True when this row is an extra Veo clip continuing the same timeline line (>8s) */
+  /** True when this row is an extra Veo clip continuing the same timeline line (>12s) */
   veoTimelineContinuation?: boolean
   /** User has reviewed/approved this direction */
   isApproved: boolean

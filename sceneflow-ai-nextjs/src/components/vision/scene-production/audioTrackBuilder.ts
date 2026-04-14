@@ -130,10 +130,10 @@ function computeSceneTimelineSpanFromSegments(scene: any, segmentPlaybackOffsetS
 }
 
 /** Default AI video segment length on the timeline (seconds). */
-export const DEFAULT_SEGMENT_DURATION_SECONDS = 8
+export const DEFAULT_SEGMENT_DURATION_SECONDS = 12
 
 /**
- * Repack segment `startTime`/`endTime` in play order using a uniform segment duration (default 8s).
+ * Repack segment `startTime`/`endTime` in play order using a uniform segment duration (default 12s).
  * Keeps the video row aligned with product rules; dialogue is matched via assignments + pack-to-segment, not by shrinking segments to clip length.
  * Set `opts.sizeFromAssignedDialogue: true` to restore legacy width-from-dialogue-durations behavior.
  */

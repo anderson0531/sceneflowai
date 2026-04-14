@@ -82,7 +82,7 @@ interface VisualClip {
   establishingShotType?: string
   shotNumber?: number
   anchorStatus?: 'pending' | 'start-locked' | 'end-pending' | 'fully-anchored'
-  exceedsVideoLimit?: boolean  // true if duration > 8s (will need split for video generation)
+  exceedsVideoLimit?: boolean  // true if duration > 12s (will need split for video generation)
 }
 
 interface DragState {
@@ -1069,8 +1069,8 @@ export function SceneTimelineV2({
           
           {/* Video limit warning badge */}
           {trackType === 'visual' && clip.exceedsVideoLimit && (
-            <div className="absolute top-0.5 right-6 bg-amber-500/90 px-1 py-0.5 rounded text-[7px] font-medium text-white" title="Segment exceeds 8s - will be split for video generation">
-              &gt;8s
+            <div className="absolute top-0.5 right-6 bg-amber-500/90 px-1 py-0.5 rounded text-[7px] font-medium text-white" title="Segment exceeds 12s - will be split for video generation">
+              &gt;12s
             </div>
           )}
         </div>
@@ -1276,7 +1276,7 @@ export function SceneTimelineV2({
     
     return {
       transform: `scale(${scale}) ${transformMap[kenBurnsDirection]}`,
-      transition: 'transform 8s cubic-bezier(0.4, 0.0, 0.2, 1)',
+      transition: 'transform 12s cubic-bezier(0.4, 0.0, 0.2, 1)',
     }
   }, [mode, isPlaying, kenBurnsDirection])
   
@@ -1801,7 +1801,7 @@ export function SceneTimelineV2({
           // Check if segments cover the audio
           const segmentCoverage = sceneDuration
           const coverageGap = totalAudioDuration - segmentCoverage
-          const MAX_SEGMENT_SECONDS = 8
+          const MAX_SEGMENT_SECONDS = 12
           const segmentsNeeded = Math.ceil(totalAudioDuration / MAX_SEGMENT_SECONDS)
           const segmentShortfall = segmentsNeeded - visualClips.length
           
@@ -1812,7 +1812,7 @@ export function SceneTimelineV2({
                   <AlertCircle className="w-4 h-4 text-amber-500" />
                   <span className="text-xs text-amber-700 dark:text-amber-300">
                     {visualClips.length === 0 
-                      ? `Audio is ${totalAudioDuration.toFixed(1)}s. Generate ${segmentsNeeded} segments (${segmentsNeeded} × 8s = ${segmentsNeeded * 8}s) to cover the audio.`
+                      ? `Audio is ${totalAudioDuration.toFixed(1)}s. Generate ${segmentsNeeded} segments (${segmentsNeeded} × 12s = ${segmentsNeeded * 12}s) to cover the audio.`
                       : `Audio is ${totalAudioDuration.toFixed(1)}s but segments only cover ${segmentCoverage.toFixed(1)}s. Add ${segmentShortfall} more segment${segmentShortfall > 1 ? 's' : ''} or click Auto-Align.`
                     }
                   </span>
