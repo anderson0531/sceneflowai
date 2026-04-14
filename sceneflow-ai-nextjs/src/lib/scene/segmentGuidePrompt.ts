@@ -39,6 +39,8 @@ export interface GuideAudioElement {
   type: GuideAudioElementType
   label: string
   content: string
+  /** Prompt-only override entered in GuidePromptEditor (does not mutate source script/audio). */
+  editedContent?: string
   character?: string
   characterAge?: string
   characterGender?: string
@@ -136,6 +138,12 @@ export function getTextPortion(text: string, startPercent: number, endPercent: n
   const safeEnd = Math.max(safeStart + 1, Math.min(words.length, endWord))
 
   return words.slice(safeStart, safeEnd).join(' ').trim()
+}
+
+export function getEffectiveElementText(element: GuideAudioElement): string {
+  const override = element.editedContent?.trim()
+  if (override) return override
+  return getTextPortion(element.content, element.portionStart, element.portionEnd)
 }
 
 export function extractCoreVisualAction(text: string, maxLength: number = 250): string {
@@ -313,7 +321,7 @@ export function composeGuidePromptFromElements(
   const directions = selectedElements.filter((el) => el.type === 'direction')
   if (directions.length > 0) {
     const directionText = directions
-      .map((d) => getTextPortion(d.content, d.portionStart, d.portionEnd))
+      .map((d) => getEffectiveElementText(d))
       .join(' ')
 
     const cameraMatch = directionText.match(
@@ -332,7 +340,7 @@ export function composeGuidePromptFromElements(
   const dialogues = selectedElements.filter((el) => el.type === 'dialogue')
   if (dialogues.length > 0) {
     dialogues.forEach((d) => {
-      const portion = getTextPortion(d.content, d.portionStart, d.portionEnd)
+      const portion = getEffectiveElementText(d)
       const charName = d.character || 'The character'
       const emotion = extractDialoguePerformance(portion, undefined)
 
@@ -372,7 +380,7 @@ export function composeGuidePromptFromElements(
   const narrations = selectedElements.filter((el) => el.type === 'narration')
   if (narrations.length > 0) {
     const narrationText = narrations
-      .map((n) => getTextPortion(n.content, n.portionStart, n.portionEnd))
+      .map((n) => getEffectiveElementText(n))
       .join(' ')
 
     const voiceAnchor =
@@ -393,7 +401,7 @@ export function composeGuidePromptFromElements(
   const sfxElements = selectedElements.filter((el) => el.type === 'sfx')
   if (sfxElements.length > 0) {
     const sfxDescriptions = sfxElements
-      .map((s) => getTextPortion(s.content, s.portionStart, s.portionEnd).toLowerCase())
+      .map((s) => getEffectiveElementText(s).toLowerCase())
       .join(', ')
     visualParts.push(`Audio includes ${sfxDescriptions}`)
   }
@@ -401,7 +409,7 @@ export function composeGuidePromptFromElements(
   const musicElements = selectedElements.filter((el) => el.type === 'music')
   if (musicElements.length > 0) {
     const musicDescriptions = musicElements
-      .map((m) => getTextPortion(m.content, m.portionStart, m.portionEnd).toLowerCase())
+      .map((m) => getEffectiveElementText(m).toLowerCase())
       .join(', ')
     visualParts.push(`Background music: ${musicDescriptions}`)
   }

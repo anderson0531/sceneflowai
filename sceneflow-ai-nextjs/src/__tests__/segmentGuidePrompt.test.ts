@@ -106,4 +106,53 @@ describe('segmentGuidePrompt', () => {
     expect(middlePortion).not.toContain('And to truly understand')
     expect(middlePortion).not.toContain('forged its very foundation.')
   })
+
+  it('prefers edited dialogue text when provided', () => {
+    const elements: GuideAudioElement[] = [
+      {
+        id: 'd2',
+        type: 'dialogue',
+        label: 'BEN',
+        content: 'Original dialogue line that is too long.',
+        editedContent: 'Short edited line.',
+        character: 'BEN',
+        selected: true,
+        portionStart: 0,
+        portionEnd: 100,
+      },
+    ]
+
+    const out = composeGuidePromptFromElements(elements, {})
+    expect(out).toContain("'Short edited line.'")
+    expect(out).not.toContain('Original dialogue line')
+  })
+
+  it('prefers edited narration text and falls back to original when absent', () => {
+    const withEdit: GuideAudioElement[] = [
+      {
+        id: 'n1',
+        type: 'narration',
+        label: 'Narration',
+        content: 'Original narration text for this segment.',
+        editedContent: 'Edited narration text.',
+        selected: true,
+        portionStart: 0,
+        portionEnd: 100,
+      },
+    ]
+    const withoutEdit: GuideAudioElement[] = [
+      {
+        id: 'n2',
+        type: 'narration',
+        label: 'Narration',
+        content: 'Fallback narration text.',
+        selected: true,
+        portionStart: 0,
+        portionEnd: 100,
+      },
+    ]
+
+    expect(composeGuidePromptFromElements(withEdit, {})).toContain("'Edited narration text.'")
+    expect(composeGuidePromptFromElements(withoutEdit, {})).toContain("'Fallback narration text.'")
+  })
 })

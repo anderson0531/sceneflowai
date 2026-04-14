@@ -28,7 +28,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Slider } from '@/components/ui/slider'
 import {
   Accordion,
   AccordionContent,
@@ -45,8 +44,8 @@ import { cn } from '@/lib/utils'
 import {
   buildBatchAutoGuideElements,
   composeGuidePromptFromElements,
+  getEffectiveElementText,
   getSegmentDialogueLines,
-  getTextPortion,
   type GuideAudioElement,
 } from '@/lib/scene/segmentGuidePrompt'
 import {
@@ -69,7 +68,6 @@ import {
   AlertCircle,
   Check,
   FileText,
-  Scissors,
   Sparkles,
   Info,
   Ban,
@@ -626,10 +624,16 @@ export function GuidePromptEditor({
     ))
   }, [])
   
-  // Update element portion
-  const updateElementPortion = useCallback((elementId: string, start: number, end: number) => {
+  // Update prompt-only edited text for dialogue/narration
+  const updateElementEditedContent = useCallback((elementId: string, editedContent: string) => {
     setElements(prev => prev.map(el => 
-      el.id === elementId ? { ...el, portionStart: start, portionEnd: end } : el
+      el.id === elementId ? { ...el, editedContent } : el
+    ))
+  }, [])
+
+  const resetElementEditedContent = useCallback((elementId: string) => {
+    setElements(prev => prev.map(el =>
+      el.id === elementId ? { ...el, editedContent: undefined } : el
     ))
   }, [])
   
@@ -652,30 +656,30 @@ export function GuidePromptEditor({
     
     const directions = selectedElements.filter(el => el.type === 'direction')
     if (directions.length > 0) {
-      parts.push(`[SCENE DIRECTION]\n${directions.map(d => getTextPortion(d.content, d.portionStart, d.portionEnd)).join('\n')}`)
+      parts.push(`[SCENE DIRECTION]\n${directions.map(d => getEffectiveElementText(d)).join('\n')}`)
     }
     
     const narrations = selectedElements.filter(el => el.type === 'narration')
     if (narrations.length > 0) {
-      parts.push(`[NARRATION]\n${narrations.map(n => getTextPortion(n.content, n.portionStart, n.portionEnd)).join('\n')}`)
+      parts.push(`[NARRATION]\n${narrations.map(n => getEffectiveElementText(n)).join('\n')}`)
     }
     
     const dialogues = selectedElements.filter(el => el.type === 'dialogue')
     if (dialogues.length > 0) {
       const dialogueText = dialogues
-        .map(d => `${d.character}: "${getTextPortion(d.content, d.portionStart, d.portionEnd)}"`)
+        .map(d => `${d.character}: "${getEffectiveElementText(d)}"`)
         .join('\n')
       parts.push(`[DIALOGUE]\n${dialogueText}`)
     }
     
     const sfx = selectedElements.filter(el => el.type === 'sfx')
     if (sfx.length > 0) {
-      parts.push(`[SOUND EFFECTS]\n${sfx.map(s => getTextPortion(s.content, s.portionStart, s.portionEnd)).join(', ')}`)
+      parts.push(`[SOUND EFFECTS]\n${sfx.map(s => getEffectiveElementText(s)).join(', ')}`)
     }
     
     const music = selectedElements.filter(el => el.type === 'music')
     if (music.length > 0) {
-      parts.push(`[MUSIC]\n${music.map(m => getTextPortion(m.content, m.portionStart, m.portionEnd)).join(', ')}`)
+      parts.push(`[MUSIC]\n${music.map(m => getEffectiveElementText(m)).join(', ')}`)
     }
     
     if (customAddition.trim()) {
@@ -718,11 +722,8 @@ export function GuidePromptEditor({
     }
   }
   
-  // Check if element content is long enough to need portion selector
-  const needsPortionSelector = (element: AudioElement): boolean => {
-    return (element.type === 'narration' || element.type === 'dialogue') && 
-           element.content.length > 120
-  }
+  const supportsPreciseTextEdit = (element: AudioElement): boolean =>
+    element.type === 'narration' || element.type === 'dialogue'
 
   if (elements.length === 0) {
     return (
@@ -879,9 +880,10 @@ export function GuidePromptEditor({
                   {elements.map((element) => {
                     const Icon = getTypeIcon(element.type)
                     const colorClass = getTypeColor(element.type)
-                    const showPortion = needsPortionSelector(element) && element.selected
-                    const portionText = getTextPortion(element.content, element.portionStart, element.portionEnd)
-                    const estimatedDuration = estimateSpeakingDuration(portionText)
+                    const showTextEditor = supportsPreciseTextEdit(element) && element.selected
+                    const effectiveText = getEffectiveElementText(element)
+                    const estimatedDuration = estimateSpeakingDuration(effectiveText)
+                    const hasEdits = Boolean(element.editedContent?.trim())
                     
                     return (
                       <div
@@ -951,36 +953,40 @@ export function GuidePromptEditor({
                           )}
                         </div>
                         
-                        {/* Portion Selector for Long Content */}
-                        {showPortion && (
+                        {/* Precise text editor for dialogue/narration */}
+                        {showTextEditor && (
                           <div className="mt-3 pt-3 border-t border-slate-700">
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
-                                <Scissors className="w-3 h-3 text-amber-400" />
-                                <span className="text-xs text-slate-400">Content portion for this clip:</span>
+                                <FileText className="w-3 h-3 text-amber-400" />
+                                <span className="text-xs text-slate-400">Text used for this clip:</span>
                               </div>
                               <div className="flex items-center gap-2 text-xs text-slate-500">
                                 <span>~{estimatedDuration}s speaking</span>
+                                {hasEdits && (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 px-2 text-[10px] text-amber-300 hover:text-amber-200"
+                                    onClick={() => resetElementEditedContent(element.id)}
+                                  >
+                                    Reset to original
+                                  </Button>
+                                )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <Slider
-                                value={[element.portionStart, element.portionEnd]}
-                                min={0}
-                                max={100}
-                                step={5}
-                                onValueChange={([start, end]) => updateElementPortion(element.id, start, end)}
-                                className="flex-1"
-                              />
-                              <span className="text-xs text-slate-500 w-24 text-right">
-                                {element.portionStart}% – {element.portionEnd}%
-                              </span>
-                            </div>
-                            {(element.portionStart > 0 || element.portionEnd < 100) && (
-                              <p className="text-xs text-slate-500 mt-2 italic line-clamp-2 pl-1 border-l-2 border-slate-600">
-                                "{portionText.slice(0, 150)}{portionText.length > 150 ? '...' : ''}"
-                              </p>
-                            )}
+                            <Textarea
+                              value={element.editedContent ?? effectiveText}
+                              onChange={(e) => updateElementEditedContent(element.id, e.target.value)}
+                              className="min-h-[90px] text-sm bg-slate-900 border-slate-600"
+                            />
+                            <p className="text-[11px] text-slate-500 mt-2">
+                              Source reference (read-only):
+                            </p>
+                            <p className="text-xs text-slate-500 mt-1 italic line-clamp-3 pl-1 border-l-2 border-slate-600">
+                              "{element.content.slice(0, 220)}{element.content.length > 220 ? '...' : ''}"
+                            </p>
                           </div>
                         )}
                       </div>
