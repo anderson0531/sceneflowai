@@ -7,6 +7,7 @@ import {
   repairPhase1DirectionsTimeline,
 } from '@/lib/scene/dialogueTimelineCoverage'
 import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDuration'
+import { expandDirectionsForTimelineAudioBudget } from '@/lib/scene/expandDirectionsForTimelineAudioBudget'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { SegmentDirection, detectNoTalentSegment } from '@/types/scene-direction'
 
@@ -725,61 +726,6 @@ function applyAssignedAudioDurationToSegments(
     if (audioSum <= est + 0.2) return seg
     return { ...seg, estimated_duration: audioSum }
   })
-}
-
-/** Phase 1: split raw direction rows when assigned timeline audio exceeds Veo max (mirrors segment split). */
-function expandDirectionsForTimelineAudioBudget(
-  rawDirections: any[],
-  sceneData: ComprehensiveSceneData,
-  maxDuration: number
-): any[] {
-  const tl = sceneData.combinedAudioTimeline
-  const result: any[] = []
-
-  for (const dir of rawDirections) {
-    const dialogueIndices: number[] = dir.dialogue_indices || []
-    const audioSum = dialogueIndices.reduce((acc, i) => {
-      const line = tl[i]
-      return acc + (typeof line?.estimatedDuration === 'number' ? line.estimatedDuration : 0)
-    }, 0)
-    const est = typeof dir.estimated_duration === 'number' ? dir.estimated_duration : 0
-    const originalDuration = Math.max(est, audioSum)
-
-    if (originalDuration <= maxDuration + 0.2) {
-      result.push(dir)
-      continue
-    }
-
-    const subDurations = allocateVeoSplitDurations(originalDuration, maxDuration)
-    const numParts = subDurations.length
-
-    const dialoguePerPart =
-      dialogueIndices.length <= 1 ? 1 : Math.ceil(dialogueIndices.length / numParts)
-
-    for (let i = 0; i < numParts; i++) {
-      // One timeline line longer than 12s → multiple Veo clips: only the first clip owns the index;
-      // later parts are continuations (same audio) and must not duplicate the index (breaks coverage repair).
-      const partDialogue =
-        dialogueIndices.length === 1
-          ? i === 0
-            ? [...dialogueIndices]
-            : []
-          : dialogueIndices.slice(i * dialoguePerPart, (i + 1) * dialoguePerPart)
-
-      result.push({
-        ...dir,
-        estimated_duration: subDurations[i],
-        dialogue_indices: partDialogue,
-        veoTimelineContinuation: dialogueIndices.length === 1 && numParts > 1 && i > 0,
-        trigger_reason:
-          i === 0
-            ? dir.trigger_reason
-            : `Continuation ${i + 1}/${numParts} — ${dir.trigger_reason || 'split for audio length'}`,
-      })
-    }
-  }
-
-  return result
 }
 
 interface ComprehensiveSceneData {
@@ -2357,8 +2303,6 @@ function enforceMaxSegmentDuration(
       `distributing ${dialogueIndices.length} dialogue line(s)`
     )
 
-    const tl = sceneData.combinedAudioTimeline
-
     for (let i = 0; i < numParts; i++) {
       const partDialogue =
         dialogueIndices.length === 1
@@ -2367,33 +2311,8 @@ function enforceMaxSegmentDuration(
             : []
           : dialogueIndices.slice(i * dialoguePerPart, (i + 1) * dialoguePerPart)
 
-      const partDialogueTexts =
-        partDialogue.length > 0
-          ? partDialogue
-              .map((ti) => {
-                const line = tl[ti]
-                if (!line?.text) return null
-                return `${line.character}: "${line.text}"`
-              })
-              .filter((s): s is string => Boolean(s))
-          : dialogueIndices.length === 1 && numParts > 1
-            ? (() => {
-                const line = tl[dialogueIndices[0]]
-                return line?.text
-                  ? [`${line.character}: "${line.text}"`]
-                  : []
-              })()
-            : []
-
       const isFirstPart = i === 0
       const isLastPart = i === numParts - 1
-
-      const splitPromptSuffix =
-        partDialogueTexts.length > 0
-          ? dialogueIndices.length === 1 && numParts > 1
-            ? `\n\n[Continuation ${i + 1}/${numParts} of the same audio line — seamless with prior clip; dialogue: ${partDialogueTexts.join(' / ')}]`
-            : `\n\n[This segment covers the following dialogue: ${partDialogueTexts.join(' / ')}]`
-          : ''
 
       const partTriggerReason = isFirstPart
         ? seg.trigger_reason
@@ -2404,7 +2323,8 @@ function enforceMaxSegmentDuration(
         sequence: 0, // Will be re-sequenced below
         estimated_duration: subDurations[i],
         trigger_reason: partTriggerReason,
-        video_generation_prompt: seg.video_generation_prompt + splitPromptSuffix,
+        // Keep the generated prompt clean; continuity is represented by metadata fields.
+        video_generation_prompt: seg.video_generation_prompt,
         assigned_dialogue_indices: partDialogue,
         veoTimelineContinuation: dialogueIndices.length === 1 && numParts > 1 && i > 0,
         emotional_beat: isFirstPart
