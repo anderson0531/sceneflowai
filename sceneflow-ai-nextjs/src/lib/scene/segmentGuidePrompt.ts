@@ -224,10 +224,16 @@ export function getSegmentDialogueLines(
   const dialogueLineIds = segment.dialogueLineIds || []
 
   if (dialogueLineIds.length > 0) {
-    return dialogueLineIds
+    const resolved = dialogueLineIds
       .map((id) => {
+        const numericMatch = String(id).match(/(\d+)$/)
+        const numericIndex = numericMatch ? Number(numericMatch[1]) : -1
         const dialogueItem = sceneDialogue.find(
-          (d, i) => d.id === id || `dialogue-${i}` === id
+          (d, i) =>
+            d.id === id ||
+            `dialogue-${i}` === id ||
+            `scene-dialogue-${i}` === id ||
+            i === numericIndex
         )
         if (!dialogueItem) return null
         return {
@@ -239,6 +245,10 @@ export function getSegmentDialogueLines(
         }
       })
       .filter((d): d is NonNullable<typeof d> => d !== null)
+
+    if (resolved.length > 0) {
+      return resolved
+    }
   }
 
   if (segment.dialogueLines && segment.dialogueLines.length > 0) {

@@ -582,7 +582,11 @@ export async function POST(
         sceneId
       )
 
-      const transformedSegments = transformSegmentsToOutput(segments, sceneData, sceneId, scene, approvedDirections)
+      const transformedSegments = pruneAndResequenceSegments(
+        applyContinuationDialogueFallback(
+          transformSegmentsToOutput(segments, sceneData, sceneId, scene, approvedDirections)
+        )
+      )
 
       console.log(`[Scene Segmentation] Phase 2 complete: ${transformedSegments.length} segments with prompts`)
 
@@ -642,115 +646,11 @@ export async function POST(
       sceneId
     )
 
-    // Transform segments to match our enhanced data structure
-    const transformedSegments = segments.map((seg: IntelligentSegment, idx: number) => {
-      let cumulativeTime = 0
-      for (let i = 0; i < idx; i++) {
-        cumulativeTime += segments[i].estimated_duration
-      }
-
-      // Map generation method to our types
-      const methodMap: Record<string, string> = {
-        'I2V': 'I2V',
-        'EXT': 'EXT', 
-        'T2V': 'T2V',
-        'FTV': 'FTV'
-      }
-      
-      // For segment 1 with use_scene_frame, set the start frame to scene image
-      const isFirstSegment = idx === 0
-      const useSceneFrame = seg.reference_strategy?.use_scene_frame ?? isFirstSegment
-      const startFrameUrl = (isFirstSegment && useSceneFrame && sceneData.sceneFrameUrl) 
-        ? sceneData.sceneFrameUrl 
-        : null
-
-      // Phase 8: Timeline indices → script dialogueLineIds + dialogue-narration when VO lines assigned
-      const dialogueLineIds = dialogueLineIdsFromAssignedTimelineIndices(
-        seg.assigned_dialogue_indices,
-        sceneData.combinedAudioTimeline
+    const transformedSegments = pruneAndResequenceSegments(
+      applyContinuationDialogueFallback(
+        transformSegmentsToOutput(segments, sceneData, sceneId, scene)
       )
-
-      // Build prompt context for staleness detection
-      const assignedDialogue = dialogueLinesForAssignedTimelineIndices(
-        seg.assigned_dialogue_indices,
-        sceneData
-      )
-      const dialogueText = assignedDialogue.map(d => `${d.character}:${d.text}`).join('|')
-      const dialogueHash = simpleHash(dialogueText)
-      const visualDescriptionHash = simpleHash(sceneData.visualDescription || '')
-
-      // Build generation plan with prerequisites
-      const hasSceneFrame = !!sceneData.sceneFrameUrl
-      const generatedMethod = methodMap[seg.generation_method] || 'FTV'
-      
-      const generationPlan = {
-        recommendedMethod: generatedMethod,
-        confidence: seg.generation_plan?.confidence || (isFirstSegment && hasSceneFrame ? 90 : 70),
-        reasoning: seg.generation_plan?.reasoning || seg.trigger_reason || 'AI-recommended method based on segment context',
-        fallbackMethod: seg.generation_plan?.fallback_method || (generatedMethod === 'I2V' ? 'FTV' : undefined),
-        fallbackReason: generatedMethod === 'I2V' ? 'Use FTV if I2V produces unwanted motion' : undefined,
-        prerequisites: [
-          {
-            type: 'scene-image',
-            label: 'Scene keyframe image',
-            met: hasSceneFrame,
-            required: isFirstSegment,
-            assetUrl: sceneData.sceneFrameUrl || undefined,
-          },
-          ...(idx > 0 ? [{
-            type: 'previous-frame',
-            label: 'Previous segment last frame',
-            met: false, // Will be updated at runtime
-            required: false,
-          }] : []),
-        ],
-        batchPriority: idx,
-        qualityEstimate: hasSceneFrame ? 85 : 65,
-        warnings: seg.generation_plan?.warnings,
-      }
-
-      return {
-        segmentId: `seg_${sceneId}_${seg.sequence}`,
-        sequenceIndex: Math.max(0, (Number(seg.sequence) || (idx + 1)) - 1),
-        startTime: cumulativeTime,
-        endTime: cumulativeTime + seg.estimated_duration,
-        status: 'DRAFT' as const,
-        // Enhanced prompt data
-        generatedPrompt: seg.video_generation_prompt,
-        userEditedPrompt: null,
-        activeAssetUrl: null,
-        assetType: null as 'video' | 'image' | null,
-        // Enhanced metadata for Veo 3.1
-        generationMethod: generatedMethod,
-        triggerReason: seg.trigger_reason,
-        endFrameDescription: seg.end_frame_description,
-        cameraMovement: seg.camera_notes,
-        emotionalBeat: seg.emotional_beat,
-        // Phase 8: AI-assigned dialogue coverage (persisted to DB)
-        dialogueLineIds,
-        // NEW: Generation plan for batch automation
-        generationPlan,
-        // NEW: Prompt context for staleness detection
-        promptContext: {
-          dialogueHash,
-          visualDescriptionHash,
-          generatedAt: new Date().toISOString(),
-          sceneNumber: scene.sceneNumber || (typeof sceneId === 'string' ? parseInt(sceneId) : undefined),
-        },
-        isStale: false,
-        references: {
-          startFrameUrl: startFrameUrl,
-          endFrameUrl: null,
-          useSceneFrame: useSceneFrame,
-          characterRefs: seg.reference_strategy?.use_character_refs || [],
-          startFrameDescription: seg.reference_strategy?.start_frame_description || null,
-          characterIds: [],
-          sceneRefIds: [],
-          objectRefIds: [],
-        },
-        takes: [],
-      }
-    })
+    )
     
     // Log segment generation results
     console.log('[Scene Segmentation] Generated', transformedSegments.length, 'dialogue segments', previewMode ? '(preview mode)' : '')
@@ -2601,6 +2501,11 @@ function transformSegmentsToOutput(
       cameraMovement: seg.camera_notes,
       emotionalBeat: seg.emotional_beat,
       dialogueLineIds,
+      dialogueLines: assignedDialogue.map((d, dIdx) => ({
+        id: `dialogue-${dIdx}`,
+        character: d.character,
+        line: d.text,
+      })),
       generationPlan,
       promptContext: {
         dialogueHash,
@@ -2623,6 +2528,62 @@ function transformSegmentsToOutput(
         objectRefIds: [],
       },
       takes: [],
+    }
+  })
+}
+
+function applyContinuationDialogueFallback(segments: any[]): any[] {
+  return segments.map((seg, idx) => {
+    const hasDialogueIds = Array.isArray(seg.dialogueLineIds) && seg.dialogueLineIds.length > 0
+    if (hasDialogueIds) return seg
+
+    const isContinuation =
+      typeof seg?.triggerReason === 'string' &&
+      seg.triggerReason.toLowerCase().includes('continuation')
+    if (!isContinuation || idx === 0) return seg
+
+    const prev = segments[idx - 1]
+    const prevIds = Array.isArray(prev?.dialogueLineIds) ? prev.dialogueLineIds : []
+    if (prevIds.length === 0) return seg
+
+    return {
+      ...seg,
+      dialogueLineIds: [...prevIds],
+      dialogueLines: Array.isArray(prev?.dialogueLines) ? prev.dialogueLines : undefined,
+    }
+  })
+}
+
+function pruneAndResequenceSegments(segments: any[]): any[] {
+  const filtered = segments.filter((seg) => {
+    const hasDialogueIds = Array.isArray(seg.dialogueLineIds) && seg.dialogueLineIds.length > 0
+    const hasDialogueLines = Array.isArray(seg.dialogueLines) && seg.dialogueLines.length > 0
+    return hasDialogueIds || hasDialogueLines
+  })
+
+  if (filtered.length !== segments.length) {
+    console.log(
+      `[Scene Segmentation] Pruned empty segments: ${segments.length} -> ${filtered.length} (removed ${segments.length - filtered.length})`
+    )
+  }
+
+  let currentStart = 0
+  return filtered.map((seg, idx) => {
+    const duration = Math.max(
+      0.1,
+      typeof seg.endTime === 'number' && typeof seg.startTime === 'number'
+        ? seg.endTime - seg.startTime
+        : 8
+    )
+    const startTime = currentStart
+    const endTime = startTime + duration
+    currentStart = endTime
+
+    return {
+      ...seg,
+      sequenceIndex: idx,
+      startTime,
+      endTime,
     }
   })
 }

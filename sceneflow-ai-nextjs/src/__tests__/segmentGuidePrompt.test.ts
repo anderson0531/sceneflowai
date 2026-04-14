@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   composeGuidePromptFromElements,
   buildDefaultBatchGuidePrompt,
+  getSegmentDialogueLines,
   type GuideAudioElement,
 } from '@/lib/scene/segmentGuidePrompt'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
@@ -55,5 +56,42 @@ describe('segmentGuidePrompt', () => {
     } as unknown as SceneSegment
 
     expect(buildDefaultBatchGuidePrompt(segment, {}, [])).toBe('')
+  })
+
+  it('resolves scene-dialogue ids and numeric-suffix ids', () => {
+    const segment = {
+      segmentId: 's2',
+      sequenceIndex: 1,
+      startTime: 8,
+      endTime: 16,
+      dialogueLineIds: ['scene-dialogue-1', 'dialogue-0'],
+    } as unknown as SceneSegment
+
+    const lines = getSegmentDialogueLines(segment, [
+      { character: 'ALICE', text: 'Line zero.' },
+      { character: 'BOB', text: 'Line one.' },
+    ])
+
+    expect(lines.map((l) => l.character)).toEqual(['BOB', 'ALICE'])
+  })
+
+  it('falls back to segment.dialogueLines when ids do not resolve', () => {
+    const segment = {
+      segmentId: 's3',
+      sequenceIndex: 2,
+      startTime: 16,
+      endTime: 24,
+      dialogueLineIds: ['dialogue-99'],
+      dialogueLines: [{ id: 'dialogue-2', character: 'CAROL', line: 'Fallback line.' }],
+    } as unknown as SceneSegment
+
+    const lines = getSegmentDialogueLines(segment, [
+      { character: 'ALICE', text: 'Line zero.' },
+      { character: 'BOB', text: 'Line one.' },
+    ])
+
+    expect(lines).toHaveLength(1)
+    expect(lines[0].character).toBe('CAROL')
+    expect(lines[0].line).toBe('Fallback line.')
   })
 })
