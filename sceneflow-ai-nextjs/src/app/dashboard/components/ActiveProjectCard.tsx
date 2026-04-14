@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FolderOpen, Play, ChevronRight, CheckCircle, AlertTriangle, Lightbulb, X, Film, Users, Maximize2, Sparkles, Edit3 } from 'lucide-react'
+import { FolderOpen, Play, ChevronRight, CheckCircle, AlertTriangle, Lightbulb, X, Film, Users, Maximize2, Sparkles, Edit3, Coins } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -127,6 +127,13 @@ export function ActiveProjectCard({
   }
 
   const budgetBadge = getBudgetBadge()
+  const creditsUsed = Number(metadata?.creditsUsed ?? 0)
+  const creditsBudget = Number(metadata?.creditsBudget ?? 0)
+  const hasBudgetTarget = creditsBudget > 0
+  const remainingCredits = hasBudgetTarget ? Math.max(creditsBudget - creditsUsed, 0) : null
+  const budgetUtilizationPercent = hasBudgetTarget
+    ? Math.min(100, Math.round((creditsUsed / creditsBudget) * 100))
+    : null
 
   return (
     <motion.div
@@ -214,21 +221,51 @@ export function ActiveProjectCard({
       {/* Main Content - 3 Column Grid */}
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Column 1: Progress */}
+          {/* Column 1: Project Budget */}
           <div className="bg-gray-900/50 rounded-lg p-4">
-            <h4 className="text-xs uppercase tracking-wider text-gray-500 mb-3">Progress</h4>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-white mb-1">
-                Step {currentStep}/{totalSteps}
+            <h4 className="text-xs uppercase tracking-wider text-gray-500 mb-3">Project Budget</h4>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">Status</span>
+                <span className={`font-semibold ${budgetBadge.className}`}>{budgetBadge.label}</span>
               </div>
-              <div className="text-sm text-gray-400 mb-4">{phaseName}</div>
-              <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${progressPercent}%` }}
-                />
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">Used</span>
+                <span className="text-white font-semibold flex items-center gap-1">
+                  <Coins className="w-3.5 h-3.5 text-blue-400" />
+                  {creditsUsed.toLocaleString()}
+                </span>
               </div>
-              <div className="text-xs text-gray-500">{progressPercent}%</div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">Budget</span>
+                <span className="text-white font-semibold">
+                  {hasBudgetTarget ? creditsBudget.toLocaleString() : 'Not set'}
+                </span>
+              </div>
+              {hasBudgetTarget ? (
+                <>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        budgetStatus === 'over-budget'
+                          ? 'bg-red-500'
+                          : budgetStatus === 'near-limit'
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
+                      }`}
+                      style={{ width: `${budgetUtilizationPercent}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>{budgetUtilizationPercent}% used</span>
+                    <span>{remainingCredits?.toLocaleString()} left</span>
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-gray-500">
+                  Set a target budget to track burn and remaining credits.
+                </p>
+              )}
             </div>
           </div>
 

@@ -6,6 +6,7 @@ import { optimizeTextForTTS, finalizeTextForGoogleTts } from '../../../../lib/tt
 import { getAudioDurationFromBuffer } from '../../../../lib/audio/serverAudioDuration'
 import { translateWithVertexAI } from '../../../../lib/vertexai/translate'
 import { getVertexAIAuthToken } from '../../../../lib/vertexai/client'
+import { adaptScriptForTranslationTiming, type AdaptationDiagnostics } from '../../../../lib/translation/scriptAdaptation'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -88,12 +89,30 @@ export async function POST(req: NextRequest) {
     // Use requested language or default to English
     const language = requestedLanguage || 'en'
     let textToGenerate = text
+    let adaptationDiagnostics: AdaptationDiagnostics | null = null
 
     // Translate text if non-English language is requested
     // skipTranslation=true when the client already sent pre-translated text (from stored translations)
     // Uses direct Vertex AI library call (not HTTP fetch) to avoid self-referential URL issues
     if (language !== 'en' && !skipTranslation) {
       try {
+        const adaptation = await adaptScriptForTranslationTiming({
+          sourceText: textToGenerate,
+          targetLanguage: language,
+        })
+        adaptationDiagnostics = adaptation.diagnostics
+        textToGenerate = adaptation.adaptedText
+        console.log('[Scene Audio] Pre-translation adaptation:', {
+          targetLanguage: language,
+          strategy: adaptationDiagnostics.strategy,
+          usedFallback: adaptationDiagnostics.usedFallback,
+          sourceSyllables: adaptationDiagnostics.sourceSyllables,
+          adaptedSyllables: adaptationDiagnostics.adaptedSyllables,
+          targetSyllableBudget: adaptationDiagnostics.targetSyllableBudget,
+          withinTolerance: adaptationDiagnostics.withinTolerance,
+          adaptationError: adaptationDiagnostics.error,
+        })
+
         console.log(`[Scene Audio] Translating text to ${language} via Vertex AI (direct)...`)
         const result = await translateWithVertexAI({
           text: textToGenerate,
@@ -219,7 +238,8 @@ export async function POST(req: NextRequest) {
         audioDuration,
         finalVoiceConfig.voiceId,
         characterName, 
-        dialogueIndex
+        dialogueIndex,
+        adaptationDiagnostics
       )
     }
 
@@ -240,7 +260,8 @@ export async function POST(req: NextRequest) {
       language,
       duration: audioDuration,
       characterName,
-      dialogueIndex
+      dialogueIndex,
+      adaptation: adaptationDiagnostics
     })
   } catch (error: any) {
     // Safely log error details - avoid referencing variables that might not be defined
@@ -416,7 +437,8 @@ async function updateSceneAudio(
   duration?: number | null,
   voiceId?: string,
   characterName?: string,
-  dialogueIndex?: number
+  dialogueIndex?: number,
+  adaptation?: AdaptationDiagnostics | null
 ) {
   await sequelize.authenticate()
   const project = await Project.findByPk(projectId)
@@ -471,7 +493,8 @@ async function updateSceneAudio(
         url: audioUrl,
         duration: duration || undefined,
         generatedAt: new Date().toISOString(),
-        voiceId: voiceId || undefined
+        voiceId: voiceId || undefined,
+        adaptation: adaptation || undefined,
       }
       
       // Maintain backward compatibility: set narrationAudioUrl for English
@@ -491,6 +514,7 @@ async function updateSceneAudio(
         duration: duration || undefined,
         generatedAt: new Date().toISOString(),
         voiceId: voiceId || undefined,
+        adaptation: adaptation || undefined,
       }
 
       if (language === 'en') {
@@ -536,7 +560,8 @@ async function updateSceneAudio(
         dialogueIndex: dialogueIndex!,
         audioUrl,
         duration: duration || undefined,
-        voiceId: voiceId || undefined
+        voiceId: voiceId || undefined,
+        adaptation: adaptation || undefined,
       }
       
       if (existingIndex >= 0) {
