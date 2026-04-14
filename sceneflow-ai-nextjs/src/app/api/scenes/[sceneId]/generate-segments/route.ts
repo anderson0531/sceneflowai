@@ -6,6 +6,7 @@ import {
   validateAndRepairTimelineDialogueCoverage,
   repairPhase1DirectionsTimeline,
 } from '@/lib/scene/dialogueTimelineCoverage'
+import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDuration'
 import { SegmentDirection, detectNoTalentSegment } from '@/types/scene-direction'
 
 /** Vercel: match `vercel.json` for this route — long Gemini JSON on global endpoint. */
@@ -96,18 +97,6 @@ export interface SegmentDurationConfig {
   fixedSeconds: number | null
   /** Soft average from audio ÷ min segments — guides auto mode copy only */
   hintSeconds: number
-}
-
-const VEO_VALID_DURATIONS = [4, 6, 8] as const
-
-/**
- * Snap a duration to the nearest valid Veo 3.1 duration (4, 6, or 8 seconds).
- * Always rounds down to stay within limits, with a floor of 4s.
- */
-function snapToVeoDuration(duration: number): number {
-  if (duration <= 5) return 4
-  if (duration <= 7) return 6
-  return 8
 }
 
 function resolveSegmentDurationConfig(
@@ -860,19 +849,8 @@ function expandDirectionsForTimelineAudioBudget(
       continue
     }
 
-    const numParts = Math.ceil(originalDuration / maxDuration)
-    const rawPartDuration = originalDuration / numParts
-    const subDurations: number[] = []
-    let remaining = originalDuration
-    for (let i = 0; i < numParts; i++) {
-      if (i === numParts - 1) {
-        subDurations.push(snapToVeoDuration(remaining))
-      } else {
-        const snapped = snapToVeoDuration(rawPartDuration)
-        subDurations.push(snapped)
-        remaining -= snapped
-      }
-    }
+    const subDurations = allocateVeoSplitDurations(originalDuration, maxDuration)
+    const numParts = subDurations.length
 
     const dialoguePerPart =
       dialogueIndices.length <= 1 ? 1 : Math.ceil(dialogueIndices.length / numParts)
@@ -2459,24 +2437,9 @@ function enforceMaxSegmentDuration(
     const originalDuration = seg.estimated_duration
     const dialogueIndices = seg.assigned_dialogue_indices || []
 
-    // Decide how many sub-segments we need (snap each to valid Veo durations)
-    const numParts = Math.ceil(originalDuration / maxDuration)
-
-    // Build sub-segment durations that sum to originalDuration, each ≤ maxDuration
-    // Strategy: distribute evenly, then snap each to a Veo-valid duration
-    const rawPartDuration = originalDuration / numParts
-    const subDurations: number[] = []
-    let remaining = originalDuration
-    for (let i = 0; i < numParts; i++) {
-      if (i === numParts - 1) {
-        // Last part gets whatever's left, snapped to Veo
-        subDurations.push(snapToVeoDuration(remaining))
-      } else {
-        const snapped = snapToVeoDuration(rawPartDuration)
-        subDurations.push(snapped)
-        remaining -= snapped
-      }
-    }
+    // Keep the minimum required split count and allocate 8s-first where feasible.
+    const subDurations = allocateVeoSplitDurations(originalDuration, maxDuration)
+    const numParts = subDurations.length
 
     // Distribute dialogue indices across sub-segments proportionally (or repeat single long line)
     const dialoguePerPart =

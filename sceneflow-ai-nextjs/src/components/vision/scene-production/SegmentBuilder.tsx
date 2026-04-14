@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDuration'
 import {
   Sparkles,
   Loader2,
@@ -496,15 +497,6 @@ function extractAudioMetadata(scene: any, selectedLanguage = 'en-US'): {
 const CLIENT_MAX_SEGMENT_DURATION = 8 // Veo 3.1 max
 
 /**
- * Snap a duration to the nearest valid Veo 3.1 duration (4, 6, or 8 seconds).
- */
-function snapToVeoDuration(duration: number): number {
-  if (duration <= 5) return 4
-  if (duration <= 7) return 6
-  return 8
-}
-
-/**
  * Client-side safety net: split any ProposedSegments that exceed the max duration.
  * This runs after API response in case the server-side enforcement was bypassed.
  */
@@ -522,9 +514,9 @@ function enforceClientMaxDuration(segments: ProposedSegment[]): ProposedSegment[
       continue
     }
 
-    // Split oversized segment
-    const numParts = Math.ceil(seg.duration / CLIENT_MAX_SEGMENT_DURATION)
-    const rawPartDuration = seg.duration / numParts
+    // Split oversized segment with same 8s-first allocator used server-side.
+    const subDurations = allocateVeoSplitDurations(seg.duration, CLIENT_MAX_SEGMENT_DURATION)
+    const numParts = subDurations.length
     let currentStart = seg.startTime
     const dialoguePerPart = Math.ceil(seg.dialogueLineIds.length / numParts)
 
@@ -533,9 +525,7 @@ function enforceClientMaxDuration(segments: ProposedSegment[]): ProposedSegment[
     )
 
     for (let i = 0; i < numParts; i++) {
-      const partDuration = i === numParts - 1
-        ? snapToVeoDuration(seg.endTime - currentStart)
-        : snapToVeoDuration(rawPartDuration)
+      const partDuration = subDurations[i] ?? snapToVeoDuration(seg.endTime - currentStart)
       const partEnd = currentStart + partDuration
       const partDialogue = seg.dialogueLineIds.slice(
         i * dialoguePerPart,
