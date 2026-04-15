@@ -140,6 +140,8 @@ export function ScreeningRoomDashboard({
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [dragOver, setDragOver] = useState(false)
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null)
+  const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>('')
   const [editingScreeningId, setEditingScreeningId] = useState<string | null>(null)
   const [draftTitle, setDraftTitle] = useState('')
   const [isSavingTitle, setIsSavingTitle] = useState(false)
@@ -247,56 +249,60 @@ export function ScreeningRoomDashboard({
       className="bg-gray-800/50 rounded-xl border border-gray-700/50 overflow-hidden hover:border-gray-600 transition-colors"
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-gray-900">
-        {screening.thumbnail ? (
-          <img
-            src={screening.thumbnail}
-            alt={screening.title}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Video className="w-12 h-12 text-gray-700" />
+      <div className="p-2 bg-gradient-to-b from-zinc-700/30 to-zinc-900/60 border-b border-zinc-700/40">
+        <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden ring-1 ring-zinc-500/30 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+          {screening.thumbnail ? (
+            <img
+              src={screening.thumbnail}
+              alt={screening.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-zinc-900/80">
+              <Video className="w-12 h-12 text-gray-700" />
+            </div>
+          )}
+
+          {/* Status Badge */}
+          <div className={cn(
+            "absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-medium",
+            screening.status === 'active' && "bg-green-500/20 text-green-400",
+            screening.status === 'draft' && "bg-gray-500/20 text-gray-400",
+            screening.status === 'completed' && "bg-blue-500/20 text-blue-400",
+            screening.status === 'expired' && "bg-red-500/20 text-red-400",
+          )}>
+            {screening.status}
           </div>
-        )}
-        
-        {/* Status Badge */}
-        <div className={cn(
-          "absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-medium",
-          screening.status === 'active' && "bg-green-500/20 text-green-400",
-          screening.status === 'draft' && "bg-gray-500/20 text-gray-400",
-          screening.status === 'completed' && "bg-blue-500/20 text-blue-400",
-          screening.status === 'expired' && "bg-red-500/20 text-red-400",
-        )}>
-          {screening.status}
-        </div>
-        
-        {/* A/B Test Badge */}
-        {screening.hasABTest && (
-          <div className="absolute top-2 left-2 px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium flex items-center gap-1">
-            <FlaskConical className="w-3 h-3" />
-            A/B Test
+
+          {/* A/B Test Badge */}
+          {screening.hasABTest && (
+            <div className="absolute top-2 left-2 px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium flex items-center gap-1">
+              <FlaskConical className="w-3 h-3" />
+              A/B Test
+            </div>
+          )}
+
+          {/* Play Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/50">
+            <button
+              type="button"
+              disabled={!screening.videoUrl}
+              onClick={() => {
+                if (!screening.videoUrl) return
+                setSelectedVideoUrl(screening.videoUrl)
+                setSelectedVideoTitle(screening.title)
+              }}
+              className={cn(
+                'w-14 h-14 rounded-full flex items-center justify-center transition-colors',
+                screening.videoUrl
+                  ? 'bg-white/20 hover:bg-white/30'
+                  : 'bg-white/10 cursor-not-allowed'
+              )}
+            >
+              <Play className="w-7 h-7 text-white ml-0.5" fill="white" />
+            </button>
           </div>
-        )}
-        
-        {/* Play Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/50">
-          <button
-            type="button"
-            disabled={!screening.videoUrl}
-            onClick={() => {
-              if (!screening.videoUrl) return
-              window.open(screening.videoUrl, '_blank', 'noopener,noreferrer')
-            }}
-            className={cn(
-              'w-14 h-14 rounded-full flex items-center justify-center transition-colors',
-              screening.videoUrl
-                ? 'bg-white/20 hover:bg-white/30'
-                : 'bg-white/10 cursor-not-allowed'
-            )}
-          >
-            <Play className="w-7 h-7 text-white ml-0.5" fill="white" />
-          </button>
+          <div className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-violet-500/20" />
         </div>
       </div>
       
@@ -615,6 +621,36 @@ export function ScreeningRoomDashboard({
                 <Plus className="w-4 h-4 mr-2" />
                 New screening
               </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {selectedVideoUrl ? (
+          <div className="rounded-2xl border border-zinc-700/70 bg-zinc-950/70 overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-zinc-700/60 flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-white truncate">Now playing: {selectedVideoTitle}</p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setSelectedVideoUrl(null)
+                  setSelectedVideoTitle('')
+                }}
+              >
+                <X className="w-4 h-4 mr-1.5" />
+                Close
+              </Button>
+            </div>
+            <div className="p-2 bg-gradient-to-b from-zinc-700/30 to-zinc-900/70">
+              <div className="relative aspect-video rounded-xl overflow-hidden bg-black ring-1 ring-zinc-500/40 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+                <video
+                  key={selectedVideoUrl}
+                  src={selectedVideoUrl}
+                  controls
+                  className="w-full h-full object-contain"
+                />
+                <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-violet-500/20" />
+              </div>
             </div>
           </div>
         ) : null}
