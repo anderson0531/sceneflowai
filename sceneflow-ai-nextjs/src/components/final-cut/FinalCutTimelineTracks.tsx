@@ -35,7 +35,10 @@ export function FinalCutTimelineTracks({
   onTransitionPanelOpen,
 }: FinalCutTimelineTracksProps) {
   return (
-    <div ref={timelineRef} className="flex-1 flex flex-col overflow-hidden min-w-0">
+    <div
+      ref={timelineRef}
+      className="flex-1 flex flex-col overflow-hidden min-w-0 shadow-[inset_0_1px_0_0_rgba(139,92,246,0.1)]"
+    >
       <TimelineRuler
         duration={totalDuration}
         pixelsPerSecond={pixelsPerSecond}

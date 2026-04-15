@@ -916,10 +916,18 @@ export default function FinalCutPage() {
   
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-center text-zinc-100">
-          <Loader2 className="w-8 h-8 animate-spin text-violet-500 mx-auto mb-4" />
-          <p className="text-zinc-500 text-sm">Loading Final Cut…</p>
+      <div className="relative isolate min-h-screen flex items-center justify-center overflow-hidden bg-zinc-950">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-80"
+          aria-hidden
+          style={{
+            backgroundImage:
+              'radial-gradient(ellipse 100% 80% at 50% -20%, rgba(139, 92, 246, 0.2), transparent 50%)',
+          }}
+        />
+        <div className="text-center text-zinc-100 relative">
+          <Loader2 className="w-8 h-8 animate-spin text-violet-400 mx-auto mb-4" />
+          <p className="text-zinc-400 text-sm font-medium">Loading Final Cut…</p>
         </div>
       </div>
     )
@@ -944,7 +952,27 @@ export default function FinalCutPage() {
   }
   
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col text-zinc-100">
+    <div className="relative isolate min-h-screen flex flex-col overflow-hidden bg-zinc-950 text-zinc-100">
+      {/* Ambient studio backdrop (overview-video polish) */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 bg-zinc-950"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 opacity-90"
+        aria-hidden
+        style={{
+          backgroundImage: `
+            radial-gradient(ellipse 120% 80% at 15% -10%, rgba(139, 92, 246, 0.22), transparent 52%),
+            radial-gradient(ellipse 90% 70% at 92% 8%, rgba(217, 70, 239, 0.12), transparent 48%),
+            radial-gradient(ellipse 80% 50% at 50% 100%, rgba(59, 130, 246, 0.08), transparent 55%)
+          `,
+        }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.35] [background-size:24px_24px] [background-image:linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)]"
+        aria-hidden
+      />
       {/* Demo Mode Banner */}
       {isDemo && (
         <div className="bg-amber-500/15 border-b border-amber-500/25 px-4 py-2.5">
@@ -957,7 +985,7 @@ export default function FinalCutPage() {
       )}
 
       {/* Header */}
-      <header className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b border-white/[0.06] bg-zinc-950/90 backdrop-blur-md supports-[backdrop-filter]:bg-zinc-950/75">
+      <header className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b border-white/[0.08] bg-zinc-950/80 backdrop-blur-xl supports-[backdrop-filter]:bg-zinc-950/65 shadow-[0_1px_0_0_rgba(255,255,255,0.04)]">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           <Link href={isDemo ? '/dashboard' : `/dashboard/workflow/vision/${projectId}`}>
             <Button
@@ -977,9 +1005,11 @@ export default function FinalCutPage() {
               <Film className="w-5 h-5 text-violet-300" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-semibold tracking-tight text-white truncate">Final Cut</h1>
-              <p className="text-[11px] sm:text-xs text-zinc-500 truncate">
+              <h1 className="text-base sm:text-lg font-semibold tracking-tight text-white truncate">
                 {isDemo ? 'Demo project' : currentProject?.title ?? 'Project'}
+              </h1>
+              <p className="text-[11px] sm:text-xs text-zinc-500 truncate">
+                Final Cut · assembly workspace
               </p>
             </div>
           </div>
@@ -1085,9 +1115,43 @@ export default function FinalCutPage() {
       })()}
 
       {/* Library column + editor workspace (iMovie-style); Screenings live under Share in the library */}
-      <main className="flex-1 min-h-0 flex flex-col gap-3 sm:gap-4 px-4 sm:px-5 py-4 overflow-hidden border-t border-white/[0.04]">
+      <main className="relative flex-1 min-h-0 flex flex-col gap-3 sm:gap-4 px-4 sm:px-5 py-4 overflow-hidden border-t border-white/[0.06]">
+        {/* Workspace hero title (distinct from compact sticky header) */}
+        <div className="shrink-0 relative overflow-hidden rounded-2xl border border-white/[0.1] bg-gradient-to-br from-violet-950/50 via-zinc-950/70 to-fuchsia-950/25 px-5 py-4 sm:px-7 sm:py-5 shadow-[0_0_0_1px_rgba(139,92,246,0.12),0_24px_80px_-32px_rgba(139,92,246,0.35)] backdrop-blur-md">
+          <div
+            className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-fuchsia-500/20 blur-3xl motion-reduce:opacity-40"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-violet-500/15 blur-3xl motion-reduce:opacity-40"
+            aria-hidden
+          />
+          <div className="relative flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-violet-300/90">
+                SceneFlow Studio
+              </p>
+              <h2 className="mt-1 text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-white [text-shadow:0_2px_28px_rgba(139,92,246,0.35)]">
+                Final Cut
+              </h2>
+              <p className="mt-1.5 text-sm text-zinc-400 max-w-xl leading-relaxed">
+                Assembly · mix · export — precision timeline for your overview and delivery.
+              </p>
+            </div>
+            {isDemo ? (
+              <p className="text-xs text-zinc-500 shrink-0 sm:text-right max-w-[200px] sm:max-w-xs truncate">
+                Demo reel · sample timeline
+              </p>
+            ) : currentProject?.title ? (
+              <p className="text-xs text-zinc-500 tabular-nums shrink-0 sm:text-right max-w-[200px] sm:max-w-xs truncate">
+                {currentProject.title}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
         <div
-          className="flex lg:hidden shrink-0 rounded-lg border border-white/[0.08] bg-zinc-900/50 p-1 gap-1"
+          className="flex lg:hidden shrink-0 rounded-xl border border-white/[0.1] bg-zinc-950/50 backdrop-blur-md p-1 gap-1 shadow-lg shadow-black/20"
           role="tablist"
           aria-label="Final Cut layout"
         >
@@ -1099,7 +1163,7 @@ export default function FinalCutPage() {
             className={cn(
               'flex-1 rounded-md py-2 text-xs font-medium transition-colors',
               mobilePane === 'library'
-                ? 'bg-purple-600 text-white shadow-sm'
+                ? 'bg-violet-600 text-white shadow-md shadow-violet-950/40'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80'
             )}
           >
@@ -1128,19 +1192,20 @@ export default function FinalCutPage() {
               mobilePane === 'edit' && 'hidden lg:flex'
             )}
           >
-            <div className="flex flex-col flex-1 min-h-0 rounded-xl border border-slate-700/60 bg-slate-900/40 overflow-hidden">
+            <div className="flex flex-col flex-1 min-h-0 rounded-2xl border border-white/[0.08] bg-zinc-950/50 backdrop-blur-xl overflow-hidden shadow-xl shadow-black/30 ring-1 ring-white/[0.04]">
               <ProductionSectionHeader
                 icon={Film}
                 title="Project media"
+                titleClassName="font-semibold tracking-tight"
                 badge={streams.length > 0 ? streams.length : undefined}
                 collapsible
                 expanded={streamsExpanded}
                 onToggle={() => setStreamsExpanded((e) => !e)}
-                className="bg-slate-900/50 border-b border-white/[0.06] shrink-0"
+                className="bg-zinc-950/70 border-b border-white/[0.06] shrink-0"
               />
               {streamsExpanded ? (
                 <FinalCutMediaBrowser
-                  className="flex-1 min-h-0 rounded-none border-0 shadow-none bg-slate-900/25"
+                  className="flex-1 min-h-0 rounded-none border-0 shadow-none bg-zinc-950/30"
                   streams={streams}
                   selectedStreamId={selectedStreamId}
                   onSelectStream={handleStreamSelect}
@@ -1175,10 +1240,11 @@ export default function FinalCutPage() {
               mobilePane === 'library' && 'hidden lg:flex'
             )}
           >
-            <div className="flex flex-col flex-1 min-h-0 rounded-xl border border-purple-500/30 bg-zinc-950/60 overflow-hidden shadow-[inset_0_1px_0_0_rgba(168,85,247,0.06)]">
+            <div className="flex flex-col flex-1 min-h-0 rounded-2xl border border-violet-500/25 bg-zinc-950/55 backdrop-blur-xl overflow-hidden shadow-[0_0_0_1px_rgba(139,92,246,0.12),0_28px_100px_-36px_rgba(139,92,246,0.35),inset_0_1px_0_0_rgba(255,255,255,0.06)]">
               <ProductionSectionHeader
                 icon={Film}
                 title="Final Cut Mixer"
+                titleClassName="font-semibold tracking-tight"
                 badge={
                   streams.find((s) => s.id === selectedStreamId)?.scenes.length ?? undefined
                 }
@@ -1186,7 +1252,7 @@ export default function FinalCutPage() {
                 collapsible
                 expanded={mixerExpanded}
                 onToggle={() => setMixerExpanded((e) => !e)}
-                className="bg-zinc-950/90 border-b border-purple-500/25 shrink-0"
+                className="bg-zinc-950/80 border-b border-violet-500/20 shrink-0"
               />
               {mixerExpanded ? (
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden">

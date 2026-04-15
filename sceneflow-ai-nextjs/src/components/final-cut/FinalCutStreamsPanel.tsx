@@ -109,7 +109,7 @@ export function FinalCutStreamsPanel({
         'space-y-4',
         embeddedInSection
           ? 'px-4 py-4 sm:px-5 sm:py-5'
-          : 'rounded-xl border border-slate-700/60 bg-slate-900/40 p-4 sm:p-5'
+          : 'rounded-xl border border-zinc-800/70 bg-zinc-950/45 backdrop-blur-md p-4 sm:p-5'
       )}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -128,7 +128,7 @@ export function FinalCutStreamsPanel({
                 )}
               </div>
             ) : null}
-            <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
+            <p className="text-xs text-zinc-500 mt-1 max-w-2xl leading-relaxed">
               Assembly timelines by language and format. For new scene renders and segment edits, use Production
               (Vision). Select a stream to edit assembly in the mixer below.
             </p>
@@ -165,39 +165,39 @@ export function FinalCutStreamsPanel({
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as 'animatic' | 'full-video')} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2 h-10 p-1 bg-slate-900/80 border border-slate-600/80 rounded-lg">
+        <TabsList className="grid w-full max-w-md grid-cols-2 h-10 p-1 bg-zinc-950/80 border border-zinc-700/60 rounded-lg">
           <TabsTrigger
             value="animatic"
-            className="gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=inactive]:text-slate-400 rounded-md text-xs sm:text-sm"
+            className="gap-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=inactive]:text-zinc-400 rounded-md text-xs font-medium"
           >
             <Clapperboard className="w-4 h-4" />
             Animatic
-            <span className="text-[10px] opacity-80 tabular-nums">({animaticStreams.length})</span>
+            <span className="text-[11px] opacity-80 tabular-nums text-zinc-500">({animaticStreams.length})</span>
           </TabsTrigger>
           <TabsTrigger
             value="full-video"
-            className="gap-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=inactive]:text-slate-400 rounded-md text-xs sm:text-sm"
+            className="gap-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=inactive]:text-zinc-400 rounded-md text-xs font-medium"
           >
             <VideoIcon className="w-4 h-4" />
             Video
-            <span className="text-[10px] opacity-80 tabular-nums">({videoStreams.length})</span>
+            <span className="text-[11px] opacity-80 tabular-nums text-zinc-500">({videoStreams.length})</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>
 
-      <div className="flex items-center gap-2 text-xs text-slate-400">
+      <div className="flex items-center gap-2 text-xs text-zinc-400">
         {tab === 'animatic' ? (
           <>
-            <Clapperboard className="w-3.5 h-3.5 text-purple-400" />
+            <Clapperboard className="w-3.5 h-3.5 text-violet-400" />
             <span>
-              Showing <span className="text-purple-200 font-medium">Animatic</span> assembly streams
+              Showing <span className="text-violet-200 font-medium">Animatic</span> assembly streams
             </span>
           </>
         ) : (
           <>
-            <VideoIcon className="w-3.5 h-3.5 text-indigo-400" />
+            <VideoIcon className="w-3.5 h-3.5 text-violet-400" />
             <span>
-              Showing <span className="text-indigo-200 font-medium">Video</span> assembly streams
+              Showing <span className="text-violet-200 font-medium">Video</span> assembly streams
             </span>
           </>
         )}
@@ -218,7 +218,7 @@ export function FinalCutStreamsPanel({
                   'text-left rounded-xl border p-4 transition-all',
                   selected
                     ? 'border-violet-500 bg-violet-500/10 ring-1 ring-violet-500/30'
-                    : 'border-slate-700 bg-slate-800/40 hover:border-slate-600 hover:bg-slate-800/70'
+                    : 'border-zinc-700 bg-zinc-900/50 hover:border-zinc-600 hover:bg-zinc-800/70'
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -226,12 +226,12 @@ export function FinalCutStreamsPanel({
                     <span className="text-lg shrink-0">{FLAG_EMOJIS[stream.language] ?? '🌐'}</span>
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-white truncate">{stream.name}</p>
-                      <p className="text-[11px] text-slate-500 capitalize mt-0.5">{stream.status.replace('-', ' ')}</p>
+                      <p className="text-[11px] text-zinc-500 capitalize mt-0.5">{stream.status.replace('-', ' ')}</p>
                     </div>
                   </div>
                   {selected && <Check className="w-4 h-4 text-violet-400 shrink-0" />}
                 </div>
-                <div className="flex items-center gap-3 mt-3 text-[11px] text-slate-400">
+                <div className="flex items-center gap-3 mt-3 text-[11px] text-zinc-400">
                   <span className="inline-flex items-center gap-1">
                     <Layers className="w-3.5 h-3.5" />
                     {stream.scenes.length} scenes

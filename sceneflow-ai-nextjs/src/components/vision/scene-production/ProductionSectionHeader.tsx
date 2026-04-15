@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils'
 export interface ProductionSectionHeaderProps {
   icon: LucideIcon
   title: string
+  /** Optional class for the title span (e.g. Final Cut typography pass) */
+  titleClassName?: string
   /** Shown as outline badge (e.g. count or short label) */
   badge?: string | number
   /** Muted hint on the right (desktop) */
@@ -27,6 +29,7 @@ export interface ProductionSectionHeaderProps {
 export function ProductionSectionHeader({
   icon: Icon,
   title,
+  titleClassName,
   badge,
   rightHint,
   rightAction,
@@ -46,7 +49,7 @@ export function ProductionSectionHeader({
           )
         )}
         <Icon className="w-4 h-4 text-purple-400 flex-shrink-0" aria-hidden />
-        <span className="text-sm font-medium text-white truncate">{title}</span>
+        <span className={cn('text-sm font-medium text-white truncate', titleClassName)}>{title}</span>
         {badge !== undefined && badge !== '' && (
           <Badge variant="outline" className="text-[10px] text-purple-300 border-purple-500/30 flex-shrink-0">
             {badge}

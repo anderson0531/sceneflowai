@@ -40,15 +40,16 @@ export function FinalCutTimeline({
       className={cn(
         'flex flex-col flex-1 min-h-0 text-zinc-100 overflow-hidden',
         !hideMixerSectionHeader &&
-          'rounded-xl border border-purple-500/30 bg-zinc-950/60 shadow-[inset_0_1px_0_0_rgba(168,85,247,0.06)]',
+          'rounded-2xl border border-violet-500/25 bg-zinc-950/55 backdrop-blur-xl shadow-[0_0_0_1px_rgba(139,92,246,0.12),inset_0_1px_0_0_rgba(255,255,255,0.05)]',
         hideMixerSectionHeader && 'rounded-none border-0 bg-transparent shadow-none'
       )}
     >
       {!hideMixerSectionHeader ? (
-        <div className="shrink-0 border-b border-purple-500/25 bg-zinc-950/90">
+        <div className="shrink-0 border-b border-violet-500/20 bg-zinc-950/85">
           <ProductionSectionHeader
             icon={Film}
             title="Final Cut Mixer"
+            titleClassName="font-semibold tracking-tight"
             badge={selectedStream ? selectedStream.scenes.length : 0}
             rightHint="Assembly timeline — select scenes and trim"
           />

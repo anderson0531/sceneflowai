@@ -38,19 +38,20 @@ export function FinalCutInspectorPanel({
   return (
     <div
       className={cn(
-        'shrink-0 w-full sm:max-w-none lg:w-64 xl:w-72 border-white/[0.06] bg-zinc-900/30 overflow-y-auto',
+        'shrink-0 w-full sm:max-w-none lg:w-64 xl:w-72 border-white/[0.08] bg-zinc-950/50 backdrop-blur-md overflow-y-auto',
         'border-t lg:border-t-0 lg:border-l max-h-[40vh] lg:max-h-none'
       )}
     >
       <div className="p-3 sm:p-4">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">Inspector</h3>
+        <h3 className="text-sm font-semibold tracking-tight text-white mb-1">Inspector</h3>
+        <p className="text-[11px] text-zinc-500 uppercase tracking-wider mb-4">Program & timeline</p>
 
         {!selectedStream ? (
-          <p className="text-sm text-zinc-500">Select a stream in the library to use the mixer.</p>
+          <p className="text-xs text-zinc-500 leading-relaxed">Select a stream in the library to use the mixer.</p>
         ) : (
           <div className="space-y-5">
-            <div className="space-y-2 pb-4 border-b border-zinc-800">
-              <label className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">
+            <div className="space-y-2 pb-4 border-b border-zinc-800/80">
+              <label className="text-[11px] text-zinc-500 uppercase tracking-wider font-medium">
                 Assembly output level
               </label>
               <Slider
@@ -65,7 +66,7 @@ export function FinalCutInspectorPanel({
                 }}
                 className="py-1"
               />
-              <p className="text-[11px] text-zinc-600 leading-snug">
+              <p className="text-xs text-zinc-500 leading-snug">
                 Affects preview playback and export mix for this assembly stream. Save the project to persist.
               </p>
             </div>
@@ -91,19 +92,19 @@ export function FinalCutInspectorPanel({
                 if (!scene) return null
                 return (
                   <div className="space-y-4">
-                    <p className="text-sm font-semibold text-white">Selected scene</p>
+                    <p className="text-sm font-semibold text-white tracking-tight">Selected scene</p>
                     <div>
-                      <label className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Scene</label>
+                      <label className="text-[11px] text-zinc-500 uppercase tracking-wider font-medium">Scene</label>
                       <p className="text-sm text-zinc-100 mt-0.5">Scene {scene.sceneNumber}</p>
                     </div>
                     <div>
-                      <label className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Duration</label>
+                      <label className="text-[11px] text-zinc-500 uppercase tracking-wider font-medium">Duration</label>
                       <p className="text-sm text-zinc-100 mt-0.5 tabular-nums">
                         {formatTime(scene.durationMs / 1000)}
                       </p>
                     </div>
                     <div>
-                      <label className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Heading</label>
+                      <label className="text-[11px] text-zinc-500 uppercase tracking-wider font-medium">Heading</label>
                       <p className="text-sm text-zinc-200 mt-0.5 leading-snug">{scene.heading || 'No heading'}</p>
                     </div>
 
@@ -150,7 +151,7 @@ export function FinalCutInspectorPanel({
                 )
               })()
             ) : (
-              <p className="text-sm text-zinc-500">Select a scene on the timeline for details.</p>
+              <p className="text-xs text-zinc-500 leading-relaxed">Select a scene on the timeline for details.</p>
             )}
           </div>
         )}

@@ -65,7 +65,7 @@ export function FinalCutTransportBar({
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center justify-between gap-y-2 gap-x-3 border-b border-white/[0.06] bg-zinc-900/40',
+        'flex flex-wrap items-center justify-between gap-y-2 gap-x-3 border-b border-white/[0.06] bg-zinc-950/50 backdrop-blur-sm',
         under ? 'px-3 py-2 sm:px-4' : 'px-4 py-2.5'
       )}
     >
@@ -79,7 +79,7 @@ export function FinalCutTransportBar({
         >
           <Film className="w-4 h-4 text-violet-400 shrink-0" aria-hidden />
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wider text-zinc-500 leading-none">Stream</p>
+            <p className="text-[11px] uppercase tracking-wider text-zinc-500 leading-none">Stream</p>
             <p className="text-xs sm:text-sm font-medium text-zinc-100 truncate mt-0.5">
               {selectedStream?.name ?? 'None selected'}
             </p>
@@ -95,7 +95,7 @@ export function FinalCutTransportBar({
             <span className="text-emerald-500/90">{formatTime(totalDuration)}</span>
           </div>
           {under ? (
-            <span className="text-[10px] text-zinc-600 tabular-nums hidden sm:block">Position / duration</span>
+            <span className="text-[11px] text-zinc-500 tabular-nums hidden sm:block">Position / duration</span>
           ) : null}
         </div>
       </div>

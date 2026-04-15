@@ -357,14 +357,14 @@ export function FinalCutPreviewMonitor({
   return (
     <div
       className={cn(
-        'shrink-0 border-b border-white/[0.06] bg-zinc-950/80 px-4 py-3',
+        'shrink-0 border-b border-white/[0.06] bg-gradient-to-b from-zinc-950/90 to-zinc-950/70 px-4 py-3',
         className
       )}
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="flex items-center gap-2 text-xs text-zinc-500 min-w-0">
           <MonitorPlay className="w-4 h-4 text-violet-400 shrink-0" aria-hidden />
-          <span className="font-medium text-zinc-300 truncate">Program Preview</span>
+          <span className="font-semibold text-zinc-200 truncate">Program Preview</span>
           {clip ? (
             <span className="text-zinc-500 truncate hidden md:inline">· {heading}</span>
           ) : null}
@@ -386,8 +386,9 @@ export function FinalCutPreviewMonitor({
       <div className="mt-3 flex justify-center">
         <div
           className={cn(
-            'relative w-full max-w-3xl overflow-hidden rounded-lg border border-zinc-800 bg-black',
-            'aspect-video shadow-inner shadow-black/60'
+            'relative w-full max-w-3xl overflow-hidden rounded-xl border border-violet-500/25 bg-black',
+            'aspect-video shadow-[inset_0_2px_24px_rgba(0,0,0,0.65),0_0_0_1px_rgba(139,92,246,0.15),0_24px_80px_-20px_rgba(139,92,246,0.35)]',
+            'ring-1 ring-violet-400/10'
           )}
         >
           {!selectedStream ? (

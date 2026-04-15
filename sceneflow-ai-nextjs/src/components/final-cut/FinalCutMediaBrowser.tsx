@@ -34,7 +34,7 @@ function PlaceholderTab({ title, body }: { title: string; body: string }) {
   return (
     <div className="px-4 py-8 sm:px-5 text-center space-y-2">
       <Sparkles className="w-8 h-8 text-violet-400/80 mx-auto" aria-hidden />
-      <p className="text-sm font-medium text-zinc-200">{title}</p>
+      <p className="text-sm font-semibold text-zinc-100">{title}</p>
       <p className="text-xs text-zinc-500 max-w-sm mx-auto leading-relaxed">{body}</p>
     </div>
   )
@@ -78,44 +78,44 @@ export function FinalCutMediaBrowser({
   return (
     <div
       className={cn(
-        'flex flex-col min-h-0 rounded-xl border border-slate-700/60 bg-slate-900/40 overflow-hidden',
+        'flex flex-col min-h-0 rounded-xl border border-zinc-800/70 bg-zinc-950/45 backdrop-blur-md overflow-hidden',
         className
       )}
     >
       <Tabs value={tab} onValueChange={(v) => setTab(v as FinalCutMediaBrowserTab)} className="flex flex-col flex-1 min-h-0">
-        <div className="shrink-0 border-b border-white/[0.06] bg-slate-900/60 px-2 pt-2">
-          <TabsList className="flex w-full flex-wrap h-auto gap-1 p-1 bg-slate-900/90 border border-slate-600/60 rounded-lg justify-start">
+        <div className="shrink-0 border-b border-white/[0.06] bg-zinc-950/55 px-2 pt-2">
+          <TabsList className="flex w-full flex-wrap h-auto gap-1 p-1 bg-zinc-950/80 border border-zinc-700/50 rounded-lg justify-start">
             <TabsTrigger
               value="media"
-              className="text-[11px] sm:text-xs gap-1.5 px-2.5 py-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white rounded-md"
+              className="text-xs font-medium gap-1.5 px-2.5 py-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white rounded-md text-zinc-400"
             >
               <Film className="w-3.5 h-3.5 shrink-0" />
               Media
             </TabsTrigger>
             <TabsTrigger
               value="audio"
-              className="text-[11px] sm:text-xs gap-1.5 px-2.5 py-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white rounded-md text-slate-400"
+              className="text-xs font-medium gap-1.5 px-2.5 py-2 data-[state=active]:bg-zinc-700 data-[state=active]:text-white rounded-md text-zinc-400"
             >
               <Music className="w-3.5 h-3.5 shrink-0" />
               Audio
             </TabsTrigger>
             <TabsTrigger
               value="titles"
-              className="text-[11px] sm:text-xs gap-1.5 px-2.5 py-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white rounded-md text-slate-400"
+              className="text-xs font-medium gap-1.5 px-2.5 py-2 data-[state=active]:bg-zinc-700 data-[state=active]:text-white rounded-md text-zinc-400"
             >
               <Type className="w-3.5 h-3.5 shrink-0" />
               Titles
             </TabsTrigger>
             <TabsTrigger
               value="transitions"
-              className="text-[11px] sm:text-xs gap-1.5 px-2.5 py-2 data-[state=active]:bg-slate-700 data-[state=active]:text-white rounded-md text-slate-400"
+              className="text-xs font-medium gap-1.5 px-2.5 py-2 data-[state=active]:bg-zinc-700 data-[state=active]:text-white rounded-md text-zinc-400"
             >
               <Shuffle className="w-3.5 h-3.5 shrink-0" />
               Transitions
             </TabsTrigger>
             <TabsTrigger
               value="share"
-              className="text-[11px] sm:text-xs gap-1.5 px-2.5 py-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white rounded-md text-slate-400"
+              className="text-xs font-medium gap-1.5 px-2.5 py-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white rounded-md text-zinc-400"
             >
               <Share2 className="w-3.5 h-3.5 shrink-0" />
               Share

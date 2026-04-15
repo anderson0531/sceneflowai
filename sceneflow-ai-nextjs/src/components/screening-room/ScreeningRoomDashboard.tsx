@@ -336,16 +336,33 @@ export function ScreeningRoomDashboard({
       <div className={cn('text-center', isFinalCutOnly ? 'py-10' : 'py-16')}>
         <div
           className={cn(
-            'bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4',
+            isFinalCutOnly
+              ? 'bg-zinc-800/80 ring-1 ring-violet-500/15 rounded-full flex items-center justify-center mx-auto mb-4'
+              : 'bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4',
             isFinalCutOnly ? 'w-14 h-14' : 'w-16 h-16'
           )}
         >
-          <Icon className={cn('text-gray-500', isFinalCutOnly ? 'w-7 h-7' : 'w-8 h-8')} />
+          <Icon
+            className={cn(
+              isFinalCutOnly ? 'text-zinc-500' : 'text-gray-500',
+              isFinalCutOnly ? 'w-7 h-7' : 'w-8 h-8'
+            )}
+          />
         </div>
-        <h3 className={cn('font-semibold text-white mb-2', isFinalCutOnly ? 'text-base' : 'text-lg')}>
+        <h3
+          className={cn(
+            'font-semibold text-white mb-2 tracking-tight',
+            isFinalCutOnly ? 'text-sm' : 'text-lg'
+          )}
+        >
           No {tabConfig.label} Screenings
         </h3>
-        <p className="text-gray-400 mb-6 max-w-md mx-auto text-sm">
+        <p
+          className={cn(
+            'mb-6 max-w-md mx-auto',
+            isFinalCutOnly ? 'text-xs text-zinc-500 leading-relaxed' : 'text-gray-400 text-sm'
+          )}
+        >
           {tabConfig.description}. Create your first screening to start collecting audience insights.
         </p>
         <Button onClick={() => onCreateScreening?.(tabId)}>
@@ -360,75 +377,105 @@ export function ScreeningRoomDashboard({
   // Render: External Upload Zone
   // ============================================================================
   
-  const renderExternalUpload = () => (
-    <div className="mb-8">
-      <h3 className="text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
-        <Upload className="w-4 h-4" />
-        External Video Upload
-      </h3>
-      
-      <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        className={cn(
-          "border-2 border-dashed rounded-xl p-8 text-center transition-colors",
-          dragOver
-            ? "border-blue-500 bg-blue-500/10"
-            : "border-gray-700 hover:border-gray-600",
-          isUploading && "pointer-events-none opacity-70"
-        )}
-      >
-        {isUploading ? (
-          <div className="space-y-4">
-            <Loader2 className="w-8 h-8 text-blue-400 animate-spin mx-auto" />
-            <div>
-              <p className="text-white font-medium mb-2">Uploading video...</p>
-              <div className="w-48 h-2 bg-gray-700 rounded-full mx-auto overflow-hidden">
+  const renderExternalUpload = () => {
+    const fc = isFinalCutOnly
+    return (
+      <div className={cn('mb-8', fc && 'mb-6')}>
+        <h3
+          className={cn(
+            'text-sm font-semibold mb-3 flex items-center gap-2 tracking-tight',
+            fc ? 'text-zinc-200' : 'text-gray-300 font-medium'
+          )}
+        >
+          <Upload className={cn('w-4 h-4', fc && 'text-violet-400')} />
+          External Video Upload
+        </h3>
+
+        <div
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          className={cn(
+            'border-2 border-dashed rounded-xl p-8 text-center transition-colors',
+            dragOver &&
+              (fc ? 'border-violet-400 bg-violet-500/10 shadow-[0_0_40px_-12px_rgba(139,92,246,0.45)]' : 'border-blue-500 bg-blue-500/10'),
+            !dragOver &&
+              (fc
+                ? 'border-zinc-700/90 bg-zinc-950/40 hover:border-violet-500/35 hover:bg-zinc-900/50'
+                : 'border-gray-700 hover:border-gray-600'),
+            isUploading && 'pointer-events-none opacity-70'
+          )}
+        >
+          {isUploading ? (
+            <div className="space-y-4">
+              <Loader2
+                className={cn('w-8 h-8 animate-spin mx-auto', fc ? 'text-violet-400' : 'text-blue-400')}
+              />
+              <div>
+                <p className="text-sm font-semibold text-white mb-2">Uploading video…</p>
                 <div
-                  className="h-full bg-blue-500 transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
+                  className={cn(
+                    'w-48 h-2 rounded-full mx-auto overflow-hidden',
+                    fc ? 'bg-zinc-800' : 'bg-gray-700'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'h-full transition-all duration-300',
+                      fc ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500' : 'bg-blue-500'
+                    )}
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+                <p className={cn('text-xs mt-2', fc ? 'text-zinc-500' : 'text-sm text-gray-400')}>
+                  {uploadProgress}%
+                </p>
               </div>
-              <p className="text-sm text-gray-400 mt-2">{uploadProgress}%</p>
             </div>
-          </div>
-        ) : (
-          <>
-            <FileVideo className="w-10 h-10 text-gray-500 mx-auto mb-3" />
-            <p className="text-white font-medium mb-1">
-              Drop your video here
-            </p>
-            <p className="text-sm text-gray-400 mb-4">
-              or click to browse (MP4, MOV • Max 2GB)
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              Browse Files
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="video/mp4,video/quicktime"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                if (file) handleFileUpload(file)
-              }}
-            />
-            
-            {/* Credits Reminder */}
-            <p className="text-xs text-gray-500 mt-4 flex items-center justify-center gap-1">
-              <AlertCircle className="w-3 h-3" />
-              Upload will use 1 screening credit ({screeningCredits} remaining)
-            </p>
-          </>
-        )}
+          ) : (
+            <>
+              <FileVideo className={cn('w-10 h-10 mx-auto mb-3', fc ? 'text-zinc-500' : 'text-gray-500')} />
+              <p className="text-sm font-semibold text-white mb-1">Drop your video here</p>
+              <p className={cn('mb-4', fc ? 'text-xs text-zinc-500' : 'text-sm text-gray-400')}>
+                or click to browse (MP4, MOV • Max 2GB)
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className={
+                  fc
+                    ? 'border-violet-500/40 bg-violet-950/20 text-violet-100 hover:bg-violet-950/40 hover:border-violet-400/50'
+                    : undefined
+                }
+              >
+                Browse Files
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/mp4,video/quicktime"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleFileUpload(file)
+                }}
+              />
+
+              <p
+                className={cn(
+                  'text-xs mt-4 flex items-center justify-center gap-1',
+                  fc ? 'text-zinc-500' : 'text-gray-500'
+                )}
+              >
+                <AlertCircle className="w-3 h-3 shrink-0" />
+                Upload will use 1 screening credit ({screeningCredits} remaining)
+              </p>
+            </>
+          )}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
   
   // ============================================================================
   // Main Render
@@ -442,7 +489,8 @@ export function ScreeningRoomDashboard({
       <div
         className={cn(
           'space-y-4',
-          !hideFinalCutChrome && 'rounded-xl border border-slate-700/60 bg-slate-900/35 p-4 sm:p-5'
+          !hideFinalCutChrome &&
+            'rounded-2xl border border-zinc-800/70 bg-zinc-950/40 backdrop-blur-md p-4 sm:p-5 shadow-lg shadow-black/20'
         )}
       >
         {!hideFinalCutChrome ? (
@@ -452,15 +500,15 @@ export function ScreeningRoomDashboard({
                 <Video className="w-4 h-4 text-violet-400 shrink-0" />
                 Final Cut screenings
               </h2>
-              {projectName ? <p className="text-xs text-slate-500 mt-1 truncate">{projectName}</p> : null}
-              <p className="text-xs text-slate-500 mt-2 max-w-2xl leading-relaxed">
+              {projectName ? <p className="text-xs text-zinc-500 mt-1 truncate">{projectName}</p> : null}
+              <p className="text-xs text-zinc-500 mt-2 max-w-2xl leading-relaxed">
                 Share exports and external uploads for feedback. Linked videos appear below.
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
-              <div className="px-2.5 py-1.5 bg-gray-800/90 rounded-lg border border-gray-700 text-xs">
-                <span className="text-gray-400">Credits:</span>
-                <span className="text-white font-semibold ml-2">{screeningCredits}</span>
+              <div className="px-2.5 py-1.5 bg-zinc-900/90 rounded-lg border border-zinc-700/80 text-xs">
+                <span className="text-zinc-500">Credits:</span>
+                <span className="text-white font-semibold ml-2 tabular-nums">{screeningCredits}</span>
               </div>
               <Button size="sm" onClick={() => onCreateScreening?.('final-cut')}>
                 <Plus className="w-4 h-4 mr-2" />
