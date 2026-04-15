@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
 export function FinalCTA() {
   return (
@@ -27,10 +28,18 @@ export function FinalCTA() {
           <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-8">
             Launch real-estate showcases, education videos, podcasts, news formats, or cinematic projects with one production workflow.
           </p>
-          <Button href="/dashboard" size="xl" className="w-full sm:w-auto">
-            Launch Your Studio for $9
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button href="/dashboard" size="xl" className="w-full sm:w-auto">
+              Launch Your Studio for $9
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+            <Link
+              href="/early-access"
+              className="w-full sm:w-auto inline-flex items-center justify-center rounded-md border border-cyan-500/40 bg-cyan-500/10 px-6 py-3 text-sm font-semibold text-cyan-200 hover:bg-cyan-500/20 transition-colors"
+            >
+              Apply for Early Access
+            </Link>
+          </div>
         </motion.div>
       </div>
     </section>

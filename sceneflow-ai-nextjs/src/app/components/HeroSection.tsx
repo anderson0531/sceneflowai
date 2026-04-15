@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { useState } from 'react'
 import { DemoVideoModal } from './DemoVideoModal'
 import { Play, ArrowRight, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
 
 /** Longform "What's Possible Reel" */
 const HERO_COMMERCIAL_VIDEO_ID = 'Rp5kMYYdU50'
@@ -63,6 +64,12 @@ export function HeroSection() {
                 <Play className="mr-2 w-5 h-5" />
                 Watch the &apos;What&apos;s Possible&apos; Reel
               </Button>
+              <Link
+                href="/early-access"
+                className="w-full sm:w-auto inline-flex items-center justify-center rounded-md border border-cyan-500/40 bg-cyan-500/10 px-6 py-3 text-sm font-semibold text-cyan-200 hover:bg-cyan-500/20 transition-colors"
+              >
+                SUBMIT ARCHITECT APPLICATION
+              </Link>
             </motion.div>
           </div>
 
