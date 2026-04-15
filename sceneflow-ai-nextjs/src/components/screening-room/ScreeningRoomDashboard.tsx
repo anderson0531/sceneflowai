@@ -344,7 +344,9 @@ export function ScreeningRoomDashboard({
           </div>
         ) : (
           <div className="mb-2 flex items-start gap-2">
-            <h3 className="font-semibold text-white truncate flex-1">{screening.title}</h3>
+            <h3 className="text-base font-semibold text-white leading-snug whitespace-normal break-words flex-1">
+              {screening.title}
+            </h3>
             {onRenameScreening && screening.editable !== false ? (
               <button
                 type="button"
@@ -585,6 +587,30 @@ export function ScreeningRoomDashboard({
                 <span className="text-zinc-500">Credits:</span>
                 <span className="text-white font-semibold ml-2 tabular-nums">{screeningCredits}</span>
               </div>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isUploading}
+                onClick={() => fileInputRef.current?.click()}
+                className="border-violet-500/40 bg-violet-950/20 text-violet-100 hover:bg-violet-950/40 hover:border-violet-400/50"
+              >
+                {isUploading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4 mr-2" />
+                )}
+                {isUploading ? 'Uploading…' : 'Upload video'}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/mp4,video/quicktime"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleFileUpload(file)
+                }}
+              />
               <Button size="sm" onClick={() => onCreateScreening?.('final-cut')}>
                 <Plus className="w-4 h-4 mr-2" />
                 New screening
@@ -592,8 +618,6 @@ export function ScreeningRoomDashboard({
             </div>
           </div>
         ) : null}
-
-        {renderExternalUpload()}
 
         {finalCutList.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
