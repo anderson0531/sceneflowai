@@ -1,9 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import dynamic from 'next/dynamic'
-
-const Plyr = dynamic(async () => (await import('plyr-react')).default, { ssr: false })
+import { Plyr } from 'plyr-react'
 
 interface PlyrYouTubeProps {
   videoId: string
