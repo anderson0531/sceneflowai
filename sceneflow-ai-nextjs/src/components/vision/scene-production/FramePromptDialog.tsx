@@ -63,6 +63,11 @@ import {
   isNoTalentSceneForFrames,
 } from '@/lib/vision/frameGenerationContext'
 import {
+  resolveQuickFrameActionPrompt,
+  resolveAdvancedFramePromptBaseline,
+  shouldInitializeFramePromptState,
+} from '@/lib/vision/framePromptBaseline'
+import {
   LocationSettingSection,
   CharacterSelectionSection,
   PropSelectionSection,
@@ -244,22 +249,7 @@ export function FramePromptDialog({
   const [modelTier, setModelTier] = useState<ModelTier>('eco')
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('low')
   
-  // State - Initialize customPrompt from segment data immediately to prevent race conditions
-  const initialPrompt = useMemo(() => {
-    if (!segment) return ''
-    if (frameType === 'start') {
-      return segment.startFramePrompt || segment.references?.startFrameDescription || segment.userEditedPrompt || segment.generatedPrompt || ''
-    }
-    if (frameType === 'end') {
-      return segment.endFramePrompt || segment.references?.endFrameDescription || segment.userEditedPrompt || segment.generatedPrompt || ''
-    }
-    if (frameType === 'both') {
-      return segment.startFramePrompt || segment.references?.startFrameDescription || segment.userEditedPrompt || segment.generatedPrompt || ''
-    }
-    return segment.userEditedPrompt || segment.generatedPrompt || segment.actionPrompt || ''
-  }, [segment, frameType])
-  
-  const [customPrompt, setCustomPrompt] = useState(initialPrompt)
+  const [customPrompt, setCustomPrompt] = useState('')
   const [selectedNegativePresets, setSelectedNegativePresets] = useState<Set<string>>(
     new Set(DEFAULT_NEGATIVE_PRESETS)
   )
@@ -304,28 +294,30 @@ export function FramePromptDialog({
   // Check if any selected characters have reference images
   const hasCharacterReferences = selectedCharacters.some(c => c.referenceImageUrl)
 
+  const quickBaselinePrompt = useMemo(
+    () => resolveQuickFrameActionPrompt(segment),
+    [segment]
+  )
+
   // Track previous open state to detect dialog opening
   const wasOpen = useRef(false)
+  const lastInitializedContextRef = useRef<string | null>(null)
 
-  // Initialize state from segment when dialog OPENS (not on every dependency change)
+  // Initialize state from segment when opening or context changes.
   useEffect(() => {
-    const justOpened = open && !wasOpen.current
+    const contextKey = segment ? `${segment.segmentId}:${frameType}` : ''
+    const shouldInitialize = shouldInitializeFramePromptState({
+      isOpen: open,
+      wasOpen: wasOpen.current,
+      currentContextKey: contextKey,
+      lastInitializedContextKey: lastInitializedContextRef.current,
+    })
     wasOpen.current = open
     
-    if (!segment || !justOpened) return
-    
-    // Reset customPrompt to segment's prompt when dialog opens
-    let basePrompt = ''
-    if (frameType === 'start') {
-      basePrompt = segment.startFramePrompt || segment.references?.startFrameDescription || segment.userEditedPrompt || segment.generatedPrompt || ''
-    } else if (frameType === 'end') {
-      basePrompt = segment.endFramePrompt || segment.references?.endFrameDescription || segment.userEditedPrompt || segment.generatedPrompt || ''
-    } else if (frameType === 'both') {
-      basePrompt = segment.startFramePrompt || segment.references?.startFrameDescription || segment.userEditedPrompt || segment.generatedPrompt || ''
-    } else {
-      basePrompt = segment.userEditedPrompt || segment.generatedPrompt || segment.actionPrompt || ''
-    }
-    setCustomPrompt(basePrompt)
+    if (!segment || !shouldInitialize) return
+
+    setCustomPrompt(quickBaselinePrompt)
+    lastInitializedContextRef.current = contextKey
     
     // Auto-check "use previous end frame" for CONTINUE transitions when available
     if (segment.transitionType === 'CONTINUE' && previousEndFrameUrl && frameType !== 'end') {
@@ -607,7 +599,7 @@ export function FramePromptDialog({
         talentBlocking: sceneDirection.talent?.blocking || prev.talentBlocking,
       }))
     }
-  }, [segment, open, previousEndFrameUrl, frameType, sceneDirection, sceneHeading, characters, locationReferences, objectReferences, frameResolverScene])
+  }, [segment, open, previousEndFrameUrl, frameType, sceneDirection, sceneHeading, characters, locationReferences, objectReferences, frameResolverScene, quickBaselinePrompt])
 
   // Build intelligent prompt using keyframe prompt builder
   // Priority: 1. Pasted prompts, 2. Segment direction keyframe descriptions, 3. Generic builder
@@ -712,7 +704,7 @@ export function FramePromptDialog({
       } : undefined
       
       return buildKeyframePrompt({
-        actionPrompt: segment.actionPrompt || segment.generatedPrompt || '',
+        actionPrompt: resolveQuickFrameActionPrompt(segment),
         framePosition: frameType === 'both' ? 'start' : frameType,
         duration: segment.endTime - segment.startTime,
         sceneDirection,
@@ -726,6 +718,16 @@ export function FramePromptDialog({
       return null
     }
   }, [segment, segmentIndex, frameType, previousEndFrameUrl, sceneDirection, characters, useIntelligentPrompt])
+
+  const advancedBaselinePrompt = useMemo(
+    () =>
+      resolveAdvancedFramePromptBaseline({
+        segment,
+        intelligentPrompt: intelligentPrompt?.prompt || null,
+      }),
+    [segment, intelligentPrompt]
+  )
+
   // Validate current prompt against scene direction
   const directionAdherence = useMemo(() => {
     return validateDirectionAdherence(customPrompt, sceneDirection)
@@ -848,10 +850,17 @@ export function FramePromptDialog({
       }
     })
 
+    const normalizedCustomPrompt = customPrompt.trim()
+    const normalizedBaseline = advancedBaselinePrompt.trim()
+    const shouldUseQuickBaselinePath =
+      mode === 'guided' ||
+      normalizedCustomPrompt.length === 0 ||
+      normalizedCustomPrompt === normalizedBaseline
+
     const options: FrameGenerationOptions = {
       segmentId: segment.segmentId,
       frameType,
-      customPrompt,
+      customPrompt: shouldUseQuickBaselinePath ? '' : customPrompt,
       negativePrompt: buildNegativePrompt(),
       usePreviousEndFrame,
       previousEndFrameUrl: usePreviousEndFrame ? previousEndFrameUrl : undefined,
@@ -884,7 +893,7 @@ export function FramePromptDialog({
     }
 
     onGenerate(options)
-  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, characters, selectedWardrobes, objectReferences, selectedObjectRefIds, locationReferences, selectedLocationRefIds, mode, visualSetup, artStyle, modelTier, thinkingLevel])
+  }, [segment, frameType, customPrompt, buildNegativePrompt, usePreviousEndFrame, previousEndFrameUrl, onGenerate, selectedCharacters, characters, selectedWardrobes, objectReferences, selectedObjectRefIds, locationReferences, selectedLocationRefIds, mode, visualSetup, artStyle, modelTier, thinkingLevel, advancedBaselinePrompt])
 
   const isGenerateDisabled = useMemo(() => {
     if (isGenerating) return true
@@ -1443,9 +1452,21 @@ export function FramePromptDialog({
                       <ImageIcon className="w-4 h-4 text-cyan-400" />
                       Generation Prompt
                     </Label>
-                    <span className="text-xs text-slate-500">
-                      {customPrompt.length} characters
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        type="button"
+                        onClick={() => setCustomPrompt(advancedBaselinePrompt)}
+                        disabled={customPrompt.trim() === advancedBaselinePrompt.trim()}
+                        className="h-7 text-xs text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/20"
+                      >
+                        Reset to Quick Baseline
+                      </Button>
+                      <span className="text-xs text-slate-500">
+                        {customPrompt.length} characters
+                      </span>
+                    </div>
                   </div>
                   <Textarea
                     value={customPrompt}
@@ -1457,6 +1478,13 @@ export function FramePromptDialog({
                   {usePreviousEndFrame && frameType === 'start' && (
                     <p className="text-xs text-amber-400">
                       Prompt is ignored when using previous end frame directly
+                    </p>
+                  )}
+                  {quickBaselinePrompt && (
+                    <p className="text-[11px] text-slate-500">
+                      Quick baseline source: {quickBaselinePrompt.length > 140
+                        ? `${quickBaselinePrompt.substring(0, 140)}...`
+                        : quickBaselinePrompt}
                     </p>
                   )}
                 </div>

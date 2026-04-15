@@ -86,6 +86,7 @@ import { NavigationWarningDialog } from '@/components/workflow/NavigationWarning
 import { FilmTreatmentReviewModal } from '@/components/vision/FilmTreatmentReviewModal'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { resolveFrameGenerationContext } from '@/lib/vision/frameGenerationContext'
+import { resolveQuickFrameActionPrompt } from '@/lib/vision/framePromptBaseline'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { v4 as uuidv4 } from 'uuid'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
@@ -2100,7 +2101,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             sceneId,
             segmentId,
             segmentIndex,
-            actionPrompt: segment.userEditedPrompt || segment.generatedPrompt || segment.action,
+            actionPrompt: resolveQuickFrameActionPrompt(segment as any),
             duration: segment.endTime - segment.startTime,
             frameType,
             transitionType: segment.transitionType || (segmentIndex === 0 ? 'CUT' : 'CONTINUE'),
