@@ -7,10 +7,8 @@ import { toast } from 'sonner'
 import {
   AlertCircle,
   ArrowLeft,
-  Clapperboard,
   Film,
   Loader2,
-  Sparkles,
   Upload,
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
@@ -432,18 +430,8 @@ export default function PremierePage() {
 
           <div className="h-8 w-px bg-zinc-800 hidden sm:block" />
 
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600/15 ring-1 ring-violet-500/25">
-              <Clapperboard className="w-5 h-5 text-violet-300" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-semibold tracking-tight text-white truncate">
-                Premiere
-              </h1>
-              <p className="text-[11px] sm:text-xs text-zinc-500 truncate">
-                screening and release readiness
-              </p>
-            </div>
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-semibold tracking-tight text-white truncate">Premiere</h1>
           </div>
         </div>
       </header>
@@ -458,7 +446,7 @@ export default function PremierePage() {
             className="pointer-events-none absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-violet-500/15 blur-3xl motion-reduce:opacity-40"
             aria-hidden
           />
-          <div className="relative flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+          <div className="relative">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-violet-300/90">
                 SceneFlow AI Studio
@@ -470,20 +458,12 @@ export default function PremierePage() {
                 Screening room hub for audience feedback, approvals, and release confidence.
               </p>
             </div>
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-              <span>Ready for review</span>
-            </div>
           </div>
         </div>
 
         <section className="min-h-0 flex-1 rounded-2xl border border-violet-500/20 bg-zinc-950/50 backdrop-blur-xl overflow-hidden shadow-[0_0_0_1px_rgba(139,92,246,0.12),0_24px_80px_-32px_rgba(99,102,241,0.3)]">
           <div className="border-b border-violet-500/20 bg-zinc-950/80 px-4 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Clapperboard className="w-4 h-4 text-violet-300" />
-                <h3 className="text-sm font-semibold tracking-tight text-white">Premiere Dashboard</h3>
-              </div>
+            <div className="flex items-center justify-end gap-3">
               <div className="shrink-0">
                 <label>
                   <input
@@ -501,24 +481,21 @@ export default function PremierePage() {
                     asChild
                     size="sm"
                     variant="outline"
-                    className="border-violet-500/40 bg-violet-950/20 text-violet-100 hover:bg-violet-950/40 hover:border-violet-400/50"
+                    className="h-9 w-9 p-0 border-violet-500/40 bg-violet-950/20 text-violet-100 hover:bg-violet-950/40 hover:border-violet-400/50"
                     disabled={isHeaderUploading}
+                    aria-label={isHeaderUploading ? 'Uploading video' : 'Upload video'}
                   >
                     <span>
                       {isHeaderUploading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <Upload className="w-4 h-4 mr-2" />
+                        <Upload className="w-4 h-4" />
                       )}
-                      {isHeaderUploading ? 'Uploading…' : 'Upload video'}
                     </span>
                   </Button>
                 </label>
               </div>
             </div>
-            <p className="mt-1 text-xs text-zinc-500">
-              Manage final cut screenings and external uploads from one review surface.
-            </p>
           </div>
           <div className="h-full min-h-0 overflow-auto p-4 sm:p-5">
             <ScreeningRoomDashboard
