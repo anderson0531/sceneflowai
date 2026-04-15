@@ -27,12 +27,31 @@ type PremiereScreening = {
   averageCompletion: number
 }
 
+function dedupeScreenings(items: PremiereScreening[]): PremiereScreening[] {
+  const seenIds = new Set<string>()
+  const seenUrls = new Set<string>()
+  const deduped: PremiereScreening[] = []
+
+  for (const item of items) {
+    const id = item.id?.trim()
+    const url = (item.videoUrl || '').trim().toLowerCase()
+    if (!id) continue
+    if (seenIds.has(id) || (url && seenUrls.has(url))) continue
+    seenIds.add(id)
+    if (url) seenUrls.add(url)
+    deduped.push(item)
+  }
+
+  return deduped
+}
+
 export default function PremierePage() {
   const searchParams = useSearchParams()
   const currentProject = useStore((s) => s.currentProject)
   const setCurrentProject = useStore((s) => s.setCurrentProject)
 
   const [isLoading, setIsLoading] = useState(true)
+  const [persistedScreenings, setPersistedScreenings] = useState<PremiereScreening[]>([])
 
   const isDemo = searchParams.get('demo') === 'true'
   const searchProjectIdRaw = searchParams.get('projectId')
@@ -87,7 +106,29 @@ export default function PremierePage() {
     }
   }, [isDemo, searchProjectId, setCurrentProject])
 
-  const finalCutScreenings = useMemo<PremiereScreening[]>(() => {
+  const refreshPersistedScreenings = useCallback(async () => {
+    if (!projectId || isDemo) {
+      setPersistedScreenings([])
+      return
+    }
+    try {
+      const res = await fetch(`/api/premiere/screenings?projectId=${encodeURIComponent(projectId)}`, {
+        cache: 'no-store',
+      })
+      if (!res.ok) throw new Error(await res.text())
+      const data = (await res.json()) as { items?: PremiereScreening[] }
+      setPersistedScreenings(Array.isArray(data.items) ? data.items : [])
+    } catch (error) {
+      console.error('[Premiere] Failed loading persisted screenings:', error)
+      setPersistedScreenings([])
+    }
+  }, [isDemo, projectId])
+
+  useEffect(() => {
+    void refreshPersistedScreenings()
+  }, [refreshPersistedScreenings])
+
+  const derivedFinalCutScreenings = useMemo<PremiereScreening[]>(() => {
     if (isDemo) {
       return [
         {
@@ -150,8 +191,14 @@ export default function PremierePage() {
       }
     }
 
-    return items
+    return items.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
   }, [currentProject?.metadata, isDemo, projectId])
+
+  const finalCutScreenings = useMemo<PremiereScreening[]>(() => {
+    return dedupeScreenings([...persistedScreenings, ...derivedFinalCutScreenings])
+  }, [derivedFinalCutScreenings, persistedScreenings])
 
   const handleCreateScreening = useCallback(() => {
     toast.message('Premiere screening', {
@@ -160,11 +207,49 @@ export default function PremierePage() {
   }, [])
 
   const handleUploadExternal = useCallback(async (file: File) => {
-    toast.message('External upload', {
-      description: `${file.name} upload integration is coming soon.`,
+    if (!projectId || isDemo) {
+      throw new Error('Upload requires a saved non-demo project')
+    }
+
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('projectId', projectId)
+
+    const uploadRes = await fetch('/api/premiere/upload', {
+      method: 'POST',
+      body: formData,
     })
-    return URL.createObjectURL(file)
-  }, [])
+    const uploadData = (await uploadRes.json()) as {
+      success?: boolean
+      url?: string
+      error?: string
+    }
+    if (!uploadRes.ok || !uploadData.url) {
+      throw new Error(uploadData.error || 'Upload failed')
+    }
+
+    const createRes = await fetch('/api/premiere/screenings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        projectId,
+        title: `External upload · ${file.name}`,
+        videoUrl: uploadData.url,
+        source: 'external_upload',
+      }),
+    })
+    const createData = (await createRes.json()) as { success?: boolean; error?: string }
+    if (!createRes.ok || !createData.success) {
+      throw new Error(createData.error || 'Screening creation failed')
+    }
+
+    await refreshPersistedScreenings()
+    toast.success('Upload complete', {
+      description: 'Created a new Premiere screening from your external video.',
+    })
+
+    return uploadData.url
+  }, [isDemo, projectId, refreshPersistedScreenings])
 
   if (isLoading) {
     return (
