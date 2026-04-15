@@ -38,6 +38,9 @@ import {
   Pencil,
   UploadCloud,
   Send,
+  MessageSquare,
+  Download,
+  Tag,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -69,6 +72,14 @@ interface ScreeningRoomDashboardProps {
   onConfigureABTest?: (screeningId: string) => void
   onUploadExternal?: (file: File) => Promise<string>
   onRenameScreening?: (screeningId: string, nextTitle: string) => Promise<void> | void
+  onListFeedback?: (screeningId: string) => Promise<ScreeningFeedback[]>
+  onCreateFeedback?: (input: CreateScreeningFeedbackInput) => Promise<void>
+  onUpdateFeedback?: (
+    screeningId: string,
+    feedbackId: string,
+    updates: UpdateScreeningFeedbackInput
+  ) => Promise<void>
+  onExportFeedback?: (screeningId: string) => Promise<void> | void
 
   /** Embedded on Final Cut page: Final Cut tab + external upload only */
   variant?: 'full' | 'finalCutOnly'
@@ -89,6 +100,46 @@ interface ScreeningItem {
   abTestVariant?: 'A' | 'B'
   thumbnail?: string
   editable?: boolean
+  streamLabel?: string
+  locale?: string
+  sourceType?: 'video' | 'animatic'
+  reviewStatus?: 'open' | 'in_review' | 'resolved'
+  owner?: string
+  feedbackCount?: number
+  avgRating?: number
+  latestFeedbackAt?: string
+  openItems?: number
+}
+
+type ScreeningFeedbackStatus = 'open' | 'in_review' | 'resolved'
+
+interface ScreeningFeedback {
+  id: string
+  screeningId: string
+  streamId?: string
+  author: string
+  rating: number
+  comment: string
+  tags: string[]
+  status: ScreeningFeedbackStatus
+  owner?: string
+  createdAt: string
+  updatedAt: string
+}
+
+interface CreateScreeningFeedbackInput {
+  screeningId: string
+  streamId?: string
+  author?: string
+  rating: number
+  comment: string
+  tags?: string[]
+}
+
+interface UpdateScreeningFeedbackInput {
+  status?: ScreeningFeedbackStatus
+  owner?: string
+  tags?: string[]
 }
 
 type ScreeningType = 'storyboard' | 'pre-cut' | 'final-cut' | 'external'
@@ -134,6 +185,10 @@ export function ScreeningRoomDashboard({
   onConfigureABTest,
   onUploadExternal,
   onRenameScreening,
+  onListFeedback,
+  onCreateFeedback,
+  onUpdateFeedback,
+  onExportFeedback,
   variant = 'full',
   hideFinalCutChrome = false,
 }: ScreeningRoomDashboardProps) {
@@ -146,6 +201,18 @@ export function ScreeningRoomDashboard({
   const [editingScreeningId, setEditingScreeningId] = useState<string | null>(null)
   const [draftTitle, setDraftTitle] = useState('')
   const [isSavingTitle, setIsSavingTitle] = useState(false)
+  const [feedbackOpenFor, setFeedbackOpenFor] = useState<string | null>(null)
+  const [feedbackByScreening, setFeedbackByScreening] = useState<Record<string, ScreeningFeedback[]>>({})
+  const [isLoadingFeedbackFor, setIsLoadingFeedbackFor] = useState<string | null>(null)
+  const [feedbackStatusFilter, setFeedbackStatusFilter] = useState<
+    'all' | 'open' | 'in_review' | 'resolved'
+  >('all')
+  const [feedbackTagFilter, setFeedbackTagFilter] = useState('')
+  const [feedbackDraftComment, setFeedbackDraftComment] = useState('')
+  const [feedbackDraftAuthor, setFeedbackDraftAuthor] = useState('')
+  const [feedbackDraftRating, setFeedbackDraftRating] = useState(4)
+  const [feedbackDraftTags, setFeedbackDraftTags] = useState('')
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   // ============================================================================
@@ -236,6 +303,78 @@ export function ScreeningRoomDashboard({
     e.preventDefault()
     setDragOver(false)
   }, [])
+
+  const loadFeedbackForScreening = useCallback(
+    async (screeningId: string) => {
+      if (!onListFeedback) return
+      setIsLoadingFeedbackFor(screeningId)
+      try {
+        const feedback = await onListFeedback(screeningId)
+        setFeedbackByScreening((prev) => ({ ...prev, [screeningId]: feedback }))
+      } finally {
+        setIsLoadingFeedbackFor(null)
+      }
+    },
+    [onListFeedback]
+  )
+
+  const handleToggleFeedback = useCallback(
+    async (screeningId: string) => {
+      const nextOpen = feedbackOpenFor === screeningId ? null : screeningId
+      setFeedbackOpenFor(nextOpen)
+      if (nextOpen && onListFeedback && !feedbackByScreening[screeningId]) {
+        await loadFeedbackForScreening(screeningId)
+      }
+    },
+    [feedbackByScreening, feedbackOpenFor, loadFeedbackForScreening, onListFeedback]
+  )
+
+  const handleCreateFeedbackEntry = useCallback(
+    async (screening: ScreeningItem) => {
+      if (!onCreateFeedback || !feedbackDraftComment.trim()) return
+      setIsSubmittingFeedback(true)
+      try {
+        await onCreateFeedback({
+          screeningId: screening.id,
+          streamId: screening.streamId,
+          author: feedbackDraftAuthor.trim() || 'Reviewer',
+          rating: feedbackDraftRating,
+          comment: feedbackDraftComment.trim(),
+          tags: feedbackDraftTags
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+        })
+        setFeedbackDraftComment('')
+        setFeedbackDraftAuthor('')
+        setFeedbackDraftTags('')
+        await loadFeedbackForScreening(screening.id)
+      } finally {
+        setIsSubmittingFeedback(false)
+      }
+    },
+    [
+      feedbackDraftAuthor,
+      feedbackDraftComment,
+      feedbackDraftRating,
+      feedbackDraftTags,
+      loadFeedbackForScreening,
+      onCreateFeedback,
+    ]
+  )
+
+  const handleUpdateFeedbackEntry = useCallback(
+    async (
+      screeningId: string,
+      feedbackId: string,
+      updates: { status?: ScreeningFeedbackStatus; owner?: string; tags?: string[] }
+    ) => {
+      if (!onUpdateFeedback) return
+      await onUpdateFeedback(screeningId, feedbackId, updates)
+      await loadFeedbackForScreening(screeningId)
+    },
+    [loadFeedbackForScreening, onUpdateFeedback]
+  )
   
   // ============================================================================
   // Render: Screening Card
@@ -357,14 +496,14 @@ export function ScreeningRoomDashboard({
             </Button>
           </div>
         ) : (
-          <div className="mb-2 flex items-start gap-2">
-            <h3 className="text-xs font-semibold text-white leading-snug whitespace-normal break-words flex-1">
+          <div className="mb-2 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+            <h3 className="min-w-0 text-xs font-semibold text-white leading-snug whitespace-normal break-words [overflow-wrap:anywhere]">
               {screening.title}
             </h3>
             {onRenameScreening && screening.editable !== false ? (
               <button
                 type="button"
-                className="text-zinc-500 hover:text-zinc-200 transition-colors"
+                className="shrink-0 mt-0.5 text-zinc-500 hover:text-zinc-200 transition-colors"
                 onClick={() => {
                   setEditingScreeningId(screening.id)
                   setDraftTitle(screening.title)
@@ -377,8 +516,31 @@ export function ScreeningRoomDashboard({
           </div>
         )}
         
+        <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-400">
+          {screening.streamLabel ? (
+            <span className="rounded-full border border-zinc-700 bg-zinc-900/80 px-2 py-0.5">
+              {screening.streamLabel}
+            </span>
+          ) : null}
+          {screening.locale ? (
+            <span className="rounded-full border border-zinc-700 bg-zinc-900/80 px-2 py-0.5 uppercase">
+              {screening.locale}
+            </span>
+          ) : null}
+          {screening.sourceType ? (
+            <span className="rounded-full border border-zinc-700 bg-zinc-900/80 px-2 py-0.5 capitalize">
+              {screening.sourceType}
+            </span>
+          ) : null}
+          {screening.reviewStatus ? (
+            <span className="rounded-full border border-violet-500/40 bg-violet-500/10 px-2 py-0.5 capitalize text-violet-300">
+              {screening.reviewStatus.replace('_', ' ')}
+            </span>
+          ) : null}
+        </div>
+
         {/* Stats */}
-        <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 mb-3">
           <div className="flex items-center gap-1">
             <Users className="w-4 h-4" />
             <span>{screening.viewerCount}</span>
@@ -387,10 +549,18 @@ export function ScreeningRoomDashboard({
             <TrendingUp className="w-4 h-4" />
             <span>{Math.round(screening.averageCompletion)}%</span>
           </div>
+          <div className="flex items-center gap-1">
+            <MessageSquare className="w-4 h-4" />
+            <span>{screening.feedbackCount ?? 0}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-zinc-500">Rating</span>
+            <span>{(screening.avgRating ?? 0).toFixed(1)}</span>
+          </div>
         </div>
         
         {/* Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           <Button
             size="sm"
             variant="outline"
@@ -426,7 +596,153 @@ export function ScreeningRoomDashboard({
             <BarChart3 className="w-4 h-4 mr-1" />
             Analytics
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void handleToggleFeedback(screening.id)}
+            className="w-full"
+          >
+            <MessageSquare className="w-4 h-4 mr-1" />
+            Feedback
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!onExportFeedback}
+            onClick={() => void onExportFeedback?.(screening.id)}
+            className="w-full"
+          >
+            <Download className="w-4 h-4 mr-1" />
+            Export
+          </Button>
         </div>
+
+        {feedbackOpenFor === screening.id ? (
+          <div className="mt-3 rounded-lg border border-zinc-700/70 bg-zinc-950/60 p-3 space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={feedbackStatusFilter}
+                onChange={(e) =>
+                  setFeedbackStatusFilter(e.target.value as 'all' | 'open' | 'in_review' | 'resolved')
+                }
+                className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200"
+              >
+                <option value="all">All statuses</option>
+                <option value="open">Open</option>
+                <option value="in_review">In review</option>
+                <option value="resolved">Resolved</option>
+              </select>
+              <input
+                value={feedbackTagFilter}
+                onChange={(e) => setFeedbackTagFilter(e.target.value)}
+                placeholder="Filter tag"
+                className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200"
+              />
+            </div>
+
+            <div className="space-y-2 max-h-48 overflow-auto pr-1">
+              {(feedbackByScreening[screening.id] || [])
+                .filter((item) => feedbackStatusFilter === 'all' || item.status === feedbackStatusFilter)
+                .filter((item) =>
+                  feedbackTagFilter.trim()
+                    ? item.tags.some((tag) => tag.toLowerCase().includes(feedbackTagFilter.toLowerCase()))
+                    : true
+                )
+                .map((item) => (
+                  <div key={item.id} className="rounded-md border border-zinc-700/70 bg-zinc-900/70 p-2">
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-zinc-400">
+                      <span className="font-medium text-zinc-200">{item.author}</span>
+                      <span>{item.rating}/5</span>
+                      <span className="capitalize">{item.status.replace('_', ' ')}</span>
+                      {item.tags.map((tag) => (
+                        <span key={tag} className="inline-flex items-center gap-1 text-zinc-300">
+                          <Tag className="w-3 h-3" />
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-200 whitespace-pre-wrap">{item.comment}</p>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-[11px]"
+                        onClick={() =>
+                          void handleUpdateFeedbackEntry(screening.id, item.id, {
+                            status: item.status === 'resolved' ? 'in_review' : 'resolved',
+                          })
+                        }
+                      >
+                        {item.status === 'resolved' ? 'Reopen' : 'Resolve'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-[11px]"
+                        onClick={() =>
+                          void handleUpdateFeedbackEntry(screening.id, item.id, {
+                            status: 'in_review',
+                          })
+                        }
+                      >
+                        Mark in review
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+              {isLoadingFeedbackFor === screening.id ? (
+                <p className="text-xs text-zinc-500">Loading feedback…</p>
+              ) : (feedbackByScreening[screening.id] || []).length === 0 ? (
+                <p className="text-xs text-zinc-500">No feedback yet for this stream.</p>
+              ) : null}
+            </div>
+
+            <div className="rounded-md border border-zinc-700/70 bg-zinc-900/60 p-2 space-y-2">
+              <p className="text-xs font-medium text-zinc-200">Add feedback</p>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  value={feedbackDraftAuthor}
+                  onChange={(e) => setFeedbackDraftAuthor(e.target.value)}
+                  placeholder="Author"
+                  className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200"
+                />
+                <select
+                  value={feedbackDraftRating}
+                  onChange={(e) => setFeedbackDraftRating(Number(e.target.value))}
+                  className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200"
+                >
+                  <option value={5}>5 - Excellent</option>
+                  <option value={4}>4 - Good</option>
+                  <option value={3}>3 - Fair</option>
+                  <option value={2}>2 - Needs work</option>
+                  <option value={1}>1 - Poor</option>
+                </select>
+              </div>
+              <input
+                value={feedbackDraftTags}
+                onChange={(e) => setFeedbackDraftTags(e.target.value)}
+                placeholder="Tags (comma separated)"
+                className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200"
+              />
+              <textarea
+                value={feedbackDraftComment}
+                onChange={(e) => setFeedbackDraftComment(e.target.value)}
+                placeholder="Feedback comment"
+                rows={3}
+                className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200"
+              />
+              <Button
+                size="sm"
+                disabled={!onCreateFeedback || isSubmittingFeedback || !feedbackDraftComment.trim()}
+                onClick={() => void handleCreateFeedbackEntry(screening)}
+              >
+                {isSubmittingFeedback ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null}
+                Submit feedback
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </motion.div>
   )

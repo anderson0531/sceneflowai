@@ -19,31 +19,78 @@ type PremiereScreening = {
   id: string
   title: string
   streamId?: string
+  streamLabel?: string
+  locale?: string
+  sourceType?: 'video' | 'animatic'
   videoUrl?: string
   thumbnail?: string
   createdAt: string
   updatedAt?: string
   status: 'draft' | 'active' | 'completed' | 'expired'
+  reviewStatus?: 'open' | 'in_review' | 'resolved'
+  owner?: string
+  lastActionAt?: string
   viewerCount: number
   averageCompletion: number
+  feedbackCount?: number
+  avgRating?: number
+  latestFeedbackAt?: string
+  openItems?: number
   editable?: boolean
+}
+
+type PremiereFeedback = {
+  id: string
+  projectId: string
+  screeningId: string
+  streamId?: string
+  author: string
+  rating: number
+  comment: string
+  tags: string[]
+  status: 'open' | 'in_review' | 'resolved'
+  owner?: string
+  createdAt: string
+  updatedAt: string
+}
+
+function inferStreamMetadata(streamName: string | undefined): {
+  streamLabel?: string
+  locale?: string
+  sourceType: 'video' | 'animatic'
+} {
+  const label = (streamName || '').trim()
+  const normalized = label.toLowerCase()
+  let locale = 'en'
+  if (normalized.includes('spanish')) locale = 'es'
+  else if (normalized.includes('french')) locale = 'fr'
+  else if (normalized.includes('portuguese')) locale = 'pt'
+  else if (normalized.includes('german')) locale = 'de'
+  const sourceType = normalized.includes('animatic') ? 'animatic' : 'video'
+  return {
+    streamLabel: label || undefined,
+    locale,
+    sourceType,
+  }
 }
 
 function dedupeScreenings(items: PremiereScreening[]): PremiereScreening[] {
   const deduped: PremiereScreening[] = []
   const seenIds = new Set<string>()
-  const bestByUrl = new Map<string, PremiereScreening>()
+  const bestByStreamAndUrl = new Map<string, PremiereScreening>()
 
   for (const item of items) {
     const id = item.id?.trim()
     if (!id || seenIds.has(id)) continue
     seenIds.add(id)
     const urlKey = (item.videoUrl || '').trim().toLowerCase()
+    const streamKey = (item.streamId || item.streamLabel || 'unscoped').trim().toLowerCase()
     if (!urlKey) continue
+    const dedupeKey = `${streamKey}::${urlKey}`
 
-    const existing = bestByUrl.get(urlKey)
+    const existing = bestByStreamAndUrl.get(dedupeKey)
     if (!existing) {
-      bestByUrl.set(urlKey, item)
+      bestByStreamAndUrl.set(dedupeKey, item)
       continue
     }
 
@@ -61,11 +108,11 @@ function dedupeScreenings(items: PremiereScreening[]): PremiereScreening[] {
     const existingTime = new Date(existing.updatedAt || existing.createdAt).getTime()
     const itemTime = new Date(item.updatedAt || item.createdAt).getTime()
     if (itemTime >= existingTime) {
-      bestByUrl.set(urlKey, item)
+      bestByStreamAndUrl.set(dedupeKey, item)
     }
   }
 
-  for (const item of bestByUrl.values()) {
+  for (const item of bestByStreamAndUrl.values()) {
     deduped.push(item)
   }
 
@@ -85,6 +132,7 @@ export default function PremierePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [persistedScreenings, setPersistedScreenings] = useState<PremiereScreening[]>([])
   const [isHeaderUploading, setIsHeaderUploading] = useState(false)
+  const [headerUploadProgress, setHeaderUploadProgress] = useState(0)
   const headerUploadInputRef = useRef<HTMLInputElement | null>(null)
 
   const isDemo = searchParams.get('demo') === 'true'
@@ -227,6 +275,7 @@ export default function PremierePage() {
           id: ex.id,
           title: `Export · ${stream.name || 'Untitled stream'}`,
           streamId: stream.id,
+          ...inferStreamMetadata(stream.name),
           videoUrl: url,
           thumbnail: projectBillboard,
           createdAt: ex.completedAt || ex.createdAt || new Date().toISOString(),
@@ -286,6 +335,9 @@ export default function PremierePage() {
         projectId,
         title: `External upload · ${file.name}`,
         videoUrl: uploadedBlob.url,
+        streamLabel: 'External upload',
+        locale: 'und',
+        sourceType: 'video',
         source: 'external_upload',
       }),
     })
@@ -311,11 +363,23 @@ export default function PremierePage() {
 
   const handleHeaderUpload = useCallback(
     async (file: File) => {
+      let progressInterval: ReturnType<typeof setInterval> | null = null
       try {
         setIsHeaderUploading(true)
+        setHeaderUploadProgress(0)
+        progressInterval = setInterval(() => {
+          setHeaderUploadProgress((prev) => Math.min(prev + 8, 90))
+        }, 350)
         await handleUploadExternal(file)
+        if (progressInterval) {
+          clearInterval(progressInterval)
+          progressInterval = null
+        }
+        setHeaderUploadProgress(100)
       } finally {
+        if (progressInterval) clearInterval(progressInterval)
         setIsHeaderUploading(false)
+        setTimeout(() => setHeaderUploadProgress(0), 700)
       }
     },
     [handleUploadExternal]
@@ -360,6 +424,83 @@ export default function PremierePage() {
       toast.success('Name updated')
     },
     [isDemo, projectId, refreshPersistedScreenings]
+  )
+
+  const handleListFeedback = useCallback(
+    async (screeningId: string) => {
+      if (!projectId || isDemo) return []
+      const res = await fetch(
+        `/api/premiere/feedback?projectId=${encodeURIComponent(projectId)}&screeningId=${encodeURIComponent(screeningId)}`,
+        { cache: 'no-store' }
+      )
+      const payload = (await res.json()) as { items?: PremiereFeedback[]; error?: string }
+      if (!res.ok) throw new Error(payload.error || 'Failed to load feedback')
+      return payload.items || []
+    },
+    [isDemo, projectId]
+  )
+
+  const handleCreateFeedback = useCallback(
+    async (input: {
+      screeningId: string
+      streamId?: string
+      author?: string
+      rating: number
+      comment: string
+      tags?: string[]
+    }) => {
+      if (!projectId || isDemo) throw new Error('Feedback requires a saved non-demo project')
+      const res = await fetch('/api/premiere/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          screeningId: input.screeningId,
+          streamId: input.streamId,
+          author: input.author,
+          rating: input.rating,
+          comment: input.comment,
+          tags: input.tags || [],
+        }),
+      })
+      const payload = (await res.json()) as { success?: boolean; error?: string }
+      if (!res.ok || !payload.success) throw new Error(payload.error || 'Failed to submit feedback')
+      await refreshPersistedScreenings()
+    },
+    [isDemo, projectId, refreshPersistedScreenings]
+  )
+
+  const handleUpdateFeedback = useCallback(
+    async (
+      screeningId: string,
+      feedbackId: string,
+      updates: { status?: 'open' | 'in_review' | 'resolved'; tags?: string[]; owner?: string }
+    ) => {
+      if (!projectId || isDemo) throw new Error('Feedback requires a saved non-demo project')
+      const res = await fetch('/api/premiere/feedback', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          screeningId,
+          feedbackId,
+          ...updates,
+        }),
+      })
+      const payload = (await res.json()) as { success?: boolean; error?: string }
+      if (!res.ok || !payload.success) throw new Error(payload.error || 'Failed to update feedback')
+      await refreshPersistedScreenings()
+    },
+    [isDemo, projectId, refreshPersistedScreenings]
+  )
+
+  const handleExportFeedback = useCallback(
+    async (screeningId: string) => {
+      if (!projectId || isDemo) return
+      const url = `/api/premiere/feedback/export?projectId=${encodeURIComponent(projectId)}&screeningId=${encodeURIComponent(screeningId)}&format=csv`
+      window.open(url, '_blank', 'noopener,noreferrer')
+    },
+    [isDemo, projectId]
   )
 
   if (isLoading) {
@@ -508,6 +649,19 @@ export default function PremierePage() {
                 </Button>
               </div>
             </div>
+            {isHeaderUploading ? (
+              <div className="mt-2 flex items-center justify-end gap-2">
+                <div className="h-1.5 w-28 overflow-hidden rounded-full bg-zinc-800/90">
+                  <div
+                    className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-500 transition-all duration-300"
+                    style={{ width: `${headerUploadProgress}%` }}
+                  />
+                </div>
+                <span className="w-9 text-right text-[11px] tabular-nums text-zinc-400">
+                  {headerUploadProgress}%
+                </span>
+              </div>
+            ) : null}
           </div>
           <div className="h-full min-h-0 overflow-auto p-4 sm:p-5">
             <ScreeningRoomDashboard
@@ -530,6 +684,10 @@ export default function PremierePage() {
               }}
               onRenameScreening={handleRenameScreening}
               onUploadExternal={handleUploadExternal}
+              onListFeedback={handleListFeedback}
+              onCreateFeedback={handleCreateFeedback}
+              onUpdateFeedback={handleUpdateFeedback}
+              onExportFeedback={handleExportFeedback}
             />
           </div>
         </section>
