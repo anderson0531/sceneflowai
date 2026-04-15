@@ -48,6 +48,17 @@ function dedupeScreenings(items: PremiereScreening[]): PremiereScreening[] {
       continue
     }
 
+    // Persisted Premiere records (editable=true) win over derived display rows.
+    const existingPersisted = existing.editable === true
+    const itemPersisted = item.editable === true
+    if (itemPersisted && !existingPersisted) {
+      bestByUrl.set(urlKey, item)
+      continue
+    }
+    if (!itemPersisted && existingPersisted) {
+      continue
+    }
+
     const existingTime = new Date(existing.updatedAt || existing.createdAt).getTime()
     const itemTime = new Date(item.updatedAt || item.createdAt).getTime()
     if (itemTime >= existingTime) {
