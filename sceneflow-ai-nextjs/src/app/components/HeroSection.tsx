@@ -9,7 +9,7 @@ import Link from 'next/link'
 
 /** Longform "What's Possible Reel" */
 const HERO_COMMERCIAL_VIDEO_ID = 'Rp5kMYYdU50'
-const HERO_COMMERCIAL_EMBED_SRC = `https://www.youtube-nocookie.com/embed/${HERO_COMMERCIAL_VIDEO_ID}?rel=0&modestbranding=1&playsinline=1`
+const HERO_COMMERCIAL_EMBED_SRC = `https://www.youtube-nocookie.com/embed/${HERO_COMMERCIAL_VIDEO_ID}?modestbranding=1&rel=0&controls=0&playsinline=1`
 const HERO_COMMERCIAL_WATCH_URL = `https://www.youtube.com/watch?v=${HERO_COMMERCIAL_VIDEO_ID}`
 
 export function HeroSection() {
