@@ -10,6 +10,7 @@ export interface PremiereScreeningRecord {
   streamId?: string
   videoUrl: string
   createdAt: string
+  updatedAt?: string
   status: PremiereScreeningStatus
   viewerCount: number
   averageCompletion: number
@@ -54,6 +55,7 @@ function toRecord(input: Partial<PremiereScreeningRecord>): PremiereScreeningRec
     streamId: input.streamId,
     videoUrl: input.videoUrl,
     createdAt: input.createdAt,
+    updatedAt: typeof input.updatedAt === 'string' ? input.updatedAt : input.createdAt,
     status: normalizeStatus(input.status),
     viewerCount: typeof input.viewerCount === 'number' ? input.viewerCount : 0,
     averageCompletion: typeof input.averageCompletion === 'number' ? input.averageCompletion : 0,
@@ -80,6 +82,7 @@ export async function createPremiereScreeningFromUpload(
     streamId: input.streamId,
     videoUrl,
     createdAt,
+    updatedAt: createdAt,
     status: 'draft',
     viewerCount: 0,
     averageCompletion: 0,
@@ -107,7 +110,11 @@ export async function listPremiereScreenings(projectId: string): Promise<Premier
     if (record) records.push(record)
   }
 
-  records.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  records.sort(
+    (a, b) =>
+      new Date(b.updatedAt || b.createdAt).getTime() -
+      new Date(a.updatedAt || a.createdAt).getTime()
+  )
   return records
 }
 
@@ -133,6 +140,7 @@ export async function updatePremiereScreeningTitle(
   const updated: PremiereScreeningRecord = {
     ...existing,
     title: normalizedTitle,
+    updatedAt: new Date().toISOString(),
   }
 
   // Some environments ignore allowOverwrite; delete first for deterministic updates.
@@ -154,18 +162,37 @@ export async function updatePremiereScreeningTitle(
 export function dedupePremiereScreenings(
   items: Array<Pick<PremiereScreeningRecord, 'id' | 'videoUrl'> & PremiereScreeningRecord>
 ): PremiereScreeningRecord[] {
-  const seenIds = new Set<string>()
-  const seenUrls = new Set<string>()
+  const bestByUrl = new Map<string, PremiereScreeningRecord>()
   const deduped: PremiereScreeningRecord[] = []
+  const seenIds = new Set<string>()
 
   for (const item of items) {
-    const urlKey = (item.videoUrl || '').trim().toLowerCase()
-    if (!item.id || !urlKey) continue
-    if (seenIds.has(item.id) || seenUrls.has(urlKey)) continue
+    if (!item.id || seenIds.has(item.id)) continue
     seenIds.add(item.id)
-    seenUrls.add(urlKey)
+    const urlKey = (item.videoUrl || '').trim().toLowerCase()
+    if (!urlKey) continue
+
+    const existing = bestByUrl.get(urlKey)
+    if (!existing) {
+      bestByUrl.set(urlKey, item)
+      continue
+    }
+
+    const existingTime = new Date(existing.updatedAt || existing.createdAt).getTime()
+    const itemTime = new Date(item.updatedAt || item.createdAt).getTime()
+    if (itemTime >= existingTime) {
+      bestByUrl.set(urlKey, item)
+    }
+  }
+
+  for (const item of bestByUrl.values()) {
     deduped.push(item)
   }
 
+  deduped.sort(
+    (a, b) =>
+      new Date(b.updatedAt || b.createdAt).getTime() -
+      new Date(a.updatedAt || a.createdAt).getTime()
+  )
   return deduped
 }

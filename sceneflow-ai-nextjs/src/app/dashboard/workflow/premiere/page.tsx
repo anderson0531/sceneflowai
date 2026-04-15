@@ -22,6 +22,7 @@ type PremiereScreening = {
   streamId?: string
   videoUrl?: string
   createdAt: string
+  updatedAt?: string
   status: 'draft' | 'active' | 'completed' | 'expired'
   viewerCount: number
   averageCompletion: number
@@ -29,20 +30,39 @@ type PremiereScreening = {
 }
 
 function dedupeScreenings(items: PremiereScreening[]): PremiereScreening[] {
-  const seenIds = new Set<string>()
-  const seenUrls = new Set<string>()
   const deduped: PremiereScreening[] = []
+  const seenIds = new Set<string>()
+  const bestByUrl = new Map<string, PremiereScreening>()
 
   for (const item of items) {
     const id = item.id?.trim()
-    const url = (item.videoUrl || '').trim().toLowerCase()
-    if (!id) continue
-    if (seenIds.has(id) || (url && seenUrls.has(url))) continue
+    if (!id || seenIds.has(id)) continue
     seenIds.add(id)
-    if (url) seenUrls.add(url)
+    const urlKey = (item.videoUrl || '').trim().toLowerCase()
+    if (!urlKey) continue
+
+    const existing = bestByUrl.get(urlKey)
+    if (!existing) {
+      bestByUrl.set(urlKey, item)
+      continue
+    }
+
+    const existingTime = new Date(existing.updatedAt || existing.createdAt).getTime()
+    const itemTime = new Date(item.updatedAt || item.createdAt).getTime()
+    if (itemTime >= existingTime) {
+      bestByUrl.set(urlKey, item)
+    }
+  }
+
+  for (const item of bestByUrl.values()) {
     deduped.push(item)
   }
 
+  deduped.sort(
+    (a, b) =>
+      new Date(b.updatedAt || b.createdAt).getTime() -
+      new Date(a.updatedAt || a.createdAt).getTime()
+  )
   return deduped
 }
 
