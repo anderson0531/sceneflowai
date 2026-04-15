@@ -4,13 +4,12 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { useState } from 'react'
 import { DemoVideoModal } from './DemoVideoModal'
-import { Play, ArrowRight, ExternalLink } from 'lucide-react'
+import { Play, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
-import { PlyrYouTube } from '@/components/media/PlyrYouTube'
 
 /** Longform "What's Possible Reel" */
-const HERO_COMMERCIAL_VIDEO_ID = 'Rp5kMYYdU50'
-const HERO_COMMERCIAL_WATCH_URL = `https://www.youtube.com/watch?v=${HERO_COMMERCIAL_VIDEO_ID}`
+const HERO_COMMERCIAL_BLOB_SRC =
+  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/landing-hero-anya-2-sd-480p.mp4#t=0.1'
 
 export function HeroSection() {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -73,7 +72,7 @@ export function HeroSection() {
             </motion.div>
           </div>
 
-          {/* Longform What's Possible Reel (YouTube) */}
+          {/* Longform What's Possible Reel (Blob video) */}
           <motion.div
             className="relative max-w-4xl mx-auto mt-16"
             initial={{ opacity: 0, y: 20 }}
@@ -84,27 +83,20 @@ export function HeroSection() {
 
             <div className="relative rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black">
               <div className="relative aspect-video w-full">
-                <PlyrYouTube
-                  videoId={HERO_COMMERCIAL_VIDEO_ID}
-                  title="SceneFlow What's Possible Reel"
-                  autoplayMuted
+                <video
+                  src={HERO_COMMERCIAL_BLOB_SRC}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="auto"
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
               </div>
             </div>
 
             <p className="mt-4 text-center text-sm text-gray-400">
               Longform feature walkthrough: What&apos;s Possible with SceneFlow
-            </p>
-            <p className="mt-1 text-center">
-              <a
-                href={HERO_COMMERCIAL_WATCH_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm text-violet-400 hover:text-violet-300 transition-colors"
-              >
-                <ExternalLink className="w-4 h-4 shrink-0" aria-hidden />
-                Watch on YouTube
-              </a>
             </p>
           </motion.div>
         </div>
