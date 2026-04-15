@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
@@ -85,6 +85,7 @@ export default function PremierePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [persistedScreenings, setPersistedScreenings] = useState<PremiereScreening[]>([])
   const [isHeaderUploading, setIsHeaderUploading] = useState(false)
+  const headerUploadInputRef = useRef<HTMLInputElement | null>(null)
 
   const isDemo = searchParams.get('demo') === 'true'
   const searchProjectIdRaw = searchParams.get('projectId')
@@ -478,35 +479,33 @@ export default function PremierePage() {
           <div className="border-b border-violet-500/20 bg-zinc-950/80 px-4 py-3">
             <div className="flex items-center justify-end gap-3">
               <div className="shrink-0">
-                <label>
-                  <input
-                    type="file"
-                    accept="video/mp4,video/quicktime,video/x-m4v"
-                    className="hidden"
-                    disabled={isHeaderUploading}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) void handleHeaderUpload(file)
-                      e.currentTarget.value = ''
-                    }}
-                  />
-                  <Button
-                    asChild
-                    size="sm"
-                    variant="outline"
-                    className="h-9 w-9 p-0 border-violet-500/40 bg-violet-950/20 text-violet-100 hover:bg-violet-950/40 hover:border-violet-400/50"
-                    disabled={isHeaderUploading}
-                    aria-label={isHeaderUploading ? 'Uploading video' : 'Upload video'}
-                  >
-                    <span>
-                      {isHeaderUploading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4" />
-                      )}
-                    </span>
-                  </Button>
-                </label>
+                <input
+                  ref={headerUploadInputRef}
+                  type="file"
+                  accept="video/mp4,video/quicktime,video/x-m4v"
+                  className="hidden"
+                  disabled={isHeaderUploading}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) void handleHeaderUpload(file)
+                    e.currentTarget.value = ''
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  className="h-9 w-9 p-0 border-violet-500/40 bg-violet-950/20 text-violet-100 hover:bg-violet-950/40 hover:border-violet-400/50"
+                  disabled={isHeaderUploading}
+                  aria-label={isHeaderUploading ? 'Uploading video' : 'Upload video'}
+                  onClick={() => headerUploadInputRef.current?.click()}
+                >
+                  {isHeaderUploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4" />
+                  )}
+                </Button>
               </div>
             </div>
           </div>
