@@ -68,7 +68,7 @@ export function HeroSection() {
                 href="/early-access"
                 className="w-full sm:w-auto inline-flex items-center justify-center rounded-md border border-cyan-500/40 bg-cyan-500/10 px-6 py-3 text-sm font-semibold text-cyan-200 hover:bg-cyan-500/20 transition-colors"
               >
-                SUBMIT ARCHITECT APPLICATION
+                Apply for Early Access
               </Link>
             </motion.div>
           </div>

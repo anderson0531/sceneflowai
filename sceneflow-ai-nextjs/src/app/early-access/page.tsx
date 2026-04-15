@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/Button'
 
 type FormState = {
   fullName: string
+  email: string
+  countryOfOrigin: string
   organizationName: string
   primaryRole: string
   distributionChannel: string
@@ -24,6 +26,8 @@ type FormState = {
 
 const DEFAULT_FORM: FormState = {
   fullName: '',
+  email: '',
+  countryOfOrigin: '',
   organizationName: '',
   primaryRole: '',
   distributionChannel: '',
@@ -40,10 +44,10 @@ const DEFAULT_FORM: FormState = {
 }
 
 const MILESTONES = [
-  'May 15: Application Window Closes',
-  'May 22: Selection Notifications & Onboarding Materials Sent',
-  'June 1: Foundational Cohort Launch. Full access to the SceneFlow environment',
-  'July 15: Mid-EAP Virtual Roundtable with the Engineering Team',
+  'June 15: Application Window Closes',
+  'June 22: Selection Notifications & Onboarding Materials Sent',
+  'July 1: Foundational Cohort Launch. Full access to the SceneFlow environment',
+  'August 15: Mid-EAP Virtual Roundtable with the Engineering Team',
 ]
 
 const WHAT_YOU_WILL_TEST = [
@@ -58,6 +62,14 @@ export default function EarlyAccessPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submittedId, setSubmittedId] = useState<string | null>(null)
+  const [otpCode, setOtpCode] = useState('')
+  const [otpRequesting, setOtpRequesting] = useState(false)
+  const [otpVerifying, setOtpVerifying] = useState(false)
+  const [otpMessage, setOtpMessage] = useState<string | null>(null)
+  const [otpError, setOtpError] = useState<string | null>(null)
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpVerified, setOtpVerified] = useState(false)
+  const [otpVerificationToken, setOtpVerificationToken] = useState<string | null>(null)
 
   const conceptWordCount = useMemo(() => {
     return form.seriesConcept.trim().split(/\s+/).filter(Boolean).length
@@ -79,6 +91,8 @@ export default function EarlyAccessPage() {
 
   const validate = (): string | null => {
     if (!form.fullName.trim()) return 'Full Name is required.'
+    if (!form.email.trim()) return 'Email is required.'
+    if (!form.countryOfOrigin.trim()) return 'Country of origin is required.'
     if (!form.organizationName.trim()) return 'Organization/Studio Name is required.'
     if (!form.primaryRole.trim()) return 'Primary Role is required.'
     if (!form.distributionChannel.trim()) return 'Primary Distribution Channel is required.'
@@ -91,7 +105,83 @@ export default function EarlyAccessPage() {
     if (!form.seriesConcept.trim()) return 'Series concept is required.'
     if (conceptWordCount > 200) return 'Series concept must be 200 words or fewer.'
     if (!form.weeklyFeedbackCommitment) return 'Feedback commitment selection is required.'
+    if (!otpVerified || !otpVerificationToken) return 'Please verify your email before submitting.'
     return null
+  }
+
+  const onEmailChanged = (value: string) => {
+    update('email', value)
+    setOtpSent(false)
+    setOtpVerified(false)
+    setOtpVerificationToken(null)
+    setOtpCode('')
+    setOtpMessage(null)
+    setOtpError(null)
+  }
+
+  const requestOtp = async () => {
+    setOtpError(null)
+    setOtpMessage(null)
+
+    const email = form.email.trim()
+    if (!email || !email.includes('@')) {
+      setOtpError('Enter a valid email before requesting a verification code.')
+      return
+    }
+
+    setOtpRequesting(true)
+    try {
+      const res = await fetch('/api/early-access/otp/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setOtpError(data?.error || 'Failed to send verification code.')
+        return
+      }
+      setOtpSent(true)
+      setOtpMessage('Verification code sent. Check your email inbox.')
+    } catch {
+      setOtpError('Network error while sending verification code.')
+    } finally {
+      setOtpRequesting(false)
+    }
+  }
+
+  const verifyOtp = async () => {
+    setOtpError(null)
+    setOtpMessage(null)
+
+    const email = form.email.trim()
+    const code = otpCode.trim()
+
+    if (!email || !code) {
+      setOtpError('Enter your email and verification code.')
+      return
+    }
+
+    setOtpVerifying(true)
+    try {
+      const res = await fetch('/api/early-access/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setOtpError(data?.error || 'Failed to verify code.')
+        return
+      }
+      setOtpVerified(true)
+      setOtpVerificationToken(data.verificationToken)
+      setOtpMessage('Email verified. You can now submit your application.')
+    } catch {
+      setOtpError('Network error while verifying code.')
+    } finally {
+      setOtpVerifying(false)
+    }
   }
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -108,7 +198,10 @@ export default function EarlyAccessPage() {
       const res = await fetch('/api/early-access/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          otpVerificationToken,
+        }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -117,6 +210,12 @@ export default function EarlyAccessPage() {
       }
       setSubmittedId(data.applicationId || 'submitted')
       setForm(DEFAULT_FORM)
+      setOtpCode('')
+      setOtpSent(false)
+      setOtpVerified(false)
+      setOtpVerificationToken(null)
+      setOtpMessage(null)
+      setOtpError(null)
     } catch {
       setSubmitError('Network error while submitting. Please try again.')
     } finally {
@@ -133,13 +232,13 @@ export default function EarlyAccessPage() {
         </Link>
 
         <section className="mt-8 rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-slate-950 to-slate-900 p-6 sm:p-10">
-          <p className="text-xs uppercase tracking-wider text-cyan-300">Summer of Production · June 2026 Cohort</p>
+          <p className="text-xs uppercase tracking-wider text-cyan-300">Summer of Production · July 2026 Cohort</p>
           <h1 className="mt-3 text-4xl sm:text-5xl font-bold leading-tight">
             Stop Generating. Start Architecting.
           </h1>
           <p className="mt-5 text-lg text-slate-300 max-w-3xl">
             Join the SceneFlow Early Access Program. An elite cohort of creators shaping the future of automated,
-            consistent, and global-scale cinema. Starting June 2026.
+            consistent, and global-scale cinema. Starting July 2026.
           </p>
           <div className="mt-7 rounded-xl border border-slate-700 bg-slate-900/70 p-5">
             <h2 className="text-xl font-semibold">The Vision</h2>
@@ -156,7 +255,7 @@ export default function EarlyAccessPage() {
         </section>
 
         <section className="mt-8 rounded-2xl border border-slate-700 bg-slate-900/60 p-6">
-          <h3 className="text-2xl font-semibold">The June 2026 Cohort</h3>
+          <h3 className="text-2xl font-semibold">The July 2026 Cohort</h3>
           <p className="mt-3 text-slate-300">
             We are opening the studio to a limited number of Foundational Architects. As a member of the EAP, you will
             help refine the logic of automated storytelling.
@@ -172,9 +271,6 @@ export default function EarlyAccessPage() {
               <li key={m}>- {m}</li>
             ))}
           </ul>
-          <p className="mt-5 text-cyan-300 font-semibold">
-            Current Status: Accepting 50 High-Volume Production Partners for June 2026.
-          </p>
         </section>
 
         <section className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-6 sm:p-8">
@@ -211,6 +307,23 @@ export default function EarlyAccessPage() {
                   <input className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} />
                 </label>
                 <label className="block">
+                  <span className="text-sm text-slate-300">Email *</span>
+                  <input
+                    type="email"
+                    className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2"
+                    value={form.email}
+                    onChange={(e) => onEmailChanged(e.target.value)}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm text-slate-300">Country of Origin *</span>
+                  <input
+                    className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2"
+                    value={form.countryOfOrigin}
+                    onChange={(e) => update('countryOfOrigin', e.target.value)}
+                  />
+                </label>
+                <label className="block">
                   <span className="text-sm text-slate-300">Organization/Studio Name *</span>
                   <input className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2" value={form.organizationName} onChange={(e) => update('organizationName', e.target.value)} />
                 </label>
@@ -222,6 +335,26 @@ export default function EarlyAccessPage() {
                   <span className="text-sm text-slate-300">Primary Distribution Channel *</span>
                   <input className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2" value={form.distributionChannel} onChange={(e) => update('distributionChannel', e.target.value)} />
                 </label>
+              </div>
+              <div className="mt-4 rounded-lg border border-slate-700 bg-slate-900/70 p-4 space-y-3">
+                <p className="text-sm text-slate-200 font-medium">Email confirmation required before submit</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button type="button" variant="outline" onClick={requestOtp} disabled={otpRequesting}>
+                    {otpRequesting ? 'Sending code...' : otpSent ? 'Resend code' : 'Send code'}
+                  </Button>
+                  <input
+                    className="flex-1 rounded-md bg-slate-800 border border-slate-600 p-2 text-sm"
+                    placeholder="Enter verification code"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                  />
+                  <Button type="button" variant="outline" onClick={verifyOtp} disabled={otpVerifying || !otpSent}>
+                    {otpVerifying ? 'Verifying...' : 'Verify code'}
+                  </Button>
+                </div>
+                {otpVerified && <p className="text-emerald-300 text-sm">Email verified.</p>}
+                {otpMessage && !otpVerified && <p className="text-cyan-300 text-sm">{otpMessage}</p>}
+                {otpError && <p className="text-red-300 text-sm">{otpError}</p>}
               </div>
             </div>
 
@@ -358,8 +491,8 @@ export default function EarlyAccessPage() {
             </div>
 
             <div className="pt-2">
-              <Button type="submit" variant="primary" className="w-full sm:w-auto" disabled={isSubmitting}>
-                {isSubmitting ? 'Submitting...' : 'SUBMIT ARCHITECT APPLICATION'}
+              <Button type="submit" variant="primary" className="w-full sm:w-auto" disabled={isSubmitting || !otpVerified}>
+                {isSubmitting ? 'Submitting...' : 'Submit'}
                 <Send className="ml-2 w-4 h-4" />
               </Button>
             </div>

@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
+import { consumeVerifiedEmailToken } from '@/lib/early-access/otp'
 
 export const runtime = 'nodejs'
 
 type Payload = {
   fullName?: string
+  email?: string
+  countryOfOrigin?: string
   organizationName?: string
   primaryRole?: string
   distributionChannel?: string
@@ -18,6 +21,7 @@ type Payload = {
   seriesConcept?: string
   weeklyFeedbackCommitment?: string
   hasF2vExperience?: boolean
+  otpVerificationToken?: string
 }
 
 function normalizeText(value: unknown): string {
@@ -43,6 +47,8 @@ export async function POST(request: NextRequest) {
 
     const payload = {
       fullName: normalizeText(body.fullName),
+      email: normalizeText(body.email).toLowerCase(),
+      countryOfOrigin: normalizeText(body.countryOfOrigin),
       organizationName: normalizeText(body.organizationName),
       primaryRole: normalizeText(body.primaryRole),
       distributionChannel: normalizeText(body.distributionChannel),
@@ -56,10 +62,13 @@ export async function POST(request: NextRequest) {
       seriesConcept: normalizeText(body.seriesConcept),
       weeklyFeedbackCommitment: normalizeText(body.weeklyFeedbackCommitment),
       hasF2vExperience: body.hasF2vExperience === true,
+      otpVerificationToken: normalizeText(body.otpVerificationToken),
     }
 
     const required: Array<[string, string]> = [
       ['fullName', payload.fullName],
+      ['email', payload.email],
+      ['countryOfOrigin', payload.countryOfOrigin],
       ['organizationName', payload.organizationName],
       ['primaryRole', payload.primaryRole],
       ['distributionChannel', payload.distributionChannel],
@@ -81,6 +90,14 @@ export async function POST(request: NextRequest) {
     if (countWords(payload.seriesConcept) > 200) {
       return NextResponse.json({ error: 'Series concept must be 200 words or fewer.' }, { status: 400 })
     }
+    if (!payload.otpVerificationToken) {
+      return NextResponse.json({ error: 'Email verification is required before submitting.' }, { status: 400 })
+    }
+
+    const hasVerifiedToken = await consumeVerifiedEmailToken(payload.email, payload.otpVerificationToken)
+    if (!hasVerifiedToken) {
+      return NextResponse.json({ error: 'Email verification is invalid or expired. Verify again and retry.' }, { status: 400 })
+    }
 
     const submittedAt = new Date().toISOString()
     const applicationId = `${Date.now()}-${slugify(payload.organizationName || payload.fullName)}`
@@ -93,6 +110,7 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get('user-agent') || 'unknown',
       ...payload,
     }
+    delete (record as any).otpVerificationToken
 
     await put(blobPath, JSON.stringify(record, null, 2), {
       access: 'private',

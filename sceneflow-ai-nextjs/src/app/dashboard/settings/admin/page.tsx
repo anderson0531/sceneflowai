@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { isAdminEmail } from '@/lib/adminUtils'
 import { CreditGrantCard } from '@/components/admin/CreditGrantCard'
 import { CreditRecalculateCard } from '@/components/admin/CreditRecalculateCard'
+import { EapAdminCard } from '@/components/admin/EapAdminCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,6 +30,7 @@ export default async function AdminPage() {
       <div className="grid grid-cols-1 gap-6">
         <CreditGrantCard />
         <CreditRecalculateCard />
+        <EapAdminCard />
         
         {/* Future admin cards can be added here */}
         {/* Example:
