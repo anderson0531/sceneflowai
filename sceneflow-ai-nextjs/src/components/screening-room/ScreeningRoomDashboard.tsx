@@ -36,6 +36,8 @@ import {
   FileVideo,
   X,
   Pencil,
+  UploadCloud,
+  Send,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -382,22 +384,42 @@ export function ScreeningRoomDashboard({
         </div>
         
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onViewAnalytics?.(screening.id)}
-            className="flex-1"
+            disabled={!screening.videoUrl}
+            onClick={() => {
+              if (!screening.videoUrl) return
+              setSelectedVideoUrl(screening.videoUrl)
+              setSelectedVideoTitle(screening.title)
+            }}
+            className="w-full"
           >
-            <BarChart3 className="w-4 h-4 mr-1" />
-            Analytics
+            <UploadCloud className="w-4 h-4 mr-1.5" />
+            Screening Room
           </Button>
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onConfigureABTest?.(screening.id)}
+            disabled={!screening.videoUrl}
+            onClick={() => {
+              if (!screening.videoUrl) return
+              window.open(screening.videoUrl, '_blank', 'noopener,noreferrer')
+            }}
+            className="w-full"
           >
-            <FlaskConical className="w-4 h-4" />
+            <Send className="w-4 h-4 mr-1.5" />
+            Publish
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onViewAnalytics?.(screening.id)}
+            className="w-full"
+          >
+            <BarChart3 className="w-4 h-4 mr-1" />
+            Analytics
           </Button>
         </div>
       </div>

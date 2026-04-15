@@ -11,6 +11,7 @@ import {
   Film,
   Loader2,
   Sparkles,
+  Upload,
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { Button } from '@/components/ui/Button'
@@ -73,6 +74,7 @@ export default function PremierePage() {
 
   const [isLoading, setIsLoading] = useState(true)
   const [persistedScreenings, setPersistedScreenings] = useState<PremiereScreening[]>([])
+  const [isHeaderUploading, setIsHeaderUploading] = useState(false)
 
   const isDemo = searchParams.get('demo') === 'true'
   const searchProjectIdRaw = searchParams.get('projectId')
@@ -279,6 +281,18 @@ export default function PremierePage() {
     return uploadedBlob.url
   }, [isDemo, projectId, refreshPersistedScreenings])
 
+  const handleHeaderUpload = useCallback(
+    async (file: File) => {
+      try {
+        setIsHeaderUploading(true)
+        await handleUploadExternal(file)
+      } finally {
+        setIsHeaderUploading(false)
+      }
+    },
+    [handleUploadExternal]
+  )
+
   const handleRenameScreening = useCallback(
     async (screeningId: string, nextTitle: string) => {
       if (!projectId || isDemo) {
@@ -413,10 +427,10 @@ export default function PremierePage() {
             </div>
             <div className="min-w-0">
               <h1 className="text-base sm:text-lg font-semibold tracking-tight text-white truncate">
-                {isDemo ? 'Demo project' : currentProject?.title ?? 'Project'}
+                Premiere
               </h1>
               <p className="text-[11px] sm:text-xs text-zinc-500 truncate">
-                Premiere · screening and release readiness
+                screening and release readiness
               </p>
             </div>
           </div>
@@ -436,10 +450,10 @@ export default function PremierePage() {
           <div className="relative flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-violet-300/90">
-                SceneFlow Studio
+                SceneFlow AI Studio
               </p>
               <h2 className="mt-1 text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-white [text-shadow:0_2px_28px_rgba(99,102,241,0.35)]">
-                Premiere
+                {`Premiere: ${isDemo ? 'Demo project' : currentProject?.title ?? 'Project'}`}
               </h2>
               <p className="mt-1.5 text-sm text-zinc-400 max-w-xl leading-relaxed">
                 Screening room hub for audience feedback, approvals, and release confidence.
@@ -454,9 +468,42 @@ export default function PremierePage() {
 
         <section className="min-h-0 flex-1 rounded-2xl border border-violet-500/20 bg-zinc-950/50 backdrop-blur-xl overflow-hidden shadow-[0_0_0_1px_rgba(139,92,246,0.12),0_24px_80px_-32px_rgba(99,102,241,0.3)]">
           <div className="border-b border-violet-500/20 bg-zinc-950/80 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <Clapperboard className="w-4 h-4 text-violet-300" />
-              <h3 className="text-sm font-semibold tracking-tight text-white">Premiere Dashboard</h3>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Clapperboard className="w-4 h-4 text-violet-300" />
+                <h3 className="text-sm font-semibold tracking-tight text-white">Premiere Dashboard</h3>
+              </div>
+              <div className="shrink-0">
+                <label>
+                  <input
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/x-m4v"
+                    className="hidden"
+                    disabled={isHeaderUploading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) void handleHeaderUpload(file)
+                      e.currentTarget.value = ''
+                    }}
+                  />
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    className="border-violet-500/40 bg-violet-950/20 text-violet-100 hover:bg-violet-950/40 hover:border-violet-400/50"
+                    disabled={isHeaderUploading}
+                  >
+                    <span>
+                      {isHeaderUploading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4 mr-2" />
+                      )}
+                      {isHeaderUploading ? 'Uploading…' : 'Upload video'}
+                    </span>
+                  </Button>
+                </label>
+              </div>
             </div>
             <p className="mt-1 text-xs text-zinc-500">
               Manage final cut screenings and external uploads from one review surface.
