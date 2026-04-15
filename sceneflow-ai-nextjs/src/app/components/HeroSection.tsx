@@ -6,10 +6,10 @@ import { useState } from 'react'
 import { DemoVideoModal } from './DemoVideoModal'
 import { Play, ArrowRight, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
+import { PlyrYouTube } from '@/components/media/PlyrYouTube'
 
 /** Longform "What's Possible Reel" */
 const HERO_COMMERCIAL_VIDEO_ID = 'Rp5kMYYdU50'
-const HERO_COMMERCIAL_EMBED_SRC = `https://www.youtube-nocookie.com/embed/${HERO_COMMERCIAL_VIDEO_ID}?modestbranding=1&rel=0&controls=0&playsinline=1`
 const HERO_COMMERCIAL_WATCH_URL = `https://www.youtube.com/watch?v=${HERO_COMMERCIAL_VIDEO_ID}`
 
 export function HeroSection() {
@@ -84,13 +84,10 @@ export function HeroSection() {
 
             <div className="relative rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black">
               <div className="relative aspect-video w-full">
-                <iframe
-                  src={HERO_COMMERCIAL_EMBED_SRC}
+                <PlyrYouTube
+                  videoId={HERO_COMMERCIAL_VIDEO_ID}
                   title="SceneFlow What's Possible Reel"
-                  className="absolute inset-0 h-full w-full"
-                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-                  allowFullScreen
-                  loading="eager"
+                  autoplayMuted
                 />
               </div>
             </div>
