@@ -211,22 +211,15 @@ export default function PremierePage() {
       throw new Error('Upload requires a saved non-demo project')
     }
 
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('projectId', projectId)
+    const { upload } = await import('@vercel/blob/client')
+    const safeProjectId = projectId.replace(/[^a-zA-Z0-9_-]/g, '-')
+    const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const pathname = `premiere/uploads/${safeProjectId}/${Date.now()}-${safeFileName}`
 
-    const uploadRes = await fetch('/api/premiere/upload', {
-      method: 'POST',
-      body: formData,
+    const uploadedBlob = await upload(pathname, file, {
+      access: 'public',
+      handleUploadUrl: '/api/premiere/upload-url',
     })
-    const uploadData = (await uploadRes.json()) as {
-      success?: boolean
-      url?: string
-      error?: string
-    }
-    if (!uploadRes.ok || !uploadData.url) {
-      throw new Error(uploadData.error || 'Upload failed')
-    }
 
     const createRes = await fetch('/api/premiere/screenings', {
       method: 'POST',
@@ -234,11 +227,18 @@ export default function PremierePage() {
       body: JSON.stringify({
         projectId,
         title: `External upload · ${file.name}`,
-        videoUrl: uploadData.url,
+        videoUrl: uploadedBlob.url,
         source: 'external_upload',
       }),
     })
-    const createData = (await createRes.json()) as { success?: boolean; error?: string }
+    const createText = await createRes.text()
+    const createData = (() => {
+      try {
+        return JSON.parse(createText) as { success?: boolean; error?: string }
+      } catch {
+        return { error: createText }
+      }
+    })()
     if (!createRes.ok || !createData.success) {
       throw new Error(createData.error || 'Screening creation failed')
     }
@@ -248,7 +248,7 @@ export default function PremierePage() {
       description: 'Created a new Premiere screening from your external video.',
     })
 
-    return uploadData.url
+    return uploadedBlob.url
   }, [isDemo, projectId, refreshPersistedScreenings])
 
   if (isLoading) {
