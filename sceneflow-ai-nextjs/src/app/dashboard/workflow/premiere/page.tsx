@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import {
   AlertCircle,
   ArrowLeft,
+  ExternalLink,
   Film,
   Loader2,
   Upload,
@@ -543,6 +544,7 @@ export default function PremierePage() {
   const finalCutHref = `/dashboard/workflow/final-cut?projectId=${projectId || ''}${
     isDemo ? '&demo=true' : ''
   }`
+  const screeningRoomHref = `/screening-room?projectId=${encodeURIComponent(projectId || '')}&returnTo=${encodeURIComponent(finalCutHref.replace('/dashboard/workflow/final-cut', '/dashboard/workflow/premiere'))}`
 
   return (
     <div className="relative isolate min-h-screen flex flex-col overflow-hidden bg-zinc-950 text-zinc-100">
@@ -589,6 +591,16 @@ export default function PremierePage() {
           </Link>
 
         </div>
+        <Link href={screeningRoomHref}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-violet-500/40 bg-violet-950/20 text-violet-100 hover:bg-violet-950/40 hover:border-violet-400/50"
+          >
+            <ExternalLink className="w-4 h-4 mr-1.5" />
+            Screening Room Dashboard
+          </Button>
+        </Link>
       </header>
 
       <main className="relative flex-1 min-h-0 flex flex-col gap-4 px-4 sm:px-5 py-4 overflow-hidden border-t border-white/[0.06]">
