@@ -7,10 +7,17 @@ import { toast } from 'sonner'
 import {
   AlertCircle,
   ArrowLeft,
+  BarChart3,
+  ChevronDown,
+  ChevronUp,
+  Clock,
   ExternalLink,
   Film,
   Loader2,
+  Sparkles,
+  TrendingUp,
   Upload,
+  Users,
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { Button } from '@/components/ui/Button'
@@ -99,7 +106,7 @@ function dedupeScreenings(items: PremiereScreening[]): PremiereScreening[] {
     const existingPersisted = existing.editable === true
     const itemPersisted = item.editable === true
     if (itemPersisted && !existingPersisted) {
-      bestByUrl.set(urlKey, item)
+      bestByStreamAndUrl.set(dedupeKey, item)
       continue
     }
     if (!itemPersisted && existingPersisted) {
@@ -134,6 +141,8 @@ export default function PremierePage() {
   const [persistedScreenings, setPersistedScreenings] = useState<PremiereScreening[]>([])
   const [isHeaderUploading, setIsHeaderUploading] = useState(false)
   const [headerUploadProgress, setHeaderUploadProgress] = useState(0)
+  const [showProductionStreams, setShowProductionStreams] = useState(true)
+  const [showScreeningDashboard, setShowScreeningDashboard] = useState(true)
   const headerUploadInputRef = useRef<HTMLInputElement | null>(null)
 
   const isDemo = searchParams.get('demo') === 'true'
@@ -307,6 +316,28 @@ export default function PremierePage() {
       thumbnail: item.thumbnail || projectBillboard,
     }))
   }, [currentProject?.metadata, derivedFinalCutScreenings, persistedScreenings])
+
+  const mockDashboardStats = useMemo(() => {
+    const streamCount = Math.max(1, finalCutScreenings.length)
+    const totalViewers = streamCount * 34
+    const averageCompletion = 72
+    const averageWatchTime = 56
+    const emotionBreakdown = {
+      engaged: 34,
+      happy: 24,
+      surprised: 16,
+      neutral: 14,
+      confused: 8,
+      bored: 4,
+    }
+    return {
+      totalScreenings: streamCount,
+      totalViewers,
+      averageCompletion,
+      averageWatchTime,
+      emotionBreakdown,
+    }
+  }, [finalCutScreenings.length])
 
   const handleCreateScreening = useCallback(() => {
     toast.message('Premiere screening', {
@@ -629,78 +660,204 @@ export default function PremierePage() {
         </div>
 
         <section className="min-h-0 flex-1 rounded-2xl border border-violet-500/20 bg-zinc-950/50 backdrop-blur-xl overflow-hidden shadow-[0_0_0_1px_rgba(139,92,246,0.12),0_24px_80px_-32px_rgba(99,102,241,0.3)]">
-          <div className="border-b border-violet-500/20 bg-zinc-950/80 px-4 py-3">
-            <div className="flex items-center justify-end gap-3">
-              <div className="shrink-0">
-                <input
-                  ref={headerUploadInputRef}
-                  type="file"
-                  accept="video/mp4,video/quicktime,video/x-m4v"
-                  className="hidden"
-                  disabled={isHeaderUploading}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) void handleHeaderUpload(file)
-                    e.currentTarget.value = ''
-                  }}
-                />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  type="button"
-                  className="h-9 w-9 p-0 border-violet-500/40 bg-violet-950/20 text-violet-100 hover:bg-violet-950/40 hover:border-violet-400/50"
-                  disabled={isHeaderUploading}
-                  aria-label={isHeaderUploading ? 'Uploading video' : 'Upload video'}
-                  onClick={() => headerUploadInputRef.current?.click()}
-                >
-                  {isHeaderUploading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Upload className="w-4 h-4" />
-                  )}
-                </Button>
+          <div className="h-full min-h-0 overflow-auto p-4 sm:p-5 space-y-4">
+            <div className="rounded-xl border border-violet-500/20 bg-zinc-950/70 overflow-hidden">
+              <div className="border-b border-violet-500/20 bg-zinc-950/80 px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Film className="w-4 h-4 text-violet-300" />
+                    <h3 className="text-sm font-semibold tracking-tight text-white">Production Streams</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={headerUploadInputRef}
+                      type="file"
+                      accept="video/mp4,video/quicktime,video/x-m4v"
+                      className="hidden"
+                      disabled={isHeaderUploading}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) void handleHeaderUpload(file)
+                        e.currentTarget.value = ''
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      className="h-9 w-9 p-0 border-violet-500/40 bg-violet-950/20 text-violet-100 hover:bg-violet-950/40 hover:border-violet-400/50"
+                      disabled={isHeaderUploading}
+                      aria-label={isHeaderUploading ? 'Uploading video' : 'Upload video'}
+                      onClick={() => headerUploadInputRef.current?.click()}
+                    >
+                      {isHeaderUploading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4" />
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowProductionStreams((prev) => !prev)}
+                      className="border-zinc-700/80 bg-zinc-900/80 text-zinc-300 hover:bg-zinc-800"
+                    >
+                      {showProductionStreams ? (
+                        <ChevronUp className="w-4 h-4 mr-1.5" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 mr-1.5" />
+                      )}
+                      {showProductionStreams ? 'Hide' : 'Show'}
+                    </Button>
+                  </div>
+                </div>
+                {isHeaderUploading ? (
+                  <div className="mt-2 flex items-center justify-end gap-2">
+                    <div className="h-1.5 w-28 overflow-hidden rounded-full bg-zinc-800/90">
+                      <div
+                        className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-500 transition-all duration-300"
+                        style={{ width: `${headerUploadProgress}%` }}
+                      />
+                    </div>
+                    <span className="w-9 text-right text-[11px] tabular-nums text-zinc-400">
+                      {headerUploadProgress}%
+                    </span>
+                  </div>
+                ) : null}
               </div>
-            </div>
-            {isHeaderUploading ? (
-              <div className="mt-2 flex items-center justify-end gap-2">
-                <div className="h-1.5 w-28 overflow-hidden rounded-full bg-zinc-800/90">
-                  <div
-                    className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-500 transition-all duration-300"
-                    style={{ width: `${headerUploadProgress}%` }}
+              {showProductionStreams ? (
+                <div className="p-4 sm:p-5">
+                  <ScreeningRoomDashboard
+                    variant="finalCutOnly"
+                    hideFinalCutChrome
+                    projectId={projectId || 'unknown-project'}
+                    projectName={isDemo ? 'Demo project' : currentProject?.title}
+                    finalCutScreenings={finalCutScreenings}
+                    screeningCredits={100}
+                    onCreateScreening={handleCreateScreening}
+                    onViewAnalytics={(screeningId) => {
+                      toast.message('Analytics', {
+                        description: `Analytics panel for ${screeningId} is coming soon.`,
+                      })
+                    }}
+                    onConfigureABTest={(screeningId) => {
+                      toast.message('A/B testing', {
+                        description: `A/B setup for ${screeningId} will be available in a follow-up update.`,
+                      })
+                    }}
+                    onRenameScreening={handleRenameScreening}
+                    onUploadExternal={handleUploadExternal}
+                    onListFeedback={handleListFeedback}
+                    onCreateFeedback={handleCreateFeedback}
+                    onUpdateFeedback={handleUpdateFeedback}
+                    onExportFeedback={handleExportFeedback}
                   />
                 </div>
-                <span className="w-9 text-right text-[11px] tabular-nums text-zinc-400">
-                  {headerUploadProgress}%
-                </span>
+              ) : null}
+            </div>
+
+            <div className="rounded-xl border border-violet-500/20 bg-zinc-950/70 overflow-hidden">
+              <div className="border-b border-violet-500/20 bg-zinc-950/80 px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-violet-300" />
+                    <h3 className="text-sm font-semibold tracking-tight text-white">Screening Room Dashboard</h3>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowScreeningDashboard((prev) => !prev)}
+                    className="border-zinc-700/80 bg-zinc-900/80 text-zinc-300 hover:bg-zinc-800"
+                  >
+                    {showScreeningDashboard ? (
+                      <ChevronUp className="w-4 h-4 mr-1.5" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 mr-1.5" />
+                    )}
+                    {showScreeningDashboard ? 'Hide' : 'Show'}
+                  </Button>
+                </div>
               </div>
-            ) : null}
-          </div>
-          <div className="h-full min-h-0 overflow-auto p-4 sm:p-5">
-            <ScreeningRoomDashboard
-              variant="finalCutOnly"
-              hideFinalCutChrome
-              projectId={projectId || 'unknown-project'}
-              projectName={isDemo ? 'Demo project' : currentProject?.title}
-              finalCutScreenings={finalCutScreenings}
-              screeningCredits={100}
-              onCreateScreening={handleCreateScreening}
-              onViewAnalytics={(screeningId) => {
-                toast.message('Analytics', {
-                  description: `Analytics panel for ${screeningId} is coming soon.`,
-                })
-              }}
-              onConfigureABTest={(screeningId) => {
-                toast.message('A/B testing', {
-                  description: `A/B setup for ${screeningId} will be available in a follow-up update.`,
-                })
-              }}
-              onRenameScreening={handleRenameScreening}
-              onUploadExternal={handleUploadExternal}
-              onListFeedback={handleListFeedback}
-              onCreateFeedback={handleCreateFeedback}
-              onUpdateFeedback={handleUpdateFeedback}
-              onExportFeedback={handleExportFeedback}
-            />
+
+              {showScreeningDashboard ? (
+                <div className="p-4 sm:p-5 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                    <div className="rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
+                      <p className="text-xs text-zinc-400">Total Screenings</p>
+                      <p className="mt-1 text-2xl font-semibold text-white tabular-nums">
+                        {mockDashboardStats.totalScreenings}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
+                      <p className="text-xs text-zinc-400">Total Viewers</p>
+                      <p className="mt-1 text-2xl font-semibold text-white tabular-nums">
+                        {mockDashboardStats.totalViewers}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
+                      <p className="text-xs text-zinc-400">Avg. Completion</p>
+                      <p className="mt-1 text-2xl font-semibold text-white tabular-nums">
+                        {mockDashboardStats.averageCompletion}%
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
+                      <p className="text-xs text-zinc-400">Avg. Watch Time</p>
+                      <p className="mt-1 text-2xl font-semibold text-white tabular-nums">
+                        {mockDashboardStats.averageWatchTime}s
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                    <div className="lg:col-span-2 rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="w-4 h-4 text-violet-300" />
+                        <p className="text-sm font-medium text-white">Audience Emotions (Mock)</p>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                        <p className="text-zinc-300">Engaged <span className="text-zinc-500">{mockDashboardStats.emotionBreakdown.engaged}%</span></p>
+                        <p className="text-zinc-300">Happy <span className="text-zinc-500">{mockDashboardStats.emotionBreakdown.happy}%</span></p>
+                        <p className="text-zinc-300">Surprised <span className="text-zinc-500">{mockDashboardStats.emotionBreakdown.surprised}%</span></p>
+                        <p className="text-zinc-300">Neutral <span className="text-zinc-500">{mockDashboardStats.emotionBreakdown.neutral}%</span></p>
+                        <p className="text-zinc-300">Confused <span className="text-zinc-500">{mockDashboardStats.emotionBreakdown.confused}%</span></p>
+                        <p className="text-zinc-300">Bored <span className="text-zinc-500">{mockDashboardStats.emotionBreakdown.bored}%</span></p>
+                      </div>
+                    </div>
+                    <div className="rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
+                      <p className="text-sm font-medium text-white mb-2">Quick Actions</p>
+                      <div className="space-y-2">
+                        <Button size="sm" variant="outline" className="w-full justify-start border-zinc-700 bg-zinc-900">
+                          <Users className="w-4 h-4 mr-2" />
+                          Invite reviewers
+                        </Button>
+                        <Button size="sm" variant="outline" className="w-full justify-start border-zinc-700 bg-zinc-900">
+                          <TrendingUp className="w-4 h-4 mr-2" />
+                          Compare streams
+                        </Button>
+                        <Button size="sm" variant="outline" className="w-full justify-start border-zinc-700 bg-zinc-900">
+                          <Clock className="w-4 h-4 mr-2" />
+                          Schedule review
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
+                    <p className="text-sm font-medium text-white mb-2">Screening Views</p>
+                    <div className="flex flex-wrap gap-2">
+                      {['All Screenings', 'Storyboard', 'Scenes', 'Premiere'].map((tab) => (
+                        <span
+                          key={tab}
+                          className="rounded-full border border-zinc-700 bg-zinc-950/80 px-2.5 py-1 text-[11px] text-zinc-300"
+                        >
+                          {tab}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </div>
         </section>
       </main>
