@@ -352,7 +352,7 @@ export function ScreeningRoomDashboard({
           </div>
         ) : (
           <div className="mb-2 flex items-start gap-2">
-            <h3 className="text-base font-semibold text-white leading-snug whitespace-normal break-words flex-1">
+            <h3 className="text-xs font-semibold text-white leading-snug whitespace-normal break-words flex-1">
               {screening.title}
             </h3>
             {onRenameScreening && screening.editable !== false ? (
@@ -397,7 +397,7 @@ export function ScreeningRoomDashboard({
             className="w-full"
           >
             <UploadCloud className="w-4 h-4 mr-1.5" />
-            Screening Room
+            Screen
           </Button>
           <Button
             size="sm"

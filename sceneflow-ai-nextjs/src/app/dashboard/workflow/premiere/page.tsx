@@ -20,6 +20,7 @@ type PremiereScreening = {
   title: string
   streamId?: string
   videoUrl?: string
+  thumbnail?: string
   createdAt: string
   updatedAt?: string
   status: 'draft' | 'active' | 'completed' | 'expired'
@@ -181,6 +182,12 @@ export default function PremierePage() {
     if (!projectId) return []
 
     const items: PremiereScreening[] = []
+    const projectBillboard =
+      ((currentProject?.metadata as { billboardUrl?: string; billboardImageUrl?: string } | undefined)
+        ?.billboardUrl ||
+        (currentProject?.metadata as { billboardUrl?: string; billboardImageUrl?: string } | undefined)
+          ?.billboardImageUrl ||
+        '')?.trim() || undefined
     const exported = (
       (currentProject?.metadata as { exportedVideoUrl?: string } | undefined)?.exportedVideoUrl || ''
     ).trim()
@@ -190,6 +197,7 @@ export default function PremierePage() {
         id: `project-export-${projectId}`,
         title: 'Latest project export',
         videoUrl: exported,
+        thumbnail: projectBillboard,
         createdAt: new Date().toISOString(),
         status: 'draft',
         viewerCount: 0,
@@ -219,6 +227,7 @@ export default function PremierePage() {
           title: `Export · ${stream.name || 'Untitled stream'}`,
           streamId: stream.id,
           videoUrl: url,
+          thumbnail: projectBillboard,
           createdAt: ex.completedAt || ex.createdAt || new Date().toISOString(),
           status: ex.status === 'complete' ? 'active' : 'draft',
           viewerCount: 0,
@@ -233,11 +242,20 @@ export default function PremierePage() {
   }, [currentProject?.metadata, isDemo, projectId])
 
   const finalCutScreenings = useMemo<PremiereScreening[]>(() => {
+    const projectBillboard =
+      ((currentProject?.metadata as { billboardUrl?: string; billboardImageUrl?: string } | undefined)
+        ?.billboardUrl ||
+        (currentProject?.metadata as { billboardUrl?: string; billboardImageUrl?: string } | undefined)
+          ?.billboardImageUrl ||
+        '')?.trim() || undefined
     return dedupeScreenings([
       ...persistedScreenings,
       ...derivedFinalCutScreenings.map((item) => ({ ...item, editable: false })),
-    ])
-  }, [derivedFinalCutScreenings, persistedScreenings])
+    ]).map((item) => ({
+      ...item,
+      thumbnail: item.thumbnail || projectBillboard,
+    }))
+  }, [currentProject?.metadata, derivedFinalCutScreenings, persistedScreenings])
 
   const handleCreateScreening = useCallback(() => {
     toast.message('Premiere screening', {
@@ -428,11 +446,6 @@ export default function PremierePage() {
             </Button>
           </Link>
 
-          <div className="h-8 w-px bg-zinc-800 hidden sm:block" />
-
-          <div className="min-w-0">
-            <h1 className="text-base sm:text-lg font-semibold tracking-tight text-white truncate">Premiere</h1>
-          </div>
         </div>
       </header>
 
