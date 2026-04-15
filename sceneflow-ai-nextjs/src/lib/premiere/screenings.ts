@@ -138,6 +138,7 @@ export async function updatePremiereScreeningTitle(
   await put(targetPath, JSON.stringify(updated, null, 2), {
     access: 'public',
     addRandomSuffix: false,
+    allowOverwrite: true,
     contentType: 'application/json; charset=utf-8',
   })
 
