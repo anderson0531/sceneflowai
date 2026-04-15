@@ -1,4 +1,4 @@
-import { list, put } from '@vercel/blob'
+import { del, list, put } from '@vercel/blob'
 
 export type PremiereScreeningStatus = 'draft' | 'active' | 'completed' | 'expired'
 export type PremiereScreeningSource = 'external_upload' | 'final_cut_export'
@@ -135,10 +135,16 @@ export async function updatePremiereScreeningTitle(
     title: normalizedTitle,
   }
 
+  // Some environments ignore allowOverwrite; delete first for deterministic updates.
+  try {
+    await del(targetPath)
+  } catch {
+    /* no-op: proceed to write */
+  }
+
   await put(targetPath, JSON.stringify(updated, null, 2), {
     access: 'public',
     addRandomSuffix: false,
-    allowOverwrite: true,
     contentType: 'application/json; charset=utf-8',
   })
 
