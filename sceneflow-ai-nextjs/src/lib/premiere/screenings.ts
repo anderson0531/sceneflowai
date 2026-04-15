@@ -87,7 +87,7 @@ export async function createPremiereScreeningFromUpload(
   }
 
   await put(screeningPath(projectId, id), JSON.stringify(record, null, 2), {
-    access: 'private',
+    access: 'public',
     addRandomSuffix: false,
     contentType: 'application/json; charset=utf-8',
   })
