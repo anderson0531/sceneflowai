@@ -142,8 +142,7 @@ export function ScreeningRoomDashboard({
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [dragOver, setDragOver] = useState(false)
-  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null)
-  const [selectedVideoTitle, setSelectedVideoTitle] = useState<string>('')
+  const [playingScreeningId, setPlayingScreeningId] = useState<string | null>(null)
   const [editingScreeningId, setEditingScreeningId] = useState<string | null>(null)
   const [draftTitle, setDraftTitle] = useState('')
   const [isSavingTitle, setIsSavingTitle] = useState(false)
@@ -253,7 +252,15 @@ export function ScreeningRoomDashboard({
       {/* Thumbnail */}
       <div className="p-2 bg-gradient-to-b from-zinc-700/30 to-zinc-900/60 border-b border-zinc-700/40">
         <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden ring-1 ring-zinc-500/30 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
-          {screening.thumbnail ? (
+          {playingScreeningId === screening.id && screening.videoUrl ? (
+            <video
+              key={`inline-${screening.id}`}
+              src={screening.videoUrl}
+              controls
+              autoPlay
+              className="w-full h-full object-cover bg-black"
+            />
+          ) : screening.thumbnail ? (
             <img
               src={screening.thumbnail}
               alt={screening.title}
@@ -291,8 +298,7 @@ export function ScreeningRoomDashboard({
               disabled={!screening.videoUrl}
               onClick={() => {
                 if (!screening.videoUrl) return
-                setSelectedVideoUrl(screening.videoUrl)
-                setSelectedVideoTitle(screening.title)
+                setPlayingScreeningId(screening.id)
               }}
               className={cn(
                 'w-14 h-14 rounded-full flex items-center justify-center transition-colors',
@@ -391,13 +397,12 @@ export function ScreeningRoomDashboard({
             disabled={!screening.videoUrl}
             onClick={() => {
               if (!screening.videoUrl) return
-              setSelectedVideoUrl(screening.videoUrl)
-              setSelectedVideoTitle(screening.title)
+              setPlayingScreeningId((current) => (current === screening.id ? null : screening.id))
             }}
             className="w-full"
           >
             <UploadCloud className="w-4 h-4 mr-1.5" />
-            Screen
+            {playingScreeningId === screening.id ? 'Stop' : 'Screen'}
           </Button>
           <Button
             size="sm"
@@ -643,36 +648,6 @@ export function ScreeningRoomDashboard({
                 <Plus className="w-4 h-4 mr-2" />
                 New screening
               </Button>
-            </div>
-          </div>
-        ) : null}
-
-        {selectedVideoUrl ? (
-          <div className="rounded-2xl border border-zinc-700/70 bg-zinc-950/70 overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-zinc-700/60 flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-white truncate">Now playing: {selectedVideoTitle}</p>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setSelectedVideoUrl(null)
-                  setSelectedVideoTitle('')
-                }}
-              >
-                <X className="w-4 h-4 mr-1.5" />
-                Close
-              </Button>
-            </div>
-            <div className="p-2 bg-gradient-to-b from-zinc-700/30 to-zinc-900/70">
-              <div className="relative aspect-video rounded-xl overflow-hidden bg-black ring-1 ring-zinc-500/40 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
-                <video
-                  key={selectedVideoUrl}
-                  src={selectedVideoUrl}
-                  controls
-                  className="w-full h-full object-contain"
-                />
-                <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-violet-500/20" />
-              </div>
             </div>
           </div>
         ) : null}
