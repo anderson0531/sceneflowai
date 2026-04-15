@@ -25,6 +25,7 @@ type PremiereScreening = {
   status: 'draft' | 'active' | 'completed' | 'expired'
   viewerCount: number
   averageCompletion: number
+  editable?: boolean
 }
 
 function dedupeScreenings(items: PremiereScreening[]): PremiereScreening[] {
@@ -117,7 +118,11 @@ export default function PremierePage() {
       })
       if (!res.ok) throw new Error(await res.text())
       const data = (await res.json()) as { items?: PremiereScreening[] }
-      setPersistedScreenings(Array.isArray(data.items) ? data.items : [])
+      setPersistedScreenings(
+        Array.isArray(data.items)
+          ? data.items.map((item) => ({ ...item, editable: true }))
+          : []
+      )
     } catch (error) {
       console.error('[Premiere] Failed loading persisted screenings:', error)
       setPersistedScreenings([])
@@ -197,7 +202,10 @@ export default function PremierePage() {
   }, [currentProject?.metadata, isDemo, projectId])
 
   const finalCutScreenings = useMemo<PremiereScreening[]>(() => {
-    return dedupeScreenings([...persistedScreenings, ...derivedFinalCutScreenings])
+    return dedupeScreenings([
+      ...persistedScreenings,
+      ...derivedFinalCutScreenings.map((item) => ({ ...item, editable: false })),
+    ])
   }, [derivedFinalCutScreenings, persistedScreenings])
 
   const handleCreateScreening = useCallback(() => {
@@ -250,6 +258,47 @@ export default function PremierePage() {
 
     return uploadedBlob.url
   }, [isDemo, projectId, refreshPersistedScreenings])
+
+  const handleRenameScreening = useCallback(
+    async (screeningId: string, nextTitle: string) => {
+      if (!projectId || isDemo) {
+        throw new Error('Renaming requires a saved non-demo project')
+      }
+
+      if (!screeningId.startsWith('premiere-')) {
+        toast.message('Read-only item', {
+          description: 'Only uploaded screening records can be renamed right now.',
+        })
+        return
+      }
+
+      const res = await fetch('/api/premiere/screenings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          screeningId,
+          title: nextTitle,
+        }),
+      })
+      const text = await res.text()
+      const payload = (() => {
+        try {
+          return JSON.parse(text) as { success?: boolean; error?: string }
+        } catch {
+          return { error: text }
+        }
+      })()
+
+      if (!res.ok || !payload.success) {
+        throw new Error(payload.error || 'Failed to rename screening')
+      }
+
+      await refreshPersistedScreenings()
+      toast.success('Name updated')
+    },
+    [isDemo, projectId, refreshPersistedScreenings]
+  )
 
   if (isLoading) {
     return (
@@ -412,6 +461,7 @@ export default function PremierePage() {
                   description: `A/B setup for ${screeningId} will be available in a follow-up update.`,
                 })
               }}
+              onRenameScreening={handleRenameScreening}
               onUploadExternal={handleUploadExternal}
             />
           </div>

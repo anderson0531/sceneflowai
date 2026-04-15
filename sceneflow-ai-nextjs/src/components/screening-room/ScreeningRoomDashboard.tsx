@@ -35,6 +35,7 @@ import {
   Loader2,
   FileVideo,
   X,
+  Pencil,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -65,6 +66,7 @@ interface ScreeningRoomDashboardProps {
   onViewAnalytics?: (screeningId: string) => void
   onConfigureABTest?: (screeningId: string) => void
   onUploadExternal?: (file: File) => Promise<string>
+  onRenameScreening?: (screeningId: string, nextTitle: string) => Promise<void> | void
 
   /** Embedded on Final Cut page: Final Cut tab + external upload only */
   variant?: 'full' | 'finalCutOnly'
@@ -84,6 +86,7 @@ interface ScreeningItem {
   hasABTest?: boolean
   abTestVariant?: 'A' | 'B'
   thumbnail?: string
+  editable?: boolean
 }
 
 type ScreeningType = 'storyboard' | 'pre-cut' | 'final-cut' | 'external'
@@ -128,6 +131,7 @@ export function ScreeningRoomDashboard({
   onViewAnalytics,
   onConfigureABTest,
   onUploadExternal,
+  onRenameScreening,
   variant = 'full',
   hideFinalCutChrome = false,
 }: ScreeningRoomDashboardProps) {
@@ -136,6 +140,9 @@ export function ScreeningRoomDashboard({
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [dragOver, setDragOver] = useState(false)
+  const [editingScreeningId, setEditingScreeningId] = useState<string | null>(null)
+  const [draftTitle, setDraftTitle] = useState('')
+  const [isSavingTitle, setIsSavingTitle] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   // ============================================================================
@@ -274,7 +281,20 @@ export function ScreeningRoomDashboard({
         
         {/* Play Overlay */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/50">
-          <button className="w-14 h-14 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors">
+          <button
+            type="button"
+            disabled={!screening.videoUrl}
+            onClick={() => {
+              if (!screening.videoUrl) return
+              window.open(screening.videoUrl, '_blank', 'noopener,noreferrer')
+            }}
+            className={cn(
+              'w-14 h-14 rounded-full flex items-center justify-center transition-colors',
+              screening.videoUrl
+                ? 'bg-white/20 hover:bg-white/30'
+                : 'bg-white/10 cursor-not-allowed'
+            )}
+          >
             <Play className="w-7 h-7 text-white ml-0.5" fill="white" />
           </button>
         </div>
@@ -282,9 +302,64 @@ export function ScreeningRoomDashboard({
       
       {/* Info */}
       <div className="p-4">
-        <h3 className="font-semibold text-white truncate mb-2">
-          {screening.title}
-        </h3>
+        {editingScreeningId === screening.id ? (
+          <div className="mb-2 flex items-center gap-1.5">
+            <input
+              value={draftTitle}
+              onChange={(e) => setDraftTitle(e.target.value)}
+              className="flex-1 bg-zinc-900 border border-zinc-700 rounded-md px-2 py-1.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-500/60"
+              maxLength={120}
+              autoFocus
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isSavingTitle || !draftTitle.trim()}
+              onClick={async () => {
+                if (!onRenameScreening) return
+                const nextTitle = draftTitle.trim()
+                if (!nextTitle) return
+                try {
+                  setIsSavingTitle(true)
+                  await onRenameScreening(screening.id, nextTitle)
+                  setEditingScreeningId(null)
+                } finally {
+                  setIsSavingTitle(false)
+                }
+              }}
+            >
+              <Check className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isSavingTitle}
+              onClick={() => {
+                setEditingScreeningId(null)
+                setDraftTitle('')
+              }}
+            >
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        ) : (
+          <div className="mb-2 flex items-start gap-2">
+            <h3 className="font-semibold text-white truncate flex-1">{screening.title}</h3>
+            {onRenameScreening && screening.editable !== false ? (
+              <button
+                type="button"
+                className="text-zinc-500 hover:text-zinc-200 transition-colors"
+                onClick={() => {
+                  setEditingScreeningId(screening.id)
+                  setDraftTitle(screening.title)
+                }}
+                aria-label="Edit screening title"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            ) : null}
+          </div>
+        )}
         
         {/* Stats */}
         <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">

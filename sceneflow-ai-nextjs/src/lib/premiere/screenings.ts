@@ -111,6 +111,39 @@ export async function listPremiereScreenings(projectId: string): Promise<Premier
   return records
 }
 
+export async function updatePremiereScreeningTitle(
+  projectId: string,
+  screeningId: string,
+  title: string
+): Promise<PremiereScreeningRecord | null> {
+  const normalizedProjectId = projectId.trim()
+  const normalizedScreeningId = screeningId.trim()
+  const normalizedTitle = title.trim()
+  if (!normalizedProjectId || !normalizedScreeningId || !normalizedTitle) return null
+
+  const targetPath = screeningPath(normalizedProjectId, normalizedScreeningId)
+  const listing = await list({ prefix: targetPath, limit: 2 })
+  const targetBlob = listing.blobs.find((blob) => blob.pathname === targetPath) || listing.blobs[0]
+  if (!targetBlob?.url) return null
+
+  const payload = await fetchJsonFromBlobUrl<Partial<PremiereScreeningRecord>>(targetBlob.url)
+  const existing = payload ? toRecord(payload) : null
+  if (!existing) return null
+
+  const updated: PremiereScreeningRecord = {
+    ...existing,
+    title: normalizedTitle,
+  }
+
+  await put(targetPath, JSON.stringify(updated, null, 2), {
+    access: 'public',
+    addRandomSuffix: false,
+    contentType: 'application/json; charset=utf-8',
+  })
+
+  return updated
+}
+
 export function dedupePremiereScreenings(
   items: Array<Pick<PremiereScreeningRecord, 'id' | 'videoUrl'> & PremiereScreeningRecord>
 ): PremiereScreeningRecord[] {
