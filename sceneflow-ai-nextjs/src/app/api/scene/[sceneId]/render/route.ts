@@ -219,7 +219,7 @@ export async function POST(
     // Build video segments for job spec (including per-segment audio settings)
     const videoSegments: SceneRenderVideoSegment[] = body.segments.map((seg, idx) => {
       const audioSource = seg.audioSource ?? 'original'
-      console.log(`[SceneRender] API Segment ${idx}: audioSource='${audioSource}', audioVolume=${seg.audioVolume ?? 1.0}`)
+      console.log(`[SceneRender] API Segment ${idx}: audioSource='${audioSource}', audioVolume=${seg.audioVolume ?? 1.0}, pauseDuration=${seg.pauseDuration ?? 0}`)
       return {
         segmentId: seg.segmentId,
         sequenceIndex: seg.sequenceIndex,
@@ -231,6 +231,7 @@ export async function POST(
         voiceoverUrl: seg.voiceoverUrl,
         voiceoverStartTime: seg.voiceoverStartTime,
         voiceoverDuration: seg.voiceoverDuration,
+        pauseDuration: seg.pauseDuration ?? 0,
       }
     })
     

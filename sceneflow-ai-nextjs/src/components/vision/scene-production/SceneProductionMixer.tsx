@@ -347,6 +347,7 @@ export interface SceneAudioAssets {
 export interface SegmentAudioConfig {
   includeAudio: boolean
   volume: number
+  postSegmentPause?: number
 }
 
 type RenderStatus = 'idle' | 'preparing' | 'rendering' | 'complete' | 'error'
@@ -654,12 +655,16 @@ function ScenePreviewPlayer({
   const getPlaybackSegmentDuration = useCallback(
     (segment: SceneSegment) => {
       const measured = measuredSegmentDurations[segment.segmentId]
-      if (measured != null && Number.isFinite(measured) && measured > 0) {
-        return measured
-      }
-      return getSegmentDuration(segment)
+      const baseDuration = (measured != null && Number.isFinite(measured) && measured > 0) 
+        ? measured 
+        : getSegmentDuration(segment)
+        
+      const config = segmentAudioConfigs[segment.segmentId]
+      const pauseDuration = config?.postSegmentPause || 0
+      
+      return baseDuration + pauseDuration
     },
-    [measuredSegmentDurations, getSegmentDuration]
+    [measuredSegmentDurations, getSegmentDuration, segmentAudioConfigs]
   )
 
   // Helper: Start time on the playback timeline (uses measured segment lengths)
@@ -774,66 +779,95 @@ function ScenePreviewPlayer({
     }
     
     const handleEnded = () => {
-      // Check if we should advance to next segment or freeze
-      if (currentSegmentIndex < segments.length - 1) {
-        // Move to next segment
-        setCurrentSegmentIndex(prev => prev + 1)
-      } else {
-        // Last segment ended - check if audio extends beyond video
-        const dialogueStartBase = getSegmentStartTime(audioTracks.dialogue.startSegment)
-        const dialogueEnds =
-          audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0
-            ? currentAudioUrls.dialogue.map((d, i) => {
-                const cfg = dialogueClipConfigs?.[dialogueClipConfigKey(d, i)]
-                if (cfg?.enabled === false) return 0
-                const t0 = dialogueStartBase + mixerDialogueStart(d, i, 3)
-                return t0 + dialogueClipWallDuration(d.duration, cfg?.playbackRate)
-              })
-            : [0]
-        const narrEnd =
-          audioTracks.narration.enabled &&
-          currentAudioUrls.narration &&
-          (currentAudioUrls.narrationDuration ?? 0) > 0
-            ? getSegmentStartTime(audioTracks.narration.startSegment) +
-              (currentAudioUrls.narrationDuration ?? 0)
-            : 0
-        const audioEndTime = Math.max(
-          narrEnd,
-          ...dialogueEnds,
-          audioTracks.music.enabled && currentAudioUrls.music ? totalDuration : 0
-        )
-        
-        if (audioEndTime > timelineVideoDuration && currentTime < audioEndTime) {
-          // Freeze video on last frame, continue audio
-          setIsVideoFrozen(true)
-          
-          // Start timer to continue advancing currentTime for audio playback
-          const startFreezeTime = timelineVideoDuration
-          const remainingTime = audioEndTime - startFreezeTime
-          let elapsedFrozen = 0
-          
-          audioTimerRef.current = setInterval(() => {
-            elapsedFrozen += 0.1
-            setCurrentTime(startFreezeTime + elapsedFrozen)
-            
-            if (elapsedFrozen >= remainingTime) {
-              // Audio complete - end playback
-              if (audioTimerRef.current) {
-                clearInterval(audioTimerRef.current)
-                audioTimerRef.current = null
-              }
-              setIsPlaying(false)
-              setIsVideoFrozen(false)
-              setCurrentTime(0)
-              setCurrentSegmentIndex(0)
-            }
-          }, 100)
+      const config = segmentAudioConfigs[segments[currentSegmentIndex].segmentId]
+      const pauseDuration = config?.postSegmentPause || 0
+
+      const advanceOrEnd = () => {
+        // Check if we should advance to next segment or freeze
+        if (currentSegmentIndex < segments.length - 1) {
+          // Move to next segment
+          setCurrentSegmentIndex(prev => prev + 1)
         } else {
-          // No audio extension - normal end
-          setIsPlaying(false)
-          setCurrentTime(0)
-          setCurrentSegmentIndex(0)
+          // Last segment ended - check if audio extends beyond video
+          const dialogueStartBase = getSegmentStartTime(audioTracks.dialogue.startSegment)
+          const dialogueEnds =
+            audioTracks.dialogue.enabled && currentAudioUrls.dialogue.length > 0
+              ? currentAudioUrls.dialogue.map((d, i) => {
+                  const cfg = dialogueClipConfigs?.[dialogueClipConfigKey(d, i)]
+                  if (cfg?.enabled === false) return 0
+                  const t0 = dialogueStartBase + mixerDialogueStart(d, i, 3)
+                  return t0 + dialogueClipWallDuration(d.duration, cfg?.playbackRate)
+                })
+              : [0]
+          const narrEnd =
+            audioTracks.narration.enabled &&
+            currentAudioUrls.narration &&
+            (currentAudioUrls.narrationDuration ?? 0) > 0
+              ? getSegmentStartTime(audioTracks.narration.startSegment) +
+                (currentAudioUrls.narrationDuration ?? 0)
+              : 0
+          const audioEndTime = Math.max(
+            narrEnd,
+            ...dialogueEnds,
+            audioTracks.music.enabled && currentAudioUrls.music ? totalDuration : 0
+          )
+          
+          if (audioEndTime > timelineVideoDuration && currentTime < audioEndTime) {
+            // Freeze video on last frame, continue audio
+            setIsVideoFrozen(true)
+            
+            // Start timer to continue advancing currentTime for audio playback
+            const startFreezeTime = timelineVideoDuration
+            const remainingTime = audioEndTime - startFreezeTime
+            let elapsedFrozen = 0
+            
+            audioTimerRef.current = setInterval(() => {
+              elapsedFrozen += 0.1
+              setCurrentTime(startFreezeTime + elapsedFrozen)
+              
+              if (elapsedFrozen >= remainingTime) {
+                // Audio complete - end playback
+                if (audioTimerRef.current) {
+                  clearInterval(audioTimerRef.current)
+                  audioTimerRef.current = null
+                }
+                setIsPlaying(false)
+                setIsVideoFrozen(false)
+                setCurrentTime(0)
+                setCurrentSegmentIndex(0)
+              }
+            }, 100)
+          } else {
+            // No audio extension - normal end
+            setIsPlaying(false)
+            setCurrentTime(0)
+            setCurrentSegmentIndex(0)
+          }
         }
+      }
+
+      if (pauseDuration > 0) {
+        setIsVideoFrozen(true)
+        
+        const startFreezeTime = segmentStartTime + (getPlaybackSegmentDuration(segments[currentSegmentIndex]) - pauseDuration)
+        const remainingTime = pauseDuration
+        let elapsedFrozen = 0
+        
+        audioTimerRef.current = setInterval(() => {
+          elapsedFrozen += 0.1
+          setCurrentTime(startFreezeTime + elapsedFrozen)
+          
+          if (elapsedFrozen >= remainingTime) {
+            if (audioTimerRef.current) {
+              clearInterval(audioTimerRef.current)
+              audioTimerRef.current = null
+            }
+            setIsVideoFrozen(false)
+            advanceOrEnd()
+          }
+        }, 100)
+      } else {
+        advanceOrEnd()
       }
     }
     
@@ -856,6 +890,9 @@ function ScenePreviewPlayer({
     totalDuration,
     timelineVideoDuration,
     currentTime,
+    segmentAudioConfigs,
+    getPlaybackSegmentDuration,
+    getSegmentStartTime,
   ])
   
   // Sync audio tracks with video playback
@@ -2132,6 +2169,14 @@ function SegmentAudioControls({
     })
   }
   
+  const updateSegmentPause = (segmentId: string, pause: number) => {
+    const current = segmentConfigs[segmentId] || { includeAudio: true, volume: 1.0 }
+    onConfigChange({
+      ...segmentConfigs,
+      [segmentId]: { ...current, postSegmentPause: pause }
+    })
+  }
+  
   return (
     <div className="bg-gray-800/50 rounded-lg">
       {/* Header with master volume */}
@@ -2223,6 +2268,21 @@ function SegmentAudioControls({
               ) : (
                 <span className="flex-1 text-xs text-gray-500 italic">Muted</span>
               )}
+              
+              {/* Pause Control */}
+              <div className="flex items-center gap-1 border-l border-gray-600/30 pl-2 ml-2 shrink-0">
+                <span className="text-[10px] text-gray-400">Pause(s)</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  value={config.postSegmentPause || 0}
+                  onChange={(e) => updateSegmentPause(seg.segmentId, parseFloat(e.target.value) || 0)}
+                  disabled={disabled}
+                  className="w-12 h-6 bg-gray-900 border border-gray-700 rounded text-xs text-center text-gray-200 focus:border-purple-500 focus:outline-none"
+                />
+              </div>
             </div>
           )
         })}
@@ -2994,7 +3054,7 @@ export function SceneProductionMixer({
       // Build segment data
       const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
       const segmentData = renderedSegments.map(seg => {
-        const audioConfig = segmentAudioConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
+        const audioConfig = segmentAudioConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0, postSegmentPause: 0 }
         const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
         return {
           segmentId: seg.segmentId,
@@ -3004,6 +3064,7 @@ export function SceneProductionMixer({
           endTime: seg.endTime,
           audioSource: (audioConfig.includeAudio && (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)) ? 'original' : 'none',
           audioVolume: audioConfig.volume,
+          pauseDuration: audioConfig.postSegmentPause || 0,
         }
       })
       

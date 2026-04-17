@@ -824,12 +824,16 @@ def build_concat_ffmpeg_command(
     segment_audio_streams = []  # Track audio streams with their per-segment settings
     
     for i, segment in enumerate(video_segments):
+        pause_duration = float(segment.get('pauseDuration', 0))
+        tpad_str = f",tpad=stop_mode=clone:stop_duration={pause_duration}" if pause_duration > 0 else ""
+        apad_str = f",apad=pad_dur={pause_duration}" if pause_duration > 0 else ""
+        
         # Scale to target resolution and set framerate
         # setpts=PTS-STARTPTS resets video timestamps to start at 0 for proper concatenation sync
         filter_str = (
             f"[{i}:v]setpts=PTS-STARTPTS,scale={width}:{height}:force_original_aspect_ratio=decrease,"
             f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,"
-            f"fps={fps},setsar=1[v{i}]"
+            f"fps={fps},setsar=1{tpad_str}[v{i}]"
         )
         filter_parts.append(filter_str)
         video_concat_inputs.append(f"[v{i}]")
@@ -840,19 +844,19 @@ def build_concat_ffmpeg_command(
         duration = segment.get('duration', 5)
         
         # Debug: Log per-segment audio settings
-        print(f"[FFmpeg] Segment {i}: audioSource='{audio_source}', volume={seg_audio_volume}, duration={duration}")
+        print(f"[FFmpeg] Segment {i}: audioSource='{audio_source}', volume={seg_audio_volume}, duration={duration}, pauseDuration={pause_duration}")
         
         if audio_source == 'original':
             # Use original MP4 audio - normalize format for concat compatibility
             print(f"[FFmpeg] Segment {i}: Using ORIGINAL audio from MP4")
             # Always normalize audio format AND reset timestamps to ensure concat compatibility
             # asetpts=PTS-STARTPTS ensures audio starts at 0 for proper concatenation with silence streams
-            audio_filter = f"[{i}:a]asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo"
+            audio_filter = f"[{i}:a]asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo{apad_str}"
             if seg_audio_volume != 1.0:
                 audio_filter += f",volume={seg_audio_volume}"
             audio_filter += f"[seg_audio_{i}]"
             filter_parts.append(audio_filter)
-            segment_audio_streams.append((f"[seg_audio_{i}]", duration))
+            segment_audio_streams.append((f"[seg_audio_{i}]", duration + pause_duration))
         elif audio_source == 'voiceover' and i in voiceover_input_map:
             # Use voiceover audio (with optional time slicing)
             voiceover_input_idx = voiceover_input_map[i]
@@ -860,19 +864,19 @@ def build_concat_ffmpeg_command(
             voiceover_duration = segment.get('voiceoverDuration', duration)
             
             # Build filter: extract time slice, apply volume, and normalize format for concat compatibility
-            vo_filter = f"[{voiceover_input_idx}:a]atrim=start={voiceover_start}:duration={voiceover_duration},asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo"
+            vo_filter = f"[{voiceover_input_idx}:a]atrim=start={voiceover_start}:duration={voiceover_duration},asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo{apad_str}"
             if seg_audio_volume != 1.0:
                 vo_filter += f",volume={seg_audio_volume}"
             vo_filter += f"[vo_audio_{i}]"
             filter_parts.append(vo_filter)
-            segment_audio_streams.append((f"[vo_audio_{i}]", duration))
+            segment_audio_streams.append((f"[vo_audio_{i}]", duration + pause_duration))
         else:
             # Muted segment - use volume=0 on original audio to preserve actual duration
             # This keeps audio track timing in sync with video (instead of synthetic silence based on metadata duration)
             print(f"[FFmpeg] Segment {i}: Muting original audio with volume=0 (preserves actual duration)")
-            audio_filter = f"[{i}:a]asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo,volume=0[seg_audio_{i}]"
+            audio_filter = f"[{i}:a]asetpts=PTS-STARTPTS,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo,volume=0{apad_str}[seg_audio_{i}]"
             filter_parts.append(audio_filter)
-            segment_audio_streams.append((f"[seg_audio_{i}]", duration))
+            segment_audio_streams.append((f"[seg_audio_{i}]", duration + pause_duration))
     
     # Concatenate all video segments (video only)
     if len(video_concat_inputs) > 1:

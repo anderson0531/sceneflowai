@@ -295,6 +295,8 @@ export interface SceneRenderVideoSegment {
   voiceoverStartTime?: number
   /** Duration of voiceover to use (for slicing narration) */
   voiceoverDuration?: number
+  /** Pause duration after this segment ends (seconds) */
+  pauseDuration?: number
 }
 
 /**
@@ -473,6 +475,12 @@ export interface CreateSceneRenderJobRequest {
     videoUrl: string
     startTime: number
     endTime: number
+    audioSource?: SegmentAudioSource
+    audioVolume?: number
+    voiceoverUrl?: string
+    voiceoverStartTime?: number
+    voiceoverDuration?: number
+    pauseDuration?: number
   }>
   /** Audio tracks with timing */
   audioTracks: {

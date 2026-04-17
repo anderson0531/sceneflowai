@@ -434,32 +434,32 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
       {/* Scrollable timeline body — legend stays in footer below so it is always visible */}
       <div 
         ref={scrollContainerRef}
-        className="overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
+        className="flex overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
         style={{ maxHeight: 'min(520px, 78vh)' }}
       >
         <div 
           ref={containerRef} 
-          className="relative px-3 pt-3 pb-2"
-          style={{ width: `${effectiveWidth + 48}px`, minWidth: '100%' }}
+          className="relative px-3 pt-3 pb-2 flex-1"
+          style={{ width: `${effectiveWidth}px`, minWidth: '100%' }}
         >
           {/* Playhead */}
           {currentPlaybackTime > 0 && (
             <div 
               className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 pointer-events-none"
-              style={{ left: `${24 + (currentPlaybackTime / totalDuration) * effectiveWidth}px` }}
+              style={{ left: `calc(12px + 48px + ${(currentPlaybackTime / totalDuration) * effectiveWidth}px)` }}
             >
               <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45" />
             </div>
           )}
           
           {/* Ruler */}
-          <div className="h-5 relative mb-2 border-b border-gray-700/30">
+          <div className="h-5 relative mb-2 border-b border-gray-700/30 ml-12">
             {/* Tick marks */}
             {ticks.map((t) => (
               <div
                 key={t}
                 className="absolute bottom-0 flex flex-col items-center"
-                style={{ left: `${(t / totalDuration) * effectiveWidth}px` }}
+                style={{ left: `${(t / totalDuration) * 100}%` }}
               >
                 <div className="w-px h-2 bg-gray-600" />
                 <span className="text-[9px] text-gray-500 -translate-x-1/2 mt-0.5">{formatTime(t)}</span>
@@ -468,11 +468,11 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
           </div>
 
           {/* Video Segments Track */}
-          <div className="h-8 relative mb-2 rounded bg-gray-800/30">
-            <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center">
+          <div className="h-8 relative mb-2 rounded bg-gray-800/30 flex">
+            <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50">
               <span className="text-[10px] text-gray-500 font-medium pl-1">Video</span>
             </div>
-            <div className="ml-12 h-full relative">
+            <div className="flex-1 h-full relative">
               {segmentPositions.map((pos, idx) => {
                 const startPercent = (pos.start / totalDuration) * 100
                 const widthPercent = (pos.duration / totalDuration) * 100
@@ -484,7 +484,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                     className="absolute top-1 bottom-1 rounded-sm flex items-center overflow-hidden"
                     style={{
                       left: `${startPercent}%`,
-                      width: `${Math.max(widthPercent, 1)}%`,
+                      width: `calc(${Math.max(widthPercent, 1)}% - 2px)`,
                       backgroundColor: isUserUpload ? 'rgba(34, 197, 94, 0.3)' : 'rgba(168, 85, 247, 0.3)',
                       borderLeft: `2px solid ${isUserUpload ? '#22c55e' : '#a855f7'}`,
                     }}
@@ -511,9 +511,9 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
               const isDragging = draggingTrack === visual.key
 
               return (
-                <div key={visual.key} className="h-7 relative rounded bg-gray-800/30">
+                <div key={visual.key} className="h-7 relative rounded bg-gray-800/30 flex">
                   {/* Track label */}
-                  <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center">
+                  <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50">
                     <visual.icon className="w-3 h-3 ml-1" style={{ color: config.enabled ? visual.color : '#6b7280' }} />
                     <span className={`text-[10px] ml-1 ${config.enabled ? 'text-gray-400' : 'text-gray-600'}`}>
                       {visual.label}
@@ -521,7 +521,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                   </div>
                   
                   {/* Track content area */}
-                  <div className="ml-12 h-full relative">
+                  <div className="flex-1 h-full relative">
                     {config.enabled && duration > 0 && (
                       <div
                         className={`
@@ -556,7 +556,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
               <div className="relative">
                 <div className="h-7 rounded bg-gray-800/30 mb-1 flex items-center">
                   {/* Track label */}
-                  <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center z-10">
+                  <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50 h-full">
                     <MessageSquare className="w-3 h-3 ml-1" style={{ color: '#3b82f6' }} />
                     <span className="text-[10px] ml-1 text-gray-400">Dialogue</span>
                   </div>
@@ -564,7 +564,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                 
                 {/* Dialogue clips container — clip.startTime is already absolute on the scene timeline */}
                 <div
-                  className="relative scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 overscroll-y-contain pr-0.5"
+                  className="relative scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 overscroll-y-contain pr-0.5 ml-12"
                   style={{
                     maxHeight: `${Math.min(220, Math.max(100, 28 * dialogueClips.length + 12))}px`,
                     overflowY: 'auto',
@@ -630,16 +630,16 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
             {/* Empty dialogue state */}
             {(!dialogueClips || dialogueClips.length === 0) && audioTracks.dialogue.enabled && (
               <div className="h-7 relative rounded bg-gray-800/30 flex items-center">
-                <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center">
+                <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50 h-full">
                   <MessageSquare className="w-3 h-3 ml-1" style={{ color: '#3b82f6' }} />
                   <span className="text-[10px] ml-1 text-gray-400">Dialogue</span>
                 </div>
-                <div className="ml-12 text-[9px] text-gray-500">No dialogue clips available</div>
+                <div className="ml-2 text-[9px] text-gray-500">No dialogue clips available</div>
               </div>
             )}
             {(!dialogueClips || dialogueClips.length === 0) && !audioTracks.dialogue.enabled && (
               <div className="h-7 relative rounded bg-gray-800/30 flex items-center">
-                <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center">
+                <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50 h-full">
                   <MessageSquare className="w-3 h-3 ml-1" style={{ color: '#6b7280' }} />
                   <span className="text-[10px] ml-1 text-gray-600">Dialogue</span>
                 </div>
@@ -648,14 +648,14 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
 
 
             {/* Text Overlay Track */}
-            <div className="h-7 relative rounded bg-gray-800/30">
-              <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center">
+            <div className="h-7 relative rounded bg-gray-800/30 flex">
+              <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50 h-full">
                 <Type className="w-3 h-3 ml-1" style={{ color: textOverlays.length > 0 ? TEXT_TRACK_VISUAL.color : '#6b7280' }} />
                 <span className={`text-[10px] ml-1 ${textOverlays.length > 0 ? 'text-gray-400' : 'text-gray-600'}`}>
                   Text
                 </span>
               </div>
-              <div className="ml-12 h-full relative">
+              <div className="flex-1 h-full relative">
                 {textOverlays.map((overlay) => {
                   const duration = overlay.timing.duration === -1 
                     ? videoTotalDuration - overlay.timing.startTime 
