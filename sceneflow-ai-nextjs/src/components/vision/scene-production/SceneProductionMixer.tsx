@@ -751,17 +751,28 @@ function ScenePreviewPlayer({
   useEffect(() => {
     if (playbackKind !== 'image-sequence') return
     if (!isPlaying || isVideoFrozen) return
-    const id = window.setInterval(() => {
+    
+    let lastTime = performance.now()
+    let frameId: number
+    
+    const tick = (now: number) => {
+      const delta = (now - lastTime) / 1000 // in seconds
+      lastTime = now
+      
       setCurrentTime(prev => {
-        const next = prev + 0.1
+        const next = prev + delta
         if (next >= scrubberTotalDuration) {
           setIsPlaying(false)
           return 0
         }
         return next
       })
-    }, 100)
-    return () => window.clearInterval(id)
+      
+      frameId = requestAnimationFrame(tick)
+    }
+    
+    frameId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frameId)
   }, [playbackKind, isPlaying, isVideoFrozen, scrubberTotalDuration])
 
   // Handle video time updates
@@ -819,24 +830,27 @@ function ScenePreviewPlayer({
             // Start timer to continue advancing currentTime for audio playback
             const startFreezeTime = timelineVideoDuration
             const remainingTime = audioEndTime - startFreezeTime
-            let elapsedFrozen = 0
+            const startTimeMs = performance.now()
             
-            audioTimerRef.current = setInterval(() => {
-              elapsedFrozen += 0.1
+            const tick = () => {
+              const elapsedFrozen = (performance.now() - startTimeMs) / 1000
               setCurrentTime(startFreezeTime + elapsedFrozen)
               
               if (elapsedFrozen >= remainingTime) {
                 // Audio complete - end playback
                 if (audioTimerRef.current) {
-                  clearInterval(audioTimerRef.current)
+                  cancelAnimationFrame(audioTimerRef.current)
                   audioTimerRef.current = null
                 }
                 setIsPlaying(false)
                 setIsVideoFrozen(false)
                 setCurrentTime(0)
                 setCurrentSegmentIndex(0)
+              } else {
+                audioTimerRef.current = requestAnimationFrame(tick) as unknown as NodeJS.Timeout
               }
-            }, 100)
+            }
+            audioTimerRef.current = requestAnimationFrame(tick) as unknown as NodeJS.Timeout
           } else {
             // No audio extension - normal end
             setIsPlaying(false)
@@ -851,21 +865,24 @@ function ScenePreviewPlayer({
         
         const startFreezeTime = segmentStartTime + (getPlaybackSegmentDuration(segments[currentSegmentIndex]) - pauseDuration)
         const remainingTime = pauseDuration
-        let elapsedFrozen = 0
+        const startTimeMs = performance.now()
         
-        audioTimerRef.current = setInterval(() => {
-          elapsedFrozen += 0.1
+        const tick = () => {
+          const elapsedFrozen = (performance.now() - startTimeMs) / 1000
           setCurrentTime(startFreezeTime + elapsedFrozen)
           
           if (elapsedFrozen >= remainingTime) {
             if (audioTimerRef.current) {
-              clearInterval(audioTimerRef.current)
+              cancelAnimationFrame(audioTimerRef.current as unknown as number)
               audioTimerRef.current = null
             }
             setIsVideoFrozen(false)
             advanceOrEnd()
+          } else {
+            audioTimerRef.current = requestAnimationFrame(tick) as unknown as NodeJS.Timeout
           }
-        }, 100)
+        }
+        audioTimerRef.current = requestAnimationFrame(tick) as unknown as NodeJS.Timeout
       } else {
         advanceOrEnd()
       }
@@ -1016,7 +1033,7 @@ function ScenePreviewPlayer({
     return () => {
       // Clear audio timer
       if (audioTimerRef.current) {
-        clearInterval(audioTimerRef.current)
+        cancelAnimationFrame(audioTimerRef.current as unknown as number)
         audioTimerRef.current = null
       }
       
@@ -1057,7 +1074,7 @@ function ScenePreviewPlayer({
         setIsPlaying(false)
         setIsVideoFrozen(false)
         if (audioTimerRef.current) {
-          clearInterval(audioTimerRef.current)
+          cancelAnimationFrame(audioTimerRef.current as unknown as number)
           audioTimerRef.current = null
         }
       } else {
@@ -1075,7 +1092,7 @@ function ScenePreviewPlayer({
       musicRef.current?.pause()
       dialogueRefsById.current.forEach(el => el?.pause())
       if (audioTimerRef.current) {
-        clearInterval(audioTimerRef.current)
+        cancelAnimationFrame(audioTimerRef.current as unknown as number)
         audioTimerRef.current = null
       }
       setIsPlaying(false)
@@ -1094,7 +1111,7 @@ function ScenePreviewPlayer({
     // Clear any frozen state
     setIsVideoFrozen(false)
     if (audioTimerRef.current) {
-      clearInterval(audioTimerRef.current)
+      cancelAnimationFrame(audioTimerRef.current as unknown as number)
       audioTimerRef.current = null
     }
 
@@ -1142,7 +1159,7 @@ function ScenePreviewPlayer({
     // Clear frozen state
     setIsVideoFrozen(false)
     if (audioTimerRef.current) {
-      clearInterval(audioTimerRef.current)
+      cancelAnimationFrame(audioTimerRef.current as unknown as number)
       audioTimerRef.current = null
     }
 
