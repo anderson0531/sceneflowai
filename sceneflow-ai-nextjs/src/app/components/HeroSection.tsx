@@ -2,9 +2,9 @@
 
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { DemoVideoModal } from './DemoVideoModal'
-import { Play, ArrowRight } from 'lucide-react'
+import { Play, ArrowRight, Pause, Volume2, VolumeX, Maximize } from 'lucide-react'
 import Link from 'next/link'
 
 /** Longform "What's Possible Reel" */
@@ -13,6 +13,38 @@ const HERO_COMMERCIAL_BLOB_SRC =
 
 export function HeroSection() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [isPlaying, setIsPlaying] = useState(true)
+  const [isMuted, setIsMuted] = useState(true)
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause()
+      } else {
+        videoRef.current.play()
+      }
+      setIsPlaying(!isPlaying)
+    }
+  }
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted
+      setIsMuted(!isMuted)
+    }
+  }
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`)
+      })
+    } else {
+      document.exitFullscreen()
+    }
+  }
 
   return (
     <>
@@ -81,17 +113,40 @@ export function HeroSection() {
           >
             <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-3xl blur-2xl" />
 
-            <div className="relative rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black">
-              <div className="relative aspect-video w-full">
+            <div 
+              ref={containerRef}
+              className="relative rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black group"
+            >
+              <div className="relative aspect-video w-full h-full">
                 <video
+                  ref={videoRef}
                   src={HERO_COMMERCIAL_BLOB_SRC}
                   autoPlay
                   loop
-                  muted
+                  muted={isMuted}
                   playsInline
                   preload="auto"
                   className="absolute inset-0 h-full w-full object-cover"
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
                 />
+                
+                {/* Controls Overlay */}
+                <div className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  <div className="w-full bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 flex items-center justify-between pointer-events-auto">
+                    <div className="flex items-center space-x-4">
+                      <button onClick={togglePlay} className="text-white hover:text-cyan-400 transition" aria-label={isPlaying ? "Pause" : "Play"}>
+                        {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                      </button>
+                      <button onClick={toggleMute} className="text-white hover:text-cyan-400 transition" aria-label={isMuted ? "Unmute" : "Mute"}>
+                        {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                      </button>
+                    </div>
+                    <button onClick={toggleFullscreen} className="text-white hover:text-cyan-400 transition" aria-label="Fullscreen">
+                      <Maximize className="w-6 h-6" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
