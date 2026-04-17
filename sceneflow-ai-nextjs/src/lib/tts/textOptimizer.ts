@@ -239,6 +239,15 @@ export function finalizeTextForGeminiTts(text: string): string {
   s = s.replace(/\*/g, '')
   s = s.replace(/\s+/g, ' ').trim()
   s = trimEchoedPrefixTail(s)
+  
+  // Format for Gemini TTS style/text separation if there are vocal directions at the start
+  const match = s.match(/^(?:\[(.*?)\]|\{(.*?)\})\s*(.*)/)
+  if (match) {
+    const vocalStyle = match[1] || match[2]
+    const dialogueBody = match[3]
+    s = `Style: ${vocalStyle}\nText: ${dialogueBody}`
+  }
+  
   return s
 }
 
