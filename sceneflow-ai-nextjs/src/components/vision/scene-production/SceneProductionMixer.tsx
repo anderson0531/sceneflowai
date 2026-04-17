@@ -2277,10 +2277,14 @@ function SegmentAudioControls({
                   min="0"
                   max="10"
                   step="0.1"
-                  value={config.postSegmentPause || 0}
-                  onChange={(e) => updateSegmentPause(seg.segmentId, parseFloat(e.target.value) || 0)}
+                  value={config.postSegmentPause === 0 ? '' : config.postSegmentPause || ''}
+                  placeholder="0"
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    updateSegmentPause(seg.segmentId, isNaN(val) ? 0 : val);
+                  }}
                   disabled={disabled}
-                  className="w-12 h-6 bg-gray-900 border border-gray-700 rounded text-xs text-center text-gray-200 focus:border-purple-500 focus:outline-none"
+                  className="w-16 h-6 px-1 bg-gray-900 border border-gray-700 rounded text-xs text-center text-gray-200 focus:border-purple-500 focus:outline-none"
                 />
               </div>
             </div>
