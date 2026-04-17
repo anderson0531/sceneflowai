@@ -654,6 +654,7 @@ def build_ffmpeg_command(
             if tempo:
                 chain.append(tempo)
             chain.append(f"volume={volume}")
+            chain.append("aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo")
             audio_filter = f"[{input_idx}:a]{','.join(chain)}[a{i}]"
             filter_parts.append(audio_filter)
             audio_mix_inputs.append(f"[a{i}]")
@@ -960,6 +961,7 @@ def build_concat_ffmpeg_command(
             if tempo:
                 chain.append(tempo)
             chain.append(f"volume={volume}")
+            chain.append("aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo")
             audio_filter = f"[{input_idx}:a]{','.join(chain)}[overlay_a{i}]"
             filter_parts.append(audio_filter)
             all_audio_inputs.append(f"[overlay_a{i}]")
