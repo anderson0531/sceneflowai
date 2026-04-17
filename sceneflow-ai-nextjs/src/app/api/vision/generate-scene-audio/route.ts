@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
-import { optimizeTextForTTS, finalizeTextForGoogleTts } from '../../../../lib/tts/textOptimizer'
+import { optimizeTextForTTS, optimizeTextForGeminiTTS, finalizeTextForGoogleTts, finalizeTextForGeminiTts } from '../../../../lib/tts/textOptimizer'
 import { getAudioDurationFromBuffer } from '../../../../lib/audio/serverAudioDuration'
 import { translateWithVertexAI } from '../../../../lib/vertexai/translate'
 import { getVertexAIAuthToken } from '../../../../lib/vertexai/client'
@@ -136,8 +136,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 2: Optimize text for TTS (remove stage directions, clean up)
-    const optimized = optimizeTextForTTS(textToGenerate)
+    const isGeminiModel = voiceConfig.voiceId.startsWith('gemini-')
+    const optimized = isGeminiModel 
+      ? optimizeTextForGeminiTTS(textToGenerate)
+      : optimizeTextForTTS(textToGenerate)
+      
     console.log('[Scene Audio] Text optimization:', {
+      isGeminiModel,
       original: textToGenerate.substring(0, 100),
       optimized: optimized.text.substring(0, 100),
       cues: optimized.cues,
@@ -304,8 +309,14 @@ async function generateGoogleAudio(
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
   let accessToken: string | null = null
 
+  const isGemini = voiceConfig.voiceId.startsWith('gemini-')
+  const isCustomClone = !isGemini && !voiceConfig.voiceId.includes('-') && voiceConfig.voiceId.length > 20
+  
   // Final sanitize: multiline/unicode brackets, markdown emphasis, echoed tail (see textOptimizer).
-  const sanitizedText = finalizeTextForGoogleTts(text)
+  // Use the appropriate finalizer based on the model
+  const sanitizedText = isGemini 
+    ? finalizeTextForGeminiTts(text)
+    : finalizeTextForGoogleTts(text)
   
   if (!sanitizedText) {
     throw new Error('Text is empty after removing bracketed tags')
@@ -320,9 +331,6 @@ async function generateGoogleAudio(
   }
 
   if (!accessToken && !apiKey) throw new Error('Google API key or service account not configured')
-
-  const isGemini = voiceConfig.voiceId.startsWith('gemini-')
-  const isCustomClone = !isGemini && !voiceConfig.voiceId.includes('-') && voiceConfig.voiceId.length > 20
   
   const actualVoiceName = isGemini ? voiceConfig.voiceId.replace('gemini-', '') : voiceConfig.voiceId
   

@@ -173,6 +173,76 @@ export function optimizeTextForTTS(input: string): OptimizedText {
 }
 
 /**
+ * Optimizes text specifically for Gemini 2.5 Flash TTS
+ * 
+ * Gemini 2.5 TTS can accept bracketed inline emotion/delivery tags like [whispers].
+ * It does NOT use parenthetical tags.
+ * This function:
+ * 1. Converts parenthetical stage directions at the start of sentences to bracketed tags
+ * 2. Preserves existing bracketed tags
+ * 3. Does not remove performance markup, only cleans whitespace and handles edge cases.
+ */
+export function optimizeTextForGeminiTTS(input: string): OptimizedText {
+  const originalLength = input.length
+  const cues = extractEmotionCues(input)
+  
+  let optimized = normalizePerformanceBracketChars(input)
+  
+  // Convert parenthetical (stage directions) into bracketed [stage directions]
+  // Because Gemini natively understands bracketed instructions
+  optimized = optimized.replace(/\(([\s\S]*?)\)/g, '[$1]')
+  
+  optimized = unwrapMarkdownEmphasis(optimized)
+  optimized = optimized.replace(/\*/g, '')
+  
+  // Normalize whitespace
+  optimized = normalizeWhitespace(optimized)
+  optimized = trimEchoedPrefixTail(optimized)
+  
+  const optimizedLength = optimized.length
+  
+  // Check if result is speakable (has actual content outside of brackets)
+  const speakableOnly = optimized.replace(/\[[\s\S]*?\]/g, '').trim()
+  const isSpeakable = speakableOnly.length > 0
+  
+  if (originalLength !== optimizedLength || cues.length > 0) {
+    console.log('[Gemini TTS Optimizer]', {
+      originalLength,
+      optimizedLength,
+      isSpeakable,
+      cues: cues.length > 0 ? cues : 'none',
+      sample: optimized.substring(0, 60)
+    })
+  }
+  
+  return {
+    text: optimized,
+    cues,
+    originalLength,
+    optimizedLength,
+    isSpeakable
+  }
+}
+
+/**
+ * Last pass before Google Gemini TTS: defense in depth on already-optimized script text.
+ * Leaves bracketed tags intact, unlike finalizeTextForGoogleTts
+ */
+export function finalizeTextForGeminiTts(text: string): string {
+  let s = normalizePerformanceBracketChars(text)
+  
+  // We explicitly DO NOT strip [...] tags because Gemini uses them.
+  // If there are still parentheses, convert them.
+  s = s.replace(/\([\s\S]*?\)/g, '')
+  
+  s = unwrapMarkdownEmphasis(s)
+  s = s.replace(/\*/g, '')
+  s = s.replace(/\s+/g, ' ').trim()
+  s = trimEchoedPrefixTail(s)
+  return s
+}
+
+/**
  * Example transformations for testing
  */
 export const EXAMPLE_TRANSFORMATIONS = {
