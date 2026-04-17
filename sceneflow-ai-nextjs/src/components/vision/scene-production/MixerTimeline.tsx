@@ -472,7 +472,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
             <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50">
               <span className="text-[10px] text-gray-500 font-medium pl-1">Video</span>
             </div>
-            <div className="flex-1 h-full relative">
+            <div className="flex-1 h-full relative" style={{ width: `${effectiveWidth}px` }}>
               {segmentPositions.map((pos, idx) => {
                 const startPercent = (pos.start / totalDuration) * 100
                 const widthPercent = (pos.duration / totalDuration) * 100
@@ -521,7 +521,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                   </div>
                   
                   {/* Track content area */}
-                  <div className="flex-1 h-full relative">
+                  <div className="flex-1 h-full relative" style={{ width: `${effectiveWidth}px` }}>
                     {config.enabled && duration > 0 && (
                       <div
                         className={`
@@ -556,7 +556,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
               <div className="relative">
                 <div className="h-7 rounded bg-gray-800/30 mb-1 flex items-center">
                   {/* Track label */}
-                  <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50 h-full">
+                  <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50 h-full absolute left-0 top-0 bottom-0">
                     <MessageSquare className="w-3 h-3 ml-1" style={{ color: '#3b82f6' }} />
                     <span className="text-[10px] ml-1 text-gray-400">Dialogue</span>
                   </div>
@@ -564,13 +564,14 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                 
                 {/* Dialogue clips container — clip.startTime is already absolute on the scene timeline */}
                 <div
-                  className="relative scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 overscroll-y-contain pr-0.5 ml-12"
+                  className="relative scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 overscroll-y-contain pr-0.5"
                   style={{
                     maxHeight: `${Math.min(220, Math.max(100, 28 * dialogueClips.length + 12))}px`,
                     overflowY: 'auto',
+                    marginLeft: '48px', // 12w = 48px to clear the absolute label
                   }}
                 >
-                  <div className="relative" style={{ minHeight: `${Math.max(26 * dialogueClips.length, 26)}px` }}>
+                  <div className="relative" style={{ minHeight: `${Math.max(26 * dialogueClips.length, 26)}px`, width: `${effectiveWidth}px` }}>
                     {dialogueClips.map((clip, idx) => {
                       const startTime = clip.startTime
                       const wallDur = dialogueClipWallSeconds(clip)
@@ -634,7 +635,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                   <MessageSquare className="w-3 h-3 ml-1" style={{ color: '#3b82f6' }} />
                   <span className="text-[10px] ml-1 text-gray-400">Dialogue</span>
                 </div>
-                <div className="ml-2 text-[9px] text-gray-500">No dialogue clips available</div>
+                <div className="flex-1 text-[9px] text-gray-500 pl-2">No dialogue clips available</div>
               </div>
             )}
             {(!dialogueClips || dialogueClips.length === 0) && !audioTracks.dialogue.enabled && (
@@ -655,7 +656,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
                   Text
                 </span>
               </div>
-              <div className="flex-1 h-full relative">
+              <div className="flex-1 h-full relative" style={{ width: `${effectiveWidth}px` }}>
                 {textOverlays.map((overlay) => {
                   const duration = overlay.timing.duration === -1 
                     ? videoTotalDuration - overlay.timing.startTime 
