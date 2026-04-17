@@ -959,17 +959,28 @@ function ScenePreviewPlayer({
         }
         const lineVol = lineCfg?.volume ?? 1
         const rate = clampDialoguePlaybackRate(lineCfg?.playbackRate)
-        audioEl.playbackRate = rate
+        
+        // Only set playbackRate if it has actually changed to avoid interrupting audio decoding
+        if (Math.abs(audioEl.playbackRate - rate) > 0.01) {
+          audioEl.playbackRate = rate
+        }
+        
         audioEl.volume = isMuted ? 0 : lineVol * audioTracks.dialogue.volume
         const clipStart = dialogueStartTime + mixerDialogueStart(clip, idx, 3)
         const wallDur = dialogueClipWallDuration(clip.duration, lineCfg?.playbackRate)
         const clipEnd = clipStart + wallDur + EPS
 
         if (isPlaying && currentTime >= clipStart && currentTime < clipEnd) {
-          const clipLocalTime = Math.max(0, (currentTime - clipStart) * rate)
-          const drift = Math.abs(audioEl.currentTime - clipLocalTime)
+          // When adjusting playbackRate on HTMLAudioElement, it naturally plays faster/slower.
+          // The currentTime of the audio element tracks the *audio file's* time.
+          // Therefore, we do NOT multiply our wall-clock delta by rate when checking drift,
+          // because HTMLAudioElement.currentTime already advances at `rate` times real-time.
+          const expectedAudioTime = Math.max(0, (currentTime - clipStart) * rate)
+          const drift = Math.abs(audioEl.currentTime - expectedAudioTime)
+          
+          // Use a looser drift threshold to prevent stuttering
           if (drift > 0.85) {
-            audioEl.currentTime = clipLocalTime
+            audioEl.currentTime = expectedAudioTime
           }
           if (audioEl.paused) {
             audioEl.play().catch(() => {})
