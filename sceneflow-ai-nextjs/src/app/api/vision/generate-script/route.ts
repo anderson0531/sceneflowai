@@ -5,7 +5,7 @@ import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { generateText } from '@/lib/vertexai/gemini'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
-import { normalizeDialogueToCompleteSentenceLines } from '@/lib/script/segmentScript'
+import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentScript'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -330,7 +330,7 @@ DO NOT force full character names into dialogue text unnaturally.
 
 DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
 EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
-EVERY dialogue line MUST contain exactly ONE complete sentence after the opening [direction] tag.
+Target dialogue lines to roughly ~15 seconds of spoken delivery (soft target, can be shorter/longer when the beat needs it).
 
 STYLE TAGS (In square brackets BEFORE text):
 - MUST BE SHORT AND CONCISE (1-3 words max).
@@ -355,7 +355,8 @@ EXAMPLES:
   * {"character": "CHILD", "line": "[happy, quickly] Mommy, mommy! Look what I found!"}
 
 CRITICAL: Every single dialogue line must start with at least one simple emotion/style tag in [brackets].
-CRITICAL: Do NOT output fragment-only lines (e.g. "[quiet] and for what?"). Merge fragments into a complete sentence.
+CRITICAL: Avoid micro-lines that are only short fragments; combine adjacent thoughts from the same speaker when natural.
+CRITICAL: Voiceover/narration timing is flexible and can be aligned later; optimize narration lines for coherence, not strict seconds.
 
 CRITICAL REQUIREMENTS:
 1. Generate a COMPLETE, CONTINUOUS script with ${sceneCount} scenes
@@ -491,7 +492,7 @@ Generate COMPLETE scenes with full dialogue and action.`
         if (parsedBatch.scenes && Array.isArray(parsedBatch.scenes)) {
           const normalizedScenes = parsedBatch.scenes.map((scene: any) => ({
             ...scene,
-            dialogue: normalizeDialogueToCompleteSentenceLines(
+            dialogue: normalizeDialogueToProductionLineTargets(
               Array.isArray(scene?.dialogue) ? scene.dialogue : []
             ),
           }))

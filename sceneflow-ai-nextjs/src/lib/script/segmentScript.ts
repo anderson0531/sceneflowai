@@ -104,6 +104,7 @@ export function splitIntoSentences(input: string): string[] {
 
 type SentenceChunk = { text: string; complete: boolean }
 type PendingFragment = { tag: string; text: string; template: any; sourceIndexes: number[] }
+type LineLike = { character?: string; line?: string; kind?: 'dialogue' | 'narration'; [key: string]: any }
 
 function splitBodyIntoSentenceChunks(body: string): SentenceChunk[] {
   const normalized = String(body || '').replace(/\s+/g, ' ').trim()
@@ -145,17 +146,29 @@ function isLikelyOrphanClauseStart(text: string): boolean {
   return /^(and|but|or|so|yet|then|because|if|when|while|though|although)\b/i.test(trimmed)
 }
 
+export function estimateSpokenLineSeconds(text: string): number {
+  const stripped = String(text || '')
+    .replace(/^\s*\[[^\]]+\]\s*/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!stripped) return 0
+  const words = stripped.split(/\s+/).filter(Boolean).length
+  const pausePunctuation = (stripped.match(/[,:;…]/g)?.length || 0) * 0.22
+  const questionPause = (stripped.match(/[?]/g)?.length || 0) * 0.2
+  return words / 2.35 + pausePunctuation + questionPause + 0.45
+}
+
 /**
  * Enforce exactly one complete sentence per line while preserving bracket
  * direction tags. Designed for script generation output cleanup before
  * persistence and migration.
  */
 export function normalizeDialogueToCompleteSentenceLines(
-  dialogue: Array<{ character?: string; line?: string; [key: string]: any }>
-): Array<{ character?: string; line?: string; [key: string]: any }> {
+  dialogue: LineLike[]
+): LineLike[] {
   if (!Array.isArray(dialogue) || dialogue.length === 0) return []
 
-  const out: Array<{ character?: string; line?: string; [key: string]: any }> = []
+  const out: LineLike[] = []
   const pendingBySpeaker = new Map<string, PendingFragment>()
 
   const speakerKey = (d: any) => String(d?.character || '').trim().toUpperCase() || '__UNKNOWN__'
@@ -216,6 +229,69 @@ export function normalizeDialogueToCompleteSentenceLines(
   }
 
   return out
+}
+
+export function normalizeDialogueToProductionLineTargets(
+  dialogue: LineLike[],
+  options: { targetSeconds?: number; maxSeconds?: number } = {}
+): LineLike[] {
+  const targetSeconds = options.targetSeconds ?? 15
+  const maxSeconds = options.maxSeconds ?? 28
+  const normalized = normalizeDialogueToCompleteSentenceLines(dialogue)
+  if (normalized.length <= 1) return normalized
+
+  const merged: LineLike[] = []
+  let i = 0
+  while (i < normalized.length) {
+    const current = normalized[i]
+    const currentCharacter = String(current?.character || '').trim().toUpperCase()
+    const currentKind = current?.kind
+    const isNarration = currentKind === 'narration' || currentCharacter === NARRATOR_CHARACTER
+    if (isNarration) {
+      merged.push(current)
+      i++
+      continue
+    }
+
+    const seed = { ...current }
+    const seedParts = splitLeadingTag(seed.line || '')
+    let mergedBody = seedParts.body
+    let mergedTag = seedParts.tag
+    let duration = estimateSpokenLineSeconds(seed.line || '')
+    let sourceIndexes = Array.isArray(seed.__sourceIndexes) ? [...seed.__sourceIndexes] : []
+
+    let cursor = i + 1
+    while (cursor < normalized.length && duration < targetSeconds) {
+      const nxt = normalized[cursor]
+      const nextCharacter = String(nxt?.character || '').trim().toUpperCase()
+      const nextKind = nxt?.kind
+      const nextIsNarration = nextKind === 'narration' || nextCharacter === NARRATOR_CHARACTER
+      if (nextIsNarration || nextCharacter !== currentCharacter) break
+
+      const nextParts = splitLeadingTag(nxt.line || '')
+      const candidateBody = `${mergedBody} ${nextParts.body}`.trim()
+      const candidateLine = withTag(mergedTag || nextParts.tag, candidateBody)
+      const candidateDuration = estimateSpokenLineSeconds(candidateLine)
+      if (candidateDuration > maxSeconds) break
+
+      mergedBody = candidateBody
+      duration = candidateDuration
+      if (!mergedTag && nextParts.tag) mergedTag = nextParts.tag
+      if (Array.isArray(nxt.__sourceIndexes)) {
+        sourceIndexes = Array.from(new Set([...sourceIndexes, ...nxt.__sourceIndexes]))
+      }
+      cursor++
+    }
+
+    merged.push({
+      ...seed,
+      ...(sourceIndexes.length ? { __sourceIndexes: sourceIndexes } : {}),
+      line: withTag(mergedTag, ensureTerminalPunctuation(mergedBody)),
+    })
+    i = cursor
+  }
+
+  return merged
 }
 
 // ---------------------------------------------------------------------------

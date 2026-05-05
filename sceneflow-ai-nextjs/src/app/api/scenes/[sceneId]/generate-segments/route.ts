@@ -444,7 +444,11 @@ export async function POST(
           : []
         const promptBundleEntry = promptBundleEntryForSegment(
           timelineIdxs,
-          sceneData.sceneDirectionPromptBundle
+          sceneData.sceneDirectionPromptBundle,
+          dialogueLineIdsFromAssignedTimelineIndices(
+            timelineIdxs,
+            sceneData.combinedAudioTimeline
+          )
         )
         return {
         estimatedDuration:
@@ -887,17 +891,39 @@ function dialogueLinesForAssignedTimelineIndices(
 
 function promptBundleEntryForSegment(
   timelineIndices: number[] | undefined,
-  promptBundle: SceneSegmentPromptBundleEntry[]
+  promptBundle: SceneSegmentPromptBundleEntry[],
+  dialogueLineIds?: string[]
 ): SceneSegmentPromptBundleEntry | null {
   if (!Array.isArray(promptBundle) || promptBundle.length === 0) return null
   const byIndex = new Map<number, SceneSegmentPromptBundleEntry>()
   for (const row of promptBundle) byIndex.set(row.timelineIndex, row)
+  const hasPromptPayload = (row: SceneSegmentPromptBundleEntry) =>
+    !!(row.startFramePrompt || row.endFramePrompt || row.videoPrompt || row.segmentDirectionSummary)
   if (Array.isArray(timelineIndices)) {
     for (const idx of timelineIndices) {
       const hit = byIndex.get(idx)
+      if (hit && hasPromptPayload(hit)) return hit
       if (hit) return hit
     }
   }
+  const dialogueIndices = Array.isArray(dialogueLineIds)
+    ? dialogueLineIds
+        .map((id) => {
+          const m = /^dialogue-(\d+)$/.exec(typeof id === 'string' ? id : '')
+          return m ? parseInt(m[1], 10) : NaN
+        })
+        .filter((n) => !Number.isNaN(n))
+    : []
+  if (dialogueIndices.length > 0) {
+    const byDialogue = promptBundle.filter(
+      (row) => typeof row.dialogueIndex === 'number' && dialogueIndices.includes(row.dialogueIndex)
+    )
+    const richByDialogue = byDialogue.find(hasPromptPayload)
+    if (richByDialogue) return richByDialogue
+    if (byDialogue.length > 0) return byDialogue[0]
+  }
+  const richFallback = promptBundle.find(hasPromptPayload)
+  if (richFallback) return richFallback
   return null
 }
 
@@ -2456,7 +2482,8 @@ function transformSegmentsToOutput(
     const approvedDir = approvedDirections?.[idx]
     const scenePromptBundleRow = promptBundleEntryForSegment(
       seg.assigned_dialogue_indices,
-      sceneData.sceneDirectionPromptBundle
+      sceneData.sceneDirectionPromptBundle,
+      dialogueLineIds
     )
     const rawTransitionIn = String(approvedDir?.transitionIn || '').toLowerCase()
     let transitionType: 'CUT' | 'CONTINUE' = idx === 0 ? 'CUT' : 'CONTINUE'

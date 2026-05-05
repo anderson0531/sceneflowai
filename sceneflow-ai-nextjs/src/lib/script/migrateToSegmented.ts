@@ -31,7 +31,7 @@ import {
 import {
   buildSegmentSfx,
   enforceOneSentencePerLine,
-  normalizeDialogueToCompleteSentenceLines,
+  normalizeDialogueToProductionLineTargets,
   mintLineId,
   mintSegmentId,
   quantizeAndResequence,
@@ -203,7 +203,7 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
   const dialogueLinesByIndex = new Map<number, DialogueLine[]>()
   const dialogueSourceIndexByLineId = new Map<string, number>()
   const flatDialogue: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
-  const normalizedLegacyDialogue = normalizeDialogueToCompleteSentenceLines(
+  const normalizedLegacyDialogue = normalizeDialogueToProductionLineTargets(
     flatDialogue.map((d, i) => ({ ...d, __legacyIndex: i, __sourceIndexes: [i] }))
   )
   normalizedLegacyDialogue.forEach((d) => {
@@ -320,8 +320,7 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
     })
     const baseDirection =
       promptBundleForLine?.segmentDirectionSummary ||
-      line.line ||
-      sceneDirectionBase
+      `Segment beat ${i + 1}`
     const startFramePrompt = promptBundleForLine?.startFramePrompt || null
     const endFramePrompt = promptBundleForLine?.endFramePrompt || null
     const videoPrompt = promptBundleForLine?.videoPrompt || null
@@ -385,7 +384,7 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
   const quantized = quantizeAndResequence(builtSegments)
   assignSfxToLineSegments(quantized, allSfx, allDialogue)
   return {
-    segments: enforceOneSentencePerLine(quantized),
+    segments: quantized,
     dialogueIndexToLineId,
     narrationLineIds,
     sfxIndexToSfxId,
@@ -677,29 +676,25 @@ function legacyDialogueEntryToLines(d: any, _scene: any): DialogueLine[] {
       ? d.lineId
       : mintLineId()
 
-  // Use enforceOneSentencePerLine via a temporary segment.
-  const tmp = enforceOneSentencePerLine([
+  const normalized = normalizeDialogueToProductionLineTargets([
     {
-      segmentId: 'tmp',
-      sequenceIndex: 0,
-      startTime: 0,
-      endTime: 0,
-      segmentDirection: '',
-      dialogue: [
-        {
-          lineId: firstLineId,
-          character,
-          characterId,
-          kind: 'dialogue',
-          line: text,
-          voiceDirection,
-        },
-      ],
-      sfx: [],
+      lineId: firstLineId,
+      character,
+      characterId,
+      kind: 'dialogue',
+      line: text,
+      voiceDirection,
     },
-  ])[0].dialogue
+  ])
 
-  return tmp
+  return normalized.map((entry, idx) => ({
+    lineId: idx === 0 ? firstLineId : mintLineId(),
+    character,
+    characterId,
+    kind: 'dialogue',
+    line: typeof entry?.line === 'string' ? entry.line : text,
+    voiceDirection,
+  }))
 }
 
 function assignSfxToLineSegments(

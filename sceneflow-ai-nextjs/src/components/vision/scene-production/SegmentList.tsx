@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ChevronDown, Clapperboard, Film } from 'lucide-react'
+import { ChevronDown, Clapperboard } from 'lucide-react'
 import type { ScriptSegment, DialogueLine } from '@/lib/script/segmentTypes'
 import { SegmentDialogueCard } from './SegmentDialogueCard'
 import { SegmentSfxCard } from './SegmentSfxCard'
@@ -176,23 +176,6 @@ function SegmentCard({
               {segment.dialogue[0].line}
             </div>
           )}
-          {/* Segment direction */}
-          <div className="rounded-md bg-blue-900/30 border border-blue-700/40 p-3">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Film className="w-3.5 h-3.5 text-blue-300" />
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-blue-200">
-                Segment Direction
-              </span>
-            </div>
-            <p className="text-sm text-blue-50/90 whitespace-pre-line">
-              {segment.segmentDirection || (
-                <span className="italic text-blue-200/50">
-                  No segment direction yet. Edit the script to add a ~10s performance note.
-                </span>
-              )}
-            </p>
-          </div>
-
           {(segment.startFramePrompt ||
             segment.endFramePrompt ||
             segment.videoPrompt ||
