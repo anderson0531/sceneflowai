@@ -29,6 +29,16 @@ interface AudioGenerationRequest {
   voiceConfig: VoiceConfig
   characterName?: string // For dialogue
   dialogueIndex?: number // For dialogue - index of the dialog line in the scene
+  /** Stable per-line id from the segmented script (preferred). When provided
+   *  the persisted audio entry will include `lineId` so future lookups match
+   *  by id instead of positional index. Optional. */
+  lineId?: string
+  /** Optional kind discriminator: 'narration' lines are stored alongside
+   *  dialogue with kind='narration'. Defaults to 'dialogue' for the
+   *  audioType='dialogue' branch and 'narration' for audioType='narration'. */
+  lineKind?: 'narration' | 'dialogue'
+  /** Optional character id for the line (NARRATOR resolves to 'narrator'). */
+  characterId?: string
   language?: string // Target language for TTS (default: 'en')
   skipTranslation?: boolean // Skip server-side translation (text is already translated)
   skipDbUpdate?: boolean // Skip database update if called from batch generation
@@ -36,7 +46,7 @@ interface AudioGenerationRequest {
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, sceneIndex, audioType, text, voiceConfig, characterName, dialogueIndex, language: requestedLanguage, skipTranslation, skipDbUpdate = false }: AudioGenerationRequest & { text: string, skipDbUpdate?: boolean } = await req.json()
+    const { projectId, sceneIndex, audioType, text, voiceConfig, characterName, dialogueIndex, lineId, lineKind, characterId, language: requestedLanguage, skipTranslation, skipDbUpdate = false }: AudioGenerationRequest & { text: string, skipDbUpdate?: boolean } = await req.json()
 
     // Log the request for debugging
     console.log('[Scene Audio] Request:', { 
@@ -45,6 +55,8 @@ export async function POST(req: NextRequest) {
       audioType,
       characterName,
       dialogueIndex,
+      lineId,
+      lineKind,
       hasText: !!text,
       hasVoiceConfig: !!voiceConfig 
     })
@@ -244,7 +256,8 @@ export async function POST(req: NextRequest) {
         finalVoiceConfig.voiceId,
         characterName, 
         dialogueIndex,
-        adaptationDiagnostics
+        adaptationDiagnostics,
+        { lineId, lineKind, characterId }
       )
     }
 
@@ -446,7 +459,12 @@ async function updateSceneAudio(
   voiceId?: string,
   characterName?: string,
   dialogueIndex?: number,
-  adaptation?: AdaptationDiagnostics | null
+  adaptation?: AdaptationDiagnostics | null,
+  lineMeta?: {
+    lineId?: string
+    lineKind?: 'narration' | 'dialogue'
+    characterId?: string
+  }
 ) {
   await sequelize.authenticate()
   const project = await Project.findByPk(projectId)
@@ -548,16 +566,21 @@ async function updateSceneAudio(
       }
       
       const dialogueArray = [...scene.dialogueAudio[language]]
+      const targetLineId = lineMeta?.lineId
       
-      // Find existing entry by dialogueIndex (primary match) or character+index combo
-      // This handles cases where old entries might have mismatched data
-      let existingIndex = dialogueArray.findIndex((d: any) => 
-        d.dialogueIndex === dialogueIndex
-      )
-      
-      // If not found by dialogueIndex alone, try character + dialogueIndex
-      if (existingIndex < 0) {
-        existingIndex = dialogueArray.findIndex((d: any) => 
+      // Find existing entry: prefer lineId match, then fall back to dialogueIndex,
+      // then to character + dialogueIndex.
+      let existingIndex = -1
+      if (targetLineId) {
+        existingIndex = dialogueArray.findIndex((d: any) => d.lineId === targetLineId)
+      }
+      if (existingIndex < 0 && dialogueIndex !== undefined) {
+        existingIndex = dialogueArray.findIndex((d: any) =>
+          d.dialogueIndex === dialogueIndex
+        )
+      }
+      if (existingIndex < 0 && dialogueIndex !== undefined) {
+        existingIndex = dialogueArray.findIndex((d: any) =>
           d.character?.toLowerCase() === characterName?.toLowerCase() && 
           d.dialogueIndex === dialogueIndex
         )
@@ -566,6 +589,9 @@ async function updateSceneAudio(
       const dialogueEntry = {
         character: characterName!,
         dialogueIndex: dialogueIndex!,
+        ...(targetLineId ? { lineId: targetLineId } : {}),
+        ...(lineMeta?.lineKind ? { kind: lineMeta.lineKind } : {}),
+        ...(lineMeta?.characterId ? { characterId: lineMeta.characterId } : {}),
         audioUrl,
         duration: duration || undefined,
         voiceId: voiceId || undefined,
@@ -573,17 +599,21 @@ async function updateSceneAudio(
       }
       
       if (existingIndex >= 0) {
-        dialogueArray[existingIndex] = dialogueEntry
+        dialogueArray[existingIndex] = { ...dialogueArray[existingIndex], ...dialogueEntry }
       } else {
         dialogueArray.push(dialogueEntry)
       }
       
-      // CRITICAL: Deduplicate - remove any other entries with the same dialogueIndex
-      // This cleans up any duplicate entries from previous bugs
+      // Deduplicate by lineId first (preferred), falling back to dialogueIndex.
       const deduplicatedArray = dialogueArray.filter((d: any, idx: number, arr: any[]) => {
-        if (d.dialogueIndex === dialogueIndex) {
-          // For entries with this dialogueIndex, only keep the one we just set/updated
-          const lastIdx = arr.findLastIndex((x: any) => x.dialogueIndex === dialogueIndex)
+        if (targetLineId && d.lineId === targetLineId) {
+          const lastIdx = arr.findLastIndex((x: any) => x.lineId === targetLineId)
+          return idx === lastIdx
+        }
+        if (d.dialogueIndex === dialogueIndex && (!d.lineId || !targetLineId)) {
+          const lastIdx = arr.findLastIndex(
+            (x: any) => x.dialogueIndex === dialogueIndex && (!x.lineId || !targetLineId)
+          )
           return idx === lastIdx
         }
         return true

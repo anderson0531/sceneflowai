@@ -102,6 +102,56 @@ export function dialogueLineIdForIndex(dialogueIndex: number): string {
 /** Narration audio is merged into the dialogue track as a NARRATOR clip (no separate voiceover row). */
 export const DIALOGUE_NARRATION_CLIP_ID = 'dialogue-narration'
 
+/**
+ * Look up the persisted dialogue-audio entry for a given line on a scene.
+ *
+ * Resolution order:
+ *   1. Match by `lineId` (preferred — survives reorders).
+ *   2. Match by `dialogueIndex` (legacy positional lookup).
+ *   3. Match by character + dialogueIndex (last-resort).
+ *
+ * Works against both legacy array shape (`scene.dialogueAudio: any[]`) and
+ * the multi-language object shape (`scene.dialogueAudio: { [lang]: any[] }`).
+ */
+export function findDialogueAudioForLine(
+  scene: any,
+  options: {
+    language?: string
+    lineId?: string
+    dialogueIndex?: number
+    character?: string
+  }
+): any | null {
+  if (!scene?.dialogueAudio) return null
+  const lang = options.language || 'en'
+  const arr: any[] = Array.isArray(scene.dialogueAudio)
+    ? scene.dialogueAudio
+    : Array.isArray(scene.dialogueAudio?.[lang])
+      ? scene.dialogueAudio[lang]
+      : []
+  if (!arr.length) return null
+
+  const lineId = options.lineId
+  if (lineId) {
+    const byLineId = arr.find((d) => d?.lineId === lineId)
+    if (byLineId) return byLineId
+  }
+  if (options.dialogueIndex !== undefined) {
+    const byIndex = arr.find((d) => d?.dialogueIndex === options.dialogueIndex)
+    if (byIndex) return byIndex
+  }
+  if (options.character !== undefined && options.dialogueIndex !== undefined) {
+    return (
+      arr.find(
+        (d) =>
+          d?.character?.toLowerCase() === options.character?.toLowerCase() &&
+          d?.dialogueIndex === options.dialogueIndex
+      ) || null
+    )
+  }
+  return null
+}
+
 /** Match SceneTimelineV2 visual clip duration for one segment. */
 export function getSegmentBaseDurationSeconds(seg: any): number {
   const s = typeof seg.startTime === 'number' && Number.isFinite(seg.startTime) ? seg.startTime : 0

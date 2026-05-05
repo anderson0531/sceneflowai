@@ -4,6 +4,7 @@ import { sequelize } from '@/config/database'
 import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { generateText } from '@/lib/vertexai/gemini'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
+import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -700,9 +701,25 @@ Generate COMPLETE scenes with full dialogue and action.`
       }
     }
 
+    // Run the segmented-script pass so newly generated scenes land with
+    // `segments[]` populated (and stable lineIds/sfxIds).
+    let metadataToPersist: any = updatedMetadata
+    try {
+      const segmentResult = migrateProjectToSegmented(updatedMetadata)
+      metadataToPersist = segmentResult.metadata
+      if (segmentResult.changed) {
+        console.log('[Generate Script] Segmented-script pass:', {
+          migratedSceneCount: segmentResult.migratedSceneCount,
+          alreadyMigratedSceneCount: segmentResult.alreadyMigratedSceneCount,
+        })
+      }
+    } catch (segErr) {
+      console.warn('[Generate Script] Segmented-script pass failed; persisting flat shape only', segErr)
+    }
+
     // Update with proper Sequelize method
     await project.update({
-      metadata: updatedMetadata
+      metadata: metadataToPersist
     })
 
     // Send final progress: generation complete

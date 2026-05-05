@@ -23,6 +23,8 @@ import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
 import { ProductionSectionHeader } from './scene-production/ProductionSectionHeader'
 import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
 import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
+import { SegmentList } from './scene-production/SegmentList'
+import type { ScriptSegment } from '@/lib/script/segmentTypes'
 
 // Dynamic imports with ssr: false to prevent TDZ circular dependency issues
 // These components have complex initialization that can cause module load order problems
@@ -5309,8 +5311,10 @@ function SceneCard({
                     )
                   })()}
 
-                  {/* Scene Narration */}
-                  {scene.narration && (() => {
+                  {/* Scene Narration — hidden when the scene has segmented script
+                     content (narration is now rendered inline as Narrator
+                     dialog cards inside each segment). */}
+                  {scene.narration && !(Array.isArray((scene as any).segments) && (scene as any).segments.length > 0) && (() => {
                     const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
                     
                     return (
@@ -5548,8 +5552,66 @@ function SceneCard({
                     )
                   })()}
                   
-                  {/* Scene Dialog */}
-                  {scene.dialogue && scene.dialogue.length > 0 && (
+                  {/* Segmented Production Script — replaces the flat dialogue list
+                     when the scene has been migrated to the segmented shape. */}
+                  {Array.isArray((scene as any).segments) && (scene as any).segments.length > 0 && (
+                    <div className="bg-emerald-950 border-l-4 border-emerald-500 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Clapperboard className="w-4 h-4 text-emerald-400" />
+                          <span className="text-sm font-semibold text-gray-200">Scene Script</span>
+                          <span className="text-xs text-gray-500">
+                            ({(scene as any).segments.length} {(scene as any).segments.length === 1 ? 'segment' : 'segments'})
+                          </span>
+                        </div>
+                        {/* Resync Audio Timing Button (kept for parity) */}
+                        {onResyncAudioTiming && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onResyncAudioTiming(sceneIdx, selectedLanguage)
+                                  }}
+                                  disabled={resyncingAudioSceneIndex === sceneIdx}
+                                  className="ml-2 p-1 rounded hover:bg-emerald-800/50 text-emerald-400 hover:text-emerald-300 transition-colors disabled:opacity-50"
+                                >
+                                  {resyncingAudioSceneIndex === sceneIdx ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                                <p className="text-xs">Resync audio timing</p>
+                                <p className="text-[10px] text-gray-400">Recalculate start times after edits</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                      <SegmentList
+                        scene={scene}
+                        sceneIdx={sceneIdx}
+                        segments={(scene as any).segments as ScriptSegment[]}
+                        selectedLanguage={selectedLanguage}
+                        playingAudio={playingAudio}
+                        onPlayAudio={onPlayAudio}
+                        onGenerateSceneAudio={onGenerateSceneAudio}
+                        onDeleteSceneAudio={onDeleteSceneAudio}
+                        uploadAudio={uploadAudio}
+                        onOpenSfxLibrary={onOpenSfxLibrary}
+                        generatingDialogue={generatingDialogue}
+                        setGeneratingDialogue={setGeneratingDialogue}
+                        overlayStore={overlayStore}
+                      />
+                    </div>
+                  )}
+
+                  {/* Scene Dialog (legacy flat dialogue) — only when not yet migrated to segments */}
+                  {scene.dialogue && scene.dialogue.length > 0 && !(Array.isArray((scene as any).segments) && (scene as any).segments.length > 0) && (
                     <div className="bg-emerald-950 border-l-4 border-emerald-500 p-4 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
                         <button
@@ -5954,8 +6016,9 @@ function SceneCard({
                     </div>
                   )}
                   
-                  {/* SFX */}
-                  {scene.sfx && Array.isArray(scene.sfx) && scene.sfx.length > 0 && (
+                  {/* SFX (legacy flat list) — hidden once segments own their own
+                     SFX cues. Segment-scoped SFX render inside SegmentList. */}
+                  {scene.sfx && Array.isArray(scene.sfx) && scene.sfx.length > 0 && !(Array.isArray((scene as any).segments) && (scene as any).segments.length > 0) && (
                     <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                       <div className="flex items-center justify-between mb-3">
                         <button

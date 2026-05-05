@@ -1,6 +1,8 @@
 // Shared vision-workflow types extracted from src/app/dashboard/workflow/vision/[projectId]/page.tsx
 // Keeping these in their own module reduces page-level surface and improves type-checking incrementally.
 
+import type { DialogueAudioEntry, ScriptSegment, SfxAudioEntry } from '@/lib/script/segmentTypes'
+
 export interface SceneAnalysis {
   overallScore: number
   directorScore: number
@@ -33,12 +35,41 @@ export interface Scene {
   id?: string
   heading?: string | { text: string }
   visualDescription?: string
+  /**
+   * @deprecated Narrator lines are now stored as DialogueLine entries with
+   * kind='narration' inside `segments[].dialogue`. Kept for legacy reads.
+   */
   narration?: string
+  /**
+   * @deprecated Flat positional dialogue. New scenes use `segments[].dialogue`.
+   * Kept for legacy reads and the migration window.
+   */
   dialogue?: any[]
+  /**
+   * Segmented script content. When present, this is the source of truth for
+   * direction / dialogue / SFX. When absent, callers should fall back to the
+   * flat `dialogue`/`sfx`/`narration` fields and trigger migration.
+   */
+  segments?: ScriptSegment[]
   music?: string | { description: string }
+  /**
+   * @deprecated Per-scene SFX list. New scenes carry SFX inside segments.
+   */
   sfx?: any[]
+  /**
+   * Per-language dialogue audio. Stored as a map of `{ [lang]: DialogueAudioEntry[] }`
+   * (or legacy shape `DialogueAudioEntry[]` for older projects).
+   */
+  dialogueAudio?: Record<string, DialogueAudioEntry[]> | DialogueAudioEntry[]
+  /**
+   * Per-language SFX audio keyed by sfxId: `{ [lang]: { [sfxId]: entry } }`.
+   */
+  sfxAudio?: Record<string, Record<string, SfxAudioEntry>>
   imageUrl?: string
+  /** @deprecated Narration audio is now part of dialogueAudio. */
   narrationAudioUrl?: string
+  /** @deprecated Narration audio is now part of dialogueAudio. */
+  narrationAudio?: any
   musicAudio?: string
   duration?: number
   scoreAnalysis?: SceneAnalysis
@@ -129,6 +160,12 @@ export interface VisionProject {
       scenesGenerated?: boolean
       narrationVoice?: VisionVoiceConfig
       descriptionVoice?: VisionVoiceConfig
+      /**
+       * Set to an ISO timestamp once a project has been migrated to the
+       * segmented-script shape (`script.scenes[].segments[]`). When present,
+       * the migration loader is a no-op for this project.
+       */
+      scriptSegmentMigratedAt?: string
     }
     [key: string]: any
   }

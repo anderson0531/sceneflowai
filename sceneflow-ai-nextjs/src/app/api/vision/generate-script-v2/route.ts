@@ -7,6 +7,7 @@ import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { runScriptQA, autoFixScript } from '@/lib/script/qualityAssurance'
 import { generateText } from '@/lib/vertexai/gemini'
 import { getSettingsForFormat, SCRIPT_SETTINGS_BY_FORMAT } from '@/lib/script/scriptGenerationRules'
+import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
 
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
@@ -532,18 +533,37 @@ export async function POST(request: NextRequest) {
           characters: allCharacters,
           totalDuration: totalEstimatedDuration
         }
-        
-        await project.update({
-          metadata: {
-            ...project.metadata,
-            visionPhase: {
-              ...existingVisionPhase,
-              script: finalScript,
-              scriptGenerated: true,
-              characters: mergedCharacters,
-              scenes: finalScenes
-            }
+
+        // Build the metadata blob then run the segmented-script pass so newly
+        // generated scenes land with `segments[]` populated. The pass also
+        // mints stable lineIds/sfxIds and quantizes timing to Veo buckets.
+        const interimMetadata = {
+          ...project.metadata,
+          visionPhase: {
+            ...existingVisionPhase,
+            script: finalScript,
+            scriptGenerated: true,
+            characters: mergedCharacters,
+            scenes: finalScenes
           }
+        }
+
+        let metadataToPersist: any = interimMetadata
+        try {
+          const segmentResult = migrateProjectToSegmented(interimMetadata)
+          metadataToPersist = segmentResult.metadata
+          if (segmentResult.changed) {
+            console.log('[Script Gen V2] Segmented-script pass:', {
+              migratedSceneCount: segmentResult.migratedSceneCount,
+              alreadyMigratedSceneCount: segmentResult.alreadyMigratedSceneCount,
+            })
+          }
+        } catch (segErr) {
+          console.warn('[Script Gen V2] Segmented-script pass failed; persisting flat shape only', segErr)
+        }
+
+        await project.update({
+          metadata: metadataToPersist
         })
 
         // Send completion (single-pass is always complete, not partial)

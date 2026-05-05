@@ -5380,28 +5380,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             needsMigration
           })
           
-          if (needsMigration) {
-            // Save migrated script back to database
+          // Segmented-script migration: convert flat dialogue + production segments
+          // into script.scenes[i].segments[] with stable lineIds. Idempotent.
+          const { migrateProjectToSegmented } = await import('@/lib/script/migrateToSegmented')
+          const interimMetadata = {
+            ...proj.metadata,
+            visionPhase: { ...visionPhase, script: migratedScript },
+          }
+          const segmentMigration = migrateProjectToSegmented(interimMetadata)
+          const finalMetadata = segmentMigration.metadata
+          const finalScript = finalMetadata.visionPhase?.script ?? migratedScript
+
+          if (needsMigration || segmentMigration.changed) {
+            if (segmentMigration.changed) {
+              console.log('[loadProject] Segmented-script migration applied:', {
+                migratedSceneCount: segmentMigration.migratedSceneCount,
+                alreadyMigratedSceneCount: segmentMigration.alreadyMigratedSceneCount,
+                audioEntriesRewritten: segmentMigration.audioEntriesRewritten,
+                translationLinesWritten: segmentMigration.translationLinesWritten,
+              })
+            }
             try {
               await fetch(`/api/projects/${projectId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  metadata: {
-                    ...proj.metadata,
-                    visionPhase: {
-                      ...visionPhase,
-                      script: migratedScript
-                    }
-                  }
+                  metadata: finalMetadata
                 })
               })
             } catch (error) {
-              console.warn('[loadProject] Failed to save audio migration:', error)
+              console.warn('[loadProject] Failed to save script migrations:', error)
             }
           }
           
-          setScript(migratedScript)
+          setScript(finalScript)
         }
         
         // Load existing reviews
@@ -8429,30 +8441,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       } else if (audioType === 'description') {
         text = scene.visualDescription || scene.action || scene.summary || scene.heading
       } else {
-        // Dialogue: use stored translation by dialogueIndex
-        if (useStoredTranslation && sceneTranslation?.dialogue && dialogueIndex !== undefined) {
-          const translatedLine = sceneTranslation.dialogue[dialogueIndex]
-          if (translatedLine) {
-            text = translatedLine
-            isPreTranslated = true
-            console.log('[Generate Scene Audio] Using stored translation for dialogue:', {
-              language: targetLanguage,
-              sceneIdx,
-              dialogueIndex,
-              textPreview: text?.substring(0, 50)
-            })
-          } else {
-            text = dialogueLine?.line
+        // Dialogue: prefer lookup by stable lineId, then fall back to legacy
+        // positional dialogueIndex.
+        const linkedLineId: string | undefined = (dialogueLine as any)?.lineId
+        let translatedLine: string | undefined
+        if (useStoredTranslation && linkedLineId && (sceneTranslation as any)?.dialogueByLineId?.[linkedLineId]) {
+          translatedLine = (sceneTranslation as any).dialogueByLineId[linkedLineId]
+        } else if (useStoredTranslation && sceneTranslation?.dialogue && dialogueIndex !== undefined) {
+          translatedLine = sceneTranslation.dialogue[dialogueIndex]
+        }
+
+        if (useStoredTranslation && translatedLine) {
+          text = translatedLine
+          isPreTranslated = true
+          console.log('[Generate Scene Audio] Using stored translation for dialogue:', {
+            language: targetLanguage,
+            sceneIdx,
+            dialogueIndex,
+            lineId: linkedLineId,
+            via: linkedLineId && (sceneTranslation as any)?.dialogueByLineId?.[linkedLineId] ? 'lineId' : 'index',
+            textPreview: text?.substring(0, 50)
+          })
+        } else {
+          text = dialogueLine?.line
+          if (useStoredTranslation) {
             console.warn('[Generate Scene Audio] No stored translation for dialogue line, falling back:', {
               language: targetLanguage,
               sceneIdx,
               dialogueIndex,
+              lineId: linkedLineId,
               availableTranslations: sceneTranslation?.dialogue?.length || 0
             })
-          }
-        } else {
-          text = dialogueLine?.line
-          if (targetLanguage !== 'en') {
+          } else if (targetLanguage !== 'en') {
             console.log('[Generate Scene Audio] No stored translation for dialogue — server will translate via Vertex AI')
           }
         }
@@ -9194,6 +9214,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     }
     
+    // Force this scene to be re-segmented from the freshly edited flat fields.
+    // Dropping `segments` makes `migrateProjectToSegmented` rebuild this
+    // scene's ScriptSegment[] (with new lineIds for any new sentences) and
+    // re-sync the production-state segments by stable segmentId.
+    cleanedScene.segments = undefined
     updatedScenes[sceneIndex] = cleanedScene
 
     // Save to database FIRST
@@ -10086,22 +10111,42 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const existingVisionPhase = existingMetadata.visionPhase || {}
       
       const scriptUpdatedAt = new Date().toISOString()
-      const payload: Record<string, any> = {
-        metadata: {
-          ...existingMetadata,
-          visionPhase: {
-            ...existingVisionPhase,
+      const interimMetadata = {
+        ...existingMetadata,
+        visionPhase: {
+          ...existingVisionPhase,
+          script: {
+            ...currentScript,
             script: {
-              ...currentScript,
-              script: {
-                ...currentScript?.script,
-                scenes: updatedScenes
-              }
-            },
-            scenes: updatedScenes,
-            scriptUpdatedAt
-          }
-        },
+              ...currentScript?.script,
+              scenes: updatedScenes
+            }
+          },
+          scenes: updatedScenes,
+          scriptUpdatedAt
+        }
+      }
+
+      // Re-derive segments + sync production-state segments + bump stream
+      // sourceHashes for any scene whose creative content changed (or whose
+      // segments were cleared by an Edit-Script save).
+      let metadataToPersist: any = interimMetadata
+      try {
+        const { migrateProjectToSegmented } = await import('@/lib/script/migrateToSegmented')
+        const segmentResult = migrateProjectToSegmented(interimMetadata)
+        metadataToPersist = segmentResult.metadata
+        if (segmentResult.changed) {
+          console.log('[saveScenesToDatabase] Re-derived segments:', {
+            migratedSceneCount: segmentResult.migratedSceneCount,
+            audioEntriesRewritten: segmentResult.audioEntriesRewritten,
+          })
+        }
+      } catch (segErr) {
+        console.warn('[saveScenesToDatabase] Segment re-derivation failed; persisting flat shape only', segErr)
+      }
+
+      const payload: Record<string, any> = {
+        metadata: metadataToPersist,
       }
       
       // Signal to the server which scenes were intentionally deleted.
@@ -10805,16 +10850,41 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               const currentProject = projectRef.current || project
               const freshMetadata = currentProject?.metadata || {}
               const freshVisionPhase = freshMetadata.visionPhase || {}
-              
-              const saveResponse = await serializedProjectSave({
-                  metadata: {
-                    ...freshMetadata,
-                    visionPhase: {
-                      ...freshVisionPhase,
-                      script: updatedScript,
-                      scriptUpdatedAt
-                    }
+
+              // Optimized script may include unsegmented (or stale-segmented)
+              // scenes; clear any segments so the migration rebuilds them
+              // from the new flat dialog/sfx/narration content.
+              const scriptForSave = (() => {
+                try {
+                  const cloned = JSON.parse(JSON.stringify(updatedScript))
+                  const sceneList = cloned.script?.scenes ?? cloned.scenes
+                  if (Array.isArray(sceneList)) {
+                    sceneList.forEach((s: any) => { if (s) s.segments = undefined })
                   }
+                  return cloned
+                } catch {
+                  return updatedScript
+                }
+              })()
+
+              const interimMetadata = {
+                ...freshMetadata,
+                visionPhase: {
+                  ...freshVisionPhase,
+                  script: scriptForSave,
+                  scriptUpdatedAt
+                }
+              }
+              let metadataToPersist: any = interimMetadata
+              try {
+                const { migrateProjectToSegmented } = await import('@/lib/script/migrateToSegmented')
+                metadataToPersist = migrateProjectToSegmented(interimMetadata).metadata
+              } catch (segErr) {
+                console.warn('[onScriptOptimized] Segment re-derivation failed; persisting flat shape', segErr)
+              }
+
+              const saveResponse = await serializedProjectSave({
+                  metadata: metadataToPersist
                 }, 'onScriptOptimized')
               
               // Update project state to prevent stale metadata overwrites
