@@ -133,7 +133,19 @@ export default function IdeationPage() {
 
   // Keyboard shortcuts for save and navigation
   useBlueprintShortcuts({
-    onSave: handleSave,
+    onSave: () => {
+      if (!currentProject) return
+      updateProject(currentProject.id, {
+        metadata: {
+          ...currentProject.metadata,
+          concept,
+          targetAudience,
+          keyMessage,
+          tone,
+        },
+      })
+      updateStepProgress('ideation', 100)
+    },
     onClose: () => phase !== 'spark' && setPhase('spark'),
     enabled: true
   })
