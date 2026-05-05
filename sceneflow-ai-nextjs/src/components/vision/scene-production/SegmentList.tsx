@@ -193,6 +193,37 @@ function SegmentCard({
             </p>
           </div>
 
+          {(segment.startFramePrompt ||
+            segment.endFramePrompt ||
+            segment.videoPrompt ||
+            segment.references?.startFrameDescription ||
+            segment.references?.endFrameDescription) && (
+            <div className="rounded-md bg-indigo-900/20 border border-indigo-700/40 p-3 space-y-2">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-indigo-200">
+                Segment Prompts
+              </div>
+              <div className="space-y-1.5 text-xs text-indigo-100/90">
+                {(segment.startFramePrompt || segment.references?.startFrameDescription) && (
+                  <p>
+                    <span className="font-semibold text-indigo-200">Start frame:</span>{' '}
+                    {segment.startFramePrompt || segment.references?.startFrameDescription}
+                  </p>
+                )}
+                {(segment.endFramePrompt || segment.references?.endFrameDescription) && (
+                  <p>
+                    <span className="font-semibold text-indigo-200">End frame:</span>{' '}
+                    {segment.endFramePrompt || segment.references?.endFrameDescription}
+                  </p>
+                )}
+                {segment.videoPrompt && (
+                  <p>
+                    <span className="font-semibold text-indigo-200">F2V:</span> {segment.videoPrompt}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Dialog + narrator lines */}
           {segment.dialogue.length > 0 && (
             <div className="space-y-2">

@@ -159,7 +159,7 @@ Example: "She says 'I'm fine' but her voice catches on the word, fingers unconsc
 async function callGemini(prompt: string): Promise<string> {
   console.log('[Optimize Direction] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.1-pro-preview',
     temperature: 0.7,
     topP: 0.95,
     maxOutputTokens: 12000,

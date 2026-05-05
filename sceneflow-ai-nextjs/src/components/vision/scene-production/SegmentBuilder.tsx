@@ -470,7 +470,10 @@ function extractAudioMetadata(scene: any, selectedLanguage = 'en-US'): {
   })
 
   // Calculate total audio duration
-  const totalDialogueDuration = dialogueDurations.reduce((acc: number, d) => acc + d.durationSeconds, 0)
+  const totalDialogueDuration = dialogueDurations.reduce(
+    (acc: number, d: { durationSeconds: number }) => acc + d.durationSeconds,
+    0
+  )
   const totalAudioDurationSeconds = Math.max(
     narrationDurationSeconds || 0,
     totalDialogueDuration
@@ -843,9 +846,10 @@ export function SegmentBuilder({
           startTime,
           endTime,
           status: 'READY' as const,
-          generatedPrompt: '',
-          startFramePrompt: dir.keyframeStartDescription || '',
-          endFramePrompt: dir.keyframeEndDescription || '',
+          generatedPrompt: dir.videoPrompt || '',
+          videoPrompt: dir.videoPrompt || '',
+          startFramePrompt: dir.startFramePrompt || dir.keyframeStartDescription || dir.startFrameDescription || '',
+          endFramePrompt: dir.endFramePrompt || dir.keyframeEndDescription || dir.endFrameDescription || '',
           userEditedPrompt: null,
           activeAssetUrl: null,
           assetType: null,
@@ -853,7 +857,7 @@ export function SegmentBuilder({
           triggerReason: dir.triggerReason,
           emotionalBeat: dir.emotionalBeat || '',
           dialogueLineIds: dir.dialogueLineIds || [],
-          action: dir.talentAction,
+          action: dir.segmentDirectionSummary || dir.talentAction,
           shotType: dir.shotType,
           transitionType,
           segmentDirection: dir,
@@ -865,8 +869,10 @@ export function SegmentBuilder({
             characterIds: [],
             sceneRefIds: [],
             objectRefIds: [],
-            startFrameDescription: dir.keyframeStartDescription || '',
-            endFrameDescription: dir.keyframeEndDescription || '',
+            startFrameDescription:
+              dir.startFramePrompt || dir.keyframeStartDescription || dir.startFrameDescription || '',
+            endFrameDescription:
+              dir.endFramePrompt || dir.keyframeEndDescription || dir.endFrameDescription || '',
           },
           takes: [],
           promptContext: {

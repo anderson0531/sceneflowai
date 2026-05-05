@@ -89,6 +89,12 @@ export interface ScriptSegment {
   references?: ScriptSegmentReferences
   /** Optional emotional beat label. */
   emotionalBeat?: string
+  /** Canonical start frame prompt for this segment. */
+  startFramePrompt?: string | null
+  /** Canonical end frame prompt for this segment. */
+  endFramePrompt?: string | null
+  /** Canonical F2V/video prompt for this segment. */
+  videoPrompt?: string | null
 }
 
 /**

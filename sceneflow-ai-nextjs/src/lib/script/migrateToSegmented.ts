@@ -46,6 +46,7 @@ import {
   SegmentTransitionType,
 } from '@/lib/script/segmentTypes'
 import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDuration'
+import type { SceneSegmentPromptBundleEntry } from '@/types/scene-direction'
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -194,11 +195,13 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
   const dialogueIndexToLineId = new Map<number, string>()
   const sfxIndexToSfxId = new Map<number, string>()
   const narrationLineIds: string[] = []
+  const scenePromptBundle = readScenePromptBundle(scene)
 
   // 1. Build per-dialogue-index DialogueLine entries by splitting multi-sentence
   //    raw lines. The first sentence inherits the original index's lineId so
   //    that legacy positional consumers still resolve.
   const dialogueLinesByIndex = new Map<number, DialogueLine[]>()
+  const dialogueSourceIndexByLineId = new Map<string, number>()
   const flatDialogue: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
   const normalizedLegacyDialogue = normalizeDialogueToCompleteSentenceLines(
     flatDialogue.map((d, i) => ({ ...d, __legacyIndex: i, __sourceIndexes: [i] }))
@@ -215,6 +218,11 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
       dialogueLinesByIndex.set(sourceIdx, lines)
       if (!dialogueIndexToLineId.has(sourceIdx)) {
         dialogueIndexToLineId.set(sourceIdx, lines[0].lineId)
+      }
+      for (const ln of lines) {
+        if (!dialogueSourceIndexByLineId.has(ln.lineId)) {
+          dialogueSourceIndexByLineId.set(ln.lineId, sourceIdx)
+        }
       }
     })
   })
@@ -245,6 +253,8 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
     narratorLines.push(...split)
     narratorLines.forEach((ln) => narrationLineIds.push(ln.lineId))
   }
+  const narrationOrderByLineId = new Map<string, number>()
+  narratorLines.forEach((ln, idx) => narrationOrderByLineId.set(ln.lineId, idx))
 
   // 3. Build SFX list with stable sfxIds. We thread `legacyIndex` so existing
   //    positional audio handlers (`scene.sfxAudio[idx]`) keep working.
@@ -304,6 +314,17 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
   const sceneDirectionBase = typeof scene.action === 'string' ? scene.action : ''
   for (let i = 0; i < allDialogue.length; i++) {
     const line = allDialogue[i]
+    const promptBundleForLine = resolvePromptBundleForLine(scenePromptBundle, line, {
+      dialogueSourceIndexByLineId,
+      narrationOrderByLineId,
+    })
+    const baseDirection =
+      promptBundleForLine?.segmentDirectionSummary ||
+      line.line ||
+      sceneDirectionBase
+    const startFramePrompt = promptBundleForLine?.startFramePrompt || null
+    const endFramePrompt = promptBundleForLine?.endFramePrompt || null
+    const videoPrompt = promptBundleForLine?.videoPrompt || null
     const estimatedSeconds = estimateLineDurationSeconds(line.line)
     const splitDurations = estimatedSeconds > 12
       ? allocateVeoSplitDurations(estimatedSeconds, 12)
@@ -320,16 +341,19 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
         startTime: 0,
         endTime: splitDurations[partIdx],
         segmentDirection: isContinuation
-          ? `${sceneDirectionBase} (continuation ${partIdx + 1}/${splitDurations.length})`.trim()
-          : sceneDirectionBase,
+          ? `${baseDirection} (continuation ${partIdx + 1}/${splitDurations.length})`.trim()
+          : baseDirection,
         transitionType,
         dialogue: [line],
         sfx: [],
         references: {
-          startFrameDescription: null,
-          endFrameDescription: null,
+          startFrameDescription: startFramePrompt,
+          endFrameDescription: endFramePrompt,
           characterIds: line.characterId ? [line.characterId] : [],
         },
+        startFramePrompt,
+        endFramePrompt,
+        videoPrompt,
       })
     }
   }
@@ -342,7 +366,7 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
         sequenceIndex: i,
         startTime: 0,
         endTime: 6,
-        segmentDirection: sceneDirectionBase,
+        segmentDirection: sceneDirectionBase || 'SFX transition beat',
         transitionType: i === 0 ? 'CUT' : 'CONTINUE',
         dialogue: [],
         sfx: [allSfx[i]],
@@ -351,6 +375,9 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
           endFrameDescription: null,
           characterIds: [],
         },
+        startFramePrompt: null,
+        endFramePrompt: null,
+        videoPrompt: null,
       })
     }
   }
@@ -363,6 +390,57 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
     narrationLineIds,
     sfxIndexToSfxId,
   }
+}
+
+function readScenePromptBundle(scene: any): SceneSegmentPromptBundleEntry[] {
+  const raw = scene?.sceneDirection?.segmentPromptBundle
+  if (!Array.isArray(raw)) return []
+  return raw
+    .filter((row: any) => row && typeof row === 'object')
+    .map((row: any): SceneSegmentPromptBundleEntry => ({
+      timelineIndex: Number.isFinite(row.timelineIndex) ? Number(row.timelineIndex) : -1,
+      kind: row.kind === 'narration' ? 'narration' : 'dialogue',
+      dialogueIndex: Number.isFinite(row.dialogueIndex) ? Number(row.dialogueIndex) : undefined,
+      character: String(row.character || ''),
+      lineText: String(row.lineText || ''),
+      segmentDirectionSummary: String(row.segmentDirectionSummary || ''),
+      startFramePrompt: String(row.startFramePrompt || ''),
+      endFramePrompt: String(row.endFramePrompt || ''),
+      videoPrompt: String(row.videoPrompt || ''),
+    }))
+    .filter((row: SceneSegmentPromptBundleEntry) => row.timelineIndex >= 0)
+}
+
+function resolvePromptBundleForLine(
+  bundle: SceneSegmentPromptBundleEntry[],
+  line: DialogueLine,
+  maps: {
+    dialogueSourceIndexByLineId: Map<string, number>
+    narrationOrderByLineId: Map<string, number>
+  }
+): SceneSegmentPromptBundleEntry | null {
+  if (!bundle.length) return null
+  if (line.kind === 'narration') {
+    const nIdx = maps.narrationOrderByLineId.get(line.lineId)
+    if (typeof nIdx === 'number') {
+      const hit = bundle.find((b) => b.kind === 'narration' && b.timelineIndex === nIdx)
+      if (hit) return hit
+    }
+    return bundle.find((b) => b.kind === 'narration' && b.character.toUpperCase() === 'NARRATOR') || null
+  }
+  const srcIdx = maps.dialogueSourceIndexByLineId.get(line.lineId)
+  if (typeof srcIdx === 'number') {
+    const hit = bundle.find((b) => b.kind === 'dialogue' && b.dialogueIndex === srcIdx)
+    if (hit) return hit
+  }
+  return (
+    bundle.find(
+      (b) =>
+        b.kind === 'dialogue' &&
+        b.character.toLowerCase() === line.character.toLowerCase() &&
+        b.lineText.trim() === line.line.trim()
+    ) || null
+  )
 }
 
 // ---------------------------------------------------------------------------

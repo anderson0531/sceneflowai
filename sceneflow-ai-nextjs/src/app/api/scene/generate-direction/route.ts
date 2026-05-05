@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
-import { DetailedSceneDirection } from '../../../../types/scene-direction'
+import { DetailedSceneDirection, SceneSegmentPromptBundleEntry } from '../../../../types/scene-direction'
 import { generateSceneContentHash } from '../../../../lib/utils/contentHash'
 import { generateText } from '@/lib/vertexai/gemini'
 
@@ -28,7 +28,7 @@ interface GenerateDirectionRequest {
 async function callGemini(prompt: string): Promise<{ text: string; finishReason?: string }> {
   console.log('[Scene Direction] Calling Vertex AI Gemini...')
   const result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.1-pro-preview',
     temperature: 0.7,
     topP: 0.95,
     maxOutputTokens: 12000, // Increased from 8192 — scenes with many dialogue lines can exceed 8K tokens
@@ -131,7 +131,101 @@ function fillDirectionDefaults(direction: any): DetailedSceneDirection {
   if (!direction.sceneDescription) {
     direction.sceneDescription = ''
   }
+  if (!Array.isArray(direction.segmentPromptBundle)) {
+    direction.segmentPromptBundle = []
+  }
   return direction as DetailedSceneDirection
+}
+
+function splitNarrationSentences(text: string): string[] {
+  const raw = String(text || '').trim()
+  if (!raw) return []
+  return raw
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
+function buildSegmentPromptTimeline(scene: GenerateDirectionRequest['scene']): Array<{
+  timelineIndex: number
+  kind: 'narration' | 'dialogue'
+  dialogueIndex?: number
+  character: string
+  lineText: string
+}> {
+  const timeline: Array<{
+    timelineIndex: number
+    kind: 'narration' | 'dialogue'
+    dialogueIndex?: number
+    character: string
+    lineText: string
+  }> = []
+  const narrationLines = splitNarrationSentences(scene.narration || '')
+  narrationLines.forEach((lineText) => {
+    timeline.push({
+      timelineIndex: timeline.length,
+      kind: 'narration',
+      character: 'NARRATOR',
+      lineText,
+    })
+  })
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  dialogue.forEach((d, idx) => {
+    const lineText = String(d?.line || d?.text || '').trim()
+    if (!lineText) return
+    timeline.push({
+      timelineIndex: timeline.length,
+      kind: 'dialogue',
+      dialogueIndex: idx,
+      character: String(d?.character || 'UNKNOWN'),
+      lineText,
+    })
+  })
+  return timeline
+}
+
+function fallbackPromptBundle(scene: GenerateDirectionRequest['scene']): SceneSegmentPromptBundleEntry[] {
+  const timeline = buildSegmentPromptTimeline(scene)
+  const visualBase = String(scene.visualDescription || scene.action || '').trim()
+  return timeline.map((line) => ({
+    timelineIndex: line.timelineIndex,
+    kind: line.kind,
+    dialogueIndex: line.dialogueIndex,
+    character: line.character,
+    lineText: line.lineText,
+    segmentDirectionSummary: `${line.character}: ${line.lineText}`.slice(0, 240),
+    startFramePrompt: visualBase || `Opening visual for ${line.character} line`,
+    endFramePrompt: `End state after this beat: ${line.lineText}`.slice(0, 320),
+    videoPrompt: `Cinematic continuation for ${line.character}: ${line.lineText}`.slice(0, 480),
+  }))
+}
+
+function normalizePromptBundle(
+  scene: GenerateDirectionRequest['scene'],
+  direction: DetailedSceneDirection
+): SceneSegmentPromptBundleEntry[] {
+  const timeline = buildSegmentPromptTimeline(scene)
+  const source = Array.isArray(direction.segmentPromptBundle) ? direction.segmentPromptBundle : []
+  const byTimeline = new Map<number, any>()
+  for (const row of source) {
+    if (typeof row?.timelineIndex === 'number' && row.timelineIndex >= 0) {
+      byTimeline.set(row.timelineIndex, row)
+    }
+  }
+  return timeline.map((line) => {
+    const row = byTimeline.get(line.timelineIndex)
+    return {
+      timelineIndex: line.timelineIndex,
+      kind: line.kind,
+      dialogueIndex: line.dialogueIndex,
+      character: line.character,
+      lineText: line.lineText,
+      segmentDirectionSummary: String(row?.segmentDirectionSummary || `${line.character}: ${line.lineText}`).trim(),
+      startFramePrompt: String(row?.startFramePrompt || row?.startFrameDescription || '').trim(),
+      endFramePrompt: String(row?.endFramePrompt || row?.endFrameDescription || '').trim(),
+      videoPrompt: String(row?.videoPrompt || row?.f2vPrompt || '').trim(),
+    }
+  })
 }
 
 /**
@@ -158,6 +252,7 @@ function buildSceneDirectionPrompt(scene: GenerateDirectionRequest['scene']): st
     character: d.character,
     line: d.line || d.text || ''
   }))
+  const segmentPromptTimeline = buildSegmentPromptTimeline(scene)
   
   return `You are a world-class film director and cinematographer. Your task is to generate detailed, professional-grade technical instructions for a live-action film crew based on the following scene information.
 
@@ -222,6 +317,19 @@ Generate comprehensive technical direction suitable for professional film produc
       "subtextMotivation": "What the character is really feeling beneath the words",
       "physiologicalCues": "Breathing, tension, and physical responses"
     }`).join(',\n    ') : ''}
+  ],
+  "segmentPromptBundle": [
+    ${segmentPromptTimeline.length > 0 ? segmentPromptTimeline.map((line) => `{
+      "timelineIndex": ${line.timelineIndex},
+      "kind": "${line.kind}",
+      ${typeof line.dialogueIndex === 'number' ? `"dialogueIndex": ${line.dialogueIndex},` : ''}
+      "character": "${line.character.replace(/"/g, '\\"')}",
+      "lineText": "${line.lineText.replace(/"/g, '\\"').substring(0, 180)}${line.lineText.length > 180 ? '...' : ''}",
+      "segmentDirectionSummary": "One concise sentence describing this segment's visual beat.",
+      "startFramePrompt": "Detailed start frame prompt for this line's segment.",
+      "endFramePrompt": "Detailed end frame prompt showing the changed end state.",
+      "videoPrompt": "F2V cinematic motion prompt for this exact line."
+    }`).join(',\n    ') : ''}
   ]
 }
 
@@ -232,6 +340,8 @@ IMPORTANT:
 - Ensure all arrays contain at least one item
 - For dialogueTalentDirections, provide SPECIFIC direction for each line - avoid generic descriptions
 - Make each dialogue direction cinematic and evocative, not just descriptive
+- segmentPromptBundle is MANDATORY and must include exactly one object per timeline line provided
+- Do not reuse the same summary/start/end/video prompts for all rows; each row must reflect its own line and beat
 - Return ONLY valid JSON, no markdown formatting, no explanations`
 }
 
@@ -291,6 +401,10 @@ export async function POST(req: NextRequest) {
       
       // Fill missing sections with defaults instead of throwing 500
       sceneDirection = fillDirectionDefaults(sceneDirection)
+      sceneDirection.segmentPromptBundle = normalizePromptBundle(scene, sceneDirection)
+      if (sceneDirection.segmentPromptBundle.length === 0) {
+        sceneDirection.segmentPromptBundle = fallbackPromptBundle(scene)
+      }
     } catch (parseError) {
       console.error('[Scene Direction] JSON parse error:', parseError)
       console.error('[Scene Direction] Response text:', responseText.substring(0, 500))

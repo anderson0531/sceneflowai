@@ -9,7 +9,7 @@ import {
 import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDuration'
 import { expandDirectionsForTimelineAudioBudget } from '@/lib/scene/expandDirectionsForTimelineAudioBudget'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
-import { SegmentDirection, detectNoTalentSegment } from '@/types/scene-direction'
+import { SegmentDirection, SceneSegmentPromptBundleEntry, detectNoTalentSegment } from '@/types/scene-direction'
 
 /** Vercel: match `vercel.json` for this route — long Gemini JSON on global endpoint. */
 export const maxDuration = 300
@@ -442,6 +442,10 @@ export async function POST(
         const timelineIdxs: number[] = Array.isArray(dir.dialogue_indices)
           ? dir.dialogue_indices.filter((n: unknown) => typeof n === 'number' && n >= 0)
           : []
+        const promptBundleEntry = promptBundleEntryForSegment(
+          timelineIdxs,
+          sceneData.sceneDirectionPromptBundle
+        )
         return {
         estimatedDuration:
           typeof dir.estimated_duration === 'number' && dir.estimated_duration > 0
@@ -451,7 +455,10 @@ export async function POST(
         cameraMovement: dir.camera_movement || 'Static',
         cameraAngle: dir.camera_angle || 'Eye-Level',
         lens: dir.lens || '50mm',
-        talentAction: dir.talent_action || '',
+        talentAction:
+          promptBundleEntry?.segmentDirectionSummary ||
+          dir.talent_action ||
+          '',
         emotionalBeat: dir.emotional_beat || '',
         characters: dir.characters || [],
         isNoTalent: dir.is_no_talent || detectNoTalentSegment(sceneData.sceneDirection.talent),
@@ -469,15 +476,31 @@ export async function POST(
         triggerReason: dir.trigger_reason || 'AI-determined cut point',
         confidence: dir.confidence || 75,
         transitionIn: dir.transition_in || 'cut',
-        startFrameDescription: dir.start_frame_description || '',
-        endFrameDescription: dir.end_frame_description || '',
+        startFrameDescription:
+          promptBundleEntry?.startFramePrompt ||
+          dir.start_frame_description ||
+          '',
+        endFrameDescription:
+          promptBundleEntry?.endFramePrompt ||
+          dir.end_frame_description ||
+          '',
         continuityNotes: dir.continuity_notes || '',
         // Phase 8: Keyframe-specific direction fields
-        keyframeStartDescription: dir.keyframe_start_description || '',
-        keyframeEndDescription: dir.keyframe_end_description || '',
+        keyframeStartDescription:
+          promptBundleEntry?.startFramePrompt ||
+          dir.keyframe_start_description ||
+          '',
+        keyframeEndDescription:
+          promptBundleEntry?.endFramePrompt ||
+          dir.keyframe_end_description ||
+          '',
         environmentDescription: dir.environment_description || '',
         colorPalette: dir.color_palette || '',
         depthOfField: dir.depth_of_field || '',
+        segmentDirectionSummary: promptBundleEntry?.segmentDirectionSummary || '',
+        startFramePrompt: promptBundleEntry?.startFramePrompt || '',
+        endFramePrompt: promptBundleEntry?.endFramePrompt || '',
+        videoPrompt: promptBundleEntry?.videoPrompt || '',
       }
       })
       
@@ -740,6 +763,7 @@ interface ComprehensiveSceneData {
     talent: string
     audio: string
   }
+  sceneDirectionPromptBundle: SceneSegmentPromptBundleEntry[]
   sceneFrameUrl: string | null
   characters: Array<{
     name: string
@@ -861,6 +885,22 @@ function dialogueLinesForAssignedTimelineIndices(
   return out
 }
 
+function promptBundleEntryForSegment(
+  timelineIndices: number[] | undefined,
+  promptBundle: SceneSegmentPromptBundleEntry[]
+): SceneSegmentPromptBundleEntry | null {
+  if (!Array.isArray(promptBundle) || promptBundle.length === 0) return null
+  const byIndex = new Map<number, SceneSegmentPromptBundleEntry>()
+  for (const row of promptBundle) byIndex.set(row.timelineIndex, row)
+  if (Array.isArray(timelineIndices)) {
+    for (const idx of timelineIndices) {
+      const hit = byIndex.get(idx)
+      if (hit) return hit
+    }
+  }
+  return null
+}
+
 function buildComprehensiveSceneData(
   scene: any, 
   characters: any[],
@@ -904,6 +944,22 @@ function buildComprehensiveSceneData(
     talent: typeof dir.talent === 'string' ? dir.talent : JSON.stringify(dir.talent || 'Standard blocking'),
     audio: typeof dir.audio === 'string' ? dir.audio : JSON.stringify(dir.audio || 'Ambient room tone')
   }
+  const sceneDirectionPromptBundle: SceneSegmentPromptBundleEntry[] = Array.isArray(dir.segmentPromptBundle)
+    ? dir.segmentPromptBundle
+        .filter((row: any) => row && typeof row === 'object')
+        .map((row: any) => ({
+          timelineIndex: Number.isFinite(row.timelineIndex) ? Number(row.timelineIndex) : -1,
+          kind: row.kind === 'narration' ? 'narration' : 'dialogue',
+          dialogueIndex: Number.isFinite(row.dialogueIndex) ? Number(row.dialogueIndex) : undefined,
+          character: String(row.character || ''),
+          lineText: String(row.lineText || ''),
+          segmentDirectionSummary: String(row.segmentDirectionSummary || ''),
+          startFramePrompt: String(row.startFramePrompt || ''),
+          endFramePrompt: String(row.endFramePrompt || ''),
+          videoPrompt: String(row.videoPrompt || ''),
+        }))
+        .filter((row: SceneSegmentPromptBundleEntry) => row.timelineIndex >= 0)
+    : []
 
   // Get scene frame URL
   const sceneFrameUrl = scene.imageUrl || scene.thumbnailUrl || null
@@ -1052,6 +1108,7 @@ function buildComprehensiveSceneData(
     narration,
     dialogue,
     sceneDirection,
+    sceneDirectionPromptBundle,
     sceneFrameUrl,
     characters: relevantCharacters,
     estimatedTotalDuration,
@@ -1571,6 +1628,7 @@ async function callGeminiForIntelligentSegmentation(prompt: string): Promise<Int
   console.log(`[Scene Segmentation] Calling Vertex AI Gemini...`)
   
   const result = await generateText(prompt, {
+    model: 'gemini-3.1-pro-preview',
     temperature: 0.7,
     maxOutputTokens: 32768, // Increased for complex segmentation responses
     responseMimeType: 'application/json',
@@ -1933,6 +1991,7 @@ Return ONLY valid JSON array. No markdown code blocks, no explanatory text.
  */
 async function callGeminiForSegmentDirections(prompt: string): Promise<any[]> {
   const result = await generateText(prompt, {
+    model: 'gemini-3.1-pro-preview',
     temperature: 0.5, // Lower temperature for more consistent structure
     // Long scenes: many segments × long keyframe strings — 8k often truncates mid-string (invalid JSON)
     maxOutputTokens: 32768,
@@ -2145,6 +2204,12 @@ function generatePromptsFromDirectionsPrompt(
     // Phase 8: Pass keyframe descriptions to Phase 2 for prompt enrichment
     keyframe_start_description: (dir as any).keyframeStartDescription || '',
     keyframe_end_description: (dir as any).keyframeEndDescription || '',
+    segment_direction_summary:
+      (dir as any).segmentDirectionSummary ||
+      dir.talentAction ||
+      '',
+    video_prompt_seed:
+      (dir as any).videoPrompt || '',
     environment_description: (dir as any).environmentDescription || '',
     color_palette: (dir as any).colorPalette || '',
     depth_of_field: (dir as any).depthOfField || '',
@@ -2252,6 +2317,7 @@ Return ONLY valid JSON array. No markdown, no explanation.
  */
 async function callGeminiForPromptsFromDirections(prompt: string): Promise<IntelligentSegment[]> {
   const result = await generateText(prompt, {
+    model: 'gemini-3.1-pro-preview',
     temperature: 0.7,
     maxOutputTokens: 32768,
     responseMimeType: 'application/json',
@@ -2388,6 +2454,10 @@ function transformSegmentsToOutput(
     
     // Include approved direction metadata if available
     const approvedDir = approvedDirections?.[idx]
+    const scenePromptBundleRow = promptBundleEntryForSegment(
+      seg.assigned_dialogue_indices,
+      sceneData.sceneDirectionPromptBundle
+    )
     const rawTransitionIn = String(approvedDir?.transitionIn || '').toLowerCase()
     let transitionType: 'CUT' | 'CONTINUE' = idx === 0 ? 'CUT' : 'CONTINUE'
     if (rawTransitionIn === 'cut') transitionType = 'CUT'
@@ -2415,6 +2485,15 @@ function transformSegmentsToOutput(
       endTime: cumulativeTime + seg.estimated_duration,
       status: 'DRAFT' as const,
       generatedPrompt: seg.video_generation_prompt,
+      videoPrompt: seg.video_generation_prompt || scenePromptBundleRow?.videoPrompt || '',
+      startFramePrompt:
+        seg.reference_strategy?.start_frame_description ||
+        scenePromptBundleRow?.startFramePrompt ||
+        '',
+      endFramePrompt:
+        seg.end_frame_description ||
+        scenePromptBundleRow?.endFramePrompt ||
+        '',
       userEditedPrompt: null,
       activeAssetUrl: null,
       assetType: null as 'video' | 'image' | null,
@@ -2439,7 +2518,31 @@ function transformSegmentsToOutput(
       isStale: false,
       transitionType,
       // NEW: Include approved direction for reference
-      segmentDirection: approvedDir || null,
+      segmentDirection:
+        approvedDir ||
+        (scenePromptBundleRow
+          ? {
+              estimatedDuration: seg.estimated_duration,
+              shotType: 'Medium Shot',
+              cameraMovement: seg.camera_notes || 'Static',
+              cameraAngle: 'Eye-Level',
+              talentAction: scenePromptBundleRow.segmentDirectionSummary || seg.trigger_reason || '',
+              emotionalBeat: seg.emotional_beat || '',
+              characters: [],
+              isNoTalent: false,
+              isApproved: false,
+              isUserEdited: false,
+              generationMethod: generatedMethod as any,
+              triggerReason: seg.trigger_reason || 'AI-determined cut point',
+              confidence: seg.generation_plan?.confidence || 75,
+              dialogueLineIds,
+              audioTimelineIndices: seg.assigned_dialogue_indices || [],
+              segmentDirectionSummary: scenePromptBundleRow.segmentDirectionSummary || '',
+              startFramePrompt: scenePromptBundleRow.startFramePrompt || '',
+              endFramePrompt: scenePromptBundleRow.endFramePrompt || '',
+              videoPrompt: scenePromptBundleRow.videoPrompt || '',
+            }
+          : null),
       references: {
         startFrameUrl,
         endFrameUrl: null,

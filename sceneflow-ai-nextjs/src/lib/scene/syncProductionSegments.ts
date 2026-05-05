@@ -98,11 +98,22 @@ export function syncProductionSegmentsFromScript(
         transitionType: scriptSeg.transitionType || 'CUT',
         triggerReason: undefined as string | undefined,
         endFrameDescription:
-          scriptSeg.references?.endFrameDescription ?? null,
+          scriptSeg.endFramePrompt ??
+          scriptSeg.references?.endFrameDescription ??
+          null,
         emotionalBeat: scriptSeg.emotionalBeat,
         dialogueLineIds,
         dialogueLines,
         segmentDirection: scriptSeg.segmentDirection || null,
+        startFramePrompt:
+          scriptSeg.startFramePrompt ??
+          scriptSeg.references?.startFrameDescription ??
+          '',
+        endFramePrompt:
+          scriptSeg.endFramePrompt ??
+          scriptSeg.references?.endFrameDescription ??
+          '',
+        videoPrompt: scriptSeg.videoPrompt ?? '',
         // The "references" object on SceneSegment uses different keys; we
         // patch only the script-owned subset and leave urls/anchors alone.
       }
@@ -122,7 +133,9 @@ export function syncProductionSegmentsFromScript(
             useSceneFrame: idx === 0,
             characterRefs: [],
             startFrameDescription:
-              scriptSeg.references?.startFrameDescription ?? null,
+              scriptSeg.startFramePrompt ??
+              scriptSeg.references?.startFrameDescription ??
+              null,
             characterIds: scriptSeg.references?.characterIds ?? [],
             sceneRefIds: [],
             objectRefIds: [],
@@ -155,7 +168,15 @@ export function syncProductionSegmentsFromScript(
         ? {
             ...prev.references,
             startFrameDescription:
-              scriptSeg.references?.startFrameDescription ?? prev.references.startFrameDescription ?? null,
+              scriptSeg.startFramePrompt ??
+              scriptSeg.references?.startFrameDescription ??
+              prev.references.startFrameDescription ??
+              null,
+            endFrameDescription:
+              scriptSeg.endFramePrompt ??
+              scriptSeg.references?.endFrameDescription ??
+              prev.references.endFrameDescription ??
+              null,
             characterIds:
               Array.isArray(scriptSeg.references?.characterIds) && scriptSeg.references!.characterIds!.length > 0
                 ? scriptSeg.references!.characterIds
@@ -166,7 +187,14 @@ export function syncProductionSegmentsFromScript(
             endFrameUrl: null,
             useSceneFrame: idx === 0,
             characterRefs: [],
-            startFrameDescription: scriptSeg.references?.startFrameDescription ?? null,
+            startFrameDescription:
+              scriptSeg.startFramePrompt ??
+              scriptSeg.references?.startFrameDescription ??
+              null,
+            endFrameDescription:
+              scriptSeg.endFramePrompt ??
+              scriptSeg.references?.endFrameDescription ??
+              null,
             characterIds: scriptSeg.references?.characterIds ?? [],
             sceneRefIds: [],
             objectRefIds: [],
