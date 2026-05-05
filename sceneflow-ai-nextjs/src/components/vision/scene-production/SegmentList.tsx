@@ -127,6 +127,9 @@ function SegmentCard({
 }: SegmentCardProps) {
   const [collapsed, setCollapsed] = useState(false)
   const duration = Math.max(0, segment.endTime - segment.startTime)
+  const isContinuation =
+    segment.segmentId.includes('_c') ||
+    /continuation/i.test(segment.segmentDirection || '')
 
   return (
     <div className="rounded-lg border border-blue-700/40 bg-blue-950/20">
@@ -146,6 +149,11 @@ function SegmentCard({
           <span className="text-sm font-semibold text-blue-100">
             Segment {segmentIndex + 1}
           </span>
+          {isContinuation && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-200 border border-fuchsia-500/40 uppercase tracking-wide">
+              Continuation
+            </span>
+          )}
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-200 border border-blue-500/40 uppercase tracking-wide">
             {duration.toFixed(0)}s
           </span>
@@ -162,6 +170,12 @@ function SegmentCard({
       </div>
       {!collapsed && (
         <div className="px-3 pb-3 space-y-3">
+          {segment.dialogue.length === 1 && (
+            <div className="rounded-md bg-blue-950/40 border border-blue-700/40 p-2.5 text-xs text-blue-100/90">
+              <span className="font-semibold">{segment.dialogue[0].character}:</span>{' '}
+              {segment.dialogue[0].line}
+            </div>
+          )}
           {/* Segment direction */}
           <div className="rounded-md bg-blue-900/30 border border-blue-700/40 p-3">
             <div className="flex items-center gap-2 mb-1.5">

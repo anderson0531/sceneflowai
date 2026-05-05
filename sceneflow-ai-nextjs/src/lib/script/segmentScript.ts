@@ -72,6 +72,9 @@ export function splitIntoSentences(input: string): string[] {
   // keeps it. e.g. "[frustrated, low] Another loop. Another translation."
   let prefix = ''
   let body = text
+  // Normalize spaced ellipsis variants (". . .") so they are handled
+  // consistently as in-line pauses.
+  body = body.replace(/\.\s*\.\s*\./g, '…')
   const directionMatch = body.match(/^\s*([\[\(][^\]\)]+[\]\)])\s*/)
   if (directionMatch) {
     prefix = directionMatch[1] + ' '
@@ -94,14 +97,17 @@ export function splitIntoSentences(input: string): string[] {
     const isTerminator = ch === '.' || ch === '?' || ch === '!' || ch === '…'
     if (!isTerminator) continue
 
-    // Collapse runs of "....." or "..." into a single ellipsis terminator.
+    // Collapse runs of "....."/"..." and mixed "…." into one token.
+    const runStart = i
     while (i + 1 < body.length && (body[i + 1] === '.' || body[i + 1] === '…')) {
       buf += body[i + 1]
       i++
     }
+    const run = body.slice(runStart, i + 1)
+    const hasEllipsisRun = run === '…' || run.length > 1
 
     // Look at the previous word to skip abbreviations.
-    if (ch === '.') {
+    if (ch === '.' && !hasEllipsisRun) {
       const wordMatch = buf.match(/(\b[A-Za-z]+)\.\s*$/)
       const word = wordMatch?.[1]?.toLowerCase()
       if (word && ABBREV.has(word)) {
@@ -109,10 +115,15 @@ export function splitIntoSentences(input: string): string[] {
       }
       // Decimal numbers like 1.5 — only split if a non-digit follows.
       const next = body[i + 1]
-      const prev = buf[buf.length - 2 - (buf.length - 1 - buf.lastIndexOf(ch))]
+      const prev = buf.length >= 2 ? buf[buf.length - 2] : ''
       if (/\d/.test(prev || '') && /\d/.test(next || '')) {
         continue
       }
+    }
+
+    // Treat ellipses as mid-line pauses by default (no hard split).
+    if (hasEllipsisRun) {
+      continue
     }
 
     // Consume the trailing closing quote / bracket so it stays with this sentence.

@@ -44,7 +44,7 @@ import {
   SegmentSFX,
   SegmentTransitionType,
 } from '@/lib/script/segmentTypes'
-import { snapToVeoDuration } from '@/lib/scene/veoDuration'
+import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDuration'
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -251,91 +251,27 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
     return sfx
   })
 
-  // 4. If we have production segments to fold in, use their structure.
+  // 4. Build deterministic script-owned segments:
+  //    - one dialogue/narration line per segment
+  //    - lines longer than 12s become continuation segments
+  //    - SFX mapped by sourceLineId/time/legacy position
+  const lineToExistingSegmentId = new Map<string, string>()
   if (productionSegments && productionSegments.length > 0) {
-    const segments: ScriptSegment[] = productionSegments.map((ps, idx) => {
-      const dialogueLineIds: string[] = Array.isArray(ps?.dialogueLineIds)
-        ? ps.dialogueLineIds
-        : []
-
-      const segDialogue: DialogueLine[] = []
-
-      // Map dialogueLineIds (e.g. "dialogue-3") -> built lines.
-      for (const id of dialogueLineIds) {
+    for (const ps of productionSegments) {
+      if (!ps || typeof ps !== 'object' || typeof ps.segmentId !== 'string') continue
+      const ids: string[] = Array.isArray(ps.dialogueLineIds) ? ps.dialogueLineIds : []
+      for (const id of ids) {
         const m = /^dialogue-(\d+)$/.exec(typeof id === 'string' ? id : '')
         if (!m) continue
         const dIdx = parseInt(m[1], 10)
-        const lines = dialogueLinesByIndex.get(dIdx)
-        if (lines && lines.length > 0) {
-          segDialogue.push(...lines)
-          dialogueLinesByIndex.delete(dIdx)
+        const lineId = dialogueIndexToLineId.get(dIdx)
+        if (lineId && !lineToExistingSegmentId.has(lineId)) {
+          lineToExistingSegmentId.set(lineId, ps.segmentId)
         }
       }
-
-      const startTime = typeof ps?.startTime === 'number' ? ps.startTime : idx * 10
-      const endTime =
-        typeof ps?.endTime === 'number' ? ps.endTime : startTime + 10
-      const dur = Math.max(1, endTime - startTime)
-
-      const segmentDirection =
-        typeof ps?.segmentDirection === 'string'
-          ? ps.segmentDirection
-          : (ps?.segmentDirection &&
-              (ps.segmentDirection.direction || ps.segmentDirection.notes)) ||
-            ps?.triggerReason ||
-            ''
-
-      const transitionType = normalizeTransitionType(ps?.transitionType)
-
-      return {
-        segmentId: typeof ps?.segmentId === 'string' && ps.segmentId.length > 0 ? ps.segmentId : mintSegmentId(),
-        sequenceIndex: typeof ps?.sequenceIndex === 'number' ? ps.sequenceIndex : idx,
-        startTime,
-        endTime: startTime + snapToVeoDuration(dur),
-        segmentDirection,
-        transitionType,
-        dialogue: segDialogue,
-        sfx: [],
-        references: {
-          startFrameDescription: ps?.references?.startFrameDescription ?? null,
-          endFrameDescription: ps?.endFrameDescription ?? null,
-          characterIds: Array.isArray(ps?.references?.characterIds) ? ps.references.characterIds : [],
-        },
-        emotionalBeat: typeof ps?.emotionalBeat === 'string' ? ps.emotionalBeat : undefined,
-      }
-    })
-
-    // Any leftover dialogue (not referenced by a production segment) goes into
-    // the first segment so we don't drop content.
-    if (dialogueLinesByIndex.size > 0) {
-      const first = segments[0]
-      const sortedLeftover = Array.from(dialogueLinesByIndex.entries())
-        .sort(([a], [b]) => a - b)
-        .flatMap(([, lines]) => lines)
-      first.dialogue.push(...sortedLeftover)
-    }
-
-    // Insert narrator lines at the start of segment 1 (rule: legacy data has
-    // no segment alignment for narration; user can re-distribute later).
-    if (narratorLines.length > 0) {
-      segments[0].dialogue.unshift(...narratorLines)
-    }
-
-    // Distribute SFX across segments based on their `time` if provided,
-    // otherwise pile them on segment 0.
-    distributeSfxByTime(segments, allSfx)
-
-    const quantized = quantizeAndResequence(segments)
-    return {
-      segments: enforceOneSentencePerLine(quantized),
-      dialogueIndexToLineId,
-      narrationLineIds,
-      sfxIndexToSfxId,
     }
   }
 
-  // 5. No production segments. Build a single placeholder segment with all
-  //    content. The user can edit/re-segment later.
   const allDialogue: DialogueLine[] = []
   if (narratorLines.length > 0) allDialogue.push(...narratorLines)
   Array.from(dialogueLinesByIndex.entries())
@@ -351,24 +287,63 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
     }
   }
 
-  const target = clampDuration(scene.duration ?? 10)
-  const single: ScriptSegment = {
-    segmentId: mintSegmentId(),
-    sequenceIndex: 0,
-    startTime: 0,
-    endTime: target,
-    segmentDirection: typeof scene.action === 'string' ? scene.action : '',
-    transitionType: 'CUT',
-    dialogue: allDialogue,
-    sfx: allSfx,
-    references: {
-      startFrameDescription: null,
-      endFrameDescription: null,
-      characterIds: [],
-    },
+  const builtSegments: ScriptSegment[] = []
+  const sceneDirectionBase = typeof scene.action === 'string' ? scene.action : ''
+  for (let i = 0; i < allDialogue.length; i++) {
+    const line = allDialogue[i]
+    const estimatedSeconds = estimateLineDurationSeconds(line.line)
+    const splitDurations = estimatedSeconds > 12
+      ? allocateVeoSplitDurations(estimatedSeconds, 12)
+      : [snapToVeoDuration(estimatedSeconds)]
+
+    for (let partIdx = 0; partIdx < splitDurations.length; partIdx++) {
+      const isContinuation = partIdx > 0
+      const transitionType: SegmentTransitionType = (i === 0 && !isContinuation) ? 'CUT' : 'CONTINUE'
+      const baseSegmentId = lineToExistingSegmentId.get(line.lineId) || mintSegmentId()
+      const segmentId = isContinuation ? `${baseSegmentId}_c${partIdx + 1}` : baseSegmentId
+      builtSegments.push({
+        segmentId,
+        sequenceIndex: builtSegments.length,
+        startTime: 0,
+        endTime: splitDurations[partIdx],
+        segmentDirection: isContinuation
+          ? `${sceneDirectionBase} (continuation ${partIdx + 1}/${splitDurations.length})`.trim()
+          : sceneDirectionBase,
+        transitionType,
+        dialogue: [line],
+        sfx: [],
+        references: {
+          startFrameDescription: null,
+          endFrameDescription: null,
+          characterIds: line.characterId ? [line.characterId] : [],
+        },
+      })
+    }
   }
 
-  const quantized = quantizeAndResequence([single])
+  // Scene with SFX but no dialogue: create one SFX-only segment per cue.
+  if (builtSegments.length === 0 && allSfx.length > 0) {
+    for (let i = 0; i < allSfx.length; i++) {
+      builtSegments.push({
+        segmentId: mintSegmentId(),
+        sequenceIndex: i,
+        startTime: 0,
+        endTime: 6,
+        segmentDirection: sceneDirectionBase,
+        transitionType: i === 0 ? 'CUT' : 'CONTINUE',
+        dialogue: [],
+        sfx: [allSfx[i]],
+        references: {
+          startFrameDescription: null,
+          endFrameDescription: null,
+          characterIds: [],
+        },
+      })
+    }
+  }
+
+  const quantized = quantizeAndResequence(builtSegments)
+  assignSfxToLineSegments(quantized, allSfx, allDialogue)
   return {
     segments: enforceOneSentencePerLine(quantized),
     dialogueIndexToLineId,
@@ -636,21 +611,71 @@ function legacyDialogueEntryToLines(d: any, _scene: any): DialogueLine[] {
   return tmp
 }
 
-function distributeSfxByTime(segments: ScriptSegment[], sfx: SegmentSFX[]) {
+function assignSfxToLineSegments(
+  segments: ScriptSegment[],
+  sfx: SegmentSFX[],
+  orderedDialogue: DialogueLine[]
+) {
   if (!sfx.length || !segments.length) return
-  for (const cue of sfx) {
-    const cueTime = typeof cue.time === 'number' ? cue.time : 0
-    let target = segments[0]
-    for (const seg of segments) {
-      if (cueTime >= seg.startTime && cueTime < seg.endTime) {
-        target = seg
-        break
-      }
-      // Past last segment? attach to last.
-      if (cueTime >= seg.endTime) target = seg
+  const firstSegmentByLineId = new Map<string, ScriptSegment>()
+  for (const seg of segments) {
+    const lineId = seg.dialogue[0]?.lineId
+    if (lineId && !firstSegmentByLineId.has(lineId)) {
+      firstSegmentByLineId.set(lineId, seg)
     }
-    target.sfx.push(cue)
   }
+
+  const byLegacyIndex = new Map<number, string>()
+  orderedDialogue.forEach((line, idx) => byLegacyIndex.set(idx, line.lineId))
+
+  for (const cue of sfx) {
+    // 1) Source line id explicitly provided.
+    if (cue.sourceLineId) {
+      const seg = firstSegmentByLineId.get(cue.sourceLineId)
+      if (seg) {
+        seg.sfx.push(cue)
+        continue
+      }
+    }
+
+    // 2) Legacy positional cue index maps to same dialogue index.
+    if (typeof cue.legacyIndex === 'number' && byLegacyIndex.has(cue.legacyIndex)) {
+      const lineId = byLegacyIndex.get(cue.legacyIndex)!
+      const seg = firstSegmentByLineId.get(lineId)
+      if (seg) {
+        seg.sfx.push(cue)
+        continue
+      }
+    }
+
+    // 3) Timeline-based routing when cue.time exists.
+    if (typeof cue.time === 'number') {
+      let target = segments[0]
+      for (const seg of segments) {
+        if (cue.time >= seg.startTime && cue.time < seg.endTime) {
+          target = seg
+          break
+        }
+        if (cue.time >= seg.endTime) target = seg
+      }
+      target.sfx.push(cue)
+      continue
+    }
+
+    // 4) Default script order: attach by modulo to preserve all cues.
+    const fallbackIdx = Math.min(segments.length - 1, cue.legacyIndex ?? 0)
+    segments[fallbackIdx]?.sfx.push(cue)
+  }
+}
+
+function estimateLineDurationSeconds(line: string): number {
+  const text = String(line || '').trim()
+  if (!text) return 4
+  const words = text.split(/\s+/).filter(Boolean).length
+  const punctuationPauses = (text.match(/[,:;…]/g)?.length || 0) * 0.25
+  // Conversational baseline ~2.3 words/sec + pause weight.
+  const seconds = words / 2.3 + punctuationPauses + 0.5
+  return Math.max(4, Math.min(40, seconds))
 }
 
 function normalizeTransitionType(input: any): SegmentTransitionType {

@@ -128,12 +128,12 @@ function segmentDurationPromptSection(config: SegmentDurationConfig): string {
   if (config.mode === 'auto') {
     return `
 **DURATION (AUTO — PER SEGMENT):** Veo 3.1 supports **4, 6, 8, 10, or 12 seconds** per generated clip. For **each** segment, set \`estimated_duration\` to one of these values based on dialogue timing, breath pauses, and action cut points — **different segments may use different values**. A soft planning average from total audio ÷ minimum clip count is ~${config.hintSeconds}s; use that as a guide, not a hard target. **Never exceed 12s** for any segment. **Minimum 4s** per segment when possible.
-**WHEN TO SPLIT:** Split or shorten a segment when the audio and action assigned to it would need **more than 12s** to play naturally; combine adjacent lines in the **same** visual setup when they fit within **one** 4/6/8/10/12s clip.
+**WHEN TO SPLIT:** Keep exactly one dialogue/narration line per segment. If one line would need **more than 12s**, split that SAME line across continuation segments.
 `
   }
   const t = config.fixedSeconds ?? 6
   return `
-**DURATION (FIXED TARGET):** Prefer **${t}s** per segment (\`estimated_duration\` must still be **exactly 4, 6, 8, 10, or 12** — use **${t}s** as the default choice). **Never exceed 12s.** Combine lines in the same setup when their total fits; split when combined audio would require **more than 12s**.
+**DURATION (FIXED TARGET):** Prefer **${t}s** per segment (\`estimated_duration\` must still be **exactly 4, 6, 8, 10, or 12** — use **${t}s** as the default choice). **Never exceed 12s.** Keep one dialogue/narration line per segment; split only when a single line exceeds 12s.
 `
 }
 
@@ -1406,7 +1406,8 @@ ${noTalentInstructions}${referenceInstructions}${transitionInstructions}${SEAMLE
 2. **Continuity:** You must utilize specific **Methods** to ensure consistency (matching lighting, character appearance, and room tone).
 3. **Lookahead:** Each segment must define the "End Frame State" to prepare for the *next* segment's generation method.
 4. **Audio Integration:** Veo 3.1 generates speech from text. For 🗣️ DIALOGUE lines, include character dialogue directly in prompts as: Character speaks, "text". For 🎙️ VOICEOVER lines, create backdrop visuals (do NOT include narration text in video prompts).
-5. **SEGMENT EFFICIENCY:** Create as FEW segments as possible while respecting the duration limit. **Combine multiple audio lines into a single segment** when they occur in the same visual setup. A segment with 2-4 adjacent audio lines is PREFERRED over creating a new segment for each line.${minimumSegmentsRequired > 1 ? `\n6. **MINIMUM SEGMENTS:** You MUST create at least ${minimumSegmentsRequired} segments to cover the audio duration.` : ''}
+5. **SEGMENT UNIT RULE (STRICT):** Each segment must contain exactly ONE dialogue/narration line as its primary spoken content. Do NOT combine adjacent dialogue lines into the same segment.
+6. **LONG-LINE CONTINUATIONS:** If one sentence would exceed 12s, split that same line across continuation segments (same line carried through multiple sequential segments) rather than combining with other lines.${minimumSegmentsRequired > 1 ? `\n7. **MINIMUM SEGMENTS:** You MUST create at least ${minimumSegmentsRequired} segments to cover the audio duration.` : ''}
 
 **INPUT DATA:**
 
@@ -1445,10 +1446,11 @@ ${Math.round(sceneData.estimatedTotalDuration)} seconds total
 ---
 
 **LOGIC WORKFLOW:**
-1. **Analyze Triggers:** Scan script for MAJOR changes in Action, Location, or dramatic emotional shift. These are your "Cut Points." **DO NOT create a new segment just because the speaker changes** - dialogue between characters in the same location should be combined into one segment when possible.
-2. **Estimate Timing:** Assign estimated seconds to dialogue (approx. 2.5 words/sec) and action. **Combine short dialogue lines with adjacent dialogue in the same segment** when they fit in **one** Veo clip (4/6/8/10/12s). Split only when the combined audio/action for one clip would **exceed 12s** or when there is a **major** visual/camera change.
-3. **Aim for Efficiency:** Target 3-6 segments for most scenes. If you have more than 8 segments, reconsider whether some can be combined.
-4. **Select Method:**
+1. **Analyze Triggers:** Scan script for major Action/Location/emotional shifts to shape visuals, but keep ONE dialogue/narration line per segment.
+2. **Estimate Timing:** Assign estimated seconds to each individual line (approx. 2.5 words/sec) and match each line to its own Veo clip duration (4/6/8/10/12s).
+3. **Handle Long Lines:** If one line exceeds 12s, create continuation segments for that SAME line instead of grouping with neighboring lines.
+4. **No Multi-Line Merging:** Never combine two different dialogue lines into one segment.
+5. **Select Method:**
    - **FTV (Frame-to-Video):** DEFAULT method. Uses start and end keyframe images to generate video between them. Use for ALL segments except segment 1 with scene frame.
    - **I2V (Image-to-Video):** STRICTLY for Segment 1 (using the Master Scene Frame) or static establishing shots.
    - **EXT (Extend):** Use ONLY when camera angle remains IDENTICAL and action simply continues (e.g., uninterrupted monologue from same angle, continuous walk). NEVER use when cutting between different characters.
@@ -1502,7 +1504,7 @@ Return a JSON array. Each segment object MUST have these fields:
     "end_frame_description": "Character positioned near [location], facing [direction], expression [mood]",
     "camera_notes": "Slow push-in, anamorphic 35mm, motivated key light from window",
     "emotional_beat": "Tension building",
-    "assigned_dialogue_indices": [0, 1],
+    "assigned_dialogue_indices": [0],
     "generation_plan": {
       "confidence": 90,
       "reasoning": "I2V recommended for segment 1 with available scene frame - provides best visual continuity",
@@ -1524,7 +1526,8 @@ Return a JSON array. Each segment object MUST have these fields:
 - Include "assigned_dialogue_indices" array with 0-based indices from the AUDIO TIMELINE (both 🎙️ voiceover and 🗣️ dialogue lines)
 - Audio lines are numbered [0], [1], [2], etc. in the Audio Timeline input
 - Each audio line should appear in EXACTLY ONE segment
-- If audio lines [0] and [1] are covered by segment 1, include "assigned_dialogue_indices": [0, 1]
+- Standard case: exactly one index per segment, e.g. "assigned_dialogue_indices": [3]
+- Long-line continuation case: the SAME index may appear on sequential continuation segments for that same line
 - For 🗣️ DIALOGUE lines: include the character's spoken text in video_generation_prompt
 - For 🎙️ VOICEOVER lines: do NOT include narration text in video_generation_prompt — create backdrop visuals instead
 
@@ -1838,7 +1841,7 @@ ${audioTimelineList}
 - 🎙️ VOICEOVER lines: Narration plays as a separate audio track. Video should show BACKDROP visuals (environments, atmospheric shots, detail inserts) that ILLUSTRATE the narration. Do NOT show a character speaking these words.
 - 🗣️ DIALOGUE lines: Character speaks on screen with lip-sync. Video MUST show the character and include their speaking action.
 - The "dialogue_indices" field in your output references indices [0], [1], [2]... from this AUDIO TIMELINE (both narration AND dialogue lines)
-- EVERY audio line index MUST appear in exactly ONE segment's dialogue_indices
+- Each line should normally map to one segment. Exception: if one line exceeds 12s, that SAME index may repeat on sequential continuation segments.
 - Segments must be sized to FIT the audio lines assigned to them (sum of their durations)
 
 **CHARACTERS:**
@@ -1870,7 +1873,7 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
     "estimated_duration": 6.0,
     "shot_type": "Medium Close-Up",
     "talent_action": "SARAH (30s Latina) sits at mahogany desk. Her right hand grips the desk edge.",
-    "dialogue_indices": [0, 1],
+    "dialogue_indices": [0],
     "generation_method": "FTV",
     "trigger_reason": "Opening shot",
     "keyframe_start_description": "Medium close-up of SARAH, 30s Latina woman with dark curly hair pulled back in a low bun, wearing a cream silk blouse. She sits at a mahogany desk. Warm tungsten key light from brass desk lamp. 85mm f/1.2. 8K photorealistic.",
@@ -1901,7 +1904,7 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
 **RULES:**
 1. Split at MAJOR visual changes only (angle, location, emotional shift)
 2. Combine consecutive audio lines in same shot setup — especially adjacent narration sentences
-3. **UNIQUE TIMELINE COVERAGE (CRITICAL):** Each index [0] through [${Math.max(0, sceneData.combinedAudioTimeline.length - 1)}] from the Audio Timeline MUST appear in exactly ONE segment's dialogue_indices. The same index MUST NOT appear in two different segments. Omitting an index is an error.
+3. **TIMELINE COVERAGE (CRITICAL):** Each index [0] through [${Math.max(0, sceneData.combinedAudioTimeline.length - 1)}] from the Audio Timeline MUST appear at least once in dialogue_indices. Use exactly one index per segment except when the SAME long line is split across continuation segments.
 4. **DURATION RULE (CRITICAL):** Total segment durations MUST sum to EXACTLY the audio timeline duration (~${Math.round(totalTimelineDuration)}s). Do NOT exceed this. Each segment \`estimated_duration\` must be **exactly 4, 6, 8, 10, or 12** (Veo quantization).
 5. **SEGMENT COUNT:** At least ${minimumSegmentsRequired} segments for duration; use **fewer only if** you still cover every timeline index without exceeding 12s per clip. Never pad with duplicate shots for the same audio index.
 6. keyframe_start_description and keyframe_end_description are MANDATORY for every segment
