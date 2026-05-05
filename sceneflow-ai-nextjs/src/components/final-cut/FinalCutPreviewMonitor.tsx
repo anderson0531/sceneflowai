@@ -1,14 +1,10 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Film, Image as ImageIcon, MonitorPlay, Volume2, VolumeX } from 'lucide-react'
+import { Film, MonitorPlay, Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
-import type { FinalCutStream, StreamScene, StreamSegment } from '@/lib/types/finalCut'
-import {
-  resolveStreamSegmentMediaForExport,
-  resolveSceneLevelPreviewVideo,
-} from '@/lib/final-cut/resolveSegmentMedia'
+import type { FinalCutSceneClip } from '@/lib/types/finalCut'
 
 /** Wait until dimensions / duration are known so currentTime seeks are reliable */
 function waitLoadedMetadata(video: HTMLVideoElement): Promise<void> {
@@ -29,7 +25,7 @@ function waitLoadedMetadata(video: HTMLVideoElement): Promise<void> {
   })
 }
 
-/** Seek and wait for the decoder; avoids playing the wrong frame at scene / URL boundaries */
+/** Seek and wait for the decoder; avoids playing the wrong frame at scene boundaries */
 function seekToTimeAndSettle(video: HTMLVideoElement, seconds: number): Promise<void> {
   return new Promise((resolve) => {
     if (!Number.isFinite(seconds)) {
@@ -63,155 +59,54 @@ function seekToTimeAndSettle(video: HTMLVideoElement, seconds: number): Promise<
   })
 }
 
-function resolvedVideoUrl(
-  seg: StreamSegment,
-  sourceSceneId: string,
-  sceneProductionState: Record<string, unknown>
-): string {
-  const m = resolveStreamSegmentMediaForExport(seg, sourceSceneId, sceneProductionState)
-  return m?.assetType === 'video' && m.assetUrl ? m.assetUrl : ''
-}
-
-/**
- * When Production splits a scene into segments that all point at the same video file
- * (one continuous render), seeking with segment-local time restarts at 0 every segment (~8s).
- * Use time since the start of the contiguous same-URL block instead.
- */
-function previewSeekSecondsInMedia(
-  scene: StreamScene,
-  segmentIndex: number,
-  localInScene: number,
-  mediaUrl: string,
-  sceneProductionState: Record<string, unknown>
-): number {
-  const segments = [...scene.segments].sort((a, b) => a.sequenceIndex - b.sequenceIndex)
-  const seg = segments[segmentIndex]
-  if (!seg || !mediaUrl) return Math.max(0, localInScene - seg.startTime)
-
-  let j = segmentIndex
-  while (j > 0) {
-    const prevUrl = resolvedVideoUrl(segments[j - 1], scene.sourceSceneId, sceneProductionState)
-    const currUrl = resolvedVideoUrl(segments[j], scene.sourceSceneId, sceneProductionState)
-    if (!currUrl || currUrl !== mediaUrl || prevUrl !== mediaUrl) break
-    j--
-  }
-  const blockStartSceneLocal = segments[j].startTime
-  return Math.max(0, localInScene - blockStartSceneLocal)
-}
-
 export interface PreviewClip {
-  scene: StreamScene
-  segment: StreamSegment
-  media: { assetUrl: string; assetType: 'video' | 'image' }
-  /** Seconds into the segment timeline (0 … segment duration) */
+  clip: FinalCutSceneClip
+  /** Seconds into the scene clip (0 … clip duration). */
   localTimeSec: number
-  /** True when preview uses full-scene render URL; keeps one `<video>` per scene on the timeline */
-  usesSceneLevelVideo?: boolean
 }
 
 export function findPreviewClipAtTime(
-  stream: FinalCutStream | null,
-  globalTimeSec: number,
-  sceneProductionState: Record<string, unknown>
+  clips: FinalCutSceneClip[],
+  globalTimeSec: number
 ): PreviewClip | null {
-  if (!stream?.scenes?.length) return null
+  if (!clips.length) return null
   const t = Math.max(0, globalTimeSec)
 
-  for (const scene of stream.scenes) {
-    if (t < scene.startTime) continue
-    if (t >= scene.endTime) continue
-
-    const localInScene = t - scene.startTime
-    const segments = [...scene.segments].sort((a, b) => a.sequenceIndex - b.sequenceIndex)
-
-    const sceneVideoUrl = resolveSceneLevelPreviewVideo(sceneProductionState, scene.sourceSceneId)
-    if (sceneVideoUrl && segments.length > 0) {
-      const refSeg = segments[0]
-      return {
-        scene,
-        segment: refSeg,
-        media: { assetUrl: sceneVideoUrl, assetType: 'video' },
-        localTimeSec: Math.max(0, localInScene),
-        usesSceneLevelVideo: true,
-      }
-    }
-
-    for (let si = 0; si < segments.length; si++) {
-      const seg = segments[si]
-      if (localInScene < seg.startTime || localInScene >= seg.endTime) continue
-      const media = resolveStreamSegmentMediaForExport(seg, scene.sourceSceneId, sceneProductionState)
-      if (!media?.assetUrl) return null
-      const localTimeSec =
-        media.assetType === 'video'
-          ? previewSeekSecondsInMedia(scene, si, localInScene, media.assetUrl, sceneProductionState)
-          : Math.max(0, localInScene - seg.startTime)
-      return { scene, segment: seg, media, localTimeSec }
-    }
-    return null
+  for (const clip of clips) {
+    if (t < clip.startTime) continue
+    if (t >= clip.endTime) continue
+    return { clip, localTimeSec: Math.max(0, t - clip.startTime) }
   }
 
-  // Playhead past last scene end: hold last frame of final segment if possible
-  const lastScene = stream.scenes[stream.scenes.length - 1]
-  if (lastScene && t >= lastScene.endTime && lastScene.segments.length > 0) {
-    const segments = [...lastScene.segments].sort((a, b) => a.sequenceIndex - b.sequenceIndex)
-    const lastIdx = segments.length - 1
-    const seg = segments[lastIdx]
-    const sceneSpan = lastScene.endTime - lastScene.startTime
-    const localInSceneEnd = Math.max(0, sceneSpan - 0.04)
-
-    const endSceneVideo = resolveSceneLevelPreviewVideo(sceneProductionState, lastScene.sourceSceneId)
-    if (endSceneVideo) {
-      return {
-        scene: lastScene,
-        segment: seg,
-        media: { assetUrl: endSceneVideo, assetType: 'video' },
-        localTimeSec: localInSceneEnd,
-        usesSceneLevelVideo: true,
-      }
-    }
-
-    const media = resolveStreamSegmentMediaForExport(seg, lastScene.sourceSceneId, sceneProductionState)
-    if (media?.assetUrl) {
-      const localTimeSec =
-        media.assetType === 'video'
-          ? previewSeekSecondsInMedia(
-              lastScene,
-              lastIdx,
-              localInSceneEnd,
-              media.assetUrl,
-              sceneProductionState
-            )
-          : Math.max(0, seg.endTime - seg.startTime - 0.04)
-      return {
-        scene: lastScene,
-        segment: seg,
-        media,
-        localTimeSec,
-      }
-    }
+  // Past last clip: hold last frame.
+  const last = clips[clips.length - 1]
+  if (last && t >= last.endTime) {
+    return { clip: last, localTimeSec: Math.max(0, last.duration - 0.04) }
   }
-
   return null
 }
 
 export interface FinalCutPreviewMonitorProps {
-  selectedStream: FinalCutStream | null
+  clips: FinalCutSceneClip[]
   currentTime: number
   isPlaying: boolean
   playbackRate: number
-  sceneProductionState: Record<string, unknown>
-  /** 0–100 assembly master level; scales preview video element volume when unmuted */
-  masterVolume?: number
+  /** Show the empty-state copy when no clips are resolved yet. */
+  hasSelection: boolean
   className?: string
 }
 
+/**
+ * Read-only program monitor. Plays the resolved scene-level production stream
+ * at the playhead. No master volume mixing, no overlays — Final Cut is a
+ * preview viewer.
+ */
 export function FinalCutPreviewMonitor({
-  selectedStream,
+  clips,
   currentTime,
   isPlaying,
   playbackRate,
-  sceneProductionState,
-  masterVolume = 100,
+  hasSelection,
   className,
 }: FinalCutPreviewMonitorProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -219,27 +114,15 @@ export function FinalCutPreviewMonitor({
   const isPlayingRef = useRef(isPlaying)
   const playbackRateRef = useRef(playbackRate)
   const previewMutedRef = useRef(previewMuted)
-  const masterVolumeRef = useRef(masterVolume)
   const resyncGeneration = useRef(0)
 
-  const clip = useMemo(
-    () => findPreviewClipAtTime(selectedStream, currentTime, sceneProductionState),
-    [selectedStream, currentTime, sceneProductionState]
-  )
+  const preview = useMemo(() => findPreviewClipAtTime(clips, currentTime), [clips, currentTime])
+  const previewRef = useRef(preview)
+  previewRef.current = preview
 
-  const clipRef = useRef(clip)
-  clipRef.current = clip
-
-  const clipSourceKey = useMemo(() => {
-    if (!clip || clip.media.assetType !== 'video') return ''
-    return `${clip.scene.id}|${clip.media.assetUrl}|${clip.usesSceneLevelVideo ? 'scene' : clip.segment.id}`
-  }, [
-    clip?.scene.id,
-    clip?.media.assetUrl,
-    clip?.media.assetType,
-    clip?.usesSceneLevelVideo,
-    clip?.segment.id,
-  ])
+  const sourceKey = preview?.clip.url
+    ? `${preview.clip.sceneId}|${preview.clip.url}`
+    : ''
 
   useEffect(() => {
     isPlayingRef.current = isPlaying
@@ -250,15 +133,12 @@ export function FinalCutPreviewMonitor({
   useEffect(() => {
     previewMutedRef.current = previewMuted
   }, [previewMuted])
-  useEffect(() => {
-    masterVolumeRef.current = masterVolume
-  }, [masterVolume])
 
   const seekVideoToClip = useCallback(() => {
     const v = videoRef.current
-    const c = clipRef.current
-    if (!v || !c || c.media.assetType !== 'video') return
-    const target = c.localTimeSec
+    const p = previewRef.current
+    if (!v || !p?.clip.url) return
+    const target = p.localTimeSec
     if (!Number.isFinite(target)) return
     if (Math.abs(v.currentTime - target) > 0.12) {
       try {
@@ -269,11 +149,11 @@ export function FinalCutPreviewMonitor({
     }
   }, [])
 
-  // New URL or scene: load metadata, seek, then play — avoids starting before the file is ready
+  // New URL or scene: load metadata, seek, then play
   useEffect(() => {
     const v = videoRef.current
-    const c = clipRef.current
-    if (!v || !c || c.media.assetType !== 'video' || !clipSourceKey) return
+    const p = previewRef.current
+    if (!v || !p?.clip.url || !sourceKey) return
 
     const gen = ++resyncGeneration.current
     let cancelled = false
@@ -281,13 +161,13 @@ export function FinalCutPreviewMonitor({
     const run = async () => {
       v.pause()
       v.muted = previewMutedRef.current
-      v.volume = Math.max(0, Math.min(100, masterVolumeRef.current)) / 100
+      v.volume = 1
 
       await waitLoadedMetadata(v)
       if (cancelled || gen !== resyncGeneration.current) return
 
-      const targetClip = clipRef.current
-      if (!targetClip || targetClip.media.assetType !== 'video') return
+      const targetClip = previewRef.current
+      if (!targetClip) return
       await seekToTimeAndSettle(v, targetClip.localTimeSec)
       if (cancelled || gen !== resyncGeneration.current) return
 
@@ -308,13 +188,12 @@ export function FinalCutPreviewMonitor({
     return () => {
       cancelled = true
     }
-  }, [clipSourceKey])
+  }, [sourceKey])
 
-  // Play / pause when only transport changes (same video source; new source handled by resync)
   useEffect(() => {
     const v = videoRef.current
-    const c = clipRef.current
-    if (!v || !c || c.media.assetType !== 'video' || !clipSourceKey) return
+    const p = previewRef.current
+    if (!v || !p?.clip.url || !sourceKey) return
     if (v.readyState < HTMLMediaElement.HAVE_METADATA) return
 
     v.playbackRate = playbackRate
@@ -329,30 +208,24 @@ export function FinalCutPreviewMonitor({
       v.pause()
       seekVideoToClip()
     }
-  }, [isPlaying, playbackRate, clipSourceKey, seekVideoToClip])
+  }, [isPlaying, playbackRate, sourceKey, seekVideoToClip])
 
-  // Scrub / timeline drift (same source)
   useEffect(() => {
     const v = videoRef.current
-    const c = clipRef.current
-    if (!v || !c || c.media.assetType !== 'video') return
+    const p = previewRef.current
+    if (!v || !p?.clip.url) return
     if (v.readyState < HTMLMediaElement.HAVE_METADATA) return
     seekVideoToClip()
-  }, [currentTime, seekVideoToClip, clipSourceKey])
+  }, [currentTime, seekVideoToClip, sourceKey])
 
   useEffect(() => {
     const v = videoRef.current
     if (v) v.muted = previewMuted
   }, [previewMuted])
 
-  const volumeScale = Math.max(0, Math.min(100, masterVolume)) / 100
-
-  useEffect(() => {
-    const v = videoRef.current
-    if (v) v.volume = volumeScale
-  }, [volumeScale, clip?.media.assetUrl])
-
-  const heading = clip?.scene.heading || `Scene ${clip?.scene.sceneNumber ?? ''}`
+  const heading =
+    preview?.clip.heading ||
+    (preview?.clip ? `Scene ${preview.clip.sceneNumber}` : '')
 
   return (
     <div
@@ -364,12 +237,12 @@ export function FinalCutPreviewMonitor({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="flex items-center gap-2 text-xs text-zinc-500 min-w-0">
           <MonitorPlay className="w-4 h-4 text-violet-400 shrink-0" aria-hidden />
-          <span className="font-semibold text-zinc-200 truncate">Program Preview</span>
-          {clip ? (
+          <span className="font-semibold text-zinc-200 truncate">Program preview</span>
+          {preview ? (
             <span className="text-zinc-500 truncate hidden md:inline">· {heading}</span>
           ) : null}
         </div>
-        {clip?.media.assetType === 'video' ? (
+        {preview?.clip.url ? (
           <Button
             type="button"
             variant="ghost"
@@ -391,50 +264,37 @@ export function FinalCutPreviewMonitor({
             'ring-1 ring-violet-400/10'
           )}
         >
-          {!selectedStream ? (
+          {!hasSelection || clips.length === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-zinc-500 p-4 text-center">
               <Film className="w-10 h-10 opacity-40" />
-              <p className="text-sm">Select a stream to preview</p>
+              <p className="text-sm">Pick a format and language to preview</p>
             </div>
-          ) : !clip ? (
+          ) : !preview ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-zinc-500 p-4 text-center">
               <Film className="w-10 h-10 opacity-40" />
               <p className="text-sm">No media at the playhead</p>
+            </div>
+          ) : !preview.clip.url ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-zinc-500 p-4 text-center">
+              <Film className="w-10 h-10 opacity-40" />
+              <p className="text-sm">No render for this scene yet</p>
               <p className="text-xs text-zinc-600 max-w-sm">
-                Link Production segments or move the playhead over a scene with video or stills.
+                Render this scene in the Production Scene Mixer or pick a different version.
               </p>
             </div>
-          ) : clip.media.assetType === 'video' ? (
+          ) : (
             <video
-              key={
-                clip.usesSceneLevelVideo
-                  ? `scene-${clip.scene.id}-${clip.media.assetUrl}`
-                  : `${clip.segment.id}-${clip.media.assetUrl}`
-              }
+              key={`${preview.clip.sceneId}-${preview.clip.url}`}
               ref={videoRef}
-              src={clip.media.assetUrl}
+              src={preview.clip.url}
               className="h-full w-full object-contain"
               playsInline
               muted={previewMuted}
               preload="auto"
             />
-          ) : (
-            <img
-              key={clip.media.assetUrl}
-              src={clip.media.assetUrl}
-              alt=""
-              className="h-full w-full object-contain"
-            />
           )}
         </div>
       </div>
-
-      {clip && clip.media.assetType === 'image' ? (
-        <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-zinc-500">
-          <ImageIcon className="w-3.5 h-3.5" />
-          Still image at playhead — use transport to scrub the timeline
-        </p>
-      ) : null}
     </div>
   )
 }

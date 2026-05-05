@@ -3,28 +3,11 @@
 import React from 'react'
 import { Film } from 'lucide-react'
 import { ProductionSectionHeader } from '@/components/vision/scene-production/ProductionSectionHeader'
-import { FinalCutEditorWorkspace } from './FinalCutEditorWorkspace'
+import { FinalCutEditorWorkspace, type FinalCutEditorWorkspaceProps } from './FinalCutEditorWorkspace'
 import { cn } from '@/lib/utils'
-import type {
-  FinalCutStream,
-  Overlay,
-  TransitionEffect,
-  StreamSettings,
-} from '@/lib/types/finalCut'
 
-export interface FinalCutTimelineProps {
-  projectId: string
-  streams: FinalCutStream[]
-  selectedStreamId: string | null
-  onSceneReorder: (sceneIds: string[]) => void
-  onTransitionUpdate: (sceneId: string, transition: TransitionEffect) => void
-  onOverlayUpdate: (segmentId: string, overlays: Overlay[]) => void
-  onExport: (streamId: string, settings: unknown) => Promise<void>
-  totalDuration: number
-  isProcessing?: boolean
-  sceneProductionState?: Record<string, unknown>
-  productionVisionHref?: string
-  onStreamSettingsChange?: (updates: Partial<StreamSettings>) => void
+export interface FinalCutTimelineProps extends FinalCutEditorWorkspaceProps {
+  /** When the page already supplies a section header, hide the inner mixer header. */
   hideMixerSectionHeader?: boolean
 }
 
@@ -32,9 +15,6 @@ export function FinalCutTimeline({
   hideMixerSectionHeader = false,
   ...workspaceProps
 }: FinalCutTimelineProps) {
-  const selectedStream =
-    workspaceProps.streams.find((s) => s.id === workspaceProps.selectedStreamId) || null
-
   return (
     <div
       className={cn(
@@ -48,10 +28,10 @@ export function FinalCutTimeline({
         <div className="shrink-0 border-b border-violet-500/20 bg-zinc-950/85">
           <ProductionSectionHeader
             icon={Film}
-            title="Final Cut Mixer"
+            title="Final Cut Viewer"
             titleClassName="font-semibold tracking-tight"
-            badge={selectedStream ? selectedStream.scenes.length : 0}
-            rightHint="Assembly timeline — select scenes and trim"
+            badge={workspaceProps.clips.length}
+            rightHint="Read-only preview of rendered scenes"
           />
         </div>
       ) : null}

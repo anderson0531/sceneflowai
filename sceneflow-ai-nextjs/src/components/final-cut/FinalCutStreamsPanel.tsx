@@ -1,107 +1,94 @@
 'use client'
 
-import React, { useMemo, useState, useCallback } from 'react'
+import React, { useMemo } from 'react'
 import {
-  Film,
   Clapperboard,
   Video as VideoIcon,
-  Plus,
-  Check,
-  Clock,
-  Layers,
   ExternalLink,
+  CheckCircle2,
+  AlertTriangle,
+  Loader2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import type { FinalCutStream, ProductionFormat, ProductionLanguage } from '@/lib/types/finalCut'
-import { FORMAT_CONFIGS, LANGUAGE_CONFIGS } from '@/lib/types/finalCut'
-import { FLAG_EMOJIS } from '@/constants/languages'
-import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
+import type {
+  FinalCutSceneClip,
+  FinalCutSelection,
+  ProductionFormat,
+  ProductionLanguage,
+} from '@/lib/types/finalCut'
+import { FLAG_EMOJIS, getLanguageName } from '@/constants/languages'
 
 export interface FinalCutStreamsPanelProps {
-  streams: FinalCutStream[]
-  selectedStreamId: string | null
-  onSelectStream: (streamId: string) => void
-  onCreateStream: (language: ProductionLanguage, format: ProductionFormat) => Promise<void>
+  /** Active selection (format + language + per-scene overrides). */
+  selection: FinalCutSelection
+  /** Resolved per-scene clips for the current selection. */
+  clips: FinalCutSceneClip[]
+  /** Languages with at least one ready stream for the active format. */
+  availableLanguages: string[]
+  /** Update format ("animatic" | "video"). */
+  onChangeFormat: (format: ProductionFormat) => void
+  /** Update language. */
+  onChangeLanguage: (language: ProductionLanguage) => void
+  /** Set / clear a scene-level version override. Pass null to reset to global default. */
+  onChangeSceneOverride: (sceneId: string, version: number | null) => void
+  /** Disabled state (saving, demo mode). */
   disabled?: boolean
-  /** Vision / Production hub for scene renders and segment work */
+  /** Vision / Production hub for scene renders. */
   productionHref?: string
   showProductionLink?: boolean
-  /** Hide the large “Final Cut Streams” title when the page supplies a section header */
-  suppressOuterTitle?: boolean
-  /** Inside a parent card: drop duplicate border/background */
+  /** Embedded inside a section card — skip the duplicate border/padding. */
   embeddedInSection?: boolean
+  /** Suppress the panel's title when the page provides a section header. */
+  suppressOuterTitle?: boolean
 }
 
-function streamDurationSec(stream: FinalCutStream): number {
-  if (stream.scenes.length === 0) return 0
-  return Math.max(...stream.scenes.map((s) => s.endTime), 0)
-}
-
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60)
-  const s = Math.floor(seconds % 60)
-  return `${m}:${s.toString().padStart(2, '0')}`
+function statusBadge(status: FinalCutSceneClip['status']) {
+  if (status === 'ready') {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-300">
+        <CheckCircle2 className="w-3.5 h-3.5" /> Ready
+      </span>
+    )
+  }
+  if (status === 'pending') {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] text-amber-300">
+        <Loader2 className="w-3.5 h-3.5 animate-spin" /> Render in progress
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] text-rose-300">
+      <AlertTriangle className="w-3.5 h-3.5" /> Not rendered
+    </span>
+  )
 }
 
 export function FinalCutStreamsPanel({
-  streams,
-  selectedStreamId,
-  onSelectStream,
-  onCreateStream,
+  selection,
+  clips,
+  availableLanguages,
+  onChangeFormat,
+  onChangeLanguage,
+  onChangeSceneOverride,
   disabled = false,
   productionHref,
   showProductionLink = true,
-  suppressOuterTitle = false,
   embeddedInSection = false,
+  suppressOuterTitle = false,
 }: FinalCutStreamsPanelProps) {
-  const [tab, setTab] = useState<'animatic' | 'full-video'>('full-video')
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [newLanguage, setNewLanguage] = useState<ProductionLanguage>('en')
-  const [newFormat, setNewFormat] = useState<ProductionFormat>('full-video')
-  const [isCreating, setIsCreating] = useState(false)
+  const languages = useMemo(() => {
+    const set = new Set(availableLanguages)
+    set.add(selection.language)
+    return Array.from(set).sort()
+  }, [availableLanguages, selection.language])
 
-  const animaticStreams = useMemo(
-    () => streams.filter((s) => s.format === 'animatic'),
-    [streams]
-  )
-  const videoStreams = useMemo(
-    () => streams.filter((s) => s.format === 'full-video'),
-    [streams]
-  )
-
-  const currentList = tab === 'animatic' ? animaticStreams : videoStreams
-
-  const sortedList = useMemo(() => {
-    return [...currentList].sort((a, b) => {
-      const lang = a.language.localeCompare(b.language)
-      if (lang !== 0) return lang
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-    })
-  }, [currentList])
-
-  const handleCreate = useCallback(async () => {
-    setIsCreating(true)
-    try {
-      await onCreateStream(newLanguage, newFormat)
-      setShowCreateDialog(false)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setIsCreating(false)
-    }
-  }, [onCreateStream, newLanguage, newFormat])
+  const readyCount = clips.filter((c) => c.status === 'ready').length
+  const totalCount = clips.length
+  const hasAnyStream = clips.some((c) => c.availableVersions.length > 0)
 
   return (
     <div
@@ -113,219 +100,158 @@ export function FinalCutStreamsPanel({
       )}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-2 min-w-0">
+        <div className="min-w-0">
           {!suppressOuterTitle ? (
-            <Film className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" aria-hidden />
+            <h2 className="text-sm font-semibold text-white tracking-tight">Production streams</h2>
           ) : null}
-          <div className="min-w-0">
-            {!suppressOuterTitle ? (
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-sm font-semibold text-white tracking-tight">Final Cut Streams</h2>
-                {streams.length > 0 && (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-purple-500/20 text-purple-200 rounded-md border border-purple-500/25">
-                    {streams.length} total
-                  </span>
-                )}
-              </div>
-            ) : null}
-            <p className="text-xs text-zinc-500 mt-1 max-w-2xl leading-relaxed">
-              Assembly timelines by language and format. For new scene renders and segment edits, use Production
-              (Vision). Select a stream to edit assembly in the mixer below.
-            </p>
-          </div>
+          <p className="text-xs text-zinc-500 mt-1 max-w-2xl leading-relaxed">
+            Pick the format and language to preview. Scenes default to the latest ready render — pin a
+            specific version per scene if you need to.
+          </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
-          {showProductionLink && productionHref ? (
+        {showProductionLink && productionHref ? (
+          <Link href={productionHref} className="shrink-0">
             <Button
               type="button"
               size="sm"
               variant="outline"
               disabled={disabled}
               className="border-purple-500/40 text-purple-200 hover:bg-purple-500/10"
-              asChild
             >
-              <Link href={productionHref}>
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Open Production
-              </Link>
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Open Production
             </Button>
-          ) : null}
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
+          </Link>
+        ) : null}
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Tabs
+          value={selection.format}
+          onValueChange={(v) => onChangeFormat(v as ProductionFormat)}
+          className="w-full sm:w-auto"
+        >
+          <TabsList className="grid w-full sm:w-auto sm:grid-cols-2 grid-cols-2 h-10 p-1 bg-zinc-950/80 border border-zinc-700/60 rounded-lg">
+            <TabsTrigger
+              value="animatic"
+              className="gap-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=inactive]:text-zinc-400 rounded-md text-xs font-medium px-3"
+              disabled={disabled}
+            >
+              <Clapperboard className="w-4 h-4" />
+              Animatic
+            </TabsTrigger>
+            <TabsTrigger
+              value="full-video"
+              className="gap-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=inactive]:text-zinc-400 rounded-md text-xs font-medium px-3"
+              disabled={disabled}
+            >
+              <VideoIcon className="w-4 h-4" />
+              Video
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <label className="flex items-center gap-2 text-xs text-zinc-400">
+          <span className="uppercase tracking-wider text-zinc-500">Language</span>
+          <select
+            value={selection.language}
             disabled={disabled}
-            className="border-purple-500/40 text-purple-200 hover:bg-purple-500/10 shrink-0"
-            onClick={() => setShowCreateDialog(true)}
+            onChange={(e) => onChangeLanguage(e.target.value as ProductionLanguage)}
+            className="bg-zinc-900/80 text-zinc-200 text-xs rounded-md px-2 py-1.5 border border-zinc-700/80 focus:outline-none focus:ring-1 focus:ring-violet-500/50"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Add assembly stream
-          </Button>
-        </div>
+            {languages.map((code) => (
+              <option key={code} value={code}>
+                {(FLAG_EMOJIS[code] ?? '🌐') + ' ' + getLanguageName(code)}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as 'animatic' | 'full-video')} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2 h-10 p-1 bg-zinc-950/80 border border-zinc-700/60 rounded-lg">
-          <TabsTrigger
-            value="animatic"
-            className="gap-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=inactive]:text-zinc-400 rounded-md text-xs font-medium"
-          >
-            <Clapperboard className="w-4 h-4" />
-            Animatic
-            <span className="text-[11px] opacity-80 tabular-nums text-zinc-500">({animaticStreams.length})</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="full-video"
-            className="gap-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=inactive]:text-zinc-400 rounded-md text-xs font-medium"
-          >
-            <VideoIcon className="w-4 h-4" />
-            Video
-            <span className="text-[11px] opacity-80 tabular-nums text-zinc-500">({videoStreams.length})</span>
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      <div className="flex items-center gap-2 text-xs text-zinc-400">
-        {tab === 'animatic' ? (
-          <>
-            <Clapperboard className="w-3.5 h-3.5 text-violet-400" />
-            <span>
-              Showing <span className="text-violet-200 font-medium">Animatic</span> assembly streams
-            </span>
-          </>
-        ) : (
-          <>
-            <VideoIcon className="w-3.5 h-3.5 text-violet-400" />
-            <span>
-              Showing <span className="text-violet-200 font-medium">Video</span> assembly streams
-            </span>
-          </>
-        )}
+      <div className="flex items-center justify-between gap-3 text-[11px] text-zinc-500">
+        <span>
+          {readyCount} of {totalCount} scenes ready
+        </span>
+        {!hasAnyStream && totalCount > 0 ? (
+          <span className="text-amber-300">
+            No production renders for{' '}
+            {selection.format === 'animatic' ? 'Animatic' : 'Video'} · {getLanguageName(selection.language)}
+          </span>
+        ) : null}
       </div>
 
-      {sortedList.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {sortedList.map((stream) => {
-            const selected = stream.id === selectedStreamId
-            const dur = streamDurationSec(stream)
-            return (
-              <button
-                key={stream.id}
-                type="button"
-                disabled={disabled}
-                onClick={() => onSelectStream(stream.id)}
-                className={cn(
-                  'text-left rounded-xl border p-4 transition-all',
-                  selected
-                    ? 'border-violet-500 bg-violet-500/10 ring-1 ring-violet-500/30'
-                    : 'border-zinc-700 bg-zinc-900/50 hover:border-zinc-600 hover:bg-zinc-800/70'
-                )}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-lg shrink-0">{FLAG_EMOJIS[stream.language] ?? '🌐'}</span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{stream.name}</p>
-                      <p className="text-[11px] text-zinc-500 capitalize mt-0.5">{stream.status.replace('-', ' ')}</p>
-                    </div>
-                  </div>
-                  {selected && <Check className="w-4 h-4 text-violet-400 shrink-0" />}
-                </div>
-                <div className="flex items-center gap-3 mt-3 text-[11px] text-zinc-400">
-                  <span className="inline-flex items-center gap-1">
-                    <Layers className="w-3.5 h-3.5" />
-                    {stream.scenes.length} scenes
-                  </span>
-                  <span className="inline-flex items-center gap-1 tabular-nums">
-                    <Clock className="w-3.5 h-3.5" />
-                    {formatDuration(dur)}
-                  </span>
-                </div>
-              </button>
-            )
-          })}
+      {totalCount === 0 ? (
+        <div className="rounded-lg border border-zinc-700/50 bg-zinc-950/40 p-6 text-center text-sm text-zinc-400">
+          No scenes found in this project. Add scenes in the script before previewing in Final Cut.
         </div>
       ) : (
-        <div
-          className={cn(
-            'rounded-lg border p-6 text-center text-sm',
-            tab === 'animatic'
-              ? 'border-purple-700/40 bg-purple-950/20 text-purple-200/80'
-              : 'border-indigo-700/40 bg-indigo-950/20 text-indigo-200/80'
-          )}
-        >
-          No {tab === 'animatic' ? 'Animatic' : 'Video'} streams yet. Use <strong>Add assembly stream</strong> or refine
-          scenes in Production.
-        </div>
-      )}
+        <ul className="divide-y divide-zinc-800/80 rounded-lg border border-zinc-800/80 bg-zinc-950/40 overflow-hidden">
+          {clips.map((clip) => {
+            const override = selection.perSceneOverrides?.[clip.sceneId]?.streamVersion
+            const usingOverride = typeof override === 'number'
+            const versionList = clip.availableVersions
+            return (
+              <li key={clip.sceneId} className="px-3 py-3 sm:px-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xs font-medium text-zinc-300 bg-zinc-900/80 border border-zinc-700/70 rounded px-1.5 py-0.5 tabular-nums shrink-0">
+                      {clip.sceneNumber}
+                    </span>
+                    <p className="text-sm text-zinc-200 truncate">
+                      {clip.heading || `Scene ${clip.sceneNumber}`}
+                    </p>
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 flex-wrap">
+                    {statusBadge(clip.status)}
+                    {clip.streamVersion ? (
+                      <span className="text-[11px] text-zinc-500 tabular-nums">
+                        Using v{clip.streamVersion}
+                        {usingOverride ? ' (pinned)' : ''}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
 
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-zinc-100">
-          <DialogHeader>
-            <DialogTitle>Add assembly stream</DialogTitle>
-            <DialogDescription className="text-zinc-400">
-              Add a language and format for this project&apos;s assembly timeline. For new scene renders, use Open
-              Production.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Language</Label>
-              <GroupedLanguageSelector
-                value={newLanguage}
-                onValueChange={(code) => setNewLanguage(code as ProductionLanguage)}
-                size="md"
-                className="w-full bg-zinc-800 border-zinc-700"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Format</Label>
-              <div className="grid grid-cols-2 gap-3">
-                {(Object.keys(FORMAT_CONFIGS) as ProductionFormat[]).map((format) => {
-                  const config = FORMAT_CONFIGS[format]
-                  return (
-                    <button
-                      key={format}
+                <div className="flex items-center gap-2 shrink-0">
+                  <select
+                    value={usingOverride ? String(override) : ''}
+                    disabled={disabled || versionList.length === 0}
+                    onChange={(e) => {
+                      const raw = e.target.value
+                      if (raw === '') {
+                        onChangeSceneOverride(clip.sceneId, null)
+                      } else {
+                        onChangeSceneOverride(clip.sceneId, Number(raw))
+                      }
+                    }}
+                    className="bg-zinc-900/80 text-zinc-200 text-xs rounded-md px-2 py-1.5 border border-zinc-700/80 focus:outline-none focus:ring-1 focus:ring-violet-500/50 disabled:opacity-50"
+                    aria-label={`Version override for scene ${clip.sceneNumber}`}
+                  >
+                    <option value="">Use latest</option>
+                    {versionList.map((v) => (
+                      <option key={v} value={v}>
+                        v{v}
+                      </option>
+                    ))}
+                  </select>
+                  {usingOverride ? (
+                    <Button
                       type="button"
-                      onClick={() => setNewFormat(format)}
-                      className={cn(
-                        'flex items-center gap-3 p-3 rounded-lg border transition-colors text-left',
-                        newFormat === format
-                          ? 'border-violet-500 bg-violet-500/10'
-                          : 'border-zinc-700 hover:border-zinc-600 bg-zinc-800/50'
-                      )}
+                      size="sm"
+                      variant="ghost"
+                      disabled={disabled}
+                      className="h-8 px-2 text-zinc-400 hover:text-zinc-200"
+                      onClick={() => onChangeSceneOverride(clip.sceneId, null)}
                     >
-                      {format === 'full-video' ? (
-                        <Film className="w-6 h-6 text-indigo-400" />
-                      ) : (
-                        <Clapperboard className="w-6 h-6 text-purple-400" />
-                      )}
-                      <div>
-                        <div className="font-medium text-zinc-200">{config.name}</div>
-                        <div className="text-xs text-zinc-500">{config.description}</div>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-            <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700">
-              <Label className="text-xs text-zinc-500">Stream name</Label>
-              <p className="text-zinc-200 text-sm">
-                {LANGUAGE_CONFIGS[newLanguage].name} ({FORMAT_CONFIGS[newFormat].name})
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setShowCreateDialog(false)} disabled={isCreating}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreate} disabled={isCreating} className="bg-violet-600 hover:bg-violet-500">
-              {isCreating ? 'Creating…' : 'Add stream'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                      Reset
+                    </Button>
+                  ) : null}
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }

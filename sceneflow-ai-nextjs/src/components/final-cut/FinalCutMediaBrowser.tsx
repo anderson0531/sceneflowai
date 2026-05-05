@@ -1,27 +1,21 @@
 'use client'
 
 import React, { useEffect, useState, type ComponentProps } from 'react'
-import { Film, Music, Type, Shuffle, Share2, Sparkles } from 'lucide-react'
-import { FinalCutStreamsPanel } from './FinalCutStreamsPanel'
+import { Film, Share2 } from 'lucide-react'
+import { FinalCutStreamsPanel, type FinalCutStreamsPanelProps } from './FinalCutStreamsPanel'
 import { ScreeningRoomDashboard } from '@/components/screening-room/ScreeningRoomDashboard'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
-import type { FinalCutStream, ProductionFormat, ProductionLanguage } from '@/lib/types/finalCut'
 
 const LS_SECTION_SCREENINGS = 'finalCut.section.screenings'
 
-export type FinalCutMediaBrowserTab = 'media' | 'audio' | 'titles' | 'transitions' | 'share'
+export type FinalCutMediaBrowserTab = 'streams' | 'share'
 
 export interface FinalCutMediaBrowserProps {
-  streams: FinalCutStream[]
-  selectedStreamId: string | null
-  onSelectStream: (streamId: string) => void
-  onCreateStream: (language: ProductionLanguage, format: ProductionFormat) => Promise<void>
-  disabled?: boolean
-  productionHref?: string
-  showProductionLink?: boolean
+  /** Streams panel props (selection + clips + handlers). */
+  streamsPanelProps: FinalCutStreamsPanelProps
   className?: string
-  /** Screenings (Share tab) */
+  /** Screenings (Share tab). */
   projectId?: string
   projectName?: string
   finalCutScreenings: NonNullable<ComponentProps<typeof ScreeningRoomDashboard>['finalCutScreenings']>
@@ -33,7 +27,7 @@ export interface FinalCutMediaBrowserProps {
 function PlaceholderTab({ title, body }: { title: string; body: string }) {
   return (
     <div className="px-4 py-8 sm:px-5 text-center space-y-2">
-      <Sparkles className="w-8 h-8 text-violet-400/80 mx-auto" aria-hidden />
+      <Film className="w-8 h-8 text-violet-400/80 mx-auto" aria-hidden />
       <p className="text-sm font-semibold text-zinc-100">{title}</p>
       <p className="text-xs text-zinc-500 max-w-sm mx-auto leading-relaxed">{body}</p>
     </div>
@@ -41,13 +35,7 @@ function PlaceholderTab({ title, body }: { title: string; body: string }) {
 }
 
 export function FinalCutMediaBrowser({
-  streams,
-  selectedStreamId,
-  onSelectStream,
-  onCreateStream,
-  disabled = false,
-  productionHref,
-  showProductionLink = true,
+  streamsPanelProps,
   className,
   projectId,
   projectName,
@@ -56,7 +44,7 @@ export function FinalCutMediaBrowser({
   onCreateScreening,
   onUploadExternal,
 }: FinalCutMediaBrowserProps) {
-  const [tab, setTab] = useState<FinalCutMediaBrowserTab>('media')
+  const [tab, setTab] = useState<FinalCutMediaBrowserTab>('streams')
 
   useEffect(() => {
     try {
@@ -82,36 +70,19 @@ export function FinalCutMediaBrowser({
         className
       )}
     >
-      <Tabs value={tab} onValueChange={(v) => setTab(v as FinalCutMediaBrowserTab)} className="flex flex-col flex-1 min-h-0">
+      <Tabs
+        value={tab}
+        onValueChange={(v) => setTab(v as FinalCutMediaBrowserTab)}
+        className="flex flex-col flex-1 min-h-0"
+      >
         <div className="shrink-0 border-b border-white/[0.06] bg-zinc-950/55 px-2 pt-2">
           <TabsList className="flex w-full flex-wrap h-auto gap-1 p-1 bg-zinc-950/80 border border-zinc-700/50 rounded-lg justify-start">
             <TabsTrigger
-              value="media"
+              value="streams"
               className="text-xs font-medium gap-1.5 px-2.5 py-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white rounded-md text-zinc-400"
             >
               <Film className="w-3.5 h-3.5 shrink-0" />
-              Media
-            </TabsTrigger>
-            <TabsTrigger
-              value="audio"
-              className="text-xs font-medium gap-1.5 px-2.5 py-2 data-[state=active]:bg-zinc-700 data-[state=active]:text-white rounded-md text-zinc-400"
-            >
-              <Music className="w-3.5 h-3.5 shrink-0" />
-              Audio
-            </TabsTrigger>
-            <TabsTrigger
-              value="titles"
-              className="text-xs font-medium gap-1.5 px-2.5 py-2 data-[state=active]:bg-zinc-700 data-[state=active]:text-white rounded-md text-zinc-400"
-            >
-              <Type className="w-3.5 h-3.5 shrink-0" />
-              Titles
-            </TabsTrigger>
-            <TabsTrigger
-              value="transitions"
-              className="text-xs font-medium gap-1.5 px-2.5 py-2 data-[state=active]:bg-zinc-700 data-[state=active]:text-white rounded-md text-zinc-400"
-            >
-              <Shuffle className="w-3.5 h-3.5 shrink-0" />
-              Transitions
+              Streams
             </TabsTrigger>
             <TabsTrigger
               value="share"
@@ -123,38 +94,11 @@ export function FinalCutMediaBrowser({
           </TabsList>
         </div>
 
-        <TabsContent value="media" className="flex-1 min-h-0 overflow-y-auto mt-0 data-[state=inactive]:hidden">
+        <TabsContent value="streams" className="flex-1 min-h-0 overflow-y-auto mt-0 data-[state=inactive]:hidden">
           <FinalCutStreamsPanel
-            streams={streams}
-            selectedStreamId={selectedStreamId}
-            onSelectStream={onSelectStream}
-            onCreateStream={onCreateStream}
-            disabled={disabled}
-            productionHref={productionHref}
-            showProductionLink={showProductionLink}
-            suppressOuterTitle
+            {...streamsPanelProps}
             embeddedInSection
-          />
-        </TabsContent>
-
-        <TabsContent value="audio" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden">
-          <PlaceholderTab
-            title="Audio browser"
-            body="Browse music, SFX, and voice tracks here in a future update. Use Production for dialogue and stems today."
-          />
-        </TabsContent>
-
-        <TabsContent value="titles" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden">
-          <PlaceholderTab
-            title="Titles & backgrounds"
-            body="Lower thirds, credits, and generators will live here. Coming soon."
-          />
-        </TabsContent>
-
-        <TabsContent value="transitions" className="flex-1 min-h-0 mt-0 data-[state=inactive]:hidden">
-          <PlaceholderTab
-            title="Transitions library"
-            body="Drag transitions from a shared library onto edit points. Scene transitions are available from the timeline inspector and Production."
+            suppressOuterTitle
           />
         </TabsContent>
 

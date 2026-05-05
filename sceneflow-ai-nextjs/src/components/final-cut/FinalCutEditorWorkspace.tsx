@@ -1,91 +1,74 @@
 'use client'
 
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
-import { TransitionPanel } from './TransitionPanel'
-import { OverlayEditor } from './OverlayEditor'
 import { FinalCutPreviewMonitor } from './FinalCutPreviewMonitor'
 import { FinalCutTransportBar } from './FinalCutTransportBar'
 import { FinalCutTimelineTracks } from './FinalCutTimelineTracks'
 import { FinalCutInspectorPanel } from './FinalCutInspectorPanel'
 import { cn } from '@/lib/utils'
-import type {
-  FinalCutStream,
-  Overlay,
-  TransitionEffect,
-  TimelineState,
-  TimelineEditMode,
-  StreamSettings,
-} from '@/lib/types/finalCut'
+import type { FinalCutSceneClip } from '@/lib/types/finalCut'
 import { PIXELS_PER_SECOND_DEFAULT } from './timelineConstants'
 
+/** Local-only preview state (no persistence, no edit history). */
+interface PreviewTimelineState {
+  currentTime: number
+  isPlaying: boolean
+  playbackRate: number
+  zoomLevel: number
+  scrollPosition: number
+  selectedSceneId: string | null
+}
+
 export interface FinalCutEditorWorkspaceProps {
-  projectId: string
-  streams: FinalCutStream[]
-  selectedStreamId: string | null
-  onSceneReorder: (sceneIds: string[]) => void
-  onTransitionUpdate: (sceneId: string, transition: TransitionEffect) => void
-  onOverlayUpdate: (segmentId: string, overlays: Overlay[]) => void
-  onExport: (streamId: string, settings: unknown) => Promise<void>
+  clips: FinalCutSceneClip[]
   totalDuration: number
+  projectId: string | undefined
+  /** Display label for current selection (e.g. "English · Video"). */
+  streamLabel: string | null
+  /** Whether something interactive is happening on the page (save, network). */
   isProcessing?: boolean
-  sceneProductionState?: Record<string, unknown>
   productionVisionHref?: string
-  onStreamSettingsChange?: (updates: Partial<StreamSettings>) => void
+  lastRenderUrl?: string | null
+  filenameLabel?: string
+  onRendered?: (url: string) => Promise<void> | void
+  /** Disabled (demo, no project). */
+  disabled?: boolean
 }
 
 export function FinalCutEditorWorkspace({
-  projectId: _projectId,
-  streams,
-  selectedStreamId,
-  onSceneReorder: _onSceneReorder,
-  onTransitionUpdate,
-  onOverlayUpdate,
-  onExport: _onExport,
+  clips,
   totalDuration,
+  projectId,
+  streamLabel,
   isProcessing = false,
-  sceneProductionState = {},
   productionVisionHref,
-  onStreamSettingsChange,
+  lastRenderUrl,
+  filenameLabel,
+  onRendered,
+  disabled = false,
 }: FinalCutEditorWorkspaceProps) {
-  const [timelineState, setTimelineState] = useState<TimelineState>({
+  const [timelineState, setTimelineState] = useState<PreviewTimelineState>({
     currentTime: 0,
     isPlaying: false,
     playbackRate: 1,
-    selectedSceneId: null,
-    selectedSegmentId: null,
-    selectedOverlayId: null,
     zoomLevel: 1,
     scrollPosition: 0,
-    editMode: 'select',
-    snapToGrid: true,
-    snapToMarkers: true,
-    gridSize: 1,
-    markers: [],
-    undoStack: [],
-    redoStack: [],
+    selectedSceneId: null,
   })
-
-  const [showTransitionPanel, setShowTransitionPanel] = useState(false)
-  const [showOverlayEditor, setShowOverlayEditor] = useState(false)
-  const [inspectorAdvancedOpen, setInspectorAdvancedOpen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   const timelineRef = useRef<HTMLDivElement>(null)
   const playbackRef = useRef<number | null>(null)
-
-  const selectedStream = useMemo(
-    () => streams.find((s) => s.id === selectedStreamId) || null,
-    [streams, selectedStreamId]
-  )
-
-  const masterVolume = selectedStream?.settings?.masterVolume ?? 100
 
   const pixelsPerSecond = useMemo(
     () => PIXELS_PER_SECOND_DEFAULT * timelineState.zoomLevel,
     [timelineState.zoomLevel]
   )
 
-  const timelineWidth = useMemo(() => totalDuration * pixelsPerSecond, [totalDuration, pixelsPerSecond])
+  const timelineWidth = useMemo(
+    () => Math.max(0, totalDuration) * pixelsPerSecond,
+    [totalDuration, pixelsPerSecond]
+  )
 
   const handlePlayPause = useCallback(() => {
     setTimelineState((prev) => {
@@ -96,9 +79,13 @@ export function FinalCutEditorWorkspace({
         }
         return { ...prev, isPlaying: false }
       }
+      // If at end, restart from 0
+      if (prev.currentTime >= totalDuration && totalDuration > 0) {
+        return { ...prev, isPlaying: true, currentTime: 0 }
+      }
       return { ...prev, isPlaying: true }
     })
-  }, [])
+  }, [totalDuration])
 
   useEffect(() => {
     if (!timelineState.isPlaying) return
@@ -112,7 +99,7 @@ export function FinalCutEditorWorkspace({
       setTimelineState((prev) => {
         const newTime = prev.currentTime + delta * prev.playbackRate
         if (newTime >= totalDuration) {
-          return { ...prev, currentTime: 0, isPlaying: false }
+          return { ...prev, currentTime: totalDuration, isPlaying: false }
         }
         return { ...prev, currentTime: newTime }
       })
@@ -178,30 +165,23 @@ export function FinalCutEditorWorkspace({
     }))
   }, [totalDuration])
 
-  const handleEditModeChange = useCallback((mode: TimelineEditMode) => {
-    setTimelineState((prev) => ({ ...prev, editMode: mode }))
-  }, [])
-
   const handleSceneSelect = useCallback((sceneId: string | null) => {
-    setTimelineState((prev) => ({
-      ...prev,
-      selectedSceneId: sceneId,
-      selectedSegmentId: null,
-      selectedOverlayId: null,
-    }))
+    setTimelineState((prev) => ({ ...prev, selectedSceneId: sceneId }))
   }, [])
 
   const formatTime = useCallback((seconds: number): string => {
-    const hours = Math.floor(seconds / 3600)
-    const mins = Math.floor((seconds % 3600) / 60)
-    const secs = Math.floor(seconds % 60)
-    const frames = Math.floor((seconds % 1) * 24)
-
+    const safe = Math.max(0, seconds || 0)
+    const hours = Math.floor(safe / 3600)
+    const mins = Math.floor((safe % 3600) / 60)
+    const secs = Math.floor(safe % 60)
+    const frames = Math.floor((safe % 1) * 24)
     if (hours > 0) {
       return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}:${frames.toString().padStart(2, '0')}`
     }
     return `${mins}:${secs.toString().padStart(2, '0')}:${frames.toString().padStart(2, '0')}`
   }, [])
+
+  const hasSelection = clips.length > 0
 
   return (
     <div
@@ -211,20 +191,22 @@ export function FinalCutEditorWorkspace({
       )}
     >
       <div className="flex flex-1 min-h-0 flex-col lg:flex-row overflow-hidden">
-        <div className="flex flex-1 min-h-0 flex flex-col min-w-0 overflow-hidden">
+        <div className="flex flex-1 min-h-0 flex-col min-w-0 overflow-hidden">
           <FinalCutPreviewMonitor
-            selectedStream={selectedStream}
+            clips={clips}
             currentTime={timelineState.currentTime}
             isPlaying={timelineState.isPlaying}
             playbackRate={timelineState.playbackRate}
-            sceneProductionState={sceneProductionState}
-            masterVolume={masterVolume}
+            hasSelection={hasSelection}
           />
 
           <FinalCutTransportBar
-            selectedStream={selectedStream}
-            timelineState={timelineState}
+            streamLabel={streamLabel}
+            currentTime={timelineState.currentTime}
             totalDuration={totalDuration}
+            isPlaying={timelineState.isPlaying}
+            playbackRate={timelineState.playbackRate}
+            zoomLevel={timelineState.zoomLevel}
             isProcessing={isProcessing}
             isFullscreen={isFullscreen}
             onPlayPause={handlePlayPause}
@@ -233,13 +215,11 @@ export function FinalCutEditorWorkspace({
             onPlaybackRateChange={(rate) =>
               setTimelineState((prev) => ({ ...prev, playbackRate: rate }))
             }
-            onEditModeChange={handleEditModeChange}
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
             onZoomFit={handleZoomFit}
             onToggleFullscreen={() => setIsFullscreen((f) => !f)}
             formatTime={formatTime}
-            variant="underViewer"
           />
 
           <div className="flex flex-1 min-h-0 overflow-hidden min-h-[160px] sm:min-h-[200px]">
@@ -248,52 +228,29 @@ export function FinalCutEditorWorkspace({
               totalDuration={totalDuration}
               pixelsPerSecond={pixelsPerSecond}
               timelineWidth={timelineWidth}
-              timelineState={timelineState}
-              selectedStream={selectedStream}
+              currentTime={timelineState.currentTime}
+              scrollPosition={timelineState.scrollPosition}
+              selectedSceneId={timelineState.selectedSceneId}
+              clips={clips}
               onSeek={handleSeek}
               onSceneSelect={handleSceneSelect}
-              onTransitionPanelOpen={() => setShowTransitionPanel(true)}
             />
           </div>
         </div>
 
         <FinalCutInspectorPanel
-          selectedStream={selectedStream}
+          clips={clips}
           selectedSceneId={timelineState.selectedSceneId}
-          masterVolume={masterVolume}
-          isProcessing={isProcessing}
+          projectId={projectId}
           productionVisionHref={productionVisionHref}
-          onStreamSettingsChange={onStreamSettingsChange}
+          lastRenderUrl={lastRenderUrl}
+          isProcessing={isProcessing}
+          onRendered={onRendered}
+          filenameLabel={filenameLabel}
           formatTime={formatTime}
-          inspectorAdvancedOpen={inspectorAdvancedOpen}
-          onInspectorAdvancedOpenChange={setInspectorAdvancedOpen}
-          onOpenTransitionPanel={() => setShowTransitionPanel(true)}
-          onOpenOverlayEditor={() => setShowOverlayEditor(true)}
+          disabled={disabled}
         />
       </div>
-
-      {showTransitionPanel && timelineState.selectedSceneId && selectedStream ? (
-        <TransitionPanel
-          scene={selectedStream.scenes.find((s) => s.id === timelineState.selectedSceneId)!}
-          onClose={() => setShowTransitionPanel(false)}
-          onUpdate={(transition) => {
-            onTransitionUpdate(timelineState.selectedSceneId!, transition)
-            setShowTransitionPanel(false)
-          }}
-        />
-      ) : null}
-
-      {showOverlayEditor && timelineState.selectedSegmentId ? (
-        <OverlayEditor
-          segmentId={timelineState.selectedSegmentId}
-          overlays={[]}
-          onClose={() => setShowOverlayEditor(false)}
-          onUpdate={(overlays) => {
-            onOverlayUpdate(timelineState.selectedSegmentId!, overlays)
-            setShowOverlayEditor(false)
-          }}
-        />
-      ) : null}
     </div>
   )
 }

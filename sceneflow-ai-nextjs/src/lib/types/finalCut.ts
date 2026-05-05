@@ -22,7 +22,66 @@ export type {
 } from '@/components/vision/scene-production/types'
 
 // =============================================================================
-// FINAL CUT STREAM TYPES (Project-Level)
+// FINAL CUT PREVIEW SELECTION (preview-only refactor)
+// =============================================================================
+//
+// The Final Cut route is a preview viewer over Production renders — it no
+// longer manages an assembly timeline with overlays / transitions / audio
+// mixing. Persistence is reduced to a small `FinalCutSelection` blob on the
+// project metadata. Per-scene clips are computed at render time from the
+// canonical Production state, so the viewer always reflects the latest
+// finished renders without duplicating any production data on the project.
+
+/**
+ * The Final Cut viewer's persisted selection (project-level).
+ * Lives at `project.metadata.finalCut`.
+ *
+ * Per-scene overrides are sparse: only scenes that the user explicitly
+ * pinned to a non-default version appear in the map.
+ */
+export interface FinalCutSelection {
+  /** Output kind to preview ("video" = full-motion, "animatic" = Ken Burns stills) */
+  format: ProductionFormat
+  /** Language code (e.g. "en", "th"). Falls back to project default if unavailable. */
+  language: ProductionLanguage
+  /** Sparse map of sourceSceneId → version override for that scene. */
+  perSceneOverrides?: Record<string, FinalCutSceneOverride>
+}
+
+export interface FinalCutSceneOverride {
+  /** Pin a specific Production stream version (1-based). */
+  streamVersion?: number
+}
+
+/**
+ * One resolved scene clip in the assembled preview.
+ * Computed from script scenes + Production state + FinalCutSelection.
+ */
+export interface FinalCutSceneClip {
+  /** Source scene id (matches script scene + Production state key). */
+  sceneId: string
+  /** 1-based scene number from the script. */
+  sceneNumber: number
+  /** Display heading from the script ("INT. COFFEE SHOP - DAY"). */
+  heading?: string
+  /** Composition start time, seconds. */
+  startTime: number
+  /** Composition end time, seconds. */
+  endTime: number
+  /** Composition duration, seconds. */
+  duration: number
+  /** Resolved playable URL for this scene; null when no rendered stream is ready. */
+  url: string | null
+  /** Resolved stream version, when available. */
+  streamVersion?: number
+  /** Available versions (1-based) for the active (format, language). */
+  availableVersions: number[]
+  /** Coarse status for badge display in the UI. */
+  status: 'ready' | 'pending' | 'missing'
+}
+
+// =============================================================================
+// FINAL CUT STREAM TYPES (LEGACY — Premiere consumers + back-compat only)
 // =============================================================================
 
 /**
