@@ -22,6 +22,7 @@ export interface SegmentListProps {
   segments: ScriptSegment[]
   selectedLanguage: string
   playingAudio: string | null
+  projectId?: string
   onPlayAudio?: (audioUrl: string, label: string) => void
   onGenerateSceneAudio?: (
     sceneIdx: number,
@@ -43,7 +44,14 @@ export interface SegmentListProps {
     dialogueIdx?: number,
     characterName?: string
   ) => void | Promise<void>
-  onOpenSfxLibrary?: (sfxIdx: number, query?: string) => void
+  /** Persists a generated SFX URL through the project PATCH path. */
+  onSaveSfxAudio?: (
+    sceneIdx: number,
+    audioType: 'sfx' | 'music',
+    audioUrl: string,
+    sfxIdx?: number,
+    sfxAttribution?: Record<string, unknown> | null
+  ) => Promise<void> | void
   generatingDialogue?: { sceneIdx: number; character?: string; dialogueIndex?: number; lineId?: string } | null
   setGeneratingDialogue?: (val: any) => void
   overlayStore?: { show: (msg: string, n?: number) => void; hide: () => void }
@@ -242,10 +250,10 @@ function SegmentCard({
                   sfx={sfx}
                   positionInSegment={idx}
                   playingAudio={rest.playingAudio}
+                  projectId={rest.projectId}
                   onPlayAudio={rest.onPlayAudio}
                   onDeleteSceneAudio={rest.onDeleteSceneAudio}
-                  uploadAudio={rest.uploadAudio}
-                  onOpenSfxLibrary={rest.onOpenSfxLibrary}
+                  onSaveSfxAudio={rest.onSaveSfxAudio}
                 />
               ))}
             </div>

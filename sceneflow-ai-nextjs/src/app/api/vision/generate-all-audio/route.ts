@@ -48,12 +48,72 @@ async function generateAndSaveMusicForScene(scene: any, projectId: string, scene
   }
 }
 
-// Helper function to generate and save SFX for a scene
-async function generateAndSaveSFXForScene(scene: any, projectId: string, sceneIdx: number, sfxIdx: number, baseUrl: string): Promise<string | null> {
-  console.log(
-    `[Batch Audio] Auto SFX generation disabled (manual upload only), scene ${sceneIdx + 1} sfx ${sfxIdx + 1}`
-  )
-  return null
+// Helper function to generate and save SFX for a scene cue via ElevenLabs
+async function generateAndSaveSFXForScene(
+  scene: any,
+  projectId: string,
+  sceneIdx: number,
+  sfxIdx: number,
+  baseUrl: string,
+  authCookie: string
+): Promise<string | null> {
+  try {
+    const cue = Array.isArray(scene?.sfx) ? scene.sfx[sfxIdx] : null
+    const description: string =
+      typeof cue === 'string'
+        ? cue
+        : (cue?.description || cue?.label || cue?.tag || '').toString()
+    if (!description.trim()) {
+      console.warn(
+        `[Batch Audio] Skipping SFX scene ${sceneIdx + 1} cue ${sfxIdx + 1}: empty description`
+      )
+      return null
+    }
+
+    const sfxId: string | undefined =
+      typeof cue === 'object' && cue && typeof cue.sfxId === 'string' ? cue.sfxId : undefined
+    const durationSeconds: number | undefined =
+      typeof cue === 'object' && cue && typeof cue.duration === 'number'
+        ? cue.duration
+        : undefined
+
+    const response = await fetch(`${baseUrl}/api/tts/elevenlabs/sound-effects`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authCookie ? { Cookie: authCookie } : {}),
+      },
+      body: JSON.stringify({
+        projectId,
+        sfxId,
+        sfxIndex: sfxIdx,
+        text: description,
+        durationSeconds,
+      }),
+    })
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '')
+      console.error(
+        `[Batch Audio] SFX generation failed for scene ${sceneIdx + 1} cue ${sfxIdx + 1}: HTTP ${response.status} ${errText.slice(0, 200)}`
+      )
+      return null
+    }
+    const data = await response.json()
+    if (!data?.url) {
+      console.error(
+        `[Batch Audio] SFX response missing URL for scene ${sceneIdx + 1} cue ${sfxIdx + 1}`
+      )
+      return null
+    }
+    return data.url as string
+  } catch (error: any) {
+    console.error(
+      `[Batch Audio] SFX generation error for scene ${sceneIdx + 1} cue ${sfxIdx + 1}:`,
+      error?.message || String(error)
+    )
+    return null
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -68,6 +128,8 @@ export async function POST(req: NextRequest) {
     const protocol = req.headers.get('x-forwarded-proto') || 'http'
     const host = req.headers.get('host') || 'localhost:3000'
     const baseUrl = `${protocol}://${host}`
+    // Forward the inbound auth cookie so internal SFX calls preserve the user session
+    const authCookie = req.headers.get('cookie') || ''
     console.log(`[Batch Audio] Using base URL: ${baseUrl}, language: ${language}`)
 
     await sequelize.authenticate()
@@ -193,8 +255,8 @@ export async function POST(req: NextRequest) {
           }
         }
         
-        // Collect SFX audio URLs
-        if (includeSFX && (!scene.sfxAudio)) {
+        // Collect SFX audio URLs (only when SFX regeneration is actually requested)
+        if (includeSFX) {
           if (scene.sfxAudio && typeof scene.sfxAudio === 'object') {
             Object.values(scene.sfxAudio).forEach((url: any) => {
               if (typeof url === 'string' && url.includes('blob')) urlsToDelete.push(url)
@@ -202,8 +264,9 @@ export async function POST(req: NextRequest) {
           }
           if (scene.sfx && Array.isArray(scene.sfx)) {
             scene.sfx.forEach((s: any) => {
-              if (typeof s === 'object' && s.url && s.url.includes('blob')) {
-                urlsToDelete.push(s.url)
+              if (typeof s === 'object' && s) {
+                if (typeof s.url === 'string' && s.url.includes('blob')) urlsToDelete.push(s.url)
+                if (typeof s.audioUrl === 'string' && s.audioUrl.includes('blob')) urlsToDelete.push(s.audioUrl)
               }
             })
           }
@@ -271,17 +334,21 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // Clear SFX audio
-        delete cleanedScene.sfxAudio
-        if (cleanedScene.sfx && Array.isArray(cleanedScene.sfx)) {
-          cleanedScene.sfx = cleanedScene.sfx.map((s: any) => {
-            if (typeof s === 'object') {
-              const cleanedSfx = { ...s }
-              delete cleanedSfx.url
-              return cleanedSfx
-            }
-            return s
-          })
+        // Clear SFX audio only when SFX regeneration is requested. This prevents
+        // wiping user-imported SFX during narration/dialogue/music regen.
+        if (includeSFX) {
+          delete cleanedScene.sfxAudio
+          if (cleanedScene.sfx && Array.isArray(cleanedScene.sfx)) {
+            cleanedScene.sfx = cleanedScene.sfx.map((s: any) => {
+              if (typeof s === 'object' && s) {
+                const cleanedSfx = { ...s }
+                delete cleanedSfx.url
+                delete cleanedSfx.audioUrl
+                return cleanedSfx
+              }
+              return s
+            })
+          }
         }
         
         return cleanedScene
@@ -507,19 +574,39 @@ export async function POST(req: NextRequest) {
                 }
               }
               
-              // Generate SFX if enabled
-              if (includeSFX && scene.sfx && scene.sfx.length > 0 && !scene.sfxAudio) {
-                const sfxUrls: string[] = [];
+              // Generate SFX if enabled (regenerate fills missing slots; existing slots are
+              // preserved unless the cleanup pass already cleared them).
+              if (includeSFX && scene.sfx && scene.sfx.length > 0) {
+                const existingSfxAudio: string[] = Array.isArray(scenes[sceneIndex].sfxAudio)
+                  ? [...scenes[sceneIndex].sfxAudio]
+                  : []
                 for (let sfxIdx = 0; sfxIdx < scene.sfx.length; sfxIdx++) {
-                  const sfxUrl = await generateAndSaveSFXForScene(scene, projectId, sceneIndex, sfxIdx, baseUrl);
+                  if (existingSfxAudio[sfxIdx]) {
+                    continue
+                  }
+                  const sfxUrl = await generateAndSaveSFXForScene(
+                    scene,
+                    projectId,
+                    sceneIndex,
+                    sfxIdx,
+                    baseUrl,
+                    authCookie
+                  )
                   if (sfxUrl) {
-                    sfxUrls[sfxIdx] = sfxUrl;
-                    sfxCount++;
+                    existingSfxAudio[sfxIdx] = sfxUrl
+                    sfxCount++
+                    // Mirror the URL onto the structured cue so legacy consumers also see it
+                    if (
+                      Array.isArray(scenes[sceneIndex].sfx) &&
+                      typeof scenes[sceneIndex].sfx[sfxIdx] === 'object' &&
+                      scenes[sceneIndex].sfx[sfxIdx]
+                    ) {
+                      scenes[sceneIndex].sfx[sfxIdx].audioUrl = sfxUrl
+                    }
                   }
                 }
-                
-                if (sfxUrls.length > 0) {
-                  scenes[sceneIndex].sfxAudio = sfxUrls;
+                if (existingSfxAudio.length > 0) {
+                  scenes[sceneIndex].sfxAudio = existingSfxAudio
                 }
               }
             })); // End of chunk Promise.all

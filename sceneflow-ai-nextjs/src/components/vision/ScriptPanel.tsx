@@ -65,8 +65,6 @@ import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
 import { getKenBurnsConfig, generateKenBurnsKeyframes, type KenBurnsIntensity } from '@/lib/animation/kenBurns'
 import { SceneDirectionProvider } from '@/contexts/SceneDirectionContext'
 import { GenerateAudioDialog } from './GenerateAudioDialog'
-import { FreesoundBrowseModal } from './FreesoundBrowseModal'
-import { sfxSearchQuery } from '@/lib/audio/sfxSearchQuery'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { useAudioPlayerContext, type Track } from '@/context/AudioPlayerProvider'
@@ -184,7 +182,15 @@ interface ScriptPanelProps {
   onPlayAudio?: (audioUrl: string, label: string) => void
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void
   // NEW: Props for Production Script Header
-  onGenerateAllAudio?: (language?: string) => void
+  onGenerateAllAudio?: (
+    language?: string,
+    options?: {
+      includeNarration?: boolean
+      includeDialogue?: boolean
+      includeMusic?: boolean
+      includeSFX?: boolean
+    }
+  ) => void
   isGeneratingAudio?: boolean
   // NEW: Production readiness for workflow guards (disable actions until prerequisites met)
   productionReadiness?: ProductionReadiness
@@ -817,11 +823,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [showProductionScenes, setShowProductionScenes] = useState(false)
   
   // Audio features state
-  const [freesoundPicker, setFreesoundPicker] = useState<{
-    sceneIdx: number
-    sfxIdx: number
-    query: string
-  } | null>(null)
   const [generatingMusic, setGeneratingMusic] = useState<number | null>(null)
   const [audioTracks, setAudioTracks] = useState<AudioTrack[]>([])
   const [isPlayingMixed, setIsPlayingMixed] = useState(false)
@@ -1083,13 +1084,18 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     const includeSceneImages = options?.generateSceneImages ?? false
     const forceRegenerateImages = options?.forceRegenerateImages ?? false
 
-    // Batch API covers narration, dialogue, and music only (not SFX — use Browse / Upload per scene).
+    // Batch API covers narration, dialogue, music, and SFX (ElevenLabs).
     if (audioTypes.narration && audioTypes.dialogue && audioTypes.music && onGenerateAllAudio) {
       setDialogGenerationProgress(null)
       setDialogGenerationMode('foreground')
       generationModeRef.current = 'foreground'
       backgroundRequestedRef.current = false
-      await onGenerateAllAudio(language)
+      await onGenerateAllAudio(language, {
+        includeNarration: true,
+        includeDialogue: true,
+        includeMusic: true,
+        includeSFX: !!audioTypes.sfx,
+      })
       setGenerateAudioDialogOpen(false)
       return
     }
@@ -1126,11 +1132,16 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     const totalSteps = totalSceneSteps + totalDialogueLines + totalMusicScenes + totalCharacters + totalImages
     const audioTasksSelected = audioTypes.narration || audioTypes.dialogue || audioTypes.music || audioTypes.sfx
 
+    // SFX-only batch: route directly through onGenerateAllAudio with sfx flag.
     if (audioTypes.sfx && !audioTypes.narration && !audioTypes.dialogue && !audioTypes.music && !includeCharacters && !includeSceneImages) {
-      toast.info(
-        'Sound effects are added per scene: use Browse sounds or Upload in the scene card.',
-        { style: toastVisualStyle }
-      )
+      if (onGenerateAllAudio) {
+        setDialogGenerationProgress(null)
+        setDialogGenerationMode('foreground')
+        generationModeRef.current = 'foreground'
+        backgroundRequestedRef.current = false
+        await onGenerateAllAudio(language, { includeSFX: true, includeMusic: false, includeNarration: false, includeDialogue: false })
+        setGenerateAudioDialogOpen(false)
+      }
       return
     }
 
@@ -1918,6 +1929,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   }
 
   const uploadAudio = async (sceneIdx: number, type: 'description' | 'narration' | 'dialogue' | 'sfx' | 'music', sfxIdx?: number, dialogueIdx?: number, characterName?: string) => {
+    if (type === 'sfx') {
+      toast.info('SFX uploads are no longer supported. Use Generate to create the cue with ElevenLabs.')
+      return
+    }
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'audio/mp3,audio/wav,audio/ogg,audio/webm,audio/mpeg'
@@ -1945,14 +1960,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         const audioUrl = data.url
         
         // Handle different audio types
-        if (type === 'sfx' || type === 'music') {
-          await saveSceneAudio(
-            sceneIdx,
-            type,
-            audioUrl,
-            sfxIdx,
-            type === 'sfx' ? null : undefined
-          )
+        if (type === 'music') {
+          await saveSceneAudio(sceneIdx, type, audioUrl, sfxIdx, undefined)
         } else if (type === 'description') {
           // Update description audio
           const updatedScenes = [...scenes]
@@ -2117,9 +2126,62 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     return parsed
   }
 
-  // Quick play SFX (generate and play immediately)
+  // Quick play SFX (generate via ElevenLabs and play immediately).
+  // This does NOT persist the URL to the scene; it is a transient preview.
   const generateAndPlaySFX = async (description: string) => {
-    toast.info(`Auto SFX preview is disabled (${description}). Upload a curated file to preview.`)
+    if (!description?.trim()) {
+      toast.info('Add a description for this SFX before previewing.')
+      return
+    }
+    if (!projectId) {
+      toast.error('Project context is missing for SFX preview.')
+      return
+    }
+    const toastId = toast.loading('Generating SFX preview...')
+    try {
+      const response = await fetch('/api/tts/elevenlabs/sound-effects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          text: description,
+        }),
+      })
+      if (!response.ok) {
+        let payload: any = null
+        try {
+          payload = await response.json()
+        } catch {
+          payload = null
+        }
+        if (response.status === 402) {
+          const need = payload?.creditsRequired
+          const have = payload?.creditsAvailable
+          toast.error(
+            `Insufficient credits for SFX preview${
+              typeof need === 'number' ? `. Need ${need} credits` : ''
+            }${typeof have === 'number' ? ` (available: ${have})` : ''}.`,
+            { id: toastId }
+          )
+          return
+        }
+        throw new Error(payload?.error || `SFX preview failed (HTTP ${response.status})`)
+      }
+      const data = await response.json()
+      const url: string | undefined = data?.url
+      if (!url) {
+        throw new Error('SFX response missing audio URL')
+      }
+      const audio = new Audio(url)
+      orphanAudioRefs.current.add(audio)
+      audio.onended = () => orphanAudioRefs.current.delete(audio)
+      audio.onerror = () => orphanAudioRefs.current.delete(audio)
+      await audio.play()
+      toast.success('SFX preview ready.', { id: toastId })
+    } catch (error: any) {
+      console.error('[SFX Preview] Error:', error)
+      toast.error(`Failed to preview SFX: ${error?.message || 'Unknown error'}`, { id: toastId })
+    }
   }
 
   // Quick play Music (generate and play immediately)
@@ -2819,9 +2881,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       setGeneratingMusic={setGeneratingMusic}
                       generateMusic={generateMusic}
                       uploadAudio={uploadAudio}
-                      onOpenSfxLibrary={(sfxIdx: number, query: string) =>
-                        setFreesoundPicker({ sceneIdx: idx, sfxIdx, query })
-                      }
+                      onSaveSfxAudio={saveSceneAudio}
                       onGenerateSceneDirection={onGenerateSceneDirection}
                       generatingDirectionFor={generatingDirectionFor}
                       isOptimizingDirection={isOptimizingDirection}
@@ -3143,25 +3203,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         onRunInBackground={isDialogGenerating && dialogGenerationMode === 'foreground' ? handleRunGenerationInBackground : undefined}
       />
 
-      {projectId && freesoundPicker ? (
-        <FreesoundBrowseModal
-          open
-          onOpenChange={(open) => {
-            if (!open) setFreesoundPicker(null)
-          }}
-          initialQuery={freesoundPicker.query}
-          projectId={projectId}
-          onImported={(url, attribution) => {
-            void saveSceneAudio(
-              freesoundPicker.sceneIdx,
-              'sfx',
-              url,
-              freesoundPicker.sfxIdx,
-              attribution as Record<string, unknown>
-            )
-          }}
-        />
-      ) : null}
       
       {/* Translation Import Modal */}
       <Dialog open={translationImportOpen} onOpenChange={setTranslationImportOpen}>
@@ -3363,7 +3404,15 @@ interface SceneCardProps {
   // Individual audio playback
   onPlayAudio?: (audioUrl: string, label: string) => void
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void
-  onGenerateAllAudio?: (language?: string) => void
+  onGenerateAllAudio?: (
+    language?: string,
+    options?: {
+      includeNarration?: boolean
+      includeDialogue?: boolean
+      includeMusic?: boolean
+      includeSFX?: boolean
+    }
+  ) => void
   isGeneratingAudio?: boolean
   selectedLanguage?: string
   onLanguageChange?: (lang: string) => void
@@ -3402,8 +3451,14 @@ interface SceneCardProps {
   setGeneratingMusic?: (state: number | null) => void
   // Functions for generating and saving audio
   generateMusic?: (sceneIdx: number) => Promise<void>
-  /** Open in-app Freesound browser for this SFX slot */
-  onOpenSfxLibrary?: (sfxIdx: number, initialQuery: string) => void
+  /** Persist a generated SFX URL through the project PATCH path. */
+  onSaveSfxAudio?: (
+    sceneIdx: number,
+    audioType: 'sfx' | 'music',
+    audioUrl: string,
+    sfxIdx?: number,
+    sfxAttribution?: Record<string, unknown> | null
+  ) => Promise<void> | void
   // NEW: Scene direction generation props
   onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
   generatingDirectionFor?: number | null
@@ -3597,7 +3652,7 @@ function SceneCard({
   generatingMusic,
   setGeneratingMusic,
   generateMusic,
-  onOpenSfxLibrary,
+  onSaveSfxAudio,
   uploadAudio,
   onGenerateSceneDirection,
   generatingDirectionFor,
@@ -5598,11 +5653,12 @@ function SceneCard({
                         segments={(scene as any).segments as ScriptSegment[]}
                         selectedLanguage={selectedLanguage}
                         playingAudio={playingAudio}
+                        projectId={projectId}
                         onPlayAudio={onPlayAudio}
                         onGenerateSceneAudio={onGenerateSceneAudio}
                         onDeleteSceneAudio={onDeleteSceneAudio}
                         uploadAudio={uploadAudio}
-                        onOpenSfxLibrary={onOpenSfxLibrary}
+                        onSaveSfxAudio={onSaveSfxAudio}
                         generatingDialogue={generatingDialogue}
                         setGeneratingDialogue={setGeneratingDialogue}
                         overlayStore={overlayStore}
@@ -6035,8 +6091,7 @@ function SceneCard({
                       </div>
                       {!sfxCollapsed && (
                         <p className="text-xs text-amber-800/80 dark:text-amber-200/70 mb-2">
-                          Add clips with <span className="font-medium">Browse sounds</span> (in-app library) or{' '}
-                          <span className="font-medium">Upload</span>.
+                          Generated with <span className="font-medium">ElevenLabs</span> (~15 credits each).
                         </p>
                       )}
                       {!sfxCollapsed && (
@@ -6044,12 +6099,54 @@ function SceneCard({
                         {scene.sfx.map((sfx: any, sfxIdx: number) => {
                         const sfxAudio = scene.sfxAudio?.[sfxIdx]
                         const sfxDesc = typeof sfx === 'string' ? sfx : sfx.description
-                        const sfxQuery = sfxSearchQuery(sfx)
-                        const sfxMeta = Array.isArray(scene.sfxSourceMeta) ? scene.sfxSourceMeta[sfxIdx] : null
-                        const creditLine =
-                          sfxMeta && typeof sfxMeta === 'object' && 'creditLine' in sfxMeta
-                            ? String((sfxMeta as { creditLine?: string }).creditLine || '')
-                            : ''
+                        const sfxIdValue = typeof sfx === 'object' && sfx ? sfx.sfxId : undefined
+                        const sfxDuration = typeof sfx === 'object' && sfx && typeof sfx.duration === 'number' ? sfx.duration : undefined
+                        const handleGenerateLegacySfx = async () => {
+                          if (!projectId) {
+                            toast.error('Project context is missing for SFX generation.')
+                            return
+                          }
+                          if (!sfxDesc) {
+                            toast.info('Add a description for this SFX cue first.')
+                            return
+                          }
+                          const toastId = toast.loading(sfxAudio ? 'Re-generating SFX...' : 'Generating SFX...')
+                          try {
+                            const response = await fetch('/api/tts/elevenlabs/sound-effects', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                projectId,
+                                sfxId: sfxIdValue,
+                                sfxIndex: sfxIdx,
+                                text: sfxDesc,
+                                durationSeconds: sfxDuration,
+                              }),
+                            })
+                            if (!response.ok) {
+                              let payload: any = null
+                              try { payload = await response.json() } catch { payload = null }
+                              if (response.status === 402) {
+                                const need = payload?.creditsRequired
+                                const have = payload?.creditsAvailable
+                                toast.error(
+                                  `Insufficient credits for SFX generation${typeof need === 'number' ? `. Need ${need} credits` : ''}${typeof have === 'number' ? ` (available: ${have})` : ''}.`,
+                                  { id: toastId }
+                                )
+                                return
+                              }
+                              throw new Error(payload?.error || `SFX generation failed (HTTP ${response.status})`)
+                            }
+                            const data = await response.json()
+                            const url: string | undefined = data?.url
+                            if (!url) throw new Error('SFX response missing audio URL')
+                            await onSaveSfxAudio?.(sceneIdx, 'sfx', url, sfxIdx, null)
+                            toast.success(sfxAudio ? 'SFX re-generated.' : 'SFX generated.', { id: toastId })
+                          } catch (error: any) {
+                            console.error('[ScriptPanel] Legacy SFX generation failed:', error)
+                            toast.error(`Failed to generate SFX: ${error?.message || 'Unknown error'}`, { id: toastId })
+                          }
+                        }
                         return (
                           <div key={sfxIdx} className="p-3 bg-amber-100/50 dark:bg-amber-950/30 rounded-lg border border-amber-300/50 dark:border-amber-700/50">
                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
@@ -6064,7 +6161,7 @@ function SceneCard({
                                 )}
                               </div>
                               <div className="flex flex-wrap items-center gap-2">
-                                {sfxAudio ? (
+                                {sfxAudio && (
                                   <>
                                     <button
                                       type="button"
@@ -6093,7 +6190,7 @@ function SceneCard({
                                       type="button"
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        if (confirm('Delete this sound effect? You can add a new file or pick from Browse sounds.')) {
+                                        if (confirm('Delete this sound effect? You can re-generate it from the cue description.')) {
                                           onDeleteSceneAudio?.(sceneIdx, 'sfx', undefined, sfxIdx)
                                         }
                                       }}
@@ -6102,92 +6199,25 @@ function SceneCard({
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </button>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      className="h-8 bg-amber-600 hover:bg-amber-700 text-white border-0"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        onOpenSfxLibrary?.(sfxIdx, sfxQuery)
-                                      }}
-                                    >
-                                      <Library className="w-3.5 h-3.5 mr-1" />
-                                      Browse sounds
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-8 border-amber-600/50 text-amber-800 dark:text-amber-200"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        uploadAudio?.(sceneIdx, 'sfx', sfxIdx)
-                                      }}
-                                    >
-                                      <Upload className="w-3.5 h-3.5 mr-1" />
-                                      Replace file
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      className="h-8 bg-amber-600 hover:bg-amber-700 text-white border-0"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        onOpenSfxLibrary?.(sfxIdx, sfxQuery)
-                                      }}
-                                    >
-                                      <Library className="w-3.5 h-3.5 mr-1" />
-                                      Browse sounds
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-8 border-amber-600/50 text-amber-800 dark:text-amber-200"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        uploadAudio?.(sceneIdx, 'sfx', sfxIdx)
-                                      }}
-                                    >
-                                      <Upload className="w-3.5 h-3.5 mr-1" />
-                                      Upload
-                                    </Button>
-                                    <button
-                                      type="button"
-                                      onClick={async (e) => {
-                                        e.stopPropagation()
-                                        const t = sfxQuery
-                                        if (!t) {
-                                          toast.info('Nothing to copy for this slot.')
-                                          return
-                                        }
-                                        try {
-                                          await navigator.clipboard.writeText(t)
-                                          toast.success('Search text copied')
-                                        } catch {
-                                          toast.error('Could not copy')
-                                        }
-                                      }}
-                                      className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
-                                      title="Copy search text"
-                                    >
-                                      <Copy className="w-4 h-4" />
-                                    </button>
                                   </>
                                 )}
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="h-8 bg-amber-600 hover:bg-amber-700 text-white border-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    void handleGenerateLegacySfx()
+                                  }}
+                                >
+                                  <Sparkles className="w-3.5 h-3.5 mr-1" />
+                                  {sfxAudio ? 'Re-generate' : 'Generate'}
+                                </Button>
                               </div>
                             </div>
                             <div className="text-sm text-gray-700 dark:text-gray-300 italic">
                               {sfxDesc}
                             </div>
-                            {creditLine ? (
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-snug whitespace-pre-wrap">
-                                {creditLine}
-                              </p>
-                            ) : null}
                           </div>
                         )
                       })}

@@ -1,14 +1,16 @@
 'use client'
 
-import { Copy, Download, Library, Pause, Play, Trash2, Upload, Volume2 } from 'lucide-react'
+import { useState } from 'react'
+import { Download, Loader2, Pause, Play, Sparkles, Trash2, Volume2 } from 'lucide-react'
 import { Volume2 as VolumeIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
 import type { SegmentSFX } from '@/lib/script/segmentTypes'
 
 /**
- * One SFX cue inside a segment. Wraps the existing positional handlers
- * (`scene.sfxAudio[idx]`, `uploadAudio(sceneIdx, 'sfx', idx)`,
+ * One SFX cue inside a segment. The cue's description is used to drive
+ * ElevenLabs `sound-generation`; the resulting GCS URL is persisted via the
+ * existing positional handlers (`scene.sfxAudio[idx]`,
  * `onDeleteSceneAudio(sceneIdx, 'sfx', undefined, idx)`) using
  * `sfx.legacyIndex` so legacy data keeps working.
  */
@@ -19,6 +21,7 @@ export interface SegmentSfxCardProps {
   /** Position in the segment (0-based). Used for the "SFX 1" header label. */
   positionInSegment: number
   playingAudio: string | null
+  projectId?: string
   onPlayAudio?: (audioUrl: string, label: string) => void
   onDeleteSceneAudio?: (
     sceneIndex: number,
@@ -26,14 +29,17 @@ export interface SegmentSfxCardProps {
     dialogueIndex?: number,
     sfxIndex?: number
   ) => void
-  uploadAudio?: (
+  /**
+   * Persists a newly generated SFX URL via the parent's `saveSceneAudio` PATCH path.
+   * Signature mirrors `ScriptPanel.saveSceneAudio` so we can pass it down directly.
+   */
+  onSaveSfxAudio?: (
     sceneIdx: number,
-    type: 'description' | 'narration' | 'dialogue' | 'sfx' | 'music',
+    audioType: 'sfx' | 'music',
+    audioUrl: string,
     sfxIdx?: number,
-    dialogueIdx?: number,
-    characterName?: string
-  ) => void | Promise<void>
-  onOpenSfxLibrary?: (sfxIdx: number, query?: string) => void
+    sfxAttribution?: Record<string, unknown> | null
+  ) => Promise<void> | void
 }
 
 export function SegmentSfxCard({
@@ -42,32 +48,89 @@ export function SegmentSfxCard({
   sfx,
   positionInSegment,
   playingAudio,
+  projectId,
   onPlayAudio,
   onDeleteSceneAudio,
-  uploadAudio,
-  onOpenSfxLibrary,
+  onSaveSfxAudio,
 }: SegmentSfxCardProps) {
+  const [isGenerating, setIsGenerating] = useState(false)
+
   const legacyIdx = sfx.legacyIndex
   const audioUrl: string | undefined =
     legacyIdx !== undefined && Array.isArray(scene?.sfxAudio)
       ? scene.sfxAudio[legacyIdx]
       : undefined
-  const credit =
-    legacyIdx !== undefined && Array.isArray(scene?.sfxSourceMeta)
-      ? scene.sfxSourceMeta[legacyIdx]?.creditLine
-      : undefined
 
-  const dispatchUpload = () => {
-    if (legacyIdx !== undefined) uploadAudio?.(sceneIdx, 'sfx', legacyIdx)
-    else toast.error('SFX cue is not linked to a legacy index yet.')
-  }
-  const dispatchBrowse = () => {
-    if (legacyIdx !== undefined) onOpenSfxLibrary?.(legacyIdx, sfx.description)
-  }
   const dispatchDelete = () => {
     if (legacyIdx === undefined) return
-    if (!confirm('Delete this sound effect? You can add a new file or pick from Browse sounds.')) return
+    if (!confirm('Delete this sound effect? You can re-generate it from the cue description.')) return
     onDeleteSceneAudio?.(sceneIdx, 'sfx', undefined, legacyIdx)
+  }
+
+  const dispatchGenerate = async () => {
+    if (legacyIdx === undefined) {
+      toast.error('SFX cue is not linked to a legacy index yet.')
+      return
+    }
+    if (!projectId) {
+      toast.error('Project context is missing for SFX generation.')
+      return
+    }
+    const description = (sfx.description || '').trim()
+    if (!description) {
+      toast.info('Add a description for this SFX cue first.')
+      return
+    }
+
+    setIsGenerating(true)
+    const toastId = toast.loading(audioUrl ? 'Re-generating SFX...' : 'Generating SFX...')
+    try {
+      const response = await fetch('/api/tts/elevenlabs/sound-effects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sfxId: sfx.sfxId,
+          sfxIndex: legacyIdx,
+          text: description,
+        }),
+      })
+
+      if (!response.ok) {
+        let payload: any = null
+        try {
+          payload = await response.json()
+        } catch {
+          payload = null
+        }
+        if (response.status === 402) {
+          const need = payload?.creditsRequired
+          const have = payload?.creditsAvailable
+          toast.error(
+            `Insufficient credits for SFX generation${
+              typeof need === 'number' ? `. Need ${need} credits` : ''
+            }${typeof have === 'number' ? ` (available: ${have})` : ''}.`,
+            { id: toastId }
+          )
+          return
+        }
+        throw new Error(payload?.error || `SFX generation failed (HTTP ${response.status})`)
+      }
+
+      const data = await response.json()
+      const url: string | undefined = data?.url
+      if (!url) {
+        throw new Error('SFX response missing audio URL')
+      }
+
+      await onSaveSfxAudio?.(sceneIdx, 'sfx', url, legacyIdx, null)
+      toast.success(audioUrl ? 'SFX re-generated.' : 'SFX generated.', { id: toastId })
+    } catch (error: any) {
+      console.error('[SegmentSfxCard] SFX generation failed:', error)
+      toast.error(`Failed to generate SFX: ${error?.message || 'Unknown error'}`, { id: toastId })
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   return (
@@ -86,7 +149,7 @@ export function SegmentSfxCard({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {audioUrl ? (
+          {audioUrl && (
             <>
               <button
                 type="button"
@@ -122,89 +185,33 @@ export function SegmentSfxCard({
               >
                 <Trash2 className="w-4 h-4" />
               </button>
-              <Button
-                type="button"
-                size="sm"
-                className="h-8 bg-amber-600 hover:bg-amber-700 text-white border-0"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  dispatchBrowse()
-                }}
-              >
-                <Library className="w-3.5 h-3.5 mr-1" />
-                Browse sounds
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-8 border-amber-600/50 text-amber-800 dark:text-amber-200"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  dispatchUpload()
-                }}
-              >
-                <Upload className="w-3.5 h-3.5 mr-1" />
-                Replace file
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                type="button"
-                size="sm"
-                className="h-8 bg-amber-600 hover:bg-amber-700 text-white border-0"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  dispatchBrowse()
-                }}
-              >
-                <Library className="w-3.5 h-3.5 mr-1" />
-                Browse sounds
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-8 border-amber-600/50 text-amber-800 dark:text-amber-200"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  dispatchUpload()
-                }}
-              >
-                <Upload className="w-3.5 h-3.5 mr-1" />
-                Upload
-              </Button>
-              <button
-                type="button"
-                onClick={async (e) => {
-                  e.stopPropagation()
-                  if (!sfx.description) {
-                    toast.info('Nothing to copy for this slot.')
-                    return
-                  }
-                  try {
-                    await navigator.clipboard.writeText(sfx.description)
-                    toast.success('Search text copied')
-                  } catch {
-                    toast.error('Could not copy')
-                  }
-                }}
-                className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
-                title="Copy search text"
-              >
-                <Copy className="w-4 h-4" />
-              </button>
             </>
           )}
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 bg-amber-600 hover:bg-amber-700 text-white border-0"
+            onClick={(e) => {
+              e.stopPropagation()
+              void dispatchGenerate()
+            }}
+            disabled={isGenerating}
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5 mr-1" />
+                {audioUrl ? 'Re-generate' : 'Generate'}
+              </>
+            )}
+          </Button>
         </div>
       </div>
       <div className="text-sm text-gray-700 dark:text-gray-300 italic">{sfx.description}</div>
-      {credit ? (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-snug whitespace-pre-wrap">
-          {credit}
-        </p>
-      ) : null}
     </div>
   )
 }

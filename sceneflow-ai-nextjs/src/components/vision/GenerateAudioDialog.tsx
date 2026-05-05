@@ -74,7 +74,7 @@ export function GenerateAudioDialog({
     narration: true,
     dialogue: true,
     music: false,
-    /** SFX are always per-scene (Browse / Upload); never bulk-generated from this dialog */
+    /** SFX are generated via ElevenLabs sound-generation (per-cue ~15 credits). */
     sfx: false,
   })
   const [includeCharacters, setIncludeCharacters] = useState(false)
@@ -148,11 +148,12 @@ export function GenerateAudioDialog({
   const willGenerateNarration = audioTypes.narration
   const willGenerateDialogue = audioTypes.dialogue
   const willGenerateMusic = audioTypes.music
-  const willGenerateSFX = false
+  const willGenerateSFX = audioTypes.sfx
 
   const narrationCount = willGenerateNarration ? totalScenes : 0
   const dialogueCount = willGenerateDialogue ? totalDialogueLines : 0
   const musicCount = willGenerateMusic ? totalScenes : 0
+  const sfxRenderCount = willGenerateSFX ? Math.max(0, totalSFXCount - audioStatus.sfxCount) : 0
 
   const willOverwrite = (
     (willGenerateNarration && audioStatus.narrationCount > 0) ||
@@ -175,12 +176,12 @@ export function GenerateAudioDialog({
       narration: checked,
       dialogue: checked,
       music: checked,
-      sfx: false,
+      sfx: checked,
     })
   }
 
-  const allSelected = audioTypes.narration && audioTypes.dialogue && audioTypes.music
-  const noneSelected = !audioTypes.narration && !audioTypes.dialogue && !audioTypes.music
+  const allSelected = audioTypes.narration && audioTypes.dialogue && audioTypes.music && audioTypes.sfx
+  const noneSelected = !audioTypes.narration && !audioTypes.dialogue && !audioTypes.music && !audioTypes.sfx
 
   const showProgress = mode === 'foreground' && generationProgress !== null && generationProgress.status !== 'idle'
   const isRunning = showProgress && generationProgress?.status === 'running'
@@ -386,16 +387,32 @@ export function GenerateAudioDialog({
                 </label>
               </div>
 
-              <div className="p-3 bg-gray-800 rounded-lg border border-amber-800/40">
-                <div className="font-medium text-sm text-gray-200">Sound effects</div>
-                <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-                  Not part of bulk generation.{' '}
-                  {totalSFXCount > 0
-                    ? `${totalSFXCount} SFX slot${totalSFXCount !== 1 ? 's' : ''} in your script — ${audioStatus.sfxCount > 0 ? `${audioStatus.sfxCount} with audio. ` : ''}`
-                    : 'No SFX list on scenes yet. '}
-                  Add audio in each scene with <span className="text-amber-300/95">Browse sounds</span> (in-app) or{' '}
-                  <span className="text-amber-300/95">Upload</span>.
-                </p>
+              <div className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg hover:bg-gray-750">
+                <Checkbox
+                  id="sfx"
+                  checked={audioTypes.sfx}
+                  onCheckedChange={(checked) =>
+                    setAudioTypes({ ...audioTypes, sfx: !!checked })
+                  }
+                  disabled={isRunning || totalSFXCount === 0}
+                />
+                <label
+                  htmlFor="sfx"
+                  className={`flex-1 text-sm cursor-pointer ${totalSFXCount === 0 ? 'text-gray-500' : 'text-gray-200'}`}
+                >
+                  <div className="font-medium">Sound Effects (ElevenLabs, ~15 credits each)</div>
+                  <div className="text-xs text-gray-400">
+                    {totalSFXCount > 0
+                      ? `${totalSFXCount} cue${totalSFXCount === 1 ? '' : 's'} • ${
+                          audioStatus.sfxCount === 0
+                            ? 'None generated'
+                            : audioStatus.sfxCount === totalSFXCount
+                            ? 'Complete'
+                            : `Partial (${audioStatus.sfxCount}/${totalSFXCount})`
+                        }`
+                      : 'No SFX cues in script yet'}
+                  </div>
+                </label>
               </div>
             </div>
           </div>
@@ -412,6 +429,9 @@ export function GenerateAudioDialog({
               )}
               {willGenerateMusic && (
                 <div>• {musicCount} music file{musicCount !== 1 ? 's' : ''}</div>
+              )}
+              {willGenerateSFX && sfxRenderCount > 0 && (
+                <div>• {sfxRenderCount} sound effect{sfxRenderCount !== 1 ? 's' : ''}</div>
               )}
               {includeCharacters && (
                 <div>

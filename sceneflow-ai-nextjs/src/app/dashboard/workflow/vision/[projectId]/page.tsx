@@ -8189,7 +8189,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   // Handle generate all audio - supports multi-language via translation
-  const handleGenerateAllAudio = async (language: string = 'en') => {
+  const handleGenerateAllAudio = async (
+    language: string = 'en',
+    options?: {
+      includeNarration?: boolean
+      includeDialogue?: boolean
+      includeMusic?: boolean
+      includeSFX?: boolean
+    }
+  ) => {
     if (!narrationVoice) {
       try { const { toast } = require('sonner'); toast.error('Please select a narration voice first') } catch {}                                                
       return
@@ -8234,8 +8242,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             projectId,
-            includeMusic: true,
-            includeSFX: false,
+            includeMusic: options?.includeMusic ?? true,
+            includeSFX: options?.includeSFX ?? false,
             deleteAllAudioFirst: true, // Delete all existing audio before generating new
             language, // Pass language for multi-language translation support
           }),
