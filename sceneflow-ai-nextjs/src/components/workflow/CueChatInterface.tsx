@@ -80,7 +80,7 @@ const workflowContext = {
 }
 
 export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIteration, initialConcept, currentConcept, targetAudience, keyMessage, tone, isStoryboardMode, sceneContext, compact }: CueChatInterfaceProps): React.JSX.Element {
-  const { addCueMessage } = useStore()
+  const addCueMessage = useStore((s) => s.addCueMessage)
   const [messages, setMessages] = useState<CueMessage[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)

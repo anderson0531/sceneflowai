@@ -73,13 +73,11 @@ const useAudioPlayer = () => {
 }
 
 export function CueAssistantWidget() {
-  const { 
-    cueAssistantOpen, 
-    setCueAssistantOpen, 
-    cueConversation, 
-    addCueMessage, 
-    markNotificationsAsRead 
-  } = useStore()
+  const cueAssistantOpen = useStore((s) => s.cueAssistantOpen)
+  const setCueAssistantOpen = useStore((s) => s.setCueAssistantOpen)
+  const cueConversation = useStore((s) => s.cueConversation)
+  const addCueMessage = useStore((s) => s.addCueMessage)
+  const markNotificationsAsRead = useStore((s) => s.markNotificationsAsRead)
   
   const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)

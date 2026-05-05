@@ -1,7 +1,18 @@
 'use client';
 
 import { X, Download, Loader } from 'lucide-react';
-import { VideoPreview } from '@/components/editor/VideoPreview';
+import dynamic from 'next/dynamic';
+const VideoPreview = dynamic(
+  () => import('@/components/editor/VideoPreview').then((m) => ({ default: m.VideoPreview })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full bg-black flex items-center justify-center">
+        <Loader className="w-8 h-8 text-gray-400 animate-spin" />
+      </div>
+    ),
+  }
+);
 import { Timeline } from '@/components/editor/Timeline';
 import { useEditorStore } from '@/store/editorStore';
 import { useEffect, useState } from 'react';

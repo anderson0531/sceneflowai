@@ -29,7 +29,10 @@ import { SceneDirection } from '@/components/workflow/SceneDirectionDisplay'
 
 export default function DirectionPage() {
   const router = useRouter()
-  const { currentProject, updateProject, updateStepProgress, stepProgress } = useStore()
+  const currentProject = useStore((s) => s.currentProject)
+  const updateProject = useStore((s) => s.updateProject)
+  const updateStepProgress = useStore((s) => s.updateStepProgress)
+  const stepProgress = useStore((s) => s.stepProgress)
   
   // Scene direction state
   const [directions, setDirections] = useState<SceneDirection[]>([])

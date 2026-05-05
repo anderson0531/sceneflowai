@@ -10,7 +10,7 @@ interface HeroBannerProps {
 }
 
 export function HeroBanner({ userName }: HeroBannerProps) {
-  const { user } = useEnhancedStore()
+  const user = useEnhancedStore((s: any) => s.user)
   const { setSidebarOpen } = useCueStore()
 
   const handleAskCue = () => {

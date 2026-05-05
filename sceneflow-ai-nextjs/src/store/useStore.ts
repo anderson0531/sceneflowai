@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 // Local fallback type since legacy Vision types were removed
 export interface StoryboardPanelData {
   id: string;

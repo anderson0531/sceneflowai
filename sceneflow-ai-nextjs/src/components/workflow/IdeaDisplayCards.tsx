@@ -55,7 +55,7 @@ export function IdeaDisplayCards({
   const [selectedIdeas, setSelectedIdeas] = useState<Set<string>>(new Set())
   const [expandedIdea, setExpandedIdea] = useState<string | null>(null)
   const [showCollaborationStats, setShowCollaborationStats] = useState(false)
-  const { currentProject } = useStore()
+  const currentProject = useStore((s) => s.currentProject)
 
   const handleIdeaSelection = (ideaId: string) => {
     const newSelected = new Set(selectedIdeas)

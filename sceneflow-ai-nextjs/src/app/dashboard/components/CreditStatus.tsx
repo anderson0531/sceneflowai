@@ -5,7 +5,8 @@ import { CreditCard, Key, Zap, Download, Video } from 'lucide-react'
 import { useEnhancedStore } from '@/store/enhancedStore'
 
 export function CreditStatus() {
-  const { user, byokSettings } = useEnhancedStore()
+  const user = useEnhancedStore((s: any) => s.user)
+  const byokSettings = useEnhancedStore((s: any) => s.byokSettings)
 
   if (!user) return null
 

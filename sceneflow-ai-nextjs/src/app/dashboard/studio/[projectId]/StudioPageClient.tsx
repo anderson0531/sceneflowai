@@ -37,7 +37,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const { data: session } = useSession();
   const { guide, updateTitle, updateTreatment, setTreatmentVariants, variantsLastModified } = useGuideStore();
   const { invokeCue } = useCue();
-  const { currentProject, setCurrentProject, setBeats } = useStore();
+  const currentProject = useStore((s) => s.currentProject);
+  const setCurrentProject = useStore((s) => s.setCurrentProject);
+  const setBeats = useStore((s) => s.setBeats);
   const [isNewProject, setIsNewProject] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [showStructureHelp, setShowStructureHelp] = useState(false);

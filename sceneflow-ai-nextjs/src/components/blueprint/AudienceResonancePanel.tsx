@@ -22,7 +22,15 @@ import {
   X
 } from 'lucide-react'
 import { GreenlightScore } from './GreenlightScore'
-import { ResonanceRadarChart, ResonanceRadarLegend } from '@/components/charts/ResonanceRadarChart'
+import dynamic from 'next/dynamic'
+const ResonanceRadarChart = dynamic(
+  () => import('@/components/charts/ResonanceRadarChart').then((m) => ({ default: m.ResonanceRadarChart })),
+  {
+    ssr: false,
+    loading: () => <div className="w-full" style={{ height: 250, minHeight: 250 }} />,
+  }
+)
+import { ResonanceRadarLegend } from '@/components/charts/ResonanceRadarLegend'
 import { WeightCustomizer } from './WeightCustomizer'
 import { ScoreNarrative } from './ScoreNarrative'
 import {

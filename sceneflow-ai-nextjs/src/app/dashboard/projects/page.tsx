@@ -74,7 +74,8 @@ export default function ProjectsPage() {
   const { data: session, status: authStatus } = useSession()
   
   // Selected project for dashboard display
-  const { selectedProjectId, setSelectedProjectId } = useEnhancedStore()
+  const selectedProjectId = useEnhancedStore((s: any) => s.selectedProjectId)
+  const setSelectedProjectId = useEnhancedStore((s: any) => s.setSelectedProjectId)
 
   // Get user ID from session, with fallback sync for localStorage projects
   const getUserId = useCallback(() => {

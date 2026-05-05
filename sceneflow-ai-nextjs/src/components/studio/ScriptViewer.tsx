@@ -8,7 +8,18 @@ import { CSS } from '@dnd-kit/utilities'
 import { DndContext as _ignore } from '@dnd-kit/core'
 import { Button } from '@/components/ui/Button'
 import { LayoutPanelLeft, PanelRightOpen, Volume2, Square, History } from 'lucide-react'
-import { ScriptEditor } from '@/components/studio/ScriptEditor'
+import dynamic from 'next/dynamic'
+const ScriptEditor = dynamic(
+  () => import('@/components/studio/ScriptEditor').then((m) => ({ default: m.ScriptEditor })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center p-8 text-zinc-500">
+        Loading editor...
+      </div>
+    ),
+  }
+)
 import { VoiceSelector } from '@/components/tts/VoiceSelector'
 function ChangesPanel({ editorContainerRef }: { editorContainerRef: React.RefObject<HTMLDivElement | null> }) {
   const [items, setItems] = useState<Array<{ id: string; type: 'add'|'del'; text: string }>>([])
@@ -140,7 +151,8 @@ export default function ScriptViewer({ fountainText }: { fountainText: string })
     )
   }
   const router = useRouter()
-  const { currentProject, updateProject } = useStore()
+  const currentProject = useStore((s) => s.currentProject)
+  const updateProject = useStore((s) => s.updateProject)
   const [leftOpen, setLeftOpen] = useState(true)
   const [rightOpen, setRightOpen] = useState(true)
   const [suggesting, setSuggesting] = useState(false)

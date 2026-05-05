@@ -26,7 +26,8 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 
 export function DashboardOverview() {
-  const { projects, user } = useEnhancedStore()
+  const projects = useEnhancedStore((s: any) => s.projects)
+  const user = useEnhancedStore((s: any) => s.user)
   
   // State for section visibility
   const [isProjectStatusExpanded, setIsProjectStatusExpanded] = useState(true)

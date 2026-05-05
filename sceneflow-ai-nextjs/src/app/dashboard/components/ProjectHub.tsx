@@ -15,7 +15,7 @@ import {
 } from '@/constants/workflowSteps'
 
 export function ProjectHub() {
-  const { projects } = useEnhancedStore()
+  const projects = useEnhancedStore((s: any) => s.projects)
 
   const getStageDisplayName = (step: string) =>
     WORKFLOW_STEP_LABELS[normalizeWorkflowStep(step)]

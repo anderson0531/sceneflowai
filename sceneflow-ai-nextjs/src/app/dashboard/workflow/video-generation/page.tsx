@@ -38,7 +38,10 @@ interface VideoVersion {
 
 export default function VideoGenerationPage() {
   const router = useRouter()
-  const { currentProject, updateProject, updateStepProgress, stepProgress } = useStore()
+  const currentProject = useStore((s) => s.currentProject)
+  const updateProject = useStore((s) => s.updateProject)
+  const updateStepProgress = useStore((s) => s.updateStepProgress)
+  const stepProgress = useStore((s) => s.stepProgress)
   const [selectedProvider, setSelectedProvider] = useState<AIProvider | null>(null)
   const [videoVersions, setVideoVersions] = useState<VideoVersion[]>([])
   const [isGenerating, setIsGenerating] = useState(false)

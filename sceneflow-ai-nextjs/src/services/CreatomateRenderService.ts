@@ -1,3 +1,4 @@
+import 'server-only'
 import { Client, Source, Image, Audio, Pan, Video } from 'creatomate'
 
 export interface SceneRenderData {

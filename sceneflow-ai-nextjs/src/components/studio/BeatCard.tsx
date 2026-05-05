@@ -27,7 +27,7 @@ interface BeatCardProps {
 }
 
 export function BeatCard({ beat, sceneNumber, onUpdate, onDelete, isDragging = false }: BeatCardProps) {
-  const { currentProject } = useStore()
+  const currentProject = useStore((s) => s.currentProject)
   const [isEditing, setIsEditing] = useState(false);
   const [slugline, setSlugline] = useState(beat.slugline);
   const [summary, setSummary] = useState(beat.summary || '');

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useShallow } from 'zustand/react/shallow'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import { Button } from '@/components/ui/Button'
 import { CueChatInterface } from '@/components/workflow/CueChatInterface'
@@ -56,7 +57,16 @@ interface ConceptSuggestion {
 
 export default function IdeationPage() {
   const router = useRouter()
-  const { currentProject, updateProject, updateStepProgress, stepProgress, uiMode, setUIMode } = useEnhancedStore()
+  const { currentProject, updateProject, updateStepProgress, stepProgress, uiMode, setUIMode } = useEnhancedStore(
+    useShallow((s: any) => ({
+      currentProject: s.currentProject,
+      updateProject: s.updateProject,
+      updateStepProgress: s.updateStepProgress,
+      stepProgress: s.stepProgress,
+      uiMode: s.uiMode,
+      setUIMode: s.setUIMode,
+    }))
+  )
   const [concept, setConcept] = useState('')
   const [targetAudience, setTargetAudience] = useState('')
   const [keyMessage, setKeyMessage] = useState('')
@@ -1112,7 +1122,8 @@ export default function IdeationPage() {
 
 function GenerateStoryboardButton() {
   const router = useRouter()
-  const { currentProject, generateStoryboardFromCore } = useEnhancedStore() as any
+  const currentProject = useEnhancedStore((s: any) => s.currentProject)
+  const generateStoryboardFromCore = useEnhancedStore((s: any) => s.generateStoryboardFromCore)
   const [loading, setLoading] = useState(false)
   return (
     <Button

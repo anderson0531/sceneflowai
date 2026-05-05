@@ -5,7 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { Button } from '@/components/ui/Button';
 import { SparklesIcon } from 'lucide-react';
 import { useEffect, useCallback, useState } from 'react';
-import { debounce } from 'lodash';
+import debounce from 'lodash/debounce';
 
 interface TiptapEditorProps {
   content: string;

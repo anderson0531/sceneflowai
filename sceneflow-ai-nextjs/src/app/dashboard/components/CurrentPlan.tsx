@@ -6,7 +6,8 @@ import { useEnhancedStore } from '@/store/enhancedStore'
 import Link from 'next/link'
 
 export function CurrentPlan() {
-  const { user, byokSettings } = useEnhancedStore()
+  const user = useEnhancedStore((s: any) => s.user)
+  const byokSettings = useEnhancedStore((s: any) => s.byokSettings)
 
   if (!user) return null
 

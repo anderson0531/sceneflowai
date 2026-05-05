@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { useStore } from '@/store/useStore'
 import type { Beat } from '@/store/useStore'
 import { Button } from '@/components/ui/Button'
@@ -10,7 +11,19 @@ import { toast } from 'sonner'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 export default function OutlineV2() {
-  const { currentProject, setCurrentProject, beatSheet, setBeats, updateBeat, deleteBeat, addBeat, isBeatSheetDirty, saveBeatSheet } = useStore()
+  const { currentProject, setCurrentProject, beatSheet, setBeats, updateBeat, deleteBeat, addBeat, isBeatSheetDirty, saveBeatSheet } = useStore(
+    useShallow((s) => ({
+      currentProject: s.currentProject,
+      setCurrentProject: s.setCurrentProject,
+      beatSheet: s.beatSheet,
+      setBeats: s.setBeats,
+      updateBeat: s.updateBeat,
+      deleteBeat: s.deleteBeat,
+      addBeat: s.addBeat,
+      isBeatSheetDirty: s.isBeatSheetDirty,
+      saveBeatSheet: s.saveBeatSheet,
+    }))
+  )
   const [mounted, setMounted] = useState(false)
   const [isBusy, setIsBusy] = useState(false)
   const [treatmentOpen, setTreatmentOpen] = useState(true)

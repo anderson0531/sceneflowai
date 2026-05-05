@@ -2,8 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useStore } from '@/store/useStore';
-import { VideoPreview } from '@/components/editor/VideoPreview';
+const VideoPreview = dynamic(
+  () => import('@/components/editor/VideoPreview').then((m) => ({ default: m.VideoPreview })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full bg-black flex items-center justify-center">
+        <Loader className="w-8 h-8 text-gray-400 animate-spin" />
+      </div>
+    ),
+  }
+);
 import { Timeline } from '@/components/editor/Timeline';
 import { AssetPanel } from '@/components/editor/AssetPanel';
 import { EffectsPanel } from '@/components/editor/EffectsPanel';
@@ -14,7 +25,7 @@ import { Download, ArrowLeft, Loader } from 'lucide-react';
 
 export default function PolishPage() {
   const router = useRouter();
-  const { currentProject } = useStore();
+  const currentProject = useStore((s) => s.currentProject);
   const { loadProject, durationInFrames } = useEditorStore();
   const [isRendering, setIsRendering] = useState(false);
   

@@ -298,7 +298,9 @@ function buildAtmosphericInstruction(idea: ProjectIdea, seed?: string): string {
 export default function ProjectIdeaTab() {
   const { guide, initializeProject, updateGuide } = useGuideStore() as any;
   const { invokeCue, setSidebarVisibility } = useCue();
-  const { addProject, setCurrentProject, currentProject } = useStore() as any;
+  const addProject = useStore((s) => s.addProject);
+  const setCurrentProject = useStore((s) => s.setCurrentProject);
+  const currentProject = useStore((s) => s.currentProject);
   const router = useRouter();
   const [projectDescription, setProjectDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);

@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Plus, Play, Telescope } from 'lucide-react'
+import { useShallow } from 'zustand/react/shallow'
 import { useEnhancedStore } from '@/store/enhancedStore'
 import Link from 'next/link'
 import {
@@ -13,7 +14,9 @@ import {
 } from '@/constants/workflowSteps'
 
 export function Launchpad() {
-  const { projects, currentProject } = useEnhancedStore()
+  const { projects, currentProject } = useEnhancedStore(
+    useShallow((s: any) => ({ projects: s.projects, currentProject: s.currentProject }))
+  )
   
   // Get the most recent project
   const mostRecentProject = projects.length > 0 

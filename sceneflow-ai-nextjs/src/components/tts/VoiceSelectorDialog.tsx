@@ -15,7 +15,7 @@ import {
   VoiceRecommendation,
   ElevenLabsVoice
 } from '@/lib/voiceRecommendation'
-import { debounce } from 'lodash'
+import debounce from 'lodash/debounce'
 
 interface VoiceSelectorDialogProps {
   open: boolean

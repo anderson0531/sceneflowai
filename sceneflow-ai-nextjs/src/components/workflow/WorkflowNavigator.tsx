@@ -63,12 +63,10 @@ const workflowSteps = [
 ]
 
 export function WorkflowNavigator() {
-  const { 
-    currentStep, 
-    stepProgress, 
-    canAdvanceToStep, 
-    setCurrentStep 
-  } = useEnhancedStore()
+  const currentStep = useEnhancedStore((s: any) => s.currentStep)
+  const stepProgress = useEnhancedStore((s: any) => s.stepProgress)
+  const canAdvanceToStep = useEnhancedStore((s: any) => s.canAdvanceToStep)
+  const setCurrentStep = useEnhancedStore((s: any) => s.setCurrentStep)
 
   return (
     <div className="border-b border-sf-border bg-sf-surface">

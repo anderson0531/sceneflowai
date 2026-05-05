@@ -1,15 +1,18 @@
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app'
-import { getAuth } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import type { FirebaseApp } from 'firebase/app'
+import type { Auth } from 'firebase/auth'
+import type { Firestore } from 'firebase/firestore'
 
-let app: FirebaseApp | undefined
+let appPromise: Promise<FirebaseApp | null> | null = null
+let authPromise: Promise<Auth | null> | null = null
+let dbPromise: Promise<Firestore | null> | null = null
 
-export function getFirebaseApp() {
-  const apps = getApps()
-  if (apps.length) {
-    // Reuse existing app instance
-    app = apps[0]
-  } else {
+export function getFirebaseApp(): Promise<FirebaseApp | null> {
+  if (appPromise) return appPromise
+  appPromise = (async () => {
+    const { initializeApp, getApps } = await import('firebase/app')
+    const apps = getApps()
+    if (apps.length) return apps[0]
+
     const cfg = {
       apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
       authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -18,28 +21,37 @@ export function getFirebaseApp() {
       messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
       appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
     }
-    // Soft guard: if missing config, return undefined and let callers degrade gracefully
+
     if (!cfg.apiKey || !cfg.projectId || !cfg.appId) {
       if (typeof window !== 'undefined') {
         // eslint-disable-next-line no-console
         console.warn('[Firebase] Missing NEXT_PUBLIC_FIREBASE_* env. Chat features are disabled.')
       }
-      app = undefined
-    } else {
-      app = initializeApp(cfg)
+      return null
     }
-  }
-  return app
+    return initializeApp(cfg)
+  })()
+  return appPromise
 }
 
-export function getDb() {
-  const a = getFirebaseApp()
-  return a ? getFirestore(a) : null as any
+export function getDb(): Promise<Firestore | null> {
+  if (dbPromise) return dbPromise
+  dbPromise = (async () => {
+    const a = await getFirebaseApp()
+    if (!a) return null
+    const { getFirestore } = await import('firebase/firestore')
+    return getFirestore(a)
+  })()
+  return dbPromise
 }
 
-export function getClientAuth() {
-  const a = getFirebaseApp()
-  return a ? getAuth(a) : null as any
+export function getClientAuth(): Promise<Auth | null> {
+  if (authPromise) return authPromise
+  authPromise = (async () => {
+    const a = await getFirebaseApp()
+    if (!a) return null
+    const { getAuth } = await import('firebase/auth')
+    return getAuth(a)
+  })()
+  return authPromise
 }
-
-

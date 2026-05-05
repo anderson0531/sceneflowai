@@ -23,7 +23,8 @@ function getProjectCreditsUsed(metadata: Record<string, any> | undefined): numbe
 
 export default function ClientDashboard() {
   const { credits, subscription, projects, isLoading, refresh } = useDashboardData()
-  const { selectedProjectId, setSelectedProjectId } = useEnhancedStore()
+  const selectedProjectId = useEnhancedStore((s: any) => s.selectedProjectId)
+  const setSelectedProjectId = useEnhancedStore((s: any) => s.setSelectedProjectId)
   
   // Auto-select most recently updated project if none selected
   useEffect(() => {

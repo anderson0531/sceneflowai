@@ -20,11 +20,9 @@ import {
   PromptInstruction,
   AICapability 
 } from '@/types/ai-adaptability';
-// Note: Avoid importing services here to keep type surface small for UI build
-import { aiCapabilityManager } from '@/services/AICapabilityManager';
-import { aiAgentManager } from '@/services/AIAgentManager';
-import { intelligentWorkflowManager } from '@/services/IntelligentWorkflowManager';
-import { aiAgentOrchestrator } from '@/services/AIAgentOrchestrator';
+// AI service singletons are intentionally NOT imported here. Importing them at the
+// store module level pulls the entire services graph (and its transitive client deps)
+// into every component that touches the store. Use lazy imports inside actions instead.
 
 export interface EnhancedUser {
   id: string;

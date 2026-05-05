@@ -12,7 +12,7 @@ export default function GenerationProjectPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.projectId as string;
-  const { setCurrentProject } = useStore();
+  const setCurrentProject = useStore((s) => s.setCurrentProject);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

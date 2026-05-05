@@ -67,7 +67,8 @@ export default function StoryboardReadinessCard() {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showSourceInfo, setShowSourceInfo] = useState(false)
   
-  const { storyboardReadiness, templateState } = useEnhancedStore()
+  const storyboardReadiness = useEnhancedStore((s: any) => s.storyboardReadiness)
+  const templateState = useEnhancedStore((s: any) => s.templateState)
 
   // Calculate completion status
   const totalAttributes = Object.keys(attributeConfig).length

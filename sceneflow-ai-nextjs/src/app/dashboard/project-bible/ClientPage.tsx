@@ -10,7 +10,7 @@ import { BookOpen, Plus, Search, Download, Upload, ArrowLeft, Edit3, Eye, Sparkl
 
 export function ClientPage() {
   const router = useRouter()
-  const { currentProject } = useStore()
+  const currentProject = useStore((s) => s.currentProject)
   const [selectedBible, setSelectedBible] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'active' | 'archived'>('all')

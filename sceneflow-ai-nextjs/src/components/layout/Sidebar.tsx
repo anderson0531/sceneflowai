@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { useEnhancedStore } from '../../store/enhancedStore'
 import { 
   Home, 
@@ -97,7 +98,16 @@ const settingsNav = [
 ]
 
 export function Sidebar() {
-  const { sidebarOpen, setSidebarOpen, user, currentStep, projects, currentProject } = useEnhancedStore()
+  const { sidebarOpen, setSidebarOpen, user, currentStep, projects, currentProject } = useEnhancedStore(
+    useShallow((s: any) => ({
+      sidebarOpen: s.sidebarOpen,
+      setSidebarOpen: s.setSidebarOpen,
+      user: s.user,
+      currentStep: s.currentStep,
+      projects: s.projects,
+      currentProject: s.currentProject,
+    }))
+  )
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false);
 

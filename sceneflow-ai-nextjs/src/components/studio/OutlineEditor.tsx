@@ -1,5 +1,6 @@
 'use client';
 
+import { useShallow } from 'zustand/react/shallow';
 import { useStore } from '@/store/useStore';
 import {
   DndContext,
@@ -27,7 +28,7 @@ import { AskFlowModal } from './AskFlowModal';
 import type { Beat } from '@/store/useStore';
 
 export function OutlineEditor({ isGenerating }: { isGenerating?: boolean }) {
-  const { 
+  const {
     currentProject,
     setCurrentProject,
     beatSheet,
@@ -37,8 +38,21 @@ export function OutlineEditor({ isGenerating }: { isGenerating?: boolean }) {
     deleteBeat,
     isBeatSheetDirty,
     saveBeatSheet,
-    addBeat
-  } = useStore();
+    addBeat,
+  } = useStore(
+    useShallow((s) => ({
+      currentProject: s.currentProject,
+      setCurrentProject: s.setCurrentProject,
+      beatSheet: s.beatSheet,
+      setBeats: s.setBeats,
+      reorderBeats: s.reorderBeats,
+      updateBeat: s.updateBeat,
+      deleteBeat: s.deleteBeat,
+      isBeatSheetDirty: s.isBeatSheetDirty,
+      saveBeatSheet: s.saveBeatSheet,
+      addBeat: s.addBeat,
+    }))
+  );
   
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false)

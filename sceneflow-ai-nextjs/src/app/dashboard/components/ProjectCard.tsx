@@ -157,7 +157,8 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, className = '', isSelected = false, onSelectAsCurrent, onStatusChange, onDuplicate, onArchive, onDelete }: ProjectCardProps) {
-  const { user, byokSettings } = useEnhancedStore()
+  const user = useEnhancedStore((s: any) => s.user)
+  const byokSettings = useEnhancedStore((s: any) => s.byokSettings)
   const { invokeCue } = useCueStore()
   const { credits: userCredits } = useCredits()
   const [isHovered, setIsHovered] = useState(false)

@@ -32,7 +32,7 @@ const deriveStepFromPath = (pathname?: string): string | undefined => {
 
 export default function WorkflowTopNav() {
   const pathname = usePathname()
-  const { currentProject } = useEnhancedStore()
+  const currentProject = useEnhancedStore((s: any) => s.currentProject)
   const activeStepFromPath = normalizeWorkflowStep(deriveStepFromPath(pathname))
 
   const completedSteps = useMemo(() => {

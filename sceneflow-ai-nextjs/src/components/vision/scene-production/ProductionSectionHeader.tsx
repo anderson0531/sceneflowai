@@ -26,7 +26,7 @@ export interface ProductionSectionHeaderProps {
  * Shared section header aligned with Language Streams in Scene Production Mixer:
  * purple accent icon, white title, outline badge, optional right action/hint.
  */
-export function ProductionSectionHeader({
+function ProductionSectionHeaderImpl({
   icon: Icon,
   title,
   titleClassName,
@@ -88,3 +88,6 @@ export function ProductionSectionHeader({
 
   return <div className={rowClass}>{inner}</div>
 }
+
+export const ProductionSectionHeader = React.memo(ProductionSectionHeaderImpl)
+ProductionSectionHeader.displayName = 'ProductionSectionHeader'

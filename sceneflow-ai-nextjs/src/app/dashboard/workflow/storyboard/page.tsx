@@ -28,7 +28,10 @@ import { ExportService } from '@/services/ExportService'
 
 export default function StoryboardPage() {
   const router = useRouter()
-  const { currentProject, updateProject, updateStepProgress, stepProgress } = useStore()
+  const currentProject = useStore((s) => s.currentProject)
+  const updateProject = useStore((s) => s.updateProject)
+  const updateStepProgress = useStore((s) => s.updateStepProgress)
+  const stepProgress = useStore((s) => s.stepProgress)
   
   // Storyboard state
   const [scenes, setScenes] = useState<any[]>([])

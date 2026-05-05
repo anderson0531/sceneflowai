@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 import { Plyr } from 'plyr-react'
+import 'plyr-react/plyr.css'
 
 interface PlyrYouTubeProps {
   videoId: string
