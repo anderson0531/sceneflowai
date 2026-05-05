@@ -8,6 +8,7 @@ import { runScriptQA, autoFixScript } from '@/lib/script/qualityAssurance'
 import { generateText } from '@/lib/vertexai/gemini'
 import { getSettingsForFormat, SCRIPT_SETTINGS_BY_FORMAT } from '@/lib/script/scriptGenerationRules'
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
+import { normalizeDialogueToCompleteSentenceLines } from '@/lib/script/segmentScript'
 
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
@@ -295,6 +296,12 @@ export async function POST(request: NextRequest) {
             
             if (parsedData.scenes && parsedData.scenes.length > 0) {
               allScenes = parsedData.scenes
+              allScenes = allScenes.map((scene: any) => ({
+                ...scene,
+                dialogue: normalizeDialogueToCompleteSentenceLines(
+                  Array.isArray(scene?.dialogue) ? scene.dialogue : []
+                ),
+              }))
               
               // Post-process: consolidate any fragmented scenes
               allScenes = consolidateFragmentedScenes(allScenes)
@@ -647,6 +654,7 @@ DO NOT force full character names into dialogue text unnaturally.
 
 DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
 EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
+EVERY dialogue line MUST contain exactly ONE complete sentence after the opening [direction] tag.
 
 STYLE TAGS (In square brackets BEFORE text):
 Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
@@ -667,6 +675,7 @@ EXAMPLES:
   * {"character": "ERIC", "line": "[sadly, slowly] I wish things were different— but they're not."}
 
 CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
+CRITICAL: Do NOT output fragment-only lines (e.g. "[quiet] and for what?"). Merge fragments into a complete sentence.
 
 IMPORTANT - DIALOGUE VS STAGE DIRECTION:
 - Stage directions (actions, movements, descriptions) go in the "action" field, NOT in dialogue
@@ -823,6 +832,7 @@ DO NOT force full character names into dialogue text unnaturally.
 
 DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
 EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
+EVERY dialogue line MUST contain exactly ONE complete sentence after the opening [direction] tag.
 
 STYLE TAGS (In square brackets BEFORE text):
 Emotions: [happy], [sad], [angry], [fearful], [surprised], [disgusted], [neutral]
@@ -840,6 +850,7 @@ EXAMPLES:
   * {"character": "NAME", "line": "[very excited, quickly] This is AMAZING!"}
 
 CRITICAL: Every single dialogue line must start with at least one emotion/style tag in [brackets].
+CRITICAL: Do NOT output fragment-only lines (e.g. "[quiet] and for what?"). Merge fragments into a complete sentence.
 
 PREVIOUS SCENES (${totalPrevScenes} scenes generated so far, ${prevDuration}s total):
 ${prevScenes.slice(-3).map((s: any) => `Scene ${s.sceneNumber}. ${s.heading} (${s.duration}s): ${s.action.substring(0, 100)}...`).join('\n')}

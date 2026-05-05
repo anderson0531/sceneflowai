@@ -52,100 +52,170 @@ export function mintSfxId(): string {
 }
 
 // ---------------------------------------------------------------------------
-// Sentence splitter
+// Script-line splitter
 // ---------------------------------------------------------------------------
 
 /**
- * Split a free-form line of dialogue / narration into one sentence per
- * element. Preserves leading parenthetical/bracketed performance directions
- * such as "[frustrated, low]" or "(whispering)" by attaching them to the
- * first resulting sentence.
+ * Split dialogue/narration into script lines using STRICT bracket delimiters.
  *
- * Handles `.`, `?`, `!`, `…`, multi-character ellipses (`...`), and avoids
- * over-splitting on common abbreviations and decimal numbers.
+ * Rules:
+ * - Each bracketed direction block (`[ ... ]`) starts a new line.
+ * - Line text extends from one bracket block until the next bracket block.
+ * - If no bracket blocks are present, return ONE unsplit line (strict mode).
  */
 export function splitIntoSentences(input: string): string[] {
   const text = (input || '').replace(/\s+/g, ' ').trim()
   if (!text) return []
 
-  // Pull leading performance direction off the front so the first sentence
-  // keeps it. e.g. "[frustrated, low] Another loop. Another translation."
-  let prefix = ''
-  let body = text
-  // Normalize spaced ellipsis variants (". . .") so they are handled
-  // consistently as in-line pauses.
-  body = body.replace(/\.\s*\.\s*\./g, '…')
-  const directionMatch = body.match(/^\s*([\[\(][^\]\)]+[\]\)])\s*/)
-  if (directionMatch) {
-    prefix = directionMatch[1] + ' '
-    body = body.slice(directionMatch[0].length)
+  // Normalize spaced ellipsis variants; they are retained as text and are
+  // not used for splitting in strict bracket mode.
+  const body = text.replace(/\.\s*\.\s*\./g, '…')
+
+  const bracketMatches = Array.from(body.matchAll(/\[[^\]]+\]/g))
+  if (bracketMatches.length === 0) {
+    return [body]
   }
 
-  // Common abbreviations we should not split on.
-  const ABBREV = new Set([
-    'mr', 'mrs', 'ms', 'dr', 'st', 'sr', 'jr', 'vs', 'etc', 'e.g', 'i.e',
-    'no', 'fig', 'inc', 'ltd', 'mt', 'mts', 'rev', 'col', 'gen', 'sgt',
-  ])
+  const lines: string[] = []
+  const firstStart = bracketMatches[0].index ?? 0
+  const preface = body.slice(0, firstStart).trim()
 
-  const sentences: string[] = []
-  let buf = ''
-
-  for (let i = 0; i < body.length; i++) {
-    const ch = body[i]
-    buf += ch
-
-    const isTerminator = ch === '.' || ch === '?' || ch === '!' || ch === '…'
-    if (!isTerminator) continue
-
-    // Collapse runs of "....."/"..." and mixed "…." into one token.
-    const runStart = i
-    while (i + 1 < body.length && (body[i + 1] === '.' || body[i + 1] === '…')) {
-      buf += body[i + 1]
-      i++
+  for (let i = 0; i < bracketMatches.length; i++) {
+    const start = bracketMatches[i].index ?? 0
+    const end =
+      i + 1 < bracketMatches.length
+        ? (bracketMatches[i + 1].index ?? body.length)
+        : body.length
+    const line = body.slice(start, end).trim()
+    if (!line) continue
+    if (i === 0 && preface) {
+      lines.push(`${preface} ${line}`.trim())
+    } else {
+      lines.push(line)
     }
-    const run = body.slice(runStart, i + 1)
-    const hasEllipsisRun = run === '…' || run.length > 1
+  }
 
-    // Look at the previous word to skip abbreviations.
-    if (ch === '.' && !hasEllipsisRun) {
-      const wordMatch = buf.match(/(\b[A-Za-z]+)\.\s*$/)
-      const word = wordMatch?.[1]?.toLowerCase()
-      if (word && ABBREV.has(word)) {
+  return lines.length > 0 ? lines : [body]
+}
+
+// ---------------------------------------------------------------------------
+// Dialogue completeness normalization
+// ---------------------------------------------------------------------------
+
+type SentenceChunk = { text: string; complete: boolean }
+type PendingFragment = { tag: string; text: string; template: any; sourceIndexes: number[] }
+
+function splitBodyIntoSentenceChunks(body: string): SentenceChunk[] {
+  const normalized = String(body || '').replace(/\s+/g, ' ').trim()
+  if (!normalized) return []
+  const chunks = normalized.match(/[^.!?]+(?:[.!?]+["')\]]*|$)/g) || []
+  return chunks
+    .map((raw) => raw.trim())
+    .filter(Boolean)
+    .map((text) => ({
+      text,
+      complete: /[.!?]["')\]]*$/.test(text),
+    }))
+}
+
+function splitLeadingTag(line: string): { tag: string; body: string } {
+  const trimmed = String(line || '').trim()
+  const m = /^\s*(\[[^\]]+\])\s*(.*)$/.exec(trimmed)
+  if (!m) return { tag: '', body: trimmed }
+  return { tag: m[1], body: m[2].trim() }
+}
+
+function withTag(tag: string, body: string): string {
+  const t = tag.trim()
+  const b = body.trim()
+  if (!t) return b
+  return b ? `${t} ${b}` : t
+}
+
+function ensureTerminalPunctuation(text: string): string {
+  const trimmed = text.trim()
+  if (!trimmed) return trimmed
+  if (/[.!?]["')\]]*$/.test(trimmed)) return trimmed
+  return `${trimmed}.`
+}
+
+function isLikelyOrphanClauseStart(text: string): boolean {
+  const trimmed = text.trim()
+  if (!trimmed) return false
+  return /^(and|but|or|so|yet|then|because|if|when|while|though|although)\b/i.test(trimmed)
+}
+
+/**
+ * Enforce exactly one complete sentence per line while preserving bracket
+ * direction tags. Designed for script generation output cleanup before
+ * persistence and migration.
+ */
+export function normalizeDialogueToCompleteSentenceLines(
+  dialogue: Array<{ character?: string; line?: string; [key: string]: any }>
+): Array<{ character?: string; line?: string; [key: string]: any }> {
+  if (!Array.isArray(dialogue) || dialogue.length === 0) return []
+
+  const out: Array<{ character?: string; line?: string; [key: string]: any }> = []
+  const pendingBySpeaker = new Map<string, PendingFragment>()
+
+  const speakerKey = (d: any) => String(d?.character || '').trim().toUpperCase() || '__UNKNOWN__'
+  const sourceIndexesOf = (d: any): number[] =>
+    Array.isArray(d?.__sourceIndexes)
+      ? d.__sourceIndexes.filter((x: any) => Number.isInteger(x))
+      : Number.isInteger(d?.__legacyIndex)
+      ? [d.__legacyIndex]
+      : []
+
+  for (const d of dialogue) {
+    const key = speakerKey(d)
+    const { tag, body } = splitLeadingTag(d?.line || '')
+    if (!body) continue
+    const chunks = splitBodyIntoSentenceChunks(body)
+    if (chunks.length === 0) continue
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i]
+      const treatAsFragment = !chunk.complete || isLikelyOrphanClauseStart(chunk.text)
+      if (treatAsFragment) {
+        const pending = pendingBySpeaker.get(key)
+        const mergedSourceIndexes = Array.from(
+          new Set([...(pending?.sourceIndexes || []), ...sourceIndexesOf(d)])
+        )
+        pendingBySpeaker.set(key, {
+          tag: pending?.tag || tag,
+          text: `${pending?.text ? `${pending.text} ` : ''}${chunk.text}`.trim(),
+          template: pending?.template || d,
+          sourceIndexes: mergedSourceIndexes,
+        })
         continue
       }
-      // Decimal numbers like 1.5 — only split if a non-digit follows.
-      const next = body[i + 1]
-      const prev = buf.length >= 2 ? buf[buf.length - 2] : ''
-      if (/\d/.test(prev || '') && /\d/.test(next || '')) {
-        continue
-      }
-    }
 
-    // Treat ellipses as mid-line pauses by default (no hard split).
-    if (hasEllipsisRun) {
-      continue
+      const pending = pendingBySpeaker.get(key)
+      pendingBySpeaker.delete(key)
+      const fullBody = `${pending?.text ? `${pending.text} ` : ''}${chunk.text}`.trim()
+      const mergedSourceIndexes = Array.from(
+        new Set([...(pending?.sourceIndexes || []), ...sourceIndexesOf(d)])
+      )
+      out.push({
+        ...d,
+        ...(pending?.template || {}),
+        __sourceIndexes: mergedSourceIndexes,
+        line: withTag(pending?.tag || tag, ensureTerminalPunctuation(fullBody)),
+      })
     }
-
-    // Consume the trailing closing quote / bracket so it stays with this sentence.
-    while (i + 1 < body.length && /[\)\]\"\']/.test(body[i + 1])) {
-      buf += body[i + 1]
-      i++
-    }
-
-    const trimmed = buf.trim()
-    if (trimmed) sentences.push(trimmed)
-    buf = ''
   }
 
-  const tail = buf.trim()
-  if (tail) sentences.push(tail)
-
-  if (sentences.length === 0) return prefix ? [prefix.trim()] : []
-
-  if (prefix) {
-    sentences[0] = (prefix + sentences[0]).trim()
+  // Flush unresolved fragments as complete lines (fallback repair).
+  for (const [key, pending] of pendingBySpeaker.entries()) {
+    const template = pending.template || dialogue.find((d) => speakerKey(d) === key) || {}
+    out.push({
+      ...template,
+      __sourceIndexes: pending.sourceIndexes,
+      line: withTag(pending.tag, ensureTerminalPunctuation(pending.text)),
+    })
   }
-  return sentences
+
+  return out
 }
 
 // ---------------------------------------------------------------------------
@@ -187,32 +257,33 @@ export function buildDialogueLines(opts: BuildDialogueLineOptions): DialogueLine
 }
 
 /**
- * Re-normalize an existing DialogueLine so that any multi-sentence text gets
- * split into multiple lines. Preserves the original `lineId` on the FIRST
- * resulting line so existing audio/translations keep matching, and mints
- * fresh ids for the new tail lines.
+ * Re-normalize an existing DialogueLine using strict bracket-delimited
+ * splitting. Preserves the original `lineId` on the FIRST resulting line so
+ * existing audio/translations keep matching, and mints fresh ids for tails.
  */
 export function normalizeDialogueLine(line: DialogueLine): DialogueLine[] {
-  const sentences = splitIntoSentences(line.line || '')
-  if (sentences.length <= 1) {
+  const normalized = normalizeDialogueToCompleteSentenceLines([
+    { character: line.character, line: line.line },
+  ])
+  if (normalized.length <= 1) {
     return [
       {
         ...line,
-        line: sentences[0] || line.line || '',
+        line: normalized[0]?.line || line.line || '',
       },
     ]
   }
 
-  return sentences.map((sentence, i) => ({
+  return normalized.map((entry, i) => ({
     ...line,
     lineId: i === 0 ? line.lineId : mintLineId(),
-    line: sentence,
+    line: entry.line || line.line,
   }))
 }
 
 /**
- * Apply the one-sentence rule across every dialogue line in every segment of
- * a scene, in place-friendly fashion (returns a new array).
+ * Apply script-line normalization across every dialogue line in every segment
+ * of a scene, in place-friendly fashion (returns a new array).
  */
 export function enforceOneSentencePerLine(segments: ScriptSegment[]): ScriptSegment[] {
   return segments.map((seg) => ({

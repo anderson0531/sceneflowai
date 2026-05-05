@@ -31,6 +31,7 @@ import {
 import {
   buildSegmentSfx,
   enforceOneSentencePerLine,
+  normalizeDialogueToCompleteSentenceLines,
   mintLineId,
   mintSegmentId,
   quantizeAndResequence,
@@ -199,11 +200,23 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
   //    that legacy positional consumers still resolve.
   const dialogueLinesByIndex = new Map<number, DialogueLine[]>()
   const flatDialogue: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
-  flatDialogue.forEach((d, i) => {
+  const normalizedLegacyDialogue = normalizeDialogueToCompleteSentenceLines(
+    flatDialogue.map((d, i) => ({ ...d, __legacyIndex: i, __sourceIndexes: [i] }))
+  )
+  normalizedLegacyDialogue.forEach((d) => {
     const lines = legacyDialogueEntryToLines(d, scene)
     if (lines.length === 0) return
-    dialogueLinesByIndex.set(i, lines)
-    dialogueIndexToLineId.set(i, lines[0].lineId)
+    const sourceIndexes = Array.isArray(d?.__sourceIndexes)
+      ? d.__sourceIndexes.filter((x: any) => Number.isInteger(x))
+      : Number.isInteger(d?.__legacyIndex)
+      ? [d.__legacyIndex]
+      : []
+    sourceIndexes.forEach((sourceIdx) => {
+      dialogueLinesByIndex.set(sourceIdx, lines)
+      if (!dialogueIndexToLineId.has(sourceIdx)) {
+        dialogueIndexToLineId.set(sourceIdx, lines[0].lineId)
+      }
+    })
   })
 
   // 2. Narration lines are minted up-front from scene.narration.

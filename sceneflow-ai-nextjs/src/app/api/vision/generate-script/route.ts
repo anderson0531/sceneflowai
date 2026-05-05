@@ -5,6 +5,7 @@ import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { generateText } from '@/lib/vertexai/gemini'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
+import { normalizeDialogueToCompleteSentenceLines } from '@/lib/script/segmentScript'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -329,6 +330,7 @@ DO NOT force full character names into dialogue text unnaturally.
 
 DIALOGUE AUDIO TAGS (CRITICAL FOR ELEVENLABS TTS):
 EVERY dialogue line MUST include emotional/vocal direction tags to guide AI voice generation.
+EVERY dialogue line MUST contain exactly ONE complete sentence after the opening [direction] tag.
 
 STYLE TAGS (In square brackets BEFORE text):
 - MUST BE SHORT AND CONCISE (1-3 words max).
@@ -353,6 +355,7 @@ EXAMPLES:
   * {"character": "CHILD", "line": "[happy, quickly] Mommy, mommy! Look what I found!"}
 
 CRITICAL: Every single dialogue line must start with at least one simple emotion/style tag in [brackets].
+CRITICAL: Do NOT output fragment-only lines (e.g. "[quiet] and for what?"). Merge fragments into a complete sentence.
 
 CRITICAL REQUIREMENTS:
 1. Generate a COMPLETE, CONTINUOUS script with ${sceneCount} scenes
@@ -486,7 +489,13 @@ Generate COMPLETE scenes with full dialogue and action.`
         const parsedBatch = JSON.parse(batchScript)
         
         if (parsedBatch.scenes && Array.isArray(parsedBatch.scenes)) {
-          allScenes.push(...parsedBatch.scenes)
+          const normalizedScenes = parsedBatch.scenes.map((scene: any) => ({
+            ...scene,
+            dialogue: normalizeDialogueToCompleteSentenceLines(
+              Array.isArray(scene?.dialogue) ? scene.dialogue : []
+            ),
+          }))
+          allScenes.push(...normalizedScenes)
           console.log(`[Script Gen] Batch ${batchIndex + 1} complete: ${parsedBatch.scenes.length} scenes`)
         } else {
           throw new Error('Batch does not contain scenes array')
