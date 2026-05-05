@@ -299,6 +299,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     if (force) {
       console.log('[StudioPage] Force regenerating hero image...')
     }
+
+    const heroBlockedKey = `hero-blocked-credits-${variant.id || variant.title}`
+    if (!force && typeof window !== 'undefined' && sessionStorage.getItem(heroBlockedKey) === '1') {
+      console.log('[StudioPage] Hero image auto-generation blocked for insufficient credits in this session')
+      return
+    }
     
     // Use sessionStorage to prevent duplicate generation during navigation
     const heroGenKey = `hero-gen-${variant.id || variant.title}`
@@ -310,6 +316,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     // Mark as generating
     if (typeof window !== 'undefined') {
       sessionStorage.setItem(heroGenKey, 'generating')
+      if (force) sessionStorage.removeItem(heroBlockedKey)
     }
     
     setIsGeneratingHeroImage(true)
@@ -350,8 +357,24 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         })
         
         if (!response.ok) {
-          const errorText = await response.text().catch(() => 'Unknown error')
-          throw new Error(`Hero image generation failed: ${response.status} - ${errorText}`)
+          let errorPayload: any = null
+          let errorText = 'Unknown error'
+          const contentType = response.headers.get('content-type') || ''
+          if (contentType.includes('application/json')) {
+            errorPayload = await response.json().catch(() => null)
+            errorText = errorPayload?.error || JSON.stringify(errorPayload || {})
+          } else {
+            errorText = await response.text().catch(() => 'Unknown error')
+          }
+
+          const requestError = new Error(
+            response.status === 402
+              ? `Insufficient credits for hero image generation. Need ${errorPayload?.creditsRequired ?? 'more'} credits${typeof errorPayload?.creditsAvailable === 'number' ? ` (available: ${errorPayload.creditsAvailable})` : ''}.`
+              : `Hero image generation failed: ${response.status} - ${errorText}`
+          ) as Error & { status?: number; payload?: any }
+          requestError.status = response.status
+          requestError.payload = errorPayload
+          throw requestError
         }
         
         const data = await response.json()
@@ -380,7 +403,17 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         console.error('[StudioPage] Hero image generation error:', error)
         const errorMessage = error?.message || 'Failed to generate hero image'
         setHeroImageError(errorMessage)
-        try { const { toast } = require('sonner'); toast.error('Hero image generation failed. Click the image to retry.') } catch {}
+        if (typeof window !== 'undefined' && error?.status === 402) {
+          sessionStorage.setItem(heroBlockedKey, '1')
+        }
+        try {
+          const { toast } = require('sonner')
+          if (error?.status === 402) {
+            toast.error(errorMessage)
+          } else {
+            toast.error('Hero image generation failed. Click the image to retry.')
+          }
+        } catch {}
         // Clear the generation flag on error so user can retry
         if (typeof window !== 'undefined') {
           sessionStorage.removeItem(`hero-gen-${variant.id || variant.title}`)

@@ -365,12 +365,13 @@ export async function POST(request: NextRequest) {
 
     // Check credits before image generation
     if (estimatedCredits > 0) {
-      const creditCheck = await CreditService.ensureCredits(userId, estimatedCredits, 'Treatment Visual Generation')
-      if (!creditCheck.hasCredits) {
+      const hasCredits = await CreditService.ensureCredits(userId, estimatedCredits)
+      if (!hasCredits) {
+        const breakdown = await CreditService.getCreditBreakdown(userId).catch(() => null)
         return NextResponse.json({
-          error: creditCheck.message,
+          error: 'Insufficient credits for treatment visual generation',
           creditsRequired: estimatedCredits,
-          creditsAvailable: creditCheck.currentBalance
+          creditsAvailable: breakdown?.total_credits ?? 0
         }, { status: 402 })
       }
     }

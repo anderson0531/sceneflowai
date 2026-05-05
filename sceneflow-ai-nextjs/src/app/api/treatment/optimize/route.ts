@@ -79,13 +79,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Check credits before AI generation
-    const creditCheck = await CreditService.ensureCredits(userId, BLUEPRINT_OPTIMIZE_CREDIT_COST, 'Blueprint Optimize')
-    if (!creditCheck.hasCredits) {
+    const hasCredits = await CreditService.ensureCredits(userId, BLUEPRINT_OPTIMIZE_CREDIT_COST)
+    if (!hasCredits) {
+      const breakdown = await CreditService.getCreditBreakdown(userId).catch(() => null)
       return NextResponse.json({
         success: false,
-        message: creditCheck.message,
+        message: 'Insufficient credits',
         creditsRequired: BLUEPRINT_OPTIMIZE_CREDIT_COST,
-        creditsAvailable: creditCheck.currentBalance
+        creditsAvailable: breakdown?.total_credits ?? 0
       }, { status: 402 })
     }
 

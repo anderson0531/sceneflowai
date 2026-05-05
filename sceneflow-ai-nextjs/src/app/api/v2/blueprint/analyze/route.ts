@@ -26,13 +26,14 @@ export async function POST(request: NextRequest) {
     parsedInput = input
 
     // Check credits before AI generation
-    const creditCheck = await CreditService.ensureCredits(userId, BLUEPRINT_ANALYZE_CREDIT_COST, 'Blueprint Analyze V2')
-    if (!creditCheck.hasCredits) {
+    const hasCredits = await CreditService.ensureCredits(userId, BLUEPRINT_ANALYZE_CREDIT_COST)
+    if (!hasCredits) {
+      const breakdown = await CreditService.getCreditBreakdown(userId).catch(() => null)
       return NextResponse.json({
         success: false,
-        error: creditCheck.message,
+        error: 'Insufficient credits',
         creditsRequired: BLUEPRINT_ANALYZE_CREDIT_COST,
-        creditsAvailable: creditCheck.currentBalance
+        creditsAvailable: breakdown?.total_credits ?? 0
       }, { status: 402, headers: { 'x-sf-request-id': reqId } })
     }
 

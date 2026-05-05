@@ -154,13 +154,14 @@ IMPORTANT:
 ${strictJsonPromptSuffix}`
 
     // Check credits before AI generation
-    const creditCheck = await CreditService.ensureCredits(userId, BLUEPRINT_REFINE_CREDIT_COST, 'Blueprint Refine')
-    if (!creditCheck.hasCredits) {
+    const hasCredits = await CreditService.ensureCredits(userId, BLUEPRINT_REFINE_CREDIT_COST)
+    if (!hasCredits) {
+      const breakdown = await CreditService.getCreditBreakdown(userId).catch(() => null)
       return NextResponse.json({
         success: false,
-        message: creditCheck.message,
+        message: 'Insufficient credits',
         creditsRequired: BLUEPRINT_REFINE_CREDIT_COST,
-        creditsAvailable: creditCheck.currentBalance
+        creditsAvailable: breakdown?.total_credits ?? 0
       }, { status: 402 })
     }
 
