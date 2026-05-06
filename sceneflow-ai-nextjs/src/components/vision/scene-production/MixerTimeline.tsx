@@ -119,6 +119,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
   textOverlays = [],
   onTextOverlayChange,
   segments = [],
+  segmentDurations = {},
   currentPlaybackTime = 0,
   disabled,
   className = '',
