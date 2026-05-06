@@ -133,7 +133,9 @@ function SegmentCard({
   resolveDialogueIndex,
   ...rest
 }: SegmentCardProps) {
-  const [collapsed, setCollapsed] = useState(false)
+  // Default to collapsed so the script panel renders compactly; users can
+  // open individual segments to drill into dialog/SFX/prompts.
+  const [collapsed, setCollapsed] = useState(true)
   const duration = Math.max(0, segment.endTime - segment.startTime)
   const isContinuation =
     segment.segmentId.includes('_c') ||

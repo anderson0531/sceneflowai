@@ -261,6 +261,44 @@ export function SceneGallery({
     },
     [onExpressGenerate, selectedLanguage]
   )
+
+  // Compute a phase-level progress summary from the SSE-driven `expressStatus`
+  // map. We count phases (3 per scene) rather than whole scenes so the bar
+  // moves smoothly as Direction → Audio → Image complete on each in-flight
+  // worker, instead of jumping in big steps. Errors and skipped phases both
+  // count as "complete" since they don't need any more work.
+  const expressProgress = useMemo(() => {
+    if (!isExpressRunning || !expressStatus) return null
+    const sceneEntries = Object.values(expressStatus)
+    const sceneCount = sceneEntries.length
+    if (sceneCount === 0) return null
+    const totalPhases = sceneCount * 3
+    let completedPhases = 0
+    let runningPhases = 0
+    let scenesComplete = 0
+    for (const s of sceneEntries) {
+      const phases = [s.direction, s.audio, s.image]
+      let sceneDone = 0
+      for (const p of phases) {
+        if (p === 'done' || p === 'error') {
+          completedPhases += 1
+          sceneDone += 1
+        } else if (p === 'running') {
+          runningPhases += 1
+        }
+      }
+      if (sceneDone === 3) scenesComplete += 1
+    }
+    const pct = totalPhases === 0 ? 0 : Math.round((completedPhases / totalPhases) * 100)
+    return {
+      completedPhases,
+      totalPhases,
+      runningPhases,
+      scenesComplete,
+      sceneCount,
+      pct,
+    }
+  }, [isExpressRunning, expressStatus])
   
   // Build smart prompt that includes character AND object references for consistency
   const buildScenePrompt = useCallback((scene: any, sceneIdx: number): string => {
@@ -364,7 +402,11 @@ export function SceneGallery({
         </div>
         
         <div className="flex flex-wrap gap-2 items-center">
-          {/* Express button - replaces Generate All + Generate Direction */}
+          {/* Express button - replaces Generate All + Generate Direction.
+              While running, the button shows a phase-level progress strip
+              along its bottom edge plus a compact "X/Y phases" label, and a
+              second pill in the toolbar surfaces "Scene X/Y" progress so
+              the user can see how far along the run is. */}
           {onExpressGenerate && scenes.length > 0 && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -373,7 +415,7 @@ export function SceneGallery({
                   size="sm"
                   onClick={() => setExpressDialogOpen(true)}
                   disabled={isExpressRunning || scenesNeedingExpress === 0}
-                  className="flex items-center gap-2 bg-gradient-to-r from-indigo-500/15 to-purple-500/15 border-indigo-500/40 hover:border-indigo-500/60 hover:from-indigo-500/25 hover:to-purple-500/25"
+                  className="relative flex items-center gap-2 overflow-hidden bg-gradient-to-r from-indigo-500/15 to-purple-500/15 border-indigo-500/40 hover:border-indigo-500/60 hover:from-indigo-500/25 hover:to-purple-500/25"
                 >
                   {isExpressRunning ? (
                     <Loader className="w-4 h-4 animate-spin text-indigo-300" />
@@ -382,15 +424,47 @@ export function SceneGallery({
                   )}
                   <span>
                     {isExpressRunning
-                      ? 'Express running…'
+                      ? expressProgress
+                        ? `Express ${expressProgress.pct}%`
+                        : 'Express running…'
                       : `Express (${scenesNeedingExpress})`}
                   </span>
+                  {isExpressRunning && expressProgress && (
+                    <span
+                      aria-hidden
+                      className="absolute bottom-0 left-0 h-0.5 bg-indigo-400 transition-all duration-300 ease-out"
+                      style={{ width: `${expressProgress.pct}%` }}
+                    />
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                Generate Direction → Audio → Image for every scene (3 in parallel)
+                {isExpressRunning && expressProgress
+                  ? `Direction → Audio → Image • ${expressProgress.completedPhases}/${expressProgress.totalPhases} phases (${expressProgress.scenesComplete}/${expressProgress.sceneCount} scenes)`
+                  : 'Generate Direction → Audio → Image for every scene (3 in parallel)'}
               </TooltipContent>
             </Tooltip>
+          )}
+          {/* Compact running-progress pill: visible only while Express is
+              executing, gives a textual readout that complements the bar. */}
+          {isExpressRunning && expressProgress && (
+            <div className="flex items-center gap-1.5 rounded-md border border-indigo-500/40 bg-indigo-500/10 px-2 py-1 text-[11px] text-indigo-200">
+              <span className="font-semibold">
+                Scene {expressProgress.scenesComplete}/{expressProgress.sceneCount}
+              </span>
+              <span className="text-indigo-300/70">·</span>
+              <span>
+                {expressProgress.completedPhases}/{expressProgress.totalPhases} phases
+              </span>
+              {expressProgress.runningPhases > 0 && (
+                <>
+                  <span className="text-indigo-300/70">·</span>
+                  <span className="text-indigo-300">
+                    {expressProgress.runningPhases} active
+                  </span>
+                </>
+              )}
+            </div>
           )}
           {/* Language selector - always visible. The list is the full
               supported languages so users can pick a target locale to
