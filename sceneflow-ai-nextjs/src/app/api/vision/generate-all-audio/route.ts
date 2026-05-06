@@ -4,6 +4,7 @@ import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
 import { put } from '@vercel/blob'
 import { toCanonicalName, generateAliases } from '../../../../lib/character/canonical'
+import { resolveSfxDuration } from '../../../../lib/elevenlabs/sfxDuration'
 
 export const maxDuration = 300 // 5 minutes for batch generation
 export const runtime = 'nodejs'
@@ -48,6 +49,36 @@ async function generateAndSaveMusicForScene(scene: any, projectId: string, scene
   }
 }
 
+/**
+ * Walk the scene's segmented script (if present) to find the duration of the
+ * parent segment for a given legacy SFX cue index. Returns `undefined` when
+ * the scene has not been migrated to segments yet, in which case the resolver
+ * falls back to its 8s default.
+ */
+function findParentSegmentDurationSeconds(
+  scene: any,
+  sfxIdx: number,
+  sfxId?: string
+): number | undefined {
+  const segments = Array.isArray(scene?.segments) ? scene.segments : null
+  if (!segments) return undefined
+  for (const seg of segments) {
+    if (!seg || !Array.isArray(seg.sfx)) continue
+    const match = seg.sfx.find((s: any) => {
+      if (sfxId && s?.sfxId === sfxId) return true
+      if (typeof s?.legacyIndex === 'number' && s.legacyIndex === sfxIdx) return true
+      return false
+    })
+    if (match) {
+      const start = typeof seg.startTime === 'number' ? seg.startTime : 0
+      const end = typeof seg.endTime === 'number' ? seg.endTime : 0
+      const dur = end - start
+      return dur > 0 ? dur : undefined
+    }
+  }
+  return undefined
+}
+
 // Helper function to generate and save SFX for a scene cue via ElevenLabs
 async function generateAndSaveSFXForScene(
   scene: any,
@@ -72,10 +103,8 @@ async function generateAndSaveSFXForScene(
 
     const sfxId: string | undefined =
       typeof cue === 'object' && cue && typeof cue.sfxId === 'string' ? cue.sfxId : undefined
-    const durationSeconds: number | undefined =
-      typeof cue === 'object' && cue && typeof cue.duration === 'number'
-        ? cue.duration
-        : undefined
+    const segmentDurationSeconds = findParentSegmentDurationSeconds(scene, sfxIdx, sfxId)
+    const durationSeconds = resolveSfxDuration({ segmentDurationSeconds, override: 'auto' })
 
     const response = await fetch(`${baseUrl}/api/tts/elevenlabs/sound-effects`, {
       method: 'POST',

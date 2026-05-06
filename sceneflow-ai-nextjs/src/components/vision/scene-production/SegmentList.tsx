@@ -251,6 +251,7 @@ function SegmentCard({
                   positionInSegment={idx}
                   playingAudio={rest.playingAudio}
                   projectId={rest.projectId}
+                  segmentDurationSeconds={Math.max(0, (segment.endTime ?? 0) - (segment.startTime ?? 0))}
                   onPlayAudio={rest.onPlayAudio}
                   onDeleteSceneAudio={rest.onDeleteSceneAudio}
                   onSaveSfxAudio={rest.onSaveSfxAudio}

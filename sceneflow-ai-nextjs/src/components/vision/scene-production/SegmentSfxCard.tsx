@@ -6,6 +6,11 @@ import { Volume2 as VolumeIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
 import type { SegmentSFX } from '@/lib/script/segmentTypes'
+import {
+  resolveAutoSfxDuration,
+  resolveSfxDuration,
+  type SfxDurationOverride,
+} from '@/lib/elevenlabs/sfxDuration'
 
 /**
  * One SFX cue inside a segment. The cue's description is used to drive
@@ -22,6 +27,12 @@ export interface SegmentSfxCardProps {
   positionInSegment: number
   playingAudio: string | null
   projectId?: string
+  /**
+   * Parent segment duration in seconds (segment.endTime - segment.startTime).
+   * Drives the "Auto" preset's resolved duration; falls back to 8s when not
+   * provided.
+   */
+  segmentDurationSeconds?: number
   onPlayAudio?: (audioUrl: string, label: string) => void
   onDeleteSceneAudio?: (
     sceneIndex: number,
@@ -49,11 +60,14 @@ export function SegmentSfxCard({
   positionInSegment,
   playingAudio,
   projectId,
+  segmentDurationSeconds,
   onPlayAudio,
   onDeleteSceneAudio,
   onSaveSfxAudio,
 }: SegmentSfxCardProps) {
   const [isGenerating, setIsGenerating] = useState(false)
+  const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
+  const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
 
   const legacyIdx = sfx.legacyIndex
   const audioUrl: string | undefined =
@@ -85,6 +99,10 @@ export function SegmentSfxCard({
     setIsGenerating(true)
     const toastId = toast.loading(audioUrl ? 'Re-generating SFX...' : 'Generating SFX...')
     try {
+      const durationSeconds = resolveSfxDuration({
+        segmentDurationSeconds,
+        override: durationPreset,
+      })
       const response = await fetch('/api/tts/elevenlabs/sound-effects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -93,6 +111,7 @@ export function SegmentSfxCard({
           sfxId: sfx.sfxId,
           sfxIndex: legacyIdx,
           text: description,
+          durationSeconds,
         }),
       })
 
@@ -211,7 +230,62 @@ export function SegmentSfxCard({
           </Button>
         </div>
       </div>
+      <DurationPresetChips
+        value={durationPreset}
+        autoSeconds={autoSeconds}
+        onChange={setDurationPreset}
+        disabled={isGenerating}
+      />
       <div className="text-sm text-gray-700 dark:text-gray-300 italic">{sfx.description}</div>
     </div>
   )
+}
+
+interface DurationPresetChipsProps {
+  value: SfxDurationOverride
+  autoSeconds: number
+  onChange: (next: SfxDurationOverride) => void
+  disabled?: boolean
+}
+
+function DurationPresetChips({ value, autoSeconds, onChange, disabled }: DurationPresetChipsProps) {
+  const chips: Array<{ id: SfxDurationOverride; label: string }> = [
+    { id: 'auto', label: `Auto (${formatSeconds(autoSeconds)}s)` },
+    { id: 'short', label: 'Short 3s' },
+    { id: 'medium', label: 'Medium 8s' },
+    { id: 'long', label: 'Long 15s' },
+  ]
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 mb-2">
+      <span className="text-[10px] uppercase tracking-wide text-amber-700/80 dark:text-amber-300/70 mr-1">
+        Duration
+      </span>
+      {chips.map((chip) => {
+        const active = value === chip.id
+        return (
+          <button
+            key={chip.id}
+            type="button"
+            disabled={disabled}
+            onClick={(e) => {
+              e.stopPropagation()
+              onChange(chip.id)
+            }}
+            className={`text-[11px] leading-none px-2 py-1 rounded border transition-colors ${
+              active
+                ? 'bg-amber-600 border-amber-600 text-white'
+                : 'bg-transparent border-amber-400/60 text-amber-800 dark:text-amber-200 hover:bg-amber-200/50 dark:hover:bg-amber-800/40'
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {chip.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function formatSeconds(value: number): string {
+  if (!Number.isFinite(value)) return '8'
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
 }
