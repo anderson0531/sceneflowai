@@ -12,6 +12,10 @@
 import { optimizeTextForTTS } from '../../lib/tts/textOptimizer'
 import { toCanonicalName, generateAliases } from '../../lib/character/canonical'
 import { resolveSfxDuration } from '../../lib/elevenlabs/sfxDuration'
+import {
+  NARRATOR_CHARACTER,
+  NARRATOR_CHARACTER_ID,
+} from '../../lib/script/segmentTypes'
 import type { SceneAudioAsset, SceneAudioCounts, SceneAudioResult } from './types'
 
 export interface GenerateSceneAudioParams {
@@ -187,8 +191,27 @@ export async function generateSceneAudio(
     ...(authCookie ? { Cookie: authCookie } : {}),
   }
 
-  // 1. Narration
-  if (scene?.narration && narrationVoice) {
+  // 1. Narration (legacy `scene.narration` path)
+  // In the integrated narrator-as-character model the narrator's lines live
+  // inside `scene.dialogue` with `kind: 'narration'` and the dialogue path
+  // below handles them. To avoid generating two parallel narration audio
+  // streams (one keyed under `scene.narrationAudio[lang]` and one under
+  // `scene.dialogueAudio[lang][i]`) we skip this legacy path whenever the
+  // dialogue array already contains narrator lines.
+  const dialogueArr: any[] = Array.isArray(scene?.dialogue) ? scene.dialogue : []
+  const hasNarratorInDialogue = dialogueArr.some((d: any) => {
+    if (!d) return false
+    if (d.kind === 'narration') return true
+    if (d.characterId === NARRATOR_CHARACTER_ID) return true
+    if (
+      typeof d.character === 'string' &&
+      toCanonicalName(d.character) === toCanonicalName(NARRATOR_CHARACTER)
+    ) {
+      return true
+    }
+    return false
+  })
+  if (scene?.narration && narrationVoice && !hasNarratorInDialogue) {
     const sceneTranslation = storedTranslations?.[sceneIndex]
     const storedNarration = sceneTranslation?.narration
     const narrationText = storedNarration || scene.narration
@@ -228,10 +251,26 @@ export async function generateSceneAudio(
     }
   }
 
-  // 2. Dialogue (per-line)
+  // 2. Dialogue (per-line). Narrator lines (kind === 'narration' or
+  //    characterId === 'narrator' or character === 'NARRATOR') live in the
+  //    same `scene.dialogue` array under the integrated narrator-as-character
+  //    model. They will not match any entry in `visionPhase.characters`
+  //    (which only holds story characters), so we fall back to
+  //    `narrationVoice` for those lines instead of skipping them — otherwise
+  //    narrator audio in non-English languages never gets generated and the
+  //    player falls back to English narration.
   if (Array.isArray(scene?.dialogue) && scene.dialogue.length > 0) {
     const dialogueTasks = scene.dialogue.map(
       async (dialogueLine: any, dialogueIndex: number) => {
+        const lineKind: 'narration' | 'dialogue' =
+          dialogueLine?.kind === 'narration' ? 'narration' : 'dialogue'
+        const isNarratorLine =
+          lineKind === 'narration' ||
+          dialogueLine?.characterId === NARRATOR_CHARACTER_ID ||
+          (typeof dialogueLine?.character === 'string' &&
+            toCanonicalName(dialogueLine.character) ===
+              toCanonicalName(NARRATOR_CHARACTER))
+
         let character = dialogueLine.characterId
           ? characters.find((c: any) => c.id === dialogueLine.characterId)
           : null
@@ -246,7 +285,24 @@ export async function generateSceneAudio(
           )
         }
 
-        if (!character || !character.voiceConfig) {
+        let resolvedVoice = character?.voiceConfig
+        let resolvedName = character?.name
+        let resolvedCharacterId = character?.id
+
+        if (!resolvedVoice && isNarratorLine && narrationVoice) {
+          resolvedVoice = narrationVoice
+          resolvedName = NARRATOR_CHARACTER
+          resolvedCharacterId = NARRATOR_CHARACTER_ID
+        }
+
+        if (!resolvedVoice) {
+          if (isNarratorLine) {
+            console.warn(
+              `[generateSceneAudio] Narrator line skipped for scene ${
+                sceneIndex + 1
+              } line ${dialogueIndex}: no narrationVoice configured`
+            )
+          }
           return null
         }
 
@@ -264,10 +320,12 @@ export async function generateSceneAudio(
               sceneIndex,
               audioType: 'dialogue',
               text: optimized.text,
-              voiceConfig: character.voiceConfig,
-              characterName: character.name,
+              voiceConfig: resolvedVoice,
+              characterName: resolvedName,
+              characterId: resolvedCharacterId,
               dialogueIndex,
               lineId: dialogueLine.lineId,
+              lineKind,
               language,
               skipTranslation: !!storedDialogueLine,
               skipDbUpdate: true,
@@ -278,11 +336,13 @@ export async function generateSceneAudio(
             return {
               dialogueIndex,
               lineId: dialogueLine.lineId,
-              character: character.name,
+              character: resolvedName,
+              kind: lineKind,
+              characterId: resolvedCharacterId,
               audioUrl: data.audioUrl,
               durationSeconds: data.duration ?? null,
-              voiceId: character.voiceConfig.voiceId ?? null,
-              voiceProvider: character.voiceConfig.provider ?? null,
+              voiceId: resolvedVoice.voiceId ?? null,
+              voiceProvider: resolvedVoice.provider ?? null,
             }
           }
         } catch (error: any) {
@@ -301,13 +361,19 @@ export async function generateSceneAudio(
         audioType: 'dialogue',
         dialogueIndex: r.dialogueIndex,
         lineId: r.lineId,
+        kind: r.kind,
+        characterId: r.characterId,
         character: r.character,
         audioUrl: r.audioUrl,
         durationSeconds: r.durationSeconds,
         voiceId: r.voiceId,
         voiceProvider: r.voiceProvider,
       })
-      counts.dialogue += 1
+      // Count narrator-as-dialogue lines as narration so the SSE counts
+      // accurately reflect how many narration lines were generated, while
+      // still storing them in the dialogueAudio array.
+      if (r.kind === 'narration') counts.narration += 1
+      else counts.dialogue += 1
     }
   }
 
@@ -386,6 +452,11 @@ export function applyAudioAssetsToScene(
         generatedAt: new Date().toISOString(),
         voiceId: asset.voiceId,
         lineId: asset.lineId,
+        // Persist `kind` and `characterId` so players can render narrator
+        // lines distinctly without having to re-derive them from the script.
+        ...(asset.kind ? { kind: asset.kind } : {}),
+        ...(asset.characterId ? { characterId: asset.characterId } : {}),
+        dialogueIndex: idx,
       }
     } else if (asset.audioType === 'music') {
       scene.musicAudio = asset.audioUrl

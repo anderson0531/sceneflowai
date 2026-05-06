@@ -125,6 +125,7 @@ export function AudioGalleryPlayer({
       || []
     if (Array.isArray(dialogueAudio)) {
       dialogueAudio.forEach((d: any) => {
+        if (!d) return
         const dUrl = d.audioUrl || d.url
         if (dUrl) urlsToFetch.push(dUrl)
       })
@@ -190,16 +191,18 @@ export function AudioGalleryPlayer({
     
     if (Array.isArray(dialogueAudio)) {
       dialogueAudio.forEach((d: any, idx: number) => {
+        if (!d) return
         const dUrl = d.audioUrl || d.url
         if (dUrl) {
           const dur = dynamicDurations[dUrl] || d.duration || 3
+          const isNarrator = d.kind === 'narration' || d.characterId === 'narrator'
           clips.push({
             id: `dialogue-${idx}`,
             url: dUrl,
             startTime: currentStartTime,
             duration: dur,
             type: 'dialogue',
-            label: d.character || `Dialogue ${idx + 1}`
+            label: isNarrator ? 'Narrator' : (d.character || `Dialogue ${idx + 1}`)
           })
           currentStartTime += dur + 0.3 // 0.3s buffer between dialogue lines
         }

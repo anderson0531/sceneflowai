@@ -39,12 +39,21 @@ export interface SceneDirectionResult {
  */
 export interface SceneAudioAsset {
   audioType: 'narration' | 'dialogue' | 'music' | 'sfx'
-  /** Index into scene.dialogue (for kind === 'dialogue'). */
+  /** Index into scene.dialogue (for audioType === 'dialogue'). */
   dialogueIndex?: number
-  /** Index into scene.sfx (for kind === 'sfx'). */
+  /** Index into scene.sfx (for audioType === 'sfx'). */
   sfxIndex?: number
   /** Stable lineId, when available (used for dialogue/narration). */
   lineId?: string
+  /**
+   * For audioType === 'dialogue', whether this entry is a narrator line
+   * (`kind: 'narration'`) that lives inside scene.dialogue under the
+   * integrated narrator-as-character model. Players use this to render
+   * narrator lines distinctly.
+   */
+  kind?: 'narration' | 'dialogue'
+  /** Stable character id (e.g. 'narrator' for narrator lines). */
+  characterId?: string | null
   audioUrl: string
   durationSeconds?: number | null
   voiceId?: string | null
