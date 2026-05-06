@@ -26,6 +26,9 @@ import {
   User,
   FileText,
   RefreshCw,
+  Zap,
+  Settings2,
+  Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
@@ -2042,162 +2045,174 @@ const CharacterCard = ({
             </button>
             {talentSectionExpanded && (
               <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 space-y-3">
-                {/* Image Section */}
-                <div className="relative aspect-square bg-gray-100 dark:bg-gray-800">
+                {/* Image Section — overlay controls match Storyboard / Scene Gallery / Location Library (Quick, Prompt, Edit, Enhance, Upload) */}
+                <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 group rounded-md overflow-hidden">
                   {character.referenceImage && !imageError ? (
-                    <>
-                      <img
-                        src={character.referenceImage}
-                        alt={character.name}
-                        className="w-full h-full object-cover"
-                        onError={() => setImageError(true)}
-                      />
-                      {/* Overlay controls - only show on hover */}
-                      <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all opacity-0 hover:opacity-100 flex items-center justify-center gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenCharacterPrompt?.();
-                          }}
-                          className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm"
-                          title="Open Prompt Builder"
-                        >
-                          <Sparkles className="w-4 h-4" />
-                        </button>
-                        {onEditImage && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditImage();
-                            }}
-                            className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-sf-primary hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm"
-                            title="Edit image"
-                          >
-                            <Wand2 className="w-4 h-4" />
-                          </button>
-                        )}
-                        {/* Enhance Reference Button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (isEnhancingReference) return;
-                            handleEnhanceReference();
-                          }}
-                          disabled={
-                            isEnhancingReference || enhanceIterationCount >= 3
-                          }
-                          className="p-2 rounded-lg bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={
-                            enhanceIterationCount >= 3
-                              ? "Max iterations reached - upload new image"
-                              : `Enhance reference (${3 - enhanceIterationCount} left)`
-                          }
-                        >
-                          {isEnhancingReference ? (
-                            <Loader className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Sparkles className="w-4 h-4" />
-                          )}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (isUploading) return;
-                            const input = document.getElementById(
-                              `upload-${characterId}`,
-                            ) as HTMLInputElement;
-                            input?.click();
-                          }}
-                          disabled={isUploading}
-                          className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                          title={isUploading ? "Uploading..." : "Upload image"}
-                        >
-                          {isUploading ? (
-                            <Loader className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Upload className="w-4 h-4" />
-                          )}
-                        </button>
-                        <input
-                          id={`upload-${characterId}`}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={isUploading}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            if (isUploading) return;
-                            const file = e.target.files?.[0];
-                            if (file) onUpload(file);
-                            e.target.value = "";
-                          }}
-                        />
-                      </div>
-                      {/* Drag Handle - Bottom Strip */}
-                      {enableDrag && (
-                        <div
-                          className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center cursor-grab active:cursor-grabbing"
-                          {...listeners}
-                          {...attributes}
-                        >
-                          <div className="flex gap-1">
-                            <div className="w-1 h-1 rounded-full bg-white/60"></div>
-                            <div className="w-1 h-1 rounded-full bg-white/60"></div>
-                            <div className="w-1 h-1 rounded-full bg-white/60"></div>
-                          </div>
-                        </div>
-                      )}
-                    </>
+                    <img
+                      src={character.referenceImage}
+                      alt={character.name}
+                      className="w-full h-full object-cover"
+                      onError={() => setImageError(true)}
+                    />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
-                      <ImageIcon className="w-12 h-12 text-gray-400" />
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenCharacterPrompt?.();
-                          }}
-                          disabled={isGenerating}
-                          title="Open Prompt Builder"
-                        >
-                          <Sparkles className="w-4 h-4" />
-                          Create
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (isUploading) return;
-                            const input = document.getElementById(
-                              `upload-${characterId}`,
-                            ) as HTMLInputElement;
-                            input?.click();
-                          }}
-                          disabled={isUploading || isGenerating}
-                          title="Upload image"
-                        >
-                          {isUploading ? (
-                            <Loader className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Upload className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <input
-                          id={`upload-${characterId}`}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={isUploading}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            if (isUploading) return;
-                            const file = e.target.files?.[0];
-                            if (file) onUpload(file);
-                            e.target.value = "";
-                          }}
-                        />
+                    <div className="w-full h-full flex flex-col items-center justify-center">
+                      <Camera className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        No reference image
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Generation loading overlay */}
+                  {isGenerating && (
+                    <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-20">
+                      <Loader className="w-12 h-12 animate-spin text-blue-400 mb-3" />
+                      <span className="text-sm text-white font-medium">
+                        Generating Character...
+                      </span>
+                      <span className="text-xs text-gray-300 mt-1">
+                        Please wait
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Action overlay — always visible when no image, hover-only when image present */}
+                  <div
+                    className={`absolute inset-0 z-10 bg-black/40 transition-opacity flex items-center justify-center gap-3 ${
+                      character.referenceImage && !imageError
+                        ? "opacity-0 group-hover:opacity-100"
+                        : "opacity-100"
+                    }`}
+                  >
+                    {/* Quick Generate (Zap - indigo) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isGenerating) return;
+                        onGenerate();
+                      }}
+                      disabled={isGenerating}
+                      className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
+                      title={
+                        character.referenceImage && !imageError
+                          ? "Quick Regenerate Character"
+                          : "Quick Generate Character"
+                      }
+                    >
+                      {isGenerating ? (
+                        <Loader className="w-5 h-5 text-white animate-spin" />
+                      ) : (
+                        <Zap className="w-5 h-5 text-white" />
+                      )}
+                    </button>
+
+                    {/* Prompt Builder (Wand2 - amber) */}
+                    {onOpenCharacterPrompt && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenCharacterPrompt();
+                        }}
+                        disabled={isGenerating}
+                        className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
+                        title="Open Prompt Builder"
+                      >
+                        <Wand2 className="w-5 h-5 text-white" />
+                      </button>
+                    )}
+
+                    {/* Edit (Settings2 - purple) — only when an image exists */}
+                    {character.referenceImage && !imageError && onEditImage && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditImage();
+                        }}
+                        className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
+                        title="Edit Image"
+                      >
+                        <Settings2 className="w-5 h-5 text-white" />
+                      </button>
+                    )}
+
+                    {/* Enhance Reference (character-specific) — only when an image exists */}
+                    {character.referenceImage && !imageError && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isEnhancingReference) return;
+                          handleEnhanceReference();
+                        }}
+                        disabled={
+                          isEnhancingReference || enhanceIterationCount >= 3
+                        }
+                        className="p-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={
+                          enhanceIterationCount >= 3
+                            ? "Max iterations reached - upload new image"
+                            : `Enhance Reference (${3 - enhanceIterationCount} left)`
+                        }
+                      >
+                        {isEnhancingReference ? (
+                          <Loader className="w-5 h-5 text-white animate-spin" />
+                        ) : (
+                          <Sparkles className="w-5 h-5 text-white" />
+                        )}
+                      </button>
+                    )}
+
+                    {/* Upload (Upload - emerald) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isUploading) return;
+                        const input = document.getElementById(
+                          `upload-${characterId}`,
+                        ) as HTMLInputElement;
+                        input?.click();
+                      }}
+                      disabled={isUploading}
+                      className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50"
+                      title={isUploading ? "Uploading..." : "Upload Image"}
+                    >
+                      {isUploading ? (
+                        <Loader className="w-5 h-5 text-white animate-spin" />
+                      ) : (
+                        <Upload className="w-5 h-5 text-white" />
+                      )}
+                    </button>
+                    <input
+                      id={`upload-${characterId}`}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={isUploading}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        if (isUploading) return;
+                        const file = e.target.files?.[0];
+                        if (file) onUpload(file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </div>
+
+                  {/* Drag Handle - Bottom Strip (only when an image is present) */}
+                  {enableDrag && character.referenceImage && !imageError && (
+                    <div
+                      className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center cursor-grab active:cursor-grabbing z-20"
+                      {...listeners}
+                      {...attributes}
+                    >
+                      <div className="flex gap-1">
+                        <div className="w-1 h-1 rounded-full bg-white/60"></div>
+                        <div className="w-1 h-1 rounded-full bg-white/60"></div>
+                        <div className="w-1 h-1 rounded-full bg-white/60"></div>
                       </div>
                     </div>
                   )}
