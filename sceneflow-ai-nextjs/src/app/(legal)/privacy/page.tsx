@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
         </Link>
         
         <h1 className="text-4xl font-bold text-white mb-2">Privacy Policy</h1>
-        <p className="text-gray-400 mb-8">Last updated: December 25, 2025</p>
+        <p className="text-gray-400 mb-8">Last updated: May 6, 2026</p>
         
         <div className="prose prose-invert prose-purple max-w-none space-y-8">
           <section>
@@ -91,7 +91,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-2xl font-semibold text-white mb-4">4. Data Sharing and Disclosure</h2>
             <p className="text-gray-300 leading-relaxed mb-4">We share your data with:</p>
             <ul className="list-disc pl-6 text-gray-300 space-y-2">
-              <li><strong>AI Service Providers:</strong> Google (Vertex AI), ElevenLabs, Shotstack — to generate content (prompts and outputs only)</li>
+              <li><strong>AI Service Providers:</strong> Google (Vertex AI), ElevenLabs — to generate content (prompts and outputs only)</li>
               <li><strong>Payment Processor:</strong> Our authorized Merchant of Record — to process payments securely</li>
               <li><strong>Authentication Provider:</strong> Clerk — for secure user authentication</li>
               <li><strong>Infrastructure Providers:</strong> Vercel, Supabase — for hosting and database services</li>
@@ -146,7 +146,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Restriction:</strong> Request restriction of processing</li>
             </ul>
             <p className="text-gray-300 leading-relaxed mt-4">
-              To exercise these rights, email privacy@sceneflowai.com.
+              To exercise these rights, email <strong>brian@sfai.studio</strong>.
             </p>
           </section>
 
@@ -187,8 +187,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">12. Contact Us</h2>
             <p className="text-gray-300">
-              <strong>Data Protection Inquiries:</strong> privacy@sceneflowai.com<br />
-              <strong>General Support:</strong> support@sceneflowai.com<br />
+              <strong>Support and Privacy Inquiries:</strong> brian@sfai.studio<br />
               <strong>Website:</strong> https://sceneflowai.studio
             </p>
           </section>

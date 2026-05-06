@@ -16,7 +16,7 @@ export function SocialProof() {
         >
           <div className="flex items-center gap-2 text-sm">
             <Rocket className="w-4 h-4 text-cyan-400" />
-            <span className="text-gray-300">Early Access Available</span>
+            <span className="text-gray-300">Closed Beta Available</span>
           </div>
           <div className="hidden md:block w-px h-4 bg-gray-700" />
           <div className="flex items-center gap-2 text-sm">

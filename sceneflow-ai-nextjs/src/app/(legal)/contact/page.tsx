@@ -7,51 +7,19 @@ export default function ContactPage() {
   const contactChannels = [
     {
       icon: HelpCircle,
-      title: 'General Support',
-      email: 'support@sceneflowai.com',
-      description: 'Help with using SceneFlow AI, technical issues, and feature questions.',
+      title: 'Support and General Inquiries',
+      email: 'brian@sfai.studio',
+      description: 'Help with using SceneFlow AI, technical issues, feature questions, and general inquiries.',
       responseTime: 'Within 24 hours',
       color: 'purple'
     },
     {
-      icon: CreditCard,
-      title: 'Billing & Subscriptions',
-      email: 'billing@sceneflowai.com',
-      description: 'Questions about payments, refunds, subscriptions, and credits.',
-      responseTime: 'Within 24 hours',
-      color: 'emerald'
-    },
-    {
       icon: Shield,
-      title: 'Abuse Reporting',
-      email: 'abuse@sceneflowai.com',
-      description: 'Report misuse of our platform, content violations, or safety concerns.',
-      responseTime: 'Within 12 hours',
-      color: 'red'
-    },
-    {
-      icon: Scale,
-      title: 'Legal & Compliance',
-      email: 'legal@sceneflowai.com',
-      description: 'Legal inquiries, DMCA requests, data protection, and compliance matters.',
-      responseTime: 'Within 48 hours',
-      color: 'amber'
-    },
-    {
-      icon: MessageSquare,
       title: 'Trust & Safety',
-      email: 'trust@sceneflowai.com',
-      description: 'Voice verification issues, account reviews, and trust-related inquiries.',
+      email: 'brian@sfai.studio',
+      description: 'Report misuse of our platform, content violations, voice verification issues, or safety concerns.',
       responseTime: 'Within 24 hours',
-      color: 'cyan'
-    },
-    {
-      icon: Mail,
-      title: 'General Inquiries',
-      email: 'hello@sceneflowai.com',
-      description: 'Partnerships, press inquiries, and general questions.',
-      responseTime: 'Within 48 hours',
-      color: 'blue'
+      color: 'red'
     }
   ]
 
@@ -120,10 +88,22 @@ export default function ContactPage() {
           <section className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
             <h2 className="text-xl font-semibold text-white mb-4">Company Information</h2>
             <div className="space-y-3 text-gray-300">
-              <p><strong className="text-gray-200">Company Name:</strong> SceneFlow AI Inc.</p>
+              <p><strong className="text-gray-200">Company Name:</strong> Life Focus, LLC</p>
               <p><strong className="text-gray-200">Website:</strong> sceneflowai.studio</p>
               <p><strong className="text-gray-200">Service:</strong> AI-Powered Video Production Platform</p>
             </div>
+          </section>
+
+          <section className="bg-gray-800/30 rounded-xl p-6 border border-gray-700">
+            <h2 className="text-xl font-semibold text-white mb-4">Mailing Address</h2>
+            <address className="text-gray-300 not-italic leading-relaxed">
+              Life Focus, LLC<br />
+              14205 N Mo Pac Expy Ste 570<br />
+              Austin, Texas 78728-6529<br />
+            </address>
+            <p className="text-gray-400 text-sm mt-4">
+              Please note that we do not accept walk-in visitors. For the fastest response, please use email.
+            </p>
           </section>
 
           {/* Before You Contact */}

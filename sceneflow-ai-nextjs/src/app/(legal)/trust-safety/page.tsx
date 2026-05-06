@@ -19,7 +19,7 @@ export default function TrustSafetyPage() {
           <Shield className="w-8 h-8 text-purple-400" />
           <h1 className="text-4xl font-bold text-white">Trust & Safety Policy</h1>
         </div>
-        <p className="text-gray-400 mb-8">Last updated: December 28, 2025</p>
+        <p className="text-gray-400 mb-8">Last updated: May 6, 2026</p>
         
         <div className="prose prose-invert prose-purple max-w-none space-y-8">
           {/* Introduction */}

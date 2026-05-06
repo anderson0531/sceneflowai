@@ -16,7 +16,7 @@ export default function RefundPolicyPage() {
         </Link>
         
         <h1 className="text-4xl font-bold text-white mb-2">Refund Policy</h1>
-        <p className="text-gray-400 mb-8">Last updated: December 25, 2025</p>
+        <p className="text-gray-400 mb-8">Last updated: May 6, 2026</p>
         
         <div className="prose prose-invert prose-purple max-w-none space-y-8">
           <section>
@@ -80,7 +80,7 @@ export default function RefundPolicyPage() {
             <h2 className="text-2xl font-semibold text-white mb-4">5. How to Request a Refund</h2>
             <p className="text-gray-300 leading-relaxed mb-4">To request a refund:</p>
             <ol className="list-decimal pl-6 text-gray-300 space-y-2">
-              <li>Email <strong>billing@sceneflowai.com</strong> with subject line &quot;Refund Request&quot;</li>
+              <li>Email <strong>brian@sfai.studio</strong> with subject line &quot;Refund Request&quot;</li>
               <li>Include your account email address and order/transaction ID</li>
               <li>Briefly explain the reason for your refund request</li>
               <li>We will respond within 2 business days</li>
@@ -123,8 +123,7 @@ export default function RefundPolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">9. Contact</h2>
             <p className="text-gray-300">
-              <strong>Billing Inquiries:</strong> billing@sceneflowai.com<br />
-              <strong>General Support:</strong> support@sceneflowai.com<br />
+              <strong>Support and Billing Inquiries:</strong> brian@sfai.studio<br />
               <strong>Website:</strong> https://sceneflowai.studio
             </p>
           </section>

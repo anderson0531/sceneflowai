@@ -16,20 +16,20 @@ export default function TermsOfServicePage() {
         </Link>
         
         <h1 className="text-4xl font-bold text-white mb-2">Terms of Service</h1>
-        <p className="text-gray-400 mb-8">Last updated: December 25, 2025</p>
+        <p className="text-gray-400 mb-8">Last updated: May 6, 2026</p>
         
         <div className="prose prose-invert prose-purple max-w-none space-y-8">
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">1. Agreement to Terms</h2>
             <p className="text-gray-300 leading-relaxed">
-              By accessing or using SceneFlow AI (&quot;Service&quot;), operated by SceneFlow AI Inc. (&quot;Company,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Service.
+              By accessing or using SceneFlow AI ("Service"), operated by Life Focus, LLC ("Company," "we," "us," or "our"), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Service.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">2. Description of Service</h2>
             <p className="text-gray-300 leading-relaxed">
-              SceneFlow AI is an AI-powered filmmaking platform that enables users to create video content including scripts, storyboards, voice synthesis, and video generation. The Service uses artificial intelligence technologies from third-party providers including Google (Gemini, Imagen, Veo), ElevenLabs, and Shotstack.
+              SceneFlow AI is an AI-powered filmmaking platform that enables users to create video content including scripts, storyboards, voice synthesis, and video generation. The Service uses artificial intelligence technologies from third-party providers including Google (Gemini, Imagen, Veo), and ElevenLabs.
             </p>
           </section>
 
@@ -80,7 +80,7 @@ export default function TermsOfServicePage() {
             </p>
             <h3 className="text-xl font-medium text-white mb-3">Our Content</h3>
             <p className="text-gray-300 leading-relaxed">
-              The Service, including its design, features, and technology, is owned by SceneFlow AI Inc. and protected by intellectual property laws.
+              The Service, including its design, features, and technology, is owned by Life Focus, LLC and protected by intellectual property laws.
             </p>
           </section>
 
@@ -160,11 +160,11 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">12. Limitation of Liability</h2>
             <p className="text-gray-300 leading-relaxed mb-4">
-              TO THE MAXIMUM EXTENT PERMITTED BY LAW, SCENEFLOW AI SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES. OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE 12 MONTHS PRECEDING THE CLAIM.
+              TO THE MAXIMUM EXTENT PERMITTED BY LAW, SCENEFLOW AI AND LIFE FOCUS, LLC SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES. OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE 12 MONTHS PRECEDING THE CLAIM.
             </p>
             <h3 className="text-xl font-medium text-white mb-3">User Liability for Generated Content</h3>
             <p className="text-gray-300 leading-relaxed">
-              YOU ARE SOLELY RESPONSIBLE FOR ALL CONTENT YOU GENERATE USING THE SERVICE. By using SceneFlow AI, you agree to indemnify and hold harmless SceneFlow AI Inc. from any claims, damages, or legal actions arising from your use of generated content, including but not limited to claims of defamation, copyright infringement, privacy violations, or fraud. This liability transfer is a material condition of your use of the Service.
+              YOU ARE SOLELY RESPONSIBLE FOR ALL CONTENT YOU GENERATE USING THE SERVICE. By using SceneFlow AI, you agree to indemnify and hold harmless Life Focus, LLC from any claims, damages, or legal actions arising from your use of generated content, including but not limited to claims of defamation, copyright infringement, privacy violations, or fraud. This liability transfer is a material condition of your use of the Service.
             </p>
           </section>
 
@@ -185,14 +185,14 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">15. Governing Law</h2>
             <p className="text-gray-300 leading-relaxed">
-              These terms are governed by the laws of the State of Delaware, United States, without regard to conflict of law principles.
+              These terms are governed by the laws of the State of Texas, United States, without regard to conflict of law principles.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">16. Contact</h2>
             <p className="text-gray-300">
-              <strong>Email:</strong> legal@sceneflowai.com<br />
+              <strong>Email:</strong> brian@sfai.studio<br />
               <strong>Website:</strong> https://sceneflowai.studio
             </p>
           </section>

@@ -61,8 +61,8 @@ export function Pricing() {
         '3,000 credits (never expire)',
         '~300 images + 6 Fast video scenes',
         '1 GB storage',
-        'Gemini 3.0 Flash + Imagen 4',
-        'Veo 3.1 Fast video drafts',
+        'Gemini 3.1 Pro + Imagen 3',
+        'Veo 2.0 video drafts',
         'AI voiceover generation',
         'MP4 export',
         '1 active project',
@@ -70,7 +70,7 @@ export function Pricing() {
       ],
       excluded: [
         'One-time purchase only',
-        'Veo Quality (4K)',
+        'Veo 2.0 Quality (1080p)',
         'No collaboration features'
       ],
       popular: false,
@@ -92,12 +92,12 @@ export function Pricing() {
         'MP4 export (any resolution)',
         'Multi-language voiceover',
         'Background music library',
-        'Gemini 3.0 Flash + Imagen 4',
-        'Veo 3.1 Fast video drafts',
+        'Gemini 3.1 Pro + Imagen 3',
+        'Veo 2.0 video drafts',
         'Email support'
       ],
       excluded: [
-        'Veo Quality (4K)',
+        'Veo 2.0 Quality (1080p)',
         'Team collaboration',
         'Character consistency engine'
       ],
@@ -114,12 +114,12 @@ export function Pricing() {
       storage: '500 GB',
       features: [
         '15,000 monthly credits',
-        '~1,000 images + 50 Fast + 3 Quality (4K) scenes',
+        '~1,000 images + 50 Fast + 3 Quality (1080p) scenes',
         '500 GB active storage',
-        'Veo 3.1 Quality (4K) ✨',
+        'Veo 2.0 Quality (1080p) ✨',
         'Character consistency engine',
         'Custom voice cloning',
-        'Gemini 3.0 Pro + Imagen 4',
+        'Gemini 3.1 Pro + Imagen 3',
         'MP4 export (any resolution)',
         '3 collaboration seats',
         'Priority support'
@@ -144,10 +144,10 @@ export function Pricing() {
         '75,000 monthly credits',
         'Full 150-scene movie capacity',
         '2 TB active storage',
-        'Veo 3.1 Quality (4K) unlimited ✨',
+        'Veo 2.0 Quality (1080p) unlimited ✨',
         'White-label exports',
-        'Gemini 3.0 Pro + Beta models',
-        'Imagen 4 unlimited',
+        'Gemini 3.1 Pro + Beta models',
+        'Imagen 3 unlimited',
         '10 collaboration seats',
         'Dedicated account manager',
         'API access',
@@ -160,8 +160,8 @@ export function Pricing() {
   ]
 
   const creditPacks = [
-    { credits: 2500, price: 25, bonus: 0, label: 'Quick Fix', description: '1-2 Quality (4K) finals or ~12 Fast drafts' },
-    { credits: 7500, price: 60, bonus: 0, label: 'Scene Pack', description: '~40 Veo Fast scenes + revisions' },
+    { credits: 2500, price: 25, bonus: 0, label: 'Quick Fix', description: '1-2 Quality (1080p) finals or ~12 Fast drafts' },
+    { credits: 7500, price: 60, bonus: 0, label: 'Scene Pack', description: '~40 Veo 2.0 Fast scenes + revisions' },
     { credits: 25000, price: 180, bonus: 0, label: 'Feature Boost', description: 'Complete a major movie sequence' }
   ]
 
@@ -589,7 +589,7 @@ export function Pricing() {
           className="text-center mt-8"
         >
           <p className="text-sm text-gray-400 max-w-2xl mx-auto">
-            All AI generation (Gemini, Imagen 4, Veo 3.1, ElevenLabs) is included in your credits.
+            All AI generation (Gemini, Imagen 3, Veo 2.0, ElevenLabs) is included in your credits.
             Higher resolution outputs and video generation use more credits. Select &quot;Fast&quot; mode in settings for lower credit usage.
           </p>
         </motion.div>
@@ -603,7 +603,7 @@ export function Pricing() {
         >
           <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-xl p-4 max-w-3xl mx-auto">
             <p className="text-sm text-emerald-400 font-medium mb-1">
-              💡 Pro Tip: Generate with Veo 3.1 Fast + AI Upscale to 4K
+              💡 Pro Tip: Generate with Veo 2.0 Fast + AI Upscale to 4K
             </p>
             <p className="text-xs text-gray-400">
               Save up to 80% by using Fast quality and adding optional 4K upscaling (15 credits/clip).

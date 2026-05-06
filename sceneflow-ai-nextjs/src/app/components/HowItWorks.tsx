@@ -25,7 +25,7 @@ export function HowItWorks() {
       icon: <Film className="w-10 h-10" />,
       title: '3. Production',
       subtitle: 'Your Creative Bible',
-      description: 'Reference Library locks character, wardrobe, and location references for frame-perfect consistency. 800+ premium voices with cloning. Imagen 4 storyboards flow to Veo 3 video—each frame AI-generated, each cut director-approved.',
+      description: 'Reference Library locks character, wardrobe, and location references for frame-perfect consistency. 800+ premium voices with cloning. Imagen 3 storyboards flow to Veo 2.0 video—each frame AI-generated, each cut director-approved.',
       color: 'from-amber-500 to-amber-600',
       borderColor: 'border-amber-500/30',
     },
