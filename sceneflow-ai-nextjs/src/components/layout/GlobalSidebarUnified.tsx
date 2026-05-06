@@ -171,7 +171,6 @@ function StoryboardFeedbackPeek() {
   )
 }
 
-interface GlobalSidebarProps {
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   CheckCircle2,
   Circle,
