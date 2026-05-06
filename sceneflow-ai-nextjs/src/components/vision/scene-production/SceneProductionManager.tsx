@@ -1689,51 +1689,23 @@ export function SceneProductionManager({
     </DialogContent>
   )
 
+  // SceneProductionManager handle bypassing the dialog
+  useEffect(() => {
+    // If we're showing the initial dialog and production isn't segmented yet, auto-bypass it.
+    if (showInitialDialog && (!productionData || !productionData.isSegmented || productionData.segments.length === 0)) {
+      handleBypass()
+    }
+  }, [showInitialDialog, productionData, handleBypass])
+
   if (!productionData || !productionData.isSegmented || productionData.segments.length === 0) {
     return (
       <>
-        {/* Initial Dialog for Generation */}
-        <Dialog open={showInitialDialog} onOpenChange={setShowInitialDialog}>
-          <SegmentGenerationDialogContent isRegenerate={false} />
-        </Dialog>
-        
+        {/* We keep this mounted but hidden in case state briefly flashes */}
         <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900">
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            Initialize Scene Production
-          </h4>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-            Break this scene into generation-ready segments. We will analyze the direction & script to propose
-            keyframes and produce expert prompts for each cut.
-          </p>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <Button 
-              onClick={(e) => {
-                e.stopPropagation()
-                setShowInitialDialog(true)
-              }} 
-              disabled={isInitializing} 
-              className="flex items-center gap-2"
-            >
-              <Settings2 className="w-4 h-4" />
-              Configure & Generate
-            </Button>
-            <Button
-              variant="outline"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleBypass()
-              }}
-              disabled={isInitializing}
-              className="flex items-center gap-2"
-            >
-              <SkipForward className="w-4 h-4" />
-              Quick Start
-            </Button>
+          <div className="flex flex-col items-center justify-center p-4">
+            <Loader2 className="w-6 h-6 text-orange-500 animate-spin mb-4" />
+            <p className="text-sm text-gray-500">Initializing Scene Production...</p>
           </div>
-          <p className="text-xs text-gray-400 mt-3 flex items-center gap-2">
-            <Calculator className="w-4 h-4" />
-            We will balance keyframes with natural breaks to keep continuity tight across segments.
-          </p>
         </div>
       </>
     )

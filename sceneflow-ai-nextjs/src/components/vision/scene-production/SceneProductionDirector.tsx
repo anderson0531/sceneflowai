@@ -196,8 +196,7 @@ export function SceneProductionDirector({
           </div>
         </div>
 
-        {/* Inline Segment Builder */}
-        <div className="border border-indigo-500/20 rounded-lg overflow-hidden bg-background min-w-0 max-w-full">
+          {/* Inline Segment Builder (Auto-triggers generation now) */}
           <SegmentBuilder
             sceneId={sceneId}
             sceneNumber={sceneNumber}
@@ -212,7 +211,6 @@ export function SceneProductionDirector({
               setIsBuilderOpen(false)
             }}
           />
-        </div>
       </div>
     )
   }
@@ -334,11 +332,11 @@ export function SceneProductionDirector({
               disabled={isBlocked}
               className={cn(
                 "flex items-center gap-2",
-                !isBlocked && "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500"
+                !isBlocked && "bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-400 hover:to-amber-500 text-white"
               )}
             >
               <Play className="w-4 h-4" />
-              Begin Production
+              Action
             </Button>
           </div>
         </div>
