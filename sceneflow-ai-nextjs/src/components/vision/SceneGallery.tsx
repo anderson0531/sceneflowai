@@ -32,6 +32,23 @@ import type { VideoGenerationMethod } from './scene-production/SegmentPromptBuil
 import { cn } from '@/lib/utils'
 import { formatSceneHeading, extractLocation } from '@/lib/script/formatSceneHeading'
 import { ImageEditModal } from './ImageEditModal'
+import {
+  ExpressConfirmDialog,
+  type ExpressConfirmOptions,
+} from './ExpressConfirmDialog'
+
+export type ExpressPhase = 'direction' | 'audio' | 'image'
+export type ExpressPhaseStatus = 'pending' | 'running' | 'done' | 'error'
+
+export interface ExpressSceneStatus {
+  direction: ExpressPhaseStatus
+  audio: ExpressPhaseStatus
+  image: ExpressPhaseStatus
+  /** Optional human-readable error from the most recent failed phase. */
+  error?: string
+}
+
+export type ExpressSceneStatusMap = Record<number, ExpressSceneStatus>
 
 interface SceneGalleryProps {
   scenes: any[]
@@ -86,6 +103,16 @@ interface SceneGalleryProps {
   onBatchGenerateStart?: () => void
   onBatchGenerateEnd?: () => void
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
+  /**
+   * Run the Storyboard Express pipeline (Direction → Audio → Image per scene,
+   * up to 3 scenes in parallel). The parent is responsible for kicking off the
+   * SSE request and updating script state from incoming events.
+   */
+  onExpressGenerate?: (options: ExpressConfirmOptions) => Promise<void> | void
+  /** Whether an Express run is currently in flight. */
+  isExpressRunning?: boolean
+  /** Per-scene phase progress map driven by SSE events. */
+  expressStatus?: ExpressSceneStatusMap
 }
 
 const buildSceneKey = (scene: any, index: number) => scene.sceneId || scene.id || `scene-${index}`
@@ -119,6 +146,9 @@ export function SceneGallery({
   onBatchGenerateStart,
   onBatchGenerateEnd,
   onUpdateSceneAudio,
+  onExpressGenerate,
+  isExpressRunning = false,
+  expressStatus,
 }: SceneGalleryProps) {
   // Drag and drop sensors
   const sensors = useSensors(
@@ -146,17 +176,17 @@ export function SceneGallery({
   const [generatingScenes, setGeneratingScenes] = useState<Set<number>>(new Set())
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   const [openProductionScene, setOpenProductionScene] = useState<string | null>(null)
-  const [isGeneratingAll, setIsGeneratingAll] = useState(false)
   const [showAudioPlayer, setShowAudioPlayer] = useState(false)
   const [showStoryboardImages, setShowStoryboardImages] = useState(true)
-  const [isGeneratingDirection, setIsGeneratingDirection] = useState(false)
-  const [directionProgress, setDirectionProgress] = useState<{ current: number; total: number } | null>(null)
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editingSceneIndex, setEditingSceneIndex] = useState<number | null>(null)
   const [editingSceneImageUrl, setEditingSceneImageUrl] = useState<string>('')
+
+  // Express dialog state
+  const [expressDialogOpen, setExpressDialogOpen] = useState(false)
   
   // Count scenes with audio for Generate All Audio button display
   const scenesWithAudio = useMemo(() => {
@@ -191,11 +221,42 @@ export function SceneGallery({
   // Processing overlay hook for animated feedback
   const { execute } = useProcessWithOverlay()
   
-  // Count scenes without images for Generate All button
-  const scenesWithoutImages = scenes.filter(scene => !scene.imageUrl).length
-  
-  // Count scenes without direction for Generate Direction button
-  const scenesWithoutDirection = scenes.filter(scene => !scene.sceneDirection || Object.keys(scene.sceneDirection).length === 0).length
+  // Count scenes needing any Express phase (direction OR image OR missing audio)
+  const scenesNeedingExpress = useMemo(() => {
+    return scenes.filter((scene) => {
+      const needsDirection =
+        !scene?.sceneDirection ||
+        !scene.sceneDirection.camera ||
+        !scene.sceneDirection.scene
+      const needsImage = !scene?.imageUrl
+      const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
+      const dialogueAudio = scene?.dialogueAudio?.en
+      const dialogueOk =
+        dialogue.length === 0 ||
+        (Array.isArray(dialogueAudio) &&
+          dialogueAudio.length >= dialogue.length &&
+          dialogueAudio.every((d: any) => d && d.audioUrl))
+      const narrationOk =
+        !scene?.narration ||
+        !!scene?.narrationAudio?.en?.url ||
+        !!scene?.narrationAudio?.en
+      const needsAudio = !(narrationOk && dialogueOk)
+      return needsDirection || needsImage || needsAudio
+    }).length
+  }, [scenes])
+
+  const handleExpressConfirm = useCallback(
+    async (options: ExpressConfirmOptions) => {
+      if (!onExpressGenerate) return
+      setExpressDialogOpen(false)
+      try {
+        await onExpressGenerate(options)
+      } catch (err) {
+        console.error('[SceneGallery] Express generate failed:', err)
+      }
+    },
+    [onExpressGenerate]
+  )
   
   // Build smart prompt that includes character AND object references for consistency
   const buildScenePrompt = useCallback((scene: any, sceneIdx: number): string => {
@@ -246,108 +307,6 @@ export function SceneGallery({
     return baseParts.join('. ')
   }, [characters, objectReferences])
   
-  // Generate all scenes that don't have images - with processing overlay
-  const handleGenerateAll = useCallback(async () => {
-    if (scenesWithoutImages === 0) return
-    
-    setIsGeneratingAll(true)
-    onBatchGenerateStart?.()
-    
-    try {
-      await execute(async () => {
-        // Generate each scene sequentially
-        for (let idx = 0; idx < scenes.length; idx++) {
-          const scene = scenes[idx]
-          if (scene.imageUrl) continue // Skip scenes with images
-          
-          const prompt = buildScenePrompt(scene, idx)
-          setGeneratingScenes(prev => new Set(prev).add(idx))
-          
-          try {
-            await onGenerateScene(idx, prompt)
-          } catch (err) {
-            console.error(`[SceneGallery] Failed to generate scene ${idx + 1}:`, err)
-          } finally {
-            setGeneratingScenes(prev => {
-              const newSet = new Set(prev)
-              newSet.delete(idx)
-              return newSet
-            })
-          }
-        }
-      }, {
-        message: `Generating ${scenesWithoutImages} scene images...`,
-        estimatedDuration: scenesWithoutImages * 15, // ~15s per image
-        operationType: 'image-generation'
-      })
-    } finally {
-      setIsGeneratingAll(false)
-      onBatchGenerateEnd?.()
-    }
-  }, [scenes, scenesWithoutImages, buildScenePrompt, onGenerateScene, execute, onBatchGenerateStart, onBatchGenerateEnd])
-  
-  // Generate direction for all scenes - streaming with progress
-  const handleGenerateAllDirection = useCallback(async () => {
-    if (scenesWithoutDirection === 0) return
-    
-    setIsGeneratingDirection(true)
-    setDirectionProgress({ current: 0, total: scenesWithoutDirection })
-    
-    try {
-      // Get projectId from first scene or URL
-      const projectId = scenes[0]?.projectId || window.location.pathname.split('/').pop()
-      
-      const response = await fetch('/api/vision/generate-all-direction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId })
-      })
-      
-      if (!response.body) throw new Error('No response body')
-      
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
-      
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6))
-              
-              if (data.type === 'progress') {
-                setDirectionProgress({ current: data.scene, total: data.total })
-              } else if (data.type === 'scene-complete') {
-                setDirectionProgress({ current: data.scene, total: data.total })
-              } else if (data.type === 'complete') {
-                console.log(`[SceneGallery] Direction generation complete: ${data.generated} generated, ${data.skipped} skipped, ${data.failed} failed`)
-              } else if (data.type === 'error') {
-                console.error('[SceneGallery] Direction generation error:', data.error)
-              }
-            } catch (e) {
-              // Ignore parse errors
-            }
-          }
-        }
-      }
-      
-      // Trigger page refresh to show updated directions
-      window.location.reload()
-    } catch (error) {
-      console.error('[SceneGallery] Failed to generate all directions:', error)
-    } finally {
-      setIsGeneratingDirection(false)
-      setDirectionProgress(null)
-    }
-  }, [scenes, scenesWithoutDirection])
-
   const handleShareStoryboard = async () => {
     try {
       const projectId = scenes[0]?.projectId || window.location.pathname.split('/').pop()
@@ -401,53 +360,32 @@ export function SceneGallery({
         </div>
         
         <div className="flex flex-wrap gap-2 items-center">
-          {/* Generate All button - only show if scenes without images exist */}
-          {scenesWithoutImages > 0 && (
+          {/* Express button - replaces Generate All + Generate Direction */}
+          {onExpressGenerate && scenes.length > 0 && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleGenerateAll}
-                  disabled={isGeneratingAll || generatingScenes.size > 0}
-                  className="flex items-center gap-2 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border-indigo-500/30 hover:border-indigo-500/50 hover:from-indigo-500/20 hover:to-purple-500/20"
+                  onClick={() => setExpressDialogOpen(true)}
+                  disabled={isExpressRunning || scenesNeedingExpress === 0}
+                  className="flex items-center gap-2 bg-gradient-to-r from-indigo-500/15 to-purple-500/15 border-indigo-500/40 hover:border-indigo-500/60 hover:from-indigo-500/25 hover:to-purple-500/25"
                 >
-                  {isGeneratingAll ? (
-                    <Loader className="w-4 h-4 animate-spin text-indigo-400" />
+                  {isExpressRunning ? (
+                    <Loader className="w-4 h-4 animate-spin text-indigo-300" />
                   ) : (
-                    <Wand2 className="w-4 h-4 text-indigo-400" />
+                    <Zap className="w-4 h-4 text-indigo-300" />
                   )}
-                  <span>Generate All ({scenesWithoutImages})</span>
+                  <span>
+                    {isExpressRunning
+                      ? 'Express running…'
+                      : `Express (${scenesNeedingExpress})`}
+                  </span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Generate images for all scenes without images</TooltipContent>
-            </Tooltip>
-          )}
-          {/* Generate All Direction button - only show if scenes without direction exist */}
-          {scenesWithoutDirection > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGenerateAllDirection}
-                  disabled={isGeneratingDirection}
-                  className="flex items-center gap-2 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30 hover:border-amber-500/50 hover:from-amber-500/20 hover:to-orange-500/20"
-                >
-                  {isGeneratingDirection ? (
-                    <>
-                      <Loader className="w-4 h-4 animate-spin text-amber-400" />
-                      <span>{directionProgress ? `${directionProgress.current}/${directionProgress.total}` : 'Generating...'}</span>
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="w-4 h-4 text-amber-400" />
-                      <span>Generate Direction ({scenesWithoutDirection})</span>
-                    </>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Generate scene direction for all scenes without direction</TooltipContent>
+              <TooltipContent>
+                Generate Direction → Audio → Image for every scene (3 in parallel)
+              </TooltipContent>
             </Tooltip>
           )}
           {/* Generate All Audio button */}
@@ -665,6 +603,7 @@ export function SceneGallery({
                   objectReferences={objectReferences}
                   showDragHandle={!!onReorderScenes}
                   onUpdateSceneAudio={onUpdateSceneAudio}
+                  expressPhaseStatus={expressStatus?.[idx]}
                 />
                   </SortableSceneWrapper>
                 )
@@ -704,6 +643,17 @@ export function SceneGallery({
         />
       )}
       
+      {/* Storyboard Express dialog */}
+      {onExpressGenerate && (
+        <ExpressConfirmDialog
+          open={expressDialogOpen}
+          onOpenChange={setExpressDialogOpen}
+          scenes={scenes}
+          isRunning={isExpressRunning}
+          onConfirm={handleExpressConfirm}
+        />
+      )}
+
       {/* Image Edit Modal */}
       <ImageEditModal
         open={editModalOpen}
@@ -775,6 +725,8 @@ interface SceneCardProps {
   /** Whether to show the drag handle for reordering */
   showDragHandle?: boolean
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
+  /** Express pipeline phase status for this scene. */
+  expressPhaseStatus?: ExpressSceneStatus
 }
 
 // Sortable wrapper component for drag-and-drop
@@ -848,6 +800,7 @@ function SceneCard({
   objectReferences = [],
   showDragHandle = false,
   onUpdateSceneAudio,
+  expressPhaseStatus,
 }: SceneCardProps) {
   const hasImage = !!scene.imageUrl
   const fileInputRef = React.useRef<HTMLInputElement>(null)
@@ -1187,6 +1140,15 @@ function SceneCard({
         )
       })()}
 
+      {/* Express phase pills - only render when an Express run reports state for this scene */}
+      {expressPhaseStatus && (
+        <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 rounded-full px-2 py-1">
+          <ExpressPhasePill label="Dir" status={expressPhaseStatus.direction} />
+          <ExpressPhasePill label="Aud" status={expressPhaseStatus.audio} />
+          <ExpressPhasePill label="Img" status={expressPhaseStatus.image} />
+        </div>
+      )}
+
       <div
         data-scene-production
         className="mt-4 border-t border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/80 backdrop-blur-sm"
@@ -1273,6 +1235,39 @@ function TimelineView({ scenes, onSceneSelect, onRegenerateScene }: TimelineView
         </div>
       ))}
     </div>
+  )
+}
+
+function ExpressPhasePill({
+  label,
+  status,
+}: {
+  label: string
+  status: ExpressPhaseStatus
+}) {
+  const cls = (() => {
+    switch (status) {
+      case 'running':
+        return 'bg-indigo-500/30 text-indigo-200 border-indigo-400/40'
+      case 'done':
+        return 'bg-emerald-500/30 text-emerald-200 border-emerald-400/40'
+      case 'error':
+        return 'bg-rose-500/30 text-rose-200 border-rose-400/40'
+      default:
+        return 'bg-gray-700/40 text-gray-300 border-gray-500/40'
+    }
+  })()
+  return (
+    <span
+      className={cn(
+        'flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border',
+        cls
+      )}
+    >
+      {status === 'running' && <Loader className="w-2.5 h-2.5 animate-spin" />}
+      {status === 'done' && <Check className="w-2.5 h-2.5" />}
+      {label}
+    </span>
   )
 }
 

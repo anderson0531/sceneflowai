@@ -47,6 +47,13 @@ const SceneGallery = dynamic(
   () => import('@/components/vision/SceneGallery').then(mod => ({ default: mod.SceneGallery })),
   { ssr: false }
 )
+import type {
+  ExpressSceneStatus,
+  ExpressSceneStatusMap,
+  ExpressPhase,
+  ExpressPhaseStatus,
+} from '@/components/vision/SceneGallery'
+import type { ExpressConfirmOptions } from '@/components/vision/ExpressConfirmDialog'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
 // Dynamic import to break TDZ chain - ScreeningRoomV2 → FullscreenPlayer → audioTrackBuilder
 const ScreeningRoomV2 = dynamic(
@@ -4078,6 +4085,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Generation lock mechanism to prevent race conditions
   const [generatingAudioLocks, setGeneratingAudioLocks] = useState<Set<string>>(new Set())
+  
+  // Storyboard Express state — driven by SSE events from /api/vision/express
+  const [isExpressRunning, setIsExpressRunning] = useState(false)
+  const [expressStatus, setExpressStatus] = useState<ExpressSceneStatusMap>({})
   
   // Share functionality state
   const [isSharing, setIsSharing] = useState(false)
@@ -9508,6 +9519,163 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     )
   }
 
+  /**
+   * Run the Storyboard Express pipeline (Direction → Audio → Image per scene,
+   * up to 3 scenes in parallel). Streams SSE events from /api/vision/express
+   * and updates `expressStatus` + `script` in-place per scene so no full
+   * page reload is needed.
+   */
+  const handleExpressGenerate = useCallback(
+    async (options: ExpressConfirmOptions) => {
+      if (!projectId || !script?.script?.scenes?.length) return
+      if (isExpressRunning) return
+
+      const sceneCount = script.script.scenes.length
+      const initial: ExpressSceneStatusMap = {}
+      for (let i = 0; i < sceneCount; i++) {
+        initial[i] = { direction: 'pending', audio: 'pending', image: 'pending' }
+      }
+      setExpressStatus(initial)
+      setIsExpressRunning(true)
+
+      const setPhase = (
+        sceneIndex: number,
+        phase: ExpressPhase,
+        next: ExpressPhaseStatus,
+        extra?: Partial<ExpressSceneStatus>
+      ) => {
+        setExpressStatus((prev) => {
+          const current: ExpressSceneStatus =
+            prev[sceneIndex] ||
+            ({ direction: 'pending', audio: 'pending', image: 'pending' } as ExpressSceneStatus)
+          return {
+            ...prev,
+            [sceneIndex]: { ...current, [phase]: next, ...extra },
+          }
+        })
+      }
+
+      const applySceneImage = (sceneIndex: number, imageUrl?: string) => {
+        if (!imageUrl) return
+        setScript((prev: any) => {
+          if (!prev?.script?.scenes) return prev
+          const scenes = [...prev.script.scenes]
+          if (!scenes[sceneIndex]) return prev
+          scenes[sceneIndex] = { ...scenes[sceneIndex], imageUrl }
+          return { ...prev, script: { ...prev.script, scenes } }
+        })
+      }
+
+      try {
+        const response = await fetch('/api/vision/express', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            language: 'en',
+            includeMusic: !!options.includeMusic,
+            includeSFX: !!options.includeSFX,
+            regenerate: !!options.regenerate,
+          }),
+        })
+
+        if (!response.ok || !response.body) {
+          const errText = await response.text().catch(() => '')
+          console.error('[Express] Request failed:', response.status, errText)
+          toast.error(`Express failed: ${response.status} ${errText.slice(0, 120)}`)
+          return
+        }
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        let successScenes = 0
+        let failedScenes = 0
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            try {
+              const event = JSON.parse(line.slice(6))
+              switch (event.type) {
+                case 'phase-start':
+                  setPhase(event.sceneIndex, event.phase, 'running')
+                  break
+                case 'phase-done':
+                  if (event.ok) {
+                    setPhase(event.sceneIndex, event.phase, 'done')
+                    if (event.phase === 'image' && event.imageUrl) {
+                      applySceneImage(event.sceneIndex, event.imageUrl)
+                    }
+                  } else {
+                    setPhase(event.sceneIndex, event.phase, 'error', {
+                      error: event.error || 'phase failed',
+                    })
+                  }
+                  break
+                case 'complete':
+                  successScenes = event.successScenes ?? 0
+                  failedScenes = event.failedScenes ?? 0
+                  break
+                case 'error':
+                  console.error('[Express] Stream error:', event.error)
+                  toast.error(`Express error: ${event.error}`)
+                  break
+                default:
+                  break
+              }
+            } catch (parseErr) {
+              console.warn('[Express] Failed to parse SSE event:', parseErr)
+            }
+          }
+        }
+
+        if (failedScenes === 0 && successScenes > 0) {
+          toast.success(`Express complete — ${successScenes} scene${successScenes === 1 ? '' : 's'}`)
+        } else if (failedScenes > 0 && successScenes > 0) {
+          toast.warning(
+            `Express finished — ${successScenes} ok, ${failedScenes} with errors`
+          )
+        } else if (failedScenes > 0) {
+          toast.error(`Express failed for ${failedScenes} scene${failedScenes === 1 ? '' : 's'}`)
+        }
+
+        // Reload project to pick up direction/audio mutations the orchestrator
+        // wrote atomically at the end. Image URLs were already merged in-flight
+        // via applySceneImage, so this rehydrates everything else without a
+        // browser-level reload.
+        try {
+          const refreshed = await fetch(`/api/projects/${projectId}?_t=${Date.now()}`, {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' },
+          })
+          if (refreshed.ok) {
+            const data = await refreshed.json()
+            const proj = data.project || data
+            const refreshedScript = proj?.metadata?.visionPhase?.script
+            if (refreshedScript) {
+              setScript(refreshedScript)
+              setScriptEditedAt(Date.now())
+            }
+          }
+        } catch (refreshErr) {
+          console.warn('[Express] Failed to refresh project after run:', refreshErr)
+        }
+      } catch (err: any) {
+        console.error('[Express] Unexpected error:', err)
+        toast.error(`Express error: ${err?.message || String(err)}`)
+      } finally {
+        setIsExpressRunning(false)
+      }
+    },
+    [projectId, script, isExpressRunning]
+  )
+
   // Delete specific audio from a scene
   const handleDeleteSceneAudio = async (
     sceneIndex: number, 
@@ -10641,6 +10809,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onOpenPreview={() => setIsPlayerOpen(true)}
                             onOpenGenerateAudio={openGenerateAudio}
                             isGeneratingAudio={isGeneratingAudio}
+                            onExpressGenerate={handleExpressGenerate}
+                            isExpressRunning={isExpressRunning}
+                            expressStatus={expressStatus}
                           />
                         </div>
                       )}
