@@ -28,7 +28,8 @@ const NON_SPACE_LANGUAGES = ['th', 'zh', 'ja', 'ko', 'lo', 'km', 'my', 'vi']
 export async function getAudioDurationFromBuffer(
   buffer: Buffer, 
   estimatedWordCount?: number,
-  language: string = 'en'
+  language: string = 'en',
+  voiceId?: string
 ): Promise<number> {
   const tempPath = join(tmpdir(), `audio-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`)
   
@@ -45,11 +46,32 @@ export async function getAudioDurationFromBuffer(
     
     // PRIMARY FALLBACK: Estimate from buffer size (works for ALL languages!)
     // This is the most reliable method when ffprobe is unavailable (e.g., Vercel serverless).
-    // MP3 bitrates used by ElevenLabs:
-    // - 128kbps (English) = 16,000 bytes per second
-    // - 192kbps (non-English high quality) = 24,000 bytes per second
-    const isHighQualityLanguage = NON_SPACE_LANGUAGES.includes(language) || language !== 'en'
-    const bytesPerSecond = isHighQualityLanguage ? 24000 : 16000
+    
+    // Bitrate heuristics:
+    // ElevenLabs:
+    // - English: ~128kbps (16,000 bytes/s)
+    // - High Quality: ~192kbps (24,000 bytes/s)
+    // Google TTS:
+    // - Studio/Journey: ~48kbps (~6,000 bytes/s)
+    // - Neural2/Standard: ~96kbps-128kbps (~12,000-16,000 bytes/s)
+    
+    const isGoogle = voiceId && (voiceId.includes('-') || voiceId.startsWith('gemini-'))
+    const isStudioOrJourney = voiceId && (voiceId.includes('Studio') || voiceId.includes('Journey'))
+    
+    let bytesPerSecond = 16000 // Default to 128kbps
+    
+    if (isGoogle) {
+      if (isStudioOrJourney) {
+        bytesPerSecond = 6000 // ~48kbps
+      } else {
+        bytesPerSecond = 12000 // ~96kbps
+      }
+    } else {
+      // ElevenLabs or other
+      const isHighQualityLanguage = NON_SPACE_LANGUAGES.includes(language) || (language !== 'en')
+      bytesPerSecond = isHighQualityLanguage ? 24000 : 16000
+    }
+    
     const bufferBasedDuration = buffer.length / bytesPerSecond
     
     console.log('[Audio Duration] Buffer-based estimate:', {

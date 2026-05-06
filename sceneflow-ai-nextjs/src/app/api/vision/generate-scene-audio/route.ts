@@ -206,7 +206,7 @@ export async function POST(req: NextRequest) {
     try {
       const wordCount = optimized.text.split(/\s+/).length
       // Pass language for proper buffer-size fallback (critical for Thai/Chinese/Japanese)
-      audioDuration = await getAudioDurationFromBuffer(audioBuffer, wordCount, language)
+      audioDuration = await getAudioDurationFromBuffer(audioBuffer, wordCount, language, finalVoiceConfig.voiceId)
       console.log('[Scene Audio] Duration calculated:', audioDuration?.toFixed(2), 'seconds', 'language:', language)
     } catch (error) {
       console.warn('[Scene Audio] Could not get audio duration:', error)

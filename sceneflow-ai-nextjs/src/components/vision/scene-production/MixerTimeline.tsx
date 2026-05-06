@@ -57,6 +57,8 @@ interface MixerTimelineProps {
   onTextOverlayChange?: (overlay: TextOverlay) => void
   /** Video segments to show on timeline */
   segments?: SceneSegment[]
+  /** Optional map of segment IDs to their override durations (e.g. from dialogue audio + buffer) */
+  segmentDurations?: Record<string, number>
   /** Current playback time for playhead position */
   currentPlaybackTime?: number
   disabled?: boolean
@@ -367,12 +369,12 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
   const segmentPositions = useMemo(() => {
     let elapsed = 0
     return segments.map(seg => {
-      const duration = seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
+      const duration = segmentDurations?.[seg.segmentId] ?? seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
       const pos = { start: elapsed, duration, segment: seg }
       elapsed += duration
       return pos
     })
-  }, [segments])
+  }, [segments, segmentDurations])
 
   return (
     <div className={`bg-gray-900/60 rounded-lg border border-gray-700/50 overflow-hidden ${className}`}>

@@ -643,13 +643,25 @@ function ScenePreviewPlayer({
   
   // Helper: Segment duration from production metadata (animatic uses imageDuration when set)
   const getSegmentDuration = useCallback((segment: SceneSegment) => {
+    // 1. Try to find dialogue audio duration for this segment
+    const segmentDialogueLineIds = segment.dialogueLineIds || []
+    if (segmentDialogueLineIds.length > 0) {
+      // Find the first dialogue clip assigned to this segment that has a valid duration
+      const assignedClip = resolvedDialogueClips.find(c => 
+        c.lineId && segmentDialogueLineIds.includes(c.lineId) && c.duration > 0
+      )
+      if (assignedClip) {
+        return assignedClip.duration
+      }
+    }
+
     const raw = segment.imageDuration ?? segment.actualVideoDuration ?? (segment.endTime - segment.startTime)
     // Guard against 0/invalid metadata durations that collapse image-sequence playback to the last frame.
     if (!Number.isFinite(raw) || raw <= 0) {
       return 4
     }
     return raw
-  }, [])
+  }, [resolvedDialogueClips])
 
   /** Playback duration: prefer decoded media length when it differs from metadata. */
   const getPlaybackSegmentDuration = useCallback(
@@ -660,7 +672,8 @@ function ScenePreviewPlayer({
         : getSegmentDuration(segment)
         
       const config = segmentAudioConfigs[segment.segmentId]
-      const pauseDuration = config?.postSegmentPause || 0
+      // Default to 1.0s buffer between segments as requested
+      const pauseDuration = config?.postSegmentPause ?? 1.0
       
       return baseDuration + pauseDuration
     },
@@ -738,6 +751,15 @@ function ScenePreviewPlayer({
     const local = currentTime - segmentStartTime
     return Math.max(0, Math.min(1, local / activeSegmentDuration))
   }, [playbackKind, currentTime, segmentStartTime, activeSegmentDuration])
+
+  const animaticIsSecondHalf = useMemo(() => {
+    if (playbackKind !== 'image-sequence') return false
+    const local = currentTime - segmentStartTime
+    const baseDuration = currentSegment.segment ? getSegmentDuration(currentSegment.segment) : 0
+    // Switch frames at the halfway point of the base duration (e.g. 6s mark for 12s audio)
+    return local >= (baseDuration / 2)
+  }, [playbackKind, currentTime, segmentStartTime, currentSegment.segment, getSegmentDuration])
+
   const animaticStartFrameSrc = useMemo(
     () => (currentSegment.segment ? animaticKeyframeUrl(currentSegment.segment) : null),
     [currentSegment.segment]
@@ -1219,28 +1241,31 @@ function ScenePreviewPlayer({
         {currentSegment.segment?.activeAssetUrl ? (
           playbackKind === 'image-sequence' ? (
             <div className="relative w-full h-full">
-              {/* Start frame with subtle push-in to preserve storyboard-like motion feeling */}
+              {/* Start frame displays for the first half of base duration */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={animaticStartFrameSrc || currentSegment.segment.activeAssetUrl || ''}
                 alt=""
-                className="absolute inset-0 w-full h-full object-contain select-none"
+                className={`absolute inset-0 w-full h-full object-contain select-none transition-opacity duration-150 ${
+                  !animaticIsSecondHalf ? 'opacity-100' : 'opacity-0'
+                }`}
                 draggable={false}
                 style={{
                   transform: `scale(${1 + animaticFrameProgress * 0.02})`,
                   transformOrigin: 'center center',
                 }}
               />
-              {/* End frame crossfades in across segment time when available */}
+              {/* End frame displays for the second half + buffer */}
               {animaticEndFrameSrc && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={animaticEndFrameSrc}
                   alt=""
-                  className="absolute inset-0 w-full h-full object-contain select-none"
+                  className={`absolute inset-0 w-full h-full object-contain select-none transition-opacity duration-150 ${
+                    animaticIsSecondHalf ? 'opacity-100' : 'opacity-0'
+                  }`}
                   draggable={false}
                   style={{
-                    opacity: animaticFrameProgress,
                     transform: `scale(${1 + animaticFrameProgress * 0.02})`,
                     transformOrigin: 'center center',
                   }}
@@ -2755,6 +2780,14 @@ export function SceneProductionMixer({
     }))
   }, [editableDialogueClips, dialogueClipConfigs])
 
+  const segmentDurationsForTimeline = useMemo(() => {
+    const map: Record<string, number> = {}
+    segments.forEach(seg => {
+      map[seg.segmentId] = getPlaybackSegmentDuration(seg)
+    })
+    return map
+  }, [segments, getPlaybackSegmentDuration])
+
   const dialogueAudioProbeKey = useMemo(
     () =>
       playbackAudioUrls.dialogue
@@ -4112,6 +4145,7 @@ export function SceneProductionMixer({
                   <div className="px-3 pb-3">
                     <MixerTimeline
                       segments={previewSegments}
+                      segmentDurations={segmentDurationsForTimeline}
                       currentPlaybackTime={0}
                       audioTracks={audioTracks}
                       onTrackChange={updateTrackConfig}
