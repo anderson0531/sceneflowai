@@ -582,6 +582,10 @@ function ScenePreviewPlayer({
   watermarkConfig,
   playbackKind = 'video',
   dialogueClipConfigs,
+  getPlaybackSegmentDuration,
+  getSegmentDuration,
+  measuredSegmentDurations,
+  onMeasuredDurationsChange,
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -604,6 +608,11 @@ function ScenePreviewPlayer({
   playbackKind?: 'video' | 'image-sequence'
   /** Per-line volume / enable; keys match dialogue clip ids from the layout engine */
   dialogueClipConfigs?: Record<string, AudioClipConfig>
+  /** Lifted helpers and state for consistency */
+  getPlaybackSegmentDuration: (segment: SceneSegment) => number
+  getSegmentDuration: (segment: SceneSegment) => number
+  measuredSegmentDurations: Record<string, number>
+  onMeasuredDurationsChange: (durations: Record<string, number>) => void
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -616,8 +625,6 @@ function ScenePreviewPlayer({
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0)
   const [isVideoFrozen, setIsVideoFrozen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  /** Decoded duration per segment from the video element (timeline metadata can be shorter than the file). */
-  const [measuredSegmentDurations, setMeasuredSegmentDurations] = useState<Record<string, number>>({})
   
   // Track container width for proportional overlay scaling
   // Text overlays use vh units (viewport-relative) but need to be scaled
@@ -641,45 +648,6 @@ function ScenePreviewPlayer({
   // Timer for audio-extended playback (when video is frozen)
   const audioTimerRef = useRef<NodeJS.Timeout | null>(null)
   
-  // Helper: Segment duration from production metadata (animatic uses imageDuration when set)
-  const getSegmentDuration = useCallback((segment: SceneSegment) => {
-    // 1. Try to find dialogue audio duration for this segment
-    const segmentDialogueLineIds = segment.dialogueLineIds || []
-    if (segmentDialogueLineIds.length > 0) {
-      // Find the first dialogue clip assigned to this segment that has a valid duration
-      const assignedClip = resolvedDialogueClips.find(c => 
-        c.lineId && segmentDialogueLineIds.includes(c.lineId) && c.duration > 0
-      )
-      if (assignedClip) {
-        return assignedClip.duration
-      }
-    }
-
-    const raw = segment.imageDuration ?? segment.actualVideoDuration ?? (segment.endTime - segment.startTime)
-    // Guard against 0/invalid metadata durations that collapse image-sequence playback to the last frame.
-    if (!Number.isFinite(raw) || raw <= 0) {
-      return 4
-    }
-    return raw
-  }, [resolvedDialogueClips])
-
-  /** Playback duration: prefer decoded media length when it differs from metadata. */
-  const getPlaybackSegmentDuration = useCallback(
-    (segment: SceneSegment) => {
-      const measured = measuredSegmentDurations[segment.segmentId]
-      const baseDuration = (measured != null && Number.isFinite(measured) && measured > 0) 
-        ? measured 
-        : getSegmentDuration(segment)
-        
-      const config = segmentAudioConfigs[segment.segmentId]
-      // Default to 1.0s buffer between segments as requested
-      const pauseDuration = config?.postSegmentPause ?? 1.0
-      
-      return baseDuration + pauseDuration
-    },
-    [measuredSegmentDurations, getSegmentDuration, segmentAudioConfigs]
-  )
-
   // Helper: Start time on the playback timeline (uses measured segment lengths)
   const getSegmentStartTime = useCallback(
     (segmentIndex: number) => {
@@ -1284,10 +1252,7 @@ function ScenePreviewPlayer({
               if (!id) return
               const d = video.duration
               if (!Number.isFinite(d) || d <= 0) return
-              setMeasuredSegmentDurations((prev) => {
-                if (prev[id] === d) return prev
-                return { ...prev, [id]: d }
-              })
+              onMeasuredDurationsChange({ ...measuredSegmentDurations, [id]: d })
             }}
           />
           )
@@ -2441,15 +2406,13 @@ export function SceneProductionMixer({
     productionData?.renderedSceneUrl || null
   )
   
-  // === Watermark State (with localStorage persistence) ===
+  // Watermark state
   const [watermarkConfig, setWatermarkConfig] = useState<WatermarkConfig>(() => {
-    // Initialize from localStorage if available
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem(SCENEFLOW_WATERMARK_STORAGE_KEY)
         if (stored) {
           const parsed = JSON.parse(stored)
-          // Merge with defaults to handle any new fields
           return { ...DEFAULT_WATERMARK_CONFIG, ...parsed }
         }
       } catch (e) {
@@ -2458,6 +2421,9 @@ export function SceneProductionMixer({
     }
     return DEFAULT_WATERMARK_CONFIG
   })
+
+  // === Measured Durations (Lifted from Player for timeline sync) ===
+  const [measuredSegmentDurations, setMeasuredSegmentDurations] = useState<Record<string, number>>({})
   
   // === Section Collapse State (with localStorage persistence) ===
   const [collapsedSections, setCollapsedSections] = useState<{
@@ -2676,6 +2642,43 @@ export function SceneProductionMixer({
   const resolvedDialogueClips = useMemo(
     () => getResolvedDialogueClipsForScene(mixerAudioSceneStub, selectedLanguage),
     [mixerAudioSceneStub, selectedLanguage]
+  )
+
+  // === Segment Duration Helpers (Lifted for consistency between Player and Timeline) ===
+  const getSegmentDuration = useCallback((segment: SceneSegment) => {
+    // 1. Try to find dialogue audio duration for this segment
+    const segmentDialogueLineIds = segment.dialogueLineIds || []
+    if (segmentDialogueLineIds.length > 0) {
+      // Find the first dialogue clip assigned to this segment that has a valid duration
+      const assignedClip = resolvedDialogueClips.find(c => 
+        c.lineId && segmentDialogueLineIds.includes(c.lineId) && c.duration > 0
+      )
+      if (assignedClip) {
+        return assignedClip.duration
+      }
+    }
+
+    const raw = segment.imageDuration ?? segment.actualVideoDuration ?? (segment.endTime - segment.startTime)
+    if (!Number.isFinite(raw) || raw <= 0) {
+      return 4
+    }
+    return raw
+  }, [resolvedDialogueClips])
+
+  const getPlaybackSegmentDuration = useCallback(
+    (segment: SceneSegment) => {
+      const measured = measuredSegmentDurations[segment.segmentId]
+      const baseDuration = (measured != null && Number.isFinite(measured) && measured > 0) 
+        ? measured 
+        : getSegmentDuration(segment)
+        
+      const config = segmentAudioConfigs[segment.segmentId]
+      // Default to 1.0s buffer between segments as requested
+      const pauseDuration = config?.postSegmentPause ?? 1.0
+      
+      return baseDuration + pauseDuration
+    },
+    [measuredSegmentDurations, getSegmentDuration, segmentAudioConfigs]
   )
 
   const dialogueLayoutSignature = useMemo(
@@ -4114,6 +4117,10 @@ export function SceneProductionMixer({
                 isMuted={isMuted}
                 onToggleMute={() => setIsMuted(prev => !prev)}
                 segmentAudioConfigs={segmentAudioConfigs}
+                getPlaybackSegmentDuration={getPlaybackSegmentDuration}
+                getSegmentDuration={getSegmentDuration}
+                measuredSegmentDurations={measuredSegmentDurations}
+                onMeasuredDurationsChange={setMeasuredSegmentDurations}
                 textOverlays={textOverlays}
                 watermarkConfig={watermarkConfig}
                 onEditOverlay={(overlay) => {
