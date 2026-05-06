@@ -4,10 +4,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import {
+import { 
   ArrowLeft,
   ArrowRight,
-  Save,
+  Save, 
   Loader2,
   Film,
   AlertCircle,
@@ -100,7 +100,7 @@ export default function FinalCutPage() {
   const currentProject = useStore((s) => s.currentProject)
   const setCurrentProject = useStore((s) => s.setCurrentProject)
   const updateProject = useStore((s) => s.updateProject)
-
+  
   const isDemo = searchParams.get('demo') === 'true'
   const searchProjectIdRaw = searchParams.get('projectId')
   const searchProjectId =
@@ -142,7 +142,7 @@ export default function FinalCutPage() {
   const productionVisionHref = projectId
     ? `/dashboard/workflow/vision/${projectId}${isDemo ? '?demo=true' : ''}`
     : undefined
-
+  
   // Initial load: fetch project into store if necessary, then derive selection.
   useEffect(() => {
     if (isDemo) {
@@ -268,7 +268,7 @@ export default function FinalCutPage() {
 
   const lastRenderUrl =
     (currentProject?.metadata as { exportedVideoUrl?: string } | undefined)?.exportedVideoUrl ?? null
-
+  
   const handleSave = useCallback(async () => {
     if (!currentProject) return
     setIsSaving(true)
@@ -289,7 +289,7 @@ export default function FinalCutPage() {
 
   const handleRendered = useCallback(
     async (url: string) => {
-      if (!currentProject) return
+    if (!currentProject) return
       const nextMetadata = {
         ...(currentProject.metadata as Record<string, unknown>),
         exportedVideoUrl: url,
@@ -328,7 +328,7 @@ export default function FinalCutPage() {
     }
     return items
   }, [projectId, currentProject?.metadata])
-
+  
   if (isLoading) {
     return (
       <div className="relative isolate min-h-screen flex items-center justify-center overflow-hidden bg-zinc-950">
@@ -347,7 +347,7 @@ export default function FinalCutPage() {
       </div>
     )
   }
-
+  
   if (!currentProject && !isDemo) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
@@ -367,7 +367,7 @@ export default function FinalCutPage() {
   }
 
   const filenameLabel = currentProject?.title || projectId || 'final-cut'
-
+  
   return (
     <div className="relative isolate min-h-screen flex flex-col overflow-hidden bg-zinc-950 text-zinc-100">
       {/* Ambient studio backdrop */}
@@ -432,20 +432,20 @@ export default function FinalCutPage() {
 
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
           {!isDemo && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="text-zinc-400 hover:text-white hover:bg-zinc-800/80"
-            >
-              {isSaving ? (
-                <Loader2 className="w-4 h-4 sm:mr-2 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4 sm:mr-2" />
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="text-zinc-400 hover:text-white hover:bg-zinc-800/80"
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 sm:mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 sm:mr-2" />
+                )}
               <span className="hidden sm:inline">Save selection</span>
-            </Button>
+              </Button>
           )}
 
           <Link
@@ -463,7 +463,7 @@ export default function FinalCutPage() {
           </Link>
         </div>
       </header>
-
+      
       <main className="relative flex-1 min-h-0 flex flex-col gap-3 sm:gap-4 px-4 sm:px-5 py-4 overflow-hidden border-t border-white/[0.06]">
         <div className="shrink-0 relative overflow-hidden rounded-2xl border border-white/[0.1] bg-gradient-to-br from-violet-950/50 via-zinc-950/70 to-fuchsia-950/25 px-5 py-4 sm:px-7 sm:py-5 shadow-[0_0_0_1px_rgba(139,92,246,0.12),0_24px_80px_-32px_rgba(139,92,246,0.35)] backdrop-blur-md">
           <div
@@ -489,7 +489,7 @@ export default function FinalCutPage() {
             </div>
             <p className="text-xs text-zinc-500 tabular-nums shrink-0 sm:text-right max-w-[220px] sm:max-w-xs truncate">
               {streamLabel}
-            </p>
+              </p>
           </div>
         </div>
 

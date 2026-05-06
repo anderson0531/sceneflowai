@@ -747,18 +747,6 @@ export function SegmentBuilder({
     return savedHash !== sceneBible.contentHash
   }, [hasExistingSegments, existingSegments, sceneBible.contentHash])
 
-  // Auto-initialize when the builder is opened and not already generated
-  const hasAutoInitialized = useRef(false)
-  useEffect(() => {
-    if (!hasExistingVideoAssets && !hasExistingSegments && !isAnalyzing && !hasAutoInitialized.current && hasSceneDirection) {
-      hasAutoInitialized.current = true
-      // We wrap it in a setTimeout to avoid React state update during render issues
-      setTimeout(() => {
-        handleAnalyze()
-      }, 0)
-    }
-  }, [hasExistingVideoAssets, hasExistingSegments, isAnalyzing, hasSceneDirection, handleAnalyze])
-
   // -------------------------------------------------------------------------
   // Handlers
   // -------------------------------------------------------------------------
@@ -933,6 +921,18 @@ export function SegmentBuilder({
     hasSceneDirection,
     runDirectionsOverlayPreamble,
   ])
+
+  // Auto-initialize when the builder is opened and not already generated
+  const hasAutoInitialized = useRef(false)
+  useEffect(() => {
+    if (!hasExistingVideoAssets && !hasExistingSegments && !isAnalyzing && !hasAutoInitialized.current && hasSceneDirection) {
+      hasAutoInitialized.current = true
+      // We wrap it in a setTimeout to avoid React state update during render issues
+      setTimeout(() => {
+        handleAnalyze()
+      }, 0)
+    }
+  }, [hasExistingVideoAssets, hasExistingSegments, isAnalyzing, hasSceneDirection, handleAnalyze])
 
   const finalizeAndClose = useCallback(
     (segments: SceneSegment[]) => {
