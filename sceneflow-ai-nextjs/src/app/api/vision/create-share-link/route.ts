@@ -64,12 +64,21 @@ export async function POST(request: NextRequest) {
     // Save to project metadata
     const metadata = project.metadata || {}
     const metadataKey = linkType === 'storyboard' ? 'storyboardShareLink' : 'screeningRoomShareLink'
-    
-    await project.update({
-      metadata: {
-        ...metadata,
-        [metadataKey]: shareLink
+
+    const nextMeta: Record<string, unknown> = {
+      ...metadata,
+      [metadataKey]: shareLink,
+    }
+    // First storyboard share: stamp revision v1 so screening feedback can be tied to versions.
+    if (linkType === 'storyboard' && !metadata.storyboardRevision) {
+      nextMeta.storyboardRevision = {
+        version: 1,
+        updatedAt: new Date().toISOString(),
       }
+    }
+
+    await project.update({
+      metadata: nextMeta as Record<string, unknown>,
     })
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sceneflowai.studio'
@@ -84,7 +93,11 @@ export async function POST(request: NextRequest) {
       shareUrl,
       shareToken,
       slug: finalSlug,
-      linkType
+      linkType,
+      storyboardRevision:
+        linkType === 'storyboard'
+          ? (nextMeta as Record<string, unknown>).storyboardRevision ?? metadata.storyboardRevision
+          : undefined,
     })
   } catch (error: any) {
     console.error('[Create Share Link] Error:', error)

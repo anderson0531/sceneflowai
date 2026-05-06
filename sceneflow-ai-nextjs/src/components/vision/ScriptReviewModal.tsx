@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Users, Star, Download, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2, Edit, Mic, Eye, FileText, Lightbulb, Info, Clapperboard, Plus, Trash2, GripVertical } from 'lucide-react'
+import { X, Users, Star, RefreshCw, Loader, Volume2, VolumeX, Wand2, AlertTriangle, ChevronDown, ChevronUp, Target, TrendingDown, TrendingUp, Settings2, Check, Square, CheckSquare, BarChart3, MessageSquare, ListChecks, Film, Sparkles, CheckCircle2, Edit, Mic, Eye, FileText, Lightbulb, Info, Clapperboard, Plus, Trash2, GripVertical, Play } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,7 +9,9 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
 import { DIRECTOR_ASSISTANTS, applyAssistantStyle, getAssistantByVoiceId } from '@/lib/tts/productionAssistants'
 import { useStore } from '@/store/useStore'
@@ -399,6 +401,209 @@ export interface CinematicScenePlan {
 
 type ReviewTab = 'overview' | 'analysis' | 'recommendations' | 'cinematic' | 'you-direct'
 
+/**
+ * Inline picker for the Production Assistant voice. Replaces the previous
+ * sidebar voice section: shows the active assistant, lets the user pick a
+ * different one, and previews the voice with a Listen/Stop control.
+ */
+function AssistantPickerButton({
+  selectedVoiceId,
+  onSelect,
+}: {
+  selectedVoiceId: string
+  onSelect: (voiceId: string, voiceName: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  const userName = useStore(s => s.user?.name)
+  const firstName =
+    (userName && userName.split(' ')[0]) ||
+    (typeof window !== 'undefined'
+      ? (() => {
+          try {
+            const stored = localStorage.getItem('authUserName')
+            return stored && stored.trim() ? stored.split(' ')[0] : 'Director'
+          } catch {
+            return 'Director'
+          }
+        })()
+      : 'Director')
+
+  const selectedAssistant =
+    DIRECTOR_ASSISTANTS.find(a => a.voiceId === selectedVoiceId) || DIRECTOR_ASSISTANTS[0]
+
+  const stopPreview = () => {
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause()
+      previewAudioRef.current = null
+    }
+    setIsPlaying(false)
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (previewAudioRef.current) {
+        previewAudioRef.current.pause()
+        previewAudioRef.current = null
+      }
+    }
+  }, [])
+
+  const handleListen = async () => {
+    if (isPlaying) {
+      stopPreview()
+      return
+    }
+    const message = `Hi ${firstName}. I'm ${selectedAssistant.name}, your ${selectedAssistant.title}. ${selectedAssistant.pitch} I will be your voice for this session.`
+    const styled = applyAssistantStyle(message, selectedAssistant.id)
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/tts/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: styled, voiceId: selectedAssistant.voiceId, language: 'en' }),
+      })
+      if (!response.ok) throw new Error('TTS failed')
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      stopPreview()
+      previewAudioRef.current = new Audio(url)
+      previewAudioRef.current.onended = () => setIsPlaying(false)
+      previewAudioRef.current.onerror = () => setIsPlaying(false)
+      await previewAudioRef.current.play()
+      setIsPlaying(true)
+    } catch (err) {
+      console.error('Failed to preview assistant voice:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSelect = (voiceId: string) => {
+    const asst = DIRECTOR_ASSISTANTS.find(a => a.voiceId === voiceId)
+    if (asst) onSelect(asst.voiceId, asst.title)
+    stopPreview()
+  }
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (!next) stopPreview()
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2 h-8 text-xs"
+          aria-label="Choose Production Assistant voice"
+        >
+          <span
+            className={cn(
+              'w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shadow-sm border border-white/10',
+              selectedAssistant.avatar.color
+            )}
+          >
+            {selectedAssistant.avatar.initials}
+          </span>
+          Assistant
+          <ChevronDown className="w-3 h-3 opacity-70" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+            <Volume2 className="w-3.5 h-3.5 text-blue-500" />
+            Production Assistant
+          </span>
+        </div>
+
+        <Select value={selectedAssistant.voiceId} onValueChange={handleSelect}>
+          <SelectTrigger className="w-full h-auto min-h-[44px] py-1.5 px-3 [&>span]:line-clamp-none [&>span]:w-full [&>span]:flex-1">
+            <SelectValue>
+              <div className="flex items-center gap-3 text-left w-full min-w-0">
+                <div
+                  className={cn(
+                    'w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-sm border border-white/10',
+                    selectedAssistant.avatar.color
+                  )}
+                >
+                  {selectedAssistant.avatar.initials}
+                </div>
+                <div className="flex flex-col min-w-0 overflow-hidden pr-2">
+                  <span className="font-semibold text-[13px] truncate">{selectedAssistant.name}</span>
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider truncate">
+                    {selectedAssistant.title}
+                  </span>
+                </div>
+              </div>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="max-h-[300px]">
+            {DIRECTOR_ASSISTANTS.map(asst => (
+              <SelectItem key={asst.id} value={asst.voiceId} className="py-2.5 px-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={cn(
+                      'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-sm border border-white/10',
+                      asst.avatar.color
+                    )}
+                  >
+                    {asst.avatar.initials}
+                  </div>
+                  <div className="flex flex-col text-left min-w-0">
+                    <span className="font-medium text-[13px] truncate">{asst.name}</span>
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wide truncate">
+                      {asst.title}
+                    </span>
+                  </div>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="p-3 bg-gray-100/60 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/60 rounded-lg space-y-2 relative overflow-hidden">
+          <div
+            className={cn(
+              'absolute -top-10 -right-10 w-24 h-24 rounded-full blur-2xl opacity-20 pointer-events-none',
+              selectedAssistant.avatar.color
+            )}
+          />
+          <div className="flex items-center justify-between relative z-10">
+            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Voice Profile</p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleListen}
+              disabled={isLoading}
+              className="h-7 px-3 text-[11px] rounded-full"
+            >
+              {isLoading ? (
+                <Loader className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : isPlaying ? (
+                <Square className="w-3.5 h-3.5 mr-1.5 fill-current" />
+              ) : (
+                <Play className="w-3.5 h-3.5 mr-1.5 fill-current" />
+              )}
+              {isPlaying ? 'Stop' : 'Listen'}
+            </Button>
+          </div>
+          <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed relative z-10">
+            {selectedAssistant.description}
+          </p>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 export default function ScriptReviewModal({
   isOpen,
   onClose,
@@ -426,6 +631,7 @@ export default function ScriptReviewModal({
   
   const selectedVoiceId = useStore(s => s.sidebarData.selectedVoiceId) || DIRECTOR_ASSISTANTS[0].voiceId
   const selectedVoiceName = useStore(s => s.sidebarData.selectedVoiceName) || DIRECTOR_ASSISTANTS[0].title
+  const setSidebarVoiceSelection = useStore(s => s.setSidebarVoiceSelection)
   
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en') // Keep for TTS playback
   const [playingSection, setPlayingSection] = useState<string | null>(null)
@@ -1270,10 +1476,6 @@ export default function ScriptReviewModal({
   const showVsTellRatio = review?.showVsTellRatio ?? 0
   const totalDeductions = deductions.reduce((sum, d) => sum + d.points, 0)
 
-  const exportAsPDF = () => {
-    console.log('Export as PDF functionality to be implemented')
-  }
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -1314,26 +1516,22 @@ export default function ScriptReviewModal({
                   Stop Playback
                 </Button>
               )}
-              {/* Note: Production Assistant voice is now configured in the global sidebar */}
-              {!playingSection && (
-                 <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
-                   <Volume2 className="w-3 h-3" />
-                   Configure voice in sidebar
-                 </span>
-              )}
             </div>
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={exportAsPDF}
-                className="flex items-center gap-2 h-8 text-xs"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Export PDF
-              </Button>
+              <AssistantPickerButton
+                selectedVoiceId={selectedVoiceId}
+                onSelect={(voiceId, voiceName) => {
+                  setSidebarVoiceSelection(voiceId, voiceName)
+                  try {
+                    localStorage.setItem(
+                      'sceneflow-audience-resonance-voice',
+                      JSON.stringify({ voiceId, voiceName })
+                    )
+                  } catch {}
+                }}
+              />
               <div className="flex items-center gap-2 border-l border-gray-200 dark:border-gray-700 pl-2 ml-1">
                 <span className="text-xs text-gray-500 font-medium hidden sm:inline-block">Target Audience:</span>
                 <Select value={targetDemographicPreset} onValueChange={setTargetDemographicPreset}>

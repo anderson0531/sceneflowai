@@ -18,7 +18,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { feedbacks, reviewerName } = body
+    const { feedbacks, reviewerName, storyboardVersion: rawVersion } = body
 
     if (!feedbacks || typeof feedbacks !== 'object') {
       return NextResponse.json({ error: 'Feedbacks object required' }, { status: 400 })
@@ -40,6 +40,16 @@ export async function POST(
       return NextResponse.json({ error: 'Share link not found or expired' }, { status: 404 })
     }
 
+    const metadata = project.metadata || {}
+    const currentRevision = metadata.storyboardRevision
+    const currentVersion =
+      currentRevision && typeof currentRevision.version === 'number'
+        ? currentRevision.version
+        : 1
+    let stampedVersion = typeof rawVersion === 'number' ? rawVersion : parseInt(String(rawVersion), 10)
+    if (Number.isNaN(stampedVersion) || stampedVersion < 1) stampedVersion = 1
+    if (stampedVersion > currentVersion) stampedVersion = currentVersion
+
     // Format new feedback entries
     const timestamp = new Date().toISOString()
     const newFeedbackEntries = Object.entries(feedbacks).map(([sceneIndexStr, feedbackData]: [string, any]) => {
@@ -50,7 +60,8 @@ export async function POST(
         rating: feedbackData.rating || 0,
         comment: feedbackData.comment || '',
         createdAt: timestamp,
-        reviewerName: reviewerName || 'Anonymous'
+        reviewerName: reviewerName || 'Anonymous',
+        storyboardVersion: stampedVersion,
       }
     }).filter(entry => entry.rating > 0 || entry.comment.trim() !== '')
 
@@ -59,7 +70,6 @@ export async function POST(
     }
 
     // Append to existing feedback array
-    const metadata = project.metadata || {}
     const existingFeedback = Array.isArray(metadata.storyboardFeedback) ? metadata.storyboardFeedback : []
     
     const updatedFeedback = [...existingFeedback, ...newFeedbackEntries]

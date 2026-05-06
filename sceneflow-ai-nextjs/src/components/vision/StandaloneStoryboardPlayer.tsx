@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { AudioGalleryPlayer } from './AudioGalleryPlayer'
 import { Button } from '@/components/ui/Button'
-import { Star, MessageSquare, Send } from 'lucide-react'
+import { Star, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface StandaloneStoryboardPlayerProps {
   projectData: any
@@ -14,6 +15,11 @@ interface StandaloneStoryboardPlayerProps {
 export function StandaloneStoryboardPlayer({ projectData, shareToken }: StandaloneStoryboardPlayerProps) {
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
+
+  /** Version shown when this tab loaded — stamped on submit (plan: latest link, frozen reviewer version). */
+  const [reviewerStoryboardVersion] = useState(
+    () => projectData?.storyboardRevision?.version ?? 1
+  )
   
   // Feedback state per scene
   const [feedbacks, setFeedbacks] = useState<Record<number, { rating: number, comment: string }>>({})
@@ -46,7 +52,11 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
       const response = await fetch(`/api/vision/shared-project/${shareToken}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feedbacks, reviewerName })
+        body: JSON.stringify({
+          feedbacks,
+          reviewerName,
+          storyboardVersion: reviewerStoryboardVersion,
+        }),
       })
       
       const data = await response.json()
@@ -56,6 +66,9 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
       }
       
       setSubmitSuccess(true)
+      toast.success('Feedback submitted', {
+        description: `Recorded as storyboard v${reviewerStoryboardVersion}.`,
+      })
       setTimeout(() => setSubmitSuccess(false), 3000)
     } catch (err: any) {
       console.error('[Submit Feedback]', err)
@@ -66,7 +79,7 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
   }
 
   // Derive available languages from project data
-  const availableLanguages = React.useMemo(() => {
+  const availableLanguages = useMemo(() => {
     const scenes = projectData.script?.script?.scenes || projectData.script?.scenes || projectData.sceneProductionState || []
     const langs = new Set<string>()
     
@@ -90,10 +103,16 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
   return (
     <div className="flex flex-col min-h-screen lg:h-screen bg-black lg:overflow-hidden">
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-900 border-b border-gray-800 gap-4 sm:gap-0">
-        <div className="w-full sm:w-auto">
-          <h1 className="text-xl font-semibold text-white truncate max-w-[80vw] sm:max-w-[50vw]">{projectData.title}</h1>
-          <p className="text-sm text-gray-400">Storyboard Review</p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 bg-gray-900 border-b border-gray-800 gap-3 sm:gap-0">
+        <div className="w-full sm:w-auto min-w-0">
+          <h1 className="text-base sm:text-lg font-semibold text-white truncate max-w-[80vw] sm:max-w-[50vw]">{projectData.title}</h1>
+          <p className="text-xs text-gray-400">Storyboard Review</p>
+          <p className="text-[11px] text-gray-500 mt-0.5">
+            Viewing as storyboard v{reviewerStoryboardVersion}
+            {projectData?.storyboardRevision?.label
+              ? ` · ${String(projectData.storyboardRevision.label)}`
+              : ''}
+          </p>
         </div>
         <div className="w-full sm:w-auto text-left sm:text-right">
           <Button 
@@ -108,8 +127,8 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
       
       <div className="flex flex-col lg:flex-row flex-1 lg:overflow-hidden">
         {/* Main Player Area */}
-        <div className="flex-1 p-2 sm:p-4 md:p-8 overflow-y-auto bg-gray-950 flex flex-col justify-start lg:justify-center items-center h-full">
-          <div className="w-full flex justify-center items-center">
+        <div className="flex-1 p-2 sm:p-4 overflow-y-auto bg-gray-950 flex flex-col justify-start items-center min-h-0">
+          <div className="w-full flex justify-center items-start max-w-4xl">
             <AudioGalleryPlayer
               scenes={projectData.script?.script?.scenes || projectData.script?.scenes || projectData.sceneProductionState || []}
               selectedLanguage={selectedLanguage}
@@ -122,15 +141,15 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
         </div>
         
         {/* Feedback Sidebar */}
-        <div className="w-full lg:w-96 bg-gray-900 border-t lg:border-t-0 lg:border-l border-gray-800 flex flex-col lg:h-full">
-          <div className="p-4 border-b border-gray-800">
-            <h2 className="text-lg font-medium text-white flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              Scene {currentSceneIndex + 1} Feedback
+        <div className="w-full lg:w-80 xl:w-96 shrink-0 bg-gray-900 border-t lg:border-t-0 lg:border-l border-gray-800 flex flex-col lg:h-full lg:max-h-screen">
+          <div className="px-3 py-2.5 border-b border-gray-800">
+            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+              Scene {currentSceneIndex + 1} feedback
             </h2>
           </div>
           
-          <div className="p-4 flex-1 flex flex-col gap-6">
+          <div className="p-3 flex-1 flex flex-col gap-4 min-h-0">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Your Name (Optional)

@@ -13,7 +13,7 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, EyeOff, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin, FileText, ChevronDown, ChevronUp, GripVertical, Zap, Settings2 } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, EyeOff, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin, FileText, ChevronDown, ChevronUp, GripVertical, Zap, Settings2, Tag } from 'lucide-react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -36,6 +36,9 @@ import {
   ExpressConfirmDialog,
   type ExpressConfirmOptions,
 } from './ExpressConfirmDialog'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/Input'
+import { useStore } from '@/store/useStore'
 
 export type ExpressPhase = 'direction' | 'audio' | 'image'
 export type ExpressPhaseStatus = 'pending' | 'running' | 'done' | 'error'
@@ -187,6 +190,19 @@ export function SceneGallery({
 
   // Express dialog state
   const [expressDialogOpen, setExpressDialogOpen] = useState(false)
+
+  const currentProject = useStore(s => s.currentProject)
+  const setCurrentProject = useStore(s => s.setCurrentProject)
+  const storyboardRevision = currentProject?.metadata?.storyboardRevision
+  const storyboardVersion =
+    typeof storyboardRevision?.version === 'number' && storyboardRevision.version >= 1
+      ? storyboardRevision.version
+      : 1
+
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false)
+  const [publishLabel, setPublishLabel] = useState('')
+  const [publishNotes, setPublishNotes] = useState('')
+  const [publishLoading, setPublishLoading] = useState(false)
   
   // Count scenes with audio for Generate All Audio button display
   const scenesWithAudio = useMemo(() => {
@@ -352,16 +368,23 @@ export function SceneGallery({
   const handleShareStoryboard = async () => {
     try {
       const projectId = scenes[0]?.projectId || window.location.pathname.split('/').pop()
-      
+
       const response = await fetch('/api/vision/create-share-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId, linkType: 'storyboard' })
       })
-      
+
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Failed to create share link')
-      
+
+      if (data.storyboardRevision && projectId && currentProject?.id === projectId) {
+        setCurrentProject({
+          ...currentProject,
+          metadata: { ...currentProject.metadata, storyboardRevision: data.storyboardRevision },
+        })
+      }
+
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(data.shareUrl)
         toast.success('Storyboard link copied to clipboard!')
@@ -382,6 +405,38 @@ export function SceneGallery({
     }
   }
 
+  const handlePublishStoryboardRevision = async () => {
+    const projectId = scenes[0]?.projectId || window.location.pathname.split('/').pop()
+    if (!projectId || !currentProject?.id || currentProject.id !== projectId) {
+      toast.error('Project not loaded — refresh the page and try again.')
+      return
+    }
+    setPublishLoading(true)
+    try {
+      const res = await fetch(`/api/projects/${projectId}/storyboard-revision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: publishLabel || undefined, notes: publishNotes || undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to publish revision')
+      setCurrentProject({
+        ...currentProject,
+        metadata: { ...currentProject.metadata, storyboardRevision: data.storyboardRevision },
+      })
+      setPublishDialogOpen(false)
+      setPublishLabel('')
+      setPublishNotes('')
+      toast.success(`Storyboard v${data.storyboardRevision?.version ?? ''} published`, {
+        description: 'Share link unchanged. New feedback after reviewers reload will use this version.',
+      })
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to publish revision')
+    } finally {
+      setPublishLoading(false)
+    }
+  }
+
   return (
     <TooltipProvider>
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 h-full overflow-y-auto">
@@ -399,6 +454,30 @@ export function SceneGallery({
               {scenesWithAudio}/{scenes.length} audio
             </span>
           )}
+          <span
+            className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded px-1.5 py-0.5"
+            title="Screening feedback is stamped with this version when reviewers submit."
+          >
+            v{storyboardVersion}
+          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => setPublishDialogOpen(true)}
+              >
+                <Tag className="w-3.5 h-3.5 mr-1" />
+                Publish revision
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              Bump the storyboard version after meaningful changes. The public link stays the same; feedback
+              records which version the reviewer had loaded.
+            </TooltipContent>
+          </Tooltip>
         </div>
         
         <div className="flex flex-wrap gap-2 items-center">
@@ -749,6 +828,54 @@ export function SceneGallery({
           onConfirm={handleExpressConfirm}
         />
       )}
+
+      <Dialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Publish storyboard revision</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Increments the version (e.g. v{storyboardVersion} → v{storyboardVersion + 1}). Your share link does not
+            change. Reviewers who refresh will see the new current version; their next submissions are stamped
+            accordingly.
+          </p>
+          <div className="space-y-3 pt-2">
+            <div className="space-y-1.5">
+              <label htmlFor="sb-rev-label" className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                Label (optional)
+              </label>
+              <Input
+                id="sb-rev-label"
+                value={publishLabel}
+                onChange={e => setPublishLabel(e.target.value)}
+                placeholder="e.g. Client notes round 2"
+                className="h-9 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="sb-rev-notes" className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                Change notes (optional)
+              </label>
+              <textarea
+                id="sb-rev-notes"
+                value={publishNotes}
+                onChange={e => setPublishNotes(e.target.value)}
+                placeholder="What changed since the last version?"
+                rows={3}
+                className="w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => setPublishDialogOpen(false)} disabled={publishLoading}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handlePublishStoryboardRevision} disabled={publishLoading}>
+              {publishLoading ? <Loader className="w-4 h-4 animate-spin" /> : `Publish v${storyboardVersion + 1}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Image Edit Modal */}
       <ImageEditModal

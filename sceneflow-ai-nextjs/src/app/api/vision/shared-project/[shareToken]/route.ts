@@ -50,6 +50,12 @@ export async function GET(
       }
     })
 
+    const md = project.metadata || {}
+    const storyboardRevision =
+      md.storyboardRevision && typeof md.storyboardRevision.version === 'number'
+        ? md.storyboardRevision
+        : { version: 1, updatedAt: (project as any).updatedAt?.toISOString?.() || new Date().toISOString() }
+
     // Return only necessary data (no sensitive info)
     const sharedData = {
       title: project.title,
@@ -57,7 +63,8 @@ export async function GET(
       characters: project.metadata?.visionPhase?.characters,
       sceneProductionState: project.metadata?.visionPhase?.production?.scenes,
       allowedFeatures: shareLink.allowedFeatures,
-      shareToken: actualShareToken // Pass this back so the feedback API can find it
+      shareToken: actualShareToken, // Pass this back so the feedback API can find it
+      storyboardRevision,
     }
 
     console.log(`[Get Shared Project] Serving shared project: ${project.title} (views: ${shareLink.viewCount})`)

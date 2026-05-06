@@ -506,7 +506,10 @@ export function AudioGalleryPlayer({
   const currentScale = 1 + (kenBurnsConfig.scale - 1) * kenBurnsProgress;
   const currentX = kenBurnsConfig.x * kenBurnsProgress;
   const currentY = kenBurnsConfig.y * kenBurnsProgress;
-  
+
+  /** Public share page: readable scale, not the same hero layout as fullscreen. */
+  const sharedCompact = isSharedView && !isFullscreen
+
   return (
     <TooltipProvider>
       <div 
@@ -599,17 +602,20 @@ export function AudioGalleryPlayer({
         </div>
         
         {/* Main content area */}
-        <div className={cn(
-          "flex gap-4 p-4",
-          (isFullscreen || isSharedView) && "flex-1 flex-col items-center justify-center w-full"
-        )}>
+        <div
+          className={cn(
+            'flex gap-4 p-4',
+            isFullscreen && 'flex-1 flex-col items-center justify-center w-full',
+            sharedCompact && 'flex-col items-center w-full max-w-4xl mx-auto gap-3 py-2 px-2 sm:px-4'
+          )}
+        >
           {/* Scene image with Ken Burns effect */}
           <div className={cn(
             "relative rounded-lg overflow-hidden bg-black flex-shrink-0 w-full",
             isFullscreen 
               ? "max-w-7xl aspect-video" 
-              : isSharedView
-                ? "max-w-6xl aspect-video shadow-2xl"
+              : sharedCompact
+                ? "max-w-3xl sm:max-w-4xl aspect-video shadow-lg"
                 : "max-w-[500px] aspect-video shadow-xl"
           )}>
             {currentScene?.imageUrl ? (
@@ -638,25 +644,35 @@ export function AudioGalleryPlayer({
             {/* Current clip label overlay */}
             {currentClip && (
               <div className="absolute bottom-2 left-2 right-2 bg-black/70 rounded px-2 py-1">
-                <span className={cn("text-white", isFullscreen ? "text-base" : "text-xs")}>{currentClip.label}</span>
+                <span className={cn("text-white", isFullscreen && !sharedCompact ? "text-base" : "text-xs")}>{currentClip.label}</span>
               </div>
             )}
           </div>
           
           {/* Scene title below video in fullscreen or shared view */}
-          {(isFullscreen || isSharedView) && (
-            <div className={cn("mt-4 text-center w-full", isFullscreen ? "max-w-7xl" : "max-w-6xl")}>
+          {isFullscreen && !sharedCompact && (
+            <div className={cn("mt-4 text-center w-full max-w-7xl")}>
               <span className="text-white/50 text-xs uppercase tracking-wide font-semibold">SCENE {currentSceneIndex + 1}</span>
               <h2 className="text-white text-lg font-medium truncate mt-1">{formattedHeading}</h2>
+            </div>
+          )}
+          {sharedCompact && (
+            <div className="text-center w-full max-w-2xl mx-auto px-1">
+              <span className="text-white/45 text-[10px] uppercase tracking-wider font-medium">
+                Scene {currentSceneIndex + 1}
+              </span>
+              <p className="text-white text-sm sm:text-base font-medium leading-snug mt-1 line-clamp-3 break-words">
+                {formattedHeading}
+              </p>
             </div>
           )}
           
           {/* Playback controls and info */}
           <div className={cn(
             "flex flex-col justify-between min-w-0 w-full",
-            isFullscreen ? "max-w-7xl mt-3" : isSharedView ? "max-w-6xl mt-4" : "flex-1"
+            isFullscreen ? "max-w-7xl mt-3" : sharedCompact ? "max-w-2xl mx-auto mt-2" : "flex-1"
           )}>
-            {/* Scene info - hide in fullscreen/shared (shown below video) */}
+            {/* Scene info - hide in fullscreen / shared compact (heading shown above) */}
             {(!isFullscreen && !isSharedView) && (
               <div>
                 <h4 className="text-sm font-semibold text-white mb-1">
@@ -670,7 +686,7 @@ export function AudioGalleryPlayer({
             )}
             
             {/* Progress bar */}
-            <div className={cn("mt-3", isFullscreen && "mt-0")}>
+            <div className={cn("mt-3", (isFullscreen || sharedCompact) && "mt-0")}>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xs text-gray-400 w-10">{formatTime(currentTime)}</span>
                 <div 
@@ -701,10 +717,10 @@ export function AudioGalleryPlayer({
                         disabled={currentSceneIndex === 0}
                         className={cn(
                           "rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors",
-                          (isFullscreen || isSharedView) ? "p-3" : "p-2"
+                          isFullscreen ? "p-3" : "p-2"
                         )}
                       >
-                        <SkipBack className={cn("text-white", (isFullscreen || isSharedView) ? "w-5 h-5" : "w-4 h-4")} />
+                        <SkipBack className={cn("text-white", isFullscreen ? "w-5 h-5" : "w-4 h-4")} />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>Previous scene</TooltipContent>
@@ -715,13 +731,13 @@ export function AudioGalleryPlayer({
                     onClick={() => setIsPlaying(!isPlaying)}
                     className={cn(
                       "rounded-full bg-emerald-600 hover:bg-emerald-500 transition-colors",
-                      (isFullscreen || isSharedView) ? "p-4" : "p-3"
+                      isFullscreen ? "p-4" : "p-3"
                     )}
                   >
                     {isPlaying ? (
-                      <Pause className={cn("text-white", (isFullscreen || isSharedView) ? "w-6 h-6" : "w-5 h-5")} />
+                      <Pause className={cn("text-white", isFullscreen ? "w-6 h-6" : "w-5 h-5")} />
                     ) : (
-                      <Play className={cn("text-white ml-0.5", (isFullscreen || isSharedView) ? "w-6 h-6" : "w-5 h-5")} />
+                      <Play className={cn("text-white ml-0.5", isFullscreen ? "w-6 h-6" : "w-5 h-5")} />
                     )}
                   </button>
                   
@@ -733,10 +749,10 @@ export function AudioGalleryPlayer({
                         disabled={currentSceneIndex === scenes.length - 1}
                         className={cn(
                           "rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors",
-                          (isFullscreen || isSharedView) ? "p-3" : "p-2"
+                          isFullscreen ? "p-3" : "p-2"
                         )}
                       >
-                        <SkipForward className={cn("text-white", (isFullscreen || isSharedView) ? "w-5 h-5" : "w-4 h-4")} />
+                        <SkipForward className={cn("text-white", isFullscreen ? "w-5 h-5" : "w-4 h-4")} />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>Next scene</TooltipContent>
