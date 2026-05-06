@@ -411,7 +411,7 @@ async function generateGoogleAudio(
           'Speak only the words supplied in the main text. Do not read instructions aloud, do not add narrator commentary, and do not repeat the opening sentence at the end.'
       } else {
         // Gemini TTS sometimes reads the prompt aloud if it's too descriptive.
-        payload.input.prompt = `INSTRUCTION: You are a voice actor. Do not read this instruction aloud. Adopt the following voice profile precisely: ${formattedPrompt}`
+        payload.input.prompt = `INSTRUCTION: You are a voice actor. Do not read this instruction aloud. Adopt the following voice profile precisely: ${voiceConfig.prompt}`
       }
     } else if (audioType === 'dialogue') {
       payload.input.prompt =

@@ -173,38 +173,32 @@ export function optimizeTextForTTS(input: string): OptimizedText {
 }
 
 /**
- * Optimizes text specifically for Gemini 2.5 Flash TTS
- * 
- * Gemini 2.5 TTS can accept bracketed inline emotion/delivery tags like [whispers].
- * It does NOT use parenthetical tags.
- * This function:
- * 1. Converts parenthetical stage directions at the start of sentences to bracketed tags
- * 2. Preserves existing bracketed tags
- * 3. Does not remove performance markup, only cleans whitespace and handles edge cases.
+ * Optimizes text specifically for Gemini 2.5 Flash TTS.
+ *
+ * Historically this function preserved `[...]` tags because Gemini 2.5 can
+ * use them as inline delivery hints. In practice scripts emit long stage
+ * directions like `[exhausted, whispering] Another late night...` that
+ * Gemini sometimes reads aloud verbatim. To prevent direction text from
+ * leaking into the audio we now strip ALL bracketed and parenthetical
+ * directions for both Google and Gemini paths. Emotion cues are still
+ * extracted and exposed via `cues` so callers can inject them into the
+ * voice prompt instead of the spoken input.
  */
 export function optimizeTextForGeminiTTS(input: string): OptimizedText {
   const originalLength = input.length
   const cues = extractEmotionCues(input)
-  
-  let optimized = normalizePerformanceBracketChars(input)
-  
-  // Convert parenthetical (stage directions) into bracketed [stage directions]
-  // Because Gemini natively understands bracketed instructions
-  optimized = optimized.replace(/\(([\s\S]*?)\)/g, '[$1]')
-  
+
+  let optimized = removeStageDirections(input)
   optimized = unwrapMarkdownEmphasis(optimized)
   optimized = optimized.replace(/\*/g, '')
-  
-  // Normalize whitespace
+
   optimized = normalizeWhitespace(optimized)
   optimized = trimEchoedPrefixTail(optimized)
-  
+
   const optimizedLength = optimized.length
-  
-  // Check if result is speakable (has actual content outside of brackets)
-  const speakableOnly = optimized.replace(/\[[\s\S]*?\]/g, '').trim()
-  const isSpeakable = speakableOnly.length > 0
-  
+
+  const isSpeakable = optimized.trim().length > 0
+
   if (originalLength !== optimizedLength || cues.length > 0) {
     console.log('[Gemini TTS Optimizer]', {
       originalLength,
@@ -214,7 +208,7 @@ export function optimizeTextForGeminiTTS(input: string): OptimizedText {
       sample: optimized.substring(0, 60)
     })
   }
-  
+
   return {
     text: optimized,
     cues,
@@ -226,28 +220,24 @@ export function optimizeTextForGeminiTTS(input: string): OptimizedText {
 
 /**
  * Last pass before Google Gemini TTS: defense in depth on already-optimized script text.
- * Leaves bracketed tags intact, unlike finalizeTextForGoogleTts
+ *
+ * Strips both `[...]` and `(...)` directions so Gemini cannot speak them
+ * aloud. The previous behavior preserved brackets to allow Gemini's inline
+ * style tags, but multi-word stage directions like `[exhausted, whispering]`
+ * were sometimes read verbatim. Voice prompts now carry emotion hints
+ * instead (see `voiceConfig.prompt`).
  */
 export function finalizeTextForGeminiTts(text: string): string {
   let s = normalizePerformanceBracketChars(text)
-  
-  // We explicitly DO NOT strip [...] tags because Gemini uses them.
-  // If there are still parentheses, convert them.
+
+  s = s.replace(/\[[\s\S]*?\]/g, '')
   s = s.replace(/\([\s\S]*?\)/g, '')
-  
+
   s = unwrapMarkdownEmphasis(s)
   s = s.replace(/\*/g, '')
   s = s.replace(/\s+/g, ' ').trim()
   s = trimEchoedPrefixTail(s)
-  
-  // Format for Gemini TTS style/text separation if there are vocal directions at the start
-  const match = s.match(/^(?:\[(.*?)\]|\{(.*?)\})\s*(.*)/)
-  if (match) {
-    const vocalStyle = match[1] || match[2]
-    const dialogueBody = match[3]
-    s = `Style: ${vocalStyle}\nText: ${dialogueBody}`
-  }
-  
+
   return s
 }
 

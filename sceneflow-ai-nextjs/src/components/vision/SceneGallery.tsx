@@ -221,7 +221,11 @@ export function SceneGallery({
   // Processing overlay hook for animated feedback
   const { execute } = useProcessWithOverlay()
   
-  // Count scenes needing any Express phase (direction OR image OR missing audio)
+  // Count scenes needing any Express phase (direction OR image OR missing audio
+  // in the currently selected language). When the user picks a non-English
+  // language and audio for that language hasn't been generated yet, every
+  // scene with dialogue / narration becomes "needs audio" so Express can fan
+  // it out.
   const scenesNeedingExpress = useMemo(() => {
     return scenes.filter((scene) => {
       const needsDirection =
@@ -230,7 +234,7 @@ export function SceneGallery({
         !scene.sceneDirection.scene
       const needsImage = !scene?.imageUrl
       const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
-      const dialogueAudio = scene?.dialogueAudio?.en
+      const dialogueAudio = scene?.dialogueAudio?.[selectedLanguage]
       const dialogueOk =
         dialogue.length === 0 ||
         (Array.isArray(dialogueAudio) &&
@@ -238,24 +242,24 @@ export function SceneGallery({
           dialogueAudio.every((d: any) => d && d.audioUrl))
       const narrationOk =
         !scene?.narration ||
-        !!scene?.narrationAudio?.en?.url ||
-        !!scene?.narrationAudio?.en
+        !!scene?.narrationAudio?.[selectedLanguage]?.url ||
+        (selectedLanguage === 'en' && !!scene?.narrationAudioUrl)
       const needsAudio = !(narrationOk && dialogueOk)
       return needsDirection || needsImage || needsAudio
     }).length
-  }, [scenes])
+  }, [scenes, selectedLanguage])
 
   const handleExpressConfirm = useCallback(
     async (options: ExpressConfirmOptions) => {
       if (!onExpressGenerate) return
       setExpressDialogOpen(false)
       try {
-        await onExpressGenerate(options)
+        await onExpressGenerate({ ...options, language: selectedLanguage })
       } catch (err) {
         console.error('[SceneGallery] Express generate failed:', err)
       }
     },
-    [onExpressGenerate]
+    [onExpressGenerate, selectedLanguage]
   )
   
   // Build smart prompt that includes character AND object references for consistency
@@ -388,18 +392,35 @@ export function SceneGallery({
               </TooltipContent>
             </Tooltip>
           )}
-          {/* Generate All Audio button */}
-          {/* Language Stream Selector */}
-          {availableLanguages.length > 1 && (
-            <div className="flex items-center gap-1.5">
-              <GroupedLanguageSelector
-                value={selectedLanguage}
-                onValueChange={setSelectedLanguage}
-                filterCodes={availableLanguages}
-                size="xs"
-              />
-            </div>
-          )}
+          {/* Language selector - always visible. The list is the full
+              supported languages so users can pick a target locale to
+              generate audio in (the Express button reflects "needs audio in
+              this language"). When the selected language has no audio yet,
+              a small "Missing" badge nudges the user toward Express. */}
+          <div className="flex items-center gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <GroupedLanguageSelector
+                    value={selectedLanguage}
+                    onValueChange={setSelectedLanguage}
+                    size="xs"
+                    intent="generate"
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {availableLanguages.includes(selectedLanguage)
+                  ? `Switch storyboard playback language`
+                  : `No audio in this language yet — run Express to generate`}
+              </TooltipContent>
+            </Tooltip>
+            {!availableLanguages.includes(selectedLanguage) && (
+              <span className="text-[10px] uppercase tracking-wider text-amber-300 bg-amber-900/30 border border-amber-700/40 px-1.5 py-0.5 rounded">
+                Missing
+              </span>
+            )}
+          </div>
           {/* Audio Player toggle - only show if scenes have audio */}
           {scenesWithAudio > 0 && (
             <Tooltip>
@@ -650,6 +671,7 @@ export function SceneGallery({
           onOpenChange={setExpressDialogOpen}
           scenes={scenes}
           isRunning={isExpressRunning}
+          language={selectedLanguage}
           onConfirm={handleExpressConfirm}
         />
       )}

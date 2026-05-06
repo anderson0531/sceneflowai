@@ -9572,7 +9572,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             projectId,
-            language: 'en',
+            language: options.language || 'en',
             includeMusic: !!options.includeMusic,
             includeSFX: !!options.includeSFX,
             regenerate: !!options.regenerate,

@@ -11,13 +11,16 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Zap, AlertCircle, Loader, Image as ImageIcon, Volume2, FileText } from 'lucide-react'
+import { Zap, AlertCircle, Loader, Image as ImageIcon, Volume2, FileText, Languages } from 'lucide-react'
 import { IMAGE_CREDITS, AUDIO_CREDITS } from '@/lib/credits/creditCosts'
+import { getLanguageName, FLAG_EMOJIS } from '@/constants/languages'
 
 export interface ExpressConfirmOptions {
   includeMusic: boolean
   includeSFX: boolean
   regenerate: boolean
+  /** Locale of dialogue / narration to generate. Defaults to 'en' upstream. */
+  language?: string
 }
 
 interface ExpressConfirmDialogProps {
@@ -25,6 +28,10 @@ interface ExpressConfirmDialogProps {
   onOpenChange: (open: boolean) => void
   scenes: any[]
   isRunning?: boolean
+  /** Locale to generate audio in (e.g., 'en', 'th'). Drives "needs audio"
+   *  calculation and is forwarded to the orchestrator so dialogue/narration
+   *  are synthesized in this language. */
+  language?: string
   onConfirm: (options: ExpressConfirmOptions) => void
 }
 
@@ -39,6 +46,7 @@ export function ExpressConfirmDialog({
   onOpenChange,
   scenes,
   isRunning = false,
+  language = 'en',
   onConfirm,
 }: ExpressConfirmDialogProps) {
   const [includeMusic, setIncludeMusic] = useState(false)
@@ -75,7 +83,7 @@ export function ExpressConfirmDialog({
       const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
       totalDialogue += dialogue.length
 
-      const dialogueAudio = scene?.dialogueAudio?.en
+      const dialogueAudio = scene?.dialogueAudio?.[language]
       const dialogueOk =
         dialogue.length === 0 ||
         (Array.isArray(dialogueAudio) &&
@@ -83,8 +91,8 @@ export function ExpressConfirmDialog({
           dialogueAudio.every((d: any) => d && d.audioUrl))
       const narrationOk =
         !scene?.narration ||
-        !!scene?.narrationAudio?.en?.url ||
-        !!scene?.narrationAudio?.en
+        !!scene?.narrationAudio?.[language]?.url ||
+        (language === 'en' && !!scene?.narrationAudioUrl)
       if (!(narrationOk && dialogueOk)) scenesNeedingAudio += 1
 
       if (scene?.music) scenesWithMusic += 1
@@ -100,7 +108,7 @@ export function ExpressConfirmDialog({
       totalSfxCues,
       scenesWithMusic,
     }
-  }, [scenes])
+  }, [scenes, language])
 
   const effectiveImageScenes = regenerate
     ? stats.total
@@ -157,6 +165,27 @@ export function ExpressConfirmDialog({
         </DialogHeader>
 
         <div className="space-y-5 py-2">
+          {/* Language banner */}
+          <div className="rounded-lg border border-gray-800 bg-gray-900/40 p-3">
+            <div className="text-xs text-gray-400 flex items-center gap-2">
+              <Languages className="w-3.5 h-3.5 text-indigo-300" />
+              <span>Audio language</span>
+            </div>
+            <div className="mt-1 text-sm font-medium text-white flex items-center gap-2">
+              <span>{FLAG_EMOJIS[language] ?? ''}</span>
+              <span>{getLanguageName(language)}</span>
+              {language !== 'en' && (
+                <span className="ml-1 text-[10px] uppercase tracking-wider text-indigo-300 bg-indigo-900/40 px-1.5 py-0.5 rounded">
+                  translate
+                </span>
+              )}
+            </div>
+            <div className="text-[11px] text-gray-500 mt-1">
+              Dialogue and narration will be generated in {getLanguageName(language)}.
+              Existing audio in other languages is left untouched.
+            </div>
+          </div>
+
           {/* What will run */}
           <div className="rounded-lg border border-gray-800 bg-gray-900/40 p-3 space-y-2">
             <div className="text-sm font-medium text-gray-200 flex items-center gap-2">
@@ -293,7 +322,7 @@ export function ExpressConfirmDialog({
             Cancel
           </Button>
           <Button
-            onClick={() => onConfirm({ includeMusic, includeSFX, regenerate })}
+            onClick={() => onConfirm({ includeMusic, includeSFX, regenerate, language })}
             disabled={isRunning || nothingToRun}
             className="bg-indigo-600 hover:bg-indigo-700 text-white"
           >
