@@ -16,6 +16,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
+import { GoogleTranslate } from './GoogleTranslate'
+
 // Product definitions for dropdown
 const products = [
   {
@@ -266,6 +268,7 @@ export function Header() {
             
             {/* CTA Buttons - Right */}
             <div className="flex items-center space-x-3">
+              <GoogleTranslate />
               {isAuthenticated ? (
                 <>
                   {/* User Dropdown - Consolidates all auth controls */}
@@ -408,6 +411,9 @@ export function Header() {
                   
                   {/* Auth Section */}
                   <div className="flex flex-col space-y-2 pt-2">
+                    <div className="px-3 pb-2 flex justify-start">
+                      <GoogleTranslate />
+                    </div>
                     {isAuthenticated ? (
                       <>
                         {/* User Info */}
