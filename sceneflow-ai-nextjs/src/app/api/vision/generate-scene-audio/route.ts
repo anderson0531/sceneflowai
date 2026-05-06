@@ -313,6 +313,77 @@ async function generateAudio(
   return await generateGoogleAudio(text, voiceConfig, language, audioType)
 }
 
+/**
+ * Default Google TTS voice for each supported locale. Used when the user's
+ * configured voice (e.g. `en-US-Studio-M`) is locked to a specific locale
+ * but the requested generation language is different (e.g. Thai). Picking
+ * Neural2 where Google offers it, falling back to Standard otherwise. The
+ * goal is just "sounds reasonable in the target language" — voice timbre
+ * cannot be preserved across locales because Studio/WaveNet/Neural2 voices
+ * are locale-specific.
+ */
+const DEFAULT_GOOGLE_VOICE_BY_LOCALE: Record<string, string> = {
+  'en-US': 'en-US-Neural2-D',
+  'en-GB': 'en-GB-Neural2-B',
+  'th-TH': 'th-TH-Neural2-C',
+  'es-ES': 'es-ES-Neural2-B',
+  'es-US': 'es-US-Neural2-B',
+  'fr-FR': 'fr-FR-Neural2-D',
+  'fr-CA': 'fr-CA-Neural1-D',
+  'de-DE': 'de-DE-Neural2-D',
+  'it-IT': 'it-IT-Neural2-C',
+  'ja-JP': 'ja-JP-Neural2-C',
+  'ko-KR': 'ko-KR-Neural2-C',
+  'cmn-CN': 'cmn-CN-Standard-B',
+  'cmn-TW': 'cmn-TW-Standard-B',
+  'pt-BR': 'pt-BR-Neural2-B',
+  'pt-PT': 'pt-PT-Wavenet-B',
+  'ru-RU': 'ru-RU-Standard-D',
+  'nl-NL': 'nl-NL-Standard-B',
+  'pl-PL': 'pl-PL-Standard-C',
+  'tr-TR': 'tr-TR-Standard-D',
+  'sv-SE': 'sv-SE-Standard-D',
+  'da-DK': 'da-DK-Standard-C',
+  'nb-NO': 'nb-NO-Standard-D',
+  'fi-FI': 'fi-FI-Standard-A',
+  'hi-IN': 'hi-IN-Neural2-D',
+  'id-ID': 'id-ID-Standard-A',
+  'vi-VN': 'vi-VN-Standard-D',
+  'cy-GB': 'cy-GB-Standard-A',
+  'cs-CZ': 'cs-CZ-Standard-A',
+  'el-GR': 'el-GR-Standard-A',
+  'he-IL': 'he-IL-Standard-A',
+  'hu-HU': 'hu-HU-Standard-A',
+  'ro-RO': 'ro-RO-Standard-A',
+  'sk-SK': 'sk-SK-Standard-A',
+  'uk-UA': 'uk-UA-Standard-A',
+  'ar-XA': 'ar-XA-Standard-D',
+}
+
+/**
+ * A voice is "multilingual" if it can render any languageCode without a
+ * 400 from Google. Today that includes Gemini TTS and Chirp3 voices, plus
+ * voice clones (which carry their own model). For everything else (Studio,
+ * WaveNet, Neural2, Standard) we have to swap to a locale-appropriate
+ * default voice when the request language doesn't match the voice locale.
+ */
+function isMultilingualVoiceName(name: string): boolean {
+  if (!name) return false
+  // Chirp3 voices look like `en-US-Chirp3-HD-Aoede`, etc.
+  if (/-Chirp3?[-_]/i.test(name)) return true
+  if (/-Chirp\b/i.test(name)) return true
+  return false
+}
+
+function extractLocaleFromVoiceName(name: string): string | null {
+  if (!name) return null
+  const parts = name.split('-')
+  if (parts.length < 2) return null
+  // Locales are first two segments: `en-US-Studio-M` -> `en-US`,
+  // `cmn-CN-Standard-B` -> `cmn-CN`.
+  return `${parts[0]}-${parts[1]}`
+}
+
 async function generateGoogleAudio(
   text: string,
   voiceConfig: VoiceConfig,
@@ -353,34 +424,52 @@ async function generateGoogleAudio(
 
   // Override with the requested target language to ensure native accents
   if (language && language !== 'en') {
-    // Map 2-letter codes to standard Google TTS locales
-    const localeMap: Record<string, string> = {
-      'th': 'th-TH',
-      'es': 'es-ES',
-      'fr': 'fr-FR',
-      'de': 'de-DE',
-      'it': 'it-IT',
-      'ja': 'ja-JP',
-      'ko': 'ko-KR',
-      'zh': 'cmn-CN',
-      'pt': 'pt-BR',
-      'ru': 'ru-RU',
-      'nl': 'nl-NL',
-      'pl': 'nl-NL', // Wait, nl-NL for pl? Let's fix that
-      'sv': 'sv-NL', // Wait...
-    }
-    
-    // Better locale map fallback logic
     const preciseMap: Record<string, string> = {
       'th': 'th-TH', 'es': 'es-ES', 'fr': 'fr-FR', 'de': 'de-DE', 'it': 'it-IT',
       'ja': 'ja-JP', 'ko': 'ko-KR', 'zh': 'cmn-CN', 'pt': 'pt-BR', 'ru': 'ru-RU',
       'nl': 'nl-NL', 'pl': 'pl-PL', 'sv': 'sv-SE', 'tr': 'tr-TR', 'da': 'da-DK',
       'fi': 'fi-FI', 'no': 'nb-NO', 'hi': 'hi-IN', 'id': 'id-ID', 'vi': 'vi-VN',
-      'cy': 'cy-GB', 'et': 'et-EE', 'hr': 'hr-HR', 'bs': 'bs-BA', 'sl': 'sl-SI', 'mk': 'mk-MK', 'ka': 'ka-GE', 'az': 'az-AZ', 'kk': 'kk-KZ', 'fa': 'fa-IR', 'ur': 'ur-PK', 'sw': 'sw-KE'
+      'cy': 'cy-GB', 'et': 'et-EE', 'hr': 'hr-HR', 'bs': 'bs-BA', 'sl': 'sl-SI',
+      'mk': 'mk-MK', 'ka': 'ka-GE', 'az': 'az-AZ', 'kk': 'kk-KZ', 'fa': 'fa-IR',
+      'ur': 'ur-PK', 'sw': 'sw-KE'
     }
     
     languageCode = preciseMap[language] || `${language}-${language.toUpperCase()}`
     console.log(`[Google TTS] Target language ${language} requested. Setting languageCode to ${languageCode} to enforce native accent.`)
+  }
+
+  // Voice substitution for cross-locale generation. Studio/WaveNet/Neural2/
+  // Standard voices are locked to a single locale, so calling Google TTS
+  // with mismatched voice.name + languageCode 400s ("voice 'en-US-Studio-M'
+  // doesn't match language code 'th-TH'"). Gemini TTS, Chirp3, and voice
+  // clones are multilingual and can stay as-is. For everything else, if the
+  // voice's locale doesn't match the requested languageCode we swap to a
+  // locale-appropriate default so the user still gets correctly-pronounced
+  // audio in the target language even if voice timbre is lost.
+  let voiceNameToSend = actualVoiceName
+  let voiceWasSubstituted = false
+  if (!isGemini && !isCustomClone) {
+    const voiceLocale = extractLocaleFromVoiceName(actualVoiceName)
+    const localeMatches = voiceLocale && voiceLocale.toLowerCase() === languageCode.toLowerCase()
+    if (!localeMatches && !isMultilingualVoiceName(actualVoiceName)) {
+      const fallback = DEFAULT_GOOGLE_VOICE_BY_LOCALE[languageCode]
+      if (fallback) {
+        console.warn(
+          `[Google TTS] Voice '${actualVoiceName}' (${voiceLocale ?? 'unknown'}) does not support languageCode '${languageCode}'. ` +
+            `Substituting default voice '${fallback}' for this run.`
+        )
+        voiceNameToSend = fallback
+        voiceWasSubstituted = true
+      } else {
+        // No mapping — drop voice.name and let Google pick a default. We set
+        // ssmlGender NEUTRAL on the payload below so the API doesn't 400.
+        console.warn(
+          `[Google TTS] Voice '${actualVoiceName}' (${voiceLocale ?? 'unknown'}) does not support languageCode '${languageCode}' and no default mapping is available. Dropping voice.name; Google will pick a default voice.`
+        )
+        voiceNameToSend = ''
+        voiceWasSubstituted = true
+      }
+    }
   }
 
   const payload: any = {
@@ -397,8 +486,12 @@ async function generateGoogleAudio(
     payload.voice.voiceClone = {
       voiceCloningKey: actualVoiceName
     }
+  } else if (voiceNameToSend) {
+    payload.voice.name = voiceNameToSend
   } else {
-    payload.voice.name = actualVoiceName
+    // Fallback path: no voice name available for the locale. Google requires
+    // either name or ssmlGender; NEUTRAL is widely supported.
+    payload.voice.ssmlGender = 'NEUTRAL'
   }
 
   if (isGemini) {
