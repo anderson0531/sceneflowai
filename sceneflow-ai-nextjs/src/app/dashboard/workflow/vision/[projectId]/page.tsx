@@ -1780,7 +1780,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       modelTier?: 'eco' | 'designer' | 'director'
       /** Thinking level for prompt complexity */
       thinkingLevel?: 'low' | 'high'
-    }) => {
+    }): Promise<{ startFrameUrl?: string; endFrameUrl?: string } | void> => {
       const scene = script?.script?.scenes?.find((s: any) => 
         (s.id || s.sceneId || `scene-${script?.script?.scenes?.indexOf(s)}`) === sceneId
       )
@@ -1981,6 +1981,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
 
         toast.success(`Frame${frameType === 'both' ? 's' : ''} generated successfully`)
+        return { startFrameUrl: data.startFrameUrl, endFrameUrl: data.endFrameUrl }
       } catch (error) {
         console.error('[VisionPage] Failed to generate segment frames:', error)
         toast.error(error instanceof Error ? error.message : 'Failed to generate frames')

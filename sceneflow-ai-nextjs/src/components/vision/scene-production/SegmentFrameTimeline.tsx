@@ -83,7 +83,7 @@ export interface SegmentFrameTimelineProps {
     }>
     /** Scene direction for intelligent prompt building (avoids fallback to PromptEnhancer) */
     sceneDirection?: DetailedSceneDirection | null
-  }) => Promise<void>
+  }) => Promise<{ startFrameUrl?: string; endFrameUrl?: string } | void>
   onGenerateVideo: (segmentId: string) => void
   onOpenDirectorConsole?: () => void
   onEditFrame?: (segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
@@ -367,6 +367,60 @@ export function SegmentFrameTimeline({
     )
   }, [onGenerateFrames, executeWithOverlay, sceneDirection])
   
+  const handleExpress = useCallback(async () => {
+    // Group segments into concurrent chains
+    // A chain starts at index 0, or whenever transitionType === 'CUT'
+    const chains: number[][] = []
+    let currentChain: number[] = []
+
+    segments.forEach((segment, index) => {
+      if (index === 0 || segment.transitionType === 'CUT') {
+        if (currentChain.length > 0) {
+          chains.push(currentChain)
+        }
+        currentChain = [index]
+      } else {
+        currentChain.push(index)
+      }
+    })
+    if (currentChain.length > 0) {
+      chains.push(currentChain)
+    }
+
+    await executeWithOverlay(
+      async () => {
+        await Promise.all(
+          chains.map(async (chain) => {
+            let lastEndFrameUrl: string | undefined = undefined
+
+            for (let i = 0; i < chain.length; i++) {
+              const segmentIndex = chain[i]
+              const segment = segments[segmentIndex]
+              
+              // If it's a continuation within the chain
+              const usePreviousEndFrame = i > 0
+              
+              const result = await onGenerateFrames(segment.segmentId, 'both', {
+                usePreviousEndFrame,
+                previousEndFrameUrl: usePreviousEndFrame ? lastEndFrameUrl : undefined,
+                sceneDirection,
+              })
+
+              if (result && result.endFrameUrl) {
+                lastEndFrameUrl = result.endFrameUrl
+              }
+            }
+          })
+        )
+      },
+      {
+        message: `Express generating keyframes...`,
+        estimatedDuration: segments.length * 35,
+        operationType: 'keyframe-generation'
+      }
+    )
+  }, [segments, onGenerateFrames, executeWithOverlay, sceneDirection])
+
   // Handle delete segment
   const handleDeleteClick = useCallback((segmentId: string, index: number) => {
     setDeleteSegmentTarget({ segmentId, index })
@@ -443,18 +497,18 @@ export function SegmentFrameTimeline({
               </Badge>
             ) : null}
             
-            {/* Regenerate Segments button - opens confirmation dialog */}
-            {stats.total > 0 && onDeleteSegment && (
+            {/* Express Keyframe Generation button */}
+            {stats.total > 0 && (
               <Button
                 size="default"
                 variant="outline"
-                onClick={() => setRegenerateDialogOpen(true)}
+                onClick={handleExpress}
                 disabled={isGenerating}
                 className="h-10 px-5 text-sm font-semibold border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400 shadow-md hover:shadow-lg transition-all"
-                title="Clear all segments and regenerate with the Segment Builder"
+                title="Auto-generate frames for all segments concurrently"
               >
-                <Layers className="w-5 h-5 mr-2" />
-                Regenerate
+                <Wand2 className="w-5 h-5 mr-2" />
+                Express
               </Button>
             )}
             

@@ -325,7 +325,7 @@ interface ScriptPanelProps {
     negativePrompt?: string
     usePreviousEndFrame?: boolean
     previousEndFrameUrl?: string
-  }) => Promise<void>
+  }) => Promise<{ startFrameUrl?: string; endFrameUrl?: string } | void>
   onEditFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => void
   generatingFrameForSegment?: string | null
@@ -3559,7 +3559,7 @@ interface SceneCardProps {
   onMarkWorkflowComplete?: (sceneIdx: number, stepKey: string, isComplete: boolean) => void
   onDismissStaleWarning?: (sceneIdx: number, stepKey: string) => void
   // Keyframe State Machine - Frame step handlers
-  onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both', options?: { customPrompt?: string; negativePrompt?: string; usePreviousEndFrame?: boolean }) => Promise<void>
+  onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both', options?: { customPrompt?: string; negativePrompt?: string; usePreviousEndFrame?: boolean }) => Promise<{ startFrameUrl?: string; endFrameUrl?: string } | void>
   onEditFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onOpenFrameEditModal?: (sceneId: string, sceneIdx: number, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
   onUploadFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', file: File) => void
