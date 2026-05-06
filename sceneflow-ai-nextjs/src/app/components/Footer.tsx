@@ -26,10 +26,7 @@ export function Footer() {
   }
 
   const socialLinks = [
-    { name: 'Twitter', icon: Twitter, href: '#' },
-    { name: 'LinkedIn', icon: Linkedin, href: '#' },
-    { name: 'GitHub', icon: Github, href: '#' },
-    { name: 'Email', icon: Mail, href: 'mailto:hello@sceneflowai.com' }
+    { name: 'Email', icon: Mail, href: 'mailto:brian@sfai.studio' }
   ]
 
   const scrollToSection = (sectionId: string) => {

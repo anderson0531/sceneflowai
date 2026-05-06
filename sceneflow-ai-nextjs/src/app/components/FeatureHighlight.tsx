@@ -147,8 +147,8 @@ export function FeatureHighlight() {
     {
       icon: Video,
       title: 'Video Generation',
-      description: 'Veo 2.0 with 5 generation modes: Text-to-Video, Image-to-Video, Frame-to-Video, Extend, and Reference-based.',
-      detailedDescription: 'Generate stunning video segments with Google Veo 2.0. Choose from multiple generation modes: T2V (text-to-video), I2V (image-to-video), FTV (frame-anchored for consistency), EXT (extend existing clips), or REF (style reference). Our Keyframe State Machine ensures smooth transitions.',
+      description: 'Veo 3.1 with 5 generation modes: Text-to-Video, Image-to-Video, Frame-to-Video, Extend, and Reference-based.',
+      detailedDescription: 'Generate stunning video segments with Google Veo 3.1. Choose from multiple generation modes: T2V (text-to-video), I2V (image-to-video), FTV (frame-anchored for consistency), EXT (extend existing clips), or REF (style reference). Our Keyframe State Machine ensures smooth transitions.',
       benefits: [
         'Multiple generation modes',
         'Frame-anchored consistency',

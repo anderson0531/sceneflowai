@@ -6,7 +6,7 @@ import Image from 'next/image';
 
 export function GoogleCloudBadge() {
   const googleServices = [
-    { name: 'Veo 2.0', description: 'Video Generation', icon: Video },
+    { name: 'Veo 3.1', description: 'Video Generation', icon: Video },
     { name: 'Imagen 3', description: 'Image Creation', icon: ImageIcon },
     { name: 'Gemini 3.0', description: 'AI Intelligence', icon: Brain },
   ];
@@ -39,7 +39,7 @@ export function GoogleCloudBadge() {
           </h3>
           <p className="text-gray-400 max-w-2xl mx-auto">
             SceneFlow AI is the commercial showcase for Google&apos;s generative AI video capabilities. 
-            Our success directly validates Veo 2.0, Imagen 3 (and roadmapped Imagen 4), and Gemini 3.1 Pro as production-ready creative tools.
+            Our success directly validates Veo 3.1, Imagen 3 (and roadmapped Imagen 4), and Gemini 3.1 Pro as production-ready creative tools.
           </p>
         </motion.div>
 
