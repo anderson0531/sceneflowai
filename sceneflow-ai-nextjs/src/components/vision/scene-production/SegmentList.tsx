@@ -180,12 +180,6 @@ function SegmentCard({
       </div>
       {!collapsed && (
         <div className="px-3 pb-3 space-y-3">
-          {segment.dialogue.length === 1 && (
-            <div className="rounded-md bg-blue-950/40 border border-blue-700/40 p-2.5 text-xs text-blue-100/90">
-              <span className="font-semibold">{segment.dialogue[0].character}:</span>{' '}
-              {segment.dialogue[0].line}
-            </div>
-          )}
           {(segment.startFramePrompt ||
             segment.endFramePrompt ||
             segment.videoPrompt ||

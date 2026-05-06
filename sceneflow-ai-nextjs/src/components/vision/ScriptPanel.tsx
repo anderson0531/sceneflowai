@@ -3995,6 +3995,7 @@ function SceneCard({
   const [sceneImageCollapsed, setSceneImageCollapsed] = useState(true)
   // Production workflow container collapse states
   const [storyboardBuilderCollapsed, setStoryboardBuilderCollapsed] = useState(true)
+  const [showKeyframes, setShowKeyframes] = useState(false)
   const [videoProductionCollapsed, setVideoProductionCollapsed] = useState(true)
   
   // Determine active step for Co-Pilot
@@ -5842,33 +5843,59 @@ function SceneCard({
                             ({(scene as any).segments.length} {(scene as any).segments.length === 1 ? 'segment' : 'segments'})
                           </span>
                         </div>
-                        {/* Resync Audio Timing Button (kept for parity) */}
-                        {onResyncAudioTiming && (
+                        <div className="flex items-center gap-2">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    onResyncAudioTiming(sceneIdx, selectedLanguage)
+                                    setShowKeyframes(!showKeyframes)
                                   }}
-                                  disabled={resyncingAudioSceneIndex === sceneIdx}
-                                  className="ml-2 p-1 rounded hover:bg-emerald-800/50 text-emerald-400 hover:text-emerald-300 transition-colors disabled:opacity-50"
+                                  className={`p-1.5 rounded flex items-center gap-1.5 transition-colors ${
+                                    showKeyframes 
+                                      ? 'bg-indigo-800/80 text-indigo-300' 
+                                      : 'hover:bg-indigo-800/50 text-indigo-400 hover:text-indigo-300'
+                                  }`}
                                 >
-                                  {resyncingAudioSceneIndex === sceneIdx ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  ) : (
-                                    <RefreshCw className="w-3.5 h-3.5" />
-                                  )}
+                                  <ImageIcon className="w-3.5 h-3.5" />
+                                  <span className="text-xs font-medium">Generate KeyFrames</span>
                                 </button>
                               </TooltipTrigger>
                               <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                                <p className="text-xs">Resync audio timing</p>
-                                <p className="text-[10px] text-gray-400">Recalculate start times after edits</p>
+                                <p className="text-xs">{showKeyframes ? 'Hide Keyframes' : 'Show Keyframes'}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
-                        )}
+
+                          {/* Resync Audio Timing Button (kept for parity) */}
+                          {onResyncAudioTiming && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      onResyncAudioTiming(sceneIdx, selectedLanguage)
+                                    }}
+                                    disabled={resyncingAudioSceneIndex === sceneIdx}
+                                    className="p-1.5 rounded hover:bg-emerald-800/50 text-emerald-400 hover:text-emerald-300 transition-colors disabled:opacity-50"
+                                  >
+                                    {resyncingAudioSceneIndex === sceneIdx ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <RefreshCw className="w-3.5 h-3.5" />
+                                    )}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                                  <p className="text-xs">Resync audio timing</p>
+                                  <p className="text-[10px] text-gray-400">Recalculate start times after edits</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
                       </div>
                       <SegmentList
                         scene={scene}
@@ -5886,6 +5913,69 @@ function SceneCard({
                         setGeneratingDialogue={setGeneratingDialogue}
                         overlayStore={overlayStore}
                       />
+                      
+                      {/* Keyframe Section */}
+                      {showKeyframes && (
+                        <div className="mt-4 pt-4 border-t border-emerald-500/30">
+                          <SegmentFrameTimeline
+                            segments={sceneProductionData?.segments || []}
+                            sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
+                            sceneNumber={sceneNumber}
+                            sceneImageUrl={scene.imageUrl}
+                            selectedSegmentIndex={selectedSegmentIndex}
+                            onSelectSegment={setSelectedSegmentIndex}
+                            onGenerateFrames={(segmentId, frameType, options) => 
+                              onGenerateSegmentFrames?.(
+                                scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                                segmentId,
+                                frameType,
+                                options
+                              ) ?? Promise.resolve()
+                            }
+                            onGenerateVideo={(segmentId) => 
+                              onSegmentGenerate?.(
+                                scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                                segmentId,
+                                'I2V'
+                              )
+                            }
+                            onOpenDirectorConsole={() => {
+                              const consoleId = `director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`
+                              const consoleEl = document.getElementById(consoleId)
+                              if (consoleEl) {
+                                consoleEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                              }
+                            }}
+                            onEditFrame={(segmentId, frameType, frameUrl) => {
+                              onOpenFrameEditModal?.(
+                                sceneIdx,
+                                scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                                segmentId,
+                                frameType,
+                                frameUrl
+                              )
+                            }}
+                            onUploadFrame={(segmentId, frameType, file) => {
+                              onUploadFrame?.(
+                                scene.sceneId || scene.id || `scene-${sceneIdx}`,
+                                segmentId,
+                                frameType,
+                                file
+                              )
+                            }}
+                            isGenerating={generatingFrameForSegment !== null}
+                            generatingSegmentId={generatingFrameForSegment}
+                            generatingPhase={generatingFramePhase}
+                            characters={characters}
+                            objectReferences={objectReferences}
+                            locationReferences={locationReferences}
+                            sceneHeading={scene.heading}
+                            sceneDirection={scene.sceneDirection}
+                            totalAudioDurationSeconds={undefined}
+                            sceneData={sceneProductionData}
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
 
