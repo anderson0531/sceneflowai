@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, DollarSign, Layers, User, Users, Video, PlayCircle, Info, ChevronRight } from 'lucide-react';
+import { Clock, DollarSign, Layers, User, Users, Video, PlayCircle, Info } from 'lucide-react';
 
 const VIDEO_CATEGORIES = [
   {
     id: 'property',
     title: "Property, Spaces & Hospitality",
+    videoSrc: '/demo/property-hospitality.mp4',
     examples: [
       { label: "Residential Real Estate", description: "Automated listing tours featuring the agent's cloned voice and avatar identity." },
       { label: "Commercial Real Estate", description: "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data." },
@@ -122,6 +123,26 @@ const ProductionComparisonVisual = () => {
                         {cat.title}
                       </h4>
                       <div className="h-0.5 w-12 bg-cyan-500/50 mt-1 rounded-full" />
+                    </div>
+
+                    <div className="mb-3 rounded-lg border border-cyan-500/20 bg-slate-950/80 overflow-hidden">
+                      {cat.videoSrc ? (
+                        <video
+                          key={cat.videoSrc}
+                          src={cat.videoSrc}
+                          controls
+                          muted
+                          playsInline
+                          preload="metadata"
+                          className="w-full aspect-video bg-black"
+                        />
+                      ) : (
+                        <div className="w-full aspect-video bg-slate-950 flex items-center justify-center">
+                          <p className="text-xs text-slate-500 uppercase tracking-wider">
+                            Video placeholder
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid gap-2">
