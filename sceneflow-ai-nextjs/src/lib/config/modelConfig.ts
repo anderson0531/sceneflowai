@@ -234,7 +234,7 @@ export function buildThinkingConfig(
   }
 
   // Gemini 2.5: numeric thinking budget
-  if (options.thinkingBudget !== undefined) {
+  if (options.thinkingBudget !== undefined && options.thinkingBudget > 0) {
     return { thinkingBudget: options.thinkingBudget };
   }
   return undefined;

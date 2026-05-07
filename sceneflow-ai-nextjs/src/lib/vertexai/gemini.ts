@@ -114,7 +114,7 @@ export async function generateText(
   const accessToken = await getVertexAIAuthToken();
   
   // 2. CONSTRUCT CLEAN THINKING CONFIG
-  const isMinimal = options.thinkingLevel === 'minimal';
+  const isMinimal = options.thinkingLevel === 'minimal' || options.thinkingBudget === 0;
   const thinking_config: any = { include_thoughts: !isMinimal };
 
   if (isGemini3) {
@@ -125,7 +125,13 @@ export async function generateText(
     }
   } else {
     const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
-    thinking_config.thinking_budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
+    const budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
+    thinking_config.thinking_budget = budget;
+    
+    // If budget is 0, we shouldn't send thinking_config at all
+    if (budget === 0) {
+      thinking_config.include_thoughts = false;
+    }
   }
 
   // 3. ASSEMBLE REQUEST
@@ -226,7 +232,7 @@ export async function streamText(
   const accessToken = await getVertexAIAuthToken();
 
   // 2. CONSTRUCT CLEAN THINKING CONFIG
-  const isMinimal = options.thinkingLevel === 'minimal';
+  const isMinimal = options.thinkingLevel === 'minimal' || options.thinkingBudget === 0;
   const thinking_config: any = { include_thoughts: !isMinimal };
 
   if (isGemini3) {
@@ -237,7 +243,13 @@ export async function streamText(
     }
   } else {
     const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
-    thinking_config.thinking_budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
+    const budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
+    thinking_config.thinking_budget = budget;
+    
+    // If budget is 0, we shouldn't send thinking_config at all
+    if (budget === 0) {
+      thinking_config.include_thoughts = false;
+    }
   }
 
   // 3. ASSEMBLE REQUEST
