@@ -45,7 +45,8 @@ describe('segmentGuidePrompt', () => {
     const prompt = buildDefaultBatchGuidePrompt(segment, scene, [])
     expect(prompt).toContain('ALICE')
     expect(prompt).toContain('Hello world')
-    expect(prompt.toLowerCase()).toMatch(/office|leans|forward/)
+    // Scene direction / visual prose is opt-in in the guide UI; default batch seed is dialogue-only.
+    expect(prompt.toLowerCase()).not.toMatch(/office interior|leans forward/)
   })
 
   it('returns empty when no dialogue assignment and no direction text', () => {

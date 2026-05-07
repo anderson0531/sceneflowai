@@ -485,7 +485,8 @@ export function buildBatchAutoGuideElements(
       type: 'direction',
       label: 'Scene Direction',
       content: directionParts.join('\n\n'),
-      selected: true,
+      // Off by default for batch/F2V seeding — avoids conflicting with frame-locked visuals.
+      selected: false,
       portionStart: 0,
       portionEnd: 100,
     })

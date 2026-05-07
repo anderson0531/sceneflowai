@@ -607,7 +607,8 @@ export function GuidePromptEditor({
         type: 'direction',
         label: 'Scene Direction',
         content: directionParts.join('\n\n'),
-        selected: true,
+        // Off by default: scene-direction prose can fight F2V keyframe identity; opt in when needed.
+        selected: false,
         portionStart: 0,
         portionEnd: 100,
       })
