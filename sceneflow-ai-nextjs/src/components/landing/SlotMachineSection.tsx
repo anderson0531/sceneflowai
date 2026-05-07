@@ -20,6 +20,7 @@ const VIDEO_CATEGORIES = [
   {
     id: 'knowledge',
     title: "Knowledge, Training & Education",
+    videoSrc: '/demo/knowledge-education.mov',
     examples: [
       { label: "K-12 & Higher Ed", description: "30-minute curriculum modules that can be instantly localized for ESL students or global campuses." },
       { label: "Corporate L&D", description: "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices." },
