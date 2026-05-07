@@ -91,14 +91,6 @@ CULTURAL AUTHENTICITY - MANDATORY:
 - NEVER use generic Western names for non-Western characters unless explicitly stated
 - The ethnicity field must EXACTLY match what's implied in the input`
 
-const STORYTELLING_BLOCK = `
-STORYTELLING OPTIMIZATION (PRIMARY GOAL):
-- Prioritize narrative coherence, emotional resonance, dramatic structure
-- Make bold creative decisions: combine characters, elevate subplots, shift focus
-- Emphasize elements that strengthen themes and character arcs
-- Omit/minimize elements that dilute narrative power
-- Optimize for maximum storytelling impact, not input preservation`
-
 const OUTPUT_RULES_BLOCK = `
 OUTPUT RULES - CRITICAL:
 1. **START YOUR JSON WITH THESE 4 REQUIRED FIELDS** (in this exact order):
@@ -119,8 +111,41 @@ OUTPUT RULES - CRITICAL:
 
 7. Do NOT use placeholders like "General audience"; provide concrete descriptions.`
 
-const CHARACTER_ARC_REQUIREMENTS = `
-CRITICAL - CHARACTER ARCS ARE MANDATORY: 
+function getFormatSpecificBlocks(format: Format) {
+  const isNonFiction = ['education', 'training', 'news', 'podcast', 'interview'].includes(format);
+
+  if (isNonFiction) {
+    return {
+      storytellingBlock: `FORMAT OPTIMIZATION (PRIMARY GOAL):
+- Prioritize clear structure, engagement, and effective delivery of information
+- For news/podcast/interview/education, focus on topics, segments, and key takeaways
+- Emphasize elements that strengthen the core message and audience retention
+- Optimize for maximum impact and clarity, not narrative preservation`,
+      characterBlock: `CRITICAL - PARTICIPANT/SUBJECT PROFILES: 
+- Generate 2-4 detailed profiles for hosts, experts, interviewees, or subjects
+- Each MUST have complete visual attributes: subject, ethnicity, keyFeature, hairStyle, hairColor, eyeColor, expression, build
+- **NAMES MUST BE CULTURALLY AUTHENTIC**
+- **ETHNICITY MUST BE SPECIFIC**
+- **ADAPT PSYCHOLOGICAL FIELDS FOR NON-FICTION**:
+  • externalGoal: What is their role/objective in this segment?
+  • internalNeed: What unique perspective or expertise do they bring?
+  • fatalFlaw: What is a challenge or misconception they address?
+  • arcStartingState: Initial premise or introduction
+  • arcShift: The key insight or turning point they deliver
+  • arcEndingState: Final takeaway or conclusion
+- Generate 3-5 detailed scene_descriptions (key locations/sets)
+- Generate treatment with BOLD format choices and CLEAR reasoning`
+    };
+  }
+
+  return {
+    storytellingBlock: `STORYTELLING OPTIMIZATION (PRIMARY GOAL):
+- Prioritize narrative coherence, emotional resonance, dramatic structure
+- Make bold creative decisions: combine characters, elevate subplots, shift focus
+- Emphasize elements that strengthen themes and character arcs
+- Omit/minimize elements that dilute narrative power
+- Optimize for maximum storytelling impact, not input preservation`,
+    characterBlock: `CRITICAL - CHARACTER ARCS ARE MANDATORY: 
 - Generate 3-5 detailed character_descriptions (protagonist + supporting characters)
 - Each character MUST have complete attributes: subject, ethnicity, keyFeature, hairStyle, hairColor, eyeColor, expression, build
 - **CHARACTER NAMES MUST BE CULTURALLY AUTHENTIC**
@@ -135,6 +160,8 @@ CRITICAL - CHARACTER ARCS ARE MANDATORY:
 - Generate 3-5 detailed scene_descriptions (key locations)
 - Character arcs must show CLEAR TRANSFORMATION
 - Generate treatment with BOLD storytelling choices and CLEAR reasoning`
+  };
+}
 
 export function buildTreatmentPrompt(opts: {
   input: string
@@ -150,6 +177,7 @@ export function buildTreatmentPrompt(opts: {
 }) {
   const { input, coreConcept, format, targetMinutes, styleHint, context, beatStructure, persona, hasExplicitSettings } = opts
   const formatBlock = getFormatBlock(format)
+  const formatSpecifics = getFormatSpecificBlocks(format)
   const structureBlock = beatStructure ? `\nBEAT STRUCTURE:\n- Use the ${beatStructure.label} structure.\n- Produce beats matching these titles IN ORDER (adapt wording if needed, keep intent):\n${beatStructure.beats.map((b,i)=>`  ${i+1}. ${b.title}`).join('\n')}\n` : ''
   const personaBlock = persona === 'Director'
     ? '\nVOICE: Write as a concise, confident director offering clear, actionable guidance.'
@@ -181,7 +209,7 @@ ${personaBlock}${structureBlock}
 
 ${scoringChecklist}
 ${CULTURAL_AUTHENTICITY_BLOCK}
-${STORYTELLING_BLOCK}
+${formatSpecifics.storytellingBlock}
 
 INPUT:
 ${input}
@@ -202,7 +230,7 @@ CONTEXT:
 ${OUTPUT_RULES_BLOCK}
 
 STEP 1: BEFORE GENERATING ANYTHING ELSE, THINK ABOUT:
-- Who is the protagonist and why did you choose them?
+- Who are the primary subjects/participants and why did you choose them?
 - What 2-4 major creative decisions did you make?
 - What makes this treatment compelling?
 - How can the user adjust the input for different results?
@@ -211,7 +239,7 @@ STEP 2: START YOUR JSON OUTPUT WITH THESE 4 FIELDS FIRST, THEN ADD ALL OTHER FIE
 
 ${schemaBlock}
 
-${CHARACTER_ARC_REQUIREMENTS}`
+${formatSpecifics.characterBlock}`
 }
 
 function formatLabel(f: Format): string {

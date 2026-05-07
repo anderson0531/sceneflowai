@@ -50,6 +50,7 @@ type Props = {
     targetAudience?: string
     variantCount?: number // Smart variant count based on complexity
     hasStoryDirections?: boolean // Signals story direction options were selected (enables OOM-safe mode)
+    format?: string // Format derived from genre
   }) => Promise<void>
   existingVariant?: any // For reimagine mode (editing existing)
   initialIdea?: IdeationConcept // Pre-populated from Ideation
@@ -127,15 +128,15 @@ const AUDIENCE_OPTIONS = [
 ]
 
 // Instruction templates for the guided prompt builder
-const STORY_INSTRUCTION_TEMPLATES = [
+const CREATIVE_INSTRUCTION_TEMPLATES = [
   { id: 'more-conflict', label: 'Add More Conflict', text: 'Increase the central conflict and stakes for the protagonist.' },
-  { id: 'deeper-motivation', label: 'Deepen Motivation', text: 'Give the protagonist a stronger, more compelling motivation.' },
-  { id: 'twist-ending', label: 'Add a Twist', text: 'Include an unexpected plot twist that recontextualizes the story.' },
-  { id: 'emotional-depth', label: 'Emotional Depth', text: 'Amplify the emotional journey and character connections.' },
-  { id: 'faster-pacing', label: 'Faster Pacing', text: 'Tighten the narrative with quicker scene progression.' },
-  { id: 'world-building', label: 'Expand World', text: 'Add richer world-building details and setting atmosphere.' },
-  { id: 'moral-dilemma', label: 'Moral Dilemma', text: 'Introduce a challenging moral choice for the main character.' },
-  { id: 'relationship-focus', label: 'Focus on Relationships', text: 'Emphasize interpersonal dynamics between characters.' },
+  { id: 'educational-focus', label: 'Educational Focus', text: 'Structure as a clear, step-by-step educational lesson or tutorial.' },
+  { id: 'investigative', label: 'Investigative', text: 'Structure as a deep-dive investigative report or documentary.' },
+  { id: 'emotional-depth', label: 'Emotional Depth', text: 'Amplify the emotional journey and connections.' },
+  { id: 'faster-pacing', label: 'Faster Pacing', text: 'Tighten the narrative with quicker progression.' },
+  { id: 'world-building', label: 'Expand Context', text: 'Add richer world-building details and background context.' },
+  { id: 'conversational', label: 'Conversational', text: 'Structure as an engaging interview or podcast format.' },
+  { id: 'relationship-focus', label: 'Focus on Relationships', text: 'Emphasize interpersonal dynamics between subjects or characters.' },
 ]
 
 // =============================================================================
@@ -329,7 +330,7 @@ export function BlueprintReimaginDialog({
     
     // Add selected instruction templates
     const instructionTexts = selectedInstructions
-      .map(id => STORY_INSTRUCTION_TEMPLATES.find(t => t.id === id)?.text)
+      .map(id => CREATIVE_INSTRUCTION_TEMPLATES.find(t => t.id === id)?.text)
       .filter(Boolean)
     
     if (instructionTexts.length > 0 || customInstruction.trim()) {
@@ -359,6 +360,9 @@ export function BlueprintReimaginDialog({
       console.log('[BlueprintDialog] Story directions selected - using single variant mode to prevent OOM')
     }
     
+    const nonFictionFormats = ['documentary', 'education', 'training', 'news', 'podcast', 'interview']
+    const format = nonFictionFormats.includes(genre) ? genre : 'short_film'
+    
     setIsGenerating(true)
     try {
       await onGenerate(buildInput(), {
@@ -368,7 +372,8 @@ export function BlueprintReimaginDialog({
         duration,
         targetAudience,
         variantCount,
-        hasStoryDirections // Signal to API to use optimized prompt flow
+        hasStoryDirections, // Signal to API to use optimized prompt flow
+        format
       })
       
       toast.success(isReimaginMode ? 'Blueprint reimagined!' : 'Blueprint generated!')
@@ -421,12 +426,12 @@ export function BlueprintReimaginDialog({
           <div className="space-y-3">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
               <Film className="w-4 h-4 text-cyan-400" />
-              Your Story Concept
+              Your Concept
             </label>
             <Textarea
               value={synopsis}
               onChange={(e) => setSynopsis(e.target.value)}
-              placeholder="Describe your film or video concept. Include the main story, characters, and what you want the audience to feel..."
+              placeholder="Describe your concept. Include the main topic, subjects or characters, and what you want the audience to take away..."
               className="min-h-[140px] bg-slate-800/50 border-slate-700 focus:ring-cyan-500/50"
             />
           </div>
@@ -435,7 +440,7 @@ export function BlueprintReimaginDialog({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs text-gray-400 flex items-center gap-1">
-                <Palette className="w-3 h-3" /> Genre
+                <Palette className="w-3 h-3" /> Format / Genre
               </label>
               <Select value={genre} onValueChange={setGenre}>
                 <SelectTrigger className="bg-slate-800/50 border-slate-700 text-sm">
@@ -526,16 +531,16 @@ export function BlueprintReimaginDialog({
             </div>
           )}
           
-          {/* Story Direction Templates */}
+          {/* Creative Direction Templates */}
           <div className="space-y-3">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
               <Target className="w-4 h-4 text-purple-400" />
-              Story Direction
+              Creative Direction
               <span className="text-xs text-gray-500">(optional - click to select)</span>
             </label>
             
             <div className="flex flex-wrap gap-2">
-              {STORY_INSTRUCTION_TEMPLATES.map(template => (
+              {CREATIVE_INSTRUCTION_TEMPLATES.map(template => (
                 <button
                   key={template.id}
                   onClick={() => toggleInstruction(template.id)}
