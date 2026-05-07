@@ -664,13 +664,45 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     const resolvedStartFrameUrl = segment.startFrameUrl || segment.references?.startFrameUrl || null
     const resolvedEndFrameUrl = segment.endFrameUrl || segment.references?.endFrameUrl || null
     
+    // When using FTV, Veo 3.1 often triggers false-positive content policy flags if the prompt contains
+    // rich cinematography, camera movements, or lighting directions that conflict with the hard visual constraints
+    // of the start/end frames. We optimize the prompt by stripping out those directions if the user hasn't explicitly
+    // checked "skip motion transition guidance", meaning we are auto-generating the FTV prompt.
+    // AND if scene direction was manually injected by the GuidePromptEditor
+    let optimizedFtvPrompt = motionPrompt
+    let optimizedGuidePrompt = guidePrompt
+    if (method === 'FTV' && !skipAnchoringPhrase && motionPrompt) {
+      // Create a simplified prompt that only focuses on the action between frames,
+      // avoiding redundant scene direction that's already captured in the frames themselves.
+      const promptParts = motionPrompt.split('\n\n')
+      
+      const filteredParts = promptParts.filter(part => {
+        const lowerPart = part.toLowerCase()
+        if (lowerPart.includes('camera') || lowerPart.includes('lighting') || lowerPart.includes('cinematic')) {
+          return false
+        }
+        return true
+      })
+      
+      optimizedFtvPrompt = filteredParts.join('\n\n')
+      
+      // Also strip scene direction from the guide prompt for FTV to be safe
+      if (guidePrompt && guidePrompt.includes('---')) {
+          const guideParts = guidePrompt.split('---')
+          optimizedGuidePrompt = guideParts.map(part => {
+              if (part.toLowerCase().includes('scene direction')) return ''
+              return part
+          }).filter(Boolean).join('---')
+      }
+    }
+    
     const savedConfig: VideoGenerationConfig = {
       mode: method,
-      prompt: finalPrompt,
-      motionPrompt: motionPrompt,
+      prompt: method === 'FTV' ? optimizedFtvPrompt : finalPrompt,
+      motionPrompt: optimizedFtvPrompt,
       visualPrompt: visualPrompt,
       negativePrompt,
-      guidePrompt: guidePrompt || undefined,
+      guidePrompt: method === 'FTV' ? (optimizedGuidePrompt || undefined) : (guidePrompt || undefined),
       aspectRatio,
       resolution,
       duration,
