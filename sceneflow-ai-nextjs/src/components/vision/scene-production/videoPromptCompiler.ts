@@ -407,11 +407,17 @@ export interface CompileOptions {
  */
 function compileSceneDirectionPrompt(
   sceneDirection: DetailedSceneDirection | null | undefined,
-  segmentDialogue?: { character: string; text: string }
+  segmentDialogue?: { character: string; text: string },
+  isFtvMode?: boolean
 ): string {
   if (!sceneDirection) return ''
   
   const fragments: string[] = []
+  
+  // Skip complex scene direction if FTV mode, since it often conflicts with the constrained keyframes
+  if (isFtvMode) {
+     return ''
+  }
   
   // Check for per-dialogue talent direction that matches this segment
   if (segmentDialogue && sceneDirection.dialogueTalentDirections?.length) {
@@ -550,7 +556,8 @@ export function compileVideoPrompt(options: CompileOptions): VideoPromptPayload 
   const magicEditPrompt = compileMagicEditPrompt(settings.magicEdit)
   
   // NEW: Compile scene direction for professional video production
-  const sceneDirectionPrompt = compileSceneDirectionPrompt(sceneDirection)
+  // Pass method === 'FTV' so we can skip complex direction in FTV mode
+  const sceneDirectionPrompt = compileSceneDirectionPrompt(sceneDirection, undefined, method === 'FTV')
 
   // Assemble the full prompt (include scene direction for Veo-3 optimization)
   const promptParts = [

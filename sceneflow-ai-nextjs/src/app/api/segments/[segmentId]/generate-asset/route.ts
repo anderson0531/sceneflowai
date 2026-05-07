@@ -310,6 +310,21 @@ export async function POST(
         console.log('[Segment Asset Generation] Guide prompt length:', guidePrompt.length, 'chars')
       }
       
+      // Fix for Veo 3.1 Content Policy Flags in FTV mode
+      // If we are in FTV mode, we want to strip the "Scene Direction" part from the guide prompt
+      // and from the base prompt if it was concatenated, because rich cinematic descriptions 
+      // often conflict with the constrained start/end frames and trigger the safety filters.
+      if (method === 'FTV') {
+        if (enhancedPrompt.includes('---')) {
+          const parts = enhancedPrompt.split('---')
+          enhancedPrompt = parts.map(part => {
+             if (part.toLowerCase().includes('scene direction')) return ''
+             return part
+          }).filter(Boolean).join('---')
+          console.log('[Segment Asset Generation] FTV Mode: Stripped scene direction from enhanced prompt to avoid content policy conflicts')
+        }
+      }
+      
       // Additional atmospheric guidance from audioContext (legacy support)
       if (audioContext) {
         const atmosphericGuidance: string[] = []
