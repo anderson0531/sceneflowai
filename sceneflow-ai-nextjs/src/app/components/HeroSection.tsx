@@ -8,8 +8,7 @@ import { Play, ArrowRight, Pause, Volume2, VolumeX, Maximize } from 'lucide-reac
 import Link from 'next/link'
 
 /** Longform "What's Possible Reel" */
-const HERO_COMMERCIAL_BLOB_SRC =
-  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/landing-hero-anya-2-sd-480p.mp4#t=0.1'
+const HERO_COMMERCIAL_BLOB_SRC = '/demo/sceneflow-intro.mov#t=0.1'
 
 export function HeroSection() {
   const [isModalOpen, setIsModalOpen] = useState(false)
