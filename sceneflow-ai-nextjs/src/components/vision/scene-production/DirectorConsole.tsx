@@ -92,6 +92,7 @@ const SceneProductionMixer = dynamic(
   { ssr: false, loading: () => <div className="p-4 text-center text-zinc-500">Loading Mixer...</div> }
 )
 import { useVideoQueue } from '@/hooks/useVideoQueue'
+import { forceDownload } from '@/lib/utils'
 import type { SceneAudioData } from './GuidePromptEditor'
 import type { GuideCharacterDemographic } from '@/lib/scene/segmentGuidePrompt'
 import type { SegmentGuideContext } from '@/hooks/useSegmentConfig'
@@ -697,13 +698,11 @@ function DirectorConsoleRoot({
   }, [productionStreams])
   
   // Download a production stream
-  const handleDownloadStream = useCallback((streamId: string, mp4Url: string, language: string) => {
+  const handleDownloadStream = useCallback(async (streamId: string, mp4Url: string, language: string) => {
     const stream = productionStreams.find(s => s.id === streamId)
     const v = stream?.streamVersion ?? 1
-    const link = document.createElement('a')
-    link.href = mp4Url
-    link.download = `scene-${sceneNumber}-${language}-v${v}.mp4`
-    link.click()
+    const filename = `scene-${sceneNumber}-${language}-v${v}.mp4`
+    await forceDownload(mp4Url, filename)
   }, [sceneNumber, productionStreams])
   
   // Update stream when render completes
@@ -1425,14 +1424,13 @@ function DirectorConsoleRoot({
                   <PlayCircle className="w-5 h-5 text-cyan-400" />
                   Scene {sceneNumber} - Rendered Video
                 </h3>
-                <a
-                  href={renderedSceneUrl}
-                  download={`scene-${sceneNumber}.mp4`}
-                  className="text-sm text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                <button
+                  onClick={() => renderedSceneUrl && forceDownload(renderedSceneUrl, `scene-${sceneNumber}.mp4`)}
+                  className="text-sm text-cyan-400 hover:text-cyan-300 flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
                   Download MP4
-                </a>
+                </button>
               </div>
               <video
                 src={renderedSceneUrl}

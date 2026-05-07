@@ -70,7 +70,7 @@ import {
 } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
-import { cn } from '@/lib/utils'
+import { cn, forceDownload } from '@/lib/utils'
 import { SUPPORTED_LANGUAGES, FLAG_EMOJIS } from '@/constants/languages'
 import { MixerTimeline } from './MixerTimeline'
 import { ProductionSectionHeader } from './ProductionSectionHeader'
@@ -3289,6 +3289,18 @@ export function SceneProductionMixer({
     totalDuration, sceneId, projectId, sceneNumber, resolution, selectedLanguage,
     textOverlays, masterSegmentVolume, watermarkConfig, overlayStore
   ])
+
+  /**
+   * Forces a direct download of the last rendered video file.
+   * This bypasses the browser's default behavior of playing the video in a new tab.
+   */
+  const handleDownload = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (!lastRenderedUrl) return
+    const extension = activeRenderMode === 'local' || activeRenderMode === 'headless' ? 'webm' : 'mp4'
+    const filename = `scene-${sceneNumber}-${selectedLanguage}-${Date.now()}.${extension}`
+    await forceDownload(lastRenderedUrl, filename)
+  }, [lastRenderedUrl, activeRenderMode, sceneNumber, selectedLanguage])
   
   // Re-upload a GCS signed URL to Vercel Blob for persistent storage
   // GCS signed URLs expire after 7 days. Vercel Blob URLs are permanent.
@@ -5085,15 +5097,12 @@ export function SceneProductionMixer({
                   <span className="text-sm text-green-400">
                     Render complete! ({activeRenderMode === 'local' ? 'Quick Export' : activeRenderMode === 'headless' ? 'Pro Cloud' : 'Server'})
                   </span>
-                  <a 
-                    href={lastRenderedUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download={activeRenderMode === 'local' ? `scene-${sceneNumber}.webm` : undefined}
-                    className="text-sm text-purple-400 hover:text-purple-300 underline"
+                  <button 
+                    onClick={handleDownload}
+                    className="text-sm text-purple-400 hover:text-purple-300 underline bg-transparent border-none p-0 cursor-pointer"
                   >
                     Download {activeRenderMode === 'local' ? 'WebM' : activeRenderMode === 'headless' ? 'WebM' : 'MP4'}
-                  </a>
+                  </button>
                 </>
               )}
               {renderStatus === 'error' && renderError && (
