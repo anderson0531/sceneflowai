@@ -20,7 +20,7 @@ const VIDEO_CATEGORIES = [
   {
     id: 'knowledge',
     title: "Knowledge, Training & Education",
-    videoSrc: '/demo/sceneflow-intro.mov',
+    videoSrc: 'https://storage.googleapis.com/sceneflow-assets/demo/living-wall.mp4',
     examples: [
       { label: "K-12 & Higher Ed", description: "30-minute curriculum modules that can be instantly localized for ESL students or global campuses." },
       { label: "Corporate L&D", description: "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices." },

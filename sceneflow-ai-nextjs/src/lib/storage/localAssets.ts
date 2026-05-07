@@ -26,7 +26,7 @@ export interface LocalUploadResult {
  * Ensure the demo assets directory exists
  */
 async function ensureAssetDir(subcategory: string): Promise<string> {
-  const dir = path.join(process.cwd(), DEMO_ASSETS_DIR, subcategory)
+  const dir = path.join(/* turbopackIgnore: true */ process.cwd(), DEMO_ASSETS_DIR, subcategory)
   if (!existsSync(dir)) {
     await mkdir(dir, { recursive: true })
     console.log(`[Local Storage] Created directory: ${dir}`)
@@ -129,7 +129,7 @@ export async function deleteLocalAsset(url: string): Promise<void> {
     return
   }
   
-  const localPath = path.join(process.cwd(), 'public', url)
+  const localPath = path.join(/* turbopackIgnore: true */ process.cwd(), 'public', url)
   
   try {
     await unlink(localPath)

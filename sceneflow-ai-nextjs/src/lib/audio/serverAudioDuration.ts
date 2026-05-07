@@ -114,7 +114,7 @@ async function getAudioDurationWithFFprobe(filePath: string): Promise<number> {
     // Try to use ffprobe-static first
     let ffprobePath = 'ffprobe'
     try {
-      const ffprobeStatic = require('ffprobe-static')
+      const ffprobeStatic = require(/* turbopackIgnore: true */ 'ffprobe-static')
       ffprobePath = ffprobeStatic.path
     } catch {
       // Use system ffprobe

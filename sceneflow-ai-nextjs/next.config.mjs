@@ -9,6 +9,7 @@ const bundleAnalyzer = withBundleAnalyzer({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  serverExternalPackages: ["ffmpeg-static", "ffprobe-static"],
   typescript: {
     ignoreBuildErrors: true,
   },
