@@ -66,9 +66,9 @@ const ProductionComparisonVisual = () => {
   const [hoveredExample, setHoveredExample] = useState<{catId: string, index: number} | null>(null);
 
   return (
-    <div className="relative w-full mx-auto max-w-2xl">
+    <div className="relative flex h-full min-h-[22rem] w-full flex-col mx-auto max-w-2xl">
       <motion.div
-        className="relative rounded-2xl overflow-hidden border border-cyan-500/30 shadow-2xl bg-slate-900"
+        className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-cyan-500/30 bg-slate-900 shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
@@ -76,9 +76,9 @@ const ProductionComparisonVisual = () => {
       >
         <div className="absolute -inset-2 bg-gradient-to-r from-cyan-500/20 via-violet-500/20 to-emerald-500/20 rounded-2xl blur-xl -z-10" />
         
-        <div className="flex flex-col h-[500px]">
+        <div className="flex min-h-0 flex-1 flex-col">
           {/* Header */}
-          <div className="bg-slate-800/80 p-4 border-b border-white/10 flex items-center justify-between">
+          <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-slate-800/80 p-4">
             <div className="flex items-center gap-2 text-cyan-300">
               <PlayCircle className="w-5 h-5" />
               <p className="text-sm font-semibold uppercase tracking-wider">Example Use Cases</p>
@@ -88,9 +88,9 @@ const ProductionComparisonVisual = () => {
             </div>
           </div>
 
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex min-h-0 flex-1 overflow-hidden">
             {/* Sidebar Categories */}
-            <div className="w-1/3 bg-slate-950/50 border-r border-white/10 overflow-y-auto">
+            <div className="min-h-0 w-1/3 overflow-y-auto border-r border-white/10 bg-slate-950/50">
               {VIDEO_CATEGORIES.map((cat) => (
                 <button
                   key={cat.id}
@@ -107,7 +107,7 @@ const ProductionComparisonVisual = () => {
             </div>
 
             {/* Content Area */}
-            <div className="w-2/3 bg-slate-900/50 p-4 overflow-y-auto relative">
+            <div className="relative min-h-0 w-2/3 overflow-y-auto bg-slate-900/50 p-4">
               <AnimatePresence mode="wait">
                 {VIDEO_CATEGORIES.map((cat) => cat.id === activeCategory && (
                   <motion.div
@@ -197,7 +197,7 @@ const ProductionComparisonVisual = () => {
           </div>
 
           {/* Footer Instruction */}
-          <div className="bg-slate-950 p-2 border-t border-white/10 text-center">
+          <div className="shrink-0 border-t border-white/10 bg-slate-950 p-2 text-center">
             <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
               Hover items for production details
             </p>
@@ -316,7 +316,7 @@ export default function SlotMachineSection() {
           </motion.p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-12 items-center mt-16">
+        <div className="mt-16 grid grid-cols-1 gap-12 md:grid-cols-2 md:items-stretch">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -330,6 +330,7 @@ export default function SlotMachineSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.3 }}
+            className="flex h-full min-h-0"
           >
             <ProductionComparisonVisual />
           </motion.div>
