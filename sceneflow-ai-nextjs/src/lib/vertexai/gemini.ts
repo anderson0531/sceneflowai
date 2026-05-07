@@ -114,23 +114,26 @@ export async function generateText(
   const accessToken = await getVertexAIAuthToken();
   
   // 2. CONSTRUCT CLEAN THINKING CONFIG
+  const isThinkingModel = model.includes('gemini-3') || model.includes('gemini-2.5');
   const isMinimal = options.thinkingLevel === 'minimal' || options.thinkingBudget === 0;
   const thinking_config: any = { include_thoughts: !isMinimal };
 
-  if (isGemini3) {
-    if (!isMinimal) {
-      const validLevels = ['LOW', 'MEDIUM', 'HIGH'];
-      const level = (options.thinkingLevel || 'MEDIUM').toUpperCase();
-      thinking_config.thinking_level = validLevels.includes(level) ? level : 'LOW';
-    }
-  } else {
-    const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
-    const budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
-    thinking_config.thinking_budget = budget;
-    
-    // If budget is 0, we shouldn't send thinking_config at all
-    if (budget === 0) {
-      thinking_config.include_thoughts = false;
+  if (isThinkingModel) {
+    if (isGemini3) {
+      if (!isMinimal) {
+        const validLevels = ['LOW', 'MEDIUM', 'HIGH'];
+        const level = (options.thinkingLevel || 'MEDIUM').toUpperCase();
+        thinking_config.thinking_level = validLevels.includes(level) ? level : 'LOW';
+      }
+    } else {
+      const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
+      const budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
+      thinking_config.thinking_budget = budget;
+      
+      // If budget is 0, we shouldn't send thinking_config at all
+      if (budget === 0) {
+        thinking_config.include_thoughts = false;
+      }
     }
   }
 
@@ -142,7 +145,7 @@ export async function generateText(
       top_p: 0.95,
       max_output_tokens: options.maxOutputTokens ?? 8192,
       response_mime_type: options.responseMimeType ?? 'application/json',
-      ...(isMinimal ? {} : { thinking_config })
+      ...(isThinkingModel && !isMinimal ? { thinking_config } : {})
     },
     safety_settings: [
       { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "OFF" },
@@ -232,23 +235,26 @@ export async function streamText(
   const accessToken = await getVertexAIAuthToken();
 
   // 2. CONSTRUCT CLEAN THINKING CONFIG
+  const isThinkingModel = model.includes('gemini-3') || model.includes('gemini-2.5');
   const isMinimal = options.thinkingLevel === 'minimal' || options.thinkingBudget === 0;
   const thinking_config: any = { include_thoughts: !isMinimal };
 
-  if (isGemini3) {
-    if (!isMinimal) {
-      const validLevels = ['LOW', 'MEDIUM', 'HIGH'];
-      const level = (options.thinkingLevel || 'MEDIUM').toUpperCase();
-      thinking_config.thinking_level = validLevels.includes(level) ? level : 'LOW';
-    }
-  } else {
-    const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
-    const budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
-    thinking_config.thinking_budget = budget;
-    
-    // If budget is 0, we shouldn't send thinking_config at all
-    if (budget === 0) {
-      thinking_config.include_thoughts = false;
+  if (isThinkingModel) {
+    if (isGemini3) {
+      if (!isMinimal) {
+        const validLevels = ['LOW', 'MEDIUM', 'HIGH'];
+        const level = (options.thinkingLevel || 'MEDIUM').toUpperCase();
+        thinking_config.thinking_level = validLevels.includes(level) ? level : 'LOW';
+      }
+    } else {
+      const budgets = { minimal: 0, low: 1024, medium: 4096, high: 8192 };
+      const budget = options.thinkingBudget ?? budgets[options.thinkingLevel as keyof typeof budgets] ?? 1024;
+      thinking_config.thinking_budget = budget;
+      
+      // If budget is 0, we shouldn't send thinking_config at all
+      if (budget === 0) {
+        thinking_config.include_thoughts = false;
+      }
     }
   }
 
@@ -260,7 +266,7 @@ export async function streamText(
       top_p: 0.95,
       max_output_tokens: 8192,
       response_mime_type: "text/plain", // Change to text/plain for streaming raw markdown
-      ...(isMinimal ? {} : { thinking_config })
+      ...(isThinkingModel && !isMinimal ? { thinking_config } : {})
     },
     safety_settings: [
       { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "OFF" },

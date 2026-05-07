@@ -290,14 +290,13 @@ async function analyzeWithGemini(
   
   console.log(`[Resonance] Calling Vertex AI Gemini for analysis (iteration ${iteration})...`)
   
-  // Use gemini-2.5-flash with thinkingBudget: 0 to disable "thinking" mode
-  // This prevents OOM issues caused by unbounded internal reasoning tokens
+  // Use the default flash model (gemini-3.1-flash-lite-preview or similar)
+  // This is faster, cheaper, and avoids OOM issues associated with thinking models
   const result = await generateText(prompt, {
-    model: 'gemini-2.5-flash',
+    model: 'gemini-1.5-flash', // Explicitly use 1.5-flash for maximum stability and lowest memory footprint
     temperature: 0, // Use 0 for deterministic, consistent scoring
-    maxOutputTokens: 4096, // Reduced from 8192 to prevent memory issues
-    responseMimeType: 'application/json',
-    thinkingBudget: 0 // Disable thinking mode to prevent OOM
+    maxOutputTokens: 2048, // Further reduced to prevent any large response issues
+    responseMimeType: 'application/json'
   })
   
   if (!result?.text) {
