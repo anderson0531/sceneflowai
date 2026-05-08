@@ -8,7 +8,6 @@
 import { spawn } from 'child_process'
 import { writeFileSync, unlinkSync } from 'fs'
 import { tmpdir } from 'os'
-import { join } from 'path'
 
 // Languages that don't use spaces between words (CJK + Southeast Asian)
 // Word count estimation is BROKEN for these languages
@@ -114,7 +113,9 @@ async function getAudioDurationWithFFprobe(filePath: string): Promise<number> {
     // Try to use ffprobe-static first
     let ffprobePath = 'ffprobe'
     try {
-      const ffprobeStatic = require(/* turbopackIgnore: true */ 'ffprobe-static')
+      // Use eval('require') to prevent bundlers from tracing ffprobe-static
+      // It is marked as a serverExternalPackage in next.config.mjs
+      const ffprobeStatic = eval('require')('ffprobe-static')
       ffprobePath = ffprobeStatic.path
     } catch {
       // Use system ffprobe
