@@ -92,6 +92,22 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     screenshotSlot: 'Insert screenshot: Final Cut timeline and Screening Room feedback',
     videoSlot: 'Insert 00:30 clip: final polish, screening, and publish readiness',
   },
+  {
+    id: 11,
+    title: 'Audience Resonance Editor',
+    description:
+      'Determine your target audience. Get score, analysis, and recommendations. One-click fixes. Guided Edit to optimize Episodes, Blueprint, and Script.',
+    screenshotSlot: 'Insert screenshot: Audience Resonance target selection and scoring panel',
+    videoSlot: 'Insert 00:30 clip: AI analysis and guided one-click story fixes',
+  },
+  {
+    id: 12,
+    title: 'Sceneflow Express',
+    description:
+      'Auto generate images and video segments concurrently. Express Storyboard enables you to review and share audio (any available language) video storyboard in minutes vs hours. Express Animatics enables you to view and render a full Ken Burns animatic scene in minutes vs hours. Express Video enables you to view and render a full video scene in minutes vs days.',
+    screenshotSlot: 'Insert screenshot: Express generation progress and Ken Burns animatic preview',
+    videoSlot: 'Insert 00:30 clip: concurrent image/video generation and rapid animatic playback',
+  },
 ];
 
 function StoryboardCard({ item }: { item: FeatureStoryboardItem }) {
@@ -150,13 +166,13 @@ export default function FeatureStoryboardSection() {
         >
           <p className="inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-purple-200">
             <Clock3 className="h-3.5 w-3.5" />
-            5-Minute Product Walkthrough
+            Feature Deep Dive
           </p>
           <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Feature Storyboard (10 x 30s Blocks)
+            Product Walkthrough
           </h2>
           <p className="mt-4 text-base text-slate-300">
-            A practical structure for the 5-minute reel, with ready slots for screenshot evidence and short feature clips.
+            A complete guide to the SceneFlow AI Studio workflow, from initial concept to final cinematic output.
           </p>
         </motion.div>
 
