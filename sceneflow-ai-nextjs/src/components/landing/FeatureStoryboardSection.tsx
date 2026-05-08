@@ -24,6 +24,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     screenshotSlot: 'Insert screenshot: Blueprint editor with editable generated sections',
     videoSlot: 'Insert 00:30 clip: UX flow from concept to editable output',
     screenshotUrl: '/landing/storyboard/intuitive-ux.png',
+    videoUrl: 'https://storage.googleapis.com/sceneflow-assets/demo/intuitive-ux.mov',
   },
   {
     id: 2,
@@ -186,15 +187,16 @@ function StoryboardCard({
             <PlayCircle className="h-3.5 w-3.5" />
             Feature Video
           </p>
-          <div className="aspect-video rounded-lg border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center">
+          <div className="aspect-video rounded-lg border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center relative group">
             {item.videoUrl ? (
               <video 
                 src={item.videoUrl} 
-                className="w-full h-full object-cover"
-                autoPlay 
+                className="w-full h-full object-cover bg-black"
+                controls
                 muted 
                 loop 
                 playsInline 
+                preload="metadata"
               />
             ) : (
               <div className="p-3 text-xs text-slate-400">
