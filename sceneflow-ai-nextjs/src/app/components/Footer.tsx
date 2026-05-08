@@ -1,6 +1,6 @@
 'use client'
 
-import { Mail, Twitter, Linkedin, Github, ExternalLink } from 'lucide-react'
+import { Mail, Twitter, Linkedin, Github, ExternalLink, Youtube } from 'lucide-react'
 import Image from 'next/image'
 
 export function Footer() {
@@ -26,7 +26,8 @@ export function Footer() {
   }
 
   const socialLinks = [
-    { name: 'Email', icon: Mail, href: 'mailto:brian@sfai.studio' }
+    { name: 'Email', icon: Mail, href: 'mailto:brian@sfai.studio' },
+    { name: 'YouTube', icon: Youtube, href: 'https://www.youtube.com/channel/UCSXGf2gMfCRtktBCrFBDc0g/' }
   ]
 
   const scrollToSection = (sectionId: string) => {
