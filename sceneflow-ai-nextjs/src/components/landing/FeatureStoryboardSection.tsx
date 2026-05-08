@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Camera, PlayCircle, Clock3 } from 'lucide-react';
+import NextImage from 'next/image';
 
 type FeatureStoryboardItem = {
   id: number;
@@ -139,7 +140,7 @@ function StoryboardCard({ item }: { item: FeatureStoryboardItem }) {
           </p>
           <div className="aspect-video rounded-lg border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center">
             {item.screenshotUrl ? (
-              <Image 
+              <NextImage 
                 src={item.screenshotUrl} 
                 alt={item.title}
                 width={640}
