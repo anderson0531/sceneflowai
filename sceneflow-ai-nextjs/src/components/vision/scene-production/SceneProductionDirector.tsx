@@ -91,8 +91,9 @@ export function SceneProductionDirector({
 
   // Check if this scene already has segments (backward compat - FC3)
   const hasExistingSegments = useMemo(() => {
-    return productionData?.isSegmented && (productionData?.segments?.length ?? 0) > 0
-  }, [productionData])
+    // Treat the scene as having segments if there are any, avoiding the "building" loop
+    return (productionData?.segments?.length ?? 0) > 0 || (scene?.segments?.length ?? 0) > 0
+  }, [productionData, scene])
 
   // Production readiness items
   const readinessItems: ReadinessItem[] = useMemo(() => {
@@ -149,9 +150,14 @@ export function SceneProductionDirector({
   }, [onSegmentsCreated])
 
   const handleStartBuilding = useCallback(() => {
+    // If segments exist, close the builder and move on
+    if (hasExistingSegments) {
+       onNavigateToImage?.()
+       return
+    }
     setPhase('building')
     setIsBuilderOpen(true)
-  }, [])
+  }, [hasExistingSegments, onNavigateToImage])
 
   // ============================================================================
   // RENDER: Complete State (segments exist)
@@ -336,7 +342,7 @@ export function SceneProductionDirector({
               )}
             >
               <Play className="w-4 h-4" />
-              Action
+              Keyframes
             </Button>
           </div>
         </div>

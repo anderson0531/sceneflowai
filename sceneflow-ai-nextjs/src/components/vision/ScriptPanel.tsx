@@ -5844,29 +5844,63 @@ function SceneCard({
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
+                          {/* Tooltip for Keyframes */}
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setShowKeyframes(!showKeyframes)
-                                  }}
-                                  className={`p-1.5 rounded flex items-center gap-1.5 transition-colors ${
-                                    showKeyframes 
-                                      ? 'bg-indigo-800/80 text-indigo-300' 
-                                      : 'hover:bg-indigo-800/50 text-indigo-400 hover:text-indigo-300'
-                                  }`}
-                                >
-                                  <ImageIcon className="w-3.5 h-3.5" />
-                                  <span className="text-xs font-medium">Generate KeyFrames</span>
-                                </button>
+                                {sceneProductionData?.segments && sceneProductionData.segments.length > 0 ? (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setShowKeyframes(!showKeyframes)
+                                    }}
+                                    className={`p-1.5 rounded flex items-center gap-1.5 transition-colors ${
+                                      showKeyframes 
+                                        ? 'bg-indigo-800/80 text-indigo-300' 
+                                        : 'hover:bg-indigo-800/50 text-indigo-400 hover:text-indigo-300'
+                                    }`}
+                                  >
+                                    <ImageIcon className="w-3.5 h-3.5" />
+                                    <span className="text-xs font-medium">Keyframes</span>
+                                  </button>
+                                ) : (
+                                  <div style={{ display: 'none' }} />
+                                )}
                               </TooltipTrigger>
-                              <TooltipContent className="bg-gray-900 text-white border border-gray-700">
-                                <p className="text-xs">{showKeyframes ? 'Hide Keyframes' : 'Show Keyframes'}</p>
-                              </TooltipContent>
+                              {sceneProductionData?.segments && sceneProductionData.segments.length > 0 && (
+                                <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                                  <p className="text-xs">{showKeyframes ? 'Hide Keyframes' : 'Show Keyframes'}</p>
+                                </TooltipContent>
+                              )}
                             </Tooltip>
                           </TooltipProvider>
+
+                          {/* Render F2V Action Button Only If Keyframes Exist */}
+                          {sceneProductionData?.segments && sceneProductionData.segments.some(s => s.startFrameUrl || s.endFrameUrl || s.references?.startFrameUrl || s.references?.endFrameUrl) && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      const consoleId = `director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`
+                                      const consoleEl = document.getElementById(consoleId)
+                                      if (consoleEl) {
+                                        consoleEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                                      }
+                                    }}
+                                    className="p-1.5 rounded flex items-center gap-1.5 transition-colors hover:bg-emerald-800/50 text-emerald-400 hover:text-emerald-300"
+                                  >
+                                    <Video className="w-3.5 h-3.5" />
+                                    <span className="text-xs font-medium">F2V Prompts</span>
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-gray-900 text-white border border-gray-700">
+                                  <p className="text-xs">Scroll to Director's Console to Generate Video</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
 
                           {/* Resync Audio Timing Button (kept for parity) */}
                           {onResyncAudioTiming && (
@@ -5915,7 +5949,7 @@ function SceneCard({
                       />
                       
                       {/* Keyframe Section */}
-                      {showKeyframes && (
+                      {showKeyframes && sceneProductionData?.segments && sceneProductionData.segments.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-emerald-500/30">
                           <SegmentFrameTimeline
                             segments={sceneProductionData?.segments || []}
@@ -7297,6 +7331,8 @@ function SceneCard({
               if (onAddFullSegment) {
                 onAddFullSegment(sceneId, newSegment)
                 console.log('[ScriptPanel] onAddFullSegment called successfully')
+                // Trigger a Keyframes view update or scroll
+                setShowKeyframes(true)
               } else {
                 console.error('[ScriptPanel] onAddFullSegment is NOT defined!')
               }

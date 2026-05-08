@@ -914,7 +914,7 @@ function DirectorConsoleRoot({
             className="bg-indigo-600 hover:bg-indigo-700 text-white"
           >
             <Play className="w-4 h-4 mr-2" />
-            Action ({selectedUnlockedCount})
+            Generate Video ({selectedUnlockedCount})
           </Button>
           {statusCounts.rendered > 0 && (
             <Button

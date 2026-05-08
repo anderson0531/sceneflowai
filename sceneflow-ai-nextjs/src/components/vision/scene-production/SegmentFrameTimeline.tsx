@@ -610,11 +610,11 @@ export function SegmentFrameTimeline({
           })}
         </div>
       
-      {/* FTV Mode Ready Banner */}
+      {/* Generate Video Action Container */}
       {stats.fullyAnchored > 0 && (
-        <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-lg">
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-lg">
           <div className="flex items-start gap-3">
-            <Video className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+            <Video className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
             <div>
               <p className="text-emerald-300 font-medium">FTV Mode Ready</p>
               <p className="text-emerald-400/70 text-sm mt-0.5">
@@ -623,6 +623,13 @@ export function SegmentFrameTimeline({
               </p>
             </div>
           </div>
+          <Button
+            onClick={onOpenDirectorConsole}
+            className="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md shadow-indigo-900/20"
+          >
+            <Video className="w-4 h-4 mr-2" />
+            Generate Video
+          </Button>
         </div>
       )}
       

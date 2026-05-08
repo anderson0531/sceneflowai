@@ -214,32 +214,33 @@ export async function POST(
 ) {
   try {
     const { sceneId } = await params
-    const body: GenerateSegmentsRequest = await req.json()
-    const { 
-      projectId, 
-      focusMode, 
-      customInstructions,
-      selectedCharacterIds = [],
-      includeReferencesInPrompts = true,
-      optimizeForTransitions = true,
-      // NEW: Narration-driven segmentation options
-      narrationDriven = false,
-      narrationDurationSeconds,
-      narrationText,
-      narrationAudioUrl,
-      // NEW: Audio-aware segmentation - includes dialogue duration
-      totalAudioDurationSeconds,
-      // NEW: Preview mode - returns proposals without committing to DB
-      previewMode = false,
-      // NEW: Scope controls
-      totalDurationTarget,
-      segmentCountTarget,
-      // NEW: Multi-phase workflow
-      phase = 'prompts', // Default to legacy behavior (full prompts)
-      approvedDirections,
-      keyframeSummary,
-      keyframesConfirmed,
-    } = body
+  const body: GenerateSegmentsRequest & { useScriptSegments?: boolean } = await req.json()
+  const { 
+    projectId, 
+    focusMode, 
+    customInstructions,
+    selectedCharacterIds = [],
+    includeReferencesInPrompts = true,
+    optimizeForTransitions = true,
+    // NEW: Narration-driven segmentation options
+    narrationDriven = false,
+    narrationDurationSeconds,
+    narrationText,
+    narrationAudioUrl,
+    // NEW: Audio-aware segmentation - includes dialogue duration
+    totalAudioDurationSeconds,
+    // NEW: Preview mode - returns proposals without committing to DB
+    previewMode = false,
+    // NEW: Scope controls
+    totalDurationTarget,
+    segmentCountTarget,
+    // NEW: Multi-phase workflow
+    phase = 'prompts', // Default to legacy behavior (full prompts)
+    approvedDirections,
+    keyframeSummary,
+    keyframesConfirmed,
+    useScriptSegments = false,
+  } = body
 
     if (!sceneId || !projectId) {
       return NextResponse.json(
@@ -334,6 +335,46 @@ export async function POST(
     }
     
     console.log('[Scene Segmentation] Found scene:', scene.id || scene.sceneNumber || 'unknown')
+
+    // Use Script Segments if requested
+    if (useScriptSegments) {
+        if (!scene || !scene.segments || scene.segments.length === 0) {
+            return NextResponse.json(
+                { error: 'No script segments available for this scene to use directly.' },
+                { status: 400 }
+            )
+        }
+        
+        console.log(`[Scene Segmentation] Using existing script segments directly (${scene.segments.length} segments).`)
+        
+        const responseData = {
+            directions: scene.segments.map((scriptSeg: any, idx: number) => ({
+              sequence: idx + 1,
+              estimatedDuration: scriptSeg.endTime - scriptSeg.startTime,
+              triggerReason: scriptSeg.triggerReason || 'Script Segment',
+              generationMethod: 'I2V',
+              videoPrompt: scriptSeg.videoPrompt || '',
+              startFramePrompt: scriptSeg.startFramePrompt || scriptSeg.references?.startFrameDescription || '',
+              endFramePrompt: scriptSeg.endFramePrompt || scriptSeg.references?.endFrameDescription || '',
+              shotType: 'Medium Shot',
+              cameraMovement: 'Static',
+              cameraAngle: 'Eye-Level',
+              talentAction: scriptSeg.segmentDirection || scriptSeg.action || '',
+              emotionalBeat: scriptSeg.emotionalBeat || '',
+              characters: [],
+              isNoTalent: false,
+              isApproved: true,
+              isUserEdited: false,
+              confidence: 90,
+              dialogueLineIds: scriptSeg.dialogue?.map((d: any) => d.lineId || d.id) || [],
+              audioTimelineIndices: [],
+              segmentDirectionSummary: scriptSeg.segmentDirection || scriptSeg.action || '',
+              transitionIn: scriptSeg.transitionType || 'CUT'
+            }))
+        }
+        
+        return NextResponse.json(responseData)
+    }
 
     // Extract characters from project
     const characters = visionPhase.characters || project.metadata?.characters || []

@@ -922,6 +922,124 @@ export function SegmentBuilder({
     runDirectionsOverlayPreamble,
   ])
 
+  // Phase 1b: Use script segments directly
+  const handleUseScriptSegments = useCallback(async () => {
+    // If the scene is already segmented in the script, use those directly.
+    if (Array.isArray((scene as any).segments) && (scene as any).segments.length > 0) {
+        setIsAnalyzing(true)
+        setError(null)
+        await runDirectionsOverlayPreamble()
+        try {
+            // We need to convert ScriptSegment to SceneSegment.
+            const response = await fetch(`/api/scenes/${sceneId}/generate-segments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  projectId,
+                  phase: 'directions',
+                  useScriptSegments: true // Add a flag to indicate we just want the script segments converted
+                })
+            })
+            const responseText = await response.text()
+            let data: any
+            try {
+              data = JSON.parse(responseText)
+            } catch {
+              throw new Error(response.ok ? 'Invalid JSON' : `API error: ${responseText.slice(0, 280)}`)
+            }
+            if (!response.ok) throw new Error(data?.error || data?.message || 'Failed')
+            
+            const approvedDirs = data.directions as SegmentDirection[]
+            let currentTime = 0
+            const finalSegments: SceneSegment[] = approvedDirs.map((dir, idx) => {
+              const est = dir.estimatedDuration || segmentDurationTarget || segmentDurationHintSeconds
+              const startTime = currentTime
+              const endTime = currentTime + est
+              currentTime = endTime
+      
+              const rawT = String(dir.transitionIn || '').toLowerCase()
+              const transitionType: 'CUT' | 'CONTINUE' =
+                rawT === 'cut' ? 'CUT' : rawT === 'continue' ? 'CONTINUE' : idx === 0 ? 'CUT' : 'CONTINUE'
+      
+              return {
+                segmentId: `dir_${sceneId}_${idx + 1}`,
+                sequenceIndex: idx,
+                startTime,
+                endTime,
+                status: 'READY' as const,
+                generatedPrompt: dir.videoPrompt || '',
+                videoPrompt: dir.videoPrompt || '',
+                startFramePrompt: dir.startFramePrompt || dir.keyframeStartDescription || dir.startFrameDescription || '',
+                endFramePrompt: dir.endFramePrompt || dir.keyframeEndDescription || dir.endFrameDescription || '',
+                userEditedPrompt: null,
+                activeAssetUrl: null,
+                assetType: null,
+                generationMethod: dir.generationMethod,
+                triggerReason: dir.triggerReason,
+                emotionalBeat: dir.emotionalBeat || '',
+                dialogueLineIds: dir.dialogueLineIds || [],
+                action: dir.segmentDirectionSummary || dir.talentAction,
+                shotType: dir.shotType,
+                transitionType,
+                segmentDirection: dir,
+                references: {
+                  startFrameUrl: null,
+                  endFrameUrl: null,
+                  useSceneFrame: idx === 0,
+                  characterRefs: [],
+                  characterIds: [],
+                  sceneRefIds: [],
+                  objectRefIds: [],
+                  startFrameDescription:
+                    dir.startFramePrompt || dir.keyframeStartDescription || dir.startFrameDescription || '',
+                  endFrameDescription:
+                    dir.endFramePrompt || dir.keyframeEndDescription || dir.endFrameDescription || '',
+                },
+                takes: [],
+                promptContext: {
+                  dialogueHash: '',
+                  visualDescriptionHash: sceneBible.contentHash,
+                  generatedAt: new Date().toISOString(),
+                  sceneNumber: sceneBible.sceneNumber,
+                },
+                isStale: false,
+              }
+            })
+            
+            setPendingApprovedDirections(approvedDirs)
+            setStagedSegments(finalSegments)
+            setVideoPromptNotes('')
+            setKeyframesConfirmed(false)
+            setPhase('video_prompts') // Or finalize directly? User wants to edit keyframes.
+            setLastGeneratedHash(sceneBible.contentHash)
+            toast.success(`Used ${finalSegments.length} script segments — add keyframes, then generate Veo prompts (or skip).`)
+            setProductionStepIndex(3)
+            await sleep(220)
+        } catch(err: any) {
+            console.error('[SegmentBuilder] Analysis error:', err)
+            setError(err.message || 'Failed to analyze scene')
+            toast.error('Failed to analyze scene')
+        } finally {
+            setIsAnalyzing(false)
+            setShowProductionOverlay(false)
+            setProductionOverlayJob(null)
+            setProductionStepIndex(0)
+        }
+    } else {
+        handleAnalyze()
+    }
+  }, [
+    scene,
+    sceneId,
+    projectId,
+    segmentDurationTarget,
+    segmentDurationHintSeconds,
+    sceneBible.contentHash,
+    hasSceneDirection,
+    runDirectionsOverlayPreamble,
+    handleAnalyze
+  ])
+
   // Auto-initialize when the builder is opened and not already generated
   const hasAutoInitialized = useRef(false)
   useEffect(() => {
@@ -929,10 +1047,10 @@ export function SegmentBuilder({
       hasAutoInitialized.current = true
       // We wrap it in a setTimeout to avoid React state update during render issues
       setTimeout(() => {
-        handleAnalyze()
+        handleUseScriptSegments()
       }, 0)
     }
-  }, [hasExistingVideoAssets, hasExistingSegments, isAnalyzing, hasSceneDirection, handleAnalyze])
+  }, [hasExistingVideoAssets, hasExistingSegments, isAnalyzing, hasSceneDirection, handleUseScriptSegments])
 
   const finalizeAndClose = useCallback(
     (segments: SceneSegment[]) => {
@@ -1054,7 +1172,6 @@ export function SegmentBuilder({
           </div>
           <Badge variant="outline" className="border-gray-600 text-gray-400">Scene {sceneNumber}</Badge>
         </div>
-        
       </div>
 
       {/* Main Content */}
