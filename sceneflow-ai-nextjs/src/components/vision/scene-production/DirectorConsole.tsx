@@ -48,6 +48,7 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronRight,
+  ArrowRight,
   Copy,
   Wand2,
   Shield,
