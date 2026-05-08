@@ -23,7 +23,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
       'Start fast with guided automation, then edit every generated output so teams keep creative control without losing speed.',
     screenshotSlot: 'Insert screenshot: Blueprint editor with editable generated sections',
     videoSlot: 'Insert 00:30 clip: UX flow from concept to editable output',
-    screenshotUrl: '/landing/storyboard/intuitive-ux.png',
+    screenshotUrl: '/landing/storyboard/intuitive-ux-2.png',
     videoUrl: 'https://storage.googleapis.com/sceneflow-assets/demo/intuitive-ux.mp4',
   },
   {
