@@ -4,86 +4,67 @@
   "regions": ["sfo1"],
   "functions": {
     "src/app/api/vision/generate-script-v2/route.ts": {
-      "maxDuration": 600,
-      "memory": 3008
+      "maxDuration": 600
     },
     "src/app/api/vision/generate-script/route.ts": {
-      "maxDuration": 300,
-      "memory": 3008
+      "maxDuration": 300
     },
     "src/app/api/vision/optimize-script/route.ts": {
-      "maxDuration": 600,
-      "memory": 3008
+      "maxDuration": 600
     },
     "src/app/api/vision/optimize-script/batch/route.ts": {
-      "maxDuration": 120,
-      "memory": 2048
+      "maxDuration": 120
     },
     "src/app/api/ideation/film-treatment/route.ts": {
-      "maxDuration": 300,
-      "memory": 3008
+      "maxDuration": 300
     },
     "src/app/api/treatment/analyze-resonance/route.ts": {
-      "maxDuration": 180,
-      "memory": 3008
+      "maxDuration": 180
     },
     "src/app/api/treatment/refine/route.ts": {
-      "maxDuration": 120,
-      "memory": 2048
+      "maxDuration": 120
     },
     "src/app/api/v2/blueprint/analyze/route.ts": {
-      "maxDuration": 300,
-      "memory": 2048
+      "maxDuration": 300
     },
     "src/app/api/v3/blueprint/analyze/route.ts": {
-      "maxDuration": 300,
-      "memory": 2048
+      "maxDuration": 300
     },
     "src/app/api/character/process-upload/route.ts": {
-      "maxDuration": 120,
-      "memory": 2048
+      "maxDuration": 120
     },
     "src/app/api/character/upload-reference/route.ts": {
       "maxDuration": 30
     },
     "src/app/api/projects/[id]/route.ts": {
-      "maxDuration": 60,
-      "memory": 3008
+      "maxDuration": 60
     },
     "src/app/api/projects/[id]/media/route.ts": {
-      "maxDuration": 120,
-      "memory": 3008
+      "maxDuration": 120
     },
     "src/app/api/admin/migrate-media/route.ts": {
-      "maxDuration": 300,
-      "memory": 3008
+      "maxDuration": 300
     },
     "src/app/api/cron/voice-cleanup/route.ts": {
       "maxDuration": 60
     },
     "src/app/api/segments/[segmentId]/upload-video/route.ts": {
-      "maxDuration": 60,
-      "memory": 1024
+      "maxDuration": 60
     },
     "src/app/api/series/[seriesId]/generate/route.ts": {
-      "maxDuration": 600,
-      "memory": 3008
+      "maxDuration": 600
     },
     "src/app/api/series/[seriesId]/episodes/add/route.ts": {
-      "maxDuration": 300,
-      "memory": 2048
+      "maxDuration": 300
     },
     "src/app/api/vision/suggest-objects/route.ts": {
-      "maxDuration": 60,
-      "memory": 2048
+      "maxDuration": 60
     },
     "src/app/api/vision/review-script/route.ts": {
-      "maxDuration": 180,
-      "memory": 3008
+      "maxDuration": 180
     },
     "src/app/api/scenes/[sceneId]/generate-segments/route.ts": {
-      "maxDuration": 300,
-      "memory": 3008
+      "maxDuration": 300
     }
   },
   "crons": [
