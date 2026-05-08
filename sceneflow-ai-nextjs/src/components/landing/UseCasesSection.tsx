@@ -26,13 +26,14 @@ interface UseCasePersona {
   win: string;
   keyPhrases: string[];
   videoUrl?: string;
+  imageUrl?: string;
 }
 
 const personas: UseCasePersona[] = [
   {
     id: 'creator',
     label: 'I am a Solo Creator',
-    title: 'The YouTube Documentarian',
+    title: 'The YouTube Creator',
     icon: Video,
     gradient: 'from-amber-500 to-orange-600',
     bgGradient: 'from-amber-500/10 to-orange-600/10',
@@ -51,7 +52,7 @@ const personas: UseCasePersona[] = [
     },
     win: 'Move from occasional uploads to a reliable production cadence with less overhead.',
     keyPhrases: ['Faster Turnaround', 'Consistent Characters', 'Series-Ready Workflow'],
-    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_34s_202512231713_zzqmk.mp4',
+    imageUrl: '/landing/use-cases/youtube-creator.jpg',
   },
   {
     id: 'agency',
@@ -80,7 +81,15 @@ const personas: UseCasePersona[] = [
 ];
 
 // Video Player Component with Controls
-const VideoPlayer = ({ persona, onExpandVideo }: { persona: UseCasePersona; onExpandVideo: (url: string) => void }) => {
+const VideoPlayer = ({ 
+  persona, 
+  onExpandVideo,
+  onExpandImage 
+}: { 
+  persona: UseCasePersona; 
+  onExpandVideo: (url: string) => void;
+  onExpandImage: (url: string) => void;
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(true);
 
@@ -96,10 +105,12 @@ const VideoPlayer = ({ persona, onExpandVideo }: { persona: UseCasePersona; onEx
     e.stopPropagation();
     if (persona.videoUrl) {
       onExpandVideo(persona.videoUrl);
+    } else if (persona.imageUrl) {
+      onExpandImage(persona.imageUrl);
     }
   };
 
-  if (!persona.videoUrl) {
+  if (!persona.videoUrl && !persona.imageUrl) {
     return (
       <div className="relative aspect-video bg-slate-800/50 rounded-2xl border border-white/10 overflow-hidden">
         <div className={`absolute inset-0 bg-gradient-to-br ${persona.bgGradient} opacity-50`} />
@@ -134,47 +145,81 @@ const VideoPlayer = ({ persona, onExpandVideo }: { persona: UseCasePersona; onEx
         <div className={`absolute -inset-2 bg-gradient-to-r ${persona.bgGradient} rounded-2xl blur-xl -z-10 opacity-50`} />
         
         <div className="aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
-          <video
-            ref={videoRef}
-            autoPlay
-            loop
-            muted={isMuted}
-            playsInline
-            preload="auto"
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          >
-            <source src={`${persona.videoUrl}#t=0.1`} type="video/mp4" />
-          </video>
-          
-          <div className="absolute top-3 right-3">
-            <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${persona.gradient} text-white text-xs font-semibold shadow-lg`}>
-              {persona.title}
-            </div>
-          </div>
-          
-          {/* Play Overlay */}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none">
-            <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
-              <Play className="w-8 h-8 text-white fill-white" />
-            </div>
-          </div>
+          {persona.videoUrl ? (
+            <>
+              <video
+                ref={videoRef}
+                autoPlay
+                loop
+                muted={isMuted}
+                playsInline
+                preload="auto"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              >
+                <source src={`${persona.videoUrl}#t=0.1`} type="video/mp4" />
+              </video>
+              
+              <div className="absolute top-3 right-3">
+                <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${persona.gradient} text-white text-xs font-semibold shadow-lg`}>
+                  {persona.title}
+                </div>
+              </div>
+              
+              {/* Play Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none">
+                <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
+                  <Play className="w-8 h-8 text-white fill-white" />
+                </div>
+              </div>
 
-          <div className="absolute bottom-3 right-3 flex items-center gap-2 z-20">
-            <button
-              onClick={toggleMute}
-              className="p-2 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md transition-all text-white border border-white/10"
-              aria-label={isMuted ? "Unmute" : "Mute"}
-            >
-              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </button>
-            <button
-              onClick={handleExpand}
-              className="p-2 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md transition-all text-white border border-white/10"
-              aria-label="Expand Video"
-            >
-              <Maximize2 className="w-4 h-4" />
-            </button>
-          </div>
+              <div className="absolute bottom-3 right-3 flex items-center gap-2 z-20">
+                <button
+                  onClick={toggleMute}
+                  className="p-2 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md transition-all text-white border border-white/10"
+                  aria-label={isMuted ? "Unmute" : "Mute"}
+                >
+                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={handleExpand}
+                  className="p-2 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md transition-all text-white border border-white/10"
+                  aria-label="Expand Video"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <img
+                src={persona.imageUrl}
+                alt={persona.title}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute top-3 right-3">
+                <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${persona.gradient} text-white text-xs font-semibold shadow-lg`}>
+                  {persona.title}
+                </div>
+              </div>
+              
+              {/* Expand Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none">
+                <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
+                  <Maximize2 className="w-8 h-8 text-white" />
+                </div>
+              </div>
+
+              <div className="absolute bottom-3 right-3 flex items-center gap-2 z-20">
+                <button
+                  onClick={handleExpand}
+                  className="p-2 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md transition-all text-white border border-white/10"
+                  aria-label="Expand Image"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </motion.div>
     </div>
@@ -182,7 +227,17 @@ const VideoPlayer = ({ persona, onExpandVideo }: { persona: UseCasePersona; onEx
 };
 
 // Persona Card Component
-const PersonaCard = ({ persona, isActive, onExpandVideo }: { persona: UseCasePersona; isActive: boolean; onExpandVideo: (url: string) => void }) => {
+const PersonaCard = ({ 
+  persona, 
+  isActive, 
+  onExpandVideo,
+  onExpandImage 
+}: { 
+  persona: UseCasePersona; 
+  isActive: boolean; 
+  onExpandVideo: (url: string) => void;
+  onExpandImage: (url: string) => void;
+}) => {
   const Icon = persona.icon;
 
   return (
@@ -273,9 +328,13 @@ const PersonaCard = ({ persona, isActive, onExpandVideo }: { persona: UseCasePer
             </div>
           </div>
 
-          {/* Right: Video + One-Take Badge (Agency only) */}
+          {/* Right: Asset + One-Take Badge (Agency only) */}
           <div className="space-y-6">
-            <VideoPlayer persona={persona} onExpandVideo={onExpandVideo} />
+            <VideoPlayer 
+              persona={persona} 
+              onExpandVideo={onExpandVideo} 
+              onExpandImage={onExpandImage}
+            />
             
             {/* One-Take Social Proof - Agency Only */}
             {persona.id === 'agency' && (
@@ -322,11 +381,12 @@ const PersonaCard = ({ persona, isActive, onExpandVideo }: { persona: UseCasePer
 export default function UseCasesSection() {
   const [activePersona, setActivePersona] = useState<Persona>('creator');
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   return (
     <section id="use-cases" className="py-24 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
+        {/* Section Header ... (keep same) */}
         <motion.div 
           className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
@@ -351,7 +411,7 @@ export default function UseCasesSection() {
           </p>
         </motion.div>
 
-        {/* Toggle Selector */}
+        {/* Toggle Selector ... (keep same) */}
         <motion.div
           className="flex justify-center mb-12"
           initial={{ opacity: 0, y: 20 }}
@@ -385,11 +445,17 @@ export default function UseCasesSection() {
         {/* Active Persona Content */}
         <div className="min-h-[600px]">
           {personas.map((persona) => (
-            <PersonaCard key={persona.id} persona={persona} isActive={activePersona === persona.id} onExpandVideo={setExpandedVideo} />
+            <PersonaCard 
+              key={persona.id} 
+              persona={persona} 
+              isActive={activePersona === persona.id} 
+              onExpandVideo={setExpandedVideo}
+              onExpandImage={setExpandedImage}
+            />
           ))}
         </div>
 
-        {/* CTA */}
+        {/* CTA ... (keep same) */}
         <motion.div
           className="text-center mt-12"
           initial={{ opacity: 0, y: 20 }}
@@ -441,6 +507,43 @@ export default function UseCasesSection() {
                   className="w-full h-full object-contain"
                   controlsList="nodownload"
                   onContextMenu={(e) => e.preventDefault()}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Image Modal */}
+      <AnimatePresence>
+        {expandedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setExpandedImage(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 md:p-12 backdrop-blur-md cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-7xl w-full h-full flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setExpandedImage(null)}
+                className="absolute -top-12 right-0 text-white/70 hover:text-white flex items-center gap-2 text-sm font-medium transition-colors"
+              >
+                <X className="w-5 h-5" />
+                Close Preview
+              </button>
+              
+              <div className="relative w-full h-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                <img
+                  src={expandedImage}
+                  alt="Expanded view"
+                  className="w-full h-full object-contain"
                 />
               </div>
             </motion.div>
