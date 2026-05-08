@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, PlayCircle, Clock3, Maximize2, X, Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react';
+import { Camera, PlayCircle, Clock3, Maximize2, X, Play, Pause, Volume2, VolumeX, Maximize, ChevronDown, ChevronUp } from 'lucide-react';
 import NextImage from 'next/image';
 import { useState, useRef } from 'react';
 
@@ -215,89 +215,126 @@ function StoryboardCard({
   onExpand: (url: string) => void;
   onExpandVideo: (url: string) => void;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.45 }}
-      className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 backdrop-blur-sm"
+      className="rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-sm overflow-hidden"
     >
-      <div className="flex items-center gap-4">
-        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-500/20 text-base font-semibold text-purple-200">
-          {item.id}
-        </span>
-        <h3 className="text-2xl font-bold text-white">{item.title}</h3>
-      </div>
-
-      <p className="mt-4 text-base leading-relaxed text-slate-300 max-w-4xl">{item.description}</p>
-
-      <div className="mt-8 grid gap-8 grid-cols-1">
-        <div className="rounded-2xl border border-dashed border-white/20 bg-slate-950/70 p-6 md:p-8">
-          <p className="mb-4 inline-flex items-center justify-between w-full text-sm font-medium uppercase tracking-wider text-cyan-300">
-            <span className="flex items-center gap-2">
-              <Camera className="h-4 w-4" />
-              High-Resolution Screenshot
-            </span>
-            {item.screenshotUrl && (
-              <button 
-                onClick={() => onExpand(item.screenshotUrl!)}
-                className="hover:text-white transition-colors bg-white/5 p-1.5 rounded-lg"
-                title="Expand Image"
-              >
-                <Maximize2 className="h-4 w-4" />
-              </button>
+      {/* Header - Always Visible */}
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full text-left p-5 md:p-6 flex items-center justify-between hover:bg-white/5 transition-colors"
+      >
+        <div className="flex items-center gap-4">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-500/20 text-base font-semibold text-purple-200">
+            {item.id}
+          </span>
+          <div>
+            <h3 className="text-xl md:text-2xl font-bold text-white">{item.title}</h3>
+            {!isOpen && (
+              <p className="mt-1 text-sm text-slate-400 line-clamp-1 max-w-2xl">{item.description}</p>
             )}
-          </p>
-          <div 
-            className={`aspect-video rounded-xl border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center relative group ${item.screenshotUrl ? 'cursor-zoom-in' : ''}`}
-            onClick={() => item.screenshotUrl && onExpand(item.screenshotUrl)}
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-medium uppercase tracking-widest text-slate-500 hidden sm:inline">
+            {isOpen ? 'Close' : 'View Details'}
+          </span>
+          <div className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-400">
+            {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
+        </div>
+      </button>
+
+      {/* Expandable Content */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
           >
-            {item.screenshotUrl ? (
-              <>
-                <NextImage 
-                  src={item.screenshotUrl} 
-                  alt={item.title}
-                  width={1920}
-                  height={1080}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <div className="bg-white/10 backdrop-blur-md p-4 rounded-full border border-white/20">
-                    <Maximize2 className="w-8 h-8 text-white drop-shadow-lg" />
+            <div className="p-6 md:p-8 pt-0 border-t border-white/5">
+              <p className="mt-4 text-base leading-relaxed text-slate-300 max-w-4xl">{item.description}</p>
+
+              <div className="mt-8 grid gap-6 lg:grid-cols-2">
+                {/* Screenshot Column */}
+                <div className="rounded-2xl border border-dashed border-white/20 bg-slate-950/70 p-5 md:p-6">
+                  <p className="mb-4 inline-flex items-center justify-between w-full text-sm font-medium uppercase tracking-wider text-cyan-300">
+                    <span className="flex items-center gap-2">
+                      <Camera className="h-4 w-4" />
+                      Screenshot
+                    </span>
+                    {item.screenshotUrl && (
+                      <button 
+                        onClick={() => onExpand(item.screenshotUrl!)}
+                        className="hover:text-white transition-colors bg-white/5 p-1.5 rounded-lg"
+                        title="Expand Image"
+                      >
+                        <Maximize2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </p>
+                  <div 
+                    className={`aspect-video rounded-xl border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center relative group ${item.screenshotUrl ? 'cursor-zoom-in' : ''}`}
+                    onClick={() => item.screenshotUrl && onExpand(item.screenshotUrl)}
+                  >
+                    {item.screenshotUrl ? (
+                      <>
+                        <NextImage 
+                          src={item.screenshotUrl} 
+                          alt={item.title}
+                          width={1280}
+                          height={720}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <div className="bg-white/10 backdrop-blur-md p-4 rounded-full border border-white/20">
+                            <Maximize2 className="w-8 h-8 text-white drop-shadow-lg" />
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="p-3 text-xs text-slate-400">
+                        {item.screenshotSlot}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </>
-            ) : (
-              <div className="p-3 text-xs text-slate-400">
-                {item.screenshotSlot}
-              </div>
-            )}
-          </div>
-        </div>
 
-        <div className="rounded-2xl border border-dashed border-white/20 bg-slate-950/70 p-6 md:p-8">
-          <p className="mb-4 inline-flex items-center gap-2 text-sm font-medium uppercase tracking-wider text-violet-300">
-            <PlayCircle className="h-4 w-4" />
-            Feature Walkthrough Video
-          </p>
-          <div className="aspect-video rounded-xl border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center relative group shadow-2xl">
-            {item.videoUrl ? (
-              <FeatureVideoPlayer 
-                src={item.videoUrl} 
-                onExpand={(e) => {
-                  e.stopPropagation();
-                  onExpandVideo(item.videoUrl!);
-                }}
-              />
-            ) : (
-              <div className="p-3 text-xs text-slate-400">
-                {item.videoSlot}
+                {/* Video Column */}
+                <div className="rounded-2xl border border-dashed border-white/20 bg-slate-950/70 p-5 md:p-6">
+                  <p className="mb-4 inline-flex items-center gap-2 text-sm font-medium uppercase tracking-wider text-violet-300">
+                    <PlayCircle className="h-4 w-4" />
+                    Feature Video
+                  </p>
+                  <div className="aspect-video rounded-xl border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center relative group shadow-2xl">
+                    {item.videoUrl ? (
+                      <FeatureVideoPlayer 
+                        src={item.videoUrl} 
+                        onExpand={(e) => {
+                          e.stopPropagation();
+                          onExpandVideo(item.videoUrl!);
+                        }}
+                      />
+                    ) : (
+                      <div className="p-3 text-xs text-slate-400">
+                        {item.videoSlot}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-      </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.article>
   );
 }
@@ -328,7 +365,7 @@ export default function FeatureStoryboardSection() {
           </p>
         </motion.div>
 
-        <div className="mt-10 grid gap-5 lg:grid-cols-2">
+        <div className="mt-12 space-y-4 max-w-5xl mx-auto">
           {FEATURE_STORYBOARD_ITEMS.map((item) => (
             <StoryboardCard 
               key={item.id} 
