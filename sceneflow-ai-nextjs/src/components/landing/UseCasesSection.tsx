@@ -72,11 +72,12 @@ const personas: UseCasePersona[] = [
         'Budget visibility through every iteration',
         'Brand-safe visual controls',
         'Fast pre-visualization for short approval windows',
+        'Global market reach through online accessible services',
       ],
     },
     win: 'Deliver faster pitch cycles and reduce up-front production risk for client work.',
     keyPhrases: ['Budget Predictability', 'Brand Consistency', 'Faster Approvals'],
-    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Jul_16__0705_24s_202512231746_xzz58.mp4',
+    imageUrl: '/landing/use-cases/agency-pitch.jpg',
   },
 ];
 
