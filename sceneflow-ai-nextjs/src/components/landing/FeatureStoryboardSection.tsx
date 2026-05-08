@@ -15,7 +15,105 @@ type FeatureStoryboardItem = {
   videoUrl?: string;
 };
 
-// ... (FEATURE_STORYBOARD_ITEMS stay the same)
+const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
+  {
+    id: 1,
+    title: 'Intuitive UX + Full Creator Control',
+    description:
+      'Start fast with guided automation, then edit every generated output so teams keep creative control without losing speed.',
+    screenshotSlot: 'Insert screenshot: Blueprint editor with editable generated sections',
+    videoSlot: 'Insert 00:30 clip: UX flow from concept to editable output',
+    screenshotUrl: '/landing/storyboard/intuitive-ux.png',
+  },
+  {
+    id: 2,
+    title: 'Credit Budget Tracking + Vertex AI BYOK',
+    description:
+      'Track credit usage in real time, set practical production guardrails, and use Vertex AI BYOK for enterprise governance.',
+    screenshotSlot: 'Insert screenshot: credit usage panel and BYOK settings',
+    videoSlot: 'Insert 00:30 clip: budget dashboard and key configuration',
+  },
+  {
+    id: 3,
+    title: 'Any Concept, One Production Workflow',
+    description:
+      'Use one reliable pipeline for training, podcasts, news, home sales videos, and cinematic content.',
+    screenshotSlot: 'Insert screenshot: project templates and concept examples',
+    videoSlot: 'Insert 00:30 clip: create project from multiple concept types',
+  },
+  {
+    id: 4,
+    title: 'Concept to Episode Series Automation',
+    description:
+      'Scale from single concept to episodic production with audience resonance insights guiding each iteration.',
+    screenshotSlot: 'Insert screenshot: series and episode workspace with resonance panel',
+    videoSlot: 'Insert 00:30 clip: concept converted into episode series',
+  },
+  {
+    id: 5,
+    title: 'Concept or Episode to Blueprint',
+    description:
+      'Build a production-ready blueprint with characters, beats, and constraints, then optimize with resonance recommendations.',
+    screenshotSlot: 'Insert screenshot: blueprint sections for characters and story beats',
+    videoSlot: 'Insert 00:30 clip: blueprint generation and optimization pass',
+  },
+  {
+    id: 6,
+    title: 'Blueprint to Production in One Click',
+    description:
+      'Generate scene-by-scene script, dialogue, and direction, then refine with script-level and scene-level resonance feedback.',
+    screenshotSlot: 'Insert screenshot: generated scene cards and script review',
+    videoSlot: 'Insert 00:30 clip: one-click start production and script generation',
+  },
+  {
+    id: 7,
+    title: 'Shared Reference Library for Continuity',
+    description:
+      'Maintain consistent characters, wardrobe, voices, locations, and props across scenes and episodes with reusable references.',
+    screenshotSlot: 'Insert screenshot: reference library with characters, voices, and props',
+    videoSlot: 'Insert 00:30 clip: reference reuse across multiple scenes',
+  },
+  {
+    id: 8,
+    title: '76+ Languages + Adaptive Translation',
+    description:
+      'Localize content at scale while preserving narrative intent and timeline alignment for multilingual delivery.',
+    screenshotSlot: 'Insert screenshot: language selector and translated timeline tracks',
+    videoSlot: 'Insert 00:30 clip: generate multilingual output and alignment',
+  },
+  {
+    id: 9,
+    title: 'Storyboard to Veo-Aligned Scene Production',
+    description:
+      'Create a quick audiovisual storyboard, then produce scenes with automated segmentation aligned to Veo 3.1 durations.',
+    screenshotSlot: 'Insert screenshot: storyboard preview and segment breakdown',
+    videoSlot: 'Insert 00:30 clip: storyboard to segmented scene generation',
+  },
+  {
+    id: 10,
+    title: 'Final Cut + Screening Room + Cloud Scale',
+    description:
+      'Edit with precision in Final Cut, validate with Screening Room feedback, and run on scalable Google Cloud infrastructure.',
+    screenshotSlot: 'Insert screenshot: Final Cut timeline and Screening Room feedback',
+    videoSlot: 'Insert 00:30 clip: final polish, screening, and publish readiness',
+  },
+  {
+    id: 11,
+    title: 'Audience Resonance Editor',
+    description:
+      'Determine your target audience. Get score, analysis, and recommendations. One-click fixes. Guided Edit to optimize Episodes, Blueprint, and Script.',
+    screenshotSlot: 'Insert screenshot: Audience Resonance target selection and scoring panel',
+    videoSlot: 'Insert 00:30 clip: AI analysis and guided one-click story fixes',
+  },
+  {
+    id: 12,
+    title: 'Sceneflow Express',
+    description:
+      'Auto generate images and video segments concurrently. Express Storyboard enables you to review and share audio (any available language) video storyboard in minutes vs hours. Express Animatics enables you to view and render a full Ken Burns animatic scene in minutes vs hours. Express Video enables you to view and render a full video scene in minutes vs days.',
+    screenshotSlot: 'Insert screenshot: Express generation progress and Ken Burns animatic preview',
+    videoSlot: 'Insert 00:30 clip: concurrent image/video generation and rapid animatic playback',
+  },
+];
 
 function StoryboardCard({ 
   item, 
