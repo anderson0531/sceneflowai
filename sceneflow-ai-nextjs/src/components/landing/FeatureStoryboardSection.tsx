@@ -9,6 +9,8 @@ type FeatureStoryboardItem = {
   description: string;
   videoSlot: string;
   screenshotSlot: string;
+  screenshotUrl?: string;
+  videoUrl?: string;
 };
 
 const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
@@ -19,6 +21,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
       'Start fast with guided automation, then edit every generated output so teams keep creative control without losing speed.',
     screenshotSlot: 'Insert screenshot: Blueprint editor with editable generated sections',
     videoSlot: 'Insert 00:30 clip: UX flow from concept to editable output',
+    screenshotUrl: '/landing/storyboard/intuitive-ux.png',
   },
   {
     id: 2,
@@ -134,8 +137,20 @@ function StoryboardCard({ item }: { item: FeatureStoryboardItem }) {
             <Camera className="h-3.5 w-3.5" />
             Screenshot
           </p>
-          <div className="aspect-video rounded-lg border border-white/10 bg-slate-900/70 p-3 text-xs text-slate-400">
-            {item.screenshotSlot}
+          <div className="aspect-video rounded-lg border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center">
+            {item.screenshotUrl ? (
+              <Image 
+                src={item.screenshotUrl} 
+                alt={item.title}
+                width={640}
+                height={360}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="p-3 text-xs text-slate-400">
+                {item.screenshotSlot}
+              </div>
+            )}
           </div>
         </div>
 
@@ -144,8 +159,21 @@ function StoryboardCard({ item }: { item: FeatureStoryboardItem }) {
             <PlayCircle className="h-3.5 w-3.5" />
             Feature Video
           </p>
-          <div className="aspect-video rounded-lg border border-white/10 bg-slate-900/70 p-3 text-xs text-slate-400">
-            {item.videoSlot}
+          <div className="aspect-video rounded-lg border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center">
+            {item.videoUrl ? (
+              <video 
+                src={item.videoUrl} 
+                className="w-full h-full object-cover"
+                autoPlay 
+                muted 
+                loop 
+                playsInline 
+              />
+            ) : (
+              <div className="p-3 text-xs text-slate-400">
+                {item.videoSlot}
+              </div>
+            )}
           </div>
         </div>
       </div>
