@@ -1073,36 +1073,38 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
           {/* Right Panel: Controls & Prompt */}
           <div className="col-span-5 flex flex-col gap-4">
             
-            {/* Prompt Direction Preview with Direct Button */}
+            {/* Prompt Direction Entry */}
             <div className="flex flex-col gap-2">
-              {/* Prompt Preview Box */}
-              <div 
-                className="bg-slate-800/60 border border-slate-700 rounded-lg p-3 cursor-pointer hover:border-indigo-500/50 hover:bg-slate-800/80 transition-colors group"
-                onClick={() => setIsDirectionDialogOpen(true)}
-              >
-                <p className="text-sm text-slate-300 leading-relaxed line-clamp-4">
-                  {(mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt) || (
-                    <span className="text-slate-500 italic">No prompt direction set. Click to add direction.</span>
-                  )}
-                </p>
-                {isOptimizingForMode && (
-                  <div className="flex items-center gap-2 mt-2 text-xs text-indigo-400">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    <span>Optimizing for {mode === 'FRAME_TO_VIDEO' ? 'Frame-to-Video' : mode === 'IMAGE_TO_VIDEO' ? 'Image-to-Video' : 'Text-to-Video'}...</span>
-                  </div>
-                )}
+              <div className="flex items-center justify-between">
+                <Label className="text-slate-300">Prompt Direction</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsDirectionDialogOpen(true)}
+                  className="h-6 px-2 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/30"
+                >
+                  <Wand2 className="w-3 h-3 mr-1" />
+                  AI Assistant
+                </Button>
               </div>
-              
-              {/* Direct Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsDirectionDialogOpen(true)}
-                className="w-full bg-slate-800 border-slate-700 text-indigo-400 hover:bg-indigo-950/50 hover:border-indigo-500/50 hover:text-indigo-300"
-              >
-                <Wand2 className="w-4 h-4 mr-2" />
-                Direct
-              </Button>
+              <Textarea 
+                value={mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt}
+                onChange={(e) => {
+                  if (mode === 'FRAME_TO_VIDEO') {
+                    setMotionPrompt(e.target.value)
+                  } else {
+                    setVisualPrompt(e.target.value)
+                  }
+                }}
+                className="min-h-[120px] bg-slate-800/80 border-slate-700 text-slate-200 text-sm focus:border-indigo-500/50 transition-colors"
+                placeholder="Enter prompt direction here..."
+              />
+              {isOptimizingForMode && (
+                <div className="flex items-center gap-2 mt-1 text-xs text-indigo-400">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>Optimizing for {mode === 'FRAME_TO_VIDEO' ? 'Frame-to-Video' : mode === 'IMAGE_TO_VIDEO' ? 'Image-to-Video' : 'Text-to-Video'}...</span>
+                </div>
+              )}
             </div>
 
                 {/* Duration Selector */}

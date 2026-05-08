@@ -876,8 +876,8 @@ export function GuidePromptEditor({
                 Select elements to include. The prompt will be intelligently synthesized for optimal video generation.
               </p>
               
-              <ScrollArea className="max-h-[450px]">
-                <div className="space-y-3 pr-2">
+              <div className="max-h-[250px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                <div className="space-y-3">
                   {elements.map((element) => {
                     const Icon = getTypeIcon(element.type)
                     const colorClass = getTypeColor(element.type)
@@ -994,7 +994,7 @@ export function GuidePromptEditor({
                     )
                   })}
                 </div>
-              </ScrollArea>
+              </div>
             </div>
             
             {/* Custom Addition */}
