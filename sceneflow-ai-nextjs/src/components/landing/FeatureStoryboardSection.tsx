@@ -116,6 +116,92 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
   },
 ];
 
+function FeatureVideoPlayer({ src }: { src: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const toggleFullscreen = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  return (
+    <div 
+      ref={containerRef}
+      className="relative w-full h-full group bg-black cursor-pointer"
+      onClick={togglePlay}
+    >
+      <video 
+        ref={videoRef}
+        src={src} 
+        className="w-full h-full object-cover"
+        muted={isMuted}
+        loop 
+        playsInline 
+        preload="metadata"
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onContextMenu={(e) => e.preventDefault()}
+        controlsList="nodownload"
+      />
+      
+      {/* Controls Overlay */}
+      <div className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+        <div className="w-full bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 flex items-center justify-between pointer-events-auto">
+          <div className="flex items-center space-x-3">
+            <button onClick={togglePlay} className="text-white hover:text-cyan-400 transition" aria-label={isPlaying ? "Pause" : "Play"}>
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            </button>
+            <button onClick={toggleMute} className="text-white hover:text-cyan-400 transition" aria-label={isMuted ? "Unmute" : "Mute"}>
+              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            </button>
+          </div>
+          <button onClick={toggleFullscreen} className="text-white hover:text-cyan-400 transition" aria-label="Fullscreen">
+            <Maximize className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Play Overlay (Visible when paused) */}
+      {!isPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
+          <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 transition-transform group-hover:scale-110">
+            <Play className="w-6 h-6 text-white fill-white" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StoryboardCard({ 
   item, 
   onExpand 
