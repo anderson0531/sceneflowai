@@ -876,8 +876,8 @@ export function GuidePromptEditor({
                 Select elements to include. The prompt will be intelligently synthesized for optimal video generation.
               </p>
               
-              <div className="max-h-[250px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                <div className="space-y-3">
+              <ScrollArea className="h-[350px] pr-3">
+                <div className="space-y-3 pr-2">
                   {elements.map((element) => {
                     const Icon = getTypeIcon(element.type)
                     const colorClass = getTypeColor(element.type)
@@ -994,18 +994,18 @@ export function GuidePromptEditor({
                     )
                   })}
                 </div>
-              </div>
+              </ScrollArea>
             </div>
             
             {/* Custom Addition */}
             <div className="space-y-2">
               <Label className="text-xs text-slate-400">
-                Additional Motion/Action Notes (optional)
+                Additional Prompt Direction (optional)
               </Label>
               <Textarea
                 value={customAddition}
                 onChange={(e) => setCustomAddition(e.target.value)}
-                placeholder="Add custom motion instructions (e.g., 'Camera slowly pushes in on subject')..."
+                placeholder="Add custom prompt direction (e.g., 'Camera slowly pushes in on subject')..."
                 className="min-h-[60px] text-sm bg-slate-800 border-slate-700"
               />
             </div>

@@ -96,6 +96,9 @@ export interface AddSegmentTypeDialogProps {
     tone?: string
     targetAudience?: string
   }
+  initialSelectedType?: SegmentPurpose
+  initialInsertPosition?: InsertPosition
+  initialSegmentIndex?: number
 }
 
 // ============================================================================
@@ -198,11 +201,25 @@ export function AddSegmentTypeDialog({
   onAddSegment,
   onRegenerateAll,
   filmContext,
+  initialSelectedType,
+  initialInsertPosition,
+  initialSegmentIndex,
 }: AddSegmentTypeDialogProps) {
   // State
-  const [selectedType, setSelectedType] = useState<SegmentPurpose>('standard')
-  const [insertPosition, setInsertPosition] = useState<InsertPosition>('end')
-  const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number>(0)
+  const [selectedType, setSelectedType] = useState<SegmentPurpose>(initialSelectedType || 'standard')
+  const [insertPosition, setInsertPosition] = useState<InsertPosition>(initialInsertPosition || 'end')
+  const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number>(initialSegmentIndex || 0)
+  
+  // Update state when initial props change
+  useEffect(() => {
+    if (open) {
+      if (initialSelectedType) setSelectedType(initialSelectedType)
+      if (initialInsertPosition) setInsertPosition(initialInsertPosition)
+      if (initialSegmentIndex !== undefined) setSelectedSegmentIndex(initialSegmentIndex)
+      setActiveTab('type') // Start on type tab by default
+    }
+  }, [open, initialSelectedType, initialInsertPosition, initialSegmentIndex])
+
   const [duration, setDuration] = useState<number>(6)
   const [customPrompt, setCustomPrompt] = useState<string>('')
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)

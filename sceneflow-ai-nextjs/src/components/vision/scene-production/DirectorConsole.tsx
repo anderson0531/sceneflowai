@@ -84,6 +84,7 @@ const SceneRenderDialog = dynamic(
   { ssr: false }
 )
 import { AddSpecialSegmentDialog, type FilmContext, type AdjacentSceneContext } from './AddSpecialSegmentDialog'
+import { AddSegmentTypeDialog } from './AddSegmentTypeDialog'
 import { ProductionStreamsPanel } from './ProductionStreamsPanel'
 import { ProductionSectionHeader } from './ProductionSectionHeader'
 // Dynamic import for SceneProductionMixer to avoid TDZ with LocalRenderService chain
@@ -184,6 +185,8 @@ interface DirectorConsoleProps {
   ) => void
   /** Character demographics for auto guide / Director dialog (falls back to scene.characters) */
   guideCharacters?: GuideCharacterDemographic[]
+  /** Triggered when the user clicks 'Continue Shot' on a video production card */
+  onAddContinueShot?: (segmentIndex: number) => void
 }
 
 /** Slots for splitting Video / Mixer / Streams across parent section cards (ScriptPanel). */
@@ -376,6 +379,9 @@ function DirectorConsoleRoot({
   
   // Cinematic Elements dialog state - opens for inserting new cinematic segment
   const [cinematicDialogSegmentIndex, setCinematicDialogSegmentIndex] = useState<number | null>(null)
+  
+  // Continue Shot dialog state
+  const [continueShotSegmentIndex, setContinueShotSegmentIndex] = useState<number | null>(null)
   
   // Audio track selection for video playback overlay
   const [selectedAudioTracks, setSelectedAudioTracks] = useState<SelectedAudioTracks>(DEFAULT_AUDIO_TRACKS)
@@ -1152,6 +1158,20 @@ function DirectorConsoleRoot({
                           <Settings2 className="w-3.5 h-3.5 mr-1" />
                           Take ({segment.takes?.length || 1})
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs bg-slate-800 border-slate-600 text-cyan-400 hover:bg-slate-700 px-2 hover:border-cyan-500/50 hover:text-cyan-300"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const idx = segments.findIndex(s => s.segmentId === item.segmentId)
+                            if (idx >= 0) setContinueShotSegmentIndex(idx)
+                          }}
+                          title="Continue from this segment's end frame"
+                        >
+                          <ArrowRight className="w-3.5 h-3.5 mr-1" />
+                          Continue
+                        </Button>
                       </div>
                     </div>
                     {item.status === 'complete' && (
@@ -1477,6 +1497,72 @@ function DirectorConsoleRoot({
           genre: scene?.genre ? [scene.genre] : undefined,
           tone: scene?.tone,
         }}
+      />
+      
+      {/* Continue Shot Dialog via AddSegmentTypeDialog */}
+      <AddSegmentTypeDialog
+        open={continueShotSegmentIndex !== null}
+        onOpenChange={(open) => {
+          if (!open) setContinueShotSegmentIndex(null)
+        }}
+        sceneId={sceneId}
+        sceneNumber={sceneNumber}
+        existingSegments={segments}
+        adjacentContext={continueShotSegmentIndex !== null ? {
+          previousScene: {
+            lastSegment: segments[continueShotSegmentIndex]
+          },
+          currentScene: {
+            heading: scene?.sceneHeading,
+            action: scene?.action,
+            narration: scene?.narration,
+          }
+        } : undefined}
+        onAddSegment={(segmentData) => {
+          // Add the segment directly via onProductionDataChange if provided
+          if (onProductionDataChange && productionData) {
+            const idx = segmentData.insertIndex ?? segments.length
+            const newSegments = [...segments]
+            
+            // "Auto generate start and end frame images with the start image matching the end frame image"
+            // The continue shot should inherently take the previous segment's end frame as its start frame.
+            // We set it up here:
+            const prevSeg = segments[continueShotSegmentIndex!]
+            const startFrameUrl = prevSeg?.endFrameUrl || prevSeg?.references?.endFrameUrl
+            
+            newSegments.splice(idx, 0, {
+              ...segmentData,
+              segmentId: segmentData.segmentId || `segment-${Date.now()}`,
+              startFrameUrl: startFrameUrl,
+              references: {
+                ...segmentData.references,
+                startFrameUrl: startFrameUrl
+              }
+            } as SceneSegment)
+            
+            onProductionDataChange({
+              ...productionData,
+              segments: newSegments
+            })
+            
+            import('sonner').then(({ toast }) => {
+              toast.success('Continue Shot added!', {
+                description: 'Start frame copied. Configure dialogue and generate the end frame in the Segment Builder.',
+              })
+            })
+          }
+          setContinueShotSegmentIndex(null)
+        }}
+        filmContext={{
+          title: scene?.filmTitle,
+          genre: scene?.genre ? [scene.genre] : undefined,
+          tone: scene?.tone,
+        }}
+        // Force the dialog to "extend" (Continue Shot) mode implicitly if needed,
+        // but the user can also select it. To make it seamless, we can pre-select 'extend'.
+        initialSelectedType="extend"
+        initialInsertPosition="after"
+        initialSegmentIndex={continueShotSegmentIndex !== null ? continueShotSegmentIndex : undefined}
       />
     </TooltipProvider>
   )
