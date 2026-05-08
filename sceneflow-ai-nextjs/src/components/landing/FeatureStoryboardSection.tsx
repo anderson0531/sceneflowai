@@ -116,10 +116,22 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
   },
 ];
 
-function FeatureVideoPlayer({ src }: { src: string }) {
+function FeatureVideoPlayer({ 
+  src, 
+  onExpand,
+  className = "w-full h-full object-cover",
+  autoPlay = true,
+  showExpand = true
+}: { 
+  src: string; 
+  onExpand?: (e: React.MouseEvent) => void;
+  className?: string;
+  autoPlay?: boolean;
+  showExpand?: boolean;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
 
   const togglePlay = (e: React.MouseEvent) => {
@@ -142,28 +154,17 @@ function FeatureVideoPlayer({ src }: { src: string }) {
     }
   };
 
-  const toggleFullscreen = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen().catch(err => {
-        console.error(`Error attempting to enable fullscreen: ${err.message}`);
-      });
-    } else {
-      document.exitFullscreen();
-    }
-  };
-
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-full group bg-black cursor-pointer"
+      className="relative w-full h-full group bg-black cursor-pointer overflow-hidden rounded-lg"
       onClick={togglePlay}
     >
       <video 
         ref={videoRef}
         src={src} 
-        className="w-full h-full object-cover"
-        autoPlay
+        className={className}
+        autoPlay={autoPlay}
         muted={isMuted}
         loop 
         playsInline 
@@ -185,9 +186,11 @@ function FeatureVideoPlayer({ src }: { src: string }) {
               {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
             </button>
           </div>
-          <button onClick={toggleFullscreen} className="text-white hover:text-cyan-400 transition" aria-label="Fullscreen">
-            <Maximize className="w-5 h-5" />
-          </button>
+          {showExpand && onExpand && (
+            <button onClick={onExpand} className="text-white hover:text-cyan-400 transition" aria-label="Expand Video">
+              <Maximize className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -205,10 +208,12 @@ function FeatureVideoPlayer({ src }: { src: string }) {
 
 function StoryboardCard({ 
   item, 
-  onExpand 
+  onExpand,
+  onExpandVideo
 }: { 
   item: FeatureStoryboardItem; 
   onExpand: (url: string) => void;
+  onExpandVideo: (url: string) => void;
 }) {
   return (
     <motion.article
@@ -291,6 +296,7 @@ function StoryboardCard({
 
 export default function FeatureStoryboardSection() {
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
 
   return (
     <section id="feature-storyboard" className="bg-slate-950 py-20 sm:py-24 relative">
@@ -320,12 +326,13 @@ export default function FeatureStoryboardSection() {
               key={item.id} 
               item={item} 
               onExpand={setExpandedImage} 
+              onExpandVideo={setExpandedVideo}
             />
           ))}
         </div>
       </div>
 
-      {/* Lightbox / Expand Modal */}
+      {/* Lightbox / Expand Modal (Image) */}
       <AnimatePresence>
         {expandedImage && (
           <motion.div
@@ -357,6 +364,44 @@ export default function FeatureStoryboardSection() {
                   fill
                   className="object-contain"
                   priority
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {expandedVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setExpandedVideo(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 md:p-12 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-5xl w-full aspect-video flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setExpandedVideo(null)}
+                className="absolute -top-12 right-0 text-white/70 hover:text-white flex items-center gap-2 text-sm font-medium transition-colors"
+              >
+                <X className="w-5 h-5" />
+                Close Preview
+              </button>
+              
+              <div className="w-full h-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black">
+                <FeatureVideoPlayer 
+                  src={expandedVideo} 
+                  autoPlay={true}
+                  showExpand={false}
+                  className="w-full h-full object-contain"
                 />
               </div>
             </motion.div>
