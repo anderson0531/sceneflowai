@@ -1,9 +1,9 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, PlayCircle, Clock3, Maximize2, X } from 'lucide-react';
+import { Camera, PlayCircle, Clock3, Maximize2, X, Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react';
 import NextImage from 'next/image';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 type FeatureStoryboardItem = {
   id: number;
@@ -189,15 +189,7 @@ function StoryboardCard({
           </p>
           <div className="aspect-video rounded-lg border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center relative group">
             {item.videoUrl ? (
-              <video 
-                src={item.videoUrl} 
-                className="w-full h-full object-cover bg-black"
-                controls
-                muted 
-                loop 
-                playsInline 
-                preload="metadata"
-              />
+              <FeatureVideoPlayer src={item.videoUrl} />
             ) : (
               <div className="p-3 text-xs text-slate-400">
                 {item.videoSlot}
