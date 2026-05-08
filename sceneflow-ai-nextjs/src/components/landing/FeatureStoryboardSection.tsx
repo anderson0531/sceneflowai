@@ -365,7 +365,7 @@ export default function FeatureStoryboardSection() {
           </p>
         </motion.div>
 
-        <div className="mt-12 space-y-4 max-w-5xl mx-auto">
+        <div className="mt-12 space-y-4 max-w-7xl mx-auto">
           {FEATURE_STORYBOARD_ITEMS.map((item) => (
             <StoryboardCard 
               key={item.id} 
@@ -430,7 +430,7 @@ export default function FeatureStoryboardSection() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative max-w-5xl w-full aspect-video flex items-center justify-center"
+              className="relative max-w-7xl w-full aspect-video flex items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
               <button
