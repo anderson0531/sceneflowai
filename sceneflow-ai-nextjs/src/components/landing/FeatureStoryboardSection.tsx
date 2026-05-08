@@ -24,7 +24,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     screenshotSlot: 'Insert screenshot: Blueprint editor with editable generated sections',
     videoSlot: 'Insert 00:30 clip: UX flow from concept to editable output',
     screenshotUrl: '/landing/storyboard/intuitive-ux.png',
-    videoUrl: 'https://storage.googleapis.com/sceneflow-assets/demo/intuitive-ux.mov',
+    videoUrl: 'https://storage.googleapis.com/sceneflow-assets/demo/intuitive-ux.mp4',
   },
   {
     id: 2,
@@ -119,7 +119,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
 function FeatureVideoPlayer({ src }: { src: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
 
   const togglePlay = (e: React.MouseEvent) => {
@@ -163,10 +163,11 @@ function FeatureVideoPlayer({ src }: { src: string }) {
         ref={videoRef}
         src={src} 
         className="w-full h-full object-cover"
+        autoPlay
         muted={isMuted}
         loop 
         playsInline 
-        preload="metadata"
+        preload="auto"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onContextMenu={(e) => e.preventDefault()}
