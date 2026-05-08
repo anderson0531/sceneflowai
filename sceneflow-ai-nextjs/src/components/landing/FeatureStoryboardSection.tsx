@@ -223,34 +223,34 @@ function StoryboardCard({
       transition={{ duration: 0.45 }}
       className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 backdrop-blur-sm"
     >
-      <div className="flex items-center gap-3">
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-purple-500/20 text-sm font-semibold text-purple-200">
+      <div className="flex items-center gap-4">
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-500/20 text-base font-semibold text-purple-200">
           {item.id}
         </span>
-        <h3 className="text-lg font-semibold text-white">{item.title}</h3>
+        <h3 className="text-2xl font-bold text-white">{item.title}</h3>
       </div>
 
-      <p className="mt-3 text-sm leading-relaxed text-slate-300">{item.description}</p>
+      <p className="mt-4 text-base leading-relaxed text-slate-300 max-w-4xl">{item.description}</p>
 
-      <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border border-dashed border-white/20 bg-slate-950/70 p-4">
-          <p className="mb-2 inline-flex items-center justify-between text-xs font-medium uppercase tracking-wide text-cyan-300">
+      <div className="mt-8 grid gap-8 grid-cols-1">
+        <div className="rounded-2xl border border-dashed border-white/20 bg-slate-950/70 p-6 md:p-8">
+          <p className="mb-4 inline-flex items-center justify-between w-full text-sm font-medium uppercase tracking-wider text-cyan-300">
             <span className="flex items-center gap-2">
-              <Camera className="h-3.5 w-3.5" />
-              Screenshot
+              <Camera className="h-4 w-4" />
+              High-Resolution Screenshot
             </span>
             {item.screenshotUrl && (
               <button 
                 onClick={() => onExpand(item.screenshotUrl!)}
-                className="hover:text-white transition-colors"
+                className="hover:text-white transition-colors bg-white/5 p-1.5 rounded-lg"
                 title="Expand Image"
               >
-                <Maximize2 className="h-3 w-3" />
+                <Maximize2 className="h-4 w-4" />
               </button>
             )}
           </p>
           <div 
-            className={`aspect-video rounded-lg border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center relative group ${item.screenshotUrl ? 'cursor-zoom-in' : ''}`}
+            className={`aspect-video rounded-xl border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center relative group ${item.screenshotUrl ? 'cursor-zoom-in' : ''}`}
             onClick={() => item.screenshotUrl && onExpand(item.screenshotUrl)}
           >
             {item.screenshotUrl ? (
@@ -258,12 +258,14 @@ function StoryboardCard({
                 <NextImage 
                   src={item.screenshotUrl} 
                   alt={item.title}
-                  width={640}
-                  height={360}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  width={1920}
+                  height={1080}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <Maximize2 className="w-6 h-6 text-white drop-shadow-lg" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <div className="bg-white/10 backdrop-blur-md p-4 rounded-full border border-white/20">
+                    <Maximize2 className="w-8 h-8 text-white drop-shadow-lg" />
+                  </div>
                 </div>
               </>
             ) : (
@@ -274,14 +276,20 @@ function StoryboardCard({
           </div>
         </div>
 
-        <div className="rounded-xl border border-dashed border-white/20 bg-slate-950/70 p-4">
-          <p className="mb-2 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-violet-300">
-            <PlayCircle className="h-3.5 w-3.5" />
-            Feature Video
+        <div className="rounded-2xl border border-dashed border-white/20 bg-slate-950/70 p-6 md:p-8">
+          <p className="mb-4 inline-flex items-center gap-2 text-sm font-medium uppercase tracking-wider text-violet-300">
+            <PlayCircle className="h-4 w-4" />
+            Feature Walkthrough Video
           </p>
-          <div className="aspect-video rounded-lg border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center relative group">
+          <div className="aspect-video rounded-xl border border-white/10 bg-slate-900/70 overflow-hidden flex items-center justify-center relative group shadow-2xl">
             {item.videoUrl ? (
-              <FeatureVideoPlayer src={item.videoUrl} />
+              <FeatureVideoPlayer 
+                src={item.videoUrl} 
+                onExpand={(e) => {
+                  e.stopPropagation();
+                  onExpandVideo(item.videoUrl!);
+                }}
+              />
             ) : (
               <div className="p-3 text-xs text-slate-400">
                 {item.videoSlot}
