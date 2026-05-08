@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Video, Play, Building2, Film, Sparkles, Volume2, VolumeX, Maximize2, User, Briefcase, Clock, DollarSign, Target, CheckCircle2, ArrowRight, Quote } from 'lucide-react';
+import { Video, Play, Building2, Film, Sparkles, Volume2, VolumeX, Maximize2, User, Briefcase, Clock, DollarSign, Target, CheckCircle2, ArrowRight, Quote, X } from 'lucide-react';
 
 // Toggle personas for "Choose Your Path"
 type Persona = 'creator' | 'agency';
@@ -80,15 +80,22 @@ const personas: UseCasePersona[] = [
 ];
 
 // Video Player Component with Controls
-const VideoPlayer = ({ persona }: { persona: UseCasePersona }) => {
+const VideoPlayer = ({ persona, onExpandVideo }: { persona: UseCasePersona; onExpandVideo: (url: string) => void }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false);
 
-  const toggleMute = () => {
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
+      videoRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
+    }
+  };
+
+  const handleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (persona.videoUrl) {
+      onExpandVideo(persona.videoUrl);
     }
   };
 
@@ -113,14 +120,15 @@ const VideoPlayer = ({ persona }: { persona: UseCasePersona }) => {
   }
 
   return (
-    <div className={`relative w-full mx-auto transition-all duration-300 ${isExpanded ? 'max-w-4xl' : ''}`}>
+    <div className="relative w-full mx-auto group">
       <motion.div
-        className="relative rounded-2xl overflow-hidden border-2 shadow-2xl"
+        className="relative rounded-2xl overflow-hidden border-2 shadow-2xl cursor-pointer"
         style={{ borderColor: persona.id === 'creator' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(6, 182, 212, 0.3)' }}
         initial={{ opacity: 0, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
+        onClick={handleExpand}
         layout
       >
         <div className={`absolute -inset-2 bg-gradient-to-r ${persona.bgGradient} rounded-2xl blur-xl -z-10 opacity-50`} />
@@ -130,10 +138,10 @@ const VideoPlayer = ({ persona }: { persona: UseCasePersona }) => {
             ref={videoRef}
             autoPlay
             loop
-            muted
+            muted={isMuted}
             playsInline
             preload="auto"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           >
             <source src={`${persona.videoUrl}#t=0.1`} type="video/mp4" />
           </video>
@@ -144,18 +152,27 @@ const VideoPlayer = ({ persona }: { persona: UseCasePersona }) => {
             </div>
           </div>
           
-          <div className="absolute bottom-3 right-3 flex items-center gap-2">
+          {/* Play Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none">
+            <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
+              <Play className="w-8 h-8 text-white fill-white" />
+            </div>
+          </div>
+
+          <div className="absolute bottom-3 right-3 flex items-center gap-2 z-20">
             <button
               onClick={toggleMute}
-              className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
+              className="p-2 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md transition-all text-white border border-white/10"
+              aria-label={isMuted ? "Unmute" : "Mute"}
             >
-              {isMuted ? <VolumeX className="w-4 h-4 text-white/80" /> : <Volume2 className="w-4 h-4 text-white/80" />}
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </button>
             <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm transition-all opacity-60 hover:opacity-100"
+              onClick={handleExpand}
+              className="p-2 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md transition-all text-white border border-white/10"
+              aria-label="Expand Video"
             >
-              <Maximize2 className="w-4 h-4 text-white/80" />
+              <Maximize2 className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -165,7 +182,7 @@ const VideoPlayer = ({ persona }: { persona: UseCasePersona }) => {
 };
 
 // Persona Card Component
-const PersonaCard = ({ persona, isActive }: { persona: UseCasePersona; isActive: boolean }) => {
+const PersonaCard = ({ persona, isActive, onExpandVideo }: { persona: UseCasePersona; isActive: boolean; onExpandVideo: (url: string) => void }) => {
   const Icon = persona.icon;
 
   return (
@@ -258,7 +275,7 @@ const PersonaCard = ({ persona, isActive }: { persona: UseCasePersona; isActive:
 
           {/* Right: Video + One-Take Badge (Agency only) */}
           <div className="space-y-6">
-            <VideoPlayer persona={persona} />
+            <VideoPlayer persona={persona} onExpandVideo={onExpandVideo} />
             
             {/* One-Take Social Proof - Agency Only */}
             {persona.id === 'agency' && (
@@ -304,6 +321,7 @@ const PersonaCard = ({ persona, isActive }: { persona: UseCasePersona; isActive:
 
 export default function UseCasesSection() {
   const [activePersona, setActivePersona] = useState<Persona>('creator');
+  const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
 
   return (
     <section id="use-cases" className="py-24 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 overflow-hidden">
@@ -367,7 +385,7 @@ export default function UseCasesSection() {
         {/* Active Persona Content */}
         <div className="min-h-[600px]">
           {personas.map((persona) => (
-            <PersonaCard key={persona.id} persona={persona} isActive={activePersona === persona.id} />
+            <PersonaCard key={persona.id} persona={persona} isActive={activePersona === persona.id} onExpandVideo={setExpandedVideo} />
           ))}
         </div>
 
@@ -389,6 +407,46 @@ export default function UseCasesSection() {
           <p className="text-gray-500 text-sm mt-3">$9 one-time • 750 credits • Full platform access</p>
         </motion.div>
       </div>
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {expandedVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setExpandedVideo(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 md:p-12 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-5xl w-full aspect-video"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setExpandedVideo(null)}
+                className="absolute -top-12 right-0 text-white/70 hover:text-white flex items-center gap-2 text-sm font-medium transition-colors"
+              >
+                <X className="w-5 h-5" />
+                Close Preview
+              </button>
+              
+              <div className="w-full h-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black">
+                <video
+                  src={expandedVideo}
+                  autoPlay
+                  controls
+                  className="w-full h-full object-contain"
+                  controlsList="nodownload"
+                  onContextMenu={(e) => e.preventDefault()}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

@@ -37,9 +37,13 @@ export async function getAudioDurationFromBuffer(
     writeFileSync(tempPath, buffer)
     
     // Try to get duration using ffprobe
-    const duration = await getAudioDurationWithFFprobe(tempPath)
-    console.log('[Audio Duration] FFprobe duration:', duration.toFixed(2), 'seconds')
-    return duration
+    // Skip ffprobe on Vercel to avoid large binary issues and tracing warnings
+    if (!process.env.VERCEL) {
+      const duration = await getAudioDurationWithFFprobe(tempPath)
+      console.log('[Audio Duration] FFprobe duration:', duration.toFixed(2), 'seconds')
+      return duration
+    }
+    throw new Error('Skipping ffprobe on Vercel')
   } catch (error) {
     console.warn('[Audio Duration] FFprobe failed, using buffer-size estimation:', error)
     
