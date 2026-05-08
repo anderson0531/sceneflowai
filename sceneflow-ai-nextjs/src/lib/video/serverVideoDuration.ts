@@ -12,7 +12,8 @@ async function probeDuration(filePath: string): Promise<number> {
   return new Promise((resolve, reject) => {
     let ffprobePath = 'ffprobe'
     try {
-      const ffprobeStatic = require('ffprobe-static')
+      // Use eval('require') to prevent bundlers from tracing ffprobe-static
+      const ffprobeStatic = eval('require')('ffprobe-static')
       ffprobePath = ffprobeStatic.path
     } catch {
       // system ffprobe

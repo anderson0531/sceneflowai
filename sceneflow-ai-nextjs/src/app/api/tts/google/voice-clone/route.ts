@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 import ffmpeg from 'fluent-ffmpeg'
-import ffmpegStatic from 'ffmpeg-static'
 import { writeFile, readFile, unlink } from 'fs/promises'
 import { join } from 'path'
 import { tmpdir } from 'os'
@@ -9,8 +8,14 @@ import { v4 as uuidv4 } from 'uuid'
 
 export const dynamic = 'force-dynamic'
 
-if (ffmpegStatic) {
-  ffmpeg.setFfmpegPath(ffmpegStatic)
+try {
+  // Use eval('require') to prevent bundlers from tracing ffmpeg-static
+  const ffmpegStatic = eval('require')('ffmpeg-static')
+  if (ffmpegStatic) {
+    ffmpeg.setFfmpegPath(ffmpegStatic)
+  }
+} catch (e) {
+  // Fallback to system ffmpeg
 }
 
 async function convertAudio(inputBuffer: Buffer): Promise<Buffer> {

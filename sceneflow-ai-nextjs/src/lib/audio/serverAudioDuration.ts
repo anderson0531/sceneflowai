@@ -8,6 +8,7 @@
 import { spawn } from 'child_process'
 import { writeFileSync, unlinkSync } from 'fs'
 import { tmpdir } from 'os'
+import { join } from 'path'
 
 // Languages that don't use spaces between words (CJK + Southeast Asian)
 // Word count estimation is BROKEN for these languages
