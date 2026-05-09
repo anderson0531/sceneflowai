@@ -2151,6 +2151,7 @@ function SegmentAudioControls({
   disabled,
   isCollapsed = false,
   onToggleCollapse,
+  getPlaybackSegmentDuration,
 }: {
   segments: SceneSegment[]
   segmentConfigs: Record<string, SegmentAudioConfig>
@@ -2160,6 +2161,7 @@ function SegmentAudioControls({
   disabled?: boolean
   isCollapsed?: boolean
   onToggleCollapse?: () => void
+  getPlaybackSegmentDuration: (segment: SceneSegment) => number
 }) {
   const allMuted = Object.values(segmentConfigs).every(c => !c.includeAudio)
   
@@ -4866,6 +4868,7 @@ export function SceneProductionMixer({
                 disabled={isRendering}
                 isCollapsed={collapsedSections.segmentAudio}
                 onToggleCollapse={() => toggleSection('segmentAudio')}
+                getPlaybackSegmentDuration={getPlaybackSegmentDuration}
               />
               
               {/* Language Streams Status — shows available languages and their audio status */}
