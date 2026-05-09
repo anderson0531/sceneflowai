@@ -538,7 +538,7 @@ export function VoiceSelectionDialog({
                 </TabsList>
 
                 {/* Browse Tab */}
-                <TabsContent value="browse" className="flex-1 overflow-hidden flex flex-col mt-4">
+                <TabsContent value="browse" className="flex-1 overflow-hidden flex flex-col mt-4 data-[state=inactive]:hidden">
                   <BrowseVoiceContent
                     voices={voices}
                     loading={loading}
@@ -572,8 +572,8 @@ export function VoiceSelectionDialog({
                 </TabsContent>
 
                 {/* Create Tab */}
-                <TabsContent value="create" className="flex-1 overflow-y-auto mt-4">
-                  <Tabs value={createTab} onValueChange={(v) => setCreateTab(v as 'design' | 'clone')} className="h-full flex flex-col">
+                <TabsContent value="create" className="flex-1 overflow-hidden flex flex-col mt-4 data-[state=inactive]:hidden">
+                  <Tabs value={createTab} onValueChange={(v) => setCreateTab(v as 'design' | 'clone')} className="flex-1 flex flex-col min-h-0">
                     <TabsList className="shrink-0 mb-3 h-8 bg-transparent border-b border-gray-700 rounded-none p-0 gap-6">
                       {provider === 'elevenlabs' && (
                         <TabsTrigger 
@@ -594,25 +594,29 @@ export function VoiceSelectionDialog({
                     </TabsList>
 
                     {provider === 'elevenlabs' && (
-                      <TabsContent value="design" className="flex-1 overflow-hidden mt-0">
-                        <VoiceDesignPanel
-                          onVoiceCreated={handleVoiceCreated}
-                          characterContext={characterContext}
-                          screenplayContext={screenplayContext}
-                          onVoiceDescriptionGenerated={onVoiceDescriptionGenerated}
-                        />
+                      <TabsContent value="design" className="flex-1 overflow-y-auto mt-0">
+                        <div className="h-full">
+                          <VoiceDesignPanel
+                            onVoiceCreated={handleVoiceCreated}
+                            characterContext={characterContext}
+                            screenplayContext={screenplayContext}
+                            onVoiceDescriptionGenerated={onVoiceDescriptionGenerated}
+                          />
+                        </div>
                       </TabsContent>
                     )}
 
-                    <TabsContent value="clone" className="flex-1 overflow-hidden mt-0">
-                      <VoiceClonePanel
-                        onVoiceCreated={handleVoiceCreated}
-                        characterName={characterContext?.name}
-                        characterAudioSampleUrl={characterAudioSampleUrl}
-                        characterContext={characterContext}
-                        screenplayContext={screenplayContext}
-                        provider={provider}
-                      />
+                    <TabsContent value="clone" className="flex-1 overflow-y-auto mt-0">
+                      <div className="h-full">
+                        <VoiceClonePanel
+                          onVoiceCreated={handleVoiceCreated}
+                          characterName={characterContext?.name}
+                          characterAudioSampleUrl={characterAudioSampleUrl}
+                          characterContext={characterContext}
+                          screenplayContext={screenplayContext}
+                          provider={provider}
+                        />
+                      </div>
                     </TabsContent>
                   </Tabs>
                 </TabsContent>

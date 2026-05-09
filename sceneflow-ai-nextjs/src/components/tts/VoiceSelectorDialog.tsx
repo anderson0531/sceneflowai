@@ -250,7 +250,7 @@ export function VoiceSelectorDialog({
           </TabsList>
 
           {/* Browse Tab */}
-          <TabsContent value="browse" className="flex-1 overflow-hidden flex flex-col mt-4">
+          <TabsContent value="browse" className="flex-1 overflow-hidden flex flex-col mt-4 data-[state=inactive]:hidden">
             {/* Recommendations Section */}
             {recommendations.length > 0 && !debouncedQuery && (
               <div className="mb-4 shrink-0">
