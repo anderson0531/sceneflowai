@@ -22,6 +22,21 @@ import {
 import { DEFAULT_LML_CONFIG } from './defaults'
 
 /**
+ * Buffer constants for audio alignment (in seconds)
+ */
+export const AUDIO_ALIGNMENT_BUFFERS = {
+  NARRATION_BUFFER: 2,    // Buffer after narration ends (2s gap before dialogue)
+  INTER_CLIP_BUFFER: 2,   // Buffer between SFX/Dialogue clips (2s gap for natural pacing)
+  MUSIC_END_BUFFER: 5,    // Buffer at end of music for fade-out (totalAudio + 5s)
+}
+
+/** Default AI video segment length on the timeline (seconds). */
+export const DEFAULT_SEGMENT_DURATION_SECONDS = 12
+
+/** Narration audio is merged into the dialogue track as a NARRATOR clip (no separate voiceover row). */
+export const DIALOGUE_NARRATION_CLIP_ID = 'dialogue-narration'
+
+/**
  * Generate a hash of all audio URLs for change detection.
  * When the hash changes, React should re-render the timeline.
  */
@@ -99,8 +114,6 @@ export function dialogueLineIdForIndex(dialogueIndex: number): string {
   return `dialogue-${dialogueIndex}`
 }
 
-/** Narration audio is merged into the dialogue track as a NARRATOR clip (no separate voiceover row). */
-export const DIALOGUE_NARRATION_CLIP_ID = 'dialogue-narration'
 
 /**
  * Look up the persisted dialogue-audio entry for a given line on a scene.
@@ -179,8 +192,6 @@ function computeSceneTimelineSpanFromSegments(scene: any, segmentPlaybackOffsetS
   return sum
 }
 
-/** Default AI video segment length on the timeline (seconds). */
-export const DEFAULT_SEGMENT_DURATION_SECONDS = 12
 
 /**
  * Repack segment `startTime`/`endTime` in play order using a uniform segment duration (default 12s).
@@ -1157,14 +1168,6 @@ export function hasAudioForLanguage(tracks: AudioTracksDataV2): boolean {
 // SEQUENTIAL ALIGNMENT SYSTEM
 // ============================================================================
 
-/**
- * Buffer constants for audio alignment (in seconds)
- */
-export const AUDIO_ALIGNMENT_BUFFERS = {
-  NARRATION_BUFFER: 2,    // Buffer after narration ends (2s gap before dialogue)
-  INTER_CLIP_BUFFER: 2,   // Buffer between SFX/Dialogue clips (2s gap for natural pacing)
-  MUSIC_END_BUFFER: 5,    // Buffer at end of music for fade-out (totalAudio + 5s)
-}
 
 /**
  * Represents an audio clip for sequential alignment
