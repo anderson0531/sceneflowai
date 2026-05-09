@@ -48,6 +48,8 @@ export interface VideoQueueState {
 export interface BatchRenderOptionsWithOverrides extends BatchRenderOptions {
   /** Override configs for specific segments - bypasses React state async timing issues */
   overrideConfigs?: Map<string, VideoGenerationConfig>
+  /** Number of concurrent generation tasks (defaults to 1) */
+  concurrency?: number
 }
 
 export interface VideoQueueActions {
@@ -272,6 +274,7 @@ export function useVideoQueue(
     }
     
     const { mode, priority, delayBetween, selectedIds, overrideConfigs } = options
+    const concurrency = options.concurrency || 1
     
     // Filter queue based on mode
     let itemsToProcess = queue.filter((item) => {
@@ -324,100 +327,110 @@ export function useVideoQueue(
     
     toast.info(`Starting batch render of ${itemsToProcess.length} segments...`)
     
+    let currentIndex = 0
     let completed = 0
     let failed = 0
     
-    for (let i = 0; i < itemsToProcess.length; i++) {
-      // Check for cancellation
-      if (cancelRequested) {
-        toast.info('Batch rendering cancelled')
-        break
-      }
-      
-      const item = itemsToProcess[i]
-      setCurrentSegmentId(item.segmentId)
-      setProgress(Math.round((i / itemsToProcess.length) * 100))
-      
-      // Use override config if provided (fixes React state async timing issues)
-      // This ensures the freshly-set config from DirectorDialog is used immediately
-      const config = overrideConfigs?.get(item.segmentId) || item.config
-      
-      try {
-        // Map mode to generation type
-        const genType: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD' = 
-          config.mode === 'FTV' || config.mode === 'I2V' ? 'I2V' :
-          config.mode === 'EXT' ? 'I2V' : 'T2V'
+    // Worker function for concurrent processing
+    const worker = async () => {
+      while (currentIndex < itemsToProcess.length) {
+        if (cancelRequested) break
         
-        await onGenerate(
-          sceneId,
-          item.segmentId,
-          genType,
-          {
-            startFrameUrl: config.startFrameUrl || undefined,
-            endFrameUrl: config.endFrameUrl || undefined,
-            sourceVideoUrl: config.sourceVideoUrl || undefined,
-            prompt: config.prompt,
-            negativePrompt: config.negativePrompt || undefined,
-            duration: config.duration,
-            aspectRatio: config.aspectRatio,
-            resolution: config.resolution,
-            generationMethod: config.mode,
-            guidePrompt: config.guidePrompt,  // Voice/dialogue/SFX for Veo 3.1 audio
-          }
-        )
+        const i = currentIndex++
+        const item = itemsToProcess[i]
         
-        completed++
-        setCompletedCount(completed)
-      } catch (error: any) {
-        console.error(`[VideoQueue] Failed to render segment ${item.segmentId}:`, error)
-        
-        // Check if this is a rate limit error
-        const errorMessage = error?.message || error?.toString() || ''
-        const isRateLimit = errorMessage.toLowerCase().includes('rate limit') || 
-                           errorMessage.includes('429') ||
-                           errorMessage.includes('isRateLimited')
-        
-        if (isRateLimit) {
-          // Extract retry time or default to 60 seconds
-          const retryMatch = errorMessage.match(/(\d+)\s*seconds?/i)
-          const waitSeconds = retryMatch ? parseInt(retryMatch[1], 10) : 60
-          
-          console.log(`[VideoQueue] Rate limited! Pausing for ${waitSeconds} seconds...`)
-          toast.warning(`Rate limit hit. Pausing for ${waitSeconds} seconds...`, {
-            duration: 5000
-          })
-          
-          // Set paused state with countdown
-          setIsRateLimitPaused(true)
-          setRateLimitCountdown(waitSeconds)
-          
-          // Countdown timer
-          for (let sec = waitSeconds; sec > 0; sec--) {
-            if (cancelRequested) break
-            setRateLimitCountdown(sec)
-            await new Promise(r => setTimeout(r, 1000))
-          }
-          
-          setIsRateLimitPaused(false)
-          setRateLimitCountdown(0)
-          
-          if (!cancelRequested) {
-            toast.info('Rate limit cleared. Resuming queue...')
-            // Retry this segment (decrement i to redo this iteration)
-            i--
-            continue
-          }
+        // Update progress and current segment (only accurate for single concurrency)
+        if (concurrency === 1) {
+          setCurrentSegmentId(item.segmentId)
+          setProgress(Math.round((i / itemsToProcess.length) * 100))
         } else {
-          failed++
-          setFailedCount(failed)
+          // For concurrent mode, update progress based on completed items
+          setProgress(Math.round((completed / itemsToProcess.length) * 100))
+        }
+        
+        const config = overrideConfigs?.get(item.segmentId) || item.config
+        
+        try {
+          // Map mode to generation type
+          const genType: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD' = 
+            config.mode === 'FTV' || config.mode === 'I2V' ? 'I2V' :
+            config.mode === 'EXT' ? 'I2V' : 'T2V'
+          
+          await onGenerate(
+            sceneId,
+            item.segmentId,
+            genType,
+            {
+              startFrameUrl: config.startFrameUrl || undefined,
+              endFrameUrl: config.endFrameUrl || undefined,
+              sourceVideoUrl: config.sourceVideoUrl || undefined,
+              prompt: config.prompt,
+              negativePrompt: config.negativePrompt || undefined,
+              duration: config.duration,
+              aspectRatio: config.aspectRatio,
+              resolution: config.resolution,
+              generationMethod: config.mode,
+              guidePrompt: config.guidePrompt,  // Voice/dialogue/SFX for Veo 3.1 audio
+            }
+          )
+          
+          completed++
+          setCompletedCount(completed)
+        } catch (error: any) {
+          console.error(`[VideoQueue] Failed to render segment ${item.segmentId}:`, error)
+          
+          // Check if this is a rate limit error
+          const errorMessage = error?.message || error?.toString() || ''
+          const isRateLimit = errorMessage.toLowerCase().includes('rate limit') || 
+                             errorMessage.includes('429') ||
+                             errorMessage.includes('isRateLimited')
+          
+          if (isRateLimit) {
+            // Extract retry time or default to 60 seconds
+            const retryMatch = errorMessage.match(/(\d+)\s*seconds?/i)
+            const waitSeconds = retryMatch ? parseInt(retryMatch[1], 10) : 60
+            
+            console.log(`[VideoQueue] Rate limited! Pausing for ${waitSeconds} seconds...`)
+            toast.warning(`Rate limit hit. Pausing for ${waitSeconds} seconds...`, {
+              duration: 5000
+            })
+            
+            // Set paused state with countdown
+            setIsRateLimitPaused(true)
+            setRateLimitCountdown(waitSeconds)
+            
+            // Countdown timer
+            for (let sec = waitSeconds; sec > 0; sec--) {
+              if (cancelRequested) break
+              setRateLimitCountdown(sec)
+              await new Promise(r => setTimeout(r, 1000))
+            }
+            
+            setIsRateLimitPaused(false)
+            setRateLimitCountdown(0)
+            
+            if (!cancelRequested) {
+              toast.info('Rate limit cleared. Resuming queue...')
+              // Push item back to process later
+              itemsToProcess.push(item)
+              continue
+            }
+          } else {
+            failed++
+            setFailedCount(failed)
+          }
+        }
+        
+        // Rate limiting delay between API calls (only if not concurrent)
+        if (currentIndex < itemsToProcess.length && concurrency === 1) {
+          await new Promise((resolve) => setTimeout(resolve, delayBetween))
         }
       }
-      
-      // Rate limiting delay between API calls
-      if (i < itemsToProcess.length - 1) {
-        await new Promise((resolve) => setTimeout(resolve, delayBetween))
-      }
     }
+    
+    // Start workers
+    const workers = Array.from({ length: Math.min(concurrency, itemsToProcess.length) }, () => worker())
+    await Promise.all(workers)
     
     setProgress(100)
     setCurrentSegmentId(null)
@@ -428,7 +441,7 @@ export function useVideoQueue(
     } else {
       toast.warning(`Rendered ${completed} segments, ${failed} failed`)
     }
-  }, [queue, sceneId, onGenerate, cancelRequested, delayBetween])
+  }, [queue, sceneId, onGenerate, cancelRequested])
   
   // Cancel rendering
   const cancelRendering = useCallback(() => {
