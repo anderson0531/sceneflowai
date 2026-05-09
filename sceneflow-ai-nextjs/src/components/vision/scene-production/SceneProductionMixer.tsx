@@ -2339,6 +2339,22 @@ export function SceneProductionMixer({
   // === Segment Audio Configs ===
   const [segmentAudioConfigs, setSegmentAudioConfigs] = useState<Record<string, SegmentAudioConfig>>({})
 
+// === Audio Track Configs ===
+  const [audioTracks, setAudioTracks] = useState<MixerAudioTracks>({
+    narration: { enabled: false, volume: 0.8, startOffset: 0, startSegment: 0, endSegment: -1 },
+    dialogue: { enabled: true, volume: 0.9, startOffset: 0, startSegment: 0, endSegment: -1 },
+    music: { enabled: false, volume: 0.4, startOffset: 0, startSegment: 0, endSegment: -1 },
+    sfx: { enabled: false, volume: 0.6, startOffset: 0, startSegment: 0, endSegment: -1 },
+  })
+  
+  // === Dialogue Clip Configs (individual line control) ===
+  const [dialogueClipConfigs, setDialogueClipConfigs] = useState<Record<string, AudioClipConfig>>({})
+  
+  // Handle Dialogue Clip updates from timeline (declared early to avoid TDZ in minified production builds)
+  const handleDialogueClipChange = useCallback((clipId: string, newStartTime: number, newDuration?: number) => {
+    // Deprecated: Audio tracks are auto-aligned, no manual dragging
+  }, [])
+
 
   /** Minimal scene shape for shared audio layout (segment dialogueLineIds + multi-lang audio). */
   const mixerAudioSceneStub = useMemo(
@@ -2370,7 +2386,7 @@ export function SceneProductionMixer({
 
     let audioDur = 0
     const segmentDialogueLineIds = segment.dialogueLineIds || []
-    if (segmentDialogueLineIds.length > 0) {
+    if (audioTracks.dialogue.enabled && segmentDialogueLineIds.length > 0) {
       const assignedClips = resolvedDialogueClips.filter(c => 
         c.lineId && segmentDialogueLineIds.includes(c.lineId)
       )
@@ -2386,7 +2402,7 @@ export function SceneProductionMixer({
     }
 
     return Math.max(baseVisual, audioDur)
-  }, [resolvedDialogueClips, probedDurations])
+  }, [resolvedDialogueClips, probedDurations, audioTracks.dialogue.enabled])
 
   const getPlaybackSegmentDuration = useCallback(
     (segment: SceneSegment) => {
@@ -2397,13 +2413,13 @@ export function SceneProductionMixer({
         
       const config = segmentAudioConfigs[segment.segmentId]
       // Default to 1.0s buffer between segments
-      const autoPause = 1.0
+      const autoPause = audioTracks.dialogue.enabled ? 1.0 : 0.0
       // Allow users to add extra manual pause on top
       const manualPause = config?.postSegmentPause ?? 0
       
       return baseDuration + autoPause + manualPause
     },
-    [measuredSegmentDurations, getSegmentDuration, segmentAudioConfigs]
+    [measuredSegmentDurations, getSegmentDuration, segmentAudioConfigs, audioTracks.dialogue.enabled]
   )
 
   
@@ -2590,22 +2606,6 @@ export function SceneProductionMixer({
     }
     loadCachedVideo()
   }, [projectId, sceneId, selectedLanguage, lastRenderedUrl])
-  
-  // === Audio Track Configs ===
-  const [audioTracks, setAudioTracks] = useState<MixerAudioTracks>({
-    narration: { enabled: false, volume: 0.8, startOffset: 0, startSegment: 0, endSegment: -1 },
-    dialogue: { enabled: true, volume: 0.9, startOffset: 0, startSegment: 0, endSegment: -1 },
-    music: { enabled: false, volume: 0.4, startOffset: 0, startSegment: 0, endSegment: -1 },
-    sfx: { enabled: false, volume: 0.6, startOffset: 0, startSegment: 0, endSegment: -1 },
-  })
-  
-  // === Dialogue Clip Configs (individual line control) ===
-  const [dialogueClipConfigs, setDialogueClipConfigs] = useState<Record<string, AudioClipConfig>>({})
-  
-  // Handle Dialogue Clip updates from timeline (declared early to avoid TDZ in minified production builds)
-  const handleDialogueClipChange = useCallback((clipId: string, newStartTime: number, newDuration?: number) => {
-    // Deprecated: Audio tracks are auto-aligned, no manual dragging
-  }, [])
   const [preserveBackgroundStem, setPreserveBackgroundStem] = useState(true)
   const [includeSpeechStem, setIncludeSpeechStem] = useState(false)
   const [masterSegmentVolume, setMasterSegmentVolume] = useState(0.8)
