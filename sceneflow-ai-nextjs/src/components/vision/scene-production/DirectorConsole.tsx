@@ -554,7 +554,7 @@ function DirectorConsoleRoot({
       priority: 'sequence',
       delayBetween: 200, // Minimal delay for concurrent effect
       selectedIds: expressIds,
-      concurrency: 3, // Launch up to 3 at a time concurrently
+      concurrency: expressIds.length, // Allow maximum concurrent video generations
     })
   }, [queue, segments, processQueue])
 
