@@ -25,13 +25,24 @@ function normalize(value?: string | null): string {
   return (value || '').trim()
 }
 
+export function stripDialoguePrompt(text: string): string {
+  if (!text) return text
+  return text
+    // Replace " speaks, '...'" with a period to leave just the character name (e.g. "Sarah.")
+    .replace(/\s+(?:speaks|says)[,:]?\s*(?:"[^"]+"|'[^']+')[.!?]?/gi, '.')
+    // Clean up empty sentences or stray punctuation that might be left behind
+    .replace(/\s*\.\s*\./g, '.')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
 /**
  * Baseline source used by quick generation API requests.
  * Keep this precedence stable so UI and API agree.
  */
 export function resolveQuickFrameActionPrompt(segment: FramePromptSegmentLike | null): string {
   if (!segment) return ''
-  return (
+  const rawPrompt = (
     normalize(segment.userEditedPrompt) ||
     normalize(segment.generatedPrompt) ||
     normalize(segment.action) ||
@@ -39,7 +50,9 @@ export function resolveQuickFrameActionPrompt(segment: FramePromptSegmentLike | 
     normalize(segment.subject) ||
     ''
   )
+  return stripDialoguePrompt(rawPrompt)
 }
+
 
 /**
  * Baseline text shown in advanced mode before user edits.
@@ -47,7 +60,7 @@ export function resolveQuickFrameActionPrompt(segment: FramePromptSegmentLike | 
  */
 export function resolveAdvancedFramePromptBaseline(args: ResolveAdvancedBaselineArgs): string {
   const intelligent = normalize(args.intelligentPrompt)
-  if (intelligent) return intelligent
+  if (intelligent) return stripDialoguePrompt(intelligent)
   return resolveQuickFrameActionPrompt(args.segment)
 }
 
