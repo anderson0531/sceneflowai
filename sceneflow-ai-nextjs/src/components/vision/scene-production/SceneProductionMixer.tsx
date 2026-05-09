@@ -2529,22 +2529,11 @@ export function SceneProductionMixer({
   const [dialogueClipConfigs, setDialogueClipConfigs] = useState<Record<string, AudioClipConfig>>({})
   
   // === Editable Dialogue Clips (derived from audio assets) ===
-  const [editableDialogueClips, setEditableDialogueClips] = useState<AudioClipInfo[]>([])
+  const [probedDurations, setProbedDurations] = useState<Record<string, number>>({})
   
   // Handle Dialogue Clip updates from timeline (declared early to avoid TDZ in minified production builds)
   const handleDialogueClipChange = useCallback((clipId: string, newStartTime: number, newDuration?: number) => {
-    setEditableDialogueClips(prevClips => {
-      const clipIndex = prevClips.findIndex(clip => clip.id === clipId)
-      if (clipIndex === -1) return prevClips
-      
-      const newClips = [...prevClips]
-      newClips[clipIndex] = {
-        ...newClips[clipIndex],
-        startTime: newStartTime,
-        ...(newDuration !== undefined && { duration: newDuration }),
-      }
-      return newClips
-    })
+    // Deprecated: Audio tracks are auto-aligned, no manual dragging
   }, [])
   
   // === Segment Audio Configs ===
@@ -2640,10 +2629,13 @@ export function SceneProductionMixer({
     const segmentDialogueLineIds = segment.dialogueLineIds || []
     if (segmentDialogueLineIds.length > 0) {
       const assignedClips = resolvedDialogueClips.filter(c => 
-        c.lineId && segmentDialogueLineIds.includes(c.lineId) && c.duration > 0
+        c.lineId && segmentDialogueLineIds.includes(c.lineId)
       )
       if (assignedClips.length > 0) {
-        audioDur = assignedClips.reduce((sum, c) => sum + c.duration, 0)
+        audioDur = assignedClips.reduce((sum, c) => {
+          const actualDur = probedDurations[c.id] ?? c.duration ?? 0
+          return sum + Math.max(0, actualDur)
+        }, 0)
         if (assignedClips.length > 1) {
           audioDur += (assignedClips.length - 1) * 0.3 // match buffer in audioTrackBuilder
         }
@@ -2651,7 +2643,7 @@ export function SceneProductionMixer({
     }
 
     return Math.max(baseVisual, audioDur)
-  }, [resolvedDialogueClips])
+  }, [resolvedDialogueClips, probedDurations])
 
   const getPlaybackSegmentDuration = useCallback(
     (segment: SceneSegment) => {
@@ -2732,46 +2724,57 @@ export function SceneProductionMixer({
     }
   }, [audioAssets, selectedLanguage, resolvedDialogueClips])
 
-  // Initialize editable dialogue clips from layout engine (updates when segments / language / audio change)
-  useEffect(() => {
-    if (currentAudioUrls.dialogue && currentAudioUrls.dialogue.length > 0) {
-      const clips: AudioClipInfo[] = currentAudioUrls.dialogue.map(clip => ({
-        id: clip.id,
-        label: clip.character,
-        startTime: clip.startTime ?? 0,
-        duration: clip.duration ?? 3,
-        audioUrl: clip.audioUrl,
-        character: clip.character,
-      }))
-      setEditableDialogueClips(clips)
-    } else {
-      setEditableDialogueClips([])
-    }
-    // dialogueLayoutSignature encodes clip ids, urls, timing; omit currentAudioUrls from deps to avoid resetting after drag edits
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync only when layout engine output changes
-  }, [dialogueLayoutSignature])
-
   /** Dialogue start/duration from timeline drags override layout engine for preview + render. */
   const playbackAudioUrls = useMemo(() => {
-    const byId = new Map(editableDialogueClips.map(c => [c.id, c]))
     if (currentAudioUrls.dialogue.length === 0) return currentAudioUrls
+    
+    // Build a map of dialogue clip id -> segment index
+    const clipIdToSegmentIndex = new Map<string, number>()
+    previewSegments.forEach((seg, idx) => {
+      const lineIds = seg.dialogueLineIds || []
+      resolvedDialogueClips.forEach(c => {
+        if (c.lineId && lineIds.includes(c.lineId)) {
+          clipIdToSegmentIndex.set(c.id, idx)
+        }
+      })
+    })
+
+    // Track offset within the same segment (if multiple clips in one segment)
+    const segmentTimeCursors = new Map<number, number>()
+
     const dialogue = currentAudioUrls.dialogue.map(d => {
-      const ed = byId.get(d.id)
-      if (!ed) return d
-      return { ...d, startTime: ed.startTime, duration: ed.duration }
+      const duration = probedDurations[d.id || ''] ?? d.duration ?? 3
+      
+      let startTime = d.startTime ?? 0
+      if (d.id) {
+        const segIdx = clipIdToSegmentIndex.get(d.id)
+        if (segIdx !== undefined) {
+          const segStart = getSegmentStartTime(segIdx)
+          const cursor = segmentTimeCursors.get(segIdx) ?? segStart
+          startTime = cursor
+          segmentTimeCursors.set(segIdx, cursor + duration + 0.3)
+        }
+      }
+
+      return { ...d, startTime, duration }
     })
     return { ...currentAudioUrls, dialogue }
-  }, [currentAudioUrls, editableDialogueClips])
+  }, [currentAudioUrls, probedDurations, previewSegments, resolvedDialogueClips, getSegmentStartTime])
 
   /** Timeline bars reflect wall-clock span (source duration / playback rate). */
   const dialogueClipsForTimeline = useMemo(() => {
-    return editableDialogueClips.map((c, idx) => ({
-      ...c,
+    return playbackAudioUrls.dialogue.map((c, idx) => ({
+      id: c.id || `dialogue-${idx}`,
+      label: c.character,
+      startTime: c.startTime ?? 0,
+      duration: c.duration ?? 3,
+      audioUrl: c.audioUrl,
+      character: c.character,
       playbackRate: clampDialoguePlaybackRate(
         dialogueClipConfigs[dialogueClipConfigKey(c, idx)]?.playbackRate
       ),
     }))
-  }, [editableDialogueClips, dialogueClipConfigs])
+  }, [playbackAudioUrls.dialogue, dialogueClipConfigs])
 
   const segmentDurationsForTimeline = useMemo(() => {
     const map: Record<string, number> = {}
@@ -2804,14 +2807,11 @@ export function SceneProductionMixer({
       const onMeta = () => {
         const decoded = audio.duration
         if (!Number.isFinite(decoded) || decoded <= 0) return
-        setEditableDialogueClips(prev =>
-          prev.map(c => {
-            if (c.id !== clipId) return c
-            const stored = c.duration ?? 0
-            if (decoded <= stored + DIALOGUE_DURATION_METADATA_DELTA_SEC) return c
-            return { ...c, duration: decoded }
-          })
-        )
+        setProbedDurations(prev => {
+          const stored = prev[clipId] ?? clip.duration ?? 0
+          if (decoded <= stored + DIALOGUE_DURATION_METADATA_DELTA_SEC) return prev
+          return { ...prev, [clipId]: decoded }
+        })
       }
       audio.addEventListener('loadedmetadata', onMeta)
       cleaners.push(() => {
@@ -3024,7 +3024,7 @@ export function SceneProductionMixer({
   const effectiveSceneIdx = sceneIndex ?? (sceneNumber - 1)
   
   // === Language Audio Generation Handler ===
-  // Generates narration + dialogue audio for the current scene in a specific language
+  // Generates dialogue audio for the current scene in a specific language
   const handleGenerateLanguageAudio = useCallback(async (language: string) => {
     if (!onGenerateSceneAudio) return
     
@@ -3033,11 +3033,6 @@ export function SceneProductionMixer({
     
     try {
       toast.info(`⚡ Translating & generating ${langName} audio...`, { duration: 4000 })
-      
-      // Generate narration audio for this scene in the target language
-      if (audioAssets.narration) {
-        await onGenerateSceneAudio(effectiveSceneIdx, 'narration', undefined, undefined, language)
-      }
       
       // Generate dialogue audio for each line
       const dialogueLines = audioAssets.dialogue || []
@@ -4851,17 +4846,19 @@ export function SceneProductionMixer({
                 )}
               </div>
               
-              <SegmentAudioControls
-                segments={previewSegments}
-                segmentConfigs={segmentAudioConfigs}
-                onConfigChange={setSegmentAudioConfigs}
-                masterVolume={masterSegmentVolume}
-                onMasterVolumeChange={setMasterSegmentVolume}
-                disabled={isRendering}
-                isCollapsed={collapsedSections.segmentAudio}
-                onToggleCollapse={() => toggleSection('segmentAudio')}
-                getPlaybackSegmentDuration={getPlaybackSegmentDuration}
-              />
+              {productionTarget.streamType !== 'animatic' && (
+                <SegmentAudioControls
+                  segments={previewSegments}
+                  segmentConfigs={segmentAudioConfigs}
+                  onConfigChange={setSegmentAudioConfigs}
+                  masterVolume={masterSegmentVolume}
+                  onMasterVolumeChange={setMasterSegmentVolume}
+                  disabled={isRendering}
+                  isCollapsed={collapsedSections.segmentAudio}
+                  onToggleCollapse={() => toggleSection('segmentAudio')}
+                  getPlaybackSegmentDuration={getPlaybackSegmentDuration}
+                />
+              )}
               
               {/* Language Streams Status — shows available languages and their audio status */}
               {availableLanguages.length > 1 && (

@@ -388,39 +388,16 @@ export function buildAudioTracksForLanguage(
   
   const tracks: AudioTracksDataV2 = { ...emptyTracks }
   
-  // Narration → merged into dialogue as NARRATOR (no separate voiceover track)
-  const narrationAudio = scene.narrationAudio?.[language] || scene.narrationAudio?.en
-  const narrationUrl = narrationAudio?.url || scene.narrationAudioUrl
-  let narrationAsDialogue: AudioTrackClipV2 | null = null
-  if (narrationUrl && typeof narrationUrl === 'string' && narrationUrl.trim()) {
-    const narrDur =
-      normalizeAudioDurationSeconds(narrationAudio?.duration) ??
-      normalizeAudioDurationSeconds(scene.narrationDuration) ??
-      0
-    narrationAsDialogue = {
-      id: DIALOGUE_NARRATION_CLIP_ID,
-      url: narrationUrl,
-      startTime: 0,
-      duration: narrDur,
-      label: 'NARRATOR',
-      characterName: 'NARRATOR',
-      dialogueIndex: -1,
-      volume: 1,
-      language,
-      source: 'scene' as AudioClipSource,
-      scenePropertyPath: `narrationAudio.${language}.url`,
-    }
-  }
+  // Narration removed entirely
+  const narrationAsDialogue: AudioTrackClipV2 | null = null
   tracks.voiceover = null
 
   // Description track removed - description is scene context for user, not production audio
 
   // Build dialogue tracks - check multiple sources
-  const { NARRATION_BUFFER, INTER_CLIP_BUFFER } = AUDIO_ALIGNMENT_BUFFERS
+  const { INTER_CLIP_BUFFER } = AUDIO_ALIGNMENT_BUFFERS
   const dialogueClips: AudioTrackClipV2[] = []
-  let currentTime = narrationAsDialogue
-    ? narrationAsDialogue.startTime + narrationAsDialogue.duration + NARRATION_BUFFER
-    : 0
+  let currentTime = 0
   
   // Get current dialogue lines for validation
   const currentDialogue: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
