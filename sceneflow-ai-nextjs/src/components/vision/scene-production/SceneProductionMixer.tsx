@@ -2411,15 +2411,20 @@ export function SceneProductionMixer({
         ? Math.max(measured, getSegmentDuration(segment)) // Ensure we still respect audio duration if it's longer than measured
         : getSegmentDuration(segment)
         
+      const segmentDialogueLineIds = segment.dialogueLineIds || []
+      const hasDialogue = audioTracks.dialogue.enabled && 
+                          segmentDialogueLineIds.length > 0 &&
+                          resolvedDialogueClips.some(c => c.lineId && segmentDialogueLineIds.includes(c.lineId))
+
       const config = segmentAudioConfigs[segment.segmentId]
       // Default to 1.0s buffer between segments
-      const autoPause = audioTracks.dialogue.enabled ? 1.0 : 0.0
+      const autoPause = hasDialogue ? 1.0 : 0.0
       // Allow users to add extra manual pause on top
       const manualPause = config?.postSegmentPause ?? 0
       
       return baseDuration + autoPause + manualPause
     },
-    [measuredSegmentDurations, getSegmentDuration, segmentAudioConfigs, audioTracks.dialogue.enabled]
+    [measuredSegmentDurations, getSegmentDuration, segmentAudioConfigs, audioTracks.dialogue.enabled, resolvedDialogueClips]
   )
 
   
