@@ -1585,6 +1585,13 @@ Your video_generation_prompt field MUST follow this formula:
 
 [Shot Type] + [Lens] + [Subject with full visual description] + [Specific Action] + [DIALOGUE with exact text] + [Camera Movement] + [Lighting/Mood] + [Technical Specs]
 
+**STRICT KEYFRAME DESCRIPTION RULES (start_frame_description & end_frame_description):**
+Keyframe descriptions are used to generate STILL IMAGES. They CANNOT contain video concepts!
+1. **FROZEN IN TIME:** Describe a static, frozen moment (e.g., "Sarah stands looking at the screen", NOT "Sarah walks to the screen").
+2. **NO DIALOGUE:** Never include any dialogue, speaking actions, or quotes (e.g., DO NOT write "Sarah speaks, '...'").
+3. **NO CAMERA MOVEMENT:** Never include camera movement instructions (no pan, tilt, tracking, static camera, etc.).
+4. **IMAGE PROMPT STYLE:** Write them like Midjourney or DALL-E prompts. Focus purely on composition, lighting, character pose, facial expression, and framing.
+
 **DIALOGUE FORMAT IN PROMPTS:**
 When a character speaks, you MUST include it as: [Character Name] speaks, "[exact dialogue text]"
 Example: Alex speaks, "I don't know if we're ready for this, Dad."
