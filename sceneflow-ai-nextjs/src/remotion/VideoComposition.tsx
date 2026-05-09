@@ -76,7 +76,7 @@ export const VideoComposition: React.FC = () => {
     if (asset.type === 'video') {
       return (
         <AbsoluteFill key={clip.id} style={{ opacity }}>
-          <video src={asset.src} style={{ width: '100%', height: '100%', objectFit: 'cover' }} autoPlay muted loop />
+          <Video src={asset.src} style={{ width: '100%', height: '100%', objectFit: 'cover' }} autoPlay muted loop />
         </AbsoluteFill>
       );
     }
