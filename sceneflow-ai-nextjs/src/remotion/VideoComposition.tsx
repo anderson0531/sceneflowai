@@ -2,6 +2,8 @@ import React from 'react';
 import { AbsoluteFill, Img, Audio, useCurrentFrame, useVideoConfig, interpolate } from 'remotion';
 import { useEditorStore } from '@/store/editorStore';
 import { Clip } from '@/types/editor';
+// Add Video component import from remotion
+import { Video } from 'remotion';
 
 export const VideoComposition: React.FC = () => {
   const frame = useCurrentFrame();

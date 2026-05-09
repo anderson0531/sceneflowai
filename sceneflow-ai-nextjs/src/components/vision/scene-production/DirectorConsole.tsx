@@ -513,28 +513,51 @@ function DirectorConsoleRoot({
     })
   }, [processQueue])
   
-  // Handle batch render - selected segments only (excluding locked)
-  const handleRenderSelected = useCallback(() => {
-    if (selectedSegmentIds.size === 0) return
+  // Handle batch render - express generation
+  const handleExpress = useCallback(() => {
+    // Find all segments with keyframes that are not locked
+    const expressIds = queue
+      .filter(item => {
+        const segment = segments.find(s => s.segmentId === item.segmentId)
+        if (!segment) return false
+        
+        // Skip locked segments
+        if (segment.lockedForProduction || item.config.approvalStatus === 'locked') return false
+        
+        // Must have at least one keyframe image
+        const hasKeyframe = !!(
+          segment.startFrameUrl || 
+          segment.endFrameUrl || 
+          segment.references?.startFrameUrl || 
+          segment.references?.endFrameUrl ||
+          item.config.startFrameUrl ||
+          item.config.endFrameUrl
+        )
+        
+        // Only if not complete or rendering
+        const isCompleteOrRendering = item.status === 'complete' || item.status === 'rendering'
+        
+        return hasKeyframe && !isCompleteOrRendering
+      })
+      .map(item => item.segmentId)
+      
+    if (expressIds.length === 0) {
+      import('sonner').then(({ toast }) => {
+        toast.info('No eligible segments found for Express generation')
+      })
+      return
+    }
     
-    // Filter out locked segments
-    const unlockedIds = Array.from(selectedSegmentIds).filter(id => {
-      const item = queue.find(q => q.segmentId === id)
-      return item && item.config.approvalStatus !== 'locked'
-    })
-    
-    if (unlockedIds.length === 0) return
-    
+    // Process concurrently (minimal delay between API calls)
     processQueue({
       mode: 'selected',
       priority: 'sequence',
-      delayBetween: 6000,
-      selectedIds: unlockedIds,
+      delayBetween: 200, // Minimal delay for concurrent effect
+      selectedIds: expressIds,
+      concurrency: 3, // Launch up to 3 at a time concurrently
     })
-    // Clear selection after starting render
-    setSelectedSegmentIds(new Set())
-  }, [processQueue, selectedSegmentIds, queue])
-  
+  }, [queue, segments, processQueue])
+
   // Toggle segment lock status (locked/unlocked) - persists to DB
   const handleToggleLock = useCallback((segmentId: string) => {
     const item = queue.find(q => q.segmentId === segmentId)
@@ -909,12 +932,14 @@ function DirectorConsoleRoot({
         <>
           <Button
             size="sm"
-            onClick={handleRenderSelected}
-            disabled={selectedUnlockedCount === 0}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            variant="outline"
+            onClick={handleExpress}
+            disabled={queue.length === 0}
+            className="border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all"
+            title="Auto-generate F2V videos concurrently for all unlocked segments with keyframes"
           >
-            <Play className="w-4 h-4 mr-2" />
-            Generate Video ({selectedUnlockedCount})
+            <Wand2 className="w-4 h-4 mr-2" />
+            Express
           </Button>
           {statusCounts.rendered > 0 && (
             <Button

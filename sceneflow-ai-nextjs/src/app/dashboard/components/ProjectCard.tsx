@@ -802,40 +802,6 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          {isPhase1Complete ? (
-            // Phase 2: Dual pathway options
-            <>
-              {/* Primary: Generate Video */}
-              <Button
-                onClick={handleGenerateVideo}
-                className={`w-full h-11 text-sm font-semibold transition-all duration-200 ${
-                  hasValidBYOK 
-                    ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg shadow-orange-500/25' 
-                    : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg shadow-blue-500/25'
-                }`}
-              >
-                <Video className="w-4 h-4 mr-2" />
-                {getActionLabel()}
-              </Button>
-
-
-            </>
-          ) : (
-            // Phase 1: Continue current step with contextual label
-            <Link href={getResumeRoute()} className="block">
-              <Button
-                className="w-full h-11 bg-gradient-to-r from-sf-primary to-purple-500 hover:from-sf-accent hover:to-purple-600 text-white text-sm font-semibold shadow-lg shadow-sf-primary/25"
-                title={`Continue to ${currentStepInfo.name}`}
-              >
-                <Play className="w-4 h-4 mr-2" />
-                {getActionLabel()}
-              </Button>
-            </Link>
-          )}
-        </div>
-
         {/* BYOK Status Indicator - Only show when relevant */}
         {isPhase2Available && !hasValidBYOK && (
           <div className="mt-3 p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10">
