@@ -2738,12 +2738,7 @@ export function SceneProductionMixer({
       if (d.id) {
         const segIdx = clipIdToSegmentIndex.get(d.id)
         if (segIdx !== undefined) {
-          // Calculate segment start time
-          let segStart = 0
-          for (let i = 0; i < Math.min(segIdx, segments.length); i++) {
-            segStart += getPlaybackSegmentDuration(segments[i])
-          }
-          
+          const segStart = getSegmentStartTime(segIdx)
           const cursor = segmentTimeCursors.get(segIdx) ?? segStart
           startTime = cursor
           segmentTimeCursors.set(segIdx, cursor + duration + 0.3)
@@ -2753,7 +2748,7 @@ export function SceneProductionMixer({
       return { ...d, startTime, duration }
     })
     return { ...currentAudioUrls, dialogue }
-  }, [currentAudioUrls, probedDurations, segments, resolvedDialogueClips, getPlaybackSegmentDuration])
+  }, [currentAudioUrls, probedDurations, segments, resolvedDialogueClips, getSegmentStartTime])
 
   /** Timeline bars reflect wall-clock span (source duration / playback rate). */
   const dialogueClipsForTimeline = useMemo(() => {
@@ -3440,7 +3435,7 @@ export function SceneProductionMixer({
     
     try {
       const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
-      const segmentsForLocal = sourceSegments.map((seg, idx) => {
+      const segmentsForLocal = sourceSegments.map(seg => {
         // Animatic: match ScenePreviewPlayer — imageDuration + end-frame crossfade in LocalRenderService
         const duration = renderingAnimatic
           ? (() => {
@@ -3473,13 +3468,7 @@ export function SceneProductionMixer({
           segmentId: seg.segmentId,
           assetUrl: seg.activeAssetUrl!,
           assetType: localAssetType,
-          startTime: (() => {
-            let segStart = 0
-            for (let i = 0; i < Math.min(idx, sourceSegments.length); i++) {
-              segStart += getPlaybackSegmentDuration(sourceSegments[i])
-            }
-            return segStart
-          })(),
+          startTime: getSegmentStartTime(idx),
           duration: getPlaybackSegmentDuration(seg),
           endFrameUrl,
           volume: (audioConfig?.volume ?? 1.0) * masterSegmentVolume,
