@@ -462,8 +462,14 @@ export function GuidePromptEditor({
     onNegativePromptChange?.(buildNegativePrompt())
   }, [buildNegativePrompt, onNegativePromptChange])
   
+  const lastInitKey = useRef<string>('')
+
   // Build the list of audio elements from scene data
   useEffect(() => {
+    const currentInitKey = `${segment.segmentId}-${language}-${defaultElementsMode}`
+    if (lastInitKey.current === currentInitKey && elements.length > 0) return
+    lastInitKey.current = currentInitKey
+
     if (defaultElementsMode === 'batch') {
       const batchEl = buildBatchAutoGuideElements(segment, scene, characters)
       const segmentDialogueRows = getSegmentDialogueLines(segment, scene.dialogue)

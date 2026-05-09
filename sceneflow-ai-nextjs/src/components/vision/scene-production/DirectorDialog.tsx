@@ -185,6 +185,9 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   // FTV prompt options
   const [skipAnchoringPhrase, setSkipAnchoringPhrase] = useState(false)
 
+  // Force GuidePromptEditor remount on reset
+  const [editorResetKey, setEditorResetKey] = useState(0)
+
   const [keyframeEdit, setKeyframeEdit] = useState<{ frameType: 'start' | 'end'; url: string } | null>(null)
   // Quality tier state - default to 'fast' for all modes (cost-optimized)
   // Users can manually select 'premium' when higher quality is needed
@@ -785,13 +788,17 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
                 variant="outline"
                 size="sm"
                 className="text-xs border-slate-600 text-slate-300"
-                onClick={() => setGuidePrompt(batchGuideSeed)}
+                onClick={() => {
+                  setGuidePrompt(batchGuideSeed)
+                  setEditorResetKey(k => k + 1)
+                }}
                 disabled={!batchGuideSeed}
               >
                 Reset to segment dialogue
               </Button>
             </div>
             <GuidePromptEditor
+              key={`guide-editor-${segment.segmentId}-${editorResetKey}`}
               segment={segment}
               scene={scene}
               characters={guideCharacters}
