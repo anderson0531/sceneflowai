@@ -6792,7 +6792,7 @@ function SceneCard({
                     
                     {/* ==================== STORYBOARD BUILDER CONTAINER ==================== */}
                     {/* Groups: Keyframe Generation + Storyboard Editor - simplified to 2-step workflow */}
-                    {sceneProductionData?.isSegmented && sceneProductionData.segments?.length > 0 ? (
+                    {sceneProductionData?.isSegmented && sceneProductionData.segments?.length > 0 && (
                       <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
                         <ProductionSectionHeader
                           icon={Layers}

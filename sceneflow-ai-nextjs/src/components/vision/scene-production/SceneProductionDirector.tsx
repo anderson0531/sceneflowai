@@ -89,11 +89,11 @@ export function SceneProductionDirector({
   const [phase, setPhase] = useState<DirectorPhase>('ready')
   const [isBuilderOpen, setIsBuilderOpen] = useState(false)
 
-  // Check if this scene already has segments (backward compat - FC3)
+  // Check if this scene already has segments
   const hasExistingSegments = useMemo(() => {
-    // Treat the scene as having segments if there are any, avoiding the "building" loop
-    return (productionData?.segments?.length ?? 0) > 0 || (scene?.segments?.length ?? 0) > 0
-  }, [productionData, scene])
+    // Treat the scene as having segments if there are any
+    return (productionData?.segments?.length ?? 0) > 0
+  }, [productionData])
 
   // Production readiness items
   const readinessItems: ReadinessItem[] = useMemo(() => {
@@ -150,14 +150,14 @@ export function SceneProductionDirector({
   }, [onSegmentsCreated])
 
   const handleStartBuilding = useCallback(() => {
-    // If segments exist from the script phase, bypass the builder and initialize production directly
+    // If segments exist, bypass the builder and initialize production directly
     if (hasExistingSegments) {
-       onSegmentsCreated(scene.segments || productionData?.segments || [])
+       onSegmentsCreated(productionData?.segments || [])
        return
     }
     setPhase('building')
     setIsBuilderOpen(true)
-  }, [hasExistingSegments, scene.segments, productionData?.segments, onSegmentsCreated])
+  }, [hasExistingSegments, productionData?.segments, onSegmentsCreated])
 
   // ============================================================================
   // RENDER: Complete State (segments exist)
