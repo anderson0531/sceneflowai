@@ -2663,19 +2663,7 @@ export function SceneProductionMixer({
     [measuredSegmentDurations, getSegmentDuration, segmentAudioConfigs]
   )
 
-  const dialogueLayoutSignature = useMemo(
-    () =>
-      JSON.stringify(
-        resolvedDialogueClips.map(c => [
-          c.id,
-          c.url,
-          c.startTime,
-          c.duration,
-          c.dialogueIndex,
-        ])
-      ),
-    [resolvedDialogueClips]
-  )
+  // Removed unused dialogueLayoutSignature useMemo here
 
   // Get audio URLs for selected language
   const currentAudioUrls = useMemo(() => {
@@ -2842,7 +2830,7 @@ export function SceneProductionMixer({
       return changed ? next : prev
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps -- migrate when layout-derived dialogue list identity changes
-  }, [dialogueLayoutSignature])
+  }, [currentAudioUrls.dialogue])
   
   // === Preview State ===
   const [isMuted, setIsMuted] = useState(false)
