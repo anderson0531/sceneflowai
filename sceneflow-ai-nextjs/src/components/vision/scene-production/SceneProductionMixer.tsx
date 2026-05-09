@@ -2187,13 +2187,6 @@ function SegmentAudioControls({
     })
   }
   
-  const updateSegmentPause = (segmentId: string, pause: number) => {
-    const current = segmentConfigs[segmentId] || { includeAudio: true, volume: 1.0 }
-    onConfigChange({
-      ...segmentConfigs,
-      [segmentId]: { ...current, postSegmentPause: pause }
-    })
-  }
   
   return (
     <div className="bg-gray-800/50 rounded-lg">
@@ -2287,23 +2280,12 @@ function SegmentAudioControls({
                 <span className="flex-1 text-xs text-gray-500 italic">Muted</span>
               )}
               
-              {/* Pause Control */}
-              <div className="flex items-center gap-1 border-l border-gray-600/30 pl-2 ml-2 shrink-0">
-                <span className="text-[10px] text-gray-400">Pause(s)</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="10"
-                  step="0.1"
-                  value={config.postSegmentPause === 0 ? '' : config.postSegmentPause || ''}
-                  placeholder="0"
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    updateSegmentPause(seg.segmentId, isNaN(val) ? 0 : val);
-                  }}
-                  disabled={disabled}
-                  className="w-16 h-6 px-1 bg-gray-900 border border-gray-700 rounded text-xs text-center text-gray-200 focus:border-purple-500 focus:outline-none"
-                />
+              {/* Auto Pause Indicator */}
+              <div className="flex items-center gap-1 border-l border-gray-600/30 pl-2 ml-2 shrink-0" title="Automatic pause added to sync with audio duration">
+                <span className="text-[10px] text-gray-400">Auto Pause:</span>
+                <span className="text-xs text-gray-200 font-mono w-8 text-right">
+                  {Math.max(0, getPlaybackSegmentDuration(seg) - (seg.actualVideoDuration ?? seg.imageDuration ?? (seg.endTime - seg.startTime) ?? 4)).toFixed(1)}s
+                </span>
               </div>
             </div>
           )
@@ -2640,43 +2622,49 @@ export function SceneProductionMixer({
   )
 
   const resolvedDialogueClips = useMemo(
-    () => getResolvedDialogueClipsForScene(mixerAudioSceneStub, selectedLanguage),
+    () => getResolvedDialogueClipsForScene(mixerAudioSceneStub, selectedLanguage, {
+      segmentPlaybackOffsetSeconds: 1.0,
+      packDialogueToSegmentTimeline: true,
+    }),
     [mixerAudioSceneStub, selectedLanguage]
   )
 
   // === Segment Duration Helpers (Lifted for consistency between Player and Timeline) ===
   const getSegmentDuration = useCallback((segment: SceneSegment) => {
-    // 1. Try to find dialogue audio duration for this segment
+    const raw = segment.imageDuration ?? segment.actualVideoDuration ?? (segment.endTime - segment.startTime)
+    const baseVisual = (Number.isFinite(raw) && raw > 0) ? raw : 4
+
+    let audioDur = 0
     const segmentDialogueLineIds = segment.dialogueLineIds || []
     if (segmentDialogueLineIds.length > 0) {
-      // Find the first dialogue clip assigned to this segment that has a valid duration
-      const assignedClip = resolvedDialogueClips.find(c => 
+      const assignedClips = resolvedDialogueClips.filter(c => 
         c.lineId && segmentDialogueLineIds.includes(c.lineId) && c.duration > 0
       )
-      if (assignedClip) {
-        return assignedClip.duration
+      if (assignedClips.length > 0) {
+        audioDur = assignedClips.reduce((sum, c) => sum + c.duration, 0)
+        if (assignedClips.length > 1) {
+          audioDur += (assignedClips.length - 1) * 0.3 // match buffer in audioTrackBuilder
+        }
       }
     }
 
-    const raw = segment.imageDuration ?? segment.actualVideoDuration ?? (segment.endTime - segment.startTime)
-    if (!Number.isFinite(raw) || raw <= 0) {
-      return 4
-    }
-    return raw
+    return Math.max(baseVisual, audioDur)
   }, [resolvedDialogueClips])
 
   const getPlaybackSegmentDuration = useCallback(
     (segment: SceneSegment) => {
       const measured = measuredSegmentDurations[segment.segmentId]
       const baseDuration = (measured != null && Number.isFinite(measured) && measured > 0) 
-        ? measured 
+        ? Math.max(measured, getSegmentDuration(segment)) // Ensure we still respect audio duration if it's longer than measured
         : getSegmentDuration(segment)
         
       const config = segmentAudioConfigs[segment.segmentId]
-      // Default to 1.0s buffer between segments as requested
-      const pauseDuration = config?.postSegmentPause ?? 1.0
+      // Default to 1.0s buffer between segments
+      const autoPause = 1.0
+      // Allow users to add extra manual pause on top
+      const manualPause = config?.postSegmentPause ?? 0
       
-      return baseDuration + pauseDuration
+      return baseDuration + autoPause + manualPause
     },
     [measuredSegmentDurations, getSegmentDuration, segmentAudioConfigs]
   )
@@ -3132,7 +3120,7 @@ export function SceneProductionMixer({
           endTime: seg.endTime,
           audioSource: (audioConfig.includeAudio && (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)) ? 'original' : 'none',
           audioVolume: audioConfig.volume,
-          pauseDuration: audioConfig.postSegmentPause || 0,
+          pauseDuration: Math.max(0, getPlaybackSegmentDuration(seg) - (seg.actualVideoDuration ?? seg.imageDuration ?? (seg.endTime - seg.startTime) ?? 4)),
         }
       })
       
@@ -3494,8 +3482,8 @@ export function SceneProductionMixer({
           segmentId: seg.segmentId,
           assetUrl: seg.activeAssetUrl!,
           assetType: localAssetType,
-          startTime: seg.startTime,
-          duration,
+          startTime: getSegmentStartTime(idx),
+          duration: getPlaybackSegmentDuration(seg),
           endFrameUrl,
           volume: (audioConfig?.volume ?? 1.0) * masterSegmentVolume,
           includeVideoAudio, // Pass through to LocalRenderService for video audio extraction

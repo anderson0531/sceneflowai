@@ -254,7 +254,8 @@ function findMergedNarrationClip(tracks: AudioTracksDataV2): AudioTrackClipV2 | 
  */
 export function buildDialogueLineIdToCumulativeTimelineStart(
   scene: any,
-  segmentPlaybackOffsetSeconds: number = 0
+  segmentPlaybackOffsetSeconds: number = 0,
+  dialogueClips?: any[]
 ): Map<string, number> {
   const segments = Array.isArray(scene?.segments) ? scene.segments : []
   if (segments.length === 0) return new Map()
@@ -269,11 +270,33 @@ export function buildDialogueLineIdToCumulativeTimelineStart(
   let cumulative = 0
   const lineToStart = new Map<string, number>()
   const offset = Math.max(0, segmentPlaybackOffsetSeconds)
+  const narrPrefix = inferNarrationTimelinePrefixCount(scene)
 
   for (const seg of sorted) {
     const base = getSegmentBaseDurationSeconds(seg)
-    const display = base + offset
     const ids: string[] = Array.isArray(seg.dialogueLineIds) ? seg.dialogueLineIds : []
+    
+    // Calculate audio duration for this segment
+    let audioDur = 0
+    if (dialogueClips && ids.length > 0) {
+      const assignedClips = dialogueClips.filter(c => {
+        const idx = c.dialogueIndex
+        if (typeof idx !== 'number') return false
+        const key = dialogueLineIdForIndex(idx)
+        const legacyKey = `dialogue-${narrPrefix + idx}`
+        return ids.includes(key) || ids.includes(legacyKey)
+      })
+      if (assignedClips.length > 0) {
+        audioDur = assignedClips.reduce((sum, c) => sum + (c.duration || 0), 0)
+        if (assignedClips.length > 1) {
+          audioDur += (assignedClips.length - 1) * 0.3 // 0.3s buffer between lines
+        }
+      }
+    }
+
+    const effectiveBase = Math.max(base, audioDur)
+    const display = effectiveBase + offset
+    
     for (const id of ids) {
       if (!id || typeof id !== 'string') continue
       if (!lineToStart.has(id)) {
@@ -509,7 +532,8 @@ export function buildAudioTracksForLanguage(
     if (options?.packDialogueToSegmentTimeline) {
       const cumulativeStarts = buildDialogueLineIdToCumulativeTimelineStart(
         scene,
-        options?.segmentPlaybackOffsetSeconds ?? 0
+        options?.segmentPlaybackOffsetSeconds ?? 0,
+        dialogueClips
       )
       if (cumulativeStarts.size > 0) {
         const narrPrefix = inferNarrationTimelinePrefixCount(scene)
@@ -781,10 +805,11 @@ export function buildAudioTracksWithBaselineTiming(
  */
 export function getResolvedDialogueClipsForScene(
   scene: any,
-  language: string
+  language: string,
+  options?: BuildAudioTracksOptions
 ): AudioTrackClipV2[] {
   const baseline = determineBaselineLanguage(scene)
-  return buildAudioTracksWithBaselineTiming(scene, language, baseline).dialogue
+  return buildAudioTracksWithBaselineTiming(scene, language, baseline, options).dialogue
 }
 
 /**
