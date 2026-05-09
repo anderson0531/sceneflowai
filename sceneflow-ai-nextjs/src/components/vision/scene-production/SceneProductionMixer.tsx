@@ -4153,20 +4153,12 @@ export function SceneProductionMixer({
                 {!collapsedSections.timeline && (
                   <div className="px-3 pb-3">
                     <MixerTimeline
+                      videoTotalDuration={videoTotalDuration}
+                      textOverlays={textOverlays}
+                      onTextOverlayChange={updateOverlay}
                       segments={previewSegments}
                       segmentDurations={segmentDurationsForTimeline}
                       currentPlaybackTime={0}
-                      audioTracks={audioTracks}
-                      onTrackChange={updateTrackConfig}
-                      videoTotalDuration={videoTotalDuration}
-                      narrationDuration={playbackAudioUrls.narrationDuration}
-                      dialogueDuration={playbackAudioUrls.dialogue.reduce((sum, d) => sum + ((d as { duration?: number }).duration || 3), 0)}
-                      musicDuration={audioTracks.music.duration ?? videoTotalDuration}
-                      sfxDuration={playbackAudioUrls.sfx.reduce((sum, s) => sum + (s.duration || 2), 0)}
-                      dialogueClips={dialogueClipsForTimeline}
-                      onDialogueClipChange={handleDialogueClipChange}
-                      textOverlays={textOverlays}
-                      onTextOverlayChange={updateOverlay}
                       disabled={isRendering}
                     />
                   </div>

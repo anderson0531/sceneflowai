@@ -18,14 +18,6 @@ import { Button } from '@/components/ui/Button'
 // Types
 // ============================================================================
 
-interface TrackVisual {
-  key: keyof MixerAudioTracks
-  label: string
-  icon: React.ElementType
-  color: string
-  bgColor: string
-}
-
 export interface AudioClipInfo {
   id: string
   label?: string
@@ -38,19 +30,7 @@ export interface AudioClipInfo {
 }
 
 interface MixerTimelineProps {
-  audioTracks: MixerAudioTracks
-  onTrackChange: (track: keyof MixerAudioTracks, config: AudioTrackConfig) => void
   videoTotalDuration: number
-  narrationDuration?: number
-  dialogueDuration?: number
-  musicDuration?: number
-  sfxDuration?: number
-  /** Individual dialogue clips for per-line control */
-  dialogueClips?: AudioClipInfo[]
-  /** Callback when dialogue clip timing changes (drag-to-reposition) */
-  onDialogueClipChange?: (clipId: string, newStartTime: number, newDuration?: number) => void
-  /** Individual SFX clips */
-  sfxClips?: AudioClipInfo[]
   /** Text overlays to display on timeline */
   textOverlays?: TextOverlay[]
   /** Callback when text overlay timing changes (drag-to-reposition) */
@@ -68,13 +48,6 @@ interface MixerTimelineProps {
 // ============================================================================
 // Constants
 // ============================================================================
-
-const TRACK_VISUALS: TrackVisual[] = [
-  { key: 'narration', label: 'Narr', icon: Mic2, color: '#a855f7', bgColor: 'rgba(168, 85, 247, 0.25)' },
-  { key: 'dialogue', label: 'Dial', icon: MessageSquare, color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.25)' },
-  { key: 'sfx', label: 'SFX', icon: Sparkles, color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.25)' },
-  { key: 'music', label: 'Music', icon: Music, color: '#22c55e', bgColor: 'rgba(34, 197, 94, 0.25)' },
-]
 
 // Text track visual config
 const TEXT_TRACK_VISUAL = {
@@ -94,28 +67,12 @@ function formatTime(secs: number): string {
   return `${m}:${s < 10 ? '0' : ''}${s}`
 }
 
-function dialogueClipWallSeconds(clip: AudioClipInfo): number {
-  const src = clip.duration || 0
-  const r = clip.playbackRate
-  const rate = r == null || !Number.isFinite(r) || r <= 0 ? 1 : Math.min(1.5, Math.max(0.5, r))
-  return src / rate
-}
-
 // ============================================================================
 // MixerTimeline Component
 // ============================================================================
 
 export const MixerTimeline: React.FC<MixerTimelineProps> = ({
-  audioTracks,
-  onTrackChange,
   videoTotalDuration,
-  narrationDuration = 0,
-  dialogueDuration = 0,
-  musicDuration = 0,
-  sfxDuration = 0,
-  dialogueClips = [],
-  onDialogueClipChange,
-  sfxClips = [],
   textOverlays = [],
   onTextOverlayChange,
   segments = [],
@@ -126,10 +83,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const [draggingTrack, setDraggingTrack] = useState<keyof MixerAudioTracks | null>(null)
   const [draggingTextId, setDraggingTextId] = useState<string | null>(null)
-  const [draggingClipId, setDraggingClipId] = useState<string | null>(null)
-  const [draggingClipType, setDraggingClipType] = useState<'dialogue' | 'sfx' | null>(null)
   
   // Zoom state: pixels per second (higher = more zoomed in)
   const MIN_PPS = 5   // Minimum zoom (zoomed out — good for 60s+ scenes)
@@ -141,47 +95,9 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
     return Math.max(MIN_PPS, Math.min(MAX_PPS, Math.round(idealPPS)))
   })
 
-  // Duration map — do not invent narration length when absent (was causing a fake ~5s "ghost" narr clip).
-  // Dialogue extent = latest clip end (absolute timeline), not sum of durations.
-  const dialogueEndFromClips =
-    dialogueClips.length > 0
-      ? Math.max(...dialogueClips.map(c => (c.startTime || 0) + dialogueClipWallSeconds(c)))
-      : 0
-  const durations: Record<keyof MixerAudioTracks, number> = {
-    narration: narrationDuration != null && narrationDuration > 0 ? narrationDuration : 0,
-    dialogue:
-      dialogueEndFromClips > 0
-        ? dialogueEndFromClips
-        : dialogueDuration != null && dialogueDuration > 0
-          ? dialogueDuration
-          : 0,
-    music: musicDuration || 10,
-    sfx: sfxDuration || 3,
-  }
-
-  // Calculate total timeline duration (max of video or audio end times)
-  // Adapts to actual video duration - no artificial 8-second cap
-  // NOTE: Music track does NOT extend duration - it loops/fades within video duration
+  // Calculate total timeline duration
   const totalDuration = useMemo(() => {
     let maxEnd = videoTotalDuration
-    for (const key of Object.keys(audioTracks) as Array<keyof MixerAudioTracks>) {
-      const track = audioTracks[key]
-      if (track.enabled) {
-        // Music should NOT extend the render duration - it loops or fades within video
-        // Only narration, dialogue, and sfx can extend the duration
-        if (key === 'music') {
-          // Music is capped to video duration
-          continue
-        }
-        if (key === 'narration' && (durations.narration || 0) <= 0) {
-          continue
-        }
-        if (key === 'dialogue' && (durations.dialogue || 0) <= 0 && (!dialogueClips || dialogueClips.length === 0)) {
-          continue
-        }
-        maxEnd = Math.max(maxEnd, track.startOffset + (durations[key] || 0))
-      }
-    }
     // Include text overlays in duration calculation
     for (const overlay of textOverlays) {
       const overlayEnd = overlay.timing.startTime + (overlay.timing.duration === -1 ? videoTotalDuration : overlay.timing.duration)
@@ -189,7 +105,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
     }
     // Minimum of 5 seconds or video duration (no artificial cap)
     return Math.max(maxEnd, Math.max(5, videoTotalDuration))
-  }, [audioTracks, videoTotalDuration, durations, textOverlays, dialogueClips])
+  }, [videoTotalDuration, textOverlays])
 
   // Generate ruler ticks - adaptive intervals for any duration
   const ticks = useMemo(() => {
@@ -205,39 +121,6 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
   }, [totalDuration])
 
   // Handle drag
-  const handleDragStart = useCallback((
-    e: React.MouseEvent, 
-    trackKey: keyof MixerAudioTracks
-  ) => {
-    if (disabled || !audioTracks[trackKey].enabled) return
-    e.preventDefault()
-    setDraggingTrack(trackKey)
-
-    const container = containerRef.current
-    if (!container) return
-
-    const containerRect = container.getBoundingClientRect()
-    const startX = e.clientX
-    const startOffset = audioTracks[trackKey].startOffset
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - startX
-      const deltaPercent = deltaX / containerRect.width
-      const deltaSeconds = deltaPercent * totalDuration
-      const newOffset = Math.max(0, Math.round((startOffset + deltaSeconds) * 10) / 10)
-      onTrackChange(trackKey, { ...audioTracks[trackKey], startOffset: newOffset })
-    }
-
-    const handleMouseUp = () => {
-      setDraggingTrack(null)
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
-
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-  }, [disabled, audioTracks, totalDuration, onTrackChange])
-
   // Handle text overlay drag
   const handleTextDragStart = useCallback((
     e: React.MouseEvent,
@@ -274,43 +157,6 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
   }, [disabled, totalDuration, onTextOverlayChange])
-
-  // Handle individual clip drag (for dialogue and sfx)
-  const handleClipDragStart = useCallback((
-    e: React.MouseEvent,
-    clipId: string,
-    initialStartTime: number,
-    type: 'dialogue' | 'sfx',
-    action: 'move' | 'resize-left' | 'resize-right'
-  ) => {
-    if (disabled) return
-    e.preventDefault()
-    setDraggingClipId(clipId)
-    setDraggingClipType(type)
-
-    const container = containerRef.current
-    if (!container) return
-
-    const containerRect = container.getBoundingClientRect()
-    const startX = e.clientX
-    const initialDuration = dialogueClips.find(c => c.id === clipId)?.duration ?? 0
-
-    const handleMouseMove = (e: MouseEvent) => {
-      // Audio tracks are now read-only to ensure perfect alignment with the layout engine.
-      // Modifying audio positions manually causes drift from the storyboard timings.
-      return;
-    }
-
-    const handleMouseUp = () => {
-      setDraggingClipId(null)
-      setDraggingClipType(null)
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
-
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-  }, [disabled, totalDuration, pixelsPerSecond, onDialogueClipChange])
 
   // Calculate timeline width based on zoom level
   const timelineWidth = totalDuration * pixelsPerSecond
@@ -489,156 +335,8 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
             </div>
           </div>
 
-          {/* Audio Track Bars - excluding dialogue which has its own section below */}
-          <div className="space-y-1.5">
-            {TRACK_VISUALS.filter(v => v.key !== 'dialogue').map((visual) => {
-              const config = audioTracks[visual.key]
-              const duration = durations[visual.key]
-              const startPercent = (config.startOffset / totalDuration) * 100
-              const widthPercent = (duration / totalDuration) * 100
-              const endTime = config.startOffset + duration
-              const extendsVideo = endTime > videoTotalDuration
-              const isDragging = draggingTrack === visual.key
-
-              return (
-                <div key={visual.key} className="h-7 relative rounded bg-gray-800/30 flex">
-                  {/* Track label */}
-                  <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50">
-                    <visual.icon className="w-3 h-3 ml-1" style={{ color: config.enabled ? visual.color : '#6b7280' }} />
-                    <span className={`text-[10px] ml-1 ${config.enabled ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {visual.label}
-                    </span>
-                  </div>
-                  
-                  {/* Track content area */}
-                  <div className="flex-1 h-full relative" style={{ width: `${effectiveWidth}px` }}>
-                    {config.enabled && duration > 0 && (
-                      <div
-                        className={`
-                          absolute top-1 bottom-1 rounded-sm flex items-center gap-1 px-1.5
-                          cursor-grab active:cursor-grabbing select-none
-                          transition-shadow duration-100
-                          ${isDragging ? 'ring-1 ring-white/40 z-10' : 'hover:ring-1 hover:ring-white/20'}
-                          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                        `}
-                        style={{
-                          left: `${startPercent}%`,
-                          width: `${Math.max(widthPercent, 0.5)}%`,
-                          backgroundColor: visual.bgColor,
-                          borderLeft: `2px solid ${visual.color}`,
-                          borderRight: extendsVideo ? `1px dashed ${visual.color}` : undefined,
-                        }}
-                        onMouseDown={(e) => handleDragStart(e, visual.key)}
-                      >
-                        <GripVertical className="w-2.5 h-2.5 text-gray-500 flex-shrink-0" />
-                        <span className="text-[9px] text-gray-400 truncate">
-                          {formatTime(config.startOffset)} - {formatTime(endTime)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-
-            {/* Individual Dialogue Clips Track */}
-            {dialogueClips && dialogueClips.length > 0 && (
-              <div className="relative">
-                <div className="h-7 rounded bg-gray-800/30 mb-1 flex items-center">
-                  {/* Track label */}
-                  <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50 h-full absolute left-0 top-0 bottom-0">
-                    <MessageSquare className="w-3 h-3 ml-1" style={{ color: '#3b82f6' }} />
-                    <span className="text-[10px] ml-1 text-gray-400">Dialogue</span>
-                  </div>
-                </div>
-                
-                {/* Dialogue clips container — clip.startTime is already absolute on the scene timeline */}
-                <div
-                  className="relative scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 overscroll-y-contain pr-0.5"
-                  style={{
-                    maxHeight: `${Math.min(220, Math.max(100, 28 * dialogueClips.length + 12))}px`,
-                    overflowY: 'auto',
-                    marginLeft: '48px', // 12w = 48px to clear the absolute label
-                  }}
-                >
-                  <div className="relative" style={{ minHeight: `${Math.max(26 * dialogueClips.length, 26)}px`, width: `${effectiveWidth}px` }}>
-                    {dialogueClips.map((clip, idx) => {
-                      const startTime = clip.startTime
-                      const wallDur = dialogueClipWallSeconds(clip)
-                      const startPercent = (startTime / totalDuration) * 100
-                      const widthPercent = (wallDur / totalDuration) * 100
-                      const isDragging = draggingClipId === clip.id
-                      const characterLabel = clip.character || clip.label || `Dialogue ${idx + 1}`
-                      
-                      return (
-                        <div
-                          key={clip.id}
-                          className={`
-                            absolute rounded-sm px-1.5 py-0.5 flex items-center gap-1
-                            cursor-grab active:cursor-grabbing select-none
-                            transition-shadow duration-100 text-white
-                            ${isDragging ? 'ring-2 ring-white/60 z-20 shadow-lg' : 'hover:ring-1 hover:ring-white/20'}
-                            ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                          `}
-                          style={{
-                            left: `${startPercent}%`,
-                            width: `${Math.max(widthPercent, 3)}%`,
-                            top: `${idx * 26}px`,
-                            height: '24px',
-                            backgroundColor: 'rgba(167, 139, 250, 0.4)',
-                            borderLeft: '1px solid #a855f7',
-                            borderRadius: '3px',
-                          }}
-                          onMouseDown={(e) => handleClipDragStart(e, clip.id, clip.startTime, 'dialogue', 'move')}
-                          title={`${characterLabel}\n${formatTime(clip.startTime)} – ${formatTime(clip.startTime + wallDur)} (${wallDur.toFixed(1)}s on timeline${Math.abs((clip.playbackRate ?? 1) - 1) > 0.02 ? `, ${clip.duration.toFixed(1)}s file @ ${(clip.playbackRate ?? 1).toFixed(2)}×` : ''})`}
-                        >
-                          {/* Left Resize Handle */}
-                          <div
-                            className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize z-10"
-                            onMouseDown={(e) => handleClipDragStart(e, clip.id, clip.startTime, 'dialogue', 'resize-left')}
-                          />
-                          {/* Right Resize Handle */}
-                          <div
-                            className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize z-10"
-                            onMouseDown={(e) => handleClipDragStart(e, clip.id, clip.startTime, 'dialogue', 'resize-right')}
-                          />
-                          <span className="text-[8px] font-medium truncate flex-1">
-                            <span className="font-mono text-gray-500 mr-1.5">D{idx + 1}</span>
-                            {characterLabel}{' '}
-                            {wallDur > 0 ? `${wallDur.toFixed(1)}s` : ''}
-                            {Math.abs((clip.playbackRate ?? 1) - 1) > 0.02 ? (
-                              <span className="text-gray-400"> @{(clip.playbackRate ?? 1).toFixed(2)}×</span>
-                            ) : null}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Empty dialogue state */}
-            {(!dialogueClips || dialogueClips.length === 0) && audioTracks.dialogue.enabled && (
-              <div className="h-7 relative rounded bg-gray-800/30 flex items-center">
-                <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50 h-full">
-                  <MessageSquare className="w-3 h-3 ml-1" style={{ color: '#3b82f6' }} />
-                  <span className="text-[10px] ml-1 text-gray-400">Dialogue</span>
-                </div>
-                <div className="flex-1 text-[9px] text-gray-500 pl-2">No dialogue clips available</div>
-              </div>
-            )}
-            {(!dialogueClips || dialogueClips.length === 0) && !audioTracks.dialogue.enabled && (
-              <div className="h-7 relative rounded bg-gray-800/30 flex items-center">
-                <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50 h-full">
-                  <MessageSquare className="w-3 h-3 ml-1" style={{ color: '#6b7280' }} />
-                  <span className="text-[10px] ml-1 text-gray-600">Dialogue</span>
-                </div>
-              </div>
-            )}
-
-
-            {/* Text Overlay Track */}
+          {/* Text Overlay Track */}
+          <div className="space-y-1.5 mt-1.5">
             <div className="h-7 relative rounded bg-gray-800/30 flex">
               <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50 h-full">
                 <Type className="w-3 h-3 ml-1" style={{ color: textOverlays.length > 0 ? TEXT_TRACK_VISUAL.color : '#6b7280' }} />
