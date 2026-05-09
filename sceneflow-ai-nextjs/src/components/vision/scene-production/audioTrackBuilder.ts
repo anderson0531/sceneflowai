@@ -353,17 +353,7 @@ function pickDialogueStartTime(
   clipIndex: number,
   sequentialCursor: number
 ): number {
-  if (typeof explicit !== 'number' || Number.isNaN(explicit)) {
-    return sequentialCursor
-  }
-  if (clipIndex === 0) {
-    return explicit
-  }
-  const ALIGN_EPS = 0.02
-  if (explicit + ALIGN_EPS < sequentialCursor) {
-    return sequentialCursor
-  }
-  return explicit
+  return sequentialCursor
 }
 
 export type BuildAudioTracksOptions = {
@@ -537,6 +527,8 @@ export function buildAudioTracksForLanguage(
       )
       if (cumulativeStarts.size > 0) {
         const narrPrefix = inferNarrationTimelinePrefixCount(scene)
+        const segmentTimeCursors = new Map<number, number>()
+        
         for (const clip of dialogueClips) {
           const idx = clip.dialogueIndex
           if (typeof idx !== 'number' || Number.isNaN(idx) || idx < 0) continue
@@ -547,7 +539,9 @@ export function buildAudioTracksForLanguage(
             t0 = cumulativeStarts.get(`dialogue-${narrPrefix + idx}`)
           }
           if (t0 !== undefined) {
-            clip.startTime = t0
+            const cursor = segmentTimeCursors.get(t0) ?? t0
+            clip.startTime = cursor
+            segmentTimeCursors.set(t0, cursor + (clip.duration || 3) + 0.3)
           }
         }
       }

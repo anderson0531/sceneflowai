@@ -2519,7 +2519,7 @@ export function SceneProductionMixer({
   
   // === Audio Track Configs ===
   const [audioTracks, setAudioTracks] = useState<MixerAudioTracks>({
-    narration: { enabled: true, volume: 0.8, startOffset: 0, startSegment: 0, endSegment: -1 },
+    narration: { enabled: false, volume: 0.8, startOffset: 0, startSegment: 0, endSegment: -1 },
     dialogue: { enabled: true, volume: 0.9, startOffset: 0, startSegment: 0, endSegment: -1 },
     music: { enabled: false, volume: 0.4, startOffset: 0, startSegment: 0, endSegment: -1 },
     sfx: { enabled: false, volume: 0.6, startOffset: 0, startSegment: 0, endSegment: -1 },
@@ -4068,7 +4068,7 @@ export function SceneProductionMixer({
           <div>
             <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Production Mixer</h3>
             <p className="text-xs text-gray-400">
-              Mix segment video or animatic keyframes with narration, dialogue, music, and SFX — then export from the footer.
+              Mix segment video or animatic keyframes with dialogue, music, and SFX — then export from the footer.
             </p>
           </div>
         </div>
@@ -4915,7 +4915,6 @@ export function SceneProductionMixer({
                           <span>{FLAG_EMOJIS[langCode] || '🌐'}</span>
                           <span>{langInfo?.name || langCode}</span>
                           <div className="flex gap-0.5 ml-0.5">
-                            <span className={`w-1.5 h-1.5 rounded-full ${hasNarration ? 'bg-purple-400' : 'bg-gray-600'}`} title={hasNarration ? 'Narration ready' : 'No narration'} />
                             <span className={`w-1.5 h-1.5 rounded-full ${hasDialogue ? 'bg-blue-400' : 'bg-gray-600'}`} title={hasDialogue ? 'Dialogue ready' : 'No dialogue'} />
                           </div>
                         </button>
@@ -4966,36 +4965,6 @@ export function SceneProductionMixer({
               )}
               
               {/* Audio Track Controls */}
-              <AudioTrackRow
-                type="narration"
-                label="Narration"
-                icon={Mic}
-                config={audioTracks.narration}
-                onConfigChange={(c) => updateTrackConfig('narration', c)}
-                audioUrl={playbackAudioUrls.narration}
-                audioDuration={playbackAudioUrls.narrationDuration}
-                videoTotalDuration={videoTotalDuration}
-                segmentCount={previewSegments.length}
-                subtitle={
-                  playbackAudioUrls.narration
-                    ? languageLabel
-                    : audioAssets.narration
-                      ? 'Generate audio to preview'
-                      : undefined
-                }
-                hasAudio={!!playbackAudioUrls.narration}
-                disabled={isRendering}
-                isCollapsed={collapsedSections.narration}
-                onToggleCollapse={() => toggleSection('narration')}
-                onRegenerate={
-                  onGenerateSceneAudio && audioAssets.narration
-                    ? handleRegenerateNarration
-                    : undefined
-                }
-                isRegenerating={
-                  isGeneratingAudio || isGeneratingLanguageAudio || isRegeneratingNarration
-                }
-              />
               <AudioTrackRow
                 type="dialogue"
                 label="Dialogue"

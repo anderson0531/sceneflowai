@@ -296,22 +296,9 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
     const initialDuration = dialogueClips.find(c => c.id === clipId)?.duration ?? 0
 
     const handleMouseMove = (e: MouseEvent) => {
-      const deltaX = e.clientX - startX
-      const deltaSeconds = deltaX / (totalDuration * pixelsPerSecond) * totalDuration
-      
-      if (type === 'dialogue' && onDialogueClipChange) {
-        if (action === 'move') {
-          const newStartTime = Math.max(0, initialStartTime + deltaSeconds)
-          onDialogueClipChange(clipId, newStartTime, initialDuration)
-        } else if (action === 'resize-left') {
-          const newStartTime = Math.max(0, initialStartTime + deltaSeconds)
-          const newDuration = Math.max(0.1, initialDuration - deltaSeconds)
-          onDialogueClipChange(clipId, newStartTime, newDuration)
-        } else if (action === 'resize-right') {
-          const newDuration = Math.max(0.1, initialDuration + deltaSeconds)
-          onDialogueClipChange(clipId, initialStartTime, newDuration)
-        }
-      }
+      // Audio tracks are now read-only to ensure perfect alignment with the layout engine.
+      // Modifying audio positions manually causes drift from the storyboard timings.
+      return;
     }
 
     const handleMouseUp = () => {
