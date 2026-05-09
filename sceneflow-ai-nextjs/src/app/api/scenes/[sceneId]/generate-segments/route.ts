@@ -1530,8 +1530,8 @@ ${noTalentInstructions}${referenceInstructions}${transitionInstructions}${SEAMLE
 2. **Continuity:** You must utilize specific **Methods** to ensure consistency (matching lighting, character appearance, and room tone).
 3. **Lookahead:** Each segment must define the "End Frame State" to prepare for the *next* segment's generation method.
 4. **Audio Integration:** Veo 3.1 generates speech from text. For 🗣️ DIALOGUE lines, include character dialogue directly in prompts as: Character speaks, "text". For 🎙️ VOICEOVER lines, create backdrop visuals (do NOT include narration text in video prompts).
-5. **SEGMENT UNIT RULE (STRICT):** Each segment must contain exactly ONE dialogue/narration line as its primary spoken content. Do NOT combine adjacent dialogue lines into the same segment.
-6. **LONG-LINE CONTINUATIONS:** If one sentence would exceed 12s, split that same line across continuation segments (same line carried through multiple sequential segments) rather than combining with other lines.${minimumSegmentsRequired > 1 ? `\n7. **MINIMUM SEGMENTS:** You MUST create at least ${minimumSegmentsRequired} segments to cover the audio duration.` : ''}
+5. **SEGMENT UNIT RULE (STRICT - 1 SENTENCE PER SEGMENT):** Each segment must contain EXACTLY ONE SENTENCE of dialogue/narration. If a single dialogue/narration line has multiple sentences, you MUST create a separate segment for EACH sentence. Do NOT combine multiple sentences into the same segment.
+6. **LONG-LINE CONTINUATIONS:** If even a single sentence exceeds 12s, split that same sentence across continuation segments (same sentence carried through multiple sequential segments) rather than combining with other lines.${minimumSegmentsRequired > 1 ? `\n7. **MINIMUM SEGMENTS:** You MUST create at least ${minimumSegmentsRequired} segments to cover the audio duration.` : ''}
 
 **INPUT DATA:**
 
