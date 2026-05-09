@@ -150,14 +150,14 @@ export function SceneProductionDirector({
   }, [onSegmentsCreated])
 
   const handleStartBuilding = useCallback(() => {
-    // If segments exist, close the builder and move on
+    // If segments exist from the script phase, bypass the builder and initialize production directly
     if (hasExistingSegments) {
-       onNavigateToImage?.()
+       onSegmentsCreated(scene.segments || productionData?.segments || [])
        return
     }
     setPhase('building')
     setIsBuilderOpen(true)
-  }, [hasExistingSegments, onNavigateToImage])
+  }, [hasExistingSegments, scene.segments, productionData?.segments, onSegmentsCreated])
 
   // ============================================================================
   // RENDER: Complete State (segments exist)
@@ -342,7 +342,7 @@ export function SceneProductionDirector({
               )}
             >
               <Play className="w-4 h-4" />
-              Keyframes
+              {hasExistingSegments ? 'Start Production' : 'Generate Segments'}
             </Button>
           </div>
         </div>
