@@ -61,7 +61,8 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
 3. The description must focus strictly on the vocal qualities: tone, pitch, cadence, accent, texture, and emotional delivery. Include how their role and personality shape their vocal delivery.
 4. Be highly descriptive but concise (4-5 sentences max).
 5. Do NOT wrap the output in markdown code blocks or JSON formatting. Just return the raw text.
-6. Example output format: "An African American male voice in his late 40s to early 50s. The tone is a warm, textured baritone with a slight, natural huskiness. As the visionary host of 'Cognitive Horizons,' his delivery balances an energetic, forward-leaning enthusiasm with a measured, thoughtful pacing. His emotional delivery exudes a deep, empathetic hope, capturing the calm authority of an intellectually stimulating mind grappling with profound responsibilities."`
+6. Example output format: "An African American male voice in his late 40s to early 50s. The tone is a warm, textured baritone with a slight, natural huskiness. As the visionary host of 'Cognitive Horizons,' his delivery balances an energetic, forward-leaning enthusiasm with a measured, thoughtful pacing. His emotional delivery exudes a deep, empathetic hope, capturing the calm authority of an intellectually stimulating mind grappling with profound responsibilities."
+7. You MUST return ONLY the final text. NO conversational filler. NO markdown formatting. NO JSON.`
 
     let generatedText = ''
 
@@ -112,23 +113,26 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
       generatedText = response.text.trim()
     }
     
-    // Extract JSON block if Gemini adds conversational filler
-    const jsonMatch = generatedText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-    if (jsonMatch) {
-      generatedText = jsonMatch[1];
+    // The prompt explicitly asks to NOT return JSON, but if the model still returns JSON, 
+    // it will be wrapped in ````json` or `{...}`.
+    // However, if the model *obeys* the prompt and returns plain text, we don't want to extract
+    // anything that looks like JSON or it might wipe out the plain text!
+    
+    // Check if the response contains a JSON block with an audio_profile key
+    const jsonWithKeyMatch = generatedText.match(/\{[\s\S]*?"audio_profile"\s*:[\s\S]*?\}/);
+    
+    if (jsonWithKeyMatch) {
+      // It definitely gave us JSON
+      generatedText = jsonWithKeyMatch[0];
     } else {
-      // Try to find any JSON-like structure
-      const genericJsonMatch = generatedText.match(/\{[\s\S]*?\}/);
-      if (genericJsonMatch) {
-        generatedText = genericJsonMatch[0];
-      }
+      // It might be plain text with conversational filler
+      // Clean up markdown formatting if Gemini still includes it
+      generatedText = generatedText.replace(/^```[a-zA-Z]*\n?/, '')
+                                   .replace(/^```\n?/, '')
+                                   .replace(/\n?```$/, '')
+                                   .replace(/^Here is the .*?:?\s*/i, '') // Remove conversational "Here is the..."
+                                   .trim()
     }
-
-    // Clean up any remaining markdown formatting if it wasn't a JSON block
-    generatedText = generatedText.replace(/^```json\n?/, '')
-                                 .replace(/^```\n?/, '')
-                                 .replace(/\n?```$/, '')
-                                 .trim()
 
     // Fallback: If Gemini still returns JSON, parse it out
     if (generatedText.startsWith('{')) {
