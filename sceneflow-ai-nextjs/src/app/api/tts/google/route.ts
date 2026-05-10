@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
         },
         audioConfig: {
           audioEncoding: 'MP3',
-          speakingRate: isGemini ? 1.0 : 1.0, // We could adjust speaking rate, but Gemini is already fast enough usually. Let's rely on the prompt to drive the performance speed.
+          speakingRate: isGemini ? 1.4 : 1.0, // Force a faster speaking rate for Gemini TTS as it tends to speak unnaturally slowly by default
           pitch: 0.0,
           volumeGainDb: 0.0,
         },
@@ -136,9 +136,9 @@ export async function POST(request: NextRequest) {
       if (isGemini) {
         payload.voice.modelName = 'gemini-2.5-flash-tts'
         if (extractedPrompt) {
-          payload.input.prompt = `INSTRUCTION: You are a professional voice actor recording lines for a cinematic scene. Deliver this line with natural pacing, conversational timing, and appropriate emotional weight. Do not read this instruction aloud. Adopt the following voice profile precisely: ${extractedPrompt}`
+          payload.input.prompt = `INSTRUCTION: You are a professional voice actor recording lines for a cinematic scene. Deliver this line rapidly, with very fast conversational timing and snappy delivery. Do not read this instruction aloud. Adopt the following voice profile precisely: ${extractedPrompt}`
         } else {
-          payload.input.prompt = `INSTRUCTION: You are a professional voice actor. Deliver this line with natural conversational pacing and timing. Do not read this instruction aloud.`
+          payload.input.prompt = `INSTRUCTION: You are a professional voice actor. Deliver this line rapidly, with very fast conversational timing and snappy delivery. Do not read this instruction aloud.`
         }
       }
 
