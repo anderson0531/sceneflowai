@@ -112,7 +112,19 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
       generatedText = response.text.trim()
     }
     
-    // Clean up markdown formatting if Gemini still includes it
+    // Extract JSON block if Gemini adds conversational filler
+    const jsonMatch = generatedText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+    if (jsonMatch) {
+      generatedText = jsonMatch[1];
+    } else {
+      // Try to find any JSON-like structure
+      const genericJsonMatch = generatedText.match(/\{[\s\S]*?\}/);
+      if (genericJsonMatch) {
+        generatedText = genericJsonMatch[0];
+      }
+    }
+
+    // Clean up any remaining markdown formatting if it wasn't a JSON block
     generatedText = generatedText.replace(/^```json\n?/, '')
                                  .replace(/^```\n?/, '')
                                  .replace(/\n?```$/, '')
