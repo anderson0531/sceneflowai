@@ -60,9 +60,12 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
 2. Ensure the generated voice description exactly matches the character's provided age, gender, ethnicity, and role from the details above. If the demographic fields are "Not specified" but the details are mentioned in the Description or Backstory, you MUST extract and use them.
 3. The description must focus strictly on the vocal qualities: tone, pitch, cadence, accent, texture, and emotional delivery. Include how their role and personality shape their vocal delivery.
 4. Be highly descriptive but concise (4-5 sentences max).
-5. Do NOT wrap the output in markdown code blocks or JSON formatting. Just return the raw text.
-6. Example output format: "An African American male voice in his late 40s to early 50s. The tone is a warm, textured baritone with a slight, natural huskiness. As the visionary host of 'Cognitive Horizons,' his delivery balances an energetic, forward-leaning enthusiasm with a measured, thoughtful pacing. His emotional delivery exudes a deep, empathetic hope, capturing the calm authority of an intellectually stimulating mind grappling with profound responsibilities."
-7. You MUST return ONLY the final text. NO conversational filler. NO markdown formatting. NO JSON.`
+5. Be highly descriptive but concise (4-5 sentences max).
+6. You MUST return a valid JSON object with a single key "audio_profile" containing your generated description. Do NOT return plain text.
+7. Example output:
+{
+  "audio_profile": "An African American male voice in his late 40s to early 50s. The tone is a warm, textured baritone with a slight, natural huskiness. As the visionary host of 'Cognitive Horizons,' his delivery balances an energetic, forward-leaning enthusiasm with a measured, thoughtful pacing. His emotional delivery exudes a deep, empathetic hope, capturing the calm authority of an intellectually stimulating mind grappling with profound responsibilities."
+}`
 
     let generatedText = ''
 
@@ -113,37 +116,28 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
       generatedText = response.text.trim()
     }
     
-    // The prompt explicitly asks to NOT return JSON, but if the model still returns JSON, 
-    // it will be wrapped in ````json` or `{...}`.
-    // However, if the model *obeys* the prompt and returns plain text, we don't want to extract
-    // anything that looks like JSON or it might wipe out the plain text!
+    // Extract JSON block using regex to safely ignore any conversational filler
+    const jsonMatch = generatedText.match(/\{[\s\S]*?"audio_profile"\s*:[\s\S]*?\}/);
     
-    // Check if the response contains a JSON block with an audio_profile key
-    const jsonWithKeyMatch = generatedText.match(/\{[\s\S]*?"audio_profile"\s*:[\s\S]*?\}/);
-    
-    if (jsonWithKeyMatch) {
-      // It definitely gave us JSON
-      generatedText = jsonWithKeyMatch[0];
-    } else {
-      // It might be plain text with conversational filler
-      // Clean up markdown formatting if Gemini still includes it
-      generatedText = generatedText.replace(/^```[a-zA-Z]*\n?/, '')
-                                   .replace(/^```\n?/, '')
-                                   .replace(/\n?```$/, '')
-                                   .replace(/^Here is the .*?:?\s*/i, '') // Remove conversational "Here is the..."
-                                   .trim()
-    }
-
-    // Fallback: If Gemini still returns JSON, parse it out
-    if (generatedText.startsWith('{')) {
+    if (jsonMatch) {
       try {
-        const parsed = JSON.parse(generatedText)
+        const parsed = JSON.parse(jsonMatch[0])
         if (parsed.audio_profile) {
           generatedText = parsed.audio_profile
         }
       } catch (e) {
-        // ignore
+        console.error('[Director Prompt] Failed to parse JSON:', e)
+        // If JSON parsing fails but we extracted it, it might have trailing commas, etc.
+        // Fallback to stripping the JSON keys manually as a last resort
+        generatedText = jsonMatch[0].replace(/\{\s*"audio_profile"\s*:\s*"/, '').replace(/"\s*\}$/, '').trim()
       }
+    } else {
+      // Complete fallback in case the model ignored the JSON instruction completely
+      generatedText = generatedText.replace(/^```[a-zA-Z]*\n?/, '')
+                                   .replace(/^```\n?/, '')
+                                   .replace(/\n?```$/, '')
+                                   .replace(/^(Here is the )?JSON requested:?\n?/i, '')
+                                   .trim()
     }
 
     return NextResponse.json({ script: generatedText })
