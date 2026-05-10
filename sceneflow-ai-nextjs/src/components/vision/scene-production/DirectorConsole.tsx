@@ -548,13 +548,16 @@ function DirectorConsoleRoot({
       return
     }
     
-    // Process concurrently (minimal delay between API calls)
+    // Process sequentially for Express video generation
+    // Important: In some cases video generations might still be queued sequentially
+    // due to rate limiting or resource constraints, but explicit sequential mode
+    // ensures the queue processor handles them one by one.
     processQueue({
       mode: 'selected',
       priority: 'sequence',
-      delayBetween: 200, // Minimal delay for concurrent effect
+      delayBetween: 500, // Reasonable delay between items
       selectedIds: expressIds,
-      concurrency: expressIds.length, // Allow maximum concurrent video generations
+      concurrency: 1, // MUST be 1 for sequential processing
     })
   }, [queue, segments, processQueue])
 

@@ -368,50 +368,32 @@ export function SegmentFrameTimeline({
   }, [onGenerateFrames, executeWithOverlay, sceneDirection])
   
   const handleExpress = useCallback(async () => {
-    // Group segments into concurrent chains
-    // A chain starts at index 0, or whenever transitionType === 'CUT'
-    const chains: number[][] = []
-    let currentChain: number[] = []
-
-    segments.forEach((segment, index) => {
-      if (index === 0 || segment.transitionType === 'CUT') {
-        if (currentChain.length > 0) {
-          chains.push(currentChain)
-        }
-        currentChain = [index]
-      } else {
-        currentChain.push(index)
-      }
-    })
-    if (currentChain.length > 0) {
-      chains.push(currentChain)
-    }
+    // Process ALL segments sequentially for Express keyframe generation
+    // Keyframes MUST be processed sequentially because the end frame of the previous segment
+    // is often used as the start frame of the next segment (chain reference consistency).
+    // Using Promise.all across concurrent chains breaks this consistency since the previous
+    // segment's end frame wouldn't be ready when the next segment starts.
 
     await executeWithOverlay(
       async () => {
-        await Promise.all(
-          chains.map(async (chain) => {
-            let lastEndFrameUrl: string | undefined = undefined
+        let lastEndFrameUrl: string | undefined = undefined
 
-            for (let i = 0; i < chain.length; i++) {
-              const segmentIndex = chain[i]
-              const segment = segments[segmentIndex]
-              
-              // If it's a continuation within the chain
-              const usePreviousEndFrame = i > 0
-              
-              const result = await onGenerateFrames(segment.segmentId, 'both', {
-                usePreviousEndFrame,
-                previousEndFrameUrl: usePreviousEndFrame ? lastEndFrameUrl : undefined,
-                sceneDirection,
-              })
-
-              if (result && result.endFrameUrl) {
-                lastEndFrameUrl = result.endFrameUrl
-              }
-            }
+        for (let i = 0; i < segments.length; i++) {
+          const segment = segments[i]
+          
+          // If it's a continuation within the scene (not the first segment and not a CUT)
+          const usePreviousEndFrame = i > 0 && segment.transitionType !== 'CUT'
+          
+          const result = await onGenerateFrames(segment.segmentId, 'both', {
+            usePreviousEndFrame,
+            previousEndFrameUrl: usePreviousEndFrame ? lastEndFrameUrl : undefined,
+            sceneDirection,
           })
-        )
+
+          if (result && result.endFrameUrl) {
+            lastEndFrameUrl = result.endFrameUrl
+          }
+        }
       },
       {
         message: `Express generating keyframes...`,

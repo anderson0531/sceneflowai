@@ -1,8 +1,10 @@
 /**
  * Storyboard Express orchestrator.
  *
- * For each scene, runs Direction -> Audio -> Image sequentially. Multiple
- * scenes are processed concurrently (default: 3). All work is done against
+ * For each scene, runs Direction -> Audio -> Image sequentially.
+ * Scenes are processed sequentially (one by one) to ensure chain reference
+ * consistency, since the end frame of one scene/segment may be used as the
+ * start frame of the next. All work is done against
  * an in-memory `scenes` array; the orchestrator does NOT touch the DB.
  *
  * Callers (e.g. `[api/vision/express/route.ts]`) are responsible for:
@@ -25,7 +27,7 @@ import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
 
-const EXPRESS_CONCURRENCY = 3
+const EXPRESS_CONCURRENCY = 1 // Process one scene at a time for chain reference consistency
 
 export interface RunExpressParams {
   /** Already-loaded project. The orchestrator mutates `metadata.visionPhase.script` in-memory. */
