@@ -112,6 +112,12 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
       generatedText = response.text.trim()
     }
     
+    // Clean up markdown formatting if Gemini still includes it
+    generatedText = generatedText.replace(/^```json\n?/, '')
+                                 .replace(/^```\n?/, '')
+                                 .replace(/\n?```$/, '')
+                                 .trim()
+
     // Fallback: If Gemini still returns JSON, parse it out
     if (generatedText.startsWith('{')) {
       try {
