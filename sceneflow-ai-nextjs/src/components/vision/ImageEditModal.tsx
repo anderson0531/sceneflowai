@@ -41,7 +41,7 @@ interface ImageEditModalProps {
   /** Source image URL to edit */
   imageUrl: string
   /** Image type for context */
-  imageType: 'scene' | 'character' | 'object'
+  imageType: 'scene' | 'character' | 'object' | 'location' | 'prop'
   /** Optional subject reference for identity consistency */
   subjectReference?: {
     imageUrl: string

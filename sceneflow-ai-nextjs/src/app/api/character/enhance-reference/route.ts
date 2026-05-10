@@ -132,12 +132,59 @@ export async function POST(req: NextRequest) {
     )
     console.log(`[Enhance Reference] Subject description: ${subjectDescription}`)
 
+    // Detect aspect ratio from source image
+    let aspectRatio: '1:1' | '2:3' | '3:2' | '3:4' | '4:3' | '4:5' | '5:4' | '9:16' | '16:9' | '21:9' = '1:1'
+    try {
+      const sharp = (await import('sharp')).default
+      let imageBuffer: Buffer
+      if (sourceImageUrl.startsWith('data:')) {
+        const base64Data = sourceImageUrl.split(',')[1]
+        imageBuffer = Buffer.from(base64Data, 'base64')
+      } else {
+        const res = await fetch(sourceImageUrl)
+        if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`)
+        const arrayBuffer = await res.arrayBuffer()
+        imageBuffer = Buffer.from(arrayBuffer)
+      }
+      
+      const metadata = await sharp(imageBuffer).metadata()
+      if (metadata.width && metadata.height) {
+        const ratio = metadata.width / metadata.height
+        const ratios = [
+          { name: '1:1', value: 1 / 1 },
+          { name: '2:3', value: 2 / 3 },
+          { name: '3:2', value: 3 / 2 },
+          { name: '3:4', value: 3 / 4 },
+          { name: '4:3', value: 4 / 3 },
+          { name: '4:5', value: 4 / 5 },
+          { name: '5:4', value: 5 / 4 },
+          { name: '9:16', value: 9 / 16 },
+          { name: '16:9', value: 16 / 9 },
+          { name: '21:9', value: 21 / 9 }
+        ]
+        
+        let closest = ratios[0]
+        let minDiff = Math.abs(ratio - ratios[0].value)
+        for (let i = 1; i < ratios.length; i++) {
+          const diff = Math.abs(ratio - ratios[i].value)
+          if (diff < minDiff) {
+            minDiff = diff
+            closest = ratios[i]
+          }
+        }
+        aspectRatio = closest.name as any
+        console.log(`[Enhance Reference] Detected aspect ratio: ${aspectRatio} from ${metadata.width}x${metadata.height}`)
+      }
+    } catch (err) {
+      console.warn('[Enhance Reference] Failed to detect aspect ratio, defaulting to 1:1', err)
+    }
+
     // STAGE 4: Generate enhanced image using Gemini Studio (not Imagen)
     // Gemini 3 Pro Image Preview produces better enhancement results with native reference handling
     console.log(`[Enhance Reference] Stage 3: Generating enhanced headshot with Gemini Studio...`)
     const result = await generateImageWithGeminiStudio({
       prompt: enhancementPrompt,
-      aspectRatio: '1:1', // Square for consistent reference format
+      aspectRatio, // Maintain original aspect ratio
       referenceImages: [{
         imageUrl: sourceImageUrl,
         name: characterName
