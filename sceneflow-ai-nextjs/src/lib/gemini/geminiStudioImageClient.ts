@@ -397,7 +397,7 @@ export interface GeminiStudioEditOptions {
   /** Optional character reference image for identity preservation */
   referenceImage?: string
   /** Aspect ratio for the output (defaults to source aspect) */
-  aspectRatio?: '1:1' | '2:3' | '3:2' | '3:4' | '4:3' | '4:5' | '5:4' | '9:16' | '16:9'
+  aspectRatio?: '1:1' | '2:3' | '3:2' | '3:4' | '4:3' | '4:5' | '5:4' | '9:16' | '16:9' | '21:9'
   /** Output image size */
   imageSize?: '1K' | '2K'
 }
@@ -413,8 +413,9 @@ export async function editImageWithGeminiStudio(
 CRITICAL REQUIREMENTS:
 1. Preserve the EXACT same person's identity - same face, ethnicity, age, and facial features
 2. Only apply the specific edit requested - do not change anything else
-3. Maintain the same pose, angle, lighting style, and background where possible
-4. The edited image should look like the same person, just with the requested modification
+3. Maintain the EXACT SAME CAMERA ANGLE AND FRAMING as the original image
+4. Maintain the same pose, lighting style, and background where possible
+5. The edited image should look like the same person, just with the requested modification
 
 If a reference image of the person is provided, use it to ensure identity consistency.`
 

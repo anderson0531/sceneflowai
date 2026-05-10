@@ -19,6 +19,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { moderatePrompt, createBlockedResponse, getUserModerationContext } from '@/lib/moderation'
+import sharp from 'sharp'
 
 interface EditRequestBody {
   /** Edit mode: 'instruction' (only mode supported now) */
@@ -96,12 +97,58 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Detect aspect ratio from source image
+    let aspectRatio: '1:1' | '2:3' | '3:2' | '3:4' | '4:3' | '4:5' | '5:4' | '9:16' | '16:9' | '21:9' = '1:1'
+    try {
+      let imageBuffer: Buffer
+      if (sourceImage.startsWith('data:')) {
+        const base64Data = sourceImage.split(',')[1]
+        imageBuffer = Buffer.from(base64Data, 'base64')
+      } else {
+        const res = await fetch(sourceImage)
+        if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`)
+        const arrayBuffer = await res.arrayBuffer()
+        imageBuffer = Buffer.from(arrayBuffer)
+      }
+      
+      const metadata = await sharp(imageBuffer).metadata()
+      if (metadata.width && metadata.height) {
+        const ratio = metadata.width / metadata.height
+        const ratios = [
+          { name: '1:1', value: 1 / 1 },
+          { name: '2:3', value: 2 / 3 },
+          { name: '3:2', value: 3 / 2 },
+          { name: '3:4', value: 3 / 4 },
+          { name: '4:3', value: 4 / 3 },
+          { name: '4:5', value: 4 / 5 },
+          { name: '5:4', value: 5 / 4 },
+          { name: '9:16', value: 9 / 16 },
+          { name: '16:9', value: 16 / 9 },
+          { name: '21:9', value: 21 / 9 }
+        ]
+        
+        let closest = ratios[0]
+        let minDiff = Math.abs(ratio - ratios[0].value)
+        for (let i = 1; i < ratios.length; i++) {
+          const diff = Math.abs(ratio - ratios[i].value)
+          if (diff < minDiff) {
+            minDiff = diff
+            closest = ratios[i]
+          }
+        }
+        aspectRatio = closest.name as any
+        console.log(`[Image Edit API] Detected aspect ratio: ${aspectRatio} from ${metadata.width}x${metadata.height}`)
+      }
+    } catch (err) {
+      console.warn('[Image Edit API] Failed to detect aspect ratio, defaulting to 1:1', err)
+    }
+    
     // Use Gemini Studio for character-aware image editing
     const result = await editImageWithGeminiStudio({
       sourceImage,
       instruction,
       referenceImage: subjectReference?.imageUrl,
-      aspectRatio: '1:1',
+      aspectRatio,
       imageSize: '1K'
     })
     
