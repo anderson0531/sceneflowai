@@ -783,9 +783,7 @@ function buildNegativePrompt(
 ): string {
   const baseNegatives = [
     'blurry', 'low quality', 'pixelated', 'noisy', 'grainy',
-    'jpeg artifacts', 'compression artifacts', 'bad anatomy',
-    'extra limbs', 'missing limbs', 'deformed', 'mutated', 'disfigured',
-    'malformed hands', 'extra fingers', 'missing fingers',
+    'jpeg artifacts', 'compression artifacts',
     'text', 'watermark', 'logo', 'signature', 'username', 'copyright',
     'words', 'letters', 'overexposed', 'underexposed',
     'harsh lighting', 'flat lighting', 'washed out', 'oversaturated',

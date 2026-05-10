@@ -233,59 +233,47 @@ export const VIDEO_NEGATIVE_PROMPT_PRESETS = [
     id: 'unnatural-motion',
     label: 'Unnatural Motion',
     description: 'Avoid jerky or robotic movements',
-    value: 'unnatural motion, jerky movements, robotic motion, stiff movement, mechanical animation, jittery, stuttering motion, unsmooth transitions',
+    value: 'unnatural motion, robotic, mechanical, jittery, stuttering',
   },
   {
     id: 'bad-physics',
     label: 'Bad Physics',
     description: 'Avoid physics-defying elements',
-    value: 'floating objects, defying gravity, impossible physics, clipping through objects, objects passing through each other, glitching',
-  },
-  {
-    id: 'face-distortion',
-    label: 'Face Distortion',
-    description: 'Avoid facial anomalies',
-    value: 'distorted face, morphing face, melting features, uncanny valley, asymmetric eyes, wrong number of eyes, blurred face, deformed facial features',
-  },
-  {
-    id: 'hand-artifacts',
-    label: 'Hand Artifacts',
-    description: 'Avoid hand/finger issues',
-    value: 'extra fingers, missing fingers, fused fingers, deformed hands, wrong number of fingers, malformed hands, floating hands',
+    value: 'floating objects, clipping, glitching',
   },
   {
     id: 'temporal-flicker',
     label: 'Temporal Flicker',
     description: 'Avoid frame inconsistency',
-    value: 'flickering, temporal inconsistency, frame jumping, sudden appearance, sudden disappearance, objects popping in and out',
+    value: 'flickering, temporal inconsistency, frame jumping, objects popping in and out',
   },
   {
     id: 'low-quality',
     label: 'Low Quality',
     description: 'Avoid quality issues',
-    value: 'blurry, pixelated, low resolution, compression artifacts, noisy, grainy, washed out colors, overexposed, underexposed',
+    value: 'blurry, pixelated, low resolution, compression artifacts, noisy, grainy, static, poorly rendered',
   },
   {
     id: 'non-cinematic',
     label: 'Non-Cinematic',
     description: 'Avoid non-filmic styles',
-    value: 'cartoon style, anime, 3D animation, CGI look, video game graphics, illustration style, unrealistic lighting',
+    value: 'cartoonish, 2D, anime, 3D animation, CGI look, video game graphics',
   },
   {
     id: 'lip-sync',
     label: 'Lip Sync Issues',
     description: 'Avoid speech artifacts',
-    value: 'bad lip sync, mouth not matching audio, frozen mouth, exaggerated mouth movements, no mouth movement when speaking',
+    value: 'bad lip sync, mouth not matching audio, frozen mouth',
   },
   {
     id: 'text-overlay',
     label: 'No Text Overlay',
     description: 'Avoid burned-in text/titles',
-    value: 'text overlay, burned-in text, subtitles, captions, title cards, watermark, on-screen text, floating text, text graphics, lower third',
+    value: 'text, watermark, subtitles, captions, text overlay, lower third',
   },
 ] as const
 
-const DEFAULT_VIDEO_NEGATIVE_PRESETS = ['unnatural-motion', 'face-distortion', 'hand-artifacts', 'text-overlay']
+const DEFAULT_VIDEO_NEGATIVE_PRESETS = ['unnatural-motion', 'low-quality', 'temporal-flicker', 'text-overlay']
 
 /**
  * Estimate word count for duration calculation

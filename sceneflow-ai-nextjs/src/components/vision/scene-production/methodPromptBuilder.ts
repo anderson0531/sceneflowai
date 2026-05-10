@@ -504,8 +504,7 @@ function buildNegativePrompt(method: VideoGenerationMethod): string {
   const common = [
     'blurry',
     'low quality',
-    'distorted faces',
-    'extra limbs',
+    'visual artifacts',
     'watermark',
     'text overlay',
     'subtitle',

@@ -297,9 +297,7 @@ export function generateNegativePrompt(actionType: ActionType): string {
     'distorted',
     'watermark',
     'text overlay',
-    'cropped',
-    'bad anatomy',
-    'extra limbs'
+    'cropped'
   ]
   
   // Add identity-preservation negatives for low-action types

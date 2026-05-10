@@ -466,7 +466,7 @@ export function SegmentPromptBuilder({
     keyProps: '',
     artStyle: 'photorealistic',
     additionalDetails: '',
-    negativePrompt: 'blurry, low quality, distorted, poor composition, bad anatomy'
+    negativePrompt: 'blurry, low quality, distorted, poor composition'
   })
   
   const [advancedPrompt, setAdvancedPrompt] = useState('')

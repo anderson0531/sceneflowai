@@ -165,11 +165,6 @@ export const NEGATIVE_PROMPT_PRESETS: readonly NegativePromptPreset[] = [
     value: 'blurry, low quality, pixelated, noisy, grainy, jpeg artifacts, compression artifacts',
   },
   {
-    id: 'anatomy',
-    label: 'Bad Anatomy',
-    value: 'bad anatomy, extra limbs, missing limbs, deformed, mutated, disfigured, malformed hands, extra fingers, missing fingers',
-  },
-  {
     id: 'text',
     label: 'Text & Watermarks',
     value: 'text, watermark, logo, signature, username, copyright, words, letters',
@@ -202,7 +197,7 @@ export const NEGATIVE_PROMPT_PRESETS: readonly NegativePromptPreset[] = [
   {
     id: 'cgi',
     label: 'CGI/3D Look',
-    value: 'CGI, 3D rendered, unreal engine, video game graphics, plastic skin, uncanny valley',
+    value: 'CGI, 3D rendered, unreal engine, video game graphics, synthetic appearance',
   },
   {
     id: 'motion',
@@ -211,4 +206,4 @@ export const NEGATIVE_PROMPT_PRESETS: readonly NegativePromptPreset[] = [
   },
 ] as const
 
-export const DEFAULT_NEGATIVE_PRESETS = ['quality', 'anatomy']
+export const DEFAULT_NEGATIVE_PRESETS = ['quality', 'text']

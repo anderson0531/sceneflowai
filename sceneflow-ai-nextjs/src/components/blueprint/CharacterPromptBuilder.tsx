@@ -56,7 +56,7 @@ export function CharacterPromptBuilder({
     shotType: initialStructure?.shotType || 'portrait',
     artStyle: initialStructure?.artStyle || 'photorealistic',
     background: initialStructure?.background || '',
-    negativePrompt: initialStructure?.negativePrompt || 'ugly, deformed, extra limbs, blurry, low quality'
+    negativePrompt: initialStructure?.negativePrompt || 'blurry, low quality, unnatural features'
   })
   
   const [advancedPrompt, setAdvancedPrompt] = useState(initialPrompt)
@@ -80,7 +80,7 @@ export function CharacterPromptBuilder({
         shotType: initialStructure.shotType || 'portrait',
         artStyle: initialStructure.artStyle || 'photorealistic',
         background: initialStructure.background || '',
-        negativePrompt: initialStructure.negativePrompt || 'ugly, deformed, extra limbs, blurry, low quality'
+        negativePrompt: initialStructure.negativePrompt || 'blurry, low quality, unnatural features'
       })
     }
   }, [initialStructure])
@@ -394,7 +394,7 @@ export function CharacterPromptBuilder({
                 value={structure.negativePrompt}
                 onChange={(e) => setStructure(prev => ({ ...prev, negativePrompt: e.target.value }))}
                 rows={4}
-                placeholder="ugly, deformed, extra limbs, blurry, low quality..."
+                placeholder="blurry, low quality, unnatural features..."
                 className="w-full text-sm px-3 py-2 rounded bg-gray-800 border border-gray-700 text-gray-200 focus:border-gray-600 focus:outline-none"
                 style={{ resize: 'vertical' }}
               />

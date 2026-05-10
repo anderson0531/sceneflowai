@@ -192,9 +192,7 @@ const DEFAULT_NEGATIVE_PROMPTS = [
   'robotic movement',
   'digital mask',
   'mannequin-like',
-  'uncanny valley',
-  'plastic skin',
-  'dead eyes',
+  'lifeless expression',
   'mechanical motion',
   'unnatural pose'
 ]

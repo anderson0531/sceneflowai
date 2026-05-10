@@ -123,8 +123,6 @@ const COMMON_NEGATIVE_PROMPTS = [
   'frame drops',
   'temporal inconsistency',
   'morphing artifacts',
-  'face distortion',
-  'extra limbs',
   'unnatural movement',
 ]
 
@@ -138,7 +136,7 @@ const VEO3_ANTI_MANNEQUIN_PROMPTS = [
   'robotic movement',
   'mannequin-like',
   'digital mask',
-  'dead eyes',
+  'lifeless expression',
   'mechanical motion',
   'unnatural pose',
 ]
