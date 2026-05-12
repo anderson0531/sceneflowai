@@ -2909,6 +2909,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onSegmentAnimaticSettingsChange={onSegmentAnimaticSettingsChange}
                       onRenderedSceneUrlChange={onRenderedSceneUrlChange}
                       onProductionDataChange={onProductionDataChange}
+                      onResetSegments={onResetSegments}
                       onGenerateAllAudio={onGenerateAllAudio}
                       isGeneratingAudio={isGeneratingAudio}
                       onAddSegment={onAddSegment}
