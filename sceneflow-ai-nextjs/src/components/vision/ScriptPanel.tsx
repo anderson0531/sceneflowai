@@ -4881,7 +4881,7 @@ function SceneCard({
                 )}
 
                 {/* Reset Segments button */}
-                {onResetSegments && sceneProductionData[scene.sceneId || scene.id || `scene-${sceneIdx}`]?.isSegmented && (
+                {onResetSegments && sceneProductionData?.isSegmented && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
