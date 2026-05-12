@@ -763,6 +763,7 @@ export function FramePromptDialog({
           sceneContext: {
             heading: sceneHeading,
             action: segment.action || segment.subject,
+            dialogue: segment.dialogue, // Ensure dialogue is passed so intelligence can frame correctly
           },
           sceneDirection,
           characters: selectedCharacters.map(c => ({
