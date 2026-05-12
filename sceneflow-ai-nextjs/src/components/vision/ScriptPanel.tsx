@@ -3897,6 +3897,7 @@ function SceneCard({
   onSegmentAnimaticSettingsChange,
   onRenderedSceneUrlChange,
   onProductionDataChange,
+  onResetSegments,
   onAddSegment,
   onAddFullSegment,
   onDeleteSegment,
