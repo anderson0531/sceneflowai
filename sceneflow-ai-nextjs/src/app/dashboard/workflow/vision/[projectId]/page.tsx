@@ -10674,6 +10674,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentAnimaticSettingsChange={handleSegmentAnimaticSettingsChange}
                 onRenderedSceneUrlChange={handleRenderedSceneUrlChange}
                 onProductionDataChange={handleProductionDataChange}
+                onResetSegments={async (sceneId) => {
+                  try {
+                    await applySceneProductionUpdate(sceneId, (current) => ({
+                      ...current,
+                      segments: [],
+                      isSegmented: false
+                    }))
+                    const { toast } = require('sonner')
+                    toast.success('Segments reset successfully')
+                  } catch (error) {
+                    console.error('Failed to reset segments:', error)
+                    const { toast } = require('sonner')
+                    toast.error('Failed to reset segments')
+                  }
+                }}
                 onAddSegment={handleAddSegment}
                 onAddFullSegment={handleAddFullSegment}
                 onDeleteSegment={handleDeleteSegment}
