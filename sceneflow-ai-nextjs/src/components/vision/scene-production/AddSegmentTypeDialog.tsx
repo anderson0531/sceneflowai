@@ -66,6 +66,7 @@ export interface AdjacentSceneContext {
     heading?: string
     action?: string
     narration?: string
+    dialogue?: Array<{ character: string; text: string }>
   }
   nextScene?: {
     heading?: string
@@ -268,6 +269,7 @@ export function AddSegmentTypeDialog({
               heading: adjacentContext.currentScene.heading,
               action: adjacentContext.currentScene.action,
               narration: adjacentContext.currentScene.narration,
+              dialogue: adjacentContext.currentScene.dialogue,
             },
             nextScene: adjacentContext.nextScene ? {
               heading: adjacentContext.nextScene.heading,

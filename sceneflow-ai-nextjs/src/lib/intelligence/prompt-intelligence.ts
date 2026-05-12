@@ -41,6 +41,7 @@ export interface SceneContext {
   heading?: string
   action?: string
   narration?: string
+  dialogue?: Array<{ character: string; text: string; }>
   visualDescription?: string
   sceneNumber?: number
   characters?: string[]
@@ -301,6 +302,8 @@ export async function enhanceKeyframePrompt(
     const systemPrompt = `You are a professional cinematographer and visual effects supervisor creating image generation prompts.
 Your task is to enhance a base prompt into a detailed, production-ready prompt for ${framePosition} frame generation.
 
+If the scene context indicates there is dialogue, ENSURE the character speaking is clearly framed so the video generation model (Veo 3.1) can properly sync lip movements and avoid defaulting to narration.
+
 Output JSON with:
 - prompt: The enhanced, detailed image generation prompt (string)
 - reasoning: Brief explanation of enhancements made (string)
@@ -338,7 +341,8 @@ Create a detailed, visually rich prompt that:
 2. Adds specific cinematic details (lens, depth of field, color grading)
 3. Ensures character consistency if referenced
 4. Matches the scene's emotional tone
-5. Is optimized for AI image generation (Imagen 4 / DALL-E style)`
+5. Is optimized for AI image generation (Imagen 4 / DALL-E style)
+6. CRITICAL: If the scene context involves dialogue, you MUST explicitly frame the speaking character's face clearly (e.g., "medium close-up", "clear view of face") to ensure optimal lipsync in video generation.`
 
     const options: TextGenerationOptions = {
       temperature: 0.7,
@@ -455,6 +459,7 @@ Create ending sequence prompts that:
 SEGMENT TYPE: Standard Scene
 Create cinematic prompts that:
 - Capture the action with appropriate framing
+- If there is dialogue in the scene, frame the character speaking clearly so Veo 3.1 can accurately sync lip movement and perform voice-over correctly. Avoid framing where the speaker's face is obscured.
 - Use lighting that matches the scene's mood
 - Include character and environmental details
 - Maintain visual consistency with the film's style
@@ -483,14 +488,20 @@ function buildUserPrompt(
 
   // Current scene
   const current = adjacentScenes.currentScene
+  const dialogueInfo = current.dialogue && current.dialogue.length > 0 
+    ? `\n- Dialogue: ${current.dialogue.map(d => `${d.character}: "${d.text}"`).join('\n  ')}`
+    : ''
+
+  // Add dialog context if present (e.g. from action/narration fields if actual dialog array isn't passed, though we should pass it if possible. We'll add a generic warning)
   parts.push(`
 CURRENT SCENE:
 - Heading: ${current.heading || 'Unknown'}
 - Location: ${current.location || extractLocation(current.heading)}
 - Time of Day: ${current.timeOfDay || extractTimeOfDay(current.heading)}
-- Action Summary: ${current.action?.slice(0, 300) || 'Not specified'}
+- Action Summary: ${current.action?.slice(0, 300) || 'Not specified'}${dialogueInfo}
 ${current.narration ? `- Narration: ${current.narration.slice(0, 200)}` : ''}
-${current.characters?.length ? `- Characters: ${current.characters.join(', ')}` : ''}`)
+${current.characters?.length ? `- Characters: ${current.characters.join(', ')}` : ''}
+*IMPORTANT: If this segment covers character dialogue, output framing that explicitly shows the speaking character's face clearly for optimal lip-sync.*`)
 
   // Previous scene (for context)
   if (adjacentScenes.previousScene) {

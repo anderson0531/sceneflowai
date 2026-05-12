@@ -1507,6 +1507,7 @@ function DirectorConsoleRoot({
             heading: scene?.sceneHeading,
             action: scene?.action,
             narration: scene?.narration,
+            dialogue: scene?.dialogue?.map(d => ({ character: d.character, text: d.line })),
           },
           // Adjacent context could be enhanced with previous/next scene data if available
         }}
@@ -1572,6 +1573,7 @@ function DirectorConsoleRoot({
             heading: scene?.sceneHeading,
             action: scene?.action,
             narration: scene?.narration,
+            dialogue: scene?.dialogue?.map(d => ({ character: d.character, text: d.line })),
           }
         } : undefined}
         onAddSegment={(segmentData) => {
