@@ -1512,14 +1512,41 @@ function DirectorConsoleRoot({
         }}
         onAddSegment={(segmentData) => {
           // Handle adding the new cinematic segment
-          // This will need to integrate with the parent component's segment management
+          if (onProductionDataChange && productionData) {
+            const idx = segmentData.insertIndex ?? segments.length
+            const newSegments = [...segments]
+            
+            newSegments.splice(idx, 0, {
+              ...segmentData,
+              segmentId: segmentData.segmentId || `segment-${Date.now()}`
+            } as SceneSegment)
+            
+            // Recalculate sequenceIndex and timing for all segments
+            let currentTime = 0
+            const renumberedSegments = newSegments.map((seg, i) => {
+              const duration = seg.endTime - seg.startTime
+              const updated = {
+                ...seg,
+                sequenceIndex: i,
+                startTime: currentTime,
+                endTime: currentTime + duration,
+              }
+              currentTime += duration
+              return updated
+            })
+            
+            onProductionDataChange({
+              ...productionData,
+              segments: renumberedSegments
+            })
+          }
+          
           import('sonner').then(({ toast }) => {
             toast.success(`${segmentData.segmentPurpose} segment added!`, {
               description: 'Configure it in the Director Dialog to generate video.',
             })
           })
           setCinematicDialogSegmentIndex(null)
-          // TODO: Actually insert the segment via onProductionDataChange
         }}
         filmContext={{
           title: scene?.filmTitle,
@@ -1569,9 +1596,23 @@ function DirectorConsoleRoot({
               }
             } as SceneSegment)
             
+            // Recalculate sequenceIndex and timing for all segments to fix critical mismatch
+            let currentTime = 0
+            const renumberedSegments = newSegments.map((seg, i) => {
+              const duration = seg.endTime - seg.startTime
+              const updated = {
+                ...seg,
+                sequenceIndex: i,
+                startTime: currentTime,
+                endTime: currentTime + duration,
+              }
+              currentTime += duration
+              return updated
+            })
+            
             onProductionDataChange({
               ...productionData,
-              segments: newSegments
+              segments: renumberedSegments
             })
             
             import('sonner').then(({ toast }) => {
