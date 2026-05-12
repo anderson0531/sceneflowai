@@ -94,21 +94,28 @@ function StoryboardFeedbackPeek() {
           metadata: { ...cur.metadata, ...proj.metadata },
         })
       }
-      toast.success('Screening feedback synced')
+      toast.success('Screening room synced')
     } catch {
-      toast.error('Could not refresh feedback')
+      toast.error('Could not refresh data')
     } finally {
       setSyncing(false)
     }
   }
 
+  const screeningRoomHref = currentProject?.id 
+    ? `/screening-room?projectId=${currentProject.id}` 
+    : '/screening-room'
+
   return (
     <div className="mt-3 pl-1 space-y-2 border-t border-gray-200/60 dark:border-gray-700/60 pt-3">
       <div className="flex items-center justify-between gap-1 pl-4 pr-0.5">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1 min-w-0">
-          <MessageSquare className="w-3 h-3 text-cyan-500 shrink-0" />
-          <span className="truncate">Screening feedback</span>
-        </span>
+        <Link 
+          href={screeningRoomHref}
+          className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1 min-w-0 hover:text-cyan-500 transition-colors group"
+        >
+          <MessageSquare className="w-3 h-3 text-cyan-500 shrink-0 group-hover:text-cyan-400" />
+          <span className="truncate">Screening Room</span>
+        </Link>
         <Button
           type="button"
           variant="ghost"
