@@ -56,127 +56,6 @@ import { ProTipsChecklist } from '../pro-tips/ProTipsChecklist'
 import { WorkflowGuidePanel } from '../workflow/WorkflowGuidePanel'
 import { NavigationWarningDialog } from '../workflow/NavigationWarningDialog'
 import { type WorkflowStepStatus as GuideStepStatus } from '@/config/nav/workflowGuideConfig'
-import { toast } from 'sonner'
-
-type StoryboardFeedbackRow = {
-  id?: string
-  sceneIndex: number
-  rating: number
-  comment: string
-  createdAt: string
-  reviewerName?: string
-  storyboardVersion?: number
-}
-
-function StoryboardFeedbackPeek() {
-  const currentProject = useStore(s => s.currentProject)
-  const setCurrentProject = useStore(s => s.setCurrentProject)
-  const raw = currentProject?.metadata?.storyboardFeedback
-  const list = (Array.isArray(raw) ? raw : []) as StoryboardFeedbackRow[]
-  const sorted = [...list].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  )
-  const rows = sorted.slice(0, 8)
-  const [syncing, setSyncing] = useState(false)
-
-  const syncFeedback = async () => {
-    const id = currentProject?.id
-    if (!id) return
-    setSyncing(true)
-    try {
-      const res = await fetch(`/api/projects/${id}`, { credentials: 'include' })
-      const data = await res.json()
-      const proj = data.project
-      const cur = useStore.getState().currentProject
-      if (proj?.metadata && cur?.id === id) {
-        setCurrentProject({
-          ...cur,
-          metadata: { ...cur.metadata, ...proj.metadata },
-        })
-      }
-      toast.success('Screening room synced')
-    } catch {
-      toast.error('Could not refresh data')
-    } finally {
-      setSyncing(false)
-    }
-  }
-
-  const screeningRoomHref = currentProject?.id 
-    ? `/screening-room?projectId=${currentProject.id}` 
-    : '/screening-room'
-
-  return (
-    <div className="mt-3 pl-1 space-y-2 border-t border-gray-200/60 dark:border-gray-700/60 pt-3">
-      <div className="flex items-center justify-between gap-1 pl-4 pr-0.5">
-        <Link 
-          href={screeningRoomHref}
-          className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1 min-w-0 hover:text-cyan-500 transition-colors group"
-        >
-          <MessageSquare className="w-3 h-3 text-cyan-500 shrink-0 group-hover:text-cyan-400" />
-          <span className="truncate">Screening Room</span>
-        </Link>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-6 px-1.5 text-[10px] text-cyan-600 dark:text-cyan-400 shrink-0"
-          disabled={syncing || !currentProject?.id}
-          onClick={() => void syncFeedback()}
-        >
-          {syncing ? '…' : 'Sync'}
-        </Button>
-      </div>
-      {list.length === 0 ? (
-        <p className="text-[10px] text-slate-500 pl-4 pr-1 leading-snug">
-          No feedback yet. Share the storyboard from the Storyboard player, then tap Sync after reviewers submit.
-        </p>
-      ) : (
-        <>
-          <p className="text-[10px] text-slate-500 pl-4">{list.length} total · showing latest {rows.length}</p>
-          <ul className="space-y-2 max-h-[220px] overflow-y-auto pl-4 pr-1">
-            {rows.map((row, i) => {
-              const v = row.storyboardVersion != null && row.storyboardVersion >= 1 ? row.storyboardVersion : 1
-              const when = row.createdAt ? new Date(row.createdAt).toLocaleString() : ''
-              return (
-                <li
-                  key={row.id || `${row.sceneIndex}-${row.createdAt}-${i}`}
-                  className="rounded-md border border-gray-200/80 dark:border-gray-700/80 bg-gray-50/80 dark:bg-gray-900/50 p-2 text-[10px] text-gray-700 dark:text-gray-300"
-                >
-                  <div className="flex items-center justify-between gap-1 mb-0.5">
-                    <span className="font-semibold text-gray-800 dark:text-gray-200">
-                      Scene {(row.sceneIndex ?? 0) + 1}
-                    </span>
-                    <span className="text-[9px] font-medium text-amber-600 dark:text-amber-400 shrink-0 tabular-nums">
-                      {row.rating > 0 ? '★'.repeat(Math.min(5, row.rating)) : '—'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-1 text-[9px] text-gray-500 dark:text-gray-400 mb-0.5">
-                    <span className="truncate">{row.reviewerName || 'Anonymous'}</span>
-                    <span className="shrink-0 rounded bg-gray-200/90 dark:bg-gray-800 px-1 py-0.5 font-medium text-gray-700 dark:text-gray-300">
-                      v{v}
-                    </span>
-                  </div>
-                  {row.comment?.trim() ? (
-                    <p className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-2 leading-snug">{row.comment}</p>
-                  ) : null}
-                  {when ? <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-0.5">{when}</p> : null}
-                </li>
-              )
-            })}
-          </ul>
-          <button
-            type="button"
-            className="text-[10px] text-cyan-600 dark:text-cyan-400 hover:underline pl-4 text-left"
-            onClick={() => window.dispatchEvent(new CustomEvent('production:scene-gallery'))}
-          >
-            Open storyboard
-          </button>
-        </>
-      )}
-    </div>
-  )
-}
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   CheckCircle2,
@@ -552,11 +431,8 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
               <p className="text-[10px] text-slate-500 mt-1.5 pl-5">
                 Visual storyboard with AI generation
               </p>
-              <StoryboardFeedbackPeek />
             </div>
           )}
-
-          {/* Screening Room Section (Removed from general nav, restricted to Final Cut phase) */}
 
           {/* Credits Section - Always at bottom, pushed by flex-grow spacer */}
           <div className="flex-grow" />
