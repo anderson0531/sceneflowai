@@ -369,9 +369,14 @@ export function composeGuidePromptFromElements(
                       : emotion.toLowerCase()
       }
 
+      const voiceDesc =
+        d.characterAge || d.characterGender
+          ? `, ${getCharacterVoiceStyle(d.characterAge, d.characterGender)},`
+          : ''
+
       const speakPhrase = emotionPhrase
-        ? `${charName} speaks the following line ${emotionPhrase}:`
-        : `${charName} speaks the following line:`
+        ? `${charName}${voiceDesc} speaks the following line ${emotionPhrase}:`
+        : `${charName}${voiceDesc} speaks the following line:`
 
       visualParts.push(`${speakPhrase} '${truncatedText}'`)
     })
