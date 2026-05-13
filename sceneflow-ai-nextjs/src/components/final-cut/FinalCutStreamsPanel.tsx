@@ -139,55 +139,44 @@ export function FinalCutStreamsPanel({
             <h2 className="text-sm font-semibold text-white tracking-tight">Production streams</h2>
           ) : null}
         </div>
-        {showProductionLink && productionHref ? (
-          <Link href={productionHref} className="shrink-0">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={disabled}
-              className="border-purple-500/40 text-purple-200 hover:bg-purple-500/10"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open Production
-            </Button>
-          </Link>
-        ) : null}
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs
-          value={selection.format}
-          onValueChange={(v) => onChangeFormat(v as ProductionFormat)}
-          className="w-full sm:w-auto"
-        >
-          <TabsList className="grid w-full sm:w-auto sm:grid-cols-2 grid-cols-2 h-10 p-1 bg-zinc-950/80 border border-zinc-700/60 rounded-lg">
-            <TabsTrigger
-              value="animatic"
-              className="gap-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=inactive]:text-zinc-400 rounded-md text-xs font-medium px-3"
-              disabled={disabled}
-            >
-              <Clapperboard className="w-4 h-4" />
-              Animatic
-            </TabsTrigger>
-            <TabsTrigger
-              value="full-video"
-              className="gap-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=inactive]:text-zinc-400 rounded-md text-xs font-medium px-3"
-              disabled={disabled}
-            >
-              <VideoIcon className="w-4 h-4" />
-              Video
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <span className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">Format</span>
+          <Tabs
+            value={selection.format}
+            onValueChange={(v) => onChangeFormat(v as ProductionFormat)}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2 h-10 p-1 bg-zinc-950/80 border border-zinc-700/60 rounded-lg">
+              <TabsTrigger
+                value="animatic"
+                className="gap-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=inactive]:text-zinc-400 rounded-md text-xs font-medium px-3"
+                disabled={disabled}
+              >
+                <Clapperboard className="w-4 h-4" />
+                Animatic
+              </TabsTrigger>
+              <TabsTrigger
+                value="full-video"
+                className="gap-2 data-[state=active]:bg-violet-600 data-[state=active]:text-white data-[state=inactive]:text-zinc-400 rounded-md text-xs font-medium px-3"
+                disabled={disabled}
+              >
+                <VideoIcon className="w-4 h-4" />
+                Video
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
-        <label className="flex items-center gap-2 text-xs text-zinc-400">
-          <span className="uppercase tracking-wider text-zinc-500">Language</span>
+        <div className="flex flex-col gap-2">
+          <span className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">Language</span>
           <select
             value={selection.language}
             disabled={disabled}
             onChange={(e) => onChangeLanguage(e.target.value as ProductionLanguage)}
-            className="bg-zinc-900/80 text-zinc-200 text-xs rounded-md px-2 py-1.5 border border-zinc-700/80 focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+            className="bg-zinc-900/80 text-zinc-200 text-xs rounded-md px-2 py-2 border border-zinc-700/80 focus:outline-none focus:ring-1 focus:ring-violet-500/50 w-full"
           >
             {languages.map((code) => (
               <option key={code} value={code}>
@@ -195,7 +184,7 @@ export function FinalCutStreamsPanel({
               </option>
             ))}
           </select>
-        </label>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-3 text-[11px] text-zinc-500">

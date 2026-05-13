@@ -32,6 +32,8 @@ export interface FinalCutEditorWorkspaceProps {
   onRendered?: (url: string) => Promise<void> | void
   /** Disabled (demo, no project). */
   disabled?: boolean
+  isFullscreenExternal?: boolean
+  onToggleFullscreenExternal?: () => void
 }
 
 export function FinalCutEditorWorkspace({
@@ -45,6 +47,8 @@ export function FinalCutEditorWorkspace({
   filenameLabel,
   onRendered,
   disabled = false,
+  isFullscreenExternal,
+  onToggleFullscreenExternal,
 }: FinalCutEditorWorkspaceProps) {
   const [timelineState, setTimelineState] = useState<PreviewTimelineState>({
     currentTime: 0,
@@ -54,7 +58,10 @@ export function FinalCutEditorWorkspace({
     scrollPosition: 0,
     selectedSceneId: null,
   })
-  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isFullscreenInternal, setIsFullscreenInternal] = useState(false)
+
+  const isFullscreen = isFullscreenExternal ?? isFullscreenInternal
+  const onToggleFullscreen = onToggleFullscreenExternal ?? (() => setIsFullscreenInternal(f => !f))
 
   const timelineRef = useRef<HTMLDivElement>(null)
   const playbackRef = useRef<number | null>(null)
@@ -217,7 +224,7 @@ export function FinalCutEditorWorkspace({
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
             onZoomFit={handleZoomFit}
-            onToggleFullscreen={() => setIsFullscreen((f) => !f)}
+            onToggleFullscreen={onToggleFullscreen}
             formatTime={formatTime}
           />
 

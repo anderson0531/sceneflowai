@@ -9,10 +9,14 @@ import { cn } from '@/lib/utils'
 export interface FinalCutTimelineProps extends FinalCutEditorWorkspaceProps {
   /** When the page already supplies a section header, hide the inner mixer header. */
   hideMixerSectionHeader?: boolean
+  isFullscreen?: boolean
+  onToggleFullscreen?: () => void
 }
 
 export function FinalCutTimeline({
   hideMixerSectionHeader = false,
+  isFullscreen,
+  onToggleFullscreen,
   ...workspaceProps
 }: FinalCutTimelineProps) {
   return (
@@ -36,7 +40,11 @@ export function FinalCutTimeline({
         </div>
       ) : null}
 
-      <FinalCutEditorWorkspace {...workspaceProps} />
+      <FinalCutEditorWorkspace 
+        {...workspaceProps} 
+        isFullscreenExternal={isFullscreen}
+        onToggleFullscreenExternal={onToggleFullscreen}
+      />
     </div>
   )
 }

@@ -117,6 +117,7 @@ export default function FinalCutPage() {
   const [streamsExpanded, setStreamsExpanded] = useState(true)
   const [mixerExpanded, setMixerExpanded] = useState(true)
   const [mobilePane, setMobilePane] = useState<'library' | 'edit'>('edit')
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
     try {
@@ -427,12 +428,15 @@ export default function FinalCutPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setStreamsExpanded(prev => !prev)}
-            className="text-zinc-400 hover:text-white hover:bg-zinc-800/80"
-            title={streamsExpanded ? "Enter Theater Mode" : "Show Side Panel"}
+            onClick={() => setIsFullscreen(prev => !prev)}
+            className={cn(
+              "text-zinc-400 hover:text-white hover:bg-zinc-800/80",
+              isFullscreen && "bg-violet-600/20 text-violet-300 border-violet-500/30"
+            )}
+            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen Viewer"}
           >
-            {streamsExpanded ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
-            <span className="hidden sm:inline ml-2">{streamsExpanded ? 'Theater' : 'Show Panel'}</span>
+            {isFullscreen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+            <span className="hidden sm:inline ml-2">{isFullscreen ? 'Exit Theater' : 'Theater'}</span>
           </Button>
 
           {!isDemo && (
@@ -553,12 +557,15 @@ export default function FinalCutPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setStreamsExpanded(prev => !prev)}
-                    className="h-7 text-zinc-400 hover:text-white hover:bg-zinc-800/80"
-                    title={streamsExpanded ? "Enter Theater Mode" : "Show Side Panel"}
+                    onClick={() => setIsFullscreen(prev => !prev)}
+                    className={cn(
+                      "h-7 text-zinc-400 hover:text-white hover:bg-zinc-800/80",
+                      isFullscreen && "text-violet-300 bg-violet-600/20"
+                    )}
+                    title={isFullscreen ? "Exit Theater Mode" : "Theater Mode"}
                   >
-                    {streamsExpanded ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
-                    <span className="hidden sm:inline ml-1.5">{streamsExpanded ? 'Theater' : 'Show Panel'}</span>
+                    {isFullscreen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+                    <span className="hidden sm:inline ml-1.5">{isFullscreen ? 'Exit Theater' : 'Theater'}</span>
                   </Button>
                 }
                 collapsible
@@ -580,6 +587,8 @@ export default function FinalCutPage() {
                     onRendered={handleRendered}
                     disabled={isDemo}
                     hideMixerSectionHeader
+                    isFullscreen={isFullscreen}
+                    onToggleFullscreen={() => setIsFullscreen(f => !f)}
                   />
                 </div>
               ) : null}
