@@ -2153,6 +2153,7 @@ function SegmentAudioControls({
   isCollapsed = false,
   onToggleCollapse,
   getPlaybackSegmentDuration,
+  audioTracks,
 }: {
   segments: SceneSegment[]
   segmentConfigs: Record<string, SegmentAudioConfig>
@@ -2163,6 +2164,7 @@ function SegmentAudioControls({
   isCollapsed?: boolean
   onToggleCollapse?: () => void
   getPlaybackSegmentDuration: (segment: SceneSegment) => number
+  audioTracks?: MixerAudioTracks
 }) {
   const allMuted = Object.values(segmentConfigs).every(c => !c.includeAudio)
   
@@ -4863,6 +4865,7 @@ export function SceneProductionMixer({
                   isCollapsed={collapsedSections.segmentAudio}
                   onToggleCollapse={() => toggleSection('segmentAudio')}
                   getPlaybackSegmentDuration={getPlaybackSegmentDuration}
+                  audioTracks={audioTracks}
                 />
               )}
               
