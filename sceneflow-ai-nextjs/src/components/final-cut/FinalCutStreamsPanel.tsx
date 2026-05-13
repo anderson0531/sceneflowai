@@ -9,9 +9,14 @@ import {
   AlertTriangle,
   Loader2,
 } from 'lucide-react'
-import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { RenderFinalCutButton } from './RenderFinalCutButton'
 import { cn } from '@/lib/utils'
 import type {
@@ -204,23 +209,73 @@ export function FinalCutStreamsPanel({
           No scenes found in this project. Add scenes in the script before previewing in Final Cut.
         </div>
       ) : (
-        <ul className="divide-y divide-zinc-800/80 rounded-lg border border-zinc-800/80 bg-zinc-950/40 overflow-hidden">
-          {clips.map((clip) => {
-            const override = selection.perSceneOverrides?.[clip.sceneId]?.streamVersion
-            const usingOverride = typeof override === 'number'
-            const versionList = clip.availableVersions
-            return (
-              <li key={clip.sceneId} className="px-3 py-3 sm:px-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0 flex-1">
+        <TooltipProvider delayDuration={300}>
+          <ul className="divide-y divide-zinc-800/80 rounded-lg border border-zinc-800/80 bg-zinc-950/40 overflow-hidden">
+            {clips.map((clip) => {
+              const override = selection.perSceneOverrides?.[clip.sceneId]?.streamVersion
+              const usingOverride = typeof override === 'number'
+              const versionList = clip.availableVersions
+              const fullHeading = (clip.heading || `Scene ${clip.sceneNumber}`).trim()
+
+              return (
+                <li key={clip.sceneId} className="px-3 py-3 sm:px-4 flex flex-col gap-2">
+                  {/* 1. Version */}
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-xs font-medium text-zinc-300 bg-zinc-900/80 border border-zinc-700/70 rounded px-1.5 py-0.5 tabular-nums shrink-0">
-                      {clip.sceneNumber}
-                    </span>
-                    <p className="text-sm text-zinc-200 truncate">
-                      {clip.heading || `Scene ${clip.sceneNumber}`}
-                    </p>
+                    <select
+                      value={usingOverride ? String(override) : ''}
+                      disabled={disabled || versionList.length === 0}
+                      onChange={(e) => {
+                        const raw = e.target.value
+                        if (raw === '') {
+                          onChangeSceneOverride(clip.sceneId, null)
+                        } else {
+                          onChangeSceneOverride(clip.sceneId, Number(raw))
+                        }
+                      }}
+                      className="min-w-0 flex-1 bg-zinc-900/80 text-zinc-200 text-xs rounded-md px-2 py-1.5 border border-zinc-700/80 focus:outline-none focus:ring-1 focus:ring-violet-500/50 disabled:opacity-50"
+                      aria-label={`Version override for scene ${clip.sceneNumber}`}
+                    >
+                      <option value="">Use latest</option>
+                      {versionList.map((v) => (
+                        <option key={v} value={v}>
+                          v{v}
+                        </option>
+                      ))}
+                    </select>
+                    {usingOverride ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        disabled={disabled}
+                        className="h-8 shrink-0 px-2 text-zinc-400 hover:text-zinc-200"
+                        onClick={() => onChangeSceneOverride(clip.sceneId, null)}
+                      >
+                        Reset
+                      </Button>
+                    ) : null}
                   </div>
-                  <div className="mt-1 flex items-center gap-2 flex-wrap">
+
+                  {/* 2. Scene number + name (truncated; tooltip shows full heading) */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-2 min-w-0 cursor-default">
+                        <span className="text-xs font-medium text-zinc-300 bg-zinc-900/80 border border-zinc-700/70 rounded px-1.5 py-0.5 tabular-nums shrink-0">
+                          {clip.sceneNumber}
+                        </span>
+                        <p className="text-sm text-zinc-200 truncate min-w-0">{fullHeading}</p>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      className="max-w-xs text-xs text-zinc-100 bg-zinc-900 border-zinc-700"
+                    >
+                      {fullHeading}
+                    </TooltipContent>
+                  </Tooltip>
+
+                  {/* 3. Status */}
+                  <div className="flex items-center gap-2 flex-wrap">
                     {statusBadge(clip.status)}
                     {clip.streamVersion ? (
                       <span className="text-[11px] text-zinc-500 tabular-nums">
@@ -229,47 +284,11 @@ export function FinalCutStreamsPanel({
                       </span>
                     ) : null}
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <select
-                    value={usingOverride ? String(override) : ''}
-                    disabled={disabled || versionList.length === 0}
-                    onChange={(e) => {
-                      const raw = e.target.value
-                      if (raw === '') {
-                        onChangeSceneOverride(clip.sceneId, null)
-                      } else {
-                        onChangeSceneOverride(clip.sceneId, Number(raw))
-                      }
-                    }}
-                    className="bg-zinc-900/80 text-zinc-200 text-xs rounded-md px-2 py-1.5 border border-zinc-700/80 focus:outline-none focus:ring-1 focus:ring-violet-500/50 disabled:opacity-50"
-                    aria-label={`Version override for scene ${clip.sceneNumber}`}
-                  >
-                    <option value="">Use latest</option>
-                    {versionList.map((v) => (
-                      <option key={v} value={v}>
-                        v{v}
-                      </option>
-                    ))}
-                  </select>
-                  {usingOverride ? (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      disabled={disabled}
-                      className="h-8 px-2 text-zinc-400 hover:text-zinc-200"
-                      onClick={() => onChangeSceneOverride(clip.sceneId, null)}
-                    >
-                      Reset
-                    </Button>
-                  ) : null}
-                </div>
-              </li>
-            )
-          })}
-        </ul>
+                </li>
+              )
+            })}
+          </ul>
+        </TooltipProvider>
       )}
     </div>
   )
