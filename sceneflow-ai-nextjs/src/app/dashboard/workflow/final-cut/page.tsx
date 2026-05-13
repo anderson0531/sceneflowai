@@ -11,6 +11,8 @@ import {
   Loader2,
   Film,
   AlertCircle,
+  PanelRightOpen,
+  PanelRightClose,
 } from 'lucide-react'
 
 import { useStore } from '@/store/useStore'
@@ -409,28 +411,30 @@ export default function FinalCutPage() {
               className="text-zinc-400 hover:text-white hover:bg-zinc-800/80 -ml-1"
             >
               <ArrowLeft className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">{isDemo ? 'Exit demo' : 'Production'}</span>
+              <span className="hidden sm:inline">{isDemo ? 'Exit demo' : 'Back to Production'}</span>
             </Button>
           </Link>
 
           <div className="h-8 w-px bg-zinc-800 hidden sm:block" />
 
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600/15 ring-1 ring-violet-500/25">
-              <Film className="w-5 h-5 text-violet-300" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-semibold tracking-tight text-white truncate">
-                {isDemo ? 'Demo project' : currentProject?.title ?? 'Project'}
-              </h1>
-              <p className="text-[11px] sm:text-xs text-zinc-500 truncate">
-                Final Cut · preview workspace
-              </p>
-            </div>
+          <div className="flex items-center gap-2">
+            <Film className="w-4 h-4 text-violet-400" />
+            <span className="text-sm font-medium text-white">Final Cut</span>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setStreamsExpanded(prev => !prev)}
+            className="text-zinc-400 hover:text-white hover:bg-zinc-800/80"
+            title={streamsExpanded ? "Enter Theater Mode" : "Show Side Panel"}
+          >
+            {streamsExpanded ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+            <span className="hidden sm:inline ml-2">{streamsExpanded ? 'Theater' : 'Show Panel'}</span>
+          </Button>
+
           {!isDemo && (
               <Button
                 variant="ghost"
@@ -477,14 +481,13 @@ export default function FinalCutPage() {
           <div className="relative flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-violet-300/90">
-                SceneFlow Studio
+                Final Cut
               </p>
               <h2 className="mt-1 text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-white [text-shadow:0_2px_28px_rgba(139,92,246,0.35)]">
-                Final Cut
+                {isDemo ? 'Demo project' : currentProject?.title ?? 'Project'}
               </h2>
               <p className="mt-1.5 text-sm text-zinc-400 max-w-xl leading-relaxed">
-                Preview your rendered scene videos for each stream. Editing happens in the Production Scene
-                Mixer.
+                Preview your rendered scene videos for each stream. Use the side panel to pick languages and formats.
               </p>
             </div>
             <p className="text-xs text-zinc-500 tabular-nums shrink-0 sm:text-right max-w-[220px] sm:max-w-xs truncate">
@@ -528,11 +531,66 @@ export default function FinalCutPage() {
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)] gap-3 sm:gap-4 min-h-[min(55vh,480px)]">
+        <div className={cn(
+          "flex-1 min-h-0 grid gap-3 sm:gap-4 min-h-[min(55vh,480px)] transition-all duration-500 ease-in-out",
+          streamsExpanded 
+            ? "grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]" 
+            : "grid-cols-1"
+        )}>
           <section
             className={cn(
-              'min-h-0 flex flex-col overflow-hidden',
-              mobilePane === 'edit' && 'hidden lg:flex'
+              'min-h-0 flex flex-col overflow-hidden min-h-[min(50vh,440px)]',
+              mobilePane === 'library' && 'hidden lg:flex'
+            )}
+          >
+            <div className="flex flex-col flex-1 min-h-0 rounded-2xl border border-violet-500/25 bg-zinc-950/55 backdrop-blur-xl overflow-hidden shadow-[0_0_0_1px_rgba(139,92,246,0.12),0_28px_100px_-36px_rgba(139,92,246,0.35),inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+              <ProductionSectionHeader
+                icon={Film}
+                title="Final Cut Viewer"
+                titleClassName="font-semibold tracking-tight"
+                badge={clips.length || undefined}
+                rightAction={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setStreamsExpanded(prev => !prev)}
+                    className="h-7 text-zinc-400 hover:text-white hover:bg-zinc-800/80"
+                    title={streamsExpanded ? "Enter Theater Mode" : "Show Side Panel"}
+                  >
+                    {streamsExpanded ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+                    <span className="hidden sm:inline ml-1.5">{streamsExpanded ? 'Theater' : 'Show Panel'}</span>
+                  </Button>
+                }
+                collapsible
+                expanded={mixerExpanded}
+                onToggle={() => setMixerExpanded((e) => !e)}
+                className="bg-zinc-950/80 border-b border-violet-500/20 shrink-0"
+              />
+              {mixerExpanded ? (
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                  <FinalCutTimeline
+                    clips={clips}
+                    totalDuration={totalDuration}
+                    projectId={projectId}
+                    streamLabel={streamLabel}
+                    isProcessing={isSaving}
+                    productionVisionHref={productionVisionHref}
+                    lastRenderUrl={lastRenderUrl}
+                    filenameLabel={filenameLabel}
+                    onRendered={handleRendered}
+                    disabled={isDemo}
+                    hideMixerSectionHeader
+                  />
+                </div>
+              ) : null}
+            </div>
+          </section>
+
+          <section
+            className={cn(
+              'min-h-0 flex flex-col overflow-hidden transition-all duration-500 ease-in-out',
+              mobilePane === 'edit' && 'hidden lg:flex',
+              !streamsExpanded && 'lg:hidden'
             )}
           >
             <div className="flex flex-col flex-1 min-h-0 rounded-2xl border border-white/[0.08] bg-zinc-950/50 backdrop-blur-xl overflow-hidden shadow-xl shadow-black/30 ring-1 ring-white/[0.04]">
@@ -560,6 +618,12 @@ export default function FinalCutPage() {
                     productionHref: productionVisionHref,
                     showProductionLink: !!productionVisionHref,
                   }}
+                  renderButtonProps={{
+                    projectId,
+                    filenameLabel,
+                    onRendered: handleRendered,
+                    lastRenderUrl,
+                  }}
                   projectId={projectId}
                   projectName={isDemo ? 'Demo project' : currentProject?.title}
                   finalCutScreenings={finalCutScreenings}
@@ -577,44 +641,6 @@ export default function FinalCutPage() {
                     throw new Error('Not implemented')
                   }}
                 />
-              ) : null}
-            </div>
-          </section>
-
-          <section
-            className={cn(
-              'min-h-0 flex flex-col overflow-hidden min-h-[min(50vh,440px)]',
-              mobilePane === 'library' && 'hidden lg:flex'
-            )}
-          >
-            <div className="flex flex-col flex-1 min-h-0 rounded-2xl border border-violet-500/25 bg-zinc-950/55 backdrop-blur-xl overflow-hidden shadow-[0_0_0_1px_rgba(139,92,246,0.12),0_28px_100px_-36px_rgba(139,92,246,0.35),inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-              <ProductionSectionHeader
-                icon={Film}
-                title="Final Cut Viewer"
-                titleClassName="font-semibold tracking-tight"
-                badge={clips.length || undefined}
-                rightHint="Read-only preview · render to deliver"
-                collapsible
-                expanded={mixerExpanded}
-                onToggle={() => setMixerExpanded((e) => !e)}
-                className="bg-zinc-950/80 border-b border-violet-500/20 shrink-0"
-              />
-              {mixerExpanded ? (
-                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                  <FinalCutTimeline
-                    clips={clips}
-                    totalDuration={totalDuration}
-                    projectId={projectId}
-                    streamLabel={streamLabel}
-                    isProcessing={isSaving}
-                    productionVisionHref={productionVisionHref}
-                    lastRenderUrl={lastRenderUrl}
-                    filenameLabel={filenameLabel}
-                    onRendered={handleRendered}
-                    disabled={isDemo}
-                    hideMixerSectionHeader
-                  />
-                </div>
               ) : null}
             </div>
           </section>

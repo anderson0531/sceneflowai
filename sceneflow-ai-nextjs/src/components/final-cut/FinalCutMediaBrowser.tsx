@@ -22,6 +22,7 @@ export interface FinalCutMediaBrowserProps {
   screeningCredits?: number
   onCreateScreening: NonNullable<ComponentProps<typeof ScreeningRoomDashboard>['onCreateScreening']>
   onUploadExternal: NonNullable<ComponentProps<typeof ScreeningRoomDashboard>['onUploadExternal']>
+  renderButtonProps?: FinalCutStreamsPanelProps['renderButtonProps']
 }
 
 function PlaceholderTab({ title, body }: { title: string; body: string }) {
@@ -43,6 +44,7 @@ export function FinalCutMediaBrowser({
   screeningCredits = 100,
   onCreateScreening,
   onUploadExternal,
+  renderButtonProps,
 }: FinalCutMediaBrowserProps) {
   const [tab, setTab] = useState<FinalCutMediaBrowserTab>('streams')
 
@@ -99,6 +101,7 @@ export function FinalCutMediaBrowser({
             {...streamsPanelProps}
             embeddedInSection
             suppressOuterTitle
+            renderButtonProps={renderButtonProps}
           />
         </TabsContent>
 

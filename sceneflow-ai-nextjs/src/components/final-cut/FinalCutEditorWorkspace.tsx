@@ -4,7 +4,6 @@ import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { FinalCutPreviewMonitor } from './FinalCutPreviewMonitor'
 import { FinalCutTransportBar } from './FinalCutTransportBar'
 import { FinalCutTimelineTracks } from './FinalCutTimelineTracks'
-import { FinalCutInspectorPanel } from './FinalCutInspectorPanel'
 import { cn } from '@/lib/utils'
 import type { FinalCutSceneClip } from '@/lib/types/finalCut'
 import { PIXELS_PER_SECOND_DEFAULT } from './timelineConstants'
@@ -237,19 +236,6 @@ export function FinalCutEditorWorkspace({
             />
           </div>
         </div>
-
-        <FinalCutInspectorPanel
-          clips={clips}
-          selectedSceneId={timelineState.selectedSceneId}
-          projectId={projectId}
-          productionVisionHref={productionVisionHref}
-          lastRenderUrl={lastRenderUrl}
-          isProcessing={isProcessing}
-          onRendered={onRendered}
-          filenameLabel={filenameLabel}
-          formatTime={formatTime}
-          disabled={disabled}
-        />
       </div>
     </div>
   )

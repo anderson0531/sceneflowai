@@ -12,6 +12,7 @@ import {
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { RenderFinalCutButton } from './RenderFinalCutButton'
 import { cn } from '@/lib/utils'
 import type {
   FinalCutSceneClip,
@@ -43,6 +44,13 @@ export interface FinalCutStreamsPanelProps {
   embeddedInSection?: boolean
   /** Suppress the panel's title when the page provides a section header. */
   suppressOuterTitle?: boolean
+  /** Props for the RenderFinalCutButton. */
+  renderButtonProps?: {
+    projectId: string | undefined
+    filenameLabel?: string
+    onRendered?: (url: string) => Promise<void> | void
+    lastRenderUrl?: string | null
+  }
 }
 
 function statusBadge(status: FinalCutSceneClip['status']) {
@@ -79,6 +87,7 @@ export function FinalCutStreamsPanel({
   showProductionLink = true,
   embeddedInSection = false,
   suppressOuterTitle = false,
+  renderButtonProps,
 }: FinalCutStreamsPanelProps) {
   const languages = useMemo(() => {
     const set = new Set(availableLanguages)
@@ -93,21 +102,42 @@ export function FinalCutStreamsPanel({
   return (
     <div
       className={cn(
-        'space-y-4',
+        'space-y-5',
         embeddedInSection
           ? 'px-4 py-4 sm:px-5 sm:py-5'
           : 'rounded-xl border border-zinc-800/70 bg-zinc-950/45 backdrop-blur-md p-4 sm:p-5'
       )}
     >
+      {renderButtonProps && (
+        <div className="pb-4 border-b border-zinc-800/80 space-y-3">
+          <RenderFinalCutButton
+            clips={clips}
+            projectId={renderButtonProps.projectId}
+            filenameLabel={renderButtonProps.filenameLabel}
+            onRendered={renderButtonProps.onRendered}
+            disabled={disabled}
+            className="w-full"
+          />
+          {renderButtonProps.lastRenderUrl ? (
+            <a
+              href={renderButtonProps.lastRenderUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              download
+              className="inline-flex items-center gap-1.5 text-[11px] text-emerald-300 hover:text-emerald-200"
+            >
+              Open last hosted copy
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          ) : null}
+        </div>
+      )}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           {!suppressOuterTitle ? (
             <h2 className="text-sm font-semibold text-white tracking-tight">Production streams</h2>
           ) : null}
-          <p className="text-xs text-zinc-500 mt-1 max-w-2xl leading-relaxed">
-            Pick the format and language to preview. Scenes default to the latest ready render — pin a
-            specific version per scene if you need to.
-          </p>
         </div>
         {showProductionLink && productionHref ? (
           <Link href={productionHref} className="shrink-0">
