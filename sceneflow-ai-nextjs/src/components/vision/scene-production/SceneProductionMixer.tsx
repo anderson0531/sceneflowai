@@ -781,7 +781,8 @@ function ScenePreviewPlayer({
     
     const handleEnded = () => {
       const config = segmentAudioConfigs[segments[currentSegmentIndex].segmentId]
-      const pauseDuration = config?.postSegmentPause || 0
+      const autoPauseVal = audioTracks?.dialogue?.enabled ? Math.max(0, getPlaybackSegmentDuration(segments[currentSegmentIndex]) - (segments[currentSegmentIndex].actualVideoDuration ?? segments[currentSegmentIndex].imageDuration ?? (segments[currentSegmentIndex].endTime - segments[currentSegmentIndex].startTime) ?? 4)) : 0.0
+      const pauseDuration = (config?.postSegmentPause || 0) + autoPauseVal
 
       const advanceOrEnd = () => {
         // Check if we should advance to next segment or freeze
@@ -2283,10 +2284,10 @@ function SegmentAudioControls({
               )}
               
               {/* Auto Pause Indicator */}
-              <div className="flex items-center gap-1 border-l border-gray-600/30 pl-2 ml-2 shrink-0" title="Automatic pause added to sync with audio duration">
+              <div className="flex items-center gap-1 border-l border-gray-600/30 pl-2 ml-2 shrink-0" title="Automatic pause added to sync with dialogue audio duration">
                 <span className="text-[10px] text-gray-400">Auto Pause:</span>
                 <span className="text-xs text-gray-200 font-mono w-8 text-right">
-                  {Math.max(0, getPlaybackSegmentDuration(seg) - (seg.actualVideoDuration ?? seg.imageDuration ?? (seg.endTime - seg.startTime) ?? 4)).toFixed(1)}s
+                  {audioTracks?.dialogue?.enabled ? Math.max(0, getPlaybackSegmentDuration(seg) - (seg.actualVideoDuration ?? seg.imageDuration ?? (seg.endTime - seg.startTime) ?? 4)).toFixed(1) : "0.0"}s
                 </span>
               </div>
             </div>
@@ -3116,7 +3117,7 @@ export function SceneProductionMixer({
           endTime: seg.endTime,
           audioSource: (audioConfig.includeAudio && (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)) ? 'original' : 'none',
           audioVolume: audioConfig.volume,
-          pauseDuration: Math.max(0, getPlaybackSegmentDuration(seg) - (seg.actualVideoDuration ?? seg.imageDuration ?? (seg.endTime - seg.startTime) ?? 4)),
+          pauseDuration: audioTracks?.dialogue?.enabled ? Math.max(0, getPlaybackSegmentDuration(seg) - (seg.actualVideoDuration ?? seg.imageDuration ?? (seg.endTime - seg.startTime) ?? 4)) : 0.0,
         }
       })
       
