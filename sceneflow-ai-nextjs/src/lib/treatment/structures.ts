@@ -1,4 +1,4 @@
-export type BeatStructureKey = 'three_act' | 'save_the_cat' | 'heros_journey' | 'mini_doc' | 'instructional'
+export type BeatStructureKey = 'three_act' | 'save_the_cat' | 'heros_journey' | 'mini_doc' | 'instructional' | 'commercial'
 
 export const BEAT_STRUCTURES: Record<BeatStructureKey, { label: string; beats: Array<{ key: string; title: string; weight: number }> }> = {
   three_act: {
@@ -44,6 +44,14 @@ export const BEAT_STRUCTURES: Record<BeatStructureKey, { label: string; beats: A
       { key: 'module1', title: 'Module 1', weight: 0.25 },
       { key: 'module2', title: 'Module 2', weight: 0.25 },
       { key: 'recap', title: 'Recap & Assessment', weight: 0.35 }
+    ]
+  },
+  commercial: {
+    label: 'Commercial / Product Demo',
+    beats: [
+      { key: 'hook_problem', title: 'Hook & Problem Agitation', weight: 0.20 },
+      { key: 'solution', title: 'Product Solution & Features', weight: 0.50 },
+      { key: 'proof_cta', title: 'Social Proof & Call to Action', weight: 0.30 }
     ]
   }
 }

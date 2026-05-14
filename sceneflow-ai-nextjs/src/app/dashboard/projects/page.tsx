@@ -408,23 +408,23 @@ export default function ProjectsPage() {
         }
       />
 
-      <div className="px-4 lg:px-8 py-6">
+      <div className="px-4 lg:px-8 py-6 max-w-[1400px]">
         {/* Search & Filters Bar */}
         <div className="mb-6 flex flex-col sm:flex-row gap-3">
           {/* Search */}
-          <div className="flex-1 relative">
+          <div className="flex-1 min-w-0 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search projects..."
-              className="pl-10"
+              className="pl-10 w-full"
             />
           </div>
 
           {/* Status Filter */}
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
@@ -438,7 +438,7 @@ export default function ProjectsPage() {
 
           {/* Sort */}
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>

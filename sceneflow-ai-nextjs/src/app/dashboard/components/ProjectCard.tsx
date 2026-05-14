@@ -813,6 +813,16 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
             </div>
           </div>
         )}
+        
+        {/* Resume Button */}
+        <div className="mt-4 flex items-center justify-end">
+          <Link
+            href={getResumeRoute()}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-sf-primary/20 hover:bg-sf-primary/30 text-sf-primary border border-sf-primary/30 hover:border-sf-primary/50 rounded-lg text-sm font-medium transition-all"
+          >
+            Resume <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
 
       {/* Thumbnail Prompt Editor Drawer */}

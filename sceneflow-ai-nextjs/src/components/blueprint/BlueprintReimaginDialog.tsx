@@ -76,13 +76,18 @@ const GENRE_OPTIONS = [
   { value: 'education', label: 'Education', category: 'Non-Fiction' },
   { value: 'training', label: 'Training', category: 'Non-Fiction' },
   { value: 'news', label: 'News', category: 'Non-Fiction' },
+  // Commercial/Business
+  { value: 'product-demo', label: 'Product Demonstration', category: 'Commercial' },
+  { value: 'explainer', label: 'Explainer Video', category: 'Commercial' },
+  { value: 'case-study', label: 'Case Study', category: 'Commercial' },
+  { value: 'advertisement', label: 'Advertisement', category: 'Commercial' },
   // Conversational
   { value: 'podcast', label: 'Podcast', category: 'Conversational' },
   { value: 'interview', label: 'Interview', category: 'Conversational' },
 ]
 
 // Group genres by category for the dropdown
-const GENRE_CATEGORIES = ['Fiction', 'Non-Fiction', 'Conversational'] as const
+const GENRE_CATEGORIES = ['Fiction', 'Non-Fiction', 'Commercial', 'Conversational'] as const
 
 const TONE_OPTIONS = [
   { value: 'dark', label: 'Dark & Gritty' },
@@ -185,7 +190,7 @@ function IdeationSection({
     }
   }
 
-  const quickTags = ['drama', 'thriller', 'documentary', 'sci-fi', 'comedy', 'mystery']
+  const quickTags = ['commercial', 'educational', 'explainer', 'tutorial', 'documentary', 'drama', 'comedy']
 
   return (
     <div className="space-y-4">
