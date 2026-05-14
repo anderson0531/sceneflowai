@@ -320,8 +320,9 @@ export function FramePromptDialog({
     lastInitializedContextRef.current = contextKey
     
     // Auto-check "use previous end frame" for CONTINUE transitions when available
+    // Default to Camera Cut (usePreviousEndFrame=false) instead of Continuous
     if (segment.transitionType === 'CONTINUE' && previousEndFrameUrl && frameType !== 'end') {
-      setUsePreviousEndFrame(true)
+      setUsePreviousEndFrame(false)
     } else {
       setUsePreviousEndFrame(false)
     }
@@ -983,52 +984,88 @@ export function FramePromptDialog({
           <TabsContent value="guided" className="flex-1 overflow-auto">
             <ScrollArea className="h-full pr-4">
               <div className="space-y-6 py-4">
-                {/* Use Previous End Frame Option */}
+                {/* Start Frame Transition Options */}
                 {canUsePreviousFrame && (
-                  <div className={cn(
-                    "p-4 rounded-lg border",
-                    usePreviousEndFrame 
-                      ? "border-blue-500/50 bg-blue-500/10" 
-                      : "border-slate-700 bg-slate-800/50"
-                  )}>
-                    <div className="flex items-start gap-3">
-                      <Checkbox
-                        id="use-prev-frame-guided"
-                        checked={usePreviousEndFrame}
-                        onCheckedChange={(checked) => setUsePreviousEndFrame(checked === true)}
-                        className="mt-0.5"
-                      />
-                      <div className="flex-1">
-                        <Label 
-                          htmlFor="use-prev-frame-guided" 
-                          className="text-sm font-medium text-slate-200 cursor-pointer flex items-center gap-2"
-                        >
-                          <Link2 className="w-4 h-4 text-blue-400" />
-                          Use Previous Segment's End Frame
-                        </Label>
-                        <p className="text-xs text-slate-400 mt-1">
-                          Copy the end frame from Segment {segmentIndex} as this segment's start frame for seamless visual continuity.
-                        </p>
-                        
-                        {previousEndFrameUrl && (
-                          <div className="mt-3 flex items-center gap-3">
-                            <img 
-                              src={previousEndFrameUrl} 
-                              alt="Previous end frame"
-                              className="w-20 h-12 object-cover rounded border border-slate-600"
-                            />
-                            <span className="text-xs text-slate-500">
-                              Previous segment's end frame
-                            </span>
-                          </div>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-slate-200">Start Frame Transition</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Option 1: Camera Cut (Default) */}
+                      <div 
+                        className={cn(
+                          "relative p-3 rounded-lg border cursor-pointer transition-all",
+                          !usePreviousEndFrame 
+                            ? "border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/50" 
+                            : "border-slate-700 bg-slate-800/50 hover:bg-slate-800"
                         )}
+                        onClick={() => setUsePreviousEndFrame(false)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={cn(
+                            "mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0",
+                            !usePreviousEndFrame ? "border-blue-500 bg-blue-500" : "border-slate-500"
+                          )}>
+                            {!usePreviousEndFrame && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-slate-200 flex items-center gap-1.5">
+                              <Wand2 className="w-3.5 h-3.5 text-blue-400" />
+                              Camera Cut
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                              Intelligently edit the end frame of the previous segment to create a smooth camera motion or angle change.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Option 2: Continuous Shot */}
+                      <div 
+                        className={cn(
+                          "relative p-3 rounded-lg border cursor-pointer transition-all",
+                          usePreviousEndFrame 
+                            ? "border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/50" 
+                            : "border-slate-700 bg-slate-800/50 hover:bg-slate-800"
+                        )}
+                        onClick={() => setUsePreviousEndFrame(true)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={cn(
+                            "mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0",
+                            usePreviousEndFrame ? "border-blue-500 bg-blue-500" : "border-slate-500"
+                          )}>
+                            {usePreviousEndFrame && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-slate-200 flex items-center gap-1.5">
+                              <Link2 className="w-3.5 h-3.5 text-blue-400" />
+                              Continuous Shot
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                              Copy the exact end frame from Segment {segmentIndex} as this segment's start frame for seamless visual continuity.
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     </div>
+
+                    {previousEndFrameUrl && (
+                      <div className="mt-3 flex items-center gap-3 p-3 rounded border border-slate-700 bg-slate-800/30">
+                        <img 
+                          src={previousEndFrameUrl} 
+                          alt="Previous end frame reference"
+                          className="w-20 h-12 object-cover rounded border border-slate-600"
+                        />
+                        <div className="text-xs text-slate-400">
+                          <span className="text-slate-300 font-medium block">Reference Frame</span>
+                          Used as the baseline for this segment's start frame.
+                        </div>
+                      </div>
+                    )}
                     
                     {transitionType === 'CONTINUE' && (
-                      <div className="mt-3 px-6 py-2 bg-blue-500/10 rounded text-xs text-blue-300 flex items-center gap-2">
+                      <div className="mt-2 px-3 py-2 bg-blue-500/10 rounded text-xs text-blue-300 flex items-center gap-2">
                         <AlertCircle className="w-3.5 h-3.5" />
-                        This segment uses CONTINUE transition – recommended for visual continuity
+                        This segment uses CONTINUE transition – both options maintain visual continuity.
                       </div>
                     )}
                   </div>

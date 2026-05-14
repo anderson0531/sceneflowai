@@ -176,7 +176,8 @@ function determineShotType(
 
 /**
  * Rule 2: Shot Continuation
- * CONTINUE transitions begin with the end frame composition of previous segment
+ * CONTINUE transitions with a camera cut begin with the previous segment's end frame 
+ * but allow for a smooth camera cut/angle change.
  */
 function buildContinuationPrefix(
   keyframeContext: KeyframeContext,
@@ -187,14 +188,14 @@ function buildContinuationPrefix(
   }
   
   if (previousFrameDescription) {
-    return `Continuation from: ${previousFrameDescription}. Maintaining same composition. `
+    return `Camera cut continuing from: ${previousFrameDescription}. Adjust angle for smooth visual flow. `
   }
   
   if (keyframeContext.previousShotType) {
-    return `Continuing ${keyframeContext.previousShotType}, same camera setup. `
+    return `Continuing action from previous shot, cutting to ${keyframeContext.previousShotType} or appropriate angle. `
   }
   
-  return 'Smooth continuation from previous frame. '
+  return 'Camera cut continuing from previous frame. '
 }
 
 /**

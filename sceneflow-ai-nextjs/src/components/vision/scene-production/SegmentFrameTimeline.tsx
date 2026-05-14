@@ -313,7 +313,7 @@ export function SegmentFrameTimeline({
     await executeWithOverlay(
       async () => {
         await onGenerateFrames(segment.segmentId, frameType, {
-          usePreviousEndFrame: frameType === 'start' && segmentIndex > 0,
+          usePreviousEndFrame: false, // Default to Camera Cut
           previousEndFrameUrl: frameType === 'start' && segmentIndex > 0 ? getPreviousEndFrame(segmentIndex) || undefined : undefined,
           sceneDirection,
         })
@@ -382,11 +382,11 @@ export function SegmentFrameTimeline({
           const segment = segments[i]
           
           // If it's a continuation within the scene (not the first segment and not a CUT)
-          const usePreviousEndFrame = i > 0 && segment.transitionType !== 'CUT'
+          const isContinuation = i > 0 && segment.transitionType !== 'CUT'
           
           const result = await onGenerateFrames(segment.segmentId, 'both', {
-            usePreviousEndFrame,
-            previousEndFrameUrl: usePreviousEndFrame ? lastEndFrameUrl : undefined,
+            usePreviousEndFrame: false, // Default to Camera Cut
+            previousEndFrameUrl: isContinuation ? lastEndFrameUrl : undefined,
             sceneDirection,
           })
 
