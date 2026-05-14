@@ -1018,12 +1018,14 @@ STRUCTURE PRINCIPLES:
 • Natural breaks occur at: topic changes, transitions, ad breaks, or location changes
 • Minimum 4-8 dialogue exchanges per dialogue-heavy segment
 • Target 60-120 seconds per segment (based on content density)
+• Do NOT create duplicate segments for the same dialogue line.
 
 WHAT TO AVOID:
 ❌ Fragmenting discussions across multiple segments
 ❌ Creating segments under 45 seconds
 ❌ One segment per line of dialogue
 ❌ Arbitrary breaks that disrupt flow
+❌ Duplicate segments containing the exact same dialogue
 
 WHAT TO CREATE:
 ✓ Rich, substantive segments with complete arcs
@@ -1053,7 +1055,7 @@ OUTPUT FORMAT (JSON):
       "sceneNumber": 1,
       ${sceneHeadingExample},
       "characters": ["Character Name 1", "Character Name 2"],
-      "action": "Detailed segment action with atmosphere...\\n\\nSFX: Sound description\\n\\nMusic: Music description",
+      "action": "Specific and unique segment action with atmosphere. Detail the specific actions occurring in THIS segment, not a general scene description.\\n\\nSFX: Sound description\\n\\nMusic: Music description",
       "narration": "Voiceover narration/intro...",
       "dialogue": [
         {"character": "Character Name", "line": "[emotion] Dialogue text..."}
@@ -1070,6 +1072,8 @@ IMPORTANT CONSTRAINTS:
 • Maximum ${sceneLimit} segments total (consolidate if needed)
 • Each segment MINIMUM 45 seconds
 • Write the COMPLETE script from beginning to end
+• Do NOT duplicate dialogue or segments
+• Ensure "action" is specific to the events of the segment, NOT repeated across segments
 • Return ONLY valid JSON - no markdown, no explanations
 
 Now write the complete script, following the Treatment's beats naturally and dynamically adapting the structure to match the ${format} format. Focus on value and audience engagement over hitting any specific segment count.`
