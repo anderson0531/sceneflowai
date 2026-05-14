@@ -687,6 +687,13 @@ Render this scene in ${selectedStyle.name} style.`
         if (segmentDir.depthOfField && !keyframePrompt.toLowerCase().includes('dof') && !keyframePrompt.toLowerCase().includes('depth of field')) {
           keyframePrompt += ` ${segmentDir.depthOfField}.`
         }
+        
+        // Ensure the end frame prompt explicitly references the start frame
+        // This makes it an "edit" of the start frame rather than a standalone prompt
+        const startDesc = segmentContent?.startFrameDescription || startFramePrompt || actionPrompt || 'the start frame'
+        keyframePrompt = `END FRAME after ${duration}s segment. The START frame showed: ${startDesc.substring(0, 120)}. ` +
+          `What has CHANGED: ${keyframePrompt}. Show the RESULT of these changes — same scene, same characters, but with deliberate visible differences reflecting the action.`
+          
         // Phase 11: Append content-aware delta to the keyframe description
         if (segmentContent) {
           const contentDelta = buildContentDelta(segmentContent, duration)
@@ -695,7 +702,7 @@ Render this scene in ${selectedStyle.name} style.`
           }
         }
         endFramePrompt = keyframePrompt
-        console.log('[Generate Frames] Using segment direction keyframe end description (Phase 8+11)')
+        console.log('[Generate Frames] Using formatted segment direction keyframe end description (Phase 8+11)')
       } else if (sceneDirection) {
         const keyframeContext: KeyframeContext = {
           segmentIndex,
