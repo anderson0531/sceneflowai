@@ -32,6 +32,7 @@ const VIDEO_CATEGORIES = [
   {
     id: 'jit',
     title: "JIT Media & Information",
+    videoSrc: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/signal.mp4',
     examples: [
       { label: "Hyper-Local News", description: "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive." },
       { label: "Financial & Market Recaps", description: "Turning daily stock market or crypto data into 3-minute narrated visual digests." },
