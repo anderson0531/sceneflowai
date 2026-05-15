@@ -188,14 +188,14 @@ function buildContinuationPrefix(
   }
   
   if (previousFrameDescription) {
-    return `Camera cut continuing from: ${previousFrameDescription}. Shift the camera to a completely different angle. `
+    return `Camera cut continuing from: ${previousFrameDescription}. Create a medium camera angle change. `
   }
   
   if (keyframeContext.previousShotType) {
-    return `Continuing action from previous shot, cutting to a DIFFERENT camera angle (e.g. from ${keyframeContext.previousShotType} to a new perspective). `
+    return `Continuing action from previous shot. Create a medium camera angle change from the ${keyframeContext.previousShotType}. `
   }
   
-  return 'Camera cut continuing from previous frame. Shift the camera to a completely different angle to establish a smooth visual flow while maintaining scene continuity. '
+  return 'Camera cut continuing from previous frame. Create a medium camera angle change to establish a smooth visual flow while maintaining scene continuity. '
 }
 
 /**
