@@ -45,6 +45,7 @@ import {
   Film,
   Brain,
   MapPin,
+  ImagePlus,
 } from 'lucide-react'
 import type { SceneSegment, TransitionType, CharacterReference } from './types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
