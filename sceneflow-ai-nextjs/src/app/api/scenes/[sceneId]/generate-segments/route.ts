@@ -186,7 +186,7 @@ interface IntelligentSegment {
   estimated_duration: number
   trigger_reason: string // Why we cut here
   generation_method: 'I2V' | 'EXT' | 'T2V' | 'FTV' // Veo 3.1 methods
-  video_generation_prompt: string
+  video_generation_prompt?: string
   reference_strategy: {
     use_scene_frame: boolean
     use_character_refs: string[] // Character names to reference
@@ -1813,7 +1813,7 @@ function parseGeminiResponseText(text: string): IntelligentSegment[] {
   // Validate and normalize each segment
   const validMethods = ['I2V', 'EXT', 'T2V', 'FTV']
   for (const seg of segments) {
-    if (!seg.sequence || !seg.estimated_duration || !seg.video_generation_prompt) {
+    if (!seg.sequence || !seg.estimated_duration || (!seg.video_generation_prompt && !seg.video_prompt_elements)) {
       throw new Error('Invalid segment format: missing required fields')
     }
     
@@ -2498,6 +2498,7 @@ function enforceMaxSegmentDuration(
         trigger_reason: partTriggerReason,
         // Keep the generated prompt clean; continuity is represented by metadata fields.
         video_generation_prompt: seg.video_generation_prompt,
+        video_prompt_elements: seg.video_prompt_elements,
         assigned_dialogue_indices: partDialogue,
         veoTimelineContinuation: dialogueIndices.length <= 1 && numParts > 1 && i > 0,
         emotional_beat: isFirstPart

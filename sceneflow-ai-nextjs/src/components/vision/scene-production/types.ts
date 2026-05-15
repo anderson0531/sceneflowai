@@ -132,6 +132,15 @@ export interface EstablishingShotBeat {
   shotType: 'wide' | 'medium' | 'close-up' | 'detail' | 'tracking'
   cameraMotion: string
   videoPrompt: string
+  videoPromptElements?: {
+    camera?: string
+    character?: string
+    action?: string
+    dialogue?: string
+    camera_movement?: string
+    lighting?: string
+    visual_style?: string
+  } | null
 }
 
 export interface EstablishingShotSettings {
@@ -585,6 +594,15 @@ export interface SceneSegment {
   
   // Video generation prompt describing motion between start/end frames
   videoPrompt?: string
+  videoPromptElements?: {
+    camera?: string
+    character?: string
+    action?: string
+    dialogue?: string
+    camera_movement?: string
+    lighting?: string
+    visual_style?: string
+  } | null
   
   // Start frame URL (convenience accessor, also in references.startFrameUrl)
   startFrameUrl?: string | null

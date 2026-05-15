@@ -95,6 +95,15 @@ export interface ScriptSegment {
   endFramePrompt?: string | null
   /** Canonical F2V/video prompt for this segment. */
   videoPrompt?: string | null
+  videoPromptElements?: {
+    camera?: string
+    character?: string
+    action?: string
+    dialogue?: string
+    camera_movement?: string
+    lighting?: string
+    visual_style?: string
+  } | null
 }
 
 /**
