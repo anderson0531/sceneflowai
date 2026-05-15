@@ -484,9 +484,11 @@ export async function POST(
 
       // Transform to SegmentDirection objects
       const segmentDirections: SegmentDirection[] = directions.map((dir: any, idx: number) => {
-        const timelineIdxs: number[] = Array.isArray(dir.dialogue_indices)
-          ? dir.dialogue_indices.filter((n: unknown) => typeof n === 'number' && n >= 0)
-          : []
+        const timelineIdxs: number[] = Array.isArray(dir.assigned_dialogue_indices)
+          ? dir.assigned_dialogue_indices.filter((n: unknown) => typeof n === 'number' && n >= 0)
+          : Array.isArray((dir as any).dialogue_indices)
+            ? (dir as any).dialogue_indices.filter((n: unknown) => typeof n === 'number' && n >= 0)
+            : []
         const promptBundleEntry = promptBundleEntryForSegment(
           timelineIdxs,
           sceneData.sceneDirectionPromptBundle,
@@ -1639,7 +1641,7 @@ Return a JSON array. Each segment object MUST have these fields:
     "end_frame_description": "Character positioned near [location], facing [direction], expression [mood]",
     "camera_notes": "Slow push-in, anamorphic 35mm, motivated key light from window",
     "emotional_beat": "Tension building",
-    "assigned_dialogue_indices": [0, 1],
+    "assigned_dialogue_indices": [0, 1], // Which lines from the audio timeline this segment covers. MUST combine multiple lines if they fit in 12s. [] for B-roll.
     "generation_plan": {
       "confidence": 90,
       "reasoning": "I2V recommended for segment 1 with available scene frame - provides best visual continuity",
@@ -1661,6 +1663,7 @@ Return a JSON array. Each segment object MUST have these fields:
 - Include "assigned_dialogue_indices" array with 0-based indices from the AUDIO TIMELINE (both 🎙️ voiceover and 🗣️ dialogue lines)
 - COMBINE multiple sequential dialogue lines into a SINGLE segment if they occur in the same continuous shot, provided their combined duration is <= 12s. DO NOT create a new segment for every single line of dialogue.
 - Standard case: combine multiple lines per segment, e.g. "assigned_dialogue_indices": [2, 3, 4]
+- ONLY use an empty array [] for pure B-roll/establishing shots that TRULY have no associated audio. Every audio line MUST be assigned somewhere.
 - Long-line continuation case: the SAME index may appear on sequential continuation segments for that same line
 - For 🗣️ DIALOGUE lines: include the character's spoken text in video_generation_prompt
 - For 🎙️ VOICEOVER lines: do NOT include narration text in video_generation_prompt — create backdrop visuals instead
@@ -1977,10 +1980,11 @@ ${audioTimelineList}
 **AUDIO TIMELINE RULES:**
 - 🎙️ VOICEOVER lines: Narration plays as a separate audio track. Video should show BACKDROP visuals (environments, atmospheric shots, detail inserts) that ILLUSTRATE the narration. Do NOT show a character speaking these words.
 - 🗣️ DIALOGUE lines: Character speaks on screen with lip-sync. Video MUST show the character and include their speaking action.
-- The "dialogue_indices" field in your output references indices [0], [1], [2]... from this AUDIO TIMELINE (both narration AND dialogue lines)
+- The "assigned_dialogue_indices" field in your output references indices [0], [1], [2]... from this AUDIO TIMELINE (both narration AND dialogue lines)
 - Combine multiple sequential dialogue lines into a SINGLE segment if they occur in the same continuous shot, provided their combined duration is <= 12s. DO NOT create a new segment for every single line of dialogue.
 - Each segment must be sized to FIT the audio lines assigned to it (sum of their durations)
 - If one line exceeds 12s, that SAME index may repeat on sequential continuation segments.
+- EVERY audio line index from the timeline MUST be assigned to at least one segment. Do NOT drop any lines.
 
 **CHARACTERS:**
 ${characterList}
@@ -2042,7 +2046,7 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
 **RULES:**
 1. Split at MAJOR visual changes only (angle, location, emotional shift)
 2. Combine consecutive audio lines in same shot setup — especially adjacent narration sentences
-3. **TIMELINE COVERAGE (CRITICAL):** Each index [0] through [${Math.max(0, sceneData.combinedAudioTimeline.length - 1)}] from the Audio Timeline MUST appear at least once in dialogue_indices. COMBINE multiple indices per segment except when the SAME long line is split across continuation segments.
+3. **TIMELINE COVERAGE (CRITICAL):** Each index [0] through [${Math.max(0, sceneData.combinedAudioTimeline.length - 1)}] from the Audio Timeline MUST appear at least once in assigned_dialogue_indices. COMBINE multiple indices per segment except when the SAME long line is split across continuation segments. DO NOT drop any indices.
 4. **DURATION RULE (CRITICAL):** Total segment durations MUST sum to EXACTLY the audio timeline duration (~${Math.round(totalTimelineDuration)}s). Do NOT exceed this. Each segment \`estimated_duration\` must be **exactly 4, 6, 8, 10, or 12** (Veo quantization).
 5. **SEGMENT COUNT:** At least ${minimumSegmentsRequired} segments for duration; use **fewer only if** you still cover every timeline index without exceeding 12s per clip. Never pad with duplicate shots for the same audio index.
 6. keyframe_start_description and keyframe_end_description are MANDATORY for every segment
@@ -2316,7 +2320,7 @@ ${noTalentScene && !p2dAudioTimeline ? 'NO AUDIO - voiceover only' : p2dAudioTim
 - 🗣️ DLG lines: Include character dialogue in video_generation_prompt as: Character speaks, "text"
 - 🎙️ VO lines: Do NOT include narration text in video_generation_prompt — create backdrop visuals
 - When \`veo_continuation_of_prior_audio\` is true, this segment continues the **same** timeline audio as the previous segment (second Veo clip for one long line) — keep visual continuity; do not treat as a new dialogue line.
-- dialogue_indices reference the [index] numbers from the Audio Timeline above
+- assigned_dialogue_indices reference the [index] numbers from the Audio Timeline above
 
 **DIRECTOR'S NOTES:**
 Camera: ${sceneData.sceneDirection.camera}
@@ -2373,14 +2377,14 @@ Return a JSON array with one object per segment:
     "camera_notes": "85mm f/1.2, rack focus from mirror to face, static locked-off",
     "trigger_reason": "From approved direction",
     "emotional_beat": "From approved direction",
-    "assigned_dialogue_indices": [0, 1]
+      "assigned_dialogue_indices": [0, 1] // Which lines from the audio timeline this segment covers. MUST combine multiple lines if they fit in 12s. Empty array [] ONLY for true B-roll/establishing shots with no associated audio.
   }
 ]
 
 **FINAL QUALITY CHECKLIST:**
 ✅ Every prompt is 80-150 words with specific lens/DOF/lighting/color language
 ✅ Every character has full appearance description (don't just use names)
-✅ Every 🗣️ dialogue line appears in exactly one segment as: [Name] speaks, "[text]" OR multiple lines are grouped if combined.
+✅ Every 🗣️ dialogue line appears in exactly one segment as: [Name] speaks, "[text]" OR multiple lines are grouped if combined. OR multiple lines are grouped if combined.
 ✅ Every 🎙️ voiceover line is assigned via assigned_dialogue_indices but NOT included as spoken text
 ✅ End frame descriptions are detailed enough to generate the next segment's start frame
 ✅ Camera notes include focal length, f-stop, and movement speed
@@ -2454,7 +2458,7 @@ function enforceMaxSegmentDuration(
 
     for (let i = 0; i < numParts; i++) {
       const partDialogue =
-        dialogueIndices.length === 1
+        dialogueIndices.length <= 1
           ? i === 0
             ? [...dialogueIndices]
             : []
@@ -2475,7 +2479,7 @@ function enforceMaxSegmentDuration(
         // Keep the generated prompt clean; continuity is represented by metadata fields.
         video_generation_prompt: seg.video_generation_prompt,
         assigned_dialogue_indices: partDialogue,
-        veoTimelineContinuation: dialogueIndices.length === 1 && numParts > 1 && i > 0,
+        veoTimelineContinuation: dialogueIndices.length <= 1 && numParts > 1 && i > 0,
         emotional_beat: isFirstPart
           ? seg.emotional_beat
           : `${seg.emotional_beat} (continued)`,

@@ -27,7 +27,7 @@ export function normalizeTimelineIndices(raw: unknown, timelineLength: number): 
  * Phase 1 (directions): same coverage rules as Phase 2 — each combined-audio index in exactly one row.
  * Drops rows that end up with no indices after deduping duplicates (duplicate "shots" from the model).
  */
-export function repairPhase1DirectionsTimeline<T extends { dialogue_indices?: unknown }>(
+export function repairPhase1DirectionsTimeline<T extends { assigned_dialogue_indices?: unknown, dialogue_indices?: unknown }>(
   directions: T[],
   timelineLength: number,
   sceneId: string
@@ -36,20 +36,21 @@ export function repairPhase1DirectionsTimeline<T extends { dialogue_indices?: un
 
   const mapped = directions.map((d, i) => ({
     sequence: i + 1,
-    assigned_dialogue_indices: normalizeTimelineIndices(d.dialogue_indices, timelineLength),
+    assigned_dialogue_indices: normalizeTimelineIndices(d.assigned_dialogue_indices ?? d.dialogue_indices, timelineLength),
     veoTimelineContinuation: (d as { veoTimelineContinuation?: boolean }).veoTimelineContinuation === true,
   }))
   const repaired = validateAndRepairTimelineDialogueCoverage(mapped, timelineLength, sceneId)
   const merged = directions.map((dir, i) => ({
     ...dir,
+    assigned_dialogue_indices: repaired[i]?.assigned_dialogue_indices ?? [],
     dialogue_indices: repaired[i]?.assigned_dialogue_indices ?? [],
   }))
 
   return merged.filter((d, i) => {
-    const idxs = (d as { dialogue_indices?: number[] }).dialogue_indices
+    const idxs = d.assigned_dialogue_indices
     const continuation =
       (d as { veoTimelineContinuation?: boolean }).veoTimelineContinuation === true
-    if ((!Array.isArray(idxs) || idxs.length === 0) && !continuation) {
+    if ((!Array.isArray(idxs) || idxs.length === 0) && !continuation && d.assigned_dialogue_indices !== undefined) {
       console.warn(
         `[Scene Segmentation] Phase 1: dropping direction ${i} with no audio indices after timeline repair (scene=${sceneId})`
       )
