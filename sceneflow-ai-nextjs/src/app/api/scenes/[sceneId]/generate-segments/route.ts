@@ -366,7 +366,11 @@ export async function POST(
               isApproved: true,
               isUserEdited: false,
               confidence: 90,
-              dialogueLineIds: scriptSeg.dialogue?.map((d: any) => d.lineId || d.id) || [],
+              dialogueLineIds: Array.isArray(scriptSeg.dialogueLineIds) 
+                ? scriptSeg.dialogueLineIds 
+                : Array.isArray(scriptSeg.dialogue)
+                  ? scriptSeg.dialogue.map((d: any) => d.lineId || d.id) 
+                  : [],
               audioTimelineIndices: [],
               segmentDirectionSummary: scriptSeg.segmentDirection || scriptSeg.action || '',
               transitionIn: scriptSeg.transitionType || 'CUT'
@@ -1635,7 +1639,7 @@ Return a JSON array. Each segment object MUST have these fields:
     "end_frame_description": "Character positioned near [location], facing [direction], expression [mood]",
     "camera_notes": "Slow push-in, anamorphic 35mm, motivated key light from window",
     "emotional_beat": "Tension building",
-    "assigned_dialogue_indices": [0],
+    "assigned_dialogue_indices": [0, 1],
     "generation_plan": {
       "confidence": 90,
       "reasoning": "I2V recommended for segment 1 with available scene frame - provides best visual continuity",
@@ -1655,9 +1659,8 @@ Return a JSON array. Each segment object MUST have these fields:
 
 **AUDIO LINE ASSIGNMENT RULES:**
 - Include "assigned_dialogue_indices" array with 0-based indices from the AUDIO TIMELINE (both 🎙️ voiceover and 🗣️ dialogue lines)
-- Audio lines are numbered [0], [1], [2], etc. in the Audio Timeline input
-- Each audio line should appear in EXACTLY ONE segment
-- Standard case: exactly one index per segment, e.g. "assigned_dialogue_indices": [3]
+- COMBINE multiple sequential dialogue lines into a SINGLE segment if they occur in the same continuous shot, provided their combined duration is <= 12s. DO NOT create a new segment for every single line of dialogue.
+- Standard case: combine multiple lines per segment, e.g. "assigned_dialogue_indices": [2, 3, 4]
 - Long-line continuation case: the SAME index may appear on sequential continuation segments for that same line
 - For 🗣️ DIALOGUE lines: include the character's spoken text in video_generation_prompt
 - For 🎙️ VOICEOVER lines: do NOT include narration text in video_generation_prompt — create backdrop visuals instead
@@ -1926,6 +1929,8 @@ function generateDirectionsOnlyPrompt(
   } else {
     scopeConstraints += '- **FOCUS: BALANCED** — Balance dialogue and visual action\n'
   }
+  
+  scopeConstraints += '- **SEGMENT EFFICIENCY:** You MUST create as FEW segments as possible while respecting the duration limit and dialogue flow. A segment with 2-4 lines of back-and-forth dialogue is HIGHLY PREFERRED over creating a new segment for each line, as long as the combined estimated duration is <= 12s.\n'
 
   const directorNotes = customInstructions
     ? `\n**DIRECTOR'S CUSTOM INSTRUCTIONS:**\n${customInstructions}`
@@ -1973,8 +1978,9 @@ ${audioTimelineList}
 - 🎙️ VOICEOVER lines: Narration plays as a separate audio track. Video should show BACKDROP visuals (environments, atmospheric shots, detail inserts) that ILLUSTRATE the narration. Do NOT show a character speaking these words.
 - 🗣️ DIALOGUE lines: Character speaks on screen with lip-sync. Video MUST show the character and include their speaking action.
 - The "dialogue_indices" field in your output references indices [0], [1], [2]... from this AUDIO TIMELINE (both narration AND dialogue lines)
-- Each line should normally map to one segment. Exception: if one line exceeds 12s, that SAME index may repeat on sequential continuation segments.
-- Segments must be sized to FIT the audio lines assigned to them (sum of their durations)
+- Combine multiple sequential dialogue lines into a SINGLE segment if they occur in the same continuous shot, provided their combined duration is <= 12s. DO NOT create a new segment for every single line of dialogue.
+- Each segment must be sized to FIT the audio lines assigned to it (sum of their durations)
+- If one line exceeds 12s, that SAME index may repeat on sequential continuation segments.
 
 **CHARACTERS:**
 ${characterList}
@@ -2005,7 +2011,7 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
     "estimated_duration": 6.0,
     "shot_type": "Medium Close-Up",
     "talent_action": "SARAH (30s Latina) sits at mahogany desk. Her right hand grips the desk edge.",
-    "dialogue_indices": [0],
+    "dialogue_indices": [0, 1],
     "generation_method": "FTV",
     "trigger_reason": "Opening shot",
     "keyframe_start_description": "Medium close-up of SARAH, 30s Latina woman with dark curly hair pulled back in a low bun, wearing a cream silk blouse. She sits at a mahogany desk. Warm tungsten key light from brass desk lamp. 85mm f/1.2. 8K photorealistic.",
@@ -2036,7 +2042,7 @@ Return a JSON array. Each segment direction object MUST have ALL these fields:
 **RULES:**
 1. Split at MAJOR visual changes only (angle, location, emotional shift)
 2. Combine consecutive audio lines in same shot setup — especially adjacent narration sentences
-3. **TIMELINE COVERAGE (CRITICAL):** Each index [0] through [${Math.max(0, sceneData.combinedAudioTimeline.length - 1)}] from the Audio Timeline MUST appear at least once in dialogue_indices. Use exactly one index per segment except when the SAME long line is split across continuation segments.
+3. **TIMELINE COVERAGE (CRITICAL):** Each index [0] through [${Math.max(0, sceneData.combinedAudioTimeline.length - 1)}] from the Audio Timeline MUST appear at least once in dialogue_indices. COMBINE multiple indices per segment except when the SAME long line is split across continuation segments.
 4. **DURATION RULE (CRITICAL):** Total segment durations MUST sum to EXACTLY the audio timeline duration (~${Math.round(totalTimelineDuration)}s). Do NOT exceed this. Each segment \`estimated_duration\` must be **exactly 4, 6, 8, 10, or 12** (Veo quantization).
 5. **SEGMENT COUNT:** At least ${minimumSegmentsRequired} segments for duration; use **fewer only if** you still cover every timeline index without exceeding 12s per clip. Never pad with duplicate shots for the same audio index.
 6. keyframe_start_description and keyframe_end_description are MANDATORY for every segment
@@ -2374,7 +2380,7 @@ Return a JSON array with one object per segment:
 **FINAL QUALITY CHECKLIST:**
 ✅ Every prompt is 80-150 words with specific lens/DOF/lighting/color language
 ✅ Every character has full appearance description (don't just use names)
-✅ Every 🗣️ dialogue line appears in exactly one segment as: [Name] speaks, "[text]"
+✅ Every 🗣️ dialogue line appears in exactly one segment as: [Name] speaks, "[text]" OR multiple lines are grouped if combined.
 ✅ Every 🎙️ voiceover line is assigned via assigned_dialogue_indices but NOT included as spoken text
 ✅ End frame descriptions are detailed enough to generate the next segment's start frame
 ✅ Camera notes include focal length, f-stop, and movement speed
