@@ -195,7 +195,16 @@ interface IntelligentSegment {
   end_frame_description: string // For lookahead/continuity
   camera_notes: string
   emotional_beat: string
-  // Phase 8: AI-assigned dialogue coverage
+  // Enhance IntelligentSegment to support modular video prompts
+  video_prompt_elements?: {
+    camera: string
+    character: string
+    action: string
+    dialogue: string
+    camera_movement: string
+    lighting: string
+    visual_style: string
+  }
   assigned_dialogue_indices?: number[] // 0-based indices of dialogue lines covered by this segment
   /** True when this row is an extra Veo clip continuing the same timeline line (>12s audio) */
   veoTimelineContinuation?: boolean
@@ -2327,24 +2336,29 @@ Audio: ${sceneData.sceneDirection.audio}
 ${JSON.stringify(directionsJson, null, 2)}
 
 **YOUR TASK:**
-For each approved direction, generate a RICH cinematic video prompt (80-150 words) following this precise formula:
+For each approved direction, generate a RICH cinematic video prompt (80-150 words) broken down into modular sections. This allows automated systems to include or remove specific sections based on the generation method (e.g., FTV vs T2V).
 
-**PROMPT FORMULA:**
-[Shot Type] + [Lens/Focal Length] + [Subject with FULL visual description including face, hair, body, wardrobe] + [Specific Physical Action] + [DIALOGUE if any: Name speaks, "exact text"] + [Camera Movement with speed] + [Lighting setup with direction and quality] + [Depth of Field and focus target] + [Color palette/grading] + [Atmosphere/texture details]
+**PROMPT ELEMENTS FORMULA:**
+1. **camera**: [Shot Type] + [Lens/Focal Length]
+2. **character**: [Subject with FULL visual description including face, hair, body, wardrobe]
+3. **action**: [Specific Physical Action]
+4. **dialogue**: [DIALOGUE if any: Name speaks, "exact text"]
+5. **camera_movement**: [Camera Movement with speed]
+6. **lighting**: [Lighting setup with direction and quality]
+7. **visual_style**: [Depth of Field and focus target] + [Color palette/grading] + [Atmosphere/texture details]
 
 ${segmentDurationPromptSection(durationConfig)}
 **CRITICAL RULES:**
-1. FOLLOW the approved shot_type, camera_movement, camera_angle, and lens EXACTLY
-2. INCLUDE the specified talent_action and emotional_beat
-3. FOR 🗣️ DIALOGUE LINES: Include as "[Name] speaks, \\"[exact dialogue text]\\"" — Veo 3.1 generates speech from text. FOR 🎙️ VOICEOVER LINES: Do NOT include narration text — create atmospheric backdrop visuals instead.
-4. **PER-SEGMENT NO-TALENT ENFORCEMENT:** For ANY segment where \`is_no_talent: true\` in the approved directions, you MUST NOT include any people, characters, faces, human figures, or dialogue in that segment's prompt — regardless of the CHARACTERS or DIALOGUE sections above. Focus ONLY on environment, VFX, abstract visuals, text/graphics, and atmosphere for those segments.
-5. EVERY character mentioned in a talent segment MUST have their FULL appearance description (face, hair, skin, build, wardrobe)
-6. Narration is a SEPARATE audio voiceover — NEVER include narration text in prompts
+1. FOLLOW the approved shot_type, camera_movement, camera_angle, and lens EXACTLY.
+2. INCLUDE the specified talent_action and emotional_beat in the action and character sections.
+3. FOR 🗣️ DIALOGUE LINES: Include in the dialogue section as "[Name] speaks, \\"[exact dialogue text]\\"" — Veo 3.1 generates speech from text. FOR 🎙️ VOICEOVER LINES: Leave dialogue section empty.
+4. **PER-SEGMENT NO-TALENT ENFORCEMENT:** For ANY segment where \`is_no_talent: true\` in the approved directions, leave character and dialogue empty.
+5. EVERY character mentioned in a talent segment MUST have their FULL appearance description in the character section.
+6. Narration is a SEPARATE audio voiceover — NEVER include narration text in prompts.
 7. Frame continuity between segments (mandatory):
 ${SEAMLESS_CONTINUATION_PROMPT}
-8. Describe specific depth-of-field: what's in focus, what's bokeh
-9. Include color temperature and mood (warm amber, cool blue, desaturated, etc.)
-10. Minimum 80 words per prompt — more detail = better Veo 3.1 results
+8. Describe specific depth-of-field: what's in focus, what's bokeh in visual_style.
+9. Include color temperature and mood in visual_style.
 
 **LENS/DOF GUIDELINES:**
 - 24mm f/2.8: Deep DOF, wide environment, slight barrel distortion at edges
@@ -2353,8 +2367,14 @@ ${SEAMLESS_CONTINUATION_PROMPT}
 - 85mm f/1.2: Very shallow DOF, beautiful bokeh, subject pops from background
 - 135mm f/2.0: Extremely compressed background, maximum isolation, dreamy bokeh
 
-**EXAMPLE EXCELLENT PROMPT (92 words):**
-"Medium Close-Up, 85mm f/1.2 lens. ALEX ANDERSON, a young man with short brown hair, clean-shaven, wearing a charcoal suit with loosened blue tie, stares into the vanity mirror with hollow eyes. He adjusts his collar with trembling hands. Alex speaks, \\"I don't know if we're ready for this, Dad.\\" Rack focus from mirror reflection to actual face. Single motivated key light from fluorescent overhead creates harsh shadows under eyes. Background falls to creamy bokeh. Cool blue-gray color grade. Visible perspiration on forehead. 8K photorealistic."
+**EXAMPLE EXCELLENT ELEMENTS:**
+"camera": "Medium Close-Up, 85mm f/1.2 lens.",
+"character": "ALEX ANDERSON, a young man with short brown hair, clean-shaven, wearing a charcoal suit with loosened blue tie, stares into the vanity mirror with hollow eyes.",
+"action": "He adjusts his collar with trembling hands. Visible perspiration on forehead.",
+"dialogue": "Alex speaks, \\"I don't know if we're ready for this, Dad.\\"",
+"camera_movement": "Static locked-off.",
+"lighting": "Single motivated key light from fluorescent overhead creates harsh shadows under eyes.",
+"visual_style": "Rack focus from mirror reflection to actual face. Background falls to creamy bokeh. Cool blue-gray color grade. 8K photorealistic."
 
 **OUTPUT FORMAT:**
 Return a JSON array with one object per segment:
@@ -2362,7 +2382,15 @@ Return a JSON array with one object per segment:
   {
     "sequence": 1,
     "estimated_duration": 6.0,
-    "video_generation_prompt": "[80-150 word rich cinematic prompt]",
+    "video_prompt_elements": {
+      "camera": "...",
+      "character": "...",
+      "action": "...",
+      "dialogue": "...",
+      "camera_movement": "...",
+      "lighting": "...",
+      "visual_style": "..."
+    },
     "generation_method": "I2V",
     "reference_strategy": { "use_scene_frame": true, "use_character_refs": ["CharName"], "start_frame_description": "Description of opening frame" },
     "end_frame_description": "Detailed end state: character position, expression, camera angle, lighting",
@@ -2374,15 +2402,15 @@ Return a JSON array with one object per segment:
 ]
 
 **FINAL QUALITY CHECKLIST:**
-✅ Every prompt is 80-150 words with specific lens/DOF/lighting/color language
-✅ Every character has full appearance description (don't just use names)
-✅ Every 🗣️ dialogue line appears in exactly one segment as: [Name] speaks, "[text]" OR multiple lines are grouped if combined.
-✅ Every 🎙️ voiceover line is assigned via assigned_dialogue_indices but NOT included as spoken text
-✅ End frame descriptions are detailed enough to generate the next segment's start frame
-✅ Camera notes include focal length, f-stop, and movement speed
-✅ Color palette and atmosphere are specified
-✅ Segment 1 uses I2V if scene frame is available, otherwise FTV
-✅ No narration text in prompts (it's a separate voiceover track)
+✅ Every prompt element is populated correctly.
+✅ Every character has full appearance description in the character element.
+✅ Every 🗣️ dialogue line appears in exactly one segment dialogue element.
+✅ Every 🎙️ voiceover line is assigned via assigned_dialogue_indices but NOT included as spoken text.
+✅ End frame descriptions are detailed enough to generate the next segment's start frame.
+✅ Camera notes include focal length, f-stop, and movement speed.
+✅ Color palette and atmosphere are specified in visual_style.
+✅ Segment 1 uses I2V if scene frame is available, otherwise FTV.
+✅ No narration text in prompts.
 
 Return ONLY valid JSON array. No markdown, no explanation.
 `
@@ -2527,6 +2555,24 @@ function transformSegmentsToOutput(
 
     const hasSceneFrame = !!sceneData.sceneFrameUrl
     const generatedMethod = methodMap[seg.generation_method] || 'FTV'
+
+    let videoGenerationPrompt = seg.video_generation_prompt || ''
+    
+    // If elements are present, build the prompt based on generation method
+    if (seg.video_prompt_elements) {
+      const el = seg.video_prompt_elements
+      if (generatedMethod === 'FTV' || generatedMethod === 'I2V') {
+        // F2V/I2V only gets dialogue and action instructions to prevent hallucination/conflict with start frame
+        videoGenerationPrompt = [el.action, el.dialogue].filter(Boolean).join(' ')
+        // Fallback if empty
+        if (!videoGenerationPrompt.trim()) {
+           videoGenerationPrompt = [el.camera, el.character, el.action, el.dialogue, el.camera_movement, el.lighting, el.visual_style].filter(Boolean).join(' ')
+        }
+      } else {
+        // T2V and others get the full prompt
+        videoGenerationPrompt = [el.camera, el.character, el.action, el.dialogue, el.camera_movement, el.lighting, el.visual_style].filter(Boolean).join(' ')
+      }
+    }
     
     // Include approved direction metadata if available
     const approvedDir = approvedDirections?.[idx]
@@ -2561,8 +2607,9 @@ function transformSegmentsToOutput(
       startTime: cumulativeTime,
       endTime: cumulativeTime + seg.estimated_duration,
       status: 'DRAFT' as const,
-      generatedPrompt: seg.video_generation_prompt,
-      videoPrompt: seg.video_generation_prompt || scenePromptBundleRow?.videoPrompt || '',
+      generatedPrompt: videoGenerationPrompt,
+      videoPrompt: videoGenerationPrompt || scenePromptBundleRow?.videoPrompt || '',
+      videoPromptElements: seg.video_prompt_elements || null,
       startFramePrompt:
         seg.reference_strategy?.start_frame_description ||
         scenePromptBundleRow?.startFramePrompt ||

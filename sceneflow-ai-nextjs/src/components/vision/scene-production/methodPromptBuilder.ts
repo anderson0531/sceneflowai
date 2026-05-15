@@ -457,12 +457,21 @@ export function buildFTVPrompt(
     parts.push(userInstruction)
   }
   
-  // Describe the transition
-  if (startFrameDescription && endFrameDescription) {
+  // Describe the transition or action
+  if (segment.action) {
+    parts.push(segment.action)
+  } else if (startFrameDescription && endFrameDescription) {
     parts.push(`Smooth transition from ${startFrameDescription} to ${endFrameDescription}`)
   } else {
     parts.push('Smooth interpolation between the start and end frames')
   }
+  
+  // Dialogue that must be lip-synced
+  const assignedDialogue = getAssignedDialogue(segment, sceneData.dialogue)
+  assignedDialogue.forEach(d => {
+    // Just the dialogue, no character appearance
+    parts.push(`${d.character} speaks, "${d.text}"`)
+  })
   
   // Camera movement during transition
   if (segment.cameraMovement) {
