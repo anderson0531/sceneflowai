@@ -44,7 +44,7 @@ const VIDEO_CATEGORIES = [
   {
     id: 'b2b',
     title: "B2B Marketing & Sales",
-    videoSrc: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/demo/Demo.mp4', // TODO: Replace with the actual URL after manual upload to Vercel Blob
+    videoSrc: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Demo.mp4',
     examples: [
       { label: "Product Explainer Videos", description: "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos." },
       { label: "Case Study/Testimonials", description: "Using client headshots and project photos to create high-end visual success stories." },
