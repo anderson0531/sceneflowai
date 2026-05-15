@@ -6482,7 +6482,7 @@ function SceneCard({
                         characters={characters?.map(c => ({
                           name: c.name,
                           appearance: c.appearance || c.description,
-                          referenceUrl: (c as any).referenceImage,
+                          referenceImage: (c as any).referenceImage || (c as any).referenceUrl,
                           ethnicity: (c as any).ethnicity,
                           age: (c as any).age,
                           wardrobe: (c as any).defaultWardrobe || (c as any).wardrobe,
@@ -6902,9 +6902,9 @@ function SceneCard({
                           }
                           characters={characters?.map(c => ({
                             name: c.name,
-                            appearance: c.appearance || c.description,
-                            referenceUrl: (c as any).referenceImage,
-                            ethnicity: (c as any).ethnicity,
+                          appearance: c.appearance || c.description,
+                          referenceImage: (c as any).referenceImage || (c as any).referenceUrl,
+                          ethnicity: (c as any).ethnicity,
                             age: (c as any).age,
                             wardrobe: (c as any).defaultWardrobe || (c as any).wardrobe,
                             wardrobes: (c as any).wardrobes?.map((w: any) => ({
