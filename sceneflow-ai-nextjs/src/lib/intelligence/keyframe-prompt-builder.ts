@@ -634,12 +634,12 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
     
     if (changes.length > 0) {
       // Content-aware end frame: specific, deliberate changes
-      promptParts.push(`END FRAME after ${duration}s segment. `)
+      promptParts.push(`Edit the start frame image to reflect ${duration}s of action. `)
       if (segmentContent?.startFrameDescription) {
-        promptParts.push(`The START frame showed: ${segmentContent.startFrameDescription.substring(0, 120)}. `)
+        promptParts.push(`The original image showed: ${segmentContent.startFrameDescription.substring(0, 120)}. `)
       }
-      promptParts.push(`What has CHANGED: ${changes.join('. ')}. `)
-      promptParts.push('Show the RESULT of these changes — same scene, same characters, but with deliberate visible differences reflecting the action. ')
+      promptParts.push(`Apply these changes: ${changes.join('. ')}. `)
+      promptParts.push('Maintain absolute consistency of the background, characters, and overall scene. ')
     } else {
       // Fallback: generic progression (original behavior)
       const temporalContext = duration <= 3 
@@ -648,8 +648,8 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
         ? 'Shortly after' 
         : 'After the action'
       
-      promptParts.push(`${temporalContext}: The result of "${actionPrompt.substring(0, 100)}" is now visible. `)
-      promptParts.push('Show the END STATE of this action - positions, expressions, and environment should reflect the completed action. ')
+      promptParts.push(`Edit the start frame image to show the end state ${temporalContext.toLowerCase()}. `)
+      promptParts.push('Maintain absolute consistency of the background, characters, and overall scene. ')
     }
   }
   
@@ -678,7 +678,7 @@ export function buildKeyframePrompt(request: FramePromptRequest): EnhancedFrameP
   const noTalentScene = isNoTalentScene(sceneDirection?.talent)
   
   // 6. Core action/visual content FIRST — image models weight early content most heavily
-  promptParts.push(actionPrompt.trim())
+  promptParts.push(' ' + actionPrompt.trim() + ' ')
   
   // 7. Character identities (supporting context — reference images carry identity) - SKIP if no-talent scene
   if (!noTalentScene) {

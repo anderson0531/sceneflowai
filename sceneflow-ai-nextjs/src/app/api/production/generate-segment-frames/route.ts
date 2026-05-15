@@ -690,8 +690,8 @@ Render this scene in ${selectedStyle.name} style.`
         // Ensure the end frame prompt explicitly references the start frame
         // This makes it an "edit" of the start frame rather than a standalone prompt
         const startDesc = segmentContent?.startFrameDescription || startFramePrompt || actionPrompt || 'the start frame'
-        keyframePrompt = `END FRAME after ${duration}s segment. The START frame showed: ${startDesc.substring(0, 120)}. ` +
-          `What has CHANGED: ${keyframePrompt}. Show the RESULT of these changes — same scene, same characters, but with deliberate visible differences reflecting the action.`
+        keyframePrompt = `Edit the start frame image to reflect ${duration}s of action. The original image showed: ${startDesc.substring(0, 120)}. ` +
+          `Apply these changes: ${keyframePrompt}. Maintain absolute consistency of the background, characters, and overall scene.`
           
         // Phase 11: Append content-aware delta to the keyframe description
         if (segmentContent) {

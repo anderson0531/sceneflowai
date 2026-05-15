@@ -282,7 +282,7 @@ export function buildEndFramePrompt(
     ? 'shortly after' 
     : 'some time after'
   
-  const basePrompt = `${temporalContext} ${actionDescription}. Character positions and expressions show the result of the action. Starting from: ${startFrameDescription}`
+  const basePrompt = `Edit the start frame image to show the end state ${temporalContext}. Apply this action: ${actionDescription}. Maintain absolute consistency of the background, characters, and overall scene. The original image showed: ${startFrameDescription}`
   
   return enhancePrompt(basePrompt, fullConfig)
 }
