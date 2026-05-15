@@ -142,12 +142,15 @@ export interface FramePromptDialogProps {
   frameResolverScene?: Record<string, unknown> | null
 }
 
+export type StartTransitionMode = 'continuous' | 'camera_cut' | 'none'
+
 export interface FrameGenerationOptions {
   segmentId: string
   frameType: 'start' | 'end' | 'both'
   customPrompt: string
   negativePrompt: string
   usePreviousEndFrame: boolean
+  startTransitionMode?: StartTransitionMode
   previousEndFrameUrl?: string | null
   /** Indicates this came from the dialog (user made explicit selections).
    *  When true, empty selectedCharacters/selectedObjectReferences means user chose NONE.
@@ -255,6 +258,7 @@ export function FramePromptDialog({
   )
   const [customNegativePrompt, setCustomNegativePrompt] = useState('')
   const [usePreviousEndFrame, setUsePreviousEndFrame] = useState(false)
+  const [startTransitionMode, setStartTransitionMode] = useState<StartTransitionMode>('camera_cut')
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showDirectionPanel, setShowDirectionPanel] = useState(false)
   const [useIntelligentPrompt, setUseIntelligentPrompt] = useState(true)
@@ -323,8 +327,10 @@ export function FramePromptDialog({
     // Default to Camera Cut (usePreviousEndFrame=false) instead of Continuous
     if (segment.transitionType === 'CONTINUE' && previousEndFrameUrl && frameType !== 'end') {
       setUsePreviousEndFrame(false)
+      setStartTransitionMode('camera_cut')
     } else {
       setUsePreviousEndFrame(false)
+      setStartTransitionMode('none')
     }
     
     // Check if the segment indicates an abstract or non-physical space
@@ -864,8 +870,9 @@ export function FramePromptDialog({
       frameType,
       customPrompt: shouldUseQuickBaselinePath ? '' : customPrompt,
       negativePrompt: buildNegativePrompt(),
-      usePreviousEndFrame,
-      previousEndFrameUrl: usePreviousEndFrame ? previousEndFrameUrl : undefined,
+      usePreviousEndFrame: startTransitionMode === 'continuous',
+      startTransitionMode,
+      previousEndFrameUrl: startTransitionMode !== 'none' ? previousEndFrameUrl : undefined,
       // CRITICAL: fromDialog=true means the user explicitly chose which references to include.
       // Empty arrays = user chose NONE. This prevents auto-population from overriding selections.
       fromDialog: true,
@@ -899,7 +906,7 @@ export function FramePromptDialog({
 
   const isGenerateDisabled = useMemo(() => {
     if (isGenerating) return true
-    if (usePreviousEndFrame && frameType === 'start') return false
+    if (startTransitionMode === 'continuous' && frameType === 'start') return false
     
     // In guided mode, there is always some default setup structure (from characters, location, action),
     // so we don't block on customPrompt being empty.
@@ -907,7 +914,7 @@ export function FramePromptDialog({
     
     // In advanced mode, the custom prompt must have content
     return !customPrompt.trim()
-  }, [isGenerating, usePreviousEndFrame, frameType, mode, customPrompt])
+  }, [isGenerating, startTransitionMode, frameType, mode, customPrompt])
 
   if (!segment) return null
 
@@ -988,23 +995,23 @@ export function FramePromptDialog({
                 {canUsePreviousFrame && (
                   <div className="space-y-3">
                     <Label className="text-sm font-medium text-slate-200">Start Frame Transition</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Option 1: Camera Cut (Default) */}
+                    <div className="grid grid-cols-3 gap-3">
+                      {/* Option 1: Camera Cut (Default for CONTINUE) */}
                       <div 
                         className={cn(
                           "relative p-3 rounded-lg border cursor-pointer transition-all",
-                          !usePreviousEndFrame 
+                          startTransitionMode === 'camera_cut' 
                             ? "border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/50" 
                             : "border-slate-700 bg-slate-800/50 hover:bg-slate-800"
                         )}
-                        onClick={() => setUsePreviousEndFrame(false)}
+                        onClick={() => setStartTransitionMode('camera_cut')}
                       >
                         <div className="flex items-start gap-3">
                           <div className={cn(
                             "mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0",
-                            !usePreviousEndFrame ? "border-blue-500 bg-blue-500" : "border-slate-500"
+                            startTransitionMode === 'camera_cut' ? "border-blue-500 bg-blue-500" : "border-slate-500"
                           )}>
-                            {!usePreviousEndFrame && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            {startTransitionMode === 'camera_cut' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                           </div>
                           <div>
                             <div className="text-sm font-medium text-slate-200 flex items-center gap-1.5">
@@ -1012,7 +1019,7 @@ export function FramePromptDialog({
                               Camera Cut
                             </div>
                             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                              Intelligently edit the end frame of the previous segment to create a smooth camera motion or angle change.
+                              Edit the end frame of the previous segment to create a smooth camera motion or angle change.
                             </p>
                           </div>
                         </div>
@@ -1022,18 +1029,18 @@ export function FramePromptDialog({
                       <div 
                         className={cn(
                           "relative p-3 rounded-lg border cursor-pointer transition-all",
-                          usePreviousEndFrame 
+                          startTransitionMode === 'continuous' 
                             ? "border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/50" 
                             : "border-slate-700 bg-slate-800/50 hover:bg-slate-800"
                         )}
-                        onClick={() => setUsePreviousEndFrame(true)}
+                        onClick={() => setStartTransitionMode('continuous')}
                       >
                         <div className="flex items-start gap-3">
                           <div className={cn(
                             "mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0",
-                            usePreviousEndFrame ? "border-blue-500 bg-blue-500" : "border-slate-500"
+                            startTransitionMode === 'continuous' ? "border-blue-500 bg-blue-500" : "border-slate-500"
                           )}>
-                            {usePreviousEndFrame && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            {startTransitionMode === 'continuous' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                           </div>
                           <div>
                             <div className="text-sm font-medium text-slate-200 flex items-center gap-1.5">
@@ -1041,14 +1048,43 @@ export function FramePromptDialog({
                               Continuous Shot
                             </div>
                             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                              Copy the exact end frame from Segment {segmentIndex} as this segment's start frame for seamless visual continuity.
+                              Copy the exact end frame from Segment {segmentIndex} for seamless visual continuity.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Option 3: No Transition */}
+                      <div 
+                        className={cn(
+                          "relative p-3 rounded-lg border cursor-pointer transition-all",
+                          startTransitionMode === 'none' 
+                            ? "border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/50" 
+                            : "border-slate-700 bg-slate-800/50 hover:bg-slate-800"
+                        )}
+                        onClick={() => setStartTransitionMode('none')}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={cn(
+                            "mt-0.5 w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0",
+                            startTransitionMode === 'none' ? "border-blue-500 bg-blue-500" : "border-slate-500"
+                          )}>
+                            {startTransitionMode === 'none' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-slate-200 flex items-center gap-1.5">
+                              <ImagePlus className="w-3.5 h-3.5 text-blue-400" />
+                              No Transition
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                              Generate a new shot using only character and location image references.
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {previousEndFrameUrl && (
+                    {startTransitionMode !== 'none' && previousEndFrameUrl && (
                       <div className="mt-3 flex items-center gap-3 p-3 rounded border border-slate-700 bg-slate-800/30">
                         <img 
                           src={previousEndFrameUrl} 

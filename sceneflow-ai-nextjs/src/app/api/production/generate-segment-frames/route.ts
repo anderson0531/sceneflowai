@@ -295,8 +295,7 @@ export async function POST(req: NextRequest) {
       // NEW: User customization options
       customPrompt,
       negativePrompt,
-      usePreviousEndFrame = false,
-      // NEW: Visual setup from guided mode
+      startTransitionMode,
       visualSetup,
       // NEW: Scene direction for intelligent prompts
       sceneDirection,
@@ -376,8 +375,8 @@ export async function POST(req: NextRequest) {
     if (frameType === 'start' || frameType === 'both') {
       console.log('[Generate Frames] Generating start frame...')
       
-      // Check if user wants to use previous segment's end frame directly (seamless continuity)
-      if (usePreviousEndFrame && previousEndFrameUrl) {
+        // Check if user wants to use previous segment's end frame directly (seamless continuity)
+      if (startTransitionMode === 'continuous' && previousEndFrameUrl) {
         console.log('[Generate Frames] Using previous end frame as start frame (seamless continuity)')
         generatedStartFrameUrl = previousEndFrameUrl
         startFramePrompt = 'Copied from previous segment end frame for seamless continuity'
@@ -388,12 +387,12 @@ export async function POST(req: NextRequest) {
         let referenceImageUrl: string | undefined
         let imageStrength = 0 // T2I mode by default
         
-        if (transitionType === 'CONTINUE' && previousEndFrameUrl) {
+        if (startTransitionMode !== 'none' && transitionType === 'CONTINUE' && previousEndFrameUrl) {
           // Continuation: use previous segment's end frame with high strength
           referenceImageUrl = previousEndFrameUrl
           imageStrength = Math.min(0.90, weights.imageStrength + 0.1) // Boost for continuation
-          console.log('[Generate Frames] Using previous end frame for continuation')
-        } else if (sceneImageUrl) {
+          console.log('[Generate Frames] Using previous end frame for continuation (Camera Cut)')
+        } else if (startTransitionMode !== 'none' && sceneImageUrl) {
           // CUT transition: use scene image as reference
           referenceImageUrl = sceneImageUrl
           imageStrength = 0.75 // Moderate strength for establishing
@@ -418,8 +417,8 @@ export async function POST(req: NextRequest) {
           // Use intelligent keyframe prompt builder
           const keyframeContext: KeyframeContext = {
             segmentIndex,
-            transitionType,
-            previousEndFrameUrl: previousEndFrameUrl || undefined,
+            transitionType: startTransitionMode === 'none' ? 'CUT' : transitionType,
+            previousEndFrameUrl: startTransitionMode !== 'none' ? previousEndFrameUrl || undefined : undefined,
             previousShotType,
             isPanTransition,
           }
