@@ -4,7 +4,7 @@ import { safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
 
 export const runtime = 'nodejs'
-export const maxDuration = 15
+export const maxDuration = 60
 
 /**
  * Structured concept suggestion returned for vague ideas
