@@ -37,7 +37,7 @@ export function ContextBar({
   secondaryActions,
   meta,
   projectId,
-  stickyTop = 56, // match GlobalHeader h-14 (56px)
+  stickyTop = 64, // match GlobalHeader h-16 (64px)
   className,
   emphasis = false,
   titleVariant = 'default',
