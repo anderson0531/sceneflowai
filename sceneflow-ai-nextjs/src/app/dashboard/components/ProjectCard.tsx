@@ -27,6 +27,7 @@ import {
   DollarSign,
   TrendingUp,
   Coins,
+  ChevronRight,
 } from 'lucide-react'
 import { useCredits } from '@/contexts/CreditsContext'
 import { useEnhancedStore } from '@/store/enhancedStore'
