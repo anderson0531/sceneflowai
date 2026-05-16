@@ -55,6 +55,7 @@ const VIDEO_CATEGORIES = [
   {
     id: 'public',
     title: "Public Sector & Advocacy",
+    videoSrc: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/NGO.mp4',
     examples: [
       { label: "NGO Impact Reports", description: "Turning data and field photography into emotive, narrated videos for donors." },
       { label: "Public Health Announcements", description: "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity." },
