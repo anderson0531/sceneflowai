@@ -231,13 +231,13 @@ export function Header() {
                 The Workflow
               </button>
 
-              {/* Product Walkthrough Link */}
+              {/* Platform Walkthrough Link */}
               <button
                 onClick={() => scrollToSection('feature-storyboard')}
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <Film className="w-4 h-4" />
-                Product Walkthrough
+                Platform Walkthrough
               </button>
 
               {/* Enterprise Link */}
@@ -262,7 +262,7 @@ export function Header() {
                     How it Works
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => scrollToSection('feature-storyboard')}>
-                    Product Walkthrough
+                    Platform Walkthrough
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => scrollToSection('use-cases')}>
                     Use Cases
@@ -411,7 +411,7 @@ export function Header() {
                   </button>
                   <button onClick={() => scrollToSection('feature-storyboard')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Film className="w-4 h-4" />
-                    Product Walkthrough
+                    Platform Walkthrough
                   </button>
                   <button onClick={() => scrollToSection('pricing')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Building2 className="w-4 h-4" />

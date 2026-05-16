@@ -41,8 +41,8 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Any Concept, One Production Workflow',
     description:
       'Use one reliable pipeline for training, podcasts, news, home sales videos, and cinematic content.',
-    screenshotSlot: 'Insert screenshot: project templates and concept examples',
-    videoSlot: 'Insert 00:30 clip: create project from multiple concept types',
+    screenshotSlot: 'Insert screenshot: Split-view or grid showing Podcast, News, Real Estate, and Cinematic templates feeding into one unified SceneFlow pipeline UI.',
+    videoSlot: 'Insert 00:30 clip: "Start with any source material..." clicking New Project -> Podcast (UI adapts to audio), then showing split screen of News & Cinematic projects converging into the Blueprint editor.',
   },
   {
     id: 4,
@@ -360,7 +360,7 @@ export default function FeatureStoryboardSection() {
             Feature Deep Dive
           </p>
           <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Product Walkthrough
+            Platform Walkthrough
           </h2>
           <p className="mt-4 text-base text-slate-300">
             A complete guide to the SceneFlow AI Studio workflow, from initial concept to final cinematic output.
