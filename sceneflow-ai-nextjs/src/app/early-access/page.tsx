@@ -44,10 +44,10 @@ const DEFAULT_FORM: FormState = {
 }
 
 const MILESTONES = [
-  'June 15: Application Window Closes',
-  'June 22: Selection Notifications & Onboarding Materials Sent',
-  'July 1: Foundational Cohort Launch. Full access to the SceneFlow environment',
-  'August 15: Mid-EAP Virtual Roundtable with the Engineering Team',
+  'July 15: Application Window Closes',
+  'July 22: Selection Notifications & Onboarding Materials Sent',
+  'August 1: Foundational Cohort Launch. Full access to the SceneFlow environment',
+  'September 15: Mid-EAP Virtual Roundtable with the Engineering Team',
 ]
 
 const WHAT_YOU_WILL_TEST = [
@@ -232,13 +232,13 @@ export default function EarlyAccessPage() {
         </Link>
 
         <section className="mt-8 rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-slate-950 to-slate-900 p-6 sm:p-10">
-          <p className="text-xs uppercase tracking-wider text-cyan-300">Summer of Production · July 2026 Cohort</p>
+          <p className="text-xs uppercase tracking-wider text-cyan-300">Summer of Production · August 2026 Cohort</p>
           <h1 className="mt-3 text-4xl sm:text-5xl font-bold leading-tight">
             Stop Generating. Start Architecting.
           </h1>
           <p className="mt-5 text-lg text-slate-300 max-w-3xl">
             Join the SceneFlow Early Access Program. An elite cohort of creators shaping the future of automated,
-            consistent, and global-scale cinema. Starting July 2026.
+            consistent, and global-scale cinema. Starting August 2026.
           </p>
           <div className="mt-7 rounded-xl border border-slate-700 bg-slate-900/70 p-5">
             <h2 className="text-xl font-semibold">The Vision</h2>
@@ -255,7 +255,7 @@ export default function EarlyAccessPage() {
         </section>
 
         <section className="mt-8 rounded-2xl border border-slate-700 bg-slate-900/60 p-6">
-          <h3 className="text-2xl font-semibold">The July 2026 Cohort</h3>
+          <h3 className="text-2xl font-semibold">The August 2026 Cohort</h3>
           <p className="mt-3 text-slate-300">
             We are opening the studio to a limited number of Foundational Architects. As a member of the EAP, you will
             help refine the logic of automated storytelling.
@@ -338,23 +338,53 @@ export default function EarlyAccessPage() {
               </div>
               <div className="mt-4 rounded-lg border border-slate-700 bg-slate-900/70 p-4 space-y-3">
                 <p className="text-sm text-slate-200 font-medium">Email confirmation required before submit</p>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button type="button" variant="outline" onClick={requestOtp} disabled={otpRequesting}>
-                    {otpRequesting ? 'Sending code...' : otpSent ? 'Resend code' : 'Send code'}
-                  </Button>
-                  <input
-                    className="flex-1 rounded-md bg-slate-800 border border-slate-600 p-2 text-sm"
-                    placeholder="Enter verification code"
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value)}
-                  />
-                  <Button type="button" variant="outline" onClick={verifyOtp} disabled={otpVerifying || !otpSent}>
-                    {otpVerifying ? 'Verifying...' : 'Verify code'}
-                  </Button>
-                </div>
-                {otpVerified && <p className="text-emerald-300 text-sm">Email verified.</p>}
-                {otpMessage && !otpVerified && <p className="text-cyan-300 text-sm">{otpMessage}</p>}
-                {otpError && <p className="text-red-300 text-sm">{otpError}</p>}
+                
+                {otpVerified ? (
+                  <div className="flex items-center gap-2 p-3 rounded-md bg-emerald-950/40 border border-emerald-500/30">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    <span className="text-sm text-emerald-200 font-medium">Email verified successfully.</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col space-y-2">
+                    {!otpSent ? (
+                      <div className="flex gap-2">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={requestOtp} 
+                          disabled={otpRequesting || !form.email || !form.email.includes('@')}
+                          className="w-full sm:w-auto"
+                        >
+                          {otpRequesting ? 'Sending...' : 'Send verification code'}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          className="flex-1 rounded-md bg-slate-800 border border-cyan-500/50 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                          placeholder="Enter 6-digit code"
+                          value={otpCode}
+                          onChange={(e) => {
+                            setOtpCode(e.target.value)
+                            if (e.target.value.length === 6 && !otpVerifying) {
+                              // Could auto-verify here, but wait for explicit action
+                            }
+                          }}
+                          maxLength={6}
+                        />
+                        <Button type="button" variant="default" onClick={verifyOtp} disabled={otpVerifying || otpCode.length < 6} className="bg-cyan-600 hover:bg-cyan-500 text-white">
+                          {otpVerifying ? 'Verifying...' : 'Verify code'}
+                        </Button>
+                        <Button type="button" variant="ghost" onClick={requestOtp} disabled={otpRequesting} className="text-slate-400">
+                          Resend
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {otpMessage && <p className="text-cyan-300 text-sm mt-2">{otpMessage}</p>}
+                    {otpError && <p className="text-red-400 text-sm mt-2 flex items-center gap-1.5"><AlertCircle className="w-4 h-4" /> {otpError}</p>}
+                  </div>
+                )}
               </div>
             </div>
 
