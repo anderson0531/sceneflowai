@@ -693,7 +693,7 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
               <span className="text-xs text-gray-500 font-mono truncate max-w-[80px]">
                 {project.id?.slice(0, 8) ?? '—'}...
               </span>
-              <Copy className="w-3 h-3 text-gray-500 group-hover:text-gray-300" />
+                <Copy className="w-3 h-3 text-gray-500 group-hover:text-gray-300 flex-shrink-0" />
             </button>
           </div>
         </div>
