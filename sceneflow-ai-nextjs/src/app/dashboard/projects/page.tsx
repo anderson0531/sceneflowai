@@ -408,7 +408,7 @@ export default function ProjectsPage() {
         }
       />
 
-      <div className="px-4 lg:px-8 py-6 max-w-[1400px] mx-auto">
+      <div className="px-4 lg:px-8 py-6 max-w-[1920px] w-full mx-auto">
         {/* Search & Filters Bar */}
         <div className="mb-6 flex flex-col sm:flex-row gap-3">
           {/* Search */}
@@ -418,13 +418,13 @@ export default function ProjectsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search projects..."
-              className="pl-10 w-full"
+              className="pl-10 w-full bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-cyan-500/50 transition-all"
             />
           </div>
 
           {/* Status Filter */}
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px] bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
@@ -438,7 +438,7 @@ export default function ProjectsPage() {
 
           {/* Sort */}
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px] bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -467,7 +467,7 @@ export default function ProjectsPage() {
           />
         ) : (
           <div className={viewMode === 'grid' 
-            ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' 
+            ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6' 
             : 'space-y-4'
           }>
             {filteredProjects.map(project => (

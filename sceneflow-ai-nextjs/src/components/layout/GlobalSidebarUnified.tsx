@@ -250,7 +250,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   }, [config.phase, config.progressItems, currentProject?.metadata, progressData])
 
   return (
-    <div className="flex relative">
+    <div className="flex relative pt-16">
       <aside
         className={cn(
           'shrink-0 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-[calc(100vh-4rem)] sticky top-16 z-30 relative overflow-hidden transition-[width] duration-200 ease-out',
