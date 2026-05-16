@@ -16,7 +16,7 @@ const sections = [
   { id: 'comparison', label: 'Compare', icon: Clock3 },
   { id: 'how-it-works', label: 'How It Works', icon: Sparkles },
   { id: 'use-cases', label: 'Use Cases', icon: Rocket },
-  { id: 'feature-storyboard', label: 'Storyboard', icon: Film },
+  { id: 'feature-storyboard', label: 'Product Walkthrough', icon: Film },
   { id: 'engineering', label: 'Platform', icon: Shield },
   { id: 'pricing', label: 'Pricing', icon: DollarSign },
   { id: 'faq', label: 'FAQ', icon: HelpCircle },
