@@ -34,6 +34,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     screenshotSlot: 'Insert screenshot: credit usage panel and BYOK settings',
     videoSlot: 'Insert 00:30 clip: budget dashboard and key configuration',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-16%20at%2016.40.22.png',
+    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/BYOK.mp4',
   },
   {
     id: 3,
