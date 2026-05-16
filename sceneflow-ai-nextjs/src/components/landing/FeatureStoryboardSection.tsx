@@ -33,6 +33,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
       'Track credit usage in real time, set practical production guardrails, and use Vertex AI BYOK for enterprise governance.',
     screenshotSlot: 'Insert screenshot: credit usage panel and BYOK settings',
     videoSlot: 'Insert 00:30 clip: budget dashboard and key configuration',
+    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-16%20at%2016.40.22.png',
   },
   {
     id: 3,
