@@ -377,6 +377,8 @@ export default function ProjectsPage() {
         title="Projects"
         titleVariant="page"
         emphasis
+        className="sticky top-0 z-40 w-full"
+        stickyTop={0}
         primaryActions={
           <Link href="/dashboard/studio/new-project">
             <Button className="bg-sf-primary text-white hover:bg-sf-accent flex items-center gap-2">
@@ -408,7 +410,7 @@ export default function ProjectsPage() {
         }
       />
 
-      <div className="px-4 lg:px-8 py-6 max-w-[1920px] w-full mx-auto">
+      <div className="p-4 lg:p-8 w-full max-w-[1920px] mx-auto">
         {/* Search & Filters Bar */}
         <div className="mb-6 flex flex-col sm:flex-row gap-3">
           {/* Search */}
