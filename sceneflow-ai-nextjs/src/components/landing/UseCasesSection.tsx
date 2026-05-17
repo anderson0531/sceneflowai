@@ -4,7 +4,7 @@ import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Video, Play, Building2, Film, Sparkles, Volume2, VolumeX, Maximize2, User, Briefcase, Clock, DollarSign, Target, CheckCircle2, ArrowRight, Quote, X } from 'lucide-react';
 
-// Toggle personas for "Choose Your Path"
+import { ProductionComparisonVisual } from './ProductionComparisonVisual';
 type Persona = 'creator' | 'agency';
 
 interface UseCasePersona {
@@ -410,6 +410,17 @@ export default function UseCasesSection() {
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">
             Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories all run through one production workflow.
           </p>
+        </motion.div>
+
+        {/* Use Cases - Moved below the header text and above the toggle */}
+        <motion.div 
+          className="mb-20 mt-8"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <ProductionComparisonVisual />
         </motion.div>
 
         {/* Toggle Selector ... (keep same) */}
