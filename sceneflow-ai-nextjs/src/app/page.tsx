@@ -35,19 +35,19 @@ export default function LandingPage() {
       {/* 2. Trust strip */}
       <TrustSignals />
 
-      {/* 3. Traditional vs SceneFlow barrier comparison */}
+      {/* 3. Broad use cases */}
       <SlotMachineSection />
 
-      {/* 4. How it works in plain language */}
-      <HowItWorks />
-
-      {/* 5. Core Capabilities: Resonance + Express */}
-      <CoreCapabilitiesSection />
-
-      {/* 6. Broad use cases */}
+      {/* 4. How it works in plain language ("Whatever Video You Can Imagine") */}
       <UseCasesSection />
 
-      {/* 6. Feature storyboard with short-segment placeholders */}
+      {/* 5. How it works in plain language */}
+      <HowItWorks />
+
+      {/* 6. Core Capabilities: Resonance + Express */}
+      <CoreCapabilitiesSection />
+
+      {/* 7. Feature storyboard with short-segment placeholders */}
       <FeatureStoryboardSection />
 
       {/* 7. Platform trust for startups and enterprise reviewers */}

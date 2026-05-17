@@ -85,7 +85,7 @@ const ProductionComparisonVisual = () => {
           <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-slate-800/80 p-4">
             <div className="flex items-center gap-2 text-cyan-300">
               <PlayCircle className="w-5 h-5" />
-              <p className="text-sm font-semibold uppercase tracking-wider">Example Use Cases</p>
+              <p className="text-sm font-semibold uppercase tracking-wider">Use Cases</p>
             </div>
             <div className="text-[10px] text-slate-400 font-medium bg-slate-900 px-2 py-1 rounded border border-white/5">
               5 SECTORS
