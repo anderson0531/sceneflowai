@@ -40,7 +40,7 @@ export function GoogleTranslate() {
   return (
     <div 
       id="google_translate_element" 
-      className="google-translate-container flex items-center h-[36px]" 
+      className="hidden" 
     />
   )
 }
