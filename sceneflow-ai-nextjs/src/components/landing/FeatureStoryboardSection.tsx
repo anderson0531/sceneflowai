@@ -54,7 +54,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     screenshotSlot: 'Insert screenshot: Intelligent dialog showing baseline generation with edit controls',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-17%20at%2011.20.36.png',
     videoSlot: 'Insert 00:30 clip: AI baseline generation followed by user making precise edits',
-    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Automation%20.mov',
+    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Automation%202%20.mp4',
   },
   {
     id: 5,
