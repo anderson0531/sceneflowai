@@ -48,75 +48,91 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
   },
   {
     id: 4,
-    title: 'Concept to Episode Series Automation',
+    title: 'Smart Automation with Precision Edit Control',
     description:
-      'Scale from single concept to episodic production with audience resonance insights guiding each iteration.',
-    screenshotSlot: 'Insert screenshot: series and episode workspace with resonance panel',
-    videoSlot: 'Insert 00:30 clip: concept converted into episode series',
+      'The SceneFlow platform uses intelligence to automatically generate a professional baseline (series, blueprint, script, production prompts, and edits) while providing intelligent dialogs that give you full edit control with built-in guardrails.',
+    screenshotSlot: 'Insert screenshot: Intelligent dialog showing baseline generation with edit controls',
+    videoSlot: 'Insert 00:30 clip: AI baseline generation followed by user making precise edits',
   },
   {
     id: 5,
-    title: 'Concept or Episode to Blueprint',
-    description:
-      'Build a production-ready blueprint with characters, beats, and constraints, then optimize with resonance recommendations.',
-    screenshotSlot: 'Insert screenshot: blueprint sections for characters and story beats',
-    videoSlot: 'Insert 00:30 clip: blueprint generation and optimization pass',
-  },
-  {
-    id: 6,
-    title: 'Blueprint to Production in One Click',
-    description:
-      'Generate scene-by-scene script, dialogue, and direction, then refine with script-level and scene-level resonance feedback.',
-    screenshotSlot: 'Insert screenshot: generated scene cards and script review',
-    videoSlot: 'Insert 00:30 clip: one-click start production and script generation',
-  },
-  {
-    id: 7,
     title: 'Shared Reference Library for Continuity',
     description:
       'Maintain consistent characters, wardrobe, voices, locations, and props across scenes and episodes with reusable references.',
-    screenshotSlot: 'Insert screenshot: reference library with characters, voices, and props',
-    videoSlot: 'Insert 00:30 clip: reference reuse across multiple scenes',
+    screenshotSlot: 'Insert screenshot: Reference library showing character and prop continuity',
+    videoSlot: 'Insert 00:30 clip: Applying references across multiple scenes',
+  },
+  {
+    id: 6,
+    title: 'Express Generation Engine',
+    description:
+      'Auto-generate images and video segments concurrently. Express Storyboard lets you review and share audio-visual storyboards in minutes. Express Animatics renders full Ken Burns scenes in minutes, while Express Video delivers final video scenes in minutes instead of days.',
+    screenshotSlot: 'Insert screenshot: Express generation dashboard with Animatics and Video progress',
+    videoSlot: 'Insert 00:30 clip: Concurrent generation turning script into animatic then final video',
+  },
+  {
+    id: 7,
+    title: 'Audience Resonance Editor',
+    description:
+      'Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint, and Script for maximum impact.',
+    screenshotSlot: 'Insert screenshot: Resonance Editor with audience scoring and one-click fixes',
+    videoSlot: 'Insert 00:30 clip: Applying guided edits based on audience resonance score',
   },
   {
     id: 8,
-    title: '76+ Languages + Adaptive Translation',
+    title: 'Adaptive Translation (76+ Languages)',
     description:
       'Localize content at scale while preserving narrative intent and timeline alignment for multilingual delivery.',
-    screenshotSlot: 'Insert screenshot: language selector and translated timeline tracks',
-    videoSlot: 'Insert 00:30 clip: generate multilingual output and alignment',
+    screenshotSlot: 'Insert screenshot: Multi-language timeline and translation settings',
+    videoSlot: 'Insert 00:30 clip: Instantly localizing a scene into multiple languages',
   },
   {
     id: 9,
-    title: 'Storyboard to Veo-Aligned Scene Production',
+    title: 'Series Automation',
     description:
-      'Create a quick audiovisual storyboard, then produce scenes with automated segmentation aligned to Veo 3.1 durations.',
-    screenshotSlot: 'Insert screenshot: storyboard preview and segment breakdown',
-    videoSlot: 'Insert 00:30 clip: storyboard to segmented scene generation',
+      'Scale your narrative effortlessly. Define your universe once, and let the AI instantly generate cohesive multi-episode arcs, ensuring character development and overarching plotlines stay perfectly aligned across the entire season.',
+    screenshotSlot: 'Insert screenshot: Series overview with auto-generated episode arcs',
+    videoSlot: 'Insert 00:30 clip: Concept expanding into a multi-episode season',
   },
   {
     id: 10,
-    title: 'Final Cut + Screening Room + Cloud Scale',
+    title: 'Blueprint Automation',
     description:
-      'Edit with precision in Final Cut, validate with Screening Room feedback, and run on scalable Google Cloud infrastructure.',
-    screenshotSlot: 'Insert screenshot: Final Cut timeline and Screening Room feedback',
-    videoSlot: 'Insert 00:30 clip: final polish, screening, and publish readiness',
+      'Transform raw concepts into structured, production-ready architectures. Automatically generate complete story beats, character arcs, and scene-by-scene structural outlines that serve as the flawless foundation for your project.',
+    screenshotSlot: 'Insert screenshot: Auto-generated Blueprint with story beats and character arcs',
+    videoSlot: 'Insert 00:30 clip: Turning a concept into a structured Blueprint',
   },
   {
     id: 11,
-    title: 'Audience Resonance Editor',
+    title: 'Production Automation',
     description:
-      'Determine your target audience. Get score, analysis, and recommendations. One-click fixes. Guided Edit to optimize Episodes, Blueprint, and Script.',
-    screenshotSlot: 'Insert screenshot: Audience Resonance target selection and scoring panel',
-    videoSlot: 'Insert 00:30 clip: AI analysis and guided one-click story fixes',
+      'Go from script to screen without the friction. Instantly automate your script formatting, storyboard visualization, dynamic voice casting, and spatial audio mixing, seamlessly orchestrating reference libraries and keyframes into a unified video edit.',
+    screenshotSlot: 'Insert screenshot: Production dashboard showing script, voice, and video orchestration',
+    videoSlot: 'Insert 00:30 clip: Orchestrating script, storyboards, and audio into the Mixer',
   },
   {
     id: 12,
-    title: 'Sceneflow Express',
+    title: 'Final Cut Automation',
     description:
-      'Auto generate images and video segments concurrently. Express Storyboard enables you to review and share audio (any available language) video storyboard in minutes vs hours. Express Animatics enables you to view and render a full Ken Burns animatic scene in minutes vs hours. Express Video enables you to view and render a full video scene in minutes vs days.',
-    screenshotSlot: 'Insert screenshot: Express generation progress and Ken Burns animatic preview',
-    videoSlot: 'Insert 00:30 clip: concurrent image/video generation and rapid animatic playback',
+      'Polish your project with intelligent precision. Automatically assemble generated segments, sync audio tracks, and apply smart transitions for a broadcast-ready final cut that requires zero manual timeline scrubbing.',
+    screenshotSlot: 'Insert screenshot: Final Cut timeline with auto-assembled segments',
+    videoSlot: 'Insert 00:30 clip: AI assembling and polishing the final timeline',
+  },
+  {
+    id: 13,
+    title: 'Premiere Automation',
+    description:
+      'Launch with a splash. Effortlessly automate your distribution prep, generating localized metadata, optimized thumbnails, and release-ready packages tailored for any platform or screening format.',
+    screenshotSlot: 'Insert screenshot: Premiere dashboard with metadata and package prep',
+    videoSlot: 'Insert 00:30 clip: Auto-generating platform-specific packages and thumbnails',
+  },
+  {
+    id: 14,
+    title: 'Screening Room',
+    description:
+      'Validate your vision with real behavioral analytics. Host interactive review sessions to capture audience feedback, track engagement metrics, and use data-driven insights to refine your content before it goes public.',
+    screenshotSlot: 'Insert screenshot: Screening Room analytics and reviewer feedback panel',
+    videoSlot: 'Insert 00:30 clip: Hosting a review session and gathering engagement data',
   },
 ];
 
