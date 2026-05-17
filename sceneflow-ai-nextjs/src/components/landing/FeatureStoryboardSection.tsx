@@ -52,6 +52,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     description:
       'The SceneFlow platform uses intelligence to automatically generate a professional baseline (series, blueprint, script, production prompts, and edits) while providing intelligent dialogs that give you full edit control with built-in guardrails.',
     screenshotSlot: 'Insert screenshot: Intelligent dialog showing baseline generation with edit controls',
+    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-17%20at%2011.20.36.png',
     videoSlot: 'Insert 00:30 clip: AI baseline generation followed by user making precise edits',
   },
   {
