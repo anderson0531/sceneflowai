@@ -160,7 +160,7 @@ export default function SeriesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8">
+    <div className="min-h-full bg-gray-950 text-white p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div

@@ -250,10 +250,10 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   }, [config.phase, config.progressItems, currentProject?.metadata, progressData])
 
   return (
-    <div className="flex pt-16 relative w-full h-[calc(100vh)] overflow-hidden">
+    <div className="flex relative w-full h-[calc(100vh-4rem)] overflow-hidden">
       <aside
         className={cn(
-          'shrink-0 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-[calc(100vh-4rem)] sticky top-16 z-30 relative overflow-hidden transition-[width] duration-200 ease-out',
+          'shrink-0 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-full z-30 relative overflow-hidden transition-[width] duration-200 ease-out',
           sidebarVisible ? 'w-64 border-r' : 'w-0 border-transparent'
         )}
         aria-hidden={!sidebarVisible}
@@ -477,7 +477,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
         <button
           type="button"
           onClick={() => setSidebarVisible(true)}
-          className="fixed left-2 top-[4.75rem] z-[35] flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-md transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+          className="absolute left-2 top-3 z-[35] flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-md transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
           aria-label="Show navigation sidebar"
           title="Show sidebar"
         >
@@ -485,7 +485,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
         </button>
       )}
 
-      <main className={cn('flex-1 h-[calc(100vh-4rem)] overflow-y-auto overflow-x-hidden min-w-0 flex flex-col relative', !sidebarVisible && 'w-full')}>{children}</main>
+      <main className={cn('flex-1 h-full overflow-y-auto overflow-x-hidden min-w-0 flex flex-col relative', !sidebarVisible && 'w-full')}>{children}</main>
 
       {/* Navigation Warning Dialog for backward navigation */}
       <NavigationWarningDialog

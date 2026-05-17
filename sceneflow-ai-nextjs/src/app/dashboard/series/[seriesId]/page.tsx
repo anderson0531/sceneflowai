@@ -570,7 +570,7 @@ export default function SeriesStudioPage() {
   const progressPercent = totalEpisodes > 0 ? Math.round((completedCount / totalEpisodes) * 100) : 0
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-full bg-gray-950 text-white">
       {/* Hero Header with Gradient */}
       <div className="relative overflow-hidden">
         {/* Background gradient */}
