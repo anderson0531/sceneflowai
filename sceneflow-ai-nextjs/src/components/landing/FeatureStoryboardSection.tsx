@@ -73,6 +73,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
       'Auto-generate images and video segments concurrently. Express Storyboard lets you review and share audio-visual storyboards in minutes. Express Animatics renders full Ken Burns scenes in minutes, while Express Video delivers final video scenes in minutes instead of days.',
     screenshotSlot: 'Insert screenshot: Express generation dashboard with Animatics and Video progress',
     videoSlot: 'Insert 00:30 clip: Concurrent generation turning script into animatic then final video',
+    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Express.mp4',
   },
   {
     id: 7,
