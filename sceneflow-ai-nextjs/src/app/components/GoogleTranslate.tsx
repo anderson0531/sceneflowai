@@ -23,6 +23,19 @@ export function GoogleTranslate() {
         }
       }
 
+      // Add CSS to completely hide the Google Translate widget and its iframe
+      const style = document.createElement('style')
+      style.innerHTML = `
+        .goog-te-banner-frame { display: none !important; }
+        .goog-te-menu-value { display: none !important; }
+        .goog-tooltip { display: none !important; }
+        .goog-tooltip:hover { display: none !important; }
+        .goog-text-highlight { background-color: transparent !important; border: none !important; box-shadow: none !important; }
+        body { top: 0 !important; }
+        #google_translate_element { display: none !important; }
+      `
+      document.head.appendChild(style)
+
       // Add the Google Translate script
       const script = document.createElement('script')
       script.id = 'google-translate-script'
