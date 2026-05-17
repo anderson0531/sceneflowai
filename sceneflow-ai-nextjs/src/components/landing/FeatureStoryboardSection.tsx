@@ -62,6 +62,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     description:
       'Maintain consistent characters, wardrobe, voices, locations, and props across scenes and episodes with reusable references.',
     screenshotSlot: 'Insert screenshot: Reference library showing character and prop continuity',
+    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-17%20at%2014.33.01.png',
     videoSlot: 'Insert 00:30 clip: Applying references across multiple scenes',
   },
   {
