@@ -135,22 +135,45 @@ export function RenderFinalCutButton({
         finalFileUrl = uploaded.url
       } else {
         toast.loading(`Cloud rendering in progress (${readyClips.length} scenes)…`, { id: toastId })
-        const response = await fetch('/api/render/headless', {
+        const response = await fetch('/api/scene/final-cut/render', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            segments,
-            audioClips: [],
-            textOverlays: [],
+            projectId,
+            sceneId: 'final-cut',
+            sceneNumber: 0,
             resolution: '1080p',
-            fps: 30,
-            totalDuration: cursor,
+            audioConfig: {
+              includeNarration: false,
+              includeDialogue: false,
+              includeMusic: false,
+              includeSfx: false,
+              includeSegmentAudio: true,
+              language: 'en',
+              narrationVolume: 0,
+              dialogueVolume: 0,
+              musicVolume: 0,
+              sfxVolume: 0,
+              segmentAudioVolume: 1,
+            },
+            segments: segments.map((s, idx) => ({
+              segmentId: s.segmentId,
+              sequenceIndex: idx,
+              videoUrl: s.assetUrl,
+              startTime: s.startTime,
+              endTime: s.startTime + s.duration,
+              audioSource: 'original',
+              audioVolume: s.volume,
+              pauseDuration: 0,
+            })),
+            audioTracks: {},
+            textOverlays: [],
           }),
         })
 
         if (!response.ok) {
           const data = await response.json().catch(() => ({}))
-          throw new Error(data.error || `Headless render failed: ${response.status}`)
+          throw new Error(data.error || `Server render failed: ${response.status}`)
         }
 
         const result = await response.json()
@@ -164,15 +187,15 @@ export function RenderFinalCutButton({
           await new Promise((resolve) => setTimeout(resolve, 5000))
           attempts++
 
-          const pollRes = await fetch(`/api/render/headless?jobId=${jobId}`)
+          const pollRes = await fetch(`/api/scene/final-cut/render?jobId=${jobId}`)
           if (!pollRes.ok) continue
 
           const data = await pollRes.json()
-          if (data.status === 'complete') {
-            outputUrl = data.outputUrl || data.publicUrl
+          if (data.status === 'COMPLETED') {
+            outputUrl = data.downloadUrl || data.publicUrl || data.outputUrl
             break
-          } else if (data.status === 'error' || data.status === 'failed') {
-            throw new Error(data.error || 'Headless render job failed')
+          } else if (data.status === 'FAILED' || data.status === 'error') {
+            throw new Error(data.error || 'Server render job failed')
           }
 
           // Still processing
