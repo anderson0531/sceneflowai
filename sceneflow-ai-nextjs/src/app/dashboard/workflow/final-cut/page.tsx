@@ -568,13 +568,11 @@ export default function FinalCutPage() {
                     <span className="hidden sm:inline ml-1.5">{isFullscreen ? 'Exit Theater' : 'Theater'}</span>
                   </Button>
                 }
-                collapsible
-                expanded={mixerExpanded}
-                onToggle={() => setMixerExpanded((e) => !e)}
+                collapsible={false}
+                expanded={true}
                 className="bg-zinc-950/80 border-b border-violet-500/20 shrink-0"
               />
-              {mixerExpanded ? (
-                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
                   <FinalCutTimeline
                     clips={clips}
                     totalDuration={totalDuration}
@@ -591,7 +589,6 @@ export default function FinalCutPage() {
                     onToggleFullscreen={() => setIsFullscreen(f => !f)}
                   />
                 </div>
-              ) : null}
             </div>
           </section>
 
@@ -608,13 +605,11 @@ export default function FinalCutPage() {
                 title="Production streams"
                 titleClassName="font-semibold tracking-tight"
                 badge={clips.length || undefined}
-                collapsible
-                expanded={streamsExpanded}
-                onToggle={() => setStreamsExpanded((e) => !e)}
+                collapsible={false}
+                expanded={true}
                 className="bg-zinc-950/70 border-b border-white/[0.06] shrink-0"
               />
-              {streamsExpanded ? (
-                <FinalCutMediaBrowser
+              <FinalCutMediaBrowser
                   className="flex-1 min-h-0 rounded-none border-0 shadow-none bg-zinc-950/30"
                   streamsPanelProps={{
                     selection,
@@ -650,7 +645,6 @@ export default function FinalCutPage() {
                     throw new Error('Not implemented')
                   }}
                 />
-              ) : null}
             </div>
           </section>
         </div>
