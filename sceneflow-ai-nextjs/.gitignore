@@ -25,6 +25,10 @@
 .DS_Store
 *.pem
 
+# Local tooling (never ship ~25k files to Vercel via Git — breaks Turbopack / deployments)
+google-cloud-sdk/
+google-cloud-cli*.tar.gz
+
 # debug
 npm-debug.log*
 yarn-debug.log*
