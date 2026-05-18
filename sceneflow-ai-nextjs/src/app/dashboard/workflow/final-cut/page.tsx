@@ -13,6 +13,7 @@ import {
   AlertCircle,
   PanelRightOpen,
   PanelRightClose,
+  X,
 } from 'lucide-react'
 
 import { useStore } from '@/store/useStore'
@@ -537,7 +538,7 @@ export default function FinalCutPage() {
 
         <div className={cn(
           "flex-1 min-h-0 grid gap-3 sm:gap-4 min-h-[min(55vh,480px)] transition-all duration-500 ease-in-out",
-          streamsExpanded 
+          streamsExpanded && !isFullscreen 
             ? "grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]" 
             : "grid-cols-1"
         )}>
@@ -554,19 +555,36 @@ export default function FinalCutPage() {
                 titleClassName="font-semibold tracking-tight"
                 badge={clips.length || undefined}
                 rightAction={
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsFullscreen(prev => !prev)}
-                    className={cn(
-                      "h-7 text-zinc-400 hover:text-white hover:bg-zinc-800/80",
-                      isFullscreen && "text-violet-300 bg-violet-600/20"
+                  <div className="flex items-center gap-2">
+                    {isFullscreen && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setStreamsExpanded(prev => !prev)}
+                        className={cn(
+                          "h-7 text-zinc-400 hover:text-white hover:bg-zinc-800/80",
+                          streamsExpanded && "text-violet-300 bg-violet-600/20"
+                        )}
+                        title={streamsExpanded ? "Hide Production Streams" : "Show Production Streams"}
+                      >
+                        <Film className="w-4 h-4" />
+                        <span className="hidden sm:inline ml-1.5">{streamsExpanded ? 'Hide Panel' : 'Show Panel'}</span>
+                      </Button>
                     )}
-                    title={isFullscreen ? "Exit Theater Mode" : "Theater Mode"}
-                  >
-                    {isFullscreen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
-                    <span className="hidden sm:inline ml-1.5">{isFullscreen ? 'Exit Theater' : 'Theater'}</span>
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsFullscreen(prev => !prev)}
+                      className={cn(
+                        "h-7 text-zinc-400 hover:text-white hover:bg-zinc-800/80",
+                        isFullscreen && "text-violet-300 bg-violet-600/20"
+                      )}
+                      title={isFullscreen ? "Exit Theater Mode" : "Theater Mode"}
+                    >
+                      {isFullscreen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+                      <span className="hidden sm:inline ml-1.5">{isFullscreen ? 'Exit Theater' : 'Theater'}</span>
+                    </Button>
+                  </div>
                 }
                 collapsible={false}
                 expanded={true}
@@ -596,15 +614,28 @@ export default function FinalCutPage() {
             className={cn(
               'min-h-0 flex flex-col overflow-hidden transition-all duration-500 ease-in-out',
               mobilePane === 'edit' && 'hidden lg:flex',
-              !streamsExpanded && 'lg:hidden'
+              !streamsExpanded && 'lg:hidden',
+              isFullscreen && streamsExpanded && 'fixed top-[15vh] right-6 w-96 h-[70vh] z-50 shadow-2xl'
             )}
           >
-            <div className="flex flex-col flex-1 min-h-0 rounded-2xl border border-white/[0.08] bg-zinc-950/50 backdrop-blur-xl overflow-hidden shadow-xl shadow-black/30 ring-1 ring-white/[0.04]">
+            <div className={cn("flex flex-col flex-1 min-h-0 rounded-2xl border border-white/[0.08] bg-zinc-950/50 backdrop-blur-xl overflow-hidden shadow-xl shadow-black/30 ring-1 ring-white/[0.04]", isFullscreen && "bg-zinc-950/90")}>
               <ProductionSectionHeader
                 icon={Film}
                 title="Production streams"
                 titleClassName="font-semibold tracking-tight"
                 badge={clips.length || undefined}
+                rightAction={
+                  isFullscreen ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setStreamsExpanded(false)}
+                      className="h-7 w-7 text-zinc-400 hover:text-white hover:bg-zinc-800/80"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  ) : undefined
+                }
                 collapsible={false}
                 expanded={true}
                 className="bg-zinc-950/70 border-b border-white/[0.06] shrink-0"
