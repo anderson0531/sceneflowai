@@ -258,6 +258,12 @@ export async function POST(
           console.warn('[Segment Asset Generation] EXT mode requested but no veoVideoRef or startFrameUrl available')
           console.warn('[Segment Asset Generation] Falling back to T2V mode')
         }
+      } else if (method === 'FTV' && startFrameUrl) {
+          // Ensure startFrame is set for FTV
+          videoOptions.startFrame = startFrameUrl
+      } else if (method === 'I2V' && startFrameUrl) {
+          // Ensure startFrame is set for I2V
+          videoOptions.startFrame = startFrameUrl
       }
       
       // End Frame - used for FTV (Frame-to-Video/Interpolation) mode

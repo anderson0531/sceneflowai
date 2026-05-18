@@ -3036,7 +3036,7 @@ export function SceneProductionMixer({
     try {
       toast.info(`⚡ Translating & generating ${langName} audio...`, { duration: 4000 })
       
-      // Generate dialogue audio for each line
+      // Generate dialogue audio for each line sequentially
       const dialogueLines = audioAssets.dialogue || []
       for (let i = 0; i < dialogueLines.length; i++) {
         const line = dialogueLines[i]

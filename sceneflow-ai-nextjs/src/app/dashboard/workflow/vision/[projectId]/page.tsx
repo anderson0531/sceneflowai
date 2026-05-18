@@ -2305,7 +2305,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             sourceVideoUrl: options?.sourceVideoUrl,  // For EXT mode: Veo extends video directly
             endFrameUrl: options?.endFrameUrl,
             referenceImages: options?.referenceImages,
-            generationMethod: options?.generationMethod,
+            generationMethod: options?.generationMethod || mode, // Use generationMethod if provided, otherwise fallback to mode
             sceneId,
             projectId: project.id,
             // Pass video-specific options from prompt builder

@@ -352,9 +352,8 @@ export function useVideoQueue(
         
         try {
           // Map mode to generation type
-          const genType: 'T2V' | 'I2V' | 'T2I' | 'UPLOAD' = 
-            config.mode === 'FTV' || config.mode === 'I2V' ? 'I2V' :
-            config.mode === 'EXT' ? 'I2V' : 'T2V'
+          const genType: GenerationType = 
+            config.mode === 'FTV' || config.mode === 'I2V' || config.mode === 'EXT' ? 'I2V' : 'T2V'
           
           await onGenerate(
             sceneId,
