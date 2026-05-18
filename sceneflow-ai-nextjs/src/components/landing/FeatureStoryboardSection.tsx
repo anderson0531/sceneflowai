@@ -118,6 +118,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     description:
       'Go from script to screen without the friction. Instantly automate your script formatting, storyboard visualization, dynamic voice casting, and spatial audio mixing, seamlessly orchestrating reference libraries and keyframes into a unified video edit.',
     screenshotSlot: 'Insert screenshot: Production dashboard showing script, voice, and video orchestration',
+    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2010.47.26.png',
     videoSlot: 'Insert 00:30 clip: Orchestrating script, storyboards, and audio into the Mixer',
   },
   {
