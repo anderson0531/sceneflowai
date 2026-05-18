@@ -79,73 +79,163 @@ export function RenderFinalCutButton({
         return segment
       })
 
-      const result = await new LocalRenderService().render(
-        {
-          segments,
-          audioClips: [],
-          textOverlays: [],
-          resolution: '1080p',
-          fps: 30,
-          totalDuration: cursor,
-          exportFormat: 'mp4',
-        },
-        (p) => {
-          if (p.phase === 'rendering' || p.phase === 'encoding') {
-            setProgress(p.progress)
-            toast.loading(`Rendering Final Cut: ${Math.round(p.progress)}%`, { id: toastId })
-          }
-        }
-      )
+      const safeLabel = (filenameLabel || projectId).replace(/[^a-z0-9_-]+/gi, '_').slice(0, 40)
+      let finalFileUrl = ''
 
-      if (!result.success || !result.blob || !result.blobUrl) {
-        throw new Error(result.error || 'Unknown render error')
+      if (cursor <= 300) {
+        const result = await new LocalRenderService().render(
+          {
+            segments,
+            audioClips: [],
+            textOverlays: [],
+            resolution: '1080p',
+            fps: 30,
+            totalDuration: cursor,
+            exportFormat: 'mp4',
+          },
+          (p) => {
+            if (p.phase === 'rendering' || p.phase === 'encoding') {
+              setProgress(p.progress)
+              toast.loading(`Rendering Final Cut: ${Math.round(p.progress)}%`, { id: toastId })
+            }
+          }
+        )
+
+        if (!result.success || !result.blob || !result.blobUrl) {
+          throw new Error(result.error || 'Unknown render error')
+        }
+
+        const ext =
+          result.containerUsed === 'mp4' || (result.mimeType && result.mimeType.includes('mp4'))
+            ? 'mp4'
+            : 'webm'
+        const filename = `final-cut-${safeLabel}-${Date.now()}.${ext}`
+
+        // Save to Downloads first
+        const a = document.createElement('a')
+        const downloadUrl = URL.createObjectURL(result.blob)
+        a.href = downloadUrl
+        a.download = filename
+        a.rel = 'noopener'
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(downloadUrl)
+
+        setStatus('uploading')
+        toast.loading('Render complete. Uploading copy for screening…', { id: toastId })
+
+        const file = new File([result.blob], filename, { type: result.mimeType || 'video/webm' })
+        const uploaded = await upload(`renders/${filename}`, file, {
+          access: 'public',
+          handleUploadUrl: '/api/segments/upload-video-url',
+        })
+
+        LocalRenderService.revokeBlobUrl(result.blobUrl)
+        finalFileUrl = uploaded.url
+      } else {
+        toast.loading(`Cloud rendering in progress (${readyClips.length} scenes)…`, { id: toastId })
+        const response = await fetch('/api/render/headless', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            segments,
+            audioClips: [],
+            textOverlays: [],
+            resolution: '1080p',
+            fps: 30,
+            totalDuration: cursor,
+          }),
+        })
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}))
+          throw new Error(data.error || `Headless render failed: ${response.status}`)
+        }
+
+        const result = await response.json()
+        const jobId = result.jobId
+
+        let outputUrl = ''
+        const maxAttempts = 360 // 30 minutes at 5s intervals for long renders
+        let attempts = 0
+
+        while (attempts < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 5000))
+          attempts++
+
+          const pollRes = await fetch(`/api/render/headless?jobId=${jobId}`)
+          if (!pollRes.ok) continue
+
+          const data = await pollRes.json()
+          if (data.status === 'complete') {
+            outputUrl = data.outputUrl || data.publicUrl
+            break
+          } else if (data.status === 'error' || data.status === 'failed') {
+            throw new Error(data.error || 'Headless render job failed')
+          }
+
+          // Still processing
+          const progressValue = 30 + Math.min(attempts, 60)
+          setProgress(progressValue)
+          toast.loading(`Cloud rendering in progress: ~${progressValue}%…`, { id: toastId })
+        }
+
+        if (!outputUrl) {
+          throw new Error('Headless render job timed out')
+        }
+
+        setStatus('uploading')
+        toast.loading('Cloud render complete. Securing permanent storage…', { id: toastId })
+
+        if (outputUrl.includes('storage.googleapis.com')) {
+          const proxyUrl = `/api/proxy-video?url=${encodeURIComponent(outputUrl)}`
+          const res = await fetch(proxyUrl)
+          if (!res.ok) throw new Error(`Failed to fetch cloud render: ${res.status}`)
+
+          const blob = await res.blob()
+          const ext = blob.type.includes('mp4') ? 'mp4' : 'webm'
+          const filename = `final-cut-${safeLabel}-${Date.now()}.${ext}`
+
+          // Save to Downloads first
+          const a = document.createElement('a')
+          const downloadUrl = URL.createObjectURL(blob)
+          a.href = downloadUrl
+          a.download = filename
+          a.rel = 'noopener'
+          document.body.appendChild(a)
+          a.click()
+          a.remove()
+          URL.revokeObjectURL(downloadUrl)
+
+          const file = new File([blob], filename, { type: blob.type })
+          const uploaded = await upload(`renders/${filename}`, file, {
+            access: 'public',
+            handleUploadUrl: '/api/segments/upload-video-url',
+          })
+          finalFileUrl = uploaded.url
+        } else {
+          finalFileUrl = outputUrl
+        }
       }
 
-      const ext =
-        result.containerUsed === 'mp4' || (result.mimeType && result.mimeType.includes('mp4'))
-          ? 'mp4'
-          : 'webm'
-      const safeLabel = (filenameLabel || projectId).replace(/[^a-z0-9_-]+/gi, '_').slice(0, 40)
-      const filename = `final-cut-${safeLabel}-${Date.now()}.${ext}`
-
-      // Save to Downloads first
-      const a = document.createElement('a')
-      const downloadUrl = URL.createObjectURL(result.blob)
-      a.href = downloadUrl
-      a.download = filename
-      a.rel = 'noopener'
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(downloadUrl)
-
-      setStatus('uploading')
-      toast.loading('Render complete. Uploading copy for screening…', { id: toastId })
-
-      const file = new File([result.blob], filename, { type: result.mimeType || 'video/webm' })
-      const uploaded = await upload(`renders/${filename}`, file, {
-        access: 'public',
-        handleUploadUrl: '/api/segments/upload-video-url',
-      })
-
-      LocalRenderService.revokeBlobUrl(result.blobUrl)
-      setOutputUrl(uploaded.url)
+      setOutputUrl(finalFileUrl)
       setStatus('ready')
 
       if (onRendered) {
         try {
-          await onRendered(uploaded.url)
+          await onRendered(finalFileUrl)
         } catch (err) {
           console.error('[FinalCut] onRendered handler failed', err)
         }
       }
 
-      toast.success(`Saved to Downloads as ${filename}.`, {
+      toast.success(`Saved and uploaded successfully.`, {
         id: toastId,
         duration: 14000,
         action: {
           label: 'Open hosted copy',
-          onClick: () => window.open(uploaded.url, '_blank', 'noopener,noreferrer'),
+          onClick: () => window.open(finalFileUrl, '_blank', 'noopener,noreferrer'),
         },
       })
     } catch (err) {
