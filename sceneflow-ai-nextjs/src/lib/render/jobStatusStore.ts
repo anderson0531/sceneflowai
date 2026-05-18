@@ -41,19 +41,36 @@ export interface JobStatus {
 const fallbackStore = new Map<string, JobStatus>()
 
 /**
+ * Helper: Find by PK with resilient missing column retry
+ */
+async function safeFindByPk(jobId: string): Promise<any> {
+  while (true) {
+    try {
+      const excludeAttrs = Array.from(missingColumns)
+      const queryOptions: Record<string, unknown> = {}
+      if (excludeAttrs.length > 0) {
+        queryOptions.attributes = { exclude: excludeAttrs }
+      }
+      return await RenderJob.findByPk(jobId, queryOptions)
+    } catch (err) {
+      const col = getMissingColumn(err)
+      if (col && !missingColumns.has(col)) {
+        console.warn(`[JobStatusStore] Column "${col}" missing from DB, excluding from future queries. Run migration: scripts/migrations/add_scene_id_to_render_jobs.sql`)
+        missingColumns.add(col)
+        continue // Retry
+      }
+      throw err // Rethrow if it's not a missing column error or we already added it
+    }
+  }
+}
+
+/**
  * Get job status by ID - checks database first, then in-memory fallback.
  * Resilient to missing columns (e.g., scene_id not yet migrated).
  */
 export async function getJobStatusAsync(jobId: string): Promise<JobStatus | undefined> {
   try {
-    // Exclude known missing columns from the SELECT
-    const excludeAttrs = Array.from(missingColumns)
-    const queryOptions: Record<string, unknown> = {}
-    if (excludeAttrs.length > 0) {
-      queryOptions.attributes = { exclude: excludeAttrs }
-    }
-    
-    const job = await RenderJob.findByPk(jobId, queryOptions)
+    const job = await safeFindByPk(jobId)
     if (job) {
       return {
         status: job.status as JobStatus['status'],
@@ -65,14 +82,6 @@ export async function getJobStatusAsync(jobId: string): Promise<JobStatus | unde
       }
     }
   } catch (dbError) {
-    // Check if error is caused by a missing column
-    const col = getMissingColumn(dbError)
-    if (col && !missingColumns.has(col)) {
-      console.warn(`[JobStatusStore] Column "${col}" missing from DB, excluding from future queries. Run migration: scripts/migrations/add_scene_id_to_render_jobs.sql`)
-      missingColumns.add(col)
-      // Retry once with the column excluded
-      return getJobStatusAsync(jobId)
-    }
     console.warn('[JobStatusStore] DB read failed, checking fallback:', dbError)
   }
   
@@ -99,7 +108,7 @@ export function setJobStatus(jobId: string, status: JobStatus): void {
   fallbackStore.set(jobId, statusWithTimestamp)
   
   // Async write to database (non-blocking)
-  RenderJob.findByPk(jobId, missingColumns.size > 0 ? { attributes: { exclude: Array.from(missingColumns) } } : {})
+  safeFindByPk(jobId)
     .then(async (existing) => {
       if (existing) {
         await existing.update({
@@ -113,11 +122,6 @@ export function setJobStatus(jobId: string, status: JobStatus): void {
       // If job doesn't exist in DB, it was likely created by the render route already
     })
     .catch(err => {
-      const col = getMissingColumn(err)
-      if (col) {
-        missingColumns.add(col)
-        console.warn(`[JobStatusStore] Column "${col}" missing, added to exclusion list`)
-      }
       console.warn('[JobStatusStore] DB write failed (in-memory still updated):', err)
     })
 }
@@ -147,7 +151,7 @@ export function updateJobStatus(jobId: string, update: Partial<JobStatus>): bool
   }
   
   // Async write to database (non-blocking)
-  RenderJob.findByPk(jobId, missingColumns.size > 0 ? { attributes: { exclude: Array.from(missingColumns) } } : {})
+  safeFindByPk(jobId)
     .then(async (job) => {
       if (job) {
         const dbUpdate: Record<string, unknown> = {}
@@ -162,11 +166,6 @@ export function updateJobStatus(jobId: string, update: Partial<JobStatus>): bool
       }
     })
     .catch(err => {
-      const col = getMissingColumn(err)
-      if (col) {
-        missingColumns.add(col)
-        console.warn(`[JobStatusStore] Column "${col}" missing, added to exclusion list`)
-      }
       console.warn('[JobStatusStore] DB update failed:', err)
     })
   
