@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="max-w-full overflow-hidden">
+    <div className="max-w-full">
       {children}
     </div>
   )

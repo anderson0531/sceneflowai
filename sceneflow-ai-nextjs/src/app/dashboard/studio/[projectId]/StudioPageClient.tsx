@@ -915,11 +915,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const beatsDataRef = React.useRef<any[]>([])
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-full">
       <TopProgressBar progress={genProgress} />
       <GeneratingOverlay visible={isGen} message="Creating your Film Concept..." progress={genProgress} />
       
-      <PanelGroup direction="horizontal" className="min-h-screen">
+      <PanelGroup direction="horizontal" className="min-h-full">
         {/* Main Content Panel */}
         <Panel defaultSize={showSidePanel ? 75 : 100} minSize={50}>
           <div className="h-full p-4 lg:p-6 max-w-6xl mx-auto">

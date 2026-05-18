@@ -250,7 +250,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   }, [config.phase, config.progressItems, currentProject?.metadata, progressData])
 
   return (
-    <div className="flex relative w-full h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="flex relative w-full h-[calc(100dvh-4rem)] overflow-hidden">
       <aside
         className={cn(
           'shrink-0 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-full z-30 relative overflow-hidden transition-[width] duration-200 ease-out',
@@ -485,7 +485,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
         </button>
       )}
 
-      <main className={cn('flex-1 h-full overflow-y-auto overflow-x-hidden min-w-0 flex flex-col relative', !sidebarVisible && 'w-full')}>{children}</main>
+      <main className={cn('flex-1 overflow-y-auto overflow-x-hidden min-w-0 relative', !sidebarVisible && 'w-full')}>{children}</main>
 
       {/* Navigation Warning Dialog for backward navigation */}
       <NavigationWarningDialog
