@@ -127,7 +127,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     description:
       'Polish your project with intelligent precision. Automatically assemble generated segments, sync audio tracks, and apply smart transitions for a broadcast-ready final cut that requires zero manual timeline scrubbing.',
     screenshotSlot: 'Insert screenshot: Final Cut timeline with auto-assembled segments',
-    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2011.05.02.png',
+    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2015.30.48.png',
     videoSlot: 'Insert 00:30 clip: AI assembling and polishing the final timeline',
   },
   {
