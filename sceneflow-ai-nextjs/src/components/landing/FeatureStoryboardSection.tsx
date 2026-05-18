@@ -82,6 +82,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     description:
       'Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint, and Script for maximum impact.',
     screenshotSlot: 'Insert screenshot: Resonance Editor with audience scoring and one-click fixes',
+    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2008.22.24.png',
     videoSlot: 'Insert 00:30 clip: Applying guided edits based on audience resonance score',
   },
   {
