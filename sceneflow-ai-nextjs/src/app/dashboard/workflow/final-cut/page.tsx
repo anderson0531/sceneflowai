@@ -429,6 +429,20 @@ export default function FinalCutPage() {
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => setStreamsExpanded(prev => !prev)}
+            className={cn(
+              "text-zinc-400 hover:text-white hover:bg-zinc-800/80 mr-1",
+              streamsExpanded && "bg-violet-600/20 text-violet-300 border-violet-500/30"
+            )}
+            title={streamsExpanded ? "Hide Production Streams" : "Show Production Streams"}
+          >
+            <Film className="w-4 h-4" />
+            <span className="hidden sm:inline ml-2">{streamsExpanded ? 'Hide Streams' : 'Show Streams'}</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setIsFullscreen(prev => !prev)}
             className={cn(
               "text-zinc-400 hover:text-white hover:bg-zinc-800/80",
@@ -556,21 +570,19 @@ export default function FinalCutPage() {
                 badge={clips.length || undefined}
                 rightAction={
                   <div className="flex items-center gap-2">
-                    {isFullscreen && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setStreamsExpanded(prev => !prev)}
-                        className={cn(
-                          "h-7 text-zinc-400 hover:text-white hover:bg-zinc-800/80",
-                          streamsExpanded && "text-violet-300 bg-violet-600/20"
-                        )}
-                        title={streamsExpanded ? "Hide Production Streams" : "Show Production Streams"}
-                      >
-                        <Film className="w-4 h-4" />
-                        <span className="hidden sm:inline ml-1.5">{streamsExpanded ? 'Hide Panel' : 'Show Panel'}</span>
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setStreamsExpanded(prev => !prev)}
+                      className={cn(
+                        "h-7 text-zinc-400 hover:text-white hover:bg-zinc-800/80 mr-1",
+                        streamsExpanded && "bg-violet-600/20 text-violet-300 border-violet-500/30"
+                      )}
+                      title={streamsExpanded ? "Hide Production Streams" : "Show Production Streams"}
+                    >
+                      <Film className="w-4 h-4" />
+                      <span className="hidden sm:inline ml-1.5">{streamsExpanded ? 'Hide Streams' : 'Show Streams'}</span>
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -615,6 +627,7 @@ export default function FinalCutPage() {
               'min-h-0 flex flex-col overflow-hidden transition-all duration-500 ease-in-out',
               mobilePane === 'edit' && 'hidden lg:flex',
               !streamsExpanded && 'lg:hidden',
+              !streamsExpanded && !isFullscreen && 'hidden', // completely hide if closed and not fullscreen
               isFullscreen && streamsExpanded && 'fixed top-[15vh] right-6 w-96 h-[70vh] z-50 shadow-2xl'
             )}
           >
@@ -625,16 +638,15 @@ export default function FinalCutPage() {
                 titleClassName="font-semibold tracking-tight"
                 badge={clips.length || undefined}
                 rightAction={
-                  isFullscreen ? (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setStreamsExpanded(false)}
-                      className="h-7 w-7 text-zinc-400 hover:text-white hover:bg-zinc-800/80"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  ) : undefined
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setStreamsExpanded(false)}
+                    className="h-7 w-7 text-zinc-400 hover:text-white hover:bg-zinc-800/80"
+                    title="Hide Panel"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 }
                 collapsible={false}
                 expanded={true}
