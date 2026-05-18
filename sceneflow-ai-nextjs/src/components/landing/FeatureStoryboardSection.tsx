@@ -136,6 +136,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     description:
       'Launch with a splash. Effortlessly automate your distribution prep, generating localized metadata, optimized thumbnails, and release-ready packages tailored for any platform or screening format.',
     screenshotSlot: 'Insert screenshot: Premiere dashboard with metadata and package prep',
+    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2017.09.15.png',
     videoSlot: 'Insert 00:30 clip: Auto-generating platform-specific packages and thumbnails',
   },
   {
