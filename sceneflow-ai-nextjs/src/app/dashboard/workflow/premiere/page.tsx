@@ -11,10 +11,9 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
-  ExternalLink,
+  Eye,
   Film,
   Loader2,
-  Sparkles,
   TrendingUp,
   Upload,
   Users,
@@ -22,6 +21,8 @@ import {
 import { useStore } from '@/store/useStore'
 import { Button } from '@/components/ui/Button'
 import { ScreeningRoomDashboard } from '@/components/screening-room/ScreeningRoomDashboard'
+import { StatCard, EmotionBreakdown, formatDuration } from '@/components/premiere/DashboardWidgets'
+import { PublishingHub } from '@/components/premiere/PublishingHub'
 
 type PremiereScreening = {
   id: string
@@ -575,7 +576,6 @@ export default function PremierePage() {
   const finalCutHref = `/dashboard/workflow/final-cut?projectId=${projectId || ''}${
     isDemo ? '&demo=true' : ''
   }`
-  const screeningRoomHref = `/screening-room?projectId=${encodeURIComponent(projectId || '')}&returnTo=${encodeURIComponent(finalCutHref.replace('/dashboard/workflow/final-cut', '/dashboard/workflow/premiere'))}`
 
   return (
     <div className="relative isolate min-h-screen flex flex-col overflow-hidden bg-zinc-950 text-zinc-100">
@@ -620,18 +620,7 @@ export default function PremierePage() {
               <span className="hidden sm:inline">Final Cut</span>
             </Button>
           </Link>
-
         </div>
-        <Link href={screeningRoomHref}>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-violet-500/40 bg-violet-950/20 text-violet-100 hover:bg-violet-950/40 hover:border-violet-400/50"
-          >
-            <ExternalLink className="w-4 h-4 mr-1.5" />
-            Screening Room Dashboard
-          </Button>
-        </Link>
       </header>
 
       <main className="relative flex-1 min-h-0 flex flex-col gap-4 px-4 sm:px-5 py-4 overflow-hidden border-t border-white/[0.06]">
@@ -782,79 +771,79 @@ export default function PremierePage() {
               {showScreeningDashboard ? (
                 <div className="p-4 sm:p-5 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-                    <div className="rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
-                      <p className="text-xs text-zinc-400">Total Screenings</p>
-                      <p className="mt-1 text-2xl font-semibold text-white tabular-nums">
-                        {mockDashboardStats.totalScreenings}
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
-                      <p className="text-xs text-zinc-400">Total Viewers</p>
-                      <p className="mt-1 text-2xl font-semibold text-white tabular-nums">
-                        {mockDashboardStats.totalViewers}
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
-                      <p className="text-xs text-zinc-400">Avg. Completion</p>
-                      <p className="mt-1 text-2xl font-semibold text-white tabular-nums">
-                        {mockDashboardStats.averageCompletion}%
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
-                      <p className="text-xs text-zinc-400">Avg. Watch Time</p>
-                      <p className="mt-1 text-2xl font-semibold text-white tabular-nums">
-                        {mockDashboardStats.averageWatchTime}s
-                      </p>
-                    </div>
+                    <StatCard
+                      icon={<Eye className="w-5 h-5" />}
+                      label="Total Screenings"
+                      value={mockDashboardStats.totalScreenings}
+                      subValue="Active & completed"
+                      color="emerald"
+                    />
+                    <StatCard
+                      icon={<Users className="w-5 h-5" />}
+                      label="Total Viewers"
+                      value={mockDashboardStats.totalViewers}
+                      subValue="Unique test audience"
+                      trend="up"
+                      color="blue"
+                    />
+                    <StatCard
+                      icon={<TrendingUp className="w-5 h-5" />}
+                      label="Avg. Completion"
+                      value={`${mockDashboardStats.averageCompletion}%`}
+                      subValue="Watch-through rate"
+                      trend="stable"
+                      color="purple"
+                    />
+                    <StatCard
+                      icon={<Clock className="w-5 h-5" />}
+                      label="Avg. Watch Time"
+                      value={formatDuration(mockDashboardStats.averageWatchTime)}
+                      subValue="Per screening session"
+                      color="amber"
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                    <div className="lg:col-span-2 rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="w-4 h-4 text-violet-300" />
-                        <p className="text-sm font-medium text-white">Audience Emotions (Mock)</p>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                        <p className="text-zinc-300">Engaged <span className="text-zinc-500">{mockDashboardStats.emotionBreakdown.engaged}%</span></p>
-                        <p className="text-zinc-300">Happy <span className="text-zinc-500">{mockDashboardStats.emotionBreakdown.happy}%</span></p>
-                        <p className="text-zinc-300">Surprised <span className="text-zinc-500">{mockDashboardStats.emotionBreakdown.surprised}%</span></p>
-                        <p className="text-zinc-300">Neutral <span className="text-zinc-500">{mockDashboardStats.emotionBreakdown.neutral}%</span></p>
-                        <p className="text-zinc-300">Confused <span className="text-zinc-500">{mockDashboardStats.emotionBreakdown.confused}%</span></p>
-                        <p className="text-zinc-300">Bored <span className="text-zinc-500">{mockDashboardStats.emotionBreakdown.bored}%</span></p>
-                      </div>
+                    <div className="lg:col-span-2">
+                      <EmotionBreakdown data={mockDashboardStats.emotionBreakdown} />
                     </div>
-                    <div className="rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
-                      <p className="text-sm font-medium text-white mb-2">Quick Actions</p>
-                      <div className="space-y-2">
-                        <Button size="sm" variant="outline" className="w-full justify-start border-zinc-700 bg-zinc-900">
-                          <Users className="w-4 h-4 mr-2" />
+                    <div className="rounded-xl border border-zinc-700/70 bg-zinc-900/60 p-4 h-full">
+                      <p className="text-sm font-medium text-white mb-4">Quick Actions</p>
+                      <div className="space-y-3">
+                        <Button size="sm" variant="outline" className="w-full justify-start border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700">
+                          <Users className="w-4 h-4 mr-2 text-blue-400" />
                           Invite reviewers
                         </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start border-zinc-700 bg-zinc-900">
-                          <TrendingUp className="w-4 h-4 mr-2" />
+                        <Button size="sm" variant="outline" className="w-full justify-start border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700">
+                          <TrendingUp className="w-4 h-4 mr-2 text-emerald-400" />
                           Compare streams
                         </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start border-zinc-700 bg-zinc-900">
-                          <Clock className="w-4 h-4 mr-2" />
+                        <Button size="sm" variant="outline" className="w-full justify-start border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700">
+                          <Clock className="w-4 h-4 mr-2 text-amber-400" />
                           Schedule review
                         </Button>
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-zinc-700/70 bg-zinc-900/60 p-3">
-                    <p className="text-sm font-medium text-white mb-2">Screening Views</p>
+                  <div className="rounded-xl border border-zinc-700/70 bg-zinc-900/60 p-4">
+                    <p className="text-sm font-medium text-white mb-3">Screening Views</p>
                     <div className="flex flex-wrap gap-2">
                       {['All Screenings', 'Storyboard', 'Scenes', 'Premiere'].map((tab) => (
                         <span
                           key={tab}
-                          className="rounded-full border border-zinc-700 bg-zinc-950/80 px-2.5 py-1 text-[11px] text-zinc-300"
+                          className="rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-xs text-zinc-300"
                         >
                           {tab}
                         </span>
                       ))}
                     </div>
                   </div>
+                  
+                  <PublishingHub 
+                    videoUrl={finalCutScreenings.length > 0 ? finalCutScreenings[0].videoUrl : undefined} 
+                    title={finalCutScreenings.length > 0 ? finalCutScreenings[0].title : 'My Project'} 
+                  />
                 </div>
               ) : null}
             </div>

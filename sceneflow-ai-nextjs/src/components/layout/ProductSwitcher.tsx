@@ -80,7 +80,7 @@ export const products: Product[] = [
     name: 'Screening Room',
     tagline: 'Test & Feedback',
     icon: <BarChart2 className="w-5 h-5" />,
-    href: '/screening-room',
+    href: '/dashboard/workflow/premiere',
     color: 'text-emerald-400',
     hoverColor: 'hover:bg-emerald-500/10 hover:text-emerald-300',
     activeColor: 'bg-emerald-500/15 text-emerald-300 border-emerald-400',
@@ -113,7 +113,7 @@ export function ProductSwitcher({
   // Build dynamic href for products that need project context
   const getProductHref = (product: Product): string => {
     if (product.id === 'screening-room' && currentProject?.id) {
-      return `/screening-room?projectId=${currentProject.id}&returnTo=${encodeURIComponent(pathname || '/')}`
+      return `/dashboard/workflow/premiere?projectId=${currentProject.id}&returnTo=${encodeURIComponent(pathname || '/')}`
     }
     return product.href
   }
