@@ -113,7 +113,7 @@ export async function generateSFXAudio(params: GenerateSFXParams): Promise<{ mp3
  * Uses saveToBlob to have server upload directly - avoids 4.5MB client payload limit
  */
 export async function generateMusicAudio(description: string, duration: number, projectId?: string, sceneId?: string): Promise<{ mp3Url: string; duration: number }> {
-  const response = await fetch('/api/tts/google/music', {
+  const response = await fetch('/api/tts/elevenlabs/music', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

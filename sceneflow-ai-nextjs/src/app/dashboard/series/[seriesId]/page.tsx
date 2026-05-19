@@ -1415,7 +1415,7 @@ function OverviewPanel({ series, onRegenerate, isGenerating }: OverviewPanelProp
         <VoiceSelectionDialog
           open={voiceSelectorOpen}
           onOpenChange={setVoiceSelectorOpen}
-          provider="google"
+          provider="elevenlabs"
           mode="narrator"
           selectedVoiceId={selectedVoiceId}
           onSelectVoice={(id, name, prompt) => {
@@ -1879,7 +1879,7 @@ function EpisodesPanel({
         <VoiceSelectionDialog
           open={voiceSelectorOpen}
           onOpenChange={setVoiceSelectorOpen}
-          provider="google"
+          provider="elevenlabs"
           mode="narrator"
           selectedVoiceId={selectedVoiceId}
           onSelectVoice={(id, name, prompt) => {

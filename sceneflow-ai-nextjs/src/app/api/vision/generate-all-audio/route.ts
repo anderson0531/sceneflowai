@@ -11,7 +11,13 @@ export const maxDuration = 300 // 5 minutes for batch generation
 export const runtime = 'nodejs'
 
 // Helper function to generate and save music for a scene
-async function generateAndSaveMusicForScene(scene: any, projectId: string, sceneIdx: number, baseUrl: string): Promise<string | null> {
+async function generateAndSaveMusicForScene(
+  scene: any,
+  projectId: string,
+  sceneIdx: number,
+  baseUrl: string,
+  authCookie: string
+): Promise<string | null> {
   try {
     const description = typeof scene.music === 'string' ? scene.music : scene.music?.description
     if (!description) return null
@@ -19,9 +25,12 @@ async function generateAndSaveMusicForScene(scene: any, projectId: string, scene
     console.log(`[Batch Audio] Generating music for scene ${sceneIdx + 1}: ${description.substring(0, 50)}...`)
     
     // Generate music via our API endpoint, using saveToBlob to avoid payload limits
-    const musicResponse = await fetch(`${baseUrl}/api/tts/google/music`, {
+    const musicResponse = await fetch(`${baseUrl}/api/tts/elevenlabs/music`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authCookie ? { Cookie: authCookie } : {}),
+      },
       body: JSON.stringify({ 
         text: description, 
         duration: 30,
@@ -599,7 +608,7 @@ export async function POST(req: NextRequest) {
               
               // Generate music if enabled
               if (includeMusic && scene.music && !scene.musicAudio) {
-                const musicUrl = await generateAndSaveMusicForScene(scene, projectId, sceneIndex, baseUrl);
+                const musicUrl = await generateAndSaveMusicForScene(scene, projectId, sceneIndex, baseUrl, authCookie);
                 if (musicUrl) {
                   scenes[sceneIndex].musicAudio = musicUrl;
                   musicCount++;

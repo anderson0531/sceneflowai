@@ -1898,7 +1898,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     try {
       const duration = scene.duration || 30
       // Use saveToBlob to have the server upload directly - avoids 4.5MB payload limit
-      const response = await fetch('/api/tts/google/music', {
+      const response = await fetch('/api/tts/elevenlabs/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -2195,7 +2195,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Quick play Music (generate and play immediately)
   const generateAndPlayMusic = async (description: string, duration: number = 30) => {
     try {
-      const response = await fetch('/api/tts/google/music', {
+      const response = await fetch('/api/tts/elevenlabs/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

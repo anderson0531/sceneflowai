@@ -4099,7 +4099,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Image quality setting
   const [imageQuality, setImageQuality] = useState<'max' | 'auto'>('auto')
-  const [ttsProvider, setTtsProvider] = useState<'google' | 'elevenlabs'>('google')
+  const [ttsProvider, setTtsProvider] = useState<'google' | 'elevenlabs'>('elevenlabs')
   
   // BYOK Settings
   const [showBYOKSettings, setShowBYOKSettings] = useState(false)
@@ -5460,19 +5460,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 }
               }
             }
+
+            // FIX: ElevenLabs library voice ids incorrectly marked google (e.g. after Gemini TTS experiments)
+            if (char.voiceConfig && char.voiceConfig.provider === 'google') {
+              const vid = char.voiceConfig.voiceId || ''
+              const looksLikeElevenLabsLibrary =
+                vid.length >= 20 &&
+                vid.length <= 24 &&
+                /^[a-zA-Z0-9]+$/.test(vid) &&
+                !vid.startsWith('gemini')
+              if (looksLikeElevenLabsLibrary) {
+                console.warn(
+                  `[Load Project] Fixing provider for ${char.name}: ElevenLabs-style voice id marked as google (${vid})`
+                )
+                char.voiceConfig = {
+                  ...char.voiceConfig,
+                  provider: 'elevenlabs',
+                }
+              }
+            }
             
             return char
           })
           
-          // Check if any voice configs were auto-fixed and need saving
-          const needsSaving = charactersWithRole.some((c: any) => 
-            c.voiceConfig && 
-            c.voiceConfig.provider === 'google' && 
-            visionPhase.characters.find((orig: any) => 
-              orig.name === c.name && 
-              orig.voiceConfig?.provider === 'elevenlabs'
+          // Persist any automatic provider corrections back to the project
+          const needsSaving = charactersWithRole.some((c: any) => {
+            const orig = visionPhase.characters.find((o: any) => o.name === c.name)
+            return (
+              orig?.voiceConfig &&
+              c.voiceConfig &&
+              orig.voiceConfig.provider !== c.voiceConfig.provider
             )
-          )
+          })
 
           if (needsSaving) {
             console.log('[Load Project] Saving voice config fix, preserving script:', {
@@ -5765,26 +5784,47 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 ...correctedNarrationVoice,
                 provider: 'google'
               }
-              
-              // Save the corrected narration voice back to database
-              try {
-                await fetch(`/api/projects/${projectId}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    metadata: {
-                      ...proj.metadata,
-                      visionPhase: {
-                        ...visionPhase,
-                        narrationVoice: correctedNarrationVoice
-                      }
-                    }
-                  })
-                })
-                // Narration voice config corrected and saved
-              } catch (error) {
-                console.warn('[Load Project] Failed to save narration voice config:', error)
+            }
+          }
+
+          if (correctedNarrationVoice.provider === 'google') {
+            const vid = correctedNarrationVoice.voiceId || ''
+            const looksLikeElevenLabsLibrary =
+              vid.length >= 20 &&
+              vid.length <= 24 &&
+              /^[a-zA-Z0-9]+$/.test(vid) &&
+              !vid.startsWith('gemini')
+            if (looksLikeElevenLabsLibrary) {
+              console.warn(
+                `[Load Project] Fixing narration provider: ElevenLabs-style voice id marked as google (${vid})`
+              )
+              correctedNarrationVoice = {
+                ...correctedNarrationVoice,
+                provider: 'elevenlabs',
               }
+            }
+          }
+
+          const narrationNeedsSave =
+            correctedNarrationVoice.provider !== visionPhase.narrationVoice.provider
+
+          if (narrationNeedsSave) {
+            try {
+              await fetch(`/api/projects/${projectId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  metadata: {
+                    ...proj.metadata,
+                    visionPhase: {
+                      ...visionPhase,
+                      narrationVoice: correctedNarrationVoice
+                    }
+                  }
+                })
+              })
+            } catch (error) {
+              console.warn('[Load Project] Failed to save narration voice config:', error)
             }
           }
           
@@ -8664,6 +8704,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
+      if (data.rateLimited === true) {
+        try {
+          const { toast } = require('sonner')
+          const tips: string[] = Array.isArray(data.tips) ? data.tips : []
+          const description =
+            tips.length > 0
+              ? tips.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n')
+              : undefined
+          toast.error(data.error || 'Speech service rate limit — try again shortly', {
+            description,
+            duration: 14000,
+          })
+        } catch {}
+        return
+      }
+
       if (data.success) {
         // Use functional update to ensure we're working with latest state
         // This is critical when multiple audio generations run sequentially
@@ -9370,7 +9426,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log(`[Update Scene Audio] Generating music for Scene ${sceneIndex + 1}...`)
     
     // Use saveToBlob to have the server upload directly - avoids 4.5MB payload limit
-    const response = await fetch('/api/tts/google/music', {
+    const response = await fetch('/api/tts/elevenlabs/music', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 

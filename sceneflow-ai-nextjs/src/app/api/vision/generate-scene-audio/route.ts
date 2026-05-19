@@ -8,18 +8,55 @@ import { translateWithVertexAI } from '../../../../lib/vertexai/translate'
 import { getVertexAIAuthToken } from '../../../../lib/vertexai/client'
 import { adaptScriptForTranslationTiming, type AdaptationDiagnostics } from '../../../../lib/translation/scriptAdaptation'
 import { GoogleTtsBlockedError, parseVertexTtsPolicyViolation } from '../../../../lib/tts/googleTtsPolicy'
+import {
+  GoogleTtsRateLimitedError,
+  backoffMsFor429Attempt,
+  getGoogleTts429MaxRetries,
+  parseVertexTtsRateLimit,
+  sleep,
+} from '../../../../lib/tts/googleTtsRetry'
+import { synthesizeElevenLabsMp3 } from '../../../../lib/elevenlabs/textToSpeech'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
 
 interface VoiceConfig {
-  provider: 'google'
+  provider: 'google' | 'elevenlabs'
   voiceId: string
   voiceName: string
   stability?: number
   similarityBoost?: number
   languageCode?: string
   prompt?: string
+}
+
+function normalizeVoiceConfig(voiceConfig: VoiceConfig): VoiceConfig {
+  const vc = { ...voiceConfig }
+  let provider = vc.provider
+  if (provider !== 'google' && provider !== 'elevenlabs') {
+    provider = vc.voiceId?.startsWith('gemini-') ? 'google' : 'elevenlabs'
+  }
+
+  const vid = vc.voiceId || ''
+  const looksLikeElevenLabsLibrary =
+    vid.length >= 20 &&
+    vid.length <= 24 &&
+    /^[a-zA-Z0-9]+$/.test(vid) &&
+    !vid.startsWith('gemini')
+
+  if (provider === 'google' && looksLikeElevenLabsLibrary) {
+    provider = 'elevenlabs'
+  }
+
+  if (provider === 'elevenlabs') {
+    const isGoogleVoice =
+      vid.includes('Studio') || /^[a-z]{2}-[A-Z]{2}/.test(vid)
+    if (isGoogleVoice && !vid.startsWith('gemini')) {
+      provider = 'google'
+    }
+  }
+
+  return { ...vc, provider }
 }
 
 interface AudioGenerationRequest {
@@ -47,7 +84,30 @@ interface AudioGenerationRequest {
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, sceneIndex, audioType, text, voiceConfig, characterName, dialogueIndex, lineId, lineKind, characterId, language: requestedLanguage, skipTranslation, skipDbUpdate = false }: AudioGenerationRequest & { text: string, skipDbUpdate?: boolean } = await req.json()
+    const parsed = (await req.json()) as AudioGenerationRequest & {
+      text: string
+      skipDbUpdate?: boolean
+    }
+
+    if (!parsed.voiceConfig || typeof parsed.voiceConfig !== 'object') {
+      return NextResponse.json({ error: 'Missing required fields: voiceConfig' }, { status: 400 })
+    }
+
+    const voiceConfig = normalizeVoiceConfig(parsed.voiceConfig as VoiceConfig)
+    const {
+      projectId,
+      sceneIndex,
+      audioType,
+      text,
+      characterName,
+      dialogueIndex,
+      lineId,
+      lineKind,
+      characterId,
+      language: requestedLanguage,
+      skipTranslation,
+      skipDbUpdate = false,
+    } = parsed
 
     // Log the request for debugging
     console.log('[Scene Audio] Request:', { 
@@ -149,13 +209,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 2: Optimize text for TTS (remove stage directions, clean up)
-    const isGeminiModel = voiceConfig.voiceId.startsWith('gemini-')
-    const optimized = isGeminiModel 
+    const useGeminiOptimizer =
+      voiceConfig.provider === 'google' && voiceConfig.voiceId.startsWith('gemini-')
+    const optimized = useGeminiOptimizer
       ? optimizeTextForGeminiTTS(textToGenerate)
       : optimizeTextForTTS(textToGenerate)
       
     console.log('[Scene Audio] Text optimization:', {
-      isGeminiModel,
+      useGeminiOptimizer,
       original: textToGenerate.substring(0, 100),
       optimized: optimized.text.substring(0, 100),
       cues: optimized.cues,
@@ -181,15 +242,7 @@ export async function POST(req: NextRequest) {
       }, { status: 200 }) // Return 200 (success) but indicate no audio was generated
     }
 
-    // Step 3: Normalize voice config (Google/Gemini only)
-    let finalVoiceConfig = { ...voiceConfig }
-    if (voiceConfig.provider !== 'google') {
-      console.warn('[Scene Audio] Deprecated provider requested, forcing google:', voiceConfig.provider)
-      finalVoiceConfig = {
-        ...voiceConfig,
-        provider: 'google',
-      }
-    }
+    const finalVoiceConfig = voiceConfig
 
     // Step 4: Generate audio using specified provider with optimized text
     console.log('[Scene Audio] ==================== TTS INPUT DEBUG ====================')
@@ -303,6 +356,19 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    if (error instanceof GoogleTtsRateLimitedError) {
+      return NextResponse.json(
+        {
+          success: false,
+          rateLimited: true,
+          error: error.payload.userMessage,
+          code: 'VERTEX_TTS_RATE_LIMIT',
+          tips: error.payload.tips,
+        },
+        { status: 429 }
+      )
+    }
+
     // Safely log error details - avoid referencing variables that might not be defined
     console.error('[Scene Audio] Error:', {
       message: error?.message || String(error),
@@ -336,7 +402,23 @@ async function generateAudio(
   audioType: AudioGenerationRequest['audioType'] = 'narration',
   deliveryCues: string[] = []
 ): Promise<Buffer> {
-  return await generateGoogleAudio(text, voiceConfig, language, audioType, deliveryCues)
+  if (voiceConfig.provider === 'elevenlabs') {
+    return generateElevenLabsAudio(text, voiceConfig)
+  }
+  return generateGoogleAudio(text, voiceConfig, language, audioType, deliveryCues)
+}
+
+async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig): Promise<Buffer> {
+  const sanitizedText = finalizeTextForGoogleTts(text)
+  if (!sanitizedText.trim()) {
+    throw new Error('Text is empty after removing bracketed tags')
+  }
+  return synthesizeElevenLabsMp3({
+    text: sanitizedText,
+    voiceId: voiceConfig.voiceId,
+    stability: voiceConfig.stability,
+    similarityBoost: voiceConfig.similarityBoost,
+  })
 }
 
 /** Natural-language style steering for Gemini-TTS (prompt field). See Cloud TTS Gemini docs. */
@@ -439,6 +521,9 @@ async function generateGoogleAudio(
   audioType: AudioGenerationRequest['audioType'] = 'narration',
   deliveryCues: string[] = []
 ): Promise<Buffer> {
+  if (voiceConfig.provider !== 'google') {
+    throw new Error('Internal error: Google TTS invoked for non-google voice config')
+  }
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
   let accessToken: string | null = null
 
@@ -569,21 +654,52 @@ async function generateGoogleAudio(
     url += `?key=${apiKey}`
   }
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload),
-  })
+  const max429Retries = getGoogleTts429MaxRetries()
+  let response: Response | null = null
+  let lastErrorText = ''
+  let lastStatus = 0
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error(`[Google TTS] API error (${response.status}):`, errorText)
-    const violation = parseVertexTtsPolicyViolation(response.status, errorText, audioType)
+  for (let attempt = 0; attempt <= max429Retries; attempt++) {
+    response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    })
+
+    if (response.ok) {
+      break
+    }
+
+    lastStatus = response.status
+    lastErrorText = await response.text()
+    console.error(`[Google TTS] API error (${response.status}):`, lastErrorText)
+
+    const violation = parseVertexTtsPolicyViolation(response.status, lastErrorText, audioType)
     if (violation) {
       console.warn('[Google TTS] Vertex usage-guidelines block — returning user-facing guidance')
       throw new GoogleTtsBlockedError(violation)
     }
-    throw new Error(`Google TTS API error: ${response.status} - ${errorText}`)
+
+    const is429 = response.status === 429
+    const ratePayload = parseVertexTtsRateLimit(response.status, lastErrorText)
+    if (is429 && attempt < max429Retries) {
+      const delayMs = backoffMsFor429Attempt(attempt, response.headers.get('retry-after'))
+      console.warn(
+        `[Google TTS] Rate limited (429), retry ${attempt + 1}/${max429Retries} after ${delayMs}ms`
+      )
+      await sleep(delayMs)
+      continue
+    }
+
+    if (is429 && ratePayload) {
+      throw new GoogleTtsRateLimitedError(ratePayload)
+    }
+
+    throw new Error(`Google TTS API error: ${response.status} - ${lastErrorText}`)
+  }
+
+  if (!response?.ok) {
+    throw new Error(`Google TTS API error: ${lastStatus} - ${lastErrorText}`)
   }
 
   const data = await response.json()

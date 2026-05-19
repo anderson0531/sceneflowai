@@ -664,7 +664,7 @@ export function CharacterLibrary({
       <VoiceSelectionDialog
         open={createVoiceDialogOpen}
         onOpenChange={setCreateVoiceDialogOpen}
-        provider={ttsProvider || "google"}
+        provider={ttsProvider || "elevenlabs"}
         mode="character"
         onSelectVoice={(voiceId, voiceName) => {
           toast.success(

@@ -67,16 +67,20 @@ async function generateMusicForScene(
   scene: any,
   projectId: string,
   sceneIdx: number,
-  baseUrl: string
+  baseUrl: string,
+  authCookie?: string
 ): Promise<string | null> {
   try {
     const description =
       typeof scene.music === 'string' ? scene.music : scene.music?.description
     if (!description) return null
 
-    const musicResponse = await fetch(`${baseUrl}/api/tts/google/music`, {
+    const musicResponse = await fetch(`${baseUrl}/api/tts/elevenlabs/music`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authCookie ? { Cookie: authCookie } : {}),
+      },
       body: JSON.stringify({
         text: description,
         duration: 30,
@@ -382,7 +386,7 @@ export async function generateSceneAudio(
 
   // 3. Music
   if (includeMusic && scene?.music && !scene.musicAudio) {
-    const musicUrl = await generateMusicForScene(scene, projectId, sceneIndex, baseUrl)
+    const musicUrl = await generateMusicForScene(scene, projectId, sceneIndex, baseUrl, authCookie)
     if (musicUrl) {
       assets.push({ audioType: 'music', audioUrl: musicUrl })
       counts.music += 1
