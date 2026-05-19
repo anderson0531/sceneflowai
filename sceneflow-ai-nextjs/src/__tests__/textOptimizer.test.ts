@@ -1,10 +1,27 @@
 import { describe, it, expect } from 'vitest'
 import {
   optimizeTextForTTS,
+  optimizeTextForGeminiTTS,
   finalizeTextForGoogleTts,
   trimEchoedPrefixTail,
   stripDirectionBracketsForTiming,
 } from '@/lib/tts/textOptimizer'
+
+describe('optimizeTextForGeminiTTS', () => {
+  it('captures bracket delivery hints into cues before stripping from spoken text', () => {
+    const r = optimizeTextForGeminiTTS("[tired, muttering] 'Hello there.'")
+    expect(r.cues.some((c) => /tired/i.test(c))).toBe(true)
+    expect(r.cues.some((c) => /muttering/i.test(c))).toBe(true)
+    expect(r.text.toLowerCase()).toContain('hello')
+    expect(r.text.toLowerCase()).not.toContain('tired')
+    expect(r.isSpeakable).toBe(true)
+  })
+
+  it('unwraps outer screenplay quotes after removing parens', () => {
+    const r = optimizeTextForGeminiTTS("(quietly) 'Just testing.'")
+    expect(r.text).toBe('Just testing.')
+  })
+})
 
 describe('optimizeTextForTTS', () => {
   it('removes multiline square-bracket delivery notes', () => {

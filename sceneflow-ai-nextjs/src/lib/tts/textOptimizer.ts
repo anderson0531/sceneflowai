@@ -113,8 +113,53 @@ function extractEmotionCues(text: string): string[] {
 }
 
 /**
- * Normalizes whitespace in text
+ * Capture bracketed delivery hints like `[tired, muttering]` before those brackets
+ * are stripped from spoken text. Gemini-TTS steers delivery via `prompt`; cues
+ * must not be silently discarded.
  */
+export function extractBracketDeliveryHints(text: string): string[] {
+  const normalized = normalizePerformanceBracketChars(text || '')
+  const hints: string[] = []
+  const re = /\[([^\]]+)\]/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(normalized)) !== null) {
+    const inner = m[1].replace(/\s+/g, ' ').trim()
+    if (!inner) continue
+    for (const part of inner.split(',')) {
+      const p = part.trim()
+      if (p.length > 0) hints.push(p)
+    }
+  }
+  const seen = new Set<string>()
+  const deduped: string[] = []
+  for (const h of hints) {
+    const key = h.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    deduped.push(h)
+  }
+  return deduped
+}
+
+/** Strip a single layer of outer screenplay quotes so TTS does not read them aloud. */
+export function unwrapOuterScreenplayQuotes(text: string): string {
+  let s = text.trim()
+  const pairs: [string, string][] = [
+    ["'", "'"],
+    ['\u2018', '\u2019'],
+    ['\u201C', '\u201D'],
+    ['"', '"'],
+  ]
+  for (const [open, close] of pairs) {
+    if (s.length >= 2 && s.startsWith(open) && s.endsWith(close)) {
+      s = s.slice(open.length, -close.length).trim()
+      break
+    }
+  }
+  return s
+}
+
+/** Normalizes whitespace in text */
 function normalizeWhitespace(text: string): string {
   // Replace multiple spaces with single space
   let normalized = text.replace(/\s+/g, ' ')
@@ -173,24 +218,29 @@ export function optimizeTextForTTS(input: string): OptimizedText {
 }
 
 /**
- * Optimizes text specifically for Gemini 2.5 Flash TTS.
+ * Optimizes text for Cloud Gemini-TTS (gemini-* voices).
  *
- * Historically this function preserved `[...]` tags because Gemini 2.5 can
- * use them as inline delivery hints. In practice scripts emit long stage
- * directions like `[exhausted, whispering] Another late night...` that
- * Gemini sometimes reads aloud verbatim. To prevent direction text from
- * leaking into the audio we now strip ALL bracketed and parenthetical
- * directions for both Google and Gemini paths. Emotion cues are still
- * extracted and exposed via `cues` so callers can inject them into the
- * voice prompt instead of the spoken input.
+ * Bracketed directions like `[tired, muttering]` are removed from the spoken
+ * string (they may otherwise be read verbatim) but are captured in `cues` so
+ * the API `prompt` field can steer delivery. See `generate-scene-audio` route.
  */
 export function optimizeTextForGeminiTTS(input: string): OptimizedText {
   const originalLength = input.length
-  const cues = extractEmotionCues(input)
+  const bracketHints = extractBracketDeliveryHints(input)
+  const emotionCues = extractEmotionCues(input)
+  const cues: string[] = []
+  const seenCue = new Set<string>()
+  for (const c of [...bracketHints, ...emotionCues]) {
+    const k = c.toLowerCase()
+    if (seenCue.has(k)) continue
+    seenCue.add(k)
+    cues.push(c)
+  }
 
   let optimized = removeStageDirections(input)
   optimized = unwrapMarkdownEmphasis(optimized)
   optimized = optimized.replace(/\*/g, '')
+  optimized = unwrapOuterScreenplayQuotes(optimized)
 
   optimized = normalizeWhitespace(optimized)
   optimized = trimEchoedPrefixTail(optimized)
@@ -235,6 +285,7 @@ export function finalizeTextForGeminiTts(text: string): string {
 
   s = unwrapMarkdownEmphasis(s)
   s = s.replace(/\*/g, '')
+  s = unwrapOuterScreenplayQuotes(s)
   s = s.replace(/\s+/g, ' ').trim()
   s = trimEchoedPrefixTail(s)
 

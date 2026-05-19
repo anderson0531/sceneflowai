@@ -199,7 +199,13 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Audio] Text length:', optimized.text.length)
     console.log('[Scene Audio] ==================== END TTS INPUT DEBUG ====================')
     
-    const audioBuffer = await generateAudio(optimized.text, finalVoiceConfig, language, audioType)
+    const audioBuffer = await generateAudio(
+      optimized.text,
+      finalVoiceConfig,
+      language,
+      audioType,
+      optimized.cues
+    )
 
     // Step 5: Get actual audio duration from buffer
     let audioDuration: number | null = null
@@ -308,9 +314,32 @@ async function generateAudio(
   text: string,
   voiceConfig: VoiceConfig,
   language: string = 'en',
-  audioType: AudioGenerationRequest['audioType'] = 'narration'
+  audioType: AudioGenerationRequest['audioType'] = 'narration',
+  deliveryCues: string[] = []
 ): Promise<Buffer> {
-  return await generateGoogleAudio(text, voiceConfig, language, audioType)
+  return await generateGoogleAudio(text, voiceConfig, language, audioType, deliveryCues)
+}
+
+/** Natural-language style steering for Gemini-TTS (prompt field). See Cloud TTS Gemini docs. */
+function buildGeminiTtsPrompt(params: {
+  audioType: AudioGenerationRequest['audioType']
+  voicePrompt?: string
+  deliveryCues: string[]
+}): string {
+  const guard =
+    'Speak only the words in the text field. Do not read meta-instructions aloud, do not add filler words, and do not repeat or summarize the line.'
+  const prosody =
+    'Deliver with natural human prosody—conversational rhythm, believable pacing, and subtle emotion. Avoid flat, monotone, or robotic delivery.'
+  const acting =
+    params.deliveryCues.length > 0
+      ? ` Acting direction for this performance: ${params.deliveryCues.join('; ')}.`
+      : ''
+  const profile = params.voicePrompt?.trim()
+    ? params.audioType === 'dialogue'
+      ? ` Character voice profile for timbre and manner (style only, not spoken as dialogue): ${params.voicePrompt.trim().slice(0, 700)}.`
+      : ` Voice profile—apply as delivery style without narrating this sentence verbatim: ${params.voicePrompt.trim().slice(0, 800)}.`
+    : ''
+  return `${prosody}${acting}${profile} ${guard}`.trim()
 }
 
 /**
@@ -388,7 +417,8 @@ async function generateGoogleAudio(
   text: string,
   voiceConfig: VoiceConfig,
   language: string = 'en',
-  audioType: AudioGenerationRequest['audioType'] = 'narration'
+  audioType: AudioGenerationRequest['audioType'] = 'narration',
+  deliveryCues: string[] = []
 ): Promise<Buffer> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY || process.env.GOOGLE_API_KEY
   let accessToken: string | null = null
@@ -495,21 +525,15 @@ async function generateGoogleAudio(
   }
 
   if (isGemini) {
-    payload.voice.modelName = 'gemini-2.5-flash-tts'
-    if (voiceConfig.prompt) {
-      if (audioType === 'dialogue') {
-        // Long character "voice profile" prompts often get echoed or blended into dialogue.
-        // Timbre is already selected via voice.name; keep a minimal guard only.
-        payload.input.prompt =
-          'Speak only the words supplied in the main text. Do not read instructions aloud, do not add narrator commentary, and do not repeat the opening sentence at the end.'
-      } else {
-        // Gemini TTS sometimes reads the prompt aloud if it's too descriptive.
-        payload.input.prompt = `INSTRUCTION: You are a voice actor. Do not read this instruction aloud. Adopt the following voice profile precisely: ${voiceConfig.prompt}`
-      }
-    } else if (audioType === 'dialogue') {
-      payload.input.prompt =
-        'Speak only the words supplied in the main text. Do not repeat phrases or add filler at the end.'
-    }
+    // Default aligns with Gemini 3.1 Flash TTS preview (global). Override via GEMINI_TTS_MODEL,
+    // e.g. gemini-2.5-flash-tts or gemini-2.5-pro-tts for GA regions / quality tradeoffs.
+    payload.voice.modelName =
+      process.env.GEMINI_TTS_MODEL?.trim() || 'gemini-3.1-flash-tts-preview'
+    payload.input.prompt = buildGeminiTtsPrompt({
+      audioType,
+      voicePrompt: voiceConfig.prompt,
+      deliveryCues,
+    })
   }
 
   // Use v1beta1 for Gemini TTS and Voice Cloning
