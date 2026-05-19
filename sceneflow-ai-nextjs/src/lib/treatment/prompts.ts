@@ -109,7 +109,9 @@ OUTPUT RULES - CRITICAL:
 
 6. Be concise and engaging. Avoid fluff.
 
-7. Do NOT use placeholders like "General audience"; provide concrete descriptions.`
+7. Do NOT use placeholders like "General audience"; provide concrete descriptions.
+
+8. "protagonist" and "antagonist" MUST be plain JSON strings (one string each). Do NOT use nested objects here — put name, goal, and flaw inside the string sentences if needed.`
 
 function getFormatSpecificBlocks(format: Format) {
   const isNonFiction = ['education', 'training', 'news', 'podcast', 'interview'].includes(format);

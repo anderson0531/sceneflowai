@@ -1,5 +1,30 @@
 import { z } from 'zod'
 
+/**
+ * Film-treatment JSON sometimes uses strings for protagonist/antagonist; Gemini sometimes returns
+ * structured objects ({ name, goal, flaw, description }). Coerce to the single string the UI expects.
+ */
+export function coerceTreatmentCharacterField(value: unknown): string | undefined {
+  if (value == null) return undefined
+  if (typeof value === 'string') {
+    const t = value.trim()
+    return t.length ? t : undefined
+  }
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    const o = value as Record<string, unknown>
+    const name = o.name != null ? String(o.name).trim() : ''
+    const goal = o.goal != null ? String(o.goal).trim() : ''
+    const flaw = o.flaw != null ? String(o.flaw).trim() : ''
+    const description = o.description != null ? String(o.description).trim() : ''
+    const role = o.role != null ? String(o.role).trim() : ''
+    const headline = name || role || 'Character'
+    const details = [role && role !== name ? role : '', goal, flaw, description].filter(Boolean).join('. ')
+    const out = details ? `${headline}: ${details}` : headline !== 'Character' ? headline : ''
+    return out.length ? out : undefined
+  }
+  return undefined
+}
+
 const BeatSchema = z.object({
   title: z.string().min(1).catch('Beat'),
   intent: z.string().optional(),
@@ -22,8 +47,8 @@ const TreatmentSchema = z.object({
   audience: z.string().optional(),
   synopsis: z.string().optional(),
   setting: z.string().optional(),
-  protagonist: z.string().optional(),
-  antagonist: z.string().optional(),
+  protagonist: z.preprocess(coerceTreatmentCharacterField, z.string().optional()),
+  antagonist: z.preprocess(coerceTreatmentCharacterField, z.string().optional()),
   themes: z
     .union([z.array(z.string()), z.string()])
     .transform((v) => (Array.isArray(v) ? v : v ? [v] : []))

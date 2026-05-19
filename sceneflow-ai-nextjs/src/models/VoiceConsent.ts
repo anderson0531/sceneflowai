@@ -112,10 +112,8 @@ VoiceConsent.init(
     voice_clone_id: {
       type: DataTypes.UUID,
       allowNull: true,
-      references: {
-        model: 'user_voice_clones',
-        key: 'id',
-      },
+      // Intentionally no `references`: circular FK with user_voice_clones.consent_id would block CREATE TABLE order.
+      // Sequelize associations in models/index.ts still define the relationship for queries.
     },
     consent_type: {
       type: DataTypes.ENUM('self_attestation', 'voice_verified'),

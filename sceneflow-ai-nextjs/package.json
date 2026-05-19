@@ -16,6 +16,7 @@
                 "typecheck": "tsc --noEmit",
                 "lint:circular": "madge --circular --extensions ts,tsx src/",
                 "db:migrate": "echo 'Skipping migrations (placeholder)'",
+                "db:bootstrap": "npx tsx scripts/run-bootstrap-schema.ts",
                 "test:dol": "echo 'Skipping DOL tests (placeholder)'",
                 "ci:smoke": "bash scripts/ci/ai-smoke.sh",
                 "ci:circular": "bash scripts/ci/check-circular-deps.sh",
