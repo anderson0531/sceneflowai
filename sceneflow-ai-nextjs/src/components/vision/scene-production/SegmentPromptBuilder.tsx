@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
 import { Copy, Check, Sparkles, Info, Loader2, Video, Image as ImageIcon, Clock, ArrowRight, Film, Link as LinkIcon, Upload, Camera, Wand2, Library, Users, Box, Clapperboard, X, Plus, MessageSquare, AlertCircle, RotateCcw, Eye, Type, Scissors, MapPin, Coffee, CreditCard, ShieldAlert, RefreshCw } from 'lucide-react'
+import { GuidePromptEditor } from './GuidePromptEditor'
+import { visionSceneToGuideAudioData } from '@/lib/scene/visionSceneAudio'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { SceneSegment, SceneSegmentTake } from './types'
 import { VisualReference, type LocationReference } from '@/types/visionReferences'
@@ -136,6 +138,8 @@ export interface GeneratePromptData {
   selectedReferences?: SelectedReference[]
   // Enhanced: Character dialog guidance
   characterDialogGuidance?: Array<{ characterName: string; referenceImageUrl?: string; dialogLines?: string[] }>
+  /** Veo 3.1 native audio guide (dialogue, narration, SFX cues) */
+  guidePrompt?: string
   // Style data
   artStyle?: string
   shotType?: string
@@ -197,6 +201,22 @@ export function SegmentPromptBuilder({
   // Enhanced: Character dialog connections
   const [characterDialogConnections, setCharacterDialogConnections] = useState<Map<string, string>>(new Map())
   
+  const [veoGuidePrompt, setVeoGuidePrompt] = useState('')
+  const [veoGuideNegativePrompt, setVeoGuideNegativePrompt] = useState('')
+
+  const guideScene = useMemo(
+    () => visionSceneToGuideAudioData(frameResolverScene as Record<string, unknown> | null),
+    [frameResolverScene]
+  )
+
+  const guideCharacters = useMemo(
+    () =>
+      availableCharacters.map((c) => ({
+        name: c.name,
+      })),
+    [availableCharacters]
+  )
+
   // Cinematic Elements (CIN mode) state
   const [selectedCinematicType, setSelectedCinematicType] = useState<SpecialSegmentType>('title')
   const [cinematicPrompt, setCinematicPrompt] = useState('')
@@ -863,9 +883,12 @@ export function SegmentPromptBuilder({
     // Clear preflight warning since we're proceeding
     setPreflightModerationResult(null)
     
+    const mergedNegative =
+      [structure.negativePrompt, veoGuideNegativePrompt].filter(Boolean).join(', ') || structure.negativePrompt
+
     const promptData: GeneratePromptData = {
       prompt: rawPrompt,
-      negativePrompt: structure.negativePrompt,
+      negativePrompt: mergedNegative,
       mode,
       artStyle: structure.artStyle,
       shotType: structure.shotType,
@@ -934,6 +957,10 @@ export function SegmentPromptBuilder({
       
       if (dialogGuidance.length > 0) {
         promptData.characterDialogGuidance = dialogGuidance
+      }
+
+      if (veoGuidePrompt.trim()) {
+        promptData.guidePrompt = veoGuidePrompt.trim()
       }
     }
     
@@ -1142,6 +1169,20 @@ export function SegmentPromptBuilder({
         )}
 
         <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+          {mode === 'video' && guideScene ? (
+            <div className="mb-4">
+              <GuidePromptEditor
+                segment={segment}
+                scene={guideScene}
+                characters={guideCharacters}
+                defaultElementsMode={
+                  segment.dialogueLineIds && segment.dialogueLineIds.length > 0 ? 'batch' : 'interactive'
+                }
+                onGuidePromptChange={setVeoGuidePrompt}
+                onNegativePromptChange={setVeoGuideNegativePrompt}
+              />
+            </div>
+          ) : null}
           {/* Video Generation Method Selector */}
           {mode === 'video' && (
             <div className="mb-4 p-4 rounded-lg border border-gray-700 bg-gray-800/50">

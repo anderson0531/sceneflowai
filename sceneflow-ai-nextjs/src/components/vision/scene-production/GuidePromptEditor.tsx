@@ -75,7 +75,17 @@ import {
   Eye,
   User,
   Video,
+  Globe,
+  Loader2,
+  Languages,
 } from 'lucide-react'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
+import { useVeoDialogueTranslations } from '@/hooks/useVeoDialogueTranslations'
+import {
+  VEO_DIALOGUE_LANGUAGE_STORAGE_KEY,
+  VEO_VIDEO_DIALOGUE_LANGUAGE_CODES,
+  getVeoLanguageName,
+} from '@/constants/veoLanguages'
 import type { SceneSegment, SegmentDialogueLine, NarratorVoiceType, VoiceAnchorPreset } from './types'
 
 // ============================================================================
@@ -420,6 +430,18 @@ export function GuidePromptEditor({
     new Set(DEFAULT_VIDEO_NEGATIVE_PRESETS)
   )
   const [customNegativePrompt, setCustomNegativePrompt] = useState('')
+
+  const [veoDialogueLanguage, setVeoDialogueLanguage] = useState(() => {
+    if (typeof window === 'undefined') return 'en'
+    return localStorage.getItem(VEO_DIALOGUE_LANGUAGE_STORAGE_KEY) || 'en'
+  })
+
+  const handleVeoLanguageChange = useCallback((code: string) => {
+    setVeoDialogueLanguage(code)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(VEO_DIALOGUE_LANGUAGE_STORAGE_KEY, code)
+    }
+  }, [])
   
   // Get the selected voice preset
   const selectedVoicePreset = VOICE_ANCHOR_PRESETS.find(p => p.type === narratorVoiceType) || VOICE_ANCHOR_PRESETS[2]
@@ -622,6 +644,42 @@ export function GuidePromptEditor({
     ))
   }, [])
   
+  const translatableLines = useMemo(
+    () =>
+      elements
+        .filter((el) => el.type === 'dialogue' || el.type === 'narration')
+        .map((el) => ({
+          id: el.id,
+          englishText: getEffectiveElementText(el),
+        })),
+    [elements]
+  )
+
+  const {
+    translatedById,
+    isTranslating: isTranslatingDialogue,
+    error: translationError,
+    refresh: refreshTranslations,
+  } = useVeoDialogueTranslations(
+    translatableLines,
+    veoDialogueLanguage,
+    veoDialogueLanguage !== 'en'
+  )
+
+  const resolveElementTextForVeo = useCallback(
+    (el: AudioElement) => {
+      if (veoDialogueLanguage === 'en') {
+        return getEffectiveElementText(el)
+      }
+      if (el.type === 'dialogue' || el.type === 'narration') {
+        const translated = translatedById[el.id]
+        if (translated?.trim()) return translated
+      }
+      return getEffectiveElementText(el)
+    },
+    [veoDialogueLanguage, translatedById, elements]
+  )
+
   // ============================================================================
   // INTELLIGENT PROMPT SYNTHESIS (shared with batch auto-guide)
   // ============================================================================
@@ -631,8 +689,16 @@ export function GuidePromptEditor({
       narratorVoicePromptText: selectedVoicePreset.promptText,
       narratorUseCustomVoice: narratorVoiceType === 'custom',
       narratorCustomDescription: customVoiceDescription,
+      resolveElementText: resolveElementTextForVeo,
     })
-  }, [elements, customAddition, narratorVoiceType, customVoiceDescription, selectedVoicePreset])
+  }, [
+    elements,
+    customAddition,
+    narratorVoiceType,
+    customVoiceDescription,
+    selectedVoicePreset,
+    resolveElementTextForVeo,
+  ])
   
   // Raw concatenated version for preview/debugging
   const rawConcatenatedPrompt = useMemo(() => {
@@ -792,6 +858,57 @@ export function GuidePromptEditor({
                 </Tooltip>
               </div>
             </div>
+
+            <div className="p-3 bg-slate-800/70 rounded-lg border border-slate-700 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Languages className="w-4 h-4 text-cyan-400" />
+                  <span className="text-xs font-medium text-slate-300">Video dialogue language</span>
+                </div>
+                <GroupedLanguageSelector
+                  value={veoDialogueLanguage}
+                  onValueChange={handleVeoLanguageChange}
+                  filterCodes={[...VEO_VIDEO_DIALOGUE_LANGUAGE_CODES]}
+                  size="sm"
+                  intent="generate"
+                  placeholder="English"
+                  className="border-slate-600"
+                />
+              </div>
+              <p className="text-[11px] text-slate-500 leading-snug">
+                Edit dialogue and narration in <span className="text-slate-400">English</span> below.
+                {veoDialogueLanguage !== 'en' ? (
+                  <>
+                    {' '}
+                    The optimized prompt uses{' '}
+                    <span className="text-cyan-300">{getVeoLanguageName(veoDialogueLanguage)}</span>{' '}
+                    for Veo 3.1 native speech.
+                  </>
+                ) : (
+                  ' Select another language to generate speech in that language.'
+                )}
+              </p>
+              {translationError ? (
+                <div className="flex items-center justify-between gap-2 text-xs text-amber-300">
+                  <span>{translationError}</span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs"
+                    onClick={() => refreshTranslations()}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              ) : null}
+              {veoDialogueLanguage !== 'en' && isTranslatingDialogue ? (
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Translating dialogue…
+                </div>
+              ) : null}
+            </div>
             
             {/* Narrator Voice Anchor Selector */}
             {elements.some(el => el.type === 'narration' && el.selected) && (
@@ -939,7 +1056,9 @@ export function GuidePromptEditor({
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2">
                                 <FileText className="w-3 h-3 text-amber-400" />
-                                <span className="text-xs text-slate-400">Text used for this clip:</span>
+                                <span className="text-xs text-slate-400">
+                                  {veoDialogueLanguage !== 'en' ? 'English (edit):' : 'Text used for this clip:'}
+                                </span>
                               </div>
                               <div className="flex items-center gap-2 text-xs text-slate-500">
                                 <span>~{estimatedDuration}s speaking</span>
@@ -961,12 +1080,37 @@ export function GuidePromptEditor({
                               onChange={(e) => updateElementEditedContent(element.id, e.target.value)}
                               className="min-h-[90px] text-sm bg-slate-900 border-slate-600"
                             />
-                            <p className="text-[11px] text-slate-500 mt-2">
-                              Source reference (read-only):
-                            </p>
-                            <p className="text-xs text-slate-500 mt-1 italic line-clamp-3 pl-1 border-l-2 border-slate-600">
-                              "{element.content.slice(0, 220)}{element.content.length > 220 ? '...' : ''}"
-                            </p>
+                            {veoDialogueLanguage !== 'en' ? (
+                              <div className="mt-3 space-y-1.5">
+                                <div className="flex items-center gap-2">
+                                  <Globe className="w-3 h-3 text-cyan-400" />
+                                  <span className="text-xs font-medium text-cyan-300">
+                                    Translated ({getVeoLanguageName(veoDialogueLanguage)})
+                                  </span>
+                                  {isTranslatingDialogue && !translatedById[element.id] ? (
+                                    <Loader2 className="w-3 h-3 animate-spin text-slate-500" />
+                                  ) : null}
+                                </div>
+                                <div className="p-2.5 rounded-md bg-cyan-950/30 border border-cyan-800/40 text-sm text-slate-200 whitespace-pre-wrap min-h-[72px]">
+                                  {translatedById[element.id]?.trim() ||
+                                    (isTranslatingDialogue ? 'Translating…' : effectiveText)}
+                                </div>
+                                <p className="text-[10px] text-slate-500">
+                                  Sent to Veo in {getVeoLanguageName(veoDialogueLanguage)}. Edit the English
+                                  field above to change this text.
+                                </p>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="text-[11px] text-slate-500 mt-2">
+                                  Source reference (read-only):
+                                </p>
+                                <p className="text-xs text-slate-500 mt-1 italic line-clamp-3 pl-1 border-l-2 border-slate-600">
+                                  "{element.content.slice(0, 220)}
+                                  {element.content.length > 220 ? '...' : ''}"
+                                </p>
+                              </>
+                            )}
                           </div>
                         )}
                       </div>

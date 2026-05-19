@@ -1,3 +1,5 @@
+import { splitEmotionPrefix } from '@/lib/scene/translateGuideDialogue'
+
 /**
  * Shared Veo guide prompt composition for segment dialogue + direction.
  * Used by GuidePromptEditor (full UI) and useSegmentConfig (batch / auto guide).
@@ -299,6 +301,8 @@ export interface ComposeGuidePromptOptions {
   narratorVoicePromptText?: string
   narratorUseCustomVoice?: boolean
   narratorCustomDescription?: string
+  /** Override text per element (e.g. translated dialogue for Veo) */
+  resolveElementText?: (element: GuideAudioElement) => string
 }
 
 /**
@@ -310,6 +314,8 @@ export function composeGuidePromptFromElements(
   options: ComposeGuidePromptOptions = {}
 ): string {
   const selectedElements = elements.filter((el) => el.selected)
+  const textFor = (el: GuideAudioElement) =>
+    options.resolveElementText?.(el) ?? getEffectiveElementText(el)
 
   const customAddition = options.customAddition?.trim() || ''
   if (selectedElements.length === 0 && !customAddition) {
@@ -321,7 +327,7 @@ export function composeGuidePromptFromElements(
   const directions = selectedElements.filter((el) => el.type === 'direction')
   if (directions.length > 0) {
     const directionText = directions
-      .map((d) => getEffectiveElementText(d))
+      .map((d) => textFor(d))
       .join(' ')
 
     const cameraMatch = directionText.match(
@@ -340,11 +346,14 @@ export function composeGuidePromptFromElements(
   const dialogues = selectedElements.filter((el) => el.type === 'dialogue')
   if (dialogues.length > 0) {
     dialogues.forEach((d) => {
-      const portion = getEffectiveElementText(d)
+      const portion = textFor(d)
       const charName = d.character || 'The character'
-      const emotion = extractDialoguePerformance(portion, undefined)
+      const { emotion: leadingEmotionTag, body: afterEmotionTag } = splitEmotionPrefix(portion)
+      const emotion =
+        extractDialoguePerformance(afterEmotionTag || portion, undefined) ||
+        (leadingEmotionTag ? leadingEmotionTag.toLowerCase() : '')
 
-      let cleanDialogue = portion.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').trim()
+      let cleanDialogue = (afterEmotionTag || portion).replace(/\(.*?\)/g, '').trim()
       const words = cleanDialogue.split(/\s+/)
       const truncatedText =
         words.length > 60 ? words.slice(0, 60).join(' ') + '...' : cleanDialogue
@@ -378,14 +387,18 @@ export function composeGuidePromptFromElements(
         ? `${charName}${voiceDesc} speaks the following line ${emotionPhrase}:`
         : `${charName}${voiceDesc} speaks the following line:`
 
-      visualParts.push(`${speakPhrase} '${truncatedText}'`)
+      const quotedLine = leadingEmotionTag
+        ? `[${leadingEmotionTag}] ${truncatedText}`
+        : truncatedText
+
+      visualParts.push(`${speakPhrase} '${quotedLine}'`)
     })
   }
 
   const narrations = selectedElements.filter((el) => el.type === 'narration')
   if (narrations.length > 0) {
     const narrationText = narrations
-      .map((n) => getEffectiveElementText(n))
+      .map((n) => textFor(n))
       .join(' ')
 
     const voiceAnchor =
@@ -408,7 +421,7 @@ export function composeGuidePromptFromElements(
   const musicElements = selectedElements.filter((el) => el.type === 'music')
   if (musicElements.length > 0) {
     const musicDescriptions = musicElements
-      .map((m) => getEffectiveElementText(m).toLowerCase())
+      .map((m) => textFor(m).toLowerCase())
       .join(', ')
     visualParts.push(`Background music: ${musicDescriptions}`)
   }
