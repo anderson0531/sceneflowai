@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDuration'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
+import { isLikelyNarration } from '@/lib/script/narration'
 import {
   Sparkles,
   Loader2,
@@ -332,21 +333,6 @@ interface SegmentBuilderProps {
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
-// Heuristic: determine whether the provided scene.narration should be treated as
-// real narration (audio/script text) vs being a repeat of the scene's visual
-// description. We conservatively only treat it as narration if it exists and is
-// not exactly identical to the visual description. Presence of narration audio
-// URLs still counts as narration.
-function isLikelyNarration(scene: any): boolean {
-  const narration = scene?.narration
-  if (!narration) return false
-  const nTrim = narration.toString().trim()
-  if (!nTrim) return false
-  const visual = (scene.visualDescription || scene.action || scene.summary || '').toString().trim()
-  if (visual && nTrim === visual) return false
-  return true
-}
 
 /**
  * Generate a content hash for staleness detection

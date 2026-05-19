@@ -21,6 +21,7 @@ import { PanelGroup, Panel, PanelResizeHandle, ImperativePanelHandle } from 'rea
 import { upload } from '@vercel/blob/client'
 import debounce from 'lodash/debounce'
 import { cleanupStaleAudio, clearAllSceneAudio } from '@/lib/audio/cleanupAudio'
+import { getBatchNarrationTtsText } from '@/lib/script/narration'
 import { toast } from 'sonner'
 
 // Dynamic import to break TDZ initialization chain - ScriptPanel imports heavy scene-production modules
@@ -8447,7 +8448,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             textPreview: text?.substring(0, 50)
           })
         } else {
-          text = scene.narration || scene.action
+          const preferred = getBatchNarrationTtsText(scene, undefined)
+          if (preferred) {
+            text = preferred
+          } else if (!String(scene.narration || '').trim()) {
+            // Legacy: some scripts only store voiceover in action when narration is blank
+            text = scene.action
+          } else {
+            text = undefined
+          }
           if (targetLanguage !== 'en') {
             console.log('[Generate Scene Audio] No stored translation for narration — server will translate via Vertex AI:', {
               language: targetLanguage,

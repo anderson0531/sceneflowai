@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
+import { getBatchNarrationTtsText } from '../../../../lib/script/narration'
 import { put } from '@vercel/blob'
 import { toCanonicalName, generateAliases } from '../../../../lib/character/canonical'
 import { resolveSfxDuration } from '../../../../lib/elevenlabs/sfxDuration'
@@ -482,17 +483,15 @@ export async function POST(req: NextRequest) {
             await Promise.all(chunkIndices.map(async (sceneIndex) => {
               const scene = scenes[sceneIndex];
               
-              // Generate narration
-              if (scene.narration) {
-                console.log(`[Batch Audio] Generating narration for scene ${sceneIndex + 1}`);
-                
-                // Check stored translations first (user imports > machine translation)
-                const sceneTranslation = (storedTranslations as any)[sceneIndex] as { narration?: string; dialogue?: string[] } | undefined;
-                const storedNarration = sceneTranslation?.narration;
-                const narrationText = storedNarration || scene.narration;
-                const narrationIsPreTranslated = !!storedNarration;
-                if (storedNarration) {
-                  console.log(`[Batch Audio] Using stored ${language} translation for narration in scene ${sceneIndex + 1}`);
+              // Generate narration (skip duplicate-description "narration" — matches Production / SegmentBuilder)
+              const sceneTranslation = (storedTranslations as any)[sceneIndex] as { narration?: string; dialogue?: string[] } | undefined
+              const storedNarration = sceneTranslation?.narration
+              const narrationText = getBatchNarrationTtsText(scene, storedNarration)
+              if (narrationText) {
+                console.log(`[Batch Audio] Generating narration for scene ${sceneIndex + 1}`)
+                const narrationIsPreTranslated = !!storedNarration?.trim()
+                if (storedNarration?.trim()) {
+                  console.log(`[Batch Audio] Using stored ${language} translation for narration in scene ${sceneIndex + 1}`)
                 }
                 
                 // Optimize narration text
@@ -522,6 +521,10 @@ export async function POST(req: NextRequest) {
                   };
                 }
                 results.push(narrationData);
+              } else if (String(scene.narration || '').trim() && !storedNarration?.trim()) {
+                console.log(
+                  `[Batch Audio] Skipping legacy narration for scene ${sceneIndex + 1}: identical to visual/action or empty after filter (Production treats this as non-voiceover)`
+                )
               }
               
               // Generate dialogue

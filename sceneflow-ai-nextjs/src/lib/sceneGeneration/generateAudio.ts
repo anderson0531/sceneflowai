@@ -16,6 +16,7 @@ import {
   NARRATOR_CHARACTER,
   NARRATOR_CHARACTER_ID,
 } from '../../lib/script/segmentTypes'
+import { getBatchNarrationTtsText } from '../../lib/script/narration'
 import type { SceneAudioAsset, SceneAudioCounts, SceneAudioResult } from './types'
 
 export interface GenerateSceneAudioParams {
@@ -211,43 +212,45 @@ export async function generateSceneAudio(
     }
     return false
   })
-  if (scene?.narration && narrationVoice && !hasNarratorInDialogue) {
+  if (narrationVoice && !hasNarratorInDialogue) {
     const sceneTranslation = storedTranslations?.[sceneIndex]
     const storedNarration = sceneTranslation?.narration
-    const narrationText = storedNarration || scene.narration
-    const optimized = optimizeTextForTTS(narrationText)
+    const narrationText = getBatchNarrationTtsText(scene, storedNarration)
+    if (narrationText) {
+      const optimized = optimizeTextForTTS(narrationText)
 
-    try {
-      const res = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          projectId,
-          sceneIndex,
-          audioType: 'narration',
-          text: optimized.text,
-          voiceConfig: narrationVoice,
-          language,
-          skipTranslation: !!storedNarration,
-          skipDbUpdate: true,
-        }),
-      })
-      const data = await res.json().catch(() => null as any)
-      if (data?.success && data.audioUrl) {
-        assets.push({
-          audioType: 'narration',
-          audioUrl: data.audioUrl,
-          durationSeconds: data.duration ?? null,
-          voiceId: narrationVoice?.voiceId ?? null,
-          voiceProvider: narrationVoice?.provider ?? null,
+      try {
+        const res = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            projectId,
+            sceneIndex,
+            audioType: 'narration',
+            text: optimized.text,
+            voiceConfig: narrationVoice,
+            language,
+            skipTranslation: !!storedNarration?.trim(),
+            skipDbUpdate: true,
+          }),
         })
-        counts.narration += 1
+        const data = await res.json().catch(() => null as any)
+        if (data?.success && data.audioUrl) {
+          assets.push({
+            audioType: 'narration',
+            audioUrl: data.audioUrl,
+            durationSeconds: data.duration ?? null,
+            voiceId: narrationVoice?.voiceId ?? null,
+            voiceProvider: narrationVoice?.provider ?? null,
+          })
+          counts.narration += 1
+        }
+      } catch (error: any) {
+        console.error(
+          `[generateSceneAudio] Narration failed for scene ${sceneIndex + 1}:`,
+          error?.message || String(error)
+        )
       }
-    } catch (error: any) {
-      console.error(
-        `[generateSceneAudio] Narration failed for scene ${sceneIndex + 1}:`,
-        error?.message || String(error)
-      )
     }
   }
 
