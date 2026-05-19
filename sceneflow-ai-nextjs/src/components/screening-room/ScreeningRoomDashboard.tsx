@@ -41,10 +41,12 @@ import {
   MessageSquare,
   Download,
   Tag,
+  MonitorPlay,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
+import { ScreeningRoomVideoPlayer } from './ScreeningRoomVideoPlayer'
 import type {
   BehavioralAnalyticsSummary,
   ABTestConfig,
@@ -213,6 +215,10 @@ export function ScreeningRoomDashboard({
   const [feedbackDraftRating, setFeedbackDraftRating] = useState(4)
   const [feedbackDraftTags, setFeedbackDraftTags] = useState('')
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
+  const [screeningRoomFullscreen, setScreeningRoomFullscreen] = useState<{
+    url: string
+    title: string
+  } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   // ============================================================================
@@ -560,7 +566,21 @@ export function ScreeningRoomDashboard({
         </div>
         
         {/* Actions */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!screening.videoUrl}
+            onClick={() => {
+              if (!screening.videoUrl) return
+              setPlayingScreeningId(null)
+              setScreeningRoomFullscreen({ url: screening.videoUrl, title: screening.title })
+            }}
+            className="w-full border-emerald-500/35 bg-emerald-950/20 text-emerald-100 hover:bg-emerald-950/35 hover:border-emerald-400/45"
+          >
+            <MonitorPlay className="w-4 h-4 mr-1.5 shrink-0" />
+            Screening Room
+          </Button>
           <Button
             size="sm"
             variant="outline"
@@ -912,13 +932,14 @@ export function ScreeningRoomDashboard({
   if (isFinalCutOnly) {
     const finalCutList = finalCutScreenings
     return (
-      <div
-        className={cn(
-          'space-y-4',
-          !hideFinalCutChrome &&
-            'rounded-2xl border border-zinc-800/70 bg-zinc-950/40 backdrop-blur-md p-4 sm:p-5 shadow-lg shadow-black/20'
-        )}
-      >
+      <>
+        <div
+          className={cn(
+            'space-y-4',
+            !hideFinalCutChrome &&
+              'rounded-2xl border border-zinc-800/70 bg-zinc-950/40 backdrop-blur-md p-4 sm:p-5 shadow-lg shadow-black/20'
+          )}
+        >
         {!hideFinalCutChrome ? (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
@@ -975,12 +996,21 @@ export function ScreeningRoomDashboard({
         ) : (
           renderEmptyState('final-cut')
         )}
-      </div>
+        </div>
+        {screeningRoomFullscreen ? (
+          <ScreeningRoomVideoPlayer
+            videoUrl={screeningRoomFullscreen.url}
+            title={screeningRoomFullscreen.title}
+            onClose={() => setScreeningRoomFullscreen(null)}
+          />
+        ) : null}
+      </>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 p-6">
+    <>
+      <div className="min-h-screen bg-gray-950 p-6">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex items-center justify-between">
@@ -1040,6 +1070,14 @@ export function ScreeningRoomDashboard({
         </Tabs>
       </div>
     </div>
+    {screeningRoomFullscreen ? (
+      <ScreeningRoomVideoPlayer
+        videoUrl={screeningRoomFullscreen.url}
+        title={screeningRoomFullscreen.title}
+        onClose={() => setScreeningRoomFullscreen(null)}
+      />
+    ) : null}
+    </>
   )
 }
 

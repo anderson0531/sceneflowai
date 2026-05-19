@@ -8,6 +8,7 @@
  * - ConsentModal: Privacy consent and demographics collection
  * - EmojiReactionBar: Timeline emoji reactions
  * - ScreeningRoomDashboard: Main dashboard with tabbed screenings
+ * - ScreeningRoomVideoPlayer: Fullscreen premiere/final-cut MP4 player chrome
  * - CreateScreeningModal: Modal for creating new screenings with share links
  * - ABTestModal: A/B test configuration
  * - InsightsView: Analytics visualization with heatmaps
@@ -28,6 +29,7 @@ export { AudiencePlayer } from './AudiencePlayer'
 export { ConsentModal } from './ConsentModal'
 export { EmojiReactionBar, InlineEmojiReaction } from './EmojiReactionBar'
 export { ScreeningRoomDashboard } from './ScreeningRoomDashboard'
+export { ScreeningRoomVideoPlayer } from './ScreeningRoomVideoPlayer'
 export { CreateScreeningModal } from './CreateScreeningModal'
 export { ABTestModal } from './ABTestModal'
 export { InsightsView } from './InsightsView'
