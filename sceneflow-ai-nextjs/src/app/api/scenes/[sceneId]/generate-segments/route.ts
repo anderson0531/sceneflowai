@@ -9,6 +9,7 @@ import {
 import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDuration'
 import { expandDirectionsForTimelineAudioBudget } from '@/lib/scene/expandDirectionsForTimelineAudioBudget'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
+import { resolveNarrationTextForAudioTimeline } from '@/lib/script/narration'
 import { SegmentDirection, SceneSegmentPromptBundleEntry, detectNoTalentSegment } from '@/types/scene-direction'
 
 /** Vercel: match `vercel.json` for this route — long Gemini JSON on global endpoint. */
@@ -251,6 +252,11 @@ export async function POST(
     useScriptSegments = false,
   } = body
 
+    const narrationTextKeyProvided = Object.prototype.hasOwnProperty.call(
+      body as Record<string, unknown>,
+      'narrationText'
+    )
+
     if (!sceneId || !projectId) {
       return NextResponse.json(
         { error: 'Missing required fields: sceneId and projectId' },
@@ -401,6 +407,7 @@ export async function POST(
       narrationDriven,
       narrationDurationSeconds,
       narrationText,
+      narrationTextKeyProvided,
       narrationAudioUrl,
       // NEW: Total audio duration for minimum segment calculation
       totalAudioDurationSeconds
@@ -997,6 +1004,8 @@ function buildComprehensiveSceneData(
     narrationAudioUrl?: string
     // NEW: Total audio duration (includes dialogue)
     totalAudioDurationSeconds?: number
+    /** When true, HTTP body included `narrationText` (even null) — do not infer VO from scene.narration */
+    narrationTextKeyProvided?: boolean
   }
 ): ComprehensiveSceneData {
   // Extract heading
@@ -1113,19 +1122,31 @@ function buildComprehensiveSceneData(
     estimatedTotalDuration = Math.max(estimatedTotalDuration, options.narrationDurationSeconds)
     console.log(`[buildComprehensiveSceneData] Narration-driven mode: duration = ${estimatedTotalDuration}s`)
   }
+  const narrationForTimeline = resolveNarrationTextForAudioTimeline(scene, {
+    narrationText: options?.narrationText,
+    narrationTextKeyProvided: options?.narrationTextKeyProvided,
+    narrationDriven: options?.narrationDriven,
+  })
+
+  if (String(narration || '').trim() && !narrationForTimeline.trim()) {
+    console.log(
+      '[buildComprehensiveSceneData] Omitting scene.narration from combined audio timeline (no standalone narration audio unless narration-driven; narrator-as-dialogue only).'
+    )
+  }
+
   // NEW: Analyze narration beats for segment alignment
-  const narrationBeats = options?.narrationDriven && (options.narrationText || narration)
-    ? analyzeNarrationBeats(options.narrationText || narration || '', estimatedTotalDuration)
-    : undefined
+  const narrationBeats =
+    options?.narrationDriven && narrationForTimeline.trim()
+      ? analyzeNarrationBeats(narrationForTimeline, estimatedTotalDuration)
+      : undefined
 
   // Build combined audio timeline: merge narration sentences + dialogue into one indexed list
   // This is the PRIMARY input for Gemini segmentation — it sees ONE unified audio track
   const combinedAudioTimeline: ComprehensiveSceneData['combinedAudioTimeline'] = []
   
-  const narrationTextForTimeline = options?.narrationText || narration || ''
-  if (narrationTextForTimeline.trim()) {
+  if (narrationForTimeline.trim()) {
     // Split narration into sentences
-    const narrationSentences = narrationTextForTimeline
+    const narrationSentences = narrationForTimeline
       .split(/(?<=[.!?])\s+/)
       .map((s: string) => s.trim())
       .filter((s: string) => s.length > 0)
@@ -1199,7 +1220,7 @@ function buildComprehensiveSceneData(
     // NEW: Narration-driven data
     narrationDriven: options?.narrationDriven ?? false,
     narrationDurationSeconds: options?.narrationDurationSeconds,
-    narrationText: options?.narrationText || narration,
+    narrationText: narrationForTimeline || undefined,
     narrationAudioUrl: options?.narrationAudioUrl,
     narrationBeats,
     combinedAudioTimeline,
