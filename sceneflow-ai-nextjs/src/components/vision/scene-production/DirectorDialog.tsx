@@ -152,8 +152,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
   const batchGuideSeed = useMemo(
     () =>
-      scene &&
-      (segmentHasBatchGuideDialogue(segment) || (scene.sfx?.length ?? 0) > 0)
+      scene && segmentHasBatchGuideDialogue(segment)
         ? buildDefaultBatchGuidePrompt(segment, scene, guideCharacters, {
             omitDialogue:
               autoConfig.mode === 'FTV' && segmentHasBatchGuideDialogue(segment),

@@ -59,7 +59,7 @@ interface GenerateAssetRequest {
   previousSegmentAssetUrl?: string
   previousSegmentVeoRef?: string
   isEstablishingShot?: boolean
-  // Audio context for atmospheric guidance (Veo 3.1 supports voice/SFX)
+  // Audio context for atmospheric guidance (Veo 3.1 native dialogue / ambience)
   audioContext?: {
     hasNarration?: boolean
     narrationText?: string
@@ -67,7 +67,7 @@ interface GenerateAssetRequest {
     dialogueBeat?: string
     suggestedAtmosphere?: string
   }
-  // Guide prompt containing voice/dialogue/SFX cues for Veo 3.1 native audio
+  // Guide prompt containing voice/dialogue cues for Veo 3.1 native audio
   // Composed by GuidePromptEditor with proper voice anchors and Veo formatting
   guidePrompt?: string
   existingStemSourceAudioUrl?: string
@@ -110,7 +110,7 @@ export async function POST(
       isEstablishingShot = false,
       // Audio context for atmospheric guidance
       audioContext,
-      // Guide prompt with voice/dialogue/SFX cues for Veo 3.1 native audio
+      // Guide prompt with voice/dialogue cues for Veo 3.1 native audio
       guidePrompt
       ,
       existingStemSourceAudioUrl,
@@ -323,7 +323,7 @@ export async function POST(
       // after a content-policy failure (see catch handler) — reference/start/end frames often
       // trigger filters even when the prompt is clean.
 
-      // Enhance prompt with guidePrompt for Veo 3.1 native voice/dialogue/SFX generation.
+      // Enhance prompt with guidePrompt for Veo 3.1 native voice/dialogue generation.
       // FTV: narrow base text so it does not contradict keyframes; shrink audio boilerplate (RAI surface).
       let enhancedPrompt =
         method === 'FTV'
@@ -344,10 +344,10 @@ export async function POST(
             enhancedPrompt += `\n\n${FTV_MINIMAL_NATIVE_AUDIO_HINT}`
           } else {
             enhancedPrompt +=
-              '\n\nInclude native synchronized audio (dialogue, ambience, music, and SFX) matching the descriptions above unless the scene should be silent.'
+              '\n\nInclude native synchronized audio (dialogue, ambience, and music) matching the descriptions above unless the scene should be silent.'
           }
           console.log(
-            '[Segment Asset Generation] Enhanced prompt with guidePrompt for voice/SFX (raw text, no pre-sanitize)'
+            '[Segment Asset Generation] Enhanced prompt with guidePrompt for native audio (raw text, no pre-sanitize)'
           )
           console.log('[Segment Asset Generation] Guide prompt length:', gp.length, 'chars')
         }

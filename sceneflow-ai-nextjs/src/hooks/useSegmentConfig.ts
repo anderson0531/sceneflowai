@@ -548,9 +548,7 @@ export function useSegmentConfig(
       resolveSegmentFrameUrls(segment, sceneImageUrl)
 
     const guidePrompt =
-      guideContext?.scene &&
-      (segmentHasBatchGuideDialogue(segment) ||
-        (guideContext.scene.sfx?.length ?? 0) > 0)
+      guideContext?.scene && segmentHasBatchGuideDialogue(segment)
         ? buildDefaultBatchGuidePrompt(
             segment,
             guideContext.scene,
@@ -647,9 +645,7 @@ export function useSegmentConfigs(
         resolveSegmentFrameUrls(segment, sceneImageUrl)
 
       const guidePrompt =
-        guideContext?.scene &&
-        (segmentHasBatchGuideDialogue(segment) ||
-          (guideContext.scene.sfx?.length ?? 0) > 0)
+        guideContext?.scene && segmentHasBatchGuideDialogue(segment)
           ? buildDefaultBatchGuidePrompt(
               segment,
               guideContext.scene,

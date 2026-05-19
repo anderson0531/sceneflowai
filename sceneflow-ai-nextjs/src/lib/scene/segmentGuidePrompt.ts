@@ -403,13 +403,7 @@ export function composeGuidePromptFromElements(
     visualParts.push(`${narratorDesc} speaks the following voiceover: '${truncatedNarration}'`)
   }
 
-  const sfxElements = selectedElements.filter((el) => el.type === 'sfx')
-  if (sfxElements.length > 0) {
-    const sfxDescriptions = sfxElements
-      .map((s) => getEffectiveElementText(s).toLowerCase())
-      .join(', ')
-    visualParts.push(`Audio includes ${sfxDescriptions}`)
-  }
+  // SFX cues are excluded from Veo video prompts — sound design is handled outside native video gen.
 
   const musicElements = selectedElements.filter((el) => el.type === 'music')
   if (musicElements.length > 0) {
@@ -434,8 +428,9 @@ function getMusicDescription(music: GuidePromptSceneContext['music']): string {
 }
 
 /**
- * Build elements for **batch / auto** guide: assigned dialogue + optional scene SFX
+ * Build elements for **batch / auto** guide: assigned dialogue
  * (direction is attached but off by default to reduce conflict with frame-locked visuals).
+ * Scene SFX is not included — Veo prompts omit sound-effects prose.
  */
 export function buildBatchAutoGuideElements(
   segment: SceneSegment,
@@ -467,22 +462,6 @@ export function buildBatchAutoGuideElements(
       portionEnd: 100,
     })
   })
-
-  if (scene.sfx?.length) {
-    scene.sfx.forEach((sfx, idx) => {
-      const desc = sfx.description?.trim()
-      if (!desc) return
-      newElements.push({
-        id: `sfx-batch-${idx}`,
-        type: 'sfx',
-        label: 'SFX',
-        content: desc,
-        selected: true,
-        portionStart: 0,
-        portionEnd: 100,
-      })
-    })
-  }
 
   const directionParts: string[] = []
   if (segment.actionPrompt) {
@@ -521,7 +500,7 @@ export type BatchGuidePromptOptions = {
   omitDialogue?: boolean
 }
 
-/** Auto guide string for queue / useSegmentConfig when segment has dialogue and/or scene SFX */
+/** Auto guide string for queue / useSegmentConfig when segment has assigned dialogue */
 export function buildDefaultBatchGuidePrompt(
   segment: SceneSegment,
   scene: GuidePromptSceneContext,

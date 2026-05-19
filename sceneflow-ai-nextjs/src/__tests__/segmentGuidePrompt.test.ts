@@ -156,4 +156,19 @@ describe('segmentGuidePrompt', () => {
     expect(composeGuidePromptFromElements(withEdit, {})).toContain("'Edited narration text.'")
     expect(composeGuidePromptFromElements(withoutEdit, {})).toContain("'Fallback narration text.'")
   })
+
+  it('omits SFX from composed guide prompt (sound design is outside Veo text)', () => {
+    const elements: GuideAudioElement[] = [
+      {
+        id: 's1',
+        type: 'sfx',
+        label: 'SFX',
+        content: 'heavy door slam',
+        selected: true,
+        portionStart: 0,
+        portionEnd: 100,
+      },
+    ]
+    expect(composeGuidePromptFromElements(elements, {})).toBe('')
+  })
 })

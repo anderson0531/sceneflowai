@@ -564,25 +564,9 @@ export function GuidePromptEditor({
       })
     }
     
-    // 5. SFX (selected by default - Veo CAN generate SFX)
-    if (scene.sfx && scene.sfx.length > 0) {
-      scene.sfx.forEach((sfx, idx) => {
-        if (sfx.description) {
-          newElements.push({
-            id: `sfx-${idx}`,
-            type: 'sfx',
-            label: `SFX ${idx + 1}`,
-            content: sfx.description,
-            audioUrl: sfx.audioUrl,
-            selected: true, // Veo can generate ambient/SFX
-            portionStart: 0,
-            portionEnd: 100,
-          })
-        }
-      })
-    }
-    
-    // 6. Scene Direction / Action
+    // SFX cues are omitted from Veo guide prompts (handled in post/mixer, not native video gen).
+
+    // 5. Scene Direction / Action
     const directionParts: string[] = []
     
     if (segment.actionPrompt) {
@@ -671,11 +655,6 @@ export function GuidePromptEditor({
         .map(d => `${d.character}: "${getEffectiveElementText(d)}"`)
         .join('\n')
       parts.push(`[DIALOGUE]\n${dialogueText}`)
-    }
-    
-    const sfx = selectedElements.filter(el => el.type === 'sfx')
-    if (sfx.length > 0) {
-      parts.push(`[SOUND EFFECTS]\n${sfx.map(s => getEffectiveElementText(s)).join(', ')}`)
     }
     
     const music = selectedElements.filter(el => el.type === 'music')
