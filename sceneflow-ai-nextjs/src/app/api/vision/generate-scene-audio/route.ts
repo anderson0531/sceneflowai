@@ -7,6 +7,7 @@ import { getAudioDurationFromBuffer } from '../../../../lib/audio/serverAudioDur
 import { translateWithVertexAI } from '../../../../lib/vertexai/translate'
 import { getVertexAIAuthToken } from '../../../../lib/vertexai/client'
 import { adaptScriptForTranslationTiming, type AdaptationDiagnostics } from '../../../../lib/translation/scriptAdaptation'
+import { GoogleTtsBlockedError, parseVertexTtsPolicyViolation } from '../../../../lib/tts/googleTtsPolicy'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -288,6 +289,20 @@ export async function POST(req: NextRequest) {
       adaptation: adaptationDiagnostics
     })
   } catch (error: any) {
+    if (error instanceof GoogleTtsBlockedError) {
+      return NextResponse.json(
+        {
+          success: false,
+          policyBlocked: true,
+          error: error.payload.userMessage,
+          code: 'VERTEX_TTS_CONTENT_POLICY',
+          tips: error.payload.tips,
+          supportCode: error.payload.supportCode ?? null,
+        },
+        { status: 400 }
+      )
+    }
+
     // Safely log error details - avoid referencing variables that might not be defined
     console.error('[Scene Audio] Error:', {
       message: error?.message || String(error),
@@ -299,13 +314,17 @@ export async function POST(req: NextRequest) {
     // Return detailed error for debugging
     const errorMessage = error?.message || 'Audio generation failed'
     const errorDetail = error?.name ? `${error.name}: ${errorMessage}` : errorMessage
-    
+
+    const status =
+      typeof (error as any)?.statusCode === 'number' ? (error as any).statusCode : 500
+
     return NextResponse.json(
-      { 
+      {
+        success: false,
         error: errorDetail,
-        details: process.env.NODE_ENV === 'development' ? error?.stack : undefined 
+        details: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
       },
-      { status: 500 }
+      { status }
     )
   }
 }
@@ -559,6 +578,11 @@ async function generateGoogleAudio(
   if (!response.ok) {
     const errorText = await response.text()
     console.error(`[Google TTS] API error (${response.status}):`, errorText)
+    const violation = parseVertexTtsPolicyViolation(response.status, errorText, audioType)
+    if (violation) {
+      console.warn('[Google TTS] Vertex usage-guidelines block — returning user-facing guidance')
+      throw new GoogleTtsBlockedError(violation)
+    }
     throw new Error(`Google TTS API error: ${response.status} - ${errorText}`)
   }
 

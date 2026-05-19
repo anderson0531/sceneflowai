@@ -8637,7 +8637,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }),
       })
 
-      const data = await response.json()
+      let data: Record<string, any>
+      try {
+        data = await response.json()
+      } catch {
+        try {
+          const { toast } = require('sonner')
+          toast.error('Audio generation failed (could not read server response)')
+        } catch {}
+        return
+      }
+
+      if (data.policyBlocked === true) {
+        try {
+          const { toast } = require('sonner')
+          const tips: string[] = Array.isArray(data.tips) ? data.tips : []
+          const description =
+            tips.length > 0
+              ? tips.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n')
+              : undefined
+          toast.error(data.error || 'This line was blocked by speech safety filters', {
+            description,
+            duration: 16000,
+          })
+        } catch {}
+        return
+      }
+
       if (data.success) {
         // Use functional update to ensure we're working with latest state
         // This is critical when multiple audio generations run sequentially
