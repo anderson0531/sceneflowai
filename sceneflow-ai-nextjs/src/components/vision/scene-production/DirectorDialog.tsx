@@ -69,7 +69,7 @@ import type {
   VideoGenerationMethod, 
   VideoGenerationConfig 
 } from './types'
-import { useSegmentConfig, type SegmentGuideContext } from '@/hooks/useSegmentConfig'
+import { useSegmentConfig, type SegmentGuideContext, segmentHasBatchGuideDialogue } from '@/hooks/useSegmentConfig'
 import { GuidePromptEditor, type SceneAudioData } from './GuidePromptEditor'
 import {
   buildDefaultBatchGuidePrompt,
@@ -82,6 +82,11 @@ import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { AnalyzeKeyframeRiskPanel } from './AnalyzeKeyframeRiskPanel'
 import { moderatePrompt, type ModerationResult } from '@/utils/promptModerator'
 import { shouldInitializeDirectorDialogState } from '@/lib/vision/directorDialogState'
+import {
+  narrowPromptForFtvFrameLock,
+  neutralizeFtvGuidePrompt,
+  extractSpeaksQuotedPerformCue,
+} from '@/lib/vision/ftvPromptNormalize'
 
 interface DirectorDialogProps {
   segment: SceneSegment
@@ -147,10 +152,14 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
 
   const batchGuideSeed = useMemo(
     () =>
-      scene && (segment.dialogueLineIds?.length ?? 0) > 0
-        ? buildDefaultBatchGuidePrompt(segment, scene, guideCharacters)
+      scene &&
+      (segmentHasBatchGuideDialogue(segment) || (scene.sfx?.length ?? 0) > 0)
+        ? buildDefaultBatchGuidePrompt(segment, scene, guideCharacters, {
+            omitDialogue:
+              autoConfig.mode === 'FTV' && segmentHasBatchGuideDialogue(segment),
+          })
         : '',
-    [scene, segment, guideCharacters]
+    [scene, segment, guideCharacters, autoConfig.mode]
   )
   
   // Local state initialized with auto-drafted values
@@ -675,27 +684,21 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
     let optimizedFtvPrompt = motionPrompt
     let optimizedGuidePrompt = guidePrompt
     if (method === 'FTV' && !skipAnchoringPhrase && motionPrompt) {
-      // Create a simplified prompt that only focuses on the action between frames,
-      // avoiding redundant scene direction that's already captured in the frames themselves.
-      const promptParts = motionPrompt.split('\n\n')
-      
-      const filteredParts = promptParts.filter(part => {
-        const lowerPart = part.toLowerCase()
-        if (lowerPart.includes('camera') || lowerPart.includes('lighting') || lowerPart.includes('cinematic')) {
-          return false
+      const extracted = extractSpeaksQuotedPerformCue(motionPrompt)
+      let narrowed = extracted ?? narrowPromptForFtvFrameLock(motionPrompt)
+      if (!narrowed.trim()) narrowed = motionPrompt.trim()
+      optimizedFtvPrompt = narrowed
+
+      if (guidePrompt?.trim()) {
+        let g = guidePrompt
+        if (g.includes('---')) {
+          g = g
+            .split('---')
+            .map((part) => (part.toLowerCase().includes('scene direction') ? '' : part))
+            .filter(Boolean)
+            .join('---')
         }
-        return true
-      })
-      
-      optimizedFtvPrompt = filteredParts.join('\n\n')
-      
-      // Also strip scene direction from the guide prompt for FTV to be safe
-      if (guidePrompt && guidePrompt.includes('---')) {
-          const guideParts = guidePrompt.split('---')
-          optimizedGuidePrompt = guideParts.map(part => {
-              if (part.toLowerCase().includes('scene direction')) return ''
-              return part
-          }).filter(Boolean).join('---')
+        optimizedGuidePrompt = neutralizeFtvGuidePrompt(g)
       }
     }
     

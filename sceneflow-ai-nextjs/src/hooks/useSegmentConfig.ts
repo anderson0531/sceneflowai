@@ -25,6 +25,11 @@ import {
   type GuideCharacterDemographic,
   type GuidePromptSceneContext,
 } from '@/lib/scene/segmentGuidePrompt'
+import {
+  narrowPromptForFtvFrameLock,
+  buildMinimalFtvPerformPrompt,
+  FTV_SILENT_MOTION_HINT,
+} from '@/lib/vision/ftvPromptNormalize'
 
 /** Scene script + audio fields used to auto-build Veo guide text for batch generate */
 export type SegmentGuideContext = {
@@ -88,44 +93,23 @@ function sanitizeFTVPrompt(prompt: string): string {
 }
 
 /**
- * FTV-SPECIFIC: Generates optimal motion prompt for frame-to-frame interpolation
- * 
- * Key principles:
- * 1. PREPEND end-frame anchoring (Veo weights prompt start more heavily)
- * 2. Remove motion language that conflicts with end-frame
- * 3. Preserve dialogue and emotional content for Veo speech synthesis
- * 4. Keep character descriptions but remove positional changes
- * 
- * Design Decision: Anchoring phrase is prepended, not appended, because testing
- * shows Veo prioritizes early prompt content for compositional decisions.
- * 
- * NEW: If the base prompt already contains transition/interpolation language,
- * we skip the anchoring phrase to avoid duplicate/conflicting instructions.
+ * FTV-SPECIFIC: Minimal text for frame-to-frame interpolation.
+ *
+ * Start/end images encode blocking and pose; when dialogue exists, only the perform cue
+ * (`Name speaks, "..."`) is sent. Silent beats get a one-line motion hint plus optional camera metadata.
  */
 function generateFTVMotionPrompt(segment: SceneSegment, skipAnchoringPhrase?: boolean): string {
-  // FTV-specific motion phrase (PREPENDED for priority)
-  // NOTE: Veo 3.1 works better with motion descriptions than constraint instructions.
-  // "IMPORTANT" meta-instructions cause the model to take shortcuts (fades/cuts).
-  // Instead, describe the BRIDGE between frames - the motion that connects them.
-  const anchoringPhrase = 'A smooth, continuous transition. Static camera. No fades, cuts, or scene changes. All elements gradually evolve from their starting positions to their final positions over the full duration.'
-  
-  // Get the base prompt content
   let basePrompt = ''
-  
-  // Priority 1: User instruction (but still sanitize for FTV)
+
   if (segment.userInstruction && segment.userInstruction.trim()) {
     basePrompt = segment.userInstruction.trim()
-  }
-  // Priority 2: User-edited prompt
-  else if (segment.userEditedPrompt && segment.userEditedPrompt.trim()) {
+  } else if (segment.userEditedPrompt && segment.userEditedPrompt.trim()) {
     basePrompt = segment.userEditedPrompt.trim()
-  }
-  // Priority 3: AI-generated prompt (most common case)
-  else if (segment.generatedPrompt && segment.generatedPrompt.trim()) {
+  } else if (segment.videoPrompt && segment.videoPrompt.trim()) {
+    basePrompt = segment.videoPrompt.trim()
+  } else if (segment.generatedPrompt && segment.generatedPrompt.trim()) {
     basePrompt = segment.generatedPrompt.trim()
-  }
-  // Priority 4: Build from metadata
-  else {
+  } else {
     const parts: string[] = []
     if (segment.action || segment.actionPrompt) {
       parts.push(segment.action || segment.actionPrompt || '')
@@ -135,34 +119,43 @@ function generateFTVMotionPrompt(segment: SceneSegment, skipAnchoringPhrase?: bo
     }
     basePrompt = parts.join('. ') || 'Subtle ambient motion and natural movement.'
   }
-  
-  // Sanitize the prompt to remove conflicting motion
+
+  basePrompt = narrowPromptForFtvFrameLock(basePrompt)
+
+  const dialogueOnly = buildMinimalFtvPerformPrompt(segment, basePrompt)
+  if (dialogueOnly) {
+    console.log('[FTV Prompt] Dialogue-only perform cue (blocking omitted; frames carry poses)')
+    return dialogueOnly
+  }
+
+  if (!basePrompt.trim()) {
+    basePrompt = 'Subtle natural motion and expression between the two keyframes.'
+  }
+
   basePrompt = sanitizeFTVPrompt(basePrompt)
-  
-  // Add camera movement if available and it's not conflicting
+
   const cameraMovement = segment.cameraMovement || ''
   if (cameraMovement && cameraMovement.toLowerCase() !== 'static') {
-    // Only add camera movement if it's not a "pull back" or "away" movement
     const isConflicting = /pull|back|out|away|retreat|reveal/i.test(cameraMovement)
     if (!isConflicting && !basePrompt.toLowerCase().includes('camera')) {
       basePrompt = `Camera ${cameraMovement}. ${basePrompt}`
     }
   }
-  
-  // Check if base prompt already has transition/interpolation language
-  const hasTransitionLanguage = /\b(interpolat|transition|between.*frame|start.*end\s*frame|end\s*keyframe|final\s*frame|smoothly\s*(interpolate|transition)|match.*end)\b/i.test(basePrompt)
-  
-  // Skip anchoring if explicitly requested OR if prompt already has transition language
+
+  const hasTransitionLanguage = /\b(interpolat|transition|between.*frame|start.*end\s*frame|end\s*keyframe|final\s*frame|smoothly\s*(interpolate|transition)|match.*end)\b/i.test(
+    basePrompt
+  )
+
   if (skipAnchoringPhrase || hasTransitionLanguage) {
-    console.log('[FTV Prompt] Skipping anchoring phrase:', skipAnchoringPhrase ? 'explicitly requested' : 'prompt already has transition language')
+    console.log(
+      '[FTV Prompt] Silent beat — skipping short motion hint:',
+      skipAnchoringPhrase ? 'explicitly requested' : 'prompt already has transition language'
+    )
     return basePrompt
   }
-  
-  // PREPEND anchoring phrase for maximum Veo priority
-  const finalPrompt = `${anchoringPhrase}\n\n${basePrompt}`
-  
-  console.log('[FTV Prompt] Sanitized and anchored prompt:', finalPrompt.substring(0, 150) + '...')
-  
+
+  const finalPrompt = `${FTV_SILENT_MOTION_HINT}\n\n${basePrompt}`
+  console.log('[FTV Prompt] Silent beat with motion hint:', finalPrompt.substring(0, 120) + '...')
   return finalPrompt
 }
 
@@ -180,7 +173,7 @@ function generateFTVMotionPrompt(segment: SceneSegment, skipAnchoringPhrase?: bo
  * dialogue in the format: "Character speaks the following line [emotion]: 'text'"
  * 
  * IMPORTANT: For FTV mode, this function routes to generateFTVMotionPrompt()
- * which intelligently removes conflicting motion language and prepends end-frame anchoring.
+ * which prefers dialogue-only perform cues; silent beats use a short motion hint.
  */
 function generateMotionPrompt(segment: SceneSegment, sceneImageUrl?: string): string {
   const masterSceneStart =
@@ -355,7 +348,7 @@ function detectRecommendedMethod(
 }
 
 /** True when batch auto-guide can include dialogue (IDs or embedded segment lines). */
-function segmentHasBatchGuideDialogue(segment: SceneSegment): boolean {
+export function segmentHasBatchGuideDialogue(segment: SceneSegment): boolean {
   return (
     (segment.dialogueLineIds?.length ?? 0) > 0 ||
     (segment.dialogueLines?.length ?? 0) > 0
@@ -561,7 +554,11 @@ export function useSegmentConfig(
         ? buildDefaultBatchGuidePrompt(
             segment,
             guideContext.scene,
-            guideContext.characters ?? []
+            guideContext.characters ?? [],
+            {
+              omitDialogue:
+                method === 'FTV' && segmentHasBatchGuideDialogue(segment),
+            }
           )
         : ''
     
@@ -656,7 +653,11 @@ export function useSegmentConfigs(
           ? buildDefaultBatchGuidePrompt(
               segment,
               guideContext.scene,
-              guideContext.characters ?? []
+              guideContext.characters ?? [],
+              {
+                omitDialogue:
+                  method === 'FTV' && segmentHasBatchGuideDialogue(segment),
+              }
             )
           : ''
       

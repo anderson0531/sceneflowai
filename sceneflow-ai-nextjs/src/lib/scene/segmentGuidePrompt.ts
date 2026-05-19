@@ -516,14 +516,23 @@ export function buildBatchAutoGuideElements(
   return newElements
 }
 
+export type BatchGuidePromptOptions = {
+  /** FTV: dialogue is already in the minimal perform prompt — avoid duplicating it in the guide. */
+  omitDialogue?: boolean
+}
+
 /** Auto guide string for queue / useSegmentConfig when segment has dialogue and/or scene SFX */
 export function buildDefaultBatchGuidePrompt(
   segment: SceneSegment,
   scene: GuidePromptSceneContext,
-  characters: GuideCharacterDemographic[] = []
+  characters: GuideCharacterDemographic[] = [],
+  options?: BatchGuidePromptOptions
 ): string {
   const elements = buildBatchAutoGuideElements(segment, scene, characters)
-  const selected = elements.filter((e) => e.selected)
+  const selected = elements.filter((e) => {
+    if (options?.omitDialogue && e.type === 'dialogue') return false
+    return e.selected
+  })
   if (selected.length === 0) return ''
   return composeGuidePromptFromElements(selected, {})
 }

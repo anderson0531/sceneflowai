@@ -24,6 +24,13 @@ import { separateAudioStemsWithRetry, type StemSeparationResult } from '@/lib/au
 import { computeSourceHash } from '@/lib/audio/stemJobs'
 import { extractVeoRaiDetailsFromErrorString } from '@/lib/vertexai/safety'
 import { appendFtvTransitionStabilityTokens } from '@/lib/vision/ftvTransitionStability'
+import {
+  FTV_MINIMAL_NATIVE_AUDIO_HINT,
+  narrowPromptForFtvFrameLock,
+  neutralizeFtvGuidePrompt,
+  extractSpeaksQuotedPerformCue,
+  normalizeVeoSuspiciousPunctuation,
+} from '@/lib/vision/ftvPromptNormalize'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -316,32 +323,38 @@ export async function POST(
       // after a content-policy failure (see catch handler) — reference/start/end frames often
       // trigger filters even when the prompt is clean.
 
-      // Enhance prompt with guidePrompt for Veo 3.1 native voice/dialogue/SFX generation
-      let enhancedPrompt = prompt
-      if (guidePrompt && guidePrompt.trim()) {
-        enhancedPrompt = `${prompt}\n\n${guidePrompt.trim()}`
-        enhancedPrompt += '\n\nInclude native synchronized audio (dialogue, ambience, music, and SFX) matching the descriptions above unless the scene should be silent.'
-        console.log('[Segment Asset Generation] Enhanced prompt with guidePrompt for voice/SFX (raw text, no pre-sanitize)')
-        console.log('[Segment Asset Generation] Guide prompt length:', guidePrompt.length, 'chars')
+      // Enhance prompt with guidePrompt for Veo 3.1 native voice/dialogue/SFX generation.
+      // FTV: narrow base text so it does not contradict keyframes; shrink audio boilerplate (RAI surface).
+      let enhancedPrompt =
+        method === 'FTV'
+          ? extractSpeaksQuotedPerformCue(prompt) ?? narrowPromptForFtvFrameLock(prompt)
+          : prompt
+      if (method === 'FTV' && !enhancedPrompt.trim()) {
+        enhancedPrompt = 'Natural motion and expression between the two keyframes.'
       }
-      
-      // Fix for Veo 3.1 Content Policy Flags in FTV mode
-      // If we are in FTV mode, we want to strip the "Scene Direction" part from the guide prompt
-      // and from the base prompt if it was concatenated, because rich cinematic descriptions 
-      // often conflict with the constrained start/end frames and trigger the safety filters.
-      if (method === 'FTV') {
-        if (enhancedPrompt.includes('---')) {
-          const parts = enhancedPrompt.split('---')
-          enhancedPrompt = parts.map(part => {
-             if (part.toLowerCase().includes('scene direction')) return ''
-             return part
-          }).filter(Boolean).join('---')
-          console.log('[Segment Asset Generation] FTV Mode: Stripped scene direction from enhanced prompt to avoid content policy conflicts')
+
+      if (guidePrompt && guidePrompt.trim()) {
+        const gpRaw = guidePrompt.trim()
+        const gp = method === 'FTV' ? neutralizeFtvGuidePrompt(gpRaw) : gpRaw
+        if (gp) {
+          enhancedPrompt = enhancedPrompt.trim()
+            ? `${enhancedPrompt.trim()}\n\n${gp}`
+            : gp
+          if (method === 'FTV') {
+            enhancedPrompt += `\n\n${FTV_MINIMAL_NATIVE_AUDIO_HINT}`
+          } else {
+            enhancedPrompt +=
+              '\n\nInclude native synchronized audio (dialogue, ambience, music, and SFX) matching the descriptions above unless the scene should be silent.'
+          }
+          console.log(
+            '[Segment Asset Generation] Enhanced prompt with guidePrompt for voice/SFX (raw text, no pre-sanitize)'
+          )
+          console.log('[Segment Asset Generation] Guide prompt length:', gp.length, 'chars')
         }
       }
-      
-      // Additional atmospheric guidance from audioContext (legacy support)
-      if (audioContext) {
+
+      // Legacy audio context — skip for FTV (duplicates scene/set mood and hurts policy match rate).
+      if (audioContext && method !== 'FTV') {
         const atmosphericGuidance: string[] = []
         
         if (audioContext.emotionalTone) {
@@ -364,7 +377,11 @@ export async function POST(
         }
       }
 
-      enhancedPrompt = appendFtvTransitionStabilityTokens(enhancedPrompt, method, segmentIndex)
+      enhancedPrompt = appendFtvTransitionStabilityTokens(
+        method === 'FTV' ? normalizeVeoSuspiciousPunctuation(enhancedPrompt) : enhancedPrompt,
+        method,
+        segmentIndex
+      )
 
       console.log(
         '[Segment Asset Generation] Full Veo prompt length:',
