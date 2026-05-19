@@ -6,6 +6,11 @@ import {
   getImagenPersonGeneration,
   formatVeoRaiDetailsFromPayload,
 } from '@/lib/vertexai/safety'
+import {
+  isVeoDiagnosticLogEnabled,
+  logVeoPredictLongRunningSubmitDiagnostics,
+  logVeoFetchPredictOperationResponseDiagnostics,
+} from '@/lib/gemini/veoRequestDiagnostics'
 
 /**
  * Get Google OAuth2 Bearer token for Vertex AI
@@ -400,6 +405,14 @@ export async function generateVideoWithVeo(
     parameters: parameters
   }
 
+  logVeoPredictLongRunningSubmitDiagnostics({
+    endpoint,
+    model,
+    quality,
+    prompt,
+    requestBody,
+  })
+
   // FTV Debug: Confirm frame fields are at correct level (instance, not parameters)
   console.log('[Veo Video] Instance keys:', Object.keys(instance))
   console.log('[Veo Video] Parameters keys:', Object.keys(parameters))
@@ -555,7 +568,11 @@ export async function checkVideoGenerationStatus(
     }
 
     const data = await response.json()
-    console.log('[Veo Video] Status check response:', JSON.stringify(data).substring(0, 500))
+    if (isVeoDiagnosticLogEnabled()) {
+      logVeoFetchPredictOperationResponseDiagnostics(data)
+    } else {
+      console.log('[Veo Video] Status check response:', JSON.stringify(data).substring(0, 500))
+    }
 
     if (data.done) {
       // Check for error in completed operation (e.g., content policy violation)

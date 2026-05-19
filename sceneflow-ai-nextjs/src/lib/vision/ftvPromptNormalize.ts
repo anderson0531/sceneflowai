@@ -13,14 +13,16 @@ import type { SceneSegment } from '@/components/vision/scene-production/types'
  * Ellipsis (`...`), unicode …, and runs like `..` are ordinary in prose but occasionally
  * correlate with false positives when layered safety / input guardrails use broad regexes
  * or treat punctuation-heavy spans as anomalous (e.g. Model Armor–style input inspection).
- * We keep intent as a single period or `. ` pause where possible.
+ * Two-dot ellipsis (`..`) is rewritten as a comma pause so we never emit a stray `.` before
+ * the next word (e.g. `more like.. a` → `more like, a`), which reads cleaner and avoids odd punctuation runs.
  */
 export function normalizeVeoSuspiciousPunctuation(text: string): string {
   if (!text.trim()) return ''
   let s = text.replace(/\r\n/g, '\n')
   s = s.replace(/\u2026/g, '. ')
   s = s.replace(/\.{3,}/g, '. ')
-  s = s.replace(/\.{2}/g, '.')
+  s = s.replace(/\.{2}/g, ', ')
+  s = s.replace(/\s*,\s*,/g, ', ')
   s = s.replace(/ {2,}/g, ' ')
   s = s.replace(/\s+\./g, '.')
   return s.trim()

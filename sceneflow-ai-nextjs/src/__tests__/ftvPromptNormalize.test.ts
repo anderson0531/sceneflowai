@@ -25,14 +25,14 @@ describe('ftvPromptNormalize', () => {
   it('extracts only Name speaks, "..." from blocking + dialogue prose', () => {
     const raw = `Sarah physically closes the distance, leaning sharply into her broadcast microphone. She taps her pen once sharply against the table, her eyes glinting with assertive skepticism. Sarah speaks, "Pacified? Or.. managed? Because from where we sit, 'overnight' doesn't happen without a very deliberate hand."`
     expect(extractSpeaksQuotedPerformCue(raw)).toBe(
-      `Sarah speaks, "Pacified? Or. managed? Because from where we sit, 'overnight' doesn't happen without a very deliberate hand."`
+      `Sarah speaks, "Pacified? Or, managed? Because from where we sit, 'overnight' doesn't happen without a very deliberate hand."`
     )
   })
 
   it('normalizeVeoSuspiciousPunctuation reduces ellipsis-style pauses for Veo input', () => {
     expect(normalizeVeoSuspiciousPunctuation('Wait… really')).toBe('Wait. really')
     expect(normalizeVeoSuspiciousPunctuation('A... B')).toBe('A. B')
-    expect(normalizeVeoSuspiciousPunctuation('Or.. managed')).toBe('Or. managed')
+    expect(normalizeVeoSuspiciousPunctuation('Or.. managed')).toBe('Or, managed')
   })
 
   it('neutralizes named speaker boilerplate in guide', () => {
