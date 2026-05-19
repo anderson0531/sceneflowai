@@ -392,8 +392,10 @@ function ScreeningCard({ screening }: { screening: ScreeningItem }) {
   // Handle play button click - route to appropriate player
   const handlePlay = () => {
     if (screening.type === 'storyboard') {
-      // Route to Vision page with openPlayer query param to auto-open the Screening Room player
-      router.push(`/dashboard/workflow/vision/${screening.projectId}?openPlayer=true`)
+      const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`)
+      router.push(
+        `/dashboard/workflow/vision/${screening.projectId}?openPlayer=true&returnTo=${returnTo}`
+      )
     } else if (screening.type === 'scenes') {
       // Route to Final Cut editor
       router.push(`/dashboard/workflow/final-cut?projectId=${screening.projectId}`)

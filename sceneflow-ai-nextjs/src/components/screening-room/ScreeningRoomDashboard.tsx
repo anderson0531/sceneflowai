@@ -15,6 +15,7 @@
 'use client'
 
 import React, { useState, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Film,
@@ -41,12 +42,10 @@ import {
   MessageSquare,
   Download,
   Tag,
-  MonitorPlay,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
-import { ScreeningRoomVideoPlayer } from './ScreeningRoomVideoPlayer'
 import type {
   BehavioralAnalyticsSummary,
   ABTestConfig,
@@ -194,6 +193,10 @@ export function ScreeningRoomDashboard({
   variant = 'full',
   hideFinalCutChrome = false,
 }: ScreeningRoomDashboardProps) {
+  const router = useRouter()
+  /** Legacy Production Screening Room lives on Vision (`ScreeningRoomV2` + `FullscreenPlayer`). */
+  const canOpenVisionScreeningRoom = Boolean(projectId && projectId !== 'unknown-project')
+
   const isFinalCutOnly = variant === 'finalCutOnly'
   const [activeTab, setActiveTab] = useState<string>(isFinalCutOnly ? 'final-cut' : 'storyboard')
   const [isUploading, setIsUploading] = useState(false)
@@ -215,10 +218,6 @@ export function ScreeningRoomDashboard({
   const [feedbackDraftRating, setFeedbackDraftRating] = useState(4)
   const [feedbackDraftTags, setFeedbackDraftTags] = useState('')
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
-  const [screeningRoomFullscreen, setScreeningRoomFullscreen] = useState<{
-    url: string
-    title: string
-  } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   // ============================================================================
@@ -570,15 +569,22 @@ export function ScreeningRoomDashboard({
           <Button
             size="sm"
             variant="outline"
-            disabled={!screening.videoUrl}
+            disabled={!canOpenVisionScreeningRoom}
+            title={
+              canOpenVisionScreeningRoom
+                ? 'Open Production Screening Room (Vision) — full player with audio and scenes'
+                : 'Save or select a project to open the Screening Room'
+            }
             onClick={() => {
-              if (!screening.videoUrl) return
-              setPlayingScreeningId(null)
-              setScreeningRoomFullscreen({ url: screening.videoUrl, title: screening.title })
+              if (!canOpenVisionScreeningRoom) return
+              const returnTo = encodeURIComponent(`${window.location.pathname}${window.location.search}`)
+              router.push(
+                `/dashboard/workflow/vision/${projectId}?openPlayer=true&returnTo=${returnTo}`
+              )
             }}
             className="w-full border-emerald-500/35 bg-emerald-950/20 text-emerald-100 hover:bg-emerald-950/35 hover:border-emerald-400/45"
           >
-            <MonitorPlay className="w-4 h-4 mr-1.5 shrink-0" />
+            <Film className="w-4 h-4 mr-1.5 shrink-0" />
             Screening Room
           </Button>
           <Button
@@ -932,14 +938,13 @@ export function ScreeningRoomDashboard({
   if (isFinalCutOnly) {
     const finalCutList = finalCutScreenings
     return (
-      <>
-        <div
-          className={cn(
-            'space-y-4',
-            !hideFinalCutChrome &&
-              'rounded-2xl border border-zinc-800/70 bg-zinc-950/40 backdrop-blur-md p-4 sm:p-5 shadow-lg shadow-black/20'
-          )}
-        >
+      <div
+        className={cn(
+          'space-y-4',
+          !hideFinalCutChrome &&
+            'rounded-2xl border border-zinc-800/70 bg-zinc-950/40 backdrop-blur-md p-4 sm:p-5 shadow-lg shadow-black/20'
+        )}
+      >
         {!hideFinalCutChrome ? (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
@@ -996,21 +1001,12 @@ export function ScreeningRoomDashboard({
         ) : (
           renderEmptyState('final-cut')
         )}
-        </div>
-        {screeningRoomFullscreen ? (
-          <ScreeningRoomVideoPlayer
-            videoUrl={screeningRoomFullscreen.url}
-            title={screeningRoomFullscreen.title}
-            onClose={() => setScreeningRoomFullscreen(null)}
-          />
-        ) : null}
-      </>
+      </div>
     )
   }
 
   return (
-    <>
-      <div className="min-h-screen bg-gray-950 p-6">
+    <div className="min-h-screen bg-gray-950 p-6">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex items-center justify-between">
@@ -1070,14 +1066,6 @@ export function ScreeningRoomDashboard({
         </Tabs>
       </div>
     </div>
-    {screeningRoomFullscreen ? (
-      <ScreeningRoomVideoPlayer
-        videoUrl={screeningRoomFullscreen.url}
-        title={screeningRoomFullscreen.title}
-        onClose={() => setScreeningRoomFullscreen(null)}
-      />
-    ) : null}
-    </>
   )
 }
 

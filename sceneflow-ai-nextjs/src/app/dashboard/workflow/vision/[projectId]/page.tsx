@@ -119,6 +119,7 @@ import { useOverlayStore } from '@/store/useOverlayStore'
 import { useSidebarData, useSidebarQuickActions } from '@/hooks/useSidebarData'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { cn } from '@/lib/utils'
+import { sanitizeReturnTo } from '@/lib/navigation/sanitizeReturnTo'
 import { VisionReferencesSidebar } from '@/components/vision/VisionReferencesSidebar'
 import { ProductionBiblePanel } from '@/components/series/ProductionBiblePanel'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference } from '@/types/visionReferences'
@@ -389,6 +390,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     dismissed?: boolean
   }>>({})
   const [isPlayerOpen, setIsPlayerOpen] = useState(false)
+  /** When set, closing Screening Room navigates here (from `returnTo` query when opening from Premiere / Screening Room) */
+  const [screeningRoomReturnTo, setScreeningRoomReturnTo] = useState<string | null>(null)
   const [showSceneGallery, setShowSceneGallery] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
   const [showNavigationWarning, setShowNavigationWarning] = useState(false)
@@ -642,19 +645,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }, [projectId])
 
-  // Handle openPlayer query param from Screening Room dashboard
+  const openScreeningRoomFromVisionUi = useCallback(() => {
+    setScreeningRoomReturnTo(null)
+    setIsPlayerOpen(true)
+  }, [])
+
+  const handleCloseScreeningRoom = useCallback(() => {
+    setIsPlayerOpen(false)
+    setScreeningRoomReturnTo((prev) => {
+      if (prev) router.push(prev)
+      return null
+    })
+  }, [router])
+
+  // Handle openPlayer (+ optional returnTo) from Screening Room / Premiere
   const searchParams = useSearchParams()
   useEffect(() => {
-    if (searchParams.get('openPlayer') === 'true') {
-      setIsPlayerOpen(true)
-      // Remove openPlayer param from URL to prevent re-opening on refresh
-      const newParams = new URLSearchParams(searchParams.toString())
-      newParams.delete('openPlayer')
-      const newUrl = newParams.toString() 
-        ? `${window.location.pathname}?${newParams}` 
-        : window.location.pathname
-      window.history.replaceState({}, '', newUrl)
-    }
+    if (searchParams.get('openPlayer') !== 'true') return
+    setIsPlayerOpen(true)
+    const safeReturn = sanitizeReturnTo(searchParams.get('returnTo'))
+    setScreeningRoomReturnTo(safeReturn)
+    const newParams = new URLSearchParams(searchParams.toString())
+    newParams.delete('openPlayer')
+    newParams.delete('returnTo')
+    const newUrl = newParams.toString()
+      ? `${window.location.pathname}?${newParams}`
+      : window.location.pathname
+    window.history.replaceState({}, '', newUrl)
   }, [searchParams])
 
   useEffect(() => {
@@ -5256,11 +5273,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   useSidebarQuickActions(useMemo(() => ({
     'goto-bookmark': handleJumpToBookmark,
     'scene-gallery': () => setShowSceneGallery(prev => !prev),
-    'screening-room': () => setIsPlayerOpen(true),
+    'screening-room': () => openScreeningRoomFromVisionUi(),
     'update-reviews': handleGenerateReviews,
     'review-analysis': () => setShowReviewModal(true),
     'review-treatment': () => setShowTreatmentReview(true),
-  }), [handleJumpToBookmark, handleGenerateReviews]))
+  }), [handleJumpToBookmark, handleGenerateReviews, openScreeningRoomFromVisionUi]))
   
   // Refs to hold latest handlers for event listeners (avoids stale closures)
   const handlersRef = useRef({
@@ -5283,7 +5300,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Actions dropdown events
       'production:goto-bookmark': () => handlersRef.current.jumpToBookmark(),
       'production:scene-gallery': () => setShowSceneGallery(prev => !prev),
-      'production:screening-room': () => setIsPlayerOpen(true),
+      'production:screening-room': () => openScreeningRoomFromVisionUi(),
       'production:update-reviews': () => handlersRef.current.generateReviews(),
       'production:review-analysis': () => setShowReviewModal(true),
       'production:review-treatment': () => setShowTreatmentReview(true),
@@ -5326,7 +5343,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         window.removeEventListener(eventName, listener)
       })
     }
-  }, [])
+  }, [openScreeningRoomFromVisionUi])
   // ============================================================================
 
   // Broadcast storyboard open/close state to sidebar
@@ -10733,7 +10750,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   />
                   </>
                 }
-                onPlayScript={() => setIsPlayerOpen(true)}
+                onPlayScript={() => openScreeningRoomFromVisionUi()}
                 onAddScene={handleAddScene}
                 onDeleteScene={handleDeleteScene}
                 onReorderScenes={handleReorderScenes}
@@ -10946,7 +10963,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             }
                             onEditSegmentFrame={handleEditFrame}
                             onOpenAssets={openGenerateAudio}
-                            onOpenPreview={() => setIsPlayerOpen(true)}
+                            onOpenPreview={() => openScreeningRoomFromVisionUi()}
                             onOpenGenerateAudio={openGenerateAudio}
                             isGeneratingAudio={isGeneratingAudio}
                             onExpressGenerate={handleExpressGenerate}
@@ -11089,7 +11106,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         <ScreeningRoomV2
           script={script}
           characters={characters}
-          onClose={() => setIsPlayerOpen(false)}
+          onClose={handleCloseScreeningRoom}
+          backButtonLabel={screeningRoomReturnTo ? 'Back' : undefined}
           scriptEditedAt={scriptEditedAt}
           sceneProductionState={sceneProductionState}
           projectId={projectId}

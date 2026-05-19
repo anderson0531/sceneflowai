@@ -150,6 +150,8 @@ interface FullscreenPlayerProps {
   sessionId?: string
   /** Callback when audience feedback event occurs */
   onAudienceFeedback?: (event: AudienceFeedbackEvent) => void
+  /** When set, show a top-left back control (same handler as close) */
+  backButtonLabel?: string
 }
 
 // Audience Feedback Event type
@@ -199,6 +201,7 @@ export function FullscreenPlayer({
   screeningId,
   sessionId,
   onAudienceFeedback,
+  backButtonLabel,
 }: FullscreenPlayerProps) {
   // ============================================================================
   // State
@@ -994,9 +997,22 @@ export function FullscreenPlayer({
         style={{ cursor: showControls ? 'auto' : 'none' }}
       >
         {/* Top Bar - Title + Language Selector + Close */}
-        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent flex items-center justify-between" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
-          {/* Left: Title */}
-          <div className="text-white flex-1 min-w-0">
+        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent flex items-center justify-between gap-2" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+          {/* Left: optional back + title */}
+          <div className="text-white flex-1 min-w-0 flex items-start gap-2">
+            {backButtonLabel ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClose}
+                className="text-white hover:bg-white/20 shrink-0 -ml-1 mt-0.5"
+                title={backButtonLabel}
+              >
+                <ChevronLeft className="h-5 w-5 mr-0.5 -ml-1" />
+                <span className="hidden sm:inline text-sm font-medium">{backButtonLabel}</span>
+              </Button>
+            ) : null}
+            <div className="min-w-0 flex-1">
             <h2 className="text-lg sm:text-xl font-semibold truncate">Screening Room</h2>
             <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-400">
               <span className="truncate hidden sm:block">{scriptTitle || 'Untitled Script'}</span>
@@ -1006,10 +1022,11 @@ export function FullscreenPlayer({
                 </span>
               )}
             </div>
+            </div>
           </div>
           
           {/* Right: Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {/* Captions Toggle */}
             <button
               onClick={() => setShowCaptions(prev => !prev)}
@@ -1037,7 +1054,7 @@ export function FullscreenPlayer({
               size="icon"
               onClick={handleClose}
               className="text-white hover:bg-white/20 ml-2"
-              title="Exit Screening Room"
+              title={backButtonLabel ? backButtonLabel : 'Exit Screening Room'}
             >
               <X className="h-6 w-6" />
             </Button>

@@ -39,6 +39,8 @@ interface ScreeningRoomV2Props {
   sessionId?: string
   /** Callback when audience feedback event occurs */
   onAudienceFeedback?: (event: AudienceFeedbackEvent) => void
+  /** Top bar back affordance (same as close); e.g. "Back" when a return URL was provided */
+  backButtonLabel?: string
 }
 
 // Helper function to normalize scenes from various data paths
@@ -83,6 +85,7 @@ export function ScreeningRoomV2({
   screeningId,
   sessionId,
   onAudienceFeedback,
+  backButtonLabel,
 }: ScreeningRoomV2Props) {
   // ============================================================================
   // Scene State
@@ -154,7 +157,7 @@ export function ScreeningRoomV2({
             onClick={onClose}
             className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
           >
-            Close
+            {backButtonLabel ?? 'Close'}
           </button>
         </div>
       </div>
@@ -192,7 +195,7 @@ export function ScreeningRoomV2({
               onClick={onClose}
               className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
             >
-              Close
+              {backButtonLabel ?? 'Close'}
             </button>
           </div>
         </div>
@@ -223,6 +226,7 @@ export function ScreeningRoomV2({
       screeningId={screeningId}
       sessionId={sessionId}
       onAudienceFeedback={onAudienceFeedback}
+      backButtonLabel={backButtonLabel}
     />
   )
 }
