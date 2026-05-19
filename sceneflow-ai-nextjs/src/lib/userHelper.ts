@@ -1,6 +1,7 @@
 import { Op, QueryTypes, col, fn, where as sqlWhere } from 'sequelize'
 import { sequelize } from '@/config/database'
 import { User } from '@/models/User'
+import { grantWelcomeCreditsToNewUser } from '@/lib/credits/welcomeCredits'
 
 const TAG = '[userHelper]'
 
@@ -139,6 +140,8 @@ export async function resolveUser(userIdOrEmail: string): Promise<User> {
         storage_used_gb: 0,
         one_time_tiers_purchased: [],
       } as any)
+      const newId = readUserId(user)
+      if (newId) await grantWelcomeCreditsToNewUser(newId, 'oauth_auto_create')
     } catch (error: any) {
       if (error.name === 'SequelizeUniqueConstraintError' || error.message?.includes('unique')) {
         user =

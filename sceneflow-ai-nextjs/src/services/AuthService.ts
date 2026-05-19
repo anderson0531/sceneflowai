@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import { User } from '../models/User'
 import { Op } from 'sequelize'
+import { grantWelcomeCreditsToNewUser } from '@/lib/credits/welcomeCredits'
 
 export interface AuthResult {
   success: boolean
@@ -79,6 +80,8 @@ export class AuthService {
       await user.hashPassword(data.password)
       console.log('✅ Password hashed, saving user...')
       await user.save()
+
+      await grantWelcomeCreditsToNewUser(user.id, 'email_register')
 
       console.log('✅ User saved successfully, generating token...')
       
