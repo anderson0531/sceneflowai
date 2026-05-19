@@ -84,6 +84,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     screenshotSlot: 'Insert screenshot: Resonance Editor with audience scoring and one-click fixes',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2008.22.24.png',
     videoSlot: 'Insert 00:30 clip: Applying guided edits based on audience resonance score',
+    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Audience%20.mp4',
   },
   {
     id: 8,
