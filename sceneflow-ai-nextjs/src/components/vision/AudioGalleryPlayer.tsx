@@ -39,7 +39,7 @@ interface AudioGalleryPlayerProps {
 }
 
 /** Dialogue lines play louder than narration/music balance (HTMLAudioElement.volume max 1). */
-const DIALOGUE_VOLUME_FACTOR = 1.25
+const DIALOGUE_VOLUME_FACTOR = 1.5
 
 interface AudioClip {
   id: string
@@ -410,8 +410,8 @@ export function AudioGalleryPlayer({
       musicAudio.currentTime = 0
     }
     
-    // Sync playback state - background music at 25% of master volume
-    const musicVolume = isMuted ? 0 : volume * 0.25
+    // Sync playback state - background music at 10% of master volume
+    const musicVolume = isMuted ? 0 : volume * 0.1
     musicAudio.volume = musicVolume
     
     if (isPlaying && musicAudio.paused && currentTime < sceneDuration) {
