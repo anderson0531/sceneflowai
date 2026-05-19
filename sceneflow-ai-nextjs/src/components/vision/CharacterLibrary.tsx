@@ -110,6 +110,11 @@ export interface CharacterLibraryProps {
   /** Callback to edit a character's reference image */
   onEditCharacterImage?: (characterId: string, imageUrl: string) => void;
   ttsProvider: "google" | "elevenlabs";
+  /**
+   * When set (e.g. `"elevenlabs"` in the Vision Reference Library), voice picker and Auto voice
+   * use this provider so dialogue TTS matches ElevenLabs even if global BYOK prefers Google.
+   */
+  voiceAssignmentProvider?: "google" | "elevenlabs";
   compact?: boolean;
   uploadingRef?: Record<string, boolean>;
   setUploadingRef?: (
@@ -230,6 +235,7 @@ export function CharacterLibrary({
   onRemoveCharacter,
   onEditCharacterImage,
   ttsProvider,
+  voiceAssignmentProvider,
   compact = false,
   uploadingRef = {},
   setUploadingRef,
@@ -237,6 +243,9 @@ export function CharacterLibrary({
   showProTips: showProTipsProp,
   screenplayContext,
 }: CharacterLibraryProps) {
+  const effectiveVoiceProvider =
+    voiceAssignmentProvider ?? ttsProvider ?? "elevenlabs";
+
   const [selectedChar, setSelectedChar] = useState<string | null>(null);
   const [generatingChars, setGeneratingChars] = useState<Set<string>>(
     new Set(),
@@ -559,7 +568,7 @@ export function CharacterLibrary({
                       ? () => onEditCharacterImage(charId, char.referenceImage)
                       : undefined
                   }
-                  ttsProvider={ttsProvider}
+                  ttsProvider={effectiveVoiceProvider}
                   voiceSectionExpanded={voiceSectionExpanded[charId] || false}
                   onToggleVoiceSection={() => handleToggleVoiceSection(charId)}
                   enableDrag={enableDrag}
@@ -664,7 +673,7 @@ export function CharacterLibrary({
       <VoiceSelectionDialog
         open={createVoiceDialogOpen}
         onOpenChange={setCreateVoiceDialogOpen}
-        provider={ttsProvider || "elevenlabs"}
+        provider={effectiveVoiceProvider}
         mode="character"
         onSelectVoice={(voiceId, voiceName) => {
           toast.success(
@@ -863,80 +872,138 @@ const CharacterCard = ({
     let testAudioPlayed = false;
 
     try {
-      // 1) Select best Gemini base voice
-      const voicesRes = await fetch("/api/tts/google/voices", {
-        cache: "no-store",
-      });
-      const voicesData = await voicesRes.json().catch(() => ({}));
-      const allVoices: ElevenLabsVoice[] = Array.isArray(voicesData?.voices)
-        ? voicesData.voices
-        : [];
-      const geminiVoices = allVoices.filter(
-        (v) => typeof v.id === "string" && v.id.startsWith("gemini-"),
-      );
-
-      if (geminiVoices.length === 0) {
-        throw new Error("No Gemini voices are available right now.");
-      }
-
-      const recs = getCharacterVoiceRecommendations(
-        geminiVoices,
-        characterContext,
-        screenplayContext as ScreenplayContext,
-        1,
-      );
-      const recommendedVoiceId = recs[0]?.voiceId;
-      selectedVoice =
-        geminiVoices.find((v) => v.id === recommendedVoiceId) || geminiVoices[0];
-
-      toast.success(
-        `Auto selected: ${selectedVoice.name.replace(/ \((Gemini|Studio)\)/i, "")}`,
-      );
-
-      // 2) Generate director prompt (best effort)
-      try {
-        const promptRes = await fetch("/api/tts/google/director-prompt", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            characterContext,
-            screenplayContext,
-          }),
+      if (ttsProvider === "google") {
+        // 1) Select best Gemini base voice
+        const voicesRes = await fetch("/api/tts/google/voices", {
+          cache: "no-store",
         });
-        if (promptRes.ok) {
-          const promptData = await promptRes.json();
-          generatedPrompt = (promptData?.script || "").trim();
-          if (generatedPrompt) {
-            toast.success("Generated Voice Direction.");
-          }
+        const voicesData = await voicesRes.json().catch(() => ({}));
+        const allVoices: ElevenLabsVoice[] = Array.isArray(voicesData?.voices)
+          ? voicesData.voices
+          : [];
+        const geminiVoices = allVoices.filter(
+          (v) => typeof v.id === "string" && v.id.startsWith("gemini-"),
+        );
+
+        if (geminiVoices.length === 0) {
+          throw new Error("No Gemini voices are available right now.");
         }
-      } catch (promptErr) {
-        console.warn("[Auto Voice] Director prompt generation failed:", promptErr);
+
+        const recs = getCharacterVoiceRecommendations(
+          geminiVoices,
+          characterContext,
+          screenplayContext as ScreenplayContext,
+          1,
+        );
+        const recommendedVoiceId = recs[0]?.voiceId;
+        selectedVoice =
+          geminiVoices.find((v) => v.id === recommendedVoiceId) ||
+          geminiVoices[0];
+
+        toast.success(
+          `Auto selected: ${selectedVoice.name.replace(/ \((Gemini|Studio)\)/i, "")}`,
+        );
+
+        try {
+          const promptRes = await fetch("/api/tts/google/director-prompt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              characterContext,
+              screenplayContext,
+            }),
+          });
+          if (promptRes.ok) {
+            const promptData = await promptRes.json();
+            generatedPrompt = (promptData?.script || "").trim();
+            if (generatedPrompt) {
+              toast.success("Generated Voice Direction.");
+            }
+          }
+        } catch (promptErr) {
+          console.warn("[Auto Voice] Director prompt generation failed:", promptErr);
+        }
+
+        onUpdateCharacterVoice(characterId, {
+          provider: "google",
+          voiceId: selectedVoice.id,
+          voiceName: selectedVoice.name,
+          prompt: generatedPrompt || character.voiceConfig?.prompt,
+        });
+      } else {
+        const voicesRes = await fetch("/api/tts/elevenlabs/voices", {
+          cache: "no-store",
+        });
+        const voicesData = await voicesRes.json().catch(() => ({}));
+        if (!voicesRes.ok || voicesData.enabled === false) {
+          throw new Error(
+            voicesData?.error ||
+              "Could not load ElevenLabs voices. Check ELEVENLABS_API_KEY.",
+          );
+        }
+        const allVoices: ElevenLabsVoice[] = Array.isArray(voicesData?.voices)
+          ? voicesData.voices
+          : [];
+        const elevenVoices = allVoices.filter(
+          (v) =>
+            typeof v.id === "string" &&
+            v.id.length > 0 &&
+            !v.id.startsWith("gemini-"),
+        );
+
+        if (elevenVoices.length === 0) {
+          throw new Error("No ElevenLabs voices are available right now.");
+        }
+
+        const recs = getCharacterVoiceRecommendations(
+          elevenVoices,
+          characterContext,
+          screenplayContext as ScreenplayContext,
+          1,
+        );
+        const recommendedVoiceId = recs[0]?.voiceId;
+        selectedVoice =
+          elevenVoices.find((v) => v.id === recommendedVoiceId) ||
+          elevenVoices[0];
+
+        toast.success(`Auto selected (ElevenLabs): ${selectedVoice.name}`);
+
+        onUpdateCharacterVoice(characterId, {
+          provider: "elevenlabs",
+          voiceId: selectedVoice.id,
+          voiceName: selectedVoice.name,
+          prompt: character.voiceConfig?.prompt,
+        });
       }
 
-      // 3) Persist selected Gemini voice + generated prompt
-      onUpdateCharacterVoice(characterId, {
-        provider: "google",
-        voiceId: selectedVoice.id,
-        voiceName: selectedVoice.name,
-        prompt: generatedPrompt || character.voiceConfig?.prompt,
-      });
+      if (!selectedVoice) {
+        throw new Error("No voice could be selected.");
+      }
 
-      // 4) Generate and auto-play test dialogue (best effort)
       try {
         const sampleText = characterContext?.name
           ? `${characterContext.name}: This is my automatically recommended voice profile test.`
           : "This is my automatically recommended voice profile test.";
 
-        const testRes = await fetch("/api/tts/google", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text: sampleText,
-            voiceId: selectedVoice.id,
-            ...(generatedPrompt ? { prompt: generatedPrompt } : {}),
-          }),
-        });
+        const testRes = await fetch(
+          ttsProvider === "google" ? "/api/tts/google" : "/api/tts/elevenlabs",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(
+              ttsProvider === "google"
+                ? {
+                    text: sampleText,
+                    voiceId: selectedVoice.id,
+                    ...(generatedPrompt ? { prompt: generatedPrompt } : {}),
+                  }
+                : {
+                    text: sampleText,
+                    voiceId: selectedVoice.id,
+                  },
+            ),
+          },
+        );
 
         if (!testRes.ok) {
           throw new Error("Failed to generate test dialogue.");
@@ -1990,6 +2057,23 @@ const CharacterCard = ({
             </button>
             {voiceSectionExpandedLocal && (
               <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+                {character.voiceConfig?.voiceId ? (
+                  <p
+                    className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 font-mono truncate"
+                    title={`Scene dialogue uses ${character.voiceConfig.provider === "google" ? "Google TTS" : "ElevenLabs"} with this voice id`}
+                  >
+                    Dialogue TTS:{" "}
+                    {character.voiceConfig.provider === "google"
+                      ? "Google"
+                      : "ElevenLabs"}{" "}
+                    ·{" "}
+                    <span className="select-all">{character.voiceConfig.voiceId}</span>
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400 mb-2">
+                    Assign a voice so dialogue generation uses the correct engine and voice id.
+                  </p>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={(e) => {
@@ -2012,7 +2096,11 @@ const CharacterCard = ({
                     }}
                     disabled={isAutoSelectingVoice}
                     className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-60"
-                    title="Auto select Gemini voice, generate direction, and play test dialogue"
+                    title={
+                      ttsProvider === "google"
+                        ? "Auto select Gemini voice, generate direction, and play test dialogue"
+                        : "Auto pick an ElevenLabs voice from character profile (same recommendations as the voice browser)"
+                    }
                   >
                     {isAutoSelectingVoice ? (
                       <Loader className="w-4 h-4 animate-spin" />

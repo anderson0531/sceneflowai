@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
+import { put, del } from '@vercel/blob'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS, optimizeTextForGeminiTTS, finalizeTextForGoogleTts, finalizeTextForGeminiTts } from '../../../../lib/tts/textOptimizer'
@@ -920,15 +920,37 @@ async function updateSceneAudio(
     // Use setTimeout to ensure this runs after response is sent
     setTimeout(async () => {
       try {
-        const deleteResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/blobs/delete`, {
+        const url = oldAudioUrl
+        const isVercelBlob =
+          url.includes('.vercel-storage.com') ||
+          url.includes('.public.blob.vercel-storage.com')
+
+        if (isVercelBlob) {
+          await del([url])
+          console.log('[Update Scene Audio] Old audio blob deleted successfully:', url)
+          return
+        }
+
+        const base =
+          process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ||
+          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
+        if (!base) {
+          console.warn(
+            '[Update Scene Audio] Skipping remote blob delete (no base URL); URL:',
+            url.slice(0, 80)
+          )
+          return
+        }
+
+        const deleteResponse = await fetch(`${base}/api/blobs/delete`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ urls: [oldAudioUrl] }),
+          body: JSON.stringify({ urls: [url] }),
         })
         if (deleteResponse.ok) {
-          console.log('[Update Scene Audio] Old audio blob deleted successfully:', oldAudioUrl)
+          console.log('[Update Scene Audio] Old audio deleted via API:', url)
         } else {
-          console.warn('[Update Scene Audio] Failed to delete old audio blob:', oldAudioUrl, deleteResponse.status)
+          console.warn('[Update Scene Audio] Failed to delete old audio:', url, deleteResponse.status)
         }
       } catch (error) {
         // Ignore errors - orphaned blobs will be cleaned up by scheduled job

@@ -1466,6 +1466,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onAddCharacter={onAddCharacter}
               onRemoveCharacter={onRemoveCharacter}
               onEditCharacterImage={handleEditCharacterImage}
+              voiceAssignmentProvider="elevenlabs"
               ttsProvider={ttsProvider}
               uploadingRef={uploadingRef}
               setUploadingRef={setUploadingRef}
