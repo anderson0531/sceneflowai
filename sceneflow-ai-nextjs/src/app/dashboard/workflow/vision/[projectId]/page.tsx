@@ -121,7 +121,6 @@ import { DetailedSceneDirection } from '@/types/scene-direction'
 import { cn } from '@/lib/utils'
 import { sanitizeReturnTo } from '@/lib/navigation/sanitizeReturnTo'
 import { VisionReferencesSidebar } from '@/components/vision/VisionReferencesSidebar'
-import { ProductionBiblePanel } from '@/components/series/ProductionBiblePanel'
 import { VisualReference, VisualReferenceType, VisionReferencesPayload, LocationReference } from '@/types/visionReferences'
 import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings } from '@/components/vision/scene-production/types'
 import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
@@ -362,7 +361,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [project, setProject] = useState<Project | null>(null)
   const [script, setScript] = useState<any>(null)
   // Series/Episode context for subtitle display
-  const [seriesInfo, setSeriesInfo] = useState<{ seriesTitle: string; episodeNumber: number } | null>(null)
+  const [seriesInfo, setSeriesInfo] = useState<{
+    seriesTitle: string
+    episodeNumber: number
+    seriesBibleVersion?: string
+  } | null>(null)
   // Timestamp updated when script is edited - used to clear audio caches in ScreeningRoom
   const [scriptEditedAt, setScriptEditedAt] = useState<number>(Date.now())
   const [characters, setCharacters] = useState<any[]>([])
@@ -5392,7 +5395,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             const seriesData = await seriesRes.json()
             setSeriesInfo({
               seriesTitle: seriesData.series?.title || seriesData.title || 'Untitled Series',
-              episodeNumber: proj.episode_number || 1
+              episodeNumber: proj.episode_number || 1,
+              seriesBibleVersion: seriesData.series?.production_bible?.version,
             })
           }
         } catch (seriesError) {
@@ -11015,18 +11019,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               
               {/* Narration Voice Selector */}
               
-              {/* Reference Library Panel - only shown for series episodes */}
-              {project?.series_id && (
-                <ProductionBiblePanel 
-                  projectId={projectId}
-                  seriesId={project.series_id}
-                  characters={characters}
-                  onCharactersUpdated={(updatedChars) => setCharacters(updatedChars)}
-                />
-              )}
-              
               <VisionReferencesSidebar
                 projectId={projectId}
+                seriesId={project?.series_id}
+                seriesTitle={seriesInfo?.seriesTitle}
+                seriesBibleVersion={seriesInfo?.seriesBibleVersion}
+                projectBibleVersion={
+                  (project?.metadata as { seriesBibleRef?: { version?: string } } | undefined)
+                    ?.seriesBibleRef?.version
+                }
+                onReferenceLibrarySynced={() => loadProject(true)}
                 characters={characters}
                 onRegenerateCharacter={handleRegenerateCharacter}
                 onGenerateCharacter={handleGenerateCharacter}

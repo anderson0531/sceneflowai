@@ -8,8 +8,12 @@ import type {
   GenerateSeriesRequest,
   BibleSyncRequest,
   BibleSyncDiff,
-  StartEpisodeResponse
+  StartEpisodeResponse,
+  ReferenceTransferRequest,
+  ReferenceTransferDirection,
 } from '@/types/series'
+import type { ReferenceTransferCatalog } from '@/lib/series/referenceTransfer'
+import type { ReferenceTransferDiff } from '@/lib/series/referenceTransfer'
 
 const API_BASE = '/api/series'
 
@@ -425,6 +429,94 @@ export function useProductionBible(seriesId: string | null) {
     clearPendingDiff: () => setPendingDiff(null)
   }
 }
+
+/**
+ * Asset-level reference library transfer (series ↔ project)
+ */
+export function useReferenceTransfer(seriesId: string | null) {
+  const [isTransferring, setIsTransferring] = useState(false)
+  const [catalog, setCatalog] = useState<ReferenceTransferCatalog | null>(null)
+  const [pendingDiff, setPendingDiff] = useState<ReferenceTransferDiff | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const loadCatalog = useCallback(
+    async (projectId: string) => {
+      if (!seriesId) throw new Error('No series selected')
+      setError(null)
+      const response = await fetch(
+        `${API_BASE}/${seriesId}/bible/transfer?projectId=${encodeURIComponent(projectId)}`
+      )
+      const data = await response.json()
+      if (!data.success) throw new Error(data.error || 'Failed to load catalog')
+      setCatalog(data.catalog)
+      return data.catalog as ReferenceTransferCatalog
+    },
+    [seriesId]
+  )
+
+  const previewTransfer = useCallback(
+    async (request: ReferenceTransferRequest) => {
+      if (!seriesId) throw new Error('No series selected')
+      setIsTransferring(true)
+      setError(null)
+      try {
+        const response = await fetch(`${API_BASE}/${seriesId}/bible/transfer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...request, preview: true }),
+        })
+        const data = await response.json()
+        if (!data.success) throw new Error(data.error || 'Preview failed')
+        setPendingDiff(data.diff)
+        return data.diff as ReferenceTransferDiff
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+        throw err
+      } finally {
+        setIsTransferring(false)
+      }
+    },
+    [seriesId]
+  )
+
+  const applyTransfer = useCallback(
+    async (request: ReferenceTransferRequest) => {
+      if (!seriesId) throw new Error('No series selected')
+      setIsTransferring(true)
+      setError(null)
+      try {
+        const response = await fetch(`${API_BASE}/${seriesId}/bible/transfer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...request, preview: false }),
+        })
+        const data = await response.json()
+        if (!data.success) throw new Error(data.error || 'Transfer failed')
+        setPendingDiff(null)
+        return data
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+        throw err
+      } finally {
+        setIsTransferring(false)
+      }
+    },
+    [seriesId]
+  )
+
+  return {
+    isTransferring,
+    catalog,
+    pendingDiff,
+    error,
+    loadCatalog,
+    previewTransfer,
+    applyTransfer,
+    clearPendingDiff: () => setPendingDiff(null),
+  }
+}
+
+export type { ReferenceTransferDirection }
 
 /**
  * Combined hook for full series studio functionality

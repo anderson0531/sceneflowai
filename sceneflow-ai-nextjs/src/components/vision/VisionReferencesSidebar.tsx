@@ -4,7 +4,9 @@ import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid, MapPin, Zap, Settings2 } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid, MapPin, Zap, Settings2, Download, Share2 } from 'lucide-react'
+import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
+import type { ReferenceTransferDirection } from '@/types/series'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -48,6 +50,12 @@ interface SceneWithDirection {
 interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'compact'> {
   /** Project ID for uploads */
   projectId?: string
+  /** Series context — enables import/share with series reference library */
+  seriesId?: string | null
+  seriesTitle?: string
+  seriesBibleVersion?: string
+  projectBibleVersion?: string
+  onReferenceLibrarySynced?: () => void
   sceneReferences: VisualReference[]
   objectReferences: VisualReference[]
   onCreateReference: (type: VisualReferenceType, payload: { name: string; description?: string; file?: File | null }) => Promise<void> | void
@@ -1107,6 +1115,11 @@ function ProductionReadinessSection({ readiness }: { readiness: ProductionReadin
 export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const {
     projectId,
+    seriesId,
+    seriesTitle,
+    seriesBibleVersion,
+    projectBibleVersion,
+    onReferenceLibrarySynced,
     characters,
     onRegenerateCharacter,
     onGenerateCharacter,
@@ -1166,6 +1179,22 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onUploadLocationImage,
     generatingLocationId,
   } = props
+
+  const [transferOpen, setTransferOpen] = useState(false)
+  const [transferDirection, setTransferDirection] =
+    useState<ReferenceTransferDirection>('series_to_project')
+
+  const seriesOutOfSync = Boolean(
+    seriesId &&
+      seriesBibleVersion &&
+      projectBibleVersion &&
+      seriesBibleVersion !== projectBibleVersion
+  )
+
+  const openTransfer = (direction: ReferenceTransferDirection) => {
+    setTransferDirection(direction)
+    setTransferOpen(true)
+  }
 
   // Use new props if available, fall back to legacy props
   const handleGenerateSceneRef = onGenerateSceneReferenceImage || onGenerateSceneImage
@@ -1375,31 +1404,77 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
       <TooltipProvider delayDuration={300}>
       <div className="flex flex-col h-full">
         {/* Title - h4 style */}
-        <div className="flex items-center gap-2 py-3 mb-2">
-          <BookOpen className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-          <h4 className="font-bold text-xl tracking-tight text-gray-900 dark:text-white leading-none">Reference Library</h4>
-          {/* Overall readiness indicator */}
-          {productionReadiness && (
-            <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
-              productionReadiness.isAudioReady 
-                ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-            }`}>
-              {productionReadiness.isAudioReady ? (
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Ready
+        <div className="flex flex-col gap-2 py-3 mb-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <BookOpen className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+            <h4 className="font-bold text-xl tracking-tight text-gray-900 dark:text-white leading-none">
+              Reference Library
+            </h4>
+            {seriesId && seriesTitle ? (
+              <span
+                className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[160px]"
+                title={seriesTitle}
+              >
+                {seriesTitle}
+              </span>
+            ) : null}
+            {productionReadiness && (
+              <span
+                className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
+                  productionReadiness.isAudioReady
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                }`}
+              >
+                {productionReadiness.isAudioReady ? (
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Ready
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {productionReadiness.totalCharacters - productionReadiness.voicesAssigned} voices
+                    needed
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
+          {seriesId && projectId ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => openTransfer('series_to_project')}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+                  seriesOutOfSync
+                    ? 'border-amber-500/50 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20'
+                    : 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20'
+                }`}
+              >
+                {seriesOutOfSync ? (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                ) : null}
+                <Download className="w-3.5 h-3.5" />
+                Import from series
+              </button>
+              <button
+                type="button"
+                onClick={() => openTransfer('project_to_series')}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 transition-colors"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                Share to series
+              </button>
+              {projectBibleVersion ? (
+                <span className="text-[10px] text-gray-500 ml-auto">
+                  Synced · v{projectBibleVersion}
                 </span>
-              ) : (
-                <span className="flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3" />
-                  {productionReadiness.totalCharacters - productionReadiness.voicesAssigned} voices needed
-                </span>
-              )}
-            </span>
-          )}
+              ) : null}
+            </div>
+          ) : null}
         </div>
-        
+
         {/* Production Readiness Section - Collapsible */}
         {showProductionReadiness && productionReadiness && productionReadiness.totalScenes > 0 && (
           <ProductionReadinessSection readiness={productionReadiness} />
@@ -1592,6 +1667,18 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           })() : undefined}
         />
       )}
+
+      {seriesId && projectId ? (
+        <ReferenceTransferDialog
+          open={transferOpen}
+          onOpenChange={setTransferOpen}
+          seriesId={seriesId}
+          projectId={projectId}
+          seriesTitle={seriesTitle}
+          initialDirection={transferDirection}
+          onComplete={onReferenceLibrarySynced}
+        />
+      ) : null}
     </DndContext>
   )
 }

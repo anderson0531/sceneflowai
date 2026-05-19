@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen,
@@ -62,6 +62,8 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES, SeriesResonanceAnalysis } from '@/types/series'
 import { SeriesResonancePanel } from '@/components/series/SeriesResonancePanel'
+import { SeriesReferenceLibraryPanel } from '@/components/series/SeriesReferenceLibraryPanel'
+import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
 import type {
   SeriesCharacterResponse,
   SeriesLocationResponse,
@@ -164,6 +166,22 @@ export default function SeriesStudioPage() {
 
   // Track if we've auto-opened the dialog in this session to prevent loops
   const [hasAutoOpened, setHasAutoOpened] = useState(false)
+
+  const [postStartImport, setPostStartImport] = useState<{
+    projectId: string
+    projectTitle: string
+  } | null>(null)
+
+  const episodeProjects = useMemo(
+    () =>
+      (series?.episodeBlueprints || [])
+        .filter((ep) => ep.projectId)
+        .map((ep) => ({
+          projectId: ep.projectId as string,
+          label: `Ep ${ep.episodeNumber}: ${ep.title || 'Untitled'}`,
+        })),
+    [series?.episodeBlueprints]
+  )
 
   // Open ideation with pre-filled topic from Market Insights, or empty bible for new series
   useEffect(() => {
@@ -323,11 +341,11 @@ export default function SeriesStudioPage() {
       const result = await startEpisode(episodeId)
       console.log(`[DEBUG_START_PROJECT] Success. Project ID: ${result.project.id}`);
       toast.success(`Started Episode ${result.episode.episodeNumber}`, { id: 'start-ep' })
-      
-      // Force a hard navigation to completely bypass Next.js App Router hydration delays
-      // This ensures window.location.search is accurate when the Studio mounts and runs load()
-      console.log(`[DEBUG_START_PROJECT] Navigating to: /dashboard/studio/${result.project.id}?primeBlueprint=true`);
-      window.location.href = `/dashboard/studio/${result.project.id}?primeBlueprint=true`
+      await refreshSeries()
+      setPostStartImport({
+        projectId: result.project.id,
+        projectTitle: `Episode ${result.episode.episodeNumber}: ${result.episode.title || 'Untitled'}`,
+      })
     } catch (err) {
       console.error(`[DEBUG_START_PROJECT] Error starting episode:`, err);
       toast.error(err instanceof Error ? err.message : 'Failed to start episode', { id: 'start-ep' })
@@ -812,28 +830,12 @@ export default function SeriesStudioPage() {
               Episodes
               <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded-full">{series.episodeCount}</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="characters" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:text-purple-400 data-[state=active]:border-purple-500/30 gap-2"
+            <TabsTrigger
+              value="reference-library"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/20 data-[state=active]:to-orange-500/20 data-[state=active]:text-amber-400 data-[state=active]:border-amber-500/30 gap-2"
             >
-              <Users className="w-4 h-4" />
-              Characters
-              <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded-full">{bible?.characters?.length || 0}</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="locations" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500/20 data-[state=active]:to-teal-500/20 data-[state=active]:text-green-400 data-[state=active]:border-green-500/30 gap-2"
-            >
-              <MapPin className="w-4 h-4" />
-              Locations
-              <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded-full">{bible?.locations?.length || 0}</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="style" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500/20 data-[state=active]:to-rose-500/20 data-[state=active]:text-pink-400 data-[state=active]:border-pink-500/30 gap-2"
-            >
-              <Palette className="w-4 h-4" />
-              Visual Style
+              <BookOpen className="w-4 h-4" />
+              Reference Library
             </TabsTrigger>
           </TabsList>
 
@@ -862,30 +864,16 @@ export default function SeriesStudioPage() {
             />
           </TabsContent>
 
-          {/* Characters Tab */}
-          <TabsContent value="characters">
-            <CharactersPanel
-              characters={bible?.characters || []}
-              onRegenerate={() => handleRegenerateField('characters')}
+          <TabsContent value="reference-library">
+            <SeriesReferenceLibraryPanel
+              seriesId={series.id}
+              seriesTitle={series.title}
+              bible={bible}
+              episodeProjects={episodeProjects}
+              onRegenerateCharacters={() => handleRegenerateField('characters')}
+              onRegenerateLocations={() => handleRegenerateField('locations')}
               isGenerating={isGenerating}
-            />
-          </TabsContent>
-
-          {/* Locations Tab */}
-          <TabsContent value="locations">
-            <LocationsPanel
-              locations={bible?.locations || []}
-              onRegenerate={() => handleRegenerateField('locations')}
-              isGenerating={isGenerating}
-            />
-          </TabsContent>
-
-          {/* Visual Style Tab */}
-          <TabsContent value="style">
-            <StylePanel
-              aesthetic={bible?.aesthetic}
-              toneGuidelines={bible?.toneGuidelines}
-              visualGuidelines={bible?.visualGuidelines}
+              onRefresh={refreshSeries}
             />
           </TabsContent>
         </Tabs>
@@ -1232,6 +1220,34 @@ export default function SeriesStudioPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {postStartImport && series ? (
+        <ReferenceTransferDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              window.location.href = `/dashboard/studio/${postStartImport.projectId}?primeBlueprint=true`
+              setPostStartImport(null)
+            }
+          }}
+          seriesId={series.id}
+          projectId={postStartImport.projectId}
+          seriesTitle={series.title}
+          projectTitle={postStartImport.projectTitle}
+          initialDirection="series_to_project"
+          lockDirection
+          condensed
+          condensedTitle="Import series reference library into this episode?"
+          onComplete={() => {
+            window.location.href = `/dashboard/studio/${postStartImport.projectId}?primeBlueprint=true`
+            setPostStartImport(null)
+          }}
+          onSkip={() => {
+            window.location.href = `/dashboard/studio/${postStartImport.projectId}?primeBlueprint=true`
+            setPostStartImport(null)
+          }}
+        />
+      ) : null}
     </div>
   )
 }

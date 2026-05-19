@@ -158,6 +158,17 @@ export interface SeriesEpisodeBlueprint {
 /**
  * Series Character
  */
+export interface SeriesCharacterWardrobe {
+  id: string
+  name: string
+  description?: string
+  previewImageUrl?: string
+  headshotUrl?: string
+  fullBodyUrl?: string
+  isDefault?: boolean
+  sceneNumbers?: number[]
+}
+
 export interface SeriesCharacter {
   id: string
   name: string
@@ -169,6 +180,7 @@ export interface SeriesCharacter {
   voiceId?: string
   referenceImageUrl?: string
   lockedPromptTokens?: string[]
+  wardrobes?: SeriesCharacterWardrobe[]
   createdAt: string
   updatedAt: string
 }
@@ -354,10 +366,39 @@ export interface BibleSyncDiff {
     updated: Array<{ id: string; fields: string[] }>
     removed: string[]
   }
-  aesthetic: {
+  props?: {
+    added: SeriesProp[]
+    updated: Array<{ id: string; fields: string[] }>
+    removed: string[]
+  }
+  aesthetic?: {
     before: any
     after: any
   }
+  summary?: {
+    addedCount: number
+    updatedCount: number
+    skippedCount: number
+  }
+}
+
+export type ReferenceTransferDirection = 'project_to_series' | 'series_to_project'
+export type ReferenceTransferMergeStrategy = 'add_new_only' | 'merge' | 'replace'
+
+export interface ReferenceAssetSelection {
+  characterIds?: string[]
+  locationIds?: string[]
+  propIds?: string[]
+  wardrobeKeys?: string[]
+  includeSettings?: boolean
+}
+
+export interface ReferenceTransferRequest {
+  projectId: string
+  direction: ReferenceTransferDirection
+  selection: ReferenceAssetSelection
+  mergeStrategy?: ReferenceTransferMergeStrategy
+  preview?: boolean
 }
 
 /**
