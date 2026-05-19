@@ -145,6 +145,8 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     description:
       'Validate your vision with real behavioral analytics. Host interactive review sessions to capture audience feedback, track engagement metrics, and use data-driven insights to refine your content before it goes public.',
     screenshotSlot: 'Insert screenshot: Screening Room analytics and reviewer feedback panel',
+    screenshotUrl:
+      'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png',
     videoSlot: 'Insert 00:30 clip: Hosting a review session and gathering engagement data',
   },
 ];
