@@ -19,6 +19,15 @@ import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScor
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { toast } from 'sonner'
+import {
+  DEFAULT_TARGET_AUDIENCE,
+  normalizeTargetAudience,
+  targetAudienceToPromptString,
+  type AudienceTargetProfile,
+} from '@/lib/types/audienceResonance'
+import { TargetAudienceSelector } from '@/components/audience/TargetAudienceSelector'
+
+const SCRIPT_REVIEW_TARGET_AUDIENCE_KEY = 'sceneflow-script-review-target-audience'
 
 import { CINEMATIC_ELEMENT_TYPES, type SpecialSegmentType } from '@/components/vision/scene-production/cinematic-elements'
 
@@ -669,14 +678,24 @@ export default function ScriptReviewModal({
   const [isOptimizingYouDirect, setIsOptimizingYouDirect] = useState(false)
   const baseInstructionRef = useRef<string>('')
 
-  // Target Demographic state
-  const [targetDemographicPreset, setTargetDemographicPreset] = useState<string>('Global Audience')
-  const [customTargetDemographic, setCustomTargetDemographic] = useState('')
-  
-  // Handle regeneration with current demographic
+  const [targetAudience, setTargetAudience] = useState<AudienceTargetProfile>(() => {
+    if (typeof window === 'undefined') return DEFAULT_TARGET_AUDIENCE
+    try {
+      const raw = localStorage.getItem(SCRIPT_REVIEW_TARGET_AUDIENCE_KEY)
+      if (raw) return normalizeTargetAudience(JSON.parse(raw))
+    } catch {}
+    return DEFAULT_TARGET_AUDIENCE
+  })
+  const [targetAudienceOpen, setTargetAudienceOpen] = useState(false)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SCRIPT_REVIEW_TARGET_AUDIENCE_KEY, JSON.stringify(targetAudience))
+    } catch {}
+  }, [targetAudience])
+
   const handleRegenerate = async () => {
-    const demographic = targetDemographicPreset === 'Custom...' ? customTargetDemographic : targetDemographicPreset
-    await onRegenerate(demographic)
+    await onRegenerate(targetAudienceToPromptString(targetAudience))
   }
   
   // Speech recognition for voice input
@@ -1533,28 +1552,45 @@ export default function ScriptReviewModal({
                 }}
               />
               <div className="flex items-center gap-2 border-l border-gray-200 dark:border-gray-700 pl-2 ml-1">
-                <span className="text-xs text-gray-500 font-medium hidden sm:inline-block">Target Audience:</span>
-                <Select value={targetDemographicPreset} onValueChange={setTargetDemographicPreset}>
-                  <SelectTrigger className="w-[140px] h-8 text-xs">
-                    <SelectValue placeholder="Select demographic" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Global Audience">Global Audience</SelectItem>
-                    <SelectItem value="US/North America">US/North America</SelectItem>
-                    <SelectItem value="Thai Audience">Thai Audience</SelectItem>
-                    <SelectItem value="European Audience">European Audience</SelectItem>
-                    <SelectItem value="Young Adult">Young Adult</SelectItem>
-                    <SelectItem value="Custom...">Custom...</SelectItem>
-                  </SelectContent>
-                </Select>
-                {targetDemographicPreset === 'Custom...' && (
-                  <Input
-                    value={customTargetDemographic}
-                    onChange={(e) => setCustomTargetDemographic(e.target.value)}
-                    placeholder="e.g. Thai teenagers..."
-                    className="w-[140px] h-8 text-xs"
-                  />
-                )}
+                <Popover open={targetAudienceOpen} onOpenChange={setTargetAudienceOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs gap-1.5 max-w-[200px] truncate"
+                    >
+                      <Users className="w-3.5 h-3.5 shrink-0" />
+                      <span className="hidden sm:inline">Target audience</span>
+                      <span className="sm:hidden">Audience</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-[min(calc(100vw-2rem),28rem)] p-0 border-gray-700 bg-gray-950 shadow-xl"
+                    align="end"
+                    sideOffset={8}
+                  >
+                    <div className="p-4 max-h-[min(70vh,520px)] overflow-y-auto custom-scrollbar">
+                      <p className="text-sm font-semibold text-white mb-1">Target audience</p>
+                      <p className="text-xs text-gray-400 mb-4">
+                        Tailor scoring, feedback, and scene recommendations to this profile.
+                      </p>
+                      <TargetAudienceSelector
+                        value={targetAudience}
+                        onChange={(field, value) =>
+                          setTargetAudience((prev) => ({ ...prev, [field]: value }))
+                        }
+                        variant="compact"
+                      />
+                      <Button
+                        size="sm"
+                        className="w-full mt-4"
+                        onClick={() => setTargetAudienceOpen(false)}
+                      >
+                        Done
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <Button
                   variant="default"
                   size="sm"

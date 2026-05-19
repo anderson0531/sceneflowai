@@ -259,8 +259,8 @@ async function generateAudienceResonance(
       autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>20%). Minor narration adjustment may help.`
     }
 
-  const audienceContext = targetDemographic && targetDemographic !== 'Global Audience' 
-    ? `\nCRITICAL CONTEXT:\nAnalyze this script SPECIFICALLY for the following target demographic/market: "${targetDemographic}".\nTailor all feedback, strengths, improvements, and scores to how this specific audience would perceive the narrative, pacing, themes, and cultural resonance.` 
+  const audienceContext = targetDemographic?.trim()
+    ? `\nCRITICAL CONTEXT — TARGET AUDIENCE PROFILE:\n${targetDemographic.trim()}\n\nAnalyze this script SPECIFICALLY for the audience described above. Tailor all feedback, strengths, improvements, scene-level recommendations, and scores to how this audience would perceive narrative, pacing, themes, and cultural resonance.`
     : ''
 
   const prompt = `You are an expert screenplay analyst using a DEDUCTION-BASED RUBRIC system. Your job is to provide fair, constructive feedback that helps writers improve their scripts.${audienceContext}

@@ -12,7 +12,8 @@
  * 4. Diminishing returns after 3 iterations
  */
 
-import type { PrimaryGenre, TargetDemographic, ToneProfile } from '@/lib/types/audienceResonance'
+import type { AudienceIntent, PrimaryGenre, TargetDemographic, ToneProfile } from '@/lib/types/audienceResonance'
+import { formatTargetAudienceForPrompt, normalizeAudienceIntent } from '@/lib/types/audienceResonance'
 
 // =============================================================================
 // SCORING WEIGHTS (User-specified)
@@ -742,14 +743,14 @@ export const ENDING_EXPECTATIONS: Record<string, { acceptable: string[]; penaliz
 // HELPER: Build Checklist Prompt Section (Compact Version)
 // =============================================================================
 
-export function buildChecklistPrompt(intent: {
-  primaryGenre: PrimaryGenre
-  targetDemographic: TargetDemographic
-  toneProfile: ToneProfile
-}, iteration: number): string {
-  const genreKeywords = GENRE_KEYWORDS[intent.primaryGenre] || GENRE_KEYWORDS['drama']
-  const toneKeywords = TONE_KEYWORDS[intent.toneProfile] || TONE_KEYWORDS['dark-gritty']
-  const demoThemes = DEMOGRAPHIC_THEMES[intent.targetDemographic] || DEMOGRAPHIC_THEMES['millennials-25-34']
+export function buildChecklistPrompt(intent: AudienceIntent, iteration: number): string {
+  const normalized = normalizeAudienceIntent(intent)
+  const genreKeywords = GENRE_KEYWORDS[normalized.primaryGenre] || GENRE_KEYWORDS['drama']
+  const toneKeywords = TONE_KEYWORDS[normalized.toneProfile] || TONE_KEYWORDS['dark-gritty']
+  const demoThemes =
+    DEMOGRAPHIC_THEMES[normalized.targetDemographic] ||
+    DEMOGRAPHIC_THEMES['millennials-25-34']
+  const audienceProfile = formatTargetAudienceForPrompt(normalized)
   const iterationFocus = getIterationFocus(iteration)
   
   // Compact checklist format to reduce prompt size
@@ -765,9 +766,10 @@ Pacing (20%): three-act-structure (-25), inciting-incident-placement (-20), low-
 Genre (15%): genre-keywords (-20), genre-conventions-met (-25), tone-consistency (-15)
 Commercial (15%): protagonist-demographic-match (-20), demographic-themes (-20), marketable-logline (-15)
 
-GENRE ${intent.primaryGenre}: Need keywords like ${genreKeywords.required.slice(0, 4).join(', ')}
-TONE ${intent.toneProfile}: Need keywords like ${toneKeywords.required.slice(0, 4).join(', ')}
-AUDIENCE ${intent.targetDemographic}: Protagonist age ${demoThemes.protagonistAge}, themes: ${demoThemes.themes.slice(0, 3).join(', ')}
+GENRE ${normalized.primaryGenre}: Need keywords like ${genreKeywords.required.slice(0, 4).join(', ')}
+TONE ${normalized.toneProfile}: Need keywords like ${toneKeywords.required.slice(0, 4).join(', ')}
+TARGET AUDIENCE PROFILE: ${audienceProfile}
+AUDIENCE COHORT ${normalized.targetDemographic}: Protagonist age ${demoThemes.protagonistAge}, themes: ${demoThemes.themes.slice(0, 3).join(', ')}
 
 READY THRESHOLD: ${READY_FOR_PRODUCTION_THRESHOLD}/100. If score >= ${READY_FOR_PRODUCTION_THRESHOLD}, minimize suggestions.
 ${iteration >= MAX_ITERATIONS ? 'FINAL ITERATION: Accept unless FATAL FLAW exists.' : ''}

@@ -14,7 +14,6 @@ import {
   Zap,
   ArrowRight,
   TrendingUp,
-  Users,
   Film,
   Palette,
   ShieldCheck,
@@ -44,10 +43,14 @@ import {
   type TargetScoreProfile,
   getTargetProfileForIntent,
   GENRE_OPTIONS,
-  DEMOGRAPHIC_OPTIONS,
   TONE_OPTIONS,
-  DEFAULT_INTENT
+  DEFAULT_INTENT,
+  normalizeAudienceIntent,
 } from '@/lib/types/audienceResonance'
+import {
+  TargetAudienceSelector,
+  applyTargetAudienceChange,
+} from '@/components/audience/TargetAudienceSelector'
 import { 
   READY_FOR_PRODUCTION_THRESHOLD, 
   MAX_ITERATIONS,
@@ -103,8 +106,8 @@ export function AudienceResonancePanel({
   const wasResetByUser = useRef(false)
   
   // State - initialized from cache if available
-  const [intent, setIntentLocal] = useState<AudienceIntent>(
-    cachedState?.intent || DEFAULT_INTENT
+  const [intent, setIntentLocal] = useState<AudienceIntent>(() =>
+    normalizeAudienceIntent(cachedState?.intent)
   )
   const [analysis, setAnalysisLocal] = useState<AudienceResonanceAnalysis | null>(
     cachedState?.analysis || null
@@ -273,10 +276,12 @@ export function AudienceResonancePanel({
     
     if (treatment) {
       const detectedIntent = detectIntentFromTreatment(treatment)
-      setIntent(prev => ({
-        ...prev,
-        ...detectedIntent
-      }))
+      setIntent((prev) =>
+        normalizeAudienceIntent({
+          ...prev,
+          ...detectedIntent,
+        })
+      )
     }
   }, [treatment])
   
@@ -298,7 +303,7 @@ export function AudienceResonancePanel({
       
       // Restore all state from saved analysis
       setAnalysisLocal(savedAnalysis.analysis)
-      setIntentLocal(savedAnalysis.intent)
+      setIntentLocal(normalizeAudienceIntent(savedAnalysis.intent))
       setIterationCountLocal(savedAnalysis.iterationCount)
       setIsReadyForProductionLocal(savedAnalysis.isReadyForProduction)
       setPreviousScoreLocal(savedAnalysis.greenlightScore)
@@ -867,12 +872,29 @@ export function AudienceResonancePanel({
   }
   
   // Intent change handler - reset iterations but preserve content-based scoring context
-  const handleIntentChange = (key: keyof AudienceIntent, value: string) => {
+  const handleTargetAudienceChange = (
+    field: 'region' | 'ageRange' | 'gender' | 'educationLevel' | 'community',
+    value: string
+  ) => {
+    handleIntentChange(field, value, true)
+  }
+
+  const handleIntentChange = (
+    key: keyof AudienceIntent,
+    value: string,
+    isTargetAudienceField = false
+  ) => {
     // Capture previous analysis for content-based anchoring
     // This prevents wild score swings when only the target audience changes
     const previousScore = analysis?.greenlightScore?.score
     
-    setIntent(prev => ({ ...prev, [key]: value }))
+    setIntent((prev) => {
+      const normalized = normalizeAudienceIntent(prev)
+      if (isTargetAudienceField) {
+        return applyTargetAudienceChange(normalized, key as any, value)
+      }
+      return { ...normalized, [key]: value }
+    })
     // Clear analysis but preserve content-based baseline for scoring stability
     setAnalysisLocal(null)
     setIterationCountLocal(0)
@@ -955,10 +977,18 @@ export function AudienceResonancePanel({
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {/* Intent Selector */}
         <div className="p-4 border-b border-slate-700/30">
-          <p className="text-xs text-gray-500 mb-3 uppercase tracking-wide">Target Intent</p>
-          
+          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Target audience</p>
+          <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+            Calibrate analysis and recommendations for who you are making this for.
+          </p>
+          <TargetAudienceSelector
+            value={intent}
+            onChange={handleTargetAudienceChange}
+            variant="compact"
+          />
+
+          <p className="text-xs text-gray-500 mb-3 mt-5 uppercase tracking-wide">Creative intent</p>
           <div className="space-y-3">
-            {/* Genre */}
             <IntentSelect
               icon={<Film className="w-4 h-4" />}
               label="Genre"
@@ -966,17 +996,6 @@ export function AudienceResonancePanel({
               options={GENRE_OPTIONS}
               onChange={(v) => handleIntentChange('primaryGenre', v)}
             />
-            
-            {/* Demographic */}
-            <IntentSelect
-              icon={<Users className="w-4 h-4" />}
-              label="Audience"
-              value={intent.targetDemographic}
-              options={DEMOGRAPHIC_OPTIONS}
-              onChange={(v) => handleIntentChange('targetDemographic', v)}
-            />
-            
-            {/* Tone */}
             <IntentSelect
               icon={<Palette className="w-4 h-4" />}
               label="Tone"

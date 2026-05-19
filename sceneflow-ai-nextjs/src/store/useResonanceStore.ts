@@ -16,7 +16,7 @@ import type {
   AppliedFix,
   TargetScoreProfile
 } from '@/lib/types/audienceResonance';
-import { DEFAULT_INTENT } from '@/lib/types/audienceResonance';
+import { DEFAULT_INTENT, normalizeAudienceIntent } from '@/lib/types/audienceResonance';
 import type { CheckpointOverride } from '@/lib/treatment/localScoring';
 import { DEFAULT_SCORING_WEIGHTS, type WeightPresetKey } from '@/lib/treatment/scoringChecklist';
 
@@ -131,7 +131,10 @@ export const useResonanceStore = create<ResonanceState>()(
           return null;
         }
         
-        return cache;
+        return {
+          ...cache,
+          intent: normalizeAudienceIntent(cache.intent),
+        };
       },
       
       setAnalysis: (treatmentId: string, data) => {

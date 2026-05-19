@@ -13,7 +13,9 @@ import type {
   CheckpointResults,
   AxisCheckpointResults,
   PreviousAnalysisContext,
-  getGreenlightTier
+  getGreenlightTier,
+  formatTargetAudienceForPrompt,
+  normalizeAudienceIntent,
 } from '@/lib/types/audienceResonance'
 import {
   buildChecklistPrompt,
@@ -480,9 +482,10 @@ function buildAnalysisPrompt(
   targetProfile?: AnalyzeResonanceRequest['targetProfile'],
   contentBaseline?: { score: number; note: string }
 ): string {
-  const genreLabel = intent.primaryGenre.replace('-', ' ')
-  const demoLabel = intent.targetDemographic.replace(/-/g, ' ')
-  const toneLabel = intent.toneProfile.replace('-', ' ')
+  const normalizedIntent = normalizeAudienceIntent(intent)
+  const genreLabel = normalizedIntent.primaryGenre.replace('-', ' ')
+  const toneLabel = normalizedIntent.toneProfile.replace('-', ' ')
+  const audienceProfile = formatTargetAudienceForPrompt(normalizedIntent)
   
   // Get the checklist-based prompt section
   const checklistSection = buildChecklistPrompt(intent, iteration)
@@ -500,7 +503,7 @@ function buildAnalysisPrompt(
   // Build target profile context for consistent scoring toward 90+
   const targetContext = targetProfile ? `
 TARGET SCORING PROFILE (locked for this intent):
-This profile defines what 90+ looks like for ${genreLabel}/${demoLabel}/${toneLabel}.
+This profile defines what 90+ looks like for ${genreLabel} / ${toneLabel} / ${audienceProfile}.
 Score improvements should move TOWARD these targets, not away from them.
 
 Axis Weight Modifiers (higher = more important for this genre):
@@ -559,7 +562,8 @@ INTENT CHANGE SCORING RULES:
 
   return `You are a Creative Executive. Analyze this treatment for market viability.
 
-INTENT: ${genreLabel} | ${demoLabel} | ${toneLabel}
+INTENT: Genre ${genreLabel} | Tone ${toneLabel}
+TARGET AUDIENCE: ${audienceProfile}
 ${targetContext}
 ${baselineContext}
 ${contentBaselineContext}

@@ -59,11 +59,73 @@ export type ToneProfile =
   | 'intense'
   | 'nostalgic'
 
+/** Geographic / market region for audience calibration */
+export type TargetRegion =
+  | 'global'
+  | 'north-america'
+  | 'europe'
+  | 'asia-pacific'
+  | 'latin-america'
+  | 'middle-east-africa'
+  | 'southeast-asia'
+  | 'oceania'
+
+/** Age band (explicit; syncs to legacy targetDemographic for scoring) */
+export type TargetAgeRange =
+  | 'general-all-ages'
+  | 'teens-13-17'
+  | 'young-adult-18-24'
+  | 'millennials-25-34'
+  | 'gen-x-35-54'
+  | 'boomers-55+'
+  | 'family-all-ages'
+  | 'mature-21+'
+
+export type TargetGender =
+  | 'all-genders'
+  | 'women-primary'
+  | 'men-primary'
+  | 'women-leaning'
+  | 'men-leaning'
+  | 'non-binary-inclusive'
+
+export type TargetEducationLevel =
+  | 'general'
+  | 'secondary'
+  | 'some-college'
+  | 'college-educated'
+  | 'graduate-professional'
+  | 'vocational-trade'
+
+/** Community / lifestyle context (urban, academic, family, etc.) */
+export type TargetCommunity =
+  | 'general'
+  | 'urban-metropolitan'
+  | 'suburban'
+  | 'rural'
+  | 'academic-university'
+  | 'family-parenting'
+  | 'professional-workplace'
+  | 'faith-community'
+  | 'fandom-niche'
+  | 'diaspora-cultural'
+
 export interface AudienceIntent {
   primaryGenre: PrimaryGenre
+  /** Legacy cohort id — kept in sync with ageRange for checklist scoring */
   targetDemographic: TargetDemographic
   toneProfile: ToneProfile
+  region: TargetRegion
+  ageRange: TargetAgeRange
+  gender: TargetGender
+  educationLevel: TargetEducationLevel
+  community: TargetCommunity
 }
+
+export type AudienceTargetProfile = Pick<
+  AudienceIntent,
+  'region' | 'ageRange' | 'gender' | 'educationLevel' | 'community'
+>
 
 // =============================================================================
 // RESONANCE AXES (Radar Chart)
@@ -554,10 +616,153 @@ export const TONE_OPTIONS: { value: ToneProfile; label: string }[] = [
   { value: 'nostalgic', label: 'Nostalgic' },
 ]
 
+export const REGION_OPTIONS: { value: TargetRegion; label: string }[] = [
+  { value: 'global', label: 'Global' },
+  { value: 'north-america', label: 'North America' },
+  { value: 'europe', label: 'Europe' },
+  { value: 'asia-pacific', label: 'Asia-Pacific' },
+  { value: 'southeast-asia', label: 'Southeast Asia' },
+  { value: 'latin-america', label: 'Latin America' },
+  { value: 'middle-east-africa', label: 'Middle East & Africa' },
+  { value: 'oceania', label: 'Oceania' },
+]
+
+export const AGE_RANGE_OPTIONS: { value: TargetAgeRange; label: string }[] = [
+  { value: 'general-all-ages', label: 'All ages' },
+  { value: 'teens-13-17', label: 'Teens (13–17)' },
+  { value: 'young-adult-18-24', label: 'Young adult (18–24)' },
+  { value: 'millennials-25-34', label: '25–34' },
+  { value: 'gen-x-35-54', label: '35–54' },
+  { value: 'boomers-55+', label: '55+' },
+  { value: 'family-all-ages', label: 'Family' },
+  { value: 'mature-21+', label: 'Mature (21+)' },
+]
+
+export const GENDER_OPTIONS: { value: TargetGender; label: string }[] = [
+  { value: 'all-genders', label: 'All genders' },
+  { value: 'women-primary', label: 'Women (primary)' },
+  { value: 'men-primary', label: 'Men (primary)' },
+  { value: 'women-leaning', label: 'Women-leaning' },
+  { value: 'men-leaning', label: 'Men-leaning' },
+  { value: 'non-binary-inclusive', label: 'Inclusive / non-binary' },
+]
+
+export const EDUCATION_OPTIONS: { value: TargetEducationLevel; label: string }[] = [
+  { value: 'general', label: 'General' },
+  { value: 'secondary', label: 'Secondary school' },
+  { value: 'some-college', label: 'Some college' },
+  { value: 'college-educated', label: 'College educated' },
+  { value: 'graduate-professional', label: 'Graduate / professional' },
+  { value: 'vocational-trade', label: 'Vocational / trade' },
+]
+
+export const COMMUNITY_OPTIONS: { value: TargetCommunity; label: string }[] = [
+  { value: 'general', label: 'General' },
+  { value: 'urban-metropolitan', label: 'Urban' },
+  { value: 'suburban', label: 'Suburban' },
+  { value: 'rural', label: 'Rural' },
+  { value: 'academic-university', label: 'Academic' },
+  { value: 'family-parenting', label: 'Family' },
+  { value: 'professional-workplace', label: 'Professional' },
+  { value: 'faith-community', label: 'Faith-based' },
+  { value: 'fandom-niche', label: 'Fandom / niche' },
+  { value: 'diaspora-cultural', label: 'Diaspora / cultural' },
+]
+
+const AGE_RANGE_TO_DEMOGRAPHIC: Record<TargetAgeRange, TargetDemographic> = {
+  'general-all-ages': 'general-audience',
+  'teens-13-17': 'teens-13-17',
+  'young-adult-18-24': 'gen-z-18-24',
+  'millennials-25-34': 'millennials-25-34',
+  'gen-x-35-54': 'gen-x-35-54',
+  'boomers-55+': 'boomers-55+',
+  'family-all-ages': 'family-all-ages',
+  'mature-21+': 'mature-21+',
+}
+
+const DEMOGRAPHIC_TO_AGE_RANGE: Partial<Record<TargetDemographic, TargetAgeRange>> = {
+  'general-audience': 'general-all-ages',
+  'teens-13-17': 'teens-13-17',
+  'gen-z-18-24': 'young-adult-18-24',
+  'millennials-25-34': 'millennials-25-34',
+  'gen-x-35-54': 'gen-x-35-54',
+  'boomers-55+': 'boomers-55+',
+  'family-all-ages': 'family-all-ages',
+  'mature-21+': 'mature-21+',
+}
+
+/** Map age range to legacy demographic for scoring checklist */
+export function ageRangeToDemographic(ageRange: TargetAgeRange): TargetDemographic {
+  return AGE_RANGE_TO_DEMOGRAPHIC[ageRange] ?? 'millennials-25-34'
+}
+
+export function demographicToAgeRange(demo: TargetDemographic): TargetAgeRange {
+  return DEMOGRAPHIC_TO_AGE_RANGE[demo] ?? 'millennials-25-34'
+}
+
+/** Merge partial / legacy intent with defaults */
+export function normalizeAudienceIntent(
+  partial?: Partial<AudienceIntent> | null
+): AudienceIntent {
+  const base = { ...DEFAULT_INTENT, ...partial }
+  const ageRange =
+    partial?.ageRange ??
+    (partial?.targetDemographic
+      ? demographicToAgeRange(partial.targetDemographic)
+      : base.ageRange)
+  return {
+    ...base,
+    ageRange,
+    targetDemographic: ageRangeToDemographic(ageRange),
+    region: partial?.region ?? base.region ?? DEFAULT_INTENT.region,
+    gender: partial?.gender ?? base.gender ?? DEFAULT_INTENT.gender,
+    educationLevel:
+      partial?.educationLevel ?? base.educationLevel ?? DEFAULT_INTENT.educationLevel,
+    community: partial?.community ?? base.community ?? DEFAULT_INTENT.community,
+  }
+}
+
+function labelFor<T extends string>(
+  value: T,
+  options: { value: T; label: string }[]
+): string {
+  return options.find((o) => o.value === value)?.label ?? value.replace(/-/g, ' ')
+}
+
+/** Human-readable target audience block for LLM prompts */
+export function formatTargetAudienceForPrompt(intent: AudienceIntent): string {
+  return [
+    `Region: ${labelFor(intent.region, REGION_OPTIONS)}`,
+    `Age: ${labelFor(intent.ageRange, AGE_RANGE_OPTIONS)}`,
+    `Gender: ${labelFor(intent.gender, GENDER_OPTIONS)}`,
+    `Education: ${labelFor(intent.educationLevel, EDUCATION_OPTIONS)}`,
+    `Community: ${labelFor(intent.community, COMMUNITY_OPTIONS)}`,
+  ].join(' | ')
+}
+
+export const DEFAULT_TARGET_AUDIENCE: AudienceTargetProfile = {
+  region: 'global',
+  ageRange: 'millennials-25-34',
+  gender: 'all-genders',
+  educationLevel: 'general',
+  community: 'general',
+}
+
+export function normalizeTargetAudience(
+  partial?: Partial<AudienceTargetProfile> | null
+): AudienceTargetProfile {
+  return { ...DEFAULT_TARGET_AUDIENCE, ...partial }
+}
+
+export function targetAudienceToPromptString(profile: AudienceTargetProfile): string {
+  return formatTargetAudienceForPrompt(normalizeAudienceIntent(profile))
+}
+
 export const DEFAULT_INTENT: AudienceIntent = {
   primaryGenre: 'drama',
   targetDemographic: 'millennials-25-34',
-  toneProfile: 'dark-gritty'
+  toneProfile: 'dark-gritty',
+  ...DEFAULT_TARGET_AUDIENCE,
 }
 
 // =============================================================================
