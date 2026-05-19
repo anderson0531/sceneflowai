@@ -513,50 +513,52 @@ function DirectorConsoleRoot({
     })
   }, [processQueue])
   
-  // Handle batch render - express generation
+  // Handle batch render — Express queues **only** fully anchored segments (start + end) for F2V
   const handleExpress = useCallback(() => {
-    // Find all segments with keyframes that are not locked
     const expressIds = queue
-      .filter(item => {
-        const segment = segments.find(s => s.segmentId === item.segmentId)
+      .filter((item) => {
+        const segment = segments.find((s) => s.segmentId === item.segmentId)
         if (!segment) return false
-        
-        // Skip locked segments
+
         if (segment.lockedForProduction || item.config.approvalStatus === 'locked') return false
-        
-        // Must have at least one keyframe image
-        const hasKeyframe = !!(
-          segment.startFrameUrl || 
-          segment.endFrameUrl || 
-          segment.references?.startFrameUrl || 
-          segment.references?.endFrameUrl ||
-          item.config.startFrameUrl ||
-          item.config.endFrameUrl
-        )
-        
-        // Only if not complete or rendering
-        const isCompleteOrRendering = item.status === 'complete' || item.status === 'rendering'
-        
-        return hasKeyframe && !isCompleteOrRendering
+
+        const cfg = item.config
+        const resolvedStart =
+          (cfg.startFrameUrl && String(cfg.startFrameUrl).trim()) ||
+          segment.startFrameUrl?.trim() ||
+          segment.references?.startFrameUrl?.trim() ||
+          (segment.sequenceIndex === 0 && sceneImageUrl?.trim() ? sceneImageUrl.trim() : '')
+        const resolvedEnd =
+          (cfg.endFrameUrl && String(cfg.endFrameUrl).trim()) ||
+          segment.endFrameUrl?.trim() ||
+          segment.references?.endFrameUrl?.trim() ||
+          ''
+
+        const fullyAnchored = !!resolvedStart && !!resolvedEnd
+        const isCompleteOrRendering =
+          item.status === 'complete' || item.status === 'rendering'
+
+        return fullyAnchored && !isCompleteOrRendering
       })
-      .map(item => item.segmentId)
-      
+      .map((item) => item.segmentId)
+
     if (expressIds.length === 0) {
       import('sonner').then(({ toast }) => {
-        toast.info('No eligible segments found for Express generation')
+        toast.info(
+          'No eligible segments for Express — need both start and end keyframes (fully anchored for F2V), unlocked, and not already rendering.'
+        )
       })
       return
     }
-    
-    // Process concurrently for Express video generation
+
     processQueue({
       mode: 'selected',
       priority: 'sequence',
-      delayBetween: 500, // Reasonable delay between items
+      delayBetween: 500,
       selectedIds: expressIds,
-      concurrency: 3, // Batch concurrent generations
+      concurrency: 3,
     })
-  }, [queue, segments, processQueue])
+  }, [queue, segments, sceneImageUrl, processQueue])
 
   // Toggle segment lock status (locked/unlocked) - persists to DB
   const handleToggleLock = useCallback((segmentId: string) => {
@@ -936,7 +938,7 @@ function DirectorConsoleRoot({
             onClick={handleExpress}
             disabled={queue.length === 0}
             className="border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all"
-            title="Auto-generate F2V videos concurrently for all unlocked segments with keyframes"
+            title="Express F2V: batch-generate video for unlocked segments that have both start and end keyframes"
           >
             <Wand2 className="w-4 h-4 mr-2" />
             Express

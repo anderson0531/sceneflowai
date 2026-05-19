@@ -153,6 +153,7 @@ export async function POST(
           isEstablishingShot,
           references: {
             startFrameUrl,
+            endFrameUrl,
             characterIds: referenceImages?.filter(r => r.type === 'character').map((_, i) => `char-${i}`) || [],
           }
         },
@@ -168,19 +169,27 @@ export async function POST(
       // Get optimal method (handles AUTO and validates user-selected methods)
       const requestedMethod = (generationMethod || genType) as VideoGenerationMethod
       methodSelectionResult = getMethodWithFallback(requestedMethod, methodContext)
-      const effectiveMethod = methodSelectionResult.method
-      
+      let method = methodSelectionResult.method
+
+      // Hard guard: Veo FTV only interpolates when both URLs are present (native lastFrame).
+      if (method === 'FTV' && (!startFrameUrl?.trim?.() || !endFrameUrl?.trim?.())) {
+        const coerced: Exclude<VideoGenerationMethod, 'AUTO'> = startFrameUrl?.trim()
+          ? 'I2V'
+          : 'T2V'
+        console.warn(
+          `[Segment Asset Generation] FTV requested but missing start/end URL; coercing to ${coerced}`
+        )
+        method = coerced
+      }
+
       console.log('[Segment Asset Generation] Requested method:', requestedMethod)
-      console.log('[Segment Asset Generation] Effective method:', effectiveMethod)
+      console.log('[Segment Asset Generation] Effective method:', method)
       console.log('[Segment Asset Generation] Selection confidence:', methodSelectionResult.confidence)
       console.log('[Segment Asset Generation] Reasoning:', methodSelectionResult.reasoning)
       
       if (methodSelectionResult.warnings) {
         methodSelectionResult.warnings.forEach(w => console.warn('[Segment Asset Generation] Warning:', w))
       }
-      
-      // Handle different Veo 3.1 generation methods based on EFFECTIVE method
-      const method = effectiveMethod
       
       // Determine if this is an image-based generation method
       // T2V: allow_all ONLY

@@ -434,8 +434,8 @@ function getMusicDescription(music: GuidePromptSceneContext['music']): string {
 }
 
 /**
- * Build elements for **batch / auto** guide: assigned dialogue + direction only
- * (no narration, music, SFX — smaller RAI surface; user can expand in DirectorDialog).
+ * Build elements for **batch / auto** guide: assigned dialogue + optional scene SFX
+ * (direction is attached but off by default to reduce conflict with frame-locked visuals).
  */
 export function buildBatchAutoGuideElements(
   segment: SceneSegment,
@@ -467,6 +467,22 @@ export function buildBatchAutoGuideElements(
       portionEnd: 100,
     })
   })
+
+  if (scene.sfx?.length) {
+    scene.sfx.forEach((sfx, idx) => {
+      const desc = sfx.description?.trim()
+      if (!desc) return
+      newElements.push({
+        id: `sfx-batch-${idx}`,
+        type: 'sfx',
+        label: 'SFX',
+        content: desc,
+        selected: true,
+        portionStart: 0,
+        portionEnd: 100,
+      })
+    })
+  }
 
   const directionParts: string[] = []
   if (segment.actionPrompt) {
@@ -500,7 +516,7 @@ export function buildBatchAutoGuideElements(
   return newElements
 }
 
-/** Auto guide string for queue / useSegmentConfig when segment has assigned dialogue */
+/** Auto guide string for queue / useSegmentConfig when segment has dialogue and/or scene SFX */
 export function buildDefaultBatchGuidePrompt(
   segment: SceneSegment,
   scene: GuidePromptSceneContext,

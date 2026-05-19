@@ -2278,6 +2278,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const segmentIndexForApi = currentProduction?.segments.findIndex((s) => s.segmentId === segmentId) ?? -1
         const totalSegmentsForApi = currentProduction?.segments.length ?? 0
 
+        const scriptScenes = script?.script?.scenes ?? []
+        const visionScene = scriptScenes.find(
+          (s: any, i: number) => (s.id || s.sceneId || `scene-${i}`) === sceneId
+        )
+        const sceneImageUrlForApi =
+          typeof visionScene?.imageUrl === 'string' && visionScene.imageUrl.trim()
+            ? visionScene.imageUrl.trim()
+            : undefined
+
+        const prevSeg =
+          segmentIndexForApi > 0 ? currentProduction?.segments[segmentIndexForApi - 1] : undefined
+        const previousSegmentAssetUrl =
+          prevSeg?.activeAssetUrl && prevSeg.assetType === 'video'
+            ? prevSeg.activeAssetUrl
+            : undefined
+        const previousSegmentVeoRef = prevSeg?.takes?.[0]?.veoVideoRef
+
+        const resolvedStartFrameUrl =
+          options?.startFrameUrl?.trim() ||
+          segment.startFrameUrl ||
+          segment.references?.startFrameUrl ||
+          (segment.sequenceIndex === 0 && sceneImageUrlForApi ? sceneImageUrlForApi : undefined)
+
+        const resolvedEndFrameUrl =
+          options?.endFrameUrl?.trim() ||
+          segment.endFrameUrl ||
+          segment.references?.endFrameUrl ||
+          undefined
+
         // Use prompt from options (from prompt builder) or fall back to segment prompt
         const prompt = options?.prompt || segment.userEditedPrompt || segment.generatedPrompt || ''
         if (!prompt) {
@@ -2302,13 +2331,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           body: JSON.stringify({
             prompt,
             genType: mode,
-            startFrameUrl: options?.startFrameUrl,
+            startFrameUrl: resolvedStartFrameUrl,
             sourceVideoUrl: options?.sourceVideoUrl,  // For EXT mode: Veo extends video directly
-            endFrameUrl: options?.endFrameUrl,
+            endFrameUrl: resolvedEndFrameUrl,
             referenceImages: options?.referenceImages,
             generationMethod: options?.generationMethod || mode, // Use generationMethod if provided, otherwise fallback to mode
             sceneId,
             projectId: project.id,
+            sceneImageUrl: sceneImageUrlForApi,
+            previousSegmentAssetUrl,
+            previousSegmentVeoRef,
+            isEstablishingShot: segment.isEstablishingShot,
             // Pass video-specific options from prompt builder
             negativePrompt: options?.negativePrompt,
             duration: options?.duration,
@@ -2448,11 +2481,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               lastContentPolicyFailure: undefined,
               errorMessage: undefined,
               takes: [newTake, ...(segment.takes || [])],
-              references: {
-                ...segment.references,
-                startFrameUrl: options?.startFrameUrl || segment.references?.startFrameUrl,
-                endFrameUrl: lastFrameUrl || segment.references?.endFrameUrl,
-              },
+                references: {
+                  ...segment.references,
+                  startFrameUrl: resolvedStartFrameUrl || segment.references?.startFrameUrl,
+                  endFrameUrl: lastFrameUrl || segment.references?.endFrameUrl,
+                },
               stemSeparation: data.stemSeparation
                 ? {
                     ...data.stemSeparation,
@@ -2954,7 +2987,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         } catch {}
       }
     },
-    [applySceneProductionUpdate, project?.id, sceneProductionState]
+    [applySceneProductionUpdate, project?.id, sceneProductionState, script]
   )
 
   const handleSegmentUpload = useCallback(

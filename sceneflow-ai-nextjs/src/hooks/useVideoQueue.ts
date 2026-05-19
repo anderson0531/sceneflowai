@@ -351,24 +351,35 @@ export function useVideoQueue(
         const config = overrideConfigs?.get(item.segmentId) || item.config
         
         try {
-          // Map mode to generation type
-          const genType: GenerationType = 
-            config.mode === 'FTV' || config.mode === 'I2V' || config.mode === 'EXT' ? 'I2V' : 'T2V'
+          let batchMethod = config.mode
+          let startUrl = config.startFrameUrl?.trim() ? config.startFrameUrl : undefined
+          let endUrl = config.endFrameUrl?.trim() ? config.endFrameUrl : undefined
+          if (batchMethod === 'FTV' && (!startUrl || !endUrl)) {
+            batchMethod = startUrl ? 'I2V' : 'T2V'
+            console.warn(
+              `[VideoQueue] FTV batch item missing frames; coerced to ${batchMethod} for segment ${item.segmentId}`
+            )
+          }
+
+          const genType: 'T2V' | 'I2V' =
+            batchMethod === 'FTV' || batchMethod === 'I2V' || batchMethod === 'EXT'
+              ? 'I2V'
+              : 'T2V'
           
           await onGenerate(
             sceneId,
             item.segmentId,
             genType,
             {
-              startFrameUrl: config.startFrameUrl || undefined,
-              endFrameUrl: config.endFrameUrl || undefined,
+              startFrameUrl: startUrl,
+              endFrameUrl: endUrl,
               sourceVideoUrl: config.sourceVideoUrl || undefined,
               prompt: config.prompt,
               negativePrompt: config.negativePrompt || undefined,
               duration: config.duration,
               aspectRatio: config.aspectRatio,
               resolution: config.resolution,
-              generationMethod: config.mode,
+              generationMethod: batchMethod,
               guidePrompt: config.guidePrompt,  // Voice/dialogue/SFX for Veo 3.1 audio
             }
           )

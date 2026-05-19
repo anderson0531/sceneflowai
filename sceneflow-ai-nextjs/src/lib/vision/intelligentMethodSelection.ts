@@ -20,6 +20,8 @@ export interface MethodSelectionContext {
   segmentIndex: number
   totalSegments: number
   hasSceneImage: boolean
+  /** Explicit segment end-frame URL (required for true Veo FTV interpolation). */
+  hasEndFrameUrl: boolean
   hasCharacterRefs: boolean
   hasPreviousLastFrame: boolean
   hasPreviousVeoRef: boolean  // For EXT mode
@@ -240,11 +242,12 @@ export function validateMethodForContext(
       break
       
     case 'FTV':
-      if (!context.hasSceneImage && !context.hasPreviousLastFrame) {
+      if (!context.hasSceneImage || !context.hasEndFrameUrl) {
         return {
           valid: false,
-          error: 'FTV requires both start and end frames',
-          suggestion: 'I2V',
+          error:
+            'FTV requires both a start frame (scene image or startFrameUrl) and an end frame URL',
+          suggestion: context.hasSceneImage ? 'I2V' : context.hasCharacterRefs ? 'REF' : 'T2V',
         }
       }
       break
@@ -333,6 +336,7 @@ export function buildMethodSelectionContext(
     isEstablishingShot?: boolean
     references?: {
       startFrameUrl?: string | null
+      endFrameUrl?: string | null
       characterIds?: string[]
     }
   },
@@ -360,12 +364,14 @@ export function buildMethodSelectionContext(
   // 1. Scene has an imageUrl, OR
   // 2. Segment has a startFrameUrl explicitly set (user selected a start frame)
   const hasStartFrame = !!segment.references?.startFrameUrl
+  const hasEndFrameUrl = !!segment.references?.endFrameUrl
   const hasSceneImage = !!scene.imageUrl || hasStartFrame
   
   return {
     segmentIndex: segment.sequenceIndex,
     totalSegments,
     hasSceneImage,
+    hasEndFrameUrl,
     hasCharacterRefs,
     hasPreviousLastFrame: hasPreviousLastFrame || hasStartFrame,  // Also consider explicit startFrameUrl
     hasPreviousVeoRef,

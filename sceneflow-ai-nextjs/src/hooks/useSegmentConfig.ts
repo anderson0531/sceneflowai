@@ -182,9 +182,15 @@ function generateFTVMotionPrompt(segment: SceneSegment, skipAnchoringPhrase?: bo
  * IMPORTANT: For FTV mode, this function routes to generateFTVMotionPrompt()
  * which intelligently removes conflicting motion language and prepends end-frame anchoring.
  */
-function generateMotionPrompt(segment: SceneSegment): string {
+function generateMotionPrompt(segment: SceneSegment, sceneImageUrl?: string): string {
+  const masterSceneStart =
+    segment.sequenceIndex === 0 && sceneImageUrl?.trim() ? sceneImageUrl.trim() : ''
   // Check if this is FTV mode (has both start and end frames)
-  const hasStartFrame = !!(segment.startFrameUrl || segment.references?.startFrameUrl)
+  const hasStartFrame = !!(
+    segment.startFrameUrl ||
+    segment.references?.startFrameUrl ||
+    masterSceneStart
+  )
   const hasEndFrame = !!(segment.endFrameUrl || segment.references?.endFrameUrl)
   
   // For FTV mode: use the intelligent prompt generator with end-frame anchoring
@@ -312,8 +318,19 @@ function generateVisualPrompt(segment: SceneSegment, sceneImageUrl?: string): st
  * 3. EXT (Extend): Extend existing video
  * 4. T2V (Text-to-Video): No frames = risk of character drift
  */
-function detectRecommendedMethod(segment: SceneSegment): VideoGenerationMethod {
-  const hasStartFrame = !!(segment.startFrameUrl || segment.references?.startFrameUrl)
+function detectRecommendedMethod(
+  segment: SceneSegment,
+  sceneImageUrl?: string
+): VideoGenerationMethod {
+  const masterSceneFrame =
+    segment.sequenceIndex === 0 && sceneImageUrl?.trim()
+      ? sceneImageUrl.trim()
+      : ''
+  const hasStartFrame = !!(
+    segment.startFrameUrl ||
+    segment.references?.startFrameUrl ||
+    masterSceneFrame
+  )
   const hasEndFrame = !!(segment.endFrameUrl || segment.references?.endFrameUrl)
   const hasExistingVideo = !!(segment.activeAssetUrl && segment.assetType === 'video')
   
@@ -335,6 +352,30 @@ function detectRecommendedMethod(segment: SceneSegment): VideoGenerationMethod {
   
   // Text-to-Video: Fallback when no frames available (not recommended)
   return 'T2V'
+}
+
+/** True when batch auto-guide can include dialogue (IDs or embedded segment lines). */
+function segmentHasBatchGuideDialogue(segment: SceneSegment): boolean {
+  return (
+    (segment.dialogueLineIds?.length ?? 0) > 0 ||
+    (segment.dialogueLines?.length ?? 0) > 0
+  )
+}
+
+/** Resolved URLs passed to Veo (segment fields + first-segment scene master frame). */
+function resolveSegmentFrameUrls(segment: SceneSegment, sceneImageUrl?: string) {
+  const masterSceneFrame =
+    segment.sequenceIndex === 0 && sceneImageUrl?.trim()
+      ? sceneImageUrl.trim()
+      : null
+  const startFrameUrl =
+    segment.startFrameUrl ||
+    segment.references?.startFrameUrl ||
+    masterSceneFrame ||
+    null
+  const endFrameUrl =
+    segment.endFrameUrl || segment.references?.endFrameUrl || null
+  return { startFrameUrl, endFrameUrl }
 }
 
 /**
@@ -499,19 +540,24 @@ export function useSegmentConfig(
   guideContext?: SegmentGuideContext
 ): SegmentConfigResult {
   return useMemo(() => {
-    const method = detectRecommendedMethod(segment)
+    const method = detectRecommendedMethod(segment, sceneImageUrl)
     const confidence = calculateConfidence(segment, method)
     const approvalStatus = determineApprovalStatus(segment)
     
     // Generate appropriate prompt based on method
-    const motionPrompt = generateMotionPrompt(segment)
+    const motionPrompt = generateMotionPrompt(segment, sceneImageUrl)
     const visualPrompt = generateVisualPrompt(segment, sceneImageUrl)
     
     // Choose primary prompt based on method
     const prompt = method === 'FTV' ? motionPrompt : visualPrompt
 
+    const { startFrameUrl: resolvedStart, endFrameUrl: resolvedEnd } =
+      resolveSegmentFrameUrls(segment, sceneImageUrl)
+
     const guidePrompt =
-      guideContext?.scene && (segment.dialogueLineIds?.length ?? 0) > 0
+      guideContext?.scene &&
+      (segmentHasBatchGuideDialogue(segment) ||
+        (guideContext.scene.sfx?.length ?? 0) > 0)
         ? buildDefaultBatchGuidePrompt(
             segment,
             guideContext.scene,
@@ -532,8 +578,8 @@ export function useSegmentConfig(
       confidence,
       guidePrompt: guidePrompt || undefined,
       // Asset URLs for generation
-      startFrameUrl: segment.startFrameUrl || segment.references?.startFrameUrl || null,
-      endFrameUrl: segment.endFrameUrl || segment.references?.endFrameUrl || null,
+      startFrameUrl: resolvedStart,
+      endFrameUrl: resolvedEnd,
       sourceVideoUrl: segment.activeAssetUrl && segment.assetType === 'video' ? segment.activeAssetUrl : null,
     }
     
@@ -592,16 +638,21 @@ export function useSegmentConfigs(
     )
     
     for (const segment of validSegments) {
-      const method = detectRecommendedMethod(segment)
+      const method = detectRecommendedMethod(segment, sceneImageUrl)
       const confidence = calculateConfidence(segment, method)
       const approvalStatus = determineApprovalStatus(segment)
       
-      const motionPrompt = generateMotionPrompt(segment)
+      const motionPrompt = generateMotionPrompt(segment, sceneImageUrl)
       const visualPrompt = generateVisualPrompt(segment, sceneImageUrl)
       const prompt = method === 'FTV' ? motionPrompt : visualPrompt
 
+      const { startFrameUrl: resolvedStart, endFrameUrl: resolvedEnd } =
+        resolveSegmentFrameUrls(segment, sceneImageUrl)
+
       const guidePrompt =
-        guideContext?.scene && (segment.dialogueLineIds?.length ?? 0) > 0
+        guideContext?.scene &&
+        (segmentHasBatchGuideDialogue(segment) ||
+          (guideContext.scene.sfx?.length ?? 0) > 0)
           ? buildDefaultBatchGuidePrompt(
               segment,
               guideContext.scene,
@@ -621,8 +672,8 @@ export function useSegmentConfigs(
         approvalStatus,
         confidence,
         guidePrompt: guidePrompt || undefined,
-        startFrameUrl: segment.startFrameUrl || segment.references?.startFrameUrl || null,
-        endFrameUrl: segment.endFrameUrl || segment.references?.endFrameUrl || null,
+        startFrameUrl: resolvedStart,
+        endFrameUrl: resolvedEnd,
         sourceVideoUrl: segment.activeAssetUrl && segment.assetType === 'video' ? segment.activeAssetUrl : null,
       }
       
