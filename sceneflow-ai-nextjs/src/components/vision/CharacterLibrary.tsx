@@ -955,9 +955,54 @@ const CharacterCard = ({
           throw new Error("No ElevenLabs voices are available right now.");
         }
 
+        let recContext: CharacterContext = characterContext;
+        const thinVoiceProfile =
+          !character.voiceDescription?.trim() ||
+          character.voiceDescription.trim().length < 40;
+        if (
+          thinVoiceProfile &&
+          Boolean(character.referenceImage?.trim()) &&
+          onUpdateCharacterAttributes
+        ) {
+          try {
+            const vpRes = await fetch("/api/tts/voice-profile/generate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                characterName: characterContext.name,
+                characterContext: {
+                  role: characterContext.role,
+                  gender: characterContext.gender,
+                  age: characterContext.age,
+                  ethnicity: characterContext.ethnicity,
+                  personality: characterContext.personality,
+                  description: characterContext.description,
+                },
+                referenceImageUrl: character.referenceImage,
+                screenplayContext,
+              }),
+            });
+            const vpData = await vpRes.json().catch(() => ({}));
+            if (vpRes.ok && typeof vpData?.voiceDescription === "string") {
+              const vd = vpData.voiceDescription.trim();
+              if (vd) {
+                onUpdateCharacterAttributes(characterId, {
+                  voiceDescription: vd,
+                });
+                recContext = { ...characterContext, voiceDescription: vd };
+                toast.success(
+                  "Built an AI voice profile from your reference for smarter Auto pick.",
+                );
+              }
+            }
+          } catch (profileErr) {
+            console.warn("[Auto Voice] Voice profile prefetch failed:", profileErr);
+          }
+        }
+
         const recs = getCharacterVoiceRecommendations(
           elevenVoices,
-          characterContext,
+          recContext,
           screenplayContext as ScreenplayContext,
           1,
         );

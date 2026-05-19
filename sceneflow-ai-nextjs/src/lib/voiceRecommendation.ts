@@ -78,8 +78,54 @@ export interface ElevenLabsVoice {
 // Scoring Functions
 // ================================================================================
 
+const VOICE_PROFILE_STOPWORDS = new Set([
+  'the', 'and', 'for', 'with', 'that', 'this', 'from', 'her', 'his', 'she', 'has', 'have',
+  'was', 'were', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'their', 'they', 'what',
+  'which', 'when', 'who', 'will', 'would', 'could', 'than', 'then', 'them', 'its', 'also',
+  'into', 'just', 'more', 'most', 'some', 'such', 'only', 'other', 'about', 'over', 'after',
+  'before', 'between', 'through', 'during', 'both', 'each', 'few', 'being', 'there', 'here',
+  'where', 'while', 'under', 'above', 'voice', 'speaks', 'speaking', 'tone', 'accent',
+  'delivery', 'pacing', 'range', 'mid', 'hints', 'hint',
+])
+
+function tokenizeProfileWords(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s'-]/g, ' ')
+    .split(/\s+/)
+    .flatMap((w) => w.replace(/^'+|'+$/g, '').split('-'))
+    .filter((w) => w.length > 2 && !VOICE_PROFILE_STOPWORDS.has(w))
+}
+
+/** Distinctive words from the AI voice profile that appear in ElevenLabs listing metadata. */
+function countVoiceProfileKeywordHits(voiceDescription: string, voiceText: string): number {
+  const words = tokenizeProfileWords(voiceDescription)
+  const seen = new Set<string>()
+  let hits = 0
+  const hay = voiceText.toLowerCase()
+  for (const w of words) {
+    if (seen.has(w)) continue
+    seen.add(w)
+    try {
+      const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const re = new RegExp(`\\b${escaped}\\b`, 'i')
+      if (re.test(hay)) hits++
+    } catch {
+      if (hay.includes(w)) hits++
+    }
+  }
+  return hits
+}
+
+/** Merge appearance text, cached AI voice profile, and personality for inference & scoring. */
+export function blendCharacterProfileForVoiceScoring(character: CharacterContext): string {
+  return [character.description, character.voiceDescription, character.personality]
+    .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+    .join(' ')
+}
+
 // Maximum possible score for normalization (sum of all possible bonuses)
-const MAX_POSSIBLE_SCORE = 145 // 30 (gender) + 20 (age) + 20 (ethnicity/accent) + 25 (role) + 20 (profession) + 10 (genre) + 10 (personality) + 10 (description traits)
+const MAX_POSSIBLE_SCORE = 160 // prior cap + up to 15 for AI voice-profile keyword overlap vs catalog metadata
 
 /**
  * Infer ethnicity/cultural background from character description and name
@@ -300,14 +346,15 @@ function scoreVoiceForCharacter(
 ): { score: number; reasons: string[]; normalizedScore: number } {
   let score = 0
   const reasons: string[] = []
+  const profileText = blendCharacterProfileForVoiceScoring(character)
 
   // Infer gender if not provided
   const voiceGender = voice.gender?.toLowerCase() || voice.labels?.gender?.toLowerCase()
   let charGender = character.gender?.toLowerCase()
   
   // Try to infer gender from description or name
-  if (!charGender && character.description) {
-    const inferredFromDesc = inferGenderFromDescription(character.description)
+  if (!charGender && profileText.trim()) {
+    const inferredFromDesc = inferGenderFromDescription(profileText)
     if (inferredFromDesc) {
       charGender = inferredFromDesc
     }
@@ -331,8 +378,8 @@ function scoreVoiceForCharacter(
 
   // Infer age if not provided
   let charAge = character.age?.toLowerCase()
-  if (!charAge && character.description) {
-    const inferredAge = inferAgeFromDescription(character.description)
+  if (!charAge && profileText.trim()) {
+    const inferredAge = inferAgeFromDescription(profileText)
     if (inferredAge) {
       charAge = inferredAge
     }
@@ -365,8 +412,8 @@ function scoreVoiceForCharacter(
   let charEthnicity = character.ethnicity?.toLowerCase()
   
   // Infer ethnicity from description if not explicitly provided
-  if (!charEthnicity && character.description) {
-    const inferredEthnicity = inferEthnicityFromDescription(character.description, character.name || '')
+  if (!charEthnicity && profileText.trim()) {
+    const inferredEthnicity = inferEthnicityFromDescription(profileText, character.name || '')
     if (inferredEthnicity) {
       charEthnicity = inferredEthnicity
     }
@@ -401,7 +448,7 @@ function scoreVoiceForCharacter(
     // Fallback: Match accent to setting hints
     const settingHints = [
       screenplayContext?.setting?.toLowerCase() || '',
-      character.description?.toLowerCase() || ''
+      profileText.toLowerCase(),
     ].join(' ')
 
     if (voiceAccent.includes('british') && settingHints.includes('british')) {
@@ -414,8 +461,8 @@ function scoreVoiceForCharacter(
   }
 
   // Profession-based voice style matching
-  if (character.description) {
-    const professionInfo = inferProfessionFromDescription(character.description)
+  if (profileText.trim()) {
+    const professionInfo = inferProfessionFromDescription(profileText)
     if (professionInfo) {
       const voiceDescLower = voice.description?.toLowerCase() || ''
       const voiceLabels = Object.values(voice.labels || {}).join(' ').toLowerCase()
@@ -505,9 +552,9 @@ function scoreVoiceForCharacter(
     }
   }
 
-  // Description keyword matching
-  if (character.personality || character.description) {
-    const charTraits = [character.personality, character.description].join(' ').toLowerCase()
+  // Description keyword matching (includes AI voice profile when present)
+  if (profileText.trim()) {
+    const charTraits = profileText.toLowerCase()
     
     const traitMatches: [string[], string[], number][] = [
       [['warm', 'friendly', 'kind'], ['warm', 'friendly', 'gentle'], 10],
@@ -526,6 +573,18 @@ function scoreVoiceForCharacter(
         reasons.push(`Personality trait match`)
         break // Only count once
       }
+    }
+  }
+
+  // Rich AI voice profile vs ElevenLabs catalog labels/description
+  const vdRaw = character.voiceDescription?.trim()
+  if (vdRaw && vdRaw.length > 40) {
+    const voiceMeta = `${voice.description || ''} ${voice.name || ''} ${Object.values(voice.labels || {}).join(' ')}`
+    const hits = countVoiceProfileKeywordHits(vdRaw, voiceMeta)
+    if (hits > 0) {
+      const bonus = Math.min(15, hits * 2)
+      score += bonus
+      reasons.push(`Voice listing matches AI voice profile (${hits} cues)`)
     }
   }
 
@@ -555,9 +614,10 @@ export function getCharacterVoiceRecommendations(
   topN: number = 5
 ): VoiceRecommendation[] {
   // Infer character gender for pre-filtering
+  const profileBlend = blendCharacterProfileForVoiceScoring(character)
   let charGender = character.gender?.toLowerCase()
-  if (!charGender && character.description) {
-    const inferredFromDesc = inferGenderFromDescription(character.description)
+  if (!charGender && profileBlend.trim()) {
+    const inferredFromDesc = inferGenderFromDescription(profileBlend)
     if (inferredFromDesc) charGender = inferredFromDesc
   }
   if (!charGender && character.name) {
@@ -693,6 +753,20 @@ export function searchVoicesIntelligently(
  */
 function inferGenderFromDescription(description: string): 'male' | 'female' | null {
   const text = description.toLowerCase()
+
+  // Strong cues from AI voice profiles (e.g. "female voice in her late twenties")
+  if (
+    /\bfemale\s+voice\b|\bwoman'?s\s+voice\b|\bgirl'?s\s+voice\b|\bwoman\s+voice\b/.test(
+      text,
+    )
+  ) {
+    return 'female'
+  }
+  if (
+    /\bmale\s+voice\b|\bman'?s\s+voice\b|\bboy'?s\s+voice\b|\bman\s+voice\b/.test(text)
+  ) {
+    return 'male'
+  }
   
   // Female indicators (check first since character names like Ka'ali might be female)
   const femaleIndicators = [

@@ -27,7 +27,9 @@ export function VoiceDesignPanel({
 }: VoiceDesignPanelProps) {
   const [voiceDescription, setVoiceDescription] = useState('')
   const [voiceName, setVoiceName] = useState(characterContext?.name ? `${characterContext.name}'s Voice` : '')
-  const [previewText, setPreviewText] = useState("Hello, this is a preview of my voice. I'm excited to be part of your project!")
+  const [previewText, setPreviewText] = useState(
+    "Hello, this is my ElevenLabs voice design preview. I am reading about one hundred characters of sample dialogue so the design API can use this exact script rather than auto-generated lines.",
+  )
   const [isGenerating, setIsGenerating] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false)
@@ -242,7 +244,7 @@ export function VoiceDesignPanel({
         <div className="text-[13px] text-purple-300">
           <p className="font-medium mb-0.5">Design a Voice with AI</p>
           <p className="text-[12px] text-purple-400/80">
-            Describe the voice you want to create and our AI will generate unique voice options for you to choose from.
+            Describe the voice (accent, age, tone, texture). ElevenLabs generates preview audio from your description; optional preview script must be 100–1000 characters or leave shorter text empty for auto-generated lines.
           </p>
         </div>
       </div>
@@ -344,18 +346,21 @@ export function VoiceDesignPanel({
         </div>
       </div>
 
-      {/* Preview Text (Optional) */}
+      {/* Preview script (optional): 100–1000 chars for explicit lines; shorter clears to server auto_generate */}
       <div className="space-y-1.5">
         <label className="text-[13px] font-medium text-gray-300">
-          Preview Text <span className="text-gray-500 font-normal">(optional)</span>
+          Preview script <span className="text-gray-500 font-normal">(optional)</span>
         </label>
-        <input
-          type="text"
+        <textarea
           value={previewText}
           onChange={(e) => setPreviewText(e.target.value)}
-          placeholder="Text to speak in the preview..."
-          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 text-[13px] placeholder-gray-500 focus:outline-none focus:border-purple-500"
+          placeholder="Optional: 100–1000 characters. Leave blank or short for ElevenLabs to auto-pick sample lines."
+          rows={3}
+          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 text-[13px] placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none"
         />
+        <p className="text-[11px] text-gray-500">
+          Current length: {previewText.trim().length}. Under 100 uses auto-generated preview text on the server.
+        </p>
       </div>
 
       {/* Generate Button */}
@@ -372,7 +377,7 @@ export function VoiceDesignPanel({
         ) : (
           <>
             <Wand2 className="w-4 h-4 mr-2" />
-            Generate Voice Previews
+            Generate Voice Preview
           </>
         )}
       </Button>
