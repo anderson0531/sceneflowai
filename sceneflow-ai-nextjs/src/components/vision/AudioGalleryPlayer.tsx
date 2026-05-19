@@ -38,6 +38,9 @@ interface AudioGalleryPlayerProps {
   isSharedView?: boolean
 }
 
+/** Dialogue lines play louder than narration/music balance (HTMLAudioElement.volume max 1). */
+const DIALOGUE_VOLUME_FACTOR = 1.25
+
 interface AudioClip {
   id: string
   url: string
@@ -373,8 +376,13 @@ export function AudioGalleryPlayer({
       audio.pause()
     }
     
-    // Apply volume
-    audio.volume = isMuted ? 0 : volume
+    // Apply volume (dialogue boosted vs narration for clearer lines vs bed music)
+    const baseVol = isMuted ? 0 : volume
+    const boosted =
+      currentClip.type === 'dialogue'
+        ? Math.min(1, baseVol * DIALOGUE_VOLUME_FACTOR)
+        : baseVol
+    audio.volume = boosted
     
     // Drift correction
     const drift = Math.abs(audio.currentTime - clipLocalTime)
@@ -402,8 +410,8 @@ export function AudioGalleryPlayer({
       musicAudio.currentTime = 0
     }
     
-    // Sync playback state - music plays at 40% volume
-    const musicVolume = isMuted ? 0 : volume * 0.4
+    // Sync playback state - background music at 25% of master volume
+    const musicVolume = isMuted ? 0 : volume * 0.25
     musicAudio.volume = musicVolume
     
     if (isPlaying && musicAudio.paused && currentTime < sceneDuration) {
