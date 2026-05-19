@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 // NOTE: Vertex AI Imagen import removed - using Gemini Studio exclusively due to Vertex auth issues
 // import { callVertexAIImagen } from '@/lib/vertexai/client'
-import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
+import { generateImageWithGeminiStudio, editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -225,21 +225,6 @@ function buildContentDelta(
   }
   
   return parts.length > 0 ? `[Content delta: ${parts.join('. ')}]` : ''
-}
-
-/**
- * Phase 11: Determine if camera movement is "static-ish" (end frame should
- * preserve start frame composition closely) or "dynamic" (end frame can 
- * differ more in composition).
- * 
- * Used to choose SUBJECT (strict) vs STYLE (loose) reference type.
- */
-function isStaticCamera(cameraMovement?: string): boolean {
-  if (!cameraMovement) return true
-  const m = cameraMovement.toLowerCase()
-  // Static or very subtle movements = strict reference
-  return m === 'static' || m.includes('locked') || m.includes('tripod') || 
-    m.includes('subtle') || m.includes('steady') || m === ''
 }
 
 const NO_TALENT_SCENE_TOKENS = [
@@ -784,136 +769,44 @@ Render this scene in ${selectedStyle.name} style.`
 
       if (transitionType === 'CONTINUE') {
         endFramePrompt =
-          `TEMPORAL CONTINUITY: This end frame must be a direct continuation of the reference start image — preserve wardrobe, props, and set dressing unless the beat explicitly changes them.\n\n${endFramePrompt}`
+          `TEMPORAL CONTINUITY: Direct edit of the start frame — same beat continues; preserve wardrobe, props, and set unless the beat explicitly changes them.\n\n${endFramePrompt}`
       }
-      
-      // Append negative prompt to end frame prompt as well
-      if (negativePrompt) {
-        endFramePrompt = `${endFramePrompt}\n\nAvoid: ${negativePrompt}`
-      }
-      
-      // End frame refs: start frame (composition baseline) + up to 2 character identity/wardrobe URLs
-      // + props into remaining slots (max MAX_GEMINI_REFERENCE_IMAGES). Skipped for no-talent scenes.
-      const cameraMovement = segmentContent?.cameraMovement || segmentDir?.cameraMovement || 'Static'
-      const useStrictRef = isStaticCamera(cameraMovement)
-      const isNoTalentForEnd = isNoTalentFromSceneDirection(sceneDirection)
 
-      const endReferenceImages: Array<{ imageUrl: string; name: string }> = [
-        {
-          imageUrl: startFrameReference,
-          name: useStrictRef
-            ? 'START frame — baseline composition, environment, lighting, and pose for this segment.'
-            : 'START frame — baseline identity and scene; composition may shift if the action requires camera movement.',
-        },
-      ]
-
-      const endRefUrlsSeen = new Set<string>([String(startFrameReference)])
-
-      if (!isNoTalentForEnd) {
-        const maxCharAnchors = 2
-        let charAnchorsAdded = 0
-        for (const c of characters) {
-          if (!c.referenceUrl || charAnchorsAdded >= maxCharAnchors) break
-          const url = c.referenceUrl
-          if (endRefUrlsSeen.has(url) || url === startFrameReference) continue
-          endRefUrlsSeen.add(url)
-          endReferenceImages.push({
-            imageUrl: url,
-            name: `Identity & wardrobe anchor: ${c.name} — match face, skin, hair, and clothing; do NOT copy this image’s background, lighting, or pose.`,
-          })
-          charAnchorsAdded++
+      // End keyframe = directed edit of start frame (single source image) to reduce hallucinated scene changes
+      let identityPortraitUrl: string | undefined
+      const startRefStr = String(startFrameReference)
+      for (const c of characters) {
+        const url = c.referenceUrl
+        if (url && url !== startRefStr) {
+          identityPortraitUrl = url
+          break
         }
       }
 
-      const remainingForProps = Math.max(0, MAX_GEMINI_REFERENCE_IMAGES - endReferenceImages.length)
-      const endPropRefs = objectReferences
-        .filter(obj => obj.imageUrl && (obj.importance === 'critical' || obj.importance === 'important'))
-        .slice(0, remainingForProps)
-
-      for (const prop of endPropRefs) {
-        const url = prop.imageUrl!
-        if (endRefUrlsSeen.has(url)) continue
-        endRefUrlsSeen.add(url)
-        endReferenceImages.push({
-          imageUrl: url,
-          name: `Prop: ${prop.name}`,
-        })
-      }
-
       console.log(
-        `[Generate Frames] End frame: ${endReferenceImages.length} ref image(s) (cap ${MAX_GEMINI_REFERENCE_IMAGES}): ${endReferenceImages.map(r => r.name).join(' | ')}`
+        `[Generate Frames] End frame via edit API (keyframeEnd)${identityPortraitUrl ? ' + identity portrait' : ''}`
       )
-      
-      // Build enhanced prompt for end frame
-      // CRITICAL: For non-photorealistic styles, we must enforce style transformation
-      let geminiEndPrompt: string
-      
-      const endFrameReferenceRoles = `REFERENCE IMAGE ROLES:
-- The FIRST image is the START frame of this segment: use it as the temporal and compositional baseline (environment, lighting, blocking, current pose).
-- Any FOLLOWING people references are identity and wardrobe anchors only: lock face, skin tone, hair, facial hair, glasses, and outfit to them; do NOT copy their background, studio, lighting, or neutral pose from those anchor images.
-- Any prop references are for object shape/color only.
 
-`
-
-      if (!isPhotorealistic) {
-        // Non-photorealistic: Style transformation + content-aware transition
-        geminiEndPrompt = `MANDATORY ART STYLE: ${selectedStyle.name.toUpperCase()}
-Style specification: ${selectedStyle.promptSuffix}
-
-${endFrameReferenceRoles}Generate the ENDING frame for a ${duration}-second segment in ${selectedStyle.name} style.
-
-CHARACTER CONTINUITY:
-- The same character(s) from the START frame must appear in this end frame
-- Use any additional identity/wardrobe anchor images to prevent drift in face and clothing
-- Preserve character IDENTITY: face shape, ethnicity, age, distinguishing features
-- Maintain the SAME ${selectedStyle.name} artistic rendering as the start frame
-
-WHAT HAS CHANGED (${duration}s of action):
-${endFramePrompt}
-
-CRITICAL REQUIREMENTS:
-- Output MUST be ${selectedStyle.name} style: ${selectedStyle.promptSuffix}
-- Show DELIBERATE differences from the start frame reflecting the action
-- Match the artistic style of the start frame reference
-- Do NOT output photorealistic images`
-      } else {
-        // Photorealistic: Exact appearance matching + content-aware transition
-        geminiEndPrompt = `${endFrameReferenceRoles}Generate the ending frame for a ${duration}-second scene segment.
-
-CRITICAL — THIS IS THE SAME SCENE, SAME MOMENT:
-- The FIRST reference is the START of this ${duration}s segment — baseline shot and pose
-- You are generating what the scene looks like at the END
-- The person(s) MUST be the SAME PERSON(S) — identical face, skin tone, hair, clothing; use extra identity/wardrobe references to hold detail if the pose changes
-- The environment MUST be the SAME LOCATION with the SAME lighting
-
-WHAT HAS CHANGED (the ${duration}s of action):
-${endFramePrompt}
-
-REQUIREMENTS:
-- Preserve EXACT character identity: face structure, ethnicity, hair color/style, clothing
-- Show DELIBERATE, VISIBLE differences from the start frame that reflect the action
-- Maintain consistent camera angle and composition unless the action requires movement
-- Same color grading and visual style as the start frame`
-      }
-      
-      // Generate end frame using Gemini Studio
-      const endResult = await generateImageWithGeminiStudio({
-        prompt: geminiEndPrompt,
+      const endResult = await editImageWithGeminiStudio({
+        sourceImage: startFrameReference,
+        instruction: endFramePrompt,
+        referenceImage: identityPortraitUrl,
         aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
         imageSize: modelTier === 'eco' ? '1K' : '2K',
-        referenceImages: endReferenceImages,
+        editIntent: 'keyframeEnd',
+        segmentDurationSeconds: duration,
         modelTier,
         thinkingLevel,
-        negativePrompt
+        negativePrompt,
       })
       const endImageDataUrl = endResult.imageBase64
-      
+
       // Upload to blob storage
       generatedEndFrameUrl = await uploadImageToBlob(
         endImageDataUrl,
         `scenes/${sceneId}/segments/${segmentId}/end-frame-${Date.now()}.png`
       )
-      
+
       console.log('[Generate Frames] End frame generated:', generatedEndFrameUrl)
     }
 

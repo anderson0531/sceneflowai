@@ -400,15 +400,51 @@ export interface GeminiStudioEditOptions {
   aspectRatio?: '1:1' | '2:3' | '3:2' | '3:4' | '4:3' | '4:5' | '5:4' | '9:16' | '16:9' | '21:9'
   /** Output image size */
   imageSize?: '1K' | '2K'
+  /**
+   * `default` — small localized edits, lock framing.
+   * `keyframeEnd` — segment end frame: same scene as start, directed evolution over ~duration seconds.
+   */
+  editIntent?: 'default' | 'keyframeEnd'
+  /** Used with keyframeEnd for prompt context */
+  segmentDurationSeconds?: number
+  modelTier?: ModelTier
+  thinkingLevel?: ThinkingLevel
+  negativePrompt?: string
 }
 
 export async function editImageWithGeminiStudio(
   options: GeminiStudioEditOptions
 ): Promise<GeminiStudioImageResult> {
   console.log(`[Gemini Studio Edit] Starting edit: "${options.instruction.substring(0, 50)}..."`)
-  
-  // Build the edit prompt with identity preservation instructions
-  const editPrompt = `Edit this image according to the following instruction: ${options.instruction}
+
+  const intent = options.editIntent ?? 'default'
+  const dur =
+    typeof options.segmentDurationSeconds === 'number' && Number.isFinite(options.segmentDurationSeconds)
+      ? options.segmentDurationSeconds
+      : undefined
+
+  let editPrompt: string
+  if (intent === 'keyframeEnd') {
+    const durLine =
+      dur != null && dur > 0
+        ? `This is the END keyframe of a ~${dur}s clip. The attached primary image is the START frame — edit it in place to show the end state.`
+        : `This is the END keyframe of the segment. The attached primary image is the START frame — edit it in place to show the end state.`
+
+    editPrompt = `${durLine}
+
+DIRECTED EDIT (what must change from start → end):
+${options.instruction}
+
+RULES:
+1. Same scene and location; keep wardrobe, props, and cast unless the instruction explicitly changes them.
+2. Preserve lighting motivation and color continuity with the start frame.
+3. Apply only the described pose, expression, blocking, and subtle environmental shifts — do not invent a new setting or unrelated characters.
+4. If the instruction implies camera movement (pan, dolly, reframe), adjust composition accordingly; otherwise keep framing continuous with the start image.
+5. The result must read as the immediate next moment of the same shot.
+
+If an identity portrait reference is provided, use it only to lock facial and wardrobe detail — never copy its background or studio lighting.`
+  } else {
+    editPrompt = `Edit this image according to the following instruction: ${options.instruction}
 
 CRITICAL REQUIREMENTS:
 1. Preserve the EXACT same person's identity - same face, ethnicity, age, and facial features
@@ -418,6 +454,7 @@ CRITICAL REQUIREMENTS:
 5. The edited image should look like the same person, just with the requested modification
 
 If a reference image of the person is provided, use it to ensure identity consistency.`
+  }
 
   // Prepare reference images - source is primary, character reference is for identity
   const referenceImages: Array<{
@@ -470,7 +507,10 @@ If a reference image of the person is provided, use it to ensure identity consis
     prompt: editPrompt,
     aspectRatio: options.aspectRatio || '1:1',
     imageSize: options.imageSize || '1K',
-    referenceImages
+    referenceImages,
+    modelTier: options.modelTier,
+    thinkingLevel: options.thinkingLevel,
+    negativePrompt: options.negativePrompt,
   })
 }
 
