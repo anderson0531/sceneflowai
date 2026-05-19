@@ -227,13 +227,17 @@ const VOICE_ANCHOR_PRESETS: VoiceAnchorPreset[] = [
 /**
  * Negative prompt presets to avoid common video generation artifacts
  * Focus on motion quality and realism issues
+ *
+ * Note: Vertex evaluates `parameters.negativePrompt` as plain text for safety filters (same
+ * family as the main prompt). Disability-adjacent words (e.g. “stuttering”) and very long
+ * comma lists have correlated with false positives—prefer neutral motion/artifact wording.
  */
 export const VIDEO_NEGATIVE_PROMPT_PRESETS = [
   {
     id: 'unnatural-motion',
     label: 'Unnatural Motion',
-    description: 'Avoid jerky or robotic movements',
-    value: 'unnatural motion, robotic, mechanical, jittery, stuttering',
+    description: 'Avoid stiff or jerky movements',
+    value: 'unnatural motion, stiff movement, jittery motion, uneven pacing, mechanical-looking motion',
   },
   {
     id: 'bad-physics',
@@ -245,7 +249,8 @@ export const VIDEO_NEGATIVE_PROMPT_PRESETS = [
     id: 'temporal-flicker',
     label: 'Temporal Flicker',
     description: 'Avoid frame inconsistency',
-    value: 'flickering, temporal inconsistency, frame jumping, objects popping in and out',
+    value:
+      'flickering, temporal inconsistency, frame jumping, objects appearing or disappearing abruptly',
   },
   {
     id: 'low-quality',
@@ -269,7 +274,8 @@ export const VIDEO_NEGATIVE_PROMPT_PRESETS = [
     id: 'text-overlay',
     label: 'No Text Overlay',
     description: 'Avoid burned-in text/titles',
-    value: 'text, watermark, subtitles, captions, text overlay, lower third',
+    value:
+      'on-screen typography, watermark, burned-in subtitles, captions, lower-third graphics, logo overlay',
   },
 ] as const
 

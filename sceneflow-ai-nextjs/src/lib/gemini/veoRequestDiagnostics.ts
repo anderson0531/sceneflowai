@@ -54,35 +54,56 @@ export function redactVeoPredictLongRunningBody(body: unknown): unknown {
   }
 }
 
-/**
- * Cheap lexical hints only — Vertex does not publish mappings; this narrows A/B tests for false positives.
- */
-export function summarizePromptForPolicyHeuristics(prompt: string): string[] {
+/** Cheap lexical hints only — Vertex does not publish mappings; this narrows A/B tests for false positives. */
+export function collectPolicyHeuristicHits(text: string): string[] {
   const hits: string[] = []
   const note = (msg: string) => {
     if (!hits.includes(msg)) hits.push(msg)
   }
-  if (/\bpeace\b/i.test(prompt)) {
+  if (/\bpeace\b/i.test(text)) {
     note(
       'contains "peace" — sometimes grouped with civic/news commentary filters; try synonyms or neutral phrasing if blocked'
     )
   }
-  if (/\b(terror|terrorism|extremist)\b/i.test(prompt)) {
+  if (/\bstuttering\b/i.test(text)) {
+    note(
+      'contains "stuttering" — disability-adjacent; same safety stack often scores parameters.negativePrompt and has correlated with false blocks'
+    )
+  }
+  if (/\b(terror|terrorism|extremist)\b/i.test(text)) {
     note('contains terrorism-adjacent terms')
   }
-  if (/\b(shoot|shooting|gunfire|weapon|bomb|explosive)\b/i.test(prompt)) {
+  if (/\b(shoot|shooting|gunfire|weapon|bomb|explosive)\b/i.test(text)) {
     note('contains violence / weapons vocabulary')
   }
-  if (/\b(nude|naked|explicit sex)\b/i.test(prompt)) {
+  if (/\b(nude|naked|explicit sex)\b/i.test(text)) {
     note('contains sexual explicitness hints')
   }
-  if (/\b(child|minor|underage)\s+/i.test(prompt) || /\bteen\b/i.test(prompt)) {
+  if (/\b(child|minor|underage)\s+/i.test(text) || /\bteen\b/i.test(text)) {
     note('contains minor / age-related wording (personGeneration + imagery combo is sensitive)')
   }
+  return hits
+}
+
+export function summarizePromptForPolicyHeuristics(prompt: string): string[] {
+  const hits = collectPolicyHeuristicHits(prompt)
   if (hits.length === 0) {
-    note('no common keyword heuristics — if blocked, suspect composite scoring, images, or uncommon phrases')
+    return [
+      'no common keyword heuristics — if blocked, suspect composite scoring, images, negativePrompt text, or uncommon phrases',
+    ]
   }
   return hits
+}
+
+/** Same heuristics as the main prompt; omit generic fallback when empty (caller supplies context). */
+export function summarizeNegativePromptForPolicyHeuristics(negativePrompt: string): string[] | null {
+  const t = negativePrompt.trim()
+  if (!t) return null
+  const hits = collectPolicyHeuristicHits(t)
+  if (hits.length > 0) return hits
+  return [
+    'no heuristic-keyword hits in negativePrompt — long comma-separated lists can still add marginal filter surface area',
+  ]
 }
 
 export function logVeoPredictLongRunningSubmitDiagnostics(params: {
@@ -96,7 +117,14 @@ export function logVeoPredictLongRunningSubmitDiagnostics(params: {
   const { endpoint, model, quality, prompt, requestBody } = params
   console.log('[Veo Diagnostic] ========== predictLongRunning (submit) ==========')
   console.log('[Veo Diagnostic]', JSON.stringify({ endpoint, model, quality }, null, 2))
-  console.log('[Veo Diagnostic] policy heuristics:', summarizePromptForPolicyHeuristics(prompt))
+  console.log('[Veo Diagnostic] policy heuristics (prompt):', summarizePromptForPolicyHeuristics(prompt))
+  const paramsObj = requestBody.parameters as Record<string, unknown> | undefined
+  const neg = typeof paramsObj?.negativePrompt === 'string' ? paramsObj.negativePrompt : ''
+  const negHints = summarizeNegativePromptForPolicyHeuristics(neg)
+  if (negHints) {
+    console.log('[Veo Diagnostic] negativePrompt length:', neg.length)
+    console.log('[Veo Diagnostic] policy heuristics (negativePrompt):', negHints)
+  }
   console.log('[Veo Diagnostic] ----- full prompt (exact string in JSON body) -----')
   console.log(prompt)
   console.log('[Veo Diagnostic] ----- instances[0].parameters (images redacted) -----')

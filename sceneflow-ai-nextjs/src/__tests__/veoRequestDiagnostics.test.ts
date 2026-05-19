@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   redactVeoPredictLongRunningBody,
   summarizePromptForPolicyHeuristics,
+  summarizeNegativePromptForPolicyHeuristics,
+  collectPolicyHeuristicHits,
 } from '@/lib/gemini/veoRequestDiagnostics'
 
 describe('veoRequestDiagnostics', () => {
@@ -26,5 +28,12 @@ describe('veoRequestDiagnostics', () => {
   it('flags peace-related wording in heuristics', () => {
     const lines = summarizePromptForPolicyHeuristics('He said peace talks continue.')
     expect(lines.some((l) => l.includes('"peace"'))).toBe(true)
+  })
+
+  it('flags stuttering in negative prompts', () => {
+    const hits = collectPolicyHeuristicHits('jittery, stuttering, blur')
+    expect(hits.some((l) => l.includes('stuttering'))).toBe(true)
+    const neg = summarizeNegativePromptForPolicyHeuristics('stuttering motion')
+    expect(neg?.some((l) => l.includes('stuttering'))).toBe(true)
   })
 })

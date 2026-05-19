@@ -322,7 +322,7 @@ export async function generateVideoWithVeo(
     parameters.resolution = '1080p'
   }
 
-  // Add negative prompt if provided
+  // Add negative prompt if provided (same string safety scoring as main prompt in practice).
   if (options.negativePrompt) {
     parameters.negativePrompt = options.negativePrompt
   }
