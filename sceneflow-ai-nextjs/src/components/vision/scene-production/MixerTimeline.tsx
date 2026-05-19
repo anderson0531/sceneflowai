@@ -29,8 +29,19 @@ export interface AudioClipInfo {
   playbackRate?: number
 }
 
+const DIALOGUE_TRACK_VISUAL = {
+  label: 'Dialogue',
+  icon: MessageSquare,
+  color: '#3b82f6',
+  bgColor: 'rgba(59, 130, 246, 0.25)',
+}
+
 interface MixerTimelineProps {
   videoTotalDuration: number
+  /** Full scrubber length (elastic audio); defaults to video + overlay extents */
+  timelineDuration?: number
+  /** Dialogue clips positioned on the global timeline */
+  dialogueClips?: AudioClipInfo[]
   /** Text overlays to display on timeline */
   textOverlays?: TextOverlay[]
   /** Callback when text overlay timing changes (drag-to-reposition) */
@@ -73,6 +84,8 @@ function formatTime(secs: number): string {
 
 export const MixerTimeline: React.FC<MixerTimelineProps> = ({
   videoTotalDuration,
+  timelineDuration,
+  dialogueClips = [],
   textOverlays = [],
   onTextOverlayChange,
   segments = [],
@@ -95,17 +108,26 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
     return Math.max(MIN_PPS, Math.min(MAX_PPS, Math.round(idealPPS)))
   })
 
+  const wallClockClipDuration = useCallback((clip: AudioClipInfo) => {
+    const rate = clip.playbackRate && clip.playbackRate > 0 ? clip.playbackRate : 1
+    return clip.duration / rate
+  }, [])
+
   // Calculate total timeline duration
   const totalDuration = useMemo(() => {
-    let maxEnd = videoTotalDuration
-    // Include text overlays in duration calculation
+    const base = timelineDuration ?? videoTotalDuration
+    let maxEnd = base
     for (const overlay of textOverlays) {
-      const overlayEnd = overlay.timing.startTime + (overlay.timing.duration === -1 ? videoTotalDuration : overlay.timing.duration)
+      const overlayEnd =
+        overlay.timing.startTime +
+        (overlay.timing.duration === -1 ? videoTotalDuration : overlay.timing.duration)
       maxEnd = Math.max(maxEnd, overlayEnd)
     }
-    // Minimum of 5 seconds or video duration (no artificial cap)
+    for (const clip of dialogueClips) {
+      maxEnd = Math.max(maxEnd, clip.startTime + wallClockClipDuration(clip))
+    }
     return Math.max(maxEnd, Math.max(5, videoTotalDuration))
-  }, [videoTotalDuration, textOverlays])
+  }, [videoTotalDuration, timelineDuration, textOverlays, dialogueClips, wallClockClipDuration])
 
   // Generate ruler ticks - adaptive intervals for any duration
   const ticks = useMemo(() => {
@@ -335,6 +357,43 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
             </div>
           </div>
 
+          {/* Dialogue Track */}
+          {dialogueClips.length > 0 && (
+            <div className="h-7 relative mb-2 rounded bg-gray-800/30 flex">
+              <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50 h-full">
+                <MessageSquare
+                  className="w-3 h-3 ml-1"
+                  style={{ color: DIALOGUE_TRACK_VISUAL.color }}
+                />
+                <span className="text-[10px] ml-1 text-gray-400">Dlg</span>
+              </div>
+              <div className="flex-1 h-full relative" style={{ width: `${effectiveWidth}px` }}>
+                {dialogueClips.map((clip) => {
+                  const wallDur = wallClockClipDuration(clip)
+                  const startPercent = (clip.startTime / totalDuration) * 100
+                  const widthPercent = (wallDur / totalDuration) * 100
+                  return (
+                    <div
+                      key={clip.id}
+                      className="absolute top-1 bottom-1 rounded-sm flex items-center overflow-hidden px-1"
+                      style={{
+                        left: `${startPercent}%`,
+                        width: `calc(${Math.max(widthPercent, 1)}% - 2px)`,
+                        backgroundColor: DIALOGUE_TRACK_VISUAL.bgColor,
+                        borderLeft: `2px solid ${DIALOGUE_TRACK_VISUAL.color}`,
+                      }}
+                      title={clip.label || clip.character || clip.id}
+                    >
+                      <span className="text-[8px] text-white/70 truncate">
+                        {clip.label || clip.character || 'Line'}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Text Overlay Track */}
           <div className="space-y-1.5 mt-1.5">
             <div className="h-7 relative rounded bg-gray-800/30 flex">
@@ -399,6 +458,15 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
           <div className="w-0.5 h-3 bg-red-500" />
           <span>Playhead</span>
         </div>
+        {dialogueClips.length > 0 && (
+          <div className="flex items-center gap-1">
+            <div
+              className="w-3 h-2 rounded-sm"
+              style={{ backgroundColor: DIALOGUE_TRACK_VISUAL.bgColor, borderLeft: `2px solid ${DIALOGUE_TRACK_VISUAL.color}` }}
+            />
+            <span>Dialogue</span>
+          </div>
+        )}
         <div className="flex items-center gap-1">
           <div className="w-3 h-2 rounded-sm border-r border-dashed" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', borderColor: 'rgba(168, 85, 247, 0.5)' }} />
           <span>Extends video</span>

@@ -858,6 +858,14 @@ function DirectorConsoleRoot({
         productionTarget={productionTarget}
         onProductionTargetChange={setProductionTarget}
         videoGenerationAvailable={videoGenerationAvailable}
+        onSegmentsChange={(updatedSegments) => {
+          if (onProductionDataChange && productionData) {
+            onProductionDataChange({
+              ...productionData,
+              segments: updatedSegments,
+            })
+          }
+        }}
         onRenderComplete={(downloadUrl, language, streamType = productionTarget.streamType, meta) => {
           setRenderedSceneUrl(downloadUrl)
           const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)

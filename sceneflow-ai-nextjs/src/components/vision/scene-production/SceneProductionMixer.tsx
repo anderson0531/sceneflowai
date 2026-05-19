@@ -103,7 +103,18 @@ import type {
   MixerAudioTracks,
 } from './types'
 import { SCENEFLOW_WATERMARK_STORAGE_KEY } from './sceneRenderBurnInPayload'
-import { getResolvedDialogueClipsForScene } from './audioTrackBuilder'
+import {
+  getResolvedDialogueClipsForScene,
+  inferNarrationTimelinePrefixCount,
+} from './audioTrackBuilder'
+import {
+  alignSegmentsToDialogueTimeline,
+  clipMatchesDialogueLineId,
+  computePlaybackSegmentDuration,
+  computeSegmentContentDuration,
+  getClipsAssignedToSegment,
+  MIXER_DIALOGUE_INTRA_GAP_SEC,
+} from '@/lib/scene/mixerTiming'
 
 export type { ProductionTarget, TextOverlay, TextOverlayStyle, TextOverlayPosition, TextOverlayTiming, AudioTrackConfig, MixerAudioTracks }
 
@@ -398,6 +409,8 @@ interface SceneProductionMixerProps {
   onProductionTargetChange: (target: ProductionTarget) => void
   /** Segment videos exist — enables Video output target */
   videoGenerationAvailable: boolean
+  /** Persist segment timing after auto-align or manual edits */
+  onSegmentsChange?: (segments: SceneSegment[]) => void
 }
 
 // ============================================================================
@@ -586,6 +599,7 @@ function ScenePreviewPlayer({
   getSegmentDuration,
   measuredSegmentDurations,
   onMeasuredDurationsChange,
+  onPlaybackTimeChange,
 }: {
   segments: SceneSegment[]
   audioTracks: MixerAudioTracks
@@ -613,6 +627,7 @@ function ScenePreviewPlayer({
   getSegmentDuration: (segment: SceneSegment) => number
   measuredSegmentDurations: Record<string, number>
   onMeasuredDurationsChange: (durations: Record<string, number>) => void
+  onPlaybackTimeChange?: (time: number) => void
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -622,6 +637,10 @@ function ScenePreviewPlayer({
   
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
+
+  useEffect(() => {
+    onPlaybackTimeChange?.(currentTime)
+  }, [currentTime, onPlaybackTimeChange])
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0)
   const [isVideoFrozen, setIsVideoFrozen] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -2327,6 +2346,7 @@ export function SceneProductionMixer({
   productionTarget,
   onProductionTargetChange,
   videoGenerationAvailable,
+  onSegmentsChange,
 }: SceneProductionMixerProps) {
   const selectedLanguage = productionTarget.language
   const [isGeneratingLanguageAudio, setIsGeneratingLanguageAudio] = useState(false)
@@ -2382,53 +2402,71 @@ export function SceneProductionMixer({
     [mixerAudioSceneStub, selectedLanguage]
   )
 
-  // === Segment Duration Helpers (Lifted for consistency between Player and Timeline) ===
-  const getSegmentDuration = useCallback((segment: SceneSegment) => {
-    const raw = segment.imageDuration ?? segment.actualVideoDuration ?? (segment.endTime - segment.startTime)
-    const baseVisual = (Number.isFinite(raw) && raw > 0) ? raw : 4
+  const narrationPrefix = useMemo(
+    () => inferNarrationTimelinePrefixCount(mixerAudioSceneStub),
+    [mixerAudioSceneStub]
+  )
 
-    let audioDur = 0
-    const segmentDialogueLineIds = segment.dialogueLineIds || []
-    if (audioTracks.dialogue.enabled && segmentDialogueLineIds.length > 0) {
-      const assignedClips = resolvedDialogueClips.filter(c => 
-        c.lineId && segmentDialogueLineIds.includes(c.lineId)
-      )
-      if (assignedClips.length > 0) {
-        audioDur = assignedClips.reduce((sum, c) => {
-          const actualDur = probedDurations[c.id] ?? c.duration ?? 0
-          return sum + Math.max(0, actualDur)
-        }, 0)
-        if (assignedClips.length > 1) {
-          audioDur += (assignedClips.length - 1) * 0.3 // match buffer in audioTrackBuilder
-        }
-      }
-    }
+  const getDialoguePlaybackRate = useCallback(
+    (clipId: string) => clampDialoguePlaybackRate(dialogueClipConfigs[clipId]?.playbackRate),
+    [dialogueClipConfigs]
+  )
 
-    return Math.max(baseVisual, audioDur)
-  }, [resolvedDialogueClips, probedDurations, audioTracks.dialogue.enabled])
+  const buildSegmentDurationInput = useCallback(
+    (segment: SceneSegment) => ({
+      segment,
+      dialogueClips: resolvedDialogueClips,
+      probedDurations,
+      measuredVideoDuration: measuredSegmentDurations[segment.segmentId],
+      manualPostPause: segmentAudioConfigs[segment.segmentId]?.postSegmentPause,
+      dialogueEnabled: audioTracks.dialogue.enabled,
+      narrationPrefix,
+      getPlaybackRate: getDialoguePlaybackRate,
+    }),
+    [
+      resolvedDialogueClips,
+      probedDurations,
+      measuredSegmentDurations,
+      segmentAudioConfigs,
+      audioTracks.dialogue.enabled,
+      narrationPrefix,
+      getDialoguePlaybackRate,
+    ]
+  )
+
+  const getSegmentDuration = useCallback(
+    (segment: SceneSegment) => computeSegmentContentDuration(buildSegmentDurationInput(segment)),
+    [buildSegmentDurationInput]
+  )
 
   const getPlaybackSegmentDuration = useCallback(
     (segment: SceneSegment) => {
+      const fromTiming = computePlaybackSegmentDuration(buildSegmentDurationInput(segment))
       const measured = measuredSegmentDurations[segment.segmentId]
-      const baseDuration = (measured != null && Number.isFinite(measured) && measured > 0) 
-        ? Math.max(measured, getSegmentDuration(segment)) // Ensure we still respect audio duration if it's longer than measured
-        : getSegmentDuration(segment)
-        
-      const segmentDialogueLineIds = segment.dialogueLineIds || []
-      const hasDialogue = audioTracks.dialogue.enabled && 
-                          segmentDialogueLineIds.length > 0 &&
-                          resolvedDialogueClips.some(c => c.lineId && segmentDialogueLineIds.includes(c.lineId))
-
-      const config = segmentAudioConfigs[segment.segmentId]
-      // Default to 1.0s buffer between segments
-      const autoPause = hasDialogue ? 1.0 : 0.0
-      // Allow users to add extra manual pause on top
-      const manualPause = config?.postSegmentPause ?? 0
-      
-      return baseDuration + autoPause + manualPause
+      if (measured != null && Number.isFinite(measured) && measured > 0) {
+        return Math.max(measured, fromTiming)
+      }
+      return fromTiming
     },
-    [measuredSegmentDurations, getSegmentDuration, segmentAudioConfigs, audioTracks.dialogue.enabled, resolvedDialogueClips]
+    [buildSegmentDurationInput, measuredSegmentDurations]
   )
+
+  const [playbackTime, setPlaybackTime] = useState(0)
+  const handlePlaybackTimeChange = useCallback((time: number) => {
+    setPlaybackTime(time)
+  }, [])
+
+  const handleAlignSegmentsToDialogue = useCallback(() => {
+    const aligned = alignSegmentsToDialogueTimeline({
+      segments,
+      dialogueClips: resolvedDialogueClips,
+      probedDurations,
+      narrationPrefix,
+      extendAnimaticToDialogue: true,
+    })
+    onSegmentsChange?.(aligned)
+    toast.success('Segment timing aligned to dialogue')
+  }, [segments, resolvedDialogueClips, probedDurations, narrationPrefix, onSegmentsChange])
 
   
   // === Theater Mode State ===
@@ -2729,8 +2767,8 @@ export function SceneProductionMixer({
     const clipIdToSegmentIndex = new Map<string, number>()
     segments.forEach((seg, idx) => {
       const lineIds = seg.dialogueLineIds || []
-      resolvedDialogueClips.forEach(c => {
-        if (c.lineId && lineIds.includes(c.lineId)) {
+      resolvedDialogueClips.forEach((c) => {
+        if (lineIds.some((lineId) => clipMatchesDialogueLineId(c, lineId, narrationPrefix))) {
           clipIdToSegmentIndex.set(c.id, idx)
         }
       })
@@ -2739,44 +2777,57 @@ export function SceneProductionMixer({
     // Track offset within the same segment (if multiple clips in one segment)
     const segmentTimeCursors = new Map<number, number>()
 
-    const dialogue = currentAudioUrls.dialogue.map(d => {
-      const duration = probedDurations[d.id || ''] ?? d.duration ?? 3
-      
+    const dialogue = currentAudioUrls.dialogue.map((d, idx) => {
+      const clipKey = d.id || `dialogue-${idx}`
+      const sourceDur = probedDurations[clipKey] ?? d.duration ?? 3
+      const rate = getDialoguePlaybackRate(clipKey)
+      const wallDur = dialogueClipWallDuration(sourceDur, rate)
+
       let startTime = d.startTime ?? 0
       if (d.id) {
         const segIdx = clipIdToSegmentIndex.get(d.id)
         if (segIdx !== undefined) {
-          // Calculate segment start time
           let segStart = 0
           for (let i = 0; i < Math.min(segIdx, segments.length); i++) {
             segStart += getPlaybackSegmentDuration(segments[i])
           }
-          
+
           const cursor = segmentTimeCursors.get(segIdx) ?? segStart
           startTime = cursor
-          segmentTimeCursors.set(segIdx, cursor + duration + 0.3)
+          segmentTimeCursors.set(segIdx, cursor + wallDur + MIXER_DIALOGUE_INTRA_GAP_SEC)
         }
       }
 
-      return { ...d, startTime, duration }
+      return { ...d, startTime, duration: sourceDur }
     })
     return { ...currentAudioUrls, dialogue }
-  }, [currentAudioUrls, probedDurations, segments, resolvedDialogueClips, getPlaybackSegmentDuration])
+  }, [
+    currentAudioUrls,
+    probedDurations,
+    segments,
+    resolvedDialogueClips,
+    getPlaybackSegmentDuration,
+    narrationPrefix,
+    getDialoguePlaybackRate,
+  ])
 
   /** Timeline bars reflect wall-clock span (source duration / playback rate). */
   const dialogueClipsForTimeline = useMemo(() => {
-    return playbackAudioUrls.dialogue.map((c, idx) => ({
-      id: c.id || `dialogue-${idx}`,
-      label: c.character,
-      startTime: c.startTime ?? 0,
-      duration: c.duration ?? 3,
-      audioUrl: c.audioUrl,
-      character: c.character,
-      playbackRate: clampDialoguePlaybackRate(
-        dialogueClipConfigs[dialogueClipConfigKey(c, idx)]?.playbackRate
-      ),
-    }))
-  }, [playbackAudioUrls.dialogue, dialogueClipConfigs])
+    return playbackAudioUrls.dialogue.map((c, idx) => {
+      const key = dialogueClipConfigKey(c, idx)
+      const sourceDur = probedDurations[key] ?? c.duration ?? 3
+      const rate = clampDialoguePlaybackRate(dialogueClipConfigs[key]?.playbackRate)
+      return {
+        id: c.id || `dialogue-${idx}`,
+        label: c.character,
+        startTime: c.startTime ?? 0,
+        duration: sourceDur,
+        audioUrl: c.audioUrl,
+        character: c.character,
+        playbackRate: rate,
+      }
+    })
+  }, [playbackAudioUrls.dialogue, dialogueClipConfigs, probedDurations])
 
   const segmentDurationsForTimeline = useMemo(() => {
     const map: Record<string, number> = {}
@@ -2928,12 +2979,10 @@ export function SceneProductionMixer({
       ? 'image-sequence'
       : 'video'
 
-  // Visual timeline length for the active output target (keyframes or video)
+  // Playback timeline length (dialogue-aware segment durations, matches preview scrubber)
   const videoTotalDuration = useMemo(() => {
-    return previewSegments.reduce((sum, s) => {
-      return sum + (s.imageDuration ?? s.actualVideoDuration ?? (s.endTime - s.startTime))
-    }, 0)
-  }, [previewSegments])
+    return previewSegments.reduce((sum, seg) => sum + getPlaybackSegmentDuration(seg), 0)
+  }, [previewSegments, getPlaybackSegmentDuration])
   
   // Calculate max audio duration across all enabled tracks
   const maxAudioDuration = useMemo(() => {
@@ -4126,6 +4175,7 @@ export function SceneProductionMixer({
                 getSegmentDuration={getSegmentDuration}
                 measuredSegmentDurations={measuredSegmentDurations}
                 onMeasuredDurationsChange={setMeasuredSegmentDurations}
+                onPlaybackTimeChange={handlePlaybackTimeChange}
                 textOverlays={textOverlays}
                 watermarkConfig={watermarkConfig}
                 onEditOverlay={(overlay) => {
@@ -4150,18 +4200,36 @@ export function SceneProductionMixer({
                     </button>
                     <Clock className="w-4 h-4 text-blue-400" />
                     <span className="text-sm font-medium text-white">Timeline</span>
-                    <span className="text-xs text-gray-500">Visual: {formatTime(videoTotalDuration)} | Total: {formatTime(totalDuration)}</span>
+                    <span className="text-xs text-gray-500 truncate">Visual: {formatTime(videoTotalDuration)} | Total: {formatTime(totalDuration)}</span>
                   </div>
+                  {onSegmentsChange && audioTracks.dialogue.enabled && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isRendering || resolvedDialogueClips.length === 0}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleAlignSegmentsToDialogue()
+                      }}
+                      className="h-7 shrink-0 text-[11px] px-2 bg-blue-500/10 border-blue-500/40 text-blue-300 hover:bg-blue-500/20"
+                      title="Extend segment holds and rebuild start/end times to match dialogue audio"
+                    >
+                      <Zap className="w-3 h-3 mr-1" />
+                      Align to dialogue
+                    </Button>
+                  )}
                 </div>
                 {!collapsedSections.timeline && (
                   <div className="px-3 pb-3">
                     <MixerTimeline
                       videoTotalDuration={videoTotalDuration}
+                      timelineDuration={totalDuration}
                       textOverlays={textOverlays}
                       onTextOverlayChange={updateOverlay}
                       segments={previewSegments}
                       segmentDurations={segmentDurationsForTimeline}
-                      currentPlaybackTime={0}
+                      dialogueClips={audioTracks.dialogue.enabled ? dialogueClipsForTimeline : []}
+                      currentPlaybackTime={playbackTime}
                       disabled={isRendering}
                     />
                   </div>
@@ -4490,34 +4558,83 @@ export function SceneProductionMixer({
                       </div>
                       
                       {/* Timing */}
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Start (seconds)</label>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={0.1}
-                            value={editingOverlay.timing.startTime}
-                            onChange={(e) => updateOverlay({
-                              ...editingOverlay,
-                              timing: { ...editingOverlay.timing, startTime: Number(e.target.value) }
-                            })}
-                            className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
-                          />
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs text-gray-400 mb-1 block">Start (seconds)</label>
+                            <Input
+                              type="number"
+                              min={0}
+                              step={0.1}
+                              value={editingOverlay.timing.startTime}
+                              onChange={(e) => updateOverlay({
+                                ...editingOverlay,
+                                timing: { ...editingOverlay.timing, startTime: Number(e.target.value) }
+                              })}
+                              className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-400 mb-1 block">Duration (s, -1=full)</label>
+                            <Input
+                              type="number"
+                              min={-1}
+                              step={0.5}
+                              value={editingOverlay.timing.duration}
+                              onChange={(e) => updateOverlay({
+                                ...editingOverlay,
+                                timing: { ...editingOverlay.timing, duration: Number(e.target.value) }
+                              })}
+                              className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block">Duration (s, -1=full)</label>
-                          <Input
-                            type="number"
-                            min={-1}
-                            step={0.5}
-                            value={editingOverlay.timing.duration}
-                            onChange={(e) => updateOverlay({
+                        <div className="flex flex-wrap gap-1.5">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={isRendering}
+                            className="h-6 text-[10px] px-2"
+                            onClick={() => updateOverlay({
                               ...editingOverlay,
-                              timing: { ...editingOverlay.timing, duration: Number(e.target.value) }
+                              timing: {
+                                ...editingOverlay.timing,
+                                startTime: Math.round(playbackTime * 10) / 10,
+                              },
                             })}
-                            className="h-8 bg-gray-900 border-gray-600 text-white text-sm"
-                          />
+                          >
+                            Snap to playhead
+                          </Button>
+                          {[3, 5, 10].map((sec) => (
+                            <Button
+                              key={sec}
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              disabled={isRendering}
+                              className="h-6 text-[10px] px-2 text-gray-400"
+                              onClick={() => updateOverlay({
+                                ...editingOverlay,
+                                timing: { ...editingOverlay.timing, duration: sec },
+                              })}
+                            >
+                              {sec}s
+                            </Button>
+                          ))}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled={isRendering}
+                            className="h-6 text-[10px] px-2 text-gray-400"
+                            onClick={() => updateOverlay({
+                              ...editingOverlay,
+                              timing: { ...editingOverlay.timing, duration: -1 },
+                            })}
+                          >
+                            Full scene
+                          </Button>
                         </div>
                       </div>
                       

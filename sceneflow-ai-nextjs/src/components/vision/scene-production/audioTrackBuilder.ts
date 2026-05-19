@@ -290,13 +290,18 @@ export function buildDialogueLineIdToCumulativeTimelineStart(
     // Calculate audio duration for this segment
     let audioDur = 0
     if (dialogueClips && ids.length > 0) {
-      const assignedClips = dialogueClips.filter(c => {
-        const idx = c.dialogueIndex
-        if (typeof idx !== 'number') return false
-        const key = dialogueLineIdForIndex(idx)
-        const legacyKey = `dialogue-${narrPrefix + idx}`
-        return ids.includes(key) || ids.includes(legacyKey)
-      })
+      const assignedClips = dialogueClips.filter((c) =>
+        ids.some((id) => {
+          if (c.lineId && c.lineId === id) return true
+          const idx = c.dialogueIndex
+          if (typeof idx !== 'number') return false
+          return (
+            id === dialogueLineIdForIndex(idx) ||
+            id === `dialogue-${idx}` ||
+            (narrPrefix > 0 && id === `dialogue-${narrPrefix + idx}`)
+          )
+        })
+      )
       if (assignedClips.length > 0) {
         audioDur = assignedClips.reduce((sum, c) => sum + (c.duration || 0), 0)
         if (assignedClips.length > 1) {
@@ -321,7 +326,7 @@ export function buildDialogueLineIdToCumulativeTimelineStart(
 }
 
 /** Matches generate-segments `combinedAudioTimeline`: narration sentences are listed before dialogue. */
-function inferNarrationTimelinePrefixCount(scene: any): number {
+export function inferNarrationTimelinePrefixCount(scene: any): number {
   const nt = String(
     scene?.narration ?? scene?.narrationText ?? scene?.sceneNarration ?? ''
   ).trim()
@@ -462,8 +467,10 @@ export function buildAudioTracksForLanguage(
         
         const duration = dialogueClipDurationFromSource(audio)
         const dialogueIndex = audio.dialogueIndex ?? idx
+        const lineId = dialogueLineIdForIndex(dialogueIndex)
         dialogueClips.push({
-          id: `dialogue-${idx}`,
+          id: lineId,
+          lineId,
           url,
           startTime: pickDialogueStartTime(audio.startTime, idx, currentTime),
           duration,
@@ -488,8 +495,10 @@ export function buildAudioTracksForLanguage(
       const url = d.audioUrl || d.url
       if (url && typeof url === 'string' && url.trim()) {
         const duration = dialogueClipDurationFromSource(d)
+        const lineId = dialogueLineIdForIndex(idx)
         dialogueClips.push({
-          id: `dialogue-${idx}`,
+          id: lineId,
+          lineId,
           url,
           startTime: pickDialogueStartTime(d.startTime, idx, currentTime),
           duration,
