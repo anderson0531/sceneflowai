@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
+import { computeDashboardProjectStats } from '@/lib/dashboardStats'
+import { normalizeWorkflowStep, WORKFLOW_STEP_LABELS } from '@/constants/workflowSteps'
 
 // Types for dashboard data
 export interface DashboardCredits {
@@ -35,10 +37,22 @@ export interface DashboardProject {
   metadata: Record<string, any>
 }
 
+export interface DashboardStats {
+  totalProjects: number
+  activeProjects: number
+  archivedProjects: number
+  completedProjects: number
+  inProduction: number
+  totalSeries: number
+  byPhase: Record<string, number>
+}
+
 export interface DashboardData {
   credits: DashboardCredits | null
   subscription: DashboardSubscription | null
   projects: DashboardProject[]
+  recentProjects: DashboardProject[]
+  stats: DashboardStats | null
   isLoading: boolean
   error: string | null
   refresh: () => Promise<void>
@@ -49,6 +63,8 @@ export function useDashboardData(): DashboardData {
   const [credits, setCredits] = useState<DashboardCredits | null>(null)
   const [subscription, setSubscription] = useState<DashboardSubscription | null>(null)
   const [projects, setProjects] = useState<DashboardProject[]>([])
+  const [recentProjects, setRecentProjects] = useState<DashboardProject[]>([])
+  const [stats, setStats] = useState<DashboardStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -62,10 +78,12 @@ export function useDashboardData(): DashboardData {
       setError(null)
       
       // Fetch all data in parallel
-      const [creditsRes, subscriptionRes, projectsRes] = await Promise.all([
+      const userId = session.user.id
+      const [creditsRes, subscriptionRes, projectsRes, seriesRes] = await Promise.all([
         fetch('/api/user/credits'),
         fetch('/api/subscription/status'),
-        fetch(`/api/projects?userId=${session.user.id}`)
+        fetch(`/api/projects?userId=${userId}&pageSize=50`),
+        fetch(`/api/series?userId=${userId}&pageSize=1`),
       ])
 
       // Parse credits
@@ -92,18 +110,51 @@ export function useDashboardData(): DashboardData {
         }
       }
 
+      let totalSeries = 0
+      if (seriesRes.ok) {
+        const seriesData = await seriesRes.json()
+        if (seriesData.success && typeof seriesData.total === 'number') {
+          totalSeries = seriesData.total
+        }
+      }
+
       // Parse projects
       if (projectsRes.ok) {
         const data = await projectsRes.json()
         if (data.success && Array.isArray(data.projects)) {
-          const activeProjects = data.projects
-            .filter((p: DashboardProject) => p.status !== 'archived')
-            .sort((a: DashboardProject, b: DashboardProject) => 
-              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-            )
-            .slice(0, 5)
-          setProjects(activeProjects)
+          const allProjects = data.projects as DashboardProject[]
+          const sorted = [...allProjects].sort(
+            (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          )
+          const activeSorted = sorted.filter((p) => p.status !== 'archived')
+          const projectStats = computeDashboardProjectStats(allProjects, data.total)
+
+          setProjects(activeSorted)
+          setRecentProjects(activeSorted.slice(0, 6))
+          setStats({
+            totalProjects: projectStats.total,
+            activeProjects: projectStats.active,
+            archivedProjects: projectStats.archived,
+            completedProjects: projectStats.completed,
+            inProduction: projectStats.inProduction,
+            totalSeries,
+            byPhase: projectStats.byPhase,
+          })
         }
+      } else {
+        setStats((prev) =>
+          prev
+            ? { ...prev, totalSeries }
+            : {
+                totalProjects: 0,
+                activeProjects: 0,
+                archivedProjects: 0,
+                completedProjects: 0,
+                inProduction: 0,
+                totalSeries,
+                byPhase: {},
+              }
+        )
       }
     } catch (err: any) {
       console.error('[useDashboardData] Error:', err)
@@ -133,9 +184,11 @@ export function useDashboardData(): DashboardData {
     credits,
     subscription,
     projects,
+    recentProjects,
+    stats,
     isLoading,
     error,
-    refresh: fetchDashboardData
+    refresh: fetchDashboardData,
   }
 }
 
@@ -156,24 +209,10 @@ export function formatRelativeTime(dateString: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-// Helper to map project step to phase name
-// Updated phase names: Blueprint → Production → Final Cut → Premiere
+// Helper to map project step to phase name (canonical workflow labels)
 export function getPhaseDisplayName(currentStep: string): string {
-  const stepMap: Record<string, string> = {
-    'ideation': 'Blueprint',
-    'blueprint': 'Blueprint',
-    'vision': 'Production',
-    'storyboard': 'Production',
-    'scene-direction': 'Final Cut',
-    'direction': 'Final Cut',
-    'creation': 'Final Cut',
-    'video-generation': 'Final Cut',
-    'polish': 'Final Cut',
-    'export': 'Premiere',
-    'launch': 'Premiere',
-    'completed': 'Complete'
-  }
-  return stepMap[currentStep] || currentStep
+  const step = normalizeWorkflowStep(currentStep)
+  return WORKFLOW_STEP_LABELS[step] || currentStep
 }
 
 // Helper to get step number from step name

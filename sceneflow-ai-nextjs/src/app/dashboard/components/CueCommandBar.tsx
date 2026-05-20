@@ -4,77 +4,40 @@ import React, { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { 
-  Plus, 
-  FolderOpen, 
-  CreditCard, 
-  Settings,
-  Sparkles
-} from 'lucide-react'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 
 /**
- * CueCommandBar - Compact Welcome Header with Integrated Quick Actions
- * 
- * 2026 Design: Hyper-Personalized Adaptive Layout
- * - Reduced vertical height
- * - Quick actions inline
- * - Glassmorphism effect
+ * Compact welcome header with a single primary CTA.
  */
-
-const quickActions = [
-  { 
-    label: 'New Project', 
-    icon: Plus, 
-    href: '/dashboard/studio/new-project',
-    primary: true
-  },
-  { 
-    label: 'Projects', 
-    icon: FolderOpen, 
-    href: '/dashboard/projects'
-  },
-  { 
-    label: 'Credits', 
-    icon: CreditCard, 
-    href: '/dashboard/settings/billing'
-  },
-  { 
-    label: 'Settings', 
-    icon: Settings, 
-    href: '/dashboard/settings'
-  },
-]
-
 export function CueCommandBar() {
   const { data: session } = useSession()
-  
-  // Get user's first name from session
+
   const userName = useMemo(() => {
     const name = session?.user?.name
     const email = session?.user?.email
-    
+
     if (name && name.includes(' ')) {
       return name.split(' ')[0]
     }
-    
+
     const emailPrefix = email?.split('@')[0]
     if (name && name === emailPrefix) {
       const knownUsers: Record<string, string> = {
-        'anderson0531': 'Brian',
+        anderson0531: 'Brian',
       }
       if (knownUsers[name]) {
         return knownUsers[name]
       }
     }
-    
+
     if (name) {
       return name.split(' ')[0]
     }
-    
+
     return 'there'
   }, [session?.user?.name, session?.user?.email])
 
-  // Get user initials for avatar
   const userInitial = userName.charAt(0).toUpperCase()
 
   return (
@@ -82,50 +45,29 @@ export function CueCommandBar() {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-gray-800/60 backdrop-blur-md rounded-xl border border-gray-700/50 shadow-lg px-5 py-3"
+      className="bg-gray-800/60 backdrop-blur-md rounded-xl border border-gray-700/50 shadow-lg px-5 py-4"
     >
-      <div className="flex items-center justify-between">
-        {/* Left: Avatar + Welcome */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          {/* User Avatar */}
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shadow-lg">
+          <motion.div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shadow-lg shrink-0">
             {userInitial}
-          </div>
-          
-          {/* Welcome Text */}
+          </motion.div>
           <div>
-            <h2 className="text-base font-medium text-white">
-              Welcome back, <span className="text-indigo-400 font-semibold">{userName}</span>
-            </h2>
-            <p className="text-xs text-gray-400">
-              What would you like to create today?
+            <h1 className="text-lg font-semibold text-white">
+              Welcome back, <span className="text-indigo-400">{userName}</span>
+            </h1>
+            <p className="text-sm text-gray-400">
+              Your production hub — resume a project or start something new.
             </p>
           </div>
         </div>
 
-        {/* Right: Quick Actions */}
-        <div className="flex items-center gap-2">
-          {quickActions.map((action) => {
-            const Icon = action.icon
-            return (
-              <Link
-                key={action.label}
-                href={action.href}
-                className={`
-                  flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
-                  transition-all duration-200
-                  ${action.primary 
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 shadow-md'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                  }
-                `}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{action.label}</span>
-              </Link>
-            )
-          })}
-        </div>
+        <Link href="/dashboard/studio/new-project" className="shrink-0">
+          <Button className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md">
+            <Plus className="w-4 h-4 mr-2" />
+            New project
+          </Button>
+        </Link>
       </div>
     </motion.div>
   )
