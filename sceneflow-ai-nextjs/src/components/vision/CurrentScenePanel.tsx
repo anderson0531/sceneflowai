@@ -89,7 +89,7 @@ export function CurrentScenePanel({ scene }: CurrentScenePanelProps) {
         )}
 
         {/* Sound Effects */}
-        {scene.sfx && scene.sfx.length > 0 && (
+        {Array.isArray(scene.sfx) && scene.sfx.length > 0 && (
           <div className="mb-4">
             <h4 className="text-sm font-medium text-gray-500 mb-1 flex items-center gap-1">
               <Volume2 className="w-3 h-3" />

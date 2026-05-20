@@ -305,10 +305,11 @@ function hashDialogue(lines: DialogueLine[]): string {
   return simpleHash(parts.join('|'))
 }
 
-function hashSfx(sfx: SegmentSFX[]): string {
-  if (!sfx?.length) return 'empty'
+function hashSfx(sfx: SegmentSFX[] | unknown): string {
+  const list = Array.isArray(sfx) ? sfx : []
+  if (!list.length) return 'empty'
   return simpleHash(
-    sfx.map((s) => `${s.sfxId}:${s.description || ''}:${s.time ?? ''}`).join('|')
+    list.map((s) => `${s.sfxId}:${s.description || ''}:${s.time ?? ''}`).join('|')
   )
 }
 

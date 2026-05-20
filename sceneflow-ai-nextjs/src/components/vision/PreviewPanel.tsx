@@ -191,7 +191,7 @@ export function PreviewPanel({ originalScene, previewScene, isGenerating, change
         )}
 
         {/* Sound Effects */}
-        {previewScene.sfx && previewScene.sfx.length > 0 && (
+        {Array.isArray(previewScene.sfx) && previewScene.sfx.length > 0 && (
           <div>
             <h4 className="text-sm font-medium text-gray-500 mb-1 flex items-center gap-1">
               <Volume2 className="w-3 h-3" />

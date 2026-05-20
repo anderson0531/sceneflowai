@@ -468,6 +468,97 @@ export function buildSegmentSfx(
   }
 }
 
+/**
+ * Legacy flat `scene.sfx` may be a string, object, or array. Always return an array
+ * suitable for `.map()` / `.filter()` in UI and audio builders.
+ */
+export function coerceSceneSfxFlatArray(value: unknown): any[] {
+  if (Array.isArray(value)) return value
+  if (typeof value === 'string' && value.trim().length > 0) return [value.trim()]
+  if (value && typeof value === 'object') return [value]
+  return []
+}
+
+function coerceSegmentSfxItem(raw: unknown, legacyIndex?: number): SegmentSFX | null {
+  if (raw == null) return null
+  if (typeof raw === 'string') {
+    const description = raw.trim()
+    if (!description) return null
+    return {
+      ...buildSegmentSfx(description),
+      legacyIndex,
+    }
+  }
+  if (typeof raw === 'object' && !Array.isArray(raw)) {
+    const o = raw as Record<string, unknown>
+    const description = String(
+      o.description ?? o.text ?? o.name ?? ''
+    ).trim()
+    if (!description) return null
+    return {
+      sfxId:
+        typeof o.sfxId === 'string' && o.sfxId.length > 0
+          ? o.sfxId
+          : mintSfxId(),
+      description,
+      time: typeof o.time === 'number' ? o.time : undefined,
+      sourceLineId:
+        typeof o.sourceLineId === 'string' ? o.sourceLineId : undefined,
+      legacyIndex:
+        typeof o.legacyIndex === 'number' ? o.legacyIndex : legacyIndex,
+    }
+  }
+  return null
+}
+
+/** Normalize `segment.sfx` to `SegmentSFX[]` (never a string/object). */
+export function coerceSegmentSfxArray(value: unknown): SegmentSFX[] {
+  if (Array.isArray(value)) {
+    const out: SegmentSFX[] = []
+    value.forEach((item, idx) => {
+      const cue = coerceSegmentSfxItem(item, idx)
+      if (cue) out.push(cue)
+    })
+    return out
+  }
+  const single = coerceSegmentSfxItem(value, 0)
+  return single ? [single] : []
+}
+
+/**
+ * In-place normalization for script scenes: flat dialogue lines, flat sfx list,
+ * and per-segment sfx arrays.
+ */
+export function sanitizeScriptScenes(scriptData: any): any {
+  if (!scriptData) return scriptData
+  const scenes = scriptData?.script?.scenes ?? scriptData?.scenes
+  if (!Array.isArray(scenes)) return scriptData
+
+  for (const scene of scenes) {
+    if (!scene || typeof scene !== 'object') continue
+    scene.sfx = coerceSceneSfxFlatArray(scene.sfx)
+    if (Array.isArray(scene.dialogue)) {
+      scene.dialogue = scene.dialogue.map((d: any) => normalizeDialogueEntry(d))
+    }
+    if (Array.isArray(scene.segments)) {
+      scene.segments = scene.segments.map((seg: any) => {
+        if (!seg || typeof seg !== 'object') return seg
+        return {
+          ...seg,
+          sfx: coerceSegmentSfxArray(seg.sfx),
+          dialogue: Array.isArray(seg.dialogue)
+            ? seg.dialogue.map((ln: any) => ({
+                ...ln,
+                line: coerceDialogueLineText(ln?.line),
+              }))
+            : [],
+        }
+      })
+    }
+  }
+  return scriptData
+}
+
 // ---------------------------------------------------------------------------
 // Inspection / queries
 // ---------------------------------------------------------------------------

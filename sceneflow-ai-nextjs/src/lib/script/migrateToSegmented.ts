@@ -31,12 +31,14 @@ import {
 import {
   buildSegmentSfx,
   coerceDialogueLineText,
+  coerceSceneSfxFlatArray,
   enforceOneSentencePerLine,
   normalizeDialogueToProductionLineTargets,
   normalizeDialogueEntry,
   mintLineId,
   mintSegmentId,
   quantizeAndResequence,
+  sanitizeScriptScenes,
 } from '@/lib/script/segmentScript'
 import {
   DialogueAudioEntry,
@@ -162,7 +164,14 @@ export function migrateProjectToSegmented(metadata: unknown): MigrateResult {
     }
   }
 
-  const changed = migratedSceneCount > 0 || audioEntriesRewritten > 0 || translationLinesWritten > 0
+  // Normalize sfx/dialogue on every scene (including already-segmented) so UI
+  // code can safely call `.map()` on `scene.sfx` and `segment.sfx`.
+  sanitizeScriptScenes(script)
+
+  const changed =
+    migratedSceneCount > 0 ||
+    audioEntriesRewritten > 0 ||
+    translationLinesWritten > 0
   if (changed) {
     visionPhase[MIGRATION_FLAG_KEY] = new Date().toISOString()
   } else if (alreadyMigratedSceneCount > 0 && !visionPhase[MIGRATION_FLAG_KEY]) {
@@ -260,7 +269,7 @@ function buildSegmentsForScene(scene: any, productionSegments: any[] | null): Sc
 
   // 3. Build SFX list with stable sfxIds. We thread `legacyIndex` so existing
   //    positional audio handlers (`scene.sfxAudio[idx]`) keep working.
-  const flatSfx: any[] = Array.isArray(scene.sfx) ? scene.sfx : []
+  const flatSfx: any[] = coerceSceneSfxFlatArray(scene.sfx)
   const allSfx: SegmentSFX[] = flatSfx.map((s, idx) => {
     const description =
       typeof s === 'string'

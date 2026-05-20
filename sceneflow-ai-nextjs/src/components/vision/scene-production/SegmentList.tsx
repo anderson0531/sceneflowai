@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { ChevronDown, Clapperboard } from 'lucide-react'
 import type { ScriptSegment, DialogueLine } from '@/lib/script/segmentTypes'
 import { SegmentDialogueCard } from './SegmentDialogueCard'
+import { coerceSegmentSfxArray } from '@/lib/script/segmentScript'
 import { SegmentSfxCard } from './SegmentSfxCard'
 
 /**
@@ -136,6 +137,7 @@ function SegmentCard({
   // Default to collapsed so the script panel renders compactly; users can
   // open individual segments to drill into dialog/SFX/prompts.
   const [collapsed, setCollapsed] = useState(true)
+  const segmentSfx = coerceSegmentSfxArray(segment.sfx)
   const duration = Math.max(0, segment.endTime - segment.startTime)
   const isContinuation =
     segment.segmentId.includes('_c') ||
@@ -174,7 +176,7 @@ function SegmentCard({
           )}
           <span className="text-[10px] text-blue-200/80">
             {segment.dialogue.length} line{segment.dialogue.length === 1 ? '' : 's'}
-            {segment.sfx.length > 0 ? ` · ${segment.sfx.length} SFX` : ''}
+            {segmentSfx.length > 0 ? ` · ${segmentSfx.length} SFX` : ''}
           </span>
         </button>
       </div>
@@ -236,9 +238,9 @@ function SegmentCard({
           )}
 
           {/* SFX */}
-          {segment.sfx.length > 0 && (
+          {segmentSfx.length > 0 && (
             <div className="space-y-2">
-              {segment.sfx.map((sfx, idx) => (
+              {segmentSfx.map((sfx, idx) => (
                 <SegmentSfxCard
                   key={sfx.sfxId}
                   scene={rest.scene}

@@ -18,6 +18,7 @@
 'use client'
 
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
@@ -258,6 +259,11 @@ function DirectorConsoleRoot({
     [guideCharacters, scene]
   )
 
+  const normalizedSceneSfx = useMemo(
+    () => coerceSceneSfxFlatArray(scene?.sfx),
+    [scene?.sfx]
+  )
+
   const segmentGuideContext = useMemo<SegmentGuideContext | undefined>(() => {
     if (!scene) return undefined
     return {
@@ -268,11 +274,11 @@ function DirectorConsoleRoot({
         action: scene.action,
         narration: scene.narration,
         music: scene.music,
-        sfx: scene.sfx,
+        sfx: normalizedSceneSfx,
       },
       characters: effectiveGuideCharacters,
     }
-  }, [scene, effectiveGuideCharacters])
+  }, [scene, effectiveGuideCharacters, normalizedSceneSfx])
 
   const videoGenerationAvailable = useMemo(
     () => segments.some(s => s.activeAssetUrl && s.status === 'COMPLETE'),
@@ -847,7 +853,7 @@ function DirectorConsoleRoot({
           dialogue: scene?.dialogue,
           musicAudio: scene?.musicAudio,
           music: scene?.music,
-          sfx: scene?.sfx,
+          sfx: normalizedSceneSfx,
         }}
         textOverlays={textOverlays}
         onTextOverlaysChange={handleTextOverlaysChange}
@@ -1359,7 +1365,12 @@ function DirectorConsoleRoot({
           // Collect dialogue audio URLs
           dialogueUrls: scene?.dialogueAudio?.en?.map(d => d?.audioUrl).filter(Boolean) || [],
           // Collect SFX audio URLs
-          sfxUrls: scene?.sfx?.filter(s => s?.audioUrl).map(s => s.audioUrl!) || [],
+          sfxUrls: normalizedSceneSfx
+            .filter(
+              (s): s is { audioUrl: string } =>
+                typeof s === 'object' && !!s && typeof (s as { audioUrl?: string }).audioUrl === 'string'
+            )
+            .map((s) => s.audioUrl),
         }}
         audioConfig={{
           narration: scene?.narrationAudioUrl ? {
@@ -1381,12 +1392,17 @@ function DirectorConsoleRoot({
             duration: audioTrackTiming.dialogue.duration,
             volume: 0.9,
           })),
-          sfx: scene?.sfx?.filter(s => s?.audioUrl).map((s, i) => ({
-            url: s.audioUrl!,
-            startTime: audioTrackTiming.sfx.startTime + (i * 1), // Stagger SFX
-            duration: audioTrackTiming.sfx.duration,
-            volume: 0.6,
-          })),
+          sfx: normalizedSceneSfx
+            .filter(
+              (s): s is { audioUrl: string } =>
+                typeof s === 'object' && !!s && typeof (s as { audioUrl?: string }).audioUrl === 'string'
+            )
+            .map((s, i) => ({
+              url: s.audioUrl,
+              startTime: audioTrackTiming.sfx.startTime + i * 1,
+              duration: audioTrackTiming.sfx.duration,
+              volume: 0.6,
+            })),
         } as SceneAudioConfig}
       />
       

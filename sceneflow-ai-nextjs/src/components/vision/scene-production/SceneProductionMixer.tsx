@@ -16,6 +16,7 @@
 'use client'
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
 import { toast } from 'sonner'
 import { 
   Play, 
@@ -2379,6 +2380,11 @@ export function SceneProductionMixer({
   }, [])
 
 
+  const normalizedSceneSfx = useMemo(
+    () => coerceSceneSfxFlatArray(audioAssets.sfx),
+    [audioAssets.sfx]
+  )
+
   /** Minimal scene shape for shared audio layout (segment dialogueLineIds + multi-lang audio). */
   const mixerAudioSceneStub = useMemo(
     () => ({
@@ -2388,10 +2394,12 @@ export function SceneProductionMixer({
       narrationAudioUrl: audioAssets.narrationAudioUrl,
       dialogue: audioAssets.dialogue ?? [],
       musicAudio: audioAssets.musicAudio,
-      sfxAudio: audioAssets.sfx?.map(s => s.audioUrl).filter((u): u is string => !!u) ?? [],
-      sfx: audioAssets.sfx,
+      sfxAudio: normalizedSceneSfx
+        .map((s) => (typeof s === 'object' && s ? s.audioUrl : undefined))
+        .filter((u): u is string => !!u),
+      sfx: normalizedSceneSfx,
     }),
-    [segments, audioAssets]
+    [segments, audioAssets, normalizedSceneSfx]
   )
 
   const resolvedDialogueClips = useMemo(
@@ -2748,7 +2756,9 @@ export function SceneProductionMixer({
     
     const musicUrl = audioAssets.musicAudio
     
-    const sfxEntries = audioAssets.sfx?.filter(s => s?.audioUrl) || []
+    const sfxEntries = normalizedSceneSfx.filter(
+      (s) => typeof s === 'object' && s && (s as { audioUrl?: string }).audioUrl
+    )
     
     return {
       narration: narrationUrl,
@@ -2757,7 +2767,7 @@ export function SceneProductionMixer({
       music: musicUrl,
       sfx: sfxEntries,
     }
-  }, [audioAssets, selectedLanguage, resolvedDialogueClips])
+  }, [audioAssets, selectedLanguage, resolvedDialogueClips, normalizedSceneSfx])
 
   /** Dialogue start/duration from timeline drags override layout engine for preview + render. */
   const playbackAudioUrls = useMemo(() => {

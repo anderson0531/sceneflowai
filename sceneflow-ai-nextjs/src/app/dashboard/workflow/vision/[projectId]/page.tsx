@@ -127,7 +127,7 @@ import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
 // audioTrackBuilder functions are imported dynamically inside callbacks to break TDZ scope-hoisting chain
 import { buildSceneReferencePrompt } from '@/lib/vision/sceneReferencePromptBuilder'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
-import { normalizeDialogueEntry } from '@/lib/script/segmentScript'
+import { sanitizeScriptScenes } from '@/lib/script/segmentScript'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { useAutoMigrate } from '@/hooks/useMediaLoader'
 import { uploadAssetViaAPI } from '@/lib/vision/uploads'
@@ -229,15 +229,7 @@ const normalizeCharacterName = (name: string): string => {
 // Helper function to normalize scenes from various data paths
 // This ensures consistent scene access across all components
 function sanitizeScriptDialogueLines(scriptData: any): any {
-  if (!scriptData) return scriptData
-  const scenes = scriptData?.script?.scenes ?? scriptData?.scenes
-  if (!Array.isArray(scenes)) return scriptData
-  for (const scene of scenes) {
-    if (Array.isArray(scene?.dialogue)) {
-      scene.dialogue = scene.dialogue.map((d: any) => normalizeDialogueEntry(d))
-    }
-  }
-  return scriptData
+  return sanitizeScriptScenes(scriptData)
 }
 
 function normalizeScenes(source: any): any[] {
@@ -9416,7 +9408,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     // Save to database FIRST
     try {
-      await saveScenesToDatabase(updatedScenes)
+      const saveResult = await saveScenesToDatabase(updatedScenes)
+      const persistedScenes =
+        saveResult?.metadata?.visionPhase?.script?.script?.scenes ??
+        saveResult?.metadata?.visionPhase?.scenes ??
+        updatedScenes
       
       // Delete orphaned audio blobs in background (don't block UI)
       if (allDeletedUrls.length > 0) {
@@ -9441,10 +9437,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         ...script,
         script: {
           ...script.script,
-          scenes: updatedScenes
+          scenes: persistedScenes
         }
       }
-      setScript(updatedScript)
+      setScript(sanitizeScriptDialogueLines(updatedScript))
       
       // CRITICAL: Sync project state so subsequent saves don't overwrite with stale metadata.
       // Without this, handleBackgroundDirectionGeneration (and any save triggered after)
@@ -9453,12 +9449,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!prev) return prev
         const updated = {
           ...prev,
-          metadata: {
+          metadata: saveResult?.metadata ?? {
             ...prev.metadata,
             visionPhase: {
               ...prev.metadata?.visionPhase,
               script: updatedScript,
-              scenes: updatedScenes
+              scenes: persistedScenes
             }
           }
         }
@@ -10441,7 +10437,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     }
   }
-  const saveScenesToDatabase = async (updatedScenes: any[], deletedSceneIds?: string[]) => {
+  const saveScenesToDatabase = async (
+    updatedScenes: any[],
+    deletedSceneIds?: string[]
+  ): Promise<{ metadata: Record<string, any> } | null> => {
     // Guard: refuse to save if script state is null/stale — spreading null produces
     // { script: { scenes: [...] } } which loses title, format, metadata, etc.
     if (!script) {
@@ -10450,7 +10449,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const { toast } = require('sonner')
         toast.error('Cannot save: script data not loaded. Try refreshing the page.')
       } catch {}
-      return
+      return null
     }
     
     try {
@@ -10516,6 +10515,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       await response.json()
+      return { metadata: metadataToPersist }
       
     } catch (error) {
       console.error('[saveScenesToDatabase] Failed to save scenes:', error)
