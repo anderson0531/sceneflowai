@@ -23,6 +23,7 @@ import { SegmentFrameTimeline } from './scene-production/SegmentFrameTimeline'
 import { ProductionSectionHeader } from './scene-production/ProductionSectionHeader'
 import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
 import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
+import { ResetSegmentsConfirmDialog } from './scene-production/ResetSegmentsConfirmDialog'
 import { SegmentList } from './scene-production/SegmentList'
 import type { ScriptSegment } from '@/lib/script/segmentTypes'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
@@ -3983,6 +3984,8 @@ function SceneCard({
   const [editSegmentDialogOpen, setEditSegmentDialogOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deleteSceneConfirmOpen, setDeleteSceneConfirmOpen] = useState(false)
+  const [resetSegmentsDialogOpen, setResetSegmentsDialogOpen] = useState(false)
+  const [isResettingSegments, setIsResettingSegments] = useState(false)
   
   // Generate All Audio confirmation dialog
   const [generateAllAudioConfirmOpen, setGenerateAllAudioConfirmOpen] = useState(false)
@@ -4889,9 +4892,7 @@ function SceneCard({
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (window.confirm('Reset all segments? WARNING: This will delete all current segments, including generated images and video assets for this scene. This action cannot be undone.')) {
-                              onResetSegments(scene.sceneId || scene.id || `scene-${sceneIdx}`)
-                            }
+                            setResetSegmentsDialogOpen(true)
                           }}
                           className="px-2 py-1 text-xs rounded-lg transition flex items-center gap-1 bg-red-500/20 text-red-300 border border-red-500/40 hover:bg-red-500/30"
                         >
@@ -4899,8 +4900,8 @@ function SceneCard({
                           <span>Reset Segments</span>
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-[200px]">
-                        Delete all segments and assets to start fresh
+                      <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-[240px]">
+                        Clear segment timeline, keyframes, and generated video for this scene
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -7238,6 +7239,26 @@ function SceneCard({
             </DialogContent>
           </Dialog>
           
+          <ResetSegmentsConfirmDialog
+            open={resetSegmentsDialogOpen}
+            onOpenChange={setResetSegmentsDialogOpen}
+            sceneNumber={sceneNumber}
+            sceneHeading={formattedHeading}
+            production={sceneProductionData ?? null}
+            isResetting={isResettingSegments}
+            onConfirm={async () => {
+              if (!onResetSegments) return
+              const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
+              setIsResettingSegments(true)
+              try {
+                await Promise.resolve(onResetSegments(sceneId))
+                setResetSegmentsDialogOpen(false)
+              } finally {
+                setIsResettingSegments(false)
+              }
+            }}
+          />
+
           {/* Delete Scene Confirmation Dialog */}
           <Dialog open={deleteSceneConfirmOpen} onOpenChange={setDeleteSceneConfirmOpen}>
             <DialogContent className="bg-slate-900 border border-red-500/30 max-w-md">
