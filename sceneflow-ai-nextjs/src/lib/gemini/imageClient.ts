@@ -249,7 +249,14 @@ export async function generateImageWithGemini(
   // Extract image from Vertex AI response
   const predictions = data?.predictions
   if (!predictions || predictions.length === 0) {
-    console.error('[Vertex Imagen] No predictions in response - likely filtered by safety settings')
+    const raiInfo =
+      data?.raiFilteredReason ??
+      predictions?.[0]?.raiFilteredReason ??
+      data?.predictions?.[0]?.raiFilteredReason
+    console.error(
+      '[Vertex Imagen] No predictions in response - likely filtered by safety settings',
+      raiInfo ? { raiFilteredReason: raiInfo } : { raw: JSON.stringify(data).slice(0, 800) }
+    )
     throw new Error('Problem: Image generation was filtered due to content policies.\n\n\nAction: Try adjusting the prompt to be more descriptive and professional.')
   }
   

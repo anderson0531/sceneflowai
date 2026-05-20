@@ -1,7 +1,25 @@
 import type Series from '@/models/Series'
+import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 
 /** Imagen prompt length guard — long bible fields can exceed API limits and return 400. */
 export const SERIES_THUMBNAIL_PROMPT_MAX = 2800
+
+const IMAGEN_FILTER_WORD_REPLACEMENTS: Array<[RegExp, string]> = [
+  [/cramped/gi, 'cozy'],
+  [/worn/gi, 'weathered'],
+  [/seedy/gi, 'modest'],
+  [/dirty/gi, 'dusty'],
+  [/grungy/gi, 'textured'],
+  [/sleazy/gi, 'simple'],
+  [/intimate/gi, 'close'],
+  [/sensual/gi, 'warm'],
+  [/violent/gi, 'dramatic'],
+  [/blood/gi, 'dramatic red'],
+  [/kill/gi, 'confront'],
+  [/murder/gi, 'mystery'],
+  [/nude/gi, ''],
+  [/naked/gi, ''],
+]
 
 export function asPromptText(value: unknown, maxLen = 500): string {
   if (value == null) return ''
@@ -17,6 +35,22 @@ export function cloneSeriesMetadata(metadata: unknown): Record<string, unknown> 
   } catch {
     return { ...(metadata as Record<string, unknown>) }
   }
+}
+
+export function sanitizeForImagen(text: string): string {
+  let cleaned = text
+  for (const [pattern, replacement] of IMAGEN_FILTER_WORD_REPLACEMENTS) {
+    cleaned = cleaned.replace(pattern, replacement)
+  }
+  return cleaned.replace(/\s{2,}/g, ' ').trim()
+}
+
+export function isImagenContentFilterError(message: string): boolean {
+  return (
+    message.includes('content policies') ||
+    message.includes('filtered') ||
+    message.includes('No predictions')
+  )
 }
 
 export function assertSeriesImageGenConfigured(): string | null {
@@ -46,35 +80,123 @@ export function buildSeriesThumbnailPrompt(series: Series, customPrompt?: string
   const seriesInfo = [
     series.title ? `Series Title: ${series.title}` : '',
     series.genre ? `Genre: ${series.genre}` : '',
-    series.logline ? `Action/Concept: ${asPromptText(series.logline, 600)}` : '',
+    series.logline
+      ? `Story: ${sanitizeForImagen(asPromptText(series.logline, 500))}`
+      : '',
     protagonist
-      ? `Main Subject: ${asPromptText(protagonist.name, 80)} - ${asPromptText(protagonist.appearance || protagonist.description, 400)}`
+      ? `Lead character: ${asPromptText(protagonist.name, 80)} (${asPromptText(protagonist.description, 200)})`
       : '',
     mainLocation
-      ? `Setting/Location: ${asPromptText(mainLocation.name, 80)} - ${asPromptText(mainLocation.visualDescription || mainLocation.description, 400)}`
+      ? `Setting: ${asPromptText(mainLocation.name, 80)} (${asPromptText(mainLocation.visualDescription || mainLocation.description, 200)})`
       : '',
   ]
     .filter(Boolean)
     .join('\n')
 
-  const prompt = `Create an engaging, illustrative, and highly cinematic 16:9 thumbnail image for a TV series.
-DO NOT generate a simple headshot or portrait. The image MUST depict an active scene illustrating the core concept.
+  const prompt = `Professional cinematic 16:9 streaming series key art thumbnail.
+Wide establishing shot with characters in a dynamic scene (not a close-up portrait).
 
-Series Details:
 ${seriesInfo}
 
-CRITICAL INSTRUCTIONS:
-- Create a dynamic, active scene based on the Action/Concept.
-- The Main Subject must be situated within the Setting/Location.
-- Show the character engaged in the narrative, not just staring at the camera.
-- Professional TV series poster quality, suitable for streaming platform thumbnail display
-- Cinematic lighting with high contrast and dramatic shadows
-- Wide angle cinematic framing (environmental context is important)
-- 16:9 landscape aspect ratio
-- No text, titles, or watermarks on the image
-- Photorealistic or stylized based on genre appropriateness`
+Style: award-winning television marketing still, dramatic lighting, rich environment, high production value, 16:9 landscape, no text or watermarks.`
 
   return prompt.length <= SERIES_THUMBNAIL_PROMPT_MAX
     ? prompt
     : prompt.slice(0, SERIES_THUMBNAIL_PROMPT_MAX)
+}
+
+/** Safer prompt without detailed appearance — used when Imagen filters the full prompt. */
+export function buildSeriesThumbnailFallbackPrompt(series: Series): string {
+  const bits = [
+    series.title ? `Series: ${asPromptText(series.title, 120)}` : '',
+    series.genre ? `Genre: ${asPromptText(series.genre, 60)}` : '',
+    series.logline
+      ? `Premise: ${sanitizeForImagen(asPromptText(series.logline, 400))}`
+      : '',
+  ]
+    .filter(Boolean)
+    .join('. ')
+
+  const prompt = `Professional cinematic streaming series poster, 16:9 widescreen. ${bits}. Dynamic wide shot, atmospheric lighting, family-friendly broadcast quality, no text or logos.`
+  return prompt.length <= SERIES_THUMBNAIL_PROMPT_MAX
+    ? prompt
+    : prompt.slice(0, SERIES_THUMBNAIL_PROMPT_MAX)
+}
+
+/** Environment-only prompt — last resort when person generation is blocked. */
+export function buildSeriesThumbnailMinimalPrompt(series: Series): string {
+  const title = asPromptText(series.title, 120) || 'Television series'
+  const genre = asPromptText(series.genre, 60)
+  return `Cinematic ${genre ? `${genre} ` : ''}television series promotional landscape for "${title}". Wide atmospheric environment, dramatic sky, moody lighting, 16:9, professional color grading, no people, no text, no watermarks.`
+}
+
+type ThumbnailImagenOptions = NonNullable<Parameters<typeof generateImageWithGemini>[1]>
+
+export async function generateSeriesThumbnailImage(
+  series: Series,
+  customPrompt?: string
+): Promise<{ base64: string; promptUsed: string; attempt: number }> {
+  const attempts: Array<{
+    name: string
+    prompt: string
+    options?: ThumbnailImagenOptions
+  }> = []
+
+  if (customPrompt?.trim()) {
+    attempts.push({
+      name: 'custom',
+      prompt: buildSeriesThumbnailPrompt(series, customPrompt),
+    })
+    attempts.push({
+      name: 'fallback',
+      prompt: buildSeriesThumbnailFallbackPrompt(series),
+    })
+  } else {
+    attempts.push({
+      name: 'full',
+      prompt: buildSeriesThumbnailPrompt(series),
+    })
+    attempts.push({
+      name: 'fallback',
+      prompt: buildSeriesThumbnailFallbackPrompt(series),
+      options: { quality: 'standard' },
+    })
+    attempts.push({
+      name: 'minimal',
+      prompt: buildSeriesThumbnailMinimalPrompt(series),
+      options: { personGeneration: 'dont_allow', quality: 'fast' },
+    })
+  }
+
+  let lastError: Error | null = null
+
+  for (let i = 0; i < attempts.length; i++) {
+    const { name, prompt, options } = attempts[i]
+    try {
+      console.log(
+        `[Series Thumbnail] Imagen attempt ${i + 1}/${attempts.length} (${name}), chars=${prompt.length}`
+      )
+      const base64 = await generateImageWithGemini(prompt, {
+        aspectRatio: '16:9',
+        numberOfImages: 1,
+        quality: 'fast',
+        ...options,
+      })
+      return { base64, promptUsed: prompt, attempt: i + 1 }
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err))
+      if (!isImagenContentFilterError(lastError.message)) {
+        throw lastError
+      }
+      console.warn(
+        `[Series Thumbnail] Attempt ${i + 1} (${name}) blocked:`,
+        lastError.message.split('\n')[0]
+      )
+    }
+  }
+
+  throw new Error(
+    lastError?.message ||
+      'Image generation was blocked by content safety filters. Try simplifying the series logline or use a custom prompt.'
+  )
 }

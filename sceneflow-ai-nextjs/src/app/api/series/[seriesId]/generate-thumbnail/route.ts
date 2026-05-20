@@ -3,11 +3,10 @@ import '@/models'
 import Series from '@/models/Series'
 import { sequelize } from '@/config/database'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import {
   assertSeriesImageGenConfigured,
-  buildSeriesThumbnailPrompt,
   cloneSeriesMetadata,
+  generateSeriesThumbnailImage,
 } from '@/lib/series/thumbnailPrompt'
 
 export const runtime = 'nodejs'
@@ -50,15 +49,10 @@ export async function POST(
       // Empty body is fine for default prompt
     }
 
-    const enhancedPrompt = buildSeriesThumbnailPrompt(series, customPrompt)
-    console.log('[Series Thumbnail] Prompt length:', enhancedPrompt.length)
-
     console.log('[Series Thumbnail] Generating with Vertex Imagen...')
-    const base64Image = await generateImageWithGemini(enhancedPrompt, {
-      aspectRatio: '16:9',
-      numberOfImages: 1,
-      quality: 'fast',
-    })
+    const { base64: base64Image, promptUsed: enhancedPrompt, attempt } =
+      await generateSeriesThumbnailImage(series, customPrompt)
+    console.log('[Series Thumbnail] Succeeded on attempt', attempt)
 
     console.log('[Series Thumbnail] Uploading to GCS...')
     const blobUrl = await uploadImageToBlob(
