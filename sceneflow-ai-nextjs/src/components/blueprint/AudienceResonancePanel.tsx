@@ -45,8 +45,10 @@ import {
   GENRE_OPTIONS,
   TONE_OPTIONS,
   DEFAULT_INTENT,
+  formatTargetAudienceForPrompt,
   normalizeAudienceIntent,
 } from '@/lib/types/audienceResonance'
+import { cn } from '@/lib/utils'
 import {
   TargetAudienceSelector,
   applyTargetAudienceChange,
@@ -112,6 +114,7 @@ export function AudienceResonancePanel({
   const [analysis, setAnalysisLocal] = useState<AudienceResonanceAnalysis | null>(
     cachedState?.analysis || null
   )
+  const [isTargetAudienceOpen, setIsTargetAudienceOpen] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedInsights, setExpandedInsights] = useState<string[]>([])
@@ -977,15 +980,58 @@ export function AudienceResonancePanel({
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {/* Intent Selector */}
         <div className="p-4 border-b border-slate-700/30">
-          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Target audience</p>
-          <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
-            Calibrate analysis and recommendations for who you are making this for.
-          </p>
-          <TargetAudienceSelector
-            value={intent}
-            onChange={handleTargetAudienceChange}
-            variant="compact"
-          />
+          <div className="rounded-lg border border-slate-700/40 bg-slate-900/30 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setIsTargetAudienceOpen((open) => !open)}
+              className="flex w-full items-start gap-2 px-3 py-2.5 text-left hover:bg-slate-800/40 transition-colors"
+              aria-expanded={isTargetAudienceOpen}
+            >
+              <ChevronDown
+                className={cn(
+                  'mt-0.5 h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200',
+                  isTargetAudienceOpen && 'rotate-180'
+                )}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                    Target audience
+                  </p>
+                  <span className="text-[10px] text-slate-500 shrink-0">
+                    {isTargetAudienceOpen ? 'Hide' : 'Show'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  Calibrate analysis and recommendations for who you are making this for.
+                </p>
+                {!isTargetAudienceOpen && (
+                  <p className="text-[11px] text-cyan-400/80 mt-1.5 truncate" title={formatTargetAudienceForPrompt(intent)}>
+                    {formatTargetAudienceForPrompt(intent)}
+                  </p>
+                )}
+              </div>
+            </button>
+            <AnimatePresence initial={false}>
+              {isTargetAudienceOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-3 pb-3 pt-0 border-t border-slate-700/30">
+                    <TargetAudienceSelector
+                      value={intent}
+                      onChange={handleTargetAudienceChange}
+                      variant="compact"
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           <p className="text-xs text-gray-500 mb-3 mt-5 uppercase tracking-wide">Creative intent</p>
           <div className="space-y-3">
