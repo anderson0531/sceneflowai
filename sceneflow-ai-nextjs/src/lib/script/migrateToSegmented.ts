@@ -649,9 +649,9 @@ function resolveSceneId(scene: any, sceneIdx: number): string | null {
 }
 
 function legacyDialogueEntryToLines(d: any, _scene: any): DialogueLine[] {
-  const normalized = normalizeDialogueEntry(d)
-  const character: string = normalized.character || ''
-  const text: string = coerceDialogueLineText(normalized.line)
+  const normalizedEntry = normalizeDialogueEntry(d)
+  const character: string = normalizedEntry.character || ''
+  const text: string = coerceDialogueLineText(normalizedEntry.line)
   if (!text) return []
   const characterId =
     typeof d?.characterId === 'string' ? d.characterId : undefined
