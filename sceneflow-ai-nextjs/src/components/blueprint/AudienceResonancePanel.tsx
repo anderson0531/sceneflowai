@@ -17,9 +17,8 @@ import {
   Film,
   Palette,
   ShieldCheck,
-  Wand2,
-  X
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { GreenlightScore } from './GreenlightScore'
 import dynamic from 'next/dynamic'
 const ResonanceRadarChart = dynamic(
@@ -31,7 +30,6 @@ const ResonanceRadarChart = dynamic(
 )
 import { ResonanceRadarLegend } from '@/components/charts/ResonanceRadarLegend'
 import { WeightCustomizer } from './WeightCustomizer'
-import { ScoreNarrative } from './ScoreNarrative'
 import {
   type AudienceIntent,
   type AudienceResonanceAnalysis,
@@ -69,6 +67,10 @@ import {
 } from '@/lib/treatment/localScoring'
 import type { PersistedAudienceResonance } from '@/lib/types/audienceResonance'
 import { createPersistedAR } from '@/lib/types/audienceResonance'
+import {
+  treatmentToRefineVariant,
+  impactLabel,
+} from '@/lib/treatment/resonanceScoring'
 
 interface AudienceResonancePanelProps {
   treatment?: any
@@ -115,6 +117,8 @@ export function AudienceResonancePanel({
     cachedState?.analysis || null
   )
   const [isTargetAudienceOpen, setIsTargetAudienceOpen] = useState(false)
+  const [isScoringAdvancedOpen, setIsScoringAdvancedOpen] = useState(false)
+  const [showAllInsights, setShowAllInsights] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedInsights, setExpandedInsights] = useState<string[]>([])
@@ -167,6 +171,26 @@ export function AudienceResonancePanel({
   const [weightPreset, setWeightPresetLocal] = useState<WeightPresetKey | 'custom' | null>(
     cachedState?.weightPreset || null
   )
+
+  const weaknessInsights = useMemo(
+    () => analysis?.insights.filter((i) => i.status === 'weakness') ?? [],
+    [analysis?.insights]
+  )
+  const priorityInsights = useMemo(() => weaknessInsights.slice(0, 3), [weaknessInsights])
+  const strengthInsights = useMemo(
+    () => analysis?.insights.filter((i) => i.status === 'strength').slice(0, 2) ?? [],
+    [analysis?.insights]
+  )
+  const pendingWeaknesses = useMemo(
+    () =>
+      weaknessInsights.filter(
+        (i) => !appliedFixes.includes(i.id) && i.fixSuggestion && i.fixSection
+      ),
+    [weaknessInsights, appliedFixes]
+  )
+  const scoreProgress = analysis
+    ? Math.min(100, Math.round((analysis.greenlightScore.score / READY_FOR_PRODUCTION_THRESHOLD) * 100))
+    : 0
   
   // Wrapper functions to sync local state with Zustand store
   const setIntent = useCallback((value: AudienceIntent | ((prev: AudienceIntent) => AudienceIntent)) => {
@@ -519,12 +543,6 @@ export function AudienceResonancePanel({
       return
     }
     
-    // Check if we've reached max iterations
-    if (iterationCount >= MAX_ITERATIONS) {
-      setError('Maximum refinement iterations reached. Your treatment is ready for production.')
-      return
-    }
-    
     setApplyingFix(insight.id)
     setError(null)
     
@@ -533,16 +551,25 @@ export function AudienceResonancePanel({
       const response = await fetch('/api/treatment/refine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
-          variant: treatment,
+          variant: treatmentToRefineVariant(treatment),
           section: insight.fixSection,
-          instructions: insight.fixSuggestion
-        })
+          instructions: insight.fixSuggestion,
+        }),
       })
-      
-      const data = await response.json()
-      
-      if (data.success && data.draft) {
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || data.error || `Refine failed (${response.status})`
+        )
+      }
+
+      const fieldsUpdated = data.fieldsUpdated as string[] | undefined
+
+      if (data.success && data.draft && fieldsUpdated && fieldsUpdated.length > 0) {
         // Merge the draft into the local treatment
         const updatedTreatment = { ...treatment, ...data.draft, updatedAt: Date.now() }
         setLocalTreatment(updatedTreatment)
@@ -613,15 +640,18 @@ export function AudienceResonancePanel({
         // Notify parent component
         onFixApplied?.(insight.id, insight.fixSection, updatedTreatment)
         onTreatmentUpdate?.(updatedTreatment)
-        
-        // NOTE: Do NOT auto re-analyze. User will click Analyze when ready.
-        // This allows applying multiple fixes before using an iteration.
+        toast.success(`Updated ${insight.fixSection} section`)
       } else {
-        setError(data.message || 'Failed to apply fix')
+        throw new Error(
+          data.message || 'The AI did not return changes for this section. Try rephrasing or edit manually.'
+        )
       }
     } catch (err) {
       console.error('Failed to apply fix:', err)
-      setError('Failed to apply fix. Please try again.')
+      const message =
+        err instanceof Error ? err.message : 'Failed to apply fix. Please try again.'
+      setError(message)
+      toast.error(message)
     } finally {
       setApplyingFix(null)
     }
@@ -650,12 +680,6 @@ export function AudienceResonancePanel({
       return
     }
     
-    // Check iteration limit
-    if (iterationCount >= MAX_ITERATIONS) {
-      setError('Maximum refinement iterations reached.')
-      return
-    }
-    
     setIsApplyingAllFixes(true)
     setError(null)
     
@@ -671,16 +695,23 @@ export function AudienceResonancePanel({
           const response = await fetch('/api/treatment/refine', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({
-              variant: currentTreatment,
+              variant: treatmentToRefineVariant(currentTreatment),
               section: insight.fixSection,
-              instructions: insight.fixSuggestion
-            })
+              instructions: insight.fixSuggestion,
+            }),
           })
-          
-          const data = await response.json()
-          
-          if (data.success && data.draft) {
+
+          const data = await response.json().catch(() => ({}))
+
+          if (
+            response.ok &&
+            data.success &&
+            data.draft &&
+            Array.isArray(data.fieldsUpdated) &&
+            data.fieldsUpdated.length > 0
+          ) {
             // Merge the draft into current treatment
             currentTreatment = { ...currentTreatment, ...data.draft, updatedAt: Date.now() }
             successfullyApplied.push(insight.id)
@@ -759,10 +790,12 @@ export function AudienceResonancePanel({
         
         // Notify parent components
         onTreatmentUpdate?.(currentTreatment)
-        
-        console.log(`[ApplyAllFixes] Successfully applied ${successfullyApplied.length}/${pendingFixes.length} fixes`)
+        toast.success(
+          `Applied ${successfullyApplied.length} of ${pendingFixes.length} fixes`
+        )
       } else {
         setError('Failed to apply any fixes')
+        toast.error('Failed to apply any fixes')
       }
     } catch (err) {
       console.error('Failed to apply all fixes:', err)
@@ -771,101 +804,6 @@ export function AudienceResonancePanel({
       setIsApplyingAllFixes(false)
     }
   }, [analysis, appliedFixes, treatment, iterationCount, serverCheckpointResults, checkpointOverrides, previousScore, onTreatmentUpdate, setAnalysis, setIsScoreEstimated, setCheckpointOverrides, setPreviousScore, setIsReadyForProduction, setAppliedFixes, setAppliedFixDetails, setPendingFixesCount])
-  
-  // State for Optimize Blueprint
-  const [isOptimizing, setIsOptimizing] = useState(false)
-  const [showOptimizePreview, setShowOptimizePreview] = useState(false)
-  const [optimizedDraft, setOptimizedDraft] = useState<Record<string, unknown> | null>(null)
-  
-  // Optimize entire blueprint based on AR analysis
-  const optimizeBlueprint = useCallback(async () => {
-    if (!treatment) {
-      setError('No treatment to optimize')
-      return
-    }
-    
-    setIsOptimizing(true)
-    setError(null)
-    
-    try {
-      // Determine focus areas based on lowest scoring axes
-      const focusAreas: ('clarity' | 'pacing' | 'character' | 'tone' | 'commercial')[] = ['clarity']
-      
-      if (analysis?.axes) {
-        const sortedAxes = [...analysis.axes].sort((a, b) => a.score - b.score)
-        // Add focus areas for lowest scoring axes
-        for (const axis of sortedAxes.slice(0, 2)) {
-          switch (axis.id) {
-            case 'originality':
-              focusAreas.push('clarity')
-              break
-            case 'character-depth':
-              focusAreas.push('character')
-              break
-            case 'pacing':
-              focusAreas.push('pacing')
-              break
-            case 'genre-fidelity':
-              focusAreas.push('tone')
-              break
-            case 'commercial-viability':
-              focusAreas.push('commercial')
-              break
-          }
-        }
-      }
-      
-      const response = await fetch('/api/treatment/optimize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          variant: treatment,
-          previousAnalysis: analysis,
-          focusAreas: [...new Set(focusAreas)] // Dedupe
-        })
-      })
-      
-      const data = await response.json()
-      
-      if (data.success && data.optimizedDraft) {
-        setOptimizedDraft(data.optimizedDraft)
-        setShowOptimizePreview(true)
-      } else {
-        setError(data.message || 'Failed to optimize blueprint')
-      }
-    } catch (err) {
-      console.error('Failed to optimize blueprint:', err)
-      setError('Failed to optimize blueprint. Please try again.')
-    } finally {
-      setIsOptimizing(false)
-    }
-  }, [treatment, analysis])
-  
-  // Apply the optimized draft to the treatment
-  const applyOptimizedDraft = useCallback(() => {
-    if (!optimizedDraft) return
-    
-    const updatedTreatment = { ...treatment, ...optimizedDraft, updatedAt: Date.now() }
-    setLocalTreatment(updatedTreatment)
-    onTreatmentUpdate?.(updatedTreatment)
-    
-    // Reset analysis state since treatment changed significantly
-    setAnalysisLocal(null)
-    setIterationCountLocal(0)
-    setAppliedFixesLocal([])
-    setAppliedFixDetailsLocal([])
-    setPendingFixesCountLocal(0)
-    setServerCheckpointResultsLocal(null)
-    setCheckpointOverridesLocal([])
-    setIsScoreEstimatedLocal(false)
-    
-    // Close preview and clear draft
-    setShowOptimizePreview(false)
-    setOptimizedDraft(null)
-    
-    // Show success message
-    try { const { toast } = require('sonner'); toast.success('Blueprint optimized! Run analysis to see your new score.') } catch {}
-  }, [optimizedDraft, treatment, onTreatmentUpdate])
   
   // Toggle insight expansion
   const toggleInsight = (id: string) => {
@@ -1051,123 +989,52 @@ export function AudienceResonancePanel({
             />
           </div>
           
-          {/* Weight Customizer */}
-          <WeightCustomizer
-            weights={customWeights}
-            preset={weightPreset}
-            onWeightsChange={setCustomWeights}
-            onPresetChange={setWeightPreset}
-            disabled={hasIntentLock} // Disable after first analysis
-          />
-          
-          {/* Iteration Progress */}
-          {iterationCount > 0 && (
-            <div className="mt-3 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">
-                  Iteration {iterationCount}/{MAX_ITERATIONS}
-                </span>
-                <button
-                  onClick={handleReset}
-                  className="flex items-center gap-1 px-2 py-0.5 text-gray-400 hover:text-cyan-400 hover:bg-slate-700/50 rounded transition-colors"
-                  title="Reset iterations to score different intent"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  Reset
-                </button>
-              </div>
-              <span className={`font-medium ${
-                isReadyForProduction ? 'text-emerald-400' : 'text-amber-400'
-              }`}>
-                Target: {READY_FOR_PRODUCTION_THRESHOLD}+
-              </span>
-            </div>
-          )}
-          
-          {/* Pending Fixes Indicator */}
-          {pendingFixesCount > 0 && (
-            <div className="mt-2 p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
-              <p className="text-xs text-cyan-400">
-                <span className="font-medium">{pendingFixesCount} fix{pendingFixesCount > 1 ? 'es' : ''} applied</span> — Click Re-analyze to see updated score
-              </p>
-            </div>
-          )}
-          
-          {/* Ready for Production Banner */}
-          {isReadyForProduction && analysis && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="mt-4 p-3 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-lg border border-emerald-500/30"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                <span className="text-emerald-300 font-semibold">Ready for Production!</span>
-              </div>
-              <p className="text-xs text-gray-400 mb-3">
-                Your treatment meets the quality threshold and is ready for production.
-              </p>
-              <button
-                onClick={onProceedToScripting}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-medium rounded-lg hover:from-emerald-600 hover:to-cyan-600 transition-all"
-              >
-                <ArrowRight className="w-4 h-4" />
-                Start Production
-              </button>
-            </motion.div>
-          )}
-          
-          {/* Analyze Button - hidden when ready for production */}
-          {!isReadyForProduction && (
+          <div className="mt-4 rounded-lg border border-slate-700/40 overflow-hidden">
             <button
-              onClick={() => runAnalysis(false, pendingFixesCount > 0)}
-              disabled={isAnalyzing || iterationCount >= MAX_ITERATIONS}
-              className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 text-white font-medium rounded-lg hover:from-cyan-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              type="button"
+              onClick={() => setIsScoringAdvancedOpen((o) => !o)}
+              className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-slate-800/40 transition-colors"
+            >
+              <span className="text-xs text-gray-500 uppercase tracking-wide">
+                Scoring weights (optional)
+              </span>
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 text-slate-400 transition-transform',
+                  isScoringAdvancedOpen && 'rotate-180'
+                )}
+              />
+            </button>
+            {isScoringAdvancedOpen && (
+              <div className="px-3 pb-3 border-t border-slate-700/30">
+                <WeightCustomizer
+                  weights={customWeights}
+                  preset={weightPreset}
+                  onWeightsChange={setCustomWeights}
+                  onPresetChange={setWeightPreset}
+                  disabled={hasIntentLock}
+                />
+              </div>
+            )}
+          </div>
+
+          {!analysis && (
+            <button
+              onClick={() => runAnalysis(false, false)}
+              disabled={isAnalyzing}
+              className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-emerald-500 text-white font-medium rounded-lg hover:from-cyan-600 hover:to-cyan-600 transition-all disabled:opacity-50"
             >
               {isAnalyzing ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
                   Analyzing...
                 </>
-              ) : iterationCount >= MAX_ITERATIONS ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4" />
-                  Analysis Complete
-                </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  {pendingFixesCount > 0 ? `Re-analyze (${pendingFixesCount} fix${pendingFixesCount > 1 ? 'es' : ''})` : iterationCount > 0 ? 'Re-analyze' : 'Analyze Resonance'}
+                  Analyze Resonance
                 </>
               )}
-            </button>
-          )}
-          
-          {/* Start Production Anyway - show when analysis complete but score below threshold */}
-          {analysis && !isReadyForProduction && (
-            <div className="mt-3 p-2 bg-amber-500/10 rounded-lg border border-amber-500/20">
-              <p className="text-xs text-amber-400">
-                {iterationCount >= MAX_ITERATIONS 
-                  ? 'Maximum refinements reached. Consider starting production - detailed improvements can be made during the scripting phase.'
-                  : 'Score below threshold. You can continue refining or start production - detailed improvements can be made during the scripting phase.'}
-              </p>
-              <button
-                onClick={onProceedToScripting}
-                className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-500/20 text-amber-300 font-medium rounded-lg hover:bg-amber-500/30 transition-all text-sm"
-              >
-                <ArrowRight className="w-4 h-4" />
-                Start Production Anyway
-              </button>
-            </div>
-          )}
-          
-          {/* Quick Analysis (free) - only show on first analysis */}
-          {!analysis && !isAnalyzing && iterationCount === 0 && (
-            <button
-              onClick={() => runAnalysis(true)}
-              className="mt-2 w-full text-xs text-gray-500 hover:text-gray-400 transition-colors"
-            >
-              or try Quick Analysis (free)
             </button>
           )}
         </div>
@@ -1183,173 +1050,207 @@ export function AudienceResonancePanel({
         <AnimatePresence mode="wait">
           {analysis && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="p-4 space-y-6"
+              exit={{ opacity: 0 }}
+              className="p-4 space-y-4"
             >
-              {/* Greenlight Score with Delta Indicator */}
-              <div className="flex flex-col items-center relative">
-                <GreenlightScore
-                  score={analysis.greenlightScore.score}
-                  confidence={analysis.greenlightScore.confidence}
-                  size="md"
-                  genre={GENRE_OPTIONS.find(g => g.value === intent.primaryGenre)?.label}
-                />
-                
-                {/* Estimated Score Badge - NEW */}
-                {isScoreEstimated && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
-                      Estimated Score
-                    </span>
-                    <button
-                      onClick={() => runAnalysis(false, true)}
-                      disabled={isAnalyzing}
-                      className="flex items-center gap-1 text-xs px-2 py-0.5 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 rounded-full border border-cyan-500/30 transition-colors disabled:opacity-50"
-                      title="Re-analyze with API to verify score"
-                    >
-                      <ShieldCheck className="w-3 h-3" />
-                      Verify Score
-                    </button>
+              {/* Score summary */}
+              <div className="rounded-xl border border-slate-700/40 bg-slate-900/40 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                      Market readiness
+                    </p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-white tabular-nums">
+                        {analysis.greenlightScore.score}
+                      </span>
+                      <span className="text-sm text-gray-500">/ 100</span>
+                      {scoreDelta !== null && scoreDelta !== 0 && (
+                        <span
+                          className={cn(
+                            'text-xs font-semibold',
+                            scoreDelta > 0 ? 'text-emerald-400' : 'text-red-400'
+                          )}
+                        >
+                          {scoreDelta > 0 ? '+' : ''}
+                          {scoreDelta}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-400 mt-0.5">
+                      {analysis.greenlightScore.label}
+                      {isScoreEstimated && ' · estimated until re-analyze'}
+                    </p>
                   </div>
-                )}
-                
-                {/* Score Delta Indicator */}
-                <AnimatePresence>
-                  {scoreDelta !== null && scoreDelta !== 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10, scale: 0.8 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.8 }}
-                      className={`absolute -right-2 top-0 px-2 py-1 rounded-full text-xs font-bold ${
-                        scoreDelta > 0 
-                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                          : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                      }`}
-                    >
-                      {scoreDelta > 0 ? '+' : ''}{scoreDelta} pts
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                
-                {/* Applied Fixes Count */}
-                {appliedFixes.length > 0 && (
-                  <div className="mt-2 text-xs text-cyan-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    {appliedFixes.length} fix{appliedFixes.length > 1 ? 'es' : ''} applied
+                  <GreenlightScore
+                    score={analysis.greenlightScore.score}
+                    confidence={analysis.greenlightScore.confidence}
+                    size="sm"
+                    genre={GENRE_OPTIONS.find((g) => g.value === intent.primaryGenre)?.label}
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between text-[10px] text-gray-500 mb-1">
+                    <span>Progress to production ready</span>
+                    <span>{READY_FOR_PRODUCTION_THRESHOLD}+</span>
                   </div>
-                )}
-              </div>
-              
-              {/* Radar Chart */}
-              <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/30">
-                <h4 className="text-xs text-gray-500 uppercase tracking-wide mb-2">
-                  Resonance Radar
-                </h4>
-                <ResonanceRadarChart 
-                  axes={analysis.axes} 
-                  size="md" 
-                />
-                <ResonanceRadarLegend axes={analysis.axes} />
-                
-                {/* Score Narrative */}
-                <ScoreNarrative
-                  scores={{
-                    originality: analysis.axes.find(a => a.id === 'originality')?.score || 50,
-                    characterDepth: analysis.axes.find(a => a.id === 'character-depth')?.score || 50,
-                    pacing: analysis.axes.find(a => a.id === 'pacing')?.score || 50,
-                    genreFidelity: analysis.axes.find(a => a.id === 'genre-fidelity')?.score || 50,
-                    commercialViability: analysis.axes.find(a => a.id === 'commercial-viability')?.score || 50
-                  }}
-                  overallScore={analysis.greenlightScore?.score || 0}
-                />
-              </div>
-              
-              {/* Optimize Blueprint Button - Full Rewrite */}
-              {!isReadyForProduction && analysis.greenlightScore.score < 80 && (
-                <div className="bg-gradient-to-r from-purple-500/10 to-cyan-500/10 rounded-xl p-4 border border-purple-500/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Wand2 className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm font-medium text-white">AI Blueprint Optimizer</span>
+                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all',
+                        isReadyForProduction
+                          ? 'bg-emerald-500'
+                          : 'bg-gradient-to-r from-cyan-500 to-emerald-500'
+                      )}
+                      style={{ width: `${scoreProgress}%` }}
+                    />
                   </div>
-                  <p className="text-xs text-gray-400 mb-3">
-                    Rewrite your entire blueprint for maximum clarity, effectiveness, and marketability based on the analysis.
-                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={optimizeBlueprint}
-                    disabled={isOptimizing}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-medium rounded-lg hover:from-purple-600 hover:to-cyan-600 transition-all disabled:opacity-50"
+                    onClick={() => runAnalysis(false, pendingFixesCount > 0)}
+                    disabled={isAnalyzing || iterationCount >= MAX_ITERATIONS}
+                    className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 bg-cyan-600/80 hover:bg-cyan-600 text-white text-xs font-medium rounded-lg disabled:opacity-50"
                   >
-                    {isOptimizing ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        Optimizing Blueprint...
-                      </>
+                    {isAnalyzing ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                     ) : (
-                      <>
-                        <Wand2 className="w-4 h-4" />
-                        Optimize Blueprint
-                      </>
+                      <Sparkles className="w-3.5 h-3.5" />
                     )}
+                    {pendingFixesCount > 0 ? 'Verify score' : 'Re-analyze'}
+                  </button>
+                  {isReadyForProduction ? (
+                    <button
+                      onClick={onProceedToScripting}
+                      className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium rounded-lg"
+                    >
+                      <ArrowRight className="w-3.5 h-3.5" />
+                      Start production
+                    </button>
+                  ) : (
+                    onProceedToScripting && (
+                      <button
+                        onClick={onProceedToScripting}
+                        className="px-3 py-2 text-xs text-gray-400 hover:text-white border border-slate-600 rounded-lg"
+                      >
+                        Skip to production
+                      </button>
+                    )
+                  )}
+                  <button
+                    onClick={handleReset}
+                    className="px-2 py-2 text-gray-500 hover:text-gray-300 rounded-lg border border-slate-700/50"
+                    title="Reset analysis"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
                   </button>
                 </div>
-              )}
-              
-              {/* Insights Accordion */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs text-gray-500 uppercase tracking-wide">
-                    Insights & Recommendations
-                  </h4>
-                  
-                  {/* Apply All Fixes Button */}
-                  {(() => {
-                    const pendingWeaknesses = analysis.insights.filter(
-                      (i) => i.status === 'weakness' && 
-                             !appliedFixes.includes(i.id) && 
-                             i.fixSuggestion && 
-                             i.fixSection
-                    )
-                    if (pendingWeaknesses.length > 1 && iterationCount < MAX_ITERATIONS) {
-                      return (
-                        <button
-                          onClick={applyAllFixes}
-                          disabled={isApplyingAllFixes}
-                          className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-cyan-300 text-xs font-medium rounded-lg hover:from-purple-500/30 hover:to-cyan-500/30 border border-cyan-500/30 transition-all disabled:opacity-50"
-                        >
-                          {isApplyingAllFixes ? (
-                            <>
-                              <RefreshCw className="w-3 h-3 animate-spin" />
-                              Applying...
-                            </>
-                          ) : (
-                            <>
-                              <Zap className="w-3 h-3" />
-                              Apply All ({pendingWeaknesses.length})
-                            </>
-                          )}
-                        </button>
-                      )
-                    }
-                    return null
-                  })()}
-                </div>
-                
-                {analysis.insights.map((insight) => (
-                  <InsightCard
-                    key={insight.id}
-                    insight={insight}
-                    expanded={expandedInsights.includes(insight.id)}
-                    onToggle={() => toggleInsight(insight.id)}
-                    onApplyFix={() => applyFix(insight)}
-                    isApplying={applyingFix === insight.id}
-                    isApplied={appliedFixes.includes(insight.id)}
-                    maxIterationsReached={iterationCount >= MAX_ITERATIONS}
-                  />
-                ))}
-                
+                {pendingFixesCount > 0 && (
+                  <p className="text-[11px] text-cyan-400/90">
+                    {pendingFixesCount} fix{pendingFixesCount > 1 ? 'es' : ''} applied to your blueprint — re-analyze to update the official score.
+                  </p>
+                )}
               </div>
+
+              {/* Compact radar */}
+              <details className="rounded-xl border border-slate-700/30 bg-slate-800/20 group">
+                <summary className="px-3 py-2.5 text-xs text-gray-400 cursor-pointer hover:text-gray-200 list-none flex items-center justify-between">
+                  <span>Axis breakdown</span>
+                  <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform" />
+                </summary>
+                <div className="px-3 pb-3">
+                  <ResonanceRadarChart axes={analysis.axes} size="sm" />
+                  <ResonanceRadarLegend axes={analysis.axes} />
+                </div>
+              </details>
+
+              {/* Priority fixes */}
+              {priorityInsights.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                      Top priorities
+                    </h4>
+                    {pendingWeaknesses.length > 1 && (
+                      <button
+                        onClick={applyAllFixes}
+                        disabled={isApplyingAllFixes}
+                        className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 disabled:opacity-50"
+                      >
+                        {isApplyingAllFixes ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Zap className="w-3 h-3" />
+                        )}
+                        Apply all ({pendingWeaknesses.length})
+                      </button>
+                    )}
+                  </div>
+                  {priorityInsights.map((insight) => (
+                    <InsightCard
+                      key={insight.id}
+                      insight={insight}
+                      expanded={expandedInsights.includes(insight.id)}
+                      onToggle={() => toggleInsight(insight.id)}
+                      onApplyFix={() => applyFix(insight)}
+                      isApplying={applyingFix === insight.id}
+                      isApplied={appliedFixes.includes(insight.id)}
+                      showImpact
+                    />
+                  ))}
+                </div>
+              )}
+
+              {strengthInsights.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium text-emerald-500/80 uppercase tracking-wide">
+                    Strengths
+                  </h4>
+                  {strengthInsights.map((insight) => (
+                    <InsightCard
+                      key={insight.id}
+                      insight={insight}
+                      expanded={expandedInsights.includes(insight.id)}
+                      onToggle={() => toggleInsight(insight.id)}
+                      isApplying={false}
+                      isApplied={false}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {weaknessInsights.length > 3 && (
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAllInsights((v) => !v)}
+                    className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1"
+                  >
+                    <ChevronDown
+                      className={cn(
+                        'w-4 h-4 transition-transform',
+                        showAllInsights && 'rotate-180'
+                      )}
+                    />
+                    {showAllInsights ? 'Hide' : 'Show'} all issues ({weaknessInsights.length})
+                  </button>
+                  {showAllInsights &&
+                    weaknessInsights.slice(3).map((insight) => (
+                      <InsightCard
+                        key={insight.id}
+                        insight={insight}
+                        expanded={expandedInsights.includes(insight.id)}
+                        onToggle={() => toggleInsight(insight.id)}
+                        onApplyFix={() => applyFix(insight)}
+                        isApplying={applyingFix === insight.id}
+                        isApplied={appliedFixes.includes(insight.id)}
+                        showImpact
+                      />
+                    ))}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -1366,147 +1267,6 @@ export function AudienceResonancePanel({
           </div>
         )}
       </div>
-      
-      {/* Optimize Blueprint Preview Modal */}
-      <AnimatePresence>
-        {showOptimizePreview && optimizedDraft && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-            onClick={() => setShowOptimizePreview(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl flex flex-col"
-              onClick={e => e.stopPropagation()}
-            >
-              {/* Modal Header */}
-              <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500/20 to-cyan-500/20 flex items-center justify-center">
-                    <Wand2 className="w-5 h-5 text-purple-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">Optimized Blueprint</h3>
-                    <p className="text-xs text-gray-500">Review changes before applying</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowOptimizePreview(false)}
-                  className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              
-              {/* Modal Content - Scrollable */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
-                {/* Title & Logline */}
-                {(optimizedDraft.title || optimizedDraft.logline) && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs text-purple-400 uppercase tracking-wide font-medium">Core</h4>
-                    {optimizedDraft.title && (
-                      <div>
-                        <span className="text-xs text-gray-500">Title:</span>
-                        <p className="text-sm text-white">{optimizedDraft.title as string}</p>
-                      </div>
-                    )}
-                    {optimizedDraft.logline && (
-                      <div>
-                        <span className="text-xs text-gray-500">Logline:</span>
-                        <p className="text-sm text-gray-300">{optimizedDraft.logline as string}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Synopsis */}
-                {optimizedDraft.synopsis && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs text-purple-400 uppercase tracking-wide font-medium">Synopsis</h4>
-                    <p className="text-sm text-gray-300 whitespace-pre-line">{optimizedDraft.synopsis as string}</p>
-                  </div>
-                )}
-                
-                {/* Characters */}
-                {(optimizedDraft.protagonist || optimizedDraft.antagonist) && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs text-purple-400 uppercase tracking-wide font-medium">Characters</h4>
-                    {optimizedDraft.protagonist && (
-                      <div>
-                        <span className="text-xs text-gray-500">Protagonist:</span>
-                        <p className="text-sm text-gray-300">{optimizedDraft.protagonist as string}</p>
-                      </div>
-                    )}
-                    {optimizedDraft.antagonist && (
-                      <div>
-                        <span className="text-xs text-gray-500">Antagonist:</span>
-                        <p className="text-sm text-gray-300">{optimizedDraft.antagonist as string}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Tone & Style */}
-                {(optimizedDraft.tone_description || optimizedDraft.visual_style) && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs text-purple-400 uppercase tracking-wide font-medium">Tone & Style</h4>
-                    {optimizedDraft.tone_description && (
-                      <p className="text-sm text-gray-300">{optimizedDraft.tone_description as string}</p>
-                    )}
-                    {optimizedDraft.visual_style && (
-                      <p className="text-sm text-gray-400 italic">{optimizedDraft.visual_style as string}</p>
-                    )}
-                  </div>
-                )}
-                
-                {/* Beats */}
-                {Array.isArray(optimizedDraft.beats) && optimizedDraft.beats.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="text-xs text-purple-400 uppercase tracking-wide font-medium">Story Beats</h4>
-                    <div className="space-y-2">
-                      {(optimizedDraft.beats as Array<{title: string; synopsis?: string; intent?: string}>).map((beat, i) => (
-                        <div key={i} className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/30">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium text-white">{beat.title}</span>
-                            {beat.intent && (
-                              <span className="text-[10px] text-gray-500 uppercase">{beat.intent}</span>
-                            )}
-                          </div>
-                          {beat.synopsis && (
-                            <p className="text-xs text-gray-400">{beat.synopsis}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Modal Footer */}
-              <div className="flex-shrink-0 flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-700/50 bg-gray-900/50">
-                <button
-                  onClick={() => setShowOptimizePreview(false)}
-                  className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={applyOptimizedDraft}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-cyan-500 text-white text-sm font-medium rounded-lg hover:from-purple-600 hover:to-cyan-600 transition-all"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  Apply Changes
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }
@@ -1558,15 +1318,15 @@ function InsightCard({
   onApplyFix,
   isApplying,
   isApplied,
-  maxIterationsReached
+  showImpact = false,
 }: {
   insight: ResonanceInsight
   expanded: boolean
   onToggle: () => void
-  onApplyFix: () => void
+  onApplyFix?: () => void
   isApplying: boolean
   isApplied: boolean
-  maxIterationsReached: boolean
+  showImpact?: boolean
 }) {
   const statusConfig = {
     strength: {
@@ -1611,6 +1371,20 @@ function InsightCard({
       >
         <Icon className={`w-4 h-4 ${config.color} flex-shrink-0`} />
         <span className={`flex-1 text-sm font-medium ${isApplied ? 'text-gray-400 line-through' : 'text-white'}`}>{insight.title}</span>
+        {showImpact && insight.impactScore != null && insight.status === 'weakness' && (
+          <span
+            className={cn(
+              'text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0',
+              impactLabel(insight.impactScore) === 'High'
+                ? 'text-red-300 bg-red-500/15'
+                : impactLabel(insight.impactScore) === 'Medium'
+                  ? 'text-amber-300 bg-amber-500/15'
+                  : 'text-gray-400 bg-slate-700/50'
+            )}
+          >
+            {impactLabel(insight.impactScore)} impact
+          </span>
+        )}
         {isApplied && (
           <span className="text-[10px] text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded font-medium">
             ✓ Applied
@@ -1669,30 +1443,23 @@ function InsightCard({
               )}
               
               {/* Fix Button - hidden when applied */}
-              {!isApplied && insight.actionable && insight.fixSuggestion && (
-                maxIterationsReached ? (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-500/10 text-gray-500 text-xs font-medium rounded-lg cursor-not-allowed">
-                    <ShieldCheck className="w-3 h-3" />
-                    Max iterations reached - Reset to continue
-                  </div>
-                ) : (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onApplyFix()
-                    }}
-                    disabled={isApplying}
-                    className="flex items-center gap-2 px-3 py-2 bg-cyan-500/10 text-cyan-400 text-xs font-medium rounded-lg hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
-                  >
-                    {isApplying ? (
-                      <RefreshCw className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Zap className="w-3 h-3" />
-                    )}
-                    Apply Fix
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
-                )
+              {!isApplied && insight.actionable && insight.fixSuggestion && onApplyFix && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onApplyFix()
+                  }}
+                  disabled={isApplying}
+                  className="flex items-center gap-2 px-3 py-2 bg-cyan-500/10 text-cyan-400 text-xs font-medium rounded-lg hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
+                >
+                  {isApplying ? (
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Zap className="w-3 h-3" />
+                  )}
+                  Apply fix
+                  <ArrowRight className="w-3 h-3" />
+                </button>
               )}
               
               {/* Applied confirmation */}

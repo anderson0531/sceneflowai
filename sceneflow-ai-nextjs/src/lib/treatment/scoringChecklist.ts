@@ -91,6 +91,9 @@ export const WEIGHT_FORMULA = 'Score = (Concept × 0.15) + (Character × 0.25) +
 export const READY_FOR_PRODUCTION_THRESHOLD = 80
 export const MAX_ITERATIONS = 2
 
+/** Scales gradient checkpoint penalties — reduces over-penalization from minor gaps */
+export const CHECKPOINT_PENALTY_SCALE = 0.55
+
 // =============================================================================
 // AXIS CHECKPOINTS (Pass/Fail Gates)
 // =============================================================================
@@ -330,6 +333,14 @@ export const ALL_SCORING_AXES: AxisConfig[] = [
   GENRE_FIDELITY_AXIS,
   COMMERCIAL_VIABILITY_AXIS
 ]
+
+export function getCheckpointFailPenalty(checkpointId: string): number {
+  for (const axis of ALL_SCORING_AXES) {
+    const cp = axis.checkpoints.find((c) => c.id === checkpointId)
+    if (cp) return cp.failPenalty
+  }
+  return 10
+}
 
 // =============================================================================
 // GENRE-SPECIFIC KEYWORDS

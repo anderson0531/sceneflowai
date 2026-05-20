@@ -27,7 +27,8 @@ import type {
 import { 
   SCORING_WEIGHTS, 
   ALL_SCORING_AXES,
-  READY_FOR_PRODUCTION_THRESHOLD 
+  READY_FOR_PRODUCTION_THRESHOLD,
+  CHECKPOINT_PENALTY_SCALE,
 } from './scoringChecklist'
 
 // =============================================================================
@@ -211,8 +212,12 @@ function calculateAxisScores(checkpointResults: CheckpointResults): ResonanceAxi
     let score = axisConfig.baseScore
     
     for (const [checkpointId, result] of Object.entries(axisCheckpoints)) {
-      if (!result.passed) {
-        score -= result.penalty
+      const maxPenalty = getCheckpointPenalty(axisId, checkpointId)
+      if (result.score !== undefined) {
+        const penaltyFraction = (10 - result.score) / 10
+        score -= Math.round(maxPenalty * penaltyFraction * CHECKPOINT_PENALTY_SCALE)
+      } else if (!result.passed) {
+        score -= Math.round((result.penalty ?? maxPenalty) * CHECKPOINT_PENALTY_SCALE)
       }
     }
     

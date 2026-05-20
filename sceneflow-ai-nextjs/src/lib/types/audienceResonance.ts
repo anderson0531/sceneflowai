@@ -195,6 +195,8 @@ export interface ResonanceInsight {
   fixSection?: 'core' | 'story' | 'tone' | 'beats' | 'characters' // Which refine section to target
   checkpointId?: string // Links to specific checkpoint for local score recalculation (e.g., 'hook-or-twist')
   axisId?: 'concept-originality' | 'character-depth' | 'pacing-structure' | 'genre-fidelity' | 'commercial-viability' // Which scoring axis this insight relates to
+  /** Relative score impact (higher = more important weakness) */
+  impactScore?: number
 }
 
 export interface OptimizationRecommendation {

@@ -33,8 +33,14 @@ import {
   CHARACTER_DEPTH_AXIS,
   PACING_STRUCTURE_AXIS,
   GENRE_FIDELITY_AXIS,
-  COMMERCIAL_VIABILITY_AXIS
+  COMMERCIAL_VIABILITY_AXIS,
+  CHECKPOINT_PENALTY_SCALE,
 } from '@/lib/treatment/scoringChecklist'
+import {
+  blendAxisScores,
+  calculateWeightedOverallScore,
+  enrichAndPrioritizeInsights,
+} from '@/lib/treatment/resonanceScoring'
 
 // MODULE-LEVEL CACHE: Build checkpoint penalty lookup once at module load
 // This avoids 85 iterations per request inside parseCheckpointResults()
@@ -348,17 +354,6 @@ async function analyzeWithGemini(
     }
   ]
   
-  const overallScore = clamp(parsed.greenlight_score || calculateWeightedScore(axes), 0, 100)
-  const tierInfo = getGreenlightTierLocal(overallScore)
-  
-  const greenlightScore: GreenlightScore = {
-    score: overallScore,
-    tier: tierInfo.tier as any,
-    label: tierInfo.label,
-    confidence: clamp(parsed.confidence || 0.8, 0, 1),
-    analysisDate: new Date().toISOString()
-  }
-  
   // Transform insights - force actionable and fixSuggestion for all weaknesses
   // Also filter out restricted suggestions based on iteration
   const rawInsights: ResonanceInsight[] = (parsed.insights || []).map((i: any, idx: number) => {
@@ -397,11 +392,19 @@ async function analyzeWithGemini(
   })
   
   // Filter out stylistic/polish suggestions in later iterations
-  const insights = rawInsights.filter(insight => {
+  const filteredInsights = rawInsights.filter(insight => {
     if (insight.status !== 'weakness') return true // Keep all strengths
     if (!insight.fixSuggestion) return true
     return !isSuggestionRestricted(insight.fixSuggestion, iteration)
   })
+
+  // Parse checkpoint results before scoring blend (used for insight priority too)
+  const checkpointResults = parseCheckpointResultsGradient(
+    parsed.checkpoint_scores,
+    previousAnalysis?.checkpointScores
+  )
+
+  const insights = enrichAndPrioritizeInsights(filteredInsights, checkpointResults)
   
   // Transform recommendations
   const recommendations: OptimizationRecommendation[] = (parsed.recommendations || []).map((r: any, idx: number) => ({
@@ -414,23 +417,20 @@ async function analyzeWithGemini(
     effort: r.effort === 'quick' ? 'quick' : r.effort === 'significant' ? 'significant' : 'moderate'
   }))
   
-  // Parse checkpoint results from Gemini response (now using 0-10 gradient scores)
-  const checkpointResults = parseCheckpointResultsGradient(
-    parsed.checkpoint_scores,
-    previousAnalysis?.checkpointScores
-  )
-  
+  // Blend AI axis scores with checkpoint-derived scores (checkpoints drive most of the grade)
+  const blendedAxesPreSmooth = blendAxisScores(axes, checkpointResults, 0.72)
+
   // Apply hysteresis smoothing to prevent score volatility
   // Reduce anchor strength on later iterations to allow scores to reach target faster
   // Iteration 1: 30% anchor (responsive), Iteration 2: 20%, Iteration 3: 10% (allow reaching target)
   const iterationAnchorStrength = iteration === 1 ? 0.30 : iteration === 2 ? 0.20 : 0.10
   
   const rawAxisScores = {
-    originality: axes.find(a => a.id === 'originality')?.score || 50,
-    genreFidelity: axes.find(a => a.id === 'genre-fidelity')?.score || 50,
-    characterDepth: axes.find(a => a.id === 'character-depth')?.score || 50,
-    pacing: axes.find(a => a.id === 'pacing')?.score || 50,
-    commercialViability: axes.find(a => a.id === 'commercial-viability')?.score || 50
+    originality: blendedAxesPreSmooth.find(a => a.id === 'originality')?.score || 50,
+    genreFidelity: blendedAxesPreSmooth.find(a => a.id === 'genre-fidelity')?.score || 50,
+    characterDepth: blendedAxesPreSmooth.find(a => a.id === 'character-depth')?.score || 50,
+    pacing: blendedAxesPreSmooth.find(a => a.id === 'pacing')?.score || 50,
+    commercialViability: blendedAxesPreSmooth.find(a => a.id === 'commercial-viability')?.score || 50
   }
   
   const smoothedScores = previousAnalysis 
@@ -438,7 +438,7 @@ async function analyzeWithGemini(
     : rawAxisScores
   
   // Update axes with smoothed scores
-  const smoothedAxes = axes.map(axis => {
+  const smoothedAxes = blendedAxesPreSmooth.map(axis => {
     const smoothedScore = axis.id === 'originality' ? smoothedScores.originality
       : axis.id === 'genre-fidelity' ? smoothedScores.genreFidelity
       : axis.id === 'character-depth' ? smoothedScores.characterDepth
@@ -448,11 +448,22 @@ async function analyzeWithGemini(
     return { ...axis, score: smoothedScore }
   })
   
+  const weightedOverall = calculateWeightedOverallScore(smoothedAxes)
+
   // Apply score floor to overall score
-  // On iteration 3+, no regression allowed (maxDrop = 0)
   const smoothedOverallScore = previousAnalysis 
-    ? enforceScoreFloor(overallScore, previousAnalysis.score, iteration)
-    : overallScore
+    ? enforceScoreFloor(weightedOverall, previousAnalysis.score, iteration)
+    : weightedOverall
+
+  const tierInfo = getGreenlightTierLocal(smoothedOverallScore)
+  
+  const greenlightScore: GreenlightScore = {
+    score: smoothedOverallScore,
+    tier: tierInfo.tier as any,
+    label: tierInfo.label,
+    confidence: clamp(parsed.confidence || 0.8, 0, 1),
+    analysisDate: new Date().toISOString()
+  }
   
   const smoothedGreenlightScore: GreenlightScore = {
     ...greenlightScore,
@@ -635,10 +646,10 @@ Return JSON:
   "recommendations": [{"priority": "high"|"medium"|"low", "title": string, "description": string, "expected_impact": number}]
 }
 
-SCORING SCALE: 0-10 per checkpoint (0=missing, 5=weak, 7=adequate, 9=strong, 10=excellent). Score 7+ = checkpoint passed.
-PATH TO 90+: For scores below 90, generate fixes for checkpoints scoring < 9. To reach 90+, most checkpoints need 9-10.
-RULES: Weaknesses (score<7) MUST have actionable=true, fix_suggestion (specific text), checkpoint_id, axis_id. Checkpoints 7-8 should ALSO have fix_suggestion if overall score is below target.
-ALWAYS provide at least 3 actionable insights with fix_suggestion when score < 90. Include recommendations for polish/enhancement even when core issues are fixed.
+SCORING SCALE: 0-10 per checkpoint (0=missing, 5=developing, 7=adequate for production blueprint, 9=strong). Score 7+ = checkpoint passed.
+SCORING PHILOSOPHY: A solid blueprint with clear protagonist, conflict, and structure should score 70-85. Reserve scores below 60 for missing fundamentals. Minor polish gaps (score 6-7) are not fatal — weight insights by impact.
+RULES: Only flag weaknesses for checkpoints scoring < 7, OR score 7-8 when the gap materially hurts market readiness. Each weakness MUST include checkpoint_id, axis_id, and fix_suggestion.
+Prioritize the 3-5 highest-impact weaknesses first. Include 1-2 strengths. Avoid nitpicking diction or polish in iteration 1.
 ${iteration >= 2 ? `Avoid: ${iterationFocus.restrictedSuggestions.slice(0, 3).join(', ')}` : ''}
 ${iteration >= 3 ? 'FINAL: Accept unless FATAL FLAW. Still provide enhancement suggestions if score < 90.' : ''}`
 }
@@ -713,7 +724,9 @@ function parseCheckpointResultsGradient(
       
       // Convert to result format with backward compatibility
       const passed = score >= 7
-      const penalty = passed ? 0 : Math.round(((10 - score) / 10) * checkpoint.failPenalty)
+      const penalty = passed
+        ? 0
+        : Math.round(((10 - score) / 10) * checkpoint.failPenalty * CHECKPOINT_PENALTY_SCALE)
       
       axisResults[checkpoint.id] = {
         score,
