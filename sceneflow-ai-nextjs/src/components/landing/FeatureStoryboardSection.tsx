@@ -104,6 +104,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     screenshotSlot: 'Insert screenshot: Series overview with auto-generated episode arcs',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2009.17.05.png',
     videoSlot: 'Insert 00:30 clip: Concept expanding into a multi-episode season',
+    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Series.mp4',
   },
   {
     id: 10,
