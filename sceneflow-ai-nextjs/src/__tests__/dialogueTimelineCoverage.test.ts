@@ -53,6 +53,17 @@ describe('dialogueTimelineCoverage', () => {
     expect(out[0].assigned_dialogue_indices?.slice().sort((x, y) => x - y)).toEqual([0, 1])
   })
 
+  it('repairPhase1DirectionsTimeline drops empty establishing rows', () => {
+    const raw = [
+      { dialogue_indices: [], trigger_reason: 'Establishing', id: 'empty1' },
+      { dialogue_indices: [], trigger_reason: 'Wide shot', id: 'empty2' },
+      { dialogue_indices: [0], talent_action: 'Character enters and sits.', id: 'real' },
+    ]
+    const out = repairPhase1DirectionsTimeline(raw, 1, 'test-scene')
+    expect(out.length).toBe(1)
+    expect(out[0].dialogue_indices).toEqual([0])
+  })
+
   it('repairPhase1DirectionsTimeline dedupes duplicate rows and covers missing last index', () => {
     const raw = [
       { dialogue_indices: [0, 1, 2], id: 'a' },

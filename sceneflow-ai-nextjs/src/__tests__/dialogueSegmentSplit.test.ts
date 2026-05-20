@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import {
+  composeFtvMotionFromDirection,
   estimateSpokenDurationSeconds,
+  phase1RawDirectionHasContent,
   planDialogueLineSplits,
+  prunePhase1RawDirections,
   splitSpokenTextAtBoundaries,
   VEO_DIALOGUE_CLIP_MAX_SEC,
 } from '@/lib/scene/dialogueSegmentSplit'
@@ -29,6 +32,45 @@ describe('dialogueSegmentSplit', () => {
     for (const p of parts) {
       expect(estimateSpokenDurationSeconds(p)).toBeLessThanOrEqual(VEO_DIALOGUE_CLIP_MAX_SEC + 2)
     }
+  })
+
+  it('rejects empty establishing rows without dialogue or action', () => {
+    expect(
+      phase1RawDirectionHasContent({
+        dialogue_indices: [],
+        trigger_reason: 'Establishing shot',
+      })
+    ).toBe(false)
+    expect(
+      phase1RawDirectionHasContent({
+        dialogue_indices: [0],
+      })
+    ).toBe(true)
+    expect(
+      phase1RawDirectionHasContent({
+        veoTimelineContinuation: true,
+        dialogue_indices: [],
+      })
+    ).toBe(true)
+  })
+
+  it('prunePhase1RawDirections drops empty rows and resequences', () => {
+    const out = prunePhase1RawDirections([
+      { sequence: 1, dialogue_indices: [], trigger_reason: 'B-roll' },
+      { sequence: 2, dialogue_indices: [0], talent_action: 'Sarah leans forward at the desk.' },
+    ])
+    expect(out).toHaveLength(1)
+    expect(out[0].sequence).toBe(1)
+    expect(out[0].dialogue_indices).toEqual([0])
+  })
+
+  it('composeFtvMotionFromDirection prefers segment summary over keyframes', () => {
+    const motion = composeFtvMotionFromDirection({
+      talentAction: 'Alex turns toward the window.',
+      keyframeStartDescription: 'Wide shot of room',
+      keyframeEndDescription: 'Close on Alex',
+    })
+    expect(motion).toContain('Alex turns')
   })
 
   it('plans veo durations per part', () => {

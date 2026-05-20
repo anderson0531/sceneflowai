@@ -162,7 +162,72 @@ export function outputSegmentHasContent(seg: {
   return segmentHasActionContent({
     action: seg.action,
     actionPrompt: seg.actionPrompt,
-    triggerReason: seg.triggerReason,
     segmentDirection: seg.segmentDirection,
   })
+}
+
+const MIN_PHASE1_ACTION_CHARS = 12
+
+/** Visible action / keyframe text on a Phase 1 LLM direction row (not trigger_reason alone). */
+export function phase1RawDirectionHasContent(dir: {
+  assigned_dialogue_indices?: unknown
+  dialogue_indices?: unknown
+  veoTimelineContinuation?: boolean
+  talent_action?: string
+  keyframe_start_description?: string
+  keyframe_end_description?: string
+  start_frame_description?: string
+  end_frame_description?: string
+}): boolean {
+  const idxs = dir.assigned_dialogue_indices ?? dir.dialogue_indices
+  if (Array.isArray(idxs) && idxs.length > 0) return true
+  if (dir.veoTimelineContinuation === true) return true
+  const fields = [
+    dir.talent_action,
+    dir.keyframe_start_description,
+    dir.keyframe_end_description,
+    dir.start_frame_description,
+    dir.end_frame_description,
+  ]
+  return fields.some((f) => typeof f === 'string' && f.trim().length >= MIN_PHASE1_ACTION_CHARS)
+}
+
+export function prunePhase1RawDirections<T extends { sequence?: number }>(directions: T[]): T[] {
+  const filtered = directions.filter((d) => phase1RawDirectionHasContent(d as Parameters<typeof phase1RawDirectionHasContent>[0]))
+  return filtered.map((d, i) => ({ ...d, sequence: i + 1 }))
+}
+
+export type FtvMotionDirectionFields = {
+  segmentDirectionSummary?: string
+  talentAction?: string
+  keyframeStartDescription?: string
+  keyframeEndDescription?: string
+  startFrameDescription?: string
+  endFrameDescription?: string
+}
+
+/** Segment-specific motion prompt for F2V — never scene-wide director notes. */
+export function composeFtvMotionFromDirection(dir: FtvMotionDirectionFields): string {
+  const summary = dir.segmentDirectionSummary?.trim() || dir.talentAction?.trim() || ''
+  if (summary) return summary
+
+  const start = (
+    dir.keyframeStartDescription ||
+    dir.startFrameDescription ||
+    ''
+  ).trim()
+  const end = (
+    dir.keyframeEndDescription ||
+    dir.endFrameDescription ||
+    ''
+  ).trim()
+
+  if (start && end) {
+    const clip = (s: string, max: number) => (s.length > max ? `${s.slice(0, max)}…` : s)
+    return (
+      `Animate from the start keyframe to the end keyframe. Opening: ${clip(start, 140)} ` +
+      `Closing: ${clip(end, 140)}`
+    )
+  }
+  return start || end
 }

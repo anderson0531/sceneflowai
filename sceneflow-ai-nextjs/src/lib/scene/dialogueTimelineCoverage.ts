@@ -48,15 +48,29 @@ export function repairPhase1DirectionsTimeline<T extends { assigned_dialogue_ind
 
   return merged.filter((d, i) => {
     const idxs = d.assigned_dialogue_indices
+    const hasIndices = Array.isArray(idxs) && idxs.length > 0
     const continuation =
       (d as { veoTimelineContinuation?: boolean }).veoTimelineContinuation === true
-    if ((!Array.isArray(idxs) || idxs.length === 0) && !continuation && d.assigned_dialogue_indices !== undefined) {
-      console.warn(
-        `[Scene Segmentation] Phase 1: dropping direction ${i} with no audio indices after timeline repair (scene=${sceneId})`
-      )
-      return false
+    if (hasIndices || continuation) return true
+
+    const raw = d as {
+      talent_action?: string
+      keyframe_start_description?: string
+      keyframe_end_description?: string
     }
-    return true
+    const hasAction =
+      (typeof raw.talent_action === 'string' && raw.talent_action.trim().length >= 12) ||
+      (typeof raw.keyframe_start_description === 'string' &&
+        raw.keyframe_start_description.trim().length >= 12) ||
+      (typeof raw.keyframe_end_description === 'string' &&
+        raw.keyframe_end_description.trim().length >= 12)
+
+    if (hasAction) return true
+
+    console.warn(
+      `[Scene Segmentation] Phase 1: dropping direction ${i} with no audio indices and no segment action (scene=${sceneId})`
+    )
+    return false
   })
 }
 

@@ -10,10 +10,12 @@ import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDur
 import {
   VEO_ABSOLUTE_CLIP_MAX_SEC,
   VEO_DIALOGUE_CLIP_MAX_SEC,
+  composeFtvMotionFromDirection,
   estimateSpokenDurationSeconds,
   maxVeoDurationForSegment,
   outputSegmentHasContent,
   planDialogueLineSplits,
+  prunePhase1RawDirections,
 } from '@/lib/scene/dialogueSegmentSplit'
 import { expandDirectionsForTimelineAudioBudget } from '@/lib/scene/expandDirectionsForTimelineAudioBudget'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
@@ -511,10 +513,26 @@ export async function POST(
         )
       }
       // Re-repair after Veo-length splits so continuation rows (empty dialogue_indices) do not steal timeline slots
-      const directions = repairPhase1DirectionsTimeline(expandedDirections, timelineLen, sceneId)
+      let directions = repairPhase1DirectionsTimeline(expandedDirections, timelineLen, sceneId)
+      const beforePrune = directions.length
+      directions = prunePhase1RawDirections(directions)
+      if (directions.length !== beforePrune) {
+        console.log(
+          `[Scene Segmentation] Phase 1 prune: ${beforePrune} → ${directions.length} directions (removed empty rows)`
+        )
+      }
+      if (directions.length === 0) {
+        return NextResponse.json(
+          {
+            error:
+              'No valid segment directions after pruning empty rows. Try regenerating directions.',
+          },
+          { status: 422 }
+        )
+      }
 
       // Transform to SegmentDirection objects
-      const segmentDirections: SegmentDirection[] = directions.map((dir: any, idx: number) => {
+      let segmentDirections: SegmentDirection[] = directions.map((dir: any, idx: number) => {
         const timelineIdxs: number[] = Array.isArray(dir.assigned_dialogue_indices)
           ? dir.assigned_dialogue_indices.filter((n: unknown) => typeof n === 'number' && n >= 0)
           : Array.isArray((dir as any).dialogue_indices)
@@ -585,6 +603,9 @@ export async function POST(
         videoPrompt: promptBundleEntry?.videoPrompt || '',
       }
       })
+
+      segmentDirections = applyPhase1ContinuationDialogue(segmentDirections)
+      segmentDirections = fillPhase1ContinuationTalentAction(segmentDirections)
       
       console.log(`[Scene Segmentation] Phase 1 complete: ${segmentDirections.length} directions generated`)
       
@@ -676,6 +697,8 @@ export async function POST(
         sceneData.combinedAudioTimeline.length,
         sceneId
       )
+
+      rawSegments = enrichFtvPromptElementsFromDirections(rawSegments, approvedDirections)
 
       const withAudioAwareDuration = applyAssignedAudioDurationToSegments(rawSegments, sceneData)
       let segments = enforceMaxSegmentDuration(withAudioAwareDuration, MAX_SEGMENT_SECONDS, sceneData)
@@ -1000,8 +1023,6 @@ function promptBundleEntryForSegment(
     if (richByDialogue) return richByDialogue
     if (byDialogue.length > 0) return byDialogue[0]
   }
-  const richFallback = promptBundle.find(hasPromptPayload)
-  if (richFallback) return richFallback
   return null
 }
 
@@ -1966,7 +1987,7 @@ function generateDirectionsOnlyPrompt(
   
   const dialogueCount = sceneData.combinedAudioTimeline.length
   
-  scopeConstraints += `- **SEGMENT COUNT MATCHING:** Output one segment per audio timeline index (🗣️/🎙️). Split any line longer than **${VEO_DIALOGUE_CLIP_MAX_SEC}s** using \`veoTimelineContinuation: true\`. You MAY add **action-only** segments (no dialogue index) for silent beats between lines. Do NOT combine two dialogue indices into one segment.\n`
+  scopeConstraints += `- **SEGMENT COUNT MATCHING:** Output **exactly one segment per audio timeline index** (🗣️/🎙️). Split any line longer than **${VEO_DIALOGUE_CLIP_MAX_SEC}s** using \`veoTimelineContinuation: true\` on continuation rows only. **Do NOT** add extra establishing/B-roll rows with empty \`dialogue_indices\` and empty \`talent_action\`. Do NOT combine two dialogue indices into one segment.\n`
   
   if (segmentCountTarget) {
     scopeConstraints += `- **OVERRIDE SEGMENT COUNT: ${segmentCountTarget} segments**\n`
@@ -2026,12 +2047,8 @@ ${audioTimelineList}
 **CHARACTERS:**
 ${characterList}
 
-**DIRECTOR'S NOTES:**
-Camera: ${sceneData.sceneDirection.camera}
-Lighting: ${sceneData.sceneDirection.lighting}
-Scene: ${sceneData.sceneDirection.scene}
-Talent: ${sceneData.sceneDirection.talent}
-Audio: ${sceneData.sceneDirection.audio}
+**SCENE CONTEXT (for continuity only — do NOT paste into per-segment fields):**
+Use scene heading and visual description for overall tone. Per-segment \`talent_action\` and keyframes must be **segment-specific**, not copies of global scene blocks.
 ${directorNotes}
 
 **CONSTRAINTS:**
@@ -2359,14 +2376,10 @@ ${noTalentScene && !p2dAudioTimeline ? 'NO AUDIO - voiceover only' : p2dAudioTim
 - When \`veo_continuation_of_prior_audio\` is true, this segment continues the **same** timeline audio as the previous segment (second Veo clip for one long line) — keep visual continuity; do not treat as a new dialogue line.
 - assigned_dialogue_indices reference the [index] numbers from the Audio Timeline above
 
-**DIRECTOR'S NOTES:**
-Camera: ${sceneData.sceneDirection.camera}
-Lighting: ${sceneData.sceneDirection.lighting}
-Scene: ${sceneData.sceneDirection.scene}
-Talent: ${sceneData.sceneDirection.talent}
-Audio: ${sceneData.sceneDirection.audio}
-
 **SCENE FRAME:** ${sceneData.sceneFrameUrl ? 'Available for I2V on Segment 1' : 'Not available'}
+
+**DO NOT USE SCENE-WIDE DIRECTOR BLOCKS IN PROMPTS:**
+Each segment's video prompt must come **only** from that segment's approved fields: \`segment_direction_summary\`, \`talent_action\`, \`keyframe_start_description\`, \`keyframe_end_description\`, \`shot_type\`, \`camera_movement\`, and \`lens\`. Never paste global scene talent/camera/lighting blocks into \`video_prompt_elements\`.
 
 **APPROVED SEGMENT DIRECTIONS:**
 ${JSON.stringify(directionsJson, null, 2)}
@@ -2395,6 +2408,7 @@ ${segmentDurationPromptSection(durationConfig)}
 ${SEAMLESS_CONTINUATION_PROMPT}
 8. Describe specific depth-of-field: what's in focus, what's bokeh in visual_style.
 9. Include color temperature and mood in visual_style.
+10. **FTV / I2V (frame-locked):** For \`generation_method\` FTV or I2V, the \`action\` element MUST be the segment's motion beat from \`segment_direction_summary\` / \`talent_action\` and the visual change between \`keyframe_start_description\` and \`keyframe_end_description\`. Keep \`action\` concise (1–3 sentences). Do not repeat full scene description in \`action\`.
 
 **LENS/DOF GUIDELINES:**
 - 24mm f/2.8: Deep DOF, wide environment, slight barrel distortion at edges
@@ -2657,12 +2671,17 @@ function transformSegmentsToOutput(
     if (seg.video_prompt_elements) {
       const el = seg.video_prompt_elements
       if (generatedMethod === 'FTV' || generatedMethod === 'I2V') {
-        // F2V/I2V only gets dialogue and action instructions to prevent hallucination/conflict with start frame
-        videoGenerationPrompt = [el.action, el.dialogue].filter(Boolean).join(' ')
-        // Fallback if empty
-        if (!videoGenerationPrompt.trim()) {
-           videoGenerationPrompt = [el.camera, el.character, el.action, el.dialogue, el.camera_movement, el.lighting, el.visual_style].filter(Boolean).join(' ')
-        }
+        const segmentMotion =
+          composeFtvMotionFromDirection({
+            segmentDirectionSummary: approvedDir?.segmentDirectionSummary,
+            talentAction: approvedDir?.talentAction,
+            keyframeStartDescription: (approvedDir as any)?.keyframeStartDescription,
+            keyframeEndDescription: (approvedDir as any)?.keyframeEndDescription,
+            startFrameDescription: (approvedDir as any)?.startFrameDescription,
+            endFrameDescription: (approvedDir as any)?.endFrameDescription,
+          }) || el.action?.trim() || ''
+        const dialoguePart = el.dialogue?.trim() || ''
+        videoGenerationPrompt = [segmentMotion, dialoguePart].filter(Boolean).join(' ')
       } else {
         // T2V and others get the full prompt
         videoGenerationPrompt = [el.camera, el.character, el.action, el.dialogue, el.camera_movement, el.lighting, el.visual_style].filter(Boolean).join(' ')
@@ -2683,10 +2702,17 @@ function transformSegmentsToOutput(
     else if (seg.veoTimelineContinuation) transitionType = 'CONTINUE'
 
     const resolvedAction =
+      composeFtvMotionFromDirection({
+        segmentDirectionSummary: approvedDir?.segmentDirectionSummary,
+        talentAction: approvedDir?.talentAction,
+        keyframeStartDescription: (approvedDir as any)?.keyframeStartDescription,
+        keyframeEndDescription: (approvedDir as any)?.keyframeEndDescription,
+        startFrameDescription: (approvedDir as any)?.startFrameDescription,
+        endFrameDescription: (approvedDir as any)?.endFrameDescription,
+      }) ||
       approvedDir?.talentAction?.trim() ||
       seg.video_prompt_elements?.action?.trim() ||
       scenePromptBundleRow?.segmentDirectionSummary?.trim() ||
-      seg.trigger_reason?.trim() ||
       ''
 
     const generationPlan = {
@@ -2711,7 +2737,7 @@ function transformSegmentsToOutput(
       endTime: cumulativeTime + seg.estimated_duration,
       status: 'DRAFT' as const,
       generatedPrompt: videoGenerationPrompt,
-      videoPrompt: videoGenerationPrompt || scenePromptBundleRow?.videoPrompt || '',
+      videoPrompt: videoGenerationPrompt || '',
       videoPromptElements: seg.video_prompt_elements || null,
       startFramePrompt:
         seg.reference_strategy?.start_frame_description ||
@@ -2797,14 +2823,80 @@ function transformSegmentsToOutput(
   })
 }
 
+function applyPhase1ContinuationDialogue(directions: SegmentDirection[]): SegmentDirection[] {
+  return directions.map((dir, idx) => {
+    if (dir.dialogueLineIds?.length) return dir
+    if (!dir.veoTimelineContinuation || idx === 0) return dir
+    const prev = directions[idx - 1]
+    if (!prev?.dialogueLineIds?.length) return dir
+    return {
+      ...dir,
+      dialogueLineIds: [...prev.dialogueLineIds],
+      audioTimelineIndices:
+        prev.audioTimelineIndices?.length ? [...prev.audioTimelineIndices] : dir.audioTimelineIndices,
+    }
+  })
+}
+
+function fillPhase1ContinuationTalentAction(directions: SegmentDirection[]): SegmentDirection[] {
+  return directions.map((dir, idx) => {
+    if (dir.talentAction?.trim()) return dir
+    if (!dir.veoTimelineContinuation || idx === 0) return dir
+    const prev = directions[idx - 1]
+    const motion = composeFtvMotionFromDirection({
+      segmentDirectionSummary: prev?.segmentDirectionSummary,
+      talentAction: prev?.talentAction,
+      keyframeStartDescription: (prev as any)?.keyframeStartDescription,
+      keyframeEndDescription: (prev as any)?.keyframeEndDescription,
+    })
+    if (!motion) return dir
+    return {
+      ...dir,
+      talentAction: `Continuation beat: ${motion.slice(0, 220)}`,
+    }
+  })
+}
+
+function enrichFtvPromptElementsFromDirections(
+  segments: IntelligentSegment[],
+  approvedDirections: SegmentDirection[]
+): IntelligentSegment[] {
+  return segments.map((seg, idx) => {
+    const dir = approvedDirections[idx]
+    if (!dir) return seg
+    const method = (seg.generation_method || dir.generationMethod || 'FTV').toUpperCase()
+    if (method !== 'FTV' && method !== 'I2V') return seg
+
+    const segmentMotion = composeFtvMotionFromDirection({
+      segmentDirectionSummary: dir.segmentDirectionSummary,
+      talentAction: dir.talentAction,
+      keyframeStartDescription: (dir as any).keyframeStartDescription,
+      keyframeEndDescription: (dir as any).keyframeEndDescription,
+      startFrameDescription: (dir as any).startFrameDescription,
+      endFrameDescription: (dir as any).endFrameDescription,
+    })
+    if (!segmentMotion) return seg
+
+    const el = seg.video_prompt_elements || {}
+    return {
+      ...seg,
+      video_prompt_elements: {
+        ...el,
+        action: segmentMotion,
+      },
+    }
+  })
+}
+
 function applyContinuationDialogueFallback(segments: any[]): any[] {
   return segments.map((seg, idx) => {
     const hasDialogueIds = Array.isArray(seg.dialogueLineIds) && seg.dialogueLineIds.length > 0
     if (hasDialogueIds) return seg
 
     const isContinuation =
-      typeof seg?.triggerReason === 'string' &&
-      seg.triggerReason.toLowerCase().includes('continuation')
+      seg?.segmentDirection?.veoTimelineContinuation === true ||
+      (typeof seg?.triggerReason === 'string' &&
+        seg.triggerReason.toLowerCase().includes('continuation'))
     if (!isContinuation || idx === 0) return seg
 
     const prev = segments[idx - 1]
