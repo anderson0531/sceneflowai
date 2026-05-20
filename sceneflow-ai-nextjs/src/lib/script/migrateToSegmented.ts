@@ -30,8 +30,10 @@ import {
 } from '@/lib/scene/syncProductionSegments'
 import {
   buildSegmentSfx,
+  coerceDialogueLineText,
   enforceOneSentencePerLine,
   normalizeDialogueToProductionLineTargets,
+  normalizeDialogueEntry,
   mintLineId,
   mintSegmentId,
   quantizeAndResequence,
@@ -647,15 +649,9 @@ function resolveSceneId(scene: any, sceneIdx: number): string | null {
 }
 
 function legacyDialogueEntryToLines(d: any, _scene: any): DialogueLine[] {
-  const character: string =
-    (typeof d?.character === 'string' && d.character) ||
-    (typeof d?.name === 'string' && d.name) ||
-    ''
-  const text: string =
-    (typeof d?.line === 'string' && d.line) ||
-    (typeof d?.text === 'string' && d.text) ||
-    (typeof d?.dialogue === 'string' && d.dialogue) ||
-    ''
+  const normalized = normalizeDialogueEntry(d)
+  const character: string = normalized.character || ''
+  const text: string = coerceDialogueLineText(normalized.line)
   if (!text) return []
   const characterId =
     typeof d?.characterId === 'string' ? d.characterId : undefined

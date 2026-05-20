@@ -25,6 +25,7 @@ import { AddSegmentDialog } from './scene-production/AddSegmentDialog'
 import { EditSegmentDialog } from './scene-production/EditSegmentDialog'
 import { SegmentList } from './scene-production/SegmentList'
 import type { ScriptSegment } from '@/lib/script/segmentTypes'
+import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import {
   resolveAutoSfxDuration,
   resolveSfxDuration,
@@ -4982,7 +4983,18 @@ function SceneCard({
                     </p>
                     <ul className="space-y-2">
                       {scene.audienceAnalysis.recommendations.map((rec: string | { text: string; category?: string; impact?: string; priority?: string; pointsDeducted?: number }, rIdx: number) => {
-                        const recText = typeof rec === 'string' ? rec : rec?.text || String(rec)
+                        const recText =
+                          typeof rec === 'string'
+                            ? rec
+                            : typeof rec === 'object' && rec && typeof rec.text === 'string'
+                            ? rec.text
+                            : (() => {
+                                const line = coerceDialogueLineText((rec as any)?.line)
+                                if (line && typeof (rec as any)?.character === 'string') {
+                                  return `${(rec as any).character}: ${line}`
+                                }
+                                return line || String(rec)
+                              })()
                         const recCategory = typeof rec === 'object' && rec?.category ? rec.category : null
                         const recImpact = typeof rec === 'object' && rec?.impact ? rec.impact : null
                         const recPriority = typeof rec === 'object' && rec?.priority ? rec.priority : null
@@ -5970,9 +5982,12 @@ function SceneCard({
                           a.character === d.character && a.dialogueIndex === i
                         )
                         // Extract parenthetical voice direction from line (e.g., "(angrily) I'm fine")
-                        const parentheticalMatch = d.line?.match(/^\(([^)]+)\)\s*/)
+                        const dialogueLineText = coerceDialogueLineText(d.line ?? d.text)
+                        const parentheticalMatch = dialogueLineText.match(/^\(([^)]+)\)\s*/)
                         const parenthetical = parentheticalMatch?.[1]
-                        const lineWithoutParenthetical = parenthetical ? d.line.replace(/^\([^)]+\)\s*/, '') : d.line
+                        const lineWithoutParenthetical = parenthetical
+                          ? dialogueLineText.replace(/^\([^)]+\)\s*/, '')
+                          : dialogueLineText
                         
                         return (
                           <div key={i} className="p-3 bg-green-900/30 rounded-lg border border-green-700/30 hover:border-green-600/50 transition-colors">

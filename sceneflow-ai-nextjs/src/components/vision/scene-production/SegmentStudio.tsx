@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import type { SceneSegment, SceneProductionReferences, SceneSegmentStatus, SegmentKeyframeSettings, KeyframeEasingType, KeyframePanDirection } from './types'
 import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText, Trash2, ImagePlus, AlertCircle, FrameIcon, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import { SegmentPromptBuilder, GeneratePromptData, VideoGenerationMethod } from './SegmentPromptBuilder'
 // Dynamic import for VideoEditingDialog - shared between SegmentStudio and DirectorConsole chunks
 const VideoEditingDialog = dynamic(
@@ -1344,7 +1345,7 @@ export function SegmentStudio({
                           {dialogue.character}
                         </span>
                         <p className="text-[11px] text-gray-700 dark:text-gray-300 line-clamp-2">
-                          "{dialogue.line}"
+                          "{coerceDialogueLineText(dialogue.line)}"
                         </p>
                       </div>
                     </div>

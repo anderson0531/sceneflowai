@@ -20,6 +20,7 @@ import { toast } from 'sonner'
 import { GeneratingOverlay } from '@/components/ui/GeneratingOverlay'
 import { cn } from '@/lib/utils'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
+import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import {
   buildAudioTracksWithBaselineTiming,
   determineBaselineLanguage,
@@ -332,7 +333,7 @@ export function SceneProductionManager({
     return scene.dialogue.map((d: any, idx: number) => ({
       id: `dialogue-${idx}`,
       character: d.character || 'Unknown',
-      line: d.line || d.text || '',
+      line: coerceDialogueLineText(d.line ?? d.text),
     }))
   }, [scene?.dialogue])
   

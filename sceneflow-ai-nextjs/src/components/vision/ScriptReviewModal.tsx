@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import { OptimizeSceneDialog } from '@/components/vision/OptimizeSceneDialog'
 import { DIRECTOR_ASSISTANTS, applyAssistantStyle, getAssistantByVoiceId } from '@/lib/tts/productionAssistants'
 import { useStore } from '@/store/useStore'
@@ -150,7 +151,16 @@ interface Review {
 
 // Helper to extract text from a recommendation
 const getRecommendationText = (rec: RecommendationItem): string => {
-  return typeof rec === 'string' ? rec : rec.text
+  if (typeof rec === 'string') return rec
+  if (rec && typeof rec === 'object') {
+    if (typeof rec.text === 'string') return rec.text
+    const line = coerceDialogueLineText((rec as { line?: unknown }).line)
+    if (line && typeof (rec as { character?: string }).character === 'string') {
+      return `${(rec as { character: string }).character}: ${line}`
+    }
+    if (line) return line
+  }
+  return String(rec ?? '')
 }
 
 // Helper to safely extract text from any item (string, object with text, or other)

@@ -3,6 +3,7 @@
 import { Download, Loader, Pause, Play, RefreshCw, Trash2, Upload, Volume2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
+import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import type { DialogueLine } from '@/lib/script/segmentTypes'
 
 /**
@@ -92,12 +93,13 @@ export function SegmentDialogueCard({
       (generatingDialogue.character === line.character &&
         (generatingDialogue.dialogueIndex ?? -1) === (dialogueIndex ?? -1)))
 
+  const lineText = coerceDialogueLineText(line.line)
   // Pull leading parenthetical voice direction off the body for chip display.
-  const parentheticalMatch = line.line?.match(/^\(([^)]+)\)\s*/)
+  const parentheticalMatch = lineText.match(/^\(([^)]+)\)\s*/)
   const parenthetical = parentheticalMatch?.[1]
   const lineWithoutParenthetical = parenthetical
-    ? line.line.replace(/^\([^)]+\)\s*/, '')
-    : line.line
+    ? lineText.replace(/^\([^)]+\)\s*/, '')
+    : lineText
   const voiceChip = parenthetical || line.voiceDirection
 
   const cardClasses = isNarrator

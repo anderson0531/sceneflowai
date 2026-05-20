@@ -127,6 +127,7 @@ import { applyIntelligentDefaults } from '@/lib/audio/anchoredTiming'
 // audioTrackBuilder functions are imported dynamically inside callbacks to break TDZ scope-hoisting chain
 import { buildSceneReferencePrompt } from '@/lib/vision/sceneReferencePromptBuilder'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
+import { normalizeDialogueEntry } from '@/lib/script/segmentScript'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { useAutoMigrate } from '@/hooks/useMediaLoader'
 import { uploadAssetViaAPI } from '@/lib/vision/uploads'
@@ -227,6 +228,18 @@ const normalizeCharacterName = (name: string): string => {
 
 // Helper function to normalize scenes from various data paths
 // This ensures consistent scene access across all components
+function sanitizeScriptDialogueLines(scriptData: any): any {
+  if (!scriptData) return scriptData
+  const scenes = scriptData?.script?.scenes ?? scriptData?.scenes
+  if (!Array.isArray(scenes)) return scriptData
+  for (const scene of scenes) {
+    if (Array.isArray(scene?.dialogue)) {
+      scene.dialogue = scene.dialogue.map((d: any) => normalizeDialogueEntry(d))
+    }
+  }
+  return scriptData
+}
+
 function normalizeScenes(source: any): any[] {
   if (!source) return []
 
@@ -5495,7 +5508,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           }
           
-          setScript(finalScript)
+          setScript(sanitizeScriptDialogueLines(finalScript))
         }
         
         // Load existing reviews

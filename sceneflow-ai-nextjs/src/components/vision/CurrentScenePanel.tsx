@@ -1,5 +1,6 @@
 'use client'
 
+import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import { Badge } from '@/components/ui/badge'
 import { Clock, Users, Music, Volume2 } from 'lucide-react'
 
@@ -66,7 +67,7 @@ export function CurrentScenePanel({ scene }: CurrentScenePanelProps) {
                     {line.character}:
                   </span>
                   <span className="ml-2 text-gray-700 dark:text-gray-300">
-                    {line.line || line.text || ''}
+                    {coerceDialogueLineText(line.line ?? line.text)}
                   </span>
                 </div>
               ))}

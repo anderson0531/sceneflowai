@@ -4,6 +4,7 @@ import React from 'react'
 import { Check, Play, Download, Loader } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/Button'
+import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import { Voice, DialogueTrack as DialogueTrackType } from '@/types/sceneAudio'
 
 interface DialogueTrackProps {
@@ -43,7 +44,7 @@ export function DialogueTrack({
             )}
           </div>
           <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
-            "{dialogue.line}"
+            "{coerceDialogueLineText(dialogue.line)}"
           </div>
         </div>
 

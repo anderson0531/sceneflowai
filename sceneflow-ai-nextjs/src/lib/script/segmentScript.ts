@@ -106,6 +106,47 @@ type SentenceChunk = { text: string; complete: boolean }
 type PendingFragment = { tag: string; text: string; template: any; sourceIndexes: number[] }
 type LineLike = { character?: string; line?: string; kind?: 'dialogue' | 'narration'; [key: string]: any }
 
+/**
+ * Coerce dialogue line text to a string. Handles nested `{ character, line }`
+ * objects that occasionally appear in LLM output or legacy migrations.
+ */
+export function coerceDialogueLineText(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (value == null) return ''
+  if (typeof value === 'object') {
+    const o = value as Record<string, unknown>
+    if (typeof o.line === 'string') return o.line
+    if (typeof o.text === 'string') return o.text
+    if (typeof o.dialogue === 'string') return o.dialogue
+  }
+  return ''
+}
+
+/** Normalize a flat scene.dialogue entry to `{ character, line: string }`. */
+export function normalizeDialogueEntry(entry: any): LineLike {
+  if (!entry || typeof entry !== 'object') {
+    return { character: '', line: '' }
+  }
+  const nested =
+    entry.line && typeof entry.line === 'object' && !Array.isArray(entry.line)
+      ? (entry.line as Record<string, unknown>)
+      : null
+  const line = coerceDialogueLineText(
+    entry.line ?? entry.text ?? entry.dialogue ?? nested?.line ?? nested?.text
+  )
+  const character =
+    (typeof entry.character === 'string' && entry.character) ||
+    (typeof entry.name === 'string' && entry.name) ||
+    (typeof nested?.character === 'string' && nested.character) ||
+    ''
+  return {
+    ...entry,
+    character,
+    line,
+    text: line,
+  }
+}
+
 function splitBodyIntoSentenceChunks(body: string): SentenceChunk[] {
   const normalized = String(body || '').replace(/\s+/g, ' ').trim()
   if (!normalized) return []
@@ -179,9 +220,10 @@ export function normalizeDialogueToCompleteSentenceLines(
       ? [d.__legacyIndex]
       : []
 
-  for (const d of dialogue) {
+  for (const raw of dialogue) {
+    const d = normalizeDialogueEntry(raw)
     const key = speakerKey(d)
-    const { tag, body } = splitLeadingTag(d?.line || '')
+    const { tag, body } = splitLeadingTag(d.line || '')
     if (!body) continue
     const chunks = splitBodyIntoSentenceChunks(body)
     if (chunks.length === 0) continue
