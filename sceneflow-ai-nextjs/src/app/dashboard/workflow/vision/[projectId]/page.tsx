@@ -8251,13 +8251,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       if (!directionResponse.ok) {
         const errorData = await directionResponse.json().catch(() => ({ error: 'Unknown error' }))
-        throw new Error(errorData.error || 'Failed to generate scene direction')
+        const apiErr =
+          typeof errorData.error === 'string'
+            ? errorData.error
+            : typeof errorData.message === 'string'
+              ? errorData.message
+              : errorData.error != null
+                ? JSON.stringify(errorData.error)
+                : 'Failed to generate scene direction'
+        throw new Error(apiErr)
       }
 
       const data = await directionResponse.json()
       
       if (!data.success || !data.sceneDirection) {
-        throw new Error(data.error || 'Failed to generate scene direction')
+        const apiErr =
+          typeof data.error === 'string'
+            ? data.error
+            : data.error != null
+              ? JSON.stringify(data.error)
+              : 'Failed to generate scene direction'
+        throw new Error(apiErr)
       }
 
       // Re-read current script state (may have changed during async operation)

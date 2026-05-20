@@ -2637,6 +2637,8 @@ function transformSegmentsToOutput(
   approvedDirections?: SegmentDirection[]
 ): any[] {
   return segments.map((seg: IntelligentSegment, idx: number) => {
+    const approvedDir = approvedDirections?.[idx]
+
     let cumulativeTime = 0
     for (let i = 0; i < idx; i++) {
       cumulativeTime += segments[i].estimated_duration
@@ -2687,9 +2689,7 @@ function transformSegmentsToOutput(
         videoGenerationPrompt = [el.camera, el.character, el.action, el.dialogue, el.camera_movement, el.lighting, el.visual_style].filter(Boolean).join(' ')
       }
     }
-    
-    // Include approved direction metadata if available
-    const approvedDir = approvedDirections?.[idx]
+
     const scenePromptBundleRow = promptBundleEntryForSegment(
       seg.assigned_dialogue_indices,
       sceneData.sceneDirectionPromptBundle,
