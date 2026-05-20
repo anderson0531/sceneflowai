@@ -92,7 +92,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     description:
       'Localize content at scale while preserving narrative intent and timeline alignment for multilingual delivery.',
     screenshotSlot: 'Insert screenshot: Multi-language timeline and translation settings',
-    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2008.58.47.png',
+    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-20%20at%2011.59.14.png',
     videoSlot: 'Insert 00:30 clip: Instantly localizing a scene into multiple languages',
   },
   {
