@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Clapperboard,
@@ -98,8 +98,16 @@ export function SeriesCard({
   const [isExpanded, setIsExpanded] = useState(false)
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false)
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(
-    (series.metadata as any)?.thumbnailUrl || null
+    (series.metadata as { thumbnailUrl?: string; thumbnail?: string })?.thumbnailUrl ||
+      (series.metadata as { thumbnail?: string })?.thumbnail ||
+      null
   )
+
+  useEffect(() => {
+    const meta = series.metadata as { thumbnailUrl?: string; thumbnail?: string } | undefined
+    const url = meta?.thumbnailUrl || meta?.thumbnail || null
+    setThumbnailUrl(url)
+  }, [series.id, series.metadata])
   
   const statusStyle = STATUS_STYLES[series.status] || STATUS_STYLES.draft
   const characterCount = series.productionBible?.characters?.length || 0
@@ -119,16 +127,23 @@ export function SeriesCard({
         body: JSON.stringify({})
       })
       
-      if (!response.ok) {
-        throw new Error('Failed to generate thumbnail')
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to generate thumbnail')
       }
-      
-      const data = await response.json()
-      setThumbnailUrl(data.thumbnailUrl)
-      onThumbnailUpdate?.(series.id, data.thumbnailUrl)
+
+      const url = data.thumbnailUrl as string | undefined
+      if (!url) {
+        throw new Error('Thumbnail generated but no image URL was returned')
+      }
+
+      setThumbnailUrl(url)
+      onThumbnailUpdate?.(series.id, url)
       toast.success('Thumbnail generated!')
     } catch (err) {
-      toast.error('Failed to generate thumbnail')
+      const message = err instanceof Error ? err.message : 'Failed to generate thumbnail'
+      toast.error(message)
     } finally {
       setIsGeneratingThumbnail(false)
     }

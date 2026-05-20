@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import '@/models'
 import Series from '@/models/Series'
 import { sequelize } from '@/config/database'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
+import {
+  assertSeriesImageGenConfigured,
+  buildSeriesThumbnailPrompt,
+  cloneSeriesMetadata,
+} from '@/lib/series/thumbnailPrompt'
 
-export const maxDuration = 60
+export const runtime = 'nodejs'
+export const maxDuration = 120
 
 export async function POST(
   request: NextRequest,
@@ -20,118 +27,76 @@ export async function POST(
       )
     }
 
-    // TODO: BYOK - Use user's Gemini API key when BYOK is implemented
-    if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json({
-        success: false,
-        error: 'Gemini API not configured. Please set GEMINI_API_KEY.',
-        requiresBYOK: true
-      }, { status: 400 })
+    const configError = assertSeriesImageGenConfigured()
+    if (configError) {
+      return NextResponse.json({ success: false, error: configError }, { status: 500 })
     }
 
-    // Fetch the series to get metadata for prompt generation
     await sequelize.authenticate()
-    
+
     const series = await Series.findByPk(seriesId)
     if (!series) {
       return NextResponse.json({
         success: false,
-        error: 'Series not found'
+        error: 'Series not found',
       }, { status: 404 })
     }
 
-    // Parse optional custom prompt from request body
     let customPrompt: string | undefined
     try {
       const body = await request.json()
-      customPrompt = body.customPrompt
+      customPrompt = typeof body?.customPrompt === 'string' ? body.customPrompt : undefined
     } catch {
-      // No body or invalid JSON - that's fine, use default prompt
+      // Empty body is fine for default prompt
     }
 
-    // Use custom prompt if provided, otherwise generate from series data
-    let enhancedPrompt: string
-    
-    if (customPrompt) {
-      enhancedPrompt = customPrompt
-      console.log('[Series Thumbnail] Using custom prompt from user')
-    } else {
-      // Build cinematic thumbnail prompt from series metadata
-      const protagonist = series.production_bible?.characters?.find(
-        (c: any) => c.id === series.production_bible?.protagonist?.characterId
-      ) || series.production_bible?.characters?.[0]
-      
-      const mainLocation = series.production_bible?.locations?.[0]
-      
-      const seriesInfo = [
-        series.title ? `Series Title: ${series.title}` : '',
-        series.genre ? `Genre: ${series.genre}` : '',
-        series.logline ? `Action/Concept: ${series.logline}` : '',
-        protagonist ? `Main Subject: ${protagonist.name} - ${protagonist.appearance}` : '',
-        mainLocation ? `Setting/Location: ${mainLocation.name} - ${mainLocation.visualDescription || mainLocation.description}` : ''
-      ].filter(Boolean).join('\n')
+    const enhancedPrompt = buildSeriesThumbnailPrompt(series, customPrompt)
+    console.log('[Series Thumbnail] Prompt length:', enhancedPrompt.length)
 
-      enhancedPrompt = `Create an engaging, illustrative, and highly cinematic 16:9 thumbnail image for a TV series. 
-DO NOT generate a simple headshot or portrait. The image MUST depict an active scene illustrating the core concept.
-
-Series Details:
-${seriesInfo}
-
-CRITICAL INSTRUCTIONS:
-- Create a dynamic, active scene based on the Action/Concept.
-- The Main Subject must be situated within the Setting/Location.
-- Show the character engaged in the narrative, not just staring at the camera.
-- Professional TV series poster quality, suitable for streaming platform thumbnail display
-- Cinematic lighting with high contrast and dramatic shadows
-- Wide angle cinematic framing (environmental context is important)
-- 16:9 landscape aspect ratio
-- No text, titles, or watermarks on the image
-- Photorealistic or stylized based on genre appropriateness`
-      
-      console.log('[Series Thumbnail] Using default generated prompt')
-    }
-
-    console.log('[Series Thumbnail] Generating with Gemini Image...')
-
-    // Generate image using Gemini API
+    console.log('[Series Thumbnail] Generating with Vertex Imagen...')
     const base64Image = await generateImageWithGemini(enhancedPrompt, {
       aspectRatio: '16:9',
       numberOfImages: 1,
-      imageSize: '2K'
+      quality: 'fast',
     })
-    
-    console.log('[Series Thumbnail] Image generated, uploading to Vercel Blob...')
-    
-    // Upload to Vercel Blob storage
-    const blobUrl = await uploadImageToBlob(base64Image, `series-thumbnails/${seriesId}-${Date.now()}.png`)
-    console.log('[Series Thumbnail] Uploaded to Blob:', blobUrl)
-    
-    // Update series metadata with the thumbnail
+
+    console.log('[Series Thumbnail] Uploading to GCS...')
+    const blobUrl = await uploadImageToBlob(
+      base64Image,
+      `thumbnails/${seriesId}-${Date.now()}.png`,
+      seriesId
+    )
+    console.log('[Series Thumbnail] Uploaded:', blobUrl)
+
+    const existingMeta = cloneSeriesMetadata(series.metadata)
     const updatedMetadata = {
-      ...series.metadata,
+      ...existingMeta,
       thumbnailUrl: blobUrl,
+      thumbnail: blobUrl,
       thumbnailPrompt: enhancedPrompt,
-      thumbnailGeneratedAt: new Date().toISOString()
+      thumbnailGeneratedAt: new Date().toISOString(),
     }
 
     await series.update({ metadata: updatedMetadata })
+    await series.reload()
 
-    console.log('[Series Thumbnail] Successfully generated and saved thumbnail for series:', seriesId)
+    console.log('[Series Thumbnail] Saved thumbnail for series:', seriesId)
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       thumbnailUrl: blobUrl,
       promptUsed: enhancedPrompt,
-      model: 'imagen-3.0-generate-001',
-      provider: 'vertex-ai-imagen-3',
-      storageType: 'vercel-blob'
+      model: 'imagen-3.0-fast-generate-001',
+      provider: 'vertex-ai-imagen',
+      storageType: 'gcs',
     })
-
   } catch (error) {
     console.error('[Series Thumbnail] Generation error:', error)
-    return NextResponse.json({ 
-      success: false,
-      error: error instanceof Error ? error.message : 'Internal server error' 
-    }, { status: 500 })
+    const message =
+      error instanceof Error ? error.message : 'Internal server error'
+    return NextResponse.json(
+      { success: false, error: message },
+      { status: 500 }
+    )
   }
 }
