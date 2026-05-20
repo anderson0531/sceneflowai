@@ -54,6 +54,7 @@ import {
   DialogDescription
 } from '@/components/ui/dialog'
 import { VoiceSelectionDialog } from '@/components/tts/VoiceSelectionDialog'
+import { GEMINI_VOICES } from '@/components/tts/GeminiVoicePicker'
 import { useSeriesStudio } from '@/hooks/useSeries'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSession } from 'next-auth/react'

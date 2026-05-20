@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import {
   ArrowRight,
   Download,
@@ -90,7 +90,10 @@ export function ReferenceTransferDialog({
     clearPendingDiff,
   } = useReferenceTransfer(seriesId)
 
-  const needsProjectPicker = importMode && !!projects?.length && !projectIdProp
+  const needsProjectPicker = useMemo(
+    () => importMode && !!projects?.length && !projectIdProp,
+    [importMode, projects, projectIdProp]
+  )
   const [resolvedProjectId, setResolvedProjectId] = useState(projectIdProp || '')
   const [resolvedProjectTitle, setResolvedProjectTitle] = useState(projectTitleProp || '')
   const activeProjectId = resolvedProjectId || projectIdProp || ''
@@ -120,8 +123,16 @@ export function ReferenceTransferDialog({
     ? resolvedProjectTitle || projectTitleProp || 'Project'
     : seriesTitle || 'Series'
 
+  const wasOpenRef = useRef(false)
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      wasOpenRef.current = false
+      return
+    }
+    const justOpened = !wasOpenRef.current
+    wasOpenRef.current = true
+    if (!justOpened) return
+
     setDirection(initialDirection)
     setResolvedProjectId(projectIdProp || '')
     setResolvedProjectTitle(projectTitleProp || '')
@@ -133,7 +144,14 @@ export function ReferenceTransferDialog({
     setSelectedPropIds(new Set())
     setSelectedWardrobeKeys(new Set())
     setIncludeSettings(false)
-  }, [open, initialDirection, clearPendingDiff, needsProjectPicker, projectIdProp, projectTitleProp])
+  }, [
+    open,
+    initialDirection,
+    clearPendingDiff,
+    needsProjectPicker,
+    projectIdProp,
+    projectTitleProp,
+  ])
 
   useEffect(() => {
     if (!open || !activeProjectId || step === 'project') return

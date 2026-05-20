@@ -506,6 +506,8 @@ export function useReferenceTransfer(seriesId: string | null) {
     [seriesId]
   )
 
+  const clearPendingDiff = useCallback(() => setPendingDiff(null), [])
+
   return {
     isTransferring,
     catalog,
@@ -514,7 +516,7 @@ export function useReferenceTransfer(seriesId: string | null) {
     loadCatalog,
     previewTransfer,
     applyTransfer,
-    clearPendingDiff: () => setPendingDiff(null),
+    clearPendingDiff,
   }
 }
 
