@@ -11,13 +11,13 @@ import {
   Sparkles,
   RefreshCw,
   RotateCcw,
-  Zap,
   ArrowRight,
   TrendingUp,
   Film,
   Palette,
-  ShieldCheck,
+  Pencil,
 } from 'lucide-react'
+import { BlueprintResonanceEditDialog } from './BlueprintResonanceEditDialog'
 import { toast } from 'sonner'
 import { GreenlightScore } from './GreenlightScore'
 import dynamic from 'next/dynamic'
@@ -68,8 +68,8 @@ import {
 import type { PersistedAudienceResonance } from '@/lib/types/audienceResonance'
 import { createPersistedAR } from '@/lib/types/audienceResonance'
 import {
-  treatmentToRefineVariant,
   impactLabel,
+  buildScoreImprovementPath,
 } from '@/lib/treatment/resonanceScoring'
 
 interface AudienceResonancePanelProps {
@@ -122,7 +122,8 @@ export function AudienceResonancePanel({
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedInsights, setExpandedInsights] = useState<string[]>([])
-  const [applyingFix, setApplyingFix] = useState<string | null>(null)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editFocusInsight, setEditFocusInsight] = useState<ResonanceInsight | null>(null)
   const [previousScore, setPreviousScoreLocal] = useState<number | null>(
     cachedState?.previousScore ?? null
   )
@@ -191,6 +192,23 @@ export function AudienceResonancePanel({
   const scoreProgress = analysis
     ? Math.min(100, Math.round((analysis.greenlightScore.score / READY_FOR_PRODUCTION_THRESHOLD) * 100))
     : 0
+
+  const scorePath = useMemo(() => {
+    if (!analysis) return null
+    return (
+      analysis.scorePath ??
+      buildScoreImprovementPath(
+        analysis.greenlightScore.score,
+        analysis.axes,
+        weaknessInsights
+      )
+    )
+  }, [analysis, weaknessInsights])
+
+  const openImproveDialog = useCallback((insight?: ResonanceInsight) => {
+    setEditFocusInsight(insight ?? null)
+    setEditDialogOpen(true)
+  }, [])
   
   // Wrapper functions to sync local state with Zustand store
   const setIntent = useCallback((value: AudienceIntent | ((prev: AudienceIntent) => AudienceIntent)) => {
@@ -529,281 +547,105 @@ export function AudienceResonancePanel({
     }
   }, [treatment, intent, previousScore, appliedFixes, appliedFixDetails, iterationCount, serverCheckpointResults, checkpointOverrides, hasIntentLock, targetProfile, setHasIntentLock, setTargetProfile, onAnalysisComplete])
   
-  // Apply fix suggestion
-  const applyFix = useCallback(async (insight: ResonanceInsight) => {
-    // Validate that we have the required fix data
-    if (!insight.fixSuggestion) {
-      console.warn('[ApplyFix] No fix suggestion available for insight:', insight.id)
-      setError('No fix suggestion available for this insight.')
-      return
-    }
-    if (!insight.fixSection) {
-      console.warn('[ApplyFix] No fix section specified for insight:', insight.id, 'Title:', insight.title)
-      setError('This insight is best addressed in the Script phase. Update the treatment manually or proceed to script generation.')
-      return
-    }
-    
-    setApplyingFix(insight.id)
-    setError(null)
-    
-    try {
-      // Call the refine API with the fix suggestion
-      const response = await fetch('/api/treatment/refine', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          variant: treatmentToRefineVariant(treatment),
-          section: insight.fixSection,
-          instructions: insight.fixSuggestion,
-        }),
-      })
+  const applyResonanceImprovements = useCallback(
+    ({
+      updatedTreatment,
+      appliedInsightIds,
+      section,
+    }: {
+      updatedTreatment: Record<string, unknown>
+      appliedInsightIds: string[]
+      section: string
+    }) => {
+      setLocalTreatment(updatedTreatment)
+      setError(null)
 
-      const data = await response.json().catch(() => ({}))
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || data.error || `Refine failed (${response.status})`
-        )
+      const newInsights = appliedInsightIds.filter((id) => !appliedFixes.includes(id))
+      if (newInsights.length === 0) {
+        onTreatmentUpdate?.(updatedTreatment)
+        return
       }
 
-      const fieldsUpdated = data.fieldsUpdated as string[] | undefined
+      const insightsById = new Map(
+        (analysis?.insights ?? []).map((i) => [i.id, i])
+      )
+      const appliedDetails: AppliedFix[] = []
+      const newOverrides: CheckpointOverride[] = []
 
-      if (data.success && data.draft && fieldsUpdated && fieldsUpdated.length > 0) {
-        // Merge the draft into the local treatment
-        const updatedTreatment = { ...treatment, ...data.draft, updatedAt: Date.now() }
-        setLocalTreatment(updatedTreatment)
-        
-        // Track this fix as applied (increment pending fixes count)
-        setAppliedFixes(prev => [...prev, insight.id])
-        setPendingFixesCount(prev => prev + 1)
-        
-        // Track full fix details for API verification (gradient scoring)
-        const fixDetail: AppliedFix = {
+      for (const id of newInsights) {
+        const insight = insightsById.get(id)
+        if (!insight) continue
+        appliedDetails.push({
           id: insight.id,
           checkpointId: insight.checkpointId || '',
           axisId: insight.axisId || '',
           fixText: insight.fixSuggestion || '',
-          appliedAt: new Date().toISOString()
-        }
-        setAppliedFixDetails(prev => [...prev, fixDetail])
-        
-        // LOCAL SCORING: Add checkpoint override if insight has checkpointId - NEW
-        if (insight.checkpointId && insight.axisId && serverCheckpointResults) {
-          const newOverride: CheckpointOverride = {
+          appliedAt: new Date().toISOString(),
+        })
+        if (insight.checkpointId && insight.axisId) {
+          newOverrides.push({
             checkpointId: insight.checkpointId,
-            axisId: insight.axisId,
-            overridePassed: true, // User applied the fix
-            overrideScore: 8 // Gradient: 8/10 for locally-applied fix (pending AI verification)
-          }
-          
-          setCheckpointOverrides(prev => {
-            // Don't add duplicate overrides
-            const existing = prev.find(
-              o => o.checkpointId === insight.checkpointId && o.axisId === insight.axisId
-            )
-            if (existing) return prev
-            return [...prev, newOverride]
+            axisId: insight.axisId as keyof CheckpointResults,
+            overridePassed: true,
+            overrideScore: 8,
           })
-          
-          // Recalculate score locally
-          const updatedOverrides = checkpointOverrides.some(
-            o => o.checkpointId === insight.checkpointId && o.axisId === insight.axisId
-          ) ? checkpointOverrides : [...checkpointOverrides, newOverride]
-          
-          const localResult = calculateLocalScore(serverCheckpointResults, updatedOverrides)
-          
-          // Update analysis with estimated score
-          if (analysis) {
-            const updatedAnalysis: AudienceResonanceAnalysis = {
-              ...analysis,
-              greenlightScore: localResult.greenlightScore,
-              axes: localResult.axes
-            }
-            setAnalysis(updatedAnalysis)
-            setIsScoreEstimated(true)
-            
-            // Calculate and show score delta
-            const newScore = localResult.overallScore
-            if (previousScore !== null && newScore !== previousScore) {
-              setScoreDelta(newScore - previousScore)
-              setTimeout(() => setScoreDelta(null), 5000)
-            }
-            setPreviousScore(newScore)
-            
-            // Check if now ready for production
-            const ready = newScore >= READY_FOR_PRODUCTION_THRESHOLD
-            setIsReadyForProduction(ready)
-          }
         }
-        
-        // Notify parent component
-        onFixApplied?.(insight.id, insight.fixSection, updatedTreatment)
-        onTreatmentUpdate?.(updatedTreatment)
-        toast.success(`Updated ${insight.fixSection} section`)
-      } else {
-        throw new Error(
-          data.message || 'The AI did not return changes for this section. Try rephrasing or edit manually.'
-        )
+        onFixApplied?.(insight.id, section, updatedTreatment)
       }
-    } catch (err) {
-      console.error('Failed to apply fix:', err)
-      const message =
-        err instanceof Error ? err.message : 'Failed to apply fix. Please try again.'
-      setError(message)
-      toast.error(message)
-    } finally {
-      setApplyingFix(null)
-    }
-  }, [treatment, onFixApplied, onTreatmentUpdate, runAnalysis, serverCheckpointResults, checkpointOverrides, analysis, previousScore, setAnalysis, setIsScoreEstimated, setCheckpointOverrides, setPreviousScore, setIsReadyForProduction, setAppliedFixes, setAppliedFixDetails, setPendingFixesCount, iterationCount])
-  
-  // State for batch fix application
-  const [isApplyingAllFixes, setIsApplyingAllFixes] = useState(false)
-  
-  // Apply all pending fixes at once
-  const applyAllFixes = useCallback(async () => {
-    if (!analysis?.insights) {
-      setError('No analysis available')
-      return
-    }
-    
-    // Get all unapplied weaknesses with fix suggestions
-    const pendingFixes = analysis.insights.filter(
-      (i) => i.status === 'weakness' && 
-             !appliedFixes.includes(i.id) && 
-             i.fixSuggestion && 
-             i.fixSection
-    )
-    
-    if (pendingFixes.length === 0) {
-      setError('No fixes available to apply')
-      return
-    }
-    
-    setIsApplyingAllFixes(true)
-    setError(null)
-    
-    let currentTreatment = { ...treatment }
-    const successfullyApplied: string[] = []
-    const appliedDetails: AppliedFix[] = []
-    const newOverrides: CheckpointOverride[] = []
-    
-    try {
-      // Apply fixes sequentially to accumulate changes
-      for (const insight of pendingFixes) {
-        try {
-          const response = await fetch('/api/treatment/refine', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-              variant: treatmentToRefineVariant(currentTreatment),
-              section: insight.fixSection,
-              instructions: insight.fixSuggestion,
-            }),
-          })
 
-          const data = await response.json().catch(() => ({}))
+      setAppliedFixes((prev) => [...prev, ...newInsights])
+      setAppliedFixDetails((prev) => [...prev, ...appliedDetails])
+      setPendingFixesCount((prev) => prev + newInsights.length)
+      onTreatmentUpdate?.(updatedTreatment)
 
-          if (
-            response.ok &&
-            data.success &&
-            data.draft &&
-            Array.isArray(data.fieldsUpdated) &&
-            data.fieldsUpdated.length > 0
-          ) {
-            // Merge the draft into current treatment
-            currentTreatment = { ...currentTreatment, ...data.draft, updatedAt: Date.now() }
-            successfullyApplied.push(insight.id)
-            
-            // Track fix detail
-            appliedDetails.push({
-              id: insight.id,
-              checkpointId: insight.checkpointId || '',
-              axisId: insight.axisId || '',
-              fixText: insight.fixSuggestion || '',
-              appliedAt: new Date().toISOString()
-            })
-            
-            // Track checkpoint override for local scoring
-            if (insight.checkpointId && insight.axisId) {
-              newOverrides.push({
-                checkpointId: insight.checkpointId,
-                axisId: insight.axisId,
-                overridePassed: true,
-                overrideScore: 8
-              })
-            }
-          }
-        } catch (err) {
-          console.error('Failed to apply fix:', insight.id, err)
-          // Continue with other fixes
+      if (newOverrides.length > 0 && serverCheckpointResults && analysis) {
+        const updatedOverrides = [...checkpointOverrides]
+        for (const override of newOverrides) {
+          const exists = updatedOverrides.some(
+            (o) =>
+              o.checkpointId === override.checkpointId &&
+              o.axisId === override.axisId
+          )
+          if (!exists) updatedOverrides.push(override)
         }
-      }
-      
-      if (successfullyApplied.length > 0) {
-        // Update local treatment state
-        setLocalTreatment(currentTreatment)
-        
-        // Track all applied fixes
-        setAppliedFixes(prev => [...prev, ...successfullyApplied])
-        setAppliedFixDetails(prev => [...prev, ...appliedDetails])
-        setPendingFixesCount(prev => prev + successfullyApplied.length)
-        
-        // Add checkpoint overrides
-        if (newOverrides.length > 0 && serverCheckpointResults) {
-          const updatedOverrides = [...checkpointOverrides]
-          for (const override of newOverrides) {
-            const existing = updatedOverrides.find(
-              o => o.checkpointId === override.checkpointId && o.axisId === override.axisId
-            )
-            if (!existing) {
-              updatedOverrides.push(override)
-            }
-          }
-          setCheckpointOverrides(updatedOverrides)
-          
-          // Recalculate local score
-          const localResult = calculateLocalScore(serverCheckpointResults, updatedOverrides)
-          
-          if (analysis) {
-            const updatedAnalysis: AudienceResonanceAnalysis = {
-              ...analysis,
-              greenlightScore: localResult.greenlightScore,
-              axes: localResult.axes
-            }
-            setAnalysis(updatedAnalysis)
-            setIsScoreEstimated(true)
-            
-            // Show score delta
-            const newScore = localResult.overallScore
-            if (previousScore !== null && newScore !== previousScore) {
-              setScoreDelta(newScore - previousScore)
-              setTimeout(() => setScoreDelta(null), 5000)
-            }
-            setPreviousScore(newScore)
-            
-            // Check production readiness
-            setIsReadyForProduction(newScore >= READY_FOR_PRODUCTION_THRESHOLD)
-          }
-        }
-        
-        // Notify parent components
-        onTreatmentUpdate?.(currentTreatment)
-        toast.success(
-          `Applied ${successfullyApplied.length} of ${pendingFixes.length} fixes`
+        setCheckpointOverrides(updatedOverrides)
+        const localResult = calculateLocalScore(
+          serverCheckpointResults,
+          updatedOverrides
         )
-      } else {
-        setError('Failed to apply any fixes')
-        toast.error('Failed to apply any fixes')
+        setAnalysis({
+          ...analysis,
+          greenlightScore: localResult.greenlightScore,
+          axes: localResult.axes,
+        })
+        setIsScoreEstimated(true)
+        const newScore = localResult.overallScore
+        if (previousScore !== null && newScore !== previousScore) {
+          setScoreDelta(newScore - previousScore)
+          setTimeout(() => setScoreDelta(null), 5000)
+        }
+        setPreviousScore(newScore)
+        setIsReadyForProduction(newScore >= READY_FOR_PRODUCTION_THRESHOLD)
       }
-    } catch (err) {
-      console.error('Failed to apply all fixes:', err)
-      setError('Failed to apply fixes. Please try again.')
-    } finally {
-      setIsApplyingAllFixes(false)
-    }
-  }, [analysis, appliedFixes, treatment, iterationCount, serverCheckpointResults, checkpointOverrides, previousScore, onTreatmentUpdate, setAnalysis, setIsScoreEstimated, setCheckpointOverrides, setPreviousScore, setIsReadyForProduction, setAppliedFixes, setAppliedFixDetails, setPendingFixesCount])
+    },
+    [
+      analysis,
+      appliedFixes,
+      checkpointOverrides,
+      onFixApplied,
+      onTreatmentUpdate,
+      previousScore,
+      serverCheckpointResults,
+      setAnalysis,
+      setAppliedFixDetails,
+      setAppliedFixes,
+      setCheckpointOverrides,
+      setIsReadyForProduction,
+      setIsScoreEstimated,
+      setPendingFixesCount,
+      setPreviousScore,
+    ]
+  )
   
   // Toggle insight expansion
   const toggleInsight = (id: string) => {
@@ -1149,10 +991,65 @@ export function AudienceResonancePanel({
                 </div>
                 {pendingFixesCount > 0 && (
                   <p className="text-[11px] text-cyan-400/90">
-                    {pendingFixesCount} fix{pendingFixesCount > 1 ? 'es' : ''} applied to your blueprint — re-analyze to update the official score.
+                    {pendingFixesCount} improvement{pendingFixesCount > 1 ? 's' : ''} applied — re-analyze to update your official score.
                   </p>
                 )}
               </div>
+
+              {/* Path to higher score */}
+              {!isReadyForProduction && scorePath && scorePath.steps.length > 0 && (
+                <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="text-xs font-medium text-cyan-300 uppercase tracking-wide flex items-center gap-1.5">
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      Path to {READY_FOR_PRODUCTION_THRESHOLD}+
+                    </h4>
+                    <span className="text-[10px] text-gray-500 tabular-nums">
+                      ~{scorePath.projectedScoreIfTopSteps} if top {Math.min(3, scorePath.steps.length)} done
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-400">
+                    You need <span className="text-white font-medium">{scorePath.pointsToReady} points</span> to reach production ready. Work through these in order:
+                  </p>
+                  <ol className="space-y-1.5">
+                    {scorePath.steps.slice(0, 3).map((step, idx) => (
+                      <li
+                        key={step.id}
+                        className="flex items-start gap-2 text-xs text-gray-300"
+                      >
+                        <span className="text-cyan-500/80 font-mono shrink-0">{idx + 1}.</span>
+                        <span className="flex-1 min-w-0">
+                          <span className="text-white">{step.title}</span>
+                          <span className="text-gray-500"> · {step.axisLabel}</span>
+                          <span className="text-emerald-400/90 ml-1">+~{step.estimatedGain} pts</span>
+                        </span>
+                        {!appliedFixes.includes(step.id) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const insight = analysis?.insights.find((i) => i.id === step.id)
+                              if (insight) openImproveDialog(insight)
+                            }}
+                            className="text-[10px] text-cyan-400 hover:text-cyan-300 shrink-0"
+                          >
+                            Improve
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                  {pendingWeaknesses.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => openImproveDialog()}
+                      className="w-full mt-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 text-xs font-medium rounded-lg border border-cyan-500/30"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      Open guided editor
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Compact radar */}
               <details className="rounded-xl border border-slate-700/30 bg-slate-800/20 group">
@@ -1173,18 +1070,14 @@ export function AudienceResonancePanel({
                     <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide">
                       Top priorities
                     </h4>
-                    {pendingWeaknesses.length > 1 && (
+                    {pendingWeaknesses.length > 0 && (
                       <button
-                        onClick={applyAllFixes}
-                        disabled={isApplyingAllFixes}
-                        className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 disabled:opacity-50"
+                        type="button"
+                        onClick={() => openImproveDialog()}
+                        className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
                       >
-                        {isApplyingAllFixes ? (
-                          <RefreshCw className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <Zap className="w-3 h-3" />
-                        )}
-                        Apply all ({pendingWeaknesses.length})
+                        <Pencil className="w-3 h-3" />
+                        Improve ({pendingWeaknesses.length})
                       </button>
                     )}
                   </div>
@@ -1194,8 +1087,7 @@ export function AudienceResonancePanel({
                       insight={insight}
                       expanded={expandedInsights.includes(insight.id)}
                       onToggle={() => toggleInsight(insight.id)}
-                      onApplyFix={() => applyFix(insight)}
-                      isApplying={applyingFix === insight.id}
+                      onImprove={() => openImproveDialog(insight)}
                       isApplied={appliedFixes.includes(insight.id)}
                       showImpact
                     />
@@ -1214,7 +1106,6 @@ export function AudienceResonancePanel({
                       insight={insight}
                       expanded={expandedInsights.includes(insight.id)}
                       onToggle={() => toggleInsight(insight.id)}
-                      isApplying={false}
                       isApplied={false}
                     />
                   ))}
@@ -1243,8 +1134,7 @@ export function AudienceResonancePanel({
                         insight={insight}
                         expanded={expandedInsights.includes(insight.id)}
                         onToggle={() => toggleInsight(insight.id)}
-                        onApplyFix={() => applyFix(insight)}
-                        isApplying={applyingFix === insight.id}
+                        onImprove={() => openImproveDialog(insight)}
                         isApplied={appliedFixes.includes(insight.id)}
                         showImpact
                       />
@@ -1267,6 +1157,20 @@ export function AudienceResonancePanel({
           </div>
         )}
       </div>
+
+      <BlueprintResonanceEditDialog
+        isOpen={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false)
+          setEditFocusInsight(null)
+        }}
+        insights={pendingWeaknesses}
+        focusInsight={editFocusInsight}
+        treatment={treatment}
+        currentScore={analysis?.greenlightScore.score}
+        targetScore={READY_FOR_PRODUCTION_THRESHOLD}
+        onApplied={applyResonanceImprovements}
+      />
     </div>
   )
 }
@@ -1315,16 +1219,14 @@ function InsightCard({
   insight,
   expanded,
   onToggle,
-  onApplyFix,
-  isApplying,
+  onImprove,
   isApplied,
   showImpact = false,
 }: {
   insight: ResonanceInsight
   expanded: boolean
   onToggle: () => void
-  onApplyFix?: () => void
-  isApplying: boolean
+  onImprove?: () => void
   isApplied: boolean
   showImpact?: boolean
 }) {
@@ -1442,22 +1344,16 @@ function InsightCard({
                 })()
               )}
               
-              {/* Fix Button - hidden when applied */}
-              {!isApplied && insight.actionable && insight.fixSuggestion && onApplyFix && (
+              {!isApplied && insight.actionable && insight.fixSuggestion && onImprove && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    onApplyFix()
+                    onImprove()
                   }}
-                  disabled={isApplying}
-                  className="flex items-center gap-2 px-3 py-2 bg-cyan-500/10 text-cyan-400 text-xs font-medium rounded-lg hover:bg-cyan-500/20 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-3 py-2 bg-cyan-500/10 text-cyan-400 text-xs font-medium rounded-lg hover:bg-cyan-500/20 transition-colors"
                 >
-                  {isApplying ? (
-                    <RefreshCw className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <Zap className="w-3 h-3" />
-                  )}
-                  Apply fix
+                  <Pencil className="w-3 h-3" />
+                  Improve in editor
                   <ArrowRight className="w-3 h-3" />
                 </button>
               )}

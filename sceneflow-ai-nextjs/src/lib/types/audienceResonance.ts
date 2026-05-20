@@ -209,6 +209,24 @@ export interface OptimizationRecommendation {
   effort: 'quick' | 'moderate' | 'significant'
 }
 
+/** Actionable step toward production-ready score (80+) */
+export interface ScoreImprovementStep {
+  id: string
+  title: string
+  insight: string
+  axisLabel: string
+  section: string
+  estimatedGain: number
+  impact: 'High' | 'Medium' | 'Low'
+  fixSuggestion?: string
+}
+
+export interface ScoreImprovementPath {
+  pointsToReady: number
+  steps: ScoreImprovementStep[]
+  projectedScoreIfTopSteps: number
+}
+
 // =============================================================================
 // GREENLIGHT SCORE
 // =============================================================================
@@ -403,6 +421,8 @@ export interface AudienceResonanceAnalysis {
   // Detailed Insights
   insights: ResonanceInsight[]
   recommendations: OptimizationRecommendation[]
+  /** How to reach production-ready score from current analysis */
+  scorePath?: ScoreImprovementPath
   
   // Tone Analysis
   toneHeatMap?: ToneHeatMapSegment[]

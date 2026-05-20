@@ -27,7 +27,6 @@ import {
   isSuggestionRestricted,
   ALL_SCORING_AXES,
   applyHysteresisSmoothing,
-  enforceScoreFloor,
   calculateAxisScoreGradient,
   CONCEPT_ORIGINALITY_AXIS,
   CHARACTER_DEPTH_AXIS,
@@ -38,8 +37,8 @@ import {
 } from '@/lib/treatment/scoringChecklist'
 import {
   blendAxisScores,
-  calculateWeightedOverallScore,
   enrichAndPrioritizeInsights,
+  finalizeResonanceScore,
 } from '@/lib/treatment/resonanceScoring'
 
 // MODULE-LEVEL CACHE: Build checkpoint penalty lookup once at module load
@@ -418,7 +417,7 @@ async function analyzeWithGemini(
   }))
   
   // Blend AI axis scores with checkpoint-derived scores (checkpoints drive most of the grade)
-  const blendedAxesPreSmooth = blendAxisScores(axes, checkpointResults, 0.72)
+  const blendedAxesPreSmooth = blendAxisScores(axes, checkpointResults, 0.55)
 
   // Apply hysteresis smoothing to prevent score volatility
   // Reduce anchor strength on later iterations to allow scores to reach target faster
@@ -448,12 +447,13 @@ async function analyzeWithGemini(
     return { ...axis, score: smoothedScore }
   })
   
-  const weightedOverall = calculateWeightedOverallScore(smoothedAxes)
-
-  // Apply score floor to overall score
-  const smoothedOverallScore = previousAnalysis 
-    ? enforceScoreFloor(weightedOverall, previousAnalysis.score, iteration)
-    : weightedOverall
+  const { axes: finalAxes, overall: smoothedOverallScore, scorePath } =
+    finalizeResonanceScore(
+      smoothedAxes,
+      insights.filter((i) => i.status === 'weakness'),
+      previousAnalysis?.score ?? null,
+      iteration
+    )
 
   const tierInfo = getGreenlightTierLocal(smoothedOverallScore)
   
@@ -476,10 +476,11 @@ async function analyzeWithGemini(
     intent,
     treatmentId: reqId,
     greenlightScore: smoothedGreenlightScore,
-    axes: smoothedAxes,
+    axes: finalAxes,
     checkpointResults,
     insights,
     recommendations,
+    scorePath,
     analysisVersion: '2.0', // Updated for gradient scoring
     generatedAt: new Date().toISOString(),
     creditsUsed: 0 // Credits shown in sidebar balance instead

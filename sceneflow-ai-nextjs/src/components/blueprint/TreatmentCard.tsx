@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import TreatmentEditorDialog from './TreatmentEditorDialog'
 import BlueprintReimaginDialog from './BlueprintReimaginDialog'
 import BlueprintRefineDialog from './BlueprintRefineDialog'
 import { CoreInfoEditDialog } from './CoreInfoEditDialog'
@@ -65,7 +64,6 @@ export function TreatmentCard() {
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>('pNInz6obpgDQGcFmaJgB') // Adam voice
-  const [editorOpen, setEditorOpen] = useState(false)
   const [reimaginOpen, setReimaginOpen] = useState(false)
   const [refineOpen, setRefineOpen] = useState(false)
   const [coreInfoEditOpen, setCoreInfoEditOpen] = useState(false)
@@ -988,16 +986,7 @@ export function TreatmentCard() {
             </div>
           </div>
         </CardContent>
-        <TreatmentEditorDialog
-          open={editorOpen}
-          variant={activeVariant as any}
-          onClose={() => setEditorOpen(false)}
-          onApply={(patch) => {
-            try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
-            setEditorOpen(false)
-          }}
-        />
-        {/* Blueprint Refine Dialog - Section-specific editing */}
+        {/* Blueprint Refine Dialog - guided section editing */}
         <BlueprintRefineDialog
           open={refineOpen}
           variant={activeVariant as any}
