@@ -440,11 +440,13 @@ export function useReferenceTransfer(seriesId: string | null) {
   const [error, setError] = useState<string | null>(null)
 
   const loadCatalog = useCallback(
-    async (projectId: string) => {
+    async (projectId: string, options?: { importMode?: boolean }) => {
       if (!seriesId) throw new Error('No series selected')
       setError(null)
+      const params = new URLSearchParams({ projectId })
+      if (options?.importMode) params.set('mode', 'import')
       const response = await fetch(
-        `${API_BASE}/${seriesId}/bible/transfer?projectId=${encodeURIComponent(projectId)}`
+        `${API_BASE}/${seriesId}/bible/transfer?${params.toString()}`
       )
       const data = await response.json()
       if (!data.success) throw new Error(data.error || 'Failed to load catalog')

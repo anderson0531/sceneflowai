@@ -337,6 +337,69 @@ export function buildTransferCatalog(
   }
 }
 
+/**
+ * Catalog of all reference assets in a project (for importing into a series library).
+ */
+export function buildProjectImportCatalog(
+  projectMetadata: Record<string, any>
+): ReferenceTransferCatalog {
+  const proj = getProjectReferences(projectMetadata)
+  const gs = proj.generationSettings || {}
+
+  const characters: TransferCatalogCharacter[] = proj.characters.map((pc: any) => {
+    const wardrobes = (pc.wardrobes || []).map((w: SeriesCharacterWardrobe) => ({
+      key: `${pc.id}:${w.id}`,
+      id: w.id,
+      name: w.name,
+    }))
+    return {
+      id: pc.id,
+      name: pc.name || 'Character',
+      role: pc.role,
+      referenceImageUrl: pc.referenceUrl || pc.referenceImage,
+      voiceId: pc.voiceId || pc.voiceConfig?.voiceId,
+      voiceLabel: pc.voiceLabel || pc.voiceConfig?.voiceName,
+      wardrobes,
+      provenance: 'episode' as const,
+    }
+  })
+
+  const locations: TransferCatalogLocation[] = extractLocationsFromProject(projectMetadata).map(
+    (l) => ({
+      id: l.id,
+      name: l.name,
+      referenceImageUrl: l.referenceImageUrl,
+      provenance: 'episode' as const,
+    })
+  )
+
+  const props: TransferCatalogProp[] = proj.objectReferences.map((o) => ({
+    id: o.id,
+    name: o.name,
+    referenceImageUrl: o.imageUrl,
+    category: o.category,
+    provenance: 'episode' as const,
+  }))
+
+  const hasSettings = !!(
+    gs.aspectRatio ||
+    gs.imageStyle ||
+    gs.visualStyle ||
+    gs.colorPalette ||
+    proj.visionPhase?.visualStyle
+  )
+
+  return {
+    seriesVersion: '1.0.0',
+    seriesOutOfSync: false,
+    characters,
+    locations,
+    props,
+    hasSettings,
+    episodeCharacterIds: characters.map((c) => c.id),
+  }
+}
+
 function mergeCharacters(
   bibleChars: (SeriesCharacter & { wardrobes?: SeriesCharacterWardrobe[] })[],
   projectChars: any[],

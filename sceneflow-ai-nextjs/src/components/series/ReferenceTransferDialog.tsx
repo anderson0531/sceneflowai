@@ -37,15 +37,25 @@ import { toast } from 'sonner'
 
 type CategoryKey = 'characters' | 'locations' | 'props' | 'settings'
 
+export interface ReferenceImportProjectOption {
+  id: string
+  title: string
+}
+
 interface ReferenceTransferDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   seriesId: string
-  projectId: string
+  /** Required unless `projects` is provided (picker step). */
+  projectId?: string
   seriesTitle?: string
   projectTitle?: string
   initialDirection: ReferenceTransferDirection
   lockDirection?: boolean
+  /** Import from any user project into the series library (project picker + full asset catalog). */
+  importMode?: boolean
+  /** When set, user picks a project before selecting assets. */
+  projects?: ReferenceImportProjectOption[]
   condensed?: boolean
   condensedTitle?: string
   onComplete?: () => void
@@ -58,11 +68,13 @@ export function ReferenceTransferDialog({
   open,
   onOpenChange,
   seriesId,
-  projectId,
+  projectId: projectIdProp,
   seriesTitle,
-  projectTitle,
+  projectTitle: projectTitleProp,
   initialDirection,
   lockDirection = false,
+  importMode = false,
+  projects,
   condensed = false,
   condensedTitle,
   onComplete,
@@ -78,7 +90,14 @@ export function ReferenceTransferDialog({
     clearPendingDiff,
   } = useReferenceTransfer(seriesId)
 
-  const [step, setStep] = useState<'select' | 'preview'>('select')
+  const needsProjectPicker = importMode && !!projects?.length && !projectIdProp
+  const [resolvedProjectId, setResolvedProjectId] = useState(projectIdProp || '')
+  const [resolvedProjectTitle, setResolvedProjectTitle] = useState(projectTitleProp || '')
+  const activeProjectId = resolvedProjectId || projectIdProp || ''
+
+  const [step, setStep] = useState<'project' | 'select' | 'preview'>(
+    needsProjectPicker ? 'project' : 'select'
+  )
   const [direction, setDirection] = useState<ReferenceTransferDirection>(initialDirection)
   const [mergeStrategy, setMergeStrategy] = useState<ReferenceTransferMergeStrategy>(() => {
     if (typeof window === 'undefined') return 'add_new_only'
@@ -94,22 +113,33 @@ export function ReferenceTransferDialog({
   const [loadingCatalog, setLoadingCatalog] = useState(false)
 
   const isPull = direction === 'series_to_project'
-  const sourceLabel = isPull ? seriesTitle || 'Series' : projectTitle || 'Episode'
-  const targetLabel = isPull ? projectTitle || 'Episode' : seriesTitle || 'Series'
+  const sourceLabel = isPull
+    ? seriesTitle || 'Series'
+    : resolvedProjectTitle || projectTitleProp || 'Project'
+  const targetLabel = isPull
+    ? resolvedProjectTitle || projectTitleProp || 'Project'
+    : seriesTitle || 'Series'
 
   useEffect(() => {
     if (!open) return
     setDirection(initialDirection)
-    setStep('select')
+    setResolvedProjectId(projectIdProp || '')
+    setResolvedProjectTitle(projectTitleProp || '')
+    setStep(needsProjectPicker ? 'project' : 'select')
     clearPendingDiff()
     setSearch('')
-  }, [open, initialDirection, clearPendingDiff])
+    setSelectedCharIds(new Set())
+    setSelectedLocIds(new Set())
+    setSelectedPropIds(new Set())
+    setSelectedWardrobeKeys(new Set())
+    setIncludeSettings(false)
+  }, [open, initialDirection, clearPendingDiff, needsProjectPicker, projectIdProp, projectTitleProp])
 
   useEffect(() => {
-    if (!open || !projectId) return
+    if (!open || !activeProjectId || step === 'project') return
     let cancelled = false
     setLoadingCatalog(true)
-    loadCatalog(projectId)
+    loadCatalog(activeProjectId, { importMode })
       .then((cat) => {
         if (cancelled || !cat) return
         if (condensed && initialDirection === 'series_to_project') {
@@ -129,7 +159,25 @@ export function ReferenceTransferDialog({
     return () => {
       cancelled = true
     }
-  }, [open, projectId, loadCatalog, condensed, initialDirection])
+  }, [open, activeProjectId, step, loadCatalog, condensed, initialDirection, importMode])
+
+  const selectAllFromCatalog = useCallback(() => {
+    if (!catalog) return
+    setSelectedCharIds(new Set(catalog.characters.map((c) => c.id)))
+    setSelectedLocIds(new Set(catalog.locations.map((l) => l.id)))
+    setSelectedPropIds(new Set(catalog.props.map((p) => p.id)))
+    setSelectedWardrobeKeys(
+      new Set(catalog.characters.flatMap((c) => c.wardrobes.map((w) => w.key)))
+    )
+    if (catalog.hasSettings) setIncludeSettings(true)
+  }, [catalog])
+
+  const handlePickProject = (id: string) => {
+    const picked = projects?.find((p) => p.id === id)
+    setResolvedProjectId(id)
+    setResolvedProjectTitle(picked?.title || '')
+    setStep('select')
+  }
 
   const buildSelection = useCallback((): ReferenceAssetSelection => {
     return {
@@ -192,7 +240,7 @@ export function ReferenceTransferDialog({
     try {
       localStorage.setItem(MERGE_STORAGE_KEY, mergeStrategy)
       await previewTransfer({
-        projectId,
+        projectId: activeProjectId,
         direction,
         selection: buildSelection(),
         mergeStrategy,
@@ -206,13 +254,17 @@ export function ReferenceTransferDialog({
   const handleApply = async () => {
     try {
       await applyTransfer({
-        projectId,
+        projectId: activeProjectId,
         direction,
         selection: buildSelection(),
         mergeStrategy,
       })
       toast.success(
-        isPull ? 'Imported into episode library' : 'Added to series reference library'
+        isPull
+          ? 'Imported into episode library'
+          : importMode
+            ? 'Imported into series reference library'
+            : 'Added to series reference library'
       )
       onComplete?.()
       onOpenChange(false)
@@ -226,21 +278,45 @@ export function ReferenceTransferDialog({
       <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-3xl w-[95vw] max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-800 shrink-0">
           <DialogTitle className="text-lg">
-            {condensed && condensedTitle ? condensedTitle : 'Share Reference Library'}
+            {condensed && condensedTitle
+              ? condensedTitle
+              : importMode
+                ? 'Reference Library Import'
+                : 'Share Reference Library'}
           </DialogTitle>
           <DialogDescription className="text-gray-400">
-            {sourceLabel}
-            <ArrowRight className="inline w-3.5 h-3.5 mx-1.5" />
-            {targetLabel}
+            {step === 'project' ? (
+              'Choose a project to import characters, locations, props, and settings into this series.'
+            ) : (
+              <>
+                {sourceLabel}
+                <ArrowRight className="inline w-3.5 h-3.5 mx-1.5" />
+                {targetLabel}
+              </>
+            )}
             {catalog?.seriesOutOfSync ? (
               <span className="ml-2 text-amber-400 text-xs">Series updated since last sync</span>
             ) : null}
           </DialogDescription>
         </DialogHeader>
 
-        {step === 'select' ? (
+        {step === 'project' ? (
+          <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar min-h-[280px]">
+            {projects?.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => handlePickProject(p.id)}
+                className="w-full flex items-center justify-between gap-3 p-4 rounded-lg border border-gray-700 bg-gray-800/50 hover:border-amber-500/40 hover:bg-amber-500/5 text-left transition-colors"
+              >
+                <span className="font-medium text-white truncate">{p.title}</span>
+                <ArrowRight className="w-4 h-4 text-gray-500 shrink-0" />
+              </button>
+            ))}
+          </div>
+        ) : step === 'select' ? (
           <>
-            {!lockDirection && (
+            {!lockDirection && !importMode && (
               <div className="px-6 py-3 border-b border-gray-800 flex flex-wrap gap-2 shrink-0">
                 <button
                   type="button"
@@ -312,6 +388,18 @@ export function ReferenceTransferDialog({
                       className="pl-8 h-8 text-xs bg-gray-950 border-gray-700"
                     />
                   </div>
+                  {importMode ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs border-amber-500/40 text-amber-300"
+                      onClick={selectAllFromCatalog}
+                      disabled={!catalog || loadingCatalog}
+                    >
+                      Import all
+                    </Button>
+                  ) : null}
                   <Button
                     type="button"
                     size="sm"
@@ -367,7 +455,7 @@ export function ReferenceTransferDialog({
                         meta={[c.role, c.voiceId ? 'voice ✓' : null, c.provenance].filter(Boolean).join(' · ')}
                         imageUrl={c.referenceImageUrl}
                         checked={selectedCharIds.has(c.id)}
-                        badge={c.provenance === 'series' ? 'Series' : 'Episode'}
+                        badge={c.provenance === 'series' ? 'Series' : 'Project'}
                         onCheckedChange={(on) => {
                           setSelectedCharIds((prev) => {
                             const next = new Set(prev)
@@ -410,7 +498,7 @@ export function ReferenceTransferDialog({
                         meta={l.provenance}
                         imageUrl={l.referenceImageUrl}
                         checked={selectedLocIds.has(l.id)}
-                        badge={l.provenance === 'series' ? 'Series' : 'Episode'}
+                        badge={l.provenance === 'series' ? 'Series' : 'Project'}
                         onCheckedChange={(on) => {
                           setSelectedLocIds((prev) => {
                             const next = new Set(prev)
@@ -429,7 +517,7 @@ export function ReferenceTransferDialog({
                         meta={p.category || p.provenance}
                         imageUrl={p.referenceImageUrl}
                         checked={selectedPropIds.has(p.id)}
-                        badge={p.provenance === 'series' ? 'Series' : 'Episode'}
+                        badge={p.provenance === 'series' ? 'Series' : 'Project'}
                         onCheckedChange={(on) => {
                           setSelectedPropIds((prev) => {
                             const next = new Set(prev)
@@ -475,7 +563,17 @@ export function ReferenceTransferDialog({
             )}
 
             <DialogFooter className="px-6 py-4 border-t border-gray-800 shrink-0">
-              {condensed ? (
+              {importMode && projects?.length ? (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    if (step === 'select') setStep('project')
+                    else onOpenChange(false)
+                  }}
+                >
+                  {step === 'select' ? 'Change project' : 'Cancel'}
+                </Button>
+              ) : condensed ? (
                 <Button
                   variant="ghost"
                   onClick={() => {

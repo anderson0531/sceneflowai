@@ -1,15 +1,15 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   BookOpen,
   Users,
   MapPin,
   Package,
   Palette,
-  Download,
   Share2,
   RefreshCw,
+  Upload,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import {
@@ -24,9 +24,9 @@ import type {
   SeriesCharacterResponse,
   SeriesLocationResponse,
   SeriesProp,
-  ReferenceTransferDirection,
 } from '@/types/series'
 import type { SeriesProductionBible } from '@/types/series'
+import { useSession } from 'next-auth/react'
 
 interface EpisodeProjectOption {
   projectId: string
@@ -56,21 +56,60 @@ export function SeriesReferenceLibraryPanel({
   isGenerating,
   onRefresh,
 }: SeriesReferenceLibraryPanelProps) {
+  const { data: session } = useSession()
+  const userId = session?.user?.id
+
   const [subTab, setSubTab] = useState<RefSubTab>('cast')
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('')
-  const [transferOpen, setTransferOpen] = useState(false)
-  const [transferDirection, setTransferDirection] =
-    useState<ReferenceTransferDirection>('project_to_series')
+  const [selectedEpisodeProjectId, setSelectedEpisodeProjectId] = useState<string>('')
+  const [importOpen, setImportOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
+  const [userProjects, setUserProjects] = useState<Array<{ id: string; title: string }>>([])
+  const [loadingProjects, setLoadingProjects] = useState(false)
+
+  useEffect(() => {
+    if (!userId) return
+    let cancelled = false
+    setLoadingProjects(true)
+    fetch(`/api/projects?userId=${encodeURIComponent(userId)}&pageSize=50`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data.success) return
+        const list = (data.projects || []).map((p: { id: string; title: string }) => ({
+          id: p.id,
+          title: p.title || 'Untitled project',
+        }))
+        setUserProjects(list)
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingProjects(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
+
+  const importProjectOptions = useMemo(() => {
+    const byId = new Map<string, string>()
+    for (const p of userProjects) byId.set(p.id, p.title)
+    for (const ep of episodeProjects) {
+      if (!byId.has(ep.projectId)) {
+        byId.set(ep.projectId, ep.label)
+      }
+    }
+    return Array.from(byId.entries())
+      .map(([id, title]) => ({ id, title }))
+      .sort((a, b) => a.title.localeCompare(b.title))
+  }, [userProjects, episodeProjects])
 
   const selectedEpisode = useMemo(
-    () => episodeProjects.find((e) => e.projectId === selectedProjectId),
-    [episodeProjects, selectedProjectId]
+    () => episodeProjects.find((e) => e.projectId === selectedEpisodeProjectId),
+    [episodeProjects, selectedEpisodeProjectId]
   )
 
-  const openTransfer = (direction: ReferenceTransferDirection) => {
-    if (!selectedProjectId) return
-    setTransferDirection(direction)
-    setTransferOpen(true)
+  const openExport = () => {
+    if (!selectedEpisodeProjectId) return
+    setExportOpen(true)
   }
 
   const lastUpdated = bible?.lastUpdated
@@ -104,45 +143,50 @@ export function SeriesReferenceLibraryPanel({
                 {bible?.version ? `v${bible.version}` : 'v1.0.0'}
                 {lastUpdated ? ` · Updated ${lastUpdated}` : ''}
               </p>
+              <p className="text-xs text-gray-500 mt-2 max-w-xl">
+                Import cast (image, wardrobe, voice), locations, props, and visual settings from any of
+                your projects. Assets are stored on this series and flow into new episodes.
+              </p>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center shrink-0">
+            <Button
+              onClick={() => setImportOpen(true)}
+              disabled={loadingProjects || importProjectOptions.length === 0}
+              className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
+            >
+              <Upload className="w-4 h-4 mr-1.5" />
+              Reference Library Import
+            </Button>
             {episodeProjects.length > 0 ? (
-              <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                <SelectTrigger className="w-full sm:w-[220px] bg-gray-900 border-gray-700 text-sm">
-                  <SelectValue placeholder="Select episode project…" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-gray-700">
-                  {episodeProjects.map((ep) => (
-                    <SelectItem key={ep.projectId} value={ep.projectId}>
-                      {ep.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <p className="text-xs text-gray-500">Start an episode to import or export assets.</p>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!selectedProjectId}
-              onClick={() => openTransfer('project_to_series')}
-              className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10"
-            >
-              <Download className="w-4 h-4 mr-1.5" />
-              Import from episode
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!selectedProjectId}
-              onClick={() => openTransfer('series_to_project')}
-              className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10"
-            >
-              <Share2 className="w-4 h-4 mr-1.5" />
-              Export to episode
-            </Button>
+              <>
+                <Select
+                  value={selectedEpisodeProjectId}
+                  onValueChange={setSelectedEpisodeProjectId}
+                >
+                  <SelectTrigger className="w-full sm:w-[200px] bg-gray-900 border-gray-700 text-sm">
+                    <SelectValue placeholder="Episode project…" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-900 border-gray-700">
+                    {episodeProjects.map((ep) => (
+                      <SelectItem key={ep.projectId} value={ep.projectId}>
+                        {ep.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!selectedEpisodeProjectId}
+                  onClick={openExport}
+                  className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10"
+                >
+                  <Share2 className="w-4 h-4 mr-1.5" />
+                  Export to episode
+                </Button>
+              </>
+            ) : null}
           </div>
         </div>
       </div>
@@ -189,15 +233,28 @@ export function SeriesReferenceLibraryPanel({
         />
       )}
 
-      {selectedProjectId ? (
+      <ReferenceTransferDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        seriesId={seriesId}
+        seriesTitle={seriesTitle}
+        initialDirection="project_to_series"
+        lockDirection
+        importMode
+        projects={importProjectOptions}
+        onComplete={onRefresh}
+      />
+
+      {selectedEpisodeProjectId ? (
         <ReferenceTransferDialog
-          open={transferOpen}
-          onOpenChange={setTransferOpen}
+          open={exportOpen}
+          onOpenChange={setExportOpen}
           seriesId={seriesId}
-          projectId={selectedProjectId}
+          projectId={selectedEpisodeProjectId}
           seriesTitle={seriesTitle}
           projectTitle={selectedEpisode?.label}
-          initialDirection={transferDirection}
+          initialDirection="series_to_project"
+          lockDirection
           onComplete={onRefresh}
         />
       ) : null}
@@ -219,7 +276,9 @@ function SeriesCastSection({
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-xl font-bold text-white">Cast</h3>
-          <p className="text-sm text-gray-500">Characters shared across all episodes</p>
+          <p className="text-sm text-gray-500">
+            Characters with reference image, wardrobe, and voice
+          </p>
         </div>
         <Button
           variant="outline"
@@ -266,7 +325,10 @@ function SeriesCastSection({
           ))}
         </div>
       ) : (
-        <EmptyState icon={<Users className="w-12 h-12" />} message="No cast in the library yet." />
+        <EmptyState
+          icon={<Users className="w-12 h-12" />}
+          message="No cast in the library yet. Use Reference Library Import to bring assets from a project."
+        />
       )}
     </div>
   )
@@ -343,7 +405,7 @@ function SeriesPropsSection({ props }: { props: SeriesProp[] }) {
       ) : (
         <EmptyState
           icon={<Package className="w-12 h-12" />}
-          message="No props yet. Import from an episode project or add during production."
+          message="No props yet. Import from a project reference library."
         />
       )}
     </div>

@@ -6,6 +6,7 @@ import { sequelize } from '@/config/database'
 import type { ReferenceTransferRequest } from '@/types/series'
 import {
   buildTransferCatalog,
+  buildProjectImportCatalog,
   applyProjectToSeriesTransfer,
   applySeriesToProjectTransfer,
 } from '@/lib/series/referenceTransfer'
@@ -23,6 +24,7 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   const { seriesId } = await params
   const projectId = request.nextUrl.searchParams.get('projectId')
+  const mode = request.nextUrl.searchParams.get('mode')
 
   if (!projectId) {
     return NextResponse.json({ success: false, error: 'projectId is required' }, { status: 400 })
@@ -39,7 +41,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (!project) {
       return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 })
     }
-    if (project.series_id !== seriesId) {
+
+    const isImportMode = mode === 'import'
+    if (isImportMode) {
+      if (project.user_id !== series.user_id) {
+        return NextResponse.json(
+          { success: false, error: 'You can only import from your own projects' },
+          { status: 403 }
+        )
+      }
+    } else if (project.series_id !== seriesId) {
       return NextResponse.json(
         { success: false, error: 'Project does not belong to this series' },
         { status: 403 }
@@ -53,12 +64,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       episode?.characters?.map((c) => c.characterId).filter(Boolean) || []
     const bibleRef = metadata.seriesBibleRef as { version?: string } | undefined
 
-    const catalog = buildTransferCatalog(
-      bible,
-      metadata,
-      episodeCharacterIds,
-      bibleRef?.version
-    )
+    const catalog = isImportMode
+      ? buildProjectImportCatalog(metadata)
+      : buildTransferCatalog(bible, metadata, episodeCharacterIds, bibleRef?.version)
 
     return NextResponse.json({
       success: true,
@@ -66,6 +74,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       seriesTitle: series.title,
       projectTitle: project.title,
       episodeNumber: project.episode_number,
+      importMode: isImportMode,
     })
   } catch (error) {
     return NextResponse.json(
@@ -112,7 +121,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (!project) {
       return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 })
     }
-    if (project.series_id !== seriesId) {
+
+    const isExternalImport =
+      direction === 'project_to_series' && project.series_id !== seriesId
+    if (isExternalImport) {
+      if (project.user_id !== series.user_id) {
+        return NextResponse.json(
+          { success: false, error: 'You can only import from your own projects' },
+          { status: 403 }
+        )
+      }
+    } else if (project.series_id !== seriesId) {
       return NextResponse.json(
         { success: false, error: 'Project does not belong to this series' },
         { status: 403 }
@@ -145,16 +164,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
       updatedBible.lastUpdatedBy = `project:${projectId}`
       await series.update({ production_bible: updatedBible })
-      await project.update({
-        metadata: {
-          ...metadata,
-          seriesBibleRef: {
-            version: updatedBible.version,
-            syncedAt: new Date().toISOString(),
-            direction: 'push_to_series',
+      if (project.series_id === seriesId) {
+        await project.update({
+          metadata: {
+            ...metadata,
+            seriesBibleRef: {
+              version: updatedBible.version,
+              syncedAt: new Date().toISOString(),
+              direction: 'push_to_series',
+            },
           },
-        },
-      })
+        })
+      }
 
       return NextResponse.json({
         success: true,
