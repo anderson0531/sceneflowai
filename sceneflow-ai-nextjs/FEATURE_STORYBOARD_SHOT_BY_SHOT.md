@@ -69,7 +69,7 @@ Runtime target: 5:00 total (10 blocks x 0:30 each).
 4. **3:18-3:24** - Apply reference to a scene/segment.
 5. **3:24-3:30** - Cut between two scenes showing continuity consistency.
 
-## Block 8 (3:30-4:00) - 76+ Languages + Adaptive Translation
+## Block 8 (3:30-4:00) - 70+ Languages + Adaptive Translation
 
 1. **3:30-3:36** - Open language/version controls.
 2. **3:36-3:42** - Select a new language version.

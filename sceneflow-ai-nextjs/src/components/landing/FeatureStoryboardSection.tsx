@@ -88,7 +88,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
   },
   {
     id: 8,
-    title: 'Adaptive Translation (76+ Languages)',
+    title: 'Adaptive Translation (70+ Languages)',
     description:
       'Localize content at scale while preserving narrative intent and timeline alignment for multilingual delivery.',
     screenshotSlot: 'Insert screenshot: Multi-language timeline and translation settings',
