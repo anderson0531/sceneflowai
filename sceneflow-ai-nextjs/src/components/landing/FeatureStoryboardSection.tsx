@@ -94,6 +94,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     screenshotSlot: 'Insert screenshot: Multi-language timeline and translation settings',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-20%20at%2011.59.14.png',
     videoSlot: 'Insert 00:30 clip: Instantly localizing a scene into multiple languages',
+    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Multilanguage.mp4',
   },
   {
     id: 9,
