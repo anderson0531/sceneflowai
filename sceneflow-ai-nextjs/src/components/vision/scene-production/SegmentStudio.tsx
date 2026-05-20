@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/textarea'
 import type { SceneSegment, SceneProductionReferences, SceneSegmentStatus, SegmentKeyframeSettings, KeyframeEasingType, KeyframePanDirection } from './types'
 import { Upload, Video, Image as ImageIcon, CheckCircle2, Loader2, Film, Play, X, ChevronLeft, ChevronRight, Maximize2, Clock, Timer, MessageSquare, User, Check, Move, ZoomIn, ZoomOut, RotateCcw, Pencil, Layers, Info, Clapperboard, Camera, Sparkles, Users, FileText, Trash2, ImagePlus, AlertCircle, FrameIcon, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -68,6 +69,8 @@ interface SegmentStudioProps {
   sceneDialogueLines?: SceneDialogueLine[]
   segmentDialogueLines?: SegmentDialogueAssignment[]
   onToggleDialogue?: (dialogueId: string) => void
+  /** Persist visible action instruction for this segment */
+  onSegmentActionChange?: (segmentId: string, action: string) => void
   // Phase 3: Keyframe settings (kept for legacy/export compatibility, UI removed)
   onKeyframeChange?: (settings: SegmentKeyframeSettings) => void
   // Image editing (reuses same modal as Frame step)
@@ -130,6 +133,7 @@ export function SegmentStudio({
   sceneDialogueLines = [],
   segmentDialogueLines = [],
   onToggleDialogue,
+  onSegmentActionChange,
   onKeyframeChange,
   onEditImage,
   onEditSegmentFrame,
@@ -171,6 +175,17 @@ export function SegmentStudio({
   // Video Editing Dialog State
   const [isVideoEditingOpen, setIsVideoEditingOpen] = useState(false)
   const [videoEditingInitialTab, setVideoEditingInitialTab] = useState<VideoEditingTab>('extend')
+
+  const [actionDraft, setActionDraft] = useState('')
+  useEffect(() => {
+    if (!segment) return
+    setActionDraft(
+      segment.action ||
+        segment.actionPrompt ||
+        segment.segmentDirection?.talentAction ||
+        ''
+    )
+  }, [segment?.segmentId, segment?.action, segment?.actionPrompt, segment?.segmentDirection?.talentAction])
   
   // Audio playback state
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -1259,6 +1274,38 @@ export function SegmentStudio({
             </div>
           )}
 
+          {/* Action instruction (dialogue or silent beat) */}
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Clapperboard className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <span className="text-xs font-semibold text-amber-800 dark:text-amber-200">Action instruction</span>
+            </div>
+            <p className="text-[10px] text-amber-700/80 dark:text-amber-300/80 mb-2">
+              {assignedDialogueCount > 0
+                ? 'Motion and blocking for this line (keyframes + Veo). Long lines auto-split at ~10s.'
+                : 'No dialogue assigned — describe the visible action for this segment.'}
+            </p>
+            <Textarea
+              value={actionDraft}
+              onChange={(e) => setActionDraft(e.target.value)}
+              onBlur={() => {
+                if (segment && onSegmentActionChange) {
+                  onSegmentActionChange(segment.segmentId, actionDraft.trim())
+                }
+              }}
+              rows={3}
+              className="text-xs bg-white dark:bg-gray-900 border-amber-200 dark:border-amber-700"
+              placeholder="Character enters frame, picks up the phone, expression shifts to dread…"
+            />
+            {segment.dialoguePortion && segment.dialoguePortion.partCount > 1 && (
+              <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1.5">
+                Dialogue part {segment.dialoguePortion.partIndex + 1}/{segment.dialoguePortion.partCount}: &ldquo;
+                {segment.dialoguePortion.excerpt.slice(0, 80)}
+                {segment.dialoguePortion.excerpt.length > 80 ? '…' : ''}&rdquo;
+              </p>
+            )}
+          </div>
+
           {/* Dialogue Coverage */}
           {sceneDialogueLines.length > 0 && (
             <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
@@ -1552,6 +1599,11 @@ export function SegmentStudio({
           sceneNarration={sceneNarration}
           frameResolverScene={visionScene ?? null}
           locationReferences={locationReferences}
+          onActionChange={
+            onSegmentActionChange && segment
+              ? (action) => onSegmentActionChange(segment.segmentId, action)
+              : undefined
+          }
           onSaveEditedKeyframe={
             onEditSegmentFrame && segment
               ? (frameType, newUrl) =>

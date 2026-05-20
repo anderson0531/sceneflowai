@@ -2155,6 +2155,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [applySceneProductionUpdate]
   )
 
+  const handleSegmentActionChange = useCallback(
+    (sceneId: string, segmentId: string, action: string) => {
+      applySceneProductionUpdate(sceneId, (current) => {
+        if (!current) return current
+        const segments = current.segments.map((segment) =>
+          segment.segmentId === segmentId
+            ? { ...segment, action, actionPrompt: action }
+            : segment
+        )
+        return { ...current, segments }
+      })
+    },
+    [applySceneProductionUpdate]
+  )
+
   // Handle segment lock state changes (persists to DB for production lock)
   const handleLockSegment = useCallback(
     (sceneId: string, segmentId: string, locked: boolean) => {
@@ -10813,6 +10828,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentPromptChange={handleSegmentPromptChange}
                 onSegmentKeyframeChange={handleSegmentKeyframeChange}
                 onSegmentDialogueAssignmentChange={handleSegmentDialogueAssignmentChange}
+                onSegmentActionChange={handleSegmentActionChange}
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
                 onLockSegment={handleLockSegment}
@@ -10959,6 +10975,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onSegmentPromptChange={(sceneId, segmentId, prompt) =>
                               handleSegmentPromptChange(sceneId, segmentId, prompt)
                             }
+                            onSegmentDialogueAssignmentChange={handleSegmentDialogueAssignmentChange}
+                            onSegmentActionChange={handleSegmentActionChange}
                             onSegmentGenerate={(sceneId, segmentId, mode) =>
                               handleSegmentGenerate(sceneId, segmentId, mode)
                             }

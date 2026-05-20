@@ -7,6 +7,7 @@ export interface FramePromptSegmentLike {
   action?: string | null
   actionPrompt?: string | null
   subject?: string | null
+  segmentDirection?: { talentAction?: string } | null
 }
 
 export interface ResolveAdvancedBaselineArgs {
@@ -47,6 +48,7 @@ export function resolveQuickFrameActionPrompt(segment: FramePromptSegmentLike | 
     normalize(segment.generatedPrompt) ||
     normalize(segment.action) ||
     normalize(segment.actionPrompt) ||
+    normalize(segment.segmentDirection?.talentAction) ||
     normalize(segment.subject) ||
     ''
   )

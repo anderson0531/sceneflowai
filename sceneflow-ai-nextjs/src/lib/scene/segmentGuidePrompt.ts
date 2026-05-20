@@ -265,10 +265,17 @@ export function getSegmentDialogueLines(
             i === numericIndex
         )
         if (!dialogueItem) return null
+        const fullLine = dialogueItem.line || dialogueItem.text || ''
+        const portion =
+          segment.dialoguePortion &&
+          segment.dialoguePortion.lineId === id &&
+          segment.dialoguePortion.excerpt?.trim()
+            ? segment.dialoguePortion.excerpt.trim()
+            : segment.dialogueLines?.find((dl) => dl.id === id)?.line?.trim()
         return {
           id,
           character: dialogueItem.character || 'Unknown',
-          line: dialogueItem.line || dialogueItem.text || '',
+          line: portion || fullLine,
           parenthetical: dialogueItem.parenthetical,
           index: sceneDialogue.indexOf(dialogueItem),
         }

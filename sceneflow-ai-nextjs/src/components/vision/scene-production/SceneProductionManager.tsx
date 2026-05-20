@@ -72,6 +72,7 @@ interface SceneProductionManagerProps {
   onPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
   onKeyframeChange?: (sceneId: string, segmentId: string, keyframeSettings: SegmentKeyframeSettings) => void
   onDialogueAssignmentChange?: (sceneId: string, segmentId: string, dialogueLineIds: string[]) => void
+  onSegmentActionChange?: (sceneId: string, segmentId: string, action: string) => void
   onGenerate: (sceneId: string, segmentId: string, mode: GenerationType, options?: { 
     startFrameUrl?: string
     endFrameUrl?: string
@@ -143,6 +144,7 @@ export function SceneProductionManager({
   onPromptChange,
   onKeyframeChange,
   onDialogueAssignmentChange,
+  onSegmentActionChange,
   onGenerate,
   onUpload,
   audioTracks: externalAudioTracks,
@@ -1902,6 +1904,11 @@ Example format:
               sceneDialogueLines={sceneDialogueLines}
               segmentDialogueLines={selectedSegmentDialogue}
               onToggleDialogue={handleToggleDialogue}
+              onSegmentActionChange={
+                onSegmentActionChange
+                  ? (segmentId, action) => onSegmentActionChange(sceneId, segmentId, action)
+                  : undefined
+              }
               onKeyframeChange={handleKeyframeChange}
               onEditImage={onEditImage}
               onEditSegmentFrame={

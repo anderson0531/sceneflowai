@@ -117,6 +117,8 @@ interface SegmentPromptBuilderProps {
   locationReferences?: LocationReference[]
   /** After AI keyframe edit in this dialog — persist new image URL */
   onSaveEditedKeyframe?: (frameType: 'start' | 'end', newFrameUrl: string) => void
+  /** Persist segment action instruction (visual beat without / alongside dialogue) */
+  onActionChange?: (action: string) => void
 }
 
 export interface GeneratePromptData {
@@ -140,6 +142,8 @@ export interface GeneratePromptData {
   characterDialogGuidance?: Array<{ characterName: string; referenceImageUrl?: string; dialogLines?: string[] }>
   /** Veo 3.1 native audio guide (dialogue, narration, SFX cues) */
   guidePrompt?: string
+  /** Visible action / motion for this clip (especially action-only segments) */
+  actionInstruction?: string
   // Style data
   artStyle?: string
   shotType?: string
@@ -171,6 +175,7 @@ export function SegmentPromptBuilder({
   frameResolverScene = null,
   locationReferences = [],
   onSaveEditedKeyframe,
+  onActionChange,
 }: SegmentPromptBuilderProps) {
   const [activeTab, setActiveTab] = useState<'guided' | 'advanced'>('guided')
   
@@ -480,7 +485,11 @@ export function SegmentPromptBuilder({
     lighting: 'natural',
     lightingMood: '',
     characters: [],
-    characterActions: segment.action || '',
+    characterActions:
+      segment.action ||
+      segment.actionPrompt ||
+      segment.segmentDirection?.talentAction ||
+      '',
     talentBlocking: '',
     emotionalBeat: '',
     keyProps: '',
@@ -533,14 +542,18 @@ export function SegmentPromptBuilder({
         shotType: segment.shotType || prev.shotType,
         cameraAngle: segment.cameraAngle || prev.cameraAngle,
         cameraMovement: segment.cameraMovement || prev.cameraMovement,
-        characterActions: segment.action || prev.characterActions,
+        characterActions:
+          segment.action ||
+          segment.actionPrompt ||
+          segment.segmentDirection?.talentAction ||
+          prev.characterActions,
         emotionalBeat: segment.emotionalBeat || prev.emotionalBeat,
       }))
       
       // Set duration from segment
       const segmentDuration = Math.round(segment.endTime - segment.startTime)
-      if ([4, 6, 8].includes(segmentDuration)) {
-        setDuration(segmentDuration as 4 | 6 | 8)
+      if ([4, 6, 8, 10].includes(segmentDuration)) {
+        setDuration(segmentDuration as 4 | 6 | 8 | 10)
       }
       
       // Backdrop mode: Pre-fill prompt with scene context for establishing shots
@@ -902,6 +915,8 @@ export function SegmentPromptBuilder({
       promptData.aspectRatio = aspectRatio
       promptData.resolution = resolution
       promptData.generationMethod = generationMethod
+      promptData.actionInstruction = structure.characterActions.trim() || undefined
+      onActionChange?.(structure.characterActions.trim())
       
       if (generationMethod === 'I2V' && startFrameUrl) {
         promptData.startFrameUrl = startFrameUrl
@@ -1793,7 +1808,7 @@ export function SegmentPromptBuilder({
               <div className="mt-4 grid grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs text-gray-400">Duration</label>
-                  <Select value={String(duration)} onValueChange={(v) => setDuration(Number(v) as 4 | 6 | 8)}>
+                  <Select value={String(duration)} onValueChange={(v) => setDuration(Number(v) as 4 | 6 | 8 | 10)}>
                     <SelectTrigger className="mt-1 h-9">
                       <SelectValue />
                     </SelectTrigger>
@@ -1801,6 +1816,7 @@ export function SegmentPromptBuilder({
                       <SelectItem value="4">4 seconds</SelectItem>
                       <SelectItem value="6">6 seconds</SelectItem>
                       <SelectItem value="8">8 seconds</SelectItem>
+                      <SelectItem value="10">10 seconds (dialogue max)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1840,6 +1856,29 @@ export function SegmentPromptBuilder({
 
             {/* Guided Mode */}
             <TabsContent value="guided" className="space-y-4 mt-4">
+              {mode === 'video' && (
+                <div className="space-y-2 p-3 rounded-lg border border-amber-600/40 bg-amber-950/20">
+                  <h3 className="text-sm font-semibold text-amber-200 flex items-center gap-2">
+                    <Clapperboard className="w-4 h-4" />
+                    Action instruction
+                  </h3>
+                  <p className="text-[11px] text-gray-400 leading-relaxed">
+                    Describe visible motion for this segment. Required for action-only beats; for dialogue segments,
+                    keyframes use this plus the assigned line (split automatically if longer than ~10s for Veo).
+                  </p>
+                  <Textarea
+                    value={structure.characterActions}
+                    onChange={(e) =>
+                      setStructure((prev) => ({ ...prev, characterActions: e.target.value }))
+                    }
+                    onBlur={() => onActionChange?.(structure.characterActions.trim())}
+                    rows={3}
+                    placeholder="e.g. She slams the folder on the desk and turns toward the window, shoulders tense."
+                    className="bg-gray-900 border-gray-600 text-white text-sm"
+                  />
+                </div>
+              )}
+
               {/* Location & Setting */}
               <div className="space-y-3 p-3 rounded border border-gray-700 bg-gray-800/50">
                 <h3 className="text-sm font-semibold text-gray-200">Location & Setting</h3>

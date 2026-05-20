@@ -69,6 +69,8 @@ interface SceneGalleryProps {
   productionReferences: SceneProductionReferences
   onInitializeProduction: (sceneId: string, options: { targetDuration: number }) => Promise<void>
   onSegmentPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
+  onSegmentDialogueAssignmentChange?: (sceneId: string, segmentId: string, dialogueLineIds: string[]) => void
+  onSegmentActionChange?: (sceneId: string, segmentId: string, action: string) => void
   onSegmentGenerate: (sceneId: string, segmentId: string, mode: GenerationType, options?: {
     startFrameUrl?: string
     endFrameUrl?: string
@@ -136,6 +138,8 @@ export function SceneGallery({
   productionReferences,
   onInitializeProduction,
   onSegmentPromptChange,
+  onSegmentDialogueAssignmentChange,
+  onSegmentActionChange,
   onSegmentGenerate,
   onSegmentUpload,
   onEditSegmentFrame,
@@ -770,6 +774,8 @@ export function SceneGallery({
                   productionReferences={productionReferences}
                   onInitializeProduction={onInitializeProduction}
                   onSegmentPromptChange={onSegmentPromptChange}
+                  onSegmentDialogueAssignmentChange={onSegmentDialogueAssignmentChange}
+                  onSegmentActionChange={onSegmentActionChange}
                   onSegmentGenerate={onSegmentGenerate}
                   onSegmentUpload={onSegmentUpload}
                   onEditSegmentFrame={onEditSegmentFrame}
@@ -921,6 +927,8 @@ interface SceneCardProps {
   productionReferences: SceneProductionReferences
   onInitializeProduction: (sceneId: string, options: { targetDuration: number }) => Promise<void>
   onSegmentPromptChange: (sceneId: string, segmentId: string, prompt: string) => void
+  onSegmentDialogueAssignmentChange?: (sceneId: string, segmentId: string, dialogueLineIds: string[]) => void
+  onSegmentActionChange?: (sceneId: string, segmentId: string, action: string) => void
   onSegmentGenerate: (sceneId: string, segmentId: string, mode: GenerationType, options?: {
     startFrameUrl?: string
     endFrameUrl?: string
@@ -1016,6 +1024,8 @@ function SceneCard({
   productionReferences,
   onInitializeProduction,
   onSegmentPromptChange,
+  onSegmentDialogueAssignmentChange,
+  onSegmentActionChange,
   onSegmentGenerate,
   onSegmentUpload,
   onEditSegmentFrame,
@@ -1406,6 +1416,8 @@ function SceneCard({
               references={productionReferences}
               onInitialize={onInitializeProduction}
               onPromptChange={onSegmentPromptChange}
+              onDialogueAssignmentChange={onSegmentDialogueAssignmentChange}
+              onSegmentActionChange={onSegmentActionChange}
               onGenerate={onSegmentGenerate}
               onUpload={onSegmentUpload}
               onEditSegmentFrame={onEditSegmentFrame}

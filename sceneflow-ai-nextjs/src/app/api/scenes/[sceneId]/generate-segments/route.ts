@@ -7,6 +7,14 @@ import {
   repairPhase1DirectionsTimeline,
 } from '@/lib/scene/dialogueTimelineCoverage'
 import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDuration'
+import {
+  VEO_ABSOLUTE_CLIP_MAX_SEC,
+  VEO_DIALOGUE_CLIP_MAX_SEC,
+  estimateSpokenDurationSeconds,
+  maxVeoDurationForSegment,
+  outputSegmentHasContent,
+  planDialogueLineSplits,
+} from '@/lib/scene/dialogueSegmentSplit'
 import { expandDirectionsForTimelineAudioBudget } from '@/lib/scene/expandDirectionsForTimelineAudioBudget'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { resolveNarrationTextForAudioTimeline } from '@/lib/script/narration'
@@ -128,8 +136,9 @@ function targetSegmentDurationForResponse(config: SegmentDurationConfig): number
 function segmentDurationPromptSection(config: SegmentDurationConfig): string {
   if (config.mode === 'auto') {
     return `
-**DURATION (AUTO — PER SEGMENT):** Veo 3.1 supports **4, 6, 8, 10, or 12 seconds** per generated clip. For **each** segment, set \`estimated_duration\` to one of these values based on dialogue timing, breath pauses, and action cut points — **different segments may use different values**. A soft planning average from total audio ÷ minimum clip count is ~${config.hintSeconds}s; use that as a guide, not a hard target. **Never exceed 12s** for any segment. **Minimum 4s** per segment when possible.
-**WHEN TO SPLIT:** Keep exactly one dialogue/narration line per segment. If one line would need **more than 12s**, split that SAME line across continuation segments.
+**DURATION (AUTO — PER SEGMENT):** Veo 3.1 supports **4, 6, 8, 10, or 12 seconds** per generated clip. For **each** segment, set \`estimated_duration\` to one of these values based on dialogue timing, breath pauses, and action cut points — **different segments may use different values**. A soft planning average from total audio ÷ minimum clip count is ~${config.hintSeconds}s; use that as a guide, not a hard target. **Dialogue lip-sync clips: never exceed 10s.** Action-only or voiceover backdrop clips: **never exceed 12s**. **Minimum 4s** per segment when possible.
+**WHEN TO SPLIT:** Keep exactly one dialogue/narration line per segment. If one spoken line would need **more than 10s**, split that SAME line across continuation segments (\`veoTimelineContinuation: true\`) with matching keyframe continuity.
+**ACTION-ONLY BEATS:** Scenes may need visual action **without** dialogue (fights, reveals, inserts). For timeline gaps or pure action beats, assign **no** dialogue index but write a specific \`talent_action\` / keyframe action describing visible motion.
 `
   }
   const t = config.fixedSeconds ?? 6
@@ -207,8 +216,12 @@ interface IntelligentSegment {
     visual_style: string
   }
   assigned_dialogue_indices?: number[] // 0-based indices of dialogue lines covered by this segment
-  /** True when this row is an extra Veo clip continuing the same timeline line (>12s audio) */
+  /** True when this row is an extra Veo clip continuing the same timeline line (>10s dialogue) */
   veoTimelineContinuation?: boolean
+  /** Sub-string of assigned dialogue for split clips (lip-sync portion) */
+  dialogue_text_excerpt?: string
+  dialogue_part_index?: number
+  dialogue_part_count?: number
   // NEW: AI-recommended generation plan
   generation_plan?: {
     confidence: number
@@ -413,9 +426,8 @@ export async function POST(
       totalAudioDurationSeconds
     })
     
-    // Calculate minimum segments required based on total audio duration
-    // Each segment can be max 12 seconds (Veo 3.1 constraint)
-    const MAX_SEGMENT_SECONDS = 12
+    // Minimum segment count: plan for ~10s dialogue clips (Veo lip-sync effective limit)
+    const MAX_SEGMENT_SECONDS = VEO_ABSOLUTE_CLIP_MAX_SEC
     const timelineAudioSum = sceneData.combinedAudioTimeline.reduce(
       (acc, l) => acc + (typeof l.estimatedDuration === 'number' ? l.estimatedDuration : 0),
       0
@@ -430,7 +442,10 @@ export async function POST(
       timelineAudioSum,
       clientAudioSeconds
     )
-    const minimumSegmentsRequired = Math.max(1, Math.ceil(effectiveAudioDuration / MAX_SEGMENT_SECONDS))
+    const minimumSegmentsRequired = Math.max(
+      1,
+      Math.ceil(effectiveAudioDuration / VEO_DIALOGUE_CLIP_MAX_SEC)
+    )
     const durationConfig = resolveSegmentDurationConfig(body, effectiveAudioDuration, minimumSegmentsRequired)
     const targetSegmentDurationResponse = targetSegmentDurationForResponse(durationConfig)
     
@@ -1945,13 +1960,13 @@ function generateDirectionsOnlyPrompt(
       ? `- **Segment length (AUTO):** Each segment \`estimated_duration\` must be **exactly 4, 6, 8, 10, or 12** seconds (Veo only). Pick per segment from dialogue/action cuts; soft average ~${durationConfig.hintSeconds}s. **Never exceed 12s** per segment.\n`
       : `- **Segment length (FIXED):** Target **${durationConfig.fixedSeconds ?? 6}s** per segment (\`estimated_duration\` must be **exactly 4, 6, 8, 10, or 12** — prefer **${durationConfig.fixedSeconds ?? 6}s**). **Never exceed 12s.**\n`
   scopeConstraints += `- **HARD CONSTRAINT: Total segment durations MUST sum to exactly ~${authoritativeDuration}s (narration/audio duration)**\n`
-  scopeConstraints += `- **MINIMUM SEGMENT COUNT:** At least **${minimumSegmentsRequired}** segments (${authoritativeDuration}s ÷ ${8}s max per clip). Use **more** segments only when distinct shots are needed or a single audio line exceeds 12s (then you are effectively continuing the same line across clips).\n`
+  scopeConstraints += `- **MINIMUM SEGMENT COUNT:** At least **${minimumSegmentsRequired}** segments (${authoritativeDuration}s ÷ ${VEO_DIALOGUE_CLIP_MAX_SEC}s dialogue clips). Use **more** when distinct shots are needed or a single spoken line exceeds **${VEO_DIALOGUE_CLIP_MAX_SEC}s** (continue same line with \`veoTimelineContinuation: true\`).\n`
   scopeConstraints += `- **NO REDUNDANT ESTABLISHING SHOTS:** Use **one** backdrop/establishing beat for contiguous 🎙️ voiceover unless duration forces a required continuation. Do not output multiple segments that repeat the same audio timeline index.\n`
   scopeConstraints += `- Do not exceed ${authoritativeDuration}s total duration across segments.\n`
   
   const dialogueCount = sceneData.combinedAudioTimeline.length
   
-  scopeConstraints += `- **SEGMENT COUNT MATCHING:** You MUST output exactly ${dialogueCount} segments (one for each item in the audio timeline) unless a segment requires >12s duration, in which case you must split it using \`veoTimelineContinuation: true\`. Do NOT invent B-roll segments. Do NOT combine multiple dialogue lines into a single segment. There must be exactly ${dialogueCount} non-continuation segments.\n`
+  scopeConstraints += `- **SEGMENT COUNT MATCHING:** Output one segment per audio timeline index (🗣️/🎙️). Split any line longer than **${VEO_DIALOGUE_CLIP_MAX_SEC}s** using \`veoTimelineContinuation: true\`. You MAY add **action-only** segments (no dialogue index) for silent beats between lines. Do NOT combine two dialogue indices into one segment.\n`
   
   if (segmentCountTarget) {
     scopeConstraints += `- **OVERRIDE SEGMENT COUNT: ${segmentCountTarget} segments**\n`
@@ -2467,34 +2482,93 @@ async function callGeminiForPromptsFromDirections(prompt: string): Promise<Intel
  */
 function enforceMaxSegmentDuration(
   segments: IntelligentSegment[],
-  maxDuration: number = 12,
+  _maxDuration: number = VEO_ABSOLUTE_CLIP_MAX_SEC,
   sceneData: ComprehensiveSceneData
 ): IntelligentSegment[] {
   const result: IntelligentSegment[] = []
 
   for (const seg of segments) {
-    if (seg.estimated_duration <= maxDuration) {
-      result.push(seg)
+    const dialogueIndices = seg.assigned_dialogue_indices || []
+    const hasDialogue = dialogueIndices.length > 0
+    const maxDur = maxVeoDurationForSegment(hasDialogue)
+
+    // Single long dialogue line → split spoken text at natural boundaries (~10s per clip)
+    if (dialogueIndices.length === 1) {
+      const lineIdx = dialogueIndices[0]
+      const timelineLine = sceneData.combinedAudioTimeline[lineIdx]
+      if (timelineLine?.text) {
+        const spokenDur =
+          timelineLine.estimatedDuration || estimateSpokenDurationSeconds(timelineLine.text)
+        if (spokenDur > maxDur || seg.estimated_duration > maxDur) {
+          const parts = planDialogueLineSplits(timelineLine.text, maxDur)
+          if (parts.length > 1) {
+            console.log(
+              `[Segment Split] Dialogue line ${lineIdx} (~${spokenDur.toFixed(1)}s) → ${parts.length} clips: ` +
+                parts.map((p) => `${p.veoDuration}s`).join(', ')
+            )
+            for (const part of parts) {
+              const isFirst = part.partIndex === 0
+              const isLast = part.partIndex === parts.length - 1
+              const elements = seg.video_prompt_elements
+                ? {
+                    ...seg.video_prompt_elements,
+                    dialogue: part.excerpt,
+                    action: isFirst
+                      ? seg.video_prompt_elements.action
+                      : `Continue performance: ${part.excerpt}`,
+                  }
+                : seg.video_prompt_elements
+
+              result.push({
+                ...seg,
+                sequence: 0,
+                estimated_duration: part.veoDuration,
+                assigned_dialogue_indices: [lineIdx],
+                veoTimelineContinuation: part.partIndex > 0,
+                dialogue_text_excerpt: part.excerpt,
+                dialogue_part_index: part.partIndex,
+                dialogue_part_count: part.partCount,
+                video_prompt_elements: elements,
+                trigger_reason: isFirst
+                  ? seg.trigger_reason
+                  : `Dialogue continuation (part ${part.partIndex + 1}/${part.partCount})`,
+                emotional_beat: isFirst
+                  ? seg.emotional_beat
+                  : `${seg.emotional_beat} (continued)`,
+                end_frame_description: isLast
+                  ? seg.end_frame_description
+                  : `Mid-line pause — mouth position and pose match end of: "${part.excerpt.slice(0, 60)}..."`,
+                reference_strategy: {
+                  ...seg.reference_strategy,
+                  use_scene_frame: isFirst ? seg.reference_strategy.use_scene_frame : false,
+                  start_frame_description: isFirst
+                    ? seg.reference_strategy.start_frame_description
+                    : seg.end_frame_description,
+                },
+              })
+            }
+            continue
+          }
+        }
+      }
+    }
+
+    if (seg.estimated_duration <= maxDur) {
+      result.push({
+        ...seg,
+        estimated_duration: snapToVeoDuration(Math.max(seg.estimated_duration, 4)),
+      })
       continue
     }
 
-    // --- Split required ---
     const originalDuration = seg.estimated_duration
-    const dialogueIndices = seg.assigned_dialogue_indices || []
-
-    // Keep the minimum required split count and allocate 12s-first where feasible.
-    const subDurations = allocateVeoSplitDurations(originalDuration, maxDuration)
+    const subDurations = allocateVeoSplitDurations(originalDuration, maxDur)
     const numParts = subDurations.length
-
-    // Distribute dialogue indices across sub-segments proportionally (or repeat single long line)
     const dialoguePerPart =
       dialogueIndices.length <= 1 ? 1 : Math.ceil(dialogueIndices.length / numParts)
 
     console.log(
-      `[Segment Split] Splitting segment seq=${seg.sequence} ` +
-      `(${originalDuration.toFixed(1)}s) into ${numParts} parts: ` +
-      `[${subDurations.map(d => `${d}s`).join(', ')}], ` +
-      `distributing ${dialogueIndices.length} dialogue line(s)`
+      `[Segment Split] Splitting segment seq=${seg.sequence} (${originalDuration.toFixed(1)}s, max ${maxDur}s) → ${numParts} parts`
     )
 
     for (let i = 0; i < numParts; i++) {
@@ -2508,36 +2582,29 @@ function enforceMaxSegmentDuration(
       const isFirstPart = i === 0
       const isLastPart = i === numParts - 1
 
-      const partTriggerReason = isFirstPart
-        ? seg.trigger_reason
-        : `Continuation of split segment (part ${i + 1}/${numParts}) — ${seg.trigger_reason}`
-
       result.push({
         ...seg,
-        sequence: 0, // Will be re-sequenced below
+        sequence: 0,
         estimated_duration: subDurations[i],
-        trigger_reason: partTriggerReason,
-        // Keep the generated prompt clean; continuity is represented by metadata fields.
+        trigger_reason: isFirstPart
+          ? seg.trigger_reason
+          : `Continuation (part ${i + 1}/${numParts}) — ${seg.trigger_reason}`,
         video_generation_prompt: seg.video_generation_prompt,
         video_prompt_elements: seg.video_prompt_elements,
         assigned_dialogue_indices: partDialogue,
         veoTimelineContinuation: dialogueIndices.length <= 1 && numParts > 1 && i > 0,
-        emotional_beat: isFirstPart
-          ? seg.emotional_beat
-          : `${seg.emotional_beat} (continued)`,
+        emotional_beat: isFirstPart ? seg.emotional_beat : `${seg.emotional_beat} (continued)`,
         end_frame_description: isLastPart
           ? seg.end_frame_description
           : `Transition point within split segment — visual continuity maintained`,
         reference_strategy: {
           ...seg.reference_strategy,
-          // Only the first part of a split should use the scene frame
           use_scene_frame: isFirstPart ? seg.reference_strategy.use_scene_frame : false,
         },
       })
     }
   }
 
-  // Re-sequence all segments
   result.forEach((seg, idx) => {
     seg.sequence = idx + 1
   })
@@ -2571,7 +2638,13 @@ function transformSegmentsToOutput(
       sceneData.combinedAudioTimeline
     )
     const assignedDialogue = dialogueLinesForAssignedTimelineIndices(seg.assigned_dialogue_indices, sceneData)
-    const dialogueText = assignedDialogue.map(d => `${d.character}:${d.text}`).join('|')
+    const dialogueExcerpt = seg.dialogue_text_excerpt?.trim()
+    const dialogueText = assignedDialogue
+      .map((d) => {
+        const line = dialogueExcerpt && assignedDialogue.length === 1 ? dialogueExcerpt : d.text
+        return `${d.character}:${line}`
+      })
+      .join('|')
     const dialogueHash = simpleHash(dialogueText)
     const visualDescriptionHash = simpleHash(sceneData.visualDescription || '')
 
@@ -2607,6 +2680,14 @@ function transformSegmentsToOutput(
     let transitionType: 'CUT' | 'CONTINUE' = idx === 0 ? 'CUT' : 'CONTINUE'
     if (rawTransitionIn === 'cut') transitionType = 'CUT'
     else if (rawTransitionIn === 'continue') transitionType = 'CONTINUE'
+    else if (seg.veoTimelineContinuation) transitionType = 'CONTINUE'
+
+    const resolvedAction =
+      approvedDir?.talentAction?.trim() ||
+      seg.video_prompt_elements?.action?.trim() ||
+      scenePromptBundleRow?.segmentDirectionSummary?.trim() ||
+      seg.trigger_reason?.trim() ||
+      ''
 
     const generationPlan = {
       recommendedMethod: generatedMethod,
@@ -2650,10 +2731,22 @@ function transformSegmentsToOutput(
       emotionalBeat: seg.emotional_beat,
       dialogueLineIds,
       dialogueLines: assignedDialogue.map((d, dIdx) => ({
-        id: `dialogue-${dIdx}`,
+        id: dialogueLineIds[dIdx] || `dialogue-${dIdx}`,
         character: d.character,
-        line: d.text,
+        line: dialogueExcerpt && assignedDialogue.length === 1 ? dialogueExcerpt : d.text,
       })),
+      ...(seg.dialogue_part_count && seg.dialogue_part_count > 1 && dialogueLineIds[0]
+        ? {
+            dialoguePortion: {
+              lineId: dialogueLineIds[0],
+              partIndex: seg.dialogue_part_index ?? 0,
+              partCount: seg.dialogue_part_count,
+              excerpt: dialogueExcerpt || assignedDialogue[0]?.text || '',
+            },
+          }
+        : {}),
+      action: resolvedAction,
+      actionPrompt: resolvedAction,
       generationPlan,
       promptContext: {
         dialogueHash,
@@ -2727,11 +2820,7 @@ function applyContinuationDialogueFallback(segments: any[]): any[] {
 }
 
 function pruneAndResequenceSegments(segments: any[]): any[] {
-  const filtered = segments.filter((seg) => {
-    const hasDialogueIds = Array.isArray(seg.dialogueLineIds) && seg.dialogueLineIds.length > 0
-    const hasDialogueLines = Array.isArray(seg.dialogueLines) && seg.dialogueLines.length > 0
-    return hasDialogueIds || hasDialogueLines
-  })
+  const filtered = segments.filter((seg) => outputSegmentHasContent(seg))
 
   if (filtered.length !== segments.length) {
     console.log(

@@ -529,6 +529,13 @@ export interface SceneSegment {
   characters?: SegmentCharacter[]  // Characters present in this segment
   dialogueLines?: SegmentDialogueLine[]  // Dialogue lines assigned to this segment
   dialogueLineIds?: string[]  // Phase 6: IDs of assigned dialogue lines (persisted to DB)
+  /** When a single dialogue line is split across Veo clips (>10s), this holds the spoken excerpt for this segment */
+  dialoguePortion?: {
+    lineId: string
+    partIndex: number
+    partCount: number
+    excerpt: string
+  }
   // Phase 3: Keyframe settings for Ken Burns animation
   keyframeSettings?: SegmentKeyframeSettings
   // Establishing Shot metadata

@@ -19,6 +19,7 @@ import {
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDuration'
+import { VEO_ABSOLUTE_CLIP_MAX_SEC, maxVeoDurationForSegment } from '@/lib/scene/dialogueSegmentSplit'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { isLikelyNarration } from '@/lib/script/narration'
 import {
@@ -485,7 +486,7 @@ function extractAudioMetadata(scene: any, selectedLanguage = 'en-US'): {
 // Client-Side Segment Duration Enforcement (Safety Net)
 // ============================================================================
 
-const CLIENT_MAX_SEGMENT_DURATION = 12 // Veo 3.1 max
+const CLIENT_MAX_SEGMENT_DURATION = VEO_ABSOLUTE_CLIP_MAX_SEC
 
 /**
  * Client-side safety net: split any ProposedSegments that exceed the max duration.
@@ -499,14 +500,14 @@ function enforceClientMaxDuration(segments: ProposedSegment[]): ProposedSegment[
   let globalIndex = 0
 
   for (const seg of segments) {
-    if (seg.duration <= CLIENT_MAX_SEGMENT_DURATION) {
+    const maxDur = maxVeoDurationForSegment(seg.dialogueLineIds.length > 0)
+    if (seg.duration <= maxDur) {
       result.push({ ...seg, sequenceIndex: globalIndex })
       globalIndex++
       continue
     }
 
-    // Split oversized segment with same 8s-first allocator used server-side.
-    const subDurations = allocateVeoSplitDurations(seg.duration, CLIENT_MAX_SEGMENT_DURATION)
+    const subDurations = allocateVeoSplitDurations(seg.duration, maxDur)
     const numParts = subDurations.length
     let currentStart = seg.startTime
     const dialoguePerPart = Math.ceil(seg.dialogueLineIds.length / numParts)
