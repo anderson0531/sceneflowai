@@ -13,7 +13,8 @@ import type {
   CheckpointResults,
   AxisCheckpointResults,
   PreviousAnalysisContext,
-  getGreenlightTier,
+} from '@/lib/types/audienceResonance'
+import {
   formatTargetAudienceForPrompt,
   normalizeAudienceIntent,
 } from '@/lib/types/audienceResonance'
