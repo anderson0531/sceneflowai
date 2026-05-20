@@ -66,6 +66,7 @@ import type {
   AudioTrackTimingSettings,
   SceneAudioConfig,
   ProductionStream,
+  ProductionStreamType,
   TextOverlay,
   ProductionTarget,
   AnimaticRenderSettings,
@@ -111,8 +112,9 @@ function normalizeGuideCharacters(raw: unknown): GuideCharacterDemographic[] {
     }))
     .filter((c) => c.name.length > 0)
 }
+import { upload } from '@vercel/blob/client'
 import { SUPPORTED_LANGUAGES } from '@/constants/languages'
-import { getNextProductionStreamVersion } from './defaults'
+import { getNextProductionStreamVersion, getProductionStreamDisplayName } from './defaults'
 
 // Default audio track selection state
 const DEFAULT_AUDIO_TRACKS: SelectedAudioTracks = {
@@ -363,6 +365,8 @@ function DirectorConsoleRoot({
   )
   const [renderingStreamId, setRenderingStreamId] = useState<string | null>(null)
   const [streamRenderProgress, setStreamRenderProgress] = useState(0)
+  const [isUploadingStream, setIsUploadingStream] = useState(false)
+  const [streamUploadError, setStreamUploadError] = useState<string | null>(null)
   const [productionTarget, setProductionTarget] = useState<ProductionTarget>({ streamType: 'animatic', language: 'en' })
   const [renderDialogMode, setRenderDialogMode] = useState<'video' | 'animatic'>('video')
   const [renderDialogAnimaticSettings, setRenderDialogAnimaticSettings] = useState<
@@ -738,10 +742,111 @@ function DirectorConsoleRoot({
   // Download a production stream
   const handleDownloadStream = useCallback(async (streamId: string, mp4Url: string, language: string) => {
     const stream = productionStreams.find(s => s.id === streamId)
-    const v = stream?.streamVersion ?? 1
-    const filename = `scene-${sceneNumber}-${language}-v${v}.mp4`
+    const label = stream ? getProductionStreamDisplayName(stream) : `${language} v${stream?.streamVersion ?? 1}`
+    const safeName = label.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-') || `scene-${sceneNumber}-${language}`
+    const filename = `${safeName}.mp4`
     await forceDownload(mp4Url, filename)
   }, [sceneNumber, productionStreams])
+
+  const extractVideoDuration = useCallback((file: File): Promise<number | undefined> => {
+    if (!file.type.startsWith('video')) return Promise.resolve(undefined)
+    return new Promise((resolve) => {
+      const video = document.createElement('video')
+      video.preload = 'metadata'
+      const objectUrl = URL.createObjectURL(file)
+      video.onloadedmetadata = () => {
+        const duration = video.duration
+        URL.revokeObjectURL(objectUrl)
+        if (Number.isFinite(duration) && duration > 0) resolve(duration)
+        else resolve(undefined)
+      }
+      video.onerror = () => {
+        URL.revokeObjectURL(objectUrl)
+        resolve(undefined)
+      }
+      video.src = objectUrl
+    })
+  }, [])
+
+  const handleUploadStream = useCallback(
+    async (streamType: ProductionStreamType, file: File) => {
+      setIsUploadingStream(true)
+      setStreamUploadError(null)
+      const language = productionTarget.language
+      const languageInfo = SUPPORTED_LANGUAGES.find((l) => l.code === language)
+      try {
+        const fileExt = file.name.split('.').pop() || 'mp4'
+        const nextVer = getNextProductionStreamVersion(productionStreams, language, streamType)
+        const blob = await upload(
+          `production-streams/${projectId}/${sceneId}/${streamType}-v${nextVer}-${Date.now()}.${fileExt}`,
+          file,
+          {
+            access: 'public',
+            handleUploadUrl: '/api/segments/upload-video-url',
+          }
+        )
+        const duration = await extractVideoDuration(file)
+        const baseName = file.name.replace(/\.[^/.]+$/, '').trim()
+        const typeLabel = streamType === 'video' ? 'Video' : 'Animatic'
+        const streamId = `stream-upload-${streamType}-${language}-v${nextVer}-${Date.now()}`
+        const newStream: ProductionStream = {
+          id: streamId,
+          streamType,
+          streamVersion: nextVer,
+          language,
+          languageLabel: languageInfo?.name || language,
+          displayName: baseName || `${languageInfo?.name || language} ${typeLabel}`,
+          source: 'upload',
+          status: 'complete',
+          mp4Url: blob.url,
+          fileSize: file.size,
+          createdAt: new Date().toISOString(),
+          completedAt: new Date().toISOString(),
+          ...(duration !== undefined ? { duration } : {}),
+        }
+        const updatedStreams = [...productionStreams, newStream]
+        setProductionStreams(updatedStreams)
+        if (onProductionDataChange && productionData) {
+          onProductionDataChange({
+            ...productionData,
+            productionStreams: updatedStreams,
+          })
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Upload failed'
+        setStreamUploadError(message)
+        console.error('[DirectorConsole] Stream upload failed:', err)
+      } finally {
+        setIsUploadingStream(false)
+      }
+    },
+    [
+      productionTarget.language,
+      productionStreams,
+      projectId,
+      sceneId,
+      productionData,
+      onProductionDataChange,
+      extractVideoDuration,
+    ]
+  )
+
+  const handleRenameStream = useCallback(
+    (streamId: string, displayName: string) => {
+      const trimmed = displayName.trim()
+      const updatedStreams = productionStreams.map((s) =>
+        s.id === streamId ? { ...s, displayName: trimmed || undefined } : s
+      )
+      setProductionStreams(updatedStreams)
+      if (onProductionDataChange && productionData) {
+        onProductionDataChange({
+          ...productionData,
+          productionStreams: updatedStreams,
+        })
+      }
+    },
+    [productionStreams, productionData, onProductionDataChange]
+  )
   
   // Update stream when render completes
   const handleRenderComplete = useCallback((
@@ -828,9 +933,14 @@ function DirectorConsoleRoot({
       onReRenderStream={handleReRenderStream}
       onPreviewStream={handlePreviewStream}
       onDownloadStream={handleDownloadStream}
+      onUploadStream={handleUploadStream}
+      onRenameStream={handleRenameStream}
       isRendering={!!renderingStreamId}
       renderingStreamId={renderingStreamId}
       renderProgress={streamRenderProgress}
+      isUploadingStream={isUploadingStream}
+      streamUploadError={streamUploadError}
+      onDismissStreamUploadError={() => setStreamUploadError(null)}
       hasSegmentChanges={false}
       videoGenerationAvailable={videoGenerationAvailable}
       disabled={isRendering}

@@ -74,6 +74,7 @@ export {
   DEFAULT_VIDEO_SETTINGS,
   createDefaultSmartPromptSettings,
   getNextProductionStreamVersion,
+  getProductionStreamDisplayName,
   pickLatestCompleteStream,
 } from './defaults'
 

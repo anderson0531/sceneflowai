@@ -186,6 +186,14 @@ export const DEFAULT_LML_CONFIG: LMLConfig = {
 /**
  * Next 1-based version for a new render in the same scene bucket (language + animatic|video).
  */
+/** Primary label for a production stream in UI and downloads */
+export function getProductionStreamDisplayName(stream: ProductionStream): string {
+  const custom = stream.displayName?.trim()
+  if (custom) return custom
+  const typeLabel = stream.streamType === 'video' ? 'Video' : 'Animatic'
+  return `${stream.languageLabel} ${typeLabel} v${stream.streamVersion ?? 1}`
+}
+
 export function getNextProductionStreamVersion(
   streams: ProductionStream[],
   language: string,

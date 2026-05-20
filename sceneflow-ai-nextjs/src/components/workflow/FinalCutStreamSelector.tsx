@@ -19,6 +19,7 @@ import type {
   DEFAULT_FINAL_CUT_SETTINGS 
 } from '@/types/productionStreams'
 import type { ProductionStream, ProductionStreamType } from '@/components/vision/scene-production/types'
+import { getProductionStreamDisplayName } from '@/components/vision/scene-production/defaults'
 import { pickLatestCompleteStream } from '@/components/vision/scene-production/defaults'
 
 // ============================================================================
@@ -301,7 +302,7 @@ function SceneRow({
           >
             {streamsForSelectedLang.map((s) => (
               <option key={s.id} value={s.id}>
-                v{s.streamVersion ?? 1}
+                {getProductionStreamDisplayName(s)}
                 {s.completedAt ? ` · ${new Date(s.completedAt).toLocaleDateString()}` : ''}
               </option>
             ))}

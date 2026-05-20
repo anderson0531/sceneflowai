@@ -17,7 +17,10 @@ import {
   Video as VideoIcon,
   Maximize2,
   X,
-  Pause
+  Pause,
+  Upload,
+  Pencil,
+  Check,
 } from 'lucide-react'
 import { FLAG_EMOJIS } from '@/constants/languages'
 import type {
@@ -26,6 +29,7 @@ import type {
   ProductionStreamType,
   AnimaticRenderSettings,
 } from './types'
+import { getProductionStreamDisplayName } from './defaults'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 // ============================================================================
@@ -49,6 +53,15 @@ interface ProductionStreamsPanelProps {
   onPreviewStream: (streamId: string, mp4Url: string) => void
   /** Callback to download a stream */
   onDownloadStream: (streamId: string, mp4Url: string, language: string) => void
+  /** Upload an MP4 as a new production stream for the active tab type */
+  onUploadStream?: (streamType: ProductionStreamType, file: File) => Promise<void>
+  /** Rename a stream's display label */
+  onRenameStream?: (streamId: string, displayName: string) => void
+  /** Whether a stream upload is in progress */
+  isUploadingStream?: boolean
+  /** Last upload error message */
+  streamUploadError?: string | null
+  onDismissStreamUploadError?: () => void
   /** Whether any render is in progress */
   isRendering?: boolean
   /** ID of stream currently rendering (if any) */
@@ -231,7 +244,7 @@ function InlineVideoPlayer({ stream, onClose, onExpandFullscreen, onDownload }: 
         <div className="flex items-center gap-2">
           <span className="text-lg">{flag}</span>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-white">{stream.languageLabel}</span>
+            <span className="text-sm font-medium text-white">{getProductionStreamDisplayName(stream)}</span>
             <span className={`flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ${
               stream.streamType === 'video' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-purple-500/20 text-purple-300'
             }`}>
@@ -336,6 +349,7 @@ function ProductionStreamCard({
   onDownload,
   onReRender,
   onDelete,
+  onRename,
   disabled
 }: {
   stream: ProductionStream
@@ -346,11 +360,36 @@ function ProductionStreamCard({
   onDownload: () => void
   onReRender: () => void
   onDelete: () => void
+  onRename?: (displayName: string) => void
   disabled?: boolean
 }) {
   const statusConfig = STATUS_CONFIG[stream.status]
   const flag = FLAG_EMOJIS[stream.language] || '🌐'
   const streamTypeConfig = STREAM_TYPE_CONFIG[stream.streamType || 'animatic']
+  const displayName = getProductionStreamDisplayName(stream)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState(displayName)
+  const nameInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!isEditingName) setNameDraft(displayName)
+  }, [displayName, isEditingName])
+
+  useEffect(() => {
+    if (isEditingName) nameInputRef.current?.focus()
+  }, [isEditingName])
+
+  const commitRename = useCallback(() => {
+    const trimmed = nameDraft.trim()
+    const currentCustom = stream.displayName?.trim() ?? ''
+    if (trimmed !== currentCustom) onRename?.(trimmed)
+    setIsEditingName(false)
+  }, [nameDraft, stream.displayName, onRename])
+
+  const cancelRename = useCallback(() => {
+    setNameDraft(displayName)
+    setIsEditingName(false)
+  }, [displayName])
   
   return (
     <div className={`flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border transition-all duration-200 ${
@@ -362,8 +401,63 @@ function ProductionStreamCard({
       <div className="flex items-center gap-3 min-w-0">
         <span className="text-xl" title={stream.languageLabel}>{flag}</span>
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-200 truncate">{stream.languageLabel}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            {isEditingName && onRename ? (
+              <div className="flex items-center gap-1 min-w-0 flex-1">
+                <input
+                  ref={nameInputRef}
+                  type="text"
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') commitRename()
+                    if (e.key === 'Escape') cancelRename()
+                  }}
+                  className="h-7 min-w-[120px] max-w-[220px] flex-1 px-2 text-sm bg-slate-900 border border-slate-600 rounded text-white focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                  aria-label="Stream name"
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={commitRename}
+                  className="h-7 w-7 p-0 text-green-400 hover:text-green-300"
+                  title="Save name"
+                >
+                  <Check className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={cancelRename}
+                  className="h-7 w-7 p-0 text-gray-400 hover:text-gray-200"
+                  title="Cancel"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <span className="font-medium text-gray-200 truncate max-w-[200px]" title={displayName}>
+                  {displayName}
+                </span>
+                {onRename && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingName(true)}
+                    disabled={disabled}
+                    className="p-0.5 text-gray-500 hover:text-cyan-400 transition-colors disabled:opacity-40"
+                    title="Edit stream name"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </>
+            )}
+            {stream.source === 'upload' && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+                Uploaded
+              </span>
+            )}
             {/* Stream type badge */}
             <span className={`flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ${
               stream.streamType === 'video' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-purple-500/20 text-purple-300'
@@ -380,6 +474,9 @@ function ProductionStreamCard({
             </span>
           </div>
           <div className="flex items-center gap-2 text-xs text-gray-500">
+            {stream.displayName?.trim() && (
+              <span className="text-gray-400">{stream.languageLabel}</span>
+            )}
             {stream.duration && <span>{formatDuration(stream.duration)}</span>}
             {stream.resolution && <span>• {stream.resolution}</span>}
             {stream.completedAt && <span>• {formatTimeAgo(stream.completedAt)}</span>}
@@ -484,16 +581,21 @@ function ProductionStreamCard({
 
 export function ProductionStreamsPanel({
   productionStreams,
-  selectedLanguage: _selectedLanguage,
+  selectedLanguage,
   onRenderAnimatic: _onRenderAnimatic,
   onRenderProduction: _onRenderProduction, // Legacy - maps to onRenderAnimatic
   onDeleteStream,
   onReRenderStream,
   onPreviewStream,
   onDownloadStream,
+  onUploadStream,
+  onRenameStream,
   isRendering = false,
   renderingStreamId,
   renderProgress,
+  isUploadingStream = false,
+  streamUploadError,
+  onDismissStreamUploadError,
   hasSegmentChanges = false,
   videoGenerationAvailable = false,
   disabled = false
@@ -501,6 +603,18 @@ export function ProductionStreamsPanel({
   /** Independent of Scene Production Mixer — browse all animatic vs video exports */
   const [streamsPanelTab, setStreamsPanelTab] = useState<ProductionStreamType>('animatic')
   const selectedStreamType = streamsPanelTab
+  const uploadInputRef = useRef<HTMLInputElement>(null)
+  const selectedLanguageFlag = FLAG_EMOJIS[selectedLanguage] || '🌐'
+
+  const handleUploadFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      e.target.value = ''
+      if (!file || !onUploadStream) return
+      await onUploadStream(selectedStreamType, file)
+    },
+    [onUploadStream, selectedStreamType]
+  )
 
   // Inline video preview state
   const [previewingStreamId, setPreviewingStreamId] = useState<string | null>(null)
@@ -627,6 +741,57 @@ export function ProductionStreamsPanel({
           </>
         )}
       </div>
+
+      {onUploadStream && (
+        <div className="flex flex-col gap-2 p-3 rounded-lg border border-slate-600/60 bg-slate-900/40">
+          <input
+            ref={uploadInputRef}
+            type="file"
+            accept="video/mp4,video/webm,video/quicktime,video/*"
+            className="hidden"
+            onChange={handleUploadFileChange}
+            aria-hidden
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={disabled || isRendering || isUploadingStream}
+              onClick={() => uploadInputRef.current?.click()}
+              className="gap-2 border-slate-600 text-slate-200 hover:bg-slate-800"
+            >
+              {isUploadingStream ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4" />
+              )}
+              {isUploadingStream ? 'Uploading…' : `Upload ${selectedStreamType === 'video' ? 'Video' : 'Animatic'} MP4`}
+            </Button>
+            <span className="text-xs text-slate-500">
+              {selectedLanguageFlag} Mixer language: <span className="text-slate-300">{selectedLanguage}</span>
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            Import an external MP4 (up to 500MB). It is versioned like mixer renders and appears in Final Cut.
+          </p>
+          {streamUploadError && (
+            <div className="flex items-start gap-2 text-xs text-red-300">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <span className="flex-1">{streamUploadError}</span>
+              {onDismissStreamUploadError && (
+                <button
+                  type="button"
+                  onClick={onDismissStreamUploadError}
+                  className="text-red-400/80 hover:text-red-200 underline shrink-0"
+                >
+                  Dismiss
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       
       {/* Inline Video Player */}
       {previewingStream && previewingStream.mp4Url && (
@@ -652,6 +817,7 @@ export function ProductionStreamsPanel({
               onDownload={() => stream.mp4Url && onDownloadStream(stream.id, stream.mp4Url, stream.language)}
               onReRender={() => onReRenderStream(stream.id)}
               onDelete={() => onDeleteStream(stream.id)}
+              onRename={onRenameStream ? (name) => onRenameStream(stream.id, name) : undefined}
               disabled={disabled}
             />
           ))}
@@ -661,7 +827,7 @@ export function ProductionStreamsPanel({
       {selectedStreamType === 'animatic' && (
         <div className="p-3 bg-gray-800/25 rounded-lg border border-gray-700/60">
           <p className="text-xs text-gray-400 text-center">
-            New animatic exports: use <span className="text-purple-300 font-medium">Render</span> in the Production Mixer footer. This list shows completed outputs for preview and download.
+            New animatic exports: use <span className="text-purple-300 font-medium">Render</span> in the Production Mixer footer, or <span className="text-purple-300 font-medium">Upload</span> above. Rename streams with the pencil icon.
           </p>
         </div>
       )}
@@ -669,7 +835,7 @@ export function ProductionStreamsPanel({
       {selectedStreamType === 'video' && videoGenerationAvailable && (
         <div className="p-3 bg-gray-800/25 rounded-lg border border-gray-700/60">
           <p className="text-xs text-gray-400 text-center">
-            New stitched video exports: use <span className="text-indigo-300 font-medium">Render</span> in the Production Mixer footer. This list shows completed outputs for preview and download.
+            New stitched video exports: use <span className="text-indigo-300 font-medium">Render</span> in the Production Mixer footer, or <span className="text-indigo-300 font-medium">Upload</span> above.
           </p>
         </div>
       )}
@@ -679,8 +845,7 @@ export function ProductionStreamsPanel({
       {selectedStreamType === 'video' && !videoGenerationAvailable && (
         <div className="p-3 bg-indigo-900/20 border border-indigo-700/50 rounded-lg">
           <p className="text-xs text-indigo-300 text-center">
-            Generate AI video segments first to create a video production stream.
-            Video streams stitch together your AI-generated clips with audio.
+            Generate AI video segments to stitch a video stream from the mixer, or upload an external MP4 above.
           </p>
         </div>
       )}
@@ -688,7 +853,7 @@ export function ProductionStreamsPanel({
       {selectedStreamType === 'animatic' && animaticStreams.length === 0 && (
         <div className="p-3 bg-purple-900/20 border border-purple-700/50 rounded-lg">
           <p className="text-xs text-purple-300 text-center">
-            No animatic files yet. Render an animatic from the mixer footer to create your first export.
+            No animatic files yet. Render from the mixer footer or upload an MP4 above.
           </p>
         </div>
       )}

@@ -829,6 +829,10 @@ export interface ProductionStream {
   language: string
   /** Human-readable language name (e.g., 'English', 'Thai', 'Spanish') */
   languageLabel: string
+  /** User-editable label shown in Streams and Final Cut (falls back to language + type + version) */
+  displayName?: string
+  /** How this stream was created */
+  source?: 'render' | 'upload'
   /** URL of the rendered MP4 video (null until render completes) */
   mp4Url?: string | null
   /** File size in bytes */
