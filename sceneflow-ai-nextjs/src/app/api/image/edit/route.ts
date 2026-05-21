@@ -1,11 +1,12 @@
 /**
  * Image Edit API Route
  * 
- * Provides AI-powered image editing for SceneFlow AI using Gemini Studio.
+ * Provides AI-powered image editing via Vertex AI Imagen 3 (imagen-3.0-capability-001).
+ * Uses project service-account auth and Vertex quotas — not the consumer Gemini API
+ * (generativelanguage.googleapis.com), which is rate-limited at ~20 RPM.
  * 
  * Primary Mode:
- * - Instruction-based editing (Gemini Studio) - Natural language edits with
- *   character identity preservation via reference images
+ * - Instruction-based editing with optional subject reference for identity
  * 
  * Content Moderation:
  * - All prompts are pre-screened via Hive AI
@@ -16,10 +17,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
+import { editImageWithInstruction } from '@/lib/imagen/editClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { moderatePrompt, createBlockedResponse, getUserModerationContext } from '@/lib/moderation'
-import sharp from 'sharp'
 
 interface EditRequestBody {
   /** Edit mode: 'instruction' (only mode supported now) */
@@ -97,70 +97,31 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Detect aspect ratio from source image
-    let aspectRatio: '1:1' | '2:3' | '3:2' | '3:4' | '4:3' | '4:5' | '5:4' | '9:16' | '16:9' | '21:9' = '1:1'
-    try {
-      let imageBuffer: Buffer
-      if (sourceImage.startsWith('data:')) {
-        const base64Data = sourceImage.split(',')[1]
-        imageBuffer = Buffer.from(base64Data, 'base64')
-      } else {
-        const res = await fetch(sourceImage)
-        if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`)
-        const arrayBuffer = await res.arrayBuffer()
-        imageBuffer = Buffer.from(arrayBuffer)
-      }
-      
-      const metadata = await sharp(imageBuffer).metadata()
-      if (metadata.width && metadata.height) {
-        const ratio = metadata.width / metadata.height
-        const ratios = [
-          { name: '1:1', value: 1 / 1 },
-          { name: '2:3', value: 2 / 3 },
-          { name: '3:2', value: 3 / 2 },
-          { name: '3:4', value: 3 / 4 },
-          { name: '4:3', value: 4 / 3 },
-          { name: '4:5', value: 4 / 5 },
-          { name: '5:4', value: 5 / 4 },
-          { name: '9:16', value: 9 / 16 },
-          { name: '16:9', value: 16 / 9 },
-          { name: '21:9', value: 21 / 9 }
-        ]
-        
-        let closest = ratios[0]
-        let minDiff = Math.abs(ratio - ratios[0].value)
-        for (let i = 1; i < ratios.length; i++) {
-          const diff = Math.abs(ratio - ratios[i].value)
-          if (diff < minDiff) {
-            minDiff = diff
-            closest = ratios[i]
-          }
-        }
-        aspectRatio = closest.name as any
-        console.log(`[Image Edit API] Detected aspect ratio: ${aspectRatio} from ${metadata.width}x${metadata.height}`)
-      }
-    } catch (err) {
-      console.warn('[Image Edit API] Failed to detect aspect ratio, defaulting to 1:1', err)
-    }
-    
-    // Use Gemini Studio for character-aware image editing
-    const result = await editImageWithGeminiStudio({
+    const enrichedInstruction = subjectReference
+      ? `${instruction.trim()}. Preserve the person's identity using the provided subject reference.`
+      : `${instruction.trim()}. Preserve composition, framing, and lighting unless the instruction requires otherwise.`
+
+    const result = await editImageWithInstruction({
       sourceImage,
-      instruction,
-      referenceImage: subjectReference?.imageUrl,
-      aspectRatio,
-      imageSize: '1K'
+      instruction: enrichedInstruction,
+      subjectReference,
     })
-    
-    // Convert result to data URL
-    const imageDataUrl = `data:${result.mimeType};base64,${result.imageBase64}`
-    
+
+    if (!result.success || !result.imageDataUrl) {
+      throw new Error(result.error || 'Image edit failed')
+    }
+
+    const imageDataUrl = result.imageDataUrl
+    const base64Payload = imageDataUrl.includes(',')
+      ? imageDataUrl.split(',')[1]
+      : imageDataUrl
+
     // Optionally save to blob storage for persistence
     let permanentUrl = imageDataUrl
     if (saveToBlob) {
       try {
         const filename = `${blobPrefix}-${Date.now()}.png`
-        permanentUrl = await uploadImageToBlob(result.imageBase64, filename)
+        permanentUrl = await uploadImageToBlob(base64Payload, filename)
         console.log(`[Image Edit API] Saved to blob: ${permanentUrl}`)
       } catch (blobError: any) {
         console.warn('[Image Edit API] Failed to save to blob, returning data URL:', blobError.message)
@@ -190,20 +151,17 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     service: 'Image Edit API',
-    version: '2.0.0',
-    description: 'AI-powered image editing using Gemini Studio with character identity preservation',
+    version: '3.0.0',
+    description: 'AI-powered image editing via Vertex AI Imagen 3 (instruction-based)',
+    provider: 'vertex-ai',
     modes: [
       {
         mode: 'instruction',
-        description: 'Edit image using natural language instruction with character identity preservation (Gemini Studio)',
+        description: 'Edit image using natural language instruction (Vertex Imagen 3)',
         requiredFields: ['sourceImage', 'instruction'],
         optionalFields: ['subjectReference', 'saveToBlob', 'blobPrefix'],
-        note: 'When subjectReference is provided, the character identity will be preserved during edits'
+        note: 'When subjectReference is provided, identity is preserved via Imagen subject customization'
       }
     ],
-    deprecatedModes: [
-      'inpaint (mask-based editing) - Removed: Imagen 3 did not preserve character identity',
-      'outpaint (aspect ratio expansion) - Removed: Imagen 3 did not preserve character identity'
-    ]
   })
 }
