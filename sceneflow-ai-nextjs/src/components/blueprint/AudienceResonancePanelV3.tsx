@@ -35,7 +35,8 @@ import {
   targetAudienceToPromptString,
   GENRE_OPTIONS,
 } from '@/lib/types/audienceResonance'
-import BlueprintRefineDialog from './BlueprintRefineDialog'
+import { BlueprintTtsControls } from './BlueprintTtsControls'
+import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
 
 const ResonanceRadarChart = dynamic(
   () =>
@@ -58,6 +59,7 @@ export interface AudienceResonancePanelV3Props {
   onProceedToScripting?: () => void
   onAudienceDefinitionSave?: (def: AudienceDefinition) => Promise<void>
   onAnalysisComplete?: (persisted: PersistedBlueprintAudienceResonance) => void
+  onOpenBlueprintRefine?: (opts?: OpenBlueprintRefineOptions) => void
 }
 
 const V3_CATEGORY_AXIS_IDS: Record<string, ResonanceAxis['id']> = {
@@ -123,6 +125,7 @@ export function AudienceResonancePanelV3({
   onProceedToScripting,
   onAudienceDefinitionSave,
   onAnalysisComplete,
+  onOpenBlueprintRefine,
 }: AudienceResonancePanelV3Props) {
   const [localTreatment, setLocalTreatment] = useState(treatmentProp)
   const treatment = localTreatment || treatmentProp
@@ -147,9 +150,6 @@ export function AudienceResonancePanelV3({
   const [isSavingAudience, setIsSavingAudience] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [scoreDelta, setScoreDelta] = useState<number | null>(null)
-  const [refineOpen, setRefineOpen] = useState(false)
-  const [refineRecs, setRefineRecs] = useState<BlueprintAudienceRecommendation[]>([])
-  const [refineSection, setRefineSection] = useState<string>('story')
   const [audienceSetupExpanded, setAudienceSetupExpanded] = useState(false)
 
   useEffect(() => {
@@ -307,22 +307,14 @@ export function AudienceResonancePanelV3({
     projectId,
   ])
 
-  const openEditor = (recs?: BlueprintAudienceRecommendation[]) => {
-    const list = recs ?? pendingRecs
-    if (list.length === 0) {
-      toast.info('No pending recommendations')
-      return
-    }
-    setRefineRecs(list)
-    setRefineSection(list[0]?.fixSection || 'story')
-    setRefineOpen(true)
-  }
-
-  const handleRefineApply = (patch: Record<string, unknown>) => {
+  const handleResonanceRefineApply = (
+    patch: Record<string, unknown>,
+    appliedRecs: BlueprintAudienceRecommendation[]
+  ) => {
     const updated = { ...treatment, ...patch, updatedAt: Date.now() }
     setLocalTreatment(updated)
     onTreatmentUpdate?.(updated)
-    const newApplied = [...appliedIds, ...refineRecs.map((r) => r.id)]
+    const newApplied = [...appliedIds, ...appliedRecs.map((r) => r.id)]
     setAppliedIds(newApplied)
     if (analysis) {
       const persisted = createPersistedBlueprintAR(
@@ -335,6 +327,32 @@ export function AudienceResonancePanelV3({
     }
     toast.success('Blueprint updated — re-analyze to refresh your score')
   }
+
+  const openEditor = (recs?: BlueprintAudienceRecommendation[]) => {
+    const list = recs ?? pendingRecs
+    if (list.length === 0) {
+      toast.info('No pending recommendations')
+      return
+    }
+    if (!onOpenBlueprintRefine) {
+      toast.error('Blueprint editor is unavailable')
+      return
+    }
+    onOpenBlueprintRefine({
+      resonanceRecommendations: list,
+      initialActiveTab: list[0]?.fixSection || 'story',
+      onApplyExtra: (patch) => handleResonanceRefineApply(patch, list),
+    })
+  }
+
+  const arNarrationText = useCallback(() => {
+    if (analysis?.summary) return analysis.summary
+    const t = treatment
+    if (!t) return ''
+    const log = t.logline ? `${t.logline}. ` : ''
+    const synopsis = String(t.synopsis || t.content || '')
+    return `${log}${synopsis}`.trim()
+  }, [analysis?.summary, treatment])
 
   const handleReset = () => {
     setAnalysis(null)
@@ -349,9 +367,15 @@ export function AudienceResonancePanelV3({
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 border-b border-slate-800/60 space-y-3">
-          <h2 className="text-sm font-semibold text-white tracking-tight">
-            Audience Resonance Analysis
-          </h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-white tracking-tight">
+              Audience Resonance Analysis
+            </h2>
+            <BlueprintTtsControls
+              playId="ar-panel"
+              getTextToSpeak={arNarrationText}
+            />
+          </div>
 
           <button
             type="button"
@@ -652,15 +676,6 @@ export function AudienceResonancePanelV3({
         )}
       </div>
 
-      <BlueprintRefineDialog
-        open={refineOpen}
-        variant={treatment as any}
-        onClose={() => setRefineOpen(false)}
-        onApply={handleRefineApply}
-        projectId={projectId}
-        resonanceRecommendations={refineRecs}
-        initialActiveTab={refineSection}
-      />
     </div>
   )
 }

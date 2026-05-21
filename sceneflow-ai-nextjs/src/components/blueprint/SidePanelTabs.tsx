@@ -13,6 +13,7 @@ import type {
 } from '@/lib/types/audienceResonance'
 import { isBlueprintARV3Enabled } from '@/lib/types/audienceResonance'
 import { AudienceResonancePanel } from './AudienceResonancePanel'
+import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
 
 interface SidePanelTabsProps {
   onClose?: () => void
@@ -42,6 +43,7 @@ export function SidePanelTabs({
   onAnalysisComplete,
   savedBlueprintAR,
   legacyIntent,
+  onOpenBlueprintRefine,
 }: SidePanelTabsProps) {
   const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration'>('resonance')
   const { guide } = useGuideStore()
@@ -117,6 +119,7 @@ export function SidePanelTabs({
               onProceedToScripting={onProceedToScripting}
               onAudienceDefinitionSave={onAudienceDefinitionSave}
               onAnalysisComplete={onAnalysisComplete}
+              onOpenBlueprintRefine={onOpenBlueprintRefine}
             />
           ) : (
             <AudienceResonancePanel

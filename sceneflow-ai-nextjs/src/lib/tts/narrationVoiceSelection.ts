@@ -6,6 +6,12 @@
  * instead of the full voice browser.
  */
 
+import {
+  getCuratedElevenVoices,
+  SCENEFLOW_CREATOR_DISPLAY_NAME,
+  type ElevenVoice,
+} from '@/lib/tts/voices'
+
 // ================================================================================
 // Types
 // ================================================================================
@@ -52,6 +58,39 @@ export function getEffectiveNarrationVoices(): NarrationVoice[] {
   const customVoices = NARRATION_VOICES.filter(v => tagged.has(v.id))
   const defaultVoices = NARRATION_VOICES.filter(v => !tagged.has(v.id))
   return [...customVoices, ...defaultVoices]
+}
+
+/** Resolve SceneFlow Creator from the ElevenLabs account (custom voice). */
+export async function resolveSceneFlowCreatorVoice(): Promise<NarrationVoice | null> {
+  try {
+    const res = await fetch('/api/tts/elevenlabs/voices', { cache: 'no-store' })
+    const data = await res.json().catch(() => null)
+    if (!data?.enabled || !Array.isArray(data.voices)) return null
+    const list: ElevenVoice[] = data.voices.map((v: { id: string; name: string }) => ({
+      id: v.id,
+      name: v.name,
+    }))
+    const { voices } = await getCuratedElevenVoices(async () => list)
+    const creator = voices.find((v) => v.key === 'Creator')
+    if (!creator) return null
+    return sceneFlowCreatorNarrationVoice(creator.id)
+  } catch {
+    return null
+  }
+}
+
+export function sceneFlowCreatorNarrationVoice(id: string): NarrationVoice {
+  return {
+    id,
+    name: SCENEFLOW_CREATOR_DISPLAY_NAME,
+    gender: 'male',
+    age: 'middle',
+    tone: 'warm',
+    style: 'cinematic',
+    accent: 'american',
+    description: 'SceneFlow’s signature narrator for blueprint and analysis previews',
+    bestFor: ['drama', 'documentary', 'thriller', 'sci-fi', 'all genres'],
+  }
 }
 
 // ================================================================================

@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import BlueprintReimaginDialog from './BlueprintReimaginDialog'
-import BlueprintRefineDialog from './BlueprintRefineDialog'
+import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
 import { CoreInfoEditDialog } from './CoreInfoEditDialog'
 import { StorySetupEditDialog } from './StorySetupEditDialog'
 import { ToneStyleEditDialog } from './ToneStyleEditDialog'
@@ -24,7 +24,11 @@ import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType } from '@/lib/types/reports'
 
-export function TreatmentCard() {
+export type TreatmentCardProps = {
+  onOpenBlueprintRefine?: (opts?: OpenBlueprintRefineOptions) => void
+}
+
+export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}) {
   const router = useRouter()
   const { guide } = useGuideStore()
   const { selectTreatmentVariant } = useGuideStore() as any
@@ -65,7 +69,7 @@ export function TreatmentCard() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>('pNInz6obpgDQGcFmaJgB') // Adam voice
   const [reimaginOpen, setReimaginOpen] = useState(false)
-  const [refineOpen, setRefineOpen] = useState(false)
+  const openRefine = () => onOpenBlueprintRefine?.()
   const [coreInfoEditOpen, setCoreInfoEditOpen] = useState(false)
   const [storySetupEditOpen, setStorySetupEditOpen] = useState(false)
   const [toneStyleEditOpen, setToneStyleEditOpen] = useState(false)
@@ -78,7 +82,7 @@ export function TreatmentCard() {
   const [audioMenuOpen, setAudioMenuOpen] = useState(false)
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Adam')
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('SceneFlow Creator')
   const [collabOpen, setCollabOpen] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [showReasoning, setShowReasoning] = useState(false)
@@ -117,13 +121,22 @@ export function TreatmentCard() {
         const data = await res.json().catch(() => null)
         if (!mounted) return
         if (data?.enabled && Array.isArray(data.voices) && data.voices.length > 0) {
-          const formattedVoices = data.voices.map((v: any) => ({ 
-            id: v.id, 
-            name: v.name 
+          const list = data.voices.map((v: { id: string; name: string }) => ({
+            id: v.id,
+            name: v.name,
           }))
-          setEnabled(true)
-          setVoices(formattedVoices)
-          setSelectedVoiceId(data.voices[0].id)
+          const { voices: curated, defaultVoiceId } = await getCuratedElevenVoices(
+            async () => list
+          )
+          if (!mounted) return
+          setEnabled(curated.length > 0)
+          setVoices(curated)
+          const defaultVoice =
+            curated.find((v) => v.id === defaultVoiceId) ?? curated[0]
+          if (defaultVoice) {
+            setSelectedVoiceId(defaultVoice.id)
+            setSelectedVoiceName(defaultVoice.name)
+          }
         } else {
           setEnabled(false)
           setVoices([])
@@ -248,7 +261,7 @@ export function TreatmentCard() {
       if ((document as any).body?.classList?.contains('modal-open')) return
       if (e.key.toLowerCase() === 's') { e.preventDefault(); (async()=>{ try{ const btn = document.activeElement as HTMLElement; }catch{} })(); (async()=>{ try{ }catch{} })(); }
       if (e.key === 'Enter') { e.preventDefault(); try { const v = (Array.isArray(variants) ? variants.find(x=>x.id===active) : null) || (variants||[])[0]; if (v) (useGuideStore.getState() as any).useTreatmentVariant(v.id) } catch {} }
-      if (e.key.toLowerCase() === 'e') { e.preventDefault(); setRefineOpen(true) }
+      if (e.key.toLowerCase() === 'e') { e.preventDefault(); openRefine() }
       if (e.key.toLowerCase() === 'i') { e.preventDefault(); try { const v = (variants||[]).find(x=>x.id===active) || (variants||[])[0]; if (v) { const t = mapVariantToInputText(v); sendToComposer(t, { generate: false }) } } catch {} }
       if (e.key.toLowerCase() === 'r') { e.preventDefault(); try { const v = (variants||[]).find(x=>x.id===active) || (variants||[])[0]; if (v) { const t = mapVariantToInputText(v); sendToComposer(t, { generate: true }) } } catch {} }
     }
@@ -397,7 +410,7 @@ export function TreatmentCard() {
                             <Button
                               aria-label="Edit blueprint"
                               title="Edit Blueprint (E)"
-                              onClick={() => setRefineOpen(true)}
+                              onClick={openRefine}
                               className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
                               variant="outline"
                               size="icon"
@@ -453,7 +466,7 @@ export function TreatmentCard() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-52">
-                              <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); setRefineOpen(true);}} onClick={(e)=>{e.preventDefault();}}>
+                              <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); openRefine();}} onClick={(e)=>{e.preventDefault();}}>
                                 <PencilLine className="h-4 w-4 mr-2" /> Refine
                               </DropdownMenuItem>
                               <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); setReimaginOpen(true);}} onClick={(e)=>{e.preventDefault();}}>
@@ -986,16 +999,6 @@ export function TreatmentCard() {
             </div>
           </div>
         </CardContent>
-        {/* Blueprint Refine Dialog - guided section editing */}
-        <BlueprintRefineDialog
-          open={refineOpen}
-          variant={activeVariant as any}
-          onClose={() => setRefineOpen(false)}
-          onApply={(patch) => {
-            try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
-            setRefineOpen(false)
-          }}
-        />
         {/* Section-Specific Edit Dialogs */}
         <CoreInfoEditDialog
           open={coreInfoEditOpen}

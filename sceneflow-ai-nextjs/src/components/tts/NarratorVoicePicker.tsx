@@ -8,7 +8,8 @@ import {
   NarrationVoice, 
   NarrationContext,
   getEffectiveNarrationVoices,
-  getRankedNarrationVoices 
+  getRankedNarrationVoices,
+  resolveSceneFlowCreatorVoice,
 } from '@/lib/tts/narrationVoiceSelection'
 
 // ================================================================================
@@ -37,6 +38,18 @@ export function NarratorVoicePicker({
 }: NarratorVoicePickerProps) {
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)
   const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all')
+  const [sceneFlowCreator, setSceneFlowCreator] = useState<NarrationVoice | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    let mounted = true
+    resolveSceneFlowCreatorVoice().then((voice) => {
+      if (mounted) setSceneFlowCreator(voice)
+    })
+    return () => {
+      mounted = false
+    }
+  }, [open])
 
   // Rank voices by context if provided
   const rankedVoices = useMemo(() => {
@@ -45,13 +58,18 @@ export function NarratorVoicePicker({
       ? getRankedNarrationVoices(narrationContext)
       : baseVoices.map(v => ({ voice: v, score: 50 }))
 
+    const withCreator =
+      sceneFlowCreator && !ranked.some((r) => r.voice.id === sceneFlowCreator.id)
+        ? [{ voice: sceneFlowCreator, score: 65 }, ...ranked]
+        : ranked
+
     // Apply gender filter
     const filtered = genderFilter === 'all' 
-      ? ranked 
-      : ranked.filter(r => r.voice.gender === genderFilter)
+      ? withCreator 
+      : withCreator.filter(r => r.voice.gender === genderFilter)
 
     return filtered
-  }, [narrationContext, genderFilter])
+  }, [narrationContext, genderFilter, sceneFlowCreator])
 
   // Best match (first ranked voice)
   const bestMatch = rankedVoices[0]

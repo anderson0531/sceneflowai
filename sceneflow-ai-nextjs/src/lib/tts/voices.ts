@@ -2,13 +2,20 @@ export type ElevenVoice = { id: string; name: string }
 export type CuratedKey = 'Autumn Veil'|'William'|'Arabella'|'David'|'Creator'
 export type CuratedVoice = { id: string; key: CuratedKey; name: string }
 
+export const SCENEFLOW_CREATOR_DISPLAY_NAME = 'SceneFlow Creator'
+
 export const CURATED_TTS_VOICES: Array<{ key: CuratedKey; matchers: string[] }> = [
   { key: 'Autumn Veil', matchers: ['autumn', 'veil'] },
   { key: 'William', matchers: ['william'] },
   { key: 'Arabella', matchers: ['arabella'] },
   { key: 'David', matchers: ['david'] },
-  { key: 'Creator', matchers: ['creator'] },
+  { key: 'Creator', matchers: ['creator', 'sceneflow'] },
 ]
+
+function curatedDisplayName(key: CuratedKey, fallback?: string): string {
+  if (key === 'Creator') return SCENEFLOW_CREATOR_DISPLAY_NAME
+  return fallback ?? key
+}
 
 function normalize(s: string): string { return (s || '').toLowerCase() }
 
@@ -35,7 +42,7 @@ export function filterCuratedVoices(
 }
 
 export function pickDefaultVoice(voices: CuratedVoice[]): string | null {
-  const preferred: CuratedKey[] = ['Autumn Veil','William','Arabella','David','Creator']
+  const preferred: CuratedKey[] = ['Creator', 'Autumn Veil', 'William', 'Arabella', 'David']
   for (const key of preferred) {
     const v = voices.find(x => x.key === key)
     if (v) return v.id

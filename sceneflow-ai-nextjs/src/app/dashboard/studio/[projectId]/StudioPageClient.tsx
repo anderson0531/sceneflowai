@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Button } from "@/components/ui/Button";
@@ -19,16 +19,25 @@ import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
 import { HeroImagePromptBuilder } from '@/components/treatment/HeroImagePromptBuilder'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { SidePanelTabs } from '@/components/blueprint/SidePanelTabs'
+import BlueprintRefineDialog from '@/components/blueprint/BlueprintRefineDialog'
 import type {
   AudienceDefinition,
+  BlueprintAudienceRecommendation,
   PersistedBlueprintAudienceResonance,
   AudienceIntent,
 } from '@/lib/types/audienceResonance'
-import { loadBlueprintARFromMetadata } from '@/lib/types/audienceResonance'
+import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
+import {
+  createPersistedBlueprintAR,
+  loadBlueprintARFromMetadata,
+} from '@/lib/types/audienceResonance'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
-const TreatmentCard = dynamic(() => import('@/components/blueprint/TreatmentCard').then(mod => mod.TreatmentCard), { ssr: false })
+const TreatmentCard = dynamic(
+  () => import('@/components/blueprint/TreatmentCard').then((mod) => mod.TreatmentCard),
+  { ssr: false }
+)
 import TopProgressBar from '@/components/ui/TopProgressBar'
 import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
 
@@ -41,6 +50,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const router = useRouter();
   const { data: session } = useSession();
   const { guide, updateTitle, updateTreatment, setTreatmentVariants, variantsLastModified } = useGuideStore();
+  const { updateTreatmentVariant } = useGuideStore() as {
+    updateTreatmentVariant: (id: string, patch: Record<string, unknown>) => void
+  };
   const { invokeCue } = useCue();
   const currentProject = useStore((s) => s.currentProject);
   const setCurrentProject = useStore((s) => s.setCurrentProject);
@@ -114,6 +126,44 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [savedBlueprintAR, setSavedBlueprintAR] =
     useState<PersistedBlueprintAudienceResonance | null>(null)
   const [legacyARIntent, setLegacyARIntent] = useState<AudienceIntent | null>(null)
+
+  const [blueprintRefineOpen, setBlueprintRefineOpen] = useState(false)
+  const [blueprintRefineRecs, setBlueprintRefineRecs] = useState<
+    BlueprintAudienceRecommendation[] | undefined
+  >()
+  const [blueprintRefineTab, setBlueprintRefineTab] = useState<string | undefined>()
+  const blueprintRefineApplyExtraRef = useRef<
+    ((patch: Record<string, unknown>) => void) | null
+  >(null)
+
+  const activeTreatmentVariant = useMemo(() => {
+    const variants = (guide as { treatmentVariants?: Array<{ id: string }> })
+      ?.treatmentVariants
+    const selectedId = (guide as { selectedTreatmentId?: string })?.selectedTreatmentId
+    const id = selectedId || variants?.[0]?.id
+    return variants?.find((v) => v.id === id) ?? variants?.[0] ?? null
+  }, [guide])
+
+  const openBlueprintRefine = useCallback((opts?: OpenBlueprintRefineOptions) => {
+    setBlueprintRefineRecs(opts?.resonanceRecommendations)
+    setBlueprintRefineTab(opts?.initialActiveTab)
+    blueprintRefineApplyExtraRef.current = opts?.onApplyExtra ?? null
+    setBlueprintRefineOpen(true)
+  }, [])
+
+  const handleBlueprintRefineApply = useCallback(
+    (patch: Record<string, unknown>) => {
+      if (activeTreatmentVariant?.id) {
+        updateTreatmentVariant(activeTreatmentVariant.id, patch)
+      }
+      blueprintRefineApplyExtraRef.current?.(patch)
+      blueprintRefineApplyExtraRef.current = null
+      setBlueprintRefineOpen(false)
+      setBlueprintRefineRecs(undefined)
+      setBlueprintRefineTab(undefined)
+    },
+    [activeTreatmentVariant?.id, updateTreatmentVariant]
+  )
   
   // Handle share/collaborate
   const handleShare = async () => {
@@ -268,6 +318,45 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
       } catch {}
     }
   }
+
+  /** Toolbar pencil: same editor as AR, with pending resonance recs when available. */
+  const openBlueprintRefineFromToolbar = useCallback(() => {
+    const applied = new Set(savedBlueprintAR?.appliedRecommendationIds ?? [])
+    const pending =
+      savedBlueprintAR?.analysis?.recommendations?.filter((r) => !applied.has(r.id)) ??
+      []
+    if (pending.length > 0) {
+      openBlueprintRefine({
+        resonanceRecommendations: pending,
+        initialActiveTab: pending[0]?.fixSection || 'story',
+        onApplyExtra: () => {
+          if (!savedBlueprintAR?.analysis) return
+          const audDef =
+            audienceDefinition ?? savedBlueprintAR.audienceDefinition
+          if (!audDef) return
+          const newApplied = [
+            ...(savedBlueprintAR.appliedRecommendationIds ?? []),
+            ...pending.map((r) => r.id),
+          ]
+          void handleAnalysisComplete(
+            createPersistedBlueprintAR(
+              savedBlueprintAR.analysis,
+              audDef,
+              newApplied,
+              savedBlueprintAR.iterationCount ?? 0
+            )
+          )
+        },
+      })
+      return
+    }
+    openBlueprintRefine()
+  }, [
+    audienceDefinition,
+    openBlueprintRefine,
+    savedBlueprintAR,
+    handleAnalysisComplete,
+  ])
 
   // Handle script import from BlueprintComposer
   const handleScriptImport = async (result: ScriptImportResult) => {
@@ -1157,7 +1246,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 )}
 
                 {/* Treatment Card */}
-                <TreatmentCard />
+                <TreatmentCard onOpenBlueprintRefine={openBlueprintRefineFromToolbar} />
               </div>
             </div>
           </div>
@@ -1183,6 +1272,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 onAnalysisComplete={handleAnalysisComplete}
                 savedBlueprintAR={savedBlueprintAR}
                 legacyIntent={legacyARIntent}
+                onOpenBlueprintRefine={openBlueprintRefine}
               />
             </Panel>
           </>
@@ -1229,6 +1319,23 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         </div>
       )}
       
+      {activeTreatmentVariant && (
+        <BlueprintRefineDialog
+          open={blueprintRefineOpen}
+          variant={activeTreatmentVariant as any}
+          onClose={() => {
+            setBlueprintRefineOpen(false)
+            setBlueprintRefineRecs(undefined)
+            setBlueprintRefineTab(undefined)
+            blueprintRefineApplyExtraRef.current = null
+          }}
+          onApply={handleBlueprintRefineApply}
+          projectId={projectId}
+          resonanceRecommendations={blueprintRefineRecs}
+          initialActiveTab={blueprintRefineTab}
+        />
+      )}
+
       {/* Blueprint Reimagine Dialog for initial generation */}
       <BlueprintReimaginDialog
         open={showReimaginDialog}
