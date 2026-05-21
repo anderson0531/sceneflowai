@@ -42,13 +42,7 @@ export function NarratorVoicePicker({
 
   useEffect(() => {
     if (!open) return
-    let mounted = true
-    resolveSceneFlowCreatorVoice().then((voice) => {
-      if (mounted) setSceneFlowCreator(voice)
-    })
-    return () => {
-      mounted = false
-    }
+    setSceneFlowCreator(resolveSceneFlowCreatorVoice())
   }, [open])
 
   // Rank voices by context if provided

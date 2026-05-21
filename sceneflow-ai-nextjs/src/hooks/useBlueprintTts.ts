@@ -1,13 +1,19 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
+import {
+  getCuratedElevenVoices,
+  SCENEFLOW_CREATOR_VOICE_ID,
+  type CuratedVoice,
+} from '@/lib/tts/voices'
 
 export function useBlueprintTts() {
   const [voices, setVoices] = useState<CuratedVoice[]>([])
   const [enabled, setEnabled] = useState(false)
   const [loadingId, setLoadingId] = useState<string | null>(null)
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>()
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>(
+    SCENEFLOW_CREATOR_VOICE_ID
+  )
   const [selectedVoiceName, setSelectedVoiceName] = useState<string>('SceneFlow Creator')
   const [audioMenuOpen, setAudioMenuOpen] = useState(false)
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)

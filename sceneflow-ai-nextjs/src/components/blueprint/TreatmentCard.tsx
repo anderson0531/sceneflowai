@@ -20,7 +20,11 @@ import { CharactersEditDialog } from './CharactersEditDialog'
 import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
-import { getCuratedElevenVoices, type CuratedVoice } from '@/lib/tts/voices'
+import {
+  getCuratedElevenVoices,
+  SCENEFLOW_CREATOR_VOICE_ID,
+  type CuratedVoice,
+} from '@/lib/tts/voices'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType } from '@/lib/types/reports'
 
@@ -67,7 +71,9 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
   const [enabled, setEnabled] = useState<boolean>(false)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>('pNInz6obpgDQGcFmaJgB') // Adam voice
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>(
+    SCENEFLOW_CREATOR_VOICE_ID
+  )
   const [reimaginOpen, setReimaginOpen] = useState(false)
   const openRefine = () => onOpenBlueprintRefine?.()
   const [coreInfoEditOpen, setCoreInfoEditOpen] = useState(false)

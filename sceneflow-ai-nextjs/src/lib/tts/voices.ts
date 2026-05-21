@@ -4,6 +4,13 @@ export type CuratedVoice = { id: string; key: CuratedKey; name: string }
 
 export const SCENEFLOW_CREATOR_DISPLAY_NAME = 'SceneFlow Creator'
 
+/** ElevenLabs voice ID for SceneFlow AI Creator (signature narrator). */
+export const SCENEFLOW_CREATOR_VOICE_ID = '2WZUpLnG1rGcQpTL3sVC'
+
+const DEFAULT_CURATED_VOICE_IDS: Partial<Record<CuratedKey, string>> = {
+  Creator: SCENEFLOW_CREATOR_VOICE_ID,
+}
+
 export const CURATED_TTS_VOICES: Array<{ key: CuratedKey; matchers: string[] }> = [
   { key: 'Autumn Veil', matchers: ['autumn', 'veil'] },
   { key: 'William', matchers: ['william'] },
@@ -26,16 +33,32 @@ export function filterCuratedVoices(
   const byName = new Map(allVoices.map(v => [normalize(v.name), v]))
   const result: CuratedVoice[] = []
   for (const spec of CURATED_TTS_VOICES) {
+    const overrideId = overrides?.[spec.key] ?? DEFAULT_CURATED_VOICE_IDS[spec.key]
+    if (spec.key === 'Creator' && overrideId) {
+      result.push({
+        id: overrideId,
+        key: spec.key,
+        name: curatedDisplayName(spec.key),
+      })
+      continue
+    }
     let found: ElevenVoice | undefined
     for (const m of spec.matchers) {
       const hit = [...byName.values()].find(v => normalize(v.name).includes(normalize(m)))
       if (hit) { found = hit; break }
     }
-    const overrideId = overrides?.[spec.key]
     if (overrideId) {
-      result.push({ id: overrideId, key: spec.key, name: spec.key })
+      result.push({
+        id: overrideId,
+        key: spec.key,
+        name: curatedDisplayName(spec.key),
+      })
     } else if (found) {
-      result.push({ id: found.id, key: spec.key, name: found.name })
+      result.push({
+        id: found.id,
+        key: spec.key,
+        name: curatedDisplayName(spec.key, found.name),
+      })
     }
   }
   return result.slice(0, 5)

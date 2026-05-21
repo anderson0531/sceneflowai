@@ -7,9 +7,8 @@
  */
 
 import {
-  getCuratedElevenVoices,
   SCENEFLOW_CREATOR_DISPLAY_NAME,
-  type ElevenVoice,
+  SCENEFLOW_CREATOR_VOICE_ID,
 } from '@/lib/tts/voices'
 
 // ================================================================================
@@ -60,23 +59,9 @@ export function getEffectiveNarrationVoices(): NarrationVoice[] {
   return [...customVoices, ...defaultVoices]
 }
 
-/** Resolve SceneFlow Creator from the ElevenLabs account (custom voice). */
-export async function resolveSceneFlowCreatorVoice(): Promise<NarrationVoice | null> {
-  try {
-    const res = await fetch('/api/tts/elevenlabs/voices', { cache: 'no-store' })
-    const data = await res.json().catch(() => null)
-    if (!data?.enabled || !Array.isArray(data.voices)) return null
-    const list: ElevenVoice[] = data.voices.map((v: { id: string; name: string }) => ({
-      id: v.id,
-      name: v.name,
-    }))
-    const { voices } = await getCuratedElevenVoices(async () => list)
-    const creator = voices.find((v) => v.key === 'Creator')
-    if (!creator) return null
-    return sceneFlowCreatorNarrationVoice(creator.id)
-  } catch {
-    return null
-  }
+/** SceneFlow AI Creator narrator (fixed ElevenLabs voice ID). */
+export function resolveSceneFlowCreatorVoice(): NarrationVoice {
+  return sceneFlowCreatorNarrationVoice(SCENEFLOW_CREATOR_VOICE_ID)
 }
 
 export function sceneFlowCreatorNarrationVoice(id: string): NarrationVoice {
