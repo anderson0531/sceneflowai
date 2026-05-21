@@ -157,6 +157,13 @@ export function AudienceResonancePanelV3({
     setLocalTreatment(treatmentProp)
   }, [treatmentProp])
 
+  useEffect(() => {
+    if (savedBlueprintAR?.analysis) {
+      setAnalysis(savedBlueprintAR.analysis)
+      setAppliedIds(savedBlueprintAR.appliedRecommendationIds ?? [])
+    }
+  }, [savedBlueprintAR])
+
   const pendingRecs = useMemo(
     () =>
       (analysis?.recommendations ?? []).filter((r) => !appliedIds.includes(r.id)),
@@ -234,6 +241,7 @@ export function AudienceResonancePanelV3({
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
+          projectId,
           treatmentId: (treatment.id as string) || 'current',
           treatment: {
             title: treatment.label || treatment.title,
@@ -252,6 +260,7 @@ export function AudienceResonancePanelV3({
           genre: intent.primaryGenre,
           tone: intent.toneProfile,
           appliedRecommendationIds: appliedIds,
+          iteration: (savedBlueprintAR?.iterationCount ?? 0) + 1,
           previousAnalysis: analysis
             ? {
                 overallScore: analysis.overallScore,
@@ -296,6 +305,7 @@ export function AudienceResonancePanelV3({
     legacyIntent,
     savedBlueprintAR,
     onAnalysisComplete,
+    projectId,
   ])
 
   const openEditor = (recs?: BlueprintAudienceRecommendation[]) => {
@@ -315,6 +325,15 @@ export function AudienceResonancePanelV3({
     onTreatmentUpdate?.(updated)
     const newApplied = [...appliedIds, ...refineRecs.map((r) => r.id)]
     setAppliedIds(newApplied)
+    if (analysis) {
+      const persisted = createPersistedBlueprintAR(
+        analysis,
+        audienceDefinition,
+        newApplied,
+        savedBlueprintAR?.iterationCount ?? 0
+      )
+      onAnalysisComplete?.(persisted)
+    }
     toast.success('Blueprint updated — re-analyze to refresh your score')
   }
 

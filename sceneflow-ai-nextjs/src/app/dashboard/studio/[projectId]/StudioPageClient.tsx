@@ -204,6 +204,17 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     extra: Record<string, unknown>
   ) => {
     if (!projectId || projectId.startsWith('new-project')) return false
+    const mergedMetadata = {
+      ...(currentProject?.metadata || {}),
+      blueprintInput: lastInput,
+      filmTreatment: guide.filmTreatment,
+      treatmentVariants: (guide as any).treatmentVariants || [],
+      beats: beatsView,
+      estimatedRuntime: estimatedRuntime,
+      audienceDefinition,
+      blueprintAudienceResonance: savedBlueprintAR,
+      ...extra,
+    }
     const res = await fetch('/api/projects', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -211,18 +222,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         id: projectId,
         title: guide.title || 'Untitled Project',
         description: '',
-        metadata: {
-          blueprintInput: lastInput,
-          filmTreatment: guide.filmTreatment,
-          treatmentVariants: (guide as any).treatmentVariants || [],
-          beats: beatsView,
-          estimatedRuntime: estimatedRuntime,
-          audienceDefinition,
-          blueprintAudienceResonance: savedBlueprintAR,
-          ...extra,
-        },
+        metadata: mergedMetadata,
       }),
     })
+    if (res.ok && currentProject) {
+      setCurrentProject({
+        ...currentProject,
+        metadata: mergedMetadata,
+      })
+    }
     return res.ok
   }
 
@@ -244,12 +252,20 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     try {
       setSavedBlueprintAR(persisted)
       setAudienceDefinition(persisted.audienceDefinition)
-      await persistBlueprintMetadata({
+      const ok = await persistBlueprintMetadata({
         audienceDefinition: persisted.audienceDefinition,
         blueprintAudienceResonance: persisted,
       })
+      if (!ok) {
+        const { toast } = await import('sonner')
+        toast.error('Analysis completed but failed to save to project')
+      }
     } catch (error) {
       console.error('[StudioPage] Error saving AR analysis:', error)
+      try {
+        const { toast } = await import('sonner')
+        toast.error('Failed to save analysis to project')
+      } catch {}
     }
   }
 
@@ -605,11 +621,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         title: guide.title || 'Untitled Project',
         description: '',
         metadata: {
+          ...(currentProject?.metadata || {}),
           blueprintInput: lastInput,
           filmTreatment: guide.filmTreatment,
           treatmentVariants: (guide as any).treatmentVariants || [],
           beats: beatsView,
-          estimatedRuntime: estimatedRuntime
+          estimatedRuntime: estimatedRuntime,
+          audienceDefinition,
+          blueprintAudienceResonance: savedBlueprintAR,
         }
       }
       
@@ -858,7 +877,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             filmTreatment: guide.filmTreatment,
             treatmentVariants: treatmentVariants,
             beats: beatsView,
-            estimatedRuntime: estimatedRuntime
+            estimatedRuntime: estimatedRuntime,
+            audienceDefinition,
+            blueprintAudienceResonance: savedBlueprintAR,
           }
         }
         
@@ -888,7 +909,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         clearTimeout(autoSaveDebounceRef.current)
       }
     }
-  }, [projectId, lastInput, variantsLastModified, guide.title, guide.filmTreatment, treatmentVariants, beatsView, estimatedRuntime])
+  }, [projectId, lastInput, variantsLastModified, guide.title, guide.filmTreatment, treatmentVariants, beatsView, estimatedRuntime, audienceDefinition, savedBlueprintAR, currentProject?.metadata])
 
   useEffect(() => { console.debug('[StudioPage] outline autogen disabled; relying on OutlineV2') }, [guide?.filmTreatment, currentProject?.id])
 

@@ -10,10 +10,14 @@ import {
   type AudienceDefinition,
   type BlueprintAudienceResonanceAnalysis,
   type BlueprintAudienceCategory,
+  type PersistedBlueprintAudienceResonance,
   createAudienceDefinition,
+  createPersistedBlueprintAR,
   formatAudienceDefinitionForPrompt,
   READY_FOR_PRODUCTION_THRESHOLD_V3,
 } from '@/lib/types/audienceResonance'
+import { sequelize } from '@/config/database'
+import Project from '@/models/Project'
 import {
   finalizeBlueprintScore,
   mapDeductions,
@@ -42,6 +46,8 @@ export interface AudienceResonanceRequestBody {
     character_descriptions?: Array<{ name?: string; role?: string; description?: string }>
   }
   audienceDefinition: AudienceDefinition
+  /** When set, analysis is merged into project.metadata in the database */
+  projectId?: string
   /** Genre/tone context only — not part of audience definition */
   genre?: string
   tone?: string
@@ -251,10 +257,26 @@ export async function POST(request: NextRequest) {
       overallScore,
     })
 
+    const persisted = createPersistedBlueprintAR(
+      analysis,
+      audienceDefinition,
+      appliedIds,
+      body.iteration ?? 1
+    )
+
+    if (body.projectId && !body.projectId.startsWith('new-project')) {
+      try {
+        await persistBlueprintARToProject(body.projectId, persisted)
+      } catch (persistErr) {
+        console.error('[Blueprint AR v3] Failed to persist analysis to project:', persistErr)
+      }
+    }
+
     return NextResponse.json(
       {
         success: true,
         analysis,
+        persisted,
         readyForProduction: analysis.isReadyForProduction,
         iteration: body.iteration ?? 1,
       },
