@@ -3,7 +3,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Target,
   ChevronDown,
   Sparkles,
   RefreshCw,
@@ -350,30 +349,37 @@ export function AudienceResonancePanelV3({
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 border-b border-slate-800/60 space-y-3">
+          <h2 className="text-sm font-semibold text-white tracking-tight">
+            Audience Resonance Analysis
+          </h2>
+
           <button
             type="button"
             onClick={() => setAudienceSetupExpanded((v) => !v)}
             className="w-full flex items-center gap-2 text-left group"
             aria-expanded={audienceSetupExpanded}
           >
-            <Target className="w-4 h-4 text-cyan-400 shrink-0" />
-            <h3 className="text-sm font-semibold text-white flex-1">Target audience</h3>
+            <span className="text-xs font-medium text-gray-400 uppercase tracking-wide flex-1">
+              Target Audience
+            </span>
             {audienceDirty && (
-              <span className="text-[10px] text-amber-400">Unsaved</span>
+              <span className="text-[10px] text-amber-400 normal-case tracking-normal">
+                Unsaved
+              </span>
             )}
-            <span className="text-[10px] text-gray-500 group-hover:text-gray-400">
+            <span className="text-[10px] text-gray-500 group-hover:text-gray-400 normal-case tracking-normal">
               {audienceSetupExpanded ? 'Hide' : 'Show'}
             </span>
             <ChevronDown
               className={cn(
-                'w-4 h-4 text-gray-500 transition-transform shrink-0',
+                'w-3.5 h-3.5 text-gray-500 transition-transform shrink-0',
                 audienceSetupExpanded && 'rotate-180'
               )}
             />
           </button>
 
           {!audienceSetupExpanded && (
-            <p className="text-[11px] text-gray-500 leading-snug line-clamp-2 pl-6">
+            <p className="text-[11px] text-gray-500 leading-snug line-clamp-2">
               {targetAudienceToPromptString(audienceDefinition.profile)}
               {audienceDefinition.customDirection
                 ? ` · ${audienceDefinition.customDirection}`
