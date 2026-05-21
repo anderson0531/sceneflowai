@@ -33,6 +33,7 @@ import {
   READY_FOR_PRODUCTION_THRESHOLD_V3,
   type AudienceIntent,
   normalizeAudienceIntent,
+  targetAudienceToPromptString,
   GENRE_OPTIONS,
 } from '@/lib/types/audienceResonance'
 import BlueprintRefineDialog from './BlueprintRefineDialog'
@@ -66,6 +67,32 @@ const V3_CATEGORY_AXIS_IDS: Record<string, ResonanceAxis['id']> = {
   'Concept Hook': 'originality',
   'Character Connection': 'character-depth',
   'Clarity & Structure': 'pacing',
+}
+
+function getBlueprintScoreTextClass(score: number): string {
+  if (score >= READY_FOR_PRODUCTION_THRESHOLD_V3) return 'text-emerald-400'
+  if (score >= 60) return 'text-amber-400'
+  return 'text-red-400'
+}
+
+function getBlueprintScoreBarClass(score: number): string {
+  if (score >= READY_FOR_PRODUCTION_THRESHOLD_V3) {
+    return 'bg-gradient-to-r from-emerald-500 to-green-400'
+  }
+  if (score >= 60) return 'bg-gradient-to-r from-amber-500 to-yellow-400'
+  return 'bg-gradient-to-r from-red-600 to-red-400'
+}
+
+function getBlueprintScoreBorderClass(score: number): string {
+  if (score >= READY_FOR_PRODUCTION_THRESHOLD_V3) return 'border-emerald-500/35'
+  if (score >= 60) return 'border-amber-500/35'
+  return 'border-red-500/35'
+}
+
+function getBlueprintScoreLabel(score: number): string {
+  if (score >= READY_FOR_PRODUCTION_THRESHOLD_V3) return 'Production ready'
+  if (score >= 60) return 'Needs improvement'
+  return 'Major gaps'
 }
 
 function categoriesToAxes(
@@ -124,6 +151,7 @@ export function AudienceResonancePanelV3({
   const [refineOpen, setRefineOpen] = useState(false)
   const [refineRecs, setRefineRecs] = useState<BlueprintAudienceRecommendation[]>([])
   const [refineSection, setRefineSection] = useState<string>('story')
+  const [audienceSetupExpanded, setAudienceSetupExpanded] = useState(false)
 
   useEffect(() => {
     setLocalTreatment(treatmentProp)
@@ -302,59 +330,86 @@ export function AudienceResonancePanelV3({
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
-        <div className="p-4 border-b border-slate-800/60 space-y-4">
-          <div className="flex items-center gap-2">
-            <Target className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-semibold text-white">Target audience</h3>
+        <div className="p-4 border-b border-slate-800/60 space-y-3">
+          <button
+            type="button"
+            onClick={() => setAudienceSetupExpanded((v) => !v)}
+            className="w-full flex items-center gap-2 text-left group"
+            aria-expanded={audienceSetupExpanded}
+          >
+            <Target className="w-4 h-4 text-cyan-400 shrink-0" />
+            <h3 className="text-sm font-semibold text-white flex-1">Target audience</h3>
             {audienceDirty && (
               <span className="text-[10px] text-amber-400">Unsaved</span>
             )}
-          </div>
-
-          <div className="flex flex-wrap gap-1.5">
-            {AUDIENCE_PRESETS.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => applyPreset(p.id)}
-                className={cn(
-                  'px-2 py-1 text-[10px] rounded-md border transition-colors',
-                  audienceDefinition.presetId === p.id
-                    ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-200'
-                    : 'border-slate-700 text-gray-400 hover:border-slate-500'
-                )}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          <TargetAudienceSelector
-            value={audienceDefinition.profile}
-            onChange={updateProfile}
-            variant="compact"
-            showSummary
-          />
-
-          <div>
-            <label className="text-xs text-gray-500 mb-1 block">
-              Analysis direction (optional)
-            </label>
-            <Textarea
-              value={audienceDefinition.customDirection || ''}
-              onChange={(e) => {
-                setAudienceDefinition((prev) =>
-                  createAudienceDefinition({
-                    ...prev,
-                    customDirection: e.target.value,
-                  })
-                )
-                setAudienceDirty(true)
-              }}
-              placeholder="e.g. Focus on emotional authenticity for a female-led YA audience..."
-              className="min-h-[60px] text-xs bg-slate-800/50 border-slate-600"
+            <span className="text-[10px] text-gray-500 group-hover:text-gray-400">
+              {audienceSetupExpanded ? 'Hide' : 'Show'}
+            </span>
+            <ChevronDown
+              className={cn(
+                'w-4 h-4 text-gray-500 transition-transform shrink-0',
+                audienceSetupExpanded && 'rotate-180'
+              )}
             />
-          </div>
+          </button>
+
+          {!audienceSetupExpanded && (
+            <p className="text-[11px] text-gray-500 leading-snug line-clamp-2 pl-6">
+              {targetAudienceToPromptString(audienceDefinition.profile)}
+              {audienceDefinition.customDirection
+                ? ` · ${audienceDefinition.customDirection}`
+                : ''}
+            </p>
+          )}
+
+          {audienceSetupExpanded && (
+            <div className="space-y-4 pt-1">
+              <div className="flex flex-wrap gap-1.5">
+                {AUDIENCE_PRESETS.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => applyPreset(p.id)}
+                    className={cn(
+                      'px-2 py-1 text-[10px] rounded-md border transition-colors',
+                      audienceDefinition.presetId === p.id
+                        ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-200'
+                        : 'border-slate-700 text-gray-400 hover:border-slate-500'
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+
+              <TargetAudienceSelector
+                value={audienceDefinition.profile}
+                onChange={updateProfile}
+                variant="compact"
+                showSummary
+              />
+
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">
+                  Analysis direction (optional)
+                </label>
+                <Textarea
+                  value={audienceDefinition.customDirection || ''}
+                  onChange={(e) => {
+                    setAudienceDefinition((prev) =>
+                      createAudienceDefinition({
+                        ...prev,
+                        customDirection: e.target.value,
+                      })
+                    )
+                    setAudienceDirty(true)
+                  }}
+                  placeholder="e.g. Focus on emotional authenticity for a female-led YA audience..."
+                  className="min-h-[60px] text-xs bg-slate-800/50 border-slate-600"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2">
             <button
@@ -395,12 +450,34 @@ export function AudienceResonancePanelV3({
               animate={{ opacity: 1 }}
               className="p-4 space-y-4"
             >
-              <div className="rounded-xl border border-slate-700/40 bg-slate-900/40 p-4 space-y-3">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-white tabular-nums">
+              <div
+                className={cn(
+                  'rounded-xl border bg-slate-900/40 p-4 space-y-3',
+                  getBlueprintScoreBorderClass(analysis.overallScore)
+                )}
+              >
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span
+                    className={cn(
+                      'text-3xl font-bold tabular-nums',
+                      getBlueprintScoreTextClass(analysis.overallScore)
+                    )}
+                  >
                     {analysis.overallScore}
                   </span>
                   <span className="text-sm text-gray-500">/ 100</span>
+                  <span
+                    className={cn(
+                      'text-[10px] font-medium uppercase tracking-wide px-1.5 py-0.5 rounded',
+                      analysis.overallScore >= READY_FOR_PRODUCTION_THRESHOLD_V3
+                        ? 'bg-emerald-500/15 text-emerald-400'
+                        : analysis.overallScore >= 60
+                          ? 'bg-amber-500/15 text-amber-400'
+                          : 'bg-red-500/15 text-red-400'
+                    )}
+                  >
+                    {getBlueprintScoreLabel(analysis.overallScore)}
+                  </span>
                   {scoreDelta !== null && scoreDelta !== 0 && (
                     <span
                       className={cn(
@@ -422,9 +499,12 @@ export function AudienceResonancePanelV3({
                 )}
                 <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all"
+                    className={cn(
+                      'h-full transition-all',
+                      getBlueprintScoreBarClass(analysis.overallScore)
+                    )}
                     style={{
-                      width: `${Math.min(100, (analysis.overallScore / READY_FOR_PRODUCTION_THRESHOLD_V3) * 100)}%`,
+                      width: `${Math.min(100, analysis.overallScore)}%`,
                     }}
                   />
                 </div>

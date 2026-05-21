@@ -16,6 +16,7 @@ import {
   Palette,
   Clock,
   Users,
+  User,
   ChevronDown,
   ChevronRight,
   RefreshCw,
