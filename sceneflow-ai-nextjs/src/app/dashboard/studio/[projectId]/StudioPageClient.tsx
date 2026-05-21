@@ -146,9 +146,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
   const openBlueprintRefine = useCallback((opts?: OpenBlueprintRefineOptions) => {
     setBlueprintRefineRecs(opts?.resonanceRecommendations)
-    setBlueprintRefineTab(opts?.initialActiveTab)
+    setBlueprintRefineTab(opts?.initialScope ?? opts?.initialActiveTab)
     blueprintRefineApplyExtraRef.current = opts?.onApplyExtra ?? null
     setBlueprintRefineOpen(true)
+  }, [])
+
+  const requestBlueprintReanalyze = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('sf:blueprint-reanalyze-ar'))
+    }
   }, [])
 
   const handleBlueprintRefineApply = useCallback(
@@ -1333,6 +1339,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           projectId={projectId}
           resonanceRecommendations={blueprintRefineRecs}
           initialActiveTab={blueprintRefineTab}
+          onRequestReanalyze={requestBlueprintReanalyze}
         />
       )}
 

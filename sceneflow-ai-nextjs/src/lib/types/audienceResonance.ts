@@ -859,6 +859,10 @@ export interface BlueprintAudienceRecommendation {
   pointsDeducted: number
   fixSection: BlueprintFixSection
   category?: string
+  /** Sections that must be reconciled when applying this fix */
+  impactSections?: BlueprintFixSection[]
+  /** Short label for guided revision UI chips */
+  intentLabel?: string
 }
 
 export interface BlueprintAudienceCategory {

@@ -12,11 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import BlueprintReimaginDialog from './BlueprintReimaginDialog'
 import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
-import { CoreInfoEditDialog } from './CoreInfoEditDialog'
-import { StorySetupEditDialog } from './StorySetupEditDialog'
-import { ToneStyleEditDialog } from './ToneStyleEditDialog'
-import { BeatsEditDialog } from './BeatsEditDialog'
-import { CharactersEditDialog } from './CharactersEditDialog'
+import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
@@ -75,12 +71,9 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
     SCENEFLOW_CREATOR_VOICE_ID
   )
   const [reimaginOpen, setReimaginOpen] = useState(false)
-  const openRefine = () => onOpenBlueprintRefine?.()
-  const [coreInfoEditOpen, setCoreInfoEditOpen] = useState(false)
-  const [storySetupEditOpen, setStorySetupEditOpen] = useState(false)
-  const [toneStyleEditOpen, setToneStyleEditOpen] = useState(false)
-  const [beatsEditOpen, setBeatsEditOpen] = useState(false)
-  const [charactersEditOpen, setCharactersEditOpen] = useState(false)
+  const openRefine = (opts?: OpenBlueprintRefineOptions) => onOpenBlueprintRefine?.(opts)
+  const openGuidedForSection = (scope: BlueprintFixSection) =>
+    onOpenBlueprintRefine?.({ initialScope: scope })
   const [shareOpen, setShareOpen] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
@@ -267,7 +260,7 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
       if ((document as any).body?.classList?.contains('modal-open')) return
       if (e.key.toLowerCase() === 's') { e.preventDefault(); (async()=>{ try{ const btn = document.activeElement as HTMLElement; }catch{} })(); (async()=>{ try{ }catch{} })(); }
       if (e.key === 'Enter') { e.preventDefault(); try { const v = (Array.isArray(variants) ? variants.find(x=>x.id===active) : null) || (variants||[])[0]; if (v) (useGuideStore.getState() as any).useTreatmentVariant(v.id) } catch {} }
-      if (e.key.toLowerCase() === 'e') { e.preventDefault(); openRefine() }
+      if (e.key.toLowerCase() === 'e') { e.preventDefault(); openRefine({}) }
       if (e.key.toLowerCase() === 'i') { e.preventDefault(); try { const v = (variants||[]).find(x=>x.id===active) || (variants||[])[0]; if (v) { const t = mapVariantToInputText(v); sendToComposer(t, { generate: false }) } } catch {} }
       if (e.key.toLowerCase() === 'r') { e.preventDefault(); try { const v = (variants||[]).find(x=>x.id===active) || (variants||[])[0]; if (v) { const t = mapVariantToInputText(v); sendToComposer(t, { generate: true }) } } catch {} }
     }
@@ -416,7 +409,7 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
                             <Button
                               aria-label="Edit blueprint"
                               title="Edit Blueprint (E)"
-                              onClick={openRefine}
+                              onClick={() => openRefine({})}
                               className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
                               variant="outline"
                               size="icon"
@@ -472,7 +465,7 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-52">
-                              <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); openRefine();}} onClick={(e)=>{e.preventDefault();}}>
+                              <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); openRefine({});}} onClick={(e)=>{e.preventDefault();}}>
                                 <PencilLine className="h-4 w-4 mr-2" /> Refine
                               </DropdownMenuItem>
                               <DropdownMenuItem onSelect={(e)=>{e.preventDefault(); setReimaginOpen(true);}} onClick={(e)=>{e.preventDefault();}}>
@@ -639,7 +632,7 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
                     <div className="flex items-center justify-between">
                       <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Core Identifying Information</div>
                       <Button
-                        onClick={() => setCoreInfoEditOpen(true)}
+                        onClick={() => openGuidedForSection('core')}
                         size="sm"
                         variant="ghost"
                         className="h-6 w-6 p-0 hover:bg-slate-700/50"
@@ -690,7 +683,7 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
                     <div className="flex items-center justify-between">
                       <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Story Setup</div>
                       <Button
-                        onClick={() => setStorySetupEditOpen(true)}
+                        onClick={() => openGuidedForSection('story')}
                         size="sm"
                         variant="ghost"
                         className="h-6 w-6 p-0 hover:bg-slate-700/50"
@@ -719,7 +712,7 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
                     <div className="flex items-center justify-between">
                       <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Tone, Style, & Themes</div>
                       <Button
-                        onClick={() => setToneStyleEditOpen(true)}
+                        onClick={() => openGuidedForSection('tone')}
                         size="sm"
                         variant="ghost"
                         className="h-6 w-6 p-0 hover:bg-slate-700/50"
@@ -758,7 +751,7 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
                     <div className="flex items-center justify-between">
                       <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Beats & Runtime</div>
                       <Button
-                        onClick={() => setBeatsEditOpen(true)}
+                        onClick={() => openGuidedForSection('beats')}
                         size="sm"
                         variant="ghost"
                         className="h-6 w-6 p-0 hover:bg-slate-700/50"
@@ -799,7 +792,7 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
                           Characters ({v.character_descriptions.length})
                         </div>
                         <Button
-                          onClick={() => setCharactersEditOpen(true)}
+                          onClick={() => openGuidedForSection('characters')}
                           size="sm"
                           variant="ghost"
                           className="h-6 w-6 p-0 hover:bg-slate-700/50"
@@ -1005,57 +998,6 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
             </div>
           </div>
         </CardContent>
-        {/* Section-Specific Edit Dialogs */}
-        <CoreInfoEditDialog
-          open={coreInfoEditOpen}
-          variant={activeVariant as any}
-          onClose={() => setCoreInfoEditOpen(false)}
-          onApply={(patch) => {
-            try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
-            setCoreInfoEditOpen(false)
-          }}
-          projectId={guide.projectId}
-        />
-        <StorySetupEditDialog
-          open={storySetupEditOpen}
-          variant={activeVariant as any}
-          onClose={() => setStorySetupEditOpen(false)}
-          onApply={(patch) => {
-            try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
-            setStorySetupEditOpen(false)
-          }}
-          projectId={guide.projectId}
-        />
-        <ToneStyleEditDialog
-          open={toneStyleEditOpen}
-          variant={activeVariant as any}
-          onClose={() => setToneStyleEditOpen(false)}
-          onApply={(patch) => {
-            try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
-            setToneStyleEditOpen(false)
-          }}
-          projectId={guide.projectId}
-        />
-        <BeatsEditDialog
-          open={beatsEditOpen}
-          variant={activeVariant as any}
-          onClose={() => setBeatsEditOpen(false)}
-          onApply={(patch) => {
-            try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
-            setBeatsEditOpen(false)
-          }}
-          projectId={guide.projectId}
-        />
-        <CharactersEditDialog
-          open={charactersEditOpen}
-          variant={activeVariant as any}
-          onClose={() => setCharactersEditOpen(false)}
-          onApply={(patch) => {
-            try { (useGuideStore.getState() as any).updateTreatmentVariant(activeVariant.id, patch) } catch {}
-            setCharactersEditOpen(false)
-          }}
-          projectId={guide.projectId}
-        />
         {/* Blueprint Reimagine Dialog - Major story changes */}
         <BlueprintReimaginDialog
           open={reimaginOpen}

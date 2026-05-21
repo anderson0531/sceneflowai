@@ -124,6 +124,13 @@ export function mapRecommendations(
       ? (item.fix_section || item.fixSection)
       : 'story'
 
+    const rawImpact = item.impact_sections || item.impactSections
+    const impactSections = Array.isArray(rawImpact)
+      ? rawImpact.filter((s: string) =>
+          ['core', 'story', 'tone', 'beats', 'characters'].includes(s)
+        )
+      : undefined
+
     return {
       id: item.id || `rec-${startIndex + idx}`,
       text: String(item.text || item.description || item.title || ''),
@@ -132,6 +139,10 @@ export function mapRecommendations(
       pointsDeducted,
       fixSection,
       category: item.category ? String(item.category) : undefined,
+      impactSections: impactSections?.length ? impactSections : undefined,
+      intentLabel: item.intent_label || item.intentLabel
+        ? String(item.intent_label || item.intentLabel)
+        : undefined,
     }
   })
 }

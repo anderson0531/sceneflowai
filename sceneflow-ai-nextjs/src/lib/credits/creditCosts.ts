@@ -273,6 +273,9 @@ export const BLUEPRINT_CREDITS = {
   
   /** Blueprint refinement - single section (10 credits = $0.10) */
   BLUEPRINT_REFINE: 10,
+
+  /** Blueprint guided revision - balanced cross-section rewrite (15 credits = $0.15) */
+  BLUEPRINT_GUIDED_REVISE: 15,
   
   /** Blueprint V2/V3 analysis (20 credits = $0.20) */
   BLUEPRINT_ANALYZE: 20,

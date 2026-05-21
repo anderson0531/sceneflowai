@@ -340,10 +340,22 @@ export function AudienceResonancePanelV3({
     }
     onOpenBlueprintRefine({
       resonanceRecommendations: list,
-      initialActiveTab: list[0]?.fixSection || 'story',
+      initialScope: list[0]?.fixSection || 'story',
       onApplyExtra: (patch) => handleResonanceRefineApply(patch, list),
     })
   }
+
+  useEffect(() => {
+    const onReanalyze = () => {
+      if (audienceDirty) {
+        toast.error('Save your target audience before re-analyzing')
+        return
+      }
+      void runAnalysis()
+    }
+    window.addEventListener('sf:blueprint-reanalyze-ar', onReanalyze)
+    return () => window.removeEventListener('sf:blueprint-reanalyze-ar', onReanalyze)
+  }, [runAnalysis, audienceDirty])
 
   const arNarrationText = useCallback(() => {
     if (analysis?.summary) return analysis.summary

@@ -1,355 +1,223 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Button } from '../ui/Button'
 import { Textarea } from '../ui/textarea'
-import { Input } from '../ui/Input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { toast } from 'sonner'
-import { useGuideStore } from '@/store/useGuideStore'
-import { 
-  PencilLine, 
-  Wand2, 
-  Loader2, 
-  FileText,
-  Palette,
-  Clock,
-  Users,
-  User,
-  ChevronDown,
-  ChevronRight,
-  RefreshCw,
-  Save,
+import {
+  Compass,
+  Loader2,
   Sparkles,
   AlertTriangle,
   CheckSquare,
   Square,
+  ChevronDown,
+  ChevronRight,
+  Wand2,
+  Check,
+  RefreshCw,
 } from 'lucide-react'
-import type { BlueprintAudienceRecommendation } from '@/lib/types/audienceResonance'
+import type {
+  BlueprintAudienceRecommendation,
+  BlueprintFixSection,
+} from '@/lib/types/audienceResonance'
+import {
+  BLUEPRINT_SECTION_TEMPLATES,
+  FIX_SECTION_LABELS,
+  type BlueprintSection,
+} from '@/lib/constants/blueprint-optimization'
+import type { BlueprintChangePlan, FieldDiff } from '@/lib/treatment/blueprintRevisionTypes'
 import { cn } from '@/lib/utils'
 
-// =============================================================================
-// TYPES
-// =============================================================================
-
-type Character = {
-  name: string
-  role: string
-  subject: string
-  ethnicity: string
-  keyFeature: string
-  hairStyle: string
-  hairColor: string
-  eyeColor: string
-  expression: string
-  build: string
-  description: string
-  externalGoal?: string
-  internalNeed?: string
-  fatalFlaw?: string
-  arcStartingState?: string
-  arcShift?: string
-  arcEndingState?: string
-}
-
-type Beat = {
-  title: string
-  intent?: string
-  minutes: number
-  synopsis?: string
-}
-
-type TreatmentVariant = {
-  id: string
-  // Core Identifying Information
-  title?: string
-  logline?: string
-  genre?: string
-  format_length?: string
-  target_audience?: string
-  author_writer?: string
-  
-  // Story Setup
-  synopsis?: string
-  content?: string
-  setting?: string
-  protagonist?: string
-  antagonist?: string
-  act_breakdown?: { act1?: string; act2?: string; act3?: string }
-  
-  // Tone, Style, Themes
-  tone?: string
-  tone_description?: string
-  style?: string
-  visual_style?: string
-  themes?: string[] | string
-  mood_references?: string[]
-  
-  // Characters
-  character_descriptions?: Character[]
-  
-  // Beats & Runtime
-  beats?: Beat[]
-  total_duration_seconds?: number
-  estimatedDurationMinutes?: number
-}
+type TreatmentVariant = Record<string, unknown>
 
 type Props = {
   open: boolean
   variant: TreatmentVariant | null
   onClose: () => void
-  onApply: (patch: Partial<TreatmentVariant>) => void
+  onApply: (patch: Record<string, unknown>) => void
   projectId?: string
-  /** When set, show resonance recommendations (guided editor from AR panel) */
   resonanceRecommendations?: BlueprintAudienceRecommendation[]
+  /** Initial focus scope (from section pencil or AR fixSection) */
   initialActiveTab?: string
+  onRequestReanalyze?: () => void
 }
 
-// Section-specific instruction templates
-const SECTION_TEMPLATES: Record<string, { id: string; label: string; text: string }[]> = {
-  tips: [
-    { id: 'add-twist', label: 'Add Unexpected Twist', text: 'Add an unexpected twist to the logline that subverts audience expectations.' },
-    { id: 'subvert-trope', label: 'Subvert Genre Trope', text: 'Identify and subvert a common genre trope to make the story feel fresh.' },
-    { id: 'raise-stakes', label: 'Raise the Stakes', text: 'Increase the personal and external stakes to create more urgency and tension.' },
-    { id: 'add-irony', label: 'Add Dramatic Irony', text: 'Introduce dramatic irony where the audience knows something characters don\'t.' },
-    { id: 'moral-dilemma', label: 'Add Moral Dilemma', text: 'Give the protagonist a difficult moral choice with no easy answer.' },
-    { id: 'unique-hook', label: 'Unique Hook', text: 'Create a distinctive hook that makes this story stand out in the genre.' },
-  ],
-  core: [
-    { id: 'sharpen-logline', label: 'Sharpen Logline', text: 'Make the logline more compelling with a stronger hook and clearer stakes.' },
-    { id: 'clarify-genre', label: 'Clarify Genre', text: 'Ensure genre expectations are clear and consistent throughout.' },
-    { id: 'refine-title', label: 'Stronger Title', text: 'Suggest a more memorable, evocative title that captures the essence.' },
-  ],
-  story: [
-    { id: 'expand-setting', label: 'Expand Setting', text: 'Add more vivid details to the setting and world-building.' },
-    { id: 'deepen-protagonist', label: 'Deepen Protagonist', text: 'Give the protagonist more depth, clearer motivation, and internal conflict.' },
-    { id: 'strengthen-antagonist', label: 'Strengthen Antagonist', text: 'Make the antagonist more formidable and their opposition more meaningful.' },
-    { id: 'add-conflict', label: 'Add Conflict', text: 'Increase the central conflict and raise the stakes.' },
-  ],
-  tone: [
-    { id: 'unify-tone', label: 'Unify Tone', text: 'Ensure consistent tone throughout all story elements.' },
-    { id: 'visual-clarity', label: 'Visual Clarity', text: 'Make visual style directions more specific and actionable.' },
-    { id: 'theme-depth', label: 'Deepen Themes', text: 'Explore themes with more nuance and complexity.' },
-  ],
-  beats: [
-    { id: 'improve-pacing', label: 'Improve Pacing', text: 'Adjust beat durations for better pacing and flow.' },
-    { id: 'rising-action', label: 'Rising Action', text: 'Strengthen the escalation and rising tension.' },
-    { id: 'stronger-climax', label: 'Stronger Climax', text: 'Make the climax more impactful and satisfying.' },
-    { id: 'clear-resolution', label: 'Clear Resolution', text: 'Ensure a satisfying and meaningful resolution.' },
-  ],
-  characters: [
-    { id: 'add-depth', label: 'Add Psychological Depth', text: 'Add more internal conflict, wants vs needs, and character flaws.' },
-    { id: 'strengthen-arcs', label: 'Strengthen Arcs', text: 'Make character transformations more pronounced and earned.' },
-    { id: 'distinct-voices', label: 'Distinct Voices', text: 'Give each character a more unique personality and voice.' },
-    { id: 'relationship-dynamics', label: 'Relationship Dynamics', text: 'Enrich the relationships and dynamics between characters.' },
-  ],
+const SCOPE_OPTIONS: { id: BlueprintFixSection | 'all'; label: string }[] = [
+  { id: 'all', label: 'Full blueprint balance' },
+  { id: 'core', label: 'Core info' },
+  { id: 'story', label: 'Story' },
+  { id: 'tone', label: 'Tone & style' },
+  { id: 'beats', label: 'Beats' },
+  { id: 'characters', label: 'Characters' },
+]
+
+function sectionFromTab(tab?: string): BlueprintFixSection | 'all' {
+  const valid: BlueprintFixSection[] = ['core', 'story', 'tone', 'beats', 'characters']
+  if (tab && valid.includes(tab as BlueprintFixSection)) return tab as BlueprintFixSection
+  return 'all'
 }
 
-// =============================================================================
-// SECTION COMPONENTS
-// =============================================================================
-
-function InstructionChips({ 
-  section, 
-  selected, 
-  onToggle 
-}: { 
-  section: string
-  selected: string[]
-  onToggle: (id: string) => void 
-}) {
-  const templates = SECTION_TEMPLATES[section] || []
-  
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  if (!value.trim()) return null
   return (
-    <div className="flex flex-wrap gap-2 mb-3">
-      {templates.map(template => (
-        <button
-          key={template.id}
-          onClick={() => onToggle(template.id)}
-          title={template.text}
-          className={cn(
-            'px-3 py-1.5 text-xs rounded-lg border transition-all',
-            selected.includes(template.id)
-              ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
-              : 'bg-slate-800/50 border-slate-700 text-gray-400 hover:border-slate-600 hover:text-gray-300'
-          )}
-        >
-          {template.label}
-        </button>
+    <div className="space-y-0.5">
+      <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
+      <p className="text-xs text-gray-300 whitespace-pre-wrap leading-relaxed">{value}</p>
+    </div>
+  )
+}
+
+function BlueprintSnapshot({ variant }: { variant: TreatmentVariant }) {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({
+    core: true,
+    story: false,
+    characters: false,
+    beats: false,
+    tone: false,
+  })
+
+  const toggle = (key: string) =>
+    setExpanded((p) => ({ ...p, [key]: !p[key] }))
+
+  const themes = Array.isArray(variant.themes)
+    ? (variant.themes as string[]).join(', ')
+    : String(variant.themes || '')
+
+  const beats = (variant.beats as Array<{ title?: string; synopsis?: string }>) || []
+  const chars =
+    (variant.character_descriptions as Array<{ name?: string; role?: string }>) || []
+
+  return (
+    <div className="space-y-2 rounded-xl border border-slate-700/50 bg-slate-800/30 p-3">
+      <p className="text-xs text-gray-500 mb-2">Current blueprint (read-only)</p>
+      {(
+        [
+          {
+            key: 'core',
+            title: 'Core',
+            content: (
+              <>
+                <ReadOnlyField label="Title" value={String(variant.title || '')} />
+                <ReadOnlyField label="Logline" value={String(variant.logline || '')} />
+                <ReadOnlyField label="Genre" value={String(variant.genre || '')} />
+              </>
+            ),
+          },
+          {
+            key: 'story',
+            title: 'Story',
+            content: (
+              <>
+                <ReadOnlyField
+                  label="Synopsis"
+                  value={String(variant.synopsis || variant.content || '')}
+                />
+                <ReadOnlyField label="Protagonist" value={String(variant.protagonist || '')} />
+                <ReadOnlyField label="Antagonist" value={String(variant.antagonist || '')} />
+              </>
+            ),
+          },
+          {
+            key: 'characters',
+            title: 'Characters',
+            content: (
+              <ul className="text-xs text-gray-300 space-y-1">
+                {chars.length === 0 ? (
+                  <li className="text-gray-500">No characters</li>
+                ) : (
+                  chars.map((c, i) => (
+                    <li key={i}>
+                      {c.name || 'Character'} — {c.role || 'role'}
+                    </li>
+                  ))
+                )}
+              </ul>
+            ),
+          },
+          {
+            key: 'beats',
+            title: 'Beats',
+            content: (
+              <ul className="text-xs text-gray-300 space-y-1">
+                {beats.map((b, i) => (
+                  <li key={i}>
+                    {i + 1}. {b.title || 'Beat'}
+                  </li>
+                ))}
+              </ul>
+            ),
+          },
+          {
+            key: 'tone',
+            title: 'Tone',
+            content: (
+              <>
+                <ReadOnlyField
+                  label="Tone"
+                  value={String(variant.tone_description || variant.tone || '')}
+                />
+                <ReadOnlyField label="Themes" value={themes} />
+              </>
+            ),
+          },
+        ] as const
+      ).map(({ key, title, content }) => (
+        <div key={key} className="border border-slate-700/40 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => toggle(key)}
+            className="w-full flex items-center justify-between px-2 py-1.5 text-xs font-medium text-gray-400 hover:bg-slate-800/50"
+          >
+            {title}
+            {expanded[key] ? (
+              <ChevronDown className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5" />
+            )}
+          </button>
+          {expanded[key] && <div className="px-2 pb-2 space-y-2">{content}</div>}
+        </div>
       ))}
     </div>
   )
 }
 
-function SectionHeader({ 
-  icon: Icon, 
-  title, 
-  description 
-}: { 
-  icon: React.ElementType
-  title: string
-  description: string 
-}) {
+function DiffPanel({ diffs }: { diffs: FieldDiff[] }) {
+  if (diffs.length === 0) {
+    return (
+      <p className="text-sm text-gray-500 text-center py-4">
+        No field-level changes detected (review summary above).
+      </p>
+    )
+  }
   return (
-    <div className="flex items-start gap-3 mb-4">
-      <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center flex-shrink-0">
-        <Icon className="w-4 h-4 text-cyan-400" />
-      </div>
-      <div>
-        <h3 className="font-semibold text-white">{title}</h3>
-        <p className="text-xs text-gray-500">{description}</p>
-      </div>
-    </div>
-  )
-}
-
-// Character inline editor
-function CharacterEditor({ 
-  character, 
-  index,
-  onChange 
-}: { 
-  character: Character
-  index: number
-  onChange: (index: number, field: keyof Character, value: string) => void 
-}) {
-  const [expanded, setExpanded] = useState(false)
-  
-  return (
-    <div className="border border-slate-700 rounded-lg overflow-hidden">
-      {/* Header - always visible */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-3 bg-slate-800/50 hover:bg-slate-800 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <User className="w-4 h-4 text-cyan-400" />
-          <span className="font-medium text-white">{character.name || 'Unnamed Character'}</span>
-          <span className="text-xs text-gray-500">{character.role}</span>
-        </div>
-        {expanded ? (
-          <ChevronDown className="w-4 h-4 text-gray-400" />
-        ) : (
-          <ChevronRight className="w-4 h-4 text-gray-400" />
-        )}
-      </button>
-      
-      {/* Expanded content */}
-      {expanded && (
-        <div className="p-4 space-y-4 bg-slate-900/50">
-          {/* Basic Info */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400">Name</label>
-              <Input
-                value={character.name || ''}
-                onChange={(e) => onChange(index, 'name', e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-sm"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400">Role</label>
-              <Input
-                value={character.role || ''}
-                onChange={(e) => onChange(index, 'role', e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-sm"
-              />
-            </div>
+    <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+      {diffs.map((d) => (
+        <div
+          key={d.field}
+          className="rounded-lg border border-slate-700/50 bg-slate-800/40 p-2.5 space-y-1.5"
+        >
+          <div className="text-xs font-medium text-cyan-300/90">
+            {d.label}{' '}
+            <span className="text-gray-500 font-normal">({FIX_SECTION_LABELS[d.section] || d.section})</span>
           </div>
-          
-          {/* Description */}
-          <div className="space-y-1">
-            <label className="text-xs text-gray-400">Description</label>
-            <Textarea
-              value={character.description || ''}
-              onChange={(e) => onChange(index, 'description', e.target.value)}
-              className="min-h-[60px] bg-slate-800/50 border-slate-700 text-sm"
-            />
-          </div>
-          
-          {/* Appearance */}
-          <div>
-            <label className="text-xs text-gray-400 mb-2 block">Appearance</label>
-            <div className="grid grid-cols-3 gap-2">
-              <Input
-                placeholder="Build"
-                value={character.build || ''}
-                onChange={(e) => onChange(index, 'build', e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-xs"
-              />
-              <Input
-                placeholder="Hair Style"
-                value={character.hairStyle || ''}
-                onChange={(e) => onChange(index, 'hairStyle', e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-xs"
-              />
-              <Input
-                placeholder="Hair Color"
-                value={character.hairColor || ''}
-                onChange={(e) => onChange(index, 'hairColor', e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-xs"
-              />
-              <Input
-                placeholder="Eye Color"
-                value={character.eyeColor || ''}
-                onChange={(e) => onChange(index, 'eyeColor', e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-xs"
-              />
-              <Input
-                placeholder="Key Feature"
-                value={character.keyFeature || ''}
-                onChange={(e) => onChange(index, 'keyFeature', e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-xs"
-              />
-              <Input
-                placeholder="Expression"
-                value={character.expression || ''}
-                onChange={(e) => onChange(index, 'expression', e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-xs"
-              />
+          <div className="grid grid-cols-1 gap-2 text-[11px]">
+            <div>
+              <span className="text-red-400/80">Before</span>
+              <p className="text-gray-500 line-clamp-4 whitespace-pre-wrap">{d.before || '—'}</p>
             </div>
-          </div>
-          
-          {/* Psychological Depth */}
-          <div>
-            <label className="text-xs text-gray-400 mb-2 block">Psychological Depth</label>
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                placeholder="External Goal"
-                value={character.externalGoal || ''}
-                onChange={(e) => onChange(index, 'externalGoal', e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-xs"
-              />
-              <Input
-                placeholder="Internal Need"
-                value={character.internalNeed || ''}
-                onChange={(e) => onChange(index, 'internalNeed', e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-xs"
-              />
-              <Input
-                placeholder="Fatal Flaw"
-                value={character.fatalFlaw || ''}
-                onChange={(e) => onChange(index, 'fatalFlaw', e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-xs"
-              />
-              <Input
-                placeholder="Arc Shift"
-                value={character.arcShift || ''}
-                onChange={(e) => onChange(index, 'arcShift', e.target.value)}
-                className="bg-slate-800/50 border-slate-700 text-xs"
-              />
+            <div>
+              <span className="text-emerald-400/80">After</span>
+              <p className="text-gray-200 line-clamp-6 whitespace-pre-wrap">{d.after || '—'}</p>
             </div>
           </div>
         </div>
-      )}
+      ))}
     </div>
   )
 }
-
-// =============================================================================
-// MAIN COMPONENT
-// =============================================================================
 
 export function BlueprintRefineDialog({
   open,
@@ -359,86 +227,61 @@ export function BlueprintRefineDialog({
   projectId,
   resonanceRecommendations,
   initialActiveTab,
+  onRequestReanalyze,
 }: Props) {
-  const [activeTab, setActiveTab] = useState(initialActiveTab || 'tips')
+  const [phase, setPhase] = useState<'intent' | 'preview'>('intent')
+  const [userIntent, setUserIntent] = useState('')
+  const [focusScope, setFocusScope] = useState<BlueprintFixSection | 'all'>('all')
   const [selectedRecIds, setSelectedRecIds] = useState<Set<string>>(new Set())
+  const [selectedTemplateKeys, setSelectedTemplateKeys] = useState<Set<string>>(new Set())
   const [showResonanceRecs, setShowResonanceRecs] = useState(true)
-  const [draft, setDraft] = useState<Partial<TreatmentVariant>>({})
-  const [selectedInstructions, setSelectedInstructions] = useState<Record<string, string[]>>({
-    tips: [],
-    core: [],
-    story: [],
-    tone: [],
-    beats: [],
-    characters: [],
-  })
-  const [customInstructions, setCustomInstructions] = useState<Record<string, string>>({
-    tips: '',
-    core: '',
-    story: '',
-    tone: '',
-    beats: '',
-    characters: '',
-  })
-  const [isRefining, setIsRefining] = useState<string | null>(null)
-  const [hasChanges, setHasChanges] = useState(false)
-  
-  useEffect(() => {
-    if (open && resonanceRecommendations?.length) {
-      setSelectedRecIds(new Set(resonanceRecommendations.map((r) => r.id)))
-      if (initialActiveTab) setActiveTab(initialActiveTab)
-    }
-  }, [open, resonanceRecommendations, initialActiveTab])
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [previewVariant, setPreviewVariant] = useState<Record<string, unknown> | null>(null)
+  const [changePlan, setChangePlan] = useState<BlueprintChangePlan | null>(null)
+  const [diff, setDiff] = useState<FieldDiff[]>([])
 
-  // Initialize draft from variant
   useEffect(() => {
-    if (variant) {
-      setDraft({
-        title: variant.title,
-        logline: variant.logline,
-        genre: variant.genre,
-        target_audience: variant.target_audience,
-        synopsis: variant.synopsis || variant.content,
-        setting: variant.setting,
-        protagonist: variant.protagonist,
-        antagonist: variant.antagonist,
-        tone_description: variant.tone_description || variant.tone,
-        visual_style: variant.visual_style,
-        themes: variant.themes,
-        character_descriptions: variant.character_descriptions ? [...variant.character_descriptions] : [],
-        beats: variant.beats ? [...variant.beats] : [],
-      })
-      setHasChanges(false)
+    if (!open) return
+    setPhase('intent')
+    setUserIntent('')
+    setFocusScope(sectionFromTab(initialActiveTab))
+    setPreviewVariant(null)
+    setChangePlan(null)
+    setDiff([])
+    setSelectedTemplateKeys(new Set())
+    if (resonanceRecommendations?.length) {
+      setSelectedRecIds(new Set(resonanceRecommendations.map((r) => r.id)))
+      setShowResonanceRecs(true)
+    } else {
+      setSelectedRecIds(new Set())
     }
-  }, [variant, open])
-  
-  // Toggle instruction for a section
-  const toggleInstruction = (section: string, id: string) => {
-    setSelectedInstructions(prev => ({
-      ...prev,
-      [section]: prev[section].includes(id)
-        ? prev[section].filter(i => i !== id)
-        : [...prev[section], id]
+  }, [open, initialActiveTab, resonanceRecommendations])
+
+  const templateSections = useMemo(() => {
+    const scope = focusScope === 'all' ? null : focusScope
+    const sections: BlueprintSection[] = scope
+      ? [scope as BlueprintSection]
+      : ['core', 'story', 'tone', 'beats', 'characters']
+    return sections.map((s) => ({
+      section: s,
+      templates: BLUEPRINT_SECTION_TEMPLATES[s] || [],
     }))
-  }
-  
-  // Update draft field
-  const updateDraft = (field: keyof TreatmentVariant, value: any) => {
-    setDraft(prev => ({ ...prev, [field]: value }))
-    setHasChanges(true)
-  }
-  
-  // Update character field
-  const updateCharacter = (index: number, field: keyof Character, value: string) => {
-    setDraft(prev => {
-      const characters = [...(prev.character_descriptions || [])]
-      characters[index] = { ...characters[index], [field]: value }
-      return { ...prev, character_descriptions: characters }
-    })
-    setHasChanges(true)
-  }
-  
-  // Refine section with AI
+  }, [focusScope])
+
+  const combinedIntent = useMemo(() => {
+    const parts: string[] = []
+    if (userIntent.trim()) parts.push(userIntent.trim())
+    for (const { section, templates } of templateSections) {
+      for (const t of templates) {
+        const key = `${section}:${t.id}`
+        if (selectedTemplateKeys.has(key)) {
+          parts.push(t.instruction)
+        }
+      }
+    }
+    return parts.join('\n')
+  }, [userIntent, templateSections, selectedTemplateKeys])
+
   const toggleRec = (id: string) => {
     setSelectedRecIds((prev) => {
       const next = new Set(prev)
@@ -448,501 +291,281 @@ export function BlueprintRefineDialog({
     })
   }
 
-  const refineSection = async (section: string) => {
-    const instructions = selectedInstructions[section] || []
-    const custom = customInstructions[section] || ''
-    const recTexts =
-      resonanceRecommendations
-        ?.filter((r) => selectedRecIds.has(r.id) && (r.fixSection === section || activeTab === section))
-        .map((r) => `${r.title || 'Fix'}: ${r.text}`) || []
+  const toggleTemplate = (section: string, id: string) => {
+    const key = `${section}:${id}`
+    setSelectedTemplateKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
 
-    if (instructions.length === 0 && !custom.trim() && recTexts.length === 0) {
-      toast.error('Select recommendations, refinements, or add custom instructions')
+  const handleGenerate = async () => {
+    if (!variant) return
+    const recs = resonanceRecommendations?.filter((r) => selectedRecIds.has(r.id)) ?? []
+    if (!combinedIntent.trim() && recs.length === 0) {
+      toast.error('Describe what should change or select recommendations')
       return
     }
 
-    setIsRefining(section)
-
+    setIsGenerating(true)
     try {
-      const templates = SECTION_TEMPLATES[section] || []
-      const instructionTexts = instructions
-        .map((id) => templates.find((t) => t.id === id)?.text)
-        .filter(Boolean)
-
-      const combinedInstructions = [...recTexts, ...instructionTexts, custom.trim()]
-        .filter(Boolean)
-        .join('\n')
-      
-      const response = await fetch('/api/treatment/refine', {
+      const response = await fetch('/api/treatment/guided-revise', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
-          variant: draft,
-          section,
-          instructions: combinedInstructions
-        })
+          variant,
+          userIntent: combinedIntent,
+          selectedRecommendationIds: [...selectedRecIds],
+          resonanceRecommendations: resonanceRecommendations ?? [],
+          focusScope: focusScope === 'all' ? undefined : focusScope,
+          projectId,
+        }),
       })
-      
-      if (!response.ok) throw new Error('Refinement failed')
-      
       const data = await response.json()
-      
-      if (data.success && data.draft) {
-        // Merge refined fields into draft
-        setDraft(prev => ({ ...prev, ...data.draft }))
-        setHasChanges(true)
-        toast.success(`${section.charAt(0).toUpperCase() + section.slice(1)} refined!`)
-        
-        // Clear selected instructions for this section
-        setSelectedInstructions(prev => ({ ...prev, [section]: [] }))
-        setCustomInstructions(prev => ({ ...prev, [section]: '' }))
+      if (!response.ok) {
+        throw new Error(data.message || 'Revision failed')
       }
-    } catch (error) {
-      console.error('Refine error:', error)
-      toast.error('Failed to refine section')
-    } finally {
-      setIsRefining(null)
-    }
-  }
-  
-  const applyAllResonanceImprovements = async () => {
-    if (!resonanceRecommendations?.length) return
-    const selected = resonanceRecommendations.filter((r) => selectedRecIds.has(r.id))
-    if (selected.length === 0) {
-      toast.error('Select at least one recommendation')
-      return
-    }
-    const bySection: Record<string, BlueprintAudienceRecommendation[]> = {}
-    for (const r of selected) {
-      const sec = r.fixSection || 'story'
-      if (!bySection[sec]) bySection[sec] = []
-      bySection[sec].push(r)
-    }
-    setIsRefining('resonance')
-    let workingDraft = { ...draft }
-    try {
-      for (const [section, recs] of Object.entries(bySection)) {
-        const instructions = recs.map((r) => `${r.title || 'Improve'}: ${r.text}`).join('\n\n')
-        const response = await fetch('/api/treatment/refine', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            variant: { ...variant, ...workingDraft },
-            section,
-            instructions,
-          }),
-        })
-        if (!response.ok) throw new Error('Refinement failed')
-        const data = await response.json()
-        if (data.success && data.draft) {
-          workingDraft = { ...workingDraft, ...data.draft }
-        }
+      if (data.success && data.revisedVariant) {
+        setPreviewVariant(data.revisedVariant)
+        setChangePlan(data.changePlan ?? null)
+        setDiff(data.diff ?? [])
+        setPhase('preview')
+        toast.success('Balanced revision ready — review before applying')
+      } else {
+        throw new Error(data.message || 'Revision failed')
       }
-      setDraft(workingDraft)
-      setHasChanges(true)
-      onApply(workingDraft)
-      toast.success('Applied resonance improvements')
-      onClose()
-    } catch {
-      toast.error('Failed to apply improvements')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to generate revision')
     } finally {
-      setIsRefining(null)
+      setIsGenerating(false)
     }
   }
 
-  // Apply all changes
-  const handleApply = () => {
-    onApply(draft)
-    toast.success('Blueprint updated!')
+  const handleApplyPreview = useCallback(() => {
+    if (!previewVariant) return
+    onApply(previewVariant)
+    toast.success('Blueprint updated with balanced revision')
+    if (onRequestReanalyze) {
+      toast.message('Re-analyze audience resonance to refresh your score', {
+        action: {
+          label: 'Re-analyze',
+          onClick: onRequestReanalyze,
+        },
+      })
+    }
     onClose()
+  }, [previewVariant, onApply, onClose, onRequestReanalyze])
+
+  const handleDiscardPreview = () => {
+    setPreviewVariant(null)
+    setChangePlan(null)
+    setDiff([])
+    setPhase('intent')
   }
-  
+
   if (!variant) return null
-  
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col overflow-hidden bg-slate-900 border-slate-700">
-        {/* Freeze overlay during AI refinement */}
-        {isRefining && (
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden bg-slate-900 border-slate-700">
+        {isGenerating && (
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
             <div className="bg-slate-900 border border-cyan-500/30 rounded-xl p-8 shadow-2xl flex flex-col items-center max-w-sm text-center">
               <Loader2 className="w-12 h-12 animate-spin text-cyan-400 mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">Refining {isRefining.charAt(0).toUpperCase() + isRefining.slice(1)}</h3>
-              <p className="text-sm text-gray-400">AI is enhancing your Blueprint section...</p>
-              <div className="flex gap-1 mt-3">
-                <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Crafting balanced revision</h3>
+              <p className="text-sm text-gray-400">
+                Planning changes and reconciling story, characters, and beats…
+              </p>
             </div>
           </div>
         )}
-        
-        <DialogHeader className="flex flex-row items-center justify-between gap-4 pb-2">
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <PencilLine className="w-5 h-5 text-cyan-400" />
-            <span>Edit Blueprint</span>
-          </DialogTitle>
-          <div className="flex items-center gap-3 mr-8">
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleApply}
-              size="sm"
-              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Apply Changes
-            </Button>
-          </div>
-        </DialogHeader>
-        
-        {resonanceRecommendations && resonanceRecommendations.length > 0 && (
-          <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 space-y-2 flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowResonanceRecs(!showResonanceRecs)}
-              className="flex items-center justify-between w-full text-sm font-medium text-amber-200/90"
-            >
-              <span className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" />
-                Resonance recommendations ({resonanceRecommendations.length})
-              </span>
-              <ChevronDown className={cn('w-4 h-4 transition-transform', showResonanceRecs && 'rotate-180')} />
-            </button>
-            {showResonanceRecs && (
-              <div className="space-y-2">
-              <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
-                {resonanceRecommendations.map((rec) => {
-                  const selected = selectedRecIds.has(rec.id)
-                  return (
-                    <div
-                      key={rec.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => toggleRec(rec.id)}
-                      className={cn(
-                        'flex items-start gap-2 p-2 rounded-lg cursor-pointer border text-left text-xs',
-                        selected
-                          ? 'border-cyan-500/40 bg-cyan-500/10'
-                          : 'border-slate-700/50 bg-slate-800/40'
-                      )}
-                    >
-                      {selected ? (
-                        <CheckSquare className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
-                      ) : (
-                        <Square className="w-3.5 h-3.5 text-gray-500 shrink-0 mt-0.5" />
-                      )}
-                      <span className="text-gray-300 flex-1">
-                        {rec.text}
-                        <span className="text-red-400/80 ml-1 font-mono">−{rec.pointsDeducted}</span>
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-              <Button
-                size="sm"
-                className="w-full bg-gradient-to-r from-cyan-600 to-purple-600"
-                disabled={!!isRefining}
-                onClick={applyAllResonanceImprovements}
-              >
-                {isRefining ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <Sparkles className="w-4 h-4 mr-2" />
-                )}
-                Apply selected improvements
-              </Button>
-              </div>
-            )}
-          </div>
-        )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <TabsList className="grid grid-cols-6 bg-slate-800/50 mb-4 flex-shrink-0">
-            <TabsTrigger value="tips" className="text-xs gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:border-cyan-500/50 data-[state=active]:border">
-              <Sparkles className="w-3 h-3" />
-              Tips
-            </TabsTrigger>
-            <TabsTrigger value="core" className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:border-cyan-500/50 data-[state=active]:border">Core Info</TabsTrigger>
-            <TabsTrigger value="story" className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:border-cyan-500/50 data-[state=active]:border">Story Setup</TabsTrigger>
-            <TabsTrigger value="tone" className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:border-cyan-500/50 data-[state=active]:border">Tone & Style</TabsTrigger>
-            <TabsTrigger value="beats" className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:border-cyan-500/50 data-[state=active]:border">Beats</TabsTrigger>
-            <TabsTrigger value="characters" className="text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:border-cyan-500/50 data-[state=active]:border">Characters</TabsTrigger>
-          </TabsList>
-          
-          <div className="flex-1 overflow-y-auto pr-2 min-h-0">
-            {/* Tips Tab */}
-            <TabsContent value="tips" className="space-y-4 mt-0">
-              <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-xl border border-cyan-500/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="w-5 h-5 text-cyan-400" />
-                  <h3 className="text-lg font-semibold text-white">Improvement Tips</h3>
+        <DialogHeader className="flex-shrink-0 pb-2">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <Compass className="w-5 h-5 text-cyan-400" />
+            Guide Blueprint Revision
+          </DialogTitle>
+          <p className="text-xs text-gray-500 mt-1">
+            Describe your direction — AI will balance changes across the full blueprint. No direct
+            field editing.
+          </p>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto min-h-0 space-y-4 pr-1">
+          {phase === 'intent' && (
+            <>
+              {resonanceRecommendations && resonanceRecommendations.length > 0 && (
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowResonanceRecs(!showResonanceRecs)}
+                    className="flex items-center justify-between w-full text-sm font-medium text-amber-200/90"
+                  >
+                    <span className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4" />
+                      Resonance recommendations ({resonanceRecommendations.length})
+                    </span>
+                    <ChevronDown
+                      className={cn('w-4 h-4 transition-transform', showResonanceRecs && 'rotate-180')}
+                    />
+                  </button>
+                  {showResonanceRecs && (
+                    <div className="space-y-1.5 max-h-[120px] overflow-y-auto">
+                      {resonanceRecommendations.map((rec) => (
+                        <div
+                          key={rec.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => toggleRec(rec.id)}
+                          className={cn(
+                            'flex items-start gap-2 p-2 rounded-lg cursor-pointer border text-left text-xs',
+                            selectedRecIds.has(rec.id)
+                              ? 'border-cyan-500/40 bg-cyan-500/10'
+                              : 'border-slate-700/50 bg-slate-800/40'
+                          )}
+                        >
+                          {selectedRecIds.has(rec.id) ? (
+                            <CheckSquare className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                          ) : (
+                            <Square className="w-3.5 h-3.5 text-gray-500 shrink-0 mt-0.5" />
+                          )}
+                          <span className="text-gray-300 flex-1">
+                            {rec.intentLabel || rec.title || rec.text.slice(0, 80)}
+                            <span className="text-red-400/80 ml-1 font-mono">
+                              −{rec.pointsDeducted}
+                            </span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <p className="text-sm text-gray-400 mb-4">
-                  Select tips to apply to your entire Blueprint. These general improvements will enhance your story's appeal and originality.
-                </p>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  {SECTION_TEMPLATES.tips.map(tip => (
+              )}
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-400">
+                  What should change and why?
+                </label>
+                <Textarea
+                  value={userIntent}
+                  onChange={(e) => setUserIntent(e.target.value)}
+                  placeholder="e.g. Make the mentor secretly the antagonist, and rebalance the second act beats so the betrayal lands for a millennial thriller audience…"
+                  className="min-h-[88px] bg-slate-800/50 border-slate-700 text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-xs text-gray-500">Focus (optional)</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {SCOPE_OPTIONS.map((opt) => (
                     <button
-                      key={tip.id}
-                      onClick={() => toggleInstruction('tips', tip.id)}
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setFocusScope(opt.id)}
                       className={cn(
-                        'p-3 rounded-lg border text-left transition-all',
-                        selectedInstructions.tips?.includes(tip.id)
-                          ? 'bg-cyan-500/20 border-cyan-500/50'
-                          : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'
+                        'px-2 py-1 text-[10px] rounded-md border transition-colors',
+                        focusScope === opt.id
+                          ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-200'
+                          : 'border-slate-700 text-gray-400 hover:border-slate-500'
                       )}
                     >
-                      <span className="text-sm font-medium text-white">{tip.label}</span>
-                      <p className="text-xs text-gray-400 mt-1">{tip.text}</p>
+                      {opt.label}
                     </button>
                   ))}
                 </div>
               </div>
-            </TabsContent>
-            
-            {/* Core Info Tab */}
-            <TabsContent value="core" className="space-y-4 mt-0">
-              <InstructionChips
-                section="core"
-                selected={selectedInstructions.core}
-                onToggle={(id) => toggleInstruction('core', id)}
-              />
-              
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-xs text-gray-400">Title</label>
-                  <Input
-                    value={draft.title || ''}
-                    onChange={(e) => updateDraft('title', e.target.value)}
-                    className="bg-slate-800/50 border-slate-700"
-                  />
-                </div>
-                
-                <div className="space-y-1">
-                  <label className="text-xs text-gray-400">Logline</label>
-                  <Textarea
-                    value={draft.logline || ''}
-                    onChange={(e) => updateDraft('logline', e.target.value)}
-                    className="min-h-[80px] bg-slate-800/50 border-slate-700"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-xs text-gray-400">Genre</label>
-                    <select
-                      value={draft.genre || ''}
-                      onChange={(e) => updateDraft('genre', e.target.value)}
-                      className="w-full h-10 px-3 rounded-md bg-slate-800/50 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-                    >
-                      <option value="">Select genre...</option>
-                      <option value="Action">Action</option>
-                      <option value="Comedy">Comedy</option>
-                      <option value="Drama">Drama</option>
-                      <option value="Horror">Horror</option>
-                      <option value="Thriller">Thriller</option>
-                      <option value="Sci-Fi">Sci-Fi</option>
-                      <option value="Sci-Fi Thriller">Sci-Fi Thriller</option>
-                      <option value="Fantasy">Fantasy</option>
-                      <option value="Romance">Romance</option>
-                      <option value="Documentary">Documentary</option>
-                      <option value="Animation">Animation</option>
-                      <option value="Mystery">Mystery</option>
-                      <option value="Adventure">Adventure</option>
-                      <option value="Crime">Crime</option>
-                      <option value="Family">Family</option>
-                      <option value="Musical">Musical</option>
-                      <option value="War">War</option>
-                      <option value="Western">Western</option>
-                      <option value="Biographical">Biographical</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-gray-400">Target Audience</label>
-                    <select
-                      value={draft.target_audience || ''}
-                      onChange={(e) => updateDraft('target_audience', e.target.value)}
-                      className="w-full h-10 px-3 rounded-md bg-slate-800/50 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-                    >
-                      <option value="">Select audience...</option>
-                      <option value="General Audience">General Audience</option>
-                      <option value="Gen Z (18-24)">Gen Z (18-24)</option>
-                      <option value="Millennials (25-34)">Millennials (25-34)</option>
-                      <option value="Gen X (35-54)">Gen X (35-54)</option>
-                      <option value="Boomers (55+)">Boomers (55+)</option>
-                      <option value="Teens (13-17)">Teens (13-17)</option>
-                      <option value="Family (All Ages)">Family (All Ages)</option>
-                      <option value="Mature (21+)">Mature (21+)</option>
-                      <option value="Adults (18-49)">Adults (18-49)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              
-            </TabsContent>
-            
-            {/* Story Setup Tab */}
-            <TabsContent value="story" className="space-y-4 mt-0">
-              <InstructionChips
-                section="story"
-                selected={selectedInstructions.story}
-                onToggle={(id) => toggleInstruction('story', id)}
-              />
-              
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-xs text-gray-400">Synopsis</label>
-                  <Textarea
-                    value={draft.synopsis || ''}
-                    onChange={(e) => updateDraft('synopsis', e.target.value)}
-                    className="min-h-[100px] bg-slate-800/50 border-slate-700"
-                  />
-                </div>
-                
-                <div className="space-y-1">
-                  <label className="text-xs text-gray-400">Setting</label>
-                  <Textarea
-                    value={draft.setting || ''}
-                    onChange={(e) => updateDraft('setting', e.target.value)}
-                    className="min-h-[60px] bg-slate-800/50 border-slate-700"
-                  />
-                </div>
-                
-                <div className="space-y-1">
-                  <label className="text-xs text-gray-400">Protagonist</label>
-                  <Textarea
-                    value={draft.protagonist || ''}
-                    onChange={(e) => updateDraft('protagonist', e.target.value)}
-                    className="min-h-[60px] bg-slate-800/50 border-slate-700"
-                  />
-                </div>
-                
-                <div className="space-y-1">
-                  <label className="text-xs text-gray-400">Antagonist / Central Conflict</label>
-                  <Textarea
-                    value={draft.antagonist || ''}
-                    onChange={(e) => updateDraft('antagonist', e.target.value)}
-                    className="min-h-[60px] bg-slate-800/50 border-slate-700"
-                  />
-                </div>
-              </div>
-              
-            </TabsContent>
-            
-            {/* Tone & Style Tab */}
-            <TabsContent value="tone" className="space-y-4 mt-0">
-              <InstructionChips
-                section="tone"
-                selected={selectedInstructions.tone}
-                onToggle={(id) => toggleInstruction('tone', id)}
-              />
-              
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-xs text-gray-400">Tone Description</label>
-                  <Textarea
-                    value={draft.tone_description || ''}
-                    onChange={(e) => updateDraft('tone_description', e.target.value)}
-                    className="min-h-[80px] bg-slate-800/50 border-slate-700"
-                  />
-                </div>
-                
-                <div className="space-y-1">
-                  <label className="text-xs text-gray-400">Visual Style</label>
-                  <Textarea
-                    value={draft.visual_style || ''}
-                    onChange={(e) => updateDraft('visual_style', e.target.value)}
-                    className="min-h-[80px] bg-slate-800/50 border-slate-700"
-                  />
-                </div>
-                
-                <div className="space-y-1">
-                  <label className="text-xs text-gray-400">Themes (comma-separated)</label>
-                  <Input
-                    value={Array.isArray(draft.themes) ? draft.themes.join(', ') : draft.themes || ''}
-                    onChange={(e) => updateDraft('themes', e.target.value.split(',').map(t => t.trim()))}
-                    className="bg-slate-800/50 border-slate-700"
-                  />
-                </div>
-              </div>
-              
-            </TabsContent>
-            
-            {/* Beats Tab */}
-            <TabsContent value="beats" className="space-y-4 mt-0">
-              <InstructionChips
-                section="beats"
-                selected={selectedInstructions.beats}
-                onToggle={(id) => toggleInstruction('beats', id)}
-              />
-              
+
               <div className="space-y-2">
-                {(draft.beats || []).map((beat, index) => (
-                  <div key={index} className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
-                    <div className="flex items-center justify-between mb-2">
-                      <Input
-                        value={beat.title || ''}
-                        onChange={(e) => {
-                          const beats = [...(draft.beats || [])]
-                          beats[index] = { ...beats[index], title: e.target.value }
-                          updateDraft('beats', beats)
-                        }}
-                        className="bg-transparent border-none text-sm font-medium p-0 h-auto"
-                        placeholder="Beat title..."
-                      />
-                      <span className="text-xs text-gray-500">{beat.minutes} min</span>
-                    </div>
-                    <Textarea
-                      value={beat.synopsis || beat.intent || ''}
-                      onChange={(e) => {
-                        const beats = [...(draft.beats || [])]
-                        beats[index] = { ...beats[index], synopsis: e.target.value }
-                        updateDraft('beats', beats)
-                      }}
-                      className="min-h-[40px] bg-slate-900/50 border-slate-700 text-xs"
-                      placeholder="Beat description..."
-                    />
-                  </div>
-                ))}
-                
-                {(!draft.beats || draft.beats.length === 0) && (
-                  <p className="text-sm text-gray-500 text-center py-4">No beats defined yet</p>
+                <span className="text-xs text-gray-500">Guided refinements (optional)</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {templateSections.flatMap(({ section, templates }) =>
+                    templates.map((t) => {
+                      const key = `${section}:${t.id}`
+                      const on = selectedTemplateKeys.has(key)
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => toggleTemplate(section, t.id)}
+                          className={cn(
+                            'px-2 py-1 text-[10px] rounded-md border transition-colors flex items-center gap-1',
+                            on
+                              ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-200'
+                              : 'border-slate-700 text-gray-400 hover:border-slate-500'
+                          )}
+                        >
+                          <span>{t.icon}</span>
+                          {t.label}
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+
+              <BlueprintSnapshot variant={variant} />
+            </>
+          )}
+
+          {phase === 'preview' && changePlan && (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3 space-y-2">
+                <h3 className="text-sm font-semibold text-emerald-200 flex items-center gap-2">
+                  <Check className="w-4 h-4" />
+                  Revision plan
+                </h3>
+                <p className="text-xs text-gray-300">{changePlan.primaryGoal}</p>
+                {changePlan.coherenceActions.length > 0 && (
+                  <ul className="text-xs text-gray-400 space-y-1 list-disc list-inside">
+                    {changePlan.coherenceActions.map((a, i) => (
+                      <li key={i}>{a}</li>
+                    ))}
+                  </ul>
                 )}
               </div>
-              
-            </TabsContent>
-            
-            {/* Characters Tab */}
-            <TabsContent value="characters" className="space-y-4 mt-0">
-              <InstructionChips
-                section="characters"
-                selected={selectedInstructions.characters}
-                onToggle={(id) => toggleInstruction('characters', id)}
-              />
-              
-              <div className="space-y-3">
-                {(draft.character_descriptions || []).map((character, index) => (
-                  <CharacterEditor
-                    key={index}
-                    character={character}
-                    index={index}
-                    onChange={updateCharacter}
-                  />
-                ))}
-                
-                {(!draft.character_descriptions || draft.character_descriptions.length === 0) && (
-                  <p className="text-sm text-gray-500 text-center py-4">No characters defined yet</p>
-                )}
-              </div>
-            </TabsContent>
-          </div>
-        </Tabs>
+              <DiffPanel diffs={diff} />
+            </div>
+          )}
+        </div>
+
+        <div className="flex-shrink-0 flex items-center justify-between gap-2 pt-3 border-t border-slate-700">
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Cancel
+          </Button>
+          {phase === 'intent' ? (
+            <Button
+              size="sm"
+              disabled={isGenerating}
+              onClick={handleGenerate}
+              className="bg-gradient-to-r from-cyan-600 to-blue-600"
+            >
+              {isGenerating ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Wand2 className="w-4 h-4 mr-2" />
+              )}
+              Generate balanced revision
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleDiscardPreview}>
+                <RefreshCw className="w-4 h-4 mr-1" />
+                Revise intent
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleApplyPreview}
+                className="bg-gradient-to-r from-emerald-600 to-cyan-600"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Apply revision
+              </Button>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   )

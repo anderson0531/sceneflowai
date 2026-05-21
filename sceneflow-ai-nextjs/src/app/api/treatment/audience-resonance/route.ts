@@ -107,7 +107,7 @@ SCORING RULES (MANDATORY):
 2. List every genuine audience-resonance gap as a deduction with reason, points, category, priority.
 3. overallScore MUST equal 100 minus the sum of all deduction points (we verify server-side).
 4. Priority point bands: critical 12–18, high 10–15, medium 5–9, low 1–4.
-5. Each deduction MUST have a matching recommendation with text, priority, pointsDeducted, fixSection (core|story|tone|beats|characters).
+5. Each deduction MUST have a matching recommendation with text, priority, pointsDeducted, fixSection (core|story|tone|beats|characters), and when a fix ripples beyond one section, impactSections (array of sections to reconcile) and optional intentLabel (short chip text).
 6. Be fair: a solid treatment with minor gaps should score 75–88. Reserve below 65 for major audience misalignment.
 7. Evaluate ONLY how well this treatment resonates with the TARGET AUDIENCE above.
 
@@ -136,7 +136,7 @@ Return ONLY valid JSON:
   "baseScore": 100,
   "deductions": [{"reason": "...", "points": <number>, "category": "...", "priority": "high|medium|low"}],
   "recommendations": [
-    {"text": "...", "title": "...", "priority": "high|medium|low", "pointsDeducted": <number>, "fixSection": "story", "category": "..."}
+    {"text": "...", "title": "...", "priority": "high|medium|low", "pointsDeducted": <number>, "fixSection": "story", "impactSections": ["story","beats"], "intentLabel": "Short chip", "category": "..."}
   ],
   "categories": [
     {"name": "Audience Appeal", "score": <1-100>, "weight": 25},
