@@ -6,6 +6,8 @@ export type CreateBlueprintShareInput = {
   audienceDefinition?: unknown
   expiresInDays?: number
   legacyOwnerId?: string
+  /** When true, always create a new share URL (regenerates audio). Default false reuses active link. */
+  forceNew?: boolean
 }
 
 function legacyOwnerIdFromStorage(): string | undefined {
@@ -20,6 +22,7 @@ export type CreateBlueprintShareResult =
       token: string
       sessionId: string
       url: string
+      reused?: boolean
     }
   | {
       success: false
@@ -62,11 +65,34 @@ export async function createBlueprintShare(
       token: data.token,
       sessionId: data.sessionId,
       url,
+      reused: data.reused === true,
     }
   } catch (e) {
     return {
       success: false,
       error: e instanceof Error ? e.message : 'Network error',
+    }
+  }
+}
+
+/** Run section MP3 generation in a dedicated API route (reliable vs serverless after()). */
+export async function triggerBlueprintShareSectionAudio(
+  token: string
+): Promise<{ success: boolean; skipped?: boolean; error?: string }> {
+  try {
+    const res = await fetch(
+      `/api/blueprint/share/${encodeURIComponent(token)}/audio/generate`,
+      { method: 'POST', credentials: 'include' }
+    )
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok || !data?.success) {
+      return { success: false, error: data?.error || 'Audio generation failed' }
+    }
+    return { success: true, skipped: data.skipped === true }
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : 'Audio generation failed',
     }
   }
 }

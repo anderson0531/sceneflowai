@@ -24,7 +24,11 @@ export interface SynthesizeElevenLabsMp3Params {
   delivery?: ElevenLabsDelivery
   /** When true with storytelling delivery, prepend `[Intelligent and Engaging]`. Default true. */
   prependDeliveryTag?: boolean
+  /** Per-request timeout in ms (default 90s). */
+  timeoutMs?: number
 }
+
+const DEFAULT_TTS_TIMEOUT_MS = 90_000
 
 export async function synthesizeElevenLabsMp3(
   params: SynthesizeElevenLabsMp3Params
@@ -80,25 +84,44 @@ export async function synthesizeElevenLabsMp3(
     voiceIdRaw
   )}?output_format=mp3_44100_128`
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'xi-api-key': apiKey,
-      'Content-Type': 'application/json',
-      Accept: 'audio/mpeg',
-    },
-    body: JSON.stringify({
-      text,
-      model_id: modelId,
-      voice_settings: {
-        stability,
-        similarity_boost: similarityBoost,
-        style,
-        use_speaker_boost: useSpeakerBoost,
-        speed,
+  const timeoutMs =
+    typeof params.timeoutMs === 'number' && params.timeoutMs > 0
+      ? params.timeoutMs
+      : DEFAULT_TTS_TIMEOUT_MS
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json',
+        Accept: 'audio/mpeg',
       },
-    }),
-  })
+      signal: controller.signal,
+      body: JSON.stringify({
+        text,
+        model_id: modelId,
+        voice_settings: {
+          stability,
+          similarity_boost: similarityBoost,
+          style,
+          use_speaker_boost: useSpeakerBoost,
+          speed,
+        },
+      }),
+    })
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error(`ElevenLabs TTS timed out after ${timeoutMs}ms`)
+    }
+    throw err
+  } finally {
+    clearTimeout(timer)
+  }
 
   if (!response.ok) {
     const errText = await response.text().catch(() => '')

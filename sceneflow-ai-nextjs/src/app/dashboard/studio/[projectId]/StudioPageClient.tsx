@@ -30,6 +30,7 @@ import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRe
 import {
   createBlueprintShare,
   fetchActiveBlueprintShare,
+  triggerBlueprintShareSectionAudio,
 } from '@/lib/blueprint/createBlueprintShare'
 import { toast } from 'sonner'
 import {
@@ -235,7 +236,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     }
   }, [projectId, applyShareResult])
 
-  const handleShare = async () => {
+  const handleShare = async (opts?: { forceNew?: boolean }) => {
     if (!projectId || projectId.startsWith('new-project')) {
       toast.error('Save the project before sharing')
       return
@@ -271,10 +272,17 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         heroImageUrl,
         audienceDefinition: audienceDefinition ?? null,
         expiresInDays: 14,
+        forceNew: opts?.forceNew === true,
       })
 
       if (result.success) {
         applyShareResult(result)
+        const audio = await triggerBlueprintShareSectionAudio(result.token)
+        if (!audio.success) {
+          toast.error(audio.error || 'Section audio could not be started')
+        } else if (!audio.skipped) {
+          toast.message('Generating section audio for reviewers…')
+        }
       } else {
         const msg =
           result.status === 401

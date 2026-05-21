@@ -53,6 +53,8 @@ export type BlueprintSessionPayload = {
   sectionAudioStatus?: BlueprintSectionAudioStatus
   sectionAudioVoiceId?: string
   sectionAudioGeneratedAt?: string
+  /** Set when generation enters pending; used for stale-job recovery. */
+  sectionAudioStartedAt?: string
 }
 
 export type BlueprintShareCreateBody = {
@@ -62,6 +64,8 @@ export type BlueprintShareCreateBody = {
   heroImageUrl?: string
   audienceDefinition?: AudienceDefinition | null
   expiresInDays?: number
+  /** When false (default), reuse active share link for this project if one exists. */
+  forceNew?: boolean
   /** Pre-login localStorage authUserId when project ownership was not synced yet */
   legacyOwnerId?: string
 }

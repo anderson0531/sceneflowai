@@ -236,7 +236,9 @@ export function BlueprintShareViewer({ token }: Props) {
   }
 
   const ratedCount = useMemo(() => countRatedSections(draft), [draft])
-  const hasCachedAudio = Object.keys(sectionAudio).length > 0
+  const audioReadyCount = Object.keys(sectionAudio).length
+  const totalAudioSections = SECTION_NAV.length
+  const hasCachedAudio = audioReadyCount > 0
 
   if (loading) {
     return (
@@ -266,7 +268,11 @@ export function BlueprintShareViewer({ token }: Props) {
           <p className="text-xs text-purple-400 font-medium tracking-wide">SceneFlow · Blueprint Review</p>
           <h1 className="text-xl font-semibold text-white mt-0.5">{String(treatment.title || 'Blueprint')}</h1>
           {allowTts && audioStatus === 'pending' && !audioPollStale && (
-            <p className="text-xs text-amber-400/90 mt-1">Preparing section audio…</p>
+            <p className="text-xs text-amber-400/90 mt-1">
+              {audioReadyCount > 0
+                ? `Generating audio (${audioReadyCount}/${totalAudioSections} sections ready)…`
+                : 'Preparing section audio…'}
+            </p>
           )}
           {allowTts && audioPollStale && !hasCachedAudio && (
             <p className="text-xs text-amber-400/90 mt-1">

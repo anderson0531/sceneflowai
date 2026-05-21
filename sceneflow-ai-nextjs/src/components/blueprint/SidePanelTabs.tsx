@@ -22,7 +22,7 @@ interface SidePanelTabsProps {
   onClose?: () => void
   sessionId: string | null
   shareUrl: string | null
-  onShare: () => void
+  onShare: (opts?: { forceNew?: boolean }) => void
   isSharing: boolean
   onProceedToScripting?: () => void
   projectId?: string
@@ -172,7 +172,7 @@ function CollaborationContent({
   sessionId: string | null
   shareToken: string | null | undefined
   shareUrl: string | null
-  onShare: () => void
+  onShare: (opts?: { forceNew?: boolean }) => void
   isSharing: boolean
   onOpenBlueprintRefine?: (opts: OpenBlueprintRefineOptions) => void
 }) {
@@ -203,7 +203,11 @@ function CollaborationContent({
       if (j?.success) {
         try {
           const { toast } = require('sonner')
-          toast.success('Section audio updated')
+          if (j.skipped) {
+            toast.message('Section audio is already up to date')
+          } else {
+            toast.success('Section audio updated')
+          }
         } catch {}
       } else {
         try {
@@ -333,7 +337,7 @@ function CollaborationContent({
             </h3>
             <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">
               {hasShareLink
-                ? 'Send this link so collaborators can read, listen, and comment.'
+                ? 'One link for all reviewers. Send it so collaborators can read, listen, and comment.'
                 : 'Create a link reviewers can open without logging in.'}
             </p>
           </div>
@@ -379,11 +383,11 @@ function CollaborationContent({
           <div className="mt-2 space-y-1">
             <button
               type="button"
-              onClick={onShare}
+              onClick={() => onShare({ forceNew: true })}
               disabled={isSharing}
               className="w-full text-[11px] text-purple-300/90 hover:text-purple-200 disabled:opacity-50 text-left"
             >
-              {isSharing ? 'Updating link…' : 'Create new link (refreshes snapshot)'}
+              {isSharing ? 'Creating new link…' : 'Create new link (new URL, regenerates audio)'}
             </button>
             <button
               type="button"

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sequelize } from '@/config/database'
 import CollabSession from '@/models/CollabSession'
+import { recoverStaleSectionAudioIfNeeded } from '@/lib/blueprint/generateShareSectionAudio'
 import { getPayload, resolveSessionByToken } from '@/lib/blueprint/shareSession'
 import { requireOwnerForSession } from '@/lib/blueprint/shareAuth'
 
@@ -18,10 +19,12 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json({ success: false, error: 'Not found or expired' }, { status: 404 })
     }
 
-    const payload = getPayload(session)
+    let payload = getPayload(session)
     if (!payload) {
       return NextResponse.json({ success: false, error: 'Invalid session type' }, { status: 400 })
     }
+
+    payload = await recoverStaleSectionAudioIfNeeded(session.id, payload)
 
     return NextResponse.json({
       success: true,

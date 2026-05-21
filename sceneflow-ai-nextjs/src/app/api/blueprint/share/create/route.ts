@@ -1,4 +1,4 @@
-import { after, NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -7,10 +7,50 @@ import CollabSession from '@/models/CollabSession'
 import CollabParticipant from '@/models/CollabParticipant'
 import { getAuthenticatedUserId, assertProjectAccess } from '@/lib/projectAccess'
 import type { BlueprintSessionPayload, BlueprintShareCreateBody } from '@/lib/blueprint/shareTypes'
-import { runShareSectionAudioGeneration } from '@/lib/blueprint/generateShareSectionAudio'
+import { getPayload } from '@/lib/blueprint/shareSession'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
+
+function buildSharePayload(
+  body: BlueprintShareCreateBody,
+  ownerName: string,
+  expiresAt: Date
+): BlueprintSessionPayload {
+  return {
+    type: 'blueprint',
+    projectId: body.projectId,
+    variantId: body.variantId,
+    treatment: body.treatment,
+    heroImageUrl: body.heroImageUrl,
+    audienceDefinition: body.audienceDefinition ?? null,
+    shareSettings: {
+      expiresAt: expiresAt.toISOString(),
+      allowTts: true,
+      collectEmail: false,
+    },
+    ownerDisplayName: ownerName,
+    sectionAudioStatus: process.env.ELEVENLABS_API_KEY ? 'pending' : 'skipped',
+  }
+}
+
+async function findActiveBlueprintSession(projectId: string, ownerUserId: string) {
+  const candidates = await CollabSession.findAll({
+    where: {
+      project_id: projectId,
+      owner_user_id: ownerUserId,
+      status: 'active',
+    },
+    order: [['created_at', 'DESC']],
+    limit: 10,
+  })
+  for (const s of candidates) {
+    const expiresAt = (s as { expires_at?: Date | null }).expires_at
+    if (expiresAt && new Date(expiresAt) < new Date()) continue
+    if (getPayload(s)) return s
+  }
+  return null
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,6 +71,7 @@ export async function POST(req: NextRequest) {
       audienceDefinition,
       expiresInDays = 14,
       legacyOwnerId,
+      forceNew = false,
     } = body
 
     if (!projectId || !variantId || !treatment) {
@@ -44,28 +85,58 @@ export async function POST(req: NextRequest) {
 
     await sequelize.authenticate()
 
-    const tokenStr = crypto.randomBytes(24).toString('base64url')
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
 
-    const payload: BlueprintSessionPayload = {
-      type: 'blueprint',
-      projectId,
-      variantId,
-      treatment,
-      heroImageUrl,
-      audienceDefinition: audienceDefinition ?? null,
-      shareSettings: {
-        expiresAt: expiresAt.toISOString(),
-        allowTts: true,
-        collectEmail: false,
-      },
-      ownerDisplayName: ownerName,
-      sectionAudioStatus: process.env.ELEVENLABS_API_KEY ? 'pending' : 'skipped',
-    }
-
-    // Ensure tables exist (dev / first deploy without manual migration)
     await CollabSession.sync({ alter: false })
     await CollabParticipant.sync({ alter: false })
+
+    const origin = req.headers.get('x-forwarded-host')
+      ? `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host')}`
+      : new URL(req.url).origin
+
+    if (!forceNew) {
+      const existing = await findActiveBlueprintSession(projectId, ownerUserId)
+      if (existing) {
+        const prev = getPayload(existing)!
+        const nextPayload: BlueprintSessionPayload = {
+          ...prev,
+          variantId,
+          treatment,
+          heroImageUrl,
+          audienceDefinition: audienceDefinition ?? null,
+          ownerDisplayName: ownerName,
+          shareSettings: {
+            ...prev.shareSettings,
+            expiresAt: expiresAt.toISOString(),
+            allowTts: true,
+          },
+        }
+        await existing.update({
+          expires_at: expiresAt,
+          payload: nextPayload,
+        })
+
+        const tokenStr = (existing as { token?: string }).token
+        if (!tokenStr) {
+          return NextResponse.json({ success: false, error: 'Invalid session token' }, { status: 500 })
+        }
+
+        return NextResponse.json({
+          success: true,
+          token: tokenStr,
+          sessionId: existing.id,
+          url: `${origin}/blueprint/share/${tokenStr}`,
+          reused: true,
+        })
+      }
+    }
+
+    const tokenStr = crypto.randomBytes(24).toString('base64url')
+    const payload = buildSharePayload(
+      { projectId, variantId, treatment, heroImageUrl, audienceDefinition, expiresInDays },
+      ownerName,
+      expiresAt
+    )
 
     const t = await sequelize.transaction()
     try {
@@ -93,27 +164,12 @@ export async function POST(req: NextRequest) {
 
       await t.commit()
 
-      if (process.env.ELEVENLABS_API_KEY) {
-        const sessionId = collabSession.id
-        after(async () => {
-          try {
-            await runShareSectionAudioGeneration(sessionId)
-          } catch (err) {
-            console.error('[blueprint/share/create] section audio generation failed:', err)
-          }
-        })
-      }
-
-      const origin = req.headers.get('x-forwarded-host')
-        ? `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host')}`
-        : new URL(req.url).origin
-      const url = `${origin}/blueprint/share/${tokenStr}`
-
       return NextResponse.json({
         success: true,
         token: tokenStr,
         sessionId: collabSession.id,
-        url,
+        url: `${origin}/blueprint/share/${tokenStr}`,
+        reused: false,
       })
     } catch (e) {
       await t.rollback()
