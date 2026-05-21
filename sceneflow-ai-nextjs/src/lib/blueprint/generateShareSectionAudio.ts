@@ -2,7 +2,9 @@ import { put } from '@vercel/blob'
 import CollabSession from '@/models/CollabSession'
 import {
   DEFAULT_BLUEPRINT_GEMINI_VOICE,
+  DEFAULT_GEMINI_TTS_MODEL,
   isGeminiTtsConfigured,
+  normalizeBlueprintGeminiVoiceId,
   synthesizeGeminiFlashMp3,
 } from '@/lib/tts/geminiFlashTts'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
@@ -98,7 +100,7 @@ export function isShareAudioStaleForTreatment(
   payload: BlueprintSessionPayload,
   language: string
 ): boolean {
-  const voiceId = payload.sectionAudioVoiceId || DEFAULT_BLUEPRINT_GEMINI_VOICE
+  const voiceId = normalizeBlueprintGeminiVoiceId(payload.sectionAudioVoiceId)
   const plan = planWithLanguageHashes(
     computeSectionNarrationPlan(payload.treatment),
     language,
@@ -150,11 +152,11 @@ async function synthesizeSectionMp3(
     const t0 = Date.now()
     const buf = await synthesizeGeminiFlashMp3({
       text: chunks[i]!,
-      voiceId,
+      voiceId: normalizeBlueprintGeminiVoiceId(voiceId),
       directorNotes,
     })
     console.info(
-      `[generateShareSectionAudio] chunk ${i + 1}/${chunks.length} ms=${Date.now() - t0}`
+      `[generateShareSectionAudio] gemini chunk ${i + 1}/${chunks.length} voice=${normalizeBlueprintGeminiVoiceId(voiceId)} model=${DEFAULT_GEMINI_TTS_MODEL} ms=${Date.now() - t0}`
     )
     buffers.push(buf)
   }
@@ -188,7 +190,7 @@ export async function generateShareSectionAudio(
   params: GenerateShareSectionAudioParams
 ): Promise<GenerateShareSectionAudioResult> {
   const language = params.language || DEFAULT_SHARE_AUDIO_LANGUAGE
-  const voiceId = params.voiceId || DEFAULT_BLUEPRINT_GEMINI_VOICE
+  const voiceId = normalizeBlueprintGeminiVoiceId(params.voiceId)
   const directorNotes = params.directorNotes
   const plan = computeSectionNarrationPlan(params.treatment)
   const sectionAudio: BlueprintSectionAudioMap = { ...(params.existingAudio || {}) }
@@ -359,8 +361,9 @@ export async function runShareSectionAudioGeneration(
 
   const language =
     options?.language || payload.sectionAudioLanguage || DEFAULT_SHARE_AUDIO_LANGUAGE
-  const voiceId =
-    options?.voiceId || payload.sectionAudioVoiceId || DEFAULT_BLUEPRINT_GEMINI_VOICE
+  const voiceId = normalizeBlueprintGeminiVoiceId(
+    options?.voiceId || payload.sectionAudioVoiceId
+  )
   const directorNotes =
     options?.directorNotes !== undefined
       ? options.directorNotes

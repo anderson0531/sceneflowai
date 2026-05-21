@@ -217,7 +217,8 @@ function CollaborationContent({
           setAudioLanguage(j.payload.sectionAudioLanguage)
         }
         if (j.payload?.sectionAudioVoiceId) {
-          setAudioVoiceId(j.payload.sectionAudioVoiceId)
+          const id = j.payload.sectionAudioVoiceId as string
+          setAudioVoiceId(id.startsWith('gemini-') ? id : DEFAULT_BLUEPRINT_GEMINI_VOICE)
         }
         if (typeof j.payload?.sectionAudioDirectorNotes === 'string') {
           setAudioDirectorNotes(j.payload.sectionAudioDirectorNotes)

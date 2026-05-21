@@ -4,6 +4,12 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { synthesizeElevenLabsMp3 } from '@/lib/elevenlabs/textToSpeech'
 import type { ElevenLabsDelivery } from '@/lib/elevenlabs/voicePresets'
+import { chunkNarrationText } from '@/lib/blueprint/sectionNarrationText'
+import {
+  isGeminiTtsConfigured,
+  normalizeBlueprintGeminiVoiceId,
+  synthesizeGeminiFlashMp3,
+} from '@/lib/tts/geminiFlashTts'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -72,6 +78,61 @@ export async function POST(request: NextRequest) {
         : audioType === 'blueprint-share' || audioType === 'blueprint'
           ? 'storytelling'
           : 'neutral'
+
+    const useBlueprintGemini =
+      delivery === 'storytelling' ||
+      audioType === 'blueprint-share' ||
+      audioType === 'blueprint'
+
+    if (useBlueprintGemini && isGeminiTtsConfigured()) {
+      const geminiVoice = normalizeBlueprintGeminiVoiceId(voiceId)
+      const directorNotes =
+        typeof (body as { prompt?: string }).prompt === 'string'
+          ? (body as { prompt?: string }).prompt
+          : undefined
+      const chunks = chunkNarrationText(text, 4000)
+      const buffers: Buffer[] = []
+      for (const chunk of chunks) {
+        buffers.push(
+          await synthesizeGeminiFlashMp3({
+            text: chunk,
+            voiceId: geminiVoice,
+            directorNotes,
+          })
+        )
+      }
+      const buffer = buffers.length === 1 ? buffers[0]! : Buffer.concat(buffers)
+
+      if (saveToBlob) {
+        const projectId = body.projectId as string
+        const sceneId =
+          typeof body.sceneId === 'string' && body.sceneId.trim()
+            ? body.sceneId.trim()
+            : 'tts'
+        const blobAudioType = audioType || 'blueprint'
+        const filename = `audio/${blobAudioType}/${projectId}/${sceneId}-${Date.now()}.mp3`
+        const blob = await put(filename, buffer, {
+          access: 'public',
+          contentType: 'audio/mpeg',
+          addRandomSuffix: false,
+        })
+        return NextResponse.json({
+          url: blob.url,
+          voiceId: geminiVoice,
+          voiceName: body.voiceName,
+          byteLength: buffer.length,
+          provider: 'gemini',
+        })
+      }
+
+      return new NextResponse(new Uint8Array(buffer), {
+        status: 200,
+        headers: {
+          'Content-Type': 'audio/mpeg',
+          'Cache-Control': 'no-store',
+        },
+      })
+    }
 
     const buffer = await synthesizeElevenLabsMp3({
       text,

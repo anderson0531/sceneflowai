@@ -35,12 +35,10 @@ export function BlueprintGeminiVoicePicker({
     setLoading(true)
     ;(async () => {
       try {
-        const res = await fetch('/api/tts/google/voices', { cache: 'no-store' })
+        const res = await fetch('/api/tts/blueprint/voices', { cache: 'no-store' })
         const data = await res.json().catch(() => null)
         if (!mounted) return
-        const list = (data?.voices ?? [])
-          .filter((v: { type?: string }) => v.type === 'Gemini')
-          .map((v: { id: string; name: string; gender?: string }) => ({
+        const list = (data?.voices ?? []).map((v: { id: string; name: string; gender?: string }) => ({
             id: v.id,
             name: v.name,
             gender: v.gender,

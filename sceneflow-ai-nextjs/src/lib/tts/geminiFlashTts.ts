@@ -19,6 +19,18 @@ export function isGeminiTtsConfigured(): boolean {
   )
 }
 
+/** True when id is a Cloud TTS Gemini voice (e.g. gemini-Kore). */
+export function isBlueprintGeminiVoiceId(voiceId?: string): boolean {
+  return !!voiceId?.trim().startsWith('gemini-')
+}
+
+/** Map legacy ElevenLabs narrator ids to default Gemini voice. */
+export function normalizeBlueprintGeminiVoiceId(voiceId?: string): string {
+  const id = voiceId?.trim()
+  if (id && isBlueprintGeminiVoiceId(id)) return id
+  return DEFAULT_BLUEPRINT_GEMINI_VOICE
+}
+
 export type SynthesizeGeminiFlashMp3Params = {
   text: string
   /** e.g. gemini-Kore */
@@ -60,7 +72,8 @@ export async function synthesizeGeminiFlashMp3(
   }
 
   const { accessToken, apiKey } = await resolveGoogleTtsAuth()
-  const { actualVoiceName } = resolveGeminiVoiceName(params.voiceId)
+  const voiceId = normalizeBlueprintGeminiVoiceId(params.voiceId)
+  const { actualVoiceName } = resolveGeminiVoiceName(voiceId)
   const languageCode = params.languageCode?.trim() || 'en-US'
   const modelName = params.modelName?.trim() || DEFAULT_GEMINI_TTS_MODEL
   const timeoutMs = params.timeoutMs ?? 90_000

@@ -7,7 +7,10 @@ import {
   scheduleShareSectionAudioGeneration,
   runShareSectionAudioGeneration,
 } from '@/lib/blueprint/generateShareSectionAudio'
-import { DEFAULT_BLUEPRINT_GEMINI_VOICE } from '@/lib/tts/geminiFlashTts'
+import {
+  DEFAULT_BLUEPRINT_GEMINI_VOICE,
+  normalizeBlueprintGeminiVoiceId,
+} from '@/lib/tts/geminiFlashTts'
 import { hashForLanguage, normalizeShareAudioPayload } from '@/lib/blueprint/shareAudioPayload'
 import { hashSectionNarrationText } from '@/lib/blueprint/sectionNarrationText'
 import type { BlueprintSectionAudioMap, BlueprintSessionPayload } from '@/lib/blueprint/shareTypes'
@@ -106,6 +109,18 @@ describe('hashShareAudioContent', () => {
     const h1 = hashShareAudioContent('Hello world', DEFAULT_BLUEPRINT_GEMINI_VOICE, 'notes')
     const h2 = hashShareAudioContent('Hello world', DEFAULT_BLUEPRINT_GEMINI_VOICE, 'notes')
     expect(h1).toBe(h2)
+  })
+})
+
+describe('normalizeBlueprintGeminiVoiceId', () => {
+  it('keeps gemini voice ids', () => {
+    expect(normalizeBlueprintGeminiVoiceId('gemini-Puck')).toBe('gemini-Puck')
+  })
+
+  it('replaces legacy ElevenLabs narrator ids', () => {
+    expect(normalizeBlueprintGeminiVoiceId('2WZUpLnG1rGcQpTL3sVC')).toBe(
+      DEFAULT_BLUEPRINT_GEMINI_VOICE
+    )
   })
 })
 

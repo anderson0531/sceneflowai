@@ -36,7 +36,7 @@ export function useBlueprintTts() {
     let mounted = true
     ;(async () => {
       try {
-        const res = await fetch('/api/tts/google/voices', { cache: 'no-store' })
+        const res = await fetch('/api/tts/blueprint/voices', { cache: 'no-store' })
         const data = await res.json().catch(() => null)
         if (!mounted) return
         if (!data?.enabled || !Array.isArray(data.voices) || data.voices.length === 0) {
@@ -44,9 +44,10 @@ export function useBlueprintTts() {
           setVoices([])
           return
         }
-        const gemini = data.voices
-          .filter((v: { type?: string }) => v.type === 'Gemini')
-          .map((v: { id: string; name: string }) => ({ id: v.id, name: v.name }))
+        const gemini = data.voices.map((v: { id: string; name: string }) => ({
+          id: v.id,
+          name: v.name,
+        }))
         setEnabled(gemini.length > 0)
         setVoices(gemini)
         const defaultVoice =
@@ -122,13 +123,13 @@ export function useBlueprintTts() {
         const voiceId = selectedVoiceId || voices[0]?.id
         if (!voiceId) throw new Error('No voice available')
 
-        const resp = await fetch('/api/tts/google', {
+        const resp = await fetch('/api/tts/blueprint', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             text: textToSpeak,
             voiceId,
-            prompt: directorNotes.trim() || undefined,
+            directorNotes: directorNotes.trim() || undefined,
           }),
         })
         if (!resp.ok) {
