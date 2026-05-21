@@ -112,7 +112,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     description:
       'Transform raw concepts into structured, production-ready architectures. Automatically generate complete story beats, character arcs, and scene-by-scene structural outlines that serve as the flawless foundation for your project.',
     screenshotSlot: 'Insert screenshot: Auto-generated Blueprint with story beats and character arcs',
-    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2010.33.37.png',
+    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-21%20at%2010.05.03.png',
     videoSlot: 'Insert 00:30 clip: Turning a concept into a structured Blueprint',
   },
   {
