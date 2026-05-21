@@ -88,6 +88,7 @@ const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: numbe
   </svg>
 )
 import Link from 'next/link'
+import { loadBlueprintARFromMetadata } from '@/lib/types/audienceResonance'
 import type { CinematicScenePlan } from '@/components/vision/ScriptReviewModal'
 const ScriptReviewModal = dynamic(
   () => import('@/components/vision/ScriptReviewModal').then((m) => ({ default: m.default })),
@@ -430,6 +431,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [isGeneratingReviews, setIsGeneratingReviews] = useState(false)
   const [reviewsOutdated, setReviewsOutdated] = useState(false)
+
+  const projectAudienceDefinition = useMemo(() => {
+    if (!project?.metadata) return null
+    return loadBlueprintARFromMetadata(
+      project.metadata as Record<string, unknown>
+    ).audienceDefinition
+  }, [project?.metadata])
   
   // Keep script and project refs in sync (avoids stale closures in async operations)
   useEffect(() => { scriptRef.current = script }, [script])
@@ -11191,6 +11199,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         projectId={projectId}
         script={script?.script}
         characters={characters}
+        audienceDefinition={projectAudienceDefinition}
         scoreOutdated={reviewsOutdated}
         reviewHistory={project?.metadata?.visionPhase?.reviewHistory || []}
         onSceneAnalysisComplete={handleSceneAnalysisComplete}

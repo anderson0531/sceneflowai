@@ -19,7 +19,12 @@ import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
 import { HeroImagePromptBuilder } from '@/components/treatment/HeroImagePromptBuilder'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
 import { SidePanelTabs } from '@/components/blueprint/SidePanelTabs'
-import type { PersistedAudienceResonance } from '@/lib/types/audienceResonance'
+import type {
+  AudienceDefinition,
+  PersistedBlueprintAudienceResonance,
+  AudienceIntent,
+} from '@/lib/types/audienceResonance'
+import { loadBlueprintARFromMetadata } from '@/lib/types/audienceResonance'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
@@ -104,8 +109,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
   
-  // Audience Resonance persistence state
-  const [savedAudienceResonance, setSavedAudienceResonance] = useState<PersistedAudienceResonance | null>(null)
+  // Audience Resonance v3 persistence
+  const [audienceDefinition, setAudienceDefinition] = useState<AudienceDefinition | null>(null)
+  const [savedBlueprintAR, setSavedBlueprintAR] =
+    useState<PersistedBlueprintAudienceResonance | null>(null)
+  const [legacyARIntent, setLegacyARIntent] = useState<AudienceIntent | null>(null)
   
   // Handle share/collaborate
   const handleShare = async () => {
@@ -192,22 +200,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     }
   }
 
-  // Handle saving Audience Resonance analysis to project metadata
-  const handleAnalysisComplete = async (persistedAR: PersistedAudienceResonance) => {
-    // Skip if no valid project
-    if (!projectId || projectId.startsWith('new-project')) {
-      console.log('[StudioPage] No project to save AR to, skipping persistence')
-      return
-    }
-    
-    try {
-      // Update local state immediately for UI responsiveness
-      setSavedAudienceResonance(persistedAR)
-      
-      // Save to database via PUT
-      const userId = typeof window !== 'undefined' ? localStorage.getItem('authUserId') || 'anonymous' : 'anonymous'
-      
-      const blueprintData = {
+  const persistBlueprintMetadata = async (
+    extra: Record<string, unknown>
+  ) => {
+    if (!projectId || projectId.startsWith('new-project')) return false
+    const res = await fetch('/api/projects', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         id: projectId,
         title: guide.title || 'Untitled Project',
         description: '',
@@ -217,26 +217,37 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           treatmentVariants: (guide as any).treatmentVariants || [],
           beats: beatsView,
           estimatedRuntime: estimatedRuntime,
-          // Add AR analysis to metadata
-          audienceResonance: persistedAR
-        }
-      }
-      
-      const res = await fetch(`/api/projects`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(blueprintData)
+          audienceDefinition,
+          blueprintAudienceResonance: savedBlueprintAR,
+          ...extra,
+        },
+      }),
+    })
+    return res.ok
+  }
+
+  const handleAudienceDefinitionSave = async (def: AudienceDefinition) => {
+    setAudienceDefinition(def)
+    try {
+      const ok = await persistBlueprintMetadata({ audienceDefinition: def })
+      if (!ok) throw new Error('Save failed')
+    } catch (e) {
+      console.error('[StudioPage] audienceDefinition save', e)
+      throw e
+    }
+  }
+
+  const handleAnalysisComplete = async (
+    persisted: PersistedBlueprintAudienceResonance
+  ) => {
+    if (!projectId || projectId.startsWith('new-project')) return
+    try {
+      setSavedBlueprintAR(persisted)
+      setAudienceDefinition(persisted.audienceDefinition)
+      await persistBlueprintMetadata({
+        audienceDefinition: persisted.audienceDefinition,
+        blueprintAudienceResonance: persisted,
       })
-      
-      if (res.ok) {
-        console.log('[StudioPage] Saved AR analysis to project metadata', {
-          greenlightScore: persistedAR.greenlightScore,
-          iterationCount: persistedAR.iterationCount,
-          isReady: persistedAR.isReadyForProduction
-        })
-      } else {
-        console.error('[StudioPage] Failed to save AR analysis:', await res.text())
-      }
     } catch (error) {
       console.error('[StudioPage] Error saving AR analysis:', error)
     }
@@ -735,14 +746,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             setEstimatedRuntime(metadata.estimatedRuntime)
           }
           
-          // Load saved Audience Resonance analysis if exists
-          if (metadata.audienceResonance) {
-            console.log('[StudioPage] Loading saved Audience Resonance from project:', {
-              greenlightScore: metadata.audienceResonance.greenlightScore,
-              iterationCount: metadata.audienceResonance.iterationCount,
-              isReady: metadata.audienceResonance.isReadyForProduction
-            })
-            setSavedAudienceResonance(metadata.audienceResonance)
+          const { audienceDefinition: loadedDef, persisted: loadedAR } =
+            loadBlueprintARFromMetadata(metadata)
+          if (loadedDef) setAudienceDefinition(loadedDef)
+          if (loadedAR) setSavedBlueprintAR(loadedAR)
+          if (metadata.audienceResonance?.intent && !loadedDef) {
+            setLegacyARIntent(metadata.audienceResonance.intent as AudienceIntent)
           }
           
           console.log('[StudioPage] Project data loaded:', projectData.id)
@@ -1146,9 +1155,13 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 shareUrl={shareUrl}
                 onShare={handleShare}
                 isSharing={isSharing}
+                projectId={projectId}
+                audienceDefinition={audienceDefinition}
+                onAudienceDefinitionSave={handleAudienceDefinitionSave}
                 onProceedToScripting={handleProceedToScripting}
                 onAnalysisComplete={handleAnalysisComplete}
-                savedAnalysis={savedAudienceResonance}
+                savedBlueprintAR={savedBlueprintAR}
+                legacyIntent={legacyARIntent}
               />
             </Panel>
           </>

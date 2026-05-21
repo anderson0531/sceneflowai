@@ -13,6 +13,8 @@ interface SceneRevisionRequest {
   revisionMode: 'recommendations' | 'instruction' | 'hybrid'
   selectedRecommendations?: (string | { text: string; category?: string; impact?: 'structural' | 'polish' })[]
   customInstruction?: string
+  /** Target audience profile + optional user direction */
+  targetDemographic?: string
   preserveElements?: ('narration' | 'dialogue' | 'music' | 'sfx')[]
   revisionDepth?: 'light' | 'moderate' | 'deep' // light=polish, moderate=rewrite, deep=restructure
   context: {
@@ -31,6 +33,7 @@ export async function POST(req: NextRequest) {
       revisionMode,
       selectedRecommendations = [],
       customInstruction = '',
+      targetDemographic = '',
       preserveElements = [],
       revisionDepth = 'moderate', // Default to moderate (substantive rewrite)
       context
@@ -52,6 +55,7 @@ export async function POST(req: NextRequest) {
       revisionMode,
       selectedRecommendations,
       customInstruction,
+      targetDemographic,
       preserveElements,
       revisionDepth,
       context
@@ -77,6 +81,7 @@ async function generateRevisedScene({
   revisionMode,
   selectedRecommendations,
   customInstruction,
+  targetDemographic,
   preserveElements,
   revisionDepth,
   context
@@ -86,6 +91,7 @@ async function generateRevisedScene({
   revisionMode: string
   selectedRecommendations: (string | { text: string; category?: string; impact?: 'structural' | 'polish' })[]
   customInstruction: string
+  targetDemographic: string
   preserveElements: string[]
   revisionDepth: 'light' | 'moderate' | 'deep'
   context: any
@@ -152,7 +158,11 @@ For each recommendation, make the necessary STRUCTURAL or CONTENT changes. Do NO
     // ── Cache-aware prompt splitting ──
     // Cacheable context: scene data, formatting rules, dialogue tags, constraints
     // These are heavy content parts that remain stable during iterative revisions.
-    const cacheableContext = `CURRENT SCENE:
+    const audienceContext = targetDemographic?.trim()
+      ? `\nTARGET AUDIENCE:\n${targetDemographic.trim()}\nRewrite this scene so it resonates more strongly with this audience.\n\n`
+      : ''
+
+    const cacheableContext = `${audienceContext}CURRENT SCENE:
 Heading: ${currentScene.heading || 'Untitled Scene'}
 Scene Description: ${currentScene.visualDescription || 'No dedicated scene description'}
 Action: ${currentScene.action || 'No action description'}

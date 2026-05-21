@@ -41,6 +41,8 @@ interface AnalyzeScenesRequest {
     scenes: any[]
     characters?: any[]
   }
+  /** Target audience profile + optional user direction (from project audienceDefinition) */
+  targetDemographic?: string
   audienceReview?: AudienceReviewContext
   /** Previous analysis for progressive recommendations (don't repeat old recs) */
   previousAnalyses?: Array<{
@@ -54,7 +56,7 @@ interface AnalyzeScenesRequest {
 
 export async function POST(req: NextRequest) {
   try {
-    const { projectId, script, audienceReview, previousAnalyses }: AnalyzeScenesRequest = await req.json()
+    const { projectId, script, audienceReview, previousAnalyses, targetDemographic }: AnalyzeScenesRequest = await req.json()
 
     if (!projectId || !script?.scenes?.length) {
       return NextResponse.json(
@@ -66,7 +68,12 @@ export async function POST(req: NextRequest) {
     const sceneCount = script.scenes.length
     console.log(`[Scene Analysis] Analyzing ${sceneCount} scenes for project: ${projectId}${previousAnalyses?.length ? ' (progressive re-analysis)' : ''}`)
 
-    const sceneAnalysis = await generateSceneAnalysis(script, audienceReview, previousAnalyses)
+    const sceneAnalysis = await generateSceneAnalysis(
+      script,
+      audienceReview,
+      previousAnalyses,
+      targetDemographic
+    )
 
     console.log(`[Scene Analysis] Generated analysis for ${sceneAnalysis.length} scenes`)
 
@@ -85,7 +92,12 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function generateSceneAnalysis(script: any, audienceReview?: AudienceReviewContext, previousAnalyses?: AnalyzeScenesRequest['previousAnalyses']): Promise<SceneAnalysis[]> {
+async function generateSceneAnalysis(
+  script: any,
+  audienceReview?: AudienceReviewContext,
+  previousAnalyses?: AnalyzeScenesRequest['previousAnalyses'],
+  targetDemographic?: string
+): Promise<SceneAnalysis[]> {
   const sceneCount = script.scenes?.length || 0
   
   if (sceneCount === 0) {
@@ -172,11 +184,16 @@ SCORE CALIBRATION:
 `
   }
 
+  const audienceBlock = targetDemographic?.trim()
+    ? `\n## TARGET AUDIENCE (CRITICAL)\n${targetDemographic.trim()}\n\nAnalyze each scene for how well it resonates with this audience. Tailor scores, notes, and recommendations accordingly.\n`
+    : ''
+
   const prompt = `You are an expert screenplay analyst. Analyze each scene in this script and provide detailed, actionable feedback.
 
 Script: ${script.title || 'Untitled Script'}
 Logline: ${script.logline || 'No logline provided'}
 Total Scenes: ${sceneCount}
+${audienceBlock}
 ${scriptContext}
 ${progressiveContext}
 

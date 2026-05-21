@@ -1,6 +1,6 @@
 /**
  * Blueprint section optimization templates (guided AI edits).
- * Shared by BlueprintRefineDialog and BlueprintResonanceEditDialog.
+ * Shared by BlueprintRefineDialog (resonance recommendations mode).
  */
 
 export type BlueprintSection =

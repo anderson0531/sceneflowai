@@ -13,7 +13,6 @@ import {
   Wand2, 
   Loader2, 
   FileText,
-  MapPin,
   Palette,
   Clock,
   Users,
@@ -21,10 +20,12 @@ import {
   ChevronRight,
   RefreshCw,
   Save,
-  User,
-  Target,
-  Sparkles
+  Sparkles,
+  AlertTriangle,
+  CheckSquare,
+  Square,
 } from 'lucide-react'
+import type { BlueprintAudienceRecommendation } from '@/lib/types/audienceResonance'
 import { cn } from '@/lib/utils'
 
 // =============================================================================
@@ -99,6 +100,9 @@ type Props = {
   onClose: () => void
   onApply: (patch: Partial<TreatmentVariant>) => void
   projectId?: string
+  /** When set, show resonance recommendations (guided editor from AR panel) */
+  resonanceRecommendations?: BlueprintAudienceRecommendation[]
+  initialActiveTab?: string
 }
 
 // Section-specific instruction templates
@@ -351,9 +355,13 @@ export function BlueprintRefineDialog({
   variant,
   onClose,
   onApply,
-  projectId
+  projectId,
+  resonanceRecommendations,
+  initialActiveTab,
 }: Props) {
-  const [activeTab, setActiveTab] = useState('tips')
+  const [activeTab, setActiveTab] = useState(initialActiveTab || 'tips')
+  const [selectedRecIds, setSelectedRecIds] = useState<Set<string>>(new Set())
+  const [showResonanceRecs, setShowResonanceRecs] = useState(true)
   const [draft, setDraft] = useState<Partial<TreatmentVariant>>({})
   const [selectedInstructions, setSelectedInstructions] = useState<Record<string, string[]>>({
     tips: [],
@@ -374,6 +382,13 @@ export function BlueprintRefineDialog({
   const [isRefining, setIsRefining] = useState<string | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
   
+  useEffect(() => {
+    if (open && resonanceRecommendations?.length) {
+      setSelectedRecIds(new Set(resonanceRecommendations.map((r) => r.id)))
+      if (initialActiveTab) setActiveTab(initialActiveTab)
+    }
+  }, [open, resonanceRecommendations, initialActiveTab])
+
   // Initialize draft from variant
   useEffect(() => {
     if (variant) {
@@ -423,28 +438,39 @@ export function BlueprintRefineDialog({
   }
   
   // Refine section with AI
+  const toggleRec = (id: string) => {
+    setSelectedRecIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   const refineSection = async (section: string) => {
     const instructions = selectedInstructions[section] || []
     const custom = customInstructions[section] || ''
-    
-    if (instructions.length === 0 && !custom.trim()) {
-      toast.error('Select at least one refinement or add custom instructions')
+    const recTexts =
+      resonanceRecommendations
+        ?.filter((r) => selectedRecIds.has(r.id) && (r.fixSection === section || activeTab === section))
+        .map((r) => `${r.title || 'Fix'}: ${r.text}`) || []
+
+    if (instructions.length === 0 && !custom.trim() && recTexts.length === 0) {
+      toast.error('Select recommendations, refinements, or add custom instructions')
       return
     }
-    
+
     setIsRefining(section)
-    
+
     try {
-      // Build instruction text
       const templates = SECTION_TEMPLATES[section] || []
       const instructionTexts = instructions
-        .map(id => templates.find(t => t.id === id)?.text)
+        .map((id) => templates.find((t) => t.id === id)?.text)
         .filter(Boolean)
-      
-      const combinedInstructions = [
-        ...instructionTexts,
-        custom.trim()
-      ].filter(Boolean).join('\n')
+
+      const combinedInstructions = [...recTexts, ...instructionTexts, custom.trim()]
+        .filter(Boolean)
+        .join('\n')
       
       const response = await fetch('/api/treatment/refine', {
         method: 'POST',
@@ -478,6 +504,52 @@ export function BlueprintRefineDialog({
     }
   }
   
+  const applyAllResonanceImprovements = async () => {
+    if (!resonanceRecommendations?.length) return
+    const selected = resonanceRecommendations.filter((r) => selectedRecIds.has(r.id))
+    if (selected.length === 0) {
+      toast.error('Select at least one recommendation')
+      return
+    }
+    const bySection: Record<string, BlueprintAudienceRecommendation[]> = {}
+    for (const r of selected) {
+      const sec = r.fixSection || 'story'
+      if (!bySection[sec]) bySection[sec] = []
+      bySection[sec].push(r)
+    }
+    setIsRefining('resonance')
+    let workingDraft = { ...draft }
+    try {
+      for (const [section, recs] of Object.entries(bySection)) {
+        const instructions = recs.map((r) => `${r.title || 'Improve'}: ${r.text}`).join('\n\n')
+        const response = await fetch('/api/treatment/refine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            variant: { ...variant, ...workingDraft },
+            section,
+            instructions,
+          }),
+        })
+        if (!response.ok) throw new Error('Refinement failed')
+        const data = await response.json()
+        if (data.success && data.draft) {
+          workingDraft = { ...workingDraft, ...data.draft }
+        }
+      }
+      setDraft(workingDraft)
+      setHasChanges(true)
+      onApply(workingDraft)
+      toast.success('Applied resonance improvements')
+      onClose()
+    } catch {
+      toast.error('Failed to apply improvements')
+    } finally {
+      setIsRefining(null)
+    }
+  }
+
   // Apply all changes
   const handleApply = () => {
     onApply(draft)
@@ -526,6 +598,68 @@ export function BlueprintRefineDialog({
           </div>
         </DialogHeader>
         
+        {resonanceRecommendations && resonanceRecommendations.length > 0 && (
+          <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 space-y-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setShowResonanceRecs(!showResonanceRecs)}
+              className="flex items-center justify-between w-full text-sm font-medium text-amber-200/90"
+            >
+              <span className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                Resonance recommendations ({resonanceRecommendations.length})
+              </span>
+              <ChevronDown className={cn('w-4 h-4 transition-transform', showResonanceRecs && 'rotate-180')} />
+            </button>
+            {showResonanceRecs && (
+              <div className="space-y-2">
+              <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
+                {resonanceRecommendations.map((rec) => {
+                  const selected = selectedRecIds.has(rec.id)
+                  return (
+                    <div
+                      key={rec.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => toggleRec(rec.id)}
+                      className={cn(
+                        'flex items-start gap-2 p-2 rounded-lg cursor-pointer border text-left text-xs',
+                        selected
+                          ? 'border-cyan-500/40 bg-cyan-500/10'
+                          : 'border-slate-700/50 bg-slate-800/40'
+                      )}
+                    >
+                      {selected ? (
+                        <CheckSquare className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
+                      ) : (
+                        <Square className="w-3.5 h-3.5 text-gray-500 shrink-0 mt-0.5" />
+                      )}
+                      <span className="text-gray-300 flex-1">
+                        {rec.text}
+                        <span className="text-red-400/80 ml-1 font-mono">−{rec.pointsDeducted}</span>
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+              <Button
+                size="sm"
+                className="w-full bg-gradient-to-r from-cyan-600 to-purple-600"
+                disabled={!!isRefining}
+                onClick={applyAllResonanceImprovements}
+              >
+                {isRefining ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Sparkles className="w-4 h-4 mr-2" />
+                )}
+                Apply selected improvements
+              </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <TabsList className="grid grid-cols-6 bg-slate-800/50 mb-4 flex-shrink-0">
             <TabsTrigger value="tips" className="text-xs gap-1 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/20 data-[state=active]:border-cyan-500/50 data-[state=active]:border">

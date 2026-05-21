@@ -2,11 +2,17 @@
 
 import React, { useState } from 'react'
 import { Users, X, Copy, Check, Link2, Radar } from 'lucide-react'
-import { AudienceResonancePanel } from './AudienceResonancePanel'
+import { AudienceResonancePanelV3 } from './AudienceResonancePanelV3'
 import { cn } from '@/lib/utils'
 import { useGuideStore } from '@/store/useGuideStore'
 import ChatWindow from '../collab/ChatWindow'
-import type { PersistedAudienceResonance } from '@/lib/types/audienceResonance'
+import type {
+  AudienceDefinition,
+  PersistedBlueprintAudienceResonance,
+  AudienceIntent,
+} from '@/lib/types/audienceResonance'
+import { isBlueprintARV3Enabled } from '@/lib/types/audienceResonance'
+import { AudienceResonancePanel } from './AudienceResonancePanel'
 
 interface SidePanelTabsProps {
   onClose?: () => void
@@ -15,8 +21,12 @@ interface SidePanelTabsProps {
   onShare: () => void
   isSharing: boolean
   onProceedToScripting?: () => void
-  onAnalysisComplete?: (persistedAR: PersistedAudienceResonance) => void // For database persistence
-  savedAnalysis?: PersistedAudienceResonance | null // Pre-loaded from database
+  projectId?: string
+  audienceDefinition?: AudienceDefinition | null
+  onAudienceDefinitionSave?: (def: AudienceDefinition) => Promise<void>
+  onAnalysisComplete?: (persisted: PersistedBlueprintAudienceResonance) => void
+  savedBlueprintAR?: PersistedBlueprintAudienceResonance | null
+  legacyIntent?: AudienceIntent | null
 }
 
 export function SidePanelTabs({ 
@@ -26,8 +36,12 @@ export function SidePanelTabs({
   onShare, 
   isSharing, 
   onProceedToScripting,
+  projectId,
+  audienceDefinition,
+  onAudienceDefinitionSave,
   onAnalysisComplete,
-  savedAnalysis
+  savedBlueprintAR,
+  legacyIntent,
 }: SidePanelTabsProps) {
   const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration'>('resonance')
   const { guide } = useGuideStore()
@@ -92,13 +106,27 @@ export function SidePanelTabs({
       {/* Content */}
       <div className="flex-1 overflow-hidden">
         {activeTab === 'resonance' ? (
-          <AudienceResonancePanel 
-            treatment={currentTreatment} 
-            onTreatmentUpdate={handleTreatmentUpdate}
-            onProceedToScripting={onProceedToScripting}
-            onAnalysisComplete={onAnalysisComplete}
-            savedAnalysis={savedAnalysis}
-          />
+          isBlueprintARV3Enabled() ? (
+            <AudienceResonancePanelV3
+              treatment={currentTreatment}
+              projectId={projectId}
+              audienceDefinition={audienceDefinition}
+              savedBlueprintAR={savedBlueprintAR}
+              legacyIntent={legacyIntent}
+              onTreatmentUpdate={handleTreatmentUpdate}
+              onProceedToScripting={onProceedToScripting}
+              onAudienceDefinitionSave={onAudienceDefinitionSave}
+              onAnalysisComplete={onAnalysisComplete}
+            />
+          ) : (
+            <AudienceResonancePanel
+              treatment={currentTreatment}
+              projectId={projectId}
+              onTreatmentUpdate={handleTreatmentUpdate}
+              onProceedToScripting={onProceedToScripting}
+              onAnalysisComplete={onAnalysisComplete}
+            />
+          )
         ) : (
           <CollaborationContent 
             sessionId={sessionId}

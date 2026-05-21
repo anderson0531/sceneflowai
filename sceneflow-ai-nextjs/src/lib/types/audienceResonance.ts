@@ -780,6 +780,186 @@ export function targetAudienceToPromptString(profile: AudienceTargetProfile): st
   return formatTargetAudienceForPrompt(normalizeAudienceIntent(profile))
 }
 
+// =============================================================================
+// AUDIENCE DEFINITION (project-level, Blueprint + Script)
+// =============================================================================
+
+export type AudienceDefinitionSource = 'blueprint' | 'script' | 'manual'
+
+export interface AudienceDefinition {
+  profile: AudienceTargetProfile
+  presetId?: string
+  customDirection?: string
+  updatedAt: string
+  source: AudienceDefinitionSource
+}
+
+export function createAudienceDefinition(
+  partial: Partial<AudienceDefinition> & { profile?: Partial<AudienceTargetProfile> }
+): AudienceDefinition {
+  return {
+    profile: normalizeTargetAudience(partial.profile),
+    presetId: partial.presetId,
+    customDirection: partial.customDirection?.trim() || undefined,
+    updatedAt: partial.updatedAt || new Date().toISOString(),
+    source: partial.source || 'blueprint',
+  }
+}
+
+/** Build prompt block from saved audience definition */
+export function formatAudienceDefinitionForPrompt(def: AudienceDefinition): string {
+  const lines = [
+    formatTargetAudienceForPrompt(normalizeAudienceIntent(def.profile)),
+  ]
+  if (def.customDirection?.trim()) {
+    lines.push(`User analysis direction: ${def.customDirection.trim()}`)
+  }
+  return lines.join('\n')
+}
+
+/** Migrate legacy AudienceIntent target fields → AudienceDefinition */
+export function audienceDefinitionFromIntent(
+  intent?: Partial<AudienceIntent> | null,
+  customDirection?: string
+): AudienceDefinition {
+  const normalized = normalizeAudienceIntent(intent)
+  return createAudienceDefinition({
+    profile: {
+      region: normalized.region,
+      ageRange: normalized.ageRange,
+      gender: normalized.gender,
+      educationLevel: normalized.educationLevel,
+      community: normalized.community,
+    },
+    customDirection,
+    source: 'blueprint',
+  })
+}
+
+// =============================================================================
+// BLUEPRINT AUDIENCE RESONANCE v3 (deduct-from-100)
+// =============================================================================
+
+export type BlueprintRecommendationPriority = 'critical' | 'high' | 'medium' | 'low' | 'optional'
+
+export type BlueprintFixSection = 'core' | 'story' | 'tone' | 'beats' | 'characters'
+
+export interface BlueprintAudienceDeduction {
+  reason: string
+  points: number
+  category: string
+  priority?: BlueprintRecommendationPriority
+}
+
+export interface BlueprintAudienceRecommendation {
+  id: string
+  text: string
+  title?: string
+  priority: BlueprintRecommendationPriority
+  pointsDeducted: number
+  fixSection: BlueprintFixSection
+  category?: string
+}
+
+export interface BlueprintAudienceCategory {
+  name: string
+  score: number
+  weight: number
+}
+
+export interface BlueprintAudienceResonanceAnalysis {
+  version: 3
+  treatmentId: string
+  overallScore: number
+  baseScore: 100
+  deductions: BlueprintAudienceDeduction[]
+  recommendations: BlueprintAudienceRecommendation[]
+  categories: BlueprintAudienceCategory[]
+  strengths: string[]
+  improvements: string[]
+  summary: string
+  audienceDefinition: AudienceDefinition
+  isReadyForProduction: boolean
+  generatedAt: string
+  creditsUsed: number
+}
+
+export const BLUEPRINT_AR_CATEGORY_WEIGHTS: Record<string, number> = {
+  'Audience Appeal': 25,
+  'Genre & Tone Fit': 20,
+  'Concept Hook': 20,
+  'Character Connection': 20,
+  'Clarity & Structure': 15,
+}
+
+export const READY_FOR_PRODUCTION_THRESHOLD_V3 = 80
+
+export interface PersistedBlueprintAudienceResonance {
+  analysis: BlueprintAudienceResonanceAnalysis | null
+  audienceDefinition: AudienceDefinition
+  appliedRecommendationIds: string[]
+  iterationCount: number
+  lastAnalyzedAt: string | null
+  lastSavedAt: string
+}
+
+export function createPersistedBlueprintAR(
+  analysis: BlueprintAudienceResonanceAnalysis | null,
+  audienceDefinition: AudienceDefinition,
+  appliedRecommendationIds: string[] = [],
+  iterationCount = 0
+): PersistedBlueprintAudienceResonance {
+  return {
+    analysis,
+    audienceDefinition,
+    appliedRecommendationIds,
+    iterationCount,
+    lastAnalyzedAt: analysis?.generatedAt ?? null,
+    lastSavedAt: new Date().toISOString(),
+  }
+}
+
+/** Load v3 state from project metadata with legacy v2 fallback */
+/** Staged rollout: set NEXT_PUBLIC_BLUEPRINT_AR_V3=0 to use legacy Blueprint AR panel */
+export function isBlueprintARV3Enabled(): boolean {
+  if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BLUEPRINT_AR_V3 === '0') {
+    return false
+  }
+  return true
+}
+
+export function loadBlueprintARFromMetadata(metadata: Record<string, unknown> | null | undefined): {
+  audienceDefinition: AudienceDefinition | null
+  persisted: PersistedBlueprintAudienceResonance | null
+} {
+  if (!metadata) return { audienceDefinition: null, persisted: null }
+
+  const v3 = metadata.blueprintAudienceResonance as PersistedBlueprintAudienceResonance | undefined
+  const v3Def = metadata.audienceDefinition as AudienceDefinition | undefined
+  if (v3Def) {
+    return {
+      audienceDefinition: createAudienceDefinition(v3Def),
+      persisted: v3
+        ? {
+            ...v3,
+            audienceDefinition: createAudienceDefinition(v3Def),
+          }
+        : null,
+    }
+  }
+
+  const legacy = metadata.audienceResonance as {
+    intent?: AudienceIntent
+    analysis?: { version?: number }
+  } | undefined
+  if (legacy?.intent) {
+    const audienceDefinition = audienceDefinitionFromIntent(legacy.intent)
+    return { audienceDefinition, persisted: null }
+  }
+
+  return { audienceDefinition: null, persisted: null }
+}
+
 export const DEFAULT_INTENT: AudienceIntent = {
   primaryGenre: 'drama',
   targetDemographic: 'millennials-25-34',

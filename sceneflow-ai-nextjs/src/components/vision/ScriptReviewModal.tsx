@@ -20,10 +20,13 @@ import { AnimatedScore, AnimatedProgressBar } from '@/components/ui/AnimatedScor
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { toast } from 'sonner'
+import Link from 'next/link'
 import {
   DEFAULT_TARGET_AUDIENCE,
   normalizeTargetAudience,
-  targetAudienceToPromptString,
+  createAudienceDefinition,
+  formatAudienceDefinitionForPrompt,
+  type AudienceDefinition,
   type AudienceTargetProfile,
 } from '@/lib/types/audienceResonance'
 import { TargetAudienceSelector } from '@/components/audience/TargetAudienceSelector'
@@ -388,6 +391,8 @@ interface ScriptReviewModalProps {
   onCinematicScenesApply?: (scenes: CinematicScenePlan[]) => void
   // Existing cinematic scenes planned
   existingCinematicScenes?: CinematicScenePlan[]
+  /** Project-level audience from Blueprint (single source of truth) */
+  audienceDefinition?: AudienceDefinition | null
 }
 
 // ============================================================================
@@ -639,7 +644,8 @@ export default function ScriptReviewModal({
   reviewHistory = [],
   onSceneAnalysisComplete,
   onCinematicScenesApply,
-  existingCinematicScenes = []
+  existingCinematicScenes = [],
+  audienceDefinition: projectAudienceDefinition,
 }: ScriptReviewModalProps) {
   const [voices, setVoices] = useState<Voice[]>([])
   const [activeTab, setActiveTab] = useState<ReviewTab>('overview')
@@ -688,15 +694,27 @@ export default function ScriptReviewModal({
   const [isOptimizingYouDirect, setIsOptimizingYouDirect] = useState(false)
   const baseInstructionRef = useRef<string>('')
 
-  const [targetAudience, setTargetAudience] = useState<AudienceTargetProfile>(() => {
-    if (typeof window === 'undefined') return DEFAULT_TARGET_AUDIENCE
+  const [targetAudience, setTargetAudience] = useState<AudienceTargetProfile>(
+    () => normalizeTargetAudience(projectAudienceDefinition?.profile)
+  )
+  const [customDirection, setCustomDirection] = useState(
+    () => projectAudienceDefinition?.customDirection || ''
+  )
+  const [targetAudienceOpen, setTargetAudienceOpen] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) return
+    if (projectAudienceDefinition) {
+      setTargetAudience(normalizeTargetAudience(projectAudienceDefinition.profile))
+      setCustomDirection(projectAudienceDefinition.customDirection || '')
+      return
+    }
+    if (typeof window === 'undefined') return
     try {
       const raw = localStorage.getItem(SCRIPT_REVIEW_TARGET_AUDIENCE_KEY)
-      if (raw) return normalizeTargetAudience(JSON.parse(raw))
+      if (raw) setTargetAudience(normalizeTargetAudience(JSON.parse(raw)))
     } catch {}
-    return DEFAULT_TARGET_AUDIENCE
-  })
-  const [targetAudienceOpen, setTargetAudienceOpen] = useState(false)
+  }, [isOpen, projectAudienceDefinition])
 
   useEffect(() => {
     try {
@@ -704,8 +722,19 @@ export default function ScriptReviewModal({
     } catch {}
   }, [targetAudience])
 
+  const buildAudiencePrompt = useCallback(() => {
+    return formatAudienceDefinitionForPrompt(
+      createAudienceDefinition({
+        profile: targetAudience,
+        customDirection,
+        presetId: projectAudienceDefinition?.presetId,
+        source: 'script',
+      })
+    )
+  }, [targetAudience, customDirection, projectAudienceDefinition?.presetId])
+
   const handleRegenerate = async () => {
-    await onRegenerate(targetAudienceToPromptString(targetAudience))
+    await onRegenerate(buildAudiencePrompt())
   }
   
   // Speech recognition for voice input
@@ -1244,7 +1273,8 @@ export default function ScriptReviewModal({
         body: JSON.stringify({ 
           projectId, 
           script,
-          audienceReview: audienceReviewContext
+          audienceReview: audienceReviewContext,
+          targetDemographic: buildAudiencePrompt(),
         })
       })
       
@@ -1316,6 +1346,7 @@ export default function ScriptReviewModal({
           currentScene,
           revisionMode: 'recommendations',
           selectedRecommendations: recommendations,
+          targetDemographic: buildAudiencePrompt(),
           context: {
             characters: characters || [],
             previousScene,
@@ -1417,6 +1448,7 @@ export default function ScriptReviewModal({
             customInstruction: instruction || undefined,
             selectedRecommendations: selectedRecommendations.length > 0 ? selectedRecommendations : undefined,
             revisionDepth: 'moderate', // Use moderate depth for substantive rewrites
+            targetDemographic: buildAudiencePrompt(),
             context: {
               characters: characters || [],
               previousScene,
@@ -1581,15 +1613,34 @@ export default function ScriptReviewModal({
                   >
                     <div className="p-4 max-h-[min(70vh,520px)] overflow-y-auto custom-scrollbar">
                       <p className="text-sm font-semibold text-white mb-1">Target audience</p>
-                      <p className="text-xs text-gray-400 mb-4">
-                        Tailor scoring, feedback, and scene recommendations to this profile.
+                      <p className="text-xs text-gray-400 mb-2">
+                        {projectAudienceDefinition
+                          ? 'Loaded from your Blueprint project audience.'
+                          : 'Tailor scoring, feedback, and scene recommendations to this profile.'}
                       </p>
+                      {projectId && (
+                        <Link
+                          href={`/dashboard/studio/${projectId}`}
+                          className="text-[11px] text-cyan-400 hover:text-cyan-300 mb-3 inline-block"
+                        >
+                          Edit audience in Blueprint →
+                        </Link>
+                      )}
                       <TargetAudienceSelector
                         value={targetAudience}
                         onChange={(field, value) =>
                           setTargetAudience((prev) => ({ ...prev, [field]: value }))
                         }
                         variant="compact"
+                      />
+                      <label className="block text-xs text-gray-400 mt-4 mb-1">
+                        Analysis direction (optional)
+                      </label>
+                      <Textarea
+                        value={customDirection}
+                        onChange={(e) => setCustomDirection(e.target.value)}
+                        placeholder="e.g. Focus on Gen Z social-media pacing and authenticity…"
+                        className="min-h-[72px] text-xs bg-slate-900 border-slate-700"
                       />
                       <Button
                         size="sm"

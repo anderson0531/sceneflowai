@@ -17,7 +17,8 @@ import {
   Palette,
   Pencil,
 } from 'lucide-react'
-import { BlueprintResonanceEditDialog } from './BlueprintResonanceEditDialog'
+import BlueprintRefineDialog from './BlueprintRefineDialog'
+import type { BlueprintAudienceRecommendation } from '@/lib/types/audienceResonance'
 import { toast } from 'sonner'
 import { GreenlightScore } from './GreenlightScore'
 import dynamic from 'next/dynamic'
@@ -189,6 +190,20 @@ export function AudienceResonancePanel({
       ),
     [weaknessInsights, appliedFixes]
   )
+  const resonanceRecsFromInsights = useMemo((): BlueprintAudienceRecommendation[] => {
+    return pendingWeaknesses.map((i) => ({
+      id: i.id,
+      text: i.fixSuggestion || i.title,
+      title: i.title,
+      priority: 'high' as const,
+      pointsDeducted: 10,
+      fixSection: (['core', 'story', 'tone', 'beats', 'characters'].includes(
+        String(i.fixSection)
+      )
+        ? i.fixSection
+        : 'story') as BlueprintAudienceRecommendation['fixSection'],
+    }))
+  }, [pendingWeaknesses])
   const scoreProgress = analysis
     ? Math.min(100, Math.round((analysis.greenlightScore.score / READY_FOR_PRODUCTION_THRESHOLD) * 100))
     : 0
@@ -1158,18 +1173,32 @@ export function AudienceResonancePanel({
         )}
       </div>
 
-      <BlueprintResonanceEditDialog
-        isOpen={editDialogOpen}
+      <BlueprintRefineDialog
+        open={editDialogOpen}
+        variant={treatment as any}
         onClose={() => {
           setEditDialogOpen(false)
           setEditFocusInsight(null)
         }}
-        insights={pendingWeaknesses}
-        focusInsight={editFocusInsight}
-        treatment={treatment}
-        currentScore={analysis?.greenlightScore.score}
-        targetScore={READY_FOR_PRODUCTION_THRESHOLD}
-        onApplied={applyResonanceImprovements}
+        onApply={(updated) => {
+          applyResonanceImprovements({
+            updatedTreatment: updated,
+            appliedInsightIds: pendingWeaknesses.map((w) => w.id),
+            section: editFocusInsight?.fixSection || 'story',
+          })
+          setEditDialogOpen(false)
+          setEditFocusInsight(null)
+        }}
+        projectId={projectId}
+        resonanceRecommendations={resonanceRecsFromInsights}
+        initialActiveTab={
+          editFocusInsight?.fixSection &&
+          ['core', 'story', 'tone', 'beats', 'characters'].includes(
+            String(editFocusInsight.fixSection)
+          )
+            ? (editFocusInsight.fixSection as 'core' | 'story' | 'tone' | 'beats' | 'characters')
+            : 'story'
+        }
       />
     </div>
   )
