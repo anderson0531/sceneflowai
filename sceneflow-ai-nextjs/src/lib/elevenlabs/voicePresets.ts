@@ -41,22 +41,29 @@ export function resolveVoiceSettings(
   return { ...base, ...overrides }
 }
 
-export function resolveStorytellingModelId(): string {
-  return (
-    process.env.ELEVENLABS_STORYTELLING_MODEL?.trim() ||
-    process.env.ELEVENLABS_TTS_MODEL?.trim() ||
-    'eleven_multilingual_v2'
-  )
+/** Models that interpret `[tag]` as performance direction (not spoken aloud). */
+export function isElevenV3AudioTagModel(modelId: string): boolean {
+  const id = modelId.trim().toLowerCase()
+  return id.includes('eleven_v3') || id === 'eleven_ttv_v3'
 }
 
-/** ElevenLabs v3 audio tag — single delivery hint for blueprint narration. */
+export function resolveStorytellingModelId(): string {
+  const configured =
+    process.env.ELEVENLABS_STORYTELLING_MODEL?.trim() ||
+    process.env.ELEVENLABS_TTS_MODEL?.trim()
+  if (configured) return configured
+  // v3 required for bracket audio tags; v2 reads "[Intelligent and Engaging]" aloud.
+  return 'eleven_v3'
+}
+
+/** ElevenLabs v3 audio tag — performance cue, not narration (must use eleven_v3). */
 export const STORYTELLING_DELIVERY_TAG = '[Intelligent and Engaging]'
 
-/** Prepend the storytelling delivery tag once (strips other leading bracket tags). */
+/** Prepend bracket delivery tag on its own line (strips other leading bracket tags). */
 export function applyStorytellingDeliveryTag(text: string): string {
   const trimmed = text.trim()
   if (!trimmed) return trimmed
   if (trimmed.startsWith(STORYTELLING_DELIVERY_TAG)) return trimmed
-  const withoutLeadingTag = trimmed.replace(/^\[[^\]]+\]\s*/, '').trim()
-  return `${STORYTELLING_DELIVERY_TAG} ${withoutLeadingTag}`
+  const withoutLeadingTag = trimmed.replace(/^\[[^\]]+\]\s*(\n+)?/, '').trim()
+  return `${STORYTELLING_DELIVERY_TAG}\n\n${withoutLeadingTag}`
 }

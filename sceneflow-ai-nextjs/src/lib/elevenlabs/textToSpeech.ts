@@ -6,6 +6,7 @@
 import {
   type ElevenLabsDelivery,
   applyStorytellingDeliveryTag,
+  isElevenV3AudioTagModel,
   resolveStorytellingModelId,
   resolveVoiceSettings,
 } from './voicePresets'
@@ -80,6 +81,20 @@ export async function synthesizeElevenLabsMp3(
     process.env.ELEVENLABS_TTS_MODEL?.trim() ||
     'eleven_multilingual_v2'
 
+  const useV3Tags = isElevenV3AudioTagModel(modelId)
+  const voice_settings = useV3Tags
+    ? {
+        // eleven_v3: bracket tags are direction only; limited stability values.
+        stability: 0.5,
+      }
+    : {
+        stability,
+        similarity_boost: similarityBoost,
+        style,
+        use_speaker_boost: useSpeakerBoost,
+        speed,
+      }
+
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(
     voiceIdRaw
   )}?output_format=mp3_44100_128`
@@ -105,13 +120,7 @@ export async function synthesizeElevenLabsMp3(
       body: JSON.stringify({
         text,
         model_id: modelId,
-        voice_settings: {
-          stability,
-          similarity_boost: similarityBoost,
-          style,
-          use_speaker_boost: useSpeakerBoost,
-          speed,
-        },
+        voice_settings,
       }),
     })
   } catch (err) {
