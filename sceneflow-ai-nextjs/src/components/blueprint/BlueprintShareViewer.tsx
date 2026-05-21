@@ -20,6 +20,7 @@ import { countSectionsWithUrl } from '@/lib/blueprint/shareAudioPayload'
 import { BLUEPRINT_REVIEW_SECTION_THEME } from '@/lib/blueprint/blueprintReviewTheme'
 import { BlueprintShareLanguageControls } from './BlueprintShareLanguageControls'
 import { BlueprintReviewHero } from './BlueprintReviewHero'
+import { resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
 import {
   countRatedSections,
   hasAnyFeedback,
@@ -109,7 +110,12 @@ export function BlueprintShareViewer({ token }: Props) {
       return false
     }
     setTreatment(data.payload?.treatment || null)
-    setHeroImageUrl(data.payload?.heroImageUrl)
+    setHeroImageUrl(
+      resolveBlueprintHeroImageUrl(data.payload) ??
+        resolveBlueprintHeroImageUrl(
+          (data.payload?.treatment as Record<string, unknown> | undefined) ?? null
+        )
+    )
     setOwnerName(data.payload?.ownerDisplayName || 'Owner')
     setAllowTts(data.payload?.shareSettings?.allowTts !== false)
     const lang = data.payload?.sectionAudioLanguage || 'en'

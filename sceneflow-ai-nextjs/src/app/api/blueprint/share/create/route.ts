@@ -17,6 +17,7 @@ import {
   DEFAULT_BLUEPRINT_GEMINI_VOICE,
   isGeminiTtsConfigured,
 } from '@/lib/tts/geminiFlashTts'
+import { resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -112,6 +113,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Missing projectId, variantId, or treatment' }, { status: 400 })
     }
 
+    const resolvedHeroImageUrl =
+      resolveBlueprintHeroImageUrl(treatment as Record<string, unknown>) ||
+      (typeof heroImageUrl === 'string' && heroImageUrl.trim() ? heroImageUrl.trim() : undefined)
+
     const access = await assertProjectAccess(projectId, ownerUserId, legacyOwnerId)
     if (!access.ok) {
       return NextResponse.json({ success: false, error: access.error }, { status: access.status })
@@ -136,7 +141,7 @@ export async function POST(req: NextRequest) {
           ...prev,
           variantId,
           treatment,
-          heroImageUrl,
+          heroImageUrl: resolvedHeroImageUrl,
           audienceDefinition: audienceDefinition ?? null,
           ownerDisplayName: ownerName,
           shareSettings: {
@@ -149,7 +154,7 @@ export async function POST(req: NextRequest) {
         nextPayload = {
           ...nextPayload,
           variantId,
-          heroImageUrl,
+          heroImageUrl: resolvedHeroImageUrl,
           audienceDefinition: audienceDefinition ?? null,
           ownerDisplayName: ownerName,
           shareSettings: {
@@ -180,7 +185,14 @@ export async function POST(req: NextRequest) {
 
     const tokenStr = crypto.randomBytes(24).toString('base64url')
     const payload = buildSharePayload(
-      { projectId, variantId, treatment, heroImageUrl, audienceDefinition, expiresInDays },
+      {
+        projectId,
+        variantId,
+        treatment,
+        heroImageUrl: resolvedHeroImageUrl,
+        audienceDefinition,
+        expiresInDays,
+      },
       ownerName,
       expiresAt
     )

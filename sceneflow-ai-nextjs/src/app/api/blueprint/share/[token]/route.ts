@@ -10,6 +10,7 @@ import {
   normalizeShareAudioPayload,
 } from '@/lib/blueprint/shareAudioPayload'
 import { requireOwnerForSession } from '@/lib/blueprint/shareAuth'
+import { resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
 
 export const runtime = 'nodejs'
 
@@ -42,7 +43,9 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
       expiresAt: (session as { expires_at?: Date | null }).expires_at,
       payload: {
         treatment: payload.treatment,
-        heroImageUrl: payload.heroImageUrl,
+        heroImageUrl:
+          resolveBlueprintHeroImageUrl(payload) ??
+          resolveBlueprintHeroImageUrl(payload.treatment as Record<string, unknown>),
         variantId: payload.variantId,
         projectId: payload.projectId,
         shareSettings: payload.shareSettings,

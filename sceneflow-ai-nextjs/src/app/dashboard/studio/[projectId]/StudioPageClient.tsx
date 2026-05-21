@@ -31,6 +31,7 @@ import {
   createBlueprintShare,
   fetchActiveBlueprintShare,
 } from '@/lib/blueprint/createBlueprintShare'
+import { resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
 import { toast } from 'sonner'
 import {
   createPersistedBlueprintAR,
@@ -257,12 +258,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
     setIsSharing(true)
     try {
-      const heroImageUrl =
-        typeof variant.hero_image_url === 'string'
-          ? variant.hero_image_url
-          : typeof variant.heroImageUrl === 'string'
-            ? variant.heroImageUrl
-            : undefined
+      const heroImageUrl = resolveBlueprintHeroImageUrl(variant as Record<string, unknown>)
 
       const result = await createBlueprintShare({
         projectId,

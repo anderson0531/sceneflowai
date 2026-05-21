@@ -1,7 +1,5 @@
 'use client'
 
-import Image from 'next/image'
-
 type Props = {
   title: string
   logline?: string
@@ -9,13 +7,18 @@ type Props = {
   genre?: string
 }
 
-export function BlueprintReviewHero({ title, logline, heroImageUrl, genre }: Props) {
-  const initial = (title || genre || 'B').trim().charAt(0).toUpperCase() || 'B'
-
+export function BlueprintReviewHero({ title, logline, heroImageUrl }: Props) {
   return (
     <div className="relative w-full aspect-[21/9] min-h-[140px] max-h-[280px] rounded-2xl overflow-hidden border border-gray-800/80 shadow-xl shadow-black/40">
       {heroImageUrl ? (
-        <Image src={heroImageUrl} alt="" fill className="object-cover" unoptimized priority />
+        // eslint-disable-next-line @next/next/no-img-element -- blob/CDN URLs; avoids Image domain edge cases on share links
+        <img
+          src={heroImageUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="eager"
+          decoding="async"
+        />
       ) : (
         <div
           className="absolute inset-0 bg-gradient-to-br from-purple-900/50 via-slate-900 to-gray-950"
@@ -26,11 +29,6 @@ export function BlueprintReviewHero({ title, logline, heroImageUrl, genre }: Pro
         className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/70 to-transparent"
         aria-hidden
       />
-      {!heroImageUrl && (
-        <div className="absolute top-4 right-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-500/20 border border-purple-400/30 text-2xl font-bold text-purple-200">
-          {initial}
-        </div>
-      )}
       <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
         <h1 className="sf-page-title drop-shadow-lg">{title}</h1>
         {logline?.trim() ? (
