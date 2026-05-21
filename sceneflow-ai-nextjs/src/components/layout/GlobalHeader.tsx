@@ -7,6 +7,7 @@ import { Menu, X, Settings, User, HelpCircle, LogOut } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { AuthModal } from '../../components/auth/AuthModal'
 import { Breadcrumbs } from '../../components/layout/Breadcrumbs'
+import { SceneFlowStudioBrand } from '../../components/layout/SceneFlowStudioBrand'
 import { isPublicRoute } from '@/constants/publicRoutes'
 
 declare global {
@@ -65,16 +66,7 @@ export function GlobalHeader() {
             >
               {mobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
-            <a href="/dashboard" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 bg-gray-100 dark:bg-sf-surface-light rounded-lg flex items-center justify-center">
-                <div className="w-5 h-5 bg-sf-primary rounded-md flex items-center justify-center">
-                  <div className="w-2.5 h-2.5 bg-white dark:bg-sf-background rounded-sm" />
-                </div>
-              </div>
-              <span translate="no" className="app-name-text font-bold text-lg md:text-xl tracking-tight text-gray-900 dark:text-white flex items-baseline gap-1 leading-none">
-                <span>SceneFlow</span> <span className="text-sf-primary">AI</span> <span className="text-gray-500 dark:text-gray-400 font-medium text-sm md:text-base">Studio</span>
-              </span>
-            </a>
+            <SceneFlowStudioBrand href="/dashboard" />
           </div>
 
           {/* Center: reserved flex spacer to keep left/right balanced */}

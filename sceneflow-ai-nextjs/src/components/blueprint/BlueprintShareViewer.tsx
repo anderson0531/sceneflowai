@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { BlueprintReviewSection } from './BlueprintReviewSection'
 import type { BlueprintSectionAudioPlayerStatus } from './BlueprintSectionAudioPlayer'
@@ -21,6 +22,7 @@ import { BLUEPRINT_REVIEW_SECTION_THEME } from '@/lib/blueprint/blueprintReviewT
 import { BlueprintShareLanguageControls } from './BlueprintShareLanguageControls'
 import { BlueprintReviewHero } from './BlueprintReviewHero'
 import { resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
+import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
 import {
   countRatedSections,
   hasAnyFeedback,
@@ -367,7 +369,16 @@ export function BlueprintShareViewer({ token }: Props) {
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 text-gray-100">
       <header className="border-b border-gray-800/60 bg-gray-900/80 backdrop-blur-md sticky top-0 z-20">
         <div className="max-w-4xl mx-auto px-4 py-3 space-y-2">
-          <p className="sf-review-eyebrow">SceneFlow · Blueprint Review</p>
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <SceneFlowStudioBrand href="/" nameClassName="text-white" />
+            <Link
+              href="/"
+              className="text-sm text-purple-300/90 hover:text-purple-200 underline-offset-2 hover:underline shrink-0"
+            >
+              Learn more about SceneFlow
+            </Link>
+          </div>
+          <p className="sf-review-eyebrow">Blueprint Review</p>
           <BlueprintShareLanguageControls
             language={reviewLanguage}
             onLanguageChange={setReviewLanguage}
