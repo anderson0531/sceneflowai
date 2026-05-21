@@ -37,6 +37,7 @@ import {
 } from '@/lib/types/audienceResonance'
 import { BlueprintTtsControls } from './BlueprintTtsControls'
 import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
+import { buildBlueprintARNarrationText } from '@/lib/blueprint/arNarrationText'
 
 const ResonanceRadarChart = dynamic(
   () =>
@@ -357,14 +358,15 @@ export function AudienceResonancePanelV3({
     return () => window.removeEventListener('sf:blueprint-reanalyze-ar', onReanalyze)
   }, [runAnalysis, audienceDirty])
 
-  const arNarrationText = useCallback(() => {
-    if (analysis?.summary) return analysis.summary
-    const t = treatment
-    if (!t) return ''
-    const log = t.logline ? `${t.logline}. ` : ''
-    const synopsis = String(t.synopsis || t.content || '')
-    return `${log}${synopsis}`.trim()
-  }, [analysis?.summary, treatment])
+  const arNarrationText = useCallback(
+    () =>
+      buildBlueprintARNarrationText({
+        analysis,
+        treatment,
+        appliedRecommendationIds: appliedIds,
+      }),
+    [analysis, treatment, appliedIds]
+  )
 
   const handleReset = () => {
     setAnalysis(null)
