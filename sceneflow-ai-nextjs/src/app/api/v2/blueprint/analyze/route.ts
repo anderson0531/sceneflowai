@@ -42,7 +42,10 @@ export async function POST(request: NextRequest) {
       const { items, provider, model } = await analyzeBlueprintV2Batch(input)
       
       // Charge credits after successful generation
-      await CreditService.charge(userId, BLUEPRINT_ANALYZE_CREDIT_COST, 'Blueprint Analyze V2 (Batch)')
+      await CreditService.charge(userId, BLUEPRINT_ANALYZE_CREDIT_COST, 'ai_usage', null, {
+        operation: 'blueprint_analyze_v2',
+        batch: true,
+      })
       console.log(`[Blueprint V2] Charged ${BLUEPRINT_ANALYZE_CREDIT_COST} credits to user ${userId} for batch analysis`)
       
       return NextResponse.json({ success: true, data: items, creditsUsed: BLUEPRINT_ANALYZE_CREDIT_COST, debug: { api: 'v2-blueprint', provider, model, reqId, batch: true } }, {
@@ -59,7 +62,9 @@ export async function POST(request: NextRequest) {
     const { data, provider, model } = await analyzeBlueprintV2(input)
 
     // Charge credits after successful generation
-    await CreditService.charge(userId, BLUEPRINT_ANALYZE_CREDIT_COST, 'Blueprint Analyze V2')
+    await CreditService.charge(userId, BLUEPRINT_ANALYZE_CREDIT_COST, 'ai_usage', null, {
+      operation: 'blueprint_analyze_v2',
+    })
     console.log(`[Blueprint V2] Charged ${BLUEPRINT_ANALYZE_CREDIT_COST} credits to user ${userId} for single analysis`)
 
     return NextResponse.json({ success: true, data, creditsUsed: BLUEPRINT_ANALYZE_CREDIT_COST, debug: { api: 'v2-blueprint', provider, model, reqId, batch: false } }, {

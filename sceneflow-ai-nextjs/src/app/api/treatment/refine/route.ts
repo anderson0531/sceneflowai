@@ -197,7 +197,10 @@ ${strictJsonPromptSuffix}`
     console.log(`[Refine Treatment] Successfully refined ${Object.keys(filteredDraft).length} fields in section "${section}"`)
 
     // Charge credits after successful refinement
-    await CreditService.charge(userId, BLUEPRINT_REFINE_CREDIT_COST, `Blueprint Refine (${section})`)
+    await CreditService.charge(userId, BLUEPRINT_REFINE_CREDIT_COST, 'ai_usage', null, {
+      operation: 'blueprint_refine',
+      section,
+    })
     console.log(`[Refine Treatment] Charged ${BLUEPRINT_REFINE_CREDIT_COST} credits to user ${userId}`)
 
     return NextResponse.json({

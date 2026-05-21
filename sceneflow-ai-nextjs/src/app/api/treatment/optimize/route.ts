@@ -228,7 +228,9 @@ ${strictJsonPromptSuffix}`
     console.log('[Optimize Blueprint] Successfully optimized', Object.keys(optimizedDraft).length, 'fields')
 
     // Charge credits after successful optimization
-    await CreditService.charge(userId, BLUEPRINT_OPTIMIZE_CREDIT_COST, 'Blueprint Optimize')
+    await CreditService.charge(userId, BLUEPRINT_OPTIMIZE_CREDIT_COST, 'ai_usage', null, {
+      operation: 'blueprint_optimize',
+    })
     console.log(`[Optimize Blueprint] Charged ${BLUEPRINT_OPTIMIZE_CREDIT_COST} credits to user ${userId}`)
 
     return NextResponse.json({

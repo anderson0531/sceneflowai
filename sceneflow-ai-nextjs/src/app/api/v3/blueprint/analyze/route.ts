@@ -177,7 +177,9 @@ export async function POST(req: NextRequest) {
     if (!results.length) throw new Error('No valid variants generated')
 
     // Charge credits after successful generation
-    await CreditService.charge(userId, BLUEPRINT_ANALYZE_CREDIT_COST, 'Blueprint Analyze V3')
+    await CreditService.charge(userId, BLUEPRINT_ANALYZE_CREDIT_COST, 'ai_usage', null, {
+      operation: 'blueprint_analyze_v3',
+    })
     console.log(`[Blueprint V3] Charged ${BLUEPRINT_ANALYZE_CREDIT_COST} credits to user ${userId} for ${target} variant(s)`)
 
     const payload = target === 1 ? results[0] : results.slice(0, target)
