@@ -16,6 +16,7 @@ import CollabScore from './CollabScore'
 import CollabComment from './CollabComment'
 import CollabRecommendation from './CollabRecommendation'
 import CollabChatMessage from './CollabChatMessage'
+import CollabBlueprintFeedback from './CollabBlueprintFeedback'
 import SubscriptionTier from './SubscriptionTier'
 import RateCard from './RateCard'
 import CreditPricing from './CreditPricing'
@@ -176,6 +177,7 @@ export {
   CollabComment,
   CollabRecommendation,
   CollabChatMessage,
+  CollabBlueprintFeedback,
   SubscriptionTier,
   RateCard,
   // Compliance Layer models
@@ -205,6 +207,7 @@ export default {
   CollabComment,
   CollabRecommendation,
   CollabChatMessage,
+  CollabBlueprintFeedback,
   SubscriptionTier,
   RateCard,
   // Compliance Layer models

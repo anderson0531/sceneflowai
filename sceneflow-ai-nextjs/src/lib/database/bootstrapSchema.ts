@@ -165,6 +165,11 @@ export async function bootstrapDatabaseSchema(): Promise<{
     await CollabChatMessage.sync({ force: false })
     logs.push('✅ CollabChatMessage table created')
 
+    logs.push('21b. Creating CollabBlueprintFeedback table...')
+    const { default: CollabBlueprintFeedback } = await import('../../models/CollabBlueprintFeedback')
+    await CollabBlueprintFeedback.sync({ force: false })
+    logs.push('✅ CollabBlueprintFeedback table created')
+
     logs.push('22. Creating VoiceConsent table...')
     await VoiceConsent.sync({ force: false })
     logs.push('✅ VoiceConsent table created')

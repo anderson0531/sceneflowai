@@ -306,38 +306,40 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
                   const handleShare = async () => {
                     try {
                       setIsSharing(true)
-                      const items = (variants || []).slice(0, 3).map((v: any) => ({
-                        id: v.id,
-                        title: v.title,
-                        logline: v.logline || v.synopsis || '',
-                        synopsis: v.synopsis || v.content || '',
-                        details: {
-                          genre: v.genre,
-                          duration: v.format_length,
-                          targetAudience: v.target_audience,
-                          tone: v.tone,
-                          structure: v.act_breakdown ? 'three_act' : undefined,
-                        },
-                      }))
-                      const body = {
-                        spaceKey: { projectId: (guide as any)?.projectId || (guide as any)?.id || 'current', scopeType: 'concepts' },
-                        options: { anonAllowed: true, rubricEnabled: false },
-                        items,
-                      }
-                      const res = await fetch('/api/collab/session.create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-                      if (!res.ok) throw new Error('Failed to create share link')
+                      const pid = (guide as any)?.projectId || (guide as any)?.id
+                      if (!pid) throw new Error('Missing project')
+                      const res = await fetch('/api/blueprint/share/create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          projectId: pid,
+                          variantId: v.id,
+                          treatment: v,
+                          heroImageUrl:
+                            v.hero_image_url || v.heroImageUrl || undefined,
+                          expiresInDays: 14,
+                        }),
+                      })
                       const data = await res.json().catch(() => null)
-                      if (!data?.sessionId) throw new Error('Missing session id')
-                      const tokenPayload = { items }
-                      const token = encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(tokenPayload)))))
-                      const url = `${window.location.origin}/c/${data.sessionId}?t=${token}`
+                      if (!data?.success || !data?.token) throw new Error(data?.error || 'Failed')
+                      const url =
+                        data.url ||
+                        `${window.location.origin}/blueprint/share/${data.token}`
                       setShareUrl(url)
                       setShareOpen(true)
                       setSessionId(data.sessionId)
-                      try { await navigator.clipboard?.writeText?.(url) } catch {}
-                      try { const { toast } = require('sonner'); toast('Share link ready') } catch {}
+                      try {
+                        await navigator.clipboard?.writeText?.(url)
+                      } catch {}
+                      try {
+                        const { toast } = require('sonner')
+                        toast('Blueprint share link ready')
+                      } catch {}
                     } catch {
-                      try { const { toast } = require('sonner'); toast('Failed to create share link') } catch {}
+                      try {
+                        const { toast } = require('sonner')
+                        toast('Failed to create share link')
+                      } catch {}
                     } finally {
                       setIsSharing(false)
                     }

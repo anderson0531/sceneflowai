@@ -33,7 +33,7 @@ CollabParticipant.init(
     id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
     session_id: { type: DataTypes.UUID, allowNull: false, references: { model: 'collab_sessions', key: 'id' } },
     name: { type: DataTypes.STRING(120), allowNull: false },
-    email: { type: DataTypes.STRING(255), allowNull: false },
+    email: { type: DataTypes.STRING(255), allowNull: true, defaultValue: null },
     role: { type: DataTypes.ENUM('owner', 'collaborator'), allowNull: false, defaultValue: 'collaborator' },
     joined_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
     created_at: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },

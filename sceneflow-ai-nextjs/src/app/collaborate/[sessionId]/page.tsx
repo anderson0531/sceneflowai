@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getBlueprintShareRedirect } from '../../c/[sessionId]/redirectBlueprint'
 
 interface Character {
   name: string;
@@ -65,5 +66,9 @@ interface CollaborationSession {
 
 export default async function LegacyCollaborationRedirect({ params }: { params: Promise<{ sessionId: string }> }) {
   const { sessionId } = await params
+  const blueprintPath = await getBlueprintShareRedirect(sessionId)
+  if (blueprintPath) {
+    redirect(blueprintPath)
+  }
   redirect(`/c/${sessionId}`)
 }

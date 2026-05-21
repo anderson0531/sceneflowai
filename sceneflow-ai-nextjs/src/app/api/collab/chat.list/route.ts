@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const sessionId = searchParams.get('sessionId') || ''
     const channel = searchParams.get('channel') || 'general'
+    const scopeIdParam = searchParams.get('scopeId')
     const since = Number(searchParams.get('since') || '0')
     const limit = Math.min(500, Math.max(1, Number(searchParams.get('limit') || '200')))
 
@@ -21,12 +22,19 @@ export async function GET(req: NextRequest) {
     await sequelize.authenticate()
 
         // Query messages from database
-        const messages = await CollabChatMessage.findAll({
-          where: {
-            sessionId: sessionId,  // Changed from session_id (underscored: true handles mapping)
+        const where: Record<string, unknown> = {
+            sessionId: sessionId,
             channel,
             ...(since > 0 ? { seq: { [Op.gt]: since } } : {}),
-          },
+          }
+        if (scopeIdParam !== null && scopeIdParam !== undefined && scopeIdParam !== '') {
+          where.scopeId = scopeIdParam
+        } else if (channel === 'dm') {
+          return NextResponse.json({ success: false, error: 'scopeId required for dm channel' }, { status: 400 })
+        }
+
+        const messages = await CollabChatMessage.findAll({
+          where,
           order: [['seq', 'ASC']],
           limit,
         })

@@ -118,6 +118,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   
   // Collaboration state
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [shareToken, setShareToken] = useState<string | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
   
@@ -175,38 +176,54 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const handleShare = async () => {
     const variants = (guide as any)?.treatmentVariants
     if (!variants?.length) return
-    
+
+    const selectedId = (guide as any)?.selectedTreatmentId
+    const variant =
+      variants.find((v: { id: string }) => v.id === selectedId) || variants[0]
+    if (!variant) return
+
     setIsSharing(true)
     try {
-      const userId = typeof window !== 'undefined' ? localStorage.getItem('authUserId') || crypto.randomUUID() : 'anonymous'
-      if (typeof window !== 'undefined' && !localStorage.getItem('authUserId')) {
-        localStorage.setItem('authUserId', userId)
-      }
-      
-      const items = variants.map((v: any) => ({
-        id: v.id,
-        title: v.title,
-        logline: v.logline,
-        synopsis: v.synopsis
-      }))
-      
-      const res = await fetch('/api/collab/session.create', {
+      const heroImageUrl =
+        typeof variant.hero_image_url === 'string'
+          ? variant.hero_image_url
+          : typeof variant.heroImageUrl === 'string'
+            ? variant.heroImageUrl
+            : undefined
+
+      const res = await fetch('/api/blueprint/share/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ownerId: userId, items })
+        body: JSON.stringify({
+          projectId,
+          variantId: variant.id,
+          treatment: variant,
+          heroImageUrl,
+          audienceDefinition: audienceDefinition ?? null,
+          expiresInDays: 14,
+        }),
       })
-      
+
       const data = await res.json()
-      if (data.success && data.sessionId) {
+      if (data.success && data.token) {
         setSessionId(data.sessionId)
-        const url = `${window.location.origin}/collaborate/${data.sessionId}`
+        setShareToken(data.token)
+        const url = data.url || `${window.location.origin}/blueprint/share/${data.token}`
         setShareUrl(url)
         await navigator.clipboard.writeText(url)
-        try { const { toast } = require('sonner'); toast.success('Link copied to clipboard!') } catch {}
+        try {
+          const { toast } = require('sonner')
+          toast.success('Blueprint share link copied!')
+        } catch {}
+      } else {
+        throw new Error(data.error || 'Share failed')
       }
     } catch (error) {
       console.error('Share failed:', error)
-      try { const { toast } = require('sonner'); toast.error('Failed to create share link') } catch {}
+      try {
+        const { toast } = require('sonner')
+        toast.error('Failed to create share link')
+      } catch {}
     } finally {
       setIsSharing(false)
     }
@@ -1268,6 +1285,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               <SidePanelTabs 
                 onClose={() => setShowSidePanel(false)}
                 sessionId={sessionId}
+                shareToken={shareToken}
                 shareUrl={shareUrl}
                 onShare={handleShare}
                 isSharing={isSharing}

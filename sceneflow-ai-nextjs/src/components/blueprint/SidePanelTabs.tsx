@@ -5,7 +5,9 @@ import { Users, X, Copy, Check, Link2, Radar } from 'lucide-react'
 import { AudienceResonancePanelV3 } from './AudienceResonancePanelV3'
 import { cn } from '@/lib/utils'
 import { useGuideStore } from '@/store/useGuideStore'
-import ChatWindow from '../collab/ChatWindow'
+import { BlueprintCollabChat } from './BlueprintCollabChat'
+import { Sparkles, Loader2 } from 'lucide-react'
+import type { BlueprintAudienceRecommendation } from '@/lib/types/audienceResonance'
 import type {
   AudienceDefinition,
   PersistedBlueprintAudienceResonance,
@@ -28,6 +30,8 @@ interface SidePanelTabsProps {
   onAnalysisComplete?: (persisted: PersistedBlueprintAudienceResonance) => void
   savedBlueprintAR?: PersistedBlueprintAudienceResonance | null
   legacyIntent?: AudienceIntent | null
+  shareToken?: string | null
+  onOpenBlueprintRefine?: (opts: OpenBlueprintRefineOptions) => void
 }
 
 export function SidePanelTabs({ 
@@ -44,6 +48,7 @@ export function SidePanelTabs({
   savedBlueprintAR,
   legacyIntent,
   onOpenBlueprintRefine,
+  shareToken,
 }: SidePanelTabsProps) {
   const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration'>('resonance')
   const { guide } = useGuideStore()
@@ -133,10 +138,11 @@ export function SidePanelTabs({
         ) : (
           <CollaborationContent 
             sessionId={sessionId}
+            shareToken={shareToken}
             shareUrl={shareUrl}
-            activeVariantId={activeVariantId}
             onShare={onShare}
             isSharing={isSharing}
+            onOpenBlueprintRefine={onOpenBlueprintRefine}
           />
         )}
       </div>
@@ -145,23 +151,34 @@ export function SidePanelTabs({
 }
 
 // Inline collaboration content (not a modal overlay)
-function CollaborationContent({ 
+function CollaborationContent({
   sessionId,
+  shareToken,
   shareUrl,
-  activeVariantId,
   onShare,
-  isSharing
-}: { 
+  isSharing,
+  onOpenBlueprintRefine,
+}: {
   sessionId: string | null
+  shareToken: string | null | undefined
   shareUrl: string | null
-  activeVariantId: string | null
   onShare: () => void
   isSharing: boolean
+  onOpenBlueprintRefine?: (opts: OpenBlueprintRefineOptions) => void
 }) {
-  const [subTab, setSubTab] = useState<'feedback' | 'chat'>('feedback')
+  const [subTab, setSubTab] = useState<'feedback' | 'team' | 'messages'>('feedback')
   const [feedback, setFeedback] = React.useState<any[]>([])
+  const [participants, setParticipants] = React.useState<
+    Array<{ id: string; name: string; lastMessage?: { text: string } | null }>
+  >([])
   const [loading, setLoading] = React.useState(false)
   const [copied, setCopied] = React.useState(false)
+  const [synthesizing, setSynthesizing] = React.useState(false)
+  const [recommendations, setRecommendations] = React.useState<BlueprintAudienceRecommendation[]>([])
+  const [selectedRecIds, setSelectedRecIds] = React.useState<Set<string>>(new Set())
+  const [revoking, setRevoking] = React.useState(false)
+
+  const token = shareToken || (shareUrl ? shareUrl.split('/blueprint/share/')[1]?.split('?')[0] : null)
 
   const handleCopyLink = async () => {
     if (!shareUrl) return
@@ -174,34 +191,92 @@ function CollaborationContent({
     }
   }
 
-  // Fetch feedback when session exists
-  React.useEffect(() => {
-    if (!sessionId || !activeVariantId) return
-    let cancelled = false
+  const refreshFeedback = React.useCallback(async () => {
+    if (!token) return
     setLoading(true)
+    try {
+      const r = await fetch(`/api/blueprint/share/${encodeURIComponent(token)}/feedback`, {
+        cache: 'no-store',
+      })
+      const j = await r.json()
+      if (j?.success) setFeedback(j.feedback || [])
+    } catch {}
+    setLoading(false)
+  }, [token])
+
+  React.useEffect(() => {
+    if (!token) return
+    refreshFeedback()
     ;(async () => {
       try {
-        const r = await fetch(`/api/collab/feedback.list?sessionId=${sessionId}&scopeId=${encodeURIComponent(activeVariantId)}`, { cache: 'no-store' })
+        const r = await fetch(`/api/blueprint/share/${encodeURIComponent(token)}/participants`, {
+          cache: 'no-store',
+        })
         const j = await r.json()
-        if (!cancelled && j?.success) setFeedback(j.feedback || [])
+        if (j?.success) setParticipants(j.participants || [])
       } catch {}
-      setLoading(false)
     })()
-    return () => { cancelled = true }
-  }, [sessionId, activeVariantId])
+  }, [token, refreshFeedback])
 
-  const parseComment = (c: string) => {
+  const handleSynthesize = async () => {
+    if (!token) return
+    setSynthesizing(true)
     try {
-      const lastBrace = c.lastIndexOf('{')
-      if (lastBrace >= 0) {
-        const json = c.slice(lastBrace)
-        return JSON.parse(json)
+      const res = await fetch(`/api/blueprint/share/${encodeURIComponent(token)}/synthesize`, {
+        method: 'POST',
+      })
+      const data = await res.json()
+      if (data.success && Array.isArray(data.recommendations)) {
+        setRecommendations(data.recommendations)
+        setSelectedRecIds(new Set(data.recommendations.map((r: BlueprintAudienceRecommendation) => r.id)))
+        try {
+          const { toast } = require('sonner')
+          toast.success('Recommendations ready')
+        } catch {}
+      } else {
+        try {
+          const { toast } = require('sonner')
+          toast.error(data.error || 'Synthesis failed')
+        } catch {}
       }
-    } catch {}
-    return null
+    } catch {
+      try {
+        const { toast } = require('sonner')
+        toast.error('Synthesis failed')
+      } catch {}
+    } finally {
+      setSynthesizing(false)
+    }
   }
 
-  if (!sessionId) {
+  const handleRevoke = async () => {
+    if (!token || !confirm('Revoke this share link? Reviewers will no longer have access.')) return
+    setRevoking(true)
+    try {
+      await fetch(`/api/blueprint/share/${encodeURIComponent(token)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ revoke: true }),
+      })
+      try {
+        const { toast } = require('sonner')
+        toast.success('Link revoked')
+      } catch {}
+    } finally {
+      setRevoking(false)
+    }
+  }
+
+  const toggleRec = (id: string) => {
+    setSelectedRecIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  if (!sessionId && !token) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-6 text-center">
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/15 to-indigo-500/15 flex items-center justify-center mb-4 border border-purple-500/20">
@@ -256,62 +331,142 @@ function CollaborationContent({
         </div>
       )}
 
-      {/* Sub-tabs */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-800/40">
-        <button 
-          className={cn(
-            'text-xs px-2 py-1 rounded',
-            subTab === 'feedback' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800/60'
-          )} 
-          onClick={() => setSubTab('feedback')}
+      <div className="px-3 py-1.5 flex items-center justify-between border-b border-gray-800/40">
+        <span className="text-[10px] text-gray-500">
+          {feedback.length} review{feedback.length !== 1 ? 's' : ''} · {participants.length} chat participant
+          {participants.length !== 1 ? 's' : ''}
+        </span>
+        <button
+          type="button"
+          onClick={handleRevoke}
+          disabled={revoking}
+          className="text-[10px] text-red-400/80 hover:text-red-300 disabled:opacity-50"
         >
-          Feedback
-        </button>
-        <button 
-          className={cn(
-            'text-xs px-2 py-1 rounded',
-            subTab === 'chat' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800/60'
-          )} 
-          onClick={() => setSubTab('chat')}
-        >
-          Chat
+          Revoke link
         </button>
       </div>
 
-      {/* Content */}
+      <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-800/40 flex-wrap">
+        {(['feedback', 'team', 'messages'] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            className={cn(
+              'text-xs px-2 py-1 rounded capitalize',
+              subTab === t ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-800/60'
+            )}
+            onClick={() => setSubTab(t)}
+          >
+            {t === 'messages' ? 'Messages' : t}
+          </button>
+        ))}
+      </div>
+
       <div className="flex-1 overflow-y-auto p-3">
-        {subTab === 'feedback' ? (
-          <div className="space-y-2">
+        {subTab === 'feedback' && (
+          <div className="space-y-3">
             {loading && <div className="text-sm text-gray-400">Loading…</div>}
             {!loading && feedback.length === 0 && (
-              <div className="text-sm text-gray-400 text-center py-8">
-                No feedback yet. Share the link with reviewers to collect feedback.
+              <div className="text-sm text-gray-400 text-center py-6">
+                No feedback yet. Share the link with reviewers.
               </div>
             )}
-            {feedback.slice().reverse().slice(0, 10).map((f: any) => {
-              const parsed = typeof f.comment === 'string' ? parseComment(f.comment) : null
-              return (
-                <div key={f.id} className="text-xs text-gray-300 rounded border border-gray-800 p-2 bg-gray-900/50">
-                  <div className="text-gray-400 mb-1">
-                    <span className="text-yellow-500">{Number(f.score) || ''}</span> {f.alias ? `— ${String(f.alias)}` : ''}
-                    <span className="text-gray-500 ml-2">{new Date(f.createdAt).toLocaleString()}</span>
-                  </div>
-                  {parsed ? (
-                    <div className="space-y-1">
-                      {parsed.strengths && <div><span className="text-gray-400">Strengths:</span> {parsed.strengths}</div>}
-                      {parsed.concerns && <div><span className="text-gray-400">Concerns:</span> {parsed.concerns}</div>}
-                      {parsed.suggestions && <div><span className="text-gray-400">Suggestions:</span> {parsed.suggestions}</div>}
-                      {parsed.questions && <div><span className="text-gray-400">Questions:</span> {parsed.questions}</div>}
-                    </div>
-                  ) : (
-                    <div>{String(f.comment || '')}</div>
-                  )}
+            {feedback.map((f: any) => (
+              <div key={f.id} className="text-xs text-gray-300 rounded border border-gray-800 p-2 bg-gray-900/50">
+                <div className="text-gray-400 mb-1 flex justify-between">
+                  <span>
+                    {f.overallScore ? (
+                      <span className="text-yellow-500">{f.overallScore}/5</span>
+                    ) : null}{' '}
+                    {f.reviewerName}
+                  </span>
+                  <span className="text-gray-500">{new Date(f.createdAt).toLocaleString()}</span>
                 </div>
-              )
-            })}
+                {f.sections &&
+                  Object.entries(f.sections).map(([sec, data]: [string, any]) => (
+                    <div key={sec} className="mt-1">
+                      <span className="text-gray-500 uppercase text-[10px]">{sec}</span>
+                      {data?.concerns && (
+                        <div>
+                          <span className="text-gray-500">Concerns:</span> {data.concerns}
+                        </div>
+                      )}
+                      {data?.suggestions && (
+                        <div>
+                          <span className="text-gray-500">Suggestions:</span> {data.suggestions}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                {f.freeformNotes && <p className="mt-1 text-gray-400">{f.freeformNotes}</p>}
+              </div>
+            ))}
+
+            {feedback.length > 0 && (
+              <button
+                type="button"
+                onClick={handleSynthesize}
+                disabled={synthesizing}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium disabled:opacity-50"
+              >
+                {synthesizing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                Turn feedback into recommendations
+              </button>
+            )}
+
+            {recommendations.length > 0 && (
+              <div className="space-y-2 border-t border-gray-800 pt-3">
+                <p className="text-xs text-gray-400 font-medium">Synthesized recommendations</p>
+                {recommendations.map((rec) => (
+                  <label
+                    key={rec.id}
+                    className="flex gap-2 text-xs rounded border border-gray-800 p-2 bg-gray-900/60 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedRecIds.has(rec.id)}
+                      onChange={() => toggleRec(rec.id)}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <span className="text-purple-400">{rec.fixSection}</span> — {rec.text}
+                    </span>
+                  </label>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const selected = recommendations.filter((r) => selectedRecIds.has(r.id))
+                    onOpenBlueprintRefine?.({
+                      resonanceRecommendations: selected,
+                      initialScope: selected[0]?.fixSection || 'all',
+                    })
+                  }}
+                  disabled={selectedRecIds.size === 0 || !onOpenBlueprintRefine}
+                  className="w-full px-3 py-2 rounded-lg bg-emerald-600/90 hover:bg-emerald-500 text-white text-sm font-medium disabled:opacity-50"
+                >
+                  Open guided revision
+                </button>
+              </div>
+            )}
           </div>
-        ) : (
-          <ChatWindow sessionId={sessionId} role="owner" reviewer={{ reviewerId: 'owner', name: 'Owner' }} />
+        )}
+
+        {subTab === 'team' && token && (
+          <BlueprintCollabChat shareToken={token} role="owner" variant="team" participants={participants} />
+        )}
+
+        {subTab === 'messages' && token && (
+          <BlueprintCollabChat
+            shareToken={token}
+            role="owner"
+            variant="dm"
+            participants={participants}
+          />
         )}
       </div>
     </div>

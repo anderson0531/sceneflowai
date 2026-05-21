@@ -279,6 +279,9 @@ export const BLUEPRINT_CREDITS = {
   
   /** Blueprint V2/V3 analysis (20 credits = $0.20) */
   BLUEPRINT_ANALYZE: 20,
+
+  /** Synthesize collaborator feedback into revision recommendations (15 credits) */
+  BLUEPRINT_COLLAB_SYNTHESIS: 15,
   
   /** Treatment visual/hero image prompt generation (10 credits = $0.10) */
   TREATMENT_VISUAL: 10,
