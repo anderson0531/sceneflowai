@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, PlayCircle, Clock3, Maximize2, X, Play, Pause, Volume2, VolumeX, Maximize, ChevronDown, ChevronUp } from 'lucide-react';
+import { Camera, PlayCircle, Clock3, Maximize2, X, Play, Pause, Volume2, VolumeX, Maximize, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
 import NextImage from 'next/image';
 import { useState, useRef } from 'react';
 
@@ -9,11 +9,26 @@ type FeatureStoryboardItem = {
   id: number;
   title: string;
   description: string;
+  keyFeatures: string[];
   videoSlot: string;
   screenshotSlot: string;
   screenshotUrl?: string;
   videoUrl?: string;
 };
+
+function FeatureBulletText({ text }: { text: string }) {
+  const parts = text.split('—');
+  if (parts.length > 1) {
+    return (
+      <span className="text-sm text-slate-300">
+        <strong className="text-white font-medium">{parts[0].trim()}</strong>
+        {' — '}
+        {parts.slice(1).join('—').trim()}
+      </span>
+    );
+  }
+  return <span className="text-sm text-slate-300">{text}</span>;
+}
 
 const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
   {
@@ -21,6 +36,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Intuitive UX + Full Creator Control',
     description:
       'Start fast with guided automation, then edit every generated output so teams keep creative control without losing speed.',
+    keyFeatures: [
+      'Guided Studio workflow — from concept to export in one place',
+      'Edit every AI-generated beat, character, and line in place',
+      'Treatment variants — side-by-side compare for creative direction',
+      'Blueprint Collaborate — share links, section audio, and structured reviewer feedback',
+    ],
     screenshotSlot: 'Insert screenshot: Blueprint editor with editable generated sections',
     videoSlot: 'Insert 00:30 clip: UX flow from concept to editable output',
     screenshotUrl: '/landing/storyboard/intuitive-ux-2.png',
@@ -31,6 +52,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Credit Budget Tracking + Vertex AI BYOK',
     description:
       'Track credit usage in real time, set practical production guardrails, and use Vertex AI BYOK for enterprise governance.',
+    keyFeatures: [
+      'Real-time credit usage — by project and operation',
+      'Production guardrails — before costly generation runs',
+      'Vertex AI BYOK — enterprise billing and governance',
+      'Transparent rate cards — for TTS, video, and intelligence',
+    ],
     screenshotSlot: 'Insert screenshot: credit usage panel and BYOK settings',
     videoSlot: 'Insert 00:30 clip: budget dashboard and key configuration',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-16%20at%2016.40.22.png',
@@ -41,6 +68,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Any Concept, One Production Workflow',
     description:
       'Use one reliable pipeline for training, podcasts, news, home sales videos, and cinematic content.',
+    keyFeatures: [
+      'One pipeline — podcast, news, training, real estate, and cinematic formats',
+      'Project templates — Studio adapts to your source material',
+      'Same Blueprint → Script → Vision path — regardless of genre',
+      'No tool-switching — from ideation through delivery',
+    ],
     screenshotSlot: 'Insert screenshot: Split-view or grid showing Podcast, News, Real Estate, and Cinematic templates feeding into one unified SceneFlow pipeline UI.',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-16%20at%2021.48.31.png',
     videoSlot: 'Insert 00:30 clip: "Start with any source material..." clicking New Project -> Podcast (UI adapts to audio), then showing split screen of News & Cinematic projects converging into the Blueprint editor.',
@@ -51,6 +84,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Smart Automation with Precision Edit Control',
     description:
       'The SceneFlow platform uses intelligence to automatically generate a professional baseline (series, blueprint, script, production prompts, and edits) while providing intelligent dialogs that give you full edit control with built-in guardrails.',
+    keyFeatures: [
+      'AI baselines in one pass — series, blueprint, script, and production prompts',
+      'Intelligent edit dialogs — guardrails, not blind rewrites',
+      'Accept, refine, or reject — every suggestion stays under your control',
+      'Human-in-the-loop — at every phase of production',
+    ],
     screenshotSlot: 'Insert screenshot: Intelligent dialog showing baseline generation with edit controls',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-17%20at%2011.20.36.png',
     videoSlot: 'Insert 00:30 clip: AI baseline generation followed by user making precise edits',
@@ -61,6 +100,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Shared Reference Library for Continuity',
     description:
       'Maintain consistent characters, wardrobe, voices, locations, and props across scenes and episodes with reusable references.',
+    keyFeatures: [
+      'Reusable profiles — characters, wardrobe, voices, locations, and props',
+      'Cross-scene application — references flow into every generation',
+      'Visual consistency — same faces and tone in Imagen and Veo outputs',
+      'Franchise-scale continuity — built for multi-episode series',
+    ],
     screenshotSlot: 'Insert screenshot: Reference library showing character and prop continuity',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-17%20at%2014.33.01.png',
     videoSlot: 'Insert 00:30 clip: Applying references across multiple scenes',
@@ -71,6 +116,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Express Generation Engine',
     description:
       'Auto-generate images and video segments concurrently. Express Storyboard lets you review and share audio-visual storyboards in minutes. Express Animatics renders full Ken Burns scenes in minutes, while Express Video delivers final video scenes in minutes instead of days.',
+    keyFeatures: [
+      'Concurrent generation — images and video across scenes at once',
+      'Express Storyboard — shareable audio-visual previews in minutes',
+      'Express Animatics — Ken Burns motion from stills',
+      'Express Video — scene-level clips in minutes, not days',
+    ],
     screenshotSlot: 'Insert screenshot: Express generation dashboard with Animatics and Video progress',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-17%20at%2019.27.52.png',
     videoSlot: 'Insert 00:30 clip: Concurrent generation turning script into animatic then final video',
@@ -81,6 +132,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Audience Resonance Editor',
     description:
       'Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint, and Script for maximum impact.',
+    keyFeatures: [
+      'Target-audience scoring — with category breakdown',
+      'Section-tied recommendations — fix the right part of your story',
+      'One-click fixes and Guided Edit — precise rewrites, not guesswork',
+      'Production-ready threshold — know when to invest in full render',
+    ],
     screenshotSlot: 'Insert screenshot: Resonance Editor with audience scoring and one-click fixes',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2008.22.24.png',
     videoSlot: 'Insert 00:30 clip: Applying guided edits based on audience resonance score',
@@ -91,6 +148,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Adaptive Translation (70+ Languages)',
     description:
       'Localize content at scale while preserving narrative intent and timeline alignment for multilingual delivery.',
+    keyFeatures: [
+      '70+ languages — narration, dialogue, and copy at scale',
+      'Narrative intent preserved — meaning and timing stay aligned',
+      'Multi-language audio tracks — on the scene timeline',
+      'Export-ready packages — per locale for distribution',
+    ],
     screenshotSlot: 'Insert screenshot: Multi-language timeline and translation settings',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-20%20at%2011.59.14.png',
     videoSlot: 'Insert 00:30 clip: Instantly localizing a scene into multiple languages',
@@ -101,6 +164,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Series Automation',
     description:
       'Scale your narrative effortlessly. Define your universe once, and let the AI instantly generate cohesive multi-episode arcs, ensuring character development and overarching plotlines stay perfectly aligned across the entire season.',
+    keyFeatures: [
+      'Define your universe once — characters, tone, and season arc',
+      'Cohesive episode outlines — auto-generated across the season',
+      'Continuity tracking — up to 40 episodes in alignment',
+      "Series-to-episode sync — into Writer's Room and Production",
+    ],
     screenshotSlot: 'Insert screenshot: Series overview with auto-generated episode arcs',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2009.17.05.png',
     videoSlot: 'Insert 00:30 clip: Concept expanding into a multi-episode season',
@@ -111,6 +180,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Blueprint Automation',
     description:
       'Transform raw concepts into structured, production-ready architectures. Automatically generate complete story beats, character arcs, and scene-by-scene structural outlines that serve as the flawless foundation for your project.',
+    keyFeatures: [
+      'Concept to structure in minutes — logline, beats, characters, and tone',
+      'Production-ready beat sheets — with runtime estimates',
+      'Treatment variants — A/B creative direction before you commit',
+      'Collaborator share links — feedback synthesis into guided revision',
+    ],
     screenshotSlot: 'Insert screenshot: Auto-generated Blueprint with story beats and character arcs',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-21%20at%2010.05.03.png',
     videoSlot: 'Insert 00:30 clip: Turning a concept into a structured Blueprint',
@@ -120,6 +195,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Production Automation',
     description:
       'Go from script to screen without the friction. Instantly automate your script formatting, storyboard visualization, dynamic voice casting, and spatial audio mixing, seamlessly orchestrating reference libraries and keyframes into a unified video edit.',
+    keyFeatures: [
+      'Script formatting — scene breakdown from your blueprint',
+      'Storyboard and keyframes — with reference locking',
+      'AI voice casting — and spatial audio mixing',
+      'Full scene timeline — narration, dialogue, music, and SFX',
+    ],
     screenshotSlot: 'Insert screenshot: Production dashboard showing script, voice, and video orchestration',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2010.47.26.png',
     videoSlot: 'Insert 00:30 clip: Orchestrating script, storyboards, and audio into the Mixer',
@@ -129,6 +210,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Final Cut Automation',
     description:
       'Polish your project with intelligent precision. Automatically assemble generated segments, sync audio tracks, and apply smart transitions for a broadcast-ready final cut that requires zero manual timeline scrubbing.',
+    keyFeatures: [
+      'Auto-assemble segments — on the edit timeline',
+      'Multi-track audio sync — locked to picture',
+      'Smart transitions — and pacing suggestions',
+      'Broadcast-ready cut — without manual timeline scrubbing',
+    ],
     screenshotSlot: 'Insert screenshot: Final Cut timeline with auto-assembled segments',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2015.30.48.png',
     videoSlot: 'Insert 00:30 clip: AI assembling and polishing the final timeline',
@@ -138,6 +225,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Premiere Automation',
     description:
       'Launch with a splash. Effortlessly automate your distribution prep, generating localized metadata, optimized thumbnails, and release-ready packages tailored for any platform or screening format.',
+    keyFeatures: [
+      'Platform-specific metadata — and thumbnail packages',
+      'Localized titles and descriptions — for every distribution channel',
+      'Release-ready export bundles — tailored to your platform',
+      'Screening and social cuts — from one master project',
+    ],
     screenshotSlot: 'Insert screenshot: Premiere dashboard with metadata and package prep',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2017.09.15.png',
     videoSlot: 'Insert 00:30 clip: Auto-generating platform-specific packages and thumbnails',
@@ -147,6 +240,12 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     title: 'Screening Room',
     description:
       'Validate your vision with real behavioral analytics. Host interactive review sessions to capture audience feedback, track engagement metrics, and use data-driven insights to refine your content before it goes public.',
+    keyFeatures: [
+      'Private review sessions — secure share links for stakeholders',
+      'Structured audience feedback — and engagement signals',
+      'Behavioral analytics — before public launch',
+      'Iterate from real data — refine blueprint and script from reviewer insights',
+    ],
     screenshotSlot: 'Insert screenshot: Screening Room analytics and reviewer feedback panel',
     screenshotUrl:
       'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png',
@@ -272,10 +371,23 @@ function StoryboardCard({
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-500/20 text-base font-semibold text-purple-200">
             {item.id}
           </span>
-          <div>
+          <div className="min-w-0 flex-1">
             <h3 className="text-xl md:text-2xl font-bold text-white">{item.title}</h3>
             {!isOpen && (
-              <p className="mt-1 text-sm text-slate-400 line-clamp-1 max-w-2xl">{item.description}</p>
+              <>
+                <p className="mt-1 text-sm text-slate-400 line-clamp-1 max-w-2xl">{item.description}</p>
+                <div className="mt-2 hidden sm:flex flex-wrap gap-2 max-w-2xl">
+                  {item.keyFeatures.slice(0, 2).map((feature) => (
+                    <span
+                      key={feature}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs text-slate-300"
+                    >
+                      <CheckCircle2 className="h-3 w-3 text-purple-400 shrink-0" />
+                      <span className="line-clamp-1">{feature.split('—')[0].trim()}</span>
+                    </span>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -300,6 +412,20 @@ function StoryboardCard({
           >
             <div className="p-6 md:p-8 pt-0 border-t border-white/5">
               <p className="mt-4 text-base leading-relaxed text-slate-300 max-w-4xl">{item.description}</p>
+
+              <div className="mt-6 max-w-4xl">
+                <p className="text-xs font-medium uppercase tracking-wider text-cyan-300/90 mb-3">
+                  Key features
+                </p>
+                <ul className="space-y-2.5">
+                  {item.keyFeatures.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2.5">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-cyan-400" />
+                      <FeatureBulletText text={feature} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
               <div className="mt-8 grid gap-6 lg:grid-cols-2">
                 {/* Screenshot Column */}
