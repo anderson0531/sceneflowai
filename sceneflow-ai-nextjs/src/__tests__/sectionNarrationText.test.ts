@@ -27,24 +27,27 @@ const fixture: Record<string, unknown> = {
 }
 
 describe('buildBlueprintSectionNarrationText', () => {
-  it('builds core section with title and logline', () => {
-    const text = buildBlueprintSectionNarrationText(fixture, 'core')
-    expect(text).toContain('Midnight Run')
-    expect(text).toContain('courier races dawn')
-    expect(text).toContain('Thriller')
+  it('uses storytelling openers instead of field labels', () => {
+    const core = buildBlueprintSectionNarrationText(fixture, 'core')
+    expect(core).toContain('Let me pull you into this story')
+    expect(core).toContain('Midnight Run')
+    expect(core).toContain('Picture this')
+    expect(core).not.toMatch(/Title:/i)
+    expect(core).not.toMatch(/Logline:/i)
   })
 
-  it('builds story section with synopsis and characters', () => {
+  it('builds story section as narrative prose', () => {
     const text = buildBlueprintSectionNarrationText(fixture, 'story')
-    expect(text).toContain('Synopsis')
+    expect(text).toContain('world comes alive')
     expect(text).toContain('Alex Chen')
     expect(text).toContain('Neo-Tokyo')
+    expect(text).not.toMatch(/Synopsis:/i)
   })
 
-  it('builds beats as numbered list', () => {
+  it('builds beats with dramatic transitions', () => {
     const text = buildBlueprintSectionNarrationText(fixture, 'beats')
-    expect(text).toContain('1. Opening')
-    expect(text).toContain('2. Midpoint')
+    expect(text).toContain('opens with Opening')
+    expect(text).toContain('culminates in Midpoint')
   })
 
   it('builds characters section', () => {
@@ -74,6 +77,18 @@ describe('chunkNarrationText', () => {
     const chunks = chunkNarrationText(long, 1200)
     expect(chunks.length).toBeGreaterThan(1)
     expect(chunks.join('').length).toBe(2500)
+  })
+
+  it('prefers sentence boundaries when possible', () => {
+    const text =
+      'Let me pull you into this story. ' +
+      'It is called Midnight Run. '.repeat(80) +
+      'The end.'
+    const chunks = chunkNarrationText(text, 400)
+    expect(chunks.length).toBeGreaterThan(1)
+    chunks.forEach((c) => {
+      expect(c.endsWith('.') || c.length <= 400).toBe(true)
+    })
   })
 })
 

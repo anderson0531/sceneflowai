@@ -3,13 +3,24 @@
  * Shared by `/api/tts/elevenlabs` and vision scene audio generation.
  */
 
+import {
+  type ElevenLabsDelivery,
+  resolveStorytellingModelId,
+  resolveVoiceSettings,
+} from './voicePresets'
+
 export interface SynthesizeElevenLabsMp3Params {
   text: string
   voiceId: string
   stability?: number
   similarityBoost?: number
+  style?: number
+  useSpeakerBoost?: boolean
+  speed?: number
   /** Override model (default: env ELEVENLABS_TTS_MODEL or eleven_multilingual_v2). */
   modelId?: string
+  /** Expressive storytelling preset (lower stability, higher style). */
+  delivery?: ElevenLabsDelivery
 }
 
 export async function synthesizeElevenLabsMp3(
@@ -30,17 +41,31 @@ export async function synthesizeElevenLabsMp3(
     throw new Error('voiceId is required')
   }
 
+  const delivery = params.delivery ?? 'neutral'
+  const preset = resolveVoiceSettings(delivery)
+
   const stability =
     typeof params.stability === 'number' && Number.isFinite(params.stability)
       ? Math.min(1, Math.max(0, params.stability))
-      : 0.5
+      : preset.stability
   const similarityBoost =
     typeof params.similarityBoost === 'number' && Number.isFinite(params.similarityBoost)
       ? Math.min(1, Math.max(0, params.similarityBoost))
-      : 0.75
+      : preset.similarity_boost
+  const style =
+    typeof params.style === 'number' && Number.isFinite(params.style)
+      ? Math.min(1, Math.max(0, params.style))
+      : preset.style
+  const useSpeakerBoost =
+    typeof params.useSpeakerBoost === 'boolean' ? params.useSpeakerBoost : preset.use_speaker_boost
+  const speed =
+    typeof params.speed === 'number' && Number.isFinite(params.speed)
+      ? Math.min(4, Math.max(0.25, params.speed))
+      : preset.speed ?? 1
 
   const modelId =
     params.modelId?.trim() ||
+    (delivery === 'storytelling' ? resolveStorytellingModelId() : undefined) ||
     process.env.ELEVENLABS_TTS_MODEL?.trim() ||
     'eleven_multilingual_v2'
 
@@ -61,6 +86,9 @@ export async function synthesizeElevenLabsMp3(
       voice_settings: {
         stability,
         similarity_boost: similarityBoost,
+        style,
+        use_speaker_boost: useSpeakerBoost,
+        speed,
       },
     }),
   })

@@ -121,6 +121,7 @@ export function useBlueprintTts() {
             text: textToSpeak,
             voiceId,
             language: selectedLanguage,
+            delivery: 'storytelling',
           }),
         })
         if (!resp.ok) throw new Error('TTS failed')

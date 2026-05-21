@@ -220,7 +220,12 @@ export function TreatmentCard({
       
       const resp = await fetch('/api/tts/elevenlabs', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: textToSpeak, voiceId: selectedVoiceId || voices[0]?.id, language: selectedLanguage })
+        body: JSON.stringify({
+          text: textToSpeak,
+          voiceId: selectedVoiceId || voices[0]?.id,
+          language: selectedLanguage,
+          delivery: 'storytelling',
+        })
       })
       if (!resp.ok) throw new Error('TTS failed')
       const blob = await resp.blob()

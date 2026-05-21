@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { after, NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -94,7 +94,8 @@ export async function POST(req: NextRequest) {
       await t.commit()
 
       if (process.env.ELEVENLABS_API_KEY) {
-        scheduleShareSectionAudioGeneration(collabSession.id)
+        const sessionId = collabSession.id
+        after(() => runShareSectionAudioGeneration(sessionId))
       }
 
       const origin = req.headers.get('x-forwarded-host')

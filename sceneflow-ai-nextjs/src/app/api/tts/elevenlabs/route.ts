@@ -3,6 +3,7 @@ import { put } from '@vercel/blob'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { synthesizeElevenLabsMp3 } from '@/lib/elevenlabs/textToSpeech'
+import type { ElevenLabsDelivery } from '@/lib/elevenlabs/voicePresets'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -21,6 +22,11 @@ interface ElevenLabsTtsBody {
   sceneId?: string
   /** Accepted for client compatibility; multilingual model uses text as-is. */
   language?: string
+  style?: number
+  useSpeakerBoost?: boolean
+  speed?: number
+  /** Expressive storytelling delivery (blueprint narration default). */
+  delivery?: ElevenLabsDelivery
 }
 
 export async function POST(request: NextRequest) {
@@ -58,12 +64,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const audioType =
+      typeof body.audioType === 'string' ? body.audioType.trim() : ''
+    const delivery: ElevenLabsDelivery =
+      body.delivery === 'storytelling' || body.delivery === 'neutral'
+        ? body.delivery
+        : audioType === 'blueprint-share' || audioType === 'blueprint'
+          ? 'storytelling'
+          : 'neutral'
+
     const buffer = await synthesizeElevenLabsMp3({
       text,
       voiceId,
       stability: body.stability,
       similarityBoost: body.similarityBoost,
+      style: body.style,
+      useSpeakerBoost: body.useSpeakerBoost,
+      speed: body.speed,
       modelId: body.modelId,
+      delivery,
     })
 
     if (saveToBlob) {
@@ -72,11 +91,8 @@ export async function POST(request: NextRequest) {
         typeof body.sceneId === 'string' && body.sceneId.trim()
           ? body.sceneId.trim()
           : 'tts'
-      const audioType =
-        typeof body.audioType === 'string' && body.audioType.trim()
-          ? body.audioType.trim()
-          : 'tts'
-      const filename = `audio/${audioType}/${projectId}/${sceneId}-${Date.now()}.mp3`
+      const blobAudioType = audioType || 'tts'
+      const filename = `audio/${blobAudioType}/${projectId}/${sceneId}-${Date.now()}.mp3`
       const blob = await put(filename, buffer, {
         access: 'public',
         contentType: 'audio/mpeg',

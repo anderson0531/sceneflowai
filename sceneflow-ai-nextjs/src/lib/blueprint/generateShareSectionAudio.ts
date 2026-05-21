@@ -21,7 +21,11 @@ async function synthesizeSectionMp3(text: string, voiceId: string): Promise<Buff
   if (chunks.length === 0) return Buffer.alloc(0)
   const buffers: Buffer[] = []
   for (const chunk of chunks) {
-    const buf = await synthesizeElevenLabsMp3({ text: chunk, voiceId })
+    const buf = await synthesizeElevenLabsMp3({
+      text: chunk,
+      voiceId,
+      delivery: 'storytelling',
+    })
     buffers.push(buf)
   }
   return buffers.length === 1 ? buffers[0]! : Buffer.concat(buffers)
@@ -137,12 +141,3 @@ export async function runShareSectionAudioGeneration(sessionId: string): Promise
   }
 }
 
-/** Schedule audio generation without blocking the HTTP response. */
-export function scheduleShareSectionAudioGeneration(sessionId: string): void {
-  const task = runShareSectionAudioGeneration(sessionId)
-  void import('@vercel/functions')
-    .then(({ waitUntil }) => waitUntil(task))
-    .catch(() => {
-      void task
-    })
-}
