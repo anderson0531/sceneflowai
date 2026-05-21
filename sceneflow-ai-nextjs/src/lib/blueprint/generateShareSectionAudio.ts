@@ -1,7 +1,10 @@
 import { put } from '@vercel/blob'
 import CollabSession from '@/models/CollabSession'
-import { synthesizeElevenLabsMp3 } from '@/lib/elevenlabs/textToSpeech'
-import { SCENEFLOW_CREATOR_VOICE_ID } from '@/lib/tts/voices'
+import {
+  DEFAULT_BLUEPRINT_GEMINI_VOICE,
+  isGeminiTtsConfigured,
+  synthesizeGeminiFlashMp3,
+} from '@/lib/tts/geminiFlashTts'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import type {
   BlueprintSectionAudioEntry,
@@ -46,13 +49,34 @@ export function computeSectionNarrationPlan(
   return plan
 }
 
+/** Hash input for share audio cache (text + voice + director notes). */
+export function hashShareAudioContent(
+  speakableText: string,
+  voiceId: string,
+  directorNotes?: string
+): string {
+  const notes = (directorNotes ?? '').trim()
+  return hashSectionNarrationText(`${speakableText}|${voiceId}|${notes}`)
+}
+
 export function planWithLanguageHashes(
   plan: SectionNarrationPlanItem[],
-  language: string
+  language: string,
+  voiceId?: string,
+  directorNotes?: string
 ): SectionNarrationPlanItem[] {
+  if (!voiceId) {
+    return plan.map((item) => ({
+      ...item,
+      textHash: hashForLanguage(item.textHash, language),
+    }))
+  }
   return plan.map((item) => ({
     ...item,
-    textHash: hashForLanguage(item.textHash, language),
+    textHash: hashForLanguage(
+      hashShareAudioContent(item.text, voiceId, directorNotes),
+      language
+    ),
   }))
 }
 
@@ -74,9 +98,12 @@ export function isShareAudioStaleForTreatment(
   payload: BlueprintSessionPayload,
   language: string
 ): boolean {
+  const voiceId = payload.sectionAudioVoiceId || DEFAULT_BLUEPRINT_GEMINI_VOICE
   const plan = planWithLanguageHashes(
     computeSectionNarrationPlan(payload.treatment),
-    language
+    language,
+    voiceId,
+    payload.sectionAudioDirectorNotes
   )
   const audio = getSectionAudioForLanguage(payload, language)
   const status = payload.sectionAudioStatus
@@ -111,17 +138,20 @@ export async function recoverStaleSectionAudioIfNeeded(
   return { ...payload, sectionAudioStatus: 'failed' }
 }
 
-async function synthesizeSectionMp3(text: string, voiceId: string): Promise<Buffer> {
+async function synthesizeSectionMp3(
+  text: string,
+  voiceId: string,
+  directorNotes?: string
+): Promise<Buffer> {
   const chunks = chunkNarrationText(text)
   if (chunks.length === 0) return Buffer.alloc(0)
   const buffers: Buffer[] = []
   for (let i = 0; i < chunks.length; i++) {
     const t0 = Date.now()
-    const buf = await synthesizeElevenLabsMp3({
+    const buf = await synthesizeGeminiFlashMp3({
       text: chunks[i]!,
       voiceId,
-      delivery: 'storytelling',
-      prependDeliveryTag: i === 0,
+      directorNotes,
     })
     console.info(
       `[generateShareSectionAudio] chunk ${i + 1}/${chunks.length} ms=${Date.now() - t0}`
@@ -137,6 +167,7 @@ export type GenerateShareSectionAudioParams = {
   treatment: Record<string, unknown>
   language?: string
   voiceId?: string
+  directorNotes?: string
   existingAudio?: BlueprintSectionAudioMap
   onSectionSaved?: (
     sectionAudio: BlueprintSectionAudioMap,
@@ -157,7 +188,8 @@ export async function generateShareSectionAudio(
   params: GenerateShareSectionAudioParams
 ): Promise<GenerateShareSectionAudioResult> {
   const language = params.language || DEFAULT_SHARE_AUDIO_LANGUAGE
-  const voiceId = params.voiceId || SCENEFLOW_CREATOR_VOICE_ID
+  const voiceId = params.voiceId || DEFAULT_BLUEPRINT_GEMINI_VOICE
+  const directorNotes = params.directorNotes
   const plan = computeSectionNarrationPlan(params.treatment)
   const sectionAudio: BlueprintSectionAudioMap = { ...(params.existingAudio || {}) }
   const sectionTranslations: BlueprintSectionTranslationsMap = {}
@@ -176,7 +208,10 @@ export async function generateShareSectionAudio(
     }
 
     sectionTranslations[section] = speakableText
-    const textHash = hashForLanguage(hashSectionNarrationText(speakableText), language)
+    const textHash = hashForLanguage(
+      hashShareAudioContent(speakableText, voiceId, directorNotes),
+      language
+    )
 
     const existing = sectionAudio[section]
     if (existing?.url && existing.textHash === textHash) {
@@ -190,7 +225,7 @@ export async function generateShareSectionAudio(
     )
 
     try {
-      const buffer = await synthesizeSectionMp3(speakableText, voiceId)
+      const buffer = await synthesizeSectionMp3(speakableText, voiceId, directorNotes)
       if (!buffer.length) continue
 
       const filename = `audio/blueprint-share/${params.projectId}/${params.sessionId}/${language}/${section}.mp3`
@@ -248,6 +283,7 @@ export async function patchSessionSectionAudio(
       | 'sectionAudioLanguage'
       | 'sectionAudioStatus'
       | 'sectionAudioVoiceId'
+      | 'sectionAudioDirectorNotes'
       | 'sectionAudioGeneratedAt'
       | 'sectionAudioStartedAt'
     >
@@ -295,13 +331,15 @@ export type RunShareSectionAudioResult = {
 
 export type RunShareSectionAudioOptions = {
   language?: string
+  voiceId?: string
+  directorNotes?: string
 }
 
 export async function runShareSectionAudioGeneration(
   sessionId: string,
   options?: RunShareSectionAudioOptions
 ): Promise<RunShareSectionAudioResult> {
-  if (!process.env.ELEVENLABS_API_KEY) {
+  if (!isGeminiTtsConfigured()) {
     await patchSessionSectionAudio(sessionId, { sectionAudioStatus: 'skipped' })
     return { skipped: true, status: 'skipped' }
   }
@@ -321,9 +359,30 @@ export async function runShareSectionAudioGeneration(
 
   const language =
     options?.language || payload.sectionAudioLanguage || DEFAULT_SHARE_AUDIO_LANGUAGE
+  const voiceId =
+    options?.voiceId || payload.sectionAudioVoiceId || DEFAULT_BLUEPRINT_GEMINI_VOICE
+  const directorNotes =
+    options?.directorNotes !== undefined
+      ? options.directorNotes
+      : payload.sectionAudioDirectorNotes
+
+  if (options?.voiceId || options?.directorNotes !== undefined) {
+    await patchSessionSectionAudio(sessionId, {
+      sectionAudioVoiceId: voiceId,
+      sectionAudioDirectorNotes: directorNotes,
+    })
+    payload = {
+      ...payload,
+      sectionAudioVoiceId: voiceId,
+      sectionAudioDirectorNotes: directorNotes,
+    }
+  }
+
   const plan = planWithLanguageHashes(
     computeSectionNarrationPlan(payload.treatment),
-    language
+    language,
+    voiceId,
+    directorNotes
   )
   const existingAudio = getSectionAudioForLanguage(payload, language)
 
@@ -337,7 +396,6 @@ export async function runShareSectionAudioGeneration(
     }
   }
 
-  const voiceId = payload.sectionAudioVoiceId || SCENEFLOW_CREATOR_VOICE_ID
   const startedAt = new Date().toISOString()
 
   await patchSessionSectionAudio(
@@ -357,6 +415,7 @@ export async function runShareSectionAudioGeneration(
       treatment: payload.treatment,
       language,
       voiceId,
+      directorNotes,
       existingAudio,
       onSectionSaved: async (partial, partialTranslations) => {
         const prevByLang = payload!.sectionAudioByLanguage || {}
@@ -390,6 +449,7 @@ export async function runShareSectionAudioGeneration(
       },
       sectionAudioStatus: status,
       sectionAudioVoiceId: voiceId,
+      sectionAudioDirectorNotes: directorNotes,
       sectionAudioLanguage: language,
       sectionAudioGeneratedAt: new Date().toISOString(),
     })

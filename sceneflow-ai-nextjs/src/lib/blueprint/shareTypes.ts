@@ -70,6 +70,7 @@ export type BlueprintSessionPayload = {
   sectionAudioLanguage?: string
   sectionAudioStatus?: BlueprintSectionAudioStatus
   sectionAudioVoiceId?: string
+  sectionAudioDirectorNotes?: string
   sectionAudioGeneratedAt?: string
   /** Set when generation enters pending; used for stale-job recovery. */
   sectionAudioStartedAt?: string

@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Play, Square, ChevronDown } from 'lucide-react'
+import { Play, Square, ChevronDown, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import {
@@ -9,7 +9,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
+import { BlueprintGeminiVoicePicker } from '@/components/blueprint/BlueprintGeminiVoicePicker'
+import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { useBlueprintTts } from '@/hooks/useBlueprintTts'
 
@@ -77,7 +78,9 @@ export function BlueprintTtsControls({
                 <Play className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Configure ELEVENLABS_API_KEY to enable audio previews</TooltipContent>
+            <TooltipContent>
+              Configure Google TTS (GOOGLE_API_KEY or Vertex) to enable audio previews
+            </TooltipContent>
           </Tooltip>
         )}
 
@@ -110,6 +113,20 @@ export function BlueprintTtsControls({
             ) : (
               <div className="mx-2 my-1 text-xs text-amber-300">Audio not configured</div>
             )}
+            <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Director&apos;s notes</div>
+            <Button
+              variant="outline"
+              className="h-8 mx-1 w-[calc(100%-8px)] justify-start gap-2 text-left font-normal"
+              onClick={() => {
+                tts.setAudioMenuOpen(false)
+                tts.setDirectorNotesDialogOpen(true)
+              }}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+              <span className="truncate text-xs">
+                {tts.directorNotes.trim() ? "Notes set" : 'Add director\'s notes'}
+              </span>
+            </Button>
             <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Language</div>
             <GroupedLanguageSelector
               value={tts.selectedLanguage}
@@ -120,11 +137,17 @@ export function BlueprintTtsControls({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <NarratorVoicePicker
+        <BlueprintGeminiVoicePicker
           open={tts.voiceDialogOpen}
           onOpenChange={tts.setVoiceDialogOpen}
           selectedVoiceId={tts.selectedVoiceId}
           onSelectVoice={tts.selectVoice}
+        />
+        <DirectorNoteBuilderDialog
+          isOpen={tts.directorNotesDialogOpen}
+          onClose={() => tts.setDirectorNotesDialogOpen(false)}
+          initialPrompt={tts.directorNotes}
+          onSave={tts.saveDirectorNotes}
         />
       </div>
     </TooltipProvider>

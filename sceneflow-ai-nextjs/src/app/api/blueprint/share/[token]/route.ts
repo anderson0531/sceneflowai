@@ -52,6 +52,8 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
         sectionTranslations: payload.sectionTranslations,
         sectionAudioLanguage: lang,
         sectionAudioStatus: payload.sectionAudioStatus,
+        sectionAudioVoiceId: payload.sectionAudioVoiceId,
+        sectionAudioDirectorNotes: payload.sectionAudioDirectorNotes,
         sectionAudioStartedAt: payload.sectionAudioStartedAt,
         sectionAudioGeneratedAt: payload.sectionAudioGeneratedAt,
       },

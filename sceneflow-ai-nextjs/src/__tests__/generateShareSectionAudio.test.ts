@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import {
   computeSectionNarrationPlan,
+  hashShareAudioContent,
   isShareSectionAudioCurrent,
   planWithLanguageHashes,
   scheduleShareSectionAudioGeneration,
   runShareSectionAudioGeneration,
 } from '@/lib/blueprint/generateShareSectionAudio'
+import { DEFAULT_BLUEPRINT_GEMINI_VOICE } from '@/lib/tts/geminiFlashTts'
 import { hashForLanguage, normalizeShareAudioPayload } from '@/lib/blueprint/shareAudioPayload'
 import { hashSectionNarrationText } from '@/lib/blueprint/sectionNarrationText'
 import type { BlueprintSectionAudioMap, BlueprintSessionPayload } from '@/lib/blueprint/shareTypes'
@@ -75,6 +77,35 @@ describe('isShareSectionAudioCurrent', () => {
     }
     expect(isShareSectionAudioCurrent(sectionAudio, 'ready', plan)).toBe(true)
     expect(sectionAudio.core?.textHash).toMatch(/^es:/)
+  })
+
+  it('invalidates cache when voice or director notes change', () => {
+    const basePlan = computeSectionNarrationPlan(fixture)
+    const first = basePlan[0]!
+    const voiceA = DEFAULT_BLUEPRINT_GEMINI_VOICE
+    const voiceB = 'gemini-Puck'
+    const hashA = hashShareAudioContent(first.text, voiceA, 'warm')
+    const hashB = hashShareAudioContent(first.text, voiceB, 'warm')
+    const hashC = hashShareAudioContent(first.text, voiceA, 'dramatic')
+    expect(hashA).not.toBe(hashB)
+    expect(hashA).not.toBe(hashC)
+
+    const planA = planWithLanguageHashes(basePlan, 'en', voiceA, 'warm')
+    const planB = planWithLanguageHashes(basePlan, 'en', voiceB, 'warm')
+    const sectionAudio: BlueprintSectionAudioMap = {}
+    for (const { section, textHash } of planA) {
+      sectionAudio[section] = { url: `https://example.com/${section}.mp3`, textHash }
+    }
+    expect(isShareSectionAudioCurrent(sectionAudio, 'ready', planA)).toBe(true)
+    expect(isShareSectionAudioCurrent(sectionAudio, 'ready', planB)).toBe(false)
+  })
+})
+
+describe('hashShareAudioContent', () => {
+  it('is stable for the same inputs', () => {
+    const h1 = hashShareAudioContent('Hello world', DEFAULT_BLUEPRINT_GEMINI_VOICE, 'notes')
+    const h2 = hashShareAudioContent('Hello world', DEFAULT_BLUEPRINT_GEMINI_VOICE, 'notes')
+    expect(h1).toBe(h2)
   })
 })
 

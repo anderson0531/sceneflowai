@@ -1,67 +1,74 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import {
-  getCuratedElevenVoices,
-  SCENEFLOW_CREATOR_VOICE_ID,
-  type CuratedVoice,
-} from '@/lib/tts/voices'
+import { DEFAULT_BLUEPRINT_GEMINI_VOICE } from '@/lib/tts/geminiFlashTts'
 import { toGoogleTranslateCode } from '@/constants/veoLanguages'
 
+const DIRECTOR_NOTES_STORAGE_KEY = 'sceneflow-blueprint-tts-director-notes'
+
+export type BlueprintGeminiVoice = { id: string; name: string }
+
 export function useBlueprintTts() {
-  const [voices, setVoices] = useState<CuratedVoice[]>([])
+  const [voices, setVoices] = useState<BlueprintGeminiVoice[]>([])
   const [enabled, setEnabled] = useState(false)
   const [loadingId, setLoadingId] = useState<string | null>(null)
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>(
-    SCENEFLOW_CREATOR_VOICE_ID
-  )
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('SceneFlow Creator')
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>(DEFAULT_BLUEPRINT_GEMINI_VOICE)
+  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('Kore (Gemini)')
+  const [directorNotes, setDirectorNotes] = useState('')
   const [audioMenuOpen, setAudioMenuOpen] = useState(false)
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
+  const [directorNotesDialogOpen, setDirectorNotesDialogOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const queueAbortRef = useRef({ abort: false })
   const translationCacheRef = useRef<Map<string, string>>(new Map())
 
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem(DIRECTOR_NOTES_STORAGE_KEY)
+      if (stored) setDirectorNotes(stored)
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  useEffect(() => {
     let mounted = true
     ;(async () => {
       try {
-        const res = await fetch('/api/tts/elevenlabs/voices', { cache: 'no-store' })
+        const res = await fetch('/api/tts/google/voices', { cache: 'no-store' })
         const data = await res.json().catch(() => null)
         if (!mounted) return
         if (!data?.enabled || !Array.isArray(data.voices) || data.voices.length === 0) {
           setEnabled(false)
           setVoices([])
-          setSelectedVoiceId(undefined)
           return
         }
-        const list = data.voices.map((v: { id: string; name: string }) => ({
-          id: v.id,
-          name: v.name,
-        }))
-        const { voices: curated, defaultVoiceId } = await getCuratedElevenVoices(
-          async () => list
-        )
-        if (!mounted) return
-        setEnabled(curated.length > 0)
-        setVoices(curated)
+        const gemini = data.voices
+          .filter((v: { type?: string }) => v.type === 'Gemini')
+          .map((v: { id: string; name: string }) => ({ id: v.id, name: v.name }))
+        setEnabled(gemini.length > 0)
+        setVoices(gemini)
         const defaultVoice =
-          curated.find((v) => v.id === defaultVoiceId) ?? curated[0]
-        if (defaultVoice) {
+          gemini.find((v: BlueprintGeminiVoice) => v.id === DEFAULT_BLUEPRINT_GEMINI_VOICE) ??
+          gemini[0]
+        if (defaultVoice && !gemini.some((v: BlueprintGeminiVoice) => v.id === selectedVoiceId)) {
           setSelectedVoiceId(defaultVoice.id)
           setSelectedVoiceName(defaultVoice.name)
+        } else {
+          const current = gemini.find((v: BlueprintGeminiVoice) => v.id === selectedVoiceId)
+          if (current) setSelectedVoiceName(current.name)
         }
       } catch {
         if (!mounted) return
         setEnabled(false)
         setVoices([])
-        setSelectedVoiceId(undefined)
       }
     })()
     return () => {
       mounted = false
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- init voice list once
   }, [])
 
   const stopAny = useCallback(() => {
@@ -115,14 +122,13 @@ export function useBlueprintTts() {
         const voiceId = selectedVoiceId || voices[0]?.id
         if (!voiceId) throw new Error('No voice available')
 
-        const resp = await fetch('/api/tts/elevenlabs', {
+        const resp = await fetch('/api/tts/google', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             text: textToSpeak,
             voiceId,
-            language: selectedLanguage,
-            delivery: 'storytelling',
+            prompt: directorNotes.trim() || undefined,
           }),
         })
         if (!resp.ok) {
@@ -142,7 +148,7 @@ export function useBlueprintTts() {
         })
       }
     },
-    [selectedLanguage, selectedVoiceId, voices]
+    [selectedLanguage, selectedVoiceId, voices, directorNotes]
   )
 
   const playText = useCallback(
@@ -178,21 +184,35 @@ export function useBlueprintTts() {
     setVoiceDialogOpen(false)
   }, [])
 
+  const saveDirectorNotes = useCallback((notes: string) => {
+    setDirectorNotes(notes)
+    try {
+      localStorage.setItem(DIRECTOR_NOTES_STORAGE_KEY, notes)
+    } catch {
+      /* ignore */
+    }
+    setDirectorNotesDialogOpen(false)
+  }, [])
+
   return {
     voices,
     enabled,
     loadingId,
     selectedVoiceId,
     selectedVoiceName,
+    directorNotes,
     selectedLanguage,
     setSelectedLanguage,
     audioMenuOpen,
     setAudioMenuOpen,
     voiceDialogOpen,
     setVoiceDialogOpen,
+    directorNotesDialogOpen,
+    setDirectorNotesDialogOpen,
     playText,
     stopAny,
     selectVoice,
+    saveDirectorNotes,
     isPlaying: loadingId !== null,
   }
 }

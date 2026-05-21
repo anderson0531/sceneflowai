@@ -20,6 +20,9 @@ import { chipLabelById } from '@/lib/blueprint/feedbackChips'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { triggerBlueprintShareSectionAudio } from '@/lib/blueprint/createBlueprintShare'
 import type { BlueprintSectionAudioStatus } from '@/lib/blueprint/shareTypes'
+import { BlueprintGeminiVoicePicker } from './BlueprintGeminiVoicePicker'
+import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
+import { DEFAULT_BLUEPRINT_GEMINI_VOICE } from '@/lib/tts/geminiFlashTts'
 
 interface SidePanelTabsProps {
   onClose?: () => void
@@ -193,6 +196,11 @@ function CollaborationContent({
   const [audioRefreshing, setAudioRefreshing] = React.useState(false)
   const [audioLanguage, setAudioLanguage] = React.useState('en')
   const [audioStatus, setAudioStatus] = React.useState<BlueprintSectionAudioStatus | undefined>()
+  const [audioVoiceId, setAudioVoiceId] = React.useState(DEFAULT_BLUEPRINT_GEMINI_VOICE)
+  const [audioVoiceName, setAudioVoiceName] = React.useState('Kore (Gemini)')
+  const [audioDirectorNotes, setAudioDirectorNotes] = React.useState('')
+  const [voicePickerOpen, setVoicePickerOpen] = React.useState(false)
+  const [directorNotesOpen, setDirectorNotesOpen] = React.useState(false)
 
   const token = shareToken || (shareUrl ? shareUrl.split('/blueprint/share/')[1]?.split('?')[0] : null)
 
@@ -208,6 +216,12 @@ function CollaborationContent({
         if (j.payload?.sectionAudioLanguage) {
           setAudioLanguage(j.payload.sectionAudioLanguage)
         }
+        if (j.payload?.sectionAudioVoiceId) {
+          setAudioVoiceId(j.payload.sectionAudioVoiceId)
+        }
+        if (typeof j.payload?.sectionAudioDirectorNotes === 'string') {
+          setAudioDirectorNotes(j.payload.sectionAudioDirectorNotes)
+        }
       }
     } catch {}
   }, [token])
@@ -222,6 +236,8 @@ function CollaborationContent({
     try {
       const result = await triggerBlueprintShareSectionAudio(token, {
         language: audioLanguage,
+        voiceId: audioVoiceId,
+        directorNotes: audioDirectorNotes,
       })
       const { toast } = await import('sonner')
       if (result.success) {
@@ -410,6 +426,23 @@ function CollaborationContent({
             />
             <button
               type="button"
+              onClick={() => setVoicePickerOpen(true)}
+              disabled={audioRefreshing || audioStatus === 'pending'}
+              className="w-full px-3 py-2 rounded-lg border border-slate-600/60 bg-slate-800/40 text-white text-xs text-left truncate disabled:opacity-50"
+            >
+              Voice: {audioVoiceName}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDirectorNotesOpen(true)}
+              disabled={audioRefreshing || audioStatus === 'pending'}
+              className="w-full px-3 py-2 rounded-lg border border-slate-600/60 bg-slate-800/40 text-gray-300 text-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+              {audioDirectorNotes.trim() ? "Director's notes (set)" : "Director's notes"}
+            </button>
+            <button
+              type="button"
               onClick={handleGenerateSectionAudio}
               disabled={audioRefreshing || audioStatus === 'pending'}
               className="w-full px-3 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-500 text-white text-xs font-medium disabled:opacity-50 flex items-center justify-center gap-2"
@@ -435,6 +468,24 @@ function CollaborationContent({
             >
               {isSharing ? 'Creating new link…' : 'Create new link (new URL)'}
             </button>
+            <BlueprintGeminiVoicePicker
+              open={voicePickerOpen}
+              onOpenChange={setVoicePickerOpen}
+              selectedVoiceId={audioVoiceId}
+              onSelectVoice={(id, name) => {
+                setAudioVoiceId(id)
+                setAudioVoiceName(name)
+              }}
+            />
+            <DirectorNoteBuilderDialog
+              isOpen={directorNotesOpen}
+              onClose={() => setDirectorNotesOpen(false)}
+              initialPrompt={audioDirectorNotes}
+              onSave={(prompt) => {
+                setAudioDirectorNotes(prompt)
+                setDirectorNotesOpen(false)
+              }}
+            />
           </div>
         )}
       </div>

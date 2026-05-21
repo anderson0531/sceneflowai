@@ -13,6 +13,10 @@ import {
   getShareAudioLanguage,
 } from '@/lib/blueprint/shareAudioPayload'
 import { isShareAudioStaleForTreatment } from '@/lib/blueprint/generateShareSectionAudio'
+import {
+  DEFAULT_BLUEPRINT_GEMINI_VOICE,
+  isGeminiTtsConfigured,
+} from '@/lib/tts/geminiFlashTts'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -35,8 +39,9 @@ function buildSharePayload(
       collectEmail: false,
     },
     ownerDisplayName: ownerName,
-    sectionAudioStatus: process.env.ELEVENLABS_API_KEY ? 'idle' : 'skipped',
+    sectionAudioStatus: isGeminiTtsConfigured() ? 'idle' : 'skipped',
     sectionAudioLanguage: DEFAULT_SHARE_AUDIO_LANGUAGE,
+    sectionAudioVoiceId: DEFAULT_BLUEPRINT_GEMINI_VOICE,
     sectionAudioByLanguage: {},
   }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,15 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import BlueprintReimaginDialog from './BlueprintReimaginDialog'
 import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
-import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
+import { BlueprintGeminiVoicePicker } from '@/components/blueprint/BlueprintGeminiVoicePicker'
+import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
-import { toGoogleTranslateCode } from '@/constants/veoLanguages'
 import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
-import {
-  getCuratedElevenVoices,
-  SCENEFLOW_CREATOR_VOICE_ID,
-  type CuratedVoice,
-} from '@/lib/tts/voices'
+import { useBlueprintTts } from '@/hooks/useBlueprintTts'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType } from '@/lib/types/reports'
 import { cn } from '@/lib/utils'
@@ -73,13 +69,7 @@ export function TreatmentCard({
   const selectedId = (guide as any)?.selectedTreatmentId as string | undefined
 
   // Top-level hooks (must not be conditional)
-  const [voices, setVoices] = useState<Array<CuratedVoice>>([])
-  const [enabled, setEnabled] = useState<boolean>(false)
-  const [loadingId, setLoadingId] = useState<string | null>(null)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string | undefined>(
-    SCENEFLOW_CREATOR_VOICE_ID
-  )
+  const tts = useBlueprintTts()
   const [reimaginOpen, setReimaginOpen] = useState(false)
   const openRefine = (opts?: OpenBlueprintRefineOptions) => onOpenBlueprintRefine?.(opts)
   const openGuidedForSection = (scope: BlueprintFixSection) =>
@@ -88,10 +78,6 @@ export function TreatmentCard({
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
   const [isCreatingVision, setIsCreatingVision] = useState(false)
-  const [audioMenuOpen, setAudioMenuOpen] = useState(false)
-  const [voiceDialogOpen, setVoiceDialogOpen] = useState(false)
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('en')
-  const [selectedVoiceName, setSelectedVoiceName] = useState<string>('SceneFlow Creator')
   const [collabOpen, setCollabOpen] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [showReasoning, setShowReasoning] = useState(false)
@@ -111,8 +97,6 @@ export function TreatmentCard({
     window.dispatchEvent(new CustomEvent('sf:set-composer', { detail }))
   }
   const [narrationMode, setNarrationMode] = useState<'synopsis'|'full'|'beats'>('synopsis')
-  const queueAbortRef = useRef<{ abort: boolean }>({ abort: false })
-  const translationCacheRef = useRef<Map<string, string>>(new Map())
   // Character state removed - all character management moved to Vision phase
 
   const active = useMemo(() => {
@@ -120,58 +104,6 @@ export function TreatmentCard({
     if (Array.isArray(variants) && variants.length > 0) return variants[0].id
     return null
   }, [selectedId, variants])
-
-  useEffect(() => {
-    let mounted = true
-    ;(async () => {
-      try {
-        // Fetch ElevenLabs voices from API
-        const res = await fetch('/api/tts/elevenlabs/voices', { cache: 'no-store' })
-        const data = await res.json().catch(() => null)
-        if (!mounted) return
-        if (data?.enabled && Array.isArray(data.voices) && data.voices.length > 0) {
-          const list = data.voices.map((v: { id: string; name: string }) => ({
-            id: v.id,
-            name: v.name,
-          }))
-          const { voices: curated, defaultVoiceId } = await getCuratedElevenVoices(
-            async () => list
-          )
-          if (!mounted) return
-          setEnabled(curated.length > 0)
-          setVoices(curated)
-          const defaultVoice =
-            curated.find((v) => v.id === defaultVoiceId) ?? curated[0]
-          if (defaultVoice) {
-            setSelectedVoiceId(defaultVoice.id)
-            setSelectedVoiceName(defaultVoice.name)
-          }
-        } else {
-          setEnabled(false)
-          setVoices([])
-          setSelectedVoiceId(undefined)
-        }
-      } catch {
-        if (!mounted) return
-        setEnabled(false)
-        setVoices([])
-        setSelectedVoiceId(undefined)
-      }
-    })()
-    return () => { mounted = false }
-  }, [])
-
-  const stopAny = () => {
-    try {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.currentTime = 0
-      }
-    } catch {}
-    audioRef.current = null
-    setLoadingId(null)
-    queueAbortRef.current.abort = true
-  }
 
   function buildNarrationText(v: any, mode: 'synopsis'|'full'|'beats'): string {
     if (mode === 'beats' && Array.isArray(v.beats) && v.beats.length) {
@@ -185,88 +117,11 @@ export function TreatmentCard({
     return full
   }
 
-  async function playTextChunks(texts: string[]) {
-    queueAbortRef.current.abort = false
-    for (const t of texts) {
-      if (queueAbortRef.current.abort) break
-      
-      // Translate text if not English
-      let textToSpeak = t
-      if (selectedLanguage !== 'en') {
-        const cacheKey = `${t}-${selectedLanguage}`
-        const cached = translationCacheRef.current.get(cacheKey)
-        if (cached) {
-          textToSpeak = cached
-        } else {
-          try {
-            const translateResp = await fetch('/api/translate/google', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                text: t,
-                targetLanguage: toGoogleTranslateCode(selectedLanguage),
-                sourceLanguage: 'en'
-              })
-            })
-            if (translateResp.ok) {
-              const translateData = await translateResp.json()
-              textToSpeak = translateData.translatedText || t
-              translationCacheRef.current.set(cacheKey, textToSpeak)
-            }
-          } catch (err) {
-            console.error('[Blueprint TTS] Translation failed, using original text:', err)
-          }
-        }
-      }
-      
-      const resp = await fetch('/api/tts/elevenlabs', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: textToSpeak,
-          voiceId: selectedVoiceId || voices[0]?.id,
-          language: selectedLanguage,
-          delivery: 'storytelling',
-        })
-      })
-      if (!resp.ok) {
-        const errBody = await resp.json().catch(() => ({}))
-        const msg =
-          typeof errBody?.error === 'string' ? errBody.error : `TTS failed (${resp.status})`
-        throw new Error(msg)
-      }
-      const blob = await resp.blob()
-      const url = URL.createObjectURL(blob)
-      const audio = new Audio(url)
-      audioRef.current = audio
-      await new Promise<void>((resolve, reject) => {
-        audio.onended = () => resolve()
-        audio.onerror = () => reject(new Error('Audio error'))
-        audio.play().catch(reject)
-      })
-    }
-  }
-
   const playVariant = async (variantId: string) => {
     if (!Array.isArray(variants) || variants.length === 0) return
-    stopAny()
-    setLoadingId(variantId)
-    const v = variants.find(x => x.id === variantId) || variants[0]
-    // Build narration text based on selected mode
+    const v = variants.find((x) => x.id === variantId) || variants[0]
     const fullText = buildNarrationText(v, narrationMode)
-    // Chunk to ~1200 chars to avoid long clips
-    const chunks: string[] = []
-    const maxLen = 1200
-    let cursor = 0
-    while (cursor < fullText.length) {
-      chunks.push(fullText.slice(cursor, cursor + maxLen))
-      cursor += maxLen
-    }
-    try {
-      if (!selectedVoiceId && (!voices || !voices.length)) throw new Error('No voice available')
-      await playTextChunks(chunks)
-    } catch {
-      stopAny()
-    }
+    await tts.playText(fullText, variantId)
   }
 
   // Character image generation removed - all character management moved to Vision phase
@@ -493,14 +348,14 @@ export function TreatmentCard({
                         </div>
                         {/* Audio controls: Play/Stop + settings popover chevron */}
                         <div className="flex items-center gap-1">
-                          {enabled && voices.length > 0 ? (
-                            loadingId === active ? (
+                          {tts.enabled && tts.voices.length > 0 ? (
+                            tts.loadingId === active ? (
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
                                     aria-label="Stop playback"
                                     title="Stop (P)"
-                                    onClick={stopAny}
+                                    onClick={tts.stopAny}
                                     className="h-8 w-8 border border-gray-700 text-gray-300 hover:bg-gray-800"
                                     variant="outline"
                                     size="icon"
@@ -541,38 +396,54 @@ export function TreatmentCard({
                                   <Play className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Configure ELEVENLABS_API_KEY to enable audio previews</TooltipContent>
+                              <TooltipContent>
+                                Configure Google TTS (GOOGLE_API_KEY or Vertex) to enable audio previews
+                              </TooltipContent>
                             </Tooltip>
                           )}
 
                           {/* Audio settings chevron */}
-                          <DropdownMenu open={audioMenuOpen} onOpenChange={setAudioMenuOpen}>
+                          <DropdownMenu open={tts.audioMenuOpen} onOpenChange={tts.setAudioMenuOpen}>
                             <DropdownMenuTrigger asChild>
-                              <Button aria-label="Audio settings" aria-expanded={audioMenuOpen} className="h-8 w-8" size="icon" variant="outline">
+                              <Button aria-label="Audio settings" aria-expanded={tts.audioMenuOpen} className="h-8 w-8" size="icon" variant="outline">
                                 <ChevronDown className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-72">
                               <div className="px-1 py-1.5 text-xs text-gray-400">Voice</div>
-                              {enabled ? (
+                              {tts.enabled ? (
                                 <Button 
                                   variant="outline" 
                                   className="h-8 mx-1 w-[calc(100%-8px)] justify-between text-left font-normal"
                                   onClick={() => {
-                                    setAudioMenuOpen(false)
-                                    setVoiceDialogOpen(true)
+                                    tts.setAudioMenuOpen(false)
+                                    tts.setVoiceDialogOpen(true)
                                   }}
                                 >
-                                  <span className="truncate">{selectedVoiceName || 'Select voice...'}</span>
+                                  <span className="truncate">{tts.selectedVoiceName || 'Select voice...'}</span>
                                   <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
                                 </Button>
                               ) : (
                                 <div className="mx-2 my-1 text-xs text-amber-300">Audio not configured</div>
                               )}
+                              <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Director&apos;s notes</div>
+                              <Button
+                                variant="outline"
+                                className="h-8 mx-1 w-[calc(100%-8px)] justify-start gap-2 text-left font-normal"
+                                onClick={() => {
+                                  tts.setAudioMenuOpen(false)
+                                  tts.setDirectorNotesDialogOpen(true)
+                                }}
+                              >
+                                <SparklesIcon className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
+                                <span className="truncate text-xs">
+                                  {tts.directorNotes.trim() ? 'Notes set' : "Add director's notes"}
+                                </span>
+                              </Button>
                               <div className="px-1 pt-2 pb-1 text-xs text-gray-400">Language</div>
                               <GroupedLanguageSelector
-                                value={selectedLanguage}
-                                onValueChange={(code) => setSelectedLanguage(code)}
+                                value={tts.selectedLanguage}
+                                onValueChange={(code) => tts.setSelectedLanguage(code)}
                                 size="xs"
                                 intent="generate"
                               />
@@ -638,8 +509,8 @@ export function TreatmentCard({
                     {v.logline ? (
                       <div className={`mt-2 text-base text-gray-700 dark:text-gray-300 leading-relaxed ${v.id===activeVariant.id ? flashIf('logline') : ''}`}>{v.logline}</div>
                     ) : null}
-                    {!enabled && (
-                      <div className="mt-2 text-xs text-gray-400 inline-flex items-center gap-1" title="Set ELEVENLABS_API_KEY to enable audio previews">
+                    {!tts.enabled && (
+                      <div className="mt-2 text-xs text-gray-400 inline-flex items-center gap-1" title="Configure Google TTS to enable audio previews">
                         <Volume2 size={14} /> Audio preview unavailable
                       </div>
                     )}
@@ -1065,15 +936,17 @@ export function TreatmentCard({
           onSelectVariant={(id)=> selectTreatmentVariant(id)}
         />
         {/* Voice Selection Dialog */}
-        <NarratorVoicePicker
-          open={voiceDialogOpen}
-          onOpenChange={setVoiceDialogOpen}
-          selectedVoiceId={selectedVoiceId}
-          onSelectVoice={(voiceId, voiceName) => {
-            setSelectedVoiceId(voiceId)
-            setSelectedVoiceName(voiceName)
-            setVoiceDialogOpen(false)
-          }}
+        <BlueprintGeminiVoicePicker
+          open={tts.voiceDialogOpen}
+          onOpenChange={tts.setVoiceDialogOpen}
+          selectedVoiceId={tts.selectedVoiceId}
+          onSelectVoice={tts.selectVoice}
+        />
+        <DirectorNoteBuilderDialog
+          isOpen={tts.directorNotesDialogOpen}
+          onClose={() => tts.setDirectorNotesDialogOpen(false)}
+          initialPrompt={tts.directorNotes}
+          onSave={tts.saveDirectorNotes}
         />
         {/* Character Prompt Builder removed - now in Vision phase */}
         {shareOpen && (

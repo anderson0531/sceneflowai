@@ -24,8 +24,18 @@ export async function POST(_req: NextRequest, ctx: RouteCtx) {
       typeof body?.language === 'string' && body.language.trim()
         ? body.language.trim()
         : undefined
+    const voiceId =
+      typeof body?.voiceId === 'string' && body.voiceId.trim()
+        ? body.voiceId.trim()
+        : undefined
+    const directorNotes =
+      typeof body?.directorNotes === 'string' ? body.directorNotes : undefined
 
-    const result = await runShareSectionAudioGeneration(sessionId, { language })
+    const result = await runShareSectionAudioGeneration(sessionId, {
+      language,
+      voiceId,
+      directorNotes,
+    })
 
     const updated = await CollabSession.findByPk(sessionId)
     const payload = updated ? getPayload(updated) : null
