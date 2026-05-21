@@ -53,7 +53,7 @@ interface StudioPageClientProps {
 export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const { guide, updateTitle, updateTreatment, setTreatmentVariants, variantsLastModified } = useGuideStore();
   const { updateTreatmentVariant } = useGuideStore() as {
     updateTreatmentVariant: (id: string, patch: Record<string, unknown>) => void
@@ -193,6 +193,33 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     []
   )
 
+  // Migrate projects from pre-login localStorage owner id to authenticated user
+  useEffect(() => {
+    if (authStatus !== 'authenticated' || !session?.user?.id) return
+    const legacyId =
+      typeof window !== 'undefined' ? localStorage.getItem('authUserId') : null
+    if (!legacyId || legacyId === session.user.id) return
+
+    ;(async () => {
+      try {
+        const res = await fetch('/api/projects/sync-ownership', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            oldUserId: legacyId,
+            newUserId: session.user.id,
+          }),
+        })
+        if (res.ok) {
+          localStorage.removeItem('authUserId')
+        }
+      } catch {
+        /* non-fatal */
+      }
+    })()
+  }, [authStatus, session?.user?.id])
+
   // Restore active share link for this project
   useEffect(() => {
     if (!projectId || projectId.startsWith('new-project')) return
@@ -252,7 +279,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         const msg =
           result.status === 401
             ? 'Sign in to create a share link'
-            : result.error || 'Failed to create share link'
+            : result.status === 403
+              ? result.error || 'You do not have permission to share this project'
+              : result.error || 'Failed to create share link'
         toast.error(msg)
         console.error('[handleShare]', result)
       }

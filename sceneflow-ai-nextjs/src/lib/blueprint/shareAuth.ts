@@ -1,16 +1,11 @@
 import { NextRequest } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import CollabParticipant from '@/models/CollabParticipant'
+import { getAuthenticatedUserId } from '@/lib/projectAccess'
+import { resolveUserId } from '@/lib/userHelper'
 import { resolveSessionByToken, getPayload } from './shareSession'
 
-export async function getOwnerUserId(_req?: NextRequest): Promise<string | null> {
-  try {
-    const session = await getServerSession(authOptions as any)
-    const id = (session?.user as { id?: string })?.id
-    if (id) return id
-  } catch {}
-  return null
+export async function getOwnerUserId(req?: NextRequest): Promise<string | null> {
+  return getAuthenticatedUserId(req)
 }
 
 export async function requireOwnerForSession(
@@ -28,8 +23,16 @@ export async function requireOwnerForSession(
   if (!ownerUserId) return { ok: false, status: 401, error: 'Unauthorized' }
 
   const sessionOwner = (session as { owner_user_id?: string }).owner_user_id
-  if (sessionOwner && sessionOwner !== ownerUserId) {
-    return { ok: false, status: 403, error: 'Forbidden' }
+  if (sessionOwner) {
+    let sessionOwnerResolved = sessionOwner
+    try {
+      sessionOwnerResolved = await resolveUserId(sessionOwner)
+    } catch {
+      /* keep raw */
+    }
+    if (sessionOwnerResolved !== ownerUserId) {
+      return { ok: false, status: 403, error: 'Forbidden' }
+    }
   }
 
   return { ok: true, session, ownerUserId }

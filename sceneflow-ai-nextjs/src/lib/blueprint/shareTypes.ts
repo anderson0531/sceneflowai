@@ -40,6 +40,8 @@ export type BlueprintShareCreateBody = {
   heroImageUrl?: string
   audienceDefinition?: AudienceDefinition | null
   expiresInDays?: number
+  /** Pre-login localStorage authUserId when project ownership was not synced yet */
+  legacyOwnerId?: string
 }
 
 export type BlueprintStructuredFeedbackInput = {

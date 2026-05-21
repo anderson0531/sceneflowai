@@ -5,6 +5,13 @@ export type CreateBlueprintShareInput = {
   heroImageUrl?: string
   audienceDefinition?: unknown
   expiresInDays?: number
+  legacyOwnerId?: string
+}
+
+function legacyOwnerIdFromStorage(): string | undefined {
+  if (typeof window === 'undefined') return undefined
+  const id = localStorage.getItem('authUserId')
+  return id && id.length > 0 ? id : undefined
 }
 
 export type CreateBlueprintShareResult =
@@ -28,13 +35,20 @@ export async function createBlueprintShare(
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
+      body: JSON.stringify({
+        ...input,
+        legacyOwnerId: input.legacyOwnerId ?? legacyOwnerIdFromStorage(),
+      }),
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok || !data?.success || !data?.token) {
       return {
         success: false,
-        error: data?.error || `Share failed (${res.status})`,
+        error:
+          data?.error ||
+          (res.status === 403
+            ? 'You do not have permission to share this project'
+            : `Share failed (${res.status})`),
         status: res.status,
       }
     }

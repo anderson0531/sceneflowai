@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sequelize } from '@/config/database'
 import CollabSession from '@/models/CollabSession'
-import { getOwnerUserId } from '@/lib/blueprint/shareAuth'
+import { getAuthenticatedUserId } from '@/lib/projectAccess'
 import { getPayload } from '@/lib/blueprint/shareSession'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: NextRequest) {
   try {
-    const ownerUserId = await getOwnerUserId(req)
+    const ownerUserId = await getAuthenticatedUserId(req)
     if (!ownerUserId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }

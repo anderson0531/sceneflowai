@@ -5,34 +5,39 @@ import { authOptions } from '@/lib/auth'
 import { sequelize } from '@/config/database'
 import CollabSession from '@/models/CollabSession'
 import CollabParticipant from '@/models/CollabParticipant'
-import Project from '@/models/Project'
+import { getAuthenticatedUserId, assertProjectAccess } from '@/lib/projectAccess'
 import type { BlueprintSessionPayload, BlueprintShareCreateBody } from '@/lib/blueprint/shareTypes'
 
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions as any).catch(() => null)
-    const userId = (session?.user as { id?: string })?.id
-    const ownerName = (session?.user as { name?: string })?.name || 'Owner'
-    const ownerEmail = (session?.user as { email?: string })?.email || null
-    if (!userId) {
+    const authSession = await getServerSession(authOptions as any).catch(() => null)
+    const ownerUserId = await getAuthenticatedUserId(req)
+    const ownerName = (authSession?.user as { name?: string })?.name || 'Owner'
+    const ownerEmail = (authSession?.user as { email?: string })?.email || null
+    if (!ownerUserId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = (await req.json()) as BlueprintShareCreateBody
-    const { projectId, variantId, treatment, heroImageUrl, audienceDefinition, expiresInDays = 14 } = body
+    const body = (await req.json()) as BlueprintShareCreateBody & { legacyOwnerId?: string }
+    const {
+      projectId,
+      variantId,
+      treatment,
+      heroImageUrl,
+      audienceDefinition,
+      expiresInDays = 14,
+      legacyOwnerId,
+    } = body
 
     if (!projectId || !variantId || !treatment) {
       return NextResponse.json({ success: false, error: 'Missing projectId, variantId, or treatment' }, { status: 400 })
     }
 
-    const proj = await Project.findByPk(projectId)
-    if (!proj) {
-      return NextResponse.json({ success: false, error: 'Project not found' }, { status: 404 })
-    }
-    if ((proj as { user_id?: string }).user_id && (proj as { user_id?: string }).user_id !== userId) {
-      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+    const access = await assertProjectAccess(projectId, ownerUserId, legacyOwnerId)
+    if (!access.ok) {
+      return NextResponse.json({ success: false, error: access.error }, { status: access.status })
     }
 
     await sequelize.authenticate()
@@ -64,7 +69,7 @@ export async function POST(req: NextRequest) {
       const collabSession = await CollabSession.create(
         {
           project_id: projectId,
-          owner_user_id: userId,
+          owner_user_id: ownerUserId,
           token: tokenStr,
           status: 'active',
           expires_at: expiresAt,
