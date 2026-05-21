@@ -10,7 +10,7 @@ import {
 import {
   DEFAULT_BLUEPRINT_GEMINI_VOICE,
   normalizeBlueprintGeminiVoiceId,
-} from '@/lib/tts/geminiFlashTts'
+} from '@/lib/tts/blueprintTtsConstants'
 import { hashForLanguage, normalizeShareAudioPayload } from '@/lib/blueprint/shareAudioPayload'
 import { hashSectionNarrationText } from '@/lib/blueprint/sectionNarrationText'
 import type { BlueprintSectionAudioMap, BlueprintSessionPayload } from '@/lib/blueprint/shareTypes'

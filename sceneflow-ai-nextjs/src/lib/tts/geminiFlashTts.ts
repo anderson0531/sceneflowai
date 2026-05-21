@@ -1,35 +1,24 @@
 /**
- * Gemini Flash TTS (Cloud Text-to-Speech v1beta1).
- * Used by Blueprint share MP3 generation and /api/tts/google preview.
+ * Server-only Gemini Flash TTS (Cloud Text-to-Speech v1beta1).
+ * Do not import this module from client components — use blueprintTtsConstants.ts instead.
  */
 
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 import { finalizeTextForGoogleTts } from '@/lib/tts/textOptimizer'
 import { buildGeminiTtsPrompt } from '@/lib/tts/geminiTtsPrompt'
+import {
+  DEFAULT_BLUEPRINT_GEMINI_VOICE,
+  DEFAULT_GEMINI_TTS_MODEL,
+  normalizeBlueprintGeminiVoiceId,
+} from '@/lib/tts/blueprintTtsConstants'
 
-export const DEFAULT_BLUEPRINT_GEMINI_VOICE = 'gemini-Kore'
-
-export const DEFAULT_GEMINI_TTS_MODEL =
-  process.env.GEMINI_TTS_MODEL?.trim() || 'gemini-3.1-flash-tts-preview'
-
-export function isGeminiTtsConfigured(): boolean {
-  return !!(
-    process.env.GOOGLE_API_KEY?.trim() ||
-    process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON?.trim()
-  )
-}
-
-/** True when id is a Cloud TTS Gemini voice (e.g. gemini-Kore). */
-export function isBlueprintGeminiVoiceId(voiceId?: string): boolean {
-  return !!voiceId?.trim().startsWith('gemini-')
-}
-
-/** Map legacy ElevenLabs narrator ids to default Gemini voice. */
-export function normalizeBlueprintGeminiVoiceId(voiceId?: string): string {
-  const id = voiceId?.trim()
-  if (id && isBlueprintGeminiVoiceId(id)) return id
-  return DEFAULT_BLUEPRINT_GEMINI_VOICE
-}
+export {
+  DEFAULT_BLUEPRINT_GEMINI_VOICE,
+  DEFAULT_GEMINI_TTS_MODEL,
+  isGeminiTtsConfigured,
+  isBlueprintGeminiVoiceId,
+  normalizeBlueprintGeminiVoiceId,
+} from '@/lib/tts/blueprintTtsConstants'
 
 export type SynthesizeGeminiFlashMp3Params = {
   text: string
@@ -55,10 +44,9 @@ async function resolveGoogleTtsAuth(): Promise<{ accessToken: string | null; api
   return { accessToken, apiKey }
 }
 
-function resolveGeminiVoiceName(voiceId: string): { googleVoice: string; actualVoiceName: string } {
+function resolveGeminiVoiceName(voiceId: string): { actualVoiceName: string } {
   const googleVoice = voiceId.startsWith('gemini-') ? voiceId : `gemini-${voiceId}`
   return {
-    googleVoice,
     actualVoiceName: googleVoice.replace(/^gemini-/, ''),
   }
 }
@@ -75,7 +63,10 @@ export async function synthesizeGeminiFlashMp3(
   const voiceId = normalizeBlueprintGeminiVoiceId(params.voiceId)
   const { actualVoiceName } = resolveGeminiVoiceName(voiceId)
   const languageCode = params.languageCode?.trim() || 'en-US'
-  const modelName = params.modelName?.trim() || DEFAULT_GEMINI_TTS_MODEL
+  const modelName =
+    params.modelName?.trim() ||
+    process.env.GEMINI_TTS_MODEL?.trim() ||
+    DEFAULT_GEMINI_TTS_MODEL
   const timeoutMs = params.timeoutMs ?? 90_000
 
   let url = 'https://texttospeech.googleapis.com/v1beta1/text:synthesize'

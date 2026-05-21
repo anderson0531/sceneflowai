@@ -22,7 +22,7 @@ import { triggerBlueprintShareSectionAudio } from '@/lib/blueprint/createBluepri
 import type { BlueprintSectionAudioStatus } from '@/lib/blueprint/shareTypes'
 import { BlueprintGeminiVoicePicker } from './BlueprintGeminiVoicePicker'
 import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
-import { DEFAULT_BLUEPRINT_GEMINI_VOICE } from '@/lib/tts/geminiFlashTts'
+import { DEFAULT_BLUEPRINT_GEMINI_VOICE } from '@/lib/tts/blueprintTtsConstants'
 
 interface SidePanelTabsProps {
   onClose?: () => void
