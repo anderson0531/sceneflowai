@@ -319,7 +319,7 @@ export function BlueprintRefineDialog({
           variant,
           userIntent: combinedIntent,
           selectedRecommendationIds: [...selectedRecIds],
-          resonanceRecommendations: resonanceRecommendations ?? [],
+          resonanceRecommendations: recs,
           focusScope: focusScope === 'all' ? undefined : focusScope,
           projectId,
         }),

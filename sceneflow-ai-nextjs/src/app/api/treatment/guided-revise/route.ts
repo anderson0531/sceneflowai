@@ -11,6 +11,9 @@ import {
   buildPlannerPrompt,
   buildRewriterPrompt,
   buildBalanceMicroPassPrompt,
+  inferPlanFromFocus,
+  trimVariantForPrompt,
+  trimRecommendationsForPrompt,
 } from '@/lib/treatment/blueprintRevisionPrompts'
 import {
   buildFieldDiffs,
@@ -18,7 +21,20 @@ import {
   detectMissingBalanceSections,
 } from '@/lib/treatment/blueprintRevisionDiff'
 
+export const runtime = 'nodejs'
+export const maxDuration = 180
+
 const CREDIT_COST = BLUEPRINT_CREDITS.BLUEPRINT_GUIDED_REVISE
+
+const MAX_PATCH_FIELD_LEN: Record<string, number> = {
+  synopsis: 8000,
+  content: 8000,
+  logline: 600,
+  setting: 2000,
+  protagonist: 2000,
+  antagonist: 2000,
+  tone_description: 2000,
+}
 
 function normalizePlan(raw: Record<string, unknown>): BlueprintChangePlan {
   const sections = (raw.sectionsToUpdate as string[]) || ['story']
@@ -40,6 +56,43 @@ function normalizePlan(raw: Record<string, unknown>): BlueprintChangePlan {
   }
 }
 
+function capPatchSize(patch: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...patch }
+  for (const [key, max] of Object.entries(MAX_PATCH_FIELD_LEN)) {
+    const v = out[key]
+    if (typeof v === 'string' && v.length > max) {
+      out[key] = `${v.slice(0, max)}…`
+    }
+  }
+  if (Array.isArray(out.beats)) {
+    out.beats = (out.beats as Array<Record<string, unknown>>).slice(0, 8)
+  }
+  if (Array.isArray(out.character_descriptions)) {
+    out.character_descriptions = (out.character_descriptions as Array<Record<string, unknown>>).slice(
+      0,
+      8
+    )
+  }
+  return out
+}
+
+async function runGeminiJson(
+  prompt: string,
+  maxOutputTokens: number
+): Promise<Record<string, unknown> | null> {
+  const result = await generateText(prompt, {
+    model: 'gemini-2.5-flash',
+    temperature: 0.3,
+    maxOutputTokens,
+    thinkingBudget: 0,
+    responseMimeType: 'application/json',
+    timeoutMs: 120_000,
+  })
+  const text = result?.text || '{}'
+  const parsed = safeParseJsonFromText(text)
+  return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : null
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions as any).catch(() => null)
@@ -50,24 +103,28 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as GuidedReviseRequest
     const {
-      variant,
+      variant: rawVariant,
       userIntent = '',
       selectedRecommendationIds = [],
       resonanceRecommendations = [],
       focusScope,
     } = body
 
-    if (!variant) {
+    if (!rawVariant || typeof rawVariant !== 'object') {
       return NextResponse.json(
         { success: false, message: 'variant is required' },
         { status: 400 }
       )
     }
 
-    const selectedRecs = resonanceRecommendations.filter((r) =>
-      selectedRecommendationIds.length > 0
-        ? selectedRecommendationIds.includes(r.id)
-        : true
+    const variant = trimVariantForPrompt(rawVariant)
+
+    const selectedRecs = trimRecommendationsForPrompt(
+      resonanceRecommendations.filter((r) =>
+        selectedRecommendationIds.length > 0
+          ? selectedRecommendationIds.includes(r.id)
+          : true
+      )
     )
 
     const intentText =
@@ -96,25 +153,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Step A: Planner
-    const plannerPrompt = buildPlannerPrompt(
-      variant,
-      intentText,
-      selectedRecs,
-      focusScope
-    )
-    const plannerResult = await generateText(plannerPrompt, {
-      model: 'gemini-2.5-flash',
-      temperature: 0.2,
-      maxOutputTokens: 2048,
-      thinkingBudget: 0,
-    })
-    const planRaw = safeParseJsonFromText(plannerResult?.text || '{}')
-    const plan = normalizePlan(
-      planRaw && typeof planRaw === 'object'
-        ? (planRaw as Record<string, unknown>)
-        : { primaryGoal: intentText, sectionsToUpdate: ['story'] }
-    )
+    // Step A: Planner (skip when scoped to one section — reduces memory + one fewer LLM call)
+    let plan =
+      inferPlanFromFocus(focusScope, intentText) ??
+      normalizePlan({
+        primaryGoal: intentText,
+        sectionsToUpdate: ['story'],
+      })
+
+    if (!inferPlanFromFocus(focusScope, intentText)) {
+      const plannerPrompt = buildPlannerPrompt(variant, intentText, selectedRecs, focusScope)
+      const planRaw = await runGeminiJson(plannerPrompt, 1536)
+      plan = normalizePlan(
+        planRaw ?? { primaryGoal: intentText, sectionsToUpdate: ['story'] }
+      )
+    }
 
     if (plan.sectionsToUpdate.length === 0) {
       plan.sectionsToUpdate = selectedRecs[0]?.fixSection
@@ -124,16 +177,9 @@ export async function POST(request: NextRequest) {
 
     // Step B: Balanced rewriter
     const rewriterPrompt = buildRewriterPrompt(variant, plan, intentText, selectedRecs)
-    const rewriteResult = await generateText(rewriterPrompt, {
-      model: 'gemini-2.5-flash',
-      temperature: 0.35,
-      maxOutputTokens: 8192,
-      thinkingBudget: 0,
-    })
-    let patch =
-      safeParseJsonFromText(rewriteResult?.text || '{}') as Record<string, unknown> | null
+    let patch = await runGeminiJson(rewriterPrompt, 6144)
 
-    if (!patch || typeof patch !== 'object') {
+    if (!patch) {
       return NextResponse.json(
         { success: false, message: 'Failed to parse revision response' },
         { status: 500 }
@@ -145,25 +191,21 @@ export async function POST(request: NextRequest) {
     if (missing.length > 0) {
       incompleteBalance = true
       const microPrompt = buildBalanceMicroPassPrompt(variant, plan, patch, missing)
-      const microResult = await generateText(microPrompt, {
-        model: 'gemini-2.5-flash',
-        temperature: 0.3,
-        maxOutputTokens: 4096,
-        thinkingBudget: 0,
-      })
-      const microPatch = safeParseJsonFromText(microResult?.text || '{}')
-      if (microPatch && typeof microPatch === 'object') {
-        patch = { ...patch, ...(microPatch as Record<string, unknown>) }
+      const microPatch = await runGeminiJson(microPrompt, 3072)
+      if (microPatch) {
+        patch = { ...patch, ...microPatch }
       }
     }
+
+    patch = capPatchSize(patch)
 
     const narrativeReasoning = patch.narrative_reasoning as
       | Record<string, unknown>
       | undefined
     const { narrative_reasoning: _nr, ...fieldPatch } = patch
 
-    const revisedVariant = mergeRevisionIntoVariant(variant, fieldPatch)
-    const diff = buildFieldDiffs(variant, revisedVariant)
+    const revisedVariant = mergeRevisionIntoVariant(rawVariant, fieldPatch)
+    const diff = buildFieldDiffs(variant, trimVariantForPrompt(revisedVariant))
 
     const changePlan: BlueprintChangePlan = {
       ...plan,
@@ -190,10 +232,20 @@ export async function POST(request: NextRequest) {
       creditsUsed: CREDIT_COST,
     })
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    const oom =
+      message.includes('heap') ||
+      message.includes('OOM') ||
+      message.includes('memory')
     console.error('[Guided Revise] Error:', error)
     return NextResponse.json(
-      { success: false, message: 'Failed to generate guided revision' },
-      { status: 500 }
+      {
+        success: false,
+        message: oom
+          ? 'Revision ran out of memory. Try a narrower focus scope or fewer recommendations.'
+          : 'Failed to generate guided revision',
+      },
+      { status: oom ? 503 : 500 }
     )
   }
 }

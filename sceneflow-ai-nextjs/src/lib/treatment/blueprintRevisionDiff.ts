@@ -12,20 +12,28 @@ function fieldToSection(field: string): BlueprintFixSection {
   return 'story'
 }
 
+const MAX_DIFF_DISPLAY = 1200
+
+function truncateForDiff(text: string): string {
+  return text.length <= MAX_DIFF_DISPLAY ? text : `${text.slice(0, MAX_DIFF_DISPLAY)}…`
+}
+
 function serializeValue(value: unknown): string {
   if (value === undefined || value === null) return ''
-  if (typeof value === 'string') return value
+  if (typeof value === 'string') return truncateForDiff(value)
   if (Array.isArray(value)) {
     if (value.length === 0) return ''
     if (typeof value[0] === 'object' && value[0] !== null && 'title' in value[0]) {
-      return (value as Array<{ title?: string; synopsis?: string }>)
+      const beats = (value as Array<{ title?: string; synopsis?: string }>)
+        .slice(0, 8)
         .map((b, i) => `${i + 1}. ${b.title || 'Beat'}: ${b.synopsis || ''}`)
         .join('\n')
+      return truncateForDiff(beats)
     }
-    return value.map(String).join(', ')
+    return truncateForDiff(value.map(String).join(', '))
   }
-  if (typeof value === 'object') return JSON.stringify(value, null, 2)
-  return String(value)
+  if (typeof value === 'object') return truncateForDiff(JSON.stringify(value))
+  return truncateForDiff(String(value))
 }
 
 function valuesEqual(a: unknown, b: unknown): boolean {

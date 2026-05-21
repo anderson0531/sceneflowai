@@ -24,6 +24,10 @@
     "src/app/api/treatment/refine/route.ts": {
       "maxDuration": 120
     },
+    "src/app/api/treatment/guided-revise/route.ts": {
+      "maxDuration": 180,
+      "memory": 3009
+    },
     "src/app/api/v2/blueprint/analyze/route.ts": {
       "maxDuration": 300
     },
