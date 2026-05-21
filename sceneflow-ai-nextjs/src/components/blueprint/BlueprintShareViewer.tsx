@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import Image from 'next/image'
 import { toast } from 'sonner'
 import { BlueprintReviewSection } from './BlueprintReviewSection'
 import type { BlueprintSectionAudioPlayerStatus } from './BlueprintSectionAudioPlayer'
@@ -18,7 +17,9 @@ import type {
   BlueprintSectionTranslationsByLanguage,
 } from '@/lib/blueprint/shareTypes'
 import { countSectionsWithUrl } from '@/lib/blueprint/shareAudioPayload'
+import { BLUEPRINT_REVIEW_SECTION_THEME } from '@/lib/blueprint/blueprintReviewTheme'
 import { BlueprintShareLanguageControls } from './BlueprintShareLanguageControls'
+import { BlueprintReviewHero } from './BlueprintReviewHero'
 import {
   countRatedSections,
   hasAnyFeedback,
@@ -290,6 +291,51 @@ export function BlueprintShareViewer({ token }: Props) {
     !hasCachedAudio &&
     (audioStatus === 'ready' || audioStatus === 'partial' || audioStatus === 'idle')
 
+  const filmTitle = String(treatment?.title || 'Blueprint')
+  const logline = treatment?.logline ? String(treatment.logline) : undefined
+
+  const statusMessages = (
+    <>
+      {audioMissingForLang && (
+        <p className="text-sm text-amber-400/90">
+          Audio has not been generated for this language. You can still read the blueprint
+          {hasTranslationForLang ? ' below' : ' (page translation may apply)'}.
+        </p>
+      )}
+      {allowTts && audioStatus === 'pending' && audioStartedAt && !audioPollStale && (
+        <p className="text-sm text-amber-400/90">
+          {audioReadyCount > 0
+            ? `Generating audio (${audioReadyCount}/${totalAudioSections} sections ready)…`
+            : 'Preparing section audio…'}
+        </p>
+      )}
+      {allowTts && audioStatus === 'idle' && !hasCachedAudio && (
+        <p className="text-sm text-gray-400">
+          Section audio is not generated yet. Ask the project owner to use Generate section audio
+          in Studio → Collaborate.
+        </p>
+      )}
+      {allowTts && audioPollStale && !hasCachedAudio && audioStatus === 'pending' && (
+        <p className="text-sm text-amber-400/90">
+          Section audio is taking longer than expected. Ask the project owner to generate section
+          audio from Studio → Collaborate.
+        </p>
+      )}
+      {allowTts && audioStatus === 'failed' && (
+        <p className="text-sm text-red-400/90">
+          Section audio could not be generated. The owner can retry from Studio → Collaborate.
+        </p>
+      )}
+      {allowTts &&
+        (audioStatus === 'ready' || audioStatus === 'partial') &&
+        hasCachedAudio && (
+          <p className="text-sm text-emerald-400/80">
+            Tap Listen on each section to hear narration.
+          </p>
+        )}
+    </>
+  )
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-400">
@@ -313,79 +359,43 @@ export function BlueprintShareViewer({ token }: Props) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-slate-950 to-gray-950 text-gray-100">
-      <header className="border-b border-gray-800/60 bg-gray-900/60 backdrop-blur sticky top-0 z-20">
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <p className="text-xs text-purple-400 font-medium tracking-wide">SceneFlow · Blueprint Review</p>
-          <h1 className="text-xl font-semibold text-white mt-0.5">{String(treatment.title || 'Blueprint')}</h1>
+      <header className="border-b border-gray-800/60 bg-gray-900/80 backdrop-blur-md sticky top-0 z-20">
+        <div className="max-w-4xl mx-auto px-4 py-3 space-y-2">
+          <p className="sf-review-eyebrow">SceneFlow · Blueprint Review</p>
           <BlueprintShareLanguageControls
             language={reviewLanguage}
             onLanguageChange={setReviewLanguage}
-            className="mt-2"
           />
-          {audioMissingForLang && (
-            <p className="text-xs text-amber-400/90 mt-1">
-              Audio has not been generated for this language. You can still read the blueprint
-              {hasTranslationForLang ? ' below' : ' (page translation may apply)'}.
-            </p>
-          )}
-          {allowTts && audioStatus === 'pending' && audioStartedAt && !audioPollStale && (
-            <p className="text-xs text-amber-400/90 mt-1">
-              {audioReadyCount > 0
-                ? `Generating audio (${audioReadyCount}/${totalAudioSections} sections ready)…`
-                : 'Preparing section audio…'}
-            </p>
-          )}
-          {allowTts && audioStatus === 'idle' && !hasCachedAudio && (
-            <p className="text-xs text-gray-400 mt-1">
-              Section audio is not generated yet. Ask the project owner to use Generate section audio
-              in Studio → Collaborate.
-            </p>
-          )}
-          {allowTts && audioPollStale && !hasCachedAudio && audioStatus === 'pending' && (
-            <p className="text-xs text-amber-400/90 mt-1">
-              Section audio is taking longer than expected. Ask the project owner to generate section
-              audio from Studio → Collaborate.
-            </p>
-          )}
-          {allowTts && audioStatus === 'failed' && (
-            <p className="text-xs text-red-400/90 mt-1">
-              Section audio could not be generated. The owner can retry from Studio → Collaborate.
-            </p>
-          )}
-          {allowTts &&
-            (audioStatus === 'ready' || audioStatus === 'partial') &&
-            hasCachedAudio && (
-              <p className="text-xs text-emerald-400/80 mt-1">
-                Tap Listen on each section to hear narration.
-              </p>
-            )}
+          <div className="space-y-1">{statusMessages}</div>
         </div>
-        <nav className="max-w-4xl mx-auto px-4 pb-2 flex gap-1 overflow-x-auto">
-          {SECTION_NAV.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => scrollToSection(s.id)}
-              className="shrink-0 text-xs px-3 py-1.5 rounded-full bg-slate-800/80 text-gray-300 hover:bg-purple-600/30 hover:text-purple-200 border border-slate-700/50"
-            >
-              {s.label}
-            </button>
-          ))}
+        <nav className="max-w-4xl mx-auto px-4 pb-3 flex gap-2 overflow-x-auto">
+          {SECTION_NAV.map((s) => {
+            const t = BLUEPRINT_REVIEW_SECTION_THEME[s.id]
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => scrollToSection(s.id)}
+                className={cn(
+                  'shrink-0 text-sm font-medium px-3.5 py-1.5 rounded-full border transition-colors',
+                  t.navIdle,
+                  t.navHover
+                )}
+              >
+                {s.label}
+              </button>
+            )
+          })}
         </nav>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6 pb-36">
-        {heroImageUrl && (
-          <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-gray-800 shadow-lg">
-            <Image src={heroImageUrl} alt="" fill className="object-cover" unoptimized />
-          </div>
-        )}
-
-        {treatment.logline && (
-          <p className="text-lg text-gray-300 italic leading-relaxed border-l-2 border-purple-500/40 pl-4">
-            {String(treatment.logline)}
-          </p>
-        )}
+      <main className="max-w-4xl mx-auto px-4 py-6 space-y-8 pb-36">
+        <BlueprintReviewHero
+          title={filmTitle}
+          logline={logline}
+          heroImageUrl={heroImageUrl}
+          genre={treatment.genre ? String(treatment.genre) : undefined}
+        />
 
         {!hasCachedAudio &&
           allowTts &&
@@ -398,7 +408,7 @@ export function BlueprintShareViewer({ token }: Props) {
             </p>
           )}
 
-        <div className="space-y-3">
+        <div className="space-y-5">
           {SECTION_NAV.map((s) => (
             <BlueprintReviewSection
               key={s.id}

@@ -18,13 +18,14 @@ import type {
   BlueprintFeedbackSection,
   BlueprintSectionAudioEntry,
 } from '@/lib/blueprint/shareTypes'
+import { BLUEPRINT_REVIEW_SECTION_THEME } from '@/lib/blueprint/blueprintReviewTheme'
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   if (!value.trim()) return null
   return (
-    <div className="space-y-0.5">
-      <div className="text-[10px] uppercase tracking-wide text-gray-500">{label}</div>
-      <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{value}</p>
+    <div className="space-y-1">
+      <div className="sf-review-field-label">{label}</div>
+      <p className="sf-review-body">{value}</p>
     </div>
   )
 }
@@ -66,10 +67,12 @@ function SectionContent({
   variant: Record<string, unknown>
   omitLoglineInCore?: boolean
 }) {
+  const fieldStack = sectionId === 'story' ? 'space-y-4' : 'space-y-3'
+
   switch (sectionId) {
     case 'core':
       return (
-        <>
+        <div className={fieldStack}>
           <ReadOnlyField label="Title" value={String(variant.title || '')} />
           {!omitLoglineInCore && (
             <ReadOnlyField label="Logline" value={String(variant.logline || '')} />
@@ -77,11 +80,11 @@ function SectionContent({
           <ReadOnlyField label="Genre" value={String(variant.genre || '')} />
           <ReadOnlyField label="Format" value={String(variant.format_length || '')} />
           <ReadOnlyField label="Target audience" value={String(variant.target_audience || '')} />
-        </>
+        </div>
       )
     case 'story':
       return (
-        <>
+        <div className={fieldStack}>
           <ReadOnlyField
             label="Synopsis"
             value={String(variant.synopsis || variant.content || '')}
@@ -89,30 +92,43 @@ function SectionContent({
           <ReadOnlyField label="Setting" value={String(variant.setting || '')} />
           <ReadOnlyField label="Protagonist" value={String(variant.protagonist || '')} />
           <ReadOnlyField label="Antagonist" value={String(variant.antagonist || '')} />
-        </>
+        </div>
       )
     case 'characters': {
       const chars = normalizeCharacters(variant)
       if (chars.length === 0) {
-        return <p className="text-sm text-gray-500">No characters listed.</p>
+        return <p className="sf-review-body-muted">No characters listed.</p>
       }
       return (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {chars.map((c, i) => (
-            <div key={i} className="text-sm border-l-2 border-slate-700 pl-3">
-              <div className="font-medium text-gray-200">
+            <div
+              key={i}
+              className="rounded-lg border border-amber-500/15 bg-amber-500/5 px-3 py-3 border-l-2 border-l-amber-500/40"
+            >
+              <div className="sf-review-body font-semibold text-white">
                 {c.name || 'Character'}
-                {c.role ? <span className="text-gray-500 font-normal"> — {c.role}</span> : null}
+                {c.role ? (
+                  <span className="sf-review-body-muted font-normal"> — {c.role}</span>
+                ) : null}
               </div>
-              {c.description ? <p className="text-gray-400 mt-0.5">{c.description}</p> : null}
+              {c.description ? (
+                <p className="sf-review-body mt-1">{c.description}</p>
+              ) : null}
               {(c as { externalGoal?: string }).externalGoal ? (
-                <p className="text-gray-500 text-xs mt-1">
-                  Goal: {(c as { externalGoal?: string }).externalGoal}
+                <p className="sf-review-body-muted mt-2">
+                  <span className="sf-review-field-label normal-case tracking-normal">
+                    Goal:{' '}
+                  </span>
+                  {(c as { externalGoal?: string }).externalGoal}
                 </p>
               ) : null}
               {(c as { internalNeed?: string }).internalNeed ? (
-                <p className="text-gray-500 text-xs">
-                  Need: {(c as { internalNeed?: string }).internalNeed}
+                <p className="sf-review-body-muted">
+                  <span className="sf-review-field-label normal-case tracking-normal">
+                    Need:{' '}
+                  </span>
+                  {(c as { internalNeed?: string }).internalNeed}
                 </p>
               ) : null}
             </div>
@@ -123,20 +139,23 @@ function SectionContent({
     case 'beats': {
       const beats = normalizeBeats(variant)
       if (beats.length === 0) {
-        return <p className="text-sm text-gray-500">No beats listed.</p>
+        return <p className="sf-review-body-muted">No beats listed.</p>
       }
       return (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {beats.map((b, i) => (
-            <div key={i} className="text-sm rounded-lg bg-slate-800/40 px-3 py-2">
-              <div className="text-gray-200 font-medium flex items-center gap-2">
+            <div
+              key={i}
+              className="rounded-lg border border-emerald-500/15 bg-emerald-500/5 px-3 py-3"
+            >
+              <div className="text-base font-semibold text-white flex items-center gap-2">
                 {b.title || `Beat ${i + 1}`}
                 {b.minutes != null && b.minutes !== '' ? (
-                  <span className="text-[10px] text-gray-500 font-normal">{b.minutes} min</span>
+                  <span className="sf-review-body-muted font-normal">{b.minutes} min</span>
                 ) : null}
               </div>
-              {b.intent ? <p className="text-xs text-purple-400/80 mt-0.5">{b.intent}</p> : null}
-              {b.synopsis ? <p className="text-gray-400 mt-0.5">{b.synopsis}</p> : null}
+              {b.intent ? <p className="sf-review-body-muted mt-1">{b.intent}</p> : null}
+              {b.synopsis ? <p className="sf-review-body mt-1">{b.synopsis}</p> : null}
             </div>
           ))}
         </div>
@@ -147,7 +166,7 @@ function SectionContent({
         ? (variant.themes as string[]).join(', ')
         : String(variant.themes || '')
       return (
-        <>
+        <div className={fieldStack}>
           <ReadOnlyField label="Tone" value={String(variant.tone || '')} />
           <ReadOnlyField label="Tone description" value={String(variant.tone_description || '')} />
           <ReadOnlyField label="Style" value={String(variant.style || '')} />
@@ -159,7 +178,7 @@ function SectionContent({
               value={(variant.mood_references as string[]).join(', ')}
             />
           ) : null}
-        </>
+        </div>
       )
     }
     default:
@@ -180,7 +199,6 @@ type Props = {
   feedback?: BlueprintFeedbackSection
   onFeedbackChange?: (next: BlueprintFeedbackSection) => void
   omitLoglineInCore?: boolean
-  /** Localized narration (owner-generated); shown when reviewer language ≠ en. */
   translationNarration?: string
 }
 
@@ -199,6 +217,8 @@ export function BlueprintReviewSection({
   omitLoglineInCore,
   translationNarration,
 }: Props) {
+  const theme = BLUEPRINT_REVIEW_SECTION_THEME[sectionId]
+  const SectionIcon = theme.Icon
   const chips = chipsForSection(sectionId)
   const selectedTags = new Set(feedback.tags || [])
 
@@ -215,22 +235,33 @@ export function BlueprintReviewSection({
   return (
     <section
       id={`section-${sectionId}`}
-      className="rounded-xl border border-slate-700/50 bg-slate-900/40 overflow-hidden scroll-mt-24"
+      className={cn(
+        'rounded-xl border border-slate-700/40 bg-slate-900/50 overflow-hidden scroll-mt-28',
+        'border-l-4 shadow-lg shadow-black/20',
+        theme.borderL
+      )}
     >
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-slate-800/60">
+      <div
+        className={cn(
+          'flex items-center gap-2 px-4 py-3 border-b bg-gradient-to-r to-transparent',
+          theme.headerGradient,
+          theme.headerBorder
+        )}
+      >
         <button
           type="button"
-          className="flex-1 flex items-center gap-2 text-left text-sm font-medium text-gray-200 hover:bg-slate-800/50 -mx-1 px-1 py-0.5 rounded"
+          className="flex-1 flex items-center gap-2.5 text-left hover:bg-white/5 -mx-1 px-1 py-0.5 rounded-lg transition-colors"
           onClick={onToggle}
         >
           {expanded ? (
-            <ChevronDown className="h-4 w-4 text-gray-500 shrink-0" />
+            <ChevronDown className={cn('h-5 w-5 shrink-0', theme.iconClass)} />
           ) : (
-            <ChevronRight className="h-4 w-4 text-gray-500 shrink-0" />
+            <ChevronRight className={cn('h-5 w-5 shrink-0', theme.iconClass)} />
           )}
-          {title}
+          <SectionIcon className={cn('h-4 w-4 shrink-0', theme.iconClass)} aria-hidden />
+          <span className="sf-section-title">{title}</span>
           {canFeedback && feedback.score ? (
-            <span className="text-xs text-amber-400/90 ml-1">{feedback.score}/5</span>
+            <span className="text-xs font-medium text-amber-400/90 ml-1">{feedback.score}/5</span>
           ) : null}
         </button>
         {allowTts && (
@@ -245,38 +276,36 @@ export function BlueprintReviewSection({
       </div>
 
       {expanded && (
-        <div className="px-3 pb-3 space-y-4">
+        <div className="px-4 pb-4 pt-3 space-y-4">
           {translationNarration?.trim() ? (
-            <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 px-3 py-2">
-              <div className="text-[10px] uppercase tracking-wide text-purple-300/80 mb-1">
+            <div className="rounded-lg border border-purple-500/25 bg-purple-500/8 px-3 py-3">
+              <div className="sf-review-field-label text-purple-300/90 mb-1">
                 Narration ({title})
               </div>
-              <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
-                {translationNarration}
-              </p>
+              <p className="sf-review-body">{translationNarration}</p>
             </div>
           ) : null}
-          <div className="space-y-2 pt-1">
-            <SectionContent
-              sectionId={sectionId}
-              variant={variant}
-              omitLoglineInCore={omitLoglineInCore}
-            />
-          </div>
+          <SectionContent
+            sectionId={sectionId}
+            variant={variant}
+            omitLoglineInCore={omitLoglineInCore}
+          />
 
           {canFeedback && onFeedbackChange && (
-            <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-3 space-y-3">
-              <p className="text-xs font-medium text-purple-300/90">Your feedback on {title}</p>
+            <div className="rounded-lg border border-purple-500/25 bg-purple-500/8 p-4 space-y-3">
+              <p className="sf-section-title text-base text-purple-200/95">
+                Your feedback on {title}
+              </p>
               <div>
-                <span className="text-[10px] uppercase tracking-wide text-gray-500">Rating</span>
-                <div className="flex gap-1.5 mt-1">
+                <span className="sf-review-field-label">Rating</span>
+                <div className="flex gap-1.5 mt-1.5">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <button
                       key={n}
                       type="button"
                       onClick={() => setScore(n)}
                       className={cn(
-                        'w-8 h-8 rounded-md text-sm font-medium transition-colors',
+                        'w-9 h-9 rounded-md text-sm font-medium transition-colors',
                         feedback.score === n
                           ? 'bg-amber-500 text-gray-950'
                           : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
