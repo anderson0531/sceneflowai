@@ -1,11 +1,29 @@
 import type { AudienceDefinition } from '@/lib/types/audienceResonance'
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 
+export type BlueprintSectionAudioEntry = {
+  url: string
+  durationMs?: number
+  textHash: string
+}
+
+export type BlueprintSectionAudioMap = Partial<
+  Record<BlueprintFixSection, BlueprintSectionAudioEntry>
+>
+
+export type BlueprintSectionAudioStatus =
+  | 'pending'
+  | 'ready'
+  | 'partial'
+  | 'failed'
+  | 'skipped'
+
 export type BlueprintFeedbackSection = {
   score?: number
   strengths?: string
   concerns?: string
   suggestions?: string
+  tags?: string[]
 }
 
 export type BlueprintFeedbackSections = Partial<
@@ -31,6 +49,10 @@ export type BlueprintSessionPayload = {
     synthesizedAt: string
   }
   ownerDisplayName?: string
+  sectionAudio?: BlueprintSectionAudioMap
+  sectionAudioStatus?: BlueprintSectionAudioStatus
+  sectionAudioVoiceId?: string
+  sectionAudioGeneratedAt?: string
 }
 
 export type BlueprintShareCreateBody = {

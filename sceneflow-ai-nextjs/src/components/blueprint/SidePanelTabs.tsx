@@ -16,6 +16,7 @@ import type {
 import { isBlueprintARV3Enabled } from '@/lib/types/audienceResonance'
 import { AudienceResonancePanel } from './AudienceResonancePanel'
 import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
+import { chipLabelById } from '@/lib/blueprint/feedbackChips'
 
 interface SidePanelTabsProps {
   onClose?: () => void
@@ -186,8 +187,39 @@ function CollaborationContent({
   const [recommendations, setRecommendations] = React.useState<BlueprintAudienceRecommendation[]>([])
   const [selectedRecIds, setSelectedRecIds] = React.useState<Set<string>>(new Set())
   const [revoking, setRevoking] = React.useState(false)
+  const [audioRefreshing, setAudioRefreshing] = React.useState(false)
 
   const token = shareToken || (shareUrl ? shareUrl.split('/blueprint/share/')[1]?.split('?')[0] : null)
+
+  const handleRefreshSectionAudio = async () => {
+    if (!token) return
+    setAudioRefreshing(true)
+    try {
+      const r = await fetch(`/api/blueprint/share/${encodeURIComponent(token)}/audio/generate`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+      const j = await r.json()
+      if (j?.success) {
+        try {
+          const { toast } = require('sonner')
+          toast.success('Section audio updated')
+        } catch {}
+      } else {
+        try {
+          const { toast } = require('sonner')
+          toast.error(j?.error || 'Audio generation failed')
+        } catch {}
+      }
+    } catch {
+      try {
+        const { toast } = require('sonner')
+        toast.error('Audio generation failed')
+      } catch {}
+    } finally {
+      setAudioRefreshing(false)
+    }
+  }
 
   const handleCopyLink = async () => {
     if (!shareUrl) return
@@ -344,14 +376,24 @@ function CollaborationContent({
         )}
 
         {hasShareLink && (
-          <button
-            type="button"
-            onClick={onShare}
-            disabled={isSharing}
-            className="mt-2 w-full text-[11px] text-purple-300/90 hover:text-purple-200 disabled:opacity-50"
-          >
-            {isSharing ? 'Updating link…' : 'Create new link (refreshes snapshot)'}
-          </button>
+          <div className="mt-2 space-y-1">
+            <button
+              type="button"
+              onClick={onShare}
+              disabled={isSharing}
+              className="w-full text-[11px] text-purple-300/90 hover:text-purple-200 disabled:opacity-50 text-left"
+            >
+              {isSharing ? 'Updating link…' : 'Create new link (refreshes snapshot)'}
+            </button>
+            <button
+              type="button"
+              onClick={handleRefreshSectionAudio}
+              disabled={audioRefreshing}
+              className="w-full text-[11px] text-gray-400 hover:text-gray-300 disabled:opacity-50 text-left"
+            >
+              {audioRefreshing ? 'Generating section audio…' : 'Refresh section audio (MP3)'}
+            </button>
+          </div>
         )}
       </div>
 
@@ -406,32 +448,78 @@ function CollaborationContent({
             )}
             {feedback.map((f: any) => (
               <div key={f.id} className="text-xs text-gray-300 rounded border border-gray-800 p-2 bg-gray-900/50">
-                <div className="text-gray-400 mb-1 flex justify-between">
-                  <span>
+                <div className="text-gray-400 mb-1 flex justify-between gap-2">
+                  <span className="min-w-0">
                     {f.overallScore ? (
-                      <span className="text-yellow-500">{f.overallScore}/5</span>
+                      <span className="text-yellow-500 font-medium">{f.overallScore}/5</span>
                     ) : null}{' '}
-                    {f.reviewerName}
+                    <span className="text-gray-200">{f.reviewerName}</span>
+                    {f.preferred ? (
+                      <span className="ml-1 text-emerald-400/90">· Preferred</span>
+                    ) : null}
                   </span>
-                  <span className="text-gray-500">{new Date(f.createdAt).toLocaleString()}</span>
+                  <span className="text-gray-500 shrink-0">
+                    {new Date(f.createdAt).toLocaleString()}
+                  </span>
                 </div>
                 {f.sections &&
-                  Object.entries(f.sections).map(([sec, data]: [string, any]) => (
-                    <div key={sec} className="mt-1">
-                      <span className="text-gray-500 uppercase text-[10px]">{sec}</span>
-                      {data?.concerns && (
-                        <div>
-                          <span className="text-gray-500">Concerns:</span> {data.concerns}
+                  Object.entries(f.sections).map(([sec, data]: [string, any]) => {
+                    if (!data || typeof data !== 'object') return null
+                    const hasContent =
+                      data.score ||
+                      data.tags?.length ||
+                      data.strengths ||
+                      data.concerns ||
+                      data.suggestions
+                    if (!hasContent) return null
+                    return (
+                      <div key={sec} className="mt-2 pt-1 border-t border-gray-800/60">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-gray-500 uppercase text-[10px] font-medium">
+                            {sec}
+                          </span>
+                          {data.score ? (
+                            <span className="text-amber-500/90 text-[10px]">{data.score}/5</span>
+                          ) : null}
                         </div>
-                      )}
-                      {data?.suggestions && (
-                        <div>
-                          <span className="text-gray-500">Suggestions:</span> {data.suggestions}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                {f.freeformNotes && <p className="mt-1 text-gray-400">{f.freeformNotes}</p>}
+                        {Array.isArray(data.tags) && data.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {data.tags.map((tagId: string) => (
+                              <span
+                                key={tagId}
+                                className="px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300/90 text-[10px]"
+                              >
+                                {chipLabelById(tagId)}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {data.strengths && (
+                          <p className="mt-0.5 text-emerald-400/80">
+                            <span className="text-gray-500">+ </span>
+                            {data.strengths}
+                          </p>
+                        )}
+                        {data.concerns && (
+                          <p className="mt-0.5">
+                            <span className="text-gray-500">Concerns: </span>
+                            {data.concerns}
+                          </p>
+                        )}
+                        {data.suggestions && (
+                          <p className="mt-0.5 text-gray-400">
+                            <span className="text-gray-500">Notes: </span>
+                            {data.suggestions}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
+                {f.freeformNotes && (
+                  <p className="mt-2 pt-1 border-t border-gray-800/60 text-gray-400">
+                    {f.freeformNotes}
+                  </p>
+                )}
               </div>
             ))}
 

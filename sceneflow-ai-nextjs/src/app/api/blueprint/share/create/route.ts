@@ -7,8 +7,10 @@ import CollabSession from '@/models/CollabSession'
 import CollabParticipant from '@/models/CollabParticipant'
 import { getAuthenticatedUserId, assertProjectAccess } from '@/lib/projectAccess'
 import type { BlueprintSessionPayload, BlueprintShareCreateBody } from '@/lib/blueprint/shareTypes'
+import { scheduleShareSectionAudioGeneration } from '@/lib/blueprint/generateShareSectionAudio'
 
 export const runtime = 'nodejs'
+export const maxDuration = 300
 
 export async function POST(req: NextRequest) {
   try {
@@ -58,6 +60,7 @@ export async function POST(req: NextRequest) {
         collectEmail: false,
       },
       ownerDisplayName: ownerName,
+      sectionAudioStatus: process.env.ELEVENLABS_API_KEY ? 'pending' : 'skipped',
     }
 
     // Ensure tables exist (dev / first deploy without manual migration)
@@ -89,6 +92,10 @@ export async function POST(req: NextRequest) {
       )
 
       await t.commit()
+
+      if (process.env.ELEVENLABS_API_KEY) {
+        scheduleShareSectionAudioGeneration(collabSession.id)
+      }
 
       const origin = req.headers.get('x-forwarded-host')
         ? `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host')}`

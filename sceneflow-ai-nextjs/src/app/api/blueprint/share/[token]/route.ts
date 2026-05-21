@@ -36,6 +36,8 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
         projectId: payload.projectId,
         shareSettings: payload.shareSettings,
         ownerDisplayName: payload.ownerDisplayName,
+        sectionAudio: payload.sectionAudio,
+        sectionAudioStatus: payload.sectionAudioStatus,
       },
     })
   } catch (e: unknown) {
