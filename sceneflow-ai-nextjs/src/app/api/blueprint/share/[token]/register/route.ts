@@ -38,7 +38,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       participant = await CollabParticipant.create({
         session_id: session.id,
         name: body.name.trim(),
-        email,
+        email: email || '',
         role: 'collaborator',
       })
     } else if (participant.name !== body.name.trim()) {

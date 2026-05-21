@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import CollabParticipant from '@/models/CollabParticipant'
 import { resolveSessionByToken, getPayload } from './shareSession'
 
-export async function getOwnerUserId(req?: NextRequest): Promise<string | null> {
+export async function getOwnerUserId(_req?: NextRequest): Promise<string | null> {
   try {
     const session = await getServerSession(authOptions as any)
     const id = (session?.user as { id?: string })?.id

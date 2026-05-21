@@ -55,6 +55,10 @@ export async function POST(req: NextRequest) {
       ownerDisplayName: ownerName,
     }
 
+    // Ensure tables exist (dev / first deploy without manual migration)
+    await CollabSession.sync({ alter: false })
+    await CollabParticipant.sync({ alter: false })
+
     const t = await sequelize.transaction()
     try {
       const collabSession = await CollabSession.create(
@@ -73,7 +77,7 @@ export async function POST(req: NextRequest) {
         {
           session_id: collabSession.id,
           name: ownerName,
-          email: ownerEmail,
+          email: ownerEmail || '',
           role: 'owner',
         },
         { transaction: t }

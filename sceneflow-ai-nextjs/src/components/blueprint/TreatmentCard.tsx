@@ -23,12 +23,21 @@ import {
 } from '@/lib/tts/voices'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType } from '@/lib/types/reports'
+import { cn } from '@/lib/utils'
 
 export type TreatmentCardProps = {
   onOpenBlueprintRefine?: (opts?: OpenBlueprintRefineOptions) => void
+  onShareBlueprint?: () => void
+  isSharingBlueprint?: boolean
+  shareUrl?: string | null
 }
 
-export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}) {
+export function TreatmentCard({
+  onOpenBlueprintRefine,
+  onShareBlueprint,
+  isSharingBlueprint = false,
+  shareUrl: shareUrlFromParent,
+}: TreatmentCardProps = {}) {
   const router = useRouter()
   const { guide } = useGuideStore()
   const { selectTreatmentVariant } = useGuideStore() as any
@@ -303,48 +312,6 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
                   const v = variants.find(x => x.id === active) || variants[0]
                   const accent = v?.id === 'A' ? 'text-blue-300 border-blue-500 hover:bg-blue-500/10' : v?.id === 'B' ? 'text-purple-300 border-purple-500 hover:bg-purple-500/10' : 'text-emerald-300 border-emerald-500 hover:bg-emerald-500/10'
 
-                  const handleShare = async () => {
-                    try {
-                      setIsSharing(true)
-                      const pid = (guide as any)?.projectId || (guide as any)?.id
-                      if (!pid) throw new Error('Missing project')
-                      const res = await fetch('/api/blueprint/share/create', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          projectId: pid,
-                          variantId: v.id,
-                          treatment: v,
-                          heroImageUrl:
-                            v.hero_image_url || v.heroImageUrl || undefined,
-                          expiresInDays: 14,
-                        }),
-                      })
-                      const data = await res.json().catch(() => null)
-                      if (!data?.success || !data?.token) throw new Error(data?.error || 'Failed')
-                      const url =
-                        data.url ||
-                        `${window.location.origin}/blueprint/share/${data.token}`
-                      setShareUrl(url)
-                      setShareOpen(true)
-                      setSessionId(data.sessionId)
-                      try {
-                        await navigator.clipboard?.writeText?.(url)
-                      } catch {}
-                      try {
-                        const { toast } = require('sonner')
-                        toast('Blueprint share link ready')
-                      } catch {}
-                    } catch {
-                      try {
-                        const { toast } = require('sonner')
-                        toast('Failed to create share link')
-                      } catch {}
-                    } finally {
-                      setIsSharing(false)
-                    }
-                  }
-
                   const handleStartVision = async () => {
                     try {
                       setIsCreatingVision(true)
@@ -438,6 +405,43 @@ export function TreatmentCard({ onOpenBlueprintRefine }: TreatmentCardProps = {}
                           </TooltipTrigger>
                           <TooltipContent>Reimagine</TooltipContent>
                         </Tooltip>
+
+                        {/* Share blueprint with reviewers */}
+                        {onShareBlueprint && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                aria-label="Share blueprint for collaboration"
+                                title={
+                                  shareUrlFromParent
+                                    ? 'Share link active — click to refresh'
+                                    : 'Share & Collaborate'
+                                }
+                                onClick={() => onShareBlueprint()}
+                                disabled={isSharingBlueprint}
+                                className={cn(
+                                  'h-8 w-8 border text-gray-200 hover:bg-gray-800',
+                                  shareUrlFromParent
+                                    ? 'border-purple-500/50 text-purple-300 bg-purple-500/10'
+                                    : 'border-gray-700'
+                                )}
+                                variant="outline"
+                                size="icon"
+                              >
+                                {isSharingBlueprint ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Share2 className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {shareUrlFromParent
+                                ? 'Collaboration link active'
+                                : 'Share & Collaborate'}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
 
                         {/* Preview/Print */}
                         {activeVariant && (

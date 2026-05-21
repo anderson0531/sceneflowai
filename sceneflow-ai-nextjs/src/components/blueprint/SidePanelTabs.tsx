@@ -32,6 +32,8 @@ interface SidePanelTabsProps {
   legacyIntent?: AudienceIntent | null
   shareToken?: string | null
   onOpenBlueprintRefine?: (opts: OpenBlueprintRefineOptions) => void
+  /** Increment to switch to the Collaborate tab (e.g. after creating a link). */
+  collaborationTabSignal?: number
 }
 
 export function SidePanelTabs({ 
@@ -49,8 +51,15 @@ export function SidePanelTabs({
   legacyIntent,
   onOpenBlueprintRefine,
   shareToken,
+  collaborationTabSignal = 0,
 }: SidePanelTabsProps) {
   const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration'>('resonance')
+
+  React.useEffect(() => {
+    if (collaborationTabSignal > 0) {
+      setActiveTab('collaboration')
+    }
+  }, [collaborationTabSignal])
   const { guide } = useGuideStore()
   const { updateTreatmentVariant } = useGuideStore() as any
   const activeVariantId = (guide as any)?.selectedTreatmentId || ((guide as any)?.treatmentVariants?.[0]?.id)
@@ -276,64 +285,88 @@ function CollaborationContent({
     })
   }
 
-  if (!sessionId && !token) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/15 to-indigo-500/15 flex items-center justify-center mb-4 border border-purple-500/20">
-          <Users size={28} className="text-purple-400" />
-        </div>
-        <h3 className="text-base font-semibold text-gray-100 mb-1.5">
-          Start Collaborating
-        </h3>
-        <p className="text-xs text-gray-400 max-w-[200px] leading-relaxed mb-4">
-          Share your treatment with reviewers to get feedback
-        </p>
-        <button
-          onClick={onShare}
-          disabled={isSharing}
-          className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {isSharing ? (
-            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-          ) : (
-            <Users size={16} />
-          )}
-          <span>{isSharing ? 'Creating...' : 'Share & Collaborate'}</span>
-        </button>
-      </div>
-    )
-  }
+  const hasShareLink = Boolean(sessionId && token && shareUrl)
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Share Link Display */}
-      {shareUrl && (
-        <div className="px-3 py-2 border-b border-gray-800/40 bg-purple-500/5">
-          <div className="flex items-center gap-2 text-xs text-gray-400 mb-1.5">
-            <Link2 size={12} className="text-purple-400" />
-            <span>Share Link</span>
+    <div className="h-full flex flex-col min-h-0">
+      {/* Share CTA / link — always at top of Collaborate tab */}
+      <div className="shrink-0 px-3 py-3 border-b border-purple-500/20 bg-gradient-to-b from-purple-500/10 to-transparent">
+        <div className="flex items-start gap-2">
+          <div className="w-9 h-9 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center shrink-0">
+            <Users size={18} className="text-purple-300" />
           </div>
-          <div className="flex items-center gap-2">
-            <div 
-              className="flex-1 bg-gray-900/60 rounded-lg px-2.5 py-1.5 text-xs text-gray-300 truncate border border-gray-800/60"
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-white leading-tight">
+              {hasShareLink ? 'Reviewer link' : 'Share for feedback'}
+            </h3>
+            <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">
+              {hasShareLink
+                ? 'Send this link so collaborators can read, listen, and comment.'
+                : 'Create a link reviewers can open without logging in.'}
+            </p>
+          </div>
+        </div>
+
+        {hasShareLink && shareUrl ? (
+          <div className="mt-2.5 flex items-center gap-2">
+            <a
+              href={shareUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 min-w-0 bg-gray-900/70 rounded-lg px-2.5 py-2 text-xs text-purple-200 truncate border border-purple-500/25 hover:border-purple-400/40 transition-colors"
               title={shareUrl}
             >
               {shareUrl}
-            </div>
+            </a>
             <button
+              type="button"
               onClick={handleCopyLink}
-              className="p-1.5 rounded-lg bg-purple-600/80 hover:bg-purple-500 text-white transition-colors flex-shrink-0"
+              className="p-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white transition-colors shrink-0"
               title={copied ? 'Copied!' : 'Copy link'}
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
             </button>
           </div>
-        </div>
-      )}
+        ) : (
+          <button
+            type="button"
+            onClick={onShare}
+            disabled={isSharing}
+            className="mt-2.5 w-full px-3 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isSharing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Users size={16} />
+            )}
+            <span>{isSharing ? 'Creating link…' : 'Share & Collaborate'}</span>
+          </button>
+        )}
 
-      <div className="px-3 py-1.5 flex items-center justify-between border-b border-gray-800/40">
+        {hasShareLink && (
+          <button
+            type="button"
+            onClick={onShare}
+            disabled={isSharing}
+            className="mt-2 w-full text-[11px] text-purple-300/90 hover:text-purple-200 disabled:opacity-50"
+          >
+            {isSharing ? 'Updating link…' : 'Create new link (refreshes snapshot)'}
+          </button>
+        )}
+      </div>
+
+      {!hasShareLink ? (
+        <div className="flex-1 overflow-y-auto p-4">
+          <p className="text-xs text-gray-500 leading-relaxed">
+            After you create a link, feedback, team chat, and direct messages with reviewers will appear here.
+          </p>
+        </div>
+      ) : (
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+
+      <div className="shrink-0 px-3 py-1.5 flex items-center justify-between border-b border-gray-800/40">
         <span className="text-[10px] text-gray-500">
-          {feedback.length} review{feedback.length !== 1 ? 's' : ''} · {participants.length} chat participant
+          {feedback.length} review{feedback.length !== 1 ? 's' : ''} · {participants.length} reviewer
           {participants.length !== 1 ? 's' : ''}
         </span>
         <button
@@ -362,7 +395,7 @@ function CollaborationContent({
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 min-h-0 overflow-y-auto p-3">
         {subTab === 'feedback' && (
           <div className="space-y-3">
             {loading && <div className="text-sm text-gray-400">Loading…</div>}
@@ -469,6 +502,8 @@ function CollaborationContent({
           />
         )}
       </div>
+    </div>
+      )}
     </div>
   )
 }

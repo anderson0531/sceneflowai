@@ -28,6 +28,11 @@ import type {
 } from '@/lib/types/audienceResonance'
 import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
 import {
+  createBlueprintShare,
+  fetchActiveBlueprintShare,
+} from '@/lib/blueprint/createBlueprintShare'
+import { toast } from 'sonner'
+import {
   createPersistedBlueprintAR,
   loadBlueprintARFromMetadata,
 } from '@/lib/types/audienceResonance'
@@ -121,6 +126,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [shareToken, setShareToken] = useState<string | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
+  const [collaborationTabSignal, setCollaborationTabSignal] = useState(0)
   
   // Audience Resonance v3 persistence
   const [audienceDefinition, setAudienceDefinition] = useState<AudienceDefinition | null>(null)
@@ -172,15 +178,55 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     [activeTreatmentVariant?.id, updateTreatmentVariant]
   )
   
-  // Handle share/collaborate
+  const applyShareResult = useCallback(
+    (result: { token: string; sessionId: string; url: string }, copy = true) => {
+      setSessionId(result.sessionId)
+      setShareToken(result.token)
+      setShareUrl(result.url)
+      setCollaborationTabSignal((n) => n + 1)
+      setShowSidePanel(true)
+      if (copy) {
+        navigator.clipboard.writeText(result.url).catch(() => {})
+        toast.success('Share link ready — copied to clipboard')
+      }
+    },
+    []
+  )
+
+  // Restore active share link for this project
+  useEffect(() => {
+    if (!projectId || projectId.startsWith('new-project')) return
+    let cancelled = false
+    ;(async () => {
+      const active = await fetchActiveBlueprintShare(projectId)
+      if (!cancelled && active) {
+        applyShareResult(active, false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [projectId, applyShareResult])
+
   const handleShare = async () => {
+    if (!projectId || projectId.startsWith('new-project')) {
+      toast.error('Save the project before sharing')
+      return
+    }
+
     const variants = (guide as any)?.treatmentVariants
-    if (!variants?.length) return
+    if (!variants?.length) {
+      toast.error('Generate a blueprint before sharing')
+      return
+    }
 
     const selectedId = (guide as any)?.selectedTreatmentId
     const variant =
       variants.find((v: { id: string }) => v.id === selectedId) || variants[0]
-    if (!variant) return
+    if (!variant) {
+      toast.error('No treatment variant to share')
+      return
+    }
 
     setIsSharing(true)
     try {
@@ -191,39 +237,28 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             ? variant.heroImageUrl
             : undefined
 
-      const res = await fetch('/api/blueprint/share/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          variantId: variant.id,
-          treatment: variant,
-          heroImageUrl,
-          audienceDefinition: audienceDefinition ?? null,
-          expiresInDays: 14,
-        }),
+      const result = await createBlueprintShare({
+        projectId,
+        variantId: variant.id,
+        treatment: variant,
+        heroImageUrl,
+        audienceDefinition: audienceDefinition ?? null,
+        expiresInDays: 14,
       })
 
-      const data = await res.json()
-      if (data.success && data.token) {
-        setSessionId(data.sessionId)
-        setShareToken(data.token)
-        const url = data.url || `${window.location.origin}/blueprint/share/${data.token}`
-        setShareUrl(url)
-        await navigator.clipboard.writeText(url)
-        try {
-          const { toast } = require('sonner')
-          toast.success('Blueprint share link copied!')
-        } catch {}
+      if (result.success) {
+        applyShareResult(result)
       } else {
-        throw new Error(data.error || 'Share failed')
+        const msg =
+          result.status === 401
+            ? 'Sign in to create a share link'
+            : result.error || 'Failed to create share link'
+        toast.error(msg)
+        console.error('[handleShare]', result)
       }
     } catch (error) {
       console.error('Share failed:', error)
-      try {
-        const { toast } = require('sonner')
-        toast.error('Failed to create share link')
-      } catch {}
+      toast.error('Failed to create share link')
     } finally {
       setIsSharing(false)
     }
@@ -1269,7 +1304,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 )}
 
                 {/* Treatment Card */}
-                <TreatmentCard onOpenBlueprintRefine={openBlueprintRefineFromToolbar} />
+                <TreatmentCard
+                  onOpenBlueprintRefine={openBlueprintRefineFromToolbar}
+                  onShareBlueprint={handleShare}
+                  isSharingBlueprint={isSharing}
+                  shareUrl={shareUrl}
+                />
               </div>
             </div>
           </div>
@@ -1289,6 +1329,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 shareUrl={shareUrl}
                 onShare={handleShare}
                 isSharing={isSharing}
+                collaborationTabSignal={collaborationTabSignal}
                 projectId={projectId}
                 audienceDefinition={audienceDefinition}
                 onAudienceDefinitionSave={handleAudienceDefinitionSave}
