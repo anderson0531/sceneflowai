@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import { BlueprintReviewSection } from './BlueprintReviewSection'
+import type { BlueprintSectionAudioPlayerStatus } from './BlueprintSectionAudioPlayer'
 import { BlueprintCollabChat } from './BlueprintCollabChat'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/textarea'
@@ -24,6 +25,22 @@ import {
 } from '@/lib/blueprint/feedbackChips'
 
 const PARTICIPANT_KEY = (token: string) => `sf_collab_participant_${token}`
+
+/** ~4 minutes at 8s intervals — stale links created before auto-gen fix. */
+const MAX_AUDIO_POLLS = 30
+
+function resolveSectionAudioPlayerStatus(
+  sectionId: BlueprintFixSection,
+  sectionAudio: BlueprintSectionAudioMap,
+  audioStatus: BlueprintSectionAudioStatus | undefined,
+  allowTts: boolean,
+  audioPollStale: boolean
+): BlueprintSectionAudioPlayerStatus {
+  if (!allowTts) return 'unavailable'
+  if (sectionAudio[sectionId]?.url) return 'ready'
+  if (audioStatus === 'pending' && !audioPollStale) return 'preparing'
+  return 'unavailable'
+}
 
 const SECTION_NAV: { id: BlueprintFixSection; label: string }[] = [
   { id: 'core', label: 'Core' },
@@ -62,6 +79,8 @@ export function BlueprintShareViewer({ token }: Props) {
   const [draft, setDraft] = useState<ShareFeedbackDraft>({ sections: {} })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [audioPollStale, setAudioPollStale] = useState(false)
+  const audioPollCountRef = useRef(0)
 
   const loadShare = useCallback(async () => {
     const res = await fetch(`/api/blueprint/share/${encodeURIComponent(token)}`, { cache: 'no-store' })
@@ -110,8 +129,17 @@ export function BlueprintShareViewer({ token }: Props) {
   }, [loadShare])
 
   useEffect(() => {
-    if (audioStatus !== 'pending') return
+    if (audioStatus !== 'pending') {
+      audioPollCountRef.current = 0
+      setAudioPollStale(false)
+      return
+    }
     const id = setInterval(() => {
+      audioPollCountRef.current += 1
+      if (audioPollCountRef.current >= MAX_AUDIO_POLLS) {
+        setAudioPollStale(true)
+        return
+      }
       void loadShare()
     }, 8000)
     return () => clearInterval(id)
@@ -237,9 +265,27 @@ export function BlueprintShareViewer({ token }: Props) {
         <div className="max-w-4xl mx-auto px-4 py-3">
           <p className="text-xs text-purple-400 font-medium tracking-wide">SceneFlow · Blueprint Review</p>
           <h1 className="text-xl font-semibold text-white mt-0.5">{String(treatment.title || 'Blueprint')}</h1>
-          {audioStatus === 'pending' && (
+          {allowTts && audioStatus === 'pending' && !audioPollStale && (
             <p className="text-xs text-amber-400/90 mt-1">Preparing section audio…</p>
           )}
+          {allowTts && audioPollStale && !hasCachedAudio && (
+            <p className="text-xs text-amber-400/90 mt-1">
+              Section audio is taking longer than expected. Ask the project owner to refresh section
+              audio from Studio → Collaborate.
+            </p>
+          )}
+          {allowTts && audioStatus === 'failed' && (
+            <p className="text-xs text-red-400/90 mt-1">
+              Section audio could not be generated. The owner can retry from Studio → Collaborate.
+            </p>
+          )}
+          {allowTts &&
+            (audioStatus === 'ready' || audioStatus === 'partial') &&
+            hasCachedAudio && (
+              <p className="text-xs text-emerald-400/80 mt-1">
+                Tap Listen on each section to hear narration.
+              </p>
+            )}
         </div>
         <nav className="max-w-4xl mx-auto px-4 pb-2 flex gap-1 overflow-x-auto">
           {SECTION_NAV.map((s) => (
@@ -268,11 +314,16 @@ export function BlueprintShareViewer({ token }: Props) {
           </p>
         )}
 
-        {!hasCachedAudio && allowTts && audioStatus !== 'skipped' && (
-          <p className="text-xs text-gray-500">
-            Section audio will appear when ready. You can read the blueprint below anytime.
-          </p>
-        )}
+        {!hasCachedAudio &&
+          allowTts &&
+          audioStatus !== 'skipped' &&
+          audioStatus !== 'failed' &&
+          !audioPollStale && (
+            <p className="text-xs text-gray-500">
+              Section audio will appear when ready. Use Listen on each section when it becomes
+              available.
+            </p>
+          )}
 
         <div className="space-y-3">
           {SECTION_NAV.map((s) => (
@@ -284,7 +335,14 @@ export function BlueprintShareViewer({ token }: Props) {
               expanded={!!expanded[s.id]}
               onToggle={() => setExpanded((p) => ({ ...p, [s.id]: !p[s.id] }))}
               audio={sectionAudio[s.id]}
-              allowTts={allowTts && !!sectionAudio[s.id]?.url}
+              audioPlayerStatus={resolveSectionAudioPlayerStatus(
+                s.id,
+                sectionAudio,
+                audioStatus,
+                allowTts,
+                audioPollStale
+              )}
+              allowTts={allowTts}
               canFeedback={!!participantId && !submitted}
               feedback={draft.sections?.[s.id]}
               onFeedbackChange={

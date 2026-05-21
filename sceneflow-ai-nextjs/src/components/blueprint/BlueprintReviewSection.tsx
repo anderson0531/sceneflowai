@@ -4,7 +4,10 @@ import React from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Textarea } from '@/components/ui/textarea'
-import { BlueprintSectionAudioPlayer } from './BlueprintSectionAudioPlayer'
+import {
+  BlueprintSectionAudioPlayer,
+  type BlueprintSectionAudioPlayerStatus,
+} from './BlueprintSectionAudioPlayer'
 import {
   chipsForSection,
   applyChipToSection,
@@ -171,6 +174,7 @@ type Props = {
   expanded: boolean
   onToggle: () => void
   audio?: BlueprintSectionAudioEntry | null
+  audioPlayerStatus?: BlueprintSectionAudioPlayerStatus
   allowTts?: boolean
   canFeedback: boolean
   feedback?: BlueprintFeedbackSection
@@ -185,6 +189,7 @@ export function BlueprintReviewSection({
   expanded,
   onToggle,
   audio,
+  audioPlayerStatus,
   allowTts = true,
   canFeedback,
   feedback = {},
@@ -230,6 +235,7 @@ export function BlueprintReviewSection({
             sectionId={sectionId}
             label="Listen"
             audio={audio}
+            status={audioPlayerStatus}
             compact
           />
         )}

@@ -142,3 +142,6 @@ export async function runShareSectionAudioGeneration(sessionId: string): Promise
   }
 }
 
+/** Alias for share create `after()` and manual refresh routes. */
+export const scheduleShareSectionAudioGeneration = runShareSectionAudioGeneration
+

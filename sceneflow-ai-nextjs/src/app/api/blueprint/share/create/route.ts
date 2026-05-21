@@ -7,7 +7,7 @@ import CollabSession from '@/models/CollabSession'
 import CollabParticipant from '@/models/CollabParticipant'
 import { getAuthenticatedUserId, assertProjectAccess } from '@/lib/projectAccess'
 import type { BlueprintSessionPayload, BlueprintShareCreateBody } from '@/lib/blueprint/shareTypes'
-import { scheduleShareSectionAudioGeneration } from '@/lib/blueprint/generateShareSectionAudio'
+import { runShareSectionAudioGeneration } from '@/lib/blueprint/generateShareSectionAudio'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -95,7 +95,13 @@ export async function POST(req: NextRequest) {
 
       if (process.env.ELEVENLABS_API_KEY) {
         const sessionId = collabSession.id
-        after(() => runShareSectionAudioGeneration(sessionId))
+        after(async () => {
+          try {
+            await runShareSectionAudioGeneration(sessionId)
+          } catch (err) {
+            console.error('[blueprint/share/create] section audio generation failed:', err)
+          }
+        })
       }
 
       const origin = req.headers.get('x-forwarded-host')
