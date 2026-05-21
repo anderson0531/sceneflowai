@@ -30,7 +30,6 @@ import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRe
 import {
   createBlueprintShare,
   fetchActiveBlueprintShare,
-  triggerBlueprintShareSectionAudio,
 } from '@/lib/blueprint/createBlueprintShare'
 import { toast } from 'sonner'
 import {
@@ -277,12 +276,11 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
       if (result.success) {
         applyShareResult(result)
-        const audio = await triggerBlueprintShareSectionAudio(result.token)
-        if (!audio.success) {
-          toast.error(audio.error || 'Section audio could not be started')
-        } else if (!audio.skipped) {
-          toast.message('Generating section audio for reviewers…')
-        }
+        toast.success(
+          result.reused
+            ? 'Share link ready — generate section audio in Collaborate when you are ready'
+            : 'Share link created — generate section audio in Collaborate when you are ready'
+        )
       } else {
         const msg =
           result.status === 401

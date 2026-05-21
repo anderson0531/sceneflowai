@@ -19,16 +19,26 @@ export async function POST(_req: NextRequest, ctx: RouteCtx) {
 
     const session = auth.session!
     const sessionId = (session as { id: string }).id
-    const result = await runShareSectionAudioGeneration(sessionId)
+    const body = await _req.json().catch(() => ({}))
+    const language =
+      typeof body?.language === 'string' && body.language.trim()
+        ? body.language.trim()
+        : undefined
+
+    const result = await runShareSectionAudioGeneration(sessionId, { language })
 
     const updated = await CollabSession.findByPk(sessionId)
     const payload = updated ? getPayload(updated) : null
+    const lang = result.language || payload?.sectionAudioLanguage
 
     return NextResponse.json({
       success: true,
       skipped: result.skipped,
+      language: lang,
       sectionAudioStatus: payload?.sectionAudioStatus ?? result.status,
-      sectionAudio: payload?.sectionAudio ?? result.sectionAudio,
+      sectionAudio: result.sectionAudio,
+      sectionAudioByLanguage: payload?.sectionAudioByLanguage,
+      sectionAudioGeneratedAt: payload?.sectionAudioGeneratedAt,
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Failed to generate audio'

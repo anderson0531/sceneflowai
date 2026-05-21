@@ -180,6 +180,8 @@ type Props = {
   feedback?: BlueprintFeedbackSection
   onFeedbackChange?: (next: BlueprintFeedbackSection) => void
   omitLoglineInCore?: boolean
+  /** Localized narration (owner-generated); shown when reviewer language ≠ en. */
+  translationNarration?: string
 }
 
 export function BlueprintReviewSection({
@@ -195,6 +197,7 @@ export function BlueprintReviewSection({
   feedback = {},
   onFeedbackChange,
   omitLoglineInCore,
+  translationNarration,
 }: Props) {
   const chips = chipsForSection(sectionId)
   const selectedTags = new Set(feedback.tags || [])
@@ -243,6 +246,16 @@ export function BlueprintReviewSection({
 
       {expanded && (
         <div className="px-3 pb-3 space-y-4">
+          {translationNarration?.trim() ? (
+            <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 px-3 py-2">
+              <div className="text-[10px] uppercase tracking-wide text-purple-300/80 mb-1">
+                Narration ({title})
+              </div>
+              <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
+                {translationNarration}
+              </p>
+            </div>
+          ) : null}
           <div className="space-y-2 pt-1">
             <SectionContent
               sectionId={sectionId}

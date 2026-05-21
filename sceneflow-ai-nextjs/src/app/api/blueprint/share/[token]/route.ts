@@ -3,6 +3,12 @@ import { sequelize } from '@/config/database'
 import CollabSession from '@/models/CollabSession'
 import { recoverStaleSectionAudioIfNeeded } from '@/lib/blueprint/generateShareSectionAudio'
 import { getPayload, resolveSessionByToken } from '@/lib/blueprint/shareSession'
+import {
+  getSectionAudioForLanguage,
+  getSectionTranslationsForLanguage,
+  getShareAudioLanguage,
+  normalizeShareAudioPayload,
+} from '@/lib/blueprint/shareAudioPayload'
 import { requireOwnerForSession } from '@/lib/blueprint/shareAuth'
 
 export const runtime = 'nodejs'
@@ -25,6 +31,8 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
     }
 
     payload = await recoverStaleSectionAudioIfNeeded(session.id, payload)
+    payload = normalizeShareAudioPayload(payload)
+    const lang = getShareAudioLanguage(payload)
 
     return NextResponse.json({
       success: true,
@@ -39,8 +47,13 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
         projectId: payload.projectId,
         shareSettings: payload.shareSettings,
         ownerDisplayName: payload.ownerDisplayName,
-        sectionAudio: payload.sectionAudio,
+        sectionAudio: getSectionAudioForLanguage(payload, lang),
+        sectionAudioByLanguage: payload.sectionAudioByLanguage,
+        sectionTranslations: payload.sectionTranslations,
+        sectionAudioLanguage: lang,
         sectionAudioStatus: payload.sectionAudioStatus,
+        sectionAudioStartedAt: payload.sectionAudioStartedAt,
+        sectionAudioGeneratedAt: payload.sectionAudioGeneratedAt,
       },
     })
   } catch (e: unknown) {

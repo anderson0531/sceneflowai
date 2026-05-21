@@ -59,11 +59,39 @@ export function resolveStorytellingModelId(): string {
 /** ElevenLabs v3 audio tag — performance cue, not narration (must use eleven_v3). */
 export const STORYTELLING_DELIVERY_TAG = '[Intelligent and Engaging]'
 
-/** Prepend bracket delivery tag on its own line (strips other leading bracket tags). */
-export function applyStorytellingDeliveryTag(text: string): string {
+/** Strip outer ASCII or curly quotes from speakable body. */
+function stripOuterQuotes(body: string): string {
+  const t = body.trim()
+  const ascii = t.match(/^"([\s\S]*)"$/)
+  if (ascii) return ascii[1]!.trim()
+  const curly = t.match(/^[“]([\s\S]*)[”]$/)
+  if (curly) return curly[1]!.trim()
+  return t
+}
+
+/**
+ * Format for ElevenLabs storytelling: bracket tag = direction; only quoted body is spoken.
+ * Example: [Intelligent and Engaging] "From concept to season bible…"
+ */
+export function formatStorytellingTtsText(
+  text: string,
+  tag: string = STORYTELLING_DELIVERY_TAG
+): string {
   const trimmed = text.trim()
   if (!trimmed) return trimmed
-  if (trimmed.startsWith(STORYTELLING_DELIVERY_TAG)) return trimmed
-  const withoutLeadingTag = trimmed.replace(/^\[[^\]]+\]\s*(\n+)?/, '').trim()
-  return `${STORYTELLING_DELIVERY_TAG}\n\n${withoutLeadingTag}`
+
+  if (/^\[[^\]]+\]\s+"[^"]+"\s*$/s.test(trimmed)) return trimmed
+
+  const leadingTagMatch = trimmed.match(/^(\[[^\]]+\])\s*([\s\S]*)$/)
+  const explicitTag = leadingTagMatch?.[1] ?? tag
+  let body = (leadingTagMatch?.[2] ?? trimmed).trim()
+  body = stripOuterQuotes(body)
+  if (!body) return trimmed
+
+  return `${explicitTag} "${body}"`
+}
+
+/** @deprecated Use formatStorytellingTtsText — kept as alias for callers. */
+export function applyStorytellingDeliveryTag(text: string): string {
+  return formatStorytellingTtsText(text)
 }

@@ -12,11 +12,24 @@ export type BlueprintSectionAudioMap = Partial<
 >
 
 export type BlueprintSectionAudioStatus =
+  | 'idle'
   | 'pending'
   | 'ready'
   | 'partial'
   | 'failed'
   | 'skipped'
+
+/** Per-language reviewer-readable section copy (plain text, no TTS tags). */
+export type BlueprintSectionTranslationsMap = Partial<
+  Record<BlueprintFixSection, string>
+>
+
+export type BlueprintSectionAudioByLanguage = Record<string, BlueprintSectionAudioMap>
+
+export type BlueprintSectionTranslationsByLanguage = Record<
+  string,
+  BlueprintSectionTranslationsMap
+>
 
 export type BlueprintFeedbackSection = {
   score?: number
@@ -49,7 +62,12 @@ export type BlueprintSessionPayload = {
     synthesizedAt: string
   }
   ownerDisplayName?: string
+  /** Legacy flat map; migrated to sectionAudioByLanguage.en on read. */
   sectionAudio?: BlueprintSectionAudioMap
+  sectionAudioByLanguage?: BlueprintSectionAudioByLanguage
+  sectionTranslations?: BlueprintSectionTranslationsByLanguage
+  /** Last language used for generation (reviewer default). */
+  sectionAudioLanguage?: string
   sectionAudioStatus?: BlueprintSectionAudioStatus
   sectionAudioVoiceId?: string
   sectionAudioGeneratedAt?: string

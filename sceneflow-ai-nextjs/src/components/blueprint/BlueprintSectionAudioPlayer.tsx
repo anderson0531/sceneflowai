@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Loader2, Pause, Play } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { BlueprintSectionAudioEntry } from '@/lib/blueprint/shareTypes'
 
@@ -68,6 +69,7 @@ export function BlueprintSectionAudioPlayer({
       setPlaying(true)
     } catch {
       setPlaying(false)
+      toast.error('Audio file missing or unavailable. Ask the owner to regenerate section audio.')
     } finally {
       setLoading(false)
     }

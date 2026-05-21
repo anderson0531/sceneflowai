@@ -7,6 +7,7 @@ import type {
   BlueprintSectionAudioEntry,
   BlueprintSectionAudioMap,
   BlueprintSectionAudioStatus,
+  BlueprintSectionTranslationsMap,
   BlueprintSessionPayload,
 } from './shareTypes'
 import {
@@ -16,8 +17,15 @@ import {
   hashSectionNarrationText,
 } from './sectionNarrationText'
 import { getPayload, isBlueprintPayload } from './shareSession'
+import { translateBlueprintNarration } from './translateBlueprintNarration'
+import {
+  DEFAULT_SHARE_AUDIO_LANGUAGE,
+  PHANTOM_PENDING_MS,
+  getSectionAudioForLanguage,
+  hashForLanguage,
+} from './shareAudioPayload'
 
-/** Mark pending jobs older than this as failed (stale after() / serverless cutoff). */
+/** Mark in-flight jobs older than this as failed (serverless cutoff). */
 export const STALE_PENDING_MS = 15 * 60 * 1000
 
 export type SectionNarrationPlanItem = {
@@ -38,6 +46,16 @@ export function computeSectionNarrationPlan(
   return plan
 }
 
+export function planWithLanguageHashes(
+  plan: SectionNarrationPlanItem[],
+  language: string
+): SectionNarrationPlanItem[] {
+  return plan.map((item) => ({
+    ...item,
+    textHash: hashForLanguage(item.textHash, language),
+  }))
+}
+
 export function isShareSectionAudioCurrent(
   existing: BlueprintSectionAudioMap | undefined,
   status: BlueprintSectionAudioStatus | undefined,
@@ -52,6 +70,22 @@ export function isShareSectionAudioCurrent(
   return true
 }
 
+export function isShareAudioStaleForTreatment(
+  payload: BlueprintSessionPayload,
+  language: string
+): boolean {
+  const plan = planWithLanguageHashes(
+    computeSectionNarrationPlan(payload.treatment),
+    language
+  )
+  const audio = getSectionAudioForLanguage(payload, language)
+  const status = payload.sectionAudioStatus
+  if (!status || status === 'idle' || status === 'failed' || status === 'skipped') {
+    return false
+  }
+  return !isShareSectionAudioCurrent(audio, status, plan)
+}
+
 export async function recoverStaleSectionAudioIfNeeded(
   sessionId: string,
   payload: BlueprintSessionPayload
@@ -59,14 +93,19 @@ export async function recoverStaleSectionAudioIfNeeded(
   if (payload.sectionAudioStatus !== 'pending') return payload
 
   const startedAt = payload.sectionAudioStartedAt
-  if (!startedAt) return payload
+  const ageMs = startedAt
+    ? Date.now() - new Date(startedAt).getTime()
+    : PHANTOM_PENDING_MS + 1
 
-  const ageMs = Date.now() - new Date(startedAt).getTime()
-  if (ageMs < STALE_PENDING_MS) return payload
+  const threshold = startedAt ? STALE_PENDING_MS : PHANTOM_PENDING_MS
+  if (ageMs < threshold) return payload
 
-  const readyCount = Object.keys(payload.sectionAudio || {}).length
+  const readyCount = Object.values(payload.sectionAudioByLanguage || {}).reduce(
+    (n, m) => n + Object.keys(m || {}).filter((k) => m?.[k as BlueprintFixSection]?.url).length,
+    0
+  )
   console.warn(
-    `[generateShareSectionAudio] stale pending session=${sessionId} ageMs=${ageMs} readySections=${readyCount}`
+    `[generateShareSectionAudio] stale pending session=${sessionId} ageMs=${ageMs} startedAt=${startedAt ?? 'none'} readySections=${readyCount}`
   )
   await patchSessionSectionAudio(sessionId, { sectionAudioStatus: 'failed' })
   return { ...payload, sectionAudioStatus: 'failed' }
@@ -96,29 +135,49 @@ export type GenerateShareSectionAudioParams = {
   sessionId: string
   projectId: string
   treatment: Record<string, unknown>
+  language?: string
   voiceId?: string
   existingAudio?: BlueprintSectionAudioMap
-  onSectionSaved?: (sectionAudio: BlueprintSectionAudioMap) => Promise<void>
+  onSectionSaved?: (
+    sectionAudio: BlueprintSectionAudioMap,
+    translations: BlueprintSectionTranslationsMap
+  ) => Promise<void>
 }
 
 export type GenerateShareSectionAudioResult = {
   sectionAudio: BlueprintSectionAudioMap
+  sectionTranslations: BlueprintSectionTranslationsMap
   status: BlueprintSectionAudioStatus
   attempted: number
   succeeded: number
+  language: string
 }
 
 export async function generateShareSectionAudio(
   params: GenerateShareSectionAudioParams
 ): Promise<GenerateShareSectionAudioResult> {
+  const language = params.language || DEFAULT_SHARE_AUDIO_LANGUAGE
   const voiceId = params.voiceId || SCENEFLOW_CREATOR_VOICE_ID
   const plan = computeSectionNarrationPlan(params.treatment)
   const sectionAudio: BlueprintSectionAudioMap = { ...(params.existingAudio || {}) }
+  const sectionTranslations: BlueprintSectionTranslationsMap = {}
   let attempted = 0
   let succeeded = 0
 
-  for (const { section, text, textHash } of plan) {
+  for (const { section, text } of plan) {
     attempted++
+    let speakableText = text
+    try {
+      speakableText = await translateBlueprintNarration(text, language)
+    } catch (err) {
+      console.error(`[generateShareSectionAudio] translate ${section}:`, err)
+      if (language !== DEFAULT_SHARE_AUDIO_LANGUAGE) continue
+      speakableText = text
+    }
+
+    sectionTranslations[section] = speakableText
+    const textHash = hashForLanguage(hashSectionNarrationText(speakableText), language)
+
     const existing = sectionAudio[section]
     if (existing?.url && existing.textHash === textHash) {
       succeeded++
@@ -126,21 +185,22 @@ export async function generateShareSectionAudio(
     }
 
     const t0 = Date.now()
-    console.info(`[generateShareSectionAudio] start section=${section} session=${params.sessionId}`)
+    console.info(
+      `[generateShareSectionAudio] start section=${section} lang=${language} session=${params.sessionId}`
+    )
 
     try {
-      const buffer = await synthesizeSectionMp3(text, voiceId)
+      const buffer = await synthesizeSectionMp3(speakableText, voiceId)
       if (!buffer.length) continue
 
-      const tBlob = Date.now()
-      const filename = `audio/blueprint-share/${params.projectId}/${params.sessionId}/${section}.mp3`
+      const filename = `audio/blueprint-share/${params.projectId}/${params.sessionId}/${language}/${section}.mp3`
       const blob = await put(filename, buffer, {
         access: 'public',
         contentType: 'audio/mpeg',
         addRandomSuffix: false,
       })
       console.info(
-        `[generateShareSectionAudio] done section=${section} tts+blobMs=${Date.now() - t0} blobMs=${Date.now() - tBlob}`
+        `[generateShareSectionAudio] done section=${section} lang=${language} ms=${Date.now() - t0}`
       )
 
       sectionAudio[section] = {
@@ -151,7 +211,7 @@ export async function generateShareSectionAudio(
       succeeded++
 
       if (params.onSectionSaved) {
-        await params.onSectionSaved({ ...sectionAudio })
+        await params.onSectionSaved({ ...sectionAudio }, { ...sectionTranslations })
       }
     } catch (err) {
       console.error(`[generateShareSectionAudio] ${section} failed:`, err)
@@ -167,35 +227,61 @@ export async function generateShareSectionAudio(
           ? 'partial'
           : 'ready'
 
-  return { sectionAudio, status, attempted, succeeded }
+  return {
+    sectionAudio,
+    sectionTranslations,
+    status,
+    attempted,
+    succeeded,
+    language,
+  }
 }
 
 export async function patchSessionSectionAudio(
   sessionId: string,
-  patch: Pick<
-    BlueprintSessionPayload,
-    | 'sectionAudio'
-    | 'sectionAudioStatus'
-    | 'sectionAudioVoiceId'
-    | 'sectionAudioGeneratedAt'
-    | 'sectionAudioStartedAt'
+  patch: Partial<
+    Pick<
+      BlueprintSessionPayload,
+      | 'sectionAudio'
+      | 'sectionAudioByLanguage'
+      | 'sectionTranslations'
+      | 'sectionAudioLanguage'
+      | 'sectionAudioStatus'
+      | 'sectionAudioVoiceId'
+      | 'sectionAudioGeneratedAt'
+      | 'sectionAudioStartedAt'
+    >
   >,
-  options?: { mergeSectionAudio?: boolean }
+  options?: { mergeSectionAudio?: boolean; language?: string }
 ): Promise<void> {
   const session = await CollabSession.findByPk(sessionId)
   if (!session) return
   const raw = session.payload
   if (!isBlueprintPayload(raw)) return
 
+  const lang = options?.language || patch.sectionAudioLanguage || raw.sectionAudioLanguage || DEFAULT_SHARE_AUDIO_LANGUAGE
   let sectionAudio = patch.sectionAudio
+  let byLang = { ...(raw.sectionAudioByLanguage || {}) }
+
   if (options?.mergeSectionAudio && patch.sectionAudio) {
-    sectionAudio = { ...(raw.sectionAudio || {}), ...patch.sectionAudio }
+    sectionAudio = { ...(byLang[lang] || {}), ...patch.sectionAudio }
+    byLang[lang] = sectionAudio
+  } else if (patch.sectionAudio) {
+    byLang[lang] = patch.sectionAudio
+  }
+
+  let translations = { ...(raw.sectionTranslations || {}) }
+  if (patch.sectionTranslations) {
+    translations = { ...translations, ...patch.sectionTranslations }
   }
 
   const next: BlueprintSessionPayload = {
     ...raw,
     ...patch,
-    ...(sectionAudio !== undefined ? { sectionAudio } : {}),
+    sectionAudioLanguage: patch.sectionAudioLanguage ?? lang,
+    sectionAudioByLanguage: patch.sectionAudioByLanguage ?? byLang,
+    sectionTranslations: patch.sectionTranslations ? translations : raw.sectionTranslations,
+    ...(sectionAudio && !options?.mergeSectionAudio ? { sectionAudio } : {}),
   }
   await session.update({ payload: next })
 }
@@ -204,10 +290,16 @@ export type RunShareSectionAudioResult = {
   skipped: boolean
   status?: BlueprintSectionAudioStatus
   sectionAudio?: BlueprintSectionAudioMap
+  language?: string
+}
+
+export type RunShareSectionAudioOptions = {
+  language?: string
 }
 
 export async function runShareSectionAudioGeneration(
-  sessionId: string
+  sessionId: string,
+  options?: RunShareSectionAudioOptions
 ): Promise<RunShareSectionAudioResult> {
   if (!process.env.ELEVENLABS_API_KEY) {
     await patchSessionSectionAudio(sessionId, { sectionAudioStatus: 'skipped' })
@@ -227,57 +319,86 @@ export async function runShareSectionAudioGeneration(
     return { skipped: true, status: 'skipped' }
   }
 
-  const plan = computeSectionNarrationPlan(payload.treatment)
-  if (isShareSectionAudioCurrent(payload.sectionAudio, payload.sectionAudioStatus, plan)) {
-    console.info(`[runShareSectionAudioGeneration] up-to-date session=${sessionId}`)
+  const language =
+    options?.language || payload.sectionAudioLanguage || DEFAULT_SHARE_AUDIO_LANGUAGE
+  const plan = planWithLanguageHashes(
+    computeSectionNarrationPlan(payload.treatment),
+    language
+  )
+  const existingAudio = getSectionAudioForLanguage(payload, language)
+
+  if (isShareSectionAudioCurrent(existingAudio, payload.sectionAudioStatus, plan)) {
+    console.info(`[runShareSectionAudioGeneration] up-to-date session=${sessionId} lang=${language}`)
     return {
       skipped: true,
       status: payload.sectionAudioStatus,
-      sectionAudio: payload.sectionAudio,
+      sectionAudio: existingAudio,
+      language,
     }
   }
 
   const voiceId = payload.sectionAudioVoiceId || SCENEFLOW_CREATOR_VOICE_ID
   const startedAt = new Date().toISOString()
 
-  await patchSessionSectionAudio(sessionId, {
-    sectionAudioStatus: 'pending',
-    sectionAudioStartedAt: startedAt,
-    sectionAudio: payload.sectionAudio || {},
-  })
+  await patchSessionSectionAudio(
+    sessionId,
+    {
+      sectionAudioStatus: 'pending',
+      sectionAudioStartedAt: startedAt,
+      sectionAudioLanguage: language,
+    },
+    { language }
+  )
 
   try {
-    const { sectionAudio, status } = await generateShareSectionAudio({
+    const { sectionAudio, sectionTranslations, status } = await generateShareSectionAudio({
       sessionId,
       projectId: payload.projectId,
       treatment: payload.treatment,
+      language,
       voiceId,
-      existingAudio: payload.sectionAudio,
-      onSectionSaved: async (partial) => {
+      existingAudio,
+      onSectionSaved: async (partial, partialTranslations) => {
+        const prevByLang = payload!.sectionAudioByLanguage || {}
+        const prevTrans = payload!.sectionTranslations || {}
         await patchSessionSectionAudio(
           sessionId,
           {
             sectionAudio: partial,
             sectionAudioStatus: 'pending',
             sectionAudioStartedAt: startedAt,
+            sectionAudioByLanguage: { ...prevByLang, [language]: partial },
+            sectionTranslations: {
+              ...prevTrans,
+              [language]: { ...(prevTrans[language] || {}), ...partialTranslations },
+            },
           },
-          { mergeSectionAudio: true }
+          { mergeSectionAudio: true, language }
         )
       },
     })
 
+    const prevByLang = payload.sectionAudioByLanguage || {}
+    const prevTrans = payload.sectionTranslations || {}
+
     await patchSessionSectionAudio(sessionId, {
-      sectionAudio,
+      sectionAudio: sectionAudio,
+      sectionAudioByLanguage: { ...prevByLang, [language]: sectionAudio },
+      sectionTranslations: {
+        ...prevTrans,
+        [language]: sectionTranslations,
+      },
       sectionAudioStatus: status,
       sectionAudioVoiceId: voiceId,
+      sectionAudioLanguage: language,
       sectionAudioGeneratedAt: new Date().toISOString(),
     })
 
-    return { skipped: false, status, sectionAudio }
+    return { skipped: false, status, sectionAudio, language }
   } catch (err) {
     console.error('[runShareSectionAudioGeneration]', err)
     await patchSessionSectionAudio(sessionId, { sectionAudioStatus: 'failed' })
-    return { skipped: false, status: 'failed' }
+    return { skipped: false, status: 'failed', language }
   }
 }
 

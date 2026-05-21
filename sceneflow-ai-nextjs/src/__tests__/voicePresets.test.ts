@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   applyStorytellingDeliveryTag,
+  formatStorytellingTtsText,
   resolveVoiceSettings,
   STORYTELLING_DELIVERY_TAG,
   STORYTELLING_VOICE_SETTINGS,
@@ -21,21 +22,35 @@ describe('resolveVoiceSettings', () => {
   })
 })
 
-describe('applyStorytellingDeliveryTag', () => {
-  it('prepends bracket tag on its own line before narration', () => {
-    expect(applyStorytellingDeliveryTag('Title: Example.')).toBe(
-      `${STORYTELLING_DELIVERY_TAG}\n\nTitle: Example.`
+describe('formatStorytellingTtsText', () => {
+  it('wraps narration in double quotes after bracket tag', () => {
+    expect(formatStorytellingTtsText('Title: Example.')).toBe(
+      `${STORYTELLING_DELIVERY_TAG} "Title: Example."`
     )
   })
 
-  it('does not duplicate the tag', () => {
-    const tagged = `${STORYTELLING_DELIVERY_TAG} Title: Example.`
-    expect(applyStorytellingDeliveryTag(tagged)).toBe(tagged)
+  it('does not duplicate when already formatted', () => {
+    const formatted = `${STORYTELLING_DELIVERY_TAG} "Title: Example."`
+    expect(formatStorytellingTtsText(formatted)).toBe(formatted)
   })
 
-  it('replaces other leading bracket tags', () => {
-    expect(applyStorytellingDeliveryTag('[warm, dramatic narrator] Logline: test.')).toBe(
-      `${STORYTELLING_DELIVERY_TAG}\n\nLogline: test.`
+  it('replaces other leading bracket tags and quotes body', () => {
+    expect(formatStorytellingTtsText('[Intelligent and Confident] Logline: test.')).toBe(
+      '[Intelligent and Confident] "Logline: test."'
+    )
+  })
+
+  it('strips existing outer quotes before re-wrapping', () => {
+    expect(formatStorytellingTtsText('"Already quoted."')).toBe(
+      `${STORYTELLING_DELIVERY_TAG} "Already quoted."`
+    )
+  })
+})
+
+describe('applyStorytellingDeliveryTag', () => {
+  it('aliases formatStorytellingTtsText', () => {
+    expect(applyStorytellingDeliveryTag('Hello world.')).toBe(
+      formatStorytellingTtsText('Hello world.')
     )
   })
 })
@@ -48,7 +63,7 @@ describe('resolveStorytellingModelId', () => {
     delete process.env.ELEVENLABS_STORYTELLING_MODEL
     delete process.env.ELEVENLABS_TTS_MODEL
     expect(resolveStorytellingModelId()).toBe('eleven_v3')
-    if (prev !== undefined) process.env.ELEVENLABS_STORYTELLING_MODEL = prev
-    if (prevTts !== undefined) process.env.ELEVENLABS_TTS_MODEL = prevTts
+    if (prev) process.env.ELEVENLABS_STORYTELLING_MODEL = prev
+    if (prevTts) process.env.ELEVENLABS_TTS_MODEL = prevTts
   })
 })

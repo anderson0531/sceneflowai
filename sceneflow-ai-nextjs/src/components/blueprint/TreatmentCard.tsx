@@ -15,6 +15,7 @@ import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRe
 import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import { NarratorVoicePicker } from '@/components/tts/NarratorVoicePicker'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
+import { toGoogleTranslateCode } from '@/constants/veoLanguages'
 import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
 import {
   getCuratedElevenVoices,
@@ -203,7 +204,7 @@ export function TreatmentCard({
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 text: t,
-                targetLanguage: selectedLanguage,
+                targetLanguage: toGoogleTranslateCode(selectedLanguage),
                 sourceLanguage: 'en'
               })
             })
@@ -227,7 +228,12 @@ export function TreatmentCard({
           delivery: 'storytelling',
         })
       })
-      if (!resp.ok) throw new Error('TTS failed')
+      if (!resp.ok) {
+        const errBody = await resp.json().catch(() => ({}))
+        const msg =
+          typeof errBody?.error === 'string' ? errBody.error : `TTS failed (${resp.status})`
+        throw new Error(msg)
+      }
       const blob = await resp.blob()
       const url = URL.createObjectURL(blob)
       const audio = new Audio(url)

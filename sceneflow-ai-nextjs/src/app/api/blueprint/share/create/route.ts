@@ -8,6 +8,11 @@ import CollabParticipant from '@/models/CollabParticipant'
 import { getAuthenticatedUserId, assertProjectAccess } from '@/lib/projectAccess'
 import type { BlueprintSessionPayload, BlueprintShareCreateBody } from '@/lib/blueprint/shareTypes'
 import { getPayload } from '@/lib/blueprint/shareSession'
+import {
+  DEFAULT_SHARE_AUDIO_LANGUAGE,
+  getShareAudioLanguage,
+} from '@/lib/blueprint/shareAudioPayload'
+import { isShareAudioStaleForTreatment } from '@/lib/blueprint/generateShareSectionAudio'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -30,7 +35,31 @@ function buildSharePayload(
       collectEmail: false,
     },
     ownerDisplayName: ownerName,
-    sectionAudioStatus: process.env.ELEVENLABS_API_KEY ? 'pending' : 'skipped',
+    sectionAudioStatus: process.env.ELEVENLABS_API_KEY ? 'idle' : 'skipped',
+    sectionAudioLanguage: DEFAULT_SHARE_AUDIO_LANGUAGE,
+    sectionAudioByLanguage: {},
+  }
+}
+
+function invalidateAudioIfTreatmentChanged(
+  prev: BlueprintSessionPayload,
+  nextTreatment: Record<string, unknown>
+): BlueprintSessionPayload {
+  const lang = getShareAudioLanguage(prev)
+  const probe: BlueprintSessionPayload = { ...prev, treatment: nextTreatment }
+  if (!isShareAudioStaleForTreatment(probe, lang)) return prev
+  const byLang = { ...(prev.sectionAudioByLanguage || {}) }
+  delete byLang[lang]
+  const translations = { ...(prev.sectionTranslations || {}) }
+  delete translations[lang]
+  return {
+    ...prev,
+    treatment: nextTreatment,
+    sectionAudioByLanguage: byLang,
+    sectionTranslations: translations,
+    sectionAudioStatus: 'idle',
+    sectionAudioStartedAt: undefined,
+    sectionAudioGeneratedAt: undefined,
   }
 }
 
@@ -98,7 +127,7 @@ export async function POST(req: NextRequest) {
       const existing = await findActiveBlueprintSession(projectId, ownerUserId)
       if (existing) {
         const prev = getPayload(existing)!
-        const nextPayload: BlueprintSessionPayload = {
+        let nextPayload: BlueprintSessionPayload = {
           ...prev,
           variantId,
           treatment,
@@ -107,6 +136,19 @@ export async function POST(req: NextRequest) {
           ownerDisplayName: ownerName,
           shareSettings: {
             ...prev.shareSettings,
+            expiresAt: expiresAt.toISOString(),
+            allowTts: true,
+          },
+        }
+        nextPayload = invalidateAudioIfTreatmentChanged(prev, treatment)
+        nextPayload = {
+          ...nextPayload,
+          variantId,
+          heroImageUrl,
+          audienceDefinition: audienceDefinition ?? null,
+          ownerDisplayName: ownerName,
+          shareSettings: {
+            ...nextPayload.shareSettings,
             expiresAt: expiresAt.toISOString(),
             allowTts: true,
           },

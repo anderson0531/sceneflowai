@@ -6,6 +6,7 @@ import {
   SCENEFLOW_CREATOR_VOICE_ID,
   type CuratedVoice,
 } from '@/lib/tts/voices'
+import { toGoogleTranslateCode } from '@/constants/veoLanguages'
 
 export function useBlueprintTts() {
   const [voices, setVoices] = useState<CuratedVoice[]>([])
@@ -96,7 +97,7 @@ export function useBlueprintTts() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   text: t,
-                  targetLanguage: selectedLanguage,
+                  targetLanguage: toGoogleTranslateCode(selectedLanguage),
                   sourceLanguage: 'en',
                 }),
               })
@@ -124,7 +125,12 @@ export function useBlueprintTts() {
             delivery: 'storytelling',
           }),
         })
-        if (!resp.ok) throw new Error('TTS failed')
+        if (!resp.ok) {
+          const errBody = await resp.json().catch(() => ({}))
+          const msg =
+            typeof errBody?.error === 'string' ? errBody.error : `TTS failed (${resp.status})`
+          throw new Error(msg)
+        }
         const blob = await resp.blob()
         const url = URL.createObjectURL(blob)
         const audio = new Audio(url)

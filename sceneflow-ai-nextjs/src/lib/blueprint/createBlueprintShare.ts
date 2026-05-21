@@ -77,12 +77,18 @@ export async function createBlueprintShare(
 
 /** Run section MP3 generation in a dedicated API route (reliable vs serverless after()). */
 export async function triggerBlueprintShareSectionAudio(
-  token: string
-): Promise<{ success: boolean; skipped?: boolean; error?: string }> {
+  token: string,
+  options?: { language?: string }
+): Promise<{ success: boolean; skipped?: boolean; error?: string; language?: string }> {
   try {
     const res = await fetch(
       `/api/blueprint/share/${encodeURIComponent(token)}/audio/generate`,
-      { method: 'POST', credentials: 'include' }
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: options?.language }),
+      }
     )
     const data = await res.json().catch(() => ({}))
     if (!res.ok || !data?.success) {

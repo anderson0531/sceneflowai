@@ -16,13 +16,12 @@ import {
   formatAudienceDefinitionForPrompt,
   READY_FOR_PRODUCTION_THRESHOLD_V3,
 } from '@/lib/types/audienceResonance'
-import { sequelize } from '@/config/database'
-import Project from '@/models/Project'
 import {
   finalizeBlueprintScore,
   mapDeductions,
   mapRecommendations,
 } from '@/lib/treatment/blueprintAudienceScorer'
+import { persistBlueprintARToProject } from '@/lib/treatment/persistBlueprintAR'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -266,7 +265,7 @@ export async function POST(request: NextRequest) {
 
     if (body.projectId && !body.projectId.startsWith('new-project')) {
       try {
-        await persistBlueprintARToProject(body.projectId, persisted)
+        await persistBlueprintARToProject(body.projectId, persisted, userId)
       } catch (persistErr) {
         console.error('[Blueprint AR v3] Failed to persist analysis to project:', persistErr)
       }

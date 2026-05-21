@@ -17,6 +17,9 @@ import { isBlueprintARV3Enabled } from '@/lib/types/audienceResonance'
 import { AudienceResonancePanel } from './AudienceResonancePanel'
 import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
 import { chipLabelById } from '@/lib/blueprint/feedbackChips'
+import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
+import { triggerBlueprintShareSectionAudio } from '@/lib/blueprint/createBlueprintShare'
+import type { BlueprintSectionAudioStatus } from '@/lib/blueprint/shareTypes'
 
 interface SidePanelTabsProps {
   onClose?: () => void
@@ -188,36 +191,52 @@ function CollaborationContent({
   const [selectedRecIds, setSelectedRecIds] = React.useState<Set<string>>(new Set())
   const [revoking, setRevoking] = React.useState(false)
   const [audioRefreshing, setAudioRefreshing] = React.useState(false)
+  const [audioLanguage, setAudioLanguage] = React.useState('en')
+  const [audioStatus, setAudioStatus] = React.useState<BlueprintSectionAudioStatus | undefined>()
 
   const token = shareToken || (shareUrl ? shareUrl.split('/blueprint/share/')[1]?.split('?')[0] : null)
 
-  const handleRefreshSectionAudio = async () => {
+  const refreshShareAudioMeta = React.useCallback(async () => {
     if (!token) return
-    setAudioRefreshing(true)
     try {
-      const r = await fetch(`/api/blueprint/share/${encodeURIComponent(token)}/audio/generate`, {
-        method: 'POST',
-        credentials: 'include',
+      const r = await fetch(`/api/blueprint/share/${encodeURIComponent(token)}`, {
+        cache: 'no-store',
       })
       const j = await r.json()
       if (j?.success) {
-        try {
-          const { toast } = require('sonner')
-          if (j.skipped) {
-            toast.message('Section audio is already up to date')
-          } else {
-            toast.success('Section audio updated')
-          }
-        } catch {}
+        setAudioStatus(j.payload?.sectionAudioStatus)
+        if (j.payload?.sectionAudioLanguage) {
+          setAudioLanguage(j.payload.sectionAudioLanguage)
+        }
+      }
+    } catch {}
+  }, [token])
+
+  React.useEffect(() => {
+    if (token) void refreshShareAudioMeta()
+  }, [token, refreshShareAudioMeta])
+
+  const handleGenerateSectionAudio = async () => {
+    if (!token) return
+    setAudioRefreshing(true)
+    try {
+      const result = await triggerBlueprintShareSectionAudio(token, {
+        language: audioLanguage,
+      })
+      const { toast } = await import('sonner')
+      if (result.success) {
+        if (result.skipped) {
+          toast.message(`Section audio is already up to date (${audioLanguage})`)
+        } else {
+          toast.success(`Generating section audio (${audioLanguage})…`)
+        }
+        await refreshShareAudioMeta()
       } else {
-        try {
-          const { toast } = require('sonner')
-          toast.error(j?.error || 'Audio generation failed')
-        } catch {}
+        toast.error(result.error || 'Audio generation failed')
       }
     } catch {
       try {
-        const { toast } = require('sonner')
+        const { toast } = await import('sonner')
         toast.error('Audio generation failed')
       } catch {}
     } finally {
@@ -380,22 +399,41 @@ function CollaborationContent({
         )}
 
         {hasShareLink && (
-          <div className="mt-2 space-y-1">
+          <div className="mt-3 space-y-2 rounded-lg border border-slate-700/50 bg-slate-900/40 p-2.5">
+            <p className="text-[10px] uppercase tracking-wide text-gray-500">Reviewer audio</p>
+            <GroupedLanguageSelector
+              value={audioLanguage}
+              onValueChange={setAudioLanguage}
+              size="xs"
+              intent="generate"
+              disabled={audioRefreshing || audioStatus === 'pending'}
+            />
+            <button
+              type="button"
+              onClick={handleGenerateSectionAudio}
+              disabled={audioRefreshing || audioStatus === 'pending'}
+              className="w-full px-3 py-2 rounded-lg bg-purple-600/80 hover:bg-purple-500 text-white text-xs font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {audioRefreshing || audioStatus === 'pending' ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : null}
+              {audioRefreshing || audioStatus === 'pending'
+                ? 'Generating section audio…'
+                : 'Generate section audio'}
+            </button>
+            {audioStatus ? (
+              <p className="text-[10px] text-gray-500">
+                Status: {audioStatus}
+                {audioStatus === 'idle' ? ' — tap Generate when ready' : ''}
+              </p>
+            ) : null}
             <button
               type="button"
               onClick={() => onShare({ forceNew: true })}
               disabled={isSharing}
               className="w-full text-[11px] text-purple-300/90 hover:text-purple-200 disabled:opacity-50 text-left"
             >
-              {isSharing ? 'Creating new link…' : 'Create new link (new URL, regenerates audio)'}
-            </button>
-            <button
-              type="button"
-              onClick={handleRefreshSectionAudio}
-              disabled={audioRefreshing}
-              className="w-full text-[11px] text-gray-400 hover:text-gray-300 disabled:opacity-50 text-left"
-            >
-              {audioRefreshing ? 'Generating section audio…' : 'Refresh section audio (MP3)'}
+              {isSharing ? 'Creating new link…' : 'Create new link (new URL)'}
             </button>
           </div>
         )}

@@ -15,7 +15,10 @@ import type {
   BlueprintFeedbackSections,
   BlueprintSectionAudioMap,
   BlueprintSectionAudioStatus,
+  BlueprintSectionTranslationsByLanguage,
 } from '@/lib/blueprint/shareTypes'
+import { countSectionsWithUrl } from '@/lib/blueprint/shareAudioPayload'
+import { BlueprintShareLanguageControls } from './BlueprintShareLanguageControls'
 import {
   countRatedSections,
   hasAnyFeedback,
@@ -25,6 +28,7 @@ import {
 } from '@/lib/blueprint/feedbackChips'
 
 const PARTICIPANT_KEY = (token: string) => `sf_collab_participant_${token}`
+const SHARE_LANG_KEY = (token: string) => `sf_share_lang_${token}`
 
 /** ~4 minutes at 8s intervals — stale links created before auto-gen fix. */
 const MAX_AUDIO_POLLS = 30
@@ -34,11 +38,18 @@ function resolveSectionAudioPlayerStatus(
   sectionAudio: BlueprintSectionAudioMap,
   audioStatus: BlueprintSectionAudioStatus | undefined,
   allowTts: boolean,
-  audioPollStale: boolean
+  audioPollStale: boolean,
+  audioStartedAt?: string
 ): BlueprintSectionAudioPlayerStatus {
   if (!allowTts) return 'unavailable'
   if (sectionAudio[sectionId]?.url) return 'ready'
-  if (audioStatus === 'pending' && !audioPollStale) return 'preparing'
+  if (
+    audioStatus === 'pending' &&
+    audioStartedAt &&
+    !audioPollStale
+  ) {
+    return 'preparing'
+  }
   return 'unavailable'
 }
 
@@ -60,7 +71,14 @@ export function BlueprintShareViewer({ token }: Props) {
   const [ownerName, setOwnerName] = useState('Owner')
   const [allowTts, setAllowTts] = useState(true)
   const [sectionAudio, setSectionAudio] = useState<BlueprintSectionAudioMap>({})
+  const [sectionAudioByLanguage, setSectionAudioByLanguage] = useState<
+    Record<string, BlueprintSectionAudioMap>
+  >({})
+  const [sectionTranslations, setSectionTranslations] =
+    useState<BlueprintSectionTranslationsByLanguage>({})
+  const [reviewLanguage, setReviewLanguage] = useState('en')
   const [audioStatus, setAudioStatus] = useState<BlueprintSectionAudioStatus | undefined>()
+  const [audioStartedAt, setAudioStartedAt] = useState<string | undefined>()
 
   const [regName, setRegName] = useState('')
   const [regEmail, setRegEmail] = useState('')
@@ -93,8 +111,20 @@ export function BlueprintShareViewer({ token }: Props) {
     setHeroImageUrl(data.payload?.heroImageUrl)
     setOwnerName(data.payload?.ownerDisplayName || 'Owner')
     setAllowTts(data.payload?.shareSettings?.allowTts !== false)
-    setSectionAudio(data.payload?.sectionAudio || {})
+    const lang = data.payload?.sectionAudioLanguage || 'en'
+    const byLang = data.payload?.sectionAudioByLanguage || {}
+    const flat = data.payload?.sectionAudio || byLang[lang] || {}
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(SHARE_LANG_KEY(token))
+      setReviewLanguage(stored || lang)
+    } else {
+      setReviewLanguage(lang)
+    }
+    setSectionAudioByLanguage(byLang)
+    setSectionTranslations(data.payload?.sectionTranslations || {})
+    setSectionAudio(flat)
     setAudioStatus(data.payload?.sectionAudioStatus)
+    setAudioStartedAt(data.payload?.sectionAudioStartedAt)
     return true
   }, [token])
 
@@ -129,7 +159,18 @@ export function BlueprintShareViewer({ token }: Props) {
   }, [loadShare])
 
   useEffect(() => {
-    if (audioStatus !== 'pending') {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(SHARE_LANG_KEY(token), reviewLanguage)
+    }
+    const langAudio =
+      sectionAudioByLanguage[reviewLanguage] ||
+      (reviewLanguage === 'en' ? sectionAudio : undefined) ||
+      {}
+    setSectionAudio(langAudio)
+  }, [reviewLanguage, sectionAudioByLanguage, token])
+
+  useEffect(() => {
+    if (audioStatus !== 'pending' || !audioStartedAt) {
       audioPollCountRef.current = 0
       setAudioPollStale(false)
       return
@@ -143,7 +184,7 @@ export function BlueprintShareViewer({ token }: Props) {
       void loadShare()
     }, 8000)
     return () => clearInterval(id)
-  }, [audioStatus, loadShare])
+  }, [audioStatus, audioStartedAt, loadShare])
 
   useEffect(() => {
     if (!participantId) return
@@ -236,9 +277,18 @@ export function BlueprintShareViewer({ token }: Props) {
   }
 
   const ratedCount = useMemo(() => countRatedSections(draft), [draft])
-  const audioReadyCount = Object.keys(sectionAudio).length
+  const audioReadyCount = countSectionsWithUrl(sectionAudio)
   const totalAudioSections = SECTION_NAV.length
   const hasCachedAudio = audioReadyCount > 0
+  const hasTranslationForLang = Boolean(
+    sectionTranslations[reviewLanguage] &&
+      Object.keys(sectionTranslations[reviewLanguage] || {}).length > 0
+  )
+  const audioMissingForLang =
+    allowTts &&
+    reviewLanguage !== 'en' &&
+    !hasCachedAudio &&
+    (audioStatus === 'ready' || audioStatus === 'partial' || audioStatus === 'idle')
 
   if (loading) {
     return (
@@ -267,16 +317,33 @@ export function BlueprintShareViewer({ token }: Props) {
         <div className="max-w-4xl mx-auto px-4 py-3">
           <p className="text-xs text-purple-400 font-medium tracking-wide">SceneFlow · Blueprint Review</p>
           <h1 className="text-xl font-semibold text-white mt-0.5">{String(treatment.title || 'Blueprint')}</h1>
-          {allowTts && audioStatus === 'pending' && !audioPollStale && (
+          <BlueprintShareLanguageControls
+            language={reviewLanguage}
+            onLanguageChange={setReviewLanguage}
+            className="mt-2"
+          />
+          {audioMissingForLang && (
+            <p className="text-xs text-amber-400/90 mt-1">
+              Audio has not been generated for this language. You can still read the blueprint
+              {hasTranslationForLang ? ' below' : ' (page translation may apply)'}.
+            </p>
+          )}
+          {allowTts && audioStatus === 'pending' && audioStartedAt && !audioPollStale && (
             <p className="text-xs text-amber-400/90 mt-1">
               {audioReadyCount > 0
                 ? `Generating audio (${audioReadyCount}/${totalAudioSections} sections ready)…`
                 : 'Preparing section audio…'}
             </p>
           )}
-          {allowTts && audioPollStale && !hasCachedAudio && (
+          {allowTts && audioStatus === 'idle' && !hasCachedAudio && (
+            <p className="text-xs text-gray-400 mt-1">
+              Section audio is not generated yet. Ask the project owner to use Generate section audio
+              in Studio → Collaborate.
+            </p>
+          )}
+          {allowTts && audioPollStale && !hasCachedAudio && audioStatus === 'pending' && (
             <p className="text-xs text-amber-400/90 mt-1">
-              Section audio is taking longer than expected. Ask the project owner to refresh section
+              Section audio is taking longer than expected. Ask the project owner to generate section
               audio from Studio → Collaborate.
             </p>
           )}
@@ -341,12 +408,14 @@ export function BlueprintShareViewer({ token }: Props) {
               expanded={!!expanded[s.id]}
               onToggle={() => setExpanded((p) => ({ ...p, [s.id]: !p[s.id] }))}
               audio={sectionAudio[s.id]}
+              translationNarration={sectionTranslations[reviewLanguage]?.[s.id]}
               audioPlayerStatus={resolveSectionAudioPlayerStatus(
                 s.id,
                 sectionAudio,
                 audioStatus,
                 allowTts,
-                audioPollStale
+                audioPollStale,
+                audioStartedAt
               )}
               allowTts={allowTts}
               canFeedback={!!participantId && !submitted}
