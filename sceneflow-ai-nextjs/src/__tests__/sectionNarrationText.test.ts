@@ -27,27 +27,24 @@ const fixture: Record<string, unknown> = {
 }
 
 describe('buildBlueprintSectionNarrationText', () => {
-  it('uses storytelling openers instead of field labels', () => {
+  it('uses factual field labels for core section', () => {
     const core = buildBlueprintSectionNarrationText(fixture, 'core')
-    expect(core).toContain('Let me pull you into this story')
-    expect(core).toContain('Midnight Run')
-    expect(core).toContain('Picture this')
-    expect(core).not.toMatch(/Title:/i)
-    expect(core).not.toMatch(/Logline:/i)
+    expect(core).toContain('Title: Midnight Run')
+    expect(core).toContain('Logline:')
+    expect(core).not.toContain('Let me pull you into this story')
   })
 
-  it('builds story section as narrative prose', () => {
+  it('builds story section with synopsis and setting', () => {
     const text = buildBlueprintSectionNarrationText(fixture, 'story')
-    expect(text).toContain('world comes alive')
+    expect(text).toContain('Synopsis:')
     expect(text).toContain('Alex Chen')
     expect(text).toContain('Neo-Tokyo')
-    expect(text).not.toMatch(/Synopsis:/i)
   })
 
-  it('builds beats with dramatic transitions', () => {
+  it('builds numbered beats list', () => {
     const text = buildBlueprintSectionNarrationText(fixture, 'beats')
-    expect(text).toContain('opens with Opening')
-    expect(text).toContain('culminates in Midpoint')
+    expect(text).toContain('1. Opening')
+    expect(text).toContain('2. Midpoint')
   })
 
   it('builds characters section', () => {
@@ -81,8 +78,8 @@ describe('chunkNarrationText', () => {
 
   it('prefers sentence boundaries when possible', () => {
     const text =
-      'Let me pull you into this story. ' +
-      'It is called Midnight Run. '.repeat(80) +
+      'Title: Midnight Run. ' +
+      'Logline: A courier races dawn. '.repeat(80) +
       'The end.'
     const chunks = chunkNarrationText(text, 400)
     expect(chunks.length).toBeGreaterThan(1)

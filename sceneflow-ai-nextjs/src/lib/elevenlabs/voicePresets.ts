@@ -48,3 +48,15 @@ export function resolveStorytellingModelId(): string {
     'eleven_multilingual_v2'
   )
 }
+
+/** ElevenLabs v3 audio tag — single delivery hint for blueprint narration. */
+export const STORYTELLING_DELIVERY_TAG = '[Intelligent and Engaging]'
+
+/** Prepend the storytelling delivery tag once (strips other leading bracket tags). */
+export function applyStorytellingDeliveryTag(text: string): string {
+  const trimmed = text.trim()
+  if (!trimmed) return trimmed
+  if (trimmed.startsWith(STORYTELLING_DELIVERY_TAG)) return trimmed
+  const withoutLeadingTag = trimmed.replace(/^\[[^\]]+\]\s*/, '').trim()
+  return `${STORYTELLING_DELIVERY_TAG} ${withoutLeadingTag}`
+}

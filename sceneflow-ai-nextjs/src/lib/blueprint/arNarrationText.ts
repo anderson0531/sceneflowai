@@ -31,9 +31,7 @@ export function buildBlueprintARNarrationText(opts: {
 
   const parts: string[] = []
 
-  parts.push(
-    'Let me walk you through how this story lands with your audience — the highs, the gaps, and what to fix next.'
-  )
+  parts.push('Audience Resonance Analysis.')
   parts.push(
     `Overall score: ${analysis.overallScore} out of 100. ${scoreStatusLabel(analysis.overallScore)}.`
   )

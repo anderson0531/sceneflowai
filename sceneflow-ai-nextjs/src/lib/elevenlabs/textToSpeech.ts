@@ -5,6 +5,7 @@
 
 import {
   type ElevenLabsDelivery,
+  applyStorytellingDeliveryTag,
   resolveStorytellingModelId,
   resolveVoiceSettings,
 } from './voicePresets'
@@ -21,6 +22,8 @@ export interface SynthesizeElevenLabsMp3Params {
   modelId?: string
   /** Expressive storytelling preset (lower stability, higher style). */
   delivery?: ElevenLabsDelivery
+  /** When true with storytelling delivery, prepend `[Intelligent and Engaging]`. Default true. */
+  prependDeliveryTag?: boolean
 }
 
 export async function synthesizeElevenLabsMp3(
@@ -31,7 +34,7 @@ export async function synthesizeElevenLabsMp3(
     throw new Error('ELEVENLABS_API_KEY is not configured')
   }
 
-  const text = (params.text || '').trim()
+  let text = (params.text || '').trim()
   if (!text) {
     throw new Error('TTS text is required')
   }
@@ -42,6 +45,10 @@ export async function synthesizeElevenLabsMp3(
   }
 
   const delivery = params.delivery ?? 'neutral'
+  const prependTag = params.prependDeliveryTag !== false
+  if (delivery === 'storytelling' && prependTag) {
+    text = applyStorytellingDeliveryTag(text)
+  }
   const preset = resolveVoiceSettings(delivery)
 
   const stability =

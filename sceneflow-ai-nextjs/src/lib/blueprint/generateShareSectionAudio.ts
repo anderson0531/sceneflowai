@@ -20,11 +20,12 @@ async function synthesizeSectionMp3(text: string, voiceId: string): Promise<Buff
   const chunks = chunkNarrationText(text)
   if (chunks.length === 0) return Buffer.alloc(0)
   const buffers: Buffer[] = []
-  for (const chunk of chunks) {
+  for (let i = 0; i < chunks.length; i++) {
     const buf = await synthesizeElevenLabsMp3({
-      text: chunk,
+      text: chunks[i]!,
       voiceId,
       delivery: 'storytelling',
+      prependDeliveryTag: i === 0,
     })
     buffers.push(buf)
   }

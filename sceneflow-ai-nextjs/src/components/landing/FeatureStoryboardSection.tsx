@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, PlayCircle, Clock3, Maximize2, X, Play, Pause, Volume2, VolumeX, Maximize, ChevronDown, ChevronUp, CheckCircle2 } from 'lucide-react';
+import { Camera, PlayCircle, Clock3, Maximize2, X, Play, Pause, Volume2, VolumeX, Maximize, ChevronDown, ChevronUp, CheckCircle2, ExternalLink } from 'lucide-react';
 import NextImage from 'next/image';
 import { useState, useRef } from 'react';
 
@@ -15,6 +15,21 @@ type FeatureStoryboardItem = {
   screenshotUrl?: string;
   videoUrl?: string;
 };
+
+function MediaAssetLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-3 inline-flex items-center gap-1.5 text-xs text-cyan-400/90 hover:text-cyan-300 transition-colors break-all"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+      <span>{label}</span>
+    </a>
+  );
+}
 
 function FeatureBulletText({ text }: { text: string }) {
   const parts = text.split('—');
@@ -376,7 +391,7 @@ function StoryboardCard({
             {!isOpen && (
               <>
                 <p className="mt-1 text-sm text-slate-400 line-clamp-1 max-w-2xl">{item.description}</p>
-                <div className="mt-2 hidden sm:flex flex-wrap gap-2 max-w-2xl">
+                <div className="mt-2 hidden sm:flex flex-wrap items-center gap-2 max-w-2xl">
                   {item.keyFeatures.slice(0, 2).map((feature) => (
                     <span
                       key={feature}
@@ -386,6 +401,30 @@ function StoryboardCard({
                       <span className="line-clamp-1">{feature.split('—')[0].trim()}</span>
                     </span>
                   ))}
+                  {item.screenshotUrl && (
+                    <a
+                      href={item.screenshotUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-300 hover:text-cyan-200 transition-colors"
+                    >
+                      <Camera className="h-3 w-3 shrink-0" />
+                      Screenshot
+                    </a>
+                  )}
+                  {item.videoUrl && (
+                    <a
+                      href={item.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-xs text-violet-300 hover:text-violet-200 transition-colors"
+                    >
+                      <PlayCircle className="h-3 w-3 shrink-0" />
+                      Video
+                    </a>
+                  )}
                 </div>
               </>
             )}
@@ -412,20 +451,6 @@ function StoryboardCard({
           >
             <div className="p-6 md:p-8 pt-0 border-t border-white/5">
               <p className="mt-4 text-base leading-relaxed text-slate-300 max-w-4xl">{item.description}</p>
-
-              <div className="mt-6 max-w-4xl">
-                <p className="text-xs font-medium uppercase tracking-wider text-cyan-300/90 mb-3">
-                  Key features
-                </p>
-                <ul className="space-y-2.5">
-                  {item.keyFeatures.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2.5">
-                      <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-cyan-400" />
-                      <FeatureBulletText text={feature} />
-                    </li>
-                  ))}
-                </ul>
-              </div>
 
               <div className="mt-8 grid gap-6 lg:grid-cols-2">
                 {/* Screenshot Column */}
@@ -470,6 +495,9 @@ function StoryboardCard({
                       </div>
                     )}
                   </div>
+                  {item.screenshotUrl && (
+                    <MediaAssetLink href={item.screenshotUrl} label="Open screenshot" />
+                  )}
                 </div>
 
                 {/* Video Column */}
@@ -493,7 +521,24 @@ function StoryboardCard({
                       </div>
                     )}
                   </div>
+                  {item.videoUrl && (
+                    <MediaAssetLink href={item.videoUrl} label="Open feature video" />
+                  )}
                 </div>
+              </div>
+
+              <div className="mt-8 max-w-4xl">
+                <p className="text-xs font-medium uppercase tracking-wider text-cyan-300/90 mb-3">
+                  Key features
+                </p>
+                <ul className="space-y-2.5">
+                  {item.keyFeatures.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2.5">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-cyan-400" />
+                      <FeatureBulletText text={feature} />
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </motion.div>
