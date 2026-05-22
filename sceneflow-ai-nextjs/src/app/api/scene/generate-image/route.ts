@@ -242,11 +242,13 @@ export async function POST(req: NextRequest) {
       excludeCharacters = false,  // NEW: Generate scene reference only (no people) for reference library
       locationReferences = [],  // NEW: Location references for environment consistency
       skipObjectAutoDetection = false,  // NEW: Skip auto-detection of objects (for batch mode)
-      characterSelectionExplicit = false,  // NEW: Client explicitly chose characters (even if empty = no characters wanted)
       useAIPrompt = true,  // NEW: Use Gemini intelligence for prompt generation (default: true)
       frameType = 'establishing',  // 'establishing' | 'dialogue' storyboard frame
       dialogueIndex,  // Required when frameType === 'dialogue'
     } = body
+    
+    // Client explicitly chose characters (even if empty = no characters wanted); mutable for dialogue frames
+    let characterSelectionExplicit = body.characterSelectionExplicit ?? false
     
     const isDialogueFrame = frameType === 'dialogue'
     if (isDialogueFrame && (typeof dialogueIndex !== 'number' || dialogueIndex < 0)) {
