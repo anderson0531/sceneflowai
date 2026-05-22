@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, PlayCircle, Clock3, Maximize2, X, Play, Pause, Volume2, VolumeX, Maximize, ChevronDown, ChevronUp, CheckCircle2, ExternalLink } from 'lucide-react';
 import NextImage from 'next/image';
 import { useState, useRef } from 'react';
+import { StudioVideoWatermark } from '@/components/landing/StudioVideoWatermark';
 
 type FeatureStoryboardItem = {
   id: number;
@@ -327,9 +328,11 @@ function FeatureVideoPlayer({
         onContextMenu={(e) => e.preventDefault()}
         controlsList="nodownload"
       />
+
+      <StudioVideoWatermark />
       
       {/* Controls Overlay */}
-      <div className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+      <div className="absolute inset-0 z-20 flex items-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
         <div className="w-full bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 flex items-center justify-between pointer-events-auto">
           <div className="flex items-center space-x-3">
             <button onClick={togglePlay} className="text-white hover:text-cyan-400 transition" aria-label={isPlaying ? "Pause" : "Play"}>
@@ -349,7 +352,7 @@ function FeatureVideoPlayer({
 
       {/* Play Overlay (Visible when paused) */}
       {!isPlaying && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/20 pointer-events-none">
           <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 transition-transform group-hover:scale-110">
             <Play className="w-6 h-6 text-white fill-white" />
           </div>
