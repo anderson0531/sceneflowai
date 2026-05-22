@@ -65,6 +65,7 @@ export function ExpressConfirmDialog({
     const total = scenes.length
     let scenesNeedingDirection = 0
     let scenesNeedingImage = 0
+    let scenesNeedingDialogueFrames = 0
     let scenesNeedingAudio = 0
     let totalDialogue = 0
     let totalSfxCues = 0
@@ -82,6 +83,8 @@ export function ExpressConfirmDialog({
 
       const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
       totalDialogue += dialogue.length
+      const missingDialogueFrames = dialogue.filter((d: any) => !d?.storyboardImageUrl).length
+      if (missingDialogueFrames > 0) scenesNeedingDialogueFrames += 1
 
       const dialogueAudio = scene?.dialogueAudio?.[language]
       const dialogueOk =
@@ -103,6 +106,7 @@ export function ExpressConfirmDialog({
       total,
       scenesNeedingDirection,
       scenesNeedingImage,
+      scenesNeedingDialogueFrames,
       scenesNeedingAudio,
       totalDialogue,
       totalSfxCues,
@@ -110,16 +114,26 @@ export function ExpressConfirmDialog({
     }
   }, [scenes, language])
 
-  const effectiveImageScenes = regenerate
+  const effectiveEstablishingCount = regenerate
     ? stats.total
     : stats.scenesNeedingImage
+  const effectiveDialogueFrameCount = useMemo(() => {
+    if (regenerate) return stats.totalDialogue
+    let count = 0
+    for (const scene of scenes) {
+      const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
+      count += dialogue.filter((d: any) => !d?.storyboardImageUrl).length
+    }
+    return count
+  }, [regenerate, scenes, stats.totalDialogue])
   const effectiveAudioScenes = regenerate ? stats.total : stats.scenesNeedingAudio
   const effectiveDirectionScenes = regenerate
     ? stats.total
     : stats.scenesNeedingDirection
 
   const estimatedCredits = useMemo(() => {
-    const image = effectiveImageScenes * IMAGE_CREDITS.IMAGEN_4
+    const imageFrameCount = effectiveEstablishingCount + effectiveDialogueFrameCount
+    const image = imageFrameCount * IMAGE_CREDITS.IMAGEN_4
     // Soft estimate for audio: 80 credits per ~1k chars; assume ~250 chars/line.
     // narration counts once per scene; dialogue counts per line.
     const dialoguePerScene = stats.total > 0 ? stats.totalDialogue / stats.total : 0
@@ -132,7 +146,8 @@ export function ExpressConfirmDialog({
     const sfx = includeSFX ? stats.totalSfxCues * AUDIO_CREDITS.ELEVENLABS_SFX : 0
     return { image, audio, music, sfx, total: image + audio + music + sfx }
   }, [
-    effectiveImageScenes,
+    effectiveEstablishingCount,
+    effectiveDialogueFrameCount,
     effectiveAudioScenes,
     stats.total,
     stats.totalDialogue,
@@ -145,7 +160,8 @@ export function ExpressConfirmDialog({
   const nothingToRun =
     !regenerate &&
     effectiveDirectionScenes === 0 &&
-    effectiveImageScenes === 0 &&
+    effectiveEstablishingCount === 0 &&
+    effectiveDialogueFrameCount === 0 &&
     effectiveAudioScenes === 0 &&
     !includeMusic &&
     !includeSFX
@@ -212,7 +228,7 @@ export function ExpressConfirmDialog({
                 <ImageIcon className="w-3.5 h-3.5 text-indigo-400" />
                 <span className="font-medium">3. Image</span>
                 <span className="text-gray-500">
-                  · {effectiveImageScenes}/{stats.total} scenes
+                  · {effectiveEstablishingCount} establishing + {effectiveDialogueFrameCount} dialogue frames
                 </span>
               </li>
             </ul>
@@ -293,7 +309,7 @@ export function ExpressConfirmDialog({
               Estimated cost
             </div>
             <div className="text-xs text-gray-300 space-y-1">
-              <div>· Images: {estimatedCredits.image} credits ({effectiveImageScenes} × {IMAGE_CREDITS.IMAGEN_4})</div>
+              <div>· Images: {estimatedCredits.image} credits ({effectiveEstablishingCount + effectiveDialogueFrameCount} frames × {IMAGE_CREDITS.IMAGEN_4})</div>
               <div>· Audio: ~{estimatedCredits.audio} credits</div>
               {includeMusic && stats.scenesWithMusic > 0 && (
                 <div>· Music: {estimatedCredits.music} credits</div>

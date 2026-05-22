@@ -67,6 +67,7 @@ import { toast } from 'sonner'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
+import { flattenSceneToStoryboardFrames } from '@/lib/storyboard/types'
 import { ExportDialog } from './ExportDialog'
 import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
 import { getKenBurnsConfig, generateKenBurnsKeyframes, type KenBurnsIntensity } from '@/lib/animation/kenBurns'
@@ -3274,15 +3275,21 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
             type={ReportType.STORYBOARD}
             data={{
               title: script.title || 'Untitled Script',
-              frames: scenes.map((scene: any, idx: number) => ({
-                sceneNumber: idx + 1,
-                imageUrl: scene.imageUrl,
-                visualDescription: scene.visualDescription || scene.action || scene.summary,
-                shotType: scene.shotType,
-                cameraAngle: scene.cameraAngle,
-                lighting: scene.lighting,
-                duration: scene.duration
-              }))
+              frames: scenes.flatMap((scene: any, idx: number) =>
+                flattenSceneToStoryboardFrames(scene, idx + 1).map((f) => ({
+                  sceneNumber: f.sceneNumber,
+                  frameType: f.frameType,
+                  dialogueIndex: f.dialogueIndex,
+                  imageUrl: f.imageUrl,
+                  visualDescription: f.visualDescription,
+                  shotType: f.shotType,
+                  cameraAngle: f.cameraAngle,
+                  lighting: f.lighting,
+                  duration: f.duration,
+                  character: f.character,
+                  line: f.line,
+                }))
+              ),
             } as StoryboardData}
             projectName={script.title || 'Untitled Script'}
             open={storyboardPreviewOpen}

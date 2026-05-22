@@ -87,8 +87,17 @@ function sceneNeedsAudio(scene: any, language: string): boolean {
   return !(narrationOk && dialogueOk)
 }
 
-function sceneNeedsImage(scene: any): boolean {
+function sceneNeedsEstablishingImage(scene: any): boolean {
   return !scene?.imageUrl
+}
+
+function sceneNeedsDialogueImages(scene: any): boolean {
+  const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
+  return dialogue.some((d: any) => !d?.storyboardImageUrl)
+}
+
+function sceneNeedsImage(scene: any): boolean {
+  return sceneNeedsEstablishingImage(scene) || sceneNeedsDialogueImages(scene)
 }
 
 async function runDirectionPhase(
@@ -241,8 +250,13 @@ async function runImagePhase(
   emit: ExpressEmit
 ): Promise<{ ok: boolean; skipped: boolean; imageUrl?: string; error?: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
+  const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
+  const needsEstablishing = options.regenerate || sceneNeedsEstablishingImage(scene)
+  const needsDialogue =
+    options.regenerate ||
+    dialogue.some((d: any) => !d?.storyboardImageUrl)
 
-  if (!options.regenerate && !sceneNeedsImage(scene)) {
+  if (!options.regenerate && !needsEstablishing && !needsDialogue) {
     safeEmit(emit, {
       type: 'phase-done',
       sceneIndex,
@@ -262,30 +276,100 @@ async function runImagePhase(
     phase: 'image',
   })
 
+  let lastImageUrl = scene.imageUrl as string | undefined
+  let hadFailure = false
+  let lastError: string | undefined
+
+  const persistDialogueFrame = (idx: number, result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null }) => {
+    if (!Array.isArray(scene.dialogue)) scene.dialogue = []
+    scene.dialogue[idx] = {
+      ...scene.dialogue[idx],
+      storyboardImageUrl: result.imageUrl,
+      ...(result.gcsPath ? { storyboardImageGcsPath: result.gcsPath } : {}),
+      ...(result.imagePrompt ? { storyboardImagePrompt: result.imagePrompt } : {}),
+    }
+  }
+
   try {
-    const result = await generateSceneImage({
-      projectId: options.projectId,
-      sceneIndex,
-      baseUrl,
-      authCookie,
-      quality: options.imageQuality || 'auto',
-    })
-    scene.imageUrl = result.imageUrl
-    if (result.gcsPath) {
-      scene.imageGcsPath = result.gcsPath
+    if (needsEstablishing) {
+      try {
+        const result = await generateSceneImage({
+          projectId: options.projectId,
+          sceneIndex,
+          baseUrl,
+          authCookie,
+          quality: options.imageQuality || 'auto',
+          frameType: 'establishing',
+        })
+        scene.imageUrl = result.imageUrl
+        lastImageUrl = result.imageUrl
+        if (result.gcsPath) scene.imageGcsPath = result.gcsPath
+        if (result.imagePrompt) scene.imagePrompt = result.imagePrompt
+        safeEmit(emit, {
+          type: 'phase-done',
+          sceneIndex,
+          sceneNumber,
+          phase: 'image',
+          ok: true,
+          imageUrl: result.imageUrl,
+        })
+      } catch (err: any) {
+        hadFailure = true
+        lastError = err?.message || String(err)
+        safeEmit(emit, {
+          type: 'phase-done',
+          sceneIndex,
+          sceneNumber,
+          phase: 'image',
+          ok: false,
+          error: lastError,
+        })
+      }
     }
-    if (result.imagePrompt) {
-      scene.imagePrompt = result.imagePrompt
+
+    for (let dialogueIdx = 0; dialogueIdx < dialogue.length; dialogueIdx++) {
+      if (!options.regenerate && dialogue[dialogueIdx]?.storyboardImageUrl) continue
+
+      try {
+        const result = await generateSceneImage({
+          projectId: options.projectId,
+          sceneIndex,
+          baseUrl,
+          authCookie,
+          quality: options.imageQuality || 'auto',
+          frameType: 'dialogue',
+          dialogueIndex: dialogueIdx,
+        })
+        persistDialogueFrame(dialogueIdx, result)
+        lastImageUrl = result.imageUrl
+        safeEmit(emit, {
+          type: 'phase-done',
+          sceneIndex,
+          sceneNumber,
+          phase: 'image',
+          ok: true,
+          imageUrl: result.imageUrl,
+          dialogueIndex: dialogueIdx,
+        })
+      } catch (err: any) {
+        hadFailure = true
+        lastError = err?.message || String(err)
+        safeEmit(emit, {
+          type: 'phase-done',
+          sceneIndex,
+          sceneNumber,
+          phase: 'image',
+          ok: false,
+          error: lastError,
+          dialogueIndex: dialogueIdx,
+        })
+      }
     }
-    safeEmit(emit, {
-      type: 'phase-done',
-      sceneIndex,
-      sceneNumber,
-      phase: 'image',
-      ok: true,
-      imageUrl: result.imageUrl,
-    })
-    return { ok: true, skipped: false, imageUrl: result.imageUrl }
+
+    if (hadFailure) {
+      return { ok: false, skipped: false, imageUrl: lastImageUrl, error: lastError }
+    }
+    return { ok: true, skipped: false, imageUrl: lastImageUrl }
   } catch (err: any) {
     const error = err?.message || String(err)
     safeEmit(emit, {

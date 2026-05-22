@@ -92,6 +92,8 @@ export interface ExpressPhaseEvent {
   counts?: SceneAudioCounts
   /** Image URL when phase === 'image' && type === 'phase-done'. */
   imageUrl?: string
+  /** Dialogue line index when generating a dialogue storyboard frame. */
+  dialogueIndex?: number
   /** Whether this phase was skipped because output already existed. */
   skipped?: boolean
 }

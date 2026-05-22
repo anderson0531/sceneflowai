@@ -45,20 +45,31 @@ export const StoryboardRenderer = React.forwardRef<HTMLDivElement, RendererProps
       <div className="grid grid-cols-2 gap-6">
         {data.frames.map((frame, index) => (
           <div key={`${index}-${frame.imageUrl || 'no-image'}`} className="border border-gray-300 p-4 print:break-inside-avoid">
-            <h3 className="font-bold mb-2 !text-black">Scene {frame.sceneNumber}</h3>
+            <h3 className="font-bold mb-2 !text-black">
+              Scene {frame.sceneNumber}
+              {frame.frameType === 'dialogue' && frame.character
+                ? ` — ${frame.character}`
+                : frame.frameType === 'establishing'
+                  ? ' — Establishing'
+                  : ''}
+            </h3>
             
             {frame.imageUrl && (
               <div className="relative w-full aspect-video bg-gray-100 mb-2">
                 <img 
                   src={frame.imageUrl} 
-                  alt={`Scene ${frame.sceneNumber}`}
+                  alt={`Scene ${frame.sceneNumber}${frame.character ? ` — ${frame.character}` : ''}`}
                   className="w-full h-full object-cover"
                   key={frame.imageUrl}
                 />
               </div>
             )}
             
-            {frame.visualDescription && (
+            {frame.line && (
+              <p className="text-sm italic mb-2 !text-gray-800">&ldquo;{frame.line}&rdquo;</p>
+            )}
+            
+            {frame.visualDescription && !frame.line && (
               <p className="text-sm mb-2 !text-gray-900">{frame.visualDescription}</p>
             )}
             

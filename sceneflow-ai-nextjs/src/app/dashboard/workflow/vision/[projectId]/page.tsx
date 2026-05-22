@@ -8051,6 +8051,137 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleGenerateDialogueFrameImage = async (sceneIdx: number, dialogueIdx: number) => {
+    const scene = script?.script?.scenes?.[sceneIdx]
+    const dialogueLine = scene?.dialogue?.[dialogueIdx]
+    if (!scene || !dialogueLine) {
+      try { const { toast } = require('sonner'); toast.error('Dialogue line not found') } catch {}
+      return
+    }
+
+    const sceneDescription = scene?.visualDescription || scene?.action || scene?.summary || scene?.heading
+    if (!sceneDescription) {
+      try { const { toast } = require('sonner'); toast.error('Scene must have a description to generate dialogue frame') } catch {}
+      return
+    }
+
+    if (!batchGeneratingRef.current) {
+      overlayStore.show(`Dialogue frame — Scene ${sceneIdx + 1}, line ${dialogueIdx + 1}`, 25, 'storyboard-production')
+    }
+    setGeneratingKeyframeSceneNumber(sceneIdx + 1)
+
+    try {
+      const response = await fetch('/api/scene/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex: sceneIdx,
+          frameType: 'dialogue',
+          dialogueIndex: dialogueIdx,
+          quality: imageQuality,
+          characterSelectionExplicit: true,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data?.error || 'Dialogue frame generation failed')
+      }
+
+      const updatedScenes = [...(script.script.scenes || [])]
+      const dialogue = [...(updatedScenes[sceneIdx].dialogue || [])]
+      dialogue[dialogueIdx] = {
+        ...dialogue[dialogueIdx],
+        storyboardImageUrl: data.imageUrl,
+        storyboardImagePrompt: data.prompt || '',
+      }
+      updatedScenes[sceneIdx] = { ...updatedScenes[sceneIdx], dialogue }
+
+      setScript({
+        ...script,
+        script: { ...script.script, scenes: updatedScenes },
+      })
+
+      const { characters: _staleCharacters, ...visionPhaseWithoutCharacters } = project?.metadata?.visionPhase || {}
+      await fetch(`/api/projects/${project?.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          metadata: {
+            ...project?.metadata,
+            visionPhase: {
+              ...visionPhaseWithoutCharacters,
+              characters,
+              script: {
+                ...script,
+                script: { ...script.script, scenes: updatedScenes },
+              },
+            },
+          },
+        }),
+      })
+
+      try { const { toast } = require('sonner'); toast.success('Dialogue frame generated!') } catch {}
+    } catch (error: any) {
+      console.error('Failed to generate dialogue frame:', error)
+      try { const { toast } = require('sonner'); toast.error(error?.message || 'Failed to generate dialogue frame') } catch {}
+    } finally {
+      if (!batchGeneratingRef.current) overlayStore.hide()
+      setGeneratingKeyframeSceneNumber(null)
+    }
+  }
+
+  const handleUploadDialogueFrame = async (sceneIndex: number, dialogueIdx: number, file: File) => {
+    if (!script?.script?.scenes) return
+
+    try {
+      const scriptScenes = script.script.scenes
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        const dataUrl = e.target?.result as string
+        const updatedScenes = scriptScenes.map((s: any, idx: number) => {
+          if (idx !== sceneIndex) return s
+          const dialogue = [...(s.dialogue || [])]
+          dialogue[dialogueIdx] = { ...dialogue[dialogueIdx], storyboardImageUrl: dataUrl }
+          return { ...s, dialogue }
+        })
+
+        setScript((prev: any) => ({
+          ...prev,
+          script: { ...prev?.script, scenes: updatedScenes },
+        }))
+
+        try {
+          const existingMetadata = project?.metadata || {}
+          const existingVisionPhase = existingMetadata.visionPhase || {}
+          await fetch(`/api/projects/${projectId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              metadata: {
+                ...existingMetadata,
+                visionPhase: {
+                  ...existingVisionPhase,
+                  script: {
+                    ...script,
+                    script: { ...script.script, scenes: updatedScenes },
+                  },
+                  characters,
+                },
+              },
+            }),
+          })
+        } catch (saveError) {
+          console.error('[handleUploadDialogueFrame] Failed to persist:', saveError)
+        }
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('[handleUploadDialogueFrame] Error:', error)
+    }
+  }
+
   // Handle manual save project - forces save of all current state to database
   const handleSaveProject = async () => {
     if (!project || !script) {
@@ -9747,13 +9878,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
 
-      const applySceneImage = (sceneIndex: number, imageUrl?: string) => {
+      const applySceneImage = (sceneIndex: number, imageUrl?: string, dialogueIndex?: number) => {
         if (!imageUrl) return
         setScript((prev: any) => {
           if (!prev?.script?.scenes) return prev
           const scenes = [...prev.script.scenes]
           if (!scenes[sceneIndex]) return prev
-          scenes[sceneIndex] = { ...scenes[sceneIndex], imageUrl }
+          if (typeof dialogueIndex === 'number') {
+            const dialogue = [...(scenes[sceneIndex].dialogue || [])]
+            dialogue[dialogueIndex] = {
+              ...dialogue[dialogueIndex],
+              storyboardImageUrl: imageUrl,
+            }
+            scenes[sceneIndex] = { ...scenes[sceneIndex], dialogue }
+          } else {
+            scenes[sceneIndex] = { ...scenes[sceneIndex], imageUrl }
+          }
           return { ...prev, script: { ...prev.script, scenes } }
         })
       }
@@ -9802,7 +9942,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   if (event.ok) {
                     setPhase(event.sceneIndex, event.phase, 'done')
                     if (event.phase === 'image' && event.imageUrl) {
-                      applySceneImage(event.sceneIndex, event.imageUrl)
+                      applySceneImage(event.sceneIndex, event.imageUrl, event.dialogueIndex)
                     }
                   } else {
                     setPhase(event.sceneIndex, event.phase, 'error', {
@@ -10948,6 +11088,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onRegenerateScene={(index) => handleGenerateSceneImage(index)}
                             onOpenPromptBuilder={openPromptBuilder}
                             onGenerateScene={(sceneIdx, _prompt) => handleGenerateSceneImage(sceneIdx)}
+                            onGenerateDialogueFrame={(sceneIdx, dialogueIdx) =>
+                              handleGenerateDialogueFrameImage(sceneIdx, dialogueIdx)
+                            }
+                            onUploadDialogueFrame={(sceneIdx, dialogueIdx, file) =>
+                              handleUploadDialogueFrame(sceneIdx, dialogueIdx, file)
+                            }
                             onUploadScene={handleUploadScene}
                             onSaveEditedScene={handleSaveEditedScene}
                             onReorderScenes={handleReorderScenes}

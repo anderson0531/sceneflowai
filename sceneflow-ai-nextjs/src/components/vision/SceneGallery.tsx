@@ -39,6 +39,8 @@ import {
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
 import { useStore } from '@/store/useStore'
+import { SceneImageFrame } from './SceneImageFrame'
+import { getDialogueFrameUrl, flattenSceneToStoryboardFrames } from '@/lib/storyboard/types'
 
 export type ExpressPhase = 'direction' | 'audio' | 'image'
 export type ExpressPhaseStatus = 'pending' | 'running' | 'done' | 'error'
@@ -60,6 +62,9 @@ interface SceneGalleryProps {
   onRegenerateScene: (sceneIndex: number) => void | Promise<void>
   onOpenPromptBuilder?: (sceneIndex: number) => void
   onGenerateScene: (sceneIndex: number, prompt: string) => void | Promise<void>
+  /** Generate a speaker-focused storyboard frame for a dialogue line. */
+  onGenerateDialogueFrame?: (sceneIndex: number, dialogueIndex: number) => void | Promise<void>
+  onUploadDialogueFrame?: (sceneIndex: number, dialogueIndex: number, file: File) => void
   onUploadScene: (sceneIndex: number, file: File) => void
   onDownloadScene?: (sceneIndex: number) => void
   onAddToLibrary?: (sceneIndex: number) => void
@@ -129,6 +134,8 @@ export function SceneGallery({
   onRegenerateScene,
   onOpenPromptBuilder,
   onGenerateScene,
+  onGenerateDialogueFrame,
+  onUploadDialogueFrame,
   onUploadScene,
   onDownloadScene,
   onAddToLibrary,
@@ -181,6 +188,7 @@ export function SceneGallery({
   const [selectedScene, setSelectedScene] = useState<number | null>(null)
   const [scenePrompts, setScenePrompts] = useState<Record<number, string>>({})
   const [generatingScenes, setGeneratingScenes] = useState<Set<number>>(new Set())
+  const [generatingDialogueFrames, setGeneratingDialogueFrames] = useState<Set<string>>(new Set())
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   const [openProductionScene, setOpenProductionScene] = useState<string | null>(null)
   const [showAudioPlayer, setShowAudioPlayer] = useState(false)
@@ -770,6 +778,28 @@ export function SceneGallery({
                   prompt={scenePrompts[idx] || defaultPrompt}
                   onPromptChange={(prompt) => setScenePrompts((prev) => ({ ...prev, [idx]: prompt }))}
                   isGenerating={generatingScenes.has(idx)}
+                  sceneIndex={idx}
+                  onGenerateDialogueFrame={onGenerateDialogueFrame ? async (dialogueIdx) => {
+                    const key = `${idx}-${dialogueIdx}`
+                    setGeneratingDialogueFrames((prev) => new Set(prev).add(key))
+                    try {
+                      await execute(async () => {
+                        await onGenerateDialogueFrame(idx, dialogueIdx)
+                      }, {
+                        message: `Generating dialogue frame ${dialogueIdx + 1} for Scene ${idx + 1}...`,
+                        estimatedDuration: 15,
+                        operationType: 'image-generation',
+                      })
+                    } finally {
+                      setGeneratingDialogueFrames((prev) => {
+                        const next = new Set(prev)
+                        next.delete(key)
+                        return next
+                      })
+                    }
+                  } : undefined}
+                  onUploadDialogueFrame={onUploadDialogueFrame ? (dialogueIdx, file) => onUploadDialogueFrame(idx, dialogueIdx, file) : undefined}
+                  generatingDialogueFrames={generatingDialogueFrames}
                   productionData={productionData}
                   productionReferences={productionReferences}
                   onInitializeProduction={onInitializeProduction}
@@ -807,15 +837,21 @@ export function SceneGallery({
           type={ReportType.STORYBOARD}
           data={{
             title: projectTitle || 'Untitled Project',
-            frames: scenes.map((scene, idx) => ({
-              sceneNumber: idx + 1,
-              imageUrl: scene.imageUrl,
-              visualDescription: scene.visualDescription || scene.action || scene.summary,
-              shotType: scene.shotType,
-              cameraAngle: scene.cameraAngle,
-              lighting: scene.lighting,
-              duration: scene.duration
-            }))
+            frames: scenes.flatMap((scene, idx) =>
+              flattenSceneToStoryboardFrames(scene, idx + 1).map((f) => ({
+                sceneNumber: f.sceneNumber,
+                frameType: f.frameType,
+                dialogueIndex: f.dialogueIndex,
+                imageUrl: f.imageUrl,
+                visualDescription: f.visualDescription,
+                shotType: f.shotType,
+                cameraAngle: f.cameraAngle,
+                lighting: f.lighting,
+                duration: f.duration,
+                character: f.character,
+                line: f.line,
+              }))
+            ),
           } as StoryboardData}
           projectName={projectTitle || 'Untitled Project'}
           open={reportPreviewOpen}
@@ -915,6 +951,10 @@ interface SceneCardProps {
   onEdit?: () => void
   onOpenPromptBuilder?: () => void
   onGenerate: (prompt: string) => Promise<void>
+  onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
+  onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
+  generatingDialogueFrames?: Set<string>
+  sceneIndex: number
   onUpload: (file: File) => void
   onDownload?: () => void
   onAddToLibrary?: () => void
@@ -1012,6 +1052,10 @@ function SceneCard({
   onEdit,
   onOpenPromptBuilder,
   onGenerate,
+  onGenerateDialogueFrame,
+  onUploadDialogueFrame,
+  generatingDialogueFrames = new Set(),
+  sceneIndex,
   onUpload,
   onDownload,
   onAddToLibrary,
@@ -1372,6 +1416,49 @@ function SceneCard({
           </div>
         )
       })()}
+
+      {/* Dialogue storyboard frames — one per dialogue line */}
+      {Array.isArray(scene.dialogue) && scene.dialogue.length > 0 && (
+        <div
+          className="px-3 py-2 bg-gray-50 dark:bg-gray-900/60 border-t border-gray-200 dark:border-gray-800"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Dialogue frames
+            </span>
+            <span className="text-[10px] text-gray-400">
+              {scene.dialogue.filter((d: any) => d?.storyboardImageUrl).length}/{scene.dialogue.length}
+            </span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {scene.dialogue.map((line: any, dialogueIdx: number) => {
+              const frameKey = `${sceneIndex}-${dialogueIdx}`
+              const lineText = String(line?.line ?? line?.text ?? '')
+              const character = String(line?.character ?? 'Speaker')
+              const frameUrl = getDialogueFrameUrl(scene, dialogueIdx)
+              const isGeneratingFrame = generatingDialogueFrames.has(frameKey)
+              return (
+                <div key={frameKey} className="flex-shrink-0 w-36">
+                  <SceneImageFrame
+                    sceneIdx={sceneIndex}
+                    sceneNumber={sceneNumber}
+                    imageUrl={frameUrl}
+                    isGenerating={isGeneratingFrame}
+                    compact
+                    showBorder
+                    label={`${character}${lineText ? `: ${lineText.slice(0, 24)}${lineText.length > 24 ? '…' : ''}` : ''}`}
+                    onGenerate={() => {
+                      void onGenerateDialogueFrame?.(dialogueIdx)
+                    }}
+                    onUpload={(file) => onUploadDialogueFrame?.(dialogueIdx, file)}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Express phase pills - only render when an Express run reports state for this scene */}
       {expressPhaseStatus && (

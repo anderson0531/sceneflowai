@@ -15,8 +15,11 @@ const VideoPreview = dynamic(
 );
 import { Timeline } from '@/components/editor/Timeline';
 import { useEditorStore } from '@/store/editorStore';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
+import { flattenSceneToStoryboardFrames } from '@/lib/storyboard/types';
+
+const DEFAULT_FRAMES_PER_CLIP = 150; // 5 seconds at 30fps
 
 interface AnimaticsStudioProps {
   scenes: any[];
@@ -30,45 +33,57 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
   const [showShortcuts, setShowShortcuts] = useState(true);
   
   // Check if we have valid assets BEFORE any rendering
-  const hasValidAssets = scenes.some(scene => scene.imageUrl && scene.imageUrl.trim() !== '');
+  const flatFrames = useMemo(
+    () =>
+      scenes.flatMap((scene, idx) =>
+        flattenSceneToStoryboardFrames(scene, idx + 1).filter(f => f.imageUrl?.trim())
+      ),
+    [scenes]
+  );
+  const hasValidAssets = flatFrames.length > 0;
   
   useEffect(() => {
     // Don't load if no valid assets
     if (!hasValidAssets) {
-      console.warn('[AnimaticsStudio] No scenes with valid images found');
+      console.warn('[AnimaticsStudio] No storyboard frames with valid images found');
       return;
     }
     
-    // Filter and initialize project from storyboard scenes with valid images
-    const validAssets = scenes
-      .filter(scene => scene.imageUrl && scene.imageUrl.trim() !== '')
-      .map((scene, idx) => ({
-        id: `asset-${idx}`,
-        type: 'image' as const,
-        src: scene.imageUrl,
-        durationInFrames: 150, // 5 seconds at 30fps
-        title: `Scene ${scene.sceneNumber}`,
-        metadata: {}
-      }));
+    const validAssets = flatFrames.map((frame, idx) => ({
+      id: `asset-${idx}`,
+      type: 'image' as const,
+      src: frame.imageUrl!,
+      durationInFrames: DEFAULT_FRAMES_PER_CLIP,
+      title: frame.frameType === 'dialogue' && frame.character
+        ? `${frame.character}: ${(frame.line || '').slice(0, 40)}`
+        : `Scene ${frame.sceneNumber}`,
+      metadata: {}
+    }));
     
     console.log('[AnimaticsStudio] Total scenes:', scenes.length);
     console.log('[AnimaticsStudio] Valid assets:', validAssets.length);
-    console.log('[AnimaticsStudio] Asset URLs:', validAssets.map(a => a.src));
+    
+    let startFrame = 0;
+    const clips = validAssets.map((asset, idx) => {
+      const clip = {
+        id: `clip-${idx}`,
+        assetId: asset.id,
+        trackId: 'video-track-1',
+        startFrame,
+        durationInFrames: asset.durationInFrames,
+        trimStartFrame: 0,
+        trimEndFrame: asset.durationInFrames,
+        effects: [{ id: `effect-${idx}`, type: 'kenBurns' as const, params: {} }]
+      };
+      startFrame += asset.durationInFrames;
+      return clip;
+    });
     
     const videoTrack = {
       id: 'video-track-1',
       type: 'video' as const,
       name: 'Video',
-      clips: validAssets.map((asset, idx) => ({
-        id: `clip-${idx}`,
-        assetId: asset.id,
-        trackId: 'video-track-1',
-        startFrame: idx * 150,
-        durationInFrames: 150,
-        trimStartFrame: 0,
-        trimEndFrame: 150,
-        effects: [{ id: `effect-${idx}`, type: 'kenBurns' as const, params: {} }]
-      })),
+      clips,
       locked: false,
       visible: true
     };
@@ -79,7 +94,7 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
       fps: 30,
       width: 1920,
       height: 1080,
-      durationInFrames: validAssets.length * 150,
+      durationInFrames: startFrame,
       assets: validAssets,
       tracks: [videoTrack],
       currentFrame: 0,
@@ -87,7 +102,7 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
     });
     
     return () => resetProject();
-  }, [scenes, loadProject, resetProject, hasValidAssets]);
+  }, [scenes, flatFrames, loadProject, resetProject, hasValidAssets]);
   
   // Keyboard shortcuts
   useEffect(() => {

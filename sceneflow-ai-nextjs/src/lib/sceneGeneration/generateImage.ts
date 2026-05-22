@@ -35,6 +35,10 @@ export interface GenerateSceneImageParams {
   skipObjectAutoDetection?: boolean
   /** Whether to use Gemini intelligence for prompt generation. */
   useAIPrompt?: boolean
+  /** Storyboard frame type: establishing (scene.imageUrl) or dialogue line frame. */
+  frameType?: 'establishing' | 'dialogue'
+  /** Index into scene.dialogue when frameType is 'dialogue'. */
+  dialogueIndex?: number
 }
 
 export class SceneImageGenerationError extends Error {
@@ -69,6 +73,8 @@ export async function generateSceneImage(
     characterWardrobes,
     skipObjectAutoDetection,
     useAIPrompt,
+    frameType,
+    dialogueIndex,
   } = params
 
   const headers: HeadersInit = {
@@ -98,6 +104,8 @@ export async function generateSceneImage(
         ? { skipObjectAutoDetection }
         : {}),
       ...(typeof useAIPrompt === 'boolean' ? { useAIPrompt } : {}),
+      ...(frameType ? { frameType } : {}),
+      ...(typeof dialogueIndex === 'number' ? { dialogueIndex } : {}),
     }),
   })
 

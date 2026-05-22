@@ -16,6 +16,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { cn } from '@/lib/utils'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
+import {
+  buildStoryboardVisualTimeline,
+  getCurrentStoryboardVisualFrame,
+  getEstablishingFrameUrl,
+} from '@/lib/storyboard/types'
 
 // Ken Burns animation configurations - more pronounced scales for longer durations
 const KEN_BURNS_CONFIGS = [
@@ -71,11 +76,12 @@ export function AudioGalleryPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [dynamicDurations, setDynamicDurations] = useState<Record<string, number>>({})
   const fetchingUrls = useRef<Set<string>>(new Set())
+  const [visualFrameKey, setVisualFrameKey] = useState(0)
   
-  // Ken Burns effect - pick a config per scene for variety
+  // Ken Burns effect - pick a config per visual frame for variety
   const kenBurnsConfig = useMemo(() => {
-    return KEN_BURNS_CONFIGS[currentSceneIndex % KEN_BURNS_CONFIGS.length]
-  }, [currentSceneIndex])
+    return KEN_BURNS_CONFIGS[visualFrameKey % KEN_BURNS_CONFIGS.length]
+  }, [visualFrameKey])
   
   // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -277,6 +283,37 @@ export function AudioGalleryPlayer({
       currentTime >= clip.startTime && currentTime < clip.startTime + clip.duration
     )
   }, [audioClips, currentTime])
+
+  // Visual frames aligned to voice clips (dialogue lines get per-line images)
+  const visualFrames = useMemo(() => {
+    return buildStoryboardVisualTimeline(currentScene, audioClips)
+  }, [currentScene, audioClips])
+
+  const currentVisualFrame = useMemo(() => {
+    if (visualFrames.length > 0) {
+      return getCurrentStoryboardVisualFrame(visualFrames, currentTime)
+    }
+    const establishingUrl = getEstablishingFrameUrl(currentScene)
+    if (!establishingUrl) return undefined
+    return {
+      clipId: 'establishing',
+      frameType: 'establishing' as const,
+      imageUrl: establishingUrl,
+      startTime: 0,
+      duration: sceneDuration,
+    }
+  }, [visualFrames, currentTime, currentScene, sceneDuration])
+
+  const displayImageUrl = currentVisualFrame?.imageUrl
+
+  // Reset Ken Burns when the visible frame changes
+  useEffect(() => {
+    const next =
+      currentSceneIndex * 100 +
+      (currentVisualFrame?.dialogueIndex ?? 0) +
+      (currentVisualFrame?.frameType === 'establishing' ? 0 : 50)
+    setVisualFrameKey(prev => (prev === next ? prev : next))
+  }, [currentSceneIndex, currentVisualFrame?.clipId, currentVisualFrame?.dialogueIndex, currentVisualFrame?.frameType])
   
   // Handle scene navigation
   const goToScene = useCallback((index: number) => {
@@ -626,10 +663,10 @@ export function AudioGalleryPlayer({
                 ? "max-w-3xl sm:max-w-4xl aspect-video shadow-lg"
                 : "max-w-[500px] aspect-video shadow-xl"
           )}>
-            {currentScene?.imageUrl ? (
+            {displayImageUrl ? (
               <img
-                src={currentScene.imageUrl}
-                alt={`Scene ${currentSceneIndex + 1}`}
+                src={displayImageUrl}
+                alt={`Scene ${currentSceneIndex + 1}${currentVisualFrame?.dialogueIndex != null ? ` — line ${currentVisualFrame.dialogueIndex + 1}` : ''}`}
                 className="w-full h-full object-cover"
                 style={{
                   transform: `scale(${currentScale}) translate(${currentX}%, ${currentY}%)`,
@@ -650,9 +687,14 @@ export function AudioGalleryPlayer({
             </div>
             
             {/* Current clip label overlay */}
-            {currentClip && (
+            {(currentClip || currentVisualFrame?.label) && (
               <div className="absolute bottom-2 left-2 right-2 bg-black/70 rounded px-2 py-1">
-                <span className={cn("text-white", isFullscreen && !sharedCompact ? "text-base" : "text-xs")}>{currentClip.label}</span>
+                <span className={cn("text-white", isFullscreen && !sharedCompact ? "text-base" : "text-xs")}>
+                  {currentClip?.label ?? currentVisualFrame?.label}
+                  {currentVisualFrame?.line && (
+                    <span className="block text-white/70 truncate mt-0.5">{currentVisualFrame.line}</span>
+                  )}
+                </span>
               </div>
             )}
           </div>

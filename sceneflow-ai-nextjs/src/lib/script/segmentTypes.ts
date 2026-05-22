@@ -34,6 +34,10 @@ export interface DialogueLine {
   kind: DialogueKind
   /** Optional voice direction / emotion ("[frustrated, low]"). */
   voiceDirection?: string
+  /** Per-line storyboard frame (speaker-focused cut). */
+  storyboardImageUrl?: string
+  storyboardImagePrompt?: string
+  storyboardImageGcsPath?: string
 }
 
 /**

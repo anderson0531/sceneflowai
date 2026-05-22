@@ -65,12 +65,16 @@ export interface StoryboardData {
   title: string
   frames: Array<{
     sceneNumber: number
+    frameType?: 'establishing' | 'dialogue'
+    dialogueIndex?: number
     imageUrl?: string
     visualDescription?: string
     shotType?: string
     cameraAngle?: string
     lighting?: string
     duration?: number
+    character?: string
+    line?: string
   }>
 }
 

@@ -244,7 +244,21 @@ export async function POST(req: NextRequest) {
       skipObjectAutoDetection = false,  // NEW: Skip auto-detection of objects (for batch mode)
       characterSelectionExplicit = false,  // NEW: Client explicitly chose characters (even if empty = no characters wanted)
       useAIPrompt = true,  // NEW: Use Gemini intelligence for prompt generation (default: true)
+      frameType = 'establishing',  // 'establishing' | 'dialogue' storyboard frame
+      dialogueIndex,  // Required when frameType === 'dialogue'
     } = body
+    
+    const isDialogueFrame = frameType === 'dialogue'
+    if (isDialogueFrame && (typeof dialogueIndex !== 'number' || dialogueIndex < 0)) {
+      return NextResponse.json(
+        { success: false, error: 'dialogueIndex is required when frameType is dialogue' },
+        { status: 400 }
+      )
+    }
+    
+    let effectiveShotType = shotType
+    let effectiveCameraAngle = cameraAngle
+    let dialogueFrameContext = ''
     
     // Handle both legacy (selectedCharacters) and new (characters) formats
     // If excludeCharacters is true, ignore all character references for scene environment-only image
@@ -321,15 +335,35 @@ export async function POST(req: NextRequest) {
           console.log('[Scene Image] Reloaded character objects from DB:', characterObjects.length)
         }
       } else if (projectId && typeof sceneIndex === 'number') {
-        // AUTO-DETECT: If no characters provided, try to extract them from the scene
-        // SKIP if client explicitly chose characters (characterSelectionExplicit=true means "I chose these, even if empty")
-        if (characterSelectionExplicit) {
+        const scenesForSelection = project.metadata?.visionPhase?.script?.script?.scenes || []
+        const sceneForSelection = scenesForSelection[sceneIndex]
+
+        // Dialogue storyboard frame: select speaking character only
+        if (isDialogueFrame && sceneForSelection) {
+          characterSelectionExplicit = true
+          const dialogueLines = Array.isArray(sceneForSelection.dialogue) ? sceneForSelection.dialogue : []
+          const line = dialogueLines[dialogueIndex!]
+          if (line) {
+            const speakerName = String(line.character || '').trim()
+            if (speakerName && allCharacters.length > 0) {
+              const speakerLower = speakerName.toLowerCase()
+              const speakerChar = allCharacters.find((c: any) => {
+                if (!c?.name) return false
+                const nameLower = c.name.toLowerCase()
+                return nameLower === speakerLower || nameLower.includes(speakerLower) || speakerLower.includes(nameLower)
+              })
+              if (speakerChar) {
+                characterObjects = [speakerChar]
+                console.log(`[Scene Image] Dialogue frame: selected speaker "${speakerName}"`)
+              }
+            }
+          }
+        } else if (characterSelectionExplicit) {
           console.log('[Scene Image] Character selection was explicit (from dialog or no-talent detection) — skipping auto-detect')
           console.log('[Scene Image] Proceeding with 0 characters as intended by user')
         } else {
           console.log('[Scene Image] No characterObjects provided, attempting to auto-detect from scene')
-          const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
-          const scene = scenes[sceneIndex]
+          const scene = sceneForSelection
           
           if (scene) {
             // TALENT-AWARENESS: Check if this is a no-talent scene before auto-detecting
@@ -433,6 +467,26 @@ export async function POST(req: NextRequest) {
       references = project.metadata?.visionPhase?.references || []  // Capture references
       
       if (scene) {
+        // Dialogue storyboard frame: focus on the speaking character
+        if (isDialogueFrame) {
+          const dialogueLines = Array.isArray(scene.dialogue) ? scene.dialogue : []
+          const line = dialogueLines[dialogueIndex]
+          if (!line) {
+            return NextResponse.json(
+              { success: false, error: `Dialogue line at index ${dialogueIndex} not found` },
+              { status: 400 }
+            )
+          }
+          const speakerName = String(line.character || '').trim()
+          const lineText = String(line.line ?? line.text ?? '').trim()
+          const voiceDir = line.voiceDirection ? ` (${line.voiceDirection})` : ''
+          dialogueFrameContext =
+            `Storyboard dialogue frame. Focus on ${speakerName || 'the speaker'} delivering this line${voiceDir}: "${lineText}". ` +
+            'Frame the speaking character prominently — medium close-up or over-the-shoulder — with scene continuity preserved. '
+          effectiveShotType = effectiveShotType || 'medium close-up'
+          effectiveCameraAngle = effectiveCameraAngle || 'eye level'
+        }
+
         // PRIORITY 1: Enhanced Scene Direction (customPrompt from PromptBuilder, or sceneDirectionText)
         // PRIORITY 2: Original script components (action + visualDescription)
         const sceneDirectionText = scene.sceneDirectionText || ''
@@ -456,6 +510,10 @@ export async function POST(req: NextRequest) {
             fullSceneContext = `${scene.action} ${scene.visualDescription}`
           }
           console.log('[Scene Image] Using original script components (action/visualDescription)')
+        }
+        
+        if (dialogueFrameContext) {
+          fullSceneContext = `${dialogueFrameContext}${fullSceneContext}`
         }
         
         console.log('[Scene Image] Scene context established:', {
@@ -760,7 +818,10 @@ export async function POST(req: NextRequest) {
       )
       
       // Extract useful direction metadata (lighting, framing, mood)
-      const directionMetadata = extractDirectionMetadata(sceneData.sceneDirection)
+      const directionMetadata = {
+        ...extractDirectionMetadata(sceneData.sceneDirection),
+        ...(effectiveShotType ? { framingHint: effectiveShotType } : {}),
+      }
       
       // Build film context from project metadata
       const treatment = project.metadata?.visionPhase?.treatment || project.metadata?.treatmentPhase
@@ -1278,7 +1339,10 @@ export async function POST(req: NextRequest) {
       usedAIIntelligence,
       // Credit info
       creditsCharged: CREDIT_COST,
-      creditsBalance: newBalance
+      creditsBalance: newBalance,
+      prompt: optimizedPrompt,
+      frameType: isDialogueFrame ? 'dialogue' : 'establishing',
+      ...(isDialogueFrame ? { dialogueIndex } : {}),
     }
 
     // Add validation info (informational only for storyboards)
