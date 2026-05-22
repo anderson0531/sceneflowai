@@ -13,7 +13,7 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, EyeOff, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin, FileText, ChevronDown, ChevronUp, GripVertical, Zap, Settings2, Tag } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, EyeOff, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin, FileText, ChevronDown, ChevronUp, GripVertical, Zap, Settings2, Tag, Plus } from 'lucide-react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -40,7 +40,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/Input'
 import { useStore } from '@/store/useStore'
 import { SceneImageFrame } from './SceneImageFrame'
-import { getDialogueFrameUrl, flattenSceneToStoryboardFrames } from '@/lib/storyboard/types'
+import { getDialogueFrameUrl, flattenSceneToStoryboardFrames, getOrderedStoryboardFrames, getEstablishingFrameUrl, countStoryboardFrameStats } from '@/lib/storyboard/types'
 
 export type ExpressPhase = 'direction' | 'audio' | 'image'
 export type ExpressPhaseStatus = 'pending' | 'running' | 'done' | 'error'
@@ -65,6 +65,10 @@ interface SceneGalleryProps {
   /** Generate a speaker-focused storyboard frame for a dialogue line. */
   onGenerateDialogueFrame?: (sceneIndex: number, dialogueIndex: number) => void | Promise<void>
   onUploadDialogueFrame?: (sceneIndex: number, dialogueIndex: number, file: File) => void
+  onAddStoryboardFrame?: (sceneIndex: number) => void | Promise<void>
+  onDeleteStoryboardFrame?: (sceneIndex: number, frameId: string) => void | Promise<void>
+  onGenerateCustomFrame?: (sceneIndex: number, frameId: string) => void | Promise<void>
+  onUploadCustomFrame?: (sceneIndex: number, frameId: string, file: File) => void
   onUploadScene: (sceneIndex: number, file: File) => void
   onDownloadScene?: (sceneIndex: number) => void
   onAddToLibrary?: (sceneIndex: number) => void
@@ -136,6 +140,10 @@ export function SceneGallery({
   onGenerateScene,
   onGenerateDialogueFrame,
   onUploadDialogueFrame,
+  onAddStoryboardFrame,
+  onDeleteStoryboardFrame,
+  onGenerateCustomFrame,
+  onUploadCustomFrame,
   onUploadScene,
   onDownloadScene,
   onAddToLibrary,
@@ -189,6 +197,7 @@ export function SceneGallery({
   const [scenePrompts, setScenePrompts] = useState<Record<number, string>>({})
   const [generatingScenes, setGeneratingScenes] = useState<Set<number>>(new Set())
   const [generatingDialogueFrames, setGeneratingDialogueFrames] = useState<Set<string>>(new Set())
+  const [generatingCustomFrames, setGeneratingCustomFrames] = useState<Set<string>>(new Set())
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   const [openProductionScene, setOpenProductionScene] = useState<string | null>(null)
   const [showAudioPlayer, setShowAudioPlayer] = useState(false)
@@ -800,6 +809,29 @@ export function SceneGallery({
                   } : undefined}
                   onUploadDialogueFrame={onUploadDialogueFrame ? (dialogueIdx, file) => onUploadDialogueFrame(idx, dialogueIdx, file) : undefined}
                   generatingDialogueFrames={generatingDialogueFrames}
+                  onAddStoryboardFrame={onAddStoryboardFrame ? () => onAddStoryboardFrame(idx) : undefined}
+                  onDeleteStoryboardFrame={onDeleteStoryboardFrame ? (frameId) => onDeleteStoryboardFrame(idx, frameId) : undefined}
+                  onGenerateCustomFrame={onGenerateCustomFrame ? async (frameId) => {
+                    const key = `custom-${idx}-${frameId}`
+                    setGeneratingCustomFrames((prev) => new Set(prev).add(key))
+                    try {
+                      await execute(async () => {
+                        await onGenerateCustomFrame(idx, frameId)
+                      }, {
+                        message: `Generating custom frame for Scene ${idx + 1}...`,
+                        estimatedDuration: 15,
+                        operationType: 'image-generation',
+                      })
+                    } finally {
+                      setGeneratingCustomFrames((prev) => {
+                        const next = new Set(prev)
+                        next.delete(key)
+                        return next
+                      })
+                    }
+                  } : undefined}
+                  onUploadCustomFrame={onUploadCustomFrame ? (frameId, file) => onUploadCustomFrame(idx, frameId, file) : undefined}
+                  generatingCustomFrames={generatingCustomFrames}
                   productionData={productionData}
                   productionReferences={productionReferences}
                   onInitializeProduction={onInitializeProduction}
@@ -954,6 +986,11 @@ interface SceneCardProps {
   onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
   generatingDialogueFrames?: Set<string>
+  onAddStoryboardFrame?: () => void | Promise<void>
+  onDeleteStoryboardFrame?: (frameId: string) => void | Promise<void>
+  onGenerateCustomFrame?: (frameId: string) => Promise<void>
+  onUploadCustomFrame?: (frameId: string, file: File) => void
+  generatingCustomFrames?: Set<string>
   sceneIndex: number
   onUpload: (file: File) => void
   onDownload?: () => void
@@ -1055,6 +1092,11 @@ function SceneCard({
   onGenerateDialogueFrame,
   onUploadDialogueFrame,
   generatingDialogueFrames = new Set(),
+  onAddStoryboardFrame,
+  onDeleteStoryboardFrame,
+  onGenerateCustomFrame,
+  onUploadCustomFrame,
+  generatingCustomFrames = new Set(),
   sceneIndex,
   onUpload,
   onDownload,
@@ -1417,48 +1459,117 @@ function SceneCard({
         )
       })()}
 
-      {/* Dialogue storyboard frames — one per dialogue line */}
-      {Array.isArray(scene.dialogue) && scene.dialogue.length > 0 && (
-        <div
-          className="px-3 py-2 bg-gray-50 dark:bg-gray-900/60 border-t border-gray-200 dark:border-gray-800"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              Dialogue frames
-            </span>
-            <span className="text-[10px] text-gray-400">
-              {scene.dialogue.filter((d: any) => d?.storyboardImageUrl).length}/{scene.dialogue.length}
-            </span>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {scene.dialogue.map((line: any, dialogueIdx: number) => {
-              const frameKey = `${sceneIndex}-${dialogueIdx}`
-              const lineText = String(line?.line ?? line?.text ?? '')
-              const character = String(line?.character ?? 'Speaker')
-              const frameUrl = getDialogueFrameUrl(scene, dialogueIdx)
-              const isGeneratingFrame = generatingDialogueFrames.has(frameKey)
-              return (
-                <div key={frameKey} className="flex-shrink-0 w-36">
-                  <SceneImageFrame
-                    sceneIdx={sceneIndex}
-                    sceneNumber={sceneNumber}
-                    imageUrl={frameUrl}
-                    isGenerating={isGeneratingFrame}
-                    compact
-                    showBorder
-                    label={`${character}${lineText ? `: ${lineText.slice(0, 24)}${lineText.length > 24 ? '…' : ''}` : ''}`}
-                    onGenerate={() => {
-                      void onGenerateDialogueFrame?.(dialogueIdx)
-                    }}
-                    onUpload={(file) => onUploadDialogueFrame?.(dialogueIdx, file)}
-                  />
+      {/* Storyboard frames — establishing, dialogue-linked, and custom cuts */}
+      <div
+        className="px-3 py-2 bg-gray-50 dark:bg-gray-900/60 border-t border-gray-200 dark:border-gray-800"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {(() => {
+          const frameStats = countStoryboardFrameStats(scene)
+          const customFrames = getOrderedStoryboardFrames(scene)
+          const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+          const establishingUrl = getEstablishingFrameUrl(scene)
+
+          const handleDeleteCustom = (frameId: string, hasImage: boolean) => {
+            if (!onDeleteStoryboardFrame) return
+            if (hasImage && !window.confirm('Delete this storyboard frame?')) return
+            void onDeleteStoryboardFrame(frameId)
+          }
+
+          return (
+            <>
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                  Storyboard frames
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-gray-400">
+                    {frameStats.withImage}/{frameStats.total}
+                  </span>
+                  {onAddStoryboardFrame && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-6 px-2 text-[10px] border-indigo-500/40 text-indigo-400 hover:bg-indigo-500/10"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void onAddStoryboardFrame()
+                      }}
+                    >
+                      <Plus className="w-3 h-3 mr-0.5" />
+                      Add Frame
+                    </Button>
+                  )}
                 </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {(establishingUrl || dialogue.length === 0) && (
+                  <div className="flex-shrink-0 w-36">
+                    <SceneImageFrame
+                      sceneIdx={sceneIndex}
+                      sceneNumber={sceneNumber}
+                      imageUrl={establishingUrl}
+                      isGenerating={isGenerating}
+                      compact
+                      showBorder
+                      label="Establishing"
+                      onGenerate={() => void onGenerate(prompt)}
+                      onUpload={onUpload}
+                    />
+                  </div>
+                )}
+                {dialogue.map((line: any, dialogueIdx: number) => {
+                  const frameKey = `dialogue-${sceneIndex}-${dialogueIdx}`
+                  const lineText = String(line?.line ?? line?.text ?? '')
+                  const character = String(line?.character ?? 'Speaker')
+                  const frameUrl = getDialogueFrameUrl(scene, dialogueIdx)
+                  const isGeneratingFrame = generatingDialogueFrames.has(`${sceneIndex}-${dialogueIdx}`)
+                  return (
+                    <div key={frameKey} className="flex-shrink-0 w-36">
+                      <SceneImageFrame
+                        sceneIdx={sceneIndex}
+                        sceneNumber={sceneNumber}
+                        imageUrl={frameUrl}
+                        isGenerating={isGeneratingFrame}
+                        compact
+                        showBorder
+                        label={`${character}${lineText ? `: ${lineText.slice(0, 24)}${lineText.length > 24 ? '…' : ''}` : ''}`}
+                        onGenerate={() => void onGenerateDialogueFrame?.(dialogueIdx)}
+                        onUpload={(file) => onUploadDialogueFrame?.(dialogueIdx, file)}
+                      />
+                    </div>
+                  )
+                })}
+                {customFrames.map((frame) => {
+                  const genKey = `custom-${sceneIndex}-${frame.id}`
+                  const isGeneratingCustom = generatingCustomFrames.has(genKey)
+                  const label =
+                    frame.label ||
+                    [frame.character, frame.line?.slice(0, 20)].filter(Boolean).join(': ') ||
+                    'Custom frame'
+                  return (
+                    <div key={frame.id} className="flex-shrink-0 w-36">
+                      <SceneImageFrame
+                        sceneIdx={sceneIndex}
+                        sceneNumber={sceneNumber}
+                        imageUrl={frame.imageUrl}
+                        isGenerating={isGeneratingCustom}
+                        compact
+                        showBorder
+                        label={label}
+                        onGenerate={() => void onGenerateCustomFrame?.(frame.id)}
+                        onUpload={(file) => onUploadCustomFrame?.(frame.id, file)}
+                        onDelete={() => handleDeleteCustom(frame.id, !!frame.imageUrl)}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )
+        })()}
+      </div>
 
       {/* Express phase pills - only render when an Express run reports state for this scene */}
       {expressPhaseStatus && (

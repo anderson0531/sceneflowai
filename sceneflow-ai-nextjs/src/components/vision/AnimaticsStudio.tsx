@@ -20,6 +20,30 @@ import { Button } from '@/components/ui/Button';
 import { flattenSceneToStoryboardFrames } from '@/lib/storyboard/types';
 
 const DEFAULT_FRAMES_PER_CLIP = 150; // 5 seconds at 30fps
+const FPS = 30;
+
+function frameDurationInFrames(durationSec?: number): number {
+  if (typeof durationSec === 'number' && durationSec > 0) {
+    return Math.round(durationSec * FPS);
+  }
+  return DEFAULT_FRAMES_PER_CLIP;
+}
+
+function frameAssetTitle(frame: {
+  sceneNumber: number
+  frameType?: string
+  character?: string
+  line?: string
+  label?: string
+}): string {
+  if (frame.frameType === 'dialogue' && frame.character) {
+    return `${frame.character}: ${(frame.line || '').slice(0, 40)}`;
+  }
+  if (frame.frameType === 'custom') {
+    return frame.label || frame.character || `Scene ${frame.sceneNumber} — Custom`;
+  }
+  return `Scene ${frame.sceneNumber}`;
+}
 
 interface AnimaticsStudioProps {
   scenes: any[];
@@ -53,10 +77,8 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
       id: `asset-${idx}`,
       type: 'image' as const,
       src: frame.imageUrl!,
-      durationInFrames: DEFAULT_FRAMES_PER_CLIP,
-      title: frame.frameType === 'dialogue' && frame.character
-        ? `${frame.character}: ${(frame.line || '').slice(0, 40)}`
-        : `Scene ${frame.sceneNumber}`,
+      durationInFrames: frameDurationInFrames(frame.duration),
+      title: frameAssetTitle(frame),
       metadata: {}
     }));
     

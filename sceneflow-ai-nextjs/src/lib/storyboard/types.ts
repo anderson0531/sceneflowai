@@ -12,7 +12,46 @@ export interface DialogueStoryboardFrame {
   storyboardImageGcsPath?: string
 }
 
-export type StoryboardFrameType = 'establishing' | 'dialogue'
+export type StoryboardFrameType = 'establishing' | 'dialogue' | 'custom'
+
+/** User-managed custom storyboard cut (independent of script dialogue). */
+export interface SceneStoryboardFrame {
+  id: string
+  label?: string
+  character?: string
+  line?: string
+  imageUrl?: string
+  imagePrompt?: string
+  imageGcsPath?: string
+  durationSec?: number
+  order: number
+}
+
+/** Flat frame entry for exports and reports. */
+export interface FlatStoryboardFrame {
+  sceneNumber: number
+  frameType: StoryboardFrameType
+  dialogueIndex?: number
+  customFrameId?: string
+  imageUrl?: string
+  visualDescription?: string
+  shotType?: string
+  cameraAngle?: string
+  lighting?: string
+  duration?: number
+  character?: string
+  line?: string
+  label?: string
+}
+
+/** Minimal audio clip shape used to build the visual timeline. */
+export interface StoryboardAudioClip {
+  id: string
+  startTime: number
+  duration: number
+  type: 'narration' | 'dialogue' | 'description' | 'music' | 'sfx'
+  label?: string
+}
 
 /** A single visual frame in playback order, aligned to an audio clip window. */
 export interface StoryboardVisualFrame {
@@ -27,28 +66,80 @@ export interface StoryboardVisualFrame {
   line?: string
 }
 
-/** Flat frame entry for exports and reports. */
-export interface FlatStoryboardFrame {
-  sceneNumber: number
-  frameType: StoryboardFrameType
-  dialogueIndex?: number
-  imageUrl?: string
-  visualDescription?: string
-  shotType?: string
-  cameraAngle?: string
-  lighting?: string
-  duration?: number
-  character?: string
-  line?: string
+function createStoryboardFrameId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return `sbf_${crypto.randomUUID().slice(0, 12)}`
+  }
+  return `sbf_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 }
 
-/** Minimal audio clip shape used to build the visual timeline. */
-export interface StoryboardAudioClip {
-  id: string
-  startTime: number
-  duration: number
-  type: 'narration' | 'dialogue' | 'description' | 'music' | 'sfx'
-  label?: string
+/** Custom frames sorted by order. */
+export function getOrderedStoryboardFrames(
+  scene: Record<string, unknown> | null | undefined
+): SceneStoryboardFrame[] {
+  const frames = Array.isArray(scene?.storyboardFrames) ? scene!.storyboardFrames : []
+  return [...(frames as SceneStoryboardFrame[])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+}
+
+/** Append a new custom frame; returns the new frame (mutates scene in place). */
+export function appendStoryboardFrame(
+  scene: Record<string, unknown>,
+  partial?: Partial<Omit<SceneStoryboardFrame, 'id' | 'order'>>
+): SceneStoryboardFrame {
+  const existing = getOrderedStoryboardFrames(scene)
+  const nextOrder =
+    existing.length > 0 ? Math.max(...existing.map((f) => f.order ?? 0)) + 1 : 0
+  const frame: SceneStoryboardFrame = {
+    id: createStoryboardFrameId(),
+    order: nextOrder,
+    label: partial?.label ?? `Frame ${nextOrder + 1}`,
+    ...partial,
+  }
+  if (!Array.isArray(scene.storyboardFrames)) {
+    scene.storyboardFrames = []
+  }
+  ;(scene.storyboardFrames as SceneStoryboardFrame[]).push(frame)
+  return frame
+}
+
+/** Remove a custom frame by id; returns true if removed (mutates scene in place). */
+export function removeStoryboardFrame(
+  scene: Record<string, unknown>,
+  frameId: string
+): boolean {
+  const arr = scene.storyboardFrames
+  if (!Array.isArray(arr)) return false
+  const before = arr.length
+  scene.storyboardFrames = (arr as SceneStoryboardFrame[]).filter((f) => f.id !== frameId)
+  return (scene.storyboardFrames as SceneStoryboardFrame[]).length < before
+}
+
+/** Find a custom frame by id. */
+export function findStoryboardFrame(
+  scene: Record<string, unknown> | null | undefined,
+  frameId: string
+): SceneStoryboardFrame | undefined {
+  return getOrderedStoryboardFrames(scene).find((f) => f.id === frameId)
+}
+
+/** Count frames with images for gallery badge. */
+export function countStoryboardFrameStats(scene: Record<string, unknown>): {
+  withImage: number
+  total: number
+} {
+  const establishing = getEstablishingFrameUrl(scene) ? 1 : 0
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  const dialogueTotal = dialogue.length
+  const dialogueWithImage = dialogue.filter(
+    (d: Record<string, unknown>) =>
+      typeof d?.storyboardImageUrl === 'string' && d.storyboardImageUrl.trim()
+  ).length
+  const custom = getOrderedStoryboardFrames(scene)
+  const customWithImage = custom.filter((f) => f.imageUrl?.trim()).length
+  return {
+    withImage: establishing + dialogueWithImage + customWithImage,
+    total: establishing + dialogueTotal + custom.length,
+  }
 }
 
 function getDialogueLineText(d: Record<string, unknown> | null | undefined): string {
@@ -202,6 +293,23 @@ export function flattenSceneToStoryboardFrames(
       visualDescription: getDialogueLineText(d),
       character: getDialogueLineCharacter(d),
       line: getDialogueLineText(d),
+      shotType: scene.shotType as string | undefined,
+      cameraAngle: scene.cameraAngle as string | undefined,
+      lighting: scene.lighting as string | undefined,
+    })
+  })
+
+  getOrderedStoryboardFrames(scene).forEach((frame) => {
+    result.push({
+      sceneNumber,
+      frameType: 'custom',
+      customFrameId: frame.id,
+      imageUrl: frame.imageUrl,
+      label: frame.label,
+      character: frame.character,
+      line: frame.line,
+      visualDescription: frame.label ?? frame.line ?? '',
+      duration: frame.durationSec,
       shotType: scene.shotType as string | undefined,
       cameraAngle: scene.cameraAngle as string | undefined,
       lighting: scene.lighting as string | undefined,

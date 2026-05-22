@@ -132,6 +132,7 @@ import { sanitizeScriptScenes } from '@/lib/script/segmentScript'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
 import { useAutoMigrate } from '@/hooks/useMediaLoader'
 import { uploadAssetViaAPI } from '@/lib/vision/uploads'
+import { appendStoryboardFrame, removeStoryboardFrame, findStoryboardFrame, getOrderedStoryboardFrames } from '@/lib/storyboard/types'
 
 // Scene Analysis interface for score generation
 interface SceneAnalysis {
@@ -8182,6 +8183,200 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const persistVisionScriptScenes = async (updatedScenes: any[]) => {
+    const { characters: _staleCharacters, ...visionPhaseWithoutCharacters } =
+      project?.metadata?.visionPhase || {}
+    await fetch(`/api/projects/${project?.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        metadata: {
+          ...project?.metadata,
+          visionPhase: {
+            ...visionPhaseWithoutCharacters,
+            characters,
+            script: {
+              ...script,
+              script: { ...script.script, scenes: updatedScenes },
+            },
+          },
+        },
+      }),
+    })
+  }
+
+  const handleAddStoryboardFrame = async (sceneIdx: number) => {
+    if (!script?.script?.scenes) return
+
+    const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
+      if (idx !== sceneIdx) return s
+      const sceneCopy = { ...s }
+      appendStoryboardFrame(sceneCopy)
+      return sceneCopy
+    })
+
+    setScript({
+      ...script,
+      script: { ...script.script, scenes: updatedScenes },
+    })
+
+    try {
+      await persistVisionScriptScenes(updatedScenes)
+      try { const { toast } = require('sonner'); toast.success('Storyboard frame added') } catch {}
+    } catch (error) {
+      console.error('[handleAddStoryboardFrame] Failed to persist:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to save new frame') } catch {}
+    }
+  }
+
+  const handleDeleteStoryboardFrame = async (sceneIdx: number, frameId: string) => {
+    if (!script?.script?.scenes) return
+
+    const scene = script.script.scenes[sceneIdx]
+    const frame = findStoryboardFrame(scene, frameId)
+    const imageUrl = frame?.imageUrl
+
+    const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
+      if (idx !== sceneIdx) return s
+      const sceneCopy = { ...s }
+      removeStoryboardFrame(sceneCopy, frameId)
+      return sceneCopy
+    })
+
+    setScript({
+      ...script,
+      script: { ...script.script, scenes: updatedScenes },
+    })
+
+    try {
+      await persistVisionScriptScenes(updatedScenes)
+      if (
+        imageUrl &&
+        (imageUrl.includes('.vercel-storage.com') ||
+          imageUrl.includes('.public.blob.vercel-storage.com'))
+      ) {
+        fetch('/api/blobs/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ urls: [imageUrl] }),
+        }).catch((err) => console.warn('[handleDeleteStoryboardFrame] Blob cleanup failed:', err))
+      }
+      try { const { toast } = require('sonner'); toast.success('Storyboard frame deleted') } catch {}
+    } catch (error) {
+      console.error('[handleDeleteStoryboardFrame] Failed to persist:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to delete frame') } catch {}
+    }
+  }
+
+  const handleGenerateCustomFrame = async (sceneIdx: number, frameId: string) => {
+    const scene = script?.script?.scenes?.[sceneIdx]
+    const frame = findStoryboardFrame(scene, frameId)
+    if (!scene || !frame) {
+      try { const { toast } = require('sonner'); toast.error('Storyboard frame not found') } catch {}
+      return
+    }
+
+    const sceneDescription = scene?.visualDescription || scene?.action || scene?.summary || scene?.heading
+    if (!sceneDescription) {
+      try { const { toast } = require('sonner'); toast.error('Scene must have a description to generate frame') } catch {}
+      return
+    }
+
+    if (!batchGeneratingRef.current) {
+      overlayStore.show(`Custom frame — Scene ${sceneIdx + 1}`, 25, 'storyboard-production')
+    }
+    setGeneratingKeyframeSceneNumber(sceneIdx + 1)
+
+    try {
+      const response = await fetch('/api/scene/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex: sceneIdx,
+          frameType: 'custom',
+          customFrameId: frameId,
+          quality: imageQuality,
+          characterSelectionExplicit: !!frame.character,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data?.error || 'Custom frame generation failed')
+      }
+
+      const updatedScenes = [...(script.script.scenes || [])]
+      const sceneCopy = { ...updatedScenes[sceneIdx] }
+      const frames = Array.isArray(sceneCopy.storyboardFrames)
+        ? [...(sceneCopy.storyboardFrames as ReturnType<typeof getOrderedStoryboardFrames>)]
+        : []
+      const frameIdx = frames.findIndex((f) => f.id === frameId)
+      if (frameIdx >= 0) {
+        frames[frameIdx] = {
+          ...frames[frameIdx],
+          imageUrl: data.imageUrl,
+          imagePrompt: data.prompt || '',
+        }
+        sceneCopy.storyboardFrames = frames
+      }
+      updatedScenes[sceneIdx] = sceneCopy
+
+      setScript({
+        ...script,
+        script: { ...script.script, scenes: updatedScenes },
+      })
+
+      await persistVisionScriptScenes(updatedScenes)
+      try { const { toast } = require('sonner'); toast.success('Custom frame generated!') } catch {}
+    } catch (error: any) {
+      console.error('Failed to generate custom frame:', error)
+      try { const { toast } = require('sonner'); toast.error(error?.message || 'Failed to generate custom frame') } catch {}
+    } finally {
+      if (!batchGeneratingRef.current) overlayStore.hide()
+      setGeneratingKeyframeSceneNumber(null)
+    }
+  }
+
+  const handleUploadCustomFrame = async (sceneIndex: number, frameId: string, file: File) => {
+    if (!script?.script?.scenes) return
+
+    try {
+      const scriptScenes = script.script.scenes
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        const dataUrl = e.target?.result as string
+        const updatedScenes = scriptScenes.map((s: any, idx: number) => {
+          if (idx !== sceneIndex) return s
+          const sceneCopy = { ...s }
+          const frames = Array.isArray(sceneCopy.storyboardFrames)
+            ? [...sceneCopy.storyboardFrames]
+            : []
+          const frameIdx = frames.findIndex((f: any) => f?.id === frameId)
+          if (frameIdx >= 0) {
+            frames[frameIdx] = { ...frames[frameIdx], imageUrl: dataUrl }
+            sceneCopy.storyboardFrames = frames
+          }
+          return sceneCopy
+        })
+
+        setScript((prev: any) => ({
+          ...prev,
+          script: { ...prev?.script, scenes: updatedScenes },
+        }))
+
+        try {
+          await persistVisionScriptScenes(updatedScenes)
+        } catch (saveError) {
+          console.error('[handleUploadCustomFrame] Failed to persist:', saveError)
+        }
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('[handleUploadCustomFrame] Error:', error)
+    }
+  }
+
   // Handle manual save project - forces save of all current state to database
   const handleSaveProject = async () => {
     if (!project || !script) {
@@ -11094,6 +11289,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onUploadDialogueFrame={(sceneIdx, dialogueIdx, file) =>
                               handleUploadDialogueFrame(sceneIdx, dialogueIdx, file)
                             }
+                            onAddStoryboardFrame={handleAddStoryboardFrame}
+                            onDeleteStoryboardFrame={handleDeleteStoryboardFrame}
+                            onGenerateCustomFrame={handleGenerateCustomFrame}
+                            onUploadCustomFrame={handleUploadCustomFrame}
                             onUploadScene={handleUploadScene}
                             onSaveEditedScene={handleSaveEditedScene}
                             onReorderScenes={handleReorderScenes}

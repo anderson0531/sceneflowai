@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus } from 'lucide-react'
+import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
@@ -14,6 +14,7 @@ export interface SceneImageFrameProps {
   onGenerate: () => void
   onUpload: (file: File) => void
   onEdit?: (imageUrl: string) => void
+  onDelete?: () => void
   onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => void
   /** Compact mode for reference library - smaller frame */
   compact?: boolean
@@ -40,6 +41,7 @@ export function SceneImageFrame({
   onGenerate,
   onUpload,
   onEdit,
+  onDelete,
   onAddToReferenceLibrary,
   compact = false,
   showBorder = true,
@@ -168,6 +170,19 @@ export function SceneImageFrame({
                   >
                     <Upload className="w-5 h-5 text-white" />
                   </button>
+
+                  {onDelete && compact && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDelete()
+                      }}
+                      className="p-3 bg-red-600/80 hover:bg-red-600 rounded-full transition-colors"
+                      title="Delete frame"
+                    >
+                      <Trash2 className="w-5 h-5 text-white" />
+                    </button>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -234,6 +249,20 @@ export function SceneImageFrame({
                 <Upload className="w-4 h-4 mr-1" />
                 Upload
               </Button>
+
+              {onDelete && compact && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete()
+                  }}
+                  className="border-red-700/50 text-red-400 hover:bg-red-950"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
         )}

@@ -243,17 +243,25 @@ export async function POST(req: NextRequest) {
       locationReferences = [],  // NEW: Location references for environment consistency
       skipObjectAutoDetection = false,  // NEW: Skip auto-detection of objects (for batch mode)
       useAIPrompt = true,  // NEW: Use Gemini intelligence for prompt generation (default: true)
-      frameType = 'establishing',  // 'establishing' | 'dialogue' storyboard frame
+      frameType = 'establishing',  // 'establishing' | 'dialogue' | 'custom' storyboard frame
       dialogueIndex,  // Required when frameType === 'dialogue'
+      customFrameId,  // Required when frameType === 'custom'
     } = body
     
     // Client explicitly chose characters (even if empty = no characters wanted); mutable for dialogue frames
     let characterSelectionExplicit = body.characterSelectionExplicit ?? false
     
     const isDialogueFrame = frameType === 'dialogue'
+    const isCustomFrame = frameType === 'custom'
     if (isDialogueFrame && (typeof dialogueIndex !== 'number' || dialogueIndex < 0)) {
       return NextResponse.json(
         { success: false, error: 'dialogueIndex is required when frameType is dialogue' },
+        { status: 400 }
+      )
+    }
+    if (isCustomFrame && (!customFrameId || typeof customFrameId !== 'string')) {
+      return NextResponse.json(
+        { success: false, error: 'customFrameId is required when frameType is custom' },
         { status: 400 }
       )
     }
@@ -487,6 +495,32 @@ export async function POST(req: NextRequest) {
             'Frame the speaking character prominently — medium close-up or over-the-shoulder — with scene continuity preserved. '
           effectiveShotType = effectiveShotType || 'medium close-up'
           effectiveCameraAngle = effectiveCameraAngle || 'eye level'
+        } else if (isCustomFrame) {
+          const customFrames = Array.isArray(scene.storyboardFrames) ? scene.storyboardFrames : []
+          const customFrame = customFrames.find((f: any) => f?.id === customFrameId)
+          if (!customFrame) {
+            return NextResponse.json(
+              { success: false, error: `Custom storyboard frame ${customFrameId} not found` },
+              { status: 400 }
+            )
+          }
+          const label = String(customFrame.label || 'Custom storyboard frame').trim()
+          const character = String(customFrame.character || '').trim()
+          const lineText = String(customFrame.line || '').trim()
+          dialogueFrameContext =
+            `Storyboard custom frame "${label}". ` +
+            (character ? `Feature ${character}${lineText ? ` — "${lineText}"` : ''}. ` : '') +
+            'Create a cinematic storyboard cut that fits the scene continuity. '
+          if (character && allCharacters.length > 0) {
+            characterSelectionExplicit = true
+            const charLower = character.toLowerCase()
+            const match = allCharacters.find((c: any) => {
+              if (!c?.name) return false
+              const nameLower = c.name.toLowerCase()
+              return nameLower === charLower || nameLower.includes(charLower) || charLower.includes(nameLower)
+            })
+            if (match) characterObjects = [match]
+          }
         }
 
         // PRIORITY 1: Enhanced Scene Direction (customPrompt from PromptBuilder, or sceneDirectionText)
@@ -1343,8 +1377,9 @@ export async function POST(req: NextRequest) {
       creditsCharged: CREDIT_COST,
       creditsBalance: newBalance,
       prompt: optimizedPrompt,
-      frameType: isDialogueFrame ? 'dialogue' : 'establishing',
+      frameType: isDialogueFrame ? 'dialogue' : isCustomFrame ? 'custom' : 'establishing',
       ...(isDialogueFrame ? { dialogueIndex } : {}),
+      ...(isCustomFrame ? { customFrameId } : {}),
     }
 
     // Add validation info (informational only for storyboards)

@@ -65,8 +65,9 @@ export interface StoryboardData {
   title: string
   frames: Array<{
     sceneNumber: number
-    frameType?: 'establishing' | 'dialogue'
+    frameType?: 'establishing' | 'dialogue' | 'custom'
     dialogueIndex?: number
+    customFrameId?: string
     imageUrl?: string
     visualDescription?: string
     shotType?: string
@@ -75,6 +76,7 @@ export interface StoryboardData {
     duration?: number
     character?: string
     line?: string
+    label?: string
   }>
 }
 

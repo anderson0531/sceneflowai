@@ -51,7 +51,11 @@ export const StoryboardRenderer = React.forwardRef<HTMLDivElement, RendererProps
                 ? ` — ${frame.character}`
                 : frame.frameType === 'establishing'
                   ? ' — Establishing'
-                  : ''}
+                  : frame.frameType === 'custom' && frame.label
+                    ? ` — ${frame.label}`
+                    : frame.frameType === 'custom'
+                      ? ' — Custom'
+                      : ''}
             </h3>
             
             {frame.imageUrl && (
