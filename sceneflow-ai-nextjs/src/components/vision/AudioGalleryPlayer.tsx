@@ -306,6 +306,11 @@ export function AudioGalleryPlayer({
 
   const displayImageUrl = currentVisualFrame?.imageUrl
 
+  const speakerLabel =
+    currentVisualFrame?.character ??
+    currentClip?.label ??
+    currentVisualFrame?.label
+
   // Reset Ken Burns when the visible frame changes
   useEffect(() => {
     const next =
@@ -686,14 +691,11 @@ export function AudioGalleryPlayer({
               </span>
             </div>
             
-            {/* Current clip label overlay */}
-            {(currentClip || currentVisualFrame?.label) && (
+            {/* Current clip label overlay — speaker name only (no dialogue caption) */}
+            {speakerLabel && (
               <div className="absolute bottom-2 left-2 right-2 bg-black/70 rounded px-2 py-1">
                 <span className={cn("text-white", isFullscreen && !sharedCompact ? "text-base" : "text-xs")}>
-                  {currentClip?.label ?? currentVisualFrame?.label}
-                  {currentVisualFrame?.line && (
-                    <span className="block text-white/70 truncate mt-0.5">{currentVisualFrame.line}</span>
-                  )}
+                  {speakerLabel}
                 </span>
               </div>
             )}

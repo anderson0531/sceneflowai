@@ -490,6 +490,43 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     return resultPromise
   }, [projectId])
 
+  const persistVisionScriptScenes = useCallback(async (
+    updatedScenes: any[],
+    debugLabel?: string
+  ): Promise<boolean> => {
+    const currentScript = scriptRef.current
+    const currentProject = projectRef.current
+    if (!currentScript?.script || !currentProject?.id) return false
+
+    const { characters: _staleCharacters, ...visionPhaseWithoutCharacters } =
+      currentProject.metadata?.visionPhase || {}
+
+    const updatedScript = {
+      ...currentScript,
+      script: { ...currentScript.script, scenes: updatedScenes },
+    }
+
+    const response = await serializedProjectSave(
+      {
+        metadata: {
+          ...currentProject.metadata,
+          visionPhase: {
+            ...visionPhaseWithoutCharacters,
+            characters,
+            script: updatedScript,
+          },
+        },
+      },
+      debugLabel || 'persistVisionScriptScenes'
+    )
+
+    if (!response.ok) {
+      console.error(`[persistVisionScriptScenes] Save failed: ${response.status}`)
+      return false
+    }
+    return true
+  }, [characters, serializedProjectSave])
+
   
   // Collapsible sidebar sections
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -6678,58 +6715,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const handleUploadScene = async (sceneIndex: number, file: File) => {
     if (!script?.script?.scenes) return
-    
+
     try {
-      const scriptScenes = script.script.scenes
-      const reader = new FileReader()
-      reader.onload = async (e) => {
-        const dataUrl = e.target?.result as string
-        
-        const updatedScenes = scriptScenes.map((s: any, idx: number) => 
-          idx === sceneIndex 
-            ? { ...s, imageUrl: dataUrl } 
-            : s
-        )
-        
-        // Update script state (which is the source of truth)
-        setScript((prev: any) => ({
-          ...prev,
-          script: {
-            ...prev?.script,
-            scenes: updatedScenes
-          }
-        }))
-        
-        // Persist to project metadata
-        try {
-          const existingMetadata = project?.metadata || {}
-          const existingVisionPhase = existingMetadata.visionPhase || {}
-          
-          await fetch(`/api/projects/${projectId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              metadata: {
-                ...existingMetadata,
-                visionPhase: {
-                  ...existingVisionPhase,
-                  script: {
-                    ...script,
-                    script: {
-                      ...script.script,
-                      scenes: updatedScenes
-                    }
-                  },
-                  characters: characters
-                }
-              }
-            })
-          })
-        } catch (saveError) {
-          console.error('Failed to save uploaded scene to project:', saveError)
-        }
+      const uploadedUrl = await uploadAssetViaAPI(file, projectId)
+      const updatedScenes = script.script.scenes.map((s: any, idx: number) =>
+        idx === sceneIndex ? { ...s, imageUrl: uploadedUrl } : s
+      )
+
+      setScript((prev: any) => ({
+        ...prev,
+        script: { ...prev?.script, scenes: updatedScenes },
+      }))
+
+      const saved = await persistVisionScriptScenes(updatedScenes, 'handleUploadScene')
+      if (saved) {
+        try { const { toast } = require('sonner'); toast.success('Scene image uploaded') } catch {}
+      } else {
+        try { const { toast } = require('sonner'); toast.error('Failed to save uploaded image') } catch {}
       }
-      reader.readAsDataURL(file)
     } catch (error) {
       console.error('Scene image upload failed:', error)
       try { const { toast } = require('sonner'); toast.error('Failed to upload image') } catch {}
@@ -8137,72 +8140,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!script?.script?.scenes) return
 
     try {
-      const scriptScenes = script.script.scenes
-      const reader = new FileReader()
-      reader.onload = async (e) => {
-        const dataUrl = e.target?.result as string
-        const updatedScenes = scriptScenes.map((s: any, idx: number) => {
-          if (idx !== sceneIndex) return s
-          const dialogue = [...(s.dialogue || [])]
-          dialogue[dialogueIdx] = { ...dialogue[dialogueIdx], storyboardImageUrl: dataUrl }
-          return { ...s, dialogue }
-        })
+      const uploadedUrl = await uploadAssetViaAPI(file, projectId)
+      const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
+        if (idx !== sceneIndex) return s
+        const dialogue = [...(s.dialogue || [])]
+        dialogue[dialogueIdx] = { ...dialogue[dialogueIdx], storyboardImageUrl: uploadedUrl }
+        return { ...s, dialogue }
+      })
 
-        setScript((prev: any) => ({
-          ...prev,
-          script: { ...prev?.script, scenes: updatedScenes },
-        }))
+      setScript((prev: any) => ({
+        ...prev,
+        script: { ...prev?.script, scenes: updatedScenes },
+      }))
 
-        try {
-          const existingMetadata = project?.metadata || {}
-          const existingVisionPhase = existingMetadata.visionPhase || {}
-          await fetch(`/api/projects/${projectId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              metadata: {
-                ...existingMetadata,
-                visionPhase: {
-                  ...existingVisionPhase,
-                  script: {
-                    ...script,
-                    script: { ...script.script, scenes: updatedScenes },
-                  },
-                  characters,
-                },
-              },
-            }),
-          })
-        } catch (saveError) {
-          console.error('[handleUploadDialogueFrame] Failed to persist:', saveError)
-        }
+      const saved = await persistVisionScriptScenes(updatedScenes, 'handleUploadDialogueFrame')
+      if (saved) {
+        try { const { toast } = require('sonner'); toast.success('Dialogue frame uploaded') } catch {}
+      } else {
+        try { const { toast } = require('sonner'); toast.error('Failed to save dialogue frame') } catch {}
       }
-      reader.readAsDataURL(file)
     } catch (error) {
       console.error('[handleUploadDialogueFrame] Error:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to upload dialogue frame') } catch {}
     }
-  }
-
-  const persistVisionScriptScenes = async (updatedScenes: any[]) => {
-    const { characters: _staleCharacters, ...visionPhaseWithoutCharacters } =
-      project?.metadata?.visionPhase || {}
-    await fetch(`/api/projects/${project?.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        metadata: {
-          ...project?.metadata,
-          visionPhase: {
-            ...visionPhaseWithoutCharacters,
-            characters,
-            script: {
-              ...script,
-              script: { ...script.script, scenes: updatedScenes },
-            },
-          },
-        },
-      }),
-    })
   }
 
   const handleAddStoryboardFrame = async (sceneIdx: number) => {
@@ -8342,38 +8302,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     if (!script?.script?.scenes) return
 
     try {
-      const scriptScenes = script.script.scenes
-      const reader = new FileReader()
-      reader.onload = async (e) => {
-        const dataUrl = e.target?.result as string
-        const updatedScenes = scriptScenes.map((s: any, idx: number) => {
-          if (idx !== sceneIndex) return s
-          const sceneCopy = { ...s }
-          const frames = Array.isArray(sceneCopy.storyboardFrames)
-            ? [...sceneCopy.storyboardFrames]
-            : []
-          const frameIdx = frames.findIndex((f: any) => f?.id === frameId)
-          if (frameIdx >= 0) {
-            frames[frameIdx] = { ...frames[frameIdx], imageUrl: dataUrl }
-            sceneCopy.storyboardFrames = frames
-          }
-          return sceneCopy
-        })
-
-        setScript((prev: any) => ({
-          ...prev,
-          script: { ...prev?.script, scenes: updatedScenes },
-        }))
-
-        try {
-          await persistVisionScriptScenes(updatedScenes)
-        } catch (saveError) {
-          console.error('[handleUploadCustomFrame] Failed to persist:', saveError)
+      const uploadedUrl = await uploadAssetViaAPI(file, projectId)
+      const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
+        if (idx !== sceneIndex) return s
+        const sceneCopy = { ...s }
+        const frames = Array.isArray(sceneCopy.storyboardFrames)
+          ? [...sceneCopy.storyboardFrames]
+          : []
+        const frameIdx = frames.findIndex((f: any) => f?.id === frameId)
+        if (frameIdx >= 0) {
+          frames[frameIdx] = { ...frames[frameIdx], imageUrl: uploadedUrl }
+          sceneCopy.storyboardFrames = frames
         }
+        return sceneCopy
+      })
+
+      setScript((prev: any) => ({
+        ...prev,
+        script: { ...prev?.script, scenes: updatedScenes },
+      }))
+
+      const saved = await persistVisionScriptScenes(updatedScenes, 'handleUploadCustomFrame')
+      if (saved) {
+        try { const { toast } = require('sonner'); toast.success('Custom frame uploaded') } catch {}
+      } else {
+        try { const { toast } = require('sonner'); toast.error('Failed to save custom frame') } catch {}
       }
-      reader.readAsDataURL(file)
     } catch (error) {
       console.error('[handleUploadCustomFrame] Error:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to upload custom frame') } catch {}
     }
   }
 

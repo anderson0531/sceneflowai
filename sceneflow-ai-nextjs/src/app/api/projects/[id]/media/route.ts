@@ -159,6 +159,9 @@ export async function GET(
     }
     
     const base64Size = calculateBase64Size(metadata)
+    if (base64Size > 0) {
+      hasBase64 = true
+    }
     
     const response: MediaResponse = {
       type: type as MediaResponse['type'],

@@ -290,6 +290,55 @@ export async function migrateProjectMedia(
     } else if (scene.sceneReferenceImageUrl) {
       stats.alreadyUrls++
     }
+
+    const sceneKey = scene.id || `scene-${scenes.indexOf(scene)}`
+
+    // Per-dialogue storyboard frame images
+    const dialogue = scene.dialogue || []
+    for (let dIdx = 0; dIdx < dialogue.length; dIdx++) {
+      const line = dialogue[dIdx]
+      if (isBase64DataUri(line?.storyboardImageUrl)) {
+        stats.totalFound++
+        const result = await migrateBase64Image(
+          line.storyboardImageUrl,
+          `${sceneKey}-dlg-${dIdx}`,
+          'scene',
+          projectId
+        )
+        if (result.success && result.newUrl) {
+          line.storyboardImageUrl = result.newUrl
+          stats.migrated++
+          stats.bytesFreed += result.originalSize
+        } else {
+          stats.failed++
+        }
+      } else if (line?.storyboardImageUrl) {
+        stats.alreadyUrls++
+      }
+    }
+
+    // User-managed custom storyboard frames
+    const storyboardFrames = scene.storyboardFrames || []
+    for (const frame of storyboardFrames) {
+      if (isBase64DataUri(frame?.imageUrl)) {
+        stats.totalFound++
+        const result = await migrateBase64Image(
+          frame.imageUrl,
+          `${sceneKey}-sbf-${frame.id || storyboardFrames.indexOf(frame)}`,
+          'scene',
+          projectId
+        )
+        if (result.success && result.newUrl) {
+          frame.imageUrl = result.newUrl
+          stats.migrated++
+          stats.bytesFreed += result.originalSize
+        } else {
+          stats.failed++
+        }
+      } else if (frame?.imageUrl) {
+        stats.alreadyUrls++
+      }
+    }
   }
   
   // 4. Migrate backdrop references
@@ -407,6 +456,12 @@ export function calculateBase64Size(metadata: any): number {
   for (const scene of scenes) {
     checkAndAdd(scene.imageUrl)
     checkAndAdd(scene.sceneReferenceImageUrl)
+    for (const line of scene.dialogue || []) {
+      checkAndAdd(line?.storyboardImageUrl)
+    }
+    for (const frame of scene.storyboardFrames || []) {
+      checkAndAdd(frame?.imageUrl)
+    }
   }
   
   // Check references
@@ -458,6 +513,12 @@ export function stripBase64FromMetadata(metadata: any): any {
   for (const scene of scenes) {
     stripIfBase64(scene, 'imageUrl')
     stripIfBase64(scene, 'sceneReferenceImageUrl')
+    for (const line of scene.dialogue || []) {
+      stripIfBase64(line, 'storyboardImageUrl')
+    }
+    for (const frame of scene.storyboardFrames || []) {
+      stripIfBase64(frame, 'imageUrl')
+    }
   }
   
   // Strip reference images
