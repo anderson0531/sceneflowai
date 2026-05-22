@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Play, Square, Volume2, Share2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer } from 'lucide-react'
+import { Play, Square, Volume2, PencilLine, MoreHorizontal, ChevronDown, MessageSquare, ArrowRight, Loader2, Wand2, X, Users, Lightbulb, SparklesIcon, Award, RefreshCw, FileText, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -271,43 +271,6 @@ export function TreatmentCard({
                           </TooltipTrigger>
                           <TooltipContent>Reimagine</TooltipContent>
                         </Tooltip>
-
-                        {/* Share blueprint with reviewers */}
-                        {onShareBlueprint && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                aria-label="Share blueprint for collaboration"
-                                title={
-                                  shareUrlFromParent
-                                    ? 'Share link active — click to refresh'
-                                    : 'Share & Collaborate'
-                                }
-                                onClick={() => onShareBlueprint()}
-                                disabled={isSharingBlueprint}
-                                className={cn(
-                                  'h-8 w-8 border text-gray-200 hover:bg-gray-800',
-                                  shareUrlFromParent
-                                    ? 'border-purple-500/50 text-purple-300 bg-purple-500/10'
-                                    : 'border-gray-700'
-                                )}
-                                variant="outline"
-                                size="icon"
-                              >
-                                {isSharingBlueprint ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Share2 className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {shareUrlFromParent
-                                ? 'Collaboration link active'
-                                : 'Share & Collaborate'}
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
 
                         {/* Preview/Print */}
                         {activeVariant && (
@@ -794,7 +757,7 @@ export function TreatmentCard({
                         <div className="flex items-center gap-2">
                           <Lightbulb className="w-5 h-5 text-amber-500" />
                           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            AI Narrative Reasoning
+                            Narrative Reasoning
                           </h3>
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             Why the AI made these storytelling choices

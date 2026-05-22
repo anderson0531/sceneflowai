@@ -386,7 +386,7 @@ export function BlueprintRefineDialog({
         <DialogHeader className="flex-shrink-0 pb-2">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Compass className="w-5 h-5 text-cyan-400" />
-            Guide Blueprint Revision
+            Blueprint Editor
           </DialogTitle>
           <p className="text-xs text-gray-500 mt-1">
             Describe your direction — AI will balance changes across the full blueprint. No direct
