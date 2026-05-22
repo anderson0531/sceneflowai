@@ -204,6 +204,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     screenshotSlot: 'Insert screenshot: Auto-generated Blueprint with story beats and character arcs',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-21%20at%2010.05.03.png',
     videoSlot: 'Insert 00:30 clip: Turning a concept into a structured Blueprint',
+    videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/BLUEPRINT.mp4',
   },
   {
     id: 11,
