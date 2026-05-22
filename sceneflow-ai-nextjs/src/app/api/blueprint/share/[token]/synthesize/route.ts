@@ -7,6 +7,7 @@ import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { requireOwnerForSession, sessionDbId } from '@/lib/blueprint/shareAuth'
 import { getPayload } from '@/lib/blueprint/shareSession'
 import { synthesizeCollabFeedback } from '@/lib/treatment/collabFeedbackSynthesizer'
+import { ensureCollabBlueprintFeedbackTable } from '@/lib/blueprint/ensureCollabBlueprintSchema'
 
 export const runtime = 'nodejs'
 
@@ -23,6 +24,7 @@ export async function POST(_req: NextRequest, ctx: RouteCtx) {
     }
 
     await sequelize.authenticate()
+    await ensureCollabBlueprintFeedbackTable()
     const session = auth.session!
     const payload = getPayload(session)
     if (!payload) {

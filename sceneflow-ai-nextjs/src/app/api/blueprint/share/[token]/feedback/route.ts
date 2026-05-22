@@ -4,6 +4,7 @@ import CollabBlueprintFeedback from '@/models/CollabBlueprintFeedback'
 import { resolveSessionByToken, getPayload } from '@/lib/blueprint/shareSession'
 import { requireOwnerForSession, validateParticipant, sessionDbId } from '@/lib/blueprint/shareAuth'
 import type { BlueprintStructuredFeedbackInput } from '@/lib/blueprint/shareTypes'
+import { ensureCollabBlueprintFeedbackTable } from '@/lib/blueprint/ensureCollabBlueprintSchema'
 
 export const runtime = 'nodejs'
 
@@ -18,6 +19,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
     }
 
     await sequelize.authenticate()
+    await ensureCollabBlueprintFeedbackTable()
     const sessionId = sessionDbId(auth.session!)
 
     const rows = await CollabBlueprintFeedback.findAll({
@@ -50,6 +52,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
   try {
     const { token } = await ctx.params
     await sequelize.authenticate()
+    await ensureCollabBlueprintFeedbackTable()
 
     const session = await resolveSessionByToken(token)
     if (!session) {

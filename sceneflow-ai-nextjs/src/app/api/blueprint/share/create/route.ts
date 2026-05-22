@@ -18,6 +18,7 @@ import {
   isGeminiTtsConfigured,
 } from '@/lib/tts/geminiFlashTts'
 import { resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
+import { ensureCollabBlueprintFeedbackTable } from '@/lib/blueprint/ensureCollabBlueprintSchema'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -128,6 +129,7 @@ export async function POST(req: NextRequest) {
 
     await CollabSession.sync({ alter: false })
     await CollabParticipant.sync({ alter: false })
+    await ensureCollabBlueprintFeedbackTable()
 
     const origin = req.headers.get('x-forwarded-host')
       ? `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host')}`
