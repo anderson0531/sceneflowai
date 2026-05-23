@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 import {
   buildStoryboardVisualTimeline,
+  buildStoryboardVoiceClips,
   getCurrentStoryboardVisualFrame,
   getEstablishingFrameUrl,
 } from '@/lib/storyboard/types'
@@ -164,68 +165,23 @@ export function AudioGalleryPlayer({
   }, [currentScene, selectedLanguage])
   
   // Build audio clips for current scene (narration & dialogue - played sequentially)
-  const audioClips = useMemo((): AudioClip[] => {
-    if (!currentScene) return []
-    
-    const clips: AudioClip[] = []
-    let currentStartTime = 0
-    
-    // Add narration clip
-    const narrationUrl = currentScene.narrationAudio?.[selectedLanguage]?.url 
-      || currentScene.narrationAudio?.en?.url 
-      || currentScene.narrationAudioUrl
-    const narrationDuration = narrationUrl && dynamicDurations[narrationUrl]
-      ? dynamicDurations[narrationUrl]
-      : currentScene.narrationAudio?.[selectedLanguage]?.duration
-      || currentScene.narrationAudio?.en?.duration
-      || currentScene.narrationDuration
-      || 0
-    
-    if (narrationUrl) {
-      clips.push({
-        id: 'narration',
-        url: narrationUrl,
-        startTime: currentStartTime,
-        duration: narrationDuration,
-        type: 'narration',
-        label: 'Narration'
-      })
-      currentStartTime += narrationDuration + 0.5 // 0.5s buffer between clips
-    }
-    
-    // Add dialogue clips
-    const dialogueAudio = currentScene.dialogueAudio?.[selectedLanguage] 
-      || currentScene.dialogueAudio?.en 
-      || []
-    
-    if (Array.isArray(dialogueAudio)) {
-      dialogueAudio.forEach((d: any, idx: number) => {
-        if (!d) return
-        const dUrl = d.audioUrl || d.url
-        if (!dUrl) return
-        // Skip narration folded into dialogueAudio when already played via narrationAudioUrl
-        const isFoldedNarration =
-          (d.kind === 'narration' || d.characterId === 'narrator') &&
-          narrationUrl &&
-          dUrl === narrationUrl
-        if (isFoldedNarration) return
+  const voiceClips = useMemo(
+    () => buildStoryboardVoiceClips(currentScene, selectedLanguage, dynamicDurations),
+    [currentScene, selectedLanguage, dynamicDurations]
+  )
 
-        const dur = dynamicDurations[dUrl] || d.duration || 3
-        const isNarrator = d.kind === 'narration' || d.characterId === 'narrator'
-        clips.push({
-          id: `dialogue-${idx}`,
-          url: dUrl,
-          startTime: currentStartTime,
-          duration: dur,
-          type: 'dialogue',
-          label: isNarrator ? 'Narrator' : (d.character || `Dialogue ${idx + 1}`)
-        })
-        currentStartTime += dur + 0.3 // 0.3s buffer between dialogue lines
-      })
-    }
-    
-    return clips
-  }, [currentScene, selectedLanguage, dynamicDurations])
+  const audioClips = useMemo((): AudioClip[] => {
+    return voiceClips
+      .filter((clip) => !!clip.url)
+      .map((clip) => ({
+        id: clip.id,
+        url: clip.url!,
+        startTime: clip.startTime,
+        duration: clip.duration,
+        type: clip.type === 'description' ? 'narration' : clip.type,
+        label: clip.label,
+      }))
+  }, [voiceClips])
   
   // Build music track for current scene (plays concurrently, loops)
   const musicTrack = useMemo((): AudioClip | null => {
@@ -292,8 +248,8 @@ export function AudioGalleryPlayer({
 
   // Visual frames aligned to voice clips (dialogue lines get per-line images)
   const visualFrames = useMemo(() => {
-    return buildStoryboardVisualTimeline(currentScene, audioClips)
-  }, [currentScene, audioClips])
+    return buildStoryboardVisualTimeline(currentScene, voiceClips)
+  }, [currentScene, voiceClips])
 
   const currentVisualFrame = useMemo(() => {
     if (visualFrames.length > 0) {

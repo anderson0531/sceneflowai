@@ -5,6 +5,12 @@
  * Dialogue frames: scene.dialogue[i].storyboardImageUrl
  */
 
+import { dialogueLineIdForIndex } from '@/components/vision/scene-production/audioTrackBuilder'
+
+const NARRATION_CLIP_BUFFER_SEC = 0.5
+const DIALOGUE_CLIP_BUFFER_SEC = 0.3
+const DEFAULT_CLIP_DURATION_SEC = 3
+
 /** Storyboard image fields stored on each dialogue line object. */
 export interface DialogueStoryboardFrame {
   storyboardImageUrl?: string
@@ -47,10 +53,13 @@ export interface FlatStoryboardFrame {
 /** Minimal audio clip shape used to build the visual timeline. */
 export interface StoryboardAudioClip {
   id: string
+  url?: string
   startTime: number
   duration: number
   type: 'narration' | 'dialogue' | 'description' | 'music' | 'sfx'
   label?: string
+  /** Script dialogue line index (matches scene.dialogue[i]). */
+  dialogueIndex?: number
 }
 
 /** A single visual frame in playback order, aligned to an audio clip window. */
@@ -166,6 +175,151 @@ export function getEstablishingFrameUrl(scene: Record<string, unknown> | null | 
   return typeof url === 'string' && url.trim() ? url : undefined
 }
 
+function resolveVoiceClipDuration(
+  url: string,
+  storedDuration: unknown,
+  dynamicDurations: Record<string, number>
+): number {
+  const dynamic = dynamicDurations[url]
+  if (typeof dynamic === 'number' && dynamic > 0) return dynamic
+  if (typeof storedDuration === 'number' && storedDuration > 0) return storedDuration
+  return DEFAULT_CLIP_DURATION_SEC
+}
+
+function isFoldedNarrationDuplicate(
+  entry: Record<string, unknown>,
+  url: string,
+  narrationUrl: string | undefined
+): boolean {
+  return (
+    (entry.kind === 'narration' || entry.characterId === 'narrator') &&
+    !!narrationUrl &&
+    url === narrationUrl
+  )
+}
+
+/**
+ * Build sequential voice clips (description → narration → dialogue) for storyboard playback.
+ * Dialogue clip IDs use script dialogueIndex (not dialogueAudio array position).
+ */
+export function buildStoryboardVoiceClips(
+  scene: Record<string, unknown> | null | undefined,
+  language: string,
+  dynamicDurations: Record<string, number> = {}
+): StoryboardAudioClip[] {
+  if (!scene) return []
+
+  const clips: StoryboardAudioClip[] = []
+  let currentStartTime = 0
+
+  const descriptionUrl =
+    (scene.descriptionAudio as Record<string, { url?: string }> | undefined)?.[language]?.url ||
+    (scene.descriptionAudio as Record<string, { url?: string }> | undefined)?.en?.url ||
+    (typeof scene.descriptionAudioUrl === 'string' ? scene.descriptionAudioUrl : undefined)
+
+  if (descriptionUrl) {
+    const descriptionDuration = resolveVoiceClipDuration(
+      descriptionUrl,
+      (scene.descriptionAudio as Record<string, { duration?: number }> | undefined)?.[language]
+        ?.duration ||
+        (scene.descriptionAudio as Record<string, { duration?: number }> | undefined)?.en
+          ?.duration ||
+        scene.descriptionDuration,
+      dynamicDurations
+    )
+    clips.push({
+      id: 'description',
+      url: descriptionUrl,
+      startTime: currentStartTime,
+      duration: descriptionDuration,
+      type: 'description',
+      label: 'Description',
+    })
+    currentStartTime += descriptionDuration + NARRATION_CLIP_BUFFER_SEC
+  }
+
+  const narrationUrl =
+    (scene.narrationAudio as Record<string, { url?: string }> | undefined)?.[language]?.url ||
+    (scene.narrationAudio as Record<string, { url?: string }> | undefined)?.en?.url ||
+    (typeof scene.narrationAudioUrl === 'string' ? scene.narrationAudioUrl : undefined)
+
+  if (narrationUrl) {
+    const narrationDuration = resolveVoiceClipDuration(
+      narrationUrl,
+      (scene.narrationAudio as Record<string, { duration?: number }> | undefined)?.[language]
+        ?.duration ||
+        (scene.narrationAudio as Record<string, { duration?: number }> | undefined)?.en?.duration ||
+        scene.narrationDuration,
+      dynamicDurations
+    )
+    clips.push({
+      id: 'narration',
+      url: narrationUrl,
+      startTime: currentStartTime,
+      duration: narrationDuration,
+      type: 'narration',
+      label: 'Narration',
+    })
+    currentStartTime += narrationDuration + NARRATION_CLIP_BUFFER_SEC
+  }
+
+  const dialogueAudioRaw = scene.dialogueAudio
+  const dialogueAudio: unknown[] = Array.isArray(dialogueAudioRaw)
+    ? dialogueAudioRaw
+    : Array.isArray((dialogueAudioRaw as Record<string, unknown[]>)?.[language])
+      ? (dialogueAudioRaw as Record<string, unknown[]>)[language]
+      : Array.isArray((dialogueAudioRaw as Record<string, unknown[]>)?.en)
+        ? (dialogueAudioRaw as Record<string, unknown[]>).en
+        : []
+
+  const dialogueEntries: Array<{ entry: Record<string, unknown>; arrayIndex: number }> = []
+  dialogueAudio.forEach((raw, arrayIndex) => {
+    if (!raw || typeof raw !== 'object') return
+    const entry = raw as Record<string, unknown>
+    const url =
+      (typeof entry.audioUrl === 'string' && entry.audioUrl) ||
+      (typeof entry.url === 'string' && entry.url) ||
+      ''
+    if (!url) return
+    if (isFoldedNarrationDuplicate(entry, url, narrationUrl)) return
+    dialogueEntries.push({ entry, arrayIndex })
+  })
+
+  dialogueEntries.sort((a, b) => {
+    const indexA =
+      typeof a.entry.dialogueIndex === 'number' ? a.entry.dialogueIndex : a.arrayIndex
+    const indexB =
+      typeof b.entry.dialogueIndex === 'number' ? b.entry.dialogueIndex : b.arrayIndex
+    return indexA - indexB
+  })
+
+  for (const { entry, arrayIndex } of dialogueEntries) {
+    const url =
+      (typeof entry.audioUrl === 'string' && entry.audioUrl) ||
+      (typeof entry.url === 'string' && entry.url) ||
+      ''
+    const dialogueIndex =
+      typeof entry.dialogueIndex === 'number' ? entry.dialogueIndex : arrayIndex
+    const duration = resolveVoiceClipDuration(url, entry.duration, dynamicDurations)
+    const isNarrator = entry.kind === 'narration' || entry.characterId === 'narrator'
+    const character =
+      typeof entry.character === 'string' ? entry.character : undefined
+
+    clips.push({
+      id: dialogueLineIdForIndex(dialogueIndex),
+      url,
+      startTime: currentStartTime,
+      duration,
+      type: 'dialogue',
+      label: isNarrator ? 'Narrator' : character || `Dialogue ${dialogueIndex + 1}`,
+      dialogueIndex,
+    })
+    currentStartTime += duration + DIALOGUE_CLIP_BUFFER_SEC
+  }
+
+  return clips
+}
+
 /** Per-dialogue frame URL with fallback to establishing. */
 export function getDialogueFrameUrl(
   scene: Record<string, unknown> | null | undefined,
@@ -196,7 +350,10 @@ export function buildStoryboardVisualTimeline(
     if (clip.type === 'music' || clip.type === 'sfx') continue
 
     if (clip.type === 'dialogue') {
-      const dialogueIndex = parseDialogueIndexFromClipId(clip.id)
+      const dialogueIndex =
+        typeof clip.dialogueIndex === 'number'
+          ? clip.dialogueIndex
+          : parseDialogueIndexFromClipId(clip.id)
       const d =
         typeof dialogueIndex === 'number'
           ? (dialogue[dialogueIndex] as Record<string, unknown> | undefined)
