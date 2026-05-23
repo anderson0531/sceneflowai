@@ -81,6 +81,7 @@ import { getAudioDuration } from '@/lib/audio/audioDuration'
 import { getAudioUrl } from '@/lib/audio/languageDetection'
 import { cleanupScriptAudio } from '@/lib/audio/cleanupAudio'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
+import { uploadAssetViaAPI } from '@/lib/vision/uploads'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { useCredits } from '@/contexts/CreditsContext'
 import { ProjectCostCalculator } from '@/components/credits/ProjectCostCalculator'
@@ -1944,6 +1945,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       toast.info('SFX uploads are no longer supported. Use Generate to create the cue with ElevenLabs.')
       return
     }
+    if (!projectId) {
+      toast.error('Project not loaded — cannot upload audio')
+      return
+    }
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'audio/mp3,audio/wav,audio/ogg,audio/webm,audio/mpeg'
@@ -1954,21 +1959,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
       const toastId = toast.loading('Uploading audio...')
       try {
-        const formData = new FormData()
-        formData.append('file', file)
-
-        const response = await fetch('/api/upload/audio', {
-          method: 'POST',
-          body: formData
-        })
-
-        if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.error || 'Upload failed')
-        }
-
-        const data = await response.json()
-        const audioUrl = data.url
+        const audioUrl = await uploadAssetViaAPI(file, projectId)
         
         // Handle different audio types
         if (type === 'music') {
@@ -2000,6 +1991,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           const updatedScript = { ...script, script: { ...script.script, scenes: updatedScenes } }
           onScriptChange(updatedScript)
         } else if (type === 'dialogue' && dialogueIdx !== undefined) {
+          const dialogueLine = scenes[sceneIdx]?.dialogue?.[dialogueIdx]
           // Update dialogue audio
           const updatedScenes = [...scenes]
           if (!updatedScenes[sceneIdx].dialogueAudio) {
@@ -2008,11 +2000,24 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           if (!updatedScenes[sceneIdx].dialogueAudio[selectedLanguage]) {
             updatedScenes[sceneIdx].dialogueAudio[selectedLanguage] = []
           }
-          // Find and update the entry for this dialogue index
-          const existingIdx = updatedScenes[sceneIdx].dialogueAudio[selectedLanguage].findIndex((a: any) => a.dialogueIndex === dialogueIdx)
-          const audioEntry = { audioUrl, character: characterName, dialogueIndex: dialogueIdx }
+          const existingIdx = updatedScenes[sceneIdx].dialogueAudio[selectedLanguage].findIndex(
+            (a: any) =>
+              (dialogueLine?.lineId && a?.lineId === dialogueLine.lineId) ||
+              (a.dialogueIndex === dialogueIdx && a.character === characterName)
+          )
+          const audioEntry: Record<string, unknown> = {
+            audioUrl,
+            character: characterName,
+            dialogueIndex: dialogueIdx,
+          }
+          if (dialogueLine?.lineId) audioEntry.lineId = dialogueLine.lineId
+          if (dialogueLine?.kind) audioEntry.kind = dialogueLine.kind
+          if (dialogueLine?.characterId) audioEntry.characterId = dialogueLine.characterId
           if (existingIdx >= 0) {
-            updatedScenes[sceneIdx].dialogueAudio[selectedLanguage][existingIdx] = audioEntry
+            updatedScenes[sceneIdx].dialogueAudio[selectedLanguage][existingIdx] = {
+              ...updatedScenes[sceneIdx].dialogueAudio[selectedLanguage][existingIdx],
+              ...audioEntry,
+            }
           } else {
             updatedScenes[sceneIdx].dialogueAudio[selectedLanguage].push(audioEntry)
           }

@@ -80,8 +80,9 @@ export async function generateTTSAudio(params: GenerateTTSParams): Promise<{ mp3
   const timestamp = Date.now()
   const filename = `audio/tts-${timestamp}.mp3`
   formData.append('file', blob, filename)
+  formData.append('projectId', 'default')
 
-  const uploadRes = await fetch('/api/upload/audio', {
+  const uploadRes = await fetch('/api/audio/upload', {
     method: 'POST',
     body: formData
   })
@@ -90,7 +91,8 @@ export async function generateTTSAudio(params: GenerateTTSParams): Promise<{ mp3
     throw new Error('Failed to upload audio file')
   }
 
-  const { url } = await uploadRes.json()
+  const data = await uploadRes.json()
+  const url = data.url || data.audioUrl
 
   return {
     mp3Url: url,
