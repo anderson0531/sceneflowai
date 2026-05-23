@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { optimizeTextForTTS } from '../../../../lib/tts/textOptimizer'
-import { getBatchNarrationTtsText } from '../../../../lib/script/narration'
+import { getBatchNarrationTtsText, sceneHasNarratorInDialogue } from '../../../../lib/script/narration'
 import { put } from '@vercel/blob'
 import { toCanonicalName, generateAliases } from '../../../../lib/character/canonical'
 import { resolveSfxDuration } from '../../../../lib/elevenlabs/sfxDuration'
@@ -496,7 +496,7 @@ export async function POST(req: NextRequest) {
               const sceneTranslation = (storedTranslations as any)[sceneIndex] as { narration?: string; dialogue?: string[] } | undefined
               const storedNarration = sceneTranslation?.narration
               const narrationText = getBatchNarrationTtsText(scene, storedNarration)
-              if (narrationText) {
+              if (narrationText && !sceneHasNarratorInDialogue(scene)) {
                 console.log(`[Batch Audio] Generating narration for scene ${sceneIndex + 1}`)
                 const narrationIsPreTranslated = !!storedNarration?.trim()
                 if (storedNarration?.trim()) {

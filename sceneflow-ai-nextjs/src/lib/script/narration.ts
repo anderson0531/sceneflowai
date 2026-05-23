@@ -5,6 +5,12 @@
  * never authored as separate voiceover.
  */
 
+import { toCanonicalName } from '@/lib/character/canonical'
+import {
+  NARRATOR_CHARACTER,
+  NARRATOR_CHARACTER_ID,
+} from '@/lib/script/segmentTypes'
+
 function normalizeForDedup(s: string): string {
   return s.replace(/\s+/g, ' ').trim().toLowerCase()
 }
@@ -65,6 +71,114 @@ export function hasStandaloneNarrationAudio(
   return false
 }
 
+/** True when narrator lines live in `scene.dialogue` (integrated narrator-as-character model). */
+export function sceneHasNarratorInDialogue(
+  scene: SceneLikeForNarration & Record<string, unknown>
+): boolean {
+  const dialogueArr = Array.isArray(scene?.dialogue) ? scene.dialogue : []
+  return dialogueArr.some((d: unknown) => {
+    if (!d || typeof d !== 'object') return false
+    const line = d as Record<string, unknown>
+    if (line.kind === 'narration') return true
+    if (line.characterId === NARRATOR_CHARACTER_ID) return true
+    if (
+      typeof line.character === 'string' &&
+      toCanonicalName(line.character) === toCanonicalName(NARRATOR_CHARACTER)
+    ) {
+      return true
+    }
+    return false
+  })
+}
+
+/**
+ * True when a separate `narrationAudio` track should exist / play (not narrator-as-dialogue).
+ * Mirrors the generation contract in generateSceneAudio / generate-all-audio.
+ */
+export function shouldScheduleStandaloneNarration(
+  scene: SceneLikeForNarration & Record<string, unknown>,
+  storedNarration?: string | null
+): boolean {
+  if (sceneHasNarratorInDialogue(scene)) return false
+  return getBatchNarrationTtsText(scene, storedNarration) !== null
+}
+
+/** Resolve standalone narration URL for playback, or undefined when ghost / not intentional. */
+export function resolveStandaloneNarrationUrl(
+  scene: SceneLikeForNarration & Record<string, unknown>,
+  language: string,
+  storedNarration?: string | null
+): string | undefined {
+  if (!shouldScheduleStandaloneNarration(scene, storedNarration)) return undefined
+
+  const narrationAudio = scene.narrationAudio as
+    | Record<string, { url?: string; audioUrl?: string }>
+    | undefined
+  const langEntry = narrationAudio?.[language] ?? narrationAudio?.en
+  const fromObject = langEntry?.url || langEntry?.audioUrl
+  if (typeof fromObject === 'string' && fromObject.trim()) return fromObject
+
+  const legacy = scene.narrationAudioUrl
+  if (typeof legacy === 'string' && legacy.trim()) return legacy
+
+  const legacyUrl = scene.narrationUrl
+  if (typeof legacyUrl === 'string' && legacyUrl.trim()) return legacyUrl
+
+  return undefined
+}
+
+export type StripGhostNarrationResult = {
+  cleanedScene: SceneLikeForNarration & Record<string, unknown>
+  deletedUrls: string[]
+}
+
+/** Remove orphan standalone narration audio when narration is not intentional. */
+export function stripGhostStandaloneNarration(
+  scene: SceneLikeForNarration & Record<string, unknown>
+): StripGhostNarrationResult {
+  const cleanedScene = { ...scene }
+  const deletedUrls: string[] = []
+
+  if (!hasStandaloneNarrationAudio(cleanedScene)) {
+    return { cleanedScene, deletedUrls }
+  }
+
+  if (shouldScheduleStandaloneNarration(cleanedScene)) {
+    return { cleanedScene, deletedUrls }
+  }
+
+  const na = cleanedScene.narrationAudio
+  if (na && typeof na === 'object') {
+    for (const langAudio of Object.values(na as Record<string, { url?: string; audioUrl?: string }>)) {
+      const url = langAudio?.url || langAudio?.audioUrl
+      if (typeof url === 'string' && url.trim()) deletedUrls.push(url)
+    }
+  }
+  if (
+    typeof cleanedScene.narrationAudioUrl === 'string' &&
+    cleanedScene.narrationAudioUrl.trim() &&
+    !deletedUrls.includes(cleanedScene.narrationAudioUrl)
+  ) {
+    deletedUrls.push(cleanedScene.narrationAudioUrl)
+  }
+  if (
+    typeof cleanedScene.narrationUrl === 'string' &&
+    cleanedScene.narrationUrl.trim() &&
+    !deletedUrls.includes(cleanedScene.narrationUrl)
+  ) {
+    deletedUrls.push(cleanedScene.narrationUrl)
+  }
+
+  delete cleanedScene.narrationAudio
+  delete cleanedScene.narrationAudioUrl
+  delete cleanedScene.narrationUrl
+  delete cleanedScene.narrationDuration
+  delete cleanedScene.narrationAudioDuration
+  delete cleanedScene.narrationAudioGeneratedAt
+
+  return { cleanedScene, deletedUrls: [...new Set(deletedUrls)] }
+}
+
 export type ResolveNarrationTimelineOptions = {
   narrationText?: string | null
   /**
@@ -92,6 +206,6 @@ export function resolveNarrationTextForAudioTimeline(
   const raw = String(scene?.narration ?? '').trim()
   if (!raw) return ''
   if (options?.narrationDriven) return raw
-  if (hasStandaloneNarrationAudio(scene)) return raw
+  if (hasStandaloneNarrationAudio(scene) && shouldScheduleStandaloneNarration(scene)) return raw
   return ''
 }

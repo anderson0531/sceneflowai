@@ -9,6 +9,7 @@ import {
   dialogueLineIdForIndex,
   findDialogueAudioForLine,
 } from '@/components/vision/scene-production/audioTrackBuilder'
+import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
 import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
 
 const NARRATION_CLIP_BUFFER_SEC = 0.5
@@ -290,10 +291,7 @@ export function buildStoryboardVoiceClips(
     currentStartTime += descriptionDuration + NARRATION_CLIP_BUFFER_SEC
   }
 
-  const narrationUrl =
-    (scene.narrationAudio as Record<string, { url?: string }> | undefined)?.[language]?.url ||
-    (scene.narrationAudio as Record<string, { url?: string }> | undefined)?.en?.url ||
-    (typeof scene.narrationAudioUrl === 'string' ? scene.narrationAudioUrl : undefined)
+  const narrationUrl = resolveStandaloneNarrationUrl(scene, language)
 
   if (narrationUrl) {
     const narrationDuration = resolveVoiceClipDuration(

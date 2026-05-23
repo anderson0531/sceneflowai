@@ -12,6 +12,8 @@ const BOB_URL = 'https://example.com/bob.mp3'
 describe('buildStoryboardVoiceClips', () => {
   it('uses script dialogueIndex for clip ids when narrator occupies array index 0', () => {
     const scene = {
+      narration: 'Opening voiceover for the scene.',
+      action: 'INT. ROOM - DAY',
       narrationAudioUrl: NARRATION_URL,
       narrationAudio: { en: { url: NARRATION_URL, duration: 4 } },
       dialogue: [
@@ -54,6 +56,29 @@ describe('buildStoryboardVoiceClips', () => {
     const sarahFrame = visualFrames.find((f) => f.dialogueIndex === 0)
     expect(sarahFrame?.character).toBe('Sarah')
     expect(sarahFrame?.line).toBe('Hello there.')
+  })
+
+  it('does not schedule ghost narration when narration duplicates visualDescription', () => {
+    const scene = {
+      narration: 'The rainy street.',
+      visualDescription: 'The rainy street.',
+      narrationAudio: { en: { url: NARRATION_URL, duration: 4 } },
+      dialogue: [{ character: 'Sarah', line: 'Hello there.' }],
+      dialogueAudio: {
+        en: [
+          {
+            character: 'Sarah',
+            dialogueIndex: 0,
+            audioUrl: SARAH_URL,
+            duration: 2.5,
+          },
+        ],
+      },
+    }
+
+    const clips = buildStoryboardVoiceClips(scene, 'en')
+    expect(clips.find((c) => c.id === 'narration')).toBeUndefined()
+    expect(clips.filter((c) => c.type === 'dialogue')).toHaveLength(1)
   })
 
   it('sorts dialogue clips by dialogueIndex when array order differs', () => {

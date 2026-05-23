@@ -36,6 +36,7 @@ import { GroupedNativeSelect } from '@/components/vision/GroupedNativeSelect'
 import { toast } from 'sonner'
 import type { SceneProductionData, AudioTracksData } from '@/components/vision/scene-production/types'
 import { calculateSequentialAlignment, AUDIO_ALIGNMENT_BUFFERS, determineBaselineLanguage, getLanguagePlaybackOffset, type AlignmentClip } from '@/components/vision/scene-production/audioTrackBuilder'
+import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
 
 
 interface ScreeningRoomProps {
@@ -812,8 +813,8 @@ export function ScreeningRoom({ script, characters, onClose, initialScene = 0, s
     const isUsingBaseline = selectedLanguage !== baselineLanguage
     
     // Get audio URLs for BOTH baseline (for timing) and target (for playback)
-    const baselineNarrationUrl = getAudioForLanguage(scene, baselineLanguage, 'narration')
-    const targetNarrationUrl = getAudioForLanguage(scene, selectedLanguage, 'narration')
+    const baselineNarrationUrl = resolveStandaloneNarrationUrl(scene, baselineLanguage)
+    const targetNarrationUrl = resolveStandaloneNarrationUrl(scene, selectedLanguage)
     const narrationUrl = targetNarrationUrl || baselineNarrationUrl // Fallback to baseline if target missing
     
     const baselineDialogueArray = (scene.dialogueAudio?.[baselineLanguage] || (baselineLanguage === 'en' ? scene.dialogueAudio : null))?.filter?.(Boolean) || null

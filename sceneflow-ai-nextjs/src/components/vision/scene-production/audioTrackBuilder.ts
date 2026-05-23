@@ -20,6 +20,7 @@ import {
   AudioClipSource,
 } from './types'
 import { DEFAULT_LML_CONFIG } from './defaults'
+import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
 
 /**
  * Buffer constants for audio alignment (in seconds)
@@ -1327,9 +1328,9 @@ export function applySequentialAlignmentToScene(
   musicDuration: number
   totalDuration: number
 } {
-  // Extract narration
+  // Extract narration (skip ghost / duplicate-description standalone tracks)
+  const narrationUrl = resolveStandaloneNarrationUrl(scene, language)
   const narrationAudio = scene.narrationAudio?.[language] || scene.narrationAudio?.en
-  const narrationUrl = narrationAudio?.url || scene.narrationAudioUrl
   const narrationDuration = narrationAudio?.duration || scene.narrationDuration || 0
   
   const narration: AlignmentClip | null = narrationUrl ? {

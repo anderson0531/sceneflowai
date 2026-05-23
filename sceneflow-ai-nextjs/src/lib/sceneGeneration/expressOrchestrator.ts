@@ -26,6 +26,7 @@ import type {
 import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
+import { shouldScheduleStandaloneNarration } from '../script/narration'
 
 const EXPRESS_CONCURRENCY = 1 // Process one scene at a time for chain reference consistency
 
@@ -73,10 +74,10 @@ function sceneNeedsDirection(scene: any): boolean {
 }
 
 function sceneNeedsAudio(scene: any, language: string): boolean {
+  const wantsStandaloneNarration = shouldScheduleStandaloneNarration(scene)
   const narrationOk =
-    !scene?.narration ||
-    !!scene?.narrationAudio?.[language]?.url ||
-    !!scene?.narrationAudio?.[language]
+    !wantsStandaloneNarration ||
+    !!scene?.narrationAudio?.[language]?.url
   const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
   const dialogueAudio = scene?.dialogueAudio?.[language]
   const dialogueOk =

@@ -16,7 +16,7 @@ import {
   NARRATOR_CHARACTER,
   NARRATOR_CHARACTER_ID,
 } from '../../lib/script/segmentTypes'
-import { getBatchNarrationTtsText } from '../../lib/script/narration'
+import { getBatchNarrationTtsText, sceneHasNarratorInDialogue } from '../../lib/script/narration'
 import type { SceneAudioAsset, SceneAudioCounts, SceneAudioResult } from './types'
 
 export interface GenerateSceneAudioParams {
@@ -204,18 +204,7 @@ export async function generateSceneAudio(
   // `scene.dialogueAudio[lang][i]`) we skip this legacy path whenever the
   // dialogue array already contains narrator lines.
   const dialogueArr: any[] = Array.isArray(scene?.dialogue) ? scene.dialogue : []
-  const hasNarratorInDialogue = dialogueArr.some((d: any) => {
-    if (!d) return false
-    if (d.kind === 'narration') return true
-    if (d.characterId === NARRATOR_CHARACTER_ID) return true
-    if (
-      typeof d.character === 'string' &&
-      toCanonicalName(d.character) === toCanonicalName(NARRATOR_CHARACTER)
-    ) {
-      return true
-    }
-    return false
-  })
+  const hasNarratorInDialogue = sceneHasNarratorInDialogue(scene)
   if (narrationVoice && !hasNarratorInDialogue) {
     const sceneTranslation = storedTranslations?.[sceneIndex]
     const storedNarration = sceneTranslation?.narration

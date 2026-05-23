@@ -4,7 +4,11 @@ import {
   isLikelyNarration,
   hasStandaloneNarrationAudio,
   resolveNarrationTextForAudioTimeline,
+  shouldScheduleStandaloneNarration,
+  sceneHasNarratorInDialogue,
+  stripGhostStandaloneNarration,
 } from '@/lib/script/narration'
+import { validateAndCleanSceneAudio } from '@/lib/audio/cleanupAudio'
 
 describe('narration helpers', () => {
   it('isLikelyNarration false when narration duplicates visual description (normalized)', () => {
@@ -61,6 +65,58 @@ describe('narration helpers', () => {
     expect(
       resolveNarrationTextForAudioTimeline(scene, { narrationDriven: true })
     ).toBe('Beat one. Beat two.')
+  })
+
+  it('resolveNarrationTextForAudioTimeline skips ghost duplicate-visual narration even with audio', () => {
+    const scene = {
+      narration: 'Same text',
+      visualDescription: 'Same text',
+      narrationAudio: { en: { url: 'https://x/blob/ghost.mp3' } },
+    }
+    expect(resolveNarrationTextForAudioTimeline(scene, {})).toBe('')
+  })
+
+  it('shouldScheduleStandaloneNarration false when narration duplicates visual with audio', () => {
+    const scene = {
+      narration: 'Same text',
+      visualDescription: 'Same text',
+      narrationAudio: { en: { url: 'https://x/blob/ghost.mp3' } },
+    }
+    expect(shouldScheduleStandaloneNarration(scene)).toBe(false)
+  })
+
+  it('shouldScheduleStandaloneNarration false when narrator lives in dialogue', () => {
+    const scene = {
+      narration: 'Real voiceover.',
+      action: 'INT. ROOM',
+      dialogue: [{ kind: 'narration', characterId: 'narrator', line: 'Real voiceover.' }],
+    }
+    expect(sceneHasNarratorInDialogue(scene)).toBe(true)
+    expect(shouldScheduleStandaloneNarration(scene)).toBe(false)
+  })
+
+  it('stripGhostStandaloneNarration removes orphan narrationAudio URLs and fields', () => {
+    const scene = {
+      narration: 'dup',
+      visualDescription: 'dup',
+      narrationAudio: { en: { url: 'https://x/blob/ghost.mp3' } },
+      narrationAudioUrl: 'https://x/blob/ghost.mp3',
+    }
+    const { cleanedScene, deletedUrls } = stripGhostStandaloneNarration(scene)
+    expect(deletedUrls).toContain('https://x/blob/ghost.mp3')
+    expect(cleanedScene.narrationAudio).toBeUndefined()
+    expect(cleanedScene.narrationAudioUrl).toBeUndefined()
+  })
+
+  it('validateAndCleanSceneAudio strips duplicate-visual ghost narration', () => {
+    const scene = {
+      narration: 'Same text',
+      action: 'Same text',
+      narrationAudio: { en: { url: 'https://x/blob/ghost.mp3' } },
+    }
+    const { cleanedScene, deletedUrls } = validateAndCleanSceneAudio(scene)
+    expect(deletedUrls).toContain('https://x/blob/ghost.mp3')
+    expect(cleanedScene.narrationAudio).toBeUndefined()
   })
 
   it('hasStandaloneNarrationAudio true for narrationUrl', () => {

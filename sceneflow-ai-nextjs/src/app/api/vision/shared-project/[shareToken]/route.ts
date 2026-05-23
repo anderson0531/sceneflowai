@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../../models/Project'
 import { sequelize } from '../../../../../config/database'
 import { resolveStoryboardScenes } from '../../../../../lib/storyboard/resolveStoryboardScenes'
+import { validateAndCleanSceneAudio } from '../../../../../lib/audio/cleanupAudio'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -61,7 +62,7 @@ export async function GET(
     const resolvedScenes = resolveStoryboardScenes({
       script: visionPhase.script,
       visionPhaseScenes: visionPhase.scenes,
-    })
+    }).map((scene) => validateAndCleanSceneAudio(scene).cleanedScene)
 
     const script = visionPhase.script
       ? {
