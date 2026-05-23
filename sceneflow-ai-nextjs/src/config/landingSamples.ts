@@ -3,9 +3,9 @@
  * Set URLs/slug when demo assets are ready; empty values show placeholders.
  */
 export const LANDING_SAMPLE = {
-  projectTitle: 'Sample Project',
+  projectTitle: 'The White House Waltz: A Controlled Thaw',
   /** Public storyboard share slug, e.g. 'TheDawnOfSyntheticMinds'. Empty = placeholder UI. */
-  storyboardShareSlug: '',
+  storyboardShareSlug: 'TheWhiteHouseWaltzAControlledThaw',
   animaticVideoUrl: '',
   fullVideoUrl: '',
 } as const
