@@ -22,13 +22,52 @@ describe('resolveStoryboardScenes', () => {
     expect(resolved[1].imageUrl).toBe('https://example.com/s2.png')
   })
 
-  it('uses pre-merged scenes array from shared API when provided', () => {
-    const scenes = [{ id: 's1', imageUrl: 'https://example.com/shared.png', dialogue: [] }]
-    const resolved = resolveStoryboardScenes({
-      script: { script: { scenes: [] } },
-      scenes,
-    })
-    expect(resolved).toEqual(scenes)
+  it('merges dialogueAudio from visionPhase.scenes when script copy has stale mp3', () => {
+    const script = {
+      script: {
+        scenes: [
+          {
+            id: 's1',
+            dialogue: [
+              { character: 'Sarah', line: 'Hi.' },
+              { character: 'Bob', line: 'Hello.' },
+            ],
+            dialogueAudio: {
+              en: [
+                {
+                  character: 'Bob',
+                  dialogueIndex: 1,
+                  audioUrl: 'https://example.com/stale-bob.mp3',
+                  duration: 10,
+                },
+              ],
+            },
+          },
+        ],
+      },
+    }
+    const visionPhaseScenes = [
+      {
+        id: 's1',
+        dialogue: [
+          { character: 'Sarah', line: 'Hi.' },
+          { character: 'Bob', line: 'Hello.' },
+        ],
+        dialogueAudio: {
+          en: [
+            {
+              character: 'Bob',
+              dialogueIndex: 1,
+              audioUrl: 'https://example.com/uploads/default/1779502385910-bob.wav',
+              duration: 11,
+            },
+          ],
+        },
+      },
+    ]
+
+    const resolved = resolveStoryboardScenes({ script, visionPhaseScenes })
+    expect(resolved[0].dialogueAudio.en[0].audioUrl).toContain('/uploads/default/')
   })
 
   it('prefers newer script.script.scenes imageUrl over stale visionPhase.scenes on equal score', () => {

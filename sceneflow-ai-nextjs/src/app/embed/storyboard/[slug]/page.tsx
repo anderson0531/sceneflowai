@@ -18,6 +18,7 @@ export default function StoryboardEmbedPage({ params }: { params: Promise<{ slug
         slug={slug}
         className="flex-1"
         minHeight="min-h-screen"
+        showExpandLink={false}
         onNotFound={() => setIsNotFound(true)}
       />
     </div>

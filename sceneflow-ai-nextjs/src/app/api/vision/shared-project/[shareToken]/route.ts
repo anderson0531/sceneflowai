@@ -80,6 +80,7 @@ export async function GET(
       title: project.title,
       script,
       scenes: resolvedScenes,
+      visionPhaseScenes: visionPhase.scenes,
       characters: visionPhase.characters,
       sceneProductionState: visionPhase.production?.scenes,
       allowedFeatures: shareLink.allowedFeatures,

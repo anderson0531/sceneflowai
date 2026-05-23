@@ -158,6 +158,70 @@ describe('buildStoryboardVoiceClips', () => {
     expect(visualFrames.find((f) => f.dialogueIndex === 1)?.character).toBe('Bob')
   })
 
+  it('uses stored dialogue duration when dynamic metadata is a poisoned 404 placeholder', () => {
+    const andersonUrl = 'https://example.com/anderson-broken.mp3'
+    const scene = {
+      dialogue: [
+        { character: 'Sarah', line: 'First.' },
+        { character: 'Bob', line: 'Second.' },
+      ],
+      dialogueAudio: {
+        en: [
+          {
+            character: 'Sarah',
+            dialogueIndex: 0,
+            audioUrl: SARAH_URL,
+            duration: 2,
+          },
+          {
+            character: 'Bob',
+            dialogueIndex: 1,
+            audioUrl: andersonUrl,
+            duration: 10.5,
+          },
+        ],
+      },
+    }
+
+    const clips = buildStoryboardVoiceClips(scene, 'en', {
+      [SARAH_URL]: 2,
+      [andersonUrl]: 0.1,
+    })
+    const bobClip = clips.find((c) => c.id === 'dialogue-1')
+    expect(bobClip?.duration).toBe(10.5)
+  })
+
+  it('schedules both dialogue lines when they share the same stale URL', () => {
+    const sharedUrl = 'https://example.com/shared-stale.mp3'
+    const scene = {
+      dialogue: [
+        { character: 'Sarah', line: 'First.' },
+        { character: 'Bob', line: 'Second.' },
+      ],
+      dialogueAudio: {
+        en: [
+          {
+            character: 'Sarah',
+            dialogueIndex: 0,
+            audioUrl: sharedUrl,
+            duration: 2,
+          },
+          {
+            character: 'Bob',
+            dialogueIndex: 1,
+            audioUrl: sharedUrl,
+            duration: 3,
+          },
+        ],
+      },
+    }
+
+    const clips = buildStoryboardVoiceClips(scene, 'en')
+    const dialogueClips = clips.filter((c) => c.type === 'dialogue')
+    expect(dialogueClips).toHaveLength(2)
+    expect(dialogueClips.map((c) => c.id)).toEqual(['dialogue-0', 'dialogue-1'])
+  })
+
   it('plays dialogue in script order when manual uploads were pushed out of order', () => {
     const scene = {
       dialogue: [

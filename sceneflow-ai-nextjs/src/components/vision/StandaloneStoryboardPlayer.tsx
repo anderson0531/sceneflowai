@@ -85,7 +85,6 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
       resolveStoryboardScenes({
         script: projectData.script,
         visionPhaseScenes: projectData.visionPhaseScenes,
-        scenes: projectData.scenes,
       }),
     [projectData]
   )

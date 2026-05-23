@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { mergeScenesForScriptSave } from '@/lib/audio/cleanupAudio'
 import {
   mergeScenePreservingMedia,
+  pickDialogueAudioEntry,
   storyboardBlobUrlTimestamp,
 } from '@/lib/storyboard/mergeSceneMedia'
 
@@ -86,6 +87,53 @@ describe('mergeScenePreservingMedia', () => {
     }
     const merged = mergeScenePreservingMedia(canonical, incoming)
     expect(merged.imageUrl).toContain('1779527367355')
+  })
+
+  it('merges per-line dialogueAudio preferring newer manual uploads', () => {
+    const canonical = {
+      id: 's1',
+      dialogueAudio: {
+        en: [
+          {
+            character: 'Bob',
+            dialogueIndex: 1,
+            audioUrl:
+              'https://x.public.blob.vercel-storage.com/audio/dialogue/p/scene-0-bob-1779172978058.mp3',
+            duration: 10,
+          },
+        ],
+      },
+    }
+    const incoming = {
+      id: 's1',
+      dialogueAudio: {
+        en: [
+          {
+            character: 'Bob',
+            dialogueIndex: 1,
+            audioUrl:
+              'https://x.public.blob.vercel-storage.com/audio/uploads/default/1779502385910-bob.wav',
+            duration: 11,
+          },
+        ],
+      },
+    }
+
+    const merged = mergeScenePreservingMedia(canonical, incoming)
+    expect(merged.dialogueAudio.en[0].audioUrl).toContain('/uploads/default/')
+    expect(merged.dialogueAudio.en[0].audioUrl).toContain('1779502385910')
+  })
+
+  it('pickDialogueAudioEntry prefers newer timestamp', () => {
+    const older = {
+      dialogueIndex: 0,
+      audioUrl: 'https://x.public.blob.vercel-storage.com/audio/dialogue/old-1779170000000.mp3',
+    }
+    const newer = {
+      dialogueIndex: 0,
+      audioUrl: 'https://x.public.blob.vercel-storage.com/audio/uploads/default/1779502356523.wav',
+    }
+    expect(pickDialogueAudioEntry(newer, older).audioUrl).toContain('1779502356523')
   })
 })
 

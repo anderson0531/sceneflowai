@@ -9,7 +9,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Globe, X, Maximize, Minimize, Share2 } from 'lucide-react'
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Globe, X, Maximize, Minimize, Share2, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -44,6 +44,16 @@ interface AudioGalleryPlayerProps {
   isSharedView?: boolean
   /** Landing embed: hide player header; language pill overlays image area. */
   embedMode?: boolean
+  /** Open full-screen embed route (landing sample expand). */
+  expandHref?: string
+}
+
+function normalizeMediaUrl(url: string): string {
+  try {
+    return new URL(url, typeof window !== 'undefined' ? window.location.origin : 'https://localhost').href
+  } catch {
+    return url
+  }
 }
 
 /** Dialogue lines play louder than narration/music balance (HTMLAudioElement.volume max 1). */
@@ -69,6 +79,7 @@ export function AudioGalleryPlayer({
   onSceneChange,
   isSharedView = false,
   embedMode = false,
+  expandHref,
 }: AudioGalleryPlayerProps) {
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false)
@@ -155,11 +166,10 @@ export function AudioGalleryPlayer({
             setDynamicDurations(curr => ({ ...curr, [url]: audio.duration }))
           }
         })
-        audio.addEventListener('error', (e) => {
+        audio.addEventListener('error', () => {
           console.warn(`[AudioGalleryPlayer] Failed to load audio metadata for URL: ${url}`)
-          // On error (e.g. 404), set duration to 0.1s so we skip over this missing clip quickly
-          // instead of waiting for a long fallback duration (which causes lag).
-          setDynamicDurations(curr => ({ ...curr, [url]: 0.1 }))
+          // Do not overwrite timeline duration on 404 — buildStoryboardVoiceClips uses stored
+          // dialogueAudio.duration so frames stay on screen for character 2+ lines with broken blobs.
         })
       } catch (err) {
         console.warn(`[AudioGalleryPlayer] Failed to create Audio object for URL: ${url}`, err)
@@ -370,8 +380,8 @@ export function AudioGalleryPlayer({
     const audio = audioRef.current
     const clipLocalTime = currentTime - currentClip.startTime
     
-    // Only update if audio source changed
-    if (audio.src !== currentClip.url) {
+    // Only update if audio source changed (compare normalized URLs — audio.src is absolute)
+    if (normalizeMediaUrl(audio.src) !== normalizeMediaUrl(currentClip.url)) {
       audio.src = currentClip.url
       audio.currentTime = Math.max(0, clipLocalTime)
     }
@@ -739,7 +749,7 @@ export function AudioGalleryPlayer({
               </div>
               
               {/* Controls row */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
                   {/* Previous scene */}
                   <Tooltip>
@@ -791,8 +801,65 @@ export function AudioGalleryPlayer({
                   </Tooltip>
                 </div>
                 
-                {/* Volume control */}
-                <div className="flex items-center gap-2">
+                {/* Volume + embed view controls */}
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                  {embedMode && (
+                    <>
+                      <span className="text-[10px] text-gray-500 tabular-nums hidden sm:inline">
+                        {currentSceneIndex + 1}/{scenes.length}
+                      </span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => setAutoAdvance(!autoAdvance)}
+                            className={cn(
+                              'px-2 py-1 rounded text-[10px] font-medium transition-colors',
+                              autoAdvance
+                                ? 'bg-emerald-600 text-white'
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            )}
+                          >
+                            Auto
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {autoAdvance ? 'Auto-advance enabled' : 'Auto-advance disabled'}
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={toggleFullscreen}
+                            className="p-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                          >
+                            {isFullscreen ? (
+                              <Minimize className="w-3.5 h-3.5" />
+                            ) : (
+                              <Maximize className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                        </TooltipContent>
+                      </Tooltip>
+                      {expandHref && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <a
+                              href={expandHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white transition-colors inline-flex"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent>Open full storyboard player</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </>
+                  )}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button

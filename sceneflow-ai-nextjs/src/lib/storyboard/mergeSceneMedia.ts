@@ -85,6 +85,115 @@ function mergeStoryboardFrames(canonFrames: any[] | undefined, incomingFrames: a
   })
 }
 
+function getDialogueAudioEntryUrl(entry: any): string | undefined {
+  const url = entry?.audioUrl ?? entry?.url
+  if (typeof url !== 'string' || !url.trim()) return undefined
+  return url.trim()
+}
+
+function isManualUploadAudioUrl(url: string): boolean {
+  return url.includes('/uploads/default/')
+}
+
+/** Prefer newer blob timestamp; manual uploads beat legacy dialogue paths on ties. */
+export function pickDialogueAudioEntry(incoming: any, canonical: any): any {
+  if (!incoming) return canonical
+  if (!canonical) return incoming
+
+  const incUrl = getDialogueAudioEntryUrl(incoming)
+  const canUrl = getDialogueAudioEntryUrl(canonical)
+
+  if (incUrl && canUrl) {
+    const ti = storyboardBlobUrlTimestamp(incUrl)
+    const tc = storyboardBlobUrlTimestamp(canUrl)
+    if (ti && tc && ti !== tc) {
+      return ti > tc ? { ...incoming, audioUrl: incUrl } : { ...canonical, audioUrl: canUrl }
+    }
+    const incManual = isManualUploadAudioUrl(incUrl)
+    const canManual = isManualUploadAudioUrl(canUrl)
+    if (incManual && !canManual) return { ...incoming, audioUrl: incUrl }
+    if (canManual && !incManual) return { ...canonical, audioUrl: canUrl }
+  }
+  if (incUrl) return { ...incoming, audioUrl: incUrl }
+  if (canUrl) return { ...canonical, audioUrl: canUrl }
+  return { ...incoming }
+}
+
+function dialogueAudioEntryKeys(entry: any, arrayIndex: number): string[] {
+  const keys: string[] = []
+  if (typeof entry?.lineId === 'string' && entry.lineId.trim()) {
+    keys.push(`line:${entry.lineId.trim()}`)
+  }
+  if (typeof entry?.dialogueIndex === 'number' && Number.isFinite(entry.dialogueIndex)) {
+    keys.push(`idx:${entry.dialogueIndex}`)
+  }
+  if (keys.length === 0) keys.push(`pos:${arrayIndex}`)
+  return keys
+}
+
+function mergeDialogueAudioArrays(canonArr: any[], incomingArr: any[]): any[] {
+  const entryByKey = new Map<string, any>()
+  const keyOrder: string[] = []
+
+  const upsert = (entry: any, arrayIndex: number) => {
+    const keys = dialogueAudioEntryKeys(entry, arrayIndex)
+    let merged = entry
+    for (const key of keys) {
+      if (entryByKey.has(key)) {
+        merged = pickDialogueAudioEntry(entry, entryByKey.get(key))
+      }
+    }
+    for (const key of keys) {
+      if (!entryByKey.has(key)) keyOrder.push(key)
+      entryByKey.set(key, merged)
+    }
+  }
+
+  canonArr.forEach((entry, i) => {
+    if (entry) upsert(entry, i)
+  })
+  incomingArr.forEach((entry, i) => {
+    if (entry) upsert(entry, i)
+  })
+
+  const seen = new Set<any>()
+  const result: any[] = []
+  for (const key of keyOrder) {
+    const entry = entryByKey.get(key)
+    if (!entry || seen.has(entry)) continue
+    seen.add(entry)
+    result.push(entry)
+  }
+  return result
+}
+
+function mergeDialogueAudioField(canon: any, incoming: any): any {
+  const c = canon?.dialogueAudio
+  const inc = incoming?.dialogueAudio
+  if (!c) return inc
+  if (!inc) return c
+
+  if (Array.isArray(c) || Array.isArray(inc)) {
+    const canonArr = Array.isArray(c) ? c : []
+    const incomingArr = Array.isArray(inc) ? inc : []
+    return mergeDialogueAudioArrays(canonArr, incomingArr)
+  }
+
+  if (typeof c === 'object' && typeof inc === 'object') {
+    const langs = new Set([...Object.keys(c), ...Object.keys(inc)])
+    const merged: Record<string, any[]> = {}
+    for (const lang of langs) {
+      const canonArr = Array.isArray(c[lang]) ? c[lang] : []
+      const incomingArr = Array.isArray(inc[lang]) ? inc[lang] : []
+      if (canonArr.length === 0 && incomingArr.length === 0) continue
+      merged[lang] = mergeDialogueAudioArrays(canonArr, incomingArr)
+    }
+    return merged
+  }
+
+  return inc ?? c
+}
+
 function mergeSegmentDialogueMedia(canonSegments: any[] | undefined, incomingSegments: any[] | undefined): any[] | undefined {
   if (!Array.isArray(incomingSegments) || incomingSegments.length === 0) {
     return Array.isArray(canonSegments) && canonSegments.length > 0 ? canonSegments : incomingSegments
@@ -143,6 +252,7 @@ export function mergeScenePreservingMedia(canonical: any, incoming: any): any {
 
   merged.storyboardFrames = mergeStoryboardFrames(canonical.storyboardFrames, incoming.storyboardFrames)
   merged.segments = mergeSegmentDialogueMedia(canonical.segments, incoming.segments)
+  merged.dialogueAudio = mergeDialogueAudioField(canonical, incoming)
 
   return merged
 }

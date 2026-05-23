@@ -234,8 +234,14 @@ function resolveVoiceClipDuration(
   dynamicDurations: Record<string, number>
 ): number {
   const dynamic = dynamicDurations[url]
-  if (typeof dynamic === 'number' && dynamic > 0) return dynamic
-  if (typeof storedDuration === 'number' && storedDuration > 0) return storedDuration
+  const stored =
+    typeof storedDuration === 'number' && storedDuration > 0 ? storedDuration : undefined
+  // Ignore poisoned short dynamic values from legacy 404 handlers when metadata has duration.
+  if (typeof dynamic === 'number' && dynamic > 0) {
+    if (stored && dynamic < 0.5) return stored
+    return dynamic
+  }
+  if (stored) return stored
   return DEFAULT_CLIP_DURATION_SEC
 }
 
@@ -314,14 +320,13 @@ export function buildStoryboardVoiceClips(
   }
 
   const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
-  const scheduledUrls = new Set<string>()
-  if (descriptionUrl) scheduledUrls.add(descriptionUrl)
-  if (narrationUrl) scheduledUrls.add(narrationUrl)
+  const scheduledDialogueKeys = new Set<string>()
 
   for (let i = 0; i < dialogue.length; i++) {
     const line = dialogue[i] as Record<string, unknown>
     const lineId = typeof line.lineId === 'string' ? line.lineId : undefined
     const character = typeof line.character === 'string' ? line.character : undefined
+    const lineKey = lineId ?? `idx:${i}`
 
     const audioEntry = findDialogueAudioForLine(scene, {
       language,
@@ -342,8 +347,10 @@ export function buildStoryboardVoiceClips(
 
     const meta = audioEntry ?? line
     if (isFoldedNarrationDuplicate(meta, url, narrationUrl)) continue
-    if (scheduledUrls.has(url)) continue
-    scheduledUrls.add(url)
+    if (descriptionUrl && url === descriptionUrl) continue
+    if (narrationUrl && url === narrationUrl) continue
+    if (scheduledDialogueKeys.has(lineKey)) continue
+    scheduledDialogueKeys.add(lineKey)
 
     const duration = resolveVoiceClipDuration(
       url,

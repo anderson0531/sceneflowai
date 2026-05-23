@@ -63,13 +63,7 @@ export function totalStoryboardMediaScore(scenes: any[]): number {
 export function resolveStoryboardScenes(project: {
   script?: any
   visionPhaseScenes?: any[]
-  /** Pre-merged scenes from shared API (optional). */
-  scenes?: any[]
 }): any[] {
-  if (Array.isArray(project.scenes) && project.scenes.length > 0) {
-    return project.scenes
-  }
-
   const arrays = collectSceneArrays(project)
   if (arrays.length === 0) return []
 

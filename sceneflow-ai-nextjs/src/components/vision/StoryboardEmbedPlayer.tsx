@@ -48,6 +48,8 @@ export interface StoryboardEmbedPlayerProps {
   minHeight?: string
   /** Called when the shared-project API returns 404 (embed page uses this for notFound()). */
   onNotFound?: () => void
+  /** Show link to full /embed/storyboard route (landing card only). */
+  showExpandLink?: boolean
 }
 
 export function StoryboardEmbedPlayer({
@@ -55,6 +57,7 @@ export function StoryboardEmbedPlayer({
   className,
   minHeight = 'min-h-[280px]',
   onNotFound,
+  showExpandLink = true,
 }: StoryboardEmbedPlayerProps) {
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [projectData, setProjectData] = useState<any>(null)
@@ -100,7 +103,6 @@ export function StoryboardEmbedPlayer({
     return resolveStoryboardScenes({
       script: projectData.script,
       visionPhaseScenes: projectData.visionPhaseScenes,
-      scenes: projectData.scenes,
     })
   }, [projectData])
 
@@ -131,6 +133,11 @@ export function StoryboardEmbedPlayer({
         availableLanguages={availableLanguages}
         isSharedView
         embedMode
+        expandHref={
+          showExpandLink && slug.trim()
+            ? `/embed/storyboard/${encodeURIComponent(slug.trim())}`
+            : undefined
+        }
       />
     </div>
   )
