@@ -13,6 +13,7 @@ const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachin
 const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
 const CoreCapabilitiesSection = dynamic(() => import('@/components/landing/CoreCapabilitiesSection').then(m => m.CoreCapabilitiesSection), { ssr: false })
+const SamplesSection = dynamic(() => import('@/components/landing/SamplesSection'), { ssr: false })
 const FeatureStoryboardSection = dynamic(() => import('@/components/landing/FeatureStoryboardSection'), { ssr: false })
 const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
 const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
@@ -46,6 +47,9 @@ export default function LandingPage() {
 
       {/* 6. Core Capabilities: Resonance + Express */}
       <CoreCapabilitiesSection />
+
+      {/* 6b. Same-project samples: storyboard, animatic, full video */}
+      <SamplesSection />
 
       {/* 7. Feature storyboard with short-segment placeholders */}
       <FeatureStoryboardSection />

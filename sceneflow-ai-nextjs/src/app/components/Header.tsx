@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Film, Building2, Workflow, ArrowRight } from 'lucide-react'
+import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Film, Building2, Workflow, ArrowRight, PlayCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { AuthModal } from '@/components/auth/AuthModal'
@@ -144,6 +144,15 @@ export function Header() {
               >
                 <Workflow className="w-4 h-4" />
                 The Workflow
+              </button>
+
+              {/* Samples Link */}
+              <button
+                onClick={() => scrollToSection('samples')}
+                className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
+              >
+                <PlayCircle className="w-4 h-4" />
+                Samples
               </button>
 
               {/* Platform Walkthrough Link */}
@@ -295,6 +304,10 @@ export function Header() {
                   <button onClick={() => scrollToSection('how-it-works')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Workflow className="w-4 h-4" />
                     The Workflow
+                  </button>
+                  <button onClick={() => scrollToSection('samples')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                    <PlayCircle className="w-4 h-4" />
+                    Samples
                   </button>
                   <button onClick={() => scrollToSection('feature-storyboard')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Film className="w-4 h-4" />

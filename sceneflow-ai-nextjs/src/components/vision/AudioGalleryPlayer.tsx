@@ -42,6 +42,8 @@ interface AudioGalleryPlayerProps {
   onShare?: () => void
   onSceneChange?: (index: number) => void
   isSharedView?: boolean
+  /** Landing embed: hide player header; language pill overlays image area. */
+  embedMode?: boolean
 }
 
 /** Dialogue lines play louder than narration/music balance (HTMLAudioElement.volume max 1). */
@@ -66,6 +68,7 @@ export function AudioGalleryPlayer({
   onShare,
   onSceneChange,
   isSharedView = false,
+  embedMode = false,
 }: AudioGalleryPlayerProps) {
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false)
@@ -519,8 +522,8 @@ export function AudioGalleryPlayer({
   const currentX = kenBurnsConfig.x * kenBurnsProgress;
   const currentY = kenBurnsConfig.y * kenBurnsProgress;
 
-  /** Public share page: readable scale, not the same hero layout as fullscreen. */
-  const sharedCompact = isSharedView && !isFullscreen
+  /** Public share / landing embed: compact stacked layout. */
+  const sharedCompact = (isSharedView || embedMode) && !isFullscreen
 
   return (
     <TooltipProvider>
@@ -531,7 +534,8 @@ export function AudioGalleryPlayer({
           isFullscreen && "fixed inset-0 z-50 rounded-none border-none flex flex-col"
         )}
       >
-        {/* Header with language selector */}
+        {/* Header with language selector — hidden in landing embed */}
+        {!embedMode && (
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-3">
             <Volume2 className="w-5 h-5 text-emerald-400" />
@@ -612,6 +616,7 @@ export function AudioGalleryPlayer({
             )}
           </div>
         </div>
+        )}
         
         {/* Main content area */}
         <div
@@ -652,6 +657,19 @@ export function AudioGalleryPlayer({
                 SceneFlow AI Studio
               </span>
             </div>
+
+            {/* Language pill — landing embed only (header removed) */}
+            {embedMode && availableLanguages.length > 1 && (
+              <div className="absolute top-3 left-3 z-10 pointer-events-auto">
+                <GroupedLanguageSelector
+                  value={selectedLanguage}
+                  onValueChange={onLanguageChange}
+                  filterCodes={availableLanguages}
+                  size="sm"
+                  className="bg-black/70 border-white/20 backdrop-blur-sm"
+                />
+              </div>
+            )}
             
             {/* Current clip label overlay — speaker name only (no dialogue caption) */}
             {speakerLabel && (
