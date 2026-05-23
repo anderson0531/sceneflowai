@@ -5,7 +5,10 @@
  * Dialogue frames: scene.dialogue[i].storyboardImageUrl
  */
 
-import { dialogueLineIdForIndex } from '@/components/vision/scene-production/audioTrackBuilder'
+import {
+  dialogueLineIdForIndex,
+  findDialogueAudioForLine,
+} from '@/components/vision/scene-production/audioTrackBuilder'
 
 const NARRATION_CLIP_BUFFER_SEC = 0.5
 const DIALOGUE_CLIP_BUFFER_SEC = 0.3
@@ -263,56 +266,57 @@ export function buildStoryboardVoiceClips(
     currentStartTime += narrationDuration + NARRATION_CLIP_BUFFER_SEC
   }
 
-  const dialogueAudioRaw = scene.dialogueAudio
-  const dialogueAudio: unknown[] = Array.isArray(dialogueAudioRaw)
-    ? dialogueAudioRaw
-    : Array.isArray((dialogueAudioRaw as Record<string, unknown[]>)?.[language])
-      ? (dialogueAudioRaw as Record<string, unknown[]>)[language]
-      : Array.isArray((dialogueAudioRaw as Record<string, unknown[]>)?.en)
-        ? (dialogueAudioRaw as Record<string, unknown[]>).en
-        : []
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  const scheduledUrls = new Set<string>()
+  if (descriptionUrl) scheduledUrls.add(descriptionUrl)
+  if (narrationUrl) scheduledUrls.add(narrationUrl)
 
-  const dialogueEntries: Array<{ entry: Record<string, unknown>; arrayIndex: number }> = []
-  dialogueAudio.forEach((raw, arrayIndex) => {
-    if (!raw || typeof raw !== 'object') return
-    const entry = raw as Record<string, unknown>
+  for (let i = 0; i < dialogue.length; i++) {
+    const line = dialogue[i] as Record<string, unknown>
+    const lineId = typeof line.lineId === 'string' ? line.lineId : undefined
+    const character = typeof line.character === 'string' ? line.character : undefined
+
+    const audioEntry = findDialogueAudioForLine(scene, {
+      language,
+      lineId,
+      dialogueIndex: i,
+      character,
+    }) as Record<string, unknown> | null
+
     const url =
-      (typeof entry.audioUrl === 'string' && entry.audioUrl) ||
-      (typeof entry.url === 'string' && entry.url) ||
-      ''
-    if (!url) return
-    if (isFoldedNarrationDuplicate(entry, url, narrationUrl)) return
-    dialogueEntries.push({ entry, arrayIndex })
-  })
+      (audioEntry &&
+        ((typeof audioEntry.audioUrl === 'string' && audioEntry.audioUrl) ||
+          (typeof audioEntry.url === 'string' && audioEntry.url))) ||
+      (typeof line.audioUrl === 'string' && line.audioUrl) ||
+      (typeof line.url === 'string' && line.url) ||
+      undefined
 
-  dialogueEntries.sort((a, b) => {
-    const indexA =
-      typeof a.entry.dialogueIndex === 'number' ? a.entry.dialogueIndex : a.arrayIndex
-    const indexB =
-      typeof b.entry.dialogueIndex === 'number' ? b.entry.dialogueIndex : b.arrayIndex
-    return indexA - indexB
-  })
+    if (!url) continue
 
-  for (const { entry, arrayIndex } of dialogueEntries) {
-    const url =
-      (typeof entry.audioUrl === 'string' && entry.audioUrl) ||
-      (typeof entry.url === 'string' && entry.url) ||
-      ''
-    const dialogueIndex =
-      typeof entry.dialogueIndex === 'number' ? entry.dialogueIndex : arrayIndex
-    const duration = resolveVoiceClipDuration(url, entry.duration, dynamicDurations)
-    const isNarrator = entry.kind === 'narration' || entry.characterId === 'narrator'
-    const character =
-      typeof entry.character === 'string' ? entry.character : undefined
+    const meta = audioEntry ?? line
+    if (isFoldedNarrationDuplicate(meta, url, narrationUrl)) continue
+    if (scheduledUrls.has(url)) continue
+    scheduledUrls.add(url)
+
+    const duration = resolveVoiceClipDuration(
+      url,
+      audioEntry?.duration ?? line.duration,
+      dynamicDurations
+    )
+    const isNarrator =
+      line.kind === 'narration' ||
+      meta.kind === 'narration' ||
+      line.characterId === 'narrator' ||
+      meta.characterId === 'narrator'
 
     clips.push({
-      id: dialogueLineIdForIndex(dialogueIndex),
+      id: dialogueLineIdForIndex(i),
       url,
       startTime: currentStartTime,
       duration,
       type: 'dialogue',
-      label: isNarrator ? 'Narrator' : character || `Dialogue ${dialogueIndex + 1}`,
-      dialogueIndex,
+      label: isNarrator ? 'Narrator' : character || `Dialogue ${i + 1}`,
+      dialogueIndex: i,
     })
     currentStartTime += duration + DIALOGUE_CLIP_BUFFER_SEC
   }

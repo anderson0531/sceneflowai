@@ -6,6 +6,7 @@ import {
 
 const NARRATION_URL = 'https://example.com/narration.mp3'
 const SARAH_URL = 'https://example.com/sarah.mp3'
+const BOB_URL = 'https://example.com/bob.mp3'
 
 describe('buildStoryboardVoiceClips', () => {
   it('uses script dialogueIndex for clip ids when narrator occupies array index 0', () => {
@@ -83,5 +84,86 @@ describe('buildStoryboardVoiceClips', () => {
 
     expect(dialogueClips.map((c) => c.id)).toEqual(['dialogue-0', 'dialogue-1'])
     expect(dialogueClips[0].startTime).toBeLessThan(dialogueClips[1].startTime)
+  })
+
+  it('resolves first character via lineId when stored dialogueIndex is wrong', () => {
+    const scene = {
+      dialogue: [
+        { lineId: 'line-sarah', character: 'Sarah', line: 'Hello there.' },
+        { lineId: 'line-bob', character: 'Bob', line: 'Hi Sarah.' },
+      ],
+      dialogueAudio: {
+        en: [
+          {
+            kind: 'narration',
+            characterId: 'narrator',
+            audioUrl: NARRATION_URL,
+          },
+          {
+            lineId: 'line-sarah',
+            character: 'Sarah',
+            dialogueIndex: 1,
+            audioUrl: SARAH_URL,
+            duration: 2.5,
+          },
+          {
+            lineId: 'line-bob',
+            character: 'Bob',
+            dialogueIndex: 1,
+            audioUrl: BOB_URL,
+            duration: 2,
+          },
+        ],
+      },
+    }
+
+    const clips = buildStoryboardVoiceClips(scene, 'en', {
+      [SARAH_URL]: 2.5,
+      [BOB_URL]: 2,
+    })
+    const dialogueClips = clips.filter((c) => c.type === 'dialogue')
+
+    expect(dialogueClips.map((c) => c.id)).toEqual(['dialogue-0', 'dialogue-1'])
+    expect(dialogueClips[0].url).toBe(SARAH_URL)
+    expect(dialogueClips[1].url).toBe(BOB_URL)
+
+    const visualFrames = buildStoryboardVisualTimeline(scene, clips)
+    expect(visualFrames.find((f) => f.dialogueIndex === 0)?.character).toBe('Sarah')
+    expect(visualFrames.find((f) => f.dialogueIndex === 1)?.character).toBe('Bob')
+  })
+
+  it('plays dialogue in script order when manual uploads were pushed out of order', () => {
+    const scene = {
+      dialogue: [
+        { lineId: 'line-sarah', character: 'Sarah', line: 'First.' },
+        { lineId: 'line-bob', character: 'Bob', line: 'Second.' },
+      ],
+      dialogueAudio: {
+        en: [
+          {
+            lineId: 'line-bob',
+            character: 'Bob',
+            dialogueIndex: 99,
+            audioUrl: BOB_URL,
+            duration: 2,
+          },
+          {
+            lineId: 'line-sarah',
+            character: 'Sarah',
+            dialogueIndex: 99,
+            audioUrl: SARAH_URL,
+            duration: 2,
+          },
+        ],
+      },
+    }
+
+    const clips = buildStoryboardVoiceClips(scene, 'en')
+    const dialogueClips = clips.filter((c) => c.type === 'dialogue')
+
+    expect(dialogueClips.map((c) => ({ id: c.id, url: c.url }))).toEqual([
+      { id: 'dialogue-0', url: SARAH_URL },
+      { id: 'dialogue-1', url: BOB_URL },
+    ])
   })
 })
