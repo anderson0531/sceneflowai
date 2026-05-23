@@ -1,12 +1,26 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useMemo, useState, useCallback } from 'react'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 import { AudioGalleryPlayer } from './AudioGalleryPlayer'
-import { Button } from '@/components/ui/Button'
-import { Star, MessageSquare } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { resolveStoryboardScenes } from '@/lib/storyboard/resolveStoryboardScenes'
+import {
+  EMPTY_SCENE_FEEDBACK,
+  sceneFeedbackHasContent,
+  type SceneFeedbackState,
+} from '@/lib/storyboard/feedbackChips'
+import { StoryboardReviewHeader } from './storyboard-review/StoryboardReviewHeader'
+import { StoryboardReviewPanel } from './storyboard-review/StoryboardReviewPanel'
+import {
+  StoryboardReviewerIdentitySheet,
+  type ReviewerIdentity,
+} from './storyboard-review/StoryboardReviewerIdentitySheet'
+import {
+  StoryboardAudienceResonancePanel,
+  type SharedAudienceResonance,
+} from './storyboard-review/StoryboardAudienceResonancePanel'
 
 interface StandaloneStoryboardPlayerProps {
   projectData: any
@@ -16,70 +30,21 @@ interface StandaloneStoryboardPlayerProps {
 export function StandaloneStoryboardPlayer({ projectData, shareToken }: StandaloneStoryboardPlayerProps) {
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
+  const [arPanelOpen, setArPanelOpen] = useState(false)
+  const [identitySheetOpen, setIdentitySheetOpen] = useState(false)
 
-  /** Version shown when this tab loaded — stamped on submit (plan: latest link, frozen reviewer version). */
   const [reviewerStoryboardVersion] = useState(
     () => projectData?.storyboardRevision?.version ?? 1
   )
-  
-  // Feedback state per scene
-  const [feedbacks, setFeedbacks] = useState<Record<number, { rating: number, comment: string }>>({})
-  const [reviewerName, setReviewerName] = useState('')
+
+  const [feedbacks, setFeedbacks] = useState<Record<number, SceneFeedbackState>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  
-  const currentFeedback = feedbacks[currentSceneIndex] || { rating: 0, comment: '' }
-  
-  const handleRatingChange = (rating: number) => {
-    setFeedbacks(prev => ({
-      ...prev,
-      [currentSceneIndex]: { ...currentFeedback, rating }
-    }))
-  }
-  
-  const handleCommentChange = (comment: string) => {
-    setFeedbacks(prev => ({
-      ...prev,
-      [currentSceneIndex]: { ...currentFeedback, comment }
-    }))
-  }
 
-  const handleSubmitFeedback = async () => {
-    setIsSubmitting(true)
-    setSubmitError(null)
-    
-    try {
-      const response = await fetch(`/api/vision/shared-project/${shareToken}/feedback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          feedbacks,
-          reviewerName,
-          storyboardVersion: reviewerStoryboardVersion,
-        }),
-      })
-      
-      const data = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit feedback')
-      }
-      
-      setSubmitSuccess(true)
-      toast.success('Feedback submitted', {
-        description: `Recorded as storyboard v${reviewerStoryboardVersion}.`,
-      })
-      setTimeout(() => setSubmitSuccess(false), 3000)
-    } catch (err: any) {
-      console.error('[Submit Feedback]', err)
-      setSubmitError(err.message)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+  const audienceResonance = projectData?.audienceResonance as SharedAudienceResonance | undefined
 
-  // Derive available languages from project data
   const resolvedScenes = useMemo(
     () =>
       resolveStoryboardScenes({
@@ -90,136 +55,182 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
   )
 
   const availableLanguages = useMemo(() => {
-    const scenes = resolvedScenes
     const langs = new Set<string>()
-    
-    scenes.forEach((scene: any) => {
+    resolvedScenes.forEach((scene: any) => {
       if (scene.narrationAudio) {
-        Object.keys(scene.narrationAudio).forEach(lang => {
+        Object.keys(scene.narrationAudio).forEach((lang) => {
           if (scene.narrationAudio[lang]?.url) langs.add(lang)
         })
       }
       if (scene.dialogueAudio) {
-        Object.keys(scene.dialogueAudio).forEach(lang => {
-          if (Array.isArray(scene.dialogueAudio[lang]) && scene.dialogueAudio[lang].length > 0) langs.add(lang)
+        Object.keys(scene.dialogueAudio).forEach((lang) => {
+          if (Array.isArray(scene.dialogueAudio[lang]) && scene.dialogueAudio[lang].length > 0) {
+            langs.add(lang)
+          }
         })
       }
     })
-    
     if (langs.size === 0) langs.add('en')
     return Array.from(langs).sort()
   }, [resolvedScenes])
 
+  const currentFeedback = feedbacks[currentSceneIndex] ?? EMPTY_SCENE_FEEDBACK
+
+  const reviewedCount = useMemo(
+    () => Object.values(feedbacks).filter((f) => sceneFeedbackHasContent(f)).length,
+    [feedbacks]
+  )
+
+  const canSubmit = reviewedCount > 0
+
+  const updateFeedback = useCallback(
+    (patch: Partial<SceneFeedbackState>) => {
+      setFeedbacks((prev) => ({
+        ...prev,
+        [currentSceneIndex]: { ...(prev[currentSceneIndex] ?? EMPTY_SCENE_FEEDBACK), ...patch },
+      }))
+    },
+    [currentSceneIndex]
+  )
+
+  const submitFeedback = async (identity: ReviewerIdentity, emailVerificationToken: string) => {
+    setIsSubmitting(true)
+    setSubmitError(null)
+
+    try {
+      const response = await fetch(`/api/vision/shared-project/${shareToken}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          feedbacks,
+          reviewerFirstName: identity.firstName,
+          reviewerLastName: identity.lastName,
+          reviewerEmail: identity.email,
+          emailVerificationToken,
+          storyboardVersion: reviewerStoryboardVersion,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit feedback')
+      }
+
+      setSubmitSuccess(true)
+      setIdentitySheetOpen(false)
+      toast.success('Feedback submitted', {
+        description: `Recorded as storyboard v${reviewerStoryboardVersion} from ${identity.email}.`,
+      })
+      setTimeout(() => setSubmitSuccess(false), 4000)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to submit feedback'
+      setSubmitError(message)
+      throw err
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleSubmitClick = () => {
+    if (!canSubmit) return
+    setSubmitError(null)
+    setIdentitySheetOpen(true)
+  }
+
+  const currentScene = resolvedScenes[currentSceneIndex]
+
   return (
-    <div className="flex flex-col min-h-screen lg:h-screen bg-black lg:overflow-hidden">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 bg-gray-900 border-b border-gray-800 gap-3 sm:gap-0">
-        <div className="w-full sm:w-auto min-w-0">
-          <h1 className="text-base sm:text-lg font-semibold text-white truncate max-w-[80vw] sm:max-w-[50vw]">{projectData.title}</h1>
-          <p className="text-xs text-gray-400">Storyboard Review</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">
-            Viewing as storyboard v{reviewerStoryboardVersion}
-            {projectData?.storyboardRevision?.label
-              ? ` · ${String(projectData.storyboardRevision.label)}`
-              : ''}
-          </p>
-        </div>
-        <div className="w-full sm:w-auto text-left sm:text-right">
-          <Button 
-            onClick={handleSubmitFeedback}
-            disabled={isSubmitting || Object.keys(feedbacks).length === 0}
-            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white"
-          >
-            {isSubmitting ? 'Submitting...' : submitSuccess ? 'Submitted!' : 'Submit All Feedback'}
-          </Button>
-        </div>
-      </div>
-      
-      <div className="flex flex-col lg:flex-row flex-1 lg:overflow-hidden">
-        {/* Main Player Area */}
-        <div className="flex-1 p-2 sm:p-4 overflow-y-auto bg-gray-950 flex flex-col justify-start items-center min-h-0">
-          <div className="w-full flex justify-center items-start max-w-4xl">
+    <div className="flex flex-col min-h-screen lg:h-screen bg-black lg:overflow-hidden relative">
+      <StoryboardReviewHeader
+        title={projectData.title}
+        storyboardVersion={reviewerStoryboardVersion}
+        revisionLabel={projectData?.storyboardRevision?.label}
+        reviewedCount={reviewedCount}
+        totalScenes={resolvedScenes.length}
+        audienceScore={audienceResonance?.overallScore}
+        onOpenAudienceResonance={
+          audienceResonance ? () => setArPanelOpen(true) : undefined
+        }
+        onSubmitClick={handleSubmitClick}
+        canSubmit={canSubmit}
+        isSubmitting={isSubmitting}
+        submitSuccess={submitSuccess}
+      />
+
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0 lg:overflow-hidden">
+        <div className="flex-1 p-2 sm:p-4 overflow-y-auto bg-gray-950 flex flex-col items-center min-h-0 pb-20 lg:pb-4">
+          <div className="w-full max-w-5xl">
             <AudioGalleryPlayer
               scenes={resolvedScenes}
               selectedLanguage={selectedLanguage}
               onLanguageChange={setSelectedLanguage}
               availableLanguages={availableLanguages}
               onSceneChange={setCurrentSceneIndex}
-              isSharedView={true}
+              isSharedView
             />
           </div>
         </div>
-        
-        {/* Feedback Sidebar */}
-        <div className="w-full lg:w-80 xl:w-96 shrink-0 bg-gray-900 border-t lg:border-t-0 lg:border-l border-gray-800 flex flex-col lg:h-full lg:max-h-screen">
-          <div className="px-3 py-2.5 border-b border-gray-800">
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-              Scene {currentSceneIndex + 1} feedback
-            </h2>
-          </div>
-          
-          <div className="p-3 flex-1 flex flex-col gap-4 min-h-0">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Your Name (Optional)
-              </label>
-              <input
-                type="text"
-                value={reviewerName}
-                onChange={(e) => setReviewerName(e.target.value)}
-                placeholder="Enter your name..."
-                className="w-full bg-gray-800 border border-gray-700 rounded-md p-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Rating
-              </label>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => handleRatingChange(star)}
-                    className="p-1 focus:outline-none"
-                  >
-                    <Star
-                      className={cn(
-                        "w-6 h-6 transition-colors",
-                        star <= currentFeedback.rating
-                          ? "fill-amber-400 text-amber-400"
-                          : "text-gray-600 hover:text-gray-400"
-                      )}
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="flex-1 flex flex-col">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Comments
-              </label>
-              <textarea
-                value={currentFeedback.comment}
-                onChange={(e) => handleCommentChange(e.target.value)}
-                placeholder="Leave feedback for this scene..."
-                className="flex-1 w-full bg-gray-800 border border-gray-700 rounded-md p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
-              />
-            </div>
-            
-            <p className="text-xs text-gray-500 text-center">
-              Your feedback is saved locally until you click "Submit All Feedback".
-            </p>
-            {submitError && (
-              <p className="text-sm text-red-400 text-center bg-red-900/20 p-2 rounded">
-                {submitError}
-              </p>
-            )}
-          </div>
+        <div className="hidden lg:flex w-80 xl:w-96 shrink-0 bg-gray-900 border-l border-gray-800 flex-col overflow-y-auto p-4">
+          <StoryboardReviewPanel
+            sceneIndex={currentSceneIndex}
+            feedback={currentFeedback}
+            audienceAnalysis={currentScene?.audienceAnalysis}
+            onRatingChange={(rating) => updateFeedback({ rating })}
+            onCommentChange={(comment) => updateFeedback({ comment })}
+            onTagsChange={(tags) => updateFeedback({ tags })}
+          />
         </div>
       </div>
+
+      {/* Mobile review drawer */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-gray-900 border-t border-gray-800">
+        <button
+          type="button"
+          onClick={() => setMobilePanelOpen((o) => !o)}
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-white"
+        >
+          <span>Scene {currentSceneIndex + 1} feedback</span>
+          {mobilePanelOpen ? (
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          ) : (
+            <ChevronUp className="w-4 h-4 text-gray-400" />
+          )}
+        </button>
+        <div
+          className={cn(
+            'overflow-hidden transition-all duration-200',
+            mobilePanelOpen ? 'max-h-[70vh] overflow-y-auto px-4 pb-4' : 'max-h-0'
+          )}
+        >
+          <StoryboardReviewPanel
+            sceneIndex={currentSceneIndex}
+            feedback={currentFeedback}
+            audienceAnalysis={currentScene?.audienceAnalysis}
+            onRatingChange={(rating) => updateFeedback({ rating })}
+            onCommentChange={(comment) => updateFeedback({ comment })}
+            onTagsChange={(tags) => updateFeedback({ tags })}
+          />
+        </div>
+      </div>
+
+      {audienceResonance && (
+        <StoryboardAudienceResonancePanel
+          data={audienceResonance}
+          open={arPanelOpen}
+          onClose={() => setArPanelOpen(false)}
+        />
+      )}
+
+      <StoryboardReviewerIdentitySheet
+        open={identitySheetOpen}
+        onOpenChange={setIdentitySheetOpen}
+        shareToken={shareToken}
+        onVerifiedSubmit={submitFeedback}
+        isSubmitting={isSubmitting}
+        submitError={submitError}
+      />
     </div>
   )
 }

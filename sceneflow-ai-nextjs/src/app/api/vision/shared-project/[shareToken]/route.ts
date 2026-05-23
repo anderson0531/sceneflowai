@@ -3,9 +3,27 @@ import Project from '../../../../../models/Project'
 import { sequelize } from '../../../../../config/database'
 import { resolveStoryboardScenes } from '../../../../../lib/storyboard/resolveStoryboardScenes'
 import { validateAndCleanSceneAudio } from '../../../../../lib/audio/cleanupAudio'
+import { findActiveShareProject } from '../../../../../lib/storyboard/shareProjectLookup'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
+
+function sanitizeAudienceResonance(review: unknown) {
+  if (!review || typeof review !== 'object') return undefined
+  const r = review as Record<string, unknown>
+  if (typeof r.overallScore !== 'number') return undefined
+  return {
+    overallScore: r.overallScore,
+    categories: Array.isArray(r.categories) ? r.categories : undefined,
+    analysis: typeof r.analysis === 'string' ? r.analysis : undefined,
+    strengths: Array.isArray(r.strengths) ? r.strengths : undefined,
+    improvements: Array.isArray(r.improvements) ? r.improvements : undefined,
+    targetDemographic: typeof r.targetDemographic === 'string' ? r.targetDemographic : undefined,
+    emotionalImpact: typeof r.emotionalImpact === 'string' ? r.emotionalImpact : undefined,
+    showVsTellRatio: typeof r.showVsTellRatio === 'number' ? r.showVsTellRatio : undefined,
+    generatedAt: typeof r.generatedAt === 'string' ? r.generatedAt : undefined,
+  }
+}
 
 export async function GET(
   request: NextRequest,
@@ -20,16 +38,7 @@ export async function GET(
 
     await sequelize.authenticate()
     
-    // Find project with this share token or slug
-    const projects = await Project.findAll()
-    const project = projects.find(p => {
-      const screeningLink = p.metadata?.screeningRoomShareLink
-      const storyboardLink = p.metadata?.storyboardShareLink
-      return (screeningLink?.shareToken === shareToken && screeningLink?.isActive) ||
-             (storyboardLink?.shareToken === shareToken && storyboardLink?.isActive) ||
-             (screeningLink?.slug === shareToken && screeningLink?.isActive) ||
-             (storyboardLink?.slug === shareToken && storyboardLink?.isActive)
-    })
+    const project = await findActiveShareProject(shareToken)
 
     if (!project) {
       console.log(`[Get Shared Project] Share token/slug not found or inactive: ${shareToken}`)
@@ -75,6 +84,8 @@ export async function GET(
         }
       : { script: { scenes: resolvedScenes }, scenes: resolvedScenes }
 
+    const audienceResonance = sanitizeAudienceResonance(visionPhase?.reviews?.audience)
+
     // Return only necessary data (no sensitive info)
     const sharedData = {
       title: project.title,
@@ -86,6 +97,7 @@ export async function GET(
       allowedFeatures: shareLink.allowedFeatures,
       shareToken: actualShareToken, // Pass this back so the feedback API can find it
       storyboardRevision,
+      audienceResonance,
     }
 
     console.log(`[Get Shared Project] Serving shared project: ${project.title} (views: ${shareLink.viewCount})`)
