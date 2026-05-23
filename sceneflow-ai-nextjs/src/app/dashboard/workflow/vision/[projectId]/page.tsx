@@ -26,6 +26,7 @@ import {
   mergeScenesForScriptSave,
   removeStaleAudioUrlFromScene,
 } from '@/lib/audio/cleanupAudio'
+import { resolveStoryboardScenes } from '@/lib/storyboard/resolveStoryboardScenes'
 import { getBatchNarrationTtsText } from '@/lib/script/narration'
 import { toast } from 'sonner'
 
@@ -5277,6 +5278,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     return { sceneCount, castCount, durationMinutes, estimatedCredits }
   }, [script, characters])
+
+  /** Merged storyboard scenes for gallery/player (unifies script + legacy visionPhase.scenes). */
+  const storyboardGalleryScenes = useMemo(
+    () =>
+      resolveStoryboardScenes({
+        script,
+        visionPhaseScenes: project?.metadata?.visionPhase?.scenes,
+      }),
+    [script, project?.metadata?.visionPhase?.scenes]
+  )
   
   const sidebarProgressData = useMemo(() => {
     const scriptScenes = normalizeScenes(script)
@@ -11243,7 +11254,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         className="rounded-2xl border border-white/5 bg-slate-900/40 p-4 shadow-[0_15px_40px_rgba(8,8,20,0.35)]"
                       >
                           <SceneGallery
-                            scenes={normalizeScenes(script)}
+                            scenes={storyboardGalleryScenes}
                             characters={characters}
                             projectTitle={project?.title}
                             onRegenerateScene={(index) => handleGenerateSceneImage(index)}

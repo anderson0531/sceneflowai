@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../../models/Project'
 import { sequelize } from '../../../../../config/database'
+import { resolveStoryboardScenes } from '../../../../../lib/storyboard/resolveStoryboardScenes'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -51,17 +52,35 @@ export async function GET(
     })
 
     const md = project.metadata || {}
+    const visionPhase = md.visionPhase || {}
     const storyboardRevision =
       md.storyboardRevision && typeof md.storyboardRevision.version === 'number'
         ? md.storyboardRevision
         : { version: 1, updatedAt: (project as any).updatedAt?.toISOString?.() || new Date().toISOString() }
 
+    const resolvedScenes = resolveStoryboardScenes({
+      script: visionPhase.script,
+      visionPhaseScenes: visionPhase.scenes,
+    })
+
+    const script = visionPhase.script
+      ? {
+          ...visionPhase.script,
+          script: {
+            ...(visionPhase.script.script || {}),
+            scenes: resolvedScenes,
+          },
+          scenes: resolvedScenes,
+        }
+      : { script: { scenes: resolvedScenes }, scenes: resolvedScenes }
+
     // Return only necessary data (no sensitive info)
     const sharedData = {
       title: project.title,
-      script: project.metadata?.visionPhase?.script,
-      characters: project.metadata?.visionPhase?.characters,
-      sceneProductionState: project.metadata?.visionPhase?.production?.scenes,
+      script,
+      scenes: resolvedScenes,
+      characters: visionPhase.characters,
+      sceneProductionState: visionPhase.production?.scenes,
       allowedFeatures: shareLink.allowedFeatures,
       shareToken: actualShareToken, // Pass this back so the feedback API can find it
       storyboardRevision,

@@ -5,6 +5,8 @@
  * the associated audio files become stale and should be cleared.
  */
 
+import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
+
 /** Scene-level fields that store generated audio references. */
 export const SCENE_AUDIO_FIELD_KEYS = [
   'dialogueAudio',
@@ -122,17 +124,19 @@ export function mergeScenesForScriptSave(
     }
 
     if (preserveAudio) {
-      merged.push(mergeScenePreservingAudio(canonical, incoming))
+      merged.push(mergeScenePreservingMedia(canonical, mergeScenePreservingAudio(canonical, incoming)))
       continue
     }
 
     // Reject audio reversion: canonical cleared but stale incoming still has URLs
     if (!sceneHasAudioRefs(canonical) && sceneHasAudioRefs(incoming)) {
-      merged.push(mergeScenePreservingAudio(canonical, incoming))
+      merged.push(
+        mergeScenePreservingMedia(canonical, mergeScenePreservingAudio(canonical, incoming))
+      )
       continue
     }
 
-    merged.push(incoming)
+    merged.push(mergeScenePreservingMedia(canonical, incoming))
   }
 
   return merged

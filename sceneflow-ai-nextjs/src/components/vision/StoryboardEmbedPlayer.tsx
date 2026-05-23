@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { AudioGalleryPlayer } from '@/components/vision/AudioGalleryPlayer'
 import { cn } from '@/lib/utils'
+import { resolveStoryboardScenes } from '@/lib/storyboard/resolveStoryboardScenes'
 
 function deriveAvailableLanguages(scenes: any[]): string[] {
   const langs = new Set<string>()
@@ -96,12 +97,11 @@ export function StoryboardEmbedPlayer({
 
   const scenes = useMemo(() => {
     if (!projectData) return []
-    return (
-      projectData.script?.script?.scenes ||
-      projectData.script?.scenes ||
-      projectData.sceneProductionState ||
-      []
-    )
+    return resolveStoryboardScenes({
+      script: projectData.script,
+      visionPhaseScenes: projectData.visionPhaseScenes,
+      scenes: projectData.scenes,
+    })
   }, [projectData])
 
   const availableLanguages = useMemo(() => deriveAvailableLanguages(scenes), [scenes])

@@ -9,6 +9,7 @@ import {
   dialogueLineIdForIndex,
   findDialogueAudioForLine,
 } from '@/components/vision/scene-production/audioTrackBuilder'
+import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
 
 const NARRATION_CLIP_BUFFER_SEC = 0.5
 const DIALOGUE_CLIP_BUFFER_SEC = 0.3
@@ -175,7 +176,55 @@ export function parseDialogueIndexFromClipId(clipId: string): number | undefined
 /** Establishing frame URL for narration/description. */
 export function getEstablishingFrameUrl(scene: Record<string, unknown> | null | undefined): string | undefined {
   const url = scene?.imageUrl
-  return typeof url === 'string' && url.trim() ? url : undefined
+  return isValidStoryboardMediaUrl(url) ? url.trim() : undefined
+}
+
+function findSegmentDialogueStoryboardUrl(
+  scene: Record<string, unknown>,
+  dialogueIndex: number
+): string | undefined {
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  const flatLine = dialogue[dialogueIndex] as Record<string, unknown> | undefined
+  const lineId = typeof flatLine?.lineId === 'string' ? flatLine.lineId : undefined
+
+  const segments = Array.isArray(scene.segments) ? scene.segments : []
+  let positionalIdx = 0
+  for (const seg of segments) {
+    const segDialogue = Array.isArray((seg as Record<string, unknown>).dialogue)
+      ? ((seg as Record<string, unknown>).dialogue as Record<string, unknown>[])
+      : []
+    for (const line of segDialogue) {
+      if (line?.kind === 'narration') continue
+      if (lineId && line?.lineId === lineId) {
+        const url = line.storyboardImageUrl
+        if (isValidStoryboardMediaUrl(url)) return url.trim()
+      }
+      if (!lineId && positionalIdx === dialogueIndex) {
+        const url = line?.storyboardImageUrl
+        if (isValidStoryboardMediaUrl(url)) return url.trim()
+      }
+      positionalIdx++
+    }
+  }
+  return undefined
+}
+
+/** Per-dialogue frame URL with fallback to establishing. */
+export function getDialogueFrameUrl(
+  scene: Record<string, unknown> | null | undefined,
+  dialogueIndex: number
+): string | undefined {
+  if (!scene) return undefined
+
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  const entry = dialogue[dialogueIndex] as Record<string, unknown> | undefined
+  const flatUrl = entry?.storyboardImageUrl
+  if (isValidStoryboardMediaUrl(flatUrl)) return flatUrl.trim()
+
+  const segmentUrl = findSegmentDialogueStoryboardUrl(scene, dialogueIndex)
+  if (segmentUrl) return segmentUrl
+
+  return getEstablishingFrameUrl(scene)
 }
 
 function resolveVoiceClipDuration(
@@ -322,18 +371,6 @@ export function buildStoryboardVoiceClips(
   }
 
   return clips
-}
-
-/** Per-dialogue frame URL with fallback to establishing. */
-export function getDialogueFrameUrl(
-  scene: Record<string, unknown> | null | undefined,
-  dialogueIndex: number
-): string | undefined {
-  const dialogue = Array.isArray(scene?.dialogue) ? scene!.dialogue : []
-  const entry = dialogue[dialogueIndex] as Record<string, unknown> | undefined
-  const url = entry?.storyboardImageUrl
-  if (typeof url === 'string' && url.trim()) return url
-  return getEstablishingFrameUrl(scene)
 }
 
 /**

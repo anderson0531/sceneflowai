@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   buildStoryboardVoiceClips,
   buildStoryboardVisualTimeline,
+  getDialogueFrameUrl,
 } from '@/lib/storyboard/types'
 
 const NARRATION_URL = 'https://example.com/narration.mp3'
@@ -165,5 +166,35 @@ describe('buildStoryboardVoiceClips', () => {
       { id: 'dialogue-0', url: SARAH_URL },
       { id: 'dialogue-1', url: BOB_URL },
     ])
+  })
+})
+
+describe('getDialogueFrameUrl', () => {
+  it('reads storyboardImageUrl from segments when flat dialogue lacks it', () => {
+    const scene = {
+      imageUrl: 'https://example.com/establishing.png',
+      dialogue: [{ lineId: 'ln-1', character: 'Sarah', line: 'Hello.' }],
+      segments: [
+        {
+          segmentId: 'seg-1',
+          dialogue: [
+            {
+              lineId: 'ln-1',
+              character: 'Sarah',
+              line: 'Hello.',
+              kind: 'dialogue',
+              storyboardImageUrl: 'https://example.com/segment-frame.png',
+            },
+          ],
+        },
+      ],
+    }
+
+    expect(getDialogueFrameUrl(scene, 0)).toBe('https://example.com/segment-frame.png')
+  })
+
+  it('rejects deferred placeholder for establishing frame', () => {
+    const scene = { imageUrl: 'deferred', dialogue: [] }
+    expect(getDialogueFrameUrl(scene, 0)).toBeUndefined()
   })
 })

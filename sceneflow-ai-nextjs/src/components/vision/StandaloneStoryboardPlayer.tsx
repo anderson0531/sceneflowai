@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Star, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { resolveStoryboardScenes } from '@/lib/storyboard/resolveStoryboardScenes'
 
 interface StandaloneStoryboardPlayerProps {
   projectData: any
@@ -79,8 +80,18 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
   }
 
   // Derive available languages from project data
+  const resolvedScenes = useMemo(
+    () =>
+      resolveStoryboardScenes({
+        script: projectData.script,
+        visionPhaseScenes: projectData.visionPhaseScenes,
+        scenes: projectData.scenes,
+      }),
+    [projectData]
+  )
+
   const availableLanguages = useMemo(() => {
-    const scenes = projectData.script?.script?.scenes || projectData.script?.scenes || projectData.sceneProductionState || []
+    const scenes = resolvedScenes
     const langs = new Set<string>()
     
     scenes.forEach((scene: any) => {
@@ -98,7 +109,7 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
     
     if (langs.size === 0) langs.add('en')
     return Array.from(langs).sort()
-  }, [projectData])
+  }, [resolvedScenes])
 
   return (
     <div className="flex flex-col min-h-screen lg:h-screen bg-black lg:overflow-hidden">
@@ -130,7 +141,7 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
         <div className="flex-1 p-2 sm:p-4 overflow-y-auto bg-gray-950 flex flex-col justify-start items-center min-h-0">
           <div className="w-full flex justify-center items-start max-w-4xl">
             <AudioGalleryPlayer
-              scenes={projectData.script?.script?.scenes || projectData.script?.scenes || projectData.sceneProductionState || []}
+              scenes={resolvedScenes}
               selectedLanguage={selectedLanguage}
               onLanguageChange={setSelectedLanguage}
               availableLanguages={availableLanguages}

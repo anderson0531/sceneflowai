@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { stripBase64FromMetadata, calculateBase64Size } from '@/lib/storage/mediaStorage'
+import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
 
 // Increase timeout for large project updates
 export const maxDuration = 60 // 60 seconds timeout
@@ -328,13 +329,13 @@ export async function PUT(
                 
                 if (!existingScene) return incomingScene
                 
-                // Merge scene data, preserving sceneDirection if not explicitly being updated
-                return {
+                // Merge scene data, preserving sceneDirection and storyboard media when incoming lacks them
+                const spread = {
                   ...existingScene,
                   ...incomingScene,
-                  // Preserve sceneDirection from either source (incoming takes precedence)
                   sceneDirection: incomingScene.sceneDirection || existingScene.sceneDirection
                 }
+                return mergeScenePreservingMedia(existingScene, spread)
               })
               
               // Preserve existing scenes NOT in incoming payload — UNLESS explicitly deleted.
