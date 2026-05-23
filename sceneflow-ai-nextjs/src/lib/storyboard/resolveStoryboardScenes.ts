@@ -13,7 +13,7 @@ function sceneKey(scene: any, index: number): string {
   return `idx-${index}`
 }
 
-function mediaRichnessScore(scene: any): number {
+export function mediaRichnessScore(scene: any): number {
   if (!scene || typeof scene !== 'object') return 0
   let score = 0
   if (isValidStoryboardMediaUrl(scene.imageUrl)) score += 10
@@ -31,6 +31,7 @@ function mediaRichnessScore(scene: any): number {
   return score
 }
 
+/** Lower-priority copies first; canonical `script.script.scenes` last so fresh edits win ties. */
 function collectSceneArrays(project: {
   script?: any
   visionPhaseScenes?: any[]
@@ -38,16 +39,21 @@ function collectSceneArrays(project: {
   const script = project.script
   const arrays: any[][] = []
 
-  const nested = script?.script?.scenes
-  if (Array.isArray(nested) && nested.length > 0) arrays.push(nested)
+  const legacy = project.visionPhaseScenes
+  if (Array.isArray(legacy) && legacy.length > 0) arrays.push(legacy)
 
   const wrapper = script?.scenes
   if (Array.isArray(wrapper) && wrapper.length > 0) arrays.push(wrapper)
 
-  const legacy = project.visionPhaseScenes
-  if (Array.isArray(legacy) && legacy.length > 0) arrays.push(legacy)
+  const nested = script?.script?.scenes
+  if (Array.isArray(nested) && nested.length > 0) arrays.push(nested)
 
   return arrays
+}
+
+export function totalStoryboardMediaScore(scenes: any[]): number {
+  if (!Array.isArray(scenes)) return 0
+  return scenes.reduce((sum, scene) => sum + mediaRichnessScore(scene), 0)
 }
 
 /**
@@ -81,11 +87,13 @@ export function resolveStoryboardScenes(project: {
         return
       }
 
-      if (score > existing.score) {
-        existing.scene = mergeScenePreservingMedia(scene, existing.scene)
+      if (score >= existing.score) {
+        // Later / richer copy is incoming — prefer its media (uploads, canonical script)
+        existing.scene = mergeScenePreservingMedia(existing.scene, scene)
         existing.score = mediaRichnessScore(existing.scene)
       } else {
-        existing.scene = mergeScenePreservingMedia(existing.scene, scene)
+        // Keep richer existing media when the new snapshot is poorer
+        existing.scene = mergeScenePreservingMedia(scene, existing.scene)
         existing.score = mediaRichnessScore(existing.scene)
       }
     })

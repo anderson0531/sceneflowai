@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { mergeScenesForScriptSave } from '@/lib/audio/cleanupAudio'
-import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
+import {
+  mergeScenePreservingMedia,
+  storyboardBlobUrlTimestamp,
+} from '@/lib/storyboard/mergeSceneMedia'
 
 describe('mergeScenePreservingMedia', () => {
   it('preserves canonical imageUrl when incoming scene lacks it', () => {
@@ -62,6 +65,27 @@ describe('mergeScenePreservingMedia', () => {
     expect(merged.segments[0].dialogue[0].storyboardImageUrl).toBe(
       'https://blob.example/seg-line.png'
     )
+  })
+
+  it('storyboardBlobUrlTimestamp parses blob path timestamps', () => {
+    expect(
+      storyboardBlobUrlTimestamp(
+        'https://x.public.blob.vercel-storage.com/images/frames/p/1779527367355.jpeg'
+      )
+    ).toBe(1779527367355)
+  })
+
+  it('prefers newer blob URL when both valid', () => {
+    const canonical = {
+      imageUrl:
+        'https://x.public.blob.vercel-storage.com/images/frames/p/old/1779500000000.jpeg',
+    }
+    const incoming = {
+      imageUrl:
+        'https://x.public.blob.vercel-storage.com/images/frames/p/new/1779527367355.jpeg',
+    }
+    const merged = mergeScenePreservingMedia(canonical, incoming)
+    expect(merged.imageUrl).toContain('1779527367355')
   })
 })
 

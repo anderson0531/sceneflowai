@@ -27,9 +27,22 @@ export function isValidStoryboardMediaUrl(value: unknown): value is string {
   return true
 }
 
+/** Extract millisecond timestamp from Vercel blob paths like `.../1779527367355.jpeg`. */
+export function storyboardBlobUrlTimestamp(url: string): number {
+  const match = url.match(/(\d{13})\./)
+  return match ? parseInt(match[1], 10) : 0
+}
+
 function pickMediaUrl(incoming: unknown, canonical: unknown): string | undefined {
-  if (isValidStoryboardMediaUrl(incoming)) return incoming.trim()
-  if (isValidStoryboardMediaUrl(canonical)) return canonical.trim()
+  const inc = isValidStoryboardMediaUrl(incoming) ? incoming.trim() : undefined
+  const can = isValidStoryboardMediaUrl(canonical) ? canonical.trim() : undefined
+  if (inc && can) {
+    const ti = storyboardBlobUrlTimestamp(inc)
+    const tc = storyboardBlobUrlTimestamp(can)
+    if (ti && tc && ti !== tc) return ti > tc ? inc : can
+  }
+  if (inc) return inc
+  if (can) return can
   return undefined
 }
 

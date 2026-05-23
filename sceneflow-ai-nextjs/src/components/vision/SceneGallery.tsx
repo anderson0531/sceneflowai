@@ -1513,7 +1513,15 @@ function SceneCard({
                       isGenerating={isGenerating}
                       compact
                       showBorder
-                      label="Establishing"
+                      label={
+                        scene.narration ||
+                        scene.narrationAudioUrl ||
+                        scene.narrationAudio?.en?.url ||
+                        scene.descriptionAudioUrl ||
+                        scene.descriptionAudio?.en?.url
+                          ? 'Narration'
+                          : 'Establishing'
+                      }
                       onGenerate={() => void onGenerate(prompt)}
                       onUpload={onUpload}
                     />

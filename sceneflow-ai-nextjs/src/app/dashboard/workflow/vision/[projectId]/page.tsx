@@ -26,7 +26,7 @@ import {
   mergeScenesForScriptSave,
   removeStaleAudioUrlFromScene,
 } from '@/lib/audio/cleanupAudio'
-import { resolveStoryboardScenes } from '@/lib/storyboard/resolveStoryboardScenes'
+import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
 import { getBatchNarrationTtsText } from '@/lib/script/narration'
 import { toast } from 'sonner'
 
@@ -533,6 +533,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       console.error(`[persistVisionScriptScenes] Save failed: ${response.status}`)
       return false
     }
+
+    const syncedMetadata = {
+      ...currentProject.metadata,
+      visionPhase: {
+        ...visionPhaseWithoutCharacters,
+        characters,
+        script: updatedScript,
+        scenes: updatedScenes,
+      },
+    }
+    const syncedProject = { ...currentProject, metadata: syncedMetadata }
+    projectRef.current = syncedProject
+    setProject(syncedProject)
+
     return true
   }, [characters, serializedProjectSave])
 
@@ -5836,15 +5850,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const priorScenes =
             loadedScript?.script?.scenes || visionPhase.scenes || [];
 
-          // Check if any dialogue needed characterId migration or audio cleanup
+          const resolvedScenes = resolveStoryboardScenes({
+            script: loadedScript
+              ? {
+                  ...loadedScript,
+                  script: { ...loadedScript.script, scenes: scenesWithCharacterIds },
+                  scenes: scenesWithCharacterIds,
+                }
+              : { script: { scenes: scenesWithCharacterIds }, scenes: scenesWithCharacterIds },
+            visionPhaseScenes: visionPhase.scenes,
+          })
+
+          const canonicalMediaScore = totalStoryboardMediaScore(scenesWithCharacterIds)
+          const resolvedMediaScore = totalStoryboardMediaScore(resolvedScenes)
+          const needsMediaMergePersist = resolvedMediaScore > canonicalMediaScore
+
+          const finalScenes = needsMediaMergePersist ? resolvedScenes : scenesWithCharacterIds
+
+          // Check if any dialogue needed characterId migration, audio cleanup, or media merge
           const needsScenePersist =
             allDeletedUrls.length > 0 ||
-            scenesWithCharacterIds.some((scene: any, sceneIdx: number) => 
-              scene.dialogue?.some((d: any, dIdx: number) => 
+            needsMediaMergePersist ||
+            finalScenes.some((scene: any, sceneIdx: number) =>
+              scene.dialogue?.some((d: any, dIdx: number) =>
                 d.characterId !== priorScenes[sceneIdx]?.dialogue?.[dIdx]?.characterId
               )
             )
-          
+
           if (needsScenePersist) {
             try {
               const nextScript = loadedScript
@@ -5852,7 +5884,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     ...loadedScript,
                     script: {
                       ...loadedScript.script,
-                      scenes: scenesWithCharacterIds,
+                      scenes: finalScenes,
                     },
                   }
                 : loadedScript
@@ -5865,7 +5897,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     ...proj.metadata,
                     visionPhase: {
                       ...visionPhase,
-                      scenes: scenesWithCharacterIds,
+                      scenes: finalScenes,
                       script: nextScript,
                     }
                   }
@@ -5876,12 +5908,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 loadedScript = nextScript
                 setScript(sanitizeScriptDialogueLines(nextScript))
               }
+
+              const syncedMetadata = {
+                ...proj.metadata,
+                visionPhase: {
+                  ...visionPhase,
+                  scenes: finalScenes,
+                  script: nextScript ?? loadedScript,
+                },
+              }
+              const syncedProject = { ...proj, metadata: syncedMetadata }
+              projectRef.current = syncedProject
+              setProject(syncedProject)
             } catch (error) {
-              console.warn('[Load Project] Failed to save scene audio/character fixes:', error)
+              console.warn('[Load Project] Failed to save scene audio/character/media fixes:', error)
             }
           }
-          
-          setScenes(scenesWithCharacterIds)
+
+          setScenes(finalScenes)
         }
         
         // Handle case where there are no characters but narrationVoice exists
@@ -8102,24 +8146,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         script: { ...script.script, scenes: updatedScenes },
       })
 
-      const { characters: _staleCharacters, ...visionPhaseWithoutCharacters } = project?.metadata?.visionPhase || {}
-      await fetch(`/api/projects/${project?.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          metadata: {
-            ...project?.metadata,
-            visionPhase: {
-              ...visionPhaseWithoutCharacters,
-              characters,
-              script: {
-                ...script,
-                script: { ...script.script, scenes: updatedScenes },
-              },
-            },
-          },
-        }),
-      })
+      const saved = await persistVisionScriptScenes(updatedScenes, 'handleGenerateDialogueFrameImage')
+      if (!saved) {
+        try { const { toast } = require('sonner'); toast.error('Dialogue frame generated but failed to save') } catch {}
+        return
+      }
 
       try { const { toast } = require('sonner'); toast.success('Dialogue frame generated!') } catch {}
     } catch (error: any) {

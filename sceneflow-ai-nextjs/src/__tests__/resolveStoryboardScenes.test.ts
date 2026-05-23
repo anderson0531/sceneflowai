@@ -30,4 +30,30 @@ describe('resolveStoryboardScenes', () => {
     })
     expect(resolved).toEqual(scenes)
   })
+
+  it('prefers newer script.script.scenes imageUrl over stale visionPhase.scenes on equal score', () => {
+    const script = {
+      script: {
+        scenes: [
+          {
+            id: 's2',
+            imageUrl:
+              'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/images/frames/p/new/1779527367355.jpeg',
+            dialogue: [{ character: 'A', line: 'Hi', storyboardImageUrl: 'https://example.com/d0.png' }],
+          },
+        ],
+      },
+    }
+    const visionPhaseScenes = [
+      {
+        id: 's2',
+        imageUrl:
+          'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/images/frames/p/old/1779500000000.jpeg',
+        dialogue: [{ character: 'A', line: 'Hi', storyboardImageUrl: 'https://example.com/d0.png' }],
+      },
+    ]
+
+    const resolved = resolveStoryboardScenes({ script, visionPhaseScenes })
+    expect(resolved[0].imageUrl).toContain('1779527367355')
+  })
 })
