@@ -31,6 +31,7 @@ const SAMPLE_STEPS = [
     id: 'storyboard' as const,
     step: 1,
     title: 'Interactive storyboard',
+    shortTitle: 'Storyboard',
     caption: 'Per-scene audio and dialogue-synced frame cuts in one playable review.',
     icon: Clapperboard,
     accent: 'emerald',
@@ -39,6 +40,7 @@ const SAMPLE_STEPS = [
     id: 'animatic' as const,
     step: 2,
     title: 'Express animatic',
+    shortTitle: 'Animatic',
     caption: 'Fast, low-cost motion preview — ideal for JIT news, education, and documentary.',
     icon: Film,
     accent: 'cyan',
@@ -47,6 +49,7 @@ const SAMPLE_STEPS = [
     id: 'full' as const,
     step: 3,
     title: 'Full lipsync video',
+    shortTitle: 'Lipsync video',
     caption: 'Express concurrent generation from storyboard frames — 70+ languages.',
     icon: Video,
     accent: 'purple',
@@ -55,76 +58,28 @@ const SAMPLE_STEPS = [
 
 type SampleTab = (typeof SAMPLE_STEPS)[number]['id']
 
-function SampleCard({
-  step,
-  title,
-  caption,
-  icon: Icon,
-  accent,
-  children,
-  className,
-}: {
-  step: number
-  title: string
-  caption: string
-  icon: typeof Clapperboard
-  accent: string
-  children: React.ReactNode
-  className?: string
-}) {
-  const accentBorder =
-    accent === 'emerald'
-      ? 'border-emerald-500/20'
-      : accent === 'cyan'
-        ? 'border-cyan-500/20'
-        : 'border-purple-500/20'
-  const accentBadge =
-    accent === 'emerald'
-      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-      : accent === 'cyan'
-        ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30'
-        : 'bg-purple-500/15 text-purple-400 border-purple-500/30'
+const MEDIA_PANE_CLASS =
+  'min-h-[360px] sm:min-h-[420px] lg:min-h-[520px] aspect-video'
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: step * 0.08 }}
-      className={cn(
-        'flex flex-col rounded-2xl border bg-slate-900/50 backdrop-blur-sm overflow-hidden',
-        accentBorder,
-        className
-      )}
-    >
-      <div className="px-4 pt-4 pb-3 flex items-start gap-3">
-        <span
-          className={cn(
-            'flex-shrink-0 w-8 h-8 rounded-full border flex items-center justify-center text-sm font-bold',
-            accentBadge
-          )}
-        >
-          {step}
-        </span>
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Icon className="w-4 h-4 text-slate-400 flex-shrink-0" />
-            <h3 className="text-base font-semibold text-white">{title}</h3>
-          </div>
-          <p className="text-sm text-slate-400 leading-relaxed">{caption}</p>
-        </div>
-      </div>
-      <div className="flex-1 min-h-[220px] lg:min-h-[280px] border-t border-white/5 bg-black/40">
-        {children}
-      </div>
-    </motion.div>
-  )
+function tabActiveClasses(accent: string, isActive: boolean) {
+  if (!isActive) return 'text-slate-400 hover:text-white hover:bg-white/5'
+  if (accent === 'emerald') return 'bg-emerald-600 text-white shadow-sm'
+  if (accent === 'cyan') return 'bg-cyan-600 text-white shadow-sm'
+  return 'bg-purple-600 text-white shadow-sm'
+}
+
+function accentBadgeClasses(accent: string) {
+  if (accent === 'emerald') return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+  if (accent === 'cyan') return 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30'
+  return 'bg-purple-500/15 text-purple-400 border-purple-500/30'
 }
 
 export function SamplesSection() {
-  const [mobileTab, setMobileTab] = useState<SampleTab>('storyboard')
+  const [activeTab, setActiveTab] = useState<SampleTab>('storyboard')
   const shareHref = getLandingSampleShareHref()
   const projectTitle = LANDING_SAMPLE.projectTitle
+  const activeStep = SAMPLE_STEPS.find((s) => s.id === activeTab) ?? SAMPLE_STEPS[0]
+  const ActiveIcon = activeStep.icon
 
   const renderMedia = (id: SampleTab) => {
     if (id === 'storyboard') {
@@ -135,6 +90,7 @@ export function SamplesSection() {
         <LandingSampleVideo
           src={LANDING_SAMPLE.animaticVideoUrl}
           placeholderTitle="Express animatic sample — configure animaticVideoUrl"
+          className={MEDIA_PANE_CLASS}
         />
       )
     }
@@ -142,6 +98,7 @@ export function SamplesSection() {
       <LandingSampleVideo
         src={LANDING_SAMPLE.fullVideoUrl}
         placeholderTitle="Full lipsync video sample — configure fullVideoUrl"
+        className={MEDIA_PANE_CLASS}
       />
     )
   }
@@ -182,37 +139,69 @@ export function SamplesSection() {
           </div>
         </motion.div>
 
-        {/* Mobile: tabs */}
-        <div className="lg:hidden mb-4">
-          <div className="flex rounded-xl bg-slate-900/80 border border-white/10 p-1 gap-1">
-            {SAMPLE_STEPS.map(({ id, title }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setMobileTab(id)}
-                className={cn(
-                  'flex-1 py-2 px-2 text-xs sm:text-sm font-medium rounded-lg transition-colors',
-                  mobileTab === id
-                    ? 'bg-emerald-600 text-white'
-                    : 'text-slate-400 hover:text-white'
-                )}
-              >
-                {title.replace('Interactive ', '').replace('Express ', '').replace('Full ', '')}
-              </button>
-            ))}
+        <div className="w-full">
+          <div
+            role="tablist"
+            aria-label="Sample output types"
+            className="flex rounded-xl bg-slate-900/80 border border-white/10 p-1 gap-1"
+          >
+            {SAMPLE_STEPS.map(({ id, title, shortTitle, accent }) => {
+              const isActive = activeTab === id
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  id={`sample-tab-${id}`}
+                  aria-selected={isActive}
+                  aria-controls="sample-media-pane"
+                  onClick={() => setActiveTab(id)}
+                  className={cn(
+                    'flex-1 py-2.5 px-2 sm:px-4 text-xs sm:text-sm font-medium rounded-lg transition-colors capitalize',
+                    tabActiveClasses(accent, isActive)
+                  )}
+                >
+                  <span className="hidden sm:inline">{title}</span>
+                  <span className="sm:hidden">{shortTitle}</span>
+                </button>
+              )
+            })}
           </div>
-          <div className="mt-4 rounded-2xl border border-white/10 overflow-hidden min-h-[300px]">
-            {renderMedia(mobileTab)}
-          </div>
-        </div>
 
-        {/* Desktop: 3-column grid */}
-        <div className="hidden lg:grid lg:grid-cols-3 gap-6">
-          {SAMPLE_STEPS.map(({ id, ...item }) => (
-            <SampleCard key={id} {...item}>
-              {renderMedia(id)}
-            </SampleCard>
-          ))}
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="mt-4 flex items-start gap-3 px-1"
+          >
+            <span
+              className={cn(
+                'flex-shrink-0 w-8 h-8 rounded-full border flex items-center justify-center text-sm font-bold',
+                accentBadgeClasses(activeStep.accent)
+              )}
+            >
+              {activeStep.step}
+            </span>
+            <div className="min-w-0 pt-0.5">
+              <div className="flex items-center gap-2 mb-1">
+                <ActiveIcon className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <h3 className="text-base sm:text-lg font-semibold text-white capitalize">
+                  {activeStep.title}
+                </h3>
+              </div>
+              <p className="text-sm text-slate-400 leading-relaxed">{activeStep.caption}</p>
+            </div>
+          </motion.div>
+
+          <div
+            id="sample-media-pane"
+            role="tabpanel"
+            aria-labelledby={`sample-tab-${activeTab}`}
+            className="mt-4 w-full rounded-2xl border border-white/10 overflow-hidden bg-black/40 min-h-[360px] sm:min-h-[420px] lg:min-h-[520px]"
+          >
+            {renderMedia(activeTab)}
+          </div>
         </div>
 
         <motion.div

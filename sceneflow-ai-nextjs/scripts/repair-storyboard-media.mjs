@@ -6,6 +6,8 @@
  *   DRY_RUN=true node scripts/repair-storyboard-media.mjs [shareSlugOrProjectId]
  *   node scripts/repair-storyboard-media.mjs TheWhiteHouseWaltzAControlledThaw
  *
+ * For broken dialogue audio URLs (404), use scripts/repair-dialogue-audio.mjs
+ *
  * Requires DATABASE_URL or POSTGRES_* env vars (.env.production.local)
  */
 

@@ -46,6 +46,8 @@ interface AudioGalleryPlayerProps {
   embedMode?: boolean
   /** Open full-screen embed route (landing sample expand). */
   expandHref?: string
+  /** Landing full-width embed: use full pane width for scene image and controls. */
+  fullWidthEmbed?: boolean
 }
 
 function normalizeMediaUrl(url: string): string {
@@ -80,6 +82,7 @@ export function AudioGalleryPlayer({
   isSharedView = false,
   embedMode = false,
   expandHref,
+  fullWidthEmbed = false,
 }: AudioGalleryPlayerProps) {
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false)
@@ -534,6 +537,7 @@ export function AudioGalleryPlayer({
 
   /** Public share / landing embed: compact stacked layout. */
   const sharedCompact = (isSharedView || embedMode) && !isFullscreen
+  const landingWide = embedMode && fullWidthEmbed && !isFullscreen
 
   return (
     <TooltipProvider>
@@ -633,7 +637,8 @@ export function AudioGalleryPlayer({
           className={cn(
             'flex gap-4 p-4',
             isFullscreen && 'flex-1 flex-col items-center justify-center w-full',
-            sharedCompact && 'flex-col items-center w-full max-w-4xl mx-auto gap-3 py-2 px-2 sm:px-4'
+            sharedCompact && 'flex-col items-center w-full gap-3 py-2 px-2 sm:px-4',
+            landingWide ? 'max-w-none mx-0' : sharedCompact && 'max-w-4xl mx-auto'
           )}
         >
           {/* Scene image with Ken Burns effect */}
@@ -641,9 +646,11 @@ export function AudioGalleryPlayer({
             "relative rounded-lg overflow-hidden bg-black flex-shrink-0 w-full",
             isFullscreen 
               ? "max-w-7xl aspect-video" 
-              : sharedCompact
-                ? "max-w-3xl sm:max-w-4xl aspect-video shadow-lg"
-                : "max-w-[500px] aspect-video shadow-xl"
+              : landingWide
+                ? "max-w-none aspect-video shadow-lg"
+                : sharedCompact
+                  ? "max-w-3xl sm:max-w-4xl aspect-video shadow-lg"
+                  : "max-w-[500px] aspect-video shadow-xl"
           )}>
             {displayImageUrl ? (
               <img
@@ -699,7 +706,7 @@ export function AudioGalleryPlayer({
             </div>
           )}
           {sharedCompact && (
-            <div className="text-center w-full max-w-2xl mx-auto px-1">
+            <div className={cn('text-center w-full px-1', landingWide ? 'max-w-4xl mx-auto' : 'max-w-2xl mx-auto')}>
               <span className="text-white/45 text-[10px] uppercase tracking-wider font-medium">
                 Scene {currentSceneIndex + 1}
               </span>
@@ -712,7 +719,7 @@ export function AudioGalleryPlayer({
           {/* Playback controls and info */}
           <div className={cn(
             "flex flex-col justify-between min-w-0 w-full",
-            isFullscreen ? "max-w-7xl mt-3" : sharedCompact ? "max-w-2xl mx-auto mt-2" : "flex-1"
+            isFullscreen ? "max-w-7xl mt-3" : sharedCompact ? cn('mx-auto mt-2', landingWide ? 'max-w-4xl' : 'max-w-2xl') : "flex-1"
           )}>
             {/* Scene info - hide in fullscreen / shared compact (heading shown above) */}
             {(!isFullscreen && !isSharedView) && (

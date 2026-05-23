@@ -50,6 +50,8 @@ export interface StoryboardEmbedPlayerProps {
   onNotFound?: () => void
   /** Show link to full /embed/storyboard route (landing card only). */
   showExpandLink?: boolean
+  /** Landing full-width embed: widen scene image and controls to fill the pane. */
+  fullWidthEmbed?: boolean
 }
 
 export function StoryboardEmbedPlayer({
@@ -58,6 +60,7 @@ export function StoryboardEmbedPlayer({
   minHeight = 'min-h-[280px]',
   onNotFound,
   showExpandLink = true,
+  fullWidthEmbed = false,
 }: StoryboardEmbedPlayerProps) {
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   const [projectData, setProjectData] = useState<any>(null)
@@ -133,6 +136,7 @@ export function StoryboardEmbedPlayer({
         availableLanguages={availableLanguages}
         isSharedView
         embedMode
+        fullWidthEmbed={fullWidthEmbed}
         expandHref={
           showExpandLink && slug.trim()
             ? `/embed/storyboard/${encodeURIComponent(slug.trim())}`

@@ -8,8 +8,8 @@ export function LandingStoryboardEmbed() {
 
   if (!slug) {
     return (
-      <div className="h-full min-h-[280px] flex flex-col">
-        <StoryboardPlayerSkeleton minHeight="min-h-[280px]" />
+      <div className="h-full min-h-[360px] sm:min-h-[420px] lg:min-h-[520px] flex flex-col">
+        <StoryboardPlayerSkeleton minHeight="min-h-[360px] sm:min-h-[420px] lg:min-h-[520px]" />
         <p className="text-center text-xs text-slate-500 py-2 px-3">
           Sample storyboard — set <code className="text-slate-400">storyboardShareSlug</code> in config
         </p>
@@ -19,7 +19,11 @@ export function LandingStoryboardEmbed() {
 
   return (
     <div className="h-full landing-storyboard-embed">
-      <StoryboardEmbedPlayer slug={slug} />
+      <StoryboardEmbedPlayer
+        slug={slug}
+        fullWidthEmbed
+        minHeight="min-h-[360px] sm:min-h-[420px] lg:min-h-[520px]"
+      />
     </div>
   )
 }
