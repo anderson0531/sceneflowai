@@ -752,10 +752,24 @@ async function updateSceneAudio(
     } else if (audioType === 'description') {
       oldAudioUrl = currentScene.descriptionAudio?.[language]?.url ||
                     (language === 'en' ? currentScene.descriptionAudioUrl : null)
-    } else if (audioType === 'dialogue' && dialogueIndex !== undefined) {
+    } else if (audioType === 'dialogue') {
       const dialogueArray = currentScene.dialogueAudio?.[language] || []
-      const existingEntry = dialogueArray.find((d: any) => d.dialogueIndex === dialogueIndex)
-      oldAudioUrl = existingEntry?.audioUrl || null
+      const targetLineId = lineMeta?.lineId
+      let existingEntry: any = null
+      if (targetLineId) {
+        existingEntry = dialogueArray.find((d: any) => d.lineId === targetLineId)
+      }
+      if (!existingEntry && dialogueIndex !== undefined) {
+        existingEntry = dialogueArray.find((d: any) => d.dialogueIndex === dialogueIndex)
+      }
+      if (!existingEntry && dialogueIndex !== undefined && characterName) {
+        existingEntry = dialogueArray.find(
+          (d: any) =>
+            d.dialogueIndex === dialogueIndex &&
+            d.character?.toLowerCase() === characterName.toLowerCase()
+        )
+      }
+      oldAudioUrl = existingEntry?.audioUrl || existingEntry?.url || null
     }
   }
 
@@ -898,13 +912,17 @@ async function updateSceneAudio(
     language
   })
 
-  // Update metadata
+  const scriptUpdatedAt = new Date().toISOString()
+
+  // Update metadata — keep script.script.scenes and visionPhase.scenes in sync
   await project.update({
     metadata: {
       ...metadata,
       visionPhase: {
         ...visionPhase,
         script: updatedScript,
+        scenes: updatedScenes,
+        scriptUpdatedAt,
       },
     },
   })

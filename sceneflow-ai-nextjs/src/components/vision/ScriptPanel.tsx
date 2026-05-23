@@ -43,7 +43,7 @@ const DirectorWorkflow = dynamic(
   () => import('./scene-production/DirectorConsole').then(mod => ({ default: mod.DirectorWorkflow })),
   { ssr: false, loading: () => <div className="p-4 text-center text-zinc-500">Loading Director Console...</div> }
 )
-import { AUDIO_ALIGNMENT_BUFFERS, getLanguagePlaybackOffset, calculateSuggestedOffset } from './scene-production/audioTrackBuilder'
+import { AUDIO_ALIGNMENT_BUFFERS, getLanguagePlaybackOffset, calculateSuggestedOffset, findDialogueAudioForLine } from './scene-production/audioTrackBuilder'
 import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -187,7 +187,7 @@ interface ScriptPanelProps {
     dismissed?: boolean
   }>
   onDismissValidationWarning?: (sceneIdx: number) => void
-  onPlayAudio?: (audioUrl: string, label: string) => void
+  onPlayAudio?: (audioUrl: string, label: string, sceneId?: string) => void
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void
   // NEW: Props for Production Script Header
   onGenerateAllAudio?: (
@@ -697,6 +697,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   
   // Individual audio playback state
   const [playingAudio, setPlayingAudio] = useState<string | null>(null)
+  const playingAudioContextRef = useRef<{ url: string; sceneId: string } | null>(null)
   const individualAudioRef = useRef<HTMLAudioElement | null>(null)
   
   // TEMPORARILY DISABLED: Muted audio tracks state
@@ -2259,19 +2260,22 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   }
 
   // Individual audio playback handlers
-  const handlePlayAudio = (audioUrl: string, label: string) => {
+  const handlePlayAudio = (audioUrl: string, label: string, sceneId?: string) => {
     if (playingAudio === audioUrl) {
       individualAudioRef.current?.pause()
       setPlayingAudio(null)
+      playingAudioContextRef.current = null
     } else {
       if (individualAudioRef.current) {
         individualAudioRef.current.src = audioUrl
         individualAudioRef.current.play().catch((error) => {
           console.error('[ScriptPanel] Audio playback failed:', error, audioUrl)
           setPlayingAudio(null)
+          playingAudioContextRef.current = null
           toast.error(`Audio not found. Try regenerating the ${label} audio.`)
         })
         setPlayingAudio(audioUrl)
+        playingAudioContextRef.current = sceneId ? { url: audioUrl, sceneId } : null
       }
     }
   }
@@ -3327,7 +3331,12 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           const target = e.currentTarget
           if (target.src && playingAudio) {
             console.error('[ScriptPanel] Audio load error:', target.src)
+            const ctx = playingAudioContextRef.current
+            if (ctx && ctx.url === playingAudio && onCleanupStaleAudioUrl) {
+              onCleanupStaleAudioUrl(ctx.sceneId, playingAudio)
+            }
             setPlayingAudio(null)
+            playingAudioContextRef.current = null
             // Don't show toast here - handlePlayAudio.catch will handle it
           }
         }}
@@ -3420,7 +3429,7 @@ interface SceneCardProps {
   generateAndPlaySFX?: (description: string) => Promise<void>
   generateAndPlayMusic?: (description: string, duration?: number) => Promise<void>
   // Individual audio playback
-  onPlayAudio?: (audioUrl: string, label: string) => void
+  onPlayAudio?: (audioUrl: string, label: string, sceneId?: string) => void
   onGenerateSceneAudio?: (sceneIdx: number, audioType: 'narration' | 'dialogue', characterName?: string, dialogueIndex?: number, language?: string) => void
   onGenerateAllAudio?: (
     language?: string,
@@ -3641,7 +3650,7 @@ function LegacySfxCueRow({
   sfxAudio: string | undefined
   projectId?: string
   playingAudio: string | null
-  onPlayAudio?: (audioUrl: string, label: string) => void
+  onPlayAudio?: (audioUrl: string, label: string, sceneId?: string) => void
   onDeleteSceneAudio?: (
     sceneIndex: number,
     audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx',
@@ -5673,7 +5682,7 @@ function SceneCard({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                onPlayAudio?.(narrationUrl, 'narration')
+                                onPlayAudio?.(narrationUrl, 'narration', scene.id || scene.sceneId || `scene-${sceneIdx}`)
                               }}
                               className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
                               title="Play Narration"
@@ -5976,19 +5985,14 @@ function SceneCard({
                       {!dialogueCollapsed && (
                       <div className="space-y-3">
                       {scene.dialogue.map((d: any, i: number) => {
-                        // Match audio by both character and dialogueIndex
-                        // Handle both old array format and new object format (keyed by language)
-                        let dialogueAudioArray: any[] = []
-                        if (Array.isArray(scene.dialogueAudio)) {
-                          // Old format: array
-                          dialogueAudioArray = scene.dialogueAudio
-                        } else if (scene.dialogueAudio && typeof scene.dialogueAudio === 'object') {
-                          // New format: object keyed by language
-                          dialogueAudioArray = scene.dialogueAudio[selectedLanguage] || []
-                        }
-                        const audioEntry = dialogueAudioArray.find((a: any) => 
-                          a.character === d.character && a.dialogueIndex === i
-                        )
+                        const audioEntry = findDialogueAudioForLine(scene, {
+                          language: selectedLanguage,
+                          lineId: d.lineId,
+                          dialogueIndex: i,
+                          character: d.character,
+                        })
+                        const dialogueAudioUrl = audioEntry?.audioUrl || audioEntry?.url
+                        const sceneKey = scene.id || scene.sceneId || `scene-${sceneIdx}`
                         // Extract parenthetical voice direction from line (e.g., "(angrily) I'm fine")
                         const dialogueLineText = coerceDialogueLineText(d.line ?? d.text)
                         const parentheticalMatch = dialogueLineText.match(/^\(([^)]+)\)\s*/)
@@ -6009,7 +6013,7 @@ function SceneCard({
                                       {parenthetical || d.voiceDirection || d.emotion}
                                     </span>
                                   )}
-                                  {audioEntry?.audioUrl && (
+                                  {dialogueAudioUrl && (
                                     <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
                                       <Volume2 className="w-3 h-3" />
                                       Ready
@@ -6021,17 +6025,17 @@ function SceneCard({
                                   <span className="text-[10px] text-gray-500 mt-1">Duration: {audioEntry.duration.toFixed(1)}s</span>
                                 )}
                               </div>
-                            {audioEntry?.audioUrl ? (
+                            {dialogueAudioUrl ? (
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    onPlayAudio?.(audioEntry.audioUrl, d.character)
+                                    onPlayAudio?.(dialogueAudioUrl, d.character, sceneKey)
                                   }}
                                   className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
                                   title="Play Dialogue"
                                 >
-                                  {playingAudio === audioEntry.audioUrl ? (
+                                  {playingAudio === dialogueAudioUrl ? (
                                     <Pause className="w-4 h-4" />
                                   ) : (
                                     <Play className="w-4 h-4" />

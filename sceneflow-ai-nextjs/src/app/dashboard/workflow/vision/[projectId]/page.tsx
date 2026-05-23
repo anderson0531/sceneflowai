@@ -20,7 +20,12 @@ import dynamic from 'next/dynamic'
 import { PanelGroup, Panel, PanelResizeHandle, ImperativePanelHandle } from 'react-resizable-panels'
 import { upload } from '@vercel/blob/client'
 import debounce from 'lodash/debounce'
-import { cleanupStaleAudio, clearAllSceneAudio } from '@/lib/audio/cleanupAudio'
+import {
+  cleanupStaleAudio,
+  clearAllSceneAudio,
+  mergeScenesForScriptSave,
+  removeStaleAudioUrlFromScene,
+} from '@/lib/audio/cleanupAudio'
 import { getBatchNarrationTtsText } from '@/lib/script/narration'
 import { toast } from 'sonner'
 
@@ -420,6 +425,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const locationReferencesRef = useRef<LocationReference[]>([])
   const scriptRef = useRef<any>(null)
   const projectRef = useRef<any>(null)
+  /** Blocks stale handleScriptChange saves from reverting audio during bulk regen. */
+  const audioRegenInProgressRef = useRef(false)
   
   // Keep refs in sync with state (refs for sceneReferences/objectReferences/locationReferences)
   useEffect(() => { sceneReferencesRef.current = sceneReferences }, [sceneReferences])
@@ -514,6 +521,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ...visionPhaseWithoutCharacters,
             characters,
             script: updatedScript,
+            scenes: updatedScenes,
           },
         },
       },
@@ -646,8 +654,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }, [rightSidebarVisible])
 
   const handleScriptChange = useCallback(async (updatedScript: any) => {
+    const canonical = scriptRef.current
+    const incomingScenes = updatedScript?.script?.scenes || []
+    const canonicalScenes = canonical?.script?.scenes || []
+
+    const mergedScenes =
+      canonicalScenes.length > 0 && incomingScenes.length > 0
+        ? mergeScenesForScriptSave(canonicalScenes, incomingScenes, {
+            preserveAudio: audioRegenInProgressRef.current,
+          })
+        : incomingScenes
+
+    const mergedScript = {
+      ...updatedScript,
+      script: {
+        ...updatedScript?.script,
+        scenes: mergedScenes,
+      },
+    }
+
     // Update local state immediately for responsive UI
-    setScript(updatedScript)
+    setScript(mergedScript)
     setScriptEditedAt(Date.now())
     
     // Guard: Don't save if projectId is invalid
@@ -658,21 +685,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     // Save to database
     // RACE CONDITION FIX: Use projectRef for latest metadata instead of stale closure
-    const updatedScenes = updatedScript?.script?.scenes || []
     const currentProject = projectRef.current || project
-    if (updatedScenes.length > 0 && currentProject) {
+    if (mergedScenes.length > 0 && currentProject) {
       try {
         const existingMetadata = currentProject?.metadata || {}
         const existingVisionPhase = existingMetadata.visionPhase || {}
-        const scriptUpdatedAt = new Date().toISOString()
+        // Preserve existing timestamp unless this is a substantive script edit (not audio regen)
+        const existingScriptUpdatedAt = existingVisionPhase.scriptUpdatedAt as string | undefined
+        const scriptUpdatedAt = audioRegenInProgressRef.current
+          ? existingScriptUpdatedAt || new Date().toISOString()
+          : new Date().toISOString()
         
         const payload = {
           metadata: {
             ...existingMetadata,
             visionPhase: {
               ...existingVisionPhase,
-              script: updatedScript,
-              scenes: updatedScenes,
+              script: mergedScript,
+              scenes: mergedScenes,
               scriptUpdatedAt
             }
           }
@@ -4004,143 +4034,79 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       staleCleanupTimeoutRef.current = setTimeout(() => {
-        // Get the CURRENT scenes state (not a stale closure)
-        setScenes((currentScenes) => {
-          const urlsToClean = pendingStaleUrlCleanupRef.current
-          if (urlsToClean.size === 0) return currentScenes
-          
-          let hasChanges = false
-          const updatedScenes = currentScenes.map((scene, idx) => {
-            const sceneKey = (scene as any).sceneId || (scene as any).id || `scene-${idx}`
-            const staleUrlsForScene = urlsToClean.get(sceneKey)
-            if (!staleUrlsForScene || staleUrlsForScene.size === 0) return scene
-            
-            const updatedScene = JSON.parse(JSON.stringify(scene)) // Deep clone
-            
-            for (const staleUrl of staleUrlsForScene) {
-              // Check and clear narration audio if URL still matches (wasn't regenerated)
-              if ((updatedScene as any).narrationAudioUrl === staleUrl) {
-                delete (updatedScene as any).narrationAudioUrl
-                hasChanges = true
-              }
-              if ((updatedScene as any).narrationAudio) {
-                if (typeof (updatedScene as any).narrationAudio === 'object') {
-                  for (const lang of Object.keys((updatedScene as any).narrationAudio)) {
-                    if ((updatedScene as any).narrationAudio[lang]?.url === staleUrl) {
-                      delete (updatedScene as any).narrationAudio[lang]
-                      hasChanges = true
-                    }
-                  }
-                  if (Object.keys((updatedScene as any).narrationAudio).length === 0) {
-                    delete (updatedScene as any).narrationAudio
-                  }
-                }
-              }
-              
-              // Check and clear description audio if URL still matches
-              if ((updatedScene as any).descriptionAudioUrl === staleUrl) {
-                delete (updatedScene as any).descriptionAudioUrl
-                hasChanges = true
-              }
-              if ((updatedScene as any).descriptionAudio) {
-                if (typeof (updatedScene as any).descriptionAudio === 'object') {
-                  for (const lang of Object.keys((updatedScene as any).descriptionAudio)) {
-                    if ((updatedScene as any).descriptionAudio[lang]?.url === staleUrl) {
-                      delete (updatedScene as any).descriptionAudio[lang]
-                      hasChanges = true
-                    }
-                  }
-                  if (Object.keys((updatedScene as any).descriptionAudio).length === 0) {
-                    delete (updatedScene as any).descriptionAudio
-                  }
-                }
-              }
-              
-              // Check and clear dialogue audio if URL still matches
-              if ((updatedScene as any).dialogueAudio) {
-                for (const lang of Object.keys((updatedScene as any).dialogueAudio)) {
-                  const dialogueArray = (updatedScene as any).dialogueAudio[lang]
-                  if (Array.isArray(dialogueArray)) {
-                    const before = dialogueArray.length
-                    ;(updatedScene as any).dialogueAudio[lang] = dialogueArray.filter(
-                      (d: any) => d?.url !== staleUrl
-                    )
-                    if ((updatedScene as any).dialogueAudio[lang].length !== before) {
-                      hasChanges = true
-                    }
-                  }
-                }
-              }
-              
-              // Check and clear SFX if URL still matches
-              if (Array.isArray((updatedScene as any).sfx)) {
-                const before = (updatedScene as any).sfx.length
-                ;(updatedScene as any).sfx = (updatedScene as any).sfx.filter(
-                  (s: any) => s?.url !== staleUrl
-                )
-                if ((updatedScene as any).sfx.length !== before) {
-                  hasChanges = true
-                }
-              }
-              
-              // Check and clear music if URL still matches
-              if ((updatedScene as any).musicUrl === staleUrl) {
-                delete (updatedScene as any).musicUrl
-                hasChanges = true
-              }
+        const urlsToClean = pendingStaleUrlCleanupRef.current
+        if (urlsToClean.size === 0) return
+
+        const canonicalScenes = normalizeScenes(scriptRef.current)
+        if (canonicalScenes.length === 0) return
+
+        let hasChanges = false
+        const updatedScenes = canonicalScenes.map((scene, idx) => {
+          const sceneKey = (scene as any).sceneId || (scene as any).id || `scene-${idx}`
+          const staleUrlsForScene = urlsToClean.get(sceneKey)
+          if (!staleUrlsForScene || staleUrlsForScene.size === 0) return scene
+
+          let nextScene = scene
+          for (const staleUrl of staleUrlsForScene) {
+            const { cleanedScene, changed } = removeStaleAudioUrlFromScene(nextScene, staleUrl)
+            if (changed) {
+              nextScene = cleanedScene
+              hasChanges = true
             }
-            
-            return updatedScene
-          })
-          
-          // Clear the pending cleanup set
-          pendingStaleUrlCleanupRef.current.clear()
-          
-          // Only persist if there were actual changes
-          if (hasChanges && project?.id) {
-            // Persist asynchronously (don't block state update)
-            setTimeout(async () => {
-              try {
-                const currentMetadata = project.metadata ?? {}
-                const currentVisionPhase = currentMetadata.visionPhase ?? {}
-                
-                const nextVisionPhase = {
-                  ...currentVisionPhase,
-                  scenes: updatedScenes,
-                  script: currentVisionPhase.script
-                    ? {
-                        ...currentVisionPhase.script,
-                        script: {
-                          ...currentVisionPhase.script.script,
-                          scenes: updatedScenes,
-                        },
-                      }
-                    : currentVisionPhase.script,
-                }
-                
-                const nextMetadata = {
-                  ...currentMetadata,
-                  visionPhase: nextVisionPhase,
-                }
-                
-                await fetch(`/api/projects/${project.id}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ metadata: nextMetadata }),
-                })
-                
-                console.log('[Stale Audio Cleanup] Persisted cleanup')
-              } catch (error) {
-                console.error('[Stale Audio Cleanup] Failed to persist', error)
-              }
-            }, 0)
-          } else if (!hasChanges) {
-            console.log('[Stale Audio Cleanup] No changes needed - URLs may have been regenerated')
           }
-          
-          return hasChanges ? updatedScenes : currentScenes
+          return nextScene
         })
-      }, 10000) // Wait 10 seconds before cleanup to allow regeneration to complete and prevent 404s
+
+        pendingStaleUrlCleanupRef.current.clear()
+
+        if (!hasChanges) {
+          console.log('[Stale Audio Cleanup] No changes needed - URLs may have been regenerated')
+          return
+        }
+
+        const canonicalScript = scriptRef.current
+        const updatedScript = canonicalScript?.script
+          ? {
+              ...canonicalScript,
+              script: { ...canonicalScript.script, scenes: updatedScenes },
+            }
+          : canonicalScript
+
+        setScenes(updatedScenes)
+        if (updatedScript) {
+          setScript(updatedScript)
+        }
+
+        if (project?.id) {
+          setTimeout(async () => {
+            try {
+              const currentMetadata = projectRef.current?.metadata ?? project.metadata ?? {}
+              const currentVisionPhase = currentMetadata.visionPhase ?? {}
+
+              const nextVisionPhase = {
+                ...currentVisionPhase,
+                scenes: updatedScenes,
+                script: updatedScript ?? currentVisionPhase.script,
+              }
+
+              await fetch(`/api/projects/${project.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  metadata: {
+                    ...currentMetadata,
+                    visionPhase: nextVisionPhase,
+                  },
+                }),
+              })
+
+              console.log('[Stale Audio Cleanup] Persisted cleanup')
+            } catch (error) {
+              console.error('[Stale Audio Cleanup] Failed to persist', error)
+            }
+          }, 0)
+        }
+      }, 2000)
     },
     [project?.id, project?.metadata]
   )
@@ -5501,6 +5467,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         charactersLength: visionPhase?.characters?.length
       })
       if (visionPhase) {
+        let loadedScript: any = visionPhase.script ?? null
+
         if (visionPhase.script) {
           // Migrate audio structure if needed
           const { migrateScriptAudio } = await import('@/lib/audio/audioMigration')
@@ -5523,6 +5491,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const segmentMigration = migrateProjectToSegmented(interimMetadata)
           const finalMetadata = segmentMigration.metadata
           const finalScript = finalMetadata.visionPhase?.script ?? migratedScript
+          loadedScript = finalScript
 
           if (needsMigration || segmentMigration.changed) {
             if (segmentMigration.changed) {
@@ -5811,11 +5780,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           }
         }
-        if (visionPhase.scenes) {
-          // **NEW**: Validate and clean audio data for each scene
+        if (loadedScript?.script?.scenes?.length || visionPhase.scenes?.length) {
+          // Validate and clean audio on canonical script scenes (not stale visionPhase.scenes copy)
           const { validateAndCleanSceneAudio } = await import('@/lib/audio/cleanupAudio');
+          const sourceScenes =
+            loadedScript?.script?.scenes || visionPhase.scenes || [];
           let allDeletedUrls: string[] = [];
-          const cleanedScenes = visionPhase.scenes.map((scene: any) => {
+          const cleanedScenes = sourceScenes.map((scene: any) => {
             const { cleanedScene, deletedUrls } = validateAndCleanSceneAudio(scene);
             if (deletedUrls.length > 0) {
               allDeletedUrls = [...allDeletedUrls, ...deletedUrls];
@@ -5826,7 +5797,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           // If any stale audio files were found and removed, delete them from blob storage
           if (allDeletedUrls.length > 0) {
             console.log(`[loadProject] Deleting ${allDeletedUrls.length} stale audio file(s)`);
-            // Fire-and-forget deletion
             fetch('/api/blobs/delete', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -5852,15 +5822,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             })
           }))
           
-          // Check if any dialogue needed characterId migration
-          const needsDialogueMigration = scenesWithCharacterIds.some((scene: any, sceneIdx: number) => 
-            scene.dialogue?.some((d: any, dIdx: number) => 
-              d.characterId !== visionPhase.scenes[sceneIdx].dialogue?.[dIdx]?.characterId
+          const priorScenes =
+            loadedScript?.script?.scenes || visionPhase.scenes || [];
+
+          // Check if any dialogue needed characterId migration or audio cleanup
+          const needsScenePersist =
+            allDeletedUrls.length > 0 ||
+            scenesWithCharacterIds.some((scene: any, sceneIdx: number) => 
+              scene.dialogue?.some((d: any, dIdx: number) => 
+                d.characterId !== priorScenes[sceneIdx]?.dialogue?.[dIdx]?.characterId
+              )
             )
-          )
           
-          if (needsDialogueMigration) {
+          if (needsScenePersist) {
             try {
+              const nextScript = loadedScript
+                ? {
+                    ...loadedScript,
+                    script: {
+                      ...loadedScript.script,
+                      scenes: scenesWithCharacterIds,
+                    },
+                  }
+                : loadedScript
+
               await fetch(`/api/projects/${projectId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -5870,19 +5855,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     visionPhase: {
                       ...visionPhase,
                       scenes: scenesWithCharacterIds,
-                      script: visionPhase.script ? {
-                        ...visionPhase.script,
-                        script: {
-                          ...visionPhase.script.script,
-                          scenes: scenesWithCharacterIds
-                        }
-                      } : undefined
+                      script: nextScript,
                     }
                   }
                 })
               })
+
+              if (nextScript) {
+                loadedScript = nextScript
+                setScript(sanitizeScriptDialogueLines(nextScript))
+              }
             } catch (error) {
-              console.warn('[Load Project] Failed to save dialogue characterId:', error)
+              console.warn('[Load Project] Failed to save scene audio/character fixes:', error)
             }
           }
           
@@ -9049,6 +9033,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           voiceConfig,
           characterName,
           dialogueIndex,
+          lineId: (dialogueLine as any)?.lineId,
+          lineKind: (dialogueLine as any)?.kind ?? (audioType === 'dialogue' ? 'dialogue' : undefined),
+          characterId: (dialogueLine as any)?.characterId,
           language: language || 'en',
           // Skip server-side translation if we already have pre-translated text from stored translations
           // This prevents double-translation (translating already-translated text)
@@ -9060,11 +9047,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       try {
         data = await response.json()
       } catch {
-        try {
-          const { toast } = require('sonner')
-          toast.error('Audio generation failed (could not read server response)')
-        } catch {}
-        return
+        throw new Error('Audio generation failed (could not read server response)')
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.error || data?.details || `Audio generation failed (${response.status})`)
       }
 
       if (data.policyBlocked === true) {
@@ -9184,13 +9171,28 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
             
             const dialogueArray = [...scene.dialogueAudio[targetLanguage]]
-            const existingIndex = dialogueArray.findIndex((d: any) => 
-              d.character === characterName && d.dialogueIndex === dialogueIndex
-            )
+            const targetLineId = (dialogueLine as any)?.lineId
+            let existingIndex = -1
+            if (targetLineId) {
+              existingIndex = dialogueArray.findIndex((d: any) => d.lineId === targetLineId)
+            }
+            if (existingIndex < 0 && dialogueIndex !== undefined) {
+              existingIndex = dialogueArray.findIndex(
+                (d: any) =>
+                  d.dialogueIndex === dialogueIndex &&
+                  d.character?.toLowerCase() === characterName?.toLowerCase()
+              )
+            }
+            if (existingIndex < 0 && dialogueIndex !== undefined) {
+              existingIndex = dialogueArray.findIndex((d: any) => d.dialogueIndex === dialogueIndex)
+            }
             
             const dialogueEntry = {
               character: characterName,
               dialogueIndex: dialogueIndex!,
+              ...(targetLineId ? { lineId: targetLineId } : {}),
+              ...((dialogueLine as any)?.kind ? { kind: (dialogueLine as any).kind } : {}),
+              ...((dialogueLine as any)?.characterId ? { characterId: (dialogueLine as any).characterId } : {}),
               audioUrl: data.audioUrl,
               duration: data.duration || undefined,
               voiceId: voiceConfig.voiceId
@@ -9250,11 +9252,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Do NOT call saveScenesToDatabase here - it would overwrite with stale state
         // and lose the Vercel Blob URLs that the API just persisted.
       } else {
-        try { const { toast } = require('sonner'); toast.error(data.error || 'Failed to generate audio') } catch {}
+        throw new Error(data.error || 'Failed to generate audio')
       }
     } catch (error) {
       console.error('[Generate Scene Audio] Error:', error)
-      try { const { toast } = require('sonner'); toast.error('Failed to generate audio') } catch {}
+      try {
+        const { toast } = require('sonner')
+        toast.error(error instanceof Error ? error.message : 'Failed to generate audio')
+      } catch {}
+      throw error
     } finally {
       // Clean up the lock
       setGeneratingAudioLocks(prev => {
@@ -9872,6 +9878,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     // Use the standard freeze screen overlay pattern
     await execute(
       async () => {
+        audioRegenInProgressRef.current = true
+
         // First, clear ALL existing audio from the scene
         // This removes all audio URLs from the scene object AND from dialogue items
         const { cleanedScene, deletedUrls } = clearAllSceneAudio(currentScene)
@@ -9893,26 +9901,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Force cache clear in ScreeningRoom
         setScriptEditedAt(Date.now())
         
-        // Save cleaned scene to database BEFORE deleting blobs
-        // This ensures no UI tries to load the old URLs
+        // Save cleaned scene to database — do NOT delete blobs until regen completes
         await saveScenesToDatabase(updatedScenes)
         console.log(`[Update Scene Audio] Saved cleaned scene to database`)
-        
-        // Delete audio blobs from storage (in background, don't block)
-        if (deletedUrls.length > 0) {
-          console.log(`[Update Scene Audio] Deleting ${deletedUrls.length} audio blob(s) from storage...`)
-          fetch('/api/blobs/delete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ urls: deletedUrls })
-          }).then(res => res.json()).then(result => {
-            if (result.success) {
-              console.log(`[Update Scene Audio] Deleted ${result.deleted} blob(s)`)
-            }
-          }).catch(err => {
-            console.warn('[Update Scene Audio] Error deleting blobs:', err)
-          })
-        }
         
         // Now build list of audio to generate based on CLEANED scene content
         // Include TTS audio (description, narration, dialogue) and also music/SFX
@@ -9982,6 +9973,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         } else {
           toast.error('Failed to regenerate audio')
         }
+
+        // Delete orphaned blobs only after regen completes (metadata no longer references them)
+        if (deletedUrls.length > 0) {
+          console.log(`[Update Scene Audio] Deleting ${deletedUrls.length} orphaned audio blob(s)...`)
+          fetch('/api/blobs/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls: deletedUrls })
+          }).then(res => res.json()).then(result => {
+            if (result.success) {
+              console.log(`[Update Scene Audio] Deleted ${result.deleted} orphaned blob(s)`)
+            }
+          }).catch(err => {
+            console.warn('[Update Scene Audio] Error deleting orphaned blobs:', err)
+          })
+        }
         
         // NOTE: Removed loadProject() - it was causing race condition where
         // state would be overwritten with stale data before all DB writes completed.
@@ -9991,7 +9998,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         title: `Updating Audio for Scene ${sceneIndex + 1}`,
         estimatedDuration: 30, // Estimate 30 seconds for audio generation
       }
-    )
+    ).finally(() => {
+      audioRegenInProgressRef.current = false
+    })
   }
 
   /**

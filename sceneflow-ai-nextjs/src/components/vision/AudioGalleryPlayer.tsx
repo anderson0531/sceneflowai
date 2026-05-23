@@ -202,19 +202,25 @@ export function AudioGalleryPlayer({
       dialogueAudio.forEach((d: any, idx: number) => {
         if (!d) return
         const dUrl = d.audioUrl || d.url
-        if (dUrl) {
-          const dur = dynamicDurations[dUrl] || d.duration || 3
-          const isNarrator = d.kind === 'narration' || d.characterId === 'narrator'
-          clips.push({
-            id: `dialogue-${idx}`,
-            url: dUrl,
-            startTime: currentStartTime,
-            duration: dur,
-            type: 'dialogue',
-            label: isNarrator ? 'Narrator' : (d.character || `Dialogue ${idx + 1}`)
-          })
-          currentStartTime += dur + 0.3 // 0.3s buffer between dialogue lines
-        }
+        if (!dUrl) return
+        // Skip narration folded into dialogueAudio when already played via narrationAudioUrl
+        const isFoldedNarration =
+          (d.kind === 'narration' || d.characterId === 'narrator') &&
+          narrationUrl &&
+          dUrl === narrationUrl
+        if (isFoldedNarration) return
+
+        const dur = dynamicDurations[dUrl] || d.duration || 3
+        const isNarrator = d.kind === 'narration' || d.characterId === 'narrator'
+        clips.push({
+          id: `dialogue-${idx}`,
+          url: dUrl,
+          startTime: currentStartTime,
+          duration: dur,
+          type: 'dialogue',
+          label: isNarrator ? 'Narrator' : (d.character || `Dialogue ${idx + 1}`)
+        })
+        currentStartTime += dur + 0.3 // 0.3s buffer between dialogue lines
       })
     }
     

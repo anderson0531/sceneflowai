@@ -5,12 +5,211 @@
  * the associated audio files become stale and should be cleared.
  */
 
+/** Scene-level fields that store generated audio references. */
+export const SCENE_AUDIO_FIELD_KEYS = [
+  'dialogueAudio',
+  'narrationAudio',
+  'narrationAudioUrl',
+  'narrationDuration',
+  'narrationAudioGeneratedAt',
+  'descriptionAudio',
+  'descriptionAudioUrl',
+  'descriptionDuration',
+  'descriptionAudioGeneratedAt',
+  'musicAudio',
+  'musicUrl',
+  'musicDuration',
+  'sfxAudio',
+  'dialogueAudioGeneratedAt',
+] as const
+
 /**
  * Result type for cleanupStaleAudio with URLs for deletion
  */
 export interface CleanupResult {
   cleanedScene: any
   deletedUrls: string[]
+}
+
+/** True when the scene object references any generated audio URL. */
+export function sceneHasAudioRefs(scene: any): boolean {
+  if (!scene || typeof scene !== 'object') return false
+  if (scene.narrationAudioUrl || scene.descriptionAudioUrl || scene.musicAudio || scene.musicUrl) {
+    return true
+  }
+  if (scene.narrationAudio && typeof scene.narrationAudio === 'object') {
+    for (const v of Object.values(scene.narrationAudio)) {
+      if ((v as any)?.url) return true
+    }
+  }
+  if (scene.descriptionAudio && typeof scene.descriptionAudio === 'object') {
+    for (const v of Object.values(scene.descriptionAudio)) {
+      if ((v as any)?.url) return true
+    }
+  }
+  const da = scene.dialogueAudio
+  if (Array.isArray(da)) {
+    return da.some((d: any) => d?.audioUrl || d?.url)
+  }
+  if (da && typeof da === 'object') {
+    for (const arr of Object.values(da)) {
+      if (Array.isArray(arr) && arr.some((d: any) => d?.audioUrl || d?.url)) return true
+    }
+  }
+  if (Array.isArray(scene.dialogue)) {
+    return scene.dialogue.some((d: any) => d?.audioUrl || d?.url)
+  }
+  return false
+}
+
+/**
+ * Overlay incoming scene edits while keeping audio references from the canonical scene.
+ */
+export function mergeScenePreservingAudio(canonical: any, incoming: any): any {
+  if (!canonical) return incoming
+  if (!incoming) return canonical
+
+  const merged: any = { ...incoming }
+  for (const key of SCENE_AUDIO_FIELD_KEYS) {
+    if (key in canonical) {
+      merged[key] = canonical[key]
+    } else {
+      delete merged[key]
+    }
+  }
+
+  if (Array.isArray(canonical.dialogue) && Array.isArray(incoming.dialogue)) {
+    merged.dialogue = incoming.dialogue.map((line: any, i: number) => {
+      const canonLine = canonical.dialogue[i]
+      if (!canonLine) return line
+      const next = { ...line }
+      if (canonLine.audioUrl) next.audioUrl = canonLine.audioUrl
+      else delete next.audioUrl
+      if (canonLine.url) next.url = canonLine.url
+      else delete next.url
+      if (canonLine.audioDuration != null) next.audioDuration = canonLine.audioDuration
+      else delete next.audioDuration
+      return next
+    })
+  }
+
+  return merged
+}
+
+/**
+ * Merge incoming scenes onto canonical scenes for persistence.
+ * Prevents stale client snapshots from restoring deleted audio URLs.
+ */
+export function mergeScenesForScriptSave(
+  canonicalScenes: any[],
+  incomingScenes: any[],
+  options?: { preserveAudio?: boolean }
+): any[] {
+  const preserveAudio = options?.preserveAudio ?? false
+  const maxLen = Math.max(canonicalScenes.length, incomingScenes.length)
+  const merged: any[] = []
+
+  for (let idx = 0; idx < maxLen; idx++) {
+    const canonical = canonicalScenes[idx]
+    const incoming = incomingScenes[idx]
+    if (!incoming) {
+      if (canonical) merged.push(canonical)
+      continue
+    }
+    if (!canonical) {
+      merged.push(incoming)
+      continue
+    }
+
+    if (preserveAudio) {
+      merged.push(mergeScenePreservingAudio(canonical, incoming))
+      continue
+    }
+
+    // Reject audio reversion: canonical cleared but stale incoming still has URLs
+    if (!sceneHasAudioRefs(canonical) && sceneHasAudioRefs(incoming)) {
+      merged.push(mergeScenePreservingAudio(canonical, incoming))
+      continue
+    }
+
+    merged.push(incoming)
+  }
+
+  return merged
+}
+
+/**
+ * Remove a stale audio URL from a single scene (404 recovery).
+ */
+export function removeStaleAudioUrlFromScene(scene: any, staleUrl: string): { cleanedScene: any; changed: boolean } {
+  const updatedScene = JSON.parse(JSON.stringify(scene))
+  let changed = false
+
+  if (updatedScene.narrationAudioUrl === staleUrl) {
+    delete updatedScene.narrationAudioUrl
+    changed = true
+  }
+  if (updatedScene.narrationAudio && typeof updatedScene.narrationAudio === 'object') {
+    for (const lang of Object.keys(updatedScene.narrationAudio)) {
+      if (updatedScene.narrationAudio[lang]?.url === staleUrl) {
+        delete updatedScene.narrationAudio[lang]
+        changed = true
+      }
+    }
+    if (Object.keys(updatedScene.narrationAudio).length === 0) {
+      delete updatedScene.narrationAudio
+    }
+  }
+
+  if (updatedScene.descriptionAudioUrl === staleUrl) {
+    delete updatedScene.descriptionAudioUrl
+    changed = true
+  }
+  if (updatedScene.descriptionAudio && typeof updatedScene.descriptionAudio === 'object') {
+    for (const lang of Object.keys(updatedScene.descriptionAudio)) {
+      if (updatedScene.descriptionAudio[lang]?.url === staleUrl) {
+        delete updatedScene.descriptionAudio[lang]
+        changed = true
+      }
+    }
+    if (Object.keys(updatedScene.descriptionAudio).length === 0) {
+      delete updatedScene.descriptionAudio
+    }
+  }
+
+  if (updatedScene.dialogueAudio) {
+    for (const lang of Object.keys(updatedScene.dialogueAudio)) {
+      const dialogueArray = updatedScene.dialogueAudio[lang]
+      if (Array.isArray(dialogueArray)) {
+        const filtered = dialogueArray.filter(
+          (d: any) => d?.audioUrl !== staleUrl && d?.url !== staleUrl
+        )
+        if (filtered.length !== dialogueArray.length) {
+          updatedScene.dialogueAudio[lang] = filtered
+          changed = true
+        }
+      }
+    }
+  }
+
+  if (Array.isArray(updatedScene.sfx)) {
+    const filtered = updatedScene.sfx.filter((s: any) => s?.url !== staleUrl)
+    if (filtered.length !== updatedScene.sfx.length) {
+      updatedScene.sfx = filtered
+      changed = true
+    }
+  }
+
+  if (updatedScene.musicUrl === staleUrl) {
+    delete updatedScene.musicUrl
+    changed = true
+  }
+  if (updatedScene.musicAudio === staleUrl) {
+    delete updatedScene.musicAudio
+    changed = true
+  }
+
+  return { cleanedScene: updatedScene, changed }
 }
 
 /**
