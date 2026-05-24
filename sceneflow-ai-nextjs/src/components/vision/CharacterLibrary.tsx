@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Users,
   Plus,
@@ -827,6 +827,13 @@ const CharacterCard = ({
   const [generatingCostumeRefFor, setGeneratingCostumeRefFor] = useState<
     string | null
   >(null);
+  const [uploadingWardrobeId, setUploadingWardrobeId] = useState<string | null>(
+    null,
+  );
+  const [pendingWardrobeUploadId, setPendingWardrobeUploadId] = useState<
+    string | null
+  >(null);
+  const wardrobeFileInputRef = useRef<HTMLInputElement>(null);
 
   // Get wardrobes collection. Only synthesize legacy entry when:
   // 1. character.wardrobes is empty/undefined AND
@@ -1685,6 +1692,64 @@ const CharacterCard = ({
       );
     } finally {
       setGeneratingCostumeRefFor(null);
+    }
+  };
+
+  const openWardrobeFilePicker = (wardrobeId: string) => {
+    if (uploadingWardrobeId) return;
+    setPendingWardrobeUploadId(wardrobeId);
+    wardrobeFileInputRef.current?.click();
+  };
+
+  const handleUploadWardrobeImage = async (wardrobeId: string, file: File) => {
+    const wardrobe = wardrobes.find((w) => w.id === wardrobeId);
+    if (!wardrobe) return;
+
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > 10) {
+      toast.error("Image too large. Please use images under 10MB.");
+      return;
+    }
+    if (sizeMB > 5) {
+      toast.warning(
+        `Large image (${sizeMB.toFixed(1)}MB). Consider using smaller images for better performance.`,
+      );
+    }
+
+    setUploadingWardrobeId(wardrobeId);
+    try {
+      const newBlob = await upload(file.name, file, {
+        access: "public",
+        handleUploadUrl: "/api/character/upload-url",
+      });
+
+      onUpdateWardrobe?.(characterId, {
+        wardrobeId,
+        action: "update",
+        defaultWardrobe: wardrobe.description,
+        wardrobeAccessories: wardrobe.accessories,
+        fullBodyUrl: newBlob.url,
+        previewImageUrl: newBlob.url,
+      });
+
+      if (expandedWardrobe?.id === wardrobeId) {
+        setExpandedWardrobe({
+          ...expandedWardrobe,
+          fullBodyUrl: newBlob.url,
+          previewImageUrl: newBlob.url,
+        });
+      }
+
+      toast.success("Wardrobe image uploaded!");
+    } catch (error) {
+      console.error("[Wardrobe Upload] Error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to upload wardrobe image",
+      );
+    } finally {
+      setUploadingWardrobeId(null);
     }
   };
 
@@ -2702,6 +2767,23 @@ const CharacterCard = ({
                 {/* Large Image Wardrobe Cards */}
                 {wardrobes.length > 0 && (
                   <div className="space-y-4">
+                    <input
+                      ref={wardrobeFileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={!!uploadingWardrobeId}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        const file = e.target.files?.[0];
+                        const wardrobeId = pendingWardrobeUploadId;
+                        if (file && wardrobeId) {
+                          handleUploadWardrobeImage(wardrobeId, file);
+                        }
+                        setPendingWardrobeUploadId(null);
+                        e.target.value = "";
+                      }}
+                    />
                     {wardrobes.map((w) => (
                       <div
                         key={w.id}
@@ -2727,6 +2809,25 @@ const CharacterCard = ({
                                 className="w-full h-full object-cover"
                               />
                               <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all opacity-0 hover:opacity-100 flex items-center justify-center gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openWardrobeFilePicker(w.id);
+                                  }}
+                                  disabled={uploadingWardrobeId === w.id}
+                                  className="p-2 rounded-lg bg-emerald-600/90 text-white hover:bg-emerald-600 transition-colors shadow-sm disabled:opacity-50"
+                                  title={
+                                    uploadingWardrobeId === w.id
+                                      ? "Uploading..."
+                                      : "Upload Image"
+                                  }
+                                >
+                                  {uploadingWardrobeId === w.id ? (
+                                    <Loader className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <Upload className="w-4 h-4" />
+                                  )}
+                                </button>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -2802,14 +2903,30 @@ const CharacterCard = ({
                           ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
                               <Shirt className="w-12 h-12 text-gray-400" />
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleGenerateCostumeReference(w.id);
-                                }}
-                                disabled={generatingCostumeRefFor === w.id}
-                                className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded shadow flex items-center gap-1"
-                              >
+                              <div className="flex flex-wrap items-center justify-center gap-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openWardrobeFilePicker(w.id);
+                                  }}
+                                  disabled={uploadingWardrobeId === w.id}
+                                  className="px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded shadow flex items-center gap-1 disabled:opacity-50"
+                                >
+                                  {uploadingWardrobeId === w.id ? (
+                                    <Loader className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Upload className="w-3 h-3" />
+                                  )}
+                                  Upload Image
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleGenerateCostumeReference(w.id);
+                                  }}
+                                  disabled={generatingCostumeRefFor === w.id}
+                                  className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded shadow flex items-center gap-1"
+                                >
                                 {generatingCostumeRefFor === w.id ? (
                                   <Loader className="w-3 h-3 animate-spin" />
                                 ) : (
@@ -2817,6 +2934,7 @@ const CharacterCard = ({
                                 )}
                                 Generate Costume
                               </button>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -3192,13 +3310,34 @@ const CharacterCard = ({
                         <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
                           <Shirt className="w-12 h-12" />
                           <span className="text-sm">No preview</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleGenerateWardrobePreview(
-                                expandedWardrobe.id,
-                              );
-                            }}
+                          <div className="flex flex-wrap items-center justify-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openWardrobeFilePicker(expandedWardrobe.id);
+                              }}
+                              disabled={uploadingWardrobeId === expandedWardrobe.id}
+                              className="px-3 py-1.5 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-1"
+                            >
+                              {uploadingWardrobeId === expandedWardrobe.id ? (
+                                <>
+                                  <Loader className="w-3 h-3 animate-spin" />
+                                  Uploading...
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="w-3 h-3" />
+                                  Upload Image
+                                </>
+                              )}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleGenerateWardrobePreview(
+                                  expandedWardrobe.id,
+                                );
+                              }}
                             disabled={generatingPreviewFor !== null}
                             className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
                           >
@@ -3206,6 +3345,7 @@ const CharacterCard = ({
                               ? "Generating..."
                               : "Generate Preview"}
                           </button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -3331,6 +3471,28 @@ const CharacterCard = ({
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (expandedWardrobe) {
+                    openWardrobeFilePicker(expandedWardrobe.id);
+                  }
+                }}
+                disabled={!!uploadingWardrobeId}
+                className="border-emerald-500/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+              >
+                {uploadingWardrobeId === expandedWardrobe?.id ? (
+                  <>
+                    <Loader className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Image
+                  </>
+                )}
               </Button>
               <Button
                 variant="outline"
