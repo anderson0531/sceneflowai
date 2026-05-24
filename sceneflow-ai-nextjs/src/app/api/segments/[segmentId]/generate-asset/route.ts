@@ -14,8 +14,8 @@ import { authOptions } from '@/lib/auth'
 import { isBeatFirstPipelineEnabled, isStoryboardApproved, getSceneBeats } from '@/lib/script/beatMigration'
 import { compileBeatVideoPrompt } from '@/lib/scene/beatVideoPromptCompiler'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
-import Project from '../../../../models/Project'
-import { sequelize } from '../../../../config/database'
+import Project from '@/models/Project'
+import { sequelize } from '@/config/database'
 import { 
   getMethodWithFallback, 
   buildMethodSelectionContext,
