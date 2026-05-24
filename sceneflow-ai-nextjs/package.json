@@ -70,6 +70,7 @@
                 "cmdk": "^1.1.1",
                 "creatomate": "^1.2.1",
                 "dotenv": "^17.2.1",
+                "edge-tts-universal": "^1.4.0",
                 "fast-xml-parser": "^5.2.5",
                 "firebase": "^12.11.0",
                 "fluent-ffmpeg": "^2.1.3",

@@ -10,6 +10,11 @@ export const LANDING_SAMPLE = {
   fullVideoUrl: '',
 } as const
 
+/** Languages showcased on the landing demo storyboard (audio pruned via scripts/prune-demo-languages.mjs). */
+export const LANDING_SAMPLE_DEMO_LANGUAGES = ['en', 'th', 'es', 'ar', 'hi', 'ja', 'zh'] as const
+
+/** Backfill missing hi/ar/es dialogue via: npx tsx scripts/fill-demo-dialogue-audio.mjs TheWhiteHouseWaltzAControlledThaw */
+
 export function getLandingSampleShareHref(): string | null {
   const slug = LANDING_SAMPLE.storyboardShareSlug.trim()
   if (!slug) return null

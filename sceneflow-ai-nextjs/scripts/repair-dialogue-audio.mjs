@@ -6,7 +6,7 @@
  *   npx tsx scripts/repair-dialogue-audio.mjs TheWhiteHouseWaltzAControlledThaw
  *
  * Requires: DATABASE_URL, BLOB_READ_WRITE_TOKEN
- * TTS: ELEVENLABS_API_KEY and/or Google creds, or `--provider=edge` (local edge-tts CLI)
+ * TTS: ELEVENLABS_API_KEY and/or Google creds, or `--provider=edge` (Edge TTS via edge-tts-universal)
  * Optional: --provider=elevenlabs|google|edge|auto (default auto)
  * Loads: .env.production.local, .env.local
  */
@@ -15,13 +15,7 @@ import { Sequelize } from 'sequelize'
 import dotenv from 'dotenv'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { execFile } from 'child_process'
-import { promisify } from 'util'
-import fs from 'fs/promises'
-import os from 'os'
 import { put } from '@vercel/blob'
-
-const execFileAsync = promisify(execFile)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DRY_RUN = process.env.DRY_RUN === 'true'
@@ -44,13 +38,6 @@ const GOOGLE_FALLBACK_VOICE_BY_LANG = {
   en: 'en-US-Neural2-D',
   es: 'es-ES-Neural2-B',
 }
-
-const EDGE_VOICE_BY_LANG = {
-  en: 'en-US-GuyNeural',
-  es: 'es-ES-AlvaroNeural',
-}
-
-const EDGE_TTS_BIN = process.env.EDGE_TTS_BIN || 'edge-tts'
 
 dotenv.config({ path: path.join(__dirname, '..', '.env.production.local') })
 dotenv.config({ path: path.join(__dirname, '..', '.env.local') })
@@ -224,19 +211,12 @@ async function synthesizeGoogleMp3({ text, lang, voiceName }) {
   return { buffer: Buffer.from(data.audioContent, 'base64'), voiceId: voice, provider: 'google' }
 }
 
-async function synthesizeEdgeMp3({ text, lang }) {
-  const voice = EDGE_VOICE_BY_LANG[lang] || EDGE_VOICE_BY_LANG.en
-  const tmpPath = path.join(os.tmpdir(), `repair-dialogue-${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`)
-  try {
-    await execFileAsync(EDGE_TTS_BIN, ['--voice', voice, '--text', text, '--write-media', tmpPath], {
-      timeout: 120_000,
-    })
-    const buffer = await fs.readFile(tmpPath)
-    if (!buffer.length) throw new Error('edge-tts produced empty audio')
-    return { buffer, voiceId: voice, provider: 'edge' }
-  } finally {
-    await fs.unlink(tmpPath).catch(() => {})
-  }
+async function synthesizeEdgeMp3({ text, lang, gender }) {
+  const { synthesizeEdgeMp3: synth } = await import('../src/lib/tts/synthesizeEdgeMp3.ts')
+  const { resolveEdgeVoice } = await import('../src/lib/tts/edgeTtsVoices.ts')
+  const voice = resolveEdgeVoice(lang, gender)
+  const buffer = await synth({ text, voice, language: lang })
+  return { buffer, voiceId: voice, provider: 'edge' }
 }
 
 async function synthesizeRepairAudio({ text, voiceConfig, lang, providerMode: mode, modelId }) {
@@ -399,7 +379,7 @@ async function main() {
     Boolean(process.env.ELEVENLABS_API_KEY) ||
     hasGoogleCreds
   if (!hasTts) {
-    console.error('TTS credentials required (or use --provider=edge with edge-tts installed)')
+    console.error('TTS credentials required (or use --provider=edge)')
     process.exit(1)
   }
   if (!process.env.BLOB_READ_WRITE_TOKEN) {

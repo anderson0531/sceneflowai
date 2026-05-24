@@ -16,6 +16,12 @@ import {
   sleep,
 } from '../../../../lib/tts/googleTtsRetry'
 import { synthesizeElevenLabsMp3 } from '../../../../lib/elevenlabs/textToSpeech'
+import { synthesizeEdgeMp3 } from '../../../../lib/tts/synthesizeEdgeMp3'
+import { resolveEdgeVoice } from '../../../../lib/tts/edgeTtsVoices'
+import {
+  isEdgeTtsFallbackEnabled,
+  isQuotaOrRateLimitError,
+} from '../../../../lib/tts/edgeTtsFallback'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -253,20 +259,30 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Audio] Text length:', optimized.text.length)
     console.log('[Scene Audio] ==================== END TTS INPUT DEBUG ====================')
     
-    const audioBuffer = await generateAudio(
+    const characterGender = await lookupCharacterGender(
+      projectId,
+      characterId,
+      characterName
+    )
+
+    const synthesis = await generateAudio(
       optimized.text,
       finalVoiceConfig,
       language,
       audioType,
-      optimized.cues
+      optimized.cues,
+      characterGender
     )
+    const audioBuffer = synthesis.buffer
+    const usedProvider = synthesis.provider
+    const usedVoiceId = synthesis.voiceId
 
     // Step 5: Get actual audio duration from buffer
     let audioDuration: number | null = null
     try {
       const wordCount = optimized.text.split(/\s+/).length
       // Pass language for proper buffer-size fallback (critical for Thai/Chinese/Japanese)
-      audioDuration = await getAudioDurationFromBuffer(audioBuffer, wordCount, language, finalVoiceConfig.voiceId)
+      audioDuration = await getAudioDurationFromBuffer(audioBuffer, wordCount, language, usedVoiceId)
       console.log('[Scene Audio] Duration calculated:', audioDuration?.toFixed(2), 'seconds', 'language:', language)
     } catch (error) {
       console.warn('[Scene Audio] Could not get audio duration:', error)
@@ -313,11 +329,12 @@ export async function POST(req: NextRequest) {
         blob.url, 
         language,
         audioDuration,
-        finalVoiceConfig.voiceId,
-        characterName, 
+        usedVoiceId,
+        characterName,
         dialogueIndex,
         adaptationDiagnostics,
-        { lineId, lineKind, characterId }
+        { lineId, lineKind, characterId },
+        usedProvider
       )
     }
 
@@ -329,6 +346,9 @@ export async function POST(req: NextRequest) {
       characterName,
       dialogueIndex,
       sceneIndex,
+      provider: usedProvider,
+      voiceId: usedVoiceId,
+      fallback: synthesis.fallback ?? false,
     })
 
     return NextResponse.json({
@@ -339,7 +359,10 @@ export async function POST(req: NextRequest) {
       duration: audioDuration,
       characterName,
       dialogueIndex,
-      adaptation: adaptationDiagnostics
+      adaptation: adaptationDiagnostics,
+      provider: usedProvider,
+      voiceId: usedVoiceId,
+      fallback: synthesis.fallback ?? false,
     })
   } catch (error: any) {
     if (error instanceof GoogleTtsBlockedError) {
@@ -395,17 +418,81 @@ export async function POST(req: NextRequest) {
   }
 }
 
+type AudioSynthesisResult = {
+  buffer: Buffer
+  provider: 'google' | 'elevenlabs' | 'edge'
+  voiceId: string
+  fallback?: boolean
+}
+
+async function lookupCharacterGender(
+  projectId: string,
+  characterId?: string,
+  characterName?: string
+): Promise<string | undefined> {
+  try {
+    await sequelize.authenticate()
+    const project = await Project.findByPk(projectId)
+    const characters = project?.metadata?.visionPhase?.characters
+    if (!Array.isArray(characters)) return undefined
+
+    let char = characterId
+      ? characters.find((c: { id?: string }) => c?.id === characterId)
+      : undefined
+    if (!char && characterName) {
+      const lower = characterName.toLowerCase()
+      char = characters.find(
+        (c: { name?: string }) =>
+          typeof c?.name === 'string' && c.name.toLowerCase() === lower
+      )
+    }
+    const gender =
+      (char as { gender?: string })?.gender ||
+      (char as { attributes?: { gender?: string } })?.attributes?.gender
+    return typeof gender === 'string' ? gender : undefined
+  } catch {
+    return undefined
+  }
+}
+
 async function generateAudio(
   text: string,
   voiceConfig: VoiceConfig,
   language: string = 'en',
   audioType: AudioGenerationRequest['audioType'] = 'narration',
-  deliveryCues: string[] = []
-): Promise<Buffer> {
-  if (voiceConfig.provider === 'elevenlabs') {
-    return generateElevenLabsAudio(text, voiceConfig)
+  deliveryCues: string[] = [],
+  characterGender?: string
+): Promise<AudioSynthesisResult> {
+  const primaryProvider: 'google' | 'elevenlabs' =
+    voiceConfig.provider === 'elevenlabs' ? 'elevenlabs' : 'google'
+
+  try {
+    const buffer =
+      voiceConfig.provider === 'elevenlabs'
+        ? await generateElevenLabsAudio(text, voiceConfig)
+        : await generateGoogleAudio(text, voiceConfig, language, audioType, deliveryCues)
+    return {
+      buffer,
+      provider: primaryProvider,
+      voiceId: voiceConfig.voiceId,
+    }
+  } catch (err) {
+    if (!isEdgeTtsFallbackEnabled() || !isQuotaOrRateLimitError(err)) {
+      throw err
+    }
+    const edgeVoice = resolveEdgeVoice(language, characterGender)
+    console.warn(
+      `[Scene Audio] Paid TTS failed (${primaryProvider}), falling back to Edge voice ${edgeVoice}:`,
+      err instanceof Error ? err.message : err
+    )
+    const buffer = await synthesizeEdgeMp3({ text, voice: edgeVoice, language })
+    return {
+      buffer,
+      provider: 'edge',
+      voiceId: edgeVoice,
+      fallback: true,
+    }
   }
-  return generateGoogleAudio(text, voiceConfig, language, audioType, deliveryCues)
 }
 
 async function generateElevenLabsAudio(text: string, voiceConfig: VoiceConfig): Promise<Buffer> {
@@ -721,7 +808,8 @@ async function updateSceneAudio(
     lineId?: string
     lineKind?: 'narration' | 'dialogue'
     characterId?: string
-  }
+  },
+  provider?: string
 ) {
   await sequelize.authenticate()
   const project = await Project.findByPk(projectId)
@@ -791,6 +879,7 @@ async function updateSceneAudio(
         duration: duration || undefined,
         generatedAt: new Date().toISOString(),
         voiceId: voiceId || undefined,
+        provider: provider || undefined,
         adaptation: adaptation || undefined,
       }
       
@@ -811,6 +900,7 @@ async function updateSceneAudio(
         duration: duration || undefined,
         generatedAt: new Date().toISOString(),
         voiceId: voiceId || undefined,
+        provider: provider || undefined,
         adaptation: adaptation || undefined,
       }
 
@@ -866,6 +956,7 @@ async function updateSceneAudio(
         audioUrl,
         duration: duration || undefined,
         voiceId: voiceId || undefined,
+        provider: provider || undefined,
         adaptation: adaptation || undefined,
       }
       
