@@ -5,6 +5,8 @@ import {
   normalizeBeatsForProduction,
   isStoryboardApproved,
   ensureSceneBeats,
+  getSceneBeats,
+  migrateProjectToBeats,
 } from '@/lib/script/beatMigration'
 import { VEO_DIALOGUE_CLIP_MAX_SEC } from '@/lib/scene/dialogueSegmentSplit'
 
@@ -96,5 +98,110 @@ describe('beatMigration', () => {
     expect(beats).toHaveLength(2)
     expect(beats[0].kind).toBe('action')
     expect(Array.isArray(updated.dialogue)).toBe(true)
+  })
+
+  it('hydrateBeatStoryboardMediaFromLegacy copies dialogue images onto beats', () => {
+    const scene = {
+      imageUrl: 'https://example.com/establishing.jpg',
+      dialogue: [
+        {
+          lineId: 'ln_1',
+          character: 'BOB',
+          line: 'Hello.',
+          storyboardImageUrl: 'https://example.com/dialogue.jpg',
+        },
+      ],
+      beats: [
+        {
+          beatId: 'bt_a',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide shot',
+        },
+        {
+          beatId: 'bt_b',
+          sequenceIndex: 1,
+          kind: 'dialogue',
+          character: 'BOB',
+          line: 'Hello.',
+          lineId: 'ln_1',
+        },
+      ],
+    }
+
+    const beats = getSceneBeats(scene)
+    expect(beats[0].storyboardImageUrl).toBe('https://example.com/establishing.jpg')
+    expect(beats[1].storyboardImageUrl).toBe('https://example.com/dialogue.jpg')
+  })
+
+  it('normalizeBeatsForProduction deduplicates beatIds', () => {
+    const beats = normalizeBeatsForProduction([
+      {
+        beatId: 'bt_dup',
+        sequenceIndex: 0,
+        kind: 'action',
+        actionDescription: 'First',
+      },
+      {
+        beatId: 'bt_dup',
+        sequenceIndex: 1,
+        kind: 'dialogue',
+        character: 'ALICE',
+        line: 'Second',
+        lineId: 'ln_1',
+      },
+    ])
+    expect(beats[0].beatId).toBe('bt_dup')
+    expect(beats[1].beatId).not.toBe('bt_dup')
+  })
+
+  it('migrateProjectToBeats hydrates storyboard media on existing beats', () => {
+    const metadata = {
+      visionPhase: {
+        script: {
+          script: {
+            scenes: [
+              {
+                imageUrl: 'https://example.com/scene1-est.jpg',
+                dialogue: [
+                  {
+                    lineId: 'ln_1',
+                    character: 'BOB',
+                    line: 'Hi',
+                    storyboardImageUrl: 'https://example.com/scene1-line.jpg',
+                  },
+                ],
+                beats: [
+                  {
+                    beatId: 'bt_1',
+                    sequenceIndex: 0,
+                    kind: 'action',
+                    actionDescription: 'Establishing',
+                  },
+                  {
+                    beatId: 'bt_2',
+                    sequenceIndex: 1,
+                    kind: 'dialogue',
+                    character: 'BOB',
+                    line: 'Hi',
+                    lineId: 'ln_1',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    }
+
+    const result = migrateProjectToBeats(metadata)
+    expect(result.changed).toBe(true)
+    const visionPhase = result.metadata.visionPhase as Record<string, unknown>
+    const script = visionPhase.script as Record<string, unknown>
+    const nested = script.script as Record<string, unknown>
+    const scenes = nested.scenes as Array<{ beats: Array<{ storyboardImageUrl?: string }> }>
+    const beats = scenes[0].beats
+    expect(beats[0].storyboardImageUrl).toBe('https://example.com/scene1-est.jpg')
+    expect(beats[1].storyboardImageUrl).toBe('https://example.com/scene1-line.jpg')
   })
 })

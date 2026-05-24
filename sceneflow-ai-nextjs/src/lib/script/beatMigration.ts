@@ -49,13 +49,89 @@ function computeSplitFlags(beat: SceneBeat): SceneBeat {
 
 /** Assign stable beatIds, sequenceIndex, and split flags. */
 export function normalizeBeatsForProduction(beats: SceneBeat[]): SceneBeat[] {
+  const seenBeatIds = new Set<string>()
   return beats.map((raw, index) => {
+    let beatId = raw.beatId?.trim() || mintBeatId()
+    if (seenBeatIds.has(beatId)) {
+      beatId = mintBeatId()
+    }
+    seenBeatIds.add(beatId)
     const beat: SceneBeat = {
       ...raw,
-      beatId: raw.beatId?.trim() || mintBeatId(),
+      beatId,
       sequenceIndex: index,
     }
     return computeSplitFlags(beat)
+  })
+}
+
+function pickStoryboardString(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return undefined
+}
+
+/**
+ * Copy storyboard media from legacy scene fields into beats when beats lack URLs.
+ * Covers projects where images were generated on dialogue[] / imageUrl before beats[] existed.
+ */
+export function hydrateBeatStoryboardMediaFromLegacy(
+  scene: Record<string, unknown>,
+  beats: SceneBeat[]
+): SceneBeat[] {
+  const dialogue = Array.isArray(scene.dialogue)
+    ? (scene.dialogue as Array<Record<string, unknown>>)
+    : []
+  let dialogueIdx = 0
+
+  return beats.map((beat) => {
+    if (beat.kind === 'action') {
+      if (beat.storyboardImageUrl?.trim()) return beat
+      const storyboardImageUrl = pickStoryboardString(scene.imageUrl)
+      if (!storyboardImageUrl) return beat
+      return {
+        ...beat,
+        storyboardImageUrl,
+        storyboardImageGcsPath: pickStoryboardString(
+          beat.storyboardImageGcsPath,
+          scene.imageGcsPath
+        ),
+        storyboardImagePrompt: pickStoryboardString(
+          beat.storyboardImagePrompt,
+          scene.imagePrompt
+        ),
+      }
+    }
+
+    if (!isSpokenBeatKind(beat.kind)) return beat
+
+    const lineEntry = beat.lineId?.trim()
+      ? dialogue.find((entry) => entry?.lineId === beat.lineId)
+      : dialogue[dialogueIdx]
+
+    if (!beat.lineId?.trim()) {
+      dialogueIdx++
+    }
+
+    if (beat.storyboardImageUrl?.trim()) return beat
+    if (!lineEntry) return beat
+
+    const storyboardImageUrl = pickStoryboardString(lineEntry.storyboardImageUrl)
+    if (!storyboardImageUrl) return beat
+
+    return {
+      ...beat,
+      storyboardImageUrl,
+      storyboardImageGcsPath: pickStoryboardString(
+        beat.storyboardImageGcsPath,
+        lineEntry.storyboardImageGcsPath
+      ),
+      storyboardImagePrompt: pickStoryboardString(
+        beat.storyboardImagePrompt,
+        lineEntry.storyboardImagePrompt
+      ),
+    }
   })
 }
 
@@ -244,10 +320,11 @@ export function applyBeatsToScene(
 
 export function getSceneBeats(scene: Record<string, unknown> | null | undefined): SceneBeat[] {
   if (!scene) return []
-  if (Array.isArray(scene.beats) && scene.beats.length > 0) {
-    return normalizeBeatsForProduction(scene.beats as SceneBeat[])
-  }
-  return flatSceneToBeats(scene)
+  const beats =
+    Array.isArray(scene.beats) && scene.beats.length > 0
+      ? normalizeBeatsForProduction(scene.beats as SceneBeat[])
+      : flatSceneToBeats(scene)
+  return hydrateBeatStoryboardMediaFromLegacy(scene, beats)
 }
 
 export function getStoryboardStatus(
@@ -308,10 +385,18 @@ export function migrateProjectToBeats(metadata: unknown): MigrateBeatsResult {
 
   for (let i = 0; i < scenes.length; i++) {
     const scene = scenes[i] as Record<string, unknown>
-    if (Array.isArray(scene.beats) && scene.beats.length > 0) continue
-    scenes[i] = applyBeatsToScene(scene, flatSceneToBeats(scene))
-    migratedSceneCount++
-    changed = true
+    const hadBeats = Array.isArray(scene.beats) && scene.beats.length > 0
+    const baseBeats = hadBeats
+      ? normalizeBeatsForProduction(scene.beats as SceneBeat[])
+      : flatSceneToBeats(scene)
+    const hydratedBeats = hydrateBeatStoryboardMediaFromLegacy(scene, baseBeats)
+    const nextScene = applyBeatsToScene(scene, hydratedBeats)
+    const sceneChanged = JSON.stringify(scene) !== JSON.stringify(nextScene)
+    if (sceneChanged) {
+      scenes[i] = nextScene
+      changed = true
+      if (!hadBeats) migratedSceneCount++
+    }
   }
 
   if (changed) {

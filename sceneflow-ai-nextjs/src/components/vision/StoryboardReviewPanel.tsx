@@ -71,7 +71,7 @@ export function StoryboardReviewPanel({
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {beats.map((beat, idx) => (
           <div
-            key={beat.beatId}
+            key={`${beat.beatId}-${idx}`}
             className="rounded-lg border border-gray-700 overflow-hidden bg-gray-950/50"
           >
             <div className="aspect-video bg-gray-800 relative">

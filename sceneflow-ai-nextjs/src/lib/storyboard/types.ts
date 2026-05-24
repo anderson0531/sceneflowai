@@ -562,7 +562,7 @@ export function flattenSceneToStoryboardFrames(
 export function buildBeatStoryboardVisualTimeline(
   scene: Record<string, unknown> | null | undefined
 ): StoryboardVisualFrame[] {
-  const beats = Array.isArray(scene?.beats) ? (scene!.beats as Array<Record<string, unknown>>) : []
+  const beats = getSceneBeats(scene)
   if (beats.length === 0) return []
 
   let startTime = 0
@@ -570,13 +570,12 @@ export function buildBeatStoryboardVisualTimeline(
 
   for (let i = 0; i < beats.length; i++) {
     const beat = beats[i]
-    const kind = beat.kind as string | undefined
+    const kind = beat.kind
     const duration =
       typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
         ? beat.durationSeconds
         : DEFAULT_CLIP_DURATION_SEC
-    const imageUrl =
-      typeof beat.storyboardImageUrl === 'string' ? beat.storyboardImageUrl : undefined
+    const imageUrl = beat.storyboardImageUrl
 
     frames.push({
       clipId: `beat-${i}`,
@@ -590,7 +589,7 @@ export function buildBeatStoryboardVisualTimeline(
           : kind === 'narration'
             ? 'Narration'
             : String(beat.character || 'Dialogue'),
-      character: typeof beat.character === 'string' ? beat.character : undefined,
+      character: beat.character,
       line:
         kind === 'action'
           ? String(beat.actionDescription || '')
