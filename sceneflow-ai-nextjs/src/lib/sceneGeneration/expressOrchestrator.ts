@@ -27,6 +27,8 @@ import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
+import { getSceneBeats, applyBeatsToScene } from '../script/beatMigration'
+import type { SceneBeat } from '../script/segmentTypes'
 
 const EXPRESS_CONCURRENCY = 1 // Process one scene at a time for chain reference consistency
 
@@ -243,6 +245,29 @@ async function runAudioPhase(
   }
 }
 
+function sceneNeedsBeatImages(scene: any): boolean {
+  const beats = getSceneBeats(scene)
+  if (beats.length === 0) return sceneNeedsImage(scene)
+  return beats.some((b) => !b.storyboardImageUrl?.trim())
+}
+
+function persistBeatFrame(scene: any, beatIndex: number, result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null }) {
+  const beats = getSceneBeats(scene)
+  if (!beats[beatIndex]) return
+  beats[beatIndex] = {
+    ...beats[beatIndex],
+    storyboardImageUrl: result.imageUrl,
+    ...(result.gcsPath ? { storyboardImageGcsPath: result.gcsPath } : {}),
+    ...(result.imagePrompt ? { storyboardImagePrompt: result.imagePrompt } : {}),
+  }
+  const updated = applyBeatsToScene(scene, beats)
+  Object.assign(scene, updated)
+  if (beatIndex === 0 && beats[0]?.kind === 'action') {
+    scene.imageUrl = result.imageUrl
+    if (result.imagePrompt) scene.imagePrompt = result.imagePrompt
+  }
+}
+
 async function runImagePhase(
   ctx: SceneRunContext,
   options: ExpressOptions,
@@ -251,13 +276,15 @@ async function runImagePhase(
   emit: ExpressEmit
 ): Promise<{ ok: boolean; skipped: boolean; imageUrl?: string; error?: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
-  const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
-  const needsEstablishing = options.regenerate || sceneNeedsEstablishingImage(scene)
-  const needsDialogue =
-    options.regenerate ||
-    dialogue.some((d: any) => !d?.storyboardImageUrl)
+  const beats = getSceneBeats(scene)
+  const useBeatPipeline = beats.length > 0
+  const artStyle = options.artStyle || 'photorealistic'
 
-  if (!options.regenerate && !needsEstablishing && !needsDialogue) {
+  const needsImages =
+    options.regenerate ||
+    (useBeatPipeline ? sceneNeedsBeatImages(scene) : sceneNeedsImage(scene))
+
+  if (!needsImages) {
     safeEmit(emit, {
       type: 'phase-done',
       sceneIndex,
@@ -270,100 +297,145 @@ async function runImagePhase(
     return { ok: true, skipped: true, imageUrl: scene.imageUrl }
   }
 
-  safeEmit(emit, {
-    type: 'phase-start',
-    sceneIndex,
-    sceneNumber,
-    phase: 'image',
-  })
+  safeEmit(emit, { type: 'phase-start', sceneIndex, sceneNumber, phase: 'image' })
 
   let lastImageUrl = scene.imageUrl as string | undefined
   let hadFailure = false
   let lastError: string | undefined
 
-  const persistDialogueFrame = (idx: number, result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null }) => {
-    if (!Array.isArray(scene.dialogue)) scene.dialogue = []
-    scene.dialogue[idx] = {
-      ...scene.dialogue[idx],
-      storyboardImageUrl: result.imageUrl,
-      ...(result.gcsPath ? { storyboardImageGcsPath: result.gcsPath } : {}),
-      ...(result.imagePrompt ? { storyboardImagePrompt: result.imagePrompt } : {}),
-    }
-  }
-
   try {
-    if (needsEstablishing) {
-      try {
-        const result = await generateSceneImage({
-          projectId: options.projectId,
-          sceneIndex,
-          baseUrl,
-          authCookie,
-          quality: options.imageQuality || 'auto',
-          frameType: 'establishing',
-        })
-        scene.imageUrl = result.imageUrl
-        lastImageUrl = result.imageUrl
-        if (result.gcsPath) scene.imageGcsPath = result.gcsPath
-        if (result.imagePrompt) scene.imagePrompt = result.imagePrompt
-        safeEmit(emit, {
-          type: 'phase-done',
-          sceneIndex,
-          sceneNumber,
-          phase: 'image',
-          ok: true,
-          imageUrl: result.imageUrl,
-        })
-      } catch (err: any) {
-        hadFailure = true
-        lastError = err?.message || String(err)
-        safeEmit(emit, {
-          type: 'phase-done',
-          sceneIndex,
-          sceneNumber,
-          phase: 'image',
-          ok: false,
-          error: lastError,
-        })
+    if (useBeatPipeline) {
+      for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
+        const beat = beats[beatIdx]
+        if (!options.regenerate && beat.storyboardImageUrl?.trim()) continue
+
+        try {
+          const result = await generateSceneImage({
+            projectId: options.projectId,
+            sceneIndex,
+            baseUrl,
+            authCookie,
+            quality: options.imageQuality || 'auto',
+            artStyle,
+            frameType: 'beat',
+            beatIndex: beatIdx,
+          })
+          persistBeatFrame(scene, beatIdx, result)
+          lastImageUrl = result.imageUrl
+          safeEmit(emit, {
+            type: 'phase-done',
+            sceneIndex,
+            sceneNumber,
+            phase: 'image',
+            ok: true,
+            imageUrl: result.imageUrl,
+            beatIndex: beatIdx,
+          })
+        } catch (err: any) {
+          hadFailure = true
+          lastError = err?.message || String(err)
+          safeEmit(emit, {
+            type: 'phase-done',
+            sceneIndex,
+            sceneNumber,
+            phase: 'image',
+            ok: false,
+            error: lastError,
+            beatIndex: beatIdx,
+          })
+        }
       }
-    }
+      scene.storyboardStatus = 'pending_review'
+      scene.storyboardApprovedAt = undefined
+    } else {
+      const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
+      const needsEstablishing = options.regenerate || sceneNeedsEstablishingImage(scene)
 
-    for (let dialogueIdx = 0; dialogueIdx < dialogue.length; dialogueIdx++) {
-      if (!options.regenerate && dialogue[dialogueIdx]?.storyboardImageUrl) continue
+      const persistDialogueFrame = (idx: number, result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null }) => {
+        if (!Array.isArray(scene.dialogue)) scene.dialogue = []
+        scene.dialogue[idx] = {
+          ...scene.dialogue[idx],
+          storyboardImageUrl: result.imageUrl,
+          ...(result.gcsPath ? { storyboardImageGcsPath: result.gcsPath } : {}),
+          ...(result.imagePrompt ? { storyboardImagePrompt: result.imagePrompt } : {}),
+        }
+      }
 
-      try {
-        const result = await generateSceneImage({
-          projectId: options.projectId,
-          sceneIndex,
-          baseUrl,
-          authCookie,
-          quality: options.imageQuality || 'auto',
-          frameType: 'dialogue',
-          dialogueIndex: dialogueIdx,
-        })
-        persistDialogueFrame(dialogueIdx, result)
-        lastImageUrl = result.imageUrl
-        safeEmit(emit, {
-          type: 'phase-done',
-          sceneIndex,
-          sceneNumber,
-          phase: 'image',
-          ok: true,
-          imageUrl: result.imageUrl,
-          dialogueIndex: dialogueIdx,
-        })
-      } catch (err: any) {
-        hadFailure = true
-        lastError = err?.message || String(err)
-        safeEmit(emit, {
-          type: 'phase-done',
-          sceneIndex,
-          sceneNumber,
-          phase: 'image',
-          ok: false,
-          error: lastError,
-          dialogueIndex: dialogueIdx,
-        })
+      if (needsEstablishing) {
+        try {
+          const result = await generateSceneImage({
+            projectId: options.projectId,
+            sceneIndex,
+            baseUrl,
+            authCookie,
+            quality: options.imageQuality || 'auto',
+            artStyle,
+            frameType: 'establishing',
+          })
+          scene.imageUrl = result.imageUrl
+          lastImageUrl = result.imageUrl
+          if (result.gcsPath) scene.imageGcsPath = result.gcsPath
+          if (result.imagePrompt) scene.imagePrompt = result.imagePrompt
+          safeEmit(emit, {
+            type: 'phase-done',
+            sceneIndex,
+            sceneNumber,
+            phase: 'image',
+            ok: true,
+            imageUrl: result.imageUrl,
+          })
+        } catch (err: any) {
+          hadFailure = true
+          lastError = err?.message || String(err)
+          safeEmit(emit, {
+            type: 'phase-done',
+            sceneIndex,
+            sceneNumber,
+            phase: 'image',
+            ok: false,
+            error: lastError,
+          })
+        }
+      }
+
+      for (let dialogueIdx = 0; dialogueIdx < dialogue.length; dialogueIdx++) {
+        if (!options.regenerate && dialogue[dialogueIdx]?.storyboardImageUrl) continue
+
+        try {
+          const result = await generateSceneImage({
+            projectId: options.projectId,
+            sceneIndex,
+            baseUrl,
+            authCookie,
+            quality: options.imageQuality || 'auto',
+            artStyle,
+            frameType: 'dialogue',
+            dialogueIndex: dialogueIdx,
+          })
+          persistDialogueFrame(dialogueIdx, result)
+          lastImageUrl = result.imageUrl
+          safeEmit(emit, {
+            type: 'phase-done',
+            sceneIndex,
+            sceneNumber,
+            phase: 'image',
+            ok: true,
+            imageUrl: result.imageUrl,
+            dialogueIndex: dialogueIdx,
+          })
+        } catch (err: any) {
+          hadFailure = true
+          lastError = err?.message || String(err)
+          safeEmit(emit, {
+            type: 'phase-done',
+            sceneIndex,
+            sceneNumber,
+            phase: 'image',
+            ok: false,
+            error: lastError,
+            dialogueIndex: dialogueIdx,
+          })
+        }
       }
     }
 

@@ -20,6 +20,8 @@ export interface MethodSelectionContext {
   segmentIndex: number
   totalSegments: number
   hasSceneImage: boolean
+  /** Beat-first: approved storyboard start frame URL. */
+  hasStartFrameUrl?: boolean
   /** Explicit segment end-frame URL (required for true Veo FTV interpolation). */
   hasEndFrameUrl: boolean
   hasCharacterRefs: boolean
@@ -88,6 +90,7 @@ export function selectOptimalMethod(context: MethodSelectionContext): MethodSele
   const {
     segmentIndex,
     hasSceneImage,
+    hasStartFrameUrl,
     hasCharacterRefs,
     hasPreviousLastFrame,
     hasPreviousVeoRef,
@@ -103,6 +106,16 @@ export function selectOptimalMethod(context: MethodSelectionContext): MethodSele
   const isCloseUp = shotType === 'close-up' || shotType === 'extreme-close-up'
   
   // Decision Tree
+
+  // Rule 0: Beat-first approved storyboard start frame → I2V (default pipeline)
+  if (hasStartFrameUrl) {
+    return {
+      method: 'I2V',
+      confidence: 0.98,
+      reasoning: 'Approved storyboard start frame — I2V preserves reference consistency',
+      fallbackMethod: hasEndFrameUrl ? 'FTV' : undefined,
+    }
+  }
   
   // Rule 1: Establishing shot with scene image → I2V (animate the scene image)
   if (isEstablishingShot && hasSceneImage) {
@@ -371,6 +384,7 @@ export function buildMethodSelectionContext(
     segmentIndex: segment.sequenceIndex,
     totalSegments,
     hasSceneImage,
+    hasStartFrameUrl: hasStartFrame,
     hasEndFrameUrl,
     hasCharacterRefs,
     hasPreviousLastFrame: hasPreviousLastFrame || hasStartFrame,  // Also consider explicit startFrameUrl

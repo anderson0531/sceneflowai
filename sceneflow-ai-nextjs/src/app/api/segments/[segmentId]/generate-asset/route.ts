@@ -11,6 +11,11 @@ import { uploadImageToBlob, uploadVideoToBlob } from '@/lib/storage/blob'
 import { extractAndStoreLastFrame } from '@/lib/videoUtils'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { isBeatFirstPipelineEnabled, isStoryboardApproved, getSceneBeats } from '@/lib/script/beatMigration'
+import { compileBeatVideoPrompt } from '@/lib/scene/beatVideoPromptCompiler'
+import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
+import Project from '../../../../models/Project'
+import { sequelize } from '../../../../config/database'
 import { 
   getMethodWithFallback, 
   buildMethodSelectionContext,
@@ -74,6 +79,8 @@ interface GenerateAssetRequest {
   existingStemSourceHash?: string
   existingStemStatus?: string
   existingStemJobId?: string
+  /** Beat-first: segment source beat for prompt compilation */
+  beatId?: string
 }
 
 export async function POST(
@@ -85,8 +92,9 @@ export async function POST(
     const { segmentId } = await params
     requestBody = await req.json()
     const body = requestBody as GenerateAssetRequest
+    let prompt = body.prompt
+    let negativePrompt = body.negativePrompt
     const { 
-      prompt, 
       genType, 
       referenceImageIds, 
       startFrameUrl, 
@@ -96,7 +104,6 @@ export async function POST(
       generationMethod,
       sceneId, 
       projectId,
-      negativePrompt,
       duration,
       aspectRatio,
       resolution,
@@ -118,6 +125,8 @@ export async function POST(
       existingStemStatus
       ,
       existingStemJobId
+      ,
+      beatId
     } = body
 
     // Get user session for authentication
@@ -131,6 +140,39 @@ export async function POST(
         { error: 'Missing required fields: prompt, genType, sceneId, projectId' },
         { status: 400 }
       )
+    }
+
+    if (isBeatFirstPipelineEnabled()) {
+      await sequelize.authenticate()
+      const project = await Project.findByPk(projectId)
+      const scenes =
+        project?.metadata?.visionPhase?.script?.script?.scenes ||
+        project?.metadata?.visionPhase?.script?.scenes ||
+        []
+      const sceneRecord = scenes.find(
+        (s: { id?: string; sceneNumber?: number }, idx: number) =>
+          s?.id === sceneId || String(s?.sceneNumber) === sceneId || String(idx) === sceneId
+      )
+      if (sceneRecord && !isStoryboardApproved(sceneRecord as Record<string, unknown>)) {
+        return NextResponse.json(
+          {
+            error: 'Storyboard must be approved before video generation',
+            code: 'STORYBOARD_NOT_APPROVED',
+          },
+          { status: 403 }
+        )
+      }
+
+      if (beatId && sceneRecord && (genType === 'T2V' || genType === 'I2V')) {
+        const beats = getSceneBeats(sceneRecord as Record<string, unknown>)
+        const beat = beats.find((b) => b.beatId === beatId)
+        if (beat) {
+          const artStyleId = resolveProjectArtStyle(project?.metadata)
+          const compiled = compileBeatVideoPrompt(beat, { artStyleId })
+          prompt = compiled.prompt
+          negativePrompt = negativePrompt || compiled.negativePrompt
+        }
+      }
     }
 
     console.log('[Segment Asset Generation] Generating asset for segment:', segmentId, 'Type:', genType)

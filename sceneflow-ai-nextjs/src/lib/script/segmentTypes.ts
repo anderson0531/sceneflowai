@@ -15,7 +15,41 @@ export const NARRATOR_CHARACTER = 'NARRATOR'
 export const NARRATOR_CHARACTER_ID = 'narrator'
 
 export type DialogueKind = 'narration' | 'dialogue'
+export type BeatKind = 'dialogue' | 'action' | 'narration'
+export type StoryboardStatus = 'none' | 'pending_review' | 'approved'
 export type SegmentTransitionType = 'CUT' | 'CONTINUE' | 'DISSOLVE' | 'FADE'
+
+/** Recommended split for dialogue beats exceeding Veo clip budget. */
+export interface BeatSplitRecommendation {
+  partCount: number
+  excerpts: string[]
+}
+
+/**
+ * Atomic visual moment in a scene — source of truth for storyboard → segments.
+ * Spoken beats (dialogue | narration) carry TTS; action beats are silent visuals.
+ */
+export interface SceneBeat {
+  beatId: string
+  sequenceIndex: number
+  kind: BeatKind
+  /** Spoken line (dialogue or narration). */
+  character?: string
+  characterId?: string
+  line?: string
+  voiceDirection?: string
+  /** Silent visual beat description. */
+  actionDescription?: string
+  storyboardImageUrl?: string
+  storyboardImagePrompt?: string
+  storyboardImageGcsPath?: string
+  audioUrl?: string
+  durationSeconds?: number
+  needsSplit?: boolean
+  splitRecommendation?: BeatSplitRecommendation
+  /** Stable line id when this beat maps to a dialogue/narration line. */
+  lineId?: string
+}
 
 /**
  * A single sentence of dialogue (or narration). One sentence per DialogueLine

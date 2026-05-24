@@ -21,6 +21,7 @@ import {
   type PropContext,
   type LocationContext,
 } from '@/lib/intelligence/scene-image-intelligence'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120  // Increased for new AI image models
@@ -243,8 +244,9 @@ export async function POST(req: NextRequest) {
       locationReferences = [],  // NEW: Location references for environment consistency
       skipObjectAutoDetection = false,  // NEW: Skip auto-detection of objects (for batch mode)
       useAIPrompt = true,  // NEW: Use Gemini intelligence for prompt generation (default: true)
-      frameType = 'establishing',  // 'establishing' | 'dialogue' | 'custom' storyboard frame
+      frameType = 'establishing',  // 'establishing' | 'dialogue' | 'custom' | 'beat'
       dialogueIndex,  // Required when frameType === 'dialogue'
+      beatIndex,  // Required when frameType === 'beat'
       customFrameId,  // Required when frameType === 'custom'
     } = body
     
@@ -252,10 +254,17 @@ export async function POST(req: NextRequest) {
     let characterSelectionExplicit = body.characterSelectionExplicit ?? false
     
     const isDialogueFrame = frameType === 'dialogue'
+    const isBeatFrame = frameType === 'beat'
     const isCustomFrame = frameType === 'custom'
     if (isDialogueFrame && (typeof dialogueIndex !== 'number' || dialogueIndex < 0)) {
       return NextResponse.json(
         { success: false, error: 'dialogueIndex is required when frameType is dialogue' },
+        { status: 400 }
+      )
+    }
+    if (isBeatFrame && (typeof beatIndex !== 'number' || beatIndex < 0)) {
+      return NextResponse.json(
+        { success: false, error: 'beatIndex is required when frameType is beat' },
         { status: 400 }
       )
     }
@@ -367,6 +376,26 @@ export async function POST(req: NextRequest) {
                 console.log(`[Scene Image] Dialogue frame: selected speaker "${speakerName}"`)
               }
             }
+          }
+        } else if (isBeatFrame && sceneForSelection) {
+          characterSelectionExplicit = true
+          const beats = getSceneBeats(sceneForSelection as Record<string, unknown>)
+          const beat = beats[beatIndex!]
+          if (beat) {
+            if (beat.kind === 'action') {
+              characterObjects = []
+              dialogueFrameContext = beat.actionDescription ?? ''
+            } else if (beat.character) {
+              const speakerLower = beat.character.toLowerCase()
+              const speakerChar = allCharacters.find((c: any) => {
+                if (!c?.name) return false
+                const nameLower = c.name.toLowerCase()
+                return nameLower === speakerLower || nameLower.includes(speakerLower) || speakerLower.includes(nameLower)
+              })
+              if (speakerChar) characterObjects = [speakerChar]
+              dialogueFrameContext = beat.line ?? ''
+            }
+            console.log(`[Scene Image] Beat frame ${beatIndex}: kind=${beat.kind}`)
           }
         } else if (characterSelectionExplicit) {
           console.log('[Scene Image] Character selection was explicit (from dialog or no-talent detection) — skipping auto-detect')

@@ -22,6 +22,7 @@ import { allocateVeoSplitDurations, snapToVeoDuration } from '@/lib/scene/veoDur
 import { VEO_ABSOLUTE_CLIP_MAX_SEC, maxVeoDurationForSegment } from '@/lib/scene/dialogueSegmentSplit'
 import { stripDirectionBracketsForTiming } from '@/lib/tts/textOptimizer'
 import { isLikelyNarration } from '@/lib/script/narration'
+import { isBeatFirstPipelineEnabled, isStoryboardApproved, getSceneBeats } from '@/lib/script/beatMigration'
 import {
   Sparkles,
   Loader2,
@@ -610,6 +611,23 @@ export function SegmentBuilder({
   const [segmentCountTarget, setSegmentCountTarget] = useState<number | null>(null) // null = let AI decide
   const [focusMode, setFocusMode] = useState<'balanced' | 'dialogue-focused' | 'action-focused'>('balanced')
   const [customInstructions, setCustomInstructions] = useState('')
+  const [extendingBeatId, setExtendingBeatId] = useState<string | null>(null)
+  
+  const splitEligibleBeats = useMemo(() => {
+    if (!isBeatFirstPipelineEnabled()) return []
+    const appliedBeatIds = new Set(
+      (productionData?.segments ?? [])
+        .filter((s) => (s.dialoguePortion?.partCount ?? 0) > 1)
+        .map((s) => s.beatId)
+        .filter(Boolean)
+    )
+    return getSceneBeats(scene).filter(
+      (b) =>
+        b.needsSplit &&
+        (b.kind === 'dialogue' || b.kind === 'narration') &&
+        !appliedBeatIds.has(b.beatId)
+    )
+  }, [scene, productionData?.segments])
   
   // Regeneration dialog state
   
@@ -772,6 +790,36 @@ export function SegmentBuilder({
     
     await runDirectionsOverlayPreamble()
 
+    if (isBeatFirstPipelineEnabled()) {
+      if (!isStoryboardApproved(scene)) {
+        toast.error('Approve storyboard before creating segments', {
+          description: 'Review and approve all beat frames in the Storyboard Review panel.',
+        })
+        setIsAnalyzing(false)
+        return
+      }
+      try {
+        const response = await fetch(`/api/scenes/${sceneId}/derive-segments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId }),
+        })
+        const data = await response.json()
+        if (!response.ok || !data.success) {
+          throw new Error(data.errors?.join('; ') || data.error || 'Derive segments failed')
+        }
+        onSegmentsGenerated(data.segments)
+        toast.success(`Created ${data.segmentCount} segments from storyboard beats`)
+        setIsAnalyzing(false)
+        return
+      } catch (err: any) {
+        setError(err?.message || String(err))
+        toast.error('Failed to derive segments from beats')
+        setIsAnalyzing(false)
+        return
+      }
+    }
+
     try {
       // NEW: Phase 1 - Get directions only (faster, user reviews before prompts)
       const response = await fetch(`/api/scenes/${sceneId}/generate-segments`, {
@@ -908,6 +956,40 @@ export function SegmentBuilder({
     hasSceneDirection,
     runDirectionsOverlayPreamble,
   ])
+
+  const handleExtendBeat = useCallback(
+    async (beatId: string) => {
+      if (!isStoryboardApproved(scene)) {
+        toast.error('Approve storyboard before extending dialogue beats')
+        return
+      }
+      setExtendingBeatId(beatId)
+      setError(null)
+      try {
+        const response = await fetch(`/api/scenes/${sceneId}/derive-segments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId, extendBeatId: beatId }),
+        })
+        const data = await response.json()
+        if (!response.ok || !data.success) {
+          throw new Error(data.errors?.join('; ') || data.error || 'Extend failed')
+        }
+        onSegmentsGenerated(data.segments)
+        onSegmentsFinalized(data.segments)
+        toast.success(
+          'Dialogue split applied — generate part 1 with I2V, then continuation parts with Extend'
+        )
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err)
+        setError(message)
+        toast.error('Failed to apply dialogue split')
+      } finally {
+        setExtendingBeatId(null)
+      }
+    },
+    [scene, sceneId, projectId, onSegmentsGenerated, onSegmentsFinalized]
+  )
 
   // Phase 1b: Use script segments directly
   const handleUseScriptSegments = useCallback(async () => {
@@ -1523,17 +1605,64 @@ export function SegmentBuilder({
                     </div>
                   )}
 
+                  {/* Long dialogue split (beat-first) */}
+                  {isBeatFirstPipelineEnabled() && splitEligibleBeats.length > 0 && (
+                    <div className="rounded-lg border border-orange-500/30 bg-orange-950/20 p-3 space-y-2">
+                      <p className="text-sm font-medium text-orange-200 flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        Long dialogue beats
+                      </p>
+                      <p className="text-xs text-orange-200/70">
+                        These beats exceed ~10s. Extend splits them into chained segments (I2V + native EXT).
+                      </p>
+                      {splitEligibleBeats.map((beat) => (
+                        <div key={beat.beatId} className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-gray-300 truncate flex-1">
+                            {beat.character}: {(beat.line ?? '').slice(0, 72)}
+                            {(beat.line?.length ?? 0) > 72 ? '…' : ''}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!!extendingBeatId || isAnalyzing}
+                            onClick={() => handleExtendBeat(beat.beatId)}
+                            className="border-orange-500/40 text-orange-200 shrink-0"
+                          >
+                            {extendingBeatId === beat.beatId ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <>
+                                <ArrowRight className="w-3 h-3 mr-1" />
+                                Extend
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Generate Button */}
                   <Button
                     onClick={handleAnalyze}
-                    disabled={isAnalyzing || !hasSceneDirection}
+                    disabled={
+                      isAnalyzing ||
+                      (!isBeatFirstPipelineEnabled() && !hasSceneDirection) ||
+                      (isBeatFirstPipelineEnabled() && !isStoryboardApproved(scene))
+                    }
                     className={cn(
                       'w-full',
                       !hasExistingVideoAssets && 'bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/20'
                     )}
                     size="lg"
                     variant={hasExistingVideoAssets ? 'destructive' : 'default'}
-                    title={!hasSceneDirection ? 'Generate scene direction first' : undefined}
+                    title={
+                      isBeatFirstPipelineEnabled() && !isStoryboardApproved(scene)
+                        ? 'Approve storyboard first'
+                        : !hasSceneDirection && !isBeatFirstPipelineEnabled()
+                          ? 'Generate scene direction first'
+                          : undefined
+                    }
                   >
                     {isAnalyzing ? (
                       <>

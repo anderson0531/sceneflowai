@@ -35,10 +35,12 @@ export interface GenerateSceneImageParams {
   skipObjectAutoDetection?: boolean
   /** Whether to use Gemini intelligence for prompt generation. */
   useAIPrompt?: boolean
-  /** Storyboard frame type: establishing, dialogue line, or user custom cut. */
-  frameType?: 'establishing' | 'dialogue' | 'custom'
+  /** Storyboard frame type: establishing, dialogue line, beat, or user custom cut. */
+  frameType?: 'establishing' | 'dialogue' | 'custom' | 'beat'
   /** Index into scene.dialogue when frameType is 'dialogue'. */
   dialogueIndex?: number
+  /** Index into scene.beats when frameType is 'beat'. */
+  beatIndex?: number
   /** Id of scene.storyboardFrames entry when frameType is 'custom'. */
   customFrameId?: string
 }
@@ -77,6 +79,7 @@ export async function generateSceneImage(
     useAIPrompt,
     frameType,
     dialogueIndex,
+    beatIndex,
     customFrameId,
   } = params
 
@@ -109,6 +112,7 @@ export async function generateSceneImage(
       ...(typeof useAIPrompt === 'boolean' ? { useAIPrompt } : {}),
       ...(frameType ? { frameType } : {}),
       ...(typeof dialogueIndex === 'number' ? { dialogueIndex } : {}),
+      ...(typeof beatIndex === 'number' ? { beatIndex } : {}),
       ...(customFrameId ? { customFrameId } : {}),
     }),
   })

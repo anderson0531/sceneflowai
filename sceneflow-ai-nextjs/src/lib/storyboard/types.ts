@@ -9,6 +9,7 @@ import {
   dialogueLineIdForIndex,
   findDialogueAudioForLine,
 } from '@/components/vision/scene-production/audioTrackBuilder'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
 import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
 
@@ -268,6 +269,41 @@ export function buildStoryboardVoiceClips(
 ): StoryboardAudioClip[] {
   if (!scene) return []
 
+  // Beat-first: spoken beats only (dialogue + narration)
+  if (Array.isArray(scene.beats) && scene.beats.length > 0) {
+    const beats = getSceneBeats(scene)
+    const clips: StoryboardAudioClip[] = []
+    let currentStartTime = 0
+
+    for (let i = 0; i < beats.length; i++) {
+      const beat = beats[i]
+      if (beat.kind === 'action') continue
+
+      const url = beat.audioUrl?.trim()
+      if (!url) continue
+
+      const duration = resolveVoiceClipDuration(
+        url,
+        beat.durationSeconds,
+        dynamicDurations
+      )
+      const isNarration = beat.kind === 'narration'
+
+      clips.push({
+        id: isNarration ? `beat-narration-${i}` : beat.lineId ?? `beat-${i}`,
+        url,
+        startTime: currentStartTime,
+        duration,
+        type: 'dialogue',
+        label: isNarration ? 'Narrator' : beat.character || `Dialogue ${i + 1}`,
+      })
+      currentStartTime +=
+        duration + (isNarration ? NARRATION_CLIP_BUFFER_SEC : DIALOGUE_CLIP_BUFFER_SEC)
+    }
+
+    if (clips.length > 0) return clips
+  }
+
   const clips: StoryboardAudioClip[] = []
   let currentStartTime = 0
 
@@ -520,4 +556,48 @@ export function flattenSceneToStoryboardFrames(
   })
 
   return result
+}
+
+/** Build visual timeline from beats when scene.beats[] is populated. */
+export function buildBeatStoryboardVisualTimeline(
+  scene: Record<string, unknown> | null | undefined
+): StoryboardVisualFrame[] {
+  const beats = Array.isArray(scene?.beats) ? (scene!.beats as Array<Record<string, unknown>>) : []
+  if (beats.length === 0) return []
+
+  let startTime = 0
+  const frames: StoryboardVisualFrame[] = []
+
+  for (let i = 0; i < beats.length; i++) {
+    const beat = beats[i]
+    const kind = beat.kind as string | undefined
+    const duration =
+      typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
+        ? beat.durationSeconds
+        : DEFAULT_CLIP_DURATION_SEC
+    const imageUrl =
+      typeof beat.storyboardImageUrl === 'string' ? beat.storyboardImageUrl : undefined
+
+    frames.push({
+      clipId: `beat-${i}`,
+      frameType: kind === 'action' ? 'establishing' : 'dialogue',
+      imageUrl,
+      startTime,
+      duration,
+      label:
+        kind === 'action'
+          ? 'Action'
+          : kind === 'narration'
+            ? 'Narration'
+            : String(beat.character || 'Dialogue'),
+      character: typeof beat.character === 'string' ? beat.character : undefined,
+      line:
+        kind === 'action'
+          ? String(beat.actionDescription || '')
+          : String(beat.line || ''),
+    })
+    startTime += duration + DIALOGUE_CLIP_BUFFER_SEC
+  }
+
+  return frames
 }

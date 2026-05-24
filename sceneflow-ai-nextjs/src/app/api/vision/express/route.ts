@@ -12,6 +12,7 @@ export const maxDuration = 600
 interface ExpressRequest {
   projectId: string
   language?: string
+  artStyle?: string
   includeMusic?: boolean
   includeSFX?: boolean
   regenerate?: boolean
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest) {
   const {
     projectId,
     language = 'en',
+    artStyle = 'photorealistic',
     includeMusic = false,
     includeSFX = false,
     regenerate = false,
@@ -66,6 +68,7 @@ export async function POST(req: NextRequest) {
   const options: ExpressOptions = {
     projectId,
     language,
+    artStyle,
     includeMusic,
     includeSFX,
     regenerate,
@@ -111,6 +114,7 @@ export async function POST(req: NextRequest) {
               ...freshMetadata,
               visionPhase: {
                 ...freshVisionPhase,
+                artStyle: options.artStyle || freshVisionPhase.artStyle || 'photorealistic',
                 script: nested
                   ? {
                       ...freshVisionPhase.script,

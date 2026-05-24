@@ -9,6 +9,11 @@ import { generateText } from '@/lib/vertexai/gemini'
 import { getSettingsForFormat, SCRIPT_SETTINGS_BY_FORMAT } from '@/lib/script/scriptGenerationRules'
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
 import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentScript'
+import {
+  ensureSceneBeats,
+  embedCharacterIdsInSceneBeats,
+  migrateProjectToBeats,
+} from '@/lib/script/beatMigration'
 
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
@@ -393,9 +398,10 @@ export async function POST(request: NextRequest) {
         // Track name normalizations for logging
         let normalizedCount = 0
         
-        const scenesWithCharacterIds = allScenes.map((scene: any) => ({
-          ...scene,
-          dialogue: scene.dialogue?.map((d: any) => {
+        const scenesWithCharacterIds = allScenes.map((scene: any) => {
+          const withDialogue = {
+            ...scene,
+            dialogue: scene.dialogue?.map((d: any) => {
             if (!d.character) return d
             
             const originalDialogueName = d.character
@@ -439,7 +445,12 @@ export async function POST(request: NextRequest) {
               characterId: character?.id
             }
           })
-        }))
+          }
+          return embedCharacterIdsInSceneBeats(
+            ensureSceneBeats(withDialogue as Record<string, unknown>),
+            allCharacters
+          )
+        })
         
         if (normalizedCount > 0) {
           console.log(`[Script Gen V2] Total character names normalized: ${normalizedCount}`)
@@ -558,11 +569,17 @@ export async function POST(request: NextRequest) {
         let metadataToPersist: any = interimMetadata
         try {
           const segmentResult = migrateProjectToSegmented(interimMetadata)
-          metadataToPersist = segmentResult.metadata
+          const beatResult = migrateProjectToBeats(segmentResult.metadata)
+          metadataToPersist = beatResult.metadata
           if (segmentResult.changed) {
             console.log('[Script Gen V2] Segmented-script pass:', {
               migratedSceneCount: segmentResult.migratedSceneCount,
               alreadyMigratedSceneCount: segmentResult.alreadyMigratedSceneCount,
+            })
+          }
+          if (beatResult.changed) {
+            console.log('[Script Gen V2] Beat-first pass:', {
+              migratedSceneCount: beatResult.migratedSceneCount,
             })
           }
         } catch (segErr) {
@@ -1055,8 +1072,15 @@ OUTPUT FORMAT (JSON):
       "sceneNumber": 1,
       ${sceneHeadingExample},
       "characters": ["Character Name 1", "Character Name 2"],
-      "action": "Specific and unique segment action with atmosphere. Detail the specific actions occurring in THIS segment, not a general scene description.\\n\\nSFX: Sound description\\n\\nMusic: Music description",
-      "narration": "Voiceover narration/intro...",
+      "action": "Summary scene action (legacy field — also reflected in action beats)",
+      "narration": "Optional legacy narration summary",
+      "beats": [
+        {"kind": "action", "actionDescription": "Wide establishing shot of the location..."},
+        {"kind": "narration", "character": "NARRATOR", "line": "Voiceover opening..."},
+        {"kind": "dialogue", "character": "Character Name", "line": "[emotion] Dialogue..."},
+        {"kind": "action", "actionDescription": "Character reacts, close-up on hands..."},
+        {"kind": "dialogue", "character": "Character Name", "line": "[emotion] Response..."}
+      ],
       "dialogue": [
         {"character": "Character Name", "line": "[emotion] Dialogue text..."}
       ],
@@ -1067,6 +1091,16 @@ OUTPUT FORMAT (JSON):
     }
   ]
 }
+
+BEAT TIMELINE (CRITICAL — PRIMARY PRODUCTION SOURCE):
+• Each scene MUST include an ordered "beats" array mixing kind: "dialogue", "action", "narration"
+• Insert "action" beats between dialogue when visuals must change (reactions, inserts, B-roll, establishing)
+• Target ~8–10 seconds per beat for video clip alignment
+• "action" beats use actionDescription only — NO spoken line
+• "narration" beats use character "NARRATOR" with spoken line
+• "dialogue" beats must contain SPOKEN words with [emotion] tags — NO stage directions in line
+• beats[] order is the storyboard frame order (one frame per beat)
+• Keep legacy "dialogue" and "action" fields in sync with beats content
 
 IMPORTANT CONSTRAINTS:
 • Maximum ${sceneLimit} segments total (consolidate if needed)

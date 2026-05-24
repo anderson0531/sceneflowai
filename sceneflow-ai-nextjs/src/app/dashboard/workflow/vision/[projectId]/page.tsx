@@ -2113,6 +2113,45 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [script?.script?.scenes, sceneProductionState, characters, objectReferences, locationReferences, applySceneProductionUpdate]
   )
 
+  const handleApproveStoryboard = useCallback(
+    async (sceneIndex: number) => {
+      if (!project?.id || !script?.script?.scenes?.[sceneIndex]) return
+      const scene = script.script.scenes[sceneIndex]
+      const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
+      setApprovingStoryboardFor(sceneIndex)
+      try {
+        const response = await fetch(
+          `/api/scenes/${encodeURIComponent(sceneId)}/approve-storyboard`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId: project.id }),
+          }
+        )
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to approve storyboard')
+        }
+        const updatedScript = JSON.parse(JSON.stringify(script))
+        updatedScript.script.scenes[sceneIndex] = {
+          ...updatedScript.script.scenes[sceneIndex],
+          storyboardStatus: 'approved',
+          storyboardApprovedAt: data.storyboardApprovedAt,
+        }
+        await handleScriptChange(updatedScript)
+        const { toast } = require('sonner')
+        toast.success('Storyboard approved — segments and video are unlocked')
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err)
+        const { toast } = require('sonner')
+        toast.error(message)
+      } finally {
+        setApprovingStoryboardFor(null)
+      }
+    },
+    [project?.id, script, handleScriptChange]
+  )
+
   const handleInitializeSceneProduction = useCallback(
     async (sceneId: string, { targetDuration, generationOptions, segments: prePardsedSegments }: { targetDuration: number; generationOptions?: any; segments?: any[] }) => {
       if (!project?.id) {
@@ -2146,6 +2185,42 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         try {
           const { toast } = require('sonner')
           toast.success(`Scene segmented into ${productionData.segments.length} blocks.`)
+        } catch {}
+        return
+      }
+
+      const scenes = script?.script?.scenes ?? []
+      const sceneRecord = scenes.find(
+        (s: any, i: number) => (s.id || s.sceneId || `scene-${i}`) === sceneId
+      )
+      const beatFirst =
+        typeof window !== 'undefined'
+          ? (await import('@/lib/script/beatMigration')).isBeatFirstPipelineEnabled()
+          : process.env.BEAT_FIRST_PIPELINE !== 'false'
+
+      if (beatFirst && sceneRecord?.storyboardStatus === 'approved') {
+        const response = await fetch(
+          `/api/scenes/${encodeURIComponent(sceneId)}/derive-segments`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId: project.id }),
+          }
+        )
+        const data = await response.json()
+        if (!response.ok || !data.success) {
+          throw new Error(data.errors?.join('; ') || data.error || 'Failed to derive segments')
+        }
+        const productionData: SceneProductionData = {
+          isSegmented: true,
+          targetSegmentDuration: targetDuration,
+          segments: data.segments || [],
+          lastGeneratedAt: new Date().toISOString(),
+        }
+        applySceneProductionUpdate(sceneId, () => productionData)
+        try {
+          const { toast } = require('sonner')
+          toast.success(`Created ${productionData.segments.length} segments from storyboard beats`)
         } catch {}
         return
       }
@@ -2200,7 +2275,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         toast.success(`Scene segmented into ${productionData.segments.length} blocks.`)
       } catch {}
     },
-    [project?.id, applySceneProductionUpdate]
+    [project?.id, applySceneProductionUpdate, script?.script?.scenes]
   )
 
   const handleSegmentPromptChange = useCallback(
@@ -2429,6 +2504,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             : undefined
         const previousSegmentVeoRef = prevSeg?.takes?.[0]?.veoVideoRef
 
+        const autoExtContinuation =
+          segment.veoTimelineContinuation && previousSegmentVeoRef && !options?.generationMethod
+        const effectiveGenerationMethod =
+          options?.generationMethod ||
+          (autoExtContinuation ? 'EXT' : undefined) ||
+          mode
+
         const resolvedStartFrameUrl =
           options?.startFrameUrl?.trim() ||
           segment.startFrameUrl ||
@@ -2469,13 +2551,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             sourceVideoUrl: options?.sourceVideoUrl,  // For EXT mode: Veo extends video directly
             endFrameUrl: resolvedEndFrameUrl,
             referenceImages: options?.referenceImages,
-            generationMethod: options?.generationMethod || mode, // Use generationMethod if provided, otherwise fallback to mode
+            generationMethod: effectiveGenerationMethod,
             sceneId,
             projectId: project.id,
             sceneImageUrl: sceneImageUrlForApi,
             previousSegmentAssetUrl,
             previousSegmentVeoRef,
             isEstablishingShot: segment.isEstablishingShot,
+            beatId: segment.beatId,
             // Pass video-specific options from prompt builder
             negativePrompt: options?.negativePrompt,
             duration: options?.duration,
@@ -4157,6 +4240,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Audio timing resync state
   const [resyncingAudioSceneIndex, setResyncingAudioSceneIndex] = useState<number | null>(null)
+  const [approvingStoryboardFor, setApprovingStoryboardFor] = useState<number | null>(null)
   
   // Scene direction generation state
   const [generatingDirectionFor, setGeneratingDirectionFor] = useState<number | null>(null)
@@ -5590,17 +5674,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             visionPhase: { ...visionPhase, script: migratedScript },
           }
           const segmentMigration = migrateProjectToSegmented(interimMetadata)
-          const finalMetadata = segmentMigration.metadata
+          const { migrateProjectToBeats } = await import('@/lib/script/beatMigration')
+          const beatMigration = migrateProjectToBeats(segmentMigration.metadata)
+          const finalMetadata = beatMigration.metadata
           const finalScript = finalMetadata.visionPhase?.script ?? migratedScript
           loadedScript = finalScript
 
-          if (needsMigration || segmentMigration.changed) {
+          if (needsMigration || segmentMigration.changed || beatMigration.changed) {
             if (segmentMigration.changed) {
               console.log('[loadProject] Segmented-script migration applied:', {
                 migratedSceneCount: segmentMigration.migratedSceneCount,
                 alreadyMigratedSceneCount: segmentMigration.alreadyMigratedSceneCount,
                 audioEntriesRewritten: segmentMigration.audioEntriesRewritten,
                 translationLinesWritten: segmentMigration.translationLinesWritten,
+              })
+            }
+            if (beatMigration.changed) {
+              console.log('[loadProject] Beat-first migration applied:', {
+                migratedSceneCount: beatMigration.migratedSceneCount,
               })
             }
             try {
@@ -10186,13 +10277,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
 
-      const applySceneImage = (sceneIndex: number, imageUrl?: string, dialogueIndex?: number) => {
+      const applySceneImage = (sceneIndex: number, imageUrl?: string, dialogueIndex?: number, beatIndex?: number) => {
         if (!imageUrl) return
         setScript((prev: any) => {
           if (!prev?.script?.scenes) return prev
           const scenes = [...prev.script.scenes]
           if (!scenes[sceneIndex]) return prev
-          if (typeof dialogueIndex === 'number') {
+          if (typeof beatIndex === 'number') {
+            const beats = [...(scenes[sceneIndex].beats || [])]
+            if (beats[beatIndex]) {
+              beats[beatIndex] = { ...beats[beatIndex], storyboardImageUrl: imageUrl }
+              scenes[sceneIndex] = {
+                ...scenes[sceneIndex],
+                beats,
+                storyboardStatus: 'pending_review',
+              }
+            }
+          } else if (typeof dialogueIndex === 'number') {
             const dialogue = [...(scenes[sceneIndex].dialogue || [])]
             dialogue[dialogueIndex] = {
               ...dialogue[dialogueIndex],
@@ -10213,6 +10314,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           body: JSON.stringify({
             projectId,
             language: options.language || 'en',
+            artStyle: options.artStyle || 'photorealistic',
             includeMusic: !!options.includeMusic,
             includeSFX: !!options.includeSFX,
             regenerate: !!options.regenerate,
@@ -10250,7 +10352,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   if (event.ok) {
                     setPhase(event.sceneIndex, event.phase, 'done')
                     if (event.phase === 'image' && event.imageUrl) {
-                      applySceneImage(event.sceneIndex, event.imageUrl, event.dialogueIndex)
+                      applySceneImage(event.sceneIndex, event.imageUrl, event.dialogueIndex, event.beatIndex)
                     }
                   } else {
                     setPhase(event.sceneIndex, event.phase, 'error', {
@@ -11379,6 +11481,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 optimizingSceneIndex={optimizingSceneIndex}
                 onResyncAudioTiming={handleResyncAudioTiming}
                 resyncingAudioSceneIndex={resyncingAudioSceneIndex}
+                onApproveStoryboard={handleApproveStoryboard}
+                approvingStoryboardFor={approvingStoryboardFor}
                 onRegenerateScript={handleRegenerateScript}
                 isRegeneratingScript={isRegeneratingScript}
               belowDashboardSlot={({ openGenerateAudio, openPromptBuilder }) => (

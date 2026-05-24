@@ -14,11 +14,14 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Zap, AlertCircle, Loader, Image as ImageIcon, Volume2, FileText, Languages } from 'lucide-react'
 import { IMAGE_CREDITS, AUDIO_CREDITS } from '@/lib/credits/creditCosts'
 import { getLanguageName, FLAG_EMOJIS } from '@/constants/languages'
+import { artStylePresets } from '@/constants/artStylePresets'
 
 export interface ExpressConfirmOptions {
   includeMusic: boolean
   includeSFX: boolean
   regenerate: boolean
+  /** Art style preset id for storyboard frames. */
+  artStyle?: string
   /** Locale of dialogue / narration to generate. Defaults to 'en' upstream. */
   language?: string
 }
@@ -52,12 +55,14 @@ export function ExpressConfirmDialog({
   const [includeMusic, setIncludeMusic] = useState(false)
   const [includeSFX, setIncludeSFX] = useState(false)
   const [regenerate, setRegenerate] = useState(false)
+  const [artStyle, setArtStyle] = useState('photorealistic')
 
   useEffect(() => {
     if (open) {
       setIncludeMusic(false)
       setIncludeSFX(false)
       setRegenerate(false)
+      setArtStyle('photorealistic')
     }
   }, [open])
 
@@ -303,6 +308,24 @@ export function ExpressConfirmDialog({
             </div>
           </div>
 
+          <div className="space-y-2">
+            <div className="text-sm font-medium text-gray-200">Art style</div>
+            <p className="text-xs text-gray-400">
+              Applied to all storyboard frames and flows through video generation.
+            </p>
+            <select
+              value={artStyle}
+              onChange={(e) => setArtStyle(e.target.value)}
+              className="w-full text-sm rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-gray-100"
+            >
+              {artStylePresets.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Cost summary */}
           <div className="rounded-lg border border-indigo-700/40 bg-indigo-900/20 p-3 space-y-1">
             <div className="text-sm font-medium text-indigo-200">
@@ -338,7 +361,7 @@ export function ExpressConfirmDialog({
             Cancel
           </Button>
           <Button
-            onClick={() => onConfirm({ includeMusic, includeSFX, regenerate, language })}
+            onClick={() => onConfirm({ includeMusic, includeSFX, regenerate, language, artStyle })}
             disabled={isRunning || nothingToRun}
             className="bg-indigo-600 hover:bg-indigo-700 text-white"
           >

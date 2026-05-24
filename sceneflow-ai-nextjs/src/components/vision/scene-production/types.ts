@@ -572,6 +572,11 @@ export interface SceneSegment {
   // Segment Direction - approved direction metadata from the AI segmentation phase
   // Contains characters, isNoTalent, shotType, etc. from the user-approved direction
   segmentDirection?: SegmentDirection | null
+
+  /** Beat-first pipeline: source beat id (1:1 or split continuation). */
+  beatId?: string
+  /** True when this segment continues a split dialogue beat via EXT. */
+  veoTimelineContinuation?: boolean
   
   // ============================================================================
   // Keyframe State Machine Fields

@@ -16,6 +16,8 @@ export interface ExpressOptions {
   projectId: string
   /** Locale for audio generation. Defaults to 'en'. */
   language?: string
+  /** Art style preset id (e.g. photorealistic, anime-90s). */
+  artStyle?: string
   /** Whether to generate music for each scene that has a music description. */
   includeMusic?: boolean
   /** Whether to generate SFX cues for each scene. */
@@ -94,6 +96,8 @@ export interface ExpressPhaseEvent {
   imageUrl?: string
   /** Dialogue line index when generating a dialogue storyboard frame. */
   dialogueIndex?: number
+  /** Beat index when generating a beat storyboard frame. */
+  beatIndex?: number
   /** Whether this phase was skipped because output already existed. */
   skipped?: boolean
 }

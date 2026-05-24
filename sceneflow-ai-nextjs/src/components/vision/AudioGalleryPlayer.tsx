@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 import {
   buildStoryboardVisualTimeline,
+  buildBeatStoryboardVisualTimeline,
   buildStoryboardVoiceClips,
   getCurrentStoryboardVisualFrame,
   getEstablishingFrameUrl,
@@ -277,6 +278,8 @@ export function AudioGalleryPlayer({
 
   // Visual frames aligned to voice clips (dialogue lines get per-line images)
   const visualFrames = useMemo(() => {
+    const beatFrames = buildBeatStoryboardVisualTimeline(currentScene)
+    if (beatFrames.length > 0) return beatFrames
     return buildStoryboardVisualTimeline(currentScene, voiceClips)
   }, [currentScene, voiceClips])
 
