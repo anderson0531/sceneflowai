@@ -9,6 +9,10 @@ import { isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import { compileBeatVideoPrompt } from '@/lib/scene/beatVideoPromptCompiler'
 import { getSceneBeats } from '@/lib/script/beatMigration'
+import {
+  findSceneById,
+  getVisionScriptScenes,
+} from '@/lib/script/resolveSceneById'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -52,17 +56,13 @@ export async function POST(
 
     const metadata = project.metadata || {}
     const visionPhase = metadata.visionPhase || {}
-    const scenes =
-      visionPhase?.script?.script?.scenes || visionPhase?.script?.scenes || []
-    const sceneIndex = scenes.findIndex(
-      (s: { id?: string; sceneNumber?: number }, idx: number) =>
-        s?.id === sceneId || String(s?.sceneNumber) === sceneId || String(idx) === sceneId
-    )
-    if (sceneIndex < 0) {
+    const scenes = [...getVisionScriptScenes(visionPhase as Record<string, unknown>)]
+    const { scene: matchedScene, index: sceneIndex } = findSceneById(scenes, sceneId)
+    if (sceneIndex < 0 || !matchedScene) {
       return NextResponse.json({ error: 'Scene not found' }, { status: 404 })
     }
 
-    const scene = scenes[sceneIndex] as Record<string, unknown>
+    const scene = matchedScene
     const artStyleId = resolveProjectArtStyle(metadata)
 
     const result = extendBeatId

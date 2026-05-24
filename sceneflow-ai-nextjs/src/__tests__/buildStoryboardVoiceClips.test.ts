@@ -256,6 +256,76 @@ describe('buildStoryboardVoiceClips', () => {
       { id: 'dialogue-1', url: BOB_URL },
     ])
   })
+
+  it('aligns narrator-as-dialogue beat frame to first voice clip when action beat exists', () => {
+    const NARRATOR_BEAT_URL = 'https://example.com/narrator-frame.jpg'
+    const ACTION_URL = 'https://example.com/establishing.jpg'
+    const scene = {
+      imageUrl: ACTION_URL,
+      dialogue: [
+        {
+          lineId: 'ln_narr',
+          kind: 'narration',
+          character: 'NARRATOR',
+          characterId: 'narrator',
+          line: 'Opening voiceover.',
+          audioUrl: NARRATION_URL,
+        },
+        {
+          lineId: 'ln_sarah',
+          character: 'Sarah',
+          line: 'Hello there.',
+          audioUrl: SARAH_URL,
+        },
+      ],
+      beats: [
+        {
+          beatId: 'bt_action',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide shot',
+          storyboardImageUrl: ACTION_URL,
+        },
+        {
+          beatId: 'bt_narr',
+          sequenceIndex: 1,
+          kind: 'narration',
+          character: 'NARRATOR',
+          characterId: 'narrator',
+          line: 'Opening voiceover.',
+          lineId: 'ln_narr',
+          storyboardImageUrl: NARRATOR_BEAT_URL,
+          audioUrl: NARRATION_URL,
+          durationSeconds: 4,
+        },
+        {
+          beatId: 'bt_sarah',
+          sequenceIndex: 2,
+          kind: 'dialogue',
+          character: 'Sarah',
+          line: 'Hello there.',
+          lineId: 'ln_sarah',
+          storyboardImageUrl: 'https://example.com/sarah-frame.jpg',
+          audioUrl: SARAH_URL,
+          durationSeconds: 2.5,
+        },
+      ],
+    }
+
+    const clips = buildStoryboardVoiceClips(scene, 'en', {
+      [NARRATION_URL]: 4,
+      [SARAH_URL]: 2.5,
+    })
+    expect(clips).toHaveLength(2)
+    expect(clips[0].dialogueIndex).toBe(0)
+    expect(clips[0].startTime).toBe(0)
+
+    const visualFrames = buildStoryboardVisualTimeline(scene, clips)
+    expect(visualFrames[0].startTime).toBe(0)
+    expect(visualFrames[0].imageUrl).toBe(NARRATOR_BEAT_URL)
+    expect(visualFrames[0].dialogueIndex).toBe(0)
+    expect(visualFrames[1].imageUrl).toBe('https://example.com/sarah-frame.jpg')
+  })
 })
 
 describe('getDialogueFrameUrl', () => {

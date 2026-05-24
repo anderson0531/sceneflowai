@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../../models/Project'
 import { sequelize } from '../../../../../config/database'
+import { getSceneBeats } from '@/lib/script/beatMigration'
+import {
+  findSceneById,
+  getVisionScriptScenes,
+} from '@/lib/script/resolveSceneById'
 
 export const runtime = 'nodejs'
 
@@ -29,23 +34,16 @@ export async function POST(
 
     const metadata = { ...(project.metadata || {}) }
     const visionPhase = { ...(metadata.visionPhase || {}) }
-    const scriptRoot = visionPhase.script || {}
-    const nested = scriptRoot.script || {}
-    const scenes = [...(nested.scenes || scriptRoot.scenes || [])]
+    const scenes = [...getVisionScriptScenes(visionPhase as Record<string, unknown>)]
 
-    const sceneIndex = scenes.findIndex(
-      (s: { id?: string; sceneNumber?: number }, idx: number) =>
-        s?.id === sceneId || String(s?.sceneNumber) === sceneId || String(idx) === sceneId
-    )
-    if (sceneIndex < 0) {
+    const { scene: matchedScene, index: sceneIndex } = findSceneById(scenes, sceneId)
+    if (sceneIndex < 0 || !matchedScene) {
       return NextResponse.json({ error: 'Scene not found' }, { status: 404 })
     }
 
-    const scene = { ...(scenes[sceneIndex] as Record<string, unknown>) }
-    const beats = Array.isArray(scene.beats) ? scene.beats : []
-    const missing = beats.filter(
-      (b: { storyboardImageUrl?: string }) => !b?.storyboardImageUrl?.trim()
-    )
+    const scene = { ...matchedScene }
+    const beats = getSceneBeats(scene)
+    const missing = beats.filter((b) => !b.storyboardImageUrl?.trim())
     if (missing.length > 0) {
       return NextResponse.json(
         { error: `${missing.length} beat(s) missing storyboard frames` },
@@ -57,6 +55,8 @@ export async function POST(
     scene.storyboardApprovedAt = new Date().toISOString()
     scenes[sceneIndex] = scene
 
+    const scriptRoot = (visionPhase.script || {}) as Record<string, unknown>
+    const nested = (scriptRoot.script || {}) as Record<string, unknown>
     if (nested.scenes) {
       visionPhase.script = { ...scriptRoot, script: { ...nested, scenes } }
     } else {

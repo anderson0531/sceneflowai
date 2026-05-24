@@ -8,6 +8,7 @@ import {
   SegmentPrompt,
 } from '@/lib/sceneProduction'
 import { callLLM } from '@/services/llmGateway'
+import { findSceneById, getVisionScriptScenes } from '@/lib/script/resolveSceneById'
 
 interface SegmentRequestBody {
   projectId?: string
@@ -46,11 +47,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const metadata = project.metadata ?? {}
     const visionPhase = metadata.visionPhase ?? {}
-    const scriptScenes =
-      visionPhase?.script?.script?.scenes ??
-      visionPhase?.script?.scenes ??
-      visionPhase?.scenes ??
-      []
+    const scriptScenes = getVisionScriptScenes(visionPhase as Record<string, unknown>)
 
     if (!Array.isArray(scriptScenes) || scriptScenes.length === 0) {
       return NextResponse.json(
@@ -134,27 +131,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       { status: 500 }
     )
   }
-}
-
-function findSceneById(scenes: any[], sceneId: string): { scene: any | null; index: number } {
-  const directIndex = scenes.findIndex((scene) => {
-    const candidates = [scene?.sceneId, scene?.id, scene?.metadataId, scene?.slug]
-    return candidates.some((value) => value && String(value) === String(sceneId))
-  })
-  if (directIndex >= 0) {
-    return { scene: scenes[directIndex], index: directIndex }
-  }
-
-  const numericMatch = scenes.findIndex((scene) => {
-    const candidates = [scene?.sceneId, scene?.id, scene?.sceneNumber]
-    return candidates.some((value) => `scene-${value}` === String(sceneId))
-  })
-
-  if (numericMatch >= 0) {
-    return { scene: scenes[numericMatch], index: numericMatch }
-  }
-
-  return { scene: null, index: -1 }
 }
 
 async function resolvePromptGeneration({
