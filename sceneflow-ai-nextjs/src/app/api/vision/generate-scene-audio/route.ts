@@ -17,7 +17,7 @@ import {
 } from '../../../../lib/tts/googleTtsRetry'
 import { synthesizeElevenLabsMp3 } from '../../../../lib/elevenlabs/textToSpeech'
 import { synthesizeEdgeMp3 } from '../../../../lib/tts/synthesizeEdgeMp3'
-import { resolveEdgeVoiceForCharacter } from '../../../../lib/tts/edgeTtsVoices'
+import { resolveEdgeVoiceForCharacter, getEdgeVoiceConfigForLang, getEdgeVoiceLanguageFromId } from '../../../../lib/tts/edgeTtsVoices'
 import type { EdgeVoiceConfig } from '../../../../types/vision'
 import {
   isEdgeTtsFallbackEnabled,
@@ -268,7 +268,8 @@ export async function POST(req: NextRequest) {
     const characterEdgeVoice = await lookupCharacterEdgeVoice(
       projectId,
       characterId,
-      characterName
+      characterName,
+      language
     )
 
     const synthesis = await generateAudio(
@@ -447,25 +448,17 @@ async function lookupCharacterGender(
 async function lookupCharacterEdgeVoice(
   projectId: string,
   characterId?: string,
-  characterName?: string
+  characterName?: string,
+  language: string = 'en'
 ): Promise<EdgeVoiceConfig | undefined> {
   const char = await findVisionCharacter(projectId, characterId, characterName)
-  const edgeVoiceConfig = (char as { edgeVoiceConfig?: EdgeVoiceConfig })
-    ?.edgeVoiceConfig
-  if (
-    edgeVoiceConfig &&
-    typeof edgeVoiceConfig.voiceId === 'string' &&
-    edgeVoiceConfig.voiceId.trim()
-  ) {
-    return {
-      voiceId: edgeVoiceConfig.voiceId.trim(),
-      voiceName:
-        typeof edgeVoiceConfig.voiceName === 'string'
-          ? edgeVoiceConfig.voiceName
-          : edgeVoiceConfig.voiceId.trim(),
-    }
-  }
-  return undefined
+  return getEdgeVoiceConfigForLang(
+    char as {
+      edgeVoiceConfigByLang?: Record<string, EdgeVoiceConfig>
+      edgeVoiceConfig?: EdgeVoiceConfig
+    },
+    language
+  )
 }
 
 async function findVisionCharacter(
@@ -526,6 +519,16 @@ async function generateAudio(
       gender: characterGender,
       lang: language,
     })
+    const storedVoiceId = characterEdgeVoice?.voiceId?.trim()
+    if (
+      storedVoiceId &&
+      getEdgeVoiceLanguageFromId(storedVoiceId) !==
+        (language || 'en').trim().toLowerCase().split('-')[0]
+    ) {
+      console.warn(
+        `[Scene Audio] Edge voice locale mismatch: stored ${storedVoiceId} for lang ${language}, using ${edgeVoice}`
+      )
+    }
     console.warn(
       `[Scene Audio] Paid TTS failed (${primaryProvider}), falling back to Edge voice ${edgeVoice}:`,
       err instanceof Error ? err.message : err

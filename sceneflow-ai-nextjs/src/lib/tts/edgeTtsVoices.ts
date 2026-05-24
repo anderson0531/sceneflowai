@@ -120,15 +120,69 @@ export function listEdgeVoices(filters?: {
   return result
 }
 
-/** Prefer explicit character edgeVoiceConfig, else auto-resolve from gender + language. */
+/** Parse language code from an Edge neural voice id, e.g. hi-IN-SwaraNeural → hi */
+export function getEdgeVoiceLanguageFromId(voiceId: string): string | undefined {
+  const trimmed = voiceId?.trim()
+  if (!trimmed) return undefined
+  const fromCatalog = getEdgeVoiceById(trimmed)?.language
+  if (fromCatalog) return fromCatalog
+  const match = trimmed.match(/^([a-z]{2})-[A-Z]{2}-/i)
+  return match?.[1]?.toLowerCase()
+}
+
+export type EdgeVoiceCharacterLike = {
+  edgeVoiceConfigByLang?: Record<string, EdgeVoiceConfig>
+  /** @deprecated legacy single-language config — treated as en */
+  edgeVoiceConfig?: EdgeVoiceConfig
+}
+
+/** Resolve stored Edge voice config for a target generation language. */
+export function getEdgeVoiceConfigForLang(
+  char: EdgeVoiceCharacterLike | null | undefined,
+  lang: string
+): EdgeVoiceConfig | undefined {
+  if (!char) return undefined
+  const code = normalizeLangCode(lang)
+  const byLang = char.edgeVoiceConfigByLang?.[code]
+  if (byLang?.voiceId?.trim()) {
+    return {
+      voiceId: byLang.voiceId.trim(),
+      voiceName: byLang.voiceName?.trim() || getEdgeVoiceName(byLang.voiceId.trim()),
+    }
+  }
+  if (code === 'en' && char.edgeVoiceConfig?.voiceId?.trim()) {
+    return {
+      voiceId: char.edgeVoiceConfig.voiceId.trim(),
+      voiceName:
+        char.edgeVoiceConfig.voiceName?.trim() ||
+        getEdgeVoiceName(char.edgeVoiceConfig.voiceId.trim()),
+    }
+  }
+  return undefined
+}
+
+function genderHintFromVoiceId(voiceId: string): EdgeVoiceGender | undefined {
+  return getEdgeVoiceById(voiceId)?.gender
+}
+
+/** Prefer explicit character edgeVoiceConfig when locale matches; else auto-resolve. */
 export function resolveEdgeVoiceForCharacter(params: {
   edgeVoiceConfig?: EdgeVoiceConfig | null
   gender?: string
   lang?: string
 }): string {
+  const targetLang = normalizeLangCode(params.lang)
   const explicit = params.edgeVoiceConfig?.voiceId?.trim()
-  if (explicit) return explicit
-  return resolveEdgeVoice(params.lang || 'en', params.gender)
+  if (explicit) {
+    const voiceLang = getEdgeVoiceLanguageFromId(explicit)
+    if (voiceLang === targetLang) return explicit
+    const genderHint =
+      genderHintFromVoiceId(explicit) ||
+      inferGenderFromText(params.gender) ||
+      undefined
+    return resolveEdgeVoice(targetLang, genderHint)
+  }
+  return resolveEdgeVoice(targetLang, params.gender)
 }
 
 export function resolveEdgeVoiceConfigForCharacter(params: {
@@ -137,8 +191,12 @@ export function resolveEdgeVoiceConfigForCharacter(params: {
   lang?: string
 }): EdgeVoiceConfig {
   const voiceId = resolveEdgeVoiceForCharacter(params)
+  const explicit = params.edgeVoiceConfig?.voiceId?.trim()
+  const explicitLang = explicit ? getEdgeVoiceLanguageFromId(explicit) : undefined
+  const targetLang = normalizeLangCode(params.lang)
   const voiceName =
-    params.edgeVoiceConfig?.voiceName?.trim() ||
-    getEdgeVoiceName(voiceId)
+    explicit && explicitLang === targetLang && params.edgeVoiceConfig?.voiceName?.trim()
+      ? params.edgeVoiceConfig.voiceName.trim()
+      : getEdgeVoiceName(voiceId)
   return { voiceId, voiceName }
 }

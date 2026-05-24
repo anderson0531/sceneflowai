@@ -4,6 +4,8 @@ import {
   resolveEdgeVoiceForCharacter,
   resolveEdgeVoiceConfigForCharacter,
   listEdgeVoices,
+  getEdgeVoiceLanguageFromId,
+  getEdgeVoiceConfigForLang,
   EDGE_VOICE_BY_LANG,
 } from '@/lib/tts/edgeTtsVoices'
 import { isEdgeTtsFallbackEnabled, isQuotaOrRateLimitError } from '@/lib/tts/edgeTtsFallback'
@@ -22,7 +24,12 @@ describe('edgeTtsVoices', () => {
     expect(resolveEdgeVoice('en', 'Female')).toBe(EDGE_VOICE_BY_LANG.en.female)
   })
 
-  it('prefers explicit edgeVoiceConfig over gender auto', () => {
+  it('parses language from Edge voice id', () => {
+    expect(getEdgeVoiceLanguageFromId('hi-IN-SwaraNeural')).toBe('hi')
+    expect(getEdgeVoiceLanguageFromId('en-US-JennyNeural')).toBe('en')
+  })
+
+  it('uses explicit edgeVoiceConfig when locale matches', () => {
     expect(
       resolveEdgeVoiceForCharacter({
         edgeVoiceConfig: {
@@ -33,6 +40,31 @@ describe('edgeTtsVoices', () => {
         lang: 'en',
       })
     ).toBe('en-US-AriaNeural')
+  })
+
+  it('uses explicit Hindi voice for Hindi generation', () => {
+    expect(
+      resolveEdgeVoiceForCharacter({
+        edgeVoiceConfig: {
+          voiceId: 'hi-IN-SwaraNeural',
+          voiceName: 'Swara (Hindi)',
+        },
+        lang: 'hi',
+      })
+    ).toBe('hi-IN-SwaraNeural')
+  })
+
+  it('swaps English stored voice to Hindi when generation lang is hi', () => {
+    expect(
+      resolveEdgeVoiceForCharacter({
+        edgeVoiceConfig: {
+          voiceId: 'en-US-JennyNeural',
+          voiceName: 'Jenny (US)',
+        },
+        gender: 'female',
+        lang: 'hi',
+      })
+    ).toBe(EDGE_VOICE_BY_LANG.hi.female)
   })
 
   it('falls back to gender auto when no explicit config', () => {
@@ -51,6 +83,32 @@ describe('edgeTtsVoices', () => {
     })
     expect(config.voiceId).toBe(EDGE_VOICE_BY_LANG.en.female)
     expect(config.voiceName).toBeTruthy()
+  })
+
+  it('getEdgeVoiceConfigForLang prefers per-lang map', () => {
+    const config = getEdgeVoiceConfigForLang(
+      {
+        edgeVoiceConfigByLang: {
+          hi: { voiceId: 'hi-IN-SwaraNeural', voiceName: 'Swara (Hindi)' },
+          en: { voiceId: 'en-US-GuyNeural', voiceName: 'Guy (US)' },
+        },
+      },
+      'hi'
+    )
+    expect(config?.voiceId).toBe('hi-IN-SwaraNeural')
+  })
+
+  it('getEdgeVoiceConfigForLang falls back to legacy en config', () => {
+    const config = getEdgeVoiceConfigForLang(
+      {
+        edgeVoiceConfig: {
+          voiceId: 'en-US-JennyNeural',
+          voiceName: 'Jenny (US)',
+        },
+      },
+      'en'
+    )
+    expect(config?.voiceId).toBe('en-US-JennyNeural')
   })
 
   it('listEdgeVoices filters by language', () => {

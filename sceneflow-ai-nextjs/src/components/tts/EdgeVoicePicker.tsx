@@ -23,7 +23,7 @@ interface EdgeVoicePickerProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   selectedVoiceId?: string
-  onSelectVoice: (voiceId: string, voiceName: string) => void
+  onSelectVoice: (voiceId: string, voiceName: string, language: string) => void
   /** Default language filter (e.g. project dialogue language) */
   defaultLanguage?: string
 }
@@ -140,10 +140,10 @@ export function EdgeVoicePicker({
 
   const handleSelect = useCallback(
     (voice: EdgeVoiceOption) => {
-      onSelectVoice(voice.id, voice.name)
+      onSelectVoice(voice.id, voice.name, languageFilter)
       onOpenChange(false)
     },
-    [onSelectVoice, onOpenChange]
+    [onSelectVoice, onOpenChange, languageFilter]
   )
 
   useEffect(() => {

@@ -127,6 +127,9 @@ export interface VisionCharacter {
   referenceImage?: string
   appearanceDescription?: string
   voiceConfig?: VisionVoiceConfig
+  /** Per-language Edge fallback voices (e.g. hi, es, en). */
+  edgeVoiceConfigByLang?: Record<string, EdgeVoiceConfig>
+  /** @deprecated — legacy single config; reads as en only via getEdgeVoiceConfigForLang */
   edgeVoiceConfig?: EdgeVoiceConfig
   voiceDescription?: string
   voiceTrainingAudioUrl?: string

@@ -316,6 +316,7 @@ interface Character {
   // Voice assignment
   voiceConfig?: VoiceConfig
   edgeVoiceConfig?: { voiceId: string; voiceName: string }
+  edgeVoiceConfigByLang?: Record<string, { voiceId: string; voiceName: string }>
   // AI-generated voice description (cached from Gemini analysis)
   voiceDescription?: string
   // URL to stored voice training audio sample (MP3 in Vercel Blob)
@@ -4410,6 +4411,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const handleUpdateCharacterEdgeVoice = async (
     characterId: string,
+    lang: string,
     edgeVoiceConfig: { voiceId: string; voiceName: string } | null
   ) => {
     const characterIndex = characters.findIndex((c) => c.id === characterId)
@@ -4421,16 +4423,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       return
     }
 
-    const updatedCharacters = characters.map((char, idx) =>
-      idx === characterIndex
-        ? {
-            ...char,
-            ...(edgeVoiceConfig
-              ? { edgeVoiceConfig }
-              : { edgeVoiceConfig: undefined }),
-          }
-        : char
-    )
+    const normalizedLang = (lang || 'en').trim().toLowerCase().split('-')[0] || 'en'
+
+    const updatedCharacters = characters.map((char, idx) => {
+      if (idx !== characterIndex) return char
+
+      const existingByLang = { ...(char.edgeVoiceConfigByLang || {}) }
+      if (edgeVoiceConfig) {
+        existingByLang[normalizedLang] = edgeVoiceConfig
+      } else {
+        delete existingByLang[normalizedLang]
+      }
+
+      const next: Character = {
+        ...char,
+        edgeVoiceConfigByLang:
+          Object.keys(existingByLang).length > 0 ? existingByLang : undefined,
+      }
+
+      if (normalizedLang === 'en') {
+        next.edgeVoiceConfig = edgeVoiceConfig || undefined
+      }
+
+      return next
+    })
 
     setCharacters(updatedCharacters)
 

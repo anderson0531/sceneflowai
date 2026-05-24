@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Users,
   Plus,
@@ -62,6 +62,7 @@ import {
 } from "@/lib/voiceRecommendation";
 import {
   resolveEdgeVoiceConfigForCharacter,
+  getEdgeVoiceConfigForLang,
 } from "@/lib/tts/edgeTtsVoices";
 import type { EdgeVoiceConfig } from "@/types/vision";
 
@@ -80,6 +81,7 @@ export interface CharacterLibraryProps {
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void;
   onUpdateCharacterEdgeVoice?: (
     characterId: string,
+    lang: string,
     edgeVoiceConfig: EdgeVoiceConfig | null,
   ) => void;
   onUpdateCharacterAppearance?: (
@@ -178,6 +180,7 @@ interface CharacterCardProps {
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void;
   onUpdateCharacterEdgeVoice?: (
     characterId: string,
+    lang: string,
     edgeVoiceConfig: EdgeVoiceConfig | null,
   ) => void;
   onUpdateAppearance?: (characterId: string, description: string) => void;
@@ -787,6 +790,7 @@ const CharacterCard = ({
   const [isGeneratingWardrobe, setIsGeneratingWardrobe] = useState(false);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [edgeVoiceDialogOpen, setEdgeVoiceDialogOpen] = useState(false);
+  const [edgeEdgeLang, setEdgeEdgeLang] = useState("en");
   const [isAutoSelectingVoice, setIsAutoSelectingVoice] = useState(false);
   const autoTestAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
@@ -871,6 +875,24 @@ const CharacterCard = ({
           ]
         : [];
 
+  const edgeVoiceConfigsByLang = useMemo(() => {
+    const merged: Record<string, EdgeVoiceConfig> = {
+      ...(character.edgeVoiceConfigByLang || {}),
+    };
+    if (
+      character.edgeVoiceConfig?.voiceId &&
+      !merged.en
+    ) {
+      merged.en = character.edgeVoiceConfig;
+    }
+    return merged;
+  }, [character.edgeVoiceConfigByLang, character.edgeVoiceConfig]);
+
+  const activeEdgeVoiceConfig = getEdgeVoiceConfigForLang(
+    character,
+    edgeEdgeLang,
+  );
+
   const handleAutoEdgeVoice = () => {
     if (!onUpdateCharacterEdgeVoice) {
       toast.error("Edge voice update is not available.");
@@ -878,15 +900,19 @@ const CharacterCard = ({
     }
     const resolved = resolveEdgeVoiceConfigForCharacter({
       gender: character.gender,
-      lang: "en",
+      lang: edgeEdgeLang,
     });
-    onUpdateCharacterEdgeVoice(characterId, resolved);
-    toast.success(`Edge fallback voice set to ${resolved.voiceName}`);
+    onUpdateCharacterEdgeVoice(characterId, edgeEdgeLang, resolved);
+    toast.success(
+      `Edge fallback voice for ${edgeEdgeLang.toUpperCase()} set to ${resolved.voiceName}`,
+    );
   };
 
   const handleClearEdgeVoice = () => {
-    onUpdateCharacterEdgeVoice?.(characterId, null);
-    toast.success("Edge fallback voice reset to auto (gender + language)");
+    onUpdateCharacterEdgeVoice?.(characterId, edgeEdgeLang, null);
+    toast.success(
+      `Edge fallback voice for ${edgeEdgeLang.toUpperCase()} reset to auto`,
+    );
   };
 
   // Build character context for voice recommendations
@@ -2257,22 +2283,54 @@ const CharacterCard = ({
                 </div>
 
                 <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                      Edge fallback (per language)
+                    </p>
+                    <select
+                      value={edgeEdgeLang}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setEdgeEdgeLang(e.target.value);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-[10px] px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900"
+                    >
+                      {["en", "hi", "ar", "es", "th", "ja", "zh"].map((lang) => (
+                        <option key={lang} value={lang}>
+                          {lang.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {Object.keys(edgeVoiceConfigsByLang).length > 0 ? (
+                    <ul className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 space-y-0.5">
+                      {Object.entries(edgeVoiceConfigsByLang).map(([lang, cfg]) => (
+                        <li key={lang}>
+                          <span className="uppercase font-medium">{lang}</span>:{" "}
+                          <span className="text-emerald-600 dark:text-emerald-400">
+                            {cfg.voiceName}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                   <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2">
-                    Edge fallback:{" "}
-                    {character.edgeVoiceConfig?.voiceName ? (
+                    {edgeEdgeLang.toUpperCase()}:{" "}
+                    {activeEdgeVoiceConfig?.voiceName ? (
                       <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                        {character.edgeVoiceConfig.voiceName}
+                        {activeEdgeVoiceConfig.voiceName}
                       </span>
                     ) : (
                       <span>Auto (gender + language)</span>
                     )}
                   </p>
-                  {character.edgeVoiceConfig?.voiceId && (
+                  {activeEdgeVoiceConfig?.voiceId && (
                     <p
                       className="text-[10px] text-gray-400 dark:text-gray-500 mb-2 font-mono truncate"
-                      title={character.edgeVoiceConfig.voiceId}
+                      title={activeEdgeVoiceConfig.voiceId}
                     >
-                      {character.edgeVoiceConfig.voiceId}
+                      {activeEdgeVoiceConfig.voiceId}
                     </p>
                   )}
                   <div className="grid grid-cols-2 gap-2">
@@ -2292,13 +2350,13 @@ const CharacterCard = ({
                         handleAutoEdgeVoice();
                       }}
                       className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750"
-                      title="Pick Edge voice from character gender"
+                      title={`Auto-pick Edge voice for ${edgeEdgeLang.toUpperCase()} from character gender`}
                     >
                       <Sparkles className="w-4 h-4" />
                       Auto Edge
                     </button>
                   </div>
-                  {character.edgeVoiceConfig?.voiceId && (
+                  {activeEdgeVoiceConfig?.voiceId && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -2306,7 +2364,7 @@ const CharacterCard = ({
                       }}
                       className="mt-2 w-full text-[11px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline"
                     >
-                      Reset to auto
+                      Reset {edgeEdgeLang.toUpperCase()} to auto
                     </button>
                   )}
                 </div>
@@ -3178,10 +3236,13 @@ const CharacterCard = ({
         <EdgeVoicePicker
           open={edgeVoiceDialogOpen}
           onOpenChange={setEdgeVoiceDialogOpen}
-          selectedVoiceId={character.edgeVoiceConfig?.voiceId}
-          onSelectVoice={(voiceId, voiceName) => {
-            onUpdateCharacterEdgeVoice?.(characterId, { voiceId, voiceName });
-            toast.success(`Edge fallback voice set to ${voiceName}`);
+          defaultLanguage={edgeEdgeLang}
+          selectedVoiceId={activeEdgeVoiceConfig?.voiceId}
+          onSelectVoice={(voiceId, voiceName, lang) => {
+            onUpdateCharacterEdgeVoice?.(characterId, lang, { voiceId, voiceName });
+            toast.success(
+              `Edge fallback voice for ${lang.toUpperCase()} set to ${voiceName}`,
+            );
           }}
         />
 
