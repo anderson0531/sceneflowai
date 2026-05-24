@@ -44,6 +44,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { upload } from "@vercel/blob/client";
 import { VoiceSelectionDialog } from "@/components/tts/VoiceSelectionDialog";
+import { EdgeVoicePicker } from "@/components/tts/EdgeVoicePicker";
 import { NarratorVoicePicker } from "@/components/tts/NarratorVoicePicker";
 import { CharacterPromptBuilder } from "@/components/vision/CharacterPromptBuilder";
 import {
@@ -59,6 +60,10 @@ import {
   getCharacterVoiceRecommendations,
   type ElevenLabsVoice,
 } from "@/lib/voiceRecommendation";
+import {
+  resolveEdgeVoiceConfigForCharacter,
+} from "@/lib/tts/edgeTtsVoices";
+import type { EdgeVoiceConfig } from "@/types/vision";
 
 export interface CharacterLibraryProps {
   characters: any[];
@@ -73,6 +78,10 @@ export interface CharacterLibraryProps {
   onApproveCharacter: (characterId: string) => void;
   onUpdateCharacterAttributes?: (characterId: string, attributes: any) => void;
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void;
+  onUpdateCharacterEdgeVoice?: (
+    characterId: string,
+    edgeVoiceConfig: EdgeVoiceConfig | null,
+  ) => void;
   onUpdateCharacterAppearance?: (
     characterId: string,
     description: string,
@@ -167,6 +176,10 @@ interface CharacterCardProps {
     section: "coreIdentity" | "appearance",
   ) => void;
   onUpdateCharacterVoice?: (characterId: string, voiceConfig: any) => void;
+  onUpdateCharacterEdgeVoice?: (
+    characterId: string,
+    edgeVoiceConfig: EdgeVoiceConfig | null,
+  ) => void;
   onUpdateAppearance?: (characterId: string, description: string) => void;
   onUpdateCharacterName?: (characterId: string, name: string) => void;
   onUpdateCharacterRole?: (characterId: string, role: string) => void;
@@ -226,6 +239,7 @@ export function CharacterLibrary({
   onApproveCharacter,
   onUpdateCharacterAttributes,
   onUpdateCharacterVoice,
+  onUpdateCharacterEdgeVoice,
   onUpdateCharacterAppearance,
   onUpdateCharacterName,
   onUpdateCharacterRole,
@@ -555,6 +569,7 @@ export function CharacterLibrary({
                   expandedCharId={expandedSections[charId]}
                   onToggleExpand={handleToggleSection}
                   onUpdateCharacterVoice={onUpdateCharacterVoice}
+                  onUpdateCharacterEdgeVoice={onUpdateCharacterEdgeVoice}
                   onUpdateAppearance={onUpdateCharacterAppearance}
                   onUpdateCharacterName={onUpdateCharacterName}
                   onUpdateCharacterRole={onUpdateCharacterRole}
@@ -722,6 +737,7 @@ const CharacterCard = ({
   expandedCharId,
   onToggleExpand,
   onUpdateCharacterVoice,
+  onUpdateCharacterEdgeVoice,
   onUpdateAppearance,
   onUpdateCharacterName,
   onUpdateCharacterRole,
@@ -770,6 +786,7 @@ const CharacterCard = ({
   const [aiPromptText, setAiPromptText] = useState("");
   const [isGeneratingWardrobe, setIsGeneratingWardrobe] = useState(false);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
+  const [edgeVoiceDialogOpen, setEdgeVoiceDialogOpen] = useState(false);
   const [isAutoSelectingVoice, setIsAutoSelectingVoice] = useState(false);
   const autoTestAudioRef = React.useRef<HTMLAudioElement | null>(null);
 
@@ -853,6 +870,24 @@ const CharacterCard = ({
             },
           ]
         : [];
+
+  const handleAutoEdgeVoice = () => {
+    if (!onUpdateCharacterEdgeVoice) {
+      toast.error("Edge voice update is not available.");
+      return;
+    }
+    const resolved = resolveEdgeVoiceConfigForCharacter({
+      gender: character.gender,
+      lang: "en",
+    });
+    onUpdateCharacterEdgeVoice(characterId, resolved);
+    toast.success(`Edge fallback voice set to ${resolved.voiceName}`);
+  };
+
+  const handleClearEdgeVoice = () => {
+    onUpdateCharacterEdgeVoice?.(characterId, null);
+    toast.success("Edge fallback voice reset to auto (gender + language)");
+  };
 
   // Build character context for voice recommendations
   const characterContext: CharacterContext = {
@@ -2220,6 +2255,61 @@ const CharacterCard = ({
                     Auto
                   </button>
                 </div>
+
+                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2">
+                    Edge fallback:{" "}
+                    {character.edgeVoiceConfig?.voiceName ? (
+                      <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                        {character.edgeVoiceConfig.voiceName}
+                      </span>
+                    ) : (
+                      <span>Auto (gender + language)</span>
+                    )}
+                  </p>
+                  {character.edgeVoiceConfig?.voiceId && (
+                    <p
+                      className="text-[10px] text-gray-400 dark:text-gray-500 mb-2 font-mono truncate"
+                      title={character.edgeVoiceConfig.voiceId}
+                    >
+                      {character.edgeVoiceConfig.voiceId}
+                    </p>
+                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEdgeVoiceDialogOpen(true);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                      Select Edge Voice
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAutoEdgeVoice();
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750"
+                      title="Pick Edge voice from character gender"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Auto Edge
+                    </button>
+                  </div>
+                  {character.edgeVoiceConfig?.voiceId && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleClearEdgeVoice();
+                      }}
+                      className="mt-2 w-full text-[11px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline"
+                    >
+                      Reset to auto
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -3082,6 +3172,16 @@ const CharacterCard = ({
             onUpdateCharacterAttributes?.(characterId, {
               voiceTrainingAudioUrl: audioUrl,
             });
+          }}
+        />
+
+        <EdgeVoicePicker
+          open={edgeVoiceDialogOpen}
+          onOpenChange={setEdgeVoiceDialogOpen}
+          selectedVoiceId={character.edgeVoiceConfig?.voiceId}
+          onSelectVoice={(voiceId, voiceName) => {
+            onUpdateCharacterEdgeVoice?.(characterId, { voiceId, voiceName });
+            toast.success(`Edge fallback voice set to ${voiceName}`);
           }}
         />
 

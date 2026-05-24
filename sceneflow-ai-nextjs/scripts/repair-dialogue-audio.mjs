@@ -211,10 +211,14 @@ async function synthesizeGoogleMp3({ text, lang, voiceName }) {
   return { buffer: Buffer.from(data.audioContent, 'base64'), voiceId: voice, provider: 'google' }
 }
 
-async function synthesizeEdgeMp3({ text, lang, gender }) {
+async function synthesizeEdgeMp3({ text, lang, gender, edgeVoiceConfig }) {
   const { synthesizeEdgeMp3: synth } = await import('../src/lib/tts/synthesizeEdgeMp3.ts')
-  const { resolveEdgeVoice } = await import('../src/lib/tts/edgeTtsVoices.ts')
-  const voice = resolveEdgeVoice(lang, gender)
+  const { resolveEdgeVoiceForCharacter } = await import('../src/lib/tts/edgeTtsVoices.ts')
+  const voice = resolveEdgeVoiceForCharacter({
+    edgeVoiceConfig,
+    gender,
+    lang,
+  })
   const buffer = await synth({ text, voice, language: lang })
   return { buffer, voiceId: voice, provider: 'edge' }
 }

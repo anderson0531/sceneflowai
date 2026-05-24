@@ -113,6 +113,11 @@ export interface VisionVoiceConfig {
   voiceDescription?: string
 }
 
+export interface EdgeVoiceConfig {
+  voiceId: string
+  voiceName: string
+}
+
 export interface VisionCharacter {
   id: string
   name: string
@@ -122,6 +127,7 @@ export interface VisionCharacter {
   referenceImage?: string
   appearanceDescription?: string
   voiceConfig?: VisionVoiceConfig
+  edgeVoiceConfig?: EdgeVoiceConfig
   voiceDescription?: string
   voiceTrainingAudioUrl?: string
   wardrobes?: CharacterWardrobe[]

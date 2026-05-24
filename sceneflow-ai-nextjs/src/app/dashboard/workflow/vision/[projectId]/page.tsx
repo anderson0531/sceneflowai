@@ -315,6 +315,7 @@ interface Character {
   appearanceDescription?: string
   // Voice assignment
   voiceConfig?: VoiceConfig
+  edgeVoiceConfig?: { voiceId: string; voiceName: string }
   // AI-generated voice description (cached from Gemini analysis)
   voiceDescription?: string
   // URL to stored voice training audio sample (MP3 in Vercel Blob)
@@ -4402,6 +4403,64 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         try { 
           const { toast } = require('sonner')
           toast.error('Failed to save voice assignment')
+        } catch {}
+      }
+    }
+  }
+
+  const handleUpdateCharacterEdgeVoice = async (
+    characterId: string,
+    edgeVoiceConfig: { voiceId: string; voiceName: string } | null
+  ) => {
+    const characterIndex = characters.findIndex((c) => c.id === characterId)
+    if (characterIndex === -1) {
+      try {
+        const { toast } = require('sonner')
+        toast.error('Character not found')
+      } catch {}
+      return
+    }
+
+    const updatedCharacters = characters.map((char, idx) =>
+      idx === characterIndex
+        ? {
+            ...char,
+            ...(edgeVoiceConfig
+              ? { edgeVoiceConfig }
+              : { edgeVoiceConfig: undefined }),
+          }
+        : char
+    )
+
+    setCharacters(updatedCharacters)
+
+    if (project) {
+      const updatedProject = {
+        ...project,
+        metadata: {
+          ...(projectRef.current || project).metadata,
+          visionPhase: {
+            ...(projectRef.current || project)?.metadata?.visionPhase,
+            characters: updatedCharacters,
+            script: scriptRef.current || script,
+            scenes: scenes,
+            narrationVoice,
+            descriptionVoice,
+          },
+        },
+      }
+      setProject(updatedProject)
+
+      try {
+        await serializedProjectSave(
+          { metadata: updatedProject.metadata },
+          'handleUpdateCharacterEdgeVoice'
+        )
+      } catch (error) {
+        console.error('[Character Edge Voice] Failed to save:', error)
+        try {
+          const { toast } = require('sonner')
+          toast.error('Failed to save Edge fallback voice')
         } catch {}
       }
     }
@@ -11442,6 +11501,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onApproveCharacter={handleApproveCharacter}
                 onUpdateCharacterAttributes={handleUpdateCharacterAttributes}
                 onUpdateCharacterVoice={handleUpdateCharacterVoice}
+                onUpdateCharacterEdgeVoice={handleUpdateCharacterEdgeVoice}
                 onUpdateCharacterAppearance={handleUpdateCharacterAppearance}
                 onUpdateCharacterName={handleUpdateCharacterName}
                 onUpdateCharacterRole={handleUpdateCharacterRole}

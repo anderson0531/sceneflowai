@@ -17,7 +17,8 @@ import {
 } from '../../../../lib/tts/googleTtsRetry'
 import { synthesizeElevenLabsMp3 } from '../../../../lib/elevenlabs/textToSpeech'
 import { synthesizeEdgeMp3 } from '../../../../lib/tts/synthesizeEdgeMp3'
-import { resolveEdgeVoice } from '../../../../lib/tts/edgeTtsVoices'
+import { resolveEdgeVoiceForCharacter } from '../../../../lib/tts/edgeTtsVoices'
+import type { EdgeVoiceConfig } from '../../../../types/vision'
 import {
   isEdgeTtsFallbackEnabled,
   isQuotaOrRateLimitError,
@@ -264,6 +265,11 @@ export async function POST(req: NextRequest) {
       characterId,
       characterName
     )
+    const characterEdgeVoice = await lookupCharacterEdgeVoice(
+      projectId,
+      characterId,
+      characterName
+    )
 
     const synthesis = await generateAudio(
       optimized.text,
@@ -271,7 +277,8 @@ export async function POST(req: NextRequest) {
       language,
       audioType,
       optimized.cues,
-      characterGender
+      characterGender,
+      characterEdgeVoice
     )
     const audioBuffer = synthesis.buffer
     const usedProvider = synthesis.provider
@@ -430,6 +437,42 @@ async function lookupCharacterGender(
   characterId?: string,
   characterName?: string
 ): Promise<string | undefined> {
+  const char = await findVisionCharacter(projectId, characterId, characterName)
+  const gender =
+    (char as { gender?: string })?.gender ||
+    (char as { attributes?: { gender?: string } })?.attributes?.gender
+  return typeof gender === 'string' ? gender : undefined
+}
+
+async function lookupCharacterEdgeVoice(
+  projectId: string,
+  characterId?: string,
+  characterName?: string
+): Promise<EdgeVoiceConfig | undefined> {
+  const char = await findVisionCharacter(projectId, characterId, characterName)
+  const edgeVoiceConfig = (char as { edgeVoiceConfig?: EdgeVoiceConfig })
+    ?.edgeVoiceConfig
+  if (
+    edgeVoiceConfig &&
+    typeof edgeVoiceConfig.voiceId === 'string' &&
+    edgeVoiceConfig.voiceId.trim()
+  ) {
+    return {
+      voiceId: edgeVoiceConfig.voiceId.trim(),
+      voiceName:
+        typeof edgeVoiceConfig.voiceName === 'string'
+          ? edgeVoiceConfig.voiceName
+          : edgeVoiceConfig.voiceId.trim(),
+    }
+  }
+  return undefined
+}
+
+async function findVisionCharacter(
+  projectId: string,
+  characterId?: string,
+  characterName?: string
+): Promise<Record<string, unknown> | undefined> {
   try {
     await sequelize.authenticate()
     const project = await Project.findByPk(projectId)
@@ -446,10 +489,7 @@ async function lookupCharacterGender(
           typeof c?.name === 'string' && c.name.toLowerCase() === lower
       )
     }
-    const gender =
-      (char as { gender?: string })?.gender ||
-      (char as { attributes?: { gender?: string } })?.attributes?.gender
-    return typeof gender === 'string' ? gender : undefined
+    return char as Record<string, unknown> | undefined
   } catch {
     return undefined
   }
@@ -461,7 +501,8 @@ async function generateAudio(
   language: string = 'en',
   audioType: AudioGenerationRequest['audioType'] = 'narration',
   deliveryCues: string[] = [],
-  characterGender?: string
+  characterGender?: string,
+  characterEdgeVoice?: EdgeVoiceConfig
 ): Promise<AudioSynthesisResult> {
   const primaryProvider: 'google' | 'elevenlabs' =
     voiceConfig.provider === 'elevenlabs' ? 'elevenlabs' : 'google'
@@ -480,7 +521,11 @@ async function generateAudio(
     if (!isEdgeTtsFallbackEnabled() || !isQuotaOrRateLimitError(err)) {
       throw err
     }
-    const edgeVoice = resolveEdgeVoice(language, characterGender)
+    const edgeVoice = resolveEdgeVoiceForCharacter({
+      edgeVoiceConfig: characterEdgeVoice,
+      gender: characterGender,
+      lang: language,
+    })
     console.warn(
       `[Scene Audio] Paid TTS failed (${primaryProvider}), falling back to Edge voice ${edgeVoice}:`,
       err instanceof Error ? err.message : err

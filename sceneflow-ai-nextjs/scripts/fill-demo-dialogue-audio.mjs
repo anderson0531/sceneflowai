@@ -248,6 +248,7 @@ function collectGapWorkItems(scenes, translations, characters, targetLangs) {
             character: line?.character || 'dialogue',
             englishText: lineText,
             gender: findCharacter(characters, line?.character)?.gender,
+            edgeVoiceConfig: findCharacter(characters, line?.character)?.edgeVoiceConfig,
             needsTranslation: true,
           })
           continue
@@ -262,6 +263,7 @@ function collectGapWorkItems(scenes, translations, characters, targetLangs) {
           character: line?.character || 'dialogue',
           lineText: translated,
           gender: char?.gender || char?.attributes?.gender,
+          edgeVoiceConfig: char?.edgeVoiceConfig,
         })
       }
     }
@@ -273,7 +275,7 @@ async function main() {
   const { resolveStoryboardScenes } = await import('../src/lib/storyboard/resolveStoryboardScenes.ts')
   const { optimizeTextForTTS } = await import('../src/lib/tts/textOptimizer.ts')
   const { synthesizeEdgeMp3 } = await import('../src/lib/tts/synthesizeEdgeMp3.ts')
-  const { resolveEdgeVoice } = await import('../src/lib/tts/edgeTtsVoices.ts')
+  const { resolveEdgeVoiceForCharacter } = await import('../src/lib/tts/edgeTtsVoices.ts')
   const { getAudioDurationFromBuffer } = await import('../src/lib/audio/serverAudioDuration.ts')
 
   const sequelize = new Sequelize(connectionString, {
@@ -394,7 +396,11 @@ async function main() {
       continue
     }
 
-    const edgeVoice = resolveEdgeVoice(row.lang, row.gender)
+    const edgeVoice = resolveEdgeVoiceForCharacter({
+      edgeVoiceConfig: row.edgeVoiceConfig,
+      gender: row.gender,
+      lang: row.lang,
+    })
     console.log(
       `\nSynthesizing Scene ${row.sceneIndex + 1} [${row.lang}] dIdx ${row.dialogueIndex} (${row.character}) voice=${edgeVoice}`
     )

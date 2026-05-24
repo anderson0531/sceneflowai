@@ -1127,6 +1127,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onApproveCharacter,
     onUpdateCharacterAttributes,
     onUpdateCharacterVoice,
+    onUpdateCharacterEdgeVoice,
     onUpdateCharacterAppearance,
     onUpdateCharacterName,
     onUpdateCharacterRole,
@@ -1533,6 +1534,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onApproveCharacter={onApproveCharacter}
               onUpdateCharacterAttributes={onUpdateCharacterAttributes}
               onUpdateCharacterVoice={onUpdateCharacterVoice}
+              onUpdateCharacterEdgeVoice={onUpdateCharacterEdgeVoice}
               onUpdateCharacterAppearance={onUpdateCharacterAppearance}
               onUpdateCharacterName={onUpdateCharacterName}
               onUpdateCharacterRole={onUpdateCharacterRole}
