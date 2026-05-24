@@ -120,6 +120,7 @@ import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { resolveFrameGenerationContext } from '@/lib/vision/frameGenerationContext'
 import { resolveQuickFrameActionPrompt } from '@/lib/vision/framePromptBaseline'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
+import { getEdgeVoiceConfigForResolution } from '@/lib/tts/edgeTtsVoices'
 import { v4 as uuidv4 } from 'uuid'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useOverlayStore } from '@/store/useOverlayStore'
@@ -9100,6 +9101,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           ? descriptionVoice
           : narrationVoice
 
+      const edgeVoiceConfig =
+        audioType === 'dialogue' && character
+          ? getEdgeVoiceConfigForResolution(character, targetLanguage)
+          : undefined
+      const characterGender =
+        character?.gender ??
+        (character as { attributes?: { gender?: string } } | undefined)?.attributes?.gender
+
       // Debug logging for voice config resolution
       console.log('[Generate Scene Audio] Voice config resolution:', {
         audioType,
@@ -9108,6 +9117,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         provider: voiceConfig?.provider,
         characterName: character?.name,
         characterHasVoice: !!character?.voiceConfig,
+        edgeVoiceId: edgeVoiceConfig?.voiceId,
+        edgeVoiceName: edgeVoiceConfig?.voiceName,
+        characterGender,
+        targetLanguage,
         narrationVoiceConfigured: !!narrationVoice,
         descriptionVoiceConfigured: !!descriptionVoice
       })
@@ -9152,8 +9165,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           dialogueIndex,
           lineId: (dialogueLine as any)?.lineId,
           lineKind: (dialogueLine as any)?.kind ?? (audioType === 'dialogue' ? 'dialogue' : undefined),
-          characterId: (dialogueLine as any)?.characterId,
+          characterId: character?.id ?? (dialogueLine as any)?.characterId,
           language: language || 'en',
+          edgeVoiceConfig,
+          characterGender,
           // Skip server-side translation if we already have pre-translated text from stored translations
           // This prevents double-translation (translating already-translated text)
           skipTranslation: isPreTranslated,
@@ -9204,6 +9219,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       if (data.success) {
+        console.log('[Generate Scene Audio] Synthesis result:', {
+          provider: data.provider,
+          voiceId: data.voiceId,
+          fallback: data.fallback ?? false,
+          edgeVoiceSent: edgeVoiceConfig?.voiceId ?? null,
+          characterGender: characterGender ?? null,
+          targetLanguage,
+        })
+        if (data.fallback && data.provider === 'edge') {
+          try {
+            const { toast } = require('sonner')
+            toast.info(`Used Edge TTS fallback (${data.voiceId})`, { duration: 5000 })
+          } catch {}
+        }
+
         // Use functional update to ensure we're working with latest state
         // This is critical when multiple audio generations run sequentially
         // NOTE: We do NOT save to database here - the API's updateSceneAudio() already

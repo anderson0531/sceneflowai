@@ -11,6 +11,7 @@
 
 import { optimizeTextForTTS } from '../../lib/tts/textOptimizer'
 import { toCanonicalName, generateAliases } from '../../lib/character/canonical'
+import { getEdgeVoiceConfigForResolution } from '../../lib/tts/edgeTtsVoices'
 import { resolveSfxDuration } from '../../lib/elevenlabs/sfxDuration'
 import {
   NARRATOR_CHARACTER,
@@ -307,6 +308,13 @@ export async function generateSceneAudio(
         const dialogueText = storedDialogueLine || dialogueLine.line
         const optimized = optimizeTextForTTS(dialogueText)
 
+        const edgeVoiceConfig = character
+          ? getEdgeVoiceConfigForResolution(character, language || 'en')
+          : undefined
+        const characterGender =
+          character?.gender ??
+          (character as { attributes?: { gender?: string } } | undefined)?.attributes?.gender
+
         try {
           const res = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
             method: 'POST',
@@ -323,6 +331,8 @@ export async function generateSceneAudio(
               lineId: dialogueLine.lineId,
               lineKind,
               language,
+              edgeVoiceConfig,
+              characterGender,
               skipTranslation: !!storedDialogueLine,
               skipDbUpdate: true,
             }),

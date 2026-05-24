@@ -63,6 +63,7 @@ import {
 import {
   resolveEdgeVoiceConfigForCharacter,
   getEdgeVoiceConfigForLang,
+  getEdgeVoiceConfigForResolution,
 } from "@/lib/tts/edgeTtsVoices";
 import type { EdgeVoiceConfig } from "@/types/vision";
 
@@ -888,7 +889,7 @@ const CharacterCard = ({
     return merged;
   }, [character.edgeVoiceConfigByLang, character.edgeVoiceConfig]);
 
-  const activeEdgeVoiceConfig = getEdgeVoiceConfigForLang(
+  const activeEdgeVoiceConfig = getEdgeVoiceConfigForResolution(
     character,
     edgeEdgeLang,
   );

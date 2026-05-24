@@ -88,13 +88,29 @@ function normalizeLangCode(lang?: string): string {
 }
 
 /** Resolve an Edge neural voice for a target language and optional character gender. */
-export function resolveEdgeVoice(lang: string, gender?: string): string {
+export function resolveEdgeVoice(
+  lang: string,
+  gender?: string | EdgeVoiceGender
+): string {
   const code = normalizeLangCode(lang)
   const voices = EDGE_VOICE_BY_LANG[code] ?? EDGE_VOICE_BY_LANG.en
+  if (gender === 'female') return voices.female
+  if (gender === 'male') return voices.male
   const inferred = inferGenderFromText(gender)
   if (inferred === 'female') return voices.female
   if (inferred === 'male') return voices.male
   return voices.male
+}
+
+/** Infer gender from a stored voice display name, e.g. "Jenny (US)". */
+function inferGenderFromEdgeVoiceName(voiceName?: string): EdgeVoiceGender | undefined {
+  if (!voiceName?.trim()) return undefined
+  const lower = voiceName.trim().toLowerCase()
+  const fromCatalog = EDGE_VOICES.find((v) => {
+    const token = v.name.toLowerCase().split(/\s+/)[0]
+    return lower.includes(token)
+  })
+  return fromCatalog?.gender
 }
 
 export function getEdgeVoiceById(voiceId: string): EdgeVoice | undefined {
@@ -161,6 +177,48 @@ export function getEdgeVoiceConfigForLang(
   return undefined
 }
 
+/**
+ * Best Edge voice config for synthesis: exact language first, then en, then any
+ * stored voice (used for gender/locale swap when target lang has no explicit pick).
+ */
+export function getEdgeVoiceConfigForResolution(
+  char: EdgeVoiceCharacterLike | null | undefined,
+  lang: string
+): EdgeVoiceConfig | undefined {
+  const exact = getEdgeVoiceConfigForLang(char, lang)
+  if (exact) return exact
+
+  const byLang = char?.edgeVoiceConfigByLang
+  if (byLang) {
+    const enCfg = byLang.en
+    if (enCfg?.voiceId?.trim()) {
+      return {
+        voiceId: enCfg.voiceId.trim(),
+        voiceName: enCfg.voiceName?.trim() || getEdgeVoiceName(enCfg.voiceId.trim()),
+      }
+    }
+    for (const cfg of Object.values(byLang)) {
+      if (cfg?.voiceId?.trim()) {
+        return {
+          voiceId: cfg.voiceId.trim(),
+          voiceName: cfg.voiceName?.trim() || getEdgeVoiceName(cfg.voiceId.trim()),
+        }
+      }
+    }
+  }
+
+  if (char?.edgeVoiceConfig?.voiceId?.trim()) {
+    return {
+      voiceId: char.edgeVoiceConfig.voiceId.trim(),
+      voiceName:
+        char.edgeVoiceConfig.voiceName?.trim() ||
+        getEdgeVoiceName(char.edgeVoiceConfig.voiceId.trim()),
+    }
+  }
+
+  return undefined
+}
+
 function genderHintFromVoiceId(voiceId: string): EdgeVoiceGender | undefined {
   return getEdgeVoiceById(voiceId)?.gender
 }
@@ -176,11 +234,13 @@ export function resolveEdgeVoiceForCharacter(params: {
   if (explicit) {
     const voiceLang = getEdgeVoiceLanguageFromId(explicit)
     if (voiceLang === targetLang) return explicit
-    const genderHint =
+    const genderHint: EdgeVoiceGender | undefined =
       genderHintFromVoiceId(explicit) ||
+      inferGenderFromEdgeVoiceName(params.edgeVoiceConfig?.voiceName) ||
       inferGenderFromText(params.gender) ||
       undefined
-    return resolveEdgeVoice(targetLang, genderHint)
+    if (genderHint) return resolveEdgeVoice(targetLang, genderHint)
+    return resolveEdgeVoice(targetLang, params.gender)
   }
   return resolveEdgeVoice(targetLang, params.gender)
 }

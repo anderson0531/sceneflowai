@@ -212,3 +212,44 @@ export function matchCharacter(
   return null
 }
 
+/** Match a vision-phase character record by id, canonical name, or aliases. */
+export function matchCharacterRecord<
+  T extends { id?: string; name?: string; aliases?: string[] },
+>(
+  characters: T[],
+  options: { characterId?: string; characterName?: string }
+): T | undefined {
+  const { characterId, characterName } = options
+  if (!Array.isArray(characters) || characters.length === 0) return undefined
+
+  if (characterId) {
+    const byId = characters.find((c) => c?.id === characterId)
+    if (byId) return byId
+  }
+
+  if (!characterName?.trim()) return undefined
+
+  const canonicalSearch = toCanonicalName(characterName)
+
+  const exact = characters.find(
+    (c) => typeof c?.name === 'string' && toCanonicalName(c.name) === canonicalSearch
+  )
+  if (exact) return exact
+
+  const byStoredAlias = characters.find(
+    (c) =>
+      Array.isArray(c.aliases) &&
+      c.aliases.some(
+        (alias) => typeof alias === 'string' && toCanonicalName(alias) === canonicalSearch
+      )
+  )
+  if (byStoredAlias) return byStoredAlias
+
+  return characters.find((c) => {
+    if (typeof c?.name !== 'string') return false
+    return generateAliases(toCanonicalName(c.name)).some(
+      (alias) => toCanonicalName(alias) === canonicalSearch
+    )
+  })
+}
+

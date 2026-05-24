@@ -6,6 +6,7 @@ import {
   listEdgeVoices,
   getEdgeVoiceLanguageFromId,
   getEdgeVoiceConfigForLang,
+  getEdgeVoiceConfigForResolution,
   EDGE_VOICE_BY_LANG,
 } from '@/lib/tts/edgeTtsVoices'
 import { isEdgeTtsFallbackEnabled, isQuotaOrRateLimitError } from '@/lib/tts/edgeTtsFallback'
@@ -109,6 +110,47 @@ describe('edgeTtsVoices', () => {
       'en'
     )
     expect(config?.voiceId).toBe('en-US-JennyNeural')
+  })
+
+  it('getEdgeVoiceConfigForResolution falls back to en when target lang unset', () => {
+    const config = getEdgeVoiceConfigForResolution(
+      {
+        edgeVoiceConfigByLang: {
+          en: { voiceId: 'en-US-JennyNeural', voiceName: 'Jenny (US)' },
+        },
+      },
+      'hi'
+    )
+    expect(config?.voiceId).toBe('en-US-JennyNeural')
+  })
+
+  it('Jenny en config resolves to female Hindi voice without explicit gender', () => {
+    const stored = getEdgeVoiceConfigForResolution(
+      {
+        edgeVoiceConfigByLang: {
+          en: { voiceId: 'en-US-JennyNeural', voiceName: 'Jenny (US)' },
+        },
+      },
+      'hi'
+    )
+    expect(
+      resolveEdgeVoiceForCharacter({
+        edgeVoiceConfig: stored,
+        lang: 'hi',
+      })
+    ).toBe(EDGE_VOICE_BY_LANG.hi.female)
+  })
+
+  it('infers female from voice name when voice id is unknown', () => {
+    expect(
+      resolveEdgeVoiceForCharacter({
+        edgeVoiceConfig: {
+          voiceId: 'custom-jenny-id',
+          voiceName: 'Jenny (US)',
+        },
+        lang: 'hi',
+      })
+    ).toBe(EDGE_VOICE_BY_LANG.hi.female)
   })
 
   it('listEdgeVoices filters by language', () => {

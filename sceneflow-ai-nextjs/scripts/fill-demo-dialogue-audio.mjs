@@ -275,7 +275,7 @@ async function main() {
   const { resolveStoryboardScenes } = await import('../src/lib/storyboard/resolveStoryboardScenes.ts')
   const { optimizeTextForTTS } = await import('../src/lib/tts/textOptimizer.ts')
   const { synthesizeEdgeMp3 } = await import('../src/lib/tts/synthesizeEdgeMp3.ts')
-  const { resolveEdgeVoiceForCharacter, getEdgeVoiceConfigForLang } = await import('../src/lib/tts/edgeTtsVoices.ts')
+  const { resolveEdgeVoiceForCharacter, getEdgeVoiceConfigForResolution } = await import('../src/lib/tts/edgeTtsVoices.ts')
   const { getAudioDurationFromBuffer } = await import('../src/lib/audio/serverAudioDuration.ts')
 
   const sequelize = new Sequelize(connectionString, {
@@ -396,7 +396,7 @@ async function main() {
       continue
     }
 
-    const edgeVoiceConfig = getEdgeVoiceConfigForLang(row.characterRecord, row.lang)
+    const edgeVoiceConfig = getEdgeVoiceConfigForResolution(row.characterRecord, row.lang)
     const edgeVoice = resolveEdgeVoiceForCharacter({
       edgeVoiceConfig,
       gender: row.gender,

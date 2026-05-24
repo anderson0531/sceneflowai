@@ -17,7 +17,8 @@ import {
 } from '../../../../lib/tts/googleTtsRetry'
 import { synthesizeElevenLabsMp3 } from '../../../../lib/elevenlabs/textToSpeech'
 import { synthesizeEdgeMp3 } from '../../../../lib/tts/synthesizeEdgeMp3'
-import { resolveEdgeVoiceForCharacter, getEdgeVoiceConfigForLang, getEdgeVoiceLanguageFromId } from '../../../../lib/tts/edgeTtsVoices'
+import { resolveEdgeVoiceForCharacter, getEdgeVoiceConfigForResolution, getEdgeVoiceLanguageFromId } from '../../../../lib/tts/edgeTtsVoices'
+import { matchCharacterRecord } from '../../../../lib/character/canonical'
 import type { EdgeVoiceConfig } from '../../../../types/vision'
 import {
   isEdgeTtsFallbackEnabled,
@@ -87,6 +88,10 @@ interface AudioGenerationRequest {
   language?: string // Target language for TTS (default: 'en')
   skipTranslation?: boolean // Skip server-side translation (text is already translated)
   skipDbUpdate?: boolean // Skip database update if called from batch generation
+  /** Client-resolved Edge fallback voice (avoids stale DB lookup). */
+  edgeVoiceConfig?: EdgeVoiceConfig
+  /** Client-resolved character gender for Edge fallback. */
+  characterGender?: string
 }
 
 export async function POST(req: NextRequest) {
@@ -114,6 +119,8 @@ export async function POST(req: NextRequest) {
       language: requestedLanguage,
       skipTranslation,
       skipDbUpdate = false,
+      edgeVoiceConfig: clientEdgeVoiceConfig,
+      characterGender: clientCharacterGender,
     } = parsed
 
     // Log the request for debugging
@@ -260,17 +267,34 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Audio] Text length:', optimized.text.length)
     console.log('[Scene Audio] ==================== END TTS INPUT DEBUG ====================')
     
-    const characterGender = await lookupCharacterGender(
-      projectId,
-      characterId,
-      characterName
-    )
-    const characterEdgeVoice = await lookupCharacterEdgeVoice(
-      projectId,
-      characterId,
+    const characterGender =
+      typeof clientCharacterGender === 'string' && clientCharacterGender.trim()
+        ? clientCharacterGender.trim()
+        : await lookupCharacterGender(projectId, characterId, characterName)
+    const characterEdgeVoice =
+      clientEdgeVoiceConfig?.voiceId?.trim()
+        ? {
+            voiceId: clientEdgeVoiceConfig.voiceId.trim(),
+            voiceName:
+              clientEdgeVoiceConfig.voiceName?.trim() ||
+              clientEdgeVoiceConfig.voiceId.trim(),
+          }
+        : await lookupCharacterEdgeVoice(
+            projectId,
+            characterId,
+            characterName,
+            language
+          )
+
+    console.log('[Scene Audio] Edge fallback config:', {
+      language,
       characterName,
-      language
-    )
+      characterId,
+      characterGender: characterGender ?? 'unknown',
+      edgeVoiceFromClient: clientEdgeVoiceConfig?.voiceId ?? null,
+      edgeVoiceResolved: characterEdgeVoice?.voiceId ?? 'none',
+      edgeVoiceName: characterEdgeVoice?.voiceName ?? null,
+    })
 
     const synthesis = await generateAudio(
       optimized.text,
@@ -452,7 +476,7 @@ async function lookupCharacterEdgeVoice(
   language: string = 'en'
 ): Promise<EdgeVoiceConfig | undefined> {
   const char = await findVisionCharacter(projectId, characterId, characterName)
-  return getEdgeVoiceConfigForLang(
+  return getEdgeVoiceConfigForResolution(
     char as {
       edgeVoiceConfigByLang?: Record<string, EdgeVoiceConfig>
       edgeVoiceConfig?: EdgeVoiceConfig
@@ -472,16 +496,7 @@ async function findVisionCharacter(
     const characters = project?.metadata?.visionPhase?.characters
     if (!Array.isArray(characters)) return undefined
 
-    let char = characterId
-      ? characters.find((c: { id?: string }) => c?.id === characterId)
-      : undefined
-    if (!char && characterName) {
-      const lower = characterName.toLowerCase()
-      char = characters.find(
-        (c: { name?: string }) =>
-          typeof c?.name === 'string' && c.name.toLowerCase() === lower
-      )
-    }
+    const char = matchCharacterRecord(characters, { characterId, characterName })
     return char as Record<string, unknown> | undefined
   } catch {
     return undefined
@@ -530,7 +545,7 @@ async function generateAudio(
       )
     }
     console.warn(
-      `[Scene Audio] Paid TTS failed (${primaryProvider}), falling back to Edge voice ${edgeVoice}:`,
+      `[Scene Audio] Paid TTS failed (${primaryProvider}), falling back to Edge voice ${edgeVoice} (stored=${characterEdgeVoice?.voiceId ?? 'none'}, gender=${characterGender ?? 'unknown'}, lang=${language}):`,
       err instanceof Error ? err.message : err
     )
     const buffer = await synthesizeEdgeMp3({ text, voice: edgeVoice, language })
