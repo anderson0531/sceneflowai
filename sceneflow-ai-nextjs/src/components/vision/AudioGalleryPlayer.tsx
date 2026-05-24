@@ -22,16 +22,20 @@ import {
   getCurrentStoryboardVisualFrame,
   getEstablishingFrameUrl,
 } from '@/lib/storyboard/types'
-
-// Ken Burns animation configurations - more pronounced scales for longer durations
-const KEN_BURNS_CONFIGS = [
-  { scale: 1.25, x: -8, y: -4 },   // Zoom in, pan left-up
-  { scale: 1.20, x: 8, y: -3 },    // Zoom in, pan right-up
-  { scale: 1.30, x: -6, y: 6 },    // Zoom in, pan left-down
-  { scale: 1.22, x: 7, y: 5 },     // Zoom in, pan right-down
-  { scale: 1.20, x: 0, y: -8 },    // Zoom in, pan up
-  { scale: 1.28, x: 0, y: 7 },     // Zoom in, pan down
-]
+import {
+  computeKenBurnsProgress,
+  computeKenBurnsTransform,
+  computeLineZoomTransform,
+  getImageObjectFit,
+  getStaticTransform,
+  loadGalleryImageEffectPrefs,
+  saveGalleryImageEffectPrefs,
+  transformToCss,
+  CROSSFADE_DURATION_MS,
+  GALLERY_KEN_BURNS_CYCLE_DURATION,
+  type GalleryImageEffectPrefs,
+} from '@/lib/storyboard/storyboardImageEffects'
+import { StoryboardImageEffectControl } from '@/components/vision/StoryboardImageEffectControl'
 
 interface AudioGalleryPlayerProps {
   scenes: any[]
@@ -95,11 +99,20 @@ export function AudioGalleryPlayer({
   const [dynamicDurations, setDynamicDurations] = useState<Record<string, number>>({})
   const fetchingUrls = useRef<Set<string>>(new Set())
   const [visualFrameKey, setVisualFrameKey] = useState(0)
-  
-  // Ken Burns effect - pick a config per visual frame for variety
-  const kenBurnsConfig = useMemo(() => {
-    return KEN_BURNS_CONFIGS[visualFrameKey % KEN_BURNS_CONFIGS.length]
-  }, [visualFrameKey])
+  const kenBurnsCycleOrigin = useRef(0)
+  const lastImageUrlRef = useRef<string | null>(null)
+  const currentTimeRef = useRef(currentTime)
+  currentTimeRef.current = currentTime
+
+  const [imageEffectPrefs, setImageEffectPrefs] = useState<GalleryImageEffectPrefs>(() =>
+    loadGalleryImageEffectPrefs()
+  )
+  const [crossfadeFromUrl, setCrossfadeFromUrl] = useState<string | null>(null)
+
+  const updateImageEffectPrefs = useCallback((prefs: GalleryImageEffectPrefs) => {
+    setImageEffectPrefs(prefs)
+    saveGalleryImageEffectPrefs(prefs)
+  }, [])
   
   // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -289,7 +302,7 @@ export function AudioGalleryPlayer({
     currentClip?.label ??
     currentVisualFrame?.label
 
-  // Reset Ken Burns when the visible frame changes
+  // Reset Ken Burns direction when the visible frame changes
   useEffect(() => {
     const next =
       currentSceneIndex * 100 +
@@ -297,6 +310,32 @@ export function AudioGalleryPlayer({
       (currentVisualFrame?.frameType === 'establishing' ? 0 : 50)
     setVisualFrameKey(prev => (prev === next ? prev : next))
   }, [currentSceneIndex, currentVisualFrame?.clipId, currentVisualFrame?.dialogueIndex, currentVisualFrame?.frameType])
+
+  // Reset Ken Burns cycle phase when dialogue frame changes
+  useEffect(() => {
+    kenBurnsCycleOrigin.current = currentTimeRef.current
+  }, [currentSceneIndex, currentVisualFrame?.clipId])
+
+  // Crossfade between dialogue frames
+  useEffect(() => {
+    if (!displayImageUrl) {
+      lastImageUrlRef.current = null
+      setCrossfadeFromUrl(null)
+      return
+    }
+    const prev = lastImageUrlRef.current
+    if (
+      prev &&
+      prev !== displayImageUrl &&
+      imageEffectPrefs.mode === 'crossfade'
+    ) {
+      setCrossfadeFromUrl(prev)
+      const timer = setTimeout(() => setCrossfadeFromUrl(null), CROSSFADE_DURATION_MS)
+      lastImageUrlRef.current = displayImageUrl
+      return () => clearTimeout(timer)
+    }
+    lastImageUrlRef.current = displayImageUrl
+  }, [displayImageUrl, imageEffectPrefs.mode])
   
   // Handle scene navigation
   const goToScene = useCallback((index: number) => {
@@ -518,29 +557,102 @@ export function AudioGalleryPlayer({
   
   // Language display handled by GroupedLanguageSelector
   
-  // Calculate Ken Burns progress
-  // For scenes with very long audio (e.g., 5 minutes), tying transform to `currentTime / sceneDuration` 
-  // makes the motion imperceptibly slow. Instead, we use a constant cycle (e.g., 20 seconds to zoom in, 
-  // 20 seconds to zoom out). This ensures a constant, optimal illusion of motion for any scene length.
-  const CYCLE_DURATION = 40 // 40s full cycle (20s forward, 20s reverse)
-  const cyclePhase = (currentTime % CYCLE_DURATION) / CYCLE_DURATION
-  
-  // Alternate direction: 0 to 0.5 phase maps to 0->1 progress, 0.5 to 1.0 maps to 1->0
-  const kenBurnsProgress = cyclePhase <= 0.5 
-    ? cyclePhase * 2 
-    : 2 - (cyclePhase * 2)
-  
-  // Calculate transform values based on progress
-  const currentScale = 1 + (kenBurnsConfig.scale - 1) * kenBurnsProgress;
-  const currentX = kenBurnsConfig.x * kenBurnsProgress;
-  const currentY = kenBurnsConfig.y * kenBurnsProgress;
+  // Image motion transform
+  const kenBurnsProgress = useMemo(() => {
+    const cycleTime = currentTime - kenBurnsCycleOrigin.current
+    return computeKenBurnsProgress(cycleTime, GALLERY_KEN_BURNS_CYCLE_DURATION)
+  }, [currentTime, visualFrameKey])
+
+  const imageTransform = useMemo(() => {
+    switch (imageEffectPrefs.mode) {
+      case 'kenBurns':
+        return computeKenBurnsTransform({
+          intensity: imageEffectPrefs.kenBurnsIntensity,
+          progress: kenBurnsProgress,
+          directionIndex: visualFrameKey,
+        })
+      case 'lineZoom':
+        return computeLineZoomTransform({
+          frameStart: currentVisualFrame?.startTime ?? 0,
+          frameDuration: currentVisualFrame?.duration ?? sceneDuration,
+          currentTime,
+        })
+      case 'off':
+      case 'fit':
+      case 'crossfade':
+      default:
+        return getStaticTransform()
+    }
+  }, [
+    imageEffectPrefs,
+    kenBurnsProgress,
+    visualFrameKey,
+    currentVisualFrame?.startTime,
+    currentVisualFrame?.duration,
+    currentTime,
+    sceneDuration,
+  ])
+
+  const imageObjectFit = getImageObjectFit(imageEffectPrefs.mode)
+  const imageTransformCss = transformToCss(imageTransform)
+  const imageAlt = `Scene ${currentSceneIndex + 1}${currentVisualFrame?.dialogueIndex != null ? ` — line ${currentVisualFrame.dialogueIndex + 1}` : ''}`
+
+  const renderSceneImage = (url: string, layer: 'current' | 'previous') => {
+    const isPrevious = layer === 'previous'
+    const fitClass = imageObjectFit === 'contain' ? 'object-contain' : 'object-cover'
+    return (
+      <img
+        key={isPrevious ? `prev-${url}` : `cur-${url}`}
+        src={url}
+        alt={isPrevious ? '' : imageAlt}
+        aria-hidden={isPrevious}
+        className={cn('w-full h-full', fitClass, isPrevious && 'absolute inset-0')}
+        style={{
+          transform: isPrevious ? undefined : imageTransformCss,
+          transition: isPrevious
+            ? undefined
+            : isPlaying
+              ? 'transform 0.1s linear'
+              : 'transform 0.2s ease-out',
+          animation: isPrevious
+            ? `galleryCrossfadeOut ${CROSSFADE_DURATION_MS}ms ease-in-out forwards`
+            : crossfadeFromUrl && imageEffectPrefs.mode === 'crossfade'
+              ? `galleryCrossfadeIn ${CROSSFADE_DURATION_MS}ms ease-in-out forwards`
+              : undefined,
+        }}
+      />
+    )
+  }
+
 
   /** Public share / landing embed: compact stacked layout. */
   const sharedCompact = (isSharedView || embedMode) && !isFullscreen
   const landingWide = embedMode && fullWidthEmbed && !isFullscreen
 
+  const motionControl = (
+    <StoryboardImageEffectControl
+      prefs={imageEffectPrefs}
+      onChange={updateImageEffectPrefs}
+      compact={sharedCompact}
+    />
+  )
+
   return (
     <TooltipProvider>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes galleryCrossfadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes galleryCrossfadeOut {
+              from { opacity: 1; }
+              to { opacity: 0; }
+            }
+          `,
+        }}
+      />
       <div 
         ref={containerRef}
         className={cn(
@@ -605,6 +717,8 @@ export function AudioGalleryPlayer({
                 {autoAdvance ? 'Auto-advance enabled' : 'Auto-advance disabled'}
               </TooltipContent>
             </Tooltip>
+
+            {!isSharedView && motionControl}
             
             {/* Fullscreen toggle */}
             <Tooltip>
@@ -653,15 +767,12 @@ export function AudioGalleryPlayer({
                   : "max-w-[500px] aspect-video shadow-xl"
           )}>
             {displayImageUrl ? (
-              <img
-                src={displayImageUrl}
-                alt={`Scene ${currentSceneIndex + 1}${currentVisualFrame?.dialogueIndex != null ? ` — line ${currentVisualFrame.dialogueIndex + 1}` : ''}`}
-                className="w-full h-full object-cover"
-                style={{
-                  transform: `scale(${currentScale}) translate(${currentX}%, ${currentY}%)`,
-                  transition: isPlaying ? 'transform 0.1s linear' : 'transform 0.2s ease-out',
-                }}
-              />
+              <>
+                {crossfadeFromUrl && imageEffectPrefs.mode === 'crossfade' && (
+                  renderSceneImage(crossfadeFromUrl, 'previous')
+                )}
+                {renderSceneImage(displayImageUrl, 'current')}
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-500">
                 <span className="text-sm">No image</span>
@@ -810,6 +921,7 @@ export function AudioGalleryPlayer({
                 
                 {/* Volume + embed view controls */}
                 <div className="flex items-center gap-2 flex-wrap justify-end">
+                  {(sharedCompact || isFullscreen) && motionControl}
                   {embedMode && (
                     <>
                       <span className="text-[10px] text-gray-500 tabular-nums hidden sm:inline">

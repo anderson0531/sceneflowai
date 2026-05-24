@@ -19,6 +19,7 @@ import { ConsentModal } from '@/components/screening-room/ConsentModal'
 import { useEmotionTracker, type EmotionData } from '@/hooks/useEmotionTracker'
 import { useMicroBehaviorTracking, type MicroBehaviorEvent } from '@/hooks/useMicroBehaviorTracking'
 import type { TimelineReactionType, SessionDemographics, DetectedEmotion } from '@/lib/types/behavioralAnalytics'
+import { PAN_SETTINGS, type PanIntensity } from '@/lib/storyboard/storyboardImageEffects'
 
 // ============================================================================
 // Volume Settings Types & Persistence
@@ -69,16 +70,7 @@ function saveVolumeSettings(volumes: TrackVolumes): void {
 // Ken Burns / Pan Settings
 // ============================================================================
 
-type PanIntensity = 'off' | 'subtle' | 'medium' | 'dramatic'
-
 const PAN_STORAGE_KEY = 'sceneflow-fullscreen-player-pan'
-
-const PAN_SETTINGS: Record<PanIntensity, { scale: number; translate: number; duration: number }> = {
-  off: { scale: 1, translate: 0, duration: 0 },
-  subtle: { scale: 1.05, translate: 2, duration: 20 },
-  medium: { scale: 1.1, translate: 4, duration: 15 },
-  dramatic: { scale: 1.15, translate: 6, duration: 10 },
-}
 
 function loadPanSettings(): PanIntensity {
   if (typeof window === 'undefined') return 'subtle'
