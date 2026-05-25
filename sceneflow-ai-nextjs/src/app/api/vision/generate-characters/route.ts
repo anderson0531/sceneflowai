@@ -3,7 +3,7 @@ import Project from '@/models/Project'
 import UserProviderConfig from '@/models/UserProviderConfig'
 import { sequelize } from '@/config/database'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
-import { uploadImageToBlob } from '@/lib/storage/blob'
+import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
             userId,
             provider: provider.providerName,
             apiKey: provider.apiKey,
-            prompt
+            prompt,
+            projectId,
           })
           
           return {
@@ -146,6 +147,7 @@ async function generateCharacterImage(params: {
   provider: string
   apiKey: string
   prompt: string
+  projectId: string
 }): Promise<string> {
   // Use Gemini API for character generation (platform API key)
   console.log('[Character Gen] Using Gemini 3 Pro Image (platform API key)')
@@ -156,9 +158,10 @@ async function generateCharacterImage(params: {
     imageSize: '2K' // Higher quality for character references
   })
   
-  const blobUrl = await uploadImageToBlob(
+  const blobUrl = await uploadReferenceLibraryBase64Image(
     base64Image,
-    `characters/char-${Date.now()}.png`
+    `characters/char-${Date.now()}.png`,
+    params.projectId
   )
   
   return blobUrl

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { artStylePresets } from '@/constants/artStylePresets'
-import { uploadImageToBlob } from '@/lib/storage/blob'
+import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { getCharacterAttributes } from '../../../../lib/character/persistence'
 import { analyzeCharacterImage } from '@/lib/imagen/visionAnalyzer'
 import { getServerSession } from 'next-auth'
@@ -75,9 +75,10 @@ export async function POST(req: NextRequest) {
     })
     
     // Upload to Vercel Blob
-    const imageUrl = await uploadImageToBlob(
+    const imageUrl = await uploadReferenceLibraryBase64Image(
       base64Image,
-      `characters/char-${Date.now()}.png`
+      `characters/char-${Date.now()}.png`,
+      projectId || 'default'
     )
     
     // AUTO-ANALYZE: Extract detailed description using Gemini Vision

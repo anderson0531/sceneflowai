@@ -7910,17 +7910,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       formData.append('projectId', projectId)
       formData.append('type', 'location-reference')
       
-      const uploadRes = await fetch('/api/upload', {
+      const uploadRes = await fetch('/api/upload/image', {
         method: 'POST',
         body: formData
       })
       
       if (!uploadRes.ok) throw new Error('Upload failed')
-      const { url } = await uploadRes.json()
+      const { imageUrl } = await uploadRes.json()
+      if (!imageUrl) throw new Error('Upload failed')
       
       // Update location with the uploaded image
       const updatedLocations = locationReferences.map(ref =>
-        ref.id === locationId ? { ...ref, imageUrl: url } : ref
+        ref.id === locationId ? { ...ref, imageUrl } : ref
       )
       setLocationReferences(updatedLocations)
       locationReferencesRef.current = updatedLocations

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
-import { uploadImageToBlob } from '@/lib/storage/blob'
+import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { analyzeCharacterImage } from '@/lib/imagen/visionAnalyzer'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -193,9 +193,10 @@ export async function POST(req: NextRequest) {
     const base64Image = `data:${result.mimeType};base64,${result.imageBase64}`
     
     // Upload enhanced image to Vercel Blob
-    const enhancedImageUrl = await uploadImageToBlob(
+    const enhancedImageUrl = await uploadReferenceLibraryBase64Image(
       base64Image,
-      `characters/enhanced-${characterId || 'char'}-${Date.now()}.png`
+      `characters/enhanced-${characterId || 'char'}-${Date.now()}.png`,
+      projectId || 'default'
     )
     
     // STAGE 5: Auto-analyze the enhanced image for appearance description

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
-import { uploadImageToBlob } from '@/lib/storage/blob'
+import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
@@ -129,9 +129,10 @@ export async function POST(req: NextRequest) {
           }]
         })
         
-        const fullBodyUrl = await uploadImageToBlob(
+        const fullBodyUrl = await uploadReferenceLibraryBase64Image(
           fullBodyBase64,
-          `wardrobes/${characterId || 'char'}-${wardrobe.wardrobeId}-fullbody-${Date.now()}.png`
+          `wardrobes/${characterId || 'char'}-${wardrobe.wardrobeId}-fullbody-${Date.now()}.png`,
+          projectId || 'default'
         )
         
         console.log(`[Wardrobe Preview] Full body generated: ${wardrobe.wardrobeId}`)

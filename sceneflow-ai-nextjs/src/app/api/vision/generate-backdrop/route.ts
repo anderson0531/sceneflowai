@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
-import { uploadImageToBlob } from '@/lib/storage/blob'
+import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { 
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
 
     // Upload to blob storage
     const filename = `backdrops/${mode}-scene${sourceSceneNumber || 'unknown'}-${Date.now()}.png`
-    const imageUrl = await uploadImageToBlob(base64Image, filename)
+    const imageUrl = await uploadReferenceLibraryBase64Image(base64Image, filename)
 
     console.log('[Backdrop Generation] Upload complete:', imageUrl)
 

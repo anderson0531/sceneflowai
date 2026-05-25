@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { uploadToGCS } from '@/lib/storage/gcsAssets'
+import {
+  uploadReferenceLibraryBuffer,
+  useGcsForReferenceLibraryImages,
+} from '@/lib/storage/referenceLibraryStorage'
 import { uploadImageToGCS } from '@/lib/storage/gcs'
 import { analyzeCharacterImage } from '@/lib/imagen/visionAnalyzer'
 
@@ -23,46 +26,43 @@ export async function POST(req: NextRequest) {
     
     console.log('[Upload Reference] Starting upload for', characterName)
     
-    // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     const extension = file.name.split('.').pop() || 'jpg'
+    const filename = `${characterName.replace(/\s+/g, '-')}-${Date.now()}.${extension}`
+    const contentType = file.type || 'image/jpeg'
     
-    // Step 1: Upload to GCS Assets bucket (for UI display/thumbnails)
-    const result = await uploadToGCS(buffer, {
-      projectId,
-      category: 'images',
-      subcategory: 'characters',
-      filename: `${characterName.replace(/\s+/g, '-')}-${Date.now()}.${extension}`,
-      contentType: file.type || 'image/jpeg',
-    })
+    const url = await uploadReferenceLibraryBuffer(
+      buffer,
+      filename,
+      contentType,
+      projectId
+    )
     
-    console.log('[Upload Reference] GCS Assets URL:', result.url)
+    console.log('[Upload Reference] Storage URL:', url)
     
-    // Step 2: Also upload to character-specific bucket for Imagen API (gs:// URL needed)
-    const gcsUrl = await uploadImageToGCS(buffer, characterName)
+    let gcsUrl: string | undefined
+    if (useGcsForReferenceLibraryImages()) {
+      gcsUrl = await uploadImageToGCS(buffer, characterName)
+      console.log('[Upload Reference] GCS URI:', gcsUrl)
+    }
     
-    console.log('[Upload Reference] GCS URI:', gcsUrl)
-    
-    // AUTO-ANALYZE: Extract detailed description using Gemini Vision
     let visionDescription = null
     try {
-      visionDescription = await analyzeCharacterImage(result.url, characterName)
-      console.log(`[Upload Reference] Auto-analyzed with Gemini Vision`)
+      visionDescription = await analyzeCharacterImage(url, characterName)
+      console.log('[Upload Reference] Auto-analyzed with Gemini Vision')
     } catch (error) {
       console.error('[Upload Reference] Vision analysis failed:', error)
-      // Continue without analysis - not critical
     }
     
     return NextResponse.json({ 
       success: true, 
-      url: result.url,  // Signed URL for UI
-      gcsUrl: gcsUrl,   // GCS URI for Imagen API
-      visionDescription // Include in response for client to save
+      url,
+      gcsUrl,
+      visionDescription
     })
   } catch (error: any) {
     console.error('[Upload Reference] Error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
-

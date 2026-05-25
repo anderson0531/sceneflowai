@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
-import { uploadImageToBlob } from '@/lib/storage/blob'
+import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { getCreditCost } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 
@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
 
     // Upload to blob storage
     const fileName = `scenes/location-${locationName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.png`
-    const imageUrl = await uploadImageToBlob(result.imageBase64, fileName, reqProjectId || 'default')
+    const imageUrl = await uploadReferenceLibraryBase64Image(result.imageBase64, fileName, reqProjectId || 'default')
 
     // Deduct credits
     await CreditService.charge(userId, CREDIT_COST, 'ai_usage', null, {

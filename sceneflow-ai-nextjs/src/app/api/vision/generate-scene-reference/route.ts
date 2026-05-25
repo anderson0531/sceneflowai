@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
-import { uploadImageToBlob } from '@/lib/storage/blob'
+import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -66,7 +66,7 @@ Environment only. No people, no characters, no human figures. Empty scene showin
     console.log('[Scene Reference Generation] Image generated, uploading to storage...')
 
     // Upload to blob storage
-    const imageUrl = await uploadImageToBlob(
+    const imageUrl = await uploadReferenceLibraryBase64Image(
       base64Image,
       `scene-references/${name.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.png`
     )
