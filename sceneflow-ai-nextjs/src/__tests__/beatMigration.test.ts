@@ -6,6 +6,8 @@ import {
   isStoryboardApproved,
   ensureSceneBeats,
   getSceneBeats,
+  getStoryboardTimelineBeats,
+  isAutoLeadingEstablishingBeat,
   migrateProjectToBeats,
 } from '@/lib/script/beatMigration'
 import { VEO_DIALOGUE_CLIP_MAX_SEC } from '@/lib/scene/dialogueSegmentSplit'
@@ -23,6 +25,53 @@ describe('beatMigration', () => {
     expect(beats[0].kind).toBe('action')
     expect(beats.some((b) => b.kind === 'narration')).toBe(true)
     expect(beats.some((b) => b.kind === 'dialogue')).toBe(true)
+  })
+
+  it('flatSceneToBeats does not create action beat from imageUrl alone', () => {
+    const scene = {
+      imageUrl: 'https://example.com/establishing.jpg',
+      dialogue: [
+        {
+          kind: 'narration',
+          character: 'NARRATOR',
+          characterId: 'narrator',
+          line: 'Welcome.',
+        },
+      ],
+    }
+    const beats = flatSceneToBeats(scene)
+    expect(beats.some((b) => b.kind === 'action')).toBe(false)
+    expect(beats[0].kind).toBe('narration')
+  })
+
+  it('getStoryboardTimelineBeats drops auto leading establishing action', () => {
+    const scene = {
+      imageUrl: 'https://example.com/est.jpg',
+      dialogue: [
+        { lineId: 'ln_1', character: 'Sarah', line: 'Hello.' },
+      ],
+      beats: [
+        {
+          beatId: 'bt_auto',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Establishing',
+          storyboardImageUrl: 'https://example.com/est.jpg',
+        },
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 1,
+          kind: 'dialogue',
+          character: 'Sarah',
+          line: 'Hello.',
+          lineId: 'ln_1',
+        },
+      ],
+    }
+    expect(isAutoLeadingEstablishingBeat(scene.beats[0] as never, scene, 0)).toBe(true)
+    const timeline = getStoryboardTimelineBeats(scene)
+    expect(timeline).toHaveLength(1)
+    expect(timeline[0].beatId).toBe('bt_1')
   })
 
   it('beatsToLegacyFields syncs dialogue and narration', () => {

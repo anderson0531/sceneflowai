@@ -308,6 +308,44 @@ function dialogueEntryToBeat(
   }
 }
 
+/** Scene-direction / summary fallback text used for legacy action beats (not scene.action). */
+export function deriveSceneActionFallbackText(scene: Record<string, unknown>): string {
+  const sceneDirection = scene.sceneDirection as
+    | { talent?: { blocking?: string }; sceneDescription?: string }
+    | undefined
+  return String(
+    sceneDirection?.talent?.blocking ??
+      sceneDirection?.sceneDescription ??
+      scene.visualDescription ??
+      scene.summary ??
+      ''
+  ).trim()
+}
+
+/** True when the first beat is a migration-injected establishing action, not a scripted beat. */
+export function isAutoLeadingEstablishingBeat(
+  beat: SceneBeat,
+  scene: Record<string, unknown>,
+  beatIndex: number
+): boolean {
+  if (beatIndex !== 0 || beat.kind !== 'action') return false
+
+  const explicitAction = String(scene.action ?? '').trim()
+  const desc = String(beat.actionDescription ?? '').trim()
+  const fallback = deriveSceneActionFallbackText(scene)
+  const hasImage = typeof scene.imageUrl === 'string' && scene.imageUrl.trim().length > 0
+
+  if (explicitAction && desc === explicitAction) return false
+
+  if (!desc || desc === 'Establishing shot') return true
+
+  if (!explicitAction && fallback && desc === fallback) return true
+
+  if (!explicitAction && hasImage && /^establishing(\s*shot)?$/i.test(desc)) return true
+
+  return false
+}
+
 /**
  * Convert a legacy flat scene into an ordered beats[] timeline.
  * Order: optional establishing action → standalone narration → dialogue beats.
@@ -320,26 +358,14 @@ export function flatSceneToBeats(scene: Record<string, unknown>): SceneBeat[] {
   const beats: SceneBeat[] = []
   let seq = 0
 
-  const sceneDirection = scene.sceneDirection as
-    | { talent?: { blocking?: string }; sceneDescription?: string }
-    | undefined
-  const actionText = String(
-    scene.action ??
-      sceneDirection?.talent?.blocking ??
-      sceneDirection?.sceneDescription ??
-      scene.visualDescription ??
-      scene.summary ??
-      ''
-  ).trim()
-  const hasEstablishingImage =
-    typeof scene.imageUrl === 'string' && scene.imageUrl.trim().length > 0
+  const explicitAction = String(scene.action ?? '').trim()
 
-  if (actionText || hasEstablishingImage) {
+  if (explicitAction) {
     beats.push({
       beatId: mintBeatId(),
       sequenceIndex: seq++,
       kind: 'action',
-      actionDescription: actionText || 'Establishing shot',
+      actionDescription: explicitAction,
       storyboardImageUrl:
         typeof scene.imageUrl === 'string' ? scene.imageUrl : undefined,
       storyboardImagePrompt:
@@ -537,6 +563,18 @@ export function getSceneBeats(scene: Record<string, unknown> | null | undefined)
     scene,
     hydrateBeatStoryboardMediaFromLegacy(scene, beats)
   )
+}
+
+/** Beats used for storyboard frame slots and playback (drops auto-injected leading action). */
+export function getStoryboardTimelineBeats(
+  scene: Record<string, unknown> | null | undefined
+): SceneBeat[] {
+  if (!scene) return []
+  const beats = getSceneBeats(scene)
+  if (beats.length > 0 && isAutoLeadingEstablishingBeat(beats[0], scene, 0)) {
+    return beats.slice(1)
+  }
+  return beats
 }
 
 export function getStoryboardStatus(

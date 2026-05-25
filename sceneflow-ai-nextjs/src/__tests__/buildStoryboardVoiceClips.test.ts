@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { flatSceneToBeats } from '@/lib/script/beatMigration'
 import {
   buildBeatFirstPlaybackTimeline,
   buildStoryboardVoiceClips,
@@ -263,6 +264,7 @@ describe('buildStoryboardVoiceClips', () => {
     const NARRATOR_BEAT_URL = 'https://example.com/narrator-frame.jpg'
     const ACTION_URL = 'https://example.com/establishing.jpg'
     const scene = {
+      action: 'Wide shot',
       imageUrl: ACTION_URL,
       dialogue: [
         {
@@ -334,6 +336,7 @@ describe('buildStoryboardVoiceClips', () => {
 
   it('schedules narrator beat when audio is on dialogue line but missing from beat.audioUrl', () => {
     const scene = {
+      action: 'Wide shot',
       imageUrl: 'https://example.com/establishing.jpg',
       dialogue: [
         {
@@ -404,6 +407,7 @@ describe('buildStoryboardVoiceClips', () => {
     const ALICE_FRAME = 'https://example.com/alice-frame.jpg'
     const BOB_FRAME = 'https://example.com/bob-frame.jpg'
     const scene = {
+      action: 'Wide shot',
       imageUrl: 'https://example.com/establishing.jpg',
       dialogue: [
         { lineId: 'ln_alice', character: 'Alice', line: 'Hello.', audioUrl: SARAH_URL, duration: 2 },
@@ -582,15 +586,48 @@ describe('buildStoryboardVoiceClips', () => {
     expect(clips).toHaveLength(2)
     expect(clips[0].beatId).toBe('bt_b1')
     expect(clips[0].url).toBe(B1_URL)
-    expect(clips[0].startTime).toBe(4.3)
+    expect(clips[0].startTime).toBe(0)
+    expect(clips[0].dialogueIndex).toBe(0)
     expect(clips[1].beatId).toBe('bt_b2')
 
-    expect(visualFrames).toHaveLength(3)
-    expect(visualFrames[0].imageUrl).toBe(EST_URL)
-    expect(visualFrames[0].beatId).toBe('bt_action')
-    expect(visualFrames[1].imageUrl).toBe(B1_FRAME)
-    expect(visualFrames[1].clipId).toBe(clips[0].id)
-    expect(visualFrames[2].imageUrl).toBe(B2_FRAME)
+    expect(visualFrames).toHaveLength(2)
+    expect(visualFrames[0].imageUrl).toBe(B1_FRAME)
+    expect(visualFrames[0].beatId).toBe('bt_b1')
+    expect(visualFrames[0].startTime).toBe(0)
+    expect(visualFrames[0].clipId).toBe(clips[0].id)
+    expect(visualFrames[1].imageUrl).toBe(B2_FRAME)
+  })
+
+  it('starts narrator on frame 1 at t=0 when scene has imageUrl but no explicit action', () => {
+    const B1_URL = 'https://example.com/b1-narrator.mp3'
+    const B1_FRAME = 'https://example.com/b1-frame.jpg'
+    const scene = {
+      imageUrl: 'https://example.com/establishing.jpg',
+      dialogue: [
+        {
+          lineId: 'ln_b1',
+          kind: 'narration',
+          character: 'NARRATOR',
+          characterId: 'narrator',
+          line: 'Welcome to The Signal Stream.',
+          storyboardImageUrl: B1_FRAME,
+          audioUrl: B1_URL,
+          duration: 8,
+        },
+      ],
+    }
+
+    const beats = flatSceneToBeats(scene)
+    expect(beats.some((b) => b.kind === 'action')).toBe(false)
+    expect(beats[0].kind).toBe('narration')
+
+    const { voiceClips, visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [B1_URL]: 8,
+    })
+    expect(voiceClips[0].startTime).toBe(0)
+    expect(visualFrames).toHaveLength(1)
+    expect(visualFrames[0].startTime).toBe(0)
+    expect(visualFrames[0].imageUrl).toBe(B1_FRAME)
   })
 })
 

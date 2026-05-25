@@ -9,7 +9,8 @@ import {
   dialogueLineIdForIndex,
   findDialogueAudioForLine,
 } from '@/components/vision/scene-production/audioTrackBuilder'
-import { getSceneBeats } from '@/lib/script/beatMigration'
+import { getSceneBeats, getStoryboardTimelineBeats } from '@/lib/script/beatMigration'
+import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { NARRATOR_CHARACTER, NARRATOR_CHARACTER_ID } from '@/lib/script/segmentTypes'
 import { toCanonicalName } from '@/lib/character/canonical'
 import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
@@ -189,11 +190,12 @@ function getOwnDialogueStoryboardUrl(
 
 /** Ordered storyboard slots with explicit own vs placeholder image state. */
 export function enumerateStoryboardFrameSlots(
-  scene: Record<string, unknown> | null | undefined
+  scene: Record<string, unknown> | null | undefined,
+  beatsOverride?: SceneBeat[]
 ): StoryboardFrameSlot[] {
   if (!scene) return []
 
-  const beats = getSceneBeats(scene)
+  const beats = beatsOverride ?? getStoryboardTimelineBeats(scene)
   const establishingUrl = getEstablishingFrameUrl(scene)
   const slots: StoryboardFrameSlot[] = []
 
@@ -808,8 +810,8 @@ export function buildBeatFirstPlaybackTimeline(
   language: string,
   dynamicDurations: Record<string, number> = {}
 ): { voiceClips: StoryboardAudioClip[]; visualFrames: StoryboardVisualFrame[] } {
-  const beats = getSceneBeats(scene)
-  const slots = enumerateStoryboardFrameSlots(scene)
+  const beats = getStoryboardTimelineBeats(scene)
+  const slots = enumerateStoryboardFrameSlots(scene, beats)
   const slotByBeatId = new Map(
     slots.filter((slot) => slot.beatId).map((slot) => [slot.beatId!, slot])
   )
@@ -910,8 +912,7 @@ export function buildBeatFirstPlaybackTimeline(
       clipId,
     })
 
-    currentStartTime +=
-      duration + (isNarration ? NARRATION_CLIP_BUFFER_SEC : DIALOGUE_CLIP_BUFFER_SEC)
+    currentStartTime += duration + DIALOGUE_CLIP_BUFFER_SEC
   }
 
   const visualFrames: StoryboardVisualFrame[] = windows.map((win, index) => ({
