@@ -326,6 +326,74 @@ describe('buildStoryboardVoiceClips', () => {
     expect(visualFrames[0].dialogueIndex).toBe(0)
     expect(visualFrames[1].imageUrl).toBe('https://example.com/sarah-frame.jpg')
   })
+
+  it('schedules narrator beat when audio is on dialogue line but missing from beat.audioUrl', () => {
+    const scene = {
+      imageUrl: 'https://example.com/establishing.jpg',
+      dialogue: [
+        {
+          lineId: 'ln_narr',
+          kind: 'narration',
+          character: 'NARRATOR',
+          characterId: 'narrator',
+          line: 'Opening voiceover.',
+          audioUrl: NARRATION_URL,
+          duration: 4,
+        },
+        {
+          lineId: 'ln_sarah',
+          character: 'Sarah',
+          line: 'Hello there.',
+          audioUrl: SARAH_URL,
+          duration: 2.5,
+        },
+      ],
+      beats: [
+        {
+          beatId: 'bt_action',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide shot',
+          storyboardImageUrl: 'https://example.com/establishing.jpg',
+        },
+        {
+          beatId: 'bt_narr',
+          sequenceIndex: 1,
+          kind: 'narration',
+          character: 'NARRATOR',
+          characterId: 'narrator',
+          line: 'Opening voiceover.',
+          lineId: 'ln_narr',
+          storyboardImageUrl: 'https://example.com/narrator-frame.jpg',
+        },
+        {
+          beatId: 'bt_sarah',
+          sequenceIndex: 2,
+          kind: 'dialogue',
+          character: 'Sarah',
+          line: 'Hello there.',
+          lineId: 'ln_sarah',
+          storyboardImageUrl: 'https://example.com/sarah-frame.jpg',
+          audioUrl: SARAH_URL,
+          durationSeconds: 2.5,
+        },
+      ],
+    }
+
+    const clips = buildStoryboardVoiceClips(scene, 'en', {
+      [NARRATION_URL]: 4,
+      [SARAH_URL]: 2.5,
+    })
+
+    expect(clips).toHaveLength(2)
+    expect(clips[0].url).toBe(NARRATION_URL)
+    expect(clips[0].dialogueIndex).toBe(0)
+    expect(clips[0].startTime).toBe(0)
+
+    const visualFrames = buildStoryboardVisualTimeline(scene, clips)
+    expect(visualFrames[0].imageUrl).toBe('https://example.com/narrator-frame.jpg')
+    expect(visualFrames[0].dialogueIndex).toBe(0)
+  })
 })
 
 describe('getDialogueFrameUrl', () => {

@@ -479,6 +479,108 @@ function isFoldedNarrationDuplicate(
   )
 }
 
+function resolveBeatDialogueIndex(
+  scene: Record<string, unknown>,
+  beat: ReturnType<typeof getSceneBeats>[number],
+  spokenDialogueIdx: number
+): number {
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  if (beat.lineId?.trim()) {
+    const idx = dialogue.findIndex(
+      (entry) => (entry as Record<string, unknown>)?.lineId === beat.lineId
+    )
+    if (idx >= 0) return idx
+  }
+  if (spokenDialogueIdx >= 0 && spokenDialogueIdx < dialogue.length) return spokenDialogueIdx
+  return spokenDialogueIdx >= 0 ? spokenDialogueIdx : 0
+}
+
+/** Resolve spoken-beat audio from beat fields, dialogue line, or dialogueAudio (legacy storage). */
+function resolveBeatVoiceUrl(
+  scene: Record<string, unknown>,
+  beat: ReturnType<typeof getSceneBeats>[number],
+  dialogueIndex: number,
+  language: string
+): string | undefined {
+  const fromBeat = beat.audioUrl?.trim()
+  if (fromBeat) return fromBeat
+
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  const line =
+    typeof dialogueIndex === 'number'
+      ? (dialogue[dialogueIndex] as Record<string, unknown> | undefined)
+      : undefined
+  const character = beat.character || getDialogueLineCharacter(line)
+
+  const audioEntry = findDialogueAudioForLine(scene, {
+    language,
+    lineId: beat.lineId,
+    dialogueIndex,
+    character,
+  }) as Record<string, unknown> | null
+
+  const fromDialogueAudio =
+    (typeof audioEntry?.audioUrl === 'string' && audioEntry.audioUrl) ||
+    (typeof audioEntry?.url === 'string' && audioEntry.url) ||
+    undefined
+  if (fromDialogueAudio?.trim()) return fromDialogueAudio.trim()
+
+  const fromLine =
+    (typeof line?.audioUrl === 'string' && line.audioUrl) ||
+    (typeof line?.url === 'string' && line.url) ||
+    undefined
+  if (fromLine?.trim()) return fromLine.trim()
+
+  if (beat.kind === 'narration') {
+    const standalone = resolveStandaloneNarrationUrl(scene, language)
+    if (standalone?.trim()) return standalone.trim()
+  }
+
+  return undefined
+}
+
+function resolveBeatVoiceDuration(
+  url: string,
+  beat: ReturnType<typeof getSceneBeats>[number],
+  scene: Record<string, unknown>,
+  dialogueIndex: number,
+  language: string,
+  dynamicDurations: Record<string, number>
+): number {
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  const line =
+    typeof dialogueIndex === 'number'
+      ? (dialogue[dialogueIndex] as Record<string, unknown> | undefined)
+      : undefined
+  const audioEntry = findDialogueAudioForLine(scene, {
+    language,
+    lineId: beat.lineId,
+    dialogueIndex,
+    character: beat.character || getDialogueLineCharacter(line),
+  }) as Record<string, unknown> | null
+
+  const storedDuration =
+    beat.durationSeconds ??
+    (typeof audioEntry?.duration === 'number' ? audioEntry.duration : undefined) ??
+    (typeof line?.duration === 'number' ? line.duration : undefined) ??
+    (typeof line?.durationSeconds === 'number' ? line.durationSeconds : undefined)
+
+  if (beat.kind === 'narration' && storedDuration == null) {
+    const narrationAudio = scene.narrationAudio as
+      | Record<string, { duration?: number }>
+      | undefined
+    const langEntry = narrationAudio?.[language] ?? narrationAudio?.en
+    if (typeof langEntry?.duration === 'number') {
+      return resolveVoiceClipDuration(url, langEntry.duration, dynamicDurations)
+    }
+    if (typeof scene.narrationDuration === 'number') {
+      return resolveVoiceClipDuration(url, scene.narrationDuration, dynamicDurations)
+    }
+  }
+
+  return resolveVoiceClipDuration(url, storedDuration, dynamicDurations)
+}
+
 /**
  * Build sequential voice clips (description → narration → dialogue) for storyboard playback.
  * Dialogue clip IDs use script dialogueIndex (not dialogueAudio array position).
@@ -493,7 +595,6 @@ export function buildStoryboardVoiceClips(
   // Beat-first: spoken beats only (dialogue + narration), aligned to script dialogue indices.
   if (Array.isArray(scene.beats) && scene.beats.length > 0) {
     const beats = getSceneBeats(scene)
-    const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
     const clips: StoryboardAudioClip[] = []
     let currentStartTime = 0
     let spokenDialogueIdx = 0
@@ -502,20 +603,18 @@ export function buildStoryboardVoiceClips(
       const beat = beats[i]
       if (beat.kind === 'action') continue
 
-      const url = beat.audioUrl?.trim()
-      if (!url) continue
-
-      let dialogueIndex = beat.lineId?.trim()
-        ? dialogue.findIndex(
-            (entry) => (entry as Record<string, unknown>)?.lineId === beat.lineId
-          )
-        : spokenDialogueIdx
-      if (dialogueIndex < 0) dialogueIndex = spokenDialogueIdx
+      let dialogueIndex = resolveBeatDialogueIndex(scene, beat, spokenDialogueIdx)
       spokenDialogueIdx = Math.max(spokenDialogueIdx, dialogueIndex + 1)
 
-      const duration = resolveVoiceClipDuration(
+      const url = resolveBeatVoiceUrl(scene, beat, dialogueIndex, language)
+      if (!url) continue
+
+      const duration = resolveBeatVoiceDuration(
         url,
-        beat.durationSeconds,
+        beat,
+        scene,
+        dialogueIndex,
+        language,
         dynamicDurations
       )
       const isNarration = beat.kind === 'narration'
