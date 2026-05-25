@@ -17,11 +17,13 @@ import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSele
 import { cn } from '@/lib/utils'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 import {
+  buildBeatFirstPlaybackTimeline,
   buildStoryboardVisualTimeline,
   buildStoryboardVoiceClips,
   getCurrentStoryboardVisualFrame,
   getEstablishingFrameUrl,
 } from '@/lib/storyboard/types'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 import {
   computeKenBurnsProgress,
   computeKenBurnsTransform,
@@ -73,6 +75,7 @@ interface AudioClip {
   type: 'narration' | 'dialogue' | 'music' | 'sfx'
   label?: string
   loop?: boolean
+  beatId?: string
 }
 
 export function AudioGalleryPlayer({
@@ -170,6 +173,10 @@ export function AudioGalleryPlayer({
         if (dUrl) urlsToFetch.push(dUrl)
       })
     }
+
+    for (const beat of getSceneBeats(currentScene)) {
+      if (beat.audioUrl?.trim()) urlsToFetch.push(beat.audioUrl.trim())
+    }
     
     urlsToFetch.forEach(url => {
       if (fetchingUrls.current.has(url)) return
@@ -194,9 +201,20 @@ export function AudioGalleryPlayer({
   }, [currentScene, selectedLanguage])
   
   // Build audio clips for current scene (narration & dialogue - played sequentially)
+  const beatPlayback = useMemo(() => {
+    if (!currentScene?.beats?.length) return null
+    return buildBeatFirstPlaybackTimeline(
+      currentScene,
+      selectedLanguage,
+      dynamicDurations
+    )
+  }, [currentScene, selectedLanguage, dynamicDurations])
+
   const voiceClips = useMemo(
-    () => buildStoryboardVoiceClips(currentScene, selectedLanguage, dynamicDurations),
-    [currentScene, selectedLanguage, dynamicDurations]
+    () =>
+      beatPlayback?.voiceClips ??
+      buildStoryboardVoiceClips(currentScene, selectedLanguage, dynamicDurations),
+    [beatPlayback, currentScene, selectedLanguage, dynamicDurations]
   )
 
   const audioClips = useMemo((): AudioClip[] => {
@@ -209,6 +227,7 @@ export function AudioGalleryPlayer({
         duration: clip.duration,
         type: clip.type === 'description' ? 'narration' : clip.type,
         label: clip.label,
+        beatId: clip.beatId,
       }))
   }, [voiceClips])
   
@@ -260,13 +279,25 @@ export function AudioGalleryPlayer({
     }).filter(Boolean) as AudioClip[]
   }, [currentScene, audioClips])
   
+  // Visual frames aligned to beat playback (1:1 with scene beats when beats[] exists)
+  const visualFrames = useMemo(() => {
+    if (beatPlayback?.visualFrames.length) return beatPlayback.visualFrames
+    return buildStoryboardVisualTimeline(currentScene, voiceClips, {
+      language: selectedLanguage,
+      dynamicDurations,
+    })
+  }, [beatPlayback, currentScene, voiceClips, selectedLanguage, dynamicDurations])
+
   // Total duration for current scene
   const sceneDuration = useMemo(() => {
+    if (visualFrames.length > 0) {
+      const lastFrame = visualFrames[visualFrames.length - 1]
+      return lastFrame.startTime + lastFrame.duration + 1.5
+    }
     if (audioClips.length === 0) return 5 // Default 5s for scenes without audio
     const lastClip = audioClips[audioClips.length - 1]
-    // Add a small 1.5s buffer after the last voice clip completes
     return lastClip.startTime + lastClip.duration + 1.5
-  }, [audioClips])
+  }, [visualFrames, audioClips])
   
   // Current audio clip based on playback time
   const currentClip = useMemo(() => {
@@ -275,13 +306,16 @@ export function AudioGalleryPlayer({
     )
   }, [audioClips, currentTime])
 
-  // Visual frames aligned to voice clip timing (not independent beat durations)
-  const visualFrames = useMemo(() => {
-    return buildStoryboardVisualTimeline(currentScene, voiceClips)
-  }, [currentScene, voiceClips])
-
   const currentVisualFrame = useMemo(() => {
     if (visualFrames.length > 0) {
+      if (currentClip?.beatId) {
+        const beatAligned = visualFrames.find((frame) => frame.beatId === currentClip.beatId)
+        if (beatAligned) return beatAligned
+      }
+      if (currentClip) {
+        const clipAligned = visualFrames.find((frame) => frame.clipId === currentClip.id)
+        if (clipAligned) return clipAligned
+      }
       return getCurrentStoryboardVisualFrame(visualFrames, currentTime)
     }
     const establishingUrl = getEstablishingFrameUrl(currentScene)
@@ -293,7 +327,7 @@ export function AudioGalleryPlayer({
       startTime: 0,
       duration: sceneDuration,
     }
-  }, [visualFrames, currentTime, currentScene, sceneDuration])
+  }, [visualFrames, currentTime, currentScene, sceneDuration, currentClip])
 
   const displayImageUrl = currentVisualFrame?.imageUrl
 

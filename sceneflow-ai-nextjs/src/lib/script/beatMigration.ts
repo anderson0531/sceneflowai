@@ -151,6 +151,111 @@ export function hydrateBeatStoryboardMediaFromLegacy(
   })
 }
 
+function getDialogueAudioEntries(
+  scene: Record<string, unknown>,
+  language = 'en'
+): Array<Record<string, unknown>> {
+  const da = scene.dialogueAudio
+  if (!da) return []
+  if (Array.isArray(da)) return da as Array<Record<string, unknown>>
+  if (typeof da !== 'object') return []
+  const langArr = (da as Record<string, unknown>)[language]
+  if (Array.isArray(langArr)) return langArr as Array<Record<string, unknown>>
+  const enArr = (da as Record<string, unknown>).en
+  if (Array.isArray(enArr)) return enArr as Array<Record<string, unknown>>
+  return []
+}
+
+function isNarratorBeat(beat: SceneBeat): boolean {
+  if (beat.kind === 'narration') return true
+  if (beat.characterId === NARRATOR_CHARACTER_ID) return true
+  if (
+    beat.character &&
+    toCanonicalName(beat.character) === toCanonicalName(NARRATOR_CHARACTER)
+  ) {
+    return true
+  }
+  return false
+}
+
+/** Copy TTS URLs from dialogue[] / dialogueAudio[] onto beats when beats lack audioUrl. */
+export function hydrateBeatAudioFromLegacy(
+  scene: Record<string, unknown>,
+  beats: SceneBeat[]
+): SceneBeat[] {
+  const dialogue = Array.isArray(scene.dialogue)
+    ? (scene.dialogue as Array<Record<string, unknown>>)
+    : []
+  const audioEntries = getDialogueAudioEntries(scene, 'en')
+  let dialogueIdx = 0
+
+  return beats.map((beat) => {
+    if (beat.kind === 'action' || !isSpokenBeatKind(beat.kind)) return beat
+
+    const lineEntry = beat.lineId?.trim()
+      ? dialogue.find((entry) => entry?.lineId === beat.lineId)
+      : dialogue[dialogueIdx]
+
+    if (!beat.lineId?.trim()) {
+      dialogueIdx++
+    }
+
+    const lineAudioUrl =
+      (typeof lineEntry?.audioUrl === 'string' && lineEntry.audioUrl) ||
+      (typeof lineEntry?.url === 'string' && lineEntry.url) ||
+      undefined
+    const lineDuration =
+      typeof lineEntry?.duration === 'number'
+        ? lineEntry.duration
+        : typeof lineEntry?.durationSeconds === 'number'
+          ? lineEntry.durationSeconds
+          : undefined
+
+    let audioMatch: Record<string, unknown> | undefined
+    if (beat.lineId?.trim()) {
+      audioMatch = audioEntries.find((entry) => entry?.lineId === beat.lineId)
+    }
+    if (!audioMatch && isNarratorBeat(beat)) {
+      audioMatch = audioEntries.find(
+        (entry) =>
+          entry?.kind === 'narration' || entry?.characterId === NARRATOR_CHARACTER_ID
+      )
+    }
+    if (!audioMatch && lineEntry) {
+      const idx = dialogue.indexOf(lineEntry)
+      if (idx >= 0) {
+        audioMatch = audioEntries.find(
+          (entry) => typeof entry?.dialogueIndex === 'number' && entry.dialogueIndex === idx
+        )
+      }
+    }
+
+    const audioUrl =
+      beat.audioUrl?.trim() ||
+      lineAudioUrl?.trim() ||
+      (typeof audioMatch?.audioUrl === 'string' && audioMatch.audioUrl) ||
+      (typeof audioMatch?.url === 'string' && audioMatch.url) ||
+      undefined
+
+    if (!audioUrl) return beat
+
+    const durationSeconds =
+      beat.durationSeconds ??
+      lineDuration ??
+      (typeof audioMatch?.duration === 'number' ? audioMatch.duration : undefined)
+
+    if (beat.audioUrl?.trim() === audioUrl && beat.durationSeconds === durationSeconds) {
+      return beat
+    }
+
+    return {
+      ...beat,
+      audioUrl,
+      ...(durationSeconds != null ? { durationSeconds } : {}),
+    }
+  })
+}
+
 function dialogueEntryToBeat(
   entry: Record<string, unknown>,
   sequenceIndex: number
@@ -215,8 +320,16 @@ export function flatSceneToBeats(scene: Record<string, unknown>): SceneBeat[] {
   const beats: SceneBeat[] = []
   let seq = 0
 
+  const sceneDirection = scene.sceneDirection as
+    | { talent?: { blocking?: string }; sceneDescription?: string }
+    | undefined
   const actionText = String(
-    scene.action ?? scene.visualDescription ?? scene.summary ?? ''
+    scene.action ??
+      sceneDirection?.talent?.blocking ??
+      sceneDirection?.sceneDescription ??
+      scene.visualDescription ??
+      scene.summary ??
+      ''
   ).trim()
   const hasEstablishingImage =
     typeof scene.imageUrl === 'string' && scene.imageUrl.trim().length > 0
@@ -420,7 +533,10 @@ export function getSceneBeats(scene: Record<string, unknown> | null | undefined)
     Array.isArray(scene.beats) && scene.beats.length > 0
       ? normalizeBeatsForProduction(scene.beats as SceneBeat[])
       : flatSceneToBeats(scene)
-  return hydrateBeatStoryboardMediaFromLegacy(scene, beats)
+  return hydrateBeatAudioFromLegacy(
+    scene,
+    hydrateBeatStoryboardMediaFromLegacy(scene, beats)
+  )
 }
 
 export function getStoryboardStatus(

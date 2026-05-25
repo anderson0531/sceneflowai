@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  buildBeatFirstPlaybackTimeline,
   buildStoryboardVoiceClips,
   buildStoryboardVisualTimeline,
   getCurrentStoryboardVisualFrame,
@@ -313,19 +314,22 @@ describe('buildStoryboardVoiceClips', () => {
       ],
     }
 
-    const clips = buildStoryboardVoiceClips(scene, 'en', {
+    const { voiceClips: clips, visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
       [NARRATION_URL]: 4,
       [SARAH_URL]: 2.5,
     })
     expect(clips).toHaveLength(2)
     expect(clips[0].dialogueIndex).toBe(0)
-    expect(clips[0].startTime).toBe(0)
+    expect(clips[0].startTime).toBe(4.3)
 
-    const visualFrames = buildStoryboardVisualTimeline(scene, clips)
+    expect(visualFrames).toHaveLength(3)
     expect(visualFrames[0].startTime).toBe(0)
-    expect(visualFrames[0].imageUrl).toBe(NARRATOR_BEAT_URL)
-    expect(visualFrames[0].dialogueIndex).toBe(0)
-    expect(visualFrames[1].imageUrl).toBe('https://example.com/sarah-frame.jpg')
+    expect(visualFrames[0].imageUrl).toBe(ACTION_URL)
+    expect(visualFrames[0].beatId).toBe('bt_action')
+    expect(visualFrames[1].imageUrl).toBe(NARRATOR_BEAT_URL)
+    expect(visualFrames[1].startTime).toBe(4.3)
+    expect(visualFrames[1].dialogueIndex).toBe(0)
+    expect(visualFrames[2].imageUrl).toBe('https://example.com/sarah-frame.jpg')
   })
 
   it('schedules narrator beat when audio is on dialogue line but missing from beat.audioUrl', () => {
@@ -381,7 +385,7 @@ describe('buildStoryboardVoiceClips', () => {
       ],
     }
 
-    const clips = buildStoryboardVoiceClips(scene, 'en', {
+    const { voiceClips: clips, visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
       [NARRATION_URL]: 4,
       [SARAH_URL]: 2.5,
     })
@@ -389,11 +393,10 @@ describe('buildStoryboardVoiceClips', () => {
     expect(clips).toHaveLength(2)
     expect(clips[0].url).toBe(NARRATION_URL)
     expect(clips[0].dialogueIndex).toBe(0)
-    expect(clips[0].startTime).toBe(0)
+    expect(clips[0].startTime).toBe(4.3)
 
-    const visualFrames = buildStoryboardVisualTimeline(scene, clips)
-    expect(visualFrames[0].imageUrl).toBe('https://example.com/narrator-frame.jpg')
-    expect(visualFrames[0].dialogueIndex).toBe(0)
+    expect(visualFrames[1].imageUrl).toBe('https://example.com/narrator-frame.jpg')
+    expect(visualFrames[1].dialogueIndex).toBe(0)
   })
 
   it('aligns spoken beat images when narrator beat is not in dialogue array', () => {
@@ -450,7 +453,7 @@ describe('buildStoryboardVoiceClips', () => {
       ],
     }
 
-    const clips = buildStoryboardVoiceClips(scene, 'en', {
+    const { voiceClips: clips, visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
       [NARRATION_URL]: 4,
       [SARAH_URL]: 2,
       [BOB_URL]: 2,
@@ -463,18 +466,137 @@ describe('buildStoryboardVoiceClips', () => {
     expect(clips[1].dialogueIndex).toBe(0)
     expect(clips[2].dialogueIndex).toBe(1)
 
-    const visualFrames = buildStoryboardVisualTimeline(scene, clips)
+    expect(visualFrames).toHaveLength(4)
     expect(visualFrames.map((f) => f.imageUrl)).toEqual([
+      'https://example.com/establishing.jpg',
       NARRATOR_FRAME,
       ALICE_FRAME,
       BOB_FRAME,
     ])
   })
+
+  it('starts dialogue on frame 1 when scene has no leading action beat', () => {
+    const scene = {
+      dialogue: [{ character: 'Sarah Chen', line: 'Hello.', audioUrl: SARAH_URL, duration: 3 }],
+      beats: [
+        {
+          beatId: 'bt_b1',
+          sequenceIndex: 0,
+          kind: 'dialogue',
+          character: 'Sarah Chen',
+          line: 'Hello.',
+          storyboardImageUrl: 'https://example.com/sarah.jpg',
+          audioUrl: SARAH_URL,
+          durationSeconds: 3,
+        },
+      ],
+    }
+
+    const { voiceClips, visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [SARAH_URL]: 3,
+    })
+
+    expect(voiceClips[0].startTime).toBe(0)
+    expect(visualFrames).toHaveLength(1)
+    expect(visualFrames[0].startTime).toBe(0)
+    expect(visualFrames[0].imageUrl).toBe('https://example.com/sarah.jpg')
+  })
+
+  it('plays narrator as first clip when audio lives only in dialogueAudio on a 7-slot scene', () => {
+    const EST_URL = 'https://example.com/establishing.jpg'
+    const B1_URL = 'https://example.com/b1-narrator.mp3'
+    const B2_URL = 'https://example.com/b2-sarah.mp3'
+    const B1_FRAME = 'https://example.com/b1-frame.jpg'
+    const B2_FRAME = 'https://example.com/b2-frame.jpg'
+    const scene = {
+      imageUrl: EST_URL,
+      dialogue: [
+        {
+          lineId: 'ln_b1',
+          kind: 'narration',
+          character: 'NARRATOR',
+          characterId: 'narrator',
+          line: 'Welcome to The Signal Stream.',
+          storyboardImageUrl: B1_FRAME,
+        },
+        {
+          lineId: 'ln_b2',
+          character: 'Sarah Chen',
+          line: 'Dr. Anderson, the news cycle is practically euphoric.',
+          storyboardImageUrl: B2_FRAME,
+        },
+      ],
+      dialogueAudio: {
+        en: [
+          {
+            lineId: 'ln_b1',
+            kind: 'narration',
+            characterId: 'narrator',
+            dialogueIndex: 0,
+            audioUrl: B1_URL,
+            duration: 8,
+          },
+          {
+            lineId: 'ln_b2',
+            character: 'Sarah Chen',
+            dialogueIndex: 1,
+            audioUrl: B2_URL,
+            duration: 6,
+          },
+        ],
+      },
+      beats: [
+        {
+          beatId: 'bt_action',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Establishing',
+          storyboardImageUrl: EST_URL,
+        },
+        {
+          beatId: 'bt_b1',
+          sequenceIndex: 1,
+          kind: 'narration',
+          character: 'NARRATOR',
+          characterId: 'narrator',
+          line: 'Welcome to The Signal Stream.',
+          lineId: 'ln_b1',
+          storyboardImageUrl: B1_FRAME,
+        },
+        {
+          beatId: 'bt_b2',
+          sequenceIndex: 2,
+          kind: 'dialogue',
+          character: 'Sarah Chen',
+          line: 'Dr. Anderson, the news cycle is practically euphoric.',
+          lineId: 'ln_b2',
+          storyboardImageUrl: B2_FRAME,
+        },
+      ],
+    }
+
+    const { voiceClips: clips, visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [B1_URL]: 8,
+      [B2_URL]: 6,
+    })
+    expect(clips).toHaveLength(2)
+    expect(clips[0].beatId).toBe('bt_b1')
+    expect(clips[0].url).toBe(B1_URL)
+    expect(clips[0].startTime).toBe(4.3)
+    expect(clips[1].beatId).toBe('bt_b2')
+
+    expect(visualFrames).toHaveLength(3)
+    expect(visualFrames[0].imageUrl).toBe(EST_URL)
+    expect(visualFrames[0].beatId).toBe('bt_action')
+    expect(visualFrames[1].imageUrl).toBe(B1_FRAME)
+    expect(visualFrames[1].clipId).toBe(clips[0].id)
+    expect(visualFrames[2].imageUrl).toBe(B2_FRAME)
+  })
 })
 
 describe('getCurrentStoryboardVisualFrame', () => {
-  it('shows the upcoming frame during inter-clip buffer gaps', () => {
-    const frames = buildStoryboardVisualTimeline(
+  it('holds the current beat frame through inter-clip buffer gaps', () => {
+    const { visualFrames: frames } = buildBeatFirstPlaybackTimeline(
       {
         dialogue: [{ character: 'Alice', line: 'One' }, { character: 'Bob', line: 'Two' }],
         beats: [
@@ -500,41 +622,17 @@ describe('getCurrentStoryboardVisualFrame', () => {
           },
         ],
       },
-      buildStoryboardVoiceClips(
-        {
-          dialogue: [{ character: 'Alice', line: 'One' }, { character: 'Bob', line: 'Two' }],
-          beats: [
-            {
-              beatId: 'bt_1',
-              sequenceIndex: 0,
-              kind: 'dialogue',
-              character: 'Alice',
-              line: 'One',
-              storyboardImageUrl: 'https://example.com/one.jpg',
-              audioUrl: SARAH_URL,
-              durationSeconds: 4,
-            },
-            {
-              beatId: 'bt_2',
-              sequenceIndex: 1,
-              kind: 'dialogue',
-              character: 'Bob',
-              line: 'Two',
-              storyboardImageUrl: 'https://example.com/two.jpg',
-              audioUrl: BOB_URL,
-              durationSeconds: 2,
-            },
-          ],
-        },
-        'en',
-        { [SARAH_URL]: 4, [BOB_URL]: 2 }
-      )
+      'en',
+      { [SARAH_URL]: 4, [BOB_URL]: 2 }
     )
 
     expect(getCurrentStoryboardVisualFrame(frames, 3.9)?.imageUrl).toBe(
       'https://example.com/one.jpg'
     )
     expect(getCurrentStoryboardVisualFrame(frames, 4.2)?.imageUrl).toBe(
+      'https://example.com/one.jpg'
+    )
+    expect(getCurrentStoryboardVisualFrame(frames, 4.35)?.imageUrl).toBe(
       'https://example.com/two.jpg'
     )
   })
