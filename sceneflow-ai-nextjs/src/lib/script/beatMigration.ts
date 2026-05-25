@@ -322,11 +322,25 @@ export function deriveSceneActionFallbackText(scene: Record<string, unknown>): s
   ).trim()
 }
 
+function isNarratorDialogueLine(line: Record<string, unknown> | undefined): boolean {
+  if (!line) return false
+  if (line.kind === 'narration') return true
+  if (line.characterId === NARRATOR_CHARACTER_ID) return true
+  if (
+    typeof line.character === 'string' &&
+    toCanonicalName(line.character) === toCanonicalName(NARRATOR_CHARACTER)
+  ) {
+    return true
+  }
+  return false
+}
+
 /** True when the first beat is a migration-injected establishing action, not a scripted beat. */
 export function isAutoLeadingEstablishingBeat(
   beat: SceneBeat,
   scene: Record<string, unknown>,
-  beatIndex: number
+  beatIndex: number,
+  allBeats?: SceneBeat[]
 ): boolean {
   if (beatIndex !== 0 || beat.kind !== 'action') return false
 
@@ -335,13 +349,41 @@ export function isAutoLeadingEstablishingBeat(
   const fallback = deriveSceneActionFallbackText(scene)
   const hasImage = typeof scene.imageUrl === 'string' && scene.imageUrl.trim().length > 0
 
-  if (explicitAction && desc === explicitAction) return false
+  // Keep intentional scripted action (explicit text that is not migration fallback).
+  if (explicitAction && desc === explicitAction && explicitAction !== fallback) {
+    return false
+  }
 
   if (!desc || desc === 'Establishing shot') return true
 
-  if (!explicitAction && fallback && desc === fallback) return true
+  // Migration sync copies fallback blocking into scene.action and beat.actionDescription.
+  if (fallback && desc === fallback) return true
 
-  if (!explicitAction && hasImage && /^establishing(\s*shot)?$/i.test(desc)) return true
+  if (hasImage && /^establishing(\s*shot)?$/i.test(desc)) return true
+
+  // Redundant establishing before the first dialogue line (not script-style action copy).
+  const beats = allBeats ?? (Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : [])
+  const nextBeat = beats[1]
+  const dialogue = Array.isArray(scene.dialogue)
+    ? (scene.dialogue as Array<Record<string, unknown>>)
+    : []
+  if (nextBeat && isSpokenBeatKind(nextBeat.kind) && dialogue.length > 0) {
+    const firstLine = dialogue[0]
+    const alignsWithFirstLine =
+      (!!nextBeat.lineId?.trim() && nextBeat.lineId === firstLine?.lineId) ||
+      (isNarratorBeat(nextBeat) && isNarratorDialogueLine(firstLine)) ||
+      (!!nextBeat.character &&
+        typeof firstLine?.character === 'string' &&
+        toCanonicalName(nextBeat.character) === toCanonicalName(firstLine.character))
+    const isMigrationStyleAction =
+      !desc ||
+      desc === 'Establishing shot' ||
+      (fallback && desc === fallback) ||
+      /^establishing(\s*shot)?$/i.test(desc)
+    if (alignsWithFirstLine && isMigrationStyleAction) {
+      return true
+    }
+  }
 
   return false
 }
@@ -571,7 +613,7 @@ export function getStoryboardTimelineBeats(
 ): SceneBeat[] {
   if (!scene) return []
   const beats = getSceneBeats(scene)
-  if (beats.length > 0 && isAutoLeadingEstablishingBeat(beats[0], scene, 0)) {
+  if (beats.length > 0 && isAutoLeadingEstablishingBeat(beats[0], scene, 0, beats)) {
     return beats.slice(1)
   }
   return beats

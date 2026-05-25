@@ -629,6 +629,103 @@ describe('buildStoryboardVoiceClips', () => {
     expect(visualFrames[0].startTime).toBe(0)
     expect(visualFrames[0].imageUrl).toBe(B1_FRAME)
   })
+
+  it('plays all six dialogue lines when leading action mirrors synced scene.action fallback', () => {
+    const BLOCKING =
+      'INT. NEWS STUDIO - NIGHT. Two hosts at the desk, monitors glow behind them.'
+    const lines = [
+      {
+        lineId: 'ln_narr',
+        kind: 'narration',
+        character: 'NARRATOR',
+        characterId: 'narrator',
+        line: 'Welcome to The Signal Stream.',
+        storyboardImageUrl: 'https://example.com/f1.jpg',
+      },
+      {
+        lineId: 'ln_sarah1',
+        character: 'Sarah Chen',
+        line: 'Dr. Anderson, the news cycle is practically euphoric.',
+        storyboardImageUrl: 'https://example.com/f2.jpg',
+      },
+      {
+        lineId: 'ln_ben1',
+        character: 'Dr. Benjamin Anderson',
+        line: 'Indeed, Sarah. For the public, it is a narrative of diplomatic success.',
+        storyboardImageUrl: 'https://example.com/f3.jpg',
+      },
+      {
+        lineId: 'ln_sarah2',
+        character: 'Sarah Chen',
+        line: 'Pacified? Or managed?',
+        storyboardImageUrl: 'https://example.com/f4.jpg',
+      },
+      {
+        lineId: 'ln_ben2',
+        character: 'Dr. Benjamin Anderson',
+        line: 'A performance. Yes.',
+        storyboardImageUrl: 'https://example.com/f5.jpg',
+      },
+      {
+        lineId: 'ln_sarah3',
+        character: 'Sarah Chen',
+        line: "You're familiar with the term, then.",
+        storyboardImageUrl: 'https://example.com/f6.jpg',
+      },
+    ]
+    const durations = [6.4, 7.2, 5.3, 6.9, 7.0, 4.1]
+    const urls = durations.map((_, i) => `https://example.com/line-${i}.mp3`)
+    const scene = {
+      imageUrl: 'https://example.com/establishing.jpg',
+      action: BLOCKING,
+      visualDescription: BLOCKING,
+      dialogue: lines,
+      dialogueAudio: {
+        en: lines.map((line, dialogueIndex) => ({
+          lineId: line.lineId,
+          character: line.character,
+          characterId: (line as { characterId?: string }).characterId,
+          kind: (line as { kind?: string }).kind,
+          dialogueIndex,
+          audioUrl: urls[dialogueIndex],
+          duration: durations[dialogueIndex],
+        })),
+      },
+      beats: [
+        {
+          beatId: 'bt_action',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: BLOCKING,
+          storyboardImageUrl: 'https://example.com/establishing.jpg',
+        },
+        ...lines.map((line, i) => ({
+          beatId: `bt_${i}`,
+          sequenceIndex: i + 1,
+          kind: line.kind === 'narration' ? 'narration' : 'dialogue',
+          character: line.character,
+          characterId: (line as { characterId?: string }).characterId,
+          line: line.line,
+          lineId: line.lineId,
+          storyboardImageUrl: line.storyboardImageUrl,
+        })),
+      ],
+    }
+
+    const { voiceClips, visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', Object.fromEntries(urls.map((u, i) => [u, durations[i]])))
+
+    expect(voiceClips).toHaveLength(6)
+    expect(visualFrames).toHaveLength(6)
+    expect(voiceClips[0].startTime).toBe(0)
+    expect(voiceClips[0].url).toBe(urls[0])
+    expect(voiceClips[0].dialogueIndex).toBe(0)
+    expect(voiceClips[2].url).toBe(urls[2])
+    expect(voiceClips[2].dialogueIndex).toBe(2)
+    expect(visualFrames[0].beatId).toBe('bt_0')
+    expect(visualFrames[0].imageUrl).toBe('https://example.com/f1.jpg')
+    expect(visualFrames[2].imageUrl).toBe('https://example.com/f3.jpg')
+    expect(voiceClips[1].startTime).toBeCloseTo(6.4 + 0.3, 1)
+  })
 })
 
 describe('getCurrentStoryboardVisualFrame', () => {

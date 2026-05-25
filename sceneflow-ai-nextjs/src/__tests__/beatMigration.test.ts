@@ -11,6 +11,7 @@ import {
   migrateProjectToBeats,
 } from '@/lib/script/beatMigration'
 import { VEO_DIALOGUE_CLIP_MAX_SEC } from '@/lib/scene/dialogueSegmentSplit'
+import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 describe('beatMigration', () => {
   it('flatSceneToBeats creates action, narration, and dialogue beats', () => {
@@ -68,10 +69,37 @@ describe('beatMigration', () => {
         },
       ],
     }
-    expect(isAutoLeadingEstablishingBeat(scene.beats[0] as never, scene, 0)).toBe(true)
+    expect(isAutoLeadingEstablishingBeat(scene.beats[0] as never, scene, 0, scene.beats as never)).toBe(true)
     const timeline = getStoryboardTimelineBeats(scene)
     expect(timeline).toHaveLength(1)
     expect(timeline[0].beatId).toBe('bt_1')
+  })
+
+  it('isAutoLeadingEstablishingBeat filters action when scene.action mirrors fallback blocking', () => {
+    const blocking = 'INT. WAREHOUSE - NIGHT. Dust motes in the air.'
+    const scene = {
+      action: blocking,
+      visualDescription: blocking,
+      dialogue: [{ lineId: 'ln_1', character: 'Sarah Chen', line: 'Hello.' }],
+      beats: [
+        {
+          beatId: 'bt_action',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: blocking,
+        },
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 1,
+          kind: 'dialogue',
+          character: 'Sarah Chen',
+          line: 'Hello.',
+          lineId: 'ln_1',
+        },
+      ],
+    }
+    const beats = scene.beats as SceneBeat[]
+    expect(isAutoLeadingEstablishingBeat(beats[0], scene, 0, beats)).toBe(true)
   })
 
   it('beatsToLegacyFields syncs dialogue and narration', () => {

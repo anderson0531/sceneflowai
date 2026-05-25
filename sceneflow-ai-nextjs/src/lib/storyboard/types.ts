@@ -482,12 +482,17 @@ function isNarratorBeat(beat: {
 function findDialogueAudioEntryForBeat(
   scene: Record<string, unknown>,
   beat: ReturnType<typeof getSceneBeats>[number],
-  language: string
+  language: string,
+  dialogueIndex?: number
 ): Record<string, unknown> | undefined {
   const entries = getDialogueAudioEntries(scene, language)
   if (beat.lineId?.trim()) {
     const byLineId = entries.find((entry) => entry?.lineId === beat.lineId)
     if (byLineId) return byLineId
+  }
+  if (typeof dialogueIndex === 'number') {
+    const byIndex = entries.find((entry) => entry?.dialogueIndex === dialogueIndex)
+    if (byIndex) return byIndex
   }
   if (isNarratorBeat(beat)) {
     const narratorEntry = entries.find(
@@ -495,6 +500,18 @@ function findDialogueAudioEntryForBeat(
         entry?.kind === 'narration' || entry?.characterId === NARRATOR_CHARACTER_ID
     )
     if (narratorEntry) return narratorEntry
+  }
+  if (beat.character?.trim()) {
+    const canonical = toCanonicalName(beat.character)
+    const byCharacter = entries.find((entry) => {
+      if (typeof entry?.character !== 'string') return false
+      if (toCanonicalName(entry.character) !== canonical) return false
+      if (typeof dialogueIndex === 'number' && typeof entry.dialogueIndex === 'number') {
+        return entry.dialogueIndex === dialogueIndex
+      }
+      return typeof entry.dialogueIndex !== 'number'
+    })
+    if (byCharacter) return byCharacter
   }
   return undefined
 }
@@ -560,7 +577,7 @@ function resolveBeatDialogueIndex(
     return undefined
   }
   if (spokenDialogueIdx >= 0 && spokenDialogueIdx < dialogue.length) return spokenDialogueIdx
-  return undefined
+  return spokenDialogueIdx >= 0 ? spokenDialogueIdx : undefined
 }
 
 function beatVoiceClipId(
@@ -597,7 +614,7 @@ function resolveBeatVoiceUrl(
       ...(typeof dialogueIndex === 'number' ? { dialogueIndex } : {}),
       character,
     }) as Record<string, unknown> | null) ??
-    findDialogueAudioEntryForBeat(scene, beat, language) ??
+    findDialogueAudioEntryForBeat(scene, beat, language, dialogueIndex) ??
     null
 
   const fromDialogueAudio =
@@ -640,7 +657,7 @@ function resolveBeatVoiceDuration(
       ...(typeof dialogueIndex === 'number' ? { dialogueIndex } : {}),
       character: beat.character || getDialogueLineCharacter(line),
     }) as Record<string, unknown> | null) ??
-    findDialogueAudioEntryForBeat(scene, beat, language) ??
+    findDialogueAudioEntryForBeat(scene, beat, language, dialogueIndex) ??
     null
 
   const storedDuration =
