@@ -109,7 +109,7 @@ import {
   inferNarrationTimelinePrefixCount,
 } from './audioTrackBuilder'
 import {
-  alignBeatsToDialogueTimeline,
+  alignSegmentsToDialogueTimeline,
   clipMatchesDialogueLineId,
   computePlaybackSegmentDuration,
   computeSegmentContentDuration,
@@ -2465,7 +2465,7 @@ export function SceneProductionMixer({
   }, [])
 
   const handleAlignBeatsToDialogue = useCallback(() => {
-    const aligned = alignBeatsToDialogueTimeline({
+    const aligned = alignSegmentsToDialogueTimeline({
       segments,
       dialogueClips: resolvedDialogueClips,
       probedDurations,
