@@ -829,28 +829,43 @@ function alignPlaybackTimelineToFirstVoice(
 
   const firstClip = voiceClips[0]
   let frameStartIdx = 0
+  // Strip every leading frame that is not the first voice beat (even at the same t=0).
   while (
     frameStartIdx < visualFrames.length &&
-    visualFrames[frameStartIdx].beatId !== firstClip.beatId &&
-    visualFrames[frameStartIdx].startTime < firstClip.startTime - 0.001
+    visualFrames[frameStartIdx].beatId !== firstClip.beatId
   ) {
     frameStartIdx++
   }
 
-  let alignedFrames = visualFrames.slice(frameStartIdx)
-  const offset = firstClip.startTime
-  if (offset <= 0.001) {
-    return { voiceClips, visualFrames: alignedFrames }
+  if (frameStartIdx >= visualFrames.length) {
+    return { voiceClips, visualFrames }
   }
 
-  const rebaseTime = (time: number) => Math.max(0, time - offset)
-  return {
-    voiceClips: voiceClips.map((clip) => ({ ...clip, startTime: rebaseTime(clip.startTime) })),
-    visualFrames: alignedFrames.map((frame) => ({
+  let alignedClips = voiceClips
+  let alignedFrames = visualFrames.slice(frameStartIdx)
+  const offset = alignedFrames[0]?.startTime ?? 0
+
+  if (Math.abs(offset) > 0.001) {
+    const rebaseTime = (time: number) => Math.max(0, time - offset)
+    alignedClips = voiceClips.map((clip) => ({
+      ...clip,
+      startTime: rebaseTime(clip.startTime),
+    }))
+    alignedFrames = alignedFrames.map((frame) => ({
       ...frame,
       startTime: rebaseTime(frame.startTime),
-    })),
+    }))
   }
+
+  alignedFrames = alignedFrames.map((frame, index) => ({
+    ...frame,
+    duration:
+      index < alignedFrames.length - 1
+        ? alignedFrames[index + 1].startTime - frame.startTime
+        : frame.duration,
+  }))
+
+  return { voiceClips: alignedClips, visualFrames: alignedFrames }
 }
 
 /**

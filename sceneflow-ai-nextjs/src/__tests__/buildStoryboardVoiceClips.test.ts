@@ -784,7 +784,9 @@ describe('buildStoryboardVoiceClips', () => {
     expect(voiceClips[0].startTime).toBe(0)
     expect(visualFrames[0].startTime).toBe(0)
     expect(visualFrames[0].beatId).toBe(voiceClips[0].beatId)
+    expect(visualFrames[0].beatId).toBe('bt_narr')
     expect(visualFrames[0].imageUrl).toBe('https://example.com/narrator.jpg')
+    expect(visualFrames).toHaveLength(2)
   })
 })
 
