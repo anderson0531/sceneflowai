@@ -421,7 +421,7 @@ export function SegmentPromptEditor({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Film className="w-5 h-5 text-primary" />
-            <CardTitle className="text-base">Segment {segment.sequenceIndex + 1} Prompt</CardTitle>
+            <CardTitle className="text-base">Beat {segment.sequenceIndex + 1} Prompt</CardTitle>
             <Badge variant="outline" className="text-[10px]">
               {segment.generationMethod}
             </Badge>

@@ -90,7 +90,7 @@ export function SceneProductionDirector({
   const [isBuilderOpen, setIsBuilderOpen] = useState(false)
 
   // Check if this scene already has segments
-  const hasExistingSegments = useMemo(() => {
+  const hasExistingBeats = useMemo(() => {
     // Treat the scene as having segments if there are any
     return (productionData?.segments?.length ?? 0) > 0
   }, [productionData])
@@ -103,7 +103,7 @@ export function SceneProductionDirector({
         label: 'Scene Direction',
         description: hasSceneDirection 
           ? 'Camera, lighting, and talent direction configured'
-          : 'Required — AI needs direction to plan segments',
+          : 'Required — AI needs direction to plan beats',
         status: hasSceneDirection ? 'ready' : 'missing',
         icon: <Clapperboard className="w-4 h-4" />,
         action: onNavigateToDirection,
@@ -114,7 +114,7 @@ export function SceneProductionDirector({
         label: 'Scene Frame',
         description: hasSceneImage
           ? 'Reference frame available for I2V generation'
-          : 'Recommended — enables Image-to-Video for first segment',
+          : 'Recommended — enables Image-to-Video for first beat',
         status: hasSceneImage ? 'ready' : 'recommended',
         icon: <Camera className="w-4 h-4" />,
         action: onNavigateToImage,
@@ -125,7 +125,7 @@ export function SceneProductionDirector({
         label: 'Audio Generated',
         description: hasAudio
           ? 'Narration and dialogue audio ready'
-          : 'Recommended — enables audio-driven segment timing',
+          : 'Recommended — enables audio-driven beat timing',
         status: hasAudio ? 'ready' : 'recommended',
         icon: <Volume2 className="w-4 h-4" />,
         action: onNavigateToAudio,
@@ -151,7 +151,7 @@ export function SceneProductionDirector({
 
   const handleStartBuilding = useCallback(() => {
     // If segments exist, bypass the builder and initialize production directly
-    if (hasExistingSegments) {
+    if (hasExistingBeats) {
        onSegmentsCreated(productionData?.segments || [])
        return
     }
@@ -162,7 +162,7 @@ export function SceneProductionDirector({
   // ============================================================================
   // RENDER: Complete State (segments exist)
   // ============================================================================
-  if (hasExistingSegments) {
+  if (hasExistingBeats) {
     return null // Let SceneProductionManager handle existing segments
   }
 
@@ -179,7 +179,7 @@ export function SceneProductionDirector({
               <Film className="w-4 h-4 text-indigo-400" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-indigo-200">Scene {sceneNumber} — Segment Director</p>
+              <p className="text-sm font-semibold text-indigo-200">Scene {sceneNumber} — Beat Director</p>
               <p className="text-xs text-indigo-300/60">AI-powered shot breakdown and prompt generation</p>
             </div>
           </div>
@@ -202,7 +202,7 @@ export function SceneProductionDirector({
           </div>
         </div>
 
-          {/* Inline Segment Builder (Auto-triggers generation now) */}
+          {/* Inline Beat Builder (Auto-triggers generation now) */}
           <SegmentBuilder
             sceneId={sceneId}
             sceneNumber={sceneNumber}
@@ -342,7 +342,7 @@ export function SceneProductionDirector({
               )}
             >
               <Play className="w-4 h-4" />
-              {hasExistingSegments ? 'Start Production' : 'Generate Segments'}
+              {hasExistingBeats ? 'Start Production' : 'Generate Beats'}
             </Button>
           </div>
         </div>

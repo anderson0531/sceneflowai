@@ -122,7 +122,7 @@ const SegmentCard = memo(({ segment, isSelected, isPlaying, onSelect, onEdit, on
           </div>
         )}
         
-        {/* Segment number badge */}
+        {/* Beat number badge */}
         <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-black/70 rounded text-[10px] font-bold text-white">
           {segment.sequenceIndex + 1}
         </div>
@@ -150,7 +150,7 @@ const SegmentCard = memo(({ segment, isSelected, isPlaying, onSelect, onEdit, on
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (window.confirm('Delete this segment?')) onDelete();
+                  if (window.confirm('Delete this beat?')) onDelete();
                 }}
                 className="p-1 rounded bg-black/60 hover:bg-red-500/80 text-white transition-colors"
                 title="Delete segment"
@@ -222,7 +222,7 @@ export function VerticalSegmentSelector({
       <div className="h-full flex flex-col items-center justify-center p-4 text-center">
         <Film className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          No segments yet
+          No beats yet
         </p>
       </div>
     )
@@ -234,7 +234,7 @@ export function VerticalSegmentSelector({
       <div className="flex-shrink-0 px-3 py-2 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-            Segments
+            Beats
           </span>
           <span className="text-[10px] text-gray-400">
             {segments.length}
@@ -242,7 +242,7 @@ export function VerticalSegmentSelector({
         </div>
       </div>
       
-      {/* Scrollable Segment List */}
+      {/* Scrollable Beat List */}
       <div className="flex-1 overflow-y-auto p-2 space-y-2">
         {segments.map((segment) => (
           <SegmentCard
@@ -256,7 +256,7 @@ export function VerticalSegmentSelector({
           />
         ))}
         
-        {/* Add Segment Button (placeholder) */}
+        {/* Add Beat Button (placeholder) */}
         {/* {typeof onAddSegment === 'function' && (
           <Button
             variant="outline"
@@ -265,7 +265,7 @@ export function VerticalSegmentSelector({
             className="w-full h-12 border-dashed flex items-center justify-center gap-2 text-gray-400 hover:text-gray-600"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Segment</span>
+            <span>Add Beat</span>
           </Button>
         )} */}
       </div>

@@ -493,7 +493,7 @@ export function AddSegmentDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5 text-primary" />
-            Add Segment
+            Add Beat
             <Badge variant="outline" className="ml-2 text-xs">
               Scene {sceneNumber}
             </Badge>
@@ -924,7 +924,7 @@ export function AddSegmentDialog({
           </Button>
           <Button onClick={handleCreate}>
             <Sparkles className="w-4 h-4 mr-2" />
-            Add Segment
+            Add Beat
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -305,10 +305,10 @@ function DirectorConsoleRoot({
   // Selected segment for DirectorDialog
   const [selectedSegment, setSelectedSegment] = useState<SceneSegment | null>(null)
   
-  // Segment for VideoEditingDialog (editing completed videos)
+  // Beat for VideoEditingDialog (editing completed videos)
   const [editingVideoSegment, setEditingVideoSegment] = useState<SceneSegment | null>(null)
   
-  // Segment selection for batch operations (checkboxes)
+  // Beat selection for batch operations (checkboxes)
   const [selectedSegmentIds, setSelectedSegmentIds] = useState<Set<string>>(new Set())
   
   // Toggle segment selection
@@ -325,11 +325,11 @@ function DirectorConsoleRoot({
   }, [])
   
   // Select/deselect all segments
-  const selectAllSegments = useCallback(() => {
+  const selectAllBeats = useCallback(() => {
     setSelectedSegmentIds(new Set(queue.map(q => q.segmentId)))
   }, [queue])
   
-  const deselectAllSegments = useCallback(() => {
+  const deselectAllBeats = useCallback(() => {
     setSelectedSegmentIds(new Set())
   }, [])
   
@@ -916,7 +916,7 @@ function DirectorConsoleRoot({
     return (
       <div className="p-8 text-center">
         <Clapperboard className="w-16 h-16 mx-auto mb-4 text-slate-500 opacity-30" />
-        <h3 className="!text-base !leading-normal font-semibold text-slate-300 mb-2">No Segments Available</h3>
+        <h3 className="!text-base !leading-normal font-semibold text-slate-300 mb-2">No Beats Available</h3>
         <p className="text-sm text-slate-500">
           Initialize scene production in the Frame step first to create video segments.
         </p>
@@ -1027,7 +1027,7 @@ function DirectorConsoleRoot({
         onProductionStreamsChange={(streams) => {
           setProductionStreams(streams)
         }}
-        isGeneratingSegments={isRendering}
+        isGeneratingBeats={isRendering}
       />
     ) : null
 
@@ -1075,7 +1075,7 @@ function DirectorConsoleRoot({
               className="bg-emerald-600/20 border-emerald-500/50 text-emerald-300 hover:bg-emerald-600/30"
             >
               <Film className="w-4 h-4 mr-2" />
-              Play Segments ({statusCounts.rendered})
+              Play Beats ({statusCounts.rendered})
             </Button>
           )}
         </>
@@ -1142,7 +1142,7 @@ function DirectorConsoleRoot({
                       </div>
                       <div className="w-32 aspect-video bg-black rounded overflow-hidden relative flex-shrink-0">
                         {item.thumbnailUrl ? (
-                          <img src={item.thumbnailUrl} alt={`Segment ${item.sequenceIndex + 1}`} className="w-full h-full object-cover" />
+                          <img src={item.thumbnailUrl} alt={`Beat ${item.sequenceIndex + 1}`} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-slate-800">
                             <Film className="w-8 h-8 text-slate-600" />
@@ -1185,7 +1185,7 @@ function DirectorConsoleRoot({
                                   setIsScenePlayerOpen(true)
                                 }
                               }}
-                              title="Play segment video"
+                              title="Play beat video"
                             >
                               <PlayCircle className="w-10 h-10 text-white/0 group-hover:text-white/90 transition-colors drop-shadow-lg" />
                             </button>
@@ -1194,7 +1194,7 @@ function DirectorConsoleRoot({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start gap-2">
-                          <span className="font-semibold text-slate-200">Segment {item.sequenceIndex + 1}</span>
+                          <span className="font-semibold text-slate-200">Beat {item.sequenceIndex + 1}</span>
                           <Badge variant="outline" className={`flex items-center gap-1 text-[10px] ${statusConfig.className}`}>
                             <StatusIcon className={`w-3 h-3 ${item.config.approvalStatus === 'rendering' ? 'animate-spin' : ''}`} />
                             {statusConfig.label}
@@ -1255,7 +1255,7 @@ function DirectorConsoleRoot({
                                     e.stopPropagation()
                                     if (item.config.approvalStatus === 'locked') {
                                       import('sonner').then(({ toast }) => {
-                                        toast.error('Segment is protected', {
+                                        toast.error('Beat is protected', {
                                           description: 'Unprotect this segment first to upload a new video',
                                         })
                                       })
@@ -1319,7 +1319,7 @@ function DirectorConsoleRoot({
                             const idx = segments.findIndex(s => s.segmentId === item.segmentId)
                             if (idx >= 0) setContinueShotSegmentIndex(idx)
                           }}
-                          title="Continue from this segment's end frame"
+                          title="Continue from this beat's end frame"
                         >
                           <ArrowRight className="w-3.5 h-3.5 mr-1" />
                           Continue
@@ -1517,12 +1517,12 @@ function DirectorConsoleRoot({
       />
       
       {/* VideoEditingDialog for editing completed segment videos */}
-      {editingVideoSegment && (
+      {editingVideoBeat && (
         <VideoEditingDialog
           open={!!editingVideoSegment}
           onClose={() => setEditingVideoSegment(null)}
           segment={editingVideoSegment}
-          allSegments={segments}
+          allBeats={segments}
           sceneImageUrl={sceneImageUrl}
           characters={scene?.characters}
           previousSegmentLastFrame={previousSegmentLastFrame}
@@ -1752,7 +1752,7 @@ function DirectorConsoleRoot({
             
             import('sonner').then(({ toast }) => {
               toast.success('Continue Shot added!', {
-                description: 'Start frame copied. Configure dialogue and generate the end frame in the Segment Builder.',
+                description: 'Start frame copied. Configure dialogue and generate the end frame in the Beat Builder.',
               })
             })
           }

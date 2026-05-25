@@ -99,8 +99,8 @@ const automationFeatures: Omit<AutomationCardProps, 'delay'>[] = [
   },
   {
     icon: Film,
-    title: 'Scene Segments',
-    description: 'Build 8-second video segments with anchor frames and optimized prompts. Perfect for Screening Room review and distribution.',
+    title: 'Scene Beats',
+    description: 'Build 8-second video beats with anchor frames and optimized prompts. Perfect for Screening Room review and distribution.',
     highlight: 'Pitch-ready output',
     gradient: 'from-amber-500 to-amber-600'
   },

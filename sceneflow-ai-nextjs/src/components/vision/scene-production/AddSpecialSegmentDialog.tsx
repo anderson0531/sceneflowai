@@ -87,7 +87,7 @@ export interface AddSpecialSegmentDialogProps {
 }
 
 // ============================================================================
-// Special Segment Type Configurations
+// Special Beat Type Configurations
 // ============================================================================
 
 interface SpecialSegmentConfig {
@@ -392,7 +392,7 @@ export function AddSpecialSegmentDialog({
         </DialogHeader>
         
         <div className="space-y-6 py-4">
-          {/* Segment Type Selection */}
+          {/* Beat Type Selection */}
           <div className="space-y-3">
             <Label className="text-sm font-medium text-slate-300">Element Type</Label>
             <ScrollArea className="h-[280px] pr-2">

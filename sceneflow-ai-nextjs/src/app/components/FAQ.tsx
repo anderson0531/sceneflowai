@@ -16,7 +16,7 @@ export function FAQ() {
     {
       question: 'Can I edit AI-generated scripts, visuals, and audio?',
       answer:
-        'Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific segments, tune voiceover, and refine timing in Final Cut. SceneFlow accelerates production, but creators keep final control.',
+        'Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in Final Cut. SceneFlow accelerates production, but creators keep final control.',
     },
     {
       question: 'How does Target Audience Resonance work now?',

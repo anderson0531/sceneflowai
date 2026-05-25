@@ -14,10 +14,10 @@ interface SegmentTimelineProps {
 }
 
 export function SegmentTimeline({ segments, selectedSegmentId, onSelect, audioTracks }: SegmentTimelineProps) {
-  const [expandedSegments, setExpandedSegments] = useState<Set<string>>(new Set())
+  const [expandedBeats, setExpandedBeats] = useState<Set<string>>(new Set())
 
   const handleToggleExpand = (segmentId: string) => {
-    setExpandedSegments((prev) => {
+    setExpandedBeats((prev) => {
       const next = new Set(prev)
       if (next.has(segmentId)) {
         next.delete(segmentId)
@@ -38,7 +38,7 @@ export function SegmentTimeline({ segments, selectedSegmentId, onSelect, audioTr
   if (segments.length === 0) {
     return (
       <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-sm text-gray-500 dark:text-gray-400 text-center">
-        No segments yet. Initialize scene production to create segments and prompts.
+        No beats yet. Initialize scene production to create segments and prompts.
       </div>
     )
   }
@@ -48,10 +48,10 @@ export function SegmentTimeline({ segments, selectedSegmentId, onSelect, audioTr
       {/* Timeline Header */}
       <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 px-2">
         <span className="font-mono">Timeline: 0:00 - {formatTime(totalDuration)}</span>
-        <span className="text-gray-400">{segments.length} segment{segments.length !== 1 ? 's' : ''}</span>
+        <span className="text-gray-400">{segments.length} beat{segments.length !== 1 ? 's' : ''}</span>
       </div>
 
-      {/* Responsive Segment Cards Timeline */}
+      {/* Responsive Beat Cards Timeline */}
       <div className="border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50 dark:bg-gray-900 overflow-hidden">
         <div className="overflow-x-auto p-3">
           <div className="flex gap-3">

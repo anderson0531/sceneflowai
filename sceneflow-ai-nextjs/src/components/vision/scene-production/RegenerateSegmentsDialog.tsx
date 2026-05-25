@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils'
 export interface RegenerateSegmentsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  totalSegments: number
+  totalBeats: number
   totalDuration: number
   anchoredCount: number
   hasGeneratedAssets: boolean
@@ -34,7 +34,7 @@ export interface RegenerateSegmentsDialogProps {
 export function RegenerateSegmentsDialog({
   open,
   onOpenChange,
-  totalSegments,
+  totalBeats,
   totalDuration,
   anchoredCount,
   hasGeneratedAssets,
@@ -46,22 +46,22 @@ export function RegenerateSegmentsDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-cyan-400">
             <RefreshCw className="w-5 h-5" />
-            Regenerate Segments
+            Regenerate Beats
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            Clear all segments and return to the Segment Builder to start fresh.
+            Clear all segments and return to the Beat Builder to start fresh.
           </DialogDescription>
         </DialogHeader>
         
         <div className="py-4 space-y-4">
-          {/* Current Segments Summary */}
+          {/* Current Beats Summary */}
           <div className="bg-slate-800/50 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400 flex items-center gap-2">
                 <Layers className="w-4 h-4" />
-                Segments
+                Beats
               </span>
-              <span className="text-white font-medium">{totalSegments}</span>
+              <span className="text-white font-medium">{totalBeats}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400 flex items-center gap-2">
@@ -75,7 +75,7 @@ export function RegenerateSegmentsDialog({
                 <ImageIcon className="w-4 h-4" />
                 Anchored Frames
               </span>
-              <span className="text-white font-medium">{anchoredCount} / {totalSegments}</span>
+              <span className="text-white font-medium">{anchoredCount} / {totalBeats}</span>
             </div>
           </div>
           
@@ -99,7 +99,7 @@ export function RegenerateSegmentsDialog({
                 <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 <span>
                   All current segments will be removed. You&apos;ll be taken to the 
-                  Segment Builder to configure and regenerate with new settings.
+                  Beat Builder to configure and regenerate with new settings.
                 </span>
               </p>
             )}
@@ -110,7 +110,7 @@ export function RegenerateSegmentsDialog({
             <p className="flex items-start gap-2">
               <Film className="w-4 h-4 mt-0.5 flex-shrink-0 text-cyan-400" />
               <span>
-                The Segment Builder will open with controls for total duration, 
+                The Beat Builder will open with controls for total duration, 
                 segment count, focus mode, and custom direction.
               </span>
             </p>

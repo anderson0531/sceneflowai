@@ -774,7 +774,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="text-lg font-medium text-white flex items-center gap-2">
             <Wand2 className="w-4 h-4 text-indigo-400" />
-            Generate Video: Segment {segment.sequenceIndex + 1}
+            Generate Video: Beat {segment.sequenceIndex + 1}
           </DialogTitle>
           <DialogDescription className="text-sm text-slate-400">
             Review and customize generation parameters before rendering.

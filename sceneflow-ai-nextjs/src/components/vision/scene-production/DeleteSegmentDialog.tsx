@@ -23,7 +23,7 @@ export interface DeleteSegmentDialogProps {
   segmentIndex: number
   segmentDuration: number
   hasFrames: boolean
-  totalSegments: number
+  totalBeats: number
   onConfirm: () => void
   isDeleting?: boolean
 }
@@ -38,11 +38,11 @@ export function DeleteSegmentDialog({
   segmentIndex,
   segmentDuration,
   hasFrames,
-  totalSegments,
+  totalBeats,
   onConfirm,
   isDeleting = false
 }: DeleteSegmentDialogProps) {
-  const isLastSegment = totalSegments === 1
+  const isLastBeat = totalBeats === 1
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -50,7 +50,7 @@ export function DeleteSegmentDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            Delete Segment {segmentIndex + 1}?
+            Delete Beat {segmentIndex + 1}?
           </DialogTitle>
           <DialogDescription className="text-slate-400">
             This action cannot be undone.
@@ -58,7 +58,7 @@ export function DeleteSegmentDialog({
         </DialogHeader>
         
         <div className="py-4 space-y-4">
-          {/* Segment Info */}
+          {/* Beat Info */}
           <div className="bg-slate-800/50 rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400 flex items-center gap-2">
@@ -85,11 +85,11 @@ export function DeleteSegmentDialog({
           {/* Impact Warning */}
           <div className={cn(
             "rounded-lg p-3 text-sm",
-            isLastSegment 
+            isLastBeat 
               ? "bg-red-500/10 border border-red-500/30 text-red-300"
               : "bg-amber-500/10 border border-amber-500/30 text-amber-300"
           )}>
-            {isLastSegment ? (
+            {isLastBeat ? (
               <p>
                 <strong>Warning:</strong> This is the only segment in the scene. 
                 Deleting it will leave the scene without any keyframes.
@@ -126,7 +126,7 @@ export function DeleteSegmentDialog({
             ) : (
               <>
                 <Trash2 className="w-4 h-4 mr-2" />
-                Delete Segment
+                Delete Beat
               </>
             )}
           </Button>

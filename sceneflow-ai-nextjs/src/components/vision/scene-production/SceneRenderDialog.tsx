@@ -151,7 +151,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
     if (renderMode === 'animatic') return 'animatic'
     // If explicitly video but no video segments, fall back to animatic
     const hasVideoSegments = segments.some(s => s.activeAssetUrl && s.status === 'COMPLETE')
-    if (!hasVideoSegments) return 'animatic'
+    if (!hasVideoBeats) return 'animatic'
     return 'video'
   }, [renderMode, segments])
 
@@ -195,7 +195,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
   }
 
   // Check if all segments are muted
-  const allSegmentsMuted = useMemo(() => {
+  const allBeatsMuted = useMemo(() => {
     return Object.values(segmentAudioSettings).every(s => !s.includeAudio)
   }, [segmentAudioSettings])
 
@@ -650,7 +650,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium text-slate-300 flex items-center gap-2">
                 <Video className="w-4 h-4 text-cyan-400" />
-                Video Sequence ({renderedSegments.length} Segments)
+                Video Sequence ({renderedSegments.length} Beats)
               </Label>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-500">
@@ -660,11 +660,11 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleMuteAll(!allSegmentsMuted)}
+                  onClick={() => handleMuteAll(!allBeatsMuted)}
                   disabled={isRendering || renderedSegments.length === 0}
                   className="h-7 text-xs text-slate-400 hover:text-slate-200"
                 >
-                  {allSegmentsMuted ? (
+                  {allBeatsMuted ? (
                     <>
                       <Volume2 className="w-3 h-3 mr-1" />
                       Unmute All
@@ -679,7 +679,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
               </div>
             </div>
             
-            {/* Segment List */}
+            {/* Beat List */}
             <div className="bg-slate-800/30 rounded-lg border border-slate-700/50 max-h-48 overflow-y-auto">
               {renderedSegments.map((segment, idx) => {
                 const settings = segmentAudioSettings[segment.segmentId] || { includeAudio: true, volume: 1.0 }
@@ -692,7 +692,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-mono text-slate-500 w-6">#{idx + 1}</span>
-                      <span className="text-sm text-slate-300">Segment {idx + 1}</span>
+                      <span className="text-sm text-slate-300">Beat {idx + 1}</span>
                       <span className="text-xs text-slate-500">{formatDuration(duration)}</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -724,7 +724,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
             
             {renderedSegments.length < segments.length && (
               <p className="text-xs text-amber-400">
-                ⚠️ {segments.length - renderedSegments.length} segment(s) not yet rendered
+                ⚠️ {segments.length - renderedSegments.length} beat(s) not yet rendered
               </p>
             )}
           </div>

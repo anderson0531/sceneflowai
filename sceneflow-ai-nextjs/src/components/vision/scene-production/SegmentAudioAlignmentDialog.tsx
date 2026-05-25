@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Segment Audio Alignment Dialog
+ * Beat Audio Alignment Dialog
  * 
  * A focused dialog for aligning video segments with audio tracks.
  * Provides controls for:
@@ -240,7 +240,7 @@ export function SegmentAudioAlignmentDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Link2 className="w-5 h-5 text-cyan-500" />
-            Segment {segmentIndex + 1} Audio Alignment
+            Beat {segmentIndex + 1} Audio Alignment
           </DialogTitle>
           <DialogDescription>
             Align this segment with dialogue and audio tracks for precise timing.
@@ -254,7 +254,7 @@ export function SegmentAudioAlignmentDialog({
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold flex items-center gap-2">
                   <Clock className="w-4 h-4 text-cyan-500" />
-                  Segment Timing
+                  Beat Timing
                 </h4>
                 <Badge variant="outline" className={getAlignmentColor()}>
                   {alignmentStatus === 'aligned' && 'Aligned'}

@@ -680,7 +680,7 @@ export default function ScriptReviewModal({
   const [fixedScenes, setFixedScenes] = useState<Set<number>>(new Set())   // scene numbers successfully fixed
   const [expandedScenes, setExpandedScenes] = useState<Set<number>>(new Set()) // scene numbers with expanded recommendations
 
-  // Optimize Scene Dialog state
+  // Optimize Scene Dialogue state
   const [optimizeDialogOpen, setOptimizeDialogOpen] = useState(false)
   const [optimizeDialogScene, setOptimizeDialogScene] = useState<SceneAnalysis | null>(null)
 
@@ -1406,7 +1406,7 @@ export default function ScriptReviewModal({
     }
   }
 
-  // Open Optimize Scene Dialog for a specific scene
+  // Open Optimize Scene Dialogue for a specific scene
   const handleOpenOptimizeDialog = (sceneAnalysisItem: SceneAnalysis) => {
     setOptimizeDialogScene(sceneAnalysisItem)
     setOptimizeDialogOpen(true)
@@ -2639,7 +2639,7 @@ Examples:
         </div>
 
 
-        {/* Optimize Scene Dialog */}
+        {/* Optimize Scene Dialogue */}
         <OptimizeSceneDialog
           isOpen={optimizeDialogOpen}
           onClose={() => {

@@ -193,7 +193,7 @@ export function SegmentPairCard({
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-slate-700/50">
         <div className="flex items-center gap-2">
-          {/* Segment Number */}
+          {/* Beat Number */}
           <div className="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-xs font-medium">
             {segmentIndex + 1}
           </div>
@@ -259,7 +259,7 @@ export function SegmentPairCard({
                   <Trash2 className="w-3.5 h-3.5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Delete Segment</TooltipContent>
+              <TooltipContent>Delete Beat</TooltipContent>
             </Tooltip>
           )}
         </div>

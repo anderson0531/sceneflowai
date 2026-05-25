@@ -75,7 +75,7 @@ export function AudioTimeline({
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null)
   const [selectedClipTrackType, setSelectedClipTrackType] = useState<string | null>(null)
   
-  // Segment selection - use external if provided, otherwise internal
+  // Beat selection - use external if provided, otherwise internal
   const [internalSelectedSegmentId, setInternalSelectedSegmentId] = useState<string | null>(null)
   const selectedSegmentId = externalSelectedSegmentId !== undefined ? externalSelectedSegmentId : internalSelectedSegmentId
   
@@ -103,9 +103,9 @@ export function AudioTimeline({
     }
   }, [enableAudioSnap])
   
-  // Segment lock toggle - when enabled, segments cannot be moved/resized
+  // Beat lock toggle - when enabled, segments cannot be moved/resized
   // Default to locked to prevent accidental changes (timeline is for audio alignment)
-  const [segmentsLocked, setSegmentsLocked] = useState(() => {
+  const [segmentsLocked, setBeatsLocked] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sceneflow-segments-locked')
       return saved !== 'false'  // Default to locked
@@ -232,7 +232,7 @@ export function AudioTimeline({
     return clips
   }, [audioTracks])
 
-  // Segment clips derived from segments prop
+  // Beat clips derived from segments prop
   const segmentClips = useMemo<SegmentClip[]>(() => {
     return segments.map((seg, idx) => ({
       segmentId: seg.segmentId,
@@ -278,15 +278,15 @@ export function AudioTimeline({
     // Get segments that could be dialogue segments
     // Sort by start time and take the last N segments where N = number of dialogue clips
     // This assumes early segments are establishing/narration shots
-    const sortedSegments = [...segmentClips].sort((a, b) => a.startTime - b.startTime)
+    const sortedBeats = [...segmentClips].sort((a, b) => a.startTime - b.startTime)
     const dialogueSegmentCount = dialogueClips.length
-    const startIdx = Math.max(0, sortedSegments.length - dialogueSegmentCount)
-    const dialogueSegments = sortedSegments.slice(startIdx)
+    const startIdx = Math.max(0, sortedBeats.length - dialogueSegmentCount)
+    const dialogueBeats = sortedBeats.slice(startIdx)
     
     // Align each dialogue clip to corresponding segment start
     dialogueClips.forEach((clipWrapper, i) => {
-      if (i < dialogueSegments.length) {
-        const targetStart = dialogueSegments[i].startTime
+      if (i < dialogueBeats.length) {
+        const targetStart = dialogueBeats[i].startTime
         // Only update if there's a meaningful difference
         if (Math.abs(clipWrapper.clip.startTime - targetStart) > 0.1) {
           onAudioClipChange('dialogue', clipWrapper.clip.id, { startTime: targetStart })
@@ -296,8 +296,8 @@ export function AudioTimeline({
     
     // Align SFX to the first dialogue segment start (if any)
     const sfxClips = allClips.filter(c => c.type === 'sfx')
-    if (sfxClips.length > 0 && dialogueSegments.length > 0) {
-      const sfxStart = dialogueSegments[0].startTime
+    if (sfxClips.length > 0 && dialogueBeats.length > 0) {
+      const sfxStart = dialogueBeats[0].startTime
       sfxClips.forEach(clipWrapper => {
         if (Math.abs(clipWrapper.clip.startTime - sfxStart) > 0.1) {
           onAudioClipChange('sfx', clipWrapper.clip.id, { startTime: sfxStart })
@@ -615,7 +615,7 @@ export function AudioTimeline({
           className="flex-1 relative bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800"
           style={{ width: containerWidth }}
         >
-          {/* Segment markers */}
+          {/* Beat markers */}
           {segments.map((seg, i) => (
             <div
               key={seg.segmentId}
@@ -689,7 +689,7 @@ export function AudioTimeline({
           className="flex-1 relative bg-cyan-950/20 border-b border-gray-200 dark:border-gray-800"
           style={{ width: containerWidth }}
         >
-          {/* Segment clips */}
+          {/* Beat clips */}
           {segmentClips.map((seg) => {
             const isSelected = selectedSegmentId === seg.segmentId
             
@@ -793,7 +793,7 @@ export function AudioTimeline({
           </Button>
         )}
         
-        {/* Auto-Align Audio to Segments Button */}
+        {/* Auto-Align Audio to Beats Button */}
         {onAudioClipChange && segmentClips.length > 0 && allClips.filter(c => c.type === 'dialogue').length > 0 && (
           <Button
             variant="ghost"
@@ -807,12 +807,12 @@ export function AudioTimeline({
           </Button>
         )}
         
-        {/* Segment Lock Toggle */}
+        {/* Beat Lock Toggle */}
         {segmentClips.length > 0 && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setSegmentsLocked(!segmentsLocked)}
+            onClick={() => setBeatsLocked(!segmentsLocked)}
             className={cn(
               "h-7 text-[10px] gap-1 px-2",
               segmentsLocked 
@@ -1157,7 +1157,7 @@ export function AudioTimeline({
         )
       })()}
 
-      {/* Selected Segment Panel */}
+      {/* Selected Beat Panel */}
       {selectedSegmentId && !selectedClipId && (() => {
         const segData = getSelectedSegmentData()
         if (!segData) return null

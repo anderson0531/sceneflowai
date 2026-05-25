@@ -24,7 +24,7 @@ import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import {
   buildAudioTracksWithBaselineTiming,
   determineBaselineLanguage,
-  repackSegmentsFromAssignedDialogue,
+  repackBeatsFromAssignedDialogue,
 } from './audioTrackBuilder'
 import {
   Dialog,
@@ -40,7 +40,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-// Segment generation options
+// Beat generation options
 export interface SegmentGenerationOptions {
   targetDuration: number
   alignWithNarration: boolean
@@ -96,7 +96,7 @@ interface SceneProductionManagerProps {
   /** Apply intelligent auto-alignment of keyframes to audio anchors */
   onApplyIntelligentAlignment?: (sceneId: string, language?: string) => void
   onAudioClipChange?: (sceneId: string, trackType: string, clipId: string, changes: { startTime?: number; duration?: number }) => void
-  // Phase 7: Segment reordering
+  // Phase 7: Beat reordering
   onReorderSegments?: (sceneId: string, oldIndex: number, newIndex: number) => void
   // Image editing (reuses ImageEditModal from Frame step)
   onEditImage?: (imageUrl: string) => void
@@ -208,7 +208,7 @@ export function SceneProductionManager({
   )
   
   // Phase 7: Wrapper for segment reordering
-  const handleReorderSegmentsWrapper = useCallback(
+  const handleReorderBeatsWrapper = useCallback(
     (oldIndex: number, newIndex: number) => {
       if (onReorderSegments) {
         onReorderSegments(sceneId, oldIndex, newIndex)
@@ -517,7 +517,7 @@ export function SceneProductionManager({
       const parsed = JSON.parse(pastedJson)
       const rawSegments = parsed.segments || parsed
       
-      if (!Array.isArray(rawSegments) || rawSegments.length === 0) {
+      if (!Array.isArray(rawBeats) || rawBeats.length === 0) {
         toast.error('Invalid JSON: expected an array of segments or { segments: [...] }')
         return
       }
@@ -539,7 +539,7 @@ export function SceneProductionManager({
             objectRefIds: [],
           },
           takes: [],
-          generatedPrompt: seg.prompt || seg.label || `Segment ${idx + 1}`,
+          generatedPrompt: seg.prompt || seg.label || `Beat ${idx + 1}`,
         }
         currentTime += duration
         return segment
@@ -1013,7 +1013,7 @@ export function SceneProductionManager({
     try {
       await onInitialize(sceneId, { targetDuration, generationOptions })
       setGenerationProgress(100)
-      toast.success('Segments generated successfully', {
+      toast.success('Beats generated successfully', {
         description: `Created intelligent video segments with cinematic prompts`
       })
     } catch (error) {
@@ -1071,7 +1071,7 @@ export function SceneProductionManager({
             objectRefIds: [],
           },
           takes: [],
-          generatedPrompt: `Scene ${sceneNumber} - Segment ${i + 1}/${chunkDurations.length} (${dur.toFixed(1)}s). Ready for image or video upload.`,
+          generatedPrompt: `Scene ${sceneNumber} - Beat ${i + 1}/${chunkDurations.length} (${dur.toFixed(1)}s). Ready for image or video upload.`,
         }
         t += dur
         return seg
@@ -1263,7 +1263,7 @@ export function SceneProductionManager({
     const sceneDuration = narrationDriven && narrationDurationSeconds 
       ? narrationDurationSeconds 
       : (scene?.duration || totalAudioDurationSeconds || 30)
-    const effectiveDuration = addLeadInSegment ? sceneDuration + leadInDuration : sceneDuration
+    const effectiveDuration = addLeadInBeat ? sceneDuration + leadInDuration : sceneDuration
     return Math.max(1, Math.ceil(effectiveDuration / targetDuration))
   }, [narrationDriven, narrationDurationSeconds, scene?.duration, totalAudioDurationSeconds, addLeadInSegment, leadInDuration, targetDuration])
 
@@ -1295,17 +1295,17 @@ export function SceneProductionManager({
             </div>
             <div>
               <DialogTitle className="text-left">
-                {isRegenerate ? 'Regenerate Scene Segments' : 'Generate Scene Segments'}
+                {isRegenerate ? 'Regenerate Scene Beats' : 'Generate Scene Beats'}
               </DialogTitle>
               <DialogDescription className="text-left">
                 Configure how segments are created for this scene.
               </DialogDescription>
             </div>
           </div>
-          {/* Segment count preview */}
+          {/* Beat count preview */}
           <div className="flex flex-col items-center justify-center px-4 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{estimatedSegmentCount}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">segments</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">beats</div>
           </div>
         </div>
       </DialogHeader>
@@ -1364,7 +1364,7 @@ export function SceneProductionManager({
             {/* Core timing controls in a grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Target Segment Duration</Label>
+                <Label className="text-sm font-medium">Target Beat Duration</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
@@ -1421,7 +1421,7 @@ export function SceneProductionManager({
                 
                 <div className="flex items-start justify-between gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                   <div className="flex-1">
-                    <Label className="text-sm font-medium">Add Lead-In Segment</Label>
+                    <Label className="text-sm font-medium">Add Lead-In Beat</Label>
                     <p className="text-xs text-gray-500 mt-1">
                       Insert an establishing shot before dialogue begins.
                     </p>
@@ -1432,7 +1432,7 @@ export function SceneProductionManager({
                   />
                 </div>
                 
-                {addLeadInSegment && (
+                {addLeadInBeat && (
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
                     <Label className="text-sm font-medium">Lead-In Duration:</Label>
                     <Input
@@ -1686,7 +1686,7 @@ export function SceneProductionManager({
         </Button>
         <Button onClick={handleInitialize} disabled={isInitializing}>
           <Sparkles className="w-4 h-4 mr-2" />
-          {isRegenerate ? 'Regenerate Segments' : 'Generate Segments'}
+          {isRegenerate ? 'Regenerate Beats' : 'Generate Beats'}
         </Button>
       </DialogFooter>
     </DialogContent>
@@ -1718,12 +1718,12 @@ export function SceneProductionManager({
       {/* Freeze Screen Overlay during generation */}
       <GeneratingOverlay 
         visible={isInitializing} 
-        title="Generating Intelligent Segments..." 
+        title="Generating Intelligent Beats..." 
         progress={generationProgress}
         subtext="Analyzing dialogue, scene direction, and character blocking with Gemini 3.0"
       />
       
-      {/* Enhanced Segment Generation Dialog - for regeneration */}
+      {/* Enhanced Beat Generation Dialog - for regeneration */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <SegmentGenerationDialogContent isRegenerate={true} />
       </Dialog>
@@ -1805,7 +1805,7 @@ Example format:
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Create Segments
+                  Create Beats
                 </>
               )}
             </Button>
@@ -1858,7 +1858,7 @@ Example format:
           </div>
         </div>
 
-        {/* Optimized Layout: Timeline (left) + Segment Studio Panel (right, toggleable) */}
+        {/* Optimized Layout: Timeline (left) + Beat Studio Panel (right, toggleable) */}
         <div className="flex gap-4 min-h-[750px] overflow-hidden">
           {/* Main Area: Scene Timeline V2 with Video Player - Single Source of Truth */}
           <div className={cn("flex-1 min-w-0 flex flex-col", !isSidePanelVisible && "max-w-full")}>
@@ -1886,7 +1886,7 @@ Example format:
             />
           </div>
 
-          {/* Right Panel: Segment Studio (scrollable, toggleable) */}
+          {/* Right Panel: Beat Studio (scrollable, toggleable) */}
           {isSidePanelVisible && (
           <div className="w-80 flex-shrink-0">
             <SegmentStudio

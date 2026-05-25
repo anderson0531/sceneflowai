@@ -158,7 +158,7 @@ export function SegmentSfxCard({
         <div className="flex items-center gap-2 flex-wrap">
           <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
           <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
-            SFX {positionInSegment + 1}
+            SFX {positionInBeat + 1}
           </span>
           {audioUrl && (
             <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">

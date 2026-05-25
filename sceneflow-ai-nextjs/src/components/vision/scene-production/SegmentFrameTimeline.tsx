@@ -251,7 +251,7 @@ export function SegmentFrameTimeline({
   // Regenerate all segments dialog state
   const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false)
   
-  // Delete segment dialog state
+  // Delete beat dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteSegmentTarget, setDeleteSegmentTarget] = useState<{ segmentId: string; index: number } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -415,7 +415,7 @@ export function SegmentFrameTimeline({
     setIsDeleting(true)
     try {
       onDeleteSegment(deleteSegmentTarget.segmentId)
-      toast.success(`Segment ${deleteSegmentTarget.index + 1} deleted`)
+      toast.success(`Beat ${deleteSegmentTarget.index + 1} deleted`)
       setDeleteDialogOpen(false)
       setDeleteSegmentTarget(null)
     } catch (error) {
@@ -441,7 +441,7 @@ export function SegmentFrameTimeline({
     return (
       <div className="flex flex-col items-center justify-center py-12 text-slate-500">
         <Layers className="w-12 h-12 mb-3 opacity-30" />
-        <span className="text-sm font-medium">No segments generated</span>
+        <span className="text-sm font-medium">No beats generated</span>
         <p className="text-xs opacity-60 mt-1">Generate segments in the Call Action step first</p>
       </div>
     )
@@ -494,7 +494,7 @@ export function SegmentFrameTimeline({
               </Button>
             )}
             
-            {/* Add Segment Button - opens add segment type dialog for keyframe-based segments */}
+            {/* Add Beat Button - opens add segment type dialog for keyframe-based segments */}
             {stats.total > 0 && (
               <Button
                 size="default"
@@ -543,7 +543,7 @@ export function SegmentFrameTimeline({
         </div>
       </div>
         
-      {/* Segment Cards with Shot Grouping */}
+      {/* Beat Cards with Shot Grouping */}
         <div className="space-y-2">
           {segments.map((segment, index) => {
             const isContinuationGroup = segment.transitionType === 'CONTINUE'
@@ -564,7 +564,7 @@ export function SegmentFrameTimeline({
                   </div>
                 )}
                 
-                {/* Segment Card with Continuation Border */}
+                {/* Beat Card with Continuation Border */}
                 <div className={`${isContinuationGroup ? 'border-l-2 border-blue-500/30 pl-2 ml-1' : ''}`}>
                   <SegmentPairCard
                     segment={segment}
@@ -642,23 +642,23 @@ export function SegmentFrameTimeline({
         frameResolverScene={frameResolverScene}
       />
       
-      {/* Regenerate All Segments Confirmation Dialog */}
+      {/* Regenerate All Beats Confirmation Dialog */}
       <RegenerateSegmentsDialog
         open={regenerateDialogOpen}
         onOpenChange={setRegenerateDialogOpen}
-        totalSegments={stats.total}
+        totalBeats={stats.total}
         totalDuration={stats.totalDuration}
         anchoredCount={stats.fullyAnchored}
         hasGeneratedAssets={segments.some(s => s.activeAssetUrl || s.startFrameUrl || s.endFrameUrl || (s.takes && s.takes.length > 0))}
         onConfirm={() => {
           if (onDeleteSegment) {
             segments.forEach(s => onDeleteSegment(s.segmentId))
-            toast.success('Segments cleared', { description: 'Use the Segment Builder to regenerate with new settings.' })
+            toast.success('Beats cleared', { description: 'Use the Beat Builder to regenerate with new settings.' })
           }
         }}
       />
       
-      {/* Delete Segment Confirmation Dialog */}
+      {/* Delete Beat Confirmation Dialog */}
       {deleteSegmentInfo && (
         <DeleteSegmentDialog
           open={deleteDialogOpen}
@@ -672,7 +672,7 @@ export function SegmentFrameTimeline({
         />
       )}
       
-      {/* Add Segment Type Dialog - for keyframe-based segments */}
+      {/* Add Beat Type Dialog - for keyframe-based segments */}
       <AddSegmentTypeDialog
         open={addSegmentDialogOpen}
         onOpenChange={setAddSegmentDialogOpen}
@@ -696,7 +696,7 @@ export function SegmentFrameTimeline({
         onRegenerateAll={sceneData && onResegmentWithConfig ? () => setRegenerateDialogOpen(true) : undefined}
       />
       
-      {/* Add Special Segment Dialog - for cinematic elements (title, match-cut, establishing, b-roll, outro) */}
+      {/* Add Special Beat Dialog - for cinematic elements (title, match-cut, establishing, b-roll, outro) */}
       <AddSpecialSegmentDialog
         open={specialSegmentDialogOpen}
         onOpenChange={setSpecialSegmentDialogOpen}

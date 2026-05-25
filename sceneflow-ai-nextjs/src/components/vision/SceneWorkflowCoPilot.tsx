@@ -82,45 +82,45 @@ export const guidanceContent: Record<WorkflowStep, {
     tip: 'Making changes to the storyboard is fast; making changes to the video is slow and costly.'
   },
   segmentBuilder: {
-    title: 'Segments',
+    title: 'Beats',
     icon: <Layers className="w-5 h-5 text-sf-primary" />,
-    goal: 'Build intelligent video segments based on scene content and audio timing.',
-    whyItMatters: 'Proper segmentation is the foundation for high-quality video generation. AI analyzes narration, dialogue, and scene changes to create optimal segment boundaries.',
+    goal: 'Build production beats from scene script, action, and audio timing.',
+    whyItMatters: 'Beats drive production cuts. AI analyzes narration, dialogue, and scene changes to create optimal beat boundaries.',
     howItWorks: [
-      'AI Analysis: Automatically segments the scene based on narration, dialogue timing, and scene changes',
-      'Preview & Adjust: Review proposed segments on the timeline; drag edges to fine-tune boundaries',
+      'AI Analysis: Automatically divides the scene into beats from narration, dialogue timing, and scene changes',
+      'Preview & Adjust: Review proposed beats on the timeline; drag edges to fine-tune boundaries',
       'Prompt Review: Edit video generation prompts (cinematography only - scene content is locked)',
-      'Finalize: Lock segments and proceed to Key Frames for each segment'
+      'Finalize: Lock beats and proceed to keyframes for each production cut'
     ],
     toolsAndTips: [
-      'Scene Bible: The scene description, narration, and dialogue are read-only during segmentation',
-      'Duration Limits: Segments are optimized for 4-8 seconds (Veo 3.1 optimal range)',
-      'Audio Alignment: Drag segment edges to snap to narration/dialogue boundaries',
+      'Scene Bible: The scene description, narration, and dialogue are read-only while building beats',
+      'Duration Limits: Beats are optimized for 4-8 seconds (Veo 3.1 optimal range)',
+      'Audio Alignment: Drag beat edges to snap to narration/dialogue boundaries',
       'Guardrails: The system will warn if your prompts introduce content not in the script',
       'Cinematography: Focus edits on camera movement, lighting, and pacing'
     ],
-    bestPractice: 'Review the AI-generated segments before editing. If the script needs changes, go back to the Script tab first.',
-    tip: 'Scene content is locked during segmentation to prevent accidental script changes. Edit the scene in the Script tab if needed.'
+    bestPractice: 'Review the AI-generated beats before editing. If the script needs changes, go back to the Script tab first.',
+    tip: 'Scene content is locked while building beats to prevent accidental script changes. Edit the scene in the Script tab if needed.'
   },
   callAction: {
     title: 'Call Action',
     icon: <Clapperboard className="w-5 h-5 text-sf-primary" />,
-    goal: 'Generate and assemble the final video segments.',
+    goal: 'Generate and assemble the final video beats.',
     whyItMatters: 'This is where your vision becomes reality. Careful review and editing of prompts ensures high-quality, consistent output.',
     howItWorks: [
-      'Scene Breakdown: The AI automatically divides the scene into short segments (clips)',
-      'Duration Settings: Adjust segment lengths (default 8s) based on your video generation platform capabilities',
-      'Prompt Editing: Review and edit the exact prompt used for each video segment for fine-tuned control',
-      'Generation Options: Generate AI video, generate static images, or upload your own footage for each segment',
+      'Scene Breakdown: The AI automatically divides the scene into short beats (clips)',
+      'Duration Settings: Adjust beat lengths (default 8s) based on your video generation platform capabilities',
+      'Prompt Editing: Review and edit the exact prompt used for each video beat for fine-tuned control',
+      'Generation Options: Generate AI video, generate static images, or upload your own footage for each beat',
       'Timeline Review: Review the assembled scene on the timeline, complete with tracks for speech, SFX, and music'
     ],
     toolsAndTips: [
-      'Segment Breakdown: Automatic division into manageable clips',
-      'Prompt Editing: Fine-tune the exact prompt for each segment',
+      'Beat Breakdown: Automatic division into manageable clips',
+      'Prompt Editing: Fine-tune the exact prompt for each beat',
       'Generation Options: Choose between AI video, static images, or uploaded footage',
       'Timeline: Review assembled scene with all audio tracks'
     ],
-    bestPractice: 'Start by generating a few key segments to check the quality and consistency before generating the entire scene.',
+    bestPractice: 'Start by generating a few key beats to check the quality and consistency before generating the entire scene.',
     tip: 'Review and edit prompts carefully—this is your last chance to fine-tune before generation.'
   }
 }

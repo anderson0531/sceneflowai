@@ -8,7 +8,7 @@
  * - Sequential playback: plays segment 1, then auto-advances to segment 2, etc.
  * - Progress bar showing overall scene playback position
  * - Controls: play/pause, skip forward/back, close
- * - Segment indicator (e.g., "Segment 2 of 5")
+ * - Beat indicator (e.g., "Beat 2 of 5")
  * - Fallback: shows start frame for incomplete segments
  * - Audio overlay with timeline sync (start time, duration, volume per track)
  * 
@@ -68,7 +68,7 @@ interface SceneVideoPlayerProps {
   audioVolumes?: AudioVolumes
 }
 
-interface PlayableSegment {
+interface PlayableBeat {
   segment: SceneSegment
   index: number
   hasVideo: boolean
@@ -83,7 +83,7 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
   sceneHeading,
   isOpen,
   onClose,
-  startAtSegment = 0,
+  startAtBeat = 0,
   audioTracks,
   sceneAudio,
   audioConfig,
@@ -231,7 +231,7 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
   }, [isMuted])
   
   // Build playable segments list with fallbacks
-  const playableSegments: PlayableSegment[] = segments
+  const playableBeats: PlayableSegment[] = segments
     .sort((a, b) => a.sequenceIndex - b.sequenceIndex)
     .map((segment, idx) => {
       const hasVideo = segment.status === 'COMPLETE' && 
@@ -255,12 +255,12 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
     })
   
   const currentPlayable = playableSegments[currentSegmentIndex] || null
-  const totalSegments = playableSegments.length
-  const completedCount = playableSegments.filter(p => p.hasVideo).length
+  const totalBeats = playableBeats.length
+  const completedCount = playableBeats.filter(p => p.hasVideo).length
   
   // Calculate total duration
-  const totalDuration = playableSegments.reduce((sum, p) => sum + p.duration, 0)
-  const elapsedBeforeCurrent = playableSegments
+  const totalDuration = playableBeats.reduce((sum, p) => sum + p.duration, 0)
+  const elapsedBeforeCurrent = playableBeats
     .slice(0, currentSegmentIndex)
     .reduce((sum, p) => sum + p.duration, 0)
   
@@ -523,7 +523,7 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
       >
         <DialogTitle className="sr-only">Scene {sceneNumber} Video Preview</DialogTitle>
         <DialogDescription className="sr-only">
-          Playing {completedCount} of {totalSegments} rendered video segments
+          Playing {completedCount} of {totalBeats} rendered video segments
         </DialogDescription>
 
         {/* Header */}
@@ -542,7 +542,7 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
           
           <div className="flex items-center gap-4">
             <span className="text-sm text-slate-400">
-              {completedCount} of {totalSegments} segments rendered
+              {completedCount} of {totalBeats} segments rendered
             </span>
             <Button
               variant="ghost"
@@ -617,10 +617,10 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
               </div>
             )}
             
-            {/* Segment Indicator Badge */}
+            {/* Beat Indicator Badge */}
             <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/60 rounded-full backdrop-blur-sm">
               <span className="text-white text-sm font-medium">
-                Segment {currentSegmentIndex + 1} of {totalSegments}
+                Beat {currentSegmentIndex + 1} of {totalSegments}
               </span>
               {!currentPlayable?.hasVideo && (
                 <span className="text-amber-400 text-xs ml-2">(preview)</span>
@@ -645,16 +645,16 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
         <div className="px-6 pb-6 bg-gradient-to-t from-black/80 to-transparent">
           {/* Progress Bar */}
           <div className="mb-4">
-            {/* Segment markers */}
+            {/* Beat markers */}
             <div className="relative h-1 bg-slate-700 rounded-full overflow-hidden mb-2">
               {/* Overall progress */}
               <div 
                 className="absolute top-0 left-0 h-full bg-indigo-500 transition-all duration-100"
                 style={{ width: `${overallProgress}%` }}
               />
-              {/* Segment dividers */}
-              {playableSegments.slice(0, -1).map((p, idx) => {
-                const position = playableSegments
+              {/* Beat dividers */}
+              {playableBeats.slice(0, -1).map((p, idx) => {
+                const position = playableBeats
                   .slice(0, idx + 1)
                   .reduce((sum, s) => sum + s.duration, 0) / totalDuration * 100
                 return (

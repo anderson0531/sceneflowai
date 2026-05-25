@@ -640,7 +640,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (production?.segments) {
             production.segments = production.segments.map((segment) => {
               if (segment.status === 'GENERATING') {
-                console.log(`[VisionPage] Resetting stuck GENERATING status for segment ${segment.segmentId}`)
+                console.log(`[VisionPage] Resetting stuck GENERATING status for beat ${segment.segmentId}`)
                 return { ...segment, status: 'PENDING' as const }
               }
               return segment
@@ -1591,7 +1591,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   // Handler for inserting a backdrop segment at the beginning of a scene
-  const handleInsertBackdropSegment = useCallback(
+  const handleInsertBackdropBeat = useCallback(
     async (sceneId: string, referenceId: string, imageUrl: string, name: string) => {
       const currentProduction = sceneProductionState[sceneId]
       
@@ -1707,7 +1707,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         await applySceneProductionUpdate(sceneId, updatedData)
       }
       
-      toast.success(`Backdrop video added before segment #${beforeSegmentIndex + 1}`)
+      toast.success(`Backdrop video added before beat #${beforeSegmentIndex + 1}`)
     },
     [sceneProductionState, applySceneProductionUpdate]
   )
@@ -1909,7 +1909,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const segment = productionData?.segments?.find(s => s.segmentId === segmentId)
       
       if (!segment) {
-        toast.error('Segment not found')
+        toast.error('Beat not found')
         return
       }
 
@@ -2141,7 +2141,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         await handleScriptChange(updatedScript)
         const { toast } = require('sonner')
-        toast.success('Storyboard approved — segments and video are unlocked')
+        toast.success('Storyboard approved — beats and video are unlocked')
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err)
         const { toast } = require('sonner')
@@ -2160,15 +2160,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       // If pre-parsed segments are provided (from Paste Results), skip API call
-      if (prePardsedSegments && prePardsedSegments.length > 0) {
+      if (prePardsedBeats && prePardsedBeats.length > 0) {
         console.log('[handleInitializeSceneProduction] Processing pasted segments:', {
           sceneId,
           segmentCount: prePardsedSegments.length,
           firstSegment: prePardsedSegments[0]?.segmentId,
           hasRequiredFields: {
-            sequenceIndex: prePardsedSegments[0]?.sequenceIndex !== undefined,
-            references: !!prePardsedSegments[0]?.references,
-            takes: Array.isArray(prePardsedSegments[0]?.takes),
+            sequenceIndex: prePardsedBeats[0]?.sequenceIndex !== undefined,
+            references: !!prePardsedBeats[0]?.references,
+            takes: Array.isArray(prePardsedBeats[0]?.takes),
           }
         })
         
@@ -2185,7 +2185,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         try {
           const { toast } = require('sonner')
-          toast.success(`Scene segmented into ${productionData.segments.length} blocks.`)
+          toast.success(`Scene split into ${productionData.segments.length} blocks.`)
         } catch {}
         return
       }
@@ -2221,7 +2221,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         applySceneProductionUpdate(sceneId, () => productionData)
         try {
           const { toast } = require('sonner')
-          toast.success(`Created ${productionData.segments.length} segments from storyboard beats`)
+          toast.success(`Created ${productionData.segments.length} beats from storyboard beats`)
         } catch {}
         return
       }
@@ -2273,7 +2273,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       try {
         const { toast } = require('sonner')
-        toast.success(`Scene segmented into ${productionData.segments.length} blocks.`)
+        toast.success(`Scene split into ${productionData.segments.length} blocks.`)
       } catch {}
     },
     [project?.id, applySceneProductionUpdate, script?.script?.scenes]
@@ -2346,7 +2346,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   // Handle segment lock state changes (persists to DB for production lock)
-  const handleLockSegment = useCallback(
+  const handleLockBeat = useCallback(
     (sceneId: string, segmentId: string, locked: boolean) => {
       console.log('[handleLockSegment] Persisting lock state:', { sceneId, segmentId, locked })
       applySceneProductionUpdate(sceneId, (current) => {
@@ -2411,7 +2411,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   // Phase 7: Handle segment reordering (drag-and-drop)
-  const handleReorderSegments = useCallback(
+  const handleReorderBeats = useCallback(
     (sceneId: string, oldIndex: number, newIndex: number) => {
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current) return current
@@ -2475,7 +2475,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       try {
         const { toast } = require('sonner')
-        toast.info(`Generating ${mode} for segment ${segmentId.slice(0, 6)}…`)
+        toast.info(`Generating ${mode} for beat ${segmentId.slice(0, 6)}…`)
       } catch {}
 
       try {
@@ -2483,7 +2483,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         const currentProduction = sceneProductionState[sceneId]
         const segment = currentProduction?.segments.find((s) => s.segmentId === segmentId)
         if (!segment) {
-          throw new Error('Segment not found')
+          throw new Error('Beat not found')
         }
         const segmentIndexForApi = currentProduction?.segments.findIndex((s) => s.segmentId === segmentId) ?? -1
         const totalSegmentsForApi = currentProduction?.segments.length ?? 0
@@ -2527,7 +2527,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         // Use prompt from options (from prompt builder) or fall back to segment prompt
         const prompt = options?.prompt || segment.userEditedPrompt || segment.generatedPrompt || ''
         if (!prompt) {
-          throw new Error('Segment prompt is required')
+          throw new Error('Beat prompt is required')
         }
         
         // Debug: Log which prompt source is being used
@@ -2568,7 +2568,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // Pass guidePrompt containing voice/dialogue/SFX for Veo 3.1 audio generation
             guidePrompt: options?.guidePrompt,
             segmentIndex: segmentIndexForApi,
-            totalSegments: totalSegmentsForApi,
+            totalBeats: totalBeatsForApi,
             existingStemSourceAudioUrl: segment.stemSeparation?.sourceAudioUrl,
             existingStemSourceHash: segment.stemSeparation?.sourceHash,
             existingStemStatus: segment.stemSeparation?.status,
@@ -2718,7 +2718,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         try {
           const { toast } = require('sonner')
-          toast.success(`Asset generated successfully for segment ${segmentId.slice(0, 6)}`)
+          toast.success(`Asset generated successfully for beat ${segmentId.slice(0, 6)}`)
           
           // After successful I2V/FTV generation, check if the next segment's start frame
           // was linked to this segment's end frame. If so, offer to update it with the 
@@ -2745,7 +2745,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 
                 if (wasLinked || wasI2VRetry) {
                   const nextSegIdx = currentSegmentIndex + 2 // 1-based display
-                  toast.info(`Segment ${nextSegIdx} start frame may be out of sync`, {
+                  toast.info(`Beat ${nextSegIdx} start frame may be out of sync`, {
                     description: 'This video\'s end frame differs from the next segment\'s start keyframe. Update it for visual continuity.',
                     duration: 15000,
                     action: {
@@ -2776,7 +2776,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           })
                           return { ...current, segments }
                         })
-                        toast.success(`Updated Segment ${nextSegIdx} start frame with this video's end frame`)
+                        toast.success(`Updated Beat ${nextSegIdx} start frame with this video's end frame`)
                       }
                     }
                   })
@@ -2883,7 +2883,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         resolution: options?.resolution,
                         guidePrompt: options?.guidePrompt,
                         segmentIndex: retrySegmentIndexForApi,
-                        totalSegments: retryTotalSegmentsForApi,
+                        totalBeats: retryTotalBeatsForApi,
                         existingStemSourceAudioUrl: segment?.stemSeparation?.sourceAudioUrl,
                         existingStemSourceHash: segment?.stemSeparation?.sourceHash,
                         existingStemStatus: segment?.stemSeparation?.status,
@@ -2952,7 +2952,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                 : null
                               if (nextSegment?.references?.startFrameUrl) {
                                 const nextSegIdx = currentSegmentIndex + 2
-                                toast.info(`Update Segment ${nextSegIdx} start frame?`, {
+                                toast.info(`Update Beat ${nextSegIdx} start frame?`, {
                                   description: 'I2V video end frame differs from the next segment\'s start keyframe. Update for visual continuity.',
                                   duration: 15000,
                                   action: {
@@ -2972,7 +2972,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                                         })
                                         return { ...current, segments }
                                       })
-                                      toast.success(`Updated Segment ${nextSegIdx} start frame`)
+                                      toast.success(`Updated Beat ${nextSegIdx} start frame`)
                                     }
                                   }
                                 })
@@ -3071,7 +3071,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         resolution: options?.resolution,
                         guidePrompt: options?.guidePrompt,
                         segmentIndex: retrySegmentIndexForApi,
-                        totalSegments: retryTotalSegmentsForApi,
+                        totalBeats: retryTotalBeatsForApi,
                         existingStemSourceAudioUrl: segment?.stemSeparation?.sourceAudioUrl,
                         existingStemSourceHash: segment?.stemSeparation?.sourceHash,
                         existingStemStatus: segment?.stemSeparation?.status,
@@ -3200,7 +3200,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               }
             })
           } else {
-            toast.error('Generation failed - click segment for details')
+            toast.error('Generation failed - click beat for details')
           }
         } catch {}
       }
@@ -3322,7 +3322,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
 
         const { toast } = await import('sonner')
-        toast.success(`Uploaded ${file.type.startsWith('image') ? 'image' : 'video'} to segment`)
+        toast.success(`Uploaded ${file.type.startsWith('image') ? 'image' : 'video'} to beat`)
       } catch (error: any) {
         console.error('[Segment Upload] Error:', error)
         
@@ -3357,7 +3357,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         // Calculate start time based on last segment
         const lastSegment = segments[afterIndex]
-        const newStartTime = lastSegment ? lastSegment.endTime : 0
+        const newStartTime = lastBeat ? lastSegment.endTime : 0
         
         // Create new segment
         const newSegmentId = `seg_${sceneId}_${segments.length + 1}_${Date.now()}`
@@ -3391,7 +3391,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       try {
         const { toast } = require('sonner')
-        toast.success(`Added new ${duration}s segment`)
+        toast.success(`Added new ${duration}s beat`)
       } catch {}
     },
     [applySceneProductionUpdate]
@@ -3399,7 +3399,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Handle adding a complete segment with full data (from AddSegmentDialog/AddSegmentTypeDialog)
   // Supports insertPosition: 'start' | 'end' | 'before' | 'after' and insertIndex
-  const handleAddFullSegment = useCallback(
+  const handleAddFullBeat = useCallback(
     (sceneId: string, newSegment: any) => {
       const insertPosition = newSegment.insertPosition || 'end'
       const insertIndex = newSegment.insertIndex ?? -1
@@ -3475,7 +3475,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       try {
         const { toast } = require('sonner')
         const purposeLabel = newSegment.segmentPurpose ? ` ${newSegment.segmentPurpose}` : ''
-        toast.success(`Added ${duration.toFixed(1)}s${purposeLabel} segment`)
+        toast.success(`Added ${duration.toFixed(1)}s${purposeLabel} beat`)
       } catch {}
     },
     [applySceneProductionUpdate]
@@ -3547,7 +3547,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             const durationPerBeat = totalEstablishingDuration / analysis.beats.length
             
             // Create establishing shot segments for each beat
-            const establishingSegments = analysis.beats.map((beat: any, idx: number) => {
+            const establishingBeats = analysis.beats.map((beat: any, idx: number) => {
               const startTime = idx * durationPerBeat
               const endTime = (idx + 1) * durationPerBeat
               
@@ -3583,7 +3583,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // Shift all existing segments forward in time
             const updatedSegments = current.segments.map((segment, idx) => ({
               ...segment,
-              sequenceIndex: idx + establishingSegments.length,
+              sequenceIndex: idx + establishingBeats.length,
               startTime: segment.startTime + totalEstablishingDuration,
               endTime: segment.endTime + totalEstablishingDuration,
             }))
@@ -3594,7 +3594,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           })
           
-          toast.success(`Added ${analysis.beats.length} beat-matched establishing shot segments`)
+          toast.success(`Added ${analysis.beats.length} beat-matched establishing shot beats`)
           return
           
         } catch (error) {
@@ -3635,7 +3635,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         
         const establishingSegmentId = `seg_${sceneId}_establishing_${Date.now()}`
-        const establishingSegment = {
+        const establishingBeat = {
           segmentId: establishingSegmentId,
           sequenceIndex: 0,
           startTime: 0,
@@ -3898,7 +3898,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Calculate minimum segments required (max 8s per video segment)
       const MAX_SEGMENT_SECONDS = 12
-      const minimumSegmentsRequired = Math.max(1, Math.ceil(totalAudioDuration / MAX_SEGMENT_SECONDS))
+      const minimumBeatsRequired = Math.max(1, Math.ceil(totalAudioDuration / MAX_SEGMENT_SECONDS))
       
       console.log(`[Auto-Align] Audio duration: ${totalAudioDuration.toFixed(1)}s, minimum segments: ${minimumSegmentsRequired}`)
       
@@ -3914,7 +3914,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           // Get the last segment's end time as starting point
           const lastSegment = segments[segments.length - 1]
-          let nextStartTime = lastSegment ? lastSegment.endTime : 0
+          let nextStartTime = lastBeat ? lastSegment.endTime : 0
           
           // Calculate duration for new segments (split remaining time evenly)
           const remainingDuration = totalAudioDuration - nextStartTime
@@ -3939,7 +3939,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             nextStartTime += duration
           }
           
-          toast.success(`Added ${segmentsToAdd} segment${segmentsToAdd > 1 ? 's' : ''} to cover ${totalAudioDuration.toFixed(1)}s of audio`)
+          toast.success(`Added ${segmentsToAdd} beat${segmentsToAdd > 1 ? 's' : ''} to cover ${totalAudioDuration.toFixed(1)}s of audio`)
         }
         
         // Redistribute segment timing to cover audio duration evenly
@@ -11227,7 +11227,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         hasCallAction,
                         hasAudio,
                         hasRender,
-                        status: (allSegmentsComplete && hasRender) ? 'complete' as const
+                        status: (allBeatsComplete && hasRender) ? 'complete' as const
                           : (hasCallAction || hasFrame || hasAudio) ? 'in-progress' as const
                           : 'not-started' as const,
                         score: scene.audienceAnalysis?.score || scene.scoreAnalysis?.overallScore,
@@ -11282,8 +11282,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         const prevProductionData = sceneProductionState[prevSceneId]
                         const prevSegments = prevProductionData?.segments || []
                         
-                        if (prevSegments.length > 0) {
-                          const lastPrevSeg = prevSegments[prevSegments.length - 1]
+                        if (prevBeats.length > 0) {
+                          const lastPrevSeg = prevBeats[prevBeats.length - 1]
                           if (lastPrevSeg?.endTime) {
                             startTime += lastPrevSeg.endTime
                           }
@@ -11426,11 +11426,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       isSegmented: false
                     }))
                     const { toast } = require('sonner')
-                    toast.success('Segments reset successfully')
+                    toast.success('Beats reset successfully')
                   } catch (error) {
-                    console.error('Failed to reset segments:', error)
+                    console.error('Failed to reset beats:', error)
                     const { toast } = require('sonner')
-                    toast.error('Failed to reset segments')
+                    toast.error('Failed to reset beats')
                   }
                 }}
                 onAddSegment={handleAddSegment}

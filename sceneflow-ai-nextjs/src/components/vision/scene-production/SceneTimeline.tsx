@@ -72,7 +72,7 @@ interface SceneTimelineProps {
   onDeleteSegment?: (segmentId: string) => void
   // Phase 2: Dialogue coverage indicators
   dialogueAssignments?: Record<string, Set<string>>
-  // Phase 7: Segment reordering
+  // Phase 7: Beat reordering
   onReorderSegments?: (oldIndex: number, newIndex: number) => void
   // Establishing Shot support
   onAddEstablishingShot?: () => void
@@ -157,13 +157,13 @@ export function SceneTimeline({
   // Phase 7: Handle drag end for segment reordering
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
-    if (!over || active.id === over.id || !reorderSegmentsCallback) return
+    if (!over || active.id === over.id || !reorderBeatsCallback) return
     
     const oldIndex = segments.findIndex(s => s.segmentId === active.id)
     const newIndex = segments.findIndex(s => s.segmentId === over.id)
     
     if (oldIndex !== -1 && newIndex !== -1) {
-      reorderSegmentsCallback(oldIndex, newIndex)
+      reorderBeatsCallback(oldIndex, newIndex)
     }
   }, [segments, reorderSegmentsCallback])
   
@@ -373,7 +373,7 @@ export function SceneTimeline({
       seg != null && typeof seg.segmentId === 'string'
     )
     
-    return validSegments.map(seg => ({
+    return validBeats.map(seg => ({
       id: seg.segmentId,
       segmentId: seg.segmentId,
       url: seg.activeAssetUrl || undefined,
@@ -887,7 +887,7 @@ export function SceneTimeline({
               e.stopPropagation()
               deleteSegmentCallback(clip.id)
             }}
-            title="Delete segment"
+            title="Delete beat"
           >
             <X className="w-2.5 h-2.5" />
           </button>
@@ -961,10 +961,10 @@ export function SceneTimeline({
         >
           <Layers className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
           <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-            Segments
+            Beats
           </span>
-          {reorderSegmentsCallback && (
-            <GripVertical className="w-3 h-3 text-gray-400 ml-auto" title="Drag segments to reorder" />
+          {reorderBeatsCallback && (
+            <GripVertical className="w-3 h-3 text-gray-400 ml-auto" title="Drag beats to reorder" />
           )}
         </div>
         <div className="flex-1 relative bg-gray-900 border-b border-gray-700">
@@ -994,13 +994,13 @@ export function SceneTimeline({
             )
           })}
           
-          {/* Add Segment Button */}
+          {/* Add Beat Button */}
           {addSegmentCallback && (
             <button
               className="absolute top-1/2 -translate-y-1/2 h-10 px-2 rounded bg-gray-700 hover:bg-gray-600 border border-dashed border-gray-500 hover:border-gray-400 text-gray-400 hover:text-gray-200 transition-all flex items-center gap-1 text-[10px] font-medium"
               style={{ left: addButtonLeft }}
               onClick={() => setShowAddSegmentDialog(true)}
-              title="Add new segment"
+              title="Add new beat"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add</span>
@@ -1011,7 +1011,7 @@ export function SceneTimeline({
     )
     
     // Phase 7: Wrap in DndContext only if reordering is enabled
-    if (reorderSegmentsCallback) {
+    if (reorderBeatsCallback) {
       return (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={clipIds} strategy={horizontalListSortingStrategy}>
@@ -1381,7 +1381,7 @@ export function SceneTimeline({
         
         const getTrackLabel = (trackType: string) => {
           switch (trackType) {
-            case 'visual': return 'Segment'
+            case 'visual': return 'Beat'
             case 'voiceover': return 'Narration'
             case 'dialogue': return 'Dialogue'
             case 'music': return 'Music'
@@ -1486,7 +1486,7 @@ export function SceneTimeline({
         )
       ))}
       
-      {/* Add Segment Dialog */}
+      {/* Add Beat Dialog */}
       {addSegmentCallback && (
         <Dialog open={showAddSegmentDialog} onOpenChange={setShowAddSegmentDialog}>
           <DialogContent className="sm:max-w-[400px]">
@@ -1520,14 +1520,14 @@ export function SceneTimeline({
               <Button
                 onClick={() => {
                   if (typeof addSegmentCallback === 'function') {
-                    const lastSegment = visualClips[visualClips.length - 1]
+                    const lastBeat = visualClips[visualClips.length - 1]
                     addSegmentCallback(lastSegment?.id || null, newSegmentDuration)
                     setShowAddSegmentDialog(false)
                     setNewSegmentDuration(4)
                   }
                 }}
               >
-                Add Segment
+                Add Beat
               </Button>
             </DialogFooter>
           </DialogContent>

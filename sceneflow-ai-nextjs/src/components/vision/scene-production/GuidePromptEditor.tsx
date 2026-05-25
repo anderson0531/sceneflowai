@@ -814,7 +814,7 @@ export function GuidePromptEditor({
               <div className="flex gap-2 p-3 rounded-lg bg-cyan-950/40 border border-cyan-700/40 text-xs text-cyan-100/90 leading-snug">
                 <Info className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
                 <span>
-                  Dialogue lines come from <span className="font-medium text-cyan-200">segment assignment</span> (Call Action / segment builder). Adjust assignments there to change which lines appear. Use portion sliders below only when one assigned line is longer than a single clip.
+                  Dialogue lines come from <span className="font-medium text-cyan-200">beat assignment</span> (Call Action / beat builder). Adjust assignments there to change which lines appear. Use portion sliders below only when one assigned line is longer than a single clip.
                 </span>
               </div>
             )}

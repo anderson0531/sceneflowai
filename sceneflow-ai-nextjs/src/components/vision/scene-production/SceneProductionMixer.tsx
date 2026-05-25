@@ -109,7 +109,7 @@ import {
   inferNarrationTimelinePrefixCount,
 } from './audioTrackBuilder'
 import {
-  alignSegmentsToDialogueTimeline,
+  alignBeatsToDialogueTimeline,
   clipMatchesDialogueLineId,
   computePlaybackSegmentDuration,
   computeSegmentContentDuration,
@@ -392,7 +392,7 @@ interface SceneProductionMixerProps {
   /** Callback to update production streams in parent */
   onProductionStreamsChange?: (streams: ProductionStream[]) => void
   /** Whether segment generation is in progress */
-  isGeneratingSegments?: boolean
+  isGeneratingBeats?: boolean
   /** User's subscription tier for render routing */
   userTier?: 'trial' | 'starter' | 'pro' | 'studio' | 'enterprise'
   /** Remaining server renders this month (for trial/starter tiers) */
@@ -408,7 +408,7 @@ interface SceneProductionMixerProps {
   /** Current production target: animatic vs video preview + language for audio */
   productionTarget: ProductionTarget
   onProductionTargetChange: (target: ProductionTarget) => void
-  /** Segment videos exist — enables Video output target */
+  /** Beat videos exist — enables Video output target */
   videoGenerationAvailable: boolean
   /** Persist segment timing after auto-align or manual edits */
   onSegmentsChange?: (segments: SceneSegment[]) => void
@@ -1166,7 +1166,7 @@ function ScenePreviewPlayer({
     setCurrentTime(targetTime)
   }
   
-  const skipToSegment = (direction: 'prev' | 'next') => {
+  const skipToBeat = (direction: 'prev' | 'next') => {
     // Clear frozen state
     setIsVideoFrozen(false)
     if (audioTimerRef.current) {
@@ -1663,7 +1663,7 @@ function AudioTrackRow({
   const colors = TRACK_COLORS[type]
   
   // Calculate effective end segment (-1 means last segment)
-  const effectiveEndSegment = config.endSegment === -1 
+  const effectiveEndBeat = config.endBeat === -1 
     ? (segmentCount || 1) - 1 
     : Math.min(config.endSegment, (segmentCount || 1) - 1)
   
@@ -1800,13 +1800,13 @@ function AudioTrackRow({
       {/* Controls Row - Only visible when enabled and not collapsed */}
       {config.enabled && hasAudio && !isCollapsed && (
         <div className="flex flex-col gap-3 px-4 pb-4 pt-3 border-t border-gray-700/50">
-          {/* Segment Range Selector */}
+          {/* Beat Range Selector */}
           {segmentCount && segmentCount > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-500 uppercase w-16">Segments</span>
+              <span className="text-[10px] text-gray-500 uppercase w-16">Beats</span>
               <div className="flex items-center gap-1 flex-wrap">
                 {Array.from({ length: segmentCount }).map((_, i) => {
-                  const isInRange = i >= config.startSegment && i <= effectiveEndSegment
+                  const isInRange = i >= config.startBeat && i <= effectiveEndSegment
                   const isStart = i === config.startSegment
                   const isEnd = i === effectiveEndSegment
                   
@@ -1820,10 +1820,10 @@ function AudioTrackRow({
                         } else if (i > effectiveEndSegment) {
                           // Clicked after range - extend end forward
                           onConfigChange({ ...config, endSegment: i })
-                        } else if (isStart && config.startSegment < effectiveEndSegment) {
+                        } else if (isStart && config.startBeat < effectiveEndSegment) {
                           // Clicked start - shrink from start
                           onConfigChange({ ...config, startSegment: i + 1 })
-                        } else if (isEnd && effectiveEndSegment > config.startSegment) {
+                        } else if (isEnd && effectiveEndBeat > config.startSegment) {
                           // Clicked end - shrink from end  
                           onConfigChange({ ...config, endSegment: i - 1 })
                         } else if (isStart && isEnd) {
@@ -1849,7 +1849,7 @@ function AudioTrackRow({
               <span className="text-[10px] text-gray-500 ml-1">
                 {config.startSegment === 0 && effectiveEndSegment === (segmentCount - 1)
                   ? 'All'
-                  : `#${config.startSegment + 1}${config.startSegment !== effectiveEndSegment ? ` → #${effectiveEndSegment + 1}` : ''}`
+                  : `#${config.startBeat + 1}${config.startBeat !== effectiveEndBeat ? ` → #${effectiveEndBeat + 1}` : ''}`
                 }
               </span>
             </div>
@@ -2230,7 +2230,7 @@ function SegmentAudioControls({
             </button>
           )}
           <Film className="w-4 h-4 text-purple-400" />
-          <span className="text-xs text-gray-400 uppercase tracking-wide">Segment Audio</span>
+          <span className="text-xs text-gray-400 uppercase tracking-wide">Beat Audio</span>
           <span className="text-xs text-gray-500">{segments.length} segments</span>
         </div>
         <button
@@ -2258,7 +2258,7 @@ function SegmentAudioControls({
         <span className="text-xs text-gray-400 w-10 text-right">{Math.round(masterVolume * 100)}%</span>
       </div>
       
-      {/* Individual Segment Controls */}
+      {/* Individual Beat Controls */}
       <div className="space-y-2">
         {segments.map((seg, i) => {
           const config = segmentConfigs[seg.segmentId] || { includeAudio: true, volume: 1.0 }
@@ -2337,7 +2337,7 @@ export function SceneProductionMixer({
   onTextOverlaysChange,
   onRenderComplete,
   onProductionStreamsChange,
-  isGeneratingSegments,
+  isGeneratingBeats,
   userTier = 'pro',
   remainingServerRenders = Infinity,
   sceneIndex,
@@ -2360,7 +2360,7 @@ export function SceneProductionMixer({
   // === Editable Dialogue Clips (derived from audio assets) ===
   const [probedDurations, setProbedDurations] = useState<Record<string, number>>({})
   
-  // === Segment Audio Configs ===
+  // === Beat Audio Configs ===
   const [segmentAudioConfigs, setSegmentAudioConfigs] = useState<Record<string, SegmentAudioConfig>>({})
 
 // === Audio Track Configs ===
@@ -2464,8 +2464,8 @@ export function SceneProductionMixer({
     setPlaybackTime(time)
   }, [])
 
-  const handleAlignSegmentsToDialogue = useCallback(() => {
-    const aligned = alignSegmentsToDialogueTimeline({
+  const handleAlignBeatsToDialogue = useCallback(() => {
+    const aligned = alignBeatsToDialogueTimeline({
       segments,
       dialogueClips: resolvedDialogueClips,
       probedDurations,
@@ -2473,7 +2473,7 @@ export function SceneProductionMixer({
       extendAnimaticToDialogue: true,
     })
     onSegmentsChange?.(aligned)
-    toast.success('Segment timing aligned to dialogue')
+    toast.success('Beat timing aligned to dialogue')
   }, [segments, resolvedDialogueClips, probedDurations, narrationPrefix, onSegmentsChange])
 
   
@@ -2943,7 +2943,7 @@ export function SceneProductionMixer({
   
   // Video-only segments for Video render mode (excludes image-only segments)
   // Check assetType === 'video' OR infer from URL (for uploaded videos where assetType may not be set)
-  const videoSegments = useMemo(() => {
+  const videoBeats = useMemo(() => {
     return segments.filter(s => {
       if (s.status !== 'COMPLETE' || !s.activeAssetUrl) return false
       // Explicit video asset type
@@ -2958,9 +2958,9 @@ export function SceneProductionMixer({
     })
   }, [segments])
 
-  const canMixerStitchRender = videoSegments.length > 0
+  const canMixerStitchRender = videoBeats.length > 0
 
-  const animaticPreviewSegments = useMemo(() => {
+  const animaticPreviewBeats = useMemo(() => {
     return segments
       .map((s) => {
         const url = animaticKeyframeUrl(s)
@@ -2970,29 +2970,29 @@ export function SceneProductionMixer({
       .filter((s): s is SceneSegment => s != null)
   }, [segments])
 
-  const previewSegments = useMemo(() => {
+  const previewBeats = useMemo(() => {
     if (productionTarget.streamType === 'animatic') {
-      if (animaticPreviewSegments.length > 0) return animaticPreviewSegments
+      if (animaticPreviewBeats.length > 0) return animaticPreviewBeats
       return renderedSegments
     }
-    if (videoSegments.length > 0) return videoSegments
+    if (videoBeats.length > 0) return videoBeats
     return renderedSegments
   }, [productionTarget.streamType, animaticPreviewSegments, videoSegments, renderedSegments])
 
-  const nonEnglishSegmentsMissingBackgroundStem = useMemo(() => {
+  const nonEnglishBeatsMissingBackgroundStem = useMemo(() => {
     if (productionTarget.language === 'en') return 0
-    return previewSegments.filter((seg) => !seg.stemSeparation?.backgroundStemUrl).length
-  }, [previewSegments, productionTarget.language])
+    return previewBeats.filter((seg) => !seg.stemSeparation?.backgroundStemUrl).length
+  }, [previewBeats, productionTarget.language])
 
   const previewPlaybackKind: 'video' | 'image-sequence' =
-    productionTarget.streamType === 'animatic' && animaticPreviewSegments.length > 0
+    productionTarget.streamType === 'animatic' && animaticPreviewBeats.length > 0
       ? 'image-sequence'
       : 'video'
 
   // Playback timeline length (dialogue-aware segment durations, matches preview scrubber)
   const videoTotalDuration = useMemo(() => {
-    return previewSegments.reduce((sum, seg) => sum + getPlaybackSegmentDuration(seg), 0)
-  }, [previewSegments, getPlaybackSegmentDuration])
+    return previewBeats.reduce((sum, seg) => sum + getPlaybackSegmentDuration(seg), 0)
+  }, [previewBeats, getPlaybackSegmentDuration])
   
   // Calculate max audio duration across all enabled tracks
   const maxAudioDuration = useMemo(() => {
@@ -3444,11 +3444,11 @@ export function SceneProductionMixer({
   // === Local Render Handler ===
   const handleLocalRender = useCallback(async () => {
     const renderingAnimatic = productionTarget.streamType === 'animatic'
-    const sourceSegments = renderingAnimatic ? previewSegments : videoSegments
+    const sourceBeats = renderingAnimatic ? previewBeats : videoBeats
     console.log('[LocalRender] Checking segments:', {
       totalSegments: segments.length,
-      videoSegmentsCount: videoSegments.length,
-      sourceSegmentsCount: sourceSegments.length,
+      videoBeatsCount: videoBeats.length,
+      sourceBeatsCount: sourceBeats.length,
       streamType: productionTarget.streamType,
       renderedSegmentsCount: renderedSegments.length,
       segments: segments.map(s => ({
@@ -3460,18 +3460,18 @@ export function SceneProductionMixer({
       }))
     })
     
-    if (sourceSegments.length === 0) {
+    if (sourceBeats.length === 0) {
       // Provide helpful context about what segments exist
       const completeSegments = segments.filter(s => s.status === 'COMPLETE' && s.activeAssetUrl)
-      const imageSegments = completeSegments.filter(s => s.assetType === 'image')
+      const imageBeats = completeBeats.filter(s => s.assetType === 'image')
       
       let errorMessage = renderingAnimatic
         ? 'No keyframe/image segments available for Animatic render mode. Generate keyframes first.'
         : 'No video segments available for Video render mode. '
-      if (!renderingAnimatic && imageSegments.length > 0) {
-        errorMessage += `Found ${imageSegments.length} image-only segment(s) - use Animatic mode for images, or upload/generate video content.`
-      } else if (!renderingAnimatic && completeSegments.length > 0) {
-        errorMessage += `Found ${completeSegments.length} segment(s) but they don't appear to be video. Check that your uploaded files are video format (mp4, webm, mov).`
+      if (!renderingAnimatic && imageBeats.length > 0) {
+        errorMessage += `Found ${imageBeats.length} image-only segment(s) - use Animatic mode for images, or upload/generate video content.`
+      } else if (!renderingAnimatic && completeBeats.length > 0) {
+        errorMessage += `Found ${completeBeats.length} segment(s) but they don't appear to be video. Check that your uploaded files are video format (mp4, webm, mov).`
       } else if (!renderingAnimatic) {
         errorMessage += 'Generate or upload video content first.'
       }
@@ -3542,8 +3542,8 @@ export function SceneProductionMixer({
           assetType: localAssetType,
           startTime: (() => {
             let segStart = 0
-            for (let i = 0; i < Math.min(idx, sourceSegments.length); i++) {
-              segStart += getPlaybackSegmentDuration(sourceSegments[i])
+            for (let i = 0; i < Math.min(idx, sourceBeats.length); i++) {
+              segStart += getPlaybackSegmentDuration(sourceBeats[i])
             }
             return segStart
           })(),
@@ -3612,7 +3612,7 @@ export function SceneProductionMixer({
       }
 
       if (useStemDubbingPolicy && !renderingAnimatic) {
-        videoSegments.forEach(seg => {
+        videoBeats.forEach(seg => {
           const backgroundStemUrl = seg.stemSeparation?.backgroundStemUrl
           if (!backgroundStemUrl) return
           audioClips.push({
@@ -3804,7 +3804,7 @@ export function SceneProductionMixer({
   
   // === Headless Render Handler (GCP Cloud Run) ===
   const handleHeadlessRender = useCallback(async () => {
-    if (videoSegments.length === 0) {
+    if (videoBeats.length === 0) {
       setRenderError('No video segments available for headless rendering')
       return
     }
@@ -4117,7 +4117,7 @@ export function SceneProductionMixer({
   // === Render ===
   
   const isRendering = renderStatus === 'preparing' || renderStatus === 'rendering'
-  const hasRenderablePreview = previewSegments.length > 0
+  const hasRenderablePreview = previewBeats.length > 0
 
   return (
     <div className="bg-gray-900/50 rounded-xl border border-purple-500/30 overflow-hidden">
@@ -4172,7 +4172,7 @@ export function SceneProductionMixer({
             {/* Left Column: Video Preview + Timeline */}
             <div className="space-y-4 min-w-0">
               <ScenePreviewPlayer
-                segments={previewSegments}
+                segments={previewBeats}
                 playbackKind={previewPlaybackKind}
                 audioTracks={audioTracks}
                 currentAudioUrls={playbackAudioUrls}
@@ -4219,7 +4219,7 @@ export function SceneProductionMixer({
                       disabled={isRendering || resolvedDialogueClips.length === 0}
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleAlignSegmentsToDialogue()
+                        handleAlignBeatsToDialogue()
                       }}
                       className="h-7 shrink-0 text-[11px] px-2 bg-blue-500/10 border-blue-500/40 text-blue-300 hover:bg-blue-500/20"
                       title="Extend segment holds and rebuild start/end times to match dialogue audio"
@@ -4236,7 +4236,7 @@ export function SceneProductionMixer({
                       timelineDuration={totalDuration}
                       textOverlays={textOverlays}
                       onTextOverlayChange={updateOverlay}
-                      segments={previewSegments}
+                      segments={previewBeats}
                       segmentDurations={segmentDurationsForTimeline}
                       dialogueClips={audioTracks.dialogue.enabled ? dialogueClipsForTimeline : []}
                       currentPlaybackTime={playbackTime}
@@ -4983,7 +4983,7 @@ export function SceneProductionMixer({
               
               {productionTarget.streamType !== 'animatic' && (
                 <SegmentAudioControls
-                  segments={previewSegments}
+                  segments={previewBeats}
                   segmentConfigs={segmentAudioConfigs}
                   onConfigChange={setSegmentAudioConfigs}
                   masterVolume={masterSegmentVolume}
@@ -5080,9 +5080,9 @@ export function SceneProductionMixer({
                         />
                       </div>
                     )}
-                    {preserveBackgroundStem && productionTarget.language !== 'en' && nonEnglishSegmentsMissingBackgroundStem > 0 && (
+                    {preserveBackgroundStem && productionTarget.language !== 'en' && nonEnglishBeatsMissingBackgroundStem > 0 && (
                       <p className="text-[11px] text-amber-300/90">
-                        {nonEnglishSegmentsMissingBackgroundStem} segment{nonEnglishSegmentsMissingBackgroundStem > 1 ? 's are' : ' is'} missing background stems. Falling back to original segment audio for those clips.
+                        {nonEnglishBeatsMissingBackgroundStem} segment{nonEnglishBeatsMissingBackgroundStem > 1 ? 's are' : ' is'} missing background stems. Falling back to original segment audio for those clips.
                       </p>
                     )}
                   </div>
@@ -5162,7 +5162,7 @@ export function SceneProductionMixer({
             <Film className="w-16 h-16 mx-auto mb-4 text-gray-600 opacity-40" />
             <h4 className="text-lg font-medium text-gray-300 mb-2">Nothing to preview yet</h4>
             <p className="text-sm text-gray-500 max-w-md mx-auto">
-              {animaticPreviewSegments.length > 0
+              {animaticPreviewBeats.length > 0
                 ? 'Use Preview output → Animatic above to preview keyframes, or generate segment videos in the Director’s Console for full video output and stitching.'
                 : 'Generate keyframes or video segments in the Director’s Console above, then mix and render from this panel.'}
             </p>

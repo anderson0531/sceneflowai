@@ -164,7 +164,7 @@ export function ResetSegmentsConfirmDialog({
 
         <div className="space-y-4">
           <div className="rounded-lg border border-red-500/30 bg-red-950/40 px-4 py-3 text-sm leading-relaxed text-red-100/90">
-            This removes your entire <strong className="font-semibold text-red-50">segment timeline</strong>{' '}
+            This removes your entire <strong className="font-semibold text-red-50">beat timeline</strong>{' '}
             for this scene and cannot be undone. You will need to run segment setup again from scratch.
           </div>
 
@@ -201,7 +201,7 @@ export function ResetSegmentsConfirmDialog({
                       ? '1 generated video clip'
                       : `${impact.videoCount} generated video clips`
                   }
-                  detail="Segment-level Veo / I2V outputs and active takes on the timeline"
+                  detail="Beat-level Veo / I2V outputs and active takes on the timeline"
                 />
               ) : null}
               {impact.imageClipCount > 0 ? (
@@ -240,7 +240,7 @@ export function ResetSegmentsConfirmDialog({
               {!hasGeneratedWork && impact.segmentCount > 0 ? (
                 <ImpactRow
                   icon={Layers}
-                  label="Segment structure only"
+                  label="Beat structure only"
                   detail="No keyframes or clips detected yet, but segmentation progress will still be cleared"
                 />
               ) : null}

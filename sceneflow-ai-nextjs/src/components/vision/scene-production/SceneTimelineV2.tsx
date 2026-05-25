@@ -498,7 +498,7 @@ export function SceneTimelineV2({
     )
     
     let cumulativeStart = 0
-    return validSegments.map(seg => {
+    return validBeats.map(seg => {
       const baseDuration = seg.endTime - seg.startTime
       // Display duration = base + offset (for animatic playback)
       const displayDuration = baseDuration + effectiveOffset
@@ -764,7 +764,7 @@ export function SceneTimelineV2({
   }, [dragState, pixelsPerSecond, enableAudioSnap, snapDragTime, onVisualClipChange, onAudioClipChange])
   
   // ============================================================================
-  // Segment Reordering (DnD)
+  // Beat Reordering (DnD)
   // ============================================================================
   
   const sensors = useSensors(
@@ -1069,7 +1069,7 @@ export function SceneTimelineV2({
           
           {/* Video limit warning badge */}
           {trackType === 'visual' && clip.exceedsVideoLimit && (
-            <div className="absolute top-0.5 right-6 bg-amber-500/90 px-1 py-0.5 rounded text-[7px] font-medium text-white" title="Segment exceeds 12s - will be split for video generation">
+            <div className="absolute top-0.5 right-6 bg-amber-500/90 px-1 py-0.5 rounded text-[7px] font-medium text-white" title="Beat exceeds 12s - will be split for video generation">
               &gt;12s
             </div>
           )}
@@ -1548,14 +1548,14 @@ export function SceneTimelineV2({
             </Button>
           )}
           
-          {/* Open Segment Prompt Dialog */}
+          {/* Open Beat Prompt Dialog */}
           {onOpenSegmentPromptDialog && selectedSegmentId && (
             <Button
               variant="outline"
               size="sm"
               className="h-7 text-xs gap-1 px-2"
               onClick={() => onOpenSegmentPromptDialog(selectedSegmentId)}
-              title="Edit segment prompt and settings"
+              title="Edit beat prompt and settings"
             >
               <MessageSquare className="w-3 h-3" />
               Edit
@@ -1564,7 +1564,7 @@ export function SceneTimelineV2({
           
           <div className="w-px h-5 bg-gray-300 dark:bg-gray-600" />
           
-          {/* Add/Delete Segment Controls */}
+          {/* Add/Delete Beat Controls */}
           {onAddSegment && (
             <Button
               variant="outline"
@@ -1786,7 +1786,7 @@ export function SceneTimelineV2({
           true
         )}
         
-        {/* Segment coverage warning - show when segments don't cover audio duration */}
+        {/* Beat coverage warning - show when segments don't cover audio duration */}
         {(() => {
           // Calculate total audio duration
           let totalAudioDuration = 0

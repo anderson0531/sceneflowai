@@ -325,7 +325,7 @@ export const MixerTimeline: React.FC<MixerTimelineProps> = ({
             ))}
           </div>
 
-          {/* Video Segments Track */}
+          {/* Video Beats Track */}
           <div className="h-8 relative mb-2 rounded bg-gray-800/30 flex">
             <div className="sticky left-0 z-30 w-12 shrink-0 flex items-center bg-gray-900 border-r border-gray-700/50">
               <span className="text-[10px] text-gray-500 font-medium pl-1">Video</span>

@@ -103,7 +103,7 @@ export interface AddSegmentTypeDialogProps {
 }
 
 // ============================================================================
-// Segment Type Definitions
+// Beat Type Definitions
 // ============================================================================
 
 interface SegmentTypeConfig {
@@ -128,7 +128,7 @@ interface SegmentTypeConfig {
 const SEGMENT_TYPES: SegmentTypeConfig[] = [
   {
     id: 'standard',
-    name: 'Standard Segment',
+    name: 'Standard Beat',
     icon: Film,
     description: 'Scene segment with start/end keyframes for AI video generation. Full control over shot composition.',
     defaultDuration: 6,
@@ -396,7 +396,7 @@ export function AddSegmentTypeDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5 text-cyan-400" />
-            Add Segment to Scene {sceneNumber}
+            Add Beat to Scene {sceneNumber}
           </DialogTitle>
           <DialogDescription className="text-slate-400">
             Add a keyframe-based segment for AI video generation. For cinematic elements (titles, transitions, B-roll), use the Cinematic Elements button.
@@ -469,7 +469,7 @@ export function AddSegmentTypeDialog({
                   )
                 })}
                 
-                {/* Regenerate All Segments Section */}
+                {/* Regenerate All Beats Section */}
                 {onRegenerateAll && existingSegments.length > 0 && (
                   <>
                     <div className="flex items-center gap-2 pt-4 pb-2">
@@ -490,7 +490,7 @@ export function AddSegmentTypeDialog({
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-amber-300">Regenerate All Segments</h4>
+                            <h4 className="font-medium text-amber-300">Regenerate All Beats</h4>
                             <Badge variant="outline" className="text-[10px] py-0 h-5 text-amber-400 border-amber-500/30">
                               {existingSegments.length} segments
                             </Badge>
@@ -538,10 +538,10 @@ export function AddSegmentTypeDialog({
                 </RadioGroup>
               </div>
               
-              {/* Segment Selector (for before/after) */}
+              {/* Beat Selector (for before/after) */}
               {(insertPosition === 'before' || insertPosition === 'after') && existingSegments.length > 0 && (
                 <div className="space-y-3">
-                  <Label className="text-sm font-medium text-slate-300">Reference Segment</Label>
+                  <Label className="text-sm font-medium text-slate-300">Reference Beat</Label>
                   <Select 
                     value={selectedSegmentIndex.toString()} 
                     onValueChange={(v) => setSelectedSegmentIndex(parseInt(v))}
@@ -552,7 +552,7 @@ export function AddSegmentTypeDialog({
                     <SelectContent className="bg-slate-800 border-slate-600">
                       {existingSegments.map((seg, idx) => (
                         <SelectItem key={seg.segmentId} value={idx.toString()}>
-                          Segment {idx + 1} ({(seg.endTime - seg.startTime).toFixed(1)}s)
+                          Beat {idx + 1} ({(seg.endTime - seg.startTime).toFixed(1)}s)
                         </SelectItem>
                       ))}
                     </SelectContent>

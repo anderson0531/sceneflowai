@@ -167,7 +167,7 @@ export function EditSegmentDialog({
             <Pencil className="w-5 h-5 text-amber-400" />
             Edit Segment
             <Badge variant="outline" className="ml-2 text-xs">
-              Scene {sceneNumber} • Segment {segment.sequenceIndex + 1}
+              Scene {sceneNumber} • Beat {segment.sequenceIndex + 1}
             </Badge>
           </DialogTitle>
           <DialogDescription>

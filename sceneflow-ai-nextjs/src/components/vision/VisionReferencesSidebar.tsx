@@ -276,7 +276,7 @@ function DraggableReferenceCard({
   }
 
   // Check if we can show the Add to Timeline button
-  const canAddToTimeline = scenes && scenes.length > 0 && onInsertBackdropSegment && reference.imageUrl
+  const canAddToTimeline = scenes && scenes.length > 0 && onInsertBackdropBeat && reference.imageUrl
 
   return (
     <>
@@ -612,7 +612,7 @@ function DraggableReferenceCard({
   )
 }
 
-function ReferenceSection({ title, type, references, icon, onAdd, onRemove, showGenerateButton, onGenerate, scenes, onInsertBackdropSegment }: ReferenceSectionProps) {
+function ReferenceSection({ title, type, references, icon, onAdd, onRemove, showGenerateButton, onGenerate, scenes, onInsertBackdropBeat }: ReferenceSectionProps) {
   const [open, setOpen] = useState(false)
 
   return (

@@ -697,7 +697,7 @@ export function ProductionStreamsPanel({
         {hasSegmentChanges && productionStreams.length > 0 && (
           <span className="flex items-center gap-1 text-xs text-amber-400 shrink-0">
             <AlertCircle className="w-3.5 h-3.5" />
-            Segments changed — new render recommended
+            Beats changed — new render recommended
           </span>
         )}
       </div>

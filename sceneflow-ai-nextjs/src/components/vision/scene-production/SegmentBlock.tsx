@@ -70,7 +70,7 @@ export const SegmentBlock = memo(({ segment, isSelected, onSelect, isExpanded = 
       >
         <div className="flex items-center justify-between gap-1">
           <div className="text-xs font-bold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
-            Seg {segment.sequenceIndex + 1}
+            Beat {segment.sequenceIndex + 1}
           </div>
           <div className="flex items-center gap-0.5 text-[10px] font-medium text-gray-700 dark:text-gray-300">
             {statusIconMap[segment.status]}

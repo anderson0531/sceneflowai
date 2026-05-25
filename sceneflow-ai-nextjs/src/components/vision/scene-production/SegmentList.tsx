@@ -159,7 +159,7 @@ function SegmentCard({
           />
           <Clapperboard className="w-4 h-4 text-blue-300" />
           <span className="text-sm font-semibold text-blue-100">
-            Segment {segmentIndex + 1}
+            Beat {segmentIndex + 1}
           </span>
           {isContinuation && (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-fuchsia-500/20 text-fuchsia-200 border border-fuchsia-500/40 uppercase tracking-wide">
@@ -189,7 +189,7 @@ function SegmentCard({
             segment.references?.endFrameDescription) && (
             <div className="rounded-md bg-indigo-900/20 border border-indigo-700/40 p-3 space-y-2">
               <div className="text-[11px] font-semibold uppercase tracking-wide text-indigo-200">
-                Segment Prompts
+                Beat Prompts
               </div>
               <div className="space-y-1.5 text-xs text-indigo-100/90">
                 {(segment.startFramePrompt || segment.references?.startFrameDescription) && (

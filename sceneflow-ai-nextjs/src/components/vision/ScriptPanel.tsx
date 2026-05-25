@@ -37,7 +37,7 @@ import {
 // These components have complex initialization that can cause module load order problems
 const SegmentBuilder = dynamic(
   () => import('./scene-production/SegmentBuilder').then(mod => ({ default: mod.SegmentBuilder })),
-  { ssr: false, loading: () => <div className="p-4 text-center text-zinc-500">Loading Segment Builder...</div> }
+  { ssr: false, loading: () => <div className="p-4 text-center text-zinc-500">Loading Beat Builder...</div> }
 )
 const DirectorWorkflow = dynamic(
   () => import('./scene-production/DirectorConsole').then(mod => ({ default: mod.DirectorWorkflow })),
@@ -3084,7 +3084,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
         />
       )}
 
-      {/* Optimize Scene Dialog - For per-scene audience analysis optimization */}
+      {/* Optimize Scene Dialogue - For per-scene audience analysis optimization */}
       {optimizeDialogScene && (
         <OptimizeSceneDialog
           isOpen={optimizeDialogOpen}
@@ -4011,18 +4011,18 @@ function SceneCard({
   const [directionBuilderOpen, setDirectionBuilderOpen] = useState(false)
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null)
   
-  // Segment selection and dialog states
+  // Beat selection and dialog states
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null)
   const [editSegmentDialogOpen, setEditSegmentDialogOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deleteSceneConfirmOpen, setDeleteSceneConfirmOpen] = useState(false)
   const [resetSegmentsDialogOpen, setResetSegmentsDialogOpen] = useState(false)
-  const [isResettingSegments, setIsResettingSegments] = useState(false)
+  const [isResettingBeats, setIsResettingBeats] = useState(false)
   
   // Generate All Audio confirmation dialog
   const [generateAllAudioConfirmOpen, setGenerateAllAudioConfirmOpen] = useState(false)
   
-  // Add Segment dialog state
+  // Add Beat dialog state
   const [addSegmentDialogOpen, setAddSegmentDialogOpen] = useState(false)
   
   // Collapsible section states
@@ -4107,7 +4107,7 @@ function SceneCard({
     const dialogueActionAuto = isSceneAudioCompleteForLanguage(selectedLanguage)
     const directorsChairAuto = !!scene.sceneDirection
     const storyboardPreVizAuto = !!scene.imageUrl
-    // Segment Builder: Complete when segments exist and all have READY or higher status
+    // Beat Builder: Complete when segments exist and all have READY or higher status
     const segmentBuilderAuto = (() => {
       if (!sceneProductionData) return false
       if (!sceneProductionData.isSegmented || sceneProductionData.segments.length === 0) return false
@@ -4601,7 +4601,7 @@ function SceneCard({
                 const status = getStepStatus(tab.key)
                 const tooltipText = tab.key === 'dialogueAction'
                   ? 'Review script, generate narration, dialogue, music & SFX audio'
-                  : 'Build storyboard keyframes, generate video segments & render final scene'
+                  : 'Build storyboard keyframes, generate video beats & render final scene'
                 
                 return (
                   <TooltipProvider key={tab.key} delayDuration={400}>
@@ -4656,7 +4656,7 @@ function SceneCard({
 
         {/* Next Step CTA Banner — contextual workflow guidance */}
         {!isOutline && isWorkflowOpen && (() => {
-          const hasVideoSegments = (() => {
+          const hasVideoBeats = (() => {
             if (!sceneProductionData?.isSegmented || !sceneProductionData.segments?.length) return false
             return sceneProductionData.segments.every(s => s.activeAssetUrl && s.assetType)
           })()
@@ -4670,7 +4670,7 @@ function SceneCard({
             hasDirection: !!scene.sceneDirection,
             hasFrame: !!scene.imageUrl,
             hasSegments: !!(sceneProductionData?.isSegmented && sceneProductionData.segments?.length),
-            hasVideoSegments,
+            hasVideoBeats,
             hasRender,
             activeTab: activeWorkflowTab as any,
           }
@@ -4916,7 +4916,7 @@ function SceneCard({
                   </TooltipProvider>
                 )}
 
-                {/* Reset Segments button */}
+                {/* Reset Beats button */}
                 {onResetSegments && sceneProductionData?.isSegmented && (
                   <TooltipProvider>
                     <Tooltip>
@@ -4929,11 +4929,11 @@ function SceneCard({
                           className="px-2 py-1 text-xs rounded-lg transition flex items-center gap-1 bg-red-500/20 text-red-300 border border-red-500/40 hover:bg-red-500/30"
                         >
                           <Trash2 className="w-3 h-3" />
-                          <span>Reset Segments</span>
+                          <span>Reset Beats</span>
                         </button>
                       </TooltipTrigger>
                       <TooltipContent className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-[240px]">
-                        Clear segment timeline, keyframes, and generated video for this scene
+                        Clear beat timeline, keyframes, and generated video for this scene
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -5906,7 +5906,7 @@ function SceneCard({
                     )
                   })()}
                   
-                  {/* Scene Dialog (legacy flat dialogue) — only when not yet migrated to segments */}
+                  {/* Scene Beats — script timeline (dialogue, narration, action) that drives production beats */}
                   {scene.dialogue && scene.dialogue.length > 0 && (
                     <div className="bg-emerald-950 border-l-4 border-emerald-500 p-4 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
@@ -5919,8 +5919,8 @@ function SceneCard({
                         >
                           <ChevronDown className={`w-4 h-4 text-emerald-400 transition-transform ${dialogueCollapsed ? '-rotate-90' : ''}`} />
                           <Users className="w-4 h-4 text-emerald-400" />
-                          <span className="text-sm font-semibold text-gray-200">Scene Dialog</span>
-                          <span className="text-xs text-gray-500">({scene.dialogue.length} {scene.dialogue.length === 1 ? 'line' : 'lines'})</span>
+                          <span className="text-sm font-semibold text-gray-200">Scene Beats</span>
+                          <span className="text-xs text-gray-500">({scene.dialogue.length} {scene.dialogue.length === 1 ? 'beat' : 'beats'})</span>
                         </button>
                         {/* Voice Casting Quick View */}
                         <div className="flex items-center gap-1">
@@ -6593,7 +6593,7 @@ function SceneCard({
                     ) : (
                       /* Fallback: Simple single-frame viewer when no segments exist */
                       <div className="space-y-4">
-                        {/* Initialize Segments CTA when scene image exists but no segments */}
+                        {/* Initialize Beats CTA when scene image exists but no segments */}
                         {scene.imageUrl && onInitializeSceneProduction && (
                           <div className="flex items-center gap-4 p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-lg">
                             <div className="flex-1">
@@ -6616,7 +6616,7 @@ function SceneCard({
                               className="bg-indigo-600 hover:bg-indigo-700 text-white"
                             >
                               <Layers className="w-4 h-4 mr-2" />
-                              Initialize Segments
+                              Initialize Beats
                             </Button>
                           </div>
                         )}
@@ -7021,7 +7021,7 @@ function SceneCard({
                       <div className="p-3 bg-gray-800/40 border border-gray-700/50 rounded-lg">
                         <p className="text-xs text-gray-400 leading-snug">
                           After keyframes are ready, use{' '}
-                          <span className="text-purple-300 font-medium">Video Production</span> for segment video, then{' '}
+                          <span className="text-purple-300 font-medium">Video Production</span> for beat video, then{' '}
                           <span className="text-purple-300 font-medium">Production Mixer</span> to composite audio and render.
                         </p>
                       </div>
@@ -7195,7 +7195,7 @@ function SceneCard({
             </div>
           )}
           
-          {/* Add Segment Dialog */}
+          {/* Add Beat Dialog */}
           <AddSegmentDialog
             open={addSegmentDialogOpen}
             onOpenChange={setAddSegmentDialogOpen}
@@ -7226,7 +7226,7 @@ function SceneCard({
             onAddSegment={(newSegment) => {
               const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
               console.log('[ScriptPanel] AddSegmentDialog callback:', { sceneId, hasHandler: !!onAddFullSegment })
-              // Use onAddFullSegment to properly append the complete segment
+              // Use onAddFullBeat to properly append the complete segment
               if (onAddFullSegment) {
                 onAddFullSegment(sceneId, newSegment)
                 console.log('[ScriptPanel] onAddFullSegment called successfully')
@@ -7238,13 +7238,13 @@ function SceneCard({
             }}
           />
           
-          {/* Delete Segment Confirmation Dialog */}
+          {/* Delete Beat Confirmation Dialog */}
           <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
             <DialogContent className="bg-slate-900 border border-red-500/30 max-w-md">
               <DialogHeader>
                 <DialogTitle className="text-red-400 flex items-center gap-2">
                   <Trash2 className="w-5 h-5" />
-                  Delete Segment
+                  Delete Beat
                 </DialogTitle>
                 <DialogDescription className="text-gray-400">
                   Are you sure you want to delete this segment? This action cannot be undone.
@@ -7268,28 +7268,28 @@ function SceneCard({
                   }}
                   className="px-4 py-2 bg-red-600 hover:bg-red-500 border border-red-500 rounded-lg text-white text-sm font-medium transition-colors"
                 >
-                  Delete Segment
+                  Delete Beat
                 </button>
               </div>
             </DialogContent>
           </Dialog>
           
           <ResetSegmentsConfirmDialog
-            open={resetSegmentsDialogOpen}
+            open={resetBeatsDialogOpen}
             onOpenChange={setResetSegmentsDialogOpen}
             sceneNumber={sceneNumber}
             sceneHeading={formattedHeading}
             production={sceneProductionData ?? null}
-            isResetting={isResettingSegments}
+            isResetting={isResettingBeats}
             onConfirm={async () => {
               if (!onResetSegments) return
               const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-              setIsResettingSegments(true)
+              setIsResettingBeats(true)
               try {
                 await Promise.resolve(onResetSegments(sceneId))
                 setResetSegmentsDialogOpen(false)
               } finally {
-                setIsResettingSegments(false)
+                setIsResettingBeats(false)
               }
             }}
           />
@@ -7337,7 +7337,7 @@ function SceneCard({
                   if (scene.descriptionAudioUrl || scene.descriptionAudio) assets.push('Description audio')
                   if (scene.dialogue?.some((d: any) => d?.audioUrl || d?.audio)) assets.push('Dialogue audio')
                   if (scene.sceneDirection) assets.push('Scene direction')
-                  if (sceneProductionData?.segments?.length) assets.push(`${sceneProductionData.segments.length} segment${sceneProductionData.segments.length > 1 ? 's' : ''}`)
+                  if (sceneProductionData?.segments?.length) assets.push(`${sceneProductionData.segments.length} beat${sceneProductionData.segments.length > 1 ? 's' : ''}`)
                   if (scene.musicUrl || scene.musicAudio) assets.push('Music')
                   
                   return assets.length > 0 ? (
@@ -7376,7 +7376,7 @@ function SceneCard({
             </DialogContent>
           </Dialog>
           
-          {/* Edit Segment Dialog */}
+          {/* Edit Beat Dialog */}
           <EditSegmentDialog
             open={editSegmentDialogOpen}
             onOpenChange={setEditSegmentDialogOpen}

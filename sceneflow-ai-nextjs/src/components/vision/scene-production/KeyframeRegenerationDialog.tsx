@@ -80,7 +80,7 @@ export interface KeyframeRegenerationDialogProps {
 export interface KeyframeGenerationConfig {
   /** Target duration for scene */
   targetDuration: number
-  /** Segment count (auto-calculated or manually set) */
+  /** Beat count (auto-calculated or manually set) */
   segmentCount: number | 'auto'
   /** Use narration for timing alignment */
   narrationDriven: boolean
@@ -435,12 +435,12 @@ export function KeyframeRegenerationDialog({
                   </div>
                 </div>
                 
-                {/* Segment Count */}
+                {/* Beat Count */}
                 <div className="space-y-3 p-3 rounded-lg border border-gray-700 bg-gray-800/30">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-gray-200 flex items-center gap-2">
                       <Layers className="w-4 h-4 text-cyan-400" />
-                      Segment Count
+                      Beat Count
                     </h3>
                     <div className="flex items-center gap-2">
                       <button

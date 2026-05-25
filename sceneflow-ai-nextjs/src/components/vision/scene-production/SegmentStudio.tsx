@@ -64,7 +64,7 @@ interface SegmentStudioProps {
   references: SceneProductionReferences
   sceneImageUrl?: string
   audioTracks?: AudioTracksData
-  // Segment position for establishing shot logic
+  // Beat position for establishing shot logic
   segmentIndex?: number
   // Phase 2: Dialogue coverage
   sceneDialogueLines?: SceneDialogueLine[]
@@ -192,7 +192,7 @@ export function SegmentStudio({
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map())
   
-  // Segment navigation
+  // Beat navigation
   const currentIndex = segment ? segments.findIndex(s => s.segmentId === segment.segmentId) : -1
   const canGoPrev = currentIndex > 0
   const canGoNext = currentIndex < segments.length - 1
@@ -467,7 +467,7 @@ export function SegmentStudio({
 
   return (
     <div className="h-full flex flex-col rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 overflow-hidden">
-      {/* Panel Header with Segment Navigation */}
+      {/* Panel Header with Beat Navigation */}
       <div className="flex-shrink-0 px-3 py-2 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
@@ -534,7 +534,7 @@ export function SegmentStudio({
             ) : (
               <img
                 src={segment.activeAssetUrl}
-                alt="Segment preview"
+                alt="Beat preview"
                 className="w-full h-full object-contain"
               />
             )}
@@ -1252,7 +1252,7 @@ export function SegmentStudio({
             </div>
           )}
 
-          {/* Characters in Segment */}
+          {/* Characters in Beat */}
           {segmentCharacters.length > 0 && (
             <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
               <div className="flex items-center gap-1.5 mb-2">
@@ -1575,7 +1575,7 @@ export function SegmentStudio({
         </DialogContent>
       </Dialog>
 
-      {/* Segment Prompt Builder */}
+      {/* Beat Prompt Builder */}
       {segment && (
         <SegmentPromptBuilder
           open={isPromptBuilderOpen}
@@ -1590,7 +1590,7 @@ export function SegmentStudio({
           previousSegmentLastFrame={previousSegmentLastFrame}
           onGenerate={handlePromptBuilderGenerate}
           isGenerating={segment.status === 'GENERATING'}
-          allSegments={segments}
+          allBeats={segments}
           sceneReferences={references.sceneReferences}
           objectReferences={references.objectReferences}
           // Pass backdrop context when in backdrop mode
@@ -1637,7 +1637,7 @@ export function SegmentStudio({
           characters={references.characters}
           sceneImageUrl={sceneImageUrl}
           previousSegmentLastFrame={previousSegmentLastFrame}
-          allSegments={segments}
+          allBeats={segments}
           onGenerate={handleVideoEditingGenerate}
           isGenerating={segment.status === 'GENERATING'}
           initialTab={videoEditingInitialTab}

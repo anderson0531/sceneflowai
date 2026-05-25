@@ -105,7 +105,7 @@ interface VisualClip {
   endThumbnailUrl?: string
   startTime: number
   duration: number
-  // LML Elastic Segment Fields
+  // LML Elastic Beat Fields
   lmlMode?: 'EXACT' | 'SMART_PAD' | 'FREEZE_EXTEND'
   lmlExtension?: number
   kenBurnsScale?: [number, number]
@@ -373,7 +373,7 @@ export function FullscreenPlayer({
   const baselineLanguage = useMemo(() => scene ? determineBaselineLanguage(scene) : 'en', [scene])
   
   // ============================================================================
-  // Build Visual Clips from Segments
+  // Build Visual Clips from Beats
   // Apply LML elastic segment timing for translated audio alignment
   // =============================================================================
   
@@ -391,9 +391,9 @@ export function FullscreenPlayer({
     
     // If LML analysis available, use per-segment elastic timing
     // Otherwise fall back to flat playback offset
-    if (lmlAnalysis && lmlAnalysis.segmentDynamics.length === validSegments.length) {
+    if (lmlAnalysis && lmlAnalysis.segmentDynamics.length === validBeats.length) {
       let cumulativeStart = 0
-      return validSegments.map((seg, idx) => {
+      return validBeats.map((seg, idx) => {
         const dynamics = lmlAnalysis.segmentDynamics[idx]
         const clip: VisualClip = {
           id: seg.segmentId,
@@ -417,7 +417,7 @@ export function FullscreenPlayer({
     // Fallback: flat playback offset (legacy behavior)
     const effectiveOffset = selectedLanguage !== baselineLanguage ? playbackOffset : 0
     let cumulativeOffset = 0
-    return validSegments.map(seg => {
+    return validBeats.map(seg => {
       const baseDuration = seg.endTime - seg.startTime
       const clip: VisualClip = {
         id: seg.segmentId,
@@ -795,7 +795,7 @@ export function FullscreenPlayer({
   // ============================================================================
   // Skip to Previous/Next Segment
   // ============================================================================
-  const skipToPreviousSegment = useCallback(() => {
+  const skipToPreviousBeat = useCallback(() => {
     if (currentClipIndex <= 0) {
       seekTo(0)
     } else {
@@ -804,7 +804,7 @@ export function FullscreenPlayer({
     }
   }, [currentClipIndex, visualClips, seekTo])
   
-  const skipToNextSegment = useCallback(() => {
+  const skipToNextBeat = useCallback(() => {
     if (currentClipIndex >= visualClips.length - 1) {
       return
     }
@@ -937,7 +937,7 @@ export function FullscreenPlayer({
         {currentClip?.thumbnailUrl ? (
           <img
             src={currentClip.thumbnailUrl}
-            alt={`Segment ${currentClipIndex + 1}`}
+            alt={`Beat ${currentClipIndex + 1}`}
             className={`w-full h-full object-cover ${panIntensity !== 'off' && !isInFreezeExtension ? 'kenburns-animated' : ''}`}
             style={isInFreezeExtension ? {
               transform: `scale(${freezeKenBurnsScale})`,
@@ -1089,13 +1089,13 @@ export function FullscreenPlayer({
                 </Button>
               )}
               
-              {/* Previous Segment */}
+              {/* Previous Beat */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={skipToPreviousSegment}
                 className="text-white hover:bg-white/20"
-                title="Previous Segment"
+                title="Previous Beat"
               >
                 <SkipBack className="h-5 w-5" />
               </Button>
@@ -1112,13 +1112,13 @@ export function FullscreenPlayer({
                 )}
               </button>
               
-              {/* Next Segment */}
+              {/* Next Beat */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={skipToNextSegment}
                 className="text-white hover:bg-white/20"
-                title="Next Segment"
+                title="Next Beat"
               >
                 <SkipForward className="h-5 w-5" />
               </Button>
@@ -1138,7 +1138,7 @@ export function FullscreenPlayer({
               )}
             </div>
             
-            {/* Right: Pan Controls + Volume Controls + Segment Info */}
+            {/* Right: Pan Controls + Volume Controls + Beat Info */}
             <div className="flex items-center gap-2 min-w-[200px] justify-end">
               {/* Pan/Ken Burns Control */}
               <Button

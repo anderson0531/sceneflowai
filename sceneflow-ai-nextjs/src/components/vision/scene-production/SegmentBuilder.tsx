@@ -89,7 +89,7 @@ const getSegmentValidation = async () => {
 }
 
 // ============================================================================
-// Segment / keyframe generation overlay (aligned to real pipeline steps)
+// Beat / keyframe generation overlay (aligned to real pipeline steps)
 // ============================================================================
 
 type OverlayJob = 'directions' | 'video_prompts'
@@ -130,7 +130,7 @@ const OVERLAY_PIPELINES: Record<OverlayJob, OverlayStepDef[]> = {
     },
     {
       id: 'timeline-build',
-      label: 'Building the segment timeline',
+      label: 'Building the beat timeline',
       sublabel: 'Stitching durations and transitions',
       progress: 0.94,
       icon: 'layers',
@@ -484,7 +484,7 @@ function extractAudioMetadata(scene: any, selectedLanguage = 'en-US'): {
 
 
 // ============================================================================
-// Client-Side Segment Duration Enforcement (Safety Net)
+// Client-Side Beat Duration Enforcement (Safety Net)
 // ============================================================================
 
 const CLIENT_MAX_SEGMENT_DURATION = VEO_ABSOLUTE_CLIP_MAX_SEC
@@ -514,7 +514,7 @@ function enforceClientMaxDuration(segments: ProposedSegment[]): ProposedSegment[
     const dialoguePerPart = Math.ceil(seg.dialogueLineIds.length / numParts)
 
     console.log(
-      `[Client Split] Segment ${seg.id} (${seg.duration.toFixed(1)}s) → ${numParts} parts`
+      `[Client Split] Beat ${seg.id} (${seg.duration.toFixed(1)}s) → ${numParts} parts`
     )
 
     for (let i = 0; i < numParts; i++) {
@@ -745,7 +745,7 @@ export function SegmentBuilder({
   
   // Check if existing segments are stale (for post-finalization view)
   const existingSegmentsStale = useMemo(() => {
-    if (!hasExistingSegments) return false
+    if (!hasExistingBeats) return false
     const firstSegment = existingSegments[0]
     const savedHash = firstSegment.promptContext?.visualDescriptionHash
     if (!savedHash) return false
@@ -853,7 +853,7 @@ export function SegmentBuilder({
         throw new Error(
           response.ok
             ? 'Invalid JSON from segment API'
-            : `Segment API error (${response.status}): ${responseText.slice(0, 280)}`
+            : `Beat API error (${response.status}): ${responseText.slice(0, 280)}`
         )
       }
 
@@ -921,13 +921,13 @@ export function SegmentBuilder({
       })
 
       setPendingApprovedDirections(approvedDirs)
-      setStagedSegments(finalSegments)
+      setStagedBeats(finalBeats)
       setVideoPromptNotes('')
       setKeyframesConfirmed(false)
       setPhase('video_prompts')
       setLastGeneratedHash(sceneBible.contentHash)
 
-      toast.success(`Created ${finalSegments.length} segments — add keyframes, then generate Veo prompts (or skip).`)
+      toast.success(`Created ${finalBeats.length} segments — add keyframes, then generate Veo prompts (or skip).`)
 
       setProductionStepIndex(3)
       await sleep(220)
@@ -1076,12 +1076,12 @@ export function SegmentBuilder({
             })
             
             setPendingApprovedDirections(approvedDirs)
-            setStagedSegments(finalSegments)
+            setStagedBeats(finalBeats)
             setVideoPromptNotes('')
             setKeyframesConfirmed(false)
             setPhase('video_prompts') // Or finalize directly? User wants to edit keyframes.
             setLastGeneratedHash(sceneBible.contentHash)
-            toast.success(`Used ${finalSegments.length} script segments — add keyframes, then generate Veo prompts (or skip).`)
+            toast.success(`Used ${finalBeats.length} script segments — add keyframes, then generate Veo prompts (or skip).`)
             setProductionStepIndex(3)
             await sleep(220)
         } catch(err: any) {
@@ -1112,7 +1112,7 @@ export function SegmentBuilder({
   // Auto-initialize when the builder is opened and not already generated
   const hasAutoInitialized = useRef(false)
   useEffect(() => {
-    if (!hasExistingVideoAssets && !hasExistingSegments && !isAnalyzing && !hasAutoInitialized.current && hasSceneDirection) {
+    if (!hasExistingVideoAssets && !hasExistingBeats && !isAnalyzing && !hasAutoInitialized.current && hasSceneDirection) {
       hasAutoInitialized.current = true
       // We wrap it in a setTimeout to avoid React state update during render issues
       setTimeout(() => {
@@ -1125,7 +1125,7 @@ export function SegmentBuilder({
     (segments: SceneSegment[]) => {
       onSegmentsFinalized(segments)
       setPendingApprovedDirections(null)
-      setStagedSegments(null)
+      setStagedBeats(null)
       setPhase('analyze')
       setVideoPromptNotes('')
       setKeyframesConfirmed(false)
@@ -1135,15 +1135,15 @@ export function SegmentBuilder({
   )
 
   const handleSkipVideoPrompts = useCallback(() => {
-    if (!stagedSegments?.length) return
-    finalizeAndClose(stagedSegments)
-    toast.message('Segments saved without Veo prompts', {
+    if (!stagedBeats?.length) return
+    finalizeAndClose(stagedBeats)
+    toast.message('Beats saved without Veo prompts', {
       description: 'You can generate video prompts later from the segment workflow if needed.',
     })
-  }, [stagedSegments, finalizeAndClose])
+  }, [stagedBeats, finalizeAndClose])
 
   const handleGenerateVideoPrompts = useCallback(async () => {
-    if (!pendingApprovedDirections?.length || !stagedSegments?.length) return
+    if (!pendingApprovedDirections?.length || !stagedBeats?.length) return
 
     setIsAnalyzing(true)
     setError(null)
@@ -1182,7 +1182,7 @@ export function SegmentBuilder({
         throw new Error(
           response.ok
             ? 'Invalid JSON from segment API'
-            : `Segment API error (${response.status}): ${responseText.slice(0, 280)}`
+            : `Beat API error (${response.status}): ${responseText.slice(0, 280)}`
         )
       }
 
@@ -1216,7 +1216,7 @@ export function SegmentBuilder({
     segmentCountTarget,
     customInstructions,
     pendingApprovedDirections,
-    stagedSegments,
+    stagedBeats,
     videoPromptNotes,
     keyframesConfirmed,
     runVideoPromptsOverlayPreamble,
@@ -1237,7 +1237,7 @@ export function SegmentBuilder({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-cyan-400" />
-            <h2 className="text-lg font-semibold text-white">Segment Builder</h2>
+            <h2 className="text-lg font-semibold text-white">Beat Builder</h2>
           </div>
           <Badge variant="outline" className="border-gray-600 text-gray-400">Scene {sceneNumber}</Badge>
         </div>
@@ -1246,10 +1246,10 @@ export function SegmentBuilder({
       {/* Main Content */}
       <div className="flex flex-1 min-w-0 overflow-hidden">
 
-        {/* Center Panel: Timeline & Segments */}
+        {/* Center Panel: Timeline & Beats */}
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
           {/* Phase: Analyze */}
-          {phase === 'video_prompts' && stagedSegments && (
+          {phase === 'video_prompts' && stagedBeats && (
             <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
               <Card className="w-full max-w-lg bg-gray-900/60 border-gray-700/50">
                 <CardHeader>
@@ -1258,7 +1258,7 @@ export function SegmentBuilder({
                     Video prompts (step 2)
                   </CardTitle>
                   <CardDescription className="text-gray-400">
-                    {stagedSegments.length} segments are staged with keyframe copy. Generate full Veo prompts after you are
+                    {stagedBeats.length} segments are staged with keyframe copy. Generate full Veo prompts after you are
                     happy with keyframes, or skip and fill prompts later.
                   </CardDescription>
                 </CardHeader>
@@ -1343,8 +1343,8 @@ export function SegmentBuilder({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Existing Segments Warning */}
-                  {hasExistingSegments && (
+                  {/* Existing Beats Warning */}
+                  {hasExistingBeats && (
                     <Alert className={cn(
                       "border",
                       existingSegmentsStale 
@@ -1413,7 +1413,7 @@ export function SegmentBuilder({
                         {/* Duration Setting */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium text-gray-300">Target Segment Duration</label>
+                            <label className="text-sm font-medium text-gray-300">Target Beat Duration</label>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -1496,10 +1496,10 @@ export function SegmentBuilder({
                           </p>
                         </div>
 
-                        {/* Segment Count Target */}
+                        {/* Beat Count Target */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium text-gray-300">Segment Count</label>
+                            <label className="text-sm font-medium text-gray-300">Beat Count</label>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -1669,15 +1669,15 @@ export function SegmentBuilder({
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Analyzing Scene...
                       </>
-                    ) : hasExistingSegments ? (
+                    ) : hasExistingBeats ? (
                       <>
                         <RefreshCw className="w-4 h-4 mr-2" />
-                        Regenerate Segments
+                        Regenerate Beats
                       </>
                     ) : (
                       <>
                         <Wand2 className="w-4 h-4 mr-2" />
-                        Generate Segments
+                        Generate Beats
                       </>
                     )}
                   </Button>

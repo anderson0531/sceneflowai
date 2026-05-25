@@ -498,7 +498,7 @@ export function ProjectCostCalculator({
 
             <div>
               <div className="flex justify-between mb-2">
-                <label className="text-sm text-gray-300">Segments per Scene</label>
+                <label className="text-sm text-gray-300">Beats per Scene</label>
                 <span className="text-sm font-medium text-white">{params.scenes.segmentsPerScene}</span>
               </div>
               <input
@@ -513,7 +513,7 @@ export function ProjectCostCalculator({
 
             <div>
               <div className="flex justify-between mb-2">
-                <label className="text-sm text-gray-300">Takes per Segment (regenerations)</label>
+                <label className="text-sm text-gray-300">Takes per Beat (regenerations)</label>
                 <span className="text-sm font-medium text-white">{params.scenes.takesPerSegment}</span>
               </div>
               <input
