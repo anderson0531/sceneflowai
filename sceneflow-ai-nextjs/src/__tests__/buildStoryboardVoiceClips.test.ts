@@ -322,16 +322,14 @@ describe('buildStoryboardVoiceClips', () => {
     })
     expect(clips).toHaveLength(2)
     expect(clips[0].dialogueIndex).toBe(0)
-    expect(clips[0].startTime).toBe(4.3)
+    expect(clips[0].startTime).toBe(0)
 
-    expect(visualFrames).toHaveLength(3)
+    expect(visualFrames).toHaveLength(2)
     expect(visualFrames[0].startTime).toBe(0)
-    expect(visualFrames[0].imageUrl).toBe(ACTION_URL)
-    expect(visualFrames[0].beatId).toBe('bt_action')
-    expect(visualFrames[1].imageUrl).toBe(NARRATOR_BEAT_URL)
-    expect(visualFrames[1].startTime).toBe(4.3)
-    expect(visualFrames[1].dialogueIndex).toBe(0)
-    expect(visualFrames[2].imageUrl).toBe('https://example.com/sarah-frame.jpg')
+    expect(visualFrames[0].imageUrl).toBe(NARRATOR_BEAT_URL)
+    expect(visualFrames[0].beatId).toBe('bt_narr')
+    expect(visualFrames[0].dialogueIndex).toBe(0)
+    expect(visualFrames[1].imageUrl).toBe('https://example.com/sarah-frame.jpg')
   })
 
   it('schedules narrator beat when audio is on dialogue line but missing from beat.audioUrl', () => {
@@ -396,10 +394,10 @@ describe('buildStoryboardVoiceClips', () => {
     expect(clips).toHaveLength(2)
     expect(clips[0].url).toBe(NARRATION_URL)
     expect(clips[0].dialogueIndex).toBe(0)
-    expect(clips[0].startTime).toBe(4.3)
+    expect(clips[0].startTime).toBe(0)
 
-    expect(visualFrames[1].imageUrl).toBe('https://example.com/narrator-frame.jpg')
-    expect(visualFrames[1].dialogueIndex).toBe(0)
+    expect(visualFrames[0].imageUrl).toBe('https://example.com/narrator-frame.jpg')
+    expect(visualFrames[0].dialogueIndex).toBe(0)
   })
 
   it('aligns spoken beat images when narrator beat is not in dialogue array', () => {
@@ -467,12 +465,12 @@ describe('buildStoryboardVoiceClips', () => {
     expect(clips[0].url).toBe(NARRATION_URL)
     expect(clips[0].id).toBe('beat-bt_narr')
     expect(clips[0].dialogueIndex).toBeUndefined()
+    expect(clips[0].startTime).toBe(0)
     expect(clips[1].dialogueIndex).toBe(0)
     expect(clips[2].dialogueIndex).toBe(1)
 
-    expect(visualFrames).toHaveLength(4)
+    expect(visualFrames).toHaveLength(3)
     expect(visualFrames.map((f) => f.imageUrl)).toEqual([
-      'https://example.com/establishing.jpg',
       NARRATOR_FRAME,
       ALICE_FRAME,
       BOB_FRAME,
@@ -725,6 +723,68 @@ describe('buildStoryboardVoiceClips', () => {
     expect(visualFrames[0].imageUrl).toBe('https://example.com/f1.jpg')
     expect(visualFrames[2].imageUrl).toBe('https://example.com/f3.jpg')
     expect(voiceClips[1].startTime).toBeCloseTo(6.4 + 0.3, 1)
+  })
+
+  it('first visual frame matches first voice clip at t=0 when action precedes narrator', () => {
+    const scene = {
+      action: 'Wide shot',
+      imageUrl: 'https://example.com/establishing.jpg',
+      dialogue: [
+        {
+          lineId: 'ln_narr',
+          kind: 'narration',
+          character: 'NARRATOR',
+          line: 'Welcome.',
+          audioUrl: NARRATION_URL,
+          duration: 6.4,
+        },
+        {
+          lineId: 'ln_sarah',
+          character: 'Sarah Chen',
+          line: 'Hello.',
+          audioUrl: SARAH_URL,
+          duration: 3,
+        },
+      ],
+      beats: [
+        {
+          beatId: 'bt_action',
+          kind: 'action',
+          actionDescription: 'Wide shot',
+          storyboardImageUrl: 'https://example.com/establishing.jpg',
+        },
+        {
+          beatId: 'bt_narr',
+          kind: 'narration',
+          character: 'NARRATOR',
+          line: 'Welcome.',
+          lineId: 'ln_narr',
+          storyboardImageUrl: 'https://example.com/narrator.jpg',
+          audioUrl: NARRATION_URL,
+          durationSeconds: 6.4,
+        },
+        {
+          beatId: 'bt_sarah',
+          kind: 'dialogue',
+          character: 'Sarah Chen',
+          line: 'Hello.',
+          lineId: 'ln_sarah',
+          storyboardImageUrl: 'https://example.com/sarah.jpg',
+          audioUrl: SARAH_URL,
+          durationSeconds: 3,
+        },
+      ],
+    }
+
+    const { voiceClips, visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [NARRATION_URL]: 6.4,
+      [SARAH_URL]: 3,
+    })
+
+    expect(voiceClips[0].startTime).toBe(0)
+    expect(visualFrames[0].startTime).toBe(0)
+    expect(visualFrames[0].beatId).toBe(voiceClips[0].beatId)
+    expect(visualFrames[0].imageUrl).toBe('https://example.com/narrator.jpg')
   })
 })
 

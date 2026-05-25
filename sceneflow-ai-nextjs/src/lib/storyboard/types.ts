@@ -818,6 +818,41 @@ function resolveActionBeatDuration(beat: ReturnType<typeof getSceneBeats>[number
   return DEFAULT_ACTION_BEAT_DURATION_SEC
 }
 
+/** Drop leading silent visual frames and rebase so the first voice clip starts at t=0. */
+function alignPlaybackTimelineToFirstVoice(
+  voiceClips: StoryboardAudioClip[],
+  visualFrames: StoryboardVisualFrame[]
+): { voiceClips: StoryboardAudioClip[]; visualFrames: StoryboardVisualFrame[] } {
+  if (voiceClips.length === 0 || visualFrames.length === 0) {
+    return { voiceClips, visualFrames }
+  }
+
+  const firstClip = voiceClips[0]
+  let frameStartIdx = 0
+  while (
+    frameStartIdx < visualFrames.length &&
+    visualFrames[frameStartIdx].beatId !== firstClip.beatId &&
+    visualFrames[frameStartIdx].startTime < firstClip.startTime - 0.001
+  ) {
+    frameStartIdx++
+  }
+
+  let alignedFrames = visualFrames.slice(frameStartIdx)
+  const offset = firstClip.startTime
+  if (offset <= 0.001) {
+    return { voiceClips, visualFrames: alignedFrames }
+  }
+
+  const rebaseTime = (time: number) => Math.max(0, time - offset)
+  return {
+    voiceClips: voiceClips.map((clip) => ({ ...clip, startTime: rebaseTime(clip.startTime) })),
+    visualFrames: alignedFrames.map((frame) => ({
+      ...frame,
+      startTime: rebaseTime(frame.startTime),
+    })),
+  }
+}
+
 /**
  * Beat-first playback: one visual frame per scene beat (including silent action beats),
  * with voice clips starting after each preceding action beat's hold time.
@@ -869,14 +904,23 @@ export function buildBeatFirstPlaybackTimeline(
       continue
     }
 
+    const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
     const dialogueIndex = resolveBeatDialogueIndex(scene, beat, spokenDialogueIdx, language)
-    if (typeof dialogueIndex === 'number') {
-      spokenDialogueIdx = Math.max(spokenDialogueIdx, dialogueIndex + 1)
+    const effectiveDialogueIndex =
+      typeof dialogueIndex === 'number'
+        ? dialogueIndex
+        : !beat.lineId?.trim() &&
+            spokenDialogueIdx >= 0 &&
+            spokenDialogueIdx < dialogue.length
+          ? spokenDialogueIdx
+          : undefined
+    if (typeof effectiveDialogueIndex === 'number') {
+      spokenDialogueIdx = Math.max(spokenDialogueIdx, effectiveDialogueIndex + 1)
     }
 
-    const url = resolveBeatVoiceUrl(scene, beat, dialogueIndex, language)
+    const url = resolveBeatVoiceUrl(scene, beat, effectiveDialogueIndex, language)
     const isNarration = isNarratorBeat(beat)
-    const clipId = beatVoiceClipId(beat, dialogueIndex)
+    const clipId = beatVoiceClipId(beat, effectiveDialogueIndex)
 
     if (!url) {
       const duration = DEFAULT_CLIP_DURATION_SEC
@@ -889,7 +933,7 @@ export function buildBeatFirstPlaybackTimeline(
         label: isNarration ? 'Narrator' : beat.character || 'Dialogue',
         character: beat.character,
         line: beat.line,
-        dialogueIndex,
+        dialogueIndex: effectiveDialogueIndex,
         clipId,
       })
       currentStartTime += duration + DIALOGUE_CLIP_BUFFER_SEC
@@ -900,7 +944,7 @@ export function buildBeatFirstPlaybackTimeline(
       url,
       beat,
       scene,
-      dialogueIndex,
+      effectiveDialogueIndex,
       language,
       dynamicDurations
     )
@@ -911,8 +955,8 @@ export function buildBeatFirstPlaybackTimeline(
       startTime: currentStartTime,
       duration,
       type: 'dialogue',
-      label: isNarration ? 'Narrator' : beat.character || `Dialogue ${(dialogueIndex ?? spokenDialogueIdx) + 1}`,
-      dialogueIndex,
+      label: isNarration ? 'Narrator' : beat.character || `Dialogue ${(effectiveDialogueIndex ?? spokenDialogueIdx) + 1}`,
+      dialogueIndex: effectiveDialogueIndex,
       beatId: beat.beatId,
     })
 
@@ -925,7 +969,7 @@ export function buildBeatFirstPlaybackTimeline(
       label: isNarration ? 'Narrator' : beat.character || 'Dialogue',
       character: beat.character,
       line: beat.line,
-      dialogueIndex,
+      dialogueIndex: effectiveDialogueIndex,
       clipId,
     })
 
@@ -948,7 +992,7 @@ export function buildBeatFirstPlaybackTimeline(
     line: win.line,
   }))
 
-  return { voiceClips, visualFrames }
+  return alignPlaybackTimelineToFirstVoice(voiceClips, visualFrames)
 }
 
 /**
