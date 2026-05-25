@@ -11415,7 +11415,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentActionChange={handleSegmentActionChange}
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
-                onLockSegment={handleLockSegment}
+                onLockSegment={handleLockBeat}
                 onSegmentAnimaticSettingsChange={handleSegmentAnimaticSettingsChange}
                 onRenderedSceneUrlChange={handleRenderedSceneUrlChange}
                 onProductionDataChange={handleProductionDataChange}
@@ -11435,11 +11435,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                 }}
                 onAddSegment={handleAddSegment}
-                onAddFullSegment={handleAddFullSegment}
+                onAddFullSegment={handleAddFullBeat}
                 onDeleteSegment={handleDeleteSegment}
                 onSegmentResize={handleSegmentResize}
                 onApplyIntelligentAlignment={handleApplyIntelligentAlignment}
-                onReorderSegments={handleReorderSegments}
+                onReorderSegments={handleReorderBeats}
                 onAudioClipChange={handleAudioClipChange}
                 onCleanupStaleAudioUrl={handleCleanupStaleAudioUrl}
                 onAddEstablishingShot={handleAddEstablishingShot}
@@ -11672,7 +11672,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 showProductionReadiness={true}
                 backdropCharacters={characters.map(c => ({ id: c.id, name: c.name, description: c.description, appearance: c.appearance }))}
                 onBackdropGenerated={handleBackdropGenerated}
-                onInsertBackdropSegment={handleInsertBackdropSegment}
+                onInsertBackdropSegment={handleInsertBackdropBeat}
                 onObjectGenerated={handleObjectGenerated}
                 screenplayContext={{
                   genre: project?.genre,
