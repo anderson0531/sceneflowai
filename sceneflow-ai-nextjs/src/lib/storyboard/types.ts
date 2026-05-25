@@ -12,7 +12,7 @@ import {
 import { getSceneBeats, getStoryboardTimelineBeats } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { NARRATOR_CHARACTER, NARRATOR_CHARACTER_ID } from '@/lib/script/segmentTypes'
-import { toCanonicalName } from '@/lib/character/canonical'
+import { generateAliases, toCanonicalName } from '@/lib/character/canonical'
 import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
 import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
 
@@ -435,13 +435,34 @@ function resolveVoiceClipDuration(
   const dynamic = dynamicDurations[url]
   const stored =
     typeof storedDuration === 'number' && storedDuration > 0 ? storedDuration : undefined
-  // Ignore poisoned short dynamic values from legacy 404 handlers when metadata has duration.
-  if (typeof dynamic === 'number' && dynamic > 0) {
-    if (stored && dynamic < 0.5) return stored
-    return dynamic
+  // Prefer stored TTS metadata; dynamic loadedmetadata can be wrong on some blobs.
+  if (stored) {
+    if (typeof dynamic === 'number' && dynamic > 0 && dynamic < 0.5) return stored
+    return stored
   }
-  if (stored) return stored
+  if (typeof dynamic === 'number' && dynamic > 0) return dynamic
   return DEFAULT_CLIP_DURATION_SEC
+}
+
+function characterNamesMatch(a: string, b: string): boolean {
+  const canonicalA = toCanonicalName(a)
+  const canonicalB = toCanonicalName(b)
+  if (canonicalA === canonicalB) return true
+  const aliasesA = new Set(generateAliases(canonicalA).map(toCanonicalName))
+  return aliasesA.has(canonicalB)
+}
+
+function isNarratorDialogueEntry(entry: Record<string, unknown> | undefined): boolean {
+  if (!entry) return false
+  if (entry.kind === 'narration') return true
+  if (entry.characterId === NARRATOR_CHARACTER_ID) return true
+  if (
+    typeof entry.character === 'string' &&
+    toCanonicalName(entry.character) === toCanonicalName(NARRATOR_CHARACTER)
+  ) {
+    return true
+  }
+  return false
 }
 
 function getSpokenBeats(scene: Record<string, unknown>): ReturnType<typeof getSceneBeats> {
@@ -519,17 +540,19 @@ function findDialogueAudioEntryForBeat(
     if (byIndex) return byIndex
   }
   if (isNarratorBeat(beat)) {
-    const narratorEntry = pickLastWithUrl(
-      (entry) =>
-        entry?.kind === 'narration' || entry?.characterId === NARRATOR_CHARACTER_ID
-    )
+    const narratorEntry = pickLastWithUrl((entry) => isNarratorDialogueEntry(entry))
     if (narratorEntry) return narratorEntry
   }
   if (beat.character?.trim()) {
     const canonical = toCanonicalName(beat.character)
     const byCharacter = pickLastWithUrl((entry) => {
       if (typeof entry?.character !== 'string') return false
-      if (toCanonicalName(entry.character) !== canonical) return false
+      if (
+        !characterNamesMatch(entry.character, beat.character!) &&
+        toCanonicalName(entry.character) !== canonical
+      ) {
+        return false
+      }
       if (typeof dialogueIndex === 'number' && typeof entry.dialogueIndex === 'number') {
         return entry.dialogueIndex === dialogueIndex
       }
@@ -598,10 +621,29 @@ function resolveBeatDialogueIndex(
     if (typeof audioEntry?.dialogueIndex === 'number') {
       return audioEntry.dialogueIndex
     }
-    return undefined
   }
-  if (spokenDialogueIdx >= 0 && spokenDialogueIdx < dialogue.length) return spokenDialogueIdx
-  return spokenDialogueIdx >= 0 ? spokenDialogueIdx : undefined
+  if (isNarratorBeat(beat)) {
+    const narratorIdx = dialogue.findIndex((entry) =>
+      isNarratorDialogueEntry(entry as Record<string, unknown>)
+    )
+    if (narratorIdx >= 0) return narratorIdx
+  }
+  if (spokenDialogueIdx >= 0 && spokenDialogueIdx < dialogue.length) {
+    if (!beat.lineId?.trim()) return spokenDialogueIdx
+
+    const line = dialogue[spokenDialogueIdx] as Record<string, unknown> | undefined
+    if (!line) return undefined
+    if (line.lineId === beat.lineId) return spokenDialogueIdx
+    if (isNarratorBeat(beat) && isNarratorDialogueEntry(line)) return spokenDialogueIdx
+    if (
+      beat.character?.trim() &&
+      typeof line.character === 'string' &&
+      characterNamesMatch(line.character, beat.character)
+    ) {
+      return spokenDialogueIdx
+    }
+  }
+  return undefined
 }
 
 function beatVoiceClipId(
@@ -649,7 +691,7 @@ function resolveBeatVoiceUrl(
   const fromBeat = beat.audioUrl?.trim()
   if (fromBeat) return fromBeat
 
-  if (beat.kind === 'narration') {
+  if (isNarratorBeat(beat)) {
     const standalone = resolveStandaloneNarrationUrl(scene, language)
     if (standalone?.trim()) return standalone.trim()
   }
@@ -1001,15 +1043,12 @@ export function buildBeatFirstPlaybackTimeline(
     }
 
     const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
-    const dialogueIndex = resolveBeatDialogueIndex(scene, beat, spokenDialogueIdx, language)
-    const effectiveDialogueIndex =
-      typeof dialogueIndex === 'number'
-        ? dialogueIndex
-        : !beat.lineId?.trim() &&
-            spokenDialogueIdx >= 0 &&
-            spokenDialogueIdx < dialogue.length
-          ? spokenDialogueIdx
-          : undefined
+    const effectiveDialogueIndex = resolveBeatDialogueIndex(
+      scene,
+      beat,
+      spokenDialogueIdx,
+      language
+    )
     if (typeof effectiveDialogueIndex === 'number') {
       spokenDialogueIdx = Math.max(spokenDialogueIdx, effectiveDialogueIndex + 1)
     }

@@ -995,6 +995,91 @@ describe('buildStoryboardVoiceClips', () => {
     expect(visualFrames[0].beatId).toBe(slots[0].beatId)
     expect(visualFrames[0].beatId).toBe(voiceClips[0].beatId)
   })
+
+  it('resolves narrator and Anderson audio when beat lineIds differ from dialogue', () => {
+    const NARR_URL = 'https://example.com/narrator.mp3'
+    const SARAH1_URL = 'https://example.com/sarah1.mp3'
+    const BEN1_URL = 'https://example.com/ben1.mp3'
+    const scene = {
+      dialogue: [
+        {
+          lineId: 'ln_narr',
+          kind: 'narration',
+          character: 'NARRATOR',
+          line: 'Welcome to The Signal Stream.',
+        },
+        {
+          lineId: 'ln_sarah1',
+          character: 'Sarah Chen',
+          line: 'Dr. Anderson, the news cycle is practically euphoric.',
+        },
+        {
+          lineId: 'ln_ben1',
+          character: 'Dr. Benjamin Anderson',
+          line: 'Indeed, Sarah.',
+        },
+      ],
+      dialogueAudio: {
+        en: [
+          {
+            character: 'NARRATOR',
+            dialogueIndex: 0,
+            audioUrl: NARR_URL,
+            duration: 6.4,
+          },
+          {
+            character: 'Sarah Chen',
+            dialogueIndex: 1,
+            audioUrl: SARAH1_URL,
+            duration: 7.2,
+          },
+          {
+            character: 'Dr. Anderson',
+            dialogueIndex: 2,
+            audioUrl: BEN1_URL,
+            duration: 5.3,
+          },
+        ],
+      },
+      beats: [
+        {
+          beatId: 'bt_narr',
+          kind: 'narration',
+          character: 'NARRATOR',
+          line: 'Welcome to The Signal Stream.',
+          lineId: 'wrong-narrator-line-id',
+        },
+        {
+          beatId: 'bt_sarah1',
+          kind: 'dialogue',
+          character: 'Sarah Chen',
+          line: 'Dr. Anderson, the news cycle is practically euphoric.',
+          lineId: 'ln_sarah1',
+        },
+        {
+          beatId: 'bt_ben1',
+          kind: 'dialogue',
+          character: 'Dr. Benjamin Anderson',
+          line: 'Indeed, Sarah.',
+          lineId: 'wrong-ben-line-id',
+        },
+      ],
+    }
+
+    const { voiceClips } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [NARR_URL]: 1,
+      [SARAH1_URL]: 1,
+      [BEN1_URL]: 1,
+    })
+
+    expect(voiceClips).toHaveLength(3)
+    expect(voiceClips[0].url).toBe(NARR_URL)
+    expect(voiceClips[0].duration).toBe(6.4)
+    expect(voiceClips[1].url).toBe(SARAH1_URL)
+    expect(voiceClips[1].duration).toBe(7.2)
+    expect(voiceClips[2].url).toBe(BEN1_URL)
+    expect(voiceClips[2].duration).toBe(5.3)
+  })
 })
 
 describe('getCurrentStoryboardVisualFrame', () => {

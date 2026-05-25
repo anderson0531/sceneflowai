@@ -496,8 +496,7 @@ export function AudioGalleryPlayer({
       audio.load()
     }
 
-    const syncTimeAndPlay = () => {
-      audio.currentTime = clipLocalTime
+    const applyVolumeAndPlayback = () => {
       const baseVol = isMuted ? 0 : volume
       const boosted =
         currentClip.type === 'dialogue'
@@ -513,9 +512,12 @@ export function AudioGalleryPlayer({
     }
 
     if (srcChanged || audio.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
-      const onReady = () => syncTimeAndPlay()
+      const onReady = () => {
+        audio.currentTime = clipLocalTime
+        applyVolumeAndPlayback()
+      }
       if (audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-        syncTimeAndPlay()
+        onReady()
       } else {
         audio.addEventListener('loadeddata', onReady, { once: true })
         return () => audio.removeEventListener('loadeddata', onReady)
@@ -523,7 +525,7 @@ export function AudioGalleryPlayer({
       return
     }
 
-    syncTimeAndPlay()
+    applyVolumeAndPlayback()
 
     const drift = Math.abs(audio.currentTime - clipLocalTime)
     if (drift > 0.3 && isPlaying && !audio.paused) {

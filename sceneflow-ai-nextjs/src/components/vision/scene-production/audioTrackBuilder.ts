@@ -21,6 +21,28 @@ import {
 } from './types'
 import { DEFAULT_LML_CONFIG } from './defaults'
 import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
+import { generateAliases, toCanonicalName } from '@/lib/character/canonical'
+import { NARRATOR_CHARACTER, NARRATOR_CHARACTER_ID } from '@/lib/script/segmentTypes'
+
+function dialogueAudioCharacterNamesMatch(a: string, b: string): boolean {
+  const canonicalA = toCanonicalName(a)
+  const canonicalB = toCanonicalName(b)
+  if (canonicalA === canonicalB) return true
+  const aliasesA = new Set(generateAliases(canonicalA).map(toCanonicalName))
+  return aliasesA.has(canonicalB)
+}
+
+function isNarratorDialogueAudioEntry(entry: Record<string, unknown>): boolean {
+  if (entry.kind === 'narration') return true
+  if (entry.characterId === NARRATOR_CHARACTER_ID) return true
+  if (
+    typeof entry.character === 'string' &&
+    toCanonicalName(entry.character) === toCanonicalName(NARRATOR_CHARACTER)
+  ) {
+    return true
+  }
+  return false
+}
 
 /**
  * Buffer constants for audio alignment (in seconds)
@@ -165,11 +187,20 @@ export function findDialogueAudioForLine(
     if (byIndex) return byIndex
   }
   if (options.character !== undefined && options.dialogueIndex !== undefined) {
-    return pickLastWithUrl(
+    const byCharacter = pickLastWithUrl(
       (d) =>
-        d?.character?.toLowerCase() === options.character?.toLowerCase() &&
+        typeof d?.character === 'string' &&
+        dialogueAudioCharacterNamesMatch(d.character, options.character!) &&
         d?.dialogueIndex === options.dialogueIndex
     )
+    if (byCharacter) return byCharacter
+  }
+  if (
+    options.character !== undefined &&
+    toCanonicalName(options.character) === toCanonicalName(NARRATOR_CHARACTER)
+  ) {
+    const narratorEntry = pickLastWithUrl((d) => isNarratorDialogueAudioEntry(d))
+    if (narratorEntry) return narratorEntry
   }
   return null
 }
