@@ -137,24 +137,206 @@ export function findStoryboardFrame(
   return getOrderedStoryboardFrames(scene).find((f) => f.id === frameId)
 }
 
+/** One storyboard cut in display/generation order. */
+export interface StoryboardFrameSlot {
+  key: string
+  label: string
+  kind: 'action' | 'dialogue' | 'narration' | 'custom'
+  beatId?: string
+  dialogueIndex?: number
+  customFrameId?: string
+  /** Image stored directly on this beat/line/frame — not a borrowed fallback. */
+  ownImageUrl?: string
+  /** URL shown in UI (own image, or borrowed establishing shot). */
+  displayImageUrl?: string
+  isPlaceholder: boolean
+  isMissing: boolean
+}
+
+function resolveDialogueIndexForBeatSlot(
+  scene: Record<string, unknown>,
+  beat: ReturnType<typeof getSceneBeats>[number],
+  spokenBeatIndex: number
+): number | undefined {
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  if (beat.lineId?.trim()) {
+    const idx = dialogue.findIndex(
+      (entry) => (entry as Record<string, unknown>)?.lineId === beat.lineId
+    )
+    if (idx >= 0) return idx
+  }
+  if (spokenBeatIndex >= 0 && spokenBeatIndex < dialogue.length) return spokenBeatIndex
+  return spokenBeatIndex >= 0 ? spokenBeatIndex : undefined
+}
+
+function getOwnDialogueStoryboardUrl(
+  scene: Record<string, unknown>,
+  dialogueIndex: number
+): string | undefined {
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  const entry = dialogue[dialogueIndex] as Record<string, unknown> | undefined
+  const flatUrl = entry?.storyboardImageUrl
+  if (isValidStoryboardMediaUrl(flatUrl)) return flatUrl.trim()
+  return findSegmentDialogueStoryboardUrl(scene, dialogueIndex)
+}
+
+/** Ordered storyboard slots with explicit own vs placeholder image state. */
+export function enumerateStoryboardFrameSlots(
+  scene: Record<string, unknown> | null | undefined
+): StoryboardFrameSlot[] {
+  if (!scene) return []
+
+  const beats = getSceneBeats(scene)
+  const establishingUrl = getEstablishingFrameUrl(scene)
+  const slots: StoryboardFrameSlot[] = []
+
+  if (beats.length > 0) {
+    let spokenIdx = 0
+    for (const beat of beats) {
+      let ownImageUrl = isValidStoryboardMediaUrl(beat.storyboardImageUrl)
+        ? beat.storyboardImageUrl!.trim()
+        : undefined
+      let dialogueIndex: number | undefined
+
+      if (beat.kind !== 'action') {
+        dialogueIndex = resolveDialogueIndexForBeatSlot(scene, beat, spokenIdx)
+        spokenIdx++
+        if (!ownImageUrl && typeof dialogueIndex === 'number') {
+          ownImageUrl = getOwnDialogueStoryboardUrl(scene, dialogueIndex)
+        }
+      } else if (!ownImageUrl && establishingUrl) {
+        ownImageUrl = establishingUrl
+      }
+
+      let displayImageUrl = ownImageUrl
+      if (!displayImageUrl && beat.kind === 'action') {
+        displayImageUrl = establishingUrl
+      }
+      if (!displayImageUrl && beat.kind !== 'action' && typeof dialogueIndex === 'number') {
+        displayImageUrl = getStoryboardFrameUrlForDialogueIndex(scene, dialogueIndex)
+      }
+
+      const label =
+        beat.kind === 'action'
+          ? 'Establishing'
+          : beat.kind === 'narration'
+            ? 'Narrator'
+            : String(beat.character || 'Dialogue')
+
+      slots.push({
+        key: beat.beatId,
+        label,
+        kind: beat.kind,
+        beatId: beat.beatId,
+        dialogueIndex,
+        ownImageUrl,
+        displayImageUrl,
+        isPlaceholder: !ownImageUrl && !!displayImageUrl,
+        isMissing: !ownImageUrl && !displayImageUrl,
+      })
+    }
+
+    for (const frame of getOrderedStoryboardFrames(scene)) {
+      const ownImageUrl = isValidStoryboardMediaUrl(frame.imageUrl)
+        ? frame.imageUrl!.trim()
+        : undefined
+      slots.push({
+        key: frame.id,
+        label: frame.label || 'Custom frame',
+        kind: 'custom',
+        customFrameId: frame.id,
+        ownImageUrl,
+        displayImageUrl: ownImageUrl,
+        isPlaceholder: false,
+        isMissing: !ownImageUrl,
+      })
+    }
+
+    return slots
+  }
+
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  const hasStandaloneNarration =
+    !!String(scene.narration ?? '').trim() &&
+    !dialogue.some(
+      (d: Record<string, unknown>) =>
+        d?.kind === 'narration' || d?.characterId === 'narrator'
+    )
+
+  if (establishingUrl || dialogue.length === 0 || hasStandaloneNarration) {
+    const ownImageUrl = establishingUrl
+    slots.push({
+      key: 'establishing',
+      label: hasStandaloneNarration ? 'Narration' : 'Establishing',
+      kind: 'action',
+      ownImageUrl,
+      displayImageUrl: ownImageUrl,
+      isPlaceholder: false,
+      isMissing: !ownImageUrl,
+    })
+  }
+
+  dialogue.forEach((raw, dialogueIndex) => {
+    const line = raw as Record<string, unknown>
+    const ownImageUrl = getOwnDialogueStoryboardUrl(scene, dialogueIndex)
+    const displayImageUrl =
+      ownImageUrl ?? getStoryboardFrameUrlForDialogueIndex(scene, dialogueIndex)
+    const character = getDialogueLineCharacter(line)
+    const lineText = getDialogueLineText(line)
+    slots.push({
+      key: `dialogue-${dialogueIndex}`,
+      label: `${character}${lineText ? `: ${lineText.slice(0, 24)}${lineText.length > 24 ? '…' : ''}` : ''}`,
+      kind:
+        line.kind === 'narration' || line.characterId === 'narrator'
+          ? 'narration'
+          : 'dialogue',
+      dialogueIndex,
+      ownImageUrl,
+      displayImageUrl,
+      isPlaceholder: !ownImageUrl && !!displayImageUrl,
+      isMissing: !ownImageUrl && !displayImageUrl,
+    })
+  })
+
+  for (const frame of getOrderedStoryboardFrames(scene)) {
+    const ownImageUrl = isValidStoryboardMediaUrl(frame.imageUrl)
+      ? frame.imageUrl!.trim()
+      : undefined
+    slots.push({
+      key: frame.id,
+      label: frame.label || 'Custom frame',
+      kind: 'custom',
+      customFrameId: frame.id,
+      ownImageUrl,
+      displayImageUrl: ownImageUrl,
+      isPlaceholder: false,
+      isMissing: !ownImageUrl,
+    })
+  }
+
+  return slots
+}
+
 /** Count frames with images for gallery badge. */
 export function countStoryboardFrameStats(scene: Record<string, unknown>): {
   withImage: number
   total: number
+  missing: number
+  placeholders: number
 } {
-  const establishing = getEstablishingFrameUrl(scene) ? 1 : 0
-  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
-  const dialogueTotal = dialogue.length
-  const dialogueWithImage = dialogue.filter(
-    (d: Record<string, unknown>) =>
-      typeof d?.storyboardImageUrl === 'string' && d.storyboardImageUrl.trim()
-  ).length
-  const custom = getOrderedStoryboardFrames(scene)
-  const customWithImage = custom.filter((f) => f.imageUrl?.trim()).length
+  const slots = enumerateStoryboardFrameSlots(scene)
+  const withImage = slots.filter((s) => !!s.ownImageUrl).length
   return {
-    withImage: establishing + dialogueWithImage + customWithImage,
-    total: establishing + dialogueTotal + custom.length,
+    withImage,
+    total: slots.length,
+    missing: slots.filter((s) => s.isMissing).length,
+    placeholders: slots.filter((s) => s.isPlaceholder).length,
   }
+}
+
+/** Frames that still need generation (no dedicated image stored). */
+export function countMissingStoryboardFrames(scene: Record<string, unknown>): number {
+  return enumerateStoryboardFrameSlots(scene).filter((s) => !s.ownImageUrl).length
 }
 
 function getDialogueLineText(d: Record<string, unknown> | null | undefined): string {

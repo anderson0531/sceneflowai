@@ -17,6 +17,12 @@ const DIALOGUE_STORYBOARD_KEYS = [
   'storyboardImagePrompt',
 ] as const
 
+const BEAT_STORYBOARD_KEYS = [
+  'storyboardImageUrl',
+  'storyboardImageGcsPath',
+  'storyboardImagePrompt',
+] as const
+
 const CUSTOM_FRAME_IMAGE_KEYS = ['imageUrl', 'imageGcsPath', 'imagePrompt'] as const
 
 /** True when a media URL is usable (not empty, not lite-mode placeholder). */
@@ -57,6 +63,40 @@ function mergeDialogueLineMedia(canonLine: any, incomingLine: any): any {
     else delete merged[key]
   }
   return merged
+}
+
+function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
+  if (!incomingBeat) return canonBeat
+  if (!canonBeat) return incomingBeat
+
+  const merged = { ...incomingBeat }
+  for (const key of BEAT_STORYBOARD_KEYS) {
+    const next = pickMediaUrl(incomingBeat[key], canonBeat[key])
+    if (next) merged[key] = next
+    else delete merged[key]
+  }
+  return merged
+}
+
+function mergeBeatsArray(
+  canonBeats: any[] | undefined,
+  incomingBeats: any[] | undefined
+): any[] | undefined {
+  if (!Array.isArray(incomingBeats) || incomingBeats.length === 0) {
+    return Array.isArray(canonBeats) && canonBeats.length > 0 ? canonBeats : incomingBeats
+  }
+  if (!Array.isArray(canonBeats) || canonBeats.length === 0) return incomingBeats
+
+  const canonById = new Map<string, any>()
+  for (const beat of canonBeats) {
+    if (beat?.beatId) canonById.set(beat.beatId, beat)
+  }
+
+  return incomingBeats.map((incomingBeat, idx) => {
+    const canonBeat =
+      (incomingBeat?.beatId && canonById.get(incomingBeat.beatId)) || canonBeats[idx]
+    return mergeBeatMedia(canonBeat, incomingBeat)
+  })
 }
 
 function mergeStoryboardFrames(canonFrames: any[] | undefined, incomingFrames: any[] | undefined): any[] | undefined {
@@ -251,6 +291,7 @@ export function mergeScenePreservingMedia(canonical: any, incoming: any): any {
   }
 
   merged.storyboardFrames = mergeStoryboardFrames(canonical.storyboardFrames, incoming.storyboardFrames)
+  merged.beats = mergeBeatsArray(canonical.beats, incoming.beats)
   merged.segments = mergeSegmentDialogueMedia(canonical.segments, incoming.segments)
   merged.dialogueAudio = mergeDialogueAudioField(canonical, incoming)
 

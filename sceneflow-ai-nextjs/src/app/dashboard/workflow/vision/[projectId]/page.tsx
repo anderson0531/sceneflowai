@@ -28,6 +28,7 @@ import {
 } from '@/lib/audio/cleanupAudio'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
 import { getBatchNarrationTtsText } from '@/lib/script/narration'
+import { applyBeatsToScene } from '@/lib/script/beatMigration'
 import { toast } from 'sonner'
 
 // Dynamic import to break TDZ initialization chain - ScriptPanel imports heavy scene-production modules
@@ -10288,8 +10289,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             if (beats[beatIndex]) {
               beats[beatIndex] = { ...beats[beatIndex], storyboardImageUrl: imageUrl }
               scenes[sceneIndex] = {
-                ...scenes[sceneIndex],
-                beats,
+                ...applyBeatsToScene(scenes[sceneIndex], beats),
                 storyboardStatus: 'pending_review',
               }
             }

@@ -40,7 +40,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/Input'
 import { useStore } from '@/store/useStore'
 import { SceneImageFrame } from './SceneImageFrame'
-import { getDialogueFrameUrl, flattenSceneToStoryboardFrames, getOrderedStoryboardFrames, getEstablishingFrameUrl, countStoryboardFrameStats } from '@/lib/storyboard/types'
+import { flattenSceneToStoryboardFrames, countStoryboardFrameStats, enumerateStoryboardFrameSlots } from '@/lib/storyboard/types'
 
 export type ExpressPhase = 'direction' | 'audio' | 'image'
 export type ExpressPhaseStatus = 'pending' | 'running' | 'done' | 'error'
@@ -1466,9 +1466,7 @@ function SceneCard({
       >
         {(() => {
           const frameStats = countStoryboardFrameStats(scene)
-          const customFrames = getOrderedStoryboardFrames(scene)
-          const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
-          const establishingUrl = getEstablishingFrameUrl(scene)
+          const frameSlots = enumerateStoryboardFrameSlots(scene)
 
           const handleDeleteCustom = (frameId: string, hasImage: boolean) => {
             if (!onDeleteStoryboardFrame) return
@@ -1483,8 +1481,25 @@ function SceneCard({
                   Storyboard frames
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-gray-400">
+                  <span
+                    className={`text-[10px] ${
+                      frameStats.missing > 0
+                        ? 'text-amber-500'
+                        : frameStats.placeholders > 0
+                          ? 'text-amber-400'
+                          : 'text-gray-400'
+                    }`}
+                    title={
+                      frameStats.missing > 0
+                        ? `${frameStats.missing} frame(s) need generation`
+                        : frameStats.placeholders > 0
+                          ? `${frameStats.placeholders} frame(s) using anchor placeholder`
+                          : 'All frames have dedicated images'
+                    }
+                  >
                     {frameStats.withImage}/{frameStats.total}
+                    {frameStats.missing > 0 ? ` · ${frameStats.missing} missing` : ''}
+                    {frameStats.placeholders > 0 ? ` · ${frameStats.placeholders} placeholder` : ''}
                   </span>
                   {onAddStoryboardFrame && (
                     <Button
@@ -1504,71 +1519,63 @@ function SceneCard({
                 </div>
               </div>
               <div className="flex gap-2 overflow-x-auto pb-1">
-                {(establishingUrl || dialogue.length === 0) && (
-                  <div className="flex-shrink-0 w-36">
-                    <SceneImageFrame
-                      sceneIdx={sceneIndex}
-                      sceneNumber={sceneNumber}
-                      imageUrl={establishingUrl}
-                      isGenerating={isGenerating}
-                      compact
-                      showBorder
-                      label={
-                        scene.narration ||
-                        scene.narrationAudioUrl ||
-                        scene.narrationAudio?.en?.url ||
-                        scene.descriptionAudioUrl ||
-                        scene.descriptionAudio?.en?.url
-                          ? 'Narration'
-                          : 'Establishing'
-                      }
-                      onGenerate={() => void onGenerate(prompt)}
-                      onUpload={onUpload}
-                    />
-                  </div>
-                )}
-                {dialogue.map((line: any, dialogueIdx: number) => {
-                  const frameKey = `dialogue-${sceneIndex}-${dialogueIdx}`
-                  const lineText = String(line?.line ?? line?.text ?? '')
-                  const character = String(line?.character ?? 'Speaker')
-                  const frameUrl = getDialogueFrameUrl(scene, dialogueIdx)
-                  const isGeneratingFrame = generatingDialogueFrames.has(`${sceneIndex}-${dialogueIdx}`)
+                {frameSlots.map((slot) => {
+                  if (slot.kind === 'custom') {
+                    const genKey = `custom-${sceneIndex}-${slot.customFrameId}`
+                    const isGeneratingCustom = generatingCustomFrames.has(genKey)
+                    return (
+                      <div key={slot.key} className="flex-shrink-0 w-36">
+                        <SceneImageFrame
+                          sceneIdx={sceneIndex}
+                          sceneNumber={sceneNumber}
+                          imageUrl={slot.displayImageUrl}
+                          isPlaceholder={slot.isPlaceholder}
+                          isGenerating={isGeneratingCustom}
+                          compact
+                          showBorder
+                          label={slot.label}
+                          onGenerate={() => void onGenerateCustomFrame?.(slot.customFrameId!)}
+                          onUpload={(file) => onUploadCustomFrame?.(slot.customFrameId!, file)}
+                          onDelete={() => handleDeleteCustom(slot.customFrameId!, !!slot.ownImageUrl)}
+                        />
+                      </div>
+                    )
+                  }
+
+                  const dialogueIdx = slot.dialogueIndex
+                  const isGeneratingFrame =
+                    typeof dialogueIdx === 'number' &&
+                    generatingDialogueFrames.has(`${sceneIndex}-${dialogueIdx}`)
+                  const isEstablishingOnly =
+                    slot.kind === 'action' && typeof dialogueIdx !== 'number'
+
                   return (
-                    <div key={frameKey} className="flex-shrink-0 w-36">
+                    <div key={slot.key} className="flex-shrink-0 w-36">
                       <SceneImageFrame
                         sceneIdx={sceneIndex}
                         sceneNumber={sceneNumber}
-                        imageUrl={frameUrl}
-                        isGenerating={isGeneratingFrame}
+                        imageUrl={slot.isMissing ? undefined : slot.displayImageUrl}
+                        isPlaceholder={slot.isPlaceholder}
+                        isGenerating={
+                          isEstablishingOnly ? isGenerating : isGeneratingFrame
+                        }
                         compact
                         showBorder
-                        label={`${character}${lineText ? `: ${lineText.slice(0, 24)}${lineText.length > 24 ? '…' : ''}` : ''}`}
-                        onGenerate={() => void onGenerateDialogueFrame?.(dialogueIdx)}
-                        onUpload={(file) => onUploadDialogueFrame?.(dialogueIdx, file)}
-                      />
-                    </div>
-                  )
-                })}
-                {customFrames.map((frame) => {
-                  const genKey = `custom-${sceneIndex}-${frame.id}`
-                  const isGeneratingCustom = generatingCustomFrames.has(genKey)
-                  const label =
-                    frame.label ||
-                    [frame.character, frame.line?.slice(0, 20)].filter(Boolean).join(': ') ||
-                    'Custom frame'
-                  return (
-                    <div key={frame.id} className="flex-shrink-0 w-36">
-                      <SceneImageFrame
-                        sceneIdx={sceneIndex}
-                        sceneNumber={sceneNumber}
-                        imageUrl={frame.imageUrl}
-                        isGenerating={isGeneratingCustom}
-                        compact
-                        showBorder
-                        label={label}
-                        onGenerate={() => void onGenerateCustomFrame?.(frame.id)}
-                        onUpload={(file) => onUploadCustomFrame?.(frame.id, file)}
-                        onDelete={() => handleDeleteCustom(frame.id, !!frame.imageUrl)}
+                        label={slot.label}
+                        onGenerate={() => {
+                          if (isEstablishingOnly) {
+                            void onGenerate(prompt)
+                          } else if (typeof dialogueIdx === 'number') {
+                            void onGenerateDialogueFrame?.(dialogueIdx)
+                          }
+                        }}
+                        onUpload={(file) => {
+                          if (isEstablishingOnly) {
+                            onUpload?.(file)
+                          } else if (typeof dialogueIdx === 'number') {
+                            onUploadDialogueFrame?.(dialogueIdx, file)
+                          }
+                        }}
                       />
                     </div>
                   )

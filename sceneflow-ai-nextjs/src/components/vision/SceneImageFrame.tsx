@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2 } from 'lucide-react'
+import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
@@ -10,6 +10,8 @@ export interface SceneImageFrameProps {
   sceneIdx: number
   sceneNumber: number
   imageUrl?: string | null
+  /** When true, imageUrl is a borrowed establishing/anchor shot — not this frame's own cut. */
+  isPlaceholder?: boolean
   isGenerating?: boolean
   onGenerate: () => void
   onUpload: (file: File) => void
@@ -37,6 +39,7 @@ export function SceneImageFrame({
   sceneIdx,
   sceneNumber,
   imageUrl,
+  isPlaceholder = false,
   isGenerating = false,
   onGenerate,
   onUpload,
@@ -98,11 +101,25 @@ export function SceneImageFrame({
             
             {/* Status Badge */}
             <div className="absolute top-2 right-2 z-10">
-              <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center gap-1 backdrop-blur-sm">
-                <CheckCircle2 className="w-3 h-3" />
-                Ready
-              </span>
+              {isPlaceholder ? (
+                <span className="text-xs px-2 py-1 bg-amber-500/20 text-amber-300 rounded-full flex items-center gap-1 backdrop-blur-sm">
+                  <AlertTriangle className="w-3 h-3" />
+                  Placeholder
+                </span>
+              ) : (
+                <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center gap-1 backdrop-blur-sm">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Ready
+                </span>
+              )}
             </div>
+            {isPlaceholder && (
+              <div className="absolute bottom-0 left-0 right-0 bg-amber-950/80 px-2 py-1">
+                <p className="text-[9px] text-amber-200/90 leading-tight">
+                  Using anchor frame — generate a dedicated cut
+                </p>
+              </div>
+            )}
             
             {/* Hover Overlay with Actions */}
             <AnimatePresence>
