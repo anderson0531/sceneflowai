@@ -790,6 +790,50 @@ describe('buildStoryboardVoiceClips', () => {
     expect(visualFrames).toHaveLength(2)
   })
 
+  it('prefers dialogueAudio over stale beat.audioUrl after script audio regen', () => {
+    const OLD_URL = 'https://example.com/old-narrator.mp3'
+    const NEW_URL = 'https://example.com/new-narrator.mp3'
+    const scene = {
+      dialogue: [
+        {
+          lineId: 'ln_narr',
+          kind: 'narration',
+          character: 'NARRATOR',
+          line: 'Welcome.',
+        },
+      ],
+      dialogueAudio: {
+        en: [
+          {
+            lineId: 'ln_narr',
+            kind: 'narration',
+            characterId: 'narrator',
+            dialogueIndex: 0,
+            audioUrl: NEW_URL,
+            duration: 5,
+          },
+        ],
+      },
+      beats: [
+        {
+          beatId: 'bt_narr',
+          kind: 'narration',
+          character: 'NARRATOR',
+          line: 'Welcome.',
+          lineId: 'ln_narr',
+          audioUrl: OLD_URL,
+          durationSeconds: 2,
+        },
+      ],
+    }
+
+    const { voiceClips } = buildBeatFirstPlaybackTimeline(scene, 'en')
+
+    expect(voiceClips).toHaveLength(1)
+    expect(voiceClips[0].url).toBe(NEW_URL)
+    expect(voiceClips[0].duration).toBe(5)
+  })
+
   it('matches storyboard frame slot count to playback visual frames', () => {
     const scene = {
       action: 'Wide shot',

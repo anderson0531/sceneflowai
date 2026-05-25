@@ -178,7 +178,7 @@ function isNarratorBeat(beat: SceneBeat): boolean {
   return false
 }
 
-/** Copy TTS URLs from dialogue[] / dialogueAudio[] onto beats when beats lack audioUrl. */
+/** Copy TTS URLs from dialogue[] / dialogueAudio[] onto beats (dialogueAudio wins over stale beat.audioUrl). */
 export function hydrateBeatAudioFromLegacy(
   scene: Record<string, unknown>,
   beats: SceneBeat[]
@@ -195,7 +195,7 @@ export function hydrateBeatAudioFromLegacy(
     let resolvedDialogueIdx = beat.lineId?.trim()
       ? dialogue.findIndex((entry) => entry?.lineId === beat.lineId)
       : spokenIdx
-    if (resolvedDialogueIdx < 0) {
+    if (resolvedDialogueIdx < 0 && !beat.lineId?.trim()) {
       resolvedDialogueIdx = spokenIdx
     }
 
@@ -203,6 +203,9 @@ export function hydrateBeatAudioFromLegacy(
       resolvedDialogueIdx >= 0 && resolvedDialogueIdx < dialogue.length
         ? dialogue[resolvedDialogueIdx]
         : undefined
+    const lineMatchesBeat =
+      !!lineEntry &&
+      (!beat.lineId?.trim() || lineEntry?.lineId === beat.lineId)
 
     if (!beat.lineId?.trim()) {
       spokenIdx++
@@ -210,16 +213,18 @@ export function hydrateBeatAudioFromLegacy(
       spokenIdx = Math.max(spokenIdx, resolvedDialogueIdx + 1)
     }
 
-    const lineAudioUrl =
-      (typeof lineEntry?.audioUrl === 'string' && lineEntry.audioUrl) ||
-      (typeof lineEntry?.url === 'string' && lineEntry.url) ||
-      undefined
-    const lineDuration =
-      typeof lineEntry?.duration === 'number'
+    const lineAudioUrl = lineMatchesBeat
+      ? (typeof lineEntry?.audioUrl === 'string' && lineEntry.audioUrl) ||
+        (typeof lineEntry?.url === 'string' && lineEntry.url) ||
+        undefined
+      : undefined
+    const lineDuration = lineMatchesBeat
+      ? typeof lineEntry?.duration === 'number'
         ? lineEntry.duration
         : typeof lineEntry?.durationSeconds === 'number'
           ? lineEntry.durationSeconds
           : undefined
+      : undefined
 
     let audioMatch: Record<string, unknown> | undefined
     if (beat.lineId?.trim()) {
@@ -231,7 +236,7 @@ export function hydrateBeatAudioFromLegacy(
           entry?.kind === 'narration' || entry?.characterId === NARRATOR_CHARACTER_ID
       )
     }
-    if (!audioMatch && resolvedDialogueIdx >= 0) {
+    if (!audioMatch && resolvedDialogueIdx >= 0 && lineMatchesBeat) {
       audioMatch = audioEntries.find(
         (entry) =>
           typeof entry?.dialogueIndex === 'number' && entry.dialogueIndex === resolvedDialogueIdx
@@ -250,18 +255,18 @@ export function hydrateBeatAudioFromLegacy(
     }
 
     const audioUrl =
-      beat.audioUrl?.trim() ||
       lineAudioUrl?.trim() ||
       (typeof audioMatch?.audioUrl === 'string' && audioMatch.audioUrl) ||
       (typeof audioMatch?.url === 'string' && audioMatch.url) ||
+      beat.audioUrl?.trim() ||
       undefined
 
     if (!audioUrl) return beat
 
     const durationSeconds =
-      beat.durationSeconds ??
       lineDuration ??
-      (typeof audioMatch?.duration === 'number' ? audioMatch.duration : undefined)
+      (typeof audioMatch?.duration === 'number' ? audioMatch.duration : undefined) ??
+      beat.durationSeconds
 
     if (beat.audioUrl?.trim() === audioUrl && beat.durationSeconds === durationSeconds) {
       return beat

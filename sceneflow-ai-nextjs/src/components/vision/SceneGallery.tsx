@@ -737,32 +737,6 @@ export function SceneGallery({
                     setSelectedScene(idx)
                     setOpenProductionScene(isProductionOpen ? null : sceneKey)
                   }}
-                  onRegenerate={async () => {
-                    setGeneratingScenes((prev) => new Set(prev).add(idx))
-                    try {
-                      await execute(async () => {
-                        await onRegenerateScene(idx)
-                      }, {
-                        message: `Generating new image for Scene ${idx + 1}...`,
-                        estimatedDuration: 15,
-                        operationType: 'image-generation'
-                      })
-                    } finally {
-                      setGeneratingScenes((prev) => {
-                        const newSet = new Set(prev)
-                        newSet.delete(idx)
-                        return newSet
-                      })
-                    }
-                  }}
-                  onEdit={() => {
-                    if (scene.imageUrl) {
-                      setEditingSceneIndex(idx)
-                      setEditingSceneImageUrl(scene.imageUrl)
-                      setEditModalOpen(true)
-                    }
-                  }}
-                  onOpenPromptBuilder={onOpenPromptBuilder ? () => onOpenPromptBuilder(idx) : undefined}
                   onGenerate={async (prompt) => {
                     setGeneratingScenes((prev) => new Set(prev).add(idx))
                     try {
@@ -782,11 +756,7 @@ export function SceneGallery({
                     }
                   }}
                   onUpload={(file) => onUploadScene(idx, file)}
-                  onDownload={onDownloadScene ? () => onDownloadScene(idx) : undefined}
-                  onAddToLibrary={onAddToLibrary ? () => onAddToLibrary(idx) : undefined}
-                  onAddToSceneLibrary={onAddToSceneLibrary && scene.imageUrl ? () => onAddToSceneLibrary(idx, scene.imageUrl) : undefined}
                   prompt={scenePrompts[idx] || defaultPrompt}
-                  onPromptChange={(prompt) => setScenePrompts((prev) => ({ ...prev, [idx]: prompt }))}
                   isGenerating={generatingScenes.has(idx)}
                   sceneIndex={idx}
                   onGenerateDialogueFrame={onGenerateDialogueFrame ? async (dialogueIdx) => {
@@ -980,9 +950,6 @@ interface SceneCardProps {
   isSelected: boolean
   isProductionOpen: boolean
   onClick: () => void
-  onRegenerate: () => Promise<void>
-  onEdit?: () => void
-  onOpenPromptBuilder?: () => void
   onGenerate: (prompt: string) => Promise<void>
   onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
@@ -994,11 +961,7 @@ interface SceneCardProps {
   generatingCustomFrames?: Set<string>
   sceneIndex: number
   onUpload: (file: File) => void
-  onDownload?: () => void
-  onAddToLibrary?: () => void
-  onAddToSceneLibrary?: () => void
   prompt: string
-  onPromptChange: (prompt: string) => void
   isGenerating: boolean
   onToggleProduction: () => void
   productionData?: SceneProductionData
@@ -1086,9 +1049,6 @@ function SceneCard({
   isSelected,
   isProductionOpen,
   onClick,
-  onRegenerate,
-  onEdit,
-  onOpenPromptBuilder,
   onGenerate,
   onGenerateDialogueFrame,
   onUploadDialogueFrame,
@@ -1100,11 +1060,7 @@ function SceneCard({
   generatingCustomFrames = new Set(),
   sceneIndex,
   onUpload,
-  onDownload,
-  onAddToLibrary,
-  onAddToSceneLibrary,
   prompt,
-  onPromptChange,
   isGenerating,
   onToggleProduction,
   productionData,
@@ -1122,8 +1078,6 @@ function SceneCard({
   onUpdateSceneAudio,
   expressPhaseStatus,
 }: SceneCardProps) {
-  const hasImage = !!scene.imageUrl
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
   const frameSlots = useMemo(() => enumerateStoryboardFrameSlots(scene), [scene])
   const [selectedFrameKey, setSelectedFrameKey] = React.useState<string | null>(null)
 
@@ -1177,15 +1131,6 @@ function SceneCard({
     onClick()
   }
   
-  const handleDownload = () => {
-    if (scene.imageUrl) {
-      const link = document.createElement('a')
-      link.href = scene.imageUrl
-      link.download = `scene-${sceneNumber}.png`
-      link.click()
-    }
-  }
-  
   const sceneHeading = typeof scene.heading === 'string' ? scene.heading : scene.heading?.text
   const formattedHeading = formatSceneHeading(sceneHeading) || sceneHeading || 'Untitled'
   return (
@@ -1207,7 +1152,7 @@ function SceneCard({
         </div>
       )}
 
-      {/* Scene Image — shows the selected storyboard frame (defaults to first cut) */}
+      {/* Scene preview — read-only; use storyboard frame thumbnails for generate/upload */}
       <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative">
         {previewImageUrl ? (
           <img 
@@ -1238,89 +1183,6 @@ function SceneCard({
           <div className="text-xs font-semibold">SCENE {sceneNumber}</div>
           <div className="text-sm truncate">{formattedHeading}</div>
         </div>
-      </div>
-      
-      {/* Unified Hover Controls - same for both empty and populated states */}
-      <div className={`absolute inset-0 bg-black/40 transition-opacity rounded-t-lg flex items-center justify-center gap-3 ${hasImage ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}>
-        {/* Hidden file input for upload */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (file) onUpload(file)
-          }}
-        />
-        
-        {/* Quick Generate image (Zap - indigo) */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                onGenerate(prompt);
-              }}
-              disabled={isGenerating}
-              className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
-            >
-              {isGenerating ? (
-                <Loader className="w-5 h-5 text-white animate-spin" />
-              ) : (
-                <Zap className="w-5 h-5 text-white" />
-              )}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>{hasImage ? 'Quick Regenerate Image' : 'Quick Generate Image'}</TooltipContent>
-        </Tooltip>
-
-        {/* Prompt Builder (Wand2/Sparkles - amber) */}
-        {onOpenPromptBuilder && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  onOpenPromptBuilder();
-                }}
-                disabled={isGenerating}
-                className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
-              >
-                <Wand2 className="w-5 h-5 text-white" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Open Prompt Builder</TooltipContent>
-          </Tooltip>
-        )}
-        
-        {/* Edit image (Settings2 - purple) - only show if has image */}
-        {hasImage && onEdit && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
-              >
-                <Settings2 className="w-5 h-5 text-white" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Edit Image</TooltipContent>
-          </Tooltip>
-        )}
-        
-        {/* Upload Scene Image (Upload - emerald) */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-              className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors"
-            >
-              <Upload className="w-5 h-5 text-white" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>Upload Image</TooltipContent>
-        </Tooltip>
       </div>
       
       {/* Reference Status Indicator - Top Right */}

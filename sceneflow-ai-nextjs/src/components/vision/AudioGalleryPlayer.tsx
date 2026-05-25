@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 import {
   buildBeatFirstPlaybackTimeline,
+  buildStoryboardAudioRevision,
   buildStoryboardVisualTimeline,
   buildStoryboardVoiceClips,
   getCurrentStoryboardVisualFrame,
@@ -126,6 +127,26 @@ export function AudioGalleryPlayer({
   
   // Get current scene
   const currentScene = scenes[currentSceneIndex]
+
+  const sceneAudioRevision = useMemo(
+    () => buildStoryboardAudioRevision(currentScene, selectedLanguage),
+    [currentScene, selectedLanguage]
+  )
+
+  // Reload audio elements when scene TTS URLs change (regen, upload, language switch).
+  useEffect(() => {
+    fetchingUrls.current.clear()
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.removeAttribute('src')
+      audioRef.current.load()
+    }
+    if (musicAudioRef.current) {
+      musicAudioRef.current.pause()
+      musicAudioRef.current.removeAttribute('src')
+      musicAudioRef.current.load()
+    }
+  }, [sceneAudioRevision, currentSceneIndex])
   
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -198,7 +219,7 @@ export function AudioGalleryPlayer({
         console.warn(`[AudioGalleryPlayer] Failed to create Audio object for URL: ${url}`, err)
       }
     })
-  }, [currentScene, selectedLanguage])
+  }, [currentScene, selectedLanguage, sceneAudioRevision])
   
   // Build audio clips for current scene (narration & dialogue - played sequentially)
   const beatPlayback = useMemo(() => {
@@ -208,13 +229,13 @@ export function AudioGalleryPlayer({
       selectedLanguage,
       dynamicDurations
     )
-  }, [currentScene, selectedLanguage, dynamicDurations])
+  }, [currentScene, selectedLanguage, dynamicDurations, sceneAudioRevision])
 
   const voiceClips = useMemo(
     () =>
       beatPlayback?.voiceClips ??
       buildStoryboardVoiceClips(currentScene, selectedLanguage, dynamicDurations),
-    [beatPlayback, currentScene, selectedLanguage, dynamicDurations]
+    [beatPlayback, currentScene, selectedLanguage, dynamicDurations, sceneAudioRevision]
   )
 
   const audioClips = useMemo((): AudioClip[] => {

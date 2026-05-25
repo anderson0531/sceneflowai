@@ -590,16 +590,13 @@ function beatVoiceClipId(
   return `beat-${beat.beatId}`
 }
 
-/** Resolve spoken-beat audio from beat fields, dialogue line, or dialogueAudio (legacy storage). */
+/** Resolve spoken-beat audio from dialogueAudio / dialogue line (source of truth after TTS regen), then beat fields. */
 function resolveBeatVoiceUrl(
   scene: Record<string, unknown>,
   beat: ReturnType<typeof getSceneBeats>[number],
   dialogueIndex: number | undefined,
   language: string
 ): string | undefined {
-  const fromBeat = beat.audioUrl?.trim()
-  if (fromBeat) return fromBeat
-
   const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
   const line =
     typeof dialogueIndex === 'number' && dialogueIndex >= 0
@@ -624,10 +621,15 @@ function resolveBeatVoiceUrl(
   if (fromDialogueAudio?.trim()) return fromDialogueAudio.trim()
 
   const fromLine =
-    (typeof line?.audioUrl === 'string' && line.audioUrl) ||
-    (typeof line?.url === 'string' && line.url) ||
-    undefined
-  if (fromLine?.trim()) return fromLine.trim()
+    line &&
+    (!beat.lineId?.trim() || line.lineId === beat.lineId) &&
+    ((typeof line.audioUrl === 'string' && line.audioUrl) ||
+      (typeof line.url === 'string' && line.url) ||
+      undefined)
+  if (typeof fromLine === 'string' && fromLine.trim()) return fromLine.trim()
+
+  const fromBeat = beat.audioUrl?.trim()
+  if (fromBeat) return fromBeat
 
   if (beat.kind === 'narration') {
     const standalone = resolveStandaloneNarrationUrl(scene, language)
@@ -661,10 +663,10 @@ function resolveBeatVoiceDuration(
     null
 
   const storedDuration =
-    beat.durationSeconds ??
     (typeof audioEntry?.duration === 'number' ? audioEntry.duration : undefined) ??
     (typeof line?.duration === 'number' ? line.duration : undefined) ??
-    (typeof line?.durationSeconds === 'number' ? line.durationSeconds : undefined)
+    (typeof line?.durationSeconds === 'number' ? line.durationSeconds : undefined) ??
+    beat.durationSeconds
 
   if (isNarratorBeat(beat) && storedDuration == null) {
     const narrationAudio = scene.narrationAudio as
@@ -680,6 +682,72 @@ function resolveBeatVoiceDuration(
   }
 
   return resolveVoiceClipDuration(url, storedDuration, dynamicDurations)
+}
+
+/** Stable fingerprint of scene audio URLs — detects TTS regen without scene object identity changing. */
+export function buildStoryboardAudioRevision(
+  scene: Record<string, unknown> | null | undefined,
+  language: string
+): string {
+  if (!scene) return ''
+
+  const parts: string[] = []
+
+  const descriptionUrl =
+    (scene.descriptionAudio as Record<string, { url?: string }> | undefined)?.[language]?.url ||
+    (scene.descriptionAudio as Record<string, { url?: string }> | undefined)?.en?.url ||
+    (typeof scene.descriptionAudioUrl === 'string' ? scene.descriptionAudioUrl : undefined)
+  if (descriptionUrl) parts.push(`desc:${descriptionUrl}`)
+
+  const narrationUrl = resolveStandaloneNarrationUrl(scene, language)
+  if (narrationUrl) parts.push(`narr:${narrationUrl}`)
+
+  const dialogueAudio =
+    (scene.dialogueAudio as Record<string, Array<Record<string, unknown>>> | undefined)?.[
+      language
+    ] ??
+    (scene.dialogueAudio as Record<string, Array<Record<string, unknown>>> | undefined)?.en ??
+    (Array.isArray(scene.dialogueAudio) ? (scene.dialogueAudio as Array<Record<string, unknown>>) : [])
+  if (Array.isArray(dialogueAudio)) {
+    dialogueAudio.forEach((entry, index) => {
+      if (!entry) return
+      const url =
+        (typeof entry.audioUrl === 'string' && entry.audioUrl) ||
+        (typeof entry.url === 'string' && entry.url) ||
+        ''
+      if (url) parts.push(`da:${index}:${url}:${entry.duration ?? ''}`)
+    })
+  }
+
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  dialogue.forEach((line, index) => {
+    const entry = line as Record<string, unknown>
+    const url =
+      (typeof entry.audioUrl === 'string' && entry.audioUrl) ||
+      (typeof entry.url === 'string' && entry.url) ||
+      ''
+    if (url) parts.push(`dl:${index}:${url}`)
+  })
+
+  for (const beat of getSceneBeats(scene)) {
+    if (beat.audioUrl?.trim()) {
+      parts.push(`beat:${beat.beatId}:${beat.audioUrl.trim()}:${beat.durationSeconds ?? ''}`)
+    }
+  }
+
+  if (typeof scene.musicAudio === 'string' && scene.musicAudio) {
+    parts.push(`music:${scene.musicAudio}`)
+  }
+
+  const sfx = scene.sfxAudio
+  if (Array.isArray(sfx)) {
+    sfx.forEach((entry, index) => {
+      const url = typeof entry === 'string' ? entry : (entry as { url?: string })?.url
+      if (url) parts.push(`sfx:${index}:${url}`)
+    })
+  }
+
+  return parts.join('|')
 }
 
 /**
