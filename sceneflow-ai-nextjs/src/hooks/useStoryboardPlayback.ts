@@ -97,6 +97,10 @@ function collectSceneAudioUrls(
   return [...new Set(urls)]
 }
 
+function buildClipTimelineKey(clips: TimelineAudioClip[]): string {
+  return clips.map((clip) => `${clip.id}|${clip.startTime}|${clip.duration}|${clip.url}`).join(';')
+}
+
 export function useStoryboardPlayback({
   scene,
   language,
@@ -106,17 +110,33 @@ export function useStoryboardPlayback({
 }: UseStoryboardPlaybackOptions): UseStoryboardPlaybackReturn {
   const [dynamicDurations, setDynamicDurations] = useState<Record<string, number>>({})
   const fetchingUrls = useRef<Set<string>>(new Set())
+  const sceneRef = useRef(scene)
+  sceneRef.current = scene
 
   const sceneAudioRevision = useMemo(
     () => buildStoryboardAudioRevision(scene, language),
     [scene, language]
   )
 
-  useEffect(() => {
-    if (!scene) return
-    fetchingUrls.current.clear()
+  const dynamicDurationKey = useMemo(
+    () =>
+      Object.entries(dynamicDurations)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([url, duration]) => `${url}:${duration}`)
+        .join('|'),
+    [dynamicDurations]
+  )
 
-    collectSceneAudioUrls(scene, language).forEach((url) => {
+  useEffect(() => {
+    setDynamicDurations({})
+    fetchingUrls.current.clear()
+  }, [sceneAudioRevision])
+
+  useEffect(() => {
+    const activeScene = sceneRef.current
+    if (!activeScene) return
+
+    collectSceneAudioUrls(activeScene, language).forEach((url) => {
       if (fetchingUrls.current.has(url)) return
       fetchingUrls.current.add(url)
 
@@ -139,28 +159,31 @@ export function useStoryboardPlayback({
         console.warn(`[useStoryboardPlayback] Failed to create Audio for URL: ${url}`, err)
       }
     })
-  }, [scene, language, sceneAudioRevision])
+  }, [sceneAudioRevision, language])
 
   const beatPlayback = useMemo(() => {
-    if (!scene?.beats?.length) return null
-    return buildBeatFirstPlaybackTimeline(scene, language, dynamicDurations)
-  }, [scene, language, dynamicDurations, sceneAudioRevision])
+    const activeScene = sceneRef.current
+    if (!activeScene?.beats?.length) return null
+    return buildBeatFirstPlaybackTimeline(activeScene, language, dynamicDurations)
+  }, [sceneAudioRevision, language, dynamicDurationKey])
 
-  const voiceClips = useMemo(
-    () =>
+  const voiceClips = useMemo(() => {
+    const activeScene = sceneRef.current
+    return (
       beatPlayback?.voiceClips ??
-      (scene ? buildStoryboardVoiceClips(scene, language, dynamicDurations) : []),
-    [beatPlayback, scene, language, dynamicDurations, sceneAudioRevision]
-  )
+      (activeScene ? buildStoryboardVoiceClips(activeScene, language, dynamicDurations) : [])
+    )
+  }, [beatPlayback, sceneAudioRevision, language, dynamicDurationKey])
 
   const visualFrames = useMemo(() => {
+    const activeScene = sceneRef.current
     if (beatPlayback?.visualFrames.length) return beatPlayback.visualFrames
-    if (!scene) return []
-    return buildStoryboardVisualTimeline(scene, voiceClips, {
+    if (!activeScene) return []
+    return buildStoryboardVisualTimeline(activeScene, voiceClips, {
       language,
       dynamicDurations,
     })
-  }, [beatPlayback, scene, voiceClips, language, dynamicDurations])
+  }, [beatPlayback, voiceClips, language, dynamicDurationKey])
 
   const sceneDuration = useMemo(() => {
     if (visualFrames.length > 0) {
@@ -173,6 +196,7 @@ export function useStoryboardPlayback({
   }, [visualFrames, voiceClips])
 
   const timelineAudioClips = useMemo((): TimelineAudioClip[] => {
+    const activeScene = sceneRef.current
     const clips: TimelineAudioClip[] = voiceClips
       .filter((clip) => !!clip.url)
       .map((clip) => ({
@@ -184,21 +208,21 @@ export function useStoryboardPlayback({
         label: clip.label,
       }))
 
-    if (scene) {
-      const musicUrl = scene.musicAudio || (scene.music as { url?: string } | undefined)?.url
+    if (activeScene) {
+      const musicUrl = activeScene.musicAudio || (activeScene.music as { url?: string } | undefined)?.url
       if (typeof musicUrl === 'string' && musicUrl.trim()) {
         clips.push({
           id: 'music',
           url: musicUrl.trim(),
           startTime: 0,
-          duration: (scene.musicDuration as number | undefined) || sceneDuration,
+          duration: (activeScene.musicDuration as number | undefined) || sceneDuration,
           trackType: 'music',
           label: 'Background Music',
           loop: true,
         })
       }
 
-      const sfxArray = scene.sfxAudio
+      const sfxArray = activeScene.sfxAudio
       if (Array.isArray(sfxArray) && sfxArray.length > 0) {
         const baseDuration =
           voiceClips.length > 0
@@ -224,7 +248,7 @@ export function useStoryboardPlayback({
     }
 
     return clips
-  }, [voiceClips, scene, sceneDuration])
+  }, [voiceClips, sceneDuration, sceneAudioRevision])
 
   const visualClips = useMemo(
     () => storyboardFramesToVisualClips(visualFrames),
@@ -264,9 +288,26 @@ export function useStoryboardPlayback({
     onPlaybackEnd,
   })
 
+  const currentTimeRef = useRef(currentTime)
+  currentTimeRef.current = currentTime
+
+  const clipTimelineKey = useMemo(
+    () => buildClipTimelineKey(timelineAudioClips),
+    [timelineAudioClips]
+  )
+  const prevClipTimelineKeyRef = useRef('')
+
   useEffect(() => {
     reset()
+    prevClipTimelineKeyRef.current = ''
   }, [sceneAudioRevision, reset])
+
+  useEffect(() => {
+    const prev = prevClipTimelineKeyRef.current
+    prevClipTimelineKeyRef.current = clipTimelineKey
+    if (!prev || prev === clipTimelineKey) return
+    seekTo(currentTimeRef.current)
+  }, [clipTimelineKey, seekTo])
 
   useEffect(() => {
     setTrackVolume('voiceover', dialogueVolume)

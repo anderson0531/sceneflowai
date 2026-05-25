@@ -796,7 +796,7 @@ export function buildStoryboardAudioRevision(
         (typeof entry.audioUrl === 'string' && entry.audioUrl) ||
         (typeof entry.url === 'string' && entry.url) ||
         ''
-      if (url) parts.push(`da:${index}:${url}:${entry.duration ?? ''}`)
+      if (url) parts.push(`da:${index}:${url}`)
     })
   }
 
@@ -812,7 +812,7 @@ export function buildStoryboardAudioRevision(
 
   for (const beat of getSceneBeats(scene)) {
     if (beat.audioUrl?.trim()) {
-      parts.push(`beat:${beat.beatId}:${beat.audioUrl.trim()}:${beat.durationSeconds ?? ''}`)
+      parts.push(`beat:${beat.beatId}:${beat.audioUrl.trim()}`)
     }
   }
 

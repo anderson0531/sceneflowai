@@ -1,3 +1,4 @@
+import { validateAndCleanSceneAudio } from '@/lib/audio/cleanupAudio'
 import {
   auditStoryboardSceneMedia,
   isValidStoryboardMediaUrl,
@@ -95,5 +96,5 @@ export function resolveStoryboardScenes(project: {
 
   return Array.from(mergedByKey.values())
     .sort((a, b) => a.order - b.order)
-    .map((entry) => entry.scene)
+    .map((entry) => validateAndCleanSceneAudio(entry.scene).cleanedScene)
 }
