@@ -1074,11 +1074,59 @@ describe('buildStoryboardVoiceClips', () => {
 
     expect(voiceClips).toHaveLength(3)
     expect(voiceClips[0].url).toBe(NARR_URL)
-    expect(voiceClips[0].duration).toBe(6.4)
+    expect(voiceClips[0].duration).toBeCloseTo(6.7, 1)
     expect(voiceClips[1].url).toBe(SARAH1_URL)
-    expect(voiceClips[1].duration).toBe(7.2)
+    expect(voiceClips[1].duration).toBeCloseTo(7.5, 1)
     expect(voiceClips[2].url).toBe(BEN1_URL)
-    expect(voiceClips[2].duration).toBe(5.3)
+    expect(voiceClips[2].duration).toBeCloseTo(5.3, 1)
+  })
+
+  it('uses max of stored and measured duration when blob is longer than metadata', () => {
+    const url = 'https://example.com/long.mp3'
+    const scene = {
+      dialogue: [{ lineId: 'ln_a', character: 'Alice', line: 'Hello.' }],
+      dialogueAudio: {
+        en: [{ lineId: 'ln_a', dialogueIndex: 0, audioUrl: url, duration: 6.4 }],
+      },
+      beats: [
+        {
+          beatId: 'bt_a',
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'Hello.',
+          lineId: 'ln_a',
+        },
+      ],
+    }
+
+    const { voiceClips } = buildBeatFirstPlaybackTimeline(scene, 'en', { [url]: 8.0 })
+    expect(voiceClips[0].duration).toBe(8)
+  })
+
+  it('extends voice clip window through visual frame span to prevent early cutoff', () => {
+    const url = 'https://example.com/line.mp3'
+    const scene = {
+      dialogue: [
+        { lineId: 'ln_a', character: 'Alice', line: 'One.' },
+        { lineId: 'ln_b', character: 'Bob', line: 'Two.' },
+      ],
+      dialogueAudio: {
+        en: [
+          { lineId: 'ln_a', dialogueIndex: 0, audioUrl: url, duration: 4 },
+          { lineId: 'ln_b', dialogueIndex: 1, audioUrl: 'https://example.com/b.mp3', duration: 3 },
+        ],
+      },
+      beats: [
+        { beatId: 'bt_a', kind: 'dialogue', character: 'Alice', line: 'One.', lineId: 'ln_a' },
+        { beatId: 'bt_b', kind: 'dialogue', character: 'Bob', line: 'Two.', lineId: 'ln_b' },
+      ],
+    }
+
+    const { voiceClips, visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', { [url]: 4 })
+    const frame = visualFrames.find((f) => f.clipId === voiceClips[0].id)
+    expect(frame).toBeDefined()
+    expect(voiceClips[0].duration).toBe(frame!.duration)
+    expect(voiceClips[0].duration).toBeGreaterThan(4)
   })
 })
 

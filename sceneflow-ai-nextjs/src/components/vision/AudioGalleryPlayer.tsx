@@ -17,14 +17,9 @@ import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSele
 import { cn } from '@/lib/utils'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 import {
-  buildBeatFirstPlaybackTimeline,
-  buildStoryboardAudioRevision,
-  buildStoryboardVisualTimeline,
-  buildStoryboardVoiceClips,
-  getCurrentStoryboardVisualFrame,
   getEstablishingFrameUrl,
 } from '@/lib/storyboard/types'
-import { getSceneBeats } from '@/lib/script/beatMigration'
+import { useStoryboardPlayback } from '@/hooks/useStoryboardPlayback'
 import {
   computeKenBurnsProgress,
   computeKenBurnsTransform,
@@ -57,26 +52,10 @@ interface AudioGalleryPlayerProps {
   fullWidthEmbed?: boolean
 }
 
-function normalizeMediaUrl(url: string): string {
-  try {
-    return new URL(url, typeof window !== 'undefined' ? window.location.origin : 'https://localhost').href
-  } catch {
-    return url
-  }
-}
-
-/** Dialogue lines play louder than narration/music balance (HTMLAudioElement.volume max 1). */
-const DIALOGUE_VOLUME_FACTOR = 1.5
-
-interface AudioClip {
-  id: string
-  url: string
-  startTime: number
-  duration: number
-  type: 'narration' | 'dialogue' | 'music' | 'sfx'
-  label?: string
-  loop?: boolean
-  beatId?: string
+function formatTime(seconds: number) {
+  const mins = Math.floor(seconds / 60)
+  const secs = Math.floor(seconds % 60)
+  return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
 export function AudioGalleryPlayer({
@@ -92,21 +71,17 @@ export function AudioGalleryPlayer({
   expandHref,
   fullWidthEmbed = false,
 }: AudioGalleryPlayerProps) {
-  // Playback state
-  const [isPlaying, setIsPlaying] = useState(false)
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
-  const [currentTime, setCurrentTime] = useState(0)
   const [volume, setVolume] = useState(0.8)
   const [isMuted, setIsMuted] = useState(false)
   const [autoAdvance, setAutoAdvance] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [dynamicDurations, setDynamicDurations] = useState<Record<string, number>>({})
-  const fetchingUrls = useRef<Set<string>>(new Set())
   const [visualFrameKey, setVisualFrameKey] = useState(0)
   const kenBurnsCycleOrigin = useRef(0)
   const lastImageUrlRef = useRef<string | null>(null)
-  const currentTimeRef = useRef(currentTime)
-  currentTimeRef.current = currentTime
+  const containerRef = useRef<HTMLDivElement>(null)
+  const autoAdvanceRef = useRef(autoAdvance)
+  autoAdvanceRef.current = autoAdvance
 
   const [imageEffectPrefs, setImageEffectPrefs] = useState<GalleryImageEffectPrefs>(() =>
     loadGalleryImageEffectPrefs()
@@ -117,38 +92,57 @@ export function AudioGalleryPlayer({
     setImageEffectPrefs(prefs)
     saveGalleryImageEffectPrefs(prefs)
   }, [])
-  
-  // Refs
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const activeVoiceClipIdRef = useRef<string | null>(null)
-  const musicAudioRef = useRef<HTMLAudioElement | null>(null)
-  const sfxAudioRefs = useRef<(HTMLAudioElement | null)[]>([])
-  const animationRef = useRef<number | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  
-  // Get current scene
+
   const currentScene = scenes[currentSceneIndex]
 
-  const sceneAudioRevision = useMemo(
-    () => buildStoryboardAudioRevision(currentScene, selectedLanguage),
-    [currentScene, selectedLanguage]
-  )
+  const playAfterSceneChangeRef = useRef<() => void>(() => {})
 
-  // Reload audio elements when scene TTS URLs change (regen, upload, language switch).
-  useEffect(() => {
-    fetchingUrls.current.clear()
-    activeVoiceClipIdRef.current = null
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.removeAttribute('src')
-      audioRef.current.load()
+  const goToNextScene = useCallback(() => {
+    setCurrentSceneIndex((prev) => {
+      if (prev >= scenes.length - 1) return prev
+      const next = prev + 1
+      onSceneChange?.(next)
+      return next
+    })
+  }, [scenes.length, onSceneChange])
+
+  const handlePlaybackEnd = useCallback(() => {
+    if (autoAdvanceRef.current && currentSceneIndex < scenes.length - 1) {
+      setTimeout(() => {
+        goToNextScene()
+        setTimeout(() => playAfterSceneChangeRef.current(), 100)
+      }, 100)
     }
-    if (musicAudioRef.current) {
-      musicAudioRef.current.pause()
-      musicAudioRef.current.removeAttribute('src')
-      musicAudioRef.current.load()
-    }
-  }, [sceneAudioRevision, currentSceneIndex])
+  }, [currentSceneIndex, scenes.length, goToNextScene])
+
+  const playback = useStoryboardPlayback({
+    scene: currentScene,
+    language: selectedLanguage,
+    volume,
+    isMuted,
+    onPlaybackEnd: handlePlaybackEnd,
+  })
+
+  playAfterSceneChangeRef.current = playback.play
+
+  const {
+    isPlaying,
+    currentTime,
+    sceneDuration,
+    currentVisualFrame,
+    hasVoiceAudio,
+    pause,
+    togglePlayback,
+    seekTo,
+    reset,
+  } = playback
+
+  const displayImageUrl =
+    currentVisualFrame?.imageUrl ?? getEstablishingFrameUrl(currentScene)
+
+  const speakerLabel = currentVisualFrame?.character ?? currentVisualFrame?.label
+  const currentTimeRef = useRef(currentTime)
+  currentTimeRef.current = currentTime
   
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -174,193 +168,6 @@ export function AudioGalleryPlayer({
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
-
-  // Fetch true audio duration
-  useEffect(() => {
-    if (!currentScene) return
-    
-    const urlsToFetch: string[] = []
-    
-    const narrationUrl = currentScene.narrationAudio?.[selectedLanguage]?.url 
-      || currentScene.narrationAudio?.en?.url 
-      || currentScene.narrationAudioUrl
-    if (narrationUrl) urlsToFetch.push(narrationUrl)
-      
-    const dialogueAudio = currentScene.dialogueAudio?.[selectedLanguage] 
-      || currentScene.dialogueAudio?.en 
-      || []
-    if (Array.isArray(dialogueAudio)) {
-      dialogueAudio.forEach((d: any) => {
-        if (!d) return
-        const dUrl = d.audioUrl || d.url
-        if (dUrl) urlsToFetch.push(dUrl)
-      })
-    }
-
-    for (const beat of getSceneBeats(currentScene)) {
-      if (beat.audioUrl?.trim()) urlsToFetch.push(beat.audioUrl.trim())
-    }
-    
-    urlsToFetch.forEach(url => {
-      if (fetchingUrls.current.has(url)) return
-      fetchingUrls.current.add(url)
-      
-      try {
-        const audio = new Audio(url)
-        audio.addEventListener('loadedmetadata', () => {
-          if (audio.duration && audio.duration !== Infinity && !isNaN(audio.duration)) {
-            setDynamicDurations(curr => ({ ...curr, [url]: audio.duration }))
-          }
-        })
-        audio.addEventListener('error', () => {
-          console.warn(`[AudioGalleryPlayer] Failed to load audio metadata for URL: ${url}`)
-          // Do not overwrite timeline duration on 404 — buildStoryboardVoiceClips uses stored
-          // dialogueAudio.duration so frames stay on screen for character 2+ lines with broken blobs.
-        })
-      } catch (err) {
-        console.warn(`[AudioGalleryPlayer] Failed to create Audio object for URL: ${url}`, err)
-      }
-    })
-  }, [currentScene, selectedLanguage, sceneAudioRevision])
-  
-  // Build audio clips for current scene (narration & dialogue - played sequentially)
-  const beatPlayback = useMemo(() => {
-    if (!currentScene?.beats?.length) return null
-    return buildBeatFirstPlaybackTimeline(
-      currentScene,
-      selectedLanguage,
-      dynamicDurations
-    )
-  }, [currentScene, selectedLanguage, dynamicDurations, sceneAudioRevision])
-
-  const voiceClips = useMemo(
-    () =>
-      beatPlayback?.voiceClips ??
-      buildStoryboardVoiceClips(currentScene, selectedLanguage, dynamicDurations),
-    [beatPlayback, currentScene, selectedLanguage, dynamicDurations, sceneAudioRevision]
-  )
-
-  const audioClips = useMemo((): AudioClip[] => {
-    return voiceClips
-      .filter((clip) => !!clip.url)
-      .map((clip) => ({
-        id: clip.id,
-        url: clip.url!,
-        startTime: clip.startTime,
-        duration: clip.duration,
-        type: clip.type === 'description' ? 'narration' : clip.type,
-        label: clip.label,
-        beatId: clip.beatId,
-      }))
-  }, [voiceClips])
-  
-  // Build music track for current scene (plays concurrently, loops)
-  const musicTrack = useMemo((): AudioClip | null => {
-    if (!currentScene) return null
-    
-    const musicUrl = currentScene.musicAudio || currentScene.music?.url
-    if (!musicUrl) return null
-    
-    return {
-      id: 'music',
-      url: musicUrl,
-      startTime: 0,
-      duration: currentScene.musicDuration || 60, // Default long duration, will loop
-      type: 'music',
-      label: 'Background Music',
-      loop: true
-    }
-  }, [currentScene])
-  
-  // Build SFX clips for current scene (play concurrently at specific times or distributed)
-  const sfxClips = useMemo((): AudioClip[] => {
-    if (!currentScene) return []
-    
-    const sfxArray = currentScene.sfxAudio || []
-    if (!Array.isArray(sfxArray) || sfxArray.length === 0) return []
-    
-    // Distribute SFX across scene duration or use provided timing
-    const baseDuration = audioClips.length > 0 
-      ? audioClips[audioClips.length - 1].startTime + audioClips[audioClips.length - 1].duration 
-      : 5
-    
-    return sfxArray.map((sfx: any, idx: number) => {
-      const sfxUrl = typeof sfx === 'string' ? sfx : sfx?.url
-      if (!sfxUrl) return null
-      
-      // Calculate distributed start time if not specified
-      const startTime = sfx?.startTime ?? (idx * (baseDuration / Math.max(sfxArray.length, 1)))
-      
-      return {
-        id: `sfx-${idx}`,
-        url: sfxUrl,
-        startTime,
-        duration: sfx?.duration || 3,
-        type: 'sfx' as const,
-        label: sfx?.description || `Sound Effect ${idx + 1}`
-      }
-    }).filter(Boolean) as AudioClip[]
-  }, [currentScene, audioClips])
-  
-  // Visual frames aligned to beat playback (1:1 with scene beats when beats[] exists)
-  const visualFrames = useMemo(() => {
-    if (beatPlayback?.visualFrames.length) return beatPlayback.visualFrames
-    return buildStoryboardVisualTimeline(currentScene, voiceClips, {
-      language: selectedLanguage,
-      dynamicDurations,
-    })
-  }, [beatPlayback, currentScene, voiceClips, selectedLanguage, dynamicDurations])
-
-  // Total duration for current scene
-  const sceneDuration = useMemo(() => {
-    if (visualFrames.length > 0) {
-      const lastFrame = visualFrames[visualFrames.length - 1]
-      return lastFrame.startTime + lastFrame.duration + 1.5
-    }
-    if (audioClips.length === 0) return 5 // Default 5s for scenes without audio
-    const lastClip = audioClips[audioClips.length - 1]
-    return lastClip.startTime + lastClip.duration + 1.5
-  }, [visualFrames, audioClips])
-  
-  // Current audio clip based on playback time
-  const currentClip = useMemo(() => {
-    return audioClips.find(clip => 
-      currentTime >= clip.startTime && currentTime < clip.startTime + clip.duration
-    )
-  }, [audioClips, currentTime])
-
-  const currentVisualFrame = useMemo(() => {
-    if (visualFrames.length > 0) {
-      const timeFrame = getCurrentStoryboardVisualFrame(visualFrames, currentTime)
-      if (currentClip?.beatId) {
-        const beatAligned = visualFrames.find((frame) => frame.beatId === currentClip.beatId)
-        if (beatAligned && timeFrame?.beatId === beatAligned.beatId) return timeFrame
-        if (beatAligned && currentTime >= beatAligned.startTime - 0.001) return beatAligned
-      }
-      if (currentClip) {
-        const clipAligned = visualFrames.find((frame) => frame.clipId === currentClip.id)
-        if (clipAligned && timeFrame?.clipId === clipAligned.clipId) return timeFrame
-        if (clipAligned && currentTime >= clipAligned.startTime - 0.001) return clipAligned
-      }
-      return timeFrame
-    }
-    const establishingUrl = getEstablishingFrameUrl(currentScene)
-    if (!establishingUrl) return undefined
-    return {
-      clipId: 'establishing',
-      frameType: 'establishing' as const,
-      imageUrl: establishingUrl,
-      startTime: 0,
-      duration: sceneDuration,
-    }
-  }, [visualFrames, currentTime, currentScene, sceneDuration, currentClip])
-
-  const displayImageUrl = currentVisualFrame?.imageUrl
-
-  const speakerLabel =
-    currentVisualFrame?.character ??
-    currentClip?.label ??
-    currentVisualFrame?.label
 
   // Reset Ken Burns direction when the visible frame changes
   useEffect(() => {
@@ -397,249 +204,34 @@ export function AudioGalleryPlayer({
     lastImageUrlRef.current = displayImageUrl
   }, [displayImageUrl, imageEffectPrefs.mode])
   
-  // Handle scene navigation
-  const goToScene = useCallback((index: number) => {
-    if (index >= 0 && index < scenes.length) {
-      setCurrentSceneIndex(index)
-      if (onSceneChange) onSceneChange(index)
-      setCurrentTime(0)
-      setIsPlaying(false)
-      
-      // Stop any playing audio
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.currentTime = 0
+  const goToScene = useCallback(
+    (index: number) => {
+      if (index >= 0 && index < scenes.length) {
+        pause()
+        reset()
+        setCurrentSceneIndex(index)
+        onSceneChange?.(index)
       }
-    }
-  }, [scenes.length])
-  
+    },
+    [scenes.length, pause, reset, onSceneChange]
+  )
+
   const goToPrevScene = useCallback(() => {
     goToScene(currentSceneIndex - 1)
   }, [currentSceneIndex, goToScene])
-  
-  const goToNextScene = useCallback(() => {
-    if (currentSceneIndex < scenes.length - 1) {
-      goToScene(currentSceneIndex + 1)
-      if (autoAdvance) {
-        // Start playing next scene automatically
-        setTimeout(() => setIsPlaying(true), 100)
-      }
-    } else {
-      // End of all scenes
-      setIsPlaying(false)
-    }
-  }, [currentSceneIndex, scenes.length, goToScene, autoAdvance])
-  
-  // Playback loop
-  useEffect(() => {
-    if (!isPlaying) {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-      return
-    }
-    
-    let lastTime = performance.now()
-    
-    const animate = () => {
-      const now = performance.now()
-      const delta = (now - lastTime) / 1000
-      lastTime = now
-      
-      setCurrentTime(prev => {
-        const newTime = prev + delta
-        
-        // Check if scene has ended
-        if (newTime >= sceneDuration) {
-          if (autoAdvance && currentSceneIndex < scenes.length - 1) {
-            // Go to next scene
-            setTimeout(() => goToNextScene(), 100)
-          } else {
-            setIsPlaying(false)
-          }
-          return sceneDuration
-        }
-        
-        return newTime
-      })
-      
-      animationRef.current = requestAnimationFrame(animate)
-    }
-    
-    animationRef.current = requestAnimationFrame(animate)
-    
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-    }
-  }, [isPlaying, sceneDuration, autoAdvance, currentSceneIndex, scenes.length, goToNextScene])
-  
-  // Sync audio element with playback state
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
 
-    if (!currentClip) {
-      if (!audio.paused) audio.pause()
-      return
-    }
-
-    const clipLocalTime = Math.max(0, currentTime - currentClip.startTime)
-    const clipChanged = activeVoiceClipIdRef.current !== currentClip.id
-    const srcChanged =
-      clipChanged || normalizeMediaUrl(audio.src) !== normalizeMediaUrl(currentClip.url)
-
-    if (srcChanged) {
-      activeVoiceClipIdRef.current = currentClip.id
-      audio.src = currentClip.url
-      audio.load()
-    }
-
-    const applyVolumeAndPlayback = () => {
-      const baseVol = isMuted ? 0 : volume
-      const boosted =
-        currentClip.type === 'dialogue'
-          ? Math.min(1, baseVol * DIALOGUE_VOLUME_FACTOR)
-          : baseVol
-      audio.volume = boosted
-
-      if (isPlaying) {
-        audio.play().catch(() => {})
-      } else if (!audio.paused) {
-        audio.pause()
-      }
-    }
-
-    if (srcChanged || audio.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
-      const onReady = () => {
-        audio.currentTime = clipLocalTime
-        applyVolumeAndPlayback()
-      }
-      if (audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-        onReady()
-      } else {
-        audio.addEventListener('loadeddata', onReady, { once: true })
-        return () => audio.removeEventListener('loadeddata', onReady)
-      }
-      return
-    }
-
-    applyVolumeAndPlayback()
-
-    const drift = Math.abs(audio.currentTime - clipLocalTime)
-    if (drift > 0.3 && isPlaying && !audio.paused) {
-      audio.currentTime = clipLocalTime
-    }
-  }, [currentClip, currentTime, isPlaying, volume, isMuted])
-  
-  // Stop audio when clip ends
-  useEffect(() => {
-    if (!currentClip && audioRef.current && !audioRef.current.paused) {
-      audioRef.current.pause()
-    }
-  }, [currentClip])
-  
-  // Sync music track (plays throughout scene, loops, lower volume)
-  useEffect(() => {
-    const musicAudio = musicAudioRef.current
-    if (!musicAudio || !musicTrack) return
-    
-    // Set source if changed
-    if (musicAudio.src !== musicTrack.url) {
-      musicAudio.src = musicTrack.url
-      musicAudio.loop = true
-      musicAudio.currentTime = 0
-    }
-    
-    // Sync playback state - background music at 10% of master volume
-    const musicVolume = isMuted ? 0 : volume * 0.1
-    musicAudio.volume = musicVolume
-    
-    if (isPlaying && musicAudio.paused && currentTime < sceneDuration) {
-      musicAudio.play().catch(() => {})
-    } else if (!isPlaying && !musicAudio.paused) {
-      musicAudio.pause()
-    }
-  }, [musicTrack, isPlaying, volume, isMuted, currentTime, sceneDuration])
-  
-  // Stop music when scene changes or playback stops
-  useEffect(() => {
-    return () => {
-      if (musicAudioRef.current) {
-        musicAudioRef.current.pause()
-        musicAudioRef.current.currentTime = 0
-      }
-    }
-  }, [currentSceneIndex])
-  
-  // Sync SFX clips (play at scheduled times)
-  useEffect(() => {
-    if (!isPlaying || sfxClips.length === 0) return
-    
-    sfxClips.forEach((sfx, idx) => {
-      // Check if it's time to play this SFX
-      const sfxShouldPlay = currentTime >= sfx.startTime && currentTime < sfx.startTime + sfx.duration
-      
-      // Get or create audio element for this SFX
-      if (!sfxAudioRefs.current[idx]) {
-        sfxAudioRefs.current[idx] = new Audio()
-      }
-      const sfxAudio = sfxAudioRefs.current[idx]
-      if (!sfxAudio) return
-      
-      if (sfxShouldPlay) {
-        // Set source if changed
-        if (sfxAudio.src !== sfx.url) {
-          sfxAudio.src = sfx.url
-          sfxAudio.currentTime = 0
-        }
-        
-        // Play at 50% volume
-        sfxAudio.volume = isMuted ? 0 : volume * 0.5
-        
-        if (sfxAudio.paused) {
-          sfxAudio.play().catch(() => {})
-        }
-      } else if (!sfxAudio.paused && currentTime >= sfx.startTime + sfx.duration) {
-        // Stop if past end time
-        sfxAudio.pause()
-        sfxAudio.currentTime = 0
-      }
-    })
-  }, [isPlaying, sfxClips, currentTime, volume, isMuted])
-  
-  // Cleanup SFX audio elements on scene change
-  useEffect(() => {
-    return () => {
-      sfxAudioRefs.current.forEach(audio => {
-        if (audio) {
-          audio.pause()
-          audio.src = ''
-        }
-      })
-      sfxAudioRefs.current = []
-    }
-  }, [currentSceneIndex])
-  
-  // Format time as MM:SS
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-  
-  // Get scene heading
-  const sceneHeading = typeof currentScene?.heading === 'string' 
-    ? currentScene.heading 
-    : currentScene?.heading?.text
+  const sceneHeading =
+    typeof currentScene?.heading === 'string'
+      ? currentScene.heading
+      : currentScene?.heading?.text
   const formattedHeading = formatSceneHeading(sceneHeading) || sceneHeading || 'Untitled Scene'
-  
-  // Check if current scene has audio
-  const hasAudio = audioClips.length > 0 || !!musicTrack || sfxClips.length > 0
-  
-  // Language display handled by GroupedLanguageSelector
-  
+
+  const hasAudio =
+    hasVoiceAudio ||
+    !!currentScene?.musicAudio ||
+    !!(currentScene?.music as { url?: string } | undefined)?.url ||
+    (Array.isArray(currentScene?.sfxAudio) && currentScene!.sfxAudio.length > 0)
+
   // Image motion transform
   const kenBurnsProgress = useMemo(() => {
     const cycleTime = currentTime - kenBurnsCycleOrigin.current
@@ -938,7 +530,7 @@ export function AudioGalleryPlayer({
                     const rect = e.currentTarget.getBoundingClientRect()
                     const x = e.clientX - rect.left
                     const percent = x / rect.width
-                    setCurrentTime(percent * sceneDuration)
+                    seekTo(percent * sceneDuration)
                   }}
                 >
                   <div 
@@ -971,7 +563,7 @@ export function AudioGalleryPlayer({
                   
                   {/* Play/Pause */}
                   <button
-                    onClick={() => setIsPlaying(!isPlaying)}
+                    onClick={togglePlayback}
                     className={cn(
                       "rounded-full bg-emerald-600 hover:bg-emerald-500 transition-colors",
                       isFullscreen ? "p-4" : "p-3"
@@ -988,7 +580,7 @@ export function AudioGalleryPlayer({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={goToNextScene}
+                        onClick={() => goToScene(currentSceneIndex + 1)}
                         disabled={currentSceneIndex === scenes.length - 1}
                         className={cn(
                           "rounded-full bg-gray-700 hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors",
@@ -1135,10 +727,6 @@ export function AudioGalleryPlayer({
             })}
           </div>
         </div>
-        
-        {/* Hidden audio elements */}
-        <audio ref={audioRef} preload="auto" />
-        <audio ref={musicAudioRef} preload="auto" />
       </div>
     </TooltipProvider>
   )
