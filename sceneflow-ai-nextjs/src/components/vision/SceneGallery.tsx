@@ -40,7 +40,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/Input'
 import { useStore } from '@/store/useStore'
 import { SceneImageFrame } from './SceneImageFrame'
-import { flattenSceneToStoryboardFrames, countStoryboardFrameStats, enumerateStoryboardFrameSlots } from '@/lib/storyboard/types'
+import { flattenSceneToStoryboardFrames, countStoryboardFrameStats, enumerateStoryboardFrameSlots, countStoryboardFramesNeedingGeneration } from '@/lib/storyboard/types'
 
 export type ExpressPhase = 'direction' | 'audio' | 'image'
 export type ExpressPhaseStatus = 'pending' | 'running' | 'done' | 'error'
@@ -269,7 +269,8 @@ export function SceneGallery({
         !scene?.sceneDirection ||
         !scene.sceneDirection.camera ||
         !scene.sceneDirection.scene
-      const needsImage = !scene?.imageUrl
+      const needsImage =
+        !scene?.imageUrl || countStoryboardFramesNeedingGeneration(scene) > 0
       const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
       const dialogueAudio = scene?.dialogueAudio?.[selectedLanguage]
       const dialogueOk =
@@ -1123,6 +1124,23 @@ function SceneCard({
 }: SceneCardProps) {
   const hasImage = !!scene.imageUrl
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const frameSlots = useMemo(() => enumerateStoryboardFrameSlots(scene), [scene])
+  const [selectedFrameKey, setSelectedFrameKey] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    setSelectedFrameKey(frameSlots[0]?.key ?? null)
+  }, [sceneKey, frameSlots])
+
+  const previewSlot = useMemo(() => {
+    if (frameSlots.length === 0) return null
+    return frameSlots.find((slot) => slot.key === selectedFrameKey) ?? frameSlots[0]
+  }, [frameSlots, selectedFrameKey])
+
+  const previewImageUrl =
+    previewSlot?.displayImageUrl ??
+    previewSlot?.ownImageUrl ??
+    scene.imageUrl ??
+    undefined
   
   // Compute reference status for this scene
   const referenceStatus = useMemo(() => {
@@ -1189,12 +1207,12 @@ function SceneCard({
         </div>
       )}
 
-      {/* Scene Image */}
+      {/* Scene Image — shows the selected storyboard frame (defaults to first cut) */}
       <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative">
-        {scene.imageUrl ? (
+        {previewImageUrl ? (
           <img 
-            src={scene.imageUrl} 
-            alt={`Scene ${sceneNumber}`}
+            src={previewImageUrl} 
+            alt={`Scene ${sceneNumber}${previewSlot?.label ? ` — ${previewSlot.label}` : ''}`}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -1466,7 +1484,6 @@ function SceneCard({
       >
         {(() => {
           const frameStats = countStoryboardFrameStats(scene)
-          const frameSlots = enumerateStoryboardFrameSlots(scene)
 
           const handleDeleteCustom = (frameId: string, hasImage: boolean) => {
             if (!onDeleteStoryboardFrame) return
@@ -1530,12 +1547,17 @@ function SceneCard({
                           sceneNumber={sceneNumber}
                           imageUrl={slot.displayImageUrl}
                           isPlaceholder={slot.isPlaceholder}
+                          isSelected={selectedFrameKey === slot.key}
+                          onSelect={() => setSelectedFrameKey(slot.key)}
                           isGenerating={isGeneratingCustom}
                           compact
                           showBorder
                           label={slot.label}
                           onGenerate={() => void onGenerateCustomFrame?.(slot.customFrameId!)}
-                          onUpload={(file) => onUploadCustomFrame?.(slot.customFrameId!, file)}
+                          onUpload={(file) => {
+                            setSelectedFrameKey(slot.key)
+                            onUploadCustomFrame?.(slot.customFrameId!, file)
+                          }}
                           onDelete={() => handleDeleteCustom(slot.customFrameId!, !!slot.ownImageUrl)}
                         />
                       </div>
@@ -1556,6 +1578,8 @@ function SceneCard({
                         sceneNumber={sceneNumber}
                         imageUrl={slot.isMissing ? undefined : slot.displayImageUrl}
                         isPlaceholder={slot.isPlaceholder}
+                        isSelected={selectedFrameKey === slot.key}
+                        onSelect={() => setSelectedFrameKey(slot.key)}
                         isGenerating={
                           isEstablishingOnly ? isGenerating : isGeneratingFrame
                         }
@@ -1570,6 +1594,7 @@ function SceneCard({
                           }
                         }}
                         onUpload={(file) => {
+                          setSelectedFrameKey(slot.key)
                           if (isEstablishingOnly) {
                             onUpload?.(file)
                           } else if (typeof dialogueIdx === 'number') {

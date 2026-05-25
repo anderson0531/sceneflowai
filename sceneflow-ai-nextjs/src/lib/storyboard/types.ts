@@ -204,8 +204,6 @@ export function enumerateStoryboardFrameSlots(
         if (!ownImageUrl && typeof dialogueIndex === 'number') {
           ownImageUrl = getOwnDialogueStoryboardUrl(scene, dialogueIndex)
         }
-      } else if (!ownImageUrl && establishingUrl) {
-        ownImageUrl = establishingUrl
       }
 
       let displayImageUrl = ownImageUrl
@@ -335,8 +333,15 @@ export function countStoryboardFrameStats(scene: Record<string, unknown>): {
 }
 
 /** Frames that still need generation (no dedicated image stored). */
-export function countMissingStoryboardFrames(scene: Record<string, unknown>): number {
+export function countStoryboardFramesNeedingGeneration(
+  scene: Record<string, unknown>
+): number {
   return enumerateStoryboardFrameSlots(scene).filter((s) => !s.ownImageUrl).length
+}
+
+/** Frames with no image at all (not even a borrowed placeholder). */
+export function countMissingStoryboardFrames(scene: Record<string, unknown>): number {
+  return enumerateStoryboardFrameSlots(scene).filter((s) => s.isMissing).length
 }
 
 function getDialogueLineText(d: Record<string, unknown> | null | undefined): string {

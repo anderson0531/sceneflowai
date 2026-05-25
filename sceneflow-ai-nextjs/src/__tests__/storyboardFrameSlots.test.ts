@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   countMissingStoryboardFrames,
   countStoryboardFrameStats,
+  countStoryboardFramesNeedingGeneration,
   enumerateStoryboardFrameSlots,
 } from '@/lib/storyboard/types'
 
@@ -47,6 +48,27 @@ describe('storyboard frame slots', () => {
     expect(stats.withImage).toBe(1)
     expect(stats.total).toBe(2)
     expect(stats.placeholders).toBe(1)
-    expect(countMissingStoryboardFrames(scene)).toBe(1)
+    expect(countStoryboardFramesNeedingGeneration(scene)).toBe(1)
+    expect(countMissingStoryboardFrames(scene)).toBe(0)
+  })
+
+  it('prefers scene.imageUrl over stale action beat URL after establishing upload', () => {
+    const scene = {
+      imageUrl: 'https://example.com/new-establishing.jpg',
+      beats: [
+        {
+          beatId: 'bt_action',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide',
+          storyboardImageUrl: 'https://example.com/old-establishing.jpg',
+        },
+      ],
+    }
+
+    const slots = enumerateStoryboardFrameSlots(scene)
+    expect(slots[0]?.ownImageUrl).toBe('https://example.com/new-establishing.jpg')
+    expect(slots[0]?.isPlaceholder).toBe(false)
+    expect(countStoryboardFramesNeedingGeneration(scene)).toBe(0)
   })
 })

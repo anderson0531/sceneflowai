@@ -28,7 +28,7 @@ import {
 } from '@/lib/audio/cleanupAudio'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
 import { getBatchNarrationTtsText } from '@/lib/script/narration'
-import { applyBeatsToScene } from '@/lib/script/beatMigration'
+import { applyBeatsToScene, applyDialogueStoryboardImageToScene, applyEstablishingImageToScene } from '@/lib/script/beatMigration'
 import { toast } from 'sonner'
 
 // Dynamic import to break TDZ initialization chain - ScriptPanel imports heavy scene-production modules
@@ -6926,7 +6926,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     try {
       const uploadedUrl = await uploadAssetViaAPI(file, projectId)
       const updatedScenes = script.script.scenes.map((s: any, idx: number) =>
-        idx === sceneIndex ? { ...s, imageUrl: uploadedUrl } : s
+        idx === sceneIndex ? applyEstablishingImageToScene(s, uploadedUrl) : s
       )
 
       setScript((prev: any) => ({
@@ -6954,7 +6954,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     
     const updatedScenes = script.script.scenes.map((s: any, idx: number) => 
       idx === sceneIndex 
-        ? { ...s, imageUrl: newImageUrl } 
+        ? applyEstablishingImageToScene(s, newImageUrl)
         : s
     )
     
@@ -8179,12 +8179,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Update scene with image and workflow sync hashes
       const updatedScenes = [...(script.script.scenes || [])]
       updatedScenes[sceneIdx] = {
-        ...updatedScenes[sceneIdx],
-        imageUrl: data.imageUrl,
-        imagePrompt: requestBody.scenePrompt || requestBody.customPrompt || '',
-        // Track which direction and references this image was based on (for workflow sync)
+        ...applyEstablishingImageToScene(
+          updatedScenes[sceneIdx],
+          data.imageUrl,
+          { imagePrompt: data.prompt || requestBody.scenePrompt || requestBody.customPrompt || '' }
+        ),
         basedOnDirectionHash: data.basedOnDirectionHash,
-        basedOnReferencesHash: data.basedOnReferencesHash
+        basedOnReferencesHash: data.basedOnReferencesHash,
       }
       
       // Update local state
@@ -8301,13 +8302,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       const updatedScenes = [...(script.script.scenes || [])]
-      const dialogue = [...(updatedScenes[sceneIdx].dialogue || [])]
-      dialogue[dialogueIdx] = {
-        ...dialogue[dialogueIdx],
-        storyboardImageUrl: data.imageUrl,
-        storyboardImagePrompt: data.prompt || '',
-      }
-      updatedScenes[sceneIdx] = { ...updatedScenes[sceneIdx], dialogue }
+      updatedScenes[sceneIdx] = applyDialogueStoryboardImageToScene(
+        updatedScenes[sceneIdx],
+        dialogueIdx,
+        data.imageUrl,
+        { imagePrompt: data.prompt || '' }
+      )
 
       setScript({
         ...script,
@@ -8337,9 +8337,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const uploadedUrl = await uploadAssetViaAPI(file, projectId)
       const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
         if (idx !== sceneIndex) return s
-        const dialogue = [...(s.dialogue || [])]
-        dialogue[dialogueIdx] = { ...dialogue[dialogueIdx], storyboardImageUrl: uploadedUrl }
-        return { ...s, dialogue }
+        return applyDialogueStoryboardImageToScene(s, dialogueIdx, uploadedUrl)
       })
 
       setScript((prev: any) => ({

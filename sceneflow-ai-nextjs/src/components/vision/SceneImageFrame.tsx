@@ -12,6 +12,9 @@ export interface SceneImageFrameProps {
   imageUrl?: string | null
   /** When true, imageUrl is a borrowed establishing/anchor shot — not this frame's own cut. */
   isPlaceholder?: boolean
+  /** Highlight when this frame drives the large scene preview. */
+  isSelected?: boolean
+  onSelect?: () => void
   isGenerating?: boolean
   onGenerate: () => void
   onUpload: (file: File) => void
@@ -40,6 +43,8 @@ export function SceneImageFrame({
   sceneNumber,
   imageUrl,
   isPlaceholder = false,
+  isSelected = false,
+  onSelect,
   isGenerating = false,
   onGenerate,
   onUpload,
@@ -75,9 +80,26 @@ export function SceneImageFrame({
     <div 
       className={`relative overflow-hidden rounded-lg ${
         showBorder ? 'border border-slate-700/50' : ''
-      } ${compact ? 'w-full' : ''}`}
+      } ${compact ? 'w-full' : ''} ${
+        isSelected ? 'ring-2 ring-sf-primary border-sf-primary/60' : ''
+      } ${onSelect ? 'cursor-pointer' : ''}`}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
+      onClick={(e) => {
+        if (!onSelect) return
+        e.stopPropagation()
+        onSelect()
+      }}
+      role={onSelect ? 'button' : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (!onSelect) return
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          e.stopPropagation()
+          onSelect()
+        }
+      }}
     >
       {/* Hidden file input */}
       <input

@@ -87,17 +87,25 @@ export function hydrateBeatStoryboardMediaFromLegacy(
 
   return beats.map((beat) => {
     if (beat.kind === 'action') {
-      if (beat.storyboardImageUrl?.trim()) return beat
-      const storyboardImageUrl = pickStoryboardString(scene.imageUrl)
+      const sceneImageUrl = pickStoryboardString(scene.imageUrl)
+      const beatImageUrl = pickStoryboardString(beat.storyboardImageUrl)
+      // scene.imageUrl is canonical for establishing shots (uploads update it first).
+      const storyboardImageUrl = sceneImageUrl || beatImageUrl
       if (!storyboardImageUrl) return beat
       return {
         ...beat,
         storyboardImageUrl,
         storyboardImageGcsPath: pickStoryboardString(
+          sceneImageUrl && sceneImageUrl !== beatImageUrl
+            ? scene.imageGcsPath
+            : undefined,
           beat.storyboardImageGcsPath,
           scene.imageGcsPath
         ),
         storyboardImagePrompt: pickStoryboardString(
+          sceneImageUrl && sceneImageUrl !== beatImageUrl
+            ? scene.imagePrompt
+            : undefined,
           beat.storyboardImagePrompt,
           scene.imagePrompt
         ),
@@ -114,20 +122,28 @@ export function hydrateBeatStoryboardMediaFromLegacy(
       dialogueIdx++
     }
 
-    if (beat.storyboardImageUrl?.trim()) return beat
     if (!lineEntry) return beat
 
-    const storyboardImageUrl = pickStoryboardString(lineEntry.storyboardImageUrl)
+    const lineImageUrl = pickStoryboardString(lineEntry.storyboardImageUrl)
+    const beatImageUrl = pickStoryboardString(beat.storyboardImageUrl)
+    // dialogue[].storyboardImageUrl wins when uploads/generation dual-write to legacy first.
+    const storyboardImageUrl = lineImageUrl || beatImageUrl
     if (!storyboardImageUrl) return beat
 
     return {
       ...beat,
       storyboardImageUrl,
       storyboardImageGcsPath: pickStoryboardString(
+        lineImageUrl && lineImageUrl !== beatImageUrl
+          ? lineEntry.storyboardImageGcsPath
+          : undefined,
         beat.storyboardImageGcsPath,
         lineEntry.storyboardImageGcsPath
       ),
       storyboardImagePrompt: pickStoryboardString(
+        lineImageUrl && lineImageUrl !== beatImageUrl
+          ? lineEntry.storyboardImagePrompt
+          : undefined,
         beat.storyboardImagePrompt,
         lineEntry.storyboardImagePrompt
       ),
@@ -316,6 +332,86 @@ export function applyBeatsToScene(
     ...(legacy.narration !== undefined ? { narration: legacy.narration } : {}),
     ...(legacy.action !== undefined ? { action: legacy.action } : {}),
   }
+}
+
+/** Persist establishing / scene-card image to scene.imageUrl and the action beat. */
+export function applyEstablishingImageToScene(
+  scene: Record<string, unknown>,
+  imageUrl: string,
+  extras?: { imagePrompt?: string; imageGcsPath?: string }
+): Record<string, unknown> {
+  const beats = getSceneBeats(scene).map((beat) =>
+    beat.kind === 'action'
+      ? {
+          ...beat,
+          storyboardImageUrl: imageUrl,
+          ...(extras?.imageGcsPath
+            ? { storyboardImageGcsPath: extras.imageGcsPath }
+            : {}),
+          ...(extras?.imagePrompt
+            ? { storyboardImagePrompt: extras.imagePrompt }
+            : {}),
+        }
+      : beat
+  )
+  return applyBeatsToScene(
+    {
+      ...scene,
+      imageUrl,
+      ...(extras?.imagePrompt ? { imagePrompt: extras.imagePrompt } : {}),
+      ...(extras?.imageGcsPath ? { imageGcsPath: extras.imageGcsPath } : {}),
+    },
+    beats
+  )
+}
+
+/** Persist a dialogue-line storyboard image to beats[] and dialogue[]. */
+export function applyDialogueStoryboardImageToScene(
+  scene: Record<string, unknown>,
+  dialogueIndex: number,
+  imageUrl: string,
+  extras?: { imagePrompt?: string; imageGcsPath?: string }
+): Record<string, unknown> {
+  const dialogue = Array.isArray(scene.dialogue)
+    ? (scene.dialogue as Array<Record<string, unknown>>)
+    : []
+  const targetLineId =
+    typeof dialogue[dialogueIndex]?.lineId === 'string'
+      ? dialogue[dialogueIndex].lineId.trim()
+      : undefined
+
+  let spokenIdx = 0
+  const beats = getSceneBeats(scene).map((beat) => {
+    if (beat.kind === 'action') return beat
+
+    let matches = false
+    if (targetLineId && beat.lineId === targetLineId) {
+      matches = true
+    } else if (!targetLineId) {
+      const resolvedIdx = beat.lineId?.trim()
+        ? dialogue.findIndex((entry) => entry?.lineId === beat.lineId)
+        : spokenIdx
+      matches = resolvedIdx === dialogueIndex
+    }
+
+    if (!beat.lineId?.trim()) {
+      spokenIdx++
+    }
+
+    if (!matches) return beat
+    return {
+      ...beat,
+      storyboardImageUrl: imageUrl,
+      ...(extras?.imageGcsPath
+        ? { storyboardImageGcsPath: extras.imageGcsPath }
+        : {}),
+      ...(extras?.imagePrompt
+        ? { storyboardImagePrompt: extras.imagePrompt }
+        : {}),
+    }
+  })
+
+  return applyBeatsToScene(scene, beats)
 }
 
 export function getSceneBeats(scene: Record<string, unknown> | null | undefined): SceneBeat[] {

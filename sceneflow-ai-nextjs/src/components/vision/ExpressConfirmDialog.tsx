@@ -15,7 +15,7 @@ import { Zap, AlertCircle, Loader, Image as ImageIcon, Volume2, FileText, Langua
 import { IMAGE_CREDITS, AUDIO_CREDITS } from '@/lib/credits/creditCosts'
 import { getLanguageName, FLAG_EMOJIS } from '@/constants/languages'
 import { artStylePresets } from '@/constants/artStylePresets'
-import { countMissingStoryboardFrames, countStoryboardFrameStats } from '@/lib/storyboard/types'
+import { countStoryboardFramesNeedingGeneration, countStoryboardFrameStats } from '@/lib/storyboard/types'
 
 export interface ExpressConfirmOptions {
   includeMusic: boolean
@@ -87,7 +87,7 @@ export function ExpressConfirmDialog({
       }
       if (!scene?.imageUrl) scenesNeedingImage += 1
 
-      const missingFrameCount = countMissingStoryboardFrames(scene)
+      const missingFrameCount = countStoryboardFramesNeedingGeneration(scene)
       if (missingFrameCount > 0) scenesNeedingDialogueFrames += 1
 
       const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
@@ -128,7 +128,7 @@ export function ExpressConfirmDialog({
     if (regenerate) {
       return scenes.reduce((sum, scene) => sum + countStoryboardFrameStats(scene).total, 0)
     }
-    return scenes.reduce((sum, scene) => sum + countMissingStoryboardFrames(scene), 0)
+    return scenes.reduce((sum, scene) => sum + countStoryboardFramesNeedingGeneration(scene), 0)
   }, [regenerate, scenes])
   const effectiveAudioScenes = regenerate ? stats.total : stats.scenesNeedingAudio
   const effectiveDirectionScenes = regenerate

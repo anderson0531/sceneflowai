@@ -28,6 +28,7 @@ import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
 import { getSceneBeats, applyBeatsToScene } from '../script/beatMigration'
+import { countStoryboardFramesNeedingGeneration } from '../storyboard/types'
 import type { SceneBeat } from '../script/segmentTypes'
 
 const EXPRESS_CONCURRENCY = 1 // Process one scene at a time for chain reference consistency
@@ -246,9 +247,7 @@ async function runAudioPhase(
 }
 
 function sceneNeedsBeatImages(scene: any): boolean {
-  const beats = getSceneBeats(scene)
-  if (beats.length === 0) return sceneNeedsImage(scene)
-  return beats.some((b) => !b.storyboardImageUrl?.trim())
+  return countStoryboardFramesNeedingGeneration(scene) > 0
 }
 
 function persistBeatFrame(scene: any, beatIndex: number, result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null }) {
