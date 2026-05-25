@@ -1591,7 +1591,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   // Handler for inserting a backdrop segment at the beginning of a scene
-  const handleInsertBackdropBeat = useCallback(
+  const handleInsertBackdropSegment = useCallback(
     async (sceneId: string, referenceId: string, imageUrl: string, name: string) => {
       const currentProduction = sceneProductionState[sceneId]
       
@@ -2346,7 +2346,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   // Handle segment lock state changes (persists to DB for production lock)
-  const handleLockBeat = useCallback(
+  const handleLockSegment = useCallback(
     (sceneId: string, segmentId: string, locked: boolean) => {
       console.log('[handleLockSegment] Persisting lock state:', { sceneId, segmentId, locked })
       applySceneProductionUpdate(sceneId, (current) => {
@@ -2411,7 +2411,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   // Phase 7: Handle segment reordering (drag-and-drop)
-  const handleReorderBeats = useCallback(
+  const handleReorderSegments = useCallback(
     (sceneId: string, oldIndex: number, newIndex: number) => {
       applySceneProductionUpdate(sceneId, (current) => {
         if (!current) return current
@@ -3399,7 +3399,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Handle adding a complete segment with full data (from AddSegmentDialog/AddSegmentTypeDialog)
   // Supports insertPosition: 'start' | 'end' | 'before' | 'after' and insertIndex
-  const handleAddFullBeat = useCallback(
+  const handleAddFullSegment = useCallback(
     (sceneId: string, newSegment: any) => {
       const insertPosition = newSegment.insertPosition || 'end'
       const insertIndex = newSegment.insertIndex ?? -1
@@ -11415,7 +11415,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onSegmentActionChange={handleSegmentActionChange}
                 onSegmentGenerate={handleSegmentGenerate}
                 onSegmentUpload={handleSegmentUpload}
-                onLockSegment={handleLockBeat}
+                onLockSegment={handleLockSegment}
                 onSegmentAnimaticSettingsChange={handleSegmentAnimaticSettingsChange}
                 onRenderedSceneUrlChange={handleRenderedSceneUrlChange}
                 onProductionDataChange={handleProductionDataChange}
@@ -11435,11 +11435,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                 }}
                 onAddSegment={handleAddSegment}
-                onAddFullSegment={handleAddFullBeat}
+                onAddFullSegment={handleAddFullSegment}
                 onDeleteSegment={handleDeleteSegment}
                 onSegmentResize={handleSegmentResize}
                 onApplyIntelligentAlignment={handleApplyIntelligentAlignment}
-                onReorderSegments={handleReorderBeats}
+                onReorderSegments={handleReorderSegments}
                 onAudioClipChange={handleAudioClipChange}
                 onCleanupStaleAudioUrl={handleCleanupStaleAudioUrl}
                 onAddEstablishingShot={handleAddEstablishingShot}
@@ -11672,7 +11672,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 showProductionReadiness={true}
                 backdropCharacters={characters.map(c => ({ id: c.id, name: c.name, description: c.description, appearance: c.appearance }))}
                 onBackdropGenerated={handleBackdropGenerated}
-                onInsertBackdropSegment={handleInsertBackdropBeat}
+                onInsertBackdropSegment={handleInsertBackdropSegment}
                 onObjectGenerated={handleObjectGenerated}
                 screenplayContext={{
                   genre: project?.genre,

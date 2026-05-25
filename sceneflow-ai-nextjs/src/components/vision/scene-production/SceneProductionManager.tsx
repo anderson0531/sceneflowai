@@ -208,7 +208,7 @@ export function SceneProductionManager({
   )
   
   // Phase 7: Wrapper for segment reordering
-  const handleReorderBeatsWrapper = useCallback(
+  const handleReorderSegmentsWrapper = useCallback(
     (oldIndex: number, newIndex: number) => {
       if (onReorderSegments) {
         onReorderSegments(sceneId, oldIndex, newIndex)
