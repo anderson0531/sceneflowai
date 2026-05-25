@@ -145,22 +145,30 @@ export function findDialogueAudioForLine(
       : []
   if (!arr.length) return null
 
+  const pickLastWithUrl = (predicate: (entry: any) => boolean): any | null => {
+    for (let i = arr.length - 1; i >= 0; i--) {
+      const entry = arr[i]
+      if (!entry || !predicate(entry)) continue
+      const url = entry.audioUrl || entry.url
+      if (typeof url === 'string' && url.trim()) return entry
+    }
+    return null
+  }
+
   const lineId = options.lineId
   if (lineId) {
-    const byLineId = arr.find((d) => d?.lineId === lineId)
+    const byLineId = pickLastWithUrl((d) => d?.lineId === lineId)
     if (byLineId) return byLineId
   }
   if (options.dialogueIndex !== undefined) {
-    const byIndex = arr.find((d) => d?.dialogueIndex === options.dialogueIndex)
+    const byIndex = pickLastWithUrl((d) => d?.dialogueIndex === options.dialogueIndex)
     if (byIndex) return byIndex
   }
   if (options.character !== undefined && options.dialogueIndex !== undefined) {
-    return (
-      arr.find(
-        (d) =>
-          d?.character?.toLowerCase() === options.character?.toLowerCase() &&
-          d?.dialogueIndex === options.dialogueIndex
-      ) || null
+    return pickLastWithUrl(
+      (d) =>
+        d?.character?.toLowerCase() === options.character?.toLowerCase() &&
+        d?.dialogueIndex === options.dialogueIndex
     )
   }
   return null

@@ -228,7 +228,18 @@ export function hydrateBeatAudioFromLegacy(
 
     let audioMatch: Record<string, unknown> | undefined
     if (beat.lineId?.trim()) {
-      audioMatch = audioEntries.find((entry) => entry?.lineId === beat.lineId)
+      for (let i = audioEntries.length - 1; i >= 0; i--) {
+        const entry = audioEntries[i]
+        if (entry?.lineId !== beat.lineId) continue
+        const entryUrl =
+          (typeof entry.audioUrl === 'string' && entry.audioUrl) ||
+          (typeof entry.url === 'string' && entry.url) ||
+          undefined
+        if (entryUrl?.trim()) {
+          audioMatch = entry
+          break
+        }
+      }
     }
     if (!audioMatch && isNarratorBeat(beat)) {
       audioMatch = audioEntries.find(

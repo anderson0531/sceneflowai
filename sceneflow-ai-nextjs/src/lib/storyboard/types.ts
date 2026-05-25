@@ -479,6 +479,17 @@ function isNarratorBeat(beat: {
   return false
 }
 
+function extractDialogueAudioEntryUrl(
+  entry: Record<string, unknown> | null | undefined
+): string | undefined {
+  if (!entry) return undefined
+  const url =
+    (typeof entry.audioUrl === 'string' && entry.audioUrl) ||
+    (typeof entry.url === 'string' && entry.url) ||
+    undefined
+  return url?.trim() || undefined
+}
+
 function findDialogueAudioEntryForBeat(
   scene: Record<string, unknown>,
   beat: ReturnType<typeof getSceneBeats>[number],
@@ -486,16 +497,29 @@ function findDialogueAudioEntryForBeat(
   dialogueIndex?: number
 ): Record<string, unknown> | undefined {
   const entries = getDialogueAudioEntries(scene, language)
+  const pickLastWithUrl = (
+    predicate: (entry: Record<string, unknown>) => boolean
+  ): Record<string, unknown> | undefined => {
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const entry = entries[i]
+      if (!entry || !predicate(entry)) continue
+      if (extractDialogueAudioEntryUrl(entry)) return entry
+    }
+    return undefined
+  }
+
   if (beat.lineId?.trim()) {
-    const byLineId = entries.find((entry) => entry?.lineId === beat.lineId)
+    const byLineId = pickLastWithUrl((entry) => entry?.lineId === beat.lineId)
     if (byLineId) return byLineId
   }
   if (typeof dialogueIndex === 'number') {
-    const byIndex = entries.find((entry) => entry?.dialogueIndex === dialogueIndex)
+    const byIndex = pickLastWithUrl(
+      (entry) => entry?.dialogueIndex === dialogueIndex
+    )
     if (byIndex) return byIndex
   }
   if (isNarratorBeat(beat)) {
-    const narratorEntry = entries.find(
+    const narratorEntry = pickLastWithUrl(
       (entry) =>
         entry?.kind === 'narration' || entry?.characterId === NARRATOR_CHARACTER_ID
     )
@@ -503,7 +527,7 @@ function findDialogueAudioEntryForBeat(
   }
   if (beat.character?.trim()) {
     const canonical = toCanonicalName(beat.character)
-    const byCharacter = entries.find((entry) => {
+    const byCharacter = pickLastWithUrl((entry) => {
       if (typeof entry?.character !== 'string') return false
       if (toCanonicalName(entry.character) !== canonical) return false
       if (typeof dialogueIndex === 'number' && typeof entry.dialogueIndex === 'number') {
@@ -582,11 +606,8 @@ function resolveBeatDialogueIndex(
 
 function beatVoiceClipId(
   beat: ReturnType<typeof getSceneBeats>[number],
-  dialogueIndex: number | undefined
+  _dialogueIndex: number | undefined
 ): string {
-  if (typeof dialogueIndex === 'number' && dialogueIndex >= 0) {
-    return dialogueLineIdForIndex(dialogueIndex)
-  }
   return `beat-${beat.beatId}`
 }
 
@@ -614,11 +635,8 @@ function resolveBeatVoiceUrl(
     findDialogueAudioEntryForBeat(scene, beat, language, dialogueIndex) ??
     null
 
-  const fromDialogueAudio =
-    (typeof audioEntry?.audioUrl === 'string' && audioEntry.audioUrl) ||
-    (typeof audioEntry?.url === 'string' && audioEntry.url) ||
-    undefined
-  if (fromDialogueAudio?.trim()) return fromDialogueAudio.trim()
+  const fromDialogueAudio = extractDialogueAudioEntryUrl(audioEntry)
+  if (fromDialogueAudio) return fromDialogueAudio
 
   const fromLine =
     line &&

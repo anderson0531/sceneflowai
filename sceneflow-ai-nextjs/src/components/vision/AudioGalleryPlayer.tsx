@@ -120,6 +120,7 @@ export function AudioGalleryPlayer({
   
   // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const activeVoiceClipIdRef = useRef<string | null>(null)
   const musicAudioRef = useRef<HTMLAudioElement | null>(null)
   const sfxAudioRefs = useRef<(HTMLAudioElement | null)[]>([])
   const animationRef = useRef<number | null>(null)
@@ -136,6 +137,7 @@ export function AudioGalleryPlayer({
   // Reload audio elements when scene TTS URLs change (regen, upload, language switch).
   useEffect(() => {
     fetchingUrls.current.clear()
+    activeVoiceClipIdRef.current = null
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current.removeAttribute('src')
@@ -475,35 +477,56 @@ export function AudioGalleryPlayer({
   
   // Sync audio element with playback state
   useEffect(() => {
-    if (!currentClip || !audioRef.current) return
-    
     const audio = audioRef.current
-    const clipLocalTime = currentTime - currentClip.startTime
-    
-    // Only update if audio source changed (compare normalized URLs — audio.src is absolute)
-    if (normalizeMediaUrl(audio.src) !== normalizeMediaUrl(currentClip.url)) {
+    if (!audio) return
+
+    if (!currentClip) {
+      if (!audio.paused) audio.pause()
+      return
+    }
+
+    const clipLocalTime = Math.max(0, currentTime - currentClip.startTime)
+    const clipChanged = activeVoiceClipIdRef.current !== currentClip.id
+    const srcChanged =
+      clipChanged || normalizeMediaUrl(audio.src) !== normalizeMediaUrl(currentClip.url)
+
+    if (srcChanged) {
+      activeVoiceClipIdRef.current = currentClip.id
       audio.src = currentClip.url
-      audio.currentTime = Math.max(0, clipLocalTime)
+      audio.load()
     }
-    
-    // Sync playback state
-    if (isPlaying && audio.paused) {
-      audio.play().catch(() => {})
-    } else if (!isPlaying && !audio.paused) {
-      audio.pause()
+
+    const syncTimeAndPlay = () => {
+      audio.currentTime = clipLocalTime
+      const baseVol = isMuted ? 0 : volume
+      const boosted =
+        currentClip.type === 'dialogue'
+          ? Math.min(1, baseVol * DIALOGUE_VOLUME_FACTOR)
+          : baseVol
+      audio.volume = boosted
+
+      if (isPlaying) {
+        audio.play().catch(() => {})
+      } else if (!audio.paused) {
+        audio.pause()
+      }
     }
-    
-    // Apply volume (dialogue boosted vs narration for clearer lines vs bed music)
-    const baseVol = isMuted ? 0 : volume
-    const boosted =
-      currentClip.type === 'dialogue'
-        ? Math.min(1, baseVol * DIALOGUE_VOLUME_FACTOR)
-        : baseVol
-    audio.volume = boosted
-    
-    // Drift correction
+
+    if (srcChanged || audio.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      const onReady = () => syncTimeAndPlay()
+      if (audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        syncTimeAndPlay()
+      } else {
+        audio.addEventListener('loadeddata', onReady, { once: true })
+        return () => audio.removeEventListener('loadeddata', onReady)
+      }
+      return
+    }
+
+    syncTimeAndPlay()
+
     const drift = Math.abs(audio.currentTime - clipLocalTime)
-    if (drift > 0.3 && !audio.paused) {
+    if (drift > 0.3 && isPlaying && !audio.paused) {
       audio.currentTime = clipLocalTime
     }
   }, [currentClip, currentTime, isPlaying, volume, isMuted])

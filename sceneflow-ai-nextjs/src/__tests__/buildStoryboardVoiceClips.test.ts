@@ -790,6 +790,105 @@ describe('buildStoryboardVoiceClips', () => {
     expect(visualFrames).toHaveLength(2)
   })
 
+  it('uses unique beat clip ids when multiple beats share a dialogue index', () => {
+    const scene = {
+      dialogue: [
+        { lineId: 'ln_a', character: 'Alice', line: 'First.' },
+        { lineId: 'ln_b', character: 'Bob', line: 'Second.' },
+      ],
+      dialogueAudio: {
+        en: [
+          { lineId: 'ln_a', dialogueIndex: 0, audioUrl: 'https://example.com/a.mp3', duration: 2 },
+          { lineId: 'ln_b', dialogueIndex: 1, audioUrl: 'https://example.com/b.mp3', duration: 2 },
+        ],
+      },
+      beats: [
+        {
+          beatId: 'bt_a1',
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'First.',
+          lineId: 'ln_a',
+          audioUrl: 'https://example.com/stale-a.mp3',
+        },
+        {
+          beatId: 'bt_b',
+          kind: 'dialogue',
+          character: 'Bob',
+          line: 'Second.',
+          lineId: 'ln_b',
+        },
+        {
+          beatId: 'bt_a2',
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'First again.',
+          lineId: 'ln_a',
+        },
+      ],
+    }
+
+    const { voiceClips } = buildBeatFirstPlaybackTimeline(scene, 'en')
+
+    expect(voiceClips.map((clip) => clip.id)).toEqual([
+      'beat-bt_a1',
+      'beat-bt_b',
+      'beat-bt_a2',
+    ])
+    expect(new Set(voiceClips.map((clip) => clip.id)).size).toBe(3)
+    expect(voiceClips.every((clip) => !!clip.url)).toBe(true)
+  })
+
+  it('prefers the latest dialogueAudio entry when stale empty duplicates exist', () => {
+    const scene = {
+      dialogue: [
+        { lineId: 'ln_a', character: 'Alice', line: 'Hello.' },
+        { lineId: 'ln_b', character: 'Bob', line: 'Hi.' },
+      ],
+      dialogueAudio: {
+        en: [
+          { lineId: 'ln_a', dialogueIndex: 0 },
+          { lineId: 'ln_b', dialogueIndex: 1 },
+          {
+            lineId: 'ln_a',
+            dialogueIndex: 0,
+            audioUrl: 'https://example.com/a-new.mp3',
+            duration: 2,
+          },
+          {
+            lineId: 'ln_b',
+            dialogueIndex: 1,
+            audioUrl: 'https://example.com/b-new.mp3',
+            duration: 2,
+          },
+        ],
+      },
+      beats: [
+        {
+          beatId: 'bt_a',
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'Hello.',
+          lineId: 'ln_a',
+        },
+        {
+          beatId: 'bt_b',
+          kind: 'dialogue',
+          character: 'Bob',
+          line: 'Hi.',
+          lineId: 'ln_b',
+        },
+      ],
+    }
+
+    const { voiceClips } = buildBeatFirstPlaybackTimeline(scene, 'en')
+
+    expect(voiceClips.map((clip) => clip.url)).toEqual([
+      'https://example.com/a-new.mp3',
+      'https://example.com/b-new.mp3',
+    ])
+  })
+
   it('prefers dialogueAudio over stale beat.audioUrl after script audio regen', () => {
     const OLD_URL = 'https://example.com/old-narrator.mp3'
     const NEW_URL = 'https://example.com/new-narrator.mp3'
