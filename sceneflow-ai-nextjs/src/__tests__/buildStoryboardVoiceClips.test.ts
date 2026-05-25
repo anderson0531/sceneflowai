@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   buildStoryboardVoiceClips,
   buildStoryboardVisualTimeline,
+  getCurrentStoryboardVisualFrame,
   getDialogueFrameUrl,
 } from '@/lib/storyboard/types'
 
@@ -393,6 +394,149 @@ describe('buildStoryboardVoiceClips', () => {
     const visualFrames = buildStoryboardVisualTimeline(scene, clips)
     expect(visualFrames[0].imageUrl).toBe('https://example.com/narrator-frame.jpg')
     expect(visualFrames[0].dialogueIndex).toBe(0)
+  })
+
+  it('aligns spoken beat images when narrator beat is not in dialogue array', () => {
+    const NARRATOR_FRAME = 'https://example.com/narrator-frame.jpg'
+    const ALICE_FRAME = 'https://example.com/alice-frame.jpg'
+    const BOB_FRAME = 'https://example.com/bob-frame.jpg'
+    const scene = {
+      imageUrl: 'https://example.com/establishing.jpg',
+      dialogue: [
+        { lineId: 'ln_alice', character: 'Alice', line: 'Hello.', audioUrl: SARAH_URL, duration: 2 },
+        { lineId: 'ln_bob', character: 'Bob', line: 'Hi.', audioUrl: BOB_URL, duration: 2 },
+      ],
+      beats: [
+        {
+          beatId: 'bt_action',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide shot',
+          storyboardImageUrl: 'https://example.com/establishing.jpg',
+        },
+        {
+          beatId: 'bt_narr',
+          sequenceIndex: 1,
+          kind: 'narration',
+          character: 'NARRATOR',
+          line: 'Opening voiceover.',
+          lineId: 'ln_narr',
+          storyboardImageUrl: NARRATOR_FRAME,
+          audioUrl: NARRATION_URL,
+          durationSeconds: 4,
+        },
+        {
+          beatId: 'bt_alice',
+          sequenceIndex: 2,
+          kind: 'dialogue',
+          character: 'Alice',
+          line: 'Hello.',
+          lineId: 'ln_alice',
+          storyboardImageUrl: ALICE_FRAME,
+          audioUrl: SARAH_URL,
+          durationSeconds: 2,
+        },
+        {
+          beatId: 'bt_bob',
+          sequenceIndex: 3,
+          kind: 'dialogue',
+          character: 'Bob',
+          line: 'Hi.',
+          lineId: 'ln_bob',
+          storyboardImageUrl: BOB_FRAME,
+          audioUrl: BOB_URL,
+          durationSeconds: 2,
+        },
+      ],
+    }
+
+    const clips = buildStoryboardVoiceClips(scene, 'en', {
+      [NARRATION_URL]: 4,
+      [SARAH_URL]: 2,
+      [BOB_URL]: 2,
+    })
+
+    expect(clips).toHaveLength(3)
+    expect(clips[0].url).toBe(NARRATION_URL)
+    expect(clips[0].id).toBe('beat-bt_narr')
+    expect(clips[0].dialogueIndex).toBeUndefined()
+    expect(clips[1].dialogueIndex).toBe(0)
+    expect(clips[2].dialogueIndex).toBe(1)
+
+    const visualFrames = buildStoryboardVisualTimeline(scene, clips)
+    expect(visualFrames.map((f) => f.imageUrl)).toEqual([
+      NARRATOR_FRAME,
+      ALICE_FRAME,
+      BOB_FRAME,
+    ])
+  })
+})
+
+describe('getCurrentStoryboardVisualFrame', () => {
+  it('shows the upcoming frame during inter-clip buffer gaps', () => {
+    const frames = buildStoryboardVisualTimeline(
+      {
+        dialogue: [{ character: 'Alice', line: 'One' }, { character: 'Bob', line: 'Two' }],
+        beats: [
+          {
+            beatId: 'bt_1',
+            sequenceIndex: 0,
+            kind: 'dialogue',
+            character: 'Alice',
+            line: 'One',
+            storyboardImageUrl: 'https://example.com/one.jpg',
+            audioUrl: SARAH_URL,
+            durationSeconds: 4,
+          },
+          {
+            beatId: 'bt_2',
+            sequenceIndex: 1,
+            kind: 'dialogue',
+            character: 'Bob',
+            line: 'Two',
+            storyboardImageUrl: 'https://example.com/two.jpg',
+            audioUrl: BOB_URL,
+            durationSeconds: 2,
+          },
+        ],
+      },
+      buildStoryboardVoiceClips(
+        {
+          dialogue: [{ character: 'Alice', line: 'One' }, { character: 'Bob', line: 'Two' }],
+          beats: [
+            {
+              beatId: 'bt_1',
+              sequenceIndex: 0,
+              kind: 'dialogue',
+              character: 'Alice',
+              line: 'One',
+              storyboardImageUrl: 'https://example.com/one.jpg',
+              audioUrl: SARAH_URL,
+              durationSeconds: 4,
+            },
+            {
+              beatId: 'bt_2',
+              sequenceIndex: 1,
+              kind: 'dialogue',
+              character: 'Bob',
+              line: 'Two',
+              storyboardImageUrl: 'https://example.com/two.jpg',
+              audioUrl: BOB_URL,
+              durationSeconds: 2,
+            },
+          ],
+        },
+        'en',
+        { [SARAH_URL]: 4, [BOB_URL]: 2 }
+      )
+    )
+
+    expect(getCurrentStoryboardVisualFrame(frames, 3.9)?.imageUrl).toBe(
+      'https://example.com/one.jpg'
+    )
+    expect(getCurrentStoryboardVisualFrame(frames, 4.2)?.imageUrl).toBe(
+      'https://example.com/two.jpg'
+    )
   })
 })
 

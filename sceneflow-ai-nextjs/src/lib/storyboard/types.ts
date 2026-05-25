@@ -66,6 +66,8 @@ export interface StoryboardAudioClip {
   label?: string
   /** Script dialogue line index (matches scene.dialogue[i]). */
   dialogueIndex?: number
+  /** Beat-first scenes: links clip to scene.beats[]. */
+  beatId?: string
 }
 
 /** A single visual frame in playback order, aligned to an audio clip window. */
@@ -483,23 +485,34 @@ function resolveBeatDialogueIndex(
   scene: Record<string, unknown>,
   beat: ReturnType<typeof getSceneBeats>[number],
   spokenDialogueIdx: number
-): number {
+): number | undefined {
   const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
   if (beat.lineId?.trim()) {
     const idx = dialogue.findIndex(
       (entry) => (entry as Record<string, unknown>)?.lineId === beat.lineId
     )
     if (idx >= 0) return idx
+    return undefined
   }
   if (spokenDialogueIdx >= 0 && spokenDialogueIdx < dialogue.length) return spokenDialogueIdx
-  return spokenDialogueIdx >= 0 ? spokenDialogueIdx : 0
+  return undefined
+}
+
+function beatVoiceClipId(
+  beat: ReturnType<typeof getSceneBeats>[number],
+  dialogueIndex: number | undefined
+): string {
+  if (typeof dialogueIndex === 'number' && dialogueIndex >= 0) {
+    return dialogueLineIdForIndex(dialogueIndex)
+  }
+  return `beat-${beat.beatId}`
 }
 
 /** Resolve spoken-beat audio from beat fields, dialogue line, or dialogueAudio (legacy storage). */
 function resolveBeatVoiceUrl(
   scene: Record<string, unknown>,
   beat: ReturnType<typeof getSceneBeats>[number],
-  dialogueIndex: number,
+  dialogueIndex: number | undefined,
   language: string
 ): string | undefined {
   const fromBeat = beat.audioUrl?.trim()
@@ -507,7 +520,7 @@ function resolveBeatVoiceUrl(
 
   const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
   const line =
-    typeof dialogueIndex === 'number'
+    typeof dialogueIndex === 'number' && dialogueIndex >= 0
       ? (dialogue[dialogueIndex] as Record<string, unknown> | undefined)
       : undefined
   const character = beat.character || getDialogueLineCharacter(line)
@@ -515,7 +528,7 @@ function resolveBeatVoiceUrl(
   const audioEntry = findDialogueAudioForLine(scene, {
     language,
     lineId: beat.lineId,
-    dialogueIndex,
+    ...(typeof dialogueIndex === 'number' ? { dialogueIndex } : {}),
     character,
   }) as Record<string, unknown> | null
 
@@ -543,19 +556,19 @@ function resolveBeatVoiceDuration(
   url: string,
   beat: ReturnType<typeof getSceneBeats>[number],
   scene: Record<string, unknown>,
-  dialogueIndex: number,
+  dialogueIndex: number | undefined,
   language: string,
   dynamicDurations: Record<string, number>
 ): number {
   const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
   const line =
-    typeof dialogueIndex === 'number'
+    typeof dialogueIndex === 'number' && dialogueIndex >= 0
       ? (dialogue[dialogueIndex] as Record<string, unknown> | undefined)
       : undefined
   const audioEntry = findDialogueAudioForLine(scene, {
     language,
     lineId: beat.lineId,
-    dialogueIndex,
+    ...(typeof dialogueIndex === 'number' ? { dialogueIndex } : {}),
     character: beat.character || getDialogueLineCharacter(line),
   }) as Record<string, unknown> | null
 
@@ -604,7 +617,9 @@ export function buildStoryboardVoiceClips(
       if (beat.kind === 'action') continue
 
       let dialogueIndex = resolveBeatDialogueIndex(scene, beat, spokenDialogueIdx)
-      spokenDialogueIdx = Math.max(spokenDialogueIdx, dialogueIndex + 1)
+      if (typeof dialogueIndex === 'number') {
+        spokenDialogueIdx = Math.max(spokenDialogueIdx, dialogueIndex + 1)
+      }
 
       const url = resolveBeatVoiceUrl(scene, beat, dialogueIndex, language)
       if (!url) continue
@@ -620,13 +635,14 @@ export function buildStoryboardVoiceClips(
       const isNarration = beat.kind === 'narration'
 
       clips.push({
-        id: dialogueLineIdForIndex(dialogueIndex),
+        id: beatVoiceClipId(beat, dialogueIndex),
         url,
         startTime: currentStartTime,
         duration,
         type: 'dialogue',
-        label: isNarration ? 'Narrator' : beat.character || `Dialogue ${dialogueIndex + 1}`,
+        label: isNarration ? 'Narrator' : beat.character || `Dialogue ${(dialogueIndex ?? spokenDialogueIdx) + 1}`,
         dialogueIndex,
+        beatId: beat.beatId,
       })
       currentStartTime +=
         duration + (isNarration ? NARRATION_CLIP_BUFFER_SEC : DIALOGUE_CLIP_BUFFER_SEC)
@@ -745,6 +761,63 @@ export function buildStoryboardVoiceClips(
   return clips
 }
 
+function resolveBeatSlotImageUrl(
+  scene: Record<string, unknown>,
+  beat: ReturnType<typeof getSceneBeats>[number],
+  dialogueIndex?: number
+): string | undefined {
+  if (isValidStoryboardMediaUrl(beat.storyboardImageUrl)) {
+    return beat.storyboardImageUrl!.trim()
+  }
+  if (typeof dialogueIndex === 'number') {
+    return getStoryboardFrameUrlForDialogueIndex(scene, dialogueIndex)
+  }
+  return getEstablishingFrameUrl(scene)
+}
+
+/** Beat-first visual cuts: one frame per spoken beat, images from beat slots (not dialogue index). */
+function buildBeatFirstStoryboardVisualTimeline(
+  scene: Record<string, unknown>,
+  audioClips: StoryboardAudioClip[]
+): StoryboardVisualFrame[] {
+  const beats = getSceneBeats(scene)
+  const voiceClips = audioClips.filter(
+    (clip) => clip.type !== 'music' && clip.type !== 'sfx'
+  )
+  if (voiceClips.length === 0) return []
+
+  const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
+  const frames: StoryboardVisualFrame[] = []
+  let clipIdx = 0
+
+  for (const beat of beats) {
+    if (beat.kind === 'action') continue
+
+    const clip = voiceClips[clipIdx]
+    if (!clip) break
+
+    const d =
+      typeof clip.dialogueIndex === 'number'
+        ? (dialogue[clip.dialogueIndex] as Record<string, unknown> | undefined)
+        : undefined
+
+    frames.push({
+      clipId: clip.id,
+      frameType: 'dialogue',
+      dialogueIndex: clip.dialogueIndex,
+      imageUrl: resolveBeatSlotImageUrl(scene, beat, clip.dialogueIndex),
+      startTime: clip.startTime,
+      duration: clip.duration,
+      label: clip.label,
+      character: beat.character || getDialogueLineCharacter(d),
+      line: String(beat.line || getDialogueLineText(d)),
+    })
+    clipIdx++
+  }
+
+  return frames
+}
+
 /**
  * Map audio clips to visual frames. Non-voice clips (description/narration) use
  * establishing; dialogue clips use per-line images with fallback.
@@ -754,6 +827,11 @@ export function buildStoryboardVisualTimeline(
   audioClips: StoryboardAudioClip[]
 ): StoryboardVisualFrame[] {
   if (!scene || audioClips.length === 0) return []
+
+  if (Array.isArray(scene.beats) && scene.beats.length > 0) {
+    const beatFirst = buildBeatFirstStoryboardVisualTimeline(scene, audioClips)
+    if (beatFirst.length > 0) return beatFirst
+  }
 
   const dialogue = Array.isArray(scene.dialogue) ? scene.dialogue : []
   const establishingUrl = getEstablishingFrameUrl(scene)
@@ -832,7 +910,16 @@ export function getCurrentStoryboardVisualFrame(
     }
   }
 
-  // Buffer gap between clips: hold the last frame that has started
+  // Inter-clip buffer gap: show the upcoming frame so silence lands on the next beat image.
+  for (let i = 0; i < frames.length - 1; i++) {
+    const frameEnd = frames[i].startTime + frames[i].duration
+    const next = frames[i + 1]
+    if (currentTime >= frameEnd && currentTime < next.startTime) {
+      return next
+    }
+  }
+
+  // After last frame ends, hold final frame
   let held: StoryboardVisualFrame | undefined
   for (const frame of frames) {
     if (currentTime >= frame.startTime) {
