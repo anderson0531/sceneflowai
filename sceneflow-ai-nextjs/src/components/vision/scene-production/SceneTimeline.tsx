@@ -373,7 +373,7 @@ export function SceneTimeline({
       seg != null && typeof seg.segmentId === 'string'
     )
     
-    return validBeats.map(seg => ({
+    return validSegments.map(seg => ({
       id: seg.segmentId,
       segmentId: seg.segmentId,
       url: seg.activeAssetUrl || undefined,

@@ -165,7 +165,7 @@ export function SegmentPromptBuilder({
   previousSegmentLastFrame,
   onGenerate,
   isGenerating = false,
-  allBeats = [],
+  allSegments = [],
   sceneReferences = [],
   objectReferences = [],
   isBackdropMode = false,
@@ -309,7 +309,7 @@ export function SegmentPromptBuilder({
   // Compute all available video takes from all segments
   const allVideoTakes = useMemo((): VideoTakeReference[] => {
     const takes: VideoTakeReference[] = []
-    allBeats.forEach((seg) => {
+    allSegments.forEach((seg) => {
       if (!seg) return  // Skip undefined segments
       (seg.takes || []).forEach((take) => {
         if (take.assetUrl && take.status === 'COMPLETE') {
@@ -328,7 +328,7 @@ export function SegmentPromptBuilder({
       })
     })
     return takes
-  }, [allBeats])
+  }, [allSegments])
 
   // Combined reference library for easy selection
   const combinedReferenceLibrary = useMemo(() => {

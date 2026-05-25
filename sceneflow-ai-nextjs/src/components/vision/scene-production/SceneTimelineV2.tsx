@@ -498,7 +498,7 @@ export function SceneTimelineV2({
     )
     
     let cumulativeStart = 0
-    return validBeats.map(seg => {
+    return validSegments.map(seg => {
       const baseDuration = seg.endTime - seg.startTime
       // Display duration = base + offset (for animatic playback)
       const displayDuration = baseDuration + effectiveOffset

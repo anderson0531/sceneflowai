@@ -1517,12 +1517,12 @@ function DirectorConsoleRoot({
       />
       
       {/* VideoEditingDialog for editing completed segment videos */}
-      {editingVideoBeat && (
+      {editingVideoSegment && (
         <VideoEditingDialog
           open={!!editingVideoSegment}
           onClose={() => setEditingVideoSegment(null)}
           segment={editingVideoSegment}
-          allBeats={segments}
+          allSegments={segments}
           sceneImageUrl={sceneImageUrl}
           characters={scene?.characters}
           previousSegmentLastFrame={previousSegmentLastFrame}

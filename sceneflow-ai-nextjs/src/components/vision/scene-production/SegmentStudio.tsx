@@ -1590,7 +1590,7 @@ export function SegmentStudio({
           previousSegmentLastFrame={previousSegmentLastFrame}
           onGenerate={handlePromptBuilderGenerate}
           isGenerating={segment.status === 'GENERATING'}
-          allBeats={segments}
+          allSegments={segments}
           sceneReferences={references.sceneReferences}
           objectReferences={references.objectReferences}
           // Pass backdrop context when in backdrop mode
@@ -1637,7 +1637,7 @@ export function SegmentStudio({
           characters={references.characters}
           sceneImageUrl={sceneImageUrl}
           previousSegmentLastFrame={previousSegmentLastFrame}
-          allBeats={segments}
+          allSegments={segments}
           onGenerate={handleVideoEditingGenerate}
           isGenerating={segment.status === 'GENERATING'}
           initialTab={videoEditingInitialTab}

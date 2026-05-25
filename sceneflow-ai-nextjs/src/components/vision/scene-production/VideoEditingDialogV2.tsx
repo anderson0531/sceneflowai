@@ -248,7 +248,7 @@ interface ExtendTabProps {
 
 function ExtendTab({ 
   segment, 
-  allBeats = [],
+  allSegments = [],
   prompt,
   setPrompt,
   sourceVideoUrl,
@@ -1264,7 +1264,7 @@ export function VideoEditingDialog({
   onClose,
   segment,
   initialTab = 'smart-prompt',
-  allBeats = [],
+  allSegments = [],
   characters = [],
   sceneImageUrl,
   onGenerate,
@@ -1404,7 +1404,7 @@ export function VideoEditingDialog({
   const getExtendSourceFrameUrl = useCallback((): string | undefined => {
     // Find the current segment index and previous segment
     const currentIndex = allSegments?.findIndex(s => s.segmentId === segment.segmentId) ?? -1
-    const previousBeat = currentIndex > 0 ? allBeats?.[currentIndex - 1] : null
+    const previousSegment = currentIndex > 0 ? allSegments?.[currentIndex - 1] : null
     const previousTakes = previousSegment?.takes?.filter(t => t.status === 'done') || []
     
     // Handle different selection modes
@@ -1630,7 +1630,7 @@ export function VideoEditingDialog({
                 <TabsContent value="extend" className="mt-0">
                   <ExtendTab
                     segment={segment}
-                    allBeats={allBeats}
+                    allSegments={allSegments}
                     prompt={prompt}
                     setPrompt={setPrompt}
                     sourceVideoUrl={sourceVideoRef}

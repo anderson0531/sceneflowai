@@ -4017,7 +4017,7 @@ function SceneCard({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deleteSceneConfirmOpen, setDeleteSceneConfirmOpen] = useState(false)
   const [resetSegmentsDialogOpen, setResetSegmentsDialogOpen] = useState(false)
-  const [isResettingBeats, setIsResettingBeats] = useState(false)
+  const [isResettingSegments, setIsResettingSegments] = useState(false)
   
   // Generate All Audio confirmation dialog
   const [generateAllAudioConfirmOpen, setGenerateAllAudioConfirmOpen] = useState(false)
@@ -4656,7 +4656,7 @@ function SceneCard({
 
         {/* Next Step CTA Banner — contextual workflow guidance */}
         {!isOutline && isWorkflowOpen && (() => {
-          const hasVideoBeats = (() => {
+          const hasVideoSegments = (() => {
             if (!sceneProductionData?.isSegmented || !sceneProductionData.segments?.length) return false
             return sceneProductionData.segments.every(s => s.activeAssetUrl && s.assetType)
           })()
@@ -4670,7 +4670,7 @@ function SceneCard({
             hasDirection: !!scene.sceneDirection,
             hasFrame: !!scene.imageUrl,
             hasSegments: !!(sceneProductionData?.isSegmented && sceneProductionData.segments?.length),
-            hasVideoBeats,
+            hasVideoSegments,
             hasRender,
             activeTab: activeWorkflowTab as any,
           }
@@ -7275,21 +7275,21 @@ function SceneCard({
           </Dialog>
           
           <ResetSegmentsConfirmDialog
-            open={resetBeatsDialogOpen}
+            open={resetSegmentsDialogOpen}
             onOpenChange={setResetSegmentsDialogOpen}
             sceneNumber={sceneNumber}
             sceneHeading={formattedHeading}
             production={sceneProductionData ?? null}
-            isResetting={isResettingBeats}
+            isResetting={isResettingSegments}
             onConfirm={async () => {
               if (!onResetSegments) return
               const sceneId = scene.sceneId || scene.id || `scene-${sceneIdx}`
-              setIsResettingBeats(true)
+              setIsResettingSegments(true)
               try {
                 await Promise.resolve(onResetSegments(sceneId))
                 setResetSegmentsDialogOpen(false)
               } finally {
-                setIsResettingBeats(false)
+                setIsResettingSegments(false)
               }
             }}
           />

@@ -90,7 +90,7 @@ export function SceneProductionDirector({
   const [isBuilderOpen, setIsBuilderOpen] = useState(false)
 
   // Check if this scene already has segments
-  const hasExistingBeats = useMemo(() => {
+  const hasExistingSegments = useMemo(() => {
     // Treat the scene as having segments if there are any
     return (productionData?.segments?.length ?? 0) > 0
   }, [productionData])
@@ -151,7 +151,7 @@ export function SceneProductionDirector({
 
   const handleStartBuilding = useCallback(() => {
     // If segments exist, bypass the builder and initialize production directly
-    if (hasExistingBeats) {
+    if (hasExistingSegments) {
        onSegmentsCreated(productionData?.segments || [])
        return
     }
@@ -162,7 +162,7 @@ export function SceneProductionDirector({
   // ============================================================================
   // RENDER: Complete State (segments exist)
   // ============================================================================
-  if (hasExistingBeats) {
+  if (hasExistingSegments) {
     return null // Let SceneProductionManager handle existing segments
   }
 
@@ -342,7 +342,7 @@ export function SceneProductionDirector({
               )}
             >
               <Play className="w-4 h-4" />
-              {hasExistingBeats ? 'Start Production' : 'Generate Beats'}
+              {hasExistingSegments ? 'Start Production' : 'Generate Beats'}
             </Button>
           </div>
         </div>

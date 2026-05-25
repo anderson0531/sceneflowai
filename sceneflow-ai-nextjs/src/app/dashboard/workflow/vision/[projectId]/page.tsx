@@ -2160,15 +2160,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       // If pre-parsed segments are provided (from Paste Results), skip API call
-      if (prePardsedBeats && prePardsedBeats.length > 0) {
+      if (prePardsedSegments && prePardsedSegments.length > 0) {
         console.log('[handleInitializeSceneProduction] Processing pasted segments:', {
           sceneId,
           segmentCount: prePardsedSegments.length,
           firstSegment: prePardsedSegments[0]?.segmentId,
           hasRequiredFields: {
-            sequenceIndex: prePardsedBeats[0]?.sequenceIndex !== undefined,
-            references: !!prePardsedBeats[0]?.references,
-            takes: Array.isArray(prePardsedBeats[0]?.takes),
+            sequenceIndex: prePardsedSegments[0]?.sequenceIndex !== undefined,
+            references: !!prePardsedSegments[0]?.references,
+            takes: Array.isArray(prePardsedSegments[0]?.takes),
           }
         })
         
@@ -2568,7 +2568,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // Pass guidePrompt containing voice/dialogue/SFX for Veo 3.1 audio generation
             guidePrompt: options?.guidePrompt,
             segmentIndex: segmentIndexForApi,
-            totalBeats: totalBeatsForApi,
+            totalSegments: totalSegmentsForApi,
             existingStemSourceAudioUrl: segment.stemSeparation?.sourceAudioUrl,
             existingStemSourceHash: segment.stemSeparation?.sourceHash,
             existingStemStatus: segment.stemSeparation?.status,
@@ -2883,7 +2883,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         resolution: options?.resolution,
                         guidePrompt: options?.guidePrompt,
                         segmentIndex: retrySegmentIndexForApi,
-                        totalBeats: retryTotalBeatsForApi,
+                        totalSegments: retryTotalSegmentsForApi,
                         existingStemSourceAudioUrl: segment?.stemSeparation?.sourceAudioUrl,
                         existingStemSourceHash: segment?.stemSeparation?.sourceHash,
                         existingStemStatus: segment?.stemSeparation?.status,
@@ -3071,7 +3071,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         resolution: options?.resolution,
                         guidePrompt: options?.guidePrompt,
                         segmentIndex: retrySegmentIndexForApi,
-                        totalBeats: retryTotalBeatsForApi,
+                        totalSegments: retryTotalSegmentsForApi,
                         existingStemSourceAudioUrl: segment?.stemSeparation?.sourceAudioUrl,
                         existingStemSourceHash: segment?.stemSeparation?.sourceHash,
                         existingStemStatus: segment?.stemSeparation?.status,
@@ -3357,7 +3357,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         
         // Calculate start time based on last segment
         const lastSegment = segments[afterIndex]
-        const newStartTime = lastBeat ? lastSegment.endTime : 0
+        const newStartTime = lastSegment ? lastSegment.endTime : 0
         
         // Create new segment
         const newSegmentId = `seg_${sceneId}_${segments.length + 1}_${Date.now()}`
@@ -3547,7 +3547,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             const durationPerBeat = totalEstablishingDuration / analysis.beats.length
             
             // Create establishing shot segments for each beat
-            const establishingBeats = analysis.beats.map((beat: any, idx: number) => {
+            const establishingSegments = analysis.beats.map((beat: any, idx: number) => {
               const startTime = idx * durationPerBeat
               const endTime = (idx + 1) * durationPerBeat
               
@@ -3583,7 +3583,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             // Shift all existing segments forward in time
             const updatedSegments = current.segments.map((segment, idx) => ({
               ...segment,
-              sequenceIndex: idx + establishingBeats.length,
+              sequenceIndex: idx + establishingSegments.length,
               startTime: segment.startTime + totalEstablishingDuration,
               endTime: segment.endTime + totalEstablishingDuration,
             }))
@@ -3635,7 +3635,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         
         const establishingSegmentId = `seg_${sceneId}_establishing_${Date.now()}`
-        const establishingBeat = {
+        const establishingSegment = {
           segmentId: establishingSegmentId,
           sequenceIndex: 0,
           startTime: 0,
@@ -3898,7 +3898,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Calculate minimum segments required (max 8s per video segment)
       const MAX_SEGMENT_SECONDS = 12
-      const minimumBeatsRequired = Math.max(1, Math.ceil(totalAudioDuration / MAX_SEGMENT_SECONDS))
+      const minimumSegmentsRequired = Math.max(1, Math.ceil(totalAudioDuration / MAX_SEGMENT_SECONDS))
       
       console.log(`[Auto-Align] Audio duration: ${totalAudioDuration.toFixed(1)}s, minimum segments: ${minimumSegmentsRequired}`)
       
@@ -3914,7 +3914,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           // Get the last segment's end time as starting point
           const lastSegment = segments[segments.length - 1]
-          let nextStartTime = lastBeat ? lastSegment.endTime : 0
+          let nextStartTime = lastSegment ? lastSegment.endTime : 0
           
           // Calculate duration for new segments (split remaining time evenly)
           const remainingDuration = totalAudioDuration - nextStartTime
@@ -11228,7 +11228,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         hasCallAction,
                         hasAudio,
                         hasRender,
-                        status: (allBeatsComplete && hasRender) ? 'complete' as const
+                        status: (allSegmentsComplete && hasRender) ? 'complete' as const
                           : (hasCallAction || hasFrame || hasAudio) ? 'in-progress' as const
                           : 'not-started' as const,
                         score: scene.audienceAnalysis?.score || scene.scoreAnalysis?.overallScore,
@@ -11283,8 +11283,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         const prevProductionData = sceneProductionState[prevSceneId]
                         const prevSegments = prevProductionData?.segments || []
                         
-                        if (prevBeats.length > 0) {
-                          const lastPrevSeg = prevBeats[prevBeats.length - 1]
+                        if (prevSegments.length > 0) {
+                          const lastPrevSeg = prevSegments[prevSegments.length - 1]
                           if (lastPrevSeg?.endTime) {
                             startTime += lastPrevSeg.endTime
                           }

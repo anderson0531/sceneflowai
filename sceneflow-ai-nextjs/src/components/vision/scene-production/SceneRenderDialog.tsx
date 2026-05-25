@@ -151,7 +151,7 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
     if (renderMode === 'animatic') return 'animatic'
     // If explicitly video but no video segments, fall back to animatic
     const hasVideoSegments = segments.some(s => s.activeAssetUrl && s.status === 'COMPLETE')
-    if (!hasVideoBeats) return 'animatic'
+    if (!hasVideoSegments) return 'animatic'
     return 'video'
   }, [renderMode, segments])
 

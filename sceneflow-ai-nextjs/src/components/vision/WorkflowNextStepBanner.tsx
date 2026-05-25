@@ -25,8 +25,8 @@ export interface WorkflowState {
   hasAudio: boolean
   hasDirection: boolean
   hasFrame: boolean
-  hasBeats: boolean
-  hasVideoBeats: boolean
+  hasSegments: boolean
+  hasVideoSegments: boolean
   hasRender: boolean
   /** Current active workflow tab */
   activeTab?: 'dialogueAction' | 'callAction'
@@ -106,7 +106,7 @@ function getNextStep(state: WorkflowState): NextStepAction | null {
     }
   }
 
-  if (!state.hasVideoBeats) {
+  if (!state.hasVideoSegments) {
     return {
       label: 'Generate Video Beats',
       description: 'Generate AI video for each segment using Frame-to-Video (FTV) mode for best results.',

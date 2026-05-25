@@ -2943,7 +2943,7 @@ export function SceneProductionMixer({
   
   // Video-only segments for Video render mode (excludes image-only segments)
   // Check assetType === 'video' OR infer from URL (for uploaded videos where assetType may not be set)
-  const videoBeats = useMemo(() => {
+  const videoSegments = useMemo(() => {
     return segments.filter(s => {
       if (s.status !== 'COMPLETE' || !s.activeAssetUrl) return false
       // Explicit video asset type
@@ -2958,9 +2958,9 @@ export function SceneProductionMixer({
     })
   }, [segments])
 
-  const canMixerStitchRender = videoBeats.length > 0
+  const canMixerStitchRender = videoSegments.length > 0
 
-  const animaticPreviewBeats = useMemo(() => {
+  const animaticPreviewSegments = useMemo(() => {
     return segments
       .map((s) => {
         const url = animaticKeyframeUrl(s)
@@ -2970,29 +2970,29 @@ export function SceneProductionMixer({
       .filter((s): s is SceneSegment => s != null)
   }, [segments])
 
-  const previewBeats = useMemo(() => {
+  const previewSegments = useMemo(() => {
     if (productionTarget.streamType === 'animatic') {
-      if (animaticPreviewBeats.length > 0) return animaticPreviewBeats
+      if (animaticPreviewSegments.length > 0) return animaticPreviewSegments
       return renderedSegments
     }
-    if (videoBeats.length > 0) return videoBeats
+    if (videoSegments.length > 0) return videoSegments
     return renderedSegments
   }, [productionTarget.streamType, animaticPreviewSegments, videoSegments, renderedSegments])
 
   const nonEnglishBeatsMissingBackgroundStem = useMemo(() => {
     if (productionTarget.language === 'en') return 0
-    return previewBeats.filter((seg) => !seg.stemSeparation?.backgroundStemUrl).length
-  }, [previewBeats, productionTarget.language])
+    return previewSegments.filter((seg) => !seg.stemSeparation?.backgroundStemUrl).length
+  }, [previewSegments, productionTarget.language])
 
   const previewPlaybackKind: 'video' | 'image-sequence' =
-    productionTarget.streamType === 'animatic' && animaticPreviewBeats.length > 0
+    productionTarget.streamType === 'animatic' && animaticPreviewSegments.length > 0
       ? 'image-sequence'
       : 'video'
 
   // Playback timeline length (dialogue-aware segment durations, matches preview scrubber)
   const videoTotalDuration = useMemo(() => {
-    return previewBeats.reduce((sum, seg) => sum + getPlaybackSegmentDuration(seg), 0)
-  }, [previewBeats, getPlaybackSegmentDuration])
+    return previewSegments.reduce((sum, seg) => sum + getPlaybackSegmentDuration(seg), 0)
+  }, [previewSegments, getPlaybackSegmentDuration])
   
   // Calculate max audio duration across all enabled tracks
   const maxAudioDuration = useMemo(() => {
@@ -3444,11 +3444,11 @@ export function SceneProductionMixer({
   // === Local Render Handler ===
   const handleLocalRender = useCallback(async () => {
     const renderingAnimatic = productionTarget.streamType === 'animatic'
-    const sourceBeats = renderingAnimatic ? previewBeats : videoBeats
+    const sourceSegments = renderingAnimatic ? previewSegments : videoSegments
     console.log('[LocalRender] Checking segments:', {
       totalSegments: segments.length,
-      videoBeatsCount: videoBeats.length,
-      sourceBeatsCount: sourceBeats.length,
+      videoSegmentsCount: videoSegments.length,
+      sourceSegmentsCount: sourceSegments.length,
       streamType: productionTarget.streamType,
       renderedSegmentsCount: renderedSegments.length,
       segments: segments.map(s => ({
@@ -3460,18 +3460,18 @@ export function SceneProductionMixer({
       }))
     })
     
-    if (sourceBeats.length === 0) {
+    if (sourceSegments.length === 0) {
       // Provide helpful context about what segments exist
       const completeSegments = segments.filter(s => s.status === 'COMPLETE' && s.activeAssetUrl)
-      const imageBeats = completeBeats.filter(s => s.assetType === 'image')
+      const imageSegments = completeSegments.filter(s => s.assetType === 'image')
       
       let errorMessage = renderingAnimatic
         ? 'No keyframe/image segments available for Animatic render mode. Generate keyframes first.'
         : 'No video segments available for Video render mode. '
-      if (!renderingAnimatic && imageBeats.length > 0) {
-        errorMessage += `Found ${imageBeats.length} image-only segment(s) - use Animatic mode for images, or upload/generate video content.`
-      } else if (!renderingAnimatic && completeBeats.length > 0) {
-        errorMessage += `Found ${completeBeats.length} segment(s) but they don't appear to be video. Check that your uploaded files are video format (mp4, webm, mov).`
+      if (!renderingAnimatic && imageSegments.length > 0) {
+        errorMessage += `Found ${imageSegments.length} image-only segment(s) - use Animatic mode for images, or upload/generate video content.`
+      } else if (!renderingAnimatic && completeSegments.length > 0) {
+        errorMessage += `Found ${completeSegments.length} segment(s) but they don't appear to be video. Check that your uploaded files are video format (mp4, webm, mov).`
       } else if (!renderingAnimatic) {
         errorMessage += 'Generate or upload video content first.'
       }
@@ -3542,8 +3542,8 @@ export function SceneProductionMixer({
           assetType: localAssetType,
           startTime: (() => {
             let segStart = 0
-            for (let i = 0; i < Math.min(idx, sourceBeats.length); i++) {
-              segStart += getPlaybackSegmentDuration(sourceBeats[i])
+            for (let i = 0; i < Math.min(idx, sourceSegments.length); i++) {
+              segStart += getPlaybackSegmentDuration(sourceSegments[i])
             }
             return segStart
           })(),
@@ -3612,7 +3612,7 @@ export function SceneProductionMixer({
       }
 
       if (useStemDubbingPolicy && !renderingAnimatic) {
-        videoBeats.forEach(seg => {
+        videoSegments.forEach(seg => {
           const backgroundStemUrl = seg.stemSeparation?.backgroundStemUrl
           if (!backgroundStemUrl) return
           audioClips.push({
@@ -3804,7 +3804,7 @@ export function SceneProductionMixer({
   
   // === Headless Render Handler (GCP Cloud Run) ===
   const handleHeadlessRender = useCallback(async () => {
-    if (videoBeats.length === 0) {
+    if (videoSegments.length === 0) {
       setRenderError('No video segments available for headless rendering')
       return
     }
@@ -4117,7 +4117,7 @@ export function SceneProductionMixer({
   // === Render ===
   
   const isRendering = renderStatus === 'preparing' || renderStatus === 'rendering'
-  const hasRenderablePreview = previewBeats.length > 0
+  const hasRenderablePreview = previewSegments.length > 0
 
   return (
     <div className="bg-gray-900/50 rounded-xl border border-purple-500/30 overflow-hidden">
@@ -4172,7 +4172,7 @@ export function SceneProductionMixer({
             {/* Left Column: Video Preview + Timeline */}
             <div className="space-y-4 min-w-0">
               <ScenePreviewPlayer
-                segments={previewBeats}
+                segments={previewSegments}
                 playbackKind={previewPlaybackKind}
                 audioTracks={audioTracks}
                 currentAudioUrls={playbackAudioUrls}
@@ -4236,7 +4236,7 @@ export function SceneProductionMixer({
                       timelineDuration={totalDuration}
                       textOverlays={textOverlays}
                       onTextOverlayChange={updateOverlay}
-                      segments={previewBeats}
+                      segments={previewSegments}
                       segmentDurations={segmentDurationsForTimeline}
                       dialogueClips={audioTracks.dialogue.enabled ? dialogueClipsForTimeline : []}
                       currentPlaybackTime={playbackTime}
@@ -4983,7 +4983,7 @@ export function SceneProductionMixer({
               
               {productionTarget.streamType !== 'animatic' && (
                 <SegmentAudioControls
-                  segments={previewBeats}
+                  segments={previewSegments}
                   segmentConfigs={segmentAudioConfigs}
                   onConfigChange={setSegmentAudioConfigs}
                   masterVolume={masterSegmentVolume}
@@ -5162,7 +5162,7 @@ export function SceneProductionMixer({
             <Film className="w-16 h-16 mx-auto mb-4 text-gray-600 opacity-40" />
             <h4 className="text-lg font-medium text-gray-300 mb-2">Nothing to preview yet</h4>
             <p className="text-sm text-gray-500 max-w-md mx-auto">
-              {animaticPreviewBeats.length > 0
+              {animaticPreviewSegments.length > 0
                 ? 'Use Preview output → Animatic above to preview keyframes, or generate segment videos in the Director’s Console for full video output and stitching.'
                 : 'Generate keyframes or video segments in the Director’s Console above, then mix and render from this panel.'}
             </p>

@@ -231,7 +231,7 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
   }, [isMuted])
   
   // Build playable segments list with fallbacks
-  const playableBeats: PlayableSegment[] = segments
+  const playableSegments: PlayableSegment[] = segments
     .sort((a, b) => a.sequenceIndex - b.sequenceIndex)
     .map((segment, idx) => {
       const hasVideo = segment.status === 'COMPLETE' && 
@@ -255,12 +255,12 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
     })
   
   const currentPlayable = playableSegments[currentSegmentIndex] || null
-  const totalBeats = playableBeats.length
-  const completedCount = playableBeats.filter(p => p.hasVideo).length
+  const totalSegments = playableSegments.length
+  const completedCount = playableSegments.filter(p => p.hasVideo).length
   
   // Calculate total duration
-  const totalDuration = playableBeats.reduce((sum, p) => sum + p.duration, 0)
-  const elapsedBeforeCurrent = playableBeats
+  const totalDuration = playableSegments.reduce((sum, p) => sum + p.duration, 0)
+  const elapsedBeforeCurrent = playableSegments
     .slice(0, currentSegmentIndex)
     .reduce((sum, p) => sum + p.duration, 0)
   
@@ -523,7 +523,7 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
       >
         <DialogTitle className="sr-only">Scene {sceneNumber} Video Preview</DialogTitle>
         <DialogDescription className="sr-only">
-          Playing {completedCount} of {totalBeats} rendered video segments
+          Playing {completedCount} of {totalSegments} rendered video segments
         </DialogDescription>
 
         {/* Header */}
@@ -542,7 +542,7 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
           
           <div className="flex items-center gap-4">
             <span className="text-sm text-slate-400">
-              {completedCount} of {totalBeats} segments rendered
+              {completedCount} of {totalSegments} segments rendered
             </span>
             <Button
               variant="ghost"
@@ -653,8 +653,8 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
                 style={{ width: `${overallProgress}%` }}
               />
               {/* Beat dividers */}
-              {playableBeats.slice(0, -1).map((p, idx) => {
-                const position = playableBeats
+              {playableSegments.slice(0, -1).map((p, idx) => {
+                const position = playableSegments
                   .slice(0, idx + 1)
                   .reduce((sum, s) => sum + s.duration, 0) / totalDuration * 100
                 return (

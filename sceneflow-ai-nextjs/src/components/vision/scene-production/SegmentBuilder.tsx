@@ -745,7 +745,7 @@ export function SegmentBuilder({
   
   // Check if existing segments are stale (for post-finalization view)
   const existingSegmentsStale = useMemo(() => {
-    if (!hasExistingBeats) return false
+    if (!hasExistingSegments) return false
     const firstSegment = existingSegments[0]
     const savedHash = firstSegment.promptContext?.visualDescriptionHash
     if (!savedHash) return false
@@ -1112,7 +1112,7 @@ export function SegmentBuilder({
   // Auto-initialize when the builder is opened and not already generated
   const hasAutoInitialized = useRef(false)
   useEffect(() => {
-    if (!hasExistingVideoAssets && !hasExistingBeats && !isAnalyzing && !hasAutoInitialized.current && hasSceneDirection) {
+    if (!hasExistingVideoAssets && !hasExistingSegments && !isAnalyzing && !hasAutoInitialized.current && hasSceneDirection) {
       hasAutoInitialized.current = true
       // We wrap it in a setTimeout to avoid React state update during render issues
       setTimeout(() => {
@@ -1135,15 +1135,15 @@ export function SegmentBuilder({
   )
 
   const handleSkipVideoPrompts = useCallback(() => {
-    if (!stagedBeats?.length) return
-    finalizeAndClose(stagedBeats)
+    if (!stagedSegments?.length) return
+    finalizeAndClose(stagedSegments)
     toast.message('Beats saved without Veo prompts', {
       description: 'You can generate video prompts later from the segment workflow if needed.',
     })
-  }, [stagedBeats, finalizeAndClose])
+  }, [stagedSegments, finalizeAndClose])
 
   const handleGenerateVideoPrompts = useCallback(async () => {
-    if (!pendingApprovedDirections?.length || !stagedBeats?.length) return
+    if (!pendingApprovedDirections?.length || !stagedSegments?.length) return
 
     setIsAnalyzing(true)
     setError(null)
@@ -1216,7 +1216,7 @@ export function SegmentBuilder({
     segmentCountTarget,
     customInstructions,
     pendingApprovedDirections,
-    stagedBeats,
+    stagedSegments,
     videoPromptNotes,
     keyframesConfirmed,
     runVideoPromptsOverlayPreamble,
@@ -1249,7 +1249,7 @@ export function SegmentBuilder({
         {/* Center Panel: Timeline & Beats */}
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
           {/* Phase: Analyze */}
-          {phase === 'video_prompts' && stagedBeats && (
+          {phase === 'video_prompts' && stagedSegments && (
             <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
               <Card className="w-full max-w-lg bg-gray-900/60 border-gray-700/50">
                 <CardHeader>
@@ -1258,7 +1258,7 @@ export function SegmentBuilder({
                     Video prompts (step 2)
                   </CardTitle>
                   <CardDescription className="text-gray-400">
-                    {stagedBeats.length} segments are staged with keyframe copy. Generate full Veo prompts after you are
+                    {stagedSegments.length} segments are staged with keyframe copy. Generate full Veo prompts after you are
                     happy with keyframes, or skip and fill prompts later.
                   </CardDescription>
                 </CardHeader>
@@ -1344,7 +1344,7 @@ export function SegmentBuilder({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Existing Beats Warning */}
-                  {hasExistingBeats && (
+                  {hasExistingSegments && (
                     <Alert className={cn(
                       "border",
                       existingSegmentsStale 
@@ -1669,7 +1669,7 @@ export function SegmentBuilder({
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Analyzing Scene...
                       </>
-                    ) : hasExistingBeats ? (
+                    ) : hasExistingSegments ? (
                       <>
                         <RefreshCw className="w-4 h-4 mr-2" />
                         Regenerate Beats

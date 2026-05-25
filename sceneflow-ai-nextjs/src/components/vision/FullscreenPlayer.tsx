@@ -391,9 +391,9 @@ export function FullscreenPlayer({
     
     // If LML analysis available, use per-segment elastic timing
     // Otherwise fall back to flat playback offset
-    if (lmlAnalysis && lmlAnalysis.segmentDynamics.length === validBeats.length) {
+    if (lmlAnalysis && lmlAnalysis.segmentDynamics.length === validSegments.length) {
       let cumulativeStart = 0
-      return validBeats.map((seg, idx) => {
+      return validSegments.map((seg, idx) => {
         const dynamics = lmlAnalysis.segmentDynamics[idx]
         const clip: VisualClip = {
           id: seg.segmentId,
@@ -417,7 +417,7 @@ export function FullscreenPlayer({
     // Fallback: flat playback offset (legacy behavior)
     const effectiveOffset = selectedLanguage !== baselineLanguage ? playbackOffset : 0
     let cumulativeOffset = 0
-    return validBeats.map(seg => {
+    return validSegments.map(seg => {
       const baseDuration = seg.endTime - seg.startTime
       const clip: VisualClip = {
         id: seg.segmentId,

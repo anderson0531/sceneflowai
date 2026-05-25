@@ -517,7 +517,7 @@ export function SceneProductionManager({
       const parsed = JSON.parse(pastedJson)
       const rawSegments = parsed.segments || parsed
       
-      if (!Array.isArray(rawBeats) || rawBeats.length === 0) {
+      if (!Array.isArray(rawSegments) || rawSegments.length === 0) {
         toast.error('Invalid JSON: expected an array of segments or { segments: [...] }')
         return
       }

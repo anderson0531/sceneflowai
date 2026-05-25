@@ -216,7 +216,7 @@ interface SceneForOptimization {
 export interface DirectionOptimizationConfig {
   selectedTemplates: string[]
   customInstruction: string
-  propagateToBeats: boolean
+  propagateToSegments: boolean
   enableSubsurfaceScattering: boolean
   includeNegativePrompts: boolean
   negativePrompts: string[]
@@ -250,7 +250,7 @@ export function SceneDirectionOptimizeDialog({
   // State
   const [selectedTemplates, setSelectedTemplates] = useState<Set<string>>(new Set())
   const [customInstruction, setCustomInstruction] = useState('')
-  const [propagateToBeats, setPropagateToBeats] = useState(true)
+  const [propagateToSegments, setPropagateToSegments] = useState(true)
   const [enableSubsurfaceScattering, setEnableSubsurfaceScattering] = useState(true)
   const [includeNegativePrompts, setIncludeNegativePrompts] = useState(true)
   const [negativePrompts, setNegativePrompts] = useState<string[]>(DEFAULT_NEGATIVE_PROMPTS)
@@ -283,7 +283,7 @@ export function SceneDirectionOptimizeDialog({
     if (isOpen) {
       setSelectedTemplates(new Set())
       setCustomInstruction('')
-      setPropagateToBeats(true)
+      setPropagateToSegments(true)
       setEnableSubsurfaceScattering(true)
       setIncludeNegativePrompts(true)
       setNegativePrompts(DEFAULT_NEGATIVE_PROMPTS)
@@ -476,7 +476,7 @@ export function SceneDirectionOptimizeDialog({
     const config: DirectionOptimizationConfig = {
       selectedTemplates: Array.from(selectedTemplates),
       customInstruction: customInstruction.trim(),
-      propagateToBeats,
+      propagateToSegments,
       enableSubsurfaceScattering,
       includeNegativePrompts,
       negativePrompts,
@@ -880,8 +880,8 @@ export function SceneDirectionOptimizeDialog({
               <div className="flex items-center gap-2 h-8">
                 <Switch
                   id="propagate"
-                  checked={propagateToBeats}
-                  onCheckedChange={setPropagateToBeats}
+                  checked={propagateToSegments}
+                  onCheckedChange={setPropagateToSegments}
                 />
                 <Label htmlFor="propagate" className="text-xs cursor-pointer">
                   Propagate to all segments
