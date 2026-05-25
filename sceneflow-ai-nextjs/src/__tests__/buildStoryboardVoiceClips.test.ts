@@ -4,6 +4,7 @@ import {
   buildBeatFirstPlaybackTimeline,
   buildStoryboardVoiceClips,
   buildStoryboardVisualTimeline,
+  enumerateStoryboardFrameSlots,
   getCurrentStoryboardVisualFrame,
   getDialogueFrameUrl,
 } from '@/lib/storyboard/types'
@@ -787,6 +788,69 @@ describe('buildStoryboardVoiceClips', () => {
     expect(visualFrames[0].beatId).toBe('bt_narr')
     expect(visualFrames[0].imageUrl).toBe('https://example.com/narrator.jpg')
     expect(visualFrames).toHaveLength(2)
+  })
+
+  it('matches storyboard frame slot count to playback visual frames', () => {
+    const scene = {
+      action: 'Wide shot',
+      imageUrl: 'https://example.com/establishing.jpg',
+      dialogue: [
+        {
+          lineId: 'ln_narr',
+          kind: 'narration',
+          character: 'NARRATOR',
+          line: 'Welcome.',
+          audioUrl: NARRATION_URL,
+          duration: 6,
+        },
+        {
+          lineId: 'ln_sarah',
+          character: 'Sarah Chen',
+          line: 'Hello.',
+          audioUrl: SARAH_URL,
+          duration: 3,
+        },
+      ],
+      beats: [
+        {
+          beatId: 'bt_action',
+          kind: 'action',
+          actionDescription: 'Wide shot',
+          storyboardImageUrl: 'https://example.com/establishing.jpg',
+        },
+        {
+          beatId: 'bt_narr',
+          kind: 'narration',
+          character: 'NARRATOR',
+          line: 'Welcome.',
+          lineId: 'ln_narr',
+          storyboardImageUrl: 'https://example.com/narrator.jpg',
+          audioUrl: NARRATION_URL,
+          durationSeconds: 6,
+        },
+        {
+          beatId: 'bt_sarah',
+          kind: 'dialogue',
+          character: 'Sarah Chen',
+          line: 'Hello.',
+          lineId: 'ln_sarah',
+          storyboardImageUrl: 'https://example.com/sarah.jpg',
+          audioUrl: SARAH_URL,
+          durationSeconds: 3,
+        },
+      ],
+    }
+
+    const slots = enumerateStoryboardFrameSlots(scene)
+    const { voiceClips, visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [NARRATION_URL]: 6,
+      [SARAH_URL]: 3,
+    })
+
+    expect(slots.filter((s) => s.kind !== 'custom')).toHaveLength(visualFrames.length)
+    expect(voiceClips).toHaveLength(2)
+    expect(visualFrames[0].beatId).toBe(slots[0].beatId)
+    expect(visualFrames[0].beatId).toBe(voiceClips[0].beatId)
   })
 })
 

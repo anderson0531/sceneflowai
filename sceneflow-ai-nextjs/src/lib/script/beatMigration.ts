@@ -380,34 +380,23 @@ export function isAutoLeadingEstablishingBeat(
 ): boolean {
   if (beatIndex !== 0 || beat.kind !== 'action') return false
 
-  const explicitAction = String(scene.action ?? '').trim()
   const desc = String(beat.actionDescription ?? '').trim()
   const fallback = deriveSceneActionFallbackText(scene)
   const hasImage = typeof scene.imageUrl === 'string' && scene.imageUrl.trim().length > 0
 
-  // Keep intentional scripted action (explicit text that is not migration fallback).
-  if (explicitAction && desc === explicitAction && explicitAction !== fallback) {
-    return false
+  const beats = allBeats ?? (Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : [])
+  const nextBeat = beats[1]
+
+  // Any leading action immediately before a spoken beat is excluded from playback/slots.
+  if (nextBeat && isSpokenBeatKind(nextBeat.kind)) {
+    return true
   }
 
   if (!desc || desc === 'Establishing shot') return true
 
-  // Migration sync copies fallback blocking into scene.action and beat.actionDescription.
   if (fallback && desc === fallback) return true
 
   if (hasImage && /^establishing(\s*shot)?$/i.test(desc)) return true
-
-  // Leading action before the first script dialogue line is redundant for playback.
-  const beats = allBeats ?? (Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : [])
-  const nextBeat = beats[1]
-  const dialogue = Array.isArray(scene.dialogue)
-    ? (scene.dialogue as Array<Record<string, unknown>>)
-    : []
-  if (nextBeat && isSpokenBeatKind(nextBeat.kind) && dialogue.length > 0) {
-    if (beatAlignsWithDialogueLine(nextBeat, dialogue[0])) {
-      return true
-    }
-  }
 
   return false
 }

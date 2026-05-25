@@ -818,7 +818,7 @@ function resolveActionBeatDuration(beat: ReturnType<typeof getSceneBeats>[number
   return DEFAULT_ACTION_BEAT_DURATION_SEC
 }
 
-/** Drop leading silent visual frames and rebase so the first voice clip starts at t=0. */
+/** Rebase playback times so the first voice clip starts at t=0. */
 function alignPlaybackTimelineToFirstVoice(
   voiceClips: StoryboardAudioClip[],
   visualFrames: StoryboardVisualFrame[]
@@ -827,45 +827,40 @@ function alignPlaybackTimelineToFirstVoice(
     return { voiceClips, visualFrames }
   }
 
-  const firstClip = voiceClips[0]
-  let frameStartIdx = 0
-  // Strip every leading frame that is not the first voice beat (even at the same t=0).
-  while (
-    frameStartIdx < visualFrames.length &&
-    visualFrames[frameStartIdx].beatId !== firstClip.beatId
-  ) {
-    frameStartIdx++
+  const offset = voiceClips[0]?.startTime ?? 0
+  if (Math.abs(offset) <= 0.001) {
+    return {
+      voiceClips,
+      visualFrames: visualFrames.map((frame, index) => ({
+        ...frame,
+        duration:
+          index < visualFrames.length - 1
+            ? visualFrames[index + 1].startTime - frame.startTime
+            : frame.duration,
+      })),
+    }
   }
 
-  if (frameStartIdx >= visualFrames.length) {
-    return { voiceClips, visualFrames }
-  }
-
-  let alignedClips = voiceClips
-  let alignedFrames = visualFrames.slice(frameStartIdx)
-  const offset = alignedFrames[0]?.startTime ?? 0
-
-  if (Math.abs(offset) > 0.001) {
-    const rebaseTime = (time: number) => Math.max(0, time - offset)
-    alignedClips = voiceClips.map((clip) => ({
-      ...clip,
-      startTime: rebaseTime(clip.startTime),
-    }))
-    alignedFrames = alignedFrames.map((frame) => ({
-      ...frame,
-      startTime: rebaseTime(frame.startTime),
-    }))
-  }
-
-  alignedFrames = alignedFrames.map((frame, index) => ({
+  const rebaseTime = (time: number) => Math.max(0, time - offset)
+  const alignedClips = voiceClips.map((clip) => ({
+    ...clip,
+    startTime: rebaseTime(clip.startTime),
+  }))
+  const alignedFrames = visualFrames.map((frame) => ({
     ...frame,
-    duration:
-      index < alignedFrames.length - 1
-        ? alignedFrames[index + 1].startTime - frame.startTime
-        : frame.duration,
+    startTime: rebaseTime(frame.startTime),
   }))
 
-  return { voiceClips: alignedClips, visualFrames: alignedFrames }
+  return {
+    voiceClips: alignedClips,
+    visualFrames: alignedFrames.map((frame, index) => ({
+      ...frame,
+      duration:
+        index < alignedFrames.length - 1
+          ? alignedFrames[index + 1].startTime - frame.startTime
+          : frame.duration,
+    })),
+  }
 }
 
 /**

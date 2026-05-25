@@ -308,15 +308,18 @@ export function AudioGalleryPlayer({
 
   const currentVisualFrame = useMemo(() => {
     if (visualFrames.length > 0) {
+      const timeFrame = getCurrentStoryboardVisualFrame(visualFrames, currentTime)
       if (currentClip?.beatId) {
         const beatAligned = visualFrames.find((frame) => frame.beatId === currentClip.beatId)
-        if (beatAligned) return beatAligned
+        if (beatAligned && timeFrame?.beatId === beatAligned.beatId) return timeFrame
+        if (beatAligned && currentTime >= beatAligned.startTime - 0.001) return beatAligned
       }
       if (currentClip) {
         const clipAligned = visualFrames.find((frame) => frame.clipId === currentClip.id)
-        if (clipAligned) return clipAligned
+        if (clipAligned && timeFrame?.clipId === clipAligned.clipId) return timeFrame
+        if (clipAligned && currentTime >= clipAligned.startTime - 0.001) return clipAligned
       }
-      return getCurrentStoryboardVisualFrame(visualFrames, currentTime)
+      return timeFrame
     }
     const establishingUrl = getEstablishingFrameUrl(currentScene)
     if (!establishingUrl) return undefined
