@@ -2,6 +2,7 @@
 
 import { Download, Loader, Pause, Play, RefreshCw, Trash2, Upload, Volume2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { saveAudioFile } from '@/lib/download/saveFile'
 import { findDialogueAudioForLine } from '@/components/vision/scene-production/audioTrackBuilder'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import type { DialogueLine } from '@/lib/script/segmentTypes'
@@ -226,14 +227,27 @@ export function SegmentDialogueCard({
                 <RefreshCw className="w-4 h-4" />
               )}
             </button>
-            <a
-              href={audioUrl}
-              download
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (!audioUrl) return
+                void saveAudioFile({
+                  url: audioUrl,
+                  sceneNumber: sceneIdx + 1,
+                  track: isNarrator ? 'narration' : 'dialogue',
+                  character: line.character,
+                  index: dialogueIndex ?? undefined,
+                }).catch((error) => {
+                  console.error('[SegmentDialogueCard] Audio download failed:', error)
+                  toast.error('Failed to save audio file')
+                })
+              }}
               className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
               title="Download"
             >
               <Download className="w-4 h-4" />
-            </a>
+            </button>
             <button
               onClick={(e) => {
                 e.stopPropagation()

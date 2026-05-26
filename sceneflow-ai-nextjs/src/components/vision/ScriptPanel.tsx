@@ -64,6 +64,7 @@ import { SceneDirectionOptimizeDialog, type DirectionOptimizationConfig } from '
 import { Badge } from '@/components/ui/badge'
 import { WorkflowNextStepBanner, type WorkflowState } from './WorkflowNextStepBanner'
 import { toast } from 'sonner'
+import { saveAudioFile } from '@/lib/download/saveFile'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/reports'
@@ -3642,6 +3643,20 @@ interface SceneCardProps {
   productionReadiness?: ProductionReadiness
 }
 
+async function downloadSceneAudioFile(
+  e: React.MouseEvent,
+  url: string,
+  options: Omit<Parameters<typeof saveAudioFile>[0], 'url'>
+) {
+  e.stopPropagation()
+  try {
+    await saveAudioFile({ url, ...options })
+  } catch (error) {
+    console.error('[ScriptPanel] Audio download failed:', error)
+    toast.error('Failed to save audio file')
+  }
+}
+
 /**
  * One legacy (non-segmented) SFX cue row, with the same Auto / Short / Medium /
  * Long preset chips as `SegmentSfxCard`. Used inside `SceneCard` for scenes
@@ -3777,14 +3792,20 @@ function LegacySfxCueRow({
               >
                 {playingAudio === sfxAudio ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </button>
-              <a
-                href={sfxAudio}
-                download
-                className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-800 rounded inline-flex"
+              <button
+                type="button"
+                onClick={(e) => {
+                  void downloadSceneAudioFile(e, sfxAudio, {
+                    sceneNumber: sceneIdx + 1,
+                    track: 'sfx',
+                    index: sfxIdx,
+                  })
+                }}
+                className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
                 title="Download SFX"
               >
                 <Download className="w-4 h-4" />
-              </a>
+              </button>
               <button
                 type="button"
                 onClick={(e) => {
@@ -5735,14 +5756,19 @@ function SceneCard({
                                 <RefreshCw className="w-4 h-4" />
                               )}
                             </button>
-                            <a
-                              href={narrationUrl}
-                              download
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                void downloadSceneAudioFile(e, narrationUrl, {
+                                  sceneNumber: sceneIdx + 1,
+                                  track: 'narration',
+                                })
+                              }}
                               className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
                               title="Download Narration"
                             >
                               <Download className="w-4 h-4" />
-                            </a>
+                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -6085,14 +6111,21 @@ function SceneCard({
                                     <RefreshCw className="w-4 h-4" />
                                   )}
                                 </button>
-                                <a
-                                  href={audioEntry.audioUrl}
-                                  download
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    void downloadSceneAudioFile(e, audioEntry.audioUrl, {
+                                      sceneNumber: sceneIdx + 1,
+                                      track: 'dialogue',
+                                      character: d.character,
+                                      index: i,
+                                    })
+                                  }}
                                   className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
                                   title="Download Dialogue"
                                 >
                                   <Download className="w-4 h-4" />
-                                </a>
+                                </button>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -6232,14 +6265,19 @@ function SceneCard({
                                 <RefreshCw className="w-4 h-4" />
                               )}
                             </button>
-                            <a
-                              href={scene.musicAudio}
-                              download
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                void downloadSceneAudioFile(e, scene.musicAudio, {
+                                  sceneNumber: sceneIdx + 1,
+                                  track: 'music',
+                                })
+                              }}
                               className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded"
                               title="Download Music"
                             >
                               <Download className="w-4 h-4" />
-                            </a>
+                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()

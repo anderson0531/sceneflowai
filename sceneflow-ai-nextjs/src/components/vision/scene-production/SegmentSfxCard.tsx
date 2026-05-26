@@ -5,6 +5,7 @@ import { Download, Loader2, Pause, Play, Sparkles, Trash2, Volume2 } from 'lucid
 import { Volume2 as VolumeIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
+import { saveAudioFile } from '@/lib/download/saveFile'
 import type { SegmentSFX } from '@/lib/script/segmentTypes'
 import {
   resolveAutoSfxDuration,
@@ -185,14 +186,26 @@ export function SegmentSfxCard({
                   <Play className="w-4 h-4" />
                 )}
               </button>
-              <a
-                href={audioUrl}
-                download
-                className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-800 rounded inline-flex"
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (!audioUrl) return
+                  void saveAudioFile({
+                    url: audioUrl,
+                    sceneNumber: sceneIdx + 1,
+                    track: 'sfx',
+                    index: legacyIdx ?? positionInSegment,
+                  }).catch((error) => {
+                    console.error('[SegmentSfxCard] Audio download failed:', error)
+                    toast.error('Failed to save audio file')
+                  })
+                }}
+                className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
                 title="Download SFX"
               >
                 <Download className="w-4 h-4" />
-              </a>
+              </button>
               <button
                 type="button"
                 onClick={(e) => {

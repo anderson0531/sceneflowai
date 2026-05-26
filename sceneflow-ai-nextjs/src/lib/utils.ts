@@ -45,12 +45,6 @@ export async function forceDownload(url: string, filename: string): Promise<void
     setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100)
   } catch (error) {
     console.error('[forceDownload] Error:', error)
-    // Fallback: Try a standard link download if blob fetch fails
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    link.target = '_blank'
-    link.rel = 'noopener noreferrer'
-    link.click()
+    throw error
   }
 }
