@@ -1,7 +1,7 @@
 'use client'
 
-import { useRef, useState } from 'react'
-import { Play, Pause, Volume2, VolumeX, Film } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Play, Pause, Volume2, VolumeX, Film, Maximize, Minimize } from 'lucide-react'
 import { StudioVideoWatermark } from '@/components/landing/StudioVideoWatermark'
 import { cn } from '@/lib/utils'
 
@@ -9,12 +9,45 @@ interface LandingSampleVideoProps {
   src: string
   placeholderTitle: string
   className?: string
+  /** Show enter/exit fullscreen control (Express animatic sample). */
+  enableFullscreen?: boolean
 }
 
-export function LandingSampleVideo({ src, placeholderTitle, className }: LandingSampleVideoProps) {
+export function LandingSampleVideo({
+  src,
+  placeholderTitle,
+  className,
+  enableFullscreen = false,
+}: LandingSampleVideoProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(!!src)
   const [isMuted, setIsMuted] = useState(true)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
+  const toggleFullscreen = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      if (!enableFullscreen || !containerRef.current) return
+
+      if (document.fullscreenElement) {
+        void document.exitFullscreen?.()
+        return
+      }
+
+      void containerRef.current.requestFullscreen?.()
+    },
+    [enableFullscreen]
+  )
 
   if (!src?.trim()) {
     return (
@@ -52,8 +85,10 @@ export function LandingSampleVideo({ src, placeholderTitle, className }: Landing
 
   return (
     <div
+      ref={containerRef}
       className={cn(
         'relative w-full h-full min-h-[200px] bg-black group cursor-pointer overflow-hidden',
+        isFullscreen && 'flex items-center justify-center',
         className
       )}
       onClick={togglePlay}
@@ -61,7 +96,7 @@ export function LandingSampleVideo({ src, placeholderTitle, className }: Landing
       <video
         ref={videoRef}
         src={src}
-        className="w-full h-full object-cover"
+        className={cn('w-full h-full object-cover', isFullscreen && 'max-h-screen')}
         autoPlay
         muted={isMuted}
         loop
@@ -73,7 +108,12 @@ export function LandingSampleVideo({ src, placeholderTitle, className }: Landing
         controlsList="nodownload"
       />
       <StudioVideoWatermark />
-      <div className="absolute inset-0 z-20 flex items-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+      <div
+        className={cn(
+          'absolute inset-0 z-20 flex items-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none',
+          isFullscreen && 'opacity-100'
+        )}
+      >
         <div className="w-full bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 flex items-center gap-3 pointer-events-auto">
           <button
             type="button"
@@ -91,6 +131,16 @@ export function LandingSampleVideo({ src, placeholderTitle, className }: Landing
           >
             {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
           </button>
+          {enableFullscreen && (
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="ml-auto text-white hover:text-cyan-400 transition"
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            >
+              {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+            </button>
+          )}
         </div>
       </div>
     </div>

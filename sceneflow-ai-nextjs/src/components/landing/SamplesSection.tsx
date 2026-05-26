@@ -91,6 +91,7 @@ export function SamplesSection() {
           src={LANDING_SAMPLE.animaticVideoUrl}
           placeholderTitle="Express animatic sample — configure animaticVideoUrl"
           className={MEDIA_PANE_CLASS}
+          enableFullscreen
         />
       )
     }
