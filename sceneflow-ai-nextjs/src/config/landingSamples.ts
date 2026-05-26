@@ -6,7 +6,8 @@ export const LANDING_SAMPLE = {
   projectTitle: 'The White House Waltz: A Controlled Thaw',
   /** Public storyboard share slug, e.g. 'TheDawnOfSyntheticMinds'. Empty = placeholder UI. */
   storyboardShareSlug: 'TheWhiteHouseWaltzAControlledThaw',
-  animaticVideoUrl: '',
+  animaticVideoUrl:
+    'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Whitehouse%20Waltz.mp4',
   fullVideoUrl: '',
 } as const
 
