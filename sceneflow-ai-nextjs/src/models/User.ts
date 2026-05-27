@@ -23,6 +23,9 @@ export interface UserAttributes {
   storage_used_gb: number
   paddle_customer_id?: string | null
   paddle_subscription_id?: string | null
+  whop_user_id?: string | null
+  whop_membership_id?: string | null
+  payment_provider?: string | null
   one_time_tiers_purchased: string[]
   // Compliance/Trust fields
   trust_score: number                    // 0-100, increases with positive behavior
@@ -61,6 +64,9 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   declare storage_used_gb: number
   declare paddle_customer_id: string | null | undefined
   declare paddle_subscription_id: string | null | undefined
+  declare whop_user_id: string | null | undefined
+  declare whop_membership_id: string | null | undefined
+  declare payment_provider: string | null | undefined
   declare one_time_tiers_purchased: string[]
   declare trust_score: number
   declare voice_cloning_enabled: boolean
@@ -186,6 +192,19 @@ User.init(
     paddle_subscription_id: {
       type: DataTypes.STRING(255),
       allowNull: true,
+    },
+    whop_user_id: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    whop_membership_id: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    payment_provider: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      defaultValue: 'whop',
     },
     one_time_tiers_purchased: {
       type: DataTypes.ARRAY(DataTypes.STRING),

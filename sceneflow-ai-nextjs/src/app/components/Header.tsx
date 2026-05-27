@@ -92,6 +92,12 @@ export function Header() {
       setIsAuthModalOpen(true)
       window.history.replaceState({}, '', window.location.pathname)
     }
+    if (params.get('signup') === 'explorer' && !isAuthenticated) {
+      sessionStorage.setItem('pendingCheckoutTier', 'explorer')
+      setAuthMode('signup')
+      setIsAuthModalOpen(true)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
   }, [isAuthenticated])
 
   return (

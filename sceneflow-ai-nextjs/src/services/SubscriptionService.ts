@@ -1,6 +1,11 @@
 import { User, SubscriptionTier, CreditLedger, Project, sequelize } from '@/models'
 import { Op } from 'sequelize'
 import { resolveUser } from '@/lib/userHelper'
+import {
+  getTierCredits,
+  normalizeTierName,
+  TIER_CATALOG,
+} from '@/lib/billing/tierCatalog'
 
 export interface SubscriptionDetails {
   tier: SubscriptionTier | null
@@ -324,56 +329,223 @@ export class SubscriptionService {
   static async canPurchaseOneTimeTier(userId: string, tierName: string): Promise<boolean> {
     try {
       const user = await resolveUser(userId)
-    
+      const normalized = normalizeTierName(tierName) || tierName
       const purchased = user.one_time_tiers_purchased || []
-      return !purchased.includes(tierName)
+      return !purchased.includes(normalized) && !purchased.includes('trial')
     } catch {
       return false
     }
   }
 
   /**
-   * Grant one-time tier credits (1,000 addon credits)
+   * Grant Explorer one-time purchase (750 addon credits)
+   */
+  static async grantExplorerPurchase(userId: string): Promise<void> {
+    return this.grantOneTimeTier(userId, 'explorer')
+  }
+
+  /**
+   * Grant one-time tier credits from catalog
    */
   static async grantOneTimeTier(userId: string, tierName: string): Promise<void> {
+    const normalizedTier = normalizeTierName(tierName)
+    if (!normalizedTier || !TIER_CATALOG[normalizedTier].isOneTime) {
+      throw new Error(`Invalid one-time tier: ${tierName}`)
+    }
+
+    const creditsToGrant = TIER_CATALOG[normalizedTier].credits
+    const amountPaid = TIER_CATALOG[normalizedTier].priceUsd
+
     const resolvedUser = await resolveUser(userId)
     const userUuid = resolvedUser.id
     return await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
-      
-      // Check if already purchased
+
       const purchased = user.one_time_tiers_purchased || []
-      if (purchased.includes(tierName)) {
+      if (
+        purchased.includes(normalizedTier) ||
+        (normalizedTier === 'explorer' && purchased.includes('trial'))
+      ) {
         throw new Error('One-time tier already purchased')
       }
-      
-      // Add 1,000 addon credits (never expire)
+
       const prevAddonCredits = Number(user.addon_credits || 0)
       const prevTotalCredits = Number(user.credits || 0)
-      
-      user.addon_credits = prevAddonCredits + 1000
-      
-      // Update total credits
+
+      user.addon_credits = prevAddonCredits + creditsToGrant
       user.credits = Number(user.addon_credits) + Number(user.subscription_credits_monthly || 0)
-      
-      // Mark tier as purchased
-      user.one_time_tiers_purchased = [...purchased, tierName]
-      
+      user.one_time_tiers_purchased = [...purchased, normalizedTier]
+      user.payment_provider = user.payment_provider || 'whop'
+
       await user.save({ transaction: tx })
-      
-      // Log credit grant
+
       await CreditLedger.create({
         user_id: userUuid,
-        delta_credits: 1000,
+        delta_credits: creditsToGrant,
         prev_balance: prevTotalCredits,
         new_balance: Number(user.credits),
         reason: 'addon_purchase',
         credit_type: 'addon',
-        ref: `trial_purchase`,
-        meta: { tier: tierName, amount_paid: 5.00 }
+        ref: `${normalizedTier}_purchase`,
+        meta: { tier: normalizedTier, amount_paid: amountPaid },
       } as any, { transaction: tx })
     })
+  }
+
+  /**
+   * Add addon credits (credit packs)
+   */
+  static async addCredits(
+    userId: string,
+    amount: number,
+    reason: string,
+    ref: string
+  ): Promise<void> {
+    return this.purchaseAddonCredits(userId, amount, amount / 100)
+  }
+
+  /**
+   * Activate or renew a subscription tier
+   */
+  static async activateSubscription(
+    userId: string,
+    tierName: string,
+    options: {
+      whopMembershipId?: string
+      whopUserId?: string
+      billingPeriodEnd?: Date
+      source?: string
+      grantCredits?: boolean
+    } = {}
+  ): Promise<void> {
+    const normalizedTier = normalizeTierName(tierName)
+    if (!normalizedTier || TIER_CATALOG[normalizedTier].isOneTime) {
+      throw new Error(`Invalid subscription tier: ${tierName}`)
+    }
+
+    const tier = await SubscriptionTier.findOne({ where: { name: normalizedTier } })
+    if (!tier) {
+      throw new Error(`Subscription tier "${normalizedTier}" not found in database`)
+    }
+
+    const resolvedUser = await resolveUser(userId)
+    const userUuid = resolvedUser.id
+    const creditsToGrant =
+      options.grantCredits === false ? 0 : getTierCredits(normalizedTier)
+
+    return await sequelize.transaction(async (tx) => {
+      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
+      if (!user) throw new Error('User not found')
+
+      const prevCredits = Number(user.credits || 0)
+      const endDate = options.billingPeriodEnd || (() => {
+        const date = new Date()
+        date.setDate(date.getDate() + 30)
+        return date
+      })()
+
+      user.subscription_tier_id = tier.id
+      user.subscription_status = 'active'
+      user.subscription_start_date = user.subscription_start_date || new Date()
+      user.subscription_end_date = endDate
+      user.payment_provider = 'whop'
+
+      if (options.whopMembershipId) {
+        user.whop_membership_id = options.whopMembershipId
+      }
+      if (options.whopUserId) {
+        user.whop_user_id = options.whopUserId
+      }
+
+      if (creditsToGrant > 0) {
+        user.subscription_credits_monthly = creditsToGrant
+        user.subscription_credits_expires_at = endDate
+        const addonCredits = Number(user.addon_credits || 0)
+        user.credits = addonCredits + creditsToGrant
+
+        await CreditLedger.create({
+          user_id: userUuid,
+          delta_credits: creditsToGrant,
+          prev_balance: prevCredits,
+          new_balance: Number(user.credits),
+          reason: 'subscription_allocation',
+          credit_type: 'subscription',
+          ref: `whop_${normalizedTier}_${Date.now()}`,
+          meta: {
+            tier: normalizedTier,
+            source: options.source || 'whop_webhook',
+            expires_at: endDate.toISOString(),
+          },
+        } as any, { transaction: tx })
+      }
+
+      await user.save({ transaction: tx })
+    })
+  }
+
+  /**
+   * Grant subscription credits (used by webhook renewals)
+   */
+  static async grantSubscriptionCredits(userId: string, credits: number): Promise<void> {
+    const subscription = await this.getUserSubscription(userId)
+    const tierName = subscription.tier?.name
+    if (!tierName) {
+      throw new Error('No subscription tier found for user')
+    }
+    await this.activateSubscription(userId, tierName, {
+      source: 'subscription_renewal',
+      grantCredits: true,
+    })
+  }
+
+  /**
+   * Deactivate subscription after cancellation or failed renewal
+   */
+  static async deactivateSubscription(
+    userId: string,
+    reason: string = 'membership_invalid'
+  ): Promise<void> {
+    const resolvedUser = await resolveUser(userId)
+    const userUuid = resolvedUser.id
+
+    return await sequelize.transaction(async (tx) => {
+      const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
+      if (!user) throw new Error('User not found')
+
+      user.subscription_status = 'cancelled'
+      await user.save({ transaction: tx })
+
+      await CreditLedger.create({
+        user_id: userUuid,
+        delta_credits: 0,
+        prev_balance: Number(user.credits || 0),
+        new_balance: Number(user.credits || 0),
+        reason: 'adjustment',
+        credit_type: 'subscription',
+        ref: `subscription_deactivated_${Date.now()}`,
+        meta: { reason },
+      } as any, { transaction: tx })
+    })
+  }
+
+  /**
+   * Record a refund — flag account; full credit clawback handled manually if needed
+   */
+  static async recordRefund(userId: string, paymentId: string): Promise<void> {
+    const resolvedUser = await resolveUser(userId)
+    const userUuid = resolvedUser.id
+
+    await CreditLedger.create({
+      user_id: userUuid,
+      delta_credits: 0,
+      prev_balance: 0,
+      new_balance: 0,
+      reason: 'adjustment',
+      credit_type: 'addon',
+      ref: `refund_${paymentId}`,
+      meta: { payment_id: paymentId, action: 'refund_recorded' },
+    } as any)
   }
 
   /**

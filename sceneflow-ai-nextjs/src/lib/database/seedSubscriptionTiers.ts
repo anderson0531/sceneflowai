@@ -8,12 +8,12 @@ import { SubscriptionTier, sequelize } from '@/models';
 
 const SUBSCRIPTION_TIERS = [
   {
-    name: 'trial' as const,
-    display_name: 'Trial',
-    monthly_price_usd: 4.99,
-    annual_price_usd: 4.99,
-    included_credits_monthly: 1500,
-    storage_gb: 1,
+    name: 'explorer' as const,
+    display_name: 'Explorer',
+    monthly_price_usd: 9.00,
+    annual_price_usd: 9.00,
+    included_credits_monthly: 750,
+    storage_gb: 5,
     max_resolution: '1080p' as const,
     ai_model_access: 'standard' as const,
     byok_access: false,
@@ -21,14 +21,14 @@ const SUBSCRIPTION_TIERS = [
     collaboration_seats: 0,
     is_active: true,
     is_one_time: true,
-    max_projects: 1,
-    max_scenes_per_project: 5,
+    max_projects: 3,
+    max_scenes_per_project: 20,
     features: [
-      '1,500 credits (one-time)',
+      '750 credits (one-time)',
       'Credits never expire',
-      '1 GB storage',
+      '5 GB storage',
       '1080p max resolution',
-      'Veo 3.1 Fast',
+      'Full platform access',
       'Email support'
     ]
   },

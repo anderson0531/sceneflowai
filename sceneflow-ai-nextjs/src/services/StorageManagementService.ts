@@ -5,7 +5,7 @@
  * - Storage usage tracking and breakdown
  * - File archival to GCS Nearline/Coldline
  * - File restoration from cold storage
- * - Storage addon purchases via Paddle
+ * - Storage addon purchases via Whop
  * - Auto-cleanup of expired files
  * 
  * @version 2.32
@@ -415,7 +415,7 @@ export async function getRestoreProgress(
 // =============================================================================
 
 /**
- * Initiate a storage addon purchase via Paddle
+ * Initiate a storage addon purchase via Whop
  */
 export async function purchaseStorageAddon(
   userId: string,
@@ -431,7 +431,7 @@ export async function purchaseStorageAddon(
     }
   }
   
-  // Get Paddle price ID from environment
+  // Get Whop plan ID from environment
   const priceIdKey = `PADDLE_STORAGE_${addonId.toUpperCase()}_PRICE_ID`
   const priceId = process.env[priceIdKey]
   
@@ -440,13 +440,13 @@ export async function purchaseStorageAddon(
       addonId,
       priceId: '',
       success: false,
-      error: `Paddle price ID not configured for ${addonId}`,
+      error: `Whop plan ID not configured for ${addonId}`,
     }
   }
   
   try {
-    // Create Paddle checkout session
-    // This would integrate with Paddle API
+    // Create Whop checkout session
+    // This would integrate with Whop API
     const checkoutUrl = `/api/subscription/purchase-storage?addon=${addonId}&user=${userId}`
     
     return {

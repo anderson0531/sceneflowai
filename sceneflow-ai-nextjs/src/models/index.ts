@@ -24,6 +24,7 @@ import CreditPricing from './CreditPricing'
 import VoiceConsent from './VoiceConsent'
 import UserVoiceClone from './UserVoiceClone'
 import ModerationEvent from './ModerationEvent'
+import PaymentWebhookEvent from './PaymentWebhookEvent'
 
 // Define model associations
 User.hasMany(Project, {
@@ -183,7 +184,8 @@ export {
   // Compliance Layer models
   VoiceConsent,
   UserVoiceClone,
-  ModerationEvent
+  ModerationEvent,
+  PaymentWebhookEvent
 }
 
 // Export default for convenience
@@ -213,5 +215,6 @@ export default {
   // Compliance Layer models
   VoiceConsent,
   UserVoiceClone,
-  ModerationEvent
+  ModerationEvent,
+  PaymentWebhookEvent
 }

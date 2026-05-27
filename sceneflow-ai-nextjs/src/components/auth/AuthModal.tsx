@@ -38,7 +38,14 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
 
   const handleSuccess = () => {
     onClose()
-    // Navigate to dashboard after successful authentication
+    const pendingTier = typeof window !== 'undefined'
+      ? sessionStorage.getItem('pendingCheckoutTier')
+      : null
+    if (pendingTier) {
+      sessionStorage.removeItem('pendingCheckoutTier')
+      router.push(`/dashboard/settings/billing?checkoutTier=${pendingTier}`)
+      return
+    }
     router.push('/dashboard')
   }
 

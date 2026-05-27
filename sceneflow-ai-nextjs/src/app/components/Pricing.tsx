@@ -1,5 +1,7 @@
 'use client'
 
+import { MOR_FOOTER_LINE } from '@/config/landing/valuePropCopy'
+
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle, X, Zap, Film, Clapperboard, Users, ChevronDown, ChevronUp, ArrowRight, Clock, DollarSign, Calculator, Layers, Volume2 } from 'lucide-react'
@@ -627,7 +629,7 @@ export function Pricing() {
             <span className="text-xs text-gray-400">Secure Payments</span>
           </div>
           <p className="text-xs text-gray-500 max-w-lg mx-auto">
-            Payments processed by our authorized Merchant of Record, who handles tax calculation and compliance.
+            {MOR_FOOTER_LINE}
             All major credit cards accepted. Prices shown exclude applicable taxes.
           </p>
         </motion.div>

@@ -26,7 +26,7 @@ export default function RefundPolicyPage() {
             </p>
             <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 mt-4">
               <p className="text-gray-300 text-sm">
-                <strong className="text-purple-400">Payment Processing:</strong> All payments and refunds are processed by our authorized Merchant of Record payment partner, who handles payment processing, tax calculation, and compliance on our behalf. Sales tax, VAT, or GST collected at the time of purchase will be refunded proportionally with any approved refund.
+                <strong className="text-purple-400">Payment Processing:</strong> All payments and refunds are processed by Whop, our Merchant of Record, who handles payment processing, tax calculation, and compliance on our behalf. Sales tax, VAT, or GST collected at the time of purchase will be refunded proportionally with any approved refund.
               </p>
             </div>
           </section>
@@ -53,7 +53,7 @@ export default function RefundPolicyPage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">3. One-Time Purchases</h2>
             
-            <h3 className="text-xl font-medium text-white mb-3">3.1 Explorer ($9.99 Starter Pack)</h3>
+            <h3 className="text-xl font-medium text-white mb-3">3.1 Explorer ($9 Starter Pack)</h3>
             <p className="text-gray-300 leading-relaxed mb-4">
               The Explorer one-time purchase is refundable within 7 days if no credits have been used. Once credits are consumed, refunds are not available.
             </p>

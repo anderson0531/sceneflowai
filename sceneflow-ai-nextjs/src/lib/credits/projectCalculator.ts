@@ -143,7 +143,7 @@ export interface DetailedCostBreakdown {
       exportCost: number;
       totalCost: number;
     };
-    /** Payment processor fees (Paddle) */
+    /** Payment processor fees (Whop) */
     payment: {
       percentFee: number;
       fixedFee: number;
@@ -433,9 +433,9 @@ export function calculateDetailedProjectCost(params: FullProjectParameters): Det
     exportMinutes: safeParams.video.totalMinutes,
   });
 
-  // Calculate payment processing fees (Paddle: 5% + $0.50)
-  const paymentPercentFee = totalUsdCost * PLATFORM_OVERHEAD_COSTS.payment.PADDLE_FEE_PERCENT;
-  const paymentFixedFee = PLATFORM_OVERHEAD_COSTS.payment.PADDLE_FIXED_FEE;
+  // Calculate payment processing fees (Whop: 2.7% + $0.30 domestic cards)
+  const paymentPercentFee = totalUsdCost * PLATFORM_OVERHEAD_COSTS.payment.WHOP_FEE_PERCENT;
+  const paymentFixedFee = PLATFORM_OVERHEAD_COSTS.payment.WHOP_FIXED_FEE;
   const paymentTotalFee = paymentPercentFee + paymentFixedFee;
 
   const platformCosts = {

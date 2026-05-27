@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Check, 
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
+import { MOR_FOOTER_LINE } from '@/config/landing/valuePropCopy'
 
 // Credit costs for calculator
 const creditCosts = {
@@ -467,8 +469,21 @@ function ProjectBudgetCalculator() {
 }
 
 export function PricingCredits() {
+  const { data: session } = useSession()
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly')
   const annualDiscount = 0.17 // 17% discount
+
+  const handlePlanClick = useCallback((tierName: string) => {
+    if (session?.user) {
+      window.location.href = `/dashboard/settings/billing?checkoutTier=${tierName}`
+      return
+    }
+    if (tierName === 'explorer') {
+      window.location.href = '/?signup=explorer'
+      return
+    }
+    window.location.href = '/?signup=1'
+  }, [session])
 
   return (
     <section id="pricing" className="relative py-24 md:py-32 overflow-hidden scroll-mt-20">
@@ -558,7 +573,7 @@ export function PricingCredits() {
                   <div className="text-sm text-amber-400">{explorerPlan.includedCredits} credits</div>
                 </div>
                 <Button
-                  onClick={() => window.location.href = '/?signup=explorer'}
+                  onClick={() => handlePlanClick('explorer')}
                   className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6"
                 >
                   Start Test Flight
@@ -682,7 +697,7 @@ export function PricingCredits() {
 
                 {/* CTA */}
                 <Button
-                  onClick={() => window.location.href = '/?signup=1'}
+                  onClick={() => handlePlanClick(plan.id)}
                   className={cn(
                     'w-full py-3 font-medium',
                     plan.popular
@@ -892,7 +907,7 @@ export function PricingCredits() {
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-6 max-w-md mx-auto">
-            Payments processed by Paddle, our Merchant of Record. Tax and compliance handled on behalf of Life Focus, LLC.
+            {MOR_FOOTER_LINE}
           </p>
         </motion.div>
       </div>

@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { SubscriptionService } from '../../../../services/SubscriptionService'
+import { isWhopPaymentEnabled } from '@/lib/billing/tierCatalog'
 
-// Paddle Webhook Handler
+// Paddle Webhook Handler (deprecated — use /api/webhooks/whop when PAYMENT_PROVIDER=whop)
 // Reference: https://developer.paddle.com/webhooks/overview
 
 export async function POST(req: NextRequest) {
+  if (isWhopPaymentEnabled()) {
+    return NextResponse.json(
+      { error: 'Paddle webhooks are disabled. Use Whop webhooks.' },
+      { status: 410 }
+    )
+  }
+
   try {
     const rawBody = await req.text()
     const signature = req.headers.get('paddle-signature')
@@ -160,10 +168,10 @@ async function handleTransactionCompleted(
   }
   
   // Check if this is a Trial purchase
-  if (tierName === 'trial') {
-    console.log(`[Paddle Webhook] Processing Trial purchase for user: ${userId}`)
+  if (tierName === 'trial' || tierName === 'explorer') {
+    console.log(`[Paddle Webhook] Processing Explorer purchase for user: ${userId}`)
     try {
-      await SubscriptionService.grantOneTimeTier(userId, 'trial')
+      await SubscriptionService.grantExplorerPurchase(userId)
       console.log('[Paddle Webhook] Trial credits granted successfully')
     } catch (error: any) {
       console.error('[Paddle Webhook] Failed to grant Trial credits:', error)

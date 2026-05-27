@@ -646,12 +646,18 @@ export const PLATFORM_OVERHEAD_COSTS = {
     HIVE_AUDIO_PER_MINUTE: 0.02,
   },
   
-  /** Payment processor fees (Paddle MoR) */
+  /** Payment processor fees (Whop MoR) */
   payment: {
-    /** Paddle fee percentage */
-    PADDLE_FEE_PERCENT: 0.05, // 5% of transaction
-    /** Paddle fixed fee per transaction */
-    PADDLE_FIXED_FEE: 0.50,
+    /** Whop domestic card fee percentage */
+    WHOP_FEE_PERCENT: 0.027, // 2.7%
+    /** Whop fixed fee per transaction */
+    WHOP_FIXED_FEE: 0.30,
+    /** Optional MoR tax handling when enabled */
+    WHOP_TAX_HANDLING_PERCENT: 0.005,
+    /** @deprecated Use WHOP_FEE_PERCENT */
+    PADDLE_FEE_PERCENT: 0.027,
+    /** @deprecated Use WHOP_FIXED_FEE */
+    PADDLE_FIXED_FEE: 0.30,
   },
   
   /** Infrastructure overhead */
