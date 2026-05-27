@@ -37,6 +37,8 @@ import {
 } from '@/lib/types/audienceResonance'
 import { BlueprintTtsControls } from './BlueprintTtsControls'
 import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRefine'
+import { blueprintCategoryToSection, scrollToBlueprintSection } from '@/lib/blueprint/blueprintProgress'
+import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
 import { buildBlueprintARNarrationText } from '@/lib/blueprint/arNarrationText'
 
 const ResonanceRadarChart = dynamic(
@@ -61,6 +63,7 @@ export interface AudienceResonancePanelV3Props {
   onAudienceDefinitionSave?: (def: AudienceDefinition) => Promise<void>
   onAnalysisComplete?: (persisted: PersistedBlueprintAudienceResonance) => void
   onOpenBlueprintRefine?: (opts?: OpenBlueprintRefineOptions) => void
+  onScrollToSection?: (section: string) => void
 }
 
 const V3_CATEGORY_AXIS_IDS: Record<string, ResonanceAxis['id']> = {
@@ -69,6 +72,14 @@ const V3_CATEGORY_AXIS_IDS: Record<string, ResonanceAxis['id']> = {
   'Concept Hook': 'originality',
   'Character Connection': 'character-depth',
   'Clarity & Structure': 'pacing',
+}
+
+const CATEGORY_SECTION_MAP: Record<string, string> = {
+  'Audience Appeal': 'core',
+  'Genre & Tone Fit': 'tone',
+  'Concept Hook': 'story',
+  'Character Connection': 'characters',
+  'Clarity & Structure': 'beats',
 }
 
 function getBlueprintScoreTextClass(score: number): string {
@@ -127,6 +138,7 @@ export function AudienceResonancePanelV3({
   onAudienceDefinitionSave,
   onAnalysisComplete,
   onOpenBlueprintRefine,
+  onScrollToSection,
 }: AudienceResonancePanelV3Props) {
   const [localTreatment, setLocalTreatment] = useState(treatmentProp)
   const treatment = localTreatment || treatmentProp
@@ -580,13 +592,18 @@ export function AudienceResonancePanelV3({
                   >
                     Re-analyze
                   </button>
-                  {analysis.isReadyForProduction && onProceedToScripting && (
+                  {onProceedToScripting && (
                     <button
                       type="button"
                       onClick={onProceedToScripting}
-                      className="flex-1 px-3 py-2 text-xs bg-emerald-600 text-white rounded-lg"
+                      className={cn(
+                        'flex-1 px-3 py-2 text-xs text-white rounded-lg',
+                        analysis.isReadyForProduction
+                          ? 'bg-emerald-600'
+                          : 'bg-slate-700 hover:bg-slate-600'
+                      )}
                     >
-                      Start production
+                      {BLUEPRINT_COPY.startProduction}
                     </button>
                   )}
                   <button type="button" onClick={handleReset} className="p-2 text-gray-500 border border-slate-700 rounded-lg">
@@ -604,7 +621,13 @@ export function AudienceResonancePanelV3({
                     {analysis.deductions.map((d, i) => (
                       <li
                         key={i}
-                        className="flex justify-between text-xs text-gray-300 bg-slate-800/40 rounded px-2 py-1.5"
+                        className="flex justify-between text-xs text-gray-300 bg-slate-800/40 rounded px-2 py-1.5 cursor-pointer hover:bg-slate-700/50"
+                        onClick={() => {
+                          const section = blueprintCategoryToSection(d.category || '')
+                          scrollToBlueprintSection(section)
+                          onScrollToSection?.(section)
+                        }}
+                        title="Jump to matching Blueprint section"
                       >
                         <span className="flex-1 pr-2">{d.reason}</span>
                         <span className="text-red-400 font-mono shrink-0">−{d.points}</span>
@@ -674,9 +697,26 @@ export function AudienceResonancePanelV3({
                   Category scores
                   <ChevronDown className="w-4 h-4" />
                 </summary>
-                <div className="px-3 pb-3">
+                <div className="px-3 pb-3 space-y-2">
                   <ResonanceRadarChart axes={radarAxes} size="sm" />
                   <ResonanceRadarLegend axes={radarAxes} />
+                  {analysis.categories.map((cat) => (
+                    <button
+                      key={cat.name}
+                      type="button"
+                      onClick={() => {
+                        const section =
+                          CATEGORY_SECTION_MAP[cat.name] ??
+                          blueprintCategoryToSection(cat.name)
+                        scrollToBlueprintSection(section)
+                        onScrollToSection?.(section)
+                      }}
+                      className="w-full flex justify-between text-[11px] text-gray-400 hover:text-cyan-300 px-1 py-0.5 rounded hover:bg-slate-800/50"
+                    >
+                      <span>{cat.name}</span>
+                      <span className="font-mono">{cat.score}</span>
+                    </button>
+                  ))}
                 </div>
               </details>
             </motion.div>

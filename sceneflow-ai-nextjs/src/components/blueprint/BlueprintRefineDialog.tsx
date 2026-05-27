@@ -37,6 +37,7 @@ type Props = {
   variant: TreatmentVariant | null
   onClose: () => void
   onApply: (patch: Record<string, unknown>) => void
+  onRefineApplied?: (diff: FieldDiff[]) => void
   projectId?: string
   resonanceRecommendations?: BlueprintAudienceRecommendation[]
   /** Initial focus scope (from section pencil or AR fixSection) */
@@ -224,6 +225,7 @@ export function BlueprintRefineDialog({
   variant,
   onClose,
   onApply,
+  onRefineApplied,
   projectId,
   resonanceRecommendations,
   initialActiveTab,
@@ -347,6 +349,9 @@ export function BlueprintRefineDialog({
   const handleApplyPreview = useCallback(() => {
     if (!previewVariant) return
     onApply(previewVariant)
+    if (diff.length > 0 && onRefineApplied) {
+      onRefineApplied(diff)
+    }
     toast.success('Blueprint updated with balanced revision')
     if (onRequestReanalyze) {
       toast.message('Re-analyze audience resonance to refresh your score', {
@@ -357,7 +362,7 @@ export function BlueprintRefineDialog({
       })
     }
     onClose()
-  }, [previewVariant, onApply, onClose, onRequestReanalyze])
+  }, [previewVariant, onApply, onClose, onRequestReanalyze, diff, onRefineApplied])
 
   const handleDiscardPreview = () => {
     setPreviewVariant(null)

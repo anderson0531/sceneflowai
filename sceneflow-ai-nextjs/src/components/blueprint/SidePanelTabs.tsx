@@ -41,6 +41,9 @@ interface SidePanelTabsProps {
   onOpenBlueprintRefine?: (opts: OpenBlueprintRefineOptions) => void
   /** Increment to switch to the Collaborate tab (e.g. after creating a link). */
   collaborationTabSignal?: number
+  /** Increment to switch to the Resonance tab (e.g. after first generation). */
+  resonanceTabSignal?: number
+  onScrollToSection?: (section: string) => void
 }
 
 export function SidePanelTabs({ 
@@ -59,6 +62,8 @@ export function SidePanelTabs({
   onOpenBlueprintRefine,
   shareToken,
   collaborationTabSignal = 0,
+  resonanceTabSignal = 0,
+  onScrollToSection,
 }: SidePanelTabsProps) {
   const [activeTab, setActiveTab] = useState<'resonance' | 'collaboration'>('resonance')
 
@@ -67,6 +72,12 @@ export function SidePanelTabs({
       setActiveTab('collaboration')
     }
   }, [collaborationTabSignal])
+
+  React.useEffect(() => {
+    if (resonanceTabSignal > 0) {
+      setActiveTab('resonance')
+    }
+  }, [resonanceTabSignal])
   const { guide } = useGuideStore()
   const { updateTreatmentVariant } = useGuideStore() as any
   const activeVariantId = (guide as any)?.selectedTreatmentId || ((guide as any)?.treatmentVariants?.[0]?.id)
@@ -141,6 +152,7 @@ export function SidePanelTabs({
               onAudienceDefinitionSave={onAudienceDefinitionSave}
               onAnalysisComplete={onAnalysisComplete}
               onOpenBlueprintRefine={onOpenBlueprintRefine}
+              onScrollToSection={onScrollToSection}
             />
           ) : (
             <AudienceResonancePanel

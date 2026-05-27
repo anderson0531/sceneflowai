@@ -197,9 +197,9 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     description:
       'Transform raw concepts into structured, production-ready architectures. Automatically generate complete story beats, character arcs, and scene-by-scene structural outlines that serve as the flawless foundation for your project.',
     keyFeatures: [
+      'Generate → Review → Iterate → Start Production workflow',
       'Concept to structure in minutes — logline, beats, characters, and tone',
-      'Production-ready beat sheets — with runtime estimates',
-      'Treatment variants — A/B creative direction before you commit',
+      'Audience Resonance scoring with 80+ target before Production',
       'Collaborator share links — feedback synthesis into guided revision',
     ],
     screenshotSlot: 'Insert screenshot: Auto-generated Blueprint with story beats and character arcs',

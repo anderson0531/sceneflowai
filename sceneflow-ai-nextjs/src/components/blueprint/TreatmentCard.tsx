@@ -16,10 +16,10 @@ import type { BlueprintFixSection } from '@/lib/types/audienceResonance'
 import { BlueprintGeminiVoicePicker } from '@/components/blueprint/BlueprintGeminiVoicePicker'
 import { DirectorNoteBuilderDialog } from '@/components/tts/DirectorNoteBuilderDialog'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
-import OwnerCollabPanel from '@/components/studio/OwnerCollabPanel'
 import { useBlueprintTts } from '@/hooks/useBlueprintTts'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType } from '@/lib/types/reports'
+import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
 import { cn } from '@/lib/utils'
 
 export type TreatmentCardProps = {
@@ -27,6 +27,10 @@ export type TreatmentCardProps = {
   onShareBlueprint?: () => void
   isSharingBlueprint?: boolean
   shareUrl?: string | null
+  onStartProduction?: () => void
+  isStartingProduction?: boolean
+  startProductionEnabled?: boolean
+  onOpenCollaborate?: () => void
 }
 
 export function TreatmentCard({
@@ -34,6 +38,10 @@ export function TreatmentCard({
   onShareBlueprint,
   isSharingBlueprint = false,
   shareUrl: shareUrlFromParent,
+  onStartProduction,
+  isStartingProduction = false,
+  startProductionEnabled = true,
+  onOpenCollaborate,
 }: TreatmentCardProps = {}) {
   const router = useRouter()
   const { guide } = useGuideStore()
@@ -77,8 +85,6 @@ export function TreatmentCard({
   const [shareOpen, setShareOpen] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
-  const [isCreatingVision, setIsCreatingVision] = useState(false)
-  const [collabOpen, setCollabOpen] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [showReasoning, setShowReasoning] = useState(false)
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
@@ -178,59 +184,10 @@ export function TreatmentCard({
                   const v = variants.find(x => x.id === active) || variants[0]
                   const accent = v?.id === 'A' ? 'text-blue-300 border-blue-500 hover:bg-blue-500/10' : v?.id === 'B' ? 'text-purple-300 border-purple-500 hover:bg-purple-500/10' : 'text-emerald-300 border-emerald-500 hover:bg-emerald-500/10'
 
-                  const handleStartVision = async () => {
-                    try {
-                      setIsCreatingVision(true)
-                      
-                      // LOG VARIANT DATA BEFORE SENDING
-                      console.log('[Start Vision] Sending variant:', {
-                        title: v.title,
-                        hasBeats: !!v.beats,
-                        beatsCount: Array.isArray(v.beats) ? v.beats.length : 0,
-                        total_duration_seconds: v.total_duration_seconds,
-                        estimatedDurationMinutes: v.estimatedDurationMinutes,
-                        format_length: v.format_length
-                      })
-                      console.log('[Start Vision] BEATS DATA:', v.beats)
-                      console.log('[Start Vision] FULL VARIANT:', JSON.stringify({
-                        total_duration_seconds: v.total_duration_seconds,
-                        estimatedDurationMinutes: v.estimatedDurationMinutes,
-                        format_length: v.format_length,
-                        beatsCount: Array.isArray(v.beats) ? v.beats.length : 0,
-                        firstBeat: Array.isArray(v.beats) && v.beats[0] ? v.beats[0] : null
-                      }, null, 2))
-                      
-                      // Get or create user ID
-                      let userId = localStorage.getItem('authUserId')
-                      if (!userId) {
-                        userId = crypto.randomUUID()
-                        localStorage.setItem('authUserId', userId)
-                      }
-                      
-                      // Create project from Film Treatment variant
-                      const res = await fetch('/api/projects/from-variant', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          userId,
-                          variant: v // Send full variant with all data
-                        })
-                      })
-                      
-                      const data = await res.json()
-                      
-                      if (data.success && data.project) {
-                        try { const { toast } = require('sonner'); toast('Creating Vision...') } catch {}
-                        // Navigate to Vision page
-                        router.push(`/dashboard/workflow/vision/${data.project.id}`)
-                      } else {
-                        try { const { toast } = require('sonner'); toast('Failed to create project') } catch {}
-                      }
-                    } catch (e) {
-                      console.error('Vision creation error:', e)
-                      try { const { toast } = require('sonner'); toast('Failed to create Vision') } catch {}
-                    } finally {
-                      setIsCreatingVision(false)
+                  const handleStartProductionClick = () => {
+                    if (onStartProduction) {
+                      onStartProduction()
+                      return
                     }
                   }
 
@@ -252,15 +209,15 @@ export function TreatmentCard({
                               <PencilLine className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Edit Blueprint (E)</TooltipContent>
+                          <TooltipContent>{BLUEPRINT_COPY.editBlueprint} (E)</TooltipContent>
                         </Tooltip>
 
                         {/* Reimagine - major story changes */}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
-                              aria-label="Reimagine blueprint"
-                              title="Reimagine"
+                              aria-label={BLUEPRINT_COPY.reimagine}
+                              title={BLUEPRINT_COPY.reimagine}
                               onClick={() => setReimaginOpen(true)}
                               className="h-8 w-8 border border-gray-700 text-gray-200 hover:bg-gray-800"
                               variant="outline"
@@ -269,7 +226,7 @@ export function TreatmentCard({
                               <RefreshCw className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Reimagine</TooltipContent>
+                          <TooltipContent>{BLUEPRINT_COPY.reimagine}</TooltipContent>
                         </Tooltip>
 
                         {/* Preview/Print */}
@@ -429,24 +386,24 @@ export function TreatmentCard({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
-                              aria-busy={isCreatingVision}
-                              aria-label="Start Production"
-                              onClick={handleStartVision}
-                              disabled={isCreatingVision}
+                              aria-busy={isStartingProduction}
+                              aria-label={BLUEPRINT_COPY.startProduction}
+                              onClick={handleStartProductionClick}
+                              disabled={!startProductionEnabled || isStartingProduction}
                               className="h-8 px-2 bg-sf-primary text-white hover:bg-sf-accent disabled:opacity-50"
                               size="sm"
                             >
-                              {isCreatingVision ? (
+                              {isStartingProduction ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <ArrowRight className="h-4 w-4" />
                               )}
                               <span className="hidden md:inline ml-1.5">
-                                {isCreatingVision ? 'Creating...' : 'Start Production'}
+                                {isStartingProduction ? BLUEPRINT_COPY.startingProduction : BLUEPRINT_COPY.startProduction}
                               </span>
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Start production - generate script & visuals</TooltipContent>
+                          <TooltipContent>{BLUEPRINT_COPY.startProductionTooltip}</TooltipContent>
                         </Tooltip>
                       </div>
                     </TooltipProvider>
@@ -479,7 +436,7 @@ export function TreatmentCard({
                     )}
                   </div>
                   {/* Core Identifying Information */}
-                  <div className="space-y-1">
+                  <div className="space-y-1" data-blueprint-section="core">
                     <div className="flex items-center justify-between">
                       <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Core Identifying Information</div>
                       <Button
@@ -530,7 +487,7 @@ export function TreatmentCard({
                   </div>
 
                   {/* Narrative Structure & Plot */}
-                  <div className="space-y-1">
+                  <div className="space-y-1" data-blueprint-section="story">
                     <div className="flex items-center justify-between">
                       <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Story Setup</div>
                       <Button
@@ -559,7 +516,7 @@ export function TreatmentCard({
                   </div>
 
                   {/* Tone, Style, & Themes */}
-                  <div className="space-y-1">
+                  <div className="space-y-1" data-blueprint-section="tone">
                     <div className="flex items-center justify-between">
                       <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Tone, Style, & Themes</div>
                       <Button
@@ -598,7 +555,7 @@ export function TreatmentCard({
                   </div>
 
                   {/* Beats & Runtime */}
-                  <div className="space-y-1">
+                  <div className="space-y-1" data-blueprint-section="beats">
                     <div className="flex items-center justify-between">
                       <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Beats & Runtime</div>
                       <Button
@@ -636,7 +593,7 @@ export function TreatmentCard({
 
                   {/* Characters - Expanded View with Psychological Depth */}
                   {Array.isArray(v.character_descriptions) && v.character_descriptions.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="space-y-3" data-blueprint-section="characters">
                       <div className="flex items-center justify-between">
                         <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-2">
                           <Users className="w-3 h-3" />
@@ -734,7 +691,7 @@ export function TreatmentCard({
                         ))}
                       </div>
                       <div className="text-xs text-gray-600 dark:text-gray-400 italic mt-2 px-3">
-                        💡 Characters will be refined with images and detailed attributes in the Vision phase
+                        💡 Characters will be refined with images and detailed attributes in Production
                       </div>
                     </div>
                   ) : null}
@@ -890,14 +847,6 @@ export function TreatmentCard({
             onOpenChange={setReportPreviewOpen}
           />
         )}
-        {/* Owner Collaboration Panel */}
-        <OwnerCollabPanel
-          open={collabOpen}
-          onClose={()=> setCollabOpen(false)}
-          sessionId={sessionId}
-          activeVariantId={activeVariant.id}
-          onSelectVariant={(id)=> selectTreatmentVariant(id)}
-        />
         {/* Voice Selection Dialog */}
         <BlueprintGeminiVoicePicker
           open={tts.voiceDialogOpen}
@@ -911,40 +860,6 @@ export function TreatmentCard({
           initialPrompt={tts.directorNotes}
           onSave={tts.saveDirectorNotes}
         />
-        {/* Character Prompt Builder removed - now in Vision phase */}
-        {shareOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setShareOpen(false)} />
-            <div className="relative w-full max-w-lg mx-auto rounded-lg border border-gray-800 bg-gray-900 p-5 shadow-xl">
-              <div className="text-lg font-semibold text-white mb-2">Share collaboration link</div>
-              <div className="text-sm text-gray-300 mb-3">Send this link to your reviewers.</div>
-              <div className="flex items-center gap-2">
-                <input
-                  readOnly
-                  value={shareUrl || ''}
-                  onFocus={(e)=> (e.target as HTMLInputElement).select()}
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200"
-                />
-                <button
-                  type="button"
-                  onClick={async ()=> { if (shareUrl) { try { await navigator.clipboard?.writeText?.(shareUrl) } catch {} } }}
-                  className="px-3 py-1 rounded bg-gray-800 text-xs"
-                >Copy</button>
-                <a
-                  href={shareUrl || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-xs"
-                >Open</a>
-              </div>
-              <div className="mt-4 flex justify-end">
-                <button className="px-3 py-1 rounded bg-gray-800 text-xs" onClick={() => setShareOpen(false)}>Close</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Image Zoom Modal removed - now in Vision phase */}
       </Card>
     )
   }

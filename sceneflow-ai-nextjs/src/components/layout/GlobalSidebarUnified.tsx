@@ -229,11 +229,24 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   // Build progress items with computed completion status for Blueprint
   const progressItems = useMemo(() => {
     if (config.phase === 'blueprint') {
+      const meta = currentProject?.metadata as Record<string, unknown> | undefined
+      const variants = (meta?.treatmentVariants as unknown[]) ?? []
+      const ar = meta?.blueprintAudienceResonance as { analysis?: { overallScore?: number } } | undefined
+      const audienceDef = meta?.audienceDefinition as { profile?: { primaryAudience?: string } } | undefined
+      const arScore = ar?.analysis?.overallScore ?? null
+      const hasBlueprint = variants.length > 0
+      const hasAudience = !!(
+        audienceDef?.updatedAt ||
+        (meta?.blueprintAudienceResonance as { audienceDefinition?: { updatedAt?: string } } | undefined)
+          ?.audienceDefinition?.updatedAt
+      )
+      const hasAR = arScore !== null
+      const atTarget = arScore !== null && arScore >= 80
       return [
-        { id: 'concept-analysis', label: 'Concept Analysis', icon: 'CheckCircle2', isComplete: !!currentProject?.metadata?.coreConcept },
-        { id: 'workshop', label: 'Workshop Refinement', icon: 'Wrench', isComplete: !!currentProject?.metadata?.workshopComplete },
-        { id: 'ideas', label: 'Ideas Generated', icon: 'Lightbulb', isComplete: !!currentProject?.metadata?.ideasGenerated },
-        { id: 'core-concept', label: 'Core Concept Ready', icon: 'FileText', isComplete: !!currentProject?.metadata?.coreConceptReady },
+        { id: 'blueprint-generated', label: 'Blueprint Generated', icon: 'CheckCircle2', isComplete: hasBlueprint },
+        { id: 'audience-saved', label: 'Target Audience Saved', icon: 'Users', isComplete: hasAudience },
+        { id: 'ar-analyzed', label: 'Audience Resonance', icon: 'Radar', isComplete: hasAR, value: arScore !== null ? `${arScore}/100` : undefined },
+        { id: 'ar-target', label: 'Score 80+', icon: 'Target', isComplete: atTarget },
       ]
     }
     if (config.phase === 'production' && progressData) {

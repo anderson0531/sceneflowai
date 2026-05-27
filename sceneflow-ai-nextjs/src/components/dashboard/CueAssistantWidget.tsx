@@ -40,9 +40,10 @@ const dashboardKnowledge = {
 
 type AssistantMessage = string
 type CueMode =
-  | 'general'         // General Help
-  | 'dashboard'       // Dashboard guidance + credits
-  | 'spark'           // The Spark Studio (ideation)
+  | 'general'
+  | 'dashboard'
+  | 'blueprint'
+  | 'spark'
   | 'vision'          // Vision Board (storyboard)
   | 'director'        // Director's Chair (scene direction)
   | 'screening'       // The Screening Room (video generation)
@@ -122,6 +123,7 @@ export function CueAssistantWidget() {
   // helper: quick prompts per step
   const step = useStore.getState().currentStep
   const quickByStep: Record<string, string[]> = {
+    blueprint: ['Run Audience Resonance', 'Edit weakest section', 'Start Production checklist'],
     ideation: ['Improve my hook', 'Give 3 concept lines', 'Audience insight'],
     storyboard: ['Write a shot list', 'Transitions ideas', 'Fix pacing'],
     'scene-direction': ['Lens + movement', 'Lighting plan', 'Subject action'],
@@ -131,6 +133,7 @@ export function CueAssistantWidget() {
   // Detect mode from current route
   const detectModeFromPath = (p: string): CueMode => {
     if (!p) return 'general'
+    if (p.startsWith('/dashboard/studio/')) return 'blueprint'
     if (p.startsWith('/dashboard/workflow/ideation')) return 'spark'
     if (p.startsWith('/dashboard/workflow/storyboard')) return 'vision'
     if (p.startsWith('/dashboard/workflow/direction')) return 'director'
@@ -260,6 +263,17 @@ export function CueAssistantWidget() {
 
     // Mode-specific helpers
     switch (mode) {
+      case 'blueprint':
+        if (message.includes('resonance') || message.includes('score') || message.includes('audience')) {
+          return 'Blueprint Audience Resonance: save your target audience in the side panel, then Analyze. Target 80+ before Start Production. Click category deductions to jump to the matching section.'
+        }
+        if (message.includes('production') || message.includes('start')) {
+          return 'When your Blueprint is ready, use Start Production in the header or Resonance panel. A checklist warns below 80 — you can confirm and override if needed.'
+        }
+        if (message.includes('edit') || message.includes('refine') || message.includes('iterate')) {
+          return 'Iterate with Edit Blueprint (scoped changes) or Regenerate Blueprint (full reset). Apply AR recommendations, then re-analyze to track score improvement.'
+        }
+        return 'Blueprint workflow: Generate → Review sections → Run Audience Resonance → Iterate → Start Production. Check the sidebar workflow guide and header next-step banner.'
       case 'dashboard':
         return "You're on the Dashboard. I can help you navigate, understand credits, configure BYOK, or start a new project. Try: ‘How do credits work?’ or ‘Show me where to create a project.’"
       case 'spark': {

@@ -46,6 +46,25 @@ const TreatmentCard = dynamic(
 )
 import TopProgressBar from '@/components/ui/TopProgressBar'
 import GeneratingOverlay from '@/components/ui/GeneratingOverlay'
+import { BlueprintOnboarding } from '@/components/blueprint/BlueprintOnboarding'
+import { BlueprintResonanceStrip } from '@/components/blueprint/BlueprintResonanceStrip'
+import { BlueprintNextStepBanner } from '@/components/blueprint/BlueprintNextStepBanner'
+import { BlueprintReadyBanner } from '@/components/blueprint/BlueprintReadyBanner'
+import { StartProductionDialog } from '@/components/blueprint/StartProductionDialog'
+import {
+  BlueprintRefineDiffBanner,
+  type RefineDiffSummary,
+} from '@/components/blueprint/BlueprintRefineDiffBanner'
+import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
+import { useBlueprintProgress } from '@/hooks/studio/useBlueprintProgress'
+import { useBlueprintReadiness } from '@/hooks/studio/useBlueprintReadiness'
+import { useStartProduction } from '@/hooks/studio/useStartProduction'
+import {
+  useStudioBlueprintEvents,
+  useBlueprintGuideStatus,
+  useCueBlueprintMode,
+} from '@/hooks/studio/useStudioBlueprintEvents'
+import { scrollToBlueprintSection } from '@/lib/blueprint/blueprintProgress'
 
 interface StudioPageClientProps {
   projectId: string;
@@ -121,6 +140,10 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   
   // Reimagine dialog state for initial generation
   const [showReimaginDialog, setShowReimaginDialog] = useState(false)
+  const [isGen, setIsGen] = useState(false)
+  const [genProgress, setGenProgress] = useState(0)
+  const [isGeneratingHeroImage, setIsGeneratingHeroImage] = useState(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
   
   // Collaboration state
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -128,6 +151,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [isSharing, setIsSharing] = useState(false)
   const [collaborationTabSignal, setCollaborationTabSignal] = useState(0)
+  const [resonanceTabSignal, setResonanceTabSignal] = useState(0)
+  const [refineDiffSummary, setRefineDiffSummary] = useState<RefineDiffSummary[]>([])
+  const hadBlueprintOnLoadRef = useRef(false)
   
   // Audience Resonance v3 persistence
   const [audienceDefinition, setAudienceDefinition] = useState<AudienceDefinition | null>(null)
@@ -163,6 +189,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('sf:blueprint-reanalyze-ar'))
     }
+  }, [])
+
+  const handleBlueprintRefineApplied = useCallback((diff: Array<{ field?: string; label?: string; after?: unknown }>) => {
+    setRefineDiffSummary(
+      diff.map((d) => ({
+        label: d.label || d.field || 'Section',
+        after: d.after != null ? String(d.after) : undefined,
+      }))
+    )
   }, [])
 
   const handleBlueprintRefineApply = useCallback(
@@ -295,49 +330,38 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     }
   }
 
-  // Handle "Start Production" from AudienceResonancePanel
-  const handleProceedToScripting = async () => {
+  // Unified Start Production handoff (shared gate for toolbar + AR panel)
+  const {
+    isStarting: isStartingProduction,
+    showPreflight,
+    pendingGate,
+    requestStartProduction: openStartProductionFlow,
+    confirmStartProduction,
+    cancelStartProduction,
+  } = useStartProduction(projectId)
+
+  const { checklist, evaluateGate } = useBlueprintReadiness({
+    hasBlueprint: !!((guide as any)?.treatmentVariants?.length),
+    variant: (activeTreatmentVariant as Record<string, unknown> | null) ?? null,
+    audienceDefinition,
+    savedBlueprintAR,
+    estimatedRuntimeMinutes: estimatedRuntime,
+  })
+
+  const handleRequestStartProduction = useCallback(() => {
     const variants = (guide as any)?.treatmentVariants
     const selectedId = (guide as any)?.selectedTreatmentId
-    const v = variants?.find((variant: any) => variant.id === selectedId) || variants?.[0]
-    
+    const v =
+      variants?.find((variant: any) => variant.id === selectedId) || variants?.[0]
     if (!v) {
-      try { const { toast } = require('sonner'); toast.error('No treatment variant found') } catch {}
+      toast.error('No Blueprint variant found')
       return
     }
-    
-    try {
-      // Get or create user ID
-      let userId = localStorage.getItem('authUserId')
-      if (!userId) {
-        userId = crypto.randomUUID()
-        localStorage.setItem('authUserId', userId)
-      }
-      
-      // Create project from Film Treatment variant
-      const res = await fetch('/api/projects/from-variant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          variant: v // Send full variant with all data
-        })
-      })
-      
-      const data = await res.json()
-      
-      if (data.success && data.project) {
-        try { const { toast } = require('sonner'); toast('Creating Vision...') } catch {}
-        // Navigate to Vision page
-        router.push(`/dashboard/workflow/vision/${data.project.id}`)
-      } else {
-        try { const { toast } = require('sonner'); toast.error('Failed to create project') } catch {}
-      }
-    } catch (e) {
-      console.error('Vision creation error:', e)
-      try { const { toast } = require('sonner'); toast.error('Failed to create Vision') } catch {}
-    }
-  }
+    const gate = evaluateGate(false)
+    openStartProductionFlow(v, gate)
+  }, [guide, openStartProductionFlow, evaluateGate])
+
+  const handleProceedToScripting = handleRequestStartProduction
 
   const persistBlueprintMetadata = async (
     extra: Record<string, unknown>
@@ -710,6 +734,15 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           updateTitle(variants[0].title || 'Untitled Project')
           updateTreatment(variants[0].synopsis || variants[0].content || '')
           
+          if (!hadBlueprintOnLoadRef.current) {
+            hadBlueprintOnLoadRef.current = true
+            setShowSidePanel(true)
+            setResonanceTabSignal((s) => s + 1)
+            toast.message('Blueprint ready — save your audience, then run Audience Resonance', {
+              duration: 6000,
+            })
+          }
+          
           // Auto-generate hero image for the first variant
           if (!variants[0].heroImage) {
             generateHeroImage(variants[0]).catch(err => {
@@ -914,6 +947,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               updateTreatment(first.content || first.synopsis || '')
             }
             console.log('[StudioPage] Restored treatmentVariants from project:', metadata.treatmentVariants.length)
+            hadBlueprintOnLoadRef.current = true
           } else if (hasFilmTreatment) {
             // Restore from plain filmTreatment string
             updateTreatment(metadata.filmTreatment)
@@ -966,46 +1000,22 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           const isPrimeBlueprint = urlParams.get('primeBlueprint') === 'true'
           const hasBlueprintPrimeInput = metadata.blueprintPrimeInput && !hasFilmTreatmentVariant && !hasTreatmentVariants
 
-          console.log('[DEBUG_START_PROJECT] Evaluate conditions:', {
-            urlSearch: window.location.search,
-            isPrimeBlueprint,
-            hasBlueprintPrimeInput,
-            blueprintPrimeInputLength: metadata.blueprintPrimeInput?.length || 0,
-            hasFilmTreatmentVariant,
-            hasTreatmentVariants,
-            hasFilmTreatment: !!metadata.filmTreatment,
-            metadataKeys: Object.keys(metadata)
-          });
-          
-          import('sonner').then(({ toast }) => {
-            toast.info(`[Debug] primeBlueprint=${isPrimeBlueprint}, hasInput=${!!metadata.blueprintPrimeInput}, variants=${hasTreatmentVariants}`, { duration: 10000 });
-          });
-
           if (isPrimeBlueprint && hasBlueprintPrimeInput) {
             console.log('[StudioPage] Series episode detected - auto-generating Blueprint directly from load()')
-            
-            // Clear URL param to prevent re-trigger on refresh
             router.replace(`/dashboard/studio/${projectId}`, { scroll: false })
-            
             setTimeout(() => {
-              console.log('[DEBUG_START_PROJECT] Executing handleGenerateBlueprint()');
-              import('sonner').then(({ toast }) => toast.info('Auto-generating blueprint now...'));
-              
               handleGenerateBlueprint(metadata.blueprintPrimeInput, {
                 genre: metadata.genre || projectData.genre || 'Drama',
                 tone: metadata.tone || projectData.tone || 'Cinematic',
                 targetAudience: metadata.targetAudience || 'General Audience',
-                variantCount: 1, 
-                hasStoryDirections: true, 
-                format: metadata.format || projectData.metadata?.format || 'narrative'
-              }).catch(err => {
+                variantCount: 1,
+                hasStoryDirections: true,
+                format: metadata.format || projectData.metadata?.format || 'narrative',
+              }).catch((err) => {
                 console.error('[StudioPage] Auto-generation failed:', err)
-                import('sonner').then(({ toast }) => toast.error('Failed to generate Blueprint automatically.'))
+                toast.error('Failed to generate Blueprint automatically.')
               })
-            }, 800) // Slightly longer timeout to let React completely finish mounting state
-          } else if (isPrimeBlueprint) {
-            console.log('[DEBUG_START_PROJECT] Skipping generation. Reason:', !hasBlueprintPrimeInput ? 'Missing prime input or already has variants' : 'Unknown');
-            import('sonner').then(({ toast }) => toast.warning('Skipping auto-gen: Variants exist or missing input. Check console.', { duration: 10000 }));
+            }, 800)
           }
         }
       } catch (err) {
@@ -1018,6 +1028,61 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   // Auto-save effect - debounced to prevent excessive API calls
   // Access treatmentVariants with proper typing (not in ProductionGuide interface yet)
   const treatmentVariants = (guide as any)?.treatmentVariants || []
+  const hasBlueprint = treatmentVariants.length > 0
+
+  const blueprintProgress = useBlueprintProgress({
+    hasBlueprint,
+    isGenerating: isGen,
+    hasConceptInput: !!(lastInput?.trim() || guide.filmTreatment?.trim()),
+    audienceDefinition,
+    savedBlueprintAR,
+    shareUrl,
+    hasShareLink: !!shareUrl,
+  })
+
+  useBlueprintGuideStatus(blueprintProgress)
+  useCueBlueprintMode(projectId, hasBlueprint)
+
+  const openResonancePanel = useCallback(() => {
+    setShowSidePanel(true)
+    setResonanceTabSignal((s) => s + 1)
+  }, [])
+
+  const openCollaboratePanel = useCallback(() => {
+    setShowSidePanel(true)
+    setCollaborationTabSignal((s) => s + 1)
+  }, [])
+
+  const studioEventHandlers = useMemo(
+    () => ({
+      openReimaginDialog: () => setShowReimaginDialog(true),
+      openBlueprintRefine: openBlueprintRefineFromToolbar,
+      openResonancePanel,
+      openCollaboratePanel,
+      handleSave: () => void handleSaveProject(),
+      handleShare: () => void handleShare(),
+      requestStartProduction: handleRequestStartProduction,
+      hasBlueprint,
+      hasConceptInput: !!(lastInput?.trim() || guide.filmTreatment?.trim()),
+    }),
+    [
+      openBlueprintRefineFromToolbar,
+      openResonancePanel,
+      openCollaboratePanel,
+      handleRequestStartProduction,
+      hasBlueprint,
+      lastInput,
+      guide.filmTreatment,
+    ]
+  )
+
+  useStudioBlueprintEvents(studioEventHandlers, blueprintProgress)
+
+  const handleNextStepAction = useCallback(() => {
+    if (blueprintProgress.nextStepEvent) {
+      window.dispatchEvent(new CustomEvent(blueprintProgress.nextStepEvent))
+    }
+  }, [blueprintProgress.nextStepEvent])
   
   useEffect(() => {
     // Only auto-save for existing projects (not new-project-*)
@@ -1090,11 +1155,6 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   }, [projectId, lastInput, variantsLastModified, guide.title, guide.filmTreatment, treatmentVariants, beatsView, estimatedRuntime, audienceDefinition, savedBlueprintAR, currentProject?.metadata])
 
   useEffect(() => { console.debug('[StudioPage] outline autogen disabled; relying on OutlineV2') }, [guide?.filmTreatment, currentProject?.id])
-
-  const [isGen, setIsGen] = useState(false)
-  const [genProgress, setGenProgress] = useState(0)
-  const [isGeneratingHeroImage, setIsGeneratingHeroImage] = useState(false)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const startProgress = () => {
     setGenProgress(5)
@@ -1170,7 +1230,31 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    {hasBlueprint && (
+                      <BlueprintResonanceStrip
+                        progress={blueprintProgress}
+                        onOpenResonance={openResonancePanel}
+                        onImproveWeakest={() => {
+                          window.dispatchEvent(new CustomEvent('blueprint:scroll-weakest'))
+                        }}
+                      />
+                    )}
+                    {hasBlueprint && (
+                      <Button
+                        onClick={handleRequestStartProduction}
+                        disabled={isStartingProduction}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white text-sm h-9"
+                        size="sm"
+                      >
+                        {isStartingProduction ? (
+                          <RefreshCw className="w-4 h-4 animate-spin mr-1.5" />
+                        ) : (
+                          <Clapperboard className="w-4 h-4 mr-1.5" />
+                        )}
+                        {BLUEPRINT_COPY.startProduction}
+                      </Button>
+                    )}
                     <Button 
                       onClick={() => setShowSidePanel(!showSidePanel)} 
                       variant="outline" 
@@ -1188,14 +1272,24 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
               
               {/* Content area with proper padding */}
               <div className="p-6 space-y-6">
+                {hasBlueprint && (
+                  <BlueprintNextStepBanner
+                    progress={blueprintProgress}
+                    onAction={handleNextStepAction}
+                  />
+                )}
+                {hasBlueprint && !checklist.isBlueprintReady && (
+                  <BlueprintReadyBanner checklist={checklist} />
+                )}
+                {refineDiffSummary.length > 0 && (
+                  <BlueprintRefineDiffBanner
+                    diffs={refineDiffSummary}
+                    onDismiss={() => setRefineDiffSummary([])}
+                  />
+                )}
                 {/* Billboard Hero Image - shows when treatment exists */}
                 {guide.treatmentVariants && guide.treatmentVariants.length > 0 && guide.treatmentVariants[0]?.title && (
-                  <>
-                    {console.log('[StudioPage] Passing to TreatmentHeroImage:', {
-                      hasHeroImage: !!guide.treatmentVariants[0]?.heroImage,
-                      heroImageUrl: guide.treatmentVariants[0]?.heroImage?.url?.substring(0, 60),
-                      heroImageStatus: guide.treatmentVariants[0]?.heroImage?.status
-                    })}
+                  <div data-blueprint-section="hero-image">
                     <TreatmentHeroImage
                       image={guide.treatmentVariants[0]?.heroImage || null}
                       title={guide.treatmentVariants[0]?.title || guide.title || 'Untitled'}
@@ -1245,7 +1339,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                       isGenerating={isGeneratingHeroImage}
                       error={heroImageError}
                     />
-                  </>
+                  </div>
                 )}
 
                 {/* Empty Blueprint State - Show prominent CTA when no Blueprint exists */}
@@ -1340,6 +1434,10 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   onShareBlueprint={handleShare}
                   isSharingBlueprint={isSharing}
                   shareUrl={shareUrl}
+                  onStartProduction={handleRequestStartProduction}
+                  isStartingProduction={isStartingProduction}
+                  startProductionEnabled={checklist.blueprintGenerated}
+                  onOpenCollaborate={openCollaboratePanel}
                 />
               </div>
             </div>
@@ -1361,6 +1459,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 onShare={handleShare}
                 isSharing={isSharing}
                 collaborationTabSignal={collaborationTabSignal}
+                resonanceTabSignal={resonanceTabSignal}
                 projectId={projectId}
                 audienceDefinition={audienceDefinition}
                 onAudienceDefinitionSave={handleAudienceDefinitionSave}
@@ -1369,6 +1468,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 savedBlueprintAR={savedBlueprintAR}
                 legacyIntent={legacyARIntent}
                 onOpenBlueprintRefine={openBlueprintRefine}
+                onScrollToSection={(section) => scrollToBlueprintSection(section)}
               />
             </Panel>
           </>
@@ -1426,6 +1526,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             blueprintRefineApplyExtraRef.current = null
           }}
           onApply={handleBlueprintRefineApply}
+          onRefineApplied={handleBlueprintRefineApplied}
           projectId={projectId}
           resonanceRecommendations={blueprintRefineRecs}
           initialActiveTab={blueprintRefineTab}
@@ -1527,6 +1628,19 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           }}
         />
       )}
+
+      <StartProductionDialog
+        open={showPreflight}
+        onOpenChange={(open) => {
+          if (!open) cancelStartProduction()
+        }}
+        gate={pendingGate}
+        isStarting={isStartingProduction}
+        onConfirm={confirmStartProduction}
+        onCancel={cancelStartProduction}
+      />
+
+      <BlueprintOnboarding />
     </div>
   );
 }

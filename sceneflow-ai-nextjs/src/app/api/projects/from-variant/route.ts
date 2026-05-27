@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     userId = body.userId
     variant = body.variant
     const title = body.title
+    const sourceBlueprintProjectId = body.sourceBlueprintProjectId as string | undefined
     
     console.log('[from-variant] Request received for user:', userId)
     
@@ -172,6 +173,7 @@ export async function POST(request: NextRequest) {
         // Save complete Film Treatment variant for script generation
         filmTreatmentVariant: variant,
         blueprintInput: variant.content || variant.synopsis,
+        sourceBlueprintProjectId: sourceBlueprintProjectId || undefined,
         visionPhase: {
           scriptGenerated: false,
           charactersGenerated: false,
