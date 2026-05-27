@@ -44,11 +44,23 @@ export interface FinalCutSelection {
   format: ProductionFormat
   /** Language code (e.g. "en", "th"). Falls back to project default if unavailable. */
   language: ProductionLanguage
-  /** Sparse map of sourceSceneId → version override for that scene. */
+  /** Last applied assembly preset id for resume clarity. */
+  presetId?: FinalCutAssemblyPresetId
+  /** Sparse map of sourceSceneId → override for that scene. */
   perSceneOverrides?: Record<string, FinalCutSceneOverride>
 }
 
+export type FinalCutAssemblyPresetId =
+  | 'all-video'
+  | 'all-animatic'
+  | 'hybrid-review'
+  | 'custom'
+
 export interface FinalCutSceneOverride {
+  /** Per-scene stream type override. */
+  streamType?: 'animatic' | 'video'
+  /** Per-scene language override. */
+  language?: ProductionLanguage
   /** Pin a specific Production stream version (1-based). */
   streamVersion?: number
 }
@@ -74,8 +86,16 @@ export interface FinalCutSceneClip {
   url: string | null
   /** Resolved stream version, when available. */
   streamVersion?: number
+  /** Resolved stream type for this clip. */
+  streamType?: 'animatic' | 'video'
+  /** Resolved language for this clip. */
+  language?: string
   /** Available versions (1-based) for the active (format, language). */
   availableVersions: number[]
+  /** Languages with ready streams for this scene (any format). */
+  availableLanguages?: string[]
+  /** Available stream types for this scene. */
+  availableStreamTypes?: Array<'animatic' | 'video'>
   /** Coarse status for badge display in the UI. */
   status: 'ready' | 'pending' | 'missing'
 }

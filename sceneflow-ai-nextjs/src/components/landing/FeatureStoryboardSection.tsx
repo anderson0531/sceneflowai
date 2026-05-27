@@ -224,18 +224,18 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
   },
   {
     id: 12,
-    title: 'Final Cut Automation',
+    title: 'Final Cut Assembly',
     description:
-      'Polish your project with intelligent precision. Automatically assemble generated segments, sync audio tracks, and apply smart transitions for a broadcast-ready final cut that requires zero manual timeline scrubbing.',
+      'Stitch finished Production streams into one master video. Pick Animatic or Video — and language — per scene, preview the full program in script order, and export a single MP4 for Premiere.',
     keyFeatures: [
-      'Auto-assemble segments — on the edit timeline',
-      'Multi-track audio sync — locked to picture',
-      'Smart transitions — and pacing suggestions',
-      'Broadcast-ready cut — without manual timeline scrubbing',
+      'Per-scene stream pick — Animatic, Video, language, version',
+      'Assembly presets — All Video, Hybrid, Custom mix',
+      'Auto-aligned preview — script order, read-only monitor',
+      'One-click master export — stitched MP4 for Premiere',
     ],
-    screenshotSlot: 'Insert screenshot: Final Cut timeline with auto-assembled segments',
+    screenshotSlot: 'Insert screenshot: Final Cut assembly panel with per-scene stream pickers',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2015.30.48.png',
-    videoSlot: 'Insert 00:30 clip: AI assembling and polishing the final timeline',
+    videoSlot: 'Insert 00:30 clip: Picking streams, previewing assembly, and exporting master',
   },
   {
     id: 13,

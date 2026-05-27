@@ -32,7 +32,7 @@ const suggestedResponses = [
 const dashboardKnowledge = {
   tour: "Welcome to SceneFlow AI! Here's your dashboard tour:\n\n🎯 **Quick Actions**: Start new projects or continue existing ones\n💳 **Credit Status**: Monitor your AI generation credits\n📁 **Project Hub**: Manage your video projects\n⚙️ **Studio Utilities**: Access settings and tools\n\nReady to create your first video? Click 'Create New Project' to get started!",
   byok: "BYOK (Bring Your Own Key) configuration:\n\n1. Go to **Settings** → **BYOK Configuration**\n2. Add your Google Gemini API key for text generation\n3. Add your Google Veo API key for video generation\n4. This gives you direct control over costs and no rate limiting\n\nBenefits: Lower costs, better performance, full control over your AI providers.",
-  workflow: "SceneFlow AI has a 5-step workflow:\n\n1️⃣ **Series**: Showrunner Engine for multi-episode franchise management\n2️⃣ **Blueprint**: AI-powered concept generation and ideation\n3️⃣ **Production**: Visual storyboard and scene planning\n4️⃣ **Final Cut**: Scene direction, editing and refinement\n5️⃣ **Premiere**: Final video generation and export\n\nEach step builds on the previous one, creating a professional video production pipeline.",
+  workflow: "SceneFlow AI has a 5-step workflow:\n\n1️⃣ **Series**: Showrunner Engine for multi-episode franchise management\n2️⃣ **Blueprint**: AI-powered concept generation and ideation\n3️⃣ **Production**: Visual storyboard and scene planning\n4️⃣ **Final Cut**: Stream assembly — pick streams, preview, export master\n5️⃣ **Premiere**: Screenings, share links, and distribution prep\n\nEach step builds on the previous one, creating a professional video production pipeline.",
   credits: "Credits are consumed for AI operations:\n\n• **Ideation**: 10-25 credits per concept\n• **Storyboarding**: 50-100 credits per storyboard\n• **Scene Direction**: 25-50 credits per scene\n• **Video Generation**: 100-500 credits per video\n\nYour plan includes monthly credits, and you can purchase additional packs ($10 for 100 credits) as needed.",
   social: "Social media video tips:\n\n📱 **Platform Optimization**:\n• Instagram: 15-60 seconds, vertical 9:16\n• TikTok: 15-60 seconds, vertical 9:16\n• YouTube: 15 seconds to 10+ minutes\n• LinkedIn: 30 seconds to 5 minutes\n\n🎬 **Content Strategy**:\n• Hook viewers in first 3 seconds\n• Use trending audio and hashtags\n• Include captions for accessibility\n• End with clear call-to-action",
   concept: "Concept refinement tips:\n\n🎯 **Core Premise**: Focus on one main idea that's clear and compelling\n📝 **Outline Structure**: Ensure logical flow from hook to conclusion\n🎨 **Style & Tone**: Match your target audience and platform\n⏱️ **Duration**: Consider platform requirements and audience attention span\n\nI can help you refine any aspect of your concept - just ask!"
@@ -43,6 +43,8 @@ type CueMode =
   | 'general'
   | 'dashboard'
   | 'blueprint'
+  | 'finalcut'
+  | 'premiere'
   | 'spark'
   | 'vision'          // Vision Board (storyboard)
   | 'director'        // Director's Chair (scene direction)
@@ -124,6 +126,8 @@ export function CueAssistantWidget() {
   const step = useStore.getState().currentStep
   const quickByStep: Record<string, string[]> = {
     blueprint: ['Run Audience Resonance', 'Edit weakest section', 'Start Production checklist'],
+    finalcut: ['Apply assembly preset', 'Which scenes are missing?', 'Render Final Cut checklist'],
+    premiere: ['Create a screening', 'Share premiere link', 'Export metadata package'],
     ideation: ['Improve my hook', 'Give 3 concept lines', 'Audience insight'],
     storyboard: ['Write a shot list', 'Transitions ideas', 'Fix pacing'],
     'scene-direction': ['Lens + movement', 'Lighting plan', 'Subject action'],
@@ -134,6 +138,8 @@ export function CueAssistantWidget() {
   const detectModeFromPath = (p: string): CueMode => {
     if (!p) return 'general'
     if (p.startsWith('/dashboard/studio/')) return 'blueprint'
+    if (p.includes('/dashboard/workflow/final-cut')) return 'finalcut'
+    if (p.includes('/dashboard/workflow/premiere')) return 'premiere'
     if (p.startsWith('/dashboard/workflow/ideation')) return 'spark'
     if (p.startsWith('/dashboard/workflow/storyboard')) return 'vision'
     if (p.startsWith('/dashboard/workflow/direction')) return 'director'
@@ -274,6 +280,19 @@ export function CueAssistantWidget() {
           return 'Iterate with Edit Blueprint (scoped changes) or Regenerate Blueprint (full reset). Apply AR recommendations, then re-analyze to track score improvement.'
         }
         return 'Blueprint workflow: Generate → Review sections → Run Audience Resonance → Iterate → Start Production. Check the sidebar workflow guide and header next-step banner.'
+      case 'finalcut':
+        if (message.includes('preset') || message.includes('mix') || message.includes('animatic')) {
+          return 'Final Cut presets: All Video, All Animatic, Hybrid (Video with Animatic fallback), or Custom mix per scene. Open the Assembly panel to pick format, language, and version for each scene.'
+        }
+        if (message.includes('missing') || message.includes('production') || message.includes('render')) {
+          return 'Missing streams? Render them in Production Mixer first — use Go to Production on any missing scene row. When all scenes are ready, click Render Final Cut to stitch one master MP4.'
+        }
+        if (message.includes('premiere') || message.includes('screen') || message.includes('share')) {
+          return 'After export, continue to Premiere for screenings and share links. Final Cut only stitches — creative edits stay in Production Mixer.'
+        }
+        return 'Final Cut workflow: Pick streams per scene (or preset) → Preview in script order → Render Final Cut → Continue to Premiere. No timeline editing here.'
+      case 'premiere':
+        return 'Premiere: host screenings from your exported master, share review links, and prepare distribution metadata. Upload external masters or use the latest Final Cut export.'
       case 'dashboard':
         return "You're on the Dashboard. I can help you navigate, understand credits, configure BYOK, or start a new project. Try: ‘How do credits work?’ or ‘Show me where to create a project.’"
       case 'spark': {

@@ -125,8 +125,8 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
     setSectionsOpen(prev => ({ ...prev, [section]: !prev[section] }))
   }, [])
 
-  // Blueprint guide step status - updated via custom events from workflow pages
-  const [blueprintGuideStatus, setBlueprintGuideStatus] = useState<Record<string, GuideStepStatus>>({})
+  // Blueprint + Final Cut guide step status - updated via custom events from workflow pages
+  const [workflowGuideStatus, setWorkflowGuideStatus] = useState<Record<string, GuideStepStatus>>({})
 
   // Navigation warning dialog state for backward navigation
   const [showNavigationWarning, setShowNavigationWarning] = useState(false)
@@ -169,14 +169,16 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
     if (!isInProductionPhase) setIsStoryboardOpen(false)
   }, [isInProductionPhase])
 
-  // Listen for blueprint guide status updates
+  // Listen for workflow guide status updates (Blueprint, Final Cut, …)
   useEffect(() => {
     const handleStatusUpdate = (e: CustomEvent<Record<string, GuideStepStatus>>) => {
-      setBlueprintGuideStatus(prev => ({ ...prev, ...e.detail }))
+      setWorkflowGuideStatus(prev => ({ ...prev, ...e.detail }))
     }
     window.addEventListener('blueprint:guide-status' as any, handleStatusUpdate)
+    window.addEventListener('final-cut:guide-status' as any, handleStatusUpdate)
     return () => {
       window.removeEventListener('blueprint:guide-status' as any, handleStatusUpdate)
+      window.removeEventListener('final-cut:guide-status' as any, handleStatusUpdate)
     }
   }, [])
 
@@ -257,6 +259,19 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
         { id: 'scene-images', label: 'Scene Images', icon: 'ImageIcon', isComplete: progressData.imageProgress === 100, progress: progressData.imageProgress },
         { id: 'audio', label: 'Audio', icon: 'Music', isComplete: progressData.audioProgress === 100, progress: progressData.audioProgress },
         { id: 'video-export', label: 'Video Export', icon: 'Video', isComplete: false, badge: 'Soon' },
+      ]
+    }
+    if (config.phase === 'final-cut') {
+      const meta = currentProject?.metadata as Record<string, unknown> | undefined
+      const exported = !!(meta?.exportedVideoUrl as string | undefined)?.trim()
+      const finalCut = meta?.finalCut as { perSceneOverrides?: Record<string, unknown> } | undefined
+      const hasAssembly = !!finalCut
+      const vision = meta?.visionPhase as { production?: { scenes?: unknown[] } } | undefined
+      const sceneCount = vision?.production?.scenes?.length ?? 0
+      return [
+        { id: 'streams-ready', label: 'Streams ready', icon: 'Video', isComplete: sceneCount > 0, value: sceneCount ? `${sceneCount} scenes` : undefined },
+        { id: 'assembly', label: 'Assembly configured', icon: 'Film', isComplete: hasAssembly },
+        { id: 'export', label: 'Master exported', icon: 'Download', isComplete: exported },
       ]
     }
     return config.progressItems || []
@@ -403,7 +418,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
               phase={config.phase}
               isOpen={sectionsOpen.workflowGuide}
               onToggle={() => toggleSection('workflowGuide')}
-              externalStatus={blueprintGuideStatus}
+              externalStatus={workflowGuideStatus}
             />
           )}
 

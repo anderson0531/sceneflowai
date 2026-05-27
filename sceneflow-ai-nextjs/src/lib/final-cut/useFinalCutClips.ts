@@ -10,7 +10,9 @@ import { useMemo } from 'react'
 import type { FinalCutSceneClip, FinalCutSelection } from '@/lib/types/finalCut'
 import { getSceneProductionStateFromMetadata } from './projectProductionState'
 import {
-  getAvailableSceneVersions,
+  getAvailableLanguagesForSceneStream,
+  getAvailableSceneVersionsForFormat,
+  getAvailableStreamTypesForScene,
   resolveSceneStreamUrl,
 } from './resolveSegmentMedia'
 
@@ -101,9 +103,26 @@ export function buildFinalCutClips({
     const sceneId = sceneIdFor(scene, index)
     const prodScene = sceneProductionState[sceneId] as Record<string, unknown> | undefined
     const resolved = resolveSceneStreamUrl(sceneProductionState, sceneId, selection)
+    const targetType = resolved.streamType ?? (selection.format === 'animatic' ? 'animatic' : 'video')
+    const targetLang = resolved.language ?? selection.language
     const versions = resolved.availableVersions.length
       ? resolved.availableVersions
-      : getAvailableSceneVersions(sceneProductionState, sceneId, selection.format, selection.language)
+      : getAvailableSceneVersionsForFormat(
+          sceneProductionState,
+          sceneId,
+          selection.format,
+          targetLang
+        )
+    const availableLanguages = getAvailableLanguagesForSceneStream(
+      sceneProductionState,
+      sceneId,
+      targetType
+    )
+    const availableStreamTypes = getAvailableStreamTypesForScene(
+      sceneProductionState,
+      sceneId,
+      targetLang
+    )
 
     const durationSec =
       resolved.durationSec ?? readSceneDurationSeconds(prodScene, DEFAULT_SCENE_DURATION_SEC)
@@ -127,7 +146,11 @@ export function buildFinalCutClips({
       duration: durationSec,
       url: resolved.url,
       streamVersion: resolved.streamVersion,
+      streamType: targetType,
+      language: targetLang,
       availableVersions: versions,
+      availableLanguages,
+      availableStreamTypes,
       status,
     })
   }

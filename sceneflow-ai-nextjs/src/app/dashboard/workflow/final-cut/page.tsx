@@ -21,80 +21,30 @@ import { Button } from '@/components/ui/Button'
 import { ProductionSectionHeader } from '@/components/vision/scene-production/ProductionSectionHeader'
 import { FinalCutTimeline } from '@/components/final-cut/FinalCutTimeline'
 import { FinalCutMediaBrowser } from '@/components/final-cut/FinalCutMediaBrowser'
+import {
+  FinalCutNextStepBanner,
+  FinalCutReadinessStrip,
+} from '@/components/final-cut/FinalCutNextStepBanner'
+import { FinalCutOnboarding } from '@/components/final-cut/FinalCutOnboarding'
 import { getSceneProductionStateFromMetadata } from '@/lib/final-cut/projectProductionState'
 import { getAvailableLanguagesForFormat } from '@/lib/final-cut/resolveSegmentMedia'
 import { buildFinalCutClips } from '@/lib/final-cut/useFinalCutClips'
-import { getLanguageName } from '@/constants/languages'
+import {
+  calculateFinalCutProgress,
+  formatFinalCutDuration,
+  scrollToAssemblySceneRow,
+} from '@/lib/final-cut/finalCutProgress'
+import { readFinalCutSelection, useFinalCutSelection } from '@/hooks/final-cut/useFinalCutSelection'
+import { useFinalCutEvents, useFinalCutGuideStatus } from '@/hooks/final-cut/useFinalCutEvents'
 import { cn } from '@/lib/utils'
-import type {
-  FinalCutSelection,
-  ProductionFormat,
-  ProductionLanguage,
-} from '@/lib/types/finalCut'
+import type { FinalCutAssemblyPresetId, FinalCutSelection } from '@/lib/types/finalCut'
 
 const LS_SECTION_STREAMS = 'finalCut.section.streams'
 const LS_SECTION_MIXER = 'finalCut.section.mixer'
 const LS_MOBILE_PANE = 'finalCut.section.mobilePane'
 
-const DEFAULT_SELECTION: FinalCutSelection = {
-  format: 'full-video',
-  language: 'en',
-  perSceneOverrides: {},
-}
-
-/**
- * Migrate the legacy `metadata.finalCutStreams` blob (used by the editing
- * workspace pre-refactor) into the lean `metadata.finalCut` selection. We
- * only carry over `format` and `language` from the most recently-edited
- * stream — overlays, transitions, and audio mixing all moved to Production.
- */
-function migrateLegacySelection(metadata: unknown): FinalCutSelection | null {
-  if (!metadata || typeof metadata !== 'object') return null
-  const m = metadata as Record<string, unknown>
-  const legacy = m.finalCutStreams
-  if (!Array.isArray(legacy) || legacy.length === 0) return null
-
-  const sortedLegacy = [...legacy].sort((a: unknown, b: unknown) => {
-    const ad = new Date((a as { updatedAt?: string })?.updatedAt ?? 0).getTime()
-    const bd = new Date((b as { updatedAt?: string })?.updatedAt ?? 0).getTime()
-    return bd - ad
-  })
-
-  const first = sortedLegacy[0] as { language?: string; format?: string } | undefined
-  if (!first) return null
-
-  const format = (first.format === 'animatic' ? 'animatic' : 'full-video') as ProductionFormat
-  const language = (typeof first.language === 'string' && first.language ? first.language : 'en') as ProductionLanguage
-
-  return { format, language, perSceneOverrides: {} }
-}
-
-function readSelection(metadata: unknown): FinalCutSelection {
-  if (metadata && typeof metadata === 'object') {
-    const m = metadata as { finalCut?: Partial<FinalCutSelection> }
-    if (m.finalCut && typeof m.finalCut === 'object') {
-      const format = (m.finalCut.format === 'animatic' ? 'animatic' : 'full-video') as ProductionFormat
-      const language = (typeof m.finalCut.language === 'string' && m.finalCut.language
-        ? m.finalCut.language
-        : 'en') as ProductionLanguage
-      const overridesRaw =
-        m.finalCut.perSceneOverrides && typeof m.finalCut.perSceneOverrides === 'object'
-          ? (m.finalCut.perSceneOverrides as Record<string, { streamVersion?: number }>)
-          : {}
-      const overrides: NonNullable<FinalCutSelection['perSceneOverrides']> = {}
-      for (const k of Object.keys(overridesRaw)) {
-        const v = Number(overridesRaw[k]?.streamVersion)
-        if (Number.isFinite(v) && v > 0) overrides[k] = { streamVersion: v }
-      }
-      return { format, language, perSceneOverrides: overrides }
-    }
-  }
-  const migrated = migrateLegacySelection(metadata)
-  return migrated ?? { ...DEFAULT_SELECTION }
-}
-
 function buildDemoSelection(): FinalCutSelection {
-  return { format: 'full-video', language: 'en', perSceneOverrides: {} }
+  return { format: 'full-video', language: 'en', presetId: 'all-video', perSceneOverrides: {} }
 }
 
 export default function FinalCutPage() {
@@ -114,7 +64,17 @@ export default function FinalCutPage() {
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [selection, setSelection] = useState<FinalCutSelection>(DEFAULT_SELECTION)
+  const sceneState = useMemo(
+    () => getSceneProductionStateFromMetadata(currentProject?.metadata),
+    [currentProject?.metadata]
+  )
+  const {
+    selection,
+    setSelection,
+    handleApplyPreset,
+    handleChangeSceneOverride,
+    normalizeLanguage,
+  } = useFinalCutSelection(sceneState)
   const [streamsExpanded, setStreamsExpanded] = useState(true)
   const [mixerExpanded, setMixerExpanded] = useState(true)
   const [mobilePane, setMobilePane] = useState<'library' | 'edit'>('edit')
@@ -192,14 +152,7 @@ export default function FinalCutPage() {
       if (cancelled || !project) return
 
       try {
-        const initial = readSelection(project.metadata)
-        // If language not present in available languages for this format, fall
-        // back to first available (or 'en').
-        const sceneState = getSceneProductionStateFromMetadata(project.metadata)
-        const langs = getAvailableLanguagesForFormat(sceneState, initial.format)
-        if (langs.length > 0 && !langs.includes(initial.language)) {
-          initial.language = (langs[0] || 'en') as ProductionLanguage
-        }
+        const initial = normalizeLanguage(readFinalCutSelection(project.metadata))
         setSelection(initial)
       } catch (error) {
         console.error('[FinalCut] Failed to compute selection:', error)
@@ -211,7 +164,7 @@ export default function FinalCutPage() {
     return () => {
       cancelled = true
     }
-  }, [isDemo, searchProjectId, router, setCurrentProject])
+  }, [isDemo, searchProjectId, router, setCurrentProject, normalizeLanguage, setSelection])
 
   // Resolve clip list for the active selection.
   const clips = useMemo(
@@ -224,54 +177,94 @@ export default function FinalCutPage() {
     [clips]
   )
 
-  const sceneState = useMemo(
-    () => getSceneProductionStateFromMetadata(currentProject?.metadata),
-    [currentProject?.metadata]
-  )
-
-  const availableLanguages = useMemo(
-    () => getAvailableLanguagesForFormat(sceneState, selection.format),
-    [sceneState, selection.format]
-  )
-
-  const streamLabel = `${getLanguageName(selection.language)} · ${
-    selection.format === 'animatic' ? 'Animatic' : 'Video'
-  }`
-
-  const handleChangeFormat = useCallback(
-    (format: ProductionFormat) => {
-      setSelection((prev) => {
-        const langs = getAvailableLanguagesForFormat(sceneState, format)
-        const language =
-          langs.includes(prev.language) ? prev.language : ((langs[0] ?? prev.language) as ProductionLanguage)
-        // Reset overrides on format switch — versions are format-specific.
-        return { format, language, perSceneOverrides: {} }
-      })
-    },
-    [sceneState]
-  )
-
-  const handleChangeLanguage = useCallback((language: ProductionLanguage) => {
-    setSelection((prev) => ({ ...prev, language, perSceneOverrides: {} }))
-  }, [])
-
-  const handleChangeSceneOverride = useCallback((sceneId: string, version: number | null) => {
-    setSelection((prev) => {
-      const next: FinalCutSelection = {
-        ...prev,
-        perSceneOverrides: { ...(prev.perSceneOverrides ?? {}) },
-      }
-      if (version == null) {
-        delete next.perSceneOverrides![sceneId]
-      } else {
-        next.perSceneOverrides![sceneId] = { streamVersion: version }
-      }
-      return next
-    })
-  }, [])
+  const availableLanguages = useMemo(() => {
+    const langs = getAvailableLanguagesForFormat(sceneState, selection.format)
+    const fromClips = clips.flatMap((c) => c.availableLanguages ?? [])
+    return Array.from(new Set([...langs, ...fromClips, selection.language])).sort()
+  }, [sceneState, selection.format, selection.language, clips])
 
   const lastRenderUrl =
     (currentProject?.metadata as { exportedVideoUrl?: string } | undefined)?.exportedVideoUrl ?? null
+
+  const finalCutProgress = useMemo(
+    () =>
+      calculateFinalCutProgress({
+        clips,
+        selection,
+        hasExportedVideo: !!lastRenderUrl,
+        totalDurationSec: totalDuration,
+      }),
+    [clips, selection, lastRenderUrl, totalDuration]
+  )
+
+  useFinalCutGuideStatus(finalCutProgress)
+
+  const premiereHref = `/dashboard/workflow/premiere?projectId=${projectId}${isDemo ? '&demo=true' : ''}`
+
+  const openPremiere = useCallback(() => {
+    router.push(premiereHref)
+  }, [router, premiereHref])
+
+  const openAssembly = useCallback(() => {
+    setStreamsExpanded(true)
+    setMobilePane('library')
+  }, [])
+
+  const openProduction = useCallback(() => {
+    if (productionVisionHref) router.push(productionVisionHref)
+  }, [router, productionVisionHref])
+
+  const triggerRender = useCallback(() => {
+    setStreamsExpanded(true)
+    setMobilePane('library')
+    window.setTimeout(() => {
+      const btn = document.querySelector<HTMLButtonElement>('[data-final-cut-render]')
+      btn?.click()
+    }, 150)
+  }, [])
+
+  const focusScene = useCallback((sceneId: string) => {
+    setStreamsExpanded(true)
+    setMobilePane('library')
+    scrollToAssemblySceneRow(sceneId)
+  }, [])
+
+  useFinalCutEvents(
+    useMemo(
+      () => ({
+        openAssembly,
+        openProduction,
+        renderFinalCut: triggerRender,
+        openPremiere,
+        focusScene,
+      }),
+      [openAssembly, openProduction, triggerRender, openPremiere, focusScene]
+    )
+  )
+
+  const handleApplyPresetWrapped = useCallback(
+    (presetId: FinalCutAssemblyPresetId) => {
+      const sceneIds = clips.map((c) => c.sceneId)
+      handleApplyPreset(presetId, currentProject?.metadata, sceneIds)
+    },
+    [clips, currentProject?.metadata, handleApplyPreset]
+  )
+
+  const handleFocusAssembly = useCallback((sceneId: string) => {
+    setStreamsExpanded(true)
+    setMobilePane('library')
+    scrollToAssemblySceneRow(sceneId)
+  }, [])
+
+  const handleNextStep = useCallback(() => {
+    const event = finalCutProgress.nextStepEvent
+    if (event) window.dispatchEvent(new CustomEvent(event))
+  }, [finalCutProgress.nextStepEvent])
+
+  const streamLabel =
+    finalCutProgress.isMixedFormat
+      ? 'Mixed assembly'
+      : `${selection.format === 'animatic' ? 'Animatic' : 'Video'} · ${selection.language.toUpperCase()}`
   
   const handleSave = useCallback(async () => {
     if (!currentProject) return
@@ -293,14 +286,21 @@ export default function FinalCutPage() {
 
   const handleRendered = useCallback(
     async (url: string) => {
-    if (!currentProject) return
+      if (!currentProject) return
       const nextMetadata = {
         ...(currentProject.metadata as Record<string, unknown>),
         exportedVideoUrl: url,
       } as unknown
       await updateProject(currentProject.id, { ...currentProject, metadata: nextMetadata as never })
+      toast.success('Master export saved', {
+        description: 'Continue to Premiere for screenings and share.',
+        action: {
+          label: 'Open Premiere',
+          onClick: () => router.push(premiereHref),
+        },
+      })
     },
-    [currentProject, updateProject]
+    [currentProject, updateProject, router, premiereHref]
   )
 
   const finalCutScreenings = useMemo(() => {
@@ -392,6 +392,8 @@ export default function FinalCutPage() {
         aria-hidden
       />
 
+      <FinalCutOnboarding />
+
       {isDemo && (
         <div className="bg-amber-500/15 border-b border-amber-500/25 px-4 py-2.5">
           <div className="flex items-center justify-center gap-2 text-amber-200/95 text-sm">
@@ -471,9 +473,7 @@ export default function FinalCutPage() {
               </Button>
           )}
 
-          <Link
-            href={`/dashboard/workflow/premiere?projectId=${projectId}${isDemo ? '&demo=true' : ''}`}
-          >
+          <Link href={premiereHref}>
             <Button
               size="sm"
               variant="outline"
@@ -506,13 +506,25 @@ export default function FinalCutPage() {
                 {isDemo ? 'Demo project' : currentProject?.title ?? 'Project'}
               </h2>
               <p className="mt-1.5 text-sm text-zinc-400 max-w-xl leading-relaxed">
-                Preview your rendered scene videos for each stream. Use the side panel to pick languages and formats.
+                Pick which Production stream each scene contributes, preview the full program in script order, and export one master MP4 for Premiere.
               </p>
             </div>
-            <p className="text-xs text-zinc-500 tabular-nums shrink-0 sm:text-right max-w-[220px] sm:max-w-xs truncate">
-              {streamLabel}
+            <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
+              <FinalCutReadinessStrip
+                progress={finalCutProgress}
+                totalDurationSec={totalDuration}
+                formatDuration={formatFinalCutDuration}
+              />
+              <p className="text-xs text-zinc-500 tabular-nums truncate max-w-[220px] sm:max-w-xs text-right">
+                {streamLabel}
               </p>
+            </div>
           </div>
+          <FinalCutNextStepBanner
+            progress={finalCutProgress}
+            onAction={handleNextStep}
+            className="relative mt-4"
+          />
         </div>
 
         <div
@@ -614,6 +626,7 @@ export default function FinalCutPage() {
                     filenameLabel={filenameLabel}
                     onRendered={handleRendered}
                     disabled={isDemo}
+                    onFocusAssembly={handleFocusAssembly}
                     hideMixerSectionHeader
                     isFullscreen={isFullscreen}
                     onToggleFullscreen={() => setIsFullscreen(f => !f)}
@@ -658,34 +671,30 @@ export default function FinalCutPage() {
                     selection,
                     clips,
                     availableLanguages,
-                    onChangeFormat: handleChangeFormat,
-                    onChangeLanguage: handleChangeLanguage,
+                    onApplyPreset: handleApplyPresetWrapped,
                     onChangeSceneOverride: handleChangeSceneOverride,
                     disabled: isDemo || isSaving || (!isDemo && !currentProject),
                     productionHref: productionVisionHref,
-                    showProductionLink: !!productionVisionHref,
+                    projectId,
+                    isMixedFormat: finalCutProgress.isMixedFormat,
                   }}
                   renderButtonProps={{
                     projectId,
                     filenameLabel,
                     onRendered: handleRendered,
                     lastRenderUrl,
+                    onOpenPremiere: openPremiere,
                   }}
                   projectId={projectId}
                   projectName={isDemo ? 'Demo project' : currentProject?.title}
                   finalCutScreenings={finalCutScreenings}
                   screeningCredits={100}
                   onCreateScreening={() => {
-                    toast.message('Screenings', {
-                      description:
-                        'Screening creation will connect to the Premiere workflow in a future update.',
-                    })
+                    router.push(premiereHref)
                   }}
                   onUploadExternal={async () => {
-                    toast.message('Upload', {
-                      description: 'External screening upload is not wired yet.',
-                    })
-                    throw new Error('Not implemented')
+                    router.push(premiereHref)
+                    return premiereHref
                   }}
                 />
             </div>

@@ -32,6 +32,8 @@ export interface FinalCutEditorWorkspaceProps {
   onRendered?: (url: string) => Promise<void> | void
   /** Disabled (demo, no project). */
   disabled?: boolean
+  /** Scroll assembly panel to matching scene row. */
+  onFocusAssembly?: (sceneId: string) => void
   isFullscreenExternal?: boolean
   onToggleFullscreenExternal?: () => void
 }
@@ -47,6 +49,7 @@ export function FinalCutEditorWorkspace({
   filenameLabel,
   onRendered,
   disabled = false,
+  onFocusAssembly,
   isFullscreenExternal,
   onToggleFullscreenExternal,
 }: FinalCutEditorWorkspaceProps) {
@@ -240,6 +243,8 @@ export function FinalCutEditorWorkspace({
               clips={clips}
               onSeek={handleSeek}
               onSceneSelect={handleSceneSelect}
+              onFocusAssembly={onFocusAssembly}
+              productionHref={productionVisionHref}
             />
           </div>
         </div>

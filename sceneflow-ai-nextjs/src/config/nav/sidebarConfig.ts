@@ -220,17 +220,18 @@ export const finalCutSidebarConfig: WorkflowSidebarConfig = {
   showWorkflowStepper: true,
   workflowSteps: makeWorkflowSteps('final-cut'),
   progressItems: [
-    { id: 'video-gen', label: 'Video Generation', icon: 'Video', isComplete: false, progress: 0 },
-    { id: 'assembly', label: 'Assembly', icon: 'Film', isComplete: false },
-    { id: 'export', label: 'Export', icon: 'Download', isComplete: false },
+    { id: 'streams-ready', label: 'Streams ready', icon: 'Video', isComplete: false, progress: 0 },
+    { id: 'assembly', label: 'Assembly configured', icon: 'Film', isComplete: false },
+    { id: 'export', label: 'Master exported', icon: 'Download', isComplete: false },
   ],
   quickActions: [
-    { id: 'generate-videos', label: 'Generate All Videos', icon: 'Video', iconColor: 'text-sf-primary', action: 'event', eventName: 'finalcut:generate-all' },
-    { id: 'screening-room', label: 'Screening Room', icon: 'Play', iconColor: 'text-green-500', action: 'event', eventName: 'finalcut:screening-room' },
+    { id: 'open-assembly', label: 'Open Assembly', icon: 'Layers', iconColor: 'text-violet-400', action: 'event', eventName: 'final-cut:open-assembly' },
+    { id: 'render-final-cut', label: 'Render Final Cut', icon: 'Film', iconColor: 'text-sf-primary', action: 'event', eventName: 'final-cut:render' },
+    { id: 'screening-room', label: 'Continue to Premiere', icon: 'Play', iconColor: 'text-green-500', action: 'event', eventName: 'finalcut:screening-room' },
   ],
   sectionVisibility: {
     workflow: true,
-    workflowGuide: false,
+    workflowGuide: true,
     proTips: true,
     progress: true,
     quickActions: true,
@@ -241,7 +242,7 @@ export const finalCutSidebarConfig: WorkflowSidebarConfig = {
   },
   sectionDefaults: {
     workflow: false,
-    workflowGuide: false,
+    workflowGuide: true,
     proTips: false,
     progress: false,
     quickActions: false,

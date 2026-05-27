@@ -1,11 +1,5 @@
 /**
  * Final Cut viewer media resolvers.
- *
- * Final Cut is a preview-only surface over Production renders. These helpers
- * read the canonical `metadata.visionPhase.production.scenes[sceneId]` blob
- * (and the legacy `sceneProductionState` fallback merged by
- * `getSceneProductionStateFromMetadata`) and return the appropriate scene-level
- * playable URL for a given (format, language, version) selection.
  */
 
 import type { FinalCutSelection, ProductionFormat } from '@/lib/types/finalCut'
@@ -17,6 +11,7 @@ interface ProductionStreamRow {
   streamVersion?: number
   mp4Url?: string | null
   status?: string
+  duration?: number
 }
 
 export function refineAssetTypeFromUrl(url: string, fallback: 'video' | 'image'): 'video' | 'image' {
@@ -26,8 +21,12 @@ export function refineAssetTypeFromUrl(url: string, fallback: 'video' | 'image')
   return fallback
 }
 
-function streamTypeFromFormat(format: ProductionFormat): 'animatic' | 'video' {
+export function streamTypeFromFormat(format: ProductionFormat): 'animatic' | 'video' {
   return format === 'animatic' ? 'animatic' : 'video'
+}
+
+export function formatFromStreamType(streamType: 'animatic' | 'video'): ProductionFormat {
+  return streamType === 'animatic' ? 'animatic' : 'full-video'
 }
 
 function readProductionStreams(prodScene: Record<string, unknown> | undefined): ProductionStreamRow[] {
@@ -43,20 +42,76 @@ function isReadyStream(row: ProductionStreamRow): boolean {
   return row.status === 'complete'
 }
 
-/**
- * Available production versions for `(scene, format, language)`, sorted ascending by streamVersion.
- * Only "complete" rows with an mp4 URL are considered.
- */
+export interface SceneStreamTarget {
+  streamType: 'animatic' | 'video'
+  language: string
+}
+
+/** Effective stream target for a scene (override → global defaults). */
+export function getSceneStreamTarget(
+  selection: Pick<FinalCutSelection, 'format' | 'language' | 'perSceneOverrides'>,
+  sceneId: string
+): SceneStreamTarget {
+  const override = selection.perSceneOverrides?.[sceneId]
+  return {
+    streamType: override?.streamType ?? streamTypeFromFormat(selection.format),
+    language: override?.language ?? selection.language,
+  }
+}
+
+export function sceneHasReadyStream(
+  sceneProductionState: Record<string, unknown>,
+  sceneId: string,
+  streamType: 'animatic' | 'video',
+  language: string
+): boolean {
+  const prod = sceneProductionState[sceneId] as Record<string, unknown> | undefined
+  return readProductionStreams(prod).some(
+    (s) => s.streamType === streamType && (s.language ?? '') === language && isReadyStream(s)
+  )
+}
+
+export function getAvailableLanguagesForSceneStream(
+  sceneProductionState: Record<string, unknown>,
+  sceneId: string,
+  streamType: 'animatic' | 'video'
+): string[] {
+  const prod = sceneProductionState[sceneId] as Record<string, unknown> | undefined
+  const set = new Set<string>()
+  for (const row of readProductionStreams(prod)) {
+    if (row.streamType === streamType && row.language && isReadyStream(row)) {
+      set.add(row.language)
+    }
+  }
+  return Array.from(set).sort()
+}
+
+export function getAvailableStreamTypesForScene(
+  sceneProductionState: Record<string, unknown>,
+  sceneId: string,
+  language?: string
+): Array<'animatic' | 'video'> {
+  const prod = sceneProductionState[sceneId] as Record<string, unknown> | undefined
+  const set = new Set<'animatic' | 'video'>()
+  for (const row of readProductionStreams(prod)) {
+    if (!isReadyStream(row)) continue
+    if (language && (row.language ?? '') !== language) continue
+    if (row.streamType === 'animatic' || row.streamType === 'video') {
+      set.add(row.streamType)
+    }
+  }
+  return Array.from(set)
+}
+
 export function getAvailableSceneVersions(
   sceneProductionState: Record<string, unknown>,
   sourceSceneId: string,
-  format: ProductionFormat,
+  streamType: 'animatic' | 'video',
   language: string
 ): number[] {
   const prod = sceneProductionState[sourceSceneId] as Record<string, unknown> | undefined
-  const target = streamTypeFromFormat(format)
   const rows = readProductionStreams(prod).filter(
-    (s) => s.streamType === target && (s.language ?? '') === language && isReadyStream(s)
+    (s) => s.streamType === streamType && (s.language ?? '') === language && isReadyStream(s)
   )
   const versions = new Set<number>()
   for (const row of rows) {
@@ -66,9 +121,21 @@ export function getAvailableSceneVersions(
   return Array.from(versions).sort((a, b) => a - b)
 }
 
-/**
- * Languages that have at least one ready production stream for `format`.
- */
+/** Back-compat wrapper using global format. */
+export function getAvailableSceneVersionsForFormat(
+  sceneProductionState: Record<string, unknown>,
+  sourceSceneId: string,
+  format: ProductionFormat,
+  language: string
+): number[] {
+  return getAvailableSceneVersions(
+    sceneProductionState,
+    sourceSceneId,
+    streamTypeFromFormat(format),
+    language
+  )
+}
+
 export function getAvailableLanguagesForFormat(
   sceneProductionState: Record<string, unknown>,
   format: ProductionFormat
@@ -76,48 +143,35 @@ export function getAvailableLanguagesForFormat(
   const target = streamTypeFromFormat(format)
   const set = new Set<string>()
   for (const sceneId of Object.keys(sceneProductionState)) {
-    const prod = sceneProductionState[sceneId] as Record<string, unknown> | undefined
-    for (const row of readProductionStreams(prod)) {
-      if (row.streamType === target && row.language && isReadyStream(row)) {
-        set.add(row.language)
-      }
+    for (const lang of getAvailableLanguagesForSceneStream(sceneProductionState, sceneId, target)) {
+      set.add(lang)
     }
   }
   return Array.from(set).sort()
 }
 
 export interface ResolvedSceneStream {
-  /** Playable URL of the chosen production stream, when available. */
   url: string | null
-  /** Resolved 1-based version, when matched. */
   streamVersion?: number
-  /** Effective duration in seconds (from production stream metadata, when present). */
+  streamType?: 'animatic' | 'video'
+  language?: string
   durationSec?: number
-  /** All ready versions for `(format, language)` in this scene, ascending. */
   availableVersions: number[]
 }
 
-/**
- * Resolve the scene-level playable URL for the active selection.
- *
- * Order of preference:
- *  1. `selection.perSceneOverrides[sceneId].streamVersion` (when ready).
- *  2. Highest ready `streamVersion` matching `(streamType=format, language)`.
- *  3. `renderedSceneUrl` on the production state, when its extension matches the format kind.
- *
- * Returns `{ url: null, ... }` so the UI can render a "missing" badge.
- */
 export function resolveSceneStreamUrl(
   sceneProductionState: Record<string, unknown>,
   sourceSceneId: string,
   selection: Pick<FinalCutSelection, 'format' | 'language' | 'perSceneOverrides'>
 ): ResolvedSceneStream {
   const prod = sceneProductionState[sourceSceneId] as Record<string, unknown> | undefined
-  const target = streamTypeFromFormat(selection.format)
-  const language = selection.language
+  const target = getSceneStreamTarget(selection, sourceSceneId)
 
   const rows = readProductionStreams(prod).filter(
-    (s) => s.streamType === target && (s.language ?? '') === language && isReadyStream(s)
+    (s) =>
+      s.streamType === target.streamType &&
+      (s.language ?? '') === target.language &&
+      isReadyStream(s)
   )
 
   const availableVersions = Array.from(
@@ -141,25 +195,30 @@ export function resolveSceneStreamUrl(
   if (chosen) {
     const url = typeof chosen.mp4Url === 'string' ? chosen.mp4Url.trim() : ''
     if (url) {
-      const duration = (chosen as { duration?: number }).duration
+      const duration = chosen.duration
       return {
         url,
         streamVersion: Number(chosen.streamVersion) || 1,
+        streamType: target.streamType,
+        language: target.language,
         durationSec: typeof duration === 'number' && duration > 0 ? duration : undefined,
         availableVersions,
       }
     }
   }
 
-  // Fallback: legacy single-render scene URL when format matches.
   const rendered = (prod?.renderedSceneUrl as string | undefined)?.trim() ?? ''
-  if (rendered) {
+  if (rendered && target.streamType === 'video') {
     const refined = refineAssetTypeFromUrl(rendered, 'video')
-    const formatExpectsVideo = target === 'video' || target === 'animatic'
-    if (formatExpectsVideo && refined === 'video') {
-      return { url: rendered, availableVersions }
+    if (refined === 'video') {
+      return {
+        url: rendered,
+        streamType: 'video',
+        language: target.language,
+        availableVersions,
+      }
     }
   }
 
-  return { url: null, availableVersions }
+  return { url: null, streamType: target.streamType, language: target.language, availableVersions }
 }

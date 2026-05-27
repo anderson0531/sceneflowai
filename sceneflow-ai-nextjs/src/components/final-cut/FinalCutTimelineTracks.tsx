@@ -19,6 +19,8 @@ export interface FinalCutTimelineTracksProps {
   clips: FinalCutSceneClip[]
   onSeek: (time: number) => void
   onSceneSelect: (sceneId: string | null) => void
+  onFocusAssembly?: (sceneId: string) => void
+  productionHref?: string
 }
 
 /**
@@ -36,6 +38,8 @@ export function FinalCutTimelineTracks({
   clips,
   onSeek,
   onSceneSelect,
+  onFocusAssembly,
+  productionHref,
 }: FinalCutTimelineTracksProps) {
   return (
     <div
@@ -74,7 +78,11 @@ export function FinalCutTimelineTracks({
                     onSceneSelect(clip.sceneId)
                     onSeek(clip.startTime)
                   }}
-                />
+              onFocusAssembly={
+                onFocusAssembly ? () => onFocusAssembly(clip.sceneId) : undefined
+              }
+              productionHref={productionHref}
+            />
               ))}
             </div>
           </div>

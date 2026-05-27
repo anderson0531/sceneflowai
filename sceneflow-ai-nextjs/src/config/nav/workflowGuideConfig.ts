@@ -122,35 +122,32 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
 export const finalCutWorkflowGroups: WorkflowGroup[] = [
   {
     id: 'pick-streams',
-    title: 'Pick stream versions',
+    title: 'Pick streams per scene',
     icon: 'Film',
     iconColor: 'text-purple-500',
     steps: [
-      { id: 'select-stream-type', label: 'Choose Animatic or Video per scene', description: 'Match stakeholder-approved storyboard vs full motion' },
-      { id: 'select-language', label: 'Pick language stream version', description: 'One stream per scene × language × version' },
-      { id: 'review-duration', label: 'Review elastic timing vs baseline', description: 'Non-English streams may run longer — holds extend automatically' },
+      { id: 'select-stream-type', label: 'Choose Animatic or Video', description: 'Per scene — or apply an assembly preset', actionEventName: 'final-cut:open-assembly' },
+      { id: 'select-language', label: 'Pick language stream', description: 'Mix EN, ES, and other languages across scenes', actionEventName: 'final-cut:open-assembly' },
+      { id: 'review-duration', label: 'Review assembly duration', description: 'Scenes auto-align in script order' },
     ],
   },
   {
     id: 'assemble',
-    title: 'Assemble in Final Cut',
+    title: 'Preview assembly',
     icon: 'Clapperboard',
     iconColor: 'text-cyan-500',
     steps: [
-      { id: 'order-scenes', label: 'Order scenes on timeline', actionEventName: 'final-cut:order-scenes' },
-      { id: 'transitions', label: 'Add transitions & titles', actionEventName: 'final-cut:transitions' },
-      { id: 'captions-export', label: 'Captions for export (burn-in)', description: 'Configure in Mixer before render — Screening Room captions are preview only' },
+      { id: 'preview-assembly', label: 'Preview full program', description: 'Read-only monitor — creative edits stay in Production Mixer' },
+      { id: 'export-master', label: 'Render Final Cut master', description: 'Stitch selected streams into one MP4', actionEventName: 'final-cut:render' },
     ],
   },
   {
     id: 'premiere-export',
-    title: 'The Premiere',
+    title: 'Premiere handoff',
     icon: 'Sparkles',
     iconColor: 'text-amber-500',
     steps: [
-      { id: 'preview-full', label: 'Preview full assembly', actionEventName: 'premiere:preview' },
-      { id: 'export-master', label: 'Export master MP4', actionEventName: 'premiere:export' },
-      { id: 'share-premiere', label: 'Share premiere link', actionEventName: 'premiere:share' },
+      { id: 'share-premiere', label: 'Continue to Premiere', description: 'Screenings, share links, and distribution prep', actionEventName: 'final-cut:open-premiere' },
     ],
   },
 ]

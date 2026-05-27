@@ -22,6 +22,8 @@ export interface RenderFinalCutButtonProps {
   disabled?: boolean
   /** Render only when all clips are ready. */
   className?: string
+  /** Navigate to Premiere after successful export. */
+  onOpenPremiere?: () => void
 }
 
 /**
@@ -40,9 +42,11 @@ export function RenderFinalCutButton({
   onRendered,
   disabled = false,
   className,
+  onOpenPremiere,
 }: RenderFinalCutButtonProps) {
   const [status, setStatus] = useState<RenderStatus>('idle')
   const [progress, setProgress] = useState(0)
+  const [stitchScene, setStitchScene] = useState<{ current: number; total: number } | null>(null)
   const [outputUrl, setOutputUrl] = useState<string | null>(null)
 
   const readyClips = clips.filter((c) => c.status === 'ready' && !!c.url)
@@ -54,9 +58,10 @@ export function RenderFinalCutButton({
 
     setStatus('rendering')
     setProgress(0)
+    setStitchScene({ current: 0, total: readyClips.length })
     setOutputUrl(null)
 
-    const toastId = toast.loading(`Rendering Final Cut (1080p, ${readyClips.length} scenes)…`)
+    const toastId = toast.loading(`Stitching Final Cut (scene 1 of ${readyClips.length})…`)
 
     try {
       const [{ LocalRenderService }, { upload }] = await Promise.all([
@@ -65,7 +70,9 @@ export function RenderFinalCutButton({
       ])
 
       let cursor = 0
-      const segments = readyClips.map((clip) => {
+      const segments = readyClips.map((clip, idx) => {
+        setStitchScene({ current: idx + 1, total: readyClips.length })
+        toast.loading(`Stitching scene ${idx + 1} of ${readyClips.length}…`, { id: toastId })
         const segment = {
           segmentId: `scene-${clip.sceneId}`,
           assetUrl: clip.url as string,
@@ -96,7 +103,10 @@ export function RenderFinalCutButton({
           (p) => {
             if (p.phase === 'rendering' || p.phase === 'encoding') {
               setProgress(p.progress)
-              toast.loading(`Rendering Final Cut: ${Math.round(p.progress)}%`, { id: toastId })
+              const sceneLabel = stitchScene
+                ? ` · scene ${stitchScene.current}/${stitchScene.total}`
+                : ''
+              toast.loading(`Rendering Final Cut: ${Math.round(p.progress)}%${sceneLabel}`, { id: toastId })
             }
           }
         )
@@ -134,7 +144,7 @@ export function RenderFinalCutButton({
         LocalRenderService.revokeBlobUrl(result.blobUrl)
         finalFileUrl = uploaded.url
       } else {
-        toast.loading(`Cloud rendering in progress (${readyClips.length} scenes)…`, { id: toastId })
+        toast.loading(`Cloud stitching ${readyClips.length} scenes…`, { id: toastId })
         const response = await fetch('/api/scene/final-cut/render', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -201,7 +211,14 @@ export function RenderFinalCutButton({
           // Still processing
           const progressValue = 30 + Math.min(attempts, 60)
           setProgress(progressValue)
-          toast.loading(`Cloud rendering in progress: ~${progressValue}%…`, { id: toastId })
+          setStitchScene({
+            current: Math.min(Math.ceil((attempts / maxAttempts) * readyClips.length), readyClips.length),
+            total: readyClips.length,
+          })
+          toast.loading(
+            `Cloud stitch: scene ~${Math.min(Math.ceil((attempts / maxAttempts) * readyClips.length), readyClips.length)} of ${readyClips.length}…`,
+            { id: toastId }
+          )
         }
 
         if (!outputUrl) {
@@ -244,6 +261,7 @@ export function RenderFinalCutButton({
 
       setOutputUrl(finalFileUrl)
       setStatus('ready')
+      setStitchScene(null)
 
       if (onRendered) {
         try {
@@ -253,29 +271,36 @@ export function RenderFinalCutButton({
         }
       }
 
-      toast.success(`Saved and uploaded successfully.`, {
+      toast.success(`Master export ready.`, {
         id: toastId,
         duration: 14000,
-        action: {
-          label: 'Open hosted copy',
-          onClick: () => window.open(finalFileUrl, '_blank', 'noopener,noreferrer'),
-        },
+        action: onOpenPremiere
+          ? {
+              label: 'Open Premiere',
+              onClick: onOpenPremiere,
+            }
+          : {
+              label: 'Open hosted copy',
+              onClick: () => window.open(finalFileUrl, '_blank', 'noopener,noreferrer'),
+            },
       })
     } catch (err) {
       console.error('[FinalCut] Render error', err)
       setStatus('error')
+      setStitchScene(null)
       toast.error(`Render failed: ${err instanceof Error ? err.message : 'Unknown error'}`, {
         id: toastId,
         duration: 8000,
       })
     }
-  }, [filenameLabel, onRendered, projectId, readyClips])
+  }, [filenameLabel, onOpenPremiere, onRendered, projectId, readyClips])
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       <Button
         size="sm"
         type="button"
+        data-final-cut-render
         onClick={handleRender}
         disabled={!canRender}
         className="bg-violet-600 hover:bg-violet-500 text-white shadow-md shadow-violet-950/40"
@@ -283,7 +308,11 @@ export function RenderFinalCutButton({
         {status === 'rendering' || status === 'uploading' ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            {status === 'rendering' ? `Rendering ${Math.round(progress)}%` : 'Uploading…'}
+            {status === 'rendering'
+              ? stitchScene
+                ? `Scene ${stitchScene.current}/${stitchScene.total} · ${Math.round(progress)}%`
+                : `Rendering ${Math.round(progress)}%`
+              : 'Uploading…'}
           </>
         ) : (
           <>
