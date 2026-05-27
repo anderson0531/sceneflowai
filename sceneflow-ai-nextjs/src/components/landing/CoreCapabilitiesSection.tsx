@@ -29,8 +29,8 @@ export function CoreCapabilitiesSection() {
             </h2>
             
             <p className="text-lg text-slate-400 mb-8 leading-relaxed">
-              Know your score before you hit publish. Determine your target audience and get deep AI analysis 
-              with actionable recommendations to optimize every beat.
+              Know your score before you invest in full renders. Target Audience Resonance scores 
+              Blueprint and script with actionable fixes — optimize every beat before Express and video generation.
             </p>
             
             <ul className="space-y-4 mb-10">
@@ -76,8 +76,8 @@ export function CoreCapabilitiesSection() {
             </h2>
             
             <p className="text-lg text-slate-400 mb-8 leading-relaxed">
-              Auto-generate high-fidelity images and video segments concurrently. Move from script 
-              to full cinematic scene in minutes, not days.
+              Auto-generate storyboards, animatics, and video beats concurrently. Move from script 
+              to shareable preview in minutes — then approve Beat Frames before final F2V spend.
             </p>
             
             <div className="grid gap-4 mb-10">

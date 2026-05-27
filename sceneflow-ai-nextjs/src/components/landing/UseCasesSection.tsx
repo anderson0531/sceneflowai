@@ -43,7 +43,7 @@ const personas: UseCasePersona[] = [
     },
     solution: {
       title: 'The Automated Storyteller',
-      description: 'Turn scripts into production-ready visuals quickly while keeping character and style continuity from first scene to final cut.',
+      description: 'Turn scripts into production-ready visuals quickly while keeping character and style continuity from first scene to publish-ready master.',
       features: [
         'Visuals that map cleanly to script beats',
         'Consistent Protagonists across every scene',
@@ -408,7 +408,7 @@ export default function UseCasesSection() {
           </h2>
           
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">
-            Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories all run through one production workflow.
+            Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.
           </p>
         </motion.div>
 

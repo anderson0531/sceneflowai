@@ -4,11 +4,13 @@
 import dynamic from 'next/dynamic'
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
-import { TrustSignals } from './components/TrustSignals'
 import { EngineeringTrust } from '@/components/landing/EngineeringTrust'
 
 const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
 
+const ValuePropStrip = dynamic(() => import('@/components/landing/ValuePropStrip').then(m => m.ValuePropStrip), { ssr: false })
+const WhySceneFlowSection = dynamic(() => import('@/components/landing/WhySceneFlowSection').then(m => m.WhySceneFlowSection), { ssr: false })
+const OneTakePipelineSection = dynamic(() => import('@/components/landing/OneTakePipelineSection').then(m => m.OneTakePipelineSection), { ssr: false })
 const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachineSection'), { ssr: false })
 const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
@@ -30,43 +32,34 @@ export default function LandingPage() {
       <FloatingCTA />
       <ExitIntentPopup />
       
-      {/* 1. Hero: "Your Vision, Rendered. Without the Friction." */}
       <HeroSection />
       
-      {/* 2. Trust strip */}
-      <TrustSignals />
+      <ValuePropStrip />
 
-      {/* 3. Broad use cases */}
+      <WhySceneFlowSection />
+
+      <OneTakePipelineSection />
+
       <SlotMachineSection />
 
-      {/* 4. How it works in plain language ("Whatever Video You Can Imagine") */}
-      <UseCasesSection />
-
-      {/* 5. How it works in plain language */}
       <HowItWorks />
 
-      {/* 6. Core Capabilities: Resonance + Express */}
       <CoreCapabilitiesSection />
 
-      {/* 6b. Same-project samples: storyboard, animatic, full video */}
+      <UseCasesSection />
+
       <SamplesSection />
 
-      {/* 7. Feature storyboard with short-segment placeholders */}
       <FeatureStoryboardSection />
 
-      {/* 7. Platform trust for startups and enterprise reviewers */}
       <EngineeringTrust />
 
-      {/* 8. Pricing and budget control */}
       <PricingCredits />
 
-      {/* 9. FAQ */}
       <FAQ />
       
-      {/* 10. Final CTA */}
       <FinalCTA />
       
-      {/* 11. Footer */}
       <Footer />
     </div>
   )

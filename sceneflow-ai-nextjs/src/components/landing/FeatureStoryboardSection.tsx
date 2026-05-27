@@ -5,6 +5,11 @@ import { Camera, PlayCircle, Clock3, Maximize2, X, Play, Pause, Volume2, VolumeX
 import NextImage from 'next/image';
 import { useState, useRef } from 'react';
 import { StudioVideoWatermark } from '@/components/landing/StudioVideoWatermark';
+import {
+  BEAT_FIRST_CARD,
+  SCREENING_ROOM_COPY,
+  WORKFLOW_PHASES,
+} from '@/config/landing/workflowPhaseCopy';
 
 type FeatureStoryboardItem = {
   id: number;
@@ -87,7 +92,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     keyFeatures: [
       'One pipeline — podcast, news, training, real estate, and cinematic formats',
       'Project templates — Studio adapts to your source material',
-      'Same Blueprint → Script → Vision path — regardless of genre',
+      'Same Blueprint → Script → Production path — regardless of genre',
       'No tool-switching — from ideation through delivery',
     ],
     screenshotSlot: 'Insert screenshot: Split-view or grid showing Podcast, News, Real Estate, and Cinematic templates feeding into one unified SceneFlow pipeline UI.',
@@ -176,16 +181,18 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
     videoUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Multilanguage.mp4',
   },
   {
+    id: 15,
+    title: BEAT_FIRST_CARD.title,
+    description: BEAT_FIRST_CARD.description,
+    keyFeatures: [...BEAT_FIRST_CARD.keyFeatures],
+    screenshotSlot: BEAT_FIRST_CARD.screenshotSlot,
+    videoSlot: BEAT_FIRST_CARD.videoSlot,
+  },
+  {
     id: 9,
     title: 'Series Automation',
-    description:
-      'Scale your narrative effortlessly. Define your universe once, and let the AI instantly generate cohesive multi-episode arcs, ensuring character development and overarching plotlines stay perfectly aligned across the entire season.',
-    keyFeatures: [
-      'Define your universe once — characters, tone, and season arc',
-      'Cohesive episode outlines — auto-generated across the season',
-      'Continuity tracking — up to 40 episodes in alignment',
-      "Series-to-episode sync — into Writer's Room and Production",
-    ],
+    description: WORKFLOW_PHASES[0].description,
+    keyFeatures: [...WORKFLOW_PHASES[0].keyFeatures],
     screenshotSlot: 'Insert screenshot: Series overview with auto-generated episode arcs',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2009.17.05.png',
     videoSlot: 'Insert 00:30 clip: Concept expanding into a multi-episode season',
@@ -194,14 +201,8 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
   {
     id: 10,
     title: 'Blueprint Automation',
-    description:
-      'Transform raw concepts into structured, production-ready architectures. Automatically generate complete story beats, character arcs, and scene-by-scene structural outlines that serve as the flawless foundation for your project.',
-    keyFeatures: [
-      'Generate → Review → Iterate → Start Production workflow',
-      'Concept to structure in minutes — logline, beats, characters, and tone',
-      'Audience Resonance scoring with 80+ target before Production',
-      'Collaborator share links — feedback synthesis into guided revision',
-    ],
+    description: WORKFLOW_PHASES[1].description,
+    keyFeatures: [...WORKFLOW_PHASES[1].keyFeatures],
     screenshotSlot: 'Insert screenshot: Auto-generated Blueprint with story beats and character arcs',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-21%20at%2010.05.03.png',
     videoSlot: 'Insert 00:30 clip: Turning a concept into a structured Blueprint',
@@ -210,29 +211,17 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
   {
     id: 11,
     title: 'Production Automation',
-    description:
-      'Go from script to screen without the friction. Instantly automate your script formatting, storyboard visualization, dynamic voice casting, and spatial audio mixing, seamlessly orchestrating reference libraries and keyframes into a unified video edit.',
-    keyFeatures: [
-      'Script formatting — scene breakdown from your blueprint',
-      'Storyboard and keyframes — with reference locking',
-      'AI voice casting — and spatial audio mixing',
-      'Full scene timeline — narration, dialogue, music, and SFX',
-    ],
-    screenshotSlot: 'Insert screenshot: Production dashboard showing script, voice, and video orchestration',
+    description: WORKFLOW_PHASES[2].description,
+    keyFeatures: [...WORKFLOW_PHASES[2].keyFeatures],
+    screenshotSlot: 'Insert screenshot: Production dashboard showing script, Beat Frames, and Mixer',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-27%20at%2011.15.48.png',
-    videoSlot: 'Insert 00:30 clip: Orchestrating script, storyboards, and audio into the Mixer',
+    videoSlot: 'Insert 00:30 clip: Foundation, Express storyboard, Beat Frames, and stream export',
   },
   {
     id: 12,
     title: 'Final Cut Assembly',
-    description:
-      'Stitch finished Production streams into one master video. Pick Animatic or Video — and language — per scene, preview the full program in script order, and export a single MP4 for Premiere.',
-    keyFeatures: [
-      'Per-scene stream pick — Animatic, Video, language, version',
-      'Assembly presets — All Video, Hybrid, Custom mix',
-      'Auto-aligned preview — script order, read-only monitor',
-      'One-click master export — stitched MP4 for Premiere',
-    ],
+    description: WORKFLOW_PHASES[3].description,
+    keyFeatures: [...WORKFLOW_PHASES[3].keyFeatures],
     screenshotSlot: 'Insert screenshot: Final Cut assembly panel with per-scene stream pickers',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2015.30.48.png',
     videoSlot: 'Insert 00:30 clip: Picking streams, previewing assembly, and exporting master',
@@ -240,35 +229,29 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
   {
     id: 13,
     title: 'Premiere Distribution',
-    description:
-      'Screen your master with real audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.',
-    keyFeatures: [
-      'Shareable Screening Room — /s/ links with scoring & biometrics',
-      'Insights dashboard — Scoring, Biometric, Visual tabs',
-      'YouTube wizard — thumbnail, localized title/description, SceneFlow CTA',
-      'Export bundles & vertical short-form clip plans',
-    ],
+    description: WORKFLOW_PHASES[4].description,
+    keyFeatures: [...WORKFLOW_PHASES[4].keyFeatures],
     screenshotSlot: 'Insert screenshot: Premiere dashboard with insights and publish wizard',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2017.09.15.png',
-    videoSlot: 'Insert 00:30 clip: Auto-generating platform-specific packages and thumbnails',
+    videoSlot: 'Insert 00:30 clip: Screening insights, YouTube wizard, and export bundles',
   },
   {
     id: 14,
-    title: 'Screening Room',
-    description:
-      'Validate your vision with real behavioral analytics. Host interactive review sessions to capture audience feedback, track engagement metrics, and use data-driven insights to refine your content before it goes public.',
-    keyFeatures: [
-      'Private review sessions — secure share links for stakeholders',
-      'Structured audience feedback — and engagement signals',
-      'Behavioral analytics — before public launch',
-      'Iterate from real data — refine blueprint and script from reviewer insights',
-    ],
-    screenshotSlot: 'Insert screenshot: Screening Room analytics and reviewer feedback panel',
-    screenshotUrl:
-      'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png',
-    videoSlot: 'Insert 00:30 clip: Hosting a review session and gathering engagement data',
+    title: SCREENING_ROOM_COPY.title,
+    description: SCREENING_ROOM_COPY.description,
+    keyFeatures: [...SCREENING_ROOM_COPY.keyFeatures],
+    screenshotSlot: SCREENING_ROOM_COPY.screenshotSlot,
+    screenshotUrl: SCREENING_ROOM_COPY.screenshotUrl,
+    videoSlot: SCREENING_ROOM_COPY.videoSlot,
   },
 ];
+
+/** Lead with differentiation; demote BYOK/credits to end */
+const FEATURE_DISPLAY_ORDER = [15, 4, 5, 6, 7, 8, 3, 1, 9, 10, 11, 12, 13, 14, 2];
+
+const ORDERED_FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = FEATURE_DISPLAY_ORDER.map(
+  (id) => FEATURE_STORYBOARD_ITEMS.find((item) => item.id === id)
+).filter((item): item is FeatureStoryboardItem => !!item);
 
 function FeatureVideoPlayer({ 
   src, 
@@ -579,7 +562,7 @@ export default function FeatureStoryboardSection() {
         </motion.div>
 
         <div className="mt-12 space-y-4 max-w-7xl mx-auto">
-          {FEATURE_STORYBOARD_ITEMS.map((item) => (
+          {ORDERED_FEATURE_STORYBOARD_ITEMS.map((item) => (
             <StoryboardCard 
               key={item.id} 
               item={item} 

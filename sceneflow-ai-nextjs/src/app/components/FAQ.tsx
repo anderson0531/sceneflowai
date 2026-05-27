@@ -11,12 +11,17 @@ export function FAQ() {
     {
       question: 'How does the SceneFlow workflow run from idea to publish-ready video?',
       answer:
-        'SceneFlow uses a structured workflow: Series (optional) -> Blueprint -> Production -> Final Cut -> Premiere (Screening Room). Blueprint defines story and target audience, Production generates scenes/audio, Final Cut refines pacing, and Premiere handles review feedback before publishing.',
+        'SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles.',
+    },
+    {
+      question: 'How is SceneFlow different from Gemini Studio or Google Flow?',
+      answer:
+        'Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio.',
     },
     {
       question: 'Can I edit AI-generated scripts, visuals, and audio?',
       answer:
-        'Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in Final Cut. SceneFlow accelerates production, but creators keep final control.',
+        'Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production.',
     },
     {
       question: 'How does Target Audience Resonance work now?',
@@ -31,12 +36,12 @@ export function FAQ() {
     {
       question: 'What does Premiere do if Screening Room is the review phase?',
       answer:
-        'Premiere is the release-readiness phase powered by Screening Room. Share cuts, collect stakeholder feedback, review ratings/engagement signals, and make final revisions before publishing.',
+        'Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles.',
     },
     {
       question: 'Do I need technical or editing experience?',
       answer:
-        'No. SceneFlow is built for non-technical creators and teams. You can start from plain-language prompts, then use guided tools to edit and approve results at each phase.',
+        'No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks.',
     },
     {
       question: 'How does the Explorer Plan work?',

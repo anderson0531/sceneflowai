@@ -171,7 +171,7 @@ const basePlans = [
       'API access',
       '10 team seats',
       'Dedicated account manager',
-      'SLA guarantee',
+      'Enterprise SLA available on request',
     ],
     limitations: [],
   },
@@ -888,9 +888,12 @@ export function PricingCredits() {
             </div>
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-amber-400" />
-              <span>Credits never expire</span>
+              <span>Credits never expire (Explorer pack)</span>
             </div>
           </div>
+          <p className="text-xs text-gray-500 mt-6 max-w-md mx-auto">
+            Payments processed by Paddle, our Merchant of Record. Tax and compliance handled on behalf of Life Focus, LLC.
+          </p>
         </motion.div>
       </div>
     </section>

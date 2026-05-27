@@ -1,7 +1,8 @@
 'use client'
 
-import { Mail, Twitter, Linkedin, Github, ExternalLink, Youtube } from 'lucide-react'
+import { Mail, ExternalLink, Youtube } from 'lucide-react'
 import Image from 'next/image'
+import { MOR_FOOTER_LINE } from '@/config/landing/valuePropCopy'
 
 export function Footer() {
   const footerLinks = {
@@ -49,8 +50,8 @@ export function Footer() {
               </span>
             </div>
             <p className="text-gray-400 max-w-md mb-6">
-              Transform your ideas into published video with AI-powered filmmaking. 
-              From script to screening room—the future of video production is here.
+              End-to-end automated video production — from concept to publish-ready master. 
+              One guided studio: Blueprint → Production → Final Cut → Premiere.
             </p>
             
             {/* Social Links */}
@@ -160,10 +161,10 @@ export function Footer() {
               <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span className="text-xs text-gray-400">Secure payments processed by our authorized Merchant of Record</span>
+              <span className="text-xs text-gray-400">Secure payments processed by Paddle, our Merchant of Record</span>
             </div>
             <p className="text-xs text-gray-500 text-center max-w-lg">
-              All payments, tax calculation, and compliance are handled by our payment partner on behalf of SceneFlow AI.
+              {MOR_FOOTER_LINE}
             </p>
           </div>
 
@@ -171,7 +172,7 @@ export function Footer() {
           <div className="flex flex-col md:flex-row justify-between items-center pt-6 border-t border-gray-800/50">
             <div className="text-center md:text-left">
               <p className="text-gray-500 text-sm">
-                © 2025 SceneFlow AI. All rights reserved.
+                © 2026 SceneFlow AI. All rights reserved.
               </p>
               {/* Business Address - Required for payment processor compliance */}
               <p className="text-gray-600 text-xs mt-1">

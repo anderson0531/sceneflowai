@@ -6,6 +6,7 @@ import { useState, useRef } from 'react'
 import { DemoVideoModal } from './DemoVideoModal'
 import { Play, ArrowRight, Pause, Volume2, VolumeX, Maximize } from 'lucide-react'
 import Link from 'next/link'
+import { HERO_COPY } from '@/config/landing/valuePropCopy'
 
 /** Longform "What's Possible Reel" */
 const HERO_COMMERCIAL_BLOB_SRC = '/demo/sceneflow-intro.mov#t=0.1'
@@ -54,45 +55,53 @@ export function HeroSection() {
         
         <div className="relative container mx-auto px-4 z-10">
           <div className="max-w-4xl mx-auto text-center">
-            {/* New Headline */}
+            <motion.p
+              className="text-sm font-medium text-cyan-400/90 mb-4 tracking-wide"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              {HERO_COPY.pipelineLine}
+            </motion.p>
+
             <motion.h1 
               className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight bg-gradient-to-r from-white via-gray-300 to-gray-400 text-transparent bg-clip-text"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              Your Vision, Rendered. Without the Friction.
+              {HERO_COPY.headline}
             </motion.h1>
 
-            {/* New Sub-headline */}
             <motion.p 
               className="mt-6 max-w-2xl mx-auto text-lg text-gray-300"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              Plan and produce real videos without a full production team. From real-estate showcases and training to podcasts, news, and cinema-style stories, SceneFlow helps non-technical creators move from idea to publish-ready output.
+              {HERO_COPY.subheadline}
             </motion.p>
             
-            {/* New CTAs */}
             <motion.div 
               className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              <Button href="/dashboard" size="xl" className="w-full sm:w-auto">
-                Start Your First Series
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
+              <Link href="/?signup=1" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto">
+                  {HERO_COPY.ctaPrimary}
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
               <Button 
                 variant="outline" 
-                size="xl" 
+                size="lg" 
                 className="w-full sm:w-auto"
                 onClick={() => setIsModalOpen(true)}
               >
                 <Play className="mr-2 w-5 h-5" />
-                Watch the &apos;What&apos;s Possible&apos; Reel
+                {HERO_COPY.ctaSecondary}
               </Button>
               <Link
                 href="/early-access"
@@ -103,7 +112,6 @@ export function HeroSection() {
             </motion.div>
           </div>
 
-          {/* Longform What's Possible Reel (Blob video) */}
           <motion.div
             className="relative max-w-4xl mx-auto mt-16"
             initial={{ opacity: 0, y: 20 }}
@@ -130,7 +138,6 @@ export function HeroSection() {
                   onPause={() => setIsPlaying(false)}
                 />
                 
-                {/* Controls Overlay */}
                 <div className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                   <div className="w-full bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 flex items-center justify-between pointer-events-auto">
                     <div className="flex items-center space-x-4">

@@ -22,9 +22,9 @@ const trustPillars = [
     description: 'Built on Google Cloud infrastructure with scalable orchestration for production workloads and growing teams.',
     highlights: [
       'Vertex AI for generation workflows',
-      'Veo video synthesis',
-      'Imagen image generation',
-      'ElevenLabs TTS integration'
+      'Imagen 4 and Veo 3.1 synthesis',
+      'ElevenLabs TTS integration',
+      'BYOK for enterprise billing control',
     ],
     gradient: 'from-cyan-500 to-blue-600',
     bgColor: 'bg-cyan-500/10',
@@ -38,8 +38,8 @@ const trustPillars = [
     highlights: [
       'Enterprise-ready cloud controls',
       'AES-256 encryption',
-      'GDPR-ready data handling',
-      'No training on user content'
+      'Designed with GDPR considerations',
+      'See our Privacy Policy for data handling',
     ],
     gradient: 'from-purple-500 to-violet-600',
     bgColor: 'bg-purple-500/10',
@@ -64,8 +64,8 @@ const trustPillars = [
 ];
 
 const metrics = [
-  { value: '99.9%', label: 'Uptime SLA', icon: Server },
-  { value: 'Global', label: 'Cloud Regions', icon: Zap },
+  { value: 'Global', label: 'Cloud delivery', icon: Server },
+  { value: 'Imagen 4', label: 'Image generation', icon: Zap },
   { value: '256-bit', label: 'Encryption', icon: Lock },
   { value: '24/7', label: 'Monitoring', icon: Clock }
 ];
@@ -244,9 +244,6 @@ export function EngineeringTrust() {
           </div>
           <p className="text-gray-500 text-xs mt-3 max-w-lg mx-auto">
             SceneFlow AI runs on scalable Google Cloud infrastructure designed for startup growth and enterprise expectations.
-          </p>
-          <p className="text-gray-500 text-xs mt-2">
-            Google Startups application contact: <span className="text-gray-300">brian@sfai.studio</span>
           </p>
         </motion.div>
 
