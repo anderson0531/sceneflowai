@@ -46,78 +46,63 @@ export interface WorkflowGuidePhaseConfig {
 
 export const productionWorkflowGroups: WorkflowGroup[] = [
   {
-    id: 'review-script',
-    title: 'Review & Refine Script',
+    id: 'foundation-script',
+    title: 'Foundation — Script tab',
     icon: 'FileText',
     iconColor: 'text-blue-500',
     steps: [
-      { id: 'update-review-score', label: 'Update Review Score', actionEventName: 'production:update-reviews' },
-      { id: 'review-analysis', label: 'Review Analysis (Edit Script)', actionEventName: 'production:review-analysis' },
-      { id: 'obtain-target-score', label: 'Obtain Target Score (85+)', description: 'Aim for green scores' },
+      { id: 'update-review-score', label: 'Run Audience Resonance', actionEventName: 'production:update-reviews' },
+      { id: 'review-analysis', label: 'Revise script (Script tab)', actionEventName: 'production:review-analysis' },
+      { id: 'lock-script', label: 'Lock script for production', description: 'Draft → Reviewed → Locked' },
+      { id: 'assign-voices', label: 'Assign voices (Reference Library)', actionEventName: 'production:assign-voices' },
+      { id: 'create-scene-audio', label: 'Generate scene audio', actionEventName: 'production:generate-audio' },
     ],
   },
   {
-    id: 'create-characters',
-    title: 'Create Characters',
+    id: 'foundation-refs',
+    title: 'Foundation — References',
     icon: 'Users',
     iconColor: 'text-purple-500',
+    collapsed: true,
     steps: [
-      { id: 'create-character-images', label: 'Create Character Images', actionEventName: 'production:generate-characters' },
-      { id: 'assign-voices', label: 'Assign Voices', actionEventName: 'production:assign-voices' },
-      { id: 'create-wardrobe', label: 'Create Wardrobe (with scenes)', actionEventName: 'production:create-wardrobe' },
+      { id: 'create-character-images', label: 'Character references', actionEventName: 'production:generate-characters' },
+      { id: 'create-suggested-objects', label: 'Key props', actionEventName: 'production:create-objects' },
+      { id: 'create-scene-references', label: 'Location references', actionEventName: 'production:generate-references' },
     ],
   },
   {
-    id: 'create-objects',
-    title: 'Key Props',
-    icon: 'Box',
-    iconColor: 'text-orange-500',
-    steps: [
-      { id: 'create-suggested-objects', label: 'Get Key Props', actionEventName: 'production:create-objects' },
-      { id: 'add-additional-objects', label: 'Add Custom Props', actionEventName: 'production:add-objects' },
-    ],
-  },
-  {
-    id: 'scene-audio',
-    title: 'Audio (by Scene)',
-    icon: 'Volume2',
-    iconColor: 'text-cyan-500',
-    steps: [
-      { id: 'create-scene-audio', label: 'Create Audio', actionEventName: 'production:generate-audio' },
-      { id: 'review-audio-timeline', label: 'Review & Adjust Timeline', actionEventName: 'production:audio-timeline' },
-      { id: 'create-multilanguage', label: 'Create Multilanguage (optional)', actionEventName: 'production:multilanguage' },
-    ],
-  },
-  {
-    id: 'scene-direction',
-    title: 'Direction (by Scene)',
-    icon: 'Clapperboard',
-    iconColor: 'text-pink-500',
-    steps: [
-      { id: 'create-scene-references', label: 'Create Scene References', actionEventName: 'production:generate-references' },
-      { id: 'iterate-direction', label: 'Iterate as Needed', actionEventName: 'production:edit-direction' },
-    ],
-  },
-  {
-    id: 'scene-frames',
-    title: 'Frames (by Scene)',
+    id: 'storyboard-express',
+    title: 'Storyboard — Express & gallery',
     icon: 'Image',
     iconColor: 'text-emerald-500',
     steps: [
-      { id: 'generate-key-frames', label: 'Generate Key Frames', actionEventName: 'production:generate-frames' },
-      { id: 'iterate-frames', label: 'Iterate as Necessary', actionEventName: 'production:edit-frames' },
-      { id: 'select-screening-frames', label: 'Select Screening Room Frames', actionEventName: 'production:select-frames' },
+      { id: 'run-express', label: 'Build Storyboard (Express)', actionEventName: 'production:scene-gallery' },
+      { id: 'review-storyboard', label: 'Review storyboard gallery', actionEventName: 'production:scene-gallery' },
+      { id: 'collaborate-share', label: 'Share for review', actionEventName: 'production:share-link' },
+      { id: 'review-animatic', label: 'Screening Room — Preview (live)', actionEventName: 'production:screening-room' },
     ],
   },
   {
-    id: 'screening-room',
-    title: 'Screening Room',
+    id: 'production-action',
+    title: 'Production — Action tab',
+    icon: 'Video',
+    iconColor: 'text-red-500',
+    steps: [
+      { id: 'generate-beat-frames', label: 'Build Beat Frames (start/end)', actionEventName: 'production:generate-frames' },
+      { id: 'create-video', label: 'Generate beat video (Director Console)', actionEventName: 'production:generate-video' },
+      { id: 'mix-scene', label: 'Preview in Production Mixer', actionEventName: 'production:edit-video' },
+      { id: 'render-stream', label: 'Render Stream (export dialog)', actionEventName: 'production:mark-complete' },
+    ],
+  },
+  {
+    id: 'production-streams',
+    title: 'Production Streams — Export (MP4)',
     icon: 'Play',
     iconColor: 'text-green-500',
     steps: [
-      { id: 'review-animatic', label: 'Review Script Animatic', actionEventName: 'production:screening-room' },
-      { id: 'collaborate-share', label: 'Collaborate (Share Link)', actionEventName: 'production:share-link' },
-      { id: 'create-revision-notes', label: 'Create Revision Notes', actionEventName: 'production:revision-notes' },
+      { id: 'review-streams', label: 'Review finished MP4s', actionEventName: 'production:edit-video' },
+      { id: 'rerender-stale', label: 'Re-render when beats change', description: 'Update available badge' },
+      { id: 'send-final-cut', label: 'Send to Final Cut', actionEventName: 'production:mark-complete' },
     ],
   },
   {
@@ -127,20 +112,45 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
     iconColor: 'text-amber-500',
     collapsed: true,
     steps: [
-      { id: 'revise-script', label: 'Revise Script as Needed', actionEventName: 'production:review-analysis' },
-      { id: 'revise-frames', label: 'Revise Frames', actionEventName: 'production:edit-frames' },
-      { id: 'revise-audio', label: 'Revise Audio', actionEventName: 'production:audio-timeline' },
+      { id: 'revise-script', label: 'Unlock script & revise', actionEventName: 'production:review-analysis' },
+      { id: 'revise-frames', label: 'Re-run Express or edit Beat Frames', actionEventName: 'production:edit-frames' },
+      { id: 'revise-audio', label: 'Revise audio timeline', actionEventName: 'production:audio-timeline' },
+    ],
+  },
+]
+
+export const finalCutWorkflowGroups: WorkflowGroup[] = [
+  {
+    id: 'pick-streams',
+    title: 'Pick stream versions',
+    icon: 'Film',
+    iconColor: 'text-purple-500',
+    steps: [
+      { id: 'select-stream-type', label: 'Choose Animatic or Video per scene', description: 'Match stakeholder-approved storyboard vs full motion' },
+      { id: 'select-language', label: 'Pick language stream version', description: 'One stream per scene × language × version' },
+      { id: 'review-duration', label: 'Review elastic timing vs baseline', description: 'Non-English streams may run longer — holds extend automatically' },
     ],
   },
   {
-    id: 'video-production',
-    title: 'Action! (by Scene)',
-    icon: 'Video',
-    iconColor: 'text-red-500',
+    id: 'assemble',
+    title: 'Assemble in Final Cut',
+    icon: 'Clapperboard',
+    iconColor: 'text-cyan-500',
     steps: [
-      { id: 'create-video', label: 'Create Video', actionEventName: 'production:generate-video' },
-      { id: 'edit-video', label: 'Edit Video (if needed)', actionEventName: 'production:edit-video' },
-      { id: 'mark-scene-complete', label: 'Mark Scene Video Complete', actionEventName: 'production:mark-complete' },
+      { id: 'order-scenes', label: 'Order scenes on timeline', actionEventName: 'final-cut:order-scenes' },
+      { id: 'transitions', label: 'Add transitions & titles', actionEventName: 'final-cut:transitions' },
+      { id: 'captions-export', label: 'Captions for export (burn-in)', description: 'Configure in Mixer before render — Screening Room captions are preview only' },
+    ],
+  },
+  {
+    id: 'premiere-export',
+    title: 'The Premiere',
+    icon: 'Sparkles',
+    iconColor: 'text-amber-500',
+    steps: [
+      { id: 'preview-full', label: 'Preview full assembly', actionEventName: 'premiere:preview' },
+      { id: 'export-master', label: 'Export master MP4', actionEventName: 'premiere:export' },
+      { id: 'share-premiere', label: 'Share premiere link', actionEventName: 'premiere:share' },
     ],
   },
 ]
@@ -257,7 +267,7 @@ export const blueprintWorkflowGroups: WorkflowGroup[] = [
 export const workflowGuideConfig: Record<WorkflowPhase, WorkflowGroup[]> = {
   blueprint: blueprintWorkflowGroups,
   production: productionWorkflowGroups,
-  'final-cut': [], // TODO: Add Final Cut workflow
+  'final-cut': finalCutWorkflowGroups,
   premiere: [], // TODO: Add Premiere workflow
   dashboard: [],
   settings: [],

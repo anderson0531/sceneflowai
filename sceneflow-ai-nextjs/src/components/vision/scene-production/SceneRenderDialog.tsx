@@ -634,10 +634,10 @@ export const SceneRenderDialog: React.FC<SceneRenderDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-white">
             <Film className="w-5 h-5 text-purple-400" />
-            Scene Composer
+            Export Stream
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
-            Configure video segments and audio tracks for Scene {sceneNumber}
+          <DialogDescription className="text-gray-400">
+            Scene {sceneNumber} — Fast (WebM) for drafts, Broadcast (MP4) for delivery, or Cloud for long scenes.
           </DialogDescription>
         </DialogHeader>
 

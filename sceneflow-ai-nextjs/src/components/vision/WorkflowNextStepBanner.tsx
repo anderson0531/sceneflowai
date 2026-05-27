@@ -87,7 +87,7 @@ function getNextStep(state: WorkflowState): NextStepAction | null {
   if (!state.hasDirection) {
     return {
       label: 'Generate Scene Direction',
-      description: 'Scene direction provides camera angles, lighting, and atmosphere for better keyframe generation.',
+      description: 'Scene direction provides camera angles, lighting, and atmosphere for better Beat Frame generation.',
       icon: <Compass className="w-4 h-4" />,
       targetTab: 'callAction',
       actionId: 'generate-direction',
@@ -97,11 +97,11 @@ function getNextStep(state: WorkflowState): NextStepAction | null {
 
   if (!state.hasFrame) {
     return {
-      label: 'Build Storyboard Keyframes',
-      description: 'Generate start and end keyframe images for each segment. This enables Frame-to-Video generation.',
+      label: 'Build Beat Frames',
+      description: 'Generate start and end Beat Frame images for each beat clip. This enables Frame-to-Video generation.',
       icon: <Frame className="w-4 h-4" />,
       targetTab: 'callAction',
-      actionId: 'generate-keyframes',
+      actionId: 'generate-beat-frames',
       accentColor: 'purple',
     }
   }

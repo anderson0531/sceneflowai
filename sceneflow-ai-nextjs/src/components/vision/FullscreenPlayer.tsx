@@ -1005,7 +1005,7 @@ export function FullscreenPlayer({
               </Button>
             ) : null}
             <div className="min-w-0 flex-1">
-            <h2 className="text-lg sm:text-xl font-semibold truncate">Screening Room</h2>
+            <h2 className="text-lg sm:text-xl font-semibold truncate">Screening Room — Preview (live)</h2>
             <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-400">
               <span className="truncate hidden sm:block">{scriptTitle || 'Untitled Script'}</span>
               {totalScenes > 1 && (
@@ -1025,7 +1025,7 @@ export function FullscreenPlayer({
               className={`p-2 rounded-lg hover:bg-white/10 text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${
                 showCaptions ? 'bg-white/20' : ''
               }`}
-              title="Toggle Captions"
+              title={showCaptions ? 'Preview captions (not exported)' : 'Preview captions (not exported)'}
             >
               <Subtitles className="w-5 h-5" />
             </button>

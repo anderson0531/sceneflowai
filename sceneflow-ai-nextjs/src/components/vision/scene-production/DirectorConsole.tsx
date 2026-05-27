@@ -555,7 +555,7 @@ function DirectorConsoleRoot({
     if (expressIds.length === 0) {
       import('sonner').then(({ toast }) => {
         toast.info(
-          'No eligible segments for Express — need both start and end keyframes (fully anchored for F2V), unlocked, and not already rendering.'
+          'No eligible segments for Express — need both start and end Beat Frames (fully anchored for F2V), unlocked, and not already rendering.'
         )
       })
       return
@@ -928,6 +928,10 @@ function DirectorConsoleRoot({
     <ProductionStreamsPanel
       productionStreams={productionStreams}
       selectedLanguage={productionTarget.language}
+      streamType={productionTarget.streamType}
+      onStreamTypeChange={(streamType) =>
+        setProductionTarget((prev) => ({ ...prev, streamType }))
+      }
       onRenderAnimatic={handleRenderAnimatic}
       onDeleteStream={handleDeleteStream}
       onReRenderStream={handleReRenderStream}
@@ -1023,6 +1027,15 @@ function DirectorConsoleRoot({
               productionStreams: updatedStreams,
             } as SceneProductionData)
           }
+          import('sonner').then(({ toast }) => {
+            toast.success('Stream rendered', {
+              description: 'Review the MP4 in Production Streams or send to Final Cut.',
+              action: {
+                label: 'Play in Streams',
+                onClick: () => setStreamsCollapsed(false),
+              },
+            })
+          })
         }}
         onProductionStreamsChange={(streams) => {
           setProductionStreams(streams)
@@ -1062,7 +1075,7 @@ function DirectorConsoleRoot({
             onClick={handleExpress}
             disabled={queue.length === 0}
             className="border-indigo-500/50 text-indigo-300 hover:bg-indigo-500/10 hover:border-indigo-400 shadow-md hover:shadow-lg transition-all"
-            title="Express F2V: batch-generate video for unlocked segments that have both start and end keyframes"
+            title="Express F2V: batch-generate video for unlocked segments that have both start and end Beat Frames"
           >
             <Wand2 className="w-4 h-4 mr-2" />
             Express
@@ -1091,7 +1104,7 @@ function DirectorConsoleRoot({
             icon={Film}
             title="Video Generation"
             badge={`${statusCounts.rendered}/${statusCounts.total}`}
-            rightHint="Generate video clips from keyframes using AI"
+            rightHint="Generate video clips from Beat Frames using AI"
             className="flex-1 min-w-0 border-0 p-0"
           />
           <div className="flex-shrink-0 px-1 sm:px-0">{generateControls}</div>
@@ -1401,9 +1414,9 @@ function DirectorConsoleRoot({
       <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
         <ProductionSectionHeader
           icon={ListVideo}
-          title="Production Streams"
+          title="Production Streams — Export (MP4)"
           badge={productionStreams.length}
-          rightHint="Animatic and stitched video exports"
+          rightHint="Finished MP4 library — not live preview"
           collapsible
           expanded={!streamsCollapsed}
           onToggle={() => setStreamsCollapsed((c) => !c)}

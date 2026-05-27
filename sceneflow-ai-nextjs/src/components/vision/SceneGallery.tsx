@@ -13,7 +13,7 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, EyeOff, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin, FileText, ChevronDown, ChevronUp, GripVertical, Zap, Settings2, Tag, Plus } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, EyeOff, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin, FileText, ChevronDown, ChevronUp, GripVertical, Zap, Settings2, Tag, Plus, ArrowRight, Share2 } from 'lucide-react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -25,13 +25,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData } from '@/lib/types/reports'
-import { SceneProductionManager } from './scene-production/SceneProductionManager'
 import type { SceneProductionData, SceneProductionReferences } from './scene-production/types'
 import type { GenerationType } from './scene-production/SegmentStudio'
 import type { VideoGenerationMethod } from './scene-production/SegmentPromptBuilder'
 import { cn } from '@/lib/utils'
 import { formatSceneHeading, extractLocation } from '@/lib/script/formatSceneHeading'
+import { getStoryboardBeatProgress } from '@/lib/production/sceneProgress'
 import { ImageEditModal } from './ImageEditModal'
+import { SceneImageFrame } from './SceneImageFrame'
 import {
   ExpressConfirmDialog,
   type ExpressConfirmOptions,
@@ -39,7 +40,6 @@ import {
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
 import { useStore } from '@/store/useStore'
-import { SceneImageFrame } from './SceneImageFrame'
 import { flattenSceneToStoryboardFrames, countStoryboardFrameStats, enumerateStoryboardFrameSlots, countStoryboardFramesNeedingGeneration } from '@/lib/storyboard/types'
 
 export type ExpressPhase = 'direction' | 'audio' | 'image'
@@ -127,6 +127,11 @@ interface SceneGalleryProps {
   isExpressRunning?: boolean
   /** Per-scene phase progress map driven by SSE events. */
   expressStatus?: ExpressSceneStatusMap
+  /** When true, Express is blocked until script lock + production ready. */
+  expressGateBlocked?: boolean
+  expressGateReasons?: string[]
+  /** Called after successful Express to open storyboard player / share flow. */
+  onExpressComplete?: () => void
 }
 
 const buildSceneKey = (scene: any, index: number) => scene.sceneId || scene.id || `scene-${index}`
@@ -171,6 +176,9 @@ export function SceneGallery({
   onExpressGenerate,
   isExpressRunning = false,
   expressStatus,
+  expressGateBlocked = false,
+  expressGateReasons = [],
+  onExpressComplete,
 }: SceneGalleryProps) {
   // Drag and drop sensors
   const sensors = useSensors(
@@ -211,6 +219,25 @@ export function SceneGallery({
 
   // Express dialog state
   const [expressDialogOpen, setExpressDialogOpen] = useState(false)
+  const [expressStartedAt, setExpressStartedAt] = useState<number | null>(null)
+  const [expressElapsedSec, setExpressElapsedSec] = useState(0)
+
+  React.useEffect(() => {
+    if (!isExpressRunning || !expressStartedAt) return
+    const tick = () => setExpressElapsedSec(Math.floor((Date.now() - expressStartedAt) / 1000))
+    tick()
+    const id = window.setInterval(tick, 1000)
+    return () => window.clearInterval(id)
+  }, [isExpressRunning, expressStartedAt])
+
+  React.useEffect(() => {
+    if (isExpressRunning) {
+      setExpressStartedAt((prev) => prev ?? Date.now())
+    } else {
+      setExpressStartedAt(null)
+      setExpressElapsedSec(0)
+    }
+  }, [isExpressRunning])
 
   const currentProject = useStore(s => s.currentProject)
   const setCurrentProject = useStore(s => s.setCurrentProject)
@@ -287,9 +314,23 @@ export function SceneGallery({
     }).length
   }, [scenes, selectedLanguage])
 
+  const storyboardBeatProgress = useMemo(() => {
+    return scenes.reduce(
+      (acc, scene) => {
+        const { complete, total } = getStoryboardBeatProgress(scene)
+        return { complete: acc.complete + complete, total: acc.total + total }
+      },
+      { complete: 0, total: 0 }
+    )
+  }, [scenes])
+
   const handleExpressConfirm = useCallback(
     async (options: ExpressConfirmOptions) => {
       if (!onExpressGenerate) return
+      if (expressGateBlocked) {
+        toast.error(expressGateReasons[0] || 'Complete Production Ready checklist before Express.')
+        return
+      }
       setExpressDialogOpen(false)
       try {
         await onExpressGenerate({ ...options, language: selectedLanguage })
@@ -297,7 +338,7 @@ export function SceneGallery({
         console.error('[SceneGallery] Express generate failed:', err)
       }
     },
-    [onExpressGenerate, selectedLanguage]
+    [onExpressGenerate, selectedLanguage, expressGateBlocked, expressGateReasons]
   )
 
   // Compute a phase-level progress summary from the SSE-driven `expressStatus`
@@ -514,8 +555,14 @@ export function SceneGallery({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setExpressDialogOpen(true)}
-                  disabled={isExpressRunning || scenesNeedingExpress === 0}
+                  onClick={() => {
+                    if (expressGateBlocked) {
+                      toast.error(expressGateReasons[0] || 'Complete Production Ready checklist before Express.')
+                      return
+                    }
+                    setExpressDialogOpen(true)
+                  }}
+                  disabled={isExpressRunning || (!expressGateBlocked && scenesNeedingExpress === 0)}
                   className="relative flex items-center gap-2 overflow-hidden bg-gradient-to-r from-indigo-500/15 to-purple-500/15 border-indigo-500/40 hover:border-indigo-500/60 hover:from-indigo-500/25 hover:to-purple-500/25"
                 >
                   {isExpressRunning ? (
@@ -528,7 +575,9 @@ export function SceneGallery({
                       ? expressProgress
                         ? `Express ${expressProgress.pct}%`
                         : 'Express running…'
-                      : `Express (${scenesNeedingExpress})`}
+                      : expressGateBlocked
+                      ? 'Build Storyboard (locked)'
+                      : `Build Storyboard (${scenesNeedingExpress})`}
                   </span>
                   {isExpressRunning && expressProgress && (
                     <span
@@ -539,32 +588,32 @@ export function SceneGallery({
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>
-                {isExpressRunning && expressProgress
-                  ? `Direction → Audio → Image • ${expressProgress.completedPhases}/${expressProgress.totalPhases} phases (${expressProgress.scenesComplete}/${expressProgress.sceneCount} scenes)`
-                  : 'Generate Direction → Audio → Image for every scene (3 in parallel)'}
+              <TooltipContent className="max-w-xs">
+                {expressGateBlocked ? (
+                  <ul className="text-xs space-y-1 list-disc pl-4">
+                    {expressGateReasons.map((reason) => (
+                      <li key={reason}>{reason}</li>
+                    ))}
+                  </ul>
+                ) : isExpressRunning && expressProgress ? (
+                  `Direction → Audio → Storyboard • ${storyboardBeatProgress.complete}/${storyboardBeatProgress.total} beats • ${expressElapsedSec}s elapsed`
+                ) : (
+                  'Build Storyboard (Express): Direction → Audio → storyboard frames for every scene'
+                )}
               </TooltipContent>
             </Tooltip>
           )}
-          {/* Compact running-progress pill: visible only while Express is
-              executing, gives a textual readout that complements the bar. */}
           {isExpressRunning && expressProgress && (
             <div className="flex items-center gap-1.5 rounded-md border border-indigo-500/40 bg-indigo-500/10 px-2 py-1 text-[11px] text-indigo-200">
               <span className="font-semibold">
-                Scene {expressProgress.scenesComplete}/{expressProgress.sceneCount}
+                Beats {storyboardBeatProgress.complete}/{storyboardBeatProgress.total}
               </span>
               <span className="text-indigo-300/70">·</span>
+              <span>{expressElapsedSec}s</span>
+              <span className="text-indigo-300/70">·</span>
               <span>
-                {expressProgress.completedPhases}/{expressProgress.totalPhases} phases
+                Scene {expressProgress.scenesComplete}/{expressProgress.sceneCount}
               </span>
-              {expressProgress.runningPhases > 0 && (
-                <>
-                  <span className="text-indigo-300/70">·</span>
-                  <span className="text-indigo-300">
-                    {expressProgress.runningPhases} active
-                  </span>
-                </>
-              )}
             </div>
           )}
           {/* Language selector - always visible. The list is the full
@@ -1487,43 +1536,28 @@ function SceneCard({
         className="mt-4 border-t border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/80 backdrop-blur-sm"
         onClick={(event) => event.stopPropagation()}
       >
-        <button
-          type="button"
-          onClick={onToggleProduction}
-          className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100"
-        >
-          <span className="flex items-center gap-2">
-            <Clapperboard className="w-4 h-4 text-sf-primary" />
-            <span className="truncate">SCENE {sceneNumber}: {(() => {
-              // Extract simplified location from heading (remove INT/EXT prefix)
-              const heading = sceneHeading || ''
-              const simplified = heading.replace(/^(INT\.?\/EXT\.?|EXT\.?\/INT\.?|INT\.?|EXT\.?)\s*/i, '').trim()
-              return simplified || 'Untitled'
-            })()}</span>
-          </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 ml-2">
-            {isProductionOpen ? 'Hide' : 'Expand'}
-          </span>
-        </button>
-        {isProductionOpen ? (
-          <div className="px-4 pb-4">
-            <SceneProductionManager
-              sceneId={sceneKey}
-              sceneNumber={sceneNumber}
-              heading={sceneHeading}
-              scene={scene}
-              productionData={productionData}
-              references={productionReferences}
-              onInitialize={onInitializeProduction}
-              onPromptChange={onSegmentPromptChange}
-              onDialogueAssignmentChange={onSegmentDialogueAssignmentChange}
-              onSegmentActionChange={onSegmentActionChange}
-              onGenerate={onSegmentGenerate}
-              onUpload={onSegmentUpload}
-              onEditSegmentFrame={onEditSegmentFrame}
-            />
+        <div className="px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            Video production lives in the <span className="font-medium text-gray-700 dark:text-gray-200">Action</span> tab — Beat Frames, Mixer, and Production Streams — Export (MP4).
           </div>
-        ) : null}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="gap-2 border-purple-500/40 text-purple-200 hover:bg-purple-500/10"
+            onClick={() => {
+              window.dispatchEvent(
+                new CustomEvent('production:open-action-tab', {
+                  detail: { sceneId: sceneKey, sceneIndex: sceneNumber - 1 },
+                })
+              )
+            }}
+          >
+            <Clapperboard className="w-4 h-4" />
+            Open in Action tab
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Button>
+        </div>
       </div>
     </div>
   )

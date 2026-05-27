@@ -37,7 +37,7 @@ export interface SceneProgressItem {
   hasScript: boolean
   /** Has scene direction generated */
   hasDirection: boolean
-  /** Has scene image / keyframe */
+  /** Has Beat Frames (start + end pairs for F2V) */
   hasFrame: boolean
   /** Has segments with active assets (video/image) */
   hasCallAction: boolean
@@ -66,7 +66,7 @@ const STEPS = [
   { key: 'hasScript', label: 'Script', icon: FileText, color: 'green' },
   { key: 'hasAudio', label: 'Audio', icon: Volume2, color: 'blue' },
   { key: 'hasDirection', label: 'Direction', icon: Compass, color: 'cyan' },
-  { key: 'hasFrame', label: 'Keyframes', icon: Frame, color: 'purple' },
+  { key: 'hasFrame', label: 'Beat Frames', icon: Frame, color: 'purple' },
   { key: 'hasCallAction', label: 'Video', icon: Film, color: 'amber' },
   { key: 'hasRender', label: 'Render', icon: Clapperboard, color: 'emerald' },
 ] as const

@@ -3032,6 +3032,13 @@ export function SceneProductionMixer({
   const totalDuration = useMemo(() => {
     return Math.max(videoTotalDuration, maxAudioDuration)
   }, [videoTotalDuration, maxAudioDuration])
+
+  const languageDurationDeltaPct = useMemo(() => {
+    if (productionTarget.language === 'en' || videoTotalDuration <= 0) return 0
+    const stretch = maxAudioDuration / videoTotalDuration
+    if (!Number.isFinite(stretch) || stretch <= 1) return 0
+    return Math.round((stretch - 1) * 100)
+  }, [productionTarget.language, maxAudioDuration, videoTotalDuration])
   
   const audioTrackCount = useMemo(() => {
     let count = 0
@@ -4160,6 +4167,20 @@ export function SceneProductionMixer({
           />
         </div>
       </div>
+
+      <div className="px-4 sm:px-5 py-2 border-b border-purple-500/15 bg-gray-900/40 flex flex-wrap items-center gap-2 text-xs">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-cyan-200">
+          Timing baseline: English — other languages follow this timeline
+        </span>
+        {productionTarget.language !== 'en' && (
+          <span className="text-gray-400">
+            {languageLabel}
+            {languageDurationDeltaPct > 0
+              ? ` +${languageDurationDeltaPct}% longer vs baseline — holds extended automatically`
+              : ' — aligned to baseline timing'}
+          </span>
+        )}
+      </div>
       
       {/* Main Content */}
       <div className="p-4 sm:p-5">
@@ -4346,7 +4367,7 @@ export function SceneProductionMixer({
                   </div>
                 ) : (
                   <div className="text-center py-4 text-gray-500 text-sm">
-                    No text overlays. Add a title, lower third, or subtitle.
+                    Captions for export — burned into the rendered MP4. Preview captions separately in Screening Room (not exported).
                   </div>
                 )}
                 
@@ -5180,7 +5201,7 @@ export function SceneProductionMixer({
                 <>
                   <CheckCircle2 className="w-5 h-5 text-green-400" />
                   <span className="text-sm text-green-400">
-                    Render complete! ({activeRenderMode === 'local' ? 'Quick Export' : activeRenderMode === 'headless' ? 'Pro Cloud' : 'Server'})
+                    Render complete! ({activeRenderMode === 'local' ? 'Fast (WebM)' : activeRenderMode === 'headless' ? 'Cloud (long scenes)' : 'Broadcast (MP4)'})
                   </span>
                   <button 
                     onClick={handleDownload}
@@ -5249,10 +5270,10 @@ export function SceneProductionMixer({
                 } text-white`}
                 title={
                   selectedRenderMode === 'local'
-                    ? 'Quick Export: browser WebM up to 1080p (4K uses cloud). Overlays and sync may vary by device.'
+                    ? 'Fast (WebM): browser export up to 1080p. Quick drafts — use Broadcast (MP4) for delivery.'
                     : selectedRenderMode === 'headless'
-                    ? `Pro Cloud: headless render at your Output resolution (${resolution}) with frame-accurate overlays when configured`
-                    : `Final Render: server MP4 at your Output resolution (${resolution})`
+                    ? `Cloud (long scenes): headless render at ${resolution} with frame-accurate overlays when configured`
+                    : `Broadcast (MP4): server export at ${resolution} for delivery-grade output`
                 }
               >
                 {isRendering ? (
@@ -5266,9 +5287,9 @@ export function SceneProductionMixer({
                     {selectedRenderMode === 'server' && <Video className="w-4 h-4 mr-2" />}
                     {selectedRenderMode === 'headless' && <Monitor className="w-4 h-4 mr-2" />}
                     {selectedRenderMode === 'auto' && <Sparkles className="w-4 h-4 mr-2" />}
-                    {selectedRenderMode === 'local' ? 'Quick Export' : 
-                     selectedRenderMode === 'headless' ? 'Pro Cloud' : 
-                     'Render'} {languageLabel}
+                    {selectedRenderMode === 'local' ? 'Fast (WebM)' : 
+                     selectedRenderMode === 'headless' ? 'Cloud' : 
+                     'Render Stream'} {languageLabel}
                   </>
                 )}
               </Button>
@@ -5283,13 +5304,13 @@ export function SceneProductionMixer({
                   <>
                     <div className="flex items-center gap-1">
                       <Zap className="w-3 h-3 text-yellow-400" />
-                      <span className="text-yellow-300">Quick Export:</span>
+                      <span className="text-yellow-300">Fast (WebM):</span>
                       <span>
                         Browser WebM • Up to 1080p (matches Output; 4K requires Final or Pro Cloud) • May vary vs preview on slower devices
                       </span>
                     </div>
                     <div className="flex items-center gap-1 text-gray-400">
-                      <span>Best for: Fast drafts; use Final Render for delivery-grade MP4</span>
+                      <span>Best for: Fast drafts; use Broadcast (MP4) for delivery-grade export</span>
                     </div>
                     {watermarkConfig.enabled && (
                       <div className="flex items-center gap-1 text-green-400">

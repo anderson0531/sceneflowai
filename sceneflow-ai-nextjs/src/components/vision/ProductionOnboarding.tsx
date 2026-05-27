@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   FileText,
   Volume2,
-  Compass,
   Frame,
   Film,
   Clapperboard,
@@ -17,21 +16,16 @@ import {
   Lightbulb,
   CheckCircle2,
   SkipForward,
+  Share2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-
-// ============================================================================
-// Tour Step Configuration
-// ============================================================================
 
 export interface TourStep {
   id: string
   title: string
   description: string
   icon: React.ReactNode
-  /** Which workflow step this maps to */
   workflowStep?: string
-  /** Tip for this step */
   tip?: string
 }
 
@@ -39,119 +33,100 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
     title: 'Welcome to Production',
-    description: 'This is where your screenplay comes to life. Each scene goes through a structured workflow — from script refinement to final rendered video. Let\'s walk through the steps.',
+    description:
+      'SceneFlow is one continuous pipeline: Foundation → Storyboard → Production → Final Cut. You work in two tabs — Script and Action — with a clear next step at every stage.',
     icon: <Sparkles className="w-6 h-6" />,
-    tip: 'You can work on scenes in any order, but completing them sequentially gives the best results.',
+    tip: 'The Production Progress dashboard and co-pilot always show where you are and what is next.',
   },
   {
     id: 'script-tab',
-    title: '1. Script — Write & Refine',
-    description: 'Start with your AI-generated scene script. Use Insights & Direction to make specific revisions with AI assistance. Generate audio narration and dialogue in 13+ languages.',
+    title: 'Phase 1 — Foundation (Script tab)',
+    description:
+      'Write and refine your script, run Audience Resonance (85+ target), generate audio, and assign voices. Lock the script when ready — Express stays disabled until Foundation is complete.',
     icon: <FileText className="w-6 h-6" />,
     workflowStep: 'dialogueAction',
-    tip: 'The Audience Resonance score (shown on each scene) measures quality across Dialogue, Pacing, Emotion, and Visual dimensions. Aim for 85+.',
-  },
-  {
-    id: 'direction',
-    title: '2. Scene Direction — Auto-Generated',
-    description: 'Scene Direction is automatically generated from your script, providing camera angles, lighting, atmosphere, and key props. You can review and edit it anytime.',
-    icon: <Compass className="w-6 h-6" />,
-    workflowStep: 'directorsChair',
-    tip: 'Scene Direction feeds into keyframe image generation for better visual consistency.',
+    tip: 'Script Status: Draft → Reviewed → Locked. Production Ready checks voices and references.',
   },
   {
     id: 'storyboard',
-    title: '3. Storyboard Builder — Keyframes',
-    description: 'Generate start and end keyframe images for each beat. These keyframes define your scene composition and enable Frame-to-Video (FTV) generation — the most reliable video mode.',
+    title: 'Phase 2 — Storyboard',
+    description:
+      'Use Build Storyboard (Express) for Direction → Audio → storyboard frames in ~10 minutes. Review in the gallery, share for approval, and preview in Screening Room — Preview (live).',
     icon: <Frame className="w-6 h-6" />,
-    workflowStep: 'segmentBuilder',
-    tip: 'FTV mode interpolates between your Start and End keyframes, giving you precise control over the video output.',
+    workflowStep: 'dialogueAction',
+    tip: 'Storyboard Frame = still image per beat. Screening Room is live preview — not an exported MP4.',
   },
   {
-    id: 'storyboard-editor',
-    title: '4. Storyboard → Scene Production Mixer',
-    description: 'After keyframes, open Video Production and use the Scene Production Mixer: one output target (Animatic or Video × language), timeline preview, overlays, and Production Streams for animatic and final video renders.',
-    icon: <Film className="w-6 h-6" />,
-    tip: 'Use Output in the mixer to switch between animatic (keyframes) and stitched beat video; render animatics from Production Streams or the export dialog.',
-  },
-  {
-    id: 'video-generation',
-    title: '5. Video Generation — AI Beats',
-    description: 'Generate AI video for each beat. The default FTV mode uses your keyframes for the most reliable results. You also have I2V, T2V, Reference, and Extend modes for full creative control.',
+    id: 'action-tab',
+    title: 'Phase 3 — Production (Action tab)',
+    description:
+      'Beat Frames (start/end pairs for F2V) → Director Console video beats → Production Mixer → Production Streams — Export (MP4). One Output control syncs Animatic, Video, and language.',
     icon: <Clapperboard className="w-6 h-6" />,
     workflowStep: 'callAction',
-    tip: 'Video beats are up to 8 seconds each to align with AI generation limits. The system auto-beats your scene for optimal results.',
+    tip: 'Do video work only in Action — the storyboard gallery no longer embeds a duplicate production panel.',
   },
   {
-    id: 'mixer',
-    title: '6. Scene Production Mixer — Compose',
-    description: 'Combine beat videos into a single scene render with audio mixing, text overlays, and watermarks. Render in 720p, 1080p, or 4K.',
+    id: 'mixer-streams',
+    title: 'Mixer & Streams',
+    description:
+      'Mixer previews with elastic timing; baseline language drives the timeline. Render Stream opens one export dialog (Fast WebM / Broadcast MP4 / Cloud). Finished files live in Production Streams.',
     icon: <Volume2 className="w-6 h-6" />,
-    tip: 'The mixer supports "Elastic Timing" — audio can extend beyond video by freezing the last frame, ensuring narration is never cut short.',
+    tip: 'After render: Play in Streams or Send to Final Cut — not auto-download.',
+  },
+  {
+    id: 'final-cut',
+    title: 'Phase 4 — Final Cut',
+    description:
+      'Pick a stream version per scene (Animatic or Video × language), assemble in Final Cut, and export your premiere. The workflow guide lists each step.',
+    icon: <Film className="w-6 h-6" />,
+    tip: 'Stale streams show “Update available” when beats or audio change.',
   },
   {
     id: 'progress',
-    title: '7. Track Progress — Dashboard',
-    description: 'The Production Progress dashboard shows all scenes at a glance with color-coded status for each step: Script, Audio, Direction, Keyframes, Video, and Render. Click any scene to jump to it.',
+    title: 'Track Progress',
+    description:
+      'The dashboard tracks Script, Audio, Direction, Beat Frames, Video, and Render using beat-first rules. Click any scene to jump to it.',
     icon: <CheckCircle2 className="w-6 h-6" />,
-    tip: 'When all scenes are complete, continue to Final Cut to assemble and export your full production.',
+    tip: 'Share storyboard links early — approval converts to faster video production.',
   },
 ]
 
-// ============================================================================
-// LocalStorage Key
-// ============================================================================
-
-const TOUR_STORAGE_KEY = 'sceneflow-production-tour-completed'
+const TOUR_STORAGE_KEY = 'sceneflow-production-tour-complete'
 const TOUR_DISMISSED_KEY = 'sceneflow-production-tour-dismissed'
 
-// ============================================================================
-// Component
-// ============================================================================
-
 interface ProductionOnboardingProps {
-  /** Force show even if previously dismissed */
-  forceShow?: boolean
   onComplete?: () => void
   className?: string
 }
 
-export function ProductionOnboarding({ forceShow, onComplete, className }: ProductionOnboardingProps) {
+export function ProductionOnboarding({ onComplete, className }: ProductionOnboardingProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
 
-  // Check if user has already seen the tour
-  useEffect(() => {
-    if (forceShow) {
-      setIsVisible(true)
-      return
-    }
-    if (typeof window !== 'undefined') {
-      const dismissed = localStorage.getItem(TOUR_DISMISSED_KEY)
-      const completed = localStorage.getItem(TOUR_STORAGE_KEY)
-      if (!dismissed && !completed) {
-        // Show tour for first-time users after a short delay
-        const timer = setTimeout(() => setIsVisible(true), 1500)
-        return () => clearTimeout(timer)
-      }
-    }
-  }, [forceShow])
-
-  const step = PRODUCTION_TOUR_STEPS[currentStep]
   const totalSteps = PRODUCTION_TOUR_STEPS.length
+  const step = PRODUCTION_TOUR_STEPS[currentStep]
   const isLastStep = currentStep === totalSteps - 1
-  const isFirstStep = currentStep === 0
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const completed = localStorage.getItem(TOUR_STORAGE_KEY)
+    const dismissed = localStorage.getItem(TOUR_DISMISSED_KEY)
+    if (!completed && !dismissed) {
+      const timer = setTimeout(() => setIsVisible(true), 800)
+      return () => clearTimeout(timer)
+    }
+  }, [])
 
   const handleNext = useCallback(() => {
     if (isLastStep) {
       handleComplete()
     } else {
-      setCurrentStep(prev => prev + 1)
+      setCurrentStep((prev) => prev + 1)
     }
   }, [isLastStep])
 
   const handlePrev = useCallback(() => {
-    setCurrentStep(prev => Math.max(0, prev - 1))
+    setCurrentStep((prev) => Math.max(0, prev - 1))
   }, [])
 
   const handleComplete = useCallback(() => {
@@ -187,12 +162,11 @@ export function ProductionOnboarding({ forceShow, onComplete, className }: Produ
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
           className={cn(
-            "relative w-full max-w-lg mx-4 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl shadow-purple-500/10 overflow-hidden",
+            'relative w-full max-w-lg mx-4 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl shadow-purple-500/10 overflow-hidden',
             className
           )}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Progress bar */}
           <div className="h-1 bg-gray-800">
             <motion.div
               className="h-full bg-gradient-to-r from-purple-500 to-cyan-500"
@@ -201,7 +175,6 @@ export function ProductionOnboarding({ forceShow, onComplete, className }: Produ
             />
           </div>
 
-          {/* Close button */}
           <button
             onClick={handleDismiss}
             className="absolute top-4 right-4 p-1 text-gray-400 hover:text-white transition-colors rounded-full hover:bg-white/10"
@@ -209,93 +182,56 @@ export function ProductionOnboarding({ forceShow, onComplete, className }: Produ
             <X className="w-5 h-5" />
           </button>
 
-          {/* Content */}
           <div className="px-8 pt-8 pb-6">
-            {/* Icon */}
             <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400 mb-4">
               {step.icon}
             </div>
 
-            {/* Step counter */}
             <div className="text-xs text-gray-500 mb-2">
               Step {currentStep + 1} of {totalSteps}
             </div>
 
-            {/* Title */}
-            <h3 className="text-xl font-bold text-white mb-3">
-              {step.title}
-            </h3>
+            <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
 
-            {/* Description */}
-            <p className="text-sm text-gray-300 leading-relaxed mb-4">
-              {step.description}
-            </p>
+            <p className="text-sm text-gray-300 leading-relaxed mb-4">{step.description}</p>
 
-            {/* Tip */}
             {step.tip && (
               <div className="flex items-start gap-2 p-3 bg-cyan-900/20 border border-cyan-700/30 rounded-lg">
                 <Lightbulb className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-cyan-300 leading-relaxed">
-                  {step.tip}
-                </p>
+                <p className="text-xs text-cyan-300 leading-relaxed">{step.tip}</p>
               </div>
             )}
           </div>
 
-          {/* Navigation */}
           <div className="flex items-center justify-between px-8 py-4 border-t border-gray-800 bg-gray-900/50">
             <div className="flex items-center gap-2">
-              {/* Step dots */}
               {PRODUCTION_TOUR_STEPS.map((_, idx) => (
-                <button
+                <div
                   key={idx}
-                  onClick={() => setCurrentStep(idx)}
                   className={cn(
-                    "w-2 h-2 rounded-full transition-all duration-200",
-                    idx === currentStep
-                      ? "bg-purple-500 w-6"
-                      : idx < currentStep
-                      ? "bg-purple-500/50"
-                      : "bg-gray-600"
+                    'w-2 h-2 rounded-full transition-colors',
+                    idx === currentStep ? 'bg-purple-400' : 'bg-gray-700'
                   )}
                 />
               ))}
             </div>
 
             <div className="flex items-center gap-2">
-              {!isFirstStep && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handlePrev}
-                  className="text-gray-400 hover:text-white"
-                >
+              {currentStep > 0 && (
+                <Button variant="ghost" size="sm" onClick={handlePrev} className="text-gray-400">
                   <ChevronLeft className="w-4 h-4 mr-1" />
                   Back
                 </Button>
               )}
-
-              {isFirstStep && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDismiss}
-                  className="text-gray-500 hover:text-white"
-                >
-                  <SkipForward className="w-4 h-4 mr-1" />
-                  Skip Tour
-                </Button>
-              )}
-
-              <Button
-                size="sm"
-                onClick={handleNext}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
+              <Button variant="ghost" size="sm" onClick={handleDismiss} className="text-gray-500">
+                <SkipForward className="w-4 h-4 mr-1" />
+                Skip
+              </Button>
+              <Button size="sm" onClick={handleNext} className="bg-purple-600 hover:bg-purple-700 text-white">
                 {isLastStep ? (
                   <>
-                    Get Started
-                    <Sparkles className="w-4 h-4 ml-1" />
+                    <Share2 className="w-4 h-4 mr-1" />
+                    Start Production
                   </>
                 ) : (
                   <>
@@ -312,38 +248,9 @@ export function ProductionOnboarding({ forceShow, onComplete, className }: Produ
   )
 }
 
-// ============================================================================
-// Restart Tour Button — for settings/help
-// ============================================================================
-
-export function RestartTourButton({ className }: { className?: string }) {
-  const [showTour, setShowTour] = useState(false)
-
-  const handleRestart = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(TOUR_STORAGE_KEY)
-      localStorage.removeItem(TOUR_DISMISSED_KEY)
-    }
-    setShowTour(true)
+export function resetProductionTour() {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(TOUR_STORAGE_KEY)
+    localStorage.removeItem(TOUR_DISMISSED_KEY)
   }
-
-  return (
-    <>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleRestart}
-        className={cn("text-gray-400 hover:text-white", className)}
-      >
-        <Lightbulb className="w-4 h-4 mr-2" />
-        Restart Tour
-      </Button>
-      {showTour && (
-        <ProductionOnboarding
-          forceShow
-          onComplete={() => setShowTour(false)}
-        />
-      )}
-    </>
-  )
 }

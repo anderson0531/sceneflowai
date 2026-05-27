@@ -49,6 +49,12 @@ const ScriptPanel = dynamic(
 import { SceneSelector } from '@/components/vision/SceneSelector'
 import { SceneProgressDashboard, type SceneProgressItem } from '@/components/vision/SceneProgressDashboard'
 import { ProductionOnboarding } from '@/components/vision/ProductionOnboarding'
+import { useSceneProgressItems } from '@/hooks/vision/useSceneProgressItems'
+import { useProductionScriptLock } from '@/hooks/vision/useProductionScriptLock'
+import {
+  evaluateProductionReadyChecklist,
+  canRunExpress,
+} from '@/lib/production/productionReadinessGate'
 // Dynamic import to break TDZ chain - SceneGallery → SceneProductionManager → SegmentStudio
 // shares scope-hoisted modules with ScriptPanel chunk causing 'Cannot access te before initialization'
 const SceneGallery = dynamic(
@@ -602,6 +608,81 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       hasNarrationVoice: Array.isArray(characters) && !!characters.find(c => c.type === 'narrator')?.voiceConfig
     }
   }, [characters, script])
+
+  const {
+    scriptLockStatus,
+    nextStatus,
+    previousStatus,
+    buildMetadataPatch,
+  } = useProductionScriptLock(project?.metadata)
+
+  const productionReadyChecklist = useMemo(
+    () =>
+      evaluateProductionReadyChecklist({
+        scriptLockStatus,
+        characters: characters || [],
+        scenes: script?.script?.scenes || [],
+        objectReferences,
+        locationReferences,
+      }),
+    [scriptLockStatus, characters, script, objectReferences, locationReferences]
+  )
+
+  const expressGate = useMemo(
+    () =>
+      canRunExpress({
+        scriptLockStatus,
+        checklist: productionReadyChecklist,
+      }),
+    [scriptLockStatus, productionReadyChecklist]
+  )
+
+  const sceneProgressItems = useSceneProgressItems(
+    script?.script?.scenes,
+    sceneProductionState
+  )
+
+  const handleScriptLockChange = useCallback(
+    async (status: typeof scriptLockStatus) => {
+      if (!projectId || !project) return
+      const patch = buildMetadataPatch(status)
+      try {
+        const existingMetadata = project.metadata || {}
+        const existingVision = (existingMetadata as Record<string, unknown>).visionPhase || {}
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              ...existingMetadata,
+              visionPhase: {
+                ...(existingVision as Record<string, unknown>),
+                ...patch.visionPhase,
+              },
+            },
+          }),
+        })
+        if (!response.ok) throw new Error('Failed to update script lock')
+        setProject((prev: any) => {
+          if (!prev) return prev
+          const meta = { ...(prev.metadata || {}) }
+          const vision = { ...(meta.visionPhase || {}), ...patch.visionPhase }
+          return { ...prev, metadata: { ...meta, visionPhase: vision } }
+        })
+        toast.success(
+          status === 'locked'
+            ? 'Script locked for production'
+            : status === 'reviewed'
+            ? 'Script marked reviewed'
+            : 'Script unlocked'
+        )
+      } catch (err) {
+        console.error('[ScriptLock]', err)
+        toast.error('Could not update script status')
+      }
+    },
+    [projectId, project, buildMetadataPatch]
+  )
 
   useEffect(() => {
     // Only run sanitization on initial load, not on subsequent project changes
@@ -10377,7 +10458,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
 
         if (failedScenes === 0 && successScenes > 0) {
-          toast.success(`Express complete — ${successScenes} scene${successScenes === 1 ? '' : 's'}`)
+          toast.success(`Express complete — ${successScenes} scene${successScenes === 1 ? '' : 's'}`, {
+            action: {
+              label: 'Share for review',
+              onClick: () => {
+                window.dispatchEvent(new CustomEvent('production:share-link'))
+              },
+            },
+          })
+          setShowSceneGallery(true)
+          requestAnimationFrame(() => {
+            document.getElementById('scene-gallery-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          })
         } else if (failedScenes > 0 && successScenes > 0) {
           toast.warning(
             `Express finished — ${successScenes} ok, ${failedScenes} with errors`
@@ -10414,7 +10506,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setIsExpressRunning(false)
       }
     },
-    [projectId, script, isExpressRunning]
+    [projectId, script, isExpressRunning, setShowSceneGallery]
   )
 
   // Delete specific audio from a scene
@@ -11200,6 +11292,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateAllAudio={handleGenerateAllAudio}
                 isGeneratingAudio={isGeneratingAudio}
                 productionReadiness={productionReadiness}
+                scriptLockStatus={scriptLockStatus}
+                onScriptLockAdvance={
+                  nextStatus ? () => handleScriptLockChange(nextStatus) : undefined
+                }
+                onScriptLockRetreat={
+                  previousStatus ? () => handleScriptLockChange(previousStatus) : undefined
+                }
+                productionReadyChecklist={productionReadyChecklist}
                 projectTitle={projectTitle}
                 projectLogline={projectLogline}
                 projectDuration={projectDuration || undefined}
@@ -11207,33 +11307,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 timelineSlot={
                   <>
                   <SceneProgressDashboard
-                    scenes={(script?.script?.scenes || []).map((scene: any, idx: number) => {
-                      const sceneId = scene.id || scene.sceneId || `scene-${idx}`
-                      const productionData = sceneProductionState[sceneId]
-                      const segments = productionData?.segments || []
-                      const hasScript = !!(scene.content || scene.dialog || scene.narration || scene.description)
-                      const hasDirection = !!(scene.direction || scene.sceneDirection || scene.cameraDirection)
-                      const hasFrame = !!scene.imageUrl
-                      const hasCallAction = segments.some((s: any) => s.activeAssetUrl && s.assetType)
-                      const hasAudio = !!(scene.narrationAudioUrl || scene.musicAudio || scene.narrationAudio)
-                      const hasRender = !!(productionData?.renderedSceneUrl || (productionData?.productionStreams && productionData.productionStreams.length > 0))
-                      const allSegmentsComplete = segments.length > 0 && segments.every((s: any) => s.status === 'complete' || s.status === 'COMPLETE')
-                      return {
-                        id: sceneId,
-                        sceneNumber: idx + 1,
-                        name: typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || `Scene ${idx + 1}`,
-                        hasScript,
-                        hasDirection,
-                        hasFrame,
-                        hasCallAction,
-                        hasAudio,
-                        hasRender,
-                        status: (allSegmentsComplete && hasRender) ? 'complete' as const
-                          : (hasCallAction || hasFrame || hasAudio) ? 'in-progress' as const
-                          : 'not-started' as const,
-                        score: scene.audienceAnalysis?.score || scene.scoreAnalysis?.overallScore,
-                      } satisfies SceneProgressItem
-                    })}
+                    scenes={sceneProgressItems}
                     selectedSceneId={
                       selectedSceneIndex !== null
                         ? (script?.script?.scenes?.[selectedSceneIndex]?.id ||
@@ -11587,6 +11661,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onExpressGenerate={handleExpressGenerate}
                             isExpressRunning={isExpressRunning}
                             expressStatus={expressStatus}
+                            expressGateBlocked={!expressGate.allowed}
+                            expressGateReasons={expressGate.reasons}
                           />
                         </div>
                       )}

@@ -175,11 +175,10 @@ export function ExpressConfirmDialog({
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <Zap className="w-5 h-5 text-indigo-400" />
-            Run Express
+            Run Build Storyboard (Express)
           </DialogTitle>
           <DialogDescription className="text-gray-300">
-            Generate Direction, Audio, and Image for every scene with up to 3 scenes
-            in parallel.
+            Direction → Audio → storyboard frames for every scene (up to 3 scenes in parallel).
           </DialogDescription>
         </DialogHeader>
 

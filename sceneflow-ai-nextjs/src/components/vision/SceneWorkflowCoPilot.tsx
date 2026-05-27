@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { FileText, Film, Camera, Clapperboard, ChevronDown, ChevronUp, Lightbulb, Layers } from 'lucide-react'
+import { FileText, Film, Camera, Clapperboard, ChevronDown, ChevronUp, Lightbulb, Layers, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export type WorkflowStep = 'dialogueAction' | 'directorsChair' | 'storyboardPreViz' | 'segmentBuilder' | 'callAction'
@@ -23,106 +23,97 @@ export const guidanceContent: Record<WorkflowStep, {
   tip: string
 }> = {
   dialogueAction: {
-    title: 'Script',
+    title: 'Script — Foundation',
     icon: <FileText className="w-5 h-5 text-sf-primary" />,
-    goal: 'Finalize the scene script.',
-    whyItMatters: 'The script is the foundation. Changes made here automatically update everything else. Locking the script now prevents costly regeneration later.',
+    goal: 'Finalize script, audio, and references before storyboard and video production.',
+    whyItMatters: 'Foundation work happens here: writing, Audience Resonance review, voice casting, and timeline prep. Lock the script when ready so Express and production stay stable.',
     howItWorks: [
-      'Edit narration and dialogue directly in the script',
-      'Use AI Review (Score) to get feedback from professional Director and Audience perspectives',
-      'Use the AI assistant to professionally revise dialogue, improve pacing, or adjust tone'
+      'Edit narration, dialogue, and action in the Script tab',
+      'Run Audience Resonance (aim for 85+) and apply targeted fixes',
+      'Generate scene audio and assign voices from the Reference Library',
+      'Use Screening Room — Preview (live) to review the animatic before exporting MP4s',
     ],
     toolsAndTips: [
-      'Edit Scene: Click "Scene" to edit narration, dialogue, and action in a rich editor',
-      'Get Review: Click "Get Review" to score your scene from Director & Audience perspectives',
-      'AI Review (Score): Analyzes pacing, structure, emotional impact, and engagement',
-      'AI Assistant: Use to revise dialogue and improve script quality',
-      'Audio Generation: Generate voice narration and character dialogue',
-      'Delete Audio: When you change voices, delete old audio first to force fresh generation'
+      'Script Status: Draft → Reviewed → Locked (lock before Express)',
+      'Production Ready checklist: voices, references, and script lock',
+      'Express: one project-level CTA for Direction → Audio → Storyboard frames',
+      'Screening Room = live preview; Production Streams = finished MP4 exports',
     ],
-    bestPractice: 'Do not proceed until the script is locked and you have achieved a satisfactory AI Score.',
-    tip: 'Finalizing the script early prevents costly rework later in the workflow.'
+    bestPractice: 'Complete Foundation (script lock + voices + key references) before running Express.',
+    tip: 'You only see Script and Action tabs — Direction, storyboard, and Beat Frames live inside those phases.',
   },
   directorsChair: {
-    title: 'Direction',
+    title: 'Direction (in Script phase)',
     icon: <Film className="w-5 h-5 text-sf-primary" />,
-    goal: 'Define the cinematic vision and technical execution of the scene.',
-    whyItMatters: 'This direction is used directly as the input prompt for storyboards and final video generation. Precision here is key.',
+    goal: 'Define cinematic direction that feeds storyboard and Beat Frame generation.',
+    whyItMatters: 'Direction is generated automatically during Express or from the script. It drives camera, lighting, and blocking for consistent storyboard frames.',
     howItWorks: [
-      'Click "Generate AI Direction" to analyze your script and references',
-      'The AI generates detailed direction including camera work, lighting, talent blocking, and audio cues',
-      'Review and edit the direction manually or regenerate with adjustments'
+      'Express generates direction per scene, or generate manually from the script',
+      'Review camera, lighting, talent blocking, and audio cues',
+      'Edit direction before re-running storyboard generation',
     ],
     toolsAndTips: [
-      'Camera: Angles, movement, lens choice, and focus',
-      'Lighting: Mood, time of day, key/fill/backlight, color temperature',
-      'Scene: Location, key props, atmosphere',
-      'Talent: Blocking, key actions, emotional beats',
-      'Audio: Priorities and considerations for SFX and music'
+      'Direction lives in the Script tab workflow — no separate tab',
+      'Changes to direction may require regenerating storyboard frames',
     ],
-    bestPractice: 'Read the generated direction carefully. Does it match your vision? You can edit manually or prompt the AI to regenerate with adjustments.',
-    tip: 'This direction is used directly as the input prompt for storyboards and final video. Precision here is key.'
+    bestPractice: 'Confirm direction matches your vision before building the storyboard.',
+    tip: 'Direction is an input to Express, not a separate production phase.',
   },
   storyboardPreViz: {
-    title: 'Frame',
+    title: 'Storyboard — Storyboard phase',
     icon: <Camera className="w-5 h-5 text-sf-primary" />,
-    goal: 'Visualize the scene and gather feedback before final video generation.',
-    whyItMatters: 'This is your checkpoint! Video generation is intensive. Making changes to the storyboard is fast; making changes to the video is slow and costly.',
+    goal: 'Build storyboard frames for every beat and share for approval.',
+    whyItMatters: 'Storyboard frames are still images per beat — fast to change. Video and Beat Frames come later in the Action tab.',
     howItWorks: [
-      'Generate Storyboard: Creates images based on Director\'s Chair direction and Reference Library',
-      'The Screening Room: Click \'Play\' to watch the Pre-Viz—the storyboard timed with generated voice, music, and SFX',
-      'Sharing: Share the Pre-Viz link with collaborators for feedback'
+      'Run Build Storyboard (Express) at project level when script is locked',
+      'Review frames in the storyboard gallery; share link for stakeholder approval',
+      'Screening Room — Preview (live): storyboard timed with audio (not exported MP4)',
     ],
     toolsAndTips: [
-      'Generate Storyboard: Creates images based on your direction',
-      'The Screening Room: Preview the complete Pre-Viz with audio',
-      'Sharing: Get feedback from collaborators before final generation'
+      'Storyboard Frame = still image for a beat (Express output)',
+      'Approve storyboard before opening Action tab video work',
+      'Gallery is the single storyboard truth — video production lives in Action',
     ],
-    bestPractice: 'If changes are needed, go back to the previous steps (Script or Direction) and regenerate the storyboard.',
-    tip: 'Making changes to the storyboard is fast; making changes to the video is slow and costly.'
+    bestPractice: 'Share the storyboard for review before investing in Beat Frames and video.',
+    tip: 'Making storyboard changes is fast; re-rendering MP4 streams is slow.',
   },
   segmentBuilder: {
-    title: 'Beats',
+    title: 'Beats (internal)',
     icon: <Layers className="w-5 h-5 text-sf-primary" />,
-    goal: 'Build production beats from scene script, action, and audio timing.',
-    whyItMatters: 'Beats drive production cuts. AI analyzes narration, dialogue, and scene changes to create optimal beat boundaries.',
+    goal: 'Understand how beats drive cuts — managed automatically in the beat-first pipeline.',
+    whyItMatters: 'Beats are script units (dialogue, narration, action). Express and production derive storyboard frames and beat clips from them.',
     howItWorks: [
-      'AI Analysis: Automatically divides the scene into beats from narration, dialogue timing, and scene changes',
-      'Preview & Adjust: Review proposed beats on the timeline; drag edges to fine-tune boundaries',
-      'Prompt Review: Edit video generation prompts (cinematography only - scene content is locked)',
-      'Finalize: Lock beats and proceed to keyframes for each production cut'
+      'Beats are created from your script automatically',
+      'Storyboard frames attach to beats via Express',
+      'Action tab derives beat clips for Beat Frames and video generation',
     ],
     toolsAndTips: [
-      'Scene Bible: The scene description, narration, and dialogue are read-only while building beats',
-      'Duration Limits: Beats are optimized for 4-8 seconds (Veo 3.1 optimal range)',
-      'Audio Alignment: Drag beat edges to snap to narration/dialogue boundaries',
-      'Guardrails: The system will warn if your prompts introduce content not in the script',
-      'Cinematography: Focus edits on camera movement, lighting, and pacing'
+      'Beat = script unit; Beat Frame = start/end pair for F2V',
+      'No separate Beats tab — work in Script and Action only',
     ],
-    bestPractice: 'Review the AI-generated beats before editing. If the script needs changes, go back to the Script tab first.',
-    tip: 'Scene content is locked while building beats to prevent accidental script changes. Edit the scene in the Script tab if needed.'
+    bestPractice: 'Edit the script in the Script tab if beat boundaries need to change at the source.',
+    tip: 'Segment Builder is not a user-facing step in the simplified workflow.',
   },
   callAction: {
-    title: 'Call Action',
+    title: 'Action — Production phase',
     icon: <Clapperboard className="w-5 h-5 text-sf-primary" />,
-    goal: 'Generate and assemble the final video beats.',
-    whyItMatters: 'This is where your vision becomes reality. Careful review and editing of prompts ensures high-quality, consistent output.',
+    goal: 'Beat Frames → Mixer → Production Streams → Final Cut.',
+    whyItMatters: 'This is canonical video production: Beat Frames for F2V, Director Console for beat video, Mixer for preview/export, Streams for finished MP4s.',
     howItWorks: [
-      'Scene Breakdown: The AI automatically divides the scene into short beats (clips)',
-      'Duration Settings: Adjust beat lengths (default 8s) based on your video generation platform capabilities',
-      'Prompt Editing: Review and edit the exact prompt used for each video beat for fine-tuned control',
-      'Generation Options: Generate AI video, generate static images, or upload your own footage for each beat',
-      'Timeline Review: Review the assembled scene on the timeline, complete with tracks for speech, SFX, and music'
+      'Beat Frames: generate start/end pairs per beat clip (renamed from keyframes)',
+      'Director Console: generate AI video beats (FTV recommended)',
+      'Production Mixer: one Output control (Animatic | Video × language), elastic timing',
+      'Production Streams — Export (MP4): review renders, re-render when beats change',
     ],
     toolsAndTips: [
-      'Beat Breakdown: Automatic division into manageable clips',
-      'Prompt Editing: Fine-tune the exact prompt for each beat',
-      'Generation Options: Choose between AI video, static images, or uploaded footage',
-      'Timeline: Review assembled scene with all audio tracks'
+      'Output selector syncs Mixer and Streams panel',
+      'Render Stream opens unified export: Fast (WebM) / Broadcast (MP4) / Cloud',
+      'After render: Play in Streams or Send to Final Cut',
+      'Baseline language drives timeline; other languages show duration delta',
     ],
-    bestPractice: 'Start by generating a few key beats to check the quality and consistency before generating the entire scene.',
-    tip: 'Review and edit prompts carefully—this is your last chance to fine-tune before generation.'
-  }
+    bestPractice: 'Complete Beat Frames before switching Output to Video. Gate video until start + end frames exist.',
+    tip: 'Do not use the gallery production panel — open Action tab for video work.',
+  },
 }
 
 export function SceneWorkflowCoPilot({ activeStep, isCollapsed = false, onToggleCollapse }: SceneWorkflowCoPilotProps) {
@@ -134,14 +125,13 @@ export function SceneWorkflowCoPilot({ activeStep, isCollapsed = false, onToggle
 
   return (
     <div className="border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 overflow-hidden">
-      {/* Header */}
       <button
         onClick={onToggleCollapse}
         className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
       >
         <div className="flex items-center gap-2">
           {content.icon}
-          <span>AI Co-Pilot: {content.title}</span>
+          <span>Co-Pilot: {content.title}</span>
         </div>
         {isCollapsed ? (
           <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -152,19 +142,21 @@ export function SceneWorkflowCoPilot({ activeStep, isCollapsed = false, onToggle
 
       {!isCollapsed && (
         <div className="px-4 pb-4 space-y-4 border-t border-gray-200 dark:border-gray-800">
-          {/* Goal */}
+          <div className="flex items-center gap-2 text-[11px] text-gray-500 uppercase tracking-wide">
+            <Sparkles className="w-3.5 h-3.5" />
+            Foundation → Storyboard → Production → Final Cut
+          </div>
+
           <div>
             <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Goal:</h4>
             <p className="text-sm text-gray-700 dark:text-gray-300">{content.goal}</p>
           </div>
 
-          {/* Why it Matters */}
           <div>
             <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Why it Matters:</h4>
             <p className="text-sm text-gray-700 dark:text-gray-300">{content.whyItMatters}</p>
           </div>
 
-          {/* How it Works */}
           <div>
             <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">How it Works:</h4>
             <ul className="space-y-1.5 text-sm text-gray-700 dark:text-gray-300">
@@ -177,7 +169,6 @@ export function SceneWorkflowCoPilot({ activeStep, isCollapsed = false, onToggle
             </ul>
           </div>
 
-          {/* Tools & Tips */}
           <div>
             <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Tools & Tips:</h4>
             <ul className="space-y-1.5 text-sm text-gray-700 dark:text-gray-300">
@@ -190,7 +181,6 @@ export function SceneWorkflowCoPilot({ activeStep, isCollapsed = false, onToggle
             </ul>
           </div>
 
-          {/* Best Practice */}
           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <div className="flex items-start gap-2">
               <Lightbulb className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
@@ -201,19 +191,11 @@ export function SceneWorkflowCoPilot({ activeStep, isCollapsed = false, onToggle
             </div>
           </div>
 
-          {/* Tip */}
-          <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-            <div className="flex items-start gap-2">
-              <span className="text-amber-600 dark:text-amber-400 text-lg">💡</span>
-              <div>
-                <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-300 mb-1">Tip:</h4>
-                <p className="text-sm text-amber-800 dark:text-amber-200">{content.tip}</p>
-              </div>
-            </div>
-          </div>
+          {content.tip && (
+            <p className="text-xs text-gray-500 italic">{content.tip}</p>
+          )}
         </div>
       )}
     </div>
   )
 }
-

@@ -72,6 +72,9 @@ interface ProductionStreamsPanelProps {
   hasSegmentChanges?: boolean
   /** Whether video generation is available (requires segment videos) */
   videoGenerationAvailable?: boolean
+  /** Sync Animatic/Video tab with mixer output target */
+  streamType?: ProductionStreamType
+  onStreamTypeChange?: (streamType: ProductionStreamType) => void
   /** Disabled state */
   disabled?: boolean
 }
@@ -92,7 +95,7 @@ const STREAM_TYPE_CONFIG: Record<ProductionStreamType, StreamTypeEntry> = {
   animatic: { 
     Icon: Clapperboard, 
     label: 'Animatic', 
-    description: 'Ken Burns animation with keyframes'
+    description: 'Ken Burns animation with Beat Frames'
   },
   video: { 
     Icon: VideoIcon, 
@@ -598,10 +601,13 @@ export function ProductionStreamsPanel({
   onDismissStreamUploadError,
   hasSegmentChanges = false,
   videoGenerationAvailable = false,
+  streamType: controlledStreamType,
+  onStreamTypeChange,
   disabled = false
 }: ProductionStreamsPanelProps) {
-  /** Independent of Scene Production Mixer — browse all animatic vs video exports */
-  const [streamsPanelTab, setStreamsPanelTab] = useState<ProductionStreamType>('animatic')
+  const [internalStreamTab, setInternalStreamTab] = useState<ProductionStreamType>('animatic')
+  const streamsPanelTab = controlledStreamType ?? internalStreamTab
+  const setStreamsPanelTab = onStreamTypeChange ?? setInternalStreamTab
   const selectedStreamType = streamsPanelTab
   const uploadInputRef = useRef<HTMLInputElement>(null)
   const selectedLanguageFlag = FLAG_EMOJIS[selectedLanguage] || '🌐'
@@ -681,7 +687,7 @@ export function ProductionStreamsPanel({
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-sm font-medium text-white tracking-tight">
-                Production Streams
+                Production Streams — Export (MP4)
               </h3>
               {productionStreams.length > 0 && (
                 <span className="px-2 py-0.5 text-xs font-medium bg-purple-500/20 text-purple-200 rounded-md border border-purple-500/25">
@@ -690,7 +696,7 @@ export function ProductionStreamsPanel({
               )}
             </div>
             <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-              Finished exports for this scene by language and type. Versions stack for the same language (Animatic English v1, v2…). In Final Cut, pick Animatic vs Video and the stream version per scene.
+              Finished MP4 exports for this scene by language and type. Preview live work in Screening Room or the Mixer — review finished files here.
             </p>
           </div>
         </div>
@@ -702,7 +708,7 @@ export function ProductionStreamsPanel({
         )}
       </div>
 
-      {/* Animatic / Video toggle (independent of mixer output target) */}
+      {/* Animatic / Video toggle (synced with mixer output target when provided) */}
       <Tabs
         value={streamsPanelTab}
         onValueChange={(v) => setStreamsPanelTab(v as ProductionStreamType)}
