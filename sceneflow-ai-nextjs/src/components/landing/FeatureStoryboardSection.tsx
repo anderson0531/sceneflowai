@@ -219,7 +219,7 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
       'Full scene timeline — narration, dialogue, music, and SFX',
     ],
     screenshotSlot: 'Insert screenshot: Production dashboard showing script, voice, and video orchestration',
-    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2010.47.26.png',
+    screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-27%20at%2011.15.48.png',
     videoSlot: 'Insert 00:30 clip: Orchestrating script, storyboards, and audio into the Mixer',
   },
   {

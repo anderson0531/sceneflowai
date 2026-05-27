@@ -40,7 +40,7 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'script-tab',
-    title: 'Phase 1 — Foundation (Script tab)',
+    title: 'Step 1 - Foundation (Script tab)',
     description:
       'Write and refine your script, run Audience Resonance (85+ target), generate audio, and assign voices. Lock the script when ready — Express stays disabled until Foundation is complete.',
     icon: <FileText className="w-6 h-6" />,
@@ -49,7 +49,7 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'storyboard',
-    title: 'Phase 2 — Storyboard',
+    title: 'Step 2 - Storyboard',
     description:
       'Use Build Storyboard (Express) for Direction → Audio → storyboard frames in ~10 minutes. Review in the gallery, share for approval, and preview in Screening Room — Preview (live).',
     icon: <Frame className="w-6 h-6" />,
@@ -58,7 +58,7 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'action-tab',
-    title: 'Phase 3 — Production (Action tab)',
+    title: 'Step 3 - Production (Action tab)',
     description:
       'Beat Frames (start/end pairs for F2V) → Director Console video beats → Production Mixer → Production Streams — Export (MP4). One Output control syncs Animatic, Video, and language.',
     icon: <Clapperboard className="w-6 h-6" />,
@@ -67,7 +67,7 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'mixer-streams',
-    title: 'Mixer & Streams',
+    title: 'Step 4 - Mixer & Streams',
     description:
       'Mixer previews with elastic timing; baseline language drives the timeline. Render Stream opens one export dialog (Fast WebM / Broadcast MP4 / Cloud). Finished files live in Production Streams.',
     icon: <Volume2 className="w-6 h-6" />,
@@ -75,7 +75,7 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'final-cut',
-    title: 'Phase 4 — Final Cut',
+    title: 'Step 5 - Final Cut',
     description:
       'Pick a stream version per scene (Animatic or Video × language), assemble in Final Cut, and export your premiere. The workflow guide lists each step.',
     icon: <Film className="w-6 h-6" />,
@@ -83,7 +83,7 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'progress',
-    title: 'Track Progress',
+    title: 'Step 6 - Track Progress',
     description:
       'The dashboard tracks Script, Audio, Direction, Beat Frames, Video, and Render using beat-first rules. Click any scene to jump to it.',
     icon: <CheckCircle2 className="w-6 h-6" />,
