@@ -4088,7 +4088,7 @@ function SceneCard({
         if (detail.sceneId !== thisSceneId) return
       }
       setActiveWorkflowTab('callAction')
-      if (!isOpen && onWorkflowOpenChange) onWorkflowOpenChange(true)
+      if (!isWorkflowOpen && onWorkflowOpenChange) onWorkflowOpenChange(true)
       requestAnimationFrame(() => {
         document.getElementById(`director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`)?.scrollIntoView({
           behavior: 'smooth',
@@ -4098,7 +4098,7 @@ function SceneCard({
     }
     window.addEventListener('production:open-action-tab', handler)
     return () => window.removeEventListener('production:open-action-tab', handler)
-  }, [sceneIdx, scene, isOpen, onWorkflowOpenChange])
+  }, [sceneIdx, scene, isWorkflowOpen, onWorkflowOpenChange])
   const [showKeyframes, setShowKeyframes] = useState(false)
   const [videoProductionCollapsed, setVideoProductionCollapsed] = useState(true)
   
