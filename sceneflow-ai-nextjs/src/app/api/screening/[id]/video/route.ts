@@ -38,6 +38,29 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const accessToken = searchParams.get('token')
 
+    if (screeningId.startsWith('premiere-')) {
+      const { getPremiereScreeningById } = await import('@/lib/premiere/screeningLookup')
+      const record = await getPremiereScreeningById(screeningId)
+      if (!record) {
+        return NextResponse.json({ error: 'Screening not found' }, { status: 404 })
+      }
+      if (record.status === 'expired') {
+        return NextResponse.json({ error: 'Screening has expired' }, { status: 410 })
+      }
+      return NextResponse.json({
+        success: true,
+        screeningType: 'premiere',
+        videoUrl: record.videoUrl,
+        projectId: record.projectId,
+        projectTitle: record.title,
+        title: record.title,
+        description: record.streamLabel,
+        feedbackEnabled: record.feedbackEnabled !== false,
+        collectBiometrics: record.collectBiometrics !== false,
+        collectDemographics: record.collectDemographics !== false,
+      })
+    }
+
     const result = await findScreeningById(screeningId)
     
     if (!result) {

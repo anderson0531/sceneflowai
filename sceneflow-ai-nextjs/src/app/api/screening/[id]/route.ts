@@ -45,6 +45,36 @@ export async function GET(
 ) {
   try {
     const { id: screeningId } = await params
+
+    // Premiere Blob screenings (premiere-* ids)
+    if (screeningId.startsWith('premiere-')) {
+      const { getPremiereScreeningById } = await import('@/lib/premiere/screeningLookup')
+      const record = await getPremiereScreeningById(screeningId)
+      if (!record) {
+        return NextResponse.json({ error: 'Screening not found' }, { status: 404 })
+      }
+      if (record.status === 'expired') {
+        return NextResponse.json({ error: 'Screening has expired' }, { status: 410 })
+      }
+      return NextResponse.json({
+        success: true,
+        screening: {
+          id: record.id,
+          title: record.title,
+          description: record.streamLabel,
+          projectId: record.projectId,
+          accessType: 'public',
+          requiresPassword: false,
+          expiresAt: null,
+          feedbackEnabled: record.feedbackEnabled !== false,
+          collectBiometrics: record.collectBiometrics !== false,
+          collectDemographics: record.collectDemographics !== false,
+          status: record.status,
+          videoUrl: record.videoUrl,
+          shareUrl: record.shareUrl || `/s/${record.id}`,
+        },
+      })
+    }
     
     const result = await findScreeningById(screeningId)
     

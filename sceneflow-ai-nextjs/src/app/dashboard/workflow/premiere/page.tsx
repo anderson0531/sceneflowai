@@ -21,117 +21,18 @@ import {
 import { useStore } from '@/store/useStore'
 import { Button } from '@/components/ui/Button'
 import { ScreeningRoomDashboard } from '@/components/screening-room/ScreeningRoomDashboard'
-import { StatCard, EmotionBreakdown, formatDuration } from '@/components/premiere/DashboardWidgets'
-import { PublishingHub } from '@/components/premiere/PublishingHub'
-
-type PremiereScreening = {
-  id: string
-  title: string
-  streamId?: string
-  streamLabel?: string
-  locale?: string
-  sourceType?: 'video' | 'animatic'
-  videoUrl?: string
-  thumbnail?: string
-  createdAt: string
-  updatedAt?: string
-  status: 'draft' | 'active' | 'completed' | 'expired'
-  reviewStatus?: 'open' | 'in_review' | 'resolved'
-  owner?: string
-  lastActionAt?: string
-  viewerCount: number
-  averageCompletion: number
-  feedbackCount?: number
-  avgRating?: number
-  latestFeedbackAt?: string
-  openItems?: number
-  editable?: boolean
-}
-
-type PremiereFeedback = {
-  id: string
-  projectId: string
-  screeningId: string
-  streamId?: string
-  author: string
-  rating: number
-  comment: string
-  tags: string[]
-  status: 'open' | 'in_review' | 'resolved'
-  owner?: string
-  createdAt: string
-  updatedAt: string
-}
-
-function inferStreamMetadata(streamName: string | undefined): {
-  streamLabel?: string
-  locale?: string
-  sourceType: 'video' | 'animatic'
-} {
-  const label = (streamName || '').trim()
-  const normalized = label.toLowerCase()
-  let locale = 'en'
-  if (normalized.includes('spanish')) locale = 'es'
-  else if (normalized.includes('french')) locale = 'fr'
-  else if (normalized.includes('portuguese')) locale = 'pt'
-  else if (normalized.includes('german')) locale = 'de'
-  const sourceType = normalized.includes('animatic') ? 'animatic' : 'video'
-  return {
-    streamLabel: label || undefined,
-    locale,
-    sourceType,
-  }
-}
-
-function dedupeScreenings(items: PremiereScreening[]): PremiereScreening[] {
-  const deduped: PremiereScreening[] = []
-  const seenIds = new Set<string>()
-  const bestByStreamAndUrl = new Map<string, PremiereScreening>()
-
-  for (const item of items) {
-    const id = item.id?.trim()
-    if (!id || seenIds.has(id)) continue
-    seenIds.add(id)
-    const urlKey = (item.videoUrl || '').trim().toLowerCase()
-    const streamKey = (item.streamId || item.streamLabel || 'unscoped').trim().toLowerCase()
-    if (!urlKey) continue
-    const dedupeKey = `${streamKey}::${urlKey}`
-
-    const existing = bestByStreamAndUrl.get(dedupeKey)
-    if (!existing) {
-      bestByStreamAndUrl.set(dedupeKey, item)
-      continue
-    }
-
-    // Persisted Premiere records (editable=true) win over derived display rows.
-    const existingPersisted = existing.editable === true
-    const itemPersisted = item.editable === true
-    if (itemPersisted && !existingPersisted) {
-      bestByStreamAndUrl.set(dedupeKey, item)
-      continue
-    }
-    if (!itemPersisted && existingPersisted) {
-      continue
-    }
-
-    const existingTime = new Date(existing.updatedAt || existing.createdAt).getTime()
-    const itemTime = new Date(item.updatedAt || item.createdAt).getTime()
-    if (itemTime >= existingTime) {
-      bestByStreamAndUrl.set(dedupeKey, item)
-    }
-  }
-
-  for (const item of bestByStreamAndUrl.values()) {
-    deduped.push(item)
-  }
-
-  deduped.sort(
-    (a, b) =>
-      new Date(b.updatedAt || b.createdAt).getTime() -
-      new Date(a.updatedAt || a.createdAt).getTime()
-  )
-  return deduped
-}
+import { StatCard } from '@/components/premiere/DashboardWidgets'
+import { PublishingWizard } from '@/components/premiere/PublishingWizard'
+import { PremiereInsightsPanel } from '@/components/premiere/PremiereInsightsPanel'
+import { ShortFormPublishPanel } from '@/components/premiere/ShortFormPublishPanel'
+import { ExportBundlePanel } from '@/components/premiere/ExportBundlePanel'
+import { PremiereOnboarding } from '@/components/premiere/PremiereOnboarding'
+import { calculatePremiereProgress } from '@/lib/premiere/premiereProgress'
+import { usePremiereEvents, usePremiereGuideStatus } from '@/hooks/premiere/usePremiereEvents'
+import { usePremiereScreenings } from '@/hooks/premiere/usePremiereScreenings'
+import { usePremiereAnalytics, type PremiereFeedback } from '@/hooks/premiere/usePremiereAnalytics'
+import { usePremierePublish } from '@/hooks/premiere/usePremierePublish'
+import { premiereSharePath } from '@/lib/premiere/screeningLookup'
 
 export default function PremierePage() {
   const searchParams = useSearchParams()
@@ -139,11 +40,11 @@ export default function PremierePage() {
   const setCurrentProject = useStore((s) => s.setCurrentProject)
 
   const [isLoading, setIsLoading] = useState(true)
-  const [persistedScreenings, setPersistedScreenings] = useState<PremiereScreening[]>([])
   const [isHeaderUploading, setIsHeaderUploading] = useState(false)
   const [headerUploadProgress, setHeaderUploadProgress] = useState(0)
   const [showProductionStreams, setShowProductionStreams] = useState(true)
   const [showScreeningDashboard, setShowScreeningDashboard] = useState(true)
+  const [publishTab, setPublishTab] = useState<'youtube' | 'shorts' | 'bundle'>('youtube')
   const headerUploadInputRef = useRef<HTMLInputElement | null>(null)
 
   const isDemo = searchParams.get('demo') === 'true'
@@ -199,152 +100,91 @@ export default function PremierePage() {
     }
   }, [isDemo, searchProjectId, setCurrentProject])
 
-  const refreshPersistedScreenings = useCallback(async () => {
+  const projectBillboard = useMemo(
+    () =>
+      ((currentProject?.metadata as { billboardUrl?: string; billboardImageUrl?: string } | undefined)
+        ?.billboardUrl ||
+        (currentProject?.metadata as { billboardUrl?: string; billboardImageUrl?: string } | undefined)
+          ?.billboardImageUrl ||
+        '')?.trim() || undefined,
+    [currentProject?.metadata]
+  )
+
+  const {
+    screenings: finalCutScreenings,
+    masterVideoUrl,
+    activePremiereScreeningId,
+    refreshPersistedScreenings,
+  } = usePremiereScreenings({
+    projectId,
+    isDemo,
+    projectMetadata: currentProject?.metadata,
+    projectBillboard,
+  })
+
+  const { analytics, allFeedback, loading: analyticsLoading, refreshAnalytics } = usePremiereAnalytics(
+    projectId,
+    isDemo,
+    activePremiereScreeningId,
+    finalCutScreenings.filter((s) => s.id.startsWith('premiere-')).length
+  )
+
+  const { hasPublishedJob } = usePremierePublish(projectId, isDemo)
+
+  const premiereProgress = useMemo(
+    () =>
+      calculatePremiereProgress({
+        hasMasterExport: !!masterVideoUrl,
+        screeningCount: finalCutScreenings.filter((s) => s.id.startsWith('premiere-')).length,
+        hasActiveScreening: !!activePremiereScreeningId,
+        feedbackOpenCount: analytics?.feedback?.openItems ?? allFeedback.filter((f) => f.status === 'open').length,
+        hasPublishedJob,
+        avgRating: analytics?.feedback?.avgRating ?? null,
+      }),
+    [masterVideoUrl, finalCutScreenings, activePremiereScreeningId, analytics, allFeedback, hasPublishedJob]
+  )
+
+  usePremiereGuideStatus(premiereProgress)
+
+  const handleCreateScreening = useCallback(async () => {
     if (!projectId || isDemo) {
-      setPersistedScreenings([])
+      toast.message('Demo mode', { description: 'Screening creation is disabled in demo.' })
+      return
+    }
+    const videoUrl = masterVideoUrl
+    if (!videoUrl) {
+      toast.error('Export a master from Final Cut first.')
       return
     }
     try {
-      const res = await fetch(`/api/premiere/screenings?projectId=${encodeURIComponent(projectId)}`, {
-        cache: 'no-store',
+      const res = await fetch('/api/premiere/screenings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          title: `${currentProject?.title || 'Project'} · Premiere screening`,
+          videoUrl,
+          source: 'final_cut_export',
+          sourceType: 'video',
+        }),
       })
-      if (!res.ok) throw new Error(await res.text())
-      const data = (await res.json()) as { items?: PremiereScreening[] }
-      setPersistedScreenings(
-        Array.isArray(data.items)
-          ? data.items.map((item) => ({ ...item, editable: true }))
-          : []
-      )
-    } catch (error) {
-      console.error('[Premiere] Failed loading persisted screenings:', error)
-      setPersistedScreenings([])
-    }
-  }, [isDemo, projectId])
-
-  useEffect(() => {
-    void refreshPersistedScreenings()
-  }, [refreshPersistedScreenings])
-
-  const derivedFinalCutScreenings = useMemo<PremiereScreening[]>(() => {
-    if (isDemo) {
-      return [
-        {
-          id: 'demo-premiere-screening',
-          title: 'Demo premiere cut',
-          createdAt: new Date().toISOString(),
-          status: 'active',
-          viewerCount: 8,
-          averageCompletion: 73,
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to create screening')
+      await refreshPersistedScreenings()
+      await refreshAnalytics()
+      const sharePath = premiereSharePath(data.item?.id || '')
+      const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}${sharePath}` : sharePath
+      toast.success('Screening created', {
+        description: 'Share the link with reviewers.',
+        action: {
+          label: 'Copy link',
+          onClick: () => navigator.clipboard.writeText(fullUrl),
         },
-      ]
-    }
-
-    if (!projectId) return []
-
-    const items: PremiereScreening[] = []
-    const projectBillboard =
-      ((currentProject?.metadata as { billboardUrl?: string; billboardImageUrl?: string } | undefined)
-        ?.billboardUrl ||
-        (currentProject?.metadata as { billboardUrl?: string; billboardImageUrl?: string } | undefined)
-          ?.billboardImageUrl ||
-        '')?.trim() || undefined
-    const exported = (
-      (currentProject?.metadata as { exportedVideoUrl?: string } | undefined)?.exportedVideoUrl || ''
-    ).trim()
-
-    if (exported) {
-      items.push({
-        id: `project-export-${projectId}`,
-        title: 'Latest project export',
-        videoUrl: exported,
-        thumbnail: projectBillboard,
-        createdAt: new Date().toISOString(),
-        status: 'draft',
-        viewerCount: 0,
-        averageCompletion: 0,
       })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not create screening')
     }
-
-    const streams = ((currentProject?.metadata as { finalCutStreams?: unknown } | undefined)
-      ?.finalCutStreams || []) as Array<{
-      id: string
-      name?: string
-      exports?: Array<{
-        id: string
-        outputUrl?: string
-        status?: string
-        completedAt?: string
-        createdAt?: string
-      }>
-    }>
-
-    for (const stream of streams) {
-      for (const ex of stream.exports ?? []) {
-        const url = (ex.outputUrl || '').trim()
-        if (!url) continue
-        items.push({
-          id: ex.id,
-          title: `Export · ${stream.name || 'Untitled stream'}`,
-          streamId: stream.id,
-          ...inferStreamMetadata(stream.name),
-          videoUrl: url,
-          thumbnail: projectBillboard,
-          createdAt: ex.completedAt || ex.createdAt || new Date().toISOString(),
-          status: ex.status === 'complete' ? 'active' : 'draft',
-          viewerCount: 0,
-          averageCompletion: 0,
-        })
-      }
-    }
-
-    return items.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
-  }, [currentProject?.metadata, isDemo, projectId])
-
-  const finalCutScreenings = useMemo<PremiereScreening[]>(() => {
-    const projectBillboard =
-      ((currentProject?.metadata as { billboardUrl?: string; billboardImageUrl?: string } | undefined)
-        ?.billboardUrl ||
-        (currentProject?.metadata as { billboardUrl?: string; billboardImageUrl?: string } | undefined)
-          ?.billboardImageUrl ||
-        '')?.trim() || undefined
-    return dedupeScreenings([
-      ...persistedScreenings,
-      ...derivedFinalCutScreenings.map((item) => ({ ...item, editable: false })),
-    ]).map((item) => ({
-      ...item,
-      thumbnail: item.thumbnail || projectBillboard,
-    }))
-  }, [currentProject?.metadata, derivedFinalCutScreenings, persistedScreenings])
-
-  const mockDashboardStats = useMemo(() => {
-    const streamCount = Math.max(1, finalCutScreenings.length)
-    const totalViewers = streamCount * 34
-    const averageCompletion = 72
-    const averageWatchTime = 56
-    const emotionBreakdown = {
-      engaged: 34,
-      happy: 24,
-      surprised: 16,
-      neutral: 14,
-      confused: 8,
-      bored: 4,
-    }
-    return {
-      totalScreenings: streamCount,
-      totalViewers,
-      averageCompletion,
-      averageWatchTime,
-      emotionBreakdown,
-    }
-  }, [finalCutScreenings.length])
-
-  const handleCreateScreening = useCallback(() => {
-    toast.message('Premiere screening', {
-      description: 'Screening creation will be connected to release workflows soon.',
-    })
-  }, [])
+  }, [projectId, isDemo, masterVideoUrl, currentProject?.title, refreshPersistedScreenings, refreshAnalytics])
 
   const handleUploadExternal = useCallback(async (file: File) => {
     if (!projectId || isDemo) {
@@ -536,6 +376,34 @@ export default function PremierePage() {
     [isDemo, projectId]
   )
 
+  const finalCutHref = `/dashboard/workflow/final-cut?projectId=${projectId || ''}${
+    isDemo ? '&demo=true' : ''
+  }`
+
+  usePremiereEvents(
+    useMemo(
+      () => ({
+        createScreening: () => void handleCreateScreening(),
+        reviewInsights: () => setShowScreeningDashboard(true),
+        openPublish: () => {
+          setShowScreeningDashboard(true)
+          setPublishTab('youtube')
+        },
+        openFinalCut: () => {
+          window.location.href = finalCutHref
+        },
+        share: () => {
+          const id = activePremiereScreeningId
+          if (id && typeof window !== 'undefined') {
+            void navigator.clipboard.writeText(`${window.location.origin}${premiereSharePath(id)}`)
+            toast.success('Share link copied')
+          }
+        },
+      }),
+      [handleCreateScreening, finalCutHref, activePremiereScreeningId]
+    )
+  )
+
   if (isLoading) {
     return (
       <div className="relative isolate min-h-screen flex items-center justify-center overflow-hidden bg-zinc-950">
@@ -573,10 +441,6 @@ export default function PremierePage() {
     )
   }
 
-  const finalCutHref = `/dashboard/workflow/final-cut?projectId=${projectId || ''}${
-    isDemo ? '&demo=true' : ''
-  }`
-
   return (
     <div className="relative isolate min-h-screen flex flex-col overflow-hidden bg-zinc-950 text-zinc-100">
       <div className="pointer-events-none absolute inset-0 -z-10 bg-zinc-950" aria-hidden />
@@ -595,6 +459,8 @@ export default function PremierePage() {
         className="pointer-events-none absolute inset-0 -z-10 opacity-[0.34] [background-size:24px_24px] [background-image:linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)]"
         aria-hidden
       />
+
+      <PremiereOnboarding />
 
       {isDemo ? (
         <div className="bg-amber-500/15 border-b border-amber-500/25 px-4 py-2.5">
@@ -642,8 +508,13 @@ export default function PremierePage() {
                 {`Premiere: ${isDemo ? 'Demo project' : currentProject?.title ?? 'Project'}`}
               </h2>
               <p className="mt-1.5 text-sm text-zinc-400 max-w-xl leading-relaxed">
-                Screening room hub for audience feedback, approvals, and release confidence.
+                Screen your master, track scoring and biometrics, then publish to YouTube or export bundles.
               </p>
+              {masterVideoUrl ? (
+                <p className="mt-2 text-xs text-emerald-300">Master export ready</p>
+              ) : (
+                <p className="mt-2 text-xs text-amber-300">Export master from Final Cut to begin</p>
+              )}
             </div>
           </div>
         </div>
@@ -724,10 +595,9 @@ export default function PremierePage() {
                     finalCutScreenings={finalCutScreenings}
                     screeningCredits={100}
                     onCreateScreening={handleCreateScreening}
-                    onViewAnalytics={(screeningId) => {
-                      toast.message('Analytics', {
-                        description: `Analytics panel for ${screeningId} is coming soon.`,
-                      })
+                    onViewAnalytics={() => {
+                      setShowScreeningDashboard(true)
+                      void refreshAnalytics()
                     }}
                     onConfigureABTest={(screeningId) => {
                       toast.message('A/B testing', {
@@ -774,76 +644,91 @@ export default function PremierePage() {
                     <StatCard
                       icon={<Eye className="w-5 h-5" />}
                       label="Total Screenings"
-                      value={mockDashboardStats.totalScreenings}
-                      subValue="Active & completed"
+                      value={finalCutScreenings.filter((s) => s.id.startsWith('premiere-')).length}
+                      subValue="Shareable /s/ links"
                       color="emerald"
                     />
                     <StatCard
                       icon={<Users className="w-5 h-5" />}
                       label="Total Viewers"
-                      value={mockDashboardStats.totalViewers}
-                      subValue="Unique test audience"
+                      value={analytics?.totalViewers ?? 0}
+                      subValue="Analytics sessions"
                       trend="up"
                       color="blue"
                     />
                     <StatCard
                       icon={<TrendingUp className="w-5 h-5" />}
                       label="Avg. Completion"
-                      value={`${mockDashboardStats.averageCompletion}%`}
+                      value={`${analytics?.averageCompletion ?? 0}%`}
                       subValue="Watch-through rate"
                       trend="stable"
                       color="purple"
                     />
                     <StatCard
                       icon={<Clock className="w-5 h-5" />}
-                      label="Avg. Watch Time"
-                      value={formatDuration(mockDashboardStats.averageWatchTime)}
-                      subValue="Per screening session"
+                      label="Engagement"
+                      value={`${analytics?.averageEngagement ?? 0}`}
+                      subValue="Behavioral score"
                       color="amber"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                    <div className="lg:col-span-2">
-                      <EmotionBreakdown data={mockDashboardStats.emotionBreakdown} />
-                    </div>
-                    <div className="rounded-xl border border-zinc-700/70 bg-zinc-900/60 p-4 h-full">
-                      <p className="text-sm font-medium text-white mb-4">Quick Actions</p>
-                      <div className="space-y-3">
-                        <Button size="sm" variant="outline" className="w-full justify-start border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700">
-                          <Users className="w-4 h-4 mr-2 text-blue-400" />
-                          Invite reviewers
-                        </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700">
-                          <TrendingUp className="w-4 h-4 mr-2 text-emerald-400" />
-                          Compare streams
-                        </Button>
-                        <Button size="sm" variant="outline" className="w-full justify-start border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700">
-                          <Clock className="w-4 h-4 mr-2 text-amber-400" />
-                          Schedule review
-                        </Button>
-                      </div>
-                    </div>
+                  <PremiereInsightsPanel
+                    projectId={projectId || ''}
+                    screeningId={activePremiereScreeningId}
+                    feedbackItems={allFeedback}
+                    analytics={analytics}
+                    loading={analyticsLoading}
+                    onUpdateFeedback={async (id, patch) => {
+                      const item = allFeedback.find((f) => f.id === id)
+                      if (!item) return
+                      await handleUpdateFeedback(item.screeningId, id, {
+                        status: patch.status as PremiereFeedback['status'],
+                      })
+                      void refreshAnalytics()
+                    }}
+                  />
+
+                  <div className="flex flex-wrap gap-2 border-b border-zinc-800 pb-2">
+                    {(['youtube', 'shorts', 'bundle'] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setPublishTab(tab)}
+                        className={`text-xs font-medium px-3 py-1.5 rounded-md ${
+                          publishTab === tab
+                            ? 'bg-violet-600 text-white'
+                            : 'text-zinc-400 hover:text-zinc-200'
+                        }`}
+                      >
+                        {tab === 'youtube' ? 'YouTube' : tab === 'shorts' ? 'Shorts / Reels / TikTok' : 'Export bundle'}
+                      </button>
+                    ))}
                   </div>
 
-                  <div className="rounded-xl border border-zinc-700/70 bg-zinc-900/60 p-4">
-                    <p className="text-sm font-medium text-white mb-3">Screening Views</p>
-                    <div className="flex flex-wrap gap-2">
-                      {['All Screenings', 'Storyboard', 'Scenes', 'Premiere'].map((tab) => (
-                        <span
-                          key={tab}
-                          className="rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-xs text-zinc-300"
-                        >
-                          {tab}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <PublishingHub 
-                    videoUrl={finalCutScreenings.length > 0 ? finalCutScreenings[0].videoUrl : undefined} 
-                    title={finalCutScreenings.length > 0 ? finalCutScreenings[0].title : 'My Project'} 
-                  />
+                  {publishTab === 'youtube' && (
+                    <PublishingWizard
+                      projectId={projectId}
+                      videoUrl={masterVideoUrl}
+                      title={currentProject?.title}
+                      thumbnailUrl={projectBillboard}
+                    />
+                  )}
+                  {publishTab === 'shorts' && (
+                    <ShortFormPublishPanel
+                      projectId={projectId}
+                      videoUrl={masterVideoUrl}
+                      durationSec={120}
+                    />
+                  )}
+                  {publishTab === 'bundle' && (
+                    <ExportBundlePanel
+                      projectId={projectId}
+                      videoUrl={masterVideoUrl}
+                      title={currentProject?.title}
+                      thumbnailUrl={projectBillboard}
+                    />
+                  )}
                 </div>
               ) : null}
             </div>

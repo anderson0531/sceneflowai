@@ -239,6 +239,15 @@ export async function endSession(
   session.didFinish = session.completionRate >= 95 // 95% threshold for "finished"
   
   await saveSession(session)
+
+  if (screeningId.startsWith('premiere-')) {
+    try {
+      const { syncPremiereScreeningFromAnalytics } = await import('@/lib/premiere/syncAnalytics')
+      await syncPremiereScreeningFromAnalytics(screeningId)
+    } catch {
+      /* non-fatal */
+    }
+  }
 }
 
 // =============================================================================

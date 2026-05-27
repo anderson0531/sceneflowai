@@ -93,6 +93,7 @@ interface ScreeningItem {
   title: string
   streamId?: string
   videoUrl?: string
+  shareUrl?: string
   createdAt: string
   status: 'draft' | 'active' | 'completed' | 'expired'
   viewerCount: number
@@ -566,6 +567,22 @@ export function ScreeningRoomDashboard({
         
         {/* Actions */}
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
+          {screening.id.startsWith('premiere-') ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full border-violet-500/35 bg-violet-950/20 text-violet-100 hover:bg-violet-950/35"
+              onClick={() => {
+                const path = screening.shareUrl || `/s/${screening.id}`
+                const fullUrl = `${window.location.origin}${path}`
+                void navigator.clipboard.writeText(fullUrl)
+              }}
+              title="Copy audience share link (/s/)"
+            >
+              <ExternalLink className="w-4 h-4 mr-1.5 shrink-0" />
+              Share link
+            </Button>
+          ) : null}
           <Button
             size="sm"
             variant="outline"

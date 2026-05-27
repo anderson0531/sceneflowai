@@ -30,6 +30,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   initializeSession,
 } from '@/services/BehavioralAnalyticsService'
+import { resolvePremiereVideoForAnalytics } from '@/lib/premiere/syncAnalytics'
 import type { SessionInitPayload } from '@/lib/types/behavioralAnalytics'
 
 export const runtime = 'nodejs'
@@ -63,13 +64,11 @@ export async function POST(req: NextRequest) {
     
     // Initialize session
     const response = await initializeSession(payload)
-    
-    // TODO: Fetch actual video URL from screening data
-    // For now, return placeholder
+
+    const premiere = await resolvePremiereVideoForAnalytics(body.screeningId)
     const enrichedResponse = {
       ...response,
-      // These would come from the screening/project lookup
-      videoUrl: response.videoUrl || '/api/placeholder-video',
+      videoUrl: premiere?.videoUrl || response.videoUrl || '',
       videoDuration: response.videoDuration || 0,
     }
     

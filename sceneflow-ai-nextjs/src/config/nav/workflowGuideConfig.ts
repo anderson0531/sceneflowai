@@ -152,6 +152,38 @@ export const finalCutWorkflowGroups: WorkflowGroup[] = [
   },
 ]
 
+export const premiereWorkflowGroups: WorkflowGroup[] = [
+  {
+    id: 'screen',
+    title: 'Screen your master',
+    icon: 'Play',
+    iconColor: 'text-violet-500',
+    steps: [
+      { id: 'master-ready', label: 'Confirm Final Cut master', description: 'Export from Final Cut first', actionEventName: 'premiere:open-final-cut' },
+      { id: 'create-screening', label: 'Create screening & share /s/ link', actionEventName: 'premiere:create-screening' },
+    ],
+  },
+  {
+    id: 'insights',
+    title: 'Review feedback',
+    icon: 'BarChart3',
+    iconColor: 'text-cyan-500',
+    steps: [
+      { id: 'review-insights', label: 'Scoring · Biometric · Visual', actionEventName: 'premiere:review-insights' },
+    ],
+  },
+  {
+    id: 'publish',
+    title: 'Publish & export',
+    icon: 'Youtube',
+    iconColor: 'text-red-500',
+    steps: [
+      { id: 'publish-youtube', label: 'YouTube publish wizard', actionEventName: 'premiere:open-publish' },
+      { id: 'export-bundle', label: 'Export bundle or short-form cuts', actionEventName: 'premiere:export-settings' },
+    ],
+  },
+]
+
 // =============================================================================
 // BLUEPRINT PHASE WORKFLOW GUIDE
 // =============================================================================
@@ -265,7 +297,7 @@ export const workflowGuideConfig: Record<WorkflowPhase, WorkflowGroup[]> = {
   blueprint: blueprintWorkflowGroups,
   production: productionWorkflowGroups,
   'final-cut': finalCutWorkflowGroups,
-  premiere: [], // TODO: Add Premiere workflow
+  premiere: premiereWorkflowGroups,
   dashboard: [],
   settings: [],
 }

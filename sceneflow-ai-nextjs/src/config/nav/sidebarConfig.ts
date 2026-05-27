@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 /**
  * Workflow phase identifiers matching the production pipeline
  */
-export type WorkflowPhase = 'blueprint' | 'production' | 'final-cut' | 'dashboard' | 'settings'
+export type WorkflowPhase = 'blueprint' | 'production' | 'final-cut' | 'premiere' | 'dashboard' | 'settings'
 
 /**
  * Status of a workflow step
@@ -254,8 +254,41 @@ export const finalCutSidebarConfig: WorkflowSidebarConfig = {
 }
 
 export const premiereSidebarConfig: WorkflowSidebarConfig = {
-  ...finalCutSidebarConfig,
+  phase: 'premiere',
+  showWorkflowStepper: true,
   workflowSteps: makeWorkflowSteps('premiere'),
+  progressItems: [
+    { id: 'master-ready', label: 'Master ready', icon: 'Film', isComplete: false },
+    { id: 'screenings', label: 'Screenings', icon: 'Play', isComplete: false },
+    { id: 'published', label: 'Published', icon: 'Download', isComplete: false },
+  ],
+  quickActions: [
+    { id: 'create-screening', label: 'Create Screening', icon: 'Play', iconColor: 'text-violet-400', action: 'event', eventName: 'premiere:create-screening' },
+    { id: 'review-insights', label: 'Review Insights', icon: 'BarChart3', iconColor: 'text-cyan-400', action: 'event', eventName: 'premiere:review-insights' },
+    { id: 'publish-youtube', label: 'Publish YouTube', icon: 'Video', iconColor: 'text-red-400', action: 'event', eventName: 'premiere:open-publish' },
+  ],
+  sectionVisibility: {
+    workflow: true,
+    workflowGuide: true,
+    proTips: true,
+    progress: true,
+    quickActions: true,
+    reviewScores: true,
+    screeningRoom: true,
+    projectStats: true,
+    credits: true,
+  },
+  sectionDefaults: {
+    workflow: false,
+    workflowGuide: true,
+    proTips: false,
+    progress: false,
+    quickActions: false,
+    reviewScores: false,
+    screeningRoom: false,
+    projectStats: false,
+    credits: false,
+  },
 }
 
 // ============================================================================

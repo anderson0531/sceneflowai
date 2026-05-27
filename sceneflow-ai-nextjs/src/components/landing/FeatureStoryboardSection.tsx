@@ -239,16 +239,16 @@ const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
   },
   {
     id: 13,
-    title: 'Premiere Automation',
+    title: 'Premiere Distribution',
     description:
-      'Launch with a splash. Effortlessly automate your distribution prep, generating localized metadata, optimized thumbnails, and release-ready packages tailored for any platform or screening format.',
+      'Screen your master with real audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.',
     keyFeatures: [
-      'Platform-specific metadata — and thumbnail packages',
-      'Localized titles and descriptions — for every distribution channel',
-      'Release-ready export bundles — tailored to your platform',
-      'Screening and social cuts — from one master project',
+      'Shareable Screening Room — /s/ links with scoring & biometrics',
+      'Insights dashboard — Scoring, Biometric, Visual tabs',
+      'YouTube wizard — thumbnail, localized title/description, SceneFlow CTA',
+      'Export bundles & vertical short-form clip plans',
     ],
-    screenshotSlot: 'Insert screenshot: Premiere dashboard with metadata and package prep',
+    screenshotSlot: 'Insert screenshot: Premiere dashboard with insights and publish wizard',
     screenshotUrl: 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2017.09.15.png',
     videoSlot: 'Insert 00:30 clip: Auto-generating platform-specific packages and thumbnails',
   },

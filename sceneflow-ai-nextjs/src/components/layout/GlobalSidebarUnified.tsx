@@ -176,9 +176,11 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
     }
     window.addEventListener('blueprint:guide-status' as any, handleStatusUpdate)
     window.addEventListener('final-cut:guide-status' as any, handleStatusUpdate)
+    window.addEventListener('premiere:guide-status' as any, handleStatusUpdate)
     return () => {
       window.removeEventListener('blueprint:guide-status' as any, handleStatusUpdate)
       window.removeEventListener('final-cut:guide-status' as any, handleStatusUpdate)
+      window.removeEventListener('premiere:guide-status' as any, handleStatusUpdate)
     }
   }, [])
 
@@ -272,6 +274,15 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
         { id: 'streams-ready', label: 'Streams ready', icon: 'Video', isComplete: sceneCount > 0, value: sceneCount ? `${sceneCount} scenes` : undefined },
         { id: 'assembly', label: 'Assembly configured', icon: 'Film', isComplete: hasAssembly },
         { id: 'export', label: 'Master exported', icon: 'Download', isComplete: exported },
+      ]
+    }
+    if (config.phase === 'premiere') {
+      const meta = currentProject?.metadata as Record<string, unknown> | undefined
+      const exported = !!(meta?.exportedVideoUrl as string | undefined)?.trim()
+      return [
+        { id: 'master-ready', label: 'Master ready', icon: 'Film', isComplete: exported },
+        { id: 'screenings', label: 'Screenings', icon: 'Play', isComplete: false },
+        { id: 'published', label: 'Published', icon: 'Download', isComplete: false },
       ]
     }
     return config.progressItems || []

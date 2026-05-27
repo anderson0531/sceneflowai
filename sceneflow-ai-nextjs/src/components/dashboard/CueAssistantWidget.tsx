@@ -292,7 +292,19 @@ export function CueAssistantWidget() {
         }
         return 'Final Cut workflow: Pick streams per scene (or preset) → Preview in script order → Render Final Cut → Continue to Premiere. No timeline editing here.'
       case 'premiere':
-        return 'Premiere: host screenings from your exported master, share review links, and prepare distribution metadata. Upload external masters or use the latest Final Cut export.'
+        if (message.includes('youtube') || message.includes('publish')) {
+          return 'Use the YouTube publish wizard: confirm master → thumbnail → localized metadata (SceneFlow CTA optional) → privacy settings → publish. Connect Google OAuth when prompted.'
+        }
+        if (message.includes('insight') || message.includes('biometric') || message.includes('score')) {
+          return 'Screening insights has three tabs: Scoring (manual ratings), Biometric (camera-consent emotions), and Visual (engagement peaks). Share your /s/ link first to collect data.'
+        }
+        if (message.includes('short') || message.includes('reel') || message.includes('tiktok')) {
+          return 'Open Shorts / Reels / TikTok to auto-detect highlight clips from your master and export vertical 9:16 cuts with platform metadata.'
+        }
+        if (message.includes('bundle') || message.includes('export')) {
+          return 'Export bundle packages master MP4, thumbnail, and metadata.json per locale — ready for manual upload or stakeholder handoff.'
+        }
+        return 'Premiere: create a screening from your Final Cut master, share the /s/ review link, review Scoring · Biometric · Visual insights, then publish to YouTube or export bundles.'
       case 'dashboard':
         return "You're on the Dashboard. I can help you navigate, understand credits, configure BYOK, or start a new project. Try: ‘How do credits work?’ or ‘Show me where to create a project.’"
       case 'spark': {

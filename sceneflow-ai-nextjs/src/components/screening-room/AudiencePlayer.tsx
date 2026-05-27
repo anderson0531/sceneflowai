@@ -42,6 +42,7 @@ import {
   useMetricsBatcher,
   type MicroBehaviorEvent,
 } from '@/hooks/useMicroBehaviorTracking'
+import { useEmotionTracker } from '@/hooks/useEmotionTracker'
 import type {
   SessionDemographics,
   TimelineReactionType,
@@ -171,6 +172,27 @@ export function AudiencePlayer({
     enabled: isInitialized && !!sessionId,
     onEvent: handleMicroBehaviorEvent,
   })
+
+  const emotionTracker = useEmotionTracker({
+    videoRef,
+    enabled: isInitialized && !!sessionId && cameraConsent,
+    sampleRate: 2,
+    onEmotionDetected: (data) => {
+      metricsBatcher.addBiometric(
+        data.timestamp,
+        data.emotion,
+        data.intensity,
+        data.confidence,
+        data.gazeOnScreen
+      )
+    },
+  })
+
+  useEffect(() => {
+    if (isInitialized && cameraConsent && !emotionTracker.isActive) {
+      emotionTracker.startTracking().catch(() => {})
+    }
+  }, [isInitialized, cameraConsent, emotionTracker])
   
   // ============================================================================
   // Consent Handler

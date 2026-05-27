@@ -14,6 +14,7 @@ export interface PremiereScreeningRecord {
   locale?: string
   sourceType?: PremiereSourceType
   videoUrl: string
+  shareUrl?: string
   createdAt: string
   updatedAt?: string
   status: PremiereScreeningStatus
@@ -22,10 +23,14 @@ export interface PremiereScreeningRecord {
   lastActionAt?: string
   viewerCount: number
   averageCompletion: number
+  engagementScore?: number
   feedbackCount?: number
   avgRating?: number
   latestFeedbackAt?: string
   openItems?: number
+  feedbackEnabled?: boolean
+  collectBiometrics?: boolean
+  collectDemographics?: boolean
   source: PremiereScreeningSource
 }
 
@@ -49,6 +54,9 @@ export interface UpdatePremiereScreeningInput {
   avgRating?: number
   latestFeedbackAt?: string
   openItems?: number
+  viewerCount?: number
+  averageCompletion?: number
+  engagementScore?: number
 }
 
 const PREMIERE_SCREENINGS_PREFIX = 'premiere/screenings/'
@@ -105,6 +113,11 @@ function toRecord(input: Partial<PremiereScreeningRecord>): PremiereScreeningRec
     avgRating: typeof input.avgRating === 'number' ? input.avgRating : 0,
     latestFeedbackAt: typeof input.latestFeedbackAt === 'string' ? input.latestFeedbackAt : undefined,
     openItems: typeof input.openItems === 'number' ? input.openItems : 0,
+    shareUrl: typeof input.shareUrl === 'string' ? input.shareUrl : undefined,
+    engagementScore: typeof input.engagementScore === 'number' ? input.engagementScore : 0,
+    feedbackEnabled: input.feedbackEnabled !== false,
+    collectBiometrics: input.collectBiometrics !== false,
+    collectDemographics: input.collectDemographics !== false,
     source: input.source === 'final_cut_export' ? 'final_cut_export' : 'external_upload',
   }
 }
@@ -130,16 +143,21 @@ export async function createPremiereScreeningFromUpload(
     locale: input.locale?.trim() || undefined,
     sourceType: normalizeSourceType(input.sourceType),
     videoUrl,
+    shareUrl: `/s/${id}`,
     createdAt,
     updatedAt: createdAt,
-    status: 'draft',
+    status: 'active',
     reviewStatus: 'open',
     lastActionAt: createdAt,
     viewerCount: 0,
     averageCompletion: 0,
+    engagementScore: 0,
     feedbackCount: 0,
     avgRating: 0,
     openItems: 0,
+    feedbackEnabled: true,
+    collectBiometrics: true,
+    collectDemographics: true,
     source: input.source || 'external_upload',
   }
 
@@ -148,6 +166,9 @@ export async function createPremiereScreeningFromUpload(
     addRandomSuffix: false,
     contentType: 'application/json; charset=utf-8',
   })
+
+  const { writePremiereScreeningLookup } = await import('./screeningLookup')
+  await writePremiereScreeningLookup(id, projectId)
 
   return record
 }
@@ -209,6 +230,13 @@ export async function updatePremiereScreening(
     latestFeedbackAt:
       typeof updates.latestFeedbackAt === 'string' ? updates.latestFeedbackAt : existing.latestFeedbackAt,
     openItems: typeof updates.openItems === 'number' ? updates.openItems : existing.openItems,
+    viewerCount: typeof updates.viewerCount === 'number' ? updates.viewerCount : existing.viewerCount,
+    averageCompletion:
+      typeof updates.averageCompletion === 'number'
+        ? updates.averageCompletion
+        : existing.averageCompletion,
+    engagementScore:
+      typeof updates.engagementScore === 'number' ? updates.engagementScore : existing.engagementScore,
     updatedAt: new Date().toISOString(),
     lastActionAt: new Date().toISOString(),
   }
