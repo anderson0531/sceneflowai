@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Video, PlayCircle, Info } from 'lucide-react';
 
@@ -65,9 +65,21 @@ export const VIDEO_CATEGORIES = [
   }
 ];
 
-export const ProductionComparisonVisual = () => {
-  const [activeCategory, setActiveCategory] = useState<string | null>(VIDEO_CATEGORIES[0].id);
+interface ProductionComparisonVisualProps {
+  initialCategoryId?: string
+}
+
+export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComparisonVisualProps) => {
+  const [activeCategory, setActiveCategory] = useState<string | null>(
+    initialCategoryId ?? VIDEO_CATEGORIES[0].id
+  );
   const [hoveredExample, setHoveredExample] = useState<{catId: string, index: number} | null>(null);
+
+  useEffect(() => {
+    if (initialCategoryId && VIDEO_CATEGORIES.some((cat) => cat.id === initialCategoryId)) {
+      setActiveCategory(initialCategoryId);
+    }
+  }, [initialCategoryId]);
 
   return (
     <div className="relative flex h-full min-h-[22rem] w-full flex-col mx-auto max-w-4xl">

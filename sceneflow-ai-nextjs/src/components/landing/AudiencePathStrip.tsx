@@ -11,6 +11,16 @@ const ICONS = {
   briefcase: Briefcase,
 } as const
 
+function handlePathClick(hash: string, e: React.MouseEvent<HTMLAnchorElement>) {
+  e.preventDefault()
+  if (window.location.hash.slice(1) !== hash) {
+    window.location.hash = hash
+  } else {
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
+  }
+  document.getElementById('use-cases')?.scrollIntoView({ behavior: 'smooth' })
+}
+
 export function AudiencePathStrip() {
   return (
     <section className="py-10 bg-slate-950 border-b border-white/5">
@@ -31,6 +41,7 @@ export function AudiencePathStrip() {
               <motion.a
                 key={path.id}
                 href={`#${path.hash}`}
+                onClick={(e) => handlePathClick(path.hash, e)}
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -43,9 +54,19 @@ export function AudiencePathStrip() {
                   </div>
                   <span className="text-sm font-semibold text-white">{path.label}</span>
                 </div>
-                <p className="text-xs text-gray-400 leading-relaxed flex-1">{path.outcome}</p>
+                <p className="text-xs text-gray-400 leading-relaxed">{path.outcome}</p>
+                <ul className="mt-3 flex flex-wrap gap-1.5" aria-label={`Use cases for ${path.label}`}>
+                  {path.useCases.map((useCase) => (
+                    <li
+                      key={useCase}
+                      className="px-2 py-0.5 rounded-md text-[10px] leading-snug text-gray-300 bg-slate-800/80 border border-white/10"
+                    >
+                      {useCase}
+                    </li>
+                  ))}
+                </ul>
                 <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-purple-400 group-hover:text-purple-300">
-                  See your path
+                  See examples
                   <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                 </span>
               </motion.a>

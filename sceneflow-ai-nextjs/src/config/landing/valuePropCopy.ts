@@ -24,6 +24,15 @@ export const AUDIENCE_PATHS = [
     hash: 'use-cases-creator',
     label: 'Creator',
     outcome: 'Ship on schedule — stop rebuilding in every tool',
+    useCases: [
+      'YouTube & episodic series',
+      'Video podcasts & show clips',
+      'Hyper-local & JIT news',
+      'Documentaries & docuseries',
+      'How-to & skill channels',
+      'Sports recaps & commentary',
+    ],
+    defaultCategoryId: 'jit',
     icon: 'video' as const,
   },
   {
@@ -31,6 +40,15 @@ export const AUDIENCE_PATHS = [
     hash: 'use-cases-team',
     label: 'In-house team',
     outcome: 'Replace slow vendor cycles — control brand and budget',
+    useCases: [
+      'Corporate L&D & compliance',
+      'Internal comms & town halls',
+      'Product explainers for sales',
+      'HR recruitment & culture',
+      'K-12 / higher-ed lessons',
+      'Public health & safety updates',
+    ],
+    defaultCategoryId: 'knowledge',
     icon: 'building' as const,
   },
   {
@@ -38,6 +56,15 @@ export const AUDIENCE_PATHS = [
     hash: 'use-cases-production-shop',
     label: 'Production shop',
     outcome: 'Productize a niche with repeatable intake → delivery',
+    useCases: [
+      'Real estate listing tours',
+      'Corporate training for clients',
+      'Education & course modules',
+      'Documentary production',
+      'Hospitality & tourism guides',
+      'Local news as a service',
+    ],
+    defaultCategoryId: 'property',
     icon: 'film' as const,
   },
   {
@@ -45,9 +72,26 @@ export const AUDIENCE_PATHS = [
     hash: 'use-cases-agency',
     label: 'Agency',
     outcome: 'Faster pitches and scalable client delivery',
+    useCases: [
+      'Client pitch pre-viz',
+      'Product launch campaigns',
+      'Case studies & testimonials',
+      'Event & conference promos',
+      'Multi-language campaigns',
+      'Property marketing for clients',
+    ],
+    defaultCategoryId: 'b2b',
     icon: 'briefcase' as const,
   },
 ] as const
+
+export function getAudiencePathByPersonaId(personaId: string) {
+  return AUDIENCE_PATHS.find((path) => path.id === personaId)
+}
+
+export function getDefaultCategoryIdForPersona(personaId: string): string {
+  return getAudiencePathByPersonaId(personaId)?.defaultCategoryId ?? 'property'
+}
 
 export const INSTITUTIONAL_ROI = {
   title: 'Replace vendor shoots with predictable in-house production',

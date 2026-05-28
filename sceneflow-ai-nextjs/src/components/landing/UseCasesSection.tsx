@@ -7,6 +7,10 @@ import { Video, Play, Sparkles, Volume2, VolumeX, Maximize2, User, Briefcase, Ta
 
 import { ProductionComparisonVisual } from './ProductionComparisonVisual';
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent';
+import {
+  getAudiencePathByPersonaId,
+  getDefaultCategoryIdForPersona,
+} from '@/config/landing/valuePropCopy';
 
 type Persona = 'creator' | 'team' | 'productionShop' | 'agency';
 
@@ -490,6 +494,9 @@ const PersonaCard = ({
 
 export default function UseCasesSection() {
   const [activePersona, setActivePersona] = useState<Persona>('creator');
+  const [activeCategoryId, setActiveCategoryId] = useState<string>(
+    getDefaultCategoryIdForPersona('creator')
+  );
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
@@ -505,11 +512,16 @@ export default function UseCasesSection() {
     return () => window.removeEventListener('hashchange', syncFromHash);
   }, []);
 
+  useEffect(() => {
+    setActiveCategoryId(getDefaultCategoryIdForPersona(activePersona));
+  }, [activePersona]);
+
+  const activeAudiencePath = getAudiencePathByPersonaId(activePersona);
   const activeCta = SEGMENT_CTAS[activePersona];
   const isExternalSignup = activePersona === 'creator';
 
   return (
-    <section id="use-cases" className="py-24 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 overflow-hidden">
+    <section id="use-cases" className="py-24 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 overflow-hidden scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header ... (keep same) */}
         <motion.div 
@@ -545,7 +557,13 @@ export default function UseCasesSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.1 }}
         >
-          <ProductionComparisonVisual />
+          {activeAudiencePath && (
+            <p className="text-center text-sm text-gray-400 mb-4 max-w-2xl mx-auto">
+              <span className="text-gray-300 font-medium">Examples for {activeAudiencePath.label}:</span>{' '}
+              {activeAudiencePath.useCases.slice(0, 3).join(', ')}, and more.
+            </p>
+          )}
+          <ProductionComparisonVisual initialCategoryId={activeCategoryId} />
         </motion.div>
 
         {/* Toggle Selector ... (keep same) */}
