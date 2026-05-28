@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
+import { getAuthSecret, hasAuthSecretConfigured } from '@/lib/auth/secret'
 
 const PRODUCTION_SESSION_COOKIE = '__Secure-next-auth.session-token'
 const DEVELOPMENT_SESSION_COOKIE = 'next-auth.session-token'
@@ -9,8 +10,8 @@ const SESSION_COOKIE_CANDIDATES =
     ? [PRODUCTION_SESSION_COOKIE, DEVELOPMENT_SESSION_COOKIE]
     : [DEVELOPMENT_SESSION_COOKIE, PRODUCTION_SESSION_COOKIE]
 
-function getAuthSecret(): string | undefined {
-  return process.env.NEXTAUTH_SECRET || process.env.NEXT_AUTH_SECRET
+function hasSessionCookie(req: NextRequest): boolean {
+  return SESSION_COOKIE_CANDIDATES.some((name) => req.cookies.has(name))
 }
 
 async function getSessionToken(req: NextRequest) {
@@ -38,14 +39,24 @@ export async function proxy(req: NextRequest) {
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
     const token = await getSessionToken(req)
 
-    if (!token) {
-      console.warn('[proxy] Unauthenticated access blocked', {
-        pathname,
-        hasSecret: Boolean(getAuthSecret()),
-        cookieNamesTried: SESSION_COOKIE_CANDIDATES,
-      })
-      return redirectToLogin(req, pathname)
+    if (token) {
+      return NextResponse.next()
     }
+
+    if (hasSessionCookie(req)) {
+      console.warn('[proxy] Session cookie present but JWT verification failed; allowing through', {
+        pathname,
+        hasAuthSecretConfigured: hasAuthSecretConfigured(),
+      })
+      return NextResponse.next()
+    }
+
+    console.warn('[proxy] Unauthenticated access blocked', {
+      pathname,
+      hasAuthSecretConfigured: hasAuthSecretConfigured(),
+      cookieNamesTried: SESSION_COOKIE_CANDIDATES,
+    })
+    return redirectToLogin(req, pathname)
   }
 
   return NextResponse.next()

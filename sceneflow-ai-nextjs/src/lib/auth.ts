@@ -1,13 +1,14 @@
 import type { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { isDemoMode, allowDemoFallback } from '@/lib/env'
+import { getAuthSecret } from '@/lib/auth/secret'
 
 export const authOptions: NextAuthOptions = {
   session: { 
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: process.env.NEXT_AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'sceneflow-dev-secret',
+  secret: getAuthSecret(),
   // Ensure cookies work in production with secure settings
   cookies: {
     sessionToken: {

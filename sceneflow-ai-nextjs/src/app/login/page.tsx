@@ -90,7 +90,8 @@ function LoginPageContent() {
           <h1 className="text-2xl font-bold text-white">Could not open dashboard</h1>
           <p className="text-gray-400 text-sm">
             You are signed in, but the app could not complete the redirect to your dashboard.
-            This is usually temporary after a deployment or database update.
+            Try signing out and back in. If this persists, the server may be missing{' '}
+            <code className="text-gray-300">NEXTAUTH_SECRET</code> in its environment configuration.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             <Button onClick={handleRetryDashboard} className="bg-sf-primary hover:bg-sf-accent text-sf-background">
