@@ -1,21 +1,27 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 
-const SESSION_COOKIE_NAME =
+const PRODUCTION_SESSION_COOKIE = '__Secure-next-auth.session-token'
+const DEVELOPMENT_SESSION_COOKIE = 'next-auth.session-token'
+
+const SESSION_COOKIE_CANDIDATES =
   process.env.NODE_ENV === 'production'
-    ? '__Secure-next-auth.session-token'
-    : 'next-auth.session-token'
+    ? [PRODUCTION_SESSION_COOKIE, DEVELOPMENT_SESSION_COOKIE]
+    : [DEVELOPMENT_SESSION_COOKIE, PRODUCTION_SESSION_COOKIE]
 
 function getAuthSecret(): string | undefined {
   return process.env.NEXTAUTH_SECRET || process.env.NEXT_AUTH_SECRET
 }
 
 async function getSessionToken(req: NextRequest) {
-  return getToken({
-    req,
-    secret: getAuthSecret(),
-    cookieName: SESSION_COOKIE_NAME,
-  })
+  const secret = getAuthSecret()
+
+  for (const cookieName of SESSION_COOKIE_CANDIDATES) {
+    const token = await getToken({ req, secret, cookieName })
+    if (token) return token
+  }
+
+  return null
 }
 
 function redirectToLogin(req: NextRequest, returnPath: string) {
@@ -33,6 +39,11 @@ export async function proxy(req: NextRequest) {
     const token = await getSessionToken(req)
 
     if (!token) {
+      console.warn('[proxy] Unauthenticated access blocked', {
+        pathname,
+        hasSecret: Boolean(getAuthSecret()),
+        cookieNamesTried: SESSION_COOKIE_CANDIDATES,
+      })
       return redirectToLogin(req, pathname)
     }
   }

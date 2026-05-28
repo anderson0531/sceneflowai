@@ -1,15 +1,18 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { SignUpForm } from '@/components/auth/SignUpForm'
 import { useAuthSuccessHandler } from '@/components/auth/useAuthSuccessHandler'
+import { Button } from '@/components/ui/Button'
 import { setPendingCheckoutTier } from '@/lib/billing/checkoutIntent'
 import {
+  clearDashboardRedirectAttempts,
   getDashboardUrl,
+  hasExceededDashboardRedirectAttempts,
   navigateAfterAuth,
   persistReturnUrl,
   resolvePostLoginPath,
@@ -19,6 +22,7 @@ function LoginPageContent() {
   const searchParams = useSearchParams()
   const { status } = useSession()
   const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [redirectBlocked, setRedirectBlocked] = useState(false)
   const handleSuccess = useAuthSuccessHandler(mode)
 
   useEffect(() => {
@@ -39,18 +43,67 @@ function LoginPageContent() {
     } else {
       setMode('login')
     }
+
+    setRedirectBlocked(hasExceededDashboardRedirectAttempts())
   }, [searchParams])
 
-  useEffect(() => {
-    if (status === 'authenticated') {
-      navigateAfterAuth(resolvePostLoginPath())
+  const attemptAuthenticatedRedirect = useCallback(() => {
+    if (hasExceededDashboardRedirectAttempts()) {
+      setRedirectBlocked(true)
+      return
     }
-  }, [status])
+    navigateAfterAuth(resolvePostLoginPath())
+  }, [])
 
-  if (status === 'loading' || status === 'authenticated') {
+  useEffect(() => {
+    if (status !== 'authenticated') return
+    if (redirectBlocked) return
+    attemptAuthenticatedRedirect()
+  }, [status, redirectBlocked, attemptAuthenticatedRedirect])
+
+  const handleRetryDashboard = () => {
+    clearDashboardRedirectAttempts()
+    setRedirectBlocked(false)
+    attemptAuthenticatedRedirect()
+  }
+
+  if (status === 'loading') {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-sf-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (status === 'authenticated' && !redirectBlocked) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-sf-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (status === 'authenticated' && redirectBlocked) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4 py-12">
+        <div className="max-w-md w-full text-center space-y-4">
+          <h1 className="text-2xl font-bold text-white">Could not open dashboard</h1>
+          <p className="text-gray-400 text-sm">
+            You are signed in, but the app could not complete the redirect to your dashboard.
+            This is usually temporary after a deployment or database update.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+            <Button onClick={handleRetryDashboard} className="bg-sf-primary hover:bg-sf-accent text-sf-background">
+              Retry dashboard
+            </Button>
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800"
+            >
+              Back to home
+            </Link>
+          </div>
+        </div>
       </div>
     )
   }

@@ -1,6 +1,8 @@
 export const DASHBOARD_PATH = '/dashboard'
 export const LOGIN_PATH = '/login'
 export const PENDING_RETURN_URL_KEY = 'pendingReturnUrl'
+export const DASHBOARD_REDIRECT_ATTEMPTS_KEY = 'dashboardRedirectAttempts'
+export const MAX_DASHBOARD_REDIRECT_ATTEMPTS = 2
 
 export interface LoginUrlOptions {
   returnUrl?: string
@@ -86,8 +88,32 @@ export function resolvePostLoginPath(): string {
   return consumeReturnUrl() || getDashboardUrl()
 }
 
+export function getDashboardRedirectAttempts(): number {
+  if (typeof window === 'undefined') return 0
+  const raw = sessionStorage.getItem(DASHBOARD_REDIRECT_ATTEMPTS_KEY)
+  const parsed = Number(raw)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+}
+
+export function incrementDashboardRedirectAttempts(): number {
+  if (typeof window === 'undefined') return 0
+  const next = getDashboardRedirectAttempts() + 1
+  sessionStorage.setItem(DASHBOARD_REDIRECT_ATTEMPTS_KEY, String(next))
+  return next
+}
+
+export function clearDashboardRedirectAttempts(): void {
+  if (typeof window === 'undefined') return
+  sessionStorage.removeItem(DASHBOARD_REDIRECT_ATTEMPTS_KEY)
+}
+
+export function hasExceededDashboardRedirectAttempts(): boolean {
+  return getDashboardRedirectAttempts() >= MAX_DASHBOARD_REDIRECT_ATTEMPTS
+}
+
 export function navigateAfterAuth(path: string): void {
   if (typeof window === 'undefined') return
+  incrementDashboardRedirectAttempts()
   window.location.assign(isSafeInternalPath(path) ? path : getDashboardUrl())
 }
 

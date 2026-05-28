@@ -29,6 +29,7 @@ import ModerationEvent from '@/models/ModerationEvent'
 import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubscription'
 import { migrateCreditLedger } from '@/lib/database/migrateCreditLedger'
 import { migrateRateCard } from '@/lib/database/migrateRateCard'
+import { ensureWhopUserColumns } from '@/lib/database/migrateWhopPayment'
 
 /**
  * Creates Sequelize tables on an empty Postgres (e.g. new Neon DB).
@@ -86,6 +87,15 @@ export async function bootstrapDatabaseSchema(): Promise<{
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error)
       logs.push(`⚠️ Migration note: ${msg}`)
+    }
+
+    logs.push('4b. Running Whop user columns migration...')
+    try {
+      await ensureWhopUserColumns()
+      logs.push('✅ Whop user columns migration completed')
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      logs.push(`⚠️ Whop columns migration note: ${msg}`)
     }
 
     logs.push('5. Creating Series table (required before projects.series_id FK)...')

@@ -7,6 +7,7 @@ import { DashboardOverviewStats } from './components/DashboardOverviewStats'
 import { RecentProjectsPanel } from './components/RecentProjectsPanel'
 import { DashboardQuickStart } from './components/DashboardQuickStart'
 import { useDashboardData } from '@/hooks/useDashboardData'
+import { DashboardRedirectGuard } from '@/components/auth/DashboardRedirectGuard'
 import { motion } from 'framer-motion'
 import { Loader2, AlertCircle } from 'lucide-react'
 
@@ -62,6 +63,7 @@ export default function ClientDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6 md:p-8 font-sans">
+      <DashboardRedirectGuard />
       <div className="max-w-7xl mx-auto space-y-6">
         <CueCommandBar />
 

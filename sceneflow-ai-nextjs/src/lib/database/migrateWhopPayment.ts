@@ -1,6 +1,16 @@
 import crypto from 'crypto'
 import { sequelize } from '@/models'
 
+/** Lightweight column-only migration safe to run on hot paths (credits API). */
+export async function ensureWhopUserColumns(): Promise<void> {
+  await sequelize.authenticate()
+  await sequelize.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS whop_user_id VARCHAR(255);
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS whop_membership_id VARCHAR(255);
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS payment_provider VARCHAR(50) DEFAULT 'whop';
+  `)
+}
+
 export async function migrateWhopPayment(): Promise<void> {
   await sequelize.authenticate()
 
@@ -62,11 +72,7 @@ export async function migrateWhopPayment(): Promise<void> {
 
   // Whop user fields
   try {
-    await sequelize.query(`
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS whop_user_id VARCHAR(255);
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS whop_membership_id VARCHAR(255);
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS payment_provider VARCHAR(50) DEFAULT 'whop';
-    `)
+    await ensureWhopUserColumns()
     console.log('✓ Added Whop columns to users')
   } catch (error: any) {
     console.log('Whop user columns note:', error.message)

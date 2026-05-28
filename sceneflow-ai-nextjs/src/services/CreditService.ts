@@ -1,6 +1,7 @@
 import { sequelize, AIPricing, CreditLedger, User, AIUsage } from '@/models'
 import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubscription'
 import { migrateCreditLedger } from '@/lib/database/migrateCreditLedger'
+import { ensureWhopUserColumns } from '@/lib/database/migrateWhopPayment'
 import { resolveUser } from '@/lib/userHelper'
 
 export const CREDIT_VALUE_USD = Number(process.env.CREDIT_VALUE_USD ?? '0.0001')
@@ -11,8 +12,20 @@ export type PricingCategory = 'text' | 'images' | 'tts' | 'whisper' | 'video' | 
 // Cache to prevent multiple concurrent migrations
 let migrationInProgress = false
 let migrationCompleted = false
+let whopMigrationInProgress = false
+let whopMigrationCompleted = false
 let creditLedgerMigrationInProgress = false
 let creditLedgerMigrationCompleted = false
+
+function isMissingColumnError(error: any, columnHint?: string): boolean {
+  const code = error?.parent?.code ?? error?.original?.code
+  const message = String(error?.message ?? error?.parent?.message ?? '')
+  if (code === '42703') return true
+  if (message.includes('does not exist')) {
+    return columnHint ? message.includes(columnHint) : true
+  }
+  return false
+}
 
 /**
  * Helper to check if migration is needed and run it automatically
@@ -50,6 +63,37 @@ async function ensureMigrationRan(): Promise<void> {
     throw error
   } finally {
     migrationInProgress = false
+  }
+}
+
+/** Auto-add Whop billing columns when model/schema drift is detected. */
+export async function ensureWhopMigrationRan(): Promise<void> {
+  if (whopMigrationCompleted) return
+
+  if (whopMigrationInProgress) {
+    for (let i = 0; i < 100; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 100))
+      if (whopMigrationCompleted) return
+    }
+    throw new Error('Whop migration timeout - please try again')
+  }
+
+  whopMigrationInProgress = true
+  try {
+    console.log('[CreditService] Auto-running Whop user columns migration...')
+    await ensureWhopUserColumns()
+    whopMigrationCompleted = true
+    console.log('[CreditService] Whop user columns migration completed')
+  } catch (error: any) {
+    whopMigrationInProgress = false
+    if (error.message?.includes('already exists') || error.message?.includes('duplicate')) {
+      whopMigrationCompleted = true
+      return
+    }
+    console.error('[CreditService] Whop migration failed:', error)
+    throw error
+  } finally {
+    whopMigrationInProgress = false
   }
 }
 
@@ -106,22 +150,28 @@ async function findUserWithAutoMigration(userIdOrEmail: string, options?: any) {
     }
     return user
   } catch (error: any) {
-    // Check if error is due to missing subscription columns
-    // This is distinct from a connection error, which should be handled higher up.
-    if (
-      (error?.parent?.code === '42703' && error?.message?.includes('undefined_column')) ||
-      (error?.message?.includes('does not exist') && error?.message?.includes('subscription_tier_id'))
-    ) {
-      console.log('[CreditService] Detected missing subscription columns, running migration...')
-      await ensureMigrationRan()
-      // Retry the query after migration
+    if (isMissingColumnError(error, 'whop_user_id') || isMissingColumnError(error, 'whop_membership_id') || isMissingColumnError(error, 'payment_provider')) {
+      console.log('[CreditService] Detected missing Whop columns, running migration...')
+      await ensureWhopMigrationRan()
       const user = await resolveUser(userIdOrEmail)
       if (options?.transaction) {
         return await User.findByPk(user.id, options)
       }
       return user
     }
-    // If it's not a known migration error, re-throw it.
+
+    if (
+      isMissingColumnError(error, 'subscription_tier_id') ||
+      (error?.parent?.code === '42703' && error?.message?.includes('undefined_column'))
+    ) {
+      console.log('[CreditService] Detected missing subscription columns, running migration...')
+      await ensureMigrationRan()
+      const user = await resolveUser(userIdOrEmail)
+      if (options?.transaction) {
+        return await User.findByPk(user.id, options)
+      }
+      return user
+    }
     throw error
   }
 }
