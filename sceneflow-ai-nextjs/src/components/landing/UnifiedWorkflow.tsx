@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
+import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
 // Old way tools
 const fragmentedTools = [
@@ -293,7 +294,7 @@ export function UnifiedWorkflow() {
             </p>
             <Button
               size="lg"
-              onClick={() => window.location.href = '/?signup=explorer'}
+              onClick={() => { window.location.href = getSignupUrlForTier('explorer') }}
               className="bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 text-white px-8 py-3 font-semibold"
             >
               Try Explorer — $9

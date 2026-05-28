@@ -7,7 +7,6 @@ import Image from 'next/image'
 import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Film, Building2, Workflow, ArrowRight, PlayCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
-import { AuthModal } from '@/components/auth/AuthModal'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,24 +15,25 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-import { setPendingCheckoutTier } from '@/lib/billing/checkoutIntent'
 import {
   getDashboardUrl,
+  getLoginUrl,
+  getLoginUrlFromLegacySearch,
   navigateToDashboard,
-  persistReturnUrl,
 } from '@/lib/auth/postLoginRedirect'
 import { GoogleTranslate } from './GoogleTranslate'
 import { LanguageSelector } from './LanguageSelector'
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
   const [scrollProgress, setScrollProgress] = useState(0)
   const [isScrolled, setIsScrolled] = useState(false)
   const { data: session } = useSession()
   const isAuthenticated = !!session?.user
   const user = session?.user
+
+  const loginUrl = getLoginUrl({ returnUrl: getDashboardUrl(), mode: 'login' })
+  const signupUrl = getLoginUrl({ mode: 'signup' })
 
   // Scroll progress tracking
   useEffect(() => {
@@ -70,17 +70,24 @@ export function Header() {
     setIsMobileMenuOpen(false)
   }
 
-  const openAuthModal = (mode: 'login' | 'signup') => {
-    if (mode === 'login') {
-      persistReturnUrl(getDashboardUrl())
-    }
-    setAuthMode(mode)
-    setIsAuthModalOpen(true)
+  const goToLogin = () => {
+    window.location.href = loginUrl
+    setIsMobileMenuOpen(false)
   }
 
-  const closeAuthModal = () => {
-    setIsAuthModalOpen(false)
+  const goToSignup = () => {
+    window.location.href = signupUrl
+    setIsMobileMenuOpen(false)
   }
+
+  // Redirect legacy auth query params on landing to dedicated /login page
+  useEffect(() => {
+    if (typeof window === 'undefined' || isAuthenticated) return
+    const legacyLoginUrl = getLoginUrlFromLegacySearch(window.location.search)
+    if (legacyLoginUrl) {
+      window.location.replace(legacyLoginUrl)
+    }
+  }, [isAuthenticated])
 
   const handleLogout = async () => {
     try {
@@ -91,50 +98,6 @@ export function Header() {
     signOut()
     setIsMobileMenuOpen(false)
   }
-
-  const clearAuthQueryParams = () => {
-    window.history.replaceState({}, '', window.location.pathname)
-  }
-
-  // Only open auth modal if explicitly requested via URL query params
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const params = new URLSearchParams(window.location.search)
-    const returnUrlParam = params.get('returnUrl')
-
-    if (returnUrlParam?.startsWith('/')) {
-      persistReturnUrl(returnUrlParam)
-    }
-
-    if (params.get('login') === '1' && !isAuthenticated) {
-      if (!returnUrlParam) {
-        persistReturnUrl(getDashboardUrl())
-      }
-      setAuthMode('login')
-      setIsAuthModalOpen(true)
-      clearAuthQueryParams()
-    }
-    if (params.get('signup') === '1' && !isAuthenticated) {
-      setAuthMode('signup')
-      setIsAuthModalOpen(true)
-      clearAuthQueryParams()
-    }
-    if (params.get('signup') === 'explorer' && !isAuthenticated) {
-      setPendingCheckoutTier('explorer')
-      setAuthMode('signup')
-      setIsAuthModalOpen(true)
-      clearAuthQueryParams()
-    }
-    const checkoutTier = params.get('checkoutTier')
-    if (checkoutTier && !isAuthenticated) {
-      setPendingCheckoutTier(checkoutTier)
-      if (params.get('signup') === '1' || params.get('signup') === 'explorer') {
-        setAuthMode('signup')
-      }
-      setIsAuthModalOpen(true)
-      clearAuthQueryParams()
-    }
-  }, [isAuthenticated])
 
   return (
     <>
@@ -292,14 +255,14 @@ export function Header() {
               ) : (
                 <>
                   <Button 
-                    onClick={() => openAuthModal('login')}
+                    onClick={goToLogin}
                     variant="outline"
                     className="border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background transition-all duration-200"
                   >
                     Sign In
                   </Button>
                   <Button 
-                    onClick={() => { openAuthModal('signup') }}
+                    onClick={goToSignup}
                     className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-2 text-sm font-medium"
                   >
                     Start a Project
@@ -421,13 +384,13 @@ export function Header() {
                       <>
                         <Button 
                           variant="outline" 
-                          onClick={() => { openAuthModal('login') }}
+                          onClick={goToLogin}
                           className="w-full px-4 border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background py-3 text-base font-medium"
                         >
                           Sign In
                         </Button>
                         <Button 
-                          onClick={() => { openAuthModal('signup') }} 
+                          onClick={goToSignup} 
                           className="w-full px-4 bg-sf-primary hover:bg-sf-accent text-sf-background py-3 text-base font-medium"
                         >
                           Start a Project
@@ -441,13 +404,6 @@ export function Header() {
           </div>
         </div>
       </motion.header>
-
-      {/* Authentication Modal */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={closeAuthModal}
-        initialMode={authMode}
-      />
     </>
   )
 }

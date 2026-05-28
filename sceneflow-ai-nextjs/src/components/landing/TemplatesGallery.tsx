@@ -4,6 +4,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Film, Presentation, BookOpen, ArrowRight, Sparkles, Users, Target, Clapperboard, Mic, GraduationCap, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { getLoginUrl } from '@/lib/auth/postLoginRedirect';
+
+const SIGNUP_URL = getLoginUrl({ mode: 'signup' });
 
 interface ProductionCard {
   id: string;
@@ -170,7 +173,7 @@ const ProductionCardComponent = ({ production, index }: { production: Production
       {/* Hover CTA */}
       <div className="absolute inset-0 bg-gray-900/90 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
         <Button
-          onClick={() => window.location.href = `/?signup=1&production=${production.id}`}
+          onClick={() => { window.location.href = getLoginUrl({ mode: 'signup', extra: { production: production.id } }) }}
           className={`bg-gradient-to-r ${production.color.bg.replace('/10', '')} ${production.color.bg.replace('/5', '')} text-white px-6 py-3`}
         >
           Start This Production
@@ -246,7 +249,7 @@ export default function TemplatesGallery() {
             <div className="hidden md:block w-px h-6 bg-gray-700" />
             <Button
               variant="outline"
-              onClick={() => window.location.href = '/?signup=1'}
+              onClick={() => { window.location.href = SIGNUP_URL }}
               className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10"
             >
               Start Your Production

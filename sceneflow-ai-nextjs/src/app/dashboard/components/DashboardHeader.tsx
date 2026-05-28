@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { getDashboardUrl, persistReturnUrl } from '@/lib/auth/postLoginRedirect'
+import { getDashboardUrl, getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import { Button } from '@/components/ui/Button';
 import {
   Settings,
@@ -76,14 +76,12 @@ export default function DashboardHeader() {
             ) : (
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="sm" className="border-dark-border text-dark-text hover:bg-dark-bg" onClick={() => {
-                  persistReturnUrl(getDashboardUrl())
-                  window.location.href = '/?login=1&returnUrl=/dashboard'
+                  window.location.href = getLoginUrl({ returnUrl: getDashboardUrl(), mode: 'login' })
                 }}>
                   Sign In
                 </Button>
                 <Button size="sm" className="bg-dark-accent hover:bg-dark-accent-hover" onClick={() => {
-                  persistReturnUrl(getDashboardUrl())
-                  window.location.href = '/?signup=1&returnUrl=/dashboard'
+                  window.location.href = getLoginUrl({ returnUrl: getDashboardUrl(), mode: 'signup' })
                 }}>
                   Get Started
                 </Button>

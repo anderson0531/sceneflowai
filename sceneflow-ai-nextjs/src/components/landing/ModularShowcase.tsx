@@ -27,6 +27,9 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
+import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
+
+const SIGNUP_URL = getLoginUrl({ mode: 'signup' })
 
 // Module definitions with standalone and ecosystem features
 const modules = [
@@ -252,7 +255,7 @@ function ModuleCard({ module, index }: ModuleCardProps) {
           {/* CTA */}
           <div className="flex items-center gap-4">
             <Button
-              onClick={() => window.location.href = '/?signup=1'}
+              onClick={() => { window.location.href = SIGNUP_URL }}
               className={cn(
                 'bg-gradient-to-r text-white px-6 py-3 font-medium',
                 module.color

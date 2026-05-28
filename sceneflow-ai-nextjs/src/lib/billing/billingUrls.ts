@@ -1,3 +1,4 @@
+import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import { CHECKOUT_TIER_NAMES, type BillingTierName } from './tierCatalog'
 
 export interface BillingUrlOptions {
@@ -17,10 +18,7 @@ export function getBillingUrl(options: BillingUrlOptions = {}): string {
 
   if (isAuthenticated === false) {
     if (tier && isCheckoutTierName(tier)) {
-      if (tier === 'explorer') {
-        return '/?signup=explorer'
-      }
-      return `/?signup=1&checkoutTier=${tier}`
+      return getLoginUrl({ mode: 'signup', checkoutTier: tier })
     }
     return anchor ? `/#${anchor}` : '/#pricing'
   }

@@ -3,6 +3,9 @@
 import { motion } from 'framer-motion'
 import { Target, Zap, Sparkles, Clock, Globe, Film, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
+
+const SIGNUP_URL = getLoginUrl({ mode: 'signup' })
 
 export function CoreCapabilitiesSection() {
   return (
@@ -50,7 +53,7 @@ export function CoreCapabilitiesSection() {
             </ul>
             
             <Button 
-              onClick={() => window.location.href = '/?signup=1'}
+              onClick={() => { window.location.href = SIGNUP_URL }}
               className="bg-emerald-600 hover:bg-emerald-500 text-white gap-2"
             >
               Analyze Your Script
@@ -115,7 +118,7 @@ export function CoreCapabilitiesSection() {
             </div>
             
             <Button 
-              onClick={() => window.location.href = '/?signup=1'}
+              onClick={() => { window.location.href = SIGNUP_URL }}
               className="bg-cyan-600 hover:bg-cyan-500 text-white gap-2"
             >
               Start Express Rendering

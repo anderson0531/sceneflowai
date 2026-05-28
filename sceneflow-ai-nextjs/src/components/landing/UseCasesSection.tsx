@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Video, Play, Building2, Film, Sparkles, Volume2, VolumeX, Maximize2, User, Briefcase, Clock, DollarSign, Target, CheckCircle2, ArrowRight, Quote, X } from 'lucide-react';
 
 import { ProductionComparisonVisual } from './ProductionComparisonVisual';
+import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent';
 type Persona = 'creator' | 'agency';
 
 interface UseCasePersona {
@@ -476,7 +477,7 @@ export default function UseCasesSection() {
           transition={{ duration: 0.6, delay: 0.3 }}
         >
           <button
-            onClick={() => window.location.href = '/?signup=explorer'}
+            onClick={() => { window.location.href = getSignupUrlForTier('explorer') }}
             className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500 text-white font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
           >
             Start Your Production Test Flight

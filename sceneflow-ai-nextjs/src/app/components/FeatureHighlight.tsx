@@ -5,6 +5,9 @@ import { motion } from 'framer-motion'
 import { Users, Shield, Globe, Film, Mic2, Video, Image, Play, ArrowRight, Volume2, VolumeX, Brain, Library, Languages, ClipboardCheck } from 'lucide-react'
 import { FeatureDetailModal } from './FeatureDetailModal'
 import { Button } from '@/components/ui/Button'
+import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
+
+const SIGNUP_URL = getLoginUrl({ mode: 'signup' })
 
 export function FeatureHighlight() {
   const [selectedFeature, setSelectedFeature] = useState<number | null>(null)
@@ -41,7 +44,7 @@ export function FeatureHighlight() {
         icon: ClipboardCheck
       },
       ctaText: 'Try Script Review',
-      ctaLink: '/?signup=1',
+      ctaLink: SIGNUP_URL,
       color: 'from-emerald-500 to-emerald-600'
     },
     {
@@ -66,7 +69,7 @@ export function FeatureHighlight() {
         icon: Brain
       },
       ctaText: 'Try AI Editor',
-      ctaLink: '/?signup=1',
+      ctaLink: SIGNUP_URL,
       color: 'from-rose-500 to-rose-600'
     },
     {
@@ -91,7 +94,7 @@ export function FeatureHighlight() {
         icon: Library
       },
       ctaText: 'See Reference Library',
-      ctaLink: '/?signup=1',
+      ctaLink: SIGNUP_URL,
       color: 'from-indigo-500 to-indigo-600'
     },
     {
@@ -116,7 +119,7 @@ export function FeatureHighlight() {
         icon: Languages
       },
       ctaText: 'Explore Languages',
-      ctaLink: '/?signup=1',
+      ctaLink: SIGNUP_URL,
       color: 'from-teal-500 to-teal-600'
     },
     {
@@ -141,7 +144,7 @@ export function FeatureHighlight() {
         icon: Film
       },
       ctaText: 'Try Script Generator',
-      ctaLink: '/?signup=1',
+      ctaLink: SIGNUP_URL,
       color: 'from-cyan-500 to-cyan-600'
     },
     {
@@ -166,7 +169,7 @@ export function FeatureHighlight() {
         icon: Video
       },
       ctaText: 'Try Video Generation',
-      ctaLink: '/?signup=1',
+      ctaLink: SIGNUP_URL,
       color: 'from-amber-500 to-amber-600'
     },
     {
@@ -191,7 +194,7 @@ export function FeatureHighlight() {
         icon: Mic2
       },
       ctaText: 'Explore Audio Tools',
-      ctaLink: '/?signup=1',
+      ctaLink: SIGNUP_URL,
       color: 'from-green-500 to-green-600'
     }
   ]

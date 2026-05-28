@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import { FINAL_CTA_COPY } from '@/config/landing/valuePropCopy'
 
 export function FinalCTA() {
@@ -28,7 +29,7 @@ export function FinalCTA() {
             {FINAL_CTA_COPY.subtitle}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/?signup=1" className="w-full sm:w-auto">
+            <Link href={getLoginUrl({ mode: 'signup' })} className="w-full sm:w-auto">
               <Button size="lg" className="w-full sm:w-auto">
                 {FINAL_CTA_COPY.cta}
                 <ArrowRight className="ml-2 w-5 h-5" />

@@ -5,13 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { LoginForm } from './LoginForm'
 import { SignUpForm } from './SignUpForm'
-import { consumePendingCheckoutTier } from '@/lib/billing/checkoutIntent'
-import { getWelcomeCreditsOnSignup } from '@/lib/credits/welcomeCreditsConfig'
-import {
-  navigateAfterAuth,
-  resolvePostLoginPath,
-} from '@/lib/auth/postLoginRedirect'
-import { toast } from 'sonner'
+import { useAuthSuccessHandler } from '@/components/auth/useAuthSuccessHandler'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -47,23 +41,11 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
     }
   }, [isOpen, onClose])
 
+  const onAuthSuccess = useAuthSuccessHandler(mode)
+
   const handleSuccess = () => {
     onClose()
-
-    const pendingTier = consumePendingCheckoutTier()
-    if (pendingTier) {
-      navigateAfterAuth(`/dashboard/settings/billing?checkoutTier=${pendingTier}`)
-      return
-    }
-
-    if (mode === 'signup') {
-      const welcomeCredits = getWelcomeCreditsOnSignup()
-      if (welcomeCredits > 0) {
-        toast.success(`Welcome! ${welcomeCredits.toLocaleString()} free credits have been added to your account.`)
-      }
-    }
-
-    navigateAfterAuth(resolvePostLoginPath())
+    onAuthSuccess()
   }
 
   const switchMode = (newMode: 'login' | 'signup') => {

@@ -1,3 +1,5 @@
+import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
+
 export const PENDING_CHECKOUT_TIER_KEY = 'pendingCheckoutTier'
 
 export function setPendingCheckoutTier(tier: string): void {
@@ -15,8 +17,5 @@ export function consumePendingCheckoutTier(): string | null {
 }
 
 export function getSignupUrlForTier(tier: string): string {
-  if (tier === 'explorer') {
-    return '/?signup=explorer'
-  }
-  return `/?signup=1&checkoutTier=${encodeURIComponent(tier)}`
+  return getLoginUrl({ mode: 'signup', checkoutTier: tier })
 }

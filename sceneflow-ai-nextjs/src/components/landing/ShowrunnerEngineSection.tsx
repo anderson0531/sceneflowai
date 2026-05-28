@@ -23,6 +23,9 @@ import {
   Target
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
+
+const SIGNUP_URL = getLoginUrl({ mode: 'signup' })
 
 // Series Launch Checklist Steps - Simplified 3-step flow
 const launchSteps = [
@@ -599,7 +602,7 @@ export function ShowrunnerEngineSection() {
         >
           <Button
             size="lg"
-            onClick={() => window.location.href = '/?signup=1'}
+            onClick={() => { window.location.href = SIGNUP_URL }}
             className="bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 hover:from-cyan-400 hover:via-purple-400 hover:to-amber-400 text-white px-10 py-4 text-lg font-semibold shadow-lg shadow-purple-500/25"
           >
             Launch Your First Show

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Lightbulb, Film, Scissors, Rocket, ArrowRight, Clapperboard } from 'lucide-react'
 import { WORKFLOW_PHASES } from '@/config/landing/workflowPhaseCopy'
 import { HOW_IT_WORKS_HEADER } from '@/config/landing/valuePropCopy'
+import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 
 const PHASE_ICONS = [Clapperboard, Lightbulb, Film, Scissors, Rocket]
 const PHASE_COLORS = [
@@ -102,7 +103,7 @@ export function HowItWorks() {
             Ready to test the full pipeline?
           </p>
           <a 
-            href="/?signup=1"
+            href={getLoginUrl({ mode: 'signup' })}
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 hover:from-cyan-400 hover:via-purple-400 hover:to-amber-400 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-500/25"
           >
             Start with Explorer — $9

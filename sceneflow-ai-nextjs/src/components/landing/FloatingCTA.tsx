@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, X, DollarSign } from 'lucide-react';
 import Link from 'next/link';
+import { getLoginUrl } from '@/lib/auth/postLoginRedirect';
+
+const SIGNUP_URL = getLoginUrl({ mode: 'signup' });
 
 export default function FloatingCTA() {
   const [isVisible, setIsVisible] = useState(false);
@@ -57,7 +60,7 @@ export default function FloatingCTA() {
                 <span className="text-sm">See Pricing</span>
               </button>
               <Link
-                href="/?signup=1"
+                href={SIGNUP_URL}
                 className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all"
               >
                 <span className="text-sm">Try $9</span>
@@ -76,7 +79,7 @@ export default function FloatingCTA() {
           >
           {/* Main CTA Button */}
           <Link
-            href="/?signup=1"
+            href={SIGNUP_URL}
             className="group relative inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 hover:from-cyan-400 hover:via-purple-400 hover:to-amber-400 text-white font-semibold rounded-xl shadow-2xl shadow-purple-500/30 transition-all duration-300 hover:scale-105"
           >
             {/* Glow effect */}
