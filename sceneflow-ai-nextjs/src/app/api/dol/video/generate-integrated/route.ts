@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
             message: 'Veo Max quality is available on Pro and Studio plans. Please upgrade to access this feature.',
             requiredPlan: 'pro',
             currentPlan: userPlan,
-            upgradeUrl: '/pricing'
+            upgradeUrl: '/dashboard/settings/billing'
           },
           { status: 403 }
         );

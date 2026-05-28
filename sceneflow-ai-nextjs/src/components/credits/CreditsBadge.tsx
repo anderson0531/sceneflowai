@@ -1,9 +1,11 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 import { useCreditsDisplay, useCredits } from '@/contexts/CreditsContext'
 import { Coins, AlertTriangle, RefreshCw } from 'lucide-react'
-import Link from 'next/link'
+import { getBillingUrl } from '@/lib/billing/billingUrls'
 
 interface CreditsBadgeProps {
   showPlan?: boolean
@@ -11,8 +13,10 @@ interface CreditsBadgeProps {
 }
 
 export function CreditsBadge({ showPlan = false, className = '' }: CreditsBadgeProps) {
+  const { data: session } = useSession()
   const { formatted, plan, isLow, isEmpty } = useCreditsDisplay()
   const { isLoading, refreshCredits } = useCredits()
+  const billingHref = getBillingUrl({ isAuthenticated: Boolean(session?.user) })
 
   const getBadgeStyle = () => {
     if (isEmpty) return 'bg-red-500/20 text-red-400 border-red-500/30'
@@ -23,7 +27,7 @@ export function CreditsBadge({ showPlan = false, className = '' }: CreditsBadgeP
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <Link 
-        href="/pricing"
+        href={billingHref}
         className={`
           flex items-center gap-2 px-3 py-1.5 rounded-full border 
           text-sm font-medium transition-all hover:scale-105
@@ -51,7 +55,7 @@ export function CreditsBadge({ showPlan = false, className = '' }: CreditsBadgeP
       
       {(isLow || isEmpty) && !isLoading && (
         <Link
-          href="/pricing"
+          href={billingHref}
           className="text-xs text-yellow-400 hover:text-yellow-300 underline"
         >
           Add Credits

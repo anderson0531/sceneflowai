@@ -6,6 +6,9 @@ import { X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { LoginForm } from './LoginForm'
 import { SignUpForm } from './SignUpForm'
+import { consumePendingCheckoutTier } from '@/lib/billing/checkoutIntent'
+import { getWelcomeCreditsOnSignup } from '@/lib/credits/welcomeCreditsConfig'
+import { toast } from 'sonner'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -16,6 +19,12 @@ interface AuthModalProps {
 export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
   const [mode, setMode] = useState<'login' | 'signup'>(initialMode)
   const router = useRouter()
+
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode)
+    }
+  }, [isOpen, initialMode])
 
   // Close modal on escape key
   useEffect(() => {
@@ -38,14 +47,28 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
 
   const handleSuccess = () => {
     onClose()
-    const pendingTier = typeof window !== 'undefined'
-      ? sessionStorage.getItem('pendingCheckoutTier')
-      : null
+    const pendingTier = consumePendingCheckoutTier()
     if (pendingTier) {
-      sessionStorage.removeItem('pendingCheckoutTier')
       router.push(`/dashboard/settings/billing?checkoutTier=${pendingTier}`)
       return
     }
+
+    if (mode === 'signup') {
+      const welcomeCredits = getWelcomeCreditsOnSignup()
+      if (welcomeCredits > 0) {
+        toast.success(`Welcome! ${welcomeCredits.toLocaleString()} free credits have been added to your account.`)
+      }
+    }
+
+    const returnUrl =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('returnUrl')
+        : null
+    if (returnUrl && returnUrl.startsWith('/')) {
+      router.push(returnUrl)
+      return
+    }
+
     router.push('/dashboard')
   }
 

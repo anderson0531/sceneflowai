@@ -1,23 +1,23 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { CreditCard, Zap, TrendingUp, Crown, ExternalLink, Loader, CheckCircle, AlertCircle, Beaker, ArrowRight, Mic } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/Button'
-import Link from 'next/link'
 import { toast } from 'sonner'
 import { WhopCheckoutModal } from '@/components/billing/WhopCheckoutModal'
 import { useWhopCheckout } from '@/hooks/useWhopCheckout'
 import { MOR_FOOTER_LINE } from '@/config/landing/valuePropCopy'
+import {
+  mapSubscriptionStatus,
+  type MappedSubscriptionData,
+} from '@/lib/billing/mapSubscriptionStatus'
+import { getCheckoutPlans, hasPurchasedExplorer } from '@/lib/billing/tierCatalog'
 
-const CHECKOUT_PLANS = [
-  { name: 'explorer', displayName: 'Explorer', price: 9, credits: 750, isOneTime: true },
-  { name: 'starter', displayName: 'Starter', price: 49, credits: 4500, isOneTime: false },
-  { name: 'pro', displayName: 'Pro', price: 149, credits: 15000, isOneTime: false },
-  { name: 'studio', displayName: 'Studio', price: 599, credits: 75000, isOneTime: false },
-] as const
+const CHECKOUT_PLANS = getCheckoutPlans()
 
 interface TierInfo {
   name: string
@@ -30,27 +30,7 @@ interface TierInfo {
   voiceCloneSlots: number
 }
 
-interface SubscriptionData {
-  subscription: {
-    tier: {
-      id: string
-      name: string
-      display_name: string
-      monthly_price_usd: number
-      included_credits_monthly: number
-      storage_gb: number
-      features: string[]
-    } | null
-    status: string | null
-    startDate: string | null
-    endDate: string | null
-  }
-  credits: {
-    total: number
-    subscription: number
-    addon: number
-  }
-}
+interface SubscriptionData extends MappedSubscriptionData {}
 
 interface TestModeData {
   testModeEnabled: boolean
@@ -64,72 +44,124 @@ interface TestModeData {
 
 export default function BillingPage() {
   const { data: session } = useSession()
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null)
   const [testMode, setTestMode] = useState<TestModeData | null>(null)
   const [switchingPlan, setSwitchingPlan] = useState<string | null>(null)
+  const [activatingPlan, setActivatingPlan] = useState(false)
+  const [activationTimedOut, setActivationTimedOut] = useState(false)
+  const checkoutStartedRef = useRef(false)
+  const activationPollStartedRef = useRef(false)
   const { loading: checkoutLoading, checkout, startCheckout, closeCheckout } = useWhopCheckout()
 
-  const fetchSubscriptionData = useCallback(async () => {
+  const fetchSubscriptionData = useCallback(async (): Promise<SubscriptionData | null> => {
     try {
-      setLoading(true)
-      
-      // Fetch subscription status
+      setFetchError(null)
       const subResponse = await fetch('/api/subscription/status')
-      console.log('[Billing] Subscription response status:', subResponse.status)
       if (subResponse.ok) {
         const subData = await subResponse.json()
-        console.log('[Billing] Subscription data:', subData)
-        setSubscription(subData)
-      } else {
-        console.warn('[Billing] Subscription fetch failed:', subResponse.status)
+        const mapped = mapSubscriptionStatus(subData)
+        setSubscription(mapped)
+        return mapped
       }
 
-      // Fetch test mode info (available tiers)
-      try {
-        const testResponse = await fetch('/api/admin/test/switch-plan')
-        console.log('[Billing] Test mode response status:', testResponse.status)
-        if (testResponse.ok) {
-          const testData = await testResponse.json()
-          console.log('[Billing] Test mode data:', testData)
-          setTestMode(testData)
-        } else {
-          const errorText = await testResponse.text()
-          console.warn('[Billing] Test mode fetch failed:', testResponse.status, errorText)
-        }
-      } catch (e) {
-        console.error('[Billing] Test mode fetch error:', e)
-        // Test mode not available
-      }
+      setFetchError('Failed to load subscription data')
+      return null
     } catch (error) {
       console.error('Failed to fetch subscription data:', error)
-    } finally {
-      setLoading(false)
+      setFetchError('Failed to load subscription data')
+      return null
     }
   }, [])
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchSubscriptionData()
+  const loadBillingPage = useCallback(async () => {
+    try {
+      setLoading(true)
+      await fetchSubscriptionData()
+
+      try {
+        const testResponse = await fetch('/api/admin/test/switch-plan')
+        if (testResponse.ok) {
+          const testData = await testResponse.json()
+          setTestMode(testData)
+        }
+      } catch {
+        // Test mode not available
+      }
+    } finally {
+      setLoading(false)
     }
-  }, [session, fetchSubscriptionData])
+  }, [fetchSubscriptionData])
+
+  const pollForActivation = useCallback(
+    async (baseline: SubscriptionData | null) => {
+      setActivatingPlan(true)
+      setActivationTimedOut(false)
+
+      const baselineCredits = baseline?.credits.total ?? 0
+      const baselineTier = baseline?.subscription?.tier?.name ?? null
+
+      for (let attempt = 0; attempt < 20; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        const latest = await fetchSubscriptionData()
+        if (!latest) continue
+
+        const creditsChanged = latest.credits.total > baselineCredits
+        const tierChanged =
+          Boolean(latest.subscription?.tier?.name) &&
+          latest.subscription?.tier?.name !== baselineTier
+        const explorerPurchased =
+          hasPurchasedExplorer(latest.oneTimeTiersPurchased) &&
+          !hasPurchasedExplorer(baseline?.oneTimeTiersPurchased)
+
+        if (creditsChanged || tierChanged || explorerPurchased) {
+          setActivatingPlan(false)
+          toast.success('Your plan is active and credits are ready!')
+          return
+        }
+      }
+
+      setActivatingPlan(false)
+      setActivationTimedOut(true)
+      toast.message('Payment received — activation is still processing. Refresh in a moment or contact support if credits do not appear.')
+    },
+    [fetchSubscriptionData]
+  )
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (session?.user) {
+      loadBillingPage()
+    }
+  }, [session, loadBillingPage])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !session?.user) return
 
     const params = new URLSearchParams(window.location.search)
     const checkoutStatus = params.get('checkout')
-    if (checkoutStatus === 'success') {
-      toast.success('Payment successful! Your credits will appear shortly.')
-    } else if (checkoutStatus === 'error') {
+    const checkoutTier = params.get('checkoutTier')
+
+    if (checkoutStatus === 'success' && !activationPollStartedRef.current) {
+      activationPollStartedRef.current = true
+      void (async () => {
+        const baseline = await fetchSubscriptionData()
+        await pollForActivation(baseline)
+      })()
+    } else if (checkoutStatus === 'error' || checkoutStatus === 'cancel') {
       toast.error('Checkout was cancelled or failed. Please try again.')
     }
 
-    const checkoutTier = params.get('checkoutTier')
-    if (checkoutTier && session?.user) {
+    if (checkoutTier && !checkoutStartedRef.current) {
+      checkoutStartedRef.current = true
       startCheckout(checkoutTier)
     }
-  }, [session, startCheckout])
+
+    if (checkoutStatus || checkoutTier) {
+      router.replace('/dashboard/settings/billing', { scroll: false })
+    }
+  }, [session, startCheckout, router, pollForActivation, fetchSubscriptionData])
 
   const handleSwitchPlan = async (tierName: string) => {
     if (switchingPlan) return
@@ -172,15 +204,30 @@ export default function BillingPage() {
 
   const currentTierName = subscription?.subscription?.tier?.name || testMode?.currentSubscription?.tier?.name
   const isTestMode = Boolean(testMode?.testModeEnabled)
-
-  const handleCheckoutComplete = async () => {
-    closeCheckout()
-    toast.success('Payment complete! Updating your account...')
-    await fetchSubscriptionData()
-  }
+  const explorerPurchased = hasPurchasedExplorer(subscription?.oneTimeTiersPurchased)
 
   return (
     <div className="space-y-6">
+      {activatingPlan && (
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-blue-500/30 bg-blue-900/20 text-blue-100">
+          <Loader className="w-5 h-5 animate-spin text-blue-400" />
+          <span>Activating your plan… credits will appear shortly.</span>
+        </div>
+      )}
+      {activationTimedOut && (
+        <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-500/30 bg-amber-900/20 text-amber-100 text-sm">
+          <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <span>
+            Payment received but activation is still processing. Refresh this page in a minute, or contact support if your credits do not appear.
+          </span>
+        </div>
+      )}
+      {fetchError && (
+        <div className="flex items-start gap-3 p-4 rounded-lg border border-red-500/30 bg-red-900/20 text-red-100 text-sm">
+          <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+          <span>{fetchError}</span>
+        </div>
+      )}
       <WhopCheckoutModal
         isOpen={Boolean(checkout)}
         sessionId={checkout?.sessionId || ''}
@@ -294,13 +341,14 @@ export default function BillingPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {CHECKOUT_PLANS.map((plan) => {
                   const isCurrent = currentTierName === plan.name
+                  const isExplorerOwned = plan.name === 'explorer' && explorerPurchased
                   const isLoading = checkoutLoading === plan.name
 
                   return (
                     <div
                       key={plan.name}
                       className={`p-4 rounded-lg border-2 transition-all ${
-                        isCurrent
+                        isCurrent || isExplorerOwned
                           ? 'border-green-500/60 bg-green-900/20'
                           : 'border-dark-border bg-dark-bg hover:border-sf-primary/40'
                       }`}
@@ -316,12 +364,22 @@ export default function BillingPage() {
                         <div className="text-xs text-gray-400 mt-1">
                           {plan.credits.toLocaleString()} credits{plan.isOneTime ? '' : '/mo'}
                         </div>
+                        {plan.isOneTime && (
+                          <div className="text-[10px] text-gray-500 mt-1">
+                            Add-on credits only — does not unlock Pro features
+                          </div>
+                        )}
                       </div>
 
                       {isCurrent ? (
                         <Button disabled className="w-full bg-green-600/20 text-green-400 border border-green-500/30">
                           <CheckCircle className="w-4 h-4 mr-1" />
                           Current
+                        </Button>
+                      ) : isExplorerOwned ? (
+                        <Button disabled className="w-full bg-green-600/20 text-green-400 border border-green-500/30">
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Purchased
                         </Button>
                       ) : (
                         <Button
@@ -507,6 +565,23 @@ export default function BillingPage() {
                   Coming Soon
                 </Button>
               </div>
+
+              {subscription?.subscription?.status === 'active' && (
+                <div className="flex items-center justify-between p-4 bg-dark-bg rounded-lg border border-dark-border">
+                  <div>
+                    <h4 className="text-white font-semibold">Manage Subscription</h4>
+                    <p className="text-gray-400 text-sm">Update payment method or cancel via Whop</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="border-dark-border text-dark-text hover:bg-dark-bg flex items-center gap-2"
+                    onClick={() => window.open('https://whop.com/hub/memberships', '_blank', 'noopener,noreferrer')}
+                  >
+                    Manage on Whop
+                    <ExternalLink className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
 
               {subscription?.subscription?.status === 'active' && (
                 <div className="flex items-center justify-between p-4 bg-dark-bg rounded-lg border border-dark-border">

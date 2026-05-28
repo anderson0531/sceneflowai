@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { AlertCircle, X } from 'lucide-react'
+import { getBillingUrl } from '@/lib/billing/billingUrls'
 
 interface ProjectLimits {
   canCreateProject: boolean
@@ -78,7 +79,7 @@ export function ProjectLimitBanner({ userId }: { userId: string }) {
                 : 'You\'re approaching the maximum number of active projects. '
               }
               <a 
-                href="/pricing" 
+                href={getBillingUrl({ tier: 'starter', isAuthenticated: true })} 
                 className="font-medium underline hover:no-underline"
               >
                 Upgrade to Starter

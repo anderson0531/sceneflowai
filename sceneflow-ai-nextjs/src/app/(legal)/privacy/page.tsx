@@ -93,7 +93,7 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc pl-6 text-gray-300 space-y-2">
               <li><strong>AI Service Providers:</strong> Google (Vertex AI), ElevenLabs — to generate content (prompts and outputs only)</li>
               <li><strong>Payment Processor:</strong> Whop, our Merchant of Record — to process payments securely</li>
-              <li><strong>Authentication Provider:</strong> Clerk — for secure user authentication</li>
+              <li><strong>Authentication:</strong> SceneFlow account credentials (email/password) secured via NextAuth — we do not use third-party social login providers by default</li>
               <li><strong>Infrastructure Providers:</strong> Vercel, Supabase — for hosting and database services</li>
               <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
             </ul>

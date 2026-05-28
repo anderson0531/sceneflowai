@@ -56,6 +56,19 @@ function extractPlanId(event: WhopWebhookEvent): string | undefined {
   return undefined
 }
 
+async function fulfillExplorerPurchase(userId: string): Promise<void> {
+  try {
+    await SubscriptionService.grantExplorerPurchase(userId)
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.includes('already purchased')) {
+      console.log('[Whop Webhook] Explorer already purchased for user:', userId)
+      return
+    }
+    throw error
+  }
+}
+
 async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
   const eventType = event.type
   const { userId: metadataUserId, tierName: metadataTierName } = extractMetadata(event)
@@ -84,7 +97,7 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
         return
       }
       if (resolvedTier && isOneTimeTier(resolvedTier)) {
-        await SubscriptionService.grantExplorerPurchase(metadataUserId)
+        await fulfillExplorerPurchase(metadataUserId)
       }
       break
     }
@@ -97,7 +110,7 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
         return
       }
       if (isOneTimeTier(resolvedTier)) {
-        await SubscriptionService.grantExplorerPurchase(metadataUserId)
+        await fulfillExplorerPurchase(metadataUserId)
       } else {
         await SubscriptionService.activateSubscription(metadataUserId, resolvedTier, {
           whopMembershipId: membershipId,

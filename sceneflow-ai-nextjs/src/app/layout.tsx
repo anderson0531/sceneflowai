@@ -10,6 +10,7 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { Toaster } from 'sonner'
 import AnimatedProcessingOverlay from '../components/AnimatedProcessingOverlay'
 import { CreditsProvider } from '@/contexts/CreditsContext'
+import { CreditsPaywallHost } from '@/components/credits/CreditsPaywallHost'
 import { CookieConsent } from '@/components/ui/CookieConsent'
 import { GlobalErrorGuard } from '@/components/providers/GlobalErrorGuard'
 import AudioPlayerProvider from '@/context/AudioPlayerProvider'
@@ -195,6 +196,7 @@ export default function RootLayout({
           <AuthSessionProvider>
             <AudioPlayerProvider>
               <CreditsProvider>
+                <CreditsPaywallHost />
                 <GlobalHeader />
                 <ConditionalLayout>{children}</ConditionalLayout>
                 <InstallPrompt />

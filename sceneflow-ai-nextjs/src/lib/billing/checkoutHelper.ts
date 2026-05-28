@@ -97,3 +97,12 @@ export function isCheckoutConfigured(): boolean {
   if (!isWhopPaymentEnabled()) return false
   return Boolean(process.env.WHOP_API_KEY && process.env.WHOP_COMPANY_ID)
 }
+
+/** Demo checkout only when Whop is not configured and demo/dev mode is explicitly enabled. */
+export function shouldUseDemoCheckout(): boolean {
+  if (isCheckoutConfigured()) return false
+  return (
+    process.env.DEMO_MODE === 'true' ||
+    (process.env.NODE_ENV === 'development' && process.env.FORCE_WHOP_CHECKOUT !== 'true')
+  )
+}

@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
+import { setPendingCheckoutTier } from '@/lib/billing/checkoutIntent'
 import { GoogleTranslate } from './GoogleTranslate'
 import { LanguageSelector } from './LanguageSelector'
 
@@ -73,7 +74,12 @@ export function Header() {
     setIsAuthModalOpen(false)
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch {
+      // ignore
+    }
     signOut()
     setIsMobileMenuOpen(false)
   }
@@ -93,8 +99,17 @@ export function Header() {
       window.history.replaceState({}, '', window.location.pathname)
     }
     if (params.get('signup') === 'explorer' && !isAuthenticated) {
-      sessionStorage.setItem('pendingCheckoutTier', 'explorer')
+      setPendingCheckoutTier('explorer')
       setAuthMode('signup')
+      setIsAuthModalOpen(true)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+    const checkoutTier = params.get('checkoutTier')
+    if (checkoutTier && !isAuthenticated) {
+      setPendingCheckoutTier(checkoutTier)
+      if (params.get('signup') === '1' || params.get('signup') === 'explorer') {
+        setAuthMode('signup')
+      }
       setIsAuthModalOpen(true)
       window.history.replaceState({}, '', window.location.pathname)
     }

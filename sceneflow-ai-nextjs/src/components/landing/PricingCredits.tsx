@@ -24,6 +24,11 @@ import {
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { MOR_FOOTER_LINE } from '@/config/landing/valuePropCopy'
+import { getLandingPlans } from '@/lib/billing/tierCatalog'
+import { getBillingUrl } from '@/lib/billing/billingUrls'
+import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
+
+const { explorer: explorerPlan, subscriptions: basePlans } = getLandingPlans()
 
 // Credit costs for calculator
 const creditCosts = {
@@ -90,94 +95,7 @@ const creditPacks = [
 const BYOK_PLATFORM_FEE_PERCENT = 0.20;
 const BYOK_SAVINGS_PERCENT = 80; // 80% savings on SceneFlow credits with BYOK
 
-// Explorer one-time plan
-const explorerPlan = {
-  id: 'explorer',
-  name: 'Explorer',
-  price: 9,
-  includedCredits: 750,
-  storage: '5 GB',
-  description: 'One-time purchase to try it out',
-  isOneTime: true,
-  features: [
-    'One-time purchase',
-    '750 credits (never expire)',
-    '5 GB storage (30 days)',
-    'Full platform access',
-    'MP4 export (any resolution)',
-    'AI voiceover (70+ languages)',
-  ],
-  limitations: [
-    'No recurring credits',
-    'Community support only',
-  ],
-}
-
-// Base access plans
-const basePlans = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: 49,
-    includedCredits: 4500,
-    storage: '25 GB',
-    description: 'For individual creators',
-    features: [
-      'Full platform access',
-      '4,500 credits/month included',
-      '25 GB active storage',
-      'MP4 export (any resolution)',
-      'AI voiceover (70+ languages)',
-      'Email support',
-    ],
-    limitations: [
-      '1 team seat',
-      'Community support only',
-    ],
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: 149,
-    includedCredits: 15000,
-    storage: '100 GB',
-    description: 'For professional creators',
-    popular: true,
-    features: [
-      'Everything in Starter, plus:',
-      '15,000 credits/month included',
-      '100 GB active storage',
-      'Veo 3.1 Quality (4K) access',
-      '⭐ Character Consistency Engine',
-      'Voice cloning',
-      'BYOK (Bring Your Own Key)',
-      '3 team seats',
-      'Priority support',
-    ],
-    limitations: [],
-  },
-  {
-    id: 'studio',
-    name: 'Studio',
-    price: 599,
-    includedCredits: 75000,
-    storage: '500 GB',
-    description: 'For teams & agencies',
-    features: [
-      'Everything in Pro, plus:',
-      '75,000 credits/month included',
-      '500 GB active storage',
-      '🔥 Veo 3.1 4K Priority Queue',
-      '🔥 Unlimited Character Consistency',
-      'White-label exports',
-      'API access',
-      '10 team seats',
-      'Dedicated account manager',
-      'Enterprise SLA available on request',
-    ],
-    limitations: [],
-  },
-]
+// Explorer and subscription plans are sourced from tierCatalog.ts
 
 // Project Budget Calculator Component
 function ProjectBudgetCalculator() {
@@ -470,19 +388,13 @@ function ProjectBudgetCalculator() {
 
 export function PricingCredits() {
   const { data: session } = useSession()
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly')
-  const annualDiscount = 0.17 // 17% discount
 
   const handlePlanClick = useCallback((tierName: string) => {
     if (session?.user) {
-      window.location.href = `/dashboard/settings/billing?checkoutTier=${tierName}`
+      window.location.href = getBillingUrl({ tier: tierName, isAuthenticated: true })
       return
     }
-    if (tierName === 'explorer') {
-      window.location.href = '/?signup=explorer'
-      return
-    }
-    window.location.href = '/?signup=1'
+    window.location.href = getSignupUrlForTier(tierName)
   }, [session])
 
   return (
@@ -512,38 +424,6 @@ export function PricingCredits() {
           <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-8">
             One base plan for platform access. Credits for AI generation. Top up when you need more. Full control, zero waste.
           </p>
-
-          {/* Billing Toggle */}
-          <div className="inline-flex items-center p-1 bg-gray-800/50 rounded-lg border border-gray-700">
-            <button
-              onClick={() => setBillingCycle('monthly')}
-              className={cn(
-                'px-6 py-2.5 rounded-md text-sm font-medium transition-all',
-                billingCycle === 'monthly'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white'
-                  : 'text-gray-400 hover:text-white'
-              )}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setBillingCycle('annual')}
-              className={cn(
-                'px-6 py-2.5 rounded-md text-sm font-medium transition-all flex items-center gap-2',
-                billingCycle === 'annual'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white'
-                  : 'text-gray-400 hover:text-white'
-              )}
-            >
-              Annual
-              <span className={cn(
-                'text-xs px-2 py-0.5 rounded-full',
-                billingCycle === 'annual' ? 'bg-white/20' : 'bg-emerald-500/20 text-emerald-400'
-              )}>
-                Save 17%
-              </span>
-            </button>
-          </div>
         </motion.div>
 
         {/* Explorer One-Time Plan */}
@@ -621,9 +501,7 @@ export function PricingCredits() {
         {/* Base Plans Grid */}
         <div className="grid md:grid-cols-3 gap-6 lg:gap-8 mb-20">
           {basePlans.map((plan, index) => {
-            const displayPrice = billingCycle === 'annual' 
-              ? Math.round(plan.price * (1 - annualDiscount))
-              : plan.price
+            const displayPrice = plan.price
 
             return (
               <motion.div
@@ -660,11 +538,6 @@ export function PricingCredits() {
                     <span className="text-4xl font-bold text-white">${displayPrice}</span>
                     <span className="text-gray-400">/month</span>
                   </div>
-                  {billingCycle === 'annual' && (
-                    <p className="text-sm text-emerald-400 mt-1">
-                      Billed ${displayPrice * 12}/year (save ${Math.round(plan.price * 12 * annualDiscount)})
-                    </p>
-                  )}
                 </div>
 
                 {/* Credits & Storage */}

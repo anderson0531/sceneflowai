@@ -19,6 +19,7 @@ import {
   Zap
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { getBillingUrl } from '@/lib/billing/billingUrls'
 import type { TrustBlocker } from '@/hooks/useVoiceConsent'
 
 // ============================================================================
@@ -237,8 +238,8 @@ export function TierGateModal({
           </Button>
           <Button
             onClick={() => {
-              // Navigate to pricing page
-              window.location.href = '/pricing'
+              const tier = requiredTier || 'pro'
+              window.location.href = getBillingUrl({ tier, isAuthenticated: true })
             }}
             className={`flex-1 flex items-center justify-center gap-2 bg-gradient-to-r ${colors.gradient} hover:opacity-90`}
           >

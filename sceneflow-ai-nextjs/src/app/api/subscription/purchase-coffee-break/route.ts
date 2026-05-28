@@ -6,6 +6,7 @@ import {
   createWhopCheckoutSession,
   handleDemoCheckout,
   isCheckoutConfigured,
+  shouldUseDemoCheckout,
 } from '@/lib/billing/checkoutHelper'
 
 /** Explorer one-time purchase (legacy coffee-break route) */
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!isCheckoutConfigured()) {
-      if (process.env.NODE_ENV === 'development' || process.env.DEMO_MODE === 'true') {
+      if (shouldUseDemoCheckout()) {
         const demo = await handleDemoCheckout(userId, tierName)
         return NextResponse.json(demo)
       }

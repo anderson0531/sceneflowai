@@ -1,18 +1,5 @@
 import { CreditService } from '@/services/CreditService'
-
-/**
- * First-time account credits (matches trial tier marketing: ~1,500 free credits).
- * Set WELCOME_CREDITS_ON_SIGNUP=0 to disable.
- */
-export function getWelcomeCreditsOnSignup(): number {
-  const raw = process.env.WELCOME_CREDITS_ON_SIGNUP
-  if (raw === '0') return 0
-  if (raw != null && raw.trim() !== '') {
-    const n = Number(raw)
-    if (Number.isFinite(n) && n >= 0) return Math.floor(n)
-  }
-  return 1500
-}
+import { getWelcomeCreditsOnSignup } from '@/lib/credits/welcomeCreditsConfig'
 
 /** Grant welcome credits once for a newly created account; failures are logged only. */
 export async function grantWelcomeCreditsToNewUser(

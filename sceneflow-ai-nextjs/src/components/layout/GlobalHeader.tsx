@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { Menu, X, Settings, User, HelpCircle, LogOut } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { AuthModal } from '../../components/auth/AuthModal'
+import { CreditsBadge } from '../../components/credits/CreditsBadge'
 import { Breadcrumbs } from '../../components/layout/Breadcrumbs'
 import { SceneFlowStudioBrand } from '../../components/layout/SceneFlowStudioBrand'
 import { isPublicRoute } from '@/constants/publicRoutes'
@@ -36,6 +37,11 @@ export function GlobalHeader() {
   // Global header intentionally does not render page titles. Titles live in ContextBar.
 
   const handleSignOut = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch {
+      // ignore
+    }
     await signOut({ callbackUrl: '/' })
   }
 
@@ -74,6 +80,7 @@ export function GlobalHeader() {
 
           {/* Right: Controls */}
           <div className="flex items-center gap-3 ml-auto">
+            {isSignedIn && <CreditsBadge className="hidden sm:flex" />}
             {/* Profile */}
             <button
               className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800/60"

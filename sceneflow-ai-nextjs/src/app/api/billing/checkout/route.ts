@@ -6,6 +6,7 @@ import {
   handleDemoCheckout,
   isCheckoutConfigured,
   isValidCheckoutTier,
+  shouldUseDemoCheckout,
 } from '@/lib/billing/checkoutHelper'
 import { isWhopPaymentEnabled } from '@/lib/billing/tierCatalog'
 
@@ -34,11 +35,8 @@ export async function POST(req: NextRequest) {
     const userId = session.user.id
     const userEmail = session.user.email
 
-    if (
-      !isWhopPaymentEnabled() ||
-      !isCheckoutConfigured()
-    ) {
-      if (process.env.NODE_ENV === 'development' || process.env.DEMO_MODE === 'true') {
+    if (!isWhopPaymentEnabled() || !isCheckoutConfigured()) {
+      if (shouldUseDemoCheckout()) {
         const demo = await handleDemoCheckout(userId, tierName)
         return NextResponse.json(demo)
       }

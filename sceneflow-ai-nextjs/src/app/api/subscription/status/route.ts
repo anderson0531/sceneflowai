@@ -4,6 +4,7 @@ import { authOptions } from '../../../../lib/auth'
 import { AuthService } from '../../../../services/AuthService'
 import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { CreditService } from '../../../../services/CreditService'
+import { resolveUser } from '@/lib/userHelper'
 
 /**
  * GET /api/subscription/status
@@ -38,6 +39,7 @@ export async function GET(req: NextRequest) {
 
     const subscription = await SubscriptionService.getUserSubscription(userId)
     const credits = await CreditService.getCreditBreakdown(userId)
+    const user = await resolveUser(userId)
 
     return NextResponse.json({
       success: true,
@@ -69,6 +71,7 @@ export async function GET(req: NextRequest) {
         addon_credits: credits.addon_credits,
         total_credits: credits.total_credits,
       },
+      one_time_tiers_purchased: user.one_time_tiers_purchased || [],
     })
   } catch (error) {
     console.error('[Subscription Status API] Error:', error)
