@@ -35,12 +35,6 @@ export function FinalCTA() {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Link
-              href="/early-access"
-              className="w-full sm:w-auto inline-flex items-center justify-center rounded-md border border-cyan-500/40 bg-cyan-500/10 px-6 py-3 text-sm font-semibold text-cyan-200 hover:bg-cyan-500/20 transition-colors"
-            >
-              Apply for Closed Beta
-            </Link>
           </div>
         </motion.div>
       </div>

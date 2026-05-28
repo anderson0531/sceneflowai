@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { ArrowRight, Play, Sparkles, Zap, Film, Mic2, Video, Wand2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { getEarlyAccessUrl } from '@/lib/auth/postLoginRedirect'
 
 export function EvolutionHero() {
   return (
@@ -142,7 +143,7 @@ export function EvolutionHero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
           >
-            <Link href="/signup">
+            <Link href={getEarlyAccessUrl()}>
               <Button 
                 size="lg" 
                 className="group bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white font-semibold px-8 py-6 text-lg rounded-xl shadow-lg shadow-purple-500/25 transition-all duration-300 hover:shadow-purple-500/40 hover:scale-105"

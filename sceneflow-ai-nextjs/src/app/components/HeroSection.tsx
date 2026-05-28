@@ -6,7 +6,7 @@ import { useState, useRef } from 'react'
 import { DemoVideoModal } from './DemoVideoModal'
 import { Play, ArrowRight, Pause, Volume2, VolumeX, Maximize } from 'lucide-react'
 import Link from 'next/link'
-import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
+import { getEarlyAccessUrl } from '@/lib/auth/postLoginRedirect'
 import { HERO_COPY } from '@/config/landing/valuePropCopy'
 
 /** Hero commercial reel (Vercel Blob) */
@@ -90,7 +90,7 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              <Link href={getLoginUrl({ mode: 'signup' })} className="w-full sm:w-auto">
+              <Link href={getEarlyAccessUrl()} className="w-full sm:w-auto">
                 <Button size="lg" className="w-full sm:w-auto">
                   {HERO_COPY.ctaPrimary}
                   <ArrowRight className="ml-2 w-5 h-5" />
@@ -105,12 +105,6 @@ export function HeroSection() {
                 <Play className="mr-2 w-5 h-5" />
                 {HERO_COPY.ctaSecondary}
               </Button>
-              <Link
-                href="/early-access"
-                className="w-full sm:w-auto inline-flex items-center justify-center rounded-md border border-cyan-500/40 bg-cyan-500/10 px-6 py-3 text-sm font-semibold text-cyan-200 hover:bg-cyan-500/20 transition-colors"
-              >
-                Apply for Closed Beta
-              </Link>
             </motion.div>
           </div>
 

@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { LoginForm } from './LoginForm'
-import { SignUpForm } from './SignUpForm'
 import { useAuthSuccessHandler } from '@/components/auth/useAuthSuccessHandler'
+import { getEarlyAccessUrl } from '@/lib/auth/postLoginRedirect'
 
 interface AuthModalProps {
   isOpen: boolean
@@ -14,13 +14,12 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
-  const [mode, setMode] = useState<'login' | 'signup'>(initialMode)
-
   useEffect(() => {
-    if (isOpen) {
-      setMode(initialMode)
-    }
-  }, [isOpen, initialMode])
+    if (!isOpen) return
+    if (initialMode !== 'signup') return
+    onClose()
+    window.location.href = getEarlyAccessUrl()
+  }, [isOpen, initialMode, onClose])
 
   // Close modal on escape key
   useEffect(() => {
@@ -41,18 +40,14 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
     }
   }, [isOpen, onClose])
 
-  const onAuthSuccess = useAuthSuccessHandler(mode)
+  const onAuthSuccess = useAuthSuccessHandler('login')
 
   const handleSuccess = () => {
     onClose()
     onAuthSuccess()
   }
 
-  const switchMode = (newMode: 'login' | 'signup') => {
-    setMode(newMode)
-  }
-
-  if (!isOpen) return null
+  if (!isOpen || initialMode === 'signup') return null
 
   return (
     <AnimatePresence>
@@ -79,36 +74,15 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
             <X className="w-5 h-5" />
           </button>
 
-          {/* Auth Forms */}
-          <AnimatePresence mode="wait">
-            {mode === 'login' ? (
-              <motion.div
-                key="login"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <LoginForm
-                  onSuccess={handleSuccess}
-                  onSwitchToSignUp={() => switchMode('signup')}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="signup"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <SignUpForm
-                  onSuccess={handleSuccess}
-                  onSwitchToLogin={() => switchMode('login')}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <motion.div
+            key="login"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            <LoginForm onSuccess={handleSuccess} />
+          </motion.div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

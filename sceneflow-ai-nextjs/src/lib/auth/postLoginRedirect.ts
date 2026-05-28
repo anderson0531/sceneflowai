@@ -1,5 +1,6 @@
 export const DASHBOARD_PATH = '/dashboard'
 export const LOGIN_PATH = '/login'
+export const EARLY_ACCESS_PATH = '/early-access'
 export const PENDING_RETURN_URL_KEY = 'pendingReturnUrl'
 export const DASHBOARD_REDIRECT_ATTEMPTS_KEY = 'dashboardRedirectAttempts'
 export const MAX_DASHBOARD_REDIRECT_ATTEMPTS = 2
@@ -11,19 +12,46 @@ export interface LoginUrlOptions {
   extra?: Record<string, string>
 }
 
+export interface EarlyAccessUrlOptions {
+  returnUrl?: string
+  checkoutTier?: string
+  extra?: Record<string, string>
+}
+
 function isSafeInternalPath(path: string): boolean {
   return path.startsWith('/') && !path.startsWith('//')
 }
 
-export function getLoginUrl(options: LoginUrlOptions = {}): string {
+export function getEarlyAccessUrl(options: EarlyAccessUrlOptions = {}): string {
   const params = new URLSearchParams()
-  const { returnUrl, mode, checkoutTier, extra } = options
+  const { returnUrl, checkoutTier, extra } = options
 
   if (returnUrl && isSafeInternalPath(returnUrl)) {
     params.set('returnUrl', returnUrl)
   }
+  if (checkoutTier) {
+    params.set('checkoutTier', checkoutTier)
+  }
+  if (extra) {
+    for (const [key, value] of Object.entries(extra)) {
+      if (value) params.set(key, value)
+    }
+  }
+
+  const query = params.toString()
+  return query ? `${EARLY_ACCESS_PATH}?${query}` : EARLY_ACCESS_PATH
+}
+
+export function getLoginUrl(options: LoginUrlOptions = {}): string {
+  const { returnUrl, mode, checkoutTier, extra } = options
+
   if (mode === 'signup') {
-    params.set('mode', 'signup')
+    return getEarlyAccessUrl({ returnUrl, checkoutTier, extra })
+  }
+
+  const params = new URLSearchParams()
+  if (returnUrl && isSafeInternalPath(returnUrl)) {
+    params.set('returnUrl', returnUrl)
   }
   if (checkoutTier) {
     params.set('checkoutTier', checkoutTier)

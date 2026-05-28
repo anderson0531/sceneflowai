@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { ArrowRight, Sparkles, Play, Gift } from 'lucide-react'
+import { getEarlyAccessUrl } from '@/lib/auth/postLoginRedirect'
 
 export function EvolutionCTA() {
   return (
@@ -45,7 +46,7 @@ export function EvolutionCTA() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
             <motion.a
-              href="/signup"
+              href={getEarlyAccessUrl()}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="inline-flex items-center px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-semibold text-lg shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 transition-all group"

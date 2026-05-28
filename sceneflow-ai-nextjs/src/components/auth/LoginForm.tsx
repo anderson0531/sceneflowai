@@ -1,18 +1,19 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { signIn, getSession } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
+import { getEarlyAccessUrl } from '@/lib/auth/postLoginRedirect'
 
 interface LoginFormProps {
   onSuccess: () => void
-  onSwitchToSignUp: () => void
 }
 
-export function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProps) {
+export function LoginForm({ onSuccess }: LoginFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -121,12 +122,12 @@ export function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProps) {
         <div className="mt-6 text-center">
           <p className="text-gray-400">
             Don&apos;t have an account?{' '}
-            <button
-              onClick={onSwitchToSignUp}
+            <Link
+              href={getEarlyAccessUrl()}
               className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
             >
-              Sign up here
-            </button>
+              Apply for closed beta
+            </Link>
           </p>
         </div>
 

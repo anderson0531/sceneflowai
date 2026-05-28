@@ -2,16 +2,16 @@
 
 import { Suspense, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { LoginForm } from '@/components/auth/LoginForm'
-import { SignUpForm } from '@/components/auth/SignUpForm'
 import { useAuthSuccessHandler } from '@/components/auth/useAuthSuccessHandler'
 import { Button } from '@/components/ui/Button'
 import { setPendingCheckoutTier } from '@/lib/billing/checkoutIntent'
 import {
   clearDashboardRedirectAttempts,
   getDashboardUrl,
+  getEarlyAccessUrl,
   hasExceededDashboardRedirectAttempts,
   navigateAfterAuth,
   persistReturnUrl,
@@ -19,16 +19,26 @@ import {
 } from '@/lib/auth/postLoginRedirect'
 
 function LoginPageContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const { status } = useSession()
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [redirectBlocked, setRedirectBlocked] = useState(false)
-  const handleSuccess = useAuthSuccessHandler(mode)
+  const handleSuccess = useAuthSuccessHandler('login')
 
   useEffect(() => {
     const returnUrl = searchParams.get('returnUrl')
     const checkoutTier = searchParams.get('checkoutTier')
     const modeParam = searchParams.get('mode')
+
+    if (modeParam === 'signup') {
+      router.replace(
+        getEarlyAccessUrl({
+          returnUrl: returnUrl?.startsWith('/') ? returnUrl : undefined,
+          checkoutTier: checkoutTier || undefined,
+        })
+      )
+      return
+    }
 
     persistReturnUrl(
       returnUrl?.startsWith('/') ? returnUrl : getDashboardUrl()
@@ -38,14 +48,8 @@ function LoginPageContent() {
       setPendingCheckoutTier(checkoutTier)
     }
 
-    if (modeParam === 'signup') {
-      setMode('signup')
-    } else {
-      setMode('login')
-    }
-
     setRedirectBlocked(hasExceededDashboardRedirectAttempts())
-  }, [searchParams])
+  }, [searchParams, router])
 
   const attemptAuthenticatedRedirect = useCallback(() => {
     if (hasExceededDashboardRedirectAttempts()) {
@@ -125,17 +129,7 @@ function LoginPageContent() {
         </Link>
       </div>
 
-      {mode === 'login' ? (
-        <LoginForm
-          onSuccess={handleSuccess}
-          onSwitchToSignUp={() => setMode('signup')}
-        />
-      ) : (
-        <SignUpForm
-          onSuccess={handleSuccess}
-          onSwitchToLogin={() => setMode('login')}
-        />
-      )}
+      <LoginForm onSuccess={handleSuccess} />
 
       <Link
         href="/"

@@ -53,6 +53,15 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/signup",
+        destination: "/early-access",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default bundleAnalyzer(withSerwist(nextConfig));
