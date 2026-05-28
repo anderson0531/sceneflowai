@@ -4,7 +4,7 @@ import {
   getProjectCreditsBudget,
   isProjectIdRef,
   resolveProjectIdFromCharge,
-} from '@/lib/credits/projectBudget'
+} from '@/lib/credits/projectBudgetShared'
 
 describe('projectBudget', () => {
   const projectId = '550e8400-e29b-41d4-a716-446655440000'

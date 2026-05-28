@@ -9,7 +9,7 @@ import { RecentProjectsPanel } from './components/RecentProjectsPanel'
 import { DashboardQuickStart } from './components/DashboardQuickStart'
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { DashboardRedirectGuard } from '@/components/auth/DashboardRedirectGuard'
-import { getProjectCreditsUsed } from '@/lib/credits/projectBudget'
+import { getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
 import { motion } from 'framer-motion'
 import { Loader2, AlertCircle } from 'lucide-react'
 

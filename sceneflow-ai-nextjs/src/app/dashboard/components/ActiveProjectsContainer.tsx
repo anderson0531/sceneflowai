@@ -6,7 +6,7 @@ import { Filter, ArrowUpDown, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { formatRelativeTime, getPhaseDisplayName, getStepNumber, getTotalSteps } from '@/hooks/useDashboardData'
-import { getProjectCreditsUsed } from '@/lib/credits/projectBudget'
+import { getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
 
 // Types for project data from API
 interface DashboardProject {

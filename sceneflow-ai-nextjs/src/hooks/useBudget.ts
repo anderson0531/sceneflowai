@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { getProjectCreditsUsed } from '@/lib/credits/projectBudget'
+import { getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
 import { useDashboardData } from './useDashboardData'
 
 /**

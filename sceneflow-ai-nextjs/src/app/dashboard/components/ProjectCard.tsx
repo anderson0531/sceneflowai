@@ -40,7 +40,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
 import { ProjectCostCalculator } from '@/components/credits/ProjectCostCalculator'
 import { AdjustCreditsUsedDialog } from '@/components/credits/AdjustCreditsUsedDialog'
-import { getProjectCreditsBudget, getProjectCreditsUsed } from '@/lib/credits/projectBudget'
+import { getProjectCreditsBudget, getProjectCreditsUsed } from '@/lib/credits/projectBudgetShared'
 import { useProjectCosts } from '@/hooks/useProjectCosts'
 import {
   WORKFLOW_STEPS,

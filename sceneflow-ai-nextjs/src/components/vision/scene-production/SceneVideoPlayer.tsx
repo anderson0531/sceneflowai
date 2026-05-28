@@ -68,7 +68,7 @@ interface SceneVideoPlayerProps {
   audioVolumes?: AudioVolumes
 }
 
-interface PlayableBeat {
+interface PlayableSegment {
   segment: SceneSegment
   index: number
   hasVideo: boolean
@@ -83,7 +83,7 @@ export const SceneVideoPlayer: React.FC<SceneVideoPlayerProps> = ({
   sceneHeading,
   isOpen,
   onClose,
-  startAtBeat = 0,
+  startAtSegment = 0,
   audioTracks,
   sceneAudio,
   audioConfig,

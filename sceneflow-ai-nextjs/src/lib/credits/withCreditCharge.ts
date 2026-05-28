@@ -35,7 +35,7 @@ import {
   canUseVeoMax,
   getVideoCredits,
 } from './creditCosts'
-import { isProjectIdRef } from './projectBudget'
+import { isProjectIdRef } from './projectBudgetShared'
 
 // =============================================================================
 // TYPES
