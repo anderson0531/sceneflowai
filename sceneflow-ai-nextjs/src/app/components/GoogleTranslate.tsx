@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { LANDING_TRANSLATE_INCLUDED_LANGUAGES } from '@/config/landingTranslateLanguages'
 
 export function GoogleTranslate() {
   const [isClient, setIsClient] = useState(false)
@@ -14,9 +15,10 @@ export function GoogleTranslate() {
       ;(window as any).googleTranslateElementInit = () => {
         if ((window as any).google && (window as any).google.translate) {
           new (window as any).google.translate.TranslateElement(
-            { 
+            {
               pageLanguage: 'en',
-              autoDisplay: false 
+              includedLanguages: LANDING_TRANSLATE_INCLUDED_LANGUAGES,
+              autoDisplay: false,
             },
             'google_translate_element'
           )
