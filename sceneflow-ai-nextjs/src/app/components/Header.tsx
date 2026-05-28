@@ -17,6 +17,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 import { setPendingCheckoutTier } from '@/lib/billing/checkoutIntent'
+import {
+  getDashboardUrl,
+  navigateToDashboard,
+  persistReturnUrl,
+} from '@/lib/auth/postLoginRedirect'
 import { GoogleTranslate } from './GoogleTranslate'
 import { LanguageSelector } from './LanguageSelector'
 
@@ -66,6 +71,9 @@ export function Header() {
   }
 
   const openAuthModal = (mode: 'login' | 'signup') => {
+    if (mode === 'login') {
+      persistReturnUrl(getDashboardUrl())
+    }
     setAuthMode(mode)
     setIsAuthModalOpen(true)
   }
@@ -84,25 +92,38 @@ export function Header() {
     setIsMobileMenuOpen(false)
   }
 
+  const clearAuthQueryParams = () => {
+    window.history.replaceState({}, '', window.location.pathname)
+  }
+
   // Only open auth modal if explicitly requested via URL query params
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
+    const returnUrlParam = params.get('returnUrl')
+
+    if (returnUrlParam?.startsWith('/')) {
+      persistReturnUrl(returnUrlParam)
+    }
+
     if (params.get('login') === '1' && !isAuthenticated) {
+      if (!returnUrlParam) {
+        persistReturnUrl(getDashboardUrl())
+      }
       setAuthMode('login')
       setIsAuthModalOpen(true)
-      window.history.replaceState({}, '', window.location.pathname)
+      clearAuthQueryParams()
     }
     if (params.get('signup') === '1' && !isAuthenticated) {
       setAuthMode('signup')
       setIsAuthModalOpen(true)
-      window.history.replaceState({}, '', window.location.pathname)
+      clearAuthQueryParams()
     }
     if (params.get('signup') === 'explorer' && !isAuthenticated) {
       setPendingCheckoutTier('explorer')
       setAuthMode('signup')
       setIsAuthModalOpen(true)
-      window.history.replaceState({}, '', window.location.pathname)
+      clearAuthQueryParams()
     }
     const checkoutTier = params.get('checkoutTier')
     if (checkoutTier && !isAuthenticated) {
@@ -111,7 +132,7 @@ export function Header() {
         setAuthMode('signup')
       }
       setIsAuthModalOpen(true)
-      window.history.replaceState({}, '', window.location.pathname)
+      clearAuthQueryParams()
     }
   }, [isAuthenticated])
 
@@ -242,7 +263,7 @@ export function Header() {
                         {user?.email}
                       </div>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => window.location.href = '/dashboard/'}>
+                      <DropdownMenuItem onClick={() => navigateToDashboard()}>
                         <LayoutDashboard className="w-4 h-4 mr-2" />
                         Dashboard
                       </DropdownMenuItem>
@@ -262,7 +283,7 @@ export function Header() {
                   
                   {/* Primary CTA */}
                   <Button 
-                    onClick={() => window.location.href = '/dashboard/'}
+                    onClick={() => navigateToDashboard()}
                     className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-2 text-sm font-medium"
                   >
                     Go to Dashboard
@@ -369,7 +390,7 @@ export function Header() {
                         </div>
                         
                         <Button 
-                          onClick={() => window.location.href = '/dashboard/'}
+                          onClick={() => navigateToDashboard()}
                           className="w-full bg-sf-primary hover:bg-sf-accent text-sf-background py-3 text-base font-medium"
                         >
                           <LayoutDashboard className="w-4 h-4 mr-2" />

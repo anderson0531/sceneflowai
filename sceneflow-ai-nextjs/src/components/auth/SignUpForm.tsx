@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { signIn, getSession } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { motion } from 'framer-motion'
@@ -79,6 +79,7 @@ export function SignUpForm({ onSuccess, onSwitchToLogin }: SignUpFormProps) {
         setError('Login failed after registration.');
         setIsLoading(false);
       } else {
+        await getSession();
         onSuccess();
       }
     } catch (err) {

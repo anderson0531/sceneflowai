@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { LoginForm } from './LoginForm'
 import { SignUpForm } from './SignUpForm'
 import { consumePendingCheckoutTier } from '@/lib/billing/checkoutIntent'
 import { getWelcomeCreditsOnSignup } from '@/lib/credits/welcomeCreditsConfig'
+import {
+  navigateAfterAuth,
+  resolvePostLoginPath,
+} from '@/lib/auth/postLoginRedirect'
 import { toast } from 'sonner'
 
 interface AuthModalProps {
@@ -18,7 +21,6 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalProps) {
   const [mode, setMode] = useState<'login' | 'signup'>(initialMode)
-  const router = useRouter()
 
   useEffect(() => {
     if (isOpen) {
@@ -47,9 +49,10 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
 
   const handleSuccess = () => {
     onClose()
+
     const pendingTier = consumePendingCheckoutTier()
     if (pendingTier) {
-      router.push(`/dashboard/settings/billing?checkoutTier=${pendingTier}`)
+      navigateAfterAuth(`/dashboard/settings/billing?checkoutTier=${pendingTier}`)
       return
     }
 
@@ -60,16 +63,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
       }
     }
 
-    const returnUrl =
-      typeof window !== 'undefined'
-        ? new URLSearchParams(window.location.search).get('returnUrl')
-        : null
-    if (returnUrl && returnUrl.startsWith('/')) {
-      router.push(returnUrl)
-      return
-    }
-
-    router.push('/dashboard')
+    navigateAfterAuth(resolvePostLoginPath())
   }
 
   const switchMode = (newMode: 'login' | 'signup') => {

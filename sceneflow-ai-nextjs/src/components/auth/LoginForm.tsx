@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { signIn, getSession } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { motion } from 'framer-motion'
@@ -14,7 +13,6 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProps) {
-  const router = useRouter();
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -37,6 +35,7 @@ export function LoginForm({ onSuccess, onSwitchToSignUp }: LoginFormProps) {
         setError('Invalid email or password');
         setIsLoading(false);
       } else {
+        await getSession();
         onSuccess();
       }
     } catch (err) {
