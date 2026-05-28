@@ -9,8 +9,9 @@ import Link from 'next/link'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import { HERO_COPY } from '@/config/landing/valuePropCopy'
 
-/** Longform "What's Possible Reel" */
-const HERO_COMMERCIAL_BLOB_SRC = '/demo/sceneflow-intro.mov#t=0.1'
+/** Hero commercial reel (Vercel Blob) */
+const HERO_COMMERCIAL_BLOB_SRC =
+  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/SceneFlow%20Hero.mp4#t=0.1'
 
 export function HeroSection() {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -158,7 +159,7 @@ export function HeroSection() {
             </div>
 
             <p className="mt-4 text-center text-sm text-gray-400">
-              Longform feature walkthrough: What&apos;s Possible with SceneFlow
+              From concept to publish-ready video — one automated studio
             </p>
           </motion.div>
         </div>
