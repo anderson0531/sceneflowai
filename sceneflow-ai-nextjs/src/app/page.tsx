@@ -9,6 +9,8 @@ import { EngineeringTrust } from '@/components/landing/EngineeringTrust'
 const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
 
 const ValuePropStrip = dynamic(() => import('@/components/landing/ValuePropStrip').then(m => m.ValuePropStrip), { ssr: false })
+const AudiencePathStrip = dynamic(() => import('@/components/landing/AudiencePathStrip').then(m => m.AudiencePathStrip), { ssr: false })
+const InstitutionalRoiSection = dynamic(() => import('@/components/landing/InstitutionalRoiSection').then(m => m.InstitutionalRoiSection), { ssr: false })
 const WhySceneFlowSection = dynamic(() => import('@/components/landing/WhySceneFlowSection').then(m => m.WhySceneFlowSection), { ssr: false })
 const OneTakePipelineSection = dynamic(() => import('@/components/landing/OneTakePipelineSection').then(m => m.OneTakePipelineSection), { ssr: false })
 const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachineSection'), { ssr: false })
@@ -33,6 +35,8 @@ export default function LandingPage() {
       <ExitIntentPopup />
       
       <HeroSection />
+
+      <AudiencePathStrip />
       
       <ValuePropStrip />
 
@@ -44,9 +48,11 @@ export default function LandingPage() {
 
       <HowItWorks />
 
-      <CoreCapabilitiesSection />
-
       <UseCasesSection />
+
+      <InstitutionalRoiSection />
+
+      <CoreCapabilitiesSection />
 
       <SamplesSection />
 

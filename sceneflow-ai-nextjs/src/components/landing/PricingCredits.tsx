@@ -586,22 +586,42 @@ export function PricingCredits() {
           })}
         </div>
 
-        {/* Enterprise CTA */}
+        {/* Enterprise & team CTAs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="mb-12"
         >
-          <div className="inline-flex items-center gap-4 p-4 rounded-xl bg-gray-900/60 border border-gray-800">
-            <Building2 className="w-6 h-6 text-purple-400" />
-            <div className="text-left">
-              <div className="text-white font-medium">Need enterprise scale?</div>
-              <div className="text-sm text-gray-400">Custom credits, SLA, dedicated support</div>
+          <div className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 rounded-xl bg-gray-900/60 border border-gray-800">
+              <Building2 className="w-6 h-6 text-emerald-400 shrink-0" />
+              <div className="flex-1 text-left">
+                <div className="text-white font-medium">In-house team or institution?</div>
+                <div className="text-sm text-gray-400">Book a workflow walkthrough for comms, L&D, and marketing teams</div>
+              </div>
+              <Button
+                variant="outline"
+                className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 shrink-0"
+                onClick={() => { window.location.href = '/early-access' }}
+              >
+                Book Walkthrough
+              </Button>
             </div>
-            <Button variant="outline" className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10">
-              Contact Sales
-            </Button>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 rounded-xl bg-gray-900/60 border border-gray-800">
+              <Users className="w-6 h-6 text-purple-400 shrink-0" />
+              <div className="flex-1 text-left">
+                <div className="text-white font-medium">Agency or production shop?</div>
+                <div className="text-sm text-gray-400">Custom credits, SLA, and dedicated support at scale</div>
+              </div>
+              <Button
+                variant="outline"
+                className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10 shrink-0"
+                onClick={() => { window.location.href = '/contact' }}
+              >
+                Contact Sales
+              </Button>
+            </div>
           </div>
         </motion.div>
 

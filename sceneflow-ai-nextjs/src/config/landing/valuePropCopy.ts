@@ -3,20 +3,76 @@
  */
 
 export const HERO_COPY = {
-  headline: 'From concept to publish-ready video — one automated studio.',
+  headline: 'Make professional video without a production team or a dozen apps.',
   subheadline:
-    'No prompt stacks or tool hopping. Guided Blueprint → Production → Final Cut → Premiere. Review storyboard beats and Beat Frames before generating final video — fewer blind regenerations.',
+    'One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.',
   pipelineLine: 'Blueprint → Production → Final Cut → Premiere',
   ctaPrimary: 'Test the Full Pipeline — $9',
   ctaSecondary: "Watch the 'What's Possible' Reel",
 } as const
 
 export const VP_STRIP_PILLS = [
-  { label: 'One Platform', detail: 'Concept to publish in one studio' },
-  { label: 'Beat-First Video', detail: 'Approve visuals before F2V render' },
-  { label: 'Audience Resonance', detail: 'Optimize story before heavy spend' },
+  { label: 'One Studio', detail: 'Concept to publish in one place' },
+  { label: 'Approve Before Final Video', detail: 'Review storyboard beats before you render' },
+  { label: 'Test Your Story First', detail: 'Know what lands before heavy spend' },
   { label: 'Publish-Ready Output', detail: 'Master MP4 + distribution bundles' },
 ] as const
+
+export const AUDIENCE_PATHS = [
+  {
+    id: 'creator',
+    hash: 'use-cases-creator',
+    label: 'Creator',
+    outcome: 'Ship on schedule — stop rebuilding in every tool',
+    icon: 'video' as const,
+  },
+  {
+    id: 'team',
+    hash: 'use-cases-team',
+    label: 'In-house team',
+    outcome: 'Replace slow vendor cycles — control brand and budget',
+    icon: 'building' as const,
+  },
+  {
+    id: 'productionShop',
+    hash: 'use-cases-production-shop',
+    label: 'Production shop',
+    outcome: 'Productize a niche with repeatable intake → delivery',
+    icon: 'film' as const,
+  },
+  {
+    id: 'agency',
+    hash: 'use-cases-agency',
+    label: 'Agency',
+    outcome: 'Faster pitches and scalable client delivery',
+    icon: 'briefcase' as const,
+  },
+] as const
+
+export const INSTITUTIONAL_ROI = {
+  title: 'Replace vendor shoots with predictable in-house production',
+  subtitle:
+    'Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.',
+  comparisons: [
+    {
+      label: 'Traditional vendor shoot + edit',
+      cost: '$5,000–$15,000',
+      timeline: '4–8 weeks',
+    },
+    {
+      label: 'SceneFlow in-house workflow',
+      cost: '$50–$500 in credits',
+      timeline: 'Same week',
+    },
+  ],
+  bullets: [
+    'Brand-safe templates and approval before final render',
+    'Budget caps with visible credit spend per project',
+    'No crew days, no edit back-and-forth on every revision',
+  ],
+  ctaPrimary: 'Book a team walkthrough',
+  ctaSecondary: 'See pricing',
+} as const
 
 export const ONE_TAKE_PIPELINE = {
   title: 'Beat-First Video Pipeline',

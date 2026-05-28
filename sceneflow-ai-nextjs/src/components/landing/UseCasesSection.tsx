@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Video, Play, Building2, Film, Sparkles, Volume2, VolumeX, Maximize2, User, Briefcase, Clock, DollarSign, Target, CheckCircle2, ArrowRight, Quote, X } from 'lucide-react';
+import { Video, Play, Sparkles, Volume2, VolumeX, Maximize2, User, Briefcase, Target, CheckCircle2, ArrowRight, Quote, X, Users, Store } from 'lucide-react';
 
 import { ProductionComparisonVisual } from './ProductionComparisonVisual';
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent';
-type Persona = 'creator' | 'agency';
+
+type Persona = 'creator' | 'team' | 'productionShop' | 'agency';
 
 interface UseCasePersona {
   id: Persona;
@@ -15,6 +17,12 @@ interface UseCasePersona {
   icon: React.ElementType;
   gradient: string;
   bgGradient: string;
+  accentBorder: string;
+  accentDot: string;
+  accentText: string;
+  accentCheck: string;
+  accentKeyPhrase: string;
+  beforeAfter: { before: string; after: string };
   challenge: {
     title: string;
     description: string;
@@ -30,14 +38,27 @@ interface UseCasePersona {
   imageUrl?: string;
 }
 
+const PERSONA_HASH_MAP: Record<string, Persona> = {
+  'use-cases-creator': 'creator',
+  'use-cases-team': 'team',
+  'use-cases-production-shop': 'productionShop',
+  'use-cases-agency': 'agency',
+};
+
 const personas: UseCasePersona[] = [
   {
     id: 'creator',
-    label: 'I am a Solo Creator',
+    label: 'Solo Creator',
     title: 'The YouTube Creator',
     icon: Video,
     gradient: 'from-amber-500 to-orange-600',
     bgGradient: 'from-amber-500/10 to-orange-600/10',
+    accentBorder: 'border-amber-500/20',
+    accentDot: 'bg-amber-500',
+    accentText: 'text-amber-400',
+    accentCheck: 'text-amber-400',
+    accentKeyPhrase: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+    beforeAfter: { before: '40 hrs', after: '25 mins' },
     challenge: {
       title: 'The "B-Roll" Bottleneck',
       description: 'You have a strong script, but most of your time goes to finding footage, coordinating edits, and chasing consistency between scenes. That delay slows publishing cadence and weakens audience retention.',
@@ -47,7 +68,7 @@ const personas: UseCasePersona[] = [
       description: 'Turn scripts into production-ready visuals quickly while keeping character and style continuity from first scene to publish-ready master.',
       features: [
         'Visuals that map cleanly to script beats',
-        'Consistent Protagonists across every scene',
+        'Consistent protagonists across every scene',
         'Scale to episode series with a shared reference library',
       ],
     },
@@ -56,31 +77,122 @@ const personas: UseCasePersona[] = [
     imageUrl: '/landing/use-cases/youtube-creator.jpg',
   },
   {
+    id: 'team',
+    label: 'In-house Team',
+    title: 'The In-House Video Team',
+    icon: Users,
+    gradient: 'from-emerald-500 to-teal-600',
+    bgGradient: 'from-emerald-500/10 to-teal-600/10',
+    accentBorder: 'border-emerald-500/20',
+    accentDot: 'bg-emerald-500',
+    accentText: 'text-emerald-400',
+    accentCheck: 'text-emerald-400',
+    accentKeyPhrase: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
+    beforeAfter: { before: '6 wks', after: 'Same wk' },
+    challenge: {
+      title: 'Vendor Backlog & Brand Drift',
+      description: 'Comms, L&D, and marketing teams wait weeks for agency or vendor video. Every shoot brings inconsistent branding, unpredictable invoices, and approval chains that stall campaigns.',
+    },
+    solution: {
+      title: 'Same-Week In-House Production',
+      description: 'Assign staff to produce video on a predictable credit budget — with brand templates, approval before final render, and no crew days or open-ended edit cycles.',
+      features: [
+        'Replace vendor shoots with guided in-house workflows',
+        'Brand-safe templates and reference libraries',
+        'Visible credit spend and budget caps per project',
+        'Approve storyboards before paying for final video',
+      ],
+    },
+    win: 'Ship training, comms, and campaign video on your timeline — not the vendor\'s backlog.',
+    keyPhrases: ['Predictable Cost', 'Brand Control', 'Same-Week Turnaround'],
+    imageUrl: '/landing/use-cases/agency-pitch.jpg',
+  },
+  {
+    id: 'productionShop',
+    label: 'Production Shop',
+    title: 'The Niche Production Shop',
+    icon: Store,
+    gradient: 'from-violet-500 to-purple-600',
+    bgGradient: 'from-violet-500/10 to-purple-600/10',
+    accentBorder: 'border-violet-500/20',
+    accentDot: 'bg-violet-500',
+    accentText: 'text-violet-400',
+    accentCheck: 'text-violet-400',
+    accentKeyPhrase: 'bg-violet-500/20 text-violet-300 border border-violet-500/30',
+    beforeAfter: { before: '$8K/shoot', after: '$200 credits' },
+    challenge: {
+      title: 'Custom Verticals, No Repeatable System',
+      description: 'Real estate, education, and documentary clients need fast turnaround — but every project starts from scratch. Intake, production, and delivery don\'t scale without a templated pipeline.',
+    },
+    solution: {
+      title: 'Productize Your Niche',
+      description: 'Build repeatable intake → storyboard → delivery workflows for one vertical. Template the hard parts, customize per client, and grow margin on volume.',
+      features: [
+        'Vertical templates for RE tours, courses, and docs',
+        'Client intake forms tied to production phases',
+        'Same-day listing tours and weekly course modules',
+        'Margin on credits instead of per-shoot overhead',
+      ],
+    },
+    win: 'Turn a niche expertise into a scalable production service — not a one-off freelance grind.',
+    keyPhrases: ['Vertical Templates', 'Repeatable Delivery', 'Volume Margin'],
+    imageUrl: '/landing/use-cases/youtube-creator.jpg',
+  },
+  {
     id: 'agency',
-    label: 'I am an Agency/Studio',
-    title: 'The Agency Pitch Lead',
+    label: 'Agency',
+    title: 'The Client Delivery Lead',
     icon: Briefcase,
     gradient: 'from-cyan-500 to-blue-600',
     bgGradient: 'from-cyan-500/10 to-blue-600/10',
+    accentBorder: 'border-cyan-500/20',
+    accentDot: 'bg-cyan-500',
+    accentText: 'text-cyan-400',
+    accentCheck: 'text-cyan-400',
+    accentKeyPhrase: 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30',
+    beforeAfter: { before: '3 wk delivery', after: '3 day delivery' },
     challenge: {
-      title: 'High-Stakes Spec Work',
-      description: 'Pitch deadlines are tight, and pre-production costs can escalate before a client approves direction. Teams need speed while still keeping brand and quality controls.',
+      title: 'Client Delivery at Scale',
+      description: 'Winning the pitch is only half the battle. Recurring client work needs fast turnaround, clear approval chains, and margin on every deliverable — without rebuilding production from scratch each time.',
     },
     solution: {
-      title: 'The "Locked" Concept Engine',
-      description: 'Build pitch-ready treatments with practical brand controls, iterate quickly with client feedback, and push to high-resolution outputs once direction is approved.',
+      title: 'Throughput + Client Approval',
+      description: 'Move from pitch spec to recurring delivery with brand-safe controls, client review before final render, and predictable credit costs per project.',
       features: [
+        'Fast pre-visualization for pitches and client sign-off',
+        'Reusable templates for recurring client formats',
         'Budget visibility through every iteration',
-        'Brand-safe visual controls',
-        'Fast pre-visualization for short approval windows',
-        'Global market reach through online accessible services',
+        'Scalable delivery without adding headcount',
       ],
     },
-    win: 'Deliver faster pitch cycles and reduce up-front production risk for client work.',
-    keyPhrases: ['Budget Predictability', 'Brand Consistency', 'Faster Approvals'],
+    win: 'Deliver faster pitch cycles and recurring client work with less production risk and more margin.',
+    keyPhrases: ['Client Approvals', 'Delivery Throughput', 'Budget Predictability'],
     imageUrl: '/landing/use-cases/agency-pitch.jpg',
   },
 ];
+
+const SEGMENT_CTAS: Record<Persona, { label: string; href: string; subtext?: string }> = {
+  creator: {
+    label: 'Start Your Production Test Flight',
+    href: getSignupUrlForTier('explorer'),
+    subtext: '$9 one-time • 750 credits • Full platform access',
+  },
+  team: {
+    label: 'Book a Team Walkthrough',
+    href: '/early-access',
+    subtext: 'See how in-house teams replace vendor cycles',
+  },
+  productionShop: {
+    label: 'Explore Vertical Templates',
+    href: '#production-verticals',
+    subtext: 'RE, education, docs, and more — see what you can productize',
+  },
+  agency: {
+    label: 'See Team Pricing',
+    href: '#pricing',
+    subtext: 'Plans for agencies and production shops at scale',
+  },
+};
 
 // Video Player Component with Controls
 const VideoPlayer = ({ 
@@ -136,7 +248,7 @@ const VideoPlayer = ({
     <div className="relative w-full mx-auto group">
       <motion.div
         className="relative rounded-2xl overflow-hidden border-2 shadow-2xl cursor-pointer"
-        style={{ borderColor: persona.id === 'creator' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(6, 182, 212, 0.3)' }}
+        style={{ borderColor: persona.id === 'creator' ? 'rgba(245, 158, 11, 0.3)' : persona.id === 'team' ? 'rgba(16, 185, 129, 0.3)' : persona.id === 'productionShop' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(6, 182, 212, 0.3)' }}
         initial={{ opacity: 0, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
@@ -277,10 +389,10 @@ const PersonaCard = ({
             </div>
 
             {/* Solution */}
-            <div className={`bg-gradient-to-br ${persona.bgGradient} backdrop-blur-sm rounded-xl p-6 border ${persona.id === 'creator' ? 'border-amber-500/20' : 'border-cyan-500/20'}`}>
+            <div className={`bg-gradient-to-br ${persona.bgGradient} backdrop-blur-sm rounded-xl p-6 border ${persona.accentBorder}`}>
               <div className="flex items-center gap-2 mb-3">
-                <div className={`w-2 h-2 rounded-full ${persona.id === 'creator' ? 'bg-amber-500' : 'bg-cyan-500'}`} />
-                <span className={`text-sm font-semibold uppercase tracking-wide ${persona.id === 'creator' ? 'text-amber-400' : 'text-cyan-400'}`}>The SceneFlow Solution</span>
+                <div className={`w-2 h-2 rounded-full ${persona.accentDot}`} />
+                <span className={`text-sm font-semibold uppercase tracking-wide ${persona.accentText}`}>The SceneFlow Solution</span>
               </div>
               <h4 className="text-lg font-bold text-white mb-2">{persona.solution.title}</h4>
               <p className="text-gray-300 text-sm leading-relaxed mb-4">{persona.solution.description}</p>
@@ -288,7 +400,7 @@ const PersonaCard = ({
               <div className="space-y-2">
                 {persona.solution.features.map((feature, idx) => (
                   <div key={idx} className="flex items-start gap-2">
-                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${persona.id === 'creator' ? 'text-amber-400' : 'text-cyan-400'}`} />
+                    <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${persona.accentCheck}`} />
                     <span className="text-sm text-gray-300">
                       {feature.split('—').map((part, i) => 
                         i === 0 ? <strong key={i} className="text-white">{part}</strong> : <span key={i}>—{part}</span>
@@ -308,14 +420,14 @@ const PersonaCard = ({
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
                   <span className="text-[10px] text-gray-500 block mb-1">Before</span>
-                  <span className="text-sm font-bold text-red-400">{persona.id === 'creator' ? '40 hrs' : '$5K risk'}</span>
+                  <span className="text-sm font-bold text-red-400">{persona.beforeAfter.before}</span>
                 </div>
                 <div className="p-2 flex items-center justify-center">
                   <span className="text-gray-600">→</span>
                 </div>
                 <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                   <span className="text-[10px] text-gray-500 block mb-1">After</span>
-                  <span className="text-sm font-bold text-emerald-400">{persona.id === 'creator' ? '25 mins' : '$0 risk'}</span>
+                  <span className="text-sm font-bold text-emerald-400">{persona.beforeAfter.after}</span>
                 </div>
               </div>
             </div>
@@ -363,11 +475,7 @@ const PersonaCard = ({
               {persona.keyPhrases.map((phrase, idx) => (
                 <span
                   key={idx}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium ${
-                    persona.id === 'creator' 
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                      : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                  }`}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium ${persona.accentKeyPhrase}`}
                 >
                   {phrase}
                 </span>
@@ -384,6 +492,21 @@ export default function UseCasesSection() {
   const [activePersona, setActivePersona] = useState<Persona>('creator');
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const syncFromHash = () => {
+      const hash = window.location.hash.slice(1);
+      if (PERSONA_HASH_MAP[hash]) {
+        setActivePersona(PERSONA_HASH_MAP[hash]);
+      }
+    };
+    syncFromHash();
+    window.addEventListener('hashchange', syncFromHash);
+    return () => window.removeEventListener('hashchange', syncFromHash);
+  }, []);
+
+  const activeCta = SEGMENT_CTAS[activePersona];
+  const isExternalSignup = activePersona === 'creator';
 
   return (
     <section id="use-cases" className="py-24 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 overflow-hidden">
@@ -415,6 +538,7 @@ export default function UseCasesSection() {
 
         {/* Use Cases - Moved below the header text and above the toggle */}
         <motion.div 
+          id="production-verticals"
           className="mb-20 mt-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -426,13 +550,13 @@ export default function UseCasesSection() {
 
         {/* Toggle Selector ... (keep same) */}
         <motion.div
-          className="flex justify-center mb-12"
+          className="flex justify-center mb-12 px-2"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.1 }}
         >
-          <div className="inline-flex p-1.5 rounded-2xl bg-slate-800/50 border border-slate-700/50">
+          <div className="inline-flex flex-wrap justify-center gap-1 p-1.5 rounded-2xl bg-slate-800/50 border border-slate-700/50 max-w-full">
             {personas.map((persona) => {
               const Icon = persona.icon;
               return (
@@ -440,15 +564,15 @@ export default function UseCasesSection() {
                   key={persona.id}
                   onClick={() => setActivePersona(persona.id)}
                   className={`
-                    flex items-center gap-3 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300
+                    flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300
                     ${activePersona === persona.id
                       ? `bg-gradient-to-r ${persona.gradient} text-white shadow-lg`
                       : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
                     }
                   `}
                 >
-                  <Icon className="w-5 h-5" />
-                  <span>{persona.label}</span>
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span className="whitespace-nowrap">{persona.label}</span>
                 </button>
               );
             })}
@@ -468,7 +592,7 @@ export default function UseCasesSection() {
           ))}
         </div>
 
-        {/* CTA ... (keep same) */}
+        {/* Segment-specific CTA */}
         <motion.div
           className="text-center mt-12"
           initial={{ opacity: 0, y: 20 }}
@@ -476,14 +600,37 @@ export default function UseCasesSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <button
-            onClick={() => { window.location.href = getSignupUrlForTier('explorer') }}
-            className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500 text-white font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
-          >
-            Start Your Production Test Flight
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </button>
-          <p className="text-gray-500 text-sm mt-3">$9 one-time • 750 credits • Full platform access</p>
+          {isExternalSignup ? (
+            <button
+              onClick={() => { window.location.href = activeCta.href }}
+              className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500 text-white font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
+            >
+              {activeCta.label}
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          ) : (
+            <Link
+              href={activeCta.href}
+              className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500 text-white font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
+            >
+              {activeCta.label}
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          )}
+          {activeCta.subtext && (
+            <p className="text-gray-500 text-sm mt-3">{activeCta.subtext}</p>
+          )}
+          {activePersona !== 'creator' && (
+            <p className="text-gray-600 text-xs mt-2">
+              Or{' '}
+              <button
+                onClick={() => { window.location.href = getSignupUrlForTier('explorer') }}
+                className="text-purple-400 hover:text-purple-300 underline-offset-2 hover:underline"
+              >
+                start with the $9 Explorer plan
+              </button>
+            </p>
+          )}
         </motion.div>
       </div>
 
