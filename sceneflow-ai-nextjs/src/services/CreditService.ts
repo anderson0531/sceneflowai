@@ -3,6 +3,10 @@ import { migrateUsersSubscriptionColumns } from '@/lib/database/migrateUsersSubs
 import { migrateCreditLedger } from '@/lib/database/migrateCreditLedger'
 import { ensureWhopUserColumns } from '@/lib/database/migrateWhopPayment'
 import { resolveUser } from '@/lib/userHelper'
+import {
+  incrementProjectCreditsUsed,
+  resolveProjectIdFromCharge,
+} from '@/lib/credits/projectBudget'
 
 export const CREDIT_VALUE_USD = Number(process.env.CREDIT_VALUE_USD ?? '0.0001')
 export const MARKUP_MULTIPLIER = Number(process.env.MARKUP_MULTIPLIER ?? '4')
@@ -204,7 +208,7 @@ export class CreditService {
     const userUuid = resolvedUser.id
     // Ensure migration is run before starting transaction
     await ensureMigrationRan()
-    return await sequelize.transaction(async (tx) => {
+    const result = await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
       const prev = Number(user.credits ?? 0)
@@ -246,6 +250,13 @@ export class CreditService {
       }
       return { prev, next }
     })
+
+    const projectId = resolveProjectIdFromCharge(ref, meta)
+    if (projectId) {
+      void incrementProjectCreditsUsed(projectId, chargeCredits)
+    }
+
+    return result
   }
 
   static async logUsage(data: Partial<AIUsage>) {
@@ -305,7 +316,7 @@ export class CreditService {
     const userUuid = resolvedUser.id
     // Ensure migration is run before starting transaction
     await ensureMigrationRan()
-    return await sequelize.transaction(async (tx) => {
+    const result = await sequelize.transaction(async (tx) => {
       const user = await User.findByPk(userUuid, { transaction: tx, lock: tx.LOCK.UPDATE })
       if (!user) throw new Error('User not found')
 
@@ -399,6 +410,13 @@ export class CreditService {
         usedSubscription,
       }
     })
+
+    const projectId = resolveProjectIdFromCharge(ref, meta)
+    if (projectId) {
+      void incrementProjectCreditsUsed(projectId, credits)
+    }
+
+    return result
   }
 
   /**

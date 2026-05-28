@@ -39,6 +39,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
 import { ProjectCostCalculator } from '@/components/credits/ProjectCostCalculator'
+import { AdjustCreditsUsedDialog } from '@/components/credits/AdjustCreditsUsedDialog'
+import { getProjectCreditsBudget, getProjectCreditsUsed } from '@/lib/credits/projectBudget'
 import { useProjectCosts } from '@/hooks/useProjectCosts'
 import {
   WORKFLOW_STEPS,
@@ -166,6 +168,7 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false)
   const [promptDrawerOpen, setPromptDrawerOpen] = useState(false)
   const [costCalculatorOpen, setCostCalculatorOpen] = useState(false)
+  const [adjustCreditsOpen, setAdjustCreditsOpen] = useState(false)
   
   // Get project cost parameters from actual project data stored in metadata
   const projectCosts = useProjectCosts(project.metadata?.visionPhase)
@@ -265,8 +268,8 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
 
   // Calculate project costs in CREDITS - actual, budget, and estimated to complete
   const getProjectCosts = () => {
-    const creditsUsed = project.metadata?.creditsUsed || 0
-    const creditsBudget = project.metadata?.creditsBudget || 0
+    const creditsUsed = getProjectCreditsUsed(project.metadata)
+    const creditsBudget = getProjectCreditsBudget(project.metadata)
     const sceneCount = getSceneCount()
     
     // Estimate remaining cost based on scenes and current progress
@@ -769,6 +772,13 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
                 Used
               </div>
               <div className="font-bold text-white">{costs.creditsUsed.toLocaleString()}</div>
+              <button
+                type="button"
+                onClick={() => setAdjustCreditsOpen(true)}
+                className="mt-1 text-[10px] text-sf-primary hover:text-sf-accent underline-offset-2 hover:underline"
+              >
+                Adjust
+              </button>
             </div>
             
             {/* Budget */}
@@ -857,14 +867,14 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
               currentBalance={userCredits?.total_credits ?? 0}
               compact={false}
               projectId={project.id}
+              currentCreditsUsed={costs.creditsUsed}
               initialParams={projectCosts || undefined}
               onSetBudget={async (budget) => {
-                // Save budget to project metadata
                 try {
-                  await fetch(`/api/projects/${project.id}`, {
-                    method: 'PUT',
+                  await fetch(`/api/projects/${project.id}/budget`, {
+                    method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ metadata: { ...project.metadata, creditsBudget: budget } })
+                    body: JSON.stringify({ creditsBudget: budget }),
                   })
                   setCostCalculatorOpen(false)
                   window.dispatchEvent(new CustomEvent('project-updated'))
@@ -872,10 +882,30 @@ export function ProjectCard({ project, className = '', isSelected = false, onSel
                   console.error('Failed to set budget:', error)
                 }
               }}
+              onSetCreditsUsed={async (creditsUsed) => {
+                try {
+                  await fetch(`/api/projects/${project.id}/budget`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ creditsUsed }),
+                  })
+                  window.dispatchEvent(new CustomEvent('project-updated'))
+                } catch (error) {
+                  console.error('Failed to set credits used:', error)
+                }
+              }}
             />
           </div>
         </DialogContent>
       </Dialog>
+
+      <AdjustCreditsUsedDialog
+        open={adjustCreditsOpen}
+        onOpenChange={setAdjustCreditsOpen}
+        projectId={project.id}
+        projectTitle={project.title}
+        currentCreditsUsed={costs.creditsUsed}
+      />
     </motion.div>
   )
 }

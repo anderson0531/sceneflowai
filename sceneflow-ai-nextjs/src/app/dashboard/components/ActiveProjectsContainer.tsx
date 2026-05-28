@@ -6,6 +6,7 @@ import { Filter, ArrowUpDown, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 import { formatRelativeTime, getPhaseDisplayName, getStepNumber, getTotalSteps } from '@/hooks/useDashboardData'
+import { getProjectCreditsUsed } from '@/lib/credits/projectBudget'
 
 // Types for project data from API
 interface DashboardProject {
@@ -25,16 +26,6 @@ interface DashboardProject {
 interface ActiveProjectsContainerProps {
   projects?: DashboardProject[]
   onProjectUpdated?: () => void
-}
-
-function getProjectCreditsUsed(metadata: Record<string, any> | undefined): number {
-  const rawValue =
-    metadata?.creditsUsed ??
-    metadata?.creationHub?.metrics?.creditsUsed ??
-    metadata?.productionCosts?.totalCredits ??
-    0
-  const parsedValue = Number(rawValue)
-  return Number.isFinite(parsedValue) ? parsedValue : 0
 }
 
 // Transform API project to ActiveProjectCard props
@@ -187,6 +178,7 @@ export function ActiveProjectsContainer({ projects = [], onProjectUpdated }: Act
           key={project.id}
           {...transformProject(project, index)}
           onThumbnailUpdated={() => onProjectUpdated?.()}
+          onBudgetUpdated={() => onProjectUpdated?.()}
         />
       ))}
 

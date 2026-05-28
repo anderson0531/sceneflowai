@@ -35,6 +35,7 @@ import {
   canUseVeoMax,
   getVideoCredits,
 } from './creditCosts'
+import { isProjectIdRef } from './projectBudget'
 
 // =============================================================================
 // TYPES
@@ -233,14 +234,24 @@ export function withCreditCharge<T = any>(config: CreditChargeConfig<T>) {
       // 7. If successful (2xx status), charge credits
       if (response.status >= 200 && response.status < 300) {
         const refId = config.getRefId ? config.getRefId(req, context) : undefined
-        const meta = config.getMeta ? config.getMeta(req, context) : { operation: config.operation }
+        const baseMeta = config.getMeta ? config.getMeta(req, context) : { operation: config.operation }
+        const projectId =
+          (typeof baseMeta?.projectId === 'string' && isProjectIdRef(baseMeta.projectId)
+            ? baseMeta.projectId
+            : undefined) ?? (isProjectIdRef(refId) ? refId : undefined)
+        const meta = {
+          ...baseMeta,
+          operation: config.operation,
+          timestamp: new Date().toISOString(),
+          ...(projectId ? { projectId } : {}),
+        }
 
         await CreditService.charge(
           userId,
           creditsRequired,
           'ai_usage',
           refId,
-          { ...meta, operation: config.operation, timestamp: new Date().toISOString() }
+          meta
         )
         creditsCharged = creditsRequired
 

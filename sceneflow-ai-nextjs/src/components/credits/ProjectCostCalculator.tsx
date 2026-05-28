@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Calculator, 
@@ -61,7 +61,9 @@ interface ProjectCostCalculatorProps {
   onTopUp?: (pack: keyof typeof TOPUP_PACKS) => void
   compact?: boolean
   projectId?: string
+  currentCreditsUsed?: number
   onSetBudget?: (credits: number) => void | Promise<void>
+  onSetCreditsUsed?: (credits: number) => void | Promise<void>
   initialParams?: Partial<FullProjectParameters>
 }
 
@@ -113,10 +115,11 @@ export function ProjectCostCalculator({
   onTopUp,
   compact = false,
   projectId,
+  currentCreditsUsed = 0,
   onSetBudget,
+  onSetCreditsUsed,
   initialParams,
 }: ProjectCostCalculatorProps) {
-  // Project parameters state - merge initialParams with defaults
   const [params, setParams] = useState<FullProjectParameters>(() => {
     if (!initialParams) return DEFAULT_PROJECT_PARAMS;
     
@@ -161,6 +164,12 @@ export function ProjectCostCalculator({
   
   // Language versions for multi-language releases
   const [languageVersions, setLanguageVersions] = useState(1)
+  const [manualCreditsUsedInput, setManualCreditsUsedInput] = useState(String(currentCreditsUsed))
+  const [isSavingCreditsUsed, setIsSavingCreditsUsed] = useState(false)
+
+  useEffect(() => {
+    setManualCreditsUsedInput(String(currentCreditsUsed))
+  }, [currentCreditsUsed])
 
   // Update a specific parameter
   const updateParam = useCallback(<K extends keyof FullProjectParameters>(
@@ -839,6 +848,43 @@ export function ProjectCostCalculator({
                 <Check className="w-4 h-4" />
                 Set as Project Budget ({formatCredits(breakdown.total.credits)} credits)
               </button>
+            )}
+
+            {projectId && onSetCreditsUsed && (
+              <div className="mt-4 pt-4 border-t border-slate-700/50">
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="text-gray-400">Current credits used</span>
+                  <span className="text-white font-medium">{formatCredits(currentCreditsUsed)}</span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={manualCreditsUsedInput}
+                    onChange={(e) => setManualCreditsUsedInput(e.target.value)}
+                    className="flex-1 rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white"
+                    placeholder="Credits used"
+                  />
+                  <button
+                    type="button"
+                    disabled={isSavingCreditsUsed}
+                    onClick={async () => {
+                      const parsed = Number(manualCreditsUsedInput)
+                      if (!Number.isFinite(parsed) || parsed < 0) return
+                      setIsSavingCreditsUsed(true)
+                      try {
+                        await onSetCreditsUsed(Math.round(parsed))
+                      } finally {
+                        setIsSavingCreditsUsed(false)
+                      }
+                    }}
+                    className="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium disabled:opacity-50"
+                  >
+                    {isSavingCreditsUsed ? 'Saving...' : 'Set used'}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 

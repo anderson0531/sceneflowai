@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { CueCommandBar } from './components/CueCommandBar'
 import { BudgetHealthWidget } from './components/BudgetHealthWidget'
 import { ActiveProjectsContainer } from './components/ActiveProjectsContainer'
@@ -8,18 +9,9 @@ import { RecentProjectsPanel } from './components/RecentProjectsPanel'
 import { DashboardQuickStart } from './components/DashboardQuickStart'
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { DashboardRedirectGuard } from '@/components/auth/DashboardRedirectGuard'
+import { getProjectCreditsUsed } from '@/lib/credits/projectBudget'
 import { motion } from 'framer-motion'
 import { Loader2, AlertCircle } from 'lucide-react'
-
-function getProjectCreditsUsed(metadata: Record<string, any> | undefined): number {
-  const rawValue =
-    metadata?.creditsUsed ??
-    metadata?.creationHub?.metrics?.creditsUsed ??
-    metadata?.productionCosts?.totalCredits ??
-    0
-  const parsedValue = Number(rawValue)
-  return Number.isFinite(parsedValue) ? parsedValue : 0
-}
 
 export default function ClientDashboard() {
   const { credits, subscription, projects, recentProjects, stats, isLoading, error, refresh } =
@@ -33,6 +25,14 @@ export default function ClientDashboard() {
   const usedCredits = Math.max(0, monthlyCredits - subscriptionCreditsRemaining)
   const availableCredits = credits?.total_credits || 0
   const addonCredits = credits?.addon_credits || 0
+
+  useEffect(() => {
+    const handleProjectUpdated = () => {
+      void refresh()
+    }
+    window.addEventListener('project-updated', handleProjectUpdated)
+    return () => window.removeEventListener('project-updated', handleProjectUpdated)
+  }, [refresh])
 
   const projectedRequired = projects.reduce((sum, p) => {
     const sceneCount =

@@ -4,11 +4,12 @@ import { motion } from 'framer-motion'
 import { FolderOpen, Play, ChevronRight, CheckCircle, AlertTriangle, Lightbulb, X, Film, Users, Maximize2, Sparkles, Edit3, Coins } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import ThumbnailPromptDrawer from '@/components/project/ThumbnailPromptDrawer'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
+import { AdjustCreditsUsedDialog } from '@/components/credits/AdjustCreditsUsedDialog'
 
 interface NextStep {
   name: string
@@ -50,6 +51,7 @@ interface ActiveProjectCardProps {
   genre?: string
   metadata?: any
   onThumbnailUpdated?: (newUrl: string) => void
+  onBudgetUpdated?: () => void
 }
 
 function NextStepPanel({ nextStep }: { nextStep: NextStep }) {
@@ -110,12 +112,19 @@ export function ActiveProjectCard({
   index = 0,
   genre,
   metadata,
-  onThumbnailUpdated
+  onThumbnailUpdated,
+  onBudgetUpdated,
 }: ActiveProjectCardProps) {
   const [tipDismissed, setTipDismissed] = useState(false)
   const [expandedImageOpen, setExpandedImageOpen] = useState(false)
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [adjustCreditsOpen, setAdjustCreditsOpen] = useState(false)
+  const [displayCreditsUsed, setDisplayCreditsUsed] = useState(creditsUsedProp)
+
+  useEffect(() => {
+    setDisplayCreditsUsed(creditsUsedProp)
+  }, [creditsUsedProp])
 
   const getBudgetBadge = () => {
     switch (budgetStatus) {
@@ -129,7 +138,7 @@ export function ActiveProjectCard({
   }
 
   const budgetBadge = getBudgetBadge()
-  const creditsUsed = Number.isFinite(Number(creditsUsedProp)) ? Number(creditsUsedProp) : 0
+  const creditsUsed = Number.isFinite(Number(displayCreditsUsed)) ? Number(displayCreditsUsed) : 0
   const creditsBudget = Number(metadata?.creditsBudget ?? 0)
   const hasBudgetTarget = creditsBudget > 0
   const remainingCredits = hasBudgetTarget ? Math.max(creditsBudget - creditsUsed, 0) : null
@@ -238,6 +247,13 @@ export function ActiveProjectCard({
                   {creditsUsed.toLocaleString()}
                 </span>
               </div>
+              <button
+                type="button"
+                onClick={() => setAdjustCreditsOpen(true)}
+                className="text-xs text-sf-primary hover:text-sf-accent underline-offset-2 hover:underline"
+              >
+                Adjust used credits
+              </button>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-400">Budget</span>
                 <span className="text-white font-semibold">
@@ -420,6 +436,18 @@ export function ActiveProjectCard({
           title="Edit Billboard Image"
         />
       )}
+
+      <AdjustCreditsUsedDialog
+        open={adjustCreditsOpen}
+        onOpenChange={setAdjustCreditsOpen}
+        projectId={String(id)}
+        projectTitle={title}
+        currentCreditsUsed={creditsUsed}
+        onSaved={(next) => {
+          setDisplayCreditsUsed(next)
+          onBudgetUpdated?.()
+        }}
+      />
     </motion.div>
   )
 }

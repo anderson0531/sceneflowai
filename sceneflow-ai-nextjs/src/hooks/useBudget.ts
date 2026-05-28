@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { getProjectCreditsUsed } from '@/lib/credits/projectBudget'
 import { useDashboardData } from './useDashboardData'
 
 /**
@@ -113,7 +114,7 @@ export function useBudget(): BudgetData {
 
     // Calculate projects near budget limit
     const projectsNearLimit = projects.filter(p => {
-      const creditsUsed = p.metadata?.creditsUsed || 0
+      const creditsUsed = getProjectCreditsUsed(p.metadata)
       const estimated = (p.metadata?.visionPhase?.script?.script?.scenes?.length || 5) * 100
       return creditsUsed > estimated * 0.75
     }).length
