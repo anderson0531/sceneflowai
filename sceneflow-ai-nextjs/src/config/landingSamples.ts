@@ -1,11 +1,25 @@
 /**
- * Landing page sample project — one project, three outputs (storyboard, animatic, full video).
- * Set URLs/slug when demo assets are ready; empty values show placeholders.
+ * Landing page sample project — collaboration demos (Blueprint, Storyboard, Screening Room).
+ * Set share tokens/slugs when demo assets are ready; empty values show placeholders.
+ *
+ * Blueprint setup (one-time):
+ * 1. Open the demo project in Studio → Blueprint phase
+ * 2. Create an active Blueprint share link
+ * 3. Copy token from /blueprint/share/{token} and set blueprintShareToken below
+ *
+ * Optional Screening Room footer link:
+ * Create screening-room share via Vision/Premiere share link on the same project,
+ * then set screeningRoomShareSlug to the slug from project metadata.
  */
 export const LANDING_SAMPLE = {
   projectTitle: 'The White House Waltz: A Controlled Thaw',
   /** Public storyboard share slug, e.g. 'TheDawnOfSyntheticMinds'. Empty = placeholder UI. */
   storyboardShareSlug: 'TheWhiteHouseWaltzAControlledThaw',
+  /** Blueprint collab share token from /blueprint/share/{token}. Empty = placeholder UI. */
+  blueprintShareToken: '',
+  /** Public screening-room share slug (same project). Empty = hide full Screening Room link. */
+  screeningRoomShareSlug: '',
+  /** Express animatic used in Screening Room landing demo */
   animaticVideoUrl:
     'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Whitehouse%20Waltz.mp4',
   fullVideoUrl: '',
@@ -20,4 +34,16 @@ export function getLandingSampleShareHref(): string | null {
   const slug = LANDING_SAMPLE.storyboardShareSlug.trim()
   if (!slug) return null
   return `/${slug}`
+}
+
+export function getLandingBlueprintShareHref(): string | null {
+  const token = LANDING_SAMPLE.blueprintShareToken.trim()
+  if (!token) return null
+  return `/blueprint/share/${token}`
+}
+
+export function getLandingScreeningShareHref(): string | null {
+  const slug = LANDING_SAMPLE.screeningRoomShareSlug.trim()
+  if (!slug) return null
+  return `/share/screening-room/${slug}`
 }

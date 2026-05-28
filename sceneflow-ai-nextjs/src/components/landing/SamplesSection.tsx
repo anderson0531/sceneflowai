@@ -5,31 +5,47 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
   Clapperboard,
-  Film,
+  FileText,
   Globe,
-  Languages,
-  Layers,
+  MessageSquare,
+  Play,
   Share2,
   Sparkles,
-  Video,
+  Star,
   ArrowRight,
   ExternalLink,
 } from 'lucide-react'
-import { LANDING_SAMPLE, getLandingSampleShareHref } from '@/config/landingSamples'
+import {
+  LANDING_SAMPLE,
+  getLandingBlueprintShareHref,
+  getLandingSampleShareHref,
+  getLandingScreeningShareHref,
+} from '@/config/landingSamples'
 import { LandingStoryboardEmbed } from '@/components/landing/LandingStoryboardEmbed'
-import { LandingSampleVideo } from '@/components/landing/LandingSampleVideo'
+import { LandingBlueprintEmbed } from '@/components/landing/LandingBlueprintEmbed'
+import { LandingScreeningRoomEmbed } from '@/components/landing/LandingScreeningRoomEmbed'
 import { cn } from '@/lib/utils'
 
 const WORKFLOW_BULLETS = [
+  { icon: FileText, text: 'Blueprint section feedback and team chat' },
   { icon: Share2, text: 'Shareable storyboard review links' },
-  { icon: Languages, text: '70+ language audio and localization' },
-  { icon: Layers, text: 'One output stream or many — scale reach without re-editing' },
+  { icon: Star, text: 'Screening Room reactions from collaborators' },
 ] as const
 
 const SAMPLE_STEPS = [
   {
-    id: 'storyboard' as const,
+    id: 'blueprint' as const,
     step: 1,
+    title: 'Blueprint collaboration',
+    shortTitle: 'Blueprint',
+    caption:
+      'Collaborators read the treatment, listen to section audio, and leave structured feedback before production starts.',
+    icon: FileText,
+    accent: 'purple',
+  },
+  {
+    id: 'storyboard' as const,
+    step: 2,
     title: 'Interactive storyboard',
     shortTitle: 'Storyboard',
     caption: 'Per-scene audio and dialogue-synced frame cuts in one playable review.',
@@ -37,71 +53,51 @@ const SAMPLE_STEPS = [
     accent: 'emerald',
   },
   {
-    id: 'animatic' as const,
-    step: 2,
-    title: 'Express animatic',
-    shortTitle: 'Animatic',
-    caption: 'Fast, low-cost motion preview — ideal for JIT news, education, and documentary.',
-    icon: Film,
-    accent: 'cyan',
-  },
-  {
-    id: 'full' as const,
+    id: 'screening' as const,
     step: 3,
-    title: 'Full lipsync video',
-    shortTitle: 'Lipsync video',
-    caption: 'Express concurrent generation from storyboard frames — 70+ languages.',
-    icon: Video,
-    accent: 'purple',
+    title: 'Screening Room',
+    shortTitle: 'Screening',
+    caption:
+      'Watch the Express animatic cut and react like a test audience — the same flow collaborators use before final publish.',
+    icon: Play,
+    accent: 'cyan',
   },
 ] as const
 
 type SampleTab = (typeof SAMPLE_STEPS)[number]['id']
 
-const MEDIA_PANE_CLASS =
-  'min-h-[360px] sm:min-h-[420px] lg:min-h-[520px] aspect-video'
-
 function tabActiveClasses(accent: string, isActive: boolean) {
   if (!isActive) return 'text-slate-400 hover:text-white hover:bg-white/5'
+  if (accent === 'purple') return 'bg-purple-600 text-white shadow-sm'
   if (accent === 'emerald') return 'bg-emerald-600 text-white shadow-sm'
   if (accent === 'cyan') return 'bg-cyan-600 text-white shadow-sm'
   return 'bg-purple-600 text-white shadow-sm'
 }
 
 function accentBadgeClasses(accent: string) {
+  if (accent === 'purple') return 'bg-purple-500/15 text-purple-400 border-purple-500/30'
   if (accent === 'emerald') return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
   if (accent === 'cyan') return 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30'
   return 'bg-purple-500/15 text-purple-400 border-purple-500/30'
 }
 
 export function SamplesSection() {
-  const [activeTab, setActiveTab] = useState<SampleTab>('storyboard')
-  const shareHref = getLandingSampleShareHref()
+  const [activeTab, setActiveTab] = useState<SampleTab>('blueprint')
+  const blueprintHref = getLandingBlueprintShareHref()
+  const storyboardHref = getLandingSampleShareHref()
+  const screeningHref = getLandingScreeningShareHref()
   const projectTitle = LANDING_SAMPLE.projectTitle
   const activeStep = SAMPLE_STEPS.find((s) => s.id === activeTab) ?? SAMPLE_STEPS[0]
   const ActiveIcon = activeStep.icon
 
   const renderMedia = (id: SampleTab) => {
+    if (id === 'blueprint') {
+      return <LandingBlueprintEmbed />
+    }
     if (id === 'storyboard') {
       return <LandingStoryboardEmbed />
     }
-    if (id === 'animatic') {
-      return (
-        <LandingSampleVideo
-          src={LANDING_SAMPLE.animaticVideoUrl}
-          placeholderTitle="Express animatic sample — configure animaticVideoUrl"
-          className={MEDIA_PANE_CLASS}
-          enableFullscreen
-        />
-      )
-    }
-    return (
-      <LandingSampleVideo
-        src={LANDING_SAMPLE.fullVideoUrl}
-        placeholderTitle="Full lipsync video sample — configure fullVideoUrl"
-        className={MEDIA_PANE_CLASS}
-      />
-    )
+    return <LandingScreeningRoomEmbed />
   }
 
   return (
@@ -121,18 +117,15 @@ export function SamplesSection() {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-6">
             <Sparkles className="w-3.5 h-3.5" />
-            Real outputs · Same project
+            Real collaboration · Same project
           </div>
           <h2 className="landing-section-heading text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
-            From storyboard to broadcast — one project, three outputs
+            Experience the collaborator journey — Blueprint, Storyboard, Screening Room
           </h2>
           <p className="text-lg text-slate-400 leading-relaxed">
-            Start with a full audio-visual storyboard — scene images, dialogue-synced frames, and
-            narration in one playable review. Share it with teammates or customers for feedback and
-            approval. When you&apos;re ready, render the same project as a fast, low-cost animatic
-            (ideal for JIT news, education, and documentary). Then use your storyboard frames to
-            drive Express concurrent generation of full lipsync video — in 70+ languages, as one
-            stream or multiple streams to expand your reach.
+            See how teammates and clients review your work at every stage: structured Blueprint
+            feedback, playable storyboard approval, and Screening Room reactions on the Express
+            animatic — all on one sample project before you sign up.
           </p>
           <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 border border-white/10 text-sm text-slate-300">
             <Globe className="w-4 h-4 text-cyan-400" />
@@ -143,7 +136,7 @@ export function SamplesSection() {
         <div className="w-full">
           <div
             role="tablist"
-            aria-label="Sample output types"
+            aria-label="Collaboration tool demos"
             className="flex rounded-xl bg-slate-900/80 border border-white/10 p-1 gap-1"
           >
             {SAMPLE_STEPS.map(({ id, title, shortTitle, accent }) => {
@@ -209,7 +202,7 @@ export function SamplesSection() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-6 pt-8 border-t border-white/10"
+          className="mt-12 flex flex-col gap-6 pt-8 border-t border-white/10"
         >
           <ul className="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-8">
             {WORKFLOW_BULLETS.map(({ icon: Icon, text }) => (
@@ -219,22 +212,57 @@ export function SamplesSection() {
               </li>
             ))}
           </ul>
-          {shareHref ? (
-            <Link
-              href={shareHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors whitespace-nowrap"
-            >
-              Open interactive storyboard review
-              <ExternalLink className="w-4 h-4" />
-            </Link>
-          ) : (
-            <span className="inline-flex items-center gap-2 text-sm text-slate-500">
-              Full review link available when share slug is configured
-              <ArrowRight className="w-4 h-4" />
-            </span>
-          )}
+
+          <div className="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-6">
+            {blueprintHref ? (
+              <Link
+                href={blueprintHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors"
+              >
+                Open Blueprint review
+                <ExternalLink className="w-4 h-4" />
+              </Link>
+            ) : (
+              <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+                Blueprint link — set blueprintShareToken
+                <ArrowRight className="w-4 h-4" />
+              </span>
+            )}
+            {storyboardHref ? (
+              <Link
+                href={storyboardHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                Open interactive storyboard
+                <ExternalLink className="w-4 h-4" />
+              </Link>
+            ) : (
+              <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+                Storyboard link unavailable
+                <ArrowRight className="w-4 h-4" />
+              </span>
+            )}
+            {screeningHref ? (
+              <Link
+                href={screeningHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
+              >
+                Open Screening Room
+                <ExternalLink className="w-4 h-4" />
+              </Link>
+            ) : (
+              <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+                Screening Room link — set screeningRoomShareSlug
+                <MessageSquare className="w-4 h-4" />
+              </span>
+            )}
+          </div>
         </motion.div>
       </div>
     </section>
