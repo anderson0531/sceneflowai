@@ -2,18 +2,34 @@
 
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
-import { useState, useRef } from 'react'
-import { Play, ArrowRight, Pause, Volume2, VolumeX, Maximize } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Play, ArrowRight, Pause, Volume2, VolumeX, Maximize, Globe } from 'lucide-react'
 import Link from 'next/link'
 import { getEarlyAccessUrl } from '@/lib/auth/postLoginRedirect'
 import { HERO_COPY } from '@/config/landing/valuePropCopy'
-
-/** Hero commercial reel (Vercel Blob) */
-const HERO_COMMERCIAL_BLOB_SRC =
-  'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/SceneFlow%20Hero.mp4#t=0.1'
+import {
+  DEFAULT_HERO_VIDEO_LOCALE,
+  HERO_VIDEO_LANGUAGE_PROMPT,
+  HERO_VIDEO_LOCALES,
+  HERO_VIDEO_MULTILANG_HINT,
+  HERO_VIDEO_LOCALE_STORAGE_KEY,
+  getHeroVideoLocale,
+  getDefaultHeroVideoSrc,
+  type HeroVideoLocaleId,
+} from '@/config/landing/heroVideoLocales'
+import { cn } from '@/lib/utils'
 
 function scrollToSection(sectionId: string) {
   document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
+}
+
+function readStoredLocale(): HeroVideoLocaleId | null {
+  if (typeof window === 'undefined') return null
+  const stored = localStorage.getItem(HERO_VIDEO_LOCALE_STORAGE_KEY)
+  if (stored && getHeroVideoLocale(stored as HeroVideoLocaleId)?.available) {
+    return stored as HeroVideoLocaleId
+  }
+  return null
 }
 
 export function HeroSection() {
@@ -21,6 +37,35 @@ export function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(true)
+  const [activeLocale, setActiveLocale] = useState<HeroVideoLocaleId>(DEFAULT_HERO_VIDEO_LOCALE)
+
+  const activeEntry = getHeroVideoLocale(activeLocale) ?? getHeroVideoLocale(DEFAULT_HERO_VIDEO_LOCALE)!
+  const videoSrc = activeEntry.available ? activeEntry.src : getDefaultHeroVideoSrc()
+
+  useEffect(() => {
+    const stored = readStoredLocale()
+    if (stored) setActiveLocale(stored)
+  }, [])
+
+  const selectLocale = useCallback((id: HeroVideoLocaleId) => {
+    const entry = getHeroVideoLocale(id)
+    if (!entry?.available) return
+
+    setActiveLocale(id)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(HERO_VIDEO_LOCALE_STORAGE_KEY, id)
+    }
+
+    const video = videoRef.current
+    if (!video) return
+
+    const wasPlaying = !video.paused
+    video.src = entry.src
+    video.load()
+    if (wasPlaying) {
+      void video.play().catch(() => {})
+    }
+  }, [])
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -115,6 +160,56 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
           >
+            <div className="mb-4 flex flex-col items-center gap-3">
+              <p className="inline-flex items-center gap-2 text-sm text-gray-400">
+                <Globe className="h-4 w-4 text-cyan-400/80" aria-hidden />
+                {HERO_VIDEO_LANGUAGE_PROMPT}
+              </p>
+              <div
+                className="flex flex-wrap items-center justify-center gap-2"
+                role="group"
+                aria-label="Hero video language"
+              >
+                {HERO_VIDEO_LOCALES.map((locale) => {
+                  const isActive = activeLocale === locale.id
+                  const isDisabled = !locale.available
+                  return (
+                    <button
+                      key={locale.id}
+                      type="button"
+                      disabled={isDisabled}
+                      aria-pressed={isActive}
+                      aria-label={
+                        isDisabled
+                          ? `${locale.label} — coming soon`
+                          : `Play hero video in ${locale.label}`
+                      }
+                      onClick={() => selectLocale(locale.id)}
+                      className={cn(
+                        'rounded-full px-3 py-1.5 text-sm font-medium transition-colors border',
+                        isActive
+                          ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-100'
+                          : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20 hover:text-white',
+                        isDisabled &&
+                          'opacity-50 cursor-not-allowed hover:border-white/10 hover:text-gray-300'
+                      )}
+                    >
+                      <span className="hidden sm:inline">{locale.nativeLabel}</span>
+                      <span className="sm:hidden">{locale.label}</span>
+                      {isDisabled ? (
+                        <span className="ml-1.5 text-[10px] uppercase tracking-wide text-gray-500">
+                          Soon
+                        </span>
+                      ) : null}
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="text-xs text-gray-500 max-w-lg text-center">
+                {HERO_VIDEO_MULTILANG_HINT}
+              </p>
+            </div>
+
             <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-3xl blur-2xl" />
 
             <div 
@@ -124,7 +219,8 @@ export function HeroSection() {
               <div className="relative aspect-video w-full h-full">
                 <video
                   ref={videoRef}
-                  src={HERO_COMMERCIAL_BLOB_SRC}
+                  key={activeLocale}
+                  src={videoSrc}
                   autoPlay
                   loop
                   muted={isMuted}
@@ -155,6 +251,9 @@ export function HeroSection() {
 
             <p className="mt-4 text-center text-base text-gray-400">
               From concept to publish-ready video — one automated studio
+            </p>
+            <p className="mt-1 text-center text-sm text-gray-500">
+              Switch languages on the same pipeline — automated streams in Production, not manual re-edit cycles.
             </p>
           </motion.div>
         </div>
