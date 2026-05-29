@@ -3,25 +3,33 @@
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Play, ArrowRight, Pause, Volume2, VolumeX, Maximize, Globe } from 'lucide-react'
+import {
+  Play,
+  ArrowRight,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize2,
+  Globe,
+} from 'lucide-react'
 import Link from 'next/link'
 import { getEarlyAccessUrl } from '@/lib/auth/postLoginRedirect'
 import { HERO_COPY } from '@/config/landing/valuePropCopy'
 import {
   DEFAULT_HERO_VIDEO_LOCALE,
   HERO_VIDEO_LANGUAGE_PROMPT,
-  HERO_VIDEO_LOCALES,
   HERO_VIDEO_MULTILANG_HINT,
   HERO_VIDEO_LOCALE_STORAGE_KEY,
+  HERO_VIDEO_UNMUTE_DISMISSED_KEY,
   getHeroVideoLocale,
   getDefaultHeroVideoSrc,
+  getDefaultHeroVideoPoster,
+  getSuggestedHeroLocaleFromBrowser,
   type HeroVideoLocaleId,
 } from '@/config/landing/heroVideoLocales'
+import { HeroLanguagePills } from '@/components/landing/HeroLanguagePills'
+import { HeroTheaterModal } from '@/components/landing/HeroTheaterModal'
 import { cn } from '@/lib/utils'
-
-function scrollToSection(sectionId: string) {
-  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
-}
 
 function readStoredLocale(): HeroVideoLocaleId | null {
   if (typeof window === 'undefined') return null
@@ -32,19 +40,47 @@ function readStoredLocale(): HeroVideoLocaleId | null {
   return null
 }
 
+function readUnmuteDismissed(): boolean {
+  if (typeof window === 'undefined') return false
+  return localStorage.getItem(HERO_VIDEO_UNMUTE_DISMISSED_KEY) === '1'
+}
+
 export function HeroSection() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
   const [isMuted, setIsMuted] = useState(true)
+  const [showUnmutePrompt, setShowUnmutePrompt] = useState(true)
+  const [isTheaterOpen, setIsTheaterOpen] = useState(false)
   const [activeLocale, setActiveLocale] = useState<HeroVideoLocaleId>(DEFAULT_HERO_VIDEO_LOCALE)
+  const [highlightLocale, setHighlightLocale] = useState<HeroVideoLocaleId | null>(null)
 
-  const activeEntry = getHeroVideoLocale(activeLocale) ?? getHeroVideoLocale(DEFAULT_HERO_VIDEO_LOCALE)!
+  const activeEntry =
+    getHeroVideoLocale(activeLocale) ?? getHeroVideoLocale(DEFAULT_HERO_VIDEO_LOCALE)!
   const videoSrc = activeEntry.available ? activeEntry.src : getDefaultHeroVideoSrc()
+  const videoPoster = activeEntry.available ? activeEntry.poster : getDefaultHeroVideoPoster()
 
   useEffect(() => {
     const stored = readStoredLocale()
-    if (stored) setActiveLocale(stored)
+    if (stored) {
+      setActiveLocale(stored)
+    } else {
+      setHighlightLocale(getSuggestedHeroLocaleFromBrowser())
+    }
+    setShowUnmutePrompt(!readUnmuteDismissed())
+  }, [])
+
+  const unmuteWithSound = useCallback(() => {
+    const video = videoRef.current
+    if (video) {
+      video.muted = false
+      void video.play().catch(() => {})
+    }
+    setIsMuted(false)
+    setShowUnmutePrompt(false)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(HERO_VIDEO_UNMUTE_DISMISSED_KEY, '1')
+    }
   }, [])
 
   const selectLocale = useCallback((id: HeroVideoLocaleId) => {
@@ -52,6 +88,7 @@ export function HeroSection() {
     if (!entry?.available) return
 
     setActiveLocale(id)
+    setHighlightLocale(null)
     if (typeof window !== 'undefined') {
       localStorage.setItem(HERO_VIDEO_LOCALE_STORAGE_KEY, id)
     }
@@ -61,11 +98,22 @@ export function HeroSection() {
 
     const wasPlaying = !video.paused
     video.src = entry.src
+    video.poster = entry.poster
     video.load()
     if (wasPlaying) {
       void video.play().catch(() => {})
     }
   }, [])
+
+  const watchWhatsPossible = useCallback(() => {
+    document.getElementById('hero-video')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    window.setTimeout(() => unmuteWithSound(), 450)
+  }, [unmuteWithSound])
+
+  const openTheater = useCallback(() => {
+    unmuteWithSound()
+    setIsTheaterOpen(true)
+  }, [unmuteWithSound])
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -80,57 +128,212 @@ export function HeroSection() {
 
   const toggleMute = () => {
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted
-      setIsMuted(!isMuted)
-    }
-  }
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen().catch(err => {
-        console.error(`Error attempting to enable fullscreen: ${err.message}`)
-      })
-    } else {
-      document.exitFullscreen()
+      const nextMuted = !isMuted
+      videoRef.current.muted = nextMuted
+      setIsMuted(nextMuted)
+      if (!nextMuted) {
+        setShowUnmutePrompt(false)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(HERO_VIDEO_UNMUTE_DISMISSED_KEY, '1')
+        }
+      }
     }
   }
 
   return (
     <>
-      <section className="relative bg-gray-950 text-white pt-24 pb-20 sm:pt-32 sm:pb-28 lg:pt-40 lg:pb-36">
+      <section className="relative bg-gray-950 text-white pt-20 pb-16 sm:pt-24 sm:pb-20 lg:pt-28 lg:pb-24">
         <div className="absolute inset-0 bg-grid-pattern opacity-[0.07]" />
         <div className="absolute inset-0 bg-gradient-to-b from-gray-950 via-gray-950/80 to-transparent" />
-        
+
         <div className="relative container mx-auto px-4 z-10">
-          <div className="max-w-4xl mx-auto text-center">
+          {/* Video-first: motion leads the hero */}
+          <motion.div
+            id="hero-video"
+            className="relative max-w-6xl mx-auto scroll-mt-24"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="pointer-events-none absolute -inset-4 bg-gradient-to-r from-blue-500/25 via-purple-500/25 to-pink-500/25 rounded-3xl blur-2xl" />
+
+            <div
+              ref={containerRef}
+              className="relative z-10 rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black group cursor-pointer"
+              onClick={(e) => {
+                const target = e.target as HTMLElement
+                if (target.closest('[data-hero-control]')) return
+                openTheater()
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  openTheater()
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Expand hero video to theater mode with sound"
+            >
+              <div className="relative aspect-video w-full h-full">
+                <video
+                  ref={videoRef}
+                  key={activeLocale}
+                  src={videoSrc}
+                  poster={videoPoster}
+                  autoPlay
+                  loop
+                  muted={isMuted}
+                  playsInline
+                  preload="auto"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                />
+
+                {/* First-visit + persistent unmute affordance */}
+                {isMuted && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    {showUnmutePrompt ? (
+                      <button
+                        type="button"
+                        data-hero-control
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          unmuteWithSound()
+                        }}
+                        className="pointer-events-auto flex items-center gap-2 rounded-full bg-black/70 border border-cyan-400/40 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 animate-pulse hover:bg-black/85 hover:border-cyan-400/60 transition-colors"
+                      >
+                        <Volume2 className="h-5 w-5 text-cyan-400" aria-hidden />
+                        Play with narration
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        data-hero-control
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          unmuteWithSound()
+                        }}
+                        className="pointer-events-auto absolute bottom-20 right-4 flex items-center gap-1.5 rounded-full bg-black/60 border border-white/20 px-3 py-2 text-xs font-medium text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors sm:bottom-24"
+                        aria-label="Tap to hear narration"
+                      >
+                        <VolumeX className="h-4 w-4 text-cyan-400 animate-pulse" aria-hidden />
+                        Tap to hear
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Expand affordance — always visible */}
+                <button
+                  type="button"
+                  data-hero-control
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    openTheater()
+                  }}
+                  className="absolute top-3 right-3 z-10 flex items-center gap-1.5 rounded-lg bg-black/50 border border-white/15 px-2.5 py-1.5 text-xs font-medium text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors"
+                  aria-label="Open theater mode"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" aria-hidden />
+                  <span className="hidden sm:inline">Theater</span>
+                </button>
+
+                {/* Player chrome: languages + controls */}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/55 to-transparent pt-20 pb-3 px-3 sm:px-4">
+                  <div className="flex flex-col items-center gap-2 mb-3">
+                    <p className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs text-gray-400">
+                      <Globe className="h-3.5 w-3.5 text-cyan-400/80 shrink-0" aria-hidden />
+                      {HERO_VIDEO_LANGUAGE_PROMPT}
+                    </p>
+                    <HeroLanguagePills
+                      activeLocale={activeLocale}
+                      onSelect={selectLocale}
+                      highlightLocale={highlightLocale}
+                      size="sm"
+                    />
+                  </div>
+
+                  <div
+                    data-hero-control
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          togglePlay()
+                        }}
+                        className="text-white hover:text-cyan-400 transition p-1"
+                        aria-label={isPlaying ? 'Pause' : 'Play'}
+                      >
+                        {isPlaying ? (
+                          <Pause className="w-5 h-5" />
+                        ) : (
+                          <Play className="w-5 h-5" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleMute()
+                        }}
+                        className="text-white hover:text-cyan-400 transition p-1"
+                        aria-label={isMuted ? 'Unmute' : 'Mute'}
+                      >
+                        {isMuted ? (
+                          <VolumeX className="w-5 h-5" />
+                        ) : (
+                          <Volume2 className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-gray-500 hidden md:block max-w-xs text-right">
+                      {HERO_VIDEO_MULTILANG_HINT}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p className="relative z-10 mt-3 text-center text-sm text-gray-400">
+              From concept to publish-ready video — one automated studio
+            </p>
+          </motion.div>
+
+          {/* Copy below the video */}
+          <div className="max-w-4xl mx-auto text-center mt-12 lg:mt-14">
             <motion.p
               className="text-sm font-medium text-cyan-400/90 mb-4 tracking-wide"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
             >
               {HERO_COPY.pipelineLine}
             </motion.p>
 
-            <motion.h1 
+            <motion.h1
               className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight bg-gradient-to-r from-white via-gray-300 to-gray-400 text-transparent bg-clip-text"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              {HERO_COPY.headline}
-            </motion.h1>
-
-            <motion.p 
-              className="mt-6 max-w-2xl mx-auto text-lg text-gray-300"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
+              {HERO_COPY.headline}
+            </motion.h1>
+
+            <motion.p
+              className="mt-6 max-w-2xl mx-auto text-lg text-gray-300"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
               {HERO_COPY.subheadline}
             </motion.p>
-            
-            <motion.div 
+
+            <motion.div
               className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -142,122 +345,36 @@ export function HeroSection() {
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="w-full sm:w-auto"
-                onClick={() => scrollToSection('use-cases')}
+              <Button
+                variant="outline"
+                size="lg"
+                className={cn('w-full sm:w-auto')}
+                onClick={watchWhatsPossible}
               >
                 <Play className="mr-2 w-5 h-5" />
                 {HERO_COPY.ctaSecondary}
               </Button>
             </motion.div>
-          </div>
 
-          <motion.div
-            className="relative max-w-4xl mx-auto mt-16"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-          >
-            <div className="relative z-10 mb-4 flex flex-col items-center gap-3">
-              <p className="inline-flex items-center gap-2 text-sm text-gray-400">
-                <Globe className="h-4 w-4 text-cyan-400/80" aria-hidden />
-                {HERO_VIDEO_LANGUAGE_PROMPT}
-              </p>
-              <div
-                className="flex flex-wrap items-center justify-center gap-2"
-                role="group"
-                aria-label="Hero video language"
-              >
-                {HERO_VIDEO_LOCALES.map((locale) => {
-                  const isActive = activeLocale === locale.id
-                  const isDisabled = !locale.available
-                  return (
-                    <button
-                      key={locale.id}
-                      type="button"
-                      disabled={isDisabled}
-                      aria-pressed={isActive}
-                      aria-label={
-                        isDisabled
-                          ? `${locale.label} — coming soon`
-                          : `Play hero video in ${locale.label}`
-                      }
-                      onClick={() => selectLocale(locale.id)}
-                      className={cn(
-                        'rounded-full px-3 py-1.5 text-sm font-medium transition-colors border',
-                        isActive
-                          ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-100'
-                          : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20 hover:text-white',
-                        isDisabled &&
-                          'opacity-50 cursor-not-allowed hover:border-white/10 hover:text-gray-300'
-                      )}
-                    >
-                      <span className="hidden sm:inline">{locale.nativeLabel}</span>
-                      <span className="sm:hidden">{locale.label}</span>
-                      {isDisabled ? (
-                        <span className="ml-1.5 text-[10px] uppercase tracking-wide text-gray-500">
-                          Soon
-                        </span>
-                      ) : null}
-                    </button>
-                  )
-                })}
-              </div>
-              <p className="text-xs text-gray-500 max-w-lg text-center">
-                {HERO_VIDEO_MULTILANG_HINT}
-              </p>
-            </div>
-
-            <div className="pointer-events-none absolute -inset-4 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-3xl blur-2xl" />
-
-            <div 
-              ref={containerRef}
-              className="relative z-10 rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black group"
+            <motion.p
+              className="mt-6 text-sm text-gray-500"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
             >
-              <div className="relative aspect-video w-full h-full">
-                <video
-                  ref={videoRef}
-                  key={activeLocale}
-                  src={videoSrc}
-                  autoPlay
-                  loop
-                  muted={isMuted}
-                  playsInline
-                  preload="auto"
-                  className="absolute inset-0 h-full w-full object-cover"
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                />
-                
-                <div className="absolute inset-0 flex items-end opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                  <div className="w-full bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 flex items-center justify-between pointer-events-auto">
-                    <div className="flex items-center space-x-4">
-                      <button onClick={togglePlay} className="text-white hover:text-cyan-400 transition" aria-label={isPlaying ? "Pause" : "Play"}>
-                        {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-                      </button>
-                      <button onClick={toggleMute} className="text-white hover:text-cyan-400 transition" aria-label={isMuted ? "Unmute" : "Mute"}>
-                        {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
-                      </button>
-                    </div>
-                    <button onClick={toggleFullscreen} className="text-white hover:text-cyan-400 transition" aria-label="Fullscreen">
-                      <Maximize className="w-6 h-6" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <p className="relative z-10 mt-4 text-center text-base text-gray-400">
-              From concept to publish-ready video — one automated studio
-            </p>
-            <p className="relative z-10 mt-1 text-center text-sm text-gray-500">
-              Switch languages on the same pipeline — automated streams in Production, not manual re-edit cycles.
-            </p>
-          </motion.div>
+              Switch languages on the same pipeline — automated streams in Production, not manual
+              re-edit cycles.
+            </motion.p>
+          </div>
         </div>
       </section>
+
+      <HeroTheaterModal
+        open={isTheaterOpen}
+        onClose={() => setIsTheaterOpen(false)}
+        activeLocale={activeLocale}
+        onLocaleChange={selectLocale}
+      />
     </>
-  );
+  )
 }
