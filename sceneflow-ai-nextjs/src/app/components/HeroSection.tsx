@@ -5,15 +5,12 @@ import { Button } from '@/components/ui/Button'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import {
   Play,
-  ArrowRight,
   Pause,
   Volume2,
   VolumeX,
   Maximize2,
   Globe,
 } from 'lucide-react'
-import Link from 'next/link'
-import { getEarlyAccessUrl } from '@/lib/auth/postLoginRedirect'
 import { HERO_COPY } from '@/config/landing/valuePropCopy'
 import {
   DEFAULT_HERO_VIDEO_LOCALE,
@@ -29,7 +26,6 @@ import {
 } from '@/config/landing/heroVideoLocales'
 import { HeroLanguagePills } from '@/components/landing/HeroLanguagePills'
 import { HeroTheaterModal } from '@/components/landing/HeroTheaterModal'
-import { cn } from '@/lib/utils'
 
 function readStoredLocale(): HeroVideoLocaleId | null {
   if (typeof window === 'undefined') return null
@@ -327,27 +323,14 @@ export function HeroSection() {
                 {HERO_VIDEO_MULTILANG_HINT}
               </p>
             </div>
-
-            <p className="relative z-10 mt-3 text-center text-sm text-gray-400">
-              From concept to publish-ready video — one automated studio
-            </p>
           </motion.div>
 
           <div className="max-w-4xl mx-auto text-center mt-12 lg:mt-14">
-            <motion.p
-              className="text-sm font-medium text-cyan-400/90 mb-4 tracking-wide"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.15 }}
-            >
-              {HERO_COPY.pipelineLine}
-            </motion.p>
-
             <motion.h1
               className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter leading-tight bg-gradient-to-r from-white via-gray-300 to-gray-400 text-transparent bg-clip-text"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              transition={{ duration: 0.8, delay: 0.15 }}
             >
               {HERO_COPY.headline}
             </motion.h1>
@@ -356,43 +339,22 @@ export function HeroSection() {
               className="mt-6 max-w-2xl mx-auto text-lg text-gray-300"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
+              transition={{ duration: 0.8, delay: 0.25 }}
             >
               {HERO_COPY.subheadline}
             </motion.p>
 
             <motion.div
-              className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+              className="mt-10 flex justify-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
+              transition={{ duration: 0.8, delay: 0.35 }}
             >
-              <Link href={getEarlyAccessUrl()} className="w-full sm:w-auto">
-                <Button size="lg" className="w-full sm:w-auto">
-                  {HERO_COPY.ctaPrimary}
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
-              <Button
-                variant="outline"
-                size="lg"
-                className={cn('w-full sm:w-auto')}
-                onClick={watchWhatsPossible}
-              >
+              <Button size="lg" className="w-full sm:w-auto" onClick={watchWhatsPossible}>
                 <Play className="mr-2 w-5 h-5" />
                 {HERO_COPY.ctaSecondary}
               </Button>
             </motion.div>
-
-            <motion.p
-              className="mt-6 text-sm text-gray-500"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-            >
-              Switch languages on the same pipeline — automated streams in Production, not manual
-              re-edit cycles.
-            </motion.p>
           </div>
         </div>
       </section>

@@ -6,8 +6,6 @@ export const HERO_COPY = {
   headline: 'Make professional video without a production team or a dozen apps.',
   subheadline:
     'One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.',
-  pipelineLine: 'Blueprint → Production → Final Cut → Premiere',
-  ctaPrimary: 'Test the Full Pipeline — $9',
   ctaSecondary: "Watch the 'What's Possible'",
 } as const
 
