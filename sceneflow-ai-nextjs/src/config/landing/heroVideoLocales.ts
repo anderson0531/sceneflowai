@@ -58,7 +58,7 @@ export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = [
     label: 'Arabic',
     nativeLabel: 'العربية',
     src: heroSrc('landing/hero/sceneflow-hero-ar.mp4'),
-    available: false,
+    available: true,
   },
 ]
 
