@@ -205,7 +205,7 @@ export function HeroSection() {
               }}
               role="button"
               tabIndex={0}
-              aria-label="Expand hero video to theater mode with sound"
+              aria-label="Expand hero video to fullscreen with sound"
             >
               <div className="relative aspect-video w-full h-full">
                 <video
@@ -264,10 +264,10 @@ export function HeroSection() {
                     openTheater()
                   }}
                   className="absolute top-3 right-3 z-10 flex items-center gap-1.5 rounded-lg bg-black/50 border border-white/15 px-2.5 py-1.5 text-xs font-medium text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors"
-                  aria-label="Open theater mode"
+                  aria-label="Open fullscreen video"
                 >
                   <Maximize2 className="h-3.5 w-3.5" aria-hidden />
-                  <span className="hidden sm:inline">Theater</span>
+                  <span className="hidden sm:inline">Fullscreen</span>
                 </button>
 
                 <div
@@ -363,7 +363,6 @@ export function HeroSection() {
         open={isTheaterOpen}
         onClose={closeTheater}
         activeLocale={activeLocale}
-        onLocaleChange={selectLocale}
       />
     </>
   )
