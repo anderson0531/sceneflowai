@@ -51,7 +51,7 @@ export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = [
     label: 'Chinese',
     nativeLabel: '中文',
     src: heroSrc('landing/hero/sceneflow-hero-zh.mp4'),
-    available: false,
+    available: true,
   },
   {
     id: 'ar',
