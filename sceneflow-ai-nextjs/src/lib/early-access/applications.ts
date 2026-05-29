@@ -1,5 +1,6 @@
 import { list, put } from '@vercel/blob'
 import type { EapAiAssessment } from '@/lib/early-access/aiQualification'
+import { fetchPrivateBlobJson, getPrivateBlobToken } from '@/lib/early-access/privateBlob'
 
 export type EapApplicationStatus = 'new' | 'in_review' | 'approved' | 'waitlisted' | 'rejected'
 
@@ -83,9 +84,7 @@ function toSafeNumber(value: unknown, fallback = 0): number {
 }
 
 async function fetchJsonFromBlobUrl<T>(url: string): Promise<T | null> {
-  const response = await fetch(url, { cache: 'no-store' })
-  if (!response.ok) return null
-  return (await response.json()) as T
+  return fetchPrivateBlobJson<T>(url)
 }
 
 function normalizeStatus(value: unknown): EapApplicationStatus {
@@ -130,7 +129,7 @@ function aiRecommendationRank(status?: EapAiAssessment['recommendedStatus']): nu
 
 async function loadReviewsMap(): Promise<Map<string, EapReviewRecord>> {
   const map = new Map<string, EapReviewRecord>()
-  const listing = await list({ prefix: REVIEWS_PREFIX, limit: 1000 })
+  const listing = await list({ prefix: REVIEWS_PREFIX, limit: 1000, token: getPrivateBlobToken() })
   for (const blob of listing.blobs) {
     const review = await fetchJsonFromBlobUrl<EapReviewRecord>(blob.url)
     if (review?.applicationId) {
@@ -148,7 +147,7 @@ export async function listEapApplications(filters: EapListFilters = {}) {
   const status = filters.status || 'all'
 
   const [appsListing, reviewsMap] = await Promise.all([
-    list({ prefix: APPLICATIONS_PREFIX, limit: 1000 }),
+    list({ prefix: APPLICATIONS_PREFIX, limit: 1000, token: getPrivateBlobToken() }),
     loadReviewsMap(),
   ])
 
@@ -222,8 +221,8 @@ export async function listEapApplications(filters: EapListFilters = {}) {
 export async function getEapApplication(applicationId: string) {
   const appBlobPath = `${APPLICATIONS_PREFIX}${applicationId}.json`
   const [appsListing, reviewListing] = await Promise.all([
-    list({ prefix: appBlobPath, limit: 1 }),
-    list({ prefix: reviewPath(applicationId), limit: 1 }),
+    list({ prefix: appBlobPath, limit: 1, token: getPrivateBlobToken() }),
+    list({ prefix: reviewPath(applicationId), limit: 1, token: getPrivateBlobToken() }),
   ])
 
   const appBlob = appsListing.blobs.find((b) => b.pathname === appBlobPath) || appsListing.blobs[0]
@@ -257,6 +256,7 @@ export async function upsertEapReview(applicationId: string, updates: Partial<Ea
     access: 'private',
     addRandomSuffix: false,
     contentType: 'application/json; charset=utf-8',
+    token: getPrivateBlobToken(),
   })
 
   return { application: existing.application, review: merged }
@@ -298,7 +298,7 @@ export async function findEapApplicationByEmail(rawEmail: string) {
   if (!email) return null
 
   const [appsListing, reviewsMap] = await Promise.all([
-    list({ prefix: APPLICATIONS_PREFIX, limit: 1000 }),
+    list({ prefix: APPLICATIONS_PREFIX, limit: 1000, token: getPrivateBlobToken() }),
     loadReviewsMap(),
   ])
 

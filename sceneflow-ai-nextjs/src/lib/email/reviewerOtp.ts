@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import { list, put } from '@vercel/blob'
+import { fetchPrivateBlobJson, getPrivateBlobToken } from '@/lib/early-access/privateBlob'
 
 const OTP_EXPIRES_MS = 10 * 60 * 1000
 const VERIFIED_TOKEN_EXPIRES_MS = 30 * 60 * 1000
@@ -48,13 +49,11 @@ function generateOtpCode(): string {
 
 async function readOtpRecord(email: string): Promise<OtpRecord | null> {
   const path = otpPath(email)
-  const listing = await list({ prefix: path, limit: 1 })
+  const listing = await list({ prefix: path, limit: 1, token: getPrivateBlobToken() })
   const blob = listing.blobs.find((item) => item.pathname === path) || listing.blobs[0]
   if (!blob?.url) return null
 
-  const response = await fetch(blob.url, { cache: 'no-store' })
-  if (!response.ok) return null
-  return (await response.json()) as OtpRecord
+  return fetchPrivateBlobJson<OtpRecord>(blob.url)
 }
 
 async function writeOtpRecord(email: string, record: OtpRecord): Promise<void> {
@@ -62,6 +61,7 @@ async function writeOtpRecord(email: string, record: OtpRecord): Promise<void> {
     access: 'private',
     addRandomSuffix: false,
     contentType: 'application/json; charset=utf-8',
+    token: getPrivateBlobToken(),
   })
 }
 

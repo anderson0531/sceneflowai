@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import { list } from '@vercel/blob'
 import { getAppBaseUrl } from '@/lib/email/resendClient'
+import { fetchPrivateBlobJson, getPrivateBlobToken } from '@/lib/early-access/privateBlob'
 import type { EapReviewRecord } from '@/lib/early-access/applications'
 import { getEapApplication } from '@/lib/early-access/applications'
 
@@ -35,13 +36,11 @@ export function isInviteRedeemed(review: EapReviewRecord): boolean {
 }
 
 async function loadAllReviewsWithInvites(): Promise<EapReviewRecord[]> {
-  const listing = await list({ prefix: 'early-access/reviews/', limit: 1000 })
+  const listing = await list({ prefix: 'early-access/reviews/', limit: 1000, token: getPrivateBlobToken() })
   const reviews: EapReviewRecord[] = []
 
   for (const blob of listing.blobs) {
-    const response = await fetch(blob.url, { cache: 'no-store' })
-    if (!response.ok) continue
-    const review = (await response.json()) as EapReviewRecord
+    const review = await fetchPrivateBlobJson<EapReviewRecord>(blob.url)
     if (review?.inviteTokenHash) reviews.push(review)
   }
 

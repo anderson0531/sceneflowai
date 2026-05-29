@@ -3,6 +3,7 @@ import { put } from '@vercel/blob'
 import { consumeVerifiedEmailToken } from '@/lib/early-access/otp'
 import { findEapApplicationByEmail, upsertEapReview } from '@/lib/early-access/applications'
 import { sendApplicationReceivedEmail } from '@/lib/email/templates/eap'
+import { getPrivateBlobToken } from '@/lib/early-access/privateBlob'
 
 export const runtime = 'nodejs'
 
@@ -128,6 +129,7 @@ export async function POST(request: NextRequest) {
       access: 'private',
       contentType: 'application/json; charset=utf-8',
       addRandomSuffix: false,
+      token: getPrivateBlobToken(),
     })
 
     await upsertEapReview(applicationId, { status: 'new' })
