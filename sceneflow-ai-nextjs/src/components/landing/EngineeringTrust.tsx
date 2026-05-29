@@ -121,12 +121,12 @@ export function EngineeringTrust() {
                   
                   {/* Title & Description */}
                   <h3 className="text-xl font-bold text-white mb-2">{pillar.title}</h3>
-                  <p className="text-gray-400 text-sm mb-4 leading-relaxed">{pillar.description}</p>
+                  <p className="text-gray-400 text-base mb-4 leading-relaxed">{pillar.description}</p>
                   
                   {/* Highlights */}
                   <ul className="space-y-2">
                     {pillar.highlights.map((highlight, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm">
+                      <li key={idx} className="flex items-center gap-2 text-base">
                         <CheckCircle2 className={`w-4 h-4 ${pillar.iconColor} flex-shrink-0`} />
                         <span className="text-gray-300">{highlight}</span>
                       </li>
@@ -153,7 +153,7 @@ export function EngineeringTrust() {
                 <div key={metric.label} className="text-center">
                   <MetricIcon className="w-6 h-6 text-cyan-400 mx-auto mb-2" />
                   <div className="text-2xl sm:text-3xl font-bold text-white mb-1">{metric.value}</div>
-                  <div className="text-sm text-gray-400">{metric.label}</div>
+                  <div className="text-base text-gray-400">{metric.label}</div>
                 </div>
               );
             })}
@@ -175,7 +175,7 @@ export function EngineeringTrust() {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-white">Why Google Vertex AI?</h3>
-                <p className="text-sm text-gray-400">The technical moat that matters</p>
+                <p className="text-base text-gray-400">The technical moat that matters</p>
               </div>
             </div>
             
@@ -188,7 +188,7 @@ export function EngineeringTrust() {
                   </div>
                   <h4 className="font-semibold text-white">Data Privacy</h4>
                 </div>
-                <p className="text-sm text-gray-400">
+                <p className="text-base text-gray-400">
                   Your scripts and creative assets are <span className="text-emerald-400 font-medium">not used to train shared models</span>, helping protect your IP and client work.
                 </p>
               </div>
@@ -201,7 +201,7 @@ export function EngineeringTrust() {
                   </div>
                   <h4 className="font-semibold text-white">Built for Reliable Throughput</h4>
                 </div>
-                <p className="text-sm text-gray-400">
+                <p className="text-base text-gray-400">
                   Production-oriented infrastructure helps maintain stable generation workflows during high-demand cycles.
                 </p>
               </div>
@@ -214,7 +214,7 @@ export function EngineeringTrust() {
                   </div>
                   <h4 className="font-semibold text-white">Reference-Aware Consistency</h4>
                 </div>
-                <p className="text-sm text-gray-400">
+                <p className="text-base text-gray-400">
                   SceneFlow uses reference-aware generation to improve consistency across characters, locations, and props from scene to scene.
                 </p>
               </div>
@@ -238,11 +238,11 @@ export function EngineeringTrust() {
               height={24}
               className="opacity-90"
             />
-            <span className="text-gray-300 text-sm">
+            <span className="text-gray-300 text-base">
               Powered by <span className="text-white font-medium">Google Cloud</span> with Vertex AI, Cloud Storage, and translation tooling
             </span>
           </div>
-          <p className="text-gray-500 text-xs mt-3 max-w-lg mx-auto">
+          <p className="text-gray-500 text-sm mt-3 max-w-lg mx-auto">
             SceneFlow AI runs on scalable Google Cloud infrastructure designed for startup growth and enterprise expectations.
           </p>
         </motion.div>
@@ -255,7 +255,7 @@ export function EngineeringTrust() {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="text-center mt-8"
         >
-          <p className="text-gray-500 text-sm italic">
+          <p className="text-gray-500 text-base italic">
             — The SceneFlow Engineering Team
           </p>
         </motion.div>

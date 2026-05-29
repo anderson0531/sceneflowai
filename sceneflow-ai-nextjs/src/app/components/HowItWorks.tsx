@@ -78,8 +78,8 @@ export function HowItWorks() {
                 </div>
                 
                 <h3 className="text-base md:text-lg font-bold text-white mb-1">{step.title}</h3>
-                <p className="text-xs text-gray-500 mb-2">{step.subtitle}</p>
-                <p className="text-gray-400 text-xs md:text-sm leading-relaxed">{step.description}</p>
+                <p className="text-sm text-gray-500 mb-2">{step.subtitle}</p>
+                <p className="text-gray-400 text-sm md:text-base leading-relaxed">{step.description}</p>
               </div>
               
               {index < steps.length - 1 && (

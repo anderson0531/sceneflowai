@@ -99,7 +99,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
               <PlayCircle className="w-5 h-5" />
               <p className="text-sm font-semibold uppercase tracking-wider">Use Cases</p>
             </div>
-            <div className="text-[10px] text-slate-400 font-medium bg-slate-900 px-2 py-1 rounded border border-white/5">
+            <div className="text-xs text-slate-400 font-medium bg-slate-900 px-2 py-1 rounded border border-white/5">
               5 SECTORS
             </div>
           </div>
@@ -117,7 +117,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                       : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
                   }`}
                 >
-                  <p className="text-xs font-bold leading-tight">{cat.title}</p>
+                  <p className="text-sm font-bold leading-tight">{cat.title}</p>
                 </button>
               ))}
             </div>
@@ -134,7 +134,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                     className="space-y-4"
                   >
                     <div className="mb-4 hidden md:block">
-                      <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                      <h4 className="text-base font-bold text-white flex items-center gap-2">
                         <Video className="w-4 h-4 text-cyan-400" />
                         {cat.title}
                       </h4>
@@ -174,7 +174,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                           }`}
                         >
                           <div className="flex items-center justify-between mb-2">
-                            <span className={`text-xs font-semibold ${
+                            <span className={`text-sm font-semibold ${
                               hoveredExample?.catId === cat.id && hoveredExample?.index === idx
                                 ? 'text-cyan-300'
                                 : 'text-slate-300'
@@ -188,7 +188,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                             }`} />
                           </div>
                           
-                          <p className={`text-[11px] mt-auto transition-colors duration-200 leading-relaxed ${
+                          <p className={`text-sm mt-auto transition-colors duration-200 leading-relaxed ${
                              hoveredExample?.catId === cat.id && hoveredExample?.index === idx 
                               ? 'text-slate-200' 
                               : 'text-slate-400'
@@ -206,7 +206,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
 
           {/* Footer Instruction */}
           <div className="shrink-0 border-t border-white/10 bg-slate-950 p-2 text-center">
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+            <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">
               Select category to view production details
             </p>
           </div>

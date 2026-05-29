@@ -28,7 +28,7 @@ function MediaAssetLink({ href, label }: { href: string; label: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="mt-3 inline-flex items-center gap-1.5 text-xs text-cyan-400/90 hover:text-cyan-300 transition-colors break-all"
+      className="mt-3 inline-flex items-center gap-1.5 text-sm text-cyan-400/90 hover:text-cyan-300 transition-colors break-all"
       onClick={(e) => e.stopPropagation()}
     >
       <ExternalLink className="h-3.5 w-3.5 shrink-0" />
@@ -41,14 +41,14 @@ function FeatureBulletText({ text }: { text: string }) {
   const parts = text.split('—');
   if (parts.length > 1) {
     return (
-      <span className="text-sm text-slate-300">
+      <span className="text-base text-slate-300">
         <strong className="text-white font-medium">{parts[0].trim()}</strong>
         {' — '}
         {parts.slice(1).join('—').trim()}
       </span>
     );
   }
-  return <span className="text-sm text-slate-300">{text}</span>;
+  return <span className="text-base text-slate-300">{text}</span>;
 }
 
 const FEATURE_STORYBOARD_ITEMS: FeatureStoryboardItem[] = [
@@ -377,12 +377,12 @@ function StoryboardCard({
             <h3 className="text-xl md:text-2xl font-bold text-white">{item.title}</h3>
             {!isOpen && (
               <>
-                <p className="mt-1 text-sm text-slate-400 line-clamp-1 max-w-2xl">{item.description}</p>
+                <p className="mt-1 text-base text-slate-400 line-clamp-1 max-w-2xl">{item.description}</p>
                 <div className="mt-2 hidden sm:flex flex-wrap items-center gap-2 max-w-2xl">
                   {item.keyFeatures.slice(0, 2).map((feature) => (
                     <span
                       key={feature}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs text-slate-300"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-sm text-slate-300"
                     >
                       <CheckCircle2 className="h-3 w-3 text-purple-400 shrink-0" />
                       <span className="line-clamp-1">{feature.split('—')[0].trim()}</span>
@@ -394,7 +394,7 @@ function StoryboardCard({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-300 hover:text-cyan-200 transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-sm text-cyan-300 hover:text-cyan-200 transition-colors"
                     >
                       <Camera className="h-3 w-3 shrink-0" />
                       Screenshot
@@ -406,7 +406,7 @@ function StoryboardCard({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-xs text-violet-300 hover:text-violet-200 transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-sm text-violet-300 hover:text-violet-200 transition-colors"
                     >
                       <PlayCircle className="h-3 w-3 shrink-0" />
                       Video
@@ -477,7 +477,7 @@ function StoryboardCard({
                         </div>
                       </>
                     ) : (
-                      <div className="p-3 text-xs text-slate-400">
+                      <div className="p-3 text-sm text-slate-400">
                         {item.screenshotSlot}
                       </div>
                     )}
@@ -503,7 +503,7 @@ function StoryboardCard({
                         }}
                       />
                     ) : (
-                      <div className="p-3 text-xs text-slate-400">
+                      <div className="p-3 text-sm text-slate-400">
                         {item.videoSlot}
                       </div>
                     )}
@@ -515,7 +515,7 @@ function StoryboardCard({
               </div>
 
               <div className="mt-8 max-w-4xl">
-                <p className="text-xs font-medium uppercase tracking-wider text-cyan-300/90 mb-3">
+                <p className="text-sm font-medium uppercase tracking-wider text-cyan-300/90 mb-3">
                   Key features
                 </p>
                 <ul className="space-y-2.5">

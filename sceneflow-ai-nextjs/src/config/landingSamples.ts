@@ -16,7 +16,7 @@ export const LANDING_SAMPLE = {
   /** Public storyboard share slug, e.g. 'TheDawnOfSyntheticMinds'. Empty = placeholder UI. */
   storyboardShareSlug: 'TheWhiteHouseWaltzAControlledThaw',
   /** Blueprint collab share token from /blueprint/share/{token}. Empty = placeholder UI. */
-  blueprintShareToken: '',
+  blueprintShareToken: '50IuESZwELvHkNd4bTaULp1pli56zXWg',
   /** Public screening-room share slug (same project). Empty = hide full Screening Room link. */
   screeningRoomShareSlug: '',
   /** Express animatic used in Screening Room landing demo */

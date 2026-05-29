@@ -389,7 +389,7 @@ const PersonaCard = ({
                 <span className="text-red-400 text-sm font-semibold uppercase tracking-wide">The Challenge</span>
               </div>
               <h4 className="text-lg font-bold text-white mb-2">{persona.challenge.title}</h4>
-              <p className="text-gray-400 text-sm leading-relaxed">{persona.challenge.description}</p>
+              <p className="text-gray-400 text-base leading-relaxed">{persona.challenge.description}</p>
             </div>
 
             {/* Solution */}
@@ -399,13 +399,13 @@ const PersonaCard = ({
                 <span className={`text-sm font-semibold uppercase tracking-wide ${persona.accentText}`}>The SceneFlow Solution</span>
               </div>
               <h4 className="text-lg font-bold text-white mb-2">{persona.solution.title}</h4>
-              <p className="text-gray-300 text-sm leading-relaxed mb-4">{persona.solution.description}</p>
+              <p className="text-gray-300 text-base leading-relaxed mb-4">{persona.solution.description}</p>
               
               <div className="space-y-2">
                 {persona.solution.features.map((feature, idx) => (
                   <div key={idx} className="flex items-start gap-2">
                     <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${persona.accentCheck}`} />
-                    <span className="text-sm text-gray-300">
+                    <span className="text-base text-gray-300">
                       {feature.split('—').map((part, i) => 
                         i === 0 ? <strong key={i} className="text-white">{part}</strong> : <span key={i}>—{part}</span>
                       )}
@@ -423,15 +423,15 @@ const PersonaCard = ({
               </div>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
-                  <span className="text-[10px] text-gray-500 block mb-1">Before</span>
-                  <span className="text-sm font-bold text-red-400">{persona.beforeAfter.before}</span>
+                  <span className="text-xs text-gray-500 block mb-1">Before</span>
+                  <span className="text-base font-bold text-red-400">{persona.beforeAfter.before}</span>
                 </div>
                 <div className="p-2 flex items-center justify-center">
                   <span className="text-gray-600">→</span>
                 </div>
                 <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                  <span className="text-[10px] text-gray-500 block mb-1">After</span>
-                  <span className="text-sm font-bold text-emerald-400">{persona.beforeAfter.after}</span>
+                  <span className="text-xs text-gray-500 block mb-1">After</span>
+                  <span className="text-base font-bold text-emerald-400">{persona.beforeAfter.after}</span>
                 </div>
               </div>
             </div>
@@ -466,7 +466,7 @@ const PersonaCard = ({
                   <Target className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm text-purple-300 font-medium mb-1">Frame-Anchored Continuity</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-sm text-gray-400">
                       SceneFlow is the only tool that allows <span className="text-purple-400 font-semibold">Frame-Anchored</span> continuity, ensuring your client's product or character remains identical across every scene segment.
                     </p>
                   </div>
@@ -558,7 +558,7 @@ export default function UseCasesSection() {
           transition={{ duration: 0.6, delay: 0.1 }}
         >
           {activeAudiencePath && (
-            <p className="text-center text-sm text-gray-400 mb-4 max-w-2xl mx-auto">
+            <p className="text-center text-base text-gray-400 mb-4 max-w-2xl mx-auto">
               <span className="text-gray-300 font-medium">Examples for {activeAudiencePath.label}:</span>{' '}
               {activeAudiencePath.useCases.slice(0, 3).join(', ')}, and more.
             </p>
@@ -582,7 +582,7 @@ export default function UseCasesSection() {
                   key={persona.id}
                   onClick={() => setActivePersona(persona.id)}
                   className={`
-                    flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300
+                    flex items-center gap-2 px-4 py-2.5 rounded-xl text-base font-medium transition-all duration-300
                     ${activePersona === persona.id
                       ? `bg-gradient-to-r ${persona.gradient} text-white shadow-lg`
                       : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
@@ -636,10 +636,10 @@ export default function UseCasesSection() {
             </Link>
           )}
           {activeCta.subtext && (
-            <p className="text-gray-500 text-sm mt-3">{activeCta.subtext}</p>
+            <p className="text-gray-500 text-base mt-3">{activeCta.subtext}</p>
           )}
           {activePersona !== 'creator' && (
-            <p className="text-gray-600 text-xs mt-2">
+            <p className="text-gray-600 text-sm mt-2">
               Or{' '}
               <button
                 onClick={() => { window.location.href = getSignupUrlForTier('explorer') }}

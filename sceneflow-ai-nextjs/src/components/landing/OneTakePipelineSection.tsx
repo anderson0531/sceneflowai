@@ -30,7 +30,7 @@ export function OneTakePipelineSection() {
 
           <ol className="space-y-4">
             {ONE_TAKE_PIPELINE.steps.map((step, index) => (
-              <li key={index} className="flex gap-3 text-sm text-gray-300">
+              <li key={index} className="flex gap-3 text-base text-gray-300">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-violet-200 text-xs font-bold">
                   {index + 1}
                 </span>
@@ -39,7 +39,7 @@ export function OneTakePipelineSection() {
             ))}
           </ol>
 
-          <div className="mt-8 flex items-center gap-2 text-sm text-violet-300/90">
+          <div className="mt-8 flex items-center gap-2 text-base text-violet-300/90">
             <ArrowRight className="w-4 h-4" />
             <span>Fewer slot-machine regenerations — approve visuals before final video spend</span>
           </div>

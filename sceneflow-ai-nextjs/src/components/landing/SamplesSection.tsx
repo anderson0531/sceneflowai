@@ -127,7 +127,7 @@ export function SamplesSection() {
             feedback, playable storyboard approval, and Screening Room reactions on the Express
             animatic — all on one sample project before you sign up.
           </p>
-          <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 border border-white/10 text-sm text-slate-300">
+          <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 border border-white/10 text-base text-slate-300">
             <Globe className="w-4 h-4 text-cyan-400" />
             Sample: <span className="font-medium text-white">{projectTitle}</span>
           </div>
@@ -151,7 +151,7 @@ export function SamplesSection() {
                   aria-controls="sample-media-pane"
                   onClick={() => setActiveTab(id)}
                   className={cn(
-                    'flex-1 py-2.5 px-2 sm:px-4 text-xs sm:text-sm font-medium rounded-lg transition-colors capitalize',
+                    'flex-1 py-2.5 px-2 sm:px-4 text-sm sm:text-base font-medium rounded-lg transition-colors capitalize',
                     tabActiveClasses(accent, isActive)
                   )}
                 >
@@ -184,7 +184,7 @@ export function SamplesSection() {
                   {activeStep.title}
                 </h3>
               </div>
-              <p className="text-sm text-slate-400 leading-relaxed">{activeStep.caption}</p>
+              <p className="text-base text-slate-400 leading-relaxed">{activeStep.caption}</p>
             </div>
           </motion.div>
 
@@ -206,7 +206,7 @@ export function SamplesSection() {
         >
           <ul className="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-8">
             {WORKFLOW_BULLETS.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-center gap-2 text-sm text-slate-400">
+              <li key={text} className="flex items-center gap-2 text-base text-slate-400">
                 <Icon className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                 {text}
               </li>
@@ -219,13 +219,13 @@ export function SamplesSection() {
                 href={blueprintHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors"
+                className="inline-flex items-center gap-2 text-base font-medium text-purple-400 hover:text-purple-300 transition-colors"
               >
                 Open Blueprint review
                 <ExternalLink className="w-4 h-4" />
               </Link>
             ) : (
-              <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+              <span className="inline-flex items-center gap-2 text-base text-slate-500">
                 Blueprint link — set blueprintShareToken
                 <ArrowRight className="w-4 h-4" />
               </span>
@@ -235,13 +235,13 @@ export function SamplesSection() {
                 href={storyboardHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+                className="inline-flex items-center gap-2 text-base font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
               >
                 Open interactive storyboard
                 <ExternalLink className="w-4 h-4" />
               </Link>
             ) : (
-              <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+              <span className="inline-flex items-center gap-2 text-base text-slate-500">
                 Storyboard link unavailable
                 <ArrowRight className="w-4 h-4" />
               </span>
@@ -251,13 +251,13 @@ export function SamplesSection() {
                 href={screeningHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
+                className="inline-flex items-center gap-2 text-base font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
               >
                 Open Screening Room
                 <ExternalLink className="w-4 h-4" />
               </Link>
             ) : (
-              <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+              <span className="inline-flex items-center gap-2 text-base text-slate-500">
                 Screening Room link — set screeningRoomShareSlug
                 <MessageSquare className="w-4 h-4" />
               </span>

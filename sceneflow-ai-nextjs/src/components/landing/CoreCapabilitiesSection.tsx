@@ -47,7 +47,7 @@ export function CoreCapabilitiesSection() {
                   <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-slate-900 border border-white/10 flex items-center justify-center group-hover:border-emerald-500/30 transition-colors">
                     <item.icon className="w-4 h-4 text-emerald-400" />
                   </div>
-                  <span className="text-sm font-medium">{item.text}</span>
+                  <span className="text-base font-medium">{item.text}</span>
                 </li>
               ))}
             </ul>
@@ -108,11 +108,11 @@ export function CoreCapabilitiesSection() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <item.icon className="w-4 h-4 text-cyan-400" />
-                      <h4 className="font-bold text-white text-sm">{item.title}</h4>
+                      <h4 className="font-bold text-white text-base">{item.title}</h4>
                     </div>
-                    <span className="text-[10px] font-bold text-cyan-500 uppercase tracking-widest">{item.time}</span>
+                    <span className="text-xs font-bold text-cyan-500 uppercase tracking-widest">{item.time}</span>
                   </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">{item.desc}</p>
+                  <p className="text-sm text-slate-400 leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>

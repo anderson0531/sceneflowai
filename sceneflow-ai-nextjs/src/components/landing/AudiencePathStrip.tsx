@@ -26,7 +26,7 @@ export function AudiencePathStrip() {
     <section className="py-10 bg-slate-950 border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.p
-          className="text-center text-sm font-medium text-gray-400 mb-6"
+          className="text-center text-base font-medium text-gray-400 mb-6"
           initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -52,20 +52,20 @@ export function AudiencePathStrip() {
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/20 border border-white/10 flex items-center justify-center">
                     <Icon className="w-4 h-4 text-purple-300" />
                   </div>
-                  <span className="text-sm font-semibold text-white">{path.label}</span>
+                  <span className="text-base font-semibold text-white">{path.label}</span>
                 </div>
-                <p className="text-xs text-gray-400 leading-relaxed">{path.outcome}</p>
-                <ul className="mt-3 flex flex-wrap gap-1.5" aria-label={`Use cases for ${path.label}`}>
+                <p className="text-sm text-gray-400 leading-relaxed">{path.outcome}</p>
+                <ul className="mt-3 flex flex-wrap gap-2" aria-label={`Use cases for ${path.label}`}>
                   {path.useCases.map((useCase) => (
                     <li
                       key={useCase}
-                      className="px-2 py-0.5 rounded-md text-[10px] leading-snug text-gray-300 bg-slate-800/80 border border-white/10"
+                      className="px-2.5 py-1 rounded-md text-xs sm:text-sm leading-snug text-gray-300 bg-slate-800/80 border border-white/10"
                     >
                       {useCase}
                     </li>
                   ))}
                 </ul>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-purple-400 group-hover:text-purple-300">
+                <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-purple-400 group-hover:text-purple-300">
                   See examples
                   <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                 </span>

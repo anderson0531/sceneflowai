@@ -35,16 +35,16 @@ export function InstitutionalRoiSection() {
                     : 'bg-emerald-500/5 border-emerald-500/20'
                 }`}
               >
-                <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">{row.label}</p>
+                <p className="text-sm uppercase tracking-wide text-gray-500 mb-2">{row.label}</p>
                 <div className="flex flex-wrap gap-6">
                   <div>
-                    <p className="text-[10px] text-gray-500 mb-0.5">Typical cost</p>
+                    <p className="text-xs text-gray-500 mb-0.5">Typical cost</p>
                     <p className={`text-lg font-bold ${idx === 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                       {row.cost}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-500 mb-0.5">Timeline</p>
+                    <p className="text-xs text-gray-500 mb-0.5">Timeline</p>
                     <p className={`text-lg font-bold ${idx === 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                       {row.timeline}
                     </p>
@@ -56,7 +56,7 @@ export function InstitutionalRoiSection() {
 
           <ul className="space-y-2 mb-8">
             {INSTITUTIONAL_ROI.bullets.map((bullet) => (
-              <li key={bullet} className="flex items-start gap-2 text-sm text-gray-300">
+              <li key={bullet} className="flex items-start gap-2 text-base text-gray-300">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 {bullet}
               </li>

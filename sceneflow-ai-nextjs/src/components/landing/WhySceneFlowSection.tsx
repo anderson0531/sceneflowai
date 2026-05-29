@@ -19,7 +19,7 @@ export function WhySceneFlowSection() {
         </motion.div>
 
         <div className="rounded-2xl border border-white/10 overflow-hidden">
-          <div className="hidden sm:grid sm:grid-cols-2 bg-slate-900/80 border-b border-white/10 text-xs font-semibold uppercase tracking-wider text-gray-500">
+          <div className="hidden sm:grid sm:grid-cols-2 bg-slate-900/80 border-b border-white/10 text-sm font-semibold uppercase tracking-wider text-gray-500">
             <div className="px-5 py-3">Typical clip-generation tools</div>
             <div className="px-5 py-3 text-cyan-400/90">SceneFlow bundles</div>
           </div>
@@ -32,10 +32,10 @@ export function WhySceneFlowSection() {
               transition={{ delay: index * 0.05 }}
               className="grid sm:grid-cols-2 border-b border-white/5 last:border-b-0"
             >
-              <div className="px-5 py-4 text-sm text-gray-400 border-b sm:border-b-0 sm:border-r border-white/5">
+              <div className="px-5 py-4 text-base text-gray-400 border-b sm:border-b-0 sm:border-r border-white/5">
                 {row.them}
               </div>
-              <div className="px-5 py-4 text-sm text-gray-200 flex gap-2">
+              <div className="px-5 py-4 text-base text-gray-200 flex gap-2">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>{row.us}</span>
               </div>

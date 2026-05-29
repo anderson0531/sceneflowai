@@ -32,7 +32,7 @@ export default function SlotMachineSection() {
               className="w-full h-auto object-cover"
             />
           </motion.div>
-          <p className="mt-4 text-center text-xs text-gray-500 flex items-center justify-center gap-1.5">
+          <p className="mt-4 text-center text-sm text-gray-500 flex items-center justify-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-cyan-500/70" />
             One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs
           </p>

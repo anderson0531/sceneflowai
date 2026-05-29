@@ -152,7 +152,7 @@ export function HeroSection() {
               </div>
             </div>
 
-            <p className="mt-4 text-center text-sm text-gray-400">
+            <p className="mt-4 text-center text-base text-gray-400">
               From concept to publish-ready video — one automated studio
             </p>
           </motion.div>
