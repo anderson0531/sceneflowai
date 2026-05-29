@@ -7,7 +7,7 @@
 export const PUBLIC_ROUTES = ['/', '/login', '/early-access', '/pricing', '/terms', '/privacy', '/refunds', '/trust-safety', '/contact'] as const;
 
 // Prefix match routes (no navigation for any path starting with these)
-export const PUBLIC_ROUTE_PREFIXES = ['/c/', '/collaborate/', '/share/', '/s/', '/blueprint/share/', '/embed/'] as const;
+export const PUBLIC_ROUTE_PREFIXES = ['/c/', '/collaborate/', '/share/', '/s/', '/blueprint/share/', '/embed/', '/early-access/invite/'] as const;
 
 // Known private app route prefixes (for identifying root-level branded links)
 const APP_ROUTES = [

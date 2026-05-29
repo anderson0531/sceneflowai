@@ -66,32 +66,8 @@ async function writeOtpRecord(email: string, record: OtpRecord): Promise<void> {
 }
 
 async function sendOtpEmail(email: string, code: string): Promise<void> {
-  const resendApiKey = process.env.RESEND_API_KEY
-  const resendFrom = process.env.RESEND_FROM_EMAIL
-
-  if (!resendApiKey || !resendFrom) {
-    throw new Error('Email delivery is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL.')
-  }
-
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: resendFrom,
-      to: [normalizeEmail(email)],
-      subject: 'Your SceneFlow Early Access verification code',
-      text: `Your verification code is ${code}. It expires in 10 minutes.`,
-      html: `<p>Your verification code is <strong>${code}</strong>.</p><p>This code expires in 10 minutes.</p>`,
-    }),
-  })
-
-  if (!response.ok) {
-    const errorBody = await response.text()
-    throw new Error(`Failed to send verification email: ${errorBody}`)
-  }
+  const { sendEapOtpEmail } = await import('@/lib/email/templates/eap')
+  await sendEapOtpEmail(normalizeEmail(email), code)
 }
 
 export async function requestEmailOtp(rawEmail: string): Promise<void> {

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
 import { consumeVerifiedEmailToken } from '@/lib/early-access/otp'
+import { findEapApplicationByEmail, upsertEapReview } from '@/lib/early-access/applications'
+import { sendApplicationReceivedEmail } from '@/lib/email/templates/eap'
 
 export const runtime = 'nodejs'
 
@@ -99,6 +101,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email verification is invalid or expired. Verify again and retry.' }, { status: 400 })
     }
 
+    const duplicate = await findEapApplicationByEmail(payload.email)
+    if (duplicate) {
+      return NextResponse.json(
+        {
+          error: 'An application with this email is already in progress or approved. Check your inbox for updates.',
+        },
+        { status: 409 }
+      )
+    }
+
     const submittedAt = new Date().toISOString()
     const applicationId = `${Date.now()}-${slugify(payload.organizationName || payload.fullName)}`
     const blobPath = `early-access/applications/${applicationId}.json`
@@ -117,6 +129,17 @@ export async function POST(request: NextRequest) {
       contentType: 'application/json; charset=utf-8',
       addRandomSuffix: false,
     })
+
+    await upsertEapReview(applicationId, { status: 'new' })
+
+    try {
+      await sendApplicationReceivedEmail(payload.email, {
+        fullName: payload.fullName,
+        applicationId,
+      })
+    } catch (emailError) {
+      console.error('[Early Access Apply] Confirmation email failed:', emailError)
+    }
 
     return NextResponse.json({ success: true, applicationId })
   } catch (error: any) {

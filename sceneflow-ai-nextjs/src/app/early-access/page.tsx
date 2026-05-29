@@ -1,9 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Send, CheckCircle2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Send, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
 
 type FormState = {
   fullName: string
@@ -43,6 +44,13 @@ const DEFAULT_FORM: FormState = {
   hasF2vExperience: false,
 }
 
+const WIZARD_STEPS = [
+  { id: 1, title: 'Director profile', subtitle: 'Who you are' },
+  { id: 2, title: 'Production scale', subtitle: 'Volume & fit' },
+  { id: 3, title: 'Feature testing', subtitle: 'Technical alignment' },
+  { id: 4, title: 'Creative challenge', subtitle: 'Your series vision' },
+]
+
 const MILESTONES = [
   'July 15: Application Window Closes',
   'July 22: Selection Notifications & Onboarding Materials Sent',
@@ -59,6 +67,8 @@ const WHAT_YOU_WILL_TEST = [
 
 export default function EarlyAccessPage() {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM)
+  const [currentStep, setCurrentStep] = useState(0)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submittedId, setSubmittedId] = useState<string | null>(null)
@@ -77,6 +87,11 @@ export default function EarlyAccessPage() {
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
+    setFieldErrors((prev) => {
+      const next = { ...prev }
+      delete next[key as string]
+      return next
+    })
   }
 
   const toggleArtStyle = (value: string) => {
@@ -87,26 +102,40 @@ export default function EarlyAccessPage() {
         artStyles: exists ? prev.artStyles.filter((s) => s !== value) : [...prev.artStyles, value],
       }
     })
+    setFieldErrors((prev) => {
+      const next = { ...prev }
+      delete next.artStyles
+      return next
+    })
   }
 
-  const validate = (): string | null => {
-    if (!form.fullName.trim()) return 'Full Name is required.'
-    if (!form.email.trim()) return 'Email is required.'
-    if (!form.countryOfOrigin.trim()) return 'Country of origin is required.'
-    if (!form.organizationName.trim()) return 'Organization/Studio Name is required.'
-    if (!form.primaryRole.trim()) return 'Primary Role is required.'
-    if (!form.distributionChannel.trim()) return 'Primary Distribution Channel is required.'
-    if (!form.monthlyVolume) return 'Current Monthly Video Volume is required.'
-    if (!form.bottleneck) return 'Biggest workflow bottleneck is required.'
-    if (form.artStyles.length === 0) return 'Select at least one Art Style.'
-    if (!form.audienceResonanceImportance) return 'Audience Resonance importance is required.'
-    if (!form.multiLanguageStatus) return 'Multi-language status is required.'
-    if (!form.gcpVertexComfort) return 'GCP/Vertex comfort level is required.'
-    if (!form.seriesConcept.trim()) return 'Series concept is required.'
-    if (conceptWordCount > 200) return 'Series concept must be 200 words or fewer.'
-    if (!form.weeklyFeedbackCommitment) return 'Feedback commitment selection is required.'
-    if (!otpVerified || !otpVerificationToken) return 'Please verify your email before submitting.'
-    return null
+  const validateStep = (step: number): Record<string, string> => {
+    const errors: Record<string, string> = {}
+    if (step === 0) {
+      if (!form.fullName.trim()) errors.fullName = 'Full name is required'
+      if (!form.email.trim() || !form.email.includes('@')) errors.email = 'Valid email is required'
+      if (!form.countryOfOrigin.trim()) errors.countryOfOrigin = 'Country is required'
+      if (!form.organizationName.trim()) errors.organizationName = 'Organization is required'
+      if (!form.primaryRole.trim()) errors.primaryRole = 'Role is required'
+      if (!form.distributionChannel.trim()) errors.distributionChannel = 'Distribution channel is required'
+      if (!otpVerified || !otpVerificationToken) errors.otp = 'Verify your email before continuing'
+    }
+    if (step === 1) {
+      if (!form.monthlyVolume) errors.monthlyVolume = 'Select monthly volume'
+      if (!form.bottleneck) errors.bottleneck = 'Select a bottleneck'
+      if (form.artStyles.length === 0) errors.artStyles = 'Select at least one art style'
+    }
+    if (step === 2) {
+      if (!form.audienceResonanceImportance) errors.audienceResonanceImportance = 'Required'
+      if (!form.multiLanguageStatus) errors.multiLanguageStatus = 'Required'
+      if (!form.gcpVertexComfort) errors.gcpVertexComfort = 'Required'
+    }
+    if (step === 3) {
+      if (!form.seriesConcept.trim()) errors.seriesConcept = 'Series concept is required'
+      if (conceptWordCount > 200) errors.seriesConcept = 'Must be 200 words or fewer'
+      if (!form.weeklyFeedbackCommitment) errors.weeklyFeedbackCommitment = 'Required'
+    }
+    return errors
   }
 
   const onEmailChanged = (value: string) => {
@@ -122,13 +151,11 @@ export default function EarlyAccessPage() {
   const requestOtp = async () => {
     setOtpError(null)
     setOtpMessage(null)
-
     const email = form.email.trim()
     if (!email || !email.includes('@')) {
       setOtpError('Enter a valid email before requesting a verification code.')
       return
     }
-
     setOtpRequesting(true)
     try {
       const res = await fetch('/api/early-access/otp/request', {
@@ -142,7 +169,7 @@ export default function EarlyAccessPage() {
         return
       }
       setOtpSent(true)
-      setOtpMessage('Verification code sent. Check your email inbox.')
+      setOtpMessage('Verification code sent. Check your inbox.')
     } catch {
       setOtpError('Network error while sending verification code.')
     } finally {
@@ -150,17 +177,12 @@ export default function EarlyAccessPage() {
     }
   }
 
-  const verifyOtp = async () => {
+  const verifyOtp = useCallback(async (codeOverride?: string) => {
     setOtpError(null)
     setOtpMessage(null)
-
     const email = form.email.trim()
-    const code = otpCode.trim()
-
-    if (!email || !code) {
-      setOtpError('Enter your email and verification code.')
-      return
-    }
+    const code = (codeOverride ?? otpCode).trim()
+    if (!email || code.length < 6) return
 
     setOtpVerifying(true)
     try {
@@ -176,32 +198,47 @@ export default function EarlyAccessPage() {
       }
       setOtpVerified(true)
       setOtpVerificationToken(data.verificationToken)
-      setOtpMessage('Email verified. You can now submit your application.')
+      setOtpMessage('Email verified.')
+      setFieldErrors((prev) => {
+        const next = { ...prev }
+        delete next.otp
+        return next
+      })
     } catch {
       setOtpError('Network error while verifying code.')
     } finally {
       setOtpVerifying(false)
     }
+  }, [form.email, otpCode])
+
+  useEffect(() => {
+    if (otpSent && otpCode.length === 6 && !otpVerified && !otpVerifying) {
+      verifyOtp(otpCode)
+    }
+  }, [otpCode, otpSent, otpVerified, otpVerifying, verifyOtp])
+
+  const goNext = () => {
+    const errors = validateStep(currentStep)
+    setFieldErrors(errors)
+    if (Object.keys(errors).length > 0) return
+    setCurrentStep((s) => Math.min(s + 1, WIZARD_STEPS.length - 1))
   }
+
+  const goBack = () => setCurrentStep((s) => Math.max(s - 1, 0))
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSubmitError(null)
-    const err = validate()
-    if (err) {
-      setSubmitError(err)
-      return
-    }
+    const errors = validateStep(3)
+    setFieldErrors(errors)
+    if (Object.keys(errors).length > 0) return
 
     setIsSubmitting(true)
     try {
       const res = await fetch('/api/early-access/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          otpVerificationToken,
-        }),
+        body: JSON.stringify({ ...form, otpVerificationToken }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -210,6 +247,7 @@ export default function EarlyAccessPage() {
       }
       setSubmittedId(data.applicationId || 'submitted')
       setForm(DEFAULT_FORM)
+      setCurrentStep(0)
       setOtpCode('')
       setOtpSent(false)
       setOtpVerified(false)
@@ -223,43 +261,35 @@ export default function EarlyAccessPage() {
     }
   }
 
+  const fieldError = (key: string) =>
+    fieldErrors[key] ? (
+      <p className="mt-1 text-xs text-red-400 flex items-center gap-1">
+        <AlertCircle className="w-3 h-3" /> {fieldErrors[key]}
+      </p>
+    ) : null
+
   return (
-    <main className="min-h-screen bg-[#121212] text-white">
+    <main className="min-h-screen bg-[#050A18] text-white">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <Link href="/" className="inline-flex items-center gap-2 text-sm text-cyan-300 hover:text-cyan-200">
           <ArrowLeft className="w-4 h-4" />
           Back to Landing
         </Link>
 
+        <div className="mt-6 flex justify-center">
+          <SceneFlowStudioBrand variant="landing" />
+        </div>
+
         <section className="mt-8 rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-slate-950 to-slate-900 p-6 sm:p-10">
           <p className="text-xs uppercase tracking-wider text-cyan-300">Summer of Production · August 2026 Cohort</p>
-          <h1 className="mt-3 text-4xl sm:text-5xl font-bold leading-tight">
-            Stop Generating. Start Architecting.
-          </h1>
+          <h1 className="mt-3 text-4xl sm:text-5xl font-bold leading-tight">Stop Generating. Start Architecting.</h1>
           <p className="mt-5 text-lg text-slate-300 max-w-3xl">
-            Join the SceneFlow Early Access Program. An elite cohort of creators shaping the future of automated,
-            consistent, and global-scale cinema. Starting August 2026.
+            Join the SceneFlow Early Access Program — an elite cohort shaping automated, consistent, global-scale cinema.
           </p>
-          <div className="mt-7 rounded-xl border border-slate-700 bg-slate-900/70 p-5">
-            <h2 className="text-xl font-semibold">The Vision</h2>
-            <p className="mt-3 text-slate-300">
-              The era of the single prompt is over. The future belongs to producers who maintain narrative integrity
-              across a series, localized for a global audience, with the push of a button.
-            </p>
-            <p className="mt-3 text-slate-300">
-              SceneFlow AI Studio is a complete production stack built on Google Cloud and Vertex AI. From audience
-              resonance analysis to 4K F2V generation via Veo 3.1, the workflow removes friction while keeping the
-              soul of the story in your hands.
-            </p>
-          </div>
         </section>
 
         <section className="mt-8 rounded-2xl border border-slate-700 bg-slate-900/60 p-6">
           <h3 className="text-2xl font-semibold">The August 2026 Cohort</h3>
-          <p className="mt-3 text-slate-300">
-            We are opening the studio to a limited number of Foundational Architects. As a member of the EAP, you will
-            help refine the logic of automated storytelling.
-          </p>
           <ul className="mt-4 space-y-2 text-slate-200 list-disc pl-6">
             {WHAT_YOU_WILL_TEST.map((item) => (
               <li key={item}>{item}</li>
@@ -274,16 +304,29 @@ export default function EarlyAccessPage() {
         </section>
 
         <section className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-6 sm:p-8">
-          <h2 className="text-2xl sm:text-3xl font-bold">SceneFlow AI Studio: Early Access Application</h2>
-          <p className="mt-2 text-slate-300">
-            The future of automated production starts with your vision.
-          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold">Early Access Application</h2>
+          <p className="mt-2 text-slate-300">Step {currentStep + 1} of {WIZARD_STEPS.length}: {WIZARD_STEPS[currentStep].title}</p>
+
+          <div className="mt-6 flex gap-2">
+            {WIZARD_STEPS.map((step, index) => (
+              <div key={step.id} className="flex-1">
+                <div
+                  className={`h-1.5 rounded-full ${
+                    index <= currentStep ? 'bg-cyan-400' : 'bg-slate-700'
+                  }`}
+                />
+                <p className={`mt-2 text-xs hidden sm:block ${index === currentStep ? 'text-cyan-300' : 'text-slate-500'}`}>
+                  {step.title}
+                </p>
+              </div>
+            ))}
+          </div>
 
           {submittedId && (
             <div className="mt-6 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4 text-emerald-200">
               <div className="flex items-center gap-2 font-medium">
                 <CheckCircle2 className="w-4 h-4" />
-                Application submitted successfully.
+                Application submitted — check your email for confirmation.
               </div>
               <p className="mt-1 text-sm">Application ID: {submittedId}</p>
             </div>
@@ -298,235 +341,211 @@ export default function EarlyAccessPage() {
             </div>
           )}
 
-          <form onSubmit={onSubmit} className="mt-8 space-y-8">
-            <div>
-              <h3 className="text-xl font-semibold">Part 1: The Director’s Profile</h3>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <label className="block">
-                  <span className="text-sm text-slate-300">Full Name *</span>
-                  <input className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} />
-                </label>
-                <label className="block">
-                  <span className="text-sm text-slate-300">Email *</span>
-                  <input
-                    type="email"
-                    className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2"
-                    value={form.email}
-                    onChange={(e) => onEmailChanged(e.target.value)}
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm text-slate-300">Country of Origin *</span>
-                  <input
-                    className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2"
-                    value={form.countryOfOrigin}
-                    onChange={(e) => update('countryOfOrigin', e.target.value)}
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm text-slate-300">Organization/Studio Name *</span>
-                  <input className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2" value={form.organizationName} onChange={(e) => update('organizationName', e.target.value)} />
-                </label>
-                <label className="block">
-                  <span className="text-sm text-slate-300">Current Primary Role *</span>
-                  <input className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2" value={form.primaryRole} onChange={(e) => update('primaryRole', e.target.value)} />
-                </label>
-                <label className="block">
-                  <span className="text-sm text-slate-300">Primary Distribution Channel *</span>
-                  <input className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2" value={form.distributionChannel} onChange={(e) => update('distributionChannel', e.target.value)} />
-                </label>
-              </div>
-              <div className="mt-4 rounded-lg border border-slate-700 bg-slate-900/70 p-4 space-y-3">
-                <p className="text-sm text-slate-200 font-medium">Email confirmation required before submit</p>
-                
-                {otpVerified ? (
-                  <div className="flex items-center gap-2 p-3 rounded-md bg-emerald-950/40 border border-emerald-500/30">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    <span className="text-sm text-emerald-200 font-medium">Email verified successfully.</span>
+          {!submittedId && (
+            <form onSubmit={onSubmit} className="mt-8 space-y-6">
+              {currentStep === 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">{WIZARD_STEPS[0].title}</h3>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="block">
+                      <span className="text-sm text-slate-300">Full Name *</span>
+                      <input className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} />
+                      {fieldError('fullName')}
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-slate-300">Email *</span>
+                      <input type="email" className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2" value={form.email} onChange={(e) => onEmailChanged(e.target.value)} />
+                      {fieldError('email')}
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-slate-300">Country of Origin *</span>
+                      <input className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2" value={form.countryOfOrigin} onChange={(e) => update('countryOfOrigin', e.target.value)} />
+                      {fieldError('countryOfOrigin')}
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-slate-300">Organization/Studio Name *</span>
+                      <input className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2" value={form.organizationName} onChange={(e) => update('organizationName', e.target.value)} />
+                      {fieldError('organizationName')}
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-slate-300">Current Primary Role *</span>
+                      <input className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2" value={form.primaryRole} onChange={(e) => update('primaryRole', e.target.value)} />
+                      {fieldError('primaryRole')}
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-slate-300">Primary Distribution Channel *</span>
+                      <input className="mt-1 w-full rounded-md bg-slate-800 border border-slate-600 p-2" value={form.distributionChannel} onChange={(e) => update('distributionChannel', e.target.value)} />
+                      {fieldError('distributionChannel')}
+                    </label>
                   </div>
-                ) : (
-                  <div className="flex flex-col space-y-2">
-                    {!otpSent ? (
-                      <div className="flex gap-2">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={requestOtp} 
-                          disabled={otpRequesting || !form.email || !form.email.includes('@')}
-                          className="w-full sm:w-auto"
-                        >
-                          {otpRequesting ? 'Sending...' : 'Send verification code'}
-                        </Button>
+
+                  <div className="rounded-lg border border-slate-700 bg-slate-900/70 p-4 space-y-3">
+                    <p className="text-sm text-slate-200 font-medium">Email verification</p>
+                    {otpVerified ? (
+                      <div className="flex items-center gap-2 p-3 rounded-md bg-emerald-950/40 border border-emerald-500/30">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                        <span className="text-sm text-emerald-200 font-medium">Email verified</span>
                       </div>
                     ) : (
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <input
-                          className="flex-1 rounded-md bg-slate-800 border border-cyan-500/50 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-cyan-500"
-                          placeholder="Enter 6-digit code"
-                          value={otpCode}
-                          onChange={(e) => {
-                            setOtpCode(e.target.value)
-                            if (e.target.value.length === 6 && !otpVerifying) {
-                              // Could auto-verify here, but wait for explicit action
-                            }
-                          }}
-                          maxLength={6}
-                        />
-                        <Button type="button" variant="default" onClick={verifyOtp} disabled={otpVerifying || otpCode.length < 6} className="bg-cyan-600 hover:bg-cyan-500 text-white">
-                          {otpVerifying ? 'Verifying...' : 'Verify code'}
-                        </Button>
-                        <Button type="button" variant="ghost" onClick={requestOtp} disabled={otpRequesting} className="text-slate-400">
-                          Resend
-                        </Button>
+                      <div className="space-y-2">
+                        {!otpSent ? (
+                          <Button type="button" variant="outline" onClick={requestOtp} disabled={otpRequesting || !form.email.includes('@')}>
+                            {otpRequesting ? 'Sending...' : 'Send verification code'}
+                          </Button>
+                        ) : (
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <input
+                              className="flex-1 rounded-md bg-slate-800 border border-cyan-500/50 p-2 text-sm tracking-widest"
+                              placeholder="6-digit code"
+                              value={otpCode}
+                              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                              maxLength={6}
+                              inputMode="numeric"
+                            />
+                            <Button type="button" variant="ghost" onClick={requestOtp} disabled={otpRequesting} className="text-slate-400">
+                              Resend
+                            </Button>
+                          </div>
+                        )}
+                        {otpVerifying && <p className="text-cyan-300 text-sm">Verifying...</p>}
+                        {otpMessage && <p className="text-cyan-300 text-sm">{otpMessage}</p>}
+                        {otpError && <p className="text-red-400 text-sm">{otpError}</p>}
+                        {fieldError('otp')}
                       </div>
                     )}
-                    
-                    {otpMessage && <p className="text-cyan-300 text-sm mt-2">{otpMessage}</p>}
-                    {otpError && <p className="text-red-400 text-sm mt-2 flex items-center gap-1.5"><AlertCircle className="w-4 h-4" /> {otpError}</p>}
                   </div>
+                </div>
+              )}
+
+              {currentStep === 1 && (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">{WIZARD_STEPS[1].title}</h3>
+                  <div>
+                    <p className="text-sm text-slate-300">Current Monthly Video Volume *</p>
+                    <div className="mt-2 space-y-2">
+                      {['1–5 videos', '5–20 videos', '20+ videos (High-volume automation candidate)'].map((v) => (
+                        <label key={v} className="flex items-center gap-2">
+                          <input type="radio" name="monthlyVolume" checked={form.monthlyVolume === v} onChange={() => update('monthlyVolume', v)} />
+                          <span>{v}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {fieldError('monthlyVolume')}
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-300">Biggest workflow bottleneck *</p>
+                    <div className="mt-2 space-y-2">
+                      {['Character/Location Consistency', 'Script-to-Screen Lead Time', 'Localization/Dubbing Costs', 'Asset Management across series'].map((v) => (
+                        <label key={v} className="flex items-center gap-2">
+                          <input type="radio" name="bottleneck" checked={form.bottleneck === v} onChange={() => update('bottleneck', v)} />
+                          <span>{v}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {fieldError('bottleneck')}
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-300">Art Styles (select all that apply) *</p>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      {['Realistic / Photorealistic', 'Pixar / 3D Render', 'Anime / Comic Book', 'Concept Art / Digital Art', 'Other'].map((v) => (
+                        <label key={v} className="flex items-center gap-2">
+                          <input type="checkbox" checked={form.artStyles.includes(v)} onChange={() => toggleArtStyle(v)} />
+                          <span>{v}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {form.artStyles.includes('Other') && (
+                      <input className="mt-2 w-full rounded-md bg-slate-800 border border-slate-600 p-2" placeholder="Other art style" value={form.artStyleOther} onChange={(e) => update('artStyleOther', e.target.value)} />
+                    )}
+                    {fieldError('artStyles')}
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 2 && (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">{WIZARD_STEPS[2].title}</h3>
+                  <label className="block">
+                    <span className="text-sm text-slate-300">Audience Resonance Analysis importance (1-5) *</span>
+                    <input type="range" min={1} max={5} value={form.audienceResonanceImportance} onChange={(e) => update('audienceResonanceImportance', e.target.value)} className="mt-2 w-full" />
+                    <span className="text-sm text-cyan-300">Selected: {form.audienceResonanceImportance}</span>
+                  </label>
+                  <div>
+                    <p className="text-sm text-slate-300">Do you currently produce in multiple languages? *</p>
+                    <div className="mt-2 space-y-2">
+                      {['Yes, we manually dub/sub.', 'Yes, we use basic AI translation.', 'No, but we want to scale globally using SceneFlow’s 75+ language engine.'].map((v) => (
+                        <label key={v} className="flex items-center gap-2">
+                          <input type="radio" name="multiLanguageStatus" checked={form.multiLanguageStatus === v} onChange={() => update('multiLanguageStatus', v)} />
+                          <span>{v}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {fieldError('multiLanguageStatus')}
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-300">Comfort with GCP/Vertex AI environment *</p>
+                    <div className="mt-2 space-y-2">
+                      {['Yes, we are already on Google Cloud.', 'No, but we are ready to migrate/integrate.'].map((v) => (
+                        <label key={v} className="flex items-center gap-2">
+                          <input type="radio" name="gcpVertexComfort" checked={form.gcpVertexComfort === v} onChange={() => update('gcpVertexComfort', v)} />
+                          <span>{v}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {fieldError('gcpVertexComfort')}
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 3 && (
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">{WIZARD_STEPS[3].title}</h3>
+                  <label className="block">
+                    <span className="text-sm text-slate-300">Describe a series concept you want to build (200 words max) *</span>
+                    <textarea className="mt-1 min-h-[140px] w-full rounded-md bg-slate-800 border border-slate-600 p-3" value={form.seriesConcept} onChange={(e) => update('seriesConcept', e.target.value)} />
+                    <span className={`text-sm ${conceptWordCount > 200 ? 'text-red-300' : 'text-slate-400'}`}>{conceptWordCount}/200 words</span>
+                    {fieldError('seriesConcept')}
+                  </label>
+                  <div>
+                    <p className="text-sm text-slate-300">Weekly feedback + monthly sync commitment *</p>
+                    <div className="mt-2 space-y-2">
+                      {['Yes, I want to shape the future of SceneFlow.', 'No, I just want to use the tool.'].map((v) => (
+                        <label key={v} className="flex items-center gap-2">
+                          <input type="radio" name="weeklyFeedbackCommitment" checked={form.weeklyFeedbackCommitment === v} onChange={() => update('weeklyFeedbackCommitment', v)} />
+                          <span>{v}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {fieldError('weeklyFeedbackCommitment')}
+                  </div>
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={form.hasF2vExperience} onChange={(e) => update('hasF2vExperience', e.target.checked)} />
+                    <span>We have prior F2V (Frame-to-Video) workflow experience.</span>
+                  </label>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-3 pt-2">
+                {currentStep > 0 && (
+                  <Button type="button" variant="outline" onClick={goBack}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                  </Button>
+                )}
+                {currentStep < WIZARD_STEPS.length - 1 ? (
+                  <Button type="button" onClick={goNext}>
+                    Continue
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                ) : (
+                  <Button type="submit" variant="primary" disabled={isSubmitting || !otpVerified}>
+                    {isSubmitting ? 'Submitting...' : 'Submit application'}
+                    <Send className="ml-2 w-4 h-4" />
+                  </Button>
                 )}
               </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold">Part 2: Production Scale & Technical Fit</h3>
-              <div className="mt-4 space-y-4">
-                <div>
-                  <p className="text-sm text-slate-300">Current Monthly Video Volume *</p>
-                  <div className="mt-2 space-y-2">
-                    {['1–5 videos', '5–20 videos', '20+ videos (High-volume automation candidate)'].map((v) => (
-                      <label key={v} className="flex items-center gap-2">
-                        <input type="radio" name="monthlyVolume" checked={form.monthlyVolume === v} onChange={() => update('monthlyVolume', v)} />
-                        <span>{v}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-300">Biggest workflow bottleneck *</p>
-                  <div className="mt-2 space-y-2">
-                    {['Character/Location Consistency', 'Script-to-Screen Lead Time', 'Localization/Dubbing Costs', 'Asset Management across series'].map((v) => (
-                      <label key={v} className="flex items-center gap-2">
-                        <input type="radio" name="bottleneck" checked={form.bottleneck === v} onChange={() => update('bottleneck', v)} />
-                        <span>{v}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-300">Art Styles (select all that apply) *</p>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    {['Realistic / Photorealistic', 'Pixar / 3D Render', 'Anime / Comic Book', 'Concept Art / Digital Art', 'Other'].map((v) => (
-                      <label key={v} className="flex items-center gap-2">
-                        <input type="checkbox" checked={form.artStyles.includes(v)} onChange={() => toggleArtStyle(v)} />
-                        <span>{v}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {form.artStyles.includes('Other') && (
-                    <input
-                      className="mt-2 w-full rounded-md bg-slate-800 border border-slate-600 p-2"
-                      placeholder="Other art style"
-                      value={form.artStyleOther}
-                      onChange={(e) => update('artStyleOther', e.target.value)}
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold">Part 3: Testing the Feature Set</h3>
-              <div className="mt-4 space-y-4">
-                <label className="block">
-                  <span className="text-sm text-slate-300">Audience Resonance Analysis importance (1-5) *</span>
-                  <input
-                    type="range"
-                    min={1}
-                    max={5}
-                    value={form.audienceResonanceImportance}
-                    onChange={(e) => update('audienceResonanceImportance', e.target.value)}
-                    className="mt-2 w-full"
-                  />
-                  <span className="text-sm text-cyan-300">Selected: {form.audienceResonanceImportance}</span>
-                </label>
-                <div>
-                  <p className="text-sm text-slate-300">Do you currently produce in multiple languages? *</p>
-                  <div className="mt-2 space-y-2">
-                    {[
-                      'Yes, we manually dub/sub.',
-                      'Yes, we use basic AI translation.',
-                      'No, but we want to scale globally using SceneFlow’s 75+ language engine.',
-                    ].map((v) => (
-                      <label key={v} className="flex items-center gap-2">
-                        <input type="radio" name="multiLanguageStatus" checked={form.multiLanguageStatus === v} onChange={() => update('multiLanguageStatus', v)} />
-                        <span>{v}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-300">Comfort with GCP/Vertex AI environment *</p>
-                  <div className="mt-2 space-y-2">
-                    {['Yes, we are already on Google Cloud.', 'No, but we are ready to migrate/integrate.'].map((v) => (
-                      <label key={v} className="flex items-center gap-2">
-                        <input type="radio" name="gcpVertexComfort" checked={form.gcpVertexComfort === v} onChange={() => update('gcpVertexComfort', v)} />
-                        <span>{v}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold">Part 4: The Creative Challenge</h3>
-              <div className="mt-4 space-y-4">
-                <label className="block">
-                  <span className="text-sm text-slate-300">Describe a series concept you want to build in SceneFlow (200 words max) *</span>
-                  <textarea
-                    className="mt-1 min-h-[140px] w-full rounded-md bg-slate-800 border border-slate-600 p-3"
-                    value={form.seriesConcept}
-                    onChange={(e) => update('seriesConcept', e.target.value)}
-                  />
-                  <span className={`text-sm ${conceptWordCount > 200 ? 'text-red-300' : 'text-slate-400'}`}>
-                    {conceptWordCount}/200 words
-                  </span>
-                </label>
-                <div>
-                  <p className="text-sm text-slate-300">
-                    We require one detailed feedback report per week and a 30-minute monthly sync. Can you commit? *
-                  </p>
-                  <div className="mt-2 space-y-2">
-                    {[
-                      'Yes, I want to shape the future of SceneFlow.',
-                      'No, I just want to use the tool.',
-                    ].map((v) => (
-                      <label key={v} className="flex items-center gap-2">
-                        <input type="radio" name="weeklyFeedbackCommitment" checked={form.weeklyFeedbackCommitment === v} onChange={() => update('weeklyFeedbackCommitment', v)} />
-                        <span>{v}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={form.hasF2vExperience}
-                    onChange={(e) => update('hasF2vExperience', e.target.checked)}
-                  />
-                  <span>We have prior F2V (Frame-to-Video) workflow experience.</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <Button type="submit" variant="primary" className="w-full sm:w-auto" disabled={isSubmitting || !otpVerified}>
-                {isSubmitting ? 'Submitting...' : 'Submit'}
-                <Send className="ml-2 w-4 h-4" />
-              </Button>
-            </div>
-          </form>
+            </form>
+          )}
         </section>
       </div>
     </main>

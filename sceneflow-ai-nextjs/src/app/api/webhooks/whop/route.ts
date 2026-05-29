@@ -23,6 +23,7 @@ interface WhopWebhookEvent {
 function extractMetadata(event: WhopWebhookEvent): {
   userId?: string
   tierName?: string
+  applicationId?: string
 } {
   const data = event.data || {}
   const metadata =
@@ -38,7 +39,11 @@ function extractMetadata(event: WhopWebhookEvent): {
     (metadata.tier_name as string | undefined) ||
     (metadata.tierName as string | undefined)
 
-  return { userId, tierName }
+  const applicationId =
+    (metadata.application_id as string | undefined) ||
+    (metadata.applicationId as string | undefined)
+
+  return { userId, tierName, applicationId }
 }
 
 function extractPlanId(event: WhopWebhookEvent): string | undefined {
@@ -71,7 +76,7 @@ async function fulfillExplorerPurchase(userId: string): Promise<void> {
 
 async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
   const eventType = event.type
-  const { userId: metadataUserId, tierName: metadataTierName } = extractMetadata(event)
+  const { userId: metadataUserId, tierName: metadataTierName, applicationId } = extractMetadata(event)
   const planId = extractPlanId(event)
   const resolvedTier =
     (metadataTierName ? normalizeTierName(metadataTierName) : null) ||
@@ -87,6 +92,7 @@ async function processWhopEvent(event: WhopWebhookEvent): Promise<void> {
     userId: metadataUserId,
     tier: resolvedTier,
     planId,
+    applicationId,
   })
 
   switch (eventType) {

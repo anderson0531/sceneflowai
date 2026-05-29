@@ -1,4 +1,5 @@
 import { list, put } from '@vercel/blob'
+import type { EapAiAssessment } from '@/lib/early-access/aiQualification'
 
 export type EapApplicationStatus = 'new' | 'in_review' | 'approved' | 'waitlisted' | 'rejected'
 
@@ -49,15 +50,25 @@ export interface EapReviewRecord {
   score?: EapReviewScore
   notes: EapReviewNote[]
   updatedAt: string
+  aiAssessment?: EapAiAssessment
+  inviteTokenHash?: string
+  inviteExpiresAt?: string
+  inviteSentAt?: string
+  activatedAt?: string
+  approvedTier?: string | null
 }
+
+export type { EapAiAssessment }
 
 export interface EapListFilters {
   status?: EapApplicationStatus | 'all'
   search?: string
   page?: number
   limit?: number
-  sort?: 'newest' | 'oldest' | 'score_desc' | 'score_asc'
+  sort?: 'newest' | 'oldest' | 'score_desc' | 'score_asc' | 'ai_confidence_desc' | 'ai_recommendation'
 }
+
+const ACTIVE_APPLICATION_STATUSES: EapApplicationStatus[] = ['new', 'in_review', 'approved']
 
 const APPLICATIONS_PREFIX = 'early-access/applications/'
 const REVIEWS_PREFIX = 'early-access/reviews/'
@@ -93,6 +104,27 @@ function ensureReviewBase(applicationId: string, review?: EapReviewRecord | null
     score: review?.score,
     notes: Array.isArray(review?.notes) ? review!.notes : [],
     updatedAt: review?.updatedAt || new Date().toISOString(),
+    aiAssessment: review?.aiAssessment,
+    inviteTokenHash: review?.inviteTokenHash,
+    inviteExpiresAt: review?.inviteExpiresAt,
+    inviteSentAt: review?.inviteSentAt,
+    activatedAt: review?.activatedAt,
+    approvedTier: review?.approvedTier,
+  }
+}
+
+function aiRecommendationRank(status?: EapAiAssessment['recommendedStatus']): number {
+  switch (status) {
+    case 'approve':
+      return 4
+    case 'needs_review':
+      return 3
+    case 'waitlist':
+      return 2
+    case 'reject':
+      return 1
+    default:
+      return 0
   }
 }
 
@@ -155,6 +187,22 @@ export async function listEapApplications(filters: EapListFilters = {}) {
     }
     if (sort === 'score_asc') {
       return toSafeNumber(a.review.score?.total) - toSafeNumber(b.review.score?.total)
+    }
+    if (sort === 'ai_confidence_desc') {
+      return (
+        toSafeNumber(b.review.aiAssessment?.confidence) -
+        toSafeNumber(a.review.aiAssessment?.confidence)
+      )
+    }
+    if (sort === 'ai_recommendation') {
+      const rankDiff =
+        aiRecommendationRank(b.review.aiAssessment?.recommendedStatus) -
+        aiRecommendationRank(a.review.aiAssessment?.recommendedStatus)
+      if (rankDiff !== 0) return rankDiff
+      return (
+        toSafeNumber(b.review.aiAssessment?.confidence) -
+        toSafeNumber(a.review.aiAssessment?.confidence)
+      )
     }
     return new Date(b.application.submittedAt).getTime() - new Date(a.application.submittedAt).getTime()
   })
@@ -243,4 +291,30 @@ export async function updateEapScore(
       updatedBy,
     },
   })
+}
+
+export async function findEapApplicationByEmail(rawEmail: string) {
+  const email = rawEmail.trim().toLowerCase()
+  if (!email) return null
+
+  const [appsListing, reviewsMap] = await Promise.all([
+    list({ prefix: APPLICATIONS_PREFIX, limit: 1000 }),
+    loadReviewsMap(),
+  ])
+
+  for (const blob of appsListing.blobs) {
+    const application = await fetchJsonFromBlobUrl<EapApplicationRecord>(blob.url)
+    if (!application?.applicationId || application.email.toLowerCase() !== email) continue
+
+    const review = ensureReviewBase(
+      application.applicationId,
+      reviewsMap.get(application.applicationId)
+    )
+
+    if (ACTIVE_APPLICATION_STATUSES.includes(review.status)) {
+      return { application, review }
+    }
+  }
+
+  return null
 }

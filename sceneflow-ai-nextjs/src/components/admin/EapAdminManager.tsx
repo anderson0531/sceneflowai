@@ -3,8 +3,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
-import { Download, FileSearch, Save, MessageSquarePlus } from 'lucide-react'
+import {
+  Download,
+  FileSearch,
+  Save,
+  MessageSquarePlus,
+  Sparkles,
+  Mail,
+  CheckCircle2,
+  Clock,
+  XCircle,
+} from 'lucide-react'
 import type {
+  EapAiAssessment,
   EapApplicationRecord,
   EapApplicationStatus,
   EapReviewRecord,
@@ -14,6 +25,22 @@ type ListItem = { application: EapApplicationRecord; review: EapReviewRecord }
 
 const STATUS_OPTIONS: EapApplicationStatus[] = ['new', 'in_review', 'approved', 'waitlisted', 'rejected']
 
+const AI_STATUS_LABELS: Record<EapAiAssessment['recommendedStatus'], string> = {
+  approve: 'Approve',
+  waitlist: 'Waitlist',
+  reject: 'Reject',
+  needs_review: 'Needs review',
+}
+
+function inviteStatusLabel(review: EapReviewRecord): { label: string; tone: 'neutral' | 'success' | 'warning' | 'error' } {
+  if (review.activatedAt) return { label: 'Redeemed', tone: 'success' }
+  if (!review.inviteSentAt) return { label: 'Not sent', tone: 'neutral' }
+  if (review.inviteExpiresAt && Date.now() > new Date(review.inviteExpiresAt).getTime()) {
+    return { label: 'Expired', tone: 'error' }
+  }
+  return { label: 'Sent', tone: 'warning' }
+}
+
 export function EapAdminManager() {
   const [loading, setLoading] = useState(false)
   const [items, setItems] = useState<ListItem[]>([])
@@ -22,9 +49,12 @@ export function EapAdminManager() {
   const [limit, setLimit] = useState(25)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | EapApplicationStatus>('all')
+  const [sort, setSort] = useState<'newest' | 'score_desc' | 'ai_recommendation' | 'ai_confidence_desc'>('newest')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [detail, setDetail] = useState<ListItem | null>(null)
   const [noteInput, setNoteInput] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [approveLoading, setApproveLoading] = useState(false)
   const [scoreDraft, setScoreDraft] = useState({
     agencyLead: 0,
     seriesCreator: 0,
@@ -33,8 +63,10 @@ export function EapAdminManager() {
   })
 
   const totalPages = Math.max(1, Math.ceil(total / limit))
-
-  const selectedItem = useMemo(() => items.find((item) => item.application.applicationId === selectedId) || null, [items, selectedId])
+  const selectedItem = useMemo(
+    () => items.find((item) => item.application.applicationId === selectedId) || null,
+    [items, selectedId]
+  )
 
   const loadList = async () => {
     setLoading(true)
@@ -44,6 +76,7 @@ export function EapAdminManager() {
         limit: String(limit),
         status: statusFilter,
         search,
+        sort,
       })
       const res = await fetch(`/api/admin/eap/applications?${params}`)
       const data = await res.json()
@@ -53,8 +86,8 @@ export function EapAdminManager() {
       if (!selectedId && data.items?.[0]?.application?.applicationId) {
         setSelectedId(data.items[0].application.applicationId)
       }
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to load applications')
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to load applications')
     } finally {
       setLoading(false)
     }
@@ -72,15 +105,15 @@ export function EapAdminManager() {
         techEnthusiast: data.review?.score?.techEnthusiast ?? 0,
         casualCreator: data.review?.score?.casualCreator ?? 0,
       })
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to load application detail')
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Failed to load application detail')
     }
   }
 
   useEffect(() => {
     loadList()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit, statusFilter])
+  }, [page, limit, statusFilter, sort])
 
   useEffect(() => {
     if (selectedId) loadDetail(selectedId)
@@ -92,21 +125,90 @@ export function EapAdminManager() {
     setDetail(selectedItem)
   }, [selectedItem])
 
-  const saveStatus = async (status: EapApplicationStatus) => {
+  const saveStatus = async (status: EapApplicationStatus, sendNotification = false) => {
     if (!selectedId) return
     const res = await fetch(`/api/admin/eap/applications/${encodeURIComponent(selectedId)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, sendNotification }),
     })
     const data = await res.json()
     if (!res.ok) {
       toast.error(data?.error || 'Failed to update status')
       return
     }
-    toast.success('Status updated')
+    toast.success(sendNotification ? 'Status updated and email sent' : 'Status updated')
     setDetail({ application: data.application, review: data.review })
     await loadList()
+  }
+
+  const approveAndSendInvite = async () => {
+    if (!selectedId) return
+    setApproveLoading(true)
+    try {
+      const res = await fetch(`/api/admin/eap/applications/${encodeURIComponent(selectedId)}/approve`, {
+        method: 'POST',
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Failed to approve and send invite')
+      toast.success(data.alreadySent ? 'Invite already sent (still valid)' : 'Approved and invite email sent')
+      setDetail({ application: data.application, review: data.review })
+      await loadList()
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Approve failed')
+    } finally {
+      setApproveLoading(false)
+    }
+  }
+
+  const runAiAssessment = async () => {
+    if (!selectedId) return
+    setAiLoading(true)
+    try {
+      const res = await fetch(`/api/admin/eap/applications/${encodeURIComponent(selectedId)}/ai-assess`, {
+        method: 'POST',
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'AI assessment failed')
+      toast.success('AI assessment complete')
+      setDetail({ application: data.application, review: data.review })
+      if (data.aiAssessment?.suggestedScores) {
+        setScoreDraft(data.aiAssessment.suggestedScores)
+      }
+      await loadList()
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'AI assessment failed')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const applySuggestedScores = () => {
+    const ai = detail?.review.aiAssessment
+    if (!ai?.suggestedScores) {
+      toast.error('No AI suggested scores available')
+      return
+    }
+    setScoreDraft(ai.suggestedScores)
+    toast.message('Suggested scores applied to draft — click Save Score to persist')
+  }
+
+  const applySuggestedStatus = () => {
+    const ai = detail?.review.aiAssessment
+    if (!ai) return
+    const map: Record<EapAiAssessment['recommendedStatus'], EapApplicationStatus | null> = {
+      approve: 'approved',
+      waitlist: 'waitlisted',
+      reject: 'rejected',
+      needs_review: 'in_review',
+    }
+    const next = map[ai.recommendedStatus]
+    if (!next) return
+    if (next === 'approved') {
+      toast.message('Use "Approve & send invite" for approved applicants')
+      return
+    }
+    saveStatus(next)
   }
 
   const saveScore = async () => {
@@ -145,16 +247,15 @@ export function EapAdminManager() {
   }
 
   const exportCsv = () => {
-    const params = new URLSearchParams({
-      format: 'csv',
-      status: statusFilter,
-      search,
-    })
+    const params = new URLSearchParams({ format: 'csv', status: statusFilter, search })
     window.open(`/api/admin/eap/export?${params}`, '_blank')
   }
 
   const scoreTotal =
     scoreDraft.agencyLead + scoreDraft.seriesCreator + scoreDraft.techEnthusiast + scoreDraft.casualCreator
+
+  const inviteStatus = detail ? inviteStatusLabel(detail.review) : null
+  const ai = detail?.review.aiAssessment
 
   return (
     <div className="space-y-6">
@@ -162,7 +263,9 @@ export function EapAdminManager() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-white">EAP Applications</h3>
-            <p className="text-sm text-gray-400">Review submissions, update status, score candidates, and export records.</p>
+            <p className="text-sm text-gray-400">
+              Review submissions, run AI qualification, approve with invite emails, and export records.
+            </p>
           </div>
           <Button variant="outline" onClick={exportCsv}>
             <Download className="w-4 h-4 mr-2" />
@@ -184,17 +287,28 @@ export function EapAdminManager() {
           <select
             value={statusFilter}
             onChange={(e) => {
-              setStatusFilter(e.target.value as any)
+              setStatusFilter(e.target.value as 'all' | EapApplicationStatus)
               setPage(1)
             }}
             className="px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm text-white"
           >
             <option value="all">All statuses</option>
             {STATUS_OPTIONS.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
+              <option key={status} value={status}>{status}</option>
             ))}
+          </select>
+          <select
+            value={sort}
+            onChange={(e) => {
+              setSort(e.target.value as typeof sort)
+              setPage(1)
+            }}
+            className="px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm text-white"
+          >
+            <option value="newest">Newest first</option>
+            <option value="score_desc">Highest score</option>
+            <option value="ai_recommendation">AI recommendation</option>
+            <option value="ai_confidence_desc">AI confidence</option>
           </select>
         </div>
 
@@ -206,6 +320,7 @@ export function EapAdminManager() {
             <div className="max-h-[560px] overflow-y-auto">
               {items.map((item) => {
                 const isSelected = item.application.applicationId === selectedId
+                const aiRec = item.review.aiAssessment?.recommendedStatus
                 return (
                   <button
                     key={item.application.applicationId}
@@ -216,9 +331,14 @@ export function EapAdminManager() {
                   >
                     <div className="text-sm font-medium text-white">{item.application.fullName}</div>
                     <div className="text-xs text-gray-400 truncate">{item.application.email}</div>
-                    <div className="mt-1 flex items-center justify-between text-xs">
-                      <span className="text-gray-500">{item.application.organizationName || 'No org'}</span>
-                      <span className="uppercase text-cyan-300">{item.review.status}</span>
+                    <div className="mt-1 flex items-center justify-between text-xs gap-2">
+                      <span className="text-gray-500 truncate">{item.application.organizationName || 'No org'}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {aiRec && (
+                          <span className="text-purple-300">{AI_STATUS_LABELS[aiRec]}</span>
+                        )}
+                        <span className="uppercase text-cyan-300">{item.review.status}</span>
+                      </div>
                     </div>
                   </button>
                 )
@@ -244,38 +364,122 @@ export function EapAdminManager() {
             {detail && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-gray-400">Applicant</p>
-                    <p className="text-white font-medium">{detail.application.fullName}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Email</p>
-                    <p className="text-white">{detail.application.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Country</p>
-                    <p className="text-white">{detail.application.countryOfOrigin}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Organization</p>
-                    <p className="text-white">{detail.application.organizationName}</p>
+                  <Field label="Applicant" value={detail.application.fullName} />
+                  <Field label="Email" value={detail.application.email} />
+                  <Field label="Country" value={detail.application.countryOfOrigin} />
+                  <Field label="Organization" value={detail.application.organizationName} />
+                  <Field label="Role" value={detail.application.primaryRole} />
+                  <Field label="Distribution" value={detail.application.distributionChannel} />
+                  <Field label="Monthly volume" value={detail.application.monthlyVolume} />
+                  <Field label="Bottleneck" value={detail.application.bottleneck} />
+                  <Field label="Art styles" value={detail.application.artStyles.join(', ')} />
+                  {detail.application.artStyleOther && (
+                    <Field label="Other art style" value={detail.application.artStyleOther} />
+                  )}
+                  <Field label="Audience resonance" value={detail.application.audienceResonanceImportance} />
+                  <Field label="Multi-language" value={detail.application.multiLanguageStatus} />
+                  <Field label="GCP/Vertex" value={detail.application.gcpVertexComfort} />
+                  <Field label="Feedback commitment" value={detail.application.weeklyFeedbackCommitment} />
+                  <Field label="F2V experience" value={detail.application.hasF2vExperience ? 'Yes' : 'No'} />
+                </div>
+
+                <div className="rounded-lg border border-gray-700 bg-gray-800/40 p-3 space-y-2">
+                  <p className="text-sm font-medium text-gray-200 flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Invite status
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3 text-sm">
+                    <InviteBadge status={inviteStatus} />
+                    {detail.review.inviteSentAt && (
+                      <span className="text-gray-400">
+                        Sent {new Date(detail.review.inviteSentAt).toLocaleString()}
+                      </span>
+                    )}
+                    {detail.review.inviteExpiresAt && (
+                      <span className="text-gray-400">
+                        Expires {new Date(detail.review.inviteExpiresAt).toLocaleDateString()}
+                      </span>
+                    )}
+                    {detail.review.activatedAt && (
+                      <span className="text-emerald-300">
+                        Activated {new Date(detail.review.activatedAt).toLocaleString()}
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-300">Status</p>
+                  <p className="text-sm text-gray-300">Workflow actions</p>
                   <div className="flex flex-wrap gap-2">
-                    {STATUS_OPTIONS.map((status) => (
-                      <Button
-                        key={status}
-                        variant={detail.review.status === status ? 'primary' : 'outline'}
-                        size="sm"
-                        onClick={() => saveStatus(status)}
-                      >
-                        {status}
-                      </Button>
-                    ))}
+                    <Button onClick={approveAndSendInvite} disabled={approveLoading}>
+                      {approveLoading ? 'Sending...' : 'Approve & send invite'}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => saveStatus('waitlisted', true)}>
+                      Waitlist + email
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => saveStatus('rejected', true)}>
+                      Reject + email
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => saveStatus('in_review')}>
+                      Mark in review
+                    </Button>
                   </div>
+                </div>
+
+                <div className="rounded-lg border border-purple-500/30 bg-purple-950/20 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-purple-200 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      AI qualification
+                    </p>
+                    <Button size="sm" variant="outline" onClick={runAiAssessment} disabled={aiLoading}>
+                      {aiLoading ? 'Running...' : 'Run AI assessment'}
+                    </Button>
+                  </div>
+
+                  {ai ? (
+                    <div className="space-y-3 text-sm">
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <span className="text-white font-medium">
+                          {AI_STATUS_LABELS[ai.recommendedStatus]}
+                        </span>
+                        <span className="text-gray-400">
+                          {Math.round(ai.confidence * 100)}% confidence
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {new Date(ai.assessedAt).toLocaleString()} · {ai.model}
+                        </span>
+                      </div>
+                      <p className="text-gray-200">{ai.summary}</p>
+                      {ai.strengths.length > 0 && (
+                        <div>
+                          <p className="text-emerald-300 text-xs uppercase mb-1">Strengths</p>
+                          <ul className="list-disc pl-5 text-gray-300 space-y-1">
+                            {ai.strengths.map((s) => <li key={s}>{s}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      {ai.risks.length > 0 && (
+                        <div>
+                          <p className="text-amber-300 text-xs uppercase mb-1">Risks</p>
+                          <ul className="list-disc pl-5 text-gray-300 space-y-1">
+                            {ai.risks.map((r) => <li key={r}>{r}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      <p className="text-gray-400 text-xs">{ai.rationale}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button size="sm" variant="outline" onClick={applySuggestedScores}>
+                          Apply suggested scores
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={applySuggestedStatus}>
+                          Set status to {AI_STATUS_LABELS[ai.recommendedStatus]}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400">No AI assessment yet.</p>
+                  )}
                 </div>
 
                 <div className="space-y-3">
@@ -346,5 +550,38 @@ export function EapAdminManager() {
         </div>
       </div>
     </div>
+  )
+}
+
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-gray-400">{label}</p>
+      <p className="text-white">{value || '—'}</p>
+    </div>
+  )
+}
+
+function InviteBadge({
+  status,
+}: {
+  status: { label: string; tone: 'neutral' | 'success' | 'warning' | 'error' } | null
+}) {
+  if (!status) return null
+  const Icon =
+    status.tone === 'success' ? CheckCircle2 : status.tone === 'error' ? XCircle : Clock
+  const color =
+    status.tone === 'success'
+      ? 'text-emerald-300'
+      : status.tone === 'error'
+        ? 'text-red-300'
+        : status.tone === 'warning'
+          ? 'text-amber-300'
+          : 'text-gray-400'
+  return (
+    <span className={`inline-flex items-center gap-1 ${color}`}>
+      <Icon className="w-4 h-4" />
+      {status.label}
+    </span>
   )
 }

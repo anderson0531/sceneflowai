@@ -24,7 +24,8 @@ export function isValidCheckoutTier(tierName: string): tierName is BillingTierNa
 export async function createWhopCheckoutSession(
   userId: string,
   tierName: string,
-  userEmail?: string | null
+  userEmail?: string | null,
+  extraMetadata?: Record<string, string | undefined>
 ): Promise<CheckoutSessionResult> {
   const normalizedTier = normalizeTierName(tierName)
   if (!normalizedTier || !CHECKOUT_TIER_NAMES.includes(normalizedTier)) {
@@ -55,6 +56,7 @@ export async function createWhopCheckoutSession(
       user_id: userId,
       tier_name: normalizedTier,
       user_email: userEmail || undefined,
+      ...extraMetadata,
     },
     redirect_url: returnUrl,
     source_url: returnUrl,
