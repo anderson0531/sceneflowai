@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Generate interim hero locale MP4: English video + translated edge-tts narration.
- * Replace with professional dubs (SceneFlow Hero (Hindi).mp4) when available.
+ * Generate interim hero locale MP4: English video + edge-tts narration.
+ * Hindi uses pro VO on Blob (`SceneFlow Hero (Hindi) .mp4`) — run watermark-hero-video.mjs instead.
+ * Portuguese still interim until `SceneFlow Hero (Portuguese).mp4` is available.
  *
  * Usage: node scripts/generate-hero-locale-dub.mjs --locale hi|pt [--input path/to/en-source.mp4]
  */
