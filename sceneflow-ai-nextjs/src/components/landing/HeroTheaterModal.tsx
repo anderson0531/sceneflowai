@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Volume2, VolumeX, Pause, Play } from 'lucide-react'
+import { X, Volume2, VolumeX, Pause, Play, Globe } from 'lucide-react'
 import {
   HERO_VIDEO_LANGUAGE_PROMPT,
   HERO_VIDEO_MULTILANG_HINT,
@@ -41,6 +41,11 @@ export function HeroTheaterModal({
       setIsPlaying(true)
     } else {
       document.body.style.overflow = 'unset'
+      const video = videoRef.current
+      if (video) {
+        video.pause()
+        video.muted = true
+      }
     }
     return () => {
       document.removeEventListener('keydown', onKey)
@@ -122,48 +127,50 @@ export function HeroTheaterModal({
                   onPause={() => setIsPlaying(false)}
                 />
 
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 pt-16">
-                  <div className="flex flex-col items-center gap-3">
-                    <p className="text-xs text-gray-400">{HERO_VIDEO_LANGUAGE_PROMPT}</p>
-                    <HeroLanguagePills
-                      activeLocale={activeLocale}
-                      onSelect={onLocaleChange}
-                      size="sm"
-                    />
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={togglePlay}
-                        className={cn('text-white hover:text-cyan-400 transition p-1')}
-                        aria-label={isPlaying ? 'Pause' : 'Play'}
-                      >
-                        {isPlaying ? (
-                          <Pause className="w-5 h-5" />
-                        ) : (
-                          <Play className="w-5 h-5" />
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={toggleMute}
-                        className="text-white hover:text-cyan-400 transition p-1"
-                        aria-label={isMuted ? 'Unmute' : 'Mute'}
-                      >
-                        {isMuted ? (
-                          <VolumeX className="w-5 h-5" />
-                        ) : (
-                          <Volume2 className="w-5 h-5" />
-                        )}
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-gray-500 hidden sm:block">
-                      {HERO_VIDEO_MULTILANG_HINT}
-                    </p>
-                  </div>
+                <div
+                  className={cn(
+                    'absolute inset-x-0 bottom-0 flex items-center gap-3',
+                    'bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-10'
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={togglePlay}
+                    className="text-white hover:text-cyan-400 transition p-1"
+                    aria-label={isPlaying ? 'Pause' : 'Play'}
+                  >
+                    {isPlaying ? (
+                      <Pause className="w-5 h-5" />
+                    ) : (
+                      <Play className="w-5 h-5" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={toggleMute}
+                    className="text-white hover:text-cyan-400 transition p-1"
+                    aria-label={isMuted ? 'Unmute' : 'Mute'}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-5 h-5" />
+                    ) : (
+                      <Volume2 className="w-5 h-5" />
+                    )}
+                  </button>
                 </div>
+              </div>
+
+              <div className="border-t border-white/10 bg-gray-950/80 px-4 py-4 flex flex-col items-center gap-2">
+                <p className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+                  <Globe className="h-3.5 w-3.5 text-cyan-400/80 shrink-0" aria-hidden />
+                  {HERO_VIDEO_LANGUAGE_PROMPT}
+                </p>
+                <HeroLanguagePills
+                  activeLocale={activeLocale}
+                  onSelect={onLocaleChange}
+                  size="sm"
+                />
+                <p className="text-[10px] text-gray-500 text-center">{HERO_VIDEO_MULTILANG_HINT}</p>
               </div>
             </div>
           </motion.div>

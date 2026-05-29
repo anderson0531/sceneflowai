@@ -45,6 +45,23 @@ function readUnmuteDismissed(): boolean {
   return localStorage.getItem(HERO_VIDEO_UNMUTE_DISMISSED_KEY) === '1'
 }
 
+function applyLocaleToVideo(
+  video: HTMLVideoElement,
+  id: HeroVideoLocaleId,
+  shouldPlay: boolean
+) {
+  const entry = getHeroVideoLocale(id)
+  if (!entry?.available) return
+
+  const wasPlaying = !video.paused
+  video.src = entry.src
+  video.poster = entry.poster
+  video.load()
+  if (shouldPlay && wasPlaying) {
+    void video.play().catch(() => {})
+  }
+}
+
 export function HeroSection() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -53,17 +70,20 @@ export function HeroSection() {
   const [showUnmutePrompt, setShowUnmutePrompt] = useState(true)
   const [isTheaterOpen, setIsTheaterOpen] = useState(false)
   const [activeLocale, setActiveLocale] = useState<HeroVideoLocaleId>(DEFAULT_HERO_VIDEO_LOCALE)
+  const [inlineVideoLocale, setInlineVideoLocale] =
+    useState<HeroVideoLocaleId>(DEFAULT_HERO_VIDEO_LOCALE)
   const [highlightLocale, setHighlightLocale] = useState<HeroVideoLocaleId | null>(null)
 
-  const activeEntry =
-    getHeroVideoLocale(activeLocale) ?? getHeroVideoLocale(DEFAULT_HERO_VIDEO_LOCALE)!
-  const videoSrc = activeEntry.available ? activeEntry.src : getDefaultHeroVideoSrc()
-  const videoPoster = activeEntry.available ? activeEntry.poster : getDefaultHeroVideoPoster()
+  const inlineEntry =
+    getHeroVideoLocale(inlineVideoLocale) ?? getHeroVideoLocale(DEFAULT_HERO_VIDEO_LOCALE)!
+  const videoSrc = inlineEntry.available ? inlineEntry.src : getDefaultHeroVideoSrc()
+  const videoPoster = inlineEntry.available ? inlineEntry.poster : getDefaultHeroVideoPoster()
 
   useEffect(() => {
     const stored = readStoredLocale()
     if (stored) {
       setActiveLocale(stored)
+      setInlineVideoLocale(stored)
     } else {
       setHighlightLocale(getSuggestedHeroLocaleFromBrowser())
     }
@@ -83,27 +103,26 @@ export function HeroSection() {
     }
   }, [])
 
-  const selectLocale = useCallback((id: HeroVideoLocaleId) => {
-    const entry = getHeroVideoLocale(id)
-    if (!entry?.available) return
+  const selectLocale = useCallback(
+    (id: HeroVideoLocaleId) => {
+      const entry = getHeroVideoLocale(id)
+      if (!entry?.available) return
 
-    setActiveLocale(id)
-    setHighlightLocale(null)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(HERO_VIDEO_LOCALE_STORAGE_KEY, id)
-    }
+      setActiveLocale(id)
+      setHighlightLocale(null)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(HERO_VIDEO_LOCALE_STORAGE_KEY, id)
+      }
 
-    const video = videoRef.current
-    if (!video) return
+      if (isTheaterOpen) return
 
-    const wasPlaying = !video.paused
-    video.src = entry.src
-    video.poster = entry.poster
-    video.load()
-    if (wasPlaying) {
-      void video.play().catch(() => {})
-    }
-  }, [])
+      setInlineVideoLocale(id)
+      const video = videoRef.current
+      if (!video) return
+      applyLocaleToVideo(video, id, true)
+    },
+    [isTheaterOpen]
+  )
 
   const watchWhatsPossible = useCallback(() => {
     document.getElementById('hero-video')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -111,9 +130,27 @@ export function HeroSection() {
   }, [unmuteWithSound])
 
   const openTheater = useCallback(() => {
-    unmuteWithSound()
+    const video = videoRef.current
+    if (video) {
+      video.pause()
+      video.muted = true
+    }
     setIsTheaterOpen(true)
-  }, [unmuteWithSound])
+  }, [])
+
+  const closeTheater = useCallback(() => {
+    setIsTheaterOpen(false)
+    setInlineVideoLocale(activeLocale)
+
+    const video = videoRef.current
+    if (!video) return
+
+    applyLocaleToVideo(video, activeLocale, isPlaying)
+    video.muted = isMuted
+    if (isPlaying) {
+      void video.play().catch(() => {})
+    }
+  }, [activeLocale, isMuted, isPlaying])
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -147,7 +184,6 @@ export function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-b from-gray-950 via-gray-950/80 to-transparent" />
 
         <div className="relative container mx-auto px-4 z-10">
-          {/* Video-first: motion leads the hero */}
           <motion.div
             id="hero-video"
             className="relative max-w-6xl mx-auto scroll-mt-24"
@@ -178,7 +214,7 @@ export function HeroSection() {
               <div className="relative aspect-video w-full h-full">
                 <video
                   ref={videoRef}
-                  key={activeLocale}
+                  key={inlineVideoLocale}
                   src={videoSrc}
                   poster={videoPoster}
                   autoPlay
@@ -191,7 +227,6 @@ export function HeroSection() {
                   onPause={() => setIsPlaying(false)}
                 />
 
-                {/* First-visit + persistent unmute affordance */}
                 {isMuted && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     {showUnmutePrompt ? (
@@ -215,7 +250,7 @@ export function HeroSection() {
                           e.stopPropagation()
                           unmuteWithSound()
                         }}
-                        className="pointer-events-auto absolute bottom-20 right-4 flex items-center gap-1.5 rounded-full bg-black/60 border border-white/20 px-3 py-2 text-xs font-medium text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors sm:bottom-24"
+                        className="pointer-events-auto absolute bottom-14 right-3 flex items-center gap-1.5 rounded-full bg-black/60 border border-white/20 px-3 py-2 text-xs font-medium text-gray-200 hover:text-white hover:border-cyan-400/40 transition-colors"
                         aria-label="Tap to hear narration"
                       >
                         <VolumeX className="h-4 w-4 text-cyan-400 animate-pulse" aria-hidden />
@@ -225,7 +260,6 @@ export function HeroSection() {
                   </div>
                 )}
 
-                {/* Expand affordance — always visible */}
                 <button
                   type="button"
                   data-hero-control
@@ -240,63 +274,58 @@ export function HeroSection() {
                   <span className="hidden sm:inline">Theater</span>
                 </button>
 
-                {/* Player chrome: languages + controls */}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/55 to-transparent pt-20 pb-3 px-3 sm:px-4">
-                  <div className="flex flex-col items-center gap-2 mb-3">
-                    <p className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs text-gray-400">
-                      <Globe className="h-3.5 w-3.5 text-cyan-400/80 shrink-0" aria-hidden />
-                      {HERO_VIDEO_LANGUAGE_PROMPT}
-                    </p>
-                    <HeroLanguagePills
-                      activeLocale={activeLocale}
-                      onSelect={selectLocale}
-                      highlightLocale={highlightLocale}
-                      size="sm"
-                    />
-                  </div>
-
-                  <div
-                    data-hero-control
-                    className="flex items-center justify-between"
+                <div
+                  data-hero-control
+                  className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/80 to-transparent px-3 pb-3 pt-8"
+                >
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      togglePlay()
+                    }}
+                    className="text-white hover:text-cyan-400 transition p-1"
+                    aria-label={isPlaying ? 'Pause' : 'Play'}
                   >
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          togglePlay()
-                        }}
-                        className="text-white hover:text-cyan-400 transition p-1"
-                        aria-label={isPlaying ? 'Pause' : 'Play'}
-                      >
-                        {isPlaying ? (
-                          <Pause className="w-5 h-5" />
-                        ) : (
-                          <Play className="w-5 h-5" />
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          toggleMute()
-                        }}
-                        className="text-white hover:text-cyan-400 transition p-1"
-                        aria-label={isMuted ? 'Unmute' : 'Mute'}
-                      >
-                        {isMuted ? (
-                          <VolumeX className="w-5 h-5" />
-                        ) : (
-                          <Volume2 className="w-5 h-5" />
-                        )}
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-gray-500 hidden md:block max-w-xs text-right">
-                      {HERO_VIDEO_MULTILANG_HINT}
-                    </p>
-                  </div>
+                    {isPlaying ? (
+                      <Pause className="w-5 h-5" />
+                    ) : (
+                      <Play className="w-5 h-5" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleMute()
+                    }}
+                    className="text-white hover:text-cyan-400 transition p-1"
+                    aria-label={isMuted ? 'Unmute' : 'Mute'}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-5 h-5" />
+                    ) : (
+                      <Volume2 className="w-5 h-5" />
+                    )}
+                  </button>
                 </div>
               </div>
+            </div>
+
+            <div className="relative z-10 mt-4 flex flex-col items-center gap-2 px-1">
+              <p className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+                <Globe className="h-3.5 w-3.5 text-cyan-400/80 shrink-0" aria-hidden />
+                {HERO_VIDEO_LANGUAGE_PROMPT}
+              </p>
+              <HeroLanguagePills
+                activeLocale={activeLocale}
+                onSelect={selectLocale}
+                highlightLocale={highlightLocale}
+                size="sm"
+              />
+              <p className="text-[10px] text-gray-500 max-w-lg text-center">
+                {HERO_VIDEO_MULTILANG_HINT}
+              </p>
             </div>
 
             <p className="relative z-10 mt-3 text-center text-sm text-gray-400">
@@ -304,7 +333,6 @@ export function HeroSection() {
             </p>
           </motion.div>
 
-          {/* Copy below the video */}
           <div className="max-w-4xl mx-auto text-center mt-12 lg:mt-14">
             <motion.p
               className="text-sm font-medium text-cyan-400/90 mb-4 tracking-wide"
@@ -371,7 +399,7 @@ export function HeroSection() {
 
       <HeroTheaterModal
         open={isTheaterOpen}
-        onClose={() => setIsTheaterOpen(false)}
+        onClose={closeTheater}
         activeLocale={activeLocale}
         onLocaleChange={selectLocale}
       />
