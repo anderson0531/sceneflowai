@@ -1,6 +1,7 @@
 'use client'
 
 import { Mail, ExternalLink, Youtube } from 'lucide-react'
+import Image from 'next/image'
 import { MOR_FOOTER_LINE } from '@/config/landing/valuePropCopy'
 import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
 

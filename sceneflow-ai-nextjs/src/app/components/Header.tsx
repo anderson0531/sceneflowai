@@ -3,7 +3,6 @@
 import { Button } from '@/components/ui/Button'
 import { trackCta } from '@/lib/analytics'
 import { motion } from 'framer-motion'
-import Image from 'next/image'
 import { Menu, X, User, LogOut, Shield, Sparkles, ChevronDown, LayoutDashboard, Film, Building2, Workflow, ArrowRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
