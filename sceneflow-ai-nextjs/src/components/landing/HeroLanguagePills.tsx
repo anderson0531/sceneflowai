@@ -26,48 +26,57 @@ export function HeroLanguagePills({
 
   return (
     <div
-      className={cn('flex flex-wrap items-center justify-center gap-2', className)}
-      role="group"
-      aria-label="Hero video language"
+      className={cn(
+        'w-full max-w-full overflow-x-auto overscroll-x-contain',
+        '[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden',
+        className
+      )}
     >
-      {HERO_VIDEO_LOCALES.map((locale) => {
-        const isActive = activeLocale === locale.id
-        const isDisabled = !locale.available
-        const isHighlighted = highlightLocale === locale.id && !isActive
+      <div
+        className="flex flex-nowrap items-center justify-start sm:justify-center gap-2 min-w-min px-1 pb-0.5"
+        role="group"
+        aria-label="Hero video language"
+      >
+        {HERO_VIDEO_LOCALES.map((locale) => {
+          const isActive = activeLocale === locale.id
+          const isDisabled = !locale.available
+          const isHighlighted = highlightLocale === locale.id && !isActive
 
-        return (
-          <button
-            key={locale.id}
-            type="button"
-            disabled={isDisabled}
-            aria-pressed={isActive}
-            aria-label={
-              isDisabled
-                ? `${locale.label} — coming soon`
-                : `Play hero video in ${locale.label}`
-            }
-            onClick={() => onSelect(locale.id)}
-            className={cn(
-              'rounded-full font-medium transition-colors border',
-              sizeClasses,
-              isActive
-                ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-100'
-                : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20 hover:text-white',
-              isDisabled &&
-                'opacity-50 cursor-not-allowed hover:border-white/10 hover:text-gray-300',
-              isHighlighted && 'animate-pulse ring-2 ring-cyan-400/40 ring-offset-1 ring-offset-black/50'
-            )}
-          >
-            <span className="hidden sm:inline">{locale.nativeLabel}</span>
-            <span className="sm:hidden">{locale.label}</span>
-            {isDisabled ? (
-              <span className="ml-1.5 text-[10px] uppercase tracking-wide text-gray-500">
-                Soon
-              </span>
-            ) : null}
-          </button>
-        )
-      })}
+          return (
+            <button
+              key={locale.id}
+              type="button"
+              disabled={isDisabled}
+              aria-pressed={isActive}
+              aria-label={
+                isDisabled
+                  ? `${locale.label} — coming soon`
+                  : `Play hero video in ${locale.label}`
+              }
+              onClick={() => onSelect(locale.id)}
+              className={cn(
+                'shrink-0 rounded-full font-medium transition-colors border',
+                sizeClasses,
+                isActive
+                  ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-100'
+                  : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/20 hover:text-white',
+                isDisabled &&
+                  'opacity-50 cursor-not-allowed hover:border-white/10 hover:text-gray-300',
+                isHighlighted &&
+                  'animate-pulse ring-2 ring-cyan-400/40 ring-offset-1 ring-offset-black/50'
+              )}
+            >
+              <span className="hidden sm:inline">{locale.nativeLabel}</span>
+              <span className="sm:hidden">{locale.label}</span>
+              {isDisabled ? (
+                <span className="ml-1.5 text-[10px] uppercase tracking-wide text-gray-500">
+                  Soon
+                </span>
+              ) : null}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

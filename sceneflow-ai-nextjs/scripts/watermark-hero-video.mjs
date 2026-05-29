@@ -3,7 +3,7 @@
  * Burn "SceneFlow AI Studio" into hero MP4s (bottom-right) and optionally upload to Vercel Blob.
  *
  * Usage:
- *   node scripts/watermark-hero-video.mjs <input.mp4> [--locale en|th|es|zh|ar] [--upload] [--output path]
+ *   node scripts/watermark-hero-video.mjs <input.mp4> [--locale en|th|es|zh|ar|hi|pt] [--upload] [--output path]
  *
  * Examples:
  *   node scripts/watermark-hero-video.mjs ./SceneFlow\ Hero.mp4 --locale en
@@ -33,6 +33,8 @@ const LOCALE_BLOB_PATHS = {
   es: 'landing/hero/sceneflow-hero-es.mp4',
   zh: 'landing/hero/sceneflow-hero-zh.mp4',
   ar: 'landing/hero/sceneflow-hero-ar.mp4',
+  hi: 'landing/hero/sceneflow-hero-hi.mp4',
+  pt: 'landing/hero/sceneflow-hero-pt.mp4',
 }
 
 function parseArgs(argv) {
@@ -173,7 +175,7 @@ async function run() {
 
   if (upload) {
     if (!locale) {
-      console.error('--upload requires --locale (en, th, es, zh, ar)')
+      console.error('--upload requires --locale (en, th, es, zh, ar, hi, pt)')
       process.exit(1)
     }
     await uploadToBlob(fileToUpload, locale)

@@ -3,7 +3,7 @@
  * Append #t=0.1 to skip black first frame when supported.
  */
 
-export type HeroVideoLocaleId = 'en' | 'th' | 'es' | 'zh' | 'ar'
+export type HeroVideoLocaleId = 'en' | 'es' | 'pt' | 'hi' | 'zh' | 'ar' | 'th'
 
 export type HeroVideoLocale = {
   id: HeroVideoLocaleId
@@ -40,19 +40,27 @@ export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = [
     available: true,
   },
   {
-    id: 'th',
-    label: 'Thai',
-    nativeLabel: 'ไทย',
-    src: heroSrc('landing/hero/sceneflow-hero-th.mp4'),
-    poster: heroPoster('landing/hero/sceneflow-hero-th-poster.jpg'),
-    available: true,
-  },
-  {
     id: 'es',
     label: 'Spanish',
     nativeLabel: 'Español',
     src: heroSrc('landing/hero/sceneflow-hero-es.mp4'),
     poster: heroPoster('landing/hero/sceneflow-hero-es-poster.jpg'),
+    available: true,
+  },
+  {
+    id: 'pt',
+    label: 'Portuguese',
+    nativeLabel: 'Português',
+    src: heroSrc('landing/hero/sceneflow-hero-pt.mp4'),
+    poster: heroPoster('landing/hero/sceneflow-hero-pt-poster.jpg'),
+    available: true,
+  },
+  {
+    id: 'hi',
+    label: 'Hindi',
+    nativeLabel: 'हिन्दी',
+    src: heroSrc('landing/hero/sceneflow-hero-hi.mp4'),
+    poster: heroPoster('landing/hero/sceneflow-hero-hi-poster.jpg'),
     available: true,
   },
   {
@@ -71,12 +79,21 @@ export const HERO_VIDEO_LOCALES: HeroVideoLocale[] = [
     poster: heroPoster('landing/hero/sceneflow-hero-ar-poster.jpg'),
     available: true,
   },
+  {
+    id: 'th',
+    label: 'Thai',
+    nativeLabel: 'ไทย',
+    src: heroSrc('landing/hero/sceneflow-hero-th.mp4'),
+    poster: heroPoster('landing/hero/sceneflow-hero-th-poster.jpg'),
+    available: true,
+  },
 ]
 
 export const HERO_VIDEO_MULTILANG_HINT =
-  'Hero dubs in 5 languages — full pipeline supports 70+ in Production.'
+  'Hero dubs in 7 languages — full pipeline supports 70+ in Production.'
 
-export const HERO_VIDEO_LANGUAGE_PROMPT = 'Hear the hero in your language'
+export const HERO_VIDEO_LANGUAGE_PROMPT =
+  'Hear the hero in your language — same pipeline, new markets'
 
 export const HERO_VIDEO_LOCALE_STORAGE_KEY = 'sf-hero-video-locale'
 
@@ -111,10 +128,12 @@ export function getSuggestedHeroLocaleFromBrowser(): HeroVideoLocaleId | null {
 
   const map: Record<string, HeroVideoLocaleId> = {
     en: 'en',
-    th: 'th',
     es: 'es',
+    pt: 'pt',
+    hi: 'hi',
     zh: 'zh',
     ar: 'ar',
+    th: 'th',
   }
 
   const id = map[prefix]
