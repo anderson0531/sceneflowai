@@ -23,6 +23,11 @@
   /* Header tokens */
   --app-bar-h: 56px;
   --context-bar-h: 48px;
+
+  /* Brand palette (SFAI logo — landing/public surfaces) */
+  --sf-brand-cyan: #00F2FF;
+  --sf-brand-navy: #050A18;
+  --sf-brand-purple: #1A0B2E;
 }
 
 @layer base {
@@ -1032,4 +1037,14 @@ body {
     width: 100%;
     justify-content: flex-start;
   }
+}
+
+/* SFAI logo wordmark — cyan glow on "AI" */
+.sf-wordmark-ai {
+  color: var(--sf-brand-cyan);
+  text-shadow: 0 0 12px rgba(0, 242, 255, 0.45);
+}
+
+.landing-header {
+  --landing-header-bg: rgba(5, 10, 24, 0.95);
 }

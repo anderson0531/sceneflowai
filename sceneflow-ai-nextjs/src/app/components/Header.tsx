@@ -23,6 +23,7 @@ import {
 } from '@/lib/auth/postLoginRedirect'
 import { GoogleTranslate } from './GoogleTranslate'
 import { LanguageSelector } from './LanguageSelector'
+import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -102,9 +103,9 @@ export function Header() {
   return (
     <>
       <motion.header 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`landing-header fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled 
-            ? 'bg-slate-900/95 backdrop-blur-md shadow-lg shadow-black/10' 
+            ? 'bg-sf-brand-navy/95 backdrop-blur-md shadow-lg shadow-black/20' 
             : 'bg-transparent backdrop-blur-sm'
         }`}
         initial={{ opacity: 0, y: -20 }}
@@ -114,7 +115,7 @@ export function Header() {
         {/* Progress bar */}
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-800/50">
           <motion.div 
-            className="h-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500"
+            className="h-full bg-gradient-to-r from-cyan-400 via-teal-400 to-cyan-500"
             style={{ width: `${scrollProgress}%` }}
             transition={{ duration: 0.1 }}
           />
@@ -123,22 +124,11 @@ export function Header() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Desktop Header */}
           <div className="hidden lg:flex justify-between items-center h-20">
-            {/* Logo - Consistent with App */}
-            <div className="flex items-center gap-3">
-              {/* Logo matching app style */}
-              <div className="w-11 h-11 bg-sf-surface-light rounded-xl flex items-center justify-center">
-                <div className="w-6 h-6 bg-sf-primary rounded-lg flex items-center justify-center">
-                  <div className="w-3 h-3 bg-sf-background rounded-sm" />
-                </div>
-              </div>
-              
-              {/* App Name - Larger and properly aligned */}
-              <span className="text-2xl font-bold tracking-tight leading-none">
-                <span className="text-white">SceneFlow</span>
-                <span className="text-sf-primary"> AI</span>
-                <span className="text-gray-400 text-lg ml-1">Studio</span>
-              </span>
-            </div>
+            <SceneFlowStudioBrand
+              href="/"
+              variant="landing"
+              nameClassName="text-white"
+            />
             
             {/* Navigation Links - Center */}
             <nav className="flex items-center space-x-2">
@@ -267,21 +257,11 @@ export function Header() {
           <div className="lg:hidden">
             {/* Top Line - Logo and Mobile Menu Button */}
             <div className="flex justify-between items-center h-16">
-              {/* Mobile Logo - Matching app style */}
-              <div className="flex items-center space-x-3">
-                {/* Logo matching app style */}
-                <div className="w-10 h-10 bg-sf-surface-light rounded-lg flex items-center justify-center">
-                  <div className="w-6 h-6 bg-sf-primary rounded-md flex items-center justify-center">
-                    <div className="w-3 h-3 bg-sf-background rounded-sm" />
-                  </div>
-                </div>
-                
-                {/* Mobile App Name */}
-                <h1 className="text-xl font-bold tracking-tight">
-                  <span className="text-white">SceneFlow</span>
-                  <span className="text-sf-primary"> AI</span>
-                </h1>
-              </div>
+              <SceneFlowStudioBrand
+                href="/"
+                variant="landing"
+                nameClassName="text-white"
+              />
               
               {/* Mobile Menu Button */}
               <button 

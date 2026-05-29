@@ -1,8 +1,8 @@
 'use client'
 
 import { Mail, ExternalLink, Youtube } from 'lucide-react'
-import Image from 'next/image'
 import { MOR_FOOTER_LINE } from '@/config/landing/valuePropCopy'
+import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
 
 export function Footer() {
   const footerLinks = {
@@ -44,10 +44,11 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
           {/* Logo and Description */}
           <div className="col-span-1 lg:col-span-2">
-            <div className="flex items-center mb-6">
-              <span className="text-2xl font-bold text-white">
-                SceneFlow AI
-              </span>
+            <div className="mb-6">
+              <SceneFlowStudioBrand
+                variant="landing"
+                nameClassName="text-white"
+              />
             </div>
             <p className="text-gray-400 max-w-md mb-6">
               End-to-end automated video production — from concept to publish-ready master. 

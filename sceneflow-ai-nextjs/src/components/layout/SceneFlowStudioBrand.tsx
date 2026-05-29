@@ -1,50 +1,94 @@
+import Image from 'next/image'
 import Link from 'next/link'
+import { BRAND, getBadgeSize, type BrandVariant } from '@/config/brand'
 import { cn } from '@/lib/utils'
 
 type Props = {
   /** When set, the brand is a link (e.g. `/` on public pages, `/dashboard` in the app). */
   href?: string
   className?: string
-  /** Text color classes for the wordmark (defaults to app header light/dark). */
+  /** Text color classes for the SceneFlow + Studio portions */
   nameClassName?: string
+  variant?: BrandVariant
+  /** Hide wordmark (badge only) */
+  showWordmark?: boolean
 }
 
-function LogoMark() {
+function LogoBadge({ variant }: { variant: BrandVariant }) {
+  const { width, height } = getBadgeSize(variant)
+
   return (
-    <div className="w-9 h-9 bg-gray-100 dark:bg-sf-surface-light rounded-lg flex items-center justify-center shrink-0">
-      <div className="w-5 h-5 bg-sf-primary rounded-md flex items-center justify-center">
-        <div className="w-2.5 h-2.5 bg-white dark:bg-sf-background rounded-sm" />
-      </div>
-    </div>
+    <Image
+      src={BRAND.badge.src}
+      srcSet={`${BRAND.badge.src} 1x, ${BRAND.badge.src2x} 2x`}
+      alt=""
+      width={width}
+      height={height}
+      className="shrink-0 rounded-full object-cover"
+      style={{ width, height }}
+      priority
+      aria-hidden
+    />
   )
 }
 
-function StudioWordmark({ className }: { className?: string }) {
+function StudioWordmark({
+  className,
+  variant,
+}: {
+  className?: string
+  variant: BrandVariant
+}) {
+  const isLanding = variant === 'landing'
+
   return (
     <span
       translate="no"
       className={cn(
-        'app-name-text font-bold text-lg md:text-xl tracking-tight flex items-baseline gap-1 leading-none',
+        'app-name-text font-bold tracking-tight flex items-baseline gap-1 leading-none',
+        isLanding ? 'text-xl md:text-2xl' : 'text-lg md:text-xl',
         className
       )}
+      style={{ fontFamily: BRAND.wordmark.fontFamily }}
     >
-      <span>SceneFlow</span> <span className="text-sf-primary">AI</span>{' '}
-      <span className="text-gray-500 dark:text-gray-400 font-medium text-sm md:text-base">Studio</span>
+      <span>SceneFlow</span>{' '}
+      <span className="sf-wordmark-ai">AI</span>{' '}
+      <span
+        className={cn(
+          'font-medium text-gray-500 dark:text-gray-400',
+          isLanding ? 'text-base md:text-lg' : 'text-sm md:text-base'
+        )}
+      >
+        Studio
+      </span>
     </span>
   )
 }
 
-export function SceneFlowStudioBrand({ href, className, nameClassName }: Props) {
+export function SceneFlowStudioBrand({
+  href,
+  className,
+  nameClassName,
+  variant = 'app',
+  showWordmark = true,
+}: Props) {
   const content = (
     <>
-      <LogoMark />
-      <StudioWordmark
-        className={cn('text-gray-900 dark:text-white', nameClassName)}
-      />
+      <LogoBadge variant={variant} />
+      {showWordmark ? (
+        <StudioWordmark
+          variant={variant}
+          className={cn('text-gray-900 dark:text-white', nameClassName)}
+        />
+      ) : null}
     </>
   )
 
-  const rootClass = cn('flex items-center gap-2.5 group', className)
+  const rootClass = cn(
+    'flex items-center gap-2.5 group',
+    variant === 'landing' && 'gap-3',
+    className
+  )
 
   if (href) {
     return (

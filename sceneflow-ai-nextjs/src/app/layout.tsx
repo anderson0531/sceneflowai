@@ -62,7 +62,7 @@ const structuredData = {
   description:
     'Transform your ideas into professional videos with AI-powered workflow automation. Create scripts, characters, and videos in one integrated platform.',
   url: 'https://sceneflowai.studio',
-  image: 'https://sceneflowai.studio/logos/sceneflow-logo.png',
+  image: `${SITE_URL}/brand/sf-logo-lockup.png`,
   author: {
     '@type': 'Organization',
     name: 'SceneFlow AI',
@@ -125,8 +125,8 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon.ico' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/brand/sf-badge.png', sizes: '88x88', type: 'image/png' },
     ],
     apple: [
       { url: '/apple-touch-icon.png' },
@@ -134,7 +134,7 @@ export const metadata: Metadata = {
       { url: '/apple-touch-icon.png', sizes: '180x180' },
       { url: '/icons/icon-192x192.png', sizes: '192x192' },
     ],
-    shortcut: '/favicon.ico',
+    shortcut: '/favicon-32.png',
   },
   openGraph: {
     type: 'website',
@@ -142,14 +142,14 @@ export const metadata: Metadata = {
     title: 'SceneFlow AI',
     description: SITE_DESCRIPTION,
     url: SITE_URL,
-    images: ['/favicon.ico'],
+    images: ['/brand/sf-logo-lockup.png'],
   },
   twitter: {
     card: 'summary',
     title: 'SceneFlow AI',
     description: SITE_DESCRIPTION,
     creator: '@sceneflowai',
-    images: ['/favicon.ico'],
+    images: ['/brand/sf-logo-lockup.png'],
   },
   other: {
     'mobile-web-app-capable': 'yes',
@@ -157,7 +157,7 @@ export const metadata: Metadata = {
     'apple-mobile-web-app-status-bar-style': 'default',
     'apple-mobile-web-app-title': 'SceneFlow AI',
     'msapplication-config': '/icons/browserconfig.xml',
-    'msapplication-TileColor': '#00BFA5',
+    'msapplication-TileColor': '#050A18',
     'msapplication-tap-highlight': 'no',
   },
 }
@@ -166,7 +166,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#00BFA5',
+  themeColor: '#050A18',
 }
 
 export default function RootLayout({

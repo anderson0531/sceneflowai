@@ -48,6 +48,12 @@ module.exports = {
         'sf-primary-light': '#60A5FA',    // Lighter blue for highlights
         'sf-accent': '#6366F1',           // Indigo for secondary actions
         'sf-accent-light': '#A5B4FC',     // Light indigo for subtle accents
+
+        // SFAI logo palette (landing / public surfaces — Phase 1)
+        'sf-brand-cyan': '#00F2FF',
+        'sf-brand-navy': '#050A18',
+        'sf-brand-purple': '#1A0B2E',
+        'sf-brand-gold': '#C9A227',
         
         // Control Elements
         'sf-control': '#2A2A2A',          // Input backgrounds

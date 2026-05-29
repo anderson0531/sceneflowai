@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { LoginForm } from '@/components/auth/LoginForm'
+import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
 import { useAuthSuccessHandler } from '@/components/auth/useAuthSuccessHandler'
 import { Button } from '@/components/ui/Button'
 import { setPendingCheckoutTier } from '@/lib/billing/checkoutIntent'
@@ -116,17 +117,11 @@ function LoginPageContent() {
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4 py-12">
       <div className="mb-8 text-center">
-        <Link href="/" className="inline-flex items-center gap-3 group">
-          <div className="w-11 h-11 bg-sf-surface-light rounded-xl flex items-center justify-center">
-            <div className="w-6 h-6 bg-sf-primary rounded-lg flex items-center justify-center">
-              <div className="w-3 h-3 bg-sf-background rounded-sm" />
-            </div>
-          </div>
-          <span className="text-2xl font-bold tracking-tight">
-            <span className="text-white">SceneFlow</span>
-            <span className="text-sf-primary"> AI</span>
-          </span>
-        </Link>
+        <SceneFlowStudioBrand
+          href="/"
+          variant="landing"
+          nameClassName="text-white"
+        />
       </div>
 
       <LoginForm onSuccess={handleSuccess} />

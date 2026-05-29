@@ -4,18 +4,24 @@
   "description": "Transform your ideas into professional videos with AI-powered workflow automation",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0F172A",
-  "theme_color": "#00BFA5",
+  "background_color": "#050A18",
+  "theme_color": "#050A18",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
   "categories": ["productivity", "video", "ai", "creativity"],
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/brand/sf-badge.png",
+      "sizes": "88x88",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/brand/sf-logo-lockup.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/icon-72x72.png",

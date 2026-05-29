@@ -187,7 +187,7 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="pointer-events-none absolute -inset-4 bg-gradient-to-r from-blue-500/25 via-purple-500/25 to-pink-500/25 rounded-3xl blur-2xl" />
+            <div className="pointer-events-none absolute -inset-4 bg-gradient-to-r from-sf-brand-cyan/20 via-sf-brand-purple/15 to-sf-brand-cyan/10 rounded-3xl blur-2xl" />
 
             <div
               ref={containerRef}
