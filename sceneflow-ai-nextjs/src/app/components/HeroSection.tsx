@@ -160,7 +160,7 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
           >
-            <div className="mb-4 flex flex-col items-center gap-3">
+            <div className="relative z-10 mb-4 flex flex-col items-center gap-3">
               <p className="inline-flex items-center gap-2 text-sm text-gray-400">
                 <Globe className="h-4 w-4 text-cyan-400/80" aria-hidden />
                 {HERO_VIDEO_LANGUAGE_PROMPT}
@@ -210,11 +210,11 @@ export function HeroSection() {
               </p>
             </div>
 
-            <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-3xl blur-2xl" />
+            <div className="pointer-events-none absolute -inset-4 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-3xl blur-2xl" />
 
             <div 
               ref={containerRef}
-              className="relative rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black group"
+              className="relative z-10 rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl bg-black group"
             >
               <div className="relative aspect-video w-full h-full">
                 <video
@@ -249,10 +249,10 @@ export function HeroSection() {
               </div>
             </div>
 
-            <p className="mt-4 text-center text-base text-gray-400">
+            <p className="relative z-10 mt-4 text-center text-base text-gray-400">
               From concept to publish-ready video — one automated studio
             </p>
-            <p className="mt-1 text-center text-sm text-gray-500">
+            <p className="relative z-10 mt-1 text-center text-sm text-gray-500">
               Switch languages on the same pipeline — automated streams in Production, not manual re-edit cycles.
             </p>
           </motion.div>
