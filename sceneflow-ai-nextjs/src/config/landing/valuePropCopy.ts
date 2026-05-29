@@ -8,7 +8,7 @@ export const HERO_COPY = {
     'One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.',
   pipelineLine: 'Blueprint → Production → Final Cut → Premiere',
   ctaPrimary: 'Test the Full Pipeline — $9',
-  ctaSecondary: "Watch the 'What's Possible' Reel",
+  ctaSecondary: "Watch the 'What's Possible'",
 } as const
 
 export const VP_STRIP_PILLS = [

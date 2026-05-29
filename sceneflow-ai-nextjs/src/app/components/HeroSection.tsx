@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/Button'
 import { useState, useRef } from 'react'
-import { DemoVideoModal } from './DemoVideoModal'
 import { Play, ArrowRight, Pause, Volume2, VolumeX, Maximize } from 'lucide-react'
 import Link from 'next/link'
 import { getEarlyAccessUrl } from '@/lib/auth/postLoginRedirect'
@@ -13,8 +12,11 @@ import { HERO_COPY } from '@/config/landing/valuePropCopy'
 const HERO_COMMERCIAL_BLOB_SRC =
   'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/SceneFlow%20Hero.mp4#t=0.1'
 
+function scrollToSection(sectionId: string) {
+  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
+}
+
 export function HeroSection() {
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
@@ -50,7 +52,6 @@ export function HeroSection() {
 
   return (
     <>
-      <DemoVideoModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
       <section className="relative bg-gray-950 text-white pt-24 pb-20 sm:pt-32 sm:pb-28 lg:pt-40 lg:pb-36">
         <div className="absolute inset-0 bg-grid-pattern opacity-[0.07]" />
         <div className="absolute inset-0 bg-gradient-to-b from-gray-950 via-gray-950/80 to-transparent" />
@@ -100,7 +101,7 @@ export function HeroSection() {
                 variant="outline" 
                 size="lg" 
                 className="w-full sm:w-auto"
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => scrollToSection('use-cases')}
               >
                 <Play className="mr-2 w-5 h-5" />
                 {HERO_COPY.ctaSecondary}

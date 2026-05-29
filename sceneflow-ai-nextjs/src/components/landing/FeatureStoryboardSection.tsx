@@ -5,6 +5,7 @@ import { Camera, PlayCircle, Clock3, Maximize2, X, Play, Pause, Volume2, VolumeX
 import NextImage from 'next/image';
 import { useState, useRef } from 'react';
 import { StudioVideoWatermark } from '@/components/landing/StudioVideoWatermark';
+import { CollaborationDemosPanel } from '@/components/landing/SamplesSection';
 import {
   BEAT_FIRST_CARD,
   SCREENING_ROOM_COPY,
@@ -540,8 +541,10 @@ export default function FeatureStoryboardSection() {
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
 
   return (
-    <section id="feature-storyboard" className="bg-slate-950 py-20 sm:py-24 relative">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="feature-storyboard" className="bg-slate-950 py-20 sm:py-24 relative scroll-mt-20 overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(16,185,129,0.08),transparent_45%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(6,182,212,0.06),transparent_45%)]" />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -551,17 +554,24 @@ export default function FeatureStoryboardSection() {
         >
           <p className="inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-purple-200">
             <Clock3 className="h-3.5 w-3.5" />
-            Feature Deep Dive
+            Guided Tour
           </p>
           <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Platform Walkthrough
           </h2>
           <p className="mt-4 text-base text-slate-300">
-            A complete guide to the SceneFlow AI Studio workflow, from initial concept to final cinematic output.
+            A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.
           </p>
         </motion.div>
 
-        <div className="mt-12 space-y-4 max-w-7xl mx-auto">
+        <div className="mt-12">
+          <CollaborationDemosPanel />
+        </div>
+
+        <div className="mt-20 pt-12 border-t border-white/10 space-y-4 max-w-7xl mx-auto">
+          <p className="text-sm font-medium uppercase tracking-wider text-slate-500 mb-6">
+            Studio feature deep dive
+          </p>
           {ORDERED_FEATURE_STORYBOARD_ITEMS.map((item) => (
             <StoryboardCard 
               key={item.id} 

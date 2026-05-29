@@ -10,14 +10,12 @@ import {
   Film, 
   DollarSign, 
   HelpCircle,
-  PlayCircle,
 } from 'lucide-react'
 
 const sections = [
   { id: 'comparison', label: 'Compare', icon: Clock3 },
   { id: 'how-it-works', label: 'How It Works', icon: Sparkles },
   { id: 'use-cases', label: 'Use Cases', icon: Rocket },
-  { id: 'samples', label: 'Samples', icon: PlayCircle },
   { id: 'feature-storyboard', label: 'Platform Walkthrough', icon: Film },
   { id: 'engineering', label: 'Platform', icon: Shield },
   { id: 'pricing', label: 'Pricing', icon: DollarSign },
