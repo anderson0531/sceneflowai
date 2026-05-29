@@ -143,6 +143,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   const [isGen, setIsGen] = useState(false)
   const [genProgress, setGenProgress] = useState(0)
   const [isGeneratingHeroImage, setIsGeneratingHeroImage] = useState(false)
+  const [isUploadingHero, setIsUploadingHero] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   
   // Collaboration state
@@ -1307,7 +1308,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                         }
                       }}
                       onUpload={async (file) => {
-                        // Upload hero image
+                        setIsUploadingHero(true)
                         try {
                           const formData = new FormData()
                           formData.append('file', file)
@@ -1327,6 +1328,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                               idx === 0 ? { ...v, heroImage: { url: data.imageUrl, status: 'ready' } } : v
                             )
                             setTreatmentVariants(updatedVariants)
+                            setHeroImageError(null)
                             const { toast } = await import('sonner')
                             toast.success('Hero image uploaded successfully')
                           }
@@ -1334,9 +1336,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                           console.error('Upload error:', error)
                           const { toast } = await import('sonner')
                           toast.error('Failed to upload image')
+                        } finally {
+                          setIsUploadingHero(false)
                         }
                       }}
                       isGenerating={isGeneratingHeroImage}
+                      isUploading={isUploadingHero}
                       error={heroImageError}
                     />
                   </div>

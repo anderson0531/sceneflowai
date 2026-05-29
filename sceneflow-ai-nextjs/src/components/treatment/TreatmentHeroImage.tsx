@@ -28,6 +28,7 @@ interface TreatmentHeroImageProps {
   onUpload?: (file: File) => void
   onDownload?: () => void
   isGenerating?: boolean
+  isUploading?: boolean
   error?: string | null // External error message from parent
   className?: string
 }
@@ -47,6 +48,7 @@ export function TreatmentHeroImage({
   onUpload,
   onDownload,
   isGenerating = false,
+  isUploading = false,
   error: externalError,
   className
 }: TreatmentHeroImageProps) {
@@ -134,6 +136,28 @@ export function TreatmentHeroImage({
   // Consider image ready if URL exists and either no status or status is 'ready'
   // This handles both fresh API responses and database-loaded images
   const hasImage = image?.url && (image.status === 'ready' || !image.status) && !imageError
+
+  const uploadButton = onUpload ? (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => fileInputRef.current?.click()}
+      disabled={isUploading || isGenerating}
+      className="border-emerald-500/30 hover:border-emerald-400/50 text-emerald-300"
+    >
+      {isUploading ? (
+        <>
+          <Loader className="w-4 h-4 mr-2 animate-spin" />
+          Uploading...
+        </>
+      ) : (
+        <>
+          <Upload className="w-4 h-4 mr-2" />
+          Upload Image
+        </>
+      )}
+    </Button>
+  ) : null
   
   return (
     <div 
@@ -163,7 +187,12 @@ export function TreatmentHeroImage({
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center z-10">
-            {isGenerating || image?.status === 'generating' ? (
+            {isUploading ? (
+              <div className="flex flex-col items-center gap-3">
+                <Loader className="w-12 h-12 text-emerald-400 animate-spin" />
+                <span className="text-sm text-slate-400">Uploading hero image...</span>
+              </div>
+            ) : isGenerating || image?.status === 'generating' ? (
               <div className="flex flex-col items-center gap-3">
                 <div className="relative">
                   <Sparkles className="w-12 h-12 text-amber-400 animate-pulse" />
@@ -175,6 +204,28 @@ export function TreatmentHeroImage({
                   Generating hero image...
                 </span>
               </div>
+            ) : imageError && image?.url ? (
+              <div className="flex flex-col items-center gap-2 text-amber-400">
+                <ImageOff className="w-10 h-10" />
+                <span className="text-sm">Hero image failed to load</span>
+                <span className="text-xs text-slate-500 max-w-xs text-center">
+                  The image URL may be expired or unavailable. Upload a replacement or regenerate.
+                </span>
+                <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                  {uploadButton}
+                  {onRegenerate && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onRegenerate}
+                      disabled={isGenerating}
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Regenerate
+                    </Button>
+                  )}
+                </div>
+              </div>
             ) : image?.status === 'error' || externalError ? (
               <div className="flex flex-col items-center gap-2 text-red-400">
                 <ImageOff className="w-10 h-10" />
@@ -184,33 +235,39 @@ export function TreatmentHeroImage({
                     {externalError || image?.error}
                   </span>
                 )}
-                {onRegenerate && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onRegenerate}
-                    className="mt-2 border-red-500/30 hover:border-red-400/50"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Retry
-                  </Button>
-                )}
+                <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                  {uploadButton}
+                  {onRegenerate && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onRegenerate}
+                      className="border-red-500/30 hover:border-red-400/50"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Retry
+                    </Button>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-3 text-slate-500">
                 <Film className="w-16 h-16 opacity-30" />
                 <span className="text-sm">Hero image not generated</span>
-                {onRegenerate && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onRegenerate}
-                    className="mt-2"
-                  >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Generate Hero Image
-                  </Button>
-                )}
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {uploadButton}
+                  {onRegenerate && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onRegenerate}
+                      disabled={isGenerating}
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate Hero Image
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -299,9 +356,14 @@ export function TreatmentHeroImage({
                 <TooltipTrigger asChild>
                   <button
                     onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                    className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors"
+                    disabled={isUploading}
+                    className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors disabled:opacity-50"
                   >
-                    <Upload className="w-5 h-5 text-white" />
+                    {isUploading ? (
+                      <Loader className="w-5 h-5 text-white animate-spin" />
+                    ) : (
+                      <Upload className="w-5 h-5 text-white" />
+                    )}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>Upload Image</TooltipContent>
