@@ -331,6 +331,38 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     }
   }
 
+  /** Push latest variant (e.g. new hero URL) into the active share payload without creating a new link. */
+  const syncActiveBlueprintShare = useCallback(
+    async (variant: Record<string, unknown>) => {
+      if (!projectId || projectId.startsWith('new-project')) return
+
+      const variantId = typeof variant.id === 'string' ? variant.id : ''
+      if (!variantId) return
+
+      const active = shareToken
+        ? { token: shareToken }
+        : await fetchActiveBlueprintShare(projectId)
+      if (!active) return
+
+      const heroImageUrl = resolveBlueprintHeroImageUrl(variant)
+      const result = await createBlueprintShare({
+        projectId,
+        variantId,
+        treatment: variant,
+        heroImageUrl,
+        audienceDefinition: audienceDefinition ?? null,
+        expiresInDays: 14,
+      })
+
+      if (result.success) {
+        applyShareResult(result, false)
+      } else {
+        console.warn('[syncActiveBlueprintShare]', result.error)
+      }
+    },
+    [projectId, shareToken, audienceDefinition, applyShareResult]
+  )
+
   // Unified Start Production handoff (shared gate for toolbar + AR panel)
   const {
     isStarting: isStartingProduction,
@@ -1324,11 +1356,19 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                           const data = await response.json()
                           if (data.imageUrl) {
                             const currentVariants = useGuideStore.getState().guide.treatmentVariants || []
-                            const updatedVariants = currentVariants.map((v: any, idx: number) => 
-                              idx === 0 ? { ...v, heroImage: { url: data.imageUrl, status: 'ready' } } : v
+                            const selectedId = useGuideStore.getState().guide.selectedTreatmentId
+                            const targetId = selectedId || currentVariants[0]?.id
+                            const updatedVariants = currentVariants.map((v: any) =>
+                              v.id === targetId
+                                ? { ...v, heroImage: { url: data.imageUrl, status: 'ready' } }
+                                : v
                             )
                             setTreatmentVariants(updatedVariants)
                             setHeroImageError(null)
+                            const updatedVariant = updatedVariants.find((v: any) => v.id === targetId)
+                            if (updatedVariant) {
+                              await syncActiveBlueprintShare(updatedVariant as Record<string, unknown>)
+                            }
                             const { toast } = await import('sonner')
                             toast.success('Hero image uploaded successfully')
                           }

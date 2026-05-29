@@ -156,6 +156,7 @@ export async function POST(req: NextRequest) {
         nextPayload = {
           ...nextPayload,
           variantId,
+          treatment,
           heroImageUrl: resolvedHeroImageUrl,
           audienceDefinition: audienceDefinition ?? null,
           ownerDisplayName: ownerName,
