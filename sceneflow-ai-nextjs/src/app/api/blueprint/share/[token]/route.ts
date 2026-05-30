@@ -11,6 +11,8 @@ import {
 } from '@/lib/blueprint/shareAudioPayload'
 import { requireOwnerForSession } from '@/lib/blueprint/shareAuth'
 import { resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
+import { mirrorBlueprintHeroToBlob } from '@/lib/blueprint/shareHeroImage'
+import type { BlueprintSessionPayload } from '@/lib/blueprint/shareTypes'
 
 export const runtime = 'nodejs'
 
@@ -35,6 +37,20 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
     payload = normalizeShareAudioPayload(payload)
     const lang = getShareAudioLanguage(payload)
 
+    let heroImageUrl =
+      resolveBlueprintHeroImageUrl(payload) ??
+      resolveBlueprintHeroImageUrl(payload.treatment as Record<string, unknown>)
+
+    if (heroImageUrl && payload.projectId) {
+      const mirrored = await mirrorBlueprintHeroToBlob(heroImageUrl, payload.projectId)
+      if (mirrored !== heroImageUrl || payload.heroImageUrl !== mirrored) {
+        const nextPayload: BlueprintSessionPayload = { ...payload, heroImageUrl: mirrored }
+        payload = nextPayload
+        await CollabSession.update({ payload: nextPayload }, { where: { id: session.id } })
+        heroImageUrl = mirrored
+      }
+    }
+
     return NextResponse.json({
       success: true,
       sessionId: session.id,
@@ -43,9 +59,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
       expiresAt: (session as { expires_at?: Date | null }).expires_at,
       payload: {
         treatment: payload.treatment,
-        heroImageUrl:
-          resolveBlueprintHeroImageUrl(payload) ??
-          resolveBlueprintHeroImageUrl(payload.treatment as Record<string, unknown>),
+        heroImageUrl,
         variantId: payload.variantId,
         projectId: payload.projectId,
         shareSettings: payload.shareSettings,

@@ -275,6 +275,51 @@ export function isGcsSignedUrl(url: string): boolean {
 }
 
 /**
+ * Parse https://storage.googleapis.com/{bucket}/{path} into bucket + object path.
+ */
+export function parseGcsHttpsUrl(url: string): { bucketName: string; filePath: string } | null {
+  try {
+    const parsed = new URL(url)
+    if (
+      parsed.hostname !== 'storage.googleapis.com' &&
+      parsed.hostname !== 'storage.cloud.google.com'
+    ) {
+      return null
+    }
+    const parts = parsed.pathname.replace(/^\/+/, '').split('/')
+    if (parts.length < 2) return null
+    const [bucketName, ...rest] = parts
+    const filePath = rest.join('/')
+    if (!bucketName || !filePath) return null
+    return { bucketName, filePath }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Download a GCS asset via service account credentials (works for private objects).
+ */
+export async function downloadGcsAssetFromHttpsUrl(
+  url: string
+): Promise<{ buffer: Buffer; contentType: string }> {
+  const parsed = parseGcsHttpsUrl(url)
+  if (!parsed) {
+    throw new Error(`Invalid GCS HTTPS URL: ${url}`)
+  }
+
+  const { bucketName, filePath } = parsed
+  const storage = getStorageClient()
+  const file = storage.bucket(bucketName).file(filePath)
+
+  const [contents] = await file.download()
+  const [metadata] = await file.getMetadata().catch(() => [{} as { contentType?: string }])
+  const contentType = metadata.contentType || 'image/png'
+
+  return { buffer: contents, contentType }
+}
+
+/**
  * Check if a URL is a GCS URI
  */
 export function isGcsUri(url: string): boolean {

@@ -18,6 +18,7 @@ import {
   isGeminiTtsConfigured,
 } from '@/lib/tts/geminiFlashTts'
 import { resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
+import { mirrorBlueprintHeroToBlob } from '@/lib/blueprint/shareHeroImage'
 import { ensureCollabBlueprintFeedbackTable } from '@/lib/blueprint/ensureCollabBlueprintSchema'
 
 export const runtime = 'nodejs'
@@ -125,6 +126,10 @@ export async function POST(req: NextRequest) {
 
     await sequelize.authenticate()
 
+    const mirroredHeroImageUrl = resolvedHeroImageUrl
+      ? await mirrorBlueprintHeroToBlob(resolvedHeroImageUrl, projectId)
+      : undefined
+
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
 
     await CollabSession.sync({ alter: false })
@@ -143,7 +148,7 @@ export async function POST(req: NextRequest) {
           ...prev,
           variantId,
           treatment,
-          heroImageUrl: resolvedHeroImageUrl,
+          heroImageUrl: mirroredHeroImageUrl,
           audienceDefinition: audienceDefinition ?? null,
           ownerDisplayName: ownerName,
           shareSettings: {
@@ -157,7 +162,7 @@ export async function POST(req: NextRequest) {
           ...nextPayload,
           variantId,
           treatment,
-          heroImageUrl: resolvedHeroImageUrl,
+          heroImageUrl: mirroredHeroImageUrl,
           audienceDefinition: audienceDefinition ?? null,
           ownerDisplayName: ownerName,
           shareSettings: {
@@ -192,7 +197,7 @@ export async function POST(req: NextRequest) {
         projectId,
         variantId,
         treatment,
-        heroImageUrl: resolvedHeroImageUrl,
+        heroImageUrl: mirroredHeroImageUrl,
         audienceDefinition,
         expiresInDays,
       },
