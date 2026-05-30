@@ -60,6 +60,7 @@ async function writeOtpRecord(email: string, record: OtpRecord): Promise<void> {
   await put(otpPath(email), JSON.stringify(record, null, 2), {
     access: 'private',
     addRandomSuffix: false,
+    allowOverwrite: true,
     contentType: 'application/json; charset=utf-8',
     token: getPrivateBlobToken(),
   })

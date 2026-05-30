@@ -255,6 +255,7 @@ export async function upsertEapReview(applicationId: string, updates: Partial<Ea
   await put(reviewPath(applicationId), JSON.stringify(merged, null, 2), {
     access: 'private',
     addRandomSuffix: false,
+    allowOverwrite: true,
     contentType: 'application/json; charset=utf-8',
     token: getPrivateBlobToken(),
   })
