@@ -62,7 +62,7 @@ export const AUDIENCE_PATHS = [
       'Real estate & hospitality tours',
       'Subscription video services',
     ],
-    defaultCategoryId: 'lifeStories',
+    defaultCategoryId: 'knowledge',
     icon: 'film' as const,
   },
   {

@@ -26,7 +26,8 @@ export const VIDEO_CATEGORIES = [
       { label: "Corporate L&D", description: "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices." },
       { label: "Software SaaS Tutorials", description: "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion." },
       { label: "Niche Skill Tutoring", description: "Professional \"How-To\" series for cooking, DIY, or technical certifications." },
-      { label: "Medical/Patient Education", description: "Narrated explanations of surgical procedures or medication management for hospitals and clinics." }
+      { label: "Medical/Patient Education", description: "Narrated explanations of surgical procedures or medication management for hospitals and clinics." },
+      { label: "Video Memoirs", description: "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render." }
     ]
   },
   {
@@ -61,18 +62,6 @@ export const VIDEO_CATEGORIES = [
       { label: "Public Health Announcements", description: "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity." },
       { label: "Legal & Insurance Explainers", description: "Helping clients understand complex contracts or claim processes through narrated visual breakdowns." },
       { label: "Religious & Spiritual Teachings", description: "Converting sermons or texts into a consistent, narrated daily video series for global congregations." }
-    ]
-  },
-  {
-    id: 'lifeStories',
-    title: "Life Stories & Video Services",
-    videoSrc: '',
-    examples: [
-      { label: "Video Memoirs", description: "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render." },
-      { label: "Multi-Chapter Life Stories", description: "Episodic series—from childhood milestones to career turns and family chapters—built from uploaded photos, interviews, and voice-cloned narration that keeps every episode feeling like the same storyteller." },
-      { label: "Milestone & Tribute Videos", description: "Anniversary, memorial, and celebration reels built from client uploads and branded studio intake workflows." },
-      { label: "White-Label Memoir Studios", description: "Startup video services productize intake → Blueprint → storyboard → delivery using reusable SceneFlow templates and credit-based margin." },
-      { label: "Subscription Personal Video", description: "Monthly family updates, senior-living story packages, or local \"video greeting\" subscriptions scaled from one studio pipeline." }
     ]
   }
 ];
