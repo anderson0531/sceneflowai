@@ -17,8 +17,11 @@ import {
   DEFAULT_BLUEPRINT_GEMINI_VOICE,
   isGeminiTtsConfigured,
 } from '@/lib/tts/geminiFlashTts'
-import { resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
-import { mirrorBlueprintHeroToBlob } from '@/lib/blueprint/shareHeroImage'
+import { pickBestHeroImageUrl, resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
+import {
+  applyHeroUrlToPayload,
+  resolveShareHeroImageUrl,
+} from '@/lib/blueprint/shareHeroImage'
 import { ensureCollabBlueprintFeedbackTable } from '@/lib/blueprint/ensureCollabBlueprintSchema'
 
 export const runtime = 'nodejs'
@@ -115,9 +118,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Missing projectId, variantId, or treatment' }, { status: 400 })
     }
 
-    const resolvedHeroImageUrl =
-      resolveBlueprintHeroImageUrl(treatment as Record<string, unknown>) ||
-      (typeof heroImageUrl === 'string' && heroImageUrl.trim() ? heroImageUrl.trim() : undefined)
+    const resolvedHeroImageUrl = pickBestHeroImageUrl(
+      resolveBlueprintHeroImageUrl(treatment as Record<string, unknown>),
+      typeof heroImageUrl === 'string' ? heroImageUrl : undefined
+    )
 
     const access = await assertProjectAccess(projectId, ownerUserId, legacyOwnerId)
     if (!access.ok) {
@@ -126,9 +130,17 @@ export async function POST(req: NextRequest) {
 
     await sequelize.authenticate()
 
-    const mirroredHeroImageUrl = resolvedHeroImageUrl
-      ? await mirrorBlueprintHeroToBlob(resolvedHeroImageUrl, projectId)
-      : undefined
+    const heroDraft: BlueprintSessionPayload = {
+      type: 'blueprint',
+      projectId,
+      variantId,
+      treatment,
+      heroImageUrl: resolvedHeroImageUrl,
+    }
+    const resolvedShareHero = await resolveShareHeroImageUrl(heroDraft)
+    const heroSyncedDraft = applyHeroUrlToPayload(heroDraft, resolvedShareHero)
+    const syncedTreatment = heroSyncedDraft.treatment
+    const syncedHeroImageUrl = heroSyncedDraft.heroImageUrl
 
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
 
@@ -147,8 +159,8 @@ export async function POST(req: NextRequest) {
         let nextPayload: BlueprintSessionPayload = {
           ...prev,
           variantId,
-          treatment,
-          heroImageUrl: mirroredHeroImageUrl,
+          treatment: syncedTreatment,
+          heroImageUrl: syncedHeroImageUrl,
           audienceDefinition: audienceDefinition ?? null,
           ownerDisplayName: ownerName,
           shareSettings: {
@@ -157,12 +169,12 @@ export async function POST(req: NextRequest) {
             allowTts: true,
           },
         }
-        nextPayload = invalidateAudioIfTreatmentChanged(prev, treatment)
+        nextPayload = invalidateAudioIfTreatmentChanged(prev, syncedTreatment)
         nextPayload = {
           ...nextPayload,
           variantId,
-          treatment,
-          heroImageUrl: mirroredHeroImageUrl,
+          treatment: syncedTreatment,
+          heroImageUrl: syncedHeroImageUrl,
           audienceDefinition: audienceDefinition ?? null,
           ownerDisplayName: ownerName,
           shareSettings: {
@@ -196,8 +208,8 @@ export async function POST(req: NextRequest) {
       {
         projectId,
         variantId,
-        treatment,
-        heroImageUrl: mirroredHeroImageUrl,
+        treatment: syncedTreatment,
+        heroImageUrl: syncedHeroImageUrl,
         audienceDefinition,
         expiresInDays,
       },

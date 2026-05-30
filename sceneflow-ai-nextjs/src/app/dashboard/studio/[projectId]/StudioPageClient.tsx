@@ -1364,6 +1364,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                                 : v
                             )
                             setTreatmentVariants(updatedVariants)
+                            await persistBlueprintMetadata({ treatmentVariants: updatedVariants })
                             setHeroImageError(null)
                             const updatedVariant = updatedVariants.find((v: any) => v.id === targetId)
                             if (updatedVariant) {
