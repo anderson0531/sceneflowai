@@ -19,6 +19,7 @@ import type {
   BlueprintSectionAudioEntry,
 } from '@/lib/blueprint/shareTypes'
 import { BLUEPRINT_REVIEW_SECTION_THEME } from '@/lib/blueprint/blueprintReviewTheme'
+import { BlueprintCoreContent } from '@/components/blueprint/BlueprintCoreContent'
 
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   if (!value.trim()) return null
@@ -62,25 +63,23 @@ function SectionContent({
   sectionId,
   variant,
   omitLoglineInCore,
+  omitTitleInCore,
 }: {
   sectionId: BlueprintFixSection
   variant: Record<string, unknown>
   omitLoglineInCore?: boolean
+  omitTitleInCore?: boolean
 }) {
   const fieldStack = sectionId === 'story' ? 'space-y-4' : 'space-y-3'
 
   switch (sectionId) {
     case 'core':
       return (
-        <div className={fieldStack}>
-          <ReadOnlyField label="Title" value={String(variant.title || '')} />
-          {!omitLoglineInCore && (
-            <ReadOnlyField label="Logline" value={String(variant.logline || '')} />
-          )}
-          <ReadOnlyField label="Genre" value={String(variant.genre || '')} />
-          <ReadOnlyField label="Format" value={String(variant.format_length || '')} />
-          <ReadOnlyField label="Target audience" value={String(variant.target_audience || '')} />
-        </div>
+        <BlueprintCoreContent
+          variant={variant}
+          omitTitleInCore={omitTitleInCore}
+          omitLoglineInCore={omitLoglineInCore}
+        />
       )
     case 'story':
       return (
@@ -199,6 +198,7 @@ type Props = {
   feedback?: BlueprintFeedbackSection
   onFeedbackChange?: (next: BlueprintFeedbackSection) => void
   omitLoglineInCore?: boolean
+  omitTitleInCore?: boolean
   translationNarration?: string
 }
 
@@ -215,6 +215,7 @@ export function BlueprintReviewSection({
   feedback = {},
   onFeedbackChange,
   omitLoglineInCore,
+  omitTitleInCore,
   translationNarration,
 }: Props) {
   const theme = BLUEPRINT_REVIEW_SECTION_THEME[sectionId]
@@ -289,6 +290,7 @@ export function BlueprintReviewSection({
             sectionId={sectionId}
             variant={variant}
             omitLoglineInCore={omitLoglineInCore}
+            omitTitleInCore={omitTitleInCore}
           />
 
           {canFeedback && onFeedbackChange && (

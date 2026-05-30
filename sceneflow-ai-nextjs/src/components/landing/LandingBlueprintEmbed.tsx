@@ -131,6 +131,7 @@ export function LandingBlueprintEmbed() {
           allowTts={allowTts}
           canFeedback={false}
           omitLoglineInCore={!!treatment.logline}
+          omitTitleInCore={!!treatment.title}
         />
       </div>
       <div className="shrink-0 border-t border-white/10 bg-slate-900/80 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

@@ -453,6 +453,7 @@ export function BlueprintShareViewer({ token }: Props) {
                   : undefined
               }
               omitLoglineInCore={!!treatment.logline}
+              omitTitleInCore={!!treatment.title}
             />
           ))}
         </div>
