@@ -20,16 +20,7 @@ import type {
 } from '@/lib/blueprint/shareTypes'
 import { BLUEPRINT_REVIEW_SECTION_THEME } from '@/lib/blueprint/blueprintReviewTheme'
 import { BlueprintCoreContent } from '@/components/blueprint/BlueprintCoreContent'
-
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
-  if (!value.trim()) return null
-  return (
-    <div className="space-y-1">
-      <div className="sf-review-field-label">{label}</div>
-      <p className="sf-review-body">{value}</p>
-    </div>
-  )
-}
+import { BlueprintFieldCard } from '@/components/blueprint/BlueprintFieldCard'
 
 function normalizeBeats(variant: Record<string, unknown>) {
   const beats = variant.beats as Array<{
@@ -84,13 +75,22 @@ function SectionContent({
     case 'story':
       return (
         <div className={fieldStack}>
-          <ReadOnlyField
+          <BlueprintFieldCard
+            sectionId="story"
             label="Synopsis"
             value={String(variant.synopsis || variant.content || '')}
           />
-          <ReadOnlyField label="Setting" value={String(variant.setting || '')} />
-          <ReadOnlyField label="Protagonist" value={String(variant.protagonist || '')} />
-          <ReadOnlyField label="Antagonist" value={String(variant.antagonist || '')} />
+          <BlueprintFieldCard sectionId="story" label="Setting" value={String(variant.setting || '')} />
+          <BlueprintFieldCard
+            sectionId="story"
+            label="Protagonist"
+            value={String(variant.protagonist || '')}
+          />
+          <BlueprintFieldCard
+            sectionId="story"
+            label="Antagonist"
+            value={String(variant.antagonist || '')}
+          />
         </div>
       )
     case 'characters': {
@@ -166,13 +166,22 @@ function SectionContent({
         : String(variant.themes || '')
       return (
         <div className={fieldStack}>
-          <ReadOnlyField label="Tone" value={String(variant.tone || '')} />
-          <ReadOnlyField label="Tone description" value={String(variant.tone_description || '')} />
-          <ReadOnlyField label="Style" value={String(variant.style || '')} />
-          <ReadOnlyField label="Visual style" value={String(variant.visual_style || '')} />
-          <ReadOnlyField label="Themes" value={themes} />
+          <BlueprintFieldCard sectionId="tone" label="Tone" value={String(variant.tone || '')} />
+          <BlueprintFieldCard
+            sectionId="tone"
+            label="Tone description"
+            value={String(variant.tone_description || '')}
+          />
+          <BlueprintFieldCard sectionId="tone" label="Style" value={String(variant.style || '')} />
+          <BlueprintFieldCard
+            sectionId="tone"
+            label="Visual style"
+            value={String(variant.visual_style || '')}
+          />
+          <BlueprintFieldCard sectionId="tone" label="Themes" value={themes} />
           {Array.isArray(variant.mood_references) && variant.mood_references.length > 0 ? (
-            <ReadOnlyField
+            <BlueprintFieldCard
+              sectionId="tone"
               label="Mood references"
               value={(variant.mood_references as string[]).join(', ')}
             />
@@ -260,7 +269,7 @@ export function BlueprintReviewSection({
             <ChevronRight className={cn('h-5 w-5 shrink-0', theme.iconClass)} />
           )}
           <SectionIcon className={cn('h-4 w-4 shrink-0', theme.iconClass)} aria-hidden />
-          <span className="sf-section-title">{title}</span>
+          <span className={cn('sf-section-title', theme.iconClass)}>{title}</span>
           {canFeedback && feedback.score ? (
             <span className="text-xs font-medium text-amber-400/90 ml-1">{feedback.score}/5</span>
           ) : null}

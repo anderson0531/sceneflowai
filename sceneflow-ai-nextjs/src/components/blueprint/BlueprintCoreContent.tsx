@@ -4,6 +4,7 @@ import {
   formatBlueprintRuntime,
   getBlueprintCoreFields,
 } from '@/lib/blueprint/formatBlueprintCore'
+import { BlueprintFieldCard } from '@/components/blueprint/BlueprintFieldCard'
 
 type Props = {
   variant: Record<string, unknown>
@@ -20,63 +21,50 @@ export function BlueprintCoreContent({
   const runtime = formatBlueprintRuntime(fields.formatLength)
   const showTitle = !omitTitleInCore && !!fields.title
   const showLogline = !omitLoglineInCore && !!fields.logline
-  const hasChips = !!fields.genre || !!runtime.display
-  const hasAudience = !!fields.targetAudience
-  const hasFooter = !!fields.authorWriter || !!fields.date
+  const hasAny =
+    showTitle ||
+    showLogline ||
+    !!fields.genre ||
+    !!runtime.display ||
+    !!fields.targetAudience ||
+    !!fields.authorWriter ||
+    !!fields.date
 
-  if (!showTitle && !showLogline && !hasChips && !hasAudience && !hasFooter) {
+  if (!hasAny) {
     return <p className="sf-review-body-muted">No core information listed.</p>
   }
 
   return (
-    <div className="space-y-4">
-      {(showTitle || showLogline) && (
-        <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 px-4 py-3 border-l-4 border-l-purple-500/50">
-          {showTitle ? (
-            <h3 className="sf-section-title text-xl sm:text-2xl">{fields.title}</h3>
-          ) : null}
-          {showLogline ? (
-            <p className="sf-review-body-muted mt-2 italic">{fields.logline}</p>
-          ) : null}
-        </div>
-      )}
-
-      {hasChips ? (
-        <div className="flex flex-wrap gap-2">
-          {fields.genre ? (
-            <span className="sf-core-chip sf-core-chip-genre">{fields.genre}</span>
-          ) : null}
-          {runtime.display ? (
-            <span className="sf-core-chip sf-core-chip-format" title={runtime.raw}>
-              {runtime.display}
-            </span>
-          ) : null}
-        </div>
+    <div className="space-y-3">
+      {showTitle ? (
+        <BlueprintFieldCard
+          sectionId="core"
+          label="Title"
+          value={fields.title}
+          emphasis="prominent"
+        />
       ) : null}
-
-      {hasAudience ? (
-        <div className="sf-core-audience">
-          <div className="sf-review-field-label text-purple-300/90 mb-2">Target audience</div>
-          <p className="sf-review-body">{fields.targetAudience}</p>
-        </div>
+      {showLogline ? (
+        <BlueprintFieldCard
+          sectionId="core"
+          label="Logline"
+          value={fields.logline}
+          valueClassName="italic text-gray-300"
+        />
       ) : null}
-
-      {hasFooter ? (
-        <div className="sf-review-body-muted flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          {fields.authorWriter ? (
-            <span>
-              <span className="sf-review-field-label normal-case tracking-normal">Writer: </span>
-              {fields.authorWriter}
-            </span>
-          ) : null}
-          {fields.date ? (
-            <span>
-              <span className="sf-review-field-label normal-case tracking-normal">Date: </span>
-              {fields.date}
-            </span>
-          ) : null}
-        </div>
-      ) : null}
+      <BlueprintFieldCard sectionId="core" label="Genre" value={fields.genre} />
+      <BlueprintFieldCard
+        sectionId="core"
+        label="Format"
+        hideWhenEmpty={!runtime.display}
+      >
+        <span className="sf-review-body font-medium" title={runtime.raw || undefined}>
+          {runtime.display}
+        </span>
+      </BlueprintFieldCard>
+      <BlueprintFieldCard sectionId="core" label="Target audience" value={fields.targetAudience} />
+      <BlueprintFieldCard sectionId="core" label="Writer" value={fields.authorWriter} />
+      <BlueprintFieldCard sectionId="core" label="Date" value={fields.date} />
     </div>
   )
 }

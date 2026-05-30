@@ -62,6 +62,11 @@ export {
   type ToastType
 } from './Toast'
 
+export {
+  BlueprintFieldCard,
+  BlueprintSubsectionHeading,
+} from './BlueprintFieldCard'
+
 // Legacy/Existing Components
 export { BlueprintComposer } from './BlueprintComposer'
 export { BlueprintTopbar } from './BlueprintTopbar'

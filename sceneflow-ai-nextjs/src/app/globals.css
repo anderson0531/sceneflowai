@@ -386,28 +386,20 @@
     @apply text-xs font-medium uppercase tracking-wide text-gray-400;
   }
 
+  .sf-review-field-card {
+    @apply rounded-lg border px-4 py-3;
+  }
+
+  .sf-review-field-card-label {
+    @apply text-sm font-semibold tracking-tight normal-case;
+  }
+
   .sf-review-body {
     @apply text-base text-gray-200 leading-relaxed whitespace-pre-wrap;
   }
 
   .sf-review-body-muted {
     @apply text-sm text-gray-400 leading-relaxed;
-  }
-
-  .sf-core-chip {
-    @apply inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium leading-snug;
-  }
-
-  .sf-core-chip-genre {
-    @apply border-purple-500/35 bg-purple-500/10 text-purple-200;
-  }
-
-  .sf-core-chip-format {
-    @apply border-sky-500/35 bg-sky-500/10 text-sky-200;
-  }
-
-  .sf-core-audience {
-    @apply rounded-lg border border-purple-500/15 bg-purple-500/5 px-4 py-3;
   }
 
   .input-field {

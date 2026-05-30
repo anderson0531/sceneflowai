@@ -20,6 +20,8 @@ import { useBlueprintTts } from '@/hooks/useBlueprintTts'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType } from '@/lib/types/reports'
 import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
+import { formatBlueprintRuntime } from '@/lib/blueprint/formatBlueprintCore'
+import { BlueprintFieldCard, BlueprintSubsectionHeading } from '@/components/blueprint/BlueprintFieldCard'
 import { cn } from '@/lib/utils'
 
 export type TreatmentCardProps = {
@@ -436,9 +438,12 @@ export function TreatmentCard({
                     )}
                   </div>
                   {/* Core Identifying Information */}
-                  <div className="space-y-1" data-blueprint-section="core">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Core Identifying Information</div>
+                  <BlueprintSubsectionHeading
+                    sectionId="core"
+                    variant="studio"
+                    title="Core Identifying Information"
+                    data-blueprint-section="core"
+                    actions={
                       <Button
                         onClick={() => openGuidedForSection('core')}
                         size="sm"
@@ -447,49 +452,87 @@ export function TreatmentCard({
                       >
                         <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
                       </Button>
+                    }
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <BlueprintFieldCard
+                        sectionId="core"
+                        variant="studio"
+                        label="Title"
+                        value={v.title || ''}
+                        emphasis="prominent"
+                        valueClassName={v.id === activeVariant.id ? flashIf('title') : undefined}
+                      />
+                      <BlueprintFieldCard sectionId="core" variant="studio" label="Genre" hideWhenEmpty={!v.genre}>
+                        <span className={cn(badgeGenre, v.id === activeVariant.id ? flashIf('genre') : '')}>
+                          {v.genre}
+                        </span>
+                      </BlueprintFieldCard>
+                      <BlueprintFieldCard
+                        sectionId="core"
+                        variant="studio"
+                        label="Format"
+                        hideWhenEmpty={!v.format_length}
+                      >
+                        <span
+                          className={cn(badgeFormat, v.id === activeVariant.id ? flashIf('format_length') : '')}
+                          title={v.format_length || undefined}
+                        >
+                          {v.format_length
+                            ? formatBlueprintRuntime(String(v.format_length)).display
+                            : null}
+                        </span>
+                      </BlueprintFieldCard>
+                      <BlueprintFieldCard
+                        sectionId="core"
+                        variant="studio"
+                        label="Target audience"
+                        hideWhenEmpty={!v.target_audience}
+                      >
+                        <span
+                          className={cn(
+                            badgeAudience,
+                            v.id === activeVariant.id ? flashIf('target_audience') : ''
+                          )}
+                        >
+                          {v.target_audience}
+                        </span>
+                      </BlueprintFieldCard>
+                      <BlueprintFieldCard
+                        sectionId="core"
+                        variant="studio"
+                        label="Logline"
+                        value={v.logline || ''}
+                        valueClassName={v.id === activeVariant.id ? flashIf('logline') : undefined}
+                        className="md:col-span-2"
+                      />
+                      <BlueprintFieldCard
+                        sectionId="core"
+                        variant="studio"
+                        label="Created by"
+                        value={v.author_writer || ''}
+                        valueClassName={v.id === activeVariant.id ? flashIf('author_writer') : undefined}
+                      />
+                      <BlueprintFieldCard
+                        sectionId="core"
+                        variant="studio"
+                        label="Date"
+                        value={v.date || ''}
+                        valueClassName={cn(
+                          'font-mono',
+                          v.id === activeVariant.id ? flashIf('date') : undefined
+                        )}
+                      />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                      <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Title</div>
-                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('title') : ''}`}>{v.title || '—'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Genre</div>
-                        <div className={`${v.id===activeVariant.id ? flashIf('genre') : ''}`}>
-                          {v.genre ? <span className={badgeGenre}>{v.genre}</span> : '—'}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Format/Length</div>
-                        <div className={`${v.id===activeVariant.id ? flashIf('format_length') : ''}`}>
-                          {v.format_length ? <span className={badgeFormat}>{v.format_length}</span> : '—'}
-                        </div>
-                      </div>
-                      <div className="md:col-span-3">
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Logline</div>
-                        <div className={`text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed ${v.id===activeVariant.id ? flashIf('logline') : ''}`}>{v.logline || '—'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Target Audience</div>
-                        <div className={`${v.id===activeVariant.id ? flashIf('target_audience') : ''}`}>
-                          {v.target_audience ? <span className={badgeAudience}>{v.target_audience}</span> : '—'}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Created By</div>
-                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('author_writer') : ''}`}>{v.author_writer || '—'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Date</div>
-                        <div className={`text-gray-900 dark:text-gray-100 font-mono ${v.id===activeVariant.id ? flashIf('date') : ''}`}>{v.date || '—'}</div>
-                      </div>
-                    </div>
-                  </div>
+                  </BlueprintSubsectionHeading>
 
                   {/* Narrative Structure & Plot */}
-                  <div className="space-y-1" data-blueprint-section="story">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Story Setup</div>
+                  <BlueprintSubsectionHeading
+                    sectionId="story"
+                    variant="studio"
+                    title="Story Setup"
+                    data-blueprint-section="story"
+                    actions={
                       <Button
                         onClick={() => openGuidedForSection('story')}
                         size="sm"
@@ -498,27 +541,41 @@ export function TreatmentCard({
                       >
                         <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
                       </Button>
+                    }
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <BlueprintFieldCard
+                        sectionId="story"
+                        variant="studio"
+                        label="Setting"
+                        value={v.setting || ''}
+                        valueClassName={v.id === activeVariant.id ? flashIf('setting') : undefined}
+                      />
+                      <BlueprintFieldCard
+                        sectionId="story"
+                        variant="studio"
+                        label="Protagonist"
+                        value={v.protagonist || ''}
+                        valueClassName={v.id === activeVariant.id ? flashIf('protagonist') : undefined}
+                      />
+                      <BlueprintFieldCard
+                        sectionId="story"
+                        variant="studio"
+                        label="Antagonist / Conflict"
+                        value={v.antagonist || ''}
+                        valueClassName={v.id === activeVariant.id ? flashIf('antagonist') : undefined}
+                        className="md:col-span-2"
+                      />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                      <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Setting</div>
-                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('setting') : ''}`}>{v.setting || '—'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Protagonist</div>
-                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('protagonist') : ''}`}>{v.protagonist || '—'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Antagonist / Conflict</div>
-                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? flashIf('antagonist') : ''}`}>{v.antagonist || '—'}</div>
-                      </div>
-                    </div>
-                  </div>
+                  </BlueprintSubsectionHeading>
 
                   {/* Tone, Style, & Themes */}
-                  <div className="space-y-1" data-blueprint-section="tone">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Tone, Style, & Themes</div>
+                  <BlueprintSubsectionHeading
+                    sectionId="tone"
+                    variant="studio"
+                    title="Tone, Style, & Themes"
+                    data-blueprint-section="tone"
+                    actions={
                       <Button
                         onClick={() => openGuidedForSection('tone')}
                         size="sm"
@@ -527,37 +584,71 @@ export function TreatmentCard({
                       >
                         <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
                       </Button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                      <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Tone</div>
-                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? (flashIf('tone_description') || flashIf('tone')) : ''}`}>{v.tone_description || v.tone || '—'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Style / Visual Style</div>
-                        <div className={`text-gray-900 dark:text-gray-100 ${v.id===activeVariant.id ? (flashIf('style') || flashIf('visual_style')) : ''}`}>{v.style || v.visual_style || '—'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Themes</div>
-                        <div className={`flex flex-wrap gap-2 ${v.id===activeVariant.id ? flashIf('themes') : ''}`}>
-                          {Array.isArray(v.themes) ? v.themes.map((t: string, i: number) => (
-                            <span key={`${t}-${i}`} className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs">{t}</span>
-                          )) : (v.themes || '—')}
+                    }
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <BlueprintFieldCard
+                        sectionId="tone"
+                        variant="studio"
+                        label="Tone"
+                        value={v.tone_description || v.tone || ''}
+                        valueClassName={
+                          v.id === activeVariant.id ? flashIf('tone_description') || flashIf('tone') : undefined
+                        }
+                      />
+                      <BlueprintFieldCard
+                        sectionId="tone"
+                        variant="studio"
+                        label="Style / Visual style"
+                        value={v.style || v.visual_style || ''}
+                        valueClassName={
+                          v.id === activeVariant.id ? flashIf('style') || flashIf('visual_style') : undefined
+                        }
+                      />
+                      <BlueprintFieldCard
+                        sectionId="tone"
+                        variant="studio"
+                        label="Themes"
+                        hideWhenEmpty={!v.themes || (Array.isArray(v.themes) && v.themes.length === 0)}
+                        className="md:col-span-2"
+                      >
+                        <div
+                          className={cn(
+                            'flex flex-wrap gap-2',
+                            v.id === activeVariant.id ? flashIf('themes') : ''
+                          )}
+                        >
+                          {Array.isArray(v.themes)
+                            ? v.themes.map((t: string, i: number) => (
+                                <span
+                                  key={`${t}-${i}`}
+                                  className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-xs"
+                                >
+                                  {t}
+                                </span>
+                              ))
+                            : String(v.themes)}
                         </div>
-                      </div>
+                      </BlueprintFieldCard>
                       {Array.isArray(v.mood_references) && v.mood_references.length > 0 ? (
-                        <div className="md:col-span-3">
-                          <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Mood / References</div>
-                          <div className="text-gray-900 dark:text-gray-100">{v.mood_references.join(', ')}</div>
-                        </div>
+                        <BlueprintFieldCard
+                          sectionId="tone"
+                          variant="studio"
+                          label="Mood / References"
+                          value={v.mood_references.join(', ')}
+                          className="md:col-span-2"
+                        />
                       ) : null}
                     </div>
-                  </div>
+                  </BlueprintSubsectionHeading>
 
                   {/* Beats & Runtime */}
-                  <div className="space-y-1" data-blueprint-section="beats">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Beats & Runtime</div>
+                  <BlueprintSubsectionHeading
+                    sectionId="beats"
+                    variant="studio"
+                    title="Beats & Runtime"
+                    data-blueprint-section="beats"
+                    actions={
                       <Button
                         onClick={() => openGuidedForSection('beats')}
                         size="sm"
@@ -566,12 +657,18 @@ export function TreatmentCard({
                       >
                         <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
                       </Button>
-                    </div>
-                    <div className="space-y-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                      <div>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Synopsis</div>
-                        <div className={`text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed ${v.id===activeVariant.id ? (flashIf('synopsis') || flashIf('content')) : ''}`}>{v.synopsis || v.content || '—'}</div>
-                      </div>
+                    }
+                  >
+                    <div className="space-y-3">
+                      <BlueprintFieldCard
+                        sectionId="beats"
+                        variant="studio"
+                        label="Synopsis"
+                        value={v.synopsis || v.content || ''}
+                        valueClassName={
+                          v.id === activeVariant.id ? flashIf('synopsis') || flashIf('content') : undefined
+                        }
+                      />
                       {Array.isArray((v as any).beats) && (v as any).beats.length > 0 ? (
                         <div className="space-y-2">
                           {(v as any).beats.map((b: any, idx: number) => (
@@ -589,16 +686,16 @@ export function TreatmentCard({
                         </div>
                       ) : null}
                     </div>
-                  </div>
+                  </BlueprintSubsectionHeading>
 
                   {/* Characters - Expanded View with Psychological Depth */}
                   {Array.isArray(v.character_descriptions) && v.character_descriptions.length > 0 ? (
-                    <div className="space-y-3" data-blueprint-section="characters">
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider flex items-center gap-2">
-                          <Users className="w-3 h-3" />
-                          Characters ({v.character_descriptions.length})
-                        </div>
+                    <BlueprintSubsectionHeading
+                      sectionId="characters"
+                      variant="studio"
+                      title={`Characters (${v.character_descriptions.length})`}
+                      data-blueprint-section="characters"
+                      actions={
                         <Button
                           onClick={() => openGuidedForSection('characters')}
                           size="sm"
@@ -607,7 +704,8 @@ export function TreatmentCard({
                         >
                           <PencilLine className="w-3 h-3 text-gray-400 hover:text-cyan-400" />
                         </Button>
-                      </div>
+                      }
+                    >
                       <div className="space-y-3">
                         {v.character_descriptions.map((c, idx) => (
                           <details 
@@ -693,7 +791,7 @@ export function TreatmentCard({
                       <div className="text-xs text-gray-600 dark:text-gray-400 italic mt-2 px-3">
                         💡 Characters will be refined with images and detailed attributes in Production
                       </div>
-                    </div>
+                    </BlueprintSubsectionHeading>
                   ) : null}
 
                   {/* Narrative Reasoning */}
