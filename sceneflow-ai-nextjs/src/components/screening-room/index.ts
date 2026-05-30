@@ -25,6 +25,7 @@
  */
 
 export { AudiencePlayer } from './AudiencePlayer'
+export { PremiereScreeningEmbedPlayer, ScreeningEmbedSkeleton } from './PremiereScreeningEmbedPlayer'
 export { ConsentModal } from './ConsentModal'
 export { EmojiReactionBar, InlineEmojiReaction } from './EmojiReactionBar'
 export { ScreeningRoomDashboard } from './ScreeningRoomDashboard'

@@ -1,31 +1,38 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { ExternalLink, Play } from 'lucide-react'
-import { LandingSampleVideo } from '@/components/landing/LandingSampleVideo'
+import {
+  PremiereScreeningEmbedPlayer,
+  ScreeningEmbedSkeleton,
+} from '@/components/screening-room/PremiereScreeningEmbedPlayer'
 import {
   getLandingScreeningShareHref,
   LANDING_SAMPLE,
 } from '@/config/landingSamples'
-import { TIMELINE_EMOJIS } from '@/lib/types/behavioralAnalytics'
-import type { TimelineReactionType } from '@/lib/types/behavioralAnalytics'
-import { cn } from '@/lib/utils'
 
-const DEMO_REACTIONS = Object.entries(TIMELINE_EMOJIS).slice(0, 5) as [
-  TimelineReactionType,
-  { emoji: string; label: string },
-][]
-
-const MEDIA_PANE_CLASS =
-  'min-h-[280px] sm:min-h-[340px] lg:min-h-[400px] aspect-video'
+const EMBED_MIN_HEIGHT = 'min-h-[360px] sm:min-h-[420px] lg:min-h-[520px]'
 
 export function LandingScreeningRoomEmbed() {
-  const [activeReaction, setActiveReaction] = useState<TimelineReactionType | null>(null)
+  const screeningId = LANDING_SAMPLE.premiereScreeningId.trim()
   const screeningHref = getLandingScreeningShareHref()
 
+  if (!screeningId) {
+    return (
+      <div className={`h-full ${EMBED_MIN_HEIGHT} flex flex-col`}>
+        <ScreeningEmbedSkeleton minHeight={EMBED_MIN_HEIGHT} />
+        <p className="text-center text-xs text-slate-500 py-2 px-3">
+          Sample Screening Room — set{' '}
+          <code className="text-slate-400">premiereScreeningId</code> in landingSamples config
+          (publish animatic in Premiere, then paste the <code className="text-slate-400">premiere-*</code>{' '}
+          id from <code className="text-slate-400">/s/...</code>)
+        </p>
+      </div>
+    )
+  }
+
   return (
-    <div className="h-full min-h-[360px] sm:min-h-[420px] lg:min-h-[520px] flex flex-col bg-black">
+    <div className={`h-full ${EMBED_MIN_HEIGHT} flex flex-col bg-black`}>
       <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-2.5 border-b border-white/10 bg-black/80">
         <div className="flex items-center gap-2 min-w-0">
           <Play className="w-4 h-4 text-purple-400 shrink-0" />
@@ -40,41 +47,16 @@ export function LandingScreeningRoomEmbed() {
         </span>
       </div>
 
-      <div className="flex-1 min-h-0 relative">
-        <LandingSampleVideo
-          src={LANDING_SAMPLE.animaticVideoUrl}
-          placeholderTitle="Express animatic — configure animaticVideoUrl"
-          className={cn('h-full', MEDIA_PANE_CLASS)}
-          enableFullscreen
+      <div className="flex-1 min-h-0">
+        <PremiereScreeningEmbedPlayer
+          screeningId={screeningId}
+          minHeight="min-h-[280px] sm:min-h-[340px] lg:min-h-[400px]"
+          className="h-full"
+          showExpandLink={false}
         />
       </div>
 
-      <div className="shrink-0 border-t border-white/10 bg-gray-950/90 px-4 py-3 space-y-3">
-        <div>
-          <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-2">
-            Collaborator reactions (demo)
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {DEMO_REACTIONS.map(([type, { emoji, label }]) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setActiveReaction(type === activeReaction ? null : type)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border transition-colors',
-                  activeReaction === type
-                    ? 'border-purple-500/50 bg-purple-500/20 text-white'
-                    : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                )}
-                aria-label={label}
-              >
-                <span>{emoji}</span>
-                <span className="hidden sm:inline text-slate-400">{label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
+      <div className="shrink-0 border-t border-white/10 bg-gray-950/90 px-4 py-3">
         {screeningHref ? (
           <Link
             href={screeningHref}
@@ -85,11 +67,7 @@ export function LandingScreeningRoomEmbed() {
             Open full Screening Room
             <ExternalLink className="w-3.5 h-3.5" />
           </Link>
-        ) : (
-          <p className="text-xs text-slate-500">
-            Set <code className="text-slate-400">screeningRoomShareSlug</code> for a full Screening Room link
-          </p>
-        )}
+        ) : null}
       </div>
     </div>
   )

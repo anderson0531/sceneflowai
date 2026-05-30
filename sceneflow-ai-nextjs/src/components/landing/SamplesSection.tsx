@@ -251,7 +251,7 @@ export function CollaborationDemosPanel() {
             </Link>
           ) : (
             <span className="inline-flex items-center gap-2 text-base text-slate-500">
-              Screening Room link — set screeningRoomShareSlug
+              Screening Room link — set premiereScreeningId
               <MessageSquare className="w-4 h-4" />
             </span>
           )}

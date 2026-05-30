@@ -48,6 +48,7 @@ import type {
   TimelineReactionType,
   CalibrationState,
 } from '@/lib/types/behavioralAnalytics'
+import { cn } from '@/lib/utils'
 
 // ============================================================================
 // Types
@@ -74,6 +75,9 @@ interface AudiencePlayerProps {
   onComplete?: (sessionId: string) => void
   /** A/B test variant label */
   variantLabel?: string
+  /** Contained landing embed: skip consent modal, fill parent height */
+  embedMode?: boolean
+  className?: string
 }
 
 interface PlayerState {
@@ -109,13 +113,15 @@ export function AudiencePlayer({
   onSessionStart,
   onComplete,
   variantLabel,
+  embedMode = false,
+  className,
 }: AudiencePlayerProps) {
   // ============================================================================
   // State
   // ============================================================================
   
   // Consent state
-  const [showConsentModal, setShowConsentModal] = useState(true)
+  const [showConsentModal, setShowConsentModal] = useState(!embedMode)
   const [cameraConsent, setCameraConsent] = useState(false)
   const [demographics, setDemographics] = useState<SessionDemographics>()
   
@@ -240,6 +246,11 @@ export function AudiencePlayer({
       setIsInitialized(true)
     }
   }, [screeningId, onSessionStart])
+
+  useEffect(() => {
+    if (!embedMode || isInitialized || showConsentModal) return
+    void handleConsentComplete({ cameraConsent: false })
+  }, [embedMode, isInitialized, showConsentModal, handleConsentComplete])
   
   // ============================================================================
   // Playback Handlers
@@ -420,7 +431,7 @@ export function AudiencePlayer({
       <ConsentModal
         onConsentComplete={handleConsentComplete}
         screeningTitle={title}
-        showDemographics={collectDemographics}
+        showDemographics={collectDemographics && !embedMode}
       />
     )
   }
@@ -432,7 +443,12 @@ export function AudiencePlayer({
   return (
     <div
       ref={containerRef}
-      className="relative w-full aspect-video bg-black rounded-lg overflow-hidden group"
+      className={cn(
+        embedMode
+          ? 'relative w-full h-full min-h-[200px] bg-black overflow-hidden group'
+          : 'relative w-full aspect-video bg-black rounded-lg overflow-hidden group',
+        className
+      )}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => playerState.isPlaying && setPlayerState(prev => ({ ...prev, showControls: false }))}
     >
