@@ -48,6 +48,7 @@ export async function mirrorBlueprintHeroToBlob(
       access: 'public',
       contentType,
       addRandomSuffix: false,
+      allowOverwrite: true,
     })
 
     console.log('[shareHeroImage] Mirrored hero to Blob:', blob.url)
