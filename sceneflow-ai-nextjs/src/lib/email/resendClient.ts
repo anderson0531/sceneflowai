@@ -19,12 +19,21 @@ export function getBrandBadgeUrl(): string {
   return `${getAppBaseUrl()}${BRAND.badge.src}`
 }
 
+const DEFAULT_RESEND_FROM = 'SceneFlow AI Studio <noreply@sfai.studio>'
+
+/** Resend From header; prefers env when it uses noreply@sfai.studio, else canonical default. */
+export function getResendFromEmail(): string {
+  const configured = process.env.RESEND_FROM_EMAIL?.trim()
+  if (configured?.includes('noreply@sfai.studio')) return configured
+  return DEFAULT_RESEND_FROM
+}
+
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
   const resendApiKey = process.env.RESEND_API_KEY
-  const resendFrom = process.env.RESEND_FROM_EMAIL
+  const resendFrom = getResendFromEmail()
 
-  if (!resendApiKey || !resendFrom) {
-    throw new Error('Email delivery is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL.')
+  if (!resendApiKey) {
+    throw new Error('Email delivery is not configured. Set RESEND_API_KEY.')
   }
 
   const to = Array.isArray(options.to) ? options.to : [options.to]
