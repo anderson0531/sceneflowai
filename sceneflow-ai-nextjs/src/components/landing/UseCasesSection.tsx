@@ -126,20 +126,20 @@ const personas: UseCasePersona[] = [
     beforeAfter: { before: '$8K/shoot', after: '$200 credits' },
     challenge: {
       title: 'Custom Verticals, No Repeatable System',
-      description: 'Real estate, education, and documentary clients need fast turnaround — but every project starts from scratch. Intake, production, and delivery don\'t scale without a templated pipeline.',
+      description: 'Memoir, legacy, real estate, and education clients need fast turnaround — but every project starts from scratch. Uploads, voice clones, and avatars don\'t scale without a templated intake → delivery pipeline.',
     },
     solution: {
-      title: 'Productize Your Niche',
-      description: 'Build repeatable intake → storyboard → delivery workflows for one vertical. Template the hard parts, customize per client, and grow margin on volume.',
+      title: 'Productize Your Video Service',
+      description: 'Build repeatable workflows for memoir studios and niche verticals. Template uploads, voice clones, avatars, and storyboard approval — customize per client and grow margin on volume.',
       features: [
-        'Vertical templates for RE tours, courses, and docs',
-        'Client intake forms tied to production phases',
-        'Same-day listing tours and weekly course modules',
+        'Memoir templates with photo uploads, voice clones, and avatar hosts',
+        'Client intake tied to Blueprint and storyboard approval phases',
+        'White-label studio packages for legacy, tribute, and subscription video',
         'Margin on credits instead of per-shoot overhead',
       ],
     },
-    win: 'Turn a niche expertise into a scalable production service — not a one-off freelance grind.',
-    keyPhrases: ['Vertical Templates', 'Repeatable Delivery', 'Volume Margin'],
+    win: 'Launch a video memoir or niche studio service with repeatable delivery — not a one-off freelance grind.',
+    keyPhrases: ['Memoir Templates', 'Voice & Avatar Identity', 'Repeatable Delivery'],
     imageUrl: '/landing/use-cases/youtube-creator.jpg',
   },
   {

@@ -62,6 +62,18 @@ export const VIDEO_CATEGORIES = [
       { label: "Legal & Insurance Explainers", description: "Helping clients understand complex contracts or claim processes through narrated visual breakdowns." },
       { label: "Religious & Spiritual Teachings", description: "Converting sermons or texts into a consistent, narrated daily video series for global congregations." }
     ]
+  },
+  {
+    id: 'lifeStories',
+    title: "Life Stories & Video Services",
+    videoSrc: '',
+    examples: [
+      { label: "Video Memoirs", description: "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render." },
+      { label: "Multi-Chapter Life Stories", description: "Episodic series—from childhood milestones to career turns and family chapters—built from uploaded photos, interviews, and voice-cloned narration that keeps every episode feeling like the same storyteller." },
+      { label: "Milestone & Tribute Videos", description: "Anniversary, memorial, and celebration reels built from client uploads and branded studio intake workflows." },
+      { label: "White-Label Memoir Studios", description: "Startup video services productize intake → Blueprint → storyboard → delivery using reusable SceneFlow templates and credit-based margin." },
+      { label: "Subscription Personal Video", description: "Monthly family updates, senior-living story packages, or local \"video greeting\" subscriptions scaled from one studio pipeline." }
+    ]
   }
 ];
 
@@ -100,7 +112,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
               <p className="text-sm font-semibold uppercase tracking-wider">Use Cases</p>
             </div>
             <div className="text-xs text-slate-400 font-medium bg-slate-900 px-2 py-1 rounded border border-white/5">
-              5 SECTORS
+              {VIDEO_CATEGORIES.length} SECTORS
             </div>
           </div>
 
