@@ -73,7 +73,7 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         label: 'K-12 & Higher Ed',
         description:
           '30-minute curriculum modules that can be instantly localized for ESL students or global campuses.',
-        videoSrc: 'https://storage.googleapis.com/sceneflow-assets/demo/living-wall.mp4',
+        videoSrc: `${BLOB_DEMO}/Living%20Wall%204.mp4`,
       },
       {
         id: 'corporate-ld',
