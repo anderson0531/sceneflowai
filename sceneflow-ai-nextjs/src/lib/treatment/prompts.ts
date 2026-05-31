@@ -1,4 +1,13 @@
-type Format = 'youtube' | 'short_film' | 'documentary' | 'education' | 'training' | 'news' | 'podcast' | 'interview'
+import {
+  type ContentIntent,
+  type ProductionFormat,
+  formatLabel,
+  getFormatBlock,
+  getIntentPromptBlocks,
+  resolveContentIntent,
+} from '@/lib/content/contentIntent'
+
+type Format = ProductionFormat
 
 // =============================================================================
 // STATIC SCHEMA TEMPLATE - Built once at module load, not per-request
@@ -113,56 +122,9 @@ OUTPUT RULES - CRITICAL:
 
 8. "protagonist" and "antagonist" MUST be plain JSON strings (one string each). Do NOT use nested objects here — put name, goal, and flaw inside the string sentences if needed.`
 
-function getFormatSpecificBlocks(format: Format) {
-  const isNonFiction = ['education', 'training', 'news', 'podcast', 'interview'].includes(format);
-
-  if (isNonFiction) {
-    return {
-      storytellingBlock: `FORMAT OPTIMIZATION (PRIMARY GOAL):
-- Prioritize clear structure, engagement, and effective delivery of information
-- For news/podcast/interview/education, focus on topics, segments, and key takeaways
-- Emphasize elements that strengthen the core message and audience retention
-- Optimize for maximum impact and clarity, not narrative preservation`,
-      characterBlock: `CRITICAL - PARTICIPANT/SUBJECT PROFILES: 
-- Generate 2-4 detailed profiles for hosts, experts, interviewees, or subjects
-- Each MUST have complete visual attributes: subject, ethnicity, keyFeature, hairStyle, hairColor, eyeColor, expression, build
-- **NAMES MUST BE CULTURALLY AUTHENTIC**
-- **ETHNICITY MUST BE SPECIFIC**
-- **ADAPT PSYCHOLOGICAL FIELDS FOR NON-FICTION**:
-  • externalGoal: What is their role/objective in this segment?
-  • internalNeed: What unique perspective or expertise do they bring?
-  • fatalFlaw: What is a challenge or misconception they address?
-  • arcStartingState: Initial premise or introduction
-  • arcShift: The key insight or turning point they deliver
-  • arcEndingState: Final takeaway or conclusion
-- Generate 3-5 detailed scene_descriptions (key locations/sets)
-- Generate treatment with BOLD format choices and CLEAR reasoning`
-    };
-  }
-
-  return {
-    storytellingBlock: `STORYTELLING OPTIMIZATION (PRIMARY GOAL):
-- Prioritize narrative coherence, emotional resonance, dramatic structure
-- Make bold creative decisions: combine characters, elevate subplots, shift focus
-- Emphasize elements that strengthen themes and character arcs
-- Omit/minimize elements that dilute narrative power
-- Optimize for maximum storytelling impact, not input preservation`,
-    characterBlock: `CRITICAL - CHARACTER ARCS ARE MANDATORY: 
-- Generate 3-5 detailed character_descriptions (protagonist + supporting characters)
-- Each character MUST have complete attributes: subject, ethnicity, keyFeature, hairStyle, hairColor, eyeColor, expression, build
-- **CHARACTER NAMES MUST BE CULTURALLY AUTHENTIC**
-- **ETHNICITY MUST BE SPECIFIC** - use "Thai" not "Asian", "Nigerian" not "African", "Mexican" not "Hispanic"
-- **EVERY CHARACTER MUST HAVE PSYCHOLOGICAL DEPTH**:
-  • externalGoal: What they visibly pursue (concrete, tangible objective)
-  • internalNeed: What they emotionally need to learn/heal
-  • fatalFlaw: Their weakness that creates obstacles
-  • arcStartingState: Who they are at story start
-  • arcShift: The catalyst that forces change
-  • arcEndingState: Who they become by story end
-- Generate 3-5 detailed scene_descriptions (key locations)
-- Character arcs must show CLEAR TRANSFORMATION
-- Generate treatment with BOLD storytelling choices and CLEAR reasoning`
-  };
+function getFormatSpecificBlocks(format: Format, contentIntent?: ContentIntent) {
+  const intent = contentIntent ?? resolveContentIntent(format === 'short_film' ? 'drama' : format.replace('_', '-'))
+  return getIntentPromptBlocks(intent, format)
 }
 
 export function buildTreatmentPrompt(opts: {
@@ -174,12 +136,13 @@ export function buildTreatmentPrompt(opts: {
   context?: any
   beatStructure?: { label: string; beats: Array<{ title: string }> } | null
   persona?: 'Narrator'|'Director' | null
-  // New: skip heavy sections when explicit settings provided
   hasExplicitSettings?: boolean
+  contentIntent?: ContentIntent
 }) {
-  const { input, coreConcept, format, targetMinutes, styleHint, context, beatStructure, persona, hasExplicitSettings } = opts
+  const { input, coreConcept, format, targetMinutes, styleHint, context, beatStructure, persona, hasExplicitSettings, contentIntent } = opts
+  const intent = contentIntent ?? resolveContentIntent(context?.genre)
   const formatBlock = getFormatBlock(format)
-  const formatSpecifics = getFormatSpecificBlocks(format)
+  const formatSpecifics = getFormatSpecificBlocks(format, intent)
   const structureBlock = beatStructure ? `\nBEAT STRUCTURE:\n- Use the ${beatStructure.label} structure.\n- Produce beats matching these titles IN ORDER (adapt wording if needed, keep intent):\n${beatStructure.beats.map((b,i)=>`  ${i+1}. ${b.title}`).join('\n')}\n` : ''
   const personaBlock = persona === 'Director'
     ? '\nVOICE: Write as a concise, confident director offering clear, actionable guidance.'
@@ -187,31 +150,34 @@ export function buildTreatmentPrompt(opts: {
     ? '\nVOICE: Write as an engaging, neutral narrator with professional tone.'
     : ''
   
-  // OPTIMIZATION: Only include heavy scoring checklist when NOT using explicit settings
-  // When user provides genre/tone/audience explicitly, we can use a lighter prompt
-  // This reduces prompt size by ~2KB when explicit settings are provided
   const scoringChecklist = hasExplicitSettings 
-    ? buildLightweightChecklist(context?.genre, context?.targetAudience, context?.tone)
+    ? buildLightweightChecklist(context?.genre, context?.targetAudience, context?.tone, intent)
     : buildScoringAwareChecklist({
         genre: context?.genre,
         targetAudience: context?.targetAudience,
-        tone: context?.tone
+        tone: context?.tone,
+        contentIntent: intent,
       })
   
-  // Build schema with dynamic values
   const schemaBlock = TREATMENT_SCHEMA_TEMPLATE
     .replace('__TARGET_MINUTES__', String(targetMinutes))
     .replace('__CTA_VALUE__', formatBlock.includeCTA ? '"string"' : 'null')
     .replace('__LEARNING_VALUE__', formatBlock.includeLearning ? '["Objective 1", "Objective 2"]' : '[]')
   
-  return `CRITICAL INSTRUCTIONS: You are a professional ${formatLabel(format)} showrunner.
+  const antiFictionBlock = formatSpecifics.antiFictionalizationRule
+    ? `\n${formatSpecifics.antiFictionalizationRule}\n`
+    : ''
+
+  return `CRITICAL INSTRUCTIONS: You are a professional ${formatSpecifics.personaLabel} showrunner.
+CONTENT INTENT: ${intent.toUpperCase()} — ${formatSpecifics.schemaFieldSemantics}
 TARGET RUNTIME: ~${targetMinutes} minutes (±10%).
 PRIORITIES: ${formatBlock.priorities}
 ${personaBlock}${structureBlock}
 
 ${scoringChecklist}
 ${CULTURAL_AUTHENTICITY_BLOCK}
-${formatSpecifics.storytellingBlock}
+${formatSpecifics.optimizationBlock}
+${antiFictionBlock}
 
 INPUT:
 ${input}
@@ -227,15 +193,12 @@ CONTEXT:
 - Platform: ${context?.platform || 'YouTube & web'}
 - Tone: ${context?.tone || 'Professional'}
 - Genre: ${context?.genre || 'Documentary'}
-- Style Hint: ${styleHint || 'N/A'}
+- Style Hint: ${styleHint || context?.visualStyle || 'N/A'}
 
 ${OUTPUT_RULES_BLOCK}
 
 STEP 1: BEFORE GENERATING ANYTHING ELSE, THINK ABOUT:
-- Who are the primary subjects/participants and why did you choose them?
-- What 2-4 major creative decisions did you make?
-- What makes this treatment compelling?
-- How can the user adjust the input for different results?
+${formatSpecifics.step1Thinking}
 
 STEP 2: START YOUR JSON OUTPUT WITH THESE 4 FIELDS FIRST, THEN ADD ALL OTHER FIELDS.
 
@@ -244,30 +207,8 @@ ${schemaBlock}
 ${formatSpecifics.characterBlock}`
 }
 
-function formatLabel(f: Format): string {
-  switch (f) {
-    case 'youtube': return 'YouTube series'
-    case 'short_film': return 'short film'
-    case 'documentary': return 'documentary'
-    case 'education': return 'educational content'
-    case 'training': return 'training program'
-    case 'news': return 'news segment'
-    case 'podcast': return 'podcast episode'
-    case 'interview': return 'interview'
-    default: return 'video'
-  }
-}
 
-function getFormatBlock(f: Format) {
-  if (f === 'youtube') return { priorities: 'maximize retention, strong opening hook in first 20 seconds; clear segments and CTA', includeCTA: true, includeLearning: false }
-  if (f === 'documentary') return { priorities: 'compelling narrative arc, strong voiceover plan, visual motifs; audience engagement cues', includeCTA: true, includeLearning: false }
-  if (f === 'education') return { priorities: 'clear learning objectives, scaffolded sections, recap and quick assessment', includeCTA: false, includeLearning: true }
-  if (f === 'training') return { priorities: 'task-oriented modules, demonstrations, checkpoints and practice prompts', includeCTA: false, includeLearning: true }
-  if (f === 'news') return { priorities: 'factual accuracy, clear headline/lead, 5W1H structure (Who/What/When/Where/Why/How), balanced perspectives, source attribution', includeCTA: false, includeLearning: false }
-  if (f === 'podcast') return { priorities: 'conversational flow, engaging host presence, clear topic segments, listener hooks, natural dialogue cadence, strong opening and closing', includeCTA: true, includeLearning: false }
-  if (f === 'interview') return { priorities: 'thoughtful questions, guest expertise showcase, natural conversation flow, key insights extraction, compelling story moments', includeCTA: true, includeLearning: false }
-  return { priorities: 'three-act arc, character tension, cinematic pacing', includeCTA: false, includeLearning: false }
-}
+// formatLabel and getFormatBlock are exported from @/lib/content/contentIntent
 
 // =============================================================================
 // LIGHTWEIGHT CHECKLIST - Used when user provides explicit settings
@@ -275,11 +216,44 @@ function getFormatBlock(f: Format) {
 // Reduces prompt size by ~2KB compared to full scoring checklist
 // When user explicitly selects genre/tone/audience, they have clear intent
 
-function buildLightweightChecklist(genre?: string, targetAudience?: string, tone?: string): string {
-  const g = genre || 'drama'
-  const t = tone || 'dramatic'
+function buildLightweightChecklist(genre?: string, targetAudience?: string, tone?: string, contentIntent?: ContentIntent): string {
+  const intent = contentIntent ?? resolveContentIntent(genre)
+  const g = genre || (intent === 'fiction' ? 'drama' : 'documentary')
+  const t = tone || 'professional'
   const a = targetAudience || 'general'
-  
+
+  if (intent === 'informational') {
+    return `
+QUALITY ESSENTIALS (User specified: Genre=${g}, Tone=${t}, Audience=${a}, Intent=informational):
+- Clear thesis or learning objective
+- Credible host/subject/expert profiles
+- Logical segment or module structure
+- Audience takeaway value
+- Consistent ${t} tone throughout
+- Do NOT invent fictional characters or plot`
+  }
+
+  if (intent === 'commercial') {
+    return `
+QUALITY ESSENTIALS (User specified: Genre=${g}, Tone=${t}, Audience=${a}, Intent=commercial):
+- Clear problem and solution
+- Strong value proposition and proof points
+- Presenter or customer persona defined
+- Clear CTA
+- Consistent ${t} tone throughout
+- Do NOT convert into fictional narrative`
+  }
+
+  if (intent === 'conversational') {
+    return `
+QUALITY ESSENTIALS (User specified: Genre=${g}, Tone=${t}, Audience=${a}, Intent=conversational):
+- Engaging host and guest/participant profiles
+- Clear topic and segment flow
+- Listener/viewer takeaways
+- Consistent ${t} tone throughout
+- Do NOT invent fictional plot`
+  }
+
   return `
 QUALITY ESSENTIALS (User specified: Genre=${g}, Tone=${t}, Audience=${a}):
 - Clear protagonist goal and internal flaw
@@ -301,10 +275,23 @@ export function buildScoringAwareChecklist(opts: {
   genre?: string
   targetAudience?: string
   tone?: string
+  contentIntent?: ContentIntent
 }): string {
-  const { genre = 'drama', targetAudience = 'millennials-25-34', tone = 'dark-gritty' } = opts
-  
-  // Get demographic-specific requirements
+  const intent = opts.contentIntent ?? resolveContentIntent(opts.genre)
+  const genre = opts.genre || (intent === 'fiction' ? 'drama' : 'documentary')
+  const targetAudience = opts.targetAudience || 'millennials-25-34'
+  const tone = opts.tone || (intent === 'fiction' ? 'dark-gritty' : 'inspirational')
+
+  if (intent === 'informational') {
+    return buildInformationalChecklist(genre, targetAudience, tone)
+  }
+  if (intent === 'commercial') {
+    return buildCommercialChecklist(genre, targetAudience, tone)
+  }
+  if (intent === 'conversational') {
+    return buildConversationalChecklist(genre, targetAudience, tone)
+  }
+
   const demographicThemes = getDemographicThemes(targetAudience)
   const toneKeywords = getToneKeywords(tone)
   const genreConventions = getGenreConventions(genre)
@@ -363,6 +350,98 @@ Before outputting, verify:
 3. Is there a clear "When [event] happens, [protagonist] must..." structure? → If no, fix it
 4. Does the logline have a HOOK that makes you want to know more? → If no, add a twist
 5. Are character names culturally authentic to their ethnicity? → If not, fix them
+=============================================================================
+`
+}
+
+function buildInformationalChecklist(genre: string, targetAudience: string, tone: string): string {
+  const genreConventions = getGenreConventions(genre)
+  return `
+=============================================================================
+QUALITY GATE CHECKLIST — INFORMATIONAL CONTENT
+=============================================================================
+This treatment will be scored for audience resonance. ENSURE:
+
+AXIS 1: THESIS & CLARITY (25%)
+[ ] CLEAR THESIS: State the core topic, question, or learning objective upfront
+[ ] AUDIENCE RELEVANCE: Content addresses what ${targetAudience} needs to know
+[ ] NO FICTIONALIZATION: Do NOT invent fictional characters or dramatized plot
+
+AXIS 2: SUBJECT/EXPERT DEPTH (25%)
+[ ] HOST/SUBJECT DEFINED: Name the host, instructor, or documentary subject(s)
+[ ] CREDIBILITY: Expertise or perspective is clear
+[ ] CHALLENGE/QUESTION: Core problem or knowledge gap is stated (antagonist field)
+
+AXIS 3: STRUCTURE & PACING (20%)
+[ ] LOGICAL FLOW: Segments/modules build toward clear takeaways
+[ ] ENGAGEMENT HOOKS: Opening captures audience attention
+[ ] RECAP/SUMMARY: Key points reinforced for retention
+
+AXIS 4: GENRE FIDELITY (15%) — ${genre.toUpperCase()}
+[ ] ESSENTIAL CONVENTIONS: ${genreConventions}
+[ ] CONSISTENT TONE: ${tone} atmosphere throughout
+
+AXIS 5: TAKEAWAY VALUE (15%)
+[ ] ACTIONABLE INSIGHTS: Audience leaves with clear understanding
+[ ] LEARNING OBJECTIVES: Present when format is education/training
+=============================================================================
+`
+}
+
+function buildCommercialChecklist(genre: string, targetAudience: string, tone: string): string {
+  return `
+=============================================================================
+QUALITY GATE CHECKLIST — COMMERCIAL CONTENT
+=============================================================================
+AXIS 1: PROBLEM/SOLUTION (25%)
+[ ] PROBLEM CLEAR: Audience pain point is stated
+[ ] SOLUTION CLEAR: Product/service value is articulated
+[ ] NO FICTIONAL NARRATIVE: Use persuasive structure, not screenplay fiction
+
+AXIS 2: VALUE PROPOSITION (25%)
+[ ] BENEFITS: Clear audience benefits, not just features
+[ ] PROOF POINTS: Credibility through demo, stats, or case evidence
+[ ] PRESENTER/PERSONA: Defined in protagonist field
+
+AXIS 3: STRUCTURE (20%)
+[ ] HOOK → PROBLEM → SOLUTION → PROOF → CTA flow
+[ ] Pacing appropriate for ${genre} format
+
+AXIS 4: AUDIENCE FIT (15%) — ${targetAudience.toUpperCase()}
+[ ] Speaks to target buyer/user concerns
+[ ] Tone: ${tone}
+
+AXIS 5: CTA (15%)
+[ ] Clear call to action
+=============================================================================
+`
+}
+
+function buildConversationalChecklist(genre: string, targetAudience: string, tone: string): string {
+  return `
+=============================================================================
+QUALITY GATE CHECKLIST — CONVERSATIONAL CONTENT
+=============================================================================
+AXIS 1: TOPIC & HOOK (25%)
+[ ] COMPELLING TOPIC: Why ${targetAudience} will care
+[ ] OPENING HOOK: Strong segment or episode opening
+
+AXIS 2: HOST/GUEST (25%)
+[ ] HOST DEFINED: Clear host persona in protagonist field
+[ ] PARTICIPANTS: Guest or co-host profiles with expertise
+[ ] TENSION TOPIC: Core question or debate angle (antagonist field)
+
+AXIS 3: SEGMENT FLOW (20%)
+[ ] NATURAL CONVERSATION: Segments flow logically
+[ ] TAKEAWAYS: Clear insights per segment
+
+AXIS 4: FORMAT FIT (15%) — ${genre.toUpperCase()}
+[ ] Matches podcast/interview conventions
+[ ] Tone: ${tone}
+
+AXIS 5: AUDIENCE ENGAGEMENT (15%)
+[ ] Listener/viewer value throughout
+[ ] Do NOT invent fictional plot
 =============================================================================
 `
 }
@@ -429,13 +508,17 @@ function getGenreConventions(genre: string): string {
     'fantasy': 'consistent magic system, world-building, quest or chosen one structure',
     'mystery': 'central question, clues and red herrings, satisfying revelation',
     'documentary': 'clear thesis, compelling subjects, narrative arc despite non-fiction',
-    // Non-fiction formats
     'education': 'clear learning objectives, scaffolded complexity, instructor credibility, practical examples, assessment checkpoints',
     'training': 'task-oriented modules, step-by-step demonstrations, hands-on practice, measurable competency goals',
     'news': 'headline impact, 5W1H coverage, balanced perspectives, source credibility, timeliness, factual accuracy',
-    // Conversational formats
     'podcast': 'engaging host persona, topic expertise, conversational warmth, listener value, memorable segments, clear episode arc',
-    'interview': 'insightful questions, guest expertise showcase, conversational depth, key takeaways, story moments'
+    'interview': 'insightful questions, guest expertise showcase, conversational depth, key takeaways, story moments',
+    'product-demo': 'problem statement, product walkthrough, key features, demo moments, clear CTA',
+    'product_demo': 'problem statement, product walkthrough, key features, demo moments, clear CTA',
+    explainer: 'clear problem framing, step-by-step explanation, visual metaphors, summary and CTA',
+    'case-study': 'customer context, challenge, solution, measurable results, social proof',
+    case_study: 'customer context, challenge, solution, measurable results, social proof',
+    advertisement: 'hook in first 3 seconds, emotional appeal, brand message, memorable CTA',
   }
   return map[genre.toLowerCase()] || map['drama']
 }

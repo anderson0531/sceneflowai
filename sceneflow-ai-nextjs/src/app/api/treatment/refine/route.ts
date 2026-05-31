@@ -5,6 +5,11 @@ import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
+import {
+  type ContentIntent,
+  getIntentRevisionGuardrail,
+  resolveContentIntent,
+} from '@/lib/content/contentIntent'
 
 const BLUEPRINT_REFINE_CREDIT_COST = BLUEPRINT_CREDITS.BLUEPRINT_REFINE // 10 credits
 
@@ -21,6 +26,7 @@ interface RefineRequest {
   variant: Record<string, unknown>
   section: SectionType
   instructions: string
+  contentIntent?: ContentIntent
 }
 
 // Section-specific field mappings for targeted refinement
@@ -32,8 +38,8 @@ const SECTION_FIELDS: Record<SectionType, string[]> = {
   characters: ['character_descriptions']
 }
 
-// Section-specific prompting context
-const SECTION_CONTEXT: Record<SectionType, string> = {
+// Section-specific prompting context (fiction defaults)
+const FICTION_SECTION_CONTEXT: Record<SectionType, string> = {
   core: `You are refining the CORE IDENTIFYING INFORMATION of a film treatment.
 Focus on: title, logline, genre, format/length, and target audience.
 Keep the logline punchy (1-2 sentences max). Ensure genre and format are industry-standard terms.`,
@@ -65,6 +71,57 @@ Characters should feel three-dimensional with clear visual identity.
 Include physical descriptions suitable for image generation.`
 }
 
+function getSectionContext(section: SectionType, intent: ContentIntent): string {
+  if (intent === 'informational') {
+    const map: Record<SectionType, string> = {
+      core: `You are refining CORE IDENTIFYING INFORMATION for informational content.
+Focus on: title, logline/thesis, genre, format/length, and target audience.
+Do NOT invent fictional characters or plot.`,
+      story: `You are refining the CONTENT SETUP for informational/non-fiction content.
+Focus on: synopsis, setting, host/subject (protagonist field), core challenge (antagonist field).
+Maintain factual coherence. Do NOT add fictional drama or invented characters.`,
+      tone: FICTION_SECTION_CONTEXT.tone,
+      beats: `You are refining CONTENT SEGMENTS/BEATS for informational content.
+Focus on: segment titles, learning objectives, durations, and synopses.
+Ensure logical information flow. Maximum 8 beats.`,
+      characters: `You are refining SUBJECT/HOST/EXPERT PROFILES.
+Focus on: names, roles, expertise, and visual identity for real participants.
+Do NOT invent fictional characters.`,
+    }
+    return map[section]
+  }
+
+  if (intent === 'commercial') {
+    const map: Record<SectionType, string> = {
+      core: `You are refining CORE IDENTIFYING INFORMATION for commercial content.
+Focus on: title, value proposition hook, genre, format, target audience.`,
+      story: `You are refining the PERSUASION SETUP for commercial content.
+Focus on: synopsis, setting, presenter (protagonist field), pain point (antagonist field).
+Structure for problem → solution → proof → CTA. Do NOT convert into fictional narrative.`,
+      tone: FICTION_SECTION_CONTEXT.tone,
+      beats: `You are refining COMMERCIAL BEATS.
+Focus on: problem, solution, proof, CTA segments. Maximum 8 beats.`,
+      characters: `You are refining PRESENTER/CUSTOMER PROFILES for commercial content.`,
+    }
+    return map[section]
+  }
+
+  if (intent === 'conversational') {
+    const map: Record<SectionType, string> = {
+      core: FICTION_SECTION_CONTEXT.core,
+      story: `You are refining CONVERSATIONAL CONTENT SETUP.
+Focus on: synopsis, host (protagonist field), tension topic (antagonist field), segment flow.
+Do NOT invent fictional plot.`,
+      tone: FICTION_SECTION_CONTEXT.tone,
+      beats: `You are refining CONVERSATION SEGMENTS. Maximum 8 beats with clear takeaways.`,
+      characters: `You are refining HOST/GUEST PROFILES for conversational content.`,
+    }
+    return map[section]
+  }
+
+  return FICTION_SECTION_CONTEXT[section]
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Get session and user ID for credit charging
@@ -75,7 +132,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body: RefineRequest = await request.json()
-    const { variant, section, instructions } = body
+    const { variant, section, instructions, contentIntent: bodyIntent } = body
+    const contentIntent =
+      bodyIntent ?? resolveContentIntent(String(variant.genre || ''))
 
     if (!variant) {
       return NextResponse.json(
@@ -122,9 +181,11 @@ export async function POST(request: NextRequest) {
     const maxTokens = section === 'beats' ? 2048 : 
                       section === 'characters' ? 3072 : 4096
 
-    const prompt = `${SECTION_CONTEXT[section]}
+    const prompt = `${getSectionContext(section, contentIntent)}
 
-You are an expert film treatment editor. REWRITE the specified fields according to the user's instructions.
+${getIntentRevisionGuardrail(contentIntent)}
+
+You are an expert content blueprint editor. REWRITE the specified fields according to the user's instructions.
 
 CRITICAL: You are REPLACING content, NOT appending to it.
 - Return a COMPLETE replacement for each field you modify

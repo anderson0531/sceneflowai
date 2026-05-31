@@ -6,7 +6,8 @@ import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { SubscriptionService } from '../../../../services/SubscriptionService'
 import { runScriptQA, autoFixScript } from '@/lib/script/qualityAssurance'
 import { generateText } from '@/lib/vertexai/gemini'
-import { getSettingsForFormat, SCRIPT_SETTINGS_BY_FORMAT } from '@/lib/script/scriptGenerationRules'
+import { getSettingsForFormat, getScriptProgressStatuses, buildScriptConstraintPrompt, SCRIPT_SETTINGS_BY_FORMAT } from '@/lib/script/scriptGenerationRules'
+import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
 import { migrateProjectToSegmented } from '@/lib/script/migrateToSegmented'
 import { normalizeDialogueToProductionLineTargets } from '@/lib/script/segmentScript'
 import {
@@ -104,7 +105,10 @@ export async function POST(request: NextRequest) {
 
         // Simple duration-based safety cap (no scene-count prescriptions)
         const rawDuration = project.duration || 300
-        const projectFormat = treatment.format || 'short-film'
+        const projectFormat = treatment.format || project.metadata?.format || 'short-film'
+        const contentIntent =
+          project.metadata?.contentIntent ||
+          resolveContentIntentFromMetadata({ format: projectFormat, genre: treatment.genre })
         
         // Duration validation: cap based on format to prevent unreasonable generation times
         // Short films: max 40 min (2400s), Features: max 180 min (10800s)
@@ -220,7 +224,8 @@ export async function POST(request: NextRequest) {
           storyBeats, 
           maxSafetyScenes, 
           subscriptionMaxScenes,
-          projectFormat
+          projectFormat,
+          contentIntent
         )
         
         let retryCount = 0
@@ -242,15 +247,7 @@ export async function POST(request: NextRequest) {
             // Start a progress ticker to show activity during Gemini call
             const estimatedDuration = 45 // seconds
             let progressInterval: NodeJS.Timeout | null = null
-            const progressStatuses = [
-              'Analyzing narrative structure...',
-              'Developing character arcs...',
-              'Writing dialogue exchanges...',
-              'Crafting scene transitions...',
-              'Building dramatic tension...',
-              'Polishing narrative flow...',
-              'Finalizing script details...'
-            ]
+            const progressStatuses = getScriptProgressStatuses(projectFormat)
             let statusIndex = 0
             
             progressInterval = setInterval(() => {
@@ -960,24 +957,40 @@ function buildSinglePassPrompt(
   storyBeats: any[],
   maxSafetyScenes: number,
   subscriptionMaxScenes: number | null,
-  format: string = 'narrative'
+  format: string = 'narrative',
+  contentIntent?: string
 ): string {
-  // Dynamically set persona based on format
+  const intent = contentIntent || resolveContentIntentFromMetadata({ format, genre: treatment.genre })
+  const scriptSettings = getSettingsForFormat(format)
+  const constraintBlock = buildScriptConstraintPrompt(scriptSettings)
+
+  // Dynamically set persona based on format/intent
   let persona = 'You are a master screenwriter. Write a complete, production-ready script'
   let formatLabel = 'FILM'
   let sceneHeadingExample = '"heading": "INT. LOCATION - TIME"'
+  let philosophyIntro = 'Your goal is to write an ENGAGING, ENTERTAINING script optimized for audience connection.'
   
-  if (format === 'educational') {
+  if (format === 'educational' || format === 'education' || format === 'training') {
     persona = 'You are an expert curriculum designer and educational video producer. Write a complete, production-ready lesson script'
     formatLabel = 'EDUCATIONAL COURSE'
     sceneHeadingExample = '"heading": "LESSON SEGMENT: Topic"'
-  } else if (format === 'podcast') {
+    philosophyIntro = 'Your goal is to write a CLEAR, ENGAGING instructional script optimized for learning outcomes. Do NOT invent fictional plot.'
+  } else if (format === 'podcast' || format === 'interview') {
     persona = 'You are an expert podcast producer and showrunner. Write a complete, production-ready podcast script'
     formatLabel = 'PODCAST EPISODE'
     sceneHeadingExample = '"heading": "SEGMENT: Intro/Discussion/Outro"'
-  } else if (format === 'documentary') {
+    philosophyIntro = 'Your goal is to write an AUTHENTIC conversational script. Do NOT invent fictional narrative plot.'
+  } else if (format === 'documentary' || format === 'news') {
     persona = 'You are an expert documentary filmmaker and docuseries producer. Write a complete, production-ready docuseries script'
     formatLabel = 'DOCUMENTARY'
+    philosophyIntro = 'Your goal is to write a COMPELLING factual script over real subjects. Do NOT fictionalize.'
+  } else if (['product_demo', 'explainer', 'case_study', 'advertisement', 'demo', 'sales'].includes(format)) {
+    persona = 'You are an expert commercial video producer. Write a complete, production-ready persuasive script'
+    formatLabel = 'COMMERCIAL VIDEO'
+    sceneHeadingExample = '"heading": "SEGMENT: Problem/Solution/Proof/CTA"'
+    philosophyIntro = 'Your goal is to write a PERSUASIVE script with problem, solution, proof, and CTA. Do NOT convert into fictional screenplay.'
+  } else if (intent !== 'fiction') {
+    philosophyIntro = 'Your goal is to serve the user\'s content intent. Do NOT invent fictional characters or plot unless explicitly requested.'
   }
   // Build character list with strict name enforcement
   const characterNames = characters.map((c: any) => c.name)
@@ -1000,8 +1013,9 @@ CHARACTER DETAILS:\n${characters.map((c: any) =>
     : ''
 
   // Format story beats if available
+  const beatsLabel = intent === 'fiction' ? 'STORY BEATS TO FOLLOW' : 'CONTENT BEATS TO FOLLOW'
   const storyBeatsText = storyBeats.length > 0
-    ? `\n\nSTORY BEATS TO FOLLOW:\n${storyBeats.map((beat: any, idx: number) => 
+    ? `\n\n${beatsLabel}:\n${storyBeats.map((beat: any, idx: number) => 
         `${idx + 1}. ${typeof beat === 'string' ? beat : beat.description || beat.title || JSON.stringify(beat)}`
       ).join('\n')}`
     : ''
@@ -1027,8 +1041,9 @@ ${storyBeatsText}
 
 === SCRIPT GENERATION PHILOSOPHY ===
 
-Your goal is to write an ENGAGING, ENTERTAINING script optimized for audience connection.
-Do NOT fragment the story/lesson into tiny segments. Each segment should be a COMPLETE unit.
+${philosophyIntro}
+Do NOT fragment the content into tiny segments. Each segment should be a COMPLETE unit.
+${constraintBlock}
 
 STRUCTURE PRINCIPLES:
 • Each segment = ONE complete beat/lesson/discussion point with beginning, middle, end

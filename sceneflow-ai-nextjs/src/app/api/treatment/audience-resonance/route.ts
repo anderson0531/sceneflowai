@@ -22,6 +22,11 @@ import {
   mapRecommendations,
 } from '@/lib/treatment/blueprintAudienceScorer'
 import { persistBlueprintARToProject } from '@/lib/treatment/persistBlueprintAR'
+import {
+  type ContentIntent,
+  getIntentScoringRubric,
+  resolveContentIntent,
+} from '@/lib/content/contentIntent'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -50,6 +55,7 @@ export interface AudienceResonanceRequestBody {
   /** Genre/tone context only — not part of audience definition */
   genre?: string
   tone?: string
+  contentIntent?: ContentIntent
   iteration?: number
   appliedRecommendationIds?: string[]
   previousAnalysis?: {
@@ -68,8 +74,12 @@ function buildPrompt(
   audienceDefinition: AudienceDefinition,
   genre?: string,
   tone?: string,
-  appliedIds: string[] = []
+  appliedIds: string[] = [],
+  contentIntent?: ContentIntent
 ): string {
+  const intent = contentIntent ?? resolveContentIntent(genre || treatment.genre)
+  const rubric = getIntentScoringRubric(intent)
+  const { lead, opposition } = rubric.primaryFieldLabels
   const preset = audienceDefinition.presetId
     ? getAudiencePreset(audienceDefinition.presetId)
     : undefined
@@ -93,13 +103,15 @@ function buildPrompt(
       ? `\nThe user already applied fixes for recommendation IDs: ${appliedIds.join(', ')}. Do NOT repeat those issues. Acknowledge improvements and find remaining gaps only.`
       : ''
 
-  return `You are an expert development executive evaluating a FILM TREATMENT (blueprint phase) for TARGET AUDIENCE RESONANCE.
+  return `You are an expert ${rubric.persona} evaluating a ${intent === 'fiction' ? 'FILM TREATMENT' : 'CONTENT BLUEPRINT'} for TARGET AUDIENCE RESONANCE.
+
+${rubric.guardrail}
 
 CRITICAL — TARGET AUDIENCE PROFILE:
 ${audienceBlock}${presetHint}
 ${appliedBlock}
 
-Secondary context (genre/tone only): Genre: ${genre || treatment.genre || 'unspecified'} | Tone: ${tone || treatment.tone_description || 'unspecified'}
+Secondary context (genre/tone only): Genre: ${genre || treatment.genre || 'unspecified'} | Tone: ${tone || treatment.tone_description || 'unspecified'} | Content Intent: ${intent}
 
 SCORING RULES (MANDATORY):
 1. Start at baseScore 100.
@@ -108,26 +120,23 @@ SCORING RULES (MANDATORY):
 4. Priority point bands: critical 12–18, high 10–15, medium 5–9, low 1–4.
 5. Each deduction MUST have a matching recommendation with text, priority, pointsDeducted, fixSection (core|story|tone|beats|characters), and when a fix ripples beyond one section, impactSections (array of sections to reconcile) and optional intentLabel (short chip text).
 6. Be fair: a solid treatment with minor gaps should score 75–88. Reserve below 65 for major audience misalignment.
-7. Evaluate ONLY how well this treatment resonates with the TARGET AUDIENCE above.
+7. Evaluate ONLY how well this content resonates with the TARGET AUDIENCE above.
+8. Do NOT penalize non-fiction/commercial content for missing fictional screenplay elements (antagonist arc, three-act drama, character ghost) unless content intent is fiction.
 
 TREATMENT:
 Title: ${treatment.title || 'Untitled'}
 Logline: ${truncate(treatment.logline, 400)}
 Synopsis: ${truncate(treatment.synopsis, 2000)}
-Protagonist: ${truncate(treatment.protagonist, 300)}
-Antagonist: ${truncate(treatment.antagonist, 300)}
+${lead}: ${truncate(treatment.protagonist, 300)}
+${opposition}: ${truncate(treatment.antagonist, 300)}
 Setting: ${truncate(treatment.setting, 200)}
 Beats:
 ${beatsText}
-Characters:
+Participants:
 ${charsText}
 
 EVALUATION CATEGORIES (score each 1–100 for radar display):
-- Audience Appeal (weight 25): Will this audience want to watch?
-- Genre & Tone Fit (weight 20): Matches genre/tone expectations for this audience?
-- Concept Hook (weight 20): Logline/premise grabs this audience?
-- Character Connection (weight 20): Characters this audience will root for?
-- Clarity & Structure (weight 15): Clear enough for this audience?
+${rubric.categories.map((c) => `- ${c.name} (weight ${c.weight}): ${c.description}`).join('\n')}
 
 Return ONLY valid JSON:
 {
@@ -138,11 +147,7 @@ Return ONLY valid JSON:
     {"text": "...", "title": "...", "priority": "high|medium|low", "pointsDeducted": <number>, "fixSection": "story", "impactSections": ["story","beats"], "intentLabel": "Short chip", "category": "..."}
   ],
   "categories": [
-    {"name": "Audience Appeal", "score": <1-100>, "weight": 25},
-    {"name": "Genre & Tone Fit", "score": <1-100>, "weight": 20},
-    {"name": "Concept Hook", "score": <1-100>, "weight": 20},
-    {"name": "Character Connection", "score": <1-100>, "weight": 20},
-    {"name": "Clarity & Structure", "score": <1-100>, "weight": 15}
+${rubric.categories.map((c) => `    {"name": "${c.name}", "score": <1-100>, "weight": ${c.weight}}`).join(',\n')}
   ],
   "strengths": ["..."],
   "improvements": ["..."],
@@ -177,7 +182,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as AudienceResonanceRequestBody
-    const { treatment, audienceDefinition: rawDef, genre, tone } = body
+    const { treatment, audienceDefinition: rawDef, genre, tone, contentIntent: bodyIntent } = body
+    const contentIntent =
+      bodyIntent ?? resolveContentIntent(genre || treatment.genre)
 
     if (!treatment) {
       return NextResponse.json(
@@ -188,7 +195,7 @@ export async function POST(request: NextRequest) {
 
     const audienceDefinition = createAudienceDefinition(rawDef)
     const appliedIds = body.appliedRecommendationIds || []
-    const prompt = buildPrompt(treatment, audienceDefinition, genre, tone, appliedIds)
+    const prompt = buildPrompt(treatment, audienceDefinition, genre, tone, appliedIds, contentIntent)
 
     const result = await generateText(prompt, {
       model: 'gemini-3.0-flash',
@@ -214,13 +221,12 @@ export async function POST(request: NextRequest) {
     )
 
     if (categories.length === 0) {
-      categories = [
-        { name: 'Audience Appeal', score: 70, weight: 25 },
-        { name: 'Genre & Tone Fit', score: 70, weight: 20 },
-        { name: 'Concept Hook', score: 70, weight: 20 },
-        { name: 'Character Connection', score: 70, weight: 20 },
-        { name: 'Clarity & Structure', score: 70, weight: 15 },
-      ]
+      const rubric = getIntentScoringRubric(contentIntent)
+      categories = rubric.categories.map((c) => ({
+        name: c.name,
+        score: 70,
+        weight: c.weight,
+      }))
     }
 
     const { overallScore, categories: finalCategories } = finalizeBlueprintScore(

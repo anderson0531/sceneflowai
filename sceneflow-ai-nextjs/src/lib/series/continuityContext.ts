@@ -20,6 +20,10 @@ import type {
   EpisodeSummary,
   SeriesContinuityContext,
 } from '@/types/series'
+import {
+  type ContentIntent,
+  resolveContentIntentFromMetadata,
+} from '@/lib/content/contentIntent'
 
 // Maximum tokens (approximate) to keep the continuity block within budget.
 // Full detail for the last 3 episodes, one-line summaries for older ones.
@@ -44,8 +48,11 @@ export function buildContinuityContext(
   seriesTitle: string,
   seriesLogline: string,
   currentEpisodeNumber: number,
-  totalEpisodes: number
+  totalEpisodes: number,
+  format?: string,
+  genre?: string
 ): SeriesContinuityContext {
+  const contentIntent = resolveContentIntentFromMetadata({ format, genre })
   // 1. Gather episode summaries from bible (canonical) or fall back to blueprint synopses
   const episodeSummaries = gatherEpisodeSummaries(bible, blueprints, currentEpisodeNumber)
 
@@ -77,6 +84,7 @@ export function buildContinuityContext(
     visualGuidelines: bible.visualGuidelines,
     audioGuidelines: bible.audioGuidelines,
     unresolvedHooks: bible.unresolvedHooks || [],
+    contentIntent,
   })
 
   return {
@@ -253,7 +261,18 @@ function formatContinuityPromptBlock(ctx: {
   visualGuidelines?: string
   audioGuidelines?: string
   unresolvedHooks: string[]
+  contentIntent?: ContentIntent
 }): string {
+  const intent = ctx.contentIntent ?? 'fiction'
+  const leadLabel =
+    intent === 'informational' ? 'Host/Subject' : intent === 'commercial' ? 'Presenter' : intent === 'conversational' ? 'Host' : 'Protagonist'
+  const oppositionLabel =
+    intent === 'informational' ? 'Core Challenge' : intent === 'commercial' ? 'Pain Point' : intent === 'conversational' ? 'Tension Topic' : 'Conflict'
+  const threadsLabel =
+    intent === 'fiction' ? 'ACTIVE STORY THREADS' : intent === 'informational' ? 'ACTIVE THEMES / OBJECTIVES' : intent === 'commercial' ? 'VALUE PILLARS / CAMPAIGN THREADS' : 'RECURRING TOPICS / SEGMENTS'
+  const eventsLabel = intent === 'fiction' ? 'KEY STORY EVENTS' : 'KEY DEVELOPMENTS'
+  const canonLabel = intent === 'fiction' ? 'IRREVERSIBLE CANON EVENTS' : 'ESTABLISHED FACTS (DO NOT CONTRADICT)'
+  const participantLabel = intent === 'fiction' ? 'CHARACTER CURRENT STATUS' : 'PARTICIPANT CURRENT STATUS'
   const lines: string[] = []
 
   lines.push('=== SERIES CONTINUITY CONTEXT (MUST FOLLOW) ===')
@@ -261,10 +280,10 @@ function formatContinuityPromptBlock(ctx: {
   lines.push(`Episode: ${ctx.currentEpisodeNumber} of ${ctx.totalEpisodes}`)
   if (ctx.setting) lines.push(`Setting: ${ctx.setting}`)
   if (ctx.protagonist?.name) {
-    lines.push(`Protagonist: ${ctx.protagonist.name} — Goal: ${ctx.protagonist.goal}${ctx.protagonist.flaw ? `, Flaw: ${ctx.protagonist.flaw}` : ''}`)
+    lines.push(`${leadLabel}: ${ctx.protagonist.name} — Goal/Role: ${ctx.protagonist.goal}${ctx.protagonist.flaw ? `, Trait: ${ctx.protagonist.flaw}` : ''}`)
   }
   if (ctx.antagonistConflict?.description) {
-    lines.push(`Conflict: ${ctx.antagonistConflict.description} (${ctx.antagonistConflict.type})`)
+    lines.push(`${oppositionLabel}: ${ctx.antagonistConflict.description}${ctx.antagonistConflict.type ? ` (${ctx.antagonistConflict.type})` : ''}`)
   }
   lines.push('')
 
@@ -288,7 +307,7 @@ function formatContinuityPromptBlock(ctx: {
 
   // Active story threads
   if (ctx.activeStoryThreads.length > 0) {
-    lines.push('ACTIVE STORY THREADS (continue or resolve these):')
+    lines.push(`${threadsLabel} (continue or resolve these):`)
     for (const thread of ctx.activeStoryThreads) {
       lines.push(`  - ${thread.name} (${thread.type}, ${thread.status}): ${thread.description || 'No description'}`)
     }
@@ -298,7 +317,7 @@ function formatContinuityPromptBlock(ctx: {
   // Key events / canon constraints
   const irreversibleEvents = ctx.keyEvents.filter(e => e.irreversible)
   if (irreversibleEvents.length > 0) {
-    lines.push('IRREVERSIBLE CANON EVENTS (DO NOT CONTRADICT):')
+    lines.push(`${canonLabel} (DO NOT CONTRADICT):`)
     for (const event of irreversibleEvents) {
       lines.push(`  - [Ep ${event.episodeNumber}] ${event.type.toUpperCase()}: ${event.description}`)
     }
@@ -308,7 +327,7 @@ function formatContinuityPromptBlock(ctx: {
   // Non-irreversible key events (context)
   const contextEvents = ctx.keyEvents.filter(e => !e.irreversible)
   if (contextEvents.length > 0) {
-    lines.push('KEY STORY EVENTS (for context):')
+    lines.push(`${eventsLabel} (for context):`)
     for (const event of contextEvents) {
       lines.push(`  - [Ep ${event.episodeNumber}] ${event.description}`)
     }
@@ -318,7 +337,7 @@ function formatContinuityPromptBlock(ctx: {
   // Character current statuses
   const statusEntries = Object.entries(ctx.characterStatuses)
   if (statusEntries.length > 0) {
-    lines.push('CHARACTER CURRENT STATUS:')
+    lines.push(`${participantLabel}:`)
     for (const [name, status] of statusEntries) {
       lines.push(`  - ${name}: ${status}`)
     }
@@ -377,6 +396,7 @@ export async function loadSeriesContinuityContext(
 
     const bible = series.production_bible || {} as SeriesProductionBible
     const blueprints = series.episode_blueprints || []
+    const meta = (series as any).metadata || {}
 
     return buildContinuityContext(
       bible,
@@ -384,7 +404,9 @@ export async function loadSeriesContinuityContext(
       series.title,
       series.logline || '',
       currentEpisodeNumber,
-      series.max_episodes || blueprints.length
+      series.max_episodes || blueprints.length,
+      meta.format,
+      series.genre
     )
   } catch (error) {
     console.error('[ContinuityContext] Failed to load series context:', error)

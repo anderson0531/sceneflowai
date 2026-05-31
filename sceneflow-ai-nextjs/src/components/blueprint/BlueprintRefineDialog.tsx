@@ -29,6 +29,8 @@ import {
 } from '@/lib/constants/blueprint-optimization'
 import type { BlueprintChangePlan, FieldDiff } from '@/lib/treatment/blueprintRevisionTypes'
 import { cn } from '@/lib/utils'
+import type { ContentIntent } from '@/lib/content/contentIntent'
+import { resolveContentIntent } from '@/lib/content/contentIntent'
 
 type TreatmentVariant = Record<string, unknown>
 
@@ -43,6 +45,7 @@ type Props = {
   /** Initial focus scope (from section pencil or AR fixSection) */
   initialActiveTab?: string
   onRequestReanalyze?: () => void
+  contentIntent?: ContentIntent | null
 }
 
 const SCOPE_OPTIONS: { id: BlueprintFixSection | 'all'; label: string }[] = [
@@ -230,6 +233,7 @@ export function BlueprintRefineDialog({
   resonanceRecommendations,
   initialActiveTab,
   onRequestReanalyze,
+  contentIntent: contentIntentProp,
 }: Props) {
   const [phase, setPhase] = useState<'intent' | 'preview'>('intent')
   const [userIntent, setUserIntent] = useState('')
@@ -324,6 +328,8 @@ export function BlueprintRefineDialog({
           resonanceRecommendations: recs,
           focusScope: focusScope === 'all' ? undefined : focusScope,
           projectId,
+          contentIntent:
+            contentIntentProp ?? resolveContentIntent(String(variant?.genre || '')),
         }),
       })
       const data = await response.json()

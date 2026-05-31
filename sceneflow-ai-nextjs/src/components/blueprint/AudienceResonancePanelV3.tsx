@@ -40,6 +40,7 @@ import type { OpenBlueprintRefineOptions } from '@/lib/blueprint/openBlueprintRe
 import { blueprintCategoryToSection, scrollToBlueprintSection } from '@/lib/blueprint/blueprintProgress'
 import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
 import { buildBlueprintARNarrationText } from '@/lib/blueprint/arNarrationText'
+import { resolveContentIntent, type ContentIntent } from '@/lib/content/contentIntent'
 
 const ResonanceRadarChart = dynamic(
   () =>
@@ -58,6 +59,7 @@ export interface AudienceResonancePanelV3Props {
   savedBlueprintAR?: PersistedBlueprintAudienceResonance | null
   /** Legacy intent for migration */
   legacyIntent?: AudienceIntent | null
+  contentIntent?: ContentIntent | null
   onTreatmentUpdate?: (updated: Record<string, unknown>) => void
   onProceedToScripting?: () => void
   onAudienceDefinitionSave?: (def: AudienceDefinition) => Promise<void>
@@ -133,6 +135,7 @@ export function AudienceResonancePanelV3({
   audienceDefinition: savedDefProp,
   savedBlueprintAR,
   legacyIntent,
+  contentIntent: contentIntentProp,
   onTreatmentUpdate,
   onProceedToScripting,
   onAudienceDefinitionSave,
@@ -248,6 +251,8 @@ export function AudienceResonancePanelV3({
 
     try {
       const intent = legacyIntent || normalizeAudienceIntent()
+      const contentIntent =
+        contentIntentProp ?? resolveContentIntent(treatment.genre as string | undefined)
       const response = await fetch('/api/treatment/audience-resonance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -271,6 +276,7 @@ export function AudienceResonancePanelV3({
           audienceDefinition,
           genre: intent.primaryGenre,
           tone: intent.toneProfile,
+          contentIntent,
           appliedRecommendationIds: appliedIds,
           iteration: (savedBlueprintAR?.iterationCount ?? 0) + 1,
           previousAnalysis: analysis

@@ -4,6 +4,7 @@ import { Series } from '@/models/Series'
 import { Project } from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { resolveUser } from '@/lib/userHelper'
+import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
 import { v4 as uuidv4 } from 'uuid'
 
 export const dynamic = 'force-dynamic'
@@ -96,7 +97,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         episodeId,
         episodeNumber: episode.episodeNumber,
         format: series.metadata?.format || 'narrative',
-        
+        contentIntent: resolveContentIntentFromMetadata({
+          format: series.metadata?.format,
+          genre: series.genre,
+        }),
         // Blueprint prime input for auto-generation in Studio
         blueprintPrimeInput,
         

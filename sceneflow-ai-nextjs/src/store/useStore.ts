@@ -110,6 +110,8 @@ export interface Project {
   completedSteps: WorkflowStep[];
   metadata: {
     genre?: string;
+    format?: string;
+    contentIntent?: 'fiction' | 'informational' | 'commercial' | 'conversational';
     duration?: number;
     targetAudience?: string;
     style?: string;

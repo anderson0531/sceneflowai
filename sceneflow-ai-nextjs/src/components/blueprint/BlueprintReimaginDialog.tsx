@@ -25,6 +25,12 @@ import {
   Zap
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  resolveContentIntent,
+  resolveProductionFormat,
+  getIntentLabel,
+  type ContentIntent,
+} from '@/lib/content/contentIntent'
 
 // =============================================================================
 // TYPES & CONSTANTS
@@ -50,7 +56,8 @@ type Props = {
     targetAudience?: string
     variantCount?: number // Smart variant count based on complexity
     hasStoryDirections?: boolean // Signals story direction options were selected (enables OOM-safe mode)
-    format?: string // Format derived from genre
+    format?: string
+    contentIntent?: ContentIntent
   }) => Promise<void>
   existingVariant?: any // For reimagine mode (editing existing)
   initialIdea?: IdeationConcept // Pre-populated from Ideation
@@ -134,14 +141,16 @@ const AUDIENCE_OPTIONS = [
 
 // Instruction templates for the guided prompt builder
 const CREATIVE_INSTRUCTION_TEMPLATES = [
-  { id: 'more-conflict', label: 'Add More Conflict', text: 'Increase the central conflict and stakes for the protagonist.' },
-  { id: 'educational-focus', label: 'Educational Focus', text: 'Structure as a clear, step-by-step educational lesson or tutorial.' },
-  { id: 'investigative', label: 'Investigative', text: 'Structure as a deep-dive investigative report or documentary.' },
-  { id: 'emotional-depth', label: 'Emotional Depth', text: 'Amplify the emotional journey and connections.' },
-  { id: 'faster-pacing', label: 'Faster Pacing', text: 'Tighten the narrative with quicker progression.' },
-  { id: 'world-building', label: 'Expand Context', text: 'Add richer world-building details and background context.' },
-  { id: 'conversational', label: 'Conversational', text: 'Structure as an engaging interview or podcast format.' },
-  { id: 'relationship-focus', label: 'Focus on Relationships', text: 'Emphasize interpersonal dynamics between subjects or characters.' },
+  { id: 'more-conflict', label: 'Add More Conflict', text: 'Increase the central conflict and stakes for the protagonist.', intents: ['fiction'] as ContentIntent[] },
+  { id: 'educational-focus', label: 'Educational Focus', text: 'Structure as a clear, step-by-step educational lesson or tutorial.', intents: ['informational', 'commercial'] as ContentIntent[] },
+  { id: 'investigative', label: 'Investigative', text: 'Structure as a deep-dive investigative report or documentary.', intents: ['informational'] as ContentIntent[] },
+  { id: 'emotional-depth', label: 'Emotional Depth', text: 'Amplify the emotional journey and connections.', intents: ['fiction', 'informational', 'commercial'] as ContentIntent[] },
+  { id: 'faster-pacing', label: 'Faster Pacing', text: 'Tighten the structure with quicker progression.', intents: ['fiction', 'informational', 'commercial', 'conversational'] as ContentIntent[] },
+  { id: 'world-building', label: 'Expand Context', text: 'Add richer context, background, and supporting details.', intents: ['fiction', 'informational'] as ContentIntent[] },
+  { id: 'conversational', label: 'Conversational', text: 'Structure as an engaging interview or podcast format.', intents: ['conversational'] as ContentIntent[] },
+  { id: 'relationship-focus', label: 'Focus on Relationships', text: 'Emphasize interpersonal dynamics between subjects or characters.', intents: ['fiction', 'conversational'] as ContentIntent[] },
+  { id: 'strengthen-problem', label: 'Strengthen Core Problem', text: 'Clarify the audience pain point and why it matters now.', intents: ['commercial'] as ContentIntent[] },
+  { id: 'clarify-objective', label: 'Clarify Learning Objective', text: 'Make the learning outcome and audience takeaway explicit.', intents: ['informational'] as ContentIntent[] },
 ]
 
 // =============================================================================
@@ -294,8 +303,10 @@ export function BlueprintReimaginDialog({
   
   // Determine mode
   const isReimaginMode = !!existingVariant
-  
-  // Initialize from existing variant or initial idea
+  const contentIntent = resolveContentIntent(genre)
+  const visibleCreativeTemplates = CREATIVE_INSTRUCTION_TEMPLATES.filter(
+    (t) => !genre || t.intents.includes(contentIntent)
+  )
   useEffect(() => {
     if (existingVariant) {
       setSynopsis(existingVariant.synopsis || existingVariant.content || '')
@@ -352,12 +363,10 @@ export function BlueprintReimaginDialog({
   // Handle generate
   const handleGenerate = async () => {
     if (!synopsis.trim()) {
-      toast.error('Please enter a story concept or synopsis')
+      toast.error('Please enter a project concept or synopsis')
       return
     }
     
-    // OOM FIX: Reduce to 1 variant when ANY story direction is selected or custom instruction provided
-    // Story directions add complexity to prompts and increase memory usage significantly
     const hasStoryDirections = selectedInstructions.length > 0 || customInstruction.trim().length > 0
     const variantCount = hasStoryDirections ? 1 : 3
     
@@ -365,8 +374,7 @@ export function BlueprintReimaginDialog({
       console.log('[BlueprintDialog] Story directions selected - using single variant mode to prevent OOM')
     }
     
-    const nonFictionFormats = ['documentary', 'education', 'training', 'news', 'podcast', 'interview']
-    const format = nonFictionFormats.includes(genre) ? genre : 'short_film'
+    const format = resolveProductionFormat(genre)
     
     setIsGenerating(true)
     try {
@@ -377,8 +385,9 @@ export function BlueprintReimaginDialog({
         duration,
         targetAudience,
         variantCount,
-        hasStoryDirections, // Signal to API to use optimized prompt flow
-        format
+        hasStoryDirections,
+        format,
+        contentIntent,
       })
       
       toast.success(isReimaginMode ? 'Blueprint reimagined!' : 'Blueprint generated!')
@@ -462,6 +471,9 @@ export function BlueprintReimaginDialog({
                   ))}
                 </SelectContent>
               </Select>
+              {genre && (
+                <p className="text-[10px] text-cyan-400/80">{getIntentLabel(contentIntent)}</p>
+              )}
             </div>
             
             <div className="space-y-1.5">
@@ -545,7 +557,7 @@ export function BlueprintReimaginDialog({
             </label>
             
             <div className="flex flex-wrap gap-2">
-              {CREATIVE_INSTRUCTION_TEMPLATES.map(template => (
+              {visibleCreativeTemplates.map(template => (
                 <button
                   key={template.id}
                   onClick={() => toggleInstruction(template.id)}

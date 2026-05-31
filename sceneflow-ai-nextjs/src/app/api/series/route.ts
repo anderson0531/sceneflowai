@@ -4,6 +4,7 @@ import { Series, DEFAULT_MAX_EPISODES, ABSOLUTE_MAX_EPISODES } from '@/models/Se
 import { Project } from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { resolveUser } from '@/lib/userHelper'
+import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic'
@@ -213,6 +214,16 @@ export async function POST(request: NextRequest) {
       ...productionBible
     }
     
+    const enrichedMetadata = {
+      ...(metadata || {}),
+      ...(metadata?.format && {
+        contentIntent: resolveContentIntentFromMetadata({
+          format: metadata.format,
+          genre: genre || metadata.genre,
+        }),
+      }),
+    }
+
     const series = await Series.create({
       user_id: resolvedUserId,
       title,
@@ -223,7 +234,7 @@ export async function POST(request: NextRequest) {
       max_episodes: validatedMaxEpisodes,
       production_bible: initialBible,
       episode_blueprints: episodeBlueprints || [],
-      metadata: metadata || {}
+      metadata: enrichedMetadata
     })
     
     console.log(`[${timestamp}] [POST /api/series] Created series:`, series.id)

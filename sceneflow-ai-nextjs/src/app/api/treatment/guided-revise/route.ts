@@ -20,6 +20,7 @@ import {
   mergeRevisionIntoVariant,
   detectMissingBalanceSections,
 } from '@/lib/treatment/blueprintRevisionDiff'
+import { resolveContentIntent } from '@/lib/content/contentIntent'
 
 export const runtime = 'nodejs'
 export const maxDuration = 180
@@ -108,7 +109,11 @@ export async function POST(request: NextRequest) {
       selectedRecommendationIds = [],
       resonanceRecommendations = [],
       focusScope,
+      contentIntent: bodyIntent,
     } = body
+
+    const contentIntent =
+      bodyIntent ?? resolveContentIntent(String(rawVariant.genre || ''))
 
     if (!rawVariant || typeof rawVariant !== 'object') {
       return NextResponse.json(
@@ -162,7 +167,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (!inferPlanFromFocus(focusScope, intentText)) {
-      const plannerPrompt = buildPlannerPrompt(variant, intentText, selectedRecs, focusScope)
+      const plannerPrompt = buildPlannerPrompt(variant, intentText, selectedRecs, focusScope, contentIntent)
       const planRaw = await runGeminiJson(plannerPrompt, 1536)
       plan = normalizePlan(
         planRaw ?? { primaryGoal: intentText, sectionsToUpdate: ['story'] }
@@ -176,7 +181,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Step B: Balanced rewriter
-    const rewriterPrompt = buildRewriterPrompt(variant, plan, intentText, selectedRecs)
+    const rewriterPrompt = buildRewriterPrompt(variant, plan, intentText, selectedRecs, contentIntent)
     let patch = await runGeminiJson(rewriterPrompt, 6144)
 
     if (!patch) {
@@ -190,7 +195,7 @@ export async function POST(request: NextRequest) {
     const missing = detectMissingBalanceSections(plan.sectionsToUpdate, patch)
     if (missing.length > 0) {
       incompleteBalance = true
-      const microPrompt = buildBalanceMicroPassPrompt(variant, plan, patch, missing)
+      const microPrompt = buildBalanceMicroPassPrompt(variant, plan, patch, missing, contentIntent)
       const microPatch = await runGeminiJson(microPrompt, 3072)
       if (microPatch) {
         patch = { ...patch, ...microPatch }

@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { analyzeDuration, normalizeDuration } from '@/lib/treatment/duration'
 import { buildTreatmentPrompt } from '@/lib/treatment/prompts'
+import {
+  type ContentIntent,
+  resolveContentIntent,
+  resolveProductionFormat,
+} from '@/lib/content/contentIntent'
 import { BEAT_STRUCTURES, type BeatStructureKey } from '@/lib/treatment/structures'
 import { repairTreatment } from '@/lib/treatment/validate'
 import { generateText } from '@/lib/vertexai/gemini'
@@ -23,7 +28,8 @@ interface FilmTreatmentRequest {
   genre?: string
   duration?: number
   platform?: string
-  format?: 'youtube'|'short_film'|'documentary'|'education'|'training'
+  format?: string
+  contentIntent?: ContentIntent
   targetMinutes?: number  // Legacy, kept for backward compatibility
   filmType?: 'micro_short'|'short_film'|'featurette'|'feature_length'|'epic'
   rigor?: 'fast'|'balanced'|'thorough'
@@ -194,13 +200,14 @@ function autoDetectFilmStructure(
     }
   }
   
-  // Check for sales/demo content
-  const salesDemoPatterns = /\b(demo|product|sales|pitch|walkthrough|tour|feature|benefit|roi|conversion|prospect|lead)\b/i
-  if (salesDemoPatterns.test(content) || format === 'demo' || format === 'sales') {
+  // Check for sales/demo/commercial content
+  const salesDemoPatterns = /\b(demo|product|sales|pitch|walkthrough|tour|feature|benefit|roi|conversion|prospect|lead|explainer|case study|advertisement|ad\b)\b/i
+  const commercialFormats = ['demo', 'sales', 'product_demo', 'explainer', 'case_study', 'advertisement']
+  if (salesDemoPatterns.test(content) || commercialFormats.includes(format)) {
     return {
-      structure: 'instructional', // Sales/demo fits well with instructional structure
+      structure: 'instructional',
       confidence: 0.85,
-      reason: 'Content suits sales/demo format'
+      reason: 'Content suits commercial/demo format'
     }
   }
 
@@ -216,7 +223,7 @@ function autoDetectFilmStructure(
 
   // Check for documentary/mini-doc style
   const documentaryPatterns = /\b(documentary|real|authentic|behind-the-scenes|journey|explore|discover|reveal|interview|profile|portrait|day-in-the-life|story of|true story|podcast)\b/i
-  if (documentaryPatterns.test(content) || format === 'documentary' || format === 'podcast') {
+  if (documentaryPatterns.test(content) || format === 'documentary' || format === 'podcast' || format === 'interview') {
     return {
       structure: 'mini_doc',
       confidence: 0.85,
@@ -272,7 +279,9 @@ export async function POST(request: NextRequest) {
       console.log(`[Film Treatment] Explicit settings detected - using optimized flow (${variantsCount} variant(s))`)
     }
     
-    const format = body.format || 'documentary'
+    const format = body.format || resolveProductionFormat(genre) || 'short_film'
+    const contentIntent: ContentIntent =
+      body.contentIntent || resolveContentIntent(genre)
     // Prefer filmType over targetMinutes, but fall back to analyzeDuration if neither provided
     const targetMinutes = body.filmType 
       ? getFilmTypeMinutes(body.filmType)
@@ -299,11 +308,21 @@ export async function POST(request: NextRequest) {
       if (hasExplicitSettings && genre && tone) {
         // Build synthetic core concept from explicit settings - no LLM call needed
         console.log('[Film Treatment] Building core concept from explicit settings (skipping LLM extraction)')
+        const narrativeStructure =
+          contentIntent === 'fiction'
+            ? 'three_act'
+            : contentIntent === 'informational'
+              ? format === 'documentary' || format === 'news'
+                ? 'Documentary Structure'
+                : 'Instructional Structure'
+              : contentIntent === 'commercial'
+                ? 'Problem-Solution-Proof-CTA'
+                : 'Segment Flow'
         coreConcept = {
           input_title: extractTitleFromInput(input),
-          input_synopsis: input.slice(0, 500), // First 500 chars as synopsis
+          input_synopsis: input.slice(0, 500),
           core_themes: extractThemesFromGenreTone(genre, tone),
-          narrative_structure: 'three_act' // Default structure
+          narrative_structure: narrativeStructure,
         }
       } else {
         // No explicit settings - use full LLM extraction
@@ -336,10 +355,11 @@ export async function POST(request: NextRequest) {
       duration, 
       platform, 
       format, 
+      contentIntent,
+      visualStyle: (body as any).visualStyle,
       targetMinutes: cappedTargetMinutes, 
       beatStructure: effectiveBeatStructure, 
       userName,
-      // Pass optimization flag to prompt builder
       hasExplicitSettings
     }
 
@@ -403,14 +423,14 @@ async function generateFilmTreatment(
   const prompt = buildTreatmentPrompt({
     input,
     coreConcept,
-    format: context?.format || 'documentary',
+    format: context?.format || 'short_film',
     targetMinutes,
     styleHint: context?.variantStyle,
     context,
     beatStructure: context?.beatStructure ? { label: BEAT_STRUCTURES[context.beatStructure as BeatStructureKey]?.label, beats: (BEAT_STRUCTURES[context.beatStructure as BeatStructureKey]?.beats || []).map(b => ({ title: b.title })) } : null,
     persona: (context as any)?.persona ?? null,
-    // Pass optimization flag - uses lightweight checklist when true
-    hasExplicitSettings: context?.hasExplicitSettings
+    hasExplicitSettings: context?.hasExplicitSettings,
+    contentIntent: context?.contentIntent,
   }) + retryHint + strictJsonPromptSuffix
 
   console.log('[Film Treatment] Calling Vertex AI Gemini...')

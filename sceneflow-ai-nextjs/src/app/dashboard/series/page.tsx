@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { resolveContentIntentFromMetadata } from '@/lib/content/contentIntent'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Library,
@@ -100,7 +101,11 @@ export default function SeriesPage() {
           format,
           genre: genre === 'any' ? undefined : genre,
           tone: tone === 'any' ? undefined : tone,
-          episodeCount
+          episodeCount,
+          contentIntent: resolveContentIntentFromMetadata({
+            format,
+            genre: genre === 'any' ? undefined : genre,
+          }),
         }
       })
       

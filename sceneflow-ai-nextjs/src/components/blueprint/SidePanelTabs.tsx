@@ -37,6 +37,7 @@ interface SidePanelTabsProps {
   onAnalysisComplete?: (persisted: PersistedBlueprintAudienceResonance) => void
   savedBlueprintAR?: PersistedBlueprintAudienceResonance | null
   legacyIntent?: AudienceIntent | null
+  contentIntent?: import('@/lib/content/contentIntent').ContentIntent | null
   shareToken?: string | null
   onOpenBlueprintRefine?: (opts: OpenBlueprintRefineOptions) => void
   /** Increment to switch to the Collaborate tab (e.g. after creating a link). */
@@ -59,6 +60,7 @@ export function SidePanelTabs({
   onAnalysisComplete,
   savedBlueprintAR,
   legacyIntent,
+  contentIntent,
   onOpenBlueprintRefine,
   shareToken,
   collaborationTabSignal = 0,
@@ -147,6 +149,7 @@ export function SidePanelTabs({
               audienceDefinition={audienceDefinition}
               savedBlueprintAR={savedBlueprintAR}
               legacyIntent={legacyIntent}
+              contentIntent={contentIntent}
               onTreatmentUpdate={handleTreatmentUpdate}
               onProceedToScripting={onProceedToScripting}
               onAudienceDefinitionSave={onAudienceDefinitionSave}

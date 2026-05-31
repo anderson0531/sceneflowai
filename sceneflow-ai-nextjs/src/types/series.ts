@@ -313,6 +313,7 @@ export interface CreateSeriesRequest {
   maxEpisodes?: number
   productionBible?: Partial<SeriesProductionBibleResponse>
   episodeBlueprints?: Partial<EpisodeBlueprintResponse>[]
+  metadata?: Record<string, unknown>
 }
 
 /**
@@ -336,10 +337,11 @@ export interface UpdateSeriesRequest {
 export interface GenerateSeriesRequest {
   topic: string
   episodeCount?: number
-  regenerateField?: 'title' | 'logline' | 'synopsis' | 'protagonist' | 'antagonist' | 'setting' | 'episodes' | 'characters'
-  preserveExisting?: boolean
+  format?: string
   genre?: string
   tone?: string
+  regenerateField?: 'title' | 'logline' | 'synopsis' | 'protagonist' | 'antagonist' | 'setting' | 'episodes' | 'characters'
+  preserveExisting?: boolean
 }
 
 /**

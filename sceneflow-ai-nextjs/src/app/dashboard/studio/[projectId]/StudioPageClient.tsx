@@ -706,8 +706,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     duration?: string;
     targetAudience?: string;
     visualStyle?: string;
-    hasStoryDirections?: boolean; // Story direction options were selected - triggers OOM-safe mode
+    hasStoryDirections?: boolean;
     format?: string;
+    contentIntent?: import('@/lib/content/contentIntent').ContentIntent;
   }) => {
     setLastInput(text)
     setIsGen(true)
@@ -736,7 +737,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           ...(opts?.tone && { tone: opts.tone }),
           ...(opts?.targetAudience && { targetAudience: opts.targetAudience }),
           ...(opts?.visualStyle && { visualStyle: opts.visualStyle }),
-          // Signal to API that explicit settings were provided for optimization
+          ...(opts?.contentIntent && { contentIntent: opts.contentIntent }),
+          ...(opts?.format && { format: opts.format }),
           hasExplicitSettings
         })
       })
@@ -762,6 +764,18 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
         
         console.log('[StudioPage] Film treatment variants received:', variants.length)
         setTreatmentVariants(variants)
+
+        if (opts?.contentIntent || opts?.format || opts?.genre) {
+          setCurrentProject({
+            ...(currentProject || {}),
+            metadata: {
+              ...(currentProject?.metadata || {}),
+              ...(opts.genre && { genre: opts.genre }),
+              ...(opts.format && { format: opts.format }),
+              ...(opts.contentIntent && { contentIntent: opts.contentIntent }),
+            },
+          } as any)
+        }
         
         if (variants[0]) {
           updateTitle(variants[0].title || 'Untitled Project')
@@ -815,7 +829,10 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                   filmTreatment: variants[0]?.synopsis || variants[0]?.content || '',
                   treatmentVariants: variants,
                   beats: data.beats || [],
-                  estimatedRuntime: data.estimatedRuntime || null
+                  estimatedRuntime: data.estimatedRuntime || null,
+                  ...(opts?.genre && { genre: opts.genre }),
+                  ...(opts?.format && { format: opts.format }),
+                  ...(opts?.contentIntent && { contentIntent: opts.contentIntent }),
                 },
                 currentStep: 'ideation'
               })
@@ -1148,7 +1165,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           title: guide.title || 'Untitled Project',
           description: '',
           metadata: {
-            ...(currentProject?.metadata || {}), // Preserve existing metadata (like visionPhase, seriesId)
+            ...(currentProject?.metadata || {}),
             blueprintInput: lastInput,
             filmTreatment: guide.filmTreatment,
             treatmentVariants: treatmentVariants,
@@ -1156,6 +1173,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             estimatedRuntime: estimatedRuntime,
             audienceDefinition,
             blueprintAudienceResonance: savedBlueprintAR,
+            ...(currentProject?.metadata?.contentIntent && {
+              contentIntent: currentProject.metadata.contentIntent,
+            }),
           }
         }
         
@@ -1513,6 +1533,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                 onAnalysisComplete={handleAnalysisComplete}
                 savedBlueprintAR={savedBlueprintAR}
                 legacyIntent={legacyARIntent}
+                contentIntent={currentProject?.metadata?.contentIntent}
                 onOpenBlueprintRefine={openBlueprintRefine}
                 onScrollToSection={(section) => scrollToBlueprintSection(section)}
               />
@@ -1577,6 +1598,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           resonanceRecommendations={blueprintRefineRecs}
           initialActiveTab={blueprintRefineTab}
           onRequestReanalyze={requestBlueprintReanalyze}
+          contentIntent={currentProject?.metadata?.contentIntent}
         />
       )}
 

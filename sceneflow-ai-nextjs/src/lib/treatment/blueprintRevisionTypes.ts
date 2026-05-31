@@ -4,6 +4,7 @@ import type {
   BlueprintAudienceResonanceAnalysis,
   BlueprintFixSection,
 } from '@/lib/types/audienceResonance'
+import type { ContentIntent } from '@/lib/content/contentIntent'
 
 export type { BlueprintFixSection }
 
@@ -16,6 +17,7 @@ export interface GuidedReviseRequest {
   audienceDefinition?: AudienceDefinition
   focusScope?: BlueprintFixSection | 'all'
   projectId?: string
+  contentIntent?: ContentIntent
 }
 
 export interface BlueprintChangePlan {

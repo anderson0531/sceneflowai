@@ -7,6 +7,11 @@ import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { generateText } from '@/lib/vertexai/gemini'
 import { loadSeriesContinuityContext } from '@/lib/series/continuityContext'
 import type { AudienceResonanceAnalysis } from '@/lib/types/audienceResonance'
+import {
+  type ContentIntent,
+  getIntentRevisionGuardrail,
+  resolveContentIntent,
+} from '@/lib/content/contentIntent'
 
 const BLUEPRINT_OPTIMIZE_CREDIT_COST = BLUEPRINT_CREDITS.BLUEPRINT_OPTIMIZE // 15 credits
 
@@ -25,6 +30,7 @@ interface OptimizeRequest {
   seriesId?: string
   /** Episode number within the series */
   episodeNumber?: number
+  contentIntent?: ContentIntent
 }
 
 interface OptimizedSection {
@@ -55,7 +61,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body: OptimizeRequest = await request.json()
-    const { variant, previousAnalysis, focusAreas = ['clarity', 'pacing', 'character'], seriesId, episodeNumber } = body
+    const { variant, previousAnalysis, focusAreas = ['clarity', 'pacing', 'character'], seriesId, episodeNumber, contentIntent: bodyIntent } = body
+    const contentIntent =
+      bodyIntent ?? resolveContentIntent(String(variant.genre || ''))
 
     if (!variant) {
       return NextResponse.json(
@@ -112,13 +120,21 @@ Use this analysis to prioritize which areas need the most improvement while pres
         case 'clarity':
           return '- CLARITY: Ensure every sentence is clear, concise, and purposeful. Remove redundancy and vague language.'
         case 'pacing':
-          return '- PACING: Ensure beats flow naturally with proper escalation. Each beat should have clear dramatic purpose.'
+          return contentIntent === 'fiction'
+            ? '- PACING: Ensure beats flow naturally with proper escalation. Each beat should have clear dramatic purpose.'
+            : '- PACING: Ensure segments flow logically with clear progression toward takeaways or CTA.'
         case 'character':
-          return '- CHARACTER: Deepen protagonist/antagonist motivations. Make character descriptions more vivid and specific.'
+          return contentIntent === 'fiction'
+            ? '- CHARACTER: Deepen protagonist/antagonist motivations. Make character descriptions more vivid and specific.'
+            : contentIntent === 'commercial'
+              ? '- PERSONAS: Strengthen presenter/customer persona and pain point clarity.'
+              : '- PARTICIPANTS: Deepen host/subject/expert credibility and role clarity.'
         case 'tone':
           return '- TONE: Ensure consistent tone throughout. Make visual style descriptions more specific and evocative.'
         case 'commercial':
-          return '- COMMERCIAL: Strengthen marketable hooks. Ensure logline is punchy and genre conventions are satisfied.'
+          return contentIntent === 'fiction'
+            ? '- COMMERCIAL: Strengthen marketable hooks. Ensure logline is punchy and genre conventions are satisfied.'
+            : '- AUDIENCE FIT: Strengthen relevance, proof points, and takeaway/CTA clarity.'
         default:
           return ''
       }
@@ -146,13 +162,23 @@ Use this analysis to prioritize which areas need the most improvement while pres
         : []
     }
 
-    const prompt = `You are an expert film treatment editor and story consultant. Your task is to REWRITE and OPTIMIZE the following film treatment for maximum clarity, effectiveness, and industry-standard quality.
+    const editorRole =
+      contentIntent === 'fiction'
+        ? 'expert film treatment editor and story consultant'
+        : contentIntent === 'commercial'
+          ? 'expert commercial video strategist'
+          : contentIntent === 'conversational'
+            ? 'expert podcast/interview content producer'
+            : 'expert informational content producer'
+
+    const prompt = `You are an ${editorRole}. Your task is to REWRITE and OPTIMIZE the following blueprint for maximum clarity, effectiveness, and audience fit.
+
+${getIntentRevisionGuardrail(contentIntent)}
 
 CRITICAL INSTRUCTIONS:
 - You are REWRITING, not appending. Return complete replacements for each field.
-- Preserve the core creative vision and story, but elevate the execution.
+- Preserve the core creative vision, but elevate the execution.
 - Keep the same overall length - don't expand sections unnecessarily.
-- Maintain genre conventions while enhancing originality.
 - Make every word count - eliminate fluff and redundancy.
 
 OPTIMIZATION FOCUS AREAS:
@@ -167,10 +193,10 @@ ${JSON.stringify(currentData, null, 2)}
 
 YOUR TASK:
 Rewrite the treatment with these improvements:
-1. Sharpen the logline to be punchy and memorable (1-2 sentences max)
-2. Tighten the synopsis for clarity and dramatic impact
-3. Enhance protagonist/antagonist descriptions with clear motivations and visual details
-4. Improve beat synopses for better pacing and dramatic progression
+1. Sharpen the logline/thesis to be punchy and memorable (1-2 sentences max)
+2. Tighten the synopsis for clarity and impact
+3. ${contentIntent === 'fiction' ? 'Enhance protagonist/antagonist descriptions with clear motivations and visual details' : 'Strengthen host/subject/presenter and core challenge/pain point fields'}
+4. Improve beat synopses for better pacing and progression
 5. Refine tone_description and visual_style for specificity
 
 Return a JSON object with ALL fields rewritten and optimized. Include all fields even if minimal changes were needed.

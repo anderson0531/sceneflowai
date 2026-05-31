@@ -12,6 +12,7 @@ import { Series } from '@/models/Series'
 import { sequelize } from '@/config/database'
 import { callLLM } from '@/services/llmGateway'
 import { SeriesEpisodeBlueprint } from '@/types/series'
+import { buildEpisodeBatchPrompt, resolveSeriesContentIntent } from '@/lib/series/episodeBatchPrompt'
 
 // Maximum episodes to generate in a single batch (5 for reliable JSON parsing)
 const BATCH_SIZE = 5
@@ -129,62 +130,26 @@ async function generateEpisodeBatch(
     }
   }
   
-  // Build character roster
-  const characterList = bible.characters?.map((c: any) => 
-    `- ${c.name} (${c.role}): ${c.description}`
-  ).join('\n') || 'Not specified'
-  
-  const prompt = `You are continuing an existing TV series with consistent story arcs.
+  const format = (series as any).metadata?.format || 'narrative'
+  const contentIntent = resolveSeriesContentIntent(format, series.genre)
 
-SERIES: ${series.title}
-LOGLINE: ${series.logline || bible.logline}
-SYNOPSIS: ${bible.synopsis || 'Not specified'}
-GENRE: ${series.genre || 'Drama'}
-TONE: ${bible.toneGuidelines || 'Not specified'}
-
-CHARACTERS:
-${characterList}
-
-PROTAGONIST: ${bible.protagonist?.name || 'Not specified'} - Goal: ${bible.protagonist?.goal || ''}, Flaw: ${bible.protagonist?.flaw || ''}
-
-ANTAGONIST/CONFLICT: ${bible.antagonistConflict?.description || 'Not specified'}
-
-EXISTING EPISODES (last 5 for context):
-${episodeSummaries || 'None yet'}
-
-ACTIVE STORY THREADS:
-${activeThreads.map(t => `- ${t.name} (${t.type}): ${t.status} - ${t.description || ''}`).join('\n') || 'None tracked'}
-
-SERIES LENGTH: ${totalPlannedEpisodes} total episodes
-CURRENT POSITION: Episodes ${startEpisodeNumber} to ${startEpisodeNumber + count - 1} of ${totalPlannedEpisodes}
-
-Generate ${count} NEW episodes starting from Episode ${startEpisodeNumber}.
-Each episode must:
-1. Continue naturally from the last episode's hook
-2. Advance or resolve active story threads
-3. Introduce new threads if appropriate for pacing
-4. End with a hook for the next episode (except if this is the finale)
-5. Consider series position (early=setup, middle=complications, late=resolution)
-
-Return ONLY valid JSON array:
-[
-  {
-    "episodeNumber": ${startEpisodeNumber},
-    "title": "Episode Title",
-    "logline": "One sentence hook",
-    "synopsis": "Full episode summary continuing the narrative",
-    "beats": [
-      {"beatNumber": 1, "title": "Opening", "description": "Pickup from previous", "act": 1},
-      {"beatNumber": 2, "title": "Conflict", "description": "Rising action", "act": 2},
-      {"beatNumber": 3, "title": "Resolution", "description": "Climax/cliffhanger", "act": 3}
-    ],
-    "characters": [{"characterId": "${bible.protagonist?.characterId || 'char_1'}", "role": "protagonist"}],
-    "storyThreads": [{"id": "thread_1", "name": "Thread Name", "type": "main|subplot|character|mystery|romance", "status": "developing|climax|resolved", "description": "Progress in this episode"}],
-    "plotDevelopments": ["Key event in this episode"],
-    "episodeHook": "Setup for next episode",
-    "status": "blueprint"
-  }
-]`
+  const prompt = buildEpisodeBatchPrompt({
+    seriesTitle: series.title,
+    logline: series.logline || bible.logline,
+    synopsis: bible.synopsis,
+    genre: series.genre,
+    tone: bible.toneGuidelines,
+    format,
+    contentIntent,
+    characters: bible.characters,
+    protagonist: bible.protagonist,
+    antagonistConflict: bible.antagonistConflict,
+    episodeSummaries: episodeSummaries || 'None yet',
+    activeThreads,
+    totalPlannedEpisodes,
+    startEpisodeNumber,
+    count,
+  })
 
   const response = await callLLM(
     { 

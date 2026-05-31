@@ -2,6 +2,12 @@ import type { BlueprintAudienceRecommendation } from '@/lib/types/audienceResona
 import type { BlueprintChangePlan, BlueprintFixSection } from './blueprintRevisionTypes'
 import { SECTION_FIELDS } from './blueprintRevisionTypes'
 import { strictJsonPromptSuffix } from '@/lib/safeJson'
+import {
+  type ContentIntent,
+  getIntentCouplingRules,
+  getIntentRevisionGuardrail,
+  resolveContentIntent,
+} from '@/lib/content/contentIntent'
 
 const MAX_SYNOPSIS = 1200
 const MAX_BEAT_SYNOPSIS = 120
@@ -17,6 +23,10 @@ MANDATORY CROSS-SECTION BALANCE (you MUST reconcile dependent sections when appl
 - tone / themes changes → also update visual_style, mood_references, and beat emotional tone
 Never change one narrative layer in isolation when the user intent affects story logic.
 `
+
+export function getCouplingRulesForIntent(contentIntent?: ContentIntent): string {
+  return getIntentCouplingRules(contentIntent ?? 'fiction')
+}
 
 /** Compact JSON for prompts (avoids pretty-print memory spikes). */
 export function compactJson(value: unknown): string {
@@ -146,14 +156,20 @@ export function buildPlannerPrompt(
   variant: Record<string, unknown>,
   userIntent: string,
   recs: BlueprintAudienceRecommendation[],
-  focusScope?: BlueprintFixSection | 'all'
+  focusScope?: BlueprintFixSection | 'all',
+  contentIntent?: ContentIntent
 ): string {
+  const intent = contentIntent ?? resolveContentIntent(String(variant.genre || ''))
   const trimmed = trimVariantForPrompt(variant)
   const recBlock = buildRecommendationIntentBlock(recs)
+  const couplingRules = getCouplingRulesForIntent(intent)
+  const intentGuard = getIntentRevisionGuardrail(intent)
 
-  return `You are a film development editor planning a BALANCED blueprint revision.
+  return `You are a ${intent === 'fiction' ? 'film development editor' : 'content development editor'} planning a BALANCED blueprint revision.
 
-The user provides DIRECTION only — your job is to plan which blueprint sections must change together so the story stays coherent.
+The user provides DIRECTION only — your job is to plan which blueprint sections must change together so the content stays coherent.
+
+${intentGuard}
 
 CURRENT BLUEPRINT (summary):
 ${compactJson(trimmed)}
@@ -164,7 +180,7 @@ ${truncateStr(userIntent, 800) || '(See audience resonance recommendations below
 ${recBlock ? `AUDIENCE RESONANCE RECOMMENDATIONS TO ADDRESS:\n${recBlock}\n` : ''}
 ${focusScope && focusScope !== 'all' ? `USER FOCUS SCOPE: ${focusScope} (still apply cross-section coupling where needed)\n` : ''}
 
-${CROSS_SECTION_COUPLING_RULES}
+${couplingRules}
 
 Return ONLY valid JSON:
 {
@@ -181,8 +197,10 @@ export function buildRewriterPrompt(
   variant: Record<string, unknown>,
   plan: BlueprintChangePlan,
   userIntent: string,
-  recs: BlueprintAudienceRecommendation[]
+  recs: BlueprintAudienceRecommendation[],
+  contentIntent?: ContentIntent
 ): string {
+  const intent = contentIntent ?? resolveContentIntent(String(variant.genre || ''))
   const trimmed = trimVariantForPrompt(variant)
   const allFields = new Set<string>()
   for (const section of plan.sectionsToUpdate) {
@@ -199,16 +217,19 @@ export function buildRewriterPrompt(
   const allowedFields = [...allFields]
   const scopedBlueprint = pickVariantFields(trimmed, allowedFields)
   const recBlock = buildRecommendationIntentBlock(recs)
+  const couplingRules = getCouplingRulesForIntent(intent)
+  const intentGuard = getIntentRevisionGuardrail(intent)
 
-  return `You are an expert film treatment editor performing a GUIDED, BALANCED blueprint revision.
+  return `You are an expert ${intent === 'fiction' ? 'film treatment editor' : 'content blueprint editor'} performing a GUIDED, BALANCED blueprint revision.
 
 CRITICAL RULES:
 - You are REPLACING content, NOT appending. Return complete new values for each field you change.
 - Apply the change plan and cross-section coupling. The blueprint must read as one coherent document.
 - Do NOT change fields outside the allowed list unless coupling requires it.
 - Maximum 8 beats. Beat synopses 1-3 sentences each.
-- character_descriptions: preserve character NAMES unless user explicitly requests rename.
+- character_descriptions: preserve participant NAMES unless user explicitly requests rename.
 - Return ONLY fields you modify — do not echo unchanged fields.
+${intentGuard}
 
 CHANGE PLAN:
 ${compactJson(plan)}
@@ -222,7 +243,7 @@ ALLOWED FIELDS TO RETURN (include all you modify): ${allowedFields.join(', ')}
 CURRENT VALUES (allowed fields only):
 ${compactJson(scopedBlueprint)}
 
-${CROSS_SECTION_COUPLING_RULES}
+${couplingRules}
 
 Return ONLY a JSON object with the modified fields (subset of allowed fields). Include "narrative_reasoning" object:
 {
@@ -239,8 +260,10 @@ export function buildBalanceMicroPassPrompt(
   variant: Record<string, unknown>,
   plan: BlueprintChangePlan,
   partialDraft: Record<string, unknown>,
-  missingSections: BlueprintFixSection[]
+  missingSections: BlueprintFixSection[],
+  contentIntent?: ContentIntent
 ): string {
+  const intent = contentIntent ?? resolveContentIntent(String(variant.genre || ''))
   const fields: string[] = []
   for (const s of missingSections) {
     const f = SECTION_FIELDS[s]
@@ -261,8 +284,9 @@ ${compactJson(scopedPartial)}
 ORIGINAL (relevant fields only):
 ${compactJson(scopedOriginal)}
 
-Update ONLY these fields to balance the story: ${fields.join(', ')}
-${CROSS_SECTION_COUPLING_RULES}
+Update ONLY these fields to balance the blueprint: ${fields.join(', ')}
+${getCouplingRulesForIntent(intent)}
+${getIntentRevisionGuardrail(intent)}
 Return ONLY JSON with those fields. Do not repeat unchanged content.
 ${strictJsonPromptSuffix}`
 }

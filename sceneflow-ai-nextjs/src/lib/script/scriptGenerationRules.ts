@@ -76,7 +76,17 @@ export const SCRIPT_SETTINGS_BY_FORMAT: Record<string, Partial<ScriptSettings>> 
     maxScenesPerAct: 8,
     targetSceneCount: 20
   },
-  'feature': {
+  short_film: {
+    beatToSceneRatio: 3,
+    maxScenesPerAct: 8,
+    targetSceneCount: 20
+  },
+  narrative: {
+    beatToSceneRatio: 4,
+    maxScenesPerAct: 10,
+    targetSceneCount: 35
+  },
+  feature: {
     beatToSceneRatio: 5,
     maxScenesPerAct: 15,
     targetSceneCount: 50
@@ -86,11 +96,96 @@ export const SCRIPT_SETTINGS_BY_FORMAT: Record<string, Partial<ScriptSettings>> 
     maxScenesPerAct: 10,
     targetSceneCount: 35
   },
-  'documentary': {
+  documentary: {
     beatToSceneRatio: 6,
     narrationMode: 'narrative-driven',
     maxScenesPerAct: 12,
-    targetSceneCount: 40
+    targetSceneCount: 40,
+    enforceStateProgression: false
+  },
+  educational: {
+    beatToSceneRatio: 5,
+    narrationMode: 'moderate',
+    maxScenesPerAct: 10,
+    targetSceneCount: 30,
+    enforceStateProgression: false
+  },
+  education: {
+    beatToSceneRatio: 5,
+    narrationMode: 'moderate',
+    maxScenesPerAct: 10,
+    targetSceneCount: 30,
+    enforceStateProgression: false
+  },
+  training: {
+    beatToSceneRatio: 5,
+    narrationMode: 'moderate',
+    maxScenesPerAct: 10,
+    targetSceneCount: 25,
+    enforceStateProgression: false
+  },
+  podcast: {
+    beatToSceneRatio: 4,
+    narrationMode: 'minimal',
+    maxScenesPerAct: 8,
+    targetSceneCount: 20,
+    enforceStateProgression: false
+  },
+  interview: {
+    beatToSceneRatio: 4,
+    narrationMode: 'minimal',
+    maxScenesPerAct: 8,
+    targetSceneCount: 20,
+    enforceStateProgression: false
+  },
+  news: {
+    beatToSceneRatio: 5,
+    narrationMode: 'narrative-driven',
+    maxScenesPerAct: 10,
+    targetSceneCount: 25,
+    enforceStateProgression: false
+  },
+  product_demo: {
+    beatToSceneRatio: 4,
+    narrationMode: 'moderate',
+    maxScenesPerAct: 8,
+    targetSceneCount: 15,
+    enforceStateProgression: false
+  },
+  explainer: {
+    beatToSceneRatio: 4,
+    narrationMode: 'moderate',
+    maxScenesPerAct: 8,
+    targetSceneCount: 18,
+    enforceStateProgression: false
+  },
+  case_study: {
+    beatToSceneRatio: 4,
+    narrationMode: 'moderate',
+    maxScenesPerAct: 8,
+    targetSceneCount: 18,
+    enforceStateProgression: false
+  },
+  advertisement: {
+    beatToSceneRatio: 3,
+    narrationMode: 'minimal',
+    maxScenesPerAct: 6,
+    targetSceneCount: 12,
+    enforceStateProgression: false
+  },
+  demo: {
+    beatToSceneRatio: 4,
+    narrationMode: 'moderate',
+    maxScenesPerAct: 8,
+    targetSceneCount: 15,
+    enforceStateProgression: false
+  },
+  sales: {
+    beatToSceneRatio: 4,
+    narrationMode: 'moderate',
+    maxScenesPerAct: 8,
+    targetSceneCount: 18,
+    enforceStateProgression: false
   },
   'music-video': {
     beatToSceneRatio: 2,
@@ -101,10 +196,65 @@ export const SCRIPT_SETTINGS_BY_FORMAT: Record<string, Partial<ScriptSettings>> 
 }
 
 export function getSettingsForFormat(format: string): ScriptSettings {
+  const key = format?.toLowerCase().replace(/-/g, '_') || 'narrative'
+  const normalized = key === 'short_film' ? 'short_film' : key
   return {
     ...DEFAULT_SCRIPT_SETTINGS,
+    ...SCRIPT_SETTINGS_BY_FORMAT[normalized],
     ...SCRIPT_SETTINGS_BY_FORMAT[format]
   }
+}
+
+export function getScriptProgressStatuses(format: string): string[] {
+  const f = format?.toLowerCase() || 'narrative'
+  if (['educational', 'education', 'training'].includes(f)) {
+    return [
+      'Analyzing lesson structure...',
+      'Developing learning segments...',
+      'Writing instructional content...',
+      'Crafting segment transitions...',
+      'Building audience engagement...',
+      'Finalizing lesson script...',
+    ]
+  }
+  if (['documentary', 'news'].includes(f)) {
+    return [
+      'Analyzing narrative structure...',
+      'Developing subject segments...',
+      'Writing voiceover and interviews...',
+      'Crafting segment transitions...',
+      'Building factual throughline...',
+      'Finalizing documentary script...',
+    ]
+  }
+  if (['podcast', 'interview'].includes(f)) {
+    return [
+      'Analyzing conversation flow...',
+      'Developing host/guest segments...',
+      'Writing dialogue exchanges...',
+      'Crafting segment transitions...',
+      'Building listener engagement...',
+      'Finalizing episode script...',
+    ]
+  }
+  if (['product_demo', 'explainer', 'case_study', 'advertisement', 'demo', 'sales'].includes(f)) {
+    return [
+      'Analyzing persuasive structure...',
+      'Developing problem/solution beats...',
+      'Writing presenter segments...',
+      'Crafting proof and CTA moments...',
+      'Building value proposition...',
+      'Finalizing commercial script...',
+    ]
+  }
+  return [
+    'Analyzing narrative structure...',
+    'Developing character arcs...',
+    'Writing dialogue exchanges...',
+    'Crafting scene transitions...',
+    'Building dramatic tension...',
+    'Finalizing screenplay...',
+  ]
 }
 
 // ============================================================================
