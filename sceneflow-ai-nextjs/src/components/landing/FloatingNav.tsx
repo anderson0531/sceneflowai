@@ -1,28 +1,32 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Clock3, 
-  Shield, 
-  Sparkles, 
+import {
+  Clock3,
+  Shield,
+  Sparkles,
   Rocket,
-  Film, 
-  DollarSign, 
+  Film,
+  DollarSign,
   HelpCircle,
 } from 'lucide-react'
-
-const sections = [
-  { id: 'comparison', label: 'Compare', icon: Clock3 },
-  { id: 'how-it-works', label: 'How It Works', icon: Sparkles },
-  { id: 'use-cases', label: 'Use Cases', icon: Rocket },
-  { id: 'feature-storyboard', label: 'Platform Walkthrough', icon: Film },
-  { id: 'engineering', label: 'Platform', icon: Shield },
-  { id: 'pricing', label: 'Pricing', icon: DollarSign },
-  { id: 'faq', label: 'FAQ', icon: HelpCircle },
-]
+import { useTranslations } from 'next-intl'
 
 export function FloatingNav() {
+  const t = useTranslations('floatingNav')
+  const sections = useMemo(
+    () => [
+      { id: 'comparison', label: t('compare'), icon: Clock3 },
+      { id: 'how-it-works', label: t('howItWorks'), icon: Sparkles },
+      { id: 'use-cases', label: t('useCases'), icon: Rocket },
+      { id: 'feature-storyboard', label: t('platformWalkthrough'), icon: Film },
+      { id: 'engineering', label: t('platform'), icon: Shield },
+      { id: 'pricing', label: t('pricing'), icon: DollarSign },
+      { id: 'faq', label: t('faq'), icon: HelpCircle },
+    ],
+    [t]
+  )
   const [activeSection, setActiveSection] = useState('')
   const [isVisible, setIsVisible] = useState(false)
 

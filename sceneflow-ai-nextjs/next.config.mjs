@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { withSerwist } from "@serwist/turbopack";
 import withBundleAnalyzer from "@next/bundle-analyzer";
+import createNextIntlPlugin from "next-intl/plugin";
 
 /**
  * next-auth parses NEXTAUTH_URL via `new URL(...)`. An empty string crashes prerender/build (Invalid URL).
@@ -64,4 +65,6 @@ const nextConfig = {
   },
 };
 
-export default bundleAnalyzer(withSerwist(nextConfig));
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
+
+export default withNextIntl(bundleAnalyzer(withSerwist(nextConfig)));

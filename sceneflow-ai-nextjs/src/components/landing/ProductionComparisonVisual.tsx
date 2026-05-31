@@ -8,9 +8,10 @@ import {
   buildUseCaseExampleHash,
   getDefaultExampleId,
   getUseCaseExample,
-  hasUseCaseExampleVideo,
   parseUseCaseExampleHash,
 } from '@/config/landing/useCaseExamples';
+import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
 
 export { VIDEO_CATEGORIES } from '@/config/landing/useCaseExamples';
 
@@ -19,12 +20,30 @@ interface ProductionComparisonVisualProps {
 }
 
 export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComparisonVisualProps) => {
+  const tUi = useTranslations('useCases.ui');
+  const tCategories = useTranslations('useCases');
+  const localizedCategories = useMemo(() => {
+    const translated = tCategories.raw('categories') as Array<{
+      id: string;
+      title: string;
+      examples: Array<{ id: string; label: string; description: string }>;
+    }>;
+    return translated.map((cat) => ({
+      ...cat,
+      examples: cat.examples.map((ex) => ({
+        ...ex,
+        videoSrc: getUseCaseExample(cat.id, ex.id)?.videoSrc,
+      })),
+    }));
+  }, [tCategories]);
+
   const videoPanelRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<string>(
-    initialCategoryId ?? VIDEO_CATEGORIES[0].id
+    initialCategoryId ?? localizedCategories[0]?.id ?? VIDEO_CATEGORIES[0].id
   );
   const [activeExampleId, setActiveExampleId] = useState<string>(
-    getDefaultExampleId(initialCategoryId ?? VIDEO_CATEGORIES[0].id) ??
+    getDefaultExampleId(initialCategoryId ?? localizedCategories[0]?.id ?? VIDEO_CATEGORIES[0].id) ??
+      localizedCategories[0]?.examples[0]?.id ??
       VIDEO_CATEGORIES[0].examples[0].id
   );
 
@@ -53,7 +72,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
   }, []);
 
   useEffect(() => {
-    if (initialCategoryId && VIDEO_CATEGORIES.some((cat) => cat.id === initialCategoryId)) {
+    if (initialCategoryId && localizedCategories.some((cat) => cat.id === initialCategoryId)) {
       const defaultExampleId = getDefaultExampleId(initialCategoryId);
       if (defaultExampleId) {
         setActiveCategory(initialCategoryId);
@@ -72,9 +91,9 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
   }, [syncFromHash]);
 
   const activeCategoryData =
-    VIDEO_CATEGORIES.find((cat) => cat.id === activeCategory) ?? VIDEO_CATEGORIES[0];
+    localizedCategories.find((cat) => cat.id === activeCategory) ?? localizedCategories[0];
   const activeExample =
-    getUseCaseExample(activeCategoryData.id, activeExampleId) ??
+    activeCategoryData.examples.find((ex) => ex.id === activeExampleId) ??
     activeCategoryData.examples[0];
 
   const handleCategoryClick = (categoryId: string) => {
@@ -109,17 +128,17 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
           <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-slate-800/80 p-4">
             <div className="flex items-center gap-2 text-cyan-300">
               <PlayCircle className="w-5 h-5" />
-              <p className="text-sm font-semibold uppercase tracking-wider">Use Cases</p>
+              <p className="text-sm font-semibold uppercase tracking-wider">{tUi('useCases')}</p>
             </div>
             <div className="text-xs text-slate-400 font-medium bg-slate-900 px-2 py-1 rounded border border-white/5">
-              {VIDEO_CATEGORIES.length} SECTORS
+              {tUi('sectors', { count: localizedCategories.length })}
             </div>
           </div>
 
           <div className="flex min-h-0 flex-1 overflow-hidden flex-col md:flex-row">
             {/* Sidebar Categories */}
             <div className="min-h-0 w-full md:w-1/3 overflow-y-auto border-r border-white/10 bg-slate-950/50 flex md:flex-col overflow-x-auto md:overflow-x-hidden border-b md:border-b-0">
-              {VIDEO_CATEGORIES.map((cat) => (
+              {localizedCategories.map((cat) => (
                 <button
                   key={cat.id}
                   type="button"
@@ -138,7 +157,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
             {/* Content Area */}
             <div className="relative min-h-0 w-full md:w-2/3 overflow-y-auto bg-slate-900/50 p-4">
               <AnimatePresence mode="wait">
-                {VIDEO_CATEGORIES.map(
+                {localizedCategories.map(
                   (cat) =>
                     cat.id === activeCategory && (
                       <motion.div
@@ -165,7 +184,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                               {activeExample.label}
                             </p>
                           </div>
-                          {hasUseCaseExampleVideo(activeExample) ? (
+                          {activeExample.videoSrc?.trim() ? (
                             <video
                               key={`${cat.id}-${activeExample.id}-${activeExample.videoSrc}`}
                               src={activeExample.videoSrc}
@@ -178,7 +197,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                           ) : (
                             <div className="w-full aspect-video bg-slate-950 flex flex-col items-center justify-center gap-2 max-h-[400px] px-6 text-center">
                               <p className="text-xs text-slate-500 uppercase tracking-wider">
-                                Demo coming soon
+                                {tUi('demoComingSoon')}
                               </p>
                               <p className="text-sm text-slate-400">{activeExample.label}</p>
                             </div>

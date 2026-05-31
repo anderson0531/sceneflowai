@@ -1,0 +1,179 @@
+{
+  "glossary": [
+    "SceneFlow AI Studio",
+    "SceneFlow AI",
+    "SceneFlow",
+    "Blueprint",
+    "Production Mixer",
+    "Beat Frames",
+    "Audience Resonance",
+    "Screening Room",
+    "Reference Library",
+    "Final Cut",
+    "Premiere",
+    "Animatic",
+    "Express storyboard",
+    "BYOK",
+    "Whop",
+    "Explorer",
+    "Vertex AI",
+    "ElevenLabs",
+    "Google Cloud",
+    "Gemini Studio",
+    "Google Flow"
+  ],
+  "locales": {
+    "es": {
+      "tier": "A-reviewed",
+      "mt": false
+    },
+    "pt": {
+      "tier": "A-reviewed",
+      "mt": false
+    },
+    "fr": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "de": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "it": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "nl": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "pl": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "ru": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "uk": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "cs": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "sv": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "da": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "no": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "fi": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "el": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "tr": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "ro": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "hu": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "zh-CN": {
+      "tier": "A-reviewed",
+      "mt": false
+    },
+    "zh-TW": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "ja": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "ko": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "hi": {
+      "tier": "A-reviewed",
+      "mt": false
+    },
+    "bn": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "th": {
+      "tier": "A-reviewed",
+      "mt": false
+    },
+    "vi": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "id": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "ms": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "tl": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "ur": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "ar": {
+      "tier": "A-reviewed",
+      "mt": false
+    },
+    "he": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "fa": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "sw": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "am": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "yo": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "zu": {
+      "tier": "B-mt",
+      "mt": false
+    },
+    "af": {
+      "tier": "B-mt",
+      "mt": false
+    }
+  }
+}

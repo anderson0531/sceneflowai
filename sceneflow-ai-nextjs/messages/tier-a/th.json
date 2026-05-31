@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "title": "SceneFlow AI - สร้างวิดีโอด้วย AI",
+    "description": "เปลี่ยนไอเดียของคุณเป็นวิดีโอระดับมืออาชีพด้วยระบบอัตโนมัติที่ขับเคลื่อนด้วย AI"
+  },
+  "nav": {
+    "workflow": "เวิร์กโฟลว์",
+    "platformWalkthrough": "ทัวร์แพลตฟอร์ม",
+    "plansPricing": "แผนและราคา",
+    "signIn": "เข้าสู่ระบบ",
+    "startProject": "เริ่มโปรเจกต์"
+  },
+  "hero": {
+    "headline": "สร้างวิดีโอระดับมืออาชีพโดยไม่ต้องมีทีมโปรดักชันหรือแอปหลายสิบตัว",
+    "subheadline": "สตูดิโอแบบ guided จากไอเดียสู่ master ที่พร้อมเผยแพร่ ดู storyboard ก่อนจ่ายค่าวิดีโอฉบับสุดท้าย — อนุมัติลุคก่อน render แทนการเผา credits กับการ generate แบบเดา",
+    "ctaSecondary": "ดู 'What's Possible'"
+  },
+  "finalCta": {
+    "title": "พร้อมทดสอบ pipeline เต็มรูปแบบหรือยัง?",
+    "subtitle": "รัน concept → storyboard → video → master MP4 ในสตูดิโอเดียว เริ่มด้วยแผน Explorer $9 และดู beat-first workflow",
+    "cta": "เปิด Studio ของคุณใน $9"
+  }
+}

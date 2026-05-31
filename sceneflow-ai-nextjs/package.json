@@ -24,7 +24,10 @@
                 "test": "vitest run",
                 "gcp:deploy": "echo 'Deploy via Vercel (cloud export handled server-side).'",
                 "compliance-check": "node scripts/fastspring-compliance-check.js",
-                "test:watch": "vitest"
+                "test:watch": "vitest",
+    "i18n:build-en": "tsx scripts/build-landing-messages.ts",
+    "i18n:generate": "tsx scripts/build-landing-messages.ts && tsx scripts/generate-landing-locale-messages.ts",
+    "i18n:generate:offline": "tsx scripts/build-landing-messages.ts && tsx scripts/generate-landing-locale-messages.ts --offline"
         },
         "dependencies": {
                 "@ai-sdk/google": "^3.0.57",
@@ -87,6 +90,7 @@
                 "lucide-react": "^0.539.0",
                 "next": "^16.2.2",
                 "next-auth": "^4.24.7",
+                "next-intl": "^4.13.0",
                 "next-themes": "^0.4.6",
                 "openai": "^4.52.7",
                 "pdfjs-dist": "^5.4.149",

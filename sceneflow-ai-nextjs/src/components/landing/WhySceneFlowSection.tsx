@@ -2,9 +2,12 @@
 
 import { motion } from 'framer-motion'
 import { Check } from 'lucide-react'
-import { WHY_SCENEFLOW } from '@/config/landing/valuePropCopy'
+import { useTranslations } from 'next-intl'
 
 export function WhySceneFlowSection() {
+  const t = useTranslations('whySceneFlow')
+  const rows = t.raw('rows') as Array<{ them: string; us: string }>
+
   return (
     <section id="why-sceneflow" className="py-20 sm:py-24 bg-slate-950 scroll-mt-20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -14,16 +17,16 @@ export function WhySceneFlowSection() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">{WHY_SCENEFLOW.title}</h2>
-          <p className="text-gray-400 max-w-2xl mx-auto">{WHY_SCENEFLOW.subtitle}</p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">{t('title')}</h2>
+          <p className="text-gray-400 max-w-2xl mx-auto">{t('subtitle')}</p>
         </motion.div>
 
         <div className="rounded-2xl border border-white/10 overflow-hidden">
           <div className="hidden sm:grid sm:grid-cols-2 bg-slate-900/80 border-b border-white/10 text-sm font-semibold uppercase tracking-wider text-gray-500">
-            <div className="px-5 py-3">Typical clip-generation tools</div>
-            <div className="px-5 py-3 text-cyan-400/90">SceneFlow bundles</div>
+            <div className="px-5 py-3">{t('themHeader')}</div>
+            <div className="px-5 py-3 text-cyan-400/90">{t('usHeader')}</div>
           </div>
-          {WHY_SCENEFLOW.rows.map((row, index) => (
+          {rows.map((row, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0 }}

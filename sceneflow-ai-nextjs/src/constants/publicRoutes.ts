@@ -6,6 +6,10 @@
 // Exact match routes (no navigation)
 export const PUBLIC_ROUTES = ['/', '/login', '/early-access', '/pricing', '/terms', '/privacy', '/refunds', '/trust-safety', '/contact'] as const;
 
+/** Landing locale path prefixes treated as public (e.g. /es, /zh-CN). */
+export const LANDING_LOCALE_ROUTE_PATTERN =
+  /^\/(es|pt|fr|de|it|nl|pl|ru|uk|cs|sv|da|no|fi|el|tr|ro|hu|zh-CN|zh-TW|ja|ko|hi|bn|th|vi|id|ms|tl|ur|ar|he|fa|sw|am|yo|zu|af)$/;
+
 // Prefix match routes (no navigation for any path starting with these)
 export const PUBLIC_ROUTE_PREFIXES = ['/c/', '/collaborate/', '/share/', '/s/', '/blueprint/share/', '/embed/', '/early-access/invite/'] as const;
 
@@ -21,6 +25,11 @@ const APP_ROUTES = [
 export function isPublicRoute(pathname: string | null): boolean {
   if (!pathname) return false;
   
+  // Landing locale home paths (/es, /ja, …)
+  if (LANDING_LOCALE_ROUTE_PATTERN.test(pathname)) {
+    return true;
+  }
+
   // Check exact matches
   if ((PUBLIC_ROUTES as readonly string[]).includes(pathname)) {
     return true;

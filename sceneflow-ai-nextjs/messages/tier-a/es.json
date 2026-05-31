@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "title": "SceneFlow AI - Creación de video con IA",
+    "description": "Transforma tus ideas en videos profesionales con automatización de flujo de trabajo impulsada por IA"
+  },
+  "nav": {
+    "workflow": "El flujo de trabajo",
+    "platformWalkthrough": "Recorrido de la plataforma",
+    "plansPricing": "Planes y precios",
+    "signIn": "Iniciar sesión",
+    "startProject": "Iniciar un proyecto"
+  },
+  "hero": {
+    "headline": "Crea video profesional sin un equipo de producción ni una docena de apps.",
+    "subheadline": "Un estudio guiado de la idea al master listo para publicar. Revisa tu storyboard antes de pagar el video final — aprueba el look en lugar de quemar créditos en generaciones a ciegas.",
+    "ctaSecondary": "Ver 'Qué es posible'"
+  },
+  "finalCta": {
+    "title": "¿Listo para probar el pipeline completo?",
+    "subtitle": "Ejecuta concepto → storyboard → video → master MP4 en un solo estudio. Empieza con el plan Explorer de $9 y prueba el flujo beat-first en acción.",
+    "cta": "Lanza tu Studio por $9"
+  }
+}

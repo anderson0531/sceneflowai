@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "title": "SceneFlow AI - إنشاء فيديو بالذكاء الاصطناعي",
+    "description": "حوّل أفكارك إلى فيديوهات احترافية بأتمتة سير عمل مدعومة بالذكاء الاصطناعي"
+  },
+  "nav": {
+    "workflow": "سير العمل",
+    "platformWalkthrough": "جولة في المنصة",
+    "plansPricing": "الخطط والأسعار",
+    "signIn": "تسجيل الدخول",
+    "startProject": "ابدأ مشروعًا"
+  },
+  "hero": {
+    "headline": "أنشئ فيديو احترافيًا دون فريق إنتاج أو مجموعة من التطبيقات.",
+    "subheadline": "استوديو موجّه من الفكرة إلى master جاهز للنشر. شاهد storyboard قبل دفع تكلفة الفيديو النهائي — وافق على المظهر بدلًا من حرق credits في توليدات عشوائية.",
+    "ctaSecondary": "شاهد «ما هو ممكن»"
+  },
+  "finalCta": {
+    "title": "هل أنت مستعد لاختبار pipeline الكامل؟",
+    "subtitle": "نفّذ concept → storyboard → video → master MP4 في استوديو واحد. ابدأ بخطة Explorer بـ $9 وجرب beat-first workflow.",
+    "cta": "أطلق Studio الخاص بك مقابل $9"
+  }
+}

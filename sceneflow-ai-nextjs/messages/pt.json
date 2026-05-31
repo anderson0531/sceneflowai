@@ -1,0 +1,618 @@
+{
+  "metadata": {
+    "title": "SceneFlow AI - Criação de vídeo com IA",
+    "description": "Transforme suas ideias em vídeos profissionais com automação de fluxo de trabalho impulsionada por IA"
+  },
+  "nav": {
+    "workflow": "O fluxo de trabalho",
+    "platformWalkthrough": "Tour da plataforma",
+    "plansPricing": "Planos e preços",
+    "more": "More",
+    "useCases": "Use Cases",
+    "audienceResonance": "Audience Resonance",
+    "platformTrust": "Platform & Trust",
+    "faq": "FAQ",
+    "signIn": "Entrar",
+    "startProject": "Iniciar um projeto",
+    "dashboard": "Dashboard",
+    "adminPanel": "Admin Panel",
+    "signOut": "Sign Out",
+    "goToDashboard": "Go to Dashboard",
+    "userFallback": "User",
+    "searchLanguages": "Search languages...",
+    "noLanguagesFound": "No languages found"
+  },
+  "floatingNav": {
+    "compare": "Compare",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "platformWalkthrough": "Platform Walkthrough",
+    "platform": "Platform",
+    "pricing": "Pricing",
+    "faq": "FAQ"
+  },
+  "hero": {
+    "headline": "Faça vídeo profissional sem equipe de produção ou uma dúzia de apps.",
+    "subheadline": "Um estúdio guiado da ideia ao master pronto para publicar. Veja seu storyboard antes de pagar pelo vídeo final — aprove o visual em vez de queimar créditos em gerações no escuro.",
+    "ctaSecondary": "Assista 'O que é possível'",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
+    "heroVideoLanguages": {
+      "en": {
+        "label": "English",
+        "nativeLabel": "English"
+      },
+      "es": {
+        "label": "Spanish",
+        "nativeLabel": "Español"
+      },
+      "pt": {
+        "label": "Portuguese",
+        "nativeLabel": "Português"
+      },
+      "hi": {
+        "label": "Hindi",
+        "nativeLabel": "हिन्दी"
+      },
+      "zh": {
+        "label": "Chinese",
+        "nativeLabel": "中文"
+      },
+      "ar": {
+        "label": "Arabic",
+        "nativeLabel": "العربية"
+      },
+      "th": {
+        "label": "Thai",
+        "nativeLabel": "ไทย"
+      }
+    },
+    "soon": "Soon"
+  },
+  "valueProp": {
+    "pills": [
+      {
+        "label": "One Studio",
+        "detail": "Concept to publish in one place"
+      },
+      {
+        "label": "Approve Before Final Video",
+        "detail": "Review storyboard beats before you render"
+      },
+      {
+        "label": "Test Your Story First",
+        "detail": "Know what lands before heavy spend"
+      },
+      {
+        "label": "Publish-Ready Output",
+        "detail": "Master MP4 + distribution bundles"
+      }
+    ]
+  },
+  "audiencePaths": {
+    "prompt": "Who are you? Pick your path",
+    "seeExamples": "See examples",
+    "examplesFor": "Examples for {label}:",
+    "andMore": ", and more.",
+    "paths": [
+      {
+        "id": "creator",
+        "label": "Creator",
+        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "useCases": [
+          "YouTube & episodic series",
+          "Video podcasts & show clips",
+          "Hyper-local & JIT news",
+          "Documentaries & docuseries",
+          "How-to & skill channels",
+          "Sports recaps & commentary"
+        ]
+      },
+      {
+        "id": "team",
+        "label": "In-house team",
+        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "useCases": [
+          "Corporate L&D & compliance",
+          "Internal comms & town halls",
+          "Product explainers for sales",
+          "HR recruitment & culture",
+          "K-12 / higher-ed lessons",
+          "Public health & safety updates"
+        ]
+      },
+      {
+        "id": "productionShop",
+        "label": "Production shop",
+        "outcome": "Productize a niche with repeatable intake → delivery",
+        "useCases": [
+          "Video memoir packages",
+          "Legacy & tribute videos",
+          "Voice-cloned narration",
+          "White-label studio templates",
+          "Real estate & hospitality tours",
+          "Subscription video services"
+        ]
+      },
+      {
+        "id": "agency",
+        "label": "Agency",
+        "outcome": "Faster pitches and scalable client delivery",
+        "useCases": [
+          "Client pitch pre-viz",
+          "Product launch campaigns",
+          "Case studies & testimonials",
+          "Event & conference promos",
+          "Multi-language campaigns",
+          "Property marketing for clients"
+        ]
+      }
+    ]
+  },
+  "whySceneFlow": {
+    "title": "Why SceneFlow vs prompt-and-generate tools",
+    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "rows": [
+      {
+        "them": "Prompt + clip generation in isolation",
+        "us": "Structured phases with editable baselines at each step"
+      },
+      {
+        "them": "Manual consistency across sessions",
+        "us": "Reference Library + Beat Frames lock visuals before video"
+      },
+      {
+        "them": "No audience validation workflow",
+        "us": "Audience Resonance before render; Screening Room before publish"
+      },
+      {
+        "them": "No production pipeline or handoff",
+        "us": "Script → streams → assembly → distribution in one app"
+      },
+      {
+        "them": "Complex model and settings surface",
+        "us": "Guided Studio UX with credits and BYOK guardrails"
+      }
+    ],
+    "themHeader": "Typical clip-generation tools",
+    "usHeader": "SceneFlow bundles"
+  },
+  "beatFirstPipeline": {
+    "title": "Beat-First Video Pipeline",
+    "subtitle": "Approve before you render — not slot-machine regeneration",
+    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "steps": [
+      "Express storyboard — share audio-visual beats for review in minutes",
+      "Beat Frames — lock start/end composition with Reference Library continuity",
+      "F2V per beat — generate video from approved frames, not blind prompts",
+      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+    ],
+    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+  },
+  "comparison": {
+    "title": "Production speed without the overhead",
+    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
+    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
+    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+  },
+  "howItWorks": {
+    "title": "From concept to publish-ready video",
+    "titleAccent": "One guided pipeline",
+    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
+    "tagline": "Every step is expertly automated. Every step gives you full control.",
+    "optionalBadge": "Optional",
+    "optionalSuffix": " (optional)",
+    "readyTitle": "Ready to test the full pipeline?",
+    "explorerCta": "Start with Explorer — $9",
+    "phases": [
+      {
+        "id": "series",
+        "stepLabel": "Series",
+        "subtitle": "Showrunner Engine",
+        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "keySteps": [
+          "Define universe — characters, tone, and season arc",
+          "Auto-generate episode outlines across the season",
+          "Sync into Blueprint and Production per episode"
+        ],
+        "keyFeatures": [
+          "Define your universe once — characters, tone, and season arc",
+          "Cohesive episode outlines — auto-generated across the season",
+          "Continuity tracking — multi-episode seasons in alignment",
+          "Series-to-episode sync — into Blueprint Studio and Production"
+        ],
+        "optional": true
+      },
+      {
+        "id": "blueprint",
+        "stepLabel": "Blueprint",
+        "subtitle": "Story Development",
+        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "keySteps": [
+          "Generate → Review → Iterate → Start Production",
+          "Audience Resonance scoring with 80+ target",
+          "Collaborator share links and export (PDF, Doc, PPTX)"
+        ],
+        "keyFeatures": [
+          "Generate → Review → Iterate → Start Production workflow",
+          "Concept to structure in minutes — logline, beats, characters, and tone",
+          "Audience Resonance scoring with 80+ target before Production",
+          "Collaborator share links — feedback synthesis into guided revision"
+        ],
+        "optional": false
+      },
+      {
+        "id": "production",
+        "stepLabel": "Production",
+        "subtitle": "Script to Streams",
+        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "keySteps": [
+          "Lock script, voices, and scene audio",
+          "Express storyboard — gallery and share for review",
+          "Beat Frames → Director Console → Render Stream",
+          "Send finished streams to Final Cut"
+        ],
+        "keyFeatures": [
+          "Foundation — script, voices, scene audio, lock script",
+          "Express storyboard — direction and frames in minutes; gallery and share",
+          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
+          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
+        ],
+        "optional": false
+      },
+      {
+        "id": "final-cut",
+        "stepLabel": "Final Cut",
+        "subtitle": "Stream Assembly",
+        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "keySteps": [
+          "Pick streams per scene — preset or custom mix",
+          "Preview full program in script order",
+          "Export one master MP4 for Premiere"
+        ],
+        "keyFeatures": [
+          "Per-scene stream pick — Animatic, Video, language, version",
+          "Assembly presets — All Video, Hybrid, Custom mix",
+          "No timeline editing — creative changes stay in Production Mixer",
+          "One-click master export — stitched MP4 for Premiere"
+        ],
+        "optional": false
+      },
+      {
+        "id": "premiere",
+        "stepLabel": "Premiere",
+        "subtitle": "Distribution Hub",
+        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "keySteps": [
+          "Create screening and share /s/ link",
+          "Review Scoring, engagement, and visual insights",
+          "YouTube wizard or export bundle"
+        ],
+        "keyFeatures": [
+          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
+          "Insights dashboard — Scoring, Biometric, and Visual tabs",
+          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
+          "Export bundles and vertical short-form clip plans"
+        ],
+        "optional": false
+      }
+    ]
+  },
+  "useCases": {
+    "badge": "Production Applications",
+    "title": "Whatever Video You Can Imagine,",
+    "titleAccent": "Build It in SceneFlow",
+    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "ui": {
+      "useCases": "Use Cases",
+      "sectors": "{count} SECTORS",
+      "demoComingSoon": "Demo coming soon",
+      "selectExample": "Select an example to preview its demo"
+    },
+    "categories": [
+      {
+        "id": "property",
+        "title": "Property, Spaces & Hospitality",
+        "examples": [
+          {
+            "id": "residential-real-estate",
+            "label": "Residential Real Estate",
+            "description": "Automated listing tours featuring the agent's cloned voice and avatar identity."
+          },
+          {
+            "id": "commercial-real-estate",
+            "label": "Commercial Real Estate",
+            "description": "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data."
+          },
+          {
+            "id": "short-term-rentals",
+            "label": "Short-Term Rentals",
+            "description": "Automated \"Digital Welcome Books\" that walk guests through house features and local \"best of\" spots."
+          },
+          {
+            "id": "hospitality-tourism",
+            "label": "Hospitality & Tourism",
+            "description": "Hotel virtual tours and narrated travel itineraries for agencies."
+          },
+          {
+            "id": "museum-gallery-guides",
+            "label": "Museum & Gallery Guides",
+            "description": "Multi-language audio-visual \"tours\" for exhibitions that can be updated JIT as exhibits change."
+          }
+        ]
+      },
+      {
+        "id": "knowledge",
+        "title": "Knowledge, Training & Education",
+        "examples": [
+          {
+            "id": "k12-higher-ed",
+            "label": "K-12 & Higher Ed",
+            "description": "30-minute curriculum modules that can be instantly localized for ESL students or global campuses."
+          },
+          {
+            "id": "corporate-ld",
+            "label": "Corporate L&D",
+            "description": "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices."
+          },
+          {
+            "id": "software-saas-tutorials",
+            "label": "Software SaaS Tutorials",
+            "description": "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion."
+          },
+          {
+            "id": "niche-skill-tutoring",
+            "label": "Niche Skill Tutoring",
+            "description": "Professional \"How-To\" series for cooking, DIY, or technical certifications."
+          },
+          {
+            "id": "medical-patient-education",
+            "label": "Medical/Patient Education",
+            "description": "Narrated explanations of surgical procedures or medication management for hospitals and clinics."
+          },
+          {
+            "id": "video-memoirs",
+            "label": "Video Memoirs",
+            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+          }
+        ]
+      },
+      {
+        "id": "jit",
+        "title": "JIT Media & Information",
+        "examples": [
+          {
+            "id": "hyper-local-news",
+            "label": "Hyper-Local News",
+            "description": "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive."
+          },
+          {
+            "id": "financial-market-recaps",
+            "label": "Financial & Market Recaps",
+            "description": "Turning daily stock market or crypto data into 3-minute narrated visual digests."
+          },
+          {
+            "id": "sports-commentary",
+            "label": "Sports Commentary",
+            "description": "Automated \"recap\" videos using game stats and static photography turned into F2V action."
+          },
+          {
+            "id": "true-crime-historical-docs",
+            "label": "True Crime & Historical Docs",
+            "description": "Using the Reference Library to keep historical figures consistent across a multi-part documentary series."
+          },
+          {
+            "id": "weather-emergency-alerts",
+            "label": "Weather & Emergency Alerts",
+            "description": "Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms."
+          }
+        ]
+      },
+      {
+        "id": "b2b",
+        "title": "B2B Marketing & Sales",
+        "examples": [
+          {
+            "id": "product-explainer-videos",
+            "label": "Product Explainer Videos",
+            "description": "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos."
+          },
+          {
+            "id": "case-study-testimonials",
+            "label": "Case Study/Testimonials",
+            "description": "Using client headshots and project photos to create high-end visual success stories."
+          },
+          {
+            "id": "recruitment-branding",
+            "label": "Recruitment & Branding",
+            "description": "Giving candidates a narrated \"day in the life\" tour of the office and culture."
+          },
+          {
+            "id": "conference-event-promos",
+            "label": "Conference & Event Promos",
+            "description": "Automated \"Speaker Bio\" videos and \"What to Expect\" guides for large-scale events."
+          }
+        ]
+      },
+      {
+        "id": "public",
+        "title": "Public Sector & Advocacy",
+        "examples": [
+          {
+            "id": "ngo-impact-reports",
+            "label": "NGO Impact Reports",
+            "description": "Turning data and field photography into emotive, narrated videos for donors."
+          },
+          {
+            "id": "public-health-announcements",
+            "label": "Public Health Announcements",
+            "description": "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity."
+          },
+          {
+            "id": "legal-insurance-explainers",
+            "label": "Legal & Insurance Explainers",
+            "description": "Helping clients understand complex contracts or claim processes through narrated visual breakdowns."
+          },
+          {
+            "id": "religious-spiritual-teachings",
+            "label": "Religious & Spiritual Teachings",
+            "description": "Converting sermons or texts into a consistent, narrated daily video series for global congregations."
+          }
+        ]
+      }
+    ]
+  },
+  "institutionalRoi": {
+    "badge": "For in-house teams & institutions",
+    "title": "Replace vendor shoots with predictable in-house production",
+    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
+    "comparisons": [
+      {
+        "label": "Traditional vendor shoot + edit",
+        "cost": "$5,000–$15,000",
+        "timeline": "4–8 weeks"
+      },
+      {
+        "label": "SceneFlow in-house workflow",
+        "cost": "$50–$500 in credits",
+        "timeline": "Same week"
+      }
+    ],
+    "bullets": [
+      "Brand-safe templates and approval before final render",
+      "Budget caps with visible credit spend per project",
+      "No crew days, no edit back-and-forth on every revision"
+    ],
+    "ctaPrimary": "Book a team walkthrough",
+    "ctaSecondary": "See pricing",
+    "typicalCost": "Typical cost",
+    "timeline": "Timeline"
+  },
+  "platformWalkthrough": {
+    "badge": "Guided Tour",
+    "title": "Platform Walkthrough",
+    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
+    "subheading": "Studio feature deep dive",
+    "close": "Close",
+    "viewDetails": "View Details",
+    "beatFirst": {
+      "id": 15,
+      "title": "Beat-First Video Pipeline",
+      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "keyFeatures": [
+        "Express storyboard for review — share beats before heavy render",
+        "Beat Frames lock composition — Reference Library continuity",
+        "F2V per beat — generate video from approved frames",
+        "Mixer timing and streams — export to Final Cut assembly"
+      ],
+      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
+      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+    },
+    "screeningRoom": {
+      "title": "Audience Review and Analytics",
+      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "keyFeatures": [
+        "Private review sessions — secure /s/ share links for stakeholders",
+        "Structured audience feedback — ratings and open items",
+        "Optional engagement analytics — with viewer consent before capture",
+        "Iterate from real data — refine Blueprint and script from reviewer insights"
+      ],
+      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
+      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+    }
+  },
+  "faq": {
+    "badge": "Got Questions?",
+    "title": "Frequently Asked Questions",
+    "subtitle": "Everything you need to know about SceneFlow AI",
+    "items": [
+      {
+        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
+        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+      },
+      {
+        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
+        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+      },
+      {
+        "question": "Can I edit AI-generated scripts, visuals, and audio?",
+        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+      },
+      {
+        "question": "How does Target Audience Resonance work now?",
+        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+      },
+      {
+        "question": "Can I produce multilingual listing or marketing videos?",
+        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
+      },
+      {
+        "question": "What does Premiere do if Screening Room is the review phase?",
+        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+      },
+      {
+        "question": "Do I need technical or editing experience?",
+        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
+      },
+      {
+        "question": "How does the Explorer Plan work?",
+        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
+      },
+      {
+        "question": "How are credits and BYOK handled?",
+        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
+      },
+      {
+        "question": "What can I realistically create with SceneFlow?",
+        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+      }
+    ]
+  },
+  "finalCta": {
+    "title": "Pronto para testar o pipeline completo?",
+    "subtitle": "Execute conceito → storyboard → vídeo → master MP4 em um estúdio. Comece com o plano Explorer de $9 e veja o fluxo beat-first em ação.",
+    "cta": "Lance seu Studio por $9"
+  },
+  "footer": {
+    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
+    "product": "Product",
+    "resources": "Resources",
+    "legal": "Legal",
+    "links": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "howItWorks": "How It Works",
+      "faq": "FAQ",
+      "gettingStarted": "Getting Started",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "trustSafety": "Trust & Safety",
+      "refunds": "Refund Policy",
+      "contact": "Contact Us"
+    },
+    "tagline": "Made with ❤️ for creators",
+    "taglineSub": "From Idea to Published Video",
+    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
+    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
+    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
+    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
+    "poweredBy": "Powered by Google Cloud"
+  },
+  "floatingCta": {
+    "seePricing": "See Pricing",
+    "tryNine": "Try $9",
+    "tryForNine": "Try for $9",
+    "dismiss": "Dismiss"
+  },
+  "common": {
+    "watermark": "SceneFlow AI Studio",
+    "pause": "Pause",
+    "play": "Play",
+    "mute": "Mute",
+    "unmute": "Unmute"
+  }
+}

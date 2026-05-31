@@ -1,17 +1,20 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { motion } from 'framer-motion'
 import { Layers, Frame, Target, Rocket } from 'lucide-react'
-import { VP_STRIP_PILLS } from '@/config/landing/valuePropCopy'
 
 const ICONS = [Layers, Frame, Target, Rocket]
 
 export function ValuePropStrip() {
+  const t = useTranslations('valueProp')
+  const pills = t.raw('pills') as Array<{ label: string; detail: string }>
+
   return (
     <section className="py-12 bg-gradient-to-b from-slate-950 to-slate-900 border-y border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {VP_STRIP_PILLS.map((pill, index) => {
+          {pills.map((pill, index) => {
             const Icon = ICONS[index] ?? Layers
             return (
               <motion.div

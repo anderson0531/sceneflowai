@@ -1,69 +1,37 @@
-'use client'
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages, setRequestLocale } from 'next-intl/server'
+import { cookies } from 'next/headers'
+import LandingPageClient from './LandingPageClient'
+import {
+  DEFAULT_LANDING_LOCALE,
+  getLandingLocaleDirection,
+  isLandingLocale,
+} from '@/i18n/locale'
+import { generateLandingMetadata } from '@/i18n/landingMetadata'
 
-// Landing page with dedicated Header component - "Living Pipeline" Ecosystem Architecture
-import dynamic from 'next/dynamic'
-import { Header } from './components/Header'
-import { HeroSection } from './components/HeroSection'
-import { EngineeringTrust } from '@/components/landing/EngineeringTrust'
+export async function generateMetadata() {
+  const locale = await resolveLandingLocale()
+  return generateLandingMetadata(locale)
+}
 
-const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
+async function resolveLandingLocale(): Promise<string> {
+  const cookieStore = await cookies()
+  const fromCookie = cookieStore.get('sf-landing-locale')?.value
+  if (fromCookie && isLandingLocale(fromCookie)) return fromCookie
+  return DEFAULT_LANDING_LOCALE
+}
 
-const ValuePropStrip = dynamic(() => import('@/components/landing/ValuePropStrip').then(m => m.ValuePropStrip), { ssr: false })
-const AudiencePathStrip = dynamic(() => import('@/components/landing/AudiencePathStrip').then(m => m.AudiencePathStrip), { ssr: false })
-const InstitutionalRoiSection = dynamic(() => import('@/components/landing/InstitutionalRoiSection').then(m => m.InstitutionalRoiSection), { ssr: false })
-const WhySceneFlowSection = dynamic(() => import('@/components/landing/WhySceneFlowSection').then(m => m.WhySceneFlowSection), { ssr: false })
-const OneTakePipelineSection = dynamic(() => import('@/components/landing/OneTakePipelineSection').then(m => m.OneTakePipelineSection), { ssr: false })
-const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachineSection'), { ssr: false })
-const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
-const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
-const CoreCapabilitiesSection = dynamic(() => import('@/components/landing/CoreCapabilitiesSection').then(m => m.CoreCapabilitiesSection), { ssr: false })
-const FeatureStoryboardSection = dynamic(() => import('@/components/landing/FeatureStoryboardSection'), { ssr: false })
-const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
-const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
-const ExitIntentPopup = dynamic(() => import('@/components/landing/ExitIntentPopup'), { ssr: false })
-import { FAQ } from './components/FAQ'
-import { FinalCTA } from './components/FinalCTA'
-import { Footer } from './components/Footer'
+export default async function LandingPage() {
+  const locale = await resolveLandingLocale()
+  setRequestLocale(locale)
+  const messages = await getMessages()
+  const dir = getLandingLocaleDirection(locale)
 
-export default function LandingPage() {
   return (
-    <div id="main-content" className="min-h-screen bg-gray-950 text-white overflow-x-hidden">
-      <Header />
-      <FloatingNav />
-      <FloatingCTA />
-      <ExitIntentPopup />
-      
-      <HeroSection />
-
-      <AudiencePathStrip />
-      
-      <ValuePropStrip />
-
-      <WhySceneFlowSection />
-
-      <OneTakePipelineSection />
-
-      <SlotMachineSection />
-
-      <HowItWorks />
-
-      <UseCasesSection />
-
-      <InstitutionalRoiSection />
-
-      <CoreCapabilitiesSection />
-
-      <FeatureStoryboardSection />
-
-      <EngineeringTrust />
-
-      <PricingCredits />
-
-      <FAQ />
-      
-      <FinalCTA />
-      
-      <Footer />
-    </div>
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      <div lang={locale} dir={dir} className={dir === 'rtl' ? 'rtl' : undefined}>
+        <LandingPageClient />
+      </div>
+    </NextIntlClientProvider>
   )
 }

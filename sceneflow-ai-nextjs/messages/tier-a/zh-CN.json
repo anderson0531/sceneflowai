@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "title": "SceneFlow AI - AI 智能视频创作",
+    "description": "通过 AI 驱动的工作流自动化，将您的创意转化为专业视频"
+  },
+  "nav": {
+    "workflow": "工作流程",
+    "platformWalkthrough": "平台导览",
+    "plansPricing": "方案与定价",
+    "signIn": "登录",
+    "startProject": "开始项目"
+  },
+  "hero": {
+    "headline": "无需制作团队或十几个应用，即可制作专业视频。",
+    "subheadline": "从创意到可发布成片的单一引导式 Studio。在支付最终视频前先查看分镜——在批准画面后再渲染，而不是在盲目生成中消耗积分。",
+    "ctaSecondary": "观看「可能性」"
+  },
+  "finalCta": {
+    "title": "准备好测试完整流程了吗？",
+    "subtitle": "在一个 Studio 中完成概念 → 分镜 → 视频 → 主 MP4。从 $9 Explorer 方案开始，体验 beat-first 工作流。",
+    "cta": "以 $9 启动您的 Studio"
+  }
+}

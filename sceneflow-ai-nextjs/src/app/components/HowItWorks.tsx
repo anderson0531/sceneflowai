@@ -2,9 +2,8 @@
 
 import { motion } from 'framer-motion'
 import { Lightbulb, Film, Scissors, Rocket, ArrowRight, Clapperboard } from 'lucide-react'
-import { WORKFLOW_PHASES } from '@/config/landing/workflowPhaseCopy'
-import { HOW_IT_WORKS_HEADER } from '@/config/landing/valuePropCopy'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
+import { useTranslations } from 'next-intl'
 
 const PHASE_ICONS = [Clapperboard, Lightbulb, Film, Scissors, Rocket]
 const PHASE_COLORS = [
@@ -16,9 +15,17 @@ const PHASE_COLORS = [
 ]
 
 export function HowItWorks() {
-  const steps = WORKFLOW_PHASES.map((phase, index) => ({
+  const t = useTranslations('howItWorks')
+  const phases = t.raw('phases') as Array<{
+    stepLabel: string
+    subtitle: string
+    description: string
+    optional: boolean
+  }>
+
+  const steps = phases.map((phase, index) => ({
     icon: PHASE_ICONS[index],
-    title: phase.optional ? `${phase.stepLabel} (optional)` : phase.stepLabel,
+    title: phase.optional ? `${phase.stepLabel}${t('optionalSuffix')}` : phase.stepLabel,
     subtitle: phase.subtitle,
     description: phase.description,
     optional: phase.optional,
@@ -38,16 +45,16 @@ export function HowItWorks() {
           transition={{ duration: 0.6 }}
         >
           <h2 className="landing-section-heading text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4">
-            {HOW_IT_WORKS_HEADER.title}{' '}
+            {t('title')}{' '}
             <span className="landing-gradient-text bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
-              {HOW_IT_WORKS_HEADER.titleAccent}
+              {t('titleAccent')}
             </span>
           </h2>
           <p className="text-base md:text-lg text-gray-400 max-w-3xl mx-auto mb-4">
-            {HOW_IT_WORKS_HEADER.subtitle}
+            {t('subtitle')}
           </p>
           <p className="text-cyan-400 font-medium text-sm md:text-base">
-            {HOW_IT_WORKS_HEADER.tagline}
+            {t('tagline')}
           </p>
         </motion.div>
 
@@ -66,7 +73,7 @@ export function HowItWorks() {
               <div className={`relative h-full bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 border ${step.borderColor} hover:border-opacity-60 transition-all duration-300`}>
                 {step.optional ? (
                   <div className="absolute -top-3 -left-3 px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-[10px] font-semibold text-purple-200 uppercase tracking-wide">
-                    Optional
+                    {t('optionalBadge')}
                   </div>
                 ) : null}
                 <div className={`absolute -top-3 -right-3 w-7 h-7 rounded-full bg-gradient-to-br ${step.color} flex items-center justify-center text-white text-xs font-bold shadow-lg`}>
@@ -100,13 +107,13 @@ export function HowItWorks() {
           transition={{ duration: 0.6, delay: 0.5 }}
         >
           <p className="text-gray-400 mb-4">
-            Ready to test the full pipeline?
+            {t('readyTitle')}
           </p>
           <a 
             href={getLoginUrl({ mode: 'signup' })}
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 via-purple-500 to-amber-500 hover:from-cyan-400 hover:via-purple-400 hover:to-amber-400 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-500/25"
           >
-            Start with Explorer — $9
+            {t('explorerCta')}
             <ArrowRight className="w-5 h-5" />
           </a>
         </motion.div>

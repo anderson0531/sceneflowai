@@ -985,67 +985,7 @@ body.rtl .tabular-nums {
   unicode-bidi: embed;
 }
 
-/* Google Translate Widget Custom Styling */
-#google_translate_element {
-  display: flex;
-  align-items: center;
-}
-
-.goog-te-gadget {
-  font-family: inherit !important;
-  color: transparent !important; /* Hide "Powered by Google" text */
-  font-size: 0 !important;
-}
-
-.goog-te-gadget .goog-te-combo {
-  margin: 0 !important;
-  background-color: #1e293b !important; /* bg-slate-800 */
-  color: #f8fafc !important; /* text-slate-50 */
-  border: 1px solid #334155 !important; /* border-slate-700 */
-  border-radius: 0.5rem !important; /* rounded-lg */
-  padding: 0.25rem 0.5rem !important;
-  font-size: 0.875rem !important;
-  outline: none !important;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.goog-te-gadget .goog-te-combo:hover {
-  background-color: #334155 !important; /* bg-slate-700 */
-  border-color: #475569 !important; /* border-slate-600 */
-}
-
-.goog-te-gadget img {
-  display: none !important; /* Hide Google logo */
-}
-
-/* Hide Google Translate Banner and Tooltips */
-.goog-te-banner-frame, 
-.goog-te-banner,
-.goog-te-balloon-frame,
-#goog-gt-tt, 
-.goog-tooltip, 
-.goog-tooltip:hover {
-  display: none !important;
-  visibility: hidden !important;
-}
-
-.goog-text-highlight {
-  background-color: transparent !important;
-  box-shadow: none !important;
-}
-
-body {
-  top: 0 !important;
-}
-
-/* Fix for mobile view when translate is active */
-@media (max-width: 768px) {
-  .google-translate-container {
-    width: 100%;
-    justify-content: flex-start;
-  }
-}
+/* Google Translate widget styles removed — landing uses native next-intl locales */
 
 /* SFAI logo wordmark — cyan glow on "AI" */
 .sf-wordmark-ai {

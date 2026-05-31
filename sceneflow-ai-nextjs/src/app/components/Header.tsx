@@ -20,11 +20,16 @@ import {
   getLoginUrlFromLegacySearch,
   navigateToDashboard,
 } from '@/lib/auth/postLoginRedirect'
-import { GoogleTranslate } from './GoogleTranslate'
 import { LanguageSelector } from './LanguageSelector'
 import { SceneFlowStudioBrand } from '@/components/layout/SceneFlowStudioBrand'
+import { useTranslations } from 'next-intl'
+import { useLocale } from 'next-intl'
+import { getLandingLocalePath } from '@/i18n/locale'
 
 export function Header() {
+  const t = useTranslations('nav')
+  const locale = useLocale()
+  const homeHref = getLandingLocalePath(locale)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
   const [isScrolled, setIsScrolled] = useState(false)
@@ -124,7 +129,7 @@ export function Header() {
           {/* Desktop Header */}
           <div className="hidden lg:flex justify-between items-center h-20">
             <SceneFlowStudioBrand
-              href="/"
+              href={homeHref}
               variant="landing"
               nameClassName="text-white"
             />
@@ -137,7 +142,7 @@ export function Header() {
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <Workflow className="w-4 h-4" />
-                The Workflow
+                {t('workflow')}
               </button>
 
               {/* Platform Walkthrough Link */}
@@ -146,7 +151,7 @@ export function Header() {
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <Film className="w-4 h-4" />
-                Platform Walkthrough
+                {t('platformWalkthrough')}
               </button>
 
               {/* View All Plans Link */}
@@ -155,30 +160,30 @@ export function Header() {
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <Sparkles className="w-4 h-4 text-sf-primary" />
-                Plans & Pricing
+                {t('plansPricing')}
               </button>
               
               {/* More Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-1 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50">
-                    More
+                    {t('more')}
                     <ChevronDown className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem onClick={() => scrollToSection('use-cases')}>
-                    Use Cases
+                    {t('useCases')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => scrollToSection('showrunner')}>
-                    Audience Resonance
+                    {t('audienceResonance')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => scrollToSection('engineering')}>
-                    Platform & Trust
+                    {t('platformTrust')}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => scrollToSection('faq')}>
-                    FAQ
+                    {t('faq')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -187,7 +192,6 @@ export function Header() {
             {/* CTA Buttons - Right */}
             <div className="flex items-center space-x-3">
               <LanguageSelector />
-              <GoogleTranslate />
               {isAuthenticated ? (
                 <>
                   {/* User Dropdown - Consolidates all auth controls */}
@@ -197,7 +201,7 @@ export function Header() {
                         <div className="w-8 h-8 bg-sf-primary rounded-full flex items-center justify-center">
                           <User className="w-4 h-4 text-sf-background" />
                         </div>
-                        <span className="text-sm font-medium text-white max-w-[100px] truncate">{user?.name || 'User'}</span>
+                        <span className="text-sm font-medium text-white max-w-[100px] truncate">{user?.name || t('userFallback')}</span>
                         <ChevronDown className="w-4 h-4 text-gray-400" />
                       </button>
                     </DropdownMenuTrigger>
@@ -208,18 +212,18 @@ export function Header() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => navigateToDashboard()}>
                         <LayoutDashboard className="w-4 h-4 mr-2" />
-                        Dashboard
+                        {t('dashboard')}
                       </DropdownMenuItem>
                       {isAdmin && (
                         <DropdownMenuItem onClick={() => window.location.href = '/admin'}>
                           <Shield className="w-4 h-4 mr-2 text-amber-400" />
-                          Admin Panel
+                          {t('adminPanel')}
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleLogout} className="text-red-400 focus:text-red-400">
                         <LogOut className="w-4 h-4 mr-2" />
-                        Sign Out
+                        {t('signOut')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -229,7 +233,7 @@ export function Header() {
                     onClick={() => navigateToDashboard()}
                     className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-2 text-sm font-medium"
                   >
-                    Go to Dashboard
+                    {t('goToDashboard')}
                   </Button>
                 </>
               ) : (
@@ -239,13 +243,13 @@ export function Header() {
                     variant="outline"
                     className="border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background transition-all duration-200"
                   >
-                    Sign In
+                    {t('signIn')}
                   </Button>
                   <Button 
                     onClick={goToSignup}
                     className="bg-sf-primary hover:bg-sf-accent text-sf-background shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-2 text-sm font-medium"
                   >
-                    Start a Project
+                    {t('startProject')}
                   </Button>
                 </>
               )}
@@ -278,24 +282,24 @@ export function Header() {
                   {/* Primary Navigation */}
                   <button onClick={() => scrollToSection('how-it-works')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Workflow className="w-4 h-4" />
-                    The Workflow
+                    {t('workflow')}
                   </button>
                   <button onClick={() => scrollToSection('feature-storyboard')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Film className="w-4 h-4" />
-                    Platform Walkthrough
+                    {t('platformWalkthrough')}
                   </button>
                   <button onClick={() => scrollToSection('use-cases')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
-                    Use Cases
+                    {t('useCases')}
                   </button>
                   <button onClick={() => scrollToSection('showrunner')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
-                    Audience Resonance
+                    {t('audienceResonance')}
                   </button>
                   <button onClick={() => scrollToSection('pricing')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Sparkles className="w-4 h-4 text-sf-primary" />
-                    Plans & Pricing
+                    {t('plansPricing')}
                   </button>
                   
-                  <button onClick={() => scrollToSection('faq')} className="text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">FAQ</button>
+                  <button onClick={() => scrollToSection('faq')} className="text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">{t('faq')}</button>
                   
                   {/* Divider */}
                   <div className="border-t border-gray-800/50 my-2" />
@@ -323,7 +327,7 @@ export function Header() {
                           className="w-full bg-sf-primary hover:bg-sf-accent text-sf-background py-3 text-base font-medium"
                         >
                           <LayoutDashboard className="w-4 h-4 mr-2" />
-                          Go to Dashboard
+                          {t('goToDashboard')}
                         </Button>
                         
                         {isAdmin && (
@@ -333,7 +337,7 @@ export function Header() {
                             className="w-full border-amber-500/50 text-amber-400 hover:bg-amber-500/10 py-3 text-base font-medium"
                           >
                             <Shield className="w-4 h-4 mr-2" />
-                            Admin Panel
+                            {t('adminPanel')}
                           </Button>
                         )}
                         
@@ -343,7 +347,7 @@ export function Header() {
                           className="w-full border-gray-700 text-gray-400 hover:text-red-400 hover:border-red-500/50 py-3 text-base font-medium"
                         >
                           <LogOut className="w-4 h-4 mr-2" />
-                          Sign Out
+                          {t('signOut')}
                         </Button>
                       </>
                     ) : (
@@ -353,13 +357,13 @@ export function Header() {
                           onClick={goToLogin}
                           className="w-full px-4 border-sf-primary text-sf-primary hover:bg-sf-primary hover:text-sf-background py-3 text-base font-medium"
                         >
-                          Sign In
+                          {t('signIn')}
                         </Button>
                         <Button 
                           onClick={goToSignup} 
                           className="w-full px-4 bg-sf-primary hover:bg-sf-accent text-sf-background py-3 text-base font-medium"
                         >
-                          Start a Project
+                          {t('startProject')}
                         </Button>
                       </>
                     )}

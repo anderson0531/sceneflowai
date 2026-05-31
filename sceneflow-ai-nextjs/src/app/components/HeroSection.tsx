@@ -11,11 +11,9 @@ import {
   Maximize2,
   Globe,
 } from 'lucide-react'
-import { HERO_COPY } from '@/config/landing/valuePropCopy'
+import { useTranslations } from 'next-intl'
 import {
   DEFAULT_HERO_VIDEO_LOCALE,
-  HERO_VIDEO_LANGUAGE_PROMPT,
-  HERO_VIDEO_MULTILANG_HINT,
   HERO_VIDEO_LOCALE_STORAGE_KEY,
   HERO_VIDEO_UNMUTE_DISMISSED_KEY,
   getHeroVideoLocale,
@@ -59,6 +57,8 @@ function applyLocaleToVideo(
 }
 
 export function HeroSection() {
+  const t = useTranslations('hero')
+  const tc = useTranslations('common')
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
@@ -311,7 +311,7 @@ export function HeroSection() {
             <div className="relative z-10 mt-4 flex flex-col items-center gap-2 px-1">
               <p className="inline-flex items-center gap-1.5 text-xs text-gray-400">
                 <Globe className="h-3.5 w-3.5 text-cyan-400/80 shrink-0" aria-hidden />
-                {HERO_VIDEO_LANGUAGE_PROMPT}
+                {t('languagePrompt')}
               </p>
               <HeroLanguagePills
                 activeLocale={activeLocale}
@@ -320,7 +320,7 @@ export function HeroSection() {
                 size="sm"
               />
               <p className="text-[10px] text-gray-500 max-w-lg text-center">
-                {HERO_VIDEO_MULTILANG_HINT}
+                {t('multilangHint')}
               </p>
             </div>
           </motion.div>
@@ -332,7 +332,7 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.15 }}
             >
-              {HERO_COPY.headline}
+              {t('headline')}
             </motion.h1>
 
             <motion.p
@@ -341,7 +341,7 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.25 }}
             >
-              {HERO_COPY.subheadline}
+              {t('subheadline')}
             </motion.p>
 
             <motion.div
@@ -352,7 +352,7 @@ export function HeroSection() {
             >
               <Button size="lg" className="w-full sm:w-auto" onClick={watchWhatsPossible}>
                 <Play className="mr-2 w-5 h-5" />
-                {HERO_COPY.ctaSecondary}
+                {t('ctaSecondary')}
               </Button>
             </motion.div>
           </div>

@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "title": "SceneFlow AI - AI-Powered Video Creation",
+    "description": "AI-संचालित वर्कफ़्लो ऑटोमेशन के साथ अपने विचारों को पेशेवर वीडियो में बदलें"
+  },
+  "nav": {
+    "workflow": "वर्कफ़्लो",
+    "platformWalkthrough": "प्लेटफ़ॉर्म वॉकथ्रू",
+    "plansPricing": "प्लान और कीमत",
+    "signIn": "साइन इन",
+    "startProject": "प्रोजेक्ट शुरू करें"
+  },
+  "hero": {
+    "headline": "प्रोडक्शन टीम या दर्जन भर ऐप्स के बिना प्रोफेशनल वीडियो बनाएं।",
+    "subheadline": "आइडिया से publish-ready master तक एक guided studio। फाइनल वीडियो के लिए भुगतान से पहले storyboard देखें — अनुमान-आधारित generations पर credits बर्बाद करने के बजाय look approve करें।",
+    "ctaSecondary": "'What's Possible' देखें"
+  },
+  "finalCta": {
+    "title": "पूरा pipeline टेस्ट करने के लिए तैयार?",
+    "subtitle": "एक studio में concept → storyboard → video → master MP4 चलाएं। $9 Explorer plan से शुरू करें और beat-first workflow देखें।",
+    "cta": "$9 में अपना Studio लॉन्च करें"
+  }
+}
