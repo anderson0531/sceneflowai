@@ -108,7 +108,7 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         label: 'Video Memoirs',
         description:
           'Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render.',
-        videoSrc: `${BLOB_DEMO}/demo/use-cases/knowledge/video-memoirs.mp4`,
+        videoSrc: `${BLOB_DEMO}/KITCHEN.mp4`,
       },
     ],
   },

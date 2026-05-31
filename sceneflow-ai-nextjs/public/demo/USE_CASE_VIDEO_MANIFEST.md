@@ -35,7 +35,7 @@ Automation: [`scripts/fetch-use-case-demos.mjs`](../../scripts/fetch-use-case-de
 | `software-saas-tutorials` | Software SaaS Tutorials | `#use-cases-knowledge-software-saas-tutorials` | Ready — Blob | Pexels [4064869](https://www.pexels.com/video/man-hands-desk-laptop-4064869/) — cottonbro studio |
 | `niche-skill-tutoring` | Niche Skill Tutoring | `#use-cases-knowledge-niche-skill-tutoring` | Ready — Blob | Pexels [857167](https://www.pexels.com/video/baking-pastry-bread-857167/) — Vimeo (CC0) |
 | `medical-patient-education` | Medical/Patient Education | `#use-cases-knowledge-medical-patient-education` | Ready — Blob | Pexels [7579341](https://www.pexels.com/video/doctor-talking-to-the-patient-7579341/) — cottonbro studio |
-| `video-memoirs` | Video Memoirs | `#use-cases-knowledge-video-memoirs` | Ready — Blob | Pexels [4297074](https://www.pexels.com/video/a-family-enjoying-breakfast-together-4297074/) — August de Richelieu |
+| `video-memoirs` | Video Memoirs | `#use-cases-knowledge-video-memoirs` | Ready — `KITCHEN.mp4` (watermarked) | SceneFlow demo |
 
 ---
 
