@@ -1,0 +1,192 @@
+{
+  "commercial-real-estate": {
+    "categoryId": "property",
+    "label": "Commercial Real Estate",
+    "pexelsQuery": "modern office tower aerial city",
+    "pexelsVideoId": 4193140,
+    "pexelsUrl": "https://www.pexels.com/video/city-building-urban-city-life-4193140/",
+    "pexelsAuthor": "Nino Souza",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/4193140/4193140-uhd_2562_1440_24fps.mp4",
+    "blobPath": "demo/use-cases/property/commercial-real-estate.mp4"
+  },
+  "short-term-rentals": {
+    "categoryId": "property",
+    "label": "Short-Term Rentals",
+    "pexelsQuery": "cozy apartment interior walkthrough",
+    "pexelsVideoId": 31960018,
+    "pexelsUrl": "https://www.pexels.com/video/cozy-cabin-with-sunlight-streaming-inside-31960018/",
+    "pexelsAuthor": "Gülru Sude",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/31960018/13617898_3840_2160_30fps.mp4",
+    "blobPath": "demo/use-cases/property/short-term-rentals.mp4"
+  },
+  "hospitality-tourism": {
+    "categoryId": "property",
+    "label": "Hospitality & Tourism",
+    "pexelsQuery": "luxury hotel lobby travel",
+    "pexelsVideoId": 7820468,
+    "pexelsUrl": "https://www.pexels.com/video/woman-in-hotel-reception-area-7820468/",
+    "pexelsAuthor": "Mikhail Nilov",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/7820468/7820468-hd_1920_1080_25fps.mp4",
+    "blobPath": "demo/use-cases/property/hospitality-tourism.mp4"
+  },
+  "museum-gallery-guides": {
+    "categoryId": "property",
+    "label": "Museum & Gallery Guides",
+    "pexelsQuery": "art museum gallery exhibition",
+    "pexelsVideoId": 6214424,
+    "pexelsUrl": "https://www.pexels.com/video/artist-paiting-in-a-workshop-6214424/",
+    "pexelsAuthor": "Taryn Elliott",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/6214424/6214424-uhd_3840_2160_25fps.mp4",
+    "blobPath": "demo/use-cases/property/museum-gallery-guides.mp4"
+  },
+  "corporate-ld": {
+    "categoryId": "knowledge",
+    "label": "Corporate L&D",
+    "pexelsQuery": "corporate training meeting presentation",
+    "pexelsVideoId": 8123969,
+    "pexelsUrl": "https://www.pexels.com/video/business-people-brainstorming-on-a-meeting-8123969/",
+    "pexelsAuthor": "RDNE Stock project",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/8123969/8123969-hd_1080_1920_30fps.mp4",
+    "blobPath": "demo/use-cases/knowledge/corporate-ld.mp4"
+  },
+  "software-saas-tutorials": {
+    "categoryId": "knowledge",
+    "label": "Software SaaS Tutorials",
+    "pexelsQuery": "laptop software screen typing tutorial",
+    "pexelsVideoId": 4064869,
+    "pexelsUrl": "https://www.pexels.com/video/man-hands-desk-laptop-4064869/",
+    "pexelsAuthor": "cottonbro studio",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/4064869/4064869-uhd_4096_2160_25fps.mp4",
+    "blobPath": "demo/use-cases/knowledge/software-saas-tutorials.mp4"
+  },
+  "niche-skill-tutoring": {
+    "categoryId": "knowledge",
+    "label": "Niche Skill Tutoring",
+    "pexelsQuery": "cooking hands tutorial kitchen",
+    "pexelsVideoId": 857167,
+    "pexelsUrl": "https://www.pexels.com/video/baking-pastry-bread-857167/",
+    "pexelsAuthor": "Vimeo",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/857167/857167-hd_1280_720_30fps.mp4",
+    "blobPath": "demo/use-cases/knowledge/niche-skill-tutoring.mp4"
+  },
+  "medical-patient-education": {
+    "categoryId": "knowledge",
+    "label": "Medical/Patient Education",
+    "pexelsQuery": "doctor patient consultation explain",
+    "pexelsVideoId": 7579341,
+    "pexelsUrl": "https://www.pexels.com/video/doctor-talking-to-the-patient-7579341/",
+    "pexelsAuthor": "cottonbro studio",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/7579341/7579341-uhd_2160_4096_25fps.mp4",
+    "blobPath": "demo/use-cases/knowledge/medical-patient-education.mp4"
+  },
+  "video-memoirs": {
+    "categoryId": "knowledge",
+    "label": "Video Memoirs",
+    "pexelsQuery": "family photo memories nostalgic album",
+    "pexelsVideoId": 4297074,
+    "pexelsUrl": "https://www.pexels.com/video/a-family-enjoying-breakfast-together-4297074/",
+    "pexelsAuthor": "August de Richelieu",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/4297074/4297074-uhd_3840_2160_25fps.mp4",
+    "blobPath": "demo/use-cases/knowledge/video-memoirs.mp4"
+  },
+  "financial-market-recaps": {
+    "categoryId": "jit",
+    "label": "Financial & Market Recaps",
+    "pexelsQuery": "stock market charts trading screens",
+    "pexelsVideoId": 7578613,
+    "pexelsUrl": "https://www.pexels.com/video/stock-market-movement-analysis-7578613/",
+    "pexelsAuthor": "Tima Miroshnichenko",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/7578613/7578613-uhd_4096_2160_25fps.mp4",
+    "blobPath": "demo/use-cases/jit/financial-market-recaps.mp4"
+  },
+  "sports-commentary": {
+    "categoryId": "jit",
+    "label": "Sports Commentary",
+    "pexelsQuery": "sports stadium action crowd",
+    "pexelsVideoId": 4729196,
+    "pexelsUrl": "https://www.pexels.com/video/drone-footage-of-audience-in-a-football-match-4729196/",
+    "pexelsAuthor": "Tima Miroshnichenko",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/4729196/4729196-hd_1920_1080_25fps.mp4",
+    "blobPath": "demo/use-cases/jit/sports-commentary.mp4"
+  },
+  "true-crime-historical-docs": {
+    "categoryId": "jit",
+    "label": "True Crime & Historical Docs",
+    "pexelsQuery": "vintage archive photos documentary",
+    "pexelsVideoId": 3611037,
+    "pexelsUrl": "https://www.pexels.com/video/static-footage-of-black-and-white-in-an-old-film-3611037/",
+    "pexelsAuthor": "Luis Quintero",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/3611037/3611037-hd_1920_1080_24fps.mp4",
+    "blobPath": "demo/use-cases/jit/true-crime-historical-docs.mp4"
+  },
+  "weather-emergency-alerts": {
+    "categoryId": "jit",
+    "label": "Weather & Emergency Alerts",
+    "pexelsQuery": "storm clouds weather warning sky",
+    "pexelsVideoId": 5404147,
+    "pexelsUrl": "https://www.pexels.com/video/gloomy-sky-with-dark-clouds-5404147/",
+    "pexelsAuthor": "Zuza Musial",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/5404147/5404147-hd_1920_1080_30fps.mp4",
+    "blobPath": "demo/use-cases/jit/weather-emergency-alerts.mp4"
+  },
+  "case-study-testimonials": {
+    "categoryId": "b2b",
+    "label": "Case Study/Testimonials",
+    "pexelsQuery": "business professional interview office",
+    "pexelsVideoId": 5637284,
+    "pexelsUrl": "https://www.pexels.com/video/man-in-business-suit-looking-at-camera-5637284/",
+    "pexelsAuthor": "Sora Shimazaki",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/5637284/5637284-uhd_2160_3840_24fps.mp4",
+    "blobPath": "demo/use-cases/b2b/case-study-testimonials.mp4"
+  },
+  "recruitment-branding": {
+    "categoryId": "b2b",
+    "label": "Recruitment & Branding",
+    "pexelsQuery": "diverse team office collaboration",
+    "pexelsVideoId": 3246669,
+    "pexelsUrl": "https://www.pexels.com/video/people-in-a-business-meeting-discussing-about-data-and-charts-on-the-table-3246669/",
+    "pexelsAuthor": "fauxels",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/3246669/3246669-uhd_3840_2160_25fps.mp4",
+    "blobPath": "demo/use-cases/b2b/recruitment-branding.mp4"
+  },
+  "conference-event-promos": {
+    "categoryId": "b2b",
+    "label": "Conference & Event Promos",
+    "pexelsQuery": "conference speaker stage audience",
+    "pexelsVideoId": 7413808,
+    "pexelsUrl": "https://www.pexels.com/video/a-woman-standing-while-having-a-presentation-7413808/",
+    "pexelsAuthor": "RDNE Stock project",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/7413808/7413808-hd_1080_1920_24fps.mp4",
+    "blobPath": "demo/use-cases/b2b/conference-event-promos.mp4"
+  },
+  "public-health-announcements": {
+    "categoryId": "public",
+    "label": "Public Health Announcements",
+    "pexelsQuery": "healthcare clinic hygiene prevention",
+    "pexelsVideoId": 3197799,
+    "pexelsUrl": "https://www.pexels.com/video/people-sitting-in-a-hospital-waiting-area-3197799/",
+    "pexelsAuthor": "Andrey Kirievskiy",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/3197799/3197799-hd_1920_1080_25fps.mp4",
+    "blobPath": "demo/use-cases/public/public-health-announcements.mp4"
+  },
+  "legal-insurance-explainers": {
+    "categoryId": "public",
+    "label": "Legal & Insurance Explainers",
+    "pexelsQuery": "signing contract documents desk",
+    "pexelsVideoId": 7841671,
+    "pexelsUrl": "https://www.pexels.com/video/a-man-signing-a-document-7841671/",
+    "pexelsAuthor": "RDNE Stock project",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/7841671/7841671-hd_1920_1080_30fps.mp4",
+    "blobPath": "demo/use-cases/public/legal-insurance-explainers.mp4"
+  },
+  "religious-spiritual-teachings": {
+    "categoryId": "public",
+    "label": "Religious & Spiritual Teachings",
+    "pexelsQuery": "peaceful congregation community gathering",
+    "pexelsVideoId": 10628779,
+    "pexelsUrl": "https://www.pexels.com/video/a-priest-swinging-an-incense-burner-in-a-church-10628779/",
+    "pexelsAuthor": "Ron Lach",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/10628779/10628779-uhd_4096_2160_25fps.mp4",
+    "blobPath": "demo/use-cases/public/religious-spiritual-teachings.mp4"
+  }
+}

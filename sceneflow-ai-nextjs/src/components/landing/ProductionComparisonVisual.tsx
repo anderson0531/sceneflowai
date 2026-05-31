@@ -227,12 +227,6 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                                 >
                                   {ex.description}
                                 </p>
-
-                                {!hasUseCaseExampleVideo(ex) && (
-                                  <p className="mt-2 text-[10px] uppercase tracking-wide text-slate-500">
-                                    Video placeholder
-                                  </p>
-                                )}
                               </a>
                             );
                           })}
