@@ -25,155 +25,155 @@
   "locales": {
     "es": {
       "tier": "A-reviewed",
-      "mt": false
+      "mt": true
     },
     "pt": {
       "tier": "A-reviewed",
-      "mt": false
+      "mt": true
     },
     "fr": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "de": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "it": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "nl": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "pl": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "ru": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "uk": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "cs": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "sv": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "da": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "no": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "fi": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "el": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "tr": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "ro": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "hu": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "zh-CN": {
       "tier": "A-reviewed",
-      "mt": false
+      "mt": true
     },
     "zh-TW": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "ja": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "ko": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "hi": {
       "tier": "A-reviewed",
-      "mt": false
+      "mt": true
     },
     "bn": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "th": {
-      "tier": "A-reviewed-full",
+      "tier": "A-reviewed",
       "mt": true
     },
     "vi": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "id": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "ms": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "tl": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "ur": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "ar": {
       "tier": "A-reviewed",
-      "mt": false
+      "mt": true
     },
     "he": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "fa": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "sw": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "am": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "yo": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "zu": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     },
     "af": {
       "tier": "B-mt",
-      "mt": false
+      "mt": true
     }
   }
 }

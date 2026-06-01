@@ -1,382 +1,602 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
-    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
+    "title": "SceneFlow AI – Tworzenie wideo z wykorzystaniem sztucznej inteligencji",
+    "description": "Przekształć swoje pomysły w profesjonalne filmy dzięki automatyzacji procesu pracy opartej na sztucznej inteligencji."
   },
   "nav": {
-    "workflow": "The Workflow",
-    "platformWalkthrough": "Platform Walkthrough",
-    "plansPricing": "Plans & Pricing",
-    "more": "More",
-    "useCases": "Use Cases",
+    "workflow": "Przepływ pracy",
+    "platformWalkthrough": "Przegląd platformy",
+    "plansPricing": "Plany i cennik",
+    "more": "Więcej",
+    "useCases": "Przypadki użycia",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform & Trust",
+    "platformTrust": "Platforma i zaufanie",
     "faq": "FAQ",
-    "signIn": "Sign In",
-    "startProject": "Start a Project",
-    "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "signIn": "Zaloguj się",
+    "startProject": "Rozpocznij projekt",
+    "dashboard": "Panel",
+    "adminPanel": "Panel administratora",
+    "signOut": "Wyloguj się",
+    "goToDashboard": "Przejdź do pulpitu nawigacyjnego",
+    "userFallback": "Użytkownik",
+    "searchLanguages": "Wyszukaj języki...",
+    "noLanguagesFound": "Nie znaleziono języków"
   },
   "floatingNav": {
-    "compare": "Compare",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "platformWalkthrough": "Platform Walkthrough",
-    "platform": "Platform",
-    "pricing": "Pricing",
+    "compare": "Porównaj",
+    "howItWorks": "Jak to działa",
+    "useCases": "Przypadki użycia",
+    "platformWalkthrough": "Przegląd platformy",
+    "platform": "Platforma",
+    "pricing": "Cennik",
     "faq": "FAQ"
   },
   "hero": {
-    "headline": "Make professional video without a production team or a dozen apps.",
-    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.",
-    "ctaSecondary": "Watch the 'What's Possible'",
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "headline": "Przestań żonglować pięcioma kartami z narzędziami AI. Jedno studio przeprowadzi Cię przez cały proces – od pomysłu aż po gotowy do publikacji film.",
+    "subheadline": "Kompleksowe studio prowadzące Cię od pomysłu aż po gotowy do publikacji materiał. Zobacz storyboard przed opłaceniem finalnego filmu — zatwierdź wizualny kształt projektu, zamiast marnować kredyty na generowanie treści metodą prób i błędów. SceneFlow automatyzuje żmudne zadania — takie jak scenariusz, storyboard, lektor i montaż — pozwalając Ci jednocześnie zachować pełną kontrolę nad każdym elementem produkcji.",
+    "audienceMicroLine": "Stworzone z myślą o twórcach oczekujących wyników oraz zespołach chcących zobaczyć, jak to działa.",
+    "ctaSecondary": "Zobacz „What's Possible”",
+    "ctaToolStack": "Zobacz, jak zastępuje Twój zestaw narzędzi",
+    "languagePrompt": "Usłysz bohatera w swoim języku — ten sam proces, nowe rynki",
+    "multilangHint": "Dubbing głównych postaci w 7 językach — pełny proces produkcyjny obsługuje ponad 70 języków.",
+    "playWithNarration": "Odtwórz z narracją",
+    "tapToHear": "Dotknij, aby posłuchać",
+    "fullscreen": "Pełny ekran",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
-        "nativeLabel": "English"
+        "label": "Angielski",
+        "nativeLabel": "Angielski"
       },
       "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
+        "label": "Hiszpański",
+        "nativeLabel": "Hiszpański"
       },
       "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
+        "label": "portugalski",
+        "nativeLabel": "Portugalski"
       },
       "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
+        "label": "hindi",
+        "nativeLabel": "hindi"
       },
       "zh": {
-        "label": "Chinese",
-        "nativeLabel": "中文"
+        "label": "chiński",
+        "nativeLabel": "chiński"
       },
       "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
+        "label": "arabski",
+        "nativeLabel": "Arabski"
       },
       "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
+        "label": "tajski",
+        "nativeLabel": "Tajski"
       }
     },
-    "soon": "Soon"
+    "soon": "Wkrótce"
   },
   "valueProp": {
     "pills": [
       {
         "label": "One Studio",
-        "detail": "Concept to publish in one place"
+        "detail": "Koncepcja publikacji w jednym miejscu"
       },
       {
-        "label": "Approve Before Final Video",
-        "detail": "Review storyboard beats before you render"
+        "label": "Zatwierdź przed finalnym wideo",
+        "detail": "Przejrzyj kluczowe elementy storyboardu przed renderowaniem."
       },
       {
-        "label": "Test Your Story First",
-        "detail": "Know what lands before heavy spend"
+        "label": "Najpierw przetestuj swoją historię",
+        "detail": "Sprawdź, co przynosi efekty, zanim zainwestujesz duże środki."
       },
       {
-        "label": "Publish-Ready Output",
-        "detail": "Master MP4 + distribution bundles"
+        "label": "Materiał gotowy do publikacji",
+        "detail": "Plik źródłowy MP4 + pakiety dystrybucyjne"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Who are you? Pick your path",
-    "seeExamples": "See examples",
-    "examplesFor": "Examples for {label}:",
-    "andMore": ", and more.",
+    "prompt": "Kim jesteś? Wybierz swoją ścieżkę.",
+    "seeExamples": "Zobacz przykłady",
+    "examplesFor": "Przykłady dla {label}:",
+    "andMore": ", i nie tylko.",
+    "modes": {
+      "automate": {
+        "label": "Zautomatyzuj to",
+        "description": "Uporządkowany proces pracy — zatwierdzaj storyboardy i szybciej realizuj projekty"
+      },
+      "engine": {
+        "label": "Pokaż mi silnik",
+        "description": "Architektura, BYOK oraz głębokość peronu"
+      }
+    },
     "paths": [
       {
-        "id": "creator",
-        "label": "Creator",
-        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "id": "twórca",
+        "label": "Twórca",
+        "outcome": "Wydawaj produkty na czas — przestań odtwarzać pracę w każdym narzędziu",
         "useCases": [
-          "YouTube & episodic series",
-          "Video podcasts & show clips",
-          "Hyper-local & JIT news",
-          "Documentaries & docuseries",
-          "How-to & skill channels",
-          "Sports recaps & commentary"
+          "YouTube i serie odcinkowe",
+          "Wideopodkasty i fragmenty programów",
+          "Wiadomości hiperlokalne i dostarczane w czasie rzeczywistym (JIT)",
+          "Filmy i seriale dokumentalne",
+          "Kanały poradnikowe i rozwijające umiejętności",
+          "Podsumowania i komentarze sportowe"
         ]
       },
       {
-        "id": "team",
-        "label": "In-house team",
-        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "id": "zespół",
+        "label": "Zespół wewnętrzny",
+        "outcome": "Zastąp powolne procesy współpracy z dostawcami – zyskaj kontrolę nad marką i budżetem",
         "useCases": [
-          "Corporate L&D & compliance",
-          "Internal comms & town halls",
-          "Product explainers for sales",
-          "HR recruitment & culture",
-          "K-12 / higher-ed lessons",
-          "Public health & safety updates"
+          "Firmowe szkolenia i rozwój oraz zgodność z przepisami",
+          "Komunikacja wewnętrzna i spotkania ogólnofirmowe",
+          "Filmy wyjaśniające produkt do celów sprzedażowych",
+          "Rekrutacja i kultura organizacyjna",
+          "Zajęcia dla szkół (K-12) i uczelni wyższych",
+          "Aktualne informacje dotyczące zdrowia i bezpieczeństwa publicznego"
         ]
       },
       {
-        "id": "productionShop",
-        "label": "Production shop",
-        "outcome": "Productize a niche with repeatable intake → delivery",
+        "id": "warsztat produkcyjny",
+        "label": "Hala produkcyjna",
+        "outcome": "Przekształć niszową usługę w produkt dzięki powtarzalnemu procesowi przyjmowania i realizacji zleceń.",
         "useCases": [
-          "Video memoir packages",
-          "Legacy & tribute videos",
-          "Voice-cloned narration",
-          "White-label studio templates",
-          "Real estate & hospitality tours",
-          "Subscription video services"
+          "Pakiety wideo-wspomnień",
+          "Filmy upamiętniające i okolicznościowe",
+          "Narracja z wykorzystaniem sklonowanego głosu",
+          "Szablony typu white-label dla studiów",
+          "Prezentacje nieruchomości i obiektów hotelarskich",
+          "Subskrypcyjne serwisy wideo"
         ]
       },
       {
-        "id": "agency",
-        "label": "Agency",
-        "outcome": "Faster pitches and scalable client delivery",
+        "id": "agencja",
+        "label": "Agencja",
+        "outcome": "Szybsze przygotowywanie ofert i skalowalna realizacja zleceń",
         "useCases": [
-          "Client pitch pre-viz",
-          "Product launch campaigns",
-          "Case studies & testimonials",
-          "Event & conference promos",
-          "Multi-language campaigns",
-          "Property marketing for clients"
+          "Wizualizacja wstępna do prezentacji dla klienta",
+          "Kampanie wprowadzające produkty na rynek",
+          "Studia przypadków i opinie",
+          "Materiały promocyjne wydarzeń i konferencji",
+          "Kampanie wielojęzyczne",
+          "Marketing nieruchomości dla klientów"
         ]
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Why SceneFlow vs prompt-and-generate tools",
-    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "title": "Dlaczego SceneFlow, a nie narzędzia typu „prompt-and-generate”",
+    "subtitle": "Gemini Studio i Google Flow świetnie sprawdzają się w pracy z klipami. SceneFlow obejmuje pełny proces produkcyjny.",
     "rows": [
       {
-        "them": "Prompt + clip generation in isolation",
-        "us": "Structured phases with editable baselines at each step"
+        "them": "Generowanie promptu i klipu w izolacji",
+        "us": "Ustrukturyzowane fazy z edytowalnymi punktami odniesienia na każdym etapie"
       },
       {
-        "them": "Manual consistency across sessions",
-        "us": "Reference Library + Beat Frames lock visuals before video"
+        "them": "Spójność ręczna między sesjami",
+        "us": "Reference Library + Beat Frames blokuje obraz przed wideo"
       },
       {
-        "them": "No audience validation workflow",
-        "us": "Audience Resonance before render; Screening Room before publish"
+        "them": "Brak procesu weryfikacji grupy docelowej",
+        "us": "Audience Resonance przed renderowaniem; Screening Room przed publikacją"
       },
       {
-        "them": "No production pipeline or handoff",
-        "us": "Script → streams → assembly → distribution in one app"
-      },
-      {
-        "them": "Complex model and settings surface",
-        "us": "Guided Studio UX with credits and BYOK guardrails"
+        "them": "Brak potoku produkcyjnego lub procesu przekazania",
+        "us": "Scenariusz → strumienie → montaż → dystrybucja w jednej aplikacji"
       }
     ],
-    "themHeader": "Typical clip-generation tools",
-    "usHeader": "SceneFlow bundles"
+    "themHeader": "Typowe narzędzia do tworzenia klipów",
+    "usHeader": "Pakiety SceneFlow"
   },
   "beatFirstPipeline": {
-    "title": "Beat-First Video Pipeline",
-    "subtitle": "Approve before you render — not slot-machine regeneration",
-    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "title": "Proces produkcji wideo oparty na rytmie",
+    "subtitle": "Zatwierdź przed wygenerowaniem – zamiast losowego odświeżania",
+    "intro": "Koniec z generowaniem metodą prób i błędów. Możesz podejrzeć i zatwierdzić wygląd, zanim SceneFlow zużyje kredyty na wygenerowanie finalnego filmu.",
+    "description": "SceneFlow porządkuje proces akceptacji wizualnej na każdym etapie: Express storyboard służy do przeglądu, Beat Frames do ustalenia kompozycji, a następnie stosuje się F2V dla każdego uderzenia (beatu). Dopracowujesz wygląd, zanim zużyjesz kredyty na dryf i halucynacje modelu.",
     "steps": [
-      "Express storyboard — share audio-visual beats for review in minutes",
-      "Beat Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Express storyboard — udostępniaj materiały audiowizualne do oceny w kilka minut",
+      "Beat Frames — zablokowanie początku/końca kompozycji z zachowaniem ciągłości Reference Library",
+      "F2V w rytm muzyki — generuj wideo na podstawie zatwierdzonych klatek, a nie poleceń wprowadzanych „w ciemno”",
+      "Production Mixer — synchronizacja czasowa, dźwięk oraz eksport strumienia do montażu Final Cut"
     ],
-    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+    "footerLine": "Mniej poprawek wizualizacji automatu do gier — zatwierdź oprawę wizualną przed ostatecznym wydatkowaniem środków na wideo."
+  },
+  "toolStack": {
+    "badge": "Brzmi znajomo?",
+    "title": "Podejście wadliwe a podejście SceneFlow",
+    "subtitle": "Nie powinieneś potrzebować pięciu kart, kopiowania i wklejania wyników oraz zmęczenia ciągłym tworzeniem promptów, aby po prostu opublikować jeden film.",
+    "brokenWay": {
+      "title": "Droga złamania",
+      "tagline": "Rozproszony. Ręczny. Wyczerpujący.",
+      "tools": [
+        {
+          "name": "ChatGPT",
+          "category": "Wersje robocze scenariusza"
+        },
+        {
+          "name": "Midjourney",
+          "category": "Pojedyncze obrazy"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "Ręczny eksport VO"
+        },
+        {
+          "name": "Premiere",
+          "category": "Montaż ręczny"
+        }
+      ],
+      "chaosLabel": "Pięć kart. Utracony kontekst.",
+      "painPoints": [
+        "Kopiowanie i wklejanie między aplikacjami",
+        "Zmęczenie tworzeniem promptów i pętle ponownego generowania",
+        "Brak weryfikacji grupy docelowej przed wydaniem środków",
+        "Chaos wersyjny w eksportowanych plikach"
+      ],
+      "timeLabel": "Typowy czas realizacji projektu",
+      "timeValue": "2–4 tygodnie"
+    },
+    "sceneflowWay": {
+      "title": "Podejście SceneFlow",
+      "tagline": "Jedno studio. Zatwierdź przed renderowaniem.",
+      "stages": [
+        {
+          "label": "Blueprint",
+          "detail": "Ustrukturyzowany plan historii"
+        },
+        {
+          "label": "Bibliografia",
+          "detail": "Spójne postacie"
+        },
+        {
+          "label": "Produkcja",
+          "detail": "Głos i obraz"
+        },
+        {
+          "label": "Opublikuj",
+          "detail": "Jeden plik master MP4"
+        }
+      ],
+      "syncLabel": "Jeden plik projektu — koniec z żonglowaniem kartami",
+      "benefits": [
+        "Etapy prowadzone — a nie inżynieria promptów",
+        "Zatwierdzenie storyboardu przed napisami końcowymi",
+        "Audience Resonance wynik przed ciężkim renderowaniem",
+        "Gotowy do publikacji master z jednego studia"
+      ],
+      "timeLabel": "Typowy czas realizacji projektu",
+      "timeValue": "2–4 dni"
+    },
+    "comparisonCaption": "Jedno studio zastępuje rozproszone narzędzia do obsługi promptów, ręczne edycje i przekazywanie zadań między wieloma platformami.",
+    "comparisonImageAlt": "Tradycyjne koszty produkcji a zautomatyzowane studio — szybsza droga od koncepcji do filmu gotowego do publikacji"
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
-    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "title": "Szybkość produkcji bez zbędnego narzutu",
+    "subtitle": "Zastąp rozproszone narzędzia do obsługi promptów i ręczne składanie materiałów jednym zautomatyzowanym studiem – od wstępnej koncepcji po gotowy do publikacji materiał finalny.",
+    "caption": "Jedno studio zastępuje rozproszone narzędzia do obsługi promptów, ręczne edycje i przekazywanie zadań między wieloma platformami.",
+    "imageAlt": "Tradycyjne koszty produkcji a zautomatyzowane studio — szybsza droga od koncepcji do filmu gotowego do publikacji"
   },
   "howItWorks": {
-    "title": "From concept to publish-ready video",
-    "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
-    "tagline": "Every step is expertly automated. Every step gives you full control.",
-    "optionalBadge": "Optional",
-    "optionalSuffix": " (optional)",
-    "readyTitle": "Ready to test the full pipeline?",
-    "explorerCta": "Start with Explorer — $9",
+    "title": "Od pomysłu po gotowy do publikacji film",
+    "titleAccent": "Jeden potok sterowany",
+    "subtitle": "Seria jest opcjonalna. Główna ścieżka to Blueprint → Produkcja → Final Cut → Premiere, z uwzględnieniem po drodze etapów storyboardu, animatyku, wideo oraz wersji master MP4.",
+    "tagline": "Każdy etap jest fachowo zautomatyzowany. Każdy etap zapewnia pełną kontrolę.",
+    "optionalBadge": "Opcjonalne",
+    "optionalSuffix": " (opcjonalnie)",
+    "readyTitle": "Gotowy do przetestowania pełnego potoku?",
+    "explorerCta": "Zacznij od Explorer — 9 USD",
     "phases": [
       {
-        "id": "series",
-        "stepLabel": "Series",
-        "subtitle": "Showrunner Engine",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "id": "seria",
+        "stepLabel": "Seria",
+        "subtitle": "Silnik Showrunner",
+        "description": "Zdefiniuj swoje uniwersum raz i twórz spójne wątki fabularne obejmujące wiele odcinków. Wspólne Reference Library zapewnia spójność postaci i tonu w całym sezonie.",
         "keySteps": [
-          "Define universe — characters, tone, and season arc",
-          "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "Zdefiniuj uniwersum – postacie, ton i wątek przewodni sezonu",
+          "Automatyczne generowanie zarysów odcinków dla całego sezonu",
+          "Synchronizacja z Blueprint oraz produkcja w przeliczeniu na odcinek"
         ],
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
-        ],
-        "optional": true
+          "Zdefiniuj swoje uniwersum raz – postacie, ton i wątek przewodni sezonu.",
+          "Spójne zarysy odcinków – automatycznie generowane dla całego sezonu",
+          "Śledzenie ciągłości – spójność wieloodcinkowych sezonów",
+          "Synchronizacja serii z odcinkami — w systemie Blueprint Studio and Production"
+        ]
       },
       {
-        "id": "blueprint",
+        "id": "plan",
         "stepLabel": "Blueprint",
-        "subtitle": "Story Development",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "subtitle": "Rozwój historii",
+        "description": "Przekształć koncepcje w ustrukturyzowane szkice scenariusza (treatments), uwzględniając logline, kluczowe punkty fabuły, postacie oraz tonację. Uruchom Audience Resonance i podejmij współpracę przed rozpoczęciem intensywnego renderowania.",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
-          "Audience Resonance scoring with 80+ target",
-          "Collaborator share links and export (PDF, Doc, PPTX)"
+          "Generowanie → Weryfikacja → Iteracja → Rozpoczęcie produkcji",
+          "Audience Resonance uzyskiwanie wyniku przy progu 80+",
+          "Linki do udostępniania dla współpracowników i eksport (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
-        ],
-        "optional": false
+          "Przepływ pracy: Generowanie → Weryfikacja → Iteracja → Uruchomienie produkcji",
+          "Od pomysłu do struktury w kilka minut — logline, kluczowe momenty, postacie i ton",
+          "Audience Resonance punktacja z celem 80+ przed fazą produkcyjną",
+          "Linki do udostępniania współpracownikom — synteza uwag i wskazówki do poprawy"
+        ]
       },
       {
-        "id": "production",
-        "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "id": "produkcja",
+        "stepLabel": "Produkcja",
+        "subtitle": "Od scenariusza do streamów",
+        "description": "Zakładki Script i Action prowadzą przez etapy: Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, mikser oraz strumienie MP4 – bez konieczności przełączania narzędzi.",
         "keySteps": [
-          "Lock script, voices, and scene audio",
-          "Express storyboard — gallery and share for review",
-          "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "Zatwierdź scenariusz, głosy i dźwięk sceny",
+          "Express storyboard — galeria i udostępnianie do recenzji",
+          "Beat Frames → Konsola reżyserska → Strumień renderowania",
+          "Wyślij zakończone strumienie do Final Cut"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
-        ],
-        "optional": false
+          "Foundation — scenariusz, głosy, dźwięk sceny, zatwierdzenie scenariusza",
+          "Express storyboard — kierunek i czas dotarcia; galeria i udostępnianie",
+          "Beat Frames i Mixer — klatki początkowe/końcowe, konsola reżyserska, renderowanie strumieni MP4",
+          "Strumienie produkcyjne — weryfikacja wyników, ponowne renderowanie nieaktualnych elementów, wysyłka do Final Cut"
+        ]
       },
       {
-        "id": "final-cut",
+        "id": "ostateczna wersja montażowa",
         "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "subtitle": "Składanie strumienia",
+        "description": "Połącz gotowe strumienie produkcyjne w jeden główny plik MP4. Wybierz Animatic lub określ wideo i język dla każdej sceny — bez edycji na osi czasu; zmiany kreatywne pozostają w Production Mixer.",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
+          "Wybierz strumienie dla każdej sceny — ustawienie wstępne lub własna kompozycja",
+          "Podgląd pełnego programu w kolejności scenariusza",
+          "Wyeksportuj jeden główny plik MP4 dla Premiere"
         ],
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
+          "Wybór strumienia dla poszczególnych scen — Animatic, wideo, język, wersja",
+          "Ustawienia wstępne montażu — Całe wideo, Hybrydowe, Mieszane (własne)",
+          "Brak edycji na osi czasu — zmiany twórcze pozostają w Production Mixer",
+          "Eksport pliku głównego jednym kliknięciem — scalony plik MP4 dla Premiere"
+        ]
       },
       {
-        "id": "premiere",
+        "id": "premiera",
         "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "subtitle": "Centrum dystrybucyjne",
+        "description": "Przeanalizuj materiał główny pod kątem danych o widowni, a następnie opublikuj go w serwisie YouTube wraz ze zlokalizowanymi metadanymi lub wyeksportuj pakiety plików dla formatów Shorts, Reels i TikTok.",
         "keySteps": [
-          "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
+          "Utwórz pokaz i udostępnij link /s/",
+          "Oceny recenzji, zaangażowanie i wnioski wizualne",
+          "Kreator YouTube lub pakiet eksportowy"
         ],
         "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "optional": false
+          "Udostępnialne Screening Room — linki typu /s/ z punktacją i opcjonalną analityką zaangażowania (za zgodą widza)",
+          "Panel analityczny — karty: Punktacja, Dane biometryczne i Wizualizacja",
+          "Kreator YouTube — miniatura, zlokalizowany tytuł/opis, SceneFlow wezwanie do działania (CTA)",
+          "Pakiety eksportu i plany tworzenia krótkich materiałów wideo w formacie pionowym"
+        ]
       }
     ]
   },
   "useCases": {
-    "badge": "Production Applications",
-    "title": "Whatever Video You Can Imagine,",
-    "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "badge": "Zastosowania produkcyjne",
+    "title": "Każde wideo, jakie sobie wyobrazisz,",
+    "titleAccent": "Zbuduj to w SceneFlow",
+    "subtitle": "Prezentacje nieruchomości, materiały edukacyjne, podcasty, formaty informacyjne, kampanie wizerunkowe i filmowe opowieści – jedno zautomatyzowane studio obsługujące cały proces: od koncepcji aż po gotowy do publikacji materiał.",
+    "qualifyingStatement": "SceneFlow przekształca zdjęcia źródłowe, przesłane pliki i opisy w filmy prezentacyjne z narracją – uwzględniające opcjonalny głos oraz postać, nad którymi masz pełną kontrolę. Są to materiały przetworzone przez sztuczną inteligencję: realistyczne wizualizacje oparte na Twoich zasobach, a nie nagrania z kamery na żywo. Przed publikacją sprawdź i zatwierdź każdy scenorys, a także wyraźnie oznacz gotowe materiały, aby odbiorcy wiedzieli, co oglądają.",
     "ui": {
-      "useCases": "Use Cases",
-      "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo coming soon",
-      "selectExample": "Select an example to preview its demo"
+      "useCases": "Przypadki użycia",
+      "sectors": "{count} SEKTORÓW",
+      "demoComingSoon": "Demo już wkrótce",
+      "selectExample": "Wybierz przykład, aby wyświetlić jego wersję demonstracyjną.",
+      "targetPersona": "Persona docelowa",
+      "theChallenge": "Wyzwanie",
+      "sceneFlowSolution": "Rozwiązanie SceneFlow",
+      "beforeVsAfter": "Przed i po",
+      "before": "Przed",
+      "after": "Po",
+      "theWin": "„Wygrana”",
+      "frameAnchoredTitle": "Ciągłość zakotwiczona w klatce",
+      "frameAnchoredDescription": "SceneFlow to jedyne narzędzie umożliwiające zachowanie ciągłości zakotwiczonej w klatkach, co gwarantuje, że produkt lub postać klienta pozostaną identyczne w każdym segmencie sceny.",
+      "closePreview": "Zamknij podgląd",
+      "expandVideo": "Rozwiń wideo",
+      "expandImage": "Powiększ obraz",
+      "orStartExplorer": "zacznij od planu za 9 USD Explorer",
+      "orPrefix": "Lub"
+    },
+    "personas": {
+      "creator": {
+        "label": "Samodzielny twórca",
+        "title": "Twórca na YouTube",
+        "beforeAfter": {
+          "before": "40 godz.",
+          "after": "25 min"
+        },
+        "challenge": {
+          "title": "Wąskie gardło związane z materiałami uzupełniającymi (B-roll)",
+          "description": "Masz świetny scenariusz, ale większość czasu poświęcasz na wyszukiwanie materiałów, koordynowanie montażu i dbanie o spójność między scenami. To opóźnienie hamuje tempo publikacji i osłabia zaangażowanie odbiorców."
+        },
+        "solution": {
+          "title": "Zautomatyzowany bajarz",
+          "description": "Szybko przekształcaj scenariusze w gotowe do produkcji materiały wizualne, zachowując spójność postaci i stylu – od pierwszej sceny aż po finalną wersję gotową do publikacji.",
+          "features": [
+            "Elementy wizualne precyzyjnie odpowiadające kluczowym momentom scenariusza",
+            "Spójni bohaterowie we wszystkich scenach",
+            "Skalowanie produkcji serii odcinków dzięki współdzielonej bibliotece materiałów referencyjnych"
+          ]
+        },
+        "win": "Przejdź od sporadycznego publikowania materiałów do niezawodnego rytmu produkcji przy mniejszym nakładzie pracy organizacyjnej.",
+        "keyPhrases": [
+          "Szybsza realizacja",
+          "Spójne postacie",
+          "Proces pracy gotowy do produkcji seryjnej"
+        ]
+      },
+      "team": {
+        "label": "Zespół wewnętrzny",
+        "title": "Wewnętrzny zespół wideo",
+        "beforeAfter": {
+          "before": "6 tygodni",
+          "after": "Same weekendy"
+        },
+        "challenge": {
+          "title": "Zaległości dostawcy i dryf wizerunku marki",
+          "description": "Zespoły ds. komunikacji, szkoleń (L&D) oraz marketingu tygodniami czekają na materiały wideo od agencji lub zewnętrznych dostawców. Każda realizacja wiąże się z niespójnym wizerunkiem marki, nieprzewidywalnymi kosztami oraz skomplikowanymi procesami akceptacji, które hamują kampanie."
+        },
+        "solution": {
+          "title": "Wewnętrzna produkcja w ciągu tygodnia",
+          "description": "Zleć zespołowi produkcję wideo w ramach przewidywalnego budżetu opartego na kredytach – korzystając z szablonów marki i zatwierdzając materiał przed finalnym renderowaniem, bez konieczności opłacania dni zdjęciowych czy nieograniczonych cykli edycji.",
+          "features": [
+            "Zastąp sesje zdjęciowe realizowane przez zewnętrznych dostawców wewnętrznymi procesami z instruktażem.",
+            "Szablony i biblioteki wzorców zgodne z wymogami marki",
+            "Widoczne zużycie kredytów i limity budżetowe dla poszczególnych projektów",
+            "Zatwierdź storyboardy przed opłaceniem finalnego filmu."
+          ]
+        },
+        "win": "Wdrażaj materiały szkoleniowe, komunikacyjne i wideo do kampanii zgodnie z własnym harmonogramem, a nie kolejką zadań dostawcy.",
+        "keyPhrases": [
+          "Przewidywalny koszt",
+          "Kontrola marki",
+          "Realizacja w tym samym tygodniu"
+        ]
+      },
+      "productionShop": {
+        "label": "Warsztat produkcyjny",
+        "title": "Zakład produkcji niszowej",
+        "beforeAfter": {
+          "before": "8 tys. USD za sesję",
+          "after": "Środki o wartości 200 USD"
+        },
+        "challenge": {
+          "title": "Indywidualne rozwiązania dla poszczególnych branż, brak powtarzalnego systemu",
+          "description": "Klienci z branży wspomnień, dziedzictwa, nieruchomości i edukacji oczekują szybkiej realizacji, a jednak każdy projekt zaczyna się od zera. Przesyłanie plików, klonowanie głosu i tworzenie awatarów nie pozwala na skalowanie działań bez ustandaryzowanego procesu – od przyjęcia zlecenia aż po jego finalną realizację."
+        },
+        "solution": {
+          "title": "Przekształć swoją usługę wideo w produkt",
+          "description": "Twórz powtarzalne procesy pracy dla studiów tworzących wspomnienia oraz niszowych segmentów rynku. Wykorzystuj szablony, klonowanie głosu, awatary i zatwierdzanie scenorysów – dostosowuj rozwiązania do potrzeb klienta i zwiększaj marżę dzięki skali działań.",
+          "features": [
+            "Szablony wspomnień z opcją przesyłania zdjęć, klonowaniem głosu i awatarami-gospodarzami",
+            "Proces przyjmowania klienta powiązany z etapami Blueprint oraz zatwierdzania scenorysu",
+            "Pakiety studyjne typu white-label do produkcji materiałów wideo: biograficznych, okolicznościowych i subskrypcyjnych",
+            "Marża na kredytach zamiast kosztów ogólnych przypisanych do poszczególnych sesji"
+          ]
+        },
+        "win": "Uruchom usługę tworzenia wideopamiętników lub niszową ofertę studyjną opartą na powtarzalnym modelu realizacji – zamiast jednorazowych zleceń typu „freelance”.",
+        "keyPhrases": [
+          "Szablony wspomnień",
+          "Tożsamość głosu i awatara",
+          "Powtarzalna realizacja"
+        ]
+      },
+      "agency": {
+        "label": "Agencja",
+        "title": "Lider ds. realizacji usług dla klienta",
+        "beforeAfter": {
+          "before": "Dostawa w ciągu 3 tygodni",
+          "after": "Dostawa w ciągu 3 dni"
+        },
+        "challenge": {
+          "title": "Realizacja usług dla klientów na dużą skalę",
+          "description": "Wygranie przetargu to dopiero połowa sukcesu. Powtarzalne zlecenia wymagają szybkiej realizacji, jasnych ścieżek akceptacji i marży na każdym dostarczanym elemencie – a wszystko to bez konieczności organizowania procesu produkcji od zera za każdym razem."
+        },
+        "solution": {
+          "title": "Przepustowość + akceptacja klienta",
+          "description": "Przejdź od wstępnych koncepcji do regularnej realizacji, korzystając z mechanizmów ochrony wizerunku marki, weryfikacji przez klienta przed finalnym renderowaniem oraz przewidywalnych kosztów w kredytach na projekt.",
+          "features": [
+            "Szybka prewizualizacja na potrzeby prezentacji ofertowych i akceptacji klienta",
+            "Szablony wielokrotnego użytku dla powtarzalnych formatów klienta",
+            "Wgląd w budżet na każdym etapie iteracji",
+            "Skalowalna realizacja bez zwiększania zatrudnienia"
+          ]
+        },
+        "win": "Realizuj szybciej procesy ofertowe i powtarzalne zlecenia dla klientów, ograniczając ryzyko produkcyjne i zwiększając marżę.",
+        "keyPhrases": [
+          "Zatwierdzenia przez klienta",
+          "Przepustowość dostaw",
+          "Przewidywalność budżetu"
+        ]
+      }
+    },
+    "segmentCtas": {
+      "creator": {
+        "label": "Rozpocznij produkcyjny lot próbny",
+        "subtext": "9 USD jednorazowo • 750 kredytów • Pełny dostęp do platformy"
+      },
+      "team": {
+        "label": "Umów się na prezentację dla zespołu",
+        "subtext": "Zobacz, jak wewnętrzne zespoły zastępują cykle pracy dostawców zewnętrznych."
+      },
+      "productionShop": {
+        "label": "Przeglądaj szablony pionowe",
+        "subtext": "Nieruchomości, edukacja, dokumentacja i nie tylko – sprawdź, co możesz przekształcić w produkt."
+      },
+      "agency": {
+        "label": "Zobacz cennik dla zespołów",
+        "subtext": "Plany dla agencji i studiów produkcyjnych działających na dużą skalę"
+      }
     },
     "categories": [
       {
-        "id": "property",
-        "title": "Property, Spaces & Hospitality",
+        "id": "nieruchomość",
+        "title": "Nieruchomości, przestrzenie i gościnność",
+        "qualifyingStatement": "Stworzone na podstawie zdjęć Twojej nieruchomości — prezentowane jako wirtualny spacer z narracją, wykorzystujący Twój głos i awatar (przetworzone przez AI). To realistyczny podgląd układu i cech nieruchomości, a nie zamiennik osobistej prezentacji. Wszystkie prezentacje są wyraźnie oznaczone.",
         "examples": [
           {
-            "id": "residential-real-estate",
-            "label": "Residential Real Estate",
-            "description": "Automated listing tours featuring the agent's cloned voice and avatar identity."
+            "id": "nieruchomości mieszkaniowe",
+            "label": "Nieruchomości mieszkaniowe",
+            "description": "Wyobraź sobie, że przesyłasz zdjęcia nieruchomości wraz z zapisanym wzorcem swojej postaci i głosu, a następnie błyskawicznie generujesz profesjonalną prezentację wideo z własnym wizerunkiem i głosem – w ponad 70 językach."
           },
           {
-            "id": "commercial-real-estate",
-            "label": "Commercial Real Estate",
-            "description": "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data."
+            "id": "nieruchomości komercyjne",
+            "label": "Nieruchomości komercyjne",
+            "description": "Wyobraź sobie, że wgrywasz rzuty kondygnacji, wizualizacje i dane o okolicy, łącząc je z zapisanym głosem i awatarem swojego brokera. A następnie błyskawicznie tworzysz prezentacje w formie wirtualnych spacerów dla inwestorów, które ożywiają każdy metr kwadratowy – i to w wersji zlokalizowanej na ponad 70 języków."
           },
           {
-            "id": "short-term-rentals",
-            "label": "Short-Term Rentals",
-            "description": "Automated \"Digital Welcome Books\" that walk guests through house features and local \"best of\" spots."
+            "id": "wynajem krótkoterminowy",
+            "label": "Wynajem krótkoterminowy",
+            "description": "Wyobraź sobie, że przesyłasz zdjęcia domu i informacje o udogodnieniach, którym towarzyszy nagrany głos gospodarza. A następnie błyskawicznie udostępniasz cyfrowe filmy powitalne, które witają każdego gościa w jego własnym języku – jeszcze zanim ten się zamelduje."
           },
           {
-            "id": "hospitality-tourism",
-            "label": "Hospitality & Tourism",
-            "description": "Hotel virtual tours and narrated travel itineraries for agencies."
+            "id": "hotelarstwo i turystyka",
+            "label": "Hotelarstwo i turystyka",
+            "description": "Wyobraź sobie, że przesyłasz zdjęcia hotelu oraz najważniejsze punkty planu podróży, wykorzystując zapisany głos i awatar gospodarza reprezentującego Twoją markę. Następnie błyskawicznie udostępniasz wirtualne spacery i przewodniki z narracją w ponad 70 językach – bez konieczności angażowania ekipy filmowej w każdym obiekcie."
           },
           {
-            "id": "museum-gallery-guides",
-            "label": "Museum & Gallery Guides",
-            "description": "Multi-language audio-visual \"tours\" for exhibitions that can be updated JIT as exhibits change."
+            "id": "przewodnicy po muzeach i galeriach",
+            "label": "Przewodniki po muzeach i galeriach",
+            "description": "Wyobraź sobie, że możesz wgrywać zdjęcia eksponatów i notatki kuratorskie w miarę zmian w ekspozycji, a następnie błyskawicznie aktualizować oprowadzania audio w ponad 70 językach – bez konieczności ponownego nagrywania materiałów przy każdej rotacji wystawy."
           }
         ]
       },
       {
-        "id": "knowledge",
-        "title": "Knowledge, Training & Education",
+        "id": "wiedza",
+        "title": "Wiedza, szkolenia i edukacja",
         "examples": [
           {
-            "id": "k12-higher-ed",
-            "label": "K-12 & Higher Ed",
-            "description": "30-minute curriculum modules that can be instantly localized for ESL students or global campuses."
+            "id": "edukacja podstawowa i średnia oraz szkolnictwo wyższe",
+            "label": "Edukacja szkolna i wyższa",
+            "description": "Wyobraź sobie, że przesyłasz materiały lekcyjne, wykorzystując zapisany głos instruktora oraz wzorzec jego postaci, a następnie błyskawicznie generujesz kompletne moduły programowe, które Twoi studenci – zarówno ci uczący się języka angielskiego (ESL), jak i uczestnicy kursów globalnych – mogą oglądać w ponad 70 językach."
           },
           {
             "id": "corporate-ld",
-            "label": "Corporate L&D",
-            "description": "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices."
+            "label": "Korporacyjne uczenie się i rozwój",
+            "description": "Wyobraź sobie, że wgrywasz scenariusze dotyczące procedur zgodności, wykorzystując zapisany głos i awatar swojego trenera. A następnie błyskawicznie wdrażasz spójne szkolenia wdrożeniowe i z zakresu bezpieczeństwa we wszystkich biurach – w wersjach zlokalizowanych na ponad 70 języków."
           },
           {
-            "id": "software-saas-tutorials",
-            "label": "Software SaaS Tutorials",
-            "description": "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion."
+            "id": "poradniki dotyczące oprogramowania i SaaS",
+            "label": "Poradniki do oprogramowania SaaS",
+            "description": "Wyobraź sobie, że przesyłasz zrzuty ekranu interfejsu jako materiał bazowy i wykorzystujesz nagrany głos eksperta produktowego. Następnie błyskawicznie generujesz filmy instruktażowe animujące każde kliknięcie – aktualizowane w dniu wdrożenia zmian w interfejsie."
           },
           {
-            "id": "niche-skill-tutoring",
-            "label": "Niche Skill Tutoring",
-            "description": "Professional \"How-To\" series for cooking, DIY, or technical certifications."
+            "id": "nauczanie niszowych umiejętności",
+            "label": "Nauczanie niszowych umiejętności",
+            "description": "Wyobraź sobie, że przesyłasz zdjęcia poszczególnych etapów wraz z zapisanym głosem instruktora i wzorcem jego postaci, a następnie błyskawicznie publikujesz profesjonalne serie poradnikowe – dotyczące gotowania, majsterkowania czy przygotowań do egzaminów certyfikacyjnych – w ponad 70 językach."
           },
           {
-            "id": "medical-patient-education",
-            "label": "Medical/Patient Education",
-            "description": "Narrated explanations of surgical procedures or medication management for hospitals and clinics."
+            "id": "edukacja medyczna pacjentów",
+            "label": "Edukacja medyczna / Edukacja pacjentów",
+            "description": "Wyobraź sobie, że wgrywasz schematy procedur wraz z nagraniem głosu lekarza, a następnie błyskawicznie generujesz przejrzyste filmy edukacyjne dla pacjentów, zrozumiałe dla rodzin w ponad 70 językach."
           },
           {
-            "id": "video-memoirs",
-            "label": "Video Memoirs",
-            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+            "id": "wideopamiętniki",
+            "label": "Wideowspomnienia",
+            "description": "Wyobraź sobie, że przesyłasz zdjęcia rodzinne, nagrania wywiadów i notatki do poszczególnych scen, korzystając z zapisanego głosu narratora. Następnie błyskawicznie tworzysz filmy wspomnieniowe podzielone na rozdziały – a przed finalnym renderowaniem zatwierdzasz scenorys."
           }
         ]
       },
@@ -385,234 +605,807 @@
         "title": "JIT Media & Information",
         "examples": [
           {
-            "id": "hyper-local-news",
-            "label": "Hyper-Local News",
-            "description": "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive."
+            "id": "wiadomości hiperlokalne",
+            "label": "Wiadomości hiperlokalne",
+            "description": "Wyobraź sobie, że wgrywasz dzisiejsze zdjęcia i komunikaty, wykorzystując wcześniej nagrany głos prezentera. A następnie błyskawicznie publikujesz codzienny serwis informacyjny z okolicy – bez ekipy filmowej i bez ryzyka niedotrzymania terminu."
           },
           {
-            "id": "financial-market-recaps",
-            "label": "Financial & Market Recaps",
-            "description": "Turning daily stock market or crypto data into 3-minute narrated visual digests."
+            "id": "Podsumowania sytuacji na rynkach finansowych",
+            "label": "Podsumowania finansowe i rynkowe",
+            "description": "Wyobraź sobie, że każdego ranka wgrywasz dane rynkowe i zrzuty wykresów wraz z nagranym głosem analityka, a następnie błyskawicznie przekształcasz je w wizualny przegląd z komentarzem – gotowy jeszcze przed otwarciem sesji."
           },
           {
-            "id": "sports-commentary",
-            "label": "Sports Commentary",
-            "description": "Automated \"recap\" videos using game stats and static photography turned into F2V action."
+            "id": "komentarz sportowy",
+            "label": "Komentarz sportowy",
+            "description": "Wyobraź sobie przesyłanie statystyk meczowych i zdjęć wraz z nagranym głosem komentatora, a następnie błyskawiczne generowanie filmów podsumowujących z animowanymi akcjami – publikowanych w czasie, gdy kibice wciąż o nich dyskutują."
           },
           {
-            "id": "true-crime-historical-docs",
-            "label": "True Crime & Historical Docs",
-            "description": "Using the Reference Library to keep historical figures consistent across a multi-part documentary series."
+            "id": "historyczne dokumenty kryminalne",
+            "label": "True crime i dokumenty historyczne",
+            "description": "Wyobraź sobie, że raz utrwalasz postacie historyczne w swoim Reference Library, a następnie błyskawicznie tworzysz wieloczęściowe odcinki, w których każda twarz i każdy głos pozostają niezmienne – w kolejnych seriach."
           },
           {
-            "id": "weather-emergency-alerts",
-            "label": "Weather & Emergency Alerts",
-            "description": "Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms."
+            "id": "ostrzeżenia meteorologiczne i alarmy",
+            "label": "Alerty pogodowe i ostrzeżenia w sytuacjach awaryjnych",
+            "description": "Wyobraź sobie, że wgrywasz komunikaty alarmowe, wykorzystując zaufany, wcześniej zarejestrowany głos swojej agencji. Następnie błyskawicznie rozpowszechniasz czytelne ostrzeżenia w ponad 70 językach za pośrednictwem platform społecznościowych – w ciągu minut, a nie dni."
           }
         ]
       },
       {
-        "id": "b2b",
-        "title": "B2B Marketing & Sales",
+        "id": "B2B",
+        "title": "Marketing i sprzedaż B2B",
         "examples": [
           {
-            "id": "product-explainer-videos",
-            "label": "Product Explainer Videos",
-            "description": "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos."
+            "id": "filmy wyjaśniające działanie produktu",
+            "label": "Filmy wyjaśniające działanie produktu",
+            "description": "Wyobraź sobie, że wgrywasz zdjęcia produktów z katalogu, wykorzystując zapisany głos prezentera i awatar swojej marki. Następnie błyskawicznie tworzysz kinowej jakości serię filmów wyjaśniających – zatwierdzając scenorys przed wygenerowaniem finalnego materiału."
           },
           {
-            "id": "case-study-testimonials",
-            "label": "Case Study/Testimonials",
-            "description": "Using client headshots and project photos to create high-end visual success stories."
+            "id": "Opinie klientów – studia przypadków",
+            "label": "Studium przypadku / Referencje",
+            "description": "Wyobraź sobie, że wgrywasz zdjęcia klientów, fotografie z realizacji projektów oraz wskaźniki sukcesu, a do tego wykorzystujesz wcześniej nagrany głos lektora. Następnie błyskawicznie tworzysz dopracowane wizualne studia przypadków – bez konieczności organizowania sesji nagraniowej z udziałem klienta."
           },
           {
-            "id": "recruitment-branding",
-            "label": "Recruitment & Branding",
-            "description": "Giving candidates a narrated \"day in the life\" tour of the office and culture."
+            "id": "branding rekrutacyjny",
+            "label": "Rekrutacja i budowanie marki",
+            "description": "Wyobraź sobie, że wgrywasz zdjęcia biura i materiały prezentujące kulturę organizacyjną, łącząc je z zapisanym głosem i awatarem rekrutera. Dzięki temu możesz błyskawicznie zabrać kandydatów na wirtualny spacer z narracją, pokazujący typowy dzień pracy – a wszystko to w ponad 70 językach, co pozwala na prowadzenie rekrutacji na skalę światową."
           },
           {
-            "id": "conference-event-promos",
-            "label": "Conference & Event Promos",
-            "description": "Automated \"Speaker Bio\" videos and \"What to Expect\" guides for large-scale events."
+            "id": "Promocje na konferencje i wydarzenia",
+            "label": "Materiały promocyjne na konferencje i wydarzenia",
+            "description": "Wyobraź sobie, że wgrywasz biografie prelegentów, szczegóły sesji i zdjęcia miejsca wydarzenia, wykorzystując zapisany głos prowadzącego. A następnie błyskawicznie generujesz zapowiedzi prelegentów oraz przewodniki informujące o tym, czego można się spodziewać – aktualizowane za każdym razem, gdy zmienia się harmonogram."
           }
         ]
       },
       {
-        "id": "public",
-        "title": "Public Sector & Advocacy",
+        "id": "publiczny",
+        "title": "Sektor publiczny i rzecznictwo",
         "examples": [
           {
-            "id": "ngo-impact-reports",
-            "label": "NGO Impact Reports",
-            "description": "Turning data and field photography into emotive, narrated videos for donors."
+            "id": "Raporty o wpływie działań organizacji pozarządowych",
+            "label": "Raporty na temat wpływu organizacji pozarządowych",
+            "description": "Wyobraź sobie, że przesyłasz zdjęcia z terenu oraz dane dotyczące efektów działań, wykorzystując zapisany wcześniej głos lektora Twojej organizacji. A następnie błyskawicznie przekształcasz raporty dla darczyńców w poruszające filmy z narracją – oddające głos Twojej misji, a nie będące zwykłym pokazem slajdów."
           },
           {
-            "id": "public-health-announcements",
-            "label": "Public Health Announcements",
-            "description": "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity."
+            "id": "komunikaty dotyczące zdrowia publicznego",
+            "label": "Komunikaty dotyczące zdrowia publicznego",
+            "description": "Wyobraź sobie, że wgrywasz zatwierdzone komunikaty zdrowotne, wykorzystując zaufany, zapisany w systemie głos Twojego departamentu. Następnie błyskawicznie docierasz do każdej społeczności w ponad 70 językach – zachowując tę samą jasność przekazu i pilność komunikatu, bez żadnych opóźnień wynikających z tłumaczenia."
           },
           {
-            "id": "legal-insurance-explainers",
-            "label": "Legal & Insurance Explainers",
-            "description": "Helping clients understand complex contracts or claim processes through narrated visual breakdowns."
+            "id": "Wyjaśnienia dotyczące ubezpieczeń prawnych",
+            "label": "Wyjaśnienia dotyczące kwestii prawnych i ubezpieczeniowych",
+            "description": "Wyobraź sobie, że wgrywasz podsumowania umów i schematy procesów, wykorzystując zapisany głos swojego doradcy. A następnie błyskawicznie generujesz wizualne wyjaśnienia, które klienci naprawdę rozumieją – jeszcze zanim podpiszą dokumenty lub zgłoszą roszczenie."
           },
           {
-            "id": "religious-spiritual-teachings",
-            "label": "Religious & Spiritual Teachings",
-            "description": "Converting sermons or texts into a consistent, narrated daily video series for global congregations."
+            "id": "nauki religijne i duchowe",
+            "label": "Nauki religijne i duchowe",
+            "description": "Wyobraź sobie, że wgrywasz notatki z kazania lub teksty święte, wykorzystując przy tym zarejestrowany głos i wizerunek nauczyciela. A następnie błyskawicznie publikujesz spójną serię codziennych materiałów wideo dla wiernych na całym świecie – w ponad 70 językach."
           }
         ]
       }
     ]
   },
   "institutionalRoi": {
-    "badge": "For in-house teams & institutions",
-    "title": "Replace vendor shoots with predictable in-house production",
-    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
+    "badge": "Dla zespołów wewnętrznych i instytucji",
+    "title": "Zastąp sesje realizowane przez zewnętrznych dostawców przewidywalną produkcją wewnętrzną.",
+    "subtitle": "Zespoły ds. komunikacji, szkoleń i rozwoju (L&D) oraz marketingu, liczące od 1 do 5 osób, mogą realizować i publikować materiały wideo w ciągu tego samego tygodnia – bez konieczności korzystania z usług agencji na zasadzie stałej współpracy czy angażowania się w niekończące się procesy edycyjne.",
     "comparisons": [
       {
-        "label": "Traditional vendor shoot + edit",
-        "cost": "$5,000–$15,000",
-        "timeline": "4–8 weeks"
+        "label": "Tradycyjna sesja dla usługodawcy wraz z obróbką",
+        "cost": "5 000–15 000 USD",
+        "timeline": "4–8 tygodni"
       },
       {
-        "label": "SceneFlow in-house workflow",
-        "cost": "$50–$500 in credits",
-        "timeline": "Same week"
+        "label": "SceneFlow wewnętrzny przepływ pracy",
+        "cost": "Środki o wartości od 50 do 500 USD",
+        "timeline": "Ten sam tydzień"
       }
     ],
     "bullets": [
-      "Brand-safe templates and approval before final render",
-      "Budget caps with visible credit spend per project",
-      "No crew days, no edit back-and-forth on every revision"
+      "Szablony zgodne z wytycznymi marki oraz akceptacja przed finalnym renderowaniem",
+      "Limity budżetowe z widocznym zużyciem środków w podziale na projekty",
+      "Bez dni zdjęciowych i bez ciągłego przesyłania materiału tam i z powrotem przy każdej poprawce."
     ],
-    "ctaPrimary": "Book a team walkthrough",
-    "ctaSecondary": "See pricing",
-    "typicalCost": "Typical cost",
-    "timeline": "Timeline"
+    "ctaPrimary": "Umów się na prezentację dla zespołu",
+    "ctaSecondary": "Zobacz cennik",
+    "typicalCost": "Typowy koszt",
+    "timeline": "Harmonogram"
   },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Studio feature deep dive",
-    "close": "Close",
-    "viewDetails": "View Details",
+    "badge": "Zwiedzanie z przewodnikiem",
+    "title": "Przegląd platformy",
+    "subtitle": "Kompletny przewodnik po procesie pracy SceneFlow AI Studio – od wspólnych przeglądów aż po finalny materiał filmowy.",
+    "subheading": "Poznaj platformę — zacznij od podstaw",
+    "chapterHint": "Cztery rzeczy, które warto dziś wiedzieć. Rozwiń poszczególne sekcje, aby poznać pełny obraz sytuacji.",
+    "expandChapter": "Atrakcje programu",
+    "collapseChapter": "Ukryj funkcje",
+    "underTheHoodLabel": "Pod maską",
+    "chapters": [
+      {
+        "id": "niezbędne rzeczy",
+        "label": "Zacznij tutaj – co otrzymujesz pierwszego dnia"
+      },
+      {
+        "id": "jakość",
+        "label": "Spraw, by przekaz trafił do odbiorców"
+      },
+      {
+        "id": "produkcja",
+        "label": "Od zatwierdzonych bitów do gotowego nagrania"
+      },
+      {
+        "id": "zaawansowany",
+        "label": "Dla zespołów potrzebujących rozliczeń i mechanizmów nadzoru"
+      }
+    ],
+    "close": "Zamknij",
+    "viewDetails": "Zobacz szczegóły",
     "beatFirst": {
-      "id": 15,
-      "title": "Beat-First Video Pipeline",
-      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "title": "Proces produkcji wideo oparty na rytmie",
+      "description": "Zatwierdź kluczowe elementy storyboardu oraz Beat Frames przed etapem F2V — ograniczy to liczbę generacji wykonywanych „w ciemno” z powodu halucynacji modelu czy dryfu wizualnego. Jedna uporządkowana ścieżka: od przeglądu do finalnego klipu.",
       "keyFeatures": [
-        "Express storyboard for review — share beats before heavy render",
-        "Beat Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "Express storyboard do weryfikacji — udostępnij bity przed czasochłonnym renderowaniem",
+        "Beat Frames skład blokady — Reference Library ciągłość",
+        "F2V na uderzenie — generowanie wideo z zatwierdzonych klatek",
+        "Synchronizacja i strumienie miksera — eksport do modułu Final Cut"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
-      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+      "screenshotSlot": "Wstaw zrzut ekranu: Beat Frames oraz zatwierdzenie scenorysu przed wygenerowaniem wideo",
+      "videoSlot": "Wstaw klip 00:30: zatwierdzanie bitów, blokowanie klatek, a następnie generowanie klipów F2V."
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "title": "Analiza i statystyki dotyczące odbiorców",
+      "description": "Prywatne linki do udostępniania dla interesariuszy — umożliwiające ręczną ocenę, przekazywanie ustrukturyzowanych opinii oraz (za zgodą widza) opcjonalną analizę zaangażowania. Wykorzystywane w Premiere przed publikacją oraz do podglądu storyboardu produkcyjnego.",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "Prywatne sesje przeglądu — bezpieczne linki do udostępniania dla interesariuszy",
+        "Ustrukturyzowane opinie odbiorców – oceny i pytania otwarte",
+        "Opcjonalna analityka zaangażowania — z uzyskaniem zgody widza przed rejestracją danych",
+        "Pracuj iteracyjnie w oparciu o rzeczywiste dane — udoskonal Blueprint oraz scenariusz, uwzględniając spostrzeżenia recenzentów."
       ],
-      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotSlot": "Wstaw zrzut ekranu: panel analityki i opinii recenzenta Screening Room",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      "videoSlot": "Wstawienie 30-sekundowego nagrania: Prowadzenie sesji przeglądowej i gromadzenie danych dotyczących zaangażowania"
+    },
+    "ui": {
+      "screenshot": "Zrzut ekranu",
+      "video": "Wideo",
+      "featureVideo": "Wyróżniony materiał wideo",
+      "keyFeatures": "Kluczowe cechy",
+      "openScreenshot": "Otwórz zrzut ekranu",
+      "openFeatureVideo": "Otwórz film prezentujący funkcję",
+      "expandImage": "Powiększ obraz",
+      "closePreview": "Zamknij podgląd"
+    },
+    "items": [
+      {
+        "id": "1",
+        "title": "Intuicyjny UX + pełna kontrola twórcy",
+        "description": "Zacznij szybko dzięki automatyzacji wspomaganej, a następnie edytuj każdy wygenerowany efekt, aby zespoły zachowały kontrolę twórczą bez utraty tempa pracy.",
+        "keyFeatures": [
+          "Prowadzony proces pracy w Studio – od koncepcji po eksport w jednym miejscu",
+          "Edytuj bezpośrednio każdy wygenerowany przez AI punkt fabularny, postać i kwestię.",
+          "Warianty realizacji – porównanie zestawieniowe dla kierunku kreatywnego",
+          "Blueprint Współpraca — udostępnianie linków, fragmentów audio oraz ustrukturyzowanych opinii recenzentów"
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: edytor Blueprint z edytowalnymi wygenerowanymi sekcjami",
+        "videoSlot": "Wstaw klip (30 s): ścieżka UX – od koncepcji do edytowalnego efektu końcowego"
+      },
+      {
+        "id": "2",
+        "title": "Budżet kredytowy i kontrola kosztów",
+        "description": "Monitoruj zużycie kredytów w czasie rzeczywistym i ustanów mechanizmy kontrolne przed uruchomieniem kosztownych procesów generowania.",
+        "keyFeatures": [
+          "Zużycie kredytów w czasie rzeczywistym — według projektu i operacji",
+          "Zabezpieczenia w środowisku produkcyjnym – przed kosztownymi procesami generowania",
+          "Przejrzyste cenniki — dla TTS, wideo i rozwiązań typu intelligence",
+          "Wgląd w budżet – dla zespołów i twórców indywidualnych"
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: panel wykorzystania kredytów i ustawienia BYOK",
+        "videoSlot": "Wstaw klip o długości 00:30: pulpit nawigacyjny budżetu i kluczowa konfiguracja",
+        "underTheHood": {
+          "title": "Pod maską",
+          "body": "Dla zespołów produkcyjnych posiadających już umowy na usługi chmurowe:",
+          "bullets": [
+            "Vertex AI BYOK — rozliczenia i ład korporacyjny w skali przedsiębiorstwa",
+            "Przełączniki dostawców w kalkulatorze kredytowym",
+            "Przejrzyste cenniki platformy zestawione z Twoimi kluczami"
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "title": "Dowolna koncepcja, jeden proces produkcji",
+        "description": "Korzystaj z jednego niezawodnego procesu realizacji materiałów szkoleniowych, podcastów, wiadomości, filmów prezentujących nieruchomości oraz treści o charakterze kinowym.",
+        "keyFeatures": [
+          "Jeden proces produkcji — podcasty, wiadomości, szkolenia, nieruchomości i formaty filmowe",
+          "Szablony projektów — Studio dostosowuje się do materiałów źródłowych",
+          "Ten sam Blueprint → Scenariusz → Ścieżka produkcji — niezależnie od gatunku",
+          "Bez konieczności zmiany narzędzi – od fazy pomysłu aż po realizację"
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: widok dzielony lub siatka prezentująca szablony (Podcast, Wiadomości, Nieruchomości, Styl filmowy) zasilające jeden, ujednolicony interfejs procesu SceneFlow.",
+        "videoSlot": "Wstaw klip (00:30): „Zacznij od dowolnego materiału źródłowego...” – kliknięcie „Nowy projekt” -> „Podcast” (interfejs dostosowuje się do audio), a następnie widok dzielonego ekranu, na którym projekty typu „Wiadomości” i „Kinowe” łączą się w edytorze Blueprint."
+      },
+      {
+        "id": "4",
+        "title": "Inteligentna automatyzacja z precyzyjną kontrolą edycji",
+        "description": "Platforma SceneFlow wykorzystuje inteligentne rozwiązania do automatycznego generowania profesjonalnej bazy wyjściowej (serii, schematu, scenariusza, wytycznych produkcyjnych i wersji edycyjnych), oferując jednocześnie inteligentne interakcje, które zapewniają pełną kontrolę nad edycją dzięki wbudowanym mechanizmom zabezpieczającym.",
+        "keyFeatures": [
+          "Bazowe elementy AI w jednym cyklu: seria, plan bazowy, scenariusz i prompty produkcyjne",
+          "Inteligentne okna edycji – bezpieczne ramy, a nie automatyczne przepisywanie",
+          "Akceptuj, modyfikuj lub odrzucaj – każda sugestia pozostaje pod Twoją kontrolą.",
+          "Człowiek w procesie – na każdym etapie produkcji"
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: inteligentne okno dialogowe prezentujące generowanie linii bazowej wraz z elementami sterującymi edycją.",
+        "videoSlot": "Wstaw klip o długości 30 sekund: wygenerowanie wersji bazowej przez AI, a następnie precyzyjna edycja wprowadzana przez użytkownika."
+      },
+      {
+        "id": "5",
+        "title": "Udostępniono Reference Library w celu zapewnienia ciągłości",
+        "description": "Zachowaj spójność postaci, kostiumów, głosów, lokalizacji i rekwizytów w różnych scenach i odcinkach dzięki materiałom referencyjnym nadającym się do ponownego wykorzystania.",
+        "keyFeatures": [
+          "Profile wielokrotnego użytku — postacie, kostiumy, głosy, lokalizacje i rekwizyty",
+          "Zastosowanie wieloscenariuszowe — odniesienia przenikają do każdego pokolenia",
+          "Spójność wizualna — te same twarze i styl w materiałach wygenerowanych przez Imagen i Veo",
+          "Spójność na skalę całej franczyzy — stworzona z myślą o wieloodcinkowych seriach"
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: biblioteka materiałów referencyjnych ukazująca ciągłość wyglądu postaci i rekwizytów",
+        "videoSlot": "Wstaw klip (00:30): Stosowanie referencji w wielu scenach"
+      },
+      {
+        "id": "6",
+        "title": "Silnik szybkiego generowania",
+        "description": "Automatycznie i równocześnie generuj obrazy oraz fragmenty wideo. Narzędzie Express Storyboard umożliwia przeglądanie i udostępnianie audiowizualnych scenorysów w ciągu kilku minut. Funkcja Express Storyboard pozwala w kilka minut wygenerować pełne sekwencje w stylu Ken Burns, a Express Video dostarcza gotowe sceny wideo w minuty zamiast dni.",
+        "keyFeatures": [
+          "Jednoczesne generowanie — obrazy i wideo dla wielu scen jednocześnie",
+          "Express Storyboard — audiowizualne podglądy gotowe do udostępnienia w kilka minut",
+          "Express Animatics — efekt ruchu Ken Burns na zdjęciach",
+          "Express Video — klipy na poziomie scen w kilka minut, a nie dni"
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: pulpit nawigacyjny szybkiego generowania z elementami Animatic i postępem przetwarzania wideo.",
+        "videoSlot": "Wstaw klip (00:30): jednoczesne generowanie przekształcające scenariusz w animatik, a następnie w finalne wideo."
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance Edytor",
+        "description": "Określ grupę docelową, aby uzyskać natychmiastową ocenę, analizę i rekomendacje. Wprowadzaj poprawki jednym kliknięciem lub korzystaj z funkcji Guided Edits, aby idealnie zoptymalizować odcinki, Blueprint i scenariusz pod kątem maksymalnego efektu.",
+        "keyFeatures": [
+          "Punktacja grupy docelowej — z podziałem na kategorie",
+          "Rekomendacje przypisane do sekcji – popraw właściwą część swojej historii",
+          "Poprawki jednym kliknięciem i edycja z przewodnikiem — precyzyjne zmiany, a nie zgadywanie",
+          "Próg gotowości produkcyjnej — dowiedz się, kiedy zainwestować w pełny rendering"
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: Resonance Editor z ocenami odbiorców i poprawkami dostępnymi jednym kliknięciem",
+        "videoSlot": "Wstawienie 30-sekundowego klipu: wprowadzanie sugerowanych zmian na podstawie wskaźnika reakcji odbiorców."
+      },
+      {
+        "id": "8",
+        "title": "Tłumaczenie adaptacyjne (ponad 70 języków)",
+        "description": "Lokalizuj treści na dużą skalę, zachowując zamysł narracyjny oraz zgodność z osią czasu na potrzeby dystrybucji wielojęzycznej.",
+        "keyFeatures": [
+          "Ponad 70 języków — narracja, dialogi i treści na dużą skalę",
+          "Zachowano zamysł narracyjny – znaczenie i synchronizacja pozostają spójne.",
+          "Wielojęzyczne ścieżki audio — na osi czasu sceny",
+          "Pakiety gotowe do eksportu — w podziale na lokalizacje, do celów dystrybucji"
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: wielojęzyczna oś czasu i ustawienia tłumaczenia",
+        "videoSlot": "Wstaw klip (00:30): Błyskawiczna lokalizacja sceny na wiele języków"
+      },
+      {
+        "id": "9",
+        "title": "Automatyzacja serii",
+        "description": "Zdefiniuj swoje uniwersum raz i twórz spójne wątki fabularne obejmujące wiele odcinków. Wspólne Reference Library zapewnia spójność postaci i tonu w całym sezonie.",
+        "keyFeatures": [
+          "Zdefiniuj swoje uniwersum raz – postacie, ton i wątek przewodni sezonu.",
+          "Spójne zarysy odcinków – automatycznie generowane dla całego sezonu",
+          "Śledzenie ciągłości – spójność wieloodcinkowych sezonów",
+          "Synchronizacja serii z odcinkami — w systemie Blueprint Studio and Production"
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: przegląd serii z automatycznie wygenerowanymi wątkami odcinków",
+        "videoSlot": "Wstawienie 30-sekundowego materiału: koncepcja rozszerzona do formatu sezonu składającego się z wielu odcinków"
+      },
+      {
+        "id": "10",
+        "title": "Blueprint Automatyzacja",
+        "description": "Przekształć koncepcje w ustrukturyzowane szkice scenariusza (treatments), uwzględniając logline, kluczowe punkty fabuły, postacie oraz tonację. Uruchom Audience Resonance i podejmij współpracę przed rozpoczęciem intensywnego renderowania.",
+        "keyFeatures": [
+          "Przepływ pracy: Generowanie → Weryfikacja → Iteracja → Uruchomienie produkcji",
+          "Od pomysłu do struktury w kilka minut — logline, kluczowe momenty, postacie i ton",
+          "Audience Resonance punktacja z celem 80+ przed fazą produkcyjną",
+          "Linki do udostępniania współpracownikom — synteza uwag i wskazówki do poprawy"
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: automatycznie wygenerowany Blueprint z kluczowymi momentami fabuły i wątkami postaci",
+        "videoSlot": "Wstaw klip (00:30): Przekształcanie koncepcji w ustrukturyzowany Blueprint"
+      },
+      {
+        "id": "11",
+        "title": "Automatyzacja produkcji",
+        "description": "Zakładki Script i Action prowadzą przez etapy: Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, mikser oraz strumienie MP4 – bez konieczności przełączania narzędzi.",
+        "keyFeatures": [
+          "Foundation — scenariusz, głosy, dźwięk sceny, zatwierdzenie scenariusza",
+          "Express storyboard — kierunek i czas dotarcia; galeria i udostępnianie",
+          "Beat Frames i Mixer — klatki początkowe/końcowe, konsola reżyserska, renderowanie strumieni MP4",
+          "Strumienie produkcyjne — weryfikacja wyników, ponowne renderowanie nieaktualnych elementów, wysyłka do Final Cut"
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: panel produkcyjny prezentujący scenariusz, Beat Frames oraz mikser.",
+        "videoSlot": "Wstaw klip 00:30: Foundation, Express storyboard, Beat Frames oraz eksport strumienia"
+      },
+      {
+        "id": "12",
+        "title": "Final Cut Montaż",
+        "description": "Połącz gotowe strumienie produkcyjne w jeden główny plik MP4. Wybierz Animatic lub określ wideo i język dla każdej sceny — bez edycji na osi czasu; zmiany kreatywne pozostają w Production Mixer.",
+        "keyFeatures": [
+          "Wybór strumienia dla poszczególnych scen — Animatic, wideo, język, wersja",
+          "Ustawienia wstępne montażu — Całe wideo, Hybrydowe, Mieszane (własne)",
+          "Brak edycji na osi czasu — zmiany twórcze pozostają w Production Mixer",
+          "Eksport pliku głównego jednym kliknięciem — scalony plik MP4 dla Premiere"
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: Final Cut panel montażowy z selektorami strumieni dla poszczególnych scen",
+        "videoSlot": "Wstawka 00:30: Wybór strumieni, podgląd montażu i eksport materiału głównego"
+      },
+      {
+        "id": "13",
+        "title": "Premiere Dystrybucja",
+        "description": "Przeanalizuj materiał główny pod kątem danych o widowni, a następnie opublikuj go w serwisie YouTube wraz ze zlokalizowanymi metadanymi lub wyeksportuj pakiety plików dla formatów Shorts, Reels i TikTok.",
+        "keyFeatures": [
+          "Udostępnialne Screening Room — linki typu /s/ z punktacją i opcjonalną analityką zaangażowania (za zgodą widza)",
+          "Panel analityczny — karty: Punktacja, Dane biometryczne i Wizualizacja",
+          "Kreator YouTube — miniatura, zlokalizowany tytuł/opis, SceneFlow wezwanie do działania (CTA)",
+          "Pakiety eksportu i plany tworzenia krótkich materiałów wideo w formacie pionowym"
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: pulpit nawigacyjny Premiere z analizami i kreatorem publikacji",
+        "videoSlot": "Wstaw klip (00:30): Analiza wyników badań, kreator YouTube i pakiety eksportu"
+      },
+      {
+        "id": "14",
+        "title": "Analiza i statystyki dotyczące odbiorców",
+        "description": "Prywatne linki do udostępniania dla interesariuszy — umożliwiające ręczną ocenę, przekazywanie ustrukturyzowanych opinii oraz (za zgodą widza) opcjonalną analizę zaangażowania. Wykorzystywane w Premiere przed publikacją oraz do podglądu storyboardu produkcyjnego.",
+        "keyFeatures": [
+          "Prywatne sesje przeglądu — bezpieczne linki do udostępniania dla interesariuszy",
+          "Ustrukturyzowane opinie odbiorców – oceny i pytania otwarte",
+          "Opcjonalna analityka zaangażowania — z uzyskaniem zgody widza przed rejestracją danych",
+          "Pracuj iteracyjnie w oparciu o rzeczywiste dane — udoskonal Blueprint oraz scenariusz, uwzględniając spostrzeżenia recenzentów."
+        ],
+        "screenshotSlot": "Wstaw zrzut ekranu: panel analityki i opinii recenzenta Screening Room",
+        "videoSlot": "Wstawienie 30-sekundowego nagrania: Prowadzenie sesji przeglądowej i gromadzenie danych dotyczących zaangażowania"
+      }
+    ]
+  },
+  "engineeringTrust": {
+    "badge": "Inżynieria i bezpieczeństwo",
+    "title": "Stworzony z myślą o",
+    "titleAccent": "Obciążenia produkcyjne",
+    "subtitle": "Architektura przyjazna dla startupów, wykorzystująca komponenty Google Cloud, które wspierają bezpieczeństwo, skalowalność oraz praktyczne wdrażanie rozwiązań na środowisko produkcyjne.",
+    "pillars": [
+      {
+        "id": "architektura",
+        "title": "Architektura przedsiębiorstwa",
+        "description": "Zbudowano w oparciu o infrastrukturę Google Cloud, z wykorzystaniem skalowalnej orkiestracji dla obciążeń produkcyjnych i rozwijających się zespołów.",
+        "highlights": [
+          "Vertex AI dla procesów generowania",
+          "Synteza Imagen 4 i Veo 3.1",
+          "ElevenLabs Integracja z TTS",
+          "BYOK do kontroli rozliczeń w przedsiębiorstwie"
+        ]
+      },
+      {
+        "id": "bezpieczeństwo",
+        "title": "Bezpieczeństwo i prywatność",
+        "description": "Zasoby kreatywne są chronione dzięki szyfrowaniu danych w spoczynku, kontroli dostępu oraz podejściu stawiającym prywatność na pierwszym miejscu.",
+        "highlights": [
+          "Mechanizmy kontroli w chmurze dostosowane do potrzeb przedsiębiorstw",
+          "Szyfrowanie AES-256",
+          "Zaprojektowano z uwzględnieniem wymogów RODO",
+          "Informacje na temat przetwarzania danych znajdują się w naszej Polityce prywatności."
+        ]
+      },
+      {
+        "id": "skala",
+        "title": "Skalowalność i niezawodność",
+        "description": "Globalna dystrybucja w chmurze wspiera niezawodne procesy renderowania i weryfikacji w miarę wzrostu skali działań.",
+        "highlights": [
+          "Wdrożenie wieloregionalne",
+          "Dostarczanie przyspieszone przez CDN",
+          "Automatyczne przełączanie awaryjne",
+          "Monitorowanie w czasie rzeczywistym"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "value": "Globalny",
+        "label": "Dostarczanie w modelu chmurowym"
+      },
+      {
+        "value": "Obraz 4",
+        "label": "Generowanie obrazów"
+      },
+      {
+        "value": "256-bitowy",
+        "label": "Szyfrowanie"
+      },
+      {
+        "value": "Całodobowo, przez 7 dni w tygodniu",
+        "label": "Monitorowanie"
+      }
+    ],
+    "vertexSection": {
+      "title": "Dlaczego Google Vertex AI?",
+      "subtitle": "Istotna bariera technologiczna",
+      "cards": [
+        {
+          "title": "Prywatność danych",
+          "description": "Twoje skrypty i materiały kreatywne nie są wykorzystywane do trenowania współdzielonych modeli, co pomaga chronić Twoją własność intelektualną oraz efekty pracy dla klientów.",
+          "highlight": "niewykorzystywane do trenowania modeli współdzielonych"
+        },
+        {
+          "title": "Zaprojektowane z myślą o niezawodnej przepustowości",
+          "description": "Infrastruktura zorientowana na produkcję pomaga utrzymać stabilne procesy generowania w okresach wysokiego zapotrzebowania."
+        },
+        {
+          "title": "Spójność uwzględniająca referencje",
+          "description": "SceneFlow wykorzystuje generowanie uwzględniające odniesienia, aby poprawić spójność postaci, lokalizacji i rekwizytów między poszczególnymi scenami."
+        }
+      ]
+    },
+    "partnership": {
+      "poweredBy": "Obsługiwane przez Google Cloud z wykorzystaniem Vertex AI, pamięci masowej w chmurze oraz narzędzi do tłumaczenia",
+      "footnote": "SceneFlow AI działa w oparciu o skalowalną infrastrukturę Google Cloud, zaprojektowaną z myślą o rozwoju startupów i wymaganiach dużych przedsiębiorstw."
+    },
+    "attribution": "— Zespół inżynieryjny SceneFlow"
+  },
+  "coreCapabilities": {
+    "audienceResonance": {
+      "badge": "Warstwa inteligencji",
+      "title": "Audience Resonance Edytor",
+      "description": "Poznaj swój wynik, zanim zainwestujesz w pełny rendering. Celuj w wyniki Audience Resonance i Blueprint oraz wprowadzaj konkretne poprawki w scenariuszu – zoptymalizuj każdy etap przed procesem Express i generowaniem wideo.",
+      "bullets": [
+        "Określ swoją konkretną grupę docelową",
+        "Uzyskaj wynik, analizę i rekomendacje w czasie rzeczywistym",
+        "Rozwiązania usuwające słabości narracyjne jednym kliknięciem",
+        "Edycja wspomagana w celu optymalizacji odcinków, Blueprint i scenariusza"
+      ],
+      "cta": "Przeanalizuj swój scenariusz",
+      "howWeScore": {
+        "toggle": "Jak oceniamy",
+        "title": "Jak działa Audience Resonance",
+        "description": "Audience Resonance łączy analizę struktury narracyjnej (jasność przekazu, tempo, łuk emocjonalny) z dopasowaniem do grupy docelowej zdefiniowanej w Blueprint — zamiast opierać się na powierzchownych wskaźnikach czy danych o retencji po publikacji. Rekomendacje są powiązane z konkretnymi fragmentami scenariusza, co pozwala wyeliminować problemy jeszcze przed etapem Express lub wygenerowaniem wideo.",
+        "bullets": [
+          "Ocenia Blueprint i scenariusz w odniesieniu do wskazanej grupy docelowej.",
+          "Rekomendacje na poziomie sekcji – a nie liczba z „czarnej skrzynki” typu „zaufaj nam”",
+          "Praktyczne poprawki jednym kliknięciem i edycja z przewodnikiem — to coś więcej niż tylko ocena",
+          "Uruchom przed poniesieniem wysokich kosztów renderowania, a nie po publikacji."
+        ]
+      }
+    },
+    "express": {
+      "badge": "Produkcja o niezwykle wysokim tempie",
+      "title": "Sceneflow Express",
+      "description": "Jednocześnie automatycznie generuj storyboardy, animatyki i kluczowe ujęcia wideo. Przejdź od scenariusza do podglądu gotowego do udostępnienia w ciągu kilku minut, a następnie zatwierdź Beat Frames przed finalną realizacją produkcji wideo.",
+      "items": [
+        {
+          "title": "Express Storyboard",
+          "desc": "Weryfikuj i udostępniaj storyboardy audio i wideo w kilka minut zamiast godzin.",
+          "time": "Minuty a godziny"
+        },
+        {
+          "title": "Wyraź Animatic",
+          "desc": "Błyskawicznie generuj pełne sceny animatyczne w stylu Kena Burnsa z wysokiej klasy lektorem.",
+          "time": "Minuty a godziny"
+        },
+        {
+          "title": "Express Video",
+          "desc": "Koordynuj jednoczesne generowanie obrazów i wideo w celu uzyskania kompletnej sceny.",
+          "time": "Minuty a dni"
+        }
+      ],
+      "cta": "Rozpocznij szybkie renderowanie"
+    }
+  },
+  "exitIntent": {
+    "title": "Czekaj! Nie wychodź z pustymi rękami.",
+    "subtitle": "Zyskaj ekskluzywny, wcześniejszy dostęp oraz wskazówki dotyczące tworzenia filmów z wykorzystaniem sztucznej inteligencji.",
+    "benefits": [
+      "Cotygodniowe poradniki tworzenia filmów z wykorzystaniem AI",
+      "Wczesny dostęp do nowych funkcji",
+      "Ekskluzywne zniżki dla twórców"
+    ],
+    "emailPlaceholder": "Wpisz swój adres e-mail",
+    "subscribe": "Uzyskaj wcześniejszy dostęp",
+    "subscribing": "Subskrybowanie...",
+    "or": "lub",
+    "startNow": "Zacznij tworzyć już teraz za jedyne 9 USD →",
+    "privacy": "Żadnego spamu. Wypisz się w dowolnym momencie.",
+    "successTitle": "Jesteś na liście!",
+    "successSubtitle": "Sprawdź swoją skrzynkę odbiorczą, aby otrzymać wyjątkowe wskazówki dotyczące tworzenia filmów oraz informacje o wcześniejszym dostępie.",
+    "ctaText": "Zacznij odkrywać — 9 USD",
+    "closePopup": "Zamknij okno wyskakujące"
+  },
+  "pricing": {
+    "badge": "Wycena zależna od wykorzystania",
+    "title": "Płać za to, co tworzysz",
+    "subtitle": "Jeden plan podstawowy zapewniający dostęp do platformy. Punkty na generowanie treści przez AI. Doładowania w razie potrzeby. Pełna kontrola, brak marnotrawstwa.",
+    "valueAnchor": {
+      "traditionalCost": "Powyżej 2000 USD",
+      "traditionalLabel": "Tradycyjna wizualizacja wstępna",
+      "vs": "kontra",
+      "sceneFlowCost": "49–149 USD",
+      "sceneFlowLabel": "SceneFlow miesięcznie",
+      "saveBadge": "Oszczędź ponad 90% na projekcie"
+    },
+    "teamCta": {
+      "title": "Zespół wewnętrzny czy instytucja?",
+      "description": "Umów się na prezentację przepływu pracy dla zespołów ds. komunikacji, L&D oraz marketingu",
+      "button": "Przegląd książki"
+    },
+    "agencyCta": {
+      "title": "Agencja czy dom produkcyjny?",
+      "description": "Indywidualne kredyty, SLA i dedykowane wsparcie na dużą skalę",
+      "button": "Kontakt z działem sprzedaży"
+    },
+    "byok": {
+      "title": "Użyj własnego klucza",
+      "badge": "Plany Pro i Studio",
+      "description": "Masz już klucze API dla Vertex AI lub ElevenLabs? Użyj ich z SceneFlow AI i zaoszczędź do 80% na kredytach platformy.",
+      "savingsHighlight": "80% w postaci środków na platformie",
+      "benefits": [
+        {
+          "title": "80% oszczędności na kredycie SceneFlow",
+          "description": "Płać jedynie 20% opłaty platformowej za orkiestrację i narzędzia."
+        },
+        {
+          "title": "Wykorzystaj plany korporacyjne",
+          "description": "Skorzystaj z posiadanych już rabatów ilościowych Vertex AI lub ElevenLabs"
+        },
+        {
+          "title": "Pełna kontrola",
+          "description": "Twoje klucze, Twoje rozliczenia, Twoje zarządzanie kosztami"
+        }
+      ],
+      "supportedProviders": "Obsługiwani dostawcy",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 i Veo 3.1",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "Zamiana tekstu na mowę i klonowanie głosu",
+      "savingsLabel": "80% oszczędności",
+      "onImagesVideo": "na obrazach i wideo",
+      "onVoiceover": "w komentarzu z offu",
+      "note": "Przedstawione oszczędności w zakresie kredytów dotyczą platformy SceneFlow. Rzeczywiste koszty całkowite zależą od indywidualnych lub firmowych stawek API u poszczególnych dostawców."
+    },
+    "creditTopUps": {
+      "title": "Potrzebujesz więcej kredytów?",
+      "subtitle": "Doładuj w dowolnym momencie. Środki nigdy nie tracą ważności.",
+      "packs": [
+        {
+          "label": "Pakiet startowy",
+          "description": "Idealne do szybkiej powtórki"
+        },
+        {
+          "label": "Zestaw scen",
+          "description": "Zrealizuj krótki projekt"
+        },
+        {
+          "label": "Pakiet produkcyjny",
+          "description": "Kluczowa sekwencja filmowa"
+        },
+        {
+          "label": "Zestaw studyjny",
+          "description": "Pełna zdolność produkcyjna"
+        }
+      ],
+      "creditsUnit": "twórcy"
+    },
+    "calculator": {
+      "sectionTitle": "Oszacuj koszt swojego projektu",
+      "sectionSubtitle": "Dowiedz się dokładnie, ile zapłacisz, zanim się zdecydujesz.",
+      "title": "Kalkulator budżetu projektu",
+      "subtitle": "Oszacuj liczbę punktów przed rozpoczęciem",
+      "customize": "Dostosuj parametry",
+      "imagesLabel": "Obrazy do wygenerowania",
+      "videoClipsLabel": "Krótkie filmy",
+      "voiceoverLabel": "Lektor (minuty)",
+      "byokTitle": "Własny klucz (BYOK)",
+      "byokBadge": "Pro i Studio",
+      "byokDescription": "Użyj własnych kluczy API, aby zaoszczędzić do 80% na kredytach SceneFlow. Płacisz bezpośrednio dostawcom usług AI, według ich stawek.",
+      "vertexToggle": "Vertex AI (Obrazy i wideo)",
+      "elevenLabsToggle": "ElevenLabs (Lektor)",
+      "imageGeneration": "Generowanie obrazów",
+      "videoGeneration": "Generowanie wideo",
+      "voiceover": "Lektor",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "Całkowity szacunkowy koszt",
+      "withTopUps": "z doładowaniami",
+      "creditSavings": "SceneFlow oszczędności kredytowe",
+      "savePercent": "Oszczędzasz {percent}% na kredytach SceneFlow",
+      "transparency": "Pełna przejrzystość: na bieżąco widzisz zużycie kredytów w trakcie pracy. Żadnych niespodzianek – w każdej chwili możesz dostosować zakres projektu.",
+      "transparencyHighlight": "Całkowita przejrzystość:",
+      "byokDisclaimer": "BYOK Uwaga: Przedstawione oszczędności w zakresie kredytów dotyczą wyłącznie obniżek kredytów platformy SceneFlow. Rzeczywiste koszty zależą od posiadanych planów cenowych Vertex AI i ElevenLabs. Plany dla przedsiębiorstw lub plany API o dużym wolumenie mogą oferować dodatkowe oszczędności.",
+      "byokDisclaimerHighlight": "BYOK Uwaga:",
+      "presets": [
+        {
+          "id": "komercyjny",
+          "name": "30-sekundowy spot reklamowy"
+        },
+        {
+          "id": "krótki",
+          "name": "Dwuminutowy film krótkometrażowy"
+        },
+        {
+          "id": "odcinek",
+          "name": "10-minutowy odcinek"
+        },
+        {
+          "id": "funkcja",
+          "name": "90-minutowy film pełnometrażowy"
+        }
+      ],
+      "minSuffix": "min."
+    },
+    "tierGrid": {
+      "productionTestFlight": "Lot próbny egzemplarza produkcyjnego",
+      "getStarted": "Rozpocznij",
+      "startTestFlight": "Rozpocznij lot testowy",
+      "loading": "Ładowanie...",
+      "mostPopular": "Najpopularniejsze",
+      "creditsPerMonth": "Kredyty/mies.",
+      "storage": "Magazynowanie",
+      "perMonth": "/miesiąc"
+    },
+    "trust": {
+      "cancelAnytime": "Możesz zrezygnować w dowolnym momencie",
+      "moneyBack": "14-dniowa gwarancja zwrotu pieniędzy",
+      "creditsNeverExpire": "Środki nie tracą ważności (pakiet Explorer)"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "description": "Jednorazowy zakup na próbę",
+        "features": [
+          "Zakup jednorazowy",
+          "750 kredytów (bezterminowych)",
+          "5 GB pamięci masowej (30 dni)",
+          "Pełny dostęp do platformy",
+          "Eksport do MP4 (dowolna rozdzielczość)",
+          "Lektor AI (ponad 70 języków)"
+        ]
+      },
+      "subscriptions": [
+        {
+          "id": "przystawka",
+          "name": "Przystawka",
+          "description": "Dla indywidualnych twórców",
+          "features": [
+            "Pełny dostęp do platformy",
+            "W cenie 4500 kredytów miesięcznie",
+            "25 GB aktywnej pamięci masowej",
+            "Eksport do MP4 (dowolna rozdzielczość)",
+            "Lektor AI (ponad 70 języków)",
+            "Wsparcie mailowe"
+          ]
+        },
+        {
+          "id": "za",
+          "name": "Pro",
+          "description": "Dla profesjonalnych twórców",
+          "features": [
+            "Wszystko z pakietu Starter oraz:",
+            "Wliczono 15 000 kredytów miesięcznie",
+            "100 GB aktywnej pamięci masowej",
+            "Dostęp do jakości Veo 3.1 (4K)",
+            "Mechanizm zapewniania spójności postaci",
+            "Klonowanie głosu",
+            "BYOK (Własny klucz)",
+            "3 miejsca dla zespołu",
+            "Priorytetowe wsparcie"
+          ]
+        },
+        {
+          "id": "studio",
+          "name": "Studio",
+          "description": "Dla zespołów i agencji",
+          "features": [
+            "Wszystko, co w wersji Pro, a dodatkowo:",
+            "W cenie 75 000 kredytów miesięcznie",
+            "500 GB aktywnej pamięci masowej",
+            "Kolejka priorytetowa Veo 3.1 4K",
+            "Nieograniczona spójność postaci",
+            "Eksport produktów typu white-label",
+            "Dostęp do API",
+            "10 miejsc dla zespołu",
+            "Dedykowany opiekun klienta",
+            "Umowa SLA klasy enterprise dostępna na życzenie"
+          ]
+        }
+      ]
     }
   },
   "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
+    "badge": "Masz pytania?",
+    "title": "Często zadawane pytania",
+    "subtitle": "Wszystko, co musisz wiedzieć o SceneFlow AI",
     "items": [
       {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+        "question": "Jak przebiega proces pracy SceneFlow – od pomysłu do filmu gotowego do publikacji?",
+        "answer": "SceneFlow wykorzystuje ustrukturyzowany proces pracy: Seria (opcjonalnie) → Blueprint → Produkcja → Final Cut → Premiere. Blueprint określa strukturę historii i grupę docelową przy użyciu Audience Resonance. Etap produkcji generuje scenariusz, storyboard, beat video oraz wyrenderowane strumienie scen. Final Cut scala wybrane strumienie w jeden główny plik MP4 — nie jest to edytor oparty na osi czasu. Premiere obsługuje pokazy, analizę danych, publikację w serwisie YouTube oraz pakiety eksportowe."
       },
       {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+        "question": "Czym SceneFlow różni się od Gemini Studio lub Google Flow?",
+        "answer": "Gemini Studio i Google Flow koncentrują się na tworzeniu klipów na podstawie promptów. SceneFlow integruje pełny proces produkcyjny: uporządkowane etapy z edytowalnymi wersjami bazowymi, Reference Library i Beat Frames zapewniające spójność, Audience Resonance stosowane przed kosztownym renderowaniem, automatyczny mikser i montaż strumienia oraz weryfikację Screening Room przed publikacją – a wszystko to w ramach jednego, prowadzącego użytkownika środowiska studyjnego."
       },
       {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+        "question": "Czy mogę edytować wygenerowane przez sztuczną inteligencję scenariusze, materiały wizualne i dźwiękowe?",
+        "answer": "Tak. Wszystkie wygenerowane materiały można edytować. W ramach Production Mixer możesz modyfikować scenariusze, zmieniać założenia reżyserskie scen, ponownie generować poszczególne fragmenty, dostosowywać lektora oraz precyzyjnie ustawiać timing. Final Cut jedynie łączy gotowe sekwencje – zmiany o charakterze twórczym wprowadza się na wcześniejszym etapie produkcji."
       },
       {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+        "question": "Jak obecnie działa Target Audience Resonance?",
+        "answer": "Audience Resonance łączy analizę struktury narracyjnej (klarowność, tempo, łuk emocjonalny) z dopasowaniem do persony odbiorcy zdefiniowanej w Blueprint — zamiast opierać się na danych o retencji po publikacji. Otrzymujesz rekomendacje na poziomie poszczególnych sekcji oraz możliwość wprowadzania poprawek jednym kliknięciem na etapie serii, Blueprint i weryfikacji scenariusza, jeszcze przed rozpoczęciem kosztownego procesu renderowania."
       },
       {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
+        "question": "Czy mogę tworzyć wielojęzyczne filmy prezentujące oferty lub materiały marketingowe?",
+        "answer": "Tak. Możesz generować i lokalizować materiały wideo w ponad 70 językach, korzystając ze zsynchronizowanych procesów dopasowywania czasu trwania. Zespoły zazwyczaj tworzą jedną wersję główną, a następnie przygotowują warianty językowe dla odbiorców globalnych, klientów lub konkretnych regionów."
       },
       {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "question": "Co robi Premiere, jeśli Screening Room jest fazą przeglądu?",
+        "answer": "Screening Room to interfejs przeglądu dostępny wewnątrz Premiere, służący również do podglądu storyboardów produkcyjnych. Udostępniaj linki typu /s/, zbieraj opinie interesariuszy oraz opcjonalne dane analityczne dotyczące zaangażowania (za zgodą widza), analizuj wyniki ocen i wnioski wizualne, a następnie publikuj materiały za pomocą kreatora YouTube lub eksportuj pakiety plików."
       },
       {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
+        "question": "Czy potrzebuję doświadczenia technicznego lub redakcyjnego?",
+        "answer": "Nie. SceneFlow stworzono z myślą o twórcach i zespołach nietechnicznych. Na każdym etapie zaczynasz od wskazówek dotyczących wprowadzania danych i edytowalnych wersji bazowych generowanych przez AI, a nie od skomplikowanego inżynierowania promptów czy korzystania z wielu różnych narzędzi."
       },
       {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
+        "question": "Jak działa plan Explorer?",
+        "answer": "Za 9 USD otrzymujesz 750 kredytów w ramach jednorazowego zakupu, co pozwala przetestować pełny proces pracy. To praktyczny sprawdzian możliwości, dzięki któremu możesz realizować rzeczywiste zadania – od koncepcji po gotowe wideo – jeszcze przed wyborem planu miesięcznego."
       },
       {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
+        "question": "W jaki sposób obsługiwane są środki i BYOK?",
+        "answer": "Zużycie kredytów jest monitorowane bezpośrednio na platformie, co umożliwia zespołom zarządzanie budżetem z podziałem na poszczególne etapy procesu pracy. Plany Pro i Studio obsługują również funkcję „Bring Your Own Key” (własny klucz) u wspieranych dostawców, zapewniając dodatkową kontrolę kosztów organizacjom posiadającym już umowy z tymi dostawcami."
       },
       {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+        "question": "Co mogę realnie stworzyć za pomocą SceneFlow?",
+        "answer": "Zespoły wykorzystują SceneFlow do tworzenia prezentacji nieruchomości, materiałów edukacyjnych, podcastów z elementami wizualnego opowiadania historii, materiałów wyjaśniających bieżące wydarzenia, kampanii marki oraz filmowych serii odcinkowych. Ten sam proces pracy sprawdza się zarówno w przypadku produkcji krótkich, jak i długich form."
       }
     ]
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
-    "cta": "Launch Your Studio for $9"
+    "title": "Gotowy do przetestowania pełnego potoku?",
+    "subtitle": "Zrealizuj cały proces – od koncepcji i storyboardu po wideo i finalny plik MP4 – w jednym studiu. Zacznij od planu za 9 USD (kod: SFTERM15) i zobacz w praktyce, jak wygląda praca oparta na rytmie.",
+    "cta": "Uruchom swoje studio za 9 USD"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
-    "product": "Product",
-    "resources": "Resources",
-    "legal": "Legal",
+    "description": "Kompleksowa, zautomatyzowana produkcja wideo — od koncepcji po gotowy do publikacji materiał finalny. Jedno środowisko pracy z asystą: Blueprint → Produkcja → Final Cut → Premiere.",
+    "product": "Produkt",
+    "resources": "Zasoby",
+    "legal": "Informacje prawne",
     "links": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "howItWorks": "How It Works",
+      "features": "Funkcje",
+      "pricing": "Cennik",
+      "howItWorks": "Jak to działa",
       "faq": "FAQ",
-      "gettingStarted": "Getting Started",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "trustSafety": "Trust & Safety",
-      "refunds": "Refund Policy",
-      "contact": "Contact Us"
+      "gettingStarted": "Pierwsze kroki",
+      "privacy": "Polityka prywatności",
+      "terms": "Warunki świadczenia usług",
+      "trustSafety": "Zaufanie i bezpieczeństwo",
+      "refunds": "Polityka zwrotów",
+      "contact": "Skontaktuj się z nami"
     },
-    "tagline": "Made with ❤️ for creators",
-    "taglineSub": "From Idea to Published Video",
-    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
-    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "tagline": "Stworzone z ❤️ dla twórców",
+    "taglineSub": "Od pomysłu do opublikowanego filmu",
+    "securePayments": "Bezpieczne płatności realizowane przez Whop, naszego oficjalnego sprzedawcę (Merchant of Record)",
+    "morLine": "Bezpieczne płatności, obliczanie podatków oraz kwestie zgodności z przepisami są obsługiwane przez Whop – nasz podmiot odpowiedzialny za rozliczenia (Merchant of Record) – w imieniu Life Focus, LLC.",
+    "copyright": "© 2026 SceneFlow AI. Wszelkie prawa zastrzeżone.",
+    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Teksas 78728-6529 • Kontakt: brian@sfai.studio",
+    "poweredBy": "Obsługiwane przez Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "See Pricing",
-    "tryNine": "Try $9",
-    "tryForNine": "Try for $9",
-    "dismiss": "Dismiss"
+    "seePricing": "Zobacz cennik",
+    "tryNine": "Wypróbuj za 9 USD",
+    "tryForNine": "Wypróbuj za 9 USD",
+    "dismiss": "Odrzuć"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
-    "pause": "Pause",
-    "play": "Play",
-    "mute": "Mute",
-    "unmute": "Unmute"
+    "pause": "Pauza",
+    "play": "Odtwórz",
+    "mute": "Wycisz",
+    "unmute": "Włącz dźwięk",
+    "expandVideo": "Rozwiń wideo"
   }
 }

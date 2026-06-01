@@ -1,618 +1,1411 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
-    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
+    "title": "SceneFlow AI - Δημιουργία βίντεο με τη βοήθεια της τεχνητής νοημοσύνης",
+    "description": "Μετατρέψτε τις ιδέες σας σε επαγγελματικά βίντεο με αυτοματοποίηση ροής εργασιών που βασίζεται στην τεχνητή νοημοσύνη."
   },
   "nav": {
-    "workflow": "The Workflow",
-    "platformWalkthrough": "Platform Walkthrough",
-    "plansPricing": "Plans & Pricing",
-    "more": "More",
-    "useCases": "Use Cases",
+    "workflow": "Η ροή εργασίας",
+    "platformWalkthrough": "Παρουσίαση της πλατφόρμας",
+    "plansPricing": "Προγράμματα & Τιμές",
+    "more": "Περισσότερα",
+    "useCases": "Περιπτώσεις χρήσης",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform & Trust",
-    "faq": "FAQ",
-    "signIn": "Sign In",
-    "startProject": "Start a Project",
-    "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "platformTrust": "Πλατφόρμα και Εμπιστοσύνη",
+    "faq": "Συχνές Ερωτήσεις",
+    "signIn": "Σύνδεση",
+    "startProject": "Ξεκινήστε ένα έργο",
+    "dashboard": "Πίνακας ελέγχου",
+    "adminPanel": "Πίνακας Διαχείρισης",
+    "signOut": "Αποσύνδεση",
+    "goToDashboard": "Μετάβαση στον πίνακα ελέγχου",
+    "userFallback": "Χρήστης",
+    "searchLanguages": "Αναζήτηση γλωσσών...",
+    "noLanguagesFound": "Δεν βρέθηκαν γλώσσες"
   },
   "floatingNav": {
-    "compare": "Compare",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "platformWalkthrough": "Platform Walkthrough",
-    "platform": "Platform",
-    "pricing": "Pricing",
-    "faq": "FAQ"
+    "compare": "Σύγκριση",
+    "howItWorks": "Πώς λειτουργεί",
+    "useCases": "Περιπτώσεις χρήσης",
+    "platformWalkthrough": "Παρουσίαση της πλατφόρμας",
+    "platform": "Πλατφόρμα",
+    "pricing": "Τιμολόγηση",
+    "faq": "Συχνές Ερωτήσεις"
   },
   "hero": {
-    "headline": "Make professional video without a production team or a dozen apps.",
-    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.",
-    "ctaSecondary": "Watch the 'What's Possible'",
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "headline": "Σταμάτα να διαχειρίζεσαι ταυτόχρονα πέντε καρτέλες AI. Ένα studio σε οδηγεί από την ιδέα στο βίντεο που είναι έτοιμο για δημοσίευση.",
+    "subheadline": "Ένα ολοκληρωμένο, καθοδηγούμενο περιβάλλον δημιουργίας που σας μεταφέρει από την ιδέα στο τελικό βίντεο, έτοιμο για δημοσίευση. Δείτε το storyboard πριν πληρώσετε για το τελικό βίντεο — εγκρίνετε την αισθητική αντί να σπαταλάτε μονάδες σε δοκιμές που βασίζονται στην τύχη. Το SceneFlow αυτοματοποιεί τις χρονοβόρες διαδικασίες — σενάριο, storyboard, εκφώνηση και συναρμολόγηση — επιτρέποντάς σας παράλληλα να διατηρείτε τον έλεγχο σε κάθε στάδιο.",
+    "audienceMicroLine": "Σχεδιασμένο για δημιουργούς που επιθυμούν αποτελέσματα και για ομάδες που θέλουν να δουν πώς λειτουργεί.",
+    "ctaSecondary": "Δείτε το «What's Possible»",
+    "ctaToolStack": "Δείτε πώς αντικαθιστά τη δέσμη εργαλείων σας.",
+    "languagePrompt": "Ακούστε τον ήρωα στη γλώσσα σας — ίδια διαδικασία, νέες αγορές",
+    "multilangHint": "Μεταγλώττιση κύριου περιεχομένου σε 7 γλώσσες — η πλήρης ροή εργασιών υποστηρίζει περισσότερες από 70 γλώσσες στο στάδιο της παραγωγής.",
+    "playWithNarration": "Αναπαραγωγή με αφήγηση",
+    "tapToHear": "Πατήστε για να ακούσετε",
+    "fullscreen": "Πλήρης οθόνη",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
-        "nativeLabel": "English"
+        "label": "Αγγλικά",
+        "nativeLabel": "Αγγλικά"
       },
       "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
+        "label": "Ισπανικά",
+        "nativeLabel": "Ισπανικά"
       },
       "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
+        "label": "Πορτογαλικά",
+        "nativeLabel": "Πορτογαλικά"
       },
       "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
+        "label": "Χίντι",
+        "nativeLabel": "Χίντι"
       },
       "zh": {
-        "label": "Chinese",
-        "nativeLabel": "中文"
+        "label": "Κινεζικά",
+        "nativeLabel": "Κινεζικά"
       },
       "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
+        "label": "Αραβικά",
+        "nativeLabel": "Αραβικά"
       },
       "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
+        "label": "Ταϊλανδέζικα",
+        "nativeLabel": "Ταϊλανδικά"
       }
     },
-    "soon": "Soon"
+    "soon": "Σύντομα"
   },
   "valueProp": {
     "pills": [
       {
         "label": "One Studio",
-        "detail": "Concept to publish in one place"
+        "detail": "Ιδέα για δημοσίευση σε ένα ενιαίο σημείο"
       },
       {
-        "label": "Approve Before Final Video",
-        "detail": "Review storyboard beats before you render"
+        "label": "Έγκριση πριν από το τελικό βίντεο",
+        "detail": "Ελέγξτε τα στάδια του storyboard πριν κάνετε render."
       },
       {
-        "label": "Test Your Story First",
-        "detail": "Know what lands before heavy spend"
+        "label": "Δοκίμασε πρώτα την ιστορία σου",
+        "detail": "Μάθε τι αποδίδει πριν προχωρήσεις σε μεγάλες δαπάνες."
       },
       {
-        "label": "Publish-Ready Output",
-        "detail": "Master MP4 + distribution bundles"
+        "label": "Αποτέλεσμα έτοιμο για δημοσίευση",
+        "detail": "Πακέτα Master MP4 + διανομής"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Who are you? Pick your path",
-    "seeExamples": "See examples",
-    "examplesFor": "Examples for {label}:",
-    "andMore": ", and more.",
+    "prompt": "Ποιος είσαι; Διάλεξε το μονοπάτι σου.",
+    "seeExamples": "Δείτε παραδείγματα",
+    "examplesFor": "Παραδείγματα για {label}:",
+    "andMore": ", και άλλα.",
+    "modes": {
+      "automate": {
+        "label": "Αυτοματοποίησέ το",
+        "description": "Καθοδηγούμενη ροή εργασίας — εγκρίνετε storyboards, ολοκληρώστε ταχύτερα"
+      },
+      "engine": {
+        "label": "Δείξε μου τον κινητήρα",
+        "description": "Αρχιτεκτονική, BYOK και βάθος πλατφόρμας"
+      }
+    },
     "paths": [
       {
-        "id": "creator",
-        "label": "Creator",
-        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "id": "δημιουργός",
+        "label": "Δημιουργός",
+        "outcome": "Παραδώστε εντός χρονοδιαγράμματος — σταματήστε να τα ξαναφτιάχνετε σε κάθε εργαλείο",
         "useCases": [
-          "YouTube & episodic series",
-          "Video podcasts & show clips",
-          "Hyper-local & JIT news",
-          "Documentaries & docuseries",
-          "How-to & skill channels",
-          "Sports recaps & commentary"
+          "YouTube και σειρές επεισοδίων",
+          "Video podcasts και αποσπάσματα εκπομπών",
+          "Υπερτοπικές ειδήσεις και ειδήσεις σε πραγματικό χρόνο (JIT)",
+          "Ντοκιμαντέρ και σειρές ντοκιμαντέρ",
+          "Κανάλια με οδηγίες και δεξιότητες",
+          "Αθλητικές ανασκοπήσεις και σχολιασμός"
         ]
       },
       {
-        "id": "team",
-        "label": "In-house team",
-        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "id": "ομάδα",
+        "label": "Εσωτερική ομάδα",
+        "outcome": "Αντικαταστήστε τους αργούς κύκλους συνεργασίας με προμηθευτές — ελέγξτε το brand και τον προϋπολογισμό",
         "useCases": [
-          "Corporate L&D & compliance",
-          "Internal comms & town halls",
-          "Product explainers for sales",
-          "HR recruitment & culture",
-          "K-12 / higher-ed lessons",
-          "Public health & safety updates"
+          "Εταιρική εκπαίδευση και ανάπτυξη & συμμόρφωση",
+          "Εσωτερική επικοινωνία και συναντήσεις όλου του προσωπικού",
+          "Επεξηγηματικά βίντεο προϊόντων για πωλήσεις",
+          "Προσλήψεις και κουλτούρα ανθρώπινου δυναμικού",
+          "Μαθήματα για την πρωτοβάθμια και δευτεροβάθμια εκπαίδευση / την τριτοβάθμια εκπαίδευση",
+          "Ενημερώσεις για τη δημόσια υγεία και ασφάλεια"
         ]
       },
       {
-        "id": "productionShop",
-        "label": "Production shop",
-        "outcome": "Productize a niche with repeatable intake → delivery",
+        "id": "μονάδα παραγωγής",
+        "label": "Χώρος παραγωγής",
+        "outcome": "Μετατρέψτε μια εξειδικευμένη αγορά σε τυποποιημένο προϊόν, με επαναλαμβανόμενη διαδικασία ανάληψης και υλοποίησης.",
         "useCases": [
-          "Video memoir packages",
-          "Legacy & tribute videos",
-          "Voice-cloned narration",
-          "White-label studio templates",
-          "Real estate & hospitality tours",
-          "Subscription video services"
+          "Πακέτα βίντεο-απομνημονευμάτων",
+          "Βίντεο κληρονομιάς και αφιερώματα",
+          "Αφήγηση με κλωνοποιημένη φωνή",
+          "Πρότυπα στούντιο white-label",
+          "Περιηγήσεις σε ακίνητα και χώρους φιλοξενίας",
+          "Υπηρεσίες βίντεο με συνδρομή"
         ]
       },
       {
-        "id": "agency",
-        "label": "Agency",
-        "outcome": "Faster pitches and scalable client delivery",
+        "id": "πρακτορείο",
+        "label": "Πρακτορείο",
+        "outcome": "Ταχύτερες παρουσιάσεις και κλιμακώσιμη παροχή υπηρεσιών στους πελάτες",
         "useCases": [
-          "Client pitch pre-viz",
-          "Product launch campaigns",
-          "Case studies & testimonials",
-          "Event & conference promos",
-          "Multi-language campaigns",
-          "Property marketing for clients"
+          "Προ-οπτικοποίηση παρουσίασης σε πελάτη",
+          "Καμπάνιες λανσαρίσματος προϊόντων",
+          "Μελέτες περίπτωσης & μαρτυρίες",
+          "Προωθητικές ενέργειες για εκδηλώσεις και συνέδρια",
+          "Πολύγλωσσες καμπάνιες",
+          "Προώθηση ακινήτων για πελάτες"
         ]
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Why SceneFlow vs prompt-and-generate tools",
-    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "title": "Γιατί SceneFlow έναντι εργαλείων τύπου «prompt-and-generate»",
+    "subtitle": "Τα Gemini Studio και Google Flow υπερέχουν στα clips. Το SceneFlow ενσωματώνει την πλήρη ροή εργασιών παραγωγής.",
     "rows": [
       {
-        "them": "Prompt + clip generation in isolation",
-        "us": "Structured phases with editable baselines at each step"
+        "them": "Παραγωγή βάσει εντολής (prompt) + παραγωγή αποσπάσματος σε απομόνωση",
+        "us": "Δομημένες φάσεις με τροποποιήσιμες γραμμές αναφοράς σε κάθε στάδιο"
       },
       {
-        "them": "Manual consistency across sessions",
-        "us": "Reference Library + Beat Frames lock visuals before video"
+        "them": "Χειροκίνητη συνέπεια μεταξύ των συνεδριών",
+        "us": "Reference Library + Beat Frames κλείδωμα οπτικών στοιχείων πριν από το βίντεο"
       },
       {
-        "them": "No audience validation workflow",
-        "us": "Audience Resonance before render; Screening Room before publish"
+        "them": "Δεν υπάρχει ροή εργασίας επαλήθευσης κοινού",
+        "us": "Audience Resonance πριν από την απόδοση· Screening Room πριν από τη δημοσίευση"
       },
       {
-        "them": "No production pipeline or handoff",
-        "us": "Script → streams → assembly → distribution in one app"
-      },
-      {
-        "them": "Complex model and settings surface",
-        "us": "Guided Studio UX with credits and BYOK guardrails"
+        "them": "Καμία ροή εργασιών παραγωγής ή διαδικασία παράδοσης",
+        "us": "Σενάριο → ροές → συναρμολόγηση → διανομή σε μία εφαρμογή"
       }
     ],
-    "themHeader": "Typical clip-generation tools",
-    "usHeader": "SceneFlow bundles"
+    "themHeader": "Τυπικά εργαλεία δημιουργίας αποσπασμάτων",
+    "usHeader": "Πακέτα SceneFlow"
   },
   "beatFirstPipeline": {
-    "title": "Beat-First Video Pipeline",
-    "subtitle": "Approve before you render — not slot-machine regeneration",
-    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "title": "Ροή εργασιών βίντεο με προτεραιότητα στον ρυθμό",
+    "subtitle": "Έγκριση πριν από την απόδοση — όχι αναδημιουργία τύπου κουλοχέρη",
+    "intro": "Όχι δημιουργία περιεχομένου με τη μέθοδο της δοκιμής και του σφάλματος. Ελέγχετε την εμφάνιση και δίνετε την έγκρισή σας προτού το SceneFlow χρησιμοποιήσει μονάδες για το τελικό βίντεο.",
+    "description": "Το SceneFlow οργανώνει τη διαδικασία οπτικής έγκρισης σε κάθε στάδιο: Express storyboard για επισκόπηση, Beat Frames για το κλείδωμα της σύνθεσης και, στη συνέχεια, F2V ανά χτύπο (beat). Βελτιώνετε την αισθητική προτού σπαταλήσετε credits σε αποκλίσεις και παραισθήσεις.",
     "steps": [
-      "Express storyboard — share audio-visual beats for review in minutes",
-      "Beat Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Express storyboard — μοιραστείτε οπτικοακουστικά beats για αξιολόγηση μέσα σε λίγα λεπτά",
+      "Beat Frames — κλείδωμα σύνθεσης έναρξης/λήξης με τη συνέχεια του Reference Library",
+      "F2V ανά χτύπο — δημιουργία βίντεο από εγκεκριμένα καρέ, όχι από τυφλά prompts",
+      "Production Mixer — χρονισμός, ήχος και εξαγωγή ροής προς τη διάταξη Final Cut"
     ],
-    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+    "footerLine": "Λιγότερες αναδημιουργίες των γραφικών για τα φρουτάκια — έγκριση των οπτικών στοιχείων πριν από την τελική δαπάνη για το βίντεο"
+  },
+  "toolStack": {
+    "badge": "Σου θυμίζει κάτι;",
+    "title": "Ο ελαττωματικός τρόπος έναντι του τρόπου SceneFlow",
+    "subtitle": "Δεν θα έπρεπε να χρειάζεσαι πέντε καρτέλες, διαδικασίες αντιγραφής-επικόλλησης και να εξαντλείσαι από τη σύνταξη εντολών (prompts) μόνο και μόνο για να ολοκληρώσεις ένα βίντεο.",
+    "brokenWay": {
+      "title": "Ο Σπασμένος Δρόμος",
+      "tagline": "Κατακερματισμένη. Χειροκίνητη. Εξαντλητική.",
+      "tools": [
+        {
+          "name": "ChatGPT",
+          "category": "Προσχέδια σεναρίου"
+        },
+        {
+          "name": "Midjourney",
+          "category": "Μεμονωμένες εικόνες"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "Χειροκίνητη εξαγωγή VO"
+        },
+        {
+          "name": "Premiere",
+          "category": "Χειροκίνητη συναρμολόγηση"
+        }
+      ],
+      "chaosLabel": "Πέντε καρτέλες. Χαμένο πλαίσιο.",
+      "painPoints": [
+        "Αντιγραφή και επικόλληση μεταξύ εφαρμογών",
+        "Κόπωση από τη σύνταξη εντολών και κύκλοι επαναδημιουργίας",
+        "Χωρίς έλεγχο του κοινού πριν ξοδέψετε χρήματα",
+        "Χάος εκδόσεων στις εξαγωγές"
+      ],
+      "timeLabel": "Τυπικός χρόνος έργου",
+      "timeValue": "2–4 εβδομάδες"
+    },
+    "sceneflowWay": {
+      "title": "Η προσέγγιση SceneFlow",
+      "tagline": "Ένα στούντιο. Εγκρίνετε πριν κάνετε render.",
+      "stages": [
+        {
+          "label": "Blueprint",
+          "detail": "Δομημένο πλάνο ιστορίας"
+        },
+        {
+          "label": "Βιβλιογραφικές αναφορές",
+          "detail": "Συνεπείς χαρακτήρες"
+        },
+        {
+          "label": "Παραγωγή",
+          "detail": "Φωνή + οπτικό υλικό"
+        },
+        {
+          "label": "Δημοσίευση",
+          "detail": "Ένα κύριο αρχείο MP4"
+        }
+      ],
+      "syncLabel": "Ένα αρχείο έργου — χωρίς εναλλαγή ανάμεσα σε πολλές καρτέλες",
+      "benefits": [
+        "Καθοδηγούμενες φάσεις — όχι prompt engineering",
+        "Έγκριση του storyboard πριν από τους τίτλους του βίντεο",
+        "Βαθμολογία Audience Resonance πριν από τη βαριά απόδοση",
+        "Έτοιμο για δημοσίευση master από ένα στούντιο"
+      ],
+      "timeLabel": "Τυπικός χρόνος έργου",
+      "timeValue": "2–4 ημέρες"
+    },
+    "comparisonCaption": "Ένα ενιαίο περιβάλλον εργασίας αντικαθιστά τα κατακερματισμένα εργαλεία διαχείρισης prompts, τις χειροκίνητες επεξεργασίες και τις διαδικασίες μεταφοράς εργασιών μεταξύ διαφορετικών πλατφορμών.",
+    "comparisonImageAlt": "Παραδοσιακό κόστος παραγωγής έναντι αυτοματοποιημένου στούντιο SceneFlow — ταχύτερη μετάβαση από την ιδέα στο βίντεο που είναι έτοιμο για δημοσίευση"
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
-    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "title": "Ταχύτητα παραγωγής χωρίς το πρόσθετο λειτουργικό κόστος",
+    "subtitle": "Αντικαταστήστε τα κατακερματισμένα εργαλεία δημιουργίας εντολών (prompts) και τη χειροκίνητη συναρμολόγηση με ένα ενιαίο, αυτοματοποιημένο στούντιο — από την αρχική ιδέα έως το τελικό αρχείο, έτοιμο για δημοσίευση.",
+    "caption": "Ένα ενιαίο περιβάλλον εργασίας αντικαθιστά τα κατακερματισμένα εργαλεία διαχείρισης prompts, τις χειροκίνητες επεξεργασίες και τις διαδικασίες μεταφοράς εργασιών μεταξύ διαφορετικών πλατφορμών.",
+    "imageAlt": "Παραδοσιακό κόστος παραγωγής έναντι αυτοματοποιημένου στούντιο SceneFlow — ταχύτερη μετάβαση από την ιδέα στο βίντεο που είναι έτοιμο για δημοσίευση"
   },
   "howItWorks": {
-    "title": "From concept to publish-ready video",
-    "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
-    "tagline": "Every step is expertly automated. Every step gives you full control.",
-    "optionalBadge": "Optional",
-    "optionalSuffix": " (optional)",
-    "readyTitle": "Ready to test the full pipeline?",
-    "explorerCta": "Start with Explorer — $9",
+    "title": "Από την ιδέα έως το βίντεο που είναι έτοιμο για δημοσίευση",
+    "titleAccent": "Μία καθοδηγούμενη ροή εργασιών",
+    "subtitle": "Η σειρά είναι προαιρετική. Η βασική διαδρομή είναι Blueprint → Παραγωγή → Final Cut → Premiere — με τα στάδια storyboard, animatic, βίντεο και master MP4 να μεσολαβούν.",
+    "tagline": "Κάθε βήμα είναι αυτοματοποιημένο με εξειδικευμένο τρόπο. Κάθε βήμα σάς παρέχει πλήρη έλεγχο.",
+    "optionalBadge": "Προαιρετικό",
+    "optionalSuffix": " (προαιρετικό)",
+    "readyTitle": "Είστε έτοιμοι να δοκιμάσετε την πλήρη ροή εργασιών;",
+    "explorerCta": "Ξεκινήστε με το Explorer — $9",
     "phases": [
       {
-        "id": "series",
-        "stepLabel": "Series",
-        "subtitle": "Showrunner Engine",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "id": "σειρά",
+        "stepLabel": "Σειρά",
+        "subtitle": "Μηχανή Showrunner",
+        "description": "Καθορίστε το σύμπαν σας μία φορά και δημιουργήστε συνεκτικές αφηγηματικές ενότητες που εκτείνονται σε πολλά επεισόδια. Το κοινό Reference Library διασφαλίζει τη συνοχή των χαρακτήρων και του ύφους καθ' όλη τη διάρκεια της σεζόν.",
         "keySteps": [
-          "Define universe — characters, tone, and season arc",
-          "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "Καθορισμός του σύμπαντος — χαρακτήρες, ύφος και αφηγηματικός άξονας της σεζόν",
+          "Αυτόματη δημιουργία περιγραμμάτων επεισοδίων για ολόκληρη τη σεζόν",
+          "Συγχρονισμός με το Blueprint και παραγωγή ανά επεισόδιο"
         ],
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
-        ],
-        "optional": true
+          "Καθορίστε το σύμπαν σας μία φορά — χαρακτήρες, ύφος και αφηγηματική πορεία της σεζόν.",
+          "Συνεκτικά περιγράμματα επεισοδίων — αυτόματα παραγόμενα για ολόκληρη τη σεζόν",
+          "Παρακολούθηση της αφηγηματικής συνέχειας — ευθυγράμμιση σεζόν με πολλαπλά επεισόδια",
+          "Συγχρονισμός σειράς-επεισοδίου — στο Blueprint Studio and Production"
+        ]
       },
       {
-        "id": "blueprint",
+        "id": "σχέδιο",
         "stepLabel": "Blueprint",
-        "subtitle": "Story Development",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "subtitle": "Ανάπτυξη ιστορίας",
+        "description": "Μετατρέψτε τις ιδέες σε δομημένα προσχέδια (treatments) που περιλαμβάνουν logline, βασικά αφηγηματικά σημεία (beats), χαρακτήρες και ύφος. Εκτελέστε το Audience Resonance και συνεργαστείτε πριν από τη διαδικασία βαριάς απόδοσης (rendering).",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
-          "Audience Resonance scoring with 80+ target",
-          "Collaborator share links and export (PDF, Doc, PPTX)"
+          "Δημιουργία → Αξιολόγηση → Αναθεώρηση → Έναρξη παραγωγής",
+          "Audience Resonance επίτευξη σκορ με στόχο 80+",
+          "Σύνδεσμοι κοινής χρήσης για συνεργάτες και εξαγωγή (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
-        ],
-        "optional": false
+          "Ροή εργασίας: Δημιουργία → Έλεγχος → Αναθεώρηση → Έναρξη παραγωγής",
+          "Από την ιδέα στη δομή μέσα σε λίγα λεπτά — logline, βασικά σημεία πλοκής, χαρακτήρες και ύφος",
+          "Audience Resonance βαθμολόγηση με στόχο 80+ πριν από την παραγωγή",
+          "Σύνδεσμοι κοινής χρήσης για συνεργάτες — σύνθεση σχολίων και καθοδηγούμενη αναθεώρηση"
+        ]
       },
       {
-        "id": "production",
-        "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "id": "παραγωγή",
+        "stepLabel": "Παραγωγή",
+        "subtitle": "Από το σενάριο στη ροή",
+        "description": "Οι καρτέλες Script και Action καθοδηγούν τη ροή: Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer και ροές MP4 — χωρίς εναλλαγή εργαλείων.",
         "keySteps": [
-          "Lock script, voices, and scene audio",
-          "Express storyboard — gallery and share for review",
-          "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "Οριστικοποίηση σεναρίου, φωνών και ήχου σκηνής",
+          "Express storyboard — συλλογή και κοινοποίηση για αξιολόγηση",
+          "Beat Frames → Κονσόλα Σκηνοθέτη → Ροή Απόδοσης",
+          "Αποστολή των ολοκληρωμένων ροών στο Final Cut"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
-        ],
-        "optional": false
+          "Foundation — σενάριο, φωνές, ήχος σκηνής, οριστικοποίηση σεναρίου",
+          "Express storyboard — κατεύθυνση και καρέ σε λεπτά· συλλογή και κοινοποίηση",
+          "Beat Frames και Mixer — καρέ έναρξης/λήξης, Director Console, απόδοση (render) ροών MP4",
+          "Ροές παραγωγής — έλεγχος αποτελεσμάτων, επανα-render παρωχημένων beats, αποστολή στο Final Cut"
+        ]
       },
       {
-        "id": "final-cut",
+        "id": "τελική μορφή",
         "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "subtitle": "Συναρμολόγηση ροής",
+        "description": "Συνενώστε τις ολοκληρωμένες ροές παραγωγής σε ένα κύριο αρχείο MP4. Επιλέξτε Animatic ή βίντεο και γλώσσα ανά σκηνή — χωρίς επεξεργασία στο χρονολόγιο· οι δημιουργικές αλλαγές παραμένουν στο Production Mixer.",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
+          "Επιλογή ροών ανά σκηνή — προκαθορισμένος ή προσαρμοσμένος συνδυασμός",
+          "Προεπισκόπηση ολόκληρου του προγράμματος με τη σειρά του σεναρίου",
+          "Εξαγωγή ενός κύριου αρχείου MP4 για το Premiere"
         ],
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
+          "Επιλογή ροής ανά σκηνή — Animatic, Βίντεο, γλώσσα, έκδοση",
+          "Προεπιλογές συναρμολόγησης — Όλα βίντεο, Υβριδικό, Προσαρμοσμένη μίξη",
+          "Καμία επεξεργασία χρονολογίου — οι δημιουργικές αλλαγές παραμένουν στο Production Mixer",
+          "Εξαγωγή κύριου αρχείου με ένα κλικ — ενιαίο MP4 για το Premiere"
+        ]
       },
       {
-        "id": "premiere",
+        "id": "πρεμιέρα",
         "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "subtitle": "Κέντρο Διανομής",
+        "description": "Προβάλετε το master σας με χρήση αναλυτικών στοιχείων κοινού, στη συνέχεια δημοσιεύστε το στο YouTube με τοπικά προσαρμοσμένα μεταδεδομένα ή εξάγετε πακέτα για Shorts, Reels και TikTok.",
         "keySteps": [
-          "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
+          "Δημιουργία προβολής και κοινοποίηση συνδέσμου /s/",
+          "Βαθμολογία κριτικών, αλληλεπίδραση και οπτικά στοιχεία ανάλυσης",
+          "Οδηγός YouTube ή πακέτο εξαγωγής"
         ],
         "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "optional": false
+          "Δυνατότητα κοινοποίησης Screening Room — σύνδεσμοι /s/ με βαθμολόγηση και προαιρετικά αναλυτικά στοιχεία αλληλεπίδρασης (με τη συγκατάθεση του θεατή)",
+          "Πίνακας ελέγχου πληροφοριών — Καρτέλες βαθμολόγησης, βιομετρικών στοιχείων και οπτικών δεδομένων",
+          "YouTube Wizard — μικρογραφία, τοπικά προσαρμοσμένος τίτλος/περιγραφή, SceneFlow CTA",
+          "Πακέτα εξαγωγής και πλάνα για κάθετα βίντεο μικρής διάρκειας"
+        ]
       }
     ]
   },
   "useCases": {
-    "badge": "Production Applications",
-    "title": "Whatever Video You Can Imagine,",
-    "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "badge": "Εφαρμογές Παραγωγής",
+    "title": "Οποιοδήποτε βίντεο μπορείς να φανταστείς,",
+    "titleAccent": "Κατασκευάστε το στο SceneFlow",
+    "subtitle": "Παρουσιάσεις ακινήτων, εκπαιδευτικό περιεχόμενο, podcast, ενημερωτικές εκπομπές, καμπάνιες επωνυμιών και κινηματογραφικές αφηγήσεις — ένα αυτοματοποιημένο στούντιο που καλύπτει τα πάντα, από την αρχική ιδέα έως το τελικό αρχείο, έτοιμο για δημοσίευση.",
+    "qualifyingStatement": "Το SceneFlow μετατρέπει τις αρχικές σας φωτογραφίες, τα αρχεία που ανεβάζετε και τις περιγραφές σας σε βίντεο-παρουσιάσεις με αφήγηση — προσφέροντας τη δυνατότητα επιλογής φωνής και παρουσίας χαρακτήρα, στοιχεία που ελέγχετε εσείς. Πρόκειται για παρουσιάσεις που έχουν διαμορφωθεί με τη βοήθεια τεχνητής νοημοσύνης: ρεαλιστικές απεικονίσεις που βασίζονται στο υλικό σας, και όχι σε ζωντανές λήψεις με κάμερα. Ελέγξτε και εγκρίνετε κάθε storyboard πριν από τη δημοσίευση και επισημάνετε σαφώς το παραγόμενο υλικό, ώστε το κοινό να γνωρίζει τι παρακολουθεί.",
     "ui": {
-      "useCases": "Use Cases",
-      "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo coming soon",
-      "selectExample": "Select an example to preview its demo"
+      "useCases": "Περιπτώσεις χρήσης",
+      "sectors": "{count} ΤΟΜΕΙΣ",
+      "demoComingSoon": "Η δοκιμαστική έκδοση έρχεται σύντομα",
+      "selectExample": "Επιλέξτε ένα παράδειγμα για να δείτε την προεπισκόπηση της επίδειξής του",
+      "targetPersona": "Προφίλ-στόχος",
+      "theChallenge": "Η πρόκληση",
+      "sceneFlowSolution": "Η λύση SceneFlow",
+      "beforeVsAfter": "Πριν και μετά",
+      "before": "Πριν",
+      "after": "Μετά",
+      "theWin": "Η «Νίκη»",
+      "frameAnchoredTitle": "Συνέχεια αγκυρωμένη στο πλαίσιο",
+      "frameAnchoredDescription": "Το SceneFlow είναι το μοναδικό εργαλείο που επιτρέπει τη διατήρηση της συνέχειας με βάση το καρέ (Frame-Anchored continuity), διασφαλίζοντας ότι το προϊόν ή ο χαρακτήρας του πελάτη σας παραμένει πανομοιότυπος σε κάθε τμήμα της σκηνής.",
+      "closePreview": "Κλείσιμο προεπισκόπησης",
+      "expandVideo": "Μεγέθυνση βίντεο",
+      "expandImage": "Μεγέθυνση εικόνας",
+      "orStartExplorer": "ξεκινήστε με το πρόγραμμα των 9 $ Explorer",
+      "orPrefix": "Ή"
+    },
+    "personas": {
+      "creator": {
+        "label": "Ανεξάρτητος δημιουργός",
+        "title": "Ο δημιουργός περιεχομένου στο YouTube",
+        "beforeAfter": {
+          "before": "40 ώρες",
+          "after": "25 λεπτά"
+        },
+        "challenge": {
+          "title": "Το σημείο συμφόρησης του «B-roll»",
+          "description": "Έχεις ένα δυνατό σενάριο, αλλά το μεγαλύτερο μέρος του χρόνου σου αναλώνεται στην εύρεση υλικού, τον συντονισμό του μοντάζ και τη διασφάλιση της συνοχής μεταξύ των σκηνών. Αυτή η καθυστέρηση επιβραδύνει τον ρυθμό δημοσίευσης και μειώνει τη διακράτηση του κοινού."
+        },
+        "solution": {
+          "title": "Ο Αυτοματοποιημένος Αφηγητής",
+          "description": "Μετατρέψτε γρήγορα τα σενάρια σε οπτικό υλικό έτοιμο για παραγωγή, διατηρώντας τη συνοχή των χαρακτήρων και του στυλ από την πρώτη σκηνή έως την τελική, έτοιμη προς δημοσίευση εκδοχή.",
+          "features": [
+            "Οπτικά στοιχεία που αντιστοιχούν άψογα στα επιμέρους σημεία του σεναρίου",
+            "Σταθεροί πρωταγωνιστές σε κάθε σκηνή",
+            "Κλιμάκωση σε σειρές επεισοδίων με κοινή βιβλιοθήκη αναφοράς"
+          ]
+        },
+        "win": "Μεταβείτε από τις περιστασιακές μεταφορτώσεις σε έναν αξιόπιστο ρυθμό παραγωγής, με λιγότερο διαχειριστικό φόρτο.",
+        "keyPhrases": [
+          "Ταχύτερη ολοκλήρωση",
+          "Συνεπείς χαρακτήρες",
+          "Ροή εργασίας έτοιμη για παραγωγή σειράς"
+        ]
+      },
+      "team": {
+        "label": "Εσωτερική ομάδα",
+        "title": "Η εσωτερική ομάδα βίντεο",
+        "beforeAfter": {
+          "before": "6 εβδομάδες",
+          "after": "Την ίδια εβδομάδα"
+        },
+        "challenge": {
+          "title": "Συσσώρευση εκκρεμοτήτων προμηθευτή & Απομάκρυνση από την ταυτότητα της επωνυμίας",
+          "description": "Οι ομάδες επικοινωνίας, εκπαίδευσης και ανάπτυξης (L&D) και μάρκετινγκ περιμένουν εβδομάδες για να λάβουν βίντεο από εξωτερικούς συνεργάτες ή προμηθευτές. Κάθε γύρισμα συνεπάγεται ασυνέπεια στην εικόνα της επωνυμίας, απρόβλεπτα τιμολόγια και χρονοβόρες διαδικασίες έγκρισης που καθυστερούν τις καμπάνιες."
+        },
+        "solution": {
+          "title": "Ενδοεπιχειρησιακή παραγωγή εντός της ίδιας εβδομάδας",
+          "description": "Αναθέστε στο προσωπικό την παραγωγή βίντεο με βάση έναν προβλέψιμο προϋπολογισμό σε μονάδες (credits) — αξιοποιώντας πρότυπα της επωνυμίας και διαδικασίες έγκρισης πριν από την τελική επεξεργασία, χωρίς χρεώσεις για ημέρες απασχόλησης συνεργείου ή κύκλους επεξεργασίας χωρίς χρονικό περιορισμό.",
+          "features": [
+            "Αντικαταστήστε τις φωτογραφήσεις από εξωτερικούς συνεργάτες με καθοδηγούμενες εσωτερικές διαδικασίες εργασίας.",
+            "Πρότυπα και βιβλιοθήκες αναφοράς συμβατά με την ταυτότητα της επωνυμίας",
+            "Εμφανής κατανάλωση πιστώσεων και όρια προϋπολογισμού ανά έργο",
+            "Εγκρίνετε τα storyboards πριν πληρώσετε για το τελικό βίντεο."
+          ]
+        },
+        "win": "Διαθέστε βίντεο εκπαίδευσης, επικοινωνίας και καμπανιών με βάση το δικό σας χρονοδιάγραμμα — και όχι τη λίστα εκκρεμοτήτων του προμηθευτή.",
+        "keyPhrases": [
+          "Προβλέψιμο κόστος",
+          "Έλεγχος της μάρκας",
+          "Ολοκλήρωση εντός της ίδιας εβδομάδας"
+        ]
+      },
+      "productionShop": {
+        "label": "Χώρος παραγωγής",
+        "title": "Η μονάδα εξειδικευμένης παραγωγής",
+        "beforeAfter": {
+          "before": "8.000 $ ανά γύρισμα",
+          "after": "Πίστωση 200 $"
+        },
+        "challenge": {
+          "title": "Εξειδικευμένοι κλάδοι, χωρίς επαναλήψιμο σύστημα",
+          "description": "Οι πελάτες στους τομείς των απομνημονευμάτων, της διατήρησης κληρονομιάς, του real estate και της εκπαίδευσης απαιτούν γρήγορη ολοκλήρωση εργασιών — ωστόσο, κάθε έργο ξεκινά από το μηδέν. Οι διαδικασίες που περιλαμβάνουν μεταφορτώσεις αρχείων, κλωνοποίηση φωνής και δημιουργία avatar δεν μπορούν να κλιμακωθούν χωρίς μια τυποποιημένη ροή εργασίας, από την αρχική λήψη αιτήματος έως την τελική παράδοση."
+        },
+        "solution": {
+          "title": "Μετατρέψτε την υπηρεσία βίντεο σε προϊόν",
+          "description": "Δημιουργήστε επαναλαμβανόμενες ροές εργασίας για στούντιο παραγωγής απομνημονευμάτων και εξειδικευμένους κλάδους. Από τη μεταφόρτωση προτύπων, την κλωνοποίηση φωνής και τη χρήση avatar έως την έγκριση του storyboard — προσαρμόστε τις διαδικασίες ανά πελάτη και αυξήστε το περιθώριο κέρδους μέσω της κλιμάκωσης του όγκου εργασιών.",
+          "features": [
+            "Πρότυπα για απομνημονεύματα με δυνατότητα μεταφόρτωσης φωτογραφιών, κλωνοποίηση φωνής και παρουσίαση από avatar",
+            "Η διαδικασία ένταξης πελάτη συνδέεται με το Blueprint και τα στάδια έγκρισης του storyboard.",
+            "Πακέτα στούντιο white-label για βίντεο ιστορικού χαρακτήρα, αφιερώματα και συνδρομητικό περιεχόμενο",
+            "Περιθώριο κέρδους επί των πιστώσεων αντί για πάγια έξοδα ανά γύρισμα"
+          ]
+        },
+        "win": "Ξεκινήστε μια υπηρεσία δημιουργίας βίντεο-απομνημονευμάτων ή μια εξειδικευμένη υπηρεσία στούντιο με επαναλαμβανόμενη διαδικασία παράδοσης — όχι μια περιστασιακή, εξουθενωτική δουλειά ελεύθερου επαγγελματία.",
+        "keyPhrases": [
+          "Πρότυπα για απομνημονεύματα",
+          "Ταυτότητα φωνής και avatar",
+          "Επαναλήψιμη παράδοση"
+        ]
+      },
+      "agency": {
+        "label": "Πρακτορείο",
+        "title": "Ο Υπεύθυνος Παράδοσης Έργων στον Πελάτη",
+        "beforeAfter": {
+          "before": "Παράδοση σε 3 εβδομάδες",
+          "after": "Παράδοση σε 3 ημέρες"
+        },
+        "challenge": {
+          "title": "Παροχή υπηρεσιών σε πελάτες σε μεγάλη κλίμακα",
+          "description": "Η ανάληψη του έργου είναι μόνο η μισή μάχη. Οι επαναλαμβανόμενες εργασίες για πελάτες απαιτούν γρήγορη ολοκλήρωση, σαφείς διαδικασίες έγκρισης και περιθώριο κέρδους σε κάθε παραδοτέο — χωρίς να χρειάζεται να στήνεται η παραγωγή από το μηδέν κάθε φορά."
+        },
+        "solution": {
+          "title": "Ρυθμός διεκπεραίωσης + Έγκριση πελάτη",
+          "description": "Μεταβείτε από την παρουσίαση προσφοράς (pitch) στην τακτική παράδοση έργων, διασφαλίζοντας τη συμμόρφωση με τις προδιαγραφές του brand, τον έλεγχο από τον πελάτη πριν από την τελική παραγωγή και το προβλέψιμο κόστος σε credits ανά έργο.",
+          "features": [
+            "Ταχεία προ-οπτικοποίηση για παρουσιάσεις και έγκριση από τον πελάτη",
+            "Επαναχρησιμοποιήσιμα πρότυπα για επαναλαμβανόμενες μορφές πελατών",
+            "Ορατότητα του προϋπολογισμού σε κάθε στάδιο επανάληψης",
+            "Κλιμακούμενη παροχή υπηρεσιών χωρίς αύξηση του προσωπικού"
+          ]
+        },
+        "win": "Ολοκληρώστε ταχύτερα τους κύκλους παρουσίασης προτάσεων και τη συνεχιζόμενη εργασία για πελάτες, με μειωμένο ρίσκο παραγωγής και υψηλότερο περιθώριο κέρδους.",
+        "keyPhrases": [
+          "Εγκρίσεις πελατών",
+          "Ρυθμός διεκπεραίωσης παραδόσεων",
+          "Προβλεψιμότητα του προϋπολογισμού"
+        ]
+      }
+    },
+    "segmentCtas": {
+      "creator": {
+        "label": "Ξεκινήστε τη δοκιμαστική πτήση παραγωγής σας",
+        "subtext": "9 $ εφάπαξ • 750 μονάδες • Πλήρης πρόσβαση στην πλατφόρμα"
+      },
+      "team": {
+        "label": "Κλείστε μια παρουσίαση για την ομάδα",
+        "subtext": "Δείτε πώς οι εσωτερικές ομάδες αντικαθιστούν τους κύκλους εργασιών των προμηθευτών."
+      },
+      "productionShop": {
+        "label": "Εξερευνήστε κάθετα πρότυπα",
+        "subtext": "Real Estate, εκπαίδευση, έγγραφα και άλλα — δείτε τι μπορείτε να μετατρέψετε σε προϊόν"
+      },
+      "agency": {
+        "label": "Δείτε τις τιμές για ομάδες",
+        "subtext": "Πλάνα για πρακτορεία και εταιρείες παραγωγής μεγάλης κλίμακας"
+      }
     },
     "categories": [
       {
-        "id": "property",
-        "title": "Property, Spaces & Hospitality",
+        "id": "ιδιοκτησία",
+        "title": "Ακίνητα, Χώροι & Φιλοξενία",
+        "qualifyingStatement": "Δημιουργούνται με βάση τις πραγματικές φωτογραφίες του ακινήτου σας και παρουσιάζονται ως μια εικονική περιήγηση με αφήγηση, η οποία έχει επεξεργαστεί μέσω τεχνητής νοημοσύνης ώστε να περιλαμβάνει τη φωνή και το avatar σας. Προσφέρουν μια ρεαλιστική προεπισκόπηση της διαρρύθμισης και των χαρακτηριστικών του χώρου, χωρίς ωστόσο να υποκαθιστούν την επίσκεψη από κοντά. Όλες οι περιηγήσεις φέρουν σαφή σήμανση.",
         "examples": [
           {
-            "id": "residential-real-estate",
-            "label": "Residential Real Estate",
-            "description": "Automated listing tours featuring the agent's cloned voice and avatar identity."
+            "id": "οικιστικά ακίνητα",
+            "label": "Οικιστικά ακίνητα",
+            "description": "Φανταστείτε να ανεβάζετε φωτογραφίες του ακινήτου σας μαζί με την αποθηκευμένη ψηφιακή σας μορφή (avatar) και τη φωνή σας. Και στη συνέχεια, να δημιουργείτε άμεσα μια επαγγελματική παρουσίαση-ξενάγηση του ακινήτου με τη δική σας εικόνα και φωνή — σε περισσότερες από 70 γλώσσες."
           },
           {
-            "id": "commercial-real-estate",
-            "label": "Commercial Real Estate",
-            "description": "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data."
+            "id": "εμπορικά ακίνητα",
+            "label": "Εμπορικά ακίνητα",
+            "description": "Φανταστείτε να ανεβάζετε κατόψεις, φωτορεαλιστικές απεικονίσεις και στοιχεία για την περιοχή, συνδυάζοντάς τα με την αποθηκευμένη φωνή και το avatar του μεσίτη σας. Και στη συνέχεια, να δημιουργείτε άμεσα παρουσιάσεις-περιηγήσεις για επενδυτές που ζωντανεύουν κάθε τετραγωνικό πόδι του χώρου — προσαρμοσμένες σε περισσότερες από 70 γλώσσες."
           },
           {
-            "id": "short-term-rentals",
-            "label": "Short-Term Rentals",
-            "description": "Automated \"Digital Welcome Books\" that walk guests through house features and local \"best of\" spots."
+            "id": "βραχυπρόθεσμες μισθώσεις",
+            "label": "Βραχυπρόθεσμες μισθώσεις",
+            "description": "Φανταστείτε να ανεβάζετε φωτογραφίες του σπιτιού και πληροφορίες για τις παροχές, συνοδευόμενες από την ηχογραφημένη φωνή του οικοδεσπότη. Και στη συνέχεια, να δημοσιεύετε άμεσα ψηφιακά βίντεο καλωσορίσματος που χαιρετούν κάθε επισκέπτη στη γλώσσα του — πριν καν εκείνος κάνει check-in."
           },
           {
-            "id": "hospitality-tourism",
-            "label": "Hospitality & Tourism",
-            "description": "Hotel virtual tours and narrated travel itineraries for agencies."
+            "id": "φιλοξενία και τουρισμός",
+            "label": "Φιλοξενία και Τουρισμός",
+            "description": "Φανταστείτε να ανεβάζετε φωτογραφίες ξενοδοχείων και τα κυριότερα σημεία ενός δρομολογίου, χρησιμοποιώντας την αποθηκευμένη φωνή παρουσιαστή και το avatar της επωνυμίας σας. Και στη συνέχεια, να διαθέτετε άμεσα εικονικές περιηγήσεις και ταξιδιωτικούς οδηγούς με αφήγηση σε περισσότερες από 70 γλώσσες — χωρίς να απαιτείται συνεργείο κινηματογράφησης σε κάθε κατάλυμα."
           },
           {
-            "id": "museum-gallery-guides",
-            "label": "Museum & Gallery Guides",
-            "description": "Multi-language audio-visual \"tours\" for exhibitions that can be updated JIT as exhibits change."
+            "id": "Οδηγοί μουσείων και γκαλερί",
+            "label": "Οδηγοί Μουσείων και Γκαλερί",
+            "description": "Φανταστείτε να ανεβάζετε φωτογραφίες εκθεμάτων και σημειώσεις των επιμελητών καθώς αλλάζουν οι εκθέσεις. Και στη συνέχεια, να ανανεώνετε άμεσα τις ηχογραφημένες ξεναγήσεις σε περισσότερες από 70 γλώσσες — χωρίς να χρειάζεται νέα λήψη όταν η έκθεση αλλάζει μορφή."
           }
         ]
       },
       {
-        "id": "knowledge",
-        "title": "Knowledge, Training & Education",
+        "id": "γνώση",
+        "title": "Γνώση, Κατάρτιση & Εκπαίδευση",
         "examples": [
           {
-            "id": "k12-higher-ed",
-            "label": "K-12 & Higher Ed",
-            "description": "30-minute curriculum modules that can be instantly localized for ESL students or global campuses."
+            "id": "Πρωτοβάθμια/Δευτεροβάθμια και Τριτοβάθμια Εκπαίδευση",
+            "label": "Πρωτοβάθμια & Δευτεροβάθμια Εκπαίδευση & Τριτοβάθμια Εκπαίδευση",
+            "description": "Φανταστείτε να ανεβάζετε εκπαιδευτικό υλικό χρησιμοποιώντας την αποθηκευμένη φωνή και το ψηφιακό avatar του εκπαιδευτή σας. Και στη συνέχεια, να δημιουργείτε άμεσα ολοκληρωμένες ενότητες προγράμματος σπουδών, τις οποίες οι φοιτητές σας —είτε παρακολουθούν μαθήματα ESL είτε συμμετέχουν σε ένα παγκόσμιο εκπαιδευτικό δίκτυο— μπορούν να παρακολουθήσουν σε περισσότερες από 70 γλώσσες."
           },
           {
-            "id": "corporate-ld",
-            "label": "Corporate L&D",
-            "description": "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices."
+            "id": "εταιρική ταυτότητα",
+            "label": "Εταιρική Μάθηση και Ανάπτυξη",
+            "description": "Φανταστείτε να ανεβάζετε σενάρια συμμόρφωσης χρησιμοποιώντας την αποθηκευμένη φωνή και το avatar του εκπαιδευτή σας. Και στη συνέχεια, να υλοποιείτε άμεσα μια ενιαία διαδικασία ένταξης και εκπαίδευσης σε θέματα ασφάλειας σε όλα τα γραφεία — προσαρμοσμένη σε περισσότερες από 70 γλώσσες."
           },
           {
-            "id": "software-saas-tutorials",
-            "label": "Software SaaS Tutorials",
-            "description": "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion."
+            "id": "Οδηγοί για λογισμικό και SaaS",
+            "label": "Οδηγίες χρήσης λογισμικού SaaS",
+            "description": "Φανταστείτε να ανεβάζετε στιγμιότυπα οθόνης του UI ως πλαίσια αναφοράς, συνδυασμένα με την ηχογραφημένη φωνή του ειδικού του προϊόντος σας. Και στη συνέχεια, να δημιουργείτε άμεσα βίντεο-οδηγούς που ζωντανεύουν κάθε κλικ — ενημερωμένα την ίδια μέρα που κυκλοφορεί το UI σας."
           },
           {
-            "id": "niche-skill-tutoring",
-            "label": "Niche Skill Tutoring",
-            "description": "Professional \"How-To\" series for cooking, DIY, or technical certifications."
+            "id": "Διδασκαλία εξειδικευμένων δεξιοτήτων",
+            "label": "Διδασκαλία εξειδικευμένων δεξιοτήτων",
+            "description": "Φανταστείτε να ανεβάζετε φωτογραφίες των επιμέρους βημάτων, συνδυάζοντάς τις με την αποθηκευμένη φωνή και το ψηφιακό μοντέλο του εκπαιδευτή σας. Και στη συνέχεια, να δημοσιεύετε άμεσα επαγγελματικές σειρές οδηγιών —για μαγειρική, κατασκευές (DIY) ή προετοιμασία για πιστοποίηση— σε περισσότερες από 70 γλώσσες."
           },
           {
-            "id": "medical-patient-education",
-            "label": "Medical/Patient Education",
-            "description": "Narrated explanations of surgical procedures or medication management for hospitals and clinics."
+            "id": "Ιατρική ενημέρωση και εκπαίδευση ασθενών",
+            "label": "Ιατρική εκπαίδευση / Εκπαίδευση ασθενών",
+            "description": "Φανταστείτε να ανεβάζετε διαγράμματα διαδικασιών μαζί με την εγκεκριμένη και αποθηκευμένη φωνή του κλινικού ιατρού. Και στη συνέχεια, να δημιουργείτε άμεσα σαφή εκπαιδευτικά βίντεο για τους ασθενείς, τα οποία μπορούν να κατανοήσουν οι οικογένειες σε περισσότερες από 70 γλώσσες."
           },
           {
-            "id": "video-memoirs",
-            "label": "Video Memoirs",
-            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+            "id": "βιντεο-απομνημονεύματα",
+            "label": "Βιντεοσκοπημένα απομνημονεύματα",
+            "description": "Φανταστείτε να ανεβάζετε οικογενειακές φωτογραφίες, ηχογραφήσεις συνεντεύξεων και σημειώσεις για τις σκηνές, μαζί με μια αποθηκευμένη φωνή αφηγητή. Στη συνέχεια, δημιουργείτε άμεσα βίντεο-αναμνήσεις χωρισμένα σε κεφάλαια — εγκρίνοντας το storyboard πριν από την τελική επεξεργασία και εξαγωγή του βίντεο."
           }
         ]
       },
       {
-        "id": "jit",
+        "id": "νεαρός",
         "title": "JIT Media & Information",
         "examples": [
           {
-            "id": "hyper-local-news",
-            "label": "Hyper-Local News",
-            "description": "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive."
+            "id": "υπερτοπικές ειδήσεις",
+            "label": "Υπερτοπικές ειδήσεις",
+            "description": "Φανταστείτε να ανεβάζετε τις φωτογραφίες και τα δελτία της ημέρας χρησιμοποιώντας την αποθηκευμένη φωνή του παρουσιαστή σας. Και στη συνέχεια, να δημοσιεύετε άμεσα μια καθημερινή ενημέρωση για τα νέα της γειτονιάς — χωρίς συνεργείο λήψης και χωρίς να χάνετε καμία προθεσμία."
           },
           {
-            "id": "financial-market-recaps",
-            "label": "Financial & Market Recaps",
-            "description": "Turning daily stock market or crypto data into 3-minute narrated visual digests."
+            "id": "Ανακεφαλαιώσεις χρηματοπιστωτικών αγορών",
+            "label": "Οικονομικές και χρηματιστηριακές ανασκοπήσεις",
+            "description": "Φανταστείτε να ανεβάζετε κάθε πρωί δεδομένα της αγοράς και στιγμιότυπα διαγραμμάτων, συνδυάζοντάς τα με την ηχογραφημένη φωνή του αναλυτή σας. Και στη συνέχεια, να τα μετατρέπετε άμεσα σε μια οπτική σύνοψη με αφήγηση — έτοιμη πριν από το καμπανάκι της έναρξης."
           },
           {
-            "id": "sports-commentary",
-            "label": "Sports Commentary",
-            "description": "Automated \"recap\" videos using game stats and static photography turned into F2V action."
+            "id": "αθλητικός σχολιασμός",
+            "label": "Αθλητικός σχολιασμός",
+            "description": "Φανταστείτε να ανεβάζετε στατιστικά αγώνα και φωτογραφίες, συνδυάζοντάς τα με την ηχογραφημένη φωνή του σχολιαστή σας. Και στη συνέχεια, να δημιουργείτε άμεσα βίντεο ανασκόπησης με κινούμενα γραφικά της δράσης — τα οποία δημοσιεύονται την ώρα που οι φίλαθλοι συζητούν ακόμα για το παιχνίδι."
           },
           {
-            "id": "true-crime-historical-docs",
-            "label": "True Crime & Historical Docs",
-            "description": "Using the Reference Library to keep historical figures consistent across a multi-part documentary series."
+            "id": "Ιστορικά ντοκιμαντέρ για πραγματικά εγκλήματα",
+            "label": "Ντοκιμαντέρ αληθινών εγκλημάτων και ιστορικά ντοκιμαντέρ",
+            "description": "Φανταστείτε να «κλειδώνετε» ιστορικά πρόσωπα στο Reference Library σας μία φορά. Και στη συνέχεια να παράγετε άμεσα επεισόδια πολλών μερών, όπου κάθε πρόσωπο και φωνή παραμένουν σταθερά — από τη μία σειρά στην άλλη."
           },
           {
-            "id": "weather-emergency-alerts",
-            "label": "Weather & Emergency Alerts",
-            "description": "Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms."
+            "id": "Ειδοποιήσεις έκτακτης ανάγκης για τον καιρό",
+            "label": "Ειδοποιήσεις καιρού και έκτακτης ανάγκης",
+            "description": "Φανταστείτε να ανεβάζετε ανακοινώσεις έκτακτης ανάγκης χρησιμοποιώντας την αξιόπιστη, αποθηκευμένη φωνή του οργανισμού σας. Και στη συνέχεια, να μεταδίδετε άμεσα σαφείς ειδοποιήσεις σε περισσότερες από 70 γλώσσες μέσω των μέσων κοινωνικής δικτύωσης — μέσα σε λίγα λεπτά, όχι ημέρες."
           }
         ]
       },
       {
-        "id": "b2b",
-        "title": "B2B Marketing & Sales",
+        "id": "B2B",
+        "title": "Μάρκετινγκ και Πωλήσεις B2B",
         "examples": [
           {
-            "id": "product-explainer-videos",
-            "label": "Product Explainer Videos",
-            "description": "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos."
+            "id": "βίντεο επεξήγησης προϊόντος",
+            "label": "Βίντεο επεξήγησης προϊόντος",
+            "description": "Φανταστείτε να ανεβάζετε φωτογραφίες προϊόντων από τον κατάλογό σας, χρησιμοποιώντας τη φωνή του παρουσιαστή και το avatar που έχουν αποθηκευτεί για το brand σας. Στη συνέχεια, δημιουργείτε άμεσα μια σειρά επεξηγηματικών βίντεο κινηματογραφικής αισθητικής — εγκρίνοντας το storyboard πριν από την τελική παραγωγή (render)."
           },
           {
-            "id": "case-study-testimonials",
-            "label": "Case Study/Testimonials",
-            "description": "Using client headshots and project photos to create high-end visual success stories."
+            "id": "Μαρτυρίες πελατών για μελέτες περίπτωσης",
+            "label": "Μελέτη Περίπτωσης/Μαρτυρίες",
+            "description": "Φανταστείτε να ανεβάζετε φωτογραφίες προσώπων πελατών, φωτογραφίες έργων και δείκτες επιτυχίας, συνδυάζοντάς τα με μια αποθηκευμένη φωνή αφηγητή. Και στη συνέχεια, να δημιουργείτε άμεσα καλαίσθητες οπτικές παρουσιάσεις μελετών περίπτωσης — χωρίς να χρειάζεται γύρισμα για μαρτυρίες πελατών."
           },
           {
-            "id": "recruitment-branding",
-            "label": "Recruitment & Branding",
-            "description": "Giving candidates a narrated \"day in the life\" tour of the office and culture."
+            "id": "branding προσέλκυσης υποψηφίων",
+            "label": "Προσλήψεις & Branding",
+            "description": "Φανταστείτε να ανεβάζετε φωτογραφίες του γραφείου και στιγμιότυπα της εταιρικής κουλτούρας, συνδυάζοντάς τα με την αποθηκευμένη φωνή και το avatar του υπεύθυνου προσλήψεων. Και στη συνέχεια, να προσφέρετε άμεσα στους υποψηφίους μια ξενάγηση στην καθημερινότητα της εταιρείας — σε περισσότερες από 70 γλώσσες, για προσλήψεις σε παγκόσμιο επίπεδο."
           },
           {
-            "id": "conference-event-promos",
-            "label": "Conference & Event Promos",
-            "description": "Automated \"Speaker Bio\" videos and \"What to Expect\" guides for large-scale events."
+            "id": "Προωθητικές ενέργειες για συνέδρια και εκδηλώσεις",
+            "label": "Προωθητικές ενέργειες για συνέδρια και εκδηλώσεις",
+            "description": "Φανταστείτε να ανεβάζετε τα βιογραφικά των ομιλητών, τις λεπτομέρειες των ενοτήτων και φωτογραφίες του χώρου, συνδυάζοντάς τα με την αποθηκευμένη φωνή του παρουσιαστή της εκδήλωσης. Και στη συνέχεια, να δημιουργείτε άμεσα εισαγωγές για τους ομιλητές και οδηγούς ενημέρωσης για το πρόγραμμα — οι οποίοι θα ανανεώνονται αυτόματα κάθε φορά που αλλάζει η ατζέντα."
           }
         ]
       },
       {
-        "id": "public",
-        "title": "Public Sector & Advocacy",
+        "id": "δημόσιος",
+        "title": "Δημόσιος Τομέας και Υπεράσπιση Συμφερόντων",
         "examples": [
           {
-            "id": "ngo-impact-reports",
-            "label": "NGO Impact Reports",
-            "description": "Turning data and field photography into emotive, narrated videos for donors."
+            "id": "εκθέσεις αντίκτυπου ΜΚΟ",
+            "label": "Εκθέσεις Αντικτύπου ΜΚΟ",
+            "description": "Φανταστείτε να ανεβάζετε φωτογραφίες από το πεδίο και δεδομένα σχετικά με τον αντίκτυπο της δράσης σας, συνδυάζοντάς τα με την αποθηκευμένη φωνή αφηγητή του οργανισμού σας. Και στη συνέχεια, να μετατρέπετε άμεσα τις αναφορές προς τους δωρητές σε συγκινητικά βίντεο με αφήγηση — δίνοντας φωνή στην αποστολή σας, αντί για μια απλή παρουσίαση διαφανειών."
           },
           {
-            "id": "public-health-announcements",
-            "label": "Public Health Announcements",
-            "description": "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity."
+            "id": "ανακοινώσεις δημόσιας υγείας",
+            "label": "Ανακοινώσεις Δημόσιας Υγείας",
+            "description": "Φανταστείτε να ανεβάζετε εγκεκριμένα μηνύματα για θέματα υγείας, χρησιμοποιώντας την αξιόπιστη, αποθηκευμένη φωνή του τμήματός σας. Και στη συνέχεια, να προσεγγίζετε άμεσα κάθε κοινότητα σε περισσότερες από 70 γλώσσες — με την ίδια σαφήνεια, τον ίδιο βαθμό επείγοντος και μηδενική καθυστέρηση λόγω μετάφρασης."
           },
           {
-            "id": "legal-insurance-explainers",
-            "label": "Legal & Insurance Explainers",
-            "description": "Helping clients understand complex contracts or claim processes through narrated visual breakdowns."
+            "id": "Επεξηγηματικά κείμενα για νομικά και ασφαλιστικά θέματα",
+            "label": "Επεξηγηματικά κείμενα για νομικά και ασφαλιστικά θέματα",
+            "description": "Φανταστείτε να ανεβάζετε περιλήψεις συμβολαίων και διαγράμματα διαδικασιών, συνοδευόμενα από την ηχογραφημένη φωνή του συμβούλου σας. Και στη συνέχεια, να δημιουργείτε άμεσα οπτικές αναλύσεις που οι πελάτες όντως κατανοούν — προτού υπογράψουν ή υποβάλουν αίτημα αποζημίωσης."
           },
           {
-            "id": "religious-spiritual-teachings",
-            "label": "Religious & Spiritual Teachings",
-            "description": "Converting sermons or texts into a consistent, narrated daily video series for global congregations."
+            "id": "θρησκευτικές και πνευματικές διδασκαλίες",
+            "label": "Θρησκευτικές και πνευματικές διδασκαλίες",
+            "description": "Φανταστείτε να ανεβάζετε σημειώσεις κηρυγμάτων ή ιερά κείμενα, ενσωματώνοντας την αποθηκευμένη φωνή και παρουσία του δασκάλου σας. Και στη συνέχεια, να δημοσιεύετε άμεσα μια σταθερή σειρά καθημερινών βίντεο για εκκλησιαστικά ακροατήρια σε όλο τον κόσμο — σε περισσότερες από 70 γλώσσες."
           }
         ]
       }
     ]
   },
   "institutionalRoi": {
-    "badge": "For in-house teams & institutions",
-    "title": "Replace vendor shoots with predictable in-house production",
-    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
+    "badge": "Για εσωτερικές ομάδες και οργανισμούς",
+    "title": "Αντικαταστήστε τις φωτογραφήσεις/βιντεοσκοπήσεις από εξωτερικούς συνεργάτες με προβλέψιμη εσωτερική παραγωγή.",
+    "subtitle": "Ομάδες επικοινωνίας, εκπαίδευσης & ανάπτυξης (L&D) και μάρκετινγκ, αποτελούμενες από 1 έως 5 άτομα, μπορούν να ολοκληρώσουν και να παραδώσουν βίντεο εντός της ίδιας εβδομάδας, χωρίς να δεσμεύονται με συμβόλαια παροχής υπηρεσιών σε εξωτερικές εταιρείες ή να εμπλέκονται σε ατέρμονες διαδικασίες επεξεργασίας.",
     "comparisons": [
       {
-        "label": "Traditional vendor shoot + edit",
-        "cost": "$5,000–$15,000",
-        "timeline": "4–8 weeks"
+        "label": "Παραδοσιακή φωτογράφιση και επεξεργασία για επαγγελματίες του κλάδου",
+        "cost": "5.000 $ – 15.000 $",
+        "timeline": "4–8 εβδομάδες"
       },
       {
-        "label": "SceneFlow in-house workflow",
-        "cost": "$50–$500 in credits",
-        "timeline": "Same week"
+        "label": "SceneFlow εσωτερική ροή εργασιών",
+        "cost": "Πιστωτικό υπόλοιπο 50–500 $",
+        "timeline": "Την ίδια εβδομάδα"
       }
     ],
     "bullets": [
-      "Brand-safe templates and approval before final render",
-      "Budget caps with visible credit spend per project",
-      "No crew days, no edit back-and-forth on every revision"
+      "Πρότυπα συμβατά με την ταυτότητα της επωνυμίας και έγκριση πριν από την τελική παραγωγή",
+      "Όρια προϋπολογισμού με ορατή κατανάλωση πιστώσεων ανά έργο",
+      "Χωρίς ημέρες απασχόλησης συνεργείου, χωρίς ατέρμονες ανταλλαγές για κάθε αναθεώρηση της επεξεργασίας"
     ],
-    "ctaPrimary": "Book a team walkthrough",
-    "ctaSecondary": "See pricing",
-    "typicalCost": "Typical cost",
-    "timeline": "Timeline"
+    "ctaPrimary": "Κλείστε μια παρουσίαση για την ομάδα",
+    "ctaSecondary": "Δείτε τις τιμές",
+    "typicalCost": "Τυπικό κόστος",
+    "timeline": "Χρονοδιάγραμμα"
   },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Studio feature deep dive",
-    "close": "Close",
-    "viewDetails": "View Details",
+    "badge": "Ξενάγηση",
+    "title": "Παρουσίαση της πλατφόρμας",
+    "subtitle": "Ένας πλήρης οδηγός για τη ροή εργασίας SceneFlow AI Studio, από τις αξιολογήσεις στο πλαίσιο της συνεργασίας έως το τελικό κινηματογραφικό αποτέλεσμα.",
+    "subheading": "Εξερευνήστε την πλατφόρμα — ξεκινήστε με τα βασικά",
+    "chapterHint": "Τέσσερα πράγματα που πρέπει να γνωρίζετε σήμερα. Αναπτύξτε τις ενότητες όταν θέλετε να έχετε την πλήρη εικόνα.",
+    "expandChapter": "Χαρακτηριστικά της εκπομπής",
+    "collapseChapter": "Απόκρυψη δυνατοτήτων",
+    "underTheHoodLabel": "Κάτω από το καπό",
+    "chapters": [
+      {
+        "id": "βασικά είδη",
+        "label": "Ξεκινήστε εδώ — τι λαμβάνετε την πρώτη μέρα"
+      },
+      {
+        "id": "ποιότητα",
+        "label": "Κάν' το να έχει απήχηση στο κοινό σου"
+      },
+      {
+        "id": "παραγωγή",
+        "label": "Από τα εγκεκριμένα beats στην τελική κυκλοφορία"
+      },
+      {
+        "id": "προχωρημένος",
+        "label": "Για ομάδες που επιθυμούν δυνατότητες χρέωσης και διακυβέρνησης"
+      }
+    ],
+    "close": "Κλείσιμο",
+    "viewDetails": "Προβολή λεπτομερειών",
     "beatFirst": {
-      "id": 15,
-      "title": "Beat-First Video Pipeline",
-      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "title": "Ροή εργασιών βίντεο με προτεραιότητα στον ρυθμό",
+      "description": "Εγκρίνετε τα βασικά σημεία του storyboard και το Beat Frames πριν από το στάδιο F2V — έτσι μειώνονται οι τυφλές αναδημιουργίες που οφείλονται σε «παραισθήσεις» (hallucinations) και οπτικές αποκλίσεις. Μια ενιαία, δομημένη διαδρομή από την αξιολόγηση έως το τελικό βίντεο.",
       "keyFeatures": [
-        "Express storyboard for review — share beats before heavy render",
-        "Beat Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "Express storyboard για έλεγχο — κοινοποίηση των beats πριν από τη βαριά διαδικασία rendering",
+        "Beat Frames σύνθεση κλειδώματος — Reference Library συνέχεια",
+        "F2V ανά χτύπο — δημιουργία βίντεο από εγκεκριμένα καρέ",
+        "Χρονισμός και ροές του μίκτη — εξαγωγή στη διάταξη Final Cut"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
-      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+      "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Beat Frames και έγκριση του storyboard πριν από τη δημιουργία του βίντεο",
+      "videoSlot": "Εισαγωγή αποσπάσματος 00:30: Έγκριση beats, κλείδωμα καρέ και στη συνέχεια δημιουργία αποσπασμάτων F2V."
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "title": "Αξιολόγηση και αναλυτικά στοιχεία κοινού",
+      "description": "Ιδιωτικοί σύνδεσμοι κοινοποίησης για τα ενδιαφερόμενα μέρη — χειροκίνητη βαθμολόγηση, δομημένα σχόλια και προαιρετικά αναλυτικά στοιχεία αλληλεπίδρασης (με τη συγκατάθεση του θεατή). Χρησιμοποιούνται στο Premiere πριν από τη δημοσίευση και για την προεπισκόπηση του storyboard παραγωγής.",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "Ιδιωτικές συνεδρίες αξιολόγησης — ασφαλείς σύνδεσμοι κοινής χρήσης για τα ενδιαφερόμενα μέρη",
+        "Δομημένη ανατροφοδότηση από το κοινό — βαθμολογίες και ερωτήματα ανοιχτού τύπου",
+        "Προαιρετικά αναλυτικά στοιχεία αλληλεπίδρασης — με τη συγκατάθεση του θεατή πριν από την καταγραφή",
+        "Πραγματοποίηση επαναληπτικών βημάτων με βάση πραγματικά δεδομένα — βελτίωση του Blueprint και του σεναρίου βάσει των επισημάνσεων των αξιολογητών."
       ],
-      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Πίνακας αναλυτικών στοιχείων και σχολίων αξιολογητή Screening Room",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      "videoSlot": "Εισαγωγή αποσπάσματος 00:30: Διεξαγωγή συνεδρίας ανασκόπησης και συλλογή δεδομένων αλληλεπίδρασης"
+    },
+    "ui": {
+      "screenshot": "Στιγμιότυπο οθόνης",
+      "video": "Βίντεο",
+      "featureVideo": "Κύριο βίντεο",
+      "keyFeatures": "Βασικά χαρακτηριστικά",
+      "openScreenshot": "Άνοιγμα στιγμιότυπου οθόνης",
+      "openFeatureVideo": "Άνοιγμα βίντεο παρουσίασης",
+      "expandImage": "Μεγέθυνση εικόνας",
+      "closePreview": "Κλείσιμο προεπισκόπησης"
+    },
+    "items": [
+      {
+        "id": "1",
+        "title": "Διαισθητική εμπειρία χρήστη + Πλήρης έλεγχος για τον δημιουργό",
+        "description": "Ξεκινήστε γρήγορα με την καθοδηγούμενη αυτοματοποίηση και, στη συνέχεια, επεξεργαστείτε κάθε παραγόμενο αποτέλεσμα, ώστε οι ομάδες να διατηρούν τον δημιουργικό έλεγχο χωρίς να χάνουν σε ταχύτητα.",
+        "keyFeatures": [
+          "Καθοδηγούμενη ροή εργασίας στο Studio — από την ιδέα έως την εξαγωγή, σε ένα ενιαίο περιβάλλον.",
+          "Επεξεργαστείτε απευθείας κάθε αφηγηματικό στοιχείο, χαρακτήρα και ατάκα που δημιουργήθηκε από την τεχνητή νοημοσύνη.",
+          "Παραλλαγές προσέγγισης — παράλληλη σύγκριση για τη δημιουργική κατεύθυνση",
+          "Blueprint Συνεργαστείτε — μοιραστείτε συνδέσμους, ηχητικά αποσπάσματα και δομημένα σχόλια από αξιολογητές."
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Επεξεργαστής Blueprint με επεξεργάσιμες παραγόμενες ενότητες",
+        "videoSlot": "Εισαγωγή αποσπάσματος 00:30: Ροή UX από την ιδέα έως το επεξεργάσιμο αποτέλεσμα"
+      },
+      {
+        "id": "2",
+        "title": "Προϋπολογισμός Πιστώσεων & Έλεγχος Κόστους",
+        "description": "Παρακολουθήστε τη χρήση των credits σε πραγματικό χρόνο και ορίστε δικλείδες ασφαλείας πριν από δαπανηρές διαδικασίες παραγωγής.",
+        "keyFeatures": [
+          "Χρήση πιστωτικών μονάδων σε πραγματικό χρόνο — ανά έργο και λειτουργία",
+          "Δικλείδες ασφαλείας για την παραγωγή — πριν από δαπανηρές διαδικασίες παραγωγής",
+          "Διαφανείς τιμοκατάλογοι — για TTS, βίντεο και ευφυΐα",
+          "Ορατότητα προϋπολογισμού — για ομάδες και μεμονωμένους δημιουργούς"
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: πίνακας χρήσης πιστώσεων και ρυθμίσεις BYOK",
+        "videoSlot": "Εισαγωγή αποσπάσματος 00:30: πίνακας ελέγχου προϋπολογισμού και βασικές ρυθμίσεις",
+        "underTheHood": {
+          "title": "Κάτω από το καπό",
+          "body": "Για ομάδες παραγωγής με υφιστάμενες συμβάσεις cloud:",
+          "bullets": [
+            "Vertex AI BYOK — τιμολόγηση και διακυβέρνηση σε επίπεδο επιχείρησης",
+            "Διακόπτες επιλογής παρόχων στον υπολογιστή πίστωσης",
+            "Διαφανείς τιμοκατάλογοι της πλατφόρμας, δίπλα στα κλειδιά σας"
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "title": "Οποιαδήποτε ιδέα, μία ροή εργασιών παραγωγής",
+        "description": "Χρησιμοποιήστε μία αξιόπιστη ροή εργασιών για εκπαίδευση, podcast, ειδήσεις, βίντεο πώλησης κατοικιών και κινηματογραφικό περιεχόμενο.",
+        "keyFeatures": [
+          "Μία ενιαία ροή παραγωγής — podcast, ειδήσεις, εκπαίδευση, ακίνητα και κινηματογραφικές μορφές περιεχομένου",
+          "Πρότυπα έργων — Το Studio προσαρμόζεται στο υλικό προέλευσής σας",
+          "Ίδια Blueprint → Σενάριο → Διαδρομή παραγωγής — ανεξαρτήτως είδους",
+          "Χωρίς εναλλαγή εργαλείων — από τη σύλληψη της ιδέας έως την παράδοση"
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Προβολή σε διαχωρισμένα τμήματα ή πλέγμα που δείχνει πρότυπα για Podcast, Ειδήσεις, Ακίνητα και Κινηματογραφικές παραγωγές να τροφοδοτούν μια ενιαία διεπαφή ροής εργασιών SceneFlow.",
+        "videoSlot": "Εισαγωγή κλιπ διάρκειας 00:30: «Ξεκινήστε με οποιοδήποτε υλικό...» – επιλογή «Νέο Έργο» -> «Podcast» (το περιβάλλον εργασίας προσαρμόζεται για ήχο) και, στη συνέχεια, προβολή σε διαχωρισμένη οθόνη όπου έργα ειδήσεων και κινηματογραφικού τύπου συγκλίνουν στον επεξεργαστή Blueprint."
+      },
+      {
+        "id": "4",
+        "title": "Έξυπνος αυτοματισμός με έλεγχο επεξεργασίας ακριβείας",
+        "description": "Η πλατφόρμα SceneFlow αξιοποιεί την ευφυΐα για την αυτόματη δημιουργία μιας επαγγελματικής βάσης (σειρά, προσχέδιο, σενάριο, οδηγίες παραγωγής και επεξεργασίες), παρέχοντας παράλληλα έξυπνες δυνατότητες διαλόγου που σας προσφέρουν πλήρη έλεγχο της επεξεργασίας, με ενσωματωμένες δικλείδες ασφαλείας.",
+        "keyFeatures": [
+          "Βασικά στοιχεία AI με μία κίνηση — σειρά, προσχέδιο, σενάριο και prompts παραγωγής",
+          "Έξυπνα παράθυρα διαλόγου επεξεργασίας — δικλείδες ασφαλείας, όχι τυφλές αναδιατυπώσεις",
+          "Αποδοχή, βελτίωση ή απόρριψη — κάθε πρόταση παραμένει υπό τον έλεγχό σας.",
+          "Άνθρωπος στη διαδικασία — σε κάθε φάση της παραγωγής"
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Έξυπνο παράθυρο διαλόγου που εμφανίζει τη δημιουργία γραμμής βάσης με στοιχεία ελέγχου επεξεργασίας.",
+        "videoSlot": "Εισαγωγή αποσπάσματος 00:30: Δημιουργία βασικού σχεδίου από την ΤΝ, ακολουθούμενη από ακριβείς τροποποιήσεις από τον χρήστη."
+      },
+      {
+        "id": "5",
+        "title": "Κοινοποιήθηκε το Reference Library για τη Συνέχεια",
+        "description": "Διατηρήστε τη συνέπεια σε χαρακτήρες, ενδυμασία, φωνές, τοποθεσίες και σκηνικά αντικείμενα σε όλες τις σκηνές και τα επεισόδια, χρησιμοποιώντας επαναχρησιμοποιήσιμες αναφορές.",
+        "keyFeatures": [
+          "Επαναχρησιμοποιήσιμα προφίλ — χαρακτήρες, ενδυμασία, φωνές, τοποθεσίες και σκηνικά αντικείμενα",
+          "Εφαρμογή σε διαφορετικά πεδία — οι αναφορές διαχέονται σε κάθε γενιά",
+          "Οπτική συνέπεια — ίδια πρόσωπα και ύφος στα αποτελέσματα των Imagen και Veo",
+          "Συνέχεια σε κλίμακα franchise — σχεδιασμένη για σειρές πολλών επεισοδίων"
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Βιβλιοθήκη αναφοράς που απεικονίζει τη συνέχεια χαρακτήρων και σκηνικών αντικειμένων.",
+        "videoSlot": "Εισαγωγή αποσπάσματος 00:30: Εφαρμογή αναφορών σε πολλαπλές σκηνές"
+      },
+      {
+        "id": "6",
+        "title": "Μηχανή Ταχείας Παραγωγής",
+        "description": "Δημιουργήστε αυτόματα εικόνες και τμήματα βίντεο ταυτόχρονα. Το Express Storyboard σάς επιτρέπει να ελέγχετε και να κοινοποιείτε οπτικοακουστικά storyboard μέσα σε λίγα λεπτά. Το Express Storyboard δημιουργεί πλήρεις σκηνές τύπου Ken Burns μέσα σε λίγα λεπτά, ενώ το Express Video παράγει τελικές σκηνές βίντεο σε λεπτά αντί για ημέρες.",
+        "keyFeatures": [
+          "Ταυτόχρονη παραγωγή — εικόνες και βίντεο σε διάφορες σκηνές ταυτόχρονα",
+          "Express Storyboard — οπτικοακουστικές προεπισκοπήσεις για κοινή χρήση, μέσα σε λίγα λεπτά",
+          "Express Animatics — Κίνηση τύπου Ken Burns σε ακίνητες εικόνες",
+          "Express Video — αποσπάσματα σε επίπεδο σκηνής μέσα σε λίγα λεπτά, όχι ημέρες"
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Πίνακας ελέγχου ταχείας δημιουργίας με Animatic και πρόοδο βίντεο",
+        "videoSlot": "Εισαγωγή αποσπάσματος διάρκειας 00:30: Ταυτόχρονη παραγωγή που μετατρέπει το σενάριο σε animatic και, στη συνέχεια, σε τελικό βίντεο."
+      },
+      {
+        "id": "7",
+        "title": "Επεξεργαστής Audience Resonance",
+        "description": "Καθορίστε το κοινό-στόχο σας για να λάβετε άμεσα βαθμολογία, ανάλυση και προτάσεις. Εφαρμόστε διορθώσεις με ένα κλικ ή χρησιμοποιήστε τις Καθοδηγούμενες Επεξεργασίες (Guided Edits) για να βελτιστοποιήσετε πλήρως τα επεισόδια, το Blueprint και το σενάριό σας, εξασφαλίζοντας τη μέγιστη δυνατή επίδραση.",
+        "keyFeatures": [
+          "Βαθμολόγηση κοινού-στόχου — με ανάλυση ανά κατηγορία",
+          "Προτάσεις ανά ενότητα — διορθώστε το σωστό σημείο της ιστορίας σας",
+          "Διορθώσεις με ένα κλικ και καθοδηγούμενη επεξεργασία — ακριβείς τροποποιήσεις, όχι εικασίες",
+          "Το όριο ετοιμότητας για παραγωγή — μάθετε πότε να επενδύσετε σε πλήρη απόδοση (render)"
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Resonance Editor με βαθμολόγηση από το κοινό και διορθώσεις με ένα κλικ",
+        "videoSlot": "Εισαγωγή αποσπάσματος 00:30: Εφαρμογή καθοδηγούμενων επεξεργασιών βάσει της βαθμολογίας απήχησης στο κοινό."
+      },
+      {
+        "id": "8",
+        "title": "Προσαρμοστική μετάφραση (70+ γλώσσες)",
+        "description": "Προσαρμόστε το περιεχόμενο σε μεγάλη κλίμακα, διατηρώντας παράλληλα την αφηγηματική πρόθεση και τον χρονικό συγχρονισμό για τη διάθεση σε πολλές γλώσσες.",
+        "keyFeatures": [
+          "Πάνω από 70 γλώσσες — αφήγηση, διάλογοι και κείμενα σε μεγάλη κλίμακα",
+          "Η αφηγηματική πρόθεση διατηρείται — το νόημα και ο χρονισμός παραμένουν ευθυγραμμισμένα.",
+          "Πολύγλωσσα κομμάτια ήχου — στη χρονογραμμή της σκηνής",
+          "Πακέτα έτοιμα για εξαγωγή — ανά τοπική ρύθμιση για διανομή"
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Πολύγλωσσο χρονολόγιο και ρυθμίσεις μετάφρασης",
+        "videoSlot": "Εισαγωγή αποσπάσματος 00:30: Άμεση προσαρμογή μιας σκηνής σε πολλές γλώσσες"
+      },
+      {
+        "id": "9",
+        "title": "Αυτοματοποίηση Σειράς",
+        "description": "Καθορίστε το σύμπαν σας μία φορά και δημιουργήστε συνεκτικές αφηγηματικές ενότητες που εκτείνονται σε πολλά επεισόδια. Το κοινό Reference Library διασφαλίζει τη συνοχή των χαρακτήρων και του ύφους καθ' όλη τη διάρκεια της σεζόν.",
+        "keyFeatures": [
+          "Καθορίστε το σύμπαν σας μία φορά — χαρακτήρες, ύφος και αφηγηματική πορεία της σεζόν.",
+          "Συνεκτικά περιγράμματα επεισοδίων — αυτόματα παραγόμενα για ολόκληρη τη σεζόν",
+          "Παρακολούθηση της αφηγηματικής συνέχειας — ευθυγράμμιση σεζόν με πολλαπλά επεισόδια",
+          "Συγχρονισμός σειράς-επεισοδίου — στο Blueprint Studio and Production"
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Επισκόπηση της σειράς με αυτόματα παραγόμενες αφηγηματικές διαδρομές επεισοδίων",
+        "videoSlot": "Εισαγωγή αποσπάσματος 30 δευτερολέπτων: Η ιδέα εξελίσσεται σε σεζόν πολλών επεισοδίων"
+      },
+      {
+        "id": "10",
+        "title": "Blueprint Αυτοματισμός",
+        "description": "Μετατρέψτε τις ιδέες σε δομημένα προσχέδια (treatments) που περιλαμβάνουν logline, βασικά αφηγηματικά σημεία (beats), χαρακτήρες και ύφος. Εκτελέστε το Audience Resonance και συνεργαστείτε πριν από τη διαδικασία βαριάς απόδοσης (rendering).",
+        "keyFeatures": [
+          "Ροή εργασίας: Δημιουργία → Έλεγχος → Αναθεώρηση → Έναρξη παραγωγής",
+          "Από την ιδέα στη δομή μέσα σε λίγα λεπτά — logline, βασικά σημεία πλοκής, χαρακτήρες και ύφος",
+          "Audience Resonance βαθμολόγηση με στόχο 80+ πριν από την παραγωγή",
+          "Σύνδεσμοι κοινής χρήσης για συνεργάτες — σύνθεση σχολίων και καθοδηγούμενη αναθεώρηση"
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Αυτόματα παραγόμενο Blueprint με τα βασικά σημεία της ιστορίας και τις εξελίξεις των χαρακτήρων.",
+        "videoSlot": "Εισαγωγή αποσπάσματος 00:30: Μετατροπή μιας ιδέας σε δομημένο Blueprint"
+      },
+      {
+        "id": "11",
+        "title": "Αυτοματοποίηση παραγωγής",
+        "description": "Οι καρτέλες Script και Action καθοδηγούν τη ροή: Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer και ροές MP4 — χωρίς εναλλαγή εργαλείων.",
+        "keyFeatures": [
+          "Foundation — σενάριο, φωνές, ήχος σκηνής, οριστικοποίηση σεναρίου",
+          "Express storyboard — κατεύθυνση και καρέ σε λεπτά· συλλογή και κοινοποίηση",
+          "Beat Frames και Mixer — καρέ έναρξης/λήξης, Director Console, απόδοση (render) ροών MP4",
+          "Ροές παραγωγής — έλεγχος αποτελεσμάτων, επανα-render παρωχημένων beats, αποστολή στο Final Cut"
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Πίνακας ελέγχου παραγωγής που εμφανίζει το σενάριο, το Beat Frames και τη κονσόλα μίξης (Mixer).",
+        "videoSlot": "Εισαγωγή αποσπάσματος 00:30: Foundation, Express storyboard, Beat Frames και εξαγωγή ροής"
+      },
+      {
+        "id": "12",
+        "title": "Final Cut Συναρμολόγηση",
+        "description": "Συνενώστε τις ολοκληρωμένες ροές παραγωγής σε ένα κύριο αρχείο MP4. Επιλέξτε Animatic ή βίντεο και γλώσσα ανά σκηνή — χωρίς επεξεργασία στο χρονολόγιο· οι δημιουργικές αλλαγές παραμένουν στο Production Mixer.",
+        "keyFeatures": [
+          "Επιλογή ροής ανά σκηνή — Animatic, Βίντεο, γλώσσα, έκδοση",
+          "Προεπιλογές συναρμολόγησης — Όλα βίντεο, Υβριδικό, Προσαρμοσμένη μίξη",
+          "Καμία επεξεργασία χρονολογίου — οι δημιουργικές αλλαγές παραμένουν στο Production Mixer",
+          "Εξαγωγή κύριου αρχείου με ένα κλικ — ενιαίο MP4 για το Premiere"
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Πίνακας συναρμολόγησης Final Cut με επιλογείς ροής ανά σκηνή",
+        "videoSlot": "Εισαγωγή αποσπάσματος 00:30: Επιλογή ροών, προεπισκόπηση της σύνθεσης και εξαγωγή του κύριου αρχείου (master)"
+      },
+      {
+        "id": "13",
+        "title": "Premiere Διανομή",
+        "description": "Προβάλετε το master σας με χρήση αναλυτικών στοιχείων κοινού, στη συνέχεια δημοσιεύστε το στο YouTube με τοπικά προσαρμοσμένα μεταδεδομένα ή εξάγετε πακέτα για Shorts, Reels και TikTok.",
+        "keyFeatures": [
+          "Δυνατότητα κοινοποίησης Screening Room — σύνδεσμοι /s/ με βαθμολόγηση και προαιρετικά αναλυτικά στοιχεία αλληλεπίδρασης (με τη συγκατάθεση του θεατή)",
+          "Πίνακας ελέγχου πληροφοριών — Καρτέλες βαθμολόγησης, βιομετρικών στοιχείων και οπτικών δεδομένων",
+          "YouTube Wizard — μικρογραφία, τοπικά προσαρμοσμένος τίτλος/περιγραφή, SceneFlow CTA",
+          "Πακέτα εξαγωγής και πλάνα για κάθετα βίντεο μικρής διάρκειας"
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Πίνακας ελέγχου Premiere με πληροφορίες και οδηγό δημοσίευσης",
+        "videoSlot": "Εισαγωγή αποσπάσματος 00:30: Στοιχεία ανάλυσης προβολής, οδηγός YouTube και πακέτα εξαγωγής"
+      },
+      {
+        "id": "14",
+        "title": "Αξιολόγηση και αναλυτικά στοιχεία κοινού",
+        "description": "Ιδιωτικοί σύνδεσμοι κοινοποίησης για τα ενδιαφερόμενα μέρη — χειροκίνητη βαθμολόγηση, δομημένα σχόλια και προαιρετικά αναλυτικά στοιχεία αλληλεπίδρασης (με τη συγκατάθεση του θεατή). Χρησιμοποιούνται στο Premiere πριν από τη δημοσίευση και για την προεπισκόπηση του storyboard παραγωγής.",
+        "keyFeatures": [
+          "Ιδιωτικές συνεδρίες αξιολόγησης — ασφαλείς σύνδεσμοι κοινής χρήσης για τα ενδιαφερόμενα μέρη",
+          "Δομημένη ανατροφοδότηση από το κοινό — βαθμολογίες και ερωτήματα ανοιχτού τύπου",
+          "Προαιρετικά αναλυτικά στοιχεία αλληλεπίδρασης — με τη συγκατάθεση του θεατή πριν από την καταγραφή",
+          "Πραγματοποίηση επαναληπτικών βημάτων με βάση πραγματικά δεδομένα — βελτίωση του Blueprint και του σεναρίου βάσει των επισημάνσεων των αξιολογητών."
+        ],
+        "screenshotSlot": "Εισαγωγή στιγμιότυπου οθόνης: Πίνακας αναλυτικών στοιχείων και σχολίων αξιολογητή Screening Room",
+        "videoSlot": "Εισαγωγή αποσπάσματος 00:30: Διεξαγωγή συνεδρίας ανασκόπησης και συλλογή δεδομένων αλληλεπίδρασης"
+      }
+    ]
+  },
+  "engineeringTrust": {
+    "badge": "Μηχανική και Ασφάλεια",
+    "title": "Σχεδιασμένο για",
+    "titleAccent": "Φόρτοι εργασίας παραγωγής",
+    "subtitle": "Αρχιτεκτονική φιλική προς τις νεοφυείς επιχειρήσεις, με στοιχεία Google Cloud που υποστηρίζουν την ασφάλεια, την κλιμάκωση και την πρακτική διάθεση σε παραγωγικό περιβάλλον.",
+    "pillars": [
+      {
+        "id": "αρχιτεκτονική",
+        "title": "Αρχιτεκτονική Επιχειρήσεων",
+        "description": "Κατασκευασμένο σε υποδομή Google Cloud, με δυνατότητα κλιμακούμενης ενορχήστρωσης για φόρτους εργασίας παραγωγής και αναπτυσσόμενες ομάδες.",
+        "highlights": [
+          "Vertex AI για ροές εργασίας παραγωγής",
+          "Σύνθεση Imagen 4 και Veo 3.1",
+          "ElevenLabs Ενσωμάτωση TTS",
+          "BYOK για τον έλεγχο της τιμολόγησης σε επίπεδο επιχείρησης"
+        ]
+      },
+      {
+        "id": "ασφάλεια",
+        "title": "Ασφάλεια και ιδιωτικότητα",
+        "description": "Τα δημιουργικά στοιχεία παραμένουν προστατευμένα χάρη στην κρυπτογράφηση δεδομένων σε κατάσταση ηρεμίας, τους ελέγχους πρόσβασης και τη διαχείριση που θέτει την προστασία της ιδιωτικότητας σε προτεραιότητα.",
+        "highlights": [
+          "Μηχανισμοί ελέγχου cloud κατάλληλοι για επιχειρήσεις",
+          "Κρυπτογράφηση AES-256",
+          "Σχεδιασμένο λαμβάνοντας υπόψη τις απαιτήσεις του GDPR",
+          "Δείτε την Πολιτική Απορρήτου μας σχετικά με τη διαχείριση δεδομένων."
+        ]
+      },
+      {
+        "id": "κλίμακα",
+        "title": "Κλίμακα και αξιοπιστία",
+        "description": "Η παγκόσμια παροχή υπηρεσιών cloud υποστηρίζει αξιόπιστες ροές εργασίας απόδοσης (rendering) και ελέγχου, καθώς ο όγκος των εργασιών σας αυξάνεται.",
+        "highlights": [
+          "Ανάπτυξη σε πολλαπλές περιοχές",
+          "Παράδοση επιταχυνόμενη μέσω CDN",
+          "Αυτόματη μετάβαση σε εφεδρικό σύστημα",
+          "Παρακολούθηση σε πραγματικό χρόνο"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "value": "Παγκόσμιος",
+        "label": "Παροχή μέσω cloud"
+      },
+      {
+        "value": "Εικόνα 4",
+        "label": "Παραγωγή εικόνας"
+      },
+      {
+        "value": "256-bit",
+        "label": "Κρυπτογράφηση"
+      },
+      {
+        "value": "24/7",
+        "label": "Παρακολούθηση"
+      }
+    ],
+    "vertexSection": {
+      "title": "Γιατί Google Vertex AI;",
+      "subtitle": "Η τεχνική τάφρος που έχει σημασία",
+      "cards": [
+        {
+          "title": "Απόρρητο δεδομένων",
+          "description": "Τα σενάρια και τα δημιουργικά σας στοιχεία δεν χρησιμοποιούνται για την εκπαίδευση κοινόχρηστων μοντέλων, συμβάλλοντας έτσι στην προστασία της πνευματικής σας ιδιοκτησίας και του έργου που αφορά τους πελάτες σας.",
+          "highlight": "δεν χρησιμοποιείται για την εκπαίδευση κοινόχρηστων μοντέλων"
+        },
+        {
+          "title": "Σχεδιασμένο για αξιόπιστη απόδοση διεκπεραίωσης",
+          "description": "Η υποδομή που είναι προσανατολισμένη στην παραγωγή συμβάλλει στη διατήρηση σταθερών ροών εργασίας παραγωγής κατά τη διάρκεια περιόδων υψηλής ζήτησης."
+        },
+        {
+          "title": "Συνέπεια με επίγνωση των αναφορών",
+          "description": "Το SceneFlow χρησιμοποιεί παραγωγή με επίγνωση των αναφορών για τη βελτίωση της συνέπειας όσον αφορά τους χαρακτήρες, τις τοποθεσίες και τα σκηνικά αντικείμενα από σκηνή σε σκηνή."
+        }
+      ]
+    },
+    "partnership": {
+      "poweredBy": "Υποστηρίζεται από το Google Cloud με το Vertex AI, αποθήκευση στο cloud και εργαλεία μετάφρασης",
+      "footnote": "Το SceneFlow AI λειτουργεί σε κλιμακώσιμη υποδομή Google Cloud, σχεδιασμένη για την ανάπτυξη νεοφυών επιχειρήσεων και τις απαιτήσεις μεγάλων οργανισμών."
+    },
+    "attribution": "— Η ομάδα μηχανικών του SceneFlow"
+  },
+  "coreCapabilities": {
+    "audienceResonance": {
+      "badge": "Επίπεδο Νοημοσύνης",
+      "title": "Επεξεργαστής Audience Resonance",
+      "description": "Μάθε τη βαθμολογία σου προτού επενδύσεις σε πλήρεις διαδικασίες απόδοσης (rendering). Στόχευσε σε συγκεκριμένες βαθμολογίες και βελτίωσε το σενάριο με πρακτικές διορθώσεις — βελτιστοποίησε κάθε τμήμα του περιεχομένου πριν από τη διαδικασία Express και τη δημιουργία του βίντεο.",
+      "bullets": [
+        "Προσδιορίστε το συγκεκριμένο κοινό-στόχο σας",
+        "Λάβετε βαθμολογία, ανάλυση και προτάσεις σε πραγματικό χρόνο",
+        "Διορθώσεις με ένα κλικ για την αντιμετώπιση αφηγηματικών αδυναμιών",
+        "Καθοδηγούμενη επεξεργασία για τη βελτιστοποίηση των επεισοδίων, του Blueprint και του σεναρίου"
+      ],
+      "cta": "Αναλύστε το σενάριό σας",
+      "howWeScore": {
+        "toggle": "Πώς βαθμολογούμε",
+        "title": "Πώς λειτουργεί το Audience Resonance",
+        "description": "Το Audience Resonance συνδυάζει την ανάλυση της αφηγηματικής δομής (σαφήνεια, ρυθμός, συναισθηματική εξέλιξη) με την ευθυγράμμιση ως προς το προφίλ-στόχο (target persona) που ορίζετε στο Blueprint — και όχι με δείκτες εντυπωσιασμού (vanity metrics) ή δεδομένα διατήρησης κοινού μετά τη δημοσίευση. Οι προτάσεις συνδέονται με συγκεκριμένα τμήματα του σεναρίου, ώστε να μπορείτε να διορθώσετε τυχόν ζητήματα πριν από τη διαδικασία Express ή τη δημιουργία του βίντεο.",
+        "bullets": [
+          "Αξιολογεί το Blueprint και το σενάριο σε σχέση με το καθορισμένο κοινό-στόχο σας.",
+          "Προτάσεις σε επίπεδο ενότητας — όχι ένας αριθμός τύπου «μαύρου κουτιού» που απαιτεί τυφλή εμπιστοσύνη.",
+          "Πρακτικές διορθώσεις με ένα κλικ και καθοδηγούμενη επεξεργασία — όχι απλώς μια βαθμολογία",
+          "Εκτελέστε το πριν από τη δαπάνη πόρων για βαριά απόδοση (rendering), όχι μετά τη δημοσίευση."
+        ]
+      }
+    },
+    "express": {
+      "badge": "Παραγωγή υπερ-υψηλής ταχύτητας",
+      "title": "Sceneflow Express",
+      "description": "Δημιουργήστε αυτόματα και παράλληλα storyboards, animatics και video beats. Μεταβείτε από το σενάριο σε μια προεπισκόπηση έτοιμη για κοινοποίηση μέσα σε λίγα λεπτά — και στη συνέχεια εγκρίνετε το Beat Frames πριν από την τελική δαπάνη για το F2V.",
+      "items": [
+        {
+          "title": "Express Storyboard",
+          "desc": "Ελέγξτε και μοιραστείτε storyboard ήχου και βίντεο μέσα σε λίγα λεπτά αντί για ώρες.",
+          "time": "Λεπτά έναντι ωρών"
+        },
+        {
+          "title": "Εκφράστε τα Animatic",
+          "desc": "Δημιουργήστε άμεσα ολοκληρωμένες σκηνές animatic τύπου Ken Burns με κορυφαίας ποιότητας εκφωνήσεις.",
+          "time": "Λεπτά έναντι ωρών"
+        },
+        {
+          "title": "Express Video",
+          "desc": "Συντονίστε την ταυτόχρονη παραγωγή εικόνας και βίντεο για την ολοκληρωμένη απόδοση της σκηνής.",
+          "time": "Λεπτά έναντι ημερών"
+        }
+      ],
+      "cta": "Έναρξη ταχείας απόδοσης"
+    }
+  },
+  "exitIntent": {
+    "title": "Περιμένετε! Μην φύγετε με άδεια χέρια.",
+    "subtitle": "Αποκτήστε αποκλειστική πρώιμη πρόσβαση και συμβουλές για τη δημιουργία ταινιών με τη βοήθεια της τεχνητής νοημοσύνης.",
+    "benefits": [
+      "Εβδομαδιαία μαθήματα δημιουργίας ταινιών με τη χρήση τεχνητής νοημοσύνης",
+      "Πρώιμη πρόσβαση σε νέες λειτουργίες",
+      "Αποκλειστικές εκπτώσεις για δημιουργούς"
+    ],
+    "emailPlaceholder": "Εισαγάγετε το email σας",
+    "subscribe": "Αποκτήστε πρώιμη πρόσβαση",
+    "subscribing": "Γίνεται εγγραφή...",
+    "or": "ή",
+    "startNow": "Ξεκινήστε τη δημιουργία τώρα με μόλις 9 $ →",
+    "privacy": "Ποτέ spam. Διαγραφή ανά πάσα στιγμή.",
+    "successTitle": "Είσαι στη λίστα!",
+    "successSubtitle": "Ελέγξτε τα εισερχόμενά σας για αποκλειστικές συμβουλές κινηματογράφησης και ενημερώσεις σχετικά με την πρώιμη πρόσβαση.",
+    "ctaText": "Ξεκινήστε την εξερεύνηση — 9 $",
+    "closePopup": "Κλείσιμο αναδυόμενου παραθύρου"
+  },
+  "pricing": {
+    "badge": "Τιμολόγηση βάσει χρήσης",
+    "title": "Πλήρωσε για ό,τι δημιουργείς",
+    "subtitle": "Ένα βασικό πρόγραμμα για πρόσβαση στην πλατφόρμα. Μονάδες για παραγωγή περιεχομένου μέσω AI. Ανανέωση όποτε χρειάζεστε περισσότερες. Πλήρης έλεγχος, μηδενική σπατάλη.",
+    "valueAnchor": {
+      "traditionalCost": "2.000 $ και άνω",
+      "traditionalLabel": "Παραδοσιακή προ-οπτικοποίηση",
+      "vs": "έναντι",
+      "sceneFlowCost": "49-149 $",
+      "sceneFlowLabel": "SceneFlow μηνιαία",
+      "saveBadge": "Εξοικονομήστε πάνω από 90% ανά έργο"
+    },
+    "teamCta": {
+      "title": "Εσωτερική ομάδα ή οργανισμός;",
+      "description": "Κλείστε μια παρουσίαση της ροής εργασιών για ομάδες επικοινωνίας, L&D και μάρκετινγκ",
+      "button": "Παρουσίαση του βιβλίου"
+    },
+    "agencyCta": {
+      "title": "Διαφημιστική εταιρεία ή εταιρεία παραγωγής;",
+      "description": "Προσαρμοσμένες πιστώσεις, SLA και αποκλειστική υποστήριξη σε μεγάλη κλίμακα",
+      "button": "Επικοινωνία με το τμήμα πωλήσεων"
+    },
+    "byok": {
+      "title": "Χρήση δικού σας κλειδιού",
+      "badge": "Προγράμματα Pro & Studio",
+      "description": "Διαθέτετε ήδη κλειδιά API για το Vertex AI ή το ElevenLabs; Χρησιμοποιήστε τα με το SceneFlow AI και εξοικονομήστε έως και 80% σε μονάδες πλατφόρμας.",
+      "savingsHighlight": "80% σε πιστώσεις πλατφόρμας",
+      "benefits": [
+        {
+          "title": "Εξοικονόμηση 80% σε μονάδες SceneFlow",
+          "description": "Καταβάλετε προμήθεια πλατφόρμας ύψους μόλις 20% για την ενορχήστρωση και τα εργαλεία."
+        },
+        {
+          "title": "Αξιοποιήστε τα εταιρικά προγράμματα",
+          "description": "Χρησιμοποιήστε τις υφιστάμενες εκπτώσεις όγκου Vertex AI ή ElevenLabs"
+        },
+        {
+          "title": "Πλήρης έλεγχος",
+          "description": "Τα κλειδιά σας, η τιμολόγησή σας, η διαχείριση του κόστους σας"
+        }
+      ],
+      "supportedProviders": "Υποστηριζόμενοι πάροχοι",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "Μετατροπή κειμένου σε ομιλία και κλωνοποίηση φωνής",
+      "savingsLabel": "Εξοικονόμηση 80%",
+      "onImagesVideo": "σε εικόνες και βίντεο",
+      "onVoiceover": "σε voiceover",
+      "note": "Οι αναγραφόμενες εξοικονομήσεις πιστωτικών μονάδων αφορούν την πλατφόρμα SceneFlow. Το πραγματικό συνολικό κόστος εξαρτάται από την τιμολόγηση API (προσωπική ή εταιρική) που ισχύει για εσάς με τον εκάστοτε πάροχο."
+    },
+    "creditTopUps": {
+      "title": "Χρειάζεστε περισσότερες μονάδες;",
+      "subtitle": "Ανανέωσε το υπόλοιπό σου οποιαδήποτε στιγμή. Οι μονάδες δεν λήγουν ποτέ.",
+      "packs": [
+        {
+          "label": "Πακέτο εκκίνησης",
+          "description": "Ιδανικό για γρήγορες επαναλήψεις"
+        },
+        {
+          "label": "Πακέτο σκηνών",
+          "description": "Ολοκληρώστε ένα σύντομο έργο"
+        },
+        {
+          "label": "Πακέτο Παραγωγής",
+          "description": "Σημαντική κινηματογραφική σεκάνς"
+        },
+        {
+          "label": "Πακέτο Studio",
+          "description": "Πλήρης παραγωγική δυναμικότητα"
+        }
+      ],
+      "creditsUnit": "συντελεστές"
+    },
+    "calculator": {
+      "sectionTitle": "Υπολογίστε το κόστος του έργου σας",
+      "sectionSubtitle": "Μάθετε ακριβώς τι θα πληρώσετε προτού δεσμευτείτε.",
+      "title": "Υπολογιστής προϋπολογισμού έργου",
+      "subtitle": "Υπολογίστε τις μονάδες πριν ξεκινήσετε",
+      "customize": "Προσαρμογή παραμέτρων",
+      "imagesLabel": "Εικόνες προς δημιουργία",
+      "videoClipsLabel": "Βίντεο",
+      "voiceoverLabel": "Εκφώνηση (λεπτά)",
+      "byokTitle": "Χρήση δικού σας κλειδιού (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Χρησιμοποιήστε τα δικά σας κλειδιά API για να εξοικονομήσετε έως και 80% σε μονάδες SceneFlow. Πληρώνετε απευθείας τους παρόχους AI, με βάση τις χρεώσεις τους.",
+      "vertexToggle": "Vertex AI (Εικόνες & Βίντεο)",
+      "elevenLabsToggle": "ElevenLabs (Εκφωνήση)",
+      "imageGeneration": "Παραγωγή εικόνας",
+      "videoGeneration": "Παραγωγή βίντεο",
+      "voiceover": "Αφήγηση",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "Συνολική εκτίμηση",
+      "withTopUps": "με ανανεώσεις",
+      "creditSavings": "SceneFlow αποταμιεύσεις πιστωτικού υπολοίπου",
+      "savePercent": "Εξοικονομείτε {percent}% σε μονάδες SceneFlow",
+      "transparency": "Πλήρης διαφάνεια: Βλέπετε τη χρήση των credits σε πραγματικό χρόνο καθώς εργάζεστε. Χωρίς εκπλήξεις — προσαρμόστε το εύρος του έργου σας ανά πάσα στιγμή.",
+      "transparencyHighlight": "Πλήρης διαφάνεια:",
+      "byokDisclaimer": "BYOK Σημείωση: Η εξοικονόμηση μονάδων που εμφανίζεται αντικατοπτρίζει μόνο τις μειώσεις μονάδων της πλατφόρμας SceneFlow. Το πραγματικό κόστος εξαρτάται από τα προγράμματα τιμολόγησης Vertex AI και ElevenLabs που διαθέτετε. Τα εταιρικά προγράμματα ή τα προγράμματα API μεγάλου όγκου ενδέχεται να προσφέρουν πρόσθετη εξοικονόμηση.",
+      "byokDisclaimerHighlight": "BYOK Σημείωση:",
+      "presets": [
+        {
+          "id": "εμπορικός",
+          "name": "Διαφημιστικό σποτ 30 δευτερολέπτων"
+        },
+        {
+          "id": "κοντός",
+          "name": "Ταινία μικρού μήκους 2 λεπτών"
+        },
+        {
+          "id": "επεισόδιο",
+          "name": "Επεισόδιο 10 λεπτών"
+        },
+        {
+          "id": "χαρακτηριστικό",
+          "name": "Ταινία μεγάλου μήκους διάρκειας 90 λεπτών"
+        }
+      ],
+      "minSuffix": "ελάχ."
+    },
+    "tierGrid": {
+      "productionTestFlight": "Δοκιμαστική πτήση παραγωγής",
+      "getStarted": "Ξεκινήστε",
+      "startTestFlight": "Έναρξη δοκιμαστικής πτήσης",
+      "loading": "Φόρτωση...",
+      "mostPopular": "Τα πιο δημοφιλή",
+      "creditsPerMonth": "Μονάδες/μήνα",
+      "storage": "Αποθήκευση",
+      "perMonth": "/μήνα"
+    },
+    "trust": {
+      "cancelAnytime": "Ακύρωση ανά πάσα στιγμή",
+      "moneyBack": "Εγγύηση επιστροφής χρημάτων 14 ημερών",
+      "creditsNeverExpire": "Οι μονάδες δεν λήγουν ποτέ (πακέτο Explorer)"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "description": "Αγορά εφάπαξ για δοκιμή",
+        "features": [
+          "Αγορά εφάπαξ",
+          "750 μονάδες (δεν λήγουν ποτέ)",
+          "Αποθηκευτικός χώρος 5 GB (30 ημέρες)",
+          "Πλήρης πρόσβαση στην πλατφόρμα",
+          "Εξαγωγή σε MP4 (οποιαδήποτε ανάλυση)",
+          "Εκφώνηση με τεχνητή νοημοσύνη (70+ γλώσσες)"
+        ]
+      },
+      "subscriptions": [
+        {
+          "id": "ορεκτικό",
+          "name": "Ορεκτικό",
+          "description": "Για μεμονωμένους δημιουργούς",
+          "features": [
+            "Πλήρης πρόσβαση στην πλατφόρμα",
+            "Περιλαμβάνονται 4.500 μονάδες/μήνα",
+            "25 GB ενεργός αποθηκευτικός χώρος",
+            "Εξαγωγή σε MP4 (οποιαδήποτε ανάλυση)",
+            "Εκφώνηση με τεχνητή νοημοσύνη (70+ γλώσσες)",
+            "Υποστήριξη μέσω email"
+          ]
+        },
+        {
+          "id": "υπέρ",
+          "name": "Pro",
+          "description": "Για επαγγελματίες δημιουργούς",
+          "features": [
+            "Όλα όσα περιλαμβάνονται στο πακέτο Starter, συν:",
+            "Περιλαμβάνονται 15.000 μονάδες/μήνα",
+            "100 GB ενεργός αποθηκευτικός χώρος",
+            "Πρόσβαση σε ποιότητα Veo 3.1 (4K)",
+            "Μηχανή διασφάλισης συνέπειας χαρακτήρα",
+            "Κλωνοποίηση φωνής",
+            "BYOK (Χρήση δικού σας κλειδιού)",
+            "3 θέσεις ομάδας",
+            "Υποστήριξη προτεραιότητας"
+          ]
+        },
+        {
+          "id": "στούντιο",
+          "name": "Στούντιο",
+          "description": "Για ομάδες και εταιρείες",
+          "features": [
+            "Όλα όσα περιλαμβάνονται στο Pro, συν:",
+            "Περιλαμβάνονται 75.000 μονάδες/μήνα",
+            "Ενεργός αποθηκευτικός χώρος 500 GB",
+            "Ουρά προτεραιότητας Veo 3.1 4K",
+            "Απεριόριστη συνέπεια χαρακτήρα",
+            "Εξαγωγές προϊόντων white-label",
+            "Πρόσβαση σε API",
+            "10 θέσεις για την ομάδα",
+            "Αποκλειστικός υπεύθυνος λογαριασμού",
+            "SLA για επιχειρήσεις διαθέσιμο κατόπιν αιτήματος"
+          ]
+        }
+      ]
     }
   },
   "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
+    "badge": "Έχετε ερωτήσεις;",
+    "title": "Συχνές Ερωτήσεις",
+    "subtitle": "Όλα όσα πρέπει να γνωρίζετε για το SceneFlow AI",
     "items": [
       {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+        "question": "Πώς εξελίσσεται η ροή εργασίας SceneFlow, από την ιδέα έως το βίντεο που είναι έτοιμο για δημοσίευση;",
+        "answer": "Το SceneFlow χρησιμοποιεί μια δομημένη ροή εργασίας: Σειρά (προαιρετικά) → Blueprint → Παραγωγή → Final Cut → Premiere. Το Blueprint καθορίζει τη δομή της ιστορίας και το κοινό-στόχο σε συνεργασία με το Audience Resonance. Η Παραγωγή παράγει το σενάριο, το storyboard, το beat video και τις ροές σκηνών που έχουν υποστεί rendering. Το Final Cut συνθέτει τις επιλεγμένες ροές σε ένα κύριο αρχείο MP4 — δεν πρόκειται για πρόγραμμα επεξεργασίας τύπου timeline. Το Premiere διαχειρίζεται τις προβολές, τα δεδομένα ανάλυσης (analytics), τη δημοσίευση στο YouTube και τα πακέτα εξαγωγής."
       },
       {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+        "question": "Πώς διαφέρει το SceneFlow από το Gemini Studio ή το Google Flow;",
+        "answer": "Τα Gemini Studio και Google Flow εστιάζουν στη δημιουργία κλιπ μέσω εντολών (prompt-and-generate). Το SceneFlow ενσωματώνει την πλήρη ροή εργασιών παραγωγής: δομημένες φάσεις με επεξεργάσιμες βάσεις αναφοράς, τα Reference Library και Beat Frames για διασφάλιση της συνέπειας, το Audience Resonance πριν από χρονοβόρες διαδικασίες απόδοσης (rendering), αυτοματοποιημένη μίξη και σύνθεση ροής, καθώς και επικύρωση μέσω του Screening Room πριν από τη δημοσίευση — όλα σε ένα ενιαίο, καθοδηγούμενο περιβάλλον εργασίας."
       },
       {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+        "question": "Μπορώ να επεξεργαστώ σενάρια, οπτικό υλικό και ήχο που έχουν δημιουργηθεί από τεχνητή νοημοσύνη;",
+        "answer": "Ναι. Όλο το παραγόμενο υλικό παραμένει επεξεργάσιμο. Μπορείτε να ξαναγράψετε σενάρια, να προσαρμόσετε τη σκηνοθεσία της σκηνής, να αναδημιουργήσετε συγκεκριμένα τμήματα, να ρυθμίσετε την εκφώνηση και να βελτιώσετε τον χρονισμό στο Production Mixer. Το Final Cut απλώς συνενώνει ολοκληρωμένες ροές — οι δημιουργικές αλλαγές παραμένουν στο προηγούμενο στάδιο, αυτό της Παραγωγής."
       },
       {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+        "question": "Πώς λειτουργεί τώρα το Target Audience Resonance;",
+        "answer": "Το Audience Resonance συνδυάζει την ανάλυση της αφηγηματικής δομής (σαφήνεια, ρυθμός, συναισθηματική εξέλιξη) με την ευθυγράμμιση ως προς το προφίλ-στόχο (target persona) του κοινού που ορίζετε στο Blueprint — και όχι με βάση δεδομένα διακράτησης κοινού μετά τη δημοσίευση. Λαμβάνετε προτάσεις σε επίπεδο ενότητας και δυνατότητες άμεσης διόρθωσης (με ένα κλικ) για τη σειρά, το Blueprint και τον έλεγχο του σεναρίου, πριν από τη διαδικασία της απαιτητικής τελικής επεξεργασίας (rendering)."
       },
       {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
+        "question": "Μπορώ να δημιουργήσω πολύγλωσσα βίντεο για καταχωρίσεις ή για σκοπούς μάρκετινγκ;",
+        "answer": "Ναι. Μπορείτε να δημιουργείτε και να προσαρμόζετε τοπικά βίντεο σε περισσότερες από 70 γλώσσες, χρησιμοποιώντας εναρμονισμένες ροές εργασίας χρονισμού. Συνήθως, οι ομάδες δημιουργούν μια βασική έκδοση (master cut) και στη συνέχεια παράγουν γλωσσικές παραλλαγές για αγοραστές, πελάτες ή τοπικά κοινά σε όλο τον κόσμο."
       },
       {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "question": "Τι κάνει το Premiere εάν το Screening Room είναι η φάση αξιολόγησης;",
+        "answer": "Το Screening Room αποτελεί το περιβάλλον ελέγχου εντός του Premiere — καθώς και το μέσο προεπισκόπησης του storyboard παραγωγής. Μοιραστείτε συνδέσμους /s/, συγκεντρώστε σχόλια από τους ενδιαφερόμενους και προαιρετικά στατιστικά στοιχεία αλληλεπίδρασης (με τη συγκατάθεση του θεατή), εξετάστε τα δεδομένα βαθμολόγησης και τις οπτικές αναλύσεις και, στη συνέχεια, δημοσιεύστε το περιεχόμενο μέσω του οδηγού του YouTube ή εξάγετε πακέτα αρχείων."
       },
       {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
+        "question": "Χρειάζομαι τεχνική εμπειρία ή εμπειρία στην επεξεργασία;",
+        "answer": "Όχι. Το SceneFlow έχει σχεδιαστεί για δημιουργούς και ομάδες χωρίς τεχνική εξειδίκευση. Ξεκινάτε με καθοδηγούμενη εισαγωγή δεδομένων και επεξεργάσιμα πρότυπα βάσης (baselines) που παράγονται από AI σε κάθε φάση — χωρίς περίπλοκες διαδικασίες prompt engineering ή χρήση πολλαπλών εργαλείων."
       },
       {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
+        "question": "Πώς λειτουργεί το πρόγραμμα Explorer;",
+        "answer": "Με 9 δολάρια, αποκτάτε 750 μονάδες για να δοκιμάσετε την πλήρη ροή εργασίας μέσω μιας εφάπαξ αγοράς. Η επιλογή αυτή έχει σχεδιαστεί ως μια πρακτική δοκιμή, επιτρέποντάς σας να εκτελέσετε πραγματικές εργασίες μετατροπής μιας ιδέας σε βίντεο προτού επιλέξετε κάποιο μηνιαίο πρόγραμμα."
       },
       {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
+        "question": "Πώς αντιμετωπίζονται οι πιστώσεις και το BYOK;",
+        "answer": "Η κατανάλωση μονάδων παρακολουθείται εντός της πλατφόρμας, επιτρέποντας στις ομάδες να διαχειρίζονται τον προϋπολογισμό ανά στάδιο της ροής εργασιών. Τα προγράμματα Pro και Studio υποστηρίζουν επίσης τη δυνατότητα χρήσης δικού σας κλειδιού (Bring Your Own Key) για τους υποστηριζόμενους παρόχους, προσφέροντας πρόσθετο έλεγχο του κόστους σε οργανισμούς που διαθέτουν ήδη συμβάσεις με παρόχους."
       },
       {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+        "question": "Τι μπορώ ρεαλιστικά να δημιουργήσω με το SceneFlow;",
+        "answer": "Οι ομάδες χρησιμοποιούν το SceneFlow για περιηγήσεις σε ακίνητα, εκπαιδευτικό περιεχόμενο, podcast με οπτική αφήγηση, επεξηγηματικά βίντεο ειδήσεων, καμπάνιες επωνυμίας και κινηματογραφικές σειρές επεισοδίων. Η ίδια ροή εργασίας υποστηρίζει την παραγωγή τόσο σύντομου όσο και μεγάλου διάρκειας περιεχομένου."
       }
     ]
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
-    "cta": "Launch Your Studio for $9"
+    "title": "Είστε έτοιμοι να δοκιμάσετε την πλήρη ροή εργασιών;",
+    "subtitle": "Πραγματοποιήστε τη διαδικασία από την ιδέα και το storyboard έως το βίντεο και το master MP4 σε ένα ενιαίο στούντιο. Ξεκινήστε με το πρόγραμμα των 9 $ Explorer και δείτε στην πράξη τη ροή εργασίας που δίνει προτεραιότητα στο beat.",
+    "cta": "Ξεκινήστε το στούντιό σας με 9 $"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
-    "product": "Product",
-    "resources": "Resources",
-    "legal": "Legal",
+    "description": "Αυτοματοποιημένη παραγωγή βίντεο από άκρο σε άκρο — από την ιδέα έως το τελικό αρχείο (master) που είναι έτοιμο για δημοσίευση. Ένα στούντιο με καθοδηγούμενη ροή εργασιών: Blueprint → Παραγωγή → Final Cut → Premiere.",
+    "product": "Προϊόν",
+    "resources": "Πόροι",
+    "legal": "Νομικά",
     "links": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "howItWorks": "How It Works",
-      "faq": "FAQ",
-      "gettingStarted": "Getting Started",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "trustSafety": "Trust & Safety",
-      "refunds": "Refund Policy",
-      "contact": "Contact Us"
+      "features": "Χαρακτηριστικά",
+      "pricing": "Τιμολόγηση",
+      "howItWorks": "Πώς λειτουργεί",
+      "faq": "Συχνές Ερωτήσεις",
+      "gettingStarted": "Πρώτα βήματα",
+      "privacy": "Πολιτική Απορρήτου",
+      "terms": "Όροι Παροχής Υπηρεσιών",
+      "trustSafety": "Εμπιστοσύνη και Ασφάλεια",
+      "refunds": "Πολιτική Επιστροφής Χρημάτων",
+      "contact": "Επικοινωνήστε μαζί μας"
     },
-    "tagline": "Made with ❤️ for creators",
-    "taglineSub": "From Idea to Published Video",
-    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
-    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "tagline": "Φτιαγμένο με ❤️ για δημιουργούς",
+    "taglineSub": "Από την ιδέα έως το δημοσιευμένο βίντεο",
+    "securePayments": "Ασφαλείς πληρωμές που διεκπεραιώνονται από την Whop, τον επίσημο φορέα διεκπεραίωσης πληρωμών μας (Merchant of Record)",
+    "morLine": "Οι ασφαλείς πληρωμές, ο υπολογισμός φόρων και η συμμόρφωση διεκπεραιώνονται από την Whop, τον επίσημο φορέα διεκπεραίωσης συναλλαγών (Merchant of Record), για λογαριασμό της Life Focus, LLC.",
+    "copyright": "© 2026 SceneFlow AI. Με την επιφύλαξη παντός δικαιώματος.",
+    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Επικοινωνία: brian@sfai.studio",
+    "poweredBy": "Υποστηρίζεται από το Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "See Pricing",
-    "tryNine": "Try $9",
-    "tryForNine": "Try for $9",
-    "dismiss": "Dismiss"
+    "seePricing": "Δείτε τις τιμές",
+    "tryNine": "Δοκιμάστε τα 9 $",
+    "tryForNine": "Δοκιμάστε το με 9 $",
+    "dismiss": "Απόρριψη"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
-    "pause": "Pause",
-    "play": "Play",
-    "mute": "Mute",
-    "unmute": "Unmute"
+    "pause": "Παύση",
+    "play": "Αναπαραγωγή",
+    "mute": "Σίγαση",
+    "unmute": "Ενεργοποίηση ήχου",
+    "expandVideo": "Μεγέθυνση βίντεο"
   }
 }

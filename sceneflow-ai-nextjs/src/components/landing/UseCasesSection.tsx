@@ -497,6 +497,9 @@ export default function UseCasesSection() {
           </h2>
 
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">{t('subtitle')}</p>
+          <p className="text-slate-400 max-w-3xl mx-auto text-sm leading-relaxed mt-4">
+            {t('qualifyingStatement')}
+          </p>
         </motion.div>
 
         <motion.div

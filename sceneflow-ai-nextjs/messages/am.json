@@ -1,618 +1,1411 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
-    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
+    "title": "SceneFlow AI - በሰው ሰራሽ አስተውሎት (AI) የሚከናወን የቪዲዮ ዝግጅት",
+    "description": "በአርቴፊሻል ኢንተለጀንስ (AI) የሚደገፍ የስራ ሂደት አውቶሜሽን በመጠቀም፣ ሀሳቦችዎን ወደ ፕሮፌሽናል ቪዲዮዎች ይለውጡ።"
   },
   "nav": {
-    "workflow": "The Workflow",
-    "platformWalkthrough": "Platform Walkthrough",
-    "plansPricing": "Plans & Pricing",
-    "more": "More",
-    "useCases": "Use Cases",
+    "workflow": "የሥራ ፍሰት",
+    "platformWalkthrough": "የመድረኩ አጠቃላይ ጉብኝት",
+    "plansPricing": "እቅዶች እና ዋጋዎች",
+    "more": "ተጨማሪ",
+    "useCases": "የአጠቃቀም ሁኔታዎች",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform & Trust",
-    "faq": "FAQ",
-    "signIn": "Sign In",
-    "startProject": "Start a Project",
-    "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "platformTrust": "መድረክ እና እምነት",
+    "faq": "ተደጋግመው የሚጠየቁ ጥያቄዎች",
+    "signIn": "ይግቡ",
+    "startProject": "ፕሮጀክት ይጀምሩ",
+    "dashboard": "ዳሽቦርድ",
+    "adminPanel": "የአስተዳደር ፓነል",
+    "signOut": "ከስርዓቱ ይውጡ",
+    "goToDashboard": "ወደ ዳሽቦርድ ይሂዱ",
+    "userFallback": "ተጠቃሚ",
+    "searchLanguages": "ቋንቋዎችን ይፈልጉ...",
+    "noLanguagesFound": "ምንም ቋንቋዎች አልተገኙም"
   },
   "floatingNav": {
-    "compare": "Compare",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "platformWalkthrough": "Platform Walkthrough",
-    "platform": "Platform",
-    "pricing": "Pricing",
-    "faq": "FAQ"
+    "compare": "አወዳድር",
+    "howItWorks": "አሰራሩ",
+    "useCases": "የአጠቃቀም ሁኔታዎች",
+    "platformWalkthrough": "የመድረኩ አጠቃላይ ጉብኝት",
+    "platform": "መድረክ",
+    "pricing": "የዋጋ አወጣጥ",
+    "faq": "ተደጋግመው የሚጠየቁ ጥያቄዎች"
   },
   "hero": {
-    "headline": "Make professional video without a production team or a dozen apps.",
-    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.",
-    "ctaSecondary": "Watch the 'What's Possible'",
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "headline": "አምስት የተለያዩ የAI ገጾችን (tabs) በአንድ ጊዜ ለማስተዳደር መሞከርዎን ያቁሙ። በአንድ ስቱዲዮ አማካኝነት ከሃሳብ ጀምሮ ለህትመት ዝግጁ የሆነ ቪዲዮ ማዘጋጀት ይችላሉ።",
+    "subheadline": "ከሃሳብ ጀምሮ ለህትመት ዝግጁ እስከሆነው የመጨረሻ ውጤት ድረስ የሚመራዎ አንድ የተቀናጀ ስቱዲዮ። የመጨረሻውን ቪዲዮ ከመክፈልዎ በፊት የስቶሪቦርድ (storyboard) ንድፍዎን ይመልከቱ፤ በሙከራ እና ስህተት ሂደት ክሬዲትዎን ከማባከን ይልቅ፣ የቪዲዮውን ገጽታ አስቀድመው ያጽድቁ። SceneFlow እንደ ስክሪፕት፣ ስቶሪቦርድ፣ የድምጽ ቅጂ እና የመሳሰሉትን አድካሚ ስራዎች በራስ-ሰር ሲያከናውን፣ እርስዎ ግን በእያንዳንዱ የሂደቱ ደረጃ ላይ ሙሉ ቁጥጥር ይኖርዎታል።",
+    "audienceMicroLine": "ውጤት ለሚፈልጉ ፈጣሪዎች እና አሰራሩን ማየት ለሚፈልጉ ቡድኖች የተዘጋጀ።",
+    "ctaSecondary": "'ምን ማድረግ ይቻላል' (What's Possible) የሚለውን ይመልከቱ",
+    "ctaToolStack": "የአሁኑን የመሳሪያዎች ስብስብዎ እንዴት እንደሚተካ ይመልከቱ።",
+    "languagePrompt": "ጀግናውን በራስዎ ቋንቋ ያዳምጡ — ያው የስራ ሂደት፣ አዳዲስ ገበያዎች",
+    "multilangHint": "Hero በ7 ቋንቋዎች የድምፅ ትርጉም (dubbing) ያቀርባል፤ አጠቃላይ የስራ ሂደቱ (pipeline) በምርት ደረጃ ከ70 በላይ ቋንቋዎችን ይደግፋል።",
+    "playWithNarration": "በተረክ ያጫውቱ",
+    "tapToHear": "ለመስማት ይንኩ",
+    "fullscreen": "ሙሉ ማያ ገጽ",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
-        "nativeLabel": "English"
+        "label": "እንግሊዝኛ",
+        "nativeLabel": "እንግሊዝኛ"
       },
       "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
+        "label": "ስፓኒሽ",
+        "nativeLabel": "ስፓኒሽ"
       },
       "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
+        "label": "ፖርቱጋልኛ",
+        "nativeLabel": "ፖርቱጋልኛ"
       },
       "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
+        "label": "ሂንዲ",
+        "nativeLabel": "ሂንዲ"
       },
       "zh": {
-        "label": "Chinese",
-        "nativeLabel": "中文"
+        "label": "ቻይንኛ",
+        "nativeLabel": "ቻይንኛ"
       },
       "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
+        "label": "አረብኛ",
+        "nativeLabel": "አረብኛ"
       },
       "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
+        "label": "ታይ",
+        "nativeLabel": "ታይላንድ"
       }
     },
-    "soon": "Soon"
+    "soon": "በቅርቡ"
   },
   "valueProp": {
     "pills": [
       {
-        "label": "One Studio",
-        "detail": "Concept to publish in one place"
+        "label": "ዋን ስቱዲዮ",
+        "detail": "በአንድ ቦታ ለማተም የታቀደ ሐሳብ"
       },
       {
-        "label": "Approve Before Final Video",
-        "detail": "Review storyboard beats before you render"
+        "label": "ከመጨረሻው ቪዲዮ በፊት ያጽድቁ",
+        "detail": "ወደ 'ሬንደር' (render) ከማስገባትዎ በፊት የ'ስቶሪቦርድ' (storyboard) ክፍሎችን ይገምግሙ።"
       },
       {
-        "label": "Test Your Story First",
-        "detail": "Know what lands before heavy spend"
+        "label": "ታሪክዎን በመጀመሪያ ይፈትሹ",
+        "detail": "ከፍተኛ ወጪ ከማውጣትዎ በፊት ምን ውጤት እንደሚያመጣ ይወቁ።"
       },
       {
-        "label": "Publish-Ready Output",
-        "detail": "Master MP4 + distribution bundles"
+        "label": "ለህትመት ዝግጁ የሆነ ውጤት",
+        "detail": "ዋና የMP4 ፋይል + የማሰራጫ ጥቅሎች"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Who are you? Pick your path",
-    "seeExamples": "See examples",
-    "examplesFor": "Examples for {label}:",
-    "andMore": ", and more.",
+    "prompt": "ማን ነህ? መንገድህን ምረጥ።",
+    "seeExamples": "ምሳሌዎችን ይመልከቱ",
+    "examplesFor": "ለ{label} ምሳሌዎች፡-",
+    "andMore": "፣ እና ሌሎችም።",
+    "modes": {
+      "automate": {
+        "label": "በራስ-ሰር እንዲሠራ አድርገው",
+        "description": "በሂደት የሚመራ አሰራር — የስቶሪቦርድ (storyboard) ማጽደቅ እና በፍጥነት ማጠናቀቅ"
+      },
+      "engine": {
+        "label": "ሞተሩን አሳየኝ",
+        "description": "አርክቴክቸር፣ BYOK እና የመድረክ ጥልቀት"
+      }
+    },
     "paths": [
       {
-        "id": "creator",
-        "label": "Creator",
-        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "id": "ፈጣሪ",
+        "label": "ፈጣሪ",
+        "outcome": "በጊዜው ያቅርቡ — በእያንዳንዱ መሣሪያ ላይ እንደገና ከመሥራት ይቆጠቡ",
         "useCases": [
-          "YouTube & episodic series",
-          "Video podcasts & show clips",
-          "Hyper-local & JIT news",
-          "Documentaries & docuseries",
-          "How-to & skill channels",
-          "Sports recaps & commentary"
+          "ዩቲዩብ እና ተከታታይ ፕሮግራሞች",
+          "የቪዲዮ ፖድካስቶች እና የፕሮግራም ክፍሎች",
+          "እጅግ አካባቢያዊ እና ወቅታዊ (በአግባቡ ጊዜ የሚቀርቡ) ዜናዎች",
+          "ዶክመንተሪዎች እና የዶክመንተሪ ተከታታይ ፕሮግራሞች",
+          "የአሰራር ዘዴዎችን እና ክህሎቶችን የሚያስተምሩ ቻናሎች",
+          "የስፖርት ማጠቃለያዎች እና አስተያየቶች"
         ]
       },
       {
-        "id": "team",
-        "label": "In-house team",
-        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "id": "ቡድን",
+        "label": "የውስጥ ቡድን",
+        "outcome": "ዘገምተኛ የአቅራቢ ሂደቶችን ይተኩ፤ የምርት ስምን እና በጀት ይቆጣጠሩ።",
         "useCases": [
-          "Corporate L&D & compliance",
-          "Internal comms & town halls",
-          "Product explainers for sales",
-          "HR recruitment & culture",
-          "K-12 / higher-ed lessons",
-          "Public health & safety updates"
+          "የድርጅት ደረጃ የሰራተኞች ትምህርትና ልማት እንዲሁም የደንብና መመሪያዎች ተገዢነት",
+          "የውስጥ ግንኙነት እና አጠቃላይ የሰራተኞች ስብሰባዎች",
+          "ለሽያጭ የሚሆኑ የምርት ማብራሪያዎች",
+          "የሰው ኃይል ቅጥር እና የድርጅት ባህል",
+          "የK-12 / የከፍተኛ ትምህርት ትምህርቶች",
+          "የህዝብ ጤና እና ደህንነት ወቅታዊ መረጃዎች"
         ]
       },
       {
-        "id": "productionShop",
-        "label": "Production shop",
-        "outcome": "Productize a niche with repeatable intake → delivery",
+        "id": "የምርት አውደ ጥናት",
+        "label": "የምርት አውደ ጥናት",
+        "outcome": "ተደጋግሞ ሊከናወን በሚችል የአቀባበል እና የማድረስ ሂደት አማካኝነት፣ ለአንድ የተወሰነ የገበያ ዘርፍ (niche) አገልግሎትዎን እንደ ምርት አድርገው ያደራጁ።",
         "useCases": [
-          "Video memoir packages",
-          "Legacy & tribute videos",
-          "Voice-cloned narration",
-          "White-label studio templates",
-          "Real estate & hospitality tours",
-          "Subscription video services"
+          "የቪዲዮ ትዝታ-መዝገብ ፓኬጆች",
+          "የአሻራ እና የክብር መታሰቢያ ቪዲዮዎች",
+          "በድምፅ ቅጂ የተባዛ ትረካ",
+          "እንደራስ ብራንድ ሊጠቀሙባቸው የሚችሉ የስቱዲዮ አብነቶች",
+          "የሪል እስቴት እና የእንግዳ ተቀባይነት ዘርፍ ጉብኝቶች",
+          "በደንበኝነት የሚሰጡ የቪዲዮ አገልግሎቶች"
         ]
       },
       {
-        "id": "agency",
-        "label": "Agency",
-        "outcome": "Faster pitches and scalable client delivery",
+        "id": "ኤጀንሲ",
+        "label": "ኤጀንሲ",
+        "outcome": "ፈጣን የሃሳብ ማቅረቢያዎች እና ሊሰፋ የሚችል የደንበኛ አገልግሎት አቅርቦት",
         "useCases": [
-          "Client pitch pre-viz",
-          "Product launch campaigns",
-          "Case studies & testimonials",
-          "Event & conference promos",
-          "Multi-language campaigns",
-          "Property marketing for clients"
+          "ለደንበኛ የሚቀርብ የመጀመሪያ ደረጃ የእይታ ማሳያ (Pre-visualization)",
+          "የምርት ማስጀመሪያ ዘመቻዎች",
+          "የጉዳይ ጥናቶች እና የምስክርነቶች",
+          "የዝግጅቶች እና ኮንፈረንሶች የማስተዋወቂያ ስራዎች",
+          "ባለብዙ ቋንቋ ዘመቻዎች",
+          "ለደንበኞች የንብረት ግብይት"
         ]
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Why SceneFlow vs prompt-and-generate tools",
-    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "title": "ለምን SceneFlow ከ«prompt-and-generate» (ጥያቄ በማቅረብ ማመንጨት) መሳሪያዎች ይልቅ?",
+    "subtitle": "Gemini Studio እና Google Flow በክሊፖች (clips) ረገድ የላቀ ብቃት አላቸው። SceneFlow ደግሞ አጠቃላይ የምርት ሂደቱን (production workflow) በአንድ ላይ ያካተተ ነው።",
     "rows": [
       {
-        "them": "Prompt + clip generation in isolation",
-        "us": "Structured phases with editable baselines at each step"
+        "them": "በተናጠል የሚከናወን የትዕዛዝ (prompt) እና የቪዲዮ ክሊፕ ማመንጨት",
+        "us": "በእያንዳንዱ ደረጃ ሊሻሻሉ የሚችሉ የመነሻ መለኪያዎች (baselines) ያሏቸው የተዋቀሩ ምዕራፎች"
       },
       {
-        "them": "Manual consistency across sessions",
-        "us": "Reference Library + Beat Frames lock visuals before video"
+        "them": "በተለያዩ ክፍለ-ጊዜዎች መካከል ያለው የአሰራር ወጥነት",
+        "us": "ከቪዲዮው በፊት ምስላዊ ይዘቱን ቆልፍ (lock) Reference Library + Beat Frames"
       },
       {
-        "them": "No audience validation workflow",
-        "us": "Audience Resonance before render; Screening Room before publish"
+        "them": "የታዳሚ ማረጋገጫ የስራ ፍሰት የለም",
+        "us": "Audience Resonance ከማሳየት (render) በፊት፤ Screening Room ከማተም በፊት"
       },
       {
-        "them": "No production pipeline or handoff",
-        "us": "Script → streams → assembly → distribution in one app"
-      },
-      {
-        "them": "Complex model and settings surface",
-        "us": "Guided Studio UX with credits and BYOK guardrails"
+        "them": "ምንም የምርት ሂደት (pipeline) ወይም የማስተላለፍ ሂደት የለም",
+        "us": "ስክሪፕት → ስትሪሞች → ማሰባሰብ → ማሰራጨት በአንድ መተግበሪያ ውስጥ"
       }
     ],
-    "themHeader": "Typical clip-generation tools",
-    "usHeader": "SceneFlow bundles"
+    "themHeader": "የተለመዱ የቪዲዮ ክሊፕ ማመንጫ መሳሪያዎች",
+    "usHeader": "SceneFlow ጥቅሎች"
   },
   "beatFirstPipeline": {
-    "title": "Beat-First Video Pipeline",
-    "subtitle": "Approve before you render — not slot-machine regeneration",
-    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "title": "በምት (Beat) ላይ የተመሰረተ የቪዲዮ ማቀነባበሪያ ሂደት",
+    "subtitle": "ከማመንጨትዎ በፊት ያጽድቁት — እንደ ቁማር ማሽን በዘፈቀደ የሚፈጠር ሂደት አይሁን።",
+    "intro": "በግምትና በሙከራ የሚደረግ የማመንጨት ሂደት የለም። SceneFlow ለመጨረሻው ቪዲዮ ክሬዲቶችን ከመጠቀሙ በፊት፣ ውጤቱን አስቀድመው ይመለከታሉ እንዲሁም ያጸድቃሉ።",
+    "description": "SceneFlow በእያንዳንዱ ደረጃ የእይታ ማረጋገጫ ሂደትን ያደራጃል፦ ለግምገማ Express storyboard፣ የአቀራረብ ቅርጽን (composition) ለመቆለፍ Beat Frames፣ ከዚያም በእያንዳንዱ 'ቢት' (beat) ላይ F2V። በዚህም፣ ከቁጥጥር ውጭ በሆኑ ለውጦች (drift) እና በስህተት በተፈጠሩ ምስሎች (hallucinations) ላይ ክሬዲት ከማባከንዎ በፊት የምስሉን ጥራት ያስተካክላሉ።",
     "steps": [
-      "Express storyboard — share audio-visual beats for review in minutes",
-      "Beat Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Express storyboard — ለግምገማ የሚሆኑ የሙዚቃ ቅንብሮችን (beats) በደቂቃዎች ውስጥ ያጋሩ",
+      "Beat Frames — የቅንብር (composition) መጀመሪያ/መጨረሻን ከ Reference Library ቀጣይነት ጋር መቆለፍ",
+      "F2V (በቢት) — በዘፈቀደ ትዕዛዞች (prompts) ሳይሆን፣ በተረጋገጡ የምስል ፍሬሞች (frames) ላይ በመመስረት ቪዲዮ ይፍጠሩ።",
+      "Production Mixer — የጊዜ አወቃቀር፣ ኦዲዮ እና ስትሪም ወደ Final Cut ስብስብ (assembly) መላክ"
     ],
-    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+    "footerLine": "የስሎት ማሽን (slot-machine) ምስሎችን እንደገና የመስራት አስፈላጊነትን መቀነስ — ለቪዲዮው የመጨረሻ ወጪ ከማድረጉ በፊት ምስላዊ ይዘቶቹን ማጽደቅ"
+  },
+  "toolStack": {
+    "badge": "የሚያውቁት ይመስላል?",
+    "title": "የተበላሸው መንገድ ከ SceneFlow መንገድ ጋር ሲነጻጸር",
+    "subtitle": "አንድ ቪዲዮ ለማዘጋጀት ብቻ አምስት ታቦችን (tabs) መክፈት፣ መረጃን ኮፒ-ፔስት ማድረግ እና ትዕዛዞችን (prompts) በመጻፍ መዛል አያስፈልግዎትም።",
+    "brokenWay": {
+      "title": "የተሰበረው መንገድ",
+      "tagline": "የተበታተነ። በእጅ የሚከናወን። አድካሚ።",
+      "tools": [
+        {
+          "name": "ChatGPT",
+          "category": "የስክሪፕት ረቂቆች"
+        },
+        {
+          "name": "ሚድጀርኒ",
+          "category": "ልዩ ምስሎች (አንድ ጊዜ ብቻ የሚፈጠሩ/የሚታዩ ምስሎች)"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "በእጅ የሚከናወን የVO ኤክስፖርት"
+        },
+        {
+          "name": "Premiere",
+          "category": "በእጅ መገጣጠም"
+        }
+      ],
+      "chaosLabel": "አምስት ታቦች። አውዱ ጠፍቷል።",
+      "painPoints": [
+        "በመተግበሪያዎች መካከል መቅዳት እና መለጠፍ",
+        "የጥያቄ (Prompt) አሰጣጥ ድካም እና ተደጋጋሚ የማመንጨት ዑደቶች",
+        "ወጪ ከማድረግዎ በፊት የታዳሚዎች ማጣራት አይደረግም",
+        "በኤክስፖርት ውጤቶች ላይ ያለው የቨርዥን (ስሪት) ትርምስ"
+      ],
+      "timeLabel": "የፕሮጀክት የተለመደ ጊዜ",
+      "timeValue": "ከ2 እስከ 4 ሳምንታት"
+    },
+    "sceneflowWay": {
+      "title": "የSceneFlow አቀራረብ",
+      "tagline": "አንድ ስቱዲዮ። ሬንደር (render) ከማድረግዎ በፊት ያጽድቁ።",
+      "stages": [
+        {
+          "label": "Blueprint",
+          "detail": "የተደራጀ የታሪክ እቅድ"
+        },
+        {
+          "label": "ዋቢዎች",
+          "detail": "ወጥ ባህሪ ያላቸው ገጸ-ባህሪያት"
+        },
+        {
+          "label": "ምርት",
+          "detail": "ድምፅ + ምስል"
+        },
+        {
+          "label": "አትም",
+          "detail": "አንድ ዋና MP4"
+        }
+      ],
+      "syncLabel": "አንድ የፕሮጀክት ፋይል — በበርካታ ትሮች (tabs) መካከል መመላለስ አያስፈልግም",
+      "benefits": [
+        "በመሪነት የሚከናወኑ ደረጃዎች — የትዕዛዝ አሰጣጥ ቴክኒክ (prompt engineering) አይደለም",
+        "የቪዲዮ ክሬዲቶች ከመዘጋጀታቸው በፊት የስቶሪቦርድ (storyboard) ማጽደቅ",
+        "Audience Resonance ከከባድ ሬንደር (heavy render) በፊት ያለው ውጤት",
+        "ለህትመት ዝግጁ የሆነ ማስተር ከአንድ ስቱዲዮ"
+      ],
+      "timeLabel": "የፕሮጀክት የተለመደ ጊዜ",
+      "timeValue": "ከ2 እስከ 4 ቀናት"
+    },
+    "comparisonCaption": "አንድ ስቱዲዮ፤ የተበታተኑ የ'ፕሮምፕት' (prompt) መሳሪያዎችን፣ በእጅ የሚደረጉ ማስተካከያዎችን እና በበርካታ መድረኮች መካከል የሚደረጉ የስራ ሽግግሮችን ይተካል።",
+    "comparisonImageAlt": "ባህላዊ የምርት ወጪዎች እና SceneFlow አውቶማቲክ ስቱዲዮ — ከሃሳብ እስከ ለህትመት ዝግጁ የሆነ ቪዲዮ ድረስ ያለውን ሂደት ማፋጠን"
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
-    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "title": "ተጨማሪ ወጪና ሸክም ሳይኖር ፈጣን የምርት ሂደት",
+    "subtitle": "ከተበታተኑ የ'ፕሮምፕት' (prompt) መሣሪያዎች እና በእጅ ከሚከናወን ዝግጅት ይልቅ፣ ከመጀመሪያው ሐሳብ አንስቶ ለሕትመት ዝግጁ እስከሆነው የመጨረሻ ውጤት ድረስ የሚያደርስ አንድ አውቶማቲክ ስቱዲዮን ይጠቀሙ።",
+    "caption": "አንድ ስቱዲዮ፤ የተበታተኑ የ'ፕሮምፕት' (prompt) መሳሪያዎችን፣ በእጅ የሚደረጉ ማስተካከያዎችን እና በበርካታ መድረኮች መካከል የሚደረጉ የስራ ሽግግሮችን ይተካል።",
+    "imageAlt": "ባህላዊ የምርት ወጪዎች እና SceneFlow አውቶማቲክ ስቱዲዮ — ከሃሳብ እስከ ለህትመት ዝግጁ የሆነ ቪዲዮ ድረስ ያለውን ሂደት ማፋጠን"
   },
   "howItWorks": {
-    "title": "From concept to publish-ready video",
-    "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
-    "tagline": "Every step is expertly automated. Every step gives you full control.",
-    "optionalBadge": "Optional",
-    "optionalSuffix": " (optional)",
-    "readyTitle": "Ready to test the full pipeline?",
-    "explorerCta": "Start with Explorer — $9",
+    "title": "ከሃሳብ ጀምሮ ለህትመት ዝግጁ የሆነ ቪዲዮ",
+    "titleAccent": "አንድ የሚመራ የቧንቧ መስመር",
+    "subtitle": "ተከታታይ (Series) አማራጭ ነው። ዋናው ሂደት Blueprint → Production → Final Cut → Premiere ሲሆን፣ በሂደቱ ውስጥ የstoryboard፣ animatic፣ video እና master MP4 ደረጃዎች ይካተታሉ።",
+    "tagline": "እያንዳንዱ ደረጃ በብቃት በራስ-ሰር የሚከናወን ነው። እያንዳንዱ ደረጃ ሙሉ ቁጥጥር ይሰጥዎታል።",
+    "optionalBadge": "አማራጭ",
+    "optionalSuffix": " (አማራጭ)",
+    "readyTitle": "ሙሉውን የስራ ሂደት (pipeline) ለመፈተሽ ዝግጁ ነዎት?",
+    "explorerCta": "በ Explorer ይጀምሩ — $9",
     "phases": [
       {
-        "id": "series",
-        "stepLabel": "Series",
-        "subtitle": "Showrunner Engine",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "id": "ተከታታይ",
+        "stepLabel": "ተከታታይ",
+        "subtitle": "የሾውራነር ሞተር",
+        "description": "ዓለምዎን አንድ ጊዜ ይግለጹ እና እርስ በርስ የተሳሰሩ፣ በርካታ ክፍሎችን የሚሸፍኑ የታሪክ መስመሮችን ይፍጠሩ። የጋራ Reference Library አጠቃቀም፣ በጠቅላላው የውድድር ዘመን (season) ውስጥ ገጸ-ባህሪያት እና የትረካው ስሜት (tone) ወጥ ሆነው እንዲቀጥሉ ያደርጋል።",
         "keySteps": [
-          "Define universe — characters, tone, and season arc",
-          "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "ዓለሙን ይግለጹ — ገጸ-ባህሪያት፣ ስሜት/ድባብ እና የወቅቱ (season) አጠቃላይ ታሪክ።",
+          "በወቅቱ (season) ውስጥ ያሉትን የክፍሎች ዝርዝር እቅዶች በራስ-ሰር ማመንጨት",
+          "ከBlueprint ጋር ማመሳሰል እና ለእያንዳንዱ ክፍል የሚከናወን የምርት ሥራ"
         ],
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
-        ],
-        "optional": true
+          "ዓለምህን አንድ ጊዜ ብቻ በግልጽ አስቀምጥ፤ ገጸ-ባህሪያትን፣ ስሜትን (tone) እና የወቅቱን (season) አጠቃላይ ታሪክ።",
+          "በጠቅላላው የውድድር ዘመን በራስ-ሰር የሚፈጠሩ፣ እርስ በርስ የተሳሰሩ የክፍሎች ዝርዝር መግለጫዎች",
+          "የተከታታይነት ክትትል — በርካታ ክፍሎች ያሏቸው ወቅቶች (seasons) ተጣጥመው እንዲቀጥሉ ማድረግ",
+          "የተከታታይ እና የክፍል (episode) ማጣጣም — ወደ Blueprint ስቱዲዮ እና ፕሮዳክሽን"
+        ]
       },
       {
-        "id": "blueprint",
+        "id": "የሥራ ዕቅድ / ንድፍ",
         "stepLabel": "Blueprint",
-        "subtitle": "Story Development",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "subtitle": "የታሪክ ዝግጅት",
+        "description": "ሃሳቦችን በሎግላይን (logline)፣ በታሪክ ክፍሎች (beats)፣ በገጸ-ባህሪያት እና በስሜት/ድምጸት (tone) የተዋቀሩ ረቂቅ ታሪኮች (treatments) አድርገው ይቅረጹ። ከባድ የሬንደሪንግ (rendering) ሥራ ከመጀመርዎ በፊት Audience Resonanceን ያሂዱ እና የጋራ ትብብር ያድርጉ።",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
-          "Audience Resonance scoring with 80+ target",
-          "Collaborator share links and export (PDF, Doc, PPTX)"
+          "ማመንጨት → መገምገም → ማሻሻል → ምርት መጀመር",
+          "Audience Resonance ከ80 በላይ በሆነ ኢላማ ነጥብ ማስመዝገብ",
+          "የትብብር አጋር የማጋሪያ አገናኞች እና ወደ ውጭ መላክ (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
-        ],
-        "optional": false
+          "ማመንጨት → መገምገም → ማሻሻል → የምርት ሂደትን መጀመር",
+          "ከሃሳብ ወደ መዋቅር በደቂቃዎች ውስጥ — ዋና ጭብጥ (logline)፣ የትረካ ዋና ዋና ክስተቶች (beats)፣ ገጸ-ባህሪያት እና ስሜት/ድምፀት (tone)",
+          "ወደ ምርት (Production) ከመሸጋገሩ በፊት 80 እና ከዚያ በላይ በሆነ ኢላማ ነጥብ ማስመዝገብ Audience Resonance",
+          "ከአብሮ-ሰሪዎች የተገኙ የማጋሪያ አገናኞች — አስተያየቶችን በማቀናጀት የሚደረግ የተመራ ማሻሻያ"
+        ]
       },
       {
-        "id": "production",
-        "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "id": "ምርት",
+        "stepLabel": "ምርት",
+        "subtitle": "ከስክሪፕት ወደ ስትሪም",
+        "description": "የScript እና Action ትሮች (tabs) ከFoundation → Storyboard → Production → Final Cut ባለው ሂደት ይመራዎታል። Express storyboard፣ Beat Frames፣ Mixer እና MP4 ስትሪሞችን ያለ መሳሪያ መቀያየር ይጠቀሙ።",
         "keySteps": [
-          "Lock script, voices, and scene audio",
-          "Express storyboard — gallery and share for review",
-          "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "ስክሪፕት፣ የድምፅ ቀረጻዎች እና የትዕይንት ኦዲዮን ማጽደቅና ማጠናቀቅ",
+          "Express storyboard — ጋለሪ እና ለግምገማ ማጋራት",
+          "Beat Frames → የአመራር ኮንሶል → የማሳያ ዥረት (Render Stream)",
+          "የተጠናቀቁትን ስትሪሞች (streams) ወደ Final Cut ይላኩ።"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
-        ],
-        "optional": false
+          "Foundation — ስክሪፕት፣ ድምፆች፣ የትዕይንት ድምፅ፣ ስክሪፕትን ማጽናት",
+          "Express storyboard — አቅጣጫ እና ፍሬሞች (በደቂቃዎች)፤ ጋለሪ እና ማጋራት",
+          "Beat Frames እና Mixer — የመነሻ/ማብቂያ ፍሬሞች፣ Director Console፣ የMP4 ዥረቶችን (streams) ማዘጋጀት (render)",
+          "የምርት ፍሰቶች (Production Streams) — ውጤቶችን መገምገም፣ ጊዜ ያለፈባቸውን ቢቶች (beats) እንደገና ማዘጋጀት (re-render)፣ ወደ Final Cut መላክ"
+        ]
       },
       {
-        "id": "final-cut",
+        "id": "የመጨረሻው አርትዖት",
         "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "subtitle": "የዥረት ስብስብ",
+        "description": "የተጠናቀቁትን የምርት (production) ዥረቶች ወደ አንድ ዋና MP4 ፋይል ያዋህዱ። ለእያንዳንዱ ትዕይንት Animaticን ወይም ቪዲዮ እና ቋንቋን ይምረጡ፤ በዚህ ሂደት የጊዜ መስመር (timeline) ላይ ማስተካከያ አይደረግም፣ የፈጠራ ለውጦችም በProduction Mixer ውስጥ ብቻ ይቀራሉ።",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
+          "ለእያንዳንዱ ትዕይንት (scene) ስትሪሞችን ይምረጡ — አስቀድሞ የተዘጋጀ ወይም እንደፍላጎት የተዋቀረ ቅንብር።",
+          "ሙሉውን ፕሮግራም በስክሪፕቱ ቅደም ተከተል አስቀድመው ይመልከቱ",
+          "ለ Premiere አንድ ዋና MP4 ፋይል ያውጡ (export ያድርጉ)።"
         ],
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
+          "ለእያንዳንዱ ትዕይንት የሚደረግ የዥረት ምርጫ — Animatic፣ ቪዲዮ፣ ቋንቋ፣ ስሪት",
+          "የማሰባሰቢያ ቅድመ-ቅምጦች — ሁሉም ቪዲዮ፣ ድብልቅ፣ ብጁ ቅልቅል",
+          "የጊዜ መስመር (timeline) ላይ የሚደረግ ማስተካከያ የለም — የፈጠራ ለውጦች በ Production Mixer ውስጥ ብቻ ይቀራሉ።",
+          "ለPremiere በአንድ ጠቅታ የሚከናወን ዋና ኤክስፖርት — የተዋሃደ MP4"
+        ]
       },
       {
-        "id": "premiere",
+        "id": "የመጀመሪያ ፊልም ማሳያ",
         "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "subtitle": "የስርጭት ማዕከል",
+        "description": "ዋናውን ቪዲዮ (master) ከተመልካቾች መረጃ ትንተና ጋር ይገምግሙ፤ ከዚያም ለአካባቢው ተስማሚ በሆኑ መረጃዎች (metadata) ወደ YouTube ይልቀቁት ወይም ለShorts፣ Reels እና TikTok የሚሆኑ ስብስቦችን ያዘጋጁ።",
         "keySteps": [
-          "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
+          "የማሳያ ዝግጅት (screening) ይፍጠሩ እና የ/s/ ሊንክ ያጋሩ።",
+          "የደረጃ አሰጣጥ፣ የተሳትፎ እና የእይታ መረጃዎችን መገምገም",
+          "የYouTube አዋቂ (Wizard) ወይም ወደ ውጭ መላኪያ ጥቅል"
         ],
         "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "optional": false
+          "ለማጋራት የሚቻል Screening Room — ነጥብ አሰጣጥ እና አማራጭ የተሳትፎ ትንተና (በተመልካች ፈቃድ) ያካተቱ የ /s/ አገናኞች",
+          "የመረጃ ትንተና ዳሽቦርድ — የውጤት አሰጣጥ፣ የባዮሜትሪክ እና የእይታ ትሮች",
+          "የYouTube ባለሙያ — ድንክዬ ምስል (thumbnail)፣ ለአካባቢው የተስተካከለ ርዕስ/መግለጫ፣ SceneFlow የተግባር ጥሪ (CTA)",
+          "የኤክስፖርት ጥቅሎች እና የአቀባዊ አጭር ቪዲዮ ክሊፖች ዕቅዶች"
+        ]
       }
     ]
   },
   "useCases": {
-    "badge": "Production Applications",
-    "title": "Whatever Video You Can Imagine,",
-    "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "badge": "የምርት አጠቃቀሞች",
+    "title": "ማንኛውንም በዓይነ ሕሊናዎ የሚስሉት ቪዲዮ፣",
+    "titleAccent": "በ SceneFlow ውስጥ ይገንቡት",
+    "subtitle": "የሪል እስቴት ማስተዋወቂያዎች፣ ትምህርታዊ ይዘቶች፣ ፖድካስቶች፣ የዜና ቅርጸቶች፣ የምርት ስም ማስተዋወቂያ ዘመቻዎች እና ሲኒማዊ ታሪኮች — ከመጀመሪያው ሐሳብ አንስቶ ለሕትመት ዝግጁ እስከሆነው የመጨረሻ ውጤት ድረስ የሚያገለግል አንድ አውቶማቲክ ስቱዲዮ።",
+    "qualifyingStatement": "SceneFlow የእርስዎን የመጀመሪያ ፎቶዎች፣ የተሰቀሉ ፋይሎች እና መግለጫዎች ወደ ትረካ የታከለባቸው የማሳያ ቪዲዮዎች (walkthrough videos) ይለውጣል፤ በዚህ ሂደት ውስጥ የድምፅ እና የገጸ-ባህሪ አጠቃቀምን እርስዎ መቆጣጠር ይችላሉ። እነዚህ በቀጥታ በካሜራ የተቀረጹ ሳይሆኑ፣ በእርስዎ መረጃዎች ላይ የተመሰረቱ እና በሰው ሰራሽ አስተውሎት (AI) የተዘጋጁ እውነተኛ የሚመስሉ ምስላዊ ማሳያዎች ናቸው። ይዘቱን ለህዝብ ከማቅረብዎ በፊት እያንዳንዱን የቪዲዮ እቅድ (storyboard) ይገምግሙና ያጽድቁ፤ እንዲሁም ተመልካቾች ምን እየተመለከቱ እንደሆነ እንዲረዱ ውጤቶቹን በግልጽ ይሰይሙ።",
     "ui": {
-      "useCases": "Use Cases",
-      "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo coming soon",
-      "selectExample": "Select an example to preview its demo"
+      "useCases": "የአጠቃቀም ሁኔታዎች",
+      "sectors": "{count} ዘርፎች",
+      "demoComingSoon": "የሙከራ ስሪት በቅርቡ ይመጣል",
+      "selectExample": "የማሳያ ስሪቱን ለመመልከት አንድ ምሳሌ ይምረጡ።",
+      "targetPersona": "ዒላማ የተደረገ የተጠቃሚ መገለጫ",
+      "theChallenge": "ተግዳሮቱ",
+      "sceneFlowSolution": "የSceneFlow መፍትሄ",
+      "beforeVsAfter": "ከዚህ በፊት እና ከዚህ በኋላ",
+      "before": "ከዚህ በፊት",
+      "after": "በኋላ",
+      "theWin": "\"ድሉ\"",
+      "frameAnchoredTitle": "በፍሬም ላይ የተመሠረተ ቀጣይነት",
+      "frameAnchoredDescription": "SceneFlow በምስል ፍሬም (frame) ላይ የተመሠረተ ተከታታይነትን የሚያስችል ብቸኛው መሣሪያ ሲሆን፣ የደንበኛዎን ምርት ወይም ገጸ-ባህሪ በእያንዳንዱ የትዕይንት ክፍል ውስጥ ተመሳሳይ ሆኖ እንዲቀጥል ያረጋግጣል።",
+      "closePreview": "ቅድመ-እይታን ዝጋ",
+      "expandVideo": "ቪዲዮውን አስፋ",
+      "expandImage": "ምስሉን አስፋ",
+      "orStartExplorer": "በ$9 Explorer እቅድ ይጀምሩ",
+      "orPrefix": "ወይም"
+    },
+    "personas": {
+      "creator": {
+        "label": "ብቸኛ ፈጣሪ",
+        "title": "የዩቲዩብ ፈጣሪ",
+        "beforeAfter": {
+          "before": "40 ሰዓታት",
+          "after": "25 ደቂቃዎች"
+        },
+        "challenge": {
+          "title": "የ\"ቢ-ሮል\" (B-Roll) ማነቆ",
+          "description": "ጥሩ የስክሪፕት ይዘት ቢኖርዎትም፣ አብዛኛው ጊዜዎ ግን የሚውለው ተስማሚ ምስሎችን (footage) በመፈለግ፣ የአርትዖት ሥራን በማስተባበር እና በተለያዩ ትዕይንቶች መካከል ወጥነትን ለመጠበቅ በመጣር ነው። ይህ መዘግየት ይዘትን የማተም ፍጥነትን ይቀንሳል፤ እንዲሁም የተመልካችን ትኩረት ጠብቆ የማቆየት አቅምን ያዳክማል።"
+        },
+        "solution": {
+          "title": "አውቶማቲክ ታሪክ ተናጋሪ",
+          "description": "ከመጀመሪያው ትዕይንት አንስቶ ለህትመት ዝግጁ እስከሆነው የመጨረሻ ውጤት ድረስ የገጸ-ባህሪያትን እና የአጻጻፍ ስልትን ወጥነት በመጠበቅ፣ ስክሪፕቶችን በፍጥነት ለምርት ዝግጁ ወደሆኑ ምስላዊ ይዘቶች ይለውጡ።",
+          "features": [
+            "ከስክሪፕቱ ዋና ዋና ክፍሎች ጋር በትክክል የሚጣጣሙ ምስላዊ ይዘቶች",
+            "በእያንዳንዱ ትዕይንት ውስጥ ወጥ የሆኑ ዋና ገጸ-ባህሪያት",
+            "በጋራ የማጣቀሻ ቤተ-መጽሐፍት በመጠቀም ወደ ተከታታይ ክፍሎች (episode series) ያሳድጉ"
+          ]
+        },
+        "win": "አልፎ አልፎ ከሚደረጉ የይዘት ጭነቶች ወደ አስተማማኝና የተቀናጀ የምርት ሂደት፣ እንዲሁም አነስተኛ የአስተዳደር ጫና ወዳለበት አሰራር ሽግግር ያድርጉ።",
+        "keyPhrases": [
+          "ፈጣን የአፈጻጸም ጊዜ",
+          "ወጥ ባህሪ ያላቸው ገጸ-ባህሪያት",
+          "ለተከታታይ ስራ ዝግጁ የሆነ የስራ ፍሰት"
+        ]
+      },
+      "team": {
+        "label": "የውስጥ ቡድን",
+        "title": "የውስጥ የቪዲዮ ቡድን",
+        "beforeAfter": {
+          "before": "6 ሳምንታት",
+          "after": "በተመሳሳይ ሳምንት"
+        },
+        "challenge": {
+          "title": "የአቅራቢዎች የተጠራቀመ ሥራ እና ከብራንድ ማንነት መራቅ",
+          "description": "የኮሙኒኬሽን፣ የሰራተኞች ስልጠናና ልማት (L&D) እንዲሁም የማርኬቲንግ ቡድኖች ከኤጀንሲዎች ወይም ከአቅራቢዎች የሚመጣን ቪዲዮ ለማግኘት ለሳምንታት ይጠብቃሉ። እያንዳንዱ የቀረጻ ሂደት ወጥነት የሌለው የምርት ስም አጠቃቀም (branding)፣ አስቀድሞ ለመገመት አስቸጋሪ የሆኑ ክፍያዎች፣ እንዲሁም የማስተዋወቂያ ዘመቻዎችን የሚያዘገዩ ውስብስብ የማጽደቅ ሂደቶችን ያስከትላል።"
+        },
+        "solution": {
+          "title": "በተመሳሳይ ሳምንት ውስጥ በውስጥ የሚከናወን ምርት",
+          "description": "የቪዲዮ ምርትን አስቀድሞ ሊታወቅ በሚችል የክሬዲት በጀት ለማከናወን ሰራተኞችን ይመድቡ፤ ይህም የምርት ስም (brand) አብነቶችን መጠቀምን፣ የመጨረሻውን ቪዲዮ ከማዘጋጀት በፊት ማጽደቅን እንዲሁም ተጨማሪ የሰራተኛ የስራ ቀናትን ወይም ያልተገደበ የአርትዖት ሂደቶችን አለማካተትን ያካትታል።",
+          "features": [
+            "በውጫዊ አቅራቢዎች የሚከናወኑ የምስል/ቪዲዮ ቀረጻዎችን፣ በውስጥ የሚከናወኑ እና መመሪያ የተካተተባቸው የስራ ሂደቶች በመተካት ይቀይሩ።",
+            "ከብራንድ መርሆዎች ጋር የሚጣጣሙ አብነቶች እና የማጣቀሻ ቤተ-መጻሕፍት",
+            "ለእያንዳንዱ ፕሮጀክት የሚታይ የክሬዲት ወጪ እና የበጀት ጣሪያዎች",
+            "ለዋናው ቪዲዮ ክፍያ ከመፈጸምዎ በፊት የስቶሪቦርዶችን (storyboards) ያጽድቁ።"
+          ]
+        },
+        "win": "ለስልጠና፣ ለኮሙኒኬሽን እና ለዘመቻ የሚሆኑ ቪዲዮዎችን በአቅራቢው የስራ ክምችት (backlog) ሳይሆን፣ በእርስዎ የጊዜ ሰሌዳ መሰረት ያቅርቡ።",
+        "keyPhrases": [
+          "ሊገመት የሚችል ወጪ",
+          "የብራንድ ቁጥጥር",
+          "በተመሳሳይ ሳምንት ውስጥ የሚከናወን"
+        ]
+      },
+      "productionShop": {
+        "label": "የምርት አውደ ጥናት",
+        "title": "ልዩ የምርት ማዕከል",
+        "beforeAfter": {
+          "before": "ለአንድ ሹት (shoot) 8,000 ዶላር",
+          "after": "የ200 ዶላር ክሬዲት"
+        },
+        "challenge": {
+          "title": "ለልዩ ዘርፎች የተበጁ መፍትሄዎች፣ ነገር ግን ሊደገም የሚችል አሰራር የለም",
+          "description": "የህይወት ታሪክ (memoir)፣ የትውልድ ቅርስ፣ ሪል እስቴት እና የትምህርት ዘርፍ ደንበኞች ስራቸው በፍጥነት እንዲከናወን ይፈልጋሉ፤ ነገር ግን እያንዳንዱ ፕሮጀክት ከባዶ ነው የሚጀመረው። መረጃዎችን ማስገባት (uploads)፣ የድምፅ ቅጂዎችን (voice clones) እና አቫታሮችን መጠቀም፤ መረጃን ከመቀበል እስከ ውጤት ማድረስ ድረስ ያለውን ሂደት የሚያስተዳድር ደረጃውን የጠበቀ አሰራር (template) ከሌለ በስፋት ለማከናወን አዳጋች ይሆናል።"
+        },
+        "solution": {
+          "title": "የቪዲዮ አገልግሎትዎን ወደ ምርትነት ይለውጡት",
+          "description": "ለማስታወሻ (memoir) ስቱዲዮዎች እና ለተወሰኑ ልዩ የሥራ ዘርፎች ሊደገሙ የሚችሉ የስራ ሂደቶችን ይፍጠሩ። አብነቶችን (templates) መጫን፣ የድምፅ ቅጂዎችን (voice clones) ማዘጋጀት፣ አቫታሮችን እና የስቶሪቦርድ (storyboard) ማጽደቅ ሂደቶችን እንደየደንበኛው ፍላጎት በማበጀት፣ በስራ መጠን መጨመር አማካኝነት ትርፍዎን ያሳድጉ።",
+          "features": [
+            "ፎቶዎችን የመጫን፣ ድምፅን የመቅዳት (voice cloning) እና አቫታር አቅራቢዎችን የማካተት አማራጭ ያላቸው የማስታወሻ (memoir) አብነቶች",
+            "ከBlueprint እና ከስቶሪቦርድ (storyboard) ማጽደቂያ ምዕራፎች ጋር የተገናኘ የደንበኛ ምዝገባ ሂደት",
+            "ለታሪክና ትዝታ (legacy)፣ ለክብር መግለጫ (tribute) እና ለደንበኝነት ምዝገባ (subscription) አገልግሎት የሚውሉ የቪዲዮ ስቱዲዮ ፓኬጆች (White-label)",
+            "ለእያንዳንዱ ቀረጻ የሚውል ተጨማሪ ወጪ (overhead) ከማካተት ይልቅ፣ በክሬዲቶች ላይ የሚታከል ትርፍ (margin)"
+          ]
+        },
+        "win": "አንድ ጊዜ ብቻ የሚከናወን የፍሪላንስ (freelance) ሥራ ሳይሆን፣ በተደጋጋሚ ሊቀርብ የሚችል የቪዲዮ የሕይወት ታሪክ (video memoir) ወይም ልዩ የስታዲዮ አገልግሎት ይጀምሩ።",
+        "keyPhrases": [
+          "የማስታወሻ ጽሑፍ አብነቶች",
+          "የድምፅ እና የአቫታር ማንነት",
+          "ተደጋግሞ ሊከናወን የሚችል አቅርቦት"
+        ]
+      },
+      "agency": {
+        "label": "ኤጀንሲ",
+        "title": "ለደንበኛ አገልግሎት አቅርቦት ኃላፊ",
+        "beforeAfter": {
+          "before": "በ3 ሳምንታት ውስጥ ማድረስ",
+          "after": "የ3 ቀን ማድረስ"
+        },
+        "challenge": {
+          "title": "ለደንበኞች አገልግሎት በሰፊ መጠን ማቅረብ",
+          "description": "ፕሮጀክቱን ለማግኘት የሚደረገው ውድድር ማሸነፍ ግማሹን መንገድ ብቻ መጓዝ ነው። ለደንበኛ በተደጋጋሚ የሚሰሩ ስራዎች ፈጣን አፈጻጸም፣ ግልጽ የሆነ የማጽደቅ ሂደት እና በእያንዳንዱ ውጤት ላይ አዋጭ ትርፍ (margin) ይጠይቃሉ፤ ይህ ሁሉ ደግሞ ስራውን በየጊዜው ከመጀመሪያው ጀምሮ አዲስ አድርጎ ከመገንባት ውጪ መከናወን አለበት።"
+        },
+        "solution": {
+          "title": "የሥራ ፍሰት መጠን + የደንበኛ ማጽደቅ",
+          "description": "ለብራንድ ደህንነት ዋስትና በሚሰጡ ቁጥጥሮች፣ የመጨረሻው ውጤት ከመዘጋጀቱ በፊት በደንበኛ የመገምገም እድል እና ለእያንዳንዱ ፕሮጀክት አስቀድሞ ሊታወቅ በሚችል የክሬዲት ወጪ አማካኝነት፣ ከቅድመ-ሃሳብ (pitch) ደረጃ ወደ ተደጋጋሚ የአገልግሎት አቅርቦት ይሸጋገሩ።",
+          "features": [
+            "ለአቀራረቦች እና ለደንበኛ ማረጋገጫ ፈጣን የቅድመ-እይታ (pre-visualization) ዝግጅት",
+            "ለደንበኞች በተደጋጋሚ ለሚዘጋጁ ቅርጸቶች እንደገና ጥቅም ላይ ሊውሉ የሚችሉ አብነቶች",
+            "በእያንዳንዱ የማሻሻያ ደረጃ የበጀት ግልጽነት",
+            "ተጨማሪ የሰው ኃይል ሳይጨምሩ አገልግሎትን የማስፋት አቅም"
+          ]
+        },
+        "win": "የአገልግሎት ማቅረቢያ (pitch) ሂደቶችን እና ተደጋጋሚ የደንበኛ ስራዎችን፤ የምርት ስጋትን በመቀነስ እና የተሻለ ትርፍ በማስገኘት በፍጥነት ያከናውኑ።",
+        "keyPhrases": [
+          "የደንበኛ ማጽደቆች",
+          "የማድረስ አቅም / የማድረስ ፍሰት መጠን",
+          "የበጀት መተንበይ መቻል"
+        ]
+      }
+    },
+    "segmentCtas": {
+      "creator": {
+        "label": "የምርት ደረጃ የሙከራ በረራዎን ይጀምሩ",
+        "subtext": "$9 (አንድ ጊዜ የሚከፈል) • 750 ክሬዲቶች • የመድረኩ ሙሉ አገልግሎት ተደራሽነት"
+      },
+      "team": {
+        "label": "ለቡድን ጉብኝት ቀጠሮ ይያዙ",
+        "subtext": "የውስጥ ቡድኖች የአቅራቢዎችን የስራ ዑደት እንዴት እንደሚተኩ ይመልከቱ።"
+      },
+      "productionShop": {
+        "label": "አቀባዊ አብነቶችን ያስሱ",
+        "subtext": "ሪል እስቴት፣ ትምህርት፣ ሰነዶች እና ሌሎችም — ወደ ምርትነት ሊቀይሯቸው የሚችሏቸውን ነገሮች ይመልከቱ።"
+      },
+      "agency": {
+        "label": "ለቡድኖች የተዘጋጀውን ዋጋ ይመልከቱ",
+        "subtext": "ለኤጀንሲዎች እና ለትልቅ ደረጃ የምርት ተቋማት የተዘጋጁ ዕቅዶች"
+      }
     },
     "categories": [
       {
-        "id": "property",
-        "title": "Property, Spaces & Hospitality",
+        "id": "ንብረት",
+        "title": "ንብረት፣ ቦታዎች እና የእንግዳ ተቀባይነት አገልግሎት",
+        "qualifyingStatement": "ከእውነተኛ የንብረትዎ ፎቶዎች የተዘጋጀ፤ በእርስዎ ድምፅ እና አቫታር (avatar) ታጅቦ፣ በሰው ሰራሽ አስተውሎት (AI) ቴክኖሎጂ በተሻሻለ መልኩ የሚቀርብ ምናባዊ ጉብኝት ነው። ይህ የንብረቱን አቀማመጥ እና ገጽታዎች በተጨባጭ ሁኔታ የሚያሳይ ሲሆን፣ በአካል ተገኝቶ ንብረቱን ከመጎብኘት አማራጭ ግን አይደለም። ሁሉም ጉብኝቶች በግልጽ ተለይተው የተሰየሙ ናቸው።",
         "examples": [
           {
-            "id": "residential-real-estate",
-            "label": "Residential Real Estate",
-            "description": "Automated listing tours featuring the agent's cloned voice and avatar identity."
+            "id": "የመኖሪያ ቤት ሪል እስቴት",
+            "label": "የመኖሪያ ቤት ሪል እስቴት",
+            "description": "የንብረትዎን ምስሎች፣ እንዲሁም ያስቀመጧቸውን የግል መገለጫ መረጃዎች እና ድምጽዎን ሲያሰገቡ (upload ሲያደርጉ) በዓይነ ሕሊናዎ ይሳሉ። ከዚያም፣ ምስልዎን እና ድምጽዎን በመጠቀም ንብረቱን የሚያስተዋውቅ ሙያዊ ደረጃ ያለው የቪዲዮ ጉብኝት (walkthrough) — ከ70 በላይ በሆኑ ቋንቋዎች — ወዲያውኑ ሲፈጠር ያስቡ።"
           },
           {
-            "id": "commercial-real-estate",
-            "label": "Commercial Real Estate",
-            "description": "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data."
+            "id": "የንግድ ሪል እስቴት",
+            "label": "የንግድ ሪል እስቴት",
+            "description": "የህንጻውን የውስጥ አቀማመጥ ንድፎች (floor plans)፣ ምስላዊ ንድፎችን (renderings) እና የአካባቢውን መረጃዎች፤ ከደላላዎ የተቀዳ ድምፅ እና ዲጂታል ምስል (avatar) ጋር በማጣመር ወደ ስርዓቱ ሲያስገቡ አስቡት። ከዚያም፣ እያንዳንዱን የቦታ ክፍል በተጨባጭ ሁኔታ የሚያሳዩ እና ለኢንቨስተሮች የሚቀርቡ አቀራረቦችን (pitch walkthroughs) በቅጽበት ማዘጋጀት፤ ይህም ከ70 በላይ በሆኑ ቋንቋዎች የተዘጋጀ ሊሆን ይችላል።"
           },
           {
-            "id": "short-term-rentals",
-            "label": "Short-Term Rentals",
-            "description": "Automated \"Digital Welcome Books\" that walk guests through house features and local \"best of\" spots."
+            "id": "ለአጭር ጊዜ የሚከራዩ መኖሪያ ቤቶች",
+            "label": "ለአጭር ጊዜ የሚከራዩ ቤቶች",
+            "description": "የቤቱን ፎቶዎች እና ስለ አገልግሎቶቹ የሚገልጹ ማስታወሻዎችን፣ ከአስተናጋጁ የተቀዳ ድምፅ ጋር አያይዘው ሲያሰፍሩ በዓይነ ሕሊናዎ ይሳሉ። ከዚያም፣ እንግዶቹ ወደ ቤቱ ከመግባታቸው በፊት እንኳን፣ በእያንዳንዳቸው ቋንቋ ሰላምታ የሚያቀርቡ ዲጂታል የእንኳን ደህና መጣችሁ ቪዲዮዎችን ወዲያውኑ ሲያሰራጩ ያስቡ።"
           },
           {
-            "id": "hospitality-tourism",
-            "label": "Hospitality & Tourism",
-            "description": "Hotel virtual tours and narrated travel itineraries for agencies."
+            "id": "የእንግዳ ተቀባይነት እና ቱሪዝም",
+            "label": "የእንግዳ ተቀባይነት እና ቱሪዝም",
+            "description": "የሆቴል ፎቶዎችን እና የጉዞ መርሃ ግብር ዋና ዋና ነጥቦችን፣ ከብራንድዎ ጋር የተያያዘ የተቀዳ የአስተናጋጅ ድምፅ እና አቫታር (avatar) በመጠቀም ወደ ስርዓቱ ሲያስገቡ አስቡት። ከዚያም፣ ለእያንዳንዱ ሆቴል ወይም ቦታ የፊልም ቀረጻ ቡድን ሳያስፈልግ፣ በ70+ ቋንቋዎች የተዘጋጁ ቨርቹዋል ጉብኝቶችን እና በድምፅ የሚመሩ የጉዞ መረጃዎችን ወዲያውኑ ማቅረብ ይችላሉ።"
           },
           {
-            "id": "museum-gallery-guides",
-            "label": "Museum & Gallery Guides",
-            "description": "Multi-language audio-visual \"tours\" for exhibitions that can be updated JIT as exhibits change."
+            "id": "የሙዚየም እና የጋለሪ አስጎብኚዎች",
+            "label": "የሙዚየም እና የጋለሪ መመሪያዎች",
+            "description": "የኤግዚቢሽን ማሳያዎች ሲቀየሩ ፎቶዎችን እና የባለሙያ ማብራሪያዎችን ወደ ስርዓቱ ሲያስገቡ አስቡት፤ ከዚያም ከ70 በላይ በሆኑ ቋንቋዎች የሚቀርቡትን የጉብኝት መግለጫዎች ወዲያውኑ ማዘመን ይችላሉ — ይህም ኤግዚቢሽኑ ሲቀየር እንደገና መቅረጽ አያስፈልግም ማለት ነው።"
           }
         ]
       },
       {
-        "id": "knowledge",
-        "title": "Knowledge, Training & Education",
+        "id": "እውቀት",
+        "title": "እውቀት፣ ስልጠና እና ትምህርት",
         "examples": [
           {
-            "id": "k12-higher-ed",
-            "label": "K-12 & Higher Ed",
-            "description": "30-minute curriculum modules that can be instantly localized for ESL students or global campuses."
+            "id": "ከK-12 እስከ ከፍተኛ ትምህርት",
+            "label": "ከመዋለ-ህጻናት እስከ ሁለተኛ ደረጃ ትምህርት እና ከፍተኛ ትምህርት",
+            "description": "የአስተማሪዎን ድምፅ እና ገጽታ (avatar) በመጠቀም የመማሪያ ይዘቶችን ወደ ስርዓቱ ሲያስገቡ፤ ከዚያም የESL እና የአለም አቀፍ ካምፓስ ተማሪዎችዎ ከ70 በላይ በሆኑ ቋንቋዎች መመልከት የሚችሏቸውን ሙሉ የስርዓተ-ትምህርት ሞጁሎች ወዲያውኑ ሲያዘጋጁ በዓይነ ሕሊናዎ ይሳሉ።"
           },
           {
-            "id": "corporate-ld",
-            "label": "Corporate L&D",
-            "description": "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices."
+            "id": "ኮርፖሬት-ኤልዲ",
+            "label": "የድርጅት ትምህርትና ልማት",
+            "description": "የአሰልጣኝዎን የተቀዳ ድምፅ እና አቫታር (avatar) በመጠቀም፣ ደንቦችን የማክበር መመሪያዎችን (compliance scripts) ወደ ስርዓቱ ሲያስገቡ በዓይነ ሕሊናዎ ይሳሉ። ከዚያም፣ ወጥ የሆነ የአዲስ ሠራተኛ መግቢያ (onboarding) እና የደህንነት ስልጠናን በሁሉም ቢሮዎችዎ ውስጥ በአንድ ጊዜ ተግባራዊ ማድረግ፤ ይህም ከ70 በላይ በሆኑ ቋንቋዎች የተዘጋጀ ነው።"
           },
           {
-            "id": "software-saas-tutorials",
-            "label": "Software SaaS Tutorials",
-            "description": "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion."
+            "id": "የሶፍትዌር እና የSaaS ማብራሪያዎች",
+            "label": "የሶፍትዌር (SaaS) ማስተማሪያዎች",
+            "description": "የምርት ባለሙያዎ የተቀዳ ድምፅ አብሮ እንዲኖር በማድረግ፣ የUI (የተጠቃሚ በይነገጽ) ምስሎችን እንደ ማጣቀሻ ፍሬሞች ሲሰቅሉ ያስቡ። ከዚያም እያንዳንዱን ጠቅታ (click) የሚያሳዩ የማብራሪያ ቪዲዮዎችን ወዲያውኑ ማመንጨት፤ እነዚህም የUI ለውጦችዎ ተግባራዊ በሚሆኑበት ቀን አብረው ይዘመናሉ።"
           },
           {
-            "id": "niche-skill-tutoring",
-            "label": "Niche Skill Tutoring",
-            "description": "Professional \"How-To\" series for cooking, DIY, or technical certifications."
+            "id": "ልዩ ክህሎት የማስተማር አገልግሎት",
+            "label": "ልዩ የክህሎት ስልጠና",
+            "description": "የአሰልጣኝዎን የተቀዳ ድምፅ እና የአካል እንቅስቃሴ መግለጫ (character reference) በመጠቀም፣ የአሰራር ሂደቱን የሚያሳዩ ፎቶዎችን ሲያሰናዱ እና ሲጭኑ በዓይነ ሕሊናዎ ይሳሉ። ከዚያም፤ ምግብ አሰራርን፣ በራስ የሚሰሩ ሥራዎችን (DIY) ወይም ለብቃት ማረጋገጫ ፈተና ዝግጅትን የመሳሰሉ ሙያዊ የአሰራር መመሪያዎችን (how-to series) በአንድ ጊዜ ከ70 በላይ በሆኑ ቋንቋዎች ማተም እና ማሰራጨት እንደሚችሉ ያስቡ።"
           },
           {
-            "id": "medical-patient-education",
-            "label": "Medical/Patient Education",
-            "description": "Narrated explanations of surgical procedures or medication management for hospitals and clinics."
+            "id": "ለታካሚ የሚሰጥ የህክምና ትምህርት",
+            "label": "የህክምና/የታካሚ ትምህርት",
+            "description": "የህክምና ባለሙያዎ ያጸደቀውንና የተቀዳውን ድምፅ በመጠቀም፣ የህክምና ሂደትን የሚያሳዩ ምስሎችን (diagrams) ወደ ስርዓቱ ሲያስገቡ አስቡት፤ ከዚያም ቤተሰቦች ሊረዷቸው የሚችሉ ግልጽ የሆኑና ለታካሚዎች የሚሆኑ ትምህርታዊ ቪዲዮዎችን ከ70 በላይ በሆኑ ቋንቋዎች ወዲያውኑ ሲያዘጋጁ።"
           },
           {
-            "id": "video-memoirs",
-            "label": "Video Memoirs",
-            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+            "id": "የቪዲዮ ትዝታዎች",
+            "label": "የቪዲዮ ትዝታዎች",
+            "description": "የቤተሰብ ፎቶዎችን፣ የቃለ-መጠይቅ ድምፅን እና የትዕይንት ማስታወሻዎችን፣ አስቀድሞ ከተቀዳ የትረካ ድምፅ ጋር ሲያዋህዱት በዓይነ ሕሊናዎ ይሳሉት። ከዚያም፣ በምዕራፍ የተከፋፈሉ የማስታወሻ ቪዲዮዎችን በፍጥነት ያዘጋጁ፤ እንዲሁም የመጨረሻው ቪዲዮ ከመሰራቱ በፊት የቪዲዮውን ዝርዝር ዕቅድ (storyboard) ይገምግሙና ያጽድቁ።"
           }
         ]
       },
       {
-        "id": "jit",
-        "title": "JIT Media & Information",
+        "id": "ጂት",
+        "title": "ጂአይቲ (JIT) ሚዲያ እና መረጃ",
         "examples": [
           {
-            "id": "hyper-local-news",
-            "label": "Hyper-Local News",
-            "description": "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive."
+            "id": "እጅግ አካባቢያዊ ዜና",
+            "label": "እጅግ አካባቢያዊ ዜና",
+            "description": "የዕለቱን ፎቶዎች እና መረጃዎች፣ ቀድሞ በተቀዳው የዜና አቅራቢዎ ድምፅ ታጅበው ወደ ስርዓቱ ሲያስገቡ፤ ከዚያም ያለ ምንም የቀረጻ ቡድን እና ያለ ምንም የጊዜ ገደብ መዘግየት፣ የአካባቢውን ዕለታዊ አጭር ዜና ወዲያውኑ ሲያሰራጩ በዓይነ ሕሊናዎ ይሳሉ።"
           },
           {
-            "id": "financial-market-recaps",
-            "label": "Financial & Market Recaps",
-            "description": "Turning daily stock market or crypto data into 3-minute narrated visual digests."
+            "id": "የፋይናንስ ገበያ ማጠቃለያዎች",
+            "label": "የፋይናንስ እና የገበያ ማጠቃለያዎች",
+            "description": "በየጠዋቱ የገበያ መረጃዎችን እና የገበያ ግራፍ ምስሎችን፣ ከተንታኝዎ የተቀዳ ድምፅ ጋር በማጣመር ወደ አንድ የድምፅ ማብራሪያ ያለው ምስላዊ ማጠቃለያ ወዲያውኑ ሲቀይሩት ያስቡ፤ ይህም የገበያ እንቅስቃሴ ከመጀመሩ በፊት ዝግጁ ይሆናል።"
           },
           {
-            "id": "sports-commentary",
-            "label": "Sports Commentary",
-            "description": "Automated \"recap\" videos using game stats and static photography turned into F2V action."
+            "id": "የስፖርት አስተያየት",
+            "label": "የስፖርት ትንታኔ",
+            "description": "የጨዋታ መረጃዎችን (stats) እና ፎቶዎችን፣ ቀድሞ ከተቀዳው የአስተያየት ሰጪው (commentator) ድምፅ ጋር በማጣመር ወደ ስርዓቱ እንደጫናችሁ አስቡ። ከዚያም፣ አድናቂዎች ስለ ጨዋታው ገና እያወሩ ባሉበት ወቅት፣ አኒሜሽን የተካተተባቸውን የጨዋታ ማጠቃለያ ቪዲዮዎች ወዲያውኑ ማዘጋጀትና ማሰራጨት ይቻላል።"
           },
           {
-            "id": "true-crime-historical-docs",
-            "label": "True Crime & Historical Docs",
-            "description": "Using the Reference Library to keep historical figures consistent across a multi-part documentary series."
+            "id": "እውነተኛ የወንጀል ታሪክ ዘጋቢ ፊልሞች",
+            "label": "እውነተኛ የወንጀል ታሪኮች እና ታሪካዊ ዘጋቢ ፊልሞች",
+            "description": "ታሪካዊ ሰዎችን በReference Library ስርዓትዎ ውስጥ አንድ ጊዜ ብቻ አስገብተው እንደሚያስቀምጧቸው አስቡ። ከዚያም፣ ፊታቸውም ሆነ ድምፃቸው ሳይለወጥና ወጥነት ባለው መልኩ የሚቀጥሉባቸውን ተከታታይ ክፍሎች (episodes) ወዲያውኑ ማምረት እንደሚችሉ አስቡ።"
           },
           {
-            "id": "weather-emergency-alerts",
-            "label": "Weather & Emergency Alerts",
-            "description": "Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms."
+            "id": "የአየር ሁኔታ ድንገተኛ አደጋ ማስጠንቀቂያዎች",
+            "label": "የአየር ሁኔታ እና የአስቸኳይ ጊዜ ማስጠንቀቂያዎች",
+            "description": "በድርጅትዎ የታመነ እና አስቀድሞ በተቀዳ ድምፅ የአደጋ ጊዜ መረጃዎችን ሲያስተላልፉ ያስቡ። ከዚያም ግልጽ የሆኑ የማስጠንቀቂያ መልዕክቶችን ከ70 በላይ በሆኑ ቋንቋዎች በማህበራዊ ሚዲያ መድረኮች ላይ በደቂቃዎች ውስጥ — ቀናት ሳይፈጅ — ወዲያውኑ ሲያሰራጩ።"
           }
         ]
       },
       {
-        "id": "b2b",
-        "title": "B2B Marketing & Sales",
+        "id": "ከንግድ ወደ ንግድ (B2B)",
+        "title": "ከንግድ ወደ ንግድ (B2B) ግብይት እና ሽያጭ",
         "examples": [
           {
-            "id": "product-explainer-videos",
-            "label": "Product Explainer Videos",
-            "description": "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos."
+            "id": "ስለ ምርት የሚያብራሩ ቪዲዮዎች",
+            "label": "የምርት ማብራሪያ ቪዲዮዎች",
+            "description": "የምርት ካታሎግ ምስሎችን፣ እንዲሁም ቀድሞ የተዘጋጀውን የምርት ስምዎ (brand) የአቅራቢ ድምፅ እና አቫታር (avatar) በመጠቀም፤ በቅጽበት ሲኒማዊ የማብራሪያ ቪዲዮዎችን መፍጠር እንደሚችሉ አስቡት። ቪዲዮውን ከመጨረሻው የማምረት ሂደት (rendering) በፊት የቪዲዮውን ዝርዝር እቅድ (storyboard) ማጽደቅም ይችላሉ።"
           },
           {
-            "id": "case-study-testimonials",
-            "label": "Case Study/Testimonials",
-            "description": "Using client headshots and project photos to create high-end visual success stories."
+            "id": "የጉዳይ ጥናት ምስክርነቶች",
+            "label": "የጉዳይ ጥናት/የተጠቃሚዎች ምስክርነት",
+            "description": "የደንበኞችን ፎቶዎች፣ የፕሮጀክት ምስሎችን እና የስኬት መለኪያዎችን አስቀድሞ ከተቀዳ የትረካ ድምፅ ጋር በማጣመር እየሰቀሉ እንደሆነ ያስቡ፤ ከዚያም ምስክርነትን ለመቅረጽ የሚያስፈልገውን ሂደት ሳያልፉ፣ ወዲያውኑ ጥራት ያላቸውንና በምስል የተደገፉ የስኬት ታሪኮችን (visual case studies) ማዘጋጀት ይችላሉ።"
           },
           {
-            "id": "recruitment-branding",
-            "label": "Recruitment & Branding",
-            "description": "Giving candidates a narrated \"day in the life\" tour of the office and culture."
+            "id": "የቅጥር ብራንዲንግ",
+            "label": "ቅጥር እና የምርት ምስል ግንባታ",
+            "description": "የቢሮዎን ፎቶዎች እና የድርጅትዎን የስራ ባህል የሚያሳዩ ዋና ዋና ነጥቦችን፣ ከቀረጸው የቅጥር ኃላፊዎ ድምፅ እና ዲጂታል ምስል (avatar) ጋር ሲያዋህዱት በዓይነ ሕሊናዎ ይሳሉ። ከዚያም፣ ለዓለም አቀፍ ቅጥር አገልግሎት በሚውሉ ከ70 በላይ ቋንቋዎች አማካኝነት፣ አመልካቾች በድርጅቱ ውስጥ ያለውን የዕለት ተዕለት እንቅስቃሴ በዝርዝር ማብራሪያ የታጀበ ጉብኝት እንዲያደርጉ ወዲያውኑ ማድረግ ይችላሉ።"
           },
           {
-            "id": "conference-event-promos",
-            "label": "Conference & Event Promos",
-            "description": "Automated \"Speaker Bio\" videos and \"What to Expect\" guides for large-scale events."
+            "id": "የኮንፈረንስ እና የዝግጅት ማስተዋወቂያዎች",
+            "label": "የኮንፈረንስ እና የዝግጅት ማስተዋወቂያዎች",
+            "description": "የተናጋሪዎችን የህይወት ታሪክ፣ የክፍለ-ጊዜ ዝርዝሮችን እና የመድረኩን ፎቶዎች ከዝግጅቱ አስተናጋጅ የተቀዳ ድምፅ ጋር በማጣመር ሲያሰናዱ በዓይነ ሕሊናዎ ይሳሉ። ከዚያም፣ አጀንዳው በተቀየረ ቁጥር በራስ-ሰር የሚዘመኑ የተናጋሪዎች መግቢያዎችን እና ስለ ዝግጅቱ የሚጠብቁትን መረጃ የሚያሳዩ መመሪያዎችን ወዲያውኑ ማመንጨት ያስቡ።"
           }
         ]
       },
       {
-        "id": "public",
-        "title": "Public Sector & Advocacy",
+        "id": "ሕዝባዊ",
+        "title": "የመንግስት ዘርፍ እና የጥብቅና ስራ",
         "examples": [
           {
-            "id": "ngo-impact-reports",
-            "label": "NGO Impact Reports",
-            "description": "Turning data and field photography into emotive, narrated videos for donors."
+            "id": "የመንግስታዊ ያልሆኑ ድርጅቶች (NGOs) የተፅዕኖ ሪፖርቶች",
+            "label": "የመንግስታዊ ያልሆኑ ድርጅቶች (NGOs) የተፅዕኖ ሪፖርቶች",
+            "description": "በስራ ቦታ የተነሱ ፎቶዎችን እና የተከናወኑ ተግባራትን ውጤት የሚያሳዩ መረጃዎችን፣ እንዲሁም ድርጅትዎ ቀድሞ የመዘገበውን የአቅራቢ ድምፅ ሲያዋህዱ በዓይነ ሕሊናዎ ይሳሉ። ከዚያም፣ ለለጋሾች የሚዘጋጁ ሪፖርቶችን ወዲያውኑ ስሜት ቀስቃሽ እና በድምፅ የታጀቡ ቪዲዮዎች ይለውጧቸው፤ ይህ ማለት ዝም ብሎ የሚታይ የተንሸራታች ምስል (slideshow) ሳይሆን፣ የድርጅትዎን ተልዕኮ የሚያንፀባርቅ ሕያው ድምፅ ማለት ነው።"
           },
           {
-            "id": "public-health-announcements",
-            "label": "Public Health Announcements",
-            "description": "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity."
+            "id": "የህዝብ ጤና ማስታወቂያዎች",
+            "label": "የህዝብ ጤና ማስታወቂያዎች",
+            "description": "በክፍልዎ ዘንድ ታማኝነትን ባተረፈና አስቀድሞ በተቀረጸ ድምፅ አማካኝነት፣ ይፋ ለማድረግ የተፈቀደ የጤና መረጃን ወደ ስርዓቱ ሲያስገቡ በዓይነ ሕሊናዎ ይሳሉ። ከዚያም፣ ከ70 በላይ በሆኑ ቋንቋዎች መልእክቱ ወዲያውኑ ለሁሉም ማህበረሰብ ይደርሳል፤ ይህም መልእክቱ በተመሳሳይ ግልጽነትና አጣዳፊነት፣ እንዲሁም ምንም ዓይነት የትርጉም መዘግየት ሳይኖርበት እንዲተላለፍ ያደርጋል።"
           },
           {
-            "id": "legal-insurance-explainers",
-            "label": "Legal & Insurance Explainers",
-            "description": "Helping clients understand complex contracts or claim processes through narrated visual breakdowns."
+            "id": "የህግ እና የኢንሹራንስ ማብራሪያዎች",
+            "label": "የህግ እና የኢንሹራንስ ጉዳዮች ማብራሪያዎች",
+            "description": "የውል ማጠቃለያዎችን እና የአሰራር ሂደትን የሚያሳዩ ምስላዊ መግለጫዎችን (diagrams)፣ ከአማካሪዎ የተመዘገበ ድምፅ ጋር አያይዘው ሲያቀርቡ ያስቡ። ከዚያም ደንበኞች ውሉን ከመፈረማቸው ወይም የካሳ ጥያቄ ከማቅረባቸው በፊት፣ በቀላሉ ሊረዱት የሚችሉትን ምስላዊ ማብራሪያዎች ወዲያውኑ ማዘጋጀት ይችላሉ።"
           },
           {
-            "id": "religious-spiritual-teachings",
-            "label": "Religious & Spiritual Teachings",
-            "description": "Converting sermons or texts into a consistent, narrated daily video series for global congregations."
+            "id": "ሃይማኖታዊና መንፈሳዊ ትምህርቶች",
+            "label": "ሃይማኖታዊ እና መንፈሳዊ ትምህርቶች",
+            "description": "የስብከት ማስታወሻዎችን ወይም የተቀደሱ ጽሑፎችን፣ ከአስተማሪዎ የተቀዳ ድምፅ እና ምስል ጋር አጣምረው ሲያሰፍሩ በዓይነ ሕሊናዎ ይሳሉ። ከዚያም፣ በመላው ዓለም ለሚገኙ ምዕመናን የሚሆኑ ተከታታይ ዕለታዊ ቪዲዮዎችን — ከ70 በሚበልጡ ቋንቋዎች — ወዲያውኑ ሲያሰራጩ ያስቡ።"
           }
         ]
       }
     ]
   },
   "institutionalRoi": {
-    "badge": "For in-house teams & institutions",
-    "title": "Replace vendor shoots with predictable in-house production",
-    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
+    "badge": "ለውስጣዊ ቡድኖች እና ተቋማት",
+    "title": "ከውጭ አቅራቢዎች ጋር የሚደረጉ የቀረጻ ስራዎችን፣ ውጤቱ አስቀድሞ በሚታወቅ የውስጥ የምርት ሂደት ይተኩ።",
+    "subtitle": "ከ1 እስከ 5 አባላት ያሏቸው የግንኙነት (Comms)፣ የሰራተኞች ስልጠናና ልማት (L&D) እና የግብይት (Marketing) ቡድኖች፤ ውድ የሆኑ የአገልግሎት ውሎችን ወይም ማለቂያ የሌላቸውን የአርትዖት ሂደቶችን ሳያስፈልጋቸው፣ ቪዲዮዎችን በተሰሩበት ሳምንት ማጠናቀቅና ማቅረብ ይችላሉ።",
     "comparisons": [
       {
-        "label": "Traditional vendor shoot + edit",
-        "cost": "$5,000–$15,000",
-        "timeline": "4–8 weeks"
+        "label": "ባህላዊ አገልግሎት ሰጪዎች (Vendor) ፎቶ/ቪዲዮ ቀረጻ እና ኤዲቲንግ",
+        "cost": "5,000–15,000 ዶላር",
+        "timeline": "ከ4 እስከ 8 ሳምንታት"
       },
       {
-        "label": "SceneFlow in-house workflow",
-        "cost": "$50–$500 in credits",
-        "timeline": "Same week"
+        "label": "SceneFlow የውስጥ የስራ ፍሰት",
+        "cost": "ከ50 እስከ 500 ዶላር የሚደርስ ክሬዲት",
+        "timeline": "በተመሳሳይ ሳምንት"
       }
     ],
     "bullets": [
-      "Brand-safe templates and approval before final render",
-      "Budget caps with visible credit spend per project",
-      "No crew days, no edit back-and-forth on every revision"
+      "ከብራንድ መርሆዎች ጋር የሚጣጣሙ አብነቶች እና የመጨረሻው ውጤት ከመዘጋጀቱ በፊት የሚደረግ ማጽደቅ",
+      "ለእያንዳንዱ ፕሮጀክት የሚታይ የክሬዲት ወጪ እና የበጀት ጣሪያዎች",
+      "ለቀረጻ የሚውሉ ቀናትም ሆነ በእያንዳንዱ ማሻሻያ ላይ የሚኖር የአርትዖት መመላለስ አያስፈልግም።"
     ],
-    "ctaPrimary": "Book a team walkthrough",
-    "ctaSecondary": "See pricing",
-    "typicalCost": "Typical cost",
-    "timeline": "Timeline"
+    "ctaPrimary": "ለቡድን አጠቃላይ ጉብኝት ቀጠሮ ይያዙ",
+    "ctaSecondary": "ዋጋዎችን ይመልከቱ",
+    "typicalCost": "የተለመደ ወጪ",
+    "timeline": "የጊዜ ሰሌዳ"
   },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Studio feature deep dive",
-    "close": "Close",
-    "viewDetails": "View Details",
+    "badge": "በመሪ የታጀበ ጉብኝት",
+    "title": "የመድረኩ አጠቃላይ ጉብኝት",
+    "subtitle": "ከጋራ ግምገማዎች አንስቶ እስከ የመጨረሻው ሲኒማዊ ውጤት ድረስ ያለውን የSceneFlow AI Studio የስራ ሂደት የሚገልጽ አጠቃላይ መመሪያ።",
+    "subheading": "መድረኩን ያስሱ — በመሠረታዊ ነገሮች ይጀምሩ",
+    "chapterHint": "ዛሬ ማወቅ ያለብዎት አራት ነገሮች። ሙሉውን መረጃ ለማግኘት ክፍሎቹን ይክፈቱ።",
+    "expandChapter": "የዝግጅቱ ገጽታዎች",
+    "collapseChapter": "ባህሪያትን ደብቅ",
+    "underTheHoodLabel": "ከሽፋኑ በታች",
+    "chapters": [
+      {
+        "id": "አስፈላጊ ነገሮች",
+        "label": "ከዚህ ይጀምሩ — በመጀመሪያው ቀን የሚያገኙት"
+      },
+      {
+        "id": "ጥራት",
+        "label": "መልእክትዎ በተመልካቾችዎ ዘንድ ተጽዕኖ እንዲያሳድር ያድርጉ።"
+      },
+      {
+        "id": "ምርት",
+        "label": "ከፀደቁ የሙዚቃ ዜማዎች (beats) እስከ ታተመ የመጨረሻ ውጤት (master)"
+      },
+      {
+        "id": "የላቀ",
+        "label": "ክፍያን እና የአስተዳደር ቁጥጥርን ለሚፈልጉ ቡድኖች"
+      }
+    ],
+    "close": "ዝጋ",
+    "viewDetails": "ዝርዝር መረጃን ይመልከቱ",
     "beatFirst": {
-      "id": 15,
-      "title": "Beat-First Video Pipeline",
-      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "title": "በምት (Beat) ላይ የተመሰረተ የቪዲዮ ማቀነባበሪያ ሂደት",
+      "description": "ወደ F2V ከመሸጋገርዎ በፊት የስትሪቦርድ (storyboard) ዋና ዋና ክፍሎችን እና Beat Framesን ያጽድቁ፤ ይህም በስህተት የመነጩ (hallucination) እና ከታቀደው ምስላዊ ይዘት የመውጣት (visual drift) ችግሮችን በመቀነስ፣ ያለአግባብ የሚደረጉ ድግግሞሾችን ያስቀራል። ከግምገማ እስከ መጨረሻው ቪዲዮ ድረስ አንድ ወጥ እና የተደራጀ የስራ ሂደት ይኖርዎታል።",
       "keyFeatures": [
-        "Express storyboard for review — share beats before heavy render",
-        "Beat Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "ለግምገማ Express storyboard — ከባድ የሬንደር (render) ሂደት ከመጀመሩ በፊት ቢትሶቹን (beats) ያጋሩ",
+        "Beat Frames የመቆለፊያ አወቃቀር — Reference Library ቀጣይነት",
+        "F2V በቢት (per beat) — ከጸደቁ ፍሬሞች ቪዲዮ ማመንጨት",
+        "የማደባለቂያ (Mixer) የጊዜ አቆጣጠር እና የውሂብ ፍሰቶች — ወደ Final Cut ስብስብ (assembly) መላክ"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
-      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+      "screenshotSlot": "የስክሪን ሾት (screenshot) ያስገቡ፡ ቪዲዮ ከመፈጠሩ በፊት Beat Frames እና የስቶሪቦርድ (storyboard) ማጽደቅ።",
+      "videoSlot": "የ00:30 ቆይታ ያለው ክሊፕ አስገባ፡ የሙዚቃ ምቶች (beats) ማጽደቅ፣ ፍሬሞችን መቆለፍ፣ ከዚያም F2V ክሊፖችን ማመንጨት።"
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "title": "የታዳሚዎች ግምገማ እና ትንተና",
+      "description": "ለባለድርሻ አካላት የሚሆኑ የግል የማጋሪያ አገናኞች (links) — በእጅ የሚሰጡ ነጥቦች፣ የተደራጀ አስተያየት፣ እና ከተመልካቹ ፈቃድ ጋር የሚቀርቡ አማራጭ የተሳትፎ ትንታኔዎች። እነዚህ አገናኞች Premiere ላይ ከመታተሙ በፊት እንዲሁም ለምርት (production) ደረጃ የስትሪቦርድ (storyboard) ቅድመ-እይታ አገልግሎት ላይ ይውላሉ።",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "የግል የግምገማ ክፍለ-ጊዜዎች — ለባለድርሻ አካላት ደህንነታቸው የተጠበቁ የማጋሪያ አገናኞች",
+        "የታዳሚዎች የተደራጀ አስተያየት — ደረጃዎች እና ክፍት ጥያቄዎች/ነጥቦች",
+        "አማራጭ የተሳትፎ ትንተና — መረጃ ከመሰብሰቡ በፊት በተመልካች ፈቃድ",
+        "በእውነተኛ መረጃ ላይ በመመስረት ሂደቱን ያሻሽሉ፤ እንዲሁም ገምጋሚዎች ከሰጡት አስተያየት በመነሳት Blueprintን እና ስክሪፕቱን ያጣሩ።"
       ],
-      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotSlot": "የስክሪን ምስል ያስገቡ፡ Screening Room የትንታኔ እና የግምገማ አስተያየት ፓነል",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      "videoSlot": "የ00:30 ቪዲዮ ክሊፕ አስገባ፡ የግምገማ ስብሰባ ማካሄድ እና የተሳትፎ መረጃን መሰብሰብ"
+    },
+    "ui": {
+      "screenshot": "የስክሪን ምስል",
+      "video": "ቪዲዮ",
+      "featureVideo": "ልዩ ቪዲዮ",
+      "keyFeatures": "ቁልፍ ባህሪያት",
+      "openScreenshot": "የስክሪን ፎቶን ይክፈቱ",
+      "openFeatureVideo": "ዋናውን ቪዲዮ ይክፈቱ",
+      "expandImage": "ምስሉን አስፋ",
+      "closePreview": "ቅድመ-እይታን ዝጋ"
+    },
+    "items": [
+      {
+        "id": "1",
+        "title": "ቀላል እና ግልጽ የተጠቃሚ ተሞክሮ + ለፈጣሪ የተሟላ ቁጥጥር",
+        "description": "በመመሪያ የሚመራ አውቶሜሽንን በመጠቀም ስራዎን በፍጥነት ይጀምሩ፤ ከዚያም የተገኙትን ውጤቶች በማስተካከል፣ ቡድኖችዎ ፍጥነት ሳይቀንሱ የፈጠራ ስራውን የመቆጣጠር አቅማቸውን እንዲጠብቁ ያድርጉ።",
+        "keyFeatures": [
+          "የተመራ የስቱዲዮ የስራ ሂደት — ከሃሳብ ጀምሮ እስከ ኤክስፖርት (export) ድረስ በአንድ ቦታ",
+          "በAI የተፈጠረ እያንዳንዱን ምት (beat)፣ ገጸ-ባህሪ እና መስመር ባሉበት ቦታ ላይ አርትዕ ያድርጉ።",
+          "የአቀራረብ አማራጮች — ለፈጠራ አቅጣጫ ጎን ለጎን ማወዳደር",
+          "Blueprint በጋራ መስራት — ሊንኮችን፣ የክፍል ኦዲዮን እና የተደራጀ የአስተያየት ሰጪ ግብረ-መልስን ማጋራት"
+        ],
+        "screenshotSlot": "የስክሪን ምስል አስገባ፡ ሊስተካከሉ የሚችሉ የተፈጠሩ ክፍሎች ያሉት የBlueprint አርታኢ",
+        "videoSlot": "የ30 ሰከንድ ቪዲዮ አስገባ፡ ከሃሳብ እስከ ማስተካከል የሚቻል ውጤት ያለው የUX ሂደት"
+      },
+      {
+        "id": "2",
+        "title": "የብድር በጀት እና የወጪ ቁጥጥር",
+        "description": "የክሬዲት አጠቃቀምን በቅጽበት ይከታተሉ፤ እንዲሁም ከፍተኛ ወጪ የሚጠይቁ የማመንጨት (generation) ሂደቶች ከመጀመራቸው በፊት ገደቦችን ያበጁ።",
+        "keyFeatures": [
+          "የክሬዲት አጠቃቀም በቅጽበት — በፕሮጀክት እና በስራ እንቅስቃሴ",
+          "በምርት ደረጃ የሚተገበሩ የመከላከያ እርምጃዎች — ከፍተኛ ወጪ የሚጠይቁ የማመንጨት ሂደቶች ከመጀመራቸው በፊት",
+          "ግልጽ የታሪፍ ዝርዝሮች — ለTTS፣ ለቪዲዮ እና ለኢንተለጀንስ",
+          "የበጀት ግልጽነት — ለቡድኖች እና ለግል ፈጣሪዎች"
+        ],
+        "screenshotSlot": "የስክሪን ምስል ያስገቡ፡ የክሬዲት አጠቃቀም ፓነል እና የBYOK መቼቶች",
+        "videoSlot": "የ00:30 ርዝመት ያለው ክሊፕ አስገባ፡ የበጀት ዳሽቦርድ እና ቁልፍ ውቅሮች",
+        "underTheHood": {
+          "title": "ከሽፋኑ በታች",
+          "body": "ነባር የክላውድ (cloud) ውሎች ላሏቸው የምርት ቡድኖች፦",
+          "bullets": [
+            "Vertex AI BYOK — የድርጅት ክፍያ አፈጻጸም እና አስተዳደር",
+            "በብድር ማስያ መሣሪያው ውስጥ የአቅራቢ መምረጫ አማራጮች",
+            "ከቁልፎችዎ ጎን ግልጽ የሆነ የመድረኩ የታሪፍ ዝርዝር"
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "title": "ማንኛውም ፅንሰ-ሀሳብ፣ አንድ የምርት ሂደት",
+        "description": "ለስልጠና፣ ለፖድካስቶች፣ ለዜና፣ ለቤት ሽያጭ ቪዲዮዎች እና ለሲኒማዊ ይዘቶች አንድ አስተማማኝ የስራ ሂደት ይጠቀሙ።",
+        "keyFeatures": [
+          "አንድ የስራ ሂደት — ፖድካስት፣ ዜና፣ ስልጠና፣ ሪል እስቴት እና ሲኒማዊ ቅርጾች",
+          "የፕሮጀክት አብነቶች — Studio ከምንጭ ይዘትዎ ጋር ይጣጣማል",
+          "ከዘውግ (genre) ነፃ በሆነ መልኩ ተመሳሳይ የBlueprint → ስክሪፕት → የምርት ሂደት",
+          "ከሃሳብ መነሻ እስከ አፈጻጸም ድረስ — በመሳሪያዎች መካከል መቀያየር አያስፈልግም።"
+        ],
+        "screenshotSlot": "የስክሪን ምስል አስገባ፡ የፖድካስት፣ የዜና፣ የሪል እስቴት እና የሲኒማቲክ አብነቶች (templates) ወደ አንድ የተቀናጀ የSceneFlow የስራ ፍሰት በይነገጽ (pipeline UI) ሲገቡ የሚያሳይ የተከፋፈለ እይታ (split-view) ወይም ግሪድ።",
+        "videoSlot": "የ00:30 ርዝመት ያለው ቪዲዮ አስገባ፦ \"በማንኛውም የመነሻ ይዘት ይጀምሩ...\"፤ በመቀጠል 'New Project' -> 'Podcast' የሚለውን መምረጥ (የመተግበሪያው በይነገጽ ከኦዲዮው ጋር ይጣጣማል)፣ ከዚያም የዜና እና የሲኒማቲክ ፕሮጀክቶች ወደ Blueprint ኤዲተር ሲዋሃዱ የሚያሳይ የተከፋፈለ ስክሪን (split screen) ማሳየት።"
+      },
+      {
+        "id": "4",
+        "title": "በትክክለኛ የአርትዖት ቁጥጥር የታጀበ ብልህ አውቶሜሽን",
+        "description": "የSceneFlow መድረክ ብልህ ቴክኖሎጂን በመጠቀም ሙያዊ መሰረታዊ ይዘቶችን (ተከታታይ ክፍሎች፣ ዝርዝር እቅድ፣ ስክሪፕት፣ የምርት መመሪያዎች እና ማስተካከያዎች) በራስ-ሰር ያመነጫል፤ በተመሳሳይ ጊዜም አብሮ በተሰራ የደህንነት እና የአሰራር ገደብ (guardrails) የታጀበና የማስተካከያ ስራዎችን ሙሉ በሙሉ ለመቆጣጠር የሚያስችል ብልህ የውይይት አማራጭ ያቀርባል።",
+        "keyFeatures": [
+          "በአንድ ጊዜ የሚዘጋጁ የAI መሰረታዊ አካላት — ተከታታይ ክፍል፣ ዝርዝር እቅድ (blueprint)፣ ስክሪፕት እና የምርት ሂደትን የሚመሩ ጥያቄዎች (prompts)",
+          "ብልህ የአርትዖት መስተጋብሮች — ዓይነ ስውር በሆነ መልኩ እንደገና ከመጻፍ ይልቅ፣ ትክክለኛውን አቅጣጫ የሚያሳዩ መመሪያዎች",
+          "መቀበል፣ ማሻሻል ወይም አለመቀበል—እያንዳንዱን ሐሳብ የመቆጣጠር ሥልጣን የእርስዎ ነው።",
+          "በምርት ሂደት እያንዳንዱ ደረጃ ላይ የሰው ልጅ ተሳትፎ"
+        ],
+        "screenshotSlot": "የስክሪን ምስል አስገባ፡ የማስተካከያ መቆጣጠሪያዎችን ያካተተና የመነሻ መረጃ (baseline) መፈጠርን የሚያሳይ ብልህ የመገናኛ መስኮት (dialog)",
+        "videoSlot": "የ00:30 ርዝመት ያለው ቪዲዮ አስገባ፡ በAI የመጀመሪያ ረቂቅ መፈጠር እና በመቀጠል ተጠቃሚው የሚያደርጋቸው ትክክለኛ ማስተካከያዎች።"
+      },
+      {
+        "id": "5",
+        "title": "ለቀጣይነት Reference Library ተጋርቷል",
+        "description": "እንደገና ጥቅም ላይ ሊውሉ የሚችሉ ማጣቀሻዎችን በመጠቀም፣ በተለያዩ ትዕይንቶች እና ክፍሎች ውስጥ ገጸ-ባህሪያትን፣ አልባሳትን፣ ድምጾችን፣ ቦታዎችን እና መለዋወጫዎችን ወጥ በሆነ መልኩ ጠብቆ ያቆዩ።",
+        "keyFeatures": [
+          "እንደገና ጥቅም ላይ ሊውሉ የሚችሉ መገለጫዎች — ገጸ-ባህሪያት፣ አልባሳት፣ ድምጾች፣ ቦታዎች እና መድረክ-አጋዥ ቁሶች (props)",
+          "በተለያዩ ሁኔታዎች ውስጥ የሚተገበር — ማጣቀሻዎች ወደ እያንዳንዱ ትውልድ ይተላለፋሉ",
+          "የምስል ወጥነት — በImagen እና Veo ውጤቶች ውስጥ ተመሳሳይ ፊቶች እና ድምፀት",
+          "ለበርካታ ክፍሎች ያሏቸው ተከታታይ ስራዎች የተነደፈ፣ ሰፊ ይዘት ያለው ተከታታይነት"
+        ],
+        "screenshotSlot": "የስክሪን ሾት አስገባ፡ የገጸ-ባህሪያትን እና የትዕይንት ቁሶችን ወጥነት የሚያሳይ የማጣቀሻ ስብስብ",
+        "videoSlot": "የ00:30 ቪዲዮ ክሊፕ አስገባ፡ ማጣቀሻዎችን በበርካታ ትዕይንቶች ላይ ተግባራዊ ማድረግ"
+      },
+      {
+        "id": "6",
+        "title": "ፈጣን የማመንጨት ሞተር",
+        "description": "ምስሎችን እና የቪዲዮ ክፍሎችን በአንድ ጊዜ በራስ-ሰር ያመንጩ። Express Storyboard የድምፅ እና ምስል ጥምረት ያላቸውን የስቶሪቦርድ (storyboard) ረቂቆች በደቂቃዎች ውስጥ እንዲገመግሙ እና እንዲያጋሩ ያስችልዎታል። Express Storyboard ሙሉ የ\"Ken Burns\" አይነት ትዕይንቶችን በደቂቃዎች ውስጥ ሲያዘጋጅ፣ Express Video ደግሞ የመጨረሻዎቹን የቪዲዮ ትዕይንቶች ከቀናት ይልቅ በደቂቃዎች ውስጥ ያቀርባል።",
+        "keyFeatures": [
+          "በተመሳሳይ ጊዜ ማመንጨት — በተለያዩ ትዕይንቶች ውስጥ ምስሎችን እና ቪዲዮዎችን በአንድ ጊዜ ማመንጨት",
+          "Express Storyboard — በደቂቃዎች ውስጥ ሊጋሩ የሚችሉ የድምፅ እና ምስል ቅድመ-እይታዎች",
+          "Express Animatics — ከስታቲክ ምስሎች የሚፈጠር የKen Burns አይነት እንቅስቃሴ",
+          "Express Video — የትዕይንት ደረጃ ክሊፖች በደቂቃዎች ውስጥ፣ በቀናት ሳይሆን"
+        ],
+        "screenshotSlot": "የስክሪን ምስል አስገባ፡ Animaticዎችን እና የቪዲዮ ሂደት ሁኔታን የሚያሳይ የፈጣን ማመንጨት ዳሽቦርድ",
+        "videoSlot": "የ00:30 ቆይታ ያለው ቪዲዮ አስገባ፡ ስክሪፕትን ወደ አኒማቲክ (animatic) እና በመቀጠል ወደ መጨረሻው ቪዲዮ የመቀየር ሂደትን በአንድ ጊዜ የሚያሳይ።"
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance አርታኢ",
+        "description": "ፈጣን ውጤት (scoring)፣ ትንተና እና ምክሮችን ለማግኘት የታለመውን ታዳሚ ይለዩ። ከፍተኛ ተጽዕኖ ለመፍጠር፤ ክፍሎችዎን (episodes)፣ Blueprint እና ስክሪፕትዎን በትክክል ለማሻሻል በአንድ ጠቅታ የሚከናወኑ ማስተካከያዎችን ይጠቀሙ ወይም 'በመሪነት የሚከናወኑ የአርትዖት ሂደቶችን' (Guided Edits) ይከተሉ።",
+        "keyFeatures": [
+          "የታለመው ታዳሚ ነጥብ አሰጣጥ — በምድብ ዝርዝር መረጃ",
+          "ከክፍል ጋር የተያያዙ ምክሮች — የታሪክዎን ትክክለኛ ክፍል ያስተካክሉ",
+          "በአንድ ጠቅታ የሚደረጉ ማስተካከያዎች እና የሚመራ የአርትዖት ሂደት — ግምትን ሳይሆን ትክክለኛ እና የተሻሻሉ ጽሁፎችን ያቀርባሉ",
+          "ለማምረት ዝግጁነት ደረጃ — ሙሉ በሙሉ ለማቀነባበር (full render) መቼ ኢንቨስት ማድረግ እንዳለብዎ ይወቁ"
+        ],
+        "screenshotSlot": "የስክሪን ምስል አስገባ፡ የተመልካቾች ነጥብ አሰጣጥ እና በአንድ ጠቅታ የሚደረጉ ማስተካከያዎችን የያዘው Resonance Editor",
+        "videoSlot": "የ30 ሰከንድ ቪዲዮ ክሊፕ አስገባ፡ በተመልካቾች ዘንድ ባለው ተቀባይነት ወይም ተፅዕኖ (audience resonance score) ላይ በመመስረት የተመራ ማስተካከያዎችን ተግባራዊ ማድረግ።"
+      },
+      {
+        "id": "8",
+        "title": "አስማሚ ትርጉም (ከ70 በላይ ቋንቋዎች)",
+        "description": "በበርካታ ቋንቋዎች ለማቅረብ ሲባል፣ የትረካውን ዓላማ እና የጊዜ ቅደም ተከተል በመጠበቅ ይዘትን በስፋት ለአካባቢያዊ አውድ ማስተካከል።",
+        "keyFeatures": [
+          "ከ70 በላይ ቋንቋዎች — ትረካ፣ ውይይት እና ጽሑፍ በሰፊ መጠን",
+          "የታሪኩ ዓላማ ተጠብቋል — ትርጉምና የጊዜ አሰላለፍ ተስማምተው ይቀጥላሉ።",
+          "ባለብዙ ቋንቋ የድምፅ ትራኮች — በሲን (scene) የጊዜ መስመር ላይ",
+          "ለስርጭት ዝግጁ የሆኑና እንደየአካባቢው የተዘጋጁ ፓኬጆች"
+        ],
+        "screenshotSlot": "የስክሪን ምስል ያስገቡ፡ ባለብዙ ቋንቋ የጊዜ መስመር እና የትርጉም ቅንብሮች",
+        "videoSlot": "የ30 ሰከንድ ቪዲዮ ክሊፕ አስገባ፡ አንድን ትዕይንት ወዲያውኑ ወደ ተለያዩ ቋንቋዎች ማላመድ"
+      },
+      {
+        "id": "9",
+        "title": "ተከታታይ አውቶሜሽን",
+        "description": "ዓለምዎን አንድ ጊዜ ይግለጹ እና እርስ በርስ የተሳሰሩ፣ በርካታ ክፍሎችን የሚሸፍኑ የታሪክ መስመሮችን ይፍጠሩ። የጋራ Reference Library አጠቃቀም፣ በጠቅላላው የውድድር ዘመን (season) ውስጥ ገጸ-ባህሪያት እና የትረካው ስሜት (tone) ወጥ ሆነው እንዲቀጥሉ ያደርጋል።",
+        "keyFeatures": [
+          "ዓለምህን አንድ ጊዜ ብቻ በግልጽ አስቀምጥ፤ ገጸ-ባህሪያትን፣ ስሜትን (tone) እና የወቅቱን (season) አጠቃላይ ታሪክ።",
+          "በጠቅላላው የውድድር ዘመን በራስ-ሰር የሚፈጠሩ፣ እርስ በርስ የተሳሰሩ የክፍሎች ዝርዝር መግለጫዎች",
+          "የተከታታይነት ክትትል — በርካታ ክፍሎች ያሏቸው ወቅቶች (seasons) ተጣጥመው እንዲቀጥሉ ማድረግ",
+          "የተከታታይ እና የክፍል (episode) ማጣጣም — ወደ Blueprint ስቱዲዮ እና ፕሮዳክሽን"
+        ],
+        "screenshotSlot": "የስክሪን ፎቶ አስገባ፡ በራስ-ሰር የተፈጠሩ የክፍል (episode) ታሪክ አካሄዶችን የሚያሳይ የተከታታይ ፕሮግራሙ አጠቃላይ መግለጫ",
+        "videoSlot": "የ30 ሰከንድ ቪዲዮ ክሊፕ አስገባ፡ ጽንሰ-ሀሳቡ ወደ ብዙ ክፍሎች ያሉት የፕሮግራም ወቅት (season) ሲሰፋ የሚያሳይ"
+      },
+      {
+        "id": "10",
+        "title": "Blueprint አውቶሜሽን",
+        "description": "ሃሳቦችን በሎግላይን (logline)፣ በታሪክ ክፍሎች (beats)፣ በገጸ-ባህሪያት እና በስሜት/ድምጸት (tone) የተዋቀሩ ረቂቅ ታሪኮች (treatments) አድርገው ይቅረጹ። ከባድ የሬንደሪንግ (rendering) ሥራ ከመጀመርዎ በፊት Audience Resonanceን ያሂዱ እና የጋራ ትብብር ያድርጉ።",
+        "keyFeatures": [
+          "ማመንጨት → መገምገም → ማሻሻል → የምርት ሂደትን መጀመር",
+          "ከሃሳብ ወደ መዋቅር በደቂቃዎች ውስጥ — ዋና ጭብጥ (logline)፣ የትረካ ዋና ዋና ክስተቶች (beats)፣ ገጸ-ባህሪያት እና ስሜት/ድምፀት (tone)",
+          "ወደ ምርት (Production) ከመሸጋገሩ በፊት 80 እና ከዚያ በላይ በሆነ ኢላማ ነጥብ ማስመዝገብ Audience Resonance",
+          "ከአብሮ-ሰሪዎች የተገኙ የማጋሪያ አገናኞች — አስተያየቶችን በማቀናጀት የሚደረግ የተመራ ማሻሻያ"
+        ],
+        "screenshotSlot": "የስክሪን ሾት አስገባ፡ የታሪክ ዋና ዋና ክፍሎችን እና የገጸ-ባህሪያትን የዝግመተ-ለውጥ ሂደት የሚያሳይ በራስ-ሰር የተፈጠረ Blueprint",
+        "videoSlot": "የ00:30 ቪዲዮ ክሊፕ አስገባ፡ አንድን ሐሳብ ወደ ስልታዊ Blueprint መለወጥ"
+      },
+      {
+        "id": "11",
+        "title": "የምርት አውቶሜሽን",
+        "description": "የScript እና Action ትሮች (tabs) ከFoundation → Storyboard → Production → Final Cut ባለው ሂደት ይመራዎታል። Express storyboard፣ Beat Frames፣ Mixer እና MP4 ስትሪሞችን ያለ መሳሪያ መቀያየር ይጠቀሙ።",
+        "keyFeatures": [
+          "Foundation — ስክሪፕት፣ ድምፆች፣ የትዕይንት ድምፅ፣ ስክሪፕትን ማጽናት",
+          "Express storyboard — አቅጣጫ እና ፍሬሞች (በደቂቃዎች)፤ ጋለሪ እና ማጋራት",
+          "Beat Frames እና Mixer — የመነሻ/ማብቂያ ፍሬሞች፣ Director Console፣ የMP4 ዥረቶችን (streams) ማዘጋጀት (render)",
+          "የምርት ፍሰቶች (Production Streams) — ውጤቶችን መገምገም፣ ጊዜ ያለፈባቸውን ቢቶች (beats) እንደገና ማዘጋጀት (re-render)፣ ወደ Final Cut መላክ"
+        ],
+        "screenshotSlot": "የስክሪን ምስል አስገባ፡ ስክሪፕትን፣ Beat Framesን እና ሚክሰርን (Mixer) የሚያሳይ የምርት ዳሽቦርድ",
+        "videoSlot": "የ00:30 ርዝመት ያለው ክሊፕ አስገባ፡ Foundation፣ Express storyboard፣ Beat Frames እና የዥረት ኤክስፖርት (stream export)"
+      },
+      {
+        "id": "12",
+        "title": "Final Cut ስብሰባ",
+        "description": "የተጠናቀቁትን የምርት (production) ዥረቶች ወደ አንድ ዋና MP4 ፋይል ያዋህዱ። ለእያንዳንዱ ትዕይንት Animaticን ወይም ቪዲዮ እና ቋንቋን ይምረጡ፤ በዚህ ሂደት የጊዜ መስመር (timeline) ላይ ማስተካከያ አይደረግም፣ የፈጠራ ለውጦችም በProduction Mixer ውስጥ ብቻ ይቀራሉ።",
+        "keyFeatures": [
+          "ለእያንዳንዱ ትዕይንት የሚደረግ የዥረት ምርጫ — Animatic፣ ቪዲዮ፣ ቋንቋ፣ ስሪት",
+          "የማሰባሰቢያ ቅድመ-ቅምጦች — ሁሉም ቪዲዮ፣ ድብልቅ፣ ብጁ ቅልቅል",
+          "የጊዜ መስመር (timeline) ላይ የሚደረግ ማስተካከያ የለም — የፈጠራ ለውጦች በ Production Mixer ውስጥ ብቻ ይቀራሉ።",
+          "ለPremiere በአንድ ጠቅታ የሚከናወን ዋና ኤክስፖርት — የተዋሃደ MP4"
+        ],
+        "screenshotSlot": "የስክሪን ምስል ያስገቡ፡ ለእያንዳንዱ ትዕይንት (scene) የዥረት መምረጫዎች ያሉት የFinal Cut የመገጣጠሚያ ፓነል።",
+        "videoSlot": "የ30 ሰከንድ ክሊፕ አስገባ፡ ስትሪሞችን (streams) መምረጥ፣ የተገጣጠመውን ስራ አስቀድሞ መመልከት እና ዋናውን ፋይል (master) ወደ ውጭ መላክ።"
+      },
+      {
+        "id": "13",
+        "title": "Premiere ስርጭት",
+        "description": "ዋናውን ቪዲዮ (master) ከተመልካቾች መረጃ ትንተና ጋር ይገምግሙ፤ ከዚያም ለአካባቢው ተስማሚ በሆኑ መረጃዎች (metadata) ወደ YouTube ይልቀቁት ወይም ለShorts፣ Reels እና TikTok የሚሆኑ ስብስቦችን ያዘጋጁ።",
+        "keyFeatures": [
+          "ለማጋራት የሚቻል Screening Room — ነጥብ አሰጣጥ እና አማራጭ የተሳትፎ ትንተና (በተመልካች ፈቃድ) ያካተቱ የ /s/ አገናኞች",
+          "የመረጃ ትንተና ዳሽቦርድ — የውጤት አሰጣጥ፣ የባዮሜትሪክ እና የእይታ ትሮች",
+          "የYouTube ባለሙያ — ድንክዬ ምስል (thumbnail)፣ ለአካባቢው የተስተካከለ ርዕስ/መግለጫ፣ SceneFlow የተግባር ጥሪ (CTA)",
+          "የኤክስፖርት ጥቅሎች እና የአቀባዊ አጭር ቪዲዮ ክሊፖች ዕቅዶች"
+        ],
+        "screenshotSlot": "የስክሪን ምስል ያስገቡ፡ Premiere ዳሽቦርድ (ከትንታኔ መረጃዎች እና የማተሚያ አዋዛርድ ጋር)",
+        "videoSlot": "የ00:30 ቆይታ ያለው ቪዲዮ አስገባ፡ የማጣሪያ (screening) ግንዛቤዎች፣ የዩቲዩብ አዋቂ (wizard) እና ወደ ውጭ የሚላኩ ጥቅሎች (export bundles)"
+      },
+      {
+        "id": "14",
+        "title": "የታዳሚዎች ግምገማ እና ትንተና",
+        "description": "ለባለድርሻ አካላት የሚሆኑ የግል የማጋሪያ አገናኞች (links) — በእጅ የሚሰጡ ነጥቦች፣ የተደራጀ አስተያየት፣ እና ከተመልካቹ ፈቃድ ጋር የሚቀርቡ አማራጭ የተሳትፎ ትንታኔዎች። እነዚህ አገናኞች Premiere ላይ ከመታተሙ በፊት እንዲሁም ለምርት (production) ደረጃ የስትሪቦርድ (storyboard) ቅድመ-እይታ አገልግሎት ላይ ይውላሉ።",
+        "keyFeatures": [
+          "የግል የግምገማ ክፍለ-ጊዜዎች — ለባለድርሻ አካላት ደህንነታቸው የተጠበቁ የማጋሪያ አገናኞች",
+          "የታዳሚዎች የተደራጀ አስተያየት — ደረጃዎች እና ክፍት ጥያቄዎች/ነጥቦች",
+          "አማራጭ የተሳትፎ ትንተና — መረጃ ከመሰብሰቡ በፊት በተመልካች ፈቃድ",
+          "በእውነተኛ መረጃ ላይ በመመስረት ሂደቱን ያሻሽሉ፤ እንዲሁም ገምጋሚዎች ከሰጡት አስተያየት በመነሳት Blueprintን እና ስክሪፕቱን ያጣሩ።"
+        ],
+        "screenshotSlot": "የስክሪን ምስል ያስገቡ፡ Screening Room የትንታኔ እና የግምገማ አስተያየት ፓነል",
+        "videoSlot": "የ00:30 ቪዲዮ ክሊፕ አስገባ፡ የግምገማ ስብሰባ ማካሄድ እና የተሳትፎ መረጃን መሰብሰብ"
+      }
+    ]
+  },
+  "engineeringTrust": {
+    "badge": "ምህንድስና እና ደህንነት",
+    "title": "ለ... የተሰራ",
+    "titleAccent": "የምርት ሥራ ጫናዎች",
+    "subtitle": "ደህንነትን፣ የማደግ አቅምን (scalability) እና ተግባራዊ የሆነ የምርት ስርጭትን የሚደግፉ Google Cloud አካላትን ያካተተ፣ ለአዳዲስ ጀማሪ ኩባንያዎች (startups) ምቹ የሆነ አርክቴክቸር።",
+    "pillars": [
+      {
+        "id": "አርክቴክቸር",
+        "title": "የድርጅት አርክቴክቸር",
+        "description": "ለስራ ላይ የሚውሉ የስራ ጫናዎች (production workloads) እና እያደጉ ላሉ ቡድኖች የሚሆን፣ ሊሰፋ የሚችል የማስተባበር አቅም (scalable orchestration) ባለው የGoogle Cloud መሠረተ ልማት ላይ የተገነባ።",
+        "highlights": [
+          "ለማመንጨት የስራ ፍሰቶች Vertex AI",
+          "የImagen 4 እና Veo 3.1 ውህደት",
+          "ElevenLabs የTTS ውህደት",
+          "ለድርጅት የክፍያ አከፋፈል ቁጥጥር BYOK"
+        ]
+      },
+      {
+        "id": "ደህንነት",
+        "title": "ደህንነት እና ግላዊነት",
+        "description": "የፈጠራ ውጤቶች፤ በተከማቹበት ወቅት የሚደረግ ኢንክሪፕሽን (encryption at rest)፣ የመዳረሻ ቁጥጥሮች እና ግላዊነትን ቅድሚያ በሚሰጥ አያያዝ አማካኝነት ይጠበቃሉ።",
+        "highlights": [
+          "ለድርጅት አገልግሎት ዝግጁ የሆኑ የደመና ቁጥጥር ዘዴዎች",
+          "AES-256 ምስጠራ",
+          "የGDPR መስፈርቶችን ከግምት ውስጥ በማስገባት የተነደፈ",
+          "ስለ መረጃ አያያዝ የግላዊነት መመሪያችንን ይመልከቱ።"
+        ]
+      },
+      {
+        "id": "ሚዛን",
+        "title": "መጠን እና አስተማማኝነት",
+        "description": "የስራ መጠንዎ ሲያድግ፣ ዓለም አቀፍ የደመና አገልግሎት አቅርቦት አስተማማኝ የሆኑ የ'ሬንደር' (render) እና የክለሳ ሂደቶችን ይደግፋል።",
+        "highlights": [
+          "ባለብዙ ክልል ስምሪት",
+          "በCDN የተፋጠነ ማድረስ",
+          "አውቶማቲክ ወደ ተጠባባቂ ስርዓት መቀየር",
+          "በቅጽበት መከታተል"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "value": "ዓለም አቀፍ",
+        "label": "በደመና ላይ የተመሠረተ አቅርቦት"
+      },
+      {
+        "value": "ምስል 4",
+        "label": "ምስል ማመንጨት"
+      },
+      {
+        "value": "256-ቢት",
+        "label": "ኢንክሪፕሽን"
+      },
+      {
+        "value": "በቀን ለ24 ሰዓታት፣ በሳምንት ለ7 ቀናት",
+        "label": "ክትትል"
+      }
+    ],
+    "vertexSection": {
+      "title": "ለምን Google Vertex AI?",
+      "subtitle": "ወሳኙ የቴክኖሎጂ መከላከያ",
+      "cards": [
+        {
+          "title": "የመረጃ ግላዊነት",
+          "description": "የእርስዎ ስክሪፕቶች እና የፈጠራ ስራዎች የጋራ ሞዴሎችን ለማሰልጠን ጥቅም ላይ አይውሉም፤ ይህም የአእምሮአዊ ንብረት መብትዎን እና የደንበኛ ስራዎን ለመጠበቅ ይረዳል።",
+          "highlight": "የጋራ ሞዴሎችን ለማሰልጠን ጥቅም ላይ አይውልም"
+        },
+        {
+          "title": "ለአስተማማኝ የስራ ፍሰት አቅም የተገነባ",
+          "description": "በምርት ላይ ያተኮረ መሠረተ ልማት፣ ከፍተኛ ፍላጎት በሚኖርባቸው ጊዜያት የምርት ሂደቶች የተረጋጉ ሆነው እንዲቀጥሉ ይረዳል።"
+        },
+        {
+          "title": "ማጣቀሻን ከግምት ውስጥ የሚያስገባ ወጥነት",
+          "description": "SceneFlow ከትዕይንት ወደ ትዕይንት በሚደረግ ሽግግር ወቅት በገጸ-ባህሪያት፣ በቦታዎች እና በንብረቶች (props) መካከል ያለውን ወጥነት ለማሻሻል፣ ማጣቀሻን ከግምት ውስጥ የሚያስገባ የማመንጨት ዘዴን ይጠቀማል።"
+        }
+      ]
+    },
+    "partnership": {
+      "poweredBy": "በGoogle Cloud፣ Vertex AI፣ የደመና ማከማቻ (Cloud Storage) እና የትርጉም መሣሪያዎች የሚሰራ",
+      "footnote": "SceneFlow AI የሚሰራው፣ ለአዳዲስ ኩባንያዎች (startups) እድገት እና ለትላልቅ ድርጅቶች ፍላጎቶች ተብሎ በተዘጋጀ፣ ሊሰፋ የሚችል Google Cloud መሠረተ ልማት ላይ ነው።"
+    },
+    "attribution": "— የSceneFlow የምህንድስና ቡድን"
+  },
+  "coreCapabilities": {
+    "audienceResonance": {
+      "badge": "የአዋቂነት ንብርብር",
+      "title": "Audience Resonance አርታኢ",
+      "description": "ሙሉ በሙሉ ወደ ማቀናበር (rendering) ከመግባትዎ በፊት ውጤትዎን ይወቁ። ለተግባራዊ ማሻሻያዎች የሚያስፈልጉትን ነጥቦች በመለየት ስክሪፕትዎን እና ውጤትዎን ያሻሽሉ፤ እንዲሁም 'Express' እና ቪዲዮን ከማመንጨትዎ በፊት እያንዳንዱን ክፍል (beat) በተሻለ ሁኔታ ያስተካክሉ።",
+      "bullets": [
+        "ልዩ የታለመ ታዳሚዎን ይለዩ",
+        "የቅጽበት ውጤት፣ ትንተና እና ምክሮችን ያግኙ",
+        "የትረካ ድክመቶችን በአንድ ጠቅታ ለማስተካከል።",
+        "ክፍሎችን፣ Blueprintን እና ስክሪፕትን ለማሻሻል የሚረዳ የታገዘ የአርትዖት ሂደት"
+      ],
+      "cta": "ስክሪፕትዎን ይተንትኑ",
+      "howWeScore": {
+        "toggle": "ውጤት የምንሰጥበት መንገድ",
+        "title": "Audience Resonance እንዴት እንደሚሰራ",
+        "description": "Audience Resonance፤ የታሪክ አወቃቀር ትንተናን (እንደ ግልጽነት፣ የትረካ ፍጥነት እና የስሜት መዋቅር ያሉ) ከBlueprint ላይ ከገለጽካቸው ታዳሚዎች ጋር ያለውን ተገቢነት (target-persona fit) ያጣመራል። ይህ ሂደት እንደ ላይ ላዩን የሚታዩ መለኪያዎች (vanity metrics) ወይም ይዘቱ ከታተመ በኋላ የሚሰበሰብ የተመልካች ቆይታ መረጃ (retention data) ላይ ሳይሆን የሚያተኩረው በይዘቱ ጥራት ላይ ነው። የሚሰጡት ምክሮች ከስክሪፕቱ የተወሰኑ ክፍሎች ጋር የተሳሰሩ በመሆናቸው፣ ቪዲዮውን ከማመንጨትህ ወይም 'Express' ከማድረግህ በፊት ችግሮቹን ማስተካከል ትችላለህ።",
+        "bullets": [
+          "ለይተው ካስቀመጡት የታለመ ታዳሚ አንጻር የBlueprint ውጤቶችን እና ስክሪፕቱን ይገምግሙ።",
+          "በክፍል ደረጃ የሚሰጡ ምክሮች — እንጂ ዝም ብሎ \"እመኑን\" የሚባል፣ አሰራሩ ግልጽ ያልሆነ ቁጥር አይደለም።",
+          "በአንድ ጠቅታ የሚተገበሩ ማስተካከያዎች እና የሚመራ የአርትዖት ሂደት — ውጤት ብቻ አይደለም",
+          "ከፍተኛ ወጪ የሚጠይቅ የሬንደር (render) ሂደት ከመጀመርዎ በፊት ያሂዱት፤ ይፋ ካደረጉ በኋላ አይደለም።"
+        ]
+      }
+    },
+    "express": {
+      "badge": "እጅግ ፈጣን ምርት",
+      "title": "ስሴንፍሎው ኤክስፕረስ",
+      "description": "ስቶሪቦርዶችን፣ አኒማቲክሶችን እና የቪዲዮ ክፍሎችን (video beats) በአንድ ጊዜ በራስ-ሰር ያመንጩ። ከስክሪፕት ወደ መጋራት የሚቻል ቅድመ-እይታ (preview) ለመሸጋገር በጥቂት ደቂቃዎች ብቻ ይጠቀሙ፤ ከዚያም የመጨረሻውን የF2V ወጪ ከማድረግዎ በፊት Beat Framesን ያጽድቁ።",
+      "items": [
+        {
+          "title": "ፈጣን የታሪክ ሰሌዳ",
+          "desc": "የኦዲዮ እና የቪዲዮ ታሪክ-ቦርዶችን (storyboards) በሰዓታት ፋንታ በደቂቃዎች ውስጥ ይገምግሙ እና ያጋሩ።",
+          "time": "ደቂቃዎች ከሰዓታት ጋር ሲነጻጸሩ"
+        },
+        {
+          "title": "Animaticን ይግለጹ",
+          "desc": "ከፍተኛ ጥራት ካላቸው የድምፅ ትረካዎች ጋር የተሟሉ የ\"Ken Burns\" አይነት የአኒሜሽን ትዕይንቶችን ወዲያውኑ ያዘጋጁ።",
+          "time": "ደቂቃዎች ከሰዓታት ጋር ሲነጻጸሩ"
+        },
+        {
+          "title": "ኤክስፕረስ ቪዲዮ",
+          "desc": "ሙሉ ትዕይንትን ለማቅረብ የሚያስችል የምስል እና የቪዲዮ በአንድ ጊዜ የመፍጠር ሂደትን ያስተባብሩ።",
+          "time": "ደቂቃዎች ከቀናት ጋር ሲነጻጸሩ"
+        }
+      ],
+      "cta": "ፈጣን ሬንደሪንግ (Express Rendering) ይጀምሩ"
+    }
+  },
+  "exitIntent": {
+    "title": "ቆይ! ባዶ እጅህን አትሂድ።",
+    "subtitle": "በአርቴፊሻል ኢንተለጀንስ (AI) ለሚከናወን የፊልም ስራ ልዩ የሆነ ቀድሞ የማግኘት እድል እና ጠቃሚ ምክሮችን ያግኙ።",
+    "benefits": [
+      "በየሳምንቱ የሚቀርቡ የAI ፊልም ስራ ትምህርቶች",
+      "ለአዳዲስ ባህሪያት ቀደም ብሎ የማግኘት ዕድል",
+      "ለፈጣሪዎች ብቻ የተዘጋጁ ቅናሾች"
+    ],
+    "emailPlaceholder": "የኢሜይል አድራሻዎን ያስገቡ",
+    "subscribe": "ቀድመው የማግኘት እድል ያግኙ",
+    "subscribing": "ደንበኝነት በመመዝገብ ላይ...",
+    "or": "ወይም",
+    "startNow": "በ9 ዶላር ብቻ አሁን መፍጠር ይጀምሩ →",
+    "privacy": "አላስፈላጊ መልዕክቶች (ስፓም) በፍጹም አይላኩም። በማንኛውም ጊዜ ምዝገባዎን መሰረዝ ይችላሉ።",
+    "successTitle": "በዝርዝሩ ውስጥ ተካተሃል!",
+    "successSubtitle": "ልዩ የፊልም ስራ ምክሮችን እና ቀድሞ የማግኘት እድል የሚሰጡ መረጃዎችን ለማግኘት የኢሜይል መልእክት ሳጥንዎን ይመልከቱ።",
+    "ctaText": "ማሰስ ይጀምሩ — $9",
+    "closePopup": "ብቅ-ባይ መስኮቱን ይዝጉ"
+  },
+  "pricing": {
+    "badge": "በአጠቃቀም ላይ የተመሰረተ የዋጋ አወጣጥ",
+    "title": "ለፈጠርከው ነገር ክፈል",
+    "subtitle": "ለፕላትፎርሙ አገልግሎት የሚሆን አንድ መሰረታዊ እቅድ፤ ለAI ማመንጫ አገልግሎት የሚውሉ ክሬዲቶች፤ ተጨማሪ ሲያስፈልግዎ በቀላሉ የመሙላት አማራጭ፤ ሙሉ ቁጥጥር እና ምንም አይነት ብክነት የሌለበት አሰራር።",
+    "valueAnchor": {
+      "traditionalCost": "ከ2,000 ዶላር በላይ",
+      "traditionalLabel": "ባህላዊ ቅድመ-እይታ",
+      "vs": "ከ",
+      "sceneFlowCost": "$49–149",
+      "sceneFlowLabel": "SceneFlow በወር",
+      "saveBadge": "በእያንዳንዱ ፕሮጀክት ከ90% በላይ ይቆጥቡ"
+    },
+    "teamCta": {
+      "title": "የውስጥ ቡድን ወይስ ተቋም?",
+      "description": "ለኮሙኒኬሽን፣ ለትምህርትና ልማት (L&D) እና ለማርኬቲንግ ቡድኖች የስራ ፍሰት ማብራሪያ ቀጠሮ ይያዙ።",
+      "button": "የመጽሐፍ አጠቃላይ ቅኝት"
+    },
+    "agencyCta": {
+      "title": "ኤጀንሲ ወይስ የምርት ስቱዲዮ?",
+      "description": "ለፍላጎት የተዘጋጁ ክሬዲቶች፣ የአገልግሎት ደረጃ ስምምነት (SLA) እና በስፋት የሚሰጥ ልዩ የድጋፍ አገልግሎት",
+      "button": "የሽያጭ ክፍልን ያግኙ"
+    },
+    "byok": {
+      "title": "የራስዎን ቁልፍ ይዘው ይምጡ",
+      "badge": "የፕሮ እና ስቱዲዮ ዕቅዶች",
+      "description": "ለVertex AI ወይም ለElevenLabs የAPI ቁልፎች አሉዎት? ከSceneFlow AI ጋር ይጠቀሙባቸው እና በመድረክ ክሬዲቶች (platform credits) ላይ እስከ 80% ይቆጥቡ።",
+      "savingsHighlight": "በፕላትፎርም ክሬዲቶች ላይ 80%",
+      "benefits": [
+        {
+          "title": "80% SceneFlow የክሬዲት ቅናሽ",
+          "description": "ለኦርኬስትሬሽን (orchestration) እና ለመሳሪያዎች 20% የመድረክ ክፍያ ብቻ ይክፈሉ።"
+        },
+        {
+          "title": "የድርጅት ዕቅዶችን በአግባቡ መጠቀም",
+          "description": "ያሉዎትን የጅምላ ግዢ ቅናሾች (Vertex AI ወይም ElevenLabs) ይጠቀሙ።"
+        },
+        {
+          "title": "ሙሉ ቁጥጥር",
+          "description": "ቁልፎችዎ፣ የክፍያ ዝግጅትዎ፣ የወጪ አስተዳደርዎ"
+        }
+      ],
+      "supportedProviders": "የሚደገፉ አቅራቢዎች",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 እና Veo 3.1",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "ከጽሑፍ ወደ ንግግር እና የድምፅ ቅጂ መኮረጅ",
+      "savingsLabel": "80% ቁጠባ",
+      "onImagesVideo": "በምስሎች እና በቪዲዮ ላይ",
+      "onVoiceover": "በድምፅ አስተያየት",
+      "note": "የሚታዩት የክሬዲት ቁጠባዎች የSceneFlow መድረክ ቁጠባዎች ናቸው። ትክክለኛው አጠቃላይ ወጪዎ የሚወሰነው ከእያንዳንዱ አቅራቢ ጋር ባለው የግል ወይም የድርጅት የAPI ዋጋ አወጣጥ ላይ ነው።"
+    },
+    "creditTopUps": {
+      "title": "ተጨማሪ ክሬዲቶች ያስፈልጉዎታል?",
+      "subtitle": "በማንኛውም ጊዜ ሂሳብዎን መሙላት ይችላሉ፤ ክሬዲቱ ጊዜው አያልፍበትም።",
+      "packs": [
+        {
+          "label": "የመነሻ ጥቅል",
+          "description": "ለፈጣን ድግግሞሽ ፍጹም ነው።"
+        },
+        {
+          "label": "የትዕይንት ስብስብ",
+          "description": "አጭር ፕሮጀክት ያጠናቅቁ"
+        },
+        {
+          "label": "የምርት ስብስብ",
+          "description": "ዋና የፊልም ክፍል"
+        },
+        {
+          "label": "የስቱዲዮ ጥቅል",
+          "description": "ሙሉ የምርት አቅም"
+        }
+      ],
+      "creditsUnit": "ክሬዲቶች"
+    },
+    "calculator": {
+      "sectionTitle": "የፕሮጀክትዎን ወጪ ይገምቱ",
+      "sectionSubtitle": "ውሳኔ ከማሳለፍዎ በፊት ምን ያህል እንደሚከፍሉ በትክክል ይወቁ።",
+      "title": "የፕሮጀክት በጀት ማስያ",
+      "subtitle": "ከመጀመርዎ በፊት ክሬዲቶችን ይገምቱ።",
+      "customize": "መለኪያዎችን ማበጀት",
+      "imagesLabel": "የሚፈጠሩ ምስሎች",
+      "videoClipsLabel": "የቪዲዮ ክሊፖች",
+      "voiceoverLabel": "የድምፅ ትረካ (ደቂቃዎች)",
+      "byokTitle": "የራስዎን ቁልፍ ይዘው ይምጡ (BYOK)",
+      "byokBadge": "ፕሮ እና ስቱዲዮ",
+      "byokDescription": "በSceneFlow ክሬዲቶች ላይ እስከ 80% የሚደርስ ወጪ ለመቆጠብ የራስዎን የAPI ቁልፎች ይጠቀሙ። ክፍያውን በቀጥታ ለAI አገልግሎት አቅራቢዎች፣ በእነሱ ተመን መሰረት ይፈጽማሉ።",
+      "vertexToggle": "Vertex AI (ምስሎች እና ቪዲዮ)",
+      "elevenLabsToggle": "ElevenLabs (ከስክሪን ውጪ የሚሰማ ድምፅ)",
+      "imageGeneration": "ምስል ማመንጨት",
+      "videoGeneration": "ቪዲዮ ማመንጨት",
+      "voiceover": "የድምፅ ትረካ",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "ጠቅላላ ግምት",
+      "withTopUps": "በተጨማሪ ክፍያዎች",
+      "creditSavings": "SceneFlow የብድር ቁጠባ",
+      "savePercent": "በSceneFlow ክሬዲቶች ላይ {percent}% ይቆጥባሉ።",
+      "transparency": "ሙሉ ግልጽነት፡ በስራ ሂደትዎ ወቅት የክሬዲት አጠቃቀምዎን በቅጽበት ማየት ይችላሉ። ያልተጠበቁ ነገሮች አይኖሩም፤ የፕሮጀክትዎን ወሰን በማንኛውም ጊዜ ማስተካከል ይችላሉ።",
+      "transparencyHighlight": "ሙሉ ግልጽነት፦",
+      "byokDisclaimer": "BYOK ማሳሰቢያ፡ የሚታዩት የክሬዲት ቁጠባዎች የሚያመለክቱት የSceneFlow መድረክ የክሬዲት ቅነሳዎችን ብቻ ነው። ትክክለኛው ወጪዎ የሚወሰነው በVertex AI እና ElevenLabs የዋጋ አወጣጥ ዕቅዶችዎ ላይ ነው። የኮርፖሬት ወይም ከፍተኛ መጠን ያለው አገልግሎት የሚሰጡ የAPI ዕቅዶች ተጨማሪ የዋጋ ቅናሾችን ሊያቀርቡ ይችላሉ።",
+      "byokDisclaimerHighlight": "BYOK ማስታወሻ፦",
+      "presets": [
+        {
+          "id": "ንግዳዊ",
+          "name": "የ30 ሰከንድ ማስታወቂያ"
+        },
+        {
+          "id": "አጭር",
+          "name": "የ2 ደቂቃ አጭር ፊልም"
+        },
+        {
+          "id": "ክፍል",
+          "name": "የ10 ደቂቃ ክፍል"
+        },
+        {
+          "id": "ባህሪ",
+          "name": "የ90 ደቂቃ ፊልም"
+        }
+      ],
+      "minSuffix": "ደቂቃ"
+    },
+    "tierGrid": {
+      "productionTestFlight": "የምርት ደረጃ የሙከራ በረራ",
+      "getStarted": "ጀምር",
+      "startTestFlight": "የሙከራ በረራ ይጀምሩ",
+      "loading": "በመጫን ላይ...",
+      "mostPopular": "በጣም ታዋቂ",
+      "creditsPerMonth": "ክሬዲቶች/ወር",
+      "storage": "ማከማቻ",
+      "perMonth": "/ወር"
+    },
+    "trust": {
+      "cancelAnytime": "በማንኛውም ጊዜ መሰረዝ ይችላሉ",
+      "moneyBack": "የ14 ቀናት ገንዘብ የመመለስ ዋስትና",
+      "creditsNeverExpire": "ክሬዲቶች ጊዜያቸው አያበቃም (የExplorer ጥቅል)"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "description": "ለመሞከር የሚደረግ የአንድ ጊዜ ግዢ",
+        "features": [
+          "አንድ ጊዜ የሚደረግ ግዢ",
+          "750 ክሬዲቶች (ጊዜው አያበቃም)",
+          "5 ጊጋባይት የማከማቻ ቦታ (30 ቀናት)",
+          "ወደ መድረኩ ሙሉ መዳረሻ",
+          "MP4 ወደ ውጭ መላክ (ማንኛውም ጥራት)",
+          "በአርቴፊሻል ኢንተለጀንስ (AI) የሚሰጥ የድምፅ ትረካ (ከ70 በላይ ቋንቋዎች)"
+        ]
+      },
+      "subscriptions": [
+        {
+          "id": "መነሻ",
+          "name": "መነሻ ምግብ",
+          "description": "ለግለሰብ ፈጣሪዎች",
+          "features": [
+            "ወደ መድረኩ ሙሉ መዳረሻ",
+            "በወር 4,500 ክሬዲቶች ተካተዋል",
+            "25 ጊጋባይት ንቁ ማከማቻ",
+            "MP4 ወደ ውጭ መላክ (ማንኛውም ጥራት)",
+            "በአርቴፊሻል ኢንተለጀንስ (AI) የሚሰጥ የድምፅ ትረካ (ከ70 በላይ ቋንቋዎች)",
+            "በኢሜይል የሚሰጥ ድጋፍ"
+          ]
+        },
+        {
+          "id": "ደጋፊ",
+          "name": "ፕሮ",
+          "description": "ለሙያተኛ ፈጣሪዎች",
+          "features": [
+            "በ'Starter' ጥቅል ውስጥ ያሉት ሁሉም ነገሮች፣ በተጨማሪም፦",
+            "በወር 15,000 ክሬዲቶች ተካተዋል",
+            "100 ጊጋባይት ንቁ ማከማቻ",
+            "የVeo 3.1 ጥራት (4K) ተደራሽነት",
+            "የገጸ-ባህሪ ወጥነት ማስጠበቂያ ስርዓት",
+            "የድምፅ ቅጂ መኮረጅ",
+            "BYOK (የራስዎን ቁልፍ ይዘው ይምጡ)",
+            "ለቡድን አባላት 3 መቀመጫዎች",
+            "ቅድሚያ የሚሰጠው ድጋፍ"
+          ]
+        },
+        {
+          "id": "ስቱዲዮ",
+          "name": "ስቱዲዮ",
+          "description": "ለቡድኖች እና ኤጀንሲዎች",
+          "features": [
+            "በPro ውስጥ ያሉት ሁሉም ነገሮች፣ በተጨማሪም፦",
+            "በወር 75,000 ክሬዲቶች ተካተዋል",
+            "500 ጊጋባይት ንቁ ማከማቻ",
+            "Veo 3.1 4K ቅድሚያ የሚሰጠው ወረፋ",
+            "ያልተገደበ የቁምፊ ወጥነት",
+            "ያለ ብራንድ የሚደረጉ ኤክስፖርቶች",
+            "የAPI መዳረሻ",
+            "ለቡድን አባላት 10 መቀመጫዎች",
+            "ለአንድ የተወሰነ ደንበኛ የተመደበ የአካውንት ሥራ አስኪያጅ",
+            "ለድርጅቶች የሚሆን የአገልግሎት ደረጃ ስምምነት (SLA) ሲጠየቅ ይገኛል።"
+          ]
+        }
+      ]
     }
   },
   "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
+    "badge": "ጥያቄዎች አሉዎት?",
+    "title": "ተደጋግመው የሚጠየቁ ጥያቄዎች",
+    "subtitle": "ስለ SceneFlow AI ማወቅ ያለብዎት ነገሮች ሁሉ",
     "items": [
       {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+        "question": "የSceneFlow የስራ ሂደት ከሃሳብ ጀምሮ ለህትመት ዝግጁ እስከሆነ ቪዲዮ ድረስ እንዴት ይከናወናል?",
+        "answer": "SceneFlow የተደራጀ የስራ ሂደት ይጠቀማል፡ ተከታታይ (አማራጭ) → Blueprint → ምርት (Production) → Final Cut → Premiere። Blueprint ከ Audience Resonance ጋር በመሆን የታሪኩን አወቃቀር እና የታለመውን ተመልካች ይወስናል። የምርት ሂደቱ (Production) ስክሪፕት፣ የስቶሪቦርድ (storyboard)፣ የቢት ቪዲዮ (beat video) እና የተሰሩ (rendered) የትዕይንት ክፍሎችን ያመነጫል። Final Cut የተመረጡትን ክፍሎች ወደ አንድ ዋና MP4 ፋይል ያዋህዳል፤ ይህ ሂደት የጊዜ መስመር (timeline) ላይ የሚሰራ ኤዲተር አይደለም። Premiere የፊልም ማሳያዎችን፣ የትንታኔ መረጃዎችን፣ በዩቲዩብ ማተምን እና ፋይሎችን ለተለያዩ አገልግሎቶች የማዘጋጀት (export bundles) ስራዎችን ያስተዳድራል።"
       },
       {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+        "question": "SceneFlow ከ Gemini Studio ወይም ከ Google Flow የሚለየው እንዴት ነው?",
+        "answer": "Gemini Studio እና Google Flow በትዕዛዝ (prompt) ላይ የተመሰረቱ የቪዲዮ ክሊፖችን በማመንጨት ላይ ያተኩራሉ። SceneFlow አጠቃላይ የምርት ሂደቱን በአንድ የተቀናጀ ስቱዲዮ ውስጥ ያካትታል፤ ይህም ሊሻሻሉ የሚችሉ መሰረታዊ መዋቅሮች (baselines) ያሏቸው ደረጃዎች፣ ለወጥነት የሚረዱ Reference Library እና Beat Frames፣ ከፍተኛ ወጪ የሚጠይቅ የሬንደሪንግ (rendering) ሂደት ከመጀመሩ በፊት የሚከናወን Audience Resonance፣ አውቶማቲክ ሚክሰር (Mixer) እና የስትሪም (stream) ዝግጅት፣ እንዲሁም ከመታተሙ በፊት የሚደረግ የScreening Room ማረጋገጫ ሂደትን ያካትታል።"
       },
       {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+        "question": "በአርቴፊሻል ኢንተለጀንስ (AI) የተፈጠሩ ጽሑፎችን (scripts)፣ ምስሎችን እና ድምጾችን ማስተካከል እችላለሁ?",
+        "answer": "አዎ። የተፈጠሩት ውጤቶች በሙሉ ሊስተካከሉ የሚችሉ ናቸው። በProduction Mixer ውስጥ ስክሪፕቶችን እንደገና መጻፍ፣ የትዕይንት አቅጣጫን ማስተካከል፣ የተወሰኑ ክፍሎችን (beats) እንደገና መፍጠር፣ የድምፅ ትረካን ማስተካከል እና የጊዜ አጠባበቅን (timing) ማሻሻል ይችላሉ። Final Cut የሚያደርገው የተጠናቀቁ ክፍሎችን ማገናኘት ብቻ ነው፤ የፈጠራ ለውጦች ግን በምርት (Production) ደረጃ ላይ ይቀራሉ።"
       },
       {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+        "question": "Target Audience Resonance አሁን እንዴት ነው የሚሰራው?",
+        "answer": "Audience Resonance የታሪኩን አወቃቀር ትንተና (ግልጽነት፣ የትረካ ፍጥነት፣ የስሜት ለውጥ ሂደት) ከታለመው ታዳሚ (በBlueprint ከተገለጸው ጋር) ተስማሚነት ጋር ያጣምራል፤ ይህ የሚደረገውም ስራው ከታተመ በኋላ በሚሰበሰብ የተመልካች ተሳትፎ መረጃ ላይ ሳይሆን፣ በሂደቱ ወቅት ነው። በዚህም፣ ከፍተኛ የኮምፒውተር ሂደት (rendering) ከመጀመሩ በፊት፤ በተከታታይ ክፍሎች (Series)፣ በBlueprint እና በስክሪፕት ግምገማ ደረጃዎች ላይ ምክረ-ሀሳቦችን እንዲሁም በአንድ ጠቅታ የሚከናወኑ ማስተካከያዎችን ያገኛሉ።"
       },
       {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
+        "question": "በበርካታ ቋንቋዎች የሚዘጋጁ የምርት ዝርዝር (listing) ወይም የማርኬቲንግ ቪዲዮዎችን ማዘጋጀት እችላለሁ?",
+        "answer": "አዎ። ጊዜን ከይዘት ጋር በሚያስተባብር የስራ ሂደት አማካኝነት ከ70 በላይ በሆኑ ቋንቋዎች ቪዲዮዎችን ማዘጋጀት እና ለአካባቢው ተመልካች በሚስማማ መልኩ ማስተካከል (localize ማድረግ) ይችላሉ። ብዙውን ጊዜ ቡድኖች በመጀመሪያ ዋናውን የቪዲዮ ስሪት (master cut) ያዘጋጃሉ፤ ከዚያም ለዓለም አቀፍ ገዢዎች፣ ደንበኞች ወይም ለተለያዩ ክልሎች ተመልካቾች የሚሆኑ የቋንቋ ስሪቶችን ያመርታሉ።"
       },
       {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "question": "Screening Room የግምገማው ምዕራፍ ከሆነ፣ Premiere ምን ያደርጋል?",
+        "answer": "Screening Room በ Premiere ውስጥ የሚገኝ ለግምገማ እና ለፕሮዳክሽን ስቶሪቦርድ (storyboard) ቅድመ-እይታ የሚያገለግል መድረክ ነው። የ/s/ ሊንኮችን ያጋሩ፣ ከባለድርሻ አካላት አስተያየት እና (ተመልካቾች ሲስማሙ) አማራጭ የተሳትፎ ትንታኔዎችን ይሰብስቡ፣ የውጤት አሰጣጥ (Scoring) እና የእይታ መረጃዎችን (visual insights) ይገምግሙ፤ ከዚያም በYouTube ዊዛርድ (wizard) በኩል ያትሙ ወይም ጥቅሎችን (bundles) ወደ ውጭ ይላኩ።"
       },
       {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
+        "question": "ቴክኒካዊ ወይም የአርትዖት ልምድ ያስፈልገኛል?",
+        "answer": "አይደለም። SceneFlow የተዘጋጀው ቴክኒካዊ እውቀት ለማይፈልጉ ፈጣሪዎች እና ቡድኖች ነው። ሂደቱ የሚጀምረው በተመሩ ግብዓቶች እና ሊስተካከሉ በሚችሉ የAI መነሻዎች (baselines) ነው፤ እንጂ ውስብስብ በሆነ የ'prompt engineering' ወይም በርካታ መሳሪያዎችን በማጣመር በሚሰራ አሰራር አይደለም።"
       },
       {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
+        "question": "የExplorer እቅድ እንዴት ነው የሚሰራው?",
+        "answer": "በ9 ዶላር በሚደረግ የአንድ ጊዜ ክፍያ፣ አጠቃላይ የአሰራር ሂደቱን ለመፈተሽ የሚያስችሉ 750 ክሬዲቶችን ያገኛሉ። ይህ የተዘጋጀው ወርሃዊ ጥቅል ከመምረጥዎ በፊት፣ ከሃሳብ ጀምሮ እስከ ቪዲዮ ድረስ ያሉ ትክክለኛ ስራዎችን እንዲያከናውኑ የሚያስችል ተግባራዊ የሙከራ እድል ለመስጠት ነው።"
       },
       {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
+        "question": "ክሬዲቶች እና BYOK እንዴት ይስተናገዳሉ?",
+        "answer": "ክሬዲቶች በመድረኩ ውስጥ ስለሚከታተሉ፣ ቡድኖች በስራ ፍሰት (workflow) ደረጃዎች መሰረት በጀትን ማስተዳደር ይችላሉ። በተጨማሪም፣ የPro እና Studio እቅዶች ለሚደገፉ አቅራቢዎች \"የራስን ቁልፍ መጠቀም\" (Bring Your Own Key) አማራጭን ይደግፋሉ፤ ይህም ከአቅራቢዎች ጋር ቀድሞ የተፈረመ ውል ላላቸው ድርጅቶች ወጪን በተሻለ ሁኔታ ለመቆጣጠር ያስችላል።"
       },
       {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+        "question": "በSceneFlow አማካኝነት በተጨባጭ ምን መፍጠር እችላለሁ?",
+        "answer": "ቡድኖች SceneFlowን ለሪል እስቴት ጉብኝቶች፣ ለትምህርታዊ ይዘቶች፣ ምስላዊ ታሪክን ለሚያካትቱ ፖድካስቶች፣ ለዜና ማብራሪያዎች፣ ለብራንድ ዘመቻዎች እና ለሲኒማዊ ተከታታይ ክፍሎች ይጠቀሙበታል። ይህው የአሰራር ሂደት ለአጭር እና ለረጅም ቆይታ ያላቸውን ይዘቶች ለማምረትም ያገለግላል።"
       }
     ]
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
-    "cta": "Launch Your Studio for $9"
+    "title": "ሙሉውን የስራ ሂደት (pipeline) ለመፈተሽ ዝግጁ ነዎት?",
+    "subtitle": "ከሃሳብ (concept) ጀምሮ እስከ ስቶሪቦርድ (storyboard)፣ ቪዲዮ እና የመጨረሻው MP4 ፋይል ድረስ ያሉትን ሂደቶች በአንድ ስቱዲዮ ውስጥ ያከናውኑ። በ$9 Explorer እቅድ ይጀምሩ እና 'ቢት' (beat)ን በቅድሚያ የሚያስቀድመውን የስራ ሂደት በተግባር ይመልከቱ።",
+    "cta": "ስቱዲዮዎን በ9 ዶላር ያስጀምሩ"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
-    "product": "Product",
-    "resources": "Resources",
-    "legal": "Legal",
+    "description": "ከሃሳብ ጀምሮ ለህትመት ዝግጁ እስከሆነ የመጨረሻ ውጤት ድረስ፣ ሙሉ በሙሉ በራስ-ሰር የሚከናወን የቪዲዮ ምርት። አንድ የተቀናጀ የስቱዲዮ ሂደት፡ Blueprint → ምርት → Final Cut → Premiere።",
+    "product": "ምርት",
+    "resources": "ሀብቶች",
+    "legal": "ህጋዊ",
     "links": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "howItWorks": "How It Works",
-      "faq": "FAQ",
-      "gettingStarted": "Getting Started",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "trustSafety": "Trust & Safety",
-      "refunds": "Refund Policy",
-      "contact": "Contact Us"
+      "features": "ባህሪያት",
+      "pricing": "የዋጋ አወጣጥ",
+      "howItWorks": "አሰራሩ",
+      "faq": "ተደጋግመው የሚጠየቁ ጥያቄዎች",
+      "gettingStarted": "መጀመር",
+      "privacy": "የግላዊነት ፖሊሲ",
+      "terms": "የአገልግሎት ውል",
+      "trustSafety": "እምነት እና ደህንነት",
+      "refunds": "የገንዘብ ተመላሽ ፖሊሲ",
+      "contact": "ያግኙን"
     },
-    "tagline": "Made with ❤️ for creators",
-    "taglineSub": "From Idea to Published Video",
-    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
-    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "tagline": "ለፈጣሪዎች በፍቅር የተሰራ",
+    "taglineSub": "ከሃሳብ እስከ ታተመ ቪዲዮ",
+    "securePayments": "የክፍያ ሂደቱ የሚከናወነው በይፋዊ የክፍያ አጋራችን Whop አማካኝነት ሲሆን፣ ክፍያዎቹም ደህንነታቸው የተጠበቀ ናቸው።",
+    "morLine": "ደህንነቱ የተጠበቀ ክፍያ፣ የታክስ ስሌት እና የደንብ ተገዢነት ጉዳዮች በLife Focus, LLC ስም፣ በይፋዊ የክፍያ ተቀባይ ወኪላችን (Merchant of Record) በሆነው Whop ይከናወናሉ።",
+    "copyright": "© 2026 SceneFlow AI። መብቶቹ በህግ የተጠበቁ ናቸው።",
+    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • አድራሻ፦ brian@sfai.studio",
+    "poweredBy": "በ Google Cloud የሚሰራ"
   },
   "floatingCta": {
-    "seePricing": "See Pricing",
-    "tryNine": "Try $9",
-    "tryForNine": "Try for $9",
-    "dismiss": "Dismiss"
+    "seePricing": "ዋጋዎችን ይመልከቱ",
+    "tryNine": "በ9 ዶላር ይሞክሩት",
+    "tryForNine": "በ$9 ይሞክሩት",
+    "dismiss": "አሰናብት"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
-    "pause": "Pause",
-    "play": "Play",
-    "mute": "Mute",
-    "unmute": "Unmute"
+    "pause": "አፍታ አቁም",
+    "play": "አጫውት",
+    "mute": "ድምፅ አጥፋ",
+    "unmute": "ድምፅን መልሶ ማብራት",
+    "expandVideo": "ቪዲዮውን አስፋ"
   }
 }

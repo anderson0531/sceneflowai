@@ -7,568 +7,1360 @@
     "workflow": "工作流程",
     "platformWalkthrough": "平台导览",
     "plansPricing": "方案与定价",
-    "more": "More",
-    "useCases": "Use Cases",
+    "more": "更多",
+    "useCases": "应用场景",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform & Trust",
-    "faq": "FAQ",
+    "platformTrust": "平台与信任",
+    "faq": "常见问题",
     "signIn": "登录",
     "startProject": "开始项目",
-    "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "dashboard": "仪表盘",
+    "adminPanel": "管理面板",
+    "signOut": "退出",
+    "goToDashboard": "前往仪表盘",
+    "userFallback": "用户",
+    "searchLanguages": "搜索语言……",
+    "noLanguagesFound": "未找到语言"
   },
   "floatingNav": {
-    "compare": "Compare",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "platformWalkthrough": "Platform Walkthrough",
-    "platform": "Platform",
-    "pricing": "Pricing",
-    "faq": "FAQ"
+    "compare": "比较",
+    "howItWorks": "运作原理",
+    "useCases": "应用场景",
+    "platformWalkthrough": "平台导览",
+    "platform": "平台",
+    "pricing": "定价",
+    "faq": "常见问题"
   },
   "hero": {
     "headline": "无需制作团队或十几个应用，即可制作专业视频。",
     "subheadline": "从创意到可发布成片的单一引导式 Studio。在支付最终视频前先查看分镜——在批准画面后再渲染，而不是在盲目生成中消耗积分。",
+    "audienceMicroLine": "专为追求成效的创作者，以及希望了解运作方式的团队而打造。",
     "ctaSecondary": "观看「可能性」",
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "ctaToolStack": "了解它如何替代您现有的工具栈",
+    "languagePrompt": "用您的语言聆听英雄之声——同样的流程，全新的市场",
+    "multilangHint": "主打配音涵盖 7 种语言——完整制作管线支持 70 多种语言。",
+    "playWithNarration": "带旁白播放",
+    "tapToHear": "点击收听",
+    "fullscreen": "全屏",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
-        "nativeLabel": "English"
+        "label": "英语",
+        "nativeLabel": "英语"
       },
       "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
+        "label": "西班牙语",
+        "nativeLabel": "西班牙语"
       },
       "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
+        "label": "葡萄牙语",
+        "nativeLabel": "葡萄牙语"
       },
       "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
+        "label": "印地语",
+        "nativeLabel": "印地语"
       },
       "zh": {
-        "label": "Chinese",
+        "label": "中文",
         "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
+        "label": "阿拉伯语",
+        "nativeLabel": "阿拉伯语"
       },
       "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
+        "label": "泰国",
+        "nativeLabel": "泰国"
       }
     },
-    "soon": "Soon"
+    "soon": "很快"
   },
   "valueProp": {
     "pills": [
       {
         "label": "One Studio",
-        "detail": "Concept to publish in one place"
+        "detail": "集中发布概念"
       },
       {
-        "label": "Approve Before Final Video",
-        "detail": "Review storyboard beats before you render"
+        "label": "在最终视频制作前进行审批",
+        "detail": "在渲染之前，先检查分镜节点。"
       },
       {
-        "label": "Test Your Story First",
-        "detail": "Know what lands before heavy spend"
+        "label": "先测试你的故事",
+        "detail": "在大举投入之前，先确认什么行得通。"
       },
       {
-        "label": "Publish-Ready Output",
-        "detail": "Master MP4 + distribution bundles"
+        "label": "可直接发布的输出内容",
+        "detail": "母版 MP4 + 分发包"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Who are you? Pick your path",
-    "seeExamples": "See examples",
-    "examplesFor": "Examples for {label}:",
-    "andMore": ", and more.",
+    "prompt": "你是谁？选择你的道路。",
+    "seeExamples": "查看示例",
+    "examplesFor": "{label} 的示例：",
+    "andMore": "，以及更多。",
+    "modes": {
+      "automate": {
+        "label": "实现自动化",
+        "description": "引导式工作流程——审批分镜，加速交付"
+      },
+      "engine": {
+        "label": "让我看看发动机",
+        "description": "架构、BYOK 与平台深度"
+      }
+    },
     "paths": [
       {
-        "id": "creator",
-        "label": "Creator",
-        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "id": "创作者",
+        "label": "创作者",
+        "outcome": "按时交付——无需在各个工具中重复构建",
         "useCases": [
-          "YouTube & episodic series",
-          "Video podcasts & show clips",
-          "Hyper-local & JIT news",
-          "Documentaries & docuseries",
-          "How-to & skill channels",
-          "Sports recaps & commentary"
+          "YouTube 与系列剧集",
+          "视频播客与节目片段",
+          "极度本地化与即时（JIT）新闻",
+          "纪录片与纪录剧集",
+          "教程与技能类频道",
+          "体育赛事回顾与评述"
         ]
       },
       {
-        "id": "team",
-        "label": "In-house team",
-        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "id": "团队",
+        "label": "内部团队",
+        "outcome": "摆脱缓慢的供应商流程——掌控品牌与预算",
         "useCases": [
-          "Corporate L&D & compliance",
-          "Internal comms & town halls",
-          "Product explainers for sales",
-          "HR recruitment & culture",
-          "K-12 / higher-ed lessons",
-          "Public health & safety updates"
+          "企业学习发展与合规",
+          "内部沟通与全员大会",
+          "用于销售的产品讲解内容",
+          "人力资源招聘与企业文化",
+          "K-12 / 高等教育课程",
+          "公共卫生与安全动态"
         ]
       },
       {
-        "id": "productionShop",
-        "label": "Production shop",
-        "outcome": "Productize a niche with repeatable intake → delivery",
+        "id": "生产车间",
+        "label": "生产车间",
+        "outcome": "将细分领域业务产品化，实现“需求接收 → 交付”流程的可重复性。",
         "useCases": [
-          "Video memoir packages",
-          "Legacy & tribute videos",
-          "Voice-cloned narration",
-          "White-label studio templates",
-          "Real estate & hospitality tours",
-          "Subscription video services"
+          "视频回忆录套餐",
+          "传承与致敬视频",
+          "语音克隆旁白",
+          "白标工作室模板",
+          "房地产与酒店业考察之旅",
+          "订阅制视频服务"
         ]
       },
       {
-        "id": "agency",
-        "label": "Agency",
-        "outcome": "Faster pitches and scalable client delivery",
+        "id": "代理机构；代理处；（政府）局、署、处",
+        "label": "代理机构",
+        "outcome": "更快速的提案与可扩展的客户交付",
         "useCases": [
-          "Client pitch pre-viz",
-          "Product launch campaigns",
-          "Case studies & testimonials",
-          "Event & conference promos",
-          "Multi-language campaigns",
-          "Property marketing for clients"
+          "客户提案预演",
+          "产品发布推广活动",
+          "案例研究与客户见证",
+          "活动与会议推广",
+          "多语言营销活动",
+          "为客户提供的房产营销服务"
         ]
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Why SceneFlow vs prompt-and-generate tools",
-    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "title": "为何选择 SceneFlow 而非“提示词生成”类工具",
+    "subtitle": "Gemini Studio 和 Google Flow 擅长处理片段。SceneFlow 整合了完整的制作工作流程。",
     "rows": [
       {
-        "them": "Prompt + clip generation in isolation",
-        "us": "Structured phases with editable baselines at each step"
+        "them": "基于提示词的独立片段生成",
+        "us": "结构化阶段，各步骤均设有可编辑的基线"
       },
       {
-        "them": "Manual consistency across sessions",
-        "us": "Reference Library + Beat Frames lock visuals before video"
+        "them": "跨会话的手动一致性",
+        "us": "Reference Library + Beat Frames 在视频之前锁定画面"
       },
       {
-        "them": "No audience validation workflow",
-        "us": "Audience Resonance before render; Screening Room before publish"
+        "them": "无受众验证工作流",
+        "us": "Audience Resonance 渲染前；Screening Room 发布前"
       },
       {
-        "them": "No production pipeline or handoff",
-        "us": "Script → streams → assembly → distribution in one app"
-      },
-      {
-        "them": "Complex model and settings surface",
-        "us": "Guided Studio UX with credits and BYOK guardrails"
+        "them": "没有生产流水线或交接流程",
+        "us": "脚本、流、组装与分发，尽在一款应用之中"
       }
     ],
-    "themHeader": "Typical clip-generation tools",
-    "usHeader": "SceneFlow bundles"
+    "themHeader": "典型的片段生成工具",
+    "usHeader": "SceneFlow 捆绑包"
   },
   "beatFirstPipeline": {
-    "title": "Beat-First Video Pipeline",
-    "subtitle": "Approve before you render — not slot-machine regeneration",
-    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "title": "以节拍为先的视频制作流程",
+    "subtitle": "渲染前先确认——切勿像老虎机那样随机生成",
+    "intro": "无需反复尝试生成。在 SceneFlow 消耗点数制作最终视频之前，您可以先预览并确认视觉效果。",
+    "description": "SceneFlow 流程在每个环节都构建了视觉确认机制：先通过 Express storyboard 进行审阅，利用 Beat Frames 锁定构图，随后针对每个节拍执行 F2V（帧到视频）生成。这意味着你可以在消耗额度应对画面漂移或“幻觉”问题之前，先优化好视觉效果。",
     "steps": [
-      "Express storyboard — share audio-visual beats for review in minutes",
-      "Beat Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Express storyboard — 分享音视频节拍，数分钟内即可完成审阅",
+      "Beat Frames — 锁定起始/结束组合，并保持 Reference Library 连续性",
+      "逐拍 F2V —— 基于已确认的画面帧生成视频，而非盲目依赖提示词。",
+      "Production Mixer — 时序、音频及流导出至 Final Cut 组装"
     ],
-    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+    "footerLine": "减少反复修改——在投入最终视频制作预算前先确认视觉效果"
+  },
+  "toolStack": {
+    "badge": "听起来耳熟吗？",
+    "title": "“有缺陷的方式”与“SceneFlow 方式”",
+    "subtitle": "制作并发布一个视频，本不该需要同时打开五个标签页、反复进行复制粘贴和导出操作，更不该让人因构思提示词（prompt）而感到心力交瘁。",
+    "brokenWay": {
+      "title": "破碎之路",
+      "tagline": "碎片化。人工操作。令人筋疲力尽。",
+      "tools": [
+        {
+          "name": "ChatGPT",
+          "category": "剧本草稿"
+        },
+        {
+          "name": "Midjourney",
+          "category": "一次性图像"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "手动 VO 导出"
+        },
+        {
+          "name": "Premiere",
+          "category": "手工装配"
+        }
+      ],
+      "chaosLabel": "五个标签页。丢失了上下文。",
+      "painPoints": [
+        "在应用之间复制粘贴",
+        "提示词疲劳与重新生成循环",
+        "投放前无需进行受众核查",
+        "导出版本混乱"
+      ],
+      "timeLabel": "典型项目工期",
+      "timeValue": "2–4 周"
+    },
+    "sceneflowWay": {
+      "title": "SceneFlow 之道",
+      "tagline": "统一工作室。渲染前先确认。",
+      "stages": [
+        {
+          "label": "Blueprint",
+          "detail": "结构化故事大纲"
+        },
+        {
+          "label": "参考文献",
+          "detail": "性格连贯的角色"
+        },
+        {
+          "label": "生产",
+          "detail": "声音与视觉画面"
+        },
+        {
+          "label": "发布",
+          "detail": "一个母版 MP4"
+        }
+      ],
+      "syncLabel": "单个项目文件——无需在多个标签页间来回切换",
+      "benefits": [
+        "引导式阶段——而非提示词工程",
+        "视频片尾制作前的分镜脚本确认",
+        "Audience Resonance 重度渲染前的评分",
+        "来自同一工作室、可直接发布的母带"
+      ],
+      "timeLabel": "典型项目工期",
+      "timeValue": "2–4 天"
+    },
+    "comparisonCaption": "一个工作室，取代了零散的提示词工具、手动编辑以及跨平台交接流程。",
+    "comparisonImageAlt": "传统制作的高昂成本与 SceneFlow 自动化演播室对比——从创意构思到成片发布，速度更快"
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
-    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "title": "具备生产级速度，且无额外开销",
+    "subtitle": "用一个自动化工作室取代零散的提示词工具与人工拼凑流程——涵盖从最初构思到可发布成品的完整过程。",
+    "caption": "一个工作室，取代了零散的提示词工具、手动编辑以及跨平台交接流程。",
+    "imageAlt": "传统制作的高昂成本与 SceneFlow 自动化演播室对比——从创意构思到成片发布，速度更快"
   },
   "howItWorks": {
-    "title": "From concept to publish-ready video",
-    "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
-    "tagline": "Every step is expertly automated. Every step gives you full control.",
-    "optionalBadge": "Optional",
-    "optionalSuffix": " (optional)",
-    "readyTitle": "Ready to test the full pipeline?",
-    "explorerCta": "Start with Explorer — $9",
+    "title": "从创意构思到可发布视频",
+    "titleAccent": "一条引导式流水线",
+    "subtitle": "系列制作可选。核心流程为 Blueprint → 制作 → Final Cut → Premiere，期间涵盖分镜、动态分镜、视频及母版 MP4 等阶段。",
+    "tagline": "每一个步骤都实现了专业级的自动化，同时赋予您完全的掌控权。",
+    "optionalBadge": "可选",
+    "optionalSuffix": " （可选）",
+    "readyTitle": "准备好测试完整流水线了吗？",
+    "explorerCta": "从 Explorer 开始 — 9 美元",
     "phases": [
       {
-        "id": "series",
-        "stepLabel": "Series",
-        "subtitle": "Showrunner Engine",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "id": "系列",
+        "stepLabel": "系列",
+        "subtitle": "Showrunner 引擎",
+        "description": "只需定义一次世界观，即可生成连贯的多集剧情线。共享的 Reference Library 确保了整季中角色与基调的一致性。",
         "keySteps": [
-          "Define universe — characters, tone, and season arc",
-          "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "界定世界观——角色、基调及整季剧情走向",
+          "自动生成整季各集的剧情大纲",
+          "同步至 Blueprint 及单集制作"
         ],
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
-        ],
-        "optional": true
+          "一次性确立你的世界观——包括角色、基调和整季的故事脉络。",
+          "连贯的剧集大纲——贯穿整季自动生成",
+          "连贯性追踪——确保多集季度的内容衔接一致",
+          "系列与单集同步 —— 接入 Blueprint 演播室与制作系统"
+        ]
       },
       {
-        "id": "blueprint",
+        "id": "蓝图",
         "stepLabel": "Blueprint",
-        "subtitle": "Story Development",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "subtitle": "故事开发",
+        "description": "将创意构思转化为包含故事梗概、关键节点、角色设定及基调的结构化方案。在进行重度渲染之前，请运行 Audience Resonance 并开展协作。",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
-          "Audience Resonance scoring with 80+ target",
-          "Collaborator share links and export (PDF, Doc, PPTX)"
+          "生成 → 评审 → 迭代 → 投入生产",
+          "Audience Resonance 目标分 80+",
+          "协作者分享链接及导出（PDF、Doc、PPTX）"
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
-        ],
-        "optional": false
+          "生成 → 评审 → 迭代 → 启动生产流程",
+          "从构思到架构，仅需数分钟——涵盖故事梗概、关键节点、角色与基调。",
+          "Audience Resonance 生产环境上线前评分，目标分值 80 分以上",
+          "协作者分享链接 —— 整合反馈以指导修订"
+        ]
       },
       {
-        "id": "production",
-        "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "id": "生产",
+        "stepLabel": "生产",
+        "subtitle": "脚本转数据流",
+        "description": "“脚本”与“动作”选项卡引导您完成从基础（Foundation）到分镜（Storyboard）、制作（Production）及最终输出（Final Cut）的全过程。涵盖 Express storyboard、Beat Frames、混音器（Mixer）及 MP4 流——无需切换工具。",
         "keySteps": [
-          "Lock script, voices, and scene audio",
-          "Express storyboard — gallery and share for review",
-          "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "锁定剧本、配音及场景音频",
+          "Express storyboard — 图库及分享以供审阅",
+          "Beat Frames → 导演控制台 → 渲染流",
+          "将完成的数据流发送至 Final Cut"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
-        ],
-        "optional": false
+          "《基地》——剧本、配音、场景音频、定稿剧本",
+          "Express storyboard — 分钟级构图与取景；图库与分享",
+          "Beat Frames 与 Mixer —— 起止帧、导演控制台、渲染 MP4 流",
+          "生产流 —— 审查输出结果，重新渲染过时的节拍，发送至 Final Cut"
+        ]
       },
       {
-        "id": "final-cut",
+        "id": "最终剪辑",
         "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "subtitle": "流式组装",
+        "description": "将完成的制作流拼接成一个主 MP4 文件。按场景选择 Animatic 或视频与语言——无需进行时间轴编辑；创意变更保留在 Production Mixer 中。",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
+          "为每个场景选择流——预设或自定义混合",
+          "按脚本顺序预览完整节目",
+          "为 Premiere 导出一个主 MP4 文件"
         ],
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
+          "分场景流选择 — Animatic、视频、语言、版本",
+          "组装预设 — 全视频、混合、自定义组合",
+          "无需进行时间轴编辑——创意修改保留在 Production Mixer 中",
+          "一键导出母版 — 适用于 Premiere 的拼接 MP4"
+        ]
       },
       {
-        "id": "premiere",
+        "id": "首映；首演",
         "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "subtitle": "分拨中心",
+        "description": "结合受众分析审阅母片，随后发布至 YouTube（附带本地化元数据），或导出适用于 Shorts、Reels 和 TikTok 的内容包。",
         "keySteps": [
-          "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
+          "创建放映并分享 /s/ 链接",
+          "评论评分、互动与视觉洞察",
+          "YouTube 向导或导出包"
         ],
         "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "optional": false
+          "可分享链接 Screening Room — 带有评分及可选互动分析（需观看者同意）功能的 /s/ 链接",
+          "洞察仪表板 —— 评分、生物特征及视觉标签页",
+          "YouTube 助手 —— 缩略图、本地化标题/描述、SceneFlow 号召性用语 (CTA)",
+          "导出合集与竖屏短视频剪辑方案"
+        ]
       }
     ]
   },
   "useCases": {
-    "badge": "Production Applications",
-    "title": "Whatever Video You Can Imagine,",
-    "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "badge": "生产应用",
+    "title": "无论你能想象出什么样的视频，",
+    "titleAccent": "在 SceneFlow 中构建",
+    "subtitle": "涵盖房地产展示、教育内容、播客、新闻节目、品牌推广及电影感叙事——一个实现从创意构思到成片输出全流程自动化的演播室。",
+    "qualifyingStatement": "SceneFlow 可将您的原始照片、上传内容及文字描述转化为带有解说的演示视频，并允许您自主选择是否加入配音及虚拟人物形象。这些视频属于 AI 生成的演示内容：它们是基于您的素材所呈现的逼真视觉效果，而非实地拍摄的影像。在发布前，您可以审阅并确认每一个分镜脚本；同时，请清晰标注输出内容，以便观众了解观看的是何种类型的视频。",
     "ui": {
-      "useCases": "Use Cases",
-      "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo coming soon",
-      "selectExample": "Select an example to preview its demo"
+      "useCases": "应用场景",
+      "sectors": "{count} 个行业",
+      "demoComingSoon": "试玩版即将推出",
+      "selectExample": "选择一个示例以预览其演示",
+      "targetPersona": "目标用户画像",
+      "theChallenge": "挑战",
+      "sceneFlowSolution": "SceneFlow 解决方案",
+      "beforeVsAfter": "前后对比",
+      "before": "之前",
+      "after": "之后",
+      "theWin": "“赢”",
+      "frameAnchoredTitle": "基于帧锚定的连续性",
+      "frameAnchoredDescription": "SceneFlow 是唯一支持“帧锚定”连续性的工具，能够确保客户的产品或角色在各个场景片段中保持外观一致。",
+      "closePreview": "关闭预览",
+      "expandVideo": "展开视频",
+      "expandImage": "放大图像",
+      "orStartExplorer": "从 9 美元的 Explorer 方案开始",
+      "orPrefix": "或者"
+    },
+    "personas": {
+      "creator": {
+        "label": "独立创作者",
+        "title": "YouTube 创作者",
+        "beforeAfter": {
+          "before": "40小时",
+          "after": "25分钟"
+        },
+        "challenge": {
+          "title": "“B-Roll”（辅助镜头）瓶颈",
+          "description": "尽管你的脚本非常出色，但大部分时间却耗费在搜寻素材、协调剪辑以及确保各场景风格统一上。这种延误拖慢了发布节奏，也削弱了观众的留存率。"
+        },
+        "solution": {
+          "title": "自动讲故事者",
+          "description": "快速将剧本转化为可直接用于制作的视觉画面，同时确保从首个场景到最终成片全过程中的角色与风格连贯性。",
+          "features": [
+            "与剧本节点精准对应的视觉画面",
+            "贯穿各个场景的主角",
+            "利用共享参考库，扩展至剧集系列制作"
+          ]
+        },
+        "win": "从偶尔上传转变为可靠的生产节奏，同时降低运营成本。",
+        "keyPhrases": [
+          "更快的周转速度",
+          "角色形象一致",
+          "具备量产条件的生产流程"
+        ]
+      },
+      "team": {
+        "label": "内部团队",
+        "title": "内部视频团队",
+        "beforeAfter": {
+          "before": "6周",
+          "after": "同一周"
+        },
+        "challenge": {
+          "title": "供应商积压与品牌偏离",
+          "description": "企业传播、学习与发展（L&D）及市场营销团队往往需要等待数周，才能收到代理机构或供应商交付的视频。每一次拍摄都伴随着品牌形象不统一、费用难以预估以及审批流程冗长导致项目停滞等问题。"
+        },
+        "solution": {
+          "title": "当周内部生产",
+          "description": "安排人员利用可预估的额度预算制作视频——采用品牌模板，在最终渲染前进行审批，且无需支付拍摄团队工时费或经历无休止的剪辑周期。",
+          "features": [
+            "以引导式内部工作流程取代供应商拍摄",
+            "符合品牌规范的模板与参考资料库",
+            "各项目的额度消耗与预算上限一目了然",
+            "在支付最终视频费用前，先确认分镜脚本。"
+          ]
+        },
+        "win": "按您自己的时间表交付培训、沟通及营销活动视频，无需受限于供应商的积压工作。",
+        "keyPhrases": [
+          "可预测的成本",
+          "品牌管控",
+          "当周交付"
+        ]
+      },
+      "productionShop": {
+        "label": "生产车间",
+        "title": "小众生产作坊",
+        "beforeAfter": {
+          "before": "每场拍摄 8,000 美元",
+          "after": "200美元额度"
+        },
+        "challenge": {
+          "title": "定制化垂直领域方案，缺乏可复制的体系",
+          "description": "从事回忆录、家族传承、房地产及教育行业的客户都需要快速交付，但目前每个项目都必须从零开始。若缺乏从“需求录入”到“最终交付”的标准化流程，素材上传、语音克隆及虚拟形象生成等环节将难以实现规模化运作。"
+        },
+        "solution": {
+          "title": "将您的视频服务产品化",
+          "description": "为回忆录工作室及垂直细分领域构建可复用的工作流程。涵盖模板上传、语音克隆、虚拟形象及分镜审批等环节——既能针对客户需求进行定制，又能通过规模化运营提升利润率。",
+          "features": [
+            "包含照片上传、语音克隆及虚拟形象解说功能的传记模板",
+            "与 Blueprint 及分镜脚本审批阶段相关联的客户接洽流程",
+            "面向生平纪念、致敬及订阅制视频业务的白标工作室方案",
+            "基于点数的利润空间，而非单次拍摄的运营成本"
+          ]
+        },
+        "win": "开展视频回忆录或垂直领域工作室业务，建立可重复交付的模式，而非仅仅从事一次性的自由职业劳作。",
+        "keyPhrases": [
+          "回忆录模板",
+          "语音与虚拟形象身份",
+          "可重复交付"
+        ]
+      },
+      "agency": {
+        "label": "代理机构",
+        "title": "客户交付负责人",
+        "beforeAfter": {
+          "before": "3周交货",
+          "after": "3天送达"
+        },
+        "challenge": {
+          "title": "大规模客户交付",
+          "description": "赢得竞标仅仅是成功了一半。对于客户的常态化业务，既需要快速交付和清晰的审批流程，又要确保每一项交付成果都有利润空间——同时还要避免每次都从零开始进行制作。"
+        },
+        "solution": {
+          "title": "吞吐量 + 客户审批",
+          "description": "从提案样稿顺利过渡到常规交付，全程具备品牌安全管控机制，支持最终渲染前的客户审核，并确保每个项目的信用点数成本可控。",
+          "features": [
+            "用于提案与客户确认的快速预可视化",
+            "适用于重复性客户格式的可复用模板",
+            "贯穿各迭代阶段的预算透明度",
+            "无需增加人员即可实现可扩展的交付"
+          ]
+        },
+        "win": "以更低的制作风险和更高的利润率，实现更快的提案周期并交付持续性的客户项目。",
+        "keyPhrases": [
+          "客户审批",
+          "交付吞吐量",
+          "预算可预测性"
+        ]
+      }
+    },
+    "segmentCtas": {
+      "creator": {
+        "label": "开始您的生产测试飞行",
+        "subtext": "9美元一次性付费 • 750点数 • 平台完整访问权限"
+      },
+      "team": {
+        "label": "预约团队演示",
+        "subtext": "了解内部团队如何取代供应商的交付周期"
+      },
+      "productionShop": {
+        "label": "探索垂直领域模板",
+        "subtext": "房地产、教育、文档及更多领域——探索您可以将其转化为产品的方向"
+      },
+      "agency": {
+        "label": "查看团队定价",
+        "subtext": "面向规模化代理机构与制作工作室的方案"
+      }
     },
     "categories": [
       {
-        "id": "property",
-        "title": "Property, Spaces & Hospitality",
+        "id": "财产；房地产；特性",
+        "title": "地产、空间与酒店服务",
+        "qualifyingStatement": "基于您的房产实拍照片制作——以包含您本人语音和虚拟形象的AI解说导览形式呈现。这提供了对房屋布局和特色的逼真预览，但不能替代实地看房。所有导览均有明确标识。",
         "examples": [
           {
-            "id": "residential-real-estate",
-            "label": "Residential Real Estate",
-            "description": "Automated listing tours featuring the agent's cloned voice and avatar identity."
+            "id": "住宅房地产",
+            "label": "住宅房地产",
+            "description": "试想一下：只需上传房产图片，并结合您预先保存的人物形象与语音，即可瞬间生成一段由您的形象与声音呈现的专业房源导览视频——而且支持超过 70 种语言。"
           },
           {
-            "id": "commercial-real-estate",
-            "label": "Commercial Real Estate",
-            "description": "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data."
+            "id": "商业房地产",
+            "label": "商业房地产",
+            "description": "试想一下：只需上传户型图、效果图和周边区域数据，并结合经纪人预先录制的语音与虚拟形象，即可瞬间生成面向投资者的项目推介演示，生动呈现每一寸空间——且支持70多种语言的本地化版本。"
           },
           {
-            "id": "short-term-rentals",
-            "label": "Short-Term Rentals",
-            "description": "Automated \"Digital Welcome Books\" that walk guests through house features and local \"best of\" spots."
+            "id": "短期租赁",
+            "label": "短期租赁",
+            "description": "试想一下：上传房源照片和设施说明，并搭配房东预先录制好的语音；随后即刻发布数字欢迎视频，在客人办理入住之前，便能用他们各自的语言向其致以问候。"
           },
           {
-            "id": "hospitality-tourism",
-            "label": "Hospitality & Tourism",
-            "description": "Hotel virtual tours and narrated travel itineraries for agencies."
+            "id": "酒店与旅游",
+            "label": "酒店与旅游",
+            "description": "试想一下：只需上传酒店照片和行程亮点，并调用品牌预设的讲解员语音与虚拟形象，即可瞬间生成支持 70 多种语言的虚拟导览和语音解说旅行指南——全程无需派遣摄制组前往各个酒店实地拍摄。"
           },
           {
-            "id": "museum-gallery-guides",
-            "label": "Museum & Gallery Guides",
-            "description": "Multi-language audio-visual \"tours\" for exhibitions that can be updated JIT as exhibits change."
+            "id": "博物馆与画廊指南",
+            "label": "博物馆与画廊指南",
+            "description": "试想一下：随着展陈内容的更迭，只需上传展品照片和策展人笔记，即可即时更新涵盖 70 多种语言的语音导览——无需在展览轮换时重新拍摄。"
           }
         ]
       },
       {
-        "id": "knowledge",
-        "title": "Knowledge, Training & Education",
+        "id": "知识",
+        "title": "知识、培训与教育",
         "examples": [
           {
-            "id": "k12-higher-ed",
-            "label": "K-12 & Higher Ed",
-            "description": "30-minute curriculum modules that can be instantly localized for ESL students or global campuses."
+            "id": "K-12与高等教育",
+            "label": "K-12 与高等教育",
+            "description": "试想一下：只需上传课程资料，并结合讲师预存的语音与形象素材，即可瞬间生成完整的课程模块，让您的 ESL 及全球校区的学生能够以 70 多种语言观看学习。"
           },
           {
-            "id": "corporate-ld",
-            "label": "Corporate L&D",
-            "description": "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices."
+            "id": "企业身份",
+            "label": "企业学习与发展",
+            "description": "试想一下：上传合规培训脚本，并结合培训师预先录制的语音与虚拟形象，即可在所有办公地点即刻推行标准统一的入职与安全培训——且支持 70 多种语言的本地化版本。"
           },
           {
-            "id": "software-saas-tutorials",
-            "label": "Software SaaS Tutorials",
-            "description": "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion."
+            "id": "软件与 SaaS 教程",
+            "label": "软件与 SaaS 教程",
+            "description": "试想一下：上传 UI 截图作为参考画面，搭配产品专家的预录语音，即可瞬间生成演示视频，生动呈现每一次点击操作——而且 UI 一经发布，视频便能同步更新。"
           },
           {
-            "id": "niche-skill-tutoring",
-            "label": "Niche Skill Tutoring",
-            "description": "Professional \"How-To\" series for cooking, DIY, or technical certifications."
+            "id": "小众技能辅导",
+            "label": "小众技能辅导",
+            "description": "试想一下：只需上传步骤照片，并结合讲师预存的语音与角色形象，即可瞬间发布涵盖烹饪、DIY 或考证备考等内容的专业教程系列，且支持 70 多种语言。"
           },
           {
-            "id": "medical-patient-education",
-            "label": "Medical/Patient Education",
-            "description": "Narrated explanations of surgical procedures or medication management for hospitals and clinics."
+            "id": "医患教育",
+            "label": "医学/患者教育",
+            "description": "试想一下：上传医疗操作示意图，并结合经临床医生确认的预录语音，随即生成清晰易懂的患者宣教视频，且支持 70 多种语言，方便患者家属理解。"
           },
           {
-            "id": "video-memoirs",
-            "label": "Video Memoirs",
-            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+            "id": "视频回忆录",
+            "label": "视频回忆录",
+            "description": "试想一下：上传家庭照片、访谈音频和场景笔记，并结合预存的旁白配音，即可即时生成分章节的回忆录视频——而且在最终渲染前，您还可以先确认分镜脚本。"
           }
         ]
       },
       {
-        "id": "jit",
-        "title": "JIT Media & Information",
+        "id": "JIT（准时制生产）",
+        "title": "JIT 传媒与信息",
         "examples": [
           {
-            "id": "hyper-local-news",
-            "label": "Hyper-Local News",
-            "description": "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive."
+            "id": "超本地新闻",
+            "label": "超本地新闻",
+            "description": "试想一下：上传当天的照片和资讯，并结合主播预先录制好的声音，随即发布一份每日社区新闻简报——既无需摄制团队，也不必担心错过截止时间。"
           },
           {
-            "id": "financial-market-recaps",
-            "label": "Financial & Market Recaps",
-            "description": "Turning daily stock market or crypto data into 3-minute narrated visual digests."
+            "id": "金融市场回顾",
+            "label": "金融与市场回顾",
+            "description": "试想一下：每天清晨上传市场数据、图表快照以及分析师预先录制好的语音，随即将其转化为一份图文并茂且配有解说的市场简报——确保在开盘前准备就绪。"
           },
           {
-            "id": "sports-commentary",
-            "label": "Sports Commentary",
-            "description": "Automated \"recap\" videos using game stats and static photography turned into F2V action."
+            "id": "体育评论",
+            "label": "体育评论",
+            "description": "试想一下：上传比赛数据和静态照片，并结合解说员预先录制的声音，随即生成包含动态画面演示的赛事回顾视频——在球迷们意犹未尽、热议不断之时，便能将其发布。"
           },
           {
-            "id": "true-crime-historical-docs",
-            "label": "True Crime & Historical Docs",
-            "description": "Using the Reference Library to keep historical figures consistent across a multi-part documentary series."
+            "id": "真实犯罪历史纪录片",
+            "label": "真实犯罪与历史纪录片",
+            "description": "试想一下，只需将历史人物一次性锁定在您的 Reference Library 中，便能即刻制作出多集内容，确保每一张面孔和每一个声音在各个系列中始终保持一致。"
           },
           {
-            "id": "weather-emergency-alerts",
-            "label": "Weather & Emergency Alerts",
-            "description": "Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms."
+            "id": "气象紧急预警",
+            "label": "天气与紧急警报",
+            "description": "试想一下：您只需上传一段机构预存的、值得信赖的语音版紧急通告，便能即刻在各大社交平台上以 70 多种语言发布清晰明确的警报——整个过程仅需数分钟，而非数日。"
           }
         ]
       },
       {
-        "id": "b2b",
-        "title": "B2B Marketing & Sales",
+        "id": "B2B",
+        "title": "B2B 营销与销售",
         "examples": [
           {
-            "id": "product-explainer-videos",
-            "label": "Product Explainer Videos",
-            "description": "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos."
+            "id": "产品解说视频",
+            "label": "产品解说视频",
+            "description": "试想一下：上传产品图册照片，搭配品牌预设的讲解员配音与虚拟形象，随即生成一系列电影质感的解说视频——而且在渲染之前，您还能先确认分镜脚本。"
           },
           {
-            "id": "case-study-testimonials",
-            "label": "Case Study/Testimonials",
-            "description": "Using client headshots and project photos to create high-end visual success stories."
+            "id": "案例研究与客户评价",
+            "label": "案例研究/客户见证",
+            "description": "试想一下：只需上传客户头像、项目照片和成效数据，并搭配预先录制好的旁白，就能即刻生成制作精良的视觉化案例研究——而且完全无需进行实地拍摄。"
           },
           {
-            "id": "recruitment-branding",
-            "label": "Recruitment & Branding",
-            "description": "Giving candidates a narrated \"day in the life\" tour of the office and culture."
+            "id": "招聘品牌建设",
+            "label": "招聘与品牌建设",
+            "description": "试想一下：只需上传办公室照片和企业文化亮点，并结合招聘人员预先录制的语音与虚拟形象，就能即刻为候选人呈现一场带有解说的“职场生活一日游”——而且支持 70 多种语言，完美适配全球招聘需求。"
           },
           {
-            "id": "conference-event-promos",
-            "label": "Conference & Event Promos",
-            "description": "Automated \"Speaker Bio\" videos and \"What to Expect\" guides for large-scale events."
+            "id": "会议与活动推广",
+            "label": "会议与活动推广",
+            "description": "试想一下：只需上传演讲者简介、会议详情、场地照片以及活动主持人的预存语音，系统便能即刻生成演讲者介绍和活动指南——而且每当议程变动时，这些内容都会自动更新。"
           }
         ]
       },
       {
-        "id": "public",
-        "title": "Public Sector & Advocacy",
+        "id": "公共",
+        "title": "公共部门与倡导工作",
         "examples": [
           {
-            "id": "ngo-impact-reports",
-            "label": "NGO Impact Reports",
-            "description": "Turning data and field photography into emotive, narrated videos for donors."
+            "id": "非政府组织影响力报告",
+            "label": "非政府组织影响力报告",
+            "description": "试想一下：上传实地拍摄的照片和项目成效数据，并结合机构预存的旁白配音，瞬间将捐赠人报告转化为充满情感的解说视频——这不仅是简单的幻灯片展示，更是您机构使命的生动表达。"
           },
           {
-            "id": "public-health-announcements",
-            "label": "Public Health Announcements",
-            "description": "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity."
+            "id": "公共卫生公告",
+            "label": "公共卫生公告",
+            "description": "试想一下：您上传了经核准的健康资讯，并使用部门预存的、值得信赖的语音进行播报；随后，信息能以 70 多种语言瞬间触达各个社区——既保持了同样清晰的表达与紧迫的语调，又实现了零翻译延迟。"
           },
           {
-            "id": "legal-insurance-explainers",
-            "label": "Legal & Insurance Explainers",
-            "description": "Helping clients understand complex contracts or claim processes through narrated visual breakdowns."
+            "id": "法律与保险解读",
+            "label": "法律与保险知识解析",
+            "description": "试想一下：上传合同摘要和流程图，并结合顾问预先录制的声音，随即生成客户真正看得懂的直观解析——这一切都在客户签署文件或提交理赔申请之前完成。"
           },
           {
-            "id": "religious-spiritual-teachings",
-            "label": "Religious & Spiritual Teachings",
-            "description": "Converting sermons or texts into a consistent, narrated daily video series for global congregations."
+            "id": "宗教与灵性教导",
+            "label": "宗教与灵性教导",
+            "description": "试想一下：上传讲道笔记或神圣经文，同时结合导师预先录制的声音与形象，随即面向全球会众发布风格统一的系列日常视频——而且涵盖70多种语言。"
           }
         ]
       }
     ]
   },
   "institutionalRoi": {
-    "badge": "For in-house teams & institutions",
-    "title": "Replace vendor shoots with predictable in-house production",
-    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
+    "badge": "面向内部团队与机构",
+    "title": "以可控的内部制作取代供应商拍摄",
+    "subtitle": "由 1 至 5 人组成的传播、学习与发展（L&D）及市场营销团队，无需支付代理机构长期服务费或经历无休止的剪辑周期，即可在当周内交付视频。",
     "comparisons": [
       {
-        "label": "Traditional vendor shoot + edit",
-        "cost": "$5,000–$15,000",
-        "timeline": "4–8 weeks"
+        "label": "传统供应商拍摄与剪辑",
+        "cost": "5,000美元–15,000美元",
+        "timeline": "4–8 周"
       },
       {
-        "label": "SceneFlow in-house workflow",
-        "cost": "$50–$500 in credits",
-        "timeline": "Same week"
+        "label": "SceneFlow 内部工作流程",
+        "cost": "50至500美元的抵扣额度",
+        "timeline": "同一周"
       }
     ],
     "bullets": [
-      "Brand-safe templates and approval before final render",
-      "Budget caps with visible credit spend per project",
-      "No crew days, no edit back-and-forth on every revision"
+      "符合品牌规范的模板，以及最终渲染前的审批流程",
+      "预算上限，并可查看各项目的额度消耗情况",
+      "无需安排拍摄档期，也不必在每次修改时反复沟通。"
     ],
-    "ctaPrimary": "Book a team walkthrough",
-    "ctaSecondary": "See pricing",
-    "typicalCost": "Typical cost",
-    "timeline": "Timeline"
+    "ctaPrimary": "预约团队演示",
+    "ctaSecondary": "查看价格",
+    "typicalCost": "典型成本",
+    "timeline": "时间表"
   },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Studio feature deep dive",
-    "close": "Close",
-    "viewDetails": "View Details",
+    "badge": "导览游",
+    "title": "平台导览",
+    "subtitle": "SceneFlow AI Studio 工作流程全指南：涵盖从协作审阅到最终影视级输出的全过程。",
+    "subheading": "探索平台——从基础功能入手",
+    "chapterHint": "今日必知的四件事。如需了解详情，请展开各章节。",
+    "expandChapter": "节目特色",
+    "collapseChapter": "隐藏功能",
+    "underTheHoodLabel": "在引擎盖下；内部机制；幕后",
+    "chapters": [
+      {
+        "id": "必需品",
+        "label": "从这里开始——首日即可获得的内容"
+      },
+      {
+        "id": "质量",
+        "label": "确保能引起受众共鸣"
+      },
+      {
+        "id": "生产",
+        "label": "从获批伴奏到成品母带"
+      },
+      {
+        "id": "先进的；高级的",
+        "label": "适用于需要计费与治理功能的团队"
+      }
+    ],
+    "close": "关闭",
+    "viewDetails": "查看详情",
     "beatFirst": {
-      "id": 15,
-      "title": "Beat-First Video Pipeline",
-      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "title": "以节拍为先的视频制作流程",
+      "description": "在进入 F2V 阶段前先确认分镜节点与 Beat Frames，从而减少因“幻觉”或视觉漂移导致的盲目重生成。建立从审阅到最终成片的规范化流程。",
       "keyFeatures": [
-        "Express storyboard for review — share beats before heavy render",
-        "Beat Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "Express storyboard 待审阅 —— 在进行耗时的渲染之前分享节拍（beat）",
+        "Beat Frames 锁的构成 — Reference Library 连续性",
+        "逐拍 F2V —— 基于已确认画面生成视频",
+        "混频器时序与数据流 —— 导出至 Final Cut 组件"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
-      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+      "screenshotSlot": "插入截图：视频生成前的 Beat Frames 及分镜脚本审批",
+      "videoSlot": "插入 00:30 的片段：确认节拍、锁定帧，随后生成 F2V 片段。"
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "title": "受众评估与分析",
+      "description": "面向利益相关者的私密共享链接——支持人工评分、结构化反馈，以及在观看者同意前提下提供的可选互动分析数据。用于 Premiere 发布前的阶段，以及制作阶段的分镜预览。",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "私密评审会话 — 为利益相关者提供安全共享链接",
+        "结构化受众反馈——评分与开放式项目",
+        "可选的互动分析功能——在采集数据前须征得观众同意",
+        "基于真实数据进行迭代——根据评审人员的见解优化 Blueprint 和脚本。"
       ],
-      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotSlot": "插入截图：Screening Room 分析与审阅者反馈面板",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      "videoSlot": "插入 00:30 的片段：主持回顾会议并收集互动数据"
+    },
+    "ui": {
+      "screenshot": "截图",
+      "video": "视频",
+      "featureVideo": "精选视频",
+      "keyFeatures": "主要特点",
+      "openScreenshot": "打开截图",
+      "openFeatureVideo": "打开专题视频",
+      "expandImage": "放大图像",
+      "closePreview": "关闭预览"
+    },
+    "items": [
+      {
+        "id": "1",
+        "title": "直观的用户体验 + 创作者的完全掌控权",
+        "description": "利用引导式自动化快速起步，随后对生成的每一项内容进行编辑，让团队既能保持创作主导权，又不牺牲效率。",
+        "keyFeatures": [
+          "引导式 Studio 工作流——从构思到导出的全流程一站式体验",
+          "直接在原位编辑 AI 生成的每一个情节节点、角色和台词。",
+          "创意方案变体——针对创意方向的并排对比",
+          "Blueprint 协作 —— 分享链接、分段音频以及结构化的审阅者反馈"
+        ],
+        "screenshotSlot": "插入截图：包含可编辑生成部分的 Blueprint 编辑器",
+        "videoSlot": "插入 30 秒片段：从概念到可编辑产出的 UX 流程"
+      },
+      {
+        "id": "2",
+        "title": "信贷预算与成本控制",
+        "description": "实时追踪额度使用情况，并在执行高成本生成任务前设置防护机制。",
+        "keyFeatures": [
+          "实时额度使用情况——按项目和操作划分",
+          "生产环境护栏——在执行高成本生成任务之前",
+          "透明费率表——涵盖 TTS、视频及智能服务",
+          "预算透明度——面向团队与独立创作者"
+        ],
+        "screenshotSlot": "插入截图：额度使用面板和 BYOK 设置",
+        "videoSlot": "插入 00:30 的片段：预算仪表板与关键配置",
+        "underTheHood": {
+          "title": "在引擎盖下；内部机制；幕后",
+          "body": "对于已持有云服务合同的生产团队：",
+          "bullets": [
+            "Vertex AI BYOK — 企业计费与治理",
+            "信用计算器中的服务商切换开关",
+            "与您的密钥并列展示透明的平台费率表"
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "title": "无论何种创意，统一生产流程",
+        "description": "利用一套可靠的流程，制作培训内容、播客、新闻、房产销售视频及电影级内容。",
+        "keyFeatures": [
+          "统一制作流程——涵盖播客、新闻、培训、房地产及影视级格式",
+          "项目模板 —— Studio 可适应您的源素材",
+          "相同的 Blueprint → 剧本 → 制作流程 —— 无论何种类型",
+          "无需切换工具——从构思到交付"
+        ],
+        "screenshotSlot": "插入截图：采用分屏或网格视图，展示播客、新闻、房地产和电影风格模板汇入同一个统一的 SceneFlow 流水线界面。",
+        "videoSlot": "插入 00:30 的片段：“从任意素材开始……”点击“新建项目” -> “播客”（界面随音频内容自动调整），随后展示分屏画面，呈现新闻与影视项目汇入 Blueprint 编辑器的过程。"
+      },
+      {
+        "id": "4",
+        "title": "具备精准编辑控制功能的智能自动化",
+        "description": "SceneFlow 平台利用智能技术自动生成专业基准（包括系列、蓝图、脚本、制作提示及编辑内容），同时提供智能对话功能，在内置安全防护机制的保障下，赋予您完全的编辑掌控权。",
+        "keyFeatures": [
+          "一站式生成 AI 基础方案——涵盖系列构想、蓝图、脚本及制作提示词",
+          "智能编辑对话框——提供护栏机制，而非盲目重写",
+          "接受、优化或拒绝——每一项建议都由您掌控。",
+          "生产全流程中的“人在回路”"
+        ],
+        "screenshotSlot": "插入截图：显示基线生成及编辑控件的智能对话框",
+        "videoSlot": "插入 30 秒片段：AI 生成基础版本，随后用户进行精确编辑。"
+      },
+      {
+        "id": "5",
+        "title": "为保持连续性而共享 Reference Library",
+        "description": "利用可复用的参考资料，确保各场景和剧集中的角色、服装、配音、场景及道具保持一致。",
+        "keyFeatures": [
+          "可重复使用的配置——角色、服装、配音、场景及道具",
+          "跨场景应用——引用贯穿每一代",
+          "视觉一致性——Imagen 和 Veo 生成内容中的面孔与色调保持一致",
+          "系列级连贯性——专为多集系列作品打造"
+        ],
+        "screenshotSlot": "插入截图：展示角色与道具连贯性的参考资料库",
+        "videoSlot": "插入 00:30 处的片段：跨多个场景应用参考"
+      },
+      {
+        "id": "6",
+        "title": "快速生成引擎",
+        "description": "同步自动生成图像与视频片段。利用 Express Storyboard，您可在数分钟内审阅并分享视听分镜脚本。Express Animatic 可在数分钟内渲染出完整的 Ken Burns 风格场景，而 Express Video 则能将最终视频场景的制作周期从数天缩短至数分钟。",
+        "keyFeatures": [
+          "并发生成——同时生成跨场景的图像与视频",
+          "Express Storyboard —— 分钟级制作可分享的视听预览",
+          "Express Animatics — 基于静态图像的 Ken Burns 动态效果",
+          "Express Video —— 只需数分钟即可生成场景级片段，无需数日"
+        ],
+        "screenshotSlot": "插入截图：包含 Animatic 和视频生成进度的快速生成仪表板",
+        "videoSlot": "插入 30 秒片段：将脚本同步转化为动态分镜，进而生成最终视频的过程。"
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance 编辑器",
+        "description": "确定目标受众，即可获取即时的评分、分析与建议。通过一键修复或“引导式编辑”功能，完美优化您的剧集、Blueprint 及剧本，以实现最佳效果。",
+        "keyFeatures": [
+          "目标受众评分——含类别细分",
+          "针对特定章节的建议——精准优化故事的相应部分",
+          "一键修复与引导式编辑——精准重写，拒绝盲目尝试",
+          "达到生产就绪的临界点——明确何时投入资源进行最终渲染"
+        ],
+        "screenshotSlot": "插入截图：包含受众评分与一键修复功能的 Resonance Editor",
+        "videoSlot": "插入 00:30 的片段：根据受众共鸣评分应用引导式剪辑"
+      },
+      {
+        "id": "8",
+        "title": "自适应翻译（70多种语言）",
+        "description": "大规模进行内容本地化，同时确保叙事意图与时间轴对齐，以实现多语言发布。",
+        "keyFeatures": [
+          "涵盖 70 多种语言——大规模提供旁白、对话及文案内容",
+          "保留叙事意图——含义与时机保持一致",
+          "多语言音轨 —— 场景时间轴",
+          "可直接导出的软件包——按区域设置进行分发"
+        ],
+        "screenshotSlot": "插入截图：多语言时间轴与翻译设置",
+        "videoSlot": "插入 00:30 的片段：将场景即时本地化为多种语言"
+      },
+      {
+        "id": "9",
+        "title": "系列自动化",
+        "description": "只需定义一次世界观，即可生成连贯的多集剧情线。共享的 Reference Library 确保了整季中角色与基调的一致性。",
+        "keyFeatures": [
+          "一次性确立你的世界观——包括角色、基调和整季的故事脉络。",
+          "连贯的剧集大纲——贯穿整季自动生成",
+          "连贯性追踪——确保多集季度的内容衔接一致",
+          "系列与单集同步 —— 接入 Blueprint 演播室与制作系统"
+        ],
+        "screenshotSlot": "插入截图：包含自动生成分集剧情走向的剧集概览",
+        "videoSlot": "插入 30 秒片段：将创意扩展为包含多集的完整一季"
+      },
+      {
+        "id": "10",
+        "title": "Blueprint 自动化",
+        "description": "将创意构思转化为包含故事梗概、关键节点、角色设定及基调的结构化方案。在进行重度渲染之前，请运行 Audience Resonance 并开展协作。",
+        "keyFeatures": [
+          "生成 → 评审 → 迭代 → 启动生产流程",
+          "从构思到架构，仅需数分钟——涵盖故事梗概、关键节点、角色与基调。",
+          "Audience Resonance 生产环境上线前评分，目标分值 80 分以上",
+          "协作者分享链接 —— 整合反馈以指导修订"
+        ],
+        "screenshotSlot": "插入截图：自动生成的包含剧情节点与角色弧光的 Blueprint",
+        "videoSlot": "插入 00:30 的片段：将概念转化为结构化的 Blueprint"
+      },
+      {
+        "id": "11",
+        "title": "生产自动化",
+        "description": "“脚本”与“动作”选项卡引导您完成从基础（Foundation）到分镜（Storyboard）、制作（Production）及最终输出（Final Cut）的全过程。涵盖 Express storyboard、Beat Frames、混音器（Mixer）及 MP4 流——无需切换工具。",
+        "keyFeatures": [
+          "《基地》——剧本、配音、场景音频、定稿剧本",
+          "Express storyboard — 分钟级构图与取景；图库与分享",
+          "Beat Frames 与 Mixer —— 起止帧、导演控制台、渲染 MP4 流",
+          "生产流 —— 审查输出结果，重新渲染过时的节拍，发送至 Final Cut"
+        ],
+        "screenshotSlot": "插入截图：显示脚本、Beat Frames 和混音器的制作仪表板",
+        "videoSlot": "插入 00:30 的片段：Foundation、Express storyboard、Beat Frames 以及流导出"
+      },
+      {
+        "id": "12",
+        "title": "Final Cut 组装",
+        "description": "将完成的制作流拼接成一个主 MP4 文件。按场景选择 Animatic 或视频与语言——无需进行时间轴编辑；创意变更保留在 Production Mixer 中。",
+        "keyFeatures": [
+          "分场景流选择 — Animatic、视频、语言、版本",
+          "组装预设 — 全视频、混合、自定义组合",
+          "无需进行时间轴编辑——创意修改保留在 Production Mixer 中",
+          "一键导出母版 — 适用于 Premiere 的拼接 MP4"
+        ],
+        "screenshotSlot": "插入截图：Final Cut 包含各场景流选择器的组装面板",
+        "videoSlot": "插入 00:30 的片段：选择流、预览组装及导出母版"
+      },
+      {
+        "id": "13",
+        "title": "Premiere 分发",
+        "description": "结合受众分析审阅母片，随后发布至 YouTube（附带本地化元数据），或导出适用于 Shorts、Reels 和 TikTok 的内容包。",
+        "keyFeatures": [
+          "可分享链接 Screening Room — 带有评分及可选互动分析（需观看者同意）功能的 /s/ 链接",
+          "洞察仪表板 —— 评分、生物特征及视觉标签页",
+          "YouTube 助手 —— 缩略图、本地化标题/描述、SceneFlow 号召性用语 (CTA)",
+          "导出合集与竖屏短视频剪辑方案"
+        ],
+        "screenshotSlot": "插入截图：包含洞察分析与发布向导的 Premiere 仪表板",
+        "videoSlot": "插入 30 秒片段：筛选洞察、YouTube 向导及导出包"
+      },
+      {
+        "id": "14",
+        "title": "受众评估与分析",
+        "description": "面向利益相关者的私密共享链接——支持人工评分、结构化反馈，以及在观看者同意前提下提供的可选互动分析数据。用于 Premiere 发布前的阶段，以及制作阶段的分镜预览。",
+        "keyFeatures": [
+          "私密评审会话 — 为利益相关者提供安全共享链接",
+          "结构化受众反馈——评分与开放式项目",
+          "可选的互动分析功能——在采集数据前须征得观众同意",
+          "基于真实数据进行迭代——根据评审人员的见解优化 Blueprint 和脚本。"
+        ],
+        "screenshotSlot": "插入截图：Screening Room 分析与审阅者反馈面板",
+        "videoSlot": "插入 00:30 的片段：主持回顾会议并收集互动数据"
+      }
+    ]
+  },
+  "engineeringTrust": {
+    "badge": "工程与安全",
+    "title": "专为……打造",
+    "titleAccent": "生产工作负载",
+    "subtitle": "对初创企业友好的架构，包含支持安全性、可扩展性及实际生产交付的 Google Cloud 组件。",
+    "pillars": [
+      {
+        "id": "建筑",
+        "title": "企业架构",
+        "description": "基于 Google Cloud 基础设施构建，具备面向生产工作负载与成长型团队的可扩展编排能力。",
+        "highlights": [
+          "用于生成工作流的 Vertex AI",
+          "Imagen 4 与 Veo 3.1 综合",
+          "ElevenLabs TTS 集成",
+          "用于企业计费管控的 BYOK"
+        ]
+      },
+      {
+        "id": "安全",
+        "title": "安全与隐私",
+        "description": "创意资产通过静态数据加密、访问控制以及优先考虑隐私的处理方式得到保护。",
+        "highlights": [
+          "企业级云管控措施",
+          "AES-256 加密",
+          "设计时已考量 GDPR 要求",
+          "请参阅我们的隐私政策，了解数据处理相关信息。"
+        ]
+      },
+      {
+        "id": "规模",
+        "title": "规模与可靠性",
+        "description": "全球云交付能力可支持可靠的渲染与审阅流程，满足业务量增长的需求。",
+        "highlights": [
+          "多区域部署",
+          "CDN 加速分发",
+          "自动故障转移",
+          "实时监控"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "value": "全球",
+        "label": "云交付"
+      },
+      {
+        "value": "图像 4",
+        "label": "图像生成"
+      },
+      {
+        "value": "256位",
+        "label": "加密"
+      },
+      {
+        "value": "全天候（每周7天、每天24小时）",
+        "label": "监测"
+      }
+    ],
+    "vertexSection": {
+      "title": "为什么要搜索 Vertex AI？",
+      "subtitle": "至关重要的技术护城河",
+      "cards": [
+        {
+          "title": "数据隐私",
+          "description": "您的脚本和创意素材不会被用于训练共享模型，从而有助于保护您的知识产权及客户项目成果。",
+          "highlight": "不用于训练共享模型"
+        },
+        {
+          "title": "专为实现可靠吞吐量而打造",
+          "description": "面向生产的基础设施有助于在高需求周期内维持稳定的生成工作流。"
+        },
+        {
+          "title": "感知参考的一致性",
+          "description": "SceneFlow 采用参考感知生成技术，以提升不同场景间角色、地点和道具的一致性。"
+        }
+      ]
+    },
+    "partnership": {
+      "poweredBy": "由 Google Cloud 驱动，结合 Vertex AI、云存储及翻译工具",
+      "footnote": "SceneFlow AI 运行于可扩展的 Google Cloud 基础设施之上，该基础设施专为初创企业的成长需求及大型企业的高标准要求而设计。"
+    },
+    "attribution": "—— SceneFlow 工程团队"
+  },
+  "coreCapabilities": {
+    "audienceResonance": {
+      "badge": "智能层",
+      "title": "Audience Resonance 编辑器",
+      "description": "在投入进行完整渲染之前，先了解您的评分。针对 Audience Resonance 评分 Blueprint 及脚本，实施可操作的改进措施——在进行 Express 流程和视频生成之前，优化每一个节奏点。",
+      "bullets": [
+        "确定您的具体目标受众",
+        "获取实时评分、分析及建议",
+        "一键修复叙事缺陷",
+        "通过引导式编辑优化剧集、Blueprint 和脚本"
+      ],
+      "cta": "分析你的剧本",
+      "howWeScore": {
+        "toggle": "我们的评分方式",
+        "title": "Audience Resonance 的工作原理",
+        "description": "Audience Resonance 将叙事结构分析（涵盖清晰度、节奏和情感曲线）与目标受众契合度评估（基于您在 Blueprint 中定义的受众）相结合，而非依赖虚荣指标或发布后的留存数据。优化建议与具体的脚本片段一一对应，让您能够在进入 Express 流程或生成视频之前解决问题。",
+        "bullets": [
+          "针对您设定的目标受众，对 Blueprint 和脚本进行评分",
+          "针对各个环节的建议——而非“请相信我们”这类黑箱式的数值",
+          "可直接应用的一键修复与引导式编辑——不仅仅是调色",
+          "请在投入大量渲染成本之前运行，而非在发布之后。"
+        ]
+      }
+    },
+    "express": {
+      "badge": "超高速生产",
+      "title": "Sceneflow Express",
+      "description": "同步自动生成分镜脚本、动态分镜（animatics）及视频节奏点。从剧本到可分享的预览仅需数分钟——随后在进行最终 F2V 投入前，先对 Beat Frames 予以确认。",
+      "items": [
+        {
+          "title": "快速故事板",
+          "desc": "审核并分享音频与视频分镜，耗时仅需数分钟，而非数小时。",
+          "time": "分钟与小时"
+        },
+        {
+          "title": "表示 Animatic",
+          "desc": "即时渲染包含高端配音的完整 Ken Burns 风格动态分镜场景。",
+          "time": "分钟与小时"
+        },
+        {
+          "title": "速递视频",
+          "desc": "统筹图像与视频的同步生成，以实现完整场景的交付。",
+          "time": "分钟与天数"
+        }
+      ],
+      "cta": "开始快速渲染"
+    }
+  },
+  "exitIntent": {
+    "title": "等等！别空手而归。",
+    "subtitle": "获取 AI 赋能电影制作的独家抢先体验与实用技巧",
+    "benefits": [
+      "每周 AI 电影制作教程",
+      "抢先体验新功能",
+      "创作者专属折扣"
+    ],
+    "emailPlaceholder": "输入您的电子邮件",
+    "subscribe": "获取抢先体验",
+    "subscribing": "正在订阅……",
+    "or": "或",
+    "startNow": "立即开始创作，仅需 9 美元 →",
+    "privacy": "绝无垃圾邮件。随时可退订。",
+    "successTitle": "你在名单上！",
+    "successSubtitle": "请查收您的收件箱，获取独家电影制作技巧及抢先体验资讯。",
+    "ctaText": "开启探索之旅 — $9",
+    "closePopup": "关闭弹窗"
+  },
+  "pricing": {
+    "badge": "按使用量计费",
+    "title": "为你的创作付费",
+    "subtitle": "一项用于访问平台的基础方案，搭配 AI 生成所需的点数。按需充值，完全自主，杜绝浪费。",
+    "valueAnchor": {
+      "traditionalCost": "2,000美元以上",
+      "traditionalLabel": "传统预演",
+      "vs": "对阵",
+      "sceneFlowCost": "49-149美元",
+      "sceneFlowLabel": "SceneFlow 按月",
+      "saveBadge": "每个项目节省 90% 以上"
+    },
+    "teamCta": {
+      "title": "内部团队还是外部机构？",
+      "description": "为传播、学习与发展（L&D）及市场营销团队预约工作流程演示",
+      "button": "全书导读"
+    },
+    "agencyCta": {
+      "title": "代理公司还是制作公司？",
+      "description": "定制化额度、SLA 及大规模专属支持",
+      "button": "联系销售"
+    },
+    "byok": {
+      "title": "自带密钥",
+      "badge": "专业版与工作室版方案",
+      "description": "已有 Vertex AI 或 ElevenLabs 的 API 密钥？将其用于 SceneFlow AI，即可节省高达 80% 的平台额度费用。",
+      "savingsHighlight": "80% 平台额度",
+      "benefits": [
+        {
+          "title": "80% SceneFlow 额度节省",
+          "description": "仅需为编排与工具支付 20% 的平台费用"
+        },
+        {
+          "title": "利用企业计划",
+          "description": "使用您现有的 Vertex AI 或 ElevenLabs 批量折扣"
+        },
+        {
+          "title": "完全控制",
+          "description": "您的密钥、您的账单、您的成本管理"
+        }
+      ],
+      "supportedProviders": "支持的提供商",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 与 Veo 3.1",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "文本转语音与语音克隆",
+      "savingsLabel": "节省 80%",
+      "onImagesVideo": "针对图像与视频",
+      "onVoiceover": "伴随画外音",
+      "note": "显示的额度节省金额为 SceneFlow 平台节省的费用。您的实际总成本取决于您与各服务提供商约定的个人或企业 API 定价。"
+    },
+    "creditTopUps": {
+      "title": "需要更多点数吗？",
+      "subtitle": "随时充值，余额永不过期。",
+      "packs": [
+        {
+          "label": "新手礼包",
+          "description": "非常适合快速复习"
+        },
+        {
+          "label": "场景包",
+          "description": "完成一个短期项目"
+        },
+        {
+          "label": "制作包",
+          "description": "电影中的重头戏"
+        },
+        {
+          "label": "工作室套装",
+          "description": "满负荷生产能力"
+        }
+      ],
+      "creditsUnit": "制作人员名单"
+    },
+    "calculator": {
+      "sectionTitle": "估算您的项目",
+      "sectionSubtitle": "在做出决定前，确切了解您需要支付的费用。",
+      "title": "项目预算计算器",
+      "subtitle": "开始前估算所需点数",
+      "customize": "自定义参数",
+      "imagesLabel": "待生成的图像",
+      "videoClipsLabel": "视频片段",
+      "voiceoverLabel": "旁白（分钟）",
+      "byokTitle": "自带密钥 (BYOK)",
+      "byokBadge": "专业版与工作室版",
+      "byokDescription": "使用您自己的 API 密钥，最高可节省 80% 的 SceneFlow 额度费用。您将直接按 AI 服务商的费率进行支付。",
+      "vertexToggle": "Vertex AI（图像与视频）",
+      "elevenLabsToggle": "ElevenLabs （旁白）",
+      "imageGeneration": "图像生成",
+      "videoGeneration": "视频生成",
+      "voiceover": "旁白",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "总估算",
+      "withTopUps": "包含充值",
+      "creditSavings": "SceneFlow 学分结余",
+      "savePercent": "购买 SceneFlow 积分可节省 {percent}%",
+      "transparency": "完全透明：您在工作时可实时查看额度使用情况。无需担心意外情况——您可以随时调整项目范围。",
+      "transparencyHighlight": "完全透明：",
+      "byokDisclaimer": "BYOK 注意：显示的额度节省金额仅反映 SceneFlow 平台额度消耗的减少。您的实际成本取决于您的 Vertex AI 和 ElevenLabs 定价方案。企业级方案或高用量 API 方案可能会提供额外的节省优惠。",
+      "byokDisclaimerHighlight": "BYOK 注：",
+      "presets": [
+        {
+          "id": "商业的；广告",
+          "name": "30秒广告"
+        },
+        {
+          "id": "短",
+          "name": "2分钟短片"
+        },
+        {
+          "id": "一集；插曲；片段",
+          "name": "10分钟剧集"
+        },
+        {
+          "id": "功能",
+          "name": "90分钟长片"
+        }
+      ],
+      "minSuffix": "分钟"
+    },
+    "tierGrid": {
+      "productionTestFlight": "生产试飞",
+      "getStarted": "开始使用",
+      "startTestFlight": "开始试飞",
+      "loading": "正在加载……",
+      "mostPopular": "最受欢迎",
+      "creditsPerMonth": "每月点数",
+      "storage": "存储",
+      "perMonth": "/月"
+    },
+    "trust": {
+      "cancelAnytime": "随时取消",
+      "moneyBack": "14天退款保证",
+      "creditsNeverExpire": "点数永不过期（Explorer 套餐）"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "description": "一次性购买以进行试用",
+        "features": [
+          "一次性购买",
+          "750 点数（永久有效）",
+          "5 GB 存储空间（30 天）",
+          "平台全面访问权限",
+          "MP4 导出（任意分辨率）",
+          "AI 配音（70 多种语言）"
+        ]
+      },
+      "subscriptions": [
+        {
+          "id": "开胃菜；起动器；（赛跑的）发令员",
+          "name": "开胃菜",
+          "description": "面向个人创作者",
+          "features": [
+            "平台全面访问权限",
+            "每月包含 4,500 点额度",
+            "25 GB 活动存储空间",
+            "MP4 导出（任意分辨率）",
+            "AI 配音（70 多种语言）",
+            "电子邮件支持"
+          ]
+        },
+        {
+          "id": "专业人士；赞成；优势",
+          "name": "专业版",
+          "description": "面向专业创作者",
+          "features": [
+            "包含 Starter 版本的所有内容，以及：",
+            "每月包含 15,000 点额度",
+            "100 GB 活动存储空间",
+            "Veo 3.1 高画质 (4K) 访问权限",
+            "角色一致性引擎",
+            "语音克隆",
+            "BYOK（自带密钥）",
+            "3个团队席位",
+            "优先支持"
+          ]
+        },
+        {
+          "id": "工作室",
+          "name": "工作室",
+          "description": "面向团队与代理机构",
+          "features": [
+            "包含 Pro 版的所有功能，外加：",
+            "每月包含 75,000 点额度",
+            "500 GB 活动存储空间",
+            "Veo 3.1 4K 优先队列",
+            "无限角色一致性",
+            "白标出口",
+            "API 访问",
+            "10个团队席位",
+            "专属客户经理",
+            "可应要求提供企业级 SLA"
+          ]
+        }
+      ]
     }
   },
   "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
+    "badge": "有问题吗？",
+    "title": "常见问题",
+    "subtitle": "关于 SceneFlow AI，您需要了解的一切",
     "items": [
       {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+        "question": "SceneFlow 工作流程是如何从创意构思推进到可发布视频的？",
+        "answer": "SceneFlow 采用结构化工作流程：系列（可选）→ Blueprint → 制作 → Final Cut → Premiere。在 Blueprint 阶段，利用 Audience Resonance 确定故事结构与目标受众。制作阶段会生成剧本、分镜、节奏视频（beat video）以及渲染后的场景流。Final Cut 负责将选定的片段流整合为单一的主 MP4 文件——它并非传统的时间轴编辑器。Premiere 则处理放映、分析洞察、YouTube 发布及导出打包等任务。"
       },
       {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+        "question": "SceneFlow 与 Gemini Studio 或 Google Flow 有何不同？",
+        "answer": "Gemini Studio 和 Google Flow 专注于基于提示词生成片段。SceneFlow 整合了完整的制作工作流程：包含可编辑基准的结构化阶段、确保一致性的 Reference Library 与 Beat Frames、高成本渲染前的 Audience Resonance、自动混音与流合成，以及发布前的 Screening Room 验证——所有这些功能均集成于一个引导式工作室内。"
       },
       {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+        "question": "我可以编辑 AI 生成的脚本、视觉内容和音频吗？",
+        "answer": "是的，所有生成的内容均可编辑。您可以在 Production Mixer 中重写脚本、调整场景走向、重新生成特定片段、微调旁白以及优化时间安排。Final Cut 仅负责拼接已完成的片段流——创意层面的修改需在“制作”（Production）环节进行。"
       },
       {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+        "question": "Target Audience Resonance 目前是如何运作的？",
+        "answer": "Audience Resonance 将叙事结构分析（涵盖清晰度、节奏和情感曲线）与您在 Blueprint 中设定的目标受众画像契合度分析相结合，而非依赖发布后的留存数据。在进行高负载渲染之前，您即可在系列、Blueprint 及剧本审查阶段获得分段层级的优化建议与一键修复功能。"
       },
       {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
+        "question": "我可以制作多语言的产品详情页视频或营销视频吗？",
+        "answer": "是的。您可以利用同步的时间轴工作流程，生成并本地化支持 70 多种语言的视频。团队通常会先制作一个主版本，然后针对全球买家、客户或区域受众制作不同语言的版本。"
       },
       {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "question": "如果 Screening Room 是评审阶段，Premiere 会执行什么操作？",
+        "answer": "Screening Room 是 Premiere 内部的审阅界面，也用于制作阶段的分镜预览。您可以分享 /s/ 链接，收集利益相关者的反馈及可选的互动分析数据（需经观看者同意），查看评分与视觉洞察，随后通过 YouTube 向导发布或导出资源包。"
       },
       {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
+        "question": "我需要具备技术或编辑方面的经验吗？",
+        "answer": "不是。SceneFlow 专为非技术背景的创作者和团队打造。在各个阶段，您只需从引导式输入和可编辑的 AI 基准方案入手，无需涉及复杂的提示词工程或繁琐的工具组合。"
       },
       {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
+        "question": "Explorer 计划是如何运作的？",
+        "answer": "只需 9 美元，您即可通过一次性购买获得 750 点积分，从而体验完整的工作流程。这项服务旨在提供一次实战演练，让您在选择月度订阅方案之前，能够实际操作从创意构思到视频生成的全过程。"
       },
       {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
+        "question": "如何处理抵扣额和 BYOK？",
+        "answer": "平台会对额度（Credits）进行跟踪，以便团队按工作流阶段管理预算。Pro 和 Studio 方案还针对受支持的服务提供商提供“自带密钥”（BYOK）功能，使已与服务提供商签订合约的组织能够进一步掌控成本。"
       },
       {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+        "question": "利用 SceneFlow，我实际上能创作出什么？",
+        "answer": "团队利用 SceneFlow 制作房地产展示、教育内容、融合视觉叙事的播客、新闻解读、品牌推广活动以及电影质感的系列剧集。同一工作流程既支持短篇内容制作，也适用于长篇内容制作。"
       }
     ]
   },
@@ -578,41 +1370,42 @@
     "cta": "以 $9 启动您的 Studio"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
-    "product": "Product",
-    "resources": "Resources",
-    "legal": "Legal",
+    "description": "端到端自动化视频制作——从创意构思到可发布的成片。一体化引导式工作流：Blueprint → 制作 → Final Cut → Premiere。",
+    "product": "产品",
+    "resources": "资源",
+    "legal": "法律",
     "links": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "howItWorks": "How It Works",
-      "faq": "FAQ",
-      "gettingStarted": "Getting Started",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "trustSafety": "Trust & Safety",
-      "refunds": "Refund Policy",
-      "contact": "Contact Us"
+      "features": "功能特点",
+      "pricing": "定价",
+      "howItWorks": "运作原理",
+      "faq": "常见问题",
+      "gettingStarted": "入门指南",
+      "privacy": "隐私政策",
+      "terms": "服务条款",
+      "trustSafety": "信任与安全",
+      "refunds": "退款政策",
+      "contact": "联系我们"
     },
-    "tagline": "Made with ❤️ for creators",
-    "taglineSub": "From Idea to Published Video",
-    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
-    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "tagline": "专为创作者用心打造",
+    "taglineSub": "从创意到视频发布",
+    "securePayments": "由我们的名义商户 Whop 处理的安全支付",
+    "morLine": "安全支付、税务计算及合规事宜由我们的名义商户 Whop 代表 Life Focus, LLC 负责处理。",
+    "copyright": "© 2026 SceneFlow AI。保留所有权利。",
+    "address": "Life Focus, LLC • 德克萨斯州奥斯汀市 N Mo Pac Expy 14205号 570室，邮编 78728-6529 • 联系方式：brian@sfai.studio",
+    "poweredBy": "由 Google Cloud 驱动"
   },
   "floatingCta": {
-    "seePricing": "See Pricing",
-    "tryNine": "Try $9",
-    "tryForNine": "Try for $9",
-    "dismiss": "Dismiss"
+    "seePricing": "查看价格",
+    "tryNine": "试试 9 美元",
+    "tryForNine": "仅需 9 美元即可试用",
+    "dismiss": "关闭"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
-    "pause": "Pause",
-    "play": "Play",
-    "mute": "Mute",
-    "unmute": "Unmute"
+    "pause": "暂停",
+    "play": "播放",
+    "mute": "静音",
+    "unmute": "取消静音",
+    "expandVideo": "展开视频"
   }
 }

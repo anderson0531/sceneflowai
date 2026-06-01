@@ -26,6 +26,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
     const translated = tCategories.raw('categories') as Array<{
       id: string;
       title: string;
+      qualifyingStatement?: string;
       examples: Array<{ id: string; label: string; description: string }>;
     }>;
     return translated.map((cat) => ({
@@ -173,7 +174,18 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                             {cat.title}
                           </h4>
                           <div className="h-0.5 w-12 bg-cyan-500/50 mt-1 rounded-full" />
+                          {cat.qualifyingStatement ? (
+                            <p className="mt-3 text-xs text-slate-400 leading-relaxed border-l-2 border-cyan-500/30 pl-3">
+                              {cat.qualifyingStatement}
+                            </p>
+                          ) : null}
                         </div>
+
+                        {cat.qualifyingStatement ? (
+                          <p className="mb-4 text-xs text-slate-400 leading-relaxed border-l-2 border-cyan-500/30 pl-3 md:hidden">
+                            {cat.qualifyingStatement}
+                          </p>
+                        ) : null}
 
                         <div
                           ref={videoPanelRef}

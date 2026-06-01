@@ -1,618 +1,1411 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
-    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
+    "title": "SceneFlow AI - יצירת סרטונים מבוססת בינה מלאכותית",
+    "description": "הפכו את הרעיונות שלכם לסרטונים מקצועיים באמצעות אוטומציה של תהליכי עבודה המבוססת על בינה מלאכותית."
   },
   "nav": {
-    "workflow": "The Workflow",
-    "platformWalkthrough": "Platform Walkthrough",
-    "plansPricing": "Plans & Pricing",
-    "more": "More",
-    "useCases": "Use Cases",
+    "workflow": "תהליך העבודה",
+    "platformWalkthrough": "סקירה מודרכת של הפלטפורמה",
+    "plansPricing": "תוכניות ומחירים",
+    "more": "עוד",
+    "useCases": "מקרי שימוש",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform & Trust",
-    "faq": "FAQ",
-    "signIn": "Sign In",
-    "startProject": "Start a Project",
-    "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "platformTrust": "פלטפורמה ואמון",
+    "faq": "שאלות נפוצות",
+    "signIn": "התחבר",
+    "startProject": "התחל פרויקט",
+    "dashboard": "לוח מחוונים",
+    "adminPanel": "לוח ניהול",
+    "signOut": "התנתק",
+    "goToDashboard": "עבור ללוח המחוונים",
+    "userFallback": "משתמש",
+    "searchLanguages": "חפש שפות...",
+    "noLanguagesFound": "לא נמצאו שפות"
   },
   "floatingNav": {
-    "compare": "Compare",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "platformWalkthrough": "Platform Walkthrough",
-    "platform": "Platform",
-    "pricing": "Pricing",
-    "faq": "FAQ"
+    "compare": "השווה",
+    "howItWorks": "איך זה עובד",
+    "useCases": "מקרי שימוש",
+    "platformWalkthrough": "סקירה מודרכת של הפלטפורמה",
+    "platform": "פלטפורמה",
+    "pricing": "תמחור",
+    "faq": "שאלות נפוצות"
   },
   "hero": {
-    "headline": "Make professional video without a production team or a dozen apps.",
-    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.",
-    "ctaSecondary": "Watch the 'What's Possible'",
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "headline": "תפסיק ללהטט בין חמש לשוניות AI. סטודיו אחד לוקח אותך משלב הרעיון ועד לסרטון מוכן לפרסום.",
+    "subheadline": "סטודיו מונחה אחד שלוקח אותך מהרעיון ועד לתוצר הסופי המוכן לפרסום. צפה בסטוריבורד (לוח התסריט החזותי) לפני התשלום על הסרטון הסופי — אשר את המראה והסגנון במקום לבזבז קרדיטים על ניסיונות חוזרים ונשנים של ניחוש ובדיקה. SceneFlow מבצעת אוטומציה למשימות הטכניות — כתיבת תסריט, יצירת סטוריבורד, קריינות והרכבת הסרטון — בעודך שומר על שליטה מלאה בכל שלב ופרט.",
+    "audienceMicroLine": "נבנה עבור יוצרים שרוצים תוצאות, ועבור צוותים שרוצים לראות איך זה עובד.",
+    "ctaSecondary": "צפו ב\"מה אפשרי\"",
+    "ctaToolStack": "גלו כיצד זה מחליף את מערך הכלים שלכם",
+    "languagePrompt": "שמעו את הגיבור בשפה שלכם – אותו תהליך, שווקים חדשים",
+    "multilangHint": "דיבוב ראשי ב-7 שפות — תהליך העבודה המלא תומך ביותר מ-70 שפות בשלב הייצור.",
+    "playWithNarration": "הפעל עם קריינות",
+    "tapToHear": "הקש כדי לשמוע",
+    "fullscreen": "מסך מלא",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
-        "nativeLabel": "English"
+        "label": "אנגלית",
+        "nativeLabel": "אנגלית"
       },
       "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
+        "label": "ספרדית",
+        "nativeLabel": "ספרדית"
       },
       "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
+        "label": "פורטוגזית",
+        "nativeLabel": "פורטוגזית"
       },
       "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
+        "label": "הינדית",
+        "nativeLabel": "הינדית"
       },
       "zh": {
-        "label": "Chinese",
-        "nativeLabel": "中文"
+        "label": "סינית",
+        "nativeLabel": "סינית"
       },
       "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
+        "label": "ערבית",
+        "nativeLabel": "ערבית"
       },
       "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
+        "label": "תאילנדי",
+        "nativeLabel": "תאילנד"
       }
     },
-    "soon": "Soon"
+    "soon": "בקרוב"
   },
   "valueProp": {
     "pills": [
       {
-        "label": "One Studio",
-        "detail": "Concept to publish in one place"
+        "label": "וואן סטודיו",
+        "detail": "קונספט לפרסום במקום אחד"
       },
       {
-        "label": "Approve Before Final Video",
-        "detail": "Review storyboard beats before you render"
+        "label": "אישור לפני הסרטון הסופי",
+        "detail": "עבור על שלבי הסטוריבורד לפני הרינדור"
       },
       {
-        "label": "Test Your Story First",
-        "detail": "Know what lands before heavy spend"
+        "label": "בחן את הסיפור שלך תחילה",
+        "detail": "דע מה עובד לפני שאתה משקיע סכומים גדולים."
       },
       {
-        "label": "Publish-Ready Output",
-        "detail": "Master MP4 + distribution bundles"
+        "label": "תוצר מוכן לפרסום",
+        "detail": "חבילות קובץ מאסטר MP4 והפצה"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Who are you? Pick your path",
-    "seeExamples": "See examples",
-    "examplesFor": "Examples for {label}:",
-    "andMore": ", and more.",
+    "prompt": "מי אתה? בחר את הדרך שלך.",
+    "seeExamples": "ראו דוגמאות",
+    "examplesFor": "דוגמאות עבור {label}:",
+    "andMore": ", ועוד.",
+    "modes": {
+      "automate": {
+        "label": "הפוך את זה לאוטומטי",
+        "description": "תהליך עבודה מונחה – אישור סטוריבורדים, אספקה מהירה יותר"
+      },
+      "engine": {
+        "label": "הראה לי את המנוע",
+        "description": "ארכיטקטורה, BYOK ועומק הרציף"
+      }
+    },
     "paths": [
       {
-        "id": "creator",
-        "label": "Creator",
-        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "id": "יוצר",
+        "label": "יוצר",
+        "outcome": "עמדו בלוחות הזמנים – הפסיקו לבנות מחדש בכל כלי",
         "useCases": [
-          "YouTube & episodic series",
-          "Video podcasts & show clips",
-          "Hyper-local & JIT news",
-          "Documentaries & docuseries",
-          "How-to & skill channels",
-          "Sports recaps & commentary"
+          "YouTube וסדרות",
+          "פודקאסטים בווידאו וקטעים מתוכניות",
+          "חדשות היפר-מקומיות וחדשות בזמן אמת (JIT)",
+          "סרטים וסדרות תיעודיים",
+          "ערוצי \"איך לעשות\" ומיומנויות",
+          "סיכומי ספורט ופרשנות"
         ]
       },
       {
-        "id": "team",
-        "label": "In-house team",
-        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "id": "צוות",
+        "label": "צוות פנימי",
+        "outcome": "החליפו תהליכי עבודה איטיים מול ספקים – ושמרו על שליטה במותג ובתקציב",
         "useCases": [
-          "Corporate L&D & compliance",
-          "Internal comms & town halls",
-          "Product explainers for sales",
-          "HR recruitment & culture",
-          "K-12 / higher-ed lessons",
-          "Public health & safety updates"
+          "למידה ופיתוח ארגוניים וציות",
+          "תקשורת פנים-ארגונית ומפגשי עובדים",
+          "סרטוני הסבר על מוצרים למטרות מכירה",
+          "גיוס ותרבות ארגונית",
+          "שיעורים לחינוך היסודי והתיכוני (K-12) ולהשכלה הגבוהה",
+          "עדכונים בנושאי בריאות ובטיחות הציבור"
         ]
       },
       {
-        "id": "productionShop",
-        "label": "Production shop",
-        "outcome": "Productize a niche with repeatable intake → delivery",
+        "id": "בית מלאכה לייצור",
+        "label": "בית מלאכה לייצור",
+        "outcome": "הפיכת נישה למוצר באמצעות תהליך חוזר ונשנה של קליטה ואספקה",
         "useCases": [
-          "Video memoir packages",
-          "Legacy & tribute videos",
-          "Voice-cloned narration",
-          "White-label studio templates",
-          "Real estate & hospitality tours",
-          "Subscription video services"
+          "חבילות זיכרונות בווידאו",
+          "סרטוני מורשת והוקרה",
+          "קריינות באמצעות שכפול קול",
+          "תבניות סטודיו במיתוג עצמי (White-label)",
+          "סיורי נדל\"ן ואירוח",
+          "שירותי וידאו במתכונת מנוי"
         ]
       },
       {
-        "id": "agency",
-        "label": "Agency",
-        "outcome": "Faster pitches and scalable client delivery",
+        "id": "סוכנות",
+        "label": "סוכנות",
+        "outcome": "הצגת הצעות מהירה יותר ואספקת שירות ללקוחות בהיקף גדל (Scalable)",
         "useCases": [
-          "Client pitch pre-viz",
-          "Product launch campaigns",
-          "Case studies & testimonials",
-          "Event & conference promos",
-          "Multi-language campaigns",
-          "Property marketing for clients"
+          "הדמיה מקדימה למצגת לקוח",
+          "קמפיינים להשקת מוצרים",
+          "מחקרי מקרה והמלצות",
+          "קידום אירועים וכנסים",
+          "קמפיינים רב-לשוניים",
+          "שיווק נכסים עבור לקוחות"
         ]
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Why SceneFlow vs prompt-and-generate tools",
-    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "title": "מדוע SceneFlow עדיף על פני כלים המבוססים על הנחיה ויצירה (prompt-and-generate)",
+    "subtitle": "Gemini Studio ו-Google Flow מצטיינים בטיפול בקטעי וידאו (clips). SceneFlow מאגד את תהליך העבודה המלא של ההפקה.",
     "rows": [
       {
-        "them": "Prompt + clip generation in isolation",
-        "us": "Structured phases with editable baselines at each step"
+        "them": "יצירת קטע (קליפ) מתוך הנחיה (prompt) באופן מבודד",
+        "us": "שלבים מובנים עם קווי בסיס הניתנים לעריכה בכל שלב"
       },
       {
-        "them": "Manual consistency across sessions",
-        "us": "Reference Library + Beat Frames lock visuals before video"
+        "them": "עקביות ידנית בין מפגשים",
+        "us": "Reference Library + Beat Frames נועלים את הוויזואליה לפני הווידאו"
       },
       {
-        "them": "No audience validation workflow",
-        "us": "Audience Resonance before render; Screening Room before publish"
+        "them": "אין תהליך עבודה לאימות קהל",
+        "us": "Audience Resonance לפני הרינדור; Screening Room לפני הפרסום"
       },
       {
-        "them": "No production pipeline or handoff",
-        "us": "Script → streams → assembly → distribution in one app"
-      },
-      {
-        "them": "Complex model and settings surface",
-        "us": "Guided Studio UX with credits and BYOK guardrails"
+        "them": "אין תהליך ייצור או העברה (handoff)",
+        "us": "תסריט ← זרמים ← הרכבה ← הפצה באפליקציה אחת"
       }
     ],
-    "themHeader": "Typical clip-generation tools",
-    "usHeader": "SceneFlow bundles"
+    "themHeader": "כלים טיפוסיים ליצירת קטעי וידאו",
+    "usHeader": "חבילות SceneFlow"
   },
   "beatFirstPipeline": {
-    "title": "Beat-First Video Pipeline",
-    "subtitle": "Approve before you render — not slot-machine regeneration",
-    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "title": "תהליך הפקת וידאו מבוסס-ביט",
+    "subtitle": "אשר לפני הרינדור — לא יצירה מחדש בסגנון מכונת מזל",
+    "intro": "אין צורך ביצירה בשיטת \"ניסוי וטעייה\". אתם צופים בתצוגה מקדימה ומאשרים את המראה לפני ש-SceneFlow משתמשת בקרדיטים להפקת הסרטון הסופי.",
+    "description": "SceneFlow מסדיר את תהליך האישור החזותי בכל שלב: Express storyboard לצורך סקירה, Beat Frames לקיבוע הקומפוזיציה, ולאחר מכן F2V לכל \"ביט\" (beat). כך אתם משכללים את המראה לפני שבזבזתם קרדיטים על סחיפה (drift) והזיות (hallucinations).",
     "steps": [
-      "Express storyboard — share audio-visual beats for review in minutes",
-      "Beat Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Express storyboard — שתפו ביטים אודיו-ויזואליים לבדיקה תוך דקות",
+      "Beat Frames — נעילת הרכב ההתחלה/סיום עם רציפות Reference Library",
+      "F2V לפי ביט (beat) — יצירת וידאו מפריימים מאושרים, ולא מהנחיות (prompts) עיוורות.",
+      "Production Mixer — תזמון, שמע וייצוא זרם (stream) להרכבה ב-Final Cut"
     ],
-    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+    "footerLine": "פחות סבבי יצירה מחדש של מכונת המזל – יש לאשר את האלמנטים החזותיים לפני ההוצאה הסופית על הווידאו."
+  },
+  "toolStack": {
+    "badge": "נשמע מוכר?",
+    "title": "הדרך הלקויה לעומת הדרך של SceneFlow",
+    "subtitle": "לא אמור להידרש ממך שימוש בחמש לשוניות, העתק-הדבק של תוצרים ועייפות מהזנת הנחיות (prompts) רק כדי להוציא לפועל סרטון אחד.",
+    "brokenWay": {
+      "title": "הדרך השבורה",
+      "tagline": "מפוצל. ידני. מתיש.",
+      "tools": [
+        {
+          "name": "ChatGPT",
+          "category": "טיוטות תסריט"
+        },
+        {
+          "name": "מידג'רני",
+          "category": "תמונות חד-פעמיות"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "ייצוא VO ידני"
+        },
+        {
+          "name": "Premiere",
+          "category": "הרכבה ידנית"
+        }
+      ],
+      "chaosLabel": "חמש לשוניות. ההקשר אבד.",
+      "painPoints": [
+        "העתק-הדבק בין אפליקציות",
+        "עייפות מהנחיות (prompts) ולולאות יצירה מחדש",
+        "ללא בדיקת קהל לפני שמוציאים כסף",
+        "כאוס גרסאות בייצואים"
+      ],
+      "timeLabel": "משך זמן טיפוסי לפרויקט",
+      "timeValue": "2–4 שבועות"
+    },
+    "sceneflowWay": {
+      "title": "הדרך של SceneFlow",
+      "tagline": "סטודיו אחד. מאשרים לפני הרינדור.",
+      "stages": [
+        {
+          "label": "Blueprint",
+          "detail": "תוכנית סיפור מובנית"
+        },
+        {
+          "label": "מקורות",
+          "detail": "דמויות עקביות"
+        },
+        {
+          "label": "הפקה",
+          "detail": "קול + ויזואליה"
+        },
+        {
+          "label": "פרסם",
+          "detail": "קובץ מאסטר MP4 אחד"
+        }
+      ],
+      "syncLabel": "קובץ פרויקט אחד — ללא מעבר מתמיד בין לשוניות",
+      "benefits": [
+        "שלבים מונחים – לא הנדסת פרומפטים",
+        "אישור הסטוריבורד לפני הקרדיטים בווידאו",
+        "Audience Resonance ציון לפני רינדור כבד",
+        "מאסטר מוכן לפרסום מסטודיו אחד"
+      ],
+      "timeLabel": "משך זמן טיפוסי לפרויקט",
+      "timeValue": "2–4 ימים"
+    },
+    "comparisonCaption": "סטודיו אחד מחליף כלי פרומפטים מפוצלים, עריכות ידניות ותהליכי העברה בין פלטפורמות מרובות.",
+    "comparisonImageAlt": "עלויות תקורה בהפקה מסורתית לעומת אולפן אוטומטי SceneFlow — מעבר מהיר יותר משלב הרעיון לסרטון מוכן לפרסום"
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
-    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "title": "מהירות ייצור ללא עלויות תקורה",
+    "subtitle": "החליפו כלי יצירה (prompts) מפוזרים ותהליכי הרכבה ידניים בסטודיו אוטומטי אחד – מהרעיון הראשוני ועד לתוצר הסופי המוכן לפרסום.",
+    "caption": "סטודיו אחד מחליף כלי פרומפטים מפוצלים, עריכות ידניות ותהליכי העברה בין פלטפורמות מרובות.",
+    "imageAlt": "עלויות תקורה בהפקה מסורתית לעומת אולפן אוטומטי SceneFlow — מעבר מהיר יותר משלב הרעיון לסרטון מוכן לפרסום"
   },
   "howItWorks": {
-    "title": "From concept to publish-ready video",
-    "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
-    "tagline": "Every step is expertly automated. Every step gives you full control.",
-    "optionalBadge": "Optional",
-    "optionalSuffix": " (optional)",
-    "readyTitle": "Ready to test the full pipeline?",
-    "explorerCta": "Start with Explorer — $9",
+    "title": "מהרעיון ועד לסרטון מוכן לפרסום",
+    "titleAccent": "צינור עיבוד מונחה אחד",
+    "subtitle": "הפקת סדרה היא בגדר אפשרות בלבד. המסלול העיקרי הוא Blueprint ← הפקה ← Final Cut ← Premiere — וכולל לאורך הדרך שלבים של סטוריבורד, אנימטיק, וידאו וקובץ Master MP4.",
+    "tagline": "כל שלב עובר אוטומציה מקצועית. כל שלב מעניק לך שליטה מלאה.",
+    "optionalBadge": "אופציונלי",
+    "optionalSuffix": " (אופציונלי)",
+    "readyTitle": "מוכנים לבדוק את ה-pipeline המלא?",
+    "explorerCta": "התחילו עם Explorer — $9",
     "phases": [
       {
-        "id": "series",
-        "stepLabel": "Series",
-        "subtitle": "Showrunner Engine",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "id": "סדרה",
+        "stepLabel": "סדרה",
+        "subtitle": "מנוע Showrunner",
+        "description": "הגדר את היקום שלך פעם אחת וצור קווי עלילה מגובשים המשתרעים על פני מספר פרקים. שימוש ב-Reference Library משותף שומר על עקביות הדמויות והטון לאורך העונה כולה.",
         "keySteps": [
-          "Define universe — characters, tone, and season arc",
-          "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "הגדרת היקום – דמויות, טון וקו העלילה העונתי",
+          "יצירה אוטומטית של מתווי פרקים לכל אורך העונה",
+          "סנכרון ל-Blueprint והפקה לכל פרק"
         ],
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
-        ],
-        "optional": true
+          "הגדר את היקום שלך פעם אחת – דמויות, טון וקו העלילה של העונה.",
+          "מתווי פרקים מגובשים – נוצרים אוטומטית לאורך העונה",
+          "מעקב אחר רציפות – סנכרון עונות מרובות-פרקים",
+          "סנכרון בין סדרה לפרק — אל תוך Blueprint Studio and Production"
+        ]
       },
       {
-        "id": "blueprint",
+        "id": "תוכנית",
         "stepLabel": "Blueprint",
-        "subtitle": "Story Development",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "subtitle": "פיתוח סיפור",
+        "description": "הפוך רעיונות ל-Treatments (תקצירי פיתוח) מובנים, הכוללים Logline, נקודות עלילה (beats), דמויות וטון. הרץ את Audience Resonance ובצע עבודה משותפת לפני שלב הרינדור הכבד.",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
-          "Audience Resonance scoring with 80+ target",
-          "Collaborator share links and export (PDF, Doc, PPTX)"
+          "יצירה ← סקירה ← ביצוע סבבים נוספים ← תחילת ייצור",
+          "Audience Resonance השגת ניקוד של 80 ומעלה",
+          "קישורי שיתוף וייצוא עבור משתפים פעולה (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
-        ],
-        "optional": false
+          "יצירה ← סקירה ← ביצוע סבבי שיפור ← התחלת תהליך הייצור",
+          "מרעיון למבנה תוך דקות – לוגליין, נקודות עלילה, דמויות וטון",
+          "Audience Resonance ניקוד עם יעד של 80 ומעלה לפני שלב הייצור",
+          "קישורי שיתוף למשתפי פעולה — סינתזת משוב לכדי תהליך תיקון מונחה"
+        ]
       },
       {
-        "id": "production",
-        "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "id": "הפקה",
+        "stepLabel": "הפקה",
+        "subtitle": "מתסריט לסטרימינג",
+        "description": "הלשוניות Script ו-Action מלוות את התהליך: Foundation ← Storyboard ← Production ← Final Cut. Express storyboard, Beat Frames, Mixer וזרמי MP4 – ללא צורך במעבר בין כלים.",
         "keySteps": [
-          "Lock script, voices, and scene audio",
-          "Express storyboard — gallery and share for review",
-          "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "קיבוע התסריט, הקולות ואודיו הסצנה",
+          "Express storyboard — גלריה ושיתוף לצורך סקירה",
+          "Beat Frames ← מסוף הבמאי ← זרם רינדור",
+          "שלח זרמים שהושלמו ל-Final Cut"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
-        ],
-        "optional": false
+          "Foundation — תסריט, קולות, אודיו של הסצנה, נעילת תסריט",
+          "Express storyboard — כיוון ומסגרות בדקות; גלריה ושיתוף",
+          "Beat Frames ו-Mixer — פריימים להתחלה/סיום, קונסולת בימוי, רינדור זרמי MP4",
+          "זרמי ייצור — סקירת תוצרים, רינדור מחדש של יחידות עיבוד (beats) לא-עדכניות, שליחה ל-Final Cut"
+        ]
       },
       {
-        "id": "final-cut",
+        "id": "גרסה סופית",
         "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "subtitle": "הרכבת זרם",
+        "description": "אחדו את זרמי ההפקה המוגמרים לקובץ MP4 ראשי אחד. בחרו ב-Animatic או הגדירו וידאו ושפה לכל סצנה – ללא עריכה בציר הזמן; שינויים יצירתיים נשארים ב-Production Mixer.",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
+          "בחר זרמים לכל סצנה – שילוב מוגדר מראש או מותאם אישית",
+          "תצוגה מקדימה של התוכנית המלאה לפי סדר התסריט",
+          "ייצוא קובץ MP4 ראשי אחד עבור Premiere"
         ],
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
+          "בחירת זרם לפי סצנה — Animatic, וידאו, שפה, גרסה",
+          "הגדרות הרכבה מראש — כל הווידאו, היברידי, שילוב מותאם אישית",
+          "ללא עריכת ציר זמן — שינויים יצירתיים נשארים ב-Production Mixer",
+          "ייצוא Master בלחיצה אחת — קובץ MP4 מאוחד עבור Premiere"
+        ]
       },
       {
-        "id": "premiere",
+        "id": "הקרנת בכורה",
         "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "subtitle": "מרכז הפצה",
+        "description": "הקרן את גרסת המאסטר שלך בשילוב ניתוח נתוני קהל, לאחר מכן פרסם ב-YouTube עם מטא-דאטה מותאם מקומית, או ייצא חבילות עבור Shorts,‏ Reels ו-TikTok.",
         "keySteps": [
-          "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
+          "צור הקרנה ושתף קישור /s/",
+          "סקירת ציונים, מעורבות ותובנות ויזואליות",
+          "אשף YouTube או חבילת ייצוא"
         ],
         "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "optional": false
+          "ניתן לשיתוף Screening Room — קישורי /s/ הכוללים ניקוד וניתוח נתוני מעורבות אופציונלי (בכפוף להסכמת הצופה)",
+          "לוח מחוונים של תובנות — לשוניות ניקוד, ביומטריה וויזואליה",
+          "אשף YouTube — תמונה ממוזערת, כותרת/תיאור מותאמים מקומית, הנעה לפעולה (CTA) SceneFlow",
+          "חבילות ייצוא ותוכניות לקטעי וידאו אנכיים קצרים"
+        ]
       }
     ]
   },
   "useCases": {
-    "badge": "Production Applications",
-    "title": "Whatever Video You Can Imagine,",
-    "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "badge": "יישומי ייצור",
+    "title": "כל סרטון שתוכלו לדמיין,",
+    "titleAccent": "בנה זאת ב-SceneFlow",
+    "subtitle": "הצגת נכסי נדל\"ן, תכנים לימודיים, פודקאסטים, פורמטים חדשותיים, קמפיינים ממותגים וסיפורים קולנועיים – אולפן אוטומטי אחד, משלב הרעיון ועד לקובץ הסופי המוכן לפרסום.",
+    "qualifyingStatement": "SceneFlow הופכת את תמונות המקור, הקבצים שהועלו והתיאורים שלכם לסרטוני סיור מודרכים – הכוללים קריינות ודמויות לבחירתכם ובשליטתכם. אלו הן מצגות שעברו עיבוד באמצעות בינה מלאכותית: הדמיות ריאליסטיות המבוססות על החומרים שלכם, ולא צילומים חיים במצלמה. יש לעבור על כל תסריט חזותי (storyboard) ולאשרו לפני הפרסום, וכן לסמן את התוצרים בבירור כדי שהקהל ידע במה הוא צופה.",
     "ui": {
-      "useCases": "Use Cases",
-      "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo coming soon",
-      "selectExample": "Select an example to preview its demo"
+      "useCases": "מקרי שימוש",
+      "sectors": "{count} מגזרים",
+      "demoComingSoon": "גרסת הדגמה בקרוב",
+      "selectExample": "בחר דוגמה כדי להציג תצוגה מקדימה של ההדגמה שלה",
+      "targetPersona": "פרסונת יעד",
+      "theChallenge": "האתגר",
+      "sceneFlowSolution": "פתרון SceneFlow",
+      "beforeVsAfter": "לפני לעומת אחרי",
+      "before": "לפני",
+      "after": "אחרי",
+      "theWin": "ה\"ניצחון\"",
+      "frameAnchoredTitle": "רציפות מעוגנת-מסגרת",
+      "frameAnchoredDescription": "SceneFlow הוא הכלי היחיד המאפשר שמירה על רציפות המעוגנת בפריים (Frame-Anchored continuity), ומבטיח שהמוצר או הדמות של הלקוח שלך יישארו זהים בכל מקטע של הסצנה.",
+      "closePreview": "סגור תצוגה מקדימה",
+      "expandVideo": "הגדל את הסרטון",
+      "expandImage": "הגדל תמונה",
+      "orStartExplorer": "התחל עם התוכנית ב-9$ Explorer",
+      "orPrefix": "או"
+    },
+    "personas": {
+      "creator": {
+        "label": "יוצר עצמאי",
+        "title": "יוצר התוכן ביוטיוב",
+        "beforeAfter": {
+          "before": "40 שעות",
+          "after": "25 דקות"
+        },
+        "challenge": {
+          "title": "צוואר הבקבוק של צילומי ה-B-Roll",
+          "description": "יש לך תסריט מצוין, אך רוב הזמן שלך מתבזבז על איתור חומרי גלם, תיאום עריכה ושמירה על עקביות בין הסצנות. עיכוב זה מאט את קצב הפרסום ופוגע ביכולת לשמר את הקהל."
+        },
+        "solution": {
+          "title": "מספר הסיפורים האוטומטי",
+          "description": "הפוך תסריטים לתוצרים ויזואליים מוכנים להפקה במהירות, תוך שמירה על עקביות הדמויות והסגנון – מהסצנה הראשונה ועד לתוצר הסופי המוכן לפרסום.",
+          "features": [
+            "אלמנטים חזותיים התואמים במדויק את שלבי התסריט",
+            "גיבורים עקביים לאורך כל הסצנות",
+            "התרחבות לסדרות פרקים באמצעות ספריית עזרים משותפת"
+          ]
+        },
+        "win": "עברו מהעלאות מזדמנות לקצב ייצור אמין, עם פחות תקורה תפעולית.",
+        "keyPhrases": [
+          "זמן ביצוע מהיר יותר",
+          "דמויות עקביות",
+          "תהליך עבודה מוכן לייצור סדרתי"
+        ]
+      },
+      "team": {
+        "label": "צוות פנימי",
+        "title": "צוות הווידאו הפנימי",
+        "beforeAfter": {
+          "before": "6 שבועות",
+          "after": "באותו שבוע"
+        },
+        "challenge": {
+          "title": "צבר משימות אצל הספק וסטייה מהמותג",
+          "description": "צוותי תקשורת, למידה ופיתוח (L&D) ושיווק ממתינים שבועות לקבלת סרטונים מסוכנויות או מספקים חיצוניים. כל יום צילום מביא עמו מיתוג לא עקבי, חשבוניות בלתי-צפויות ותהליכי אישור המעכבים את הקמפיינים."
+        },
+        "solution": {
+          "title": "ייצור פנימי באותו השבוע",
+          "description": "הקצו צוות להפקת וידאו במסגרת תקציב קרדיטים צפוי מראש – תוך שימוש בתבניות מותג וקבלת אישור לפני הרינדור הסופי, וללא ימי צילום או סבבי עריכה ללא הגבלה.",
+          "features": [
+            "החליפו צילומים חיצוניים בתהליכי עבודה פנימיים מונחים",
+            "תבניות וספריות עזר התואמות למותג",
+            "תצוגה של ניצול קרדיטים ומגבלות תקציב לכל פרויקט",
+            "אשר את הסטוריבורד לפני התשלום עבור הסרטון הסופי."
+          ]
+        },
+        "win": "הוציאו לפועל סרטוני הדרכה, תקשורת וקמפיינים לפי לוחות הזמנים שלכם – ולא בהתאם לרשימת המשימות הממתינות של הספק.",
+        "keyPhrases": [
+          "עלות צפויה",
+          "שליטה במותג",
+          "ביצוע תוך שבוע"
+        ]
+      },
+      "productionShop": {
+        "label": "בית מלאכה לייצור",
+        "title": "בית הייצור המתמחה",
+        "beforeAfter": {
+          "before": "8,000 דולר ליום צילום",
+          "after": "זיכוי בסך 200 דולר"
+        },
+        "challenge": {
+          "title": "פתרונות ייעודיים למגזרים ספציפיים, ללא מערכת הניתנת לשכפול",
+          "description": "לקוחות בתחומי הזיכרונות האישיים (memoirs), שימור המורשת, הנדל\"ן והחינוך זקוקים לזמני ביצוע מהירים – אך כל פרויקט מתחיל מאפס. תהליכי העלאת תכנים, יצירת שיבוטי קול ואווטארים אינם ניתנים להרחבה (סקיילביליות) ללא תהליך עבודה מובנה וסטנדרטי, המגדיר את המעבר משלב קליטת הלקוח ועד לאספקת התוצר הסופי."
+        },
+        "solution": {
+          "title": "הפוך את שירות הווידאו שלך למוצר",
+          "description": "בנו תהליכי עבודה הניתנים לשכפול עבור אולפנים המתמחים בתיעוד זיכרונות ועבור תחומים נישתיים. החל מהעלאת תבניות, שיבוט קול ויצירת אווטארים ועד לאישור הסטוריבורד – בצעו התאמות אישיות לכל לקוח והגדילו את הרווחיות באמצעות הגדלת היקפי הפעילות.",
+          "features": [
+            "תבניות לסיפורי חיים הכוללות העלאת תמונות, שכפול קול ומנחים וירטואליים (אווטארים)",
+            "קליטת הלקוח מקושרת ל-Blueprint ולשלבי אישור הסטוריבורד",
+            "חבילות אולפן במודל White-label עבור סרטוני מורשת, סרטוני הוקרה ותוכן וידאו מבוסס-מנויים",
+            "מרווח על קרדיטים במקום עלויות תקורה לכל יום צילום"
+          ]
+        },
+        "win": "השק שירות של יצירת זיכרונות בווידאו או שירות סטודיו נישתי המבוסס על תהליך עבודה חוזר ונשנה – ולא עוד פרויקט פרילנס חד-פעמי ושוחק.",
+        "keyPhrases": [
+          "תבניות לכתיבת זיכרונות",
+          "זהות קול ואווטאר",
+          "אספקה הניתנת לשחזור"
+        ]
+      },
+      "agency": {
+        "label": "סוכנות",
+        "title": "מוביל אספקת השירות ללקוח",
+        "beforeAfter": {
+          "before": "משלוח תוך 3 שבועות",
+          "after": "משלוח תוך 3 ימים"
+        },
+        "challenge": {
+          "title": "אספקת שירותים ללקוחות בהיקף נרחב",
+          "description": "הזכייה במכרז היא רק חצי מהדרך. עבודה מתמשכת מול לקוחות דורשת זמני ביצוע מהירים, תהליכי אישור ברורים ושמירה על רווחיות בכל תוצר – וכל זאת מבלי לבנות את תהליך ההפקה מחדש בכל פעם."
+        },
+        "solution": {
+          "title": "תפוקה + אישור הלקוח",
+          "description": "עברו משלב הצעת הקונספט (pitch spec) לאספקה שוטפת, תוך שימוש בבקרות לשמירה על עקביות המותג, אישור הלקוח לפני הרינדור הסופי, ועלויות קרדיטים צפויות לכל פרויקט.",
+          "features": [
+            "הדמיה מקדימה מהירה עבור מצגות מכירה ואישור הלקוח",
+            "תבניות לשימוש חוזר עבור פורמטים חוזרים של לקוחות",
+            "שקיפות תקציבית לאורך כל שלבי הביצוע",
+            "אספקה בעלת יכולת גידול ללא תוספת כוח אדם"
+          ]
+        },
+        "win": "בצעו סבבי הצגת הצעות (pitches) ועבודות לקוח חוזרות במהירות רבה יותר, תוך הפחתת סיכוני ההפקה והגדלת הרווחיות.",
+        "keyPhrases": [
+          "אישורי לקוח",
+          "תפוקת אספקה",
+          "צפיפות תקציבית"
+        ]
+      }
+    },
+    "segmentCtas": {
+      "creator": {
+        "label": "התחל את טיסת הניסוי בסביבת הייצור",
+        "subtext": "9$ חד-פעמי • 750 קרדיטים • גישה מלאה לפלטפורמה"
+      },
+      "team": {
+        "label": "תיאום סקירה לצוות",
+        "subtext": "ראו כיצד צוותים פנימיים מחליפים את מחזורי העבודה מול ספקים חיצוניים."
+      },
+      "productionShop": {
+        "label": "גלה תבניות אנכיות",
+        "subtext": "נדל\"ן, חינוך, מסמכים ועוד – גלו אילו שירותים תוכלו להפוך למוצרים"
+      },
+      "agency": {
+        "label": "צפה במחירי הצוות",
+        "subtext": "תוכניות לסוכנויות ולבתי הפקה הפועלים בהיקף נרחב"
+      }
     },
     "categories": [
       {
-        "id": "property",
-        "title": "Property, Spaces & Hospitality",
+        "id": "נכס",
+        "title": "נדל\"ן, חללים ואירוח",
+        "qualifyingStatement": "הסיורים נבנים מתמונות אמיתיות של הנכס ומוצגים כסיור מודרך שעבר עיבוד בינה מלאכותית, תוך שימוש בקול ובדמות הווירטואלית (אוואטר) שלך. זוהי הצגה מציאותית של מבנה הנכס ומאפייניו, אך היא אינה מהווה תחליף לביקור פיזי בנכס. כל הסיורים מסומנים בבירור.",
         "examples": [
           {
-            "id": "residential-real-estate",
-            "label": "Residential Real Estate",
-            "description": "Automated listing tours featuring the agent's cloned voice and avatar identity."
+            "id": "נדל\"ן למגורים",
+            "label": "נדל\"ן למגורים",
+            "description": "תארו לעצמכם שאתם מעלים תמונות של הנכס שלכם, יחד עם הדמות והקול השמורים שלכם. לאחר מכן, אתם יוצרים באופן מיידי סרטון סיור מקצועי בנכס – הכולל את הדמות והקול שלכם – ביותר מ-70 שפות."
           },
           {
-            "id": "commercial-real-estate",
-            "label": "Commercial Real Estate",
-            "description": "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data."
+            "id": "נדל\"ן מסחרי",
+            "label": "נדל\"ן מסחרי",
+            "description": "דמיינו שאתם מעלים תוכניות קומה, הדמיות ונתונים על השכונה, בשילוב עם הקול והאוואטר השמורים של המתווך שלכם. לאחר מכן, אתם יוצרים באופן מיידי סיורים וירטואליים המיועדים להצגה בפני משקיעים – סיורים המפיחים חיים בכל פינה בנכס, ומותאמים מקומית ליותר מ-70 שפות."
           },
           {
-            "id": "short-term-rentals",
-            "label": "Short-Term Rentals",
-            "description": "Automated \"Digital Welcome Books\" that walk guests through house features and local \"best of\" spots."
+            "id": "השכרות לטווח קצר",
+            "label": "השכרות לטווח קצר",
+            "description": "תארו לעצמכם שאתם מעלים תמונות של הבית ומידע על השירותים והמתקנים, בשילוב עם הקלטה קולית של המארח. לאחר מכן, אתם מפרסמים באופן מיידי סרטוני קבלת פנים דיגיטליים המברכים כל אורח בשפתו – עוד לפני ביצוע הצ'ק-אין."
           },
           {
-            "id": "hospitality-tourism",
-            "label": "Hospitality & Tourism",
-            "description": "Hotel virtual tours and narrated travel itineraries for agencies."
+            "id": "אירוח ותיירות",
+            "label": "אירוח ותיירות",
+            "description": "דמיינו שאתם מעלים תמונות של מלון ונקודות שיא במסלול הטיול, ומשלבים אותם עם קול המנחה והדמות הווירטואלית (אוואטר) השמורים של המותג שלכם. לאחר מכן, אתם מפיצים באופן מיידי סיורים וירטואליים ומדריכי טיולים קוליים ביותר מ-70 שפות – וכל זאת ללא צורך בצוות צילום בכל נכס."
           },
           {
-            "id": "museum-gallery-guides",
-            "label": "Museum & Gallery Guides",
-            "description": "Multi-language audio-visual \"tours\" for exhibitions that can be updated JIT as exhibits change."
+            "id": "מדריכי מוזיאונים וגלריות",
+            "label": "מדריכי מוזיאונים וגלריות",
+            "description": "תארו לעצמכם שאתם מעלים תמונות של המוצגים והערות אוצר במקביל לשינויים בתצוגה, ומעדכנים באופן מיידי את הסיורים הקוליים בגלריה ביותר מ-70 שפות – ללא צורך בצילום מחדש בעת החלפת התערוכה."
           }
         ]
       },
       {
-        "id": "knowledge",
-        "title": "Knowledge, Training & Education",
+        "id": "ידע",
+        "title": "ידע, הכשרה וחינוך",
         "examples": [
           {
-            "id": "k12-higher-ed",
-            "label": "K-12 & Higher Ed",
-            "description": "30-minute curriculum modules that can be instantly localized for ESL students or global campuses."
+            "id": "חינוך K-12 והשכלה גבוהה",
+            "label": "חינוך K-12 והשכלה גבוהה",
+            "description": "תארו לעצמכם שאתם מעלים חומרי לימוד המשלבים את הקול השמור של המדריך ואת דמותו, ואז יוצרים באופן מיידי יחידות לימוד מלאות – שסטודנטים בקמפוסים גלובליים או לומדי שפה (ESL) יכולים לצפות בהן ביותר מ-70 שפות."
           },
           {
-            "id": "corporate-ld",
-            "label": "Corporate L&D",
-            "description": "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices."
+            "id": "מיתוג תאגידי",
+            "label": "למידה ופיתוח בארגון",
+            "description": "תארו לעצמכם שאתם מעלים תסריטי הדרכה בנושאי רגולציה ותאימות, תוך שימוש בקול ובדמות הווירטואלית (אוואטר) השמורים של המדריך שלכם. לאחר מכן, אתם מטמיעים באופן מיידי תהליכי קליטת עובדים והדרכות בטיחות אחידים בכל המשרדים — כשהם מותאמים מקומית ליותר מ-70 שפות."
           },
           {
-            "id": "software-saas-tutorials",
-            "label": "Software SaaS Tutorials",
-            "description": "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion."
+            "id": "מדריכי תוכנה ו-SaaS",
+            "label": "מדריכים לתוכנות SaaS",
+            "description": "תארו לעצמכם שאתם מעלים צילומי מסך של הממשק (UI) כנקודות ייחוס, משלבים אותם עם הקלטה קיימת של מומחה המוצר, ומייצרים באופן מיידי סרטוני הדרכה המציגים באנימציה כל לחיצה – ומתעדכנים אוטומטית ביום שבו הממשק החדש עולה לאוויר."
           },
           {
-            "id": "niche-skill-tutoring",
-            "label": "Niche Skill Tutoring",
-            "description": "Professional \"How-To\" series for cooking, DIY, or technical certifications."
+            "id": "הוראה פרטית במיומנויות ייחודיות",
+            "label": "הוראה פרטית של מיומנויות ייחודיות",
+            "description": "תארו לעצמכם שאתם מעלים תמונות של שלבי העבודה, יחד עם הקול השמור של המדריך ומודל הדמות שלו. לאחר מכן, אתם מפרסמים באופן מיידי סדרות הדרכה מקצועיות – בין אם מדובר בבישול, פרויקטים של \"עשה זאת בעצמך\" (DIY) או הכנה למבחני הסמכה – ביותר מ-70 שפות."
           },
           {
-            "id": "medical-patient-education",
-            "label": "Medical/Patient Education",
-            "description": "Narrated explanations of surgical procedures or medication management for hospitals and clinics."
+            "id": "חינוך רפואי למטופלים",
+            "label": "חינוך רפואי / חינוך מטופלים",
+            "description": "תארו לעצמכם שאתם מעלים תרשימי הליך רפואי יחד עם הקלטה מאושרת של קול המטפל, ואז יוצרים באופן מיידי סרטוני הסבר ברורים למטופלים – כאלה שמשפחות יכולות להבין – ביותר מ-70 שפות."
           },
           {
-            "id": "video-memoirs",
-            "label": "Video Memoirs",
-            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+            "id": "זיכרונות מצולמים",
+            "label": "זיכרונות מצולמים",
+            "description": "דמיינו שאתם מעלים תמונות משפחתיות, הקלטות ראיונות והערות על סצנות, לצד קריינות שמורה מראש. לאחר מכן, צרו באופן מיידי סרטוני זיכרונות המחולקים לפרקים – ואשרו את התסריט החזותי (storyboard) לפני העיבוד הסופי."
           }
         ]
       },
       {
-        "id": "jit",
-        "title": "JIT Media & Information",
+        "id": "ג'יט",
+        "title": "JIT מדיה ומידע",
         "examples": [
           {
-            "id": "hyper-local-news",
-            "label": "Hyper-Local News",
-            "description": "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive."
+            "id": "חדשות מקומיות-במיוחד",
+            "label": "חדשות מקומיות-במיוחד",
+            "description": "תארו לעצמכם שאתם מעלים את התמונות והעדכונים של היום, כשהם מלווים בקולו המוקלט של המגיש שלכם. לאחר מכן, אתם מפרסמים באופן מיידי מבזק חדשות שכונתי יומי – ללא צוות צילום וללא החמצת מועדים."
           },
           {
-            "id": "financial-market-recaps",
-            "label": "Financial & Market Recaps",
-            "description": "Turning daily stock market or crypto data into 3-minute narrated visual digests."
+            "id": "סיכומי שוקי ההון",
+            "label": "סיכומים פיננסיים וסקירות שוק",
+            "description": "תארו לעצמכם שאתם מעלים מדי בוקר נתוני שוק וצילומי מסך של גרפים, בשילוב עם הקלטה קולית של האנליסט שלכם – והופכים אותם באופן מיידי לסקירה ויזואלית מלווה בקריינות, המוכנה עוד לפני צלצול הפתיחה."
           },
           {
-            "id": "sports-commentary",
-            "label": "Sports Commentary",
-            "description": "Automated \"recap\" videos using game stats and static photography turned into F2V action."
+            "id": "פרשנות ספורט",
+            "label": "פרשנות ספורט",
+            "description": "תארו לעצמכם שאתם מעלים נתונים סטטיסטיים ותמונות סטילס מהמשחק, בשילוב עם הקלטת הקול של השדרן שלכם – ואז יוצרים באופן מיידי סרטוני סיכום הכוללים אנימציה של מהלכי המשחק, ומפרסמים אותם בעוד האוהדים עדיין דנים בו."
           },
           {
-            "id": "true-crime-historical-docs",
-            "label": "True Crime & Historical Docs",
-            "description": "Using the Reference Library to keep historical figures consistent across a multi-part documentary series."
+            "id": "סרטים תיעודיים היסטוריים על פשעים אמיתיים",
+            "label": "פשע אמיתי וסרטים תיעודיים היסטוריים",
+            "description": "תארו לעצמכם שאתם מקבעים דמויות היסטוריות בתוך ה-Reference Library שלכם פעם אחת בלבד. לאחר מכן, תוכלו להפיק באופן מיידי פרקים מרובי-חלקים שבהם כל פנים וכל קול נשמרים בעקביות – מסדרה לסדרה."
           },
           {
-            "id": "weather-emergency-alerts",
-            "label": "Weather & Emergency Alerts",
-            "description": "Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms."
+            "id": "התראות חירום על מזג האוויר",
+            "label": "התראות מזג אוויר וחירום",
+            "description": "תארו לעצמכם שאתם מעלים הודעות חירום בקול המוכר והאמין של הארגון שלכם, ואז מפיצים באופן מיידי התראות ברורות ביותר מ-70 שפות ברחבי הרשתות החברתיות – בתוך דקות, ולא ימים."
           }
         ]
       },
       {
-        "id": "b2b",
-        "title": "B2B Marketing & Sales",
+        "id": "B2B",
+        "title": "שיווק ומכירות B2B",
         "examples": [
           {
-            "id": "product-explainer-videos",
-            "label": "Product Explainer Videos",
-            "description": "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos."
+            "id": "סרטוני הסבר על מוצרים",
+            "label": "סרטוני הסבר על מוצרים",
+            "description": "תארו לעצמכם שאתם מעלים תמונות מקטלוג המוצרים, יחד עם קול המגיש והאוואטר השמורים של המותג שלכם. לאחר מכן, אתם יוצרים באופן מיידי סדרת סרטוני הסבר בסגנון קולנועי – ומאשרים את הסטוריבורד לפני ביצוע הרינדור."
           },
           {
-            "id": "case-study-testimonials",
-            "label": "Case Study/Testimonials",
-            "description": "Using client headshots and project photos to create high-end visual success stories."
+            "id": "המלצות מתוך מקרי בוחן",
+            "label": "מקרה בוחן / המלצות",
+            "description": "דמיינו שאתם מעלים תמונות פורטרט של לקוחות, תמונות פרויקט ומדדי הצלחה, לצד קריינות שהוקלטה מראש – ומייצרים באופן מיידי מקרי בוחן (case studies) ויזואליים ומלוטשים, מבלי לצאת לצילומים של עדויות לקוחות."
           },
           {
-            "id": "recruitment-branding",
-            "label": "Recruitment & Branding",
-            "description": "Giving candidates a narrated \"day in the life\" tour of the office and culture."
+            "id": "מיתוג גיוס",
+            "label": "גיוס ומיתוג",
+            "description": "דמיינו שאתם מעלים תמונות של המשרד ורגעים המייצגים את התרבות הארגונית, בשילוב עם האווטאר והקול המוקלט של המגייס שלכם. כך תוכלו להעניק למועמדים באופן מיידי סיור מודרך המציג את שגרת היום-יום בחברה – ביותר מ-70 שפות, לצורך גיוס עובדים ברחבי העולם."
           },
           {
-            "id": "conference-event-promos",
-            "label": "Conference & Event Promos",
-            "description": "Automated \"Speaker Bio\" videos and \"What to Expect\" guides for large-scale events."
+            "id": "קידום כנסים ואירועים",
+            "label": "קידום כנסים ואירועים",
+            "description": "תארו לעצמכם שאתם מעלים ביוגרפיות של דוברים, פרטים על המושבים ותמונות של המקום, בשילוב עם הקלטה שמורה של קול המנחה – ואז יוצרים באופן מיידי דברי פתיחה והצגה של הדוברים, לצד מדריכים המפרטים למה לצפות; כל זאת תוך עדכון אוטומטי בכל פעם שסדר היום משתנה."
           }
         ]
       },
       {
-        "id": "public",
-        "title": "Public Sector & Advocacy",
+        "id": "ציבורי",
+        "title": "המגזר הציבורי וקידום אינטרסים",
         "examples": [
           {
-            "id": "ngo-impact-reports",
-            "label": "NGO Impact Reports",
-            "description": "Turning data and field photography into emotive, narrated videos for donors."
+            "id": "דוחות השפעה של ארגונים לא-ממשלתיים",
+            "label": "דוחות השפעה של ארגונים ללא כוונת רווח",
+            "description": "תארו לעצמכם שאתם מעלים תמונות מהשטח ונתונים על ההשפעה, בשילוב עם קול הקריין השמור של הארגון שלכם. לאחר מכן, אתם הופכים באופן מיידי דוחות לתורמים לסרטונים מרגשים ומלווים בקריינות – סרטונים המשקפים את קול השליחות שלכם, ולא סתם מצגת שקופיות."
           },
           {
-            "id": "public-health-announcements",
-            "label": "Public Health Announcements",
-            "description": "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity."
+            "id": "הודעות בנושא בריאות הציבור",
+            "label": "הודעות בנושא בריאות הציבור",
+            "description": "תארו לעצמכם שאתם מעלים מסרים בריאותיים מאושרים, המושמעים בקול המוכר והאמין של המחלקה שלכם. לאחר מכן, אתם מגיעים באופן מיידי לכל קהילה ביותר מ-70 שפות – תוך שמירה על אותה בהירות ודחיפות, וללא כל עיכוב הכרוך בתרגום."
           },
           {
-            "id": "legal-insurance-explainers",
-            "label": "Legal & Insurance Explainers",
-            "description": "Helping clients understand complex contracts or claim processes through narrated visual breakdowns."
+            "id": "הסברים בנושאי ביטוח ומשפט",
+            "label": "סרטוני הסבר בנושאי משפט וביטוח",
+            "description": "תארו לעצמכם שאתם מעלים סיכומי חוזים ותרשימי תהליכים, בשילוב עם הקלטה קולית של היועץ שלכם. לאחר מכן, אתם יוצרים באופן מיידי הסברים ויזואליים שהלקוחות באמת מבינים – עוד לפני שהם חותמים או מגישים תביעה."
           },
           {
-            "id": "religious-spiritual-teachings",
-            "label": "Religious & Spiritual Teachings",
-            "description": "Converting sermons or texts into a consistent, narrated daily video series for global congregations."
+            "id": "תורות דתיות-רוחניות",
+            "label": "תורות דתיות ורוחניות",
+            "description": "תארו לעצמכם שאתם מעלים רשימות לדרשה או טקסטים מקודשים, בשילוב קולו ונוכחותו המתועדים של המורה שלכם. לאחר מכן, אתם מפרסמים באופן מיידי סדרת סרטונים יומית ועקבית עבור קהילות ברחבי העולם – ביותר מ-70 שפות."
           }
         ]
       }
     ]
   },
   "institutionalRoi": {
-    "badge": "For in-house teams & institutions",
-    "title": "Replace vendor shoots with predictable in-house production",
-    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
+    "badge": "עבור צוותים פנים-ארגוניים ומוסדות",
+    "title": "החליפו את הצילומים החיצוניים (אצל ספקים) בהפקה פנימית צפויה.",
+    "subtitle": "צוותי תקשורת, למידה ופיתוח (L&D) ושיווק המונים 1–5 אנשים יכולים להפיק ולהשיק סרטונים בתוך אותו שבוע – ללא צורך בחוזי ריטיינר מול סוכנויות או בתהליכי עריכה אינסופיים.",
     "comparisons": [
       {
-        "label": "Traditional vendor shoot + edit",
-        "cost": "$5,000–$15,000",
-        "timeline": "4–8 weeks"
+        "label": "צילום ועריכה מסורתיים עבור ספקים",
+        "cost": "5,000$–15,000$",
+        "timeline": "4–8 שבועות"
       },
       {
-        "label": "SceneFlow in-house workflow",
-        "cost": "$50–$500 in credits",
-        "timeline": "Same week"
+        "label": "SceneFlow תהליך עבודה פנים-ארגוני",
+        "cost": "זיכויים בסך 50 עד 500 דולר",
+        "timeline": "באותו שבוע"
       }
     ],
     "bullets": [
-      "Brand-safe templates and approval before final render",
-      "Budget caps with visible credit spend per project",
-      "No crew days, no edit back-and-forth on every revision"
+      "תבניות התואמות לסטנדרטים של המותג ואישור לפני העיבוד הסופי",
+      "תקרות תקציב עם תצוגה של ניצול הקרדיטים לכל פרויקט",
+      "ללא ימי צילום עם צוות, וללא תהליך עריכה הכרוך בהלוך-ושוב על כל תיקון"
     ],
-    "ctaPrimary": "Book a team walkthrough",
-    "ctaSecondary": "See pricing",
-    "typicalCost": "Typical cost",
-    "timeline": "Timeline"
+    "ctaPrimary": "תיאום סיור מודרך לצוות",
+    "ctaSecondary": "צפה במחירים",
+    "typicalCost": "עלות טיפוסית",
+    "timeline": "ציר זמן"
   },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Studio feature deep dive",
-    "close": "Close",
-    "viewDetails": "View Details",
+    "badge": "סיור מודרך",
+    "title": "סקירה מודרכת של הפלטפורמה",
+    "subtitle": "מדריך מקיף לתהליך העבודה של SceneFlow AI Studio, החל מסקירות משותפות ועד לתוצר הקולנועי הסופי.",
+    "subheading": "הכירו את הפלטפורמה – התחילו מהדברים החיוניים",
+    "chapterHint": "ארבעה דברים שכדאי לדעת היום. הרחיבו את הפרקים כשאתם רוצים לקבל את התמונה המלאה.",
+    "expandChapter": "הצג מאפיינים",
+    "collapseChapter": "הסתר תכונות",
+    "underTheHoodLabel": "מתחת למכסה המנוע",
+    "chapters": [
+      {
+        "id": "פריטים חיוניים",
+        "label": "התחילו כאן – מה אתם מקבלים ביום הראשון"
+      },
+      {
+        "id": "איכות",
+        "label": "דאג שזה יצליח להדהד בקרב הקהל שלך"
+      },
+      {
+        "id": "הפקה",
+        "label": "מביטים מאושרים ועד להקלטת מאסטר שפורסמה"
+      },
+      {
+        "id": "מתקדם",
+        "label": "עבור צוותים המעוניינים בניהול חיובים וממשל"
+      }
+    ],
+    "close": "סגור",
+    "viewDetails": "הצג פרטים",
     "beatFirst": {
-      "id": 15,
-      "title": "Beat-First Video Pipeline",
-      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "title": "תהליך הפקת וידאו מבוסס-ביט",
+      "description": "יש לאשר את שלבי הסטוריבורד ואת Beat Frames לפני שלב ה-F2V — כך מצטמצם הצורך ביצירה מחדש \"על עיוור\" עקב הזיות (hallucinations) או סטייה ויזואלית. מסלול אחד ומובנה, משלב הבחינה ועד לקליפ הסופי.",
       "keyFeatures": [
-        "Express storyboard for review — share beats before heavy render",
-        "Beat Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "Express storyboard לבדיקה — שיתוף ביטים לפני רינדור כבד",
+        "Beat Frames קיבוע הרכב — Reference Library רציפות",
+        "F2V לפי פעימה — יצירת וידאו מפריימים מאושרים",
+        "תזמון וזרמי המערבל — ייצוא למכלול Final Cut"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
-      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+      "screenshotSlot": "הוסף צילום מסך: Beat Frames ואישור הסטוריבורד לפני יצירת הסרטון",
+      "videoSlot": "שילוב קטע באורך 30 שניות: אישור ביטים, קיבוע פריימים, ולאחר מכן יצירת קטעי F2V."
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "title": "סקירה וניתוח נתונים של הקהל",
+      "description": "קישורי שיתוף פרטיים עבור בעלי עניין – כוללים דירוגים ידניים, משוב מובנה ונתוני מעורבות (אופציונליים, בכפוף להסכמת הצופה). בשימוש ב-Premiere לפני הפרסום וכן לצורך תצוגה מקדימה של הסטוריבורד (Storyboard) בשלב ההפקה.",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "מפגשי סקירה פרטיים — קישורי שיתוף מאובטחים עבור בעלי עניין",
+        "משוב מובנה מהקהל – דירוגים ושאלות פתוחות",
+        "ניתוח נתוני מעורבות אופציונלי – בכפוף להסכמת הצופה לפני האיסוף",
+        "בצע סבבי שיפור על בסיס נתונים אמיתיים — שכלל את Blueprint ואת התסריט בהתבסס על תובנות הסוקרים."
       ],
-      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotSlot": "הכנס צילום מסך: Screening Room לוח ניתוח נתונים ומשוב מהבודק",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      "videoSlot": "שילוב קטע באורך 30 שניות: עריכת מפגש סקירה ואיסוף נתוני מעורבות"
+    },
+    "ui": {
+      "screenshot": "צילום מסך",
+      "video": "סרטון",
+      "featureVideo": "סרטון מוביל",
+      "keyFeatures": "תכונות עיקריות",
+      "openScreenshot": "פתח צילום מסך",
+      "openFeatureVideo": "פתח את סרטון ההצגה",
+      "expandImage": "הגדל תמונה",
+      "closePreview": "סגור תצוגה מקדימה"
+    },
+    "items": [
+      {
+        "id": "1",
+        "title": "חוויית משתמש אינטואיטיבית + שליטה מלאה של היוצר",
+        "description": "התחילו במהירות בעזרת אוטומציה מונחית, ולאחר מכן ערכו כל תוצר שנוצר – כך הצוותים שומרים על שליטה יצירתית מבלי לפגוע במהירות העבודה.",
+        "keyFeatures": [
+          "תהליך עבודה מונחה ב-Studio – משלב הרעיון ועד הייצוא, במקום אחד",
+          "ערוך במקום כל שלב עלילתי, דמות ושורה שנוצרו על ידי בינה מלאכותית.",
+          "חלופות ביצוע – השוואה זו לצד זו לבחינת הכיוון היצירתי",
+          "Blueprint שיתוף פעולה – שיתוף קישורים, קטעי שמע ומשוב מובנה ממבקרים"
+        ],
+        "screenshotSlot": "הוספת צילום מסך: עורך Blueprint עם מקטעים שנוצרו וניתנים לעריכה",
+        "videoSlot": "שילוב סרטון באורך 30 שניות: תהליך חוויית משתמש (UX) – מקונספט ועד תוצר הניתן לעריכה"
+      },
+      {
+        "id": "2",
+        "title": "תקציב אשראי ובקרת עלויות",
+        "description": "עקוב אחר ניצול הקרדיטים בזמן אמת והגדר מגבלות בטיחות לפני הרצת תהליכי יצירה יקרים.",
+        "keyFeatures": [
+          "ניצול אשראי בזמן אמת – לפי פרויקט ופעולה",
+          "מנגנוני הגנה בסביבת הייצור – לפני הרצת תהליכי יצירה יקרים",
+          "מחירונים שקופים – עבור TTS, וידאו ובינה",
+          "שקיפות תקציבית – לצוותים וליוצרים עצמאיים"
+        ],
+        "screenshotSlot": "הכנס צילום מסך: לוח ניצול האשראי והגדרות BYOK",
+        "videoSlot": "שילוב קטע באורך 30 שניות: לוח מחוונים של תקציב והגדרות מפתח",
+        "underTheHood": {
+          "title": "מתחת למכסה המנוע",
+          "body": "עבור צוותי ייצור (Production) בעלי חוזי ענן קיימים:",
+          "bullets": [
+            "Vertex AI BYOK — חיוב וממשל ארגוניים",
+            "מתגי ספקים במחשבון האשראי",
+            "מחירוני פלטפורמה שקופים לצד המפתחות שלכם"
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "title": "כל קונספט, תהליך הפקה אחד",
+        "description": "השתמשו בתהליך עבודה אחד ואמין עבור הדרכות, פודקאסטים, חדשות, סרטוני מכירת בתים ותוכן קולנועי.",
+        "keyFeatures": [
+          "תהליך עבודה אחד – פודקאסטים, חדשות, הדרכה, נדל\"ן ופורמטים קולנועיים",
+          "תבניות פרויקט — Studio מתאים את עצמו לחומר המקור שלך",
+          "אותו Blueprint ← תסריט ← מסלול הפקה — ללא קשר לז'אנר",
+          "ללא מעבר בין כלים — משלב הרעיון ועד למסירה"
+        ],
+        "screenshotSlot": "יש להוסיף צילום מסך: תצוגה מפוצלת או רשת המציגה תבניות עבור פודקאסטים, חדשות, נדל\"ן ותוכן קולנועי, המתמזגות כולן לממשק תהליך עבודה (pipeline) אחד ומאוחד של SceneFlow.",
+        "videoSlot": "שילוב קטע באורך 00:30: \"התחילו עם כל חומר גלם...\" – לחיצה על New Project (פרויקט חדש) ואז על Podcast (פודקאסט) – הממשק מותאם לאודיו; לאחר מכן, תצוגה מפוצלת המראה פרויקטים מסוג News (חדשות) ו-Cinematic (קולנועי) המתמזגים אל תוך העורך Blueprint."
+      },
+      {
+        "id": "4",
+        "title": "אוטומציה חכמה עם שליטה מדויקת בעריכה",
+        "description": "פלטפורמת SceneFlow עושה שימוש בבינה כדי ליצור באופן אוטומטי בסיס מקצועי (סדרה, תוכנית-אב, תסריט, הנחיות הפקה ועריכות), תוך מתן אפשרות לדיאלוגים חכמים המעניקים לך שליטה מלאה בעריכה, לצד מנגנוני בקרה והגנה מובנים.",
+        "keyFeatures": [
+          "יצירת תשתיות AI במעבר אחד – סדרה, מתווה, תסריט והנחיות (prompts) להפקה",
+          "תיבות דו-שיח חכמות לעריכה — מנגנוני בקרה, לא שכתוב עיוור",
+          "קבל, שכלל או דחה – כל הצעה נשארת בשליטתך.",
+          "מעורבות אנושית בתהליך – בכל שלב של הייצור"
+        ],
+        "screenshotSlot": "הכנס צילום מסך: תיבת דו-שיח חכמה המציגה יצירת קו בסיס (baseline) עם פקדי עריכה",
+        "videoSlot": "שילוב קטע באורך 30 שניות: יצירת גרסת בסיס באמצעות בינה מלאכותית, ולאחריה ביצוע עריכות מדויקות על ידי המשתמש."
+      },
+      {
+        "id": "5",
+        "title": "שיתוף Reference Library לצורך רציפות",
+        "description": "שמרו על עקביות בדמויות, במלתחה, בקולות, במיקומים ובאביזרים לאורך סצנות ופרקים, באמצעות שימוש במקורות עזר הניתנים לשימוש חוזר.",
+        "keyFeatures": [
+          "פרופילים לשימוש חוזר — דמויות, מלתחה, קולות, מיקומים ואביזרים",
+          "יישום חוצה-סצנות — הפניות זורמות אל תוך כל דור",
+          "עקביות חזותית – אותם פנים וסגנון בתוצרים של Imagen ו-Veo",
+          "רציפות בקנה-מידה של זיכיון – מותאמת לסדרות מרובות-פרקים"
+        ],
+        "screenshotSlot": "הוספת צילום מסך: ספריית עזר המציגה את רציפות הדמויות והאביזרים",
+        "videoSlot": "שילוב קטע באורך 30 שניות: החלת רפרנסים על פני סצנות מרובות"
+      },
+      {
+        "id": "6",
+        "title": "מנוע יצירה מהיר",
+        "description": "צור באופן אוטומטי תמונות וקטעי וידאו במקביל. Express Storyboard מאפשר לך לסקור ולשתף לוחות תסריט (storyboards) אור-קוליים בתוך דקות. Express Animatics מרנדר סצנות מלאות בסגנון Ken Burns בתוך דקות, בעוד ש-Express Video מספק סצנות וידאו סופיות בתוך דקות במקום ימים.",
+        "keyFeatures": [
+          "יצירה במקביל – תמונות ווידאו על פני סצנות שונות בו-זמנית",
+          "Express Storyboard – תצוגות מקדימות אורקוליות הניתנות לשיתוף, תוך דקות ספורות",
+          "Express Animatics — אפקט Ken Burns (תנועה בתמונות סטילס)",
+          "Express Video – קטעי וידאו ברמת הסצנה בתוך דקות, לא ימים"
+        ],
+        "screenshotSlot": "הוסף צילום מסך: לוח מחוונים להפקה מהירה (Express generation) הכולל Animatics והתקדמות וידאו.",
+        "videoSlot": "שילוב קטע באורך 30 שניות: יצירה במקביל ההופכת תסריט לאנימטיק ולאחר מכן לסרטון הסופי."
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance עורך",
+        "description": "הגדר את קהל היעד שלך כדי לקבל ניקוד, ניתוח והמלצות באופן מיידי. בצע תיקונים בלחיצה אחת או השתמש בעריכה מונחית כדי לבצע אופטימיזציה מושלמת לפרקים, ל-Blueprint ולתסריט שלך, ולהשיג השפעה מרבית.",
+        "keyFeatures": [
+          "ניקוד קהל היעד – עם פירוט לפי קטגוריות",
+          "המלצות המקושרות לחלקים ספציפיים – תקנו את החלק הנכון בסיפור שלכם",
+          "תיקונים בלחיצה אחת ועריכה מודרכת – עיבוד מחדש מדויק, ללא ניחושים",
+          "סף המוכנות להפקה – דעו מתי להשקיע ברינדור מלא"
+        ],
+        "screenshotSlot": "הוספת צילום מסך: Resonance Editor עם דירוג קהל ותיקונים בלחיצה אחת",
+        "videoSlot": "שילוב קטע באורך 30 שניות: החלת עריכות מונחות על בסיס ציון התהודה בקרב הקהל."
+      },
+      {
+        "id": "8",
+        "title": "תרגום אדפטיבי (למעלה מ-70 שפות)",
+        "description": "בצע התאמה מקומית (לוקליזציה) של תוכן בהיקף נרחב, תוך שמירה על הכוונה הנרטיבית ועל סנכרון ציר הזמן לצורך הפצה רב-לשונית.",
+        "keyFeatures": [
+          "למעלה מ-70 שפות – קריינות, דיאלוגים ותוכן בהיקף נרחב",
+          "הכוונה העלילתית נשמרת – המשמעות והתזמון נותרים מסונכרנים",
+          "רצועות שמע רב-לשוניות — על ציר הזמן של הסצנה",
+          "חבילות מוכנות לייצוא — לפי אזור (locale) לצורך הפצה"
+        ],
+        "screenshotSlot": "הוסף צילום מסך: ציר זמן רב-לשוני והגדרות תרגום",
+        "videoSlot": "שילוב קטע באורך 30 שניות: התאמה מקומית מיידית של סצנה למספר שפות"
+      },
+      {
+        "id": "9",
+        "title": "אוטומציה של סדרות",
+        "description": "הגדר את היקום שלך פעם אחת וצור קווי עלילה מגובשים המשתרעים על פני מספר פרקים. שימוש ב-Reference Library משותף שומר על עקביות הדמויות והטון לאורך העונה כולה.",
+        "keyFeatures": [
+          "הגדר את היקום שלך פעם אחת – דמויות, טון וקו העלילה של העונה.",
+          "מתווי פרקים מגובשים – נוצרים אוטומטית לאורך העונה",
+          "מעקב אחר רציפות – סנכרון עונות מרובות-פרקים",
+          "סנכרון בין סדרה לפרק — אל תוך Blueprint Studio and Production"
+        ],
+        "screenshotSlot": "הוספת צילום מסך: סקירה כללית של הסדרה עם קווי עלילה של הפרקים שנוצרו באופן אוטומטי",
+        "videoSlot": "שילוב קטע באורך 30 שניות: הרחבת הקונספט לעונה מרובת-פרקים"
+      },
+      {
+        "id": "10",
+        "title": "Blueprint אוטומציה",
+        "description": "הפוך רעיונות ל-Treatments (תקצירי פיתוח) מובנים, הכוללים Logline, נקודות עלילה (beats), דמויות וטון. הרץ את Audience Resonance ובצע עבודה משותפת לפני שלב הרינדור הכבד.",
+        "keyFeatures": [
+          "יצירה ← סקירה ← ביצוע סבבי שיפור ← התחלת תהליך הייצור",
+          "מרעיון למבנה תוך דקות – לוגליין, נקודות עלילה, דמויות וטון",
+          "Audience Resonance ניקוד עם יעד של 80 ומעלה לפני שלב הייצור",
+          "קישורי שיתוף למשתפי פעולה — סינתזת משוב לכדי תהליך תיקון מונחה"
+        ],
+        "screenshotSlot": "הכנס צילום מסך: Blueprint שנוצר אוטומטית, הכולל נקודות מפתח בעלילה ותהליכי התפתחות של הדמויות.",
+        "videoSlot": "שילוב קטע באורך 30 שניות: הפיכת רעיון ל-Blueprint מובנה"
+      },
+      {
+        "id": "11",
+        "title": "אוטומציה של הייצור",
+        "description": "הלשוניות Script ו-Action מלוות את התהליך: Foundation ← Storyboard ← Production ← Final Cut. Express storyboard, Beat Frames, Mixer וזרמי MP4 – ללא צורך במעבר בין כלים.",
+        "keyFeatures": [
+          "Foundation — תסריט, קולות, אודיו של הסצנה, נעילת תסריט",
+          "Express storyboard — כיוון ומסגרות בדקות; גלריה ושיתוף",
+          "Beat Frames ו-Mixer — פריימים להתחלה/סיום, קונסולת בימוי, רינדור זרמי MP4",
+          "זרמי ייצור — סקירת תוצרים, רינדור מחדש של יחידות עיבוד (beats) לא-עדכניות, שליחה ל-Final Cut"
+        ],
+        "screenshotSlot": "הוסף צילום מסך: לוח מחוונים של ההפקה המציג את התסריט, Beat Frames ואת המיקסר.",
+        "videoSlot": "הכנסת קטע באורך 00:30: Foundation, Express storyboard, Beat Frames וייצוא הזרם"
+      },
+      {
+        "id": "12",
+        "title": "Final Cut הרכבה",
+        "description": "אחדו את זרמי ההפקה המוגמרים לקובץ MP4 ראשי אחד. בחרו ב-Animatic או הגדירו וידאו ושפה לכל סצנה – ללא עריכה בציר הזמן; שינויים יצירתיים נשארים ב-Production Mixer.",
+        "keyFeatures": [
+          "בחירת זרם לפי סצנה — Animatic, וידאו, שפה, גרסה",
+          "הגדרות הרכבה מראש — כל הווידאו, היברידי, שילוב מותאם אישית",
+          "ללא עריכת ציר זמן — שינויים יצירתיים נשארים ב-Production Mixer",
+          "ייצוא Master בלחיצה אחת — קובץ MP4 מאוחד עבור Premiere"
+        ],
+        "screenshotSlot": "הכנס צילום מסך: לוח הרכבה Final Cut עם בוררי זרמים ברמת הסצנה",
+        "videoSlot": "שילוב קטע באורך 00:30: בחירת ערוצים, תצוגה מקדימה של הרצף וייצוא קובץ המקור הסופי (Master)"
+      },
+      {
+        "id": "13",
+        "title": "Premiere הפצה",
+        "description": "הקרן את גרסת המאסטר שלך בשילוב ניתוח נתוני קהל, לאחר מכן פרסם ב-YouTube עם מטא-דאטה מותאם מקומית, או ייצא חבילות עבור Shorts,‏ Reels ו-TikTok.",
+        "keyFeatures": [
+          "ניתן לשיתוף Screening Room — קישורי /s/ הכוללים ניקוד וניתוח נתוני מעורבות אופציונלי (בכפוף להסכמת הצופה)",
+          "לוח מחוונים של תובנות — לשוניות ניקוד, ביומטריה וויזואליה",
+          "אשף YouTube — תמונה ממוזערת, כותרת/תיאור מותאמים מקומית, הנעה לפעולה (CTA) SceneFlow",
+          "חבילות ייצוא ותוכניות לקטעי וידאו אנכיים קצרים"
+        ],
+        "screenshotSlot": "הוסף צילום מסך: Premiere לוח מחוונים הכולל תובנות ואשף פרסום",
+        "videoSlot": "שילוב קטע באורך 30 שניות: תובנות סינון, אשף YouTube וחבילות ייצוא"
+      },
+      {
+        "id": "14",
+        "title": "סקירה וניתוח נתונים של הקהל",
+        "description": "קישורי שיתוף פרטיים עבור בעלי עניין – כוללים דירוגים ידניים, משוב מובנה ונתוני מעורבות (אופציונליים, בכפוף להסכמת הצופה). בשימוש ב-Premiere לפני הפרסום וכן לצורך תצוגה מקדימה של הסטוריבורד (Storyboard) בשלב ההפקה.",
+        "keyFeatures": [
+          "מפגשי סקירה פרטיים — קישורי שיתוף מאובטחים עבור בעלי עניין",
+          "משוב מובנה מהקהל – דירוגים ושאלות פתוחות",
+          "ניתוח נתוני מעורבות אופציונלי – בכפוף להסכמת הצופה לפני האיסוף",
+          "בצע סבבי שיפור על בסיס נתונים אמיתיים — שכלל את Blueprint ואת התסריט בהתבסס על תובנות הסוקרים."
+        ],
+        "screenshotSlot": "הכנס צילום מסך: Screening Room לוח ניתוח נתונים ומשוב מהבודק",
+        "videoSlot": "שילוב קטע באורך 30 שניות: עריכת מפגש סקירה ואיסוף נתוני מעורבות"
+      }
+    ]
+  },
+  "engineeringTrust": {
+    "badge": "הנדסה ואבטחה",
+    "title": "נבנה עבור",
+    "titleAccent": "עומסי עבודה בסביבת ייצור",
+    "subtitle": "ארכיטקטורה ידידותית לסטארטאפים, הכוללת רכיבי Google Cloud התומכים באבטחה, יכולת גידול (scale) ואספקה מעשית לסביבת הייצור.",
+    "pillars": [
+      {
+        "id": "אדריכלות",
+        "title": "ארכיטקטורה ארגונית",
+        "description": "נבנה על גבי תשתית Google Cloud, עם יכולות תזמור (orchestration) הניתנות להרחבה עבור עומסי עבודה בסביבת ייצור וצוותים בצמיחה.",
+        "highlights": [
+          "Vertex AI עבור תהליכי עבודה של יצירה",
+          "שילוב של Imagen 4 ו-Veo 3.1",
+          "ElevenLabs שילוב TTS",
+          "BYOK לבקרת חיובים ארגונית"
+        ]
+      },
+      {
+        "id": "אבטחה",
+        "title": "אבטחה ופרטיות",
+        "description": "נכסים יצירתיים נותרים מוגנים הודות להצפנה במצב מנוחה, בקרות גישה וטיפול המציב את הפרטיות בראש סדר העדיפויות.",
+        "highlights": [
+          "בקרות ענן המותאמות לארגונים",
+          "הצפנת AES-256",
+          "תוכנן תוך התחשבות בדרישות ה-GDPR",
+          "עיינו במדיניות הפרטיות שלנו בנוגע לטיפול בנתונים."
+        ]
+      },
+      {
+        "id": "קנה מידה",
+        "title": "יכולת גידול ואמינות",
+        "description": "אספקה גלובלית מבוססת-ענן תומכת בתהליכי רינדור ובדיקה אמינים, ככל שהיקף העבודה שלכם גדל.",
+        "highlights": [
+          "פריסה רב-אזורית",
+          "אספקה מואצת באמצעות CDN",
+          "מעבר אוטומטי לגיבוי (Failover)",
+          "ניטור בזמן אמת"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "value": "גלובלי",
+        "label": "אספקה בענן"
+      },
+      {
+        "value": "תמונה 4",
+        "label": "יצירת תמונות"
+      },
+      {
+        "value": "256-סיביות",
+        "label": "הצפנה"
+      },
+      {
+        "value": "24/7",
+        "label": "ניטור"
+      }
+    ],
+    "vertexSection": {
+      "title": "למה Google Vertex AI?",
+      "subtitle": "החפיר הטכני שקובע",
+      "cards": [
+        {
+          "title": "פרטיות מידע",
+          "description": "התסריטים והנכסים היצירתיים שלך אינם משמשים לאימון מודלים משותפים, ובכך מסייעים להגן על הקניין הרוחני שלך ועל העבודה עבור הלקוחות.",
+          "highlight": "לא משמש לאימון מודלים משותפים"
+        },
+        {
+          "title": "תוכנן להספק אמין",
+          "description": "תשתית המיועדת לסביבת ייצור מסייעת לשמור על תהליכי יצירה יציבים במהלך מחזורים של ביקוש גבוה."
+        },
+        {
+          "title": "עקביות מודעת-הפניות",
+          "description": "SceneFlow משתמשת ביצירת תוכן המודעת להקשר (reference-aware generation) כדי לשפר את העקביות של דמויות, מיקומים ואביזרים בין סצנה לסצנה."
+        }
+      ]
+    },
+    "partnership": {
+      "poweredBy": "מופעל על ידי Google Cloud בשילוב עם Vertex AI, אחסון בענן וכלי תרגום",
+      "footnote": "SceneFlow AI פועלת על גבי תשתית Google Cloud ניתנת להרחבה, שתוכננה עבור צמיחת סטארטאפים ועמידה בציפיות של ארגונים גדולים."
+    },
+    "attribution": "— צוות ההנדסה של SceneFlow"
+  },
+  "coreCapabilities": {
+    "audienceResonance": {
+      "badge": "שכבת בינה",
+      "title": "Audience Resonance עורך",
+      "description": "דע מהו הציון שלך לפני שתשקיע בביצוע רינדור מלא. כוון לציוני Audience Resonance ו-Blueprint ופעל לפי תיקונים מעשיים בתסריט – בצע אופטימיזציה לכל מקטע (beat) לפני שלבי ה-Express ויצירת הווידאו.",
+      "bullets": [
+        "הגדר את קהל היעד הספציפי שלך",
+        "קבל ציון, ניתוח והמלצות בזמן אמת",
+        "תיקונים בלחיצה אחת לפתרון חולשות עלילתיות",
+        "עריכה מודרכת למיטוב הפרקים, Blueprint והתסריט"
+      ],
+      "cta": "נתח את התסריט שלך",
+      "howWeScore": {
+        "toggle": "כיצד אנו מעניקים ניקוד",
+        "title": "כיצד Audience Resonance פועל",
+        "description": "Audience Resonance משלבת ניתוח של המבנה העלילתי (בהירות, קצב, הקשת הרגשית) עם מידת ההתאמה לקהל היעד שהגדרת ב-Blueprint – וזאת במקום להסתמך על מדדי \"ראווה\" (vanity metrics) או על נתוני שימור קהל לאחר הפרסום. ההמלצות מקושרות לחלקים ספציפיים בתסריט, כך שתוכל לתקן בעיות עוד לפני שלב ה-Express או יצירת הסרטון.",
+        "bullets": [
+          "בחינת הציונים Blueprint והתסריט אל מול קהל היעד שהגדרת",
+          "המלצות ברמת המקטע – לא מספר מסוג \"קופסה שחורה\" שדורש \"לסמוך עלינו\"",
+          "תיקונים מעשיים בלחיצה אחת ועריכה מונחית – לא רק ציון",
+          "בצע זאת לפני הוצאות רינדור כבדות, ולא לאחר הפרסום."
+        ]
+      }
+    },
+    "express": {
+      "badge": "ייצור במהירות-על",
+      "title": "Sceneflow Express",
+      "description": "צור באופן אוטומטי ובו-זמני סטוריבורדים, אנימטיקים ורצפי וידאו (video beats). עבור מתסריט לתצוגה מקדימה הניתנת לשיתוף תוך דקות – ואז אשר את ה-Beat Frames לפני ביצוע ההוצאה הסופית על ההפקה (F2V).",
+      "items": [
+        {
+          "title": "לוח תסריט מהיר",
+          "desc": "סקרו ושתפו סטוריבורדים של אודיו ווידאו בתוך דקות במקום שעות.",
+          "time": "דקות לעומת שעות"
+        },
+        {
+          "title": "הבע את Animatics",
+          "desc": "צור באופן מיידי סצנות אנימטיק מלאות בסגנון Ken Burns, בשילוב קריינות ברמה גבוהה.",
+          "time": "דקות לעומת שעות"
+        },
+        {
+          "title": "וידאו אקספרס",
+          "desc": "נהל ויַתֵּם יצירה בו-זמנית של תמונות וסרטונים לצורך אספקת הסצנה בשלמותה.",
+          "time": "דקות לעומת ימים"
+        }
+      ],
+      "cta": "התחל רינדור מהיר"
+    }
+  },
+  "exitIntent": {
+    "title": "רגע! אל תצא בידיים ריקות.",
+    "subtitle": "קבלו גישה מוקדמת בלעדית וטיפים ליצירת סרטים בעזרת בינה מלאכותית",
+    "benefits": [
+      "מדריכים שבועיים ליצירת סרטים באמצעות בינה מלאכותית",
+      "גישה מוקדמת לפיצ'רים חדשים",
+      "הנחות בלעדיות ליוצרים"
+    ],
+    "emailPlaceholder": "הזן את כתובת האימייל שלך",
+    "subscribe": "קבל גישה מוקדמת",
+    "subscribing": "מבצע הרשמה...",
+    "or": "או",
+    "startNow": "התחילו ליצור עכשיו ב-9$ בלבד ←",
+    "privacy": "ללא ספאם, לעולם. ניתן להסיר את ההרשמה בכל עת.",
+    "successTitle": "אתה ברשימה!",
+    "successSubtitle": "בדקו את תיבת הדואר הנכנס שלכם לקבלת טיפים בלעדיים על יצירת סרטים ועדכונים על גישה מוקדמת.",
+    "ctaText": "התחילו לחקור — $9",
+    "closePopup": "סגור חלון קופץ"
+  },
+  "pricing": {
+    "badge": "תמחור מבוסס-שימוש",
+    "title": "שלם עבור מה שאתה יוצר",
+    "subtitle": "תוכנית בסיס אחת לגישה לפלטפורמה. קרדיטים ליצירה באמצעות בינה מלאכותית. טעינה נוספת לפי הצורך. שליטה מלאה, ללא בזבוז.",
+    "valueAnchor": {
+      "traditionalCost": "$2,000 ומעלה",
+      "traditionalLabel": "הדמיה מקדימה מסורתית",
+      "vs": "נגד",
+      "sceneFlowCost": "$49–$149",
+      "sceneFlowLabel": "SceneFlow חודשי",
+      "saveBadge": "חסוך למעלה מ-90% לכל פרויקט"
+    },
+    "teamCta": {
+      "title": "צוות פנימי או מוסד?",
+      "description": "תאמו סקירה של תהליכי העבודה עבור צוותי תקשורת, למידה ופיתוח (L&D) ושיווק",
+      "button": "סקירה מודרכת של הספר"
+    },
+    "agencyCta": {
+      "title": "סוכנות או בית הפקה?",
+      "description": "זיכויים מותאמים אישית, SLA ותמיכה ייעודית בהיקף נרחב",
+      "button": "ליצירת קשר עם מחלקת המכירות"
+    },
+    "byok": {
+      "title": "הבא מפתח משלך",
+      "badge": "תוכניות Pro ו-Studio",
+      "description": "כבר יש לך מפתחות API עבור Vertex AI או ElevenLabs? השתמש בהם עם SceneFlow AI וחסוך עד 80% בעלויות קרדיט הפלטפורמה.",
+      "savingsHighlight": "80% בזיכויי פלטפורמה",
+      "benefits": [
+        {
+          "title": "חיסכון של 80% בנקודות זכות SceneFlow",
+          "description": "שלמו עמלת פלטפורמה של 20% בלבד עבור תזמור וכלים."
+        },
+        {
+          "title": "למנף תוכניות ארגוניות",
+          "description": "השתמשו בהנחות הכמות הקיימות שלכם מסוג Vertex AI או ElevenLabs"
+        },
+        {
+          "title": "שליטה מלאה",
+          "description": "המפתחות שלך, החיובים שלך, ניהול העלויות שלך"
+        }
+      ],
+      "supportedProviders": "ספקים נתמכים",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 ו-Veo 3.1",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "המרת טקסט לדיבור ושכפול קול",
+      "savingsLabel": "חיסכון של 80%",
+      "onImagesVideo": "על תמונות וסרטונים",
+      "onVoiceover": "בקריינות",
+      "note": "החיסכון בקרדיטים המוצג הוא החיסכון המושג באמצעות פלטפורמת SceneFlow. העלויות הכוללות בפועל תלויות בתעריפי ה-API האישיים או הארגוניים שלך מול כל ספק."
+    },
+    "creditTopUps": {
+      "title": "צריך עוד קרדיטים?",
+      "subtitle": "ניתן להטעין בכל עת. היתרה אינה פוקעת לעולם.",
+      "packs": [
+        {
+          "label": "ערכת התחלה",
+          "description": "מושלם לחזרות מהירות"
+        },
+        {
+          "label": "חבילת סצנות",
+          "description": "השלם פרויקט קצר"
+        },
+        {
+          "label": "חבילת הפקה",
+          "description": "רצף קולנועי מרכזי"
+        },
+        {
+          "label": "ערכת סטודיו",
+          "description": "כושר ייצור מלא"
+        }
+      ],
+      "creditsUnit": "קרדיטים"
+    },
+    "calculator": {
+      "sectionTitle": "קבל הערכה לפרויקט שלך",
+      "sectionSubtitle": "דע בדיוק כמה תשלם לפני שתתחייב",
+      "title": "מחשבון תקציב פרויקט",
+      "subtitle": "הערך את כמות הקרדיטים לפני שתתחיל",
+      "customize": "התאמת פרמטרים",
+      "imagesLabel": "תמונות ליצירה",
+      "videoClipsLabel": "סרטוני וידאו",
+      "voiceoverLabel": "קריינות (דקות)",
+      "byokTitle": "הבא את המפתח שלך (BYOK)",
+      "byokBadge": "מקצועי וסטודיו",
+      "byokDescription": "השתמשו במפתחות ה-API שלכם כדי לחסוך עד 80% בעלויות הקרדיטים של SceneFlow. אתם משלמים ישירות לספקי ה-AI, לפי התעריפים שלהם.",
+      "vertexToggle": "Vertex AI (תמונות ווידאו)",
+      "elevenLabsToggle": "ElevenLabs (קריינות)",
+      "imageGeneration": "יצירת תמונות",
+      "videoGeneration": "יצירת וידאו",
+      "voiceover": "קריינות",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "אומדן כולל",
+      "withTopUps": "עם תוספות",
+      "creditSavings": "SceneFlow חיסכון באשראי",
+      "savePercent": "אתה חוסך {percent}% על נקודות זכות של SceneFlow",
+      "transparency": "שקיפות מלאה: תוכל לראות את ניצול הקרדיטים בזמן אמת תוך כדי עבודה. ללא הפתעות – באפשרותך להתאים את היקף הפרויקט בכל עת.",
+      "transparencyHighlight": "בשקיפות מלאה:",
+      "byokDisclaimer": "BYOK הערה: החיסכון בקרדיטים המוצג משקף אך ורק הפחתות בקרדיטים של פלטפורמת SceneFlow. העלויות בפועל תלויות בתוכניות התמחור של Vertex AI ו-ElevenLabs. תוכניות ארגוניות או תוכניות API בנפח גבוה עשויות להציע חיסכון נוסף.",
+      "byokDisclaimerHighlight": "BYOK הערה:",
+      "presets": [
+        {
+          "id": "מסחרי",
+          "name": "פרסומת באורך 30 שניות"
+        },
+        {
+          "id": "קצר",
+          "name": "סרט קצר באורך 2 דקות"
+        },
+        {
+          "id": "פרק",
+          "name": "פרק של 10 דקות"
+        },
+        {
+          "id": "תכונה",
+          "name": "סרט באורך מלא (90 דקות)"
+        }
+      ],
+      "minSuffix": "דקות"
+    },
+    "tierGrid": {
+      "productionTestFlight": "טיסת ניסוי בייצור",
+      "getStarted": "להתחלה",
+      "startTestFlight": "התחל טיסת ניסוי",
+      "loading": "טוען...",
+      "mostPopular": "הפופולרי ביותר",
+      "creditsPerMonth": "נקודות זכות לחודש",
+      "storage": "אחסון",
+      "perMonth": "/לחודש"
+    },
+    "trust": {
+      "cancelAnytime": "ניתן לבטל בכל עת",
+      "moneyBack": "אחריות להחזר כספי תוך 14 יום",
+      "creditsNeverExpire": "הקרדיטים אינם פוקעים לעולם (חבילת Explorer)"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "description": "רכישה חד-פעמית כדי לנסות",
+        "features": [
+          "רכישה חד-פעמית",
+          "750 נקודות זכות (ללא תאריך תפוגה)",
+          "5GB אחסון (30 ימים)",
+          "גישה מלאה לפלטפורמה",
+          "ייצוא ל-MP4 (בכל רזולוציה)",
+          "קריינות מבוססת בינה מלאכותית (למעלה מ-70 שפות)"
+        ]
+      },
+      "subscriptions": [
+        {
+          "id": "מנה ראשונה",
+          "name": "מנה ראשונה",
+          "description": "עבור יוצרים עצמאיים",
+          "features": [
+            "גישה מלאה לפלטפורמה",
+            "4,500 קרדיטים לחודש כלולים",
+            "25 GB אחסון פעיל",
+            "ייצוא ל-MP4 (בכל רזולוציה)",
+            "קריינות מבוססת בינה מלאכותית (למעלה מ-70 שפות)",
+            "תמיכה בדוא\"ל"
+          ]
+        },
+        {
+          "id": "מקצוען",
+          "name": "מקצועי",
+          "description": "עבור יוצרים מקצועיים",
+          "features": [
+            "כל מה שכלול בתוכנית Starter, ובנוסף:",
+            "15,000 קרדיטים לחודש כלולים",
+            "100 GB של אחסון פעיל",
+            "גישה לאיכות Veo 3.1 (4K)",
+            "מנוע עקביות דמויות",
+            "שכפול קול",
+            "BYOK (הבא את המפתח שלך)",
+            "3 מושבים לצוות",
+            "תמיכה בעדיפות"
+          ]
+        },
+        {
+          "id": "סטודיו",
+          "name": "סטודיו",
+          "description": "עבור צוותים וסוכנויות",
+          "features": [
+            "כל מה שיש ב-Pro, ועוד:",
+            "75,000 קרדיטים לחודש כלולים",
+            "500 GB אחסון פעיל",
+            "תור עדיפות ל-Veo 3.1 4K",
+            "עקביות דמות בלתי-מוגבלת",
+            "ייצוא במודל White-label",
+            "גישה ל-API",
+            "10 מושבים לצוות",
+            "מנהל לקוחות ייעודי",
+            "הסכם רמת שירות (SLA) לארגונים זמין על פי בקשה"
+          ]
+        }
+      ]
     }
   },
   "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
+    "badge": "יש לכם שאלות?",
+    "title": "שאלות נפוצות",
+    "subtitle": "כל מה שצריך לדעת על SceneFlow AI",
     "items": [
       {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+        "question": "כיצד מתנהל תהליך העבודה של SceneFlow, החל מהרעיון ועד לסרטון המוכן לפרסום?",
+        "answer": "SceneFlow משתמשת בתהליך עבודה מובנה: סדרה (אופציונלי) ← Blueprint ← הפקה ← Final Cut ← Premiere. Blueprint מגדירה את מבנה הסיפור וקהל היעד בעזרת Audience Resonance. שלב ההפקה מייצר תסריט, סטוריבורד, סרטון \"ביט\" (beat video) ורצפי סצנות שעברו רינדור. Final Cut מרכיבה את הרצפים שנבחרו לקובץ MP4 ראשי אחד — ללא שימוש בעורך ציר-זמן (timeline editor). Premiere מטפלת בהקרנות, בתובנות אנליטיות, בפרסום ב-YouTube ובחבילות ייצוא."
       },
       {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+        "question": "במה שונה SceneFlow מ-Gemini Studio או מ-Google Flow?",
+        "answer": "Gemini Studio ו-Google Flow מתמקדים ביצירת סרטונים על בסיס הנחיות (prompts). SceneFlow מאגד את תהליך ההפקה המלא: שלבים מובנים עם נקודות ייחוס (baselines) הניתנות לעריכה, Reference Library ו-Beat Frames להבטחת עקביות, Audience Resonance לביצוע לפני תהליכי רינדור יקרים, מיקסר אוטומטי והרכבת רצף (stream assembly), ואימות באמצעות Screening Room לפני הפרסום — הכל בתוך סביבת עבודה מונחית אחת."
       },
       {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+        "question": "האם אני יכול לערוך תסריטים, חזותיים וקטעי שמע שנוצרו על ידי בינה מלאכותית?",
+        "answer": "כן. כל התוצרים שנוצרו נותרים ניתנים לעריכה. ניתן לשכתב תסריטים, להתאים את בימוי הסצנה, ליצור מחדש מקטעים ספציפיים, לכוונן את הקריינות ולדייק את התזמון ב-Production Mixer. ה-Final Cut מבצע רק חיבור (stitching) של רצפים מוכנים – שינויים יצירתיים נשארים בשלב הקודם, ב-Production."
       },
       {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+        "question": "כיצד פועל כעת Target Audience Resonance?",
+        "answer": "Audience Resonance משלבת ניתוח של המבנה העלילתי (בהירות, קצב, קשת רגשית) עם התאמה לפרסונת היעד – בהתבסס על הקהל שהגדרת ב-Blueprint, ולא על נתוני שימור משתמשים לאחר הפרסום. המערכת מספקת המלצות ברמת המקטע ואפשרויות תיקון בלחיצה אחת עבור הסדרה, Blueprint ובדיקת התסריט, עוד לפני שלב הרינדור הכבד."
       },
       {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
+        "question": "האם אני יכול להפיק סרטוני נכס או סרטוני שיווק רב-לשוניים?",
+        "answer": "כן. ניתן ליצור ולהתאים מקומית סרטונים ביותר מ-70 שפות, תוך שימוש בתהליכי עבודה מסונכרנים מבחינת תזמון. בדרך כלל, צוותים יוצרים גרסת \"מאסטר\" אחת, ולאחר מכן מפיקים גרסאות בשפות שונות עבור קונים, לקוחות או קהלים אזוריים ברחבי העולם."
       },
       {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "question": "מה עושה Premiere אם Screening Room הוא שלב הבחינה?",
+        "answer": "Screening Room הוא ממשק הבחינה והסקירה בתוך Premiere – וכן משמש לתצוגה מקדימה של סטוריבורד (לוח תסריט) בשלב ההפקה. ניתן לשתף קישורים, לאסוף משוב מבעלי עניין ונתוני מעורבות (בכפוף להסכמת הצופה), לבחון ציונים ותובנות ויזואליות, ולאחר מכן לפרסם באמצעות אשף YouTube או לייצא חבילות תוצר."
       },
       {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
+        "question": "האם אני זקוק לניסיון טכני או לניסיון בעריכה?",
+        "answer": "לא. SceneFlow נבנתה עבור יוצרים וצוותים ללא רקע טכני. אתם מתחילים עם קלט מונחה ותוצרים ראשוניים (baselines) מבוססי-AI הניתנים לעריכה בכל שלב – ללא צורך בהנדסת פרומפטים מורכבת או בשילוב של כלים רבים."
       },
       {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
+        "question": "כיצד פועלת תוכנית Explorer?",
+        "answer": "תמורת 9 דולר, תקבלו 750 קרדיטים לבחינת תהליך העבודה המלא באמצעות רכישה חד-פעמית. האפשרות הזו נועדה לשמש כפיילוט מעשי, המאפשר לכם לבצע משימות אמיתיות – החל משלב הרעיון ועד ליצירת הסרטון – עוד לפני שתבחרו בתוכנית חודשית."
       },
       {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
+        "question": "כיצד מטפלים בזיכויים וב-BYOK?",
+        "answer": "המעקב אחר נקודות זכות (credits) מתבצע בתוך הפלטפורמה, כך שצוותים יכולים לנהל את התקציב לפי שלבי תהליך העבודה. תוכניות Pro ו-Studio תומכות גם באפשרות \"הבא מפתח משלך\" (Bring Your Own Key) עבור ספקים נתמכים, ובכך מעניקות שליטה נוספת בעלויות לארגונים בעלי חוזים קיימים מול ספקים."
       },
       {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+        "question": "מה אני יכול ליצור באופן מעשי באמצעות SceneFlow?",
+        "answer": "צוותים משתמשים ב-SceneFlow עבור סיורים בנכסי נדל\"ן, תכנים חינוכיים, פודקאסטים המשלבים סיפור חזותי, סרטוני הסבר חדשותיים, קמפיינים ממותגים וסדרות פרקים בסגנון קולנועי. אותו תהליך עבודה תומך בהפקה של תכנים קצרים וארוכים כאחד."
       }
     ]
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
-    "cta": "Launch Your Studio for $9"
+    "title": "מוכנים לבדוק את ה-pipeline המלא?",
+    "subtitle": "בצעו את כל התהליך – מקונספט וסטוריבורד ועד וידאו וקובץ MP4 סופי – בסטודיו אחד. התחילו עם התוכנית ב-9$ (קוד: Explorer) וראו בפעולה את תהליך העבודה המתמקד במקצב (beat-first).",
+    "cta": "השיקו את הסטודיו שלכם ב-9 דולר"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
-    "product": "Product",
-    "resources": "Resources",
-    "legal": "Legal",
+    "description": "הפקה אוטומטית של סרטונים מקצה לקצה – מהרעיון ועד לקובץ סופי מוכן לפרסום. סטודיו אחד מונחה: Blueprint ← הפקה ← Final Cut ← Premiere.",
+    "product": "מוצר",
+    "resources": "משאבים",
+    "legal": "משפטי",
     "links": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "howItWorks": "How It Works",
-      "faq": "FAQ",
-      "gettingStarted": "Getting Started",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "trustSafety": "Trust & Safety",
-      "refunds": "Refund Policy",
-      "contact": "Contact Us"
+      "features": "תכונות",
+      "pricing": "תמחור",
+      "howItWorks": "איך זה עובד",
+      "faq": "שאלות נפוצות",
+      "gettingStarted": "תחילת העבודה",
+      "privacy": "מדיניות פרטיות",
+      "terms": "תנאי שימוש",
+      "trustSafety": "אמון ובטיחות",
+      "refunds": "מדיניות החזרים כספיים",
+      "contact": "צור קשר"
     },
-    "tagline": "Made with ❤️ for creators",
-    "taglineSub": "From Idea to Published Video",
-    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
-    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "tagline": "נוצר עם ❤️ עבור יוצרים",
+    "taglineSub": "מרעיון לסרטון שפורסם",
+    "securePayments": "תשלומים מאובטחים המעובדים על ידי Whop, הגורם האחראי על העסקה (Merchant of Record)",
+    "morLine": "תשלומים מאובטחים, חישוב מס ועמידה בדרישות הרגולציה מטופלים על ידי Whop – הגורם המשמש כסוחר הרשמי (Merchant of Record) מטעמנו – עבור Life Focus, LLC.",
+    "copyright": "© 2026 SceneFlow AI. כל הזכויות שמורות.",
+    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • ליצירת קשר: brian@sfai.studio",
+    "poweredBy": "מופעל על ידי Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "See Pricing",
-    "tryNine": "Try $9",
-    "tryForNine": "Try for $9",
-    "dismiss": "Dismiss"
+    "seePricing": "צפה במחירים",
+    "tryNine": "נסה 9 דולר",
+    "tryForNine": "נסה ב-9 דולר",
+    "dismiss": "בטל"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
-    "pause": "Pause",
-    "play": "Play",
-    "mute": "Mute",
-    "unmute": "Unmute"
+    "pause": "השהיה",
+    "play": "נגן",
+    "mute": "השתק",
+    "unmute": "בטל השתקה",
+    "expandVideo": "הגדל את הסרטון"
   }
 }

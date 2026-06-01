@@ -1,618 +1,1411 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
-    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
+    "title": "SceneFlow AI – Tekoälypohjainen videoiden luominen",
+    "description": "Muuta ideasi ammattimaisiksi videoiksi tekoälypohjaisen työnkulun automatisoinnin avulla."
   },
   "nav": {
-    "workflow": "The Workflow",
-    "platformWalkthrough": "Platform Walkthrough",
-    "plansPricing": "Plans & Pricing",
-    "more": "More",
-    "useCases": "Use Cases",
+    "workflow": "Työnkulku",
+    "platformWalkthrough": "Alustan esittely",
+    "plansPricing": "Paketit ja hinnat",
+    "more": "Lisää",
+    "useCases": "Käyttötapaukset",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform & Trust",
-    "faq": "FAQ",
-    "signIn": "Sign In",
-    "startProject": "Start a Project",
-    "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "platformTrust": "Alusta ja luottamus",
+    "faq": "Usein kysytyt kysymykset",
+    "signIn": "Kirjaudu sisään",
+    "startProject": "Aloita projekti",
+    "dashboard": "Kojelauta",
+    "adminPanel": "Hallintapaneeli",
+    "signOut": "Kirjaudu ulos",
+    "goToDashboard": "Siirry hallintapaneeliin",
+    "userFallback": "Käyttäjä",
+    "searchLanguages": "Etsi kieliä...",
+    "noLanguagesFound": "Kieliä ei löytynyt"
   },
   "floatingNav": {
-    "compare": "Compare",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "platformWalkthrough": "Platform Walkthrough",
-    "platform": "Platform",
-    "pricing": "Pricing",
-    "faq": "FAQ"
+    "compare": "Vertaa",
+    "howItWorks": "Näin se toimii",
+    "useCases": "Käyttötapaukset",
+    "platformWalkthrough": "Alustan esittely",
+    "platform": "Alusta",
+    "pricing": "Hinnoittelu",
+    "faq": "Usein kysytyt kysymykset"
   },
   "hero": {
-    "headline": "Make professional video without a production team or a dozen apps.",
-    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.",
-    "ctaSecondary": "Watch the 'What's Possible'",
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "headline": "Lopeta viiden eri tekoälyvälilehden välillä hyppiminen. Yksi studio vie sinut ideasta julkaisuvalmiiseen videoon.",
+    "subheadline": "Kaikki yhdessä paikassa: ohjattu tuotantoprosessi ideasta julkaisuvalmiiseen videoon. Näet kuvakäsikirjoituksen ennen lopullisesta videosta maksamista – hyväksy visuaalinen ilme sen sijaan, että tuhlaisit krediittejä yrityksen ja erehdyksen kautta tehtäviin kokeiluihin. SceneFlow automatisoi rutiinityöt – kuten käsikirjoituksen, kuvakäsikirjoituksen, ääniraidan ja editoinnin – mutta antaa sinun hallita videon jokaista vaihetta.",
+    "audienceMicroLine": "Luotu tekijöille, jotka haluavat tuloksia, ja tiimeille, jotka haluavat nähdä, miten se toimii.",
+    "ctaSecondary": "Katso ”What’s Possible”",
+    "ctaToolStack": "Katso, miten se korvaa nykyisen työkalukokonaisuutesi.",
+    "languagePrompt": "Kuule sankari omalla kielelläsi – sama tuotantoprosessi, uudet markkinat",
+    "multilangHint": "Pääasiallinen dubbaus seitsemällä kielellä – koko tuotantoprosessi tukee yli 70:tä kieltä.",
+    "playWithNarration": "Toista kerronnan kera",
+    "tapToHear": "Napauta kuullaksesi",
+    "fullscreen": "Koko näyttö",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
-        "nativeLabel": "English"
+        "label": "englanti",
+        "nativeLabel": "englanti"
       },
       "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
+        "label": "Espanja",
+        "nativeLabel": "Espanja"
       },
       "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
+        "label": "Portugali",
+        "nativeLabel": "Portugali"
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "हिन्दी"
+        "nativeLabel": "hindi"
       },
       "zh": {
-        "label": "Chinese",
-        "nativeLabel": "中文"
+        "label": "kiina",
+        "nativeLabel": "kiina"
       },
       "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
+        "label": "Arabia",
+        "nativeLabel": "Arabia"
       },
       "th": {
         "label": "Thai",
-        "nativeLabel": "ไทย"
+        "nativeLabel": "Thaimaa"
       }
     },
-    "soon": "Soon"
+    "soon": "Pian"
   },
   "valueProp": {
     "pills": [
       {
         "label": "One Studio",
-        "detail": "Concept to publish in one place"
+        "detail": "Konsepti julkaistavaksi yhdessä paikassa"
       },
       {
-        "label": "Approve Before Final Video",
-        "detail": "Review storyboard beats before you render"
+        "label": "Hyväksy ennen lopullista videota",
+        "detail": "Tarkista kuvakäsikirjoituksen vaiheet ennen renderöintiä."
       },
       {
-        "label": "Test Your Story First",
-        "detail": "Know what lands before heavy spend"
+        "label": "Testaa tarinasi ensin",
+        "detail": "Varmista tulokset ennen suuria panostuksia."
       },
       {
-        "label": "Publish-Ready Output",
-        "detail": "Master MP4 + distribution bundles"
+        "label": "Julkaisuvalmis tuotos",
+        "detail": "Master-MP4 + jakelupaketit"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Who are you? Pick your path",
-    "seeExamples": "See examples",
-    "examplesFor": "Examples for {label}:",
-    "andMore": ", and more.",
+    "prompt": "Kuka olet? Valitse polkusi.",
+    "seeExamples": "Katso esimerkkejä",
+    "examplesFor": "Esimerkkejä kohteelle {label}:",
+    "andMore": ", ja paljon muuta.",
+    "modes": {
+      "automate": {
+        "label": "Automatisoi se",
+        "description": "Ohjattu työnkulku – hyväksy kuvakäsikirjoitukset, julkaise nopeammin"
+      },
+      "engine": {
+        "label": "Näytä minulle moottori",
+        "description": "Arkkitehtuuri, BYOK ja alustan syvyys"
+      }
+    },
     "paths": [
       {
-        "id": "creator",
-        "label": "Creator",
-        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "id": "luoja",
+        "label": "Luoja",
+        "outcome": "Toimita ajallaan – lopeta uudelleenrakentaminen jokaisessa työkalussa",
         "useCases": [
-          "YouTube & episodic series",
-          "Video podcasts & show clips",
-          "Hyper-local & JIT news",
-          "Documentaries & docuseries",
-          "How-to & skill channels",
-          "Sports recaps & commentary"
+          "YouTube ja jaksoittaiset sarjat",
+          "Videopodcastit ja ohjelmapätkät",
+          "Hyperpaikalliset ja täsmäaikaiset uutiset",
+          "Dokumentit ja dokumenttisarjat",
+          "Ohje- ja taitokanavat",
+          "Urheilukoosteet ja -kommentit"
         ]
       },
       {
-        "id": "team",
-        "label": "In-house team",
-        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "id": "tiimi",
+        "label": "Sisäinen tiimi",
+        "outcome": "Korvaa hitaat toimittajaprosessit – hallitse brändiä ja budjettia",
         "useCases": [
-          "Corporate L&D & compliance",
-          "Internal comms & town halls",
-          "Product explainers for sales",
-          "HR recruitment & culture",
-          "K-12 / higher-ed lessons",
-          "Public health & safety updates"
+          "Yrityksen osaamisen kehittäminen ja säädöstenmukaisuus",
+          "Sisäinen viestintä ja henkilöstöinfot",
+          "Tuote-esittelyt myynnin tueksi",
+          "HR-rekrytointi ja -kulttuuri",
+          "Perus- ja toisen asteen sekä korkeakoulutuksen oppitunnit",
+          "Päivitykset kansanterveydestä ja -turvallisuudesta"
         ]
       },
       {
-        "id": "productionShop",
-        "label": "Production shop",
-        "outcome": "Productize a niche with repeatable intake → delivery",
+        "id": "tuotantopaja",
+        "label": "Tuotantopaja",
+        "outcome": "Tuotteista markkinarako toistettavalla prosessilla: asiakkaan vastaanotto → palvelun toteutus",
         "useCases": [
-          "Video memoir packages",
-          "Legacy & tribute videos",
-          "Voice-cloned narration",
-          "White-label studio templates",
-          "Real estate & hospitality tours",
-          "Subscription video services"
+          "Videomuistelmapaketit",
+          "Perintö- ja kunnianosoitusvideot",
+          "Äänikloonattu kerronta",
+          "White-label-studiopohjat",
+          "Kiinteistö- ja majoitusalan esittelykierrokset",
+          "Tilauspohjaiset videopalvelut"
         ]
       },
       {
-        "id": "agency",
-        "label": "Agency",
-        "outcome": "Faster pitches and scalable client delivery",
+        "id": "virasto",
+        "label": "Toimisto",
+        "outcome": "Nopeammat myyntiesitykset ja skaalautuva palvelun toteutus",
         "useCases": [
-          "Client pitch pre-viz",
-          "Product launch campaigns",
-          "Case studies & testimonials",
-          "Event & conference promos",
-          "Multi-language campaigns",
-          "Property marketing for clients"
+          "Asiakasesittelyn esivisualisointi",
+          "Tuotelanseerauskampanjat",
+          "Asiakastarinat ja suositukset",
+          "Tapahtuma- ja konferenssimarkkinointi",
+          "Monikieliset kampanjat",
+          "Kiinteistömarkkinointi asiakkaille"
         ]
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Why SceneFlow vs prompt-and-generate tools",
-    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "title": "Miksi SceneFlow eikä kehotteisiin perustuvat generointityökalut?",
+    "subtitle": "Gemini Studio ja Google Flow ovat erinomaisia leikkeiden käsittelyssä. SceneFlow kattaa koko tuotannon työnkulun.",
     "rows": [
       {
-        "them": "Prompt + clip generation in isolation",
-        "us": "Structured phases with editable baselines at each step"
+        "them": "Kehotteen ja leikkeen generointi erillään",
+        "us": "Jäsennellyt vaiheet, joissa on muokattavat vertailutasot kussakin vaiheessa"
       },
       {
-        "them": "Manual consistency across sessions",
-        "us": "Reference Library + Beat Frames lock visuals before video"
+        "them": "Manuaalinen yhdenmukaisuus istuntojen välillä",
+        "us": "Reference Library + Beat Frames lukitsee kuvan ennen videota"
       },
       {
-        "them": "No audience validation workflow",
-        "us": "Audience Resonance before render; Screening Room before publish"
+        "them": "Ei yleisön vahvistusprosessia",
+        "us": "Audience Resonance ennen renderöintiä; Screening Room ennen julkaisua"
       },
       {
-        "them": "No production pipeline or handoff",
-        "us": "Script → streams → assembly → distribution in one app"
-      },
-      {
-        "them": "Complex model and settings surface",
-        "us": "Guided Studio UX with credits and BYOK guardrails"
+        "them": "Ei tuotantoputkea tai luovutusvaihetta",
+        "us": "Käsikirjoitus → striimit → kokoaminen → jakelu yhdessä sovelluksessa"
       }
     ],
-    "themHeader": "Typical clip-generation tools",
-    "usHeader": "SceneFlow bundles"
+    "themHeader": "Tyypilliset leikkeiden luontityökalut",
+    "usHeader": "SceneFlow-paketit"
   },
   "beatFirstPipeline": {
-    "title": "Beat-First Video Pipeline",
-    "subtitle": "Approve before you render — not slot-machine regeneration",
-    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "title": "Iskuun pohjautuva videotuotantoprosessi",
+    "subtitle": "Hyväksy ennen renderöintiä – ei peliautomaattimaista uudelleenluontia",
+    "intro": "Ei arvailuun ja kokeiluun perustuvaa generointia. Näet esikatselun ja hyväksyt ulkoasun, ennen kuin SceneFlow käyttää krediittejä lopulliseen videoon.",
+    "description": "SceneFlow jäsentää visuaalisen hyväksynnän joka vaiheessa: Express storyboard tarkistusta varten, Beat Frames sommittelun lukitsemiseen ja sen jälkeen F2V kunkin tahdin kohdalla. Viimeistelet ulkoasun ennen kuin kulutat krediittejä ajautumiseen ja hallusinaatioihin.",
     "steps": [
-      "Express storyboard — share audio-visual beats for review in minutes",
-      "Beat Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Express storyboard — jaa audiovisuaalisia biittejä tarkistettavaksi minuuteissa",
+      "Beat Frames — lukitse alku-/loppukoostumus Reference Library-jatkuvuudella",
+      "F2V tahtia kohden – luo video hyväksytyistä ruuduista sokeiden kehotteiden sijaan.",
+      "Production Mixer — ajoitus, ääni ja striimin vienti Final Cut-kokoonpanoon"
     ],
-    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+    "footerLine": "Vähemmän kolikkopeliosioiden uudelleentekemistä – hyväksy visuaalinen ilme ennen videotuotannon loppuvaiheen kustannuksia."
+  },
+  "toolStack": {
+    "badge": "Kuulostaako tutulta?",
+    "title": "Rikkoutunut tapa vs. SceneFlow-tapa",
+    "subtitle": "Yhden videon julkaiseminen ei saisi vaatia viittä selainvälilehteä, kopioi ja liitä -työvaiheita eikä uuvuttavaa kehotteiden laatimista.",
+    "brokenWay": {
+      "title": "Rikkoutunut tie",
+      "tagline": "Pirstaleinen. Manuaalinen. Uuvuttava.",
+      "tools": [
+        {
+          "name": "ChatGPT",
+          "category": "Käsikirjoitusluonnokset"
+        },
+        {
+          "name": "Midjourney",
+          "category": "Yksittäiset kuvat"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "VO:n manuaalinen vienti"
+        },
+        {
+          "name": "Premiere",
+          "category": "Manuaalinen kokoonpano"
+        }
+      ],
+      "chaosLabel": "Viisi välilehteä. Yhteys katosi.",
+      "painPoints": [
+        "Kopiointi ja liittäminen sovellusten välillä",
+        "Kehotteisiin liittyvä väsymys ja uudelleenluontikierteet",
+        "Ei yleisön tarkistusta ennen kuluttamista",
+        "Versiokaaos vientiaineistoissa"
+      ],
+      "timeLabel": "Tyypillinen projektin kesto",
+      "timeValue": "2–4 viikkoa"
+    },
+    "sceneflowWay": {
+      "title": "SceneFlow-tapa",
+      "tagline": "Yksi studio. Hyväksy ennen renderöintiä.",
+      "stages": [
+        {
+          "label": "Blueprint",
+          "detail": "Jäsennelty tarinasuunnitelma"
+        },
+        {
+          "label": "Lähteet",
+          "detail": "Johdonmukaiset hahmot"
+        },
+        {
+          "label": "Tuotanto",
+          "detail": "Ääni ja visuaalinen ilme"
+        },
+        {
+          "label": "Julkaise",
+          "detail": "Yksi master-MP4"
+        }
+      ],
+      "syncLabel": "Yksi projektitiedosto – ei välilehtien välillä hyppimistä",
+      "benefits": [
+        "Ohjatut vaiheet – ei kehotemuotoilua",
+        "Kuvakäsikirjoituksen hyväksyntä ennen videon lopputekstejä",
+        "Audience Resonance pistemäärä ennen raskasta renderöintiä",
+        "Julkaisuvalmis master samasta studiosta"
+      ],
+      "timeLabel": "Tyypillinen projektin kesto",
+      "timeValue": "2–4 päivää"
+    },
+    "comparisonCaption": "Yksi studio korvaa hajanaiset kehote- eli prompt-työkalut, manuaaliset muokkaukset ja alustojen väliset siirrot.",
+    "comparisonImageAlt": "Perinteisen tuotannon yleiskustannukset vs. SceneFlow-automaatiostudio – nopeampi reitti konseptista julkaisuvalmiiksi videoksi"
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
-    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "title": "Tuotantonopeus ilman hallinnollista taakkaa",
+    "subtitle": "Korvaa hajanaiset kehotetyökalut ja manuaalinen kokoaminen yhdellä automatisoidulla studiolla – ensimmäisestä konseptista julkaisuvalmiiseen master-versioon.",
+    "caption": "Yksi studio korvaa hajanaiset kehote- eli prompt-työkalut, manuaaliset muokkaukset ja alustojen väliset siirrot.",
+    "imageAlt": "Perinteisen tuotannon yleiskustannukset vs. SceneFlow-automaatiostudio – nopeampi reitti konseptista julkaisuvalmiiksi videoksi"
   },
   "howItWorks": {
-    "title": "From concept to publish-ready video",
-    "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
-    "tagline": "Every step is expertly automated. Every step gives you full control.",
-    "optionalBadge": "Optional",
-    "optionalSuffix": " (optional)",
-    "readyTitle": "Ready to test the full pipeline?",
-    "explorerCta": "Start with Explorer — $9",
+    "title": "Konseptista julkaisuvalmiiksi videoksi",
+    "titleAccent": "Yksi ohjattu putki",
+    "subtitle": "Sarja on valinnainen. Ydinpolku on Blueprint → Tuotanto → Final Cut → Premiere – matkan varrella ovat kuvakäsikirjoitus-, animatiikka-, video- ja master-MP4-vaiheet.",
+    "tagline": "Jokainen vaihe on automatisoitu asiantuntevasti. Jokainen vaihe antaa sinulle täyden hallinnan.",
+    "optionalBadge": "Valinnainen",
+    "optionalSuffix": " (valinnainen)",
+    "readyTitle": "Oletko valmis testaamaan koko putken?",
+    "explorerCta": "Aloita Explorer-vaihtoehdolla – 9 $",
     "phases": [
       {
-        "id": "series",
-        "stepLabel": "Series",
-        "subtitle": "Showrunner Engine",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "id": "sarja",
+        "stepLabel": "Sarja",
+        "subtitle": "Showrunner-moottori",
+        "description": "Määritä maailmasi kertaalleen ja luo yhtenäisiä, usean jakson mittaisia tarinakaaria. Yhteinen Reference Library pitää hahmot ja sävyn johdonmukaisina koko kauden ajan.",
         "keySteps": [
-          "Define universe — characters, tone, and season arc",
-          "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "Määrittele maailma – hahmot, sävy ja kauden kaari",
+          "Luo automaattisesti jaksojen rungot koko kaudelle",
+          "Synkronointi Blueprint-järjestelmään ja jaksokohtainen tuotanto"
         ],
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
-        ],
-        "optional": true
+          "Määritä maailmasi kertaalleen – hahmot, sävy ja kauden kaari.",
+          "Yhtenäiset jaksojen rungot – automaattisesti luotuna koko kauden ajalle",
+          "Jatkuvuuden seuranta – usean jakson kausien yhteensovittaminen",
+          "Sarjan ja jakson synkronointi – Blueprint-studioon ja -tuotantoon"
+        ]
       },
       {
-        "id": "blueprint",
+        "id": "piirustus",
         "stepLabel": "Blueprint",
-        "subtitle": "Story Development",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "subtitle": "Tarinan kehittäminen",
+        "description": "Muunna konseptit jäsennellyiksi käsikirjoitusluonnoksiksi, jotka sisältävät tiivistelmän (logline), juonenkäänteet, hahmot ja sävyn. Suorita Audience Resonance ja tee yhteistyötä ennen raskaiden renderöintien aloittamista.",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
-          "Audience Resonance scoring with 80+ target",
-          "Collaborator share links and export (PDF, Doc, PPTX)"
+          "Luonti → Tarkistus → Iterointi → Tuotannon aloitus",
+          "Audience Resonance pisteytys vähintään 80 pisteen tavoitteella",
+          "Yhteistyökumppanien jakolinkit ja vienti (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
-        ],
-        "optional": false
+          "Luominen → Tarkistus → Iterointi → Tuotannon käynnistys – työnkulku",
+          "Ideasta rakenteeksi minuuteissa – logline, käännekohdat, hahmot ja sävy",
+          "Audience Resonance pisteytys yli 80 pisteen tavoitteella ennen tuotantoa",
+          "Yhteistyökumppanien jakolinkit – palautteen kokoaminen ohjatuksi muokkausvaiheeksi"
+        ]
       },
       {
-        "id": "production",
-        "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "id": "tuotanto",
+        "stepLabel": "Tuotanto",
+        "subtitle": "Käsikirjoituksesta suoratoistoksi",
+        "description": "Script- ja Action-välilehdet ohjaavat prosessia: Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, mikseri ja MP4-virrat – ei tarvetta vaihtaa työkalua.",
         "keySteps": [
-          "Lock script, voices, and scene audio",
-          "Express storyboard — gallery and share for review",
-          "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "Lukitse käsikirjoitus, puheäänet ja kohtausten äänet",
+          "Express storyboard — galleria ja jakaminen tarkastelua varten",
+          "Beat Frames → Ohjaajakonsoli → Renderöintivirta",
+          "Lähetä valmiit tietovirrat kohteeseen Final Cut"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
-        ],
-        "optional": false
+          "Foundation – käsikirjoitus, äänet, kohtauksen ääniraita, lukitse käsikirjoitus",
+          "Express storyboard — suunta ja ruudut minuuteissa; galleria ja jakaminen",
+          "Beat Frames ja mikseri — aloitus- ja lopetusruudut, ohjaajakonsoli, MP4-striimien renderöinti",
+          "Tuotantovirrat – tarkista tulosteet, renderöi vanhentuneet osat uudelleen, lähetä kohteeseen Final Cut"
+        ]
       },
       {
-        "id": "final-cut",
+        "id": "lopullinen versio",
         "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "subtitle": "Virran kokoaminen",
+        "description": "Yhdistä valmiit tuotantostriimit yhdeksi MP4-pääversioksi. Valitse Animatic tai määritä video ja kieli kohtauskohtaisesti – aikajanalla ei tehdä muokkauksia, vaan luovat muutokset pysyvät Production Mixer-versiossa.",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
+          "Valitse striimit kohtausta kohden – esiasetus tai mukautettu yhdistelmä",
+          "Esikatsele koko ohjelma käsikirjoituksen mukaisessa järjestyksessä",
+          "Vie yksi master-MP4 kohteelle Premiere"
         ],
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
+          "Kohtauskohtainen striimivalinta — Animatic, video, kieli, versio",
+          "Koosteen esiasetukset – Kaikki video, Hybridi, Mukautettu yhdistelmä",
+          "Ei aikajanalla tapahtuvaa muokkausta – luovat muutokset pysyvät Production Mixer-ohjelmistossa.",
+          "Master-viennin yhdellä napsautuksella – yhdistetty MP4 kohteelle Premiere"
+        ]
       },
       {
-        "id": "premiere",
+        "id": "ensi-ilta",
         "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "subtitle": "Jakelukeskus",
+        "description": "Tarkastele master-versiota yleisöanalytiikan avulla, julkaise se YouTubessa lokalisoiduilla metatiedoilla tai vie paketteja Shorts-, Reels- ja TikTok-alustoille.",
         "keySteps": [
-          "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
+          "Luo näytös ja jaa /s/-linkki",
+          "Arvostelupisteet, sitoutuminen ja visuaaliset näkemykset",
+          "YouTube-ohjattu toiminto tai vientipaketti"
         ],
         "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "optional": false
+          "Jaettavissa oleva Screening Room — /s/-linkit, joihin sisältyy pisteytys ja valinnainen sitoutumisanalytiikka (katsojan suostumuksella)",
+          "Insights-koontinäyttö – Pisteytys-, biometria- ja visuaaliset välilehdet",
+          "YouTube-taituri – pikkukuva, lokaloitu otsikko ja kuvaus, SceneFlow toimintakehote",
+          "Vientipaketit ja suunnitelmat pystysuuntaisille lyhytvideoille"
+        ]
       }
     ]
   },
   "useCases": {
-    "badge": "Production Applications",
-    "title": "Whatever Video You Can Imagine,",
-    "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "badge": "Tuotantosovellukset",
+    "title": "Millaisen videon tahansa voitkin kuvitella,",
+    "titleAccent": "Rakenna se SceneFlow-ympäristössä",
+    "subtitle": "Kiinteistöesittelyt, koulutusmateriaalit, podcastit, uutisformaatit, brändikampanjat ja elokuvalliset tarinat – yksi automatisoitu studio konseptista julkaisuvalmiiseen master-versioon.",
+    "qualifyingStatement": "SceneFlow muuttaa alkuperäiset valokuvat, ladatut tiedostot ja kuvaukset selostetuiksi esittelyvideoiksi – halutessasi voit lisätä niihin puhetta ja hahmoja. Kyseessä on tekoälyllä muokattu esitysmuoto: aineistoosi pohjautuva realistinen visualisointi, ei kameralla kuvattu video. Tarkista ja hyväksy jokainen kuvakäsikirjoitus ennen julkaisua ja merkitse lopputulokset selkeästi, jotta katsojat tietävät, mitä he katsovat.",
     "ui": {
-      "useCases": "Use Cases",
-      "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo coming soon",
-      "selectExample": "Select an example to preview its demo"
+      "useCases": "Käyttötapaukset",
+      "sectors": "{count} SEKTORIA",
+      "demoComingSoon": "Demo tulossa pian",
+      "selectExample": "Valitse esimerkki esikatsellaksesi sen demoa.",
+      "targetPersona": "Kohdepersoona",
+      "theChallenge": "Haaste",
+      "sceneFlowSolution": "SceneFlow-ratkaisu",
+      "beforeVsAfter": "Ennen ja jälkeen",
+      "before": "Ennen",
+      "after": "Jälkeen",
+      "theWin": "”Voitto”",
+      "frameAnchoredTitle": "Kehykseen ankkuroitu jatkuvuus",
+      "frameAnchoredDescription": "SceneFlow on ainoa työkalu, joka mahdollistaa ruutuun sidotun jatkuvuuden ja varmistaa, että asiakkaasi tuote tai hahmo pysyy täysin samanlaisena kaikissa kohtauksen osissa.",
+      "closePreview": "Sulje esikatselu",
+      "expandVideo": "Laajenna video",
+      "expandImage": "Suurenna kuva",
+      "orStartExplorer": "aloita 9 dollarin Explorer-paketilla",
+      "orPrefix": "Tai"
+    },
+    "personas": {
+      "creator": {
+        "label": "Itsenäinen sisällöntuottaja",
+        "title": "YouTube-sisällöntuottaja",
+        "beforeAfter": {
+          "before": "40 tuntia",
+          "after": "25 minuuttia"
+        },
+        "challenge": {
+          "title": "B-kuvamateriaalin pullonkaula",
+          "description": "Sinulla on vahva käsikirjoitus, mutta suurin osa ajastasi kuluu kuvamateriaalin etsimiseen, editointityön koordinointiin ja kohtausten välisen johdonmukaisuuden varmistamiseen. Tämä viivästys hidastaa julkaisutahtia ja heikentää yleisön sitoutumista."
+        },
+        "solution": {
+          "title": "Automatisoitu tarinankertoja",
+          "description": "Muuta käsikirjoitukset nopeasti tuotantovalmiiksi visuaaliseksi sisällöksi ja säilytä hahmojen sekä tyylin yhtenäisyys ensimmäisestä kohtauksesta julkaisuvalmiiseen lopputulokseen saakka.",
+          "features": [
+            "Visuaalinen ilme, joka vastaa selkeästi käsikirjoituksen vaiheita",
+            "Johdonmukaiset päähenkilöt kaikissa kohtauksissa",
+            "Laajenna tuotantoa jaksoittaisiin sarjoihin jaetun viitekirjaston avulla"
+          ]
+        },
+        "win": "Siirry satunnaisista latauksista luotettavaan tuotantorytmiin, joka vaatii vähemmän hallinnollista työtä.",
+        "keyPhrases": [
+          "Nopeampi läpimenoaika",
+          "Johdonmukaiset hahmot",
+          "Sarjatuotantovalmis työnkulku"
+        ]
+      },
+      "team": {
+        "label": "Sisäinen tiimi",
+        "title": "Yrityksen sisäinen videotiimi",
+        "beforeAfter": {
+          "before": "6 viikkoa",
+          "after": "Sama viikko"
+        },
+        "challenge": {
+          "title": "Toimittajan työjono ja brändin suunnan lipsuminen",
+          "description": "Viestintä-, koulutus- ja markkinointitiimit joutuvat odottamaan viikkoja videoiden valmistumista toimistoilta tai palveluntarjoajilta. Jokainen kuvaus tuo mukanaan brändin epäjohdonmukaisuutta, yllättäviä laskuja ja hyväksyntäprosesseja, jotka viivästyttävät kampanjoita."
+        },
+        "solution": {
+          "title": "Oman tuotannon valmistus saman viikon aikana",
+          "description": "Teetä videoita henkilöstöllä ennakoitavissa olevan krediittibudjetin puitteissa – hyödyntäen brändipohjia ja hyväksyntäkierrosta ennen lopullista renderöintiä, ilman kuvauspäiväkuluja tai loputtomia editointikierroksia.",
+          "features": [
+            "Korvaa ulkopuolisten toimittajien toteuttamat kuvaukset ohjatuilla sisäisillä työnkuluilla.",
+            "Brändin mukaiset mallipohjat ja viitekirjastot",
+            "Projektikohtainen näkyvyys krediittien käyttöön ja budjettirajoituksiin",
+            "Hyväksy kuvakäsikirjoitukset ennen lopullisen videon maksamista."
+          ]
+        },
+        "win": "Julkaise koulutus-, viestintä- ja kampanjavideoita omassa aikataulussasi – etkä palveluntarjoajan työjonon ehdoilla.",
+        "keyPhrases": [
+          "Ennakoitavissa oleva kustannus",
+          "Brändin hallinta",
+          "Valmistuminen saman viikon aikana"
+        ]
+      },
+      "productionShop": {
+        "label": "Tuotantopaja",
+        "title": "Erikoistuotantoon keskittyvä yritys",
+        "beforeAfter": {
+          "before": "8 000 $ / kuvauskerta",
+          "after": "200 dollarin saldo"
+        },
+        "challenge": {
+          "title": "Räätälöidyt toimialakohtaiset ratkaisut, ei toistettavaa järjestelmää",
+          "description": "Muistelmateosten, perintöprojektien, kiinteistöalan ja koulutuksen parissa toimivat asiakkaat tarvitsevat nopeaa toimitusta – mutta jokainen projekti aloitetaan alusta. Tiedostojen lataaminen, äänen kloonaus ja avatarit eivät skaalaudu ilman vakioitua prosessia, joka kattaa kaiken lähtötiedoista valmiiseen toimitukseen."
+        },
+        "solution": {
+          "title": "Tuotteista videopalvelusi",
+          "description": "Luo toistettavia työnkulkuja muistelmateoksia tuottaville studioille ja erityisaloille. Hyödynnä pohjia, äänen kloonausta, avatareja ja kuvakäsikirjoitusten hyväksyntää – räätälöi ratkaisut asiakaskohtaisesti ja kasvata katetta volyymin avulla.",
+          "features": [
+            "Muistelmapohjat, joissa on mahdollisuus ladata kuvia, kloonata ääni ja käyttää avatar-juontajaa",
+            "Asiakkaan vastaanotto on sidottu Blueprint-vaiheeseen ja kuvakäsikirjoituksen hyväksymisvaiheisiin.",
+            "White-label-studiopaketit perintö-, kunnianosoitus- ja tilauspohjaisille videoille",
+            "Kate krediiteistä kuvauskohtaisten yleiskustannusten sijaan"
+          ]
+        },
+        "win": "Lanseeraa videomuistelmapalvelu tai erikoistunut studiopalvelu, joka perustuu toistettavaan toimintamalliin – ei kertaluonteiseen freelancer-raatamiseen.",
+        "keyPhrases": [
+          "Muistelmapohjat",
+          "Ääni- ja avatar-identiteetti",
+          "Toistettava toimitus"
+        ]
+      },
+      "agency": {
+        "label": "Toimisto",
+        "title": "Asiakastoimitusten johtaja",
+        "beforeAfter": {
+          "before": "3 viikon toimitus",
+          "after": "3 päivän toimitus"
+        },
+        "challenge": {
+          "title": "Asiakastoimitukset laajassa mittakaavassa",
+          "description": "Tarjouskilpailun voittaminen on vasta puoli voittoa. Toistuva asiakastyö vaatii nopeaa läpimenoa, selkeitä hyväksyntäprosesseja ja katetta jokaisesta toimituksesta – ilman, että tuotantoprosessi täytyy rakentaa joka kerta alusta."
+        },
+        "solution": {
+          "title": "Läpivirtaus + asiakkaan hyväksyntä",
+          "description": "Siirry pitchausvaiheen luonnoksista jatkuvaan tuotantoon hyödyntämällä brändinmukaisuuden varmistavia työkaluja, asiakkaan tarkistusvaihetta ennen lopullista renderöintiä sekä ennakoitavia, projektikohtaisia krediittikustannuksia.",
+          "features": [
+            "Nopea esivisualisointi pitchauksia ja asiakkaan hyväksyntää varten",
+            "Uudelleenkäytettävät mallipohjat toistuville asiakasmuodoille",
+            "Budjetin läpinäkyvyys jokaisessa iteraatiossa",
+            "Skaalautuva palvelun toteutus ilman henkilöstömäärän lisäämistä"
+          ]
+        },
+        "win": "Toteuta nopeampia myyntiprosesseja ja jatkuvaa asiakastyötä pienemmällä tuotantoriskillä ja paremmalla katteella.",
+        "keyPhrases": [
+          "Asiakkaan hyväksynnät",
+          "Toimitusten läpimenomäärä",
+          "Budjetin ennustettavuus"
+        ]
+      }
+    },
+    "segmentCtas": {
+      "creator": {
+        "label": "Aloita tuotantotason koelento",
+        "subtext": "9 $ kertamaksu • 750 krediittiä • Täysi pääsy alustalle"
+      },
+      "team": {
+        "label": "Varaa tiimiesittely",
+        "subtext": "Katso, kuinka sisäiset tiimit korvaavat toimittajien syklit."
+      },
+      "productionShop": {
+        "label": "Tutustu pystysuuntaisiin malleihin",
+        "subtext": "Kiinteistöala, koulutus, dokumentaatio ja paljon muuta – katso, mitä voit tuotteistaa."
+      },
+      "agency": {
+        "label": "Katso tiimihinnoittelu",
+        "subtext": "Suunnitelmat laajamittaiseen toimintaan toimistoille ja tuotantoyksiköille"
+      }
     },
     "categories": [
       {
-        "id": "property",
-        "title": "Property, Spaces & Hospitality",
+        "id": "omaisuus",
+        "title": "Kiinteistöt, tilat ja vieraanvaraisuus",
+        "qualifyingStatement": "Luotu kohteesi valokuvista ja esitetään selostettuna, tekoälyllä muokattuna kierroksena, jossa käytetään ääntäsi ja avatar-hahmoasi. Tarjoaa realistisen esikatselun pohjaratkaisusta ja ominaisuuksista, mutta ei korvaa paikan päällä järjestettävää esittelyä. Kaikki kierrokset on merkitty selkeästi.",
         "examples": [
           {
-            "id": "residential-real-estate",
-            "label": "Residential Real Estate",
-            "description": "Automated listing tours featuring the agent's cloned voice and avatar identity."
+            "id": "asuinkiinteistöt",
+            "label": "Asuinkiinteistöt",
+            "description": "Kuvittele, että lataat kuvat kohteestasi ja käytät tallennettua hahmoa sekä ääntäsi. Sen jälkeen luot välittömästi ammattimaisen esittelyn, jossa näkyvät hahmosi ja kuuluvat äänesi – yli 70 kielellä."
           },
           {
-            "id": "commercial-real-estate",
-            "label": "Commercial Real Estate",
-            "description": "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data."
+            "id": "liikekiinteistöt",
+            "label": "Liikekiinteistöt",
+            "description": "Kuvittele, että lataat pohjapiirustuksia, havainnekuvia ja tietoja alueesta sekä hyödynnät välittäjäsi tallennettua ääntä ja avataria. Tämän jälkeen voit luoda välittömästi sijoittajille suunnattuja esittelykierroksia, jotka herättävät tilat eloon – ja jotka on lokalisoitu yli 70 kielelle."
           },
           {
-            "id": "short-term-rentals",
-            "label": "Short-Term Rentals",
-            "description": "Automated \"Digital Welcome Books\" that walk guests through house features and local \"best of\" spots."
+            "id": "lyhytaikaisvuokraus",
+            "label": "Lyhytaikaisvuokraus",
+            "description": "Kuvittele, että lataat kuvia kohteesta ja tietoja sen mukavuuksista yhdessä majoittajan tallennetun äänen kanssa. Sen jälkeen julkaiset välittömästi digitaalisia tervetulovideoita, jotka tervehtivät jokaista vierasta tämän omalla kielellä – jo ennen sisäänkirjautumista."
           },
           {
-            "id": "hospitality-tourism",
-            "label": "Hospitality & Tourism",
-            "description": "Hotel virtual tours and narrated travel itineraries for agencies."
+            "id": "majoitus- ja matkailuala",
+            "label": "Matkailu- ja ravintola-ala",
+            "description": "Kuvittele, että lataat hotellikuvia ja matkaohjelman kohokohtia ja hyödynnät brändisi tallennettua juontajan ääntä ja avataria. Sen jälkeen voit julkaista välittömästi virtuaalikierroksia ja selostettuja matkaoppaita yli 70 kielellä – ilman kuvausryhmien viemistä kuhunkin kohteeseen."
           },
           {
-            "id": "museum-gallery-guides",
-            "label": "Museum & Gallery Guides",
-            "description": "Multi-language audio-visual \"tours\" for exhibitions that can be updated JIT as exhibits change."
+            "id": "museo- ja galleriaoppaat",
+            "label": "Museo- ja galleriaoppaat",
+            "description": "Kuvittele, että voit ladata näyttelykuvia ja kuraattorin muistiinpanoja sitä mukaa kun näyttelykokonaisuus muuttuu. Samalla voit päivittää välittömästi selostetut näyttelykierrokset yli 70 kielellä – ilman tarvetta uusille kuvauksille näyttelyn vaihtuessa."
           }
         ]
       },
       {
-        "id": "knowledge",
-        "title": "Knowledge, Training & Education",
+        "id": "tieto",
+        "title": "Tieto, koulutus ja opetus",
         "examples": [
           {
-            "id": "k12-higher-ed",
-            "label": "K-12 & Higher Ed",
-            "description": "30-minute curriculum modules that can be instantly localized for ESL students or global campuses."
+            "id": "Perus- ja toisen asteen koulutus sekä korkeakoulutus",
+            "label": "Perus- ja toisen asteen koulutus sekä korkeakoulutus",
+            "description": "Kuvittele, että lataat opetusmateriaaleja hyödyntäen opettajan tallennettua ääntä ja hahmomallia. Sen jälkeen luot välittömästi kokonaisia opetuskokonaisuuksia, joita ESL-opiskelijasi ja kansainvälisen kampuksen opiskelijat voivat seurata yli 70 kielellä."
           },
           {
-            "id": "corporate-ld",
-            "label": "Corporate L&D",
-            "description": "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices."
+            "id": "yritystunnus",
+            "label": "Yrityksen oppiminen ja kehittäminen",
+            "description": "Kuvittele, että lataat säädöstenmukaisuutta käsitteleviä käsikirjoituksia, joissa käytetään kouluttajasi tallennettua ääntä ja avataria. Sen jälkeen voit ottaa yhtenäisen perehdytyksen ja turvallisuuskoulutuksen välittömästi käyttöön kaikissa toimipisteissä – yli 70 kielelle lokalisoituna."
           },
           {
-            "id": "software-saas-tutorials",
-            "label": "Software SaaS Tutorials",
-            "description": "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion."
+            "id": "Ohjelmisto- ja SaaS-oppaat",
+            "label": "Ohjelmisto- ja SaaS-oppaat",
+            "description": "Kuvittele, että lataat käyttöliittymän kuvakaappauksia viitekehyksiksi ja yhdistät ne tuoteasiantuntijan tallennettuun ääneen. Tämän jälkeen voit luoda hetkessä esittelyvideoita, joissa jokainen klikkaus animoidaan – ja jotka päivittyvät automaattisesti heti, kun uusi käyttöliittymäversio julkaistaan."
           },
           {
-            "id": "niche-skill-tutoring",
-            "label": "Niche Skill Tutoring",
-            "description": "Professional \"How-To\" series for cooking, DIY, or technical certifications."
+            "id": "erityisosaamisen opetus",
+            "label": "Erityisosaamisen opetus",
+            "description": "Kuvittele, että lataat vaihekuvia yhdessä ohjaajan tallennetun äänen ja hahmomallin kanssa. Sen jälkeen julkaiset välittömästi ammattimaisia ohjesarjoja – olipa kyse ruoanlaitosta, tee-se-itse-projekteista tai sertifiointiin valmistautumisesta – yli 70 kielellä."
           },
           {
-            "id": "medical-patient-education",
-            "label": "Medical/Patient Education",
-            "description": "Narrated explanations of surgical procedures or medication management for hospitals and clinics."
+            "id": "potilaan lääketieteellinen koulutus",
+            "label": "Lääketieteellinen koulutus / Potilaskoulutus",
+            "description": "Kuvittele, että lataat toimenpidekaavioita ja käytät terveydenhuollon ammattilaisen hyväksymää, tallennettua ääntä. Sen jälkeen voit luoda välittömästi selkeitä potilasohjevideoita, joita perheet ymmärtävät yli 70 eri kielellä."
           },
           {
-            "id": "video-memoirs",
-            "label": "Video Memoirs",
-            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+            "id": "videomuistelmat",
+            "label": "Videomuistelmat",
+            "description": "Kuvittele, että lataat palveluun perhekuvia, haastatteluäänitteitä ja kohtausmerkintöjä sekä tallennetun kertojanäänen. Sen jälkeen voit luoda hetkessä lukuihin jaettuja muistelmavideoita – ja hyväksyä kuvakäsikirjoituksen ennen lopullista renderöintiä."
           }
         ]
       },
       {
-        "id": "jit",
+        "id": "nuori jätkä",
         "title": "JIT Media & Information",
         "examples": [
           {
-            "id": "hyper-local-news",
-            "label": "Hyper-Local News",
-            "description": "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive."
+            "id": "hyperpaikalliset uutiset",
+            "label": "Hyperpaikalliset uutiset",
+            "description": "Kuvittele, että lataat päivän kuvat ja tiedotteet ja käytät uutisankkurisi tallennettua ääntä. Sitten julkaiset välittömästi päivittäisen paikallisuutiskatsauksen – ilman kuvausryhmää tai myöhästyneitä määräaikoja."
           },
           {
-            "id": "financial-market-recaps",
-            "label": "Financial & Market Recaps",
-            "description": "Turning daily stock market or crypto data into 3-minute narrated visual digests."
+            "id": "Rahoitusmarkkinoiden katsaukset",
+            "label": "Katsaukset talouteen ja markkinoihin",
+            "description": "Kuvittele, että lataat joka aamu markkinatietoa ja kuvakaappauksia kaavioista sekä analyytikkosi tallennetun äänen. Muunnat ne sitten välittömästi selostetuksi visuaaliseksi tiivistelmäksi – joka on valmis ennen pörssin avaussoittoa."
           },
           {
-            "id": "sports-commentary",
-            "label": "Sports Commentary",
-            "description": "Automated \"recap\" videos using game stats and static photography turned into F2V action."
+            "id": "urheiluselostus",
+            "label": "Urheilukommentointi",
+            "description": "Kuvittele, että lataat ottelutilastoja ja valokuvia sekä selostajan tallennetun äänen. Sen jälkeen luot välittömästi koostevideoita, joissa on animoituja pelitilanteita – ja julkaiset ne juuri silloin, kun fanit vielä keskustelevat ottelusta."
           },
           {
-            "id": "true-crime-historical-docs",
-            "label": "True Crime & Historical Docs",
-            "description": "Using the Reference Library to keep historical figures consistent across a multi-part documentary series."
+            "id": "Historialliset true crime -dokumentit",
+            "label": "Tosirikos- ja historialliset dokumentit",
+            "description": "Kuvittele, että tallennat historialliset hahmot Reference Library-järjestelmääsi vain kerran. Sen jälkeen voit tuottaa välittömästi moniosaisia jaksoja, joissa jokainen kasvo ja ääni pysyy yhdenmukaisena – sarjasta toiseen."
           },
           {
-            "id": "weather-emergency-alerts",
-            "label": "Weather & Emergency Alerts",
-            "description": "Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms."
+            "id": "Sää- ja hätätilannevaroitukset",
+            "label": "Sää- ja hätätiedotteet",
+            "description": "Kuvittele, että voit ladata hätätiedotteita, joissa käytetään organisaatiosi luotettua, valmiiksi tallennettua ääntä. Ja että voit sen jälkeen välittää selkeitä hälytyksiä välittömästi yli 70 kielellä eri sosiaalisen median alustoilla – minuuteissa, et päivissä."
           }
         ]
       },
       {
-        "id": "b2b",
-        "title": "B2B Marketing & Sales",
+        "id": "B2B",
+        "title": "B2B-markkinointi ja -myynti",
         "examples": [
           {
-            "id": "product-explainer-videos",
-            "label": "Product Explainer Videos",
-            "description": "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos."
+            "id": "tuotteen esittelyvideot",
+            "label": "Tuotteen esittelyvideot",
+            "description": "Kuvittele, että lataat tuotekuvaston kuvia ja käytät brändisi tallennettua juontajaääntä sekä avataria. Sen jälkeen luot hetkessä elokuvallisen sarjan selitysvideoita – ja hyväksyt kuvakäsikirjoituksen ennen lopullista renderöintiä."
           },
           {
-            "id": "case-study-testimonials",
-            "label": "Case Study/Testimonials",
-            "description": "Using client headshots and project photos to create high-end visual success stories."
+            "id": "Asiakastarinat ja suositukset",
+            "label": "Tapaustutkimus / Asiakaskokemukset",
+            "description": "Kuvittele, että lataat asiakkaiden kasvokuvia, projektikuvia ja tulosmittareita sekä käytät tallennettua kertojaääntä. Sitten luot hetkessä viimeisteltyjä, visuaalisia asiakastarinakuvauksia – ilman erillisiä haastattelukuvauksia."
           },
           {
-            "id": "recruitment-branding",
-            "label": "Recruitment & Branding",
-            "description": "Giving candidates a narrated \"day in the life\" tour of the office and culture."
+            "id": "rekrytointibrändäys",
+            "label": "Rekrytointi ja brändäys",
+            "description": "Kuvittele, että lataat kuvia toimistosta ja yrityskulttuurin kohokohdista sekä hyödynnät rekrytoijan tallennettua ääntä ja avataria. Näin voit tarjota työnhakijoille välittömästi selostetun kierroksen työpäivän kulusta – ja tehdä tämän yli 70 kielellä kansainvälistä rekrytointia varten."
           },
           {
-            "id": "conference-event-promos",
-            "label": "Conference & Event Promos",
-            "description": "Automated \"Speaker Bio\" videos and \"What to Expect\" guides for large-scale events."
+            "id": "Konferenssi- ja tapahtumakampanjat",
+            "label": "Konferenssi- ja tapahtumatarjoukset",
+            "description": "Kuvittele, että lataat järjestelmään puhujien esittelyt, ohjelmaosuuksien tiedot ja kuvat tapahtumapaikasta sekä hyödynnät tapahtumajuontajan tallennettua ääntä. Tämän jälkeen voit luoda hetkessä puhujien esittelyt ja oppaat siitä, mitä on odotettavissa – ja päivittää sisällön välittömästi aina ohjelman muuttuessa."
           }
         ]
       },
       {
-        "id": "public",
-        "title": "Public Sector & Advocacy",
+        "id": "julkinen",
+        "title": "Julkinen sektori ja edunvalvonta",
         "examples": [
           {
-            "id": "ngo-impact-reports",
-            "label": "NGO Impact Reports",
-            "description": "Turning data and field photography into emotive, narrated videos for donors."
+            "id": "järjestöjen vaikuttavuusraportit",
+            "label": "Kansalaisjärjestöjen vaikuttavuusraportit",
+            "description": "Kuvittele, että lataat kentältä otettuja kuvia ja tietoa toiminnan vaikuttavuudesta sekä hyödynnät organisaatiosi tallennettua kertojaääntä. Muutat sitten lahjoittajaraportit hetkessä tunteisiin vetoaviksi, selostetuiksi videoiksi – lopputuloksena on järjestösi sanomaa välittävä video, ei pelkkä diaesitys."
           },
           {
-            "id": "public-health-announcements",
-            "label": "Public Health Announcements",
-            "description": "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity."
+            "id": "kansanterveystiedotteet",
+            "label": "Kansanterveyttä koskevat tiedotteet",
+            "description": "Kuvittele, että lataat hyväksyttyjä terveysviestejä käyttäen yksikkösi luotettua, valmiiksi tallennettua ääntä. Tavoitat sitten välittömästi kaikki yhteisöt yli 70 kielellä – viesti säilyttää selkeytensä ja kiireellisyytensä, eikä käännöstyö aiheuta viivettä."
           },
           {
-            "id": "legal-insurance-explainers",
-            "label": "Legal & Insurance Explainers",
-            "description": "Helping clients understand complex contracts or claim processes through narrated visual breakdowns."
+            "id": "Oikeusturvavakuutusta käsittelevät selittävät sisällöt",
+            "label": "Selittävät sisällöt: laki ja vakuutus",
+            "description": "Kuvittele, että lataat järjestelmään sopimusyhteenvetoja ja prosessikaavioita sekä asiantuntijasi tallennetun äänen. Sen jälkeen luot välittömästi visuaalisia selityksiä, jotka asiakkaat todella ymmärtävät – ennen kuin he allekirjoittavat sopimuksen tai tekevät korvausvaatimuksen."
           },
           {
-            "id": "religious-spiritual-teachings",
-            "label": "Religious & Spiritual Teachings",
-            "description": "Converting sermons or texts into a consistent, narrated daily video series for global congregations."
+            "id": "uskonnollis-hengelliset opetukset",
+            "label": "Uskonnolliset ja henkiset opetukset",
+            "description": "Kuvittele, että lataat saarnamuistiinpanoja tai pyhiä tekstejä yhdistettynä opettajasi tallennettuun ääneen ja läsnäoloon. Ja julkaiset sitten välittömästi yhtenäisen päivittäisen videosarjan seurakunnille ympäri maailmaa – yli 70 kielellä."
           }
         ]
       }
     ]
   },
   "institutionalRoi": {
-    "badge": "For in-house teams & institutions",
-    "title": "Replace vendor shoots with predictable in-house production",
-    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
+    "badge": "Organisaatioiden sisäisille tiimeille ja laitoksille",
+    "title": "Korvaa toimittajien toteuttamat kuvaukset ennakoitavalla sisäisellä tuotannolla.",
+    "subtitle": "1–5 hengen viestintä-, koulutus- ja markkinointitiimit voivat julkaista videoita saman viikon aikana ilman jatkuvia toimistosopimuksia tai loputtomia muokkauskierroksia.",
     "comparisons": [
       {
-        "label": "Traditional vendor shoot + edit",
-        "cost": "$5,000–$15,000",
-        "timeline": "4–8 weeks"
+        "label": "Perinteinen kuvaus ja editointi (yhteistyökumppanille)",
+        "cost": "5 000–15 000 dollaria",
+        "timeline": "4–8 viikkoa"
       },
       {
-        "label": "SceneFlow in-house workflow",
-        "cost": "$50–$500 in credits",
-        "timeline": "Same week"
+        "label": "SceneFlow sisäinen työnkulku",
+        "cost": "50–500 dollaria krediitteinä",
+        "timeline": "Sama viikko"
       }
     ],
     "bullets": [
-      "Brand-safe templates and approval before final render",
-      "Budget caps with visible credit spend per project",
-      "No crew days, no edit back-and-forth on every revision"
+      "Brändin mukaiset mallipohjat ja hyväksyntä ennen lopullista generointia",
+      "Budjettirajat ja näkyvä krediittien kulutus projekteittain",
+      "Ei kuvauspäiviä, ei jatkuvaa edestakaista viestittelyä jokaisesta muutosversiosta."
     ],
-    "ctaPrimary": "Book a team walkthrough",
-    "ctaSecondary": "See pricing",
-    "typicalCost": "Typical cost",
-    "timeline": "Timeline"
+    "ctaPrimary": "Varaa tiimin läpikäynti",
+    "ctaSecondary": "Katso hinnat",
+    "typicalCost": "Tyypilliset kustannukset",
+    "timeline": "Aikajana"
   },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Studio feature deep dive",
-    "close": "Close",
-    "viewDetails": "View Details",
+    "badge": "Opastettu kierros",
+    "title": "Alustan esittely",
+    "subtitle": "Kattava opas SceneFlow AI Studio-työnkulkuun – yhteistyöhön perustuvista tarkistuksista aina lopulliseen elokuvamaiseen lopputulokseen.",
+    "subheading": "Tutustu alustaan – aloita perusasioista",
+    "chapterHint": "Neljä asiaa, jotka kannattaa tietää tänään. Laajenna osiot, kun haluat kokonaiskuvan.",
+    "expandChapter": "Ohjelman ominaisuudet",
+    "collapseChapter": "Piilota ominaisuudet",
+    "underTheHoodLabel": "Pellin alla",
+    "chapters": [
+      {
+        "id": "välttämättömyydet",
+        "label": "Aloita tästä – mitä saat heti ensimmäisenä päivänä"
+      },
+      {
+        "id": "laatu",
+        "label": "Varmista, että viestisi menee perille yleisöllesi."
+      },
+      {
+        "id": "tuotanto",
+        "label": "Hyväksytyistä biiteistä julkaistuun master-äänitteeseen"
+      },
+      {
+        "id": "edistynyt",
+        "label": "Tiimeille, jotka haluavat laskutuksen ja hallintamallin"
+      }
+    ],
+    "close": "Sulje",
+    "viewDetails": "Näytä tiedot",
     "beatFirst": {
-      "id": 15,
-      "title": "Beat-First Video Pipeline",
-      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "title": "Iskuun pohjautuva videotuotantoprosessi",
+      "description": "Hyväksy kuvakäsikirjoituksen vaiheet ja Beat Frames ennen F2V-vaihetta – vähemmän hallusinaatioista ja visuaalisesta ryöminnästä johtuvia sokkoja uudelleenluonteja. Yksi jäsennelty polku tarkastelusta lopulliseen klippiin.",
       "keyFeatures": [
-        "Express storyboard for review — share beats before heavy render",
-        "Beat Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "Express storyboard tarkistettavaksi – jaa biitit ennen raskasta renderöintiä",
+        "Beat Frames lukon rakenne — Reference Library jatkuvuus",
+        "F2V per isku – luo video hyväksytyistä ruuduista",
+        "Mikserin ajoitus ja tietovirrat – vienti Final Cut-kokoonpanoon"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
-      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+      "screenshotSlot": "Lisää kuvakaappaus: Beat Frames ja kuvakäsikirjoituksen hyväksyntä ennen videon luomista",
+      "videoSlot": "Lisää 00:30-mittainen pätkä: iskujen hyväksyminen, ruutujen lukitseminen ja F2V-pätkien luominen"
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "title": "Yleisöanalyysi ja -tilastot",
+      "description": "Yksityiset /s/-jakolinkit sidosryhmille – manuaaliset arviot, jäsennelty palaute ja valinnainen sitoutumisanalytiikka katsojan suostumuksella. Käytössä vaiheessa Premiere ennen julkaisua sekä tuotantotason kuvakäsikirjoituksen esikatselussa.",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "Yksityiset tarkastelutilaisuudet – turvalliset jakolinkit sidosryhmille",
+        "Jäsennelty yleisöpalaute – arviot ja avoimet kohdat",
+        "Valinnainen sitoutumisen analytiikka – katsojan suostumus ennen tietojen keräämistä",
+        "Kehitä ratkaisua todellisen datan pohjalta – tarkenna Blueprint-kohdetta ja skriptiä arvioijilta saatujen havaintojen perusteella."
       ],
-      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotSlot": "Lisää kuvakaappaus: Screening Room-analytiikka- ja arvioijapalautepaneeli",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      "videoSlot": "Lisää 30 sekunnin pätkä: Arviointitilaisuuden vetäminen ja sitoutumistietojen kerääminen"
+    },
+    "ui": {
+      "screenshot": "Kuvakaappaus",
+      "video": "Video",
+      "featureVideo": "Esittelyvideo",
+      "keyFeatures": "Keskeiset ominaisuudet",
+      "openScreenshot": "Avaa kuvakaappaus",
+      "openFeatureVideo": "Avaa esittelyvideo",
+      "expandImage": "Suurenna kuva",
+      "closePreview": "Sulje esikatselu"
+    },
+    "items": [
+      {
+        "id": "1",
+        "title": "Intuitiivinen käyttökokemus + Sisällöntuottajan täysi hallinta",
+        "description": "Aloita nopeasti ohjatun automaation avulla ja muokkaa sitten jokaista tuotettua sisältöä, jotta tiimit säilyttävät luovan hallinnan nopeutta menettämättä.",
+        "keyFeatures": [
+          "Ohjattu Studio-työnkulku – konseptista vientiin yhdessä paikassa",
+          "Muokkaa jokaista tekoälyn luomaa juonenkäännettä, hahmoa ja vuorosanaa suoraan paikallaan.",
+          "Toteutusvaihtoehdot – rinnakkainen vertailu luovaa suuntaa varten",
+          "Blueprint Tee yhteistyötä – jaa linkkejä, osioiden äänitiedostoja ja jäsenneltyä arvioijapalautetta."
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: Blueprint-editori, jossa on muokattavia, automaattisesti luotuja osioita",
+        "videoSlot": "Lisää 30 sekunnin pätkä: UX-polku konseptista muokattavaan lopputulokseen"
+      },
+      {
+        "id": "2",
+        "title": "Luottobudjetti ja kustannusten hallinta",
+        "description": "Seuraa krediittien käyttöä reaaliajassa ja aseta rajoituksia ennen kalliita generointiajoja.",
+        "keyFeatures": [
+          "Reaaliaikainen krediittien käyttö – projekteittain ja toiminnoittain",
+          "Tuotantoympäristön suojatoimet – ennen kalliita generointiajoja",
+          "Läpinäkyvät hinnastot – TTS:lle, videolle ja älyratkaisuille",
+          "Budjetin näkyvyys – tiimeille ja yksittäisille tekijöille"
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: krediittien käyttöä koskeva paneeli ja BYOK-asetukset",
+        "videoSlot": "Lisää 30 sekunnin pätkä: budjetin hallintanäkymä ja keskeiset asetukset",
+        "underTheHood": {
+          "title": "Pellin alla",
+          "body": "Tuotantotiimeille, joilla on voimassa olevat pilvipalvelusopimukset:",
+          "bullets": [
+            "Vertex AI BYOK — suuryritystason laskutus ja hallinto",
+            "Palveluntarjoajien valintakytkimet lainalaskurissa",
+            "Läpinäkyvät alustan hintataulukot avaintesi rinnalla"
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "title": "Mikä tahansa konsepti, yksi tuotantoprosessi",
+        "description": "Käytä yhtä luotettavaa tuotantoprosessia koulutusmateriaaleihin, podcasteihin, uutisiin, asuntojen myyntivideoihin ja elokuvamaiseen sisältöön.",
+        "keyFeatures": [
+          "Yksi tuotantoprosessi – podcastit, uutiset, koulutus, kiinteistöala ja elokuvalliset formaatit",
+          "Projektimallit – Studio mukautuu lähdemateriaaliisi",
+          "Sama Blueprint → käsikirjoitus → tuotantopolku – genrestä riippumatta",
+          "Ei tarvetta vaihtaa työkalua – ideointivaiheesta aina toimitukseen asti"
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: jaettu näkymä tai ruudukko, jossa Podcast-, Uutiset-, Kiinteistö- ja Elokuvatyyliset mallipohjat syöttävät tietoa yhteen yhtenäiseen SceneFlow-tuotantoputken käyttöliittymään.",
+        "videoSlot": "Lisää 30 sekunnin pätkä: ”Aloita millä tahansa lähdemateriaalilla...” – napsautetaan kohtaa New Project -> Podcast (käyttöliittymä mukautuu äänisisällölle), minkä jälkeen näytetään jaettu näyttö, jossa uutis- ja elokuvaprojektit yhdistyvät Blueprint-editorissa."
+      },
+      {
+        "id": "4",
+        "title": "Älykäs automaatio ja tarkka muokkausten hallinta",
+        "description": "SceneFlow-alusta hyödyntää älykkäitä toimintoja luodakseen automaattisesti ammattimaisen perustan (sarja, suunnitelma, käsikirjoitus, tuotanto-ohjeet ja muokkaukset) ja tarjoaa samalla älykkäitä vuorovaikutusnäkymiä, jotka antavat sinulle täyden muokkausvallan sisäänrakennettujen rajoitteiden puitteissa.",
+        "keyFeatures": [
+          "Tekoälyn perusmääritykset yhdellä kertaa – sarja, toimintamalli, käsikirjoitus ja tuotantokehotteet",
+          "Älykkäät muokkausnäkymät – raamit, eivät sokeaa uudelleenkirjoitusta",
+          "Hyväksy, muokkaa tai hylkää – jokainen ehdotus pysyy hallinnassasi.",
+          "Ihminen mukana prosessissa – tuotannon jokaisessa vaiheessa"
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: Älykäs valintaikkuna, joka näyttää vertailutason (baseline) luonnin ja muokkausohjaimet.",
+        "videoSlot": "Lisää 30 sekunnin pätkä: tekoälyn luoma perusversio ja sen jälkeen käyttäjän tekemät tarkat muokkaukset."
+      },
+      {
+        "id": "5",
+        "title": "Jaettu Reference Library jatkuvuuden varmistamiseksi",
+        "description": "Pidä hahmot, asut, äänet, tapahtumapaikat ja rekvisiitta yhdenmukaisina eri kohtauksissa ja jaksoissa hyödyntämällä uudelleenkäytettäviä viitemateriaaleja.",
+        "keyFeatures": [
+          "Uudelleenkäytettävät profiilit – hahmot, asut, äänet, kuvauspaikat ja rekvisiitta",
+          "Yli eri kenttien ulottuva soveltaminen – viittaukset virtaavat jokaiseen sukupolveen",
+          "Visuaalinen yhdenmukaisuus – samat kasvot ja sama tyyli Imagenin ja Veon tuotoksissa",
+          "Laajan tuotesarjan mittakaavan jatkuvuus – suunniteltu moniosaisille sarjoille"
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: viitekirjasto, joka havainnollistaa hahmojen ja rekvisiitan jatkuvuutta",
+        "videoSlot": "Lisää 00:30-mittainen pätkä: Viittausten soveltaminen useisiin kohtauksiin"
+      },
+      {
+        "id": "6",
+        "title": "Express-tuotantomoottori",
+        "description": "Luo kuvia ja videopätkiä automaattisesti ja samanaikaisesti. Express Storyboardin avulla voit tarkastella ja jakaa audiovisuaalisia kuvakäsikirjoituksia minuuteissa. Express Storyboard luo kokonaisia Ken Burns -tyylisiä kohtauksia minuuteissa, ja Express Video tuottaa valmiit videokohtaukset minuuteissa päivien sijaan.",
+        "keyFeatures": [
+          "Samanaikainen generointi – kuvien ja videon tuottaminen useissa kohtauksissa samanaikaisesti",
+          "Express Storyboard – jaettavia audiovisuaalisia esikatseluita minuuteissa",
+          "Express Animatic – Ken Burns -liikeefekti valokuvista",
+          "Express Video – kohtauskohtaisia leikkeitä minuuteissa, ei päivissä"
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: Express-luonnin hallintanäkymä, jossa näkyvät Animatic-kohteet ja videon edistyminen",
+        "videoSlot": "Lisää 30 sekunnin pätkä: samanaikainen prosessi, jossa käsikirjoitus muunnetaan ensin animaticiksi ja lopulta valmiiksi videoksi."
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance-muokkain",
+        "description": "Määritä kohdeyleisösi, niin saat välittömästi pisteytyksen, analyysin ja suosituksia. Hyödynnä yhden napsautuksen korjauksia tai ohjattuja muokkaustoimintoja ja optimoi jaksot, Blueprint ja käsikirjoitus täydellisesti parhaan mahdollisen vaikuttavuuden saavuttamiseksi.",
+        "keyFeatures": [
+          "Kohderyhmäpisteytys – luokittainen erittely",
+          "Osioihin sidotut suositukset – korjaa tarinasi oikea kohta",
+          "Yhden napsautuksen korjaukset ja ohjattu muokkaus – tarkkoja muutoksia, ei arvailua",
+          "Tuotantovalmiuden kynnys – tiedä, milloin kannattaa panostaa lopulliseen renderöintiin"
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: Resonance Editor, jossa on yleisöarviointi ja yhden napsautuksen korjaukset",
+        "videoSlot": "Lisää 00:30-mittainen pätkä: Ohjattujen muokkausten tekeminen yleisön vastaanottavuuspisteiden perusteella"
+      },
+      {
+        "id": "8",
+        "title": "Mukautuva käännös (yli 70 kieltä)",
+        "description": "Lokalisoi sisältöä laajassa mittakaavassa säilyttäen samalla kerronnallinen tarkoitus ja aikajanatason kohdistus monikielistä julkaisua varten.",
+        "keyFeatures": [
+          "Yli 70 kieltä – kerrontaa, dialogia ja tekstisisältöä suuressa mittakaavassa",
+          "Kerronnallinen tarkoitus säilyy – merkitys ja ajoitus pysyvät linjassa",
+          "Monikieliset ääniraidat – kohtauksen aikajanalla",
+          "Jakeluvalmiit paketit – kielialueittain"
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: Monikielinen aikajana ja käännösasetukset",
+        "videoSlot": "Lisää 30 sekunnin pätkä: Kohtauksen välitön lokalisointi useille kielille"
+      },
+      {
+        "id": "9",
+        "title": "Sarja-automaatio",
+        "description": "Määritä maailmasi kertaalleen ja luo yhtenäisiä, usean jakson mittaisia tarinakaaria. Yhteinen Reference Library pitää hahmot ja sävyn johdonmukaisina koko kauden ajan.",
+        "keyFeatures": [
+          "Määritä maailmasi kertaalleen – hahmot, sävy ja kauden kaari.",
+          "Yhtenäiset jaksojen rungot – automaattisesti luotuna koko kauden ajalle",
+          "Jatkuvuuden seuranta – usean jakson kausien yhteensovittaminen",
+          "Sarjan ja jakson synkronointi – Blueprint-studioon ja -tuotantoon"
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: Sarjan yleiskatsaus ja automaattisesti luodut jaksojen juonikaaret",
+        "videoSlot": "Lisää 30 sekunnin pätkä: Konsepti laajenee usean jakson mittaiseksi tuotantokaudeksi"
+      },
+      {
+        "id": "10",
+        "title": "Blueprint Automaatio",
+        "description": "Muunna konseptit jäsennellyiksi käsikirjoitusluonnoksiksi, jotka sisältävät tiivistelmän (logline), juonenkäänteet, hahmot ja sävyn. Suorita Audience Resonance ja tee yhteistyötä ennen raskaiden renderöintien aloittamista.",
+        "keyFeatures": [
+          "Luominen → Tarkistus → Iterointi → Tuotannon käynnistys – työnkulku",
+          "Ideasta rakenteeksi minuuteissa – logline, käännekohdat, hahmot ja sävy",
+          "Audience Resonance pisteytys yli 80 pisteen tavoitteella ennen tuotantoa",
+          "Yhteistyökumppanien jakolinkit – palautteen kokoaminen ohjatuksi muokkausvaiheeksi"
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: Automaattisesti luotu Blueprint, jossa on tarinan käännekohdat ja hahmojen kehityskaaret",
+        "videoSlot": "Lisää 00:30-mittainen pätkä: Konseptin muuttaminen jäsennellyksi Blueprint-kokonaisuudeksi"
+      },
+      {
+        "id": "11",
+        "title": "Tuotantoautomaatio",
+        "description": "Script- ja Action-välilehdet ohjaavat prosessia: Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, mikseri ja MP4-virrat – ei tarvetta vaihtaa työkalua.",
+        "keyFeatures": [
+          "Foundation – käsikirjoitus, äänet, kohtauksen ääniraita, lukitse käsikirjoitus",
+          "Express storyboard — suunta ja ruudut minuuteissa; galleria ja jakaminen",
+          "Beat Frames ja mikseri — aloitus- ja lopetusruudut, ohjaajakonsoli, MP4-striimien renderöinti",
+          "Tuotantovirrat – tarkista tulosteet, renderöi vanhentuneet osat uudelleen, lähetä kohteeseen Final Cut"
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: tuotannon hallintanäkymä, jossa näkyvät käsikirjoitus, Beat Frames ja mikseri",
+        "videoSlot": "Lisää 00:30:n pätkä: Foundation, Express storyboard, Beat Frames ja striimin vienti"
+      },
+      {
+        "id": "12",
+        "title": "Final Cut Kokoonpano",
+        "description": "Yhdistä valmiit tuotantostriimit yhdeksi MP4-pääversioksi. Valitse Animatic tai määritä video ja kieli kohtauskohtaisesti – aikajanalla ei tehdä muokkauksia, vaan luovat muutokset pysyvät Production Mixer-versiossa.",
+        "keyFeatures": [
+          "Kohtauskohtainen striimivalinta — Animatic, video, kieli, versio",
+          "Koosteen esiasetukset – Kaikki video, Hybridi, Mukautettu yhdistelmä",
+          "Ei aikajanalla tapahtuvaa muokkausta – luovat muutokset pysyvät Production Mixer-ohjelmistossa.",
+          "Master-viennin yhdellä napsautuksella – yhdistetty MP4 kohteelle Premiere"
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: Final Cut-koostepaneeli, jossa on kohtauskohtaiset striimivalitsimet",
+        "videoSlot": "Lisää 30 sekunnin pätkä: raitojen valinta, koosteen esikatselu ja master-version vienti"
+      },
+      {
+        "id": "13",
+        "title": "Premiere Jakelu",
+        "description": "Tarkastele master-versiota yleisöanalytiikan avulla, julkaise se YouTubessa lokalisoiduilla metatiedoilla tai vie paketteja Shorts-, Reels- ja TikTok-alustoille.",
+        "keyFeatures": [
+          "Jaettavissa oleva Screening Room — /s/-linkit, joihin sisältyy pisteytys ja valinnainen sitoutumisanalytiikka (katsojan suostumuksella)",
+          "Insights-koontinäyttö – Pisteytys-, biometria- ja visuaaliset välilehdet",
+          "YouTube-taituri – pikkukuva, lokaloitu otsikko ja kuvaus, SceneFlow toimintakehote",
+          "Vientipaketit ja suunnitelmat pystysuuntaisille lyhytvideoille"
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: Premiere-koontinäyttö, jossa on analyysitietoja ja julkaisuohjattu toiminto",
+        "videoSlot": "Lisää 30 sekunnin pätkä: Näytösten analyysitiedot, YouTube-ohjattu toiminto ja vientipaketit"
+      },
+      {
+        "id": "14",
+        "title": "Yleisöanalyysi ja -tilastot",
+        "description": "Yksityiset /s/-jakolinkit sidosryhmille – manuaaliset arviot, jäsennelty palaute ja valinnainen sitoutumisanalytiikka katsojan suostumuksella. Käytössä vaiheessa Premiere ennen julkaisua sekä tuotantotason kuvakäsikirjoituksen esikatselussa.",
+        "keyFeatures": [
+          "Yksityiset tarkastelutilaisuudet – turvalliset jakolinkit sidosryhmille",
+          "Jäsennelty yleisöpalaute – arviot ja avoimet kohdat",
+          "Valinnainen sitoutumisen analytiikka – katsojan suostumus ennen tietojen keräämistä",
+          "Kehitä ratkaisua todellisen datan pohjalta – tarkenna Blueprint-kohdetta ja skriptiä arvioijilta saatujen havaintojen perusteella."
+        ],
+        "screenshotSlot": "Lisää kuvakaappaus: Screening Room-analytiikka- ja arvioijapalautepaneeli",
+        "videoSlot": "Lisää 30 sekunnin pätkä: Arviointitilaisuuden vetäminen ja sitoutumistietojen kerääminen"
+      }
+    ]
+  },
+  "engineeringTrust": {
+    "badge": "Tekniikka ja turvallisuus",
+    "title": "Suunniteltu",
+    "titleAccent": "Tuotantotyökuormat",
+    "subtitle": "Startup-ystävällinen arkkitehtuuri, jossa on Google Cloud-komponentteja, jotka tukevat tietoturvaa, skaalautuvuutta ja käytännönläheistä tuotantoon viemistä.",
+    "pillars": [
+      {
+        "id": "arkkitehtuuri",
+        "title": "Kokonaisarkkitehtuuri",
+        "description": "Rakennettu Google Cloud-infrastruktuurin päälle, hyödyntäen skaalautuvaa orkestrointia tuotantokuormia ja kasvavia tiimejä varten.",
+        "highlights": [
+          "Vertex AI luontityönkuluille",
+          "Imagen 4:n ja Veo 3.1:n synteesi",
+          "ElevenLabs TTS-integraatio",
+          "BYOK yritystason laskutuksen hallintaan"
+        ]
+      },
+      {
+        "id": "turvallisuus",
+        "title": "Turvallisuus ja yksityisyys",
+        "description": "Luova aineisto pysyy suojattuna levossa tapahtuvan salauksen, pääsynvalvonnan ja yksityisyyttä painottavan käsittelyn avulla.",
+        "highlights": [
+          "Yritystason pilvihallintatoiminnot",
+          "AES-256-salaus",
+          "Suunniteltu GDPR-vaatimukset huomioiden",
+          "Katso tietosuojakäytäntömme tietojen käsittelyn osalta."
+        ]
+      },
+      {
+        "id": "asteikko",
+        "title": "Skaalautuvuus ja luotettavuus",
+        "description": "Maailmanlaajuinen pilvijakeluratkaisu tukee luotettavia renderöinti- ja tarkistusprosesseja volyymin kasvaessa.",
+        "highlights": [
+          "Monialuekäyttöönotto",
+          "CDN-kiihdytetty jakelu",
+          "Automaattinen vikasietokytkentä",
+          "Reaaliaikainen seuranta"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "value": "Maailmanlaajuinen",
+        "label": "Pilvitoimitus"
+      },
+      {
+        "value": "Kuva 4",
+        "label": "Kuvanluonti"
+      },
+      {
+        "value": "256-bittinen",
+        "label": "Salaus"
+      },
+      {
+        "value": "Vuorokauden ympäri",
+        "label": "Seuranta"
+      }
+    ],
+    "vertexSection": {
+      "title": "Miksi Google Vertex AI?",
+      "subtitle": "Merkityksellinen tekninen kilpailuetu",
+      "cards": [
+        {
+          "title": "Tietosuoja",
+          "description": "Käsikirjoituksiasi ja luovaa aineistoasi ei käytetä jaettujen mallien kouluttamiseen, mikä auttaa suojaamaan immateriaalioikeuksiasi ja asiakastöitäsi.",
+          "highlight": "ei käytetä jaettujen mallien kouluttamiseen"
+        },
+        {
+          "title": "Suunniteltu luotettavaa läpimenoa varten",
+          "description": "Tuotantopainotteinen infrastruktuuri auttaa ylläpitämään vakaita tuotantoprosesseja kysyntähuippujen aikana."
+        },
+        {
+          "title": "Viittaukset huomioiva yhdenmukaisuus",
+          "description": "SceneFlow hyödyntää viittaukset huomioivaa generointia parantaakseen hahmojen, tapahtumapaikkojen ja rekvisiitan johdonmukaisuutta kohtauksesta toiseen."
+        }
+      ]
+    },
+    "partnership": {
+      "poweredBy": "Käyttövoimana Google Cloud ja Vertex AI sekä pilvitallennustila ja käännöstyökalut",
+      "footnote": "SceneFlow AI toimii skaalautuvassa Google Cloud-infrastruktuurissa, joka on suunniteltu vastaamaan sekä startup-yritysten kasvutarpeisiin että suuryritysten vaatimuksiin."
+    },
+    "attribution": "— SceneFlow-kehitystiimi"
+  },
+  "coreCapabilities": {
+    "audienceResonance": {
+      "badge": "Älykkyyskerros",
+      "title": "Audience Resonance-muokkain",
+      "description": "Selvitä pistemääräsi ennen kuin panostat täysimittaiseen renderöintiin. Tavoittele Audience Resonance-pisteitä Blueprint ja käsikirjoitusta, joka sisältää konkreettisia parannusehdotuksia – optimoi jokainen vaihe ennen Express-toimintoa ja videon luontia.",
+      "bullets": [
+        "Määritä tarkka kohderyhmäsi",
+        "Saat reaaliaikaisen pistemäärän, analyysin ja suositukset.",
+        "Yhden napsautuksen ratkaisut kerronnan heikkouksiin",
+        "Ohjattu muokkaus jaksojen, Blueprint:n ja käsikirjoituksen optimoimiseksi"
+      ],
+      "cta": "Analysoi käsikirjoituksesi",
+      "howWeScore": {
+        "toggle": "Miten pisteytämme",
+        "title": "Miten Audience Resonance toimii",
+        "description": "Audience Resonance yhdistää kerronnallisen rakenteen analyysin (selkeys, rytmitys, tunnekaari) ja kohderyhmäyhteensopivuuden – perustuen Blueprint-kohdassa määrittelemääsi yleisöön, ei pintapuolisiin mittareihin tai julkaisun jälkeiseen sitoutumisdataan. Suositukset on sidottu käsikirjoituksen tiettyihin osioihin, joten voit korjata ongelmat ennen Express-toiminnon käyttöä tai videon luomista.",
+        "bullets": [
+          "Pisteyttää Blueprint-termin ja käsikirjoituksen suhteessa määrittelemääsi kohderyhmään.",
+          "Suositukset osiotasolla – ei ”luottakaa meihin” -tyyppistä lukua, joka perustuu läpinäkymättömään menetelmään.",
+          "Käytännölliset yhden napsautuksen korjaukset ja ohjattu muokkaus – ei vain arvosana",
+          "Suorita ennen raskaaseen renderöintiin kuluvaa panostusta, ei julkaisun jälkeen."
+        ]
+      }
+    },
+    "express": {
+      "badge": "Huippunopea tuotanto",
+      "title": "Sceneflow Express",
+      "description": "Luo automaattisesti ja samanaikaisesti kuvakäsikirjoituksia, animatiikoita ja videon rytmityksiä. Etene käsikirjoituksesta jaettavaan esikatseluversioon minuuteissa – ja hyväksy sitten Beat Frames ennen lopullista F2V-investointia.",
+      "items": [
+        {
+          "title": "Express-kuvakäsikirjoitus",
+          "desc": "Tarkista ja jaa ääni- ja videokuvakäsikirjoituksia minuuteissa tuntien sijaan.",
+          "time": "Minuutit vs. tunnit"
+        },
+        {
+          "title": "Ilmaise Animatic-termit",
+          "desc": "Luo välittömästi täysimittaisia Ken Burns -tyylisiä animatic-kohtauksia korkealaatuisella selostuksella.",
+          "time": "Minuutit vs. tunnit"
+        },
+        {
+          "title": "Express Video",
+          "desc": "Koordinoi samanaikaista kuvan ja videon tuottamista koko näkymän toteuttamiseksi.",
+          "time": "Minuutit vs. päivät"
+        }
+      ],
+      "cta": "Aloita pikarenderöinti"
+    }
+  },
+  "exitIntent": {
+    "title": "Odota! Älä lähde tyhjin käsin.",
+    "subtitle": "Saat ainutlaatuisen ennakkopääsyn ja vinkkejä tekoälyavusteiseen elokuvantekoon",
+    "benefits": [
+      "Viikoittaiset tekoälyelokuvanteon opetusvideot",
+      "Ennakkopääsy uusiin ominaisuuksiin",
+      "Sisällöntuottajien eksklusiiviset alennukset"
+    ],
+    "emailPlaceholder": "Syötä sähköpostiosoitteesi",
+    "subscribe": "Hanki ennakkopääsy",
+    "subscribing": "Tilataan...",
+    "or": "tai",
+    "startNow": "Aloita luominen nyt vain 9 dollarilla →",
+    "privacy": "Ei koskaan roskapostia. Voit peruuttaa tilauksen milloin tahansa.",
+    "successTitle": "Olet listalla!",
+    "successSubtitle": "Tarkista sähköpostisi: luvassa on ainutlaatuisia elokuvantekovinkkejä ja tietoa ennakkokäyttömahdollisuuksista.",
+    "ctaText": "Aloita tutkiminen – 9 $",
+    "closePopup": "Sulje ponnahdusikkuna"
+  },
+  "pricing": {
+    "badge": "Käyttöperusteinen hinnoittelu",
+    "title": "Maksa siitä, mitä luot",
+    "subtitle": "Yksi peruspaketti alustan käyttöön. Tekoälysisällön luomiseen tarkoitettuja krediittejä. Lisää saldoa tarvittaessa. Täysi hallinta, ei hukkaa.",
+    "valueAnchor": {
+      "traditionalCost": "Yli 2 000 $",
+      "traditionalLabel": "Perinteinen esivisualisointi",
+      "vs": "vs.",
+      "sceneFlowCost": "49–149 $",
+      "sceneFlowLabel": "SceneFlow kuukausittain",
+      "saveBadge": "Säästä yli 90 % projektia kohden"
+    },
+    "teamCta": {
+      "title": "Sisäinen tiimi vai instituutio?",
+      "description": "Varaa työnkulun läpikäynti viestintä-, koulutus- ja markkinointitiimeille",
+      "button": "Kirjan läpikäynti"
+    },
+    "agencyCta": {
+      "title": "Mainostoimisto vai tuotantotalo?",
+      "description": "Räätälöidyt krediitit, palvelutasosopimus (SLA) ja omistettu tuki laajassa mittakaavassa",
+      "button": "Ota yhteyttä myyntiin"
+    },
+    "byok": {
+      "title": "Käytä omaa avainta",
+      "badge": "Pro- ja Studio-paketit",
+      "description": "Onko sinulla jo API-avaimet palveluille Vertex AI tai ElevenLabs? Käytä niitä palvelun SceneFlow AI kanssa ja säästä jopa 80 % alustapisteiden kustannuksissa.",
+      "savingsHighlight": "80 % alustahyvityksinä",
+      "benefits": [
+        {
+          "title": "80 %:n säästö SceneFlow-luotosta",
+          "description": "Maksa vain 20 %:n alustamaksu orkestroinnista ja työkaluista."
+        },
+        {
+          "title": "Hyödynnä yritystason suunnitelmia",
+          "description": "Hyödynnä nykyisiä Vertex AI- tai ElevenLabs-määräalennuksiasi."
+        },
+        {
+          "title": "Täysi hallinta",
+          "description": "Avaimesi, laskutuksesi, kustannusten hallintasi"
+        }
+      ],
+      "supportedProviders": "Tuetut palveluntarjoajat",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 ja Veo 3.1",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "Tekstistä puheeksi -teknologia ja äänen kloonaus",
+      "savingsLabel": "80 %:n säästö",
+      "onImagesVideo": "kuvissa ja videoissa",
+      "onVoiceover": "selostuksessa",
+      "note": "Esitetyt krediittisäästöt ovat SceneFlow-alustan säästöjä. Todelliset kokonaiskustannuksesi riippuvat kunkin palveluntarjoajan kanssa sovituista henkilökohtaisista tai yrityskohtaisista API-hinnoista."
+    },
+    "creditTopUps": {
+      "title": "Tarvitsetko lisää krediittejä?",
+      "subtitle": "Lisää saldoa milloin tahansa. Saldo ei vanhene koskaan.",
+      "packs": [
+        {
+          "label": "Aloituspakkaus",
+          "description": "Täydellinen nopeaan kertaukseen"
+        },
+        {
+          "label": "Kohtauspaketti",
+          "description": "Suorita lyhyt projekti"
+        },
+        {
+          "label": "Tuotantopaketti",
+          "description": "Elokuvan keskeinen jakso"
+        },
+        {
+          "label": "Studiopaketti",
+          "description": "Täysi tuotantokapasiteetti"
+        }
+      ],
+      "creditsUnit": "tekijätiedot"
+    },
+    "calculator": {
+      "sectionTitle": "Arvioi projektisi",
+      "sectionSubtitle": "Tiedä tarkalleen, mitä maksat, ennen kuin sitoudut.",
+      "title": "Projektin budjettilaskuri",
+      "subtitle": "Arvioi krediitit ennen aloittamista",
+      "customize": "Mukauta parametreja",
+      "imagesLabel": "Luotavat kuvat",
+      "videoClipsLabel": "Videopätkät",
+      "voiceoverLabel": "Selostus (minuutteina)",
+      "byokTitle": "Oma avain (BYOK)",
+      "byokBadge": "Pro ja studio",
+      "byokDescription": "Käytä omia API-avaimiasi ja säästä jopa 80 % SceneFlow-krediiteissä. Maksat tekoälypalveluiden tarjoajille suoraan heidän hinnoillaan.",
+      "vertexToggle": "Vertex AI (Kuvat ja video)",
+      "elevenLabsToggle": "ElevenLabs (Kertojaääni)",
+      "imageGeneration": "Kuvien luominen",
+      "videoGeneration": "Videoiden luominen",
+      "voiceover": "Kertojaääni",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "Kokonaisarvio",
+      "withTopUps": "lisäyksillä",
+      "creditSavings": "SceneFlow luottosäästöt",
+      "savePercent": "Säästät {percent} % SceneFlow-opintopisteistä",
+      "transparency": "Täysi läpinäkyvyys: Näet krediittien käytön reaaliajassa työskentelyn aikana. Ei yllätyksiä – voit muuttaa projektin laajuutta milloin tahansa.",
+      "transparencyHighlight": "Täysi avoimuus:",
+      "byokDisclaimer": "BYOK Huomautus: Näytetyt krediittisäästöt koskevat vain SceneFlow-alustan krediittivähennyksiä. Todelliset kustannuksesi riippuvat Vertex AI- ja ElevenLabs-hinnoittelusuunnitelmistasi. Yritystason suunnitelmat tai suuren volyymin API-suunnitelmat voivat tarjota lisäsäästöjä.",
+      "byokDisclaimerHighlight": "BYOK Huomautus:",
+      "presets": [
+        {
+          "id": "kaupallinen",
+          "name": "30 sekunnin mainos"
+        },
+        {
+          "id": "lyhyt",
+          "name": "2 minuutin lyhytelokuva"
+        },
+        {
+          "id": "jakso",
+          "name": "10 minuutin jakso"
+        },
+        {
+          "id": "ominaisuus",
+          "name": "90-minuuttinen elokuva"
+        }
+      ],
+      "minSuffix": "min"
+    },
+    "tierGrid": {
+      "productionTestFlight": "Tuotannon koelento",
+      "getStarted": "Aloita",
+      "startTestFlight": "Aloita koelento",
+      "loading": "Ladataan...",
+      "mostPopular": "Suosituimmat",
+      "creditsPerMonth": "Pistettä/kk",
+      "storage": "Varastointi",
+      "perMonth": "/kk"
+    },
+    "trust": {
+      "cancelAnytime": "Peruuta milloin tahansa",
+      "moneyBack": "14 päivän rahat takaisin -takuu",
+      "creditsNeverExpire": "Saldo ei vanhene koskaan (Explorer-paketti)"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "description": "Kertahankinta kokeilua varten",
+        "features": [
+          "Kertahankinta",
+          "750 krediittiä (eivät vanhene koskaan)",
+          "5 Gt tallennustilaa (30 päivää)",
+          "Täysi pääsy alustalle",
+          "MP4-vienti (mikä tahansa resoluutio)",
+          "Tekoälypohjainen selostus (yli 70 kieltä)"
+        ]
+      },
+      "subscriptions": [
+        {
+          "id": "alkuruoka",
+          "name": "Alkuruoka",
+          "description": "Yksittäisille sisällöntuottajille",
+          "features": [
+            "Täysi pääsy alustalle",
+            "Sisältää 4 500 krediittiä kuukaudessa",
+            "25 Gt aktiivista tallennustilaa",
+            "MP4-vienti (mikä tahansa resoluutio)",
+            "Tekoälypohjainen selostus (yli 70 kieltä)",
+            "Sähköpostituki"
+          ]
+        },
+        {
+          "id": "ammattilainen",
+          "name": "Pro",
+          "description": "Ammattimaisille sisällöntuottajille",
+          "features": [
+            "Kaikki Starter-paketin sisältö sekä:",
+            "Sisältää 15 000 krediittiä kuukaudessa",
+            "100 Gt aktiivista tallennustilaa",
+            "Pääsy Veo 3.1 -laatuun (4K)",
+            "Hahmojen yhdenmukaisuuden moottori",
+            "Äänen kloonaus",
+            "BYOK (Oma salausavain)",
+            "3 paikkaa tiimille",
+            "Priorisoitu tuki"
+          ]
+        },
+        {
+          "id": "studio",
+          "name": "Studio",
+          "description": "Tiimeille ja toimistoille",
+          "features": [
+            "Kaikki Pro-versiossa oleva sekä lisäksi:",
+            "Sisältää 75 000 krediittiä kuukaudessa",
+            "500 Gt aktiivista tallennustilaa",
+            "Veo 3.1 4K -prioriteettijono",
+            "Rajoittamaton hahmojen yhdenmukaisuus",
+            "White-label-viennit",
+            "API-käyttöoikeus",
+            "10 paikkaa tiimille",
+            "Oma asiakkuusvastaava",
+            "Yritystason palvelutasosopimus (SLA) saatavilla pyynnöstä"
+          ]
+        }
+      ]
     }
   },
   "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
+    "badge": "Onko sinulla kysyttävää?",
+    "title": "Usein kysytyt kysymykset",
+    "subtitle": "Kaikki, mitä sinun tulee tietää aiheesta SceneFlow AI",
     "items": [
       {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+        "question": "Miten SceneFlow-työnkulku etenee ideasta julkaisuvalmiiksi videoksi?",
+        "answer": "SceneFlow hyödyntää jäsenneltyä työnkulkua: Sarja (valinnainen) → Blueprint → Tuotanto → Final Cut → Premiere. Blueprint määrittää tarinan rakenteen ja kohdeyleisön yhdessä Audience Resonance:n kanssa. Tuotantovaiheessa luodaan käsikirjoitus, kuvakäsikirjoitus, beat-video ja renderöidyt kohtausvirrat. Final Cut yhdistää valitut virrat yhdeksi MP4-pääversioksi – kyseessä ei ole aikajanapohjainen editointityökalu. Premiere hoitaa esitykset, analytiikkatiedot, YouTube-julkaisun ja vientipaketit."
       },
       {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+        "question": "Miten SceneFlow eroaa kohteista Gemini Studio tai Google Flow?",
+        "answer": "Gemini Studio ja Google Flow keskittyvät kehotteisiin perustuviin generoituihin leikkeisiin. SceneFlow yhdistää koko tuotannon työnkulun: jäsennellyt vaiheet ja muokattavat lähtötasot, yhdenmukaisuutta varmistavat Reference Library ja Beat Frames, Audience Resonance-vaiheen ennen kalliita renderöintejä, automatisoidun mikserin ja striimin kokoamisen sekä julkaisua edeltävän Screening Room-validoinnin – kaikki yhdessä ohjatussa studiossa."
       },
       {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+        "question": "Voinko muokata tekoälyn luomia käsikirjoituksia, visuaalista sisältöä ja ääntä?",
+        "answer": "Kyllä. Kaikki luotu sisältö on edelleen muokattavissa. Voit kirjoittaa käsikirjoituksia uudelleen, muuttaa kohtausten ohjausta, luoda tiettyjä vaiheita (beats) uudelleen, hienosäätää kerrontaa ja tarkentaa ajoitusta Production Mixer-työkalussa. Final Cut yhdistää vain valmiit sisällöt – luovat muutokset tehdään aiemmassa vaiheessa tuotannossa."
       },
       {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+        "question": "Miten Target Audience Resonance toimii nyt?",
+        "answer": "Audience Resonance yhdistää kerronnallisen rakenteen analyysin (selkeys, rytmitys, tunnekaari) ja kohdeyleisöprofiilin mukaisen yhteensopivuuden – perustuen Blueprint-vaiheessa määrittelemääsi yleisöön eikä julkaisun jälkeiseen sitoutumisdataan. Saat suosituksia ja yhdellä napsautuksella toteutettavia korjauksia eri tasoilla (sarja, Blueprint ja käsikirjoituksen tarkistus) ennen raskaampaa renderöintivaihetta."
       },
       {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
+        "question": "Voinko tuottaa monikielisiä kohde- tai markkinointivideoita?",
+        "answer": "Kyllä. Voit luoda ja lokalisoida videoita yli 70 kielellä hyödyntämällä synkronoituja ajoitusprosesseja. Tiimit luovat yleensä yhden pääversion ja tuottavat sen jälkeen kieliversioita kansainvälisille ostajille, asiakkaille tai alueellisille yleisöille."
       },
       {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "question": "Mitä Premiere tekee, jos Screening Room on tarkistusvaihe?",
+        "answer": "Screening Room on Premiere-ympäristön sisäinen tarkastelunäkymä, jota käytetään myös tuotantotason kuvakäsikirjoitusten esikatseluun. Jaa /s/-linkkejä, kerää palautetta sidosryhmiltä ja valinnaista sitoutumistietoa (katsojan suostumuksella), tarkastele pisteytystä ja visuaalisia analyyseja sekä julkaise sisältö YouTube-ohjatun toiminnon avulla tai vie se pakettina."
       },
       {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
+        "question": "Tarvitsenko teknistä tai editointikokemusta?",
+        "answer": "Ei. SceneFlow on suunniteltu sisällöntuottajille ja tiimeille, joilla ei ole teknistä taustaa. Aloitat kussakin vaiheessa ohjatuilla syötteillä ja muokattavilla tekoälyn luomilla perusmalleilla – et monimutkaisella kehote-suunnittelulla tai useiden työkalujen yhdistelmillä."
       },
       {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
+        "question": "Miten Explorer-sopimus toimii?",
+        "answer": "9 dollarilla saat 750 krediittiä, joiden avulla voit testata koko työnkulkua kertamaksulla. Tämä vaihtoehto on suunniteltu käytännönläheiseksi kokeiluksi, jonka avulla voit toteuttaa todellisia projekteja – konseptista valmiiksi videoksi – ennen kuukausitilauksen valitsemista."
       },
       {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
+        "question": "Miten hyvitykset ja BYOK käsitellään?",
+        "answer": "Krediittien käyttöä seurataan suoraan alustalla, mikä mahdollistaa budjetin hallinnan työnkulun vaiheiden mukaan. Pro- ja Studio-tilaukset tukevat myös ”Bring Your Own Key” -toimintoa (BYOK) tuetuilla palveluntarjoajilla, mikä antaa lisämahdollisuuksia kustannusten hallintaan organisaatioille, joilla on jo sopimus kyseisen palveluntarjoajan kanssa."
       },
       {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+        "question": "Mitä voin realistisesti luoda SceneFlow:lla?",
+        "answer": "Tiimit käyttävät SceneFlow-ratkaisua kiinteistöesittelyihin, opetussisältöihin, visuaalista tarinankerrontaa hyödyntäviin podcasteihin, uutisia taustoittaviin videoihin, brändikampanjoihin ja elokuvallisiin sarjoihin. Sama työnkulku tukee sekä lyhyt- että pitkäkestoisten sisältöjen tuotantoa."
       }
     ]
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
-    "cta": "Launch Your Studio for $9"
+    "title": "Oletko valmis testaamaan koko putken?",
+    "subtitle": "Toteuta kaikki vaiheet – konseptista ja kuvakäsikirjoituksesta videoon ja valmiiseen MP4-tiedostoon – yhdessä studiossa. Aloita 9 dollarin Explorer-paketilla ja näe rytmi edellä etenevä työnkulku käytännössä.",
+    "cta": "Käynnistä studiosi 9 dollarilla"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
-    "product": "Product",
-    "resources": "Resources",
-    "legal": "Legal",
+    "description": "Kokonaisvaltaisesti automatisoitu videotuotanto – konseptista julkaisuvalmiiseen master-versioon. Yksi ohjattu studio: Blueprint → Tuotanto → Final Cut → Premiere.",
+    "product": "Tuote",
+    "resources": "Resurssit",
+    "legal": "Oikeudelliset tiedot",
     "links": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "howItWorks": "How It Works",
-      "faq": "FAQ",
-      "gettingStarted": "Getting Started",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "trustSafety": "Trust & Safety",
-      "refunds": "Refund Policy",
-      "contact": "Contact Us"
+      "features": "Ominaisuudet",
+      "pricing": "Hinnoittelu",
+      "howItWorks": "Näin se toimii",
+      "faq": "Usein kysytyt kysymykset",
+      "gettingStarted": "Aloittaminen",
+      "privacy": "Tietosuojakäytäntö",
+      "terms": "Käyttöehdot",
+      "trustSafety": "Luottamus ja turvallisuus",
+      "refunds": "Hyvityskäytäntö",
+      "contact": "Ota yhteyttä"
     },
-    "tagline": "Made with ❤️ for creators",
-    "taglineSub": "From Idea to Published Video",
-    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
-    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "tagline": "Tehty ❤️:lla tekijöille",
+    "taglineSub": "Ideasta julkaistuksi videoksi",
+    "securePayments": "Turvalliset maksut käsittelee Whop, virallinen myyjämme (Merchant of Record)",
+    "morLine": "Turvalliset maksut, verojen laskenta ja säädösten noudattaminen hoidetaan Life Focus, LLC:n puolesta Whop:n (virallinen myyjä eli Merchant of Record) toimesta.",
+    "copyright": "© 2026 SceneFlow AI. Kaikki oikeudet pidätetään.",
+    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Yhteystiedot: brian@sfai.studio",
+    "poweredBy": "Käyttövoimana Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "See Pricing",
-    "tryNine": "Try $9",
-    "tryForNine": "Try for $9",
-    "dismiss": "Dismiss"
+    "seePricing": "Katso hinnat",
+    "tryNine": "Kokeile 9 dollarilla",
+    "tryForNine": "Kokeile 9 dollarilla",
+    "dismiss": "Hylkää"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
-    "pause": "Pause",
-    "play": "Play",
-    "mute": "Mute",
-    "unmute": "Unmute"
+    "pause": "Tauko",
+    "play": "Toista",
+    "mute": "Mykistä",
+    "unmute": "Poista mykistys",
+    "expandVideo": "Laajenna video"
   }
 }

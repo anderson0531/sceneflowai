@@ -21,7 +21,7 @@ import {
   SCREENING_ROOM_COPY,
   WORKFLOW_PHASES,
 } from '@/config/landing/workflowPhaseCopy'
-import { VIDEO_CATEGORIES } from '@/config/landing/useCaseExamples'
+import { VIDEO_CATEGORIES, USE_CASES_QUALIFYING_STATEMENT } from '@/config/landing/useCaseExamples'
 import {
   HERO_VIDEO_LANGUAGE_PROMPT,
   HERO_VIDEO_LOCALES,
@@ -201,6 +201,7 @@ export function buildEnMessages() {
       titleAccent: 'Build It in SceneFlow',
       subtitle:
         'Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.',
+      qualifyingStatement: USE_CASES_QUALIFYING_STATEMENT,
       ui: {
         useCases: 'Use Cases',
         sectors: '{count} SECTORS',
@@ -213,6 +214,7 @@ export function buildEnMessages() {
       categories: VIDEO_CATEGORIES.map((cat) => ({
         id: cat.id,
         title: cat.title,
+        ...(cat.qualifyingStatement ? { qualifyingStatement: cat.qualifyingStatement } : {}),
         examples: cat.examples.map((ex) => ({
           id: ex.id,
           label: ex.label,

@@ -1,618 +1,1411 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
-    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
+    "title": "SceneFlow AI - AI 기반 동영상 제작",
+    "description": "AI 기반 워크플로 자동화로 아이디어를 전문가급 영상으로 바꿔보세요."
   },
   "nav": {
-    "workflow": "The Workflow",
-    "platformWalkthrough": "Platform Walkthrough",
-    "plansPricing": "Plans & Pricing",
-    "more": "More",
-    "useCases": "Use Cases",
+    "workflow": "워크플로",
+    "platformWalkthrough": "플랫폼 둘러보기",
+    "plansPricing": "요금제 및 가격",
+    "more": "더 보기",
+    "useCases": "사용 사례",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform & Trust",
-    "faq": "FAQ",
-    "signIn": "Sign In",
-    "startProject": "Start a Project",
-    "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "platformTrust": "플랫폼과 신뢰",
+    "faq": "자주 묻는 질문",
+    "signIn": "로그인",
+    "startProject": "프로젝트 시작하기",
+    "dashboard": "대시보드",
+    "adminPanel": "관리자 패널",
+    "signOut": "로그아웃",
+    "goToDashboard": "대시보드로 이동",
+    "userFallback": "사용자",
+    "searchLanguages": "언어 검색...",
+    "noLanguagesFound": "언어를 찾을 수 없습니다."
   },
   "floatingNav": {
-    "compare": "Compare",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "platformWalkthrough": "Platform Walkthrough",
-    "platform": "Platform",
-    "pricing": "Pricing",
-    "faq": "FAQ"
+    "compare": "비교",
+    "howItWorks": "작동 원리",
+    "useCases": "사용 사례",
+    "platformWalkthrough": "플랫폼 둘러보기",
+    "platform": "플랫폼",
+    "pricing": "가격",
+    "faq": "자주 묻는 질문"
   },
   "hero": {
-    "headline": "Make professional video without a production team or a dozen apps.",
-    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.",
-    "ctaSecondary": "Watch the 'What's Possible'",
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "headline": "여러 개의 AI 탭을 번갈아 가며 작업하는 번거로움은 이제 그만두세요. 하나의 스튜디오에서 아이디어 구상부터 게시 가능한 영상 완성까지 모두 해결할 수 있습니다.",
+    "subheadline": "아이디어 구상부터 게시 가능한 최종 영상 완성까지, 모든 과정을 지원하는 통합 스튜디오입니다. 최종 영상을 결제하기 전에 스토리보드를 먼저 확인하세요. 막연한 시도로 크레딧을 낭비하는 대신, 미리 스타일을 확인하고 승인할 수 있습니다. SceneFlow는 스크립트, 스토리보드, 음성, 영상 조립 등 번거로운 작업을 자동화하는 동시에, 사용자가 영상의 모든 디테일을 직접 제어할 수 있게 해줍니다.",
+    "audienceMicroLine": "성과를 추구하는 크리에이터와 작동 방식을 확인하고 싶은 팀을 위해 만들어졌습니다.",
+    "ctaSecondary": "'What's Possible'을 시청해 보세요.",
+    "ctaToolStack": "기존 도구 스택을 어떻게 대체하는지 확인해 보세요.",
+    "languagePrompt": "여러분의 언어로 영웅의 목소리를 들어보세요 — 동일한 파이프라인, 새로운 시장",
+    "multilangHint": "Hero는 7개 언어로 더빙을 지원하며, 전체 파이프라인은 실제 제작 단계에서 70개 이상의 언어를 지원합니다.",
+    "playWithNarration": "내레이션과 함께 재생",
+    "tapToHear": "탭하여 듣기",
+    "fullscreen": "전체 화면",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
-        "nativeLabel": "English"
+        "label": "영어",
+        "nativeLabel": "영어"
       },
       "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
+        "label": "스페인어",
+        "nativeLabel": "스페인어"
       },
       "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
+        "label": "포르투갈어",
+        "nativeLabel": "포르투갈어"
       },
       "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
+        "label": "힌디어",
+        "nativeLabel": "힌디어"
       },
       "zh": {
-        "label": "Chinese",
-        "nativeLabel": "中文"
+        "label": "중국어",
+        "nativeLabel": "중국어"
       },
       "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
+        "label": "아랍어",
+        "nativeLabel": "아랍어"
       },
       "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
+        "label": "태국어",
+        "nativeLabel": "태국"
       }
     },
-    "soon": "Soon"
+    "soon": "곧"
   },
   "valueProp": {
     "pills": [
       {
-        "label": "One Studio",
-        "detail": "Concept to publish in one place"
+        "label": "원 스튜디오",
+        "detail": "한곳에 게시할 콘셉트"
       },
       {
-        "label": "Approve Before Final Video",
-        "detail": "Review storyboard beats before you render"
+        "label": "최종 영상 제작 전 승인",
+        "detail": "렌더링하기 전에 스토리보드 비트를 검토하세요."
       },
       {
-        "label": "Test Your Story First",
-        "detail": "Know what lands before heavy spend"
+        "label": "먼저 당신의 이야기를 테스트해 보세요.",
+        "detail": "본격적으로 비용을 투입하기 전에 무엇이 효과가 있는지 파악하세요."
       },
       {
-        "label": "Publish-Ready Output",
-        "detail": "Master MP4 + distribution bundles"
+        "label": "출판 준비가 완료된 결과물",
+        "detail": "마스터 MP4 및 배포용 번들"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Who are you? Pick your path",
-    "seeExamples": "See examples",
-    "examplesFor": "Examples for {label}:",
-    "andMore": ", and more.",
+    "prompt": "당신은 누구입니까? 당신의 길을 선택하세요.",
+    "seeExamples": "예시 보기",
+    "examplesFor": "{label}에 대한 예시:",
+    "andMore": ", 그리고 그 외 다수.",
+    "modes": {
+      "automate": {
+        "label": "자동화하세요",
+        "description": "가이드형 워크플로 — 스토리보드 승인 및 신속한 출시"
+      },
+      "engine": {
+        "label": "엔진을 보여주세요.",
+        "description": "아키텍처, BYOK 및 플랫폼 깊이"
+      }
+    },
     "paths": [
       {
-        "id": "creator",
-        "label": "Creator",
-        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "id": "창작자",
+        "label": "크리에이터",
+        "outcome": "일정에 맞춰 출시하세요 — 도구마다 다시 만드는 일은 이제 그만두세요.",
         "useCases": [
-          "YouTube & episodic series",
-          "Video podcasts & show clips",
-          "Hyper-local & JIT news",
-          "Documentaries & docuseries",
-          "How-to & skill channels",
-          "Sports recaps & commentary"
+          "유튜브 및 에피소드형 시리즈",
+          "비디오 팟캐스트 및 쇼 클립",
+          "초지역적 및 적시(JIT) 뉴스",
+          "다큐멘터리 및 다큐멘터리 시리즈",
+          "하우투 및 기술 채널",
+          "스포츠 경기 요약 및 해설"
         ]
       },
       {
-        "id": "team",
-        "label": "In-house team",
-        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "id": "팀",
+        "label": "사내 팀",
+        "outcome": "느린 공급업체 프로세스를 개선하고 브랜드와 예산을 관리하세요.",
         "useCases": [
-          "Corporate L&D & compliance",
-          "Internal comms & town halls",
-          "Product explainers for sales",
-          "HR recruitment & culture",
-          "K-12 / higher-ed lessons",
-          "Public health & safety updates"
+          "기업 학습·개발 및 컴플라이언스",
+          "사내 커뮤니케이션 및 타운홀 미팅",
+          "영업용 제품 설명 자료",
+          "인사 채용 및 조직 문화",
+          "K-12 및 고등교육 수업",
+          "공중 보건 및 안전 관련 최신 소식"
         ]
       },
       {
-        "id": "productionShop",
-        "label": "Production shop",
-        "outcome": "Productize a niche with repeatable intake → delivery",
+        "id": "생산 공방",
+        "label": "생산 공장",
+        "outcome": "반복 가능한 '수주 → 납품' 프로세스를 통해 특정 틈새시장을 상품화하십시오.",
         "useCases": [
-          "Video memoir packages",
-          "Legacy & tribute videos",
-          "Voice-cloned narration",
-          "White-label studio templates",
-          "Real estate & hospitality tours",
-          "Subscription video services"
+          "영상 회고록 패키지",
+          "유산 및 헌정 영상",
+          "음성 복제 내레이션",
+          "화이트 라벨 스튜디오 템플릿",
+          "부동산 및 호스피탈리티 투어",
+          "구독형 비디오 서비스"
         ]
       },
       {
-        "id": "agency",
-        "label": "Agency",
-        "outcome": "Faster pitches and scalable client delivery",
+        "id": "대행사, 기관",
+        "label": "에이전시",
+        "outcome": "더 신속한 피칭과 확장 가능한 고객 서비스 제공",
         "useCases": [
-          "Client pitch pre-viz",
-          "Product launch campaigns",
-          "Case studies & testimonials",
-          "Event & conference promos",
-          "Multi-language campaigns",
-          "Property marketing for clients"
+          "클라이언트 피치용 프리비즈",
+          "제품 출시 캠페인",
+          "사례 연구 및 고객 후기",
+          "행사 및 컨퍼런스 프로모션",
+          "다국어 캠페인",
+          "고객을 위한 부동산 마케팅"
         ]
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Why SceneFlow vs prompt-and-generate tools",
-    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "title": "SceneFlow와 프롬프트 기반 생성 도구 비교",
+    "subtitle": "Gemini Studio와 Google Flow은 클립 작업에 탁월합니다. SceneFlow는 전체 제작 워크플로를 포괄합니다.",
     "rows": [
       {
-        "them": "Prompt + clip generation in isolation",
-        "us": "Structured phases with editable baselines at each step"
+        "them": "프롬프트 및 클립의 독립적 생성",
+        "us": "각 단계별로 수정 가능한 기준선(baseline)을 갖춘 체계적인 단계"
       },
       {
-        "them": "Manual consistency across sessions",
-        "us": "Reference Library + Beat Frames lock visuals before video"
+        "them": "세션 간 수동 일관성",
+        "us": "Reference Library + Beat Frames 비디오 출력 전 영상 신호 고정"
       },
       {
-        "them": "No audience validation workflow",
-        "us": "Audience Resonance before render; Screening Room before publish"
+        "them": "오디언스 검증 워크플로 없음",
+        "us": "Audience Resonance 렌더링 전; Screening Room 게시 전"
       },
       {
-        "them": "No production pipeline or handoff",
-        "us": "Script → streams → assembly → distribution in one app"
-      },
-      {
-        "them": "Complex model and settings surface",
-        "us": "Guided Studio UX with credits and BYOK guardrails"
+        "them": "운영 파이프라인이나 업무 인계 절차 부재",
+        "us": "스크립트 → 스트림 → 조립 → 배포를 하나의 앱에서"
       }
     ],
-    "themHeader": "Typical clip-generation tools",
-    "usHeader": "SceneFlow bundles"
+    "themHeader": "일반적인 클립 생성 도구",
+    "usHeader": "SceneFlow 번들"
   },
   "beatFirstPipeline": {
-    "title": "Beat-First Video Pipeline",
-    "subtitle": "Approve before you render — not slot-machine regeneration",
-    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "title": "비트 우선 비디오 파이프라인",
+    "subtitle": "렌더링 전 승인 — 슬롯머신식 재생성 지양",
+    "intro": "무작정 시도하며 생성할 필요가 없습니다. SceneFlow가 최종 영상 제작에 크레딧을 사용하기 전에 미리 결과물을 확인하고 승인할 수 있습니다.",
+    "description": "SceneFlow는 모든 단계에서 시각적 승인 절차를 체계화합니다. 검토를 위한 Express storyboard, 구도를 확정하는 Beat Frames, 그리고 비트(beat) 단위의 F2V 과정이 포함됩니다. 이를 통해 모델의 일탈(drift)이나 환각(hallucination) 현상으로 인해 크레딧을 낭비하기 전에 미리 결과물의 외관을 다듬을 수 있습니다.",
     "steps": [
-      "Express storyboard — share audio-visual beats for review in minutes",
-      "Beat Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Express storyboard — 검토용 시청각 비트를 몇 분 만에 공유하세요",
+      "Beat Frames — Reference Library 연속성으로 시작/종료 구성을 고정",
+      "비트 단위 F2V — 막연한 프롬프트가 아닌, 승인된 프레임으로 영상 생성",
+      "Production Mixer — Final Cut 어셈블리로의 타이밍, 오디오 및 스트림 내보내기"
     ],
-    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+    "footerLine": "슬롯머신 재생성 횟수 축소 — 최종 영상 제작 비용 집행 전 비주얼 승인"
+  },
+  "toolStack": {
+    "badge": "익숙하게 들리시나요?",
+    "title": "잘못된 방식 대 SceneFlow 방식",
+    "subtitle": "영상 하나를 완성하기 위해 5개의 탭을 띄우고, 내보낸 파일을 복사해 붙여넣고, 프롬프트 작성에 지쳐야 할 필요는 없습니다.",
+    "brokenWay": {
+      "title": "부서진 길",
+      "tagline": "단절된. 수동의. 소모적인.",
+      "tools": [
+        {
+          "name": "ChatGPT",
+          "category": "대본 초안"
+        },
+        {
+          "name": "미드저니",
+          "category": "일회성 이미지"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "수동 VO 내보내기"
+        },
+        {
+          "name": "Premiere",
+          "category": "수동 조립"
+        }
+      ],
+      "chaosLabel": "탭 5개. 맥락 상실.",
+      "painPoints": [
+        "앱 간 복사 및 붙여넣기",
+        "프롬프트 피로감과 재생성 루프",
+        "비용을 지출하기 전 타겟 고객 확인 절차 없음",
+        "내보내기 전반의 버전 혼란"
+      ],
+      "timeLabel": "일반적인 프로젝트 소요 시간",
+      "timeValue": "2~4주"
+    },
+    "sceneflowWay": {
+      "title": "SceneFlow 방식",
+      "tagline": "하나의 스튜디오. 렌더링 전 승인하세요.",
+      "stages": [
+        {
+          "label": "Blueprint",
+          "detail": "체계적인 이야기 구상"
+        },
+        {
+          "label": "참고 문헌",
+          "detail": "일관성 있는 캐릭터"
+        },
+        {
+          "label": "생산",
+          "detail": "음성 + 시각 자료"
+        },
+        {
+          "label": "게시",
+          "detail": "마스터 MP4 1개"
+        }
+      ],
+      "syncLabel": "단일 프로젝트 파일 — 탭을 번갈아 오갈 필요 없음",
+      "benefits": [
+        "가이드 단계 — 프롬프트 엔지니어링이 아닌",
+        "영상 크레딧 작업 전 스토리보드 승인",
+        "Audience Resonance 고부하 렌더링 전 점수",
+        "단일 스튜디오에서 제작한, 즉시 출판 가능한 마스터"
+      ],
+      "timeLabel": "일반적인 프로젝트 소요 시간",
+      "timeValue": "2~4일"
+    },
+    "comparisonCaption": "단일 스튜디오가 파편화된 프롬프트 도구, 수동 편집, 그리고 여러 플랫폼 간의 작업 이관 과정을 대체합니다.",
+    "comparisonImageAlt": "기존 제작의 간접 비용 대비 SceneFlow 자동화 스튜디오 — 기획부터 게시 가능한 영상 완성까지 더 빠른 과정"
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
-    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "title": "오버헤드 없는 생산 속도",
+    "subtitle": "단편적인 프롬프트 도구와 수작업 조립 과정을 하나의 자동화된 스튜디오로 대체하여, 초기 콘셉트부터 즉시 게시 가능한 최종 결과물까지 완성해 보세요.",
+    "caption": "단일 스튜디오가 파편화된 프롬프트 도구, 수동 편집, 그리고 여러 플랫폼 간의 작업 이관 과정을 대체합니다.",
+    "imageAlt": "기존 제작의 간접 비용 대비 SceneFlow 자동화 스튜디오 — 기획부터 게시 가능한 영상 완성까지 더 빠른 과정"
   },
   "howItWorks": {
-    "title": "From concept to publish-ready video",
-    "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
-    "tagline": "Every step is expertly automated. Every step gives you full control.",
-    "optionalBadge": "Optional",
-    "optionalSuffix": " (optional)",
-    "readyTitle": "Ready to test the full pipeline?",
-    "explorerCta": "Start with Explorer — $9",
+    "title": "기획부터 게시 가능한 영상까지",
+    "titleAccent": "단일 가이드형 파이프라인",
+    "subtitle": "시리즈는 선택 사항입니다. 핵심 경로는 Blueprint → 제작(Production) → Final Cut → Premiere 순으로 진행되며, 이 과정에서 스토리보드, 애니매틱, 비디오, 마스터 MP4 단계가 포함됩니다.",
+    "tagline": "모든 단계가 전문적으로 자동화되어 있습니다. 모든 단계에서 귀하가 완전한 통제권을 갖습니다.",
+    "optionalBadge": "선택 사항",
+    "optionalSuffix": " (선택 사항)",
+    "readyTitle": "전체 파이프라인을 테스트할 준비가 되셨나요?",
+    "explorerCta": "Explorer로 시작 — $9",
     "phases": [
       {
-        "id": "series",
-        "stepLabel": "Series",
-        "subtitle": "Showrunner Engine",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "id": "시리즈",
+        "stepLabel": "시리즈",
+        "subtitle": "쇼러너 엔진",
+        "description": "세계관을 한 번 정의하면 일관성 있는 다회차 에피소드 서사를 생성할 수 있습니다. 공유된 Reference Library은 시즌 전체에 걸쳐 캐릭터와 톤을 일관되게 유지해 줍니다.",
         "keySteps": [
-          "Define universe — characters, tone, and season arc",
-          "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "세계관 정의 — 등장인물, 분위기, 시즌 전체의 서사 구조",
+          "시즌 전체의 에피소드 개요를 자동으로 생성합니다.",
+          "Blueprint 연동 및 에피소드별 제작"
         ],
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
-        ],
-        "optional": true
+          "등장인물, 톤, 시즌 전체의 서사 구조 등 작품의 세계관을 한 번 확실하게 정립하세요.",
+          "시즌 전체에 걸쳐 자동 생성되는 일관성 있는 에피소드 개요",
+          "연속성 추적 — 다수의 에피소드로 구성된 시즌 간 정합성 유지",
+          "시리즈-에피소드 간 동기화 — Blueprint 스튜디오 및 프로덕션 연동"
+        ]
       },
       {
-        "id": "blueprint",
+        "id": "청사진",
         "stepLabel": "Blueprint",
-        "subtitle": "Story Development",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "subtitle": "스토리 개발",
+        "description": "로그라인, 비트, 캐릭터, 톤을 포함하여 콘셉트를 체계적인 트리트먼트로 발전시키세요. 본격적인 렌더링에 앞서 Audience Resonance를 실행하고 협업을 진행하세요.",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
-          "Audience Resonance scoring with 80+ target",
-          "Collaborator share links and export (PDF, Doc, PPTX)"
+          "생성 → 검토 → 반복 → 생산 시작",
+          "Audience Resonance 목표 점수 80점 이상 달성",
+          "협업자 공유 링크 및 내보내기(PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
-        ],
-        "optional": false
+          "생성 → 검토 → 반복 → 생산 시작 워크플로",
+          "컨셉에서 구조까지 단 몇 분 만에 — 로그라인, 비트, 캐릭터, 톤",
+          "운영 환경 이행 전 목표 점수 80점 이상으로 Audience Resonance 스코어링 수행",
+          "협업자 공유 링크 — 피드백을 종합하여 수정 방향 제시"
+        ]
       },
       {
-        "id": "production",
-        "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "id": "생산",
+        "stepLabel": "생산",
+        "subtitle": "스크립트에서 스트림으로",
+        "description": "Script 및 Action 탭이 Foundation → Storyboard → Production → Final Cut 과정을 안내합니다. Express storyboard, Beat Frames, Mixer, MP4 스트림을 도구 전환 없이 모두 사용할 수 있습니다.",
         "keySteps": [
-          "Lock script, voices, and scene audio",
-          "Express storyboard — gallery and share for review",
-          "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "대본, 음성, 장면 오디오 확정",
+          "Express storyboard — 갤러리 및 검토용 공유",
+          "Beat Frames → 디렉터 콘솔 → 렌더 스트림",
+          "완료된 스트림을 Final Cut로 전송하십시오."
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
-        ],
-        "optional": false
+          "파운데이션 — 대본, 음성, 장면 오디오, 대본 확정",
+          "Express storyboard — 방향 및 프레임(분 단위); 갤러리 및 공유",
+          "Beat Frames 및 믹서 — 시작/종료 프레임, 디렉터 콘솔, MP4 스트림 렌더링",
+          "운영 스트림 — 결과물 검토, 최신 상태가 아닌 비트(beat) 재렌더링, Final Cut로 전송"
+        ]
       },
       {
-        "id": "final-cut",
+        "id": "최종 편집본",
         "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "subtitle": "스트림 조립",
+        "description": "완성된 프로덕션 스트림을 하나의 마스터 MP4로 통합하세요. 타임라인 편집 없이 장면별로 Animatic 또는 영상과 언어를 선택할 수 있으며, 크리에이티브 변경 사항은 Production Mixer에 유지됩니다.",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
+          "장면별 스트림 선택 — 프리셋 또는 사용자 지정 믹스",
+          "대본 순서대로 전체 프로그램 미리보기",
+          "Premiere용 마스터 MP4 1개를 내보내세요."
         ],
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
+          "장면별 스트림 선택 — Animatic, 비디오, 언어, 버전",
+          "조합 프리셋 — 전체 동영상, 하이브리드, 사용자 지정 혼합",
+          "타임라인 편집 없음 — 창의적인 변경 사항은 Production Mixer에 유지됨",
+          "원클릭 마스터 내보내기 — Premiere용 병합된 MP4"
+        ]
       },
       {
-        "id": "premiere",
+        "id": "초연, 첫 공개",
         "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "subtitle": "유통 거점",
+        "description": "시청자 분석 데이터를 바탕으로 마스터 영상을 검토한 후, 현지화된 메타데이터를 적용하여 YouTube에 게시하거나 Shorts, Reels, TikTok용 번들로 내보내세요.",
         "keySteps": [
-          "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
+          "스크리닝을 생성하고 /s/ 링크를 공유하세요.",
+          "리뷰 점수, 참여도 및 시각적 인사이트",
+          "YouTube 마법사 또는 내보내기 번들"
         ],
         "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "optional": false
+          "공유 가능 Screening Room — 점수 산정 및 선택적 참여 분석(시청자 동의) 기능이 포함된 /s/ 링크",
+          "인사이트 대시보드 — 스코어링, 생체 인식 및 시각화 탭",
+          "YouTube 마법사 — 썸네일, 현지화된 제목/설명, SceneFlow CTA",
+          "내보내기 번들 및 세로형 숏폼 클립 플랜"
+        ]
       }
     ]
   },
   "useCases": {
-    "badge": "Production Applications",
-    "title": "Whatever Video You Can Imagine,",
-    "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "badge": "생산용 애플리케이션",
+    "title": "상상할 수 있는 어떤 영상이든,",
+    "titleAccent": "SceneFlow에서 빌드하기",
+    "subtitle": "부동산 쇼케이스, 교육 콘텐츠, 팟캐스트, 뉴스 포맷, 브랜드 캠페인, 그리고 영화적 스토리텔링까지 — 기획부터 게시 가능한 최종 결과물 제작에 이르는 모든 과정을 아우르는 하나의 자동화된 스튜디오입니다.",
+    "qualifyingStatement": "SceneFlow는 원본 사진, 업로드한 자료, 설명을 바탕으로 내레이션이 포함된 워크스루(walkthrough) 영상을 제작해 줍니다. 이때 음성이나 캐릭터 등장 여부는 사용자가 직접 설정할 수 있습니다. 이는 실제 카메라로 촬영한 영상이 아니라, 사용자의 자료를 기반으로 AI가 생성한 사실적인 시각화 결과물입니다. 게시 전에는 반드시 모든 스토리보드를 검토 및 승인하고, 시청자가 콘텐츠의 성격을 명확히 파악할 수 있도록 결과물에 적절한 라벨을 표시하십시오.",
     "ui": {
-      "useCases": "Use Cases",
-      "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo coming soon",
-      "selectExample": "Select an example to preview its demo"
+      "useCases": "사용 사례",
+      "sectors": "{count}개 부문",
+      "demoComingSoon": "데모 출시 예정",
+      "selectExample": "예제를 선택하여 데모를 미리 확인해 보세요.",
+      "targetPersona": "타겟 페르소나",
+      "theChallenge": "도전",
+      "sceneFlowSolution": "SceneFlow 솔루션",
+      "beforeVsAfter": "비포 & 애프터",
+      "before": "이전",
+      "after": "후",
+      "theWin": "'승리'",
+      "frameAnchoredTitle": "프레임 기반 연속성",
+      "frameAnchoredDescription": "SceneFlow는 프레임 고정 방식의 연속성을 지원하는 유일한 도구로, 모든 장면 구간에서 고객의 제품이나 캐릭터가 동일하게 유지되도록 보장합니다.",
+      "closePreview": "미리보기 닫기",
+      "expandVideo": "동영상 확장",
+      "expandImage": "이미지 확대",
+      "orStartExplorer": "$9 Explorer 요금제로 시작하세요.",
+      "orPrefix": "또는"
+    },
+    "personas": {
+      "creator": {
+        "label": "1인 크리에이터",
+        "title": "유튜브 크리에이터",
+        "beforeAfter": {
+          "before": "40시간",
+          "after": "25분"
+        },
+        "challenge": {
+          "title": "'B-롤(B-Roll)' 병목 현상",
+          "description": "훌륭한 대본을 갖추고도 정작 영상 소스 찾기, 편집 조율, 장면 간 일관성 유지에 대부분의 시간을 쏟게 됩니다. 이러한 지연은 콘텐츠 발행 주기를 늦추고 시청자 유지율을 떨어뜨리는 결과를 초래합니다."
+        },
+        "solution": {
+          "title": "자동화된 이야기꾼",
+          "description": "첫 장면부터 최종 완성본에 이르기까지 캐릭터와 스타일의 일관성을 유지하면서, 대본을 제작 가능한 수준의 비주얼로 신속하게 변환하세요.",
+          "features": [
+            "대본의 주요 전개 단계(비트)와 명확하게 맞아떨어지는 비주얼",
+            "모든 장면에서 일관된 주인공",
+            "공유 참조 라이브러리를 활용하여 에피소드 시리즈로 확장"
+          ]
+        },
+        "win": "간헐적인 업로드 방식에서 벗어나, 더 적은 부담으로 안정적인 제작 및 게시 주기를 확립하세요.",
+        "keyPhrases": [
+          "더 빠른 처리",
+          "일관성 있는 캐릭터",
+          "시리즈 제작 준비가 완료된 워크플로"
+        ]
+      },
+      "team": {
+        "label": "사내 팀",
+        "title": "사내 영상 팀",
+        "beforeAfter": {
+          "before": "6주",
+          "after": "같은 주"
+        },
+        "challenge": {
+          "title": "공급업체 업무 적체 및 브랜드 정체성 이탈",
+          "description": "커뮤니케이션, 교육 및 개발(L&D), 마케팅 팀은 에이전시나 외부 업체의 영상 결과물을 받기 위해 몇 주씩 기다려야 합니다. 촬영을 진행할 때마다 브랜드 일관성 결여, 예측 불가능한 비용 청구, 그리고 캠페인 진행을 지연시키는 복잡한 승인 절차 등의 문제가 발생합니다."
+        },
+        "solution": {
+          "title": "당주(當週) 사내 생산",
+          "description": "브랜드 템플릿과 최종 렌더링 전 승인 절차를 활용하고, 촬영 인력 투입일(crew days)이나 무제한 수정 과정 없이, 예측 가능한 크레딧 예산 내에서 영상을 제작할 전담 인력을 배정하세요.",
+          "features": [
+            "외부 업체 촬영을 가이드가 포함된 사내 워크플로로 대체하세요.",
+            "브랜드 가이드라인을 준수하는 템플릿 및 참조 라이브러리",
+            "프로젝트별 크레딧 사용량 및 예산 한도 확인",
+            "최종 영상 비용을 지불하기 전에 스토리보드를 승인하세요."
+          ]
+        },
+        "win": "벤더의 작업 대기 상황에 얽매이지 말고, 원하는 일정에 맞춰 교육, 커뮤니케이션 및 캠페인 영상을 출시하세요.",
+        "keyPhrases": [
+          "예측 가능한 비용",
+          "브랜드 통제",
+          "동일 주간 내 처리"
+        ]
+      },
+      "productionShop": {
+        "label": "생산 작업장",
+        "title": "틈새 시장 전문 생산 업체",
+        "beforeAfter": {
+          "before": "촬영당 8,000달러",
+          "after": "200달러 크레딧"
+        },
+        "challenge": {
+          "title": "맞춤형 버티컬, 반복 가능한 시스템 부재",
+          "description": "회고록, 유산 기록, 부동산, 교육 분야의 고객들은 빠른 결과물 제공을 원하지만, 현실은 모든 프로젝트가 매번 처음부터 시작됩니다. 표준화된 '접수-제작-전달' 파이프라인이 없다면 업로드, 음성 복제, 아바타 생성 등의 작업을 확장하기 어렵습니다."
+        },
+        "solution": {
+          "title": "동영상 서비스를 상품화하세요",
+          "description": "회고록 제작 스튜디오 및 틈새 시장을 위한 반복 가능한 워크플로를 구축하세요. 템플릿 업로드, 음성 복제, 아바타, 스토리보드 승인 등의 기능을 활용해 고객별로 맞춤형 서비스를 제공하고, 작업 물량 확대를 통해 수익률을 높일 수 있습니다.",
+          "features": [
+            "사진 업로드, 음성 복제, 아바타 호스트 기능을 갖춘 회고록 템플릿",
+            "Blueprint 및 스토리보드 승인 단계와 연계된 고객 접수",
+            "레거시, 추모 및 구독형 영상 서비스를 위한 화이트 라벨 스튜디오 패키지",
+            "촬영 건별 간접비 대신 크레딧에 대한 마진"
+          ]
+        },
+        "win": "단발성 프리랜서 작업에 매달리는 대신, 반복 가능한 방식으로 제공할 수 있는 영상 회고록이나 틈새 시장을 겨냥한 스튜디오 서비스를 시작해 보세요.",
+        "keyPhrases": [
+          "회고록 템플릿",
+          "음성 및 아바타 정체성",
+          "반복 가능한 제공"
+        ]
+      },
+      "agency": {
+        "label": "에이전시",
+        "title": "고객 서비스 제공 책임자",
+        "beforeAfter": {
+          "before": "3주 내 배송",
+          "after": "3일 배송"
+        },
+        "challenge": {
+          "title": "대규모 고객 서비스 제공",
+          "description": "피치(제안 경쟁)에서 승리하는 것은 전체 과정의 절반에 불과합니다. 반복적인 클라이언트 업무를 수행할 때는 매번 제작 과정을 처음부터 다시 시작할 필요 없이, 신속한 작업 처리와 명확한 승인 절차를 갖추고 모든 결과물에서 수익을 확보해야 합니다."
+        },
+        "solution": {
+          "title": "처리량 + 고객 승인",
+          "description": "브랜드 안전성 제어 기능, 최종 렌더링 전 클라이언트 검토, 프로젝트별 예측 가능한 크레딧 비용을 바탕으로 피치용 시안 단계에서 정기적인 결과물 납품 단계로 전환해 보세요.",
+          "features": [
+            "피치 및 클라이언트 승인을 위한 신속한 사전 시각화",
+            "반복적인 고객용 서식에 사용할 수 있는 재사용 가능한 템플릿",
+            "모든 반복 단계에서의 예산 가시성",
+            "인력 증원 없이 확장 가능한 서비스 제공"
+          ]
+        },
+        "win": "제작 리스크는 줄이고 마진은 높이면서, 더 빠른 피치(제안) 사이클과 반복적인 고객 업무를 수행하십시오.",
+        "keyPhrases": [
+          "고객 승인",
+          "인도 처리량",
+          "예산 예측 가능성"
+        ]
+      }
+    },
+    "segmentCtas": {
+      "creator": {
+        "label": "프로덕션 테스트 비행을 시작하세요",
+        "subtext": "일회성 $9 • 750 크레딧 • 플랫폼 전체 이용 권한"
+      },
+      "team": {
+        "label": "팀 워크스루 예약하기",
+        "subtext": "사내 팀이 어떻게 외부 업체 의존 프로세스를 대체하는지 확인해 보세요."
+      },
+      "productionShop": {
+        "label": "세로형 템플릿 살펴보기",
+        "subtext": "부동산, 교육, 문서 등 — 무엇을 제품화할 수 있을지 확인해 보세요."
+      },
+      "agency": {
+        "label": "팀 요금 확인하기",
+        "subtext": "대규모 에이전시 및 프로덕션 업체를 위한 플랜"
+      }
     },
     "categories": [
       {
-        "id": "property",
-        "title": "Property, Spaces & Hospitality",
+        "id": "부동산",
+        "title": "부동산, 공간 및 호스피탈리티",
+        "qualifyingStatement": "실제 부동산 사진을 기반으로 제작되었으며, 귀하의 목소리와 아바타를 활용한 AI 기반 해설과 함께 둘러보는 형식으로 제공됩니다. 이는 공간의 구조와 특징을 생생하게 미리 확인할 수 있는 자료일 뿐, 직접 방문하여 확인하는 과정을 대체하지는 않습니다. 모든 투어에는 명확한 라벨이 표시되어 있습니다.",
         "examples": [
           {
-            "id": "residential-real-estate",
-            "label": "Residential Real Estate",
-            "description": "Automated listing tours featuring the agent's cloned voice and avatar identity."
+            "id": "주거용 부동산",
+            "label": "주거용 부동산",
+            "description": "부동산 매물 사진을 미리 저장해 둔 캐릭터 및 음성 데이터와 함께 업로드한다고 상상해 보세요. 그러면 70개 이상의 언어로, 본인의 모습과 목소리가 담긴 전문적인 매물 소개 영상을 즉시 제작할 수 있습니다."
           },
           {
-            "id": "commercial-real-estate",
-            "label": "Commercial Real Estate",
-            "description": "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data."
+            "id": "상업용 부동산",
+            "label": "상업용 부동산",
+            "description": "평면도, 렌더링 이미지, 주변 지역 정보를 중개인의 음성 및 아바타 데이터와 함께 업로드한다고 상상해 보세요. 그런 다음, 공간의 모든 디테일을 생생하게 구현한 투자자용 프레젠테이션 영상을 즉시 제작하고, 이를 70개 이상의 언어로 현지화하는 것입니다."
           },
           {
-            "id": "short-term-rentals",
-            "label": "Short-Term Rentals",
-            "description": "Automated \"Digital Welcome Books\" that walk guests through house features and local \"best of\" spots."
+            "id": "단기 임대",
+            "label": "단기 임대",
+            "description": "숙소 사진과 편의 시설에 대한 설명을 호스트의 실제 음성과 함께 업로드한다고 상상해 보세요. 그리고 체크인 전부터 각 게스트의 언어로 환영 인사를 건네는 디지털 환영 영상을 즉시 공개하는 것입니다."
           },
           {
-            "id": "hospitality-tourism",
-            "label": "Hospitality & Tourism",
-            "description": "Hotel virtual tours and narrated travel itineraries for agencies."
+            "id": "환대 및 관광",
+            "label": "환대 및 관광",
+            "description": "호텔 사진과 여행 일정의 하이라이트를 브랜드 고유의 호스트 음성 및 아바타와 함께 업로드한다고 상상해 보세요. 별도의 촬영팀 없이도 70개 이상의 언어로 가상 투어와 음성 해설이 포함된 여행 가이드를 즉시 제작해 선보일 수 있습니다."
           },
           {
-            "id": "museum-gallery-guides",
-            "label": "Museum & Gallery Guides",
-            "description": "Multi-language audio-visual \"tours\" for exhibitions that can be updated JIT as exhibits change."
+            "id": "박물관 및 갤러리 가이드",
+            "label": "박물관 및 갤러리 가이드",
+            "description": "전시 구성이 바뀔 때마다 사진과 큐레이터 노트를 업로드한다고 상상해 보세요. 그러면 70개 이상의 언어로 제공되는 전시 해설 투어가 즉시 업데이트됩니다. 전시가 교체되어도 다시 촬영할 필요가 없습니다."
           }
         ]
       },
       {
-        "id": "knowledge",
-        "title": "Knowledge, Training & Education",
+        "id": "지식",
+        "title": "지식, 훈련 및 교육",
         "examples": [
           {
-            "id": "k12-higher-ed",
-            "label": "K-12 & Higher Ed",
-            "description": "30-minute curriculum modules that can be instantly localized for ESL students or global campuses."
+            "id": "K-12 및 고등교육",
+            "label": "K-12 및 고등교육",
+            "description": "강사의 음성 데이터와 캐릭터 이미지를 활용해 수업 자료를 업로드한다고 상상해 보세요. 그런 다음, ESL 및 글로벌 캠퍼스 학생들이 70개 이상의 언어로 시청할 수 있는 전체 커리큘럼 모듈을 즉시 생성하는 것입니다."
           },
           {
-            "id": "corporate-ld",
-            "label": "Corporate L&D",
-            "description": "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices."
+            "id": "기업용 LD",
+            "label": "기업 학습 및 개발",
+            "description": "트레이너의 음성과 아바타를 활용해 규정 준수 관련 스크립트를 업로드한다고 상상해 보세요. 그리고 70개 이상의 언어로 현지화된 일관된 온보딩 및 안전 교육을 모든 지사에 즉시 도입하는 것입니다."
           },
           {
-            "id": "software-saas-tutorials",
-            "label": "Software SaaS Tutorials",
-            "description": "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion."
+            "id": "소프트웨어 및 SaaS 튜토리얼",
+            "label": "소프트웨어 및 SaaS 튜토리얼",
+            "description": "UI 스크린샷을 참조용 프레임으로 업로드하고 제품 전문가의 녹음된 음성을 결합한다고 상상해 보세요. 클릭 동작 하나하나를 애니메이션으로 구현한 가이드 영상을 즉시 생성할 수 있으며, UI가 배포되는 당일에 바로 업데이트됩니다."
           },
           {
-            "id": "niche-skill-tutoring",
-            "label": "Niche Skill Tutoring",
-            "description": "Professional \"How-To\" series for cooking, DIY, or technical certifications."
+            "id": "특수 기술 과외",
+            "label": "특수 기술 과외",
+            "description": "강사의 저장된 음성과 캐릭터 데이터를 활용해 단계별 사진을 업로드한다고 상상해 보세요. 요리, DIY, 자격증 대비 등 전문적인 '하우투(how-to)' 시리즈를 70개 이상의 언어로 즉시 발행할 수 있습니다."
           },
           {
-            "id": "medical-patient-education",
-            "label": "Medical/Patient Education",
-            "description": "Narrated explanations of surgical procedures or medication management for hospitals and clinics."
+            "id": "환자 의료 교육",
+            "label": "의학 및 환자 교육",
+            "description": "의료진이 승인하고 저장한 음성을 활용해 시술 관련 도해를 업로드한다고 상상해 보세요. 그러면 가족들이 이해하기 쉬운 명확한 환자 교육용 영상을 70개 이상의 언어로 즉시 생성할 수 있습니다."
           },
           {
-            "id": "video-memoirs",
-            "label": "Video Memoirs",
-            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+            "id": "영상 회고록",
+            "label": "영상 회고록",
+            "description": "가족 사진, 인터뷰 음성, 장면 메모를 저장된 내레이터 음성과 함께 업로드한다고 상상해 보세요. 그런 다음 챕터별 회고록 영상을 즉시 구성하고, 최종 렌더링 전에 스토리보드를 승인하는 과정입니다."
           }
         ]
       },
       {
-        "id": "jit",
-        "title": "JIT Media & Information",
+        "id": "꼬마 녀석",
+        "title": "JIT 미디어 & 인포메이션",
         "examples": [
           {
-            "id": "hyper-local-news",
-            "label": "Hyper-Local News",
-            "description": "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive."
+            "id": "초지역 뉴스",
+            "label": "초지역 뉴스",
+            "description": "오늘의 사진과 소식을 앵커의 녹음된 목소리로 업로드한다고 상상해 보세요. 촬영팀도, 마감 기한을 놓칠 염려도 없이 매일 동네 뉴스 브리핑을 즉시 발행할 수 있습니다."
           },
           {
-            "id": "financial-market-recaps",
-            "label": "Financial & Market Recaps",
-            "description": "Turning daily stock market or crypto data into 3-minute narrated visual digests."
+            "id": "금융 시장 요약",
+            "label": "금융 및 시장 요약",
+            "description": "매일 아침 시장 데이터와 차트 스냅샷을 애널리스트의 녹음된 음성과 함께 업로드한다고 상상해 보세요. 그리고 이를 즉시 해설이 포함된 시각적 요약 콘텐츠로 변환하여, 장이 시작되기 전에 준비를 마치는 것입니다."
           },
           {
-            "id": "sports-commentary",
-            "label": "Sports Commentary",
-            "description": "Automated \"recap\" videos using game stats and static photography turned into F2V action."
+            "id": "스포츠 해설",
+            "label": "스포츠 해설",
+            "description": "경기 기록과 사진, 그리고 해설자의 녹음된 음성을 업로드한다고 상상해 보세요. 그런 다음 애니메이션 효과가 가미된 경기 요약 영상을 즉시 생성하여, 팬들의 열기가 식지 않은 바로 그 순간에 공개하는 것입니다."
           },
           {
-            "id": "true-crime-historical-docs",
-            "label": "True Crime & Historical Docs",
-            "description": "Using the Reference Library to keep historical figures consistent across a multi-part documentary series."
+            "id": "실화 범죄 역사 다큐멘터리",
+            "label": "실화 범죄 및 역사 다큐멘터리",
+            "description": "역사적 인물들을 Reference Library에 단 한 번 등록해 둔다고 상상해 보세요. 그런 다음, 수많은 시리즈에 걸쳐 모든 얼굴과 목소리가 일관되게 유지되는 다부작 에피소드를 즉시 제작하는 것입니다."
           },
           {
-            "id": "weather-emergency-alerts",
-            "label": "Weather & Emergency Alerts",
-            "description": "Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms."
+            "id": "기상 긴급 경보",
+            "label": "날씨 및 긴급 경보",
+            "description": "기관이 신뢰하는 기존 음성으로 긴급 공지 사항을 업로드한다고 상상해 보세요. 며칠이 아닌 단 몇 분 만에 70개 이상의 언어로 명확한 경보를 소셜 플랫폼에 즉시 전파할 수 있습니다."
           }
         ]
       },
       {
-        "id": "b2b",
-        "title": "B2B Marketing & Sales",
+        "id": "B2B",
+        "title": "B2B 마케팅 및 영업",
         "examples": [
           {
-            "id": "product-explainer-videos",
-            "label": "Product Explainer Videos",
-            "description": "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos."
+            "id": "제품 설명 영상",
+            "label": "제품 설명 영상",
+            "description": "브랜드에 저장된 발표자 음성과 아바타를 활용해 제품 카탈로그 이미지를 업로드한다고 상상해 보세요. 그런 다음 영화 같은 스타일의 설명 영상 시리즈를 즉시 제작할 수 있습니다. 물론, 렌더링 전에는 스토리보드를 먼저 승인하면 됩니다."
           },
           {
-            "id": "case-study-testimonials",
-            "label": "Case Study/Testimonials",
-            "description": "Using client headshots and project photos to create high-end visual success stories."
+            "id": "사례 연구 및 고객 후기",
+            "label": "사례 연구/고객 후기",
+            "description": "고객 프로필 사진, 프로젝트 사진, 성과 지표를 저장해 둔 내레이션 음성과 함께 업로드한다고 상상해 보세요. 별도의 인터뷰 촬영 없이도 세련된 비주얼 사례 연구 영상을 즉시 제작할 수 있습니다."
           },
           {
-            "id": "recruitment-branding",
-            "label": "Recruitment & Branding",
-            "description": "Giving candidates a narrated \"day in the life\" tour of the office and culture."
+            "id": "채용 브랜딩",
+            "label": "채용 및 브랜딩",
+            "description": "사무실 사진과 기업 문화를 보여주는 하이라이트 영상을 채용 담당자의 아바타 및 녹음된 음성과 함께 업로드한다고 상상해 보세요. 이를 통해 전 세계 채용을 위한 70개 이상의 언어로, 담당자의 설명이 곁들여진 '회사에서의 하루' 투어를 지원자들에게 즉시 제공할 수 있습니다."
           },
           {
-            "id": "conference-event-promos",
-            "label": "Conference & Event Promos",
-            "description": "Automated \"Speaker Bio\" videos and \"What to Expect\" guides for large-scale events."
+            "id": "컨퍼런스 및 행사 프로모션",
+            "label": "컨퍼런스 및 행사 프로모션",
+            "description": "행사 진행자의 목소리 데이터를 활용해 연사 소개, 세션 상세 정보, 행사장 사진 등의 자료를 업로드한다고 상상해 보세요. 그러면 연사 소개 멘트나 행사 안내 가이드가 즉시 생성되며, 일정이 변경될 때마다 내용도 실시간으로 업데이트됩니다."
           }
         ]
       },
       {
-        "id": "public",
-        "title": "Public Sector & Advocacy",
+        "id": "공공의",
+        "title": "공공 부문 및 옹호 활동",
         "examples": [
           {
-            "id": "ngo-impact-reports",
-            "label": "NGO Impact Reports",
-            "description": "Turning data and field photography into emotive, narrated videos for donors."
+            "id": "NGO 성과 보고서",
+            "label": "NGO 성과 보고서",
+            "description": "현장 사진과 활동 성과 데이터를 업로드하고, 미리 저장해 둔 단체 고유의 내레이션 음성을 입히는 모습을 상상해 보세요. 단순한 슬라이드쇼가 아닌, 단체의 사명을 담은 목소리로 후원자 보고서를 감동적인 내레이션 영상으로 즉시 변환할 수 있습니다."
           },
           {
-            "id": "public-health-announcements",
-            "label": "Public Health Announcements",
-            "description": "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity."
+            "id": "공중보건 공지",
+            "label": "공중보건 공지",
+            "description": "부서에서 신뢰하는 기존 음성으로 승인된 보건 관련 메시지를 업로드한다고 상상해 보십시오. 그러면 번역 지연 없이, 메시지의 명확성과 긴급성을 그대로 유지한 채 70개 이상의 언어로 모든 지역사회에 즉시 도달할 수 있습니다."
           },
           {
-            "id": "legal-insurance-explainers",
-            "label": "Legal & Insurance Explainers",
-            "description": "Helping clients understand complex contracts or claim processes through narrated visual breakdowns."
+            "id": "법률 보험 관련 설명 자료",
+            "label": "법률 및 보험 해설",
+            "description": "계약 요약본과 절차 도표를 담당 자문가의 음성 데이터와 함께 업로드한다고 상상해 보세요. 그런 다음, 고객이 서명하거나 보험금을 청구하기 전에 그들이 실제로 이해할 수 있는 시각적 설명 자료를 즉시 생성하는 것입니다."
           },
           {
-            "id": "religious-spiritual-teachings",
-            "label": "Religious & Spiritual Teachings",
-            "description": "Converting sermons or texts into a consistent, narrated daily video series for global congregations."
+            "id": "종교적·영적 가르침",
+            "label": "종교적 및 영적 가르침",
+            "description": "설교 노트나 성경 말씀을 선생님의 목소리 및 모습과 함께 업로드한다고 상상해 보십시오. 그리고 전 세계 성도들을 위해 70개 이상의 언어로 일관된 매일 영상 시리즈를 즉시 발행하는 것입니다."
           }
         ]
       }
     ]
   },
   "institutionalRoi": {
-    "badge": "For in-house teams & institutions",
-    "title": "Replace vendor shoots with predictable in-house production",
-    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
+    "badge": "사내 팀 및 기관용",
+    "title": "외부 업체 촬영을 예측 가능한 사내 제작 방식으로 대체하십시오.",
+    "subtitle": "1~5명 규모의 커뮤니케이션, L&D(교육 및 개발), 마케팅 팀은 에이전시와의 고정 계약이나 끝없이 이어지는 수정 과정 없이도 당주 내에 영상을 완성해 배포할 수 있습니다.",
     "comparisons": [
       {
-        "label": "Traditional vendor shoot + edit",
-        "cost": "$5,000–$15,000",
-        "timeline": "4–8 weeks"
+        "label": "전통적인 업체 촬영 및 편집",
+        "cost": "5,000달러~15,000달러",
+        "timeline": "4~8주"
       },
       {
-        "label": "SceneFlow in-house workflow",
-        "cost": "$50–$500 in credits",
-        "timeline": "Same week"
+        "label": "SceneFlow 사내 워크플로",
+        "cost": "50~500달러 상당의 크레딧",
+        "timeline": "같은 주"
       }
     ],
     "bullets": [
-      "Brand-safe templates and approval before final render",
-      "Budget caps with visible credit spend per project",
-      "No crew days, no edit back-and-forth on every revision"
+      "브랜드 가이드라인을 준수하는 템플릿 및 최종 렌더링 전 승인 절차",
+      "프로젝트별 크레딧 사용량을 확인할 수 있는 예산 한도",
+      "촬영 인력 투입이나 수정 때마다 반복되는 편집 조율 과정이 필요 없습니다."
     ],
-    "ctaPrimary": "Book a team walkthrough",
-    "ctaSecondary": "See pricing",
-    "typicalCost": "Typical cost",
-    "timeline": "Timeline"
+    "ctaPrimary": "팀 워크스루 예약하기",
+    "ctaSecondary": "가격 확인",
+    "typicalCost": "일반적인 비용",
+    "timeline": "일정"
   },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Studio feature deep dive",
-    "close": "Close",
-    "viewDetails": "View Details",
+    "badge": "가이드 투어",
+    "title": "플랫폼 둘러보기",
+    "subtitle": "협업 검토부터 최종 시네마틱 결과물에 이르기까지, SceneFlow AI Studio 워크플로에 대한 완벽 가이드.",
+    "subheading": "플랫폼 살펴보기 — 필수 기능부터 시작하세요",
+    "chapterHint": "오늘 알아야 할 네 가지 사항입니다. 전체 내용을 확인하려면 각 항목을 펼쳐보세요.",
+    "expandChapter": "쇼의 특징",
+    "collapseChapter": "기능 숨기기",
+    "underTheHoodLabel": "내부 구조",
+    "chapters": [
+      {
+        "id": "필수품",
+        "label": "여기서 시작하세요 — 첫날 제공되는 혜택"
+      },
+      {
+        "id": "품질",
+        "label": "청중에게 확실하게 와닿도록 만드세요."
+      },
+      {
+        "id": "생산",
+        "label": "승인된 비트에서 발매된 마스터 음원까지"
+      },
+      {
+        "id": "고급의, 선진의",
+        "label": "청구 및 거버넌스 기능이 필요한 팀을 위한"
+      }
+    ],
+    "close": "닫기",
+    "viewDetails": "상세 보기",
     "beatFirst": {
-      "id": 15,
-      "title": "Beat-First Video Pipeline",
-      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "title": "비트 우선 비디오 파이프라인",
+      "description": "F2V(영상 생성) 단계 이전에 스토리보드 비트와 Beat Frames를 승인함으로써, 환각(hallucination)이나 시각적 일관성 상실(visual drift)로 인한 무분별한 재생성 작업을 줄일 수 있습니다. 검토부터 최종 영상 완성까지 하나의 체계적인 워크플로를 제공합니다.",
       "keyFeatures": [
-        "Express storyboard for review — share beats before heavy render",
-        "Beat Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "Express storyboard 검토용 — 고사양 렌더링 전 비트 공유",
+        "Beat Frames 잠금 구성 — Reference Library 연속성",
+        "비트당 F2V — 승인된 프레임으로 비디오 생성",
+        "믹서 타이밍 및 스트림 — Final Cut 어셈블리로 내보내기"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
-      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+      "screenshotSlot": "스크린샷 삽입: 영상 생성 전 Beat Frames 및 스토리보드 승인",
+      "videoSlot": "00:30 길이의 클립 삽입: 비트 승인, 프레임 고정, 그리고 F2V 클립 생성"
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "title": "오디언스 리뷰 및 분석",
+      "description": "이해관계자용 비공개 /s/ 공유 링크 — 수동 점수, 구조화된 피드백, 그리고 시청자 동의 기반의 선택적 참여 분석 기능을 포함합니다. 게시 전 Premiere 단계 및 프로덕션 스토리보드 미리보기 용도로 사용됩니다.",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "비공개 검토 세션 — 이해관계자를 위한 안전한 공유 링크",
+        "구조화된 청중 피드백 — 평점 및 자유 응답 항목",
+        "선택적 참여 분석 — 데이터 수집 전 시청자 동의 필요",
+        "실제 데이터를 바탕으로 반복 개선 — 리뷰어의 인사이트를 반영하여 Blueprint 및 스크립트 정교화"
       ],
-      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotSlot": "스크린샷 삽입: Screening Room 분석 및 검토자 피드백 패널",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      "videoSlot": "00:30 영상 삽입: 리뷰 세션 진행 및 참여 데이터 수집"
+    },
+    "ui": {
+      "screenshot": "스크린샷",
+      "video": "동영상",
+      "featureVideo": "주요 영상",
+      "keyFeatures": "주요 기능",
+      "openScreenshot": "스크린샷 열기",
+      "openFeatureVideo": "기능 소개 영상 열기",
+      "expandImage": "이미지 확대",
+      "closePreview": "미리보기 닫기"
+    },
+    "items": [
+      {
+        "id": "1",
+        "title": "직관적인 UX + 크리에이터의 완전한 통제권",
+        "description": "가이드형 자동화로 빠르게 시작한 다음, 생성된 모든 결과물을 편집하여 팀이 속도를 유지하면서도 창의적인 주도권을 놓치지 않도록 하세요.",
+        "keyFeatures": [
+          "가이드형 스튜디오 워크플로 — 콘셉트부터 내보내기까지 한 곳에서",
+          "AI가 생성한 모든 비트, 캐릭터, 대사를 그 자리에서 바로 수정하세요.",
+          "크리에이티브 방향성 설정을 위한 표현 방식(트리트먼트)별 비교",
+          "Blueprint 협업 — 링크, 섹션 오디오 및 체계적인 검토자 피드백 공유"
+        ],
+        "screenshotSlot": "스크린샷 삽입: 편집 가능한 생성 섹션이 포함된 Blueprint 편집기",
+        "videoSlot": "00:30 길이의 클립 삽입: 콘셉트에서 편집 가능한 결과물에 이르는 UX 흐름"
+      },
+      {
+        "id": "2",
+        "title": "신용 예산 및 비용 관리",
+        "description": "실시간으로 크레딧 사용량을 추적하고, 비용이 많이 드는 생성 작업을 실행하기 전에 가드레일을 설정하세요.",
+        "keyFeatures": [
+          "실시간 크레딧 사용량 — 프로젝트 및 작업별",
+          "운영 환경 가드레일 — 비용이 많이 드는 생성 작업 실행 전",
+          "투명한 요금표 — TTS, 비디오 및 인텔리전스용",
+          "예산 가시성 — 팀 및 1인 크리에이터용"
+        ],
+        "screenshotSlot": "스크린샷 삽입: 크레딧 사용 패널 및 BYOK 설정",
+        "videoSlot": "00:30 길이의 클립 삽입: 예산 대시보드 및 주요 설정",
+        "underTheHood": {
+          "title": "내부 구조",
+          "body": "기존 클라우드 계약을 보유한 프로덕션 팀의 경우:",
+          "bullets": [
+            "Vertex AI BYOK — 엔터프라이즈 청구 및 거버넌스",
+            "신용 계산기의 제공업체 선택 토글",
+            "키(key)와 함께 제공되는 투명한 플랫폼 요금표"
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "title": "어떤 콘셉트든, 하나의 제작 워크플로",
+        "description": "교육, 팟캐스트, 뉴스, 주택 매매 영상, 그리고 시네마틱 콘텐츠를 위해 하나의 신뢰할 수 있는 파이프라인을 활용하세요.",
+        "keyFeatures": [
+          "단일 파이프라인 — 팟캐스트, 뉴스, 교육, 부동산 및 시네마틱 형식",
+          "프로젝트 템플릿 — Studio가 소스 자료에 맞춰 조정됩니다",
+          "장르와 관계없이 동일한 Blueprint → 대본 → 제작 경로",
+          "아이디어 구상부터 결과물 전달까지, 도구 전환 없이"
+        ],
+        "screenshotSlot": "스크린샷 삽입: 팟캐스트, 뉴스, 부동산, 시네마틱 템플릿이 하나의 통합된 SceneFlow 파이프라인 UI로 연결되는 모습을 보여주는 분할 뷰 또는 그리드 화면.",
+        "videoSlot": "00:30 길이의 영상 삽입: \"어떤 소스 자료로든 시작해 보세요...\" '새 프로젝트(New Project)' -> '팟캐스트(Podcast)'를 클릭하면 오디오에 맞춰 UI가 변경되고, 뉴스 및 시네마틱 프로젝트가 Blueprint 에디터로 통합되는 분할 화면이 이어집니다."
+      },
+      {
+        "id": "4",
+        "title": "정밀한 편집 제어 기능을 갖춘 스마트 자동화",
+        "description": "SceneFlow 플랫폼은 지능형 기술을 활용하여 전문가 수준의 기준 자료(시리즈, 청사진, 대본, 제작 프롬프트, 편집본 등)를 자동으로 생성하는 동시에, 내장된 안전 장치(guardrails)를 통해 편집에 대한 완전한 통제권을 보장하는 지능형 대화 기능을 제공합니다.",
+        "keyFeatures": [
+          "한 번에 완성하는 AI 기준안 — 시리즈, 청사진, 스크립트, 그리고 제작용 프롬프트",
+          "지능형 편집 대화창 — 무작정 다시 쓰는 것이 아닌, 안전장치 역할",
+          "수락, 수정, 거부 등 모든 제안을 직접 제어할 수 있습니다.",
+          "생산의 모든 단계에 걸친 '휴먼 인 더 루프(Human-in-the-loop)'"
+        ],
+        "screenshotSlot": "스크린샷 삽입: 편집 컨트롤을 포함하여 기준선(baseline) 생성을 보여주는 지능형 대화 상자",
+        "videoSlot": "00:30 길이의 영상 삽입: AI가 기본 결과물을 생성한 뒤 사용자가 정밀하게 수정하는 과정"
+      },
+      {
+        "id": "5",
+        "title": "연속성을 위해 Reference Library 공유됨",
+        "description": "재사용 가능한 참조 자료를 활용하여 장면과 에피소드 전반에 걸쳐 캐릭터, 의상, 목소리, 장소, 소품의 일관성을 유지하세요.",
+        "keyFeatures": [
+          "재사용 가능한 프로필 — 캐릭터, 의상, 목소리, 장소, 소품",
+          "다양한 상황에 걸친 적용 — 모든 세대로 이어지는 참조",
+          "시각적 일관성 — Imagen과 Veo 결과물에서 동일한 얼굴과 톤 유지",
+          "프랜차이즈급 연속성 — 다수 에피소드로 구성된 시리즈를 위해 구축됨"
+        ],
+        "screenshotSlot": "스크린샷 삽입: 캐릭터 및 소품의 연속성을 보여주는 레퍼런스 라이브러리",
+        "videoSlot": "00:30 클립 삽입: 여러 장면에 걸쳐 레퍼런스 적용하기"
+      },
+      {
+        "id": "6",
+        "title": "Express 생성 엔진",
+        "description": "이미지와 비디오 세그먼트를 동시에 자동 생성하세요. Express Storyboard를 사용하면 오디오-비주얼 스토리보드를 몇 분 만에 검토하고 공유할 수 있습니다. Express Storyboard는 완전한 켄 번스(Ken Burns) 스타일의 장면을 몇 분 만에 렌더링하며, Express Video는 며칠이 아닌 단 몇 분 만에 최종 비디오 장면을 완성해 줍니다.",
+        "keyFeatures": [
+          "동시 생성 — 여러 장면에 걸친 이미지와 동영상을 한꺼번에 생성",
+          "Express Storyboard — 몇 분 만에 완성하는 공유 가능한 시청각 프리뷰",
+          "Express Animatic — 스틸 이미지를 활용한 켄 번스(Ken Burns) 효과",
+          "Express Video — 며칠이 아닌 단 몇 분 만에 완성하는 장면 단위 클립"
+        ],
+        "screenshotSlot": "스크린샷 삽입: Animatic 및 동영상 진행 상황이 포함된 Express 생성 대시보드",
+        "videoSlot": "00:30 길이의 영상 삽입: 스크립트를 애니매틱으로, 이어서 최종 영상으로 변환하는 동시 생성 과정"
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance 편집기",
+        "description": "타겟 오디언스를 설정하여 즉각적인 점수 산출, 분석 및 추천을 받아보세요. '원클릭 수정' 기능을 적용하거나 '가이드 편집(Guided Edits)'을 활용하여 에피소드, Blueprint, 그리고 스크립트를 완벽하게 최적화하고 효과를 극대화하세요.",
+        "keyFeatures": [
+          "타겟 오디언스 스코어링 — 카테고리별 세부 내역 포함",
+          "섹션별 맞춤 제안 — 이야기의 올바른 부분을 수정하세요",
+          "원클릭 수정 및 가이드 편집 — 추측이 아닌 정밀한 재작업",
+          "프로덕션 준비 단계의 기준 — 전체 렌더링에 투자할 시점 파악하기"
+        ],
+        "screenshotSlot": "스크린샷 삽입: 청중 평가 및 원클릭 수정 기능이 포함된 Resonance Editor",
+        "videoSlot": "00:30 길이의 클립 삽입: 시청자 반응 점수를 기반으로 한 가이드 편집 적용"
+      },
+      {
+        "id": "8",
+        "title": "적응형 번역 (70개 이상의 언어)",
+        "description": "다국어 제공을 위해 서사적 의도와 타임라인 정합성을 유지하면서 대규모로 콘텐츠를 현지화하십시오.",
+        "keyFeatures": [
+          "70개 이상의 언어 — 대규모 나레이션, 대사 및 카피 제작",
+          "서사적 의도 유지 — 의미와 타이밍의 일관성 유지",
+          "다국어 오디오 트랙 — 장면 타임라인",
+          "배포용 로케일별 패키지 (내보내기 준비 완료)"
+        ],
+        "screenshotSlot": "스크린샷 삽입: 다국어 타임라인 및 번역 설정",
+        "videoSlot": "00:30 길이의 영상 삽입: 장면을 즉시 여러 언어로 현지화"
+      },
+      {
+        "id": "9",
+        "title": "시리즈 자동화",
+        "description": "세계관을 한 번 정의하면 일관성 있는 다회차 에피소드 서사를 생성할 수 있습니다. 공유된 Reference Library은 시즌 전체에 걸쳐 캐릭터와 톤을 일관되게 유지해 줍니다.",
+        "keyFeatures": [
+          "등장인물, 톤, 시즌 전체의 서사 구조 등 작품의 세계관을 한 번 확실하게 정립하세요.",
+          "시즌 전체에 걸쳐 자동 생성되는 일관성 있는 에피소드 개요",
+          "연속성 추적 — 다수의 에피소드로 구성된 시즌 간 정합성 유지",
+          "시리즈-에피소드 간 동기화 — Blueprint 스튜디오 및 프로덕션 연동"
+        ],
+        "screenshotSlot": "스크린샷 삽입: 자동 생성된 에피소드 아크를 포함한 시리즈 개요",
+        "videoSlot": "00:30 분량의 영상 삽입: 다수의 에피소드로 구성된 시즌으로 확장되는 콘셉트"
+      },
+      {
+        "id": "10",
+        "title": "Blueprint 자동화",
+        "description": "로그라인, 비트, 캐릭터, 톤을 포함하여 콘셉트를 체계적인 트리트먼트로 발전시키세요. 본격적인 렌더링에 앞서 Audience Resonance를 실행하고 협업을 진행하세요.",
+        "keyFeatures": [
+          "생성 → 검토 → 반복 → 생산 시작 워크플로",
+          "컨셉에서 구조까지 단 몇 분 만에 — 로그라인, 비트, 캐릭터, 톤",
+          "운영 환경 이행 전 목표 점수 80점 이상으로 Audience Resonance 스코어링 수행",
+          "협업자 공유 링크 — 피드백을 종합하여 수정 방향 제시"
+        ],
+        "screenshotSlot": "스크린샷 삽입: 스토리 비트와 캐릭터 아크가 포함된 자동 생성 Blueprint",
+        "videoSlot": "00:30 길이의 영상 삽입: 개념을 구조화된 Blueprint(으)로 변환하기"
+      },
+      {
+        "id": "11",
+        "title": "생산 자동화",
+        "description": "Script 및 Action 탭이 Foundation → Storyboard → Production → Final Cut 과정을 안내합니다. Express storyboard, Beat Frames, Mixer, MP4 스트림을 도구 전환 없이 모두 사용할 수 있습니다.",
+        "keyFeatures": [
+          "파운데이션 — 대본, 음성, 장면 오디오, 대본 확정",
+          "Express storyboard — 방향 및 프레임(분 단위); 갤러리 및 공유",
+          "Beat Frames 및 믹서 — 시작/종료 프레임, 디렉터 콘솔, MP4 스트림 렌더링",
+          "운영 스트림 — 결과물 검토, 최신 상태가 아닌 비트(beat) 재렌더링, Final Cut로 전송"
+        ],
+        "screenshotSlot": "스크린샷 삽입: 스크립트, Beat Frames, 믹서가 표시된 프로덕션 대시보드",
+        "videoSlot": "00:30 길이 클립 삽입: Foundation, Express storyboard, Beat Frames 및 스트림 내보내기"
+      },
+      {
+        "id": "12",
+        "title": "Final Cut 조립품",
+        "description": "완성된 프로덕션 스트림을 하나의 마스터 MP4로 통합하세요. 타임라인 편집 없이 장면별로 Animatic 또는 영상과 언어를 선택할 수 있으며, 크리에이티브 변경 사항은 Production Mixer에 유지됩니다.",
+        "keyFeatures": [
+          "장면별 스트림 선택 — Animatic, 비디오, 언어, 버전",
+          "조합 프리셋 — 전체 동영상, 하이브리드, 사용자 지정 혼합",
+          "타임라인 편집 없음 — 창의적인 변경 사항은 Production Mixer에 유지됨",
+          "원클릭 마스터 내보내기 — Premiere용 병합된 MP4"
+        ],
+        "screenshotSlot": "스크린샷 삽입: Final Cut 장면별 스트림 선택기가 포함된 어셈블리 패널",
+        "videoSlot": "00:30 길이의 클립 삽입: 스트림 선택, 조립본 미리보기, 마스터 내보내기"
+      },
+      {
+        "id": "13",
+        "title": "Premiere 배포",
+        "description": "시청자 분석 데이터를 바탕으로 마스터 영상을 검토한 후, 현지화된 메타데이터를 적용하여 YouTube에 게시하거나 Shorts, Reels, TikTok용 번들로 내보내세요.",
+        "keyFeatures": [
+          "공유 가능 Screening Room — 점수 산정 및 선택적 참여 분석(시청자 동의) 기능이 포함된 /s/ 링크",
+          "인사이트 대시보드 — 스코어링, 생체 인식 및 시각화 탭",
+          "YouTube 마법사 — 썸네일, 현지화된 제목/설명, SceneFlow CTA",
+          "내보내기 번들 및 세로형 숏폼 클립 플랜"
+        ],
+        "screenshotSlot": "스크린샷 삽입: 인사이트 및 게시 마법사가 포함된 Premiere 대시보드",
+        "videoSlot": "00:30 길이의 클립 삽입: 스크리닝 인사이트, YouTube 마법사, 내보내기 번들"
+      },
+      {
+        "id": "14",
+        "title": "오디언스 리뷰 및 분석",
+        "description": "이해관계자용 비공개 /s/ 공유 링크 — 수동 점수, 구조화된 피드백, 그리고 시청자 동의 기반의 선택적 참여 분석 기능을 포함합니다. 게시 전 Premiere 단계 및 프로덕션 스토리보드 미리보기 용도로 사용됩니다.",
+        "keyFeatures": [
+          "비공개 검토 세션 — 이해관계자를 위한 안전한 공유 링크",
+          "구조화된 청중 피드백 — 평점 및 자유 응답 항목",
+          "선택적 참여 분석 — 데이터 수집 전 시청자 동의 필요",
+          "실제 데이터를 바탕으로 반복 개선 — 리뷰어의 인사이트를 반영하여 Blueprint 및 스크립트 정교화"
+        ],
+        "screenshotSlot": "스크린샷 삽입: Screening Room 분석 및 검토자 피드백 패널",
+        "videoSlot": "00:30 영상 삽입: 리뷰 세션 진행 및 참여 데이터 수집"
+      }
+    ]
+  },
+  "engineeringTrust": {
+    "badge": "엔지니어링 및 보안",
+    "title": "~을 위해 제작된",
+    "titleAccent": "운영 워크로드",
+    "subtitle": "보안, 확장성 및 실용적인 프로덕션 배포를 지원하는 Google Cloud 구성 요소를 갖춘, 스타트업 친화적인 아키텍처.",
+    "pillars": [
+      {
+        "id": "건축",
+        "title": "엔터프라이즈 아키텍처",
+        "description": "확장 가능한 오케스트레이션 기능을 갖춘 Google Cloud 인프라를 기반으로 구축되어, 프로덕션 워크로드와 성장하는 팀을 지원합니다.",
+        "highlights": [
+          "생성 워크플로용 Vertex AI",
+          "Imagen 4와 Veo 3.1 합성",
+          "ElevenLabs TTS 통합",
+          "기업용 청구 관리용 BYOK"
+        ]
+      },
+      {
+        "id": "보안",
+        "title": "보안 및 개인정보 보호",
+        "description": "크리에이티브 자산은 저장 데이터 암호화, 접근 제어, 그리고 개인정보를 최우선으로 고려한 처리 방식을 통해 안전하게 보호됩니다.",
+        "highlights": [
+          "엔터프라이즈급 클라우드 제어 기능",
+          "AES-256 암호화",
+          "GDPR을 고려하여 설계됨",
+          "데이터 처리와 관련해서는 개인정보 처리방침을 확인해 주십시오."
+        ]
+      },
+      {
+        "id": "규모",
+        "title": "확장성 및 신뢰성",
+        "description": "글로벌 클라우드 전송은 작업량이 증가함에 따라 안정적인 렌더링 및 검토 파이프라인을 지원합니다.",
+        "highlights": [
+          "다중 리전 배포",
+          "CDN 가속 전송",
+          "자동 장애 조치",
+          "실시간 모니터링"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "value": "글로벌",
+        "label": "클라우드 딜리버리"
+      },
+      {
+        "value": "이미지 4",
+        "label": "이미지 생성"
+      },
+      {
+        "value": "256비트",
+        "label": "암호화"
+      },
+      {
+        "value": "연중무휴 24시간",
+        "label": "모니터링"
+      }
+    ],
+    "vertexSection": {
+      "title": "왜 Google Vertex AI인가요?",
+      "subtitle": "중요한 기술적 해자",
+      "cards": [
+        {
+          "title": "데이터 개인정보 보호",
+          "description": "귀하의 스크립트와 크리에이티브 에셋은 공유 모델을 학습시키는 데 사용되지 않으므로, 귀하의 지적 재산과 고객 관련 작업물을 보호하는 데 도움이 됩니다.",
+          "highlight": "공유 모델을 학습시키는 데 사용되지 않음"
+        },
+        {
+          "title": "안정적인 처리량을 위해 설계됨",
+          "description": "운영 중심의 인프라는 수요가 급증하는 시기에도 안정적인 생성 워크플로를 유지하는 데 도움이 됩니다."
+        },
+        {
+          "title": "참조 인식 일관성",
+          "description": "SceneFlow는 장면 간 캐릭터, 장소, 소품의 일관성을 높이기 위해 참조 인식 생성(reference-aware generation) 방식을 사용합니다."
+        }
+      ]
+    },
+    "partnership": {
+      "poweredBy": "Google Cloud(Vertex AI, 클라우드 스토리지 및 번역 도구 포함) 기반",
+      "footnote": "SceneFlow AI는 스타트업의 성장과 기업의 요구 사항을 모두 충족하도록 설계된 확장 가능한 Google Cloud 인프라에서 구동됩니다."
+    },
+    "attribution": "— SceneFlow 엔지니어링 팀"
+  },
+  "coreCapabilities": {
+    "audienceResonance": {
+      "badge": "인텔리전스 계층",
+      "title": "Audience Resonance 편집기",
+      "description": "본격적인 렌더링 작업을 시작하기 전에 먼저 점수를 확인하세요. 실행 가능한 수정 사항을 적용하여 Audience Resonance 점수 Blueprint 및 스크립트를 최적화하고, Express 및 영상 생성 단계로 넘어가기 전에 모든 비트를 다듬으세요.",
+      "bullets": [
+        "구체적인 타겟 고객을 파악하십시오.",
+        "실시간 점수, 분석 및 추천을 확인하세요.",
+        "서사적 약점을 해결하는 원클릭 수정 기능",
+        "에피소드, Blueprint 및 스크립트를 최적화하기 위한 가이드 편집"
+      ],
+      "cta": "대본을 분석하세요.",
+      "howWeScore": {
+        "toggle": "평가 방식",
+        "title": "Audience Resonance의 작동 방식",
+        "description": "Audience Resonance는 단순한 허수 지표(vanity metrics)나 게시 후의 유지율 데이터가 아니라, 서사 구조 분석(명확성, 속도감, 감정의 흐름)과 Blueprint에서 정의한 타겟 페르소나에 대한 적합성을 결합하여 분석합니다. 개선 제안 사항은 구체적인 스크립트 구간과 연동되므로, Express 기능이나 영상 생성 단계로 넘어가기 전에 문제를 수정할 수 있습니다.",
+        "bullets": [
+          "설정하신 타겟 오디언스를 기준으로 Blueprint 및 스크립트를 평가합니다.",
+          "섹션 단위의 권장 사항 — 단순히 ‘우리를 믿으라’는 식의 블랙박스형 수치가 아닙니다.",
+          "단순한 등급 평가를 넘어, 즉시 실행 가능한 원클릭 수정 및 가이드 편집 기능 제공",
+          "게시 후가 아니라, 렌더링에 많은 비용이 발생하기 전에 실행하세요."
+        ]
+      }
+    },
+    "express": {
+      "badge": "초고속 생산",
+      "title": "씬플로우 익스프레스",
+      "description": "스토리보드, 애니매틱, 비디오 비트를 동시에 자동 생성하세요. 대본에서 공유 가능한 프리뷰 단계로 전환하는 데는 단 몇 분이면 충분합니다. 이후 최종 F2V 비용을 집행하기 전에 Beat Frames를 승인하십시오.",
+      "items": [
+        {
+          "title": "익스프레스 스토리보드",
+          "desc": "오디오 및 비디오 스토리보드를 몇 시간이 아닌 몇 분 만에 검토하고 공유하세요.",
+          "time": "분 대 시간"
+        },
+        {
+          "title": "Animatic을(를) 나타내십시오.",
+          "desc": "고품질 보이스오버를 곁들인 켄 번스(Ken Burns) 스타일의 애니매틱 장면을 즉시 렌더링하세요.",
+          "time": "분 대 시간"
+        },
+        {
+          "title": "익스프레스 비디오",
+          "desc": "전체 장면을 구현하기 위해 이미지와 비디오의 동시 생성을 통합적으로 관리하십시오.",
+          "time": "분 대 일"
+        }
+      ],
+      "cta": "Express 렌더링 시작"
+    }
+  },
+  "exitIntent": {
+    "title": "잠깐만요! 빈손으로 가지 마세요.",
+    "subtitle": "AI 기반 영화 제작을 위한 독점적인 조기 이용 권한과 팁을 받아보세요.",
+    "benefits": [
+      "주간 AI 영화 제작 튜토리얼",
+      "새로운 기능 조기 이용",
+      "크리에이터 전용 할인"
+    ],
+    "emailPlaceholder": "이메일을 입력하세요",
+    "subscribe": "사전 이용 권한 받기",
+    "subscribing": "구독 중...",
+    "or": "또는",
+    "startNow": "단 9달러로 지금 바로 창작을 시작하세요 →",
+    "privacy": "스팸은 절대 보내지 않습니다. 언제든지 구독을 취소하실 수 있습니다.",
+    "successTitle": "명단에 포함되셨습니다!",
+    "successSubtitle": "독점 영화 제작 팁과 조기 이용 관련 소식을 이메일로 확인해 보세요.",
+    "ctaText": "탐색 시작 — $9",
+    "closePopup": "팝업 닫기"
+  },
+  "pricing": {
+    "badge": "사용량 기반 요금제",
+    "title": "직접 만든 것에 대해 비용을 지불하세요.",
+    "subtitle": "플랫폼 이용을 위한 기본 요금제 하나와 AI 생성을 위한 크레딧. 필요할 때마다 추가로 충전하세요. 낭비 없이 완벽하게 관리할 수 있습니다.",
+    "valueAnchor": {
+      "traditionalCost": "2,000달러 이상",
+      "traditionalLabel": "전통적인 프리비즈",
+      "vs": "대",
+      "sceneFlowCost": "$49~149",
+      "sceneFlowLabel": "SceneFlow 월간",
+      "saveBadge": "프로젝트당 90% 이상 절감"
+    },
+    "teamCta": {
+      "title": "사내 팀인가요, 아니면 외부 기관인가요?",
+      "description": "커뮤니케이션, L&D 및 마케팅 팀을 위한 워크플로 시연을 예약하세요.",
+      "button": "책 둘러보기"
+    },
+    "agencyCta": {
+      "title": "에이전시인가요, 아니면 프로덕션인가요?",
+      "description": "대규모 환경을 위한 맞춤형 크레딧, SLA 및 전담 지원",
+      "button": "영업팀에 문의하기"
+    },
+    "byok": {
+      "title": "자체 키 사용 (BYOK)",
+      "badge": "Pro 및 Studio 플랜",
+      "description": "이미 Vertex AI 또는 ElevenLabs용 API 키를 보유하고 계신가요? 해당 키를 SceneFlow AI에 사용하면 플랫폼 크레딧 비용을 최대 80%까지 절약할 수 있습니다.",
+      "savingsHighlight": "플랫폼 크레딧 80%",
+      "benefits": [
+        {
+          "title": "80% SceneFlow 크레딧 절감",
+          "description": "오케스트레이션 및 도구에 대해 20%의 플랫폼 수수료만 지불하세요."
+        },
+        {
+          "title": "기업용 플랜 활용하기",
+          "description": "기존 Vertex AI 또는 ElevenLabs 대량 구매 할인을 이용하세요."
+        },
+        {
+          "title": "완전한 통제",
+          "description": "귀하의 키, 청구 및 비용 관리"
+        }
+      ],
+      "supportedProviders": "지원되는 제공업체",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 및 Veo 3.1",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "텍스트 음성 변환 및 음성 복제",
+      "savingsLabel": "80% 절감",
+      "onImagesVideo": "이미지 및 동영상 관련",
+      "onVoiceover": "내레이션으로",
+      "note": "표시된 크레딧 절감액은 SceneFlow 플랫폼을 통한 절감액입니다. 실제 총 비용은 각 제공업체와의 개인 또는 기업 API 요금 조건에 따라 달라집니다."
+    },
+    "creditTopUps": {
+      "title": "크레딧이 더 필요하신가요?",
+      "subtitle": "언제든 충전하세요. 크레딧은 만료되지 않습니다.",
+      "packs": [
+        {
+          "label": "스타터 팩",
+          "description": "빠른 복습에 안성맞춤입니다."
+        },
+        {
+          "label": "씬 팩",
+          "description": "단기 프로젝트를 완료하세요."
+        },
+        {
+          "label": "프로덕션 팩",
+          "description": "주요 영화 시퀀스"
+        },
+        {
+          "label": "스튜디오 팩",
+          "description": "최대 생산 능력"
+        }
+      ],
+      "creditsUnit": "크레딧"
+    },
+    "calculator": {
+      "sectionTitle": "프로젝트 견적 산출",
+      "sectionSubtitle": "결정하기 전에 지불할 금액을 정확히 확인하세요.",
+      "title": "프로젝트 예산 계산기",
+      "subtitle": "시작하기 전에 크레딧을 예상해 보세요.",
+      "customize": "매개변수 사용자 지정",
+      "imagesLabel": "생성할 이미지",
+      "videoClipsLabel": "동영상 클립",
+      "voiceoverLabel": "내레이션 (분)",
+      "byokTitle": "자체 키 사용(BYOK) (BYOK)",
+      "byokBadge": "프로 & 스튜디오",
+      "byokDescription": "직접 보유한 API 키를 사용하면 SceneFlow 크레딧 비용을 최대 80%까지 절약할 수 있습니다. AI 제공업체에는 해당 업체의 요율에 따라 직접 비용을 지불하게 됩니다.",
+      "vertexToggle": "Vertex AI (이미지 및 동영상)",
+      "elevenLabsToggle": "ElevenLabs (내레이션)",
+      "imageGeneration": "이미지 생성",
+      "videoGeneration": "비디오 생성",
+      "voiceover": "내레이션",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "총 견적",
+      "withTopUps": "추가 충전 포함",
+      "creditSavings": "SceneFlow 신용 저축",
+      "savePercent": "SceneFlow 크레딧을 {percent}% 할인받으실 수 있습니다.",
+      "transparency": "완벽한 투명성: 작업 중 실시간으로 크레딧 사용량을 확인할 수 있습니다. 예상치 못한 상황 없이 언제든 프로젝트 범위를 조정하세요.",
+      "transparencyHighlight": "솔직히 말씀드리자면:",
+      "byokDisclaimer": "BYOK 참고: 표시된 크레딧 절감액은 SceneFlow 플랫폼 크레딧 감축분만을 반영합니다. 실제 비용은 귀하의 Vertex AI 및 ElevenLabs 요금제에 따라 달라집니다. 기업용 또는 대량 API 요금제의 경우 추가적인 비용 절감 혜택이 제공될 수 있습니다.",
+      "byokDisclaimerHighlight": "BYOK 참고:",
+      "presets": [
+        {
+          "id": "상업용의",
+          "name": "30초 광고"
+        },
+        {
+          "id": "짧은",
+          "name": "2분 단편 영화"
+        },
+        {
+          "id": "에피소드",
+          "name": "10분짜리 에피소드"
+        },
+        {
+          "id": "기능",
+          "name": "90분짜리 장편"
+        }
+      ],
+      "minSuffix": "분"
+    },
+    "tierGrid": {
+      "productionTestFlight": "양산 시험 비행",
+      "getStarted": "시작하기",
+      "startTestFlight": "테스트 비행 시작",
+      "loading": "불러오는 중...",
+      "mostPopular": "가장 인기 있는",
+      "creditsPerMonth": "월간 크레딧",
+      "storage": "보관",
+      "perMonth": "/월"
+    },
+    "trust": {
+      "cancelAnytime": "언제든지 취소 가능",
+      "moneyBack": "14일 환불 보장",
+      "creditsNeverExpire": "크레딧 유효기간 없음 (Explorer 팩)"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "description": "체험을 위한 1회성 구매",
+        "features": [
+          "일회성 구매",
+          "750 크레딧 (만료일 없음)",
+          "5GB 저장 공간 (30일)",
+          "플랫폼 전체 이용 권한",
+          "MP4 내보내기 (모든 해상도)",
+          "AI 보이스오버 (70개 이상의 언어)"
+        ]
+      },
+      "subscriptions": [
+        {
+          "id": "전채 요리",
+          "name": "스타터",
+          "description": "개인 크리에이터를 위한",
+          "features": [
+            "플랫폼 전체 이용 권한",
+            "월 4,500 크레딧 포함",
+            "25GB 활성 스토리지",
+            "MP4 내보내기 (모든 해상도)",
+            "AI 보이스오버 (70개 이상의 언어)",
+            "이메일 지원"
+          ]
+        },
+        {
+          "id": "찬성",
+          "name": "프로",
+          "description": "전문 크리에이터를 위한",
+          "features": [
+            "Starter의 모든 기능에 더해:",
+            "월 15,000 크레딧 포함",
+            "100GB 활성 스토리지",
+            "Veo 3.1 고화질(4K) 이용",
+            "캐릭터 일관성 엔진",
+            "음성 복제",
+            "BYOK (자체 키 사용)",
+            "팀 좌석 3개",
+            "우선 지원"
+          ]
+        },
+        {
+          "id": "스튜디오",
+          "name": "스튜디오",
+          "description": "팀 및 에이전시용",
+          "features": [
+            "Pro의 모든 기능에 더해:",
+            "월 75,000 크레딧 포함",
+            "500GB 활성 스토리지",
+            "Veo 3.1 4K 우선순위 대기열",
+            "무제한 캐릭터 일관성",
+            "화이트 라벨 수출",
+            "API 액세스",
+            "팀 좌석 10석",
+            "전담 계정 관리자",
+            "요청 시 엔터프라이즈 SLA 제공"
+          ]
+        }
+      ]
     }
   },
   "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
+    "badge": "궁금한 점이 있으신가요?",
+    "title": "자주 묻는 질문",
+    "subtitle": "SceneFlow AI에 대해 알아야 할 모든 것",
     "items": [
       {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+        "question": "SceneFlow 워크플로가 아이디어 단계에서부터 게시 가능한 영상이 되기까지 어떤 과정을 거치나요?",
+        "answer": "SceneFlow는 '시리즈(선택 사항) → Blueprint → 프로덕션 → Final Cut → Premiere'으로 이어지는 체계적인 워크플로를 사용합니다. Blueprint 단계에서는 Audience Resonance를 활용하여 스토리 구조와 타겟 오디언스를 정의합니다. 프로덕션 단계에서는 스크립트, 스토리보드, 비트 비디오(beat video), 그리고 렌더링된 장면 스트림을 생성합니다. Final Cut는 타임라인 편집 방식이 아닌, 선택된 스트림들을 하나의 마스터 MP4 파일로 통합하는 역할을 합니다. Premiere은 시사회, 분석 인사이트, YouTube 게시 및 내보내기(export) 번들 생성을 처리합니다."
       },
       {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+        "question": "SceneFlow는 Gemini Studio나 Google Flow과 어떻게 다른가요?",
+        "answer": "Gemini Studio와 Google Flow은 프롬프트 기반의 클립 생성에 중점을 둡니다. SceneFlow는 편집 가능한 기준점(baseline)을 포함한 체계적인 단계, 일관성 유지를 위한 Reference Library 및 Beat Frames, 비용이 많이 드는 렌더링 전 단계인 Audience Resonance, 자동화된 믹서 및 스트림 조립, 그리고 게시 전 검증 단계인 Screening Room 등 전체 제작 워크플로를 하나의 가이드형 스튜디오 환경에서 통합적으로 제공합니다."
       },
       {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+        "question": "AI가 생성한 스크립트, 비주얼, 오디오를 수정할 수 있나요?",
+        "answer": "네, 생성된 모든 결과물은 계속해서 수정할 수 있습니다. Production Mixer에서 스크립트 재작성, 장면 연출 조정, 특정 비트(beat) 재생성, 보이스오버 튜닝, 타이밍 세밀 조정 등을 수행할 수 있습니다. Final Cut는 완성된 스트림을 결합하는 역할만 하며, 창작과 관련된 변경 사항은 상위 단계인 프로덕션(Production)에서 이루어집니다."
       },
       {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+        "question": "이제 Target Audience Resonance는 어떻게 작동하나요?",
+        "answer": "Audience Resonance는 사후 리텐션 데이터가 아닌, Blueprint에서 정의한 타겟 페르소나와의 적합성을 서사 구조 분석(명확성, 페이싱, 감정선)과 결합합니다. 이를 통해 본격적인 렌더링 작업에 앞서 시리즈, Blueprint, 그리고 스크립트 검토 단계에서 섹션별 권장 사항을 확인하고 원클릭으로 수정할 수 있습니다."
       },
       {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
+        "question": "다국어 리스팅 또는 마케팅 영상을 제작할 수 있나요?",
+        "answer": "네, 가능합니다. 타이밍이 동기화된 워크플로를 통해 70개 이상의 언어로 영상을 제작하고 현지화할 수 있습니다. 보통 팀에서는 마스터 영상을 먼저 제작한 다음, 글로벌 바이어, 고객 또는 지역별 시청자를 위한 언어별 버전을 만듭니다."
       },
       {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "question": "만약 Screening Room이 검토 단계라면 Premiere은 어떤 역할을 하나요?",
+        "answer": "Screening Room는 Premiere 내의 검토용 인터페이스이자 프로덕션 스토리보드 미리보기 공간입니다. /s/ 링크를 공유하고, 이해관계자의 피드백과 (시청자 동의 하에) 선택적 참여 분석 데이터를 수집하며, 점수 및 시각적 인사이트를 검토한 다음, YouTube 마법사를 통해 게시하거나 번들로 내보낼 수 있습니다."
       },
       {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
+        "question": "기술적 경험이나 편집 경험이 필요한가요?",
+        "answer": "아닙니다. SceneFlow는 기술적 전문 지식이 없는 크리에이터와 팀을 위해 설계되었습니다. 복잡한 프롬프트 엔지니어링이나 여러 도구를 조합하는 방식 대신, 각 단계에서 제공되는 가이드에 따른 입력과 수정 가능한 AI 베이스라인을 활용해 작업을 시작할 수 있습니다."
       },
       {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
+        "question": "Explorer 플랜은 어떻게 운영되나요?",
+        "answer": "9달러를 한 번만 결제하면 750크레딧을 받아 전체 워크플로를 테스트해 볼 수 있습니다. 이는 월간 요금제를 선택하기 전에 '콘셉트 구상부터 영상 제작까지'의 실제 작업을 직접 수행해 볼 수 있도록 설계된 실전 테스트 과정입니다."
       },
       {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
+        "question": "크레딧과 BYOK은 어떻게 처리되나요?",
+        "answer": "크레딧은 플랫폼 내에서 추적되므로 팀은 워크플로 단계별로 예산을 관리할 수 있습니다. 또한 Pro 및 Studio 플랜은 지원되는 공급업체에 대해 BYOK(Bring Your Own Key) 기능을 제공하여, 기존 공급업체 계약을 보유한 조직이 비용을 더욱 효과적으로 제어할 수 있도록 지원합니다."
       },
       {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+        "question": "SceneFlow로 현실적으로 무엇을 만들 수 있나요?",
+        "answer": "팀들은 부동산 투어, 교육용 콘텐츠, 시각적 스토리텔링을 결합한 팟캐스트, 뉴스 해설, 브랜드 캠페인, 그리고 영화 같은 에피소드 시리즈 제작에 SceneFlow를 활용합니다. 동일한 워크플로를 통해 숏폼 및 롱폼 콘텐츠를 모두 제작할 수 있습니다."
       }
     ]
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
-    "cta": "Launch Your Studio for $9"
+    "title": "전체 파이프라인을 테스트할 준비가 되셨나요?",
+    "subtitle": "콘셉트부터 스토리보드, 영상, 마스터 MP4 제작까지 하나의 스튜디오에서 진행해 보세요. 9달러 Explorer 플랜으로 시작하여 '비트 우선(beat-first)' 워크플로를 직접 경험해 보시기 바랍니다.",
+    "cta": "9달러로 스튜디오를 시작하세요."
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
-    "product": "Product",
-    "resources": "Resources",
-    "legal": "Legal",
+    "description": "콘셉트부터 배포 가능한 마스터 영상까지, 엔드투엔드(end-to-end) 자동화된 영상 제작. 하나의 가이드형 스튜디오: Blueprint → 제작 → Final Cut → Premiere.",
+    "product": "제품",
+    "resources": "자료",
+    "legal": "법적 고지",
     "links": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "howItWorks": "How It Works",
-      "faq": "FAQ",
-      "gettingStarted": "Getting Started",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "trustSafety": "Trust & Safety",
-      "refunds": "Refund Policy",
-      "contact": "Contact Us"
+      "features": "주요 기능",
+      "pricing": "가격",
+      "howItWorks": "작동 원리",
+      "faq": "자주 묻는 질문",
+      "gettingStarted": "시작하기",
+      "privacy": "개인정보 처리방침",
+      "terms": "서비스 이용약관",
+      "trustSafety": "신뢰와 안전",
+      "refunds": "환불 정책",
+      "contact": "문의하기"
     },
-    "tagline": "Made with ❤️ for creators",
-    "taglineSub": "From Idea to Published Video",
-    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
-    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "tagline": "크리에이터를 위해 ❤️를 담아 만들었습니다.",
+    "taglineSub": "아이디어에서 영상 게시까지",
+    "securePayments": "당사의 결제 대행사(Merchant of Record)인 Whop를 통해 안전하게 결제가 처리됩니다.",
+    "morLine": "안전한 결제, 세금 계산 및 규정 준수 업무는 Life Focus, LLC를 대신하여 당사의 공식 판매 대행사(Merchant of Record)인 Whop가 처리합니다.",
+    "copyright": "© 2026 SceneFlow AI. 모든 권리 보유.",
+    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • 연락처: brian@sfai.studio",
+    "poweredBy": "Google Cloud 기반"
   },
   "floatingCta": {
-    "seePricing": "See Pricing",
-    "tryNine": "Try $9",
-    "tryForNine": "Try for $9",
-    "dismiss": "Dismiss"
+    "seePricing": "가격 확인",
+    "tryNine": "9달러로 해보세요.",
+    "tryForNine": "9달러에 이용해 보세요",
+    "dismiss": "닫기"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
-    "pause": "Pause",
-    "play": "Play",
-    "mute": "Mute",
-    "unmute": "Unmute"
+    "pause": "일시 정지",
+    "play": "재생",
+    "mute": "음소거",
+    "unmute": "음소거 해제",
+    "expandVideo": "동영상 확장"
   }
 }

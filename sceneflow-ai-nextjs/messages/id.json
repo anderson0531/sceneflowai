@@ -1,618 +1,1411 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
-    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
+    "title": "SceneFlow AI - Pembuatan Video Berbasis AI",
+    "description": "Ubah ide Anda menjadi video profesional dengan otomatisasi alur kerja berbasis AI."
   },
   "nav": {
-    "workflow": "The Workflow",
-    "platformWalkthrough": "Platform Walkthrough",
-    "plansPricing": "Plans & Pricing",
-    "more": "More",
-    "useCases": "Use Cases",
+    "workflow": "Alur Kerja",
+    "platformWalkthrough": "Panduan Platform",
+    "plansPricing": "Paket & Harga",
+    "more": "Selengkapnya",
+    "useCases": "Kasus Penggunaan",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform & Trust",
-    "faq": "FAQ",
-    "signIn": "Sign In",
-    "startProject": "Start a Project",
-    "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "platformTrust": "Platform & Kepercayaan",
+    "faq": "Pertanyaan Umum",
+    "signIn": "Masuk",
+    "startProject": "Mulai Proyek",
+    "dashboard": "Dasbor",
+    "adminPanel": "Panel Admin",
+    "signOut": "Keluar",
+    "goToDashboard": "Buka Dasbor",
+    "userFallback": "Pengguna",
+    "searchLanguages": "Cari bahasa...",
+    "noLanguagesFound": "Tidak ada bahasa yang ditemukan"
   },
   "floatingNav": {
-    "compare": "Compare",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "platformWalkthrough": "Platform Walkthrough",
+    "compare": "Bandingkan",
+    "howItWorks": "Cara Kerjanya",
+    "useCases": "Kasus Penggunaan",
+    "platformWalkthrough": "Panduan Platform",
     "platform": "Platform",
-    "pricing": "Pricing",
-    "faq": "FAQ"
+    "pricing": "Harga",
+    "faq": "Pertanyaan Umum"
   },
   "hero": {
-    "headline": "Make professional video without a production team or a dozen apps.",
-    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.",
-    "ctaSecondary": "Watch the 'What's Possible'",
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "headline": "Berhentilah beralih-alih di antara lima tab AI. Satu studio membawa Anda dari tahap ide hingga video yang siap dipublikasikan.",
+    "subheadline": "Sebuah studio terpandu yang membawa Anda dari tahap ide hingga video final siap tayang. Lihat storyboard Anda sebelum membayar video akhir—setujui tampilannya alih-alih menghabiskan kredit untuk proses pembuatan yang hanya mengandalkan coba-coba. SceneFlow mengotomatiskan tugas-tugas teknis—seperti naskah, storyboard, pengisian suara, dan perakitan—sementara Anda tetap memegang kendali penuh atas setiap bagiannya.",
+    "audienceMicroLine": "Dibuat untuk kreator yang menginginkan hasil, dan tim yang ingin melihat cara kerjanya.",
+    "ctaSecondary": "Saksikan 'What's Possible'",
+    "ctaToolStack": "Lihat bagaimana solusi ini menggantikan rangkaian perangkat Anda.",
+    "languagePrompt": "Dengarkan sang pahlawan dalam bahasa Anda — alur kerja yang sama, pasar baru.",
+    "multilangHint": "Hero menyediakan sulih suara dalam 7 bahasa — seluruh alur kerja mendukung lebih dari 70 bahasa dalam tahap produksi.",
+    "playWithNarration": "Putar dengan narasi",
+    "tapToHear": "Ketuk untuk mendengar",
+    "fullscreen": "Layar penuh",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
-        "nativeLabel": "English"
+        "label": "Bahasa Inggris",
+        "nativeLabel": "Bahasa Inggris"
       },
       "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
+        "label": "Bahasa Spanyol",
+        "nativeLabel": "Bahasa Spanyol"
       },
       "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
+        "label": "Bahasa Portugis",
+        "nativeLabel": "Bahasa Portugis"
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "हिन्दी"
+        "nativeLabel": "Hindi"
       },
       "zh": {
-        "label": "Chinese",
-        "nativeLabel": "中文"
+        "label": "Bahasa Mandarin",
+        "nativeLabel": "Bahasa Mandarin"
       },
       "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
+        "label": "Bahasa Arab",
+        "nativeLabel": "Bahasa Arab"
       },
       "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
+        "label": "Thailand",
+        "nativeLabel": "Thailand"
       }
     },
-    "soon": "Soon"
+    "soon": "Segera"
   },
   "valueProp": {
     "pills": [
       {
         "label": "One Studio",
-        "detail": "Concept to publish in one place"
+        "detail": "Konsep untuk dipublikasikan di satu tempat"
       },
       {
-        "label": "Approve Before Final Video",
-        "detail": "Review storyboard beats before you render"
+        "label": "Setujui Sebelum Video Final",
+        "detail": "Tinjau bagian-bagian storyboard sebelum melakukan rendering."
       },
       {
-        "label": "Test Your Story First",
-        "detail": "Know what lands before heavy spend"
+        "label": "Uji Cerita Anda Terlebih Dahulu",
+        "detail": "Pastikan hasilnya jelas sebelum mengeluarkan biaya besar."
       },
       {
-        "label": "Publish-Ready Output",
-        "detail": "Master MP4 + distribution bundles"
+        "label": "Hasil Siap Terbit",
+        "detail": "Paket master MP4 + distribusi"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Who are you? Pick your path",
-    "seeExamples": "See examples",
-    "examplesFor": "Examples for {label}:",
-    "andMore": ", and more.",
+    "prompt": "Siapa Anda? Pilih jalan Anda.",
+    "seeExamples": "Lihat contoh",
+    "examplesFor": "Contoh untuk {label}:",
+    "andMore": ", dan banyak lagi.",
+    "modes": {
+      "automate": {
+        "label": "Otomatisasikan hal itu",
+        "description": "Alur kerja terpandu — setujui storyboard, luncurkan lebih cepat"
+      },
+      "engine": {
+        "label": "Tunjukkan mesinnya kepada saya.",
+        "description": "Arsitektur, BYOK, dan kedalaman platform"
+      }
+    },
     "paths": [
       {
-        "id": "creator",
-        "label": "Creator",
-        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "id": "pencipta",
+        "label": "Pencipta",
+        "outcome": "Rilis tepat waktu — hentikan pembangunan ulang di setiap alat",
         "useCases": [
-          "YouTube & episodic series",
-          "Video podcasts & show clips",
-          "Hyper-local & JIT news",
-          "Documentaries & docuseries",
-          "How-to & skill channels",
-          "Sports recaps & commentary"
+          "YouTube & serial episodik",
+          "Podcast video & klip acara",
+          "Berita hiperlokal & JIT (tepat waktu)",
+          "Film dokumenter & serial dokumenter",
+          "Saluran panduan & keterampilan",
+          "Rangkuman & ulasan olahraga"
         ]
       },
       {
-        "id": "team",
-        "label": "In-house team",
-        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "id": "tim",
+        "label": "Tim internal",
+        "outcome": "Gantikan siklus vendor yang lambat — kendalikan merek dan anggaran",
         "useCases": [
-          "Corporate L&D & compliance",
-          "Internal comms & town halls",
-          "Product explainers for sales",
-          "HR recruitment & culture",
-          "K-12 / higher-ed lessons",
-          "Public health & safety updates"
+          "Pembelajaran & Pengembangan serta Kepatuhan Korporat",
+          "Komunikasi internal & pertemuan seluruh karyawan",
+          "Materi penjelasan produk untuk penjualan",
+          "Rekrutmen & budaya SDM",
+          "Materi pelajaran K-12 / pendidikan tinggi",
+          "Pembaruan kesehatan dan keselamatan masyarakat"
         ]
       },
       {
-        "id": "productionShop",
-        "label": "Production shop",
-        "outcome": "Productize a niche with repeatable intake → delivery",
+        "id": "bengkel produksi",
+        "label": "Bengkel produksi",
+        "outcome": "Mengubah ceruk pasar menjadi produk dengan proses penerimaan hingga penyampaian yang dapat diulang.",
         "useCases": [
-          "Video memoir packages",
-          "Legacy & tribute videos",
-          "Voice-cloned narration",
-          "White-label studio templates",
-          "Real estate & hospitality tours",
-          "Subscription video services"
+          "Paket memoar video",
+          "Video warisan & penghormatan",
+          "Narasi hasil kloning suara",
+          "Templat studio white-label",
+          "Tur properti dan industri perhotelan",
+          "Layanan video berlangganan"
         ]
       },
       {
-        "id": "agency",
-        "label": "Agency",
-        "outcome": "Faster pitches and scalable client delivery",
+        "id": "agensi",
+        "label": "Agensi",
+        "outcome": "Presentasi penawaran yang lebih cepat dan layanan klien yang dapat ditingkatkan skalanya",
         "useCases": [
-          "Client pitch pre-viz",
-          "Product launch campaigns",
-          "Case studies & testimonials",
-          "Event & conference promos",
-          "Multi-language campaigns",
-          "Property marketing for clients"
+          "Pra-visualisasi untuk presentasi klien",
+          "Kampanye peluncuran produk",
+          "Studi kasus & testimoni",
+          "Promo acara & konferensi",
+          "Kampanye multibahasa",
+          "Pemasaran properti untuk klien"
         ]
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Why SceneFlow vs prompt-and-generate tools",
-    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "title": "Mengapa SceneFlow dibandingkan dengan alat *prompt-and-generate*",
+    "subtitle": "Gemini Studio dan Google Flow unggul dalam hal klip. SceneFlow mencakup alur kerja produksi secara menyeluruh.",
     "rows": [
       {
-        "them": "Prompt + clip generation in isolation",
-        "us": "Structured phases with editable baselines at each step"
+        "them": "Pembuatan prompt + klip secara terpisah",
+        "us": "Tahapan terstruktur dengan garis dasar yang dapat disesuaikan pada setiap langkah"
       },
       {
-        "them": "Manual consistency across sessions",
-        "us": "Reference Library + Beat Frames lock visuals before video"
+        "them": "Konsistensi manual antar-sesi",
+        "us": "Reference Library + Beat Frames mengunci visual sebelum video"
       },
       {
-        "them": "No audience validation workflow",
-        "us": "Audience Resonance before render; Screening Room before publish"
+        "them": "Tidak ada alur kerja validasi audiens",
+        "us": "Audience Resonance sebelum rendering; Screening Room sebelum publikasi"
       },
       {
-        "them": "No production pipeline or handoff",
-        "us": "Script → streams → assembly → distribution in one app"
-      },
-      {
-        "them": "Complex model and settings surface",
-        "us": "Guided Studio UX with credits and BYOK guardrails"
+        "them": "Tidak ada alur kerja produksi atau serah terima",
+        "us": "Skrip → stream → perakitan → distribusi dalam satu aplikasi"
       }
     ],
-    "themHeader": "Typical clip-generation tools",
-    "usHeader": "SceneFlow bundles"
+    "themHeader": "Alat pembuatan klip pada umumnya",
+    "usHeader": "Paket SceneFlow"
   },
   "beatFirstPipeline": {
-    "title": "Beat-First Video Pipeline",
-    "subtitle": "Approve before you render — not slot-machine regeneration",
-    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "title": "Alur Kerja Video Berbasis Ketukan",
+    "subtitle": "Setujui sebelum melakukan rendering — bukan regenerasi ala mesin slot",
+    "intro": "Tidak perlu lagi membuat video dengan metode coba-coba. Anda dapat meninjau dan menyetujui tampilannya sebelum SceneFlow menggunakan kredit untuk video akhir.",
+    "description": "SceneFlow mengatur persetujuan visual di setiap tahapan: Express storyboard untuk peninjauan, Beat Frames untuk mengunci komposisi, lalu F2V per *beat*. Anda menyempurnakan tampilan sebelum menghabiskan kredit untuk *drift* dan halusinasi.",
     "steps": [
-      "Express storyboard — share audio-visual beats for review in minutes",
-      "Beat Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Express storyboard — bagikan beat audio-visual untuk ditinjau dalam hitungan menit",
+      "Beat Frames — mengunci awal/akhir komposisi dengan kontinuitas Reference Library",
+      "F2V per ketukan — hasilkan video dari frame yang telah disetujui, bukan dari prompt buta",
+      "Production Mixer — timing, audio, dan ekspor stream ke perakitan Final Cut"
     ],
-    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+    "footerLine": "Lebih sedikit pembuatan ulang visual mesin slot — setujui visual sebelum pengeluaran akhir untuk video."
+  },
+  "toolStack": {
+    "badge": "Terdengar familier?",
+    "title": "Cara yang Rusak vs. Cara SceneFlow",
+    "subtitle": "Anda seharusnya tidak perlu membuka lima tab, melakukan ekspor dengan cara salin-tempel, dan mengalami kelelahan akibat menyusun prompt hanya untuk merilis satu video.",
+    "brokenWay": {
+      "title": "Jalan yang Retak",
+      "tagline": "Terpecah-pecah. Manual. Melelahkan.",
+      "tools": [
+        {
+          "name": "ChatGPT",
+          "category": "Draf naskah"
+        },
+        {
+          "name": "Midjourney",
+          "category": "Gambar sekali pakai"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "Ekspor VO manual"
+        },
+        {
+          "name": "Premiere",
+          "category": "Perakitan manual"
+        }
+      ],
+      "chaosLabel": "Lima tab. Kehilangan konteks.",
+      "painPoints": [
+        "Salin-tempel antaraplikasi",
+        "Kelelahan akibat penyusunan prompt dan siklus pembuatan ulang",
+        "Tidak ada pengecekan audiens sebelum Anda mengeluarkan biaya",
+        "Kekacauan versi pada berbagai ekspor"
+      ],
+      "timeLabel": "Waktu proyek pada umumnya",
+      "timeValue": "2–4 minggu"
+    },
+    "sceneflowWay": {
+      "title": "Cara SceneFlow",
+      "tagline": "Satu studio. Setujui sebelum melakukan rendering.",
+      "stages": [
+        {
+          "label": "Blueprint",
+          "detail": "Rencana cerita yang terstruktur"
+        },
+        {
+          "label": "Referensi",
+          "detail": "Karakter yang konsisten"
+        },
+        {
+          "label": "Produksi",
+          "detail": "Suara + visual"
+        },
+        {
+          "label": "Terbitkan",
+          "detail": "Satu master MP4"
+        }
+      ],
+      "syncLabel": "Satu file proyek — tidak perlu repot berpindah-pindah tab",
+      "benefits": [
+        "Tahapan terpandu — bukan rekayasa prompt",
+        "Persetujuan storyboard sebelum kredit video",
+        "Skor Audience Resonance sebelum rendering berat",
+        "Master siap terbit dari satu studio"
+      ],
+      "timeLabel": "Waktu proyek pada umumnya",
+      "timeValue": "2–4 hari"
+    },
+    "comparisonCaption": "Satu studio menggantikan alat *prompt* yang terpisah-pisah, penyuntingan manual, dan proses serah terima antar-platform.",
+    "comparisonImageAlt": "Biaya overhead produksi tradisional vs. studio otomatis SceneFlow — proses lebih cepat dari tahap konsep hingga video siap tayang"
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
-    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "title": "Kecepatan produksi tanpa biaya overhead",
+    "subtitle": "Gantikan alat *prompt* yang terpisah-pisah dan perakitan manual dengan satu studio otomatis — mulai dari konsep awal hingga *master* yang siap dipublikasikan.",
+    "caption": "Satu studio menggantikan alat *prompt* yang terpisah-pisah, penyuntingan manual, dan proses serah terima antar-platform.",
+    "imageAlt": "Biaya overhead produksi tradisional vs. studio otomatis SceneFlow — proses lebih cepat dari tahap konsep hingga video siap tayang"
   },
   "howItWorks": {
-    "title": "From concept to publish-ready video",
-    "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
-    "tagline": "Every step is expertly automated. Every step gives you full control.",
-    "optionalBadge": "Optional",
-    "optionalSuffix": " (optional)",
-    "readyTitle": "Ready to test the full pipeline?",
-    "explorerCta": "Start with Explorer — $9",
+    "title": "Dari konsep hingga video siap tayang",
+    "titleAccent": "Satu alur kerja terpandu",
+    "subtitle": "Seri bersifat opsional. Jalur utamanya adalah Blueprint → Produksi → Final Cut → Premiere — mencakup tingkatan storyboard, animatic, video, dan master MP4 di sepanjang prosesnya.",
+    "tagline": "Setiap langkah diotomatisasi secara ahli. Setiap langkah memberikan Anda kendali penuh.",
+    "optionalBadge": "Opsional",
+    "optionalSuffix": " (opsional)",
+    "readyTitle": "Siap menguji pipeline secara menyeluruh?",
+    "explorerCta": "Mulai dengan Explorer — $9",
     "phases": [
       {
-        "id": "series",
-        "stepLabel": "Series",
-        "subtitle": "Showrunner Engine",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "id": "seri",
+        "stepLabel": "Seri",
+        "subtitle": "Mesin Showrunner",
+        "description": "Definisikan semesta Anda sekali saja dan hasilkan alur cerita lintas episode yang kohesif. Penggunaan Reference Library secara bersama menjaga karakter dan nuansa tetap selaras sepanjang musim.",
         "keySteps": [
-          "Define universe — characters, tone, and season arc",
-          "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "Definisikan semesta — karakter, nuansa, dan alur cerita musim",
+          "Menghasilkan kerangka episode secara otomatis untuk keseluruhan musim",
+          "Sinkronisasi ke Blueprint dan produksi per episode"
         ],
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
-        ],
-        "optional": true
+          "Tentukan semesta Anda sekali saja — karakter, nuansa, dan alur cerita musim.",
+          "Kerangka episode yang padu — dibuat secara otomatis untuk keseluruhan musim",
+          "Pelacakan kesinambungan — penyelarasan musim yang terdiri dari banyak episode",
+          "Sinkronisasi seri-ke-episode — ke dalam Studio dan Produksi Blueprint"
+        ]
       },
       {
-        "id": "blueprint",
+        "id": "cetak biru",
         "stepLabel": "Blueprint",
-        "subtitle": "Story Development",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "subtitle": "Pengembangan Cerita",
+        "description": "Ubah konsep menjadi *treatment* terstruktur yang mencakup *logline*, *beat*, karakter, dan nada. Jalankan Audience Resonance dan lakukan kolaborasi sebelum memulai *rendering* berat.",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
-          "Audience Resonance scoring with 80+ target",
-          "Collaborator share links and export (PDF, Doc, PPTX)"
+          "Menghasilkan → Meninjau → Melakukan Iterasi → Memulai Produksi",
+          "Audience Resonance mencetak skor dengan target 80+",
+          "Tautan berbagi dan ekspor (PDF, Doc, PPTX) untuk kolaborator"
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
-        ],
-        "optional": false
+          "Alur kerja: Membuat → Meninjau → Melakukan iterasi → Memulai produksi",
+          "Dari konsep hingga struktur dalam hitungan menit — logline, beat, karakter, dan nada",
+          "Audience Resonance penilaian dengan target 80+ sebelum tahap Produksi",
+          "Tautan berbagi dari kolaborator — sintesis masukan menjadi revisi terpandu"
+        ]
       },
       {
-        "id": "production",
-        "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "id": "produksi",
+        "stepLabel": "Produksi",
+        "subtitle": "Dari Naskah ke Tayangan",
+        "description": "Tab Script dan Action memandu alur Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, dan stream MP4 — tanpa perlu berganti alat.",
         "keySteps": [
-          "Lock script, voices, and scene audio",
-          "Express storyboard — gallery and share for review",
-          "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "Kunci naskah, suara, dan audio adegan",
+          "Express storyboard — galeri dan berbagi untuk ditinjau",
+          "Beat Frames → Konsol Sutradara → Aliran Render",
+          "Kirim stream yang telah selesai ke Final Cut"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
-        ],
-        "optional": false
+          "Foundation — naskah, pengisi suara, audio adegan, penguncian naskah",
+          "Express storyboard — arah dan bingkai dalam hitungan menit; galeri dan berbagi",
+          "Beat Frames dan Mixer — frame awal/akhir, Director Console, render stream MP4",
+          "Alur Produksi — tinjau hasil, render ulang *beat* yang kedaluwarsa, kirim ke Final Cut"
+        ]
       },
       {
-        "id": "final-cut",
+        "id": "potongan akhir",
         "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "subtitle": "Perakitan Aliran",
+        "description": "Gabungkan stream Produksi yang telah rampung menjadi satu file master MP4. Pilih Animatic atau tentukan video dan bahasa untuk setiap adegan — tanpa penyuntingan linimasa; perubahan kreatif tetap dilakukan di Production Mixer.",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
+          "Pilih stream untuk setiap scene — preset atau campuran kustom",
+          "Pratinjau program lengkap sesuai urutan naskah",
+          "Ekspor satu master MP4 untuk Premiere"
         ],
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
+          "Pemilihan stream per adegan — Animatic, Video, bahasa, versi",
+          "Preset perakitan — Semua Video, Hibrida, Campuran kustom",
+          "Tidak ada penyuntingan linimasa — perubahan kreatif tetap berada di Production Mixer",
+          "Ekspor master sekali klik — MP4 gabungan untuk Premiere"
+        ]
       },
       {
-        "id": "premiere",
+        "id": "penayangan perdana",
         "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "subtitle": "Pusat Distribusi",
+        "description": "Tinjau master Anda beserta analitik audiens, lalu publikasikan ke YouTube dengan metadata yang dilokalisasi atau ekspor paket untuk Shorts, Reels, dan TikTok.",
         "keySteps": [
-          "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
+          "Buat screening dan bagikan tautan /s/",
+          "Tinjau skor, engagement, dan wawasan visual",
+          "Wizard YouTube atau paket ekspor"
         ],
         "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "optional": false
+          "Dapat dibagikan Screening Room — tautan /s/ dengan penilaian dan analitik interaksi opsional (persetujuan penonton)",
+          "Dasbor wawasan — Tab Penilaian, Biometrik, dan Visual",
+          "Panduan YouTube — thumbnail, judul/deskripsi yang dilokalkan, SceneFlow CTA",
+          "Paket ekspor dan rencana klip format pendek vertikal"
+        ]
       }
     ]
   },
   "useCases": {
-    "badge": "Production Applications",
-    "title": "Whatever Video You Can Imagine,",
-    "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "badge": "Aplikasi Produksi",
+    "title": "Video apa pun yang dapat Anda bayangkan,",
+    "titleAccent": "Bangun di SceneFlow",
+    "subtitle": "Presentasi properti, konten edukasi, siniar, format berita, kampanye merek, dan kisah sinematik — satu studio otomatis yang mencakup segalanya, mulai dari konsep hingga master siap tayang.",
+    "qualifyingStatement": "SceneFlow mengubah foto sumber, unggahan, dan deskripsi Anda menjadi video penelusuran (walkthrough) dengan narasi — lengkap dengan pilihan suara dan kehadiran karakter yang dapat Anda atur. Ini adalah presentasi yang dimodifikasi oleh AI: visualisasi realistis yang berbasis pada materi Anda, bukan rekaman kamera langsung. Tinjau dan setujui setiap storyboard sebelum dipublikasikan; beri label yang jelas pada hasil akhir agar audiens mengetahui apa yang sedang mereka tonton.",
     "ui": {
-      "useCases": "Use Cases",
-      "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo coming soon",
-      "selectExample": "Select an example to preview its demo"
+      "useCases": "Kasus Penggunaan",
+      "sectors": "{count} SEKTOR",
+      "demoComingSoon": "Demo Segera Hadir",
+      "selectExample": "Pilih contoh untuk melihat pratinjau demonya",
+      "targetPersona": "Persona Target",
+      "theChallenge": "Tantangan",
+      "sceneFlowSolution": "Solusi SceneFlow",
+      "beforeVsAfter": "Sebelum vs. Sesudah",
+      "before": "Sebelum",
+      "after": "Setelah",
+      "theWin": "\"Kemenangan\"",
+      "frameAnchoredTitle": "Kontinuitas yang Ditambatkan pada Bingkai",
+      "frameAnchoredDescription": "SceneFlow adalah satu-satunya alat yang memungkinkan kontinuitas berbasis bingkai (*frame-anchored*), memastikan produk atau karakter klien Anda tetap identik di setiap segmen adegan.",
+      "closePreview": "Tutup Pratinjau",
+      "expandVideo": "Perbesar Video",
+      "expandImage": "Perbesar Gambar",
+      "orStartExplorer": "mulai dengan paket $9 Explorer",
+      "orPrefix": "Atau"
+    },
+    "personas": {
+      "creator": {
+        "label": "Kreator Solo",
+        "title": "Kreator YouTube",
+        "beforeAfter": {
+          "before": "40 jam",
+          "after": "25 menit"
+        },
+        "challenge": {
+          "title": "Hambatan \"B-Roll\"",
+          "description": "Anda memiliki naskah yang kuat, namun sebagian besar waktu Anda habis untuk mencari rekaman, mengoordinasikan proses penyuntingan, dan memastikan konsistensi antaradegan. Hambatan tersebut memperlambat jadwal publikasi dan melemahkan retensi penonton."
+        },
+        "solution": {
+          "title": "Penutur Cerita Otomatis",
+          "description": "Ubah naskah menjadi visual siap-produksi dengan cepat, sembari menjaga konsistensi karakter dan gaya dari adegan pertama hingga master yang siap dipublikasikan.",
+          "features": [
+            "Visual yang selaras secara presisi dengan tahapan naskah",
+            "Tokoh utama yang konsisten di setiap adegan",
+            "Tingkatkan skala ke seri episode menggunakan pustaka referensi bersama"
+          ]
+        },
+        "win": "Beralihlah dari unggahan yang hanya sesekali ke ritme produksi yang andal dengan beban kerja tambahan yang lebih minim.",
+        "keyPhrases": [
+          "Waktu Penyelesaian Lebih Cepat",
+          "Karakter yang Konsisten",
+          "Alur Kerja Siap-Serial"
+        ]
+      },
+      "team": {
+        "label": "Tim Internal",
+        "title": "Tim Video Internal",
+        "beforeAfter": {
+          "before": "6 minggu",
+          "after": "Minggu yang sama"
+        },
+        "challenge": {
+          "title": "Tunggakan Vendor & Pergeseran Citra Merek",
+          "description": "Tim komunikasi, L&D, dan pemasaran harus menunggu berminggu-minggu untuk mendapatkan video dari agensi atau vendor. Setiap sesi pengambilan gambar menghasilkan branding yang tidak konsisten, tagihan yang sulit diprediksi, serta alur persetujuan yang menghambat jalannya kampanye."
+        },
+        "solution": {
+          "title": "Produksi Internal dalam Minggu yang Sama",
+          "description": "Tugaskan staf untuk memproduksi video dengan anggaran kredit yang dapat diprediksi—menggunakan templat merek, persetujuan sebelum *rendering* akhir, serta tanpa biaya hari kerja kru ataupun siklus penyuntingan yang tidak terbatas.",
+          "features": [
+            "Gantikan sesi pemotretan oleh vendor dengan alur kerja internal yang terpandu.",
+            "Templat dan pustaka referensi yang aman bagi merek",
+            "Visibilitas penggunaan kredit dan batas anggaran per proyek",
+            "Setujui storyboard sebelum membayar video akhir."
+          ]
+        },
+        "win": "Rilis video pelatihan, komunikasi, dan kampanye sesuai jadwal Anda — bukan bergantung pada antrean pekerjaan vendor.",
+        "keyPhrases": [
+          "Biaya yang dapat diprediksi",
+          "Pengendalian Merek",
+          "Penyelesaian dalam Minggu yang Sama"
+        ]
+      },
+      "productionShop": {
+        "label": "Bengkel Produksi",
+        "title": "Bengkel Produksi Spesialis",
+        "beforeAfter": {
+          "before": "$8.000 per sesi pemotretan",
+          "after": "Kredit senilai $200"
+        },
+        "challenge": {
+          "title": "Sektor Khusus, Tanpa Sistem yang Dapat Direplikasi",
+          "description": "Klien di bidang memoar, warisan (*legacy*), real estat, dan pendidikan membutuhkan penyelesaian yang cepat—namun setiap proyek dimulai dari nol. Proses unggahan, kloning suara, dan pembuatan avatar tidak dapat ditingkatkan skalanya tanpa alur kerja terstandarisasi, mulai dari penerimaan hingga penyampaian hasil."
+        },
+        "solution": {
+          "title": "Jadikan Layanan Video Anda sebagai Produk",
+          "description": "Bangun alur kerja yang dapat direplikasi untuk studio memoar dan sektor vertikal khusus. Mulai dari unggahan templat, kloning suara, avatar, hingga persetujuan storyboard—sesuaikan untuk setiap klien dan tingkatkan margin melalui peningkatan volume.",
+          "features": [
+            "Templat memoar dengan fitur unggah foto, kloning suara, dan host avatar",
+            "Penerimaan klien dikaitkan dengan Blueprint dan tahapan persetujuan storyboard",
+            "Paket studio *white-label* untuk video kenangan, penghormatan, dan berbasis langganan",
+            "Margin pada kredit, bukan biaya overhead per sesi pemotretan"
+          ]
+        },
+        "win": "Luncurkan layanan memoar video atau studio spesialis dengan proses pengerjaan yang dapat diulang—bukan sekadar pekerjaan lepas yang hanya dilakukan sekali saja.",
+        "keyPhrases": [
+          "Templat Memoar",
+          "Identitas Suara & Avatar",
+          "Pengiriman yang Dapat Diulang"
+        ]
+      },
+      "agency": {
+        "label": "Agensi",
+        "title": "Pimpinan Layanan Klien",
+        "beforeAfter": {
+          "before": "Pengiriman 3 minggu",
+          "after": "Pengiriman 3 hari"
+        },
+        "challenge": {
+          "title": "Penyampaian Layanan Klien dalam Skala Besar",
+          "description": "Memenangkan *pitch* hanyalah separuh dari perjuangan. Pekerjaan klien yang bersifat rutin membutuhkan waktu pengerjaan yang cepat, alur persetujuan yang jelas, dan margin keuntungan pada setiap hasil kerja—tanpa harus membangun ulang proses produksi dari nol setiap kalinya."
+        },
+        "solution": {
+          "title": "Throughput + Persetujuan Klien",
+          "description": "Beralihlah dari tahap *pitch* ke proses pengiriman karya secara berkelanjutan, dengan kendali yang menjaga keamanan *brand*, tinjauan klien sebelum *render* akhir, serta biaya kredit yang dapat diprediksi untuk setiap proyek.",
+          "features": [
+            "Pra-visualisasi cepat untuk presentasi penawaran dan persetujuan klien",
+            "Templat yang dapat digunakan kembali untuk format klien yang berulang",
+            "Visibilitas anggaran di setiap iterasi",
+            "Penyampaian layanan yang dapat ditingkatkan skalanya tanpa menambah jumlah karyawan"
+          ]
+        },
+        "win": "Hasilkan siklus presentasi yang lebih cepat dan pekerjaan klien yang berulang dengan risiko produksi lebih rendah serta margin lebih besar.",
+        "keyPhrases": [
+          "Persetujuan Klien",
+          "Throughput Pengiriman",
+          "Prediktabilitas Anggaran"
+        ]
+      }
+    },
+    "segmentCtas": {
+      "creator": {
+        "label": "Mulai Penerbangan Uji Produksi Anda",
+        "subtext": "$9 sekali bayar • 750 kredit • Akses penuh ke platform"
+      },
+      "team": {
+        "label": "Jadwalkan sesi peninjauan bersama tim",
+        "subtext": "Lihat bagaimana tim internal menggantikan siklus kerja vendor."
+      },
+      "productionShop": {
+        "label": "Jelajahi Templat Vertikal",
+        "subtext": "Real estat, pendidikan, dokumen, dan banyak lagi — lihat apa yang bisa Anda jadikan produk"
+      },
+      "agency": {
+        "label": "Lihat Harga untuk Tim",
+        "subtext": "Paket untuk agensi dan rumah produksi berskala besar"
+      }
     },
     "categories": [
       {
-        "id": "property",
-        "title": "Property, Spaces & Hospitality",
+        "id": "properti",
+        "title": "Properti, Ruang & Hospitalitas",
+        "qualifyingStatement": "Dibuat berdasarkan foto properti asli Anda — disajikan sebagai tur virtual dengan narasi serta penggunaan suara dan avatar Anda yang dihasilkan oleh AI. Ini memberikan gambaran realistis mengenai tata letak dan fitur properti, namun bukan pengganti kunjungan langsung. Semua tur diberi label yang jelas.",
         "examples": [
           {
-            "id": "residential-real-estate",
-            "label": "Residential Real Estate",
-            "description": "Automated listing tours featuring the agent's cloned voice and avatar identity."
+            "id": "real estat hunian",
+            "label": "Real Estat Hunian",
+            "description": "Bayangkan Anda mengunggah foto properti beserta referensi karakter dan rekaman suara yang telah tersimpan. Kemudian, secara instan membuat video tur properti yang profesional—lengkap dengan karakter dan suara Anda—dalam lebih dari 70 bahasa."
           },
           {
-            "id": "commercial-real-estate",
-            "label": "Commercial Real Estate",
-            "description": "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data."
+            "id": "real estat komersial",
+            "label": "Real Estat Komersial",
+            "description": "Bayangkan Anda mengunggah denah lantai, gambar rendering, dan data lingkungan sekitar, lalu menggabungkannya dengan rekaman suara serta avatar broker Anda. Hasilnya, Anda dapat langsung membuat tur presentasi bagi investor yang menghidupkan setiap sudut properti—lengkap dengan lokalisasi dalam lebih dari 70 bahasa."
           },
           {
-            "id": "short-term-rentals",
-            "label": "Short-Term Rentals",
-            "description": "Automated \"Digital Welcome Books\" that walk guests through house features and local \"best of\" spots."
+            "id": "penyewaan jangka pendek",
+            "label": "Penyewaan Jangka Pendek",
+            "description": "Bayangkan mengunggah foto rumah dan informasi fasilitas yang disertai rekaman suara tuan rumah. Lalu, secara instan memublikasikan video sambutan digital yang menyapa setiap tamu dalam bahasa mereka—bahkan sebelum mereka melakukan *check-in*."
           },
           {
-            "id": "hospitality-tourism",
-            "label": "Hospitality & Tourism",
-            "description": "Hotel virtual tours and narrated travel itineraries for agencies."
+            "id": "hospitalitas dan pariwisata",
+            "label": "Perhotelan & Pariwisata",
+            "description": "Bayangkan Anda mengunggah foto hotel dan sorotan rencana perjalanan, lalu memadukannya dengan suara pemandu serta avatar yang telah tersimpan dari merek Anda. Setelah itu, Anda dapat langsung meluncurkan tur virtual dan panduan perjalanan bernarasi dalam lebih dari 70 bahasa—tanpa perlu kru film di setiap properti."
           },
           {
-            "id": "museum-gallery-guides",
-            "label": "Museum & Gallery Guides",
-            "description": "Multi-language audio-visual \"tours\" for exhibitions that can be updated JIT as exhibits change."
+            "id": "panduan museum dan galeri",
+            "label": "Panduan Museum & Galeri",
+            "description": "Bayangkan Anda dapat mengunggah foto pameran dan catatan kurator seiring perubahan tata letak. Lalu, memperbarui tur galeri berpandu suara dalam lebih dari 70 bahasa secara instan—tanpa perlu pengambilan gambar ulang saat pameran berganti."
           }
         ]
       },
       {
-        "id": "knowledge",
-        "title": "Knowledge, Training & Education",
+        "id": "pengetahuan",
+        "title": "Pengetahuan, Pelatihan & Pendidikan",
         "examples": [
           {
-            "id": "k12-higher-ed",
-            "label": "K-12 & Higher Ed",
-            "description": "30-minute curriculum modules that can be instantly localized for ESL students or global campuses."
+            "id": "Pendidikan K-12 dan Tinggi",
+            "label": "Pendidikan K-12 & Pendidikan Tinggi",
+            "description": "Bayangkan Anda mengunggah materi pelajaran menggunakan referensi suara dan karakter instruktur yang telah tersimpan. Kemudian, Anda dapat langsung membuat modul kurikulum lengkap yang dapat disaksikan oleh mahasiswa ESL dan kampus global Anda dalam lebih dari 70 bahasa."
           },
           {
-            "id": "corporate-ld",
-            "label": "Corporate L&D",
-            "description": "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices."
+            "id": "korporat-ld",
+            "label": "Pembelajaran dan Pengembangan Perusahaan",
+            "description": "Bayangkan Anda mengunggah naskah kepatuhan menggunakan suara dan avatar pelatih Anda yang telah tersimpan. Kemudian, Anda dapat langsung meluncurkan program orientasi dan pelatihan keselamatan yang konsisten di seluruh kantor—yang telah dilokalisasi ke dalam lebih dari 70 bahasa."
           },
           {
-            "id": "software-saas-tutorials",
-            "label": "Software SaaS Tutorials",
-            "description": "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion."
+            "id": "tutorial-perangkat-lunak-saas",
+            "label": "Tutorial Perangkat Lunak SaaS",
+            "description": "Bayangkan Anda mengunggah tangkapan layar UI sebagai bingkai referensi yang dipadukan dengan rekaman suara ahli produk Anda. Kemudian, secara instan menghasilkan video panduan yang menganimasikan setiap klik—dan diperbarui tepat pada hari UI Anda diluncurkan."
           },
           {
-            "id": "niche-skill-tutoring",
-            "label": "Niche Skill Tutoring",
-            "description": "Professional \"How-To\" series for cooking, DIY, or technical certifications."
+            "id": "Bimbingan belajar keterampilan khusus",
+            "label": "Bimbingan Keterampilan Khusus",
+            "description": "Bayangkan Anda mengunggah foto-foto tahapan kegiatan yang dipadukan dengan rekaman suara instruktur serta referensi karakternya. Lalu, Anda dapat langsung menerbitkan seri panduan profesional—baik itu tentang memasak, proyek DIY, maupun persiapan sertifikasi—dalam lebih dari 70 bahasa."
           },
           {
-            "id": "medical-patient-education",
-            "label": "Medical/Patient Education",
-            "description": "Narrated explanations of surgical procedures or medication management for hospitals and clinics."
+            "id": "edukasi medis bagi pasien",
+            "label": "Edukasi Medis/Pasien",
+            "description": "Bayangkan Anda mengunggah diagram prosedur beserta rekaman suara klinisi yang telah disetujui, lalu secara instan menghasilkan video edukasi pasien yang jelas dan mudah dipahami oleh keluarga dalam lebih dari 70 bahasa."
           },
           {
-            "id": "video-memoirs",
-            "label": "Video Memoirs",
-            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+            "id": "memoar video",
+            "label": "Memoar Video",
+            "description": "Bayangkan Anda mengunggah foto keluarga, rekaman audio wawancara, dan catatan adegan, lengkap dengan rekaman suara narator yang telah tersimpan. Kemudian, Anda dapat langsung menyusun video memoar berbasis bab—serta menyetujui papan cerita sebelum proses *rendering* akhir."
           }
         ]
       },
       {
         "id": "jit",
-        "title": "JIT Media & Information",
+        "title": "Media & Informasi JIT",
         "examples": [
           {
-            "id": "hyper-local-news",
-            "label": "Hyper-Local News",
-            "description": "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive."
+            "id": "berita hiperlokal",
+            "label": "Berita Hiperlokal",
+            "description": "Bayangkan Anda mengunggah foto dan berita terkini hari ini menggunakan rekaman suara penyiar Anda. Lalu, seketika itu juga menerbitkan ringkasan berita harian lingkungan setempat—tanpa kru syuting dan tanpa risiko terlambat mengejar tenggat waktu."
           },
           {
-            "id": "financial-market-recaps",
-            "label": "Financial & Market Recaps",
-            "description": "Turning daily stock market or crypto data into 3-minute narrated visual digests."
+            "id": "Rangkuman pasar keuangan",
+            "label": "Ringkasan Keuangan & Pasar",
+            "description": "Bayangkan Anda mengunggah data pasar dan cuplikan grafik setiap pagi, disertai rekaman suara analis Anda. Lalu, mengubahnya seketika menjadi ringkasan visual bernarasi—yang siap sedia sebelum bel pembukaan pasar berbunyi."
           },
           {
-            "id": "sports-commentary",
-            "label": "Sports Commentary",
-            "description": "Automated \"recap\" videos using game stats and static photography turned into F2V action."
+            "id": "komentar olahraga",
+            "label": "Komentar Olahraga",
+            "description": "Bayangkan mengunggah statistik pertandingan dan foto diam yang dipadukan dengan rekaman suara komentator Anda. Lalu, secara instan membuat video rekap berisi aksi animasi—dan memublikasikannya saat para penggemar masih hangat memperbincangkannya."
           },
           {
-            "id": "true-crime-historical-docs",
-            "label": "True Crime & Historical Docs",
-            "description": "Using the Reference Library to keep historical figures consistent across a multi-part documentary series."
+            "id": "Dokumenter sejarah kisah kriminal nyata",
+            "label": "Dokumenter Kriminal Nyata & Sejarah",
+            "description": "Bayangkan Anda menetapkan sosok-sosok sejarah ke dalam Reference Library Anda sekali saja. Kemudian, Anda dapat langsung memproduksi episode berseri di mana wajah dan suara mereka tetap konsisten — dari satu seri ke seri berikutnya."
           },
           {
-            "id": "weather-emergency-alerts",
-            "label": "Weather & Emergency Alerts",
-            "description": "Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms."
+            "id": "peringatan darurat cuaca",
+            "label": "Peringatan Cuaca & Darurat",
+            "description": "Bayangkan mengunggah buletin darurat menggunakan rekaman suara tepercaya milik instansi Anda. Kemudian, menyiarkan peringatan yang jelas secara instan dalam lebih dari 70 bahasa di berbagai platform media sosial — hanya dalam hitungan menit, bukan hari."
           }
         ]
       },
       {
-        "id": "b2b",
-        "title": "B2B Marketing & Sales",
+        "id": "B2B",
+        "title": "Pemasaran & Penjualan B2B",
         "examples": [
           {
-            "id": "product-explainer-videos",
-            "label": "Product Explainer Videos",
-            "description": "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos."
+            "id": "video penjelasan produk",
+            "label": "Video Penjelasan Produk",
+            "description": "Bayangkan Anda mengunggah foto katalog produk, lalu menggunakan suara presenter dan avatar yang telah tersimpan untuk merek Anda. Kemudian, buatlah seri video penjelasan bergaya sinematik secara instan—dan setujui storyboard-nya sebelum melakukan rendering."
           },
           {
-            "id": "case-study-testimonials",
-            "label": "Case Study/Testimonials",
-            "description": "Using client headshots and project photos to create high-end visual success stories."
+            "id": "Testimoni studi kasus",
+            "label": "Studi Kasus/Testimoni",
+            "description": "Bayangkan Anda mengunggah foto wajah klien, foto proyek, dan metrik keberhasilan, lalu menggabungkannya dengan rekaman suara narator yang sudah tersimpan. Hasilnya, Anda bisa langsung membuat studi kasus visual yang profesional—tanpa perlu melakukan sesi pengambilan gambar testimoni."
           },
           {
-            "id": "recruitment-branding",
-            "label": "Recruitment & Branding",
-            "description": "Giving candidates a narrated \"day in the life\" tour of the office and culture."
+            "id": "branding rekrutmen",
+            "label": "Rekrutmen & Branding",
+            "description": "Bayangkan Anda mengunggah foto kantor dan sorotan budaya perusahaan, lengkap dengan rekaman suara serta avatar perekrut Anda. Kemudian, Anda dapat langsung menyajikan tur keseharian di kantor yang dipandu oleh narasi tersebut kepada para kandidat—dalam lebih dari 70 bahasa untuk kebutuhan perekrutan global."
           },
           {
-            "id": "conference-event-promos",
-            "label": "Conference & Event Promos",
-            "description": "Automated \"Speaker Bio\" videos and \"What to Expect\" guides for large-scale events."
+            "id": "Promosi konferensi dan acara",
+            "label": "Promo Konferensi & Acara",
+            "description": "Bayangkan Anda mengunggah biodata pembicara, detail sesi, dan foto lokasi acara, lalu menggabungkannya dengan rekaman suara pembawa acara. Kemudian, sistem secara instan menghasilkan materi pengenalan pembicara serta panduan mengenai apa yang dapat diharapkan peserta—yang diperbarui secara otomatis setiap kali ada perubahan agenda."
           }
         ]
       },
       {
-        "id": "public",
-        "title": "Public Sector & Advocacy",
+        "id": "publik",
+        "title": "Sektor Publik & Advokasi",
         "examples": [
           {
-            "id": "ngo-impact-reports",
-            "label": "NGO Impact Reports",
-            "description": "Turning data and field photography into emotive, narrated videos for donors."
+            "id": "Laporan Dampak LSM",
+            "label": "Laporan Dampak LSM",
+            "description": "Bayangkan Anda mengunggah foto lapangan dan data dampak, lalu memadukannya dengan rekaman suara narator organisasi Anda. Seketika itu juga, laporan donor berubah menjadi video bernarasi yang menggugah perasaan—sebuah penyampaian yang mencerminkan misi Anda, bukan sekadar tayangan slide."
           },
           {
-            "id": "public-health-announcements",
-            "label": "Public Health Announcements",
-            "description": "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity."
+            "id": "pengumuman kesehatan masyarakat",
+            "label": "Pengumuman Kesehatan Masyarakat",
+            "description": "Bayangkan Anda mengunggah pesan kesehatan yang telah disetujui menggunakan suara tepercaya milik departemen Anda yang telah tersimpan. Kemudian, pesan tersebut menjangkau setiap komunitas secara instan dalam lebih dari 70 bahasa—dengan tingkat kejelasan dan urgensi yang sama, serta tanpa jeda waktu penerjemahan."
           },
           {
-            "id": "legal-insurance-explainers",
-            "label": "Legal & Insurance Explainers",
-            "description": "Helping clients understand complex contracts or claim processes through narrated visual breakdowns."
+            "id": "Penjelasan mengenai asuransi hukum",
+            "label": "Penjelasan Hukum & Asuransi",
+            "description": "Bayangkan Anda mengunggah ringkasan kontrak dan diagram alur proses yang disertai rekaman suara penasihat Anda. Kemudian, sistem secara instan menghasilkan penjelasan visual yang benar-benar dipahami oleh klien—sebelum mereka menandatangani dokumen atau mengajukan klaim."
           },
           {
-            "id": "religious-spiritual-teachings",
-            "label": "Religious & Spiritual Teachings",
-            "description": "Converting sermons or texts into a consistent, narrated daily video series for global congregations."
+            "id": "ajaran keagamaan dan spiritual",
+            "label": "Ajaran Keagamaan dan Spiritual",
+            "description": "Bayangkan mengunggah catatan khotbah atau teks suci yang dilengkapi dengan rekaman suara dan kehadiran pengajar Anda. Lalu, secara instan menerbitkan seri video harian yang konsisten bagi jemaat di seluruh dunia — dalam lebih dari 70 bahasa."
           }
         ]
       }
     ]
   },
   "institutionalRoi": {
-    "badge": "For in-house teams & institutions",
-    "title": "Replace vendor shoots with predictable in-house production",
-    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
+    "badge": "Untuk tim internal & institusi",
+    "title": "Gantikan sesi pemotretan oleh vendor dengan produksi internal yang hasilnya dapat diprediksi.",
+    "subtitle": "Tim komunikasi, L&D, dan pemasaran yang beranggotakan 1–5 orang dapat merilis video dalam minggu yang sama tanpa perlu kontrak *retainer* dengan agensi ataupun siklus penyuntingan yang berkepanjangan.",
     "comparisons": [
       {
-        "label": "Traditional vendor shoot + edit",
-        "cost": "$5,000–$15,000",
-        "timeline": "4–8 weeks"
+        "label": "Pemotretan & penyuntingan vendor tradisional",
+        "cost": "$5.000–$15.000",
+        "timeline": "4–8 minggu"
       },
       {
-        "label": "SceneFlow in-house workflow",
-        "cost": "$50–$500 in credits",
-        "timeline": "Same week"
+        "label": "SceneFlow alur kerja internal",
+        "cost": "Kredit senilai $50–$500",
+        "timeline": "Minggu yang sama"
       }
     ],
     "bullets": [
-      "Brand-safe templates and approval before final render",
-      "Budget caps with visible credit spend per project",
-      "No crew days, no edit back-and-forth on every revision"
+      "Templat yang aman bagi merek dan persetujuan sebelum rendering akhir",
+      "Batasan anggaran dengan visibilitas penggunaan kredit per proyek",
+      "Tidak perlu hari kerja kru, tidak perlu proses revisi yang bolak-balik"
     ],
-    "ctaPrimary": "Book a team walkthrough",
-    "ctaSecondary": "See pricing",
-    "typicalCost": "Typical cost",
-    "timeline": "Timeline"
+    "ctaPrimary": "Jadwalkan sesi panduan untuk tim",
+    "ctaSecondary": "Lihat harga",
+    "typicalCost": "Biaya umum",
+    "timeline": "Linimasa"
   },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Studio feature deep dive",
-    "close": "Close",
-    "viewDetails": "View Details",
+    "badge": "Tur dengan Pemandu",
+    "title": "Panduan Platform",
+    "subtitle": "Panduan lengkap untuk alur kerja SceneFlow AI Studio, mulai dari tinjauan kolaboratif hingga hasil akhir sinematik.",
+    "subheading": "Jelajahi platform ini — mulailah dengan hal-hal mendasar",
+    "chapterHint": "Empat hal yang perlu diketahui hari ini. Perluas bagian-bagiannya jika Anda ingin gambaran lengkapnya.",
+    "expandChapter": "Fitur acara",
+    "collapseChapter": "Sembunyikan fitur",
+    "underTheHoodLabel": "Di balik layar",
+    "chapters": [
+      {
+        "id": "barang-barang pokok",
+        "label": "Mulai dari sini — apa yang Anda dapatkan pada hari pertama"
+      },
+      {
+        "id": "kualitas",
+        "label": "Pastikan hal itu benar-benar sampai dan mengena di hati audiens Anda."
+      },
+      {
+        "id": "produksi",
+        "label": "Dari beat yang disetujui hingga master yang dirilis"
+      },
+      {
+        "id": "tingkat lanjut",
+        "label": "Untuk tim yang menginginkan penagihan dan tata kelola"
+      }
+    ],
+    "close": "Tutup",
+    "viewDetails": "Lihat Detail",
     "beatFirst": {
-      "id": 15,
-      "title": "Beat-First Video Pipeline",
-      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "title": "Alur Kerja Video Berbasis Ketukan",
+      "description": "Setujui poin-poin storyboard dan Beat Frames sebelum tahap F2V — mengurangi regenerasi tanpa arah akibat halusinasi dan pergeseran visual. Satu alur terstruktur mulai dari peninjauan hingga klip akhir.",
       "keyFeatures": [
-        "Express storyboard for review — share beats before heavy render",
-        "Beat Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "Express storyboard untuk ditinjau — bagikan beat sebelum proses render berat",
+        "Beat Frames komposisi kunci — Reference Library kontinuitas",
+        "F2V per ketukan — menghasilkan video dari frame yang telah disetujui",
+        "Penentuan waktu dan aliran mixer — ekspor ke assembly Final Cut"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
-      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+      "screenshotSlot": "Sisipkan tangkapan layar: Beat Frames dan persetujuan storyboard sebelum pembuatan video",
+      "videoSlot": "Sisipkan klip 00:30: Menyetujui beat, mengunci frame, lalu membuat klip F2V."
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "title": "Tinjauan dan Analisis Audiens",
+      "description": "Tautan berbagi privat (/s/) untuk pemangku kepentingan — mencakup penilaian manual, umpan balik terstruktur, dan analitik keterlibatan opsional (dengan persetujuan penonton). Digunakan pada Premiere sebelum publikasi dan untuk pratinjau storyboard produksi.",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "Sesi tinjauan privat — tautan berbagi yang aman bagi pemangku kepentingan",
+        "Umpan balik audiens yang terstruktur — penilaian dan poin terbuka",
+        "Analitik keterlibatan opsional — dengan persetujuan penonton sebelum pengambilan data",
+        "Lakukan iterasi berdasarkan data nyata — sempurnakan Blueprint dan skrip berdasarkan masukan peninjau."
       ],
-      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotSlot": "Sisipkan tangkapan layar: Panel analitik dan umpan balik peninjau Screening Room",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      "videoSlot": "Sisipkan klip berdurasi 00:30: Mengadakan sesi tinjauan dan mengumpulkan data keterlibatan"
+    },
+    "ui": {
+      "screenshot": "Tangkapan layar",
+      "video": "Video",
+      "featureVideo": "Video Unggulan",
+      "keyFeatures": "Fitur utama",
+      "openScreenshot": "Buka tangkapan layar",
+      "openFeatureVideo": "Buka video fitur",
+      "expandImage": "Perbesar Gambar",
+      "closePreview": "Tutup Pratinjau"
+    },
+    "items": [
+      {
+        "id": "1",
+        "title": "UX Intuitif + Kendali Penuh bagi Kreator",
+        "description": "Mulailah dengan cepat menggunakan otomatisasi terpandu, lalu edit setiap hasil yang dibuat agar tim tetap memegang kendali kreatif tanpa mengorbankan kecepatan.",
+        "keyFeatures": [
+          "Alur kerja Studio terpandu — dari konsep hingga ekspor dalam satu tempat",
+          "Sunting setiap *beat*, karakter, dan baris yang dihasilkan AI secara langsung di tempatnya.",
+          "Variasi treatment — perbandingan berdampingan untuk arahan kreatif",
+          "Blueprint Berkolaborasi — bagikan tautan, audio bagian, dan masukan terstruktur dari peninjau"
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: editor Blueprint dengan bagian-bagian hasil pembuatan yang dapat disunting",
+        "videoSlot": "Sisipkan klip berdurasi 00:30: Alur UX dari konsep hingga hasil yang dapat diedit."
+      },
+      {
+        "id": "2",
+        "title": "Anggaran Kredit & Pengendalian Biaya",
+        "description": "Pantau penggunaan kredit secara real-time dan tetapkan batasan sebelum menjalankan proses pembuatan yang memakan biaya besar.",
+        "keyFeatures": [
+          "Penggunaan kredit secara real-time — berdasarkan proyek dan operasi",
+          "Guardrail produksi — sebelum proses generasi yang memakan biaya besar",
+          "Daftar tarif transparan — untuk TTS, video, dan intelijen",
+          "Transparansi anggaran — untuk tim dan kreator solo"
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: panel penggunaan kredit dan pengaturan BYOK",
+        "videoSlot": "Sisipkan klip 00:30: dasbor anggaran dan konfigurasi utama",
+        "underTheHood": {
+          "title": "Di balik layar",
+          "body": "Bagi tim produksi yang telah memiliki kontrak cloud:",
+          "bullets": [
+            "Vertex AI BYOK — penagihan dan tata kelola perusahaan",
+            "Tombol pilihan penyedia pada kalkulator kredit",
+            "Daftar tarif platform yang transparan di samping kunci Anda"
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "title": "Konsep Apa Pun, Satu Alur Kerja Produksi",
+        "description": "Gunakan satu alur kerja yang andal untuk pelatihan, podcast, berita, video penjualan rumah, dan konten sinematik.",
+        "keyFeatures": [
+          "Satu alur kerja — podcast, berita, pelatihan, real estat, dan format sinematik",
+          "Templat proyek — Studio menyesuaikan diri dengan materi sumber Anda",
+          "Alur Blueprint → Naskah → Produksi yang sama — terlepas dari genre",
+          "Tanpa perlu berganti-ganti alat — mulai dari tahap gagasan hingga pengiriman"
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: Tampilan terbagi atau kisi yang memperlihatkan templat Podcast, Berita, Real Estat, dan Sinematik yang mengalir ke satu antarmuka alur kerja SceneFlow yang terpadu.",
+        "videoSlot": "Masukkan klip berdurasi 00:30: \"Mulailah dengan materi sumber apa pun...\" mengeklik New Project -> Podcast (antarmuka menyesuaikan dengan audio), lalu menampilkan layar terbagi yang memperlihatkan proyek Berita & Sinematik yang menyatu ke dalam editor Blueprint."
+      },
+      {
+        "id": "4",
+        "title": "Otomatisasi Cerdas dengan Kontrol Pengeditan Presisi",
+        "description": "Platform SceneFlow memanfaatkan kecerdasan untuk menghasilkan basis profesional secara otomatis (seri, cetak biru, naskah, panduan produksi, dan hasil penyuntingan), sekaligus menghadirkan dialog cerdas yang memberikan kendali penuh atas penyuntingan dengan batasan pengaman bawaan.",
+        "keyFeatures": [
+          "Dasar-dasar AI dalam satu langkah — seri, cetak biru, naskah, dan prompt produksi",
+          "Dialog penyuntingan cerdas — batasan pengaman, bukan penulisan ulang membabi buta",
+          "Terima, sempurnakan, atau tolak — setiap saran tetap berada dalam kendali Anda.",
+          "Melibatkan manusia dalam proses — pada setiap tahap produksi"
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: Dialog cerdas yang menampilkan pembuatan garis dasar beserta kontrol pengeditan.",
+        "videoSlot": "Sisipkan klip berdurasi 00:30: pembuatan draf awal oleh AI diikuti dengan pengguna melakukan penyuntingan presisi."
+      },
+      {
+        "id": "5",
+        "title": "Berbagi Reference Library demi kesinambungan",
+        "description": "Pertahankan konsistensi karakter, kostum, suara, lokasi, dan properti di berbagai adegan dan episode menggunakan referensi yang dapat digunakan kembali.",
+        "keyFeatures": [
+          "Profil yang dapat digunakan kembali — karakter, kostum, suara, lokasi, dan properti",
+          "Penerapan lintas skenario — referensi mengalir ke setiap generasi",
+          "Konsistensi visual — wajah dan nuansa yang sama pada hasil Imagen dan Veo",
+          "Kontinuitas berskala waralaba — dirancang untuk seri multi-episode"
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: Pustaka referensi yang memperlihatkan kontinuitas karakter dan properti.",
+        "videoSlot": "Sisipkan klip 00:30: Menerapkan referensi pada berbagai adegan"
+      },
+      {
+        "id": "6",
+        "title": "Mesin Pembangkit Ekspres",
+        "description": "Hasilkan gambar dan segmen video secara otomatis dan bersamaan. Express Storyboard memungkinkan Anda meninjau dan membagikan storyboard audiovisual dalam hitungan menit. Express Storyboard merender adegan Ken Burns secara utuh dalam hitungan menit, sementara Express Video menghasilkan adegan video akhir dalam hitungan menit, bukan berhari-hari.",
+        "keyFeatures": [
+          "Pembuatan serentak — gambar dan video di berbagai adegan secara bersamaan",
+          "Express Storyboard — pratinjau audiovisual yang dapat dibagikan dalam hitungan menit",
+          "Express Animatic — Efek gerakan Ken Burns pada gambar diam",
+          "Express Video — klip tingkat adegan dalam hitungan menit, bukan hari"
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: Dasbor pembuatan ekspres dengan Animatic dan progres video",
+        "videoSlot": "Sisipkan klip berdurasi 00:30: Proses pembuatan simultan yang mengubah naskah menjadi animatik, lalu menjadi video akhir."
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance Editor",
+        "description": "Tentukan audiens target Anda untuk mendapatkan penilaian, analisis, dan rekomendasi secara instan. Terapkan perbaikan sekali klik atau gunakan Guided Edits untuk mengoptimalkan Episode, Blueprint, dan Naskah Anda secara sempurna demi dampak maksimal.",
+        "keyFeatures": [
+          "Penilaian audiens target — beserta rincian kategori",
+          "Rekomendasi berdasarkan bagian — perbaiki bagian yang tepat dari cerita Anda",
+          "Perbaikan sekali klik dan Guided Edit — penulisan ulang yang presisi, bukan sekadar tebakan",
+          "Ambang batas siap produksi — ketahui kapan saatnya berinvestasi dalam rendering penuh"
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: Resonance Editor dengan penilaian audiens dan perbaikan sekali klik",
+        "videoSlot": "Sisipkan klip berdurasi 00:30: Menerapkan penyuntingan terpandu berdasarkan skor resonansi audiens"
+      },
+      {
+        "id": "8",
+        "title": "Terjemahan Adaptif (70+ Bahasa)",
+        "description": "Melakukan lokalisasi konten dalam skala besar sembari mempertahankan maksud naratif dan keselarasan linimasa untuk penyajian multibahasa.",
+        "keyFeatures": [
+          "Lebih dari 70 bahasa — narasi, dialog, dan materi teks dalam skala besar",
+          "Maksud naratif terjaga — makna dan penempatan waktu tetap selaras.",
+          "Trek audio multibahasa — pada linimasa adegan",
+          "Paket siap ekspor — per lokal untuk distribusi"
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: Linimasa multibahasa dan pengaturan terjemahan",
+        "videoSlot": "Sisipkan klip 00:30: Melokalisasi adegan secara instan ke dalam berbagai bahasa"
+      },
+      {
+        "id": "9",
+        "title": "Otomasi Seri",
+        "description": "Definisikan semesta Anda sekali saja dan hasilkan alur cerita lintas episode yang kohesif. Penggunaan Reference Library secara bersama menjaga karakter dan nuansa tetap selaras sepanjang musim.",
+        "keyFeatures": [
+          "Tentukan semesta Anda sekali saja — karakter, nuansa, dan alur cerita musim.",
+          "Kerangka episode yang padu — dibuat secara otomatis untuk keseluruhan musim",
+          "Pelacakan kesinambungan — penyelarasan musim yang terdiri dari banyak episode",
+          "Sinkronisasi seri-ke-episode — ke dalam Studio dan Produksi Blueprint"
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: Gambaran umum seri dengan alur cerita episode yang dibuat secara otomatis",
+        "videoSlot": "Masukkan klip berdurasi 30 detik: Konsep yang dikembangkan menjadi musim dengan banyak episode"
+      },
+      {
+        "id": "10",
+        "title": "Blueprint Otomatisasi",
+        "description": "Ubah konsep menjadi *treatment* terstruktur yang mencakup *logline*, *beat*, karakter, dan nada. Jalankan Audience Resonance dan lakukan kolaborasi sebelum memulai *rendering* berat.",
+        "keyFeatures": [
+          "Alur kerja: Membuat → Meninjau → Melakukan iterasi → Memulai produksi",
+          "Dari konsep hingga struktur dalam hitungan menit — logline, beat, karakter, dan nada",
+          "Audience Resonance penilaian dengan target 80+ sebelum tahap Produksi",
+          "Tautan berbagi dari kolaborator — sintesis masukan menjadi revisi terpandu"
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: Blueprint yang dibuat secara otomatis, memuat poin-poin cerita dan alur perkembangan karakter.",
+        "videoSlot": "Sisipkan klip 00:30: Mengubah konsep menjadi Blueprint yang terstruktur"
+      },
+      {
+        "id": "11",
+        "title": "Otomatisasi Produksi",
+        "description": "Tab Script dan Action memandu alur Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, dan stream MP4 — tanpa perlu berganti alat.",
+        "keyFeatures": [
+          "Foundation — naskah, pengisi suara, audio adegan, penguncian naskah",
+          "Express storyboard — arah dan bingkai dalam hitungan menit; galeri dan berbagi",
+          "Beat Frames dan Mixer — frame awal/akhir, Director Console, render stream MP4",
+          "Alur Produksi — tinjau hasil, render ulang *beat* yang kedaluwarsa, kirim ke Final Cut"
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: Dasbor produksi yang menampilkan naskah, Beat Frames, dan Mixer",
+        "videoSlot": "Sisipkan klip 00:30: Foundation, Express storyboard, Beat Frames, dan ekspor stream"
+      },
+      {
+        "id": "12",
+        "title": "Final Cut Perakitan",
+        "description": "Gabungkan stream Produksi yang telah rampung menjadi satu file master MP4. Pilih Animatic atau tentukan video dan bahasa untuk setiap adegan — tanpa penyuntingan linimasa; perubahan kreatif tetap dilakukan di Production Mixer.",
+        "keyFeatures": [
+          "Pemilihan stream per adegan — Animatic, Video, bahasa, versi",
+          "Preset perakitan — Semua Video, Hibrida, Campuran kustom",
+          "Tidak ada penyuntingan linimasa — perubahan kreatif tetap berada di Production Mixer",
+          "Ekspor master sekali klik — MP4 gabungan untuk Premiere"
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: Panel perakitan Final Cut dengan pemilih aliran (stream picker) per adegan",
+        "videoSlot": "Sisipkan klip 00:30: Memilih stream, mempratinjau susunan, dan mengekspor master"
+      },
+      {
+        "id": "13",
+        "title": "Premiere Distribusi",
+        "description": "Tinjau master Anda beserta analitik audiens, lalu publikasikan ke YouTube dengan metadata yang dilokalisasi atau ekspor paket untuk Shorts, Reels, dan TikTok.",
+        "keyFeatures": [
+          "Dapat dibagikan Screening Room — tautan /s/ dengan penilaian dan analitik interaksi opsional (persetujuan penonton)",
+          "Dasbor wawasan — Tab Penilaian, Biometrik, dan Visual",
+          "Panduan YouTube — thumbnail, judul/deskripsi yang dilokalkan, SceneFlow CTA",
+          "Paket ekspor dan rencana klip format pendek vertikal"
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: Dasbor Premiere dengan wawasan dan wizard publikasi",
+        "videoSlot": "Sisipkan klip 00:30: Wawasan penyaringan, wizard YouTube, dan paket ekspor"
+      },
+      {
+        "id": "14",
+        "title": "Tinjauan dan Analisis Audiens",
+        "description": "Tautan berbagi privat (/s/) untuk pemangku kepentingan — mencakup penilaian manual, umpan balik terstruktur, dan analitik keterlibatan opsional (dengan persetujuan penonton). Digunakan pada Premiere sebelum publikasi dan untuk pratinjau storyboard produksi.",
+        "keyFeatures": [
+          "Sesi tinjauan privat — tautan berbagi yang aman bagi pemangku kepentingan",
+          "Umpan balik audiens yang terstruktur — penilaian dan poin terbuka",
+          "Analitik keterlibatan opsional — dengan persetujuan penonton sebelum pengambilan data",
+          "Lakukan iterasi berdasarkan data nyata — sempurnakan Blueprint dan skrip berdasarkan masukan peninjau."
+        ],
+        "screenshotSlot": "Sisipkan tangkapan layar: Panel analitik dan umpan balik peninjau Screening Room",
+        "videoSlot": "Sisipkan klip berdurasi 00:30: Mengadakan sesi tinjauan dan mengumpulkan data keterlibatan"
+      }
+    ]
+  },
+  "engineeringTrust": {
+    "badge": "Teknik & Keamanan",
+    "title": "Dibuat untuk",
+    "titleAccent": "Beban Kerja Produksi",
+    "subtitle": "Arsitektur yang ramah bagi startup dengan komponen Google Cloud yang mendukung keamanan, skalabilitas, dan pengiriman ke produksi secara praktis.",
+    "pillars": [
+      {
+        "id": "arsitektur",
+        "title": "Arsitektur Perusahaan",
+        "description": "Dibangun di atas infrastruktur Google Cloud dengan orkestrasi yang dapat disesuaikan skalanya untuk beban kerja produksi dan tim yang terus berkembang.",
+        "highlights": [
+          "Vertex AI untuk alur kerja pembuatan",
+          "Sintesis Imagen 4 dan Veo 3.1",
+          "ElevenLabs Integrasi TTS",
+          "BYOK untuk pengendalian penagihan perusahaan"
+        ]
+      },
+      {
+        "id": "keamanan",
+        "title": "Keamanan & Privasi",
+        "description": "Aset kreatif tetap terlindungi melalui enkripsi data saat disimpan, kontrol akses, dan penanganan yang mengutamakan privasi.",
+        "highlights": [
+          "Kontrol cloud yang siap untuk skala perusahaan",
+          "Enkripsi AES-256",
+          "Dirancang dengan mempertimbangkan GDPR",
+          "Lihat Kebijakan Privasi kami untuk penanganan data"
+        ]
+      },
+      {
+        "id": "skala",
+        "title": "Skalabilitas & Keandalan",
+        "description": "Pengiriman cloud global mendukung pipeline rendering dan peninjauan yang andal seiring dengan meningkatnya volume pekerjaan Anda.",
+        "highlights": [
+          "Penyebaran multi-wilayah",
+          "Pengiriman yang dipercepat oleh CDN",
+          "Failover otomatis",
+          "Pemantauan waktu nyata"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "value": "Global",
+        "label": "Pengiriman berbasis cloud"
+      },
+      {
+        "value": "Gambar 4",
+        "label": "Pembuatan gambar"
+      },
+      {
+        "value": "256-bit",
+        "label": "Enkripsi"
+      },
+      {
+        "value": "24 jam sehari, 7 hari seminggu",
+        "label": "Pemantauan"
+      }
+    ],
+    "vertexSection": {
+      "title": "Mengapa Google Vertex AI?",
+      "subtitle": "Parit teknis yang krusial",
+      "cards": [
+        {
+          "title": "Privasi Data",
+          "description": "Naskah dan aset kreatif Anda tidak digunakan untuk melatih model bersama, sehingga membantu melindungi kekayaan intelektual serta hasil kerja klien Anda.",
+          "highlight": "tidak digunakan untuk melatih model bersama"
+        },
+        {
+          "title": "Dirancang untuk throughput yang andal",
+          "description": "Infrastruktur yang berorientasi pada produksi membantu menjaga stabilitas alur kerja pembuatan selama siklus permintaan tinggi."
+        },
+        {
+          "title": "Konsistensi yang Memperhatikan Referensi",
+          "description": "SceneFlow menggunakan pembuatan berbasis referensi untuk meningkatkan konsistensi karakter, lokasi, dan properti dari satu adegan ke adegan lainnya."
+        }
+      ]
+    },
+    "partnership": {
+      "poweredBy": "Didukung oleh Google Cloud dengan Vertex AI, Penyimpanan Cloud, dan perangkat penerjemahan",
+      "footnote": "SceneFlow AI berjalan pada infrastruktur Google Cloud yang dapat disesuaikan skalanya, yang dirancang untuk mendukung pertumbuhan startup serta memenuhi ekspektasi perusahaan berskala besar."
+    },
+    "attribution": "— Tim Teknik SceneFlow"
+  },
+  "coreCapabilities": {
+    "audienceResonance": {
+      "badge": "Lapisan Kecerdasan",
+      "title": "Audience Resonance Editor",
+      "description": "Ketahui skor Anda sebelum melakukan rendering penuh. Targetkan skor Audience Resonance dan Blueprint serta naskah dengan perbaikan yang dapat ditindaklanjuti — optimalkan setiap bagian sebelum tahap Express dan pembuatan video.",
+      "bullets": [
+        "Tentukan target audiens spesifik Anda",
+        "Dapatkan skor, analisis, dan rekomendasi secara real-time",
+        "Perbaikan sekali klik untuk mengatasi kelemahan naratif",
+        "Pengeditan Terpandu untuk mengoptimalkan Episode, Blueprint, dan Naskah"
+      ],
+      "cta": "Analisis naskah Anda",
+      "howWeScore": {
+        "toggle": "Cara kami memberikan penilaian",
+        "title": "Cara kerja Audience Resonance",
+        "description": "Audience Resonance menggabungkan analisis struktur naratif (kejelasan, tempo, alur emosional) dengan kesesuaian persona target terhadap audiens yang Anda tentukan di Blueprint — bukan sekadar metrik semu (*vanity metrics*) atau data retensi pasca-publikasi. Rekomendasi dikaitkan dengan bagian naskah tertentu sehingga Anda dapat memperbaiki masalah sebelum tahap Express atau pembuatan video.",
+        "bullets": [
+          "Menilai Blueprint dan naskah berdasarkan target audiens yang telah Anda tentukan.",
+          "Rekomendasi tingkat bagian — bukan sekadar angka \"percaya saja pada kami\" yang bersifat *black-box*",
+          "Perbaikan sekali klik yang praktis dan penyuntingan terpandu — bukan sekadar penilaian",
+          "Jalankan sebelum menghabiskan sumber daya untuk rendering berat, bukan setelah publikasi."
+        ]
+      }
+    },
+    "express": {
+      "badge": "Produksi Berkecepatan Tinggi",
+      "title": "Sceneflow Express",
+      "description": "Hasilkan storyboard, animatic, dan beat video secara otomatis dan bersamaan. Beralih dari naskah ke pratinjau yang siap dibagikan hanya dalam hitungan menit — lalu berikan persetujuan Beat Frames sebelum melakukan pengeluaran akhir untuk F2V.",
+      "items": [
+        {
+          "title": "Storyboard Ekspres",
+          "desc": "Tinjau dan bagikan storyboard audio dan video dalam hitungan menit, bukan jam.",
+          "time": "Menit vs. Jam"
+        },
+        {
+          "title": "Nyatakan Animatic",
+          "desc": "Render adegan animatik bergaya Ken Burns secara instan, lengkap dengan sulih suara berkualitas tinggi.",
+          "time": "Menit vs. Jam"
+        },
+        {
+          "title": "Video Ekspres",
+          "desc": "Mengorkestrasi pembuatan gambar dan video secara bersamaan untuk penyajian adegan secara menyeluruh.",
+          "time": "Menit vs. Hari"
+        }
+      ],
+      "cta": "Mulai Rendering Ekspres"
+    }
+  },
+  "exitIntent": {
+    "title": "Tunggu! Jangan pergi dengan tangan hampa.",
+    "subtitle": "Dapatkan akses awal eksklusif dan tips untuk pembuatan film berbasis AI.",
+    "benefits": [
+      "Tutorial pembuatan film berbasis AI mingguan",
+      "Akses awal ke fitur-fitur baru",
+      "Diskon eksklusif untuk kreator"
+    ],
+    "emailPlaceholder": "Masukkan email Anda",
+    "subscribe": "Dapatkan Akses Awal",
+    "subscribing": "Sedang berlangganan...",
+    "or": "atau",
+    "startNow": "Mulai berkreasi sekarang hanya dengan $9 →",
+    "privacy": "Tidak ada spam, sama sekali. Berhenti berlangganan kapan saja.",
+    "successTitle": "Anda sudah masuk daftar!",
+    "successSubtitle": "Periksa kotak masuk Anda untuk mendapatkan tips pembuatan film eksklusif dan informasi akses awal.",
+    "ctaText": "Mulai Menjelajah — $9",
+    "closePopup": "Tutup popup"
+  },
+  "pricing": {
+    "badge": "Penetapan Harga Berbasis Penggunaan",
+    "title": "Bayarlah untuk apa yang Anda ciptakan",
+    "subtitle": "Satu paket dasar untuk akses platform. Kredit untuk pembuatan konten AI. Isi ulang saat Anda membutuhkannya. Kendali penuh, tanpa pemborosan.",
+    "valueAnchor": {
+      "traditionalCost": "$2.000+",
+      "traditionalLabel": "Pra-visualisasi tradisional",
+      "vs": "vs",
+      "sceneFlowCost": "$49–149",
+      "sceneFlowLabel": "SceneFlow bulanan",
+      "saveBadge": "Hemat lebih dari 90% per proyek"
+    },
+    "teamCta": {
+      "title": "Tim internal atau institusi?",
+      "description": "Jadwalkan sesi peninjauan alur kerja untuk tim komunikasi, L&D, dan pemasaran.",
+      "button": "Panduan Buku"
+    },
+    "agencyCta": {
+      "title": "Agensi atau rumah produksi?",
+      "description": "Kredit khusus, SLA, dan dukungan khusus dalam skala besar",
+      "button": "Hubungi Tim Penjualan"
+    },
+    "byok": {
+      "title": "Bawa Kunci Anda Sendiri",
+      "badge": "Paket Pro & Studio",
+      "description": "Sudah memiliki kunci API untuk Vertex AI atau ElevenLabs? Gunakan kunci tersebut dengan SceneFlow AI dan hemat hingga 80% untuk kredit platform.",
+      "savingsHighlight": "80% dalam bentuk kredit platform",
+      "benefits": [
+        {
+          "title": "Penghematan Kredit 80% SceneFlow",
+          "description": "Hanya bayar biaya platform sebesar 20% untuk orkestrasi & perangkat"
+        },
+        {
+          "title": "Manfaatkan Rencana Perusahaan",
+          "description": "Gunakan diskon volume Vertex AI atau ElevenLabs Anda yang sudah ada"
+        },
+        {
+          "title": "Kendali Penuh",
+          "description": "Kunci Anda, penagihan Anda, manajemen biaya Anda"
+        }
+      ],
+      "supportedProviders": "Penyedia yang Didukung",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "Text-to-Speech & Kloning Suara",
+      "savingsLabel": "Penghematan 80%",
+      "onImagesVideo": "pada gambar & video",
+      "onVoiceover": "dalam sulih suara",
+      "note": "Penghematan kredit yang ditampilkan merupakan penghematan pada platform SceneFlow. Total biaya aktual Anda bergantung pada harga API pribadi atau perusahaan Anda dengan masing-masing penyedia."
+    },
+    "creditTopUps": {
+      "title": "Butuh kredit tambahan?",
+      "subtitle": "Isi ulang kapan saja. Kredit tidak pernah kedaluwarsa.",
+      "packs": [
+        {
+          "label": "Paket Pemula",
+          "description": "Sempurna untuk revisi cepat"
+        },
+        {
+          "label": "Paket Adegan",
+          "description": "Menyelesaikan proyek singkat"
+        },
+        {
+          "label": "Paket Produksi",
+          "description": "Sekuens film utama"
+        },
+        {
+          "label": "Paket Studio",
+          "description": "Kapasitas produksi penuh"
+        }
+      ],
+      "creditsUnit": "kredit"
+    },
+    "calculator": {
+      "sectionTitle": "Perkirakan Biaya Proyek Anda",
+      "sectionSubtitle": "Ketahui dengan pasti berapa biaya yang harus Anda bayar sebelum berkomitmen.",
+      "title": "Kalkulator Anggaran Proyek",
+      "subtitle": "Perkirakan kredit sebelum Anda memulai",
+      "customize": "Sesuaikan parameter",
+      "imagesLabel": "Gambar yang akan dihasilkan",
+      "videoClipsLabel": "Klip video",
+      "voiceoverLabel": "Sulih suara (menit)",
+      "byokTitle": "Bawa Kunci Anda Sendiri (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Gunakan kunci API Anda sendiri untuk menghemat hingga 80% pada kredit SceneFlow. Anda membayar penyedia AI secara langsung sesuai tarif mereka.",
+      "vertexToggle": "Vertex AI (Gambar & Video)",
+      "elevenLabsToggle": "ElevenLabs (Narasi)",
+      "imageGeneration": "Pembuatan Gambar",
+      "videoGeneration": "Pembuatan Video",
+      "voiceover": "Sulih suara",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "Total Estimasi",
+      "withTopUps": "dengan isi ulang",
+      "creditSavings": "SceneFlow tabungan kredit",
+      "savePercent": "Anda menghemat {percent}% untuk kredit SceneFlow",
+      "transparency": "Transparansi penuh: Anda dapat melihat penggunaan kredit secara real-time saat bekerja. Tanpa kejutan—sesuaikan lingkup proyek Anda kapan saja.",
+      "transparencyHighlight": "Transparansi penuh:",
+      "byokDisclaimer": "BYOK Catatan: Penghematan kredit yang ditampilkan hanya mencerminkan pengurangan kredit platform SceneFlow. Biaya aktual Anda bergantung pada paket harga Vertex AI dan ElevenLabs Anda. Paket korporat atau paket API dengan volume tinggi mungkin menawarkan penghematan tambahan.",
+      "byokDisclaimerHighlight": "BYOK Catatan:",
+      "presets": [
+        {
+          "id": "komersial",
+          "name": "Iklan 30 detik"
+        },
+        {
+          "id": "pendek",
+          "name": "Film pendek berdurasi 2 menit"
+        },
+        {
+          "id": "episode",
+          "name": "Episode berdurasi 10 menit"
+        },
+        {
+          "id": "fitur",
+          "name": "Film berdurasi 90 menit"
+        }
+      ],
+      "minSuffix": "min"
+    },
+    "tierGrid": {
+      "productionTestFlight": "Penerbangan Uji Produksi",
+      "getStarted": "Mulai",
+      "startTestFlight": "Mulai Test Flight",
+      "loading": "Memuat...",
+      "mostPopular": "Paling Populer",
+      "creditsPerMonth": "Kredit/bulan",
+      "storage": "Penyimpanan",
+      "perMonth": "/bulan"
+    },
+    "trust": {
+      "cancelAnytime": "Batalkan kapan saja",
+      "moneyBack": "Jaminan uang kembali 14 hari",
+      "creditsNeverExpire": "Kredit tidak memiliki masa kedaluwarsa (paket Explorer)"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "description": "Pembelian satu kali untuk mencobanya",
+        "features": [
+          "Pembelian satu kali",
+          "750 kredit (tidak pernah kedaluwarsa)",
+          "Penyimpanan 5 GB (30 hari)",
+          "Akses penuh ke platform",
+          "Ekspor MP4 (resolusi apa pun)",
+          "Sulih suara AI (lebih dari 70 bahasa)"
+        ]
+      },
+      "subscriptions": [
+        {
+          "id": "hidangan pembuka",
+          "name": "Hidangan Pembuka",
+          "description": "Untuk kreator individu",
+          "features": [
+            "Akses penuh ke platform",
+            "Termasuk 4.500 kredit/bulan",
+            "Penyimpanan aktif 25 GB",
+            "Ekspor MP4 (resolusi apa pun)",
+            "Sulih suara AI (lebih dari 70 bahasa)",
+            "Dukungan email"
+          ]
+        },
+        {
+          "id": "pro",
+          "name": "Pro",
+          "description": "Untuk kreator profesional",
+          "features": [
+            "Semua yang ada di Starter, ditambah:",
+            "Termasuk 15.000 kredit/bulan",
+            "Penyimpanan aktif 100 GB",
+            "Akses kualitas Veo 3.1 (4K)",
+            "Mesin Konsistensi Karakter",
+            "Kloning suara",
+            "BYOK (Gunakan Kunci Anda Sendiri)",
+            "3 kursi tim",
+            "Dukungan prioritas"
+          ]
+        },
+        {
+          "id": "studio",
+          "name": "Studio",
+          "description": "Untuk tim & agensi",
+          "features": [
+            "Semua yang ada di Pro, ditambah:",
+            "Termasuk 75.000 kredit/bulan",
+            "Penyimpanan aktif 500 GB",
+            "Antrean Prioritas Veo 3.1 4K",
+            "Konsistensi Karakter Tanpa Batas",
+            "Ekspor produk white-label",
+            "Akses API",
+            "10 kursi tim",
+            "Manajer akun khusus",
+            "SLA tingkat perusahaan tersedia berdasarkan permintaan."
+          ]
+        }
+      ]
     }
   },
   "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
+    "badge": "Ada pertanyaan?",
+    "title": "Pertanyaan yang Sering Diajukan",
+    "subtitle": "Segala hal yang perlu Anda ketahui tentang SceneFlow AI",
     "items": [
       {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+        "question": "Bagaimana alur kerja SceneFlow berjalan, mulai dari tahap gagasan hingga video yang siap dipublikasikan?",
+        "answer": "SceneFlow menggunakan alur kerja terstruktur: Seri (opsional) → Blueprint → Produksi → Final Cut → Premiere. Blueprint menentukan struktur cerita dan target audiens bersama Audience Resonance. Tahap produksi menghasilkan naskah, storyboard, beat video, dan stream adegan yang telah dirender. Final Cut menggabungkan stream terpilih menjadi satu file master MP4 — bukan editor berbasis timeline. Premiere menangani pemutaran, wawasan analitik, publikasi YouTube, dan paket ekspor."
       },
       {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+        "question": "Apa perbedaan antara SceneFlow dan Gemini Studio atau Google Flow?",
+        "answer": "Gemini Studio dan Google Flow berfokus pada pembuatan klip berbasis *prompt*. SceneFlow mengintegrasikan alur kerja produksi secara menyeluruh: tahapan terstruktur dengan *baseline* yang dapat disesuaikan, Reference Library dan Beat Frames untuk menjaga konsistensi, Audience Resonance sebelum proses *rendering* yang memakan banyak sumber daya, Mixer otomatis serta perakitan *stream*, dan validasi Screening Room sebelum publikasi — semuanya dalam satu studio terpandu."
       },
       {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+        "question": "Bisakah saya mengedit naskah, visual, dan audio yang dihasilkan oleh AI?",
+        "answer": "Ya. Semua hasil yang dibuat tetap dapat disunting. Anda dapat menulis ulang naskah, menyesuaikan arahan adegan, membuat ulang bagian tertentu, menyempurnakan *voiceover*, serta mengatur ulang durasi di dalam Production Mixer. Final Cut hanya menggabungkan aliran yang sudah rampung — perubahan kreatif dilakukan pada tahap sebelumnya, yaitu Produksi."
       },
       {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+        "question": "Bagaimana cara kerja Target Audience Resonance saat ini?",
+        "answer": "Audience Resonance menggabungkan analisis struktur naratif (kejelasan, tempo, alur emosional) dengan kesesuaian persona target terhadap audiens yang Anda tentukan di Blueprint—bukan data retensi pasca-publikasi. Anda mendapatkan rekomendasi tingkat bagian serta perbaikan sekali klik pada tahap Seri, Blueprint, dan peninjauan naskah sebelum proses rendering berat dilakukan."
       },
       {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
+        "question": "Bisakah saya membuat video listing atau pemasaran dalam berbagai bahasa?",
+        "answer": "Ya. Anda dapat membuat dan melokalisasi video dalam lebih dari 70 bahasa dengan alur kerja pengaturan waktu yang selaras. Tim biasanya membuat satu versi utama (*master cut*), lalu memproduksi varian bahasa untuk pembeli global, pelanggan, atau audiens regional."
       },
       {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "question": "Apa yang dilakukan Premiere jika Screening Room merupakan tahap peninjauan?",
+        "answer": "Screening Room adalah antarmuka peninjauan di dalam Premiere — serta sarana pratinjau storyboard produksi. Bagikan tautan /s/, kumpulkan masukan dari pemangku kepentingan dan analitik keterlibatan opsional (dengan persetujuan penonton), tinjau wawasan Skor dan Visual, lalu publikasikan melalui wizard YouTube atau ekspor paket."
       },
       {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
+        "question": "Apakah saya memerlukan pengalaman teknis atau penyuntingan?",
+        "answer": "Tidak. SceneFlow dirancang untuk kreator dan tim non-teknis. Anda memulai dengan input terpandu dan basis AI yang dapat disesuaikan pada setiap tahap—bukan rekayasa *prompt* yang rumit ataupun rangkaian berbagai *tools*."
       },
       {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
+        "question": "Bagaimana cara kerja Paket Explorer?",
+        "answer": "Dengan harga $9, Anda mendapatkan 750 kredit untuk menguji alur kerja secara menyeluruh melalui pembelian satu kali. Opsi ini dirancang sebagai uji coba praktis agar Anda dapat menjalankan tugas nyata—mulai dari konsep hingga video—sebelum memutuskan untuk memilih paket bulanan."
       },
       {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
+        "question": "Bagaimana kredit dan BYOK ditangani?",
+        "answer": "Kredit dilacak di dalam platform sehingga tim dapat mengelola anggaran berdasarkan tahapan alur kerja. Paket Pro dan Studio juga mendukung *Bring Your Own Key* (BYOK) untuk penyedia layanan yang didukung, memberikan kontrol biaya tambahan bagi organisasi yang telah memiliki kontrak dengan penyedia layanan tersebut."
       },
       {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+        "question": "Apa yang secara realistis dapat saya buat dengan SceneFlow?",
+        "answer": "Tim menggunakan SceneFlow untuk tur properti, konten edukasi, siniar dengan penceritaan visual, konten penjelasan berita, kampanye merek, dan seri episodik sinematik. Alur kerja yang sama mendukung produksi format pendek maupun panjang."
       }
     ]
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
-    "cta": "Launch Your Studio for $9"
+    "title": "Siap menguji pipeline secara menyeluruh?",
+    "subtitle": "Jalankan proses mulai dari konsep → storyboard → video → hingga master MP4 dalam satu studio. Mulailah dengan paket $9 Explorer dan saksikan langsung alur kerja yang mengutamakan *beat*.",
+    "cta": "Luncurkan studio Anda seharga $9"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
-    "product": "Product",
-    "resources": "Resources",
-    "legal": "Legal",
+    "description": "Produksi video otomatis menyeluruh — mulai dari konsep hingga master siap tayang. Satu studio dengan panduan: Blueprint → Produksi → Final Cut → Premiere.",
+    "product": "Produk",
+    "resources": "Sumber Daya",
+    "legal": "Hukum",
     "links": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "howItWorks": "How It Works",
-      "faq": "FAQ",
-      "gettingStarted": "Getting Started",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "trustSafety": "Trust & Safety",
-      "refunds": "Refund Policy",
-      "contact": "Contact Us"
+      "features": "Fitur",
+      "pricing": "Harga",
+      "howItWorks": "Cara Kerjanya",
+      "faq": "Pertanyaan Umum",
+      "gettingStarted": "Memulai",
+      "privacy": "Kebijakan Privasi",
+      "terms": "Ketentuan Layanan",
+      "trustSafety": "Kepercayaan & Keamanan",
+      "refunds": "Kebijakan Pengembalian Dana",
+      "contact": "Hubungi Kami"
     },
-    "tagline": "Made with ❤️ for creators",
-    "taglineSub": "From Idea to Published Video",
-    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
-    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "tagline": "Dibuat dengan ❤️ untuk para kreator",
+    "taglineSub": "Dari Ide hingga Video yang Dipublikasikan",
+    "securePayments": "Pembayaran aman diproses oleh Whop, Merchant of Record kami.",
+    "morLine": "Pembayaran yang aman, penghitungan pajak, dan kepatuhan ditangani oleh Whop, Merchant of Record kami, atas nama Life Focus, LLC.",
+    "copyright": "© 2026 SceneFlow AI. Hak cipta dilindungi undang-undang.",
+    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Kontak: brian@sfai.studio",
+    "poweredBy": "Didukung oleh Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "See Pricing",
-    "tryNine": "Try $9",
-    "tryForNine": "Try for $9",
-    "dismiss": "Dismiss"
+    "seePricing": "Lihat Harga",
+    "tryNine": "Coba seharga $9",
+    "tryForNine": "Coba seharga $9",
+    "dismiss": "Tutup"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
-    "pause": "Pause",
-    "play": "Play",
-    "mute": "Mute",
-    "unmute": "Unmute"
+    "pause": "Jeda",
+    "play": "Mainkan",
+    "mute": "Bisukan",
+    "unmute": "Nyalakan suara",
+    "expandVideo": "Perbesar Video"
   }
 }

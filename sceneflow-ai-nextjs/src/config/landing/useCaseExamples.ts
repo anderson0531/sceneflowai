@@ -11,9 +11,18 @@ export type UseCaseCategory = {
   id: UseCaseCategoryId
   title: string
   examples: UseCaseExample[]
+  qualifyingStatement?: string
 }
 
 const BLOB_DEMO = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
+
+/** Option C — universal qualifying statement for all use cases */
+export const USE_CASES_QUALIFYING_STATEMENT =
+  'SceneFlow turns your source photos, uploads, and descriptions into narrated walkthrough videos — with optional voice and character presence you control. These are AI-altered presentations: realistic visualizations grounded in your materials, not live camera recordings. Review and approve every storyboard before publish; label outputs clearly so audiences know what they\'re watching.'
+
+/** Option B — Property category reinforcement */
+export const PROPERTY_CATEGORY_QUALIFYING_STATEMENT =
+  'Built from your real property photos — presented as a narrated AI-altered walkthrough with your voice and avatar. A realistic preview of layout and features, not a substitute for an in-person showing. All tours are clearly labeled.'
 
 export const USE_CASE_CATEGORY_IDS: UseCaseCategoryId[] = [
   'property',
@@ -27,39 +36,41 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
   {
     id: 'property',
     title: 'Property, Spaces & Hospitality',
+    qualifyingStatement: PROPERTY_CATEGORY_QUALIFYING_STATEMENT,
     examples: [
       {
         id: 'residential-real-estate',
         label: 'Residential Real Estate',
         description:
-          "Automated listing tours featuring the agent's cloned voice and avatar identity.",
+          'Imagine uploading your property images with your saved character reference and voice. Then instantly generating a professional listing walkthrough with your image and voice — in over 70 languages.',
         videoSrc: '/demo/property-hospitality.mp4',
       },
       {
         id: 'commercial-real-estate',
         label: 'Commercial Real Estate',
         description:
-          'Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data.',
+          "Imagine uploading floor plans, renderings, and neighborhood data with your broker's saved voice and avatar. Then instantly producing investor pitch walkthroughs that bring every square foot to life — localized in 70+ languages.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/property/commercial-real-estate.mp4`,
       },
       {
         id: 'short-term-rentals',
         label: 'Short-Term Rentals',
         description:
-          'Automated "Digital Welcome Books" that walk guests through house features and local "best of" spots.',
+          "Imagine uploading house photos and amenity notes with your host's saved voice. Then instantly publishing digital welcome videos that greet every guest in their language — before they ever check in.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/property/short-term-rentals.mp4`,
       },
       {
         id: 'hospitality-tourism',
         label: 'Hospitality & Tourism',
-        description: 'Hotel virtual tours and narrated travel itineraries for agencies.',
+        description:
+          "Imagine uploading hotel photos and itinerary highlights with your brand's saved host voice and avatar. Then instantly shipping virtual tours and narrated travel guides in 70+ languages — no film crew per property.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/property/hospitality-tourism.mp4`,
       },
       {
         id: 'museum-gallery-guides',
         label: 'Museum & Gallery Guides',
         description:
-          'Multi-language audio-visual "tours" for exhibitions that can be updated JIT as exhibits change.',
+          'Imagine uploading exhibit photos and curator notes as displays change. Then instantly refreshing narrated gallery tours in 70+ languages — no reshoot when the exhibition rotates.',
         videoSrc: `${BLOB_DEMO}/demo/use-cases/property/museum-gallery-guides.mp4`,
       },
     ],
@@ -72,42 +83,42 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         id: 'k12-higher-ed',
         label: 'K-12 & Higher Ed',
         description:
-          '30-minute curriculum modules that can be instantly localized for ESL students or global campuses.',
+          "Imagine uploading lesson materials with your instructor's saved voice and character reference. Then instantly generating full curriculum modules your ESL and global campus students can watch in 70+ languages.",
         videoSrc: `${BLOB_DEMO}/Living%20Wall%204.mp4`,
       },
       {
         id: 'corporate-ld',
         label: 'Corporate L&D',
         description:
-          'Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices.',
+          "Imagine uploading compliance scripts with your trainer's saved voice and avatar. Then instantly rolling out consistent onboarding and safety training across every office — localized in 70+ languages.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/knowledge/corporate-ld.mp4`,
       },
       {
         id: 'software-saas-tutorials',
         label: 'Software SaaS Tutorials',
         description:
-          'Automated "walk-throughs" using UI screenshots as reference images for F2V motion.',
+          "Imagine uploading UI screenshots as reference frames with your product expert's saved voice. Then instantly generating walkthrough videos that animate every click — updated the day your UI ships.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/knowledge/software-saas-tutorials.mp4`,
       },
       {
         id: 'niche-skill-tutoring',
         label: 'Niche Skill Tutoring',
         description:
-          'Professional "How-To" series for cooking, DIY, or technical certifications.',
+          "Imagine uploading step photos with your instructor's saved voice and character reference. Then instantly publishing professional how-to series — cooking, DIY, or certification prep — in 70+ languages.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/knowledge/niche-skill-tutoring.mp4`,
       },
       {
         id: 'medical-patient-education',
         label: 'Medical/Patient Education',
         description:
-          'Narrated explanations of surgical procedures or medication management for hospitals and clinics.',
+          "Imagine uploading procedure diagrams with your clinician's approved saved voice. Then instantly generating clear patient education videos families can understand in 70+ languages.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/knowledge/medical-patient-education.mp4`,
       },
       {
         id: 'video-memoirs',
         label: 'Video Memoirs',
         description:
-          'Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render.',
+          'Imagine uploading family photos, interview audio, and scene notes with a saved narrator voice. Then instantly shaping chapter-based memoir videos — approve the storyboard before final render.',
         videoSrc: `${BLOB_DEMO}/KITCHEN.mp4`,
       },
     ],
@@ -120,35 +131,35 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         id: 'hyper-local-news',
         label: 'Hyper-Local News',
         description:
-          'Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive.',
+          "Imagine uploading today's photos and bulletins with your anchor's saved voice. Then instantly publishing a daily neighborhood news brief — no film crew, no missed deadline.",
         videoSrc: `${BLOB_DEMO}/demo/signal.mp4`,
       },
       {
         id: 'financial-market-recaps',
         label: 'Financial & Market Recaps',
         description:
-          'Turning daily stock market or crypto data into 3-minute narrated visual digests.',
+          "Imagine uploading market data and chart snapshots each morning with your analyst's saved voice. Then instantly turning them into a narrated visual digest — ready before the opening bell.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/jit/financial-market-recaps.mp4`,
       },
       {
         id: 'sports-commentary',
         label: 'Sports Commentary',
         description:
-          'Automated "recap" videos using game stats and static photography turned into F2V action.',
+          "Imagine uploading game stats and still photography with your commentator's saved voice. Then instantly generating recap videos with animated action — published while fans are still talking.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/jit/sports-commentary.mp4`,
       },
       {
         id: 'true-crime-historical-docs',
         label: 'True Crime & Historical Docs',
         description:
-          'Using the Reference Library to keep historical figures consistent across a multi-part documentary series.',
+          'Imagine locking historical figures in your Reference Library once. Then instantly producing multi-part episodes where every face and voice stays consistent — series after series.',
         videoSrc: `${BLOB_DEMO}/demo/use-cases/jit/true-crime-historical-docs.mp4`,
       },
       {
         id: 'weather-emergency-alerts',
         label: 'Weather & Emergency Alerts',
         description:
-          'Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms.',
+          "Imagine uploading emergency bulletins with your agency's trusted saved voice. Then instantly broadcasting clear alerts in 70+ languages across social platforms — in minutes, not days.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/jit/weather-emergency-alerts.mp4`,
       },
     ],
@@ -161,28 +172,28 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         id: 'product-explainer-videos',
         label: 'Product Explainer Videos',
         description:
-          'Turning a static product catalog into a cinematic series of "Why You Need This" videos.',
+          "Imagine uploading product catalog shots with your brand's saved presenter voice and avatar. Then instantly generating a cinematic explainer series — approve the storyboard before you render.",
         videoSrc: `${BLOB_DEMO}/Demo.mp4`,
       },
       {
         id: 'case-study-testimonials',
         label: 'Case Study/Testimonials',
         description:
-          'Using client headshots and project photos to create high-end visual success stories.',
+          'Imagine uploading client headshots, project photos, and success metrics with a saved narrator voice. Then instantly producing polished visual case studies — without a testimonial shoot.',
         videoSrc: `${BLOB_DEMO}/demo/use-cases/b2b/case-study-testimonials.mp4`,
       },
       {
         id: 'recruitment-branding',
         label: 'Recruitment & Branding',
         description:
-          'Giving candidates a narrated "day in the life" tour of the office and culture.',
+          "Imagine uploading office photos and culture highlights with your recruiter's saved voice and avatar. Then instantly giving candidates a narrated day-in-the-life tour — in 70+ languages for global hiring.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/b2b/recruitment-branding.mp4`,
       },
       {
         id: 'conference-event-promos',
         label: 'Conference & Event Promos',
         description:
-          'Automated "Speaker Bio" videos and "What to Expect" guides for large-scale events.',
+          "Imagine uploading speaker bios, session details, and venue photos with your event host's saved voice. Then instantly generating speaker intros and what-to-expect guides — refreshed every time the agenda changes.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/b2b/conference-event-promos.mp4`,
       },
     ],
@@ -195,28 +206,28 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         id: 'ngo-impact-reports',
         label: 'NGO Impact Reports',
         description:
-          'Turning data and field photography into emotive, narrated videos for donors.',
+          "Imagine uploading field photography and impact data with your organization's saved narrator voice. Then instantly turning donor reports into emotive narrated videos — your mission's voice, not a slideshow.",
         videoSrc: `${BLOB_DEMO}/NGO.mp4`,
       },
       {
         id: 'public-health-announcements',
         label: 'Public Health Announcements',
         description:
-          'Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity.',
+          "Imagine uploading approved health messaging with your department's trusted saved voice. Then instantly reaching every community in 70+ languages — same clarity, same urgency, zero translation delay.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/public/public-health-announcements.mp4`,
       },
       {
         id: 'legal-insurance-explainers',
         label: 'Legal & Insurance Explainers',
         description:
-          'Helping clients understand complex contracts or claim processes through narrated visual breakdowns.',
+          "Imagine uploading contract summaries and process diagrams with your advisor's saved voice. Then instantly generating visual breakdowns clients actually understand — before they sign or file a claim.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/public/legal-insurance-explainers.mp4`,
       },
       {
         id: 'religious-spiritual-teachings',
         label: 'Religious & Spiritual Teachings',
         description:
-          'Converting sermons or texts into a consistent, narrated daily video series for global congregations.',
+          "Imagine uploading sermon notes or sacred texts with your teacher's saved voice and presence. Then instantly publishing a consistent daily video series for global congregations — in 70+ languages.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/public/religious-spiritual-teachings.mp4`,
       },
     ],

@@ -1,382 +1,602 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
-    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
+    "title": "SceneFlow AI - AI-drevet videoproduktion",
+    "description": "Forvandl dine idéer til professionelle videoer med AI-drevet workflow-automatisering"
   },
   "nav": {
-    "workflow": "The Workflow",
-    "platformWalkthrough": "Platform Walkthrough",
-    "plansPricing": "Plans & Pricing",
-    "more": "More",
-    "useCases": "Use Cases",
+    "workflow": "Arbejdsgangen",
+    "platformWalkthrough": "Gennemgang af platformen",
+    "plansPricing": "Abonnementer og priser",
+    "more": "Mere",
+    "useCases": "Anvendelsesscenarier",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform & Trust",
-    "faq": "FAQ",
-    "signIn": "Sign In",
-    "startProject": "Start a Project",
+    "platformTrust": "Platform og tillid",
+    "faq": "Ofte stillede spørgsmål",
+    "signIn": "Log ind",
+    "startProject": "Start et projekt",
     "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "adminPanel": "Administrationspanel",
+    "signOut": "Log ud",
+    "goToDashboard": "Gå til dashboard",
+    "userFallback": "Bruger",
+    "searchLanguages": "Søg efter sprog...",
+    "noLanguagesFound": "Ingen sprog fundet"
   },
   "floatingNav": {
-    "compare": "Compare",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "platformWalkthrough": "Platform Walkthrough",
+    "compare": "Sammenlign",
+    "howItWorks": "Sådan fungerer det",
+    "useCases": "Anvendelsesscenarier",
+    "platformWalkthrough": "Gennemgang af platformen",
     "platform": "Platform",
-    "pricing": "Pricing",
-    "faq": "FAQ"
+    "pricing": "Priser",
+    "faq": "Ofte stillede spørgsmål"
   },
   "hero": {
-    "headline": "Make professional video without a production team or a dozen apps.",
-    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.",
-    "ctaSecondary": "Watch the 'What's Possible'",
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "headline": "Slut med at jonglere med fem AI-faner. Ét studie tager dig fra idé til en video, der er klar til udgivelse.",
+    "subheadline": "Et guidet studie, der fører dig fra idé til færdig master, klar til udgivelse. Se dit storyboard, før du betaler for den endelige video – godkend det visuelle udtryk i stedet for at spilde credits på forsøg-og-fejl-genereringer. SceneFlow automatiserer rutinearbejdet – manuskript, storyboard, speak og samling – mens du bevarer kontrollen over hvert enkelt element.",
+    "audienceMicroLine": "Skabt til kreative, der ønsker resultater, og teams, der vil se, hvordan det fungerer.",
+    "ctaSecondary": "Se \"What's Possible\"",
+    "ctaToolStack": "Se, hvordan det erstatter din værktøjspakke",
+    "languagePrompt": "Hør helten på dit sprog – samme pipeline, nye markeder",
+    "multilangHint": "Hoveddubbing på 7 sprog – den fulde pipeline understøtter mere end 70 i produktion.",
+    "playWithNarration": "Afspil med fortællerstemme",
+    "tapToHear": "Tryk for at lytte",
+    "fullscreen": "Fuldskærm",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
-        "nativeLabel": "English"
+        "label": "Engelsk",
+        "nativeLabel": "Engelsk"
       },
       "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
+        "label": "Spansk",
+        "nativeLabel": "Spansk"
       },
       "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
+        "label": "Portugisisk",
+        "nativeLabel": "Portugisisk"
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "हिन्दी"
+        "nativeLabel": "Hindi"
       },
       "zh": {
-        "label": "Chinese",
-        "nativeLabel": "中文"
+        "label": "Kinesisk",
+        "nativeLabel": "Kinesisk"
       },
       "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
+        "label": "Arabisk",
+        "nativeLabel": "Arabisk"
       },
       "th": {
         "label": "Thai",
-        "nativeLabel": "ไทย"
+        "nativeLabel": "Thailand"
       }
     },
-    "soon": "Soon"
+    "soon": "Snart"
   },
   "valueProp": {
     "pills": [
       {
         "label": "One Studio",
-        "detail": "Concept to publish in one place"
+        "detail": "Koncept til udgivelse på ét sted"
       },
       {
-        "label": "Approve Before Final Video",
-        "detail": "Review storyboard beats before you render"
+        "label": "Godkend før endelig video",
+        "detail": "Gennemgå storyboard-elementerne, før du renderer."
       },
       {
-        "label": "Test Your Story First",
-        "detail": "Know what lands before heavy spend"
+        "label": "Test din historie først",
+        "detail": "Find ud af, hvad der virker, før du investerer store beløb."
       },
       {
-        "label": "Publish-Ready Output",
-        "detail": "Master MP4 + distribution bundles"
+        "label": "Publikationsklart resultat",
+        "detail": "Master-MP4 + distributionspakker"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Who are you? Pick your path",
-    "seeExamples": "See examples",
-    "examplesFor": "Examples for {label}:",
-    "andMore": ", and more.",
+    "prompt": "Hvem er du? Vælg din vej.",
+    "seeExamples": "Se eksempler",
+    "examplesFor": "Eksempler på {label}:",
+    "andMore": ", og meget mere.",
+    "modes": {
+      "automate": {
+        "label": "Automatiser det",
+        "description": "Guidet arbejdsgang – godkend storyboards, og bliv hurtigere færdig"
+      },
+      "engine": {
+        "label": "Vis mig motoren",
+        "description": "Arkitektur, BYOK og platformdybde"
+      }
+    },
     "paths": [
       {
-        "id": "creator",
-        "label": "Creator",
-        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "id": "skaber",
+        "label": "Skaber",
+        "outcome": "Lever til tiden – stop med at genopbygge i hvert enkelt værktøj",
         "useCases": [
-          "YouTube & episodic series",
-          "Video podcasts & show clips",
-          "Hyper-local & JIT news",
-          "Documentaries & docuseries",
-          "How-to & skill channels",
-          "Sports recaps & commentary"
+          "YouTube og episodiske serier",
+          "Videopodcasts og klip fra programmer",
+          "Hyperlokale nyheder og nyheder leveret præcis når der er brug for dem",
+          "Dokumentarfilm og dokumentarserier",
+          "Kanaler med vejledninger og færdigheder",
+          "Sportsresuméer og -kommentarer"
         ]
       },
       {
         "id": "team",
-        "label": "In-house team",
-        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "label": "Internt team",
+        "outcome": "Erstat langsomme processer hos leverandører – få styr på brand og budget",
         "useCases": [
-          "Corporate L&D & compliance",
-          "Internal comms & town halls",
-          "Product explainers for sales",
-          "HR recruitment & culture",
-          "K-12 / higher-ed lessons",
-          "Public health & safety updates"
+          "Virksomhedsudvikling og compliance",
+          "Intern kommunikation og fællesmøder",
+          "Produktforklaringer til salg",
+          "HR, rekruttering og kultur",
+          "Undervisningsforløb til grundskole og videregående uddannelser",
+          "Opdateringer om folkesundhed og sikkerhed"
         ]
       },
       {
-        "id": "productionShop",
-        "label": "Production shop",
-        "outcome": "Productize a niche with repeatable intake → delivery",
+        "id": "produktionsværksted",
+        "label": "Produktionsværksted",
+        "outcome": "Gør en niche til et produkt med en gentagelig proces fra modtagelse til levering",
         "useCases": [
-          "Video memoir packages",
-          "Legacy & tribute videos",
-          "Voice-cloned narration",
-          "White-label studio templates",
-          "Real estate & hospitality tours",
-          "Subscription video services"
+          "Pakker med videomemoarer",
+          "Videoer til minde og hyldest",
+          "Fortællerstemme baseret på stemmekloning",
+          "White-label-studioskabeloner",
+          "Rundvisninger i ejendomme og hotel- og restaurationsbranchen",
+          "Abonnementsbaserede videotjenester"
         ]
       },
       {
-        "id": "agency",
-        "label": "Agency",
-        "outcome": "Faster pitches and scalable client delivery",
+        "id": "bureau",
+        "label": "Bureau",
+        "outcome": "Hurtigere pitches og skalerbar levering til kunder",
         "useCases": [
-          "Client pitch pre-viz",
-          "Product launch campaigns",
-          "Case studies & testimonials",
-          "Event & conference promos",
-          "Multi-language campaigns",
-          "Property marketing for clients"
+          "Pre-viz til kundepræsentation",
+          "Kampagner for produktlancering",
+          "Cases og udtalelser",
+          "Promovering af events og konferencer",
+          "Flersprogede kampagner",
+          "Ejendomsmarkedsføring for kunder"
         ]
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Why SceneFlow vs prompt-and-generate tools",
-    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "title": "Hvorfor SceneFlow frem for prompt-og-generer-værktøjer",
+    "subtitle": "Gemini Studio og Google Flow udmærker sig ved klip. SceneFlow samler hele produktionsworkflowet.",
     "rows": [
       {
-        "them": "Prompt + clip generation in isolation",
-        "us": "Structured phases with editable baselines at each step"
+        "them": "Prompt- og klipgenerering isoleret set",
+        "us": "Strukturerede faser med redigerbare baselines ved hvert trin"
       },
       {
-        "them": "Manual consistency across sessions",
-        "us": "Reference Library + Beat Frames lock visuals before video"
+        "them": "Manuel konsistens på tværs af sessioner",
+        "us": "Reference Library + Beat Frames låser billedet før videoen"
       },
       {
-        "them": "No audience validation workflow",
-        "us": "Audience Resonance before render; Screening Room before publish"
+        "them": "Ingen arbejdsgang for validering af målgruppe",
+        "us": "Audience Resonance før rendering; Screening Room før publicering"
       },
       {
-        "them": "No production pipeline or handoff",
-        "us": "Script → streams → assembly → distribution in one app"
-      },
-      {
-        "them": "Complex model and settings surface",
-        "us": "Guided Studio UX with credits and BYOK guardrails"
+        "them": "Ingen produktionspipeline eller overdragelse",
+        "us": "Script → streams → samling → distribution i én app"
       }
     ],
-    "themHeader": "Typical clip-generation tools",
-    "usHeader": "SceneFlow bundles"
+    "themHeader": "Typiske værktøjer til generering af klip",
+    "usHeader": "SceneFlow-pakker"
   },
   "beatFirstPipeline": {
-    "title": "Beat-First Video Pipeline",
-    "subtitle": "Approve before you render — not slot-machine regeneration",
-    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "title": "Beat-baseret videopipeline",
+    "subtitle": "Godkend før rendering – ikke regenerering som på en spillemaskine",
+    "intro": "Ingen generering baseret på gæt og forsøg. Du får vist en forhåndsvisning og godkender udtrykket, før SceneFlow bruger credits på den endelige video.",
+    "description": "SceneFlow strukturerer den visuelle godkendelse i hvert trin: Express storyboard til gennemgang, Beat Frames til fastlåsning af kompositionen og derefter F2V pr. beat. Du finjusterer udtrykket, før du bruger credits på drift og hallucinationer.",
     "steps": [
-      "Express storyboard — share audio-visual beats for review in minutes",
-      "Beat Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Express storyboard — del audiovisuelle beats til gennemgang på få minutter",
+      "Beat Frames — lås start-/slut-sammensætning med Reference Library-kontinuitet",
+      "F2V pr. beat – generér video ud fra godkendte frames frem for blinde prompts",
+      "Production Mixer — timing, lyd og streameksport til Final Cut-samling"
     ],
-    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+    "footerLine": "Færre omarbejdninger af spillemaskine-elementer – godkend det visuelle, før der bruges penge på den endelige video"
+  },
+  "toolStack": {
+    "badge": "Lyder det bekendt?",
+    "title": "Den fejlbehæftede metode kontra SceneFlow-metoden",
+    "subtitle": "Du bør ikke have brug for fem faner, eksport via kopier-og-sæt-ind og prompt-træthed bare for at færdiggøre én video.",
+    "brokenWay": {
+      "title": "Den knuste vej",
+      "tagline": "Fragmenteret. Manuelt. Udmattende.",
+      "tools": [
+        {
+          "name": "ChatGPT",
+          "category": "Manuskriptudkast"
+        },
+        {
+          "name": "Midjourney",
+          "category": "Enkeltstående billeder"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "Manuel VO-eksport"
+        },
+        {
+          "name": "Premiere",
+          "category": "Manuel montering"
+        }
+      ],
+      "chaosLabel": "Fem faner. Mistet kontekst.",
+      "painPoints": [
+        "Kopier og indsæt mellem apps",
+        "Prompt-træthed og regenereringsløkker",
+        "Ingen tjek af målgruppen, før du bruger penge",
+        "Versionskaos på tværs af eksportfiler"
+      ],
+      "timeLabel": "Typisk projekttid",
+      "timeValue": "2–4 uger"
+    },
+    "sceneflowWay": {
+      "title": "SceneFlow-metoden",
+      "tagline": "Ét studie. Godkend, før du renderer.",
+      "stages": [
+        {
+          "label": "Blueprint",
+          "detail": "Struktureret historieplan"
+        },
+        {
+          "label": "Referencer",
+          "detail": "Konsistente karakterer"
+        },
+        {
+          "label": "Produktion",
+          "detail": "Stemme + billeder"
+        },
+        {
+          "label": "Udgiv",
+          "detail": "Én master-MP4"
+        }
+      ],
+      "syncLabel": "Én projektfil – slut med at jonglere med faner",
+      "benefits": [
+        "Guidede faser – ikke prompt engineering",
+        "Godkendelse af storyboard før videocredits",
+        "Audience Resonance-score før tung rendering",
+        "Udgivelsesklart master fra ét studie"
+      ],
+      "timeLabel": "Typisk projekttid",
+      "timeValue": "2–4 dage"
+    },
+    "comparisonCaption": "Ét samlet miljø erstatter fragmenterede prompt-værktøjer, manuelle rettelser og overleveringer på tværs af platforme.",
+    "comparisonImageAlt": "Traditionelle produktionsomkostninger vs. SceneFlow-automatiseret studie – hurtigere vej fra koncept til publiceringsklar video"
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
-    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "title": "Produktionshastighed uden overhead",
+    "subtitle": "Erstat fragmenterede prompt-værktøjer og manuel samling med ét automatiseret studie – fra første koncept til udgivelsesklart master-eksemplar.",
+    "caption": "Ét samlet miljø erstatter fragmenterede prompt-værktøjer, manuelle rettelser og overleveringer på tværs af platforme.",
+    "imageAlt": "Traditionelle produktionsomkostninger vs. SceneFlow-automatiseret studie – hurtigere vej fra koncept til publiceringsklar video"
   },
   "howItWorks": {
-    "title": "From concept to publish-ready video",
-    "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
-    "tagline": "Every step is expertly automated. Every step gives you full control.",
-    "optionalBadge": "Optional",
-    "optionalSuffix": " (optional)",
-    "readyTitle": "Ready to test the full pipeline?",
-    "explorerCta": "Start with Explorer — $9",
+    "title": "Fra koncept til udgivelsesklar video",
+    "titleAccent": "Én guidet pipeline",
+    "subtitle": "Serien er valgfri. Kerneforløbet er Blueprint → Produktion → Final Cut → Premiere – med niveauerne storyboard, animatic, video og master-MP4 undervejs.",
+    "tagline": "Hvert trin er professionelt automatiseret. Hvert trin giver dig fuld kontrol.",
+    "optionalBadge": "Valgfri",
+    "optionalSuffix": " (valgfrit)",
+    "readyTitle": "Klar til at teste hele pipelinen?",
+    "explorerCta": "Start med Explorer — 9 $",
     "phases": [
       {
-        "id": "series",
-        "stepLabel": "Series",
-        "subtitle": "Showrunner Engine",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "id": "serie",
+        "stepLabel": "Serie",
+        "subtitle": "Showrunner-motor",
+        "description": "Definér dit univers én gang, og skab sammenhængende handlingsforløb, der strækker sig over flere afsnit. Fælles Reference Library sikrer, at karakterer og tone er konsistente gennem hele sæsonen.",
         "keySteps": [
-          "Define universe — characters, tone, and season arc",
-          "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "Definér universet – karakterer, tone og sæsonens overordnede forløb",
+          "Generer automatisk episodeoversigter for hele sæsonen",
+          "Synkronisering til Blueprint og produktion pr. afsnit"
         ],
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
-        ],
-        "optional": true
+          "Definér dit univers én gang – karakterer, tone og sæsonforløb.",
+          "Sammenhængende episodeoversigter – automatisk genereret for hele sæsonen",
+          "Sporing af kontinuitet – sikring af sammenhæng i sæsoner med flere afsnit",
+          "Synkronisering mellem serie og episode – til Blueprint Studio og produktion"
+        ]
       },
       {
-        "id": "blueprint",
+        "id": "blåtryk",
         "stepLabel": "Blueprint",
-        "subtitle": "Story Development",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "subtitle": "Historieudvikling",
+        "description": "Omdan koncepter til strukturerede treatments med logline, beats, karakterer og tone. Kør Audience Resonance, og samarbejd, før der foretages tung rendering.",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
-          "Audience Resonance scoring with 80+ target",
-          "Collaborator share links and export (PDF, Doc, PPTX)"
+          "Generering → Gennemgang → Iteration → Produktionsstart",
+          "Audience Resonance pointgivning med målværdi på 80+",
+          "Delingslinks til samarbejdspartnere og eksport (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
-        ],
-        "optional": false
+          "Workflow for generering, gennemgang, iteration og produktionsstart",
+          "Fra koncept til struktur på få minutter – logline, narrative nøglepunkter, karakterer og tone",
+          "Audience Resonance-scoring med målværdi på 80+ før produktion",
+          "Delingslinks til samarbejdspartnere – syntese af feedback til guidet revision"
+        ]
       },
       {
-        "id": "production",
-        "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "id": "produktion",
+        "stepLabel": "Produktion",
+        "subtitle": "Fra manuskript til streaming",
+        "description": "Fanerne Script og Action guider dig gennem Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer og MP4-streams – uden at skulle skifte værktøj.",
         "keySteps": [
-          "Lock script, voices, and scene audio",
-          "Express storyboard — gallery and share for review",
-          "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "Fastlås manuskript, stemmer og scene-lyd",
+          "Express storyboard — galleri og deling til gennemgang",
+          "Beat Frames → Instruktørkonsol → Render-strøm",
+          "Send færdige streams til Final Cut"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
-        ],
-        "optional": false
+          "Foundation – manuskript, stemmer, scenelyd, låst manuskript",
+          "Express storyboard — retning og billeder i minutter; galleri og deling",
+          "Beat Frames og Mixer – start-/slutbilleder, Director Console, rendering af MP4-streams",
+          "Produktionsstrømme — gennemgå output, genrendr forældede beats, send til Final Cut"
+        ]
       },
       {
-        "id": "final-cut",
+        "id": "endelig klipning",
         "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "subtitle": "Samling af datastrømme",
+        "description": "Saml færdige produktionsstreams til én master-MP4-fil. Vælg Animatic eller video og sprog for hver scene – ingen redigering på tidslinjen; kreative ændringer forbliver i Production Mixer.",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
+          "Vælg streams pr. scene – forudindstillet eller tilpasset mix",
+          "Vis forhåndsvisning af hele programmet i manuskriptrækkefølge",
+          "Eksporter én master-MP4 til Premiere"
         ],
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
+          "Valg af stream pr. scene — Animatic, video, sprog, version",
+          "Samlingsforudindstillinger – Alt video, Hybrid, Brugerdefineret miks",
+          "Ingen redigering på tidslinjen – kreative ændringer forbliver i Production Mixer",
+          "Master-eksport med ét klik – sammensat MP4 til Premiere"
+        ]
       },
       {
         "id": "premiere",
         "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "subtitle": "Distribueringscenter",
+        "description": "Gennemse din master med publikumsanalyse, og udgiv derefter til YouTube med lokaliserede metadata, eller eksportér pakker til Shorts, Reels og TikTok.",
         "keySteps": [
-          "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
+          "Opret screening og del /s/-link",
+          "Bedømmelser, engagement og visuel indsigt",
+          "YouTube-guide eller eksportpakke"
         ],
         "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "optional": false
+          "Delbare Screening Room — /s/-links med scoring og valgfri analyse af engagement (samtykke fra seeren)",
+          "Dashboard med indsigt – fanerne Scoring, Biometri og Visuel",
+          "YouTube-ekspert – miniaturebillede, lokaliseret titel/beskrivelse, SceneFlow CTA",
+          "Eksportpakker og planer for vertikale kortformatklip"
+        ]
       }
     ]
   },
   "useCases": {
-    "badge": "Production Applications",
-    "title": "Whatever Video You Can Imagine,",
-    "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "badge": "Produktionsapplikationer",
+    "title": "Uanset hvilken video du kan forestille dig,",
+    "titleAccent": "Byg det i SceneFlow",
+    "subtitle": "Ejendomspræsentationer, undervisning, podcasts, nyhedsformater, brand-kampagner og filmiske fortællinger – ét automatiseret studie fra koncept til udgivelsesklart master-materiale.",
+    "qualifyingStatement": "SceneFlow omdanner dine kildebilleder, uploads og beskrivelser til præsentationsvideoer med fortællerstemme – og med mulighed for at inkludere stemme og karakterer, som du selv styrer. Der er tale om AI-genererede præsentationer: realistiske visualiseringer baseret på dit materiale, ikke live-videooptagelser. Gennemgå og godkend hvert storyboard, før det offentliggøres, og sørg for tydelig mærkning, så seerne ved, hvad de ser.",
     "ui": {
-      "useCases": "Use Cases",
-      "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo coming soon",
-      "selectExample": "Select an example to preview its demo"
+      "useCases": "Anvendelsesscenarier",
+      "sectors": "{count} SEKTORER",
+      "demoComingSoon": "Demo på vej",
+      "selectExample": "Vælg et eksempel for at få vist en forhåndsvisning af demoen",
+      "targetPersona": "Målgruppepersona",
+      "theChallenge": "Udfordringen",
+      "sceneFlowSolution": "SceneFlow-løsningen",
+      "beforeVsAfter": "Før og efter",
+      "before": "Før",
+      "after": "Efter",
+      "theWin": "\"Gevinsten\"",
+      "frameAnchoredTitle": "Ramme-forankret kontinuitet",
+      "frameAnchoredDescription": "SceneFlow er det eneste værktøj, der muliggør billedforankret kontinuitet, hvilket sikrer, at din klients produkt eller karakter forbliver identisk på tværs af alle scènesegmenter.",
+      "closePreview": "Luk forhåndsvisning",
+      "expandVideo": "Udvid video",
+      "expandImage": "Forstør billede",
+      "orStartExplorer": "start med planen til $9 Explorer",
+      "orPrefix": "Eller"
+    },
+    "personas": {
+      "creator": {
+        "label": "Solo-skaber",
+        "title": "YouTube-skaberen",
+        "beforeAfter": {
+          "before": "40 timer",
+          "after": "25 min."
+        },
+        "challenge": {
+          "title": "Flaskehalsen med B-roll",
+          "description": "Du har et stærkt manuskript, men størstedelen af din tid går med at finde optagelser, koordinere redigeringen og sikre sammenhæng mellem scenerne. Denne forsinkelse sænker udgivelsestakten og svækker publikums fastholdelse."
+        },
+        "solution": {
+          "title": "Den automatiserede historiefortæller",
+          "description": "Omdan hurtigt manuskripter til produktionsklare billeder, samtidig med at kontinuiteten i karakterer og stil bevares fra første scene til den færdige master.",
+          "features": [
+            "Visuelle elementer, der passer præcist til manuskriptets enkelte faser",
+            "Konsistente hovedpersoner på tværs af alle scener",
+            "Skalér til episodiske serier med et fælles referencebibliotek"
+          ]
+        },
+        "win": "Gå fra sporadiske uploads til en pålidelig produktionsrytme med mindre administrativt arbejde.",
+        "keyPhrases": [
+          "Hurtigere behandlingstid",
+          "Konsistente karakterer",
+          "Workflow klar til serieproduktion"
+        ]
+      },
+      "team": {
+        "label": "Internt team",
+        "title": "Det interne videoteam",
+        "beforeAfter": {
+          "before": "6 uger",
+          "after": "Samme uge"
+        },
+        "challenge": {
+          "title": "Leverandør-backlog og brand-afvigelse",
+          "description": "Teams inden for kommunikation, læring og udvikling (L&D) samt marketing må vente ugevis på videoer fra bureauer eller leverandører. Hver optagelse medfører inkonsekvent branding, uforudsigelige fakturaer og godkendelsesprocesser, der bremser kampagnerne."
+        },
+        "solution": {
+          "title": "Intern produktion inden for samme uge",
+          "description": "Få medarbejdere til at producere video inden for et forudsigeligt kreditbudget – med brand-skabeloner, godkendelse før endelig rendering og uden betaling for optagedage eller ubegrænsede redigeringsrunder.",
+          "features": [
+            "Erstat eksterne fotograferinger med guidede interne arbejdsgange",
+            "Brand-sikre skabeloner og referencebiblioteker",
+            "Synligt kreditforbrug og budgetlofter pr. projekt",
+            "Godkend storyboards, før du betaler for den endelige video."
+          ]
+        },
+        "win": "Få færdiggjort og lanceret videoer til træning, kommunikation og kampagner efter din tidsplan – ikke leverandørens backlog.",
+        "keyPhrases": [
+          "Forudsigelige omkostninger",
+          "Brandstyring",
+          "Levering inden for samme uge"
+        ]
+      },
+      "productionShop": {
+        "label": "Produktionsværksted",
+        "title": "Specialproduktionsvirksomheden",
+        "beforeAfter": {
+          "before": "8.000 $ pr. optagelse",
+          "after": "Kredit på 200 $"
+        },
+        "challenge": {
+          "title": "Skræddersyede vertikale løsninger, intet gentageligt system",
+          "description": "Kunder inden for erindringer, arv, ejendomshandel og uddannelse har brug for hurtig levering – men hvert projekt starter forfra. Uploads, stemmekloner og avatarer kan ikke skaleres uden en standardiseret proces fra modtagelse til levering."
+        },
+        "solution": {
+          "title": "Gør din videoydelse til et produkt",
+          "description": "Skab gentagelige arbejdsgange til memoir-studier og nicheområder. Upload af skabeloner, stemmekloning, avatarer og godkendelse af storyboards – tilpas løsningen til den enkelte kunde, og øg marginen gennem volumen.",
+          "features": [
+            "Skabeloner til erindringer med mulighed for at uploade billeder, stemmekloning og avatar-værter",
+            "Kundeoptag knyttet til Blueprint og faser for godkendelse af storyboards",
+            "White-label-studiopakker til videoer om livshistorier, hyldestvideoer og abonnementsbaseret videoindhold",
+            "Margin på credits i stedet for overhead pr. optagelse"
+          ]
+        },
+        "win": "Lancér en service med videobiografier eller en nichebaseret studiaydelse, der kan leveres gentagne gange – frem for et enkeltstående, opslidende freelancejob.",
+        "keyPhrases": [
+          "Skabeloner til erindringer",
+          "Stemme- og avataridentitet",
+          "Gentagelig levering"
+        ]
+      },
+      "agency": {
+        "label": "Bureau",
+        "title": "Ansvarlig for leverance til kunden",
+        "beforeAfter": {
+          "before": "Levering på 3 uger",
+          "after": "Levering på 3 dage"
+        },
+        "challenge": {
+          "title": "Levering til kunder i stor skala",
+          "description": "At vinde pitchet er kun halvdelen af kampen. Tilbagevendende opgaver for kunder kræver hurtig eksekvering, klare godkendelsesprocesser og en sund avance på hver leverance – uden at produktionen skal bygges op fra bunden hver gang."
+        },
+        "solution": {
+          "title": "Gennemløb + Kundegodkendelse",
+          "description": "Gå fra pitch-oplæg til løbende levering med brand-sikre kontrolmekanismer, kundegodkendelse før endelig rendering og forudsigelige kreditomkostninger pr. projekt.",
+          "features": [
+            "Hurtig prævisualisering til pitches og kundegodkendelse",
+            "Genanvendelige skabeloner til tilbagevendende klientformater",
+            "Indblik i budgettet gennem alle iterationer",
+            "Skalérbar levering uden at øge medarbejderantallet"
+          ]
+        },
+        "win": "Gennemfør hurtigere pitch-forløb og løbende kundeopgaver med lavere produktionsrisiko og højere avance.",
+        "keyPhrases": [
+          "Kundegodkendelser",
+          "Leveringsgennemløb",
+          "Budgetforudsigelighed"
+        ]
+      }
+    },
+    "segmentCtas": {
+      "creator": {
+        "label": "Start din produktionstestflyvning",
+        "subtext": "9 $ engangsbeløb • 750 credits • Fuld adgang til platformen"
+      },
+      "team": {
+        "label": "Book en gennemgang for teamet",
+        "subtext": "Se, hvordan interne teams erstatter leverandørprocesser"
+      },
+      "productionShop": {
+        "label": "Udforsk vertikale skabeloner",
+        "subtext": "Ejendomme, uddannelse, dokumentation og meget mere – se, hvad du kan omdanne til et produkt"
+      },
+      "agency": {
+        "label": "Se priser for teams",
+        "subtext": "Planer til bureauer og produktionshuse i stor skala"
+      }
     },
     "categories": [
       {
-        "id": "property",
-        "title": "Property, Spaces & Hospitality",
+        "id": "ejendom",
+        "title": "Ejendomme, rum og hospitality",
+        "qualifyingStatement": "Skabt ud fra dine egne billeder af ejendommen – præsenteret som en guidet rundvisning, hvor AI har integreret din stemme og avatar. Giver et realistisk indblik i indretning og detaljer, men kan ikke erstatte en fysisk fremvisning. Alle rundvisninger er tydeligt markeret.",
         "examples": [
           {
-            "id": "residential-real-estate",
-            "label": "Residential Real Estate",
-            "description": "Automated listing tours featuring the agent's cloned voice and avatar identity."
+            "id": "boligejendomme",
+            "label": "Boligejendomme",
+            "description": "Forestil dig at uploade billeder af din bolig sammen med din gemte avatar og stemme. Og derefter øjeblikkeligt generere en professionel præsentation af boligen med din avatar og stemme – på over 70 sprog."
           },
           {
-            "id": "commercial-real-estate",
-            "label": "Commercial Real Estate",
-            "description": "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data."
+            "id": "erhvervsejendomme",
+            "label": "Erhvervsejendomme",
+            "description": "Forestil dig at uploade plantegninger, visualiseringer og data om nærområdet sammen med din mæglers gemte stemme og avatar. Og derefter øjeblikkeligt at kunne producere præsentationer til investorer, der vækker hver eneste kvadratmeter til live – lokaliseret til mere end 70 sprog."
           },
           {
-            "id": "short-term-rentals",
-            "label": "Short-Term Rentals",
-            "description": "Automated \"Digital Welcome Books\" that walk guests through house features and local \"best of\" spots."
+            "id": "korttidsudlejning",
+            "label": "Korttidsudlejning",
+            "description": "Forestil dig at uploade billeder af boligen og information om faciliteterne, ledsaget af værtens indtalte stemme. Og derefter øjeblikkeligt at udgive digitale velkomstvideoer, der hilser på hver enkelt gæst på deres eget sprog – allerede inden de tjekker ind."
           },
           {
-            "id": "hospitality-tourism",
-            "label": "Hospitality & Tourism",
-            "description": "Hotel virtual tours and narrated travel itineraries for agencies."
+            "id": "hotel- og turismebranchen",
+            "label": "Hotel- og turismebranchen",
+            "description": "Forestil dig at uploade hotelbilleder og højdepunkter fra rejseplanen sammen med dit brands gemte værtstemme og avatar. Og derefter øjeblikkeligt kunne lancere virtuelle rundvisninger og rejseguides med fortællerstemme på over 70 sprog – helt uden filmhold på de enkelte lokationer."
           },
           {
-            "id": "museum-gallery-guides",
-            "label": "Museum & Gallery Guides",
-            "description": "Multi-language audio-visual \"tours\" for exhibitions that can be updated JIT as exhibits change."
+            "id": "museums- og galleriguides",
+            "label": "Museums- og galleriguides",
+            "description": "Forestil dig at kunne uploade billeder af udstillingen og kuratornoter, i takt med at udstillingen ændrer sig. Og derefter øjeblikkeligt opdatere de guidede rundvisninger på mere end 70 sprog – helt uden at skulle lave nye optagelser, når udstillingen skifter."
           }
         ]
       },
       {
-        "id": "knowledge",
-        "title": "Knowledge, Training & Education",
+        "id": "viden",
+        "title": "Viden, træning og uddannelse",
         "examples": [
           {
-            "id": "k12-higher-ed",
-            "label": "K-12 & Higher Ed",
-            "description": "30-minute curriculum modules that can be instantly localized for ESL students or global campuses."
+            "id": "Grundskole og videregående uddannelse",
+            "label": "Grundskole og videregående uddannelse",
+            "description": "Forestil dig at uploade undervisningsmaterialer sammen med underviserens gemte stemme og karakterreference. Og derefter øjeblikkeligt generere komplette undervisningsmoduler, som dine ESL- og globale campus-studerende kan se på mere end 70 sprog."
           },
           {
-            "id": "corporate-ld",
-            "label": "Corporate L&D",
-            "description": "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices."
+            "id": "virksomheds-id",
+            "label": "Virksomhedsudvikling og -læring",
+            "description": "Forestil dig at uploade scripts til compliance-træning, der benytter din undervisers gemte stemme og avatar. Og derefter øjeblikkeligt at udrulle ensartet onboarding og sikkerhedstræning på tværs af alle kontorer – lokaliseret til mere end 70 sprog."
           },
           {
-            "id": "software-saas-tutorials",
-            "label": "Software SaaS Tutorials",
-            "description": "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion."
+            "id": "Software- og SaaS-vejledninger",
+            "label": "Vejledninger til software og SaaS",
+            "description": "Forestil dig at uploade UI-skærmbilleder som referencebilleder sammen med en optagelse af din produkteksperts stemme. Og derefter øjeblikkeligt generere gennemgangsvideoer, der animerer hvert enkelt klik – og som opdateres, så snart dit UI lanceres."
           },
           {
-            "id": "niche-skill-tutoring",
-            "label": "Niche Skill Tutoring",
-            "description": "Professional \"How-To\" series for cooking, DIY, or technical certifications."
+            "id": "Undervisning i nichefærdigheder",
+            "label": "Undervisning i specialiserede færdigheder",
+            "description": "Forestil dig at uploade billeder af arbejdsprocessen sammen med din instruktørs gemte stemme og karakterreference. Og derefter øjeblikkeligt udgive professionelle instruktionsserier – uanset om det drejer sig om madlavning, gør-det-selv-projekter eller forberedelse til certificering – på mere end 70 sprog."
           },
           {
-            "id": "medical-patient-education",
-            "label": "Medical/Patient Education",
-            "description": "Narrated explanations of surgical procedures or medication management for hospitals and clinics."
+            "id": "Patientuddannelse",
+            "label": "Medicinsk undervisning / patientundervisning",
+            "description": "Forestil dig at uploade diagrammer over indgreb sammen med en godkendt, gemt lydoptagelse af klinikeren. Og derefter øjeblikkeligt generere tydelige undervisningsvideoer til patienter – videoer, som familier kan forstå, og som findes på mere end 70 sprog."
           },
           {
-            "id": "video-memoirs",
-            "label": "Video Memoirs",
-            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+            "id": "videomemoarer",
+            "label": "Video-erindringer",
+            "description": "Forestil dig at uploade familiebilleder, lydoptagelser af interviews og noter til scener sammen med en gemt fortællerstemme. Herefter kan du øjeblikkeligt skabe kapitelopdelte erindringsvideoer – og godkende storyboardet, før den endelige video genereres."
           }
         ]
       },
@@ -385,234 +605,807 @@
         "title": "JIT Media & Information",
         "examples": [
           {
-            "id": "hyper-local-news",
-            "label": "Hyper-Local News",
-            "description": "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive."
+            "id": "hyperlokale nyheder",
+            "label": "Hyperlokale nyheder",
+            "description": "Forestil dig at uploade dagens billeder og nyhedsindslag ved hjælp af din nyhedsværts gemte stemme. Og derefter øjeblikkeligt udgive et dagligt nyhedsindslag om lokalområdet – uden filmhold og uden at misse deadlines."
           },
           {
-            "id": "financial-market-recaps",
-            "label": "Financial & Market Recaps",
-            "description": "Turning daily stock market or crypto data into 3-minute narrated visual digests."
+            "id": "Opsummeringer af finansmarkederne",
+            "label": "Oversigter over finansielle forhold og markedsudvikling",
+            "description": "Forestil dig, at du hver morgen uploader markedsdata og skærmbilleder af grafer sammen med din analysts gemte stemme. Og at du derefter øjeblikkeligt forvandler dem til et visuelt resumé med fortællerstemme – klar inden børsåbningen."
           },
           {
-            "id": "sports-commentary",
-            "label": "Sports Commentary",
-            "description": "Automated \"recap\" videos using game stats and static photography turned into F2V action."
+            "id": "sportskommentering",
+            "label": "Sportskommentering",
+            "description": "Forestil dig at uploade kampstatistik og stillbilleder sammen med din kommentators gemte stemme. Og derefter øjeblikkeligt generere opsummeringsvideoer med animeret action – der udgives, mens fansene stadig taler om kampen."
           },
           {
-            "id": "true-crime-historical-docs",
-            "label": "True Crime & Historical Docs",
-            "description": "Using the Reference Library to keep historical figures consistent across a multi-part documentary series."
+            "id": "historiske true crime-dokumentarer",
+            "label": "True crime og historiske dokumentarer",
+            "description": "Forestil dig at fastlåse historiske personer i din Reference Library én gang. Og derefter øjeblikkeligt producere episoder i flere dele, hvor hvert ansigt og hver stemme forbliver konsistent – serie efter serie."
           },
           {
-            "id": "weather-emergency-alerts",
-            "label": "Weather & Emergency Alerts",
-            "description": "Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms."
+            "id": "Varsler om vejrmæssige nødsituationer",
+            "label": "Vejr- og beredskabsvarsler",
+            "description": "Forestil dig at uploade nødmeddelelser med din organisations betroede, gemte stemme. Og derefter øjeblikkeligt udsende tydelige varsler på mere end 70 sprog på tværs af sociale platforme – på få minutter frem for dage."
           }
         ]
       },
       {
-        "id": "b2b",
-        "title": "B2B Marketing & Sales",
+        "id": "B2B",
+        "title": "B2B-markedsføring og -salg",
         "examples": [
           {
-            "id": "product-explainer-videos",
-            "label": "Product Explainer Videos",
-            "description": "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos."
+            "id": "produktforklaringsvideoer",
+            "label": "Produktforklaringsvideoer",
+            "description": "Forestil dig, at du uploader billeder fra produktkataloget sammen med dit brands gemte præsentatørstemme og avatar. Og derefter øjeblikkeligt genererer en filmisk serie af forklaringsvideoer – hvor du godkender storyboardet, før du renderer."
           },
           {
-            "id": "case-study-testimonials",
-            "label": "Case Study/Testimonials",
-            "description": "Using client headshots and project photos to create high-end visual success stories."
+            "id": "Udtalelser fra casestudier",
+            "label": "Case-studie/Udtalelser",
+            "description": "Forestil dig at uploade portrætfotos af kunder, projektbilleder og succesmålinger sammen med en gemt fortællerstemme. Og derefter øjeblikkeligt skabe professionelle, visuelle cases – helt uden at skulle filme en udtalelse."
           },
           {
-            "id": "recruitment-branding",
-            "label": "Recruitment & Branding",
-            "description": "Giving candidates a narrated \"day in the life\" tour of the office and culture."
+            "id": "rekrutteringsbranding",
+            "label": "Rekruttering og branding",
+            "description": "Forestil dig at uploade billeder af kontoret og højdepunkter fra virksomhedskulturen sammen med din recruiters gemte stemme og avatar. Og derefter øjeblikkeligt give kandidater en guidet rundvisning i en typisk arbejdsdag – på mere end 70 sprog til global rekruttering."
           },
           {
-            "id": "conference-event-promos",
-            "label": "Conference & Event Promos",
-            "description": "Automated \"Speaker Bio\" videos and \"What to Expect\" guides for large-scale events."
+            "id": "Kampagner for konferencer og events",
+            "label": "Promoveringsmateriale til konferencer og events",
+            "description": "Forestil dig, at du uploader biografier om talere, detaljer om sessioner og billeder af lokationen, kombineret med din eventværts gemte stemme. Og at du derefter øjeblikkeligt kan generere præsentationer af talere samt guides til, hvad deltagerne kan forvente – og at alt dette opdateres, hver gang programmet ændres."
           }
         ]
       },
       {
-        "id": "public",
-        "title": "Public Sector & Advocacy",
+        "id": "offentlig",
+        "title": "Den offentlige sektor og interessevaretagelse",
         "examples": [
           {
-            "id": "ngo-impact-reports",
-            "label": "NGO Impact Reports",
-            "description": "Turning data and field photography into emotive, narrated videos for donors."
+            "id": "Rapporter om NGO-effekt",
+            "label": "Rapporter om NGO'ers effekt",
+            "description": "Forestil dig at uploade billeder fra felten og data om jeres indsats sammen med organisationens gemte fortællerstemme. Og derefter øjeblikkeligt forvandle donorrapporter til følelsesladede videoer med fortællerstemme – der afspejler jeres missions stemme frem for blot at være et diasshow."
           },
           {
-            "id": "public-health-announcements",
-            "label": "Public Health Announcements",
-            "description": "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity."
+            "id": "Meddelelser om folkesundhed",
+            "label": "Meddelelser om folkesundhed",
+            "description": "Forestil dig at uploade godkendte sundhedsbudskaber med din afdelings betroede, gemte stemme. Og derefter øjeblikkeligt nå ud til alle lokalsamfund på mere end 70 sprog – med samme klarhed, samme hastende karakter og uden forsinkelse grundet oversættelse."
           },
           {
-            "id": "legal-insurance-explainers",
-            "label": "Legal & Insurance Explainers",
-            "description": "Helping clients understand complex contracts or claim processes through narrated visual breakdowns."
+            "id": "Forklaringer om retshjælpsforsikring",
+            "label": "Forklaringer om jura og forsikring",
+            "description": "Forestil dig at uploade kontraktresuméer og procesdiagrammer sammen med din rådgivers gemte stemme. Og derefter øjeblikkeligt generere visuelle gennemgange, som kunderne rent faktisk forstår – inden de underskriver eller anmelder et krav."
           },
           {
-            "id": "religious-spiritual-teachings",
-            "label": "Religious & Spiritual Teachings",
-            "description": "Converting sermons or texts into a consistent, narrated daily video series for global congregations."
+            "id": "religiøse og spirituelle læresætninger",
+            "label": "Religiøse og spirituelle læresætninger",
+            "description": "Forestil dig at uploade prædikennoter eller hellige tekster sammen med din undervisers gemte stemme og tilstedeværelse. Og derefter øjeblikkeligt udgive en fast, daglig videoserie til menigheder verden over – på mere end 70 sprog."
           }
         ]
       }
     ]
   },
   "institutionalRoi": {
-    "badge": "For in-house teams & institutions",
-    "title": "Replace vendor shoots with predictable in-house production",
-    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
+    "badge": "Til interne teams og institutioner",
+    "title": "Erstat leverandørproducerede optagelser med forudsigelig in-house-produktion",
+    "subtitle": "Teams inden for kommunikation, L&D og marketing på 1–5 personer kan færdiggøre og udgive videoer i løbet af samme uge – uden faste bureauaftaler eller endeløse redigeringsprocesser.",
     "comparisons": [
       {
-        "label": "Traditional vendor shoot + edit",
-        "cost": "$5,000–$15,000",
-        "timeline": "4–8 weeks"
+        "label": "Traditionel optagelse og redigering for leverandør",
+        "cost": "5.000 $ – 15.000 $",
+        "timeline": "4–8 uger"
       },
       {
-        "label": "SceneFlow in-house workflow",
-        "cost": "$50–$500 in credits",
-        "timeline": "Same week"
+        "label": "SceneFlow internt arbejdsflow",
+        "cost": "$50–$500 i kredit",
+        "timeline": "Samme uge"
       }
     ],
     "bullets": [
-      "Brand-safe templates and approval before final render",
-      "Budget caps with visible credit spend per project",
-      "No crew days, no edit back-and-forth on every revision"
+      "Brand-sikre skabeloner og godkendelse før endelig generering",
+      "Budgetlofter med synligt kreditforbrug pr. projekt",
+      "Ingen dage med filmhold, ingen frem-og-tilbage-kommunikation om redigering ved hver revision"
     ],
-    "ctaPrimary": "Book a team walkthrough",
-    "ctaSecondary": "See pricing",
-    "typicalCost": "Typical cost",
-    "timeline": "Timeline"
+    "ctaPrimary": "Book en gennemgang for teamet",
+    "ctaSecondary": "Se priser",
+    "typicalCost": "Typisk omkostning",
+    "timeline": "Tidslinje"
   },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Studio feature deep dive",
-    "close": "Close",
-    "viewDetails": "View Details",
+    "badge": "Guidet rundvisning",
+    "title": "Gennemgang af platformen",
+    "subtitle": "En komplet guide til SceneFlow AI Studio-arbejdsgangen, fra samarbejdsbaserede gennemgange til det endelige filmiske resultat.",
+    "subheading": "Udforsk platformen – start med det grundlæggende",
+    "chapterHint": "Fire ting, du bør vide i dag. Fold kapitlerne ud, når du vil have det fulde overblik.",
+    "expandChapter": "Programmets indslag",
+    "collapseChapter": "Skjul funktioner",
+    "underTheHoodLabel": "Under motorhjelmen",
+    "chapters": [
+      {
+        "id": "det nødvendige",
+        "label": "Start her – hvad du får på dag ét"
+      },
+      {
+        "id": "kvalitet",
+        "label": "Sørg for, at det rammer plet hos dit publikum"
+      },
+      {
+        "id": "produktion",
+        "label": "Fra godkendte beats til udgivet master"
+      },
+      {
+        "id": "avanceret",
+        "label": "Til teams, der ønsker fakturering og governance"
+      }
+    ],
+    "close": "Luk",
+    "viewDetails": "Se detaljer",
     "beatFirst": {
-      "id": 15,
-      "title": "Beat-First Video Pipeline",
-      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "title": "Beat-baseret videopipeline",
+      "description": "Godkend storyboard-elementer og Beat Frames før F2V – færre blinde regenereringer som følge af hallucinationer og visuel drift. Én struktureret proces fra gennemgang til færdigt klip.",
       "keyFeatures": [
-        "Express storyboard for review — share beats before heavy render",
-        "Beat Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "Express storyboard til gennemgang – del beats før tung rendering",
+        "Beat Frames låsesammensætning — Reference Library kontinuitet",
+        "F2V pr. takt – generér video ud fra godkendte billeder",
+        "Mixer-timing og -strømme – eksport til Final Cut-assembly"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
-      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+      "screenshotSlot": "Indsæt skærmbillede: Beat Frames og godkendelse af storyboard før videogenerering",
+      "videoSlot": "Indsæt klip på 00:30: Godkendelse af beats, fastlåsning af frames og derefter generering af F2V-klip"
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "title": "Gennemgang og analyse af målgruppen",
+      "description": "Private /s/-delingslinks til interessenter – manuelle bedømmelser, struktureret feedback og valgfri analyse af engagement (med seerens samtykke). Bruges i Premiere før publicering samt til forhåndsvisning af produktions-storyboards.",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "Private gennemgangssessioner – sikre delingslinks til interessenter",
+        " Struktureret feedback fra publikum – bedømmelser og åbne punkter",
+        "Valgfri analyse af engagement – med seerens samtykke før registrering",
+        "Iterér på baggrund af reelle data – finjustér Blueprint og manuskriptet ud fra anmelderindsigter."
       ],
-      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotSlot": "Indsæt skærmbillede: Screening Room-panel til analyse og feedback fra korrekturlæsere",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      "videoSlot": "Indsæt klip på 30 sekunder: Afholdelse af en gennemgang og indsamling af data om engagement"
+    },
+    "ui": {
+      "screenshot": "Skærmbillede",
+      "video": "Video",
+      "featureVideo": "Fremhævet video",
+      "keyFeatures": "Vigtigste funktioner",
+      "openScreenshot": "Åbn skærmbillede",
+      "openFeatureVideo": "Åbn præsentationsvideo",
+      "expandImage": "Forstør billede",
+      "closePreview": "Luk forhåndsvisning"
+    },
+    "items": [
+      {
+        "id": "1",
+        "title": "Intuitiv brugeroplevelse + fuld kontrol til skaberen",
+        "description": "Kom hurtigt i gang med guidet automatisering, og redigér derefter alt genereret indhold, så teams bevarer den kreative kontrol uden at miste fart.",
+        "keyFeatures": [
+          "Guidet Studio-arbejdsgang – fra koncept til eksport på ét sted",
+          "Redigér hvert AI-genereret narrativt element, hver karakter og hver replik direkte i konteksten.",
+          "Varianter af løsningsforslag – direkte sammenligning med henblik på kreativ retning",
+          "Blueprint Samarbejd – del links, lydklip og struktureret feedback fra korrekturlæsere"
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: Blueprint-editor med redigerbare, genererede sektioner",
+        "videoSlot": "Indsæt klip på 30 sekunder: UX-flow fra koncept til redigerbart resultat"
+      },
+      {
+        "id": "2",
+        "title": "Kreditbudget og omkostningsstyring",
+        "description": "Overvåg kreditforbruget i realtid, og fastlæg begrænsninger, før der igangsættes dyre genereringsprocesser.",
+        "keyFeatures": [
+          "Kreditforbrug i realtid – fordelt på projekt og drift",
+          "Sikkerhedsforanstaltninger i produktionen – før omkostningstunge genereringskørsler",
+          "Gennemsigtige prisoversigter – til TTS, video og intelligens",
+          "Overblik over budgettet – til teams og selvstændige skabere"
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: panel for kreditforbrug og BYOK-indstillinger",
+        "videoSlot": "Indsæt klip på 30 sekunder: budget-dashboard og vigtig konfiguration",
+        "underTheHood": {
+          "title": "Under motorhjelmen",
+          "body": "Til produktionsteam med eksisterende cloud-aftaler:",
+          "bullets": [
+            "Vertex AI BYOK — fakturering og styring på virksomhedsniveau",
+            "Til- og fravalg af udbydere i låneberegneren",
+            "Gennemsigtige prislister for platformen ved siden af dine nøgletal"
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "title": "Ethvert koncept, én produktionsarbejdsgang",
+        "description": "Brug én pålidelig proces til træning, podcasts, nyheder, videoer til boligsalg og filmisk indhold.",
+        "keyFeatures": [
+          "Én pipeline – podcast, nyheder, uddannelse, ejendomme og filmiske formater",
+          "Projektskabeloner – Studio tilpasser sig dit kildemateriale",
+          "Samme Blueprint → Manuskript → Produktionsforløb – uanset genre",
+          "Intet skift mellem værktøjer – fra idé til levering"
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: Delt visning eller gitter, der viser skabeloner til podcasts, nyheder, ejendomshandel og filmproduktion, som fødes ind i én samlet SceneFlow-pipeline-brugerflade.",
+        "videoSlot": "Indsæt klip på 30 sekunder: \"Start med hvilket som helst kildemateriale...\" – der klikkes på Nyt projekt -> Podcast (brugerfladen tilpasser sig lyd), efterfulgt af en visning med delt skærm, hvor nyheds- og filmprojekter samles i Blueprint-editoren."
+      },
+      {
+        "id": "4",
+        "title": "Smart automatisering med præcis redigeringskontrol",
+        "description": "SceneFlow-platformen anvender intelligens til automatisk at generere et professionelt grundlag (serie, blueprint, manuskript, produktions-prompts og redigeringer), samtidig med at den tilbyder intelligente dialoger, der giver dig fuld kontrol over redigeringen med indbyggede sikkerhedsrammer.",
+        "keyFeatures": [
+          "AI-grundlag i én arbejdsgang – serie, blueprint, manuskript og produktions-prompts",
+          "Intelligente redigeringsdialoger – rammer, ikke blind omskrivning",
+          "Acceptér, finjustér eller afvis – du har kontrollen over hvert enkelt forslag.",
+          "Mennesket i loopet – i alle produktionsfaser"
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: Intelligent dialogboks, der viser generering af baseline med redigeringskontrolelementer",
+        "videoSlot": "Indsæt klip på 30 sekunder: AI-generering af grundlag efterfulgt af brugerens præcise rettelser."
+      },
+      {
+        "id": "5",
+        "title": "Delt Reference Library for kontinuitet",
+        "description": "Sørg for konsistens i figurer, kostumer, stemmer, lokationer og rekvisitter på tværs af scener og episoder ved hjælp af genanvendelige referencer.",
+        "keyFeatures": [
+          "Genanvendelige profiler – karakterer, kostumer, stemmer, lokationer og rekvisitter",
+          "Anvendelse på tværs af scener – referencer flyder ind i hver generation",
+          "Visuel konsistens – samme ansigter og tone i output fra Imagen og Veo",
+          "Kontinuitet i franchise-skala – skabt til serier med flere afsnit"
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: Referencebibliotek, der viser kontinuitet for karakterer og rekvisitter",
+        "videoSlot": "Indsæt klip på 30 sekunder: Anvendelse af referencer på tværs af flere scener"
+      },
+      {
+        "id": "6",
+        "title": "Express-genereringsmotor",
+        "description": "Generer automatisk billeder og videosegmenter samtidigt. Med Express Storyboard kan du gennemgå og dele audiovisuelle storyboards på få minutter. Express Storyboard renderer komplette Ken Burns-scener på få minutter, mens Express Video leverer færdige videoscener på få minutter i stedet for dage.",
+        "keyFeatures": [
+          "Samtidig generering – billeder og video på tværs af scener på én gang",
+          "Express Storyboard – audiovisuelle forhåndsvisninger, der kan deles, på få minutter",
+          "Express Animatics – Ken Burns-bevægelse i stillbilleder",
+          "Express Video – klip på sceneniveau på få minutter, ikke dage"
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: Dashboard til Express-generering med Animatic-elementer og videofremgang",
+        "videoSlot": "Indsæt klip på 30 sekunder: Samtidig generering, der omdanner manuskript til animatic og derefter til den endelige video."
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance-editor",
+        "description": "Fastlæg din målgruppe for at få øjeblikkelig scoring, analyse og anbefalinger. Foretag rettelser med et enkelt klik, eller brug Guided Edits til at optimere dine episoder, Blueprint og manuskript perfekt, så du opnår størst mulig effekt.",
+        "keyFeatures": [
+          "Scoring af målgruppe – med opdeling på kategorier",
+          "Anbefalinger knyttet til specifikke afsnit – ret den rette del af din historie",
+          "Løsninger med ét klik og guidet redigering – præcise ændringer, ikke gætværk",
+          "Grænsen for produktionsklarhed – vid, hvornår du skal investere i en fuld rendering"
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: Resonance Editor med publikumsvurdering og rettelser med ét klik",
+        "videoSlot": "Indsæt klip på 30 sekunder: Anvendelse af guidede redigeringer baseret på score for publikumsrespons"
+      },
+      {
+        "id": "8",
+        "title": "Adaptiv oversættelse (70+ sprog)",
+        "description": "Lokalisér indhold i stor skala, samtidig med at den narrative hensigt og tidslinjeafstemningen bevares med henblik på flersproget levering.",
+        "keyFeatures": [
+          "Over 70 sprog – speak, dialog og tekst i stor skala",
+          "Den fortællingsmæssige hensigt bevares – betydning og timing forbliver afstemt.",
+          "Flersprogede lydspor – på scenetidslinjen",
+          "Eksportklare pakker – pr. lokalitet til distribution"
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: Flersproget tidslinje og oversættelsesindstillinger",
+        "videoSlot": "Indsæt klip på 30 sekunder: Øjeblikkelig lokalisering af en scene til flere sprog"
+      },
+      {
+        "id": "9",
+        "title": "Serieautomatisering",
+        "description": "Definér dit univers én gang, og skab sammenhængende handlingsforløb, der strækker sig over flere afsnit. Fælles Reference Library sikrer, at karakterer og tone er konsistente gennem hele sæsonen.",
+        "keyFeatures": [
+          "Definér dit univers én gang – karakterer, tone og sæsonforløb.",
+          "Sammenhængende episodeoversigter – automatisk genereret for hele sæsonen",
+          "Sporing af kontinuitet – sikring af sammenhæng i sæsoner med flere afsnit",
+          "Synkronisering mellem serie og episode – til Blueprint Studio og produktion"
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: Serieoversigt med automatisk genererede episodeforløb",
+        "videoSlot": "Indsæt klip på 30 sekunder: Konceptet udvides til en sæson med flere afsnit"
+      },
+      {
+        "id": "10",
+        "title": "Blueprint Automatisering",
+        "description": "Omdan koncepter til strukturerede treatments med logline, beats, karakterer og tone. Kør Audience Resonance, og samarbejd, før der foretages tung rendering.",
+        "keyFeatures": [
+          "Workflow for generering, gennemgang, iteration og produktionsstart",
+          "Fra koncept til struktur på få minutter – logline, narrative nøglepunkter, karakterer og tone",
+          "Audience Resonance-scoring med målværdi på 80+ før produktion",
+          "Delingslinks til samarbejdspartnere – syntese af feedback til guidet revision"
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: Automatisk genereret Blueprint med historiens nøglepunkter og karakterbuer",
+        "videoSlot": "Indsæt klip på 30 sekunder: At omdanne et koncept til en struktureret Blueprint"
+      },
+      {
+        "id": "11",
+        "title": "Produktionsautomatisering",
+        "description": "Fanerne Script og Action guider dig gennem Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer og MP4-streams – uden at skulle skifte værktøj.",
+        "keyFeatures": [
+          "Foundation – manuskript, stemmer, scenelyd, låst manuskript",
+          "Express storyboard — retning og billeder i minutter; galleri og deling",
+          "Beat Frames og Mixer – start-/slutbilleder, Director Console, rendering af MP4-streams",
+          "Produktionsstrømme — gennemgå output, genrendr forældede beats, send til Final Cut"
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: Produktionsdashboard, der viser manuskript, Beat Frames og mixer",
+        "videoSlot": "Indsæt 00:30-klip: Foundation, Express storyboard, Beat Frames og streameksport"
+      },
+      {
+        "id": "12",
+        "title": "Final Cut Samling",
+        "description": "Saml færdige produktionsstreams til én master-MP4-fil. Vælg Animatic eller video og sprog for hver scene – ingen redigering på tidslinjen; kreative ændringer forbliver i Production Mixer.",
+        "keyFeatures": [
+          "Valg af stream pr. scene — Animatic, video, sprog, version",
+          "Samlingsforudindstillinger – Alt video, Hybrid, Brugerdefineret miks",
+          "Ingen redigering på tidslinjen – kreative ændringer forbliver i Production Mixer",
+          "Master-eksport med ét klik – sammensat MP4 til Premiere"
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: Final Cut-samlingspanel med stream-vælgere pr. scene",
+        "videoSlot": "Indsæt klip på 00:30: Valg af streams, forhåndsvisning af sammensætning og eksport af master"
+      },
+      {
+        "id": "13",
+        "title": "Premiere Distribution",
+        "description": "Gennemse din master med publikumsanalyse, og udgiv derefter til YouTube med lokaliserede metadata, eller eksportér pakker til Shorts, Reels og TikTok.",
+        "keyFeatures": [
+          "Delbare Screening Room — /s/-links med scoring og valgfri analyse af engagement (samtykke fra seeren)",
+          "Dashboard med indsigt – fanerne Scoring, Biometri og Visuel",
+          "YouTube-ekspert – miniaturebillede, lokaliseret titel/beskrivelse, SceneFlow CTA",
+          "Eksportpakker og planer for vertikale kortformatklip"
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: Premiere-dashboard med indsigt og publiceringsguide",
+        "videoSlot": "Indsæt klip på 30 sekunder: Indsigter fra screening, YouTube-guide og eksportpakker"
+      },
+      {
+        "id": "14",
+        "title": "Gennemgang og analyse af målgruppen",
+        "description": "Private /s/-delingslinks til interessenter – manuelle bedømmelser, struktureret feedback og valgfri analyse af engagement (med seerens samtykke). Bruges i Premiere før publicering samt til forhåndsvisning af produktions-storyboards.",
+        "keyFeatures": [
+          "Private gennemgangssessioner – sikre delingslinks til interessenter",
+          " Struktureret feedback fra publikum – bedømmelser og åbne punkter",
+          "Valgfri analyse af engagement – med seerens samtykke før registrering",
+          "Iterér på baggrund af reelle data – finjustér Blueprint og manuskriptet ud fra anmelderindsigter."
+        ],
+        "screenshotSlot": "Indsæt skærmbillede: Screening Room-panel til analyse og feedback fra korrekturlæsere",
+        "videoSlot": "Indsæt klip på 30 sekunder: Afholdelse af en gennemgang og indsamling af data om engagement"
+      }
+    ]
+  },
+  "engineeringTrust": {
+    "badge": "Teknik og sikkerhed",
+    "title": "Bygget til",
+    "titleAccent": "Produktionsarbejdsbelastninger",
+    "subtitle": "Startup-venlig arkitektur med Google Cloud-komponenter, der understøtter sikkerhed, skalering og praktisk levering til produktion.",
+    "pillars": [
+      {
+        "id": "arkitektur",
+        "title": "Virksomhedsarkitektur",
+        "description": "Bygget på Google Cloud-infrastruktur med skalerbar orkestrering til produktionsarbejdsbelastninger og voksende teams.",
+        "highlights": [
+          "Vertex AI til genereringsarbejdsgange",
+          "Syntese af Imagen 4 og Veo 3.1",
+          "ElevenLabs TTS-integration",
+          "BYOK til styring af fakturering i store virksomheder"
+        ]
+      },
+      {
+        "id": "sikkerhed",
+        "title": "Sikkerhed og privatliv",
+        "description": "Kreativt materiale forbliver beskyttet gennem kryptering af lagrede data, adgangskontrol og en tilgang, hvor privatlivet prioriteres højest.",
+        "highlights": [
+          "Cloud-kontroller til virksomhedsbrug",
+          "AES-256-kryptering",
+          "Designet med henblik på GDPR",
+          "Se vores privatlivspolitik for håndtering af data"
+        ]
+      },
+      {
+        "id": "skala",
+        "title": "Skalérbarhed og pålidelighed",
+        "description": "Global cloud-levering understøtter pålidelige pipelines til rendering og gennemgang, i takt med at jeres volumen vokser.",
+        "highlights": [
+          "Multi-region-implementering",
+          "CDN-accelereret levering",
+          "Automatisk failover",
+          "Overvågning i realtid"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "value": "Global",
+        "label": "Levering via skyen"
+      },
+      {
+        "value": "Billede 4",
+        "label": "Billedgenerering"
+      },
+      {
+        "value": "256-bit",
+        "label": "Kryptering"
+      },
+      {
+        "value": "Døgnet rundt",
+        "label": "Overvågning"
+      }
+    ],
+    "vertexSection": {
+      "title": "Hvorfor Google Vertex AI?",
+      "subtitle": "Den tekniske voldgrav, der betyder noget",
+      "cards": [
+        {
+          "title": "Databeskyttelse",
+          "description": "Dine scripts og kreative aktiver bruges ikke til at træne fælles modeller, hvilket bidrager til at beskytte dine immaterielle rettigheder og dit arbejde for kunder.",
+          "highlight": "ikke brugt til at træne delte modeller"
+        },
+        {
+          "title": "Bygget til pålidelig gennemstrømning",
+          "description": "Produktionsorienteret infrastruktur bidrager til at opretholde stabile genereringsarbejdsgange i perioder med høj belastning."
+        },
+        {
+          "title": "Referencebevidst konsistens",
+          "description": "SceneFlow benytter referencebevidst generering til at forbedre konsistensen på tværs af karakterer, lokationer og rekvisitter fra scene til scene."
+        }
+      ]
+    },
+    "partnership": {
+      "poweredBy": "Drevet af Google Cloud med Vertex AI, cloud-lagring og oversættelsesværktøjer",
+      "footnote": "SceneFlow AI kører på en skalerbar Google Cloud-infrastruktur, der er designet til vækst hos startups og til at imødekomme store virksomheders krav."
+    },
+    "attribution": "— SceneFlow-ingeniørteamet"
+  },
+  "coreCapabilities": {
+    "audienceResonance": {
+      "badge": "Intelligenslag",
+      "title": "Audience Resonance-editor",
+      "description": "Kend din score, før du investerer i fuld rendering. Sigt efter Audience Resonance-scorer Blueprint og et manuskript med konkrete forbedringsforslag – optimér hvert enkelt trin, før du går videre til Express og videogenerering.",
+      "bullets": [
+        "Fastlæg din specifikke målgruppe",
+        "Få score, analyse og anbefalinger i realtid",
+        "Løsninger med ét klik til at udbedre narrative svagheder",
+        "Guidet redigering til optimering af episoder, Blueprint og manuskript"
+      ],
+      "cta": "Analyser dit manuskript",
+      "howWeScore": {
+        "toggle": "Sådan bedømmer vi",
+        "title": "Sådan fungerer Audience Resonance",
+        "description": "Audience Resonance kombinerer analyse af den narrative struktur (klarhed, tempo, følelsesmæssig bue) med, hvor godt indholdet passer til den målgruppepersona, du definerer i Blueprint – frem for blot overfladiske nøgletal eller fastholdelsesdata fra tiden efter udgivelsen. Anbefalingerne er knyttet til specifikke dele af manuskriptet, så du kan udbedre eventuelle problemer, før du går videre til Express eller selve videogenereringen.",
+        "bullets": [
+          "Vurderer Blueprint og manuskriptet i forhold til din angivne målgruppe",
+          "Anbefalinger på sektionsniveau – ikke et \"black box\"-tal, hvor man bare skal stole på os",
+          "Praktiske rettelser med ét klik og guidet redigering – ikke bare en karakter",
+          "Kør det, før der bruges mange ressourcer på rendering, ikke efter publicering."
+        ]
+      }
+    },
+    "express": {
+      "badge": "Hyperhurtig produktion",
+      "title": "Sceneflow Express",
+      "description": "Generér automatisk storyboards, animatics og videosekvenser samtidigt. Gå fra manuskript til en forhåndsvisning, der kan deles, på få minutter – og godkend derefter Beat Frames før den endelige investering i F2V.",
+      "items": [
+        {
+          "title": "Express Storyboard",
+          "desc": "Gennemgå og del lyd- og videostoryboards på få minutter i stedet for timer.",
+          "time": "Minutter vs. timer"
+        },
+        {
+          "title": "Udtryk Animatic'er",
+          "desc": "Generér øjeblikkeligt komplette animatic-scener i Ken Burns-stil med voiceovers af høj kvalitet.",
+          "time": "Minutter vs. timer"
+        },
+        {
+          "title": "Express Video",
+          "desc": "Koordinér samtidig generering af billeder og video med henblik på levering af den komplette scene.",
+          "time": "Minutter kontra dage"
+        }
+      ],
+      "cta": "Start ekspres-rendering"
+    }
+  },
+  "exitIntent": {
+    "title": "Vent! Gå ikke tomhændet derfra.",
+    "subtitle": "Få eksklusiv tidlig adgang og tips til AI-drevet filmproduktion",
+    "benefits": [
+      "Ugentlige tutorials i AI-filmproduktion",
+      "Tidlig adgang til nye funktioner",
+      "Eksklusive rabatter til creators"
+    ],
+    "emailPlaceholder": "Indtast din e-mail",
+    "subscribe": "Få tidlig adgang",
+    "subscribing": "Abonnerer...",
+    "or": "eller",
+    "startNow": "Kom i gang med at skabe nu for kun 9 $ →",
+    "privacy": "Ingen spam, nogensinde. Afmeld når som helst.",
+    "successTitle": "Du står på listen!",
+    "successSubtitle": "Tjek din indbakke for eksklusive tips om filmskabelse og opdateringer om tidlig adgang.",
+    "ctaText": "Begynd at udforske – 9 $",
+    "closePopup": "Luk pop-up"
+  },
+  "pricing": {
+    "badge": "Forbrugsbaseret prissætning",
+    "title": "Betal for det, du skaber",
+    "subtitle": "Én basisplan for adgang til platformen. Credits til AI-generering. Fyld op, når du har brug for mere. Fuld kontrol, intet spild.",
+    "valueAnchor": {
+      "traditionalCost": "Over 2.000 $",
+      "traditionalLabel": "Traditionel prævisualisering",
+      "vs": "mod",
+      "sceneFlowCost": "49-149 $",
+      "sceneFlowLabel": "SceneFlow månedlig",
+      "saveBadge": "Spar over 90 % pr. projekt"
+    },
+    "teamCta": {
+      "title": "Internt team eller institution?",
+      "description": "Book en gennemgang af arbejdsgange for teams inden for kommunikation, L&D og marketing",
+      "button": "Gennemgang af bogen"
+    },
+    "agencyCta": {
+      "title": "Bureau eller produktionshus?",
+      "description": "Skræddersyede kreditter, SLA og dedikeret support i stor skala",
+      "button": "Kontakt salgsafdelingen"
+    },
+    "byok": {
+      "title": "Medbring din egen nøgle",
+      "badge": "Pro- og Studio-abonnementer",
+      "description": "Har du allerede API-nøgler til Vertex AI eller ElevenLabs? Brug dem sammen med SceneFlow AI, og spar op til 80 % på platformskreditter.",
+      "savingsHighlight": "80 % i platformskreditter",
+      "benefits": [
+        {
+          "title": "80 % besparelse på SceneFlow-kredit",
+          "description": "Betal kun et platformgebyr på 20 % for orkestrering og værktøjer"
+        },
+        {
+          "title": "Udnyt virksomhedsplaner",
+          "description": "Benyt dine eksisterende Vertex AI- eller ElevenLabs-mængderabatter"
+        },
+        {
+          "title": "Fuld kontrol",
+          "description": "Dine nøgler, din fakturering, din omkostningsstyring"
+        }
+      ],
+      "supportedProviders": "Understøttede udbydere",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "Tekst-til-tale og stemmekloning",
+      "savingsLabel": "80 % besparelse",
+      "onImagesVideo": "på billeder og video",
+      "onVoiceover": "som voiceover",
+      "note": "De viste kreditbesparelser er besparelser på SceneFlow-platformen. Dine faktiske samlede omkostninger afhænger af din personlige eller virksomhedsmæssige API-pris hos den enkelte udbyder."
+    },
+    "creditTopUps": {
+      "title": "Har du brug for flere credits?",
+      "subtitle": "Fyld op når som helst. Dine credits udløber aldrig.",
+      "packs": [
+        {
+          "label": "Startpakke",
+          "description": "Perfekt til hurtig repetition"
+        },
+        {
+          "label": "Scenepakke",
+          "description": "Gennemfør et kort projekt"
+        },
+        {
+          "label": "Produktionspakke",
+          "description": "Vigtig filmsekvens"
+        },
+        {
+          "label": "Studiepakke",
+          "description": "Fuld produktionskapacitet"
+        }
+      ],
+      "creditsUnit": "medvirkende"
+    },
+    "calculator": {
+      "sectionTitle": "Estimer dit projekt",
+      "sectionSubtitle": "Vid præcis, hvad du skal betale, før du binder dig.",
+      "title": "Beregner til projektbudget",
+      "subtitle": "Estimer antallet af credits, før du går i gang",
+      "customize": "Tilpas parametre",
+      "imagesLabel": "Billeder, der skal genereres",
+      "videoClipsLabel": "Videoklip",
+      "voiceoverLabel": "Voiceover (minutter)",
+      "byokTitle": "Medbring din egen nøgle (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Brug dine egne API-nøgler for at spare op til 80 % på SceneFlow-kreditter. Du betaler AI-udbyderne direkte til deres gældende priser.",
+      "vertexToggle": "Vertex AI (Billeder og video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Billedgenerering",
+      "videoGeneration": "Videogenerering",
+      "voiceover": "Voiceover",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "Samlet overslag",
+      "withTopUps": "med påfyldninger",
+      "creditSavings": "SceneFlow kreditopsparing",
+      "savePercent": "Du sparer {percent} % på SceneFlow-point",
+      "transparency": "Fuld gennemsigtighed: Du kan følge dit kreditforbrug i realtid, mens du arbejder. Ingen overraskelser – du kan til enhver tid justere projektets omfang.",
+      "transparencyHighlight": "Fuld gennemsigtighed:",
+      "byokDisclaimer": "BYOK Bemærk: De viste kreditbesparelser afspejler udelukkende reduktioner i platformskredit (SceneFlow). Dine faktiske omkostninger afhænger af dine prisplaner for Vertex AI og ElevenLabs. Virksomhedsplaner eller planer med højt API-forbrug kan give yderligere besparelser.",
+      "byokDisclaimerHighlight": "BYOK Bemærk:",
+      "presets": [
+        {
+          "id": "reklame",
+          "name": "30-sekunders reklame"
+        },
+        {
+          "id": "kort",
+          "name": "Kortfilm på 2 minutter"
+        },
+        {
+          "id": "episode",
+          "name": "10-minutters episode"
+        },
+        {
+          "id": "funktion",
+          "name": "Spillefilm på 90 minutter"
+        }
+      ],
+      "minSuffix": "min"
+    },
+    "tierGrid": {
+      "productionTestFlight": "Produktionstestflyvning",
+      "getStarted": "Kom i gang",
+      "startTestFlight": "Start testflyvning",
+      "loading": "Indlæser...",
+      "mostPopular": "Mest populære",
+      "creditsPerMonth": "Credits pr. måned",
+      "storage": "Opbevaring",
+      "perMonth": "/måned"
+    },
+    "trust": {
+      "cancelAnytime": "Opsig når som helst",
+      "moneyBack": "14 dages pengene-tilbage-garanti",
+      "creditsNeverExpire": "Credits udløber aldrig (Explorer-pakke)"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "description": "Engangskøb for at prøve det af",
+        "features": [
+          "Engangskøb",
+          "750 credits (udløber aldrig)",
+          "5 GB lagerplads (30 dage)",
+          "Fuld adgang til platformen",
+          "MP4-eksport (enhver opløsning)",
+          "AI-voiceover (70+ sprog)"
+        ]
+      },
+      "subscriptions": [
+        {
+          "id": "forret",
+          "name": "Forret",
+          "description": "Til individuelle skabere",
+          "features": [
+            "Fuld adgang til platformen",
+            "4.500 credits/måned inkluderet",
+            "25 GB aktiv lagring",
+            "MP4-eksport (enhver opløsning)",
+            "AI-voiceover (70+ sprog)",
+            "E-mail-support"
+          ]
+        },
+        {
+          "id": "pro",
+          "name": "Pro",
+          "description": "Til professionelle skabere",
+          "features": [
+            "Alt i Starter samt:",
+            "15.000 credits/måned inkluderet",
+            "100 GB aktiv lagring",
+            "Adgang til Veo 3.1-kvalitet (4K)",
+            "Motor til sikring af karakterkonsistens",
+            "Stemmekloning",
+            "BYOK (Medbring din egen nøgle)",
+            "3 holdpladser",
+            "Prioriteret support"
+          ]
+        },
+        {
+          "id": "studie",
+          "name": "Studie",
+          "description": "Til teams og bureauer",
+          "features": [
+            "Alt i Pro samt:",
+            "75.000 credits/måned inkluderet",
+            "500 GB aktiv lagring",
+            "Veo 3.1 4K-prioritetskø",
+            "Ubegrænset karakterkonsistens",
+            "Eksport af white-label-produkter",
+            "API-adgang",
+            "10 pladser til teamet",
+            "Dedikeret kundeansvarlig",
+            "Enterprise-SLA kan fås på forespørgsel"
+          ]
+        }
+      ]
     }
   },
   "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
+    "badge": "Har du spørgsmål?",
+    "title": "Ofte stillede spørgsmål",
+    "subtitle": "Alt, hvad du behøver at vide om SceneFlow AI",
     "items": [
       {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+        "question": "Hvordan forløber SceneFlow-arbejdsprocessen fra idé til en video, der er klar til udgivelse?",
+        "answer": "SceneFlow benytter en struktureret arbejdsgang: Serie (valgfri) → Blueprint → Produktion → Final Cut → Premiere. Blueprint definerer historiestruktur og målgruppe ved hjælp af Audience Resonance. Produktionen genererer manuskript, storyboard, beat-video og renderede scenestreams. Final Cut samler udvalgte streams til én master-MP4 – der er ikke tale om en tidslinje-editor. Premiere håndterer visninger, indsigt via analyse, publicering på YouTube og eksportpakker."
       },
       {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+        "question": "Hvordan adskiller SceneFlow sig fra Gemini Studio eller Google Flow?",
+        "answer": "Gemini Studio og Google Flow fokuserer på klip, der skabes ud fra prompts. SceneFlow samler hele produktionsworkflowet: strukturerede faser med redigerbare grundlag, Reference Library og Beat Frames for ensartethed, Audience Resonance før ressourcekrævende rendering, automatiseret mixer og sammensætning af streams samt validering via Screening Room før publicering – alt sammen i ét guidet studiemiljø."
       },
       {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+        "question": "Kan jeg redigere AI-genererede manuskripter, billedmateriale og lyd?",
+        "answer": "Ja. Alt genereret indhold kan stadig redigeres. Du kan omskrive manuskripter, justere instruktionen, genskabe specifikke sekvenser, finjustere voiceover og optimere timingen i Production Mixer. Final Cut samler udelukkende færdige streams – kreative ændringer foretages tidligere i processen, i selve produktionen."
       },
       {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+        "question": "Hvordan fungerer Target Audience Resonance nu?",
+        "answer": "Audience Resonance kombinerer analyse af den narrative struktur (klarhed, tempo, følelsesmæssig bue) med, hvor godt indholdet matcher den målgruppepersona, du definerer i Blueprint – frem for at basere sig på fastholdelsesdata fra tiden efter udgivelsen. Du får anbefalinger på afsnitsniveau og løsninger med ét klik i forbindelse med gennemgang af serien, Blueprint og manuskriptet, inden den tunge rendering påbegyndes."
       },
       {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
+        "question": "Kan jeg producere flersprogede videoer til produktlister eller markedsføring?",
+        "answer": "Ja. Du kan generere og lokalisere videoer på mere end 70 sprog ved hjælp af synkroniserede workflows til timing. Teams udarbejder typisk en masterversion og producerer derefter sprogvarianter til globale opkøbere, kunder eller regionale målgrupper."
       },
       {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "question": "Hvad gør Premiere, hvis Screening Room er gennemgangsfasen?",
+        "answer": "Screening Room er gennemgangsmiljøet i Premiere – og bruges også til forhåndsvisning af produktions-storyboards. Del /s/-links, indhent feedback fra interessenter og valgfri engagementsanalyse (med seerens samtykke), gennemgå scoring og visuel indsigt, og udgiv derefter via YouTube-guiden eller eksportpakker."
       },
       {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
+        "question": "Har jeg brug for teknisk erfaring eller erfaring med redigering?",
+        "answer": "Nej. SceneFlow er udviklet til kreative og teams uden teknisk baggrund. Du starter med guidet input og redigerbare AI-grundlag i hver fase – ikke kompleks prompt engineering eller kombinationer af mange forskellige værktøjer."
       },
       {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
+        "question": "Hvordan fungerer Explorer-planen?",
+        "answer": "For 9 $ får du 750 credits til at afprøve hele arbejdsgangen via et engangskøb. Det er tænkt som en praktisk test, så du kan udføre reelle opgaver – fra koncept til færdig video – før du vælger et månedligt abonnement."
       },
       {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
+        "question": "Hvordan håndteres kreditter og BYOK?",
+        "answer": "Forbrug af credits spores direkte på platformen, så teams kan styre budgettet ud fra workflow-faser. Pro- og Studio-abonnementer understøtter desuden \"Bring Your Own Key\" (BYOK) hos understøttede udbydere, hvilket giver organisationer med eksisterende udbyderaftaler bedre kontrol over omkostningerne."
       },
       {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+        "question": "Hvad kan jeg realistisk set skabe med SceneFlow?",
+        "answer": "Teams bruger SceneFlow til rundvisninger i boliger, undervisningsindhold, podcasts med visuel historiefortælling, forklarende nyhedsindslag, brand-kampagner og filmiske episodesserier. Det samme workflow understøtter produktion af både korte og lange formater."
       }
     ]
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
-    "cta": "Launch Your Studio for $9"
+    "title": "Klar til at teste hele pipelinen?",
+    "subtitle": "Gennemfør hele processen – fra koncept og storyboard til video og færdig MP4-fil – i ét og samme studie. Start med planen til $9 (Explorer), og oplev \"beat-first\"-arbejdsgangen i praksis.",
+    "cta": "Start dit studie for 9 $"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
-    "product": "Product",
-    "resources": "Resources",
-    "legal": "Legal",
+    "description": "Fuldautomatiseret videoproduktion – fra koncept til udgivelsesklart master-output. Ét guidet studie: Blueprint → Produktion → Final Cut → Premiere.",
+    "product": "Produkt",
+    "resources": "Ressourcer",
+    "legal": "Juridisk",
     "links": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "howItWorks": "How It Works",
-      "faq": "FAQ",
-      "gettingStarted": "Getting Started",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "trustSafety": "Trust & Safety",
-      "refunds": "Refund Policy",
-      "contact": "Contact Us"
+      "features": "Funktioner",
+      "pricing": "Priser",
+      "howItWorks": "Sådan fungerer det",
+      "faq": "Ofte stillede spørgsmål",
+      "gettingStarted": "Kom godt i gang",
+      "privacy": "Privatlivspolitik",
+      "terms": "Servicevilkår",
+      "trustSafety": "Tillid og sikkerhed",
+      "refunds": "Refusionspolitik",
+      "contact": "Kontakt os"
     },
-    "tagline": "Made with ❤️ for creators",
-    "taglineSub": "From Idea to Published Video",
-    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
-    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "tagline": "Lavet med ❤️ til skabere",
+    "taglineSub": "Fra idé til udgivet video",
+    "securePayments": "Sikre betalinger behandlet af Whop, vores Merchant of Record",
+    "morLine": "Sikre betalinger, skatteberegning og overholdelse af regler håndteres af Whop, vores Merchant of Record, på vegne af Life Focus, LLC.",
+    "copyright": "© 2026 SceneFlow AI. Alle rettigheder forbeholdes.",
+    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Kontakt: brian@sfai.studio",
+    "poweredBy": "Drevet af Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "See Pricing",
-    "tryNine": "Try $9",
-    "tryForNine": "Try for $9",
-    "dismiss": "Dismiss"
+    "seePricing": "Se priser",
+    "tryNine": "Prøv med 9 $",
+    "tryForNine": "Prøv det for 9 $",
+    "dismiss": "Afvis"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
     "pause": "Pause",
-    "play": "Play",
-    "mute": "Mute",
-    "unmute": "Unmute"
+    "play": "Afspil",
+    "mute": "Slå lyd fra",
+    "unmute": "Slå lyden til",
+    "expandVideo": "Udvid video"
   }
 }

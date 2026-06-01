@@ -1,618 +1,1411 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
-    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
+    "title": "SceneFlow AI - এআই-চালিত ভিডিও তৈরি",
+    "description": "এআই-চালিত ওয়ার্কফ্লো অটোমেশনের মাধ্যমে আপনার ধারণাগুলোকে পেশাদার ভিডিওতে রূপান্তর করুন।"
   },
   "nav": {
-    "workflow": "The Workflow",
-    "platformWalkthrough": "Platform Walkthrough",
-    "plansPricing": "Plans & Pricing",
-    "more": "More",
-    "useCases": "Use Cases",
+    "workflow": "কর্মপ্রবাহ",
+    "platformWalkthrough": "প্ল্যাটফর্ম পরিচিতি",
+    "plansPricing": "প্ল্যান ও মূল্যতালিকা",
+    "more": "আরও",
+    "useCases": "ব্যবহারের ক্ষেত্রসমূহ",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform & Trust",
-    "faq": "FAQ",
-    "signIn": "Sign In",
-    "startProject": "Start a Project",
-    "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "platformTrust": "প্ল্যাটফর্ম ও আস্থা",
+    "faq": "সচরাচর জিজ্ঞাসিত প্রশ্ন",
+    "signIn": "সাইন ইন",
+    "startProject": "একটি প্রকল্প শুরু করুন",
+    "dashboard": "ড্যাশবোর্ড",
+    "adminPanel": "অ্যাডমিন প্যানেল",
+    "signOut": "সাইন আউট",
+    "goToDashboard": "ড্যাশবোর্ডে যান",
+    "userFallback": "ব্যবহারকারী",
+    "searchLanguages": "ভাষা খুঁজুন...",
+    "noLanguagesFound": "কোনো ভাষা পাওয়া যায়নি"
   },
   "floatingNav": {
-    "compare": "Compare",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "platformWalkthrough": "Platform Walkthrough",
-    "platform": "Platform",
-    "pricing": "Pricing",
-    "faq": "FAQ"
+    "compare": "তুলনা করুন",
+    "howItWorks": "এটি যেভাবে কাজ করে",
+    "useCases": "ব্যবহারের ক্ষেত্রসমূহ",
+    "platformWalkthrough": "প্ল্যাটফর্ম পরিচিতি",
+    "platform": "প্ল্যাটফর্ম",
+    "pricing": "মূল্য",
+    "faq": "সচরাচর জিজ্ঞাসিত প্রশ্ন"
   },
   "hero": {
-    "headline": "Make professional video without a production team or a dozen apps.",
-    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.",
-    "ctaSecondary": "Watch the 'What's Possible'",
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "headline": "একাধিক AI ট্যাব নিয়ে আর ছোটাছুটি নয়; একটি স্টুডিওর মাধ্যমেই ধারণা থেকে শুরু করে প্রকাশ-উপযোগী ভিডিও তৈরি করুন।",
+    "subheadline": "ধারণা থেকে শুরু করে প্রকাশের জন্য প্রস্তুত চূড়ান্ত ভিডিও—সবকিছুর জন্যই রয়েছে একটি নির্দেশিত স্টুডিও। চূড়ান্ত ভিডিওর জন্য অর্থ প্রদানের আগেই আপনার স্টোরিবোর্ড দেখে নিন; বারবার আন্দাজে ভিডিও তৈরি করে ক্রেডিট নষ্ট না করে বরং শুরুতেই এর রূপ ও শৈলী অনুমোদন করে নিন। SceneFlow স্ক্রিপ্ট, স্টোরিবোর্ড, ভয়েস এবং ভিডিও সংযোজনের মতো শ্রমসাধ্য কাজগুলো স্বয়ংক্রিয়ভাবে সম্পন্ন করে, অথচ প্রতিটি ধাপের নিয়ন্ত্রণ আপনার হাতেই থাকে।",
+    "audienceMicroLine": "এটি তৈরি করা হয়েছে সেইসব নির্মাতার জন্য যারা ফলাফল চান এবং সেইসব দলের জন্য যারা দেখতে চান এটি কীভাবে কাজ করে।",
+    "ctaSecondary": "'কী কী সম্ভব' (What's Possible) দেখুন",
+    "ctaToolStack": "এটি কীভাবে আপনার টুল স্ট্যাককে প্রতিস্থাপন করে, তা দেখুন।",
+    "languagePrompt": "আপনার নিজের ভাষায় নায়কের কথা শুনুন — একই পাইপলাইন, নতুন বাজার",
+    "multilangHint": "'হিরো' ৭টি ভাষায় ডাবিং করে — এর পূর্ণাঙ্গ পাইপলাইন প্রোডাকশন পর্যায়ে ৭০টিরও বেশি ভাষা সমর্থন করে।",
+    "playWithNarration": "বর্ণনাসহ চালান",
+    "tapToHear": "শুনতে ট্যাপ করুন",
+    "fullscreen": "পূর্ণ পর্দা",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
-        "nativeLabel": "English"
+        "label": "ইংরেজি",
+        "nativeLabel": "ইংরেজি"
       },
       "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
+        "label": "স্প্যানিশ",
+        "nativeLabel": "স্প্যানিশ"
       },
       "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
+        "label": "পর্তুগিজ",
+        "nativeLabel": "পর্তুগিজ"
       },
       "hi": {
-        "label": "Hindi",
-        "nativeLabel": "हिन्दी"
+        "label": "হিন্দি",
+        "nativeLabel": "হিন্দি"
       },
       "zh": {
-        "label": "Chinese",
-        "nativeLabel": "中文"
+        "label": "চীনা",
+        "nativeLabel": "চীনা ভাষা"
       },
       "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
+        "label": "আরবি",
+        "nativeLabel": "আরবি"
       },
       "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
+        "label": "থাই",
+        "nativeLabel": "থাই"
       }
     },
-    "soon": "Soon"
+    "soon": "শীঘ্রই"
   },
   "valueProp": {
     "pills": [
       {
-        "label": "One Studio",
-        "detail": "Concept to publish in one place"
+        "label": "ওয়ান স্টুডিও",
+        "detail": "এক জায়গায় প্রকাশের ধারণা"
       },
       {
-        "label": "Approve Before Final Video",
-        "detail": "Review storyboard beats before you render"
+        "label": "চূড়ান্ত ভিডিওর আগে অনুমোদন করুন",
+        "detail": "রেন্ডার করার আগে স্টোরিবোর্ডের ধাপগুলো পর্যালোচনা করুন।"
       },
       {
-        "label": "Test Your Story First",
-        "detail": "Know what lands before heavy spend"
+        "label": "প্রথমে আপনার গল্পটি যাচাই করে নিন।",
+        "detail": "বড় অঙ্কের খরচ করার আগে জেনে নিন কী ফলাফল পাওয়া যাচ্ছে।"
       },
       {
-        "label": "Publish-Ready Output",
-        "detail": "Master MP4 + distribution bundles"
+        "label": "প্রকাশের জন্য প্রস্তুত আউটপুট",
+        "detail": "মাস্টার MP4 + বিতরণ প্যাকেজ"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Who are you? Pick your path",
-    "seeExamples": "See examples",
-    "examplesFor": "Examples for {label}:",
-    "andMore": ", and more.",
+    "prompt": "আপনি কে? আপনার পথ বেছে নিন।",
+    "seeExamples": "উদাহরণগুলো দেখুন",
+    "examplesFor": "{label}-এর উদাহরণ:",
+    "andMore": ", এবং আরও অনেক কিছু।",
+    "modes": {
+      "automate": {
+        "label": "এটি স্বয়ংক্রিয় করুন",
+        "description": "নির্দেশিত কর্মপ্রবাহ — স্টোরিবোর্ড অনুমোদন করুন, দ্রুত সম্পন্ন করুন"
+      },
+      "engine": {
+        "label": "আমাকে ইঞ্জিনটা দেখান।",
+        "description": "আর্কিটেকচার, BYOK এবং প্ল্যাটফর্মের গভীরতা"
+      }
+    },
     "paths": [
       {
-        "id": "creator",
-        "label": "Creator",
-        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "id": "স্রষ্টা",
+        "label": "স্রষ্টা",
+        "outcome": "নির্ধারিত সময়েই পণ্য বাজারে আনুন — প্রতিটি টুলে নতুন করে তৈরি করা বন্ধ করুন।",
         "useCases": [
-          "YouTube & episodic series",
-          "Video podcasts & show clips",
-          "Hyper-local & JIT news",
-          "Documentaries & docuseries",
-          "How-to & skill channels",
-          "Sports recaps & commentary"
+          "ইউটিউব ও এপিসোডিক সিরিজ",
+          "ভিডিও পডকাস্ট ও শো-এর ক্লিপ",
+          "অতি-স্থানীয় ও তাৎক্ষণিক (JIT) সংবাদ",
+          "প্রামাণ্যচিত্র ও প্রামাণ্য ধারাবাহিক",
+          "পদ্ধতি ও দক্ষতা বিষয়ক চ্যানেল",
+          "খেলাধুলার সারসংক্ষেপ ও ধারাভাষ্য"
         ]
       },
       {
-        "id": "team",
-        "label": "In-house team",
-        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "id": "দল",
+        "label": "অভ্যন্তরীণ দল",
+        "outcome": "ধীরগতির ভেন্ডর প্রক্রিয়ার পরিবর্তে কার্যকর ব্যবস্থা গ্রহণ করুন — ব্র্যান্ড ও বাজেট নিয়ন্ত্রণ করুন।",
         "useCases": [
-          "Corporate L&D & compliance",
-          "Internal comms & town halls",
-          "Product explainers for sales",
-          "HR recruitment & culture",
-          "K-12 / higher-ed lessons",
-          "Public health & safety updates"
+          "কর্পোরেট শিক্ষা ও উন্নয়ন এবং কমপ্লায়েন্স",
+          "অভ্যন্তরীণ যোগাযোগ ও টাউন হল সভা",
+          "বিক্রয়-সহায়ক পণ্য পরিচিতিমূলক উপকরণ",
+          "এইচআর নিয়োগ ও সংস্কৃতি",
+          "কে-১২ / উচ্চশিক্ষার পাঠ",
+          "জনস্বাস্থ্য ও নিরাপত্তা বিষয়ক হালনাগাদ তথ্য"
         ]
       },
       {
-        "id": "productionShop",
-        "label": "Production shop",
-        "outcome": "Productize a niche with repeatable intake → delivery",
+        "id": "উৎপাদনশালা",
+        "label": "উৎপাদন কর্মশালা",
+        "outcome": "পুনরাবৃত্তিযোগ্য গ্রহণ ও সেবা প্রদানের প্রক্রিয়ার মাধ্যমে কোনো নির্দিষ্ট বাজার-খাতকে (niche) পণ্যের রূপ দিন।",
         "useCases": [
-          "Video memoir packages",
-          "Legacy & tribute videos",
-          "Voice-cloned narration",
-          "White-label studio templates",
-          "Real estate & hospitality tours",
-          "Subscription video services"
+          "ভিডিও স্মৃতিকথা প্যাকেজ",
+          "স্মারক ও শ্রদ্ধাঞ্জলি ভিডিও",
+          "কণ্ঠস্বর-অনুকরণমূলক বর্ণনা",
+          "হোয়াইট-লেবেল স্টুডিও টেমপ্লেট",
+          "রিয়েল এস্টেট ও হসপিটালিটি বিষয়ক পরিদর্শন",
+          "সাবস্ক্রিপশন-ভিত্তিক ভিডিও পরিষেবা"
         ]
       },
       {
-        "id": "agency",
-        "label": "Agency",
-        "outcome": "Faster pitches and scalable client delivery",
+        "id": "সংস্থা",
+        "label": "সংস্থা",
+        "outcome": "দ্রুততর পিচ এবং সম্প্রসারণযোগ্য ক্লায়েন্ট ডেলিভারি",
         "useCases": [
-          "Client pitch pre-viz",
-          "Product launch campaigns",
-          "Case studies & testimonials",
-          "Event & conference promos",
-          "Multi-language campaigns",
-          "Property marketing for clients"
+          "ক্লায়েন্ট পিচের জন্য প্রি-ভিজ্যুয়ালাইজেশন",
+          "পণ্য উন্মোচন প্রচারভিযান",
+          "কেস স্টাডি ও গ্রাহক মতামত",
+          "ইভেন্ট ও সম্মেলনের প্রচারমূলক কার্যক্রম",
+          "বহুভাষিক প্রচারণা",
+          "ক্লায়েন্টদের জন্য প্রপার্টি মার্কেটিং"
         ]
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Why SceneFlow vs prompt-and-generate tools",
-    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "title": "SceneFlow বনাম প্রম্পট-অ্যান্ড-জেনারেট টুলস: কেন এটি বেছে নেবেন?",
+    "subtitle": "Gemini Studio এবং Google Flow ক্লিপের ক্ষেত্রে অত্যন্ত কার্যকর। SceneFlow-এ সম্পূর্ণ প্রোডাকশন ওয়ার্কফ্লো অন্তর্ভুক্ত রয়েছে।",
     "rows": [
       {
-        "them": "Prompt + clip generation in isolation",
-        "us": "Structured phases with editable baselines at each step"
+        "them": "পৃথকভাবে প্রম্পট ও ক্লিপ তৈরি",
+        "us": "প্রতিটি ধাপে পরিবর্তনযোগ্য বেসলাইনসহ সুবিন্যস্ত পর্যায়সমূহ"
       },
       {
-        "them": "Manual consistency across sessions",
-        "us": "Reference Library + Beat Frames lock visuals before video"
+        "them": "বিভিন্ন সেশনের মধ্যে ম্যানুয়াল সামঞ্জস্য",
+        "us": "ভিডিওর আগে ভিজ্যুয়াল লক করুন Reference Library + Beat Frames"
       },
       {
-        "them": "No audience validation workflow",
-        "us": "Audience Resonance before render; Screening Room before publish"
+        "them": "অডিয়েন্স যাচাইকরণ কর্মপ্রবাহ নেই",
+        "us": "Audience Resonance রেন্ডার করার আগে; Screening Room প্রকাশ করার আগে"
       },
       {
-        "them": "No production pipeline or handoff",
-        "us": "Script → streams → assembly → distribution in one app"
-      },
-      {
-        "them": "Complex model and settings surface",
-        "us": "Guided Studio UX with credits and BYOK guardrails"
+        "them": "কোনো প্রোডাকশন পাইপলাইন বা হস্তান্তর প্রক্রিয়া নেই",
+        "us": "স্ক্রিপ্ট → স্ট্রিম → অ্যাসেম্বলি → ডিস্ট্রিবিউশন — একটি অ্যাপেই।"
       }
     ],
-    "themHeader": "Typical clip-generation tools",
-    "usHeader": "SceneFlow bundles"
+    "themHeader": "সাধারণ ক্লিপ-তৈরির টুল",
+    "usHeader": "SceneFlow বান্ডেল"
   },
   "beatFirstPipeline": {
-    "title": "Beat-First Video Pipeline",
-    "subtitle": "Approve before you render — not slot-machine regeneration",
-    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "title": "বিট-কেন্দ্রিক ভিডিও পাইপলাইন",
+    "subtitle": "রেন্ডার করার আগেই অনুমোদন নিন — স্লট-মেশিনের মতো বারবার নতুন করে তৈরি করা নয়।",
+    "intro": "অনুমান-নির্ভর বা বারবার পরীক্ষা-নিরীক্ষা করে ভিডিও তৈরির প্রয়োজন নেই। চূড়ান্ত ভিডিওর জন্য SceneFlow ক্রেডিট খরচ করার আগেই আপনি এর রূপ দেখে নিতে এবং অনুমোদন দিতে পারবেন।",
+    "description": "SceneFlow প্রতিটি ধাপে ভিজ্যুয়াল অনুমোদনের প্রক্রিয়াটি সুবিন্যস্ত করে: পর্যালোচনার জন্য Express storyboard, কম্পোজিশন চূড়ান্ত করার জন্য Beat Frames এবং এরপর প্রতি বিটের জন্য F2V। 'ড্রিফট' (drift) ও 'হ্যালুসিনেশন'-এর (hallucinations) পেছনে ক্রেডিট খরচ করার আগেই আপনি দৃশ্যরূপটি পরিমার্জন করে নেন।",
     "steps": [
-      "Express storyboard — share audio-visual beats for review in minutes",
-      "Beat Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Express storyboard — পর্যালোচনার জন্য কয়েক মিনিটের মধ্যেই অডিও-ভিজ্যুয়াল বিট শেয়ার করুন",
+      "Beat Frames — Reference Library-এর ধারাবাহিকতা বজায় রেখে শুরু/শেষের কম্পোজিশন লক করা",
+      "প্রতি বিটে F2V — অন্ধ প্রম্পটের পরিবর্তে অনুমোদিত ফ্রেম থেকে ভিডিও তৈরি করুন।",
+      "Production Mixer — Final Cut অ্যাসেম্বলিতে টাইমিং, অডিও এবং স্ট্রিম এক্সপোর্ট"
     ],
-    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+    "footerLine": "স্লট-মেশিন পুনর্নির্মাণের (রিজেনারেশন) প্রয়োজনীয়তা কমানো — চূড়ান্ত ভিডিওর জন্য অর্থ ব্যয়ের আগেই ভিজ্যুয়াল অনুমোদন করে নিন।"
+  },
+  "toolStack": {
+    "badge": "পরিচিত মনে হচ্ছে?",
+    "title": "ত্রুটিপূর্ণ পদ্ধতি বনাম SceneFlow পদ্ধতি",
+    "subtitle": "মাত্র একটি ভিডিও তৈরি ও প্রকাশ করার জন্য পাঁচটি ট্যাব খোলা, এক্সপোর্ট করা ফাইল কপি-পেস্ট করা এবং প্রম্পট লিখতে লিখতে ক্লান্ত হয়ে পড়ার মতো পরিস্থিতির প্রয়োজন হওয়া উচিত নয়।",
+    "brokenWay": {
+      "title": "ভাঙা পথ",
+      "tagline": "বিচ্ছিন্ন। কায়িক। ক্লান্তিকর।",
+      "tools": [
+        {
+          "name": "চ্যাটজিপিটি",
+          "category": "চিত্রনাট্যের খসড়া"
+        },
+        {
+          "name": "মিডজার্নি",
+          "category": "এককালীন ছবি"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "ম্যানুয়াল ভিও (VO) এক্সপোর্ট"
+        },
+        {
+          "name": "Premiere",
+          "category": "হাতে সংযোজন"
+        }
+      ],
+      "chaosLabel": "পাঁচটি ট্যাব। প্রসঙ্গ হারিয়ে গেছে।",
+      "painPoints": [
+        "অ্যাপগুলোর মধ্যে কপি-পেস্ট",
+        "প্রম্পট-জনিত ক্লান্তি এবং পুনঃ-উৎপাদন চক্র",
+        "অর্থ ব্যয়ের আগে কোনো অডিয়েন্স যাচাই করা হয়নি",
+        "এক্সপোর্ট বা রপ্তানিকৃত ফাইলগুলোর সংস্করণে বিশৃঙ্খলা"
+      ],
+      "timeLabel": "প্রকল্পের সাধারণ সময়সীমা",
+      "timeValue": "২–৪ সপ্তাহ"
+    },
+    "sceneflowWay": {
+      "title": "SceneFlow-এর পদ্ধতি",
+      "tagline": "একটি স্টুডিও। রেন্ডার করার আগে অনুমোদন নিন।",
+      "stages": [
+        {
+          "label": "Blueprint",
+          "detail": "সুসংগঠিত গল্পের পরিকল্পনা"
+        },
+        {
+          "label": "তথ্যসূত্র",
+          "detail": "সামঞ্জস্যপূর্ণ চরিত্র"
+        },
+        {
+          "label": "উৎপাদন",
+          "detail": "কণ্ঠস্বর ও দৃশ্য"
+        },
+        {
+          "label": "প্রকাশ করুন",
+          "detail": "একটি মাস্টার MP4"
+        }
+      ],
+      "syncLabel": "একটিমাত্র প্রজেক্ট ফাইল — ট্যাব অদলবদলের ঝামেলা নেই",
+      "benefits": [
+        "নির্দেশিত পর্যায় — প্রম্পট ইঞ্জিনিয়ারিং নয়",
+        "ভিডিওর ক্রেডিটস-এর আগে স্টোরিবোর্ড অনুমোদন",
+        "Audience Resonance ভারী রেন্ডারের (heavy render) আগের স্কোর",
+        "একটি স্টুডিও থেকে প্রকাশ-উপযোগী মাস্টার"
+      ],
+      "timeLabel": "প্রকল্পের সাধারণ সময়সীমা",
+      "timeValue": "২–৪ দিন"
+    },
+    "comparisonCaption": "একটিমাত্র স্টুডিও বিচ্ছিন্ন প্রম্পট টুল, ম্যানুয়াল এডিট এবং একাধিক প্ল্যাটফর্মের মধ্যে কাজের আদান-প্রদানের প্রক্রিয়াকে প্রতিস্থাপন করে।",
+    "comparisonImageAlt": "প্রথাগত প্রোডাকশন খরচ বনাম SceneFlow অটোমেটেড স্টুডিও — ধারণা থেকে প্রকাশের উপযোগী ভিডিও তৈরির দ্রুততর প্রক্রিয়া"
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
-    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "title": "অতিরিক্ত খরচ বা ঝামেলা ছাড়াই দ্রুত উৎপাদন",
+    "subtitle": "বিচ্ছিন্ন সব প্রম্পট টুল ও ম্যানুয়াল সংযোজন প্রক্রিয়ার পরিবর্তে ব্যবহার করুন একটি স্বয়ংক্রিয় স্টুডিও — যা প্রাথমিক ধারণা থেকে শুরু করে প্রকাশের জন্য প্রস্তুত চূড়ান্ত সংস্করণ পর্যন্ত সবকিছুর সমাধান দেয়।",
+    "caption": "একটিমাত্র স্টুডিও বিচ্ছিন্ন প্রম্পট টুল, ম্যানুয়াল এডিট এবং একাধিক প্ল্যাটফর্মের মধ্যে কাজের আদান-প্রদানের প্রক্রিয়াকে প্রতিস্থাপন করে।",
+    "imageAlt": "প্রথাগত প্রোডাকশন খরচ বনাম SceneFlow অটোমেটেড স্টুডিও — ধারণা থেকে প্রকাশের উপযোগী ভিডিও তৈরির দ্রুততর প্রক্রিয়া"
   },
   "howItWorks": {
-    "title": "From concept to publish-ready video",
-    "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
-    "tagline": "Every step is expertly automated. Every step gives you full control.",
-    "optionalBadge": "Optional",
-    "optionalSuffix": " (optional)",
-    "readyTitle": "Ready to test the full pipeline?",
-    "explorerCta": "Start with Explorer — $9",
+    "title": "ধারণা থেকে প্রকাশের উপযোগী ভিডিও",
+    "titleAccent": "একটি নির্দেশিত পাইপলাইন",
+    "subtitle": "সিরিজটি ঐচ্ছিক। মূল ধাপগুলো হলো Blueprint → প্রোডাকশন → Final Cut → Premiere — যার মধ্যে স্টোরিবোর্ড, অ্যানিমেটিক, ভিডিও এবং মাস্টার MP4-এর মতো পর্যায়গুলো অন্তর্ভুক্ত রয়েছে।",
+    "tagline": "প্রতিটি ধাপ দক্ষতার সাথে স্বয়ংক্রিয় করা হয়েছে। প্রতিটি ধাপেই আপনি পূর্ণ নিয়ন্ত্রণ পাবেন।",
+    "optionalBadge": "ঐচ্ছিক",
+    "optionalSuffix": " (ঐচ্ছিক)",
+    "readyTitle": "সম্পূর্ণ পাইপলাইনটি পরীক্ষা করার জন্য প্রস্তুত?",
+    "explorerCta": "Explorer দিয়ে শুরু করুন — $৯",
     "phases": [
       {
-        "id": "series",
-        "stepLabel": "Series",
-        "subtitle": "Showrunner Engine",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "id": "সিরিজ",
+        "stepLabel": "সিরিজ",
+        "subtitle": "শো-রানার ইঞ্জিন",
+        "description": "আপনার জগতটিকে একবারই সংজ্ঞায়িত করুন এবং ধারাবাহিকতা বজায় রেখে একাধিক পর্বজুড়ে বিস্তৃত কাহিনি-বিন্যাস (arcs) তৈরি করুন। শেয়ার করা Reference Library পুরো সিজন জুড়ে চরিত্র ও আবহের সামঞ্জস্য বজায় রাখে।",
         "keySteps": [
-          "Define universe — characters, tone, and season arc",
-          "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "কাহিনি-জগৎ নির্ধারণ করুন — চরিত্র, মেজাজ ও সিজনের মূল আখ্যানপ্রবাহ।",
+          "পুরো সিজন জুড়ে এপিসোডের রূপরেখা স্বয়ংক্রিয়ভাবে তৈরি করুন",
+          "Blueprint-এর সাথে সমন্বয় এবং প্রতি পর্বের উৎপাদন"
         ],
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
-        ],
-        "optional": true
+          "আপনার জগতটি একবারই সুনির্দিষ্ট করে নিন—চরিত্র, আবহ এবং সিজনের মূল আখ্যান।",
+          "পুরো সিজন জুড়ে স্বয়ংক্রিয়ভাবে তৈরি সুসংহত পর্বের রূপরেখা",
+          "ধারাবাহিকতা পর্যবেক্ষণ — একাধিক পর্বের সিজনগুলোর মধ্যে সামঞ্জস্য বজায় রাখা",
+          "সিরিজ ও এপিসোডের মধ্যে সমন্বয় — Blueprint স্টুডিও ও প্রোডাকশন-এ"
+        ]
       },
       {
-        "id": "blueprint",
+        "id": "ব্লু-প্রিন্ট",
         "stepLabel": "Blueprint",
-        "subtitle": "Story Development",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "subtitle": "গল্পের বিকাশ",
+        "description": "লগলাইন, বিটস, চরিত্র এবং টোনসহ ধারণাগুলোকে সুবিন্যস্ত ট্রিটমেন্টে রূপান্তর করুন। ভারী রেন্ডারিংয়ের আগে Audience Resonance চালু করুন এবং যৌথভাবে কাজ করুন।",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
-          "Audience Resonance scoring with 80+ target",
-          "Collaborator share links and export (PDF, Doc, PPTX)"
+          "প্রস্তুতকরণ → পর্যালোচনা → পরিমার্জন → উৎপাদন শুরু",
+          "Audience Resonance ৮০-এর বেশি লক্ষ্যমাত্রা নিয়ে স্কোর করা",
+          "সহযোগীদের জন্য শেয়ার লিঙ্ক এবং এক্সপোর্ট (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
-        ],
-        "optional": false
+          "তৈরি → পর্যালোচনা → পরিমার্জন → উৎপাদন প্রক্রিয়া শুরু",
+          "কয়েক মিনিটেই ধারণা থেকে কাঠামো — লগলাইন, বিটস, চরিত্র ও সুর",
+          "প্রোডাকশনের আগে ৮০-এর বেশি লক্ষ্যমাত্রা (target) সহ Audience Resonance স্কোরিং",
+          "সহযোগীদের শেয়ার করা লিঙ্ক — মতামত বা ফিডব্যাক সমন্বয়ের মাধ্যমে নির্দেশিত পরিমার্জন"
+        ]
       },
       {
-        "id": "production",
-        "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "id": "উৎপাদন",
+        "stepLabel": "উৎপাদন",
+        "subtitle": "স্ক্রিপ্ট থেকে স্ট্রিমিং",
+        "description": "'স্ক্রিপ্ট' (Script) এবং 'অ্যাকশন' (Action) ট্যাবগুলো Foundation → Storyboard → Production → Final Cut ধাপগুলোকে পরিচালনা করে। Express storyboard, Beat Frames, Mixer এবং MP4 স্ট্রিম—কোনো টুল পরিবর্তনের প্রয়োজন নেই।",
         "keySteps": [
-          "Lock script, voices, and scene audio",
-          "Express storyboard — gallery and share for review",
-          "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "স্ক্রিপ্ট, কণ্ঠস্বর এবং দৃশ্যের অডিও চূড়ান্ত করুন",
+          "Express storyboard — গ্যালারি এবং পর্যালোচনার জন্য শেয়ার",
+          "Beat Frames → ডিরেক্টর কনসোল → রেন্ডার স্ট্রিম",
+          "সম্পন্ন স্ট্রিমগুলো Final Cut-এ পাঠান।"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
-        ],
-        "optional": false
+          "ফাউন্ডেশন — চিত্রনাট্য, কণ্ঠস্বর, দৃশ্যের অডিও, চূড়ান্ত চিত্রনাট্য",
+          "Express storyboard — দিকনির্দেশনা ও ফ্রেম (মিনিটের হিসেবে); গ্যালারি ও শেয়ার",
+          "Beat Frames এবং মিক্সার — শুরু/শেষের ফ্রেম, ডিরেক্টর কনসোল, MP4 স্ট্রিম রেন্ডার করা",
+          "প্রোডাকশন স্ট্রিম — আউটপুট পর্যালোচনা করুন, পুরনো বিট (stale beats) পুনরায় রেন্ডার করুন, Final Cut-এ পাঠান।"
+        ]
       },
       {
-        "id": "final-cut",
+        "id": "চূড়ান্ত সংস্করণ",
         "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "subtitle": "স্ট্রিম অ্যাসেম্বলি",
+        "description": "সম্পন্ন প্রোডাকশন স্ট্রিমগুলোকে একটি মাস্টার MP4 ফাইলে একত্রিত করুন। প্রতিটি দৃশ্যের জন্য Animatic অথবা ভিডিও ও ভাষা নির্বাচন করুন — এতে কোনো টাইমলাইন এডিটিংয়ের প্রয়োজন নেই; সৃজনশীল পরিবর্তনগুলো Production Mixer-এ অপরিবর্তিত থাকবে।",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
+          "প্রতিটি দৃশ্যের জন্য স্ট্রিম নির্বাচন করুন — প্রিসেট বা কাস্টম মিক্স",
+          "স্ক্রিপ্টের ক্রম অনুযায়ী সম্পূর্ণ অনুষ্ঠানটি দেখে নিন",
+          "Premiere-এর জন্য একটি মাস্টার MP4 এক্সপোর্ট করুন"
         ],
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
+          "দৃশ্য-ভিত্তিক স্ট্রিম নির্বাচন — Animatic, ভিডিও, ভাষা, সংস্করণ",
+          "অ্যাসেম্বলি প্রিসেট — অল ভিডিও, হাইব্রিড, কাস্টম মিক্স",
+          "টাইমলাইনে কোনো সম্পাদনা নয় — সৃজনশীল পরিবর্তনগুলো Production Mixer-এর মধ্যেই থাকে।",
+          "এক-ক্লিকে মাস্টার এক্সপোর্ট — Premiere-এর জন্য জোড়া লাগানো MP4"
+        ]
       },
       {
-        "id": "premiere",
+        "id": "প্রথম প্রদর্শনী",
         "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "subtitle": "বিতরণ কেন্দ্র",
+        "description": "অডিয়েন্স অ্যানালিটিক্স বা দর্শক-সংক্রান্ত তথ্য-উপাত্তের সাহায্যে আপনার মাস্টার ভিডিওটি যাচাই করে নিন; এরপর স্থানীয়করণ করা মেটাডেটা-সহ ইউটিউবে প্রকাশ করুন অথবা শর্টস (Shorts), রিলস (Reels) ও টিকটক (TikTok)-এর জন্য উপযুক্ত ফরম্যাটে ভিডিওগুলো এক্সপোর্ট করুন।",
         "keySteps": [
-          "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
+          "স্ক্রিনিং তৈরি করুন এবং /s/ লিঙ্কটি শেয়ার করুন",
+          "পর্যালোচনার স্কোরিং, এনগেজমেন্ট এবং ভিজ্যুয়াল অন্তর্দৃষ্টি",
+          "ইউটিউব উইজার্ড বা এক্সপোর্ট বান্ডেল"
         ],
         "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "optional": false
+          "শেয়ারযোগ্য Screening Room — স্কোরিং এবং ঐচ্ছিক এনগেজমেন্ট অ্যানালিটিক্স (দর্শকের সম্মতিসাপেক্ষ) সহ /s/ লিঙ্ক।",
+          "ইনসাইটস ড্যাশবোর্ড — স্কোরিং, বায়োমেট্রিক এবং ভিজ্যুয়াল ট্যাব",
+          "ইউটিউব উইজার্ড — থাম্বনেইল, স্থানীয়করণের উপযোগী শিরোনাম/বিবরণ, SceneFlow সিটিএ (CTA)",
+          "এক্সপোর্ট বান্ডল এবং ভার্টিক্যাল শর্ট-ফর্ম ক্লিপ প্ল্যান"
+        ]
       }
     ]
   },
   "useCases": {
-    "badge": "Production Applications",
-    "title": "Whatever Video You Can Imagine,",
-    "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "badge": "উৎপাদনমূলক প্রয়োগ",
+    "title": "আপনি যেমন ভিডিও-ই কল্পনা করুন না কেন,",
+    "titleAccent": "SceneFlow-এ এটি তৈরি করুন",
+    "subtitle": "রিয়েল-এস্টেট শোকেস, শিক্ষা, পডকাস্ট, সংবাদ পরিবেশনা, ব্র্যান্ড ক্যাম্পেইন এবং সিনেমাটিক গল্প—ধারণা থেকে শুরু করে প্রকাশের উপযোগী চূড়ান্ত সংস্করণ পর্যন্ত সবকিছুর জন্য একটি স্বয়ংক্রিয় স্টুডিও।",
+    "qualifyingStatement": "SceneFlow আপনার মূল ছবি, আপলোড করা ফাইল এবং বিবরণগুলোকে বর্ণনামূলক 'ওয়াকথ্রু' (walkthrough) ভিডিওতে রূপান্তর করে—যেখানে কণ্ঠস্বর ও চরিত্রের উপস্থিতি আপনি নিজেই নিয়ন্ত্রণ করতে পারেন। এগুলো মূলত এআই (AI)-এর মাধ্যমে তৈরি উপস্থাপনা; অর্থাৎ আপনার দেওয়া তথ্যের ওপর ভিত্তি করে তৈরি বাস্তবসম্মত দৃশ্যরূপ, যা সরাসরি ক্যামেরায় ধারণ করা কোনো ভিডিও নয়। প্রকাশের আগে প্রতিটি স্টোরিবোর্ড পর্যালোচনা ও অনুমোদন করে নিন এবং আউটপুটগুলো স্পষ্টভাবে চিহ্নিত করুন, যাতে দর্শকরা বুঝতে পারেন তারা ঠিক কী দেখছেন।",
     "ui": {
-      "useCases": "Use Cases",
-      "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo coming soon",
-      "selectExample": "Select an example to preview its demo"
+      "useCases": "ব্যবহারের ক্ষেত্রসমূহ",
+      "sectors": "{count}টি খাত",
+      "demoComingSoon": "ডেমো শীঘ্রই আসছে",
+      "selectExample": "এর ডেমো প্রিভিউ করতে একটি উদাহরণ নির্বাচন করুন।",
+      "targetPersona": "লক্ষ্যভুক্ত ব্যক্তিত্ব",
+      "theChallenge": "চ্যালেঞ্জটি",
+      "sceneFlowSolution": "SceneFlow সমাধান",
+      "beforeVsAfter": "আগে বনাম পরে",
+      "before": "আগে",
+      "after": "পরে",
+      "theWin": "সেই \"জয়\"",
+      "frameAnchoredTitle": "ফ্রেম-নিবদ্ধ ধারাবাহিকতা",
+      "frameAnchoredDescription": "SceneFlow হলো একমাত্র টুল যা 'ফ্রেম-অ্যাঙ্করড কন্টিনিউটি' (frame-anchored continuity) সুবিধা প্রদান করে; এর ফলে প্রতিটি দৃশ্য-খণ্ডে আপনার ক্লায়েন্টের পণ্য বা চরিত্রটি হুবহু একই রকম থাকে।",
+      "closePreview": "প্রিভিউ বন্ধ করুন",
+      "expandVideo": "ভিডিও বড় করুন",
+      "expandImage": "ছবি বড় করুন",
+      "orStartExplorer": "$9-এর Explorer প্ল্যানটি দিয়ে শুরু করুন",
+      "orPrefix": "অথবা"
+    },
+    "personas": {
+      "creator": {
+        "label": "একক নির্মাতা",
+        "title": "ইউটিউব নির্মাতা",
+        "beforeAfter": {
+          "before": "৪০ ঘণ্টা",
+          "after": "২৫ মিনিট"
+        },
+        "challenge": {
+          "title": "'বি-রোল' (B-Roll) সংক্রান্ত প্রতিবন্ধকতা",
+          "description": "আপনার হাতে একটি চমৎকার স্ক্রিপ্ট থাকলেও, আপনার সময়ের বড় অংশই ব্যয় হয় ফুটেজ খোঁজা, সম্পাদনার সমন্বয় করা এবং দৃশ্যগুলোর মধ্যে সামঞ্জস্য বজায় রাখার কাজে। এই বিলম্ব ভিডিও প্রকাশের গতি কমিয়ে দেয় এবং দর্শকদের ধরে রাখার ক্ষমতাকে দুর্বল করে তোলে।"
+        },
+        "solution": {
+          "title": "স্বয়ংক্রিয় গল্পকথক",
+          "description": "প্রথম দৃশ্য থেকে শুরু করে প্রকাশের জন্য প্রস্তুত চূড়ান্ত সংস্করণ পর্যন্ত চরিত্র ও শৈলীর ধারাবাহিকতা বজায় রেখে স্ক্রিপ্টগুলোকে দ্রুত প্রোডাকশন-রেডি ভিজ্যুয়ালে রূপান্তর করুন।",
+          "features": [
+            "দৃশ্যপট যা স্ক্রিপ্টের পর্যায়গুলোর সাথে নিখুঁতভাবে সামঞ্জস্যপূর্ণ",
+            "প্রতিটি দৃশ্যে ধারাবাহিক প্রধান চরিত্র",
+            "একটি শেয়ার্ড রেফারেন্স লাইব্রেরি ব্যবহার করে এপিসোড সিরিজের পরিসর বৃদ্ধি করুন"
+          ]
+        },
+        "win": "মাঝেমধ্যে আপলোড করার পদ্ধতি থেকে সরে এসে কম বাড়তি ঝামেলাসহ একটি নির্ভরযোগ্য ও নিয়মিত প্রকাশনা প্রক্রিয়ায় উন্নীত হোন।",
+        "keyPhrases": [
+          "দ্রুততর সম্পন্নকরণ",
+          "সামঞ্জস্যপূর্ণ চরিত্র",
+          "সিরিজ-উপযোগী কর্মপ্রবাহ"
+        ]
+      },
+      "team": {
+        "label": "অভ্যন্তরীণ দল",
+        "title": "অভ্যন্তরীণ ভিডিও দল",
+        "beforeAfter": {
+          "before": "৬ সপ্তাহ",
+          "after": "একই সপ্তাহে"
+        },
+        "challenge": {
+          "title": "বিক্রেতার কাজের জমে থাকা বোঝা ও ব্র্যান্ডের মূল অবস্থান থেকে বিচ্যুতি",
+          "description": "কমিউনিকেশনস, এলঅ্যান্ডডি (L&D) এবং মার্কেটিং টিমগুলোকে এজেন্সি বা ভেন্ডরের কাছ থেকে ভিডিও পাওয়ার জন্য সপ্তাহের পর সপ্তাহ অপেক্ষা করতে হয়। প্রতিটি শুটিংয়ের ক্ষেত্রেই ব্র্যান্ডিংয়ে অসামঞ্জস্য, অনিশ্চিত ইনভয়েস এবং দীর্ঘ অনুমোদন প্রক্রিয়ার মতো সমস্যা দেখা দেয়, যা ক্যাম্পেইনগুলোকে থমকে দেয়।"
+        },
+        "solution": {
+          "title": "একই সপ্তাহের মধ্যে নিজস্ব উৎপাদন",
+          "description": "একটি নির্দিষ্ট 'ক্রেডিট বাজেট'-এর আওতায় ভিডিও তৈরির জন্য কর্মীদের দায়িত্ব দিন—যেখানে ব্র্যান্ড টেমপ্লেট ও চূড়ান্ত রেন্ডারের আগে অনুমোদনের ব্যবস্থা থাকবে, এবং কোনো 'ক্রু-ডে' (crew days) বা অনির্দিষ্টকালের এডিট সাইকেলের প্রয়োজন হবে না।",
+          "features": [
+            "ভেন্ডর-পরিচালিত শ্যুটের পরিবর্তে নির্দেশিত ইন-হাউস কর্মপ্রক্রিয়া চালু করুন।",
+            "ব্র্যান্ড-সুরক্ষিত টেমপ্লেট ও রেফারেন্স লাইব্রেরি",
+            "প্রতিটি প্রকল্পের জন্য দৃশ্যমান ক্রেডিট খরচ ও বাজেটের সীমা",
+            "চূড়ান্ত ভিডিওর জন্য অর্থ প্রদানের আগে স্টোরিবোর্ড অনুমোদন করুন।"
+          ]
+        },
+        "win": "ভেন্ডরের কাজের জট বা ব্যাকলগের ওপর নির্ভর না করে, আপনার নিজস্ব সময়সূচি অনুযায়ী প্রশিক্ষণ, যোগাযোগ এবং প্রচারণামূলক ভিডিও প্রস্তুত ও প্রকাশ করুন।",
+        "keyPhrases": [
+          "পূর্বানুমানযোগ্য খরচ",
+          "ব্র্যান্ড নিয়ন্ত্রণ",
+          "একই সপ্তাহের মধ্যে সম্পন্নকরণ"
+        ]
+      },
+      "productionShop": {
+        "label": "উৎপাদন কর্মশালা",
+        "title": "বিশেষায়িত পণ্য উৎপাদন কেন্দ্র",
+        "beforeAfter": {
+          "before": "প্রতি শুট ৮,০০০ ডলার",
+          "after": "২০০ ডলারের ক্রেডিট"
+        },
+        "challenge": {
+          "title": "কাস্টম ভার্টিক্যালস, কোনো পুনরাবৃত্তিযোগ্য পদ্ধতি নেই",
+          "description": "স্মৃতিকথা, লিগ্যাসি (উত্তরাধিকার), রিয়েল এস্টেট এবং শিক্ষা খাতের গ্রাহকদের দ্রুত সেবা প্রয়োজন—অথচ প্রতিটি প্রজেক্টই শুরু হয় একেবারে গোড়া থেকে। তথ্য গ্রহণ (intake) থেকে শুরু করে চূড়ান্ত সেবা প্রদান (delivery) পর্যন্ত একটি সুনির্দিষ্ট ও কাঠামোবদ্ধ প্রক্রিয়া বা পাইপলাইন ছাড়া আপলোড, ভয়েস ক্লোন এবং অবতারের মতো বিষয়গুলোর ক্ষেত্রে কাজের পরিধি বাড়ানো বা স্কেল করা সম্ভব হয় না।"
+        },
+        "solution": {
+          "title": "আপনার ভিডিও পরিষেবাকে পণ্যের রূপ দিন",
+          "description": "স্মৃতিকথা বা মেমোয়ার স্টুডিও এবং বিশেষায়িত খাতের (niche verticals) জন্য পুনরাবৃত্তিযোগ্য কর্মপ্রক্রিয়া গড়ে তুলুন। টেমপ্লেট আপলোড, ভয়েস ক্লোন, অবতার এবং স্টোরিবোর্ড অনুমোদনের মতো বিষয়গুলো প্রতিটি ক্লায়েন্টের চাহিদা অনুযায়ী কাস্টমাইজ করুন এবং কাজের পরিমাণ বৃদ্ধির মাধ্যমে মুনাফার হার বাড়ান।",
+          "features": [
+            "ছবি আপলোড, ভয়েস ক্লোন এবং অবতার হোস্ট-সহ স্মৃতিকথার টেমপ্লেট",
+            "ক্লায়েন্ট গ্রহণ প্রক্রিয়াটি Blueprint এবং স্টোরিবোর্ড অনুমোদনের ধাপগুলোর সাথে যুক্ত।",
+            "লেগাসি, ট্রিবিউট এবং সাবস্ক্রিপশন ভিডিওর জন্য হোয়াইট-লেবেল স্টুডিও প্যাকেজ",
+            "প্রতিটি শুটিংয়ের ওভারহেড খরচের পরিবর্তে ক্রেডিটের ওপর মার্জিন"
+          ]
+        },
+        "win": "ভিডিও মেমোয়ার বা কোনো বিশেষায়িত স্টুডিও পরিষেবা চালু করুন যা বারবার প্রদান করা সম্ভব—এটি যেন কেবল একবারের কোনো ফ্রিল্যান্স কাজ না হয়।",
+        "keyPhrases": [
+          "স্মৃতিকথার টেমপ্লেট",
+          "কণ্ঠ ও অবতারের পরিচিতি",
+          "পুনরাবৃত্তিযোগ্য সরবরাহ"
+        ]
+      },
+      "agency": {
+        "label": "সংস্থা",
+        "title": "ক্লায়েন্ট ডেলিভারি লিড",
+        "beforeAfter": {
+          "before": "৩ সপ্তাহের মধ্যে ডেলিভারি",
+          "after": "৩ দিনের মধ্যে ডেলিভারি"
+        },
+        "challenge": {
+          "title": "ব্যাপক পরিসরে গ্রাহক সেবা প্রদান",
+          "description": "পিচ বা প্রস্তাবনায় জয়লাভ করাটা কেবল অর্ধেক লড়াই। নিয়মিত ক্লায়েন্টের কাজের ক্ষেত্রে প্রয়োজন দ্রুত সম্পন্ন করার সক্ষমতা, অনুমোদনের স্পষ্ট প্রক্রিয়া এবং প্রতিটি কাজের আউটপুটে লাভজনক মার্জিন — আর এসবই করতে হবে প্রতিবার একেবারে শুরু থেকে নতুন করে সবকিছু তৈরি না করেই।"
+        },
+        "solution": {
+          "title": "কার্যপ্রবাহের হার + ক্লায়েন্টের অনুমোদন",
+          "description": "ব্র্যান্ড-সুরক্ষিত নিয়ন্ত্রণ ব্যবস্থা, চূড়ান্ত রেন্ডারের আগে ক্লায়েন্টের পর্যালোচনার সুযোগ এবং প্রতিটি প্রজেক্টে আগে থেকে জানা ক্রেডিট খরচের সুবিধাসহ প্রাথমিক প্রস্তাবনা (pitch spec) থেকে নিয়মিত ডেলিভারি প্রক্রিয়ায় উন্নীত হোন।",
+          "features": [
+            "পিচ এবং ক্লায়েন্টের অনুমোদনের জন্য দ্রুত প্রি-ভিজ্যুয়ালাইজেশন",
+            "ক্লায়েন্টদের পুনরাবৃত্তিমূলক ফরম্যাটের জন্য পুনরায় ব্যবহারযোগ্য টেমপ্লেট",
+            "প্রতিটি ধাপে বাজেটের স্বচ্ছতা",
+            "অতিরিক্ত কর্মী নিয়োগ ছাড়াই সম্প্রসারণযোগ্য সেবা প্রদান"
+          ]
+        },
+        "win": "কম উৎপাদন ঝুঁকি ও অধিক মুনাফার সাথে দ্রুততর পিচ সাইকেল (pitch cycles) এবং ক্লায়েন্টের পুনরাবৃত্তিমূলক কাজ সম্পন্ন করুন।",
+        "keyPhrases": [
+          "ক্লায়েন্টের অনুমোদন",
+          "ডেলিভারি থ্রুপুট",
+          "বাজেটের পূর্বাভাসযোগ্যতা"
+        ]
+      }
+    },
+    "segmentCtas": {
+      "creator": {
+        "label": "আপনার প্রোডাকশন টেস্ট ফ্লাইট শুরু করুন",
+        "subtext": "এককালীন ৯ ডলার • ৭৫০ ক্রেডিট • প্ল্যাটফর্মের পূর্ণ অ্যাক্সেস"
+      },
+      "team": {
+        "label": "টিম ওয়াকথ্রু-এর জন্য সময় নির্ধারণ করুন",
+        "subtext": "দেখুন কীভাবে ইন-হাউস টিমগুলো ভেন্ডর-নির্ভর কর্মপ্রক্রিয়ার জায়গা নিচ্ছে।"
+      },
+      "productionShop": {
+        "label": "উল্লম্ব টেমপ্লেটগুলো ঘুরে দেখুন",
+        "subtext": "রিয়েল এস্টেট, শিক্ষা, নথিপত্র এবং আরও অনেক কিছু — দেখুন আপনি কী কী পণ্যে রূপান্তর করতে পারেন।"
+      },
+      "agency": {
+        "label": "টিম প্রাইসিং দেখুন",
+        "subtext": "বড় পরিসরে কার্যক্রম পরিচালনাকারী এজেন্সি ও প্রোডাকশন শপগুলোর জন্য পরিকল্পনা"
+      }
     },
     "categories": [
       {
-        "id": "property",
-        "title": "Property, Spaces & Hospitality",
+        "id": "সম্পত্তি",
+        "title": "সম্পত্তি, স্থান ও আতিথেয়তা",
+        "qualifyingStatement": "আপনার সম্পত্তির আসল ছবি থেকে এটি তৈরি করা হয়েছে—যা আপনার কণ্ঠস্বর ও অবতার (avatar) ব্যবহার করে এআই (AI)-এর সহায়তায় একটি বর্ণনামূলক 'ওয়াকথ্রু' বা ভার্চুয়াল ট্যুর হিসেবে উপস্থাপন করা হয়। এটি সম্পত্তির বিন্যাস ও বৈশিষ্ট্যের একটি বাস্তবসম্মত পূর্বরূপ মাত্র; সশরীরে গিয়ে সম্পত্তি দেখার কোনো বিকল্প নয়। প্রতিটি ট্যুর স্পষ্টভাবে চিহ্নিত করা থাকে।",
         "examples": [
           {
-            "id": "residential-real-estate",
-            "label": "Residential Real Estate",
-            "description": "Automated listing tours featuring the agent's cloned voice and avatar identity."
+            "id": "আবাসিক রিয়েল এস্টেট",
+            "label": "আবাসিক রিয়েল এস্টেট",
+            "description": "কল্পনা করুন, আপনার সংরক্ষিত চরিত্র ও কণ্ঠস্বরের সাথে আপনার প্রপার্টির ছবি আপলোড করছেন। এরপর তাৎক্ষণিকভাবে আপনার সেই ছবি ও কণ্ঠস্বর ব্যবহার করে একটি পেশাদার 'লিস্টিং ওয়াকথ্রু' (সম্পত্তি প্রদর্শনের ভিডিও) তৈরি করছেন—তাও আবার ৭০টিরও বেশি ভাষায়।"
           },
           {
-            "id": "commercial-real-estate",
-            "label": "Commercial Real Estate",
-            "description": "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data."
+            "id": "বাণিজ্যিক রিয়েল এস্টেট",
+            "label": "বাণিজ্যিক রিয়েল এস্টেট",
+            "description": "কল্পনা করুন, আপনি ফ্লোর প্ল্যান, রেন্ডারিং এবং আশেপাশের এলাকার তথ্য আপলোড করছেন—সাথে যুক্ত করছেন আপনার ব্রোকারের সংরক্ষিত কণ্ঠস্বর ও অবতার। এরপর তাৎক্ষণিকভাবে তৈরি করছেন বিনিয়োগকারীদের জন্য এমন এক 'ওয়াকথ্রু' বা ভার্চুয়াল প্রদর্শনী, যা জায়গার প্রতিটি বর্গফুটকে জীবন্ত করে তোলে—এবং তা ৭০টিরও বেশি ভাষায় স্থানীয়করণের মাধ্যমে উপস্থাপন করা হচ্ছে।"
           },
           {
-            "id": "short-term-rentals",
-            "label": "Short-Term Rentals",
-            "description": "Automated \"Digital Welcome Books\" that walk guests through house features and local \"best of\" spots."
+            "id": "স্বল্পমেয়াদী ভাড়া",
+            "label": "স্বল্পমেয়াদী ভাড়া",
+            "description": "কল্পনা করুন, বাড়ির ছবি ও সুযোগ-সুবিধা সংক্রান্ত তথ্যের সাথে হোস্টের রেকর্ড করা কণ্ঠস্বর আপলোড করছেন। এরপর অতিথিরা চেক-ইন করার আগেই তাঁদের নিজস্ব ভাষায় স্বাগত জানিয়ে ডিজিটাল ভিডিও প্রকাশ করছেন।"
           },
           {
-            "id": "hospitality-tourism",
-            "label": "Hospitality & Tourism",
-            "description": "Hotel virtual tours and narrated travel itineraries for agencies."
+            "id": "আতিথেয়তা ও পর্যটন",
+            "label": "আতিথেয়তা ও পর্যটন",
+            "description": "কল্পনা করুন, আপনার ব্র্যান্ডের সংরক্ষিত হোস্টের কণ্ঠস্বর ও অবতার ব্যবহার করে হোটেলের ছবি এবং ভ্রমণের মূল আকর্ষণগুলো আপলোড করছেন। এরপর কোনো প্রপার্টিতে আলাদা করে ফিল্ম ক্রু পাঠানোর প্রয়োজন ছাড়াই তাৎক্ষণিকভাবে ৭০টিরও বেশি ভাষায় ভার্চুয়াল ট্যুর ও বর্ণনা-সহ ভ্রমণ নির্দেশিকা তৈরি করে ছড়িয়ে দিচ্ছেন।"
           },
           {
-            "id": "museum-gallery-guides",
-            "label": "Museum & Gallery Guides",
-            "description": "Multi-language audio-visual \"tours\" for exhibitions that can be updated JIT as exhibits change."
+            "id": "জাদুঘর ও গ্যালারির নির্দেশিকা",
+            "label": "জাদুঘর ও গ্যালারি নির্দেশিকা",
+            "description": "কল্পনা করুন, প্রদর্শনীতে কোনো পরিবর্তন আসার সাথে সাথেই আপনি প্রদর্শিত বস্তুর ছবি ও কিউরেটরের নোট আপলোড করছেন। এরপর ৭০টিরও বেশি ভাষায় বর্ণিত গ্যালারি ট্যুরগুলো তাৎক্ষণিকভাবে আপডেট করে নিচ্ছেন—ফলে প্রদর্শনী পরিবর্তিত হলেও নতুন করে আর কোনো শুটিংয়ের প্রয়োজন পড়ছে না।"
           }
         ]
       },
       {
-        "id": "knowledge",
-        "title": "Knowledge, Training & Education",
+        "id": "জ্ঞান",
+        "title": "জ্ঞান, প্রশিক্ষণ ও শিক্ষা",
         "examples": [
           {
-            "id": "k12-higher-ed",
-            "label": "K-12 & Higher Ed",
-            "description": "30-minute curriculum modules that can be instantly localized for ESL students or global campuses."
+            "id": "কে-১২ ও উচ্চশিক্ষা",
+            "label": "কে-১২ ও উচ্চশিক্ষা",
+            "description": "কল্পনা করুন, আপনার প্রশিক্ষকের সংরক্ষিত কণ্ঠস্বর ও চরিত্রের রেফারেন্স ব্যবহার করে পাঠ্য উপকরণ আপলোড করছেন। এরপর তাৎক্ষণিকভাবে সম্পূর্ণ পাঠ্যক্রমের মডিউল তৈরি করছেন, যা আপনার ESL এবং গ্লোবাল ক্যাম্পাসের শিক্ষার্থীরা ৭০টিরও বেশি ভাষায় দেখতে পারবে।"
           },
           {
-            "id": "corporate-ld",
-            "label": "Corporate L&D",
-            "description": "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices."
+            "id": "কর্পোরেট-এলডি",
+            "label": "কর্পোরেট শিক্ষা ও উন্নয়ন",
+            "description": "কল্পনা করুন, আপনার প্রশিক্ষকের সংরক্ষিত কণ্ঠস্বর ও অবতার ব্যবহার করে কমপ্লায়েন্স বা নিয়মকানুন বিষয়ক স্ক্রিপ্ট আপলোড করছেন। এরপর প্রতিটি অফিসে একই মানের অনবোর্ডিং ও নিরাপত্তা বিষয়ক প্রশিক্ষণ তাৎক্ষণিকভাবে চালু করছেন—যা ৭০টিরও বেশি ভাষায় স্থানীয়করণের মাধ্যমে প্রস্তুত করা হয়েছে।"
           },
           {
-            "id": "software-saas-tutorials",
-            "label": "Software SaaS Tutorials",
-            "description": "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion."
+            "id": "সফটওয়্যার ও SaaS টিউটোরিয়াল",
+            "label": "সফটওয়্যার ও SaaS টিউটোরিয়াল",
+            "description": "কল্পনা করুন, রেফারেন্স ফ্রেম হিসেবে UI-এর স্ক্রিনশট এবং আপনার প্রোডাক্ট বিশেষজ্ঞের রেকর্ড করা কণ্ঠস্বর আপলোড করছেন। এরপর তাৎক্ষণিকভাবে এমন সব 'ওয়াকথ্রু' ভিডিও তৈরি করছেন যেখানে প্রতিটি ক্লিকের অ্যানিমেশন দেখানো হচ্ছে—আর আপনার UI যখনই রিলিজ বা আপডেট হচ্ছে, ভিডিওগুলোও সাথে সাথে হালনাগাদ হয়ে যাচ্ছে।"
           },
           {
-            "id": "niche-skill-tutoring",
-            "label": "Niche Skill Tutoring",
-            "description": "Professional \"How-To\" series for cooking, DIY, or technical certifications."
+            "id": "বিশেষায়িত দক্ষতার প্রশিক্ষণ",
+            "label": "বিশেষায়িত দক্ষতার প্রশিক্ষণ",
+            "description": "কল্পনা করুন, আপনার প্রশিক্ষকের সংরক্ষিত কণ্ঠস্বর ও চরিত্রের রেফারেন্স ব্যবহার করে কাজের বিভিন্ন ধাপের ছবি আপলোড করছেন। এরপর রান্না, ডিআইওয়াই (DIY) বা সার্টিফিকেশন পরীক্ষার প্রস্তুতির মতো পেশাদার 'হাউ-টু' (how-to) সিরিজ তাৎক্ষণিকভাবে ৭০টিরও বেশি ভাষায় প্রকাশ করছেন।"
           },
           {
-            "id": "medical-patient-education",
-            "label": "Medical/Patient Education",
-            "description": "Narrated explanations of surgical procedures or medication management for hospitals and clinics."
+            "id": "চিকিৎসা ও রোগী শিক্ষা",
+            "label": "চিকিৎসা ও রোগী বিষয়ক শিক্ষা",
+            "description": "কল্পনা করুন, চিকিৎসকের অনুমোদিত ও সংরক্ষিত কণ্ঠস্বরের সাথে চিকিৎসা পদ্ধতির ডায়াগ্রাম আপলোড করছেন; আর তার পরপরই রোগীদের জন্য এমন সব স্পষ্ট শিক্ষামূলক ভিডিও তৈরি হচ্ছে, যা পরিবারগুলো ৭০টিরও বেশি ভাষায় বুঝতে পারবে।"
           },
           {
-            "id": "video-memoirs",
-            "label": "Video Memoirs",
-            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+            "id": "ভিডিও-স্মৃতিকথা",
+            "label": "ভিডিও স্মৃতিকথা",
+            "description": "কল্পনা করুন, আপনি পরিবারের ছবি, সাক্ষাৎকারের অডিও এবং দৃশ্যের বিবরণ আপলোড করছেন—সাথে থাকছে আগে থেকে রেকর্ড করা বর্ণনাকারীর কণ্ঠস্বর। এরপর তাৎক্ষণিকভাবে অধ্যায়-ভিত্তিক স্মৃতিকথামূলক ভিডিও তৈরি করে ফেলছেন এবং চূড়ান্ত রূপ দেওয়ার আগে স্টোরিবোর্ডটি অনুমোদন করে নিচ্ছেন।"
           }
         ]
       },
       {
-        "id": "jit",
-        "title": "JIT Media & Information",
+        "id": "জিৎ",
+        "title": "জেআইটি মিডিয়া অ্যান্ড ইনফরমেশন",
         "examples": [
           {
-            "id": "hyper-local-news",
-            "label": "Hyper-Local News",
-            "description": "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive."
+            "id": "অতি-স্থানীয় সংবাদ",
+            "label": "অতি-স্থানীয় সংবাদ",
+            "description": "কল্পনা করুন, আপনার সংবাদ উপস্থাপকের আগে থেকে রেকর্ড করা কণ্ঠস্বর ব্যবহার করে আজকের ছবি ও সংবাদ বুলেটিন আপলোড করছেন। আর তারপরই কোনো ফিল্ম ক্রু বা সময়সীমা লঙ্ঘনের ঝামেলা ছাড়াই এলাকার দৈনন্দিন খবরের একটি সংক্ষিপ্ত সংস্করণ তাৎক্ষণিকভাবে প্রকাশ করছেন।"
           },
           {
-            "id": "financial-market-recaps",
-            "label": "Financial & Market Recaps",
-            "description": "Turning daily stock market or crypto data into 3-minute narrated visual digests."
+            "id": "আর্থিক বাজারের সারসংক্ষেপ",
+            "label": "আর্থিক ও বাজার বিষয়ক পর্যালোচনা",
+            "description": "কল্পনা করুন, প্রতিদিন সকালে বাজারের তথ্য ও চার্টের স্ন্যাপশট আপলোড করছেন এবং সাথে যুক্ত করছেন আপনার অ্যানালিস্টের আগে থেকে রেকর্ড করা কণ্ঠস্বর। এরপর মুহূর্তের মধ্যেই সেগুলোকে একটি বর্ণনামূলক ভিজ্যুয়াল সারাংশে রূপান্তর করছেন—যা বাজারের কার্যক্রম শুরুর আগেই প্রস্তুত হয়ে যাচ্ছে।"
           },
           {
-            "id": "sports-commentary",
-            "label": "Sports Commentary",
-            "description": "Automated \"recap\" videos using game stats and static photography turned into F2V action."
+            "id": "ক্রীড়া ধারাভাষ্য",
+            "label": "ক্রীড়া ধারাভাষ্য",
+            "description": "কল্পনা করুন, খেলার পরিসংখ্যান ও স্থিরচিত্রের সাথে ধারাভাষ্যকারের রেকর্ড করা কণ্ঠস্বর আপলোড করছেন; আর তারপর অ্যানিমেটেড অ্যাকশনসহ তাৎক্ষণিকভাবে তৈরি করছেন খেলার সারসংক্ষেপ বা 'রিক্যাপ' ভিডিও—যা ভক্তদের আলোচনার রেশ থাকতেই প্রকাশ করা হচ্ছে।"
           },
           {
-            "id": "true-crime-historical-docs",
-            "label": "True Crime & Historical Docs",
-            "description": "Using the Reference Library to keep historical figures consistent across a multi-part documentary series."
+            "id": "সত্য অপরাধ ও ঐতিহাসিক তথ্যচিত্র",
+            "label": "সত্য অপরাধ ও ঐতিহাসিক তথ্যচিত্র",
+            "description": "কল্পনা করুন, একবার আপনার Reference Library-এ ঐতিহাসিক ব্যক্তিত্বদের সংরক্ষিত করে নিলেন। এরপর তাৎক্ষণিকভাবে এমন সব বহু-পর্বের এপিসোড তৈরি করছেন, যেখানে প্রতিটি চরিত্র ও কণ্ঠস্বর ধারাবাহিকভাবে অপরিবর্তিত থাকছে—এক সিরিজ থেকে আরেক সিরিজে।"
           },
           {
-            "id": "weather-emergency-alerts",
-            "label": "Weather & Emergency Alerts",
-            "description": "Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms."
+            "id": "আবহাওয়া সংক্রান্ত জরুরি সতর্কতা",
+            "label": "আবহাওয়া ও জরুরি সতর্কতা",
+            "description": "কল্পনা করুন, আপনার সংস্থার বিশ্বস্ত ও আগে থেকে সংরক্ষিত কণ্ঠস্বর ব্যবহার করে জরুরি বার্তা আপলোড করছেন। এরপর কয়েক দিন নয়, বরং মাত্র কয়েক মিনিটের মধ্যেই ৭০টিরও বেশি ভাষায় বিভিন্ন সোশ্যাল প্ল্যাটফর্মে স্পষ্ট সতর্কবার্তা প্রচার করছেন।"
           }
         ]
       },
       {
-        "id": "b2b",
-        "title": "B2B Marketing & Sales",
+        "id": "বিটুবি",
+        "title": "বি-টু-বি (B2B) বিপণন ও বিক্রয়",
         "examples": [
           {
-            "id": "product-explainer-videos",
-            "label": "Product Explainer Videos",
-            "description": "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos."
+            "id": "পণ্য-ব্যাখ্যামূলক ভিডিও",
+            "label": "পণ্যের ব্যাখ্যাধর্মী ভিডিও",
+            "description": "কল্পনা করুন, আপনার ব্র্যান্ডের সংরক্ষিত প্রেজেন্টারের কণ্ঠস্বর ও অবতার ব্যবহার করে পণ্যের ক্যাটালগের ছবি আপলোড করছেন। এরপর তাৎক্ষণিকভাবে তৈরি করে ফেলছেন সিনেমাটিক ধাঁচের ব্যাখ্যামূলক ভিডিও সিরিজ—আর রেন্ডার করার আগেই দেখে নিচ্ছেন স্টোরিবোর্ডটি।"
           },
           {
-            "id": "case-study-testimonials",
-            "label": "Case Study/Testimonials",
-            "description": "Using client headshots and project photos to create high-end visual success stories."
+            "id": "কেস স্টাডি ও গ্রাহক মতামত",
+            "label": "কেস স্টাডি/মতামত",
+            "description": "কল্পনা করুন, ক্লায়েন্টের ছবি, প্রজেক্টের ছবি এবং সাফল্যের পরিসংখ্যান আপলোড করার পাশাপাশি আগে থেকে রেকর্ড করা কোনো কণ্ঠস্বর ব্যবহার করছেন; আর কোনো আলাদা শুটিং ছাড়াই তাৎক্ষণিকভাবে তৈরি করে ফেলছেন চমৎকার সব ভিজ্যুয়াল কেস স্টাডি।"
           },
           {
-            "id": "recruitment-branding",
-            "label": "Recruitment & Branding",
-            "description": "Giving candidates a narrated \"day in the life\" tour of the office and culture."
+            "id": "নিয়োগ-ব্র্যান্ডিং",
+            "label": "নিয়োগ ও ব্র্যান্ডিং",
+            "description": "কল্পনা করুন, আপনার রিক্রুটারের সংরক্ষিত কণ্ঠস্বর ও অবতার ব্যবহার করে অফিসের ছবি এবং কর্মসংস্কৃতির বিশেষ দিকগুলো আপলোড করছেন। এরপর বিশ্বজুড়ে কর্মী নিয়োগের সুবিধার্থে ৭০টিরও বেশি ভাষায় প্রার্থীদের তাৎক্ষণিকভাবে অফিসের দৈনন্দিন কার্যক্রমের একটি সচিত্র ও ভাষ্যসহ (narrated) ভার্চুয়াল ট্যুর উপহার দিচ্ছেন।"
           },
           {
-            "id": "conference-event-promos",
-            "label": "Conference & Event Promos",
-            "description": "Automated \"Speaker Bio\" videos and \"What to Expect\" guides for large-scale events."
+            "id": "সম্মেলন ও অনুষ্ঠানের প্রচারমূলক কার্যক্রম",
+            "label": "সম্মেলন ও অনুষ্ঠানের প্রচারমূলক কার্যক্রম",
+            "description": "কল্পনা করুন, ইভেন্ট সঞ্চালকের রেকর্ড করা কণ্ঠস্বরের সাথে বক্তাদের পরিচিতি, সেশনের বিস্তারিত তথ্য এবং ভেন্যুর ছবি আপলোড করছেন। এরপর তাৎক্ষণিকভাবে বক্তাদের পরিচিতি ও ইভেন্ট-সংক্রান্ত নির্দেশিকা তৈরি করছেন—যা কর্মসূচিতে কোনো পরিবর্তন এলেই স্বয়ংক্রিয়ভাবে হালনাগাদ হয়ে যাচ্ছে।"
           }
         ]
       },
       {
-        "id": "public",
-        "title": "Public Sector & Advocacy",
+        "id": "সর্বসাধারণ",
+        "title": "সরকারি খাত ও অ্যাডভোকেসি",
         "examples": [
           {
-            "id": "ngo-impact-reports",
-            "label": "NGO Impact Reports",
-            "description": "Turning data and field photography into emotive, narrated videos for donors."
+            "id": "এনজিওর প্রভাব বিষয়ক প্রতিবেদন",
+            "label": "এনজিওর প্রভাব বিষয়ক প্রতিবেদন",
+            "description": "কল্পনা করুন, মাঠপর্যায়ের ছবি ও কাজের প্রভাব-সংক্রান্ত তথ্যের সাথে আপনার সংস্থার সংরক্ষিত কোনো কণ্ঠস্বর (ন্যারেটর ভয়েস) যুক্ত করছেন। এরপর দাতাদের জন্য তৈরি প্রতিবেদনগুলোকে মুহূর্তেই আবেগঘন ও বর্ণনা-সমৃদ্ধ ভিডিওতে রূপান্তর করছেন—যা কেবল স্লাইডশো নয়, বরং আপনার সংস্থার লক্ষ্য ও উদ্দেশ্যেরই বলিষ্ঠ কণ্ঠস্বর হয়ে উঠছে।"
           },
           {
-            "id": "public-health-announcements",
-            "label": "Public Health Announcements",
-            "description": "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity."
+            "id": "জনস্বাস্থ্য বিষয়ক ঘোষণা",
+            "label": "জনস্বাস্থ্য বিষয়ক ঘোষণা",
+            "description": "কল্পনা করুন, আপনার বিভাগের বিশ্বস্ত ও আগে থেকে রেকর্ড করা কণ্ঠস্বর ব্যবহার করে স্বাস্থ্য-সংক্রান্ত অনুমোদিত বার্তা আপলোড করছেন। এরপর ৭০টিরও বেশি ভাষায় তাৎক্ষণিকভাবে প্রতিটি জনগোষ্ঠীর কাছে তা পৌঁছে দিচ্ছেন—যার মধ্যে রয়েছে একই রকম স্পষ্টতা ও জরুরি ভাব, আর অনুবাদের জন্য কোনো বিলম্ব ছাড়াই।"
           },
           {
-            "id": "legal-insurance-explainers",
-            "label": "Legal & Insurance Explainers",
-            "description": "Helping clients understand complex contracts or claim processes through narrated visual breakdowns."
+            "id": "আইনি বীমা বিষয়ক ব্যাখ্যা",
+            "label": "আইনি ও বীমা বিষয়ক ব্যাখ্যামূলক আলোচনা",
+            "description": "কল্পনা করুন, আপনি চুক্তির সারাংশ ও প্রক্রিয়ার ডায়াগ্রাম আপলোড করছেন এবং তার সাথে যুক্ত করছেন আপনার উপদেষ্টার আগে থেকে রেকর্ড করা কণ্ঠস্বর। এরপর, গ্রাহকরা কোনো চুক্তিতে স্বাক্ষর বা দাবির আবেদন (claim) করার আগেই—তাঁদের সহজে বোধগম্য এমন সব ভিজ্যুয়াল বা দৃশ্যমান ব্যাখ্যা তাৎক্ষণিকভাবে তৈরি করা হচ্ছে।"
           },
           {
-            "id": "religious-spiritual-teachings",
-            "label": "Religious & Spiritual Teachings",
-            "description": "Converting sermons or texts into a consistent, narrated daily video series for global congregations."
+            "id": "ধর্মীয় ও আধ্যাত্মিক শিক্ষা",
+            "label": "ধর্মীয় ও আধ্যাত্মিক শিক্ষা",
+            "description": "কল্পনা করুন, আপনার শিক্ষকের সংরক্ষিত কণ্ঠস্বর ও উপস্থিতিসহ ধর্মোপদেশের নোট বা পবিত্র ধর্মগ্রন্থের বিষয়বস্তু আপলোড করছেন; আর তারপর বিশ্বজুড়ে ছড়িয়ে থাকা ধর্মপ্রাণ মানুষের জন্য ৭০টিরও বেশি ভাষায় নিয়মিত একটি দৈনিক ভিডিও সিরিজ তাৎক্ষণিকভাবে প্রকাশ করছেন।"
           }
         ]
       }
     ]
   },
   "institutionalRoi": {
-    "badge": "For in-house teams & institutions",
-    "title": "Replace vendor shoots with predictable in-house production",
-    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
+    "badge": "অভ্যন্তরীণ দল ও প্রতিষ্ঠানের জন্য",
+    "title": "ভেন্ডর-পরিচালিত শুটিংয়ের পরিবর্তে নিজস্ব ব্যবস্থাপনায় সুনিশ্চিত উৎপাদন প্রক্রিয়া চালু করুন।",
+    "subtitle": "১ থেকে ৫ সদস্যের কমিউনিকেশনস, L&D এবং মার্কেটিং টিমগুলো কোনো এজেন্সির সাথে দীর্ঘমেয়াদী চুক্তি বা অনির্দিষ্টকালের এডিট প্রক্রিয়ার ঝামেলা ছাড়াই একই সপ্তাহের মধ্যে ভিডিও তৈরি ও প্রকাশ করতে পারে।",
     "comparisons": [
       {
-        "label": "Traditional vendor shoot + edit",
-        "cost": "$5,000–$15,000",
-        "timeline": "4–8 weeks"
+        "label": "প্রথাগত ভেন্ডর শ্যুট ও এডিট",
+        "cost": "$৫,০০০–$১৫,০০০",
+        "timeline": "৪–৮ সপ্তাহ"
       },
       {
-        "label": "SceneFlow in-house workflow",
-        "cost": "$50–$500 in credits",
-        "timeline": "Same week"
+        "label": "SceneFlow অভ্যন্তরীণ কর্মপ্রবাহ",
+        "cost": "৫০ থেকে ৫০০ ডলারের ক্রেডিট",
+        "timeline": "একই সপ্তাহে"
       }
     ],
     "bullets": [
-      "Brand-safe templates and approval before final render",
-      "Budget caps with visible credit spend per project",
-      "No crew days, no edit back-and-forth on every revision"
+      "ব্র্যান্ড-সুরক্ষিত টেমপ্লেট এবং চূড়ান্ত রেন্ডারের আগে অনুমোদন",
+      "প্রতিটি প্রকল্পের জন্য দৃশ্যমান ক্রেডিট ব্যয়ের সুবিধাসহ বাজেটের সর্বোচ্চ সীমা",
+      "ক্রু নিয়ে শুটিংয়ের দিন বা প্রতিটি সংশোধনের জন্য বারবার এডিট নিয়ে আদান-প্রদানের ঝামেলা—কোনোটিই নেই।"
     ],
-    "ctaPrimary": "Book a team walkthrough",
-    "ctaSecondary": "See pricing",
-    "typicalCost": "Typical cost",
-    "timeline": "Timeline"
+    "ctaPrimary": "টিম ওয়াকথ্রু-র জন্য সময় নির্ধারণ করুন",
+    "ctaSecondary": "মূল্য দেখুন",
+    "typicalCost": "সাধারণ খরচ",
+    "timeline": "সময়রেখা"
   },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Studio feature deep dive",
-    "close": "Close",
-    "viewDetails": "View Details",
+    "badge": "নির্দেশিত ভ্রমণ",
+    "title": "প্ল্যাটফর্ম পরিচিতি",
+    "subtitle": "সহযোগিতামূলক পর্যালোচনা থেকে শুরু করে চূড়ান্ত সিনেমাটিক আউটপুট পর্যন্ত—SceneFlow AI Studio কর্মপ্রবাহের একটি পূর্ণাঙ্গ নির্দেশিকা।",
+    "subheading": "প্ল্যাটফর্মটি ঘুরে দেখুন — প্রয়োজনীয় বিষয়গুলো দিয়ে শুরু করুন",
+    "chapterHint": "আজকের চারটি প্রয়োজনীয় বিষয়। বিস্তারিত জানতে চাইলে অধ্যায়গুলো প্রসারিত করে দেখুন।",
+    "expandChapter": "বৈশিষ্ট্যসমূহ প্রদর্শন করুন",
+    "collapseChapter": "ফিচারগুলো লুকিয়ে রাখুন",
+    "underTheHoodLabel": "অন্তর্নিহিত কার্যপদ্ধতি",
+    "chapters": [
+      {
+        "id": "অপরিহার্য বিষয়সমূহ",
+        "label": "এখান থেকে শুরু করুন — প্রথম দিনেই যা পাবেন"
+      },
+      {
+        "id": "গুণমান",
+        "label": "বিষয়টি আপনার শ্রোতাদের কাছে কার্যকরভাবে পৌঁছে দিন।"
+      },
+      {
+        "id": "উৎপাদন",
+        "label": "অনুমোদিত বিট থেকে প্রকাশিত মাস্টার"
+      },
+      {
+        "id": "উন্নত",
+        "label": "যেসব দল বিলিং ও গভর্ন্যান্স সুবিধা চায়"
+      }
+    ],
+    "close": "বন্ধ করুন",
+    "viewDetails": "বিস্তারিত দেখুন",
     "beatFirst": {
-      "id": 15,
-      "title": "Beat-First Video Pipeline",
-      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "title": "বিট-কেন্দ্রিক ভিডিও পাইপলাইন",
+      "description": "F2V-এর আগে স্টোরিবোর্ড বিট এবং Beat Frames অনুমোদন করে নিন — এতে হ্যালুসিনেশন ও ভিজ্যুয়াল ড্রিফটের কারণে অন্ধভাবে পুনরায় তৈরির (blind regeneration) প্রয়োজন কমবে। পর্যালোচনা থেকে চূড়ান্ত ক্লিপ পর্যন্ত একটি সুবিন্যস্ত প্রক্রিয়া।",
       "keyFeatures": [
-        "Express storyboard for review — share beats before heavy render",
-        "Beat Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "পর্যালোচনার জন্য Express storyboard — ভারী রেন্ডারিংয়ের আগে বিটগুলো শেয়ার করুন",
+        "Beat Frames লক বিন্যাস — Reference Library ধারাবাহিকতা",
+        "প্রতি বিটে F2V — অনুমোদিত ফ্রেম থেকে ভিডিও তৈরি করুন",
+        "মিক্সারের সময়বিন্যাস ও স্ট্রিম — Final Cut অ্যাসেম্বলিতে রপ্তানি"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
-      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+      "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: ভিডিও তৈরির আগে Beat Frames এবং স্টোরিবোর্ডের অনুমোদন।",
+      "videoSlot": "০০:৩০-এর ক্লিপটি যুক্ত করুন: বিট অনুমোদন, ফ্রেম লক করা এবং এরপর F2V ক্লিপ তৈরি করা।"
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "title": "দর্শক পর্যালোচনা ও বিশ্লেষণ",
+      "description": "স্টেকহোল্ডারদের জন্য ব্যক্তিগত শেয়ার লিঙ্ক — এতে রয়েছে ম্যানুয়াল স্কোর, সুবিন্যস্ত মতামত এবং দর্শকদের সম্মতিক্রমে ঐচ্ছিক এনগেজমেন্ট অ্যানালিটিক্স। এটি Premiere-এ প্রকাশের আগে এবং প্রোডাকশন স্টোরিবোর্ড প্রিভিউয়ের জন্য ব্যবহৃত হয়।",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "ব্যক্তিগত পর্যালোচনা সেশন — স্টেকহোল্ডারদের জন্য নিরাপদ শেয়ার লিঙ্ক",
+        "শ্রোতাদের সুবিন্যস্ত মতামত — রেটিং এবং উন্মুক্ত বিষয়সমূহ",
+        "ঐচ্ছিক এনগেজমেন্ট অ্যানালিটিক্স — তথ্য সংগ্রহের আগে দর্শকের সম্মতি সাপেক্ষে",
+        "বাস্তব ডেটার ভিত্তিতে পর্যায়ক্রমিক উন্নয়ন — পর্যালোচকদের মতামতের আলোকে Blueprint ও স্ক্রিপ্ট পরিমার্জন করুন।"
       ],
-      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: Screening Room অ্যানালিটিক্স এবং পর্যালোচকের মতামত প্যানেল",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      "videoSlot": "০০:৩০-এর ক্লিপটি যুক্ত করুন: পর্যালোচনা সেশন আয়োজন এবং এনগেজমেন্ট ডেটা সংগ্রহ করা"
+    },
+    "ui": {
+      "screenshot": "স্ক্রিনশট",
+      "video": "ভিডিও",
+      "featureVideo": "ফিচার ভিডিও",
+      "keyFeatures": "প্রধান বৈশিষ্ট্যসমূহ",
+      "openScreenshot": "স্ক্রিনশটটি খুলুন",
+      "openFeatureVideo": "ফিচার ভিডিওটি খুলুন",
+      "expandImage": "ছবি বড় করুন",
+      "closePreview": "প্রিভিউ বন্ধ করুন"
+    },
+    "items": [
+      {
+        "id": "১",
+        "title": "সহজবোধ্য ইউএক্স (UX) + নির্মাতার পূর্ণ নিয়ন্ত্রণ",
+        "description": "নির্দেশিত অটোমেশনের মাধ্যমে দ্রুত কাজ শুরু করুন এবং এরপর প্রতিটি আউটপুট সম্পাদনা করুন; এতে কাজের গতি বজায় রেখেও টিমগুলোর হাতে সৃজনশীল নিয়ন্ত্রণ থাকে।",
+        "keyFeatures": [
+          "নির্দেশিত স্টুডিও কর্মপ্রবাহ — ধারণা থেকে এক্সপোর্ট পর্যন্ত সবকিছু এক জায়গায়",
+          "AI-এর তৈরি প্রতিটি বিট, চরিত্র এবং লাইন সরাসরি সম্পাদনা করুন।",
+          "ট্রিটমেন্টের বিভিন্ন সংস্করণ — সৃজনশীল নির্দেশনার জন্য পাশাপাশি তুলনা",
+          "Blueprint যৌথভাবে কাজ করুন — লিঙ্ক, সেকশন অডিও এবং পর্যালোচকদের সুবিন্যস্ত মতামত শেয়ার করুন।"
+        ],
+        "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: সম্পাদনাযোগ্য ও স্বয়ংক্রিয়ভাবে তৈরি অংশসহ Blueprint এডিটর",
+        "videoSlot": "০০:৩০-এর ক্লিপটি যুক্ত করুন: ধারণা থেকে এডিটযোগ্য আউটপুট পর্যন্ত UX ফ্লো"
+      },
+      {
+        "id": "২",
+        "title": "ঋণ বাজেট ও ব্যয় নিয়ন্ত্রণ",
+        "description": "রিয়েল-টাইমে ক্রেডিট ব্যবহারের হিসাব রাখুন এবং ব্যয়বহুল জেনারেশন প্রক্রিয়া শুরুর আগেই প্রয়োজনীয় নিয়ন্ত্রণসীমা (guardrails) নির্ধারণ করুন।",
+        "keyFeatures": [
+          "রিয়েল-টাইম ক্রেডিট ব্যবহার — প্রকল্প ও কার্যক্রম অনুযায়ী",
+          "প্রোডাকশন গার্ডরেল — ব্যয়বহুল জেনারেশন রান-এর আগে",
+          "স্বচ্ছ রেট কার্ড — টিটিএস (TTS), ভিডিও এবং ইন্টেলিজেন্স-এর জন্য",
+          "বাজেট দৃশ্যমানতা — টিম ও একক নির্মাতাদের জন্য"
+        ],
+        "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: ক্রেডিট ব্যবহারের প্যানেল এবং BYOK সেটিংস",
+        "videoSlot": "০০:৩০-এর ক্লিপটি যুক্ত করুন: বাজেট ড্যাশবোর্ড এবং মূল কনফিগারেশন",
+        "underTheHood": {
+          "title": "অন্তর্নিহিত কার্যপদ্ধতি",
+          "body": "বিদ্যমান ক্লাউড চুক্তি রয়েছে এমন প্রোডাকশন টিমগুলোর জন্য:",
+          "bullets": [
+            "Vertex AI BYOK — এন্টারপ্রাইজ বিলিং ও গভর্ন্যান্স",
+            "ক্রেডিট ক্যালকুলেটরে প্রোভাইডার টগল",
+            "আপনার চাবির পাশাপাশি প্ল্যাটফর্মের স্বচ্ছ রেট কার্ড"
+          ]
+        }
+      },
+      {
+        "id": "৩",
+        "title": "যেকোনো ধারণা, একটিই প্রোডাকশন কর্মপ্রবাহ",
+        "description": "প্রশিক্ষণ, পডকাস্ট, সংবাদ, বাড়ি বিক্রির ভিডিও এবং সিনেমাটিক কন্টেন্টের জন্য একটি নির্ভরযোগ্য প্রক্রিয়া ব্যবহার করুন।",
+        "keyFeatures": [
+          "একটিই কর্মপ্রবাহ — পডকাস্ট, সংবাদ, প্রশিক্ষণ, রিয়েল এস্টেট এবং সিনেমাটিক ফরম্যাট",
+          "প্রজেক্ট টেমপ্লেট — স্টুডিও আপনার সোর্স ম্যাটেরিয়াল অনুযায়ী নিজেকে মানিয়ে নেয়",
+          "একই Blueprint → চিত্রনাট্য → নির্মাণ প্রক্রিয়া — ধরন নির্বিশেষে",
+          "আইডিয়া বা ধারণা থেকে শুরু করে ডেলিভারি পর্যন্ত—কোনো টুল পরিবর্তনের প্রয়োজন নেই।"
+        ],
+        "screenshotSlot": "একটি স্ক্রিনশট যুক্ত করুন: স্প্লিট-ভিউ বা গ্রিড, যেখানে পডকাস্ট, সংবাদ, রিয়েল এস্টেট এবং সিনেমাটিক টেমপ্লেটগুলোকে একটি একক SceneFlow পাইপলাইন ইউআই (UI)-তে যুক্ত হতে দেখা যাচ্ছে।",
+        "videoSlot": "০০:৩০-এর ক্লিপটি যুক্ত করুন: \"যেকোনো সোর্স ম্যাটেরিয়াল দিয়ে শুরু করুন...\" — এখানে 'New Project' থেকে 'Podcast'-এ ক্লিক করা হচ্ছে (যেখানে অডিওর সাথে মানানসই হয়ে ইউজার ইন্টারফেস বা UI পরিবর্তিত হচ্ছে), এরপর স্প্লিট স্ক্রিনে দেখানো হচ্ছে কীভাবে নিউজ (News) ও সিনেমাটিক (Cinematic) প্রজেক্টগুলো Blueprint এডিটরে এসে একত্রিত হচ্ছে।"
+      },
+      {
+        "id": "৪",
+        "title": "নির্ভুল সম্পাদনা নিয়ন্ত্রণসহ স্মার্ট অটোমেশন",
+        "description": "SceneFlow প্ল্যাটফর্মটি বুদ্ধিমত্তা ব্যবহার করে স্বয়ংক্রিয়ভাবে একটি পেশাদার ভিত্তি (যেমন—সিরিজ, ব্লুপ্রিন্ট, স্ক্রিপ্ট, প্রোডাকশন প্রম্পট এবং এডিট) তৈরি করে; পাশাপাশি এটি এমন বুদ্ধিদীপ্ত সংলাপের সুবিধা দেয়, যা বিল্ট-ইন সুরক্ষা-ব্যবস্থাসহ আপনাকে সম্পাদনার পূর্ণ নিয়ন্ত্রণ প্রদান করে।",
+        "keyFeatures": [
+          "এক ধাপে এআই (AI) ভিত্তিপ্রস্তুত — সিরিজ, ব্লুপ্রিন্ট, স্ক্রিপ্ট এবং প্রোডাকশন প্রম্পট",
+          "বুদ্ধিমান এডিট ডায়ালগ — সুরক্ষাকবচ, অন্ধভাবে পুনর্লিখন নয়",
+          "গ্রহণ, পরিমার্জন বা বর্জন—প্রতিটি পরামর্শই আপনার নিয়ন্ত্রণে থাকে।",
+          "উৎপাদনের প্রতিটি পর্যায়ে মানুষের সম্পৃক্ততা"
+        ],
+        "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: এডিট কন্ট্রোলসহ বেসলাইন তৈরির প্রক্রিয়া প্রদর্শনকারী একটি বুদ্ধিমান ডায়ালগ।",
+        "videoSlot": "০০:৩০-এর ক্লিপটি যুক্ত করুন: এআই (AI)-এর মাধ্যমে প্রাথমিক সংস্করণ তৈরি এবং এরপর ব্যবহারকারীর দ্বারা নিখুঁত সম্পাদনা।"
+      },
+      {
+        "id": "৫",
+        "title": "ধারাবাহিকতা বজায় রাখার জন্য Reference Library শেয়ার করা হয়েছে",
+        "description": "পুনঃব্যবহারযোগ্য রেফারেন্সের মাধ্যমে বিভিন্ন দৃশ্য ও পর্বে চরিত্র, পোশাক, কণ্ঠস্বর, লোকেশন এবং প্রপস-এর ধারাবাহিকতা বজায় রাখুন।",
+        "keyFeatures": [
+          "পুনরায় ব্যবহারযোগ্য প্রোফাইল — চরিত্র, পোশাক, কণ্ঠস্বর, স্থান এবং প্রপস",
+          "দৃশ্য-বহির্ভূত প্রয়োগ — প্রতিটি প্রজন্মে রেফারেন্সের প্রবাহ",
+          "দৃশ্যগত সামঞ্জস্য — Imagen ও Veo-র আউটপুটে একই রকম মুখাবয়ব ও আবহ",
+          "ফ্র্যাঞ্চাইজি-পর্যায়ের ধারাবাহিকতা — একাধিক পর্বের সিরিজের জন্য তৈরি"
+        ],
+        "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: চরিত্র ও প্রপ-এর ধারাবাহিকতা প্রদর্শনকারী রেফারেন্স লাইব্রেরি",
+        "videoSlot": "০০:৩০-এর ক্লিপটি যুক্ত করুন: একাধিক দৃশ্যে রেফারেন্স প্রয়োগ করা"
+      },
+      {
+        "id": "৬",
+        "title": "এক্সপ্রেস জেনারেশন ইঞ্জিন",
+        "description": "একই সাথে ছবি এবং ভিডিওর অংশগুলো স্বয়ংক্রিয়ভাবে তৈরি করুন। 'এক্সপ্রেস স্টোরিবোর্ড' (Express Storyboard)-এর মাধ্যমে আপনি কয়েক মিনিটের মধ্যেই অডিও-ভিজ্যুয়াল স্টোরিবোর্ড পর্যালোচনা ও শেয়ার করতে পারবেন। 'এক্সপ্রেস স্টোরিবোর্ড' কয়েক মিনিটের মধ্যে সম্পূর্ণ 'কেন বার্নস' (Ken Burns) স্টাইলের দৃশ্য তৈরি করে দেয়, আর 'এক্সপ্রেস ভিডিও' (Express Video) কয়েক দিনের পরিবর্তে মাত্র কয়েক মিনিটেই চূড়ান্ত ভিডিও দৃশ্য প্রস্তুত করে দেয়।",
+        "keyFeatures": [
+          "একই সাথে তৈরি — বিভিন্ন দৃশ্য জুড়ে একই সময়ে ছবি ও ভিডিওর জেনারেশন",
+          "এক্সপ্রেস স্টোরিবোর্ড — কয়েক মিনিটেই তৈরি করুন শেয়ারযোগ্য অডিও-ভিজ্যুয়াল প্রিভিউ।",
+          "এক্সপ্রেস Animatic — স্থিরচিত্র থেকে ‘কেন বার্নস’ (Ken Burns) মোশন ইফেক্ট",
+          "এক্সপ্রেস ভিডিও — দিনের পর দিন নয়, বরং কয়েক মিনিটেই দৃশ্য-ভিত্তিক ক্লিপ।"
+        ],
+        "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: Animatic এবং ভিডিওর অগ্রগতি-সহ এক্সপ্রেস জেনারেশন ড্যাশবোর্ড",
+        "videoSlot": "০০:৩০-এর ক্লিপটি যুক্ত করুন: স্ক্রিপ্ট থেকে অ্যানিমেটিক এবং পরবর্তীতে চূড়ান্ত ভিডিও তৈরির সমান্তরাল প্রক্রিয়া।"
+      },
+      {
+        "id": "৭",
+        "title": "Audience Resonance সম্পাদক",
+        "description": "তাৎক্ষণিক স্কোরিং, বিশ্লেষণ এবং সুপারিশ পেতে আপনার লক্ষ্য দর্শক বা শ্রোতাদের নির্ধারণ করুন। সর্বোচ্চ প্রভাব নিশ্চিত করতে আপনার এপিসোড, Blueprint এবং স্ক্রিপ্টকে নিখুঁতভাবে অপ্টিমাইজ করতে 'ওয়ান-ক্লিক ফিক্স' (এক-ক্লিকে সংশোধন) অথবা 'গাইডেড এডিট' (নির্দেশিত সম্পাদনা) ব্যবহার করুন।",
+        "keyFeatures": [
+          "লক্ষ্য-শ্রোতা স্কোরিং — শ্রেণিভিত্তিক বিভাজনসহ",
+          "নির্দিষ্ট অংশের সাথে সম্পর্কিত পরামর্শ — আপনার গল্পের সঠিক অংশটি ঠিক করুন",
+          "এক-ক্লিকে সমাধান ও নির্দেশিত সম্পাদনা — নিখুঁতভাবে নতুন করে লেখা, কোনো অনুমান নয়।",
+          "প্রোডাকশন-রেডি হওয়ার পর্যায় — পূর্ণাঙ্গ রেন্ডারিংয়ে কখন বিনিয়োগ করবেন, তা জেনে নিন"
+        ],
+        "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: অডিয়েন্স স্কোরিং ও এক-ক্লিকে সংশোধনের সুবিধাসহ রেজোন্যান্স এডিটর (Resonance Editor)",
+        "videoSlot": "০০:৩০-এর ক্লিপটি যুক্ত করুন: অডিয়েন্স রেজোন্যান্স স্কোরের ওপর ভিত্তি করে নির্দেশিত সম্পাদনা (guided edits) প্রয়োগ করা হচ্ছে।"
+      },
+      {
+        "id": "৮",
+        "title": "অভিযোজনমূলক অনুবাদ (৭০টিরও বেশি ভাষা)",
+        "description": "বহুভাষিক পরিবেশনার জন্য আখ্যানের মূল উদ্দেশ্য ও সময়ক্রমের সামঞ্জস্য বজায় রেখে ব্যাপক পরিসরে বিষয়বস্তুকে স্থানীয়করণ করুন।",
+        "keyFeatures": [
+          "৭০টিরও বেশি ভাষা — ব্যাপক পরিসরে ন্যারেশন, সংলাপ ও কপি তৈরি",
+          "বর্ণনার মূল উদ্দেশ্য অক্ষুণ্ণ—অর্থ ও সময়ের সামঞ্জস্য বজায় থাকে।",
+          "বহুভাষিক অডিও ট্র্যাক — সিন টাইমলাইনে",
+          "বিতরণের জন্য লোকাল-ভিত্তিক এক্সপোর্ট-যোগ্য প্যাকেজ"
+        ],
+        "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: বহুভাষিক টাইমলাইন এবং অনুবাদ সেটিংস",
+        "videoSlot": "০০:৩০-এর ক্লিপটি যুক্ত করুন: কোনো দৃশ্যকে তাৎক্ষণিকভাবে একাধিক ভাষায় স্থানীয়করণ করা"
+      },
+      {
+        "id": "৯",
+        "title": "সিরিজ অটোমেশন",
+        "description": "আপনার জগতটিকে একবারই সংজ্ঞায়িত করুন এবং ধারাবাহিকতা বজায় রেখে একাধিক পর্বজুড়ে বিস্তৃত কাহিনি-বিন্যাস (arcs) তৈরি করুন। শেয়ার করা Reference Library পুরো সিজন জুড়ে চরিত্র ও আবহের সামঞ্জস্য বজায় রাখে।",
+        "keyFeatures": [
+          "আপনার জগতটি একবারই সুনির্দিষ্ট করে নিন—চরিত্র, আবহ এবং সিজনের মূল আখ্যান।",
+          "পুরো সিজন জুড়ে স্বয়ংক্রিয়ভাবে তৈরি সুসংহত পর্বের রূপরেখা",
+          "ধারাবাহিকতা পর্যবেক্ষণ — একাধিক পর্বের সিজনগুলোর মধ্যে সামঞ্জস্য বজায় রাখা",
+          "সিরিজ ও এপিসোডের মধ্যে সমন্বয় — Blueprint স্টুডিও ও প্রোডাকশন-এ"
+        ],
+        "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: স্বয়ংক্রিয়ভাবে তৈরি এপিসোড আর্কসহ সিরিজের সংক্ষিপ্ত বিবরণ",
+        "videoSlot": "৩০ সেকেন্ডের ক্লিপটি যুক্ত করুন: ধারণাটি একটি বহু-পর্বের সিজনে সম্প্রসারিত হচ্ছে"
+      },
+      {
+        "id": "১০",
+        "title": "Blueprint অটোমেশন",
+        "description": "লগলাইন, বিটস, চরিত্র এবং টোনসহ ধারণাগুলোকে সুবিন্যস্ত ট্রিটমেন্টে রূপান্তর করুন। ভারী রেন্ডারিংয়ের আগে Audience Resonance চালু করুন এবং যৌথভাবে কাজ করুন।",
+        "keyFeatures": [
+          "তৈরি → পর্যালোচনা → পরিমার্জন → উৎপাদন প্রক্রিয়া শুরু",
+          "কয়েক মিনিটেই ধারণা থেকে কাঠামো — লগলাইন, বিটস, চরিত্র ও সুর",
+          "প্রোডাকশনের আগে ৮০-এর বেশি লক্ষ্যমাত্রা (target) সহ Audience Resonance স্কোরিং",
+          "সহযোগীদের শেয়ার করা লিঙ্ক — মতামত বা ফিডব্যাক সমন্বয়ের মাধ্যমে নির্দেশিত পরিমার্জন"
+        ],
+        "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: গল্পের মূল পর্যায় ও চরিত্রের বিবর্তনসহ স্বয়ংক্রিয়ভাবে তৈরি Blueprint",
+        "videoSlot": "০০:৩০-এর ক্লিপটি যুক্ত করুন: একটি ধারণাকে সুবিন্যস্ত Blueprint-এ রূপান্তর করা"
+      },
+      {
+        "id": "১১",
+        "title": "উৎপাদন স্বয়ংক্রিয়করণ",
+        "description": "'স্ক্রিপ্ট' (Script) এবং 'অ্যাকশন' (Action) ট্যাবগুলো Foundation → Storyboard → Production → Final Cut ধাপগুলোকে পরিচালনা করে। Express storyboard, Beat Frames, Mixer এবং MP4 স্ট্রিম—কোনো টুল পরিবর্তনের প্রয়োজন নেই।",
+        "keyFeatures": [
+          "ফাউন্ডেশন — চিত্রনাট্য, কণ্ঠস্বর, দৃশ্যের অডিও, চূড়ান্ত চিত্রনাট্য",
+          "Express storyboard — দিকনির্দেশনা ও ফ্রেম (মিনিটের হিসেবে); গ্যালারি ও শেয়ার",
+          "Beat Frames এবং মিক্সার — শুরু/শেষের ফ্রেম, ডিরেক্টর কনসোল, MP4 স্ট্রিম রেন্ডার করা",
+          "প্রোডাকশন স্ট্রিম — আউটপুট পর্যালোচনা করুন, পুরনো বিট (stale beats) পুনরায় রেন্ডার করুন, Final Cut-এ পাঠান।"
+        ],
+        "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: প্রোডাকশন ড্যাশবোর্ড যাতে স্ক্রিপ্ট, Beat Frames এবং মিক্সার দেখা যাচ্ছে।",
+        "videoSlot": "০০:৩০-এর ক্লিপ যুক্ত করুন: Foundation, Express storyboard, Beat Frames এবং স্ট্রিম এক্সপোর্ট"
+      },
+      {
+        "id": "১২",
+        "title": "Final Cut অ্যাসেম্বলি",
+        "description": "সম্পন্ন প্রোডাকশন স্ট্রিমগুলোকে একটি মাস্টার MP4 ফাইলে একত্রিত করুন। প্রতিটি দৃশ্যের জন্য Animatic অথবা ভিডিও ও ভাষা নির্বাচন করুন — এতে কোনো টাইমলাইন এডিটিংয়ের প্রয়োজন নেই; সৃজনশীল পরিবর্তনগুলো Production Mixer-এ অপরিবর্তিত থাকবে।",
+        "keyFeatures": [
+          "দৃশ্য-ভিত্তিক স্ট্রিম নির্বাচন — Animatic, ভিডিও, ভাষা, সংস্করণ",
+          "অ্যাসেম্বলি প্রিসেট — অল ভিডিও, হাইব্রিড, কাস্টম মিক্স",
+          "টাইমলাইনে কোনো সম্পাদনা নয় — সৃজনশীল পরিবর্তনগুলো Production Mixer-এর মধ্যেই থাকে।",
+          "এক-ক্লিকে মাস্টার এক্সপোর্ট — Premiere-এর জন্য জোড়া লাগানো MP4"
+        ],
+        "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: প্রতি-দৃশ্য স্ট্রিম পিকারসহ Final Cut অ্যাসেম্বলি প্যানেল",
+        "videoSlot": "০০:৩০-এর ক্লিপ যুক্ত করুন: স্ট্রিম নির্বাচন, অ্যাসেম্বলি প্রিভিউ এবং মাস্টার এক্সপোর্ট।"
+      },
+      {
+        "id": "১৩",
+        "title": "Premiere বিতরণ",
+        "description": "অডিয়েন্স অ্যানালিটিক্স বা দর্শক-সংক্রান্ত তথ্য-উপাত্তের সাহায্যে আপনার মাস্টার ভিডিওটি যাচাই করে নিন; এরপর স্থানীয়করণ করা মেটাডেটা-সহ ইউটিউবে প্রকাশ করুন অথবা শর্টস (Shorts), রিলস (Reels) ও টিকটক (TikTok)-এর জন্য উপযুক্ত ফরম্যাটে ভিডিওগুলো এক্সপোর্ট করুন।",
+        "keyFeatures": [
+          "শেয়ারযোগ্য Screening Room — স্কোরিং এবং ঐচ্ছিক এনগেজমেন্ট অ্যানালিটিক্স (দর্শকের সম্মতিসাপেক্ষ) সহ /s/ লিঙ্ক।",
+          "ইনসাইটস ড্যাশবোর্ড — স্কোরিং, বায়োমেট্রিক এবং ভিজ্যুয়াল ট্যাব",
+          "ইউটিউব উইজার্ড — থাম্বনেইল, স্থানীয়করণের উপযোগী শিরোনাম/বিবরণ, SceneFlow সিটিএ (CTA)",
+          "এক্সপোর্ট বান্ডল এবং ভার্টিক্যাল শর্ট-ফর্ম ক্লিপ প্ল্যান"
+        ],
+        "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: ইনসাইট ও পাবলিশ উইজার্ডসহ Premiere ড্যাশবোর্ড",
+        "videoSlot": "০০:৩০-এর ক্লিপ যুক্ত করুন: স্ক্রিনিং সংক্রান্ত অন্তর্দৃষ্টি, ইউটিউব উইজার্ড এবং এক্সপোর্ট বান্ডল"
+      },
+      {
+        "id": "১৪",
+        "title": "দর্শক পর্যালোচনা ও বিশ্লেষণ",
+        "description": "স্টেকহোল্ডারদের জন্য ব্যক্তিগত শেয়ার লিঙ্ক — এতে রয়েছে ম্যানুয়াল স্কোর, সুবিন্যস্ত মতামত এবং দর্শকদের সম্মতিক্রমে ঐচ্ছিক এনগেজমেন্ট অ্যানালিটিক্স। এটি Premiere-এ প্রকাশের আগে এবং প্রোডাকশন স্টোরিবোর্ড প্রিভিউয়ের জন্য ব্যবহৃত হয়।",
+        "keyFeatures": [
+          "ব্যক্তিগত পর্যালোচনা সেশন — স্টেকহোল্ডারদের জন্য নিরাপদ শেয়ার লিঙ্ক",
+          "শ্রোতাদের সুবিন্যস্ত মতামত — রেটিং এবং উন্মুক্ত বিষয়সমূহ",
+          "ঐচ্ছিক এনগেজমেন্ট অ্যানালিটিক্স — তথ্য সংগ্রহের আগে দর্শকের সম্মতি সাপেক্ষে",
+          "বাস্তব ডেটার ভিত্তিতে পর্যায়ক্রমিক উন্নয়ন — পর্যালোচকদের মতামতের আলোকে Blueprint ও স্ক্রিপ্ট পরিমার্জন করুন।"
+        ],
+        "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: Screening Room অ্যানালিটিক্স এবং পর্যালোচকের মতামত প্যানেল",
+        "videoSlot": "০০:৩০-এর ক্লিপটি যুক্ত করুন: পর্যালোচনা সেশন আয়োজন এবং এনগেজমেন্ট ডেটা সংগ্রহ করা"
+      }
+    ]
+  },
+  "engineeringTrust": {
+    "badge": "প্রকৌশল ও নিরাপত্তা",
+    "title": "এর জন্য তৈরি",
+    "titleAccent": "উৎপাদন-সংক্রান্ত কাজের ভার",
+    "subtitle": "স্টার্টআপ-বান্ধব আর্কিটেকচার, যাতে রয়েছে Google Cloud উপাদানসমূহ—যা নিরাপত্তা, স্কেলেবিলিটি এবং কার্যকর প্রোডাকশন ডেলিভারি নিশ্চিত করে।",
+    "pillars": [
+      {
+        "id": "স্থাপত্য",
+        "title": "এন্টারপ্রাইজ আর্কিটেকচার",
+        "description": "প্রোডাকশন ওয়ার্কলোড ও ক্রমবর্ধমান দলের উপযোগী স্কেলেবল অর্কেস্ট্রেশনসহ Google Cloud অবকাঠামোর ওপর এটি তৈরি করা হয়েছে।",
+        "highlights": [
+          "জেনরেশন ওয়ার্কফ্লো-র জন্য Vertex AI",
+          "Imagen 4 এবং Veo 3.1-এর সমন্বয়",
+          "ElevenLabs TTS ইন্টিগ্রেশন",
+          "এন্টারপ্রাইজ বিলিং নিয়ন্ত্রণের জন্য BYOK"
+        ]
+      },
+      {
+        "id": "নিরাপত্তা",
+        "title": "নিরাপত্তা ও গোপনীয়তা",
+        "description": "এনক্রিপশন (স্টোরেজ বা 'অ্যাট-রেস্ট' অবস্থায়), অ্যাক্সেস নিয়ন্ত্রণ এবং গোপনীয়তাকে সর্বোচ্চ অগ্রাধিকার দিয়ে পরিচালনার মাধ্যমে সৃজনশীল সম্পদগুলো সুরক্ষিত থাকে।",
+        "highlights": [
+          "এন্টারপ্রাইজ-উপযোগী ক্লাউড নিয়ন্ত্রণ ব্যবস্থা",
+          "AES-256 এনক্রিপশন",
+          "জিডিপিআর (GDPR)-এর বিষয়গুলো বিবেচনায় রেখে ডিজাইন করা হয়েছে",
+          "ডেটা বা তথ্য ব্যবস্থাপনার বিষয়ে আমাদের গোপনীয়তা নীতি দেখুন।"
+        ]
+      },
+      {
+        "id": "মাপ",
+        "title": "স্কেল ও নির্ভরযোগ্যতা",
+        "description": "কাজের পরিমাণ বৃদ্ধির সাথে সাথে গ্লোবাল ক্লাউড ডেলিভারি নির্ভরযোগ্য রেন্ডার ও রিভিউ পাইপলাইনকে সহায়তা করে।",
+        "highlights": [
+          "একাধিক অঞ্চলে মোতায়েন",
+          "সিডিএন-ত্বরান্বিত বিতরণ",
+          "স্বয়ংক্রিয় ফেইলওভার",
+          "রিয়েল-টাইম পর্যবেক্ষণ"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "value": "বৈশ্বিক",
+        "label": "ক্লাউড ডেলিভারি"
+      },
+      {
+        "value": "ইমেজ ৪",
+        "label": "চিত্র তৈরি"
+      },
+      {
+        "value": "২৫৬-বিট",
+        "label": "এনক্রিপশন"
+      },
+      {
+        "value": "২৪/৭",
+        "label": "পর্যবেক্ষণ"
+      }
+    ],
+    "vertexSection": {
+      "title": "কেন গুগল Vertex AI?",
+      "subtitle": "যে প্রযুক্তিগত সুরক্ষা-বলয়টি গুরুত্বপূর্ণ",
+      "cards": [
+        {
+          "title": "ডেটা গোপনীয়তা",
+          "description": "শেয়ার্ড মডেল প্রশিক্ষণের জন্য আপনার স্ক্রিপ্ট এবং সৃজনশীল সম্পদ ব্যবহার করা হয় না, যা আপনার মেধাসম্পদ (IP) ও ক্লায়েন্টের কাজ সুরক্ষিত রাখতে সহায়তা করে।",
+          "highlight": "শেয়ারড মডেল প্রশিক্ষণের জন্য ব্যবহৃত হয় না"
+        },
+        {
+          "title": "নির্ভরযোগ্য থ্রুপুটের জন্য তৈরি",
+          "description": "উৎপাদন-কেন্দ্রিক অবকাঠামো উচ্চ-চাহিদার সময়গুলোতে উৎপাদন প্রক্রিয়ার স্থিতিশীলতা বজায় রাখতে সহায়তা করে।"
+        },
+        {
+          "title": "রেফারেন্স-সচেতন সামঞ্জস্য",
+          "description": "SceneFlow বিভিন্ন দৃশ্যের মধ্যে চরিত্র, স্থান এবং প্রপস-এর সামঞ্জস্য বজায় রাখার জন্য 'রেফারেন্স-অ্যাওয়ার জেনারেশন' (reference-aware generation) পদ্ধতি ব্যবহার করে।"
+        }
+      ]
+    },
+    "partnership": {
+      "poweredBy": "Google Cloud ও Vertex AI, ক্লাউড স্টোরেজ এবং অনুবাদ টুলের মাধ্যমে চালিত",
+      "footnote": "SceneFlow AI এমন একটি স্কেলেবল Google Cloud অবকাঠামোর ওপর পরিচালিত হয়, যা স্টার্টআপের প্রবৃদ্ধি এবং বড় প্রতিষ্ঠানের প্রত্যাশা পূরণের উপযোগী করে তৈরি করা হয়েছে।"
+    },
+    "attribution": "— SceneFlow প্রকৌশল দল"
+  },
+  "coreCapabilities": {
+    "audienceResonance": {
+      "badge": "বুদ্ধিমত্তা স্তর",
+      "title": "Audience Resonance সম্পাদক",
+      "description": "সম্পূর্ণ রেন্ডারিং-এর পেছনে বিনিয়োগ করার আগেই আপনার স্কোর জেনে নিন। কার্যকর সংশোধনের মাধ্যমে Audience Resonance স্কোর ও Blueprint-এর লক্ষ্য পূরণ করুন—এক্সপ্রেস (Express) ও ভিডিও তৈরির আগেই প্রতিটি বিট অপ্টিমাইজ করে নিন।",
+      "bullets": [
+        "আপনার সুনির্দিষ্ট লক্ষ্য-দর্শক নির্ধারণ করুন।",
+        "রিয়েল-টাইম স্কোর, বিশ্লেষণ এবং সুপারিশ পান",
+        "বর্ণনার দুর্বলতা দূর করার জন্য এক-ক্লিকে সমাধান",
+        "পর্ব, Blueprint এবং স্ক্রিপ্ট অপ্টিমাইজ করার জন্য নির্দেশিত সম্পাদনা"
+      ],
+      "cta": "আপনার স্ক্রিপ্ট বিশ্লেষণ করুন",
+      "howWeScore": {
+        "toggle": "আমরা যেভাবে স্কোর করি",
+        "title": "Audience Resonance যেভাবে কাজ করে",
+        "description": "Audience Resonance আখ্যান-কাঠামোর বিশ্লেষণকে (যেমন—স্পষ্টতা, গতি বা পেসিং এবং আবেগীয় প্রবাহ) Blueprint-এ আপনার নির্ধারিত দর্শকদের জন্য উপযুক্ততার সাথে সমন্বয় করে—এটি কেবল বাহ্যিক বা অগভীর মেট্রিক্স (vanity metrics) কিংবা প্রকাশের পরবর্তী রিটেনশন ডেটার ওপর নির্ভর করে না। এর পরামর্শগুলো স্ক্রিপ্টের নির্দিষ্ট অংশের সাথে যুক্ত থাকে, ফলে 'এক্সপ্রেস' (Express) বা ভিডিও তৈরির আগেই আপনি সমস্যাগুলো সমাধান করে নিতে পারেন।",
+        "bullets": [
+          "আপনার নির্ধারিত লক্ষ্য-শ্রোতাদের সাপেক্ষে Blueprint এবং স্ক্রিপ্ট-এর স্কোর যাচাই করুন।",
+          "বিভাগ-ভিত্তিক সুপারিশ — কোনো অস্পষ্ট 'আমাদের ওপর ভরসা রাখুন' গোছের সংখ্যা নয়।",
+          "এক-ক্লিকে কার্যকর সমাধান ও নির্দেশিত সম্পাদনা — কেবল কোনো গ্রেড নয়",
+          "ভারী রেন্ডারিংয়ের পেছনে অর্থ ব্যয়ের আগেই এটি চালান, প্রকাশের পরে নয়।"
+        ]
+      }
+    },
+    "express": {
+      "badge": "অতি-দ্রুত উৎপাদন",
+      "title": "সিনফ্লো এক্সপ্রেস",
+      "description": "একই সাথে স্টোরিবোর্ড, অ্যানিমেটিক এবং ভিডিও বিট স্বয়ংক্রিয়ভাবে তৈরি করুন। স্ক্রিপ্ট থেকে শেয়ারযোগ্য প্রিভিউ-তে পৌঁছান মাত্র কয়েক মিনিটের মধ্যে—এরপর চূড়ান্ত F2V ব্যয়ের আগে Beat Frames অনুমোদন করুন।",
+      "items": [
+        {
+          "title": "এক্সপ্রেস স্টোরিবোর্ড",
+          "desc": "ঘণ্টার পরিবর্তে কয়েক মিনিটেই অডিও ও ভিডিও স্টোরিবোর্ড পর্যালোচনা ও শেয়ার করুন।",
+          "time": "মিনিট বনাম ঘণ্টা"
+        },
+        {
+          "title": "Animatic-গুলিকে প্রকাশ করুন",
+          "desc": "উচ্চমানের ভয়েসওভারসহ সম্পূর্ণ 'কেন বার্নস' (Ken Burns) অ্যানিমেটিক দৃশ্য তাৎক্ষণিকভাবে রেন্ডার করুন।",
+          "time": "মিনিট বনাম ঘণ্টা"
+        },
+        {
+          "title": "এক্সপ্রেস ভিডিও",
+          "desc": "সম্পূর্ণ দৃশ্য উপস্থাপনের লক্ষ্যে একই সাথে ছবি ও ভিডিও তৈরির প্রক্রিয়াটি সমন্বয় করুন।",
+          "time": "মিনিট বনাম দিন"
+        }
+      ],
+      "cta": "এক্সপ্রেস রেন্ডারিং শুরু করুন"
+    }
+  },
+  "exitIntent": {
+    "title": "দাঁড়ান! খালি হাতে যাবেন না।",
+    "subtitle": "এআই-চালিত চলচ্চিত্র নির্মাণের ক্ষেত্রে বিশেষ আর্লি অ্যাক্সেস ও পরামর্শ পান।",
+    "benefits": [
+      "সাপ্তাহিক এআই (AI) চলচ্চিত্র নির্মাণ টিউটোরিয়াল",
+      "নতুন ফিচারগুলোর প্রাথমিক অ্যাক্সেস",
+      "ক্রিয়েটরদের জন্য বিশেষ ছাড়"
+    ],
+    "emailPlaceholder": "আপনার ইমেল লিখুন",
+    "subscribe": "আগেভাগে ব্যবহারের সুযোগ নিন",
+    "subscribing": "সাবস্ক্রাইব করা হচ্ছে...",
+    "or": "অথবা",
+    "startNow": "মাত্র ৯ ডলারে এখনই তৈরি করা শুরু করুন →",
+    "privacy": "কখনোই কোনো স্প্যাম নয়। যেকোনো সময় আনসাবস্ক্রাইব করতে পারেন।",
+    "successTitle": "আপনি তালিকায় আছেন!",
+    "successSubtitle": "চলচ্চিত্র নির্মাণের বিশেষ পরামর্শ এবং আগেভাগে সুবিধা পাওয়ার আপডেটগুলোর জন্য আপনার ইনবক্স চেক করুন।",
+    "ctaText": "অন্বেষণ শুরু করুন — $৯",
+    "closePopup": "পপ-আপ বন্ধ করুন"
+  },
+  "pricing": {
+    "badge": "ব্যবহার-ভিত্তিক মূল্য নির্ধারণ",
+    "title": "আপনি যা তৈরি করেন তার জন্য মূল্য দিন",
+    "subtitle": "প্ল্যাটফর্ম ব্যবহারের জন্য একটি মূল প্ল্যান। এআই (AI) জেনারেশনের জন্য ক্রেডিট। প্রয়োজন হলে টপ-আপ করার সুবিধা। পূর্ণ নিয়ন্ত্রণ, অপচয়হীন ব্যবহার।",
+    "valueAnchor": {
+      "traditionalCost": "$২,০০০-এর বেশি",
+      "traditionalLabel": "প্রথাগত প্রি-ভিজ্যুয়ালাইজেশন",
+      "vs": "বনাম",
+      "sceneFlowCost": "$৪৯-১৪৯",
+      "sceneFlowLabel": "SceneFlow মাসিক",
+      "saveBadge": "প্রতি প্রকল্পে ৯০%-এর বেশি সাশ্রয় করুন"
+    },
+    "teamCta": {
+      "title": "ইন-হাউস টিম নাকি প্রতিষ্ঠান?",
+      "description": "কমিউনিকেশনস, এল অ্যান্ড ডি (L&D) এবং মার্কেটিং টিমের জন্য ওয়ার্কফ্লো বিষয়ক একটি সেশনের সময় নির্ধারণ করুন।",
+      "button": "বইয়ের বিষয়বস্তুর পর্যালোচনা"
+    },
+    "agencyCta": {
+      "title": "এজেন্সি নাকি প্রোডাকশন শপ?",
+      "description": "কাস্টম ক্রেডিট, এসএলএ (SLA) এবং ব্যাপক পরিসরে ডেডিকেটেড সাপোর্ট",
+      "button": "বিক্রয় বিভাগের সাথে যোগাযোগ করুন"
+    },
+    "byok": {
+      "title": "আপনার নিজস্ব কি (key) ব্যবহার করুন",
+      "badge": "প্রো ও স্টুডিও প্ল্যান",
+      "description": "আপনার কি ইতিমধ্যেই Vertex AI বা ElevenLabs-এর জন্য API কি (API keys) আছে? SceneFlow AI-এর সাথে সেগুলো ব্যবহার করুন এবং প্ল্যাটফর্ম ক্রেডিটের ওপর ৮০% পর্যন্ত সাশ্রয় করুন।",
+      "savingsHighlight": "প্ল্যাটফর্ম ক্রেডিটের ওপর ৮০%",
+      "benefits": [
+        {
+          "title": "৮০% SceneFlow ক্রেডিট সাশ্রয়",
+          "description": "অরকেস্ট্রেশন ও টুলসের জন্য মাত্র ২০% প্ল্যাটফর্ম ফি প্রদান করুন।"
+        },
+        {
+          "title": "কর্পোরেট পরিকল্পনাগুলোকে কাজে লাগান",
+          "description": "আপনার বিদ্যমান Vertex AI বা ElevenLabs ভলিউম ডিসকাউন্ট ব্যবহার করুন।"
+        },
+        {
+          "title": "পূর্ণ নিয়ন্ত্রণ",
+          "description": "আপনার চাবি, আপনার বিলিং, আপনার খরচ ব্যবস্থাপনা"
+        }
+      ],
+      "supportedProviders": "সমর্থিত প্রদানকারী",
+      "vertexName": "গুগল Vertex AI",
+      "vertexDetail": "ইমেজিন ৪ ও ভেও ৩.১",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "টেক্সট-টু-স্পিচ ও ভয়েস ক্লোনিং",
+      "savingsLabel": "৮০% সাশ্রয়",
+      "onImagesVideo": "ছবি ও ভিডিওর ওপর",
+      "onVoiceover": "ভয়েসওভারে",
+      "note": "এখানে প্রদর্শিত ক্রেডিট সাশ্রয় হলো SceneFlow প্ল্যাটফর্মের সাশ্রয়। আপনার প্রকৃত মোট খরচ প্রতিটি প্রোভাইডারের সাথে আপনার ব্যক্তিগত বা প্রাতিষ্ঠানিক API মূল্যের ওপর নির্ভর করে।"
+    },
+    "creditTopUps": {
+      "title": "আরও ক্রেডিট প্রয়োজন?",
+      "subtitle": "যেকোনো সময় টপ-আপ করুন। ক্রেডিটের মেয়াদ কখনোই শেষ হয় না।",
+      "packs": [
+        {
+          "label": "স্টার্টার প্যাক",
+          "description": "দ্রুত রিভিশনের জন্য উপযুক্ত"
+        },
+        {
+          "label": "সিন প্যাক",
+          "description": "একটি ছোট প্রকল্প সম্পন্ন করুন"
+        },
+        {
+          "label": "প্রোডাকশন প্যাক",
+          "description": "চলচ্চিত্রের গুরুত্বপূর্ণ দৃশ্য"
+        },
+        {
+          "label": "স্টুডিও প্যাক",
+          "description": "পূর্ণ উৎপাদন ক্ষমতা"
+        }
+      ],
+      "creditsUnit": "কৃতিত্ব স্বীকার"
+    },
+    "calculator": {
+      "sectionTitle": "আপনার প্রকল্পের সম্ভাব্য ব্যয় নির্ধারণ করুন",
+      "sectionSubtitle": "কোনো সিদ্ধান্তে আসার আগেই জেনে নিন ঠিক কত খরচ হবে।",
+      "title": "প্রকল্পের বাজেট ক্যালকুলেটর",
+      "subtitle": "শুরু করার আগে ক্রেডিটের হিসাব করে নিন।",
+      "customize": "প্যারামিটারগুলো কাস্টমাইজ করুন",
+      "imagesLabel": "যেসব ছবি তৈরি করতে হবে",
+      "videoClipsLabel": "ভিডিও ক্লিপ",
+      "voiceoverLabel": "ভয়েসওভার (মিনিট)",
+      "byokTitle": "আপনার নিজস্ব কি (Key) ব্যবহার করুন (BYOK)",
+      "byokBadge": "প্রো ও স্টুডিও",
+      "byokDescription": "SceneFlow ক্রেডিটের খরচ ৮০% পর্যন্ত কমাতে আপনার নিজস্ব API কি (API keys) ব্যবহার করুন। আপনি সরাসরি AI প্রদানকারীদের তাদের নির্ধারিত হারেই মূল্য পরিশোধ করবেন।",
+      "vertexToggle": "Vertex AI (ছবি ও ভিডিও)",
+      "elevenLabsToggle": "ElevenLabs (নেপথ্য কণ্ঠস্বর)",
+      "imageGeneration": "ছবি তৈরি",
+      "videoGeneration": "ভিডিও তৈরি",
+      "voiceover": "ভয়েসওভার",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "মোট প্রাক্কলন",
+      "withTopUps": "টপ-আপসহ",
+      "creditSavings": "SceneFlow ক্রেডিট সঞ্চয়",
+      "savePercent": "আপনি SceneFlow ক্রেডিটের ওপর {percent}% সাশ্রয় করছেন।",
+      "transparency": "সম্পূর্ণ স্বচ্ছতা: কাজ করার সময় আপনি রিয়েল-টাইমে ক্রেডিট ব্যবহারের হিসাব দেখতে পাবেন। কোনো অপ্রত্যাশিত বিষয় নেই—যেকোনো সময় আপনার প্রজেক্টের পরিধি পরিবর্তন বা সমন্বয় করতে পারবেন।",
+      "transparencyHighlight": "সম্পূর্ণ স্বচ্ছতা:",
+      "byokDisclaimer": "BYOK দ্রষ্টব্য: এখানে প্রদর্শিত ক্রেডিটের সাশ্রয় শুধুমাত্র SceneFlow প্ল্যাটফর্মের ক্রেডিট হ্রাসের বিষয়টিকেই প্রতিফলিত করে। আপনার প্রকৃত খরচ আপনার Vertex AI এবং ElevenLabs প্রাইসিং প্ল্যানের ওপর নির্ভর করে। কর্পোরেট বা উচ্চ-ভলিউম বিশিষ্ট API প্ল্যানের ক্ষেত্রে অতিরিক্ত সাশ্রয়ের সুযোগ থাকতে পারে।",
+      "byokDisclaimerHighlight": "BYOK দ্রষ্টব্য:",
+      "presets": [
+        {
+          "id": "বাণিজ্যিক",
+          "name": "৩০ সেকেন্ডের বিজ্ঞাপন"
+        },
+        {
+          "id": "সংক্ষিপ্ত",
+          "name": "২ মিনিটের স্বল্পদৈর্ঘ্য চলচ্চিত্র"
+        },
+        {
+          "id": "পর্ব",
+          "name": "১০ মিনিটের পর্ব"
+        },
+        {
+          "id": "বৈশিষ্ট্য",
+          "name": "৯০ মিনিটের পূর্ণদৈর্ঘ্য চলচ্চিত্র"
+        }
+      ],
+      "minSuffix": "মিনিট"
+    },
+    "tierGrid": {
+      "productionTestFlight": "উৎপাদন-পর্যায়ী পরীক্ষামূলক উড্ডয়ন",
+      "getStarted": "শুরু করুন",
+      "startTestFlight": "টেস্ট ফ্লাইট শুরু করুন",
+      "loading": "লোড হচ্ছে...",
+      "mostPopular": "সবচেয়ে জনপ্রিয়",
+      "creditsPerMonth": "ক্রেডিট/মাস",
+      "storage": "সংরক্ষণ",
+      "perMonth": "/মাস"
+    },
+    "trust": {
+      "cancelAnytime": "যেকোনো সময় বাতিল করুন",
+      "moneyBack": "১৪ দিনের মানি-ব্যাক গ্যারান্টি",
+      "creditsNeverExpire": "ক্রেডিটগুলোর মেয়াদ কখনোই শেষ হয় না (Explorer প্যাক)"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "description": "এটি পরখ করে দেখার জন্য এককালীন কেনাকাটা",
+        "features": [
+          "এককালীন কেনাকাটা",
+          "৭৫০ ক্রেডিট (কখনও মেয়াদ শেষ হবে না)",
+          "৫ জিবি স্টোরেজ (৩০ দিন)",
+          "পুরো প্ল্যাটফর্মে প্রবেশের সুবিধা",
+          "MP4 হিসেবে এক্সপোর্ট (যেকোনো রেজোলিউশন)",
+          "এআই ভয়েসওভার (৭০টিরও বেশি ভাষা)"
+        ]
+      },
+      "subscriptions": [
+        {
+          "id": "স্টার্টার",
+          "name": "স্টার্টার",
+          "description": "স্বতন্ত্র নির্মাতাদের জন্য",
+          "features": [
+            "পুরো প্ল্যাটফর্মে প্রবেশের সুবিধা",
+            "প্রতি মাসে ৪,৫০০ ক্রেডিট অন্তর্ভুক্ত",
+            "২৫ জিবি সক্রিয় স্টোরেজ",
+            "MP4 হিসেবে এক্সপোর্ট (যেকোনো রেজোলিউশন)",
+            "এআই ভয়েসওভার (৭০টিরও বেশি ভাষা)",
+            "ইমেইল সহায়তা"
+          ]
+        },
+        {
+          "id": "পক্ষে",
+          "name": "প্রো",
+          "description": "পেশাদার নির্মাতাদের জন্য",
+          "features": [
+            "স্টার্টার-এর সবকিছু, এবং সেই সাথে:",
+            "প্রতি মাসে ১৫,০০০ ক্রেডিট অন্তর্ভুক্ত",
+            "১০০ জিবি সক্রিয় স্টোরেজ",
+            "Veo 3.1 মানের (4K) অ্যাক্সেস",
+            "চরিত্রের সামঞ্জস্য বজায় রাখার ইঞ্জিন",
+            "কণ্ঠস্বর ক্লোনিং",
+            "BYOK (আপনার নিজস্ব কি বা চাবি ব্যবহার করুন)",
+            "দলের জন্য ৩টি আসন",
+            "অগ্রাধিকারভিত্তিক সহায়তা"
+          ]
+        },
+        {
+          "id": "স্টুডিও",
+          "name": "স্টুডিও",
+          "description": "টিম ও এজেন্সির জন্য",
+          "features": [
+            "Pro-এর সবকিছু, এবং সেই সাথে:",
+            "প্রতি মাসে ৭৫,০০০ ক্রেডিট অন্তর্ভুক্ত",
+            "৫০০ জিবি সক্রিয় স্টোরেজ",
+            "Veo 3.1 4K অগ্রাধিকার সারি",
+            "অসীম চরিত্রের সামঞ্জস্য",
+            "হোয়াইট-লেবেল রপ্তানি",
+            "এপিআই অ্যাক্সেস",
+            "দলের জন্য ১০টি আসন",
+            "নিবেদিত অ্যাকাউন্ট ম্যানেজার",
+            "অনুরোধ সাপেক্ষে এন্টারপ্রাইজ এসএলএ (SLA) পাওয়া যাবে।"
+          ]
+        }
+      ]
     }
   },
   "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
+    "badge": "কোনো প্রশ্ন আছে?",
+    "title": "সচরাচর জিজ্ঞাসিত প্রশ্নাবলী",
+    "subtitle": "SceneFlow AI সম্পর্কে আপনার যা কিছু জানা প্রয়োজন",
     "items": [
       {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+        "question": "ধারণা থেকে শুরু করে প্রকাশের জন্য প্রস্তুত ভিডিও পর্যন্ত SceneFlow কর্মপ্রবাহটি কীভাবে পরিচালিত হয়?",
+        "answer": "SceneFlow একটি সুবিন্যস্ত কর্মপ্রবাহ (workflow) অনুসরণ করে: সিরিজ (ঐচ্ছিক) → Blueprint → প্রোডাকশন → Final Cut → Premiere। Blueprint পর্যায়টি Audience Resonance-এর সহায়তায় গল্পের কাঠামো এবং লক্ষ্য দর্শক (target audience) নির্ধারণ করে। প্রোডাকশন পর্যায়ে স্ক্রিপ্ট, স্টোরিবোর্ড, বিট ভিডিও এবং রেন্ডার করা সিন স্ট্রিম (scene streams) তৈরি করা হয়। Final Cut নির্বাচিত স্ট্রিমগুলোকে একত্রিত করে একটি মাস্টার MP4 ফাইল তৈরি করে—এটি কোনো টাইমলাইন এডিটর নয়। Premiere স্ক্রিনিং, অ্যানালিটিক্স সংক্রান্ত তথ্য বিশ্লেষণ, ইউটিউবে প্রকাশ এবং এক্সপোর্ট বান্ডেল তৈরির কাজগুলো পরিচালনা করে।"
       },
       {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+        "question": "SceneFlow কীভাবে Gemini Studio বা Google Flow-এর চেয়ে আলাদা?",
+        "answer": "Gemini Studio এবং Google Flow মূলত 'প্রম্পট-অ্যান্ড-জেনারেট' (নির্দেশনা-ভিত্তিক তৈরি) ক্লিপের ওপর গুরুত্ব দেয়। SceneFlow সম্পূর্ণ প্রোডাকশন বা নির্মাণ প্রক্রিয়ার ধাপগুলোকে একত্রিত করে: সম্পাদনাযোগ্য বেসলাইনসহ সুবিন্যস্ত পর্যায়, সামঞ্জস্য বজায় রাখার জন্য Reference Library ও Beat Frames, ব্যয়বহুল রেন্ডারিংয়ের আগে Audience Resonance-এর ব্যবহার, স্বয়ংক্রিয় মিক্সার ও স্ট্রিম অ্যাসেম্বলি এবং প্রকাশের আগে Screening Room-এর মাধ্যমে যাচাইকরণ—সবই একটি নির্দেশিত স্টুডিওর আওতায় পাওয়া যায়।"
       },
       {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+        "question": "আমি কি এআই (AI)-এর তৈরি স্ক্রিপ্ট, ভিজ্যুয়াল এবং অডিও এডিট করতে পারি?",
+        "answer": "হ্যাঁ। তৈরি করা সমস্ত আউটপুটই সম্পাদনাযোগ্য। আপনি Production Mixer-এ স্ক্রিপ্ট নতুন করে লিখতে পারেন, দৃশ্যের নির্দেশনা (scene direction) পরিবর্তন করতে পারেন, নির্দিষ্ট কিছু অংশ (beats) পুনরায় তৈরি করতে পারেন, ভয়েসওভারের মান ঠিক করতে পারেন এবং টাইমিং নিখুঁত করতে পারেন। Final Cut শুধুমাত্র চূড়ান্ত হয়ে যাওয়া স্ট্রিমগুলোকে একত্রিত করে—সৃজনশীল পরিবর্তনগুলো 'প্রোডাকশন' পর্যায়েই করা হয়।"
       },
       {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+        "question": "Target Audience Resonance এখন কীভাবে কাজ করে?",
+        "answer": "Audience Resonance আখ্যান-কাঠামোর বিশ্লেষণকে (যেমন—স্পষ্টতা, গতি বা পেসিং এবং আবেগীয় পর্যায়ক্রম) Blueprint-এ আপনার নির্ধারিত দর্শকদের জন্য উপযুক্ততার সাথে সমন্বয় করে—এটি প্রকাশের পরবর্তী দর্শক-ধরে-রাখার (retention) তথ্যের ওপর ভিত্তি করে কাজ করে না। ভারী রেন্ডারিং-এর আগেই আপনি সিরিজ, Blueprint এবং স্ক্রিপ্ট পর্যালোচনার পর্যায়ে বিভিন্ন অংশের জন্য প্রয়োজনীয় পরামর্শ এবং এক-ক্লিকে সংশোধনের সুবিধা পাবেন।"
       },
       {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
+        "question": "আমি কি বহুভাষিক লিস্টিং বা মার্কেটিং ভিডিও তৈরি করতে পারি?",
+        "answer": "হ্যাঁ। সুসংগত টাইমিং বা সময়-বিন্যাস প্রক্রিয়ার মাধ্যমে আপনি ৭০টিরও বেশি ভাষায় ভিডিও তৈরি ও সেগুলোকে স্থানীয়করণের (localize) কাজ করতে পারেন। সাধারণত টিমগুলো প্রথমে একটি মূল সংস্করণ (master cut) তৈরি করে এবং এরপর বিশ্বজুড়ে ক্রেতা, গ্রাহক বা আঞ্চলিক দর্শকদের জন্য বিভিন্ন ভাষার সংস্করণ প্রস্তুত করে।"
       },
       {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "question": "Screening Room যদি পর্যালোচনা পর্যায় হয়, তবে Premiere কী কাজ করে?",
+        "answer": "Screening Room হলো Premiere-এর অভ্যন্তরে থাকা একটি পর্যালোচনা ইন্টারফেস, যা প্রোডাকশন স্টোরিবোর্ড প্রিভিউয়ের জন্যও ব্যবহৃত হয়। এর মাধ্যমে /s/ লিঙ্ক শেয়ার করুন, স্টেকহোল্ডারদের মতামত ও ঐচ্ছিক এনগেজমেন্ট অ্যানালিটিক্স (দর্শকের সম্মতিসাপেক্ষে) সংগ্রহ করুন, স্কোরিং ও ভিজ্যুয়াল ইনসাইট পর্যালোচনা করুন এবং সবশেষে ইউটিউব উইজার্ডের মাধ্যমে প্রকাশ করুন অথবা বান্ডেল হিসেবে এক্সপোর্ট করুন।"
       },
       {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
+        "question": "আমার কি প্রযুক্তিগত বা সম্পাদনার অভিজ্ঞতা প্রয়োজন?",
+        "answer": "না। SceneFlow তৈরি করা হয়েছে প্রযুক্তিগত জ্ঞানহীন নির্মাতা ও দলের জন্য। প্রতিটি ধাপে আপনি নির্দেশিত ইনপুট এবং পরিবর্তনযোগ্য এআই (AI) বেসলাইন দিয়ে কাজ শুরু করেন—এর জন্য জটিল প্রম্পট ইঞ্জিনিয়ারিং বা একাধিক টুলের সমন্বয়ের প্রয়োজন হয় না।"
       },
       {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
+        "question": "Explorer প্ল্যানটি কীভাবে কাজ করে?",
+        "answer": "মাত্র ৯ ডলারের এককালীন কেনাকাটায় আপনি ৭৫০ ক্রেডিট পাবেন, যা দিয়ে সম্পূর্ণ কর্মপ্রক্রিয়াটি (workflow) যাচাই করে দেখা সম্ভব। মাসিক কোনো প্ল্যান বেছে নেওয়ার আগে যাতে আপনি ‘কনসেপ্ট থেকে ভিডিও’ তৈরির বাস্তব কাজগুলো সম্পন্ন করে দেখতে পারেন, সেজন্যই এটি একটি ব্যবহারিক পরীক্ষামূলক ধাপ হিসেবে সাজানো হয়েছে।"
       },
       {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
+        "question": "ক্রেডিট এবং BYOK কীভাবে পরিচালনা করা হয়?",
+        "answer": "প্ল্যাটফর্মের মধ্যেই ক্রেডিটগুলোর হিসাব রাখা হয়, ফলে টিমগুলো ওয়ার্কফ্লোর বিভিন্ন পর্যায় অনুযায়ী বাজেট পরিচালনা করতে পারে। এছাড়া, প্রো (Pro) ও স্টুডিও (Studio) প্ল্যানগুলো সমর্থিত প্রোভাইডারদের ক্ষেত্রে 'ব্রিং ইওর ওন কি' (Bring Your Own Key) সুবিধা সমর্থন করে; এর ফলে যেসব প্রতিষ্ঠানের প্রোভাইডারদের সাথে আগে থেকেই চুক্তি রয়েছে, তারা খরচ আরও ভালোভাবে নিয়ন্ত্রণ করতে পারে।"
       },
       {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+        "question": "SceneFlow দিয়ে আমি বাস্তবে কী তৈরি করতে পারি?",
+        "answer": "বিভিন্ন টিম রিয়েল এস্টেট ট্যুর, শিক্ষামূলক বিষয়বস্তু, ভিজ্যুয়াল স্টোরিটেলিং-সহ পডকাস্ট, সংবাদ বিশ্লেষণমূলক ভিডিও, ব্র্যান্ড ক্যাম্পেইন এবং সিনেমাটিক এপিসোড সিরিজের জন্য SceneFlow ব্যবহার করে। একই কর্মপ্রক্রিয়া স্বল্প ও দীর্ঘ—উভয় ধরনের ভিডিও নির্মাণের ক্ষেত্রেই সহায়ক।"
       }
     ]
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
-    "cta": "Launch Your Studio for $9"
+    "title": "সম্পূর্ণ পাইপলাইনটি পরীক্ষা করার জন্য প্রস্তুত?",
+    "subtitle": "একই স্টুডিওতে কনসেপ্ট থেকে শুরু করে স্টোরিবোর্ড, ভিডিও এবং মাস্টার MP4 তৈরির পুরো প্রক্রিয়াটি সম্পন্ন করুন। $৯-এর Explorer প্ল্যানটি দিয়ে শুরু করুন এবং 'বিট-ফার্স্ট' (beat-first) কর্মপ্রবাহের কার্যকারিতা নিজে দেখুন।",
+    "cta": "৯ ডলারে আপনার স্টুডিও চালু করুন"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
-    "product": "Product",
-    "resources": "Resources",
-    "legal": "Legal",
+    "description": "সম্পূর্ণ স্বয়ংক্রিয় ভিডিও নির্মাণ প্রক্রিয়া — ধারণা থেকে শুরু করে প্রকাশের উপযোগী চূড়ান্ত সংস্করণ পর্যন্ত। একটি নির্দেশিত স্টুডিও: Blueprint → নির্মাণ → Final Cut → Premiere।",
+    "product": "পণ্য",
+    "resources": "সম্পদ",
+    "legal": "আইনি",
     "links": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "howItWorks": "How It Works",
-      "faq": "FAQ",
-      "gettingStarted": "Getting Started",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "trustSafety": "Trust & Safety",
-      "refunds": "Refund Policy",
-      "contact": "Contact Us"
+      "features": "বৈশিষ্ট্যসমূহ",
+      "pricing": "মূল্য",
+      "howItWorks": "এটি যেভাবে কাজ করে",
+      "faq": "সচরাচর জিজ্ঞাসিত প্রশ্ন",
+      "gettingStarted": "শুরু করা",
+      "privacy": "গোপনীয়তা নীতি",
+      "terms": "সেবার শর্তাবলি",
+      "trustSafety": "আস্থা ও নিরাপত্তা",
+      "refunds": "অর্থ ফেরত নীতিমালা",
+      "contact": "আমাদের সাথে যোগাযোগ করুন"
     },
-    "tagline": "Made with ❤️ for creators",
-    "taglineSub": "From Idea to Published Video",
-    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
-    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "tagline": "নির্মাতাদের জন্য ❤️ দিয়ে তৈরি",
+    "taglineSub": "ধারণা থেকে প্রকাশিত ভিডিও",
+    "securePayments": "আমাদের 'মার্চেন্ট অফ রেকর্ড' Whop-এর মাধ্যমে সুরক্ষিত পেমেন্ট প্রক্রিয়া সম্পন্ন করা হয়।",
+    "morLine": "Life Focus, LLC-এর পক্ষে আমাদের 'মার্চেন্ট অফ রেকর্ড' (Merchant of Record) হিসেবে Whop নিরাপদ পেমেন্ট, করের হিসাব এবং বিধি-বিধান পরিপালনের বিষয়টি পরিচালনা করে।",
+    "copyright": "© ২০২৬ SceneFlow AI। সর্বস্বত্ব সংরক্ষিত।",
+    "address": "লাইফ ফোকাস, এলএলসি • ১৪২০৫ এন মো প্যাক এক্সপ্রেসওয়ে স্যুট ৫৭০, অস্টিন, টেক্সাস ৭৮৭২৮-৬৫২৯ • যোগাযোগ: brian@sfai.studio",
+    "poweredBy": "Google Cloud দ্বারা চালিত"
   },
   "floatingCta": {
-    "seePricing": "See Pricing",
-    "tryNine": "Try $9",
-    "tryForNine": "Try for $9",
-    "dismiss": "Dismiss"
+    "seePricing": "মূল্য দেখুন",
+    "tryNine": "৯ ডলার দিয়ে চেষ্টা করে দেখুন",
+    "tryForNine": "৯ ডলারে ব্যবহার করে দেখুন",
+    "dismiss": "বাতিল করুন"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
-    "pause": "Pause",
-    "play": "Play",
-    "mute": "Mute",
-    "unmute": "Unmute"
+    "pause": "বিরতি",
+    "play": "চালান",
+    "mute": "নিঃশব্দ",
+    "unmute": "শব্দ চালু করুন",
+    "expandVideo": "ভিডিও বড় করুন"
   }
 }

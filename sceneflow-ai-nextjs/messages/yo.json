@@ -1,618 +1,1411 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
-    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
+    "title": "SceneFlow AI - Ṣíṣe Fídíò pẹ̀lú Agbára AI",
+    "description": "Sọ awọn ero rẹ di awọn fidio ti o ni didara giga pẹlu eto ṣiṣe iṣẹ laifọwọyi ti o n lo imọ-ẹrọ AI."
   },
   "nav": {
-    "workflow": "The Workflow",
-    "platformWalkthrough": "Platform Walkthrough",
-    "plansPricing": "Plans & Pricing",
-    "more": "More",
-    "useCases": "Use Cases",
+    "workflow": "Ilana Iṣẹ́",
+    "platformWalkthrough": "Ìtọ́sọ́nà lórí bí a ṣe ń lo pèpéle náà",
+    "plansPricing": "Àwọn Ètò àti Iye Owó",
+    "more": "Àfikún",
+    "useCases": "Àwọn Ọ̀nà Lílo",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform & Trust",
-    "faq": "FAQ",
-    "signIn": "Sign In",
-    "startProject": "Start a Project",
-    "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "platformTrust": "Pẹpẹ àti Igbẹ́kẹ̀lé",
+    "faq": "Awọn ibeere ti a n beere nigbagbogbo",
+    "signIn": "Wọlé",
+    "startProject": "Bẹ̀rẹ̀ iṣẹ́-àkànṣe",
+    "dashboard": "Ìgbìmọ̀ Àkósọ",
+    "adminPanel": "Pánẹ́ẹ̀lì Àkóso",
+    "signOut": "Jáde",
+    "goToDashboard": "Lọ sí ojú-ìwé àkọ́kọ́",
+    "userFallback": "Olùlo",
+    "searchLanguages": "Wá àwọn èdè...",
+    "noLanguagesFound": "A ko ri ede kankan"
   },
   "floatingNav": {
-    "compare": "Compare",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "platformWalkthrough": "Platform Walkthrough",
-    "platform": "Platform",
-    "pricing": "Pricing",
-    "faq": "FAQ"
+    "compare": "Fi wé",
+    "howItWorks": "Bí ó ṣe ń ṣiṣẹ́",
+    "useCases": "Àwọn Ọ̀nà Lílo",
+    "platformWalkthrough": "Ìtọ́sọ́nà lórí bí a ṣe ń lo pèpéle náà",
+    "platform": "Pẹpẹ",
+    "pricing": "Ètò iye owó",
+    "faq": "Awọn ibeere ti a n beere nigbagbogbo"
   },
   "hero": {
-    "headline": "Make professional video without a production team or a dozen apps.",
-    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.",
-    "ctaSecondary": "Watch the 'What's Possible'",
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "headline": "Dẹ́kun lílo ọ̀pọ̀lọpọ̀ ojú-ìwé AI lẹ́ẹ̀kan náà. Ilé-iṣẹ́ kan ṣoṣo yóò mú ọ láti ìpele èrò títí dé ìpele fídíò tí ó ti ṣe tán fún títẹ́jáde.",
+    "subheadline": "Ile-iṣẹ iṣelọpọ kan ti yoo tọ ọ sọna lati ibẹrẹ ero titi de ipele ti fidio naa ti ṣetan patapata fun titẹjade. Wo bi fidio rẹ yoo ṣe ri (storyboard) ki o to sanwo fun fidio ikẹhin — fọwọsi irisi rẹ dipo ki o fi awọn kirediti rẹ ṣòfò lori ṣiṣe awọn idanwo ti ko ni idaniloju. SceneFlow n ṣe awọn iṣẹ ti o n gba akoko ati agbara — gẹgẹbi kikọ iwe-afọwọkọ, ṣiṣe aworan itan (storyboard), gbigbasilẹ ohun, ati akojọpọ awọn apakan — fun ọ laifọwọyi, lakoko ti iwọ n ṣakoso gbogbo igbesẹ iṣẹ naa.",
+    "audienceMicroLine": "A ṣe é fún àwọn tó ń dá nǹkan sílẹ̀ tí wọ́n sì fẹ́ rí àbájáde, àti fún àwọn ẹgbẹ́ tó fẹ́ rí bí ó ṣe ń ṣiṣẹ́.",
+    "ctaSecondary": "Wo 'Ohun ti o ṣee ṣe'",
+    "ctaToolStack": "Wo bí ó ṣe ń rọ́pò àwọn irin-iṣẹ́ rẹ.",
+    "languagePrompt": "Gbọ́ ohùn akọni náà ní èdè rẹ — ọ̀nà ìpèsè kan náà, àwọn ọjà tuntun.",
+    "multilangHint": "Hero n ṣe àtúntò ohùn ní èdè méje — gbogbo ètò iṣẹ́ náà sì ṣe àtìlẹ́yìn fún èdè tó lé ní àádọ́rin nígbà tí a bá ń ṣe iṣẹ́ gidi.",
+    "playWithNarration": "Mu ṣiṣẹ pẹlu alaye",
+    "tapToHear": "Fọwọ́ kàn án láti gbọ́",
+    "fullscreen": "Ìfihàn ní gbogbo ojú-iboju",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
-        "nativeLabel": "English"
+        "label": "Gẹ̀ẹ́sì",
+        "nativeLabel": "Gẹ̀ẹ́sì"
       },
       "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
+        "label": "Èdè Sípéènì",
+        "nativeLabel": "Èdè Sípáníìṣì"
       },
       "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
+        "label": "Pọtugisi",
+        "nativeLabel": "Pọtugisi"
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "हिन्दी"
+        "nativeLabel": "Híndì"
       },
       "zh": {
-        "label": "Chinese",
-        "nativeLabel": "中文"
+        "label": "Ti ilẹ̀ China",
+        "nativeLabel": "Èdè Ṣáínà"
       },
       "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
+        "label": "Èdè Lárúbáwá",
+        "nativeLabel": "Èdè Lárúbáwá"
       },
       "th": {
-        "label": "Thai",
-        "nativeLabel": "ไทย"
+        "label": "Ti ilẹ̀ Thailand",
+        "nativeLabel": "Thailand"
       }
     },
-    "soon": "Soon"
+    "soon": "Laipẹ"
   },
   "valueProp": {
     "pills": [
       {
-        "label": "One Studio",
-        "detail": "Concept to publish in one place"
+        "label": "Ilé-iṣẹ́ Kan",
+        "detail": "Èrò láti tẹ̀ jáde ní ibi kan"
       },
       {
-        "label": "Approve Before Final Video",
-        "detail": "Review storyboard beats before you render"
+        "label": "Fọwọ́ sí i kí wọ́n tó ṣe fídíò tó kẹ́yìn",
+        "detail": "Ṣe àtúnyẹ̀wò àwọn apá pàtàkì nínú àwòrán ìtàn (storyboard) kí o tó ṣe ìgbékalẹ̀ ìkẹyìn (render)."
       },
       {
-        "label": "Test Your Story First",
-        "detail": "Know what lands before heavy spend"
+        "label": "Ṣe àyẹ̀wò ìtàn rẹ kọ́kọ́",
+        "detail": "Mọ ohun ti yoo de ọwọ rẹ ṣaaju ki o to na owo nla."
       },
       {
-        "label": "Publish-Ready Output",
-        "detail": "Master MP4 + distribution bundles"
+        "label": "Iṣẹ́ tó ti ṣetan fún títẹ̀jáde",
+        "detail": "Fáìlì MP4 àkọ́kọ́ àti àwọn àkópọ̀ fún pípínkiri"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Who are you? Pick your path",
-    "seeExamples": "See examples",
-    "examplesFor": "Examples for {label}:",
-    "andMore": ", and more.",
+    "prompt": "Ta ni ọ́? Yan ọ̀nà rẹ.",
+    "seeExamples": "Wo àwọn àpẹẹrẹ",
+    "examplesFor": "Àwọn àpẹẹrẹ fún {label}:",
+    "andMore": ", àti síwájú sí i.",
+    "modes": {
+      "automate": {
+        "label": "Ṣe é kí ó máa ṣiṣẹ́ fúnra rẹ̀",
+        "description": "Ilana iṣẹ́ tó ní ìtọ́sọ́nà — fọwọ́ sí àwọn àwòrán ìtàn (storyboards), parí iṣẹ́ kíákíá"
+      },
+      "engine": {
+        "label": "Fi ẹ̀rọ náà hàn mí.",
+        "description": "Ètò ìgbékalẹ̀, BYOK, àti ìjìn pèpéle"
+      }
+    },
     "paths": [
       {
-        "id": "creator",
-        "label": "Creator",
-        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "id": "Ẹlẹ́dàá",
+        "label": "Ẹlẹ́dàá",
+        "outcome": "Fi ọjà ránṣẹ́ ní àkókò — dáwọ́ dúró láti máa tún un ṣe nínú gbogbo irinṣẹ́.",
         "useCases": [
-          "YouTube & episodic series",
-          "Video podcasts & show clips",
-          "Hyper-local & JIT news",
-          "Documentaries & docuseries",
-          "How-to & skill channels",
-          "Sports recaps & commentary"
+          "YouTube àti àwọn eré oní-apá",
+          "Àwọn pódíkásì fídíò àti àwọn àkópọ̀ fídíò láti inú ètò",
+          "Àwọn ìròyìn agbègbè pàtó àti èyí tí a gbé jáde ní àkókò gangan",
+          "Àwọn fíìmù àti àwọn jara fíìmù oníwé-ẹ̀rí",
+          "Àwọn ikanni fún kíkọ́ bí a ṣe ń ṣe nǹkan àti àwọn ọgbọ́n iṣẹ́",
+          "Àtúnyẹ̀wò àti àlàyé lórí àwọn eré ìdárayá"
         ]
       },
       {
-        "id": "team",
-        "label": "In-house team",
-        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "id": "ẹgbẹ́",
+        "label": "Ẹgbẹ́ abẹ́lé",
+        "outcome": "Ṣe iyipada si awọn ilana olupese ti o lọra — ni iṣakoso lori ami-ọja ati isunawo.",
         "useCases": [
-          "Corporate L&D & compliance",
-          "Internal comms & town halls",
-          "Product explainers for sales",
-          "HR recruitment & culture",
-          "K-12 / higher-ed lessons",
-          "Public health & safety updates"
+          "Ikẹkọọ ati idagbasoke awọn oṣiṣẹ ile-iṣẹ ati ibamu pẹlu awọn ilana",
+          "Ibánisọ̀rọ̀ láàrin àwọn òṣìṣẹ́ àti àwọn ìpàdé gbogbo-gbòò",
+          "Àwọn àlàyé ọjà fún títà",
+          "Gbígbàṣiṣẹ́ àti àṣà ilé-iṣẹ́",
+          "Àwọn ẹ̀kọ́ fún K-12 / ẹ̀kọ́ gíga",
+          "Awọn iroyin tuntun nipa ilera ati aabo gbogbo eniyan"
         ]
       },
       {
-        "id": "productionShop",
-        "label": "Production shop",
-        "outcome": "Productize a niche with repeatable intake → delivery",
+        "id": "Ile-iṣẹ́ iṣelọpọ",
+        "label": "Ile-iṣẹ́ iṣelọpọ",
+        "outcome": "Ṣe iṣẹ́ tó wà ní ẹ̀ka pàtó kan ní ọjà tàbí ọjà-iṣẹ́ tí a lè ta lọ́nà tí ó dúró ṣinṣin, nípa lílo ìlànà gbígba iṣẹ́ àti pípèsè rẹ̀ tí a lè máa ṣe léraléra.",
         "useCases": [
-          "Video memoir packages",
-          "Legacy & tribute videos",
-          "Voice-cloned narration",
-          "White-label studio templates",
-          "Real estate & hospitality tours",
-          "Subscription video services"
+          "Àwọn àkopọ̀ fídíò ìtàn ìgbésí-ayé",
+          "Àwọn fídíò ìrántí àti ọlá-ọlá fún ẹni tí ó ti kọjá lọ",
+          "Ìtàn-sísọ pẹ̀lú ohùn tí a ṣe àwòkọ rẹ̀",
+          "Àwọn àwòṣe studio tí a lè fi orúkọ tàbí àmì-ìdánimọ̀ ti ara ẹni sí",
+          "Awọn irin-ajo lati wo awọn ile ati ilẹ, ati awọn ibi gbigba alejo",
+          "Awọn iṣẹ fidio ti a n sanwo fun"
         ]
       },
       {
-        "id": "agency",
-        "label": "Agency",
-        "outcome": "Faster pitches and scalable client delivery",
+        "id": "ilé-iṣẹ́ aṣojú",
+        "label": "Ile-iṣẹ Aṣoju",
+        "outcome": "Ṣíṣe àfihàn iṣẹ́ pẹ̀lú ìyára àti pípèsè iṣẹ́ fún àwọn oníbàárà ní ọ̀nà tí ó lè gbòòrò sí i",
         "useCases": [
-          "Client pitch pre-viz",
-          "Product launch campaigns",
-          "Case studies & testimonials",
-          "Event & conference promos",
-          "Multi-language campaigns",
-          "Property marketing for clients"
+          "Àpèjúwe ìrísí iṣẹ́ ṣáájú fífi hàn fún oníbàárà",
+          "Awọn ipolongo ifilọlẹ ọja",
+          "Àwọn ìwádìí ọ̀ràn pàtó àti àwọn ẹ̀rí ìrírí",
+          "Ìpolówó fún àwọn ìṣẹ̀lẹ̀ àti àpéjọ",
+          "Awọn ipolongo ti a ṣe ni ọpọlọpọ ede",
+          "Ṣíṣe ìpolówó ohun-ìní fún àwọn oníbàárà"
         ]
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Why SceneFlow vs prompt-and-generate tools",
-    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "title": "Idi ti a fi n lo SceneFlow dipo awọn irinṣẹ ti o da lori fifunni ni itọsọna lati ṣe agbejade akoonu",
+    "subtitle": "Gemini Studio ati Google Flow tayọ ni ṣiṣe pẹlu awọn agekuru fidio. SceneFlow n ṣajọpọ gbogbo ilana iṣẹ iṣelọpọ naa papọ.",
     "rows": [
       {
-        "them": "Prompt + clip generation in isolation",
-        "us": "Structured phases with editable baselines at each step"
+        "them": "Ṣíṣe àgbékalẹ̀ àtúnṣe àti ṣíṣe àgbékalẹ̀ àkópọ̀ fídíò ní ọ̀tọ̀ọ̀tọ̀",
+        "us": "Awọn ipele ti a ṣeto pẹlu awọn ipilẹ ti a le ṣatunṣe ni ipele kọọkan"
       },
       {
-        "them": "Manual consistency across sessions",
-        "us": "Reference Library + Beat Frames lock visuals before video"
+        "them": "Mímu kí ọ̀nà iṣẹ́ wà ní ìbámu láàárín àwọn ìgbà iṣẹ́",
+        "us": "Reference Library + Beat Frames ti àwọn àwòrán mọ́ra kí fídíò tó bẹ̀rẹ̀"
       },
       {
-        "them": "No audience validation workflow",
-        "us": "Audience Resonance before render; Screening Room before publish"
+        "them": "Ko si ilana iṣẹ́ fun ijẹrisi awọn olugbo",
+        "us": "Audience Resonance ṣáájú ṣíṣe àfihàn; Screening Room ṣáájú títẹ́wá síta"
       },
       {
-        "them": "No production pipeline or handoff",
-        "us": "Script → streams → assembly → distribution in one app"
-      },
-      {
-        "them": "Complex model and settings surface",
-        "us": "Guided Studio UX with credits and BYOK guardrails"
+        "them": "Ko si ilana iṣelọpọ tabi gbigbe iṣẹ lati ọwọ kan si ekeji",
+        "us": "Ìwé-ìtàn → ṣíṣe àfihàn → àkópọ̀ → pínpín nínú ohun èlò kan"
       }
     ],
-    "themHeader": "Typical clip-generation tools",
-    "usHeader": "SceneFlow bundles"
+    "themHeader": "Awọn irinṣẹ ti o wọpọ fun ṣiṣẹda awọn agekuru",
+    "usHeader": "Àwọn àkópọ̀ SceneFlow"
   },
   "beatFirstPipeline": {
-    "title": "Beat-First Video Pipeline",
-    "subtitle": "Approve before you render — not slot-machine regeneration",
-    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "title": "Ilana Ṣiṣe Fidio ti o bẹrẹ pẹlu Ilu",
+    "subtitle": "Fọwọ́ sí i kí o tó ṣe é — kì í ṣe bíi ti ẹ̀rọ ayéyẹ́ tí àbájáde rẹ̀ kò ṣeé sọtẹ́lẹ̀.",
+    "intro": "Ko si ṣiṣẹda nipasẹ ifoju-wọn-wo. Iwọ yoo wo awotẹlẹ ki o si fọwọsi irisi rẹ ṣaaju ki SceneFlow to lo awọn kirediti fun fidio ti o kẹhin.",
+    "description": "SceneFlow ṣeto ilana ifọwọsi fun irisi iṣẹ ni gbogbo ipele: Express storyboard fun ayẹwo, Beat Frames lati fi idi eto aworan mulẹ, lẹhinna F2V fun igba orin kọọkan. O ṣe atunṣe irisi rẹ ki o to lo awọn kirediti lori awọn aṣiṣe bii iyapa kuro ni itọsọna tabi awọn aworan ti ko tọna.",
     "steps": [
-      "Express storyboard — share audio-visual beats for review in minutes",
-      "Beat Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Express storyboard — pín àwọn orin (pẹ̀lú àwòrán tàbí fídíò) fún àyẹ̀wò láàrin ìṣẹ́jú díẹ̀",
+      "Beat Frames — ti ìṣẹ̀dá ìbẹ̀rẹ̀/òpin mọ́ra pẹ̀lú ìtẹ̀síwájú Reference Library",
+      "F2V fún ìlù kọ̀ọ̀kan — ṣẹ̀dá fídíò láti ara àwọn àwòrán tí a ti fọwọ́ sí, kì í ṣe láti ara àwọn ìtọ́ni tí a kò ní ìpìlẹ̀ tó péye fún.",
+      "Production Mixer — ṣíṣe àtòpọ̀ àkókò, ohùn, àti fífi ṣíṣàn (stream) ránṣẹ́ sí ìlànà àpapọ̀ Final Cut"
     ],
-    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+    "footerLine": "Dín iye ìgbà tí a ó tún àwòrán ẹ̀rọ ìtẹ́wọ́gbà-owó (slot machine) ṣe kù — fọwọ́ sí àwọn àwòrán náà kí a tó ná owó tó kẹ́yìn lórí fídíò náà."
+  },
+  "toolStack": {
+    "badge": "Ṣé ó dùn bí ohun tí o ti gbọ́ rí?",
+    "title": "Ọ̀nà tí ó ti bàjẹ́ àti ọ̀nà SceneFlow",
+    "subtitle": "O ko yẹ ki o nilo lati ṣii awọn taabu marun-un, ṣe daakọ ati lẹẹmọ awọn faili, tabi ki o rẹwẹsi nitori titẹ awọn ilana sii (prompts) nikan lati le pari fidio kan.",
+    "brokenWay": {
+      "title": "Ọ̀nà tí ó ti fọ́",
+      "tagline": "Ti a pin si wẹ́wẹ́. Ti a fi ọwọ́ ṣe. Ti o rẹni gidigidi.",
+      "tools": [
+        {
+          "name": "ChatGPT",
+          "category": "Àwọn àkọpamọ́ ìwé eré"
+        },
+        {
+          "name": "Midjourney",
+          "category": "Àwọn àwòrán tí a ṣe lẹ́ẹ̀kan ṣoṣo"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "Gbigbe VO jade pẹlu ọwọ"
+        },
+        {
+          "name": "Premiere",
+          "category": "Àpapọ̀ pẹ̀lú ọwọ́"
+        }
+      ],
+      "chaosLabel": "Àwọn ojú-ìwé márùn-ún. Àyíká-ọ̀rọ̀ ti sọnù.",
+      "painPoints": [
+        "Ṣe àdàkọ àti ìlẹ̀mọ́ láàrin àwọn ohun èlò",
+        "Rirẹ nitori fifunni ni awọn ilana ati awọn iyipo ti ṣiṣẹda leralera",
+        "Ko si ṣíṣe àyẹ̀wò àwọn olùwò ṣáájú kí o tó ná owó.",
+        "Ìdàrú nípa àwọn ẹ̀dà nínú àwọn ohun tí a gbé jáde"
+      ],
+      "timeLabel": "Àkókò tí a sábà máa ń lò fún iṣẹ́ náà",
+      "timeValue": "Ọ̀sẹ̀ méjì sí mẹ́rin"
+    },
+    "sceneflowWay": {
+      "title": "Ọ̀nà SceneFlow",
+      "tagline": "Ilé-iṣẹ́ kan. Fọwọ́sí i kí o tó ṣe àgbéjáde rẹ̀.",
+      "stages": [
+        {
+          "label": "⟦Àkókò Ẹ̀kọ́ Kẹta⟧",
+          "detail": "Ètò ìtàn tí a ṣètò dáadáa"
+        },
+        {
+          "label": "Àwọn Ìtọ́kasí",
+          "detail": "Àwọn ohun-ìwà tí kò yí padà"
+        },
+        {
+          "label": "Ṣíṣe",
+          "detail": "Ohùn àti àwòrán"
+        },
+        {
+          "label": "Tẹ́ jáde",
+          "detail": "MP4 àkọ́kọ́ pàtàkì kan"
+        }
+      ],
+      "syncLabel": "Fáìlì iṣẹ́ kan ṣoṣo — kò sí yíyí láàrin àwọn taabu.",
+      "benefits": [
+        "Awọn ipele ti a ṣe amọna rẹ — kii ṣe imọ-ẹrọ kikọ awọn ilana (prompt engineering)",
+        "Fífi ìtẹ́wọ́gbà sí àwòrán ìtàn fíìmù (storyboard) ṣáájú àkọsílẹ̀ àwọn tó kópa nínú fíìmù náà.",
+        "Audience Resonance àmì ṣáájú ìṣẹ̀dá àwòrán tó nira",
+        "Àkọsílẹ̀ àkọ́kọ́ tí ó ti ṣe tán fún títẹ́jáde láti inú ilé-iṣẹ́ kan"
+      ],
+      "timeLabel": "Àkókò tí a sábà máa ń lò fún iṣẹ́ náà",
+      "timeValue": "Ọjọ́ méjì sí mẹ́rin"
+    },
+    "comparisonCaption": "Ibùdó iṣẹ́ kan ṣoṣo máa ń rọ́pò àwọn irin-iṣẹ́ tí kò wà ní ìṣọ̀kan, ṣíṣe àtúnṣe pẹ̀lú ọwọ́, àti gbígbé iṣẹ́ láàrin àwọn pèpéle (platform) ọ̀tọ̀ọ̀tọ̀.",
+    "comparisonImageAlt": "Awọn inawo iṣelọpọ ti aṣa ni akawe pẹlu ile-iṣẹ igbasilẹ ti n ṣiṣẹ funra rẹ (automated studio) — ọna ti o yara lati ipele ero si fidio ti o ti ṣetan fun titẹjade."
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
-    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "title": "Iyara iṣelọpọ laisi awọn inawo afikun",
+    "subtitle": "Fi ibi-iṣẹ́ kan ṣoṣo tí ń ṣiṣẹ́ fúnra rẹ̀ rọ́pò àwọn irin-iṣẹ́ tí kò wà ní ìṣọ̀kan àti ṣíṣe iṣẹ́ pẹ̀lú ọwọ́ — láti ìgbà tí a ti ní èrò àkọ́kọ́ títí dé ìgbà tí iṣẹ́ náà yóò fi ṣe tán láti jáde síta.",
+    "caption": "Ibùdó iṣẹ́ kan ṣoṣo máa ń rọ́pò àwọn irin-iṣẹ́ tí kò wà ní ìṣọ̀kan, ṣíṣe àtúnṣe pẹ̀lú ọwọ́, àti gbígbé iṣẹ́ láàrin àwọn pèpéle (platform) ọ̀tọ̀ọ̀tọ̀.",
+    "imageAlt": "Awọn inawo iṣelọpọ ti aṣa ni akawe pẹlu ile-iṣẹ igbasilẹ ti n ṣiṣẹ funra rẹ (automated studio) — ọna ti o yara lati ipele ero si fidio ti o ti ṣetan fun titẹjade."
   },
   "howItWorks": {
-    "title": "From concept to publish-ready video",
-    "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
-    "tagline": "Every step is expertly automated. Every step gives you full control.",
-    "optionalBadge": "Optional",
-    "optionalSuffix": " (optional)",
-    "readyTitle": "Ready to test the full pipeline?",
-    "explorerCta": "Start with Explorer — $9",
+    "title": "Láti ìpele èrò títí dé fídíò tí ó ti ṣe tán fún gbígbé jáde",
+    "titleAccent": "Páìpùláìnì kan tí a ń darí",
+    "subtitle": "Ṣíṣe ti àwọn eré oní-apá (series) jẹ́ àṣàyàn lásán. Ọ̀nà pàtàkì náà ni Blueprint → Ṣíṣe iṣẹ́ náà (Production) → Final Cut → Premiere — pẹ̀lú àwọn ìpele bíi storyboard, animatic, fídíò, àti master MP4 ní ọ̀nà náà.",
+    "tagline": "A ti ṣeto gbogbo igbesẹ lati maa ṣiṣẹ funra rẹ pẹlu imọ-jinlẹ to peye. Gbogbo igbesẹ n fun ọ ni agbara lati ṣakoso ohun gbogbo patapata.",
+    "optionalBadge": "Ti a le yan",
+    "optionalSuffix": " (ti a le yan lati ṣe tabi rara)",
+    "readyTitle": "Ṣé o ti ṣetán láti dán gbogbo ìlànà iṣẹ́ náà wò?",
+    "explorerCta": "Bẹ̀rẹ̀ pẹ̀lú Explorer — $9",
     "phases": [
       {
-        "id": "series",
-        "stepLabel": "Series",
-        "subtitle": "Showrunner Engine",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "id": "àtẹ̀léwá",
+        "stepLabel": "Ẹ̀ka",
+        "subtitle": "Ẹ̀rọ Olùdarí Ètò",
+        "description": "Ṣe àlàyé àgbáyé rẹ lẹ́ẹ̀kan ṣoṣo, kí o sì ṣẹ̀dá àwọn ìtàn tó ní ìsopọ̀ tó dára fún ọ̀pọ̀lọpọ̀ abala eré. Lílò Reference Library fún gbogbo rẹ̀ máa ń jẹ́ kí àwọn ohun kikọ àti ìṣesí eré náà wà ní ìbámu pẹ̀lú ara wọn láàrin gbogbo àkókò eré náà.",
         "keySteps": [
-          "Define universe — characters, tone, and season arc",
-          "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "Ṣàlàyé àgbáyé ìtàn náà — àwọn ohun-ìkópa, ìṣesí tàbí afẹ́fẹ́ ìtàn, àti ìlànà ìtàn fún àsìkò (season) náà.",
+          "Ṣe àgbékalẹ̀ àkópọ̀ ìtàn fún àwọn abala eré náà ní gbogbo àsìkò eré náà fúnra rẹ̀",
+          "Ṣe ìbáramù pẹ̀lú Blueprint àti iṣẹ́ ìgbéjáde fún ìṣẹ̀lẹ̀ kọ̀ọ̀kan"
         ],
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
-        ],
-        "optional": true
+          "Ṣe àlàyé ayé ìtàn rẹ ní ẹ̀ẹ̀kan ṣoṣo — àwọn ohun-ìtàn, ìṣesí tàbí afẹ́fẹ́ ìtàn náà, àti ìlànà ìtàn fún àsìkò náà.",
+          "Àwọn ìlànà ìṣẹ̀lẹ̀ tó ní ìsopọ̀ — èyí tí a ṣẹ̀dá fúnra rẹ̀ ní gbogbo àsìkò eré náà",
+          "Titele ọna-iṣẹlẹ — mimu awọn apakan oriṣiriṣi ti akoko kan wa ni ibamu",
+          "Ìṣàpapọ̀ jara àti àwọn abala — sínú ilé-iṣẹ́ àti ètò ìgbéjáde Blueprint"
+        ]
       },
       {
-        "id": "blueprint",
-        "stepLabel": "Blueprint",
-        "subtitle": "Story Development",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "id": "Àwòrán ètò iṣẹ́",
+        "stepLabel": "⟦Àkókò Ẹ̀kọ́ Kẹta⟧",
+        "subtitle": "Mímu ìtàn dàgbà",
+        "description": "Ṣe iyipada awọn imọran si awọn ilana ti a ṣeto daradara, pẹlu akopọ kukuru (logline), awọn ipele pataki (beats), awọn ohun kikọ, ati iru iṣesi itan naa. Ṣiṣe Audience Resonance ki o si ṣe ifowosowopo ṣaaju ṣiṣe iṣẹ ṣiṣe-ikẹhin ti o wuwo (heavy rendering).",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
-          "Audience Resonance scoring with 80+ target",
-          "Collaborator share links and export (PDF, Doc, PPTX)"
+          "Ṣe àgbékalẹ̀ → Ṣe àtúnyẹ̀wò → Ṣe àtúnṣe → Bẹ̀rẹ̀ iṣẹ́ ìṣelọ́pọ̀",
+          "Audience Resonance Gbigba ami ayo pẹlu ibi-afẹde ti o ju 80 lọ",
+          "Alábàáṣiṣẹ́pọ̀ máa ń pín àwọn ọ̀nà-ìsopọ̀ (links) kí wọ́n sì máa yí àkóónú padà sí àwọn ọ́nà ìpamọ́ mìíràn (bíi PDF, Doc, tàbí PPTX)."
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
-        ],
-        "optional": false
+          "Ṣe àgbékalẹ̀ → Ṣe àyẹ̀wò → Ṣe àtúnṣe → Bẹ̀rẹ̀ ìlànà iṣẹ́ ìṣelọ́pọ̀",
+          "Láti èrò sí ètò ní ìṣẹ́jú díẹ̀ — àkópọ̀ ìtàn, àwọn kókó pàtàkì, àwọn ohun-ìtàn, àti ìṣesí ìtàn náà",
+          "Audience Resonance Gbigba ami ayo ti o ju 80 lọ gẹgẹbi ibi-afẹde ṣaaju ipele iṣelọpọ gangan (Production).",
+          "Pínpín àwọn ọ̀nà-ìsopọ̀ pẹ̀lú àwọn alábàáṣiṣẹ́ — àkópọ̀ àwọn èrò àti àbá láti ṣe àtúnṣe pẹ̀lú ìtọ́sọ́nà"
+        ]
       },
       {
-        "id": "production",
-        "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "id": "iṣelọpọ",
+        "stepLabel": "Ṣíṣe",
+        "subtitle": "Láti Àkọsílẹ̀ sí Ìgbóhùn-sáfẹ́fẹ́",
+        "description": "Awọn taabu Script ati Action n ṣe amọna lati Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, ati awọn ṣiṣan MP4 — ko si iwulo lati yi irinṣẹ pada.",
         "keySteps": [
-          "Lock script, voices, and scene audio",
-          "Express storyboard — gallery and share for review",
-          "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "Ṣe àtúnṣe tó kẹ́yìn sí ìwé ìtàn, àwọn ohùn, àti ohùn ojú-ìṣẹ̀lẹ̀ náà.",
+          "Express storyboard — àkójọpọ̀ àwòrán àti pínpín fún àyẹ̀wò",
+          "Beat Frames → Ibusọ Iṣakoso Oludari → Ṣiṣan Ṣiṣe-aworan",
+          "Fi àwọn ṣíṣàn data tí ó ti parí ránṣẹ́ sí Final Cut"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
-        ],
-        "optional": false
+          "Foundation — ìwé ìtàn, àwọn ohùn, ohùn ìṣẹ̀lẹ̀, ìwé ìtàn tí a ti fọwọ́ sí",
+          "Express storyboard — itọsọna ati awọn fireemu ni iṣẹju; ibi-ifihan ati pinpin",
+          "Beat Frames àti Mixer — àwọn fírámù ìbẹ̀rẹ̀/òpin, Director Console, ṣíṣe àgbékalẹ̀ àwọn ṣíṣàn MP4",
+          "Àwọn Ọ̀nà Ìṣelọ́pọ̀ — ṣàyẹ̀wò àwọn èso iṣẹ́, tún àwọn orin tí ó ti pẹ́ ṣe, fi ránṣẹ́ sí Final Cut"
+        ]
       },
       {
-        "id": "final-cut",
+        "id": "Àtúnṣe ìparí",
         "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "subtitle": "Àpéjọpọ̀ Àgbéjáde",
+        "description": "So awọn apakan iṣẹ́ ti a ti parí pọ̀ mọ́ra láti ṣe fáìlì MP4 kan ṣoṣo tó péye. Yan Animatic tàbí fídíò àti èdè fún ìṣẹ̀lẹ̀ kọ̀ọ̀kan — a kò ní ṣe àtúnṣe lórí ìtòlẹ́sẹẹsẹ àkókò (timeline); àwọn àtúnṣe tó ní í ṣe pẹ̀lú ẹ̀dá-inú yóò wà ní Production Mixer.",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
+          "Yan àwọn ìṣàn fún ìṣẹ̀lẹ̀ kọ̀ọ̀kan — èyí tí a ti ṣètò tẹ́lẹ̀ tàbí àdàpọ̀ tí ìwọ fúnra rẹ ṣe.",
+          "Wo àkópọ̀ ètò náà ní tẹ̀tẹ̀lé-tẹ̀tẹ̀lé bí ó ṣe wà nínú ìwé-ìtòlẹ́sẹẹsẹ",
+          "Ṣe àgbéjáde fáìlì MP4 àkọ́kọ́ kan fún Premiere"
         ],
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
+          "Yíyàn ṣísàn fún ìṣẹ̀lẹ̀ kọ̀ọ̀kan — Animatic, Fídíò, èdè, ẹ̀dà",
+          "Àwọn ètò àpapọ̀ — Gbogbo Fídíò, Àpapọ̀ onírúurú, Àpapọ̀ tí a ṣe ní pàtó",
+          "Ko si ṣíṣe àtúnṣe lórí àkókò ìṣẹ̀lẹ̀ (timeline) — àwọn àtúnṣe tó ní ṣe pẹ̀lú ẹ̀dá-erò máa ń dúró sí Production Mixer.",
+          "Ìgbé-jáde àkọ́kọ́ ní ìfọwọ́-kan-kan — MP4 tí a so pọ̀ fún Premiere"
+        ]
       },
       {
-        "id": "premiere",
+        "id": "Ìfihàn àkọ́kọ́",
         "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "subtitle": "Ibùdó Pínpín",
+        "description": "Ṣe àyẹ̀wò fídíò rẹ pẹ̀lú àwọn àlàyé lórí bí àwọn olùwò ṣe ń wo ó, lẹ́yìn náà gbé e sórí YouTube pẹ̀lú àlàyé (metadata) tí ó bá àgbègbè mu, tàbí kí o pèsè àwọn ẹ̀dà fún Shorts, Reels, àti TikTok.",
         "keySteps": [
-          "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
+          "Ṣe agbekalẹ iṣẹlẹ wiwo fiimu ki o si pín ọna asopọ rẹ.",
+          "Ṣe àyẹ̀wò àwọn èsì ìṣirò, ìbáṣepọ̀, àti àwọn àkíyèsí láti ara àwọn àwòrán tàbí àtòpọ̀ ìwífún.",
+          "Olùrànlọ́wọ́ YouTube tàbí àkópọ̀ fún ìfiránṣẹ́jáde"
         ],
         "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "optional": false
+          "Àwọn ọna-asopọ /s/ tí a lè pínpín (pẹ̀lú ètò ìṣirò-àmì àti àwọn àlàyé ìwọ̀n bí àwọn ènìyàn ṣe ń lo àkóónú náà — tí ó sì wà fún yíyàn pẹ̀lú ìyọ̀ǹda olùwò).",
+          "Ìgbá-ìwò-sọfitiwia fún àwọn àkíyèsí — Àwọn abala fún ìṣirò-àmì, ìwọ̀n-ara (biometric), àti àwọn àwòrán",
+          "Amoye YouTube — àwòrán ìfihàn, àkọlé tàbí àpèjúwe tí a ṣe níbàámu pẹ̀lú agbègbè, SceneFlow ìpè láti ṣe ìgbésẹ̀ (CTA)",
+          "Awọn akojọpọ fun gbigbejade ati awọn eto fun awọn fidio kukuru ti o duro ni inaro"
+        ]
       }
     ]
   },
   "useCases": {
-    "badge": "Production Applications",
-    "title": "Whatever Video You Can Imagine,",
-    "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "badge": "Awọn Ohun elo fun Iṣelọpọ",
+    "title": "Fidio èyíkéyìí tí o lè fojú inú wò,",
+    "titleAccent": "Kọ ọ́ ní SceneFlow",
+    "subtitle": "Ifihan ile ati ilẹ, eto ẹkọ, awọn eto ohun (podcasts), awọn ọna gbigbe iroyin, awọn ipolongo ami-ọja, ati awọn itan ti a ṣe ni ọna sinima — gbogbo rẹ n waye ni ile-iṣẹ igbasilẹ kan ti n ṣiṣẹ funra rẹ, lati ibẹrẹ ero titi di igba ti iṣẹ naa yoo fi pari patapata ti yoo si ṣetan fun itẹjade.",
+    "qualifyingStatement": "SceneFlow n yi awọn fọto, awọn faili ti a gbe sori ẹrọ, ati awọn alaye rẹ pada si awọn fidio ti n ṣalaye ohun kan tabi ibi kan — pẹlu aṣayan lati fi ohun tabi awọn ohun kikọ kun un gẹgẹ bi o ṣe fẹ. Awọn fidio wọnyi jẹ eyiti a ti ṣatunṣe pẹlu imọ-ẹrọ AI: wọn jẹ aworan ti o dabi gidi ti a da lori awọn ohun elo rẹ, kii ṣe fidio ti a ya taara pẹlu kamẹra. Ṣe ayẹwo ati fọwọsi gbogbo ilana fidio (storyboard) ṣaaju ki o to gbe e jade; fi aami ti o han gbangba si awọn fidio ti o jade ki awọn oluwo le mọ ohun ti wọn n wo.",
     "ui": {
-      "useCases": "Use Cases",
-      "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo coming soon",
-      "selectExample": "Select an example to preview its demo"
+      "useCases": "Àwọn Ọ̀nà Lílo",
+      "sectors": "Àwọn ẹ̀ka {count}",
+      "demoComingSoon": "Àpẹẹrẹ yóò wá láìpẹ́",
+      "selectExample": "Yan àpẹẹrẹ kan láti wo àfihàn rẹ̀.",
+      "targetPersona": "Ẹni tí a fojú sí",
+      "theChallenge": "Ìpèníjà náà",
+      "sceneFlowSolution": "Ojútùú SceneFlow",
+      "beforeVsAfter": "Ṣáájú àti Lẹ́yìn",
+      "before": "Ṣáájú",
+      "after": "Lẹ́yìn",
+      "theWin": "Ìṣẹ́gun náà",
+      "frameAnchoredTitle": "Ìtẹ̀síwájú tí ó dúró lórí ìlànà ìpìlẹ̀",
+      "frameAnchoredDescription": "SceneFlow nikan ni ohun-elo ti o jẹ ki a le ṣetọju aitasera ti o da lori awọn fireemu (frame-anchored continuity), eyi ti o n rii daju pe ọja tabi ohun-kọkan ti alabara rẹ ko yipada rara ni gbogbo apakan iṣẹlẹ naa.",
+      "closePreview": "Pa Àyẹ̀wò-tẹ́lẹ̀ náà",
+      "expandVideo": "Mu Fidio Tobi",
+      "expandImage": "Mu aworan naa tobi si",
+      "orStartExplorer": "Bẹ̀rẹ̀ pẹ̀lú ètò $9 Explorer náà.",
+      "orPrefix": "Tabi"
+    },
+    "personas": {
+      "creator": {
+        "label": "Olùṣẹ̀dá Aládáàkọ́kọ́",
+        "title": "Olùṣẹ̀dá YouTube",
+        "beforeAfter": {
+          "before": "Wákàtí 40",
+          "after": "Iṣẹ́jú 25"
+        },
+        "challenge": {
+          "title": "Ìdènà ní Ìpele \"B-Roll\"",
+          "description": "O ni iwe-afọwọkọ ti o dara pupọ, ṣugbọn pupọ julọ akoko rẹ n lọ si wiwa awọn aworan fidio, ṣiṣe eto fun atunṣe fidio, ati rii daju pe awọn apakan fidio naa ba ara wọn mu daradara. Iduro-pẹ-yii n fa fifalẹ igba ti o fi n gbe fidio jade, o si n dinku agbara rẹ lati jẹ ki awọn oluwo tẹsiwaju lati ma wo fidio rẹ."
+        },
+        "solution": {
+          "title": "Olùsọ̀tàn Aládàáṣiṣẹ́",
+          "description": "Yí àwọn ìwé ìtàn-eré padà sí àwòrán tó ti ṣe tán fún ṣíṣe fíìmù ní kíákíá, nígbà tí o sì ń mú kí ìrísí àwọn òṣèré àti ọ̀nà ìgbékalẹ̀ wà ní ìbámu láti ìbẹ̀rẹ̀ títí dé ìpele ìparí tó ti ṣe tán fún ìtújáde.",
+          "features": [
+            "Àwọn àwòrán tí ó bá àwọn ìpele ìtàn inú ìwé eré mu dáadáa",
+            "Àwọn akọni tí wọ́n dúró ṣinṣin ní gbogbo ìṣẹ̀lẹ̀",
+            "Faagun iṣẹ́ naa lati bo ọpọlọpọ awọn apakan itan, nipa lilo ibi ipamọ awọn ohun-itọkasi ti a n pin lopọọpọ."
+          ]
+        },
+        "win": "Yí láti ṣíṣe àgbéjáde nígbà díẹ̀ sí níní ètò ṣíṣe àgbéjáde tí ó dúró ṣinṣin, pẹ̀lú dídín àwọn inúná tàbí wàhálà iṣẹ́ kù.",
+        "keyPhrases": [
+          "Ṣíṣe iṣẹ́ ní kíákíá",
+          "Àwọn Ohun-ìwà tí ó dúró ṣinṣin",
+          "Ilana Iṣiṣẹ ti o ti ṣetan fun Ṣẹriisi"
+        ]
+      },
+      "team": {
+        "label": "Ẹgbẹ́ abẹ́lé",
+        "title": "Ẹgbẹ́ tó ń ṣiṣẹ́ fídíò nínú ilé-iṣẹ́ náà",
+        "beforeAfter": {
+          "before": "Ọ̀sẹ̀ mẹ́fà",
+          "after": "Ọ̀sẹ̀ kan náà"
+        },
+        "challenge": {
+          "title": "Àkójọpọ̀ Iṣẹ́ tí ó ń dúró de Olùpèsè àti Yíyàgún kúrò nínú Ìdánimọ̀ Àmì-ọjà",
+          "description": "Awọn ẹgbẹ ti n ṣiṣẹ lori ibaraẹnisọrọ, ikẹkọọ ati idagbasoke, ati tita ọja maa n duro de awọn ọsẹ pupọ fun awọn fidio lati ọdọ awọn ile-iṣẹ ita tabi awọn olupese. Igbesẹ kọọkan ti gbigbasilẹ fidio maa n fa awọn iṣoro bii aini iṣọkan ninu bi a ṣe n ṣafihan ami idanimọ ile-iṣẹ, awọn iwe-owo ti ko ṣe asọtẹlẹ iye wọn, ati ilana ifọwọsi ti o gun ti o si maa n fa idaduro fun awọn eto igbega ọja."
+        },
+        "solution": {
+          "title": "Ṣíṣe iṣẹ́ nílé-iṣẹ́ fúnra-ẹni láàárín ọ̀sẹ̀ kan náà",
+          "description": "Yan awọn oṣiṣẹ lati ṣe fidio pẹlu isuna ti a le sọ tẹlẹ — ni lilo awọn ilana apẹrẹ ti ile-iṣẹ, pẹlu igbanilaaye ṣaaju ki a to pari iṣẹ naa, ati laisi awọn idiyele afikun fun ọjọ iṣẹ ẹgbẹ tabi awọn ilana atunṣe ti ko ni opin.",
+          "features": [
+            "Ṣe àtúnṣe ọ̀nà tí a fi ń ya àwòrán: dípò lílo àwọn oníṣẹ́ láti òde, lo àwọn ìlànà iṣẹ́ inú ilé tí ó ní ìtọ́sọ́nà.",
+            "Àwọn àdàkọ àti àkójọpọ̀ ohun-ìtọ́kasí tí ó bá ìlànà àmì-ìdánimọ̀ ilé-iṣẹ́ mu",
+            "Àfihàn lílo kirediti àti ààlà ìṣúná fún iṣẹ́ kọ̀ọ̀kan",
+            "Fọwọ́ sí àwọn àwòrán ìtàn (storyboards) kí o tó san owó fún fídíò tó parí."
+          ]
+        },
+        "win": "Fi àwọn ohun ìdánilẹ́kọ̀ọ́, ìbánisọ̀rọ̀, àti fídíò ìpolongo ránṣẹ́ ní àkókò tí ìwọ fúnra rẹ yàn — kì í ṣe nígbà tí ó bá wù olùpèsè náà.",
+        "keyPhrases": [
+          "Iye owó tí a lè sọtẹ́lẹ̀",
+          "Iṣakoso Ami-ọja",
+          "Pípèsè láàárín ọ̀sẹ̀ kan náà"
+        ]
+      },
+      "productionShop": {
+        "label": "Ile-iṣẹ́ Iṣelọpọ",
+        "title": "Ile-iṣẹ́ Iṣelọpọ ti Ẹka Pataki",
+        "beforeAfter": {
+          "before": "$8,000 fún ìgbà ìyàwòrán kan",
+          "after": "Kirẹditi $200"
+        },
+        "challenge": {
+          "title": "Awọn Eto Pataki fun Ẹka Iṣẹ́ Kan Pato, Ko si Eto ti a le Tun Lo",
+          "description": "Awọn onibara ti n ṣiṣẹ lori itan-aye, itọju ohun-ini fun iran ti mbọ, ile ati ilẹ, ati eto-ẹkọ nilo ki iṣẹ pari ni kiakia — ṣugbọn iṣẹ kọọkan maa n bẹrẹ lati ibẹrẹ patapata. Ko si bi a ṣe le mu ki iṣẹ pọ si tabi yara si fun awọn nkan bii gbigbe data sori ẹrọ, ṣiṣe ẹda ohun, ati lilo awọn aworan oni-nọmba (avatars) ti a ko ba ni ilana ti a ti ṣeto tẹlẹ fun gbigba iṣẹ ati fifunni iṣẹ naa."
+        },
+        "solution": {
+          "title": "Sọ Iṣẹ́ Fídíò Rẹ Di Ọjà",
+          "description": "Ṣe agbekalẹ awọn ilana iṣẹ ti a le tun lo leralera fun awọn ile-iṣẹ ti n ṣiṣẹ lori itan-aye (memoir studios) ati awọn apa ọja pato miiran. Eyi pẹlu gbigbe awọn awoṣe (templates) sori ẹrọ, ṣiṣẹda ẹda ohun (voice clones), awọn aworan aṣoju oni-nọmba (avatars), ati gbigba ifọwọsi lori eto aworan itan (storyboard) — ṣe atunṣe wọn lati ba iwulo alabara kọọkan mu ki o si mu èrè pọ si nipasẹ jijẹ iye iṣẹ ti a n ṣe.",
+          "features": [
+            "Àwọn àpẹẹrẹ ìwé ìtàn-ayé pẹ̀lú àǹfààní láti gbé àwọn fọ́tò sí i, ṣíṣe àwòkọ́ṣe ohùn, àti lílo àwọn aṣojú oní-àwòrán (avatar) láti ṣe àfihàn.",
+            "Ilana gbigba onibara ti o ni ibatan si Blueprint ati awọn ipele ifọwọsi fun storyboard",
+            "Awọn idii iṣẹ́ fidio ti a le fi orukọ rẹ si fun itan-idile, ayẹyẹ ọlá, ati awọn fidio ti a n sanwo fun leralera.",
+            "Èrè lórí àwọn kirediti dípò owó ìnáwó fún ìgbà ìyàwòrán kọ̀ọ̀kan"
+          ]
+        },
+        "win": "Bẹ̀rẹ̀ iṣẹ́ ṣíṣe àkọsílẹ̀ ìtàn ìgbésí-ayé nípasẹ̀ fídíò tàbí iṣẹ́ ilé-iṣẹ́ pàtó kan tí o lè máa ṣe nígbà gbogbo — kì í ṣe iṣẹ́ oní-ìgbà-kan-ṣoṣo tí o kàn ń ṣe fún àwọn oníbàárà lẹ́ẹ̀kọ̀ọ̀kan.",
+        "keyPhrases": [
+          "Àwọn Àdàkọ fún Kíkọ Ìtàn Ìgbésí Ayé",
+          "Idanimọ Ohùn àti Àwòrán Aṣojú",
+          "Fifiranṣẹ ti a le tun ṣe"
+        ]
+      },
+      "agency": {
+        "label": "Ile-iṣẹ Aṣoju",
+        "title": "Olórí Ẹ̀ka Pípèsè Iṣẹ́ fún Oníbàárà",
+        "beforeAfter": {
+          "before": "Ifijiṣẹ laarin ọsẹ mẹta",
+          "after": "Ifijiṣẹ laarin ọjọ́ mẹ́ta"
+        },
+        "challenge": {
+          "title": "Pípèsè iṣẹ́ fún àwọn oníbàárà ní ìwọ̀n gíga",
+          "description": "Gbigba iṣẹ́ lẹ́yìn àfihàn ètò jẹ́ ìdajì ọ̀nà nìkan. Àwọn iṣẹ́ tí a ń ṣe déédé fún oníbàárà nílò kí a parí wọn ní kíákíá, kí ìlànà fífi ọwọ́ sí i ṣe kedere, kí a sì ní èrè lórí iṣẹ́ kọ̀ọ̀kan — láìnílò láti bẹ̀rẹ̀ gbogbo ìlànà iṣẹ́ náà láti ìbẹ̀rẹ̀ pátápátá nígbà gbogbo."
+        },
+        "solution": {
+          "title": "Iye iṣẹ́ tí a parí + Ifọwọ́sí oníbàárà",
+          "description": "Yí láti ìpele àbá iṣẹ́ sí pípèsè iṣẹ́ nígbà gbogbo pẹ̀lú àwọn ọ̀nà ààbò fún orúkọ ilé-iṣẹ́ rẹ, àǹfàní fún oníbàárà láti ṣàyẹ̀wò kí a tó parí iṣẹ́ náà, àti mímọ iye owó (nípa lílo àwọn 'credit') tí iṣẹ́ kọ̀ọ̀kan yóò ná ṣáájú kí ó tó bẹ̀rẹ̀.",
+          "features": [
+            "Ṣíṣe àpèjúwe ìrísí iṣẹ́ tẹ́lẹ̀-tẹ́lẹ̀ láti lè fi hàn fún ìgbékalẹ̀ èrò àti fún fífọwọ́sí láti ọ̀dọ̀ oníbàárà",
+            "Àwọn àdàkọ tí a lè lò léraléra fún àwọn ọ̀nà ìṣiṣẹ́ pẹ̀lú àwọn oníbàárà tí a máa ń ṣe nígbà gbogbo",
+            "Àǹfàní láti rí ipò ìṣúná ní gbogbo ìgbà tí a bá ń ṣe àtúnṣe tàbí àtúnyẹ̀wò",
+            "Ṣíṣe iṣẹ́ ní ìwọ̀n tó lè gbòòrò sí i láìnílò láti fi àwọn òṣìṣẹ́ kún un"
+          ]
+        },
+        "win": "Ṣe àwọn ìgbésẹ̀ ìgbékalẹ̀ iṣẹ́ àti iṣẹ́ tí a ń ṣe nígbà gbogbo fún àwọn oníbàárà ní kíákíá, pẹ̀lú ewu díẹ̀ sí i nínú ṣíṣe iṣẹ́ náà àti èrè tó pọ̀ sí i.",
+        "keyPhrases": [
+          "Ìfọwọ́sí láti ọ̀dọ̀ oníbàárà",
+          "Iye Iṣẹ́ Ifijiṣẹ́",
+          "Agbara lati sọ tẹlẹ bi isuna yoo ṣe ri"
+        ]
+      }
+    },
+    "segmentCtas": {
+      "creator": {
+        "label": "Bẹ̀rẹ̀ ìrìn-àjò ìdánwò fún iṣẹ́ ìgbékalẹ̀ rẹ",
+        "subtext": "$9 lẹ́ẹ̀kan ṣoṣo • Àwọn kirediti 750 • Àǹfàní láti lo gbogbo apá pẹpẹ náà"
+      },
+      "team": {
+        "label": "Ṣe ètò fún ìyẹ̀wò pẹ̀lú ẹgbẹ́",
+        "subtext": "Wo bí àwọn ẹgbẹ́ òṣìṣẹ́ inú ilé ṣe ń rọ́pò àwọn ìlànà iṣẹ́ àwọn olùpèsè òde."
+      },
+      "productionShop": {
+        "label": "Ṣe àyẹ̀wò àwọn àdàkọ tí ó dúró ní títòòrò",
+        "subtext": "Ohun-ini gidi, eto-ẹkọ, awọn iwe-ipamọ, ati diẹ sii — wo ohun ti o le sọ di ọja."
+      },
+      "agency": {
+        "label": "Wo iye owo fun ẹgbẹ",
+        "subtext": "Awọn eto fun awọn ile-iṣẹ iṣẹ-ṣiṣe ati awọn ile-iṣẹ iṣelọpọ ti o n ṣiṣẹ ni iwọn nla"
+      }
     },
     "categories": [
       {
-        "id": "property",
-        "title": "Property, Spaces & Hospitality",
+        "id": "Ohun-ini",
+        "title": "Ohun-ini, Awọn Aye & Iṣẹ́-ìgbàlejò",
+        "qualifyingStatement": "A ṣe e lati awọn fọto gidi ti ohun-ini rẹ — a si gbekalẹ rẹ gẹgẹbi irin-ajo foju-inu ti a ṣeto pẹlu iranlọwọ imọ-ẹrọ AI, ti o si ni ohun ati aworan oni-nọmba (avatar) rẹ ninu. O funni ni awotẹlẹ gidi ti bi ile tabi ohun-ini naa ṣe ri ati awọn ẹya rẹ, ṣugbọn ko le rọpo wiwo ohun-ini naa funra ẹni. Gbogbo awọn irin-ajo wọnyi ni a si ti fi aami ti o han gbangba ṣe iyatọ si wọn.",
         "examples": [
           {
-            "id": "residential-real-estate",
-            "label": "Residential Real Estate",
-            "description": "Automated listing tours featuring the agent's cloned voice and avatar identity."
+            "id": "Ilé àti ilẹ̀ fún ibùgbé",
+            "label": "Ohun-ini Ile-gbigbe",
+            "description": "Fojú inú wo bí o ṣe lè gbé àwọn àwòrán ilé tàbí ilẹ̀ rẹ sórí ẹ̀rọ, pẹ̀lú àpèjúwe nípa rẹ àti ohùn rẹ tí a ti fipamọ́ tẹ́lẹ̀. Lẹ́yìn náà, kí o lè yára ṣẹ̀dá àfihàn ilé náà ní ọ̀nà tó péye, pẹ̀lú àwòrán àti ohùn rẹ — ní èdè tó ju àádọ́rin lọ."
           },
           {
-            "id": "commercial-real-estate",
-            "label": "Commercial Real Estate",
-            "description": "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data."
+            "id": "Ilé àti ilẹ̀ fún iṣẹ́-òwò",
+            "label": "Ohun-ini Gidi fun Iṣowo",
+            "description": "Fojú inú wo bí o ṣe ń gbé àwọn àwòrán ìṣètò ilé, àwọn àwòrán oní-kọ̀ǹpútà tó ṣe kedere, àti àlàyé nípa àgbègbè náà sórí ẹ̀rọ, pẹ̀lú lílo ohùn àti àwòrán oní-nọ́mbà (avatar) ti aṣojú rẹ tí a ti fipamọ́ tẹ́lẹ̀. Lẹ́yìn náà, kí o sì tètè ṣẹ̀dá àwọn fídíò ìrìn-àjò ojú-lé (walkthroughs) fún àwọn olùdókòwò, èyí tí yóò mú kí gbogbo apá ibi náà wá sí ìyè — tí a sì ṣe ní èdè tó ju àádọ́rin lọ."
           },
           {
-            "id": "short-term-rentals",
-            "label": "Short-Term Rentals",
-            "description": "Automated \"Digital Welcome Books\" that walk guests through house features and local \"best of\" spots."
+            "id": "Yíyà-ilé fún àkókò kúkúrú",
+            "label": "Yíyàlé fún Àkókò Kúrúkúrú",
+            "description": "Fojú inú wo bí o ṣe ń gbé àwọn fọ́tò ilé àti àlàyé nípa àwọn ohun èlò inú rẹ̀ sórí ayélujára, pẹ̀lú ohùn ẹni tí ó ni ilé náà tí a ti gbà sílẹ̀ tẹ́lẹ̀. Lẹ́yìn náà, kí o sì tún yára gbé àwọn fídíò ìkíni jáde lórí ayélujára, èyí tí yóò máa kí gbogbo àlejò ní èdè wọn—kí wọ́n tó pàápàá dé sí ibi tí wọ́n máa dúró sí."
           },
           {
-            "id": "hospitality-tourism",
-            "label": "Hospitality & Tourism",
-            "description": "Hotel virtual tours and narrated travel itineraries for agencies."
+            "id": "Iṣẹ́ gbígbàlejò àti ìrìn-àjò afẹ́",
+            "label": "Ìtọ́jú Àlejò àti Irin-àjò Afẹ́",
+            "description": "Foju wo pe o n gbe awọn aworan hotẹẹli ati awọn alaye pataki nipa eto irin-ajo sori ẹrọ ayelujara, pẹlu lilo ohun agbalejo ati aworan oni-nọmba (avatar) ti ile-iṣẹ rẹ ti ṣeto tẹlẹ. Lẹhinna, ki o le pese awọn ọna lati ṣabẹwo si ibi naa nipasẹ ayelujara (virtual tours) ati awọn itọsọna irin-ajo ti a n sọrọ lori wọn ni awọn ede ti o ju aadọrin (70) lọ lẹsẹkẹsẹ — laisi iwulo lati ni ẹgbẹ ti n ya aworan ni ibi kọọkan."
           },
           {
-            "id": "museum-gallery-guides",
-            "label": "Museum & Gallery Guides",
-            "description": "Multi-language audio-visual \"tours\" for exhibitions that can be updated JIT as exhibits change."
+            "id": "Awọn amọna ile-iṣafihan ati ibi ipamọ awọn iṣẹ-ọnà",
+            "label": "Awọn Itọsọna Ile-iṣura ati Ile-ifihan Iṣẹ-ọnà",
+            "description": "Fojú inú wo bí o ṣe lè máa gbé àwọn fọ́tò àwọn ohun ìfihàn àti àlàyé olùtọ́jú wọn sí orí ẹ̀rọ nígbà tí àwọn ohun tí a ń fi hàn bá yí padà. Lẹ́yìn náà, kí o sì lè ṣe àtúnṣe lẹ́sẹ̀kẹsẹ̀ sí àwọn ìtọ́sọ́nà fún àwọn alejo tí ó ní àlàyé ní ẹnu sísọ ní èdè tí ó ju àádọ́rin lọ — láìnílò láti tún ya àwọn fọ́tò tàbí fídíò tuntun nígbà tí àwọn ohun ìfihàn bá yí padà."
           }
         ]
       },
       {
-        "id": "knowledge",
-        "title": "Knowledge, Training & Education",
+        "id": "ìmọ̀",
+        "title": "Imọ̀, Ikọ́ni & Ẹ̀kọ́",
         "examples": [
           {
-            "id": "k12-higher-ed",
-            "label": "K-12 & Higher Ed",
-            "description": "30-minute curriculum modules that can be instantly localized for ESL students or global campuses."
+            "id": "Ẹ̀kọ́ K-12 àti Ẹ̀kọ́ Gíga",
+            "label": "Ẹ̀kọ́ K-12 àti Ẹ̀kọ́ Gíga",
+            "description": "Fojú inú wo bí o ṣe ń gbé àwọn ohun èlò ẹ̀kọ́ sí orí ẹ̀rọ, pẹ̀lú ohùn olùkọ́ rẹ tí a ti gbà sílẹ̀ àti àpèjúwe ìwà rẹ̀. Lẹ́yìn náà, kí o sì yára ṣẹ̀dá àwọn apá pàtàkì nínú ètò ẹ̀kọ́ náà ní kíkún, èyí tí àwọn akẹ́kọ̀ọ́ rẹ—yálà àwọn tí ń kọ́ èdè Gẹ̀gẹ̀sì (ESL) tàbí àwọn akẹ́kọ̀ọ́ láti oríṣiríṣi apá ibi gbogbo àgbáyé—lè wò ní èdè tó lé ní àádọ́rin (70)."
           },
           {
-            "id": "corporate-ld",
-            "label": "Corporate L&D",
-            "description": "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices."
+            "id": "àmì-ìdánimọ̀ ilé-iṣẹ́",
+            "label": "Ikọni ati Idagbasoke ni Ile-iṣẹ",
+            "description": "Fojú inú wò ó pé o gbé àwọn ọ̀rọ̀ ìlànà iṣẹ́ sí ètò kan, pẹ̀lú lílo ohùn àti àwòrán oníṣe-kọ̀ǹpútà (avatar) tí ó dúró fún olùkọ́ rẹ. Lẹ́yìn náà, kí o lè bẹ̀rẹ̀ sí í ṣe ìdánilẹ́kọ̀ọ́ fún àwọn òṣìṣẹ́ tuntun àti ti ọ̀rọ̀ ààbò ní gbogbo àwọn ọ́fíìsì rẹ lẹ́sẹ̀kẹsẹ̀ — pẹ̀lú lílo èdè tí ó bá agbègbè kọ̀ọ̀kan mu, tí ó sì ju àádọ́rin (70) èdè lọ."
           },
           {
-            "id": "software-saas-tutorials",
-            "label": "Software SaaS Tutorials",
-            "description": "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion."
+            "id": "Awọn ẹkọ lori sọftiwia ati SaaS",
+            "label": "Awọn ẹkọ lori sọfitiwia SaaS",
+            "description": "Foju wo pe o n gbe awọn aworan iboju (screenshots) sori ẹrọ gẹgẹbi awọn apẹẹrẹ itọkasi, pẹlu ohun ti a ti gbasilẹ lati ọdọ amoye ọja rẹ. Lẹhinna, ki o si yara ṣẹda awọn fidio ti n ṣalaye bi a ṣe n lo ọja naa, eyi ti yoo fihan gbogbo igbesẹ ti a ba tẹ bọtini — ti a si n ṣe imudojuiwọn rẹ ni ọjọ ti a ba ti tu ọja naa jade fun lilo."
           },
           {
-            "id": "niche-skill-tutoring",
-            "label": "Niche Skill Tutoring",
-            "description": "Professional \"How-To\" series for cooking, DIY, or technical certifications."
+            "id": "Kíkọ́ni ní ọgbọ́n àkànṣe",
+            "label": "Ikọni nípa Ọgbọ́n Pàtó",
+            "description": "Fojú inú wo bí o ṣe ń gbé àwọn fọ́tò tó ṣàlàyé ìgbésẹ̀ kọ̀ọ̀kan sórí ẹ̀rọ, pẹ̀lú ohùn olùkọ́ rẹ tí a ti gbà sílẹ̀ àti àpèjúwe nípa irúfẹ́ ẹni tí ó jẹ́. Lẹ́yìn náà, kí o sì tètè gbé àwọn fídíò tó kọ́ni níṣẹ́ lọ́nà tó péye jáde — yálà fún sísè oúnjẹ, iṣẹ́ ọwọ́ tí o lè ṣe fúnra rẹ (DIY), tàbí fún pípamára fún ìwé-ẹ̀rí — ní èdè tó lé ní àádọ́rin."
           },
           {
-            "id": "medical-patient-education",
-            "label": "Medical/Patient Education",
-            "description": "Narrated explanations of surgical procedures or medication management for hospitals and clinics."
+            "id": "Ẹ̀kọ́ ìlera fún aláìsàn",
+            "label": "Ẹ̀kọ́ nípa Ìṣègùn/fún Àwọn Alaisàn",
+            "description": "Foju wo pe o n gbe awọn aworan alaye ilana iṣoogun sori ẹrọ pẹlu ohun ti dokita rẹ ti fọwọsi ti wọn si ti gbasilẹ tẹlẹ. Lẹhinna, ki o si yara ṣẹda awọn fidio ti o ṣe alaye kedere fun awọn alaisan—awọn fidio ti awọn ẹbi wọn le loye ni awọn ede ti o ju aadọrin (70) lọ."
           },
           {
-            "id": "video-memoirs",
-            "label": "Video Memoirs",
-            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+            "id": "Àkọsílẹ̀ ìrántí nípasẹ̀ fídíò",
+            "label": "Àkọsílẹ̀ Ìrántí nípasẹ̀ Fídíò",
+            "description": "Foju wo pe o n gbe awọn fọto ẹbi, ohun ti a gbasilẹ lakoko ifọrọwanilẹnuwo, ati awọn akọsilẹ nipa awọn iṣẹlẹ sori ẹrọ, pẹlu ohun ẹni ti yoo sọ itan naa ti a ti gbasilẹ tẹlẹ. Lẹhinna, ki o le yara ṣeto awọn fidio itan-aye ti a pin si awọn apakan — ki o si fọwọsi eto bi fidio naa yoo ṣe lọ (storyboard) ki a to ṣe agbejade rẹ nikẹhin."
           }
         ]
       },
       {
         "id": "jit",
-        "title": "JIT Media & Information",
+        "title": "JIT Media àti Ìwífún",
         "examples": [
           {
-            "id": "hyper-local-news",
-            "label": "Hyper-Local News",
-            "description": "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive."
+            "id": "Àwọn ìròyìn agbègbè kékeré",
+            "label": "Ìròyìn Agbègbè Kékeré",
+            "description": "Fojú inú wo bí o ṣe ń gbé àwọn fọ́tò àti ìròyìn òde òní sórí ẹ̀rọ pẹ̀lú ohùn olùgbékalẹ̀ ètò rẹ tí a ti gbà sílẹ̀ tẹ́lẹ̀. Lẹ́yìn náà, kí o sì tètè gbé ìròyìn kúkúrú ti agbègbè rẹ jáde lójoojúmọ́ — láìnílò àwọn òṣìṣẹ́ tó ń ya àwòrán tàbí kí o pàdánù àkókò tí a yàn fún iṣẹ́ náà."
           },
           {
-            "id": "financial-market-recaps",
-            "label": "Financial & Market Recaps",
-            "description": "Turning daily stock market or crypto data into 3-minute narrated visual digests."
+            "id": "Àkópọ̀ ìròyìn ọjà owó",
+            "label": "Àkópọ̀ Ọ̀rọ̀ Owó àti Ọjà",
+            "description": "Fojú inú wò ó pé o ń gbé àwọn ìsọfúnni nípa ọjà àti àwọn àwòrán ìtọ́ka sí ọjà sórí ẹ̀rọ ní gbogbo òwúrọ̀, pẹ̀lú ohùn onínú-ìwádìí rẹ tí a ti gbà sílẹ̀. Lẹ́yìn náà, kí o yí wọn padà lẹ́sẹ̀kẹsẹ̀ sí àkópọ̀ ìròyìn tí ó ní àwòrán àti àlàyé ní ẹnu — tí ó sì ti ṣe tán kí ọjà tó bẹ̀rẹ̀ iṣẹ́."
           },
           {
-            "id": "sports-commentary",
-            "label": "Sports Commentary",
-            "description": "Automated \"recap\" videos using game stats and static photography turned into F2V action."
+            "id": "Àlàyé lórí eré ìdárayá",
+            "label": "Àlàyé lórí eré ìdárayá",
+            "description": "Fojú inú wo bí o ṣe lè gbé àwọn àkọsílẹ̀ eré àti àwọn fọ́tò jáde pẹ̀lú ohùn olùṣàlàyé eré tí a ti gbà sílẹ̀. Lẹ́yìn náà, kí o sì tètè ṣẹ̀dá àwọn fídíò àkópọ̀ eré tí ó ní àwọn àwòrán oní-ìgbéṣẹ̀ — kí o sì gbé wọn jáde nígbà tí àwọn olólùfẹ́ eré ṣì ń sọ̀rọ̀ nípa rẹ̀."
           },
           {
-            "id": "true-crime-historical-docs",
-            "label": "True Crime & Historical Docs",
-            "description": "Using the Reference Library to keep historical figures consistent across a multi-part documentary series."
+            "id": "Àwọn ìwé àkọsílẹ̀ ìtàn nípa àwọn ọ̀daràn gidi",
+            "label": "Awọn Itan Ọdaràn Gidi ati Awọn Fiimu Iwe-akọsilẹ Itan",
+            "description": "Fojú inú wo bí o ṣe lè fi àwọn ènìyàn pàtàkì nínú ìtàn pamọ́ sínú Reference Library rẹ lẹ́ẹ̀kan ṣoṣo. Lẹ́yìn náà, kí o lè yára ṣẹ̀dá àwọn eré onípele-pèlé níbi tí ojú àti ohùn kọ̀ọ̀kan ti máa ń dúró sójú kan náà — láti ìpele kan sí òmíràn."
           },
           {
-            "id": "weather-emergency-alerts",
-            "label": "Weather & Emergency Alerts",
-            "description": "Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms."
+            "id": "Àwọn ìkìlọ̀ pàjáwìrì nípa ojú-ọjọ́",
+            "label": "Awọn Ikilọ Nipa Oju-ọjọ ati Awọn Pajawiri",
+            "description": "Fojú inú wo bí o ṣe lè gbé àwọn ìfitónilétí pàjáwìrì sórí ẹ̀rọ, ní lílo ohùn tí a ti gbà sílẹ̀ tí ó sì jẹ́ ohùn tí àwọn èèyàn ní ìgbẹ́kẹ̀lé láti ọ̀dọ̀ àjọ rẹ. Lẹ́yìn náà, kí o sì tàn àwọn ìkìlọ̀ tí ó ṣe kedere káàkiri àwọn pèpéle ayélujára ní èdè tí ó ju àádọ́rin lọ lẹ́sẹ̀kẹsẹ̀ — láàárín ìṣẹ́jú díẹ̀, kì í ṣe ní ọjọ́ pípẹ́."
           }
         ]
       },
       {
-        "id": "b2b",
-        "title": "B2B Marketing & Sales",
+        "id": "Iṣowo laarin ile-iṣẹ ati ile-iṣẹ",
+        "title": "Titaja ati Ipolowo laarin Awọn Ile-iṣẹ (B2B)",
         "examples": [
           {
-            "id": "product-explainer-videos",
-            "label": "Product Explainer Videos",
-            "description": "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos."
+            "id": "Àwọn fídíò tí ń ṣàlàyé nípa ọjà",
+            "label": "Awọn fidio ti n ṣalaye ọja",
+            "description": "Foju wo pe o n gbe awọn aworan ọja rẹ sori ẹrọ pẹlu ohun agbẹnusọ ati aworan oni-nọmba (avatar) ti a ti ṣeto tẹlẹ fun ami-iṣowo rẹ. Lẹhinna, ki o si ṣẹda awọn fidio alaye ti o ni didara giga lẹsẹkẹsẹ — ki o si fọwọsi eto aworan ati itan fidio naa (storyboard) ki o to pari rẹ patapata."
           },
           {
-            "id": "case-study-testimonials",
-            "label": "Case Study/Testimonials",
-            "description": "Using client headshots and project photos to create high-end visual success stories."
+            "id": "Àwọn ẹ̀rí nípa ìwádìí ọ̀ràn kan",
+            "label": "Àyẹ̀wò Ọ̀rọ̀ Kán pàtó / Àwọn Ẹ̀rí",
+            "description": "Fojú inú wo bí o ṣe lè gbé àwọn fọ́tò ojú àwọn oníbàárà, àwọn fọ́tò iṣẹ́ náà, àti àwọn àkọsílẹ̀ àṣeyọrí sórí ẹ̀rọ, pẹ̀lú ohùn ẹni tí yóò ṣàlàyé rẹ̀ tí a ti gbà sílẹ̀ tẹ́lẹ̀. Lẹ́yìn náà, kí o sì tètè ṣẹ̀dá àwọn àpẹẹrẹ iṣẹ́ tí ó péye tí a sì lè wò lójú-ẹsẹ̀ — láìnílò láti ya fídíò ẹni tí yóò jẹ́rìí sí iṣẹ́ náà."
           },
           {
-            "id": "recruitment-branding",
-            "label": "Recruitment & Branding",
-            "description": "Giving candidates a narrated \"day in the life\" tour of the office and culture."
+            "id": "Ṣíṣe àfihàn àmì àti ìrísí ilé-iṣẹ́ fún gbígba òṣìṣẹ́",
+            "label": "Wiwa ati Gbigba Oṣiṣẹ & Ṣiṣe Agbega Orukọ Ile-iṣẹ",
+            "description": "Fojú inú wo bí o ṣe lè gbé àwọn fọ́tò ọ́fíìsì àti àwọn kókó pàtàkì nípa àṣà ilé-iṣẹ́ rẹ sórí ẹ̀rọ, pẹ̀lú ohùn àti àwòrán oníṣẹ́ tó ń gba ènìyàn sí iṣẹ́ tí a ti fi pamọ́ síbẹ̀. Lẹ́yìn náà, kí o sì fún àwọn olùwá-iṣẹ́ ní àǹfààní láti rí bí iṣẹ́ ṣe ń lọ ní ojoojúmọ́ nípasẹ̀ ìṣàfihàn tí ó ní àlàyé—ní èdè tó lé ní àádọ́rin fún gbígba ènìyàn sí iṣẹ́ láti oríṣiríṣi apá ibi gbogbo lágbàáyé."
           },
           {
-            "id": "conference-event-promos",
-            "label": "Conference & Event Promos",
-            "description": "Automated \"Speaker Bio\" videos and \"What to Expect\" guides for large-scale events."
+            "id": "Awọn ipolowo fun apejọ tabi iṣẹlẹ",
+            "label": "Ìpolówó fún Àpéjọ àti Àwọn Ìṣẹ̀lẹ̀",
+            "description": "Foju wo pe o n gbe alaye nipa awọn agbọrọsọ, awọn alaye nipa eto naa, ati awọn aworan ibi ti yoo ti waye rẹ sori ẹrọ, pẹlu ohun ti a ti gbasilẹ ti oludari eto rẹ. Lẹhinna, ki o si le ṣẹda awọn ọrọ ifaara fun awọn agbọrọsọ ati awọn alaye ohun ti a le reti lẹsẹkẹsẹ — eyi ti yoo ma ni imudojuiwọn nigbakugba ti eto naa ba yipada."
           }
         ]
       },
       {
-        "id": "public",
-        "title": "Public Sector & Advocacy",
+        "id": "ti gbogbo eniyan",
+        "title": "Ẹ̀ka Iṣẹ́ ti Ìjọba àti Gbígbé Àwọn Èrò Lárugẹ",
         "examples": [
           {
-            "id": "ngo-impact-reports",
-            "label": "NGO Impact Reports",
-            "description": "Turning data and field photography into emotive, narrated videos for donors."
+            "id": "Awọn ijabọ lori ipa ti awọn ajo ti ko wa fun èrè (NGO)",
+            "label": "Awọn Iroyin lori Ipa ti Awọn Ajo ti Ki i ṣe ti Ijọba (NGO)",
+            "description": "Fojú inú wo bí o ṣe lè gbé àwọn fọ́tò láti ibi iṣẹ́ àti àwọn àkọsílẹ̀ nípa ipa tí iṣẹ́ yín ti ní wọlé, pẹ̀lú lílo ohùn ẹni tí ó máa ń ṣàlàyé fún àjọ yín tí a ti gbà sílẹ̀ tẹ́lẹ̀. Lẹ́yìn náà, kí o yí àwọn ìròyìn fún àwọn olùtọrẹ padà lẹ́sẹ̀kẹsẹ̀ sí àwọn fídíò tí ó ní àlàyé tí ó sì ń fa ìmọ̀lára mọ́ni — èyí tí ó gbé ohùn iṣẹ́ yín jáde, kì í ṣe àfihàn àwọn fọ́tò lásán."
           },
           {
-            "id": "public-health-announcements",
-            "label": "Public Health Announcements",
-            "description": "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity."
+            "id": "Awọn ikede nipa ilera gbogbo-eniyan",
+            "label": "Awọn Ikede Nipa Ilera Gbogbogbo",
+            "description": "Fojú inú wo bí o ṣe lè gbé àwọn ọ̀rọ̀ nípa ìlera tí a ti fọwọ́ sí jáde, ní lílo ohùn tí a ti gbà sílẹ̀ tí ó sì jẹ́ ti ẹ̀ka iṣẹ́ rẹ tí a ní ìgbẹ́kẹ̀lé nínú rẹ̀. Lẹ́yìn náà, kí o lè dé ọ̀dọ̀ gbogbo àwọn àdúgbò lẹ́sẹ̀kẹsẹ̀ ní èdè tí ó ju àádọ́rin (70) lọ — pẹ̀lú ìrọ̀rùn láti lóye, ìkánjú kan náà, àti láìsí ìdádúró kankan nítorí iṣẹ́ ìtumọ̀."
           },
           {
-            "id": "legal-insurance-explainers",
-            "label": "Legal & Insurance Explainers",
-            "description": "Helping clients understand complex contracts or claim processes through narrated visual breakdowns."
+            "id": "Àwọn àlàyé nípa òfin àti iṣẹ́ ìdáni-lójú-nípa-ààbò (insurance)",
+            "label": "Àwọn Àlàyé nípa Òfin àti Ètò Ààbò-ìdánilójú (Insurance)",
+            "description": "Fojú inú wo bí o ṣe ń gbé àkópọ̀ àdéhùn àti àwòrán bí iṣẹ́ ṣe ń lọ sí orí ẹ̀rọ, pẹ̀lú ohùn olùdámọ̀ràn rẹ tí a ti gbà sílẹ̀. Lẹ́yìn náà, kí o sì yára pèsè àlàyé tí ó ṣe kedere tí àwọn oníbàárà yóò lóye dájúdájú — kí wọ́n tó fọwọ́ sí i tàbí kí wọ́n tó béèrè fún ẹ̀tọ́ wọn."
           },
           {
-            "id": "religious-spiritual-teachings",
-            "label": "Religious & Spiritual Teachings",
-            "description": "Converting sermons or texts into a consistent, narrated daily video series for global congregations."
+            "id": "Awọn ẹkọ ẹsin ati ti ẹmi",
+            "label": "Awọn ẹkọ ẹsin ati ti ẹmi",
+            "description": "Fojú inú wo bí o ṣe lè gbé àwọn àkọsílẹ̀ ìwàásù tàbí àwọn ọ̀rọ̀ mímọ́ kalẹ̀ pẹ̀lú ohùn àti àwòrán olùkọ́ rẹ tí a ti gbà sílẹ̀. Lẹ́yìn náà, kí o sì tètè máa gbé àwọn fídíò tí a ṣètò déédéé lójoojúmọ́ jáde fún àwọn ìjọ káàkiri àgbáyé — ní èdè tí ó ju àádọ́rin lọ."
           }
         ]
       }
     ]
   },
   "institutionalRoi": {
-    "badge": "For in-house teams & institutions",
-    "title": "Replace vendor shoots with predictable in-house production",
-    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
+    "badge": "Fun awọn ẹgbẹ inu ile ati awọn ile-iṣẹ",
+    "title": "Dipo ki o gba awọn oniṣowo ita lati ya aworan tabi fidio, ṣe agbejade rẹ funrarẹ ni ọna ti o rọrun lati pinnu ilana rẹ.",
+    "subtitle": "Awọn ẹgbẹ ti n ṣiṣẹ lori ibaraẹnisọrọ, ikẹkọọ ati idagbasoke (L&D), ati tita ọja—ti wọn ni eniyan 1 si 5—le ṣe agbejade fidio laarin ọsẹ kan naa laisi iwulo fun adehun igba pipẹ pẹlu ile-iṣẹ ita tabi ilana atunṣe ti ko ni opin.",
     "comparisons": [
       {
-        "label": "Traditional vendor shoot + edit",
+        "label": "Ya aworan ati ṣiṣatunṣe aworan awọn oniṣowo aṣa",
         "cost": "$5,000–$15,000",
-        "timeline": "4–8 weeks"
+        "timeline": "Ọ̀sẹ̀ mẹ́rin sí mẹ́jọ"
       },
       {
-        "label": "SceneFlow in-house workflow",
-        "cost": "$50–$500 in credits",
-        "timeline": "Same week"
+        "label": "SceneFlow ilana iṣẹ ti inu ile-iṣẹ",
+        "cost": "Awọn kirẹditi ti o wa laarin $50 ati $500",
+        "timeline": "Ọ̀sẹ̀ kan náà"
       }
     ],
     "bullets": [
-      "Brand-safe templates and approval before final render",
-      "Budget caps with visible credit spend per project",
-      "No crew days, no edit back-and-forth on every revision"
+      "Àwọn àdàkọ tí ó bá ìlànà àmì-ìdánimọ̀ ilé-iṣẹ́ mu, àti ìfọwọ́sí ṣáájú ìgbésẹ̀ ìparí",
+      "Awọn opin isuna pẹlu iye inawo ti a le rii fun iṣẹ kọọkan",
+      "Ko si iwulo fun awọn ọjọ iṣẹ fun ẹgbẹ oṣiṣẹ, tabi fifiranṣẹ iṣẹ pada-sẹhin leralera lori gbogbo atunṣe."
     ],
-    "ctaPrimary": "Book a team walkthrough",
-    "ctaSecondary": "See pricing",
-    "typicalCost": "Typical cost",
-    "timeline": "Timeline"
+    "ctaPrimary": "Ṣe ètò fún àyẹ̀wò pẹ̀lú ẹgbẹ́",
+    "ctaSecondary": "Wo iye owo",
+    "typicalCost": "Iye owó tí ó wọ́pọ̀",
+    "timeline": "Àkókò àwọn ìṣẹ̀lẹ̀"
   },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Studio feature deep dive",
-    "close": "Close",
-    "viewDetails": "View Details",
+    "badge": "Ìrìn-àjò pẹ̀lú amọ̀nà",
+    "title": "Ìtọ́sọ́nà lórí bí a ṣe ń lo pèpéle náà",
+    "subtitle": "Ìtọ́sọ́nà tó péye lórí ìlànà iṣẹ́ SceneFlow AI Studio, láti àwọn àtúnyẹ̀wò àjọṣepọ̀ títí dé ìpele ìparí iṣẹ́ fíìmù náà.",
+    "subheading": "Ṣe àyẹ̀wò pèpéle náà — bẹ̀rẹ̀ pẹ̀lú àwọn ohun pàtàkì.",
+    "chapterHint": "Àwọn nǹkan mẹ́rin láti mọ̀ lónìí. Ṣí àwọn abala náà sílẹ̀ nígbà tí o bá fẹ́ mọ kíkún ọ̀rọ̀ náà.",
+    "expandChapter": "Àwọn ẹ̀yàra ètò",
+    "collapseChapter": "Fi awọn ẹya pamọ",
+    "underTheHoodLabel": "Lábẹ́ ìbòrí ẹ̀rọ ọkọ̀",
+    "chapters": [
+      {
+        "id": "Àwọn ohun pàtàkì",
+        "label": "Bẹ̀rẹ̀ níbí — ohun tí wàá rí gbà ní ọjọ́ kìíní"
+      },
+      {
+        "id": "didara",
+        "label": "Rí i dájú pé ó wọ àwọn olùgbọ́ rẹ lọ́kàn."
+      },
+      {
+        "id": "iṣelọpọ",
+        "label": "Láti àwọn ìlù tí a ti fọwọ́ sí títí dé àkọsílẹ̀ orin tó ti péye"
+      },
+      {
+        "id": "ti o ti ni ilọsiwaju",
+        "label": "Fun awọn ẹgbẹ ti o fẹ eto sisanwo ati iṣakoso"
+      }
+    ],
+    "close": "Pa",
+    "viewDetails": "Wo àwọn kúlẹ̀kúlẹ̀",
     "beatFirst": {
-      "id": 15,
-      "title": "Beat-First Video Pipeline",
-      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "title": "Ilana Ṣiṣe Fidio ti o bẹrẹ pẹlu Ilu",
+      "description": "Fọwọ́ sí àwọn ìgbésẹ̀ storyboard àti Beat Frames kí o tó dé ìpele F2V — èyí yóò dín àwọn ìgbìyànjú láti tún nǹkan ṣe láìní ìtọ́sọ́nà (tó máa ń wáyé nítorí àṣìṣe ìrònú ẹ̀rọ tàbí ìyàtọ̀ nínú ìrísí) kù. Ọ̀nà kan ṣoṣo tó ní ètò tó péye láti ìpele àyẹ̀wò títí dé ìpele fídíò tó parí.",
       "keyFeatures": [
-        "Express storyboard for review — share beats before heavy render",
-        "Beat Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "Express storyboard fún àyẹ̀wò — pín àwọn ìlù náà kí o tó ṣe ìgbékalẹ̀ ikẹyìn (render) tó nira",
+        "Beat Frames ètò títìpa — Reference Library ìtẹ̀síwájú",
+        "F2V fún ìlù kọ̀ọ̀kan — ṣẹ̀dá fídíò láti ara àwọn fúrémù tí a ti fọwọ́ sí",
+        "Àkókò àti àwọn ṣíṣàn Mixer — gbigbe lọ sí àkópọ̀ Final Cut"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
-      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+      "screenshotSlot": "Fi àwòrán ojú-iboju (screenshot) yìí sí i: Beat Frames àti ìfọwọ́sí ètò ìtàn fídíò (storyboard) kí a tó ṣẹ̀dá fídíò náà.",
+      "videoSlot": "Fi fidio iṣẹ́jú-aaya 00:30 yii kun un: Fífọwọ́sí àwọn ìlù, títì àwọn fúrémù mọ́ra, àti ṣíṣe àwọn fidio F2V."
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "title": "Àyẹ̀wò àti Ìtúpalẹ̀ Èrò àwọn Olùwò",
+      "description": "Awọn ọna asopọ ikọkọ fun pinpin pẹlu awọn ti o ni ipa ninu iṣẹ naa — eyi pẹlu awọn ami-ayẹwo ti a fi ọwọ ṣe, awọn esi ti a ṣeto ni ọna pato, ati awọn iṣiro nipa bi awọn eniyan ṣe n ba iṣẹ naa ṣiṣẹ (ti a n ṣe pẹlu igbanilaaye awọn oluwo). A n lo wọn ni Premiere ṣaaju ki a to gbe iṣẹ naa jade fun gbogbo eniyan, ati fun ṣiṣe ayẹwo iṣaaju lori 'storyboard' iṣelọpọ.",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "Àwọn ìpàdé àtúnyẹ̀wò àkànṣe — àwọn ọ̀nà-ìsopọ̀ tó ní ààbò fún pínpín sí àwọn olùkópa pàtàkì",
+        "Èsì láti ọ̀dọ̀ àwọn olùwò tàbí olùgbọ́ ní ọ̀nà tó ní ètò — àwọn ìṣirò tàbí ìwọ̀n àti àwọn àfikún ọ̀rọ̀",
+        "Àwọn àlàyé lórí bí àwọn ènìyàn ṣe ń bá ohun kan lò (tí a lè yàn láti lò tàbí kí a má lò) — pẹ̀lú ìyọ̀ǹda ẹni tí ó ń wò ó kí a tó kó irú ìwífún bẹ́ẹ̀ jọ.",
+        "Ṣe àtúnṣe nípasẹ̀ lílo àwọn dátà gidi — mú Blueprint àti àkọsílẹ̀ ọ̀rọ̀ (script) péye síi nípasẹ̀ àwọn àbá láti ọ̀dọ̀ àwọn tí ó ṣe àyẹ̀wò."
       ],
-      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotSlot": "Fi àwòrán ojú-iboju sí i: Screening Room pátákó fún àlàyé ìtúpalẹ̀ àti èsì láti ọ̀dọ̀ àwọn olùyẹ̀wò",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      "videoSlot": "Fi fidio iṣẹ́jú 00:30 yii kun un: Ṣíṣe ìpàdé àtúnyẹ̀wò àti gbígbà àwọn àkọsílẹ̀ nípa bí àwọn ènìyàn ṣe ń kópa."
+    },
+    "ui": {
+      "screenshot": "Àwòrán ojú-iboju",
+      "video": "Fídíò",
+      "featureVideo": "Fidio Pataki",
+      "keyFeatures": "Àwọn ànímọ́ pàtàkì",
+      "openScreenshot": "Ṣí àwòrán ibi ìfihàn",
+      "openFeatureVideo": "Ṣí fídíò pàtàkì náà",
+      "expandImage": "Mu aworan naa tobi si",
+      "closePreview": "Pa Àyẹ̀wò-tẹ́lẹ̀ náà"
+    },
+    "items": [
+      {
+        "id": "1",
+        "title": "Iriri olumulo ti o rọrun lati loye + Iṣakoso ni kikun fun ẹlẹda",
+        "description": "Bẹ̀rẹ̀ pẹ̀lú ìrànlọ́wọ́ ètò tó ń ṣiṣẹ́ fúnra rẹ̀, lẹ́yìn náà ṣàtúnṣe gbogbo ohun tí ètò náà bá pèsè kí àwọn ẹgbẹ́ lè máa darí apá ìṣẹ̀dá iṣẹ́ náà láìdín iyàsára wọn kù.",
+        "keyFeatures": [
+          "Ilana iṣẹ́ Studio tó ní ìtọ́sọ́nà — láti ìpele èrò títí dé ìpele ìparí (export) ní ibi kan ṣoṣo.",
+          "Ṣe àtúnṣe sí gbogbo ìlù, ohun èlò ìtàn (tàbí ẹ̀dá-ìtàn), àti gbólóhùn ọ̀rọ̀ tí AI ti pèsè níbìkan náà.",
+          "Àwọn ọ̀nà ìgbéṣe tó yàtọ̀ síra — fífi wọ́n wé ara wọn fún ìtọ́sọ́nà ìṣẹ̀dá",
+          "Blueprint Ṣiṣẹ́ pọ̀ — pín àwọn ọ̀nà-ìsopọ̀, ohùn láti inú abala kan, àti àwọn èsì tó ní ètò láti ọ̀dọ̀ àwọn olùyẹ̀wò"
+        ],
+        "screenshotSlot": "Fi àwòrán ojú-iboju sí i: Olóòtún Blueprint pẹ̀lú àwọn apá tí a ṣẹ̀dá tí a sì lè ṣàtúnṣe.",
+        "videoSlot": "Fi fidio iṣẹ́jú 00:30 yii kun un: Ilana UX lati ibẹrẹ ero titi de abajade ti a le ṣatunkọ."
+      },
+      {
+        "id": "2",
+        "title": "Eto Isuna fun Kirẹditi ati Iṣakoso Iye Owo",
+        "description": "Ṣe àtẹ̀lé bí a ṣe ń lo àwọn kírédítì ní àkókò gidi, kí o sì ṣètò àwọn ìlànà ìṣàkóso kí iṣẹ́ tó lè náwó púpọ̀ tó bẹ̀rẹ̀.",
+        "keyFeatures": [
+          "Lilo kirediti ní àkókò gidi — ní ìbámu pẹ̀lú iṣẹ́-ànfààní àti iṣẹ́-ṣíṣe",
+          "Awọn ilana aabo fun ipele iṣelọpọ — ṣaaju ṣiṣe awọn iṣẹ ti o le nawo pupọ",
+          "Àwọn àtòjọ owó tí ó ṣe kedere — fún TTS, fídíò, àti ìmọ̀-ẹ̀rọ ọlọ́gbọ́n (intelligence)",
+          "Àyè láti rí ipò ìṣúná — fún àwọn ẹgbẹ́ àti àwọn olùṣẹ̀dá olúkúlùkù"
+        ],
+        "screenshotSlot": "Fi àwòrán ojú-iboju yìí sí i: ìgbìmọ̀ ìlò kirediti àti àwọn ètò BYOK",
+        "videoSlot": "Fi fidio iṣẹ́jú-aaya 00:30 yii sii: pátákó ìṣàkóso ìṣúná àti àwọn ètò pàtàkì.",
+        "underTheHood": {
+          "title": "Lábẹ́ ìbòrí ẹ̀rọ ọkọ̀",
+          "body": "Fun awọn ẹgbẹ iṣelọpọ ti o ti ni awọn adehun 'cloud' tẹlẹ:",
+          "bullets": [
+            "Vertex AI BYOK — ṣíṣe ìṣirò owó àti ìṣàkóso fún ilé-iṣẹ́",
+            "Awọn aṣayan yiyan olupese ninu ẹrọ iṣiro kirẹditi",
+            "Awọn atokọ owo pẹpẹ ti o han gbangba lẹgbẹẹ awọn bọtini rẹ"
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "title": "Èrò Yówùú, Ọ̀nà Ṣíṣe Iṣẹ́ Kan Náà",
+        "description": "Lo ọ̀nà kan tó ṣeé gbẹ́kẹ̀lé fún ìdánilẹ́kọ̀ọ́, àwọn ètò ohùn (podcasts), ìròyìn, àwọn fídíò títà ilé, àti àwọn ohun àkóónú tó jọ ti sinimá.",
+        "keyFeatures": [
+          "Ọ̀nà ìṣiṣẹ́ kan — àwọn ètò ohùn (podcast), ìròyìn, ìdánilẹ́kọ̀ọ́, ọ̀rọ̀ ilé àti ilẹ̀, àti àwọn ọ̀nà ìgbékalẹ̀ fíìmù.",
+          "Àwọn àpẹẹrẹ iṣẹ́ — Studio máa ń bá ohun èlò ìpilẹ̀ṣẹ̀ rẹ mu",
+          "Ọ̀nà kan náà Blueprint → Ìwé-ìtàn → Ìlànà ìgbé-jáde — láìka irúfẹ́ iṣẹ́ náà sí",
+          "Ko si iyipada irinṣẹ — lati igba ti a ti n ronu imọran titi de igba ti a fi n pari iṣẹ naa."
+        ],
+        "screenshotSlot": "Fi àwòrán ojú-iboju sí i: Ìwò-ní-apá-méjì tàbí ètò-àtòjọ tí ó fi àwọn àpẹẹrẹ fún Podcast, Ìròyìn, Ilé-àti-Ilẹ̀ (Real Estate), àti Sinimá hàn, tí gbogbo wọn ń ṣiṣẹ́ sínú ojú-iṣẹ́ ètò ìṣiṣẹ́ (pipeline UI) SceneFlow kan ṣoṣo tí ó wà ní ìṣọ̀kan.",
+        "videoSlot": "Fi fidio iṣẹ́jú-aaya 30 yìí sí i: \"Bẹ̀rẹ̀ pẹ̀lú ohun èlò ìpilẹ̀ṣẹ̀ èyíkéyìí...\" nípa títẹ 'New Project' -> 'Podcast' (ojú-ìwòye yóò yí padà láti bá ti ohùn mu), lẹ́yìn náà fi ojú-ibòjú tí a pín sí apá méjì hàn, níbi tí àwọn iṣẹ́ ìròyìn (News) àti ti fíìmù (Cinematic) ti ń darapọ̀ mọ́ra nínú ètò àtúnṣe Blueprint."
+      },
+      {
+        "id": "4",
+        "title": "Ṣíṣiṣẹ́ fúnra-ẹni tó gbọ́n pẹ̀lú ìṣàkóso àtúnṣe tó péye",
+        "description": "Pẹpẹ SceneFlow n lo imọ-ọgbọn lati ṣẹda ipilẹ ti o peye fun iṣẹ (bii awọn ẹka eto, apẹrẹ, iwe-afọwọkọ, awọn itọsọna iṣelọpọ, ati awọn atunṣe) laifọwọyi; ni akoko kanna, o n pese awọn ibaraẹnisọrọ ti o ni imọ-ọgbọn ti o fun ọ ni agbara kikun lati ṣe awọn atunṣe, pẹlu awọn ilana aabo ti a ti fi sinu eto naa tẹlẹ.",
+        "keyFeatures": [
+          "Awọn ipilẹ AI ni igbesẹ kan — jara, apẹrẹ ipilẹ, iwe afọwọkọ, ati awọn itọsọna fun iṣelọpọ",
+          "Awọn apoti ibaraẹnisọrọ atunṣe ti o ni oye — awọn ilana amọna, kii ṣe atunkọ afọju",
+          "Gba a, ṣe atunṣe rẹ̀, tàbí kọ̀ ọ́ — gbogbo àbá wà lábẹ́ ìṣàkóso rẹ.",
+          "Ikopa eniyan — ni gbogbo ipele iṣelọpọ"
+        ],
+        "screenshotSlot": "Fi àwòrán ojú-iboju sí i: Ìbáraẹnisọ̀rọ̀ ọlọ́gbọ́n tó ń fi bí a ṣe ń ṣẹ̀dá ìpìlẹ̀ (baseline) hàn, pẹ̀lú àwọn ohun èlò fún ṣíṣe àtúnṣe.",
+        "videoSlot": "Fi fidio iṣẹ́jú-aaya 30 yìí sí i: Ìṣẹ̀dá àkọ́kọ́ nípasẹ̀ AI, tí ó sì tẹ̀lé e pẹ̀lú àtúnṣe pàtó tí olùlò ṣe."
+      },
+      {
+        "id": "5",
+        "title": "A pín Reference Library fún ìtẹ̀síwájú",
+        "description": "Rí i dájú pé àwọn ohun kikọ, aṣọ, ohùn, ibi ìṣẹ̀lẹ̀, àti àwọn ohun èlò ìṣeré wà ní ìbámu pẹ̀lú ara wọn láàárín àwọn ìṣẹ̀lẹ̀ àti àwọn abala eré, nípa lílo àwọn àpẹẹrẹ tàbí ìtọ́ka tí a lè lò lẹ́ẹ̀kan sí i.",
+        "keyFeatures": [
+          "Àwọn àkọsílẹ̀ tí a lè lò lẹ́ẹ̀kan sí i — àwọn ohun-ìkópa, aṣọ, ohùn, ibi ìṣẹ̀lẹ̀, àti àwọn ohun èlò",
+          "Lilo kọja awọn ipo oriṣiriṣi — awọn itọkasi n ṣan wọle sinu gbogbo iran.",
+          "Ìbáramu nínú ìrísí — àwọn ojú àti àwọ̀ tí ó jọra nínú àwọn àbájáde Imagen àti Veo",
+          "Ìtẹ̀síwájú tó ní ìwọ̀n gbígbòòrò — tí a ṣe fún àwọn eré oní-pàrí-pàrí tàbí oní-apá-pọ̀pọ̀"
+        ],
+        "screenshotSlot": "Fi àwòrán ojú-iboju (screenshot) sí i: Àkójọpọ̀ àwọn àwòrán ìtọ́kasí tí ó fi hàn pé àwọn ohun èlò àti ìrísí àwọn òṣèré wà ní ìbámu pẹ̀lú ara wọn láàrín àwọn apá eré ọ̀tọ̀ọ̀tọ̀.",
+        "videoSlot": "Fi fidio iṣẹ́jú-aaya 00:30 sii: Lilo awọn itọkasi kọja ọpọlọpọ awọn iṣẹlẹ"
+      },
+      {
+        "id": "6",
+        "title": "Ẹ̀rọ Ìṣẹ̀dá Yíyaránjú",
+        "description": "Ṣe agbejade awọn aworan ati awọn apakan fidio ni ẹẹkan naa. Express Storyboard n jẹ ki o ṣe ayẹwo ati pin awọn aworan itan ti o ni ohun ati aworan (audio-visual storyboards) laarin iṣẹju diẹ. Express Storyboard n ṣẹda awọn iṣẹlẹ aza Ken Burns ni kikun laarin iṣẹju diẹ, lakoko ti Express Video n pese awọn iṣẹlẹ fidio ti o ti pari laarin iṣẹju diẹ dipo awọn ọjọ.",
+        "keyFeatures": [
+          "Ṣíṣe àwọn nǹkan ní àkókò kan náà — ṣíṣe àwọn àwòrán àti fídíò fún onírúurú ìṣẹ̀lẹ̀ ní ẹ̀ẹ̀kan náà.",
+          "Express Storyboard — àwọn àkópọ̀ ìwòran àti ohùn tí a lè pín pẹ̀lú ẹlòmíràn láàárín ìṣẹ́jú díẹ̀",
+          "Awọn Express Animatic — Iṣipopada iru ti Ken Burns lati awọn aworan aimọra",
+          "Express Video — àwọn àkọsílẹ̀ fídíò oní-ìṣẹ̀lẹ̀ láàrin ìṣẹ́jú díẹ̀, kì í ṣe ọjọ́."
+        ],
+        "screenshotSlot": "Fi àwòrán ojú-iboju sí i: Pátákó ìṣàkóso ìṣẹ̀dá Express pẹ̀lú àwọn Animatic àti ìlọsíwájú fídíò",
+        "videoSlot": "Fi fidio iṣẹ́jú-aaya 30 yii kun un: Ilana ti n ṣiṣẹ́ lẹ́sẹ̀kan náà lati sọ àkọsílẹ̀ (script) di àwòrán-ìgbésẹ̀-ìpilẹ̀ṣẹ̀ (animatic) lẹ́yìn náà si di fidio tó parí."
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance Olùṣàtúnṣe",
+        "description": "Ṣe idanimọ awọn olugbo ti o n fojusi lati gba igbelewọn, itupalẹ, ati awọn imọran lẹsẹkẹsẹ. Lo awọn ọna atunṣe ti o rọrun (ti a le ṣe pẹlu tite bọtini kan) tabi lo awọn irinṣẹ atunṣe ti o n funni ni itọsọna lati mu awọn apakan (episodes) rẹ, Blueprint, ati iwe-afọwọkọ rẹ dara si ipele ti o ga julọ fun ipa ti o lagbara julọ.",
+        "keyFeatures": [
+          "Ṣíṣe ìṣirò fún àwọn olùgbọ́ tàbí oníbàárà tí a fojú sí — pẹ̀lú àlàyé nípa àwọn ẹ̀ka wọn",
+          "Awọn imọran ti o ni ibatan si apakan kan pato — ṣe atunṣe apakan ti o tọ ninu itan rẹ",
+          "Àtúnṣe nípa títẹ bọtìnì kan ṣoṣo àti Ṣíṣàtúnṣe pẹ̀lú ìtọ́sọ́nà — àtúntọ̀ tí ó péye, kì í ṣe àfojúdí.",
+          "Ipele ti o ṣe pataki fun ṣiṣe iṣẹ́ — mọ̀ igba ti o yẹ ki o ṣe idoko-owo sinu ṣiṣe aworan tabi fidio ti o peye (full render)."
+        ],
+        "screenshotSlot": "Fi àwòrán ibi-ìfihàn yìí sí i: Resonance Editor pẹ̀lú ètò ìṣirò àbájáde láti ọ̀dọ̀ àwọn olùwò/olùgbọ́ àti àwọn ọ̀nà láti ṣe àtúnṣe nípa títẹ bọtìnì kan ṣoṣo.",
+        "videoSlot": "Fi àkọsílẹ̀ fídíò ìṣẹ́jú 00:30 sí i: Ṣíṣe àtúnṣe pẹ̀lú ìtọ́sọ́nà ní ìbámu pẹ̀lú ìwọ̀n bí àwọn olùwòye ṣe gbà á sí ọkàn."
+      },
+      {
+        "id": "8",
+        "title": "Ìtumọ̀ tó ṣeé mú bá ipò mu (àwọn èdè tó lé ní 70)",
+        "description": "Ṣe àtúnṣe àwọn ohun-ìkọ̀wé tàbí àkóónú kí ó bá àṣà àti èdè àwọn agbègbè ọ̀tọ̀ọ̀tọ̀ mu ní ìwọ̀n gíga, láìyí èrò inú ìtàn tàbí ìtòlẹ́sẹẹsẹ àkókò padà, kí ó lè ṣeé lò fún àwọn èdè ọ̀tọ̀ọ̀tọ̀.",
+        "keyFeatures": [
+          "Àwọn èdè tó lé ní 70 — ṣíṣe àlàyé, ìjíròrò, àti kíkọ ọ̀rọ̀ ní ìwọ̀n tó pọ̀",
+          "A ti ṣetọju ète ìtàn náà — ìtumọ̀ àti àkókò wà ní ìbámu pẹ̀lú ara wọn.",
+          "Awọn ọna ohun ni awọn ede pupọ — lori laini akoko iṣẹlẹ naa",
+          "Àwọn àkópọ̀ tí ó ti ṣe tán fún ìfiránṣẹ́ sí òkè-òkun — fún agbègbè kọ̀ọ̀kan fún pípínkiri"
+        ],
+        "screenshotSlot": "Fi àwòrán ojú-iboju sí i: Àkókò-ìṣẹ̀lẹ̀ (timeline) oní-èdè púpọ̀ àti àwọn ètò ìyípadà-èdè",
+        "videoSlot": "Fi fidio iṣẹ́jú-aaya 30 yii kun un: Yíyí apá kan nínú fíìmù padà sí onírúurú èdè lẹ́sẹ̀kẹsẹ̀."
+      },
+      {
+        "id": "Mẹ́san-án",
+        "title": "Ìṣiṣẹ́-ara-ẹni fún Àwọn Ìṣẹ̀lẹ̀ Tàbí Ìgbésẹ̀ Tẹ̀lé-n-tẹ̀lé",
+        "description": "Ṣe àlàyé àgbáyé rẹ lẹ́ẹ̀kan ṣoṣo, kí o sì ṣẹ̀dá àwọn ìtàn tó ní ìsopọ̀ tó dára fún ọ̀pọ̀lọpọ̀ abala eré. Lílò Reference Library fún gbogbo rẹ̀ máa ń jẹ́ kí àwọn ohun kikọ àti ìṣesí eré náà wà ní ìbámu pẹ̀lú ara wọn láàrin gbogbo àkókò eré náà.",
+        "keyFeatures": [
+          "Ṣe àlàyé ayé ìtàn rẹ ní ẹ̀ẹ̀kan ṣoṣo — àwọn ohun-ìtàn, ìṣesí tàbí afẹ́fẹ́ ìtàn náà, àti ìlànà ìtàn fún àsìkò náà.",
+          "Àwọn ìlànà ìṣẹ̀lẹ̀ tó ní ìsopọ̀ — èyí tí a ṣẹ̀dá fúnra rẹ̀ ní gbogbo àsìkò eré náà",
+          "Titele ọna-iṣẹlẹ — mimu awọn apakan oriṣiriṣi ti akoko kan wa ni ibamu",
+          "Ìṣàpapọ̀ jara àti àwọn abala — sínú ilé-iṣẹ́ àti ètò ìgbéjáde Blueprint"
+        ],
+        "screenshotSlot": "Fi àwòrán ojú-iboju sí i: Àkópọ̀ nípa eré oní-pàrí-pàrí pẹ̀lú ìtòlẹ́sẹẹsẹ ìṣẹ̀lẹ̀ nínú àwọn abala rẹ̀ tí a ṣe nípasẹ̀ ẹ̀rọ.",
+        "videoSlot": "Fi fidio iṣẹ́jú-aaya 00:30 yii kun un: Ero ti n gbooro si lati di akoko ti o ni ọpọlọpọ awọn apakan."
+      },
+      {
+        "id": "10",
+        "title": "Blueprint Ìṣiṣẹ́-ara-ẹni",
+        "description": "Ṣe iyipada awọn imọran si awọn ilana ti a ṣeto daradara, pẹlu akopọ kukuru (logline), awọn ipele pataki (beats), awọn ohun kikọ, ati iru iṣesi itan naa. Ṣiṣe Audience Resonance ki o si ṣe ifowosowopo ṣaaju ṣiṣe iṣẹ ṣiṣe-ikẹhin ti o wuwo (heavy rendering).",
+        "keyFeatures": [
+          "Ṣe àgbékalẹ̀ → Ṣe àyẹ̀wò → Ṣe àtúnṣe → Bẹ̀rẹ̀ ìlànà iṣẹ́ ìṣelọ́pọ̀",
+          "Láti èrò sí ètò ní ìṣẹ́jú díẹ̀ — àkópọ̀ ìtàn, àwọn kókó pàtàkì, àwọn ohun-ìtàn, àti ìṣesí ìtàn náà",
+          "Audience Resonance Gbigba ami ayo ti o ju 80 lọ gẹgẹbi ibi-afẹde ṣaaju ipele iṣelọpọ gangan (Production).",
+          "Pínpín àwọn ọ̀nà-ìsopọ̀ pẹ̀lú àwọn alábàáṣiṣẹ́ — àkópọ̀ àwọn èrò àti àbá láti ṣe àtúnṣe pẹ̀lú ìtọ́sọ́nà"
+        ],
+        "screenshotSlot": "Fi àwòrán ojú-iboju sí i: Blueprint tí a dá sílẹ̀ láifọwọ́-kàn, tó ní àwọn kókó ìtàn àti ìtàn ìdàgbàsókè àwọn ohun-ìtàn (character arcs) nínú.",
+        "videoSlot": "Fi fidio iṣẹ́jú-aaya 30 sí i: Yíyí èrò kan padà sí Blueprint tí ó ní ètò tó péye."
+      },
+      {
+        "id": "Mọ́kànlá",
+        "title": "Ṣíṣe Ìgbékalẹ̀ Ìṣiṣẹ́ Àìní-àfọwọ́-kàn ní Ìgbà Ìṣelọ́pọ̀",
+        "description": "Awọn taabu Script ati Action n ṣe amọna lati Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, ati awọn ṣiṣan MP4 — ko si iwulo lati yi irinṣẹ pada.",
+        "keyFeatures": [
+          "Foundation — ìwé ìtàn, àwọn ohùn, ohùn ìṣẹ̀lẹ̀, ìwé ìtàn tí a ti fọwọ́ sí",
+          "Express storyboard — itọsọna ati awọn fireemu ni iṣẹju; ibi-ifihan ati pinpin",
+          "Beat Frames àti Mixer — àwọn fírámù ìbẹ̀rẹ̀/òpin, Director Console, ṣíṣe àgbékalẹ̀ àwọn ṣíṣàn MP4",
+          "Àwọn Ọ̀nà Ìṣelọ́pọ̀ — ṣàyẹ̀wò àwọn èso iṣẹ́, tún àwọn orin tí ó ti pẹ́ ṣe, fi ránṣẹ́ sí Final Cut"
+        ],
+        "screenshotSlot": "Fi àwòrán ojú-iboju (screenshot) yìí sí i: Pátákó ìṣàkóso iṣẹ́ tó ń fi ìwé-ìtàn (script), Beat Frames, àti Mixer hàn.",
+        "videoSlot": "Fi àkọsílẹ̀ ìṣẹ́jú-àáyá 30 sí i: Foundation, Express storyboard, Beat Frames, àti ìfiránṣẹ́-jáde ṣíṣàn-wọlé (stream export)"
+      },
+      {
+        "id": "12",
+        "title": "Final Cut Àpéjọ",
+        "description": "So awọn apakan iṣẹ́ ti a ti parí pọ̀ mọ́ra láti ṣe fáìlì MP4 kan ṣoṣo tó péye. Yan Animatic tàbí fídíò àti èdè fún ìṣẹ̀lẹ̀ kọ̀ọ̀kan — a kò ní ṣe àtúnṣe lórí ìtòlẹ́sẹẹsẹ àkókò (timeline); àwọn àtúnṣe tó ní í ṣe pẹ̀lú ẹ̀dá-inú yóò wà ní Production Mixer.",
+        "keyFeatures": [
+          "Yíyàn ṣísàn fún ìṣẹ̀lẹ̀ kọ̀ọ̀kan — Animatic, Fídíò, èdè, ẹ̀dà",
+          "Àwọn ètò àpapọ̀ — Gbogbo Fídíò, Àpapọ̀ onírúurú, Àpapọ̀ tí a ṣe ní pàtó",
+          "Ko si ṣíṣe àtúnṣe lórí àkókò ìṣẹ̀lẹ̀ (timeline) — àwọn àtúnṣe tó ní ṣe pẹ̀lú ẹ̀dá-erò máa ń dúró sí Production Mixer.",
+          "Ìgbé-jáde àkọ́kọ́ ní ìfọwọ́-kan-kan — MP4 tí a so pọ̀ fún Premiere"
+        ],
+        "screenshotSlot": "Fi àwòrán ojú-iboju sí i: Pánẹ́ẹ̀lì ìṣètò Final Cut pẹ̀lú àwọn ohun èlò láti yan ìṣàn-fídíò fún ìṣẹ̀lẹ̀ kọ̀ọ̀kan",
+        "videoSlot": "Fi àkọsílẹ̀ ìṣẹ́jú-àáyá 30 sí i: Yíyàn àwọn ọ̀nà ìṣàn (streams), wíwo bí gbogbo rẹ̀ ṣe wà papọ̀, àti ṣíṣe àtẹ̀jáde èyí tó parí (master)."
+      },
+      {
+        "id": "13",
+        "title": "Premiere Pinpin",
+        "description": "Ṣe àyẹ̀wò fídíò rẹ pẹ̀lú àwọn àlàyé lórí bí àwọn olùwò ṣe ń wo ó, lẹ́yìn náà gbé e sórí YouTube pẹ̀lú àlàyé (metadata) tí ó bá àgbègbè mu, tàbí kí o pèsè àwọn ẹ̀dà fún Shorts, Reels, àti TikTok.",
+        "keyFeatures": [
+          "Àwọn ọna-asopọ /s/ tí a lè pínpín (pẹ̀lú ètò ìṣirò-àmì àti àwọn àlàyé ìwọ̀n bí àwọn ènìyàn ṣe ń lo àkóónú náà — tí ó sì wà fún yíyàn pẹ̀lú ìyọ̀ǹda olùwò).",
+          "Ìgbá-ìwò-sọfitiwia fún àwọn àkíyèsí — Àwọn abala fún ìṣirò-àmì, ìwọ̀n-ara (biometric), àti àwọn àwòrán",
+          "Amoye YouTube — àwòrán ìfihàn, àkọlé tàbí àpèjúwe tí a ṣe níbàámu pẹ̀lú agbègbè, SceneFlow ìpè láti ṣe ìgbésẹ̀ (CTA)",
+          "Awọn akojọpọ fun gbigbejade ati awọn eto fun awọn fidio kukuru ti o duro ni inaro"
+        ],
+        "screenshotSlot": "Fi àwòrán ojú-iboju sí i: Pátákó-ìṣàkóso Premiere pẹ̀lú àwọn àlàyé pàtàkì àti ohun-èlò ìtẹ̀jáde.",
+        "videoSlot": "Fi fidio iṣẹ́jú 00:30 yìí sí i: Àwọn àkíyèsí láti inú ìtúpalẹ̀, olùrànlọ́wọ́ YouTube, àti àwọn àkopọ̀ fún ìfiránṣẹ́jáde."
+      },
+      {
+        "id": "14",
+        "title": "Àyẹ̀wò àti Ìtúpalẹ̀ Èrò àwọn Olùwò",
+        "description": "Awọn ọna asopọ ikọkọ fun pinpin pẹlu awọn ti o ni ipa ninu iṣẹ naa — eyi pẹlu awọn ami-ayẹwo ti a fi ọwọ ṣe, awọn esi ti a ṣeto ni ọna pato, ati awọn iṣiro nipa bi awọn eniyan ṣe n ba iṣẹ naa ṣiṣẹ (ti a n ṣe pẹlu igbanilaaye awọn oluwo). A n lo wọn ni Premiere ṣaaju ki a to gbe iṣẹ naa jade fun gbogbo eniyan, ati fun ṣiṣe ayẹwo iṣaaju lori 'storyboard' iṣelọpọ.",
+        "keyFeatures": [
+          "Àwọn ìpàdé àtúnyẹ̀wò àkànṣe — àwọn ọ̀nà-ìsopọ̀ tó ní ààbò fún pínpín sí àwọn olùkópa pàtàkì",
+          "Èsì láti ọ̀dọ̀ àwọn olùwò tàbí olùgbọ́ ní ọ̀nà tó ní ètò — àwọn ìṣirò tàbí ìwọ̀n àti àwọn àfikún ọ̀rọ̀",
+          "Àwọn àlàyé lórí bí àwọn ènìyàn ṣe ń bá ohun kan lò (tí a lè yàn láti lò tàbí kí a má lò) — pẹ̀lú ìyọ̀ǹda ẹni tí ó ń wò ó kí a tó kó irú ìwífún bẹ́ẹ̀ jọ.",
+          "Ṣe àtúnṣe nípasẹ̀ lílo àwọn dátà gidi — mú Blueprint àti àkọsílẹ̀ ọ̀rọ̀ (script) péye síi nípasẹ̀ àwọn àbá láti ọ̀dọ̀ àwọn tí ó ṣe àyẹ̀wò."
+        ],
+        "screenshotSlot": "Fi àwòrán ojú-iboju sí i: Screening Room pátákó fún àlàyé ìtúpalẹ̀ àti èsì láti ọ̀dọ̀ àwọn olùyẹ̀wò",
+        "videoSlot": "Fi fidio iṣẹ́jú 00:30 yii kun un: Ṣíṣe ìpàdé àtúnyẹ̀wò àti gbígbà àwọn àkọsílẹ̀ nípa bí àwọn ènìyàn ṣe ń kópa."
+      }
+    ]
+  },
+  "engineeringTrust": {
+    "badge": "Imọ-ẹrọ ati Aabo",
+    "title": "Ti a ṣe fun",
+    "titleAccent": "Awọn iṣẹ iṣelọpọ",
+    "subtitle": "Ètò ìgbékalẹ̀ tó rọrùn fún àwọn ilé-iṣẹ́ tuntun, tó ní àwọn èròjà Google Cloud tí ó ń ṣe àtìlẹ́yìn fún ààbò, agbára láti gbòòrò sí i, àti mímú iṣẹ́ jáde ní ọ̀nà tó wúlò.",
+    "pillars": [
+      {
+        "id": "iṣẹ́ àwòkọ́lé",
+        "title": "Ètò Àgbékalẹ̀ Ilé-iṣẹ́",
+        "description": "A kọ ọ́ sori ipilẹ-eto Google Cloud, pẹlu eto iṣakoso ti a le ṣe atunṣe iwọn rẹ lati ba awọn iṣẹ ṣiṣe gidi ati awọn ẹgbẹ ti n dagba mu.",
+        "highlights": [
+          "Vertex AI fún àwọn ìlànà iṣẹ́ ìṣẹ̀dá",
+          "Àpapọ̀ Imagen 4 àti Veo 3.1",
+          "ElevenLabs Ìsopọ̀ TTS",
+          "BYOK fún ìṣàkóso ìsanwó ilé-iṣẹ́"
+        ]
+      },
+      {
+        "id": "Ààbò",
+        "title": "Ààbò àti Àṣírí",
+        "description": "Awọn ohun-ini ẹda wa ni aabo nipasẹ lilo ọna aabo 'encryption' fun data ti a ti fipamọ, awọn ilana iṣakoso iwọle, ati ọna mimu-nkan-lo ti o fi aabo aṣiri si ipo akọkọ.",
+        "highlights": [
+          "Awọn ọna iṣakoso awọsanma ti o ṣetan fun awọn ile-iṣẹ nla",
+          "Ìyípadà sí àṣírí nípasẹ̀ AES-256",
+          "A ṣe e pẹlu imọran nipa GDPR",
+          "Wo Ilana Aṣiri wa fun bi a ṣe n ṣakoso data."
+        ]
+      },
+      {
+        "id": "ìwọ̀n",
+        "title": "Iwọn ati Igbẹkẹle",
+        "description": "Ìpèsè nípasẹ̀ ètò 'cloud' ní àgbáyé ń ṣe àtìlẹ́yìn fún àwọn ilana ṣíṣe àgbékalẹ̀ àti àyẹ̀wò tí ó ṣeé gbẹ́kẹ̀lé bí iye iṣẹ́ rẹ ṣe ń pọ̀ sí i.",
+        "highlights": [
+          "Gbigbe sipo ni awọn agbegbe pupọ",
+          "Ifijiṣẹ ti a mu yara pẹlu CDN",
+          "Yíyípadà sí ètò àtìlẹ́yìn láìsí ìrànlọ́wọ́ ènìyàn",
+          "Ṣíṣe àbójútó ní àkókò gangan"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "value": "Ti gbogbo agbaye",
+        "label": "Fífi iṣẹ́ ránṣẹ́ nípasẹ̀ Cloud"
+      },
+      {
+        "value": "Àwòrán 4",
+        "label": "Ṣíṣe àwòrán"
+      },
+      {
+        "value": "bítì 256",
+        "label": "Ìyípadà sí àmì àṣírí"
+      },
+      {
+        "value": "Wákàtí mẹ́rìnlélógún lójúmọ́, ọjọ́ méje lọ́sẹ̀ kan",
+        "label": "Ṣíṣe àbójútó"
+      }
+    ],
+    "vertexSection": {
+      "title": "Kí ló dé tí a fi ń lo Google Vertex AI?",
+      "subtitle": "Ààbò nípa ìmọ̀-ẹ̀rọ tó ṣe pàtàkì",
+      "cards": [
+        {
+          "title": "Ààbò Àṣírí Àlàyé",
+          "description": "A kì í lo àwọn àkọsílẹ̀ àti àwọn iṣẹ́ ẹ̀dá rẹ láti kọ́ àwọn ètò ìṣiṣẹ́ tí a pín lò pẹ̀lú àwọn ẹlòmíràn; èyí sì ń ṣe ìrànlọ́wọ́ láti dáàbò bo ẹ̀tọ́ ohun-ìní ọpọlọ rẹ àti àwọn iṣẹ́ tí o ṣe fún àwọn oníbàárà rẹ.",
+          "highlight": "a kò lò ó láti kọ́ àwọn àwòṣe tí a ń pín lò"
+        },
+        {
+          "title": "A ṣe é fún ṣíṣe iṣẹ́ lọ́nà tó gbẹ́kẹ̀lé",
+          "description": "Awọn amayederun ti a ṣe fun iṣẹ iṣelọpọ n ṣe iranlọwọ lati ṣetọju iduroṣinṣin ninu ilana iṣelọpọ lakoko awọn akoko ti ibeere ba ga."
+        },
+        {
+          "title": "Ìbáramu tó ní òye nípa ìtọ́ka",
+          "description": "SceneFlow n lo ọna ti o n gbe awọn alaye ti tẹlẹ yẹwo lati mu ki awọn ohun kikọ, awọn ipo, ati awọn ohun elo wa ni ibamu pẹlu ara wọn kaakiri awọn iṣẹlẹ oriṣiriṣi."
+        }
+      ]
+    },
+    "partnership": {
+      "poweredBy": "Ṣe iṣẹ́ pẹ̀lú Google Cloud àti Vertex AI, ibi-ipamọ́ lórí ayélujára (Cloud Storage), àti àwọn irinṣẹ́ ìtumọ̀",
+      "footnote": "SceneFlow AI n ṣiṣẹ́ lórí ètò ìpìlẹ̀ Google Cloud tí a lè mú gbòòrò sí i, èyí tí a ṣe fún ìdàgbàsókè àwọn ilé-iṣẹ́ tuntun àti láti pàdé àwọn ìfojúsùn àwọn ilé-iṣẹ́ ńláńlá."
+    },
+    "attribution": "— Ẹgbẹ́ Onímọ̀-ẹ̀rọ SceneFlow"
+  },
+  "coreCapabilities": {
+    "audienceResonance": {
+      "badge": "Ìpele Ọgbọ́n",
+      "title": "Audience Resonance Olùṣàtúnṣe",
+      "description": "Mọ ipele rẹ ki o to nawo sinu ṣiṣe iṣẹ naa ni kikun. Koju si awọn ipele Audience Resonance ati Blueprint pẹlu awọn atunṣe ti o wulo — mu gbogbo apakan dara si ki o to tẹsiwaju si ipele Express ati ṣiṣe fidio naa.",
+      "bullets": [
+        "Ṣe àtúnyẹ̀wò kí o sì pinnu àwọn ènìyàn pàtó tí o fẹ́ dé ọ̀dọ̀ wọn.",
+        "Gba àbájáde, àyẹ̀wò, àti àwọn ìgbàmọ̀ràn ní àkókò gidi",
+        "Awọn ọna lati ṣatunṣe awọn ailagbara ninu itan pẹlu titẹ bọtini kan ṣoṣo",
+        "Àtúnṣe pẹ̀lú ìtọ́sọ́nà láti mú kí àwọn apá eré, Blueprint, àti ìwé eré dára sí i"
+      ],
+      "cta": "Ṣe àyẹ̀wò ìwé-ìtàn rẹ",
+      "howWeScore": {
+        "toggle": "Bí a ṣe ń fúnni ní àmì",
+        "title": "Bí Audience Resonance ṣe ń ṣiṣẹ́",
+        "description": "Audience Resonance n so itupalẹ eto itan pọ̀ (gẹ́gẹ́ bíi kedere, iyara itan, ati bi ẹdun ṣe n yipada) pẹlu bi akoonu ṣe ba iru awọn olugbo ti o ti ṣalaye ninu Blueprint mu — kii ṣe awọn iṣiro ti ko ni pataki gidi tabi data lori bi awọn eniyan ṣe n tẹsiwaju lati wo akoonu lẹhin ti a ti gbe e jade. Awọn imọran ti a fun wa ni ibamu pẹlu awọn apakan pato ninu iwe-afọwọkọ naa, eyi ti yoo jẹ ki o le ṣe atunṣe awọn abawọn ṣaaju ki o to tẹsiwaju si ipele Express tabi ṣiṣe fidio naa.",
+        "bullets": [
+          "Ṣe ayẹwo ati ṣe afiwe awọn esi Blueprint ati afọwọkọ naa pẹlu awọn olugbo ti o ti pinnu lati koju.",
+          "Awọn imọran ti o da lori apakan kan pato — kii ṣe nọmba ti a ko le ṣalaye tabi ti a kan ni lati gba gbọ́ lasan.",
+          "Àwọn ojú-tutu tó ṣeé lò lẹ́sẹ̀kẹsẹ̀ àti ìtọ́sọ́nà fún àtúnṣe — kì í ṣe ìṣirò-iye lásán",
+          "Ṣe é kí o tó náwó lórí iṣẹ́ ṣíṣe tó n gba agbára púpọ̀ (render), kì í ṣe lẹ́yìn tí o ti gbé e jáde."
+        ]
+      }
+    },
+    "express": {
+      "badge": "Ṣíṣe Ọjà ní Iyánjú Gíga",
+      "title": "Sceneflow Express",
+      "description": "Ṣe agbekalẹ awọn storyboard, animatic, ati awọn apakan fidio ni ẹẹkan naa. Yipada lati inu iwe afọwọkọ (script) si awotẹlẹ ti a le pin pẹlu awọn ẹlomiran laarin iṣẹju diẹ — lẹhinna fọwọsi Beat Frames ki o to ṣe inawo ikẹhin fun F2V.",
+      "items": [
+        {
+          "title": "Àwòrán Ìtàn Kíákíá",
+          "desc": "Ṣe àtúnyẹ̀wò àti pínpín àwọn àwòrán ìtàn (storyboards) tí ó ní ohùn àti fídíò láàrin ìṣẹ́jú díẹ̀ dípò kí ó gba wákàtí púpọ̀.",
+          "time": "Awọn iṣẹju ati awọn wakati"
+        },
+        {
+          "title": "Ṣe afihan Animatic",
+          "desc": "Ṣe àgbékalẹ̀ àwọn ìṣẹ̀lẹ̀ fíìmù oní-àwòrán tí ó ní ìrísí Ken Burns ní kíkún, pẹ̀lú àwọn ohùn àkàwé tí ó ga ní dídára, láìpẹ́.",
+          "time": "Awọn iṣẹju ati awọn wakati"
+        },
+        {
+          "title": "Fidio ti o yara",
+          "desc": "Ṣe àkóso ṣíṣe àwọn àwòrán àti fídíò ní àkókò kan náà láti pèsè ìran tàbí àgbègbè náà ní kíkún.",
+          "time": "Awọn iṣẹju dipo awọn ọjọ"
+        }
+      ],
+      "cta": "Bẹ̀rẹ̀ Ìṣẹ̀dá Àwòrán Yára Kíákíá"
+    }
+  },
+  "exitIntent": {
+    "title": "Dúró! Má ṣe lọ láìní nǹkan kan lọ́wọ́.",
+    "subtitle": "Gba àǹfààní àkọ́kọ́ àti àwọn ìmọ̀ràn pàtàkì fún ṣíṣe fíìmù pẹ̀lú ìrànlọ́wọ́ AI.",
+    "benefits": [
+      "Awọn ẹkọ ọsọọsẹ lori ṣiṣe fiimu pẹlu AI",
+      "Àǹfààní láti lo àwọn ẹ̀yà tuntun ní kíákíá",
+      "Àwọn ẹdinwó pàtàkì fún àwọn olùṣẹ̀dá"
+    ],
+    "emailPlaceholder": "Fi àdírẹ́sì ìmeeli rẹ síbẹ̀",
+    "subscribe": "Gba àǹfààní láti wọlé ní kíákíá",
+    "subscribing": "Níní ìforúkọsílẹ̀...",
+    "or": "tàbí",
+    "startNow": "Bẹ̀rẹ̀ sí ní ṣẹ̀dá báyìí fún $9 péré →",
+    "privacy": "A kò ní fi àwọn ìfitónilétí tí kò wúlò ránṣẹ́ sí ọ rí. O lè jáwọ́ nínú rẹ̀ nígbàkigbà.",
+    "successTitle": "O wa ninu atọkọ naa!",
+    "successSubtitle": "Ṣayẹ̀wò àpótí-ìfìránṣẹ́ rẹ fún àwọn ìmọ̀ràn pàtàkì nípa ṣíṣe fíìmù àti àwọn ìròyìn nípa àǹfààní láti kọ́kọ́ rí àwọn nǹkan tuntun gbà.",
+    "ctaText": "Bẹ̀rẹ̀ sí í ṣàwárí — $9",
+    "closePopup": "Pa fèrésé kékeré náà"
+  },
+  "pricing": {
+    "badge": "Iye owo ti o da lori bi a ṣe lo nkan",
+    "title": "Sanwo fún ohun tí o dá sílẹ̀",
+    "subtitle": "Ètò kan ṣoṣo láti ní àǹfààní sí pèpéle náà. Àwọn kírédítì fún lílo ìmọ̀-ẹ̀rọ AI láti ṣẹ̀dá iṣẹ́. Fi kún un nígbà tí o bá nílò àfikún. Ìṣàkóso tó péye, láìsí àdánù kankan.",
+    "valueAnchor": {
+      "traditionalCost": "Ju $2,000 lọ",
+      "traditionalLabel": "Àwòrán àkọ́kọ́lọ́lẹ̀ ti ìgbàanì",
+      "vs": "dìíje pẹ̀lú",
+      "sceneFlowCost": "$49–$149",
+      "sceneFlowLabel": "SceneFlow ti oṣooṣu",
+      "saveBadge": "Fi owo ti o ju 90% pamọ fun iṣẹ kọọkan"
+    },
+    "teamCta": {
+      "title": "Ẹgbẹ́ ti inú ilé tàbí ilé-iṣẹ́?",
+      "description": "Ṣe ètò àkókò láti ṣàlàyé bí iṣẹ́ ṣe ń lọ fún àwọn ẹgbẹ́ tó ń rí sí ìbánisọ̀rọ̀, ẹ̀kọ́ àti ìdàgbàsókè (L&D), àti títà ọjà.",
+      "button": "Àlàyé lórí ìwé"
+    },
+    "agencyCta": {
+      "title": "Ile-iṣẹ́ aṣojú tàbí ibi iṣẹ́ ìgbéjáde?",
+      "description": "Awọn kirẹditi ti a ṣe ni pataki, Adehun Ipele Iṣẹ (SLA), ati atilẹyin iyasọtọ fun iṣẹ ti o gbooro",
+      "button": "Kan si Ẹka Tita"
+    },
+    "byok": {
+      "title": "Mu Kọ́kọ́rọ́ Tirẹ Wá",
+      "badge": "Awọn Eto Pro ati Studio",
+      "description": "Ṣé o ti ní àwọn kọ́kọ́rọ́ API fún Vertex AI tàbí ElevenLabs? Lo wọ́n pẹ̀lú SceneFlow AI kí o sì fi ìwọ̀n tó tó 80% pamọ́ lórí àwọn kírédítì plátfọ́ọ̀mù náà.",
+      "savingsHighlight": "80% lori awọn kirediti platfọọmu",
+      "benefits": [
+        {
+          "title": "Ìfọ́nkùn owó 80% SceneFlow",
+          "description": "San owo pẹpẹ ti o jẹ 20% nikan fun iṣakoso eto ati awọn irinṣẹ."
+        },
+        {
+          "title": "Lo àwọn ètò ilé-iṣẹ́",
+          "description": "Lo awọn ẹdinwo rẹ ti o wa tẹlẹ fun rira ni iye nla, eyini ni Vertex AI tabi ElevenLabs."
+        },
+        {
+          "title": "Àkóso Pípé",
+          "description": "Awọn bọtini rẹ, eto sisanwo rẹ, ati iṣakoso inawo rẹ"
+        }
+      ],
+      "supportedProviders": "Awọn Olupese ti a n ṣe atilẹyin fun",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 àti Veo 3.1",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "Yíyí Ọ̀rọ̀ Kíkọ̀padà sí Ohùn àti Ṣíṣe Àwòkọ́ṣe Ohùn",
+      "savingsLabel": "Fifipamọ́ ìdá 80 nínú ọgọ́rùn-ún",
+      "onImagesVideo": "lori awọn aworan ati fidio",
+      "onVoiceover": "nípa ohùn tí a gbọ́",
+      "note": "Awọn ifowopamọ kirẹditi ti a fihan jẹ awọn ifowopamọ lori pẹpẹ SceneFlow. Iye owo gangan ti iwọ yoo san da lori iye owo API ti iwọ tabi ile-iṣẹ rẹ ti gba pẹlu olupese kọọkan."
+    },
+    "creditTopUps": {
+      "title": "Ṣé o nílò àfikún àwọn kírédítì?",
+      "subtitle": "Fi owó kun un nígbàkígbà. Àwọn kirediti náà kì í parí.",
+      "packs": [
+        {
+          "label": "Àpòpọ̀ Ohun Èlò Àkọ́bẹ̀rẹ̀",
+          "description": "O dara julọ fun atunyẹwo ti ko gba akoko pupọ"
+        },
+        {
+          "label": "Àkópọ̀ Àwọn Ojú-ìṣẹ̀lẹ̀",
+          "description": "Parí iṣẹ́ kékeré kan"
+        },
+        {
+          "label": "Àkópọ̀ fún Ìgbéjáde",
+          "description": "Apá pàtàkì nínú fíìmù"
+        },
+        {
+          "label": "Àkopọ̀ Ohun Èlò Studio",
+          "description": "Agbára ìṣelọ́pọ̀ tó kúnjú ìwọ̀n"
+        }
+      ],
+      "creditsUnit": "Àwọn tó kópa"
+    },
+    "calculator": {
+      "sectionTitle": "Ṣe iṣiro iye owo iṣẹ́ rẹ",
+      "sectionSubtitle": "Mọ iye gangan ti iwọ yoo san ki o to ṣe ipinnu lati tẹsiwaju.",
+      "title": "Ohun èlò ìṣirò ìṣúnná owó iṣẹ́",
+      "subtitle": "Ṣe iṣiro awọn kirediti ṣaaju ki o to bẹrẹ.",
+      "customize": "Ṣe àtúnṣe àwọn ànímọ́",
+      "imagesLabel": "Àwọn àwòrán láti dá",
+      "videoClipsLabel": "Àwọn àkópọ̀ fídíò",
+      "voiceoverLabel": "Ohùn (iṣẹ́jú)",
+      "byokTitle": "Mu Bọtini Tirẹ Wa (BYOK)",
+      "byokBadge": "Ọjọgbọn & Ile-iṣẹ́ Iṣẹ́-ọnà",
+      "byokDescription": "Lo awọn bọtini API tirẹ lati fi owo pamọ to 80% lori awọn kirediti SceneFlow. Iwọ yoo sanwo taara fun awọn olupese AI ni ibamu pẹlu awọn idiyele wọn.",
+      "vertexToggle": "Vertex AI (Àwọn àwòrán àti fídíò)",
+      "elevenLabsToggle": "ElevenLabs (Ohùn lẹ́yìn ìṣàfihàn)",
+      "imageGeneration": "Ṣíṣe àwòrán",
+      "videoGeneration": "Ṣíṣe Fídíò",
+      "voiceover": "Ohùn àfikún",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "Àpapọ̀ ìṣirò",
+      "withTopUps": "pẹ̀lú àwọn àfikún",
+      "creditSavings": "SceneFlow ifowopamọ ti a le yawo lori rẹ",
+      "savePercent": "O n fipamọ {percent}% lori awọn kirediti SceneFlow.",
+      "transparency": "Ohun gbogbo han kedere: Wàá máa rí bí o ṣe ń lo àwọn kirediti rẹ ní àkókò gangan bí o ṣe ń ṣiṣẹ́ lọ́wọ́. Kò sí àwọn nǹkan àìròtẹ́lẹ̀—o lè yí ìwọ̀n iṣẹ́ rẹ padà nígbàkigbà.",
+      "transparencyHighlight": "Láti sọ gbogbo òtítọ́ kedere:",
+      "byokDisclaimer": "BYOK Akiyesi: Iye ti a fipamọ ninu 'credit' ti a fihan yii da lori idinku ninu 'credit' lori pẹpẹ SceneFlow nikan. Iye gangan ti iwọ yoo san da lori awọn eto idiyele Vertex AI ati ElevenLabs rẹ. Awọn eto fun awọn ile-iṣẹ nla tabi awọn ti n lo API ni iye giga le funni ni anfani lati fipamọ diẹ sii.",
+      "byokDisclaimerHighlight": "BYOK Àkíyèsí:",
+      "presets": [
+        {
+          "id": "ti iṣowo",
+          "name": "Ìpolówó ọjà tí ó gba ìṣẹ́jú-àáyá 30"
+        },
+        {
+          "id": "kúrú",
+          "name": "Fíìmù kúkúrú oní-ìṣẹ́jú méjì"
+        },
+        {
+          "id": "apá",
+          "name": "Ìpín tó gba ìṣẹ́jú mẹ́wàá"
+        },
+        {
+          "id": "àbùdá",
+          "name": "Fiimu gigun iṣẹ́jú 90"
+        }
+      ],
+      "minSuffix": "iṣẹ́jú"
+    },
+    "tierGrid": {
+      "productionTestFlight": "Ìrìn-àjò Òfuurufú fún Àyẹ̀wò Ọjà Tí A Ṣẹ̀ṣẹ̀ Ṣe",
+      "getStarted": "Bẹ̀rẹ̀",
+      "startTestFlight": "Bẹ̀rẹ̀ Ìfò-ìdánwò",
+      "loading": "Ń gbée wọlé...",
+      "mostPopular": "Èyí tí ó gbajúmọ̀ jùlọ",
+      "creditsPerMonth": "Àwọn kirediti/oṣù",
+      "storage": "Ibi-ipamọ",
+      "perMonth": "/oṣù"
+    },
+    "trust": {
+      "cancelAnytime": "Fagile nígbàkígbà",
+      "moneyBack": "Ìdánilójú láti gba owó padà láàrin ọjọ́ mẹ́rìnlá",
+      "creditsNeverExpire": "Awọn kirediti ko ni pari akoko lilo wọn (apapo Explorer)"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "description": "Rira lẹ́ẹ̀kan ṣoṣo láti dán an wò",
+        "features": [
+          "Rira lẹ́ẹ̀kan ṣoṣo",
+          "Àwọn kirediti 750 (tí kò ní parí)",
+          "Ààyè ìpamọ́ 5 GB (ọjọ́ 30)",
+          "Ààyè sí gbogbo apá pètẹpètè náà",
+          "Ìfiránṣẹ́ jáde gẹ́gẹ́ bí MP4 (ìwọ̀n àwòrán èyíkéyìí)",
+          "Ohùn AI (àwọn èdè tó lé ní 70)"
+        ]
+      },
+      "subscriptions": [
+        {
+          "id": "ohun ìbẹ̀rẹ̀",
+          "name": "Oúnjẹ ìbẹ̀rẹ̀",
+          "description": "Fún àwọn olùṣẹ̀dá kọ̀ọ̀kan",
+          "features": [
+            "Ààyè sí gbogbo apá pètẹpètè náà",
+            "Awọn kirediti 4,500 fun oṣu kan wa ninu rẹ",
+            "Ààyè ìpamọ́ 25 GB tí a ń lò",
+            "Ìfiránṣẹ́ jáde gẹ́gẹ́ bí MP4 (ìwọ̀n àwòrán èyíkéyìí)",
+            "Ohùn AI (àwọn èdè tó lé ní 70)",
+            "Ìtìlẹ́yìn nípasẹ̀ ìmeeli"
+          ]
+        },
+        {
+          "id": "olùtìlẹ́yìn",
+          "name": "Oníṣẹ́-ọ̀jọ̀gbọ́n",
+          "description": "Fun awọn olupilẹṣẹ ti o jẹ alamọdaju",
+          "features": [
+            "Gbogbo ohun tó wà nínú ètò Starter, pẹ̀lú:",
+            "Awọn kirediti 15,000 fun oṣu kan wa ninu rẹ",
+            "Ààyè ìpamọ́ 100 GB tí ń ṣiṣẹ́",
+            "Àǹfàní láti lo Veo 3.1 pẹ̀lú àwòrán tó dára gan-an (4K)",
+            "Ètò Ìmúnídánilójú Ìdúróṣinṣin Àwọn Ohun-ìwà",
+            "Ṣíṣe àwòkọ ohùn",
+            "BYOK (Mu Kọ́ọ̀kì Tirẹ Wá)",
+            "Àwọn àpóró ìjókòó mẹ́ta fún ẹgbẹ́",
+            "Àtìlẹ́yìn pàtàkì"
+          ]
+        },
+        {
+          "id": "ilé-iṣẹ́ ìṣe-ọnà tàbí ìgbóhùn-sáfẹ́fẹ́",
+          "name": "Ilé-iṣẹ́ ìṣesí",
+          "description": "Fun àwọn ẹgbẹ́ àti àwọn ilé-iṣẹ́",
+          "features": [
+            "Gbogbo ohun tó wà nínú Pro, pẹ̀lú:",
+            "Awọn kirediti 75,000 fun oṣu kan wa ninu rẹ",
+            "Ààyè ìpamọ́ 500 GB tí ó wà ní lílò",
+            "Àtòjọ Àkọ́kọ́-láti-ṣe ti Veo 3.1 4K",
+            "Ìdúróṣinṣin Àkọsílẹ̀ Láìlópin",
+            "Àwọn ọjà tí a gbé jáde láìsí orúkọ olùṣe",
+            "Àǹfààní láti lo API",
+            "Ààyè ìjókòó mẹ́wàá fún ẹgbẹ́",
+            "Olùtọ́jú àkọọ́lẹ̀ tí a yà sọ́tọ̀ fún iṣẹ́ náà",
+            "Àdéhùn ìpele iṣẹ́ (SLA) fún àwọn ilé-iṣẹ́ ńlá wà ní ìbéèrè."
+          ]
+        }
+      ]
     }
   },
   "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
+    "badge": "Ṣé o ní àwọn ìbéèrè?",
+    "title": "Awọn ibeere ti a maa n beere nigbagbogbo",
+    "subtitle": "Gbogbo ohun ti o nilo lati mọ nipa SceneFlow AI",
     "items": [
       {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+        "question": "Bawo ni ilana iṣẹ́ SceneFlow ṣe n lọ lati ipele imọ̀ràn titi de ipele ti fídíò yoo fi ṣetan fun titẹjade?",
+        "answer": "SceneFlow n lo ilana iṣẹ ti a ṣeto daradara: Ẹya itan tẹle-n-tẹle (ti a le yan lati fi kun tabi rara) → Blueprint → Ipele Ṣiṣe Fiimu → Final Cut → Premiere. Blueprint n ṣalaye eto itan ati awọn oluwo ti a fojusi pẹlu iranlọwọ Audience Resonance. Ipele ṣiṣe fiimu n pese iwe afọwọkọ, aworan itan (storyboard), fidio ti n ṣafihan ilu ati iyara (beat video), ati awọn apakan fiimu ti a ti ṣiṣẹ lori wọn (rendered scenes). Final Cut n ṣajọ awọn apakan ti a yan papọ lati di faili MP4 kan ṣoṣo ti o jẹ eyi ti o pari (master MP4) — kii ṣe ohun elo fun ṣiṣatunkọ lori laini akoko (timeline editor). Premiere n ṣakoso awọn iṣẹlẹ ifihan fiimu, itupalẹ data, gbigbe fiimu si YouTube, ati ṣiṣe awọn akojọpọ faili fun lilo ikẹhin."
       },
       {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+        "question": "Bawo ni SceneFlow ṣe yàtọ̀ sí Gemini Studio tàbí Google Flow?",
+        "answer": "Gemini Studio ati Google Flow dojukọ ṣiṣẹda awọn fidio kukuru nipasẹ lilo awọn ilana tabi aṣẹ (prompt-and-generate). SceneFlow ṣajọpọ gbogbo ilana iṣẹ iṣelọpọ: awọn ipele ti a ṣeto pẹlu awọn ipilẹ ti a le ṣatunkọ, Reference Library ati Beat Frames fun iduroṣinṣin, Audience Resonance ṣaaju ṣiṣe iṣelọpọ ikẹhin (render) ti o n gba agbara pupọ, eto Mixer ati akojọpọ ṣiṣan (stream) ti n ṣiṣẹ funrararẹ, ati Screening Room fun iṣeduro didara ṣaaju titẹjade — gbogbo rẹ wa ninu ile-iṣẹ iṣelọpọ kan ti o pese itọsọna."
       },
       {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+        "question": "Ṣé mo lè ṣàtúnṣe àwọn ìwé-ọ̀rọ̀, àwòrán, àti ohùn tí AI ti pèsè?",
+        "answer": "Bẹ́ẹ̀ni. Gbogbo ohun tí a ti ṣẹ̀dá wọ̀nyí ni a ṣì lè ṣàtúnṣe sí. O lè tún àwọn ìwé-ìtàn (scripts) kọ, ṣàtúnṣe bí a ṣe ń darí ìṣẹ̀lẹ̀, tún àwọn apá pàtó kan ṣe, ṣàtúnṣe ohùn-ìtàn (voiceover), kí o sì tún àkókò ṣe dáadáa nínú Production Mixer. Final Cut kàn máa ń so àwọn apá tí a ti parí pọ̀ ni — àwọn àtúnṣe tó ní í ṣe pẹ̀lú ìmọ̀-iṣẹ́-ọnà máa ń wáyé ní ìpele ìṣẹ̀dá (Production) ṣáájú ìgbà yẹn."
       },
       {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+        "question": "Bawo ni Target Audience Resonance ṣe n ṣiṣẹ́ báyìí?",
+        "answer": "Audience Resonance n ṣopọ̀ àyẹ̀wò ètò ìtàn (bí ó ṣe ṣe kedere tó, ìyára tàbí ìra rẹ̀, àti bí ìmọ̀lára ṣe ń yí padà nínú rẹ̀) pẹ̀lú bí ó ṣe bá àwọn olùwò tí o ti ṣàpèjúwe nínú Blueprint mu — kì í ṣe àwọn àkọsílẹ̀ nípa bí àwọn ènìyàn ṣe ń wò ó tàbí tí wọ́n fi ń tẹ̀síwájú láti wò ó lẹ́yìn tí a ti gbé e jáde. Wàá gba àwọn àbá lórí àwọn apá ọ̀tọ̀ọ̀tọ̀ nínú iṣẹ́ náà àti ọ̀nà láti ṣe àtúnṣe ní kíákíá (nípasẹ̀ títẹ bọ́tìnì kan ṣoṣo) fún àwọn eré oní-apá (Series), Blueprint, àti àyẹ̀wò ìwé-ìtàn (script) kí a tó bẹ̀rẹ̀ iṣẹ́ àgbékalẹ̀ rẹ̀ ní kíkún."
       },
       {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
+        "question": "Ṣé mo lè ṣe àwọn fídíò ìpolówó tàbí àwọn fídíò tó ṣàlàyé ọjà ní èdè tó pọ̀?",
+        "answer": "Bẹ́ẹ̀ ni. O lè ṣẹ̀dá àti ṣàtúnṣe àwọn fídíò fún àwọn èdè tó lé ní àádọ́rin (70) pẹ̀lú ètò ìṣàkóso àkókò tó wà ní ìbámu pẹ̀lú ara wọn. Lópọ̀ ìgbà, àwọn ẹgbẹ́ máa ń kọ́kọ́ ṣe fídíò àkọ́kọ́ tó péye (master cut), lẹ́yìn náà wọn á wá ṣe àwọn ẹ̀yà fídíò náà ní onírúurú èdè fún àwọn olùtajà, àwọn oníbàárà, tàbí àwọn olùwò ní onírúurú agbègbè kárí ayé."
       },
       {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "question": "Kí ni Premiere máa ń ṣe tí Screening Room bá jẹ́ ìpele àtúnyẹ̀wò?",
+        "answer": "Screening Room jẹ́ ojú-iṣẹ́ fún àtúnyẹ̀wò nínú Premiere — ó sì tún wà fún wíwo àwòrán ìtàn (storyboard) iṣẹ́ tó ń lọ lọ́wọ́. Pín àwọn ọna-asopọ̀ (links), gba èrò àwọn onípa àti àlàyé nípa bí àwọn ènìyàn ṣe ń bá iṣẹ́ náà lò (pẹ̀lú àṣẹ àwọn olùwò), ṣe àtúnyẹ̀wò àwọn àbájáde ìṣirò àti àwọn ìwòye lórí ìrísí iṣẹ́ náà, lẹ́yìn náà kí o gbé e jáde nípasẹ̀ ètò YouTube tàbí kí o kó àwọn fáìlì náà jọ fún lílò mìíràn."
       },
       {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
+        "question": "Ṣé mo nílò ìrírí nínú iṣẹ́ ìmọ̀-ẹ̀rọ tàbí ṣíṣe àtúnṣe?",
+        "answer": "Rárá. A ṣe SceneFlow fún àwọn olùṣẹ̀dá àti àwọn ẹgbẹ́ tí wọn kì í ṣe ògbógi nínú ọ̀rọ̀ ìmọ̀-ẹ̀rọ. Wàá bẹ̀rẹ̀ pẹ̀lú àwọn ìlànà ìtọ́sọ́nà àti àwọn ìpìlẹ̀ AI tí o lè ṣàtúnṣe ní ìpele kọ̀ọ̀kan — kì í ṣe lílo àwọn ọ̀nà ìfilọ́lẹ̀ (prompt engineering) tí ó díjú tàbí lílo ọ̀pọ̀lọpọ̀ irin-iṣẹ́ lẹ́ẹ̀kan náà."
       },
       {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
+        "question": "Bawo ni ètò Explorer ṣe ń ṣiṣẹ́?",
+        "answer": "Pẹ̀lú $9, wàá gba àwọn 'credit' 750 láti dán gbogbo ìlànà iṣẹ́ náà wò nípasẹ̀ sísanwó lẹ́ẹ̀kan ṣoṣo. A ṣe é gẹ́gẹ́ bí ìgbésẹ̀ láti dán iṣẹ́ náà wò ní ti gidi, kí o lè ṣe àwọn iṣẹ́ tó gidi—láti ìpele èrò títí dé ṣíṣe fídíò—kí o tó yan ètò ìsanwó oṣooṣù."
       },
       {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
+        "question": "Bawo ni a ṣe n ṣakoso awọn kirẹditi ati BYOK?",
+        "answer": "A máa ń tọpinpin àwọn kirediti (credits) nínú pèpéle náà, èyí tí ó jẹ́ kí àwọn ẹgbẹ́ lè ṣàkóso ìṣúná wọn ní ìbámu pẹ̀lú àwọn ìpele iṣẹ́. Àwọn ètò Pro àti Studio tún gba àǹfààní lílo \"Bring Your Own Key\" (BYOK) fún àwọn ilé-iṣẹ́ tí wọ́n ń pèsè iṣẹ́ náà, èyí sì ń fún àwọn àjọ tí wọ́n ti ní àdéhùn tẹ́lẹ̀ pẹ̀lú irú àwọn ilé-iṣẹ́ bẹ́ẹ̀ ní àǹfààní láti túbọ̀ ṣàkóso iye owó tí wọ́n ń ná."
       },
       {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+        "question": "Kí ni mo lè ṣe ní ti gidi pẹ̀lú SceneFlow?",
+        "answer": "Awọn ẹgbẹ n lo SceneFlow fun ṣiṣe ayẹwo awọn ile ati ilẹ, awọn akoonu ẹkọ, awọn adarọ-ohun (podcasts) ti o ni aworan ti n sọ itan, awọn eto alaye iroyin, awọn ipolongo ami-ọja, ati awọn jara fidio ti o dabi fiimu. Ilana iṣẹ kanna ni a n lo fun ṣiṣe awọn akoonu ti o kuru ati eyi ti o gun."
       }
     ]
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
-    "cta": "Launch Your Studio for $9"
+    "title": "Ṣé o ti ṣetán láti dán gbogbo ìlànà iṣẹ́ náà wò?",
+    "subtitle": "Ṣe gbogbo ilana lati ipele ero, ṣiṣe aworan itan (storyboard), ati ṣiṣe fidio titi de ipele MP4 ikẹhin ninu ile-iṣẹ kan ṣoṣo. Bẹrẹ pẹlu ètò $9 Explorer ki o si ri bi ilana iṣẹ ti o bẹrẹ pẹlu orin (beat) ṣe n ṣiṣẹ ni gidi.",
+    "cta": "Bẹ̀rẹ̀ ilé-iṣẹ́ rẹ fún $9"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
-    "product": "Product",
-    "resources": "Resources",
-    "legal": "Legal",
+    "description": "Ṣíṣe fídíò nípasẹ̀ ẹ̀rọ láti ìbẹ̀rẹ̀ dé òpin — láti ìpele èrò títí dé fídíò tó ti péye fún títẹ́jáde. Ilé-iṣẹ́ kan tó ní ìtọ́sọ́nà: Blueprint → Ṣíṣe Fídíò → Final Cut → Premiere.",
+    "product": "Ọjà",
+    "resources": "Àwọn ohun-èlò",
+    "legal": "Ti ofin",
     "links": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "howItWorks": "How It Works",
-      "faq": "FAQ",
-      "gettingStarted": "Getting Started",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "trustSafety": "Trust & Safety",
-      "refunds": "Refund Policy",
-      "contact": "Contact Us"
+      "features": "Àwọn Ẹ̀yà Ara / Àwọn Ànímọ́",
+      "pricing": "Ètò iye owó",
+      "howItWorks": "Bí ó ṣe ń ṣiṣẹ́",
+      "faq": "Awọn ibeere ti a n beere nigbagbogbo",
+      "gettingStarted": "Bí a ṣe lè bẹ̀rẹ̀",
+      "privacy": "Ìlànà Ààbò Àṣírí",
+      "terms": "Àwọn Ọ̀rọ̀ Àdéhùn Iṣẹ́",
+      "trustSafety": "Ìgbẹ́kẹ̀lé àti Ààbò",
+      "refunds": "Ìlànà fún Pípadà Owó",
+      "contact": "Kan si wa"
     },
-    "tagline": "Made with ❤️ for creators",
-    "taglineSub": "From Idea to Published Video",
-    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
-    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "tagline": "A fi ifẹ ṣe e fun awọn oludasilẹ",
+    "taglineSub": "Láti Orí Èrò dé Fídíò tí a ti gbé jáde",
+    "securePayments": "Awọn sisanwo ti o ni aabo ti Whop n ṣakoso, ẹni ti o n ṣe iṣẹ́ olutaja fun wa",
+    "morLine": "Awọn sisanwo ti o ni aabo, iṣiro owo-ori, ati imuṣẹ awọn ilana ni Whop — eyi ti o jẹ ile-iṣẹ ti a yan lati ṣe iṣakoso awọn sisanwo wa — n ṣe abojuto fun Life Focus, LLC.",
+    "copyright": "© 2026 SceneFlow AI. Gbogbo ẹtọ́ wa ni a dáàbò bo.",
+    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Kan si: brian@sfai.studio",
+    "poweredBy": "Ṣe iṣẹ́ pẹ̀lú agbára láti ọ̀dọ̀ Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "See Pricing",
-    "tryNine": "Try $9",
-    "tryForNine": "Try for $9",
-    "dismiss": "Dismiss"
+    "seePricing": "Wo iye owo",
+    "tryNine": "Gbìyànjú $9",
+    "tryForNine": "Gbìyànjú rẹ̀ fún $9",
+    "dismiss": "Tu silẹ"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
-    "pause": "Pause",
-    "play": "Play",
-    "mute": "Mute",
-    "unmute": "Unmute"
+    "pause": "Dúró díẹ̀",
+    "play": "Ṣeré",
+    "mute": "Pa ohùn",
+    "unmute": "Mu ohùn pada",
+    "expandVideo": "Mu Fidio Tobi"
   }
 }

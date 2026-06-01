@@ -1,618 +1,1411 @@
 {
   "metadata": {
-    "title": "SceneFlow AI - AI-Powered Video Creation",
-    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
+    "title": "SceneFlow AI - Paglikha ng Video gamit ang AI",
+    "description": "Gawing mga propesyonal na video ang iyong mga ideya gamit ang workflow automation na pinapagana ng AI."
   },
   "nav": {
-    "workflow": "The Workflow",
-    "platformWalkthrough": "Platform Walkthrough",
-    "plansPricing": "Plans & Pricing",
-    "more": "More",
-    "useCases": "Use Cases",
+    "workflow": "Ang Daloy ng Trabaho",
+    "platformWalkthrough": "Gabay sa Paggamit ng Platform",
+    "plansPricing": "Mga Plano at Presyo",
+    "more": "Higit pa",
+    "useCases": "Mga Kaso ng Paggamit",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform & Trust",
-    "faq": "FAQ",
-    "signIn": "Sign In",
-    "startProject": "Start a Project",
+    "platformTrust": "Platform at Tiwala",
+    "faq": "Mga Madalas Itanong",
+    "signIn": "Mag-sign in",
+    "startProject": "Magsimula ng Proyekto",
     "dashboard": "Dashboard",
-    "adminPanel": "Admin Panel",
-    "signOut": "Sign Out",
-    "goToDashboard": "Go to Dashboard",
-    "userFallback": "User",
-    "searchLanguages": "Search languages...",
-    "noLanguagesFound": "No languages found"
+    "adminPanel": "Panel ng Admin",
+    "signOut": "Mag-sign out",
+    "goToDashboard": "Punta sa Dashboard",
+    "userFallback": "Gumagamit",
+    "searchLanguages": "Maghanap ng mga wika...",
+    "noLanguagesFound": "Walang nahanap na mga wika"
   },
   "floatingNav": {
-    "compare": "Compare",
-    "howItWorks": "How It Works",
-    "useCases": "Use Cases",
-    "platformWalkthrough": "Platform Walkthrough",
-    "platform": "Platform",
-    "pricing": "Pricing",
-    "faq": "FAQ"
+    "compare": "Ihambing",
+    "howItWorks": "Paano Ito Gumagana",
+    "useCases": "Mga Kaso ng Paggamit",
+    "platformWalkthrough": "Gabay sa Paggamit ng Platform",
+    "platform": "Plataporma",
+    "pricing": "Pagpepresyo",
+    "faq": "Mga Madalas Itanong"
   },
   "hero": {
-    "headline": "Make professional video without a production team or a dozen apps.",
-    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.",
-    "ctaSecondary": "Watch the 'What's Possible'",
-    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
-    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
-    "playWithNarration": "Play with narration",
-    "tapToHear": "Tap to hear",
-    "fullscreen": "Fullscreen",
+    "headline": "Hindi mo na kailangang magpalipat-lipat sa limang AI tab. Sa iisang studio, mula sa ideya ay makakagawa ka na ng video na handa nang i-publish.",
+    "subheadline": "Isang guided studio na gagabay sa iyo mula sa ideya hanggang sa master copy na handa nang i-publish. Tingnan ang iyong storyboard bago bayaran ang final video — aprubahan ang hitsura nito sa halip na mag-aksaya ng credits sa paulit-ulit na pagsubok. Awtomatikong ginagawa ng SceneFlow ang mga nakakapagod na gawain — tulad ng script, storyboard, voice, at assembly — habang hawak mo pa rin ang kontrol sa bawat bahagi nito.",
+    "audienceMicroLine": "Ginawa para sa mga creator na nagnanais ng resulta, at sa mga team na gustong makita kung paano ito gumagana.",
+    "ctaSecondary": "Panoorin ang 'What's Possible'",
+    "ctaToolStack": "Tingnan kung paano nito pinapalitan ang iyong tool stack.",
+    "languagePrompt": "Pakinggan ang bida sa sarili mong wika — parehong proseso, mga bagong merkado",
+    "multilangHint": "Nag-a-dub ang Hero sa 7 wika — sinusuportahan ng buong pipeline ang mahigit 70 wika sa produksyon.",
+    "playWithNarration": "I-play nang may pagsasalaysay",
+    "tapToHear": "Pindutin para makinig",
+    "fullscreen": "Buong screen",
     "heroVideoLanguages": {
       "en": {
-        "label": "English",
-        "nativeLabel": "English"
+        "label": "Ingles",
+        "nativeLabel": "Ingles"
       },
       "es": {
-        "label": "Spanish",
-        "nativeLabel": "Español"
+        "label": "Espanyol",
+        "nativeLabel": "Espanyol"
       },
       "pt": {
-        "label": "Portuguese",
-        "nativeLabel": "Português"
+        "label": "Portuges",
+        "nativeLabel": "Portuges"
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "हिन्दी"
+        "nativeLabel": "Hindi"
       },
       "zh": {
-        "label": "Chinese",
-        "nativeLabel": "中文"
+        "label": "Tsino",
+        "nativeLabel": "Tsino"
       },
       "ar": {
-        "label": "Arabic",
-        "nativeLabel": "العربية"
+        "label": "Arabe",
+        "nativeLabel": "Arabe"
       },
       "th": {
         "label": "Thai",
-        "nativeLabel": "ไทย"
+        "nativeLabel": "Thailand"
       }
     },
-    "soon": "Soon"
+    "soon": "Malapit na"
   },
   "valueProp": {
     "pills": [
       {
         "label": "One Studio",
-        "detail": "Concept to publish in one place"
+        "detail": "Konseptong ilalathala sa iisang lugar"
       },
       {
-        "label": "Approve Before Final Video",
-        "detail": "Review storyboard beats before you render"
+        "label": "Aprubahan bago ang pinal na video",
+        "detail": "Suriin ang mga bahagi ng storyboard bago mag-render."
       },
       {
-        "label": "Test Your Story First",
-        "detail": "Know what lands before heavy spend"
+        "label": "Subukan muna ang iyong kuwento.",
+        "detail": "Alamin kung ano ang epektibo bago gumastos nang malaki."
       },
       {
-        "label": "Publish-Ready Output",
-        "detail": "Master MP4 + distribution bundles"
+        "label": "Output na Handa nang I-publish",
+        "detail": "Mga bundle ng master MP4 at distribusyon"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Who are you? Pick your path",
-    "seeExamples": "See examples",
-    "examplesFor": "Examples for {label}:",
-    "andMore": ", and more.",
+    "prompt": "Sino ka? Piliin ang iyong landas.",
+    "seeExamples": "Tingnan ang mga halimbawa",
+    "examplesFor": "Mga halimbawa para sa {label}:",
+    "andMore": ", at marami pang iba.",
+    "modes": {
+      "automate": {
+        "label": "Gawin itong awtomatiko",
+        "description": "Gabay na daloy ng trabaho — aprubahan ang mga storyboard, mas mabilis na ilabas ang produkto"
+      },
+      "engine": {
+        "label": "Ipakita mo sa akin ang makina.",
+        "description": "Arkitektura, BYOK, at lalim ng plataporma"
+      }
+    },
     "paths": [
       {
-        "id": "creator",
-        "label": "Creator",
-        "outcome": "Ship on schedule — stop rebuilding in every tool",
+        "id": "lumikha",
+        "label": "Lumikha",
+        "outcome": "Ilabas ang produkto ayon sa iskedyul — itigil ang paulit-ulit na pagbuo sa bawat tool",
         "useCases": [
-          "YouTube & episodic series",
-          "Video podcasts & show clips",
-          "Hyper-local & JIT news",
-          "Documentaries & docuseries",
-          "How-to & skill channels",
-          "Sports recaps & commentary"
+          "YouTube at mga seryeng episodic",
+          "Mga video podcast at clip ng palabas",
+          "Hyper-local at napapanahong balita",
+          "Mga dokumentaryo at docuseries",
+          "Mga channel para sa mga tutorial at kasanayan",
+          "Mga buod at komentaryo sa sports"
         ]
       },
       {
-        "id": "team",
-        "label": "In-house team",
-        "outcome": "Replace slow vendor cycles — control brand and budget",
+        "id": "koponan",
+        "label": "In-house na pangkat",
+        "outcome": "Palitan ang mabagal na proseso ng mga vendor — kontrolin ang brand at badyet",
         "useCases": [
-          "Corporate L&D & compliance",
-          "Internal comms & town halls",
-          "Product explainers for sales",
-          "HR recruitment & culture",
-          "K-12 / higher-ed lessons",
-          "Public health & safety updates"
+          "Pag-aaral at Pagpapaunlad (L&D) at Pagsunod sa mga Pamantayan sa Korporasyon",
+          "Komunikasyong panloob at mga town hall",
+          "Mga materyales na nagpapaliwanag sa produkto para sa pagbebenta",
+          "Pagkuha ng empleyado at kultura ng HR",
+          "Mga aralin sa K-12 at mas mataas na antas ng edukasyon",
+          "Mga update sa kalusugan at kaligtasan ng publiko"
         ]
       },
       {
-        "id": "productionShop",
-        "label": "Production shop",
-        "outcome": "Productize a niche with repeatable intake → delivery",
+        "id": "pagawaan",
+        "label": "Pasilidad sa produksyon",
+        "outcome": "Gawing produkto ang isang niche gamit ang paulit-ulit na proseso ng pagtanggap at paghahatid.",
         "useCases": [
-          "Video memoir packages",
-          "Legacy & tribute videos",
-          "Voice-cloned narration",
-          "White-label studio templates",
-          "Real estate & hospitality tours",
-          "Subscription video services"
+          "Mga pakete ng video memoir",
+          "Mga video ng pamana at pagpupugay",
+          "Narasyong gamit ang kinopyang boses",
+          "Mga white-label studio template",
+          "Mga tour sa real estate at hospitality",
+          "Mga serbisyo ng video na nakabatay sa suskrisyon"
         ]
       },
       {
-        "id": "agency",
-        "label": "Agency",
-        "outcome": "Faster pitches and scalable client delivery",
+        "id": "ahensya",
+        "label": "Ahensya",
+        "outcome": "Mas mabilis na paglalahad ng mga panukala at serbisyong madaling palakihin ang saklaw para sa mga kliyente",
         "useCases": [
-          "Client pitch pre-viz",
-          "Product launch campaigns",
-          "Case studies & testimonials",
-          "Event & conference promos",
-          "Multi-language campaigns",
-          "Property marketing for clients"
+          "Pre-visualization para sa presentasyon sa kliyente",
+          "Mga kampanya sa paglulunsad ng produkto",
+          "Mga case study at testimonya",
+          "Mga promo para sa mga event at kumperensya",
+          "Mga kampanyang gumagamit ng iba't ibang wika",
+          "Pag-o-market ng ari-arian para sa mga kliyente"
         ]
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Why SceneFlow vs prompt-and-generate tools",
-    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
+    "title": "Bakit SceneFlow kumpara sa mga tool na \"prompt-and-generate\"",
+    "subtitle": "Napakahusay ng Gemini Studio at Google Flow pagdating sa mga clip. Pinagsasama-sama naman ng SceneFlow ang buong daloy ng trabaho sa produksyon.",
     "rows": [
       {
-        "them": "Prompt + clip generation in isolation",
-        "us": "Structured phases with editable baselines at each step"
+        "them": "Pagbuo ng clip batay sa prompt nang hiwalay",
+        "us": "Mga estrukturadong yugto na may mga baseline na maaaring baguhin sa bawat hakbang"
       },
       {
-        "them": "Manual consistency across sessions",
-        "us": "Reference Library + Beat Frames lock visuals before video"
+        "them": "Pagkakapare-pareho sa mga sesyon gamit ang manu-manong pamamaraan",
+        "us": "Reference Library + Beat Frames i-lock ang mga visual bago ang video"
       },
       {
-        "them": "No audience validation workflow",
-        "us": "Audience Resonance before render; Screening Room before publish"
+        "them": "Walang daloy ng trabaho para sa pagpapatunay ng audience",
+        "us": "Audience Resonance bago ang render; Screening Room bago ang publish"
       },
       {
-        "them": "No production pipeline or handoff",
-        "us": "Script → streams → assembly → distribution in one app"
-      },
-      {
-        "them": "Complex model and settings surface",
-        "us": "Guided Studio UX with credits and BYOK guardrails"
+        "them": "Walang production pipeline o handoff",
+        "us": "Script → mga stream → pagbuo → distribusyon sa iisang app"
       }
     ],
-    "themHeader": "Typical clip-generation tools",
-    "usHeader": "SceneFlow bundles"
+    "themHeader": "Mga karaniwang tool sa paggawa ng clip",
+    "usHeader": "Mga bundle ng SceneFlow"
   },
   "beatFirstPipeline": {
-    "title": "Beat-First Video Pipeline",
-    "subtitle": "Approve before you render — not slot-machine regeneration",
-    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "title": "Proseso ng Paggawa ng Video na Inuuna ang Beat",
+    "subtitle": "Aprubahan bago i-render — hindi 'yung parang slot machine na basta na lang nag-ge-generate.",
+    "intro": "Hindi na kailangan ng pagsubok-at-pagkakamali sa paggawa. Maaari mong silipin at aprubahan ang magiging hitsura nito bago gamitin ng SceneFlow ang mga credit para sa pinal na video.",
+    "description": "Inaayos ng SceneFlow ang proseso ng visual approval sa bawat hakbang: Express storyboard para sa pagsusuri, Beat Frames upang i-lock ang komposisyon, at pagkatapos ay F2V sa bawat beat. Pinipino mo ang hitsura bago ka mag-aksaya ng credits sa drift at hallucinations.",
     "steps": [
-      "Express storyboard — share audio-visual beats for review in minutes",
-      "Beat Frames — lock start/end composition with Reference Library continuity",
-      "F2V per beat — generate video from approved frames, not blind prompts",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Express storyboard — magbahagi ng mga audio-visual beat para suriin sa loob ng ilang minuto",
+      "Beat Frames — i-lock ang simula/wakas ng komposisyon gamit ang continuity ng Reference Library",
+      "F2V bawat beat — bumuo ng video mula sa mga aprubadong frame, hindi sa mga blind prompt",
+      "Production Mixer — timing, audio, at pag-export ng stream patungo sa assembly na Final Cut"
     ],
-    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+    "footerLine": "Mas kaunting pag-uulit sa paggawa ng slot-machine visuals — aprubahan ang mga visual bago ang pinal na gastusin sa video."
+  },
+  "toolStack": {
+    "badge": "Pamilyar ba?",
+    "title": "Ang Maling Pamamaraan vs. ang Pamamaraang SceneFlow",
+    "subtitle": "Hindi mo dapat kailanganin ang limang tab, pag-copy-paste ng mga export, at pagkapagod sa paggawa ng mga prompt para lang makabuo ng isang video.",
+    "brokenWay": {
+      "title": "Ang Sirang Landas",
+      "tagline": "Watak-watak. Mano-mano. Nakakapagod.",
+      "tools": [
+        {
+          "name": "ChatGPT",
+          "category": "Mga borador ng iskrip"
+        },
+        {
+          "name": "Midjourney",
+          "category": "Mga natatanging larawan"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "Manu-manong pag-export ng VO"
+        },
+        {
+          "name": "Premiere",
+          "category": "Manu-manong pagbuo"
+        }
+      ],
+      "chaosLabel": "Limang tab. Nawala ang konteksto.",
+      "painPoints": [
+        "Mag-copy at paste sa pagitan ng mga app",
+        "Pagkapagod sa paggawa ng mga prompt at mga paulit-ulit na siklo ng pagbuo ng tugon",
+        "Walang pagsusuri sa audience bago ka gumastos",
+        "Magulong sistema ng mga bersyon sa mga export"
+      ],
+      "timeLabel": "Karaniwang tagal ng proyekto",
+      "timeValue": "2–4 na linggo"
+    },
+    "sceneflowWay": {
+      "title": "Ang Pamamaraang SceneFlow",
+      "tagline": "Isang studio. Aprubahan bago mag-render.",
+      "stages": [
+        {
+          "label": "Blueprint",
+          "detail": "Nakabalangkas na plano ng kuwento"
+        },
+        {
+          "label": "Mga Sanggunian",
+          "detail": "Mga karakter na may pagkakapare-pareho ang katangian"
+        },
+        {
+          "label": "Produksyon",
+          "detail": "Boses + mga biswal"
+        },
+        {
+          "label": "I-publish",
+          "detail": "Isang master MP4"
+        }
+      ],
+      "syncLabel": "Isang project file — hindi na kailangang magpalipat-lipat ng mga tab",
+      "benefits": [
+        "Mga yugtong may gabay — hindi prompt engineering",
+        "Pag-apruba sa storyboard bago ang mga credit ng video",
+        "Marka ng Audience Resonance bago ang mabigat na rendering",
+        "Master na handa nang ilathala mula sa iisang studio"
+      ],
+      "timeLabel": "Karaniwang tagal ng proyekto",
+      "timeValue": "2–4 na araw"
+    },
+    "comparisonCaption": "Pinapalitan ng iisang studio ang mga hiwa-hiwalay na tool para sa prompt, manu-manong pag-edit, at paglilipat ng trabaho sa iba't ibang platform.",
+    "comparisonImageAlt": "Tradisyonal na gastusin sa produksyon kumpara sa SceneFlow automated studio — mas mabilis na proseso mula konsepto hanggang sa video na handa nang i-publish"
   },
   "comparison": {
-    "title": "Production speed without the overhead",
-    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
-    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "title": "Bilis ng produksyon nang walang karagdagang gastusin sa operasyon",
+    "subtitle": "Palitan ang mga hiwa-hiwalay na tool para sa prompt at manu-manong pagbuo ng isang automated na studio — mula sa unang konsepto hanggang sa master na handa nang i-publish.",
+    "caption": "Pinapalitan ng iisang studio ang mga hiwa-hiwalay na tool para sa prompt, manu-manong pag-edit, at paglilipat ng trabaho sa iba't ibang platform.",
+    "imageAlt": "Tradisyonal na gastusin sa produksyon kumpara sa SceneFlow automated studio — mas mabilis na proseso mula konsepto hanggang sa video na handa nang i-publish"
   },
   "howItWorks": {
-    "title": "From concept to publish-ready video",
-    "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
-    "tagline": "Every step is expertly automated. Every step gives you full control.",
-    "optionalBadge": "Optional",
-    "optionalSuffix": " (optional)",
-    "readyTitle": "Ready to test the full pipeline?",
-    "explorerCta": "Start with Explorer — $9",
+    "title": "Mula sa konsepto hanggang sa video na handa nang i-publish",
+    "titleAccent": "Isang ginagabayang pipeline",
+    "subtitle": "Opsyonal ang series. Ang pangunahing daloy ay Blueprint → Production → Final Cut → Premiere — na kinabibilangan ng mga tier na storyboard, animatic, video, at master MP4 sa proseso.",
+    "tagline": "Ang bawat hakbang ay awtomatiko at mahusay na naisagawa. Ang bawat hakbang ay nagbibigay sa iyo ng ganap na kontrol.",
+    "optionalBadge": "Opsyonal",
+    "optionalSuffix": " (opsyonal)",
+    "readyTitle": "Handa na bang subukan ang buong pipeline?",
+    "explorerCta": "Magsimula sa Explorer — $9",
     "phases": [
       {
-        "id": "series",
-        "stepLabel": "Series",
+        "id": "serye",
+        "stepLabel": "Serye",
         "subtitle": "Showrunner Engine",
-        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "description": "Tukuyin nang minsan ang iyong universe at bumuo ng magkakaugnay na mga kwentong sumasaklaw sa maraming episode. Pinapanatili ng shared Reference Library ang pagkakaisa ng mga karakter at tono sa buong season.",
         "keySteps": [
-          "Define universe — characters, tone, and season arc",
-          "Auto-generate episode outlines across the season",
-          "Sync into Blueprint and Production per episode"
+          "Ilarawan ang mundo ng kuwento — mga tauhan, tono, at takbo ng kuwento sa season.",
+          "Awtomatikong bumuo ng mga balangkas ng episode para sa buong season",
+          "I-sync sa Blueprint at produksyon bawat episode"
         ],
         "keyFeatures": [
-          "Define your universe once — characters, tone, and season arc",
-          "Cohesive episode outlines — auto-generated across the season",
-          "Continuity tracking — multi-episode seasons in alignment",
-          "Series-to-episode sync — into Blueprint Studio and Production"
-        ],
-        "optional": true
+          "Tukuyin nang minsan ang iyong mundo—mga karakter, tono, at takbo ng kuwento sa season.",
+          "Magkakaugnay na balangkas ng mga episode — awtomatikong nabubuo para sa buong season",
+          "Pagsubaybay sa pagpapatuloy — pag-aayos ng mga season na binubuo ng maraming episode",
+          "Pag-synchronize ng serye sa episode — patungo sa Blueprint Studio at Produksyon"
+        ]
       },
       {
         "id": "blueprint",
         "stepLabel": "Blueprint",
-        "subtitle": "Story Development",
-        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "subtitle": "Pagbuo ng Kuwento",
+        "description": "Gawing mga estrukturadong treatment ang mga konsepto, na kinabibilangan ng logline, beats, mga karakter, at tono. Patakbuhin ang Audience Resonance at makipagtulungan bago ang mabigat na rendering.",
         "keySteps": [
-          "Generate → Review → Iterate → Start Production",
-          "Audience Resonance scoring with 80+ target",
-          "Collaborator share links and export (PDF, Doc, PPTX)"
+          "Bumuo → Suriin → Isaayos → Simulan ang Produksyon",
+          "Audience Resonance pag-iskor na may target na 80+",
+          "Mga link sa pagbabahagi at pag-export (PDF, Doc, PPTX) para sa mga collaborator"
         ],
         "keyFeatures": [
-          "Generate → Review → Iterate → Start Production workflow",
-          "Concept to structure in minutes — logline, beats, characters, and tone",
-          "Audience Resonance scoring with 80+ target before Production",
-          "Collaborator share links — feedback synthesis into guided revision"
-        ],
-        "optional": false
+          "Daloy ng trabahong Pagbuo → Pagsusuri → Pag-uulit → Pagsisimula ng Produksyon",
+          "Mula konsepto hanggang estruktura sa loob ng ilang minuto — logline, beats, mga karakter, at tono",
+          "Audience Resonance pagmamarka na may target na 80+ bago ang Production",
+          "Mga link na ibinahagi ng mga katuwang — pagsasama-sama ng mga puna para sa ginabayang rebisyon"
+        ]
       },
       {
-        "id": "production",
-        "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "id": "produksyon",
+        "stepLabel": "Produksyon",
+        "subtitle": "Mula Iskrip Patungong Stream",
+        "description": "Ginagabayan ng mga tab na Script at Action ang Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, at mga MP4 stream — hindi na kailangang lumipat ng tool.",
         "keySteps": [
-          "Lock script, voices, and scene audio",
-          "Express storyboard — gallery and share for review",
+          "I-finalize ang script, mga boses, at audio ng eksena",
+          "Express storyboard — gallery at pagbabahagi para sa pagsusuri",
           "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "Ipadala ang mga natapos na stream sa Final Cut"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
-        ],
-        "optional": false
+          "Foundation — iskrip, mga boses, audio ng eksena, pinal na iskrip",
+          "Express storyboard — direksyon at mga frame sa loob ng ilang minuto; gallery at pagbabahagi",
+          "Beat Frames at Mixer — mga frame ng simula/wakas, Director Console, pag-render ng mga MP4 stream",
+          "Mga Production Stream — suriin ang mga output, i-render muli ang mga outdated na beat, ipadala sa Final Cut"
+        ]
       },
       {
-        "id": "final-cut",
+        "id": "pinal na bersyon",
         "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "subtitle": "Pagbuo ng Stream",
+        "description": "Pagsamahin ang mga tapos nang Production stream sa iisang master MP4. Pumili ng Animatic o kaya ay video at wika para sa bawat eksena — hindi na kailangan ng timeline editing; ang mga creative change ay mananatili sa Production Mixer.",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
+          "Pumili ng mga stream para sa bawat scene — preset o custom na mix",
+          "Silipin ang buong programa ayon sa pagkakasunod-sunod ng script",
+          "Mag-export ng isang master MP4 para sa Premiere"
         ],
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
+          "Pagpili ng stream bawat eksena — Animatic, Video, wika, bersyon",
+          "Mga preset ng pagbuo — Lahat ng Video, Hybrid, Custom mix",
+          "Walang pag-e-edit sa timeline — ang mga malikhaing pagbabago ay mananatili sa Production Mixer",
+          "One-click master export — pinagdugtong na MP4 para sa Premiere"
+        ]
       },
       {
-        "id": "premiere",
+        "id": "unang pagtatanghal",
         "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "subtitle": "Sentro ng Distribusyon",
+        "description": "Suriin ang iyong master copy gamit ang audience analytics, pagkatapos ay i-publish ito sa YouTube na may localized metadata o mag-export ng mga bundle para sa Shorts, Reels, at TikTok.",
         "keySteps": [
-          "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
+          "Gumawa ng screening at ibahagi ang /s/ link",
+          "Suriin ang pagmamarka, pakikipag-ugnayan, at mga visual insight",
+          "YouTube wizard o export bundle"
         ],
         "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
-        ],
-        "optional": false
+          "Maaaring ibahagi Screening Room — mga link na /s/ na may scoring at opsyonal na analytics ng engagement (may pahintulot ng manonood)",
+          "Dashboard ng mga insight — Mga tab na Scoring, Biometric, at Visual",
+          "YouTube wizard — thumbnail, naka-localize na pamagat/paglalarawan, SceneFlow CTA",
+          "Mga bundle para sa pag-export at mga plano para sa mga vertical na short-form clip"
+        ]
       }
     ]
   },
   "useCases": {
-    "badge": "Production Applications",
-    "title": "Whatever Video You Can Imagine,",
-    "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "badge": "Mga Aplikasyon sa Produksyon",
+    "title": "Anumang video na kaya mong isipin,",
+    "titleAccent": "Buuin ito sa SceneFlow",
+    "subtitle": "Mga presentasyon ng real estate, edukasyon, podcast, format ng balita, branded campaign, at mga kuwentong mala-pelikula — isang automated na studio para sa lahat ng ito, mula sa konsepto hanggang sa master copy na handa nang ilathala.",
+    "qualifyingStatement": "Ginagawang narrated walkthrough video ng SceneFlow ang iyong mga orihinal na larawan, mga na-upload na file, at mga paglalarawan — na may opsyonal na boses at karakter na ikaw ang kumokontrol. Ang mga ito ay mga presentasyong binago gamit ang AI: mga makatotohanang visual na nakabatay sa iyong mga materyales, at hindi mga live na recording mula sa camera. Suriin at aprubahan ang bawat storyboard bago ito i-publish; lagyan ng malinaw na label ang mga output upang malaman ng mga manonood kung ano ang kanilang pinapanood.",
     "ui": {
-      "useCases": "Use Cases",
-      "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo coming soon",
-      "selectExample": "Select an example to preview its demo"
+      "useCases": "Mga Kaso ng Paggamit",
+      "sectors": "{count} na SEKTOR",
+      "demoComingSoon": "Darating na ang demo",
+      "selectExample": "Pumili ng halimbawa upang makita ang preview ng demo nito.",
+      "targetPersona": "Target na Persona",
+      "theChallenge": "Ang Hamon",
+      "sceneFlowSolution": "Ang Solusyong SceneFlow",
+      "beforeVsAfter": "Bago at Pagkatapos",
+      "before": "Bago",
+      "after": "Pagkatapos",
+      "theWin": "Ang \"Panalo\"",
+      "frameAnchoredTitle": "Pagpapatuloy na Nakabatay sa Frame",
+      "frameAnchoredDescription": "Ang SceneFlow ang tanging tool na nagbibigay-daan sa Frame-Anchored continuity, na tinitiyak na mananatiling parehong-pareho ang produkto o karakter ng iyong kliyente sa bawat bahagi ng eksena.",
+      "closePreview": "Isara ang Preview",
+      "expandVideo": "Palakihin ang Video",
+      "expandImage": "Palakihin ang larawan",
+      "orStartExplorer": "magsimula sa $9 Explorer plan",
+      "orPrefix": "O"
+    },
+    "personas": {
+      "creator": {
+        "label": "Solo na Tagalikha",
+        "title": "Ang YouTube Creator",
+        "beforeAfter": {
+          "before": "40 oras",
+          "after": "25 minuto"
+        },
+        "challenge": {
+          "title": "Ang Hadlang sa \"B-Roll\"",
+          "description": "Maganda ang iyong script, ngunit nauubos ang halos lahat ng oras mo sa paghahanap ng footage, pag-aayos ng mga edit, at pagtiyak na magkakaugnay ang mga eksena. Dahil dito, bumabagal ang daloy ng pag-publish at nababawasan ang kakayahang mapanatili ang atensyon ng mga manonood."
+        },
+        "solution": {
+          "title": "Ang Awtomatikong Tagapagsalaysay",
+          "description": "Mabilis na gawing mga visual na handa na para sa produksyon ang mga script, habang pinapanatili ang pagkakapare-pareho ng karakter at estilo mula sa unang eksena hanggang sa pinal na bersyong handa nang ilathala.",
+          "features": [
+            "Mga biswal na tumutugma nang maayos sa mga bahagi ng iskrip",
+            "Pare-parehong mga pangunahing tauhan sa bawat eksena",
+            "Palawakin ang produksyon sa mga serye ng episode gamit ang isang nakabahaging library ng mga sanggunian."
+          ]
+        },
+        "win": "Lumipat mula sa paminsan-minsang pag-upload patungo sa maaasahang daloy ng produksyon na may mas mababang overhead.",
+        "keyPhrases": [
+          "Mas mabilis na pagtatapos",
+          "Mga Tauhang Consistent",
+          "Daloy ng Trabahong Handa para sa Serye"
+        ]
+      },
+      "team": {
+        "label": "In-house na Koponan",
+        "title": "Ang In-House na Video Team",
+        "beforeAfter": {
+          "before": "6 na linggo",
+          "after": "Sa parehong linggo"
+        },
+        "challenge": {
+          "title": "Mga Nakatenggang Gawain ng Vendor at Paglayo sa Pagkakakilanlan ng Brand",
+          "description": "Naghihintay nang ilang linggo ang mga team ng Communications, L&D, at marketing para sa mga video mula sa mga agency o vendor. Nagdudulot ang bawat shoot ng hindi pare-parehong branding, mga invoice na hindi matiyak ang halaga, at mahahabang proseso ng pag-apruba na nagpapabagal sa mga campaign."
+        },
+        "solution": {
+          "title": "Produksyong In-House sa Loob ng Linggong Ito",
+          "description": "Magtalaga ng mga tauhan para gumawa ng video gamit ang credit budget na madaling matantiya — kalakip ang mga brand template at proseso ng pag-apruba bago ang final render, nang hindi na kailangan ng bayad para sa mga araw ng trabaho ng crew o walang katapusang cycle ng pag-edit.",
+          "features": [
+            "Palitan ang mga shoot na isinasagawa ng mga vendor ng mga guided in-house workflow.",
+            "Mga template at library ng sanggunian na ligtas para sa brand",
+            "Nakikitang paggamit ng credit at mga limitasyon sa badyet bawat proyekto",
+            "Aprubahan ang mga storyboard bago bayaran ang pinal na video."
+          ]
+        },
+        "win": "Ilabas ang mga video para sa pagsasanay, komunikasyon, at kampanya ayon sa sarili mong iskedyul — hindi batay sa backlog ng vendor.",
+        "keyPhrases": [
+          "Gastusing Maaaring Tantyahin",
+          "Pagkontrol sa Brand",
+          "Pagkumpleto sa loob ng parehong linggo"
+        ]
+      },
+      "productionShop": {
+        "label": "Pasilidad sa Produksyon",
+        "title": "Ang Tindahan ng Espesyalisadong Produksyon",
+        "beforeAfter": {
+          "before": "$8,000 bawat shoot",
+          "after": "$200 na credit"
+        },
+        "challenge": {
+          "title": "Mga Espesipikong Sektor, Walang Sistemang Mauulit",
+          "description": "Ang mga kliyente sa larangan ng memoir, legacy, real estate, at edukasyon ay nangangailangan ng mabilis na pagtatapos ng trabaho — ngunit ang bawat proyekto ay nagsisimula sa wala. Hindi mapapalawak ang operasyon para sa mga upload, voice clone, at avatar kung walang nakatakdang proseso o template mula sa pagtanggap ng kliyente hanggang sa paghahatid ng output."
+        },
+        "solution": {
+          "title": "Gawing Produkto ang Iyong Serbisyo sa Video",
+          "description": "Bumuo ng mga workflow na maaaring ulit-ulitin para sa mga memoir studio at mga espesyalisadong sektor. Mula sa pag-upload ng mga template, voice clone, at avatar hanggang sa pag-apruba ng storyboard — i-customize ang mga ito para sa bawat kliyente at palakihin ang kita sa pamamagitan ng mataas na volume ng trabaho.",
+          "features": [
+            "Mga template para sa memoir na may kakayahang mag-upload ng mga larawan, voice clone, at avatar host",
+            "Ang proseso ng pagtanggap sa kliyente ay nakaugnay sa Blueprint at sa mga yugto ng pag-apruba ng storyboard.",
+            "Mga white-label studio package para sa mga video na pang-alaala, pagpupugay, at subscription",
+            "Margin sa mga credit sa halip na overhead bawat shoot"
+          ]
+        },
+        "win": "Maglunsad ng serbisyong video memoir o espesyalisadong studio service na may sistema para sa paulit-ulit na paghahatid ng serbisyo — hindi 'yung isang beses lang na freelance na trabaho.",
+        "keyPhrases": [
+          "Mga Template ng Memoir",
+          "Pagkakakilanlan ng Boses at Avatar",
+          "Paghahatid na Mauulit"
+        ]
+      },
+      "agency": {
+        "label": "Ahensya",
+        "title": "Ang Client Delivery Lead",
+        "beforeAfter": {
+          "before": "Paghahatid sa loob ng 3 linggo",
+          "after": "Paghahatid sa loob ng 3 araw"
+        },
+        "challenge": {
+          "title": "Paghahatid ng Serbisyo sa Kliyente sa Malawakang Antas",
+          "description": "Ang pagkuha ng proyekto ay kalahati pa lamang ng laban. Ang mga paulit-ulit na trabaho para sa kliyente ay nangangailangan ng mabilis na pagtapos, malinaw na proseso ng pag-apruba, at kita sa bawat output — nang hindi na kailangang simulan muli ang produksyon mula sa umpisa sa bawat pagkakataon."
+        },
+        "solution": {
+          "title": "Dami ng Naproseso + Pag-apruba ng Kliyente",
+          "description": "Lumipat mula sa pitch spec patungo sa tuloy-tuloy na paghahatid gamit ang mga kontrol na ligtas para sa brand, pagsusuri ng kliyente bago ang final render, at mga gastusing credit na matatantiya bawat proyekto.",
+          "features": [
+            "Mabilis na pre-visualization para sa mga pitch at pag-apruba ng kliyente",
+            "Mga template na maaaring gamitin muli para sa mga paulit-ulit na format ng kliyente",
+            "Nakikita ang badyet sa bawat yugto ng pag-uulit",
+            "Kakayahang palawakin ang serbisyo nang hindi nagdaragdag ng tauhan"
+          ]
+        },
+        "win": "Pabilisin ang mga cycle ng pitch at pagtugon sa mga paulit-ulit na trabaho ng kliyente, habang binabawasan ang panganib sa produksyon at pinapataas ang kita.",
+        "keyPhrases": [
+          "Mga Pag-apruba ng Kliyente",
+          "Dami ng Naihahatid",
+          "Kakayahang Mahulaan ang Badyet"
+        ]
+      }
+    },
+    "segmentCtas": {
+      "creator": {
+        "label": "Simulan ang iyong production test flight",
+        "subtext": "$9 (isang beses na bayad) • 750 credits • Ganap na access sa platform"
+      },
+      "team": {
+        "label": "Mag-iskedyul ng walkthrough kasama ang team",
+        "subtext": "Tingnan kung paano pinapalitan ng mga in-house team ang mga cycle ng vendor."
+      },
+      "productionShop": {
+        "label": "Mag-explore ng mga vertical na template",
+        "subtext": "Real estate, edukasyon, mga dokumento, at iba pa — alamin kung ano ang maaari mong gawing produkto."
+      },
+      "agency": {
+        "label": "Tingnan ang presyo para sa team",
+        "subtext": "Mga planong angkop sa malalaking ahensya at production shop"
+      }
     },
     "categories": [
       {
-        "id": "property",
-        "title": "Property, Spaces & Hospitality",
+        "id": "ari-arian",
+        "title": "Ari-arian, mga Espasyo at Hospitality",
+        "qualifyingStatement": "Binuo mula sa mga totoong larawan ng iyong ari-arian — ipinapakita bilang isang walkthrough na may salaysay at binago ng AI upang gamitin ang iyong boses at avatar. Nagbibigay ito ng makatotohanang preview ng layout at mga katangian, ngunit hindi ito kapalit ng personal na pagbisita o pagtingin sa lugar. Malinaw na may label ang lahat ng tour.",
         "examples": [
           {
-            "id": "residential-real-estate",
+            "id": "residential real estate",
             "label": "Residential Real Estate",
-            "description": "Automated listing tours featuring the agent's cloned voice and avatar identity."
+            "description": "Isipin mong ia-upload mo ang mga larawan ng iyong property kasama ang iyong naka-save na character reference at boses. Pagkatapos, agad na makakabuo ng isang propesyonal na walkthrough ng listing gamit ang iyong imahe at boses — sa mahigit 70 wika."
           },
           {
-            "id": "commercial-real-estate",
-            "label": "Commercial Real Estate",
-            "description": "Investor pitch videos showing floor plans, 3D renderings of future developments, and neighborhood data."
+            "id": "komersyal na real estate",
+            "label": "Komersyal na Real Estate",
+            "description": "Isipin ang pag-upload ng mga floor plan, rendering, at impormasyon tungkol sa lugar, kasama ang nakaimbak na boses at avatar ng iyong broker. Pagkatapos ay ang agarang paggawa ng mga walkthrough para sa presentasyon sa mga investor na nagbibigay-buhay sa bawat bahagi ng espasyo — na naka-localize sa mahigit 70 wika."
           },
           {
-            "id": "short-term-rentals",
-            "label": "Short-Term Rentals",
-            "description": "Automated \"Digital Welcome Books\" that walk guests through house features and local \"best of\" spots."
+            "id": "mga paupahan sa maikling panahon",
+            "label": "Mga Paupahan sa Maikling Panahon",
+            "description": "Isipin ang pag-upload ng mga larawan ng bahay at mga detalye tungkol sa mga amenity, kalakip ang nakarekord na boses ng iyong host. Pagkatapos ay ang agarang pag-publish ng mga digital na welcome video na bumabati sa bawat bisita gamit ang kanilang sariling wika — bago pa man sila mag-check in."
           },
           {
-            "id": "hospitality-tourism",
-            "label": "Hospitality & Tourism",
-            "description": "Hotel virtual tours and narrated travel itineraries for agencies."
+            "id": "hospitalidad at turismo",
+            "label": "Hospitalidad at Turismo",
+            "description": "Isipin mong nag-a-upload ka ng mga larawan ng hotel at mga highlight ng itinerary gamit ang nakaimbak na boses ng host at avatar ng iyong brand. Pagkatapos, agad kang makakapaglabas ng mga virtual tour at travel guide na may narration sa mahigit 70 wika — nang hindi na nangangailangan ng film crew sa bawat property."
           },
           {
-            "id": "museum-gallery-guides",
-            "label": "Museum & Gallery Guides",
-            "description": "Multi-language audio-visual \"tours\" for exhibitions that can be updated JIT as exhibits change."
+            "id": "mga gabay sa museo at galeriya",
+            "label": "Mga Gabay sa Museo at Galeriya",
+            "description": "Isipin ang pag-upload ng mga larawan ng eksibit at mga tala ng curator habang nagbabago ang mga display. Pagkatapos ay agarang pag-update sa mga narrated tour ng gallery sa mahigit 70 wika — hindi na kailangang mag-shoot muli kapag nagpalit na ng eksibisyon."
           }
         ]
       },
       {
-        "id": "knowledge",
-        "title": "Knowledge, Training & Education",
+        "id": "kaalaman",
+        "title": "Kaalaman, Pagsasanay at Edukasyon",
         "examples": [
           {
-            "id": "k12-higher-ed",
-            "label": "K-12 & Higher Ed",
-            "description": "30-minute curriculum modules that can be instantly localized for ESL students or global campuses."
+            "id": "K-12 at mas mataas na antas ng edukasyon",
+            "label": "K-12 at Mas Mataas na Antas ng Edukasyon",
+            "description": "Isipin ang pag-upload ng mga materyales sa aralin gamit ang nakaimbak na boses at character reference ng iyong instruktor. Pagkatapos, ang agarang pagbuo ng mga kumpletong module ng kurikulum na mapapanood ng iyong mga estudyante sa ESL at global campus sa mahigit 70 wika."
           },
           {
-            "id": "corporate-ld",
-            "label": "Corporate L&D",
-            "description": "Compliance training, safety protocols, and new-hire onboarding that stays consistent across global offices."
+            "id": "pang-korporasyon",
+            "label": "Pag-aaral at Pagpapaunlad sa Korporasyon",
+            "description": "Isipin ang pag-upload ng mga compliance script gamit ang nakaimbak na boses at avatar ng iyong trainer. Pagkatapos ay ang agarang pagpapatupad ng pare-parehong onboarding at safety training sa bawat opisina — na naka-localize sa mahigit 70 wika."
           },
           {
-            "id": "software-saas-tutorials",
-            "label": "Software SaaS Tutorials",
-            "description": "Automated \"walk-throughs\" using UI screenshots as reference images for F2V motion."
+            "id": "mga tutorial sa software at SaaS",
+            "label": "Mga Tutorial sa SaaS Software",
+            "description": "Isipin mong nag-a-upload ka ng mga screenshot ng UI bilang mga reference frame, kasama ang nakaimbak na boses ng iyong product expert. Pagkatapos, agad kang makakagawa ng mga walkthrough video na nagpapakita ng animation sa bawat click — at awtomatikong naa-update sa mismong araw na inilabas ang iyong UI."
           },
           {
-            "id": "niche-skill-tutoring",
-            "label": "Niche Skill Tutoring",
-            "description": "Professional \"How-To\" series for cooking, DIY, or technical certifications."
+            "id": "pagtuturo ng espesyalisadong kasanayan",
+            "label": "Pagtuturo ng Espesyal na Kasanayan",
+            "description": "Isipin mong nag-a-upload ka ng mga larawan ng bawat hakbang, kasama ang nakaimbak na boses at character reference ng iyong instructor. Pagkatapos, agad kang makakapaglathala ng mga propesyonal na \"how-to\" series—tulad ng pagluluto, DIY, o paghahanda para sa sertipikasyon—sa mahigit 70 wika."
           },
           {
-            "id": "medical-patient-education",
-            "label": "Medical/Patient Education",
-            "description": "Narrated explanations of surgical procedures or medication management for hospitals and clinics."
+            "id": "edukasyong medikal para sa pasyente",
+            "label": "Edukasyong Medikal/Para sa Pasyente",
+            "description": "Isipin ang pag-upload ng mga diagram ng pamamaraan (procedure diagrams) kasama ang na-record at inaprubahang boses ng iyong clinician. Pagkatapos ay ang agarang paggawa ng malilinaw na video para sa edukasyon ng pasyente na mauunawaan ng mga pamilya sa mahigit 70 wika."
           },
           {
-            "id": "video-memoirs",
-            "label": "Video Memoirs",
-            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+            "id": "mga video-memoir",
+            "label": "Mga Video na Tala ng Alaala",
+            "description": "Isipin ang pag-upload ng mga larawan ng pamilya, audio ng panayam, at mga tala sa eksena, kasama ang nakaimbak na boses ng narrator. Pagkatapos, agad na bumuo ng mga video ng alaala na nakaayos ayon sa mga kabanata—at aprubahan ang storyboard bago ang pinal na pag-render."
           }
         ]
       },
       {
         "id": "jit",
-        "title": "JIT Media & Information",
+        "title": "JIT Media at Impormasyon",
         "examples": [
           {
-            "id": "hyper-local-news",
-            "label": "Hyper-Local News",
-            "description": "Automated daily news briefs for small towns or specific neighborhoods where a film crew is too expensive."
+            "id": "balitang hyper-local",
+            "label": "Balitang Hyper-lokal",
+            "description": "Isipin mong nag-a-upload ka ng mga larawan at balita para sa araw na ito gamit ang nakaimbak na boses ng iyong anchor. Pagkatapos ay agad na naglalathala ng maikling balita para sa komunidad—nang hindi na kailangan ng film crew o nangangamba sa paglampas sa deadline."
           },
           {
-            "id": "financial-market-recaps",
-            "label": "Financial & Market Recaps",
-            "description": "Turning daily stock market or crypto data into 3-minute narrated visual digests."
+            "id": "mga buod ng merkado ng pananalapi",
+            "label": "Mga Buod ng Pananalapi at Merkado",
+            "description": "Isipin mong nag-a-upload ka ng market data at mga snapshot ng chart tuwing umaga, kasama ang nakarekord na boses ng iyong analyst. Pagkatapos, agad itong ginagawang isang visual digest na may kasamang pagsasalaysay — handa na bago pa man magsimula ang trading session."
           },
           {
-            "id": "sports-commentary",
-            "label": "Sports Commentary",
-            "description": "Automated \"recap\" videos using game stats and static photography turned into F2V action."
+            "id": "komentaryo sa palakasan",
+            "label": "Komentaryong Pampalakasan",
+            "description": "Isipin ang pag-upload ng mga istatistika ng laro at mga litrato kasama ang nakaimbak na boses ng iyong commentator. Pagkatapos ay ang agarang paggawa ng mga recap video na may animated na aksyon — na ipinapalabas habang pinag-uusapan pa ito ng mga tagahanga."
           },
           {
-            "id": "true-crime-historical-docs",
-            "label": "True Crime & Historical Docs",
-            "description": "Using the Reference Library to keep historical figures consistent across a multi-part documentary series."
+            "id": "mga dokumentaryong pangkasaysayan tungkol sa totoong krimen",
+            "label": "Mga Dokumentaryo sa Tunay na Krimen at Kasaysayan",
+            "description": "Isipin mong i-save nang minsan lang ang mga historikal na personalidad sa iyong Reference Library. Pagkatapos, agad kang makakagawa ng mga episode na may maraming bahagi kung saan nananatiling pareho ang bawat mukha at boses — sa sunod-sunod na mga serye."
           },
           {
-            "id": "weather-emergency-alerts",
-            "label": "Weather & Emergency Alerts",
-            "description": "Multilingual emergency broadcasts that need to be generated and published in minutes across social platforms."
+            "id": "mga babala sa emergency na may kaugnayan sa panahon",
+            "label": "Mga Alerto sa Panahon at Emergency",
+            "description": "Isipin ang pag-upload ng mga emergency bulletin gamit ang pinagkakatiwalaan at nakaimbak na boses ng inyong ahensya. Pagkatapos ay ang agarang pagpapalabas ng malilinaw na alerto sa mahigit 70 wika sa iba't ibang social platform — sa loob lamang ng ilang minuto, hindi mga araw."
           }
         ]
       },
       {
-        "id": "b2b",
-        "title": "B2B Marketing & Sales",
+        "id": "negosyo-sa-negosyo",
+        "title": "Marketing at Pagbebenta sa B2B",
         "examples": [
           {
-            "id": "product-explainer-videos",
-            "label": "Product Explainer Videos",
-            "description": "Turning a static product catalog into a cinematic series of \"Why You Need This\" videos."
+            "id": "mga video na nagpapaliwanag ng produkto",
+            "label": "Mga Video na Nagpapaliwanag sa Produkto",
+            "description": "Isipin mong nag-a-upload ka ng mga larawan mula sa product catalog kasama ang nakaimbak na boses ng presenter at avatar ng iyong brand. Pagkatapos, agad kang makakabuo ng serye ng mga cinematic explainer video—at maaari mong aprubahan ang storyboard bago ang rendering."
           },
           {
-            "id": "case-study-testimonials",
-            "label": "Case Study/Testimonials",
-            "description": "Using client headshots and project photos to create high-end visual success stories."
+            "id": "mga testimonya mula sa case study",
+            "label": "Pag-aaral ng Kaso/Mga Patotoo",
+            "description": "Isipin mong nag-a-upload ka ng mga litrato ng kliyente, mga larawan ng proyekto, at mga datos ng tagumpay, kasabay ng isang nakaimbak na boses ng narrator. Pagkatapos, agad kang makakagawa ng mga pulidong visual case study — nang hindi na kinakailangang mag-shoot ng testimonial."
           },
           {
-            "id": "recruitment-branding",
-            "label": "Recruitment & Branding",
-            "description": "Giving candidates a narrated \"day in the life\" tour of the office and culture."
+            "id": "pagbuo ng imahe para sa recruitment",
+            "label": "Pag-recruit at Pagbuo ng Tatak",
+            "description": "Isipin ang pag-upload ng mga larawan ng opisina at mga tampok sa kultura ng kumpanya, gamit ang nakaimbak na boses at avatar ng iyong recruiter. Pagkatapos, agad na maipakita sa mga aplikante ang isang guided tour na nagpapakita ng karaniwang araw sa trabaho — sa mahigit 70 wika para sa global na pag-hire."
           },
           {
-            "id": "conference-event-promos",
-            "label": "Conference & Event Promos",
-            "description": "Automated \"Speaker Bio\" videos and \"What to Expect\" guides for large-scale events."
+            "id": "mga promo para sa kumperensya at event",
+            "label": "Mga Promo para sa Kumperensya at Kaganapan",
+            "description": "Isipin ang pag-upload ng mga talambuhay ng speaker, detalye ng session, at mga larawan ng venue gamit ang nakaimbak na boses ng iyong event host. Pagkatapos ay ang agarang pagbuo ng mga pagpapakilala sa speaker at mga gabay kung ano ang aasahan — na awtomatikong ina-update sa tuwing nagbabago ang agenda."
           }
         ]
       },
       {
-        "id": "public",
-        "title": "Public Sector & Advocacy",
+        "id": "publiko",
+        "title": "Sektor ng Publiko at Adbokasiya",
         "examples": [
           {
-            "id": "ngo-impact-reports",
-            "label": "NGO Impact Reports",
-            "description": "Turning data and field photography into emotive, narrated videos for donors."
+            "id": "mga ulat sa epekto ng NGO",
+            "label": "Mga Ulat sa Epekto ng NGO",
+            "description": "Isipin mong nag-a-upload ka ng mga larawan mula sa field at datos tungkol sa inyong epekto, kasama ang nakaimbak na boses ng narrator ng inyong organisasyon. Pagkatapos, agad na ginagawang mga video na may emosyonal na pagsasalaysay ang mga ulat para sa mga donor—na tunay na boses ng inyong misyon, at hindi basta slideshow lamang."
           },
           {
-            "id": "public-health-announcements",
-            "label": "Public Health Announcements",
-            "description": "Universal messaging (vaccination, hygiene, safety) that needs to hit 70+ languages with perfect clarity."
+            "id": "mga anunsyo sa kalusugang pampubliko",
+            "label": "Mga Anunsyo sa Pampublikong Kalusugan",
+            "description": "Isipin mong nag-a-upload ka ng mga aprubadong mensahe tungkol sa kalusugan gamit ang pinagkakatiwalaan at nakaimbak na boses ng iyong departamento. Pagkatapos ay agad na naabot ang bawat komunidad sa mahigit 70 wika — taglay ang parehong linaw at pagka-apurado, nang walang anumang pagkaantala dahil sa pagsasalin."
           },
           {
-            "id": "legal-insurance-explainers",
-            "label": "Legal & Insurance Explainers",
-            "description": "Helping clients understand complex contracts or claim processes through narrated visual breakdowns."
+            "id": "Mga paliwanag tungkol sa legal at insurance",
+            "label": "Mga Paliwanag sa Legal at Seguro",
+            "description": "Isipin mong nag-a-upload ka ng mga buod ng kontrata at diagram ng proseso na kalakip ang nakarekord na boses ng iyong advisor. Pagkatapos, agad kang makakabuo ng mga visual na paliwanag na talagang mauunawaan ng mga kliyente — bago pa man sila pumirma o maghain ng claim."
           },
           {
-            "id": "religious-spiritual-teachings",
-            "label": "Religious & Spiritual Teachings",
-            "description": "Converting sermons or texts into a consistent, narrated daily video series for global congregations."
+            "id": "mga aral na panrelihiyon at espirituwal",
+            "label": "Mga Aral na Panrelihiyon at Espirituwal",
+            "description": "Isipin ang pag-upload ng mga tala sa sermon o mga banal na kasulatan, kalakip ang nakaimbak na boses at presensya ng iyong guro. Pagkatapos ay ang agarang paglalathala ng tuloy-tuloy na serye ng mga video para sa mga kongregasyon sa buong mundo — sa mahigit 70 wika."
           }
         ]
       }
     ]
   },
   "institutionalRoi": {
-    "badge": "For in-house teams & institutions",
-    "title": "Replace vendor shoots with predictable in-house production",
-    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
+    "badge": "Para sa mga in-house na team at institusyon",
+    "title": "Palitan ang mga shoot na isinasagawa ng mga vendor ng produksyong in-house na may predictable na resulta.",
+    "subtitle": "Ang mga team sa communications, L&D, at marketing na binubuo ng 1–5 tao ay makakapaglabas ng video sa loob mismo ng linggong iyon—nang hindi nangangailangan ng retainer sa agency o walang katapusang proseso ng pag-edit.",
     "comparisons": [
       {
-        "label": "Traditional vendor shoot + edit",
+        "label": "Tradisyonal na shoot at pag-edit para sa vendor",
         "cost": "$5,000–$15,000",
-        "timeline": "4–8 weeks"
+        "timeline": "4–8 linggo"
       },
       {
-        "label": "SceneFlow in-house workflow",
-        "cost": "$50–$500 in credits",
-        "timeline": "Same week"
+        "label": "SceneFlow panloob na daloy ng trabaho",
+        "cost": "$50–$500 na halaga ng credits",
+        "timeline": "Sa parehong linggo"
       }
     ],
     "bullets": [
-      "Brand-safe templates and approval before final render",
-      "Budget caps with visible credit spend per project",
-      "No crew days, no edit back-and-forth on every revision"
+      "Mga template na ligtas para sa brand at pag-apruba bago ang pinal na render",
+      "Mga limitasyon sa badyet na may nakikitang paggamit ng credit bawat proyekto",
+      "Walang mga araw para sa production crew, at walang pabalik-balik na proseso ng pag-e-edit sa bawat rebisyon."
     ],
-    "ctaPrimary": "Book a team walkthrough",
-    "ctaSecondary": "See pricing",
-    "typicalCost": "Typical cost",
+    "ctaPrimary": "Mag-iskedyul ng walkthrough kasama ang team",
+    "ctaSecondary": "Tingnan ang mga presyo",
+    "typicalCost": "Karaniwang gastos",
     "timeline": "Timeline"
   },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Studio feature deep dive",
-    "close": "Close",
-    "viewDetails": "View Details",
+    "badge": "Pinatnubayang Paglilibot",
+    "title": "Gabay sa Paggamit ng Platform",
+    "subtitle": "Isang kumpletong gabay sa daloy ng trabaho ng SceneFlow AI Studio, mula sa mga pagsusuri sa kolaborasyon hanggang sa pinal na cinematic output.",
+    "subheading": "Galugarin ang platform — magsimula sa mga pangunahing bagay",
+    "chapterHint": "Apat na bagay na dapat malaman ngayon. Palawakin ang mga chapter kung nais mong makuha ang kabuuang detalye.",
+    "expandChapter": "Mga tampok ng palabas",
+    "collapseChapter": "Itago ang mga feature",
+    "underTheHoodLabel": "Sa ilalim ng hood",
+    "chapters": [
+      {
+        "id": "mga pangunahing pangangailangan",
+        "label": "Magsimula rito — ang makukuha mo sa unang araw"
+      },
+      {
+        "id": "kalidad",
+        "label": "Siguraduhing tumimo ito sa iyong mga tagapakinig."
+      },
+      {
+        "id": "produksyon",
+        "label": "Mula sa mga inaprubahang beat hanggang sa nailathalang master recording"
+      },
+      {
+        "id": "advanced",
+        "label": "Para sa mga team na nagnanais ng billing at pamamahala"
+      }
+    ],
+    "close": "Isara",
+    "viewDetails": "Tingnan ang mga detalye",
     "beatFirst": {
-      "id": 15,
-      "title": "Beat-First Video Pipeline",
-      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "title": "Proseso ng Paggawa ng Video na Inuuna ang Beat",
+      "description": "Aprubahan ang mga storyboard beat at Beat Frames bago ang F2V — mababawasan ang mga walang-batayang muling pagbuo (blind regeneration) na dulot ng hallucination at visual drift. Isang organisadong proseso mula sa pagsusuri hanggang sa pinal na clip.",
       "keyFeatures": [
-        "Express storyboard for review — share beats before heavy render",
-        "Beat Frames lock composition — Reference Library continuity",
-        "F2V per beat — generate video from approved frames",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "Express storyboard para sa pagsusuri — ibahagi ang mga beat bago ang mabigat na rendering",
+        "Beat Frames komposisyon ng lock — Reference Library pagpapatuloy",
+        "F2V bawat beat — bumuo ng video mula sa mga aprubadong frame",
+        "Timing at mga stream ng mixer — i-export sa assembly na Final Cut"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
-      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
+      "screenshotSlot": "Maglagay ng screenshot: Beat Frames at pag-apruba sa storyboard bago ang pagbuo ng video",
+      "videoSlot": "Maglagay ng 00:30 clip: Pag-apruba sa mga beat, pag-lock sa mga frame, at pagkatapos ay pag-generate ng mga F2V clip."
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "title": "Pagsusuri at Analytics ng Audience",
+      "description": "Mga pribadong link para sa pagbabahagi sa mga stakeholder — naglalaman ng mga manual na marka, nakabalangkas na feedback, at opsyonal na analytics ng engagement (na may pahintulot ng manonood). Ginagamit sa Premiere bago ang pag-publish at para sa preview ng production storyboard.",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "Mga pribadong sesyon ng pagsusuri — ligtas na mga link para sa pagbabahagi sa mga stakeholder",
+        "Nakabalangkas na feedback mula sa mga manonood — mga rating at mga bukas na punto",
+        "Opsyonal na analytics ng pakikipag-ugnayan — na may pahintulot ng manonood bago ang pagkuha ng datos",
+        "Magpatuloy sa pag-aayos batay sa totoong datos — pinuhin ang Blueprint at ang script gamit ang mga insight mula sa mga reviewer."
       ],
-      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+      "screenshotSlot": "Maglagay ng screenshot: Screening Room panel ng analytics at feedback ng reviewer",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      "videoSlot": "Maglagay ng 00:30 na clip: Pagsasagawa ng review session at pagkalap ng datos sa engagement"
+    },
+    "ui": {
+      "screenshot": "Screenshot",
+      "video": "Video",
+      "featureVideo": "Itinatampok na Video",
+      "keyFeatures": "Mga pangunahing katangian",
+      "openScreenshot": "Buksan ang screenshot",
+      "openFeatureVideo": "Buksan ang feature video",
+      "expandImage": "Palakihin ang larawan",
+      "closePreview": "Isara ang Preview"
+    },
+    "items": [
+      {
+        "id": "1",
+        "title": "Intuitive na UX + Ganap na Kontrol ng Creator",
+        "description": "Magsimula nang mabilis gamit ang guided automation, pagkatapos ay i-edit ang bawat output upang mapanatili ng mga team ang kontrol sa pagiging malikhain nang hindi nawawala ang bilis.",
+        "keyFeatures": [
+          "Guided Studio workflow — mula konsepto hanggang export sa iisang lugar",
+          "I-edit nang direkta ang bawat beat, karakter, at linyang binuo ng AI.",
+          "Mga baryasyon ng treatment — paghahambing nang magkatabi para sa malikhaing direksyon",
+          "Blueprint Makipagtulungan — magbahagi ng mga link, audio ng seksyon, at nakabalangkas na feedback mula sa mga reviewer."
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: editor ng Blueprint na may mga nababagong seksyong nabuo",
+        "videoSlot": "Maglagay ng 00:30 clip: UX flow mula sa konsepto hanggang sa output na maaaring i-edit"
+      },
+      {
+        "id": "2",
+        "title": "Badyet sa Kredit at Pagkontrol sa Gastos",
+        "description": "Subaybayan ang paggamit ng credit nang real-time at magtakda ng mga limitasyon bago ang mga proseso ng generation na magastos.",
+        "keyFeatures": [
+          "Paggamit ng credit sa real-time — ayon sa proyekto at operasyon",
+          "Mga pananggalang sa production — bago ang mga magastos na proseso ng generation",
+          "Mga malinaw na talaan ng presyo — para sa TTS, video, at intelligence",
+          "Visibility sa budget — para sa mga team at solo creator"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: panel ng paggamit ng credit at mga setting ng BYOK",
+        "videoSlot": "Maglagay ng 00:30 na clip: budget dashboard at pangunahing configuration",
+        "underTheHood": {
+          "title": "Sa ilalim ng hood",
+          "body": "Para sa mga production team na may mga kasalukuyang kontrata sa cloud:",
+          "bullets": [
+            "Vertex AI BYOK — pagsingil at pamamahala sa antas-enterprise",
+            "Mga toggle ng provider sa credit calculator",
+            "Mga malinaw na talaan ng mga rate ng platform kasabay ng iyong mga key"
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "title": "Anumang Konsepto, Isang Daloy ng Trabaho sa Produksyon",
+        "description": "Gumamit ng iisang maaasahang daloy ng trabaho para sa pagsasanay, mga podcast, balita, mga video ng pagbebenta ng bahay, at cinematic content.",
+        "keyFeatures": [
+          "Isang daloy ng produksyon — mga format para sa podcast, balita, pagsasanay, real estate, at pelikula",
+          "Mga template ng proyekto — Umaangkop ang Studio sa iyong source material",
+          "Parehong Blueprint → Iskrip → Proseso ng produksyon — anuman ang genre",
+          "Hindi na kailangang magpalit-palit ng tool — mula sa pagbuo ng ideya hanggang sa paghahatid"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Split-view o grid na nagpapakita ng mga template para sa Podcast, Balita, Real Estate, at Cinematic na pumapasok sa iisang pinag-isang UI ng pipeline na SceneFlow.",
+        "videoSlot": "Maglagay ng 00:30 clip: \"Magsimula sa anumang source material...\" pag-click sa New Project -> Podcast (nag-a-adjust ang UI para sa audio), kasunod ang split screen na nagpapakita sa mga proyektong News at Cinematic na nagsasama-sama sa Blueprint editor."
+      },
+      {
+        "id": "4",
+        "title": "Matalinong Automation na may Tumpak na Kontrol sa Pag-edit",
+        "description": "Ginagamit ng SceneFlow platform ang intelligence upang awtomatikong bumuo ng propesyonal na baseline (serye, blueprint, script, production prompts, at mga edit), habang nagbibigay ng matatalinong dialog na nagbibigay sa iyo ng ganap na kontrol sa pag-edit na may kasamang mga built-in na guardrail.",
+        "keyFeatures": [
+          "Mga batayang AI sa isang pasada — serye, blueprint, script, at mga prompt para sa produksyon",
+          "Mga matalinong dialog sa pag-edit — mga gabay at limitasyon, hindi basta-bastang muling pagsulat",
+          "Tanggapin, ayusin, o tanggihan — nasa ilalim ng iyong kontrol ang bawat mungkahi.",
+          "Pakikilahok ng tao — sa bawat yugto ng produksyon"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Intelligent dialog na nagpapakita ng pagbuo ng baseline kasama ang mga kontrol sa pag-edit",
+        "videoSlot": "Maglagay ng 00:30 na clip: pagbuo ng baseline gamit ang AI, na susundan ng paggawa ng mga tiyak na pagbabago ng user."
+      },
+      {
+        "id": "5",
+        "title": "Ibinahagi ang Reference Library para sa pagpapatuloy",
+        "description": "Panatilihin ang pagkakapare-pareho ng mga karakter, kasuotan, boses, lokasyon, at props sa iba't ibang eksena at episode gamit ang mga reperensiyang maaaring gamitin muli.",
+        "keyFeatures": [
+          "Mga profile na maaaring gamitin muli — mga karakter, kasuotan, boses, lokasyon, at mga props",
+          "Aplikasyong sumasaklaw sa iba't ibang senaryo — dumadaloy ang mga reperensiya sa bawat henerasyon",
+          "Pagkakapare-pareho ng visual — magkakatulad na mga mukha at tono sa mga output ng Imagen at Veo",
+          "Pagpapatuloy na ang saklaw ay pang-franchise — dinisenyo para sa mga seryeng binubuo ng maraming episode"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Library ng mga sanggunian na nagpapakita ng continuity ng karakter at mga prop.",
+        "videoSlot": "Maglagay ng 00:30 na clip: Paglalapat ng mga reference sa iba't ibang eksena"
+      },
+      {
+        "id": "6",
+        "title": "Express Generation Engine",
+        "description": "Awtomatikong bumuo ng mga imahe at video segment nang sabay-sabay. Hinahayaan ka ng Express Storyboard na suriin at ibahagi ang mga audio-visual storyboard sa loob lamang ng ilang minuto. Gumagawa ang Express Storyboard ng mga kumpletong Ken Burns scene sa loob ng ilang minuto, habang ang Express Video naman ay nakapagbibigay ng mga pinal na video scene sa loob ng ilang minuto sa halip na ilang araw.",
+        "keyFeatures": [
+          "Sabay-sabay na pagbuo — mga imahe at video sa iba't ibang eksena nang sabay",
+          "Express Storyboard — mga audio-visual preview na maaaring ibahagi sa loob ng ilang minuto",
+          "Express Animatics — Ken Burns motion mula sa mga still image",
+          "Express Video — mga clip na nakabase sa eksena sa loob ng ilang minuto, hindi mga araw"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Express generation dashboard na may mga Animatic at progreso ng video",
+        "videoSlot": "Maglagay ng 00:30 clip: Sabay-sabay na pagbuo kung saan ginagawang animatic ang script at pagkatapos ay ang pinal na video."
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance Editor",
+        "description": "Tukuyin ang iyong target na audience upang makakuha ng agarang scoring, pagsusuri, at mga rekomendasyon. Gamitin ang one-click fixes o Guided Edits upang perpektong ma-optimize ang iyong mga Episode, Blueprint, at Script para sa pinakamataas na epekto.",
+        "keyFeatures": [
+          "Pagmamarka ng target na madla — kasama ang paghihiwalay ayon sa kategorya",
+          "Mga rekomendasyong nakabatay sa seksyon — ayusin ang tamang bahagi ng iyong kuwento",
+          "Mga pag-aayos sa isang click at Guided Edit — tumpak na muling pagsulat, hindi hula-hula",
+          "Antas para sa pagiging handa sa produksyon — alamin kung kailan dapat mamuhunan sa full render"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Resonance Editor na may audience scoring at mga one-click fix",
+        "videoSlot": "Maglagay ng 00:30 na clip: Paglalapat ng mga guided edit batay sa audience resonance score"
+      },
+      {
+        "id": "8",
+        "title": "Adaptibong Pagsasalin (Mahigit 70 Wika)",
+        "description": "I-localize ang nilalaman nang malawakan habang pinapanatili ang layunin ng naratibo at pagkakahanay ng timeline para sa paghahatid sa iba't ibang wika.",
+        "keyFeatures": [
+          "Mahigit 70 wika — narasyon, diyalogo, at kopya sa malakihang antas",
+          "Napanatili ang layunin ng pagsasalaysay — nananatiling magkatugma ang kahulugan at tiyempo.",
+          "Mga audio track na may iba't ibang wika — sa timeline ng eksena",
+          "Mga package na handa nang i-export — bawat locale para sa distribusyon"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Timeline na may iba't ibang wika at mga setting ng pagsasalin",
+        "videoSlot": "Maglagay ng 00:30 na clip: Agarang pag-aangkop ng isang eksena sa iba't ibang wika"
+      },
+      {
+        "id": "9",
+        "title": "Awtomasyon ng Serye",
+        "description": "Tukuyin nang minsan ang iyong universe at bumuo ng magkakaugnay na mga kwentong sumasaklaw sa maraming episode. Pinapanatili ng shared Reference Library ang pagkakaisa ng mga karakter at tono sa buong season.",
+        "keyFeatures": [
+          "Tukuyin nang minsan ang iyong mundo—mga karakter, tono, at takbo ng kuwento sa season.",
+          "Magkakaugnay na balangkas ng mga episode — awtomatikong nabubuo para sa buong season",
+          "Pagsubaybay sa pagpapatuloy — pag-aayos ng mga season na binubuo ng maraming episode",
+          "Pag-synchronize ng serye sa episode — patungo sa Blueprint Studio at Produksyon"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Pangkalahatang-ideya ng serye na may mga episode arc na awtomatikong nabuo",
+        "videoSlot": "Maglagay ng 00:30 clip: Konseptong pinalalawak upang maging isang season na binubuo ng maraming episode"
+      },
+      {
+        "id": "10",
+        "title": "Blueprint Awtomasyon",
+        "description": "Gawing mga estrukturadong treatment ang mga konsepto, na kinabibilangan ng logline, beats, mga karakter, at tono. Patakbuhin ang Audience Resonance at makipagtulungan bago ang mabigat na rendering.",
+        "keyFeatures": [
+          "Daloy ng trabahong Pagbuo → Pagsusuri → Pag-uulit → Pagsisimula ng Produksyon",
+          "Mula konsepto hanggang estruktura sa loob ng ilang minuto — logline, beats, mga karakter, at tono",
+          "Audience Resonance pagmamarka na may target na 80+ bago ang Production",
+          "Mga link na ibinahagi ng mga katuwang — pagsasama-sama ng mga puna para sa ginabayang rebisyon"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Awtomatikong nabuong Blueprint na may mga story beat at character arc",
+        "videoSlot": "Maglagay ng 00:30 na clip: Pagbuo ng isang structured na Blueprint mula sa isang konsepto"
+      },
+      {
+        "id": "11",
+        "title": "Awtomasyon sa Produksyon",
+        "description": "Ginagabayan ng mga tab na Script at Action ang Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, at mga MP4 stream — hindi na kailangang lumipat ng tool.",
+        "keyFeatures": [
+          "Foundation — iskrip, mga boses, audio ng eksena, pinal na iskrip",
+          "Express storyboard — direksyon at mga frame sa loob ng ilang minuto; gallery at pagbabahagi",
+          "Beat Frames at Mixer — mga frame ng simula/wakas, Director Console, pag-render ng mga MP4 stream",
+          "Mga Production Stream — suriin ang mga output, i-render muli ang mga outdated na beat, ipadala sa Final Cut"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Production dashboard na nagpapakita ng script, Beat Frames, at Mixer",
+        "videoSlot": "Maglagay ng 00:30 na clip: Foundation, Express storyboard, Beat Frames, at stream export"
+      },
+      {
+        "id": "12",
+        "title": "Final Cut Asembliya",
+        "description": "Pagsamahin ang mga tapos nang Production stream sa iisang master MP4. Pumili ng Animatic o kaya ay video at wika para sa bawat eksena — hindi na kailangan ng timeline editing; ang mga creative change ay mananatili sa Production Mixer.",
+        "keyFeatures": [
+          "Pagpili ng stream bawat eksena — Animatic, Video, wika, bersyon",
+          "Mga preset ng pagbuo — Lahat ng Video, Hybrid, Custom mix",
+          "Walang pag-e-edit sa timeline — ang mga malikhaing pagbabago ay mananatili sa Production Mixer",
+          "One-click master export — pinagdugtong na MP4 para sa Premiere"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Final Cut assembly panel na may mga stream picker para sa bawat eksena",
+        "videoSlot": "Maglagay ng 00:30 na clip: Pagpili ng mga stream, pag-preview sa assembly, at pag-export ng master"
+      },
+      {
+        "id": "13",
+        "title": "Premiere Distribusyon",
+        "description": "Suriin ang iyong master copy gamit ang audience analytics, pagkatapos ay i-publish ito sa YouTube na may localized metadata o mag-export ng mga bundle para sa Shorts, Reels, at TikTok.",
+        "keyFeatures": [
+          "Maaaring ibahagi Screening Room — mga link na /s/ na may scoring at opsyonal na analytics ng engagement (may pahintulot ng manonood)",
+          "Dashboard ng mga insight — Mga tab na Scoring, Biometric, at Visual",
+          "YouTube wizard — thumbnail, naka-localize na pamagat/paglalarawan, SceneFlow CTA",
+          "Mga bundle para sa pag-export at mga plano para sa mga vertical na short-form clip"
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Dashboard ng Premiere na may mga insight at publish wizard",
+        "videoSlot": "Maglagay ng 00:30 na clip: Mga insight sa screening, YouTube wizard, at mga export bundle"
+      },
+      {
+        "id": "14",
+        "title": "Pagsusuri at Analytics ng Audience",
+        "description": "Mga pribadong link para sa pagbabahagi sa mga stakeholder — naglalaman ng mga manual na marka, nakabalangkas na feedback, at opsyonal na analytics ng engagement (na may pahintulot ng manonood). Ginagamit sa Premiere bago ang pag-publish at para sa preview ng production storyboard.",
+        "keyFeatures": [
+          "Mga pribadong sesyon ng pagsusuri — ligtas na mga link para sa pagbabahagi sa mga stakeholder",
+          "Nakabalangkas na feedback mula sa mga manonood — mga rating at mga bukas na punto",
+          "Opsyonal na analytics ng pakikipag-ugnayan — na may pahintulot ng manonood bago ang pagkuha ng datos",
+          "Magpatuloy sa pag-aayos batay sa totoong datos — pinuhin ang Blueprint at ang script gamit ang mga insight mula sa mga reviewer."
+        ],
+        "screenshotSlot": "Maglagay ng screenshot: Screening Room panel ng analytics at feedback ng reviewer",
+        "videoSlot": "Maglagay ng 00:30 na clip: Pagsasagawa ng review session at pagkalap ng datos sa engagement"
+      }
+    ]
+  },
+  "engineeringTrust": {
+    "badge": "Inhinyeriya at Seguridad",
+    "title": "Ginawa para sa",
+    "titleAccent": "Mga Load ng Trabaho sa Produksyon",
+    "subtitle": "Arkitekturang angkop sa mga startup na may mga component na Google Cloud na sumusuporta sa seguridad, scalability, at praktikal na paghahatid sa production.",
+    "pillars": [
+      {
+        "id": "arkitektura",
+        "title": "Arkitektura ng Enterprise",
+        "description": "Binuo sa imprastrakturang Google Cloud na may scalable orchestration para sa mga production workload at lumalaking mga team.",
+        "highlights": [
+          "Vertex AI para sa mga workflow ng pagbuo",
+          "Pagsasama ng Imagen 4 at Veo 3.1",
+          "ElevenLabs Integrasyon ng TTS",
+          "BYOK para sa kontrol sa pagsingil ng enterprise"
+        ]
+      },
+      {
+        "id": "seguridad",
+        "title": "Seguridad at Privacy",
+        "description": "Nananatiling protektado ang mga creative asset sa pamamagitan ng encryption habang nakaimbak, mga kontrol sa access, at pangangasiwang prayoridad ang privacy.",
+        "highlights": [
+          "Mga kontrol sa cloud na handa para sa enterprise",
+          "AES-256 encryption",
+          "Dinisenyo nang isinasaalang-alang ang GDPR",
+          "Tingnan ang aming Patakaran sa Privacy para sa paghawak ng datos."
+        ]
+      },
+      {
+        "id": "timbangan",
+        "title": "Kakayahang Lumaki at Pagkamaaasahan",
+        "description": "Sinusuportahan ng global cloud delivery ang maaasahang mga pipeline ng rendering at review habang lumalaki ang iyong volume.",
+        "highlights": [
+          "Pag-deploy sa maraming rehiyon",
+          "Paghahatid na pinabilis ng CDN",
+          "Awtomatikong paglipat sa backup",
+          "Pagsubaybay sa real-time"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "value": "Pandaigdig",
+        "label": "Paghahatid sa pamamagitan ng cloud"
+      },
+      {
+        "value": "Larawan 4",
+        "label": "Pagbuo ng imahe"
+      },
+      {
+        "value": "256-bit",
+        "label": "Pag-e-encrypt"
+      },
+      {
+        "value": "24 oras sa isang araw, 7 araw sa isang linggo",
+        "label": "Pagsubaybay"
+      }
+    ],
+    "vertexSection": {
+      "title": "Bakit Google Vertex AI?",
+      "subtitle": "Ang teknikal na kalamangang nagbibigay ng proteksyon na tunay na mahalaga",
+      "cards": [
+        {
+          "title": "Pagkapribado ng Datos",
+          "description": "Hindi ginagamit ang iyong mga script at creative asset upang magsanay ng mga shared model, na nakatutulong sa pagprotekta sa iyong intellectual property at sa mga gawa para sa iyong mga kliyente.",
+          "highlight": "hindi ginagamit upang sanayin ang mga shared model"
+        },
+        {
+          "title": "Dinisenyo para sa maaasahang throughput",
+          "description": "Ang imprastrukturang nakatuon sa produksyon ay nakatutulong na mapanatili ang matatag na daloy ng trabaho sa paggawa sa mga panahong mataas ang demand."
+        },
+        {
+          "title": "Pagkakapare-parehong Isinasaalang-alang ang Sanggunian",
+          "description": "Ginagamit ng SceneFlow ang *reference-aware generation* upang mapabuti ang pagkakapare-pareho ng mga karakter, lokasyon, at *props* sa iba't ibang eksena."
+        }
+      ]
+    },
+    "partnership": {
+      "poweredBy": "Pinapagana ng Google Cloud kasama ang Vertex AI, Cloud Storage, at mga kagamitan sa pagsasalin",
+      "footnote": "Ang SceneFlow AI ay tumatakbo sa scalable na imprastrukturang Google Cloud na idinisenyo para sa paglago ng mga startup at sa mga inaasahan ng malalaking negosyo."
+    },
+    "attribution": "— Ang Engineering Team ng SceneFlow"
+  },
+  "coreCapabilities": {
+    "audienceResonance": {
+      "badge": "Patong ng Katalinuhan",
+      "title": "Audience Resonance Editor",
+      "description": "Alamin ang iyong score bago mamuhunan sa full renders. Puntiryahin ang mga score na Audience Resonance at Blueprint pati na ang script gamit ang mga konkretong pagbabago — i-optimize ang bawat bahagi bago ang Express at video generation.",
+      "bullets": [
+        "Tukuyin ang iyong tiyak na target na madla",
+        "Kumuha ng real-time na iskor, pagsusuri, at mga rekomendasyon.",
+        "Mga solusyong isang-click lang para ayusin ang mga kahinaan sa naratibo",
+        "Guided Edit upang i-optimize ang mga Episode, Blueprint, at Script"
+      ],
+      "cta": "Suriin ang iyong iskrip",
+      "howWeScore": {
+        "toggle": "Paano kami nagbibigay ng marka",
+        "title": "Paano gumagana ang Audience Resonance",
+        "description": "Pinagsasama ng Audience Resonance ang pagsusuri sa estruktura ng naratibo (kalinawan, bilis ng daloy, at emosyonal na daloy ng kuwento) at ang pagiging angkop nito sa target na persona batay sa audience na tinukoy mo sa Blueprint — hindi ito nakabatay sa mga \"vanity metric\" o datos ng retention pagkatapos ma-publish ang video. Nakatali ang mga rekomendasyon sa mga partikular na bahagi ng script upang maitama mo ang mga isyu bago ang Express o ang pag-generate ng video.",
+        "bullets": [
+          "I-evaluate ang mga score ng Blueprint at ang script batay sa iyong tinukoy na target na audience.",
+          "Mga rekomendasyong nakabatay sa bawat seksyon — hindi isang numerong \"magtiwala na lang kayo\" na nagmumula sa isang hindi maipaliwanag na sistema.",
+          "Mga solusyong maisasagawa sa isang click at guided editing — hindi lang basta grado",
+          "Isagawa ito bago gumastos nang malaki sa rendering, hindi pagkatapos i-publish."
+        ]
+      }
+    },
+    "express": {
+      "badge": "Napakabilis na Produksyon",
+      "title": "Sceneflow Express",
+      "description": "Awtomatikong bumuo ng mga storyboard, animatic, at video beat nang sabay-sabay. Mula sa script patungo sa preview na maaaring ibahagi sa loob lamang ng ilang minuto — pagkatapos ay aprubahan ang Beat Frames bago ang pinal na paggastos para sa F2V.",
+      "items": [
+        {
+          "title": "Mabilisang Storyboard",
+          "desc": "Suriin at ibahagi ang mga audio at video storyboard sa loob ng ilang minuto sa halip na ilang oras.",
+          "time": "Mga minuto laban sa mga oras"
+        },
+        {
+          "title": "Mga Express Animatic",
+          "desc": "Agad na i-render ang mga kumpletong eksenang animatic na istilong Ken Burns, na may kasamang de-kalidad na voiceover.",
+          "time": "Mga minuto laban sa mga oras"
+        },
+        {
+          "title": "Express Video",
+          "desc": "Pangasiwaan ang sabay-sabay na pagbuo ng mga imahe at video para sa kumpletong paghahatid ng eksena.",
+          "time": "Mga Minuto laban sa mga Araw"
+        }
+      ],
+      "cta": "Simulan ang Express Rendering"
+    }
+  },
+  "exitIntent": {
+    "title": "Sandali! Huwag kang umalis nang walang dala.",
+    "subtitle": "Makakuha ng eksklusibong maagang access at mga tip para sa paggawa ng pelikulang gumagamit ng AI",
+    "benefits": [
+      "Lingguhang tutorial sa paggawa ng pelikula gamit ang AI",
+      "Maagang access sa mga bagong feature",
+      "Mga eksklusibong diskwento para sa mga creator"
+    ],
+    "emailPlaceholder": "Ilagay ang iyong email",
+    "subscribe": "Makakuha ng maagang access",
+    "subscribing": "Nagsu-subscribe...",
+    "or": "o",
+    "startNow": "Simulan nang lumikha sa halagang $9 lamang →",
+    "privacy": "Walang spam, kailanman. Maaaring mag-unsubscribe anumang oras.",
+    "successTitle": "Kasama ka sa listahan!",
+    "successSubtitle": "Tingnan ang iyong inbox para sa mga eksklusibong tip sa paggawa ng pelikula at mga update tungkol sa maagang access.",
+    "ctaText": "Simulang Mag-explore — $9",
+    "closePopup": "Isara ang popup"
+  },
+  "pricing": {
+    "badge": "Pagpepresyong nakabatay sa paggamit",
+    "title": "Magbayad para sa iyong nilikha",
+    "subtitle": "Isang base plan para sa access sa platform. Mga credit para sa AI generation. Mag-top up kapag kailangan pa ng dagdag. Ganap na kontrol, walang nasasayang.",
+    "valueAnchor": {
+      "traditionalCost": "Mahigit $2,000",
+      "traditionalLabel": "Tradisyonal na pre-visualization",
+      "vs": "laban sa",
+      "sceneFlowCost": "$49–149",
+      "sceneFlowLabel": "SceneFlow buwanan",
+      "saveBadge": "Makatipid ng mahigit 90% bawat proyekto"
+    },
+    "teamCta": {
+      "title": "In-house na team o institusyon?",
+      "description": "Mag-schedule ng walkthrough ng workflow para sa mga team ng communications, L&D, at marketing.",
+      "button": "Gabay sa Pagtalakay sa Libro"
+    },
+    "agencyCta": {
+      "title": "Agency o production shop?",
+      "description": "Mga custom credit, SLA, at nakalaang suporta sa malawakang antas",
+      "button": "Makipag-ugnayan sa Sales"
+    },
+    "byok": {
+      "title": "Dalhin ang Sariling Susi",
+      "badge": "Mga Planong Pro at Studio",
+      "description": "Mayroon ka na bang mga API key para sa Vertex AI o ElevenLabs? Gamitin ang mga ito kasama ng SceneFlow AI at makatipid nang hanggang 80% sa mga platform credit.",
+      "savingsHighlight": "80% sa mga platform credit",
+      "benefits": [
+        {
+          "title": "80% SceneFlow Tipid sa Credit",
+          "description": "Magbayad lamang ng 20% na platform fee para sa orchestration at mga tool."
+        },
+        {
+          "title": "Gamitin ang mga corporate plan",
+          "description": "Gamitin ang iyong kasalukuyang mga volume discount na Vertex AI o ElevenLabs"
+        },
+        {
+          "title": "Ganap na Kontrol",
+          "description": "Ang iyong mga susi, ang iyong pagsingil, ang iyong pamamahala sa gastos"
+        }
+      ],
+      "supportedProviders": "Mga Sinusuportahang Provider",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 at Veo 3.1",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "Text-to-Speech at Voice Cloning",
+      "savingsLabel": "80% na matitipid",
+      "onImagesVideo": "sa mga larawan at video",
+      "onVoiceover": "sa voiceover",
+      "note": "Ang mga ipinapakitang matitipid sa credit ay mula sa platform na SceneFlow. Ang iyong aktwal na kabuuang gastos ay nakadepende sa iyong personal o pang-korporasyong presyo ng API sa bawat provider."
+    },
+    "creditTopUps": {
+      "title": "Kailangan mo ba ng karagdagang credits?",
+      "subtitle": "Mag-top up anumang oras. Hindi nag-e-expire ang mga credit.",
+      "packs": [
+        {
+          "label": "Starter Pack",
+          "description": "Tamang-tama para sa mabilisang rebisyon"
+        },
+        {
+          "label": "Koleksyon ng mga Eksena",
+          "description": "Tapusin ang isang maikling proyekto"
+        },
+        {
+          "label": "Production Pack",
+          "description": "Mahalagang bahagi ng pelikula"
+        },
+        {
+          "label": "Studio Pack",
+          "description": "Buong kapasidad ng produksyon"
+        }
+      ],
+      "creditsUnit": "mga kinikilala"
+    },
+    "calculator": {
+      "sectionTitle": "Tantiyahin ang iyong proyekto",
+      "sectionSubtitle": "Alamin nang eksakto kung magkano ang babayaran mo bago ka mag-commit.",
+      "title": "Calculator ng Badyet ng Proyekto",
+      "subtitle": "Tantyahin ang mga credit bago ka magsimula.",
+      "customize": "I-customize ang mga parameter",
+      "imagesLabel": "Mga larawang bubuuin",
+      "videoClipsLabel": "Mga video clip",
+      "voiceoverLabel": "Voiceover (mga minuto)",
+      "byokTitle": "Dalhin ang Sarili Mong Susi (BYOK)",
+      "byokBadge": "Pro at Studio",
+      "byokDescription": "Gamitin ang sarili mong mga API key para makatipid nang hanggang 80% sa mga SceneFlow credit. Direktang magbabayad ka sa mga provider ng AI batay sa kanilang mga rate.",
+      "vertexToggle": "Vertex AI (Mga Larawan at Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Pagbuo ng Imahe",
+      "videoGeneration": "Pagbuo ng Video",
+      "voiceover": "Voiceover",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "Kabuuang Tantya",
+      "withTopUps": "may mga karagdagang load o pondo",
+      "creditSavings": "SceneFlow ipon sa credit",
+      "savePercent": "Makakatipid ka ng {percent}% sa mga credit ng SceneFlow",
+      "transparency": "Ganap na transparency: Makikita mo ang real-time na paggamit ng credits habang nagtatrabaho ka. Walang mga sorpresang hindi inaasahan—maaari mong i-adjust ang saklaw ng iyong proyekto anumang oras.",
+      "transparencyHighlight": "Lubos na katapatan:",
+      "byokDisclaimer": "BYOK Paalala: Ang ipinapakitang matitipid sa credit ay tumutukoy lamang sa mga bawas sa credit ng SceneFlow platform. Ang iyong aktwal na mga gastusin ay nakadepende sa iyong mga pricing plan na Vertex AI at ElevenLabs. Maaaring mag-alok ng karagdagang matitipid ang mga corporate plan o mga plan na may mataas na volume ng API.",
+      "byokDisclaimerHighlight": "BYOK Paalala:",
+      "presets": [
+        {
+          "id": "komersyal",
+          "name": "30-segundong patalastas"
+        },
+        {
+          "id": "maikli",
+          "name": "Maikling Pelikulang May Tagal na Dalawang Minuto"
+        },
+        {
+          "id": "episodyo",
+          "name": "10-minutong episode"
+        },
+        {
+          "id": "tampok",
+          "name": "90-minutong pelikula"
+        }
+      ],
+      "minSuffix": "min"
+    },
+    "tierGrid": {
+      "productionTestFlight": "Paglipad na Pagsubok sa Produksyon",
+      "getStarted": "Magsimula",
+      "startTestFlight": "Simulan ang Test Flight",
+      "loading": "Naglo-load...",
+      "mostPopular": "Pinakasikat",
+      "creditsPerMonth": "Mga credit kada buwan",
+      "storage": "Imbakan",
+      "perMonth": "/buwan"
+    },
+    "trust": {
+      "cancelAnytime": "Maaaring kanselahin anumang oras",
+      "moneyBack": "Garantiya ng pagbabalik ng pera sa loob ng 14 na araw",
+      "creditsNeverExpire": "Hindi nag-e-expire ang mga credit (pack na Explorer)"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "description": "Isang beses na pagbili para subukan ito",
+        "features": [
+          "Isang beses na pagbili",
+          "750 credits (hindi mawawalan ng bisa)",
+          "5 GB na storage (30 araw)",
+          "Ganap na access sa platform",
+          "Pag-export bilang MP4 (anumang resolution)",
+          "AI voiceover (higit sa 70 wika)"
+        ]
+      },
+      "subscriptions": [
+        {
+          "id": "pampasimula",
+          "name": "Pampagana",
+          "description": "Para sa mga indibidwal na creator",
+          "features": [
+            "Ganap na access sa platform",
+            "Kasama ang 4,500 credits bawat buwan",
+            "25 GB na aktibong storage",
+            "Pag-export bilang MP4 (anumang resolution)",
+            "AI voiceover (higit sa 70 wika)",
+            "Suporta sa pamamagitan ng email"
+          ]
+        },
+        {
+          "id": "pabor",
+          "name": "Pabor",
+          "description": "Para sa mga propesyonal na creator",
+          "features": [
+            "Lahat ng nasa Starter, pati na rin ang:",
+            "Kasama ang 15,000 credits bawat buwan",
+            "100 GB na aktibong storage",
+            "Access sa Veo 3.1 Quality (4K)",
+            "Sistema para sa Pagpapanatili ng Pagkakapare-pareho ng Karakter",
+            "Pagkopya ng boses",
+            "BYOK (Dalhin ang Sarili Mong Susi)",
+            "3 upuan para sa team",
+            "Prayoridad na suporta"
+          ]
+        },
+        {
+          "id": "istudyo",
+          "name": "Studio",
+          "description": "Para sa mga team at ahensya",
+          "features": [
+            "Lahat ng nasa Pro, pati na rin ang:",
+            "Kasama ang 75,000 credits bawat buwan",
+            "500 GB na aktibong storage",
+            "Veo 3.1 4K Priority Queue",
+            "Walang-limitasyong Pagpapanatili ng Konsistensi ng Karakter",
+            "Mga produktong white-label na iniluluwas",
+            "Access sa API",
+            "10 upuan para sa koponan",
+            "Nakatalagang account manager",
+            "Available ang Enterprise SLA sa kahilingan."
+          ]
+        }
+      ]
     }
   },
   "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
+    "badge": "May mga tanong ka ba?",
+    "title": "Mga Madalas Itanong",
+    "subtitle": "Lahat ng kailangan mong malaman tungkol sa SceneFlow AI",
     "items": [
       {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+        "question": "Paano tumatakbo ang workflow ng SceneFlow mula sa ideya hanggang sa video na handa nang i-publish?",
+        "answer": "Gumagamit ang SceneFlow ng nakabalangkas na daloy ng trabaho: Series (opsyonal) → Blueprint → Produksyon → Final Cut → Premiere. Tinutukoy ng Blueprint ang estruktura ng kuwento at target na manonood kasama ang Audience Resonance. Lumilikha ang Produksyon ng script, storyboard, beat video, at mga rendered na stream ng eksena. Pinagsasama-sama ng Final Cut ang mga napiling stream sa isang master MP4 — hindi ito isang timeline editor. Pinamamahalaan ng Premiere ang mga screening, mga insight mula sa analytics, pag-publish sa YouTube, at mga export bundle."
       },
       {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+        "question": "Paano naiiba ang SceneFlow sa Gemini Studio o Google Flow?",
+        "answer": "Nakatuon ang Gemini Studio at Google Flow sa paggawa ng mga clip gamit ang prompt-and-generate. Pinagsasama-sama ng SceneFlow ang buong daloy ng produksyon: mga estrukturadong yugto na may mga nababagong baseline, Reference Library at Beat Frames para sa pagkakapare-pareho, Audience Resonance bago ang magastos na pag-render, awtomatikong Mixer at pagbuo ng stream, at pagpapatunay gamit ang Screening Room bago ang pag-publish — lahat sa loob ng isang studio na may gabay."
       },
       {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+        "question": "Maaari ko bang i-edit ang mga script, visual, at audio na ginawa ng AI?",
+        "answer": "Oo. Maaari pang baguhin ang lahat ng nabuong output. Sa Production Mixer, maaari kang muling sumulat ng mga script, mag-adjust ng direksyon ng eksena, muling bumuo ng mga partikular na bahagi (beats), mag-ayos ng voiceover, at pinuhin ang timing. Pinagsasama-sama lamang ng Final Cut ang mga tapos nang stream — ang mga malikhaing pagbabago ay ginagawa sa naunang yugto, sa Production."
       },
       {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+        "question": "Paano na gumagana ang Target Audience Resonance ngayon?",
+        "answer": "Pinagsasama ng Audience Resonance ang pagsusuri sa estruktura ng naratibo (kalinawan, bilis ng daloy, at emosyonal na daloy ng kuwento) at ang pag-aangkop nito sa target na persona batay sa audience na tinukoy mo sa Blueprint — hindi sa datos ng retention pagkatapos nang ma-publish. Makakakuha ka ng mga rekomendasyon para sa bawat bahagi at mga solusyong isang-click lang ang kailangan sa antas ng Series, Blueprint, at pagsusuri ng script bago ang proseso ng heavy rendering."
       },
       {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
+        "question": "Maaari ba akong gumawa ng mga video para sa listing o marketing na nasa iba't ibang wika?",
+        "answer": "Oo. Maaari kang gumawa at mag-localize ng mga video sa mahigit 70 wika gamit ang mga naka-align na workflow para sa timing. Karaniwang gumagawa ang mga team ng isang \"master cut,\" at pagkatapos ay lumilikha ng mga bersyon sa iba't ibang wika para sa mga pandaigdigang mamimili, customer, o mga audience sa iba't ibang rehiyon."
       },
       {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "question": "Ano ang ginagawa ng Premiere kung ang Screening Room ay ang yugto ng pagsusuri?",
+        "answer": "Ang Screening Room ay ang review surface sa loob ng Premiere — at para sa preview ng Production storyboard. Magbahagi ng mga /s/ link, mangalap ng feedback mula sa mga stakeholder at opsyonal na engagement analytics (nang may pahintulot ng manonood), suriin ang Scoring at Visual insights, at pagkatapos ay mag-publish gamit ang YouTube wizard o mag-export ng mga bundle."
       },
       {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
+        "question": "Kailangan ko ba ng karanasan sa teknikal na aspeto o sa pag-e-edit?",
+        "answer": "Hindi. Ang SceneFlow ay dinisenyo para sa mga creator at team na walang teknikal na background. Magsisimula ka gamit ang mga guided input at mga AI baseline na maaaring i-edit sa bawat yugto — hindi sa pamamagitan ng kumplikadong prompt engineering o paggamit ng maraming magkakaibang tool."
       },
       {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
+        "question": "Paano gumagana ang Explorer Plan?",
+        "answer": "Sa halagang $9, makakakuha ka ng 750 credits para subukan ang buong workflow sa pamamagitan ng isang beses na pagbili. Dinisenyo ito bilang praktikal na pagsubok upang makapagsagawa ka ng mga totoong gawain—mula konsepto hanggang video—bago ka pumili ng buwanang plano."
       },
       {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
+        "question": "Paano pinangangasiwaan ang mga credit at ang BYOK?",
+        "answer": "Sinusubaybayan ang mga credit sa loob mismo ng platform upang mapamahalaan ng mga team ang badyet batay sa yugto ng workflow. Sinusuportahan din ng mga planong Pro at Studio ang \"Bring Your Own Key\" (BYOK) para sa mga suportadong provider, na nagbibigay ng karagdagang kontrol sa gastos para sa mga organisasyong mayroon nang mga kontrata sa provider."
       },
       {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+        "question": "Ano ang mga bagay na talagang maaari kong likhain gamit ang SceneFlow?",
+        "answer": "Ginagamit ng mga team ang SceneFlow para sa mga real estate tour, educational content, podcast na may visual storytelling, mga video na nagpapaliwanag ng balita, branded campaign, at cinematic na serye ng mga episode. Sinusuportahan ng parehong workflow ang produksyon ng mga short-form at long-form na materyal."
       }
     ]
   },
   "finalCta": {
-    "title": "Ready to test the full pipeline?",
-    "subtitle": "Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
-    "cta": "Launch Your Studio for $9"
+    "title": "Handa na bang subukan ang buong pipeline?",
+    "subtitle": "Isagawa ang proseso mula konsepto → storyboard → video → master MP4 sa iisang studio. Magsimula sa planong $9 na Explorer at subukan ang workflow na inuuna ang beat.",
+    "cta": "Ilunsad ang iyong studio sa halagang $9"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
-    "product": "Product",
-    "resources": "Resources",
+    "description": "Awtomatikong produksyon ng video mula simula hanggang katapusan — mula sa konsepto hanggang sa master na handa nang i-publish. Isang guided studio: Blueprint → Produksyon → Final Cut → Premiere.",
+    "product": "Produkto",
+    "resources": "Mga Mapagkukunan",
     "legal": "Legal",
     "links": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "howItWorks": "How It Works",
-      "faq": "FAQ",
-      "gettingStarted": "Getting Started",
-      "privacy": "Privacy Policy",
-      "terms": "Terms of Service",
-      "trustSafety": "Trust & Safety",
-      "refunds": "Refund Policy",
-      "contact": "Contact Us"
+      "features": "Mga Tampok",
+      "pricing": "Pagpepresyo",
+      "howItWorks": "Paano Ito Gumagana",
+      "faq": "Mga Madalas Itanong",
+      "gettingStarted": "Pagsisimula",
+      "privacy": "Patakaran sa Pagkapribado",
+      "terms": "Mga Tuntunin ng Serbisyo",
+      "trustSafety": "Tiwala at Kaligtasan",
+      "refunds": "Patakaran sa Pagsasauli ng Bayad",
+      "contact": "Makipag-ugnayan sa Amin"
     },
-    "tagline": "Made with ❤️ for creators",
-    "taglineSub": "From Idea to Published Video",
-    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
-    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
-    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
-    "poweredBy": "Powered by Google Cloud"
+    "tagline": "Ginawa nang may ❤️ para sa mga creator",
+    "taglineSub": "Mula sa Ideya Hanggang sa Na-publish na Video",
+    "securePayments": "Mga ligtas na pagbabayad na pinoproseso ng Whop, ang aming Merchant of Record",
+    "morLine": "Ang mga ligtas na pagbabayad, pagkalkula ng buwis, at pagsunod sa mga regulasyon ay pinangangasiwaan ng Whop, ang aming Merchant of Record, para sa Life Focus, LLC.",
+    "copyright": "© 2026 SceneFlow AI. Nakalaan ang lahat ng karapatan.",
+    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Makipag-ugnayan sa: brian@sfai.studio",
+    "poweredBy": "Pinapagana ng Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "See Pricing",
-    "tryNine": "Try $9",
-    "tryForNine": "Try for $9",
-    "dismiss": "Dismiss"
+    "seePricing": "Tingnan ang mga presyo",
+    "tryNine": "Subukan ang $9",
+    "tryForNine": "Subukan sa halagang $9",
+    "dismiss": "Ibasura"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
-    "pause": "Pause",
-    "play": "Play",
-    "mute": "Mute",
-    "unmute": "Unmute"
+    "pause": "Huminto",
+    "play": "Maglaro",
+    "mute": "I-mute",
+    "unmute": "I-unmute",
+    "expandVideo": "Palakihin ang Video"
   }
 }
