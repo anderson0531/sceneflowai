@@ -59,6 +59,25 @@ export function ToolStackSection() {
           <p className="text-lg text-gray-400">{t('subtitle')}</p>
         </motion.div>
 
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="max-w-5xl mx-auto mb-10"
+        >
+          <div className="rounded-2xl overflow-hidden shadow-[0_0_50px_-12px_rgba(6,182,212,0.3)] border border-cyan-500/20">
+            <img
+              src={getComparisonImageUrl(locale)}
+              alt={t('comparisonImageAlt')}
+              className="w-full h-auto object-cover"
+            />
+          </div>
+          <p className="mt-4 text-center text-sm text-gray-500 flex items-center justify-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-500/70" />
+            {t('comparisonCaption')}
+          </p>
+        </motion.div>
+
         <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 mb-10">
           {/* Broken Way */}
           <motion.div
@@ -167,17 +186,6 @@ export function ToolStackSection() {
                 </li>
               ))}
             </ul>
-
-            <div className="rounded-xl overflow-hidden border border-cyan-500/20 mb-5">
-              <img
-                src={getComparisonImageUrl(locale)}
-                alt={t('comparisonImageAlt')}
-                className="w-full h-auto object-cover"
-              />
-              <p className="px-3 py-2 text-[11px] text-gray-500 text-center bg-slate-950/80">
-                {t('comparisonCaption')}
-              </p>
-            </div>
 
             <div className="pt-5 border-t border-gray-800 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-gray-400">
