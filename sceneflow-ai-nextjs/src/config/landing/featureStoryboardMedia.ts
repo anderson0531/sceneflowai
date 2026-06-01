@@ -6,7 +6,8 @@ export const FEATURE_STORYBOARD_MEDIA: Record<
 > = {
   1: {
     screenshotUrl: '/landing/storyboard/intuitive-ux-2.png',
-    videoUrl: 'https://storage.googleapis.com/sceneflow-assets/demo/intuitive-ux.mp4',
+    videoUrl:
+      'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Intuitive%20UX%20%2B%20Full%20Creator%20Control.mov',
   },
   2: {
     screenshotUrl:
