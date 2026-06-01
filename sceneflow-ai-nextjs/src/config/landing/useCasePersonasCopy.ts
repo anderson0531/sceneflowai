@@ -46,12 +46,12 @@ export const USE_CASE_PERSONAS = {
     challenge: {
       title: 'The "B-Roll" Bottleneck',
       description:
-        'You have a strong script, but most of your time goes to finding footage, coordinating edits, and chasing consistency between scenes. That delay slows publishing cadence and weakens audience retention.',
+        'You have a strong script, but learning six separate generation and edit tools — or getting stuck in slot-machine video loops — slows every upload. That delay weakens publishing cadence and audience retention.',
     },
     solution: {
       title: 'The Automated Storyteller',
       description:
-        'Turn scripts into production-ready visuals quickly while keeping character and style continuity from first scene to publish-ready master.',
+        'Guided automation from script to publish-ready master — no need to learn six separate apps. Keep character and style continuity from first scene through series production.',
       features: [
         'Visuals that map cleanly to script beats',
         'Consistent protagonists across every scene',
@@ -68,7 +68,7 @@ export const USE_CASE_PERSONAS = {
     challenge: {
       title: 'Vendor Backlog & Brand Drift',
       description:
-        'Comms, L&D, and marketing teams wait weeks for agency or vendor video. Every shoot brings inconsistent branding, unpredictable invoices, and approval chains that stall campaigns.',
+        'Comms, L&D, and marketing teams wait weeks for agency or vendor video — or face an overwhelming tool stack with no repeatable in-house system. Every path brings inconsistent branding and stalled campaigns.',
     },
     solution: {
       title: 'Same-Week In-House Production',
@@ -87,11 +87,11 @@ export const USE_CASE_PERSONAS = {
   productionShop: {
     label: 'Production Shop',
     title: 'The Niche Production Shop',
-    beforeAfter: { before: '$8K/shoot', after: '$200 credits' },
+    beforeAfter: { before: '4+ hrs', after: '30–60 min' },
     challenge: {
       title: 'Custom Verticals, No Repeatable System',
       description:
-        'Memoir, legacy, real estate, and education clients need fast turnaround — but every project starts from scratch. Uploads, voice clones, and avatars don\'t scale without a templated intake → delivery pipeline.',
+        'Memoir, legacy, real estate, and education clients need fast turnaround — but every project starts from scratch. Per-deliverable handoffs plus slot-machine video re-rolls across script, image, voice, video, music, and edit tools eat margin on volume.',
     },
     solution: {
       title: 'Productize Your Video Service',
@@ -114,7 +114,7 @@ export const USE_CASE_PERSONAS = {
     challenge: {
       title: 'Client Delivery at Scale',
       description:
-        'Winning the pitch is only half the battle. Recurring client work needs fast turnaround, clear approval chains, and margin on every deliverable — without rebuilding production from scratch each time.',
+        'Winning the pitch is only half the battle. Recurring client work needs fast turnaround — but per-deliverable handoffs and slot-machine video re-rolls across separate generation and edit tools slow every pitch cycle.',
     },
     solution: {
       title: 'Throughput + Client Approval',

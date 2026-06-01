@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Terdengar familier?",
     "title": "Cara yang Rusak vs. Cara SceneFlow",
-    "subtitle": "Anda seharusnya tidak perlu membuka lima tab, melakukan ekspor dengan cara salin-tempel, dan mengalami kelelahan akibat menyusun prompt hanya untuk merilis satu video.",
+    "subtitle": "Bagi produser berpengalaman: hentikan pemborosan waktu berjam-jam untuk *copy-paste* antara naskah, gambar, suara, video, musik, dan alat penyuntingan. Bagi pemula di bidang video AI: satu studio terpandu mengotomatiskan seluruh alur kerja, sehingga Anda bisa merilis karya tanpa harus mempelajari enam aplikasi terpisah.",
     "brokenWay": {
       "title": "Jalan yang Retak",
-      "tagline": "Terpecah-pecah. Manual. Melelahkan.",
+      "tagline": "Terfragmentasi. Manual. Video mesin slot.",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Draf naskah"
+          "name": "Pembuatan skrip",
+          "category": "Draf tanpa validasi audiens"
         },
         {
-          "name": "Midjourney",
-          "category": "Gambar sekali pakai"
+          "name": "Pembuatan gambar",
+          "category": "Bingkai dan gambar diam dalam alat terpisah"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Ekspor VO manual"
+          "name": "Pembuatan suara",
+          "category": "Ekspor dan perekaman ulang voiceover secara manual"
         },
         {
-          "name": "Premiere",
-          "category": "Perakitan manual"
+          "name": "Pembuatan video",
+          "category": "Pengacakan ulang ala mesin slot — masukkan perintah, hasilkan, tolak, ulangi"
+        },
+        {
+          "name": "Pembuatan musik",
+          "category": "Tiket soundtrack terpisah"
+        },
+        {
+          "name": "Penyuntingan video",
+          "category": "Perakitan manual, ekspor, dan penyempurnaan peningkatan skala"
         }
       ],
-      "chaosLabel": "Lima tab. Kehilangan konteks.",
+      "chaosLabel": "Enam tab. Ulangi prosesnya sampai ada yang berhasil.",
       "painPoints": [
-        "Salin-tempel antaraplikasi",
+        "Salin-tempel antara alat pembuatan dan penyuntingan",
+        "Pembuatan video ala mesin slot — coba lagi sampai ada yang berhasil",
         "Kelelahan akibat penyusunan prompt dan siklus pembuatan ulang",
         "Tidak ada pengecekan audiens sebelum Anda mengeluarkan biaya",
         "Kekacauan versi pada berbagai ekspor"
       ],
-      "timeLabel": "Waktu proyek pada umumnya",
-      "timeValue": "2–4 minggu"
+      "timeLabel": "Sesuai video (susunan perkakas multifungsi manual)",
+      "timeValue": "Lebih dari 4 jam"
     },
     "sceneflowWay": {
       "title": "Cara SceneFlow",
-      "tagline": "Satu studio. Setujui sebelum melakukan rendering.",
+      "tagline": "Satu studio. Otomatisasi terpandu — atau produktivitas tinggi jika Anda sudah menguasai *stack* tersebut.",
       "stages": [
         {
           "label": "Blueprint",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "Satu file proyek — tidak perlu repot berpindah-pindah tab",
       "benefits": [
-        "Tahapan terpandu — bukan rekayasa prompt",
-        "Persetujuan storyboard sebelum kredit video",
+        "Tahapan terpandu — hentikan kerepotan berpindah-pindah tab dan hilangnya konteks",
+        "Persetujuan storyboard — hentikan proses revisi berulang-ulang sebelum anggaran video dikeluarkan.",
         "Skor Audience Resonance sebelum rendering berat",
-        "Master siap terbit dari satu studio"
+        "Master siap terbit dalam 30–60 menit, bukan lebih dari 4 jam."
       ],
-      "timeLabel": "Waktu proyek pada umumnya",
-      "timeValue": "2–4 hari"
+      "timeLabel": "Per video (hasil akhir yang sama)",
+      "timeValue": "30–60 menit"
     },
-    "comparisonCaption": "Satu studio menggantikan alat *prompt* yang terpisah-pisah, penyuntingan manual, dan proses serah terima antar-platform.",
-    "comparisonImageAlt": "Biaya overhead produksi tradisional vs. studio otomatis SceneFlow — proses lebih cepat dari tahap konsep hingga video siap tayang"
+    "comparisonCaption": "Sebuah studio menggantikan alat pembuatan yang terfragmentasi, pengulangan video acak ala mesin slot, dan perakitan hasil edit secara manual.",
+    "comparisonImageAlt": "Biaya overhead produksi tradisional vs. studio otomatis SceneFlow — proses lebih cepat dari tahap konsep hingga video siap tayang",
+    "costNote": "Biaya AI tetap sama, namun waktu yang terbuang lebih sedikit. Anda tetap membayar untuk penggunaan model—baik melalui kredit SceneFlow, akun penyedia layanan milik Anda sendiri, maupun BYOK. SceneFlow menghilangkan beban waktu akibat proses perakitan manual (copy-paste), sehingga Anda dapat memproduksi lebih banyak video dengan anggaran yang sama.",
+    "proofLine": "Tervalidasi melalui tur listing hunian: proses manual menyeluruh memakan waktu lebih dari 4 jam → hasil akhir yang sama dapat dicapai dalam SceneFlow dalam waktu kurang dari satu jam."
   },
   "comparison": {
     "title": "Kecepatan produksi tanpa biaya overhead",
@@ -410,11 +421,11 @@
         },
         "challenge": {
           "title": "Hambatan \"B-Roll\"",
-          "description": "Anda memiliki naskah yang kuat, namun sebagian besar waktu Anda habis untuk mencari rekaman, mengoordinasikan proses penyuntingan, dan memastikan konsistensi antaradegan. Hambatan tersebut memperlambat jadwal publikasi dan melemahkan retensi penonton."
+          "description": "Naskah Anda sudah bagus, namun keharusan mempelajari enam alat pembuatan dan penyuntingan yang berbeda—atau terjebak dalam siklus video yang berulang-ulang—memperlambat setiap proses unggah. Hambatan tersebut melemahkan konsistensi publikasi serta retensi audiens."
         },
         "solution": {
           "title": "Penutur Cerita Otomatis",
-          "description": "Ubah naskah menjadi visual siap-produksi dengan cepat, sembari menjaga konsistensi karakter dan gaya dari adegan pertama hingga master yang siap dipublikasikan.",
+          "description": "Otomatisasi terpandu mulai dari naskah hingga master siap rilis—tanpa perlu mempelajari enam aplikasi terpisah. Pertahankan konsistensi karakter dan gaya, mulai dari adegan pertama hingga produksi seri.",
           "features": [
             "Visual yang selaras secara presisi dengan tahapan naskah",
             "Tokoh utama yang konsisten di setiap adegan",
@@ -437,7 +448,7 @@
         },
         "challenge": {
           "title": "Tunggakan Vendor & Pergeseran Citra Merek",
-          "description": "Tim komunikasi, L&D, dan pemasaran harus menunggu berminggu-minggu untuk mendapatkan video dari agensi atau vendor. Setiap sesi pengambilan gambar menghasilkan branding yang tidak konsisten, tagihan yang sulit diprediksi, serta alur persetujuan yang menghambat jalannya kampanye."
+          "description": "Tim komunikasi, L&D, dan pemasaran harus menunggu berminggu-minggu untuk mendapatkan video dari agensi atau vendor—atau justru menghadapi tumpukan perangkat yang membingungkan tanpa adanya sistem internal yang dapat diterapkan secara konsisten. Apa pun pilihannya, hasilnya adalah branding yang tidak konsisten dan kampanye yang terhambat."
         },
         "solution": {
           "title": "Produksi Internal dalam Minggu yang Sama",
@@ -460,12 +471,12 @@
         "label": "Bengkel Produksi",
         "title": "Bengkel Produksi Spesialis",
         "beforeAfter": {
-          "before": "$8.000 per sesi pemotretan",
-          "after": "Kredit senilai $200"
+          "before": "4+ jam",
+          "after": "30–60 menit"
         },
         "challenge": {
           "title": "Sektor Khusus, Tanpa Sistem yang Dapat Direplikasi",
-          "description": "Klien di bidang memoar, warisan (*legacy*), real estat, dan pendidikan membutuhkan penyelesaian yang cepat—namun setiap proyek dimulai dari nol. Proses unggahan, kloning suara, dan pembuatan avatar tidak dapat ditingkatkan skalanya tanpa alur kerja terstandarisasi, mulai dari penerimaan hingga penyampaian hasil."
+          "description": "Klien di bidang memoar, dokumentasi warisan, real estat, dan pendidikan membutuhkan penyelesaian cepat—namun setiap proyek dimulai dari nol. Proses serah terima untuk setiap hasil kerja, ditambah dengan pengulangan proses produksi yang tak menentu (seperti mesin slot) pada tahap naskah, gambar, pengisian suara, video, musik, dan penyuntingan, menggerogoti margin keuntungan dari volume pekerjaan tersebut."
         },
         "solution": {
           "title": "Jadikan Layanan Video Anda sebagai Produk",
@@ -493,7 +504,7 @@
         },
         "challenge": {
           "title": "Penyampaian Layanan Klien dalam Skala Besar",
-          "description": "Memenangkan *pitch* hanyalah separuh dari perjuangan. Pekerjaan klien yang bersifat rutin membutuhkan waktu pengerjaan yang cepat, alur persetujuan yang jelas, dan margin keuntungan pada setiap hasil kerja—tanpa harus membangun ulang proses produksi dari nol setiap kalinya."
+          "description": "Memenangkan *pitch* hanyalah separuh dari perjuangan. Pekerjaan klien yang bersifat rutin menuntut penyelesaian yang cepat—namun proses serah terima untuk setiap materi serta pengulangan pembuatan video yang tak menentu (seperti mesin slot) di berbagai alat pembuatan dan penyuntingan yang terpisah justru memperlambat setiap siklus *pitch*."
         },
         "solution": {
           "title": "Throughput + Persetujuan Klien",
@@ -1328,7 +1339,7 @@
       },
       {
         "question": "Apa perbedaan antara SceneFlow dan Gemini Studio atau Google Flow?",
-        "answer": "Gemini Studio dan Google Flow berfokus pada pembuatan klip berbasis *prompt*. SceneFlow mengintegrasikan alur kerja produksi secara menyeluruh: tahapan terstruktur dengan *baseline* yang dapat disesuaikan, Reference Library dan Beat Frames untuk menjaga konsistensi, Audience Resonance sebelum proses *rendering* yang memakan banyak sumber daya, Mixer otomatis serta perakitan *stream*, dan validasi Screening Room sebelum publikasi — semuanya dalam satu studio terpandu."
+        "answer": "Gemini Studio dan Google Flow berfokus pada pembuatan klip berbasis prompt. SceneFlow mengintegrasikan alur kerja produksi secara menyeluruh: tahapan terstruktur dengan baseline yang dapat disesuaikan, Reference Library dan Beat Frames untuk menjaga konsistensi, Audience Resonance sebelum proses rendering yang memakan biaya besar, Mixer otomatis dan perakitan stream, serta validasi Screening Room sebelum publikasi—semuanya tersedia dalam satu studio terpandu. Biaya penggunaan model tetap sama baik saat Anda menggunakan SceneFlow, akun penyedia layanan milik sendiri, maupun BYOK—namun SceneFlow menghemat waktu berjam-jam yang biasanya habis untuk aktivitas salin-tempel, pembuatan ulang, dan perakitan video secara manual."
       },
       {
         "question": "Bisakah saya mengedit naskah, visual, dan audio yang dihasilkan oleh AI?",

@@ -1,1411 +1,1432 @@
 {
   "metadata": {
-    "title": "SceneFlow AI – MI-alapú videókészítés",
-    "description": "Alakítsa ötleteit professzionális videókká mesterséges intelligencián alapuló munkafolyamat-automatizálással."
+    "title": "SceneFlow AI - AI-Powered Video Creation",
+    "description": "Transform your ideas into professional videos with AI-powered workflow automation"
   },
   "nav": {
-    "workflow": "A munkafolyamat",
-    "platformWalkthrough": "Platform-ismertető",
-    "plansPricing": "Csomagok és árak",
-    "more": "Több",
-    "useCases": "Felhasználási esetek",
+    "workflow": "The Workflow",
+    "platformWalkthrough": "Platform Walkthrough",
+    "plansPricing": "Plans & Pricing",
+    "more": "More",
+    "useCases": "Use Cases",
     "audienceResonance": "Audience Resonance",
-    "platformTrust": "Platform és bizalom",
-    "faq": "Gyakran ismételt kérdések",
-    "signIn": "Bejelentkezés",
-    "startProject": "Projekt indítása",
-    "dashboard": "Irányítópult",
-    "adminPanel": "Adminisztrációs felület",
-    "signOut": "Kijelentkezés",
-    "goToDashboard": "Ugrás az irányítópultra",
-    "userFallback": "Felhasználó",
-    "searchLanguages": "Nyelvek keresése...",
-    "noLanguagesFound": "Nem található nyelv"
+    "platformTrust": "Platform & Trust",
+    "faq": "FAQ",
+    "signIn": "Sign In",
+    "startProject": "Start a Project",
+    "dashboard": "Dashboard",
+    "adminPanel": "Admin Panel",
+    "signOut": "Sign Out",
+    "goToDashboard": "Go to Dashboard",
+    "userFallback": "User",
+    "searchLanguages": "Search languages...",
+    "noLanguagesFound": "No languages found"
   },
   "floatingNav": {
-    "compare": "Összehasonlítás",
-    "howItWorks": "Hogyan működik?",
-    "useCases": "Felhasználási esetek",
-    "platformWalkthrough": "Platform-ismertető",
+    "compare": "Compare",
+    "howItWorks": "How It Works",
+    "useCases": "Use Cases",
+    "platformWalkthrough": "Platform Walkthrough",
     "platform": "Platform",
-    "pricing": "Árazás",
-    "faq": "Gyakran ismételt kérdések"
+    "pricing": "Pricing",
+    "faq": "FAQ"
   },
   "hero": {
-    "headline": "Ne zsonglőrködj többé öt különböző AI-lappal! Egyetlen stúdió segítségével az ötlettől egészen a közzétételre kész videóig juthatsz.",
-    "subheadline": "Egyetlen, végigvezetett folyamatot kínáló stúdió az ötlettől a közzétételre kész videóig. Tekintsd meg a storyboardot, mielőtt kifizetnéd a végleges videót – hagyd jóvá a látványvilágot ahelyett, hogy krediteket pazarolnál a találgatáson alapuló generálásokra. A SceneFlow automatizálja az olyan időigényes feladatokat, mint a forgatókönyv, a storyboard, a narráció és az összeállítás, miközben te minden egyes mozzanat felett megőrzöd az irányítást.",
-    "audienceMicroLine": "Azoknak az alkotóknak készült, akik eredményeket várnak, és azoknak a csapatoknak, amelyek látni akarják, hogyan működik.",
-    "ctaSecondary": "Nézze meg a „What's Possible” című videót",
-    "ctaToolStack": "Nézze meg, hogyan váltja ki a jelenlegi eszközkészletét.",
-    "languagePrompt": "Hallja a hőst a saját nyelvén – ugyanaz a folyamat, új piacok",
-    "multilangHint": "Főszereplői szinkron 7 nyelven – a teljes gyártási folyamat több mint 70 nyelvet támogat.",
-    "playWithNarration": "Lejátszás narrációval",
-    "tapToHear": "Koppintson a meghallgatáshoz",
-    "fullscreen": "Teljes képernyő",
+    "headline": "Stop juggling five AI tabs. One studio takes you from idea to publish-ready video.",
+    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations. SceneFlow automates the busywork — script, storyboard, voice, and assembly — while you stay in control of every beat.",
+    "audienceMicroLine": "Built for creators who want results, and teams who want to see how it works.",
+    "ctaSecondary": "Watch the 'What's Possible'",
+    "ctaToolStack": "See how it replaces your tool stack",
+    "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
+    "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
+    "playWithNarration": "Play with narration",
+    "tapToHear": "Tap to hear",
+    "fullscreen": "Fullscreen",
     "heroVideoLanguages": {
       "en": {
-        "label": "Angol",
-        "nativeLabel": "Angol"
+        "label": "English",
+        "nativeLabel": "English"
       },
       "es": {
-        "label": "Spanyol",
-        "nativeLabel": "Spanyol"
+        "label": "Spanish",
+        "nativeLabel": "Español"
       },
       "pt": {
-        "label": "Portugál",
-        "nativeLabel": "Portugál"
+        "label": "Portuguese",
+        "nativeLabel": "Português"
       },
       "hi": {
         "label": "Hindi",
-        "nativeLabel": "Hindi"
+        "nativeLabel": "हिन्दी"
       },
       "zh": {
-        "label": "Kínai",
-        "nativeLabel": "Kínai"
+        "label": "Chinese",
+        "nativeLabel": "中文"
       },
       "ar": {
-        "label": "Arab",
-        "nativeLabel": "Arab"
+        "label": "Arabic",
+        "nativeLabel": "العربية"
       },
       "th": {
         "label": "Thai",
-        "nativeLabel": "Thai"
+        "nativeLabel": "ไทย"
       }
     },
-    "soon": "Hamarosan"
+    "soon": "Soon"
   },
   "valueProp": {
     "pills": [
       {
         "label": "One Studio",
-        "detail": "Egyetlen helyen közzéteendő koncepció"
+        "detail": "Concept to publish in one place"
       },
       {
-        "label": "Jóváhagyás a végleges videó előtt",
-        "detail": "A renderelés előtt tekintsd át a storyboard egyes szakaszait."
+        "label": "Approve Before Final Video",
+        "detail": "Review storyboard beats before you render"
       },
       {
-        "label": "Először teszteld a történetedet",
-        "detail": "Tudd, mi működik, mielőtt jelentős összegeket költenél."
+        "label": "Test Your Story First",
+        "detail": "Know what lands before heavy spend"
       },
       {
-        "label": "Közzétételre kész kimenet",
-        "detail": "Master MP4 + terjesztési csomagok"
+        "label": "Publish-Ready Output",
+        "detail": "Master MP4 + distribution bundles"
       }
     ]
   },
   "audiencePaths": {
-    "prompt": "Ki vagy? Válaszd ki az utadat!",
-    "seeExamples": "Tekintse meg a példákat",
-    "examplesFor": "Példák a következőhöz: {label}:",
-    "andMore": ", és még sok más.",
+    "prompt": "Who are you? Pick your path",
+    "seeExamples": "See examples",
+    "examplesFor": "Examples for {label}:",
+    "andMore": ", and more.",
     "modes": {
       "automate": {
-        "label": "Automatizáld",
-        "description": "Irányított munkafolyamat – hagyja jóvá a storyboardokat, és gyorsítsa fel a megvalósítást"
+        "label": "Automate it",
+        "description": "Guided workflow — approve storyboards, ship faster"
       },
       "engine": {
-        "label": "Mutasd meg a motort.",
-        "description": "Architektúra, BYOK és platformmélység"
+        "label": "Show me the engine",
+        "description": "Architecture, BYOK, and platform depth"
       }
     },
     "paths": [
       {
-        "id": "alkotó",
-        "label": "Alkotó",
-        "outcome": "Tartsd a határidőt – ne kelljen minden eszközben újraépítened",
+        "id": "creator",
+        "label": "Creator",
+        "outcome": "Ship on schedule — stop rebuilding in every tool",
         "useCases": [
-          "YouTube és epizodikus sorozatok",
-          "Videópodcastok és műsorrészletek",
-          "Hiperlokális és „éppen időben” (JIT) érkező hírek",
-          "Dokumentumfilmek és dokumentumsorozatok",
-          "Útmutató és készségfejlesztő csatornák",
-          "Sportösszefoglalók és elemzések"
+          "YouTube & episodic series",
+          "Video podcasts & show clips",
+          "Hyper-local & JIT news",
+          "Documentaries & docuseries",
+          "How-to & skill channels",
+          "Sports recaps & commentary"
         ]
       },
       {
-        "id": "csapat",
-        "label": "Belső csapat",
-        "outcome": "Váltsa ki a lassú beszállítói folyamatokat – tartsa kézben a márkát és a költségvetést.",
+        "id": "team",
+        "label": "In-house team",
+        "outcome": "Replace slow vendor cycles — control brand and budget",
         "useCases": [
-          "Vállalati képzés és fejlesztés, valamint megfelelés",
-          "Belső kommunikáció és vállalati fórumok",
-          "Értékesítést támogató termékbemutatók",
-          "HR-toborzás és vállalati kultúra",
-          "K–12-es / felsőoktatási tanórák",
-          "Közegészségügyi és biztonsági tájékoztatás"
+          "Corporate L&D & compliance",
+          "Internal comms & town halls",
+          "Product explainers for sales",
+          "HR recruitment & culture",
+          "K-12 / higher-ed lessons",
+          "Public health & safety updates"
         ]
       },
       {
-        "id": "gyártóműhely",
-        "label": "Gyártóüzem",
-        "outcome": "Alakíts termékké egy piaci rést megismételhető megbízásfelvételi és teljesítési folyamattal.",
+        "id": "productionShop",
+        "label": "Production shop",
+        "outcome": "Productize a niche with repeatable intake → delivery",
         "useCases": [
-          "Videós emlékirat-csomagok",
-          "Emlék- és tisztelgő videók",
-          "Hangklónozással készült narráció",
-          "White-label stúdiósablonok",
-          "Ingatlan- és vendéglátóipari bemutatók",
-          "Előfizetéses videószolgáltatások"
+          "Video memoir packages",
+          "Legacy & tribute videos",
+          "Voice-cloned narration",
+          "White-label studio templates",
+          "Real estate & hospitality tours",
+          "Subscription video services"
         ]
       },
       {
-        "id": "ügynökség",
-        "label": "Ügynökség",
-        "outcome": "Gyorsabb ajánlatadás és skálázható ügyfélkiszolgálás",
+        "id": "agency",
+        "label": "Agency",
+        "outcome": "Faster pitches and scalable client delivery",
         "useCases": [
-          "Ügyfélbemutatóhoz készült elővizualizáció",
-          "Termékbevezetési kampányok",
-          "Esettanulmányok és ügyfélvélemények",
-          "Rendezvény- és konferenciapromóciók",
-          "Többnyelvű kampányok",
-          "Ingatlanmarketing ügyfelek számára"
+          "Client pitch pre-viz",
+          "Product launch campaigns",
+          "Case studies & testimonials",
+          "Event & conference promos",
+          "Multi-language campaigns",
+          "Property marketing for clients"
         ]
       }
     ]
   },
   "whySceneFlow": {
-    "title": "Miért a SceneFlow a „prompt-and-generate” eszközökkel szemben?",
-    "subtitle": "Az Gemini Studio és az Google Flow kiválóan teljesít a klipek terén. Az SceneFlow magában foglalja a teljes gyártási munkafolyamatot.",
+    "title": "Why SceneFlow vs prompt-and-generate tools",
+    "subtitle": "Gemini Studio and Google Flow excel at clips. SceneFlow bundles the full production workflow.",
     "rows": [
       {
-        "them": "Prompt és klip generálása elszigetelten",
-        "us": "Strukturált szakaszok, minden lépésnél szerkeszthető alapvonalakkal"
+        "them": "Prompt + clip generation in isolation",
+        "us": "Structured phases with editable baselines at each step"
       },
       {
-        "them": "Manuális konzisztencia a munkamenetek között",
-        "us": "Reference Library + Beat Frames vizuális elemek rögzítése a videó előtt"
+        "them": "Manual consistency across sessions",
+        "us": "Reference Library + Beat Frames lock visuals before video"
       },
       {
-        "them": "Nincs közönség-ellenőrzési munkafolyamat",
-        "us": "Audience Resonance megjelenítés előtt; Screening Room közzététel előtt"
+        "them": "No audience validation workflow",
+        "us": "Audience Resonance before render; Screening Room before publish"
       },
       {
-        "them": "Nincs gyártási folyamat vagy átadás",
-        "us": "Forgatókönyv → adatfolyamok → összeállítás → terjesztés egyetlen alkalmazásban"
+        "them": "No production pipeline or handoff",
+        "us": "Script → streams → assembly → distribution in one app"
       }
     ],
-    "themHeader": "Tipikus klipkészítő eszközök",
-    "usHeader": "SceneFlow-csomagok"
+    "themHeader": "Typical clip-generation tools",
+    "usHeader": "SceneFlow bundles"
   },
   "beatFirstPipeline": {
-    "title": "Ütemalapú videó-munkafolyamat",
-    "subtitle": "Jóváhagyás renderelés előtt – nem pedig nyerőgépes újragenerálás",
-    "intro": "Nincs találgatáson alapuló próbálkozás. Mielőtt az SceneFlow krediteket használna fel a végleges videó elkészítésére, előnézetben megtekintheted és jóváhagyhatod a látványvilágot.",
-    "description": "A SceneFlow minden lépésnél strukturálja a vizuális jóváhagyást: Express storyboard az ellenőrzéshez, Beat Frames a kompozíció rögzítéséhez, majd F2V ütemenként. Így finomíthatod a megjelenést, mielőtt krediteket pazarolnál el a driftre és a hallucinációkra.",
+    "title": "Beat-First Video Pipeline",
+    "subtitle": "Approve before you render — not slot-machine regeneration",
+    "intro": "No guess-and-check generations. You preview and approve the look before SceneFlow spends credits on final video.",
+    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
     "steps": [
-      "Express storyboard — ossz meg audiovizuális ütemeket véleményezésre percek alatt",
-      "Beat Frames — kezdő/záró kompozíció rögzítése Reference Library folytonossággal",
-      "Ütemenkénti F2V – videógenerálás jóváhagyott képkockákból, nem pedig vak promptok alapján",
-      "Production Mixer — időzítés, hang és adatfolyam exportálása az Final Cut összeállításba"
+      "Express storyboard — share audio-visual beats for review in minutes",
+      "Beat Frames — lock start/end composition with Reference Library continuity",
+      "F2V per beat — generate video from approved frames, not blind prompts",
+      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
     ],
-    "footerLine": "Kevesebb újragyártás a nyerőgépes elemeknél – vizuális jóváhagyás a videókra szánt végső költségek előtt"
+    "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
   },
   "toolStack": {
-    "badge": "Ismerősen hangzik?",
-    "title": "A hibás módszer kontra az SceneFlow módszer",
-    "subtitle": "Nem kellene öt böngészőlapra, másolás-beillesztésre és a promptolás okozta kimerültségre lennie szükség ahhoz, hogy elkészíts és közzétegyél egyetlen videót.",
+    "badge": "Sound familiar?",
+    "title": "The Broken Way vs the SceneFlow Way",
+    "subtitle": "Experienced producers: stop losing hours to copy-paste across script, image, voice, video, music, and edit tools. New to AI video: one guided studio automates the stack so you ship without learning six separate apps.",
     "brokenWay": {
-      "title": "A megtört út",
-      "tagline": "Széttagolt. Manuális. Kimerítő.",
+      "title": "The Broken Way",
+      "tagline": "Fragmented. Manual. Slot-machine video.",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Forgatókönyv-tervezetek"
+          "name": "Script generation",
+          "category": "Drafts without audience validation"
         },
         {
-          "name": "Midjourney",
-          "category": "Egyedi képek"
+          "name": "Image generation",
+          "category": "Frames and stills in a separate tool"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Manuális VO-export"
+          "name": "Voice generation",
+          "category": "Manual voiceover export and re-takes"
         },
         {
-          "name": "Premiere",
-          "category": "Kézi összeszerelés"
+          "name": "Video generation",
+          "category": "Slot-machine re-rolls — prompt, generate, reject, repeat"
+        },
+        {
+          "name": "Music generation",
+          "category": "Separate soundtrack pass"
+        },
+        {
+          "name": "Video editing",
+          "category": "Manual assembly, export, and upscaling polish"
         }
       ],
-      "chaosLabel": "Öt lap. Elveszett kontextus.",
+      "chaosLabel": "Six tabs. Re-roll until something sticks.",
       "painPoints": [
-        "Másolás és beillesztés alkalmazások között",
-        "Prompt-fáradtság és újragenerálási ciklusok",
-        "Nincs célközönség-ellenőrzés a költés előtt",
-        "Verziókáosz az exportált állományoknál"
+        "Copy-paste between generation and edit tools",
+        "Slot-machine video generation — re-roll until something sticks",
+        "Prompt fatigue and re-generation loops",
+        "No audience check before you spend",
+        "Version chaos across exports"
       ],
-      "timeLabel": "Tipikus projektidőtartam",
-      "timeValue": "2–4 hét"
+      "timeLabel": "Per video (manual multi-tool stack)",
+      "timeValue": "4+ hours"
     },
     "sceneflowWay": {
-      "title": "Az SceneFlow-módszer",
-      "tagline": "Egyetlen stúdió. Jóváhagyás a renderelés előtt.",
+      "title": "The SceneFlow Way",
+      "tagline": "One studio. Guided automation — or serious throughput if you already know the stack.",
       "stages": [
         {
           "label": "Blueprint",
-          "detail": "Strukturált történetvázlat"
+          "detail": "Structured story plan"
         },
         {
-          "label": "Hivatkozások",
-          "detail": "Következetes karakterek"
+          "label": "References",
+          "detail": "Consistent characters"
         },
         {
-          "label": "Gyártás",
-          "detail": "Hang és látvány"
+          "label": "Production",
+          "detail": "Voice + visuals"
         },
         {
-          "label": "Közzététel",
-          "detail": "Egyetlen master MP4"
+          "label": "Publish",
+          "detail": "One master MP4"
         }
       ],
-      "syncLabel": "Egyetlen projektfájl – nincs többé váltogatás a fülek között",
+      "syncLabel": "One project file — no tab juggling",
       "benefits": [
-        "Iránymutatással ellátott szakaszok – nem prompt-mérnökség",
-        "A storyboard jóváhagyása a videó stáblistája előtt",
-        "Audience Resonance pontszám a nagy erőforrásigényű renderelés előtt",
-        "Kiadásra kész mesterpéldány egyetlen stúdiótól"
+        "Guided phases — stop tab juggling and context loss",
+        "Storyboard approval — stop slot-machine re-rolls before video spend",
+        "Audience Resonance score before heavy render",
+        "Publish-ready master in 30–60 min, not 4+ hrs"
       ],
-      "timeLabel": "Tipikus projektidőtartam",
-      "timeValue": "2–4 nap"
+      "timeLabel": "Per video (same deliverable)",
+      "timeValue": "30–60 minutes"
     },
-    "comparisonCaption": "Egyetlen stúdió váltja ki a széttagolt prompteszközöket, a manuális szerkesztést és a platformok közötti átadási folyamatokat.",
-    "comparisonImageAlt": "Hagyományos gyártási többletköltségek kontra SceneFlow automatizált stúdió – gyorsabb út az ötlettől a közzétételre kész videóig"
+    "comparisonCaption": "One studio replaces fragmented generation tools, slot-machine video re-rolls, and manual edit assembly",
+    "comparisonImageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video",
+    "costNote": "Same AI spend, less wasted time. You pay for models either way — through SceneFlow credits, your own provider account, or BYOK. SceneFlow removes the copy-paste assembly tax so you can ship more videos with the same budget.",
+    "proofLine": "Validated on a residential listing tour: full manual stack 4+ hours → same deliverable in SceneFlow under an hour."
   },
   "comparison": {
-    "title": "Gyártási sebesség többletköltségek nélkül",
-    "subtitle": "Cserélje le a széttagolt prompteszközöket és a manuális összeállítást egyetlen automatizált stúdióra – az első koncepciótól egészen a közzétételre kész végleges változatig.",
-    "caption": "Egyetlen stúdió váltja ki a széttagolt prompteszközöket, a manuális szerkesztést és a platformok közötti átadási folyamatokat.",
-    "imageAlt": "Hagyományos gyártási többletköltségek kontra SceneFlow automatizált stúdió – gyorsabb út az ötlettől a közzétételre kész videóig"
+    "title": "Production speed without the overhead",
+    "subtitle": "Replace fragmented prompt tools and manual assembly with one automated studio — from first concept to publish-ready master.",
+    "caption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
+    "imageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
   },
   "howItWorks": {
-    "title": "Az ötlettől a közzétételre kész videóig",
-    "titleAccent": "Egy vezérelt folyamat",
-    "subtitle": "A sorozat opcionális. Az alapvető útvonal: Blueprint → Gyártás → Final Cut → Premiere – közben a storyboard, animatik, videó és master MP4 fázisokkal.",
-    "tagline": "Minden lépés szakszerűen automatizált. Minden lépés teljes körű irányítást biztosít.",
-    "optionalBadge": "Választható",
-    "optionalSuffix": " (opcionális)",
-    "readyTitle": "Készen állsz a teljes folyamat tesztelésére?",
-    "explorerCta": "Kezdje ezzel: Explorer – 9 $",
+    "title": "From concept to publish-ready video",
+    "titleAccent": "One guided pipeline",
+    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
+    "tagline": "Every step is expertly automated. Every step gives you full control.",
+    "optionalBadge": "Optional",
+    "optionalSuffix": " (optional)",
+    "readyTitle": "Ready to test the full pipeline?",
+    "explorerCta": "Start with Explorer — $9",
     "phases": [
       {
-        "id": "sorozat",
-        "stepLabel": "Sorozat",
-        "subtitle": "Showrunner-motor",
-        "description": "Határozd meg a világodat egyszer, és hozz létre összefüggő, több epizódon átívelő történeti szálakat. A közös Reference Library révén a karakterek és a hangvétel az egész évad során egységesek maradnak.",
+        "id": "series",
+        "stepLabel": "Series",
+        "subtitle": "Showrunner Engine",
+        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
         "keySteps": [
-          "Határozd meg a világot – a karaktereket, a hangvételt és az évad ívét.",
-          "Az évad epizódvázlatainak automatikus generálása",
-          "Szinkronizálás az Blueprint rendszerbe és epizódonkénti gyártás"
+          "Define universe — characters, tone, and season arc",
+          "Auto-generate episode outlines across the season",
+          "Sync into Blueprint and Production per episode"
         ],
         "keyFeatures": [
-          "Határozd meg egyszer a világodat – a karaktereket, a hangvételt és az évad ívét.",
-          "Egységes epizódvázlatok – automatikusan generálva az évad során",
-          "Folytonosságkövetés – összehangolt, több epizódból álló évadok",
-          "Sorozat és epizód közötti szinkronizálás – az Blueprint stúdió és produkció felé"
-        ]
+          "Define your universe once — characters, tone, and season arc",
+          "Cohesive episode outlines — auto-generated across the season",
+          "Continuity tracking — multi-episode seasons in alignment",
+          "Series-to-episode sync — into Blueprint Studio and Production"
+        ],
+        "optional": true
       },
       {
-        "id": "tervrajz",
+        "id": "blueprint",
         "stepLabel": "Blueprint",
-        "subtitle": "Történetfejlesztés",
-        "description": "Alakítsd át az ötleteket strukturált vázlatokká, amelyek tartalmazzák a logline-t, a történeti csomópontokat, a karaktereket és a hangvételt. Futtasd az Audience Resonance-ot, és működj együtt másokkal az erőforrásigényes renderelés előtt.",
+        "subtitle": "Story Development",
+        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
         "keySteps": [
-          "Előállítás → Ellenőrzés → Finomítás → Gyártás indítása",
-          "Audience Resonance pontszerzés 80 feletti célértékkel",
-          "Megosztási linkek és exportálás (PDF, Doc, PPTX) együttműködők számára"
+          "Generate → Review → Iterate → Start Production",
+          "Audience Resonance scoring with 80+ target",
+          "Collaborator share links and export (PDF, Doc, PPTX)"
         ],
         "keyFeatures": [
-          "Generálás → Ellenőrzés → Iteráció → Gyártás indítása munkafolyamat",
-          "Az ötlettől a szerkezetig percek alatt – logline, történeti mérföldkövek, karakterek és hangvétel",
-          "Audience Resonance pontozás 80 feletti célértékkel a Production kategória előtt",
-          "Megosztási linkek munkatársak számára – visszajelzések összegzése és irányított átdolgozás"
-        ]
+          "Generate → Review → Iterate → Start Production workflow",
+          "Concept to structure in minutes — logline, beats, characters, and tone",
+          "Audience Resonance scoring with 80+ target before Production",
+          "Collaborator share links — feedback synthesis into guided revision"
+        ],
+        "optional": false
       },
       {
-        "id": "termelés",
-        "stepLabel": "Gyártás",
-        "subtitle": "Szkriptből adatfolyamok",
-        "description": "A Script és Action lapok végigvezetnek a Foundation → Storyboard → Production → Final Cut folyamaton. Express storyboard, Beat Frames, Mixer és MP4-adatfolyamok – mindez eszközváltás nélkül.",
+        "id": "production",
+        "stepLabel": "Production",
+        "subtitle": "Script to Streams",
+        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
         "keySteps": [
-          "Forgatókönyv, hangok és jelenethang rögzítése",
-          "Express storyboard — galéria és megosztás véleményezésre",
-          "Beat Frames → Rendezői konzol → Renderelési adatfolyam",
-          "Küldje a kész adatfolyamokat a Final Cut címre."
+          "Lock script, voices, and scene audio",
+          "Express storyboard — gallery and share for review",
+          "Beat Frames → Director Console → Render Stream",
+          "Send finished streams to Final Cut"
         ],
         "keyFeatures": [
-          "Foundation – forgatókönyv, hangok, jelenethang, forgatókönyv véglegesítése",
-          "Express storyboard — útvonal és képkockák percekben; galéria és megosztás",
-          "Beat Frames és Mixer – kezdő/záró képkockák, Director Console, MP4-adatfolyamok renderelése",
-          "Gyártási folyamatok – kimenetek ellenőrzése, elavult ütemek újragenerálása, küldés a Final Cut-re"
-        ]
+          "Foundation — script, voices, scene audio, lock script",
+          "Express storyboard — direction and frames in minutes; gallery and share",
+          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
+          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
+        ],
+        "optional": false
       },
       {
-        "id": "végső vágat",
+        "id": "final-cut",
         "stepLabel": "Final Cut",
-        "subtitle": "Adatfolyam-összeállítás",
-        "description": "Fűzze össze a kész gyártási streameket egyetlen mester MP4-fájllá. Válassza ki a Animatic-et, vagy jelenetenként a videót és a nyelvet – nincs szükség idővonal-szerkesztésre; a kreatív módosítások a Production Mixer-ben maradnak.",
+        "subtitle": "Stream Assembly",
+        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
         "keySteps": [
-          "Válaszd ki a streameket jelenetenként – előre beállított vagy egyedi keverés",
-          "A teljes műsor megtekintése a forgatókönyv szerinti sorrendben",
-          "Egyetlen mester MP4 exportálása a Premiere számára"
+          "Pick streams per scene — preset or custom mix",
+          "Preview full program in script order",
+          "Export one master MP4 for Premiere"
         ],
         "keyFeatures": [
-          "Jelenetenkénti adatfolyam-választás — Animatic, Videó, nyelv, verzió",
-          "Összeállítási előbeállítások – Teljes videó, Hibrid, Egyedi összeállítás",
-          "Nincs idővonal-szerkesztés – a kreatív módosítások az Production Mixer-ben maradnak.",
-          "Egykattintásos mesterexport – összefűzött MP4 a Premiere számára"
-        ]
+          "Per-scene stream pick — Animatic, Video, language, version",
+          "Assembly presets — All Video, Hybrid, Custom mix",
+          "No timeline editing — creative changes stay in Production Mixer",
+          "One-click master export — stitched MP4 for Premiere"
+        ],
+        "optional": false
       },
       {
-        "id": "bemutató",
+        "id": "premiere",
         "stepLabel": "Premiere",
-        "subtitle": "Elosztóközpont",
-        "description": "Tekintsd át a végleges anyagot a közönségelemzési adatokkal, majd tedd közzé YouTube-on honosított metaadatokkal, vagy exportálj csomagokat Shorts, Reels és TikTok felületekre.",
+        "subtitle": "Distribution Hub",
+        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
         "keySteps": [
-          "Vetítés létrehozása és /s/ link megosztása",
-          "Értékelések pontozása, interakció és vizuális elemzések",
-          "YouTube-varázsló vagy exportcsomag"
+          "Create screening and share /s/ link",
+          "Review Scoring, engagement, and visual insights",
+          "YouTube wizard or export bundle"
         ],
         "keyFeatures": [
-          "Megosztható Screening Room — /s/ linkek pontozással és opcionális interakciós elemzéssel (a néző hozzájárulásával)",
-          "Elemzési irányítópult – Pontozási, biometrikus és vizuális lapok",
-          "YouTube-szakértő – bélyegkép, honosított cím/leírás, SceneFlow CTA",
-          "Exportcsomagok és függőleges rövid videós klipek tervei"
-        ]
+          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
+          "Insights dashboard — Scoring, Biometric, and Visual tabs",
+          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
+          "Export bundles and vertical short-form clip plans"
+        ],
+        "optional": false
       }
     ]
   },
   "useCases": {
-    "badge": "Gyártási alkalmazások",
-    "title": "Bármilyen videót is tudsz elképzelni,",
-    "titleAccent": "Építsd meg SceneFlow-ben",
-    "subtitle": "Ingatlanbemutatók, oktatási anyagok, podcastok, hírműsorok, márkakampányok és moziszerű történetek – egyetlen automatizált stúdió a koncepciótól a közzétételre kész végtermékig.",
-    "qualifyingStatement": "A SceneFlow az Ön által biztosított fényképekből, feltöltött fájlokból és leírásokból narrációval ellátott bemutató videókat készít – tetszés szerint választható hanggal és karaktermegjelenítéssel, amelyek felett Ön rendelkezik. Ezek mesterséges intelligencia segítségével létrehozott prezentációk: az Ön anyagain alapuló, valósághű vizualizációk, nem pedig élő kamerás felvételek. Közzététel előtt tekintse át és hagyja jóvá a forgatókönyv-vázlatokat (storyboardokat), a végeredményt pedig lássa el egyértelmű jelöléssel, hogy a közönség tisztában legyen azzal, mit lát.",
+    "badge": "Production Applications",
+    "title": "Whatever Video You Can Imagine,",
+    "titleAccent": "Build It in SceneFlow",
+    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "qualifyingStatement": "SceneFlow turns your source photos, uploads, and descriptions into narrated walkthrough videos — with optional voice and character presence you control. These are AI-altered presentations: realistic visualizations grounded in your materials, not live camera recordings. Review and approve every storyboard before publish; label outputs clearly so audiences know what they're watching.",
     "ui": {
-      "useCases": "Felhasználási esetek",
-      "sectors": "{count} ágazat",
-      "demoComingSoon": "Hamarosan érkezik a demó",
-      "selectExample": "Válasszon ki egy példát a demó előnézetének megtekintéséhez.",
-      "targetPersona": "Célcsoport-perszóna",
-      "theChallenge": "A kihívás",
-      "sceneFlowSolution": "Az SceneFlow megoldás",
-      "beforeVsAfter": "Előtte és utána",
-      "before": "Előtt",
-      "after": "Utána",
-      "theWin": "A „győzelem”",
-      "frameAnchoredTitle": "Képkockához rögzített folytonosság",
-      "frameAnchoredDescription": "Az SceneFlow az egyetlen olyan eszköz, amely lehetővé teszi a képkockához rögzített folytonosságot, így garantálva, hogy az ügyfél terméke vagy karaktere minden jelenetszakaszban változatlan maradjon.",
-      "closePreview": "Előnézet bezárása",
-      "expandVideo": "Videó nagyítása",
-      "expandImage": "Kép nagyítása",
-      "orStartExplorer": "kezdje a 9 dolláros Explorer csomaggal",
-      "orPrefix": "Vagy"
+      "useCases": "Use Cases",
+      "sectors": "{count} SECTORS",
+      "demoComingSoon": "Demo Coming Soon",
+      "selectExample": "Select an example to preview its demo",
+      "targetPersona": "Target Persona",
+      "theChallenge": "The Challenge",
+      "sceneFlowSolution": "The SceneFlow Solution",
+      "beforeVsAfter": "Before vs After",
+      "before": "Before",
+      "after": "After",
+      "theWin": "The \"Win\"",
+      "frameAnchoredTitle": "Frame-Anchored Continuity",
+      "frameAnchoredDescription": "SceneFlow is the only tool that allows Frame-Anchored continuity, ensuring your client's product or character remains identical across every scene segment.",
+      "closePreview": "Close Preview",
+      "expandVideo": "Expand Video",
+      "expandImage": "Expand Image",
+      "orStartExplorer": "start with the $9 Explorer plan",
+      "orPrefix": "Or"
     },
     "personas": {
       "creator": {
-        "label": "Önálló alkotó",
-        "title": "A YouTube-tartalomkészítő",
+        "label": "Solo Creator",
+        "title": "The YouTube Creator",
         "beforeAfter": {
-          "before": "40 óra",
-          "after": "25 perc"
+          "before": "40 hrs",
+          "after": "25 mins"
         },
         "challenge": {
-          "title": "A „B-roll” szűk keresztmetszet",
-          "description": "Bár a forgatókönyv kiváló, az időd nagy részét a nyersanyagok felkutatása, a vágási folyamatok összehangolása és a jelenetek közötti összhang biztosítása emészti fel. Ez a késlekedés lassítja a közzététel ütemét, és rontja a nézői megtartást."
+          "title": "The \"B-Roll\" Bottleneck",
+          "description": "You have a strong script, but learning six separate generation and edit tools — or getting stuck in slot-machine video loops — slows every upload. That delay weakens publishing cadence and audience retention."
         },
         "solution": {
-          "title": "Az automatizált mesemondó",
-          "description": "Alakítsd át gyorsan a forgatókönyveket gyártáskész látványvilággá, miközben megőrzöd a karakterek és a stílus egységességét az első jelenettől egészen a közzétételre kész végleges anyagig.",
+          "title": "The Automated Storyteller",
+          "description": "Guided automation from script to publish-ready master — no need to learn six separate apps. Keep character and style continuity from first scene through series production.",
           "features": [
-            "A forgatókönyv egyes szakaszaihoz pontosan illeszkedő vizuális elemek",
-            "Következetes főszereplők minden jelenetben",
-            "Bővítés epizódsorozatokra közös referenciatár segítségével"
+            "Visuals that map cleanly to script beats",
+            "Consistent protagonists across every scene",
+            "Scale to episode series with a shared reference library"
           ]
         },
-        "win": "Váltson az alkalmi feltöltésekről megbízható gyártási ütemre, csökkentett adminisztrációs teher mellett.",
+        "win": "Move from occasional uploads to a reliable production cadence with less overhead.",
         "keyPhrases": [
-          "Gyorsabb átfutási idő",
-          "Következetes karakterek",
-          "Sorozatgyártásra kész munkafolyamat"
+          "Faster Turnaround",
+          "Consistent Characters",
+          "Series-Ready Workflow"
         ]
       },
       "team": {
-        "label": "Belső csapat",
-        "title": "A házon belüli videós csapat",
+        "label": "In-house Team",
+        "title": "The In-House Video Team",
         "beforeAfter": {
-          "before": "6 hét",
-          "after": "Ugyanazon a héten"
+          "before": "6 wks",
+          "after": "Same wk"
         },
         "challenge": {
-          "title": "Beszállítói feladattorlódás és márkairány-eltolódás",
-          "description": "A kommunikációs, képzési és marketingcsapatok hetekig várnak az ügynökségek vagy beszállítók által készített videókra. Minden forgatás inkonzisztens márkaépítéssel, kiszámíthatatlan számlázással és olyan jóváhagyási folyamatokkal jár, amelyek hátráltatják a kampányokat."
+          "title": "Vendor Backlog & Brand Drift",
+          "description": "Comms, L&D, and marketing teams wait weeks for agency or vendor video — or face an overwhelming tool stack with no repeatable in-house system. Every path brings inconsistent branding and stalled campaigns."
         },
         "solution": {
-          "title": "Házon belüli gyártás egy héten belül",
-          "description": "Bízzon meg csapatot videókészítéssel, kiszámítható kreditalapú költségkeret mellett – márkasablonok használatával, a végleges renderelés előtti jóváhagyással, valamint forgatási napok és végtelenített vágási folyamatok nélkül.",
+          "title": "Same-Week In-House Production",
+          "description": "Assign staff to produce video on a predictable credit budget — with brand templates, approval before final render, and no crew days or open-ended edit cycles.",
           "features": [
-            "Váltsa ki a külső szolgáltatók által végzett fotózásokat irányított, házon belüli munkafolyamatokkal.",
-            "Márkaazonos sablonok és referenciatárak",
-            "Projektenkénti kreditfelhasználás és költségkeret-korlátok átláthatósága",
-            "Hagyja jóvá a storyboardokat a végleges videó kifizetése előtt."
+            "Replace vendor shoots with guided in-house workflows",
+            "Brand-safe templates and reference libraries",
+            "Visible credit spend and budget caps per project",
+            "Approve storyboards before paying for final video"
           ]
         },
-        "win": "Készítsd el és tedd közzé a képzési, kommunikációs és kampányvideókat a saját ütemterved szerint – ne a szolgáltató feladatlistájához igazodva.",
+        "win": "Ship training, comms, and campaign video on your timeline — not the vendor's backlog.",
         "keyPhrases": [
-          "Kiszámítható költség",
-          "Márkafelügyelet",
-          "Azonos heti teljesítés"
+          "Predictable Cost",
+          "Brand Control",
+          "Same-Week Turnaround"
         ]
       },
       "productionShop": {
-        "label": "Gyártóüzem",
-        "title": "A speciális gyártóműhely",
+        "label": "Production Shop",
+        "title": "The Niche Production Shop",
         "beforeAfter": {
-          "before": "8000 dollár/forgatás",
-          "after": "200 dollár értékű jóváírás"
+          "before": "4+ hrs",
+          "after": "30–60 min"
         },
         "challenge": {
-          "title": "Egyedi iparágspecifikus megoldások, nincs megismételhető rendszer",
-          "description": "Az emlékirat-készítés, az örökségmegőrzés, az ingatlanpiac és az oktatás területén tevékenykedő ügyfelek gyors teljesítést várnak el – csakhogy minden projekt a nulláról indul. A fájlfeltöltések, a hangklónozás és az avatarok használata nem skálázható hatékonyan anélkül, hogy sablonokra épülő folyamat létezne az igényfelvételtől egészen a végső átadásig."
+          "title": "Custom Verticals, No Repeatable System",
+          "description": "Memoir, legacy, real estate, and education clients need fast turnaround — but every project starts from scratch. Per-deliverable handoffs plus slot-machine video re-rolls across script, image, voice, video, music, and edit tools eat margin on volume."
         },
         "solution": {
-          "title": "Alakítsd termékké videós szolgáltatásodat",
-          "description": "Hozzon létre megismételhető munkafolyamatokat emlékirat-készítő stúdiók és speciális piaci szegmensek számára. Sablonok feltöltése, hangklónozás, avatarok és storyboard-jóváhagyás – szabja testre az egyes ügyfelek igényei szerint, és növelje árrését a volumen növelésével.",
+          "title": "Productize Your Video Service",
+          "description": "Build repeatable workflows for memoir studios and niche verticals. Template uploads, voice clones, avatars, and storyboard approval — customize per client and grow margin on volume.",
           "features": [
-            "Emlékirat-sablonok fotófeltöltési lehetőséggel, hangklónozással és avatár-házigazdákkal",
-            "Az ügyfélfelvétel az Blueprint-hoz és a storyboard-jóváhagyási szakaszokhoz kötődik.",
-            "White-label stúdiócsomagok életút-, emlék- és előfizetéses videókhoz",
-            "Forgatásonkénti rezsiköltség helyett a krediteken realizált árrés"
+            "Memoir templates with photo uploads, voice clones, and avatar hosts",
+            "Client intake tied to Blueprint and storyboard approval phases",
+            "White-label studio packages for legacy, tribute, and subscription video",
+            "Margin on credits instead of per-shoot overhead"
           ]
         },
-        "win": "Indíts videós emlékfilm-készítést vagy egy speciális stúdiószolgáltatást, amely megismételhető folyamatokra épül – ne pedig egyszeri, küzdelmes szabadúszó munkát végezz.",
+        "win": "Launch a video memoir or niche studio service with repeatable delivery — not a one-off freelance grind.",
         "keyPhrases": [
-          "Emlékirat-sablonok",
-          "Hang- és avatar-identitás",
-          "Megismételhető teljesítés"
+          "Memoir Templates",
+          "Voice & Avatar Identity",
+          "Repeatable Delivery"
         ]
       },
       "agency": {
-        "label": "Ügynökség",
-        "title": "Ügyféloldali szolgáltatásnyújtási vezető",
+        "label": "Agency",
+        "title": "The Client Delivery Lead",
         "beforeAfter": {
-          "before": "3 hetes szállítás",
-          "after": "3 napos szállítás"
+          "before": "3 wk delivery",
+          "after": "3 day delivery"
         },
         "challenge": {
-          "title": "Ügyfélkiszolgálás nagy volumenben",
-          "description": "A megbízás elnyerése csak a csata fele. Az ügyféllel folytatott folyamatos munka gyors átfutási időt, átlátható jóváhagyási folyamatokat és minden egyes átadott anyagon realizálható profitot igényel – anélkül, hogy a gyártási folyamatot minden alkalommal a nulláról kellene felépíteni."
+          "title": "Client Delivery at Scale",
+          "description": "Winning the pitch is only half the battle. Recurring client work needs fast turnaround — but per-deliverable handoffs and slot-machine video re-rolls across separate generation and edit tools slow every pitch cycle."
         },
         "solution": {
-          "title": "Átfolyás + Ügyféljóváhagyás",
-          "description": "Lépjen tovább a pályázati tervektől a rendszeres teljesítés felé: éljen a márka integritását védő ellenőrzési lehetőségekkel, biztosítson ügyfél-jóváhagyást a végleges renderelés előtt, és számoljon kiszámítható, projektenkénti kreditköltségekkel.",
+          "title": "Throughput + Client Approval",
+          "description": "Move from pitch spec to recurring delivery with brand-safe controls, client review before final render, and predictable credit costs per project.",
           "features": [
-            "Gyors elővizualizáció prezentációkhoz és ügyféljóváhagyáshoz",
-            "Újrafelhasználható sablonok visszatérő ügyfélformátumokhoz",
-            "A költségvetés átláthatósága minden egyes iteráció során",
-            "Skálázható teljesítés létszámbővítés nélkül"
+            "Fast pre-visualization for pitches and client sign-off",
+            "Reusable templates for recurring client formats",
+            "Budget visibility through every iteration",
+            "Scalable delivery without adding headcount"
           ]
         },
-        "win": "Lebonyolíthatja gyorsabban a tenderfolyamatokat és az ügyfelek visszatérő megbízásait, kisebb gyártási kockázat és magasabb árrés mellett.",
+        "win": "Deliver faster pitch cycles and recurring client work with less production risk and more margin.",
         "keyPhrases": [
-          "Ügyféljóváhagyások",
-          "Szállítási átbocsátóképesség",
-          "Költségvetési kiszámíthatóság"
+          "Client Approvals",
+          "Delivery Throughput",
+          "Budget Predictability"
         ]
       }
     },
     "segmentCtas": {
       "creator": {
-        "label": "Indítsa el az éles tesztrepülést",
-        "subtext": "9 $ egyszeri díj • 750 kredit • Teljes körű hozzáférés a platformhoz"
+        "label": "Start Your Production Test Flight",
+        "subtext": "$9 one-time • 750 credits • Full platform access"
       },
       "team": {
-        "label": "Foglaljon időpontot egy csapatbemutatóra",
-        "subtext": "Nézze meg, hogyan váltják ki a házon belüli csapatok a külső szállítókhoz kötődő folyamatokat."
+        "label": "Book a Team Walkthrough",
+        "subtext": "See how in-house teams replace vendor cycles"
       },
       "productionShop": {
-        "label": "Fedezze fel a függőleges sablonokat",
-        "subtext": "Ingatlan, oktatás, dokumentáció és egyebek – nézze meg, mit tehet termékké"
+        "label": "Explore Vertical Templates",
+        "subtext": "RE, education, docs, and more — see what you can productize"
       },
       "agency": {
-        "label": "Tekintse meg a csapatoknak szóló árakat",
-        "subtext": "Csomagok nagy volumenű munkát végző ügynökségek és produkciós műhelyek számára"
+        "label": "See Team Pricing",
+        "subtext": "Plans for agencies and production shops at scale"
       }
     },
     "categories": [
       {
-        "id": "ingatlan",
-        "title": "Ingatlan, terek és vendéglátás",
-        "qualifyingStatement": "Az ingatlanról készült valódi fényképek alapján készül; a bemutató egy narrált, mesterséges intelligencia segítségével módosított virtuális körbejárás, amely az Ön hangját és avatarját használja. Valósághű betekintést nyújt az elrendezésbe és a jellemzőkbe, ugyanakkor nem helyettesíti a személyes megtekintést. Minden bemutató egyértelműen meg van jelölve.",
+        "id": "property",
+        "title": "Property, Spaces & Hospitality",
+        "qualifyingStatement": "Built from your real property photos — presented as a narrated AI-altered walkthrough with your voice and avatar. A realistic preview of layout and features, not a substitute for an in-person showing. All tours are clearly labeled.",
         "examples": [
           {
-            "id": "lakóingatlan",
-            "label": "Lakóingatlan",
-            "description": "Képzeld el, hogy feltöltöd az ingatlanról készült képeket, valamint a korábban elmentett karakterprofilodat és hangmintádat. Ezután azonnal generálhatsz egy professzionális, bemutató jellegű videós ismertetőt a saját arcoddal és hangoddal – több mint 70 nyelven."
+            "id": "residential-real-estate",
+            "label": "Residential Real Estate",
+            "description": "Imagine uploading your property images with your saved character reference and voice. Then instantly generating a professional listing walkthrough with your image and voice — in over 70 languages."
           },
           {
-            "id": "kereskedelmi ingatlan",
-            "label": "Kereskedelmi ingatlan",
-            "description": "Képzelje el, hogy alaprajzokat, látványterveket és a környékre vonatkozó adatokat tölt fel, mindezt az ingatlanügynök elmentett hangjával és avatárjával kombinálva. Ezután pedig azonnal befektetői prezentációhoz szánt, virtuális bejárásokat hozhat létre, amelyek életre keltik az ingatlan minden egyes négyzetméterét – több mint 70 nyelvre lokalizálva."
+            "id": "commercial-real-estate",
+            "label": "Commercial Real Estate",
+            "description": "Imagine uploading floor plans, renderings, and neighborhood data with your broker's saved voice and avatar. Then instantly producing investor pitch walkthroughs that bring every square foot to life — localized in 70+ languages."
           },
           {
-            "id": "rövid távú bérbeadások",
-            "label": "Rövid távú bérbeadás",
-            "description": "Képzeld el, hogy feltöltöd a házról készült fotókat és a szolgáltatásokkal kapcsolatos tudnivalókat a házigazda rögzített hangjával kiegészítve. Majd azonnal közzéteszel olyan digitális üdvözlővideókat, amelyek minden vendéget a saját nyelvén köszöntenek – még a bejelentkezés előtt."
+            "id": "short-term-rentals",
+            "label": "Short-Term Rentals",
+            "description": "Imagine uploading house photos and amenity notes with your host's saved voice. Then instantly publishing digital welcome videos that greet every guest in their language — before they ever check in."
           },
           {
-            "id": "vendéglátás és turizmus",
-            "label": "Vendéglátás és turizmus",
-            "description": "Képzelje el, hogy feltölti a szállodák fényképeit és az útiterv legfontosabb állomásait, majd márkája elmentett narrátorhangját és avatárját használva azonnal elérhetővé teszi a virtuális túrákat és a narrációval ellátott útikalauzokat – több mint 70 nyelven, anélkül, hogy minden egyes helyszínre forgatócsoportot kellene küldenie."
+            "id": "hospitality-tourism",
+            "label": "Hospitality & Tourism",
+            "description": "Imagine uploading hotel photos and itinerary highlights with your brand's saved host voice and avatar. Then instantly shipping virtual tours and narrated travel guides in 70+ languages — no film crew per property."
           },
           {
-            "id": "múzeumi és galériai tárlatvezetők",
-            "label": "Múzeumi és galériai útmutatók",
-            "description": "Képzelje el, hogy a kiállítási anyag változásakor feltölti a tárgyakról készült fotókat és a kurátori jegyzeteket, majd azonnal frissíti a több mint 70 nyelven elérhető, narrációval kísért tárlatvezetéseket – anélkül, hogy a kiállítás átrendezésekor újra fel kellene vennie az anyagot."
+            "id": "museum-gallery-guides",
+            "label": "Museum & Gallery Guides",
+            "description": "Imagine uploading exhibit photos and curator notes as displays change. Then instantly refreshing narrated gallery tours in 70+ languages — no reshoot when the exhibition rotates."
           }
         ]
       },
       {
-        "id": "tudás",
-        "title": "Tudás, képzés és oktatás",
+        "id": "knowledge",
+        "title": "Knowledge, Training & Education",
         "examples": [
           {
-            "id": "K–12 és felsőoktatás",
-            "label": "Közoktatás és felsőoktatás",
-            "description": "Képzelje el, hogy feltölti a tananyagot az oktató elmentett hangjával és karakterprofiljával, majd azonnal létrehozza a teljes tananyagmodulokat, amelyeket ESL- és globális campus-hallgatói több mint 70 nyelven tekinthetnek meg."
+            "id": "k12-higher-ed",
+            "label": "K-12 & Higher Ed",
+            "description": "Imagine uploading lesson materials with your instructor's saved voice and character reference. Then instantly generating full curriculum modules your ESL and global campus students can watch in 70+ languages."
           },
           {
-            "id": "vállalati arculat",
-            "label": "Vállalati tanulás és fejlesztés",
-            "description": "Képzelje el, hogy feltölti a megfelelőségi előírásokat tartalmazó szövegeket, felhasználva az oktatója elmentett hangját és avatarját. Majd azonnal bevezeti az egységes betanítási és munkavédelmi képzést minden irodában – több mint 70 nyelvre lokalizálva."
+            "id": "corporate-ld",
+            "label": "Corporate L&D",
+            "description": "Imagine uploading compliance scripts with your trainer's saved voice and avatar. Then instantly rolling out consistent onboarding and safety training across every office — localized in 70+ languages."
           },
           {
-            "id": "Szoftver- és SaaS-útmutatók",
-            "label": "Szoftver- és SaaS-oktatóanyagok",
-            "description": "Képzeld el, hogy referenciaként feltöltöd a felhasználói felület képernyőképeit, melléjük rendelve a termékszakértőd rögzített hangját. Ezután azonnal olyan bemutató videókat generálsz, amelyek animálják az egyes kattintásokat – és amelyek a felület élesítésének napján automatikusan frissülnek."
+            "id": "software-saas-tutorials",
+            "label": "Software SaaS Tutorials",
+            "description": "Imagine uploading UI screenshots as reference frames with your product expert's saved voice. Then instantly generating walkthrough videos that animate every click — updated the day your UI ships."
           },
           {
-            "id": "Speciális készségek oktatása",
-            "label": "Speciális készségek oktatása",
-            "description": "Képzeld el, hogy feltöltöd a lépéseket bemutató fényképeket, majd felhasználod az oktató elmentett hangját és karakterprofilját. Ezt követően azonnal közzétehetsz professzionális útmutató-sorozatokat – legyen szó főzésről, barkácsolásról vagy vizsgafelkészítésről – több mint 70 nyelven."
+            "id": "niche-skill-tutoring",
+            "label": "Niche Skill Tutoring",
+            "description": "Imagine uploading step photos with your instructor's saved voice and character reference. Then instantly publishing professional how-to series — cooking, DIY, or certification prep — in 70+ languages."
           },
           {
-            "id": "orvosi betegoktatás",
-            "label": "Orvosi/betegoktatás",
-            "description": "Képzelje el, hogy feltölti a beavatkozásokat szemléltető ábrákat, és hozzájuk rendeli a klinikus jóváhagyott, rögzített hangját. Ezt követően pedig azonnal olyan, közérthető betegtájékoztató videókat hoz létre, amelyeket a családok több mint 70 nyelven érthetnek meg."
+            "id": "medical-patient-education",
+            "label": "Medical/Patient Education",
+            "description": "Imagine uploading procedure diagrams with your clinician's approved saved voice. Then instantly generating clear patient education videos families can understand in 70+ languages."
           },
           {
-            "id": "videó-visszaemlékezések",
-            "label": "Videó-emlékiratok",
-            "description": "Képzeld el, hogy feltöltöd a családi fényképeket, az interjúfelvételeket és a jelenetjegyzeteket, mindezt egy elmentett narrátorhanggal kiegészítve. Ezután azonnal összeállíthatod a fejezetekre tagolt, emlékidéző videókat – a végleges renderelés előtt pedig jóváhagyhatod a forgatókönyv-vázlatot."
+            "id": "video-memoirs",
+            "label": "Video Memoirs",
+            "description": "Imagine uploading family photos, interview audio, and scene notes with a saved narrator voice. Then instantly shaping chapter-based memoir videos — approve the storyboard before final render."
           }
         ]
       },
       {
-        "id": "kölyök",
-        "title": "JIT Média és Információ",
+        "id": "jit",
+        "title": "JIT Media & Information",
         "examples": [
           {
-            "id": "hiperlokális hírek",
-            "label": "Hiperlokális hírek",
-            "description": "Képzelje el, hogy feltölti a napi fotókat és híreket, amelyeket a műsorvezetője rögzített hangján szólaltat meg. Majd azonnal közzéteszi a környék napi híreinek rövid összefoglalóját – stáb és határidőcsúszás nélkül."
+            "id": "hyper-local-news",
+            "label": "Hyper-Local News",
+            "description": "Imagine uploading today's photos and bulletins with your anchor's saved voice. Then instantly publishing a daily neighborhood news brief — no film crew, no missed deadline."
           },
           {
-            "id": "Pénzpiaci összefoglalók",
-            "label": "Pénzügyi és piaci összefoglalók",
-            "description": "Képzelje el, hogy minden reggel feltölti a piaci adatokat és a grafikonok pillanatképeit, majd az elemzője rögzített hangjával azonnal narrált, vizuális összefoglalóvá alakítja őket – mindezt még a tőzsdenyitás előtt."
+            "id": "financial-market-recaps",
+            "label": "Financial & Market Recaps",
+            "description": "Imagine uploading market data and chart snapshots each morning with your analyst's saved voice. Then instantly turning them into a narrated visual digest — ready before the opening bell."
           },
           {
-            "id": "sportközvetítés",
-            "label": "Sportkommentár",
-            "description": "Képzeld el, hogy feltöltöd a mérkőzés statisztikáit és állóképeit a kommentátor rögzített hangjával együtt, majd azonnal összefoglaló videókat generálsz animált jelenetekkel – amelyeket még akkor teszel közzé, amikor a szurkolók éppen a meccsről beszélgetnek."
+            "id": "sports-commentary",
+            "label": "Sports Commentary",
+            "description": "Imagine uploading game stats and still photography with your commentator's saved voice. Then instantly generating recap videos with animated action — published while fans are still talking."
           },
           {
-            "id": "Valós bűnügyi és történelmi dokumentumfilmek",
-            "label": "Valós bűnügyi és történelmi dokumentumfilmek",
-            "description": "Képzeld el, hogy egyszer rögzíted a történelmi személyiségeket a Reference Library-edben, majd azonnal többrészes epizódokat készítesz, amelyekben minden arc és hang változatlan marad – évadról évadra."
+            "id": "true-crime-historical-docs",
+            "label": "True Crime & Historical Docs",
+            "description": "Imagine locking historical figures in your Reference Library once. Then instantly producing multi-part episodes where every face and voice stays consistent — series after series."
           },
           {
-            "id": "időjárási vészhelyzeti riasztások",
-            "label": "Időjárási és vészhelyzeti riasztások",
-            "description": "Képzelje el, hogy szervezete megbízható, előre rögzített hangján tölt fel vészhelyzeti közleményeket, majd azonnal, több mint 70 nyelven tesz közzé egyértelmű riasztásokat a közösségi platformokon – napok helyett percek alatt."
+            "id": "weather-emergency-alerts",
+            "label": "Weather & Emergency Alerts",
+            "description": "Imagine uploading emergency bulletins with your agency's trusted saved voice. Then instantly broadcasting clear alerts in 70+ languages across social platforms — in minutes, not days."
           }
         ]
       },
       {
-        "id": "B2B",
-        "title": "B2B marketing és értékesítés",
+        "id": "b2b",
+        "title": "B2B Marketing & Sales",
         "examples": [
           {
-            "id": "termékbemutató videók",
-            "label": "Termékbemutató videók",
-            "description": "Képzeld el, hogy feltöltöd a termékkatalógus képeit, majd a márkádhoz mentett műsorvezetői hang és avatar segítségével azonnal mozis minőségű magyarázó videósorozatot generálsz – a renderelés előtt pedig jóváhagyod a forgatókönyv-vázlatot."
+            "id": "product-explainer-videos",
+            "label": "Product Explainer Videos",
+            "description": "Imagine uploading product catalog shots with your brand's saved presenter voice and avatar. Then instantly generating a cinematic explainer series — approve the storyboard before you render."
           },
           {
-            "id": "Esettanulmányok és ügyfélvélemények",
-            "label": "Esettanulmány / Ügyfélvélemények",
-            "description": "Képzeld el, hogy feltöltöd az ügyfelek portréit, a projektfotókat és a sikermutatókat, majd egy elmentett narrátorhang segítségével azonnal igényes, vizuális esettanulmányokat hozol létre – mindezt külön forgatás nélkül."
+            "id": "case-study-testimonials",
+            "label": "Case Study/Testimonials",
+            "description": "Imagine uploading client headshots, project photos, and success metrics with a saved narrator voice. Then instantly producing polished visual case studies — without a testimonial shoot."
           },
           {
-            "id": "toborzási márkaépítés",
-            "label": "Toborzás és márkaépítés",
-            "description": "Képzelje el, hogy feltölti az irodáról készült fényképeket és a vállalati kultúra legfontosabb elemeit, mindezt a toborzója elmentett hangjával és avatárjával kiegészítve. Így azonnal bemutathatja a jelölteknek egy átlagos munkanap menetét – akár több mint 70 nyelven, támogatva ezzel a globális toborzást."
+            "id": "recruitment-branding",
+            "label": "Recruitment & Branding",
+            "description": "Imagine uploading office photos and culture highlights with your recruiter's saved voice and avatar. Then instantly giving candidates a narrated day-in-the-life tour — in 70+ languages for global hiring."
           },
           {
-            "id": "Konferencia- és rendezvénypromóciók",
-            "label": "Konferencia- és rendezvénypromóciók",
-            "description": "Képzeld el, hogy feltöltöd az előadók életrajzát, a programpontok részleteit és a helyszínről készült fotókat, mindezt az esemény házigazdájának rögzített hangjával párosítva. Ezután pedig azonnal generálhatod az előadók bemutatását és a tájékoztató anyagokat – amelyek a program minden egyes változásakor automatikusan frissülnek."
+            "id": "conference-event-promos",
+            "label": "Conference & Event Promos",
+            "description": "Imagine uploading speaker bios, session details, and venue photos with your event host's saved voice. Then instantly generating speaker intros and what-to-expect guides — refreshed every time the agenda changes."
           }
         ]
       },
       {
-        "id": "nyilvános",
-        "title": "Közszféra és érdekképviselet",
+        "id": "public",
+        "title": "Public Sector & Advocacy",
         "examples": [
           {
-            "id": "NGO-hatásjelentések",
-            "label": "Civil szervezetek hatásjelentései",
-            "description": "Képzelje el, hogy feltölti a helyszíni felvételeket és a hatásvizsgálati adatokat, majd a szervezete előre rögzített narrátorhangjával – egy egyszerű diavetítés helyett – azonnal érzelemgazdag, narrációval ellátott videókká alakítja a támogatóknak szánt beszámolókat, amelyek valóban a küldetésük hangját közvetítik."
+            "id": "ngo-impact-reports",
+            "label": "NGO Impact Reports",
+            "description": "Imagine uploading field photography and impact data with your organization's saved narrator voice. Then instantly turning donor reports into emotive narrated videos — your mission's voice, not a slideshow."
           },
           {
-            "id": "Közegészségügyi közlemények",
-            "label": "Közegészségügyi közlemények",
-            "description": "Képzelje el, hogy feltölti a jóváhagyott egészségügyi üzeneteket a hivatala által használt, megbízható, előre rögzített hangon. Majd azonnal eléri az összes közösséget több mint 70 nyelven – ugyanazzal a tisztasággal és sürgősséggel, fordítási késedelem nélkül."
+            "id": "public-health-announcements",
+            "label": "Public Health Announcements",
+            "description": "Imagine uploading approved health messaging with your department's trusted saved voice. Then instantly reaching every community in 70+ languages — same clarity, same urgency, zero translation delay."
           },
           {
-            "id": "Jogvédelmi biztosítást ismertető anyagok",
-            "label": "Jogi és biztosítási témájú magyarázók",
-            "description": "Képzelje el, hogy feltölti a szerződés-összefoglalókat és folyamatábrákat, felhasználva tanácsadója rögzített hangját. Majd azonnal olyan vizuális magyarázatokat generál, amelyeket az ügyfelek valóban megértenek – még azelőtt, hogy aláírnák a szerződést vagy kárigényt nyújtanának be."
+            "id": "legal-insurance-explainers",
+            "label": "Legal & Insurance Explainers",
+            "description": "Imagine uploading contract summaries and process diagrams with your advisor's saved voice. Then instantly generating visual breakdowns clients actually understand — before they sign or file a claim."
           },
           {
-            "id": "vallási és spirituális tanítások",
-            "label": "Vallási és spirituális tanítások",
-            "description": "Képzelje el, hogy prédikációs jegyzeteket vagy szent szövegeket tölt fel, amelyekhez társul a tanító rögzített hangja és jelenléte. Majd azonnal közzétesz egy folyamatos, napi videósorozatot a világméretű gyülekezetek számára – több mint 70 nyelven."
+            "id": "religious-spiritual-teachings",
+            "label": "Religious & Spiritual Teachings",
+            "description": "Imagine uploading sermon notes or sacred texts with your teacher's saved voice and presence. Then instantly publishing a consistent daily video series for global congregations — in 70+ languages."
           }
         ]
       }
     ]
   },
   "institutionalRoi": {
-    "badge": "Belső csapatok és intézmények számára",
-    "title": "Váltsa ki a beszállítók által végzett fotózásokat kiszámítható, házon belüli gyártással.",
-    "subtitle": "Az 1–5 fős kommunikációs, képzési (L&D) és marketingcsapatok már a hét folyamán elkészíthetik és közzétehetik videóikat, ügynökségi átalánydíjak vagy végtelenbe nyúló szerkesztési folyamatok nélkül.",
+    "badge": "For in-house teams & institutions",
+    "title": "Replace vendor shoots with predictable in-house production",
+    "subtitle": "Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.",
     "comparisons": [
       {
-        "label": "Hagyományos szolgáltatói fotózás és utómunka",
-        "cost": "5 000–15 000 dollár",
-        "timeline": "4–8 hét"
+        "label": "Traditional vendor shoot + edit",
+        "cost": "$5,000–$15,000",
+        "timeline": "4–8 weeks"
       },
       {
-        "label": "SceneFlow házon belüli munkafolyamat",
-        "cost": "50–500 dollár értékű jóváírás",
-        "timeline": "Ugyanazon a héten"
+        "label": "SceneFlow in-house workflow",
+        "cost": "$50–$500 in credits",
+        "timeline": "Same week"
       }
     ],
     "bullets": [
-      "Márkaazonos sablonok és jóváhagyás a végleges renderelés előtt",
-      "Költségkeretek projektenkénti, átlátható kreditfelhasználással",
-      "Nincs szükség forgatási napokra, sem az egyes módosítások körüli oda-vissza egyeztetésre a vágás során."
+      "Brand-safe templates and approval before final render",
+      "Budget caps with visible credit spend per project",
+      "No crew days, no edit back-and-forth on every revision"
     ],
-    "ctaPrimary": "Foglaljon időpontot egy csapatbemutatóra",
-    "ctaSecondary": "Árak megtekintése",
-    "typicalCost": "Átlagos költség",
-    "timeline": "Idővonal"
+    "ctaPrimary": "Book a team walkthrough",
+    "ctaSecondary": "See pricing",
+    "typicalCost": "Typical cost",
+    "timeline": "Timeline"
   },
   "platformWalkthrough": {
-    "badge": "Idegenvezetés",
-    "title": "Platform-ismertető",
-    "subtitle": "Átfogó útmutató a SceneFlow AI Studio munkafolyamathoz, a közös véleményezéstől a végső filmes végeredményig.",
-    "subheading": "Fedezze fel a platformot – kezdje az alapokkal",
-    "chapterHint": "Négy dolog, amit érdemes tudni ma. Bontsa ki a fejezeteket, ha a teljes képet szeretné látni.",
-    "expandChapter": "A műsor jellemzői",
-    "collapseChapter": "Funkciók elrejtése",
-    "underTheHoodLabel": "A motorháztető alatt",
+    "badge": "Guided Tour",
+    "title": "Platform Walkthrough",
+    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
+    "subheading": "Explore the platform — start with essentials",
+    "chapterHint": "Four things to know today. Expand chapters when you want the full picture.",
+    "expandChapter": "Show features",
+    "collapseChapter": "Hide features",
+    "underTheHoodLabel": "Under the hood",
     "chapters": [
       {
-        "id": "alapvető dolgok",
-        "label": "Kezdd itt – amit az első napon kapsz"
+        "id": "essentials",
+        "label": "Start here — what you get on day one",
+        "defaultExpanded": true
       },
       {
-        "id": "minőség",
-        "label": "Érd el, hogy célba találjon a közönségednél"
+        "id": "quality",
+        "label": "Make it land with your audience",
+        "defaultExpanded": false
       },
       {
-        "id": "termelés",
-        "label": "A jóváhagyott alapoktól a kiadott végleges felvételig"
+        "id": "production",
+        "label": "From approved beats to published master",
+        "defaultExpanded": false
       },
       {
-        "id": "haladó",
-        "label": "Azoknak a csapatoknak, amelyek számlázási és irányítási funkciókat igényelnek"
+        "id": "advanced",
+        "label": "For teams who want billing and governance",
+        "defaultExpanded": false
       }
     ],
-    "close": "Bezárás",
-    "viewDetails": "Részletek megtekintése",
+    "close": "Close",
+    "viewDetails": "View Details",
     "beatFirst": {
-      "title": "Ütemalapú videó-munkafolyamat",
-      "description": "Hagyja jóvá a storyboard egyes szakaszait és a Beat Frames-öt az F2V előtt – így kevesebb lesz a „vakon” történő újragenerálás a hallucinációk és a vizuális eltérések miatt. Egyetlen strukturált folyamat az ellenőrzéstől a végleges videóig.",
+      "id": 15,
+      "title": "Beat-First Video Pipeline",
+      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
       "keyFeatures": [
-        "Express storyboard véleményezésre – oszd meg az alapokat a nagy erőforrásigényű renderelés előtt",
-        "Beat Frames zárolási összetétel — Reference Library folytonosság",
-        "F2V ütemenként – videó generálása jóváhagyott képkockákból",
-        "Keverő időzítése és adatfolyamok – exportálás az Final Cut szerelvénybe"
+        "Express storyboard for review — share beats before heavy render",
+        "Beat Frames lock composition — Reference Library continuity",
+        "F2V per beat — generate video from approved frames",
+        "Mixer timing and streams — export to Final Cut assembly"
       ],
-      "screenshotSlot": "Képernyőkép beszúrása: Beat Frames és a forgatókönyv-vázlat (storyboard) jóváhagyása a videó generálása előtt",
-      "videoSlot": "00:30-as klip beszúrása: ütemek jóváhagyása, képkockák rögzítése, majd F2V-klipek generálása"
+      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
+      "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
     },
     "screeningRoom": {
-      "title": "Közönségelemzés és analitika",
-      "description": "Privát megosztási linkek az érintettek számára – manuális pontozás, strukturált visszajelzés és opcionális interakciós elemzés (a néző hozzájárulásával). Használatban a Premiere fázisban, a közzététel előtt, valamint a gyártási storyboard előnézetéhez.",
+      "title": "Audience Review and Analytics",
+      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
       "keyFeatures": [
-        "Privát véleményezési alkalmak – biztonságos megosztási linkek az érintettek számára",
-        "Strukturált közönségvisszajelzés – értékelések és szabad szöveges elemek",
-        "Opcionális interakciós elemzések – a rögzítést megelőző nézői hozzájárulással",
-        "Valós adatok alapján történő iteráció – a Blueprint és a szkript finomítása a véleményezők észrevételei alapján"
+        "Private review sessions — secure /s/ share links for stakeholders",
+        "Structured audience feedback — ratings and open items",
+        "Optional engagement analytics — with viewer consent before capture",
+        "Iterate from real data — refine Blueprint and script from reviewer insights"
       ],
-      "screenshotSlot": "Képernyőkép beszúrása: Screening Room elemzési és bírálói visszajelzési panel",
+      "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
-      "videoSlot": "00:30-as videórészlet beszúrása: Véleményező ülés tartása és interakciós adatok gyűjtése"
+      "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
     },
     "ui": {
-      "screenshot": "Képernyőkép",
-      "video": "Videó",
-      "featureVideo": "Kiemelt videó",
-      "keyFeatures": "Főbb jellemzők",
-      "openScreenshot": "Képernyőkép megnyitása",
-      "openFeatureVideo": "Bemutató videó megnyitása",
-      "expandImage": "Kép nagyítása",
-      "closePreview": "Előnézet bezárása"
+      "screenshot": "Screenshot",
+      "video": "Video",
+      "featureVideo": "Feature Video",
+      "keyFeatures": "Key features",
+      "openScreenshot": "Open screenshot",
+      "openFeatureVideo": "Open feature video",
+      "expandImage": "Expand Image",
+      "closePreview": "Close Preview"
     },
     "items": [
       {
         "id": "1",
-        "title": "Intuitív felhasználói élmény + teljes körű alkotói kontroll",
-        "description": "Kezdje gyorsan az irányított automatizálással, majd szerkessze át a generált eredményeket, így a csapatok a sebesség feláldozása nélkül is megőrizhetik a kreatív irányítást.",
+        "title": "Intuitive UX + Full Creator Control",
+        "description": "Start fast with guided automation, then edit every generated output so teams keep creative control without losing speed.",
         "keyFeatures": [
-          "Vezetett Studio-munkafolyamat – a koncepciótól az exportálásig, egyetlen helyen",
-          "Szerkessze közvetlenül a helyén az összes MI által generált cselekményelemet, karaktert és párbeszédsort.",
-          "Koncepcióváltozatok – egymás melletti összehasonlítás a kreatív irány meghatározásához",
-          "Blueprint Együttműködés – linkek, szakaszokhoz tartozó hanganyagok és strukturált véleményezői visszajelzések megosztása"
+          "Guided Studio workflow — from concept to export in one place",
+          "Edit every AI-generated beat, character, and line in place",
+          "Treatment variants — side-by-side compare for creative direction",
+          "Blueprint Collaborate — share links, section audio, and structured reviewer feedback"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: Blueprint szerkesztő szerkeszthető, generált szakaszokkal",
-        "videoSlot": "00:30-as klip beszúrása: UX-folyamat a koncepciótól a szerkeszthető végeredményig"
+        "screenshotSlot": "Insert screenshot: Blueprint editor with editable generated sections",
+        "videoSlot": "Insert 00:30 clip: UX flow from concept to editable output"
       },
       {
         "id": "2",
-        "title": "Hitelkeret-tervezés és költségkontroll",
-        "description": "Kövesse nyomon a kreditfelhasználást valós időben, és állítson be korlátokat a költséges generálási folyamatok előtt.",
+        "title": "Credit Budget & Cost Control",
+        "description": "Track credit usage in real time and set guardrails before expensive generation runs.",
         "keyFeatures": [
-          "Valós idejű kreditfelhasználás – projektenként és műveletenként",
-          "Éles környezeti védőkorlátok – a költséges generálási folyamatok előtt",
-          "Átlátható árlisták – TTS, videó és intelligencia szolgáltatásokhoz",
-          "Átlátható költségvetés – csapatok és egyéni alkotók számára"
+          "Real-time credit usage — by project and operation",
+          "Production guardrails — before costly generation runs",
+          "Transparent rate cards — for TTS, video, and intelligence",
+          "Budget visibility — for teams and solo creators"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: kreditfelhasználási panel és BYOK-beállítások",
-        "videoSlot": "00:30-as klip beszúrása: költségvetési irányítópult és kulcsfontosságú beállítások",
+        "screenshotSlot": "Insert screenshot: credit usage panel and BYOK settings",
+        "videoSlot": "Insert 00:30 clip: budget dashboard and key configuration",
         "underTheHood": {
-          "title": "A motorháztető alatt",
-          "body": "Meglévő felhőszerződéssel rendelkező produkciós csapatok számára:",
+          "title": "Under the hood",
+          "body": "For production teams with existing cloud contracts:",
           "bullets": [
-            "Vertex AI BYOK — vállalati számlázás és irányítás",
-            "Szolgáltató-választó kapcsolók a hitelkalkulátorban",
-            "Átlátható platformdíjak a kulcsai mellett"
+            "Vertex AI BYOK — enterprise billing and governance",
+            "Provider toggles in the credit calculator",
+            "Transparent platform rate cards alongside your keys"
           ]
         }
       },
       {
         "id": "3",
-        "title": "Bármilyen koncepció, egyetlen gyártási folyamat",
-        "description": "Használjon egyetlen megbízható munkafolyamatot képzésekhez, podcastokhoz, hírekhez, ingatlanértékesítési videókhoz és moziszerű tartalmakhoz.",
+        "title": "Any Concept, One Production Workflow",
+        "description": "Use one reliable pipeline for training, podcasts, news, home sales videos, and cinematic content.",
         "keyFeatures": [
-          "Egyetlen gyártási folyamat – podcast, hírek, oktatás, ingatlanpiac és filmes formátumok",
-          "Projektsablonok – A Studio alkalmazkodik a forrásanyaghoz",
-          "Ugyanaz az Blueprint → forgatókönyv → gyártási folyamat – műfajtól függetlenül",
-          "Nincs szükség eszközváltásra – az ötleteléstől a megvalósításig"
+          "One pipeline — podcast, news, training, real estate, and cinematic formats",
+          "Project templates — Studio adapts to your source material",
+          "Same Blueprint → Script → Production path — regardless of genre",
+          "No tool-switching — from ideation through delivery"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: osztott nézet vagy rács, amelyen podcast-, híradó-, ingatlan- és filmes sablonok láthatók, amint egyetlen egységes SceneFlow-folyamatfelületre (pipeline UI) futnak be.",
-        "videoSlot": "00:30-as klip beszúrása: „Kezdje bármilyen forrásanyaggal...” – kattintás az Új projekt -> Podcast lehetőségre (a felület az audióhoz igazodik), majd osztott képernyőn látható, ahogy a híradós és filmes projektek összefutnak az Blueprint szerkesztőfelületen."
+        "screenshotSlot": "Insert screenshot: Split-view or grid showing Podcast, News, Real Estate, and Cinematic templates feeding into one unified SceneFlow pipeline UI.",
+        "videoSlot": "Insert 00:30 clip: \"Start with any source material...\" clicking New Project -> Podcast (UI adapts to audio), then showing split screen of News & Cinematic projects converging into the Blueprint editor."
       },
       {
         "id": "4",
-        "title": "Intelligens automatizálás precíz szerkesztésvezérléssel",
-        "description": "A SceneFlow platform intelligens megoldásokkal automatikusan hoz létre professzionális kiindulási alapot (sorozatot, tervrajzot, forgatókönyvet, gyártási utasításokat és szerkesztéseket), miközben olyan intelligens párbeszédpaneleket kínál, amelyek beépített korlátok mellett biztosítják a szerkesztés feletti teljes körű irányítást.",
+        "title": "Smart Automation with Precision Edit Control",
+        "description": "The SceneFlow platform uses intelligence to automatically generate a professional baseline (series, blueprint, script, production prompts, and edits) while providing intelligent dialogs that give you full edit control with built-in guardrails.",
         "keyFeatures": [
-          "MI-alapok egyetlen lépésben – sorozat, tervrajz, forgatókönyv és gyártási promptok",
-          "Intelligens szerkesztőablakok – korlátok, nem pedig vak átírások",
-          "Fogadja el, finomítsa vagy utasítsa el – minden javaslat az Ön irányítása alatt marad.",
-          "Ember a folyamatban – a termelés minden szakaszában"
+          "AI baselines in one pass — series, blueprint, script, and production prompts",
+          "Intelligent edit dialogs — guardrails, not blind rewrites",
+          "Accept, refine, or reject — every suggestion stays under your control",
+          "Human-in-the-loop — at every phase of production"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: Intelligens párbeszédpanel, amely az alapvonal-generálást és a szerkesztési vezérlőket mutatja.",
-        "videoSlot": "00:30-as klip beszúrása: AI-alapú kiindulási változat létrehozása, majd a felhasználó általi pontos módosítások."
+        "screenshotSlot": "Insert screenshot: Intelligent dialog showing baseline generation with edit controls",
+        "videoSlot": "Insert 00:30 clip: AI baseline generation followed by user making precise edits"
       },
       {
         "id": "5",
-        "title": "Megosztott Reference Library a folytonosság érdekében",
-        "description": "Újrafelhasználható referenciák segítségével biztosítsd a karakterek, a jelmezek, a hangok, a helyszínek és a kellékek következetességét a különböző jelenetekben és epizódokban.",
+        "title": "Shared Reference Library for Continuity",
+        "description": "Maintain consistent characters, wardrobe, voices, locations, and props across scenes and episodes with reusable references.",
         "keyFeatures": [
-          "Újrafelhasználható profilok – karakterek, jelmezek, hangok, helyszínek és kellékek",
-          "Szcenáriókon átívelő alkalmazás – a referenciák minden generációba átgyűrűznek",
-          "Vizuális konzisztencia – azonos arcok és stílus az Imagen és a Veo kimenetein",
-          "Franchise-szintű kontinuitás – többrészes sorozatokhoz tervezve"
+          "Reusable profiles — characters, wardrobe, voices, locations, and props",
+          "Cross-scene application — references flow into every generation",
+          "Visual consistency — same faces and tone in Imagen and Veo outputs",
+          "Franchise-scale continuity — built for multi-episode series"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: Referenciatár, amely bemutatja a karakterek és kellékek folytonosságát.",
-        "videoSlot": "00:30-as klip beszúrása: Referenciák alkalmazása több jeleneten keresztül"
+        "screenshotSlot": "Insert screenshot: Reference library showing character and prop continuity",
+        "videoSlot": "Insert 00:30 clip: Applying references across multiple scenes"
       },
       {
         "id": "6",
-        "title": "Expressz generálómotor",
-        "description": "Generáljon automatikusan és párhuzamosan képeket és videórészleteket. Az Express Storyboard lehetővé teszi az audiovizuális forgatókönyv-vázlatok (storyboardok) percek alatti áttekintését és megosztását. Az Express Animatic percek alatt rendereli a teljes Ken Burns-stílusú jeleneteket, az Express Video pedig napok helyett percek alatt állítja elő a végleges videójeleneteket.",
+        "title": "Express Generation Engine",
+        "description": "Auto-generate images and video segments concurrently. Express Storyboard lets you review and share audio-visual storyboards in minutes. Express Animatics renders full Ken Burns scenes in minutes, while Express Video delivers final video scenes in minutes instead of days.",
         "keyFeatures": [
-          "Egyidejű generálás – képek és videók létrehozása több jelenetben egyszerre",
-          "Express Storyboard – megosztható audiovizuális előnézetek percek alatt",
-          "Express Animatic-ek – Ken Burns-effektus állóképekből",
-          "Express Video – jelenetszintű klipek percek, nem pedig napok alatt"
+          "Concurrent generation — images and video across scenes at once",
+          "Express Storyboard — shareable audio-visual previews in minutes",
+          "Express Animatics — Ken Burns motion from stills",
+          "Express Video — scene-level clips in minutes, not days"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: Expressz generálási irányítópult Animatic-ekkel és videó-előrehaladással",
-        "videoSlot": "00:30-as klip beszúrása: párhuzamos generálás, amely a forgatókönyvből animatikot, majd végleges videót hoz létre"
+        "screenshotSlot": "Insert screenshot: Express generation dashboard with Animatics and Video progress",
+        "videoSlot": "Insert 00:30 clip: Concurrent generation turning script into animatic then final video"
       },
       {
         "id": "7",
-        "title": "Audience Resonance Szerkesztő",
-        "description": "Határozza meg célközönségét, hogy azonnali értékelést, elemzést és javaslatokat kapjon. Alkalmazzon egykattintásos javításokat, vagy használja a vezérelt szerkesztési funkciókat epizódjai, Blueprint-e és forgatókönyve tökéletes optimalizálásához a maximális hatás érdekében.",
+        "title": "Audience Resonance Editor",
+        "description": "Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint, and Script for maximum impact.",
         "keyFeatures": [
-          "Célközönség-pontozás – kategóriák szerinti bontásban",
-          "Szakaszhoz kötött javaslatok – javítsd ki a történeted megfelelő részét",
-          "Egykattintásos javítások és vezérelt szerkesztés – pontos módosítások találgatás nélkül",
-          "Gyártáskész állapot küszöbértéke – tudja meg, mikor érdemes a teljes renderelésbe fektetni"
+          "Target-audience scoring — with category breakdown",
+          "Section-tied recommendations — fix the right part of your story",
+          "One-click fixes and Guided Edit — precise rewrites, not guesswork",
+          "Production-ready threshold — know when to invest in full render"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: Resonance Editor közönségértékeléssel és egykattintásos javítási lehetőségekkel",
-        "videoSlot": "00:30-as klip beszúrása: Irányított szerkesztések alkalmazása a közönségre gyakorolt hatás pontszáma alapján"
+        "screenshotSlot": "Insert screenshot: Resonance Editor with audience scoring and one-click fixes",
+        "videoSlot": "Insert 00:30 clip: Applying guided edits based on audience resonance score"
       },
       {
         "id": "8",
-        "title": "Adaptív fordítás (több mint 70 nyelv)",
-        "description": "Végezze el a tartalmak nagy léptékű lokalizálását a többnyelvű közzététel érdekében, miközben megőrzi a narratív szándékot és az időzítés összhangját.",
+        "title": "Adaptive Translation (70+ Languages)",
+        "description": "Localize content at scale while preserving narrative intent and timeline alignment for multilingual delivery.",
         "keyFeatures": [
-          "Több mint 70 nyelv – narráció, párbeszéd és szöveganyag nagy volumenben",
-          "A narratív szándék megőrizve – a jelentés és az időzítés összhangban marad",
-          "Többnyelvű hangsávok – a jelenet idővonalán",
-          "Terjesztésre kész csomagok – területi beállításonként"
+          "70+ languages — narration, dialogue, and copy at scale",
+          "Narrative intent preserved — meaning and timing stay aligned",
+          "Multi-language audio tracks — on the scene timeline",
+          "Export-ready packages — per locale for distribution"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: Többnyelvű idővonal és fordítási beállítások",
-        "videoSlot": "00:30-as videórészlet beszúrása: Egy jelenet azonnali lokalizálása több nyelvre"
+        "screenshotSlot": "Insert screenshot: Multi-language timeline and translation settings",
+        "videoSlot": "Insert 00:30 clip: Instantly localizing a scene into multiple languages"
       },
       {
         "id": "9",
-        "title": "Sorozatgyártás-automatizálás",
-        "description": "Határozd meg a világodat egyszer, és hozz létre összefüggő, több epizódon átívelő történeti szálakat. A közös Reference Library révén a karakterek és a hangvétel az egész évad során egységesek maradnak.",
+        "title": "Series Automation",
+        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
         "keyFeatures": [
-          "Határozd meg egyszer a világodat – a karaktereket, a hangvételt és az évad ívét.",
-          "Egységes epizódvázlatok – automatikusan generálva az évad során",
-          "Folytonosságkövetés – összehangolt, több epizódból álló évadok",
-          "Sorozat és epizód közötti szinkronizálás – az Blueprint stúdió és produkció felé"
+          "Define your universe once — characters, tone, and season arc",
+          "Cohesive episode outlines — auto-generated across the season",
+          "Continuity tracking — multi-episode seasons in alignment",
+          "Series-to-episode sync — into Blueprint Studio and Production"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: Sorozatáttekintés automatikusan generált epizódívekkel",
-        "videoSlot": "0:30-as klip beszúrása: Több epizódból álló évaddá bővülő koncepció"
+        "screenshotSlot": "Insert screenshot: Series overview with auto-generated episode arcs",
+        "videoSlot": "Insert 00:30 clip: Concept expanding into a multi-episode season"
       },
       {
         "id": "10",
-        "title": "Blueprint Automatizálás",
-        "description": "Alakítsd át az ötleteket strukturált vázlatokká, amelyek tartalmazzák a logline-t, a történeti csomópontokat, a karaktereket és a hangvételt. Futtasd az Audience Resonance-ot, és működj együtt másokkal az erőforrásigényes renderelés előtt.",
+        "title": "Blueprint Automation",
+        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
         "keyFeatures": [
-          "Generálás → Ellenőrzés → Iteráció → Gyártás indítása munkafolyamat",
-          "Az ötlettől a szerkezetig percek alatt – logline, történeti mérföldkövek, karakterek és hangvétel",
-          "Audience Resonance pontozás 80 feletti célértékkel a Production kategória előtt",
-          "Megosztási linkek munkatársak számára – visszajelzések összegzése és irányított átdolgozás"
+          "Generate → Review → Iterate → Start Production workflow",
+          "Concept to structure in minutes — logline, beats, characters, and tone",
+          "Audience Resonance scoring with 80+ target before Production",
+          "Collaborator share links — feedback synthesis into guided revision"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: Automatikusan generált Blueprint történeti csomópontokkal és karakterívekkel",
-        "videoSlot": "00:30-as klip beszúrása: Egy koncepció átalakítása strukturált Blueprint-gé"
+        "screenshotSlot": "Insert screenshot: Auto-generated Blueprint with story beats and character arcs",
+        "videoSlot": "Insert 00:30 clip: Turning a concept into a structured Blueprint"
       },
       {
         "id": "11",
-        "title": "Gyártásautomatizálás",
-        "description": "A Script és Action lapok végigvezetnek a Foundation → Storyboard → Production → Final Cut folyamaton. Express storyboard, Beat Frames, Mixer és MP4-adatfolyamok – mindez eszközváltás nélkül.",
+        "title": "Production Automation",
+        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
         "keyFeatures": [
-          "Foundation – forgatókönyv, hangok, jelenethang, forgatókönyv véglegesítése",
-          "Express storyboard — útvonal és képkockák percekben; galéria és megosztás",
-          "Beat Frames és Mixer – kezdő/záró képkockák, Director Console, MP4-adatfolyamok renderelése",
-          "Gyártási folyamatok – kimenetek ellenőrzése, elavult ütemek újragenerálása, küldés a Final Cut-re"
+          "Foundation — script, voices, scene audio, lock script",
+          "Express storyboard — direction and frames in minutes; gallery and share",
+          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
+          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: a gyártási vezérlőpult, amely a forgatókönyvet, az Beat Frames-öt és a keverőpultot mutatja.",
-        "videoSlot": "00:30-as klip beszúrása: Foundation, Express storyboard, Beat Frames és stream-exportálás"
+        "screenshotSlot": "Insert screenshot: Production dashboard showing script, Beat Frames, and Mixer",
+        "videoSlot": "Insert 00:30 clip: Foundation, Express storyboard, Beat Frames, and stream export"
       },
       {
         "id": "12",
-        "title": "Final Cut Összeszerelés",
-        "description": "Fűzze össze a kész gyártási streameket egyetlen mester MP4-fájllá. Válassza ki a Animatic-et, vagy jelenetenként a videót és a nyelvet – nincs szükség idővonal-szerkesztésre; a kreatív módosítások a Production Mixer-ben maradnak.",
+        "title": "Final Cut Assembly",
+        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
         "keyFeatures": [
-          "Jelenetenkénti adatfolyam-választás — Animatic, Videó, nyelv, verzió",
-          "Összeállítási előbeállítások – Teljes videó, Hibrid, Egyedi összeállítás",
-          "Nincs idővonal-szerkesztés – a kreatív módosítások az Production Mixer-ben maradnak.",
-          "Egykattintásos mesterexport – összefűzött MP4 a Premiere számára"
+          "Per-scene stream pick — Animatic, Video, language, version",
+          "Assembly presets — All Video, Hybrid, Custom mix",
+          "No timeline editing — creative changes stay in Production Mixer",
+          "One-click master export — stitched MP4 for Premiere"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: Final Cut összeállítási panel jelenetenkénti adatfolyam-választókkal",
-        "videoSlot": "00:30-as klip beszúrása: adatfolyamok kiválasztása, összeállítás előnézete és mesterpéldány exportálása"
+        "screenshotSlot": "Insert screenshot: Final Cut assembly panel with per-scene stream pickers",
+        "videoSlot": "Insert 00:30 clip: Picking streams, previewing assembly, and exporting master"
       },
       {
         "id": "13",
-        "title": "Premiere Elosztás",
-        "description": "Tekintsd át a végleges anyagot a közönségelemzési adatokkal, majd tedd közzé YouTube-on honosított metaadatokkal, vagy exportálj csomagokat Shorts, Reels és TikTok felületekre.",
+        "title": "Premiere Distribution",
+        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
         "keyFeatures": [
-          "Megosztható Screening Room — /s/ linkek pontozással és opcionális interakciós elemzéssel (a néző hozzájárulásával)",
-          "Elemzési irányítópult – Pontozási, biometrikus és vizuális lapok",
-          "YouTube-szakértő – bélyegkép, honosított cím/leírás, SceneFlow CTA",
-          "Exportcsomagok és függőleges rövid videós klipek tervei"
+          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
+          "Insights dashboard — Scoring, Biometric, and Visual tabs",
+          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
+          "Export bundles and vertical short-form clip plans"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: Premiere irányítópult elemzésekkel és közzétételi varázslóval",
-        "videoSlot": "0:30-as klip beszúrása: vetítési elemzések, YouTube-varázsló és exportcsomagok"
+        "screenshotSlot": "Insert screenshot: Premiere dashboard with insights and publish wizard",
+        "videoSlot": "Insert 00:30 clip: Screening insights, YouTube wizard, and export bundles"
       },
       {
         "id": "14",
-        "title": "Közönségelemzés és analitika",
-        "description": "Privát megosztási linkek az érintettek számára – manuális pontozás, strukturált visszajelzés és opcionális interakciós elemzés (a néző hozzájárulásával). Használatban a Premiere fázisban, a közzététel előtt, valamint a gyártási storyboard előnézetéhez.",
+        "title": "Audience Review and Analytics",
+        "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
         "keyFeatures": [
-          "Privát véleményezési alkalmak – biztonságos megosztási linkek az érintettek számára",
-          "Strukturált közönségvisszajelzés – értékelések és szabad szöveges elemek",
-          "Opcionális interakciós elemzések – a rögzítést megelőző nézői hozzájárulással",
-          "Valós adatok alapján történő iteráció – a Blueprint és a szkript finomítása a véleményezők észrevételei alapján"
+          "Private review sessions — secure /s/ share links for stakeholders",
+          "Structured audience feedback — ratings and open items",
+          "Optional engagement analytics — with viewer consent before capture",
+          "Iterate from real data — refine Blueprint and script from reviewer insights"
         ],
-        "screenshotSlot": "Képernyőkép beszúrása: Screening Room elemzési és bírálói visszajelzési panel",
-        "videoSlot": "00:30-as videórészlet beszúrása: Véleményező ülés tartása és interakciós adatok gyűjtése"
+        "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+        "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
       }
     ]
   },
   "engineeringTrust": {
-    "badge": "Mérnöki tevékenység és biztonság",
-    "title": "Erre tervezve",
-    "titleAccent": "Éles munkaterhelések",
-    "subtitle": "Startupbarát architektúra Google Cloud-összetevőkkel, amelyek támogatják a biztonságot, a skálázhatóságot és a gyakorlati éles környezetbe történő bevezetést.",
+    "badge": "Engineering & Security",
+    "title": "Built for",
+    "titleAccent": "Production Workloads",
+    "subtitle": "Startup-friendly architecture with Google Cloud components that support security, scale, and practical production delivery.",
     "pillars": [
       {
-        "id": "építészet",
-        "title": "Vállalati architektúra",
-        "description": "Az Google Cloud infrastruktúrára épül, skálázható vezényléssel a termelési munkaterhelések és a növekvő csapatok számára.",
+        "id": "architecture",
+        "title": "Enterprise Architecture",
+        "description": "Built on Google Cloud infrastructure with scalable orchestration for production workloads and growing teams.",
         "highlights": [
-          "Vertex AI generálási munkafolyamatokhoz",
-          "Imagen 4 és Veo 3.1 szintézis",
-          "ElevenLabs TTS-integráció",
-          "BYOK vállalati számlázás-ellenőrzéshez"
+          "Vertex AI for generation workflows",
+          "Imagen 4 and Veo 3.1 synthesis",
+          "ElevenLabs TTS integration",
+          "BYOK for enterprise billing control"
         ]
       },
       {
-        "id": "biztonság",
-        "title": "Biztonság és adatvédelem",
-        "description": "A kreatív eszközök védelmét a tárolás közbeni titkosítás, a hozzáférés-szabályozás és az adatvédelmet előtérbe helyező kezelés biztosítja.",
+        "id": "security",
+        "title": "Security & Privacy",
+        "description": "Creative assets stay protected with encryption at rest, access controls, and privacy-first handling.",
         "highlights": [
-          "Nagyvállalati szintű felhővezérlők",
-          "AES-256 titkosítás",
-          "GDPR-szempontok figyelembevételével tervezve",
-          "Az adatkezeléssel kapcsolatos tudnivalókért tekintse meg Adatvédelmi szabályzatunkat."
+          "Enterprise-ready cloud controls",
+          "AES-256 encryption",
+          "Designed with GDPR considerations",
+          "See our Privacy Policy for data handling"
         ]
       },
       {
-        "id": "skála",
-        "title": "Méretezhetőség és megbízhatóság",
-        "description": "A globális felhőalapú kézbesítés támogatja a megbízható renderelési és véleményezési folyamatokat a növekvő mennyiség mellett is.",
+        "id": "scale",
+        "title": "Scale & Reliability",
+        "description": "Global cloud delivery supports reliable render and review pipelines as your volume grows.",
         "highlights": [
-          "Többrégiós telepítés",
-          "CDN-alapú gyorsított kézbesítés",
-          "Automatikus átállás",
-          "Valós idejű megfigyelés"
+          "Multi-region deployment",
+          "CDN-accelerated delivery",
+          "Automatic failover",
+          "Real-time monitoring"
         ]
       }
     ],
     "metrics": [
       {
-        "value": "Globális",
-        "label": "Felhőalapú szolgáltatásnyújtás"
+        "value": "Global",
+        "label": "Cloud delivery"
       },
       {
-        "value": "4. kép",
-        "label": "Képgenerálás"
+        "value": "Imagen 4",
+        "label": "Image generation"
       },
       {
-        "value": "256 bites",
-        "label": "Titkosítás"
+        "value": "256-bit",
+        "label": "Encryption"
       },
       {
-        "value": "a hét minden napján, a nap 24 órájában",
+        "value": "24/7",
         "label": "Monitoring"
       }
     ],
     "vertexSection": {
-      "title": "Miért a Google Vertex AI?",
-      "subtitle": "A technológiai védőárok, amely valóban számít",
+      "title": "Why Google Vertex AI?",
+      "subtitle": "The technical moat that matters",
       "cards": [
         {
-          "title": "Adatvédelem",
-          "description": "Szkriptjeit és kreatív eszközeit nem használják fel megosztott modellek betanítására, ezzel is védve szellemi tulajdonát és ügyfelei számára végzett munkáját.",
-          "highlight": "nem használják megosztott modellek betanítására"
+          "title": "Data Privacy",
+          "description": "Your scripts and creative assets are not used to train shared models, helping protect your IP and client work.",
+          "highlight": "not used to train shared models"
         },
         {
-          "title": "Megbízható átbocsátóképességre tervezve",
-          "description": "A termelésorientált infrastruktúra segít fenntartani a stabil előállítási munkafolyamatokat a nagy igénybevétellel járó időszakokban."
+          "title": "Built for Reliable Throughput",
+          "description": "Production-oriented infrastructure helps maintain stable generation workflows during high-demand cycles."
         },
         {
-          "title": "Hivatkozás-tudatos konzisztencia",
-          "description": "A SceneFlow referenciatudatos generálást alkalmaz, hogy javítsa a karakterek, helyszínek és kellékek konzisztenciáját a jelenetek között."
+          "title": "Reference-Aware Consistency",
+          "description": "SceneFlow uses reference-aware generation to improve consistency across characters, locations, and props from scene to scene."
         }
       ]
     },
     "partnership": {
-      "poweredBy": "Üzemeltetője: Google Cloud, Vertex AI, felhőalapú tárhely és fordítási eszközök segítségével",
-      "footnote": "A SceneFlow AI a startupok növekedését és a nagyvállalati elvárásokat szem előtt tartva kialakított, skálázható Google Cloud infrastruktúrán fut."
+      "poweredBy": "Powered by Google Cloud with Vertex AI, Cloud Storage, and translation tooling",
+      "footnote": "SceneFlow AI runs on scalable Google Cloud infrastructure designed for startup growth and enterprise expectations."
     },
-    "attribution": "— Az SceneFlow mérnöki csapata"
+    "attribution": "— The SceneFlow Engineering Team"
   },
   "coreCapabilities": {
     "audienceResonance": {
-      "badge": "Intelligencia-réteg",
-      "title": "Audience Resonance Szerkesztő",
-      "description": "Ismerd meg a pontszámodat, mielőtt a teljes renderelésbe fektetnél. Célozd meg a megfelelő pontszámokat és a forgatókönyvet konkrét, megvalósítható javításokkal – optimalizálj minden egyes ütemet az Express és a videógenerálás előtt.",
+      "badge": "Intelligence Layer",
+      "title": "Audience Resonance Editor",
+      "description": "Know your score before you invest in full renders. Target Audience Resonance scores Blueprint and script with actionable fixes — optimize every beat before Express and video generation.",
       "bullets": [
-        "Határozza meg a konkrét célközönségét.",
-        "Szerezzen valós idejű pontszámot, elemzést és javaslatokat.",
-        "Egykattintásos megoldások a narratív gyengeségek kiküszöbölésére",
-        "Irányított szerkesztés az epizódok, a Blueprint és a forgatókönyv optimalizálásához"
+        "Determine your specific target audience",
+        "Get real-time score, analysis, and recommendations",
+        "One-click fixes to resolve narrative weaknesses",
+        "Guided Edit to optimize Episodes, Blueprint, and Script"
       ],
-      "cta": "Elemezze a forgatókönyvét",
+      "cta": "Analyze Your Script",
       "howWeScore": {
-        "toggle": "Hogyan pontozunk",
-        "title": "Hogyan működik az Audience Resonance",
-        "description": "A Audience Resonance ötvözi a narratív szerkezet elemzését (tisztaság, tempó, érzelmi ív) a Blueprint-ban meghatározott célközönségnek való megfeleléssel – nem pedig látszatmutatókra vagy a közzététel utáni megtartási adatokra támaszkodik. A javaslatok konkrét forgatókönyv-szakaszokhoz kapcsolódnak, így a problémákat még az Express vagy a videógenerálás előtt kijavíthatod.",
+        "toggle": "How we score",
+        "title": "How Audience Resonance works",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
         "bullets": [
-          "Értékeli a(z) Blueprint-t és a forgatókönyvet a megadott célközönség tükrében.",
-          "Szakaszszintű javaslatok – nem egy „bízzon bennünk” típusú, átláthatatlan számadat.",
-          "Gyakorlatban hasznosítható, egykattintásos javítások és vezetett szerkesztés – nem csupán egy osztályzat",
-          "Futtasd a jelentős renderelési költségekkel járó folyamat előtt, ne pedig a közzététel után."
+          "Scores Blueprint and script against your stated target audience",
+          "Section-level recommendations — not a black-box “trust us” number",
+          "Actionable one-click fixes and guided edit — not just a grade",
+          "Run before heavy render spend, not after publish"
         ]
       }
     },
     "express": {
-      "badge": "Hipergyors gyártás",
+      "badge": "Hyper-Speed Production",
       "title": "Sceneflow Express",
-      "description": "Automatikusan és párhuzamosan hozhat létre storyboardokat, animatikokat és videós vázlatokat. Percek alatt juthat el a forgatókönyvtől a megosztható előnézetig, majd a végleges F2V-költségek felmerülése előtt jóváhagyhatja a Beat Frames-öt.",
+      "description": "Auto-generate storyboards, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend.",
       "items": [
         {
           "title": "Express Storyboard",
-          "desc": "Tekintse át és ossza meg az audio- és videó-storyboardokat percek, nem pedig órák alatt.",
-          "time": "Percek kontra órák"
+          "desc": "Review and share audio and video storyboards in minutes vs hours.",
+          "time": "Minutes vs Hours"
         },
         {
-          "title": "Expressz Animatic-ek",
-          "desc": "Állítson elő azonnal teljes, Ken Burns-stílusú animatik jeleneteket csúcsminőségű narrációval.",
-          "time": "Percek kontra órák"
+          "title": "Express Animatics",
+          "desc": "Render full Ken Burns animatic scenes with high-end voiceovers instantly.",
+          "time": "Minutes vs Hours"
         },
         {
           "title": "Express Video",
-          "desc": "Hangolja össze a képek és videók egyidejű generálását a teljes jelenet előállítása érdekében.",
-          "time": "Percek kontra napok"
+          "desc": "Orchestrate concurrent image and video generation for total scene delivery.",
+          "time": "Minutes vs Days"
         }
       ],
-      "cta": "Expressz renderelés indítása"
+      "cta": "Start Express Rendering"
     }
   },
   "exitIntent": {
-    "title": "Várjon! Ne távozzon üres kézzel.",
-    "subtitle": "Szerezzen exkluzív korai hozzáférést és tippeket a mesterséges intelligenciával támogatott filmkészítéshez.",
+    "title": "Wait! Don't leave empty-handed",
+    "subtitle": "Get exclusive early access and tips for AI-powered filmmaking",
     "benefits": [
-      "Heti AI-alapú filmkészítési oktatóanyagok",
-      "Korai hozzáférés az új funkciókhoz",
-      "Exkluzív kedvezmények alkotóknak"
+      "Weekly AI filmmaking tutorials",
+      "Early access to new features",
+      "Exclusive creator discounts"
     ],
-    "emailPlaceholder": "Adja meg e-mail-címét",
-    "subscribe": "Szerezz korai hozzáférést",
-    "subscribing": "Feliratkozás...",
-    "or": "vagy",
-    "startNow": "Kezdj el alkotni most, mindössze 9 dollárért →",
-    "privacy": "Soha nem küldünk spamet. Bármikor leiratkozhatsz.",
-    "successTitle": "Rajta vagy a listán!",
-    "successSubtitle": "Ellenőrizd a postafiókodat exkluzív filmes tippekért és a korai hozzáféréssel kapcsolatos hírekért.",
-    "ctaText": "Kezdd el a felfedezést – 9 $",
-    "closePopup": "Felugró ablak bezárása"
+    "emailPlaceholder": "Enter your email",
+    "subscribe": "Get Early Access",
+    "subscribing": "Subscribing...",
+    "or": "or",
+    "startNow": "Start creating now for just $9 →",
+    "privacy": "No spam, ever. Unsubscribe anytime.",
+    "successTitle": "You're on the list!",
+    "successSubtitle": "Check your inbox for exclusive filmmaking tips and early access updates.",
+    "ctaText": "Start Exploring — $9",
+    "closePopup": "Close popup"
   },
   "pricing": {
-    "badge": "Használat alapú árazás",
-    "title": "Fizess azért, amit létrehozol",
-    "subtitle": "Egyetlen alapcsomag a platformhoz való hozzáféréshez. Kreditek az MI-alapú generáláshoz. Feltöltés igény szerint. Teljes körű kontroll, nulla pazarlás.",
+    "badge": "Usage-Based Pricing",
+    "title": "Pay for What You Create",
+    "subtitle": "One base plan for platform access. Credits for AI generation. Top up when you need more. Full control, zero waste.",
     "valueAnchor": {
-      "traditionalCost": "2000 dollár felett",
-      "traditionalLabel": "Hagyományos elővizualizáció",
-      "vs": "ellen",
-      "sceneFlowCost": "49–149 dollár",
-      "sceneFlowLabel": "SceneFlow havi",
-      "saveBadge": "Takarítson meg több mint 90%-ot projektenként"
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
     },
     "teamCta": {
-      "title": "Belső csapat vagy intézmény?",
-      "description": "Foglaljon időpontot munkafolyamat-bemutatóra kommunikációs, L&D- és marketingcsapatok számára",
-      "button": "Könyvismertető"
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
     },
     "agencyCta": {
-      "title": "Ügynökség vagy produkciós cég?",
-      "description": "Egyedi kreditek, SLA és dedikált támogatás nagy léptékben",
-      "button": "Kapcsolatfelvétel az értékesítéssel"
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
     },
     "byok": {
-      "title": "Saját kulcs használata",
-      "badge": "Pro és Studio csomagok",
-      "description": "Rendelkezik már API-kulcsokkal a Vertex AI vagy a ElevenLabs szolgáltatáshoz? Használja őket a SceneFlow AI szolgáltatással, és takarítson meg akár 80%-ot a platformkrediteken.",
-      "savingsHighlight": "80% platformkredit formájában",
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
       "benefits": [
         {
-          "title": "80%-os SceneFlow kreditmegtakarítás",
-          "description": "Mindössze 20%-os platformdíjat fizessen az orkesztrációért és az eszközökért."
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
         },
         {
-          "title": "Használja ki a vállalati terveket",
-          "description": "Használja fel meglévő Vertex AI vagy ElevenLabs mennyiségi kedvezményeit."
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
         },
         {
-          "title": "Teljes körű irányítás",
-          "description": "Az Ön kulcsai, az Ön számlázása, az Ön költségkezelése"
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
         }
       ],
-      "supportedProviders": "Támogatott szolgáltatók",
+      "supportedProviders": "Supported Providers",
       "vertexName": "Google Vertex AI",
-      "vertexDetail": "Imagen 4 és Veo 3.1",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
       "elevenLabsName": "ElevenLabs",
-      "elevenLabsDetail": "Szövegfelolvasás és hangklónozás",
-      "savingsLabel": "80%-os megtakarítás",
-      "onImagesVideo": "képeken és videókon",
-      "onVoiceover": "narráció alatt",
-      "note": "A feltüntetett kreditmegtakarítások a SceneFlow platformon elérhető megtakarításokat jelentik. A tényleges összköltség az egyes szolgáltatóknál érvényes egyéni vagy vállalati API-díjszabástól függ."
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
     },
     "creditTopUps": {
-      "title": "További kreditekre van szükséged?",
-      "subtitle": "Bármikor feltöltheti. Az egyenleg sosem jár le.",
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
       "packs": [
         {
-          "label": "Kezdőcsomag",
-          "description": "Tökéletes gyors átismétléshez"
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
         },
         {
-          "label": "Jelenetcsomag",
-          "description": "Végezz el egy rövid projektet"
+          "label": "Scene Pack",
+          "description": "Complete a short project"
         },
         {
-          "label": "Gyártási csomag",
-          "description": "Jelentős filmszekvencia"
+          "label": "Production Pack",
+          "description": "Major film sequence"
         },
         {
-          "label": "Stúdiócsomag",
-          "description": "Teljes termelési kapacitás"
+          "label": "Studio Pack",
+          "description": "Full production capacity"
         }
       ],
-      "creditsUnit": "stáblista"
+      "creditsUnit": "credits"
     },
     "calculator": {
-      "sectionTitle": "Becsülje meg projektje költségeit",
-      "sectionSubtitle": "Tudd pontosan, mennyit fogsz fizetni, mielőtt elköteleznéd magad.",
-      "title": "Projektköltség-kalkulátor",
-      "subtitle": "Becsülje meg a krediteket, mielőtt elkezdene.",
-      "customize": "Paraméterek testreszabása",
-      "imagesLabel": "Generálandó képek",
-      "videoClipsLabel": "Videóklipek",
-      "voiceoverLabel": "Narráció (perc)",
-      "byokTitle": "Saját kulcs használata (BYOK)",
-      "byokBadge": "Pro és stúdió",
-      "byokDescription": "Használja saját API-kulcsait, és takarítson meg akár 80%-ot a SceneFlow-krediteken. A szolgáltatásokért közvetlenül az AI-szolgáltatóknak fizet, az általuk meghatározott díjakon.",
-      "vertexToggle": "Vertex AI (Képek és videók)",
-      "elevenLabsToggle": "ElevenLabs (Narráció)",
-      "imageGeneration": "Képgenerálás",
-      "videoGeneration": "Videógenerálás",
-      "voiceover": "Narráció",
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
       "byokTag": "(BYOK)",
-      "totalEstimate": "Teljes becslés",
-      "withTopUps": "feltöltésekkel",
-      "creditSavings": "SceneFlow hitelcélú megtakarítás",
-      "savePercent": "{percent}%-ot takarít meg a(z) SceneFlow krediteken",
-      "transparency": "Teljes átláthatóság: munka közben valós időben követheted a kreditfelhasználást. Nincsenek meglepetések – bármikor módosíthatod a projekt terjedelmét.",
-      "transparencyHighlight": "Teljes átláthatóság:",
-      "byokDisclaimer": "BYOK Megjegyzés: A feltüntetett kreditmegtakarítások kizárólag a SceneFlow platform kreditcsökkentéseit tükrözik. A tényleges költségek a Vertex AI és ElevenLabs díjcsomagoktól függnek. A vállalati vagy nagy volumenű API-csomagok további megtakarításokat is lehetővé tehetnek.",
-      "byokDisclaimerHighlight": "BYOK Megjegyzés:",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
       "presets": [
         {
-          "id": "reklám",
-          "name": "30 másodperces reklám"
+          "id": "commercial",
+          "name": "30-sec Commercial"
         },
         {
-          "id": "rövid",
-          "name": "2 perces rövidfilm"
+          "id": "short",
+          "name": "2-min Short Film"
         },
         {
-          "id": "epizód",
-          "name": "10 perces epizód"
+          "id": "episode",
+          "name": "10-min Episode"
         },
         {
-          "id": "funkció",
-          "name": "90 perces nagyjátékfilm"
+          "id": "feature",
+          "name": "90-min Feature"
         }
       ],
-      "minSuffix": "perc"
+      "minSuffix": "min"
     },
     "tierGrid": {
-      "productionTestFlight": "Sorozatgyártás utáni berepülés",
-      "getStarted": "Kezdés",
-      "startTestFlight": "Tesztrepülés indítása",
-      "loading": "Betöltés...",
-      "mostPopular": "Legnépszerűbb",
-      "creditsPerMonth": "Kredit/hó",
-      "storage": "Tárolás",
-      "perMonth": "/hó"
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
     },
     "trust": {
-      "cancelAnytime": "Bármikor lemondható",
-      "moneyBack": "14 napos pénzvisszafizetési garancia",
-      "creditsNeverExpire": "A kreditek nem járnak le (Explorer csomag)"
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
     },
     "plans": {
       "explorer": {
         "name": "Explorer",
-        "description": "Egyszeri vásárlás a kipróbáláshoz",
+        "description": "One-time purchase to try it out",
         "features": [
-          "Egyszeri vásárlás",
-          "750 kredit (nem jár le)",
-          "5 GB tárhely (30 nap)",
-          "Teljes körű hozzáférés a platformhoz",
-          "MP4-exportálás (bármilyen felbontás)",
-          "MI-alapú narráció (több mint 70 nyelv)"
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
         ]
       },
       "subscriptions": [
         {
-          "id": "előétel",
-          "name": "Előétel",
-          "description": "Egyéni alkotók számára",
+          "id": "starter",
+          "name": "Starter",
+          "description": "For individual creators",
           "features": [
-            "Teljes körű hozzáférés a platformhoz",
-            "Havi 4500 kreditet tartalmaz",
-            "25 GB aktív tárhely",
-            "MP4-exportálás (bármilyen felbontás)",
-            "MI-alapú narráció (több mint 70 nyelv)",
-            "E-mail-alapú ügyfélszolgálat"
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
           ]
         },
         {
           "id": "pro",
           "name": "Pro",
-          "description": "Professzionális alkotók számára",
+          "description": "For professional creators",
           "features": [
-            "Minden, ami a Starter csomagban benne van, plusz:",
-            "Havi 15 000 kreditet tartalmaz",
-            "100 GB aktív tárhely",
-            "Hozzáférés a Veo 3.1 minőséghez (4K)",
-            "Karakterkonzisztencia-motor",
-            "Hangklónozás",
-            "BYOK (Saját kulcs használata)",
-            "3 csapatszék",
-            "Elsőbbségi támogatás"
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
           ]
         },
         {
-          "id": "stúdió",
-          "name": "Stúdió",
-          "description": "Csapatok és ügynökségek számára",
+          "id": "studio",
+          "name": "Studio",
+          "description": "For teams & agencies",
           "features": [
-            "Minden, ami a Pro csomagban benne van, plusz:",
-            "Havi 75 000 kreditet tartalmaz",
-            "500 GB aktív tárhely",
-            "Veo 3.1 4K prioritási sor",
-            "Korlátlan karakterkonzisztencia",
-            "White-label export",
-            "API-hozzáférés",
-            "10 csapathely",
-            "Kijelölt ügyfélkapcsolati menedzser",
-            "Vállalati szintű SLA kérésre elérhető"
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
           ]
         }
       ]
     }
   },
   "faq": {
-    "badge": "Kérdései vannak?",
-    "title": "Gyakran ismételt kérdések",
-    "subtitle": "Minden, amit a SceneFlow AI-ről tudni kell",
+    "badge": "Got Questions?",
+    "title": "Frequently Asked Questions",
+    "subtitle": "Everything you need to know about SceneFlow AI",
     "items": [
       {
-        "question": "Hogyan zajlik az SceneFlow munkafolyamat az ötlettől a közzétételre kész videóig?",
-        "answer": "A SceneFlow strukturált munkafolyamatot alkalmaz: Sorozat (opcionális) → Blueprint → Gyártás → Final Cut → Premiere. A Blueprint a Audience Resonance segítségével határozza meg a történet szerkezetét és a célközönséget. A gyártási szakaszban forgatókönyv, storyboard, beat video és renderelt jelenetfolyamok készülnek. A Final Cut a kiválasztott folyamokat egyetlen mester MP4-fájllá egyesíti – ez nem idővonal-alapú szerkesztő. A Premiere kezeli a vetítéseket, az elemzési adatokat, a YouTube-on való közzétételt és az exportcsomagokat."
+        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
+        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
       },
       {
-        "question": "Miben különbözik a SceneFlow a Gemini Studio-től vagy a Google Flow-től?",
-        "answer": "Az Gemini Studio és az Google Flow a promptalapú klipgenerálásra összpontosít. Az SceneFlow egyetlen irányított stúdiókörnyezetben fogja össze a teljes gyártási munkafolyamatot: a strukturált fázisokat szerkeszthető kiindulási alapokkal, a konzisztenciát biztosító Reference Library-at és Beat Frames-öt, a költséges renderelést megelőző Audience Resonance-ot, az automatizált keverést és stream-összeállítást, valamint a közzététel előtti Screening Room validálást."
+        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
+        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio. Model usage cost is similar whether you use SceneFlow, your own provider accounts, or BYOK — SceneFlow saves hours of copy-paste, re-generation, and manual video assembly per video."
       },
       {
-        "question": "Szerkeszthetem az MI által generált forgatókönyveket, látványelemeket és hanganyagokat?",
-        "answer": "Igen. Minden generált tartalom szerkeszthető marad. A Production Mixer-ben átírhatja a forgatókönyveket, módosíthatja a jelenetrendezést, újragenerálhat egyes szakaszokat, finomhangolhatja a narrációt és pontosíthatja az időzítést. A Final Cut kizárólag a kész folyamokat illeszti össze – a kreatív módosítások a gyártási szakaszban (upstream) történnek."
+        "question": "Can I edit AI-generated scripts, visuals, and audio?",
+        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
       },
       {
-        "question": "Hogyan működik most a Target Audience Resonance?",
-        "answer": "A Audience Resonance ötvözi a narratív szerkezet elemzését (átláthatóság, tempó, érzelmi ív) a Blueprint-ban meghatározott célközönségnek való megfeleléssel – nem pedig a közzétételt követő megtartási adatokkal. Szakaszszintű javaslatokat és egykattintásos javítási lehetőségeket kap a sorozat, a Blueprint és a forgatókönyv szintjén, még az erőforrásigényes renderelés előtt."
+        "question": "How does Target Audience Resonance work now?",
+        "answer": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not post-publish retention data. You get section-level recommendations and one-click fixes at Series, Blueprint, and script review before heavy rendering."
       },
       {
-        "question": "Készíthetek többnyelvű termék- vagy marketingvideókat?",
-        "answer": "Igen. Több mint 70 nyelven hozhat létre és honosíthat videókat összehangolt időzítési munkafolyamatokkal. A csapatok jellemzően egy mesterverziót készítenek, majd ebből állítják elő a különböző nyelvi változatokat a globális vásárlók, ügyfelek vagy regionális közönség számára."
+        "question": "Can I produce multilingual listing or marketing videos?",
+        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
       },
       {
-        "question": "Mit csinál az Premiere, ha az Screening Room a felülvizsgálati szakasz?",
-        "answer": "Az Screening Room az Premiere-en belüli véleményezési felület – amely a gyártási storyboardok előnézetére is szolgál. Osszon meg /s/ linkeket, gyűjtsön visszajelzéseket az érintettektől és – a nézők hozzájárulásával – opcionális interakciós adatokat, tekintse át az értékeléseket és a vizuális elemzéseket, majd tegye közzé a tartalmat a YouTube-varázsló segítségével, vagy exportálja csomagként."
+        "question": "What does Premiere do if Screening Room is the review phase?",
+        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
       },
       {
-        "question": "Szükségem van műszaki vagy szerkesztői tapasztalatra?",
-        "answer": "Nem. A SceneFlow kifejezetten a nem műszaki beállítottságú alkotók és csapatok számára készült. Minden szakaszban irányított adatbevitellel és szerkeszthető, mesterséges intelligencia által létrehozott kiindulási alapokkal dolgozhatsz – bonyolult prompt-tervezés vagy számos különböző eszközből álló rendszerek helyett."
+        "question": "Do I need technical or editing experience?",
+        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
       },
       {
-        "question": "Hogyan működik az Explorer csomag?",
-        "answer": "9 dollárért 750 kreditet kap, amellyel egyetlen vásárlással tesztelheti a teljes munkafolyamatot. Ezt a lehetőséget gyakorlati próbakörnek szántuk, így még a havi előfizetés kiválasztása előtt elvégezheti a teljes folyamatot – az ötlettől egészen a videó elkészítéséig."
+        "question": "How does the Explorer Plan work?",
+        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
       },
       {
-        "question": "Hogyan kezelik a jóváírásokat és az BYOK-at?",
-        "answer": "A kreditek nyomon követése közvetlenül a platformon történik, így a csapatok munkafolyamat-szakaszonként kezelhetik a költségvetést. A Pro és Studio csomagok a támogatott szolgáltatók esetében lehetővé teszik a saját kulcs használatát (Bring Your Own Key) is, további költségszabályozási lehetőséget biztosítva azon szervezetek számára, amelyek már rendelkeznek szolgáltatói szerződéssel."
+        "question": "How are credits and BYOK handled?",
+        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
       },
       {
-        "question": "Mit hozhatok létre reálisan a SceneFlow segítségével?",
-        "answer": "A csapatok ingatlanbemutatókhoz, oktatási tartalmakhoz, vizuális történetmeséléssel kiegészített podcastokhoz, hírmagyarázó videókhoz, márkakampányokhoz és moziszerű epizodikus sorozatokhoz használják a SceneFlow-t. Ugyanaz a munkafolyamat támogatja mind a rövid, mind a hosszú formátumú produkciók elkészítését."
+        "question": "What can I realistically create with SceneFlow?",
+        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
       }
     ]
   },
   "finalCta": {
-    "title": "Készen állsz a teljes folyamat tesztelésére?",
-    "subtitle": "Vidd végig a folyamatot – koncepció, storyboard, videó, végleges MP4 – egyetlen stúdióban. Kezdd a 9 dolláros Explorer csomaggal, és tapasztald meg a gyakorlatban a „beat-first” (ütemalapú) munkafolyamatot.",
-    "cta": "Indítsd el stúdiódat 9 dollárért"
+    "title": "Ready to test the full pipeline?",
+    "subtitle": "Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",
+    "cta": "Launch Your Studio for $9"
   },
   "footer": {
-    "description": "Teljes körűen automatizált videógyártás – a koncepciótól a közzétételre kész mesterpéldányig. Egyetlen irányított stúdió: Blueprint → Gyártás → Final Cut → Premiere.",
-    "product": "Termék",
-    "resources": "Források",
-    "legal": "Jogi",
+    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
+    "product": "Product",
+    "resources": "Resources",
+    "legal": "Legal",
     "links": {
-      "features": "Jellemzők",
-      "pricing": "Árazás",
-      "howItWorks": "Hogyan működik?",
-      "faq": "Gyakran ismételt kérdések",
-      "gettingStarted": "Első lépések",
-      "privacy": "Adatvédelmi tájékoztató",
-      "terms": "Szolgáltatási feltételek",
-      "trustSafety": "Bizalom és biztonság",
-      "refunds": "Visszatérítési szabályzat",
-      "contact": "Lépjen kapcsolatba velünk"
+      "features": "Features",
+      "pricing": "Pricing",
+      "howItWorks": "How It Works",
+      "faq": "FAQ",
+      "gettingStarted": "Getting Started",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "trustSafety": "Trust & Safety",
+      "refunds": "Refund Policy",
+      "contact": "Contact Us"
     },
-    "tagline": "Alkotóknak, ❤️-gal készítve",
-    "taglineSub": "Az ötlettől a közzétett videóig",
-    "securePayments": "Biztonságos fizetés a Whop – a hivatalos értékesítő partnerünk – közreműködésével",
-    "morLine": "A biztonságos fizetést, az adószámítást és a jogszabályi megfelelést a Life Focus, LLC megbízásából a Whop – mint hivatalos értékesítő partner (Merchant of Record) – végzi.",
-    "copyright": "© 2026 SceneFlow AI. Minden jog fenntartva.",
-    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Kapcsolat: brian@sfai.studio",
-    "poweredBy": "Üzemeltető: Google Cloud"
+    "tagline": "Made with ❤️ for creators",
+    "taglineSub": "From Idea to Published Video",
+    "securePayments": "Secure payments processed by Whop, our Merchant of Record",
+    "morLine": "Secure payments, tax calculation, and compliance are handled by Whop, our Merchant of Record, on behalf of Life Focus, LLC.",
+    "copyright": "© 2026 SceneFlow AI. All rights reserved.",
+    "address": "Life Focus, LLC • 14205 N Mo Pac Expy Ste 570, Austin, Texas 78728-6529 • Contact: brian@sfai.studio",
+    "poweredBy": "Powered by Google Cloud"
   },
   "floatingCta": {
-    "seePricing": "Árak megtekintése",
-    "tryNine": "Próbáld ki 9 dollárért",
-    "tryForNine": "Próbáld ki 9 dollárért",
-    "dismiss": "Elvetés"
+    "seePricing": "See Pricing",
+    "tryNine": "Try $9",
+    "tryForNine": "Try for $9",
+    "dismiss": "Dismiss"
   },
   "common": {
     "watermark": "SceneFlow AI Studio",
-    "pause": "Szünet",
-    "play": "Lejátszás",
-    "mute": "Némítás",
-    "unmute": "Némítás feloldása",
-    "expandVideo": "Videó nagyítása"
+    "pause": "Pause",
+    "play": "Play",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "expandVideo": "Expand Video"
   }
 }

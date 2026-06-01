@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Ti suona familiare?",
     "title": "Il metodo difettoso contro il metodo SceneFlow",
-    "subtitle": "Non dovresti aver bisogno di cinque schede, esportazioni basate su copia-incolla e stress da gestione dei prompt solo per pubblicare un video.",
+    "subtitle": "Produttori esperti: basta perdere ore a fare copia-incolla tra script, immagini, voce, video, musica e strumenti di montaggio. Se vi avvicinate ora ai video con IA: un unico studio guidato automatizza l'intero flusso di lavoro, permettendovi di pubblicare i contenuti senza dover imparare a usare sei applicazioni diverse.",
     "brokenWay": {
       "title": "La via spezzata",
-      "tagline": "Frammentato. Manuale. Estenuante.",
+      "tagline": "Frammentato. Manuale. Video di slot machine.",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Bozze di sceneggiatura"
+          "name": "Generazione di script",
+          "category": "Bozze prive di convalida da parte del pubblico"
         },
         {
-          "name": "Midjourney",
-          "category": "Immagini uniche"
+          "name": "Generazione di immagini",
+          "category": "Fotogrammi e immagini fisse in uno strumento separato"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Esportazione manuale VO"
+          "name": "Generazione vocale",
+          "category": "Esportazione manuale del voiceover e nuove registrazioni"
         },
         {
-          "name": "Premiere",
-          "category": "Assemblaggio manuale"
+          "name": "Generazione di video",
+          "category": "Rilanci stile slot machine: prompt, generazione, rifiuto, ripetizione."
+        },
+        {
+          "name": "Generazione di musica",
+          "category": "Pass separato per la colonna sonora"
+        },
+        {
+          "name": "Montaggio video",
+          "category": "Assemblaggio manuale, esportazione e rifinitura dell'upscaling"
         }
       ],
-      "chaosLabel": "Cinque schede. Contesto perso.",
+      "chaosLabel": "Sei schede. Rilancia finché qualcosa non attecchisce.",
       "painPoints": [
-        "Copia e incolla tra app",
+        "Copia-incolla tra strumenti di generazione e di modifica",
+        "Generazione video \"slot machine\": tentativi ripetuti finché non si ottiene un risultato valido.",
         "Affaticamento da prompt e cicli di rigenerazione",
         "Nessuna verifica del pubblico prima di spendere",
         "Caos delle versioni negli export"
       ],
-      "timeLabel": "Durata tipica del progetto",
-      "timeValue": "2–4 settimane"
+      "timeLabel": "Per video (stack di strumenti manuali multiuso)",
+      "timeValue": "Più di 4 ore"
     },
     "sceneflowWay": {
       "title": "Il metodo SceneFlow",
-      "tagline": "Un unico studio. Approva prima di renderizzare.",
+      "tagline": "Un unico studio. Automazione guidata, oppure una produttività elevata se conosci già lo stack.",
       "stages": [
         {
           "label": "Blueprint",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "Un unico file di progetto: niente più acrobazie tra le schede.",
       "benefits": [
-        "Fasi guidate, non prompt engineering",
-        "Approvazione dello storyboard prima dei titoli di coda del video",
+        "Fasi guidate: basta destreggiarsi tra le schede e perdere il contesto.",
+        "Approvazione dello storyboard: blocca le continue revisioni prima di investire nel video.",
         "Punteggio Audience Resonance prima del rendering pesante",
-        "Master pronto per la pubblicazione da un unico studio"
+        "Master pronto per la pubblicazione in 30–60 minuti, anziché oltre 4 ore"
       ],
-      "timeLabel": "Durata tipica del progetto",
-      "timeValue": "2–4 giorni"
+      "timeLabel": "Per video (stesso deliverable)",
+      "timeValue": "30–60 minuti"
     },
-    "comparisonCaption": "Un unico ambiente sostituisce strumenti di prompting frammentati, modifiche manuali e passaggi di consegne tra diverse piattaforme.",
-    "comparisonImageAlt": "Costi di produzione tradizionali vs studio automatizzato SceneFlow: dal concept al video pronto per la pubblicazione in meno tempo"
+    "comparisonCaption": "Uno studio sostituisce strumenti di generazione frammentati, la rigenerazione di video stile slot machine e l'assemblaggio manuale del montaggio.",
+    "comparisonImageAlt": "Costi di produzione tradizionali vs studio automatizzato SceneFlow: dal concept al video pronto per la pubblicazione in meno tempo",
+    "costNote": "Stessa spesa per l'IA, meno tempo perso. Paghi comunque per i modelli: tramite i crediti SceneFlow, il tuo account presso il provider o BYOK. SceneFlow elimina l'onere del montaggio basato su copia-incolla, permettendoti di realizzare più video con lo stesso budget.",
+    "proofLine": "Validato su un tour di un immobile residenziale: elaborazione manuale completa (oltre 4 ore) → stesso risultato in SceneFlow in meno di un'ora."
   },
   "comparison": {
     "title": "Velocità di produzione senza costi accessori",
@@ -410,11 +421,11 @@
         },
         "challenge": {
           "title": "Il collo di bottiglia del \"B-roll\"",
-          "description": "Hai una sceneggiatura solida, ma gran parte del tuo tempo se ne va a cercare filmati, coordinare il montaggio e garantire la coerenza tra le scene. Questo rallenta la frequenza di pubblicazione e indebolisce la capacità di trattenere il pubblico."
+          "description": "Hai una sceneggiatura valida, ma imparare a usare sei diversi strumenti di generazione ed editing — o restare intrappolati in loop video simili a quelli delle slot machine — rallenta ogni caricamento. Questo ritardo indebolisce la regolarità delle pubblicazioni e la fidelizzazione del pubblico."
         },
         "solution": {
           "title": "Il narratore automatizzato",
-          "description": "Trasforma rapidamente le sceneggiature in elementi visivi pronti per la produzione, mantenendo la coerenza di personaggi e stile dalla prima scena fino al master definitivo.",
+          "description": "Automazione guidata dalla sceneggiatura al master pronto per la pubblicazione: non è necessario imparare a usare sei applicazioni diverse. Mantieni la continuità di personaggi e stile, dalla prima scena fino alla produzione della serie.",
           "features": [
             "Elementi visivi che corrispondono in modo preciso ai passaggi chiave della sceneggiatura",
             "Protagonisti coerenti in ogni scena",
@@ -437,7 +448,7 @@
         },
         "challenge": {
           "title": "Accumulo di attività dei fornitori e scostamento dall'identità del brand",
-          "description": "I team di comunicazione, formazione e marketing attendono settimane per ricevere i video da agenzie o fornitori. Ogni ripresa comporta un branding incoerente, costi imprevisti e iter di approvazione che bloccano le campagne."
+          "description": "I team di comunicazione, formazione (L&D) e marketing attendono settimane i video da agenzie o fornitori, oppure si scontrano con una serie di strumenti eccessivamente complessi e privi di un sistema interno replicabile. In entrambi i casi, il risultato è un branding incoerente e l'arresto delle campagne."
         },
         "solution": {
           "title": "Produzione interna entro la settimana",
@@ -460,12 +471,12 @@
         "label": "Reparto di produzione",
         "title": "Il laboratorio di produzione di nicchia",
         "beforeAfter": {
-          "before": "8.000 $ a servizio fotografico",
-          "after": "Credito di 200 $"
+          "before": "Più di 4 ore",
+          "after": "30–60 min"
         },
         "challenge": {
           "title": "Settori verticali su misura, nessun sistema replicabile",
-          "description": "I clienti dei settori memorie, eredità digitale, immobiliare e formazione richiedono tempi di realizzazione rapidi, eppure ogni progetto parte da zero. Caricamenti, cloni vocali e avatar non sono scalabili senza un flusso di lavoro standardizzato che vada dall'acquisizione alla consegna."
+          "description": "I clienti dei settori memorie, eredità, immobiliare e formazione richiedono tempi di realizzazione rapidi, eppure ogni progetto riparte da zero. I passaggi di consegne per singolo output, uniti a continui tentativi e revisioni (simili a una slot machine) che coinvolgono sceneggiatura, immagini, voce, video, musica e strumenti di montaggio, erodono i margini sui grandi volumi."
         },
         "solution": {
           "title": "Trasforma il tuo servizio video in un prodotto",
@@ -493,7 +504,7 @@
         },
         "challenge": {
           "title": "Erogazione di servizi ai clienti su larga scala",
-          "description": "Vincere la gara è solo metà dell'opera. I progetti ricorrenti per i clienti richiedono tempi di realizzazione rapidi, iter di approvazione chiari e margini su ogni deliverable, il tutto senza dover ricostruire il processo produttivo da zero ogni volta."
+          "description": "Vincere il pitch è solo metà dell'opera. I progetti ricorrenti per i clienti richiedono tempi di realizzazione rapidi, ma i passaggi di consegne per ogni singolo elemento e i tentativi casuali di rigenerazione video — che costringono a passare continuamente da strumenti di generazione a quelli di editing — rallentano ogni ciclo di pitch."
         },
         "solution": {
           "title": "Capacità di elaborazione + Approvazione del cliente",
@@ -1328,7 +1339,7 @@
       },
       {
         "question": "In che modo SceneFlow differisce da Gemini Studio o Google Flow?",
-        "answer": "Gemini Studio e Google Flow si concentrano sulla generazione di clip tramite prompt. SceneFlow integra l'intero flusso di lavoro di produzione: fasi strutturate con basi modificabili, Reference Library e Beat Frames per garantire la coerenza, Audience Resonance prima di rendering onerosi, mixer e assemblaggio dei flussi automatizzati, e convalida tramite Screening Room prima della pubblicazione — il tutto in un unico ambiente di lavoro guidato."
+        "answer": "Gemini Studio e Google Flow si concentrano sulla creazione di clip tramite prompt. SceneFlow integra l'intero flusso di lavoro di produzione: fasi strutturate con basi modificabili, Reference Library e Beat Frames per garantire la coerenza, Audience Resonance prima di rendering costosi, Mixer automatizzato e assemblaggio dei flussi, oltre alla convalida Screening Room prima della pubblicazione; il tutto in un unico ambiente di lavoro guidato. I costi di utilizzo del modello sono analoghi, sia che si utilizzi SceneFlow, i propri account presso i provider o BYOK; tuttavia, SceneFlow consente di risparmiare ore di lavoro per ogni video, eliminando operazioni come copia-incolla, rigenerazione e assemblaggio manuale."
       },
       {
         "question": "Posso modificare script, elementi visivi e audio generati dall'IA?",

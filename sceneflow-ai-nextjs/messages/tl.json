@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Pamilyar ba?",
     "title": "Ang Maling Pamamaraan vs. ang Pamamaraang SceneFlow",
-    "subtitle": "Hindi mo dapat kailanganin ang limang tab, pag-copy-paste ng mga export, at pagkapagod sa paggawa ng mga prompt para lang makabuo ng isang video.",
+    "subtitle": "Para sa mga batikang producer: itigil na ang pag-aaksaya ng oras sa pag-copy-paste sa pagitan ng script, mga imahe, boses, video, musika, at mga tool sa pag-edit. Bago ka pa lang ba sa AI video? Mayroong studio na gumagabay sa iyo at nag-a-automate ng buong proseso, kaya makakapag-produce ka agad nang hindi na kinakailangang pag-aralan ang anim na magkakahiwalay na app.",
     "brokenWay": {
       "title": "Ang Sirang Landas",
-      "tagline": "Watak-watak. Mano-mano. Nakakapagod.",
+      "tagline": "Pira-piraso. Manwal. Video ng slot machine.",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Mga borador ng iskrip"
+          "name": "Pagbuo ng script",
+          "category": "Mga borador na walang pagpapatibay mula sa madla"
         },
         {
-          "name": "Midjourney",
-          "category": "Mga natatanging larawan"
+          "name": "Pagbuo ng imahe",
+          "category": "Mga frame at still sa hiwalay na tool"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Manu-manong pag-export ng VO"
+          "name": "Pagbuo ng boses",
+          "category": "Manu-manong pag-export ng voiceover at muling pag-record"
         },
         {
-          "name": "Premiere",
-          "category": "Manu-manong pagbuo"
+          "name": "Pagbuo ng video",
+          "category": "Pag-ulit sa slot machine — mag-utos, bumuo, tumanggi, ulitin"
+        },
+        {
+          "name": "Paglikha ng musika",
+          "category": "Hiwalay na pass para sa soundtrack"
+        },
+        {
+          "name": "Pag-e-edit ng video",
+          "category": "Pagpino sa manual na pagbuo, pag-export, at pag-upscale"
         }
       ],
-      "chaosLabel": "Limang tab. Nawala ang konteksto.",
+      "chaosLabel": "Anim na tab. Subukan ulit hanggang sa may gumana.",
       "painPoints": [
-        "Mag-copy at paste sa pagitan ng mga app",
+        "Pag-copy at paste sa pagitan ng mga tool sa pag-generate at pag-edit",
+        "Pagbuo ng video na parang slot machine — paulit-ulit na pagsubok hanggang sa may gumana.",
         "Pagkapagod sa paggawa ng mga prompt at mga paulit-ulit na siklo ng pagbuo ng tugon",
         "Walang pagsusuri sa audience bago ka gumastos",
         "Magulong sistema ng mga bersyon sa mga export"
       ],
-      "timeLabel": "Karaniwang tagal ng proyekto",
-      "timeValue": "2–4 na linggo"
+      "timeLabel": "Batay sa video (manwal na pagsasalansan ng multi-tool)",
+      "timeValue": "Mahigit 4 na oras"
     },
     "sceneflowWay": {
       "title": "Ang Pamamaraang SceneFlow",
-      "tagline": "Isang studio. Aprubahan bago mag-render.",
+      "tagline": "Isang studio. May gabay na automation — o kaya naman ay mataas na antas ng output kung gamay mo na ang stack.",
       "stages": [
         {
           "label": "Blueprint",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "Isang project file — hindi na kailangang magpalipat-lipat ng mga tab",
       "benefits": [
-        "Mga yugtong may gabay — hindi prompt engineering",
-        "Pag-apruba sa storyboard bago ang mga credit ng video",
+        "Mga gabay na yugto — iwasan ang pagpapalit-palit ng tab at pagkawala ng konteksto",
+        "Pag-apruba sa storyboard — itigil ang paulit-ulit na pagbabago bago gumastos sa video",
         "Marka ng Audience Resonance bago ang mabigat na rendering",
-        "Master na handa nang ilathala mula sa iisang studio"
+        "Master copy na handa nang i-publish sa loob ng 30–60 minuto, hindi mahigit 4 na oras"
       ],
-      "timeLabel": "Karaniwang tagal ng proyekto",
-      "timeValue": "2–4 na araw"
+      "timeLabel": "Bawat video (parehong output)",
+      "timeValue": "30–60 minuto"
     },
-    "comparisonCaption": "Pinapalitan ng iisang studio ang mga hiwa-hiwalay na tool para sa prompt, manu-manong pag-edit, at paglilipat ng trabaho sa iba't ibang platform.",
-    "comparisonImageAlt": "Tradisyonal na gastusin sa produksyon kumpara sa SceneFlow automated studio — mas mabilis na proseso mula konsepto hanggang sa video na handa nang i-publish"
+    "comparisonCaption": "Pinapalitan ng isang studio ang mga hiwa-hiwalay na tool sa paggawa, ang pag-uulit ng video na parang sa slot machine, at ang manu-manong pagbuo ng mga edit.",
+    "comparisonImageAlt": "Tradisyonal na gastusin sa produksyon kumpara sa SceneFlow automated studio — mas mabilis na proseso mula konsepto hanggang sa video na handa nang i-publish",
+    "costNote": "Parehong gastos sa AI, mas kaunting nasasayang na oras. Magbabayad ka pa rin naman para sa mga model—sa pamamagitan man ng SceneFlow credits, sarili mong provider account, o BYOK. Inaalis ng SceneFlow ang karagdagang gastos at oras sa manu-manong pagbuo (copy-paste assembly), kaya mas marami kang mai-produce na video gamit ang parehong badyet.",
+    "proofLine": "Napatunayan sa isang residential listing tour: ang dating prosesong manual na tumatagal nang mahigit 4 na oras ay nagreresulta na ngayon sa parehong output gamit ang SceneFlow sa loob ng wala pang isang oras."
   },
   "comparison": {
     "title": "Bilis ng produksyon nang walang karagdagang gastusin sa operasyon",
@@ -410,11 +421,11 @@
         },
         "challenge": {
           "title": "Ang Hadlang sa \"B-Roll\"",
-          "description": "Maganda ang iyong script, ngunit nauubos ang halos lahat ng oras mo sa paghahanap ng footage, pag-aayos ng mga edit, at pagtiyak na magkakaugnay ang mga eksena. Dahil dito, bumabagal ang daloy ng pag-publish at nababawasan ang kakayahang mapanatili ang atensyon ng mga manonood."
+          "description": "Maganda ang iyong script, ngunit ang pag-aaral sa anim na magkakahiwalay na tool para sa paggawa at pag-edit — o ang pagka-stuck sa mga paulit-ulit na video loop na parang sa slot machine — ay nagpapabagal sa bawat pag-upload. Ang pagkaantalang ito ay nagpapahina sa dalas ng pag-publish at sa kakayahang mapanatili ang atensyon ng mga manonood."
         },
         "solution": {
           "title": "Ang Awtomatikong Tagapagsalaysay",
-          "description": "Mabilis na gawing mga visual na handa na para sa produksyon ang mga script, habang pinapanatili ang pagkakapare-pareho ng karakter at estilo mula sa unang eksena hanggang sa pinal na bersyong handa nang ilathala.",
+          "description": "May gabay na automation mula sa script hanggang sa master copy na handa nang i-publish — hindi na kailangang matuto ng anim na magkakahiwalay na app. Panatilihin ang pagkakapare-pareho ng mga karakter at estilo mula sa unang eksena hanggang sa produksyon ng buong serye.",
           "features": [
             "Mga biswal na tumutugma nang maayos sa mga bahagi ng iskrip",
             "Pare-parehong mga pangunahing tauhan sa bawat eksena",
@@ -437,7 +448,7 @@
         },
         "challenge": {
           "title": "Mga Nakatenggang Gawain ng Vendor at Paglayo sa Pagkakakilanlan ng Brand",
-          "description": "Naghihintay nang ilang linggo ang mga team ng Communications, L&D, at marketing para sa mga video mula sa mga agency o vendor. Nagdudulot ang bawat shoot ng hindi pare-parehong branding, mga invoice na hindi matiyak ang halaga, at mahahabang proseso ng pag-apruba na nagpapabagal sa mga campaign."
+          "description": "Ang mga team ng Communications, L&D, at marketing ay umaabot ng ilang linggo sa paghihintay ng video mula sa mga agency o vendor — o kaya naman ay nahaharap sa napakaraming tool na walang maayos at paulit-ulit na sistema sa loob mismo ng kumpanya. Sa alinmang paraan, nagreresulta ito sa hindi pare-parehong branding at mga kampanyang hindi umuusad."
         },
         "solution": {
           "title": "Produksyong In-House sa Loob ng Linggong Ito",
@@ -460,12 +471,12 @@
         "label": "Pasilidad sa Produksyon",
         "title": "Ang Tindahan ng Espesyalisadong Produksyon",
         "beforeAfter": {
-          "before": "$8,000 bawat shoot",
-          "after": "$200 na credit"
+          "before": "Mahigit 4 na oras",
+          "after": "30–60 minuto"
         },
         "challenge": {
           "title": "Mga Espesipikong Sektor, Walang Sistemang Mauulit",
-          "description": "Ang mga kliyente sa larangan ng memoir, legacy, real estate, at edukasyon ay nangangailangan ng mabilis na pagtatapos ng trabaho — ngunit ang bawat proyekto ay nagsisimula sa wala. Hindi mapapalawak ang operasyon para sa mga upload, voice clone, at avatar kung walang nakatakdang proseso o template mula sa pagtanggap ng kliyente hanggang sa paghahatid ng output."
+          "description": "Kailangan ng mga kliyente sa larangan ng memoir, legacy, real estate, at edukasyon ang mabilis na pagtatapos ng trabaho — ngunit nagsisimula sa wala ang bawat proyekto. Ang proseso ng paglilipat ng mga output at ang paulit-ulit na pagsubok (na parang sugal sa slot machine) sa script, imahe, boses, video, musika, at mga tool sa pag-edit ay kumakain sa kita mula sa dami ng trabaho."
         },
         "solution": {
           "title": "Gawing Produkto ang Iyong Serbisyo sa Video",
@@ -493,7 +504,7 @@
         },
         "challenge": {
           "title": "Paghahatid ng Serbisyo sa Kliyente sa Malawakang Antas",
-          "description": "Ang pagkuha ng proyekto ay kalahati pa lamang ng laban. Ang mga paulit-ulit na trabaho para sa kliyente ay nangangailangan ng mabilis na pagtapos, malinaw na proseso ng pag-apruba, at kita sa bawat output — nang hindi na kailangang simulan muli ang produksyon mula sa umpisa sa bawat pagkakataon."
+          "description": "Ang pagwawagi sa pitch ay kalahati pa lamang ng laban. Nangangailangan ng mabilis na pagtapos ng trabaho ang mga paulit-ulit na proyekto ng kliyente — ngunit ang paglilipat ng mga output at ang paulit-ulit na pag-generate ng video (na parang sugal sa slot machine) gamit ang magkakahiwalay na tool sa paggawa at pag-edit ay nagpapabagal sa bawat yugto ng pitch."
         },
         "solution": {
           "title": "Dami ng Naproseso + Pag-apruba ng Kliyente",
@@ -1328,7 +1339,7 @@
       },
       {
         "question": "Paano naiiba ang SceneFlow sa Gemini Studio o Google Flow?",
-        "answer": "Nakatuon ang Gemini Studio at Google Flow sa paggawa ng mga clip gamit ang prompt-and-generate. Pinagsasama-sama ng SceneFlow ang buong daloy ng produksyon: mga estrukturadong yugto na may mga nababagong baseline, Reference Library at Beat Frames para sa pagkakapare-pareho, Audience Resonance bago ang magastos na pag-render, awtomatikong Mixer at pagbuo ng stream, at pagpapatunay gamit ang Screening Room bago ang pag-publish — lahat sa loob ng isang studio na may gabay."
+        "answer": "Nakatuon ang Gemini Studio at Google Flow sa paggawa ng mga clip gamit ang prompt-and-generate. Pinagsasama-sama ng SceneFlow ang buong daloy ng produksyon: mga estrukturadong yugto na may mga nababagong baseline, Reference Library at Beat Frames para sa pagkakapare-pareho, Audience Resonance bago ang magastos na pag-render, awtomatikong Mixer at pagbuo ng stream, at pag-validate gamit ang Screening Room bago i-publish — lahat sa loob ng isang guided studio. Halos pareho lang ang gastos sa paggamit ng modelo, gamitin man ang SceneFlow, ang sarili mong mga account sa provider, o ang BYOK — ngunit nakatitipid ang SceneFlow ng maraming oras sa bawat video dahil hindi na kailangan ang paulit-ulit na copy-paste, re-generation, at manu-manong pagbuo ng video."
       },
       {
         "question": "Maaari ko bang i-edit ang mga script, visual, at audio na ginawa ng AI?",

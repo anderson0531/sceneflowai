@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Ṣé ó dùn bí ohun tí o ti gbọ́ rí?",
     "title": "Ọ̀nà tí ó ti bàjẹ́ àti ọ̀nà SceneFlow",
-    "subtitle": "O ko yẹ ki o nilo lati ṣii awọn taabu marun-un, ṣe daakọ ati lẹẹmọ awọn faili, tabi ki o rẹwẹsi nitori titẹ awọn ilana sii (prompts) nikan lati le pari fidio kan.",
+    "subtitle": "Fun awọn amoye ni ṣiṣe fidio: ẹ dawọ lilo akoko pupọ lati ma daakọ ati lẹmọ (copy-paste) laarin iwe afọwọkọ, aworan, ohun, fidio, orin, ati awọn irinṣẹ atunṣe. Fun awọn ti wọn ṣẹṣẹ n bẹrẹ pẹlu fidio AI: ile-iṣẹ iṣelọpọ kan ti o n ṣe itọsọna yoo ṣe gbogbo iṣẹ naa fun ọ laifọwọyi, ki o le pari iṣẹ rẹ laisi nini lati kọ ẹkọ nipa awọn ohun elo (apps) mẹfa ti o yatọ si ara wọn.",
     "brokenWay": {
       "title": "Ọ̀nà tí ó ti fọ́",
-      "tagline": "Ti a pin si wẹ́wẹ́. Ti a fi ọwọ́ ṣe. Ti o rẹni gidigidi.",
+      "tagline": "Ti a pin si wẹ́wẹ́. Ti a n ṣiṣẹ́ rẹ̀ pẹ̀lú ọwọ́. Fídíò ẹ̀rọ tẹtà-tẹ́wọ́-gbà (slot machine).",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Àwọn àkọpamọ́ ìwé eré"
+          "name": "Ṣíṣe àgbékalẹ̀ ìwé-ìtàn tàbí ọ̀rọ̀-ìṣeré",
+          "category": "Àwọn àkọpamọ́ tí àwọn olùwò tàbí olùka kò tíì fọwọ́ sí"
         },
         {
-          "name": "Midjourney",
-          "category": "Àwọn àwòrán tí a ṣe lẹ́ẹ̀kan ṣoṣo"
+          "name": "Ṣíṣe àwòrán",
+          "category": "Àwọn fọ́ọ̀mù àti àwọn àwòrán dúró-ṣinṣin nínú irin-iṣẹ́ ọ́tọ̀ọ̀tọ̀"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Gbigbe VO jade pẹlu ọwọ"
+          "name": "Ṣíṣe àgbékalẹ̀ ohùn",
+          "category": "Fífi ohùn tí a ti gbà síta pẹ̀lú ọwọ́ àti gbígbà á sílẹ̀ lẹ́ẹ̀kan síi"
         },
         {
-          "name": "Premiere",
-          "category": "Àpapọ̀ pẹ̀lú ọwọ́"
+          "name": "Ṣíṣe fídíò",
+          "category": "Ṣíṣe àtúyíká lórí ẹ̀rọ ìtẹ́wọ́gbà-àǹfàní — fún ní àṣẹ, dá ohun kan sílẹ̀, kọ̀ ọ́ sílẹ̀, tún un ṣe."
+        },
+        {
+          "name": "Ṣíṣe orin",
+          "category": "Ààyè fún ohùn orin tàbí ohùn àkọsílẹ̀ ọ̀tọ̀ọ̀tọ̀"
+        },
+        {
+          "name": "Ṣíṣe àtúnṣe fídíò",
+          "category": "Àkójọpọ̀ pẹ̀lú ọwọ́, gbígbé jáde, àti mímú kí iṣẹ́ náà túbọ̀ dára sí i fún ìgbòòrò"
         }
       ],
-      "chaosLabel": "Àwọn ojú-ìwé márùn-ún. Àyíká-ọ̀rọ̀ ti sọnù.",
+      "chaosLabel": "Àwọn taabu mẹ́fà. Tún yí i padà títí tí nǹkan kan yóò fi dúró.",
       "painPoints": [
-        "Ṣe àdàkọ àti ìlẹ̀mọ́ láàrin àwọn ohun èlò",
+        "Ṣíṣe àdàkọ àti ìlẹ̀mọ́ láàrin àwọn irin-iṣẹ́ ìṣẹ̀dá àti àtúnṣe",
+        "Ṣíṣe àwòrán fídíò bíi ti ẹ̀rọ tẹ́tẹ́ (slot machine) — tún gbìyànjú léraléra títí tí nǹkan kan yóò fi yọrí sí rere.",
         "Rirẹ nitori fifunni ni awọn ilana ati awọn iyipo ti ṣiṣẹda leralera",
         "Ko si ṣíṣe àyẹ̀wò àwọn olùwò ṣáájú kí o tó ná owó.",
         "Ìdàrú nípa àwọn ẹ̀dà nínú àwọn ohun tí a gbé jáde"
       ],
-      "timeLabel": "Àkókò tí a sábà máa ń lò fún iṣẹ́ náà",
-      "timeValue": "Ọ̀sẹ̀ méjì sí mẹ́rin"
+      "timeLabel": "Gẹ́gẹ́ bí ó ṣe wà nínú fídíò (àkopọ̀ àwọn irinṣẹ́ onírúurú tí a ń lò pẹ̀lú ọwọ́)",
+      "timeValue": "Àkókò tó ju wákàtí mẹ́rin lọ"
     },
     "sceneflowWay": {
       "title": "Ọ̀nà SceneFlow",
-      "tagline": "Ilé-iṣẹ́ kan. Fọwọ́sí i kí o tó ṣe àgbéjáde rẹ̀.",
+      "tagline": "Ibùdó iṣẹ́ kan ṣoṣo. Ìṣiṣẹ́-ara-ẹni tí ó ní ìtọ́sọ́nà — tàbí agbára láti ṣe iṣẹ́ lọ́pọ̀lọpọ̀ kíákíá tí o bá ti mọ àwọn irin-iṣẹ́ náà dáadáa.",
       "stages": [
         {
           "label": "⟦Àkókò Ẹ̀kọ́ Kẹta⟧",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "Fáìlì iṣẹ́ kan ṣoṣo — kò sí yíyí láàrin àwọn taabu.",
       "benefits": [
-        "Awọn ipele ti a ṣe amọna rẹ — kii ṣe imọ-ẹrọ kikọ awọn ilana (prompt engineering)",
-        "Fífi ìtẹ́wọ́gbà sí àwòrán ìtàn fíìmù (storyboard) ṣáájú àkọsílẹ̀ àwọn tó kópa nínú fíìmù náà.",
+        "Awọn ipele ti a ṣe amọna rẹ — dawọ yíyí laarin awọn taabu ati pipadanu ọrọ-ọrọ tabi ipo iṣẹ",
+        "Fífọwọ́sí ètò àwòrán fídíò — dá ìyípadà ètò dúró kí a tó náwó lórí fídíò náà.",
         "Audience Resonance àmì ṣáájú ìṣẹ̀dá àwòrán tó nira",
-        "Àkọsílẹ̀ àkọ́kọ́ tí ó ti ṣe tán fún títẹ́jáde láti inú ilé-iṣẹ́ kan"
+        "Ẹ̀dà tó ti ṣe tán fún títẹ́wáde láàárín ìṣẹ́jú 30 sí 60, kì í ṣe wákàtí mẹ́rin ó lé díẹ̀."
       ],
-      "timeLabel": "Àkókò tí a sábà máa ń lò fún iṣẹ́ náà",
-      "timeValue": "Ọjọ́ méjì sí mẹ́rin"
+      "timeLabel": "Fún fídíò kọ̀ọ̀kan (ohun kan náà ni a ó pèsè)",
+      "timeValue": "Iṣẹ́jú 30–60"
     },
-    "comparisonCaption": "Ibùdó iṣẹ́ kan ṣoṣo máa ń rọ́pò àwọn irin-iṣẹ́ tí kò wà ní ìṣọ̀kan, ṣíṣe àtúnṣe pẹ̀lú ọwọ́, àti gbígbé iṣẹ́ láàrin àwọn pèpéle (platform) ọ̀tọ̀ọ̀tọ̀.",
-    "comparisonImageAlt": "Awọn inawo iṣelọpọ ti aṣa ni akawe pẹlu ile-iṣẹ igbasilẹ ti n ṣiṣẹ funra rẹ (automated studio) — ọna ti o yara lati ipele ero si fidio ti o ti ṣetan fun titẹjade."
+    "comparisonCaption": "Ile-iṣẹ kan rọpo awọn irinṣẹ ṣiṣẹda ti ko ni iṣọkan, awọn ọna atunṣe fidio ti o da lori orire (bii ti ẹrọ tẹtẹ), ati ṣiṣe atunṣe fidio pẹlu ọwọ.",
+    "comparisonImageAlt": "Awọn inawo iṣelọpọ ti aṣa ni akawe pẹlu ile-iṣẹ igbasilẹ ti n ṣiṣẹ funra rẹ (automated studio) — ọna ti o yara lati ipele ero si fidio ti o ti ṣetan fun titẹjade.",
+    "costNote": "O n lo iye owo kanna fun AI, sugbon o n din akoko ti n sofo ku. O ni lati sanwo fun awon 'model' naa lonakona — boya nipasẹ awọn kirediti SceneFlow, akọọlẹ olupese tirẹ, tabi BYOK. SceneFlow n mu inawo afikun ti o wa ninu ilana didakọ ati lẹpọ (copy-paste) kuro, eyi ti yoo jẹ ki o le ṣe ati tu awọn fidio silẹ ni iye ti o pọ si pẹlu isunawo kanna.",
+    "proofLine": "A ti fidi rẹ̀ mulẹ nipasẹ iṣẹ ayẹwo ile ti a n ta: ilana ti a fi ọwọ ṣe patapata gba ju wakati mẹrin lọ → abajade kanna ni a ṣe ni SceneFlow laarin wakati kan."
   },
   "comparison": {
     "title": "Iyara iṣelọpọ laisi awọn inawo afikun",
@@ -410,11 +421,11 @@
         },
         "challenge": {
           "title": "Ìdènà ní Ìpele \"B-Roll\"",
-          "description": "O ni iwe-afọwọkọ ti o dara pupọ, ṣugbọn pupọ julọ akoko rẹ n lọ si wiwa awọn aworan fidio, ṣiṣe eto fun atunṣe fidio, ati rii daju pe awọn apakan fidio naa ba ara wọn mu daradara. Iduro-pẹ-yii n fa fifalẹ igba ti o fi n gbe fidio jade, o si n dinku agbara rẹ lati jẹ ki awọn oluwo tẹsiwaju lati ma wo fidio rẹ."
+          "description": "O ni iwe-afọwọkọ ti o dara pupọ, ṣugbọn kiko bi a ṣe n lo awọn irinṣẹ mẹfa ti o yatọ fun ṣiṣẹda ati ṣiṣatunkọ — tabi didi ninu awọn fidio ti n tun ara wọn ṣe leralera — maa n fa idaduro ba igba ti o n gbe fidio sori ayelujara. Idaduro yii maa n dinku igbagbogbo ti o n gbe awọn nkan jade, o si tun maa n dinku bi awọn oluwo ṣe n duro lati wo awọn akoonu rẹ."
         },
         "solution": {
           "title": "Olùsọ̀tàn Aládàáṣiṣẹ́",
-          "description": "Yí àwọn ìwé ìtàn-eré padà sí àwòrán tó ti ṣe tán fún ṣíṣe fíìmù ní kíákíá, nígbà tí o sì ń mú kí ìrísí àwọn òṣèré àti ọ̀nà ìgbékalẹ̀ wà ní ìbámu láti ìbẹ̀rẹ̀ títí dé ìpele ìparí tó ti ṣe tán fún ìtújáde.",
+          "description": "Ilana ti a ṣe amọna rẹ laifọwọyi lati ipele kikọ iwe-ere titi de ipele ti iṣẹ naa ti ṣetan fun itusilẹ — ko si iwulo lati kọ bi a ṣe n lo awọn ohun elo (apps) mẹfa lọtọọtọ. Rii daju pe awọn ohun kikọ ati aṣa iṣẹ naa wa ni ibamu lati ibẹrẹ titi de opin iṣelọpọ gbogbo awọn apakan ere naa.",
           "features": [
             "Àwọn àwòrán tí ó bá àwọn ìpele ìtàn inú ìwé eré mu dáadáa",
             "Àwọn akọni tí wọ́n dúró ṣinṣin ní gbogbo ìṣẹ̀lẹ̀",
@@ -437,7 +448,7 @@
         },
         "challenge": {
           "title": "Àkójọpọ̀ Iṣẹ́ tí ó ń dúró de Olùpèsè àti Yíyàgún kúrò nínú Ìdánimọ̀ Àmì-ọjà",
-          "description": "Awọn ẹgbẹ ti n ṣiṣẹ lori ibaraẹnisọrọ, ikẹkọọ ati idagbasoke, ati tita ọja maa n duro de awọn ọsẹ pupọ fun awọn fidio lati ọdọ awọn ile-iṣẹ ita tabi awọn olupese. Igbesẹ kọọkan ti gbigbasilẹ fidio maa n fa awọn iṣoro bii aini iṣọkan ninu bi a ṣe n ṣafihan ami idanimọ ile-iṣẹ, awọn iwe-owo ti ko ṣe asọtẹlẹ iye wọn, ati ilana ifọwọsi ti o gun ti o si maa n fa idaduro fun awọn eto igbega ọja."
+          "description": "Awọn ẹgbẹ ti n ṣiṣẹ lori ibaraẹnisọrọ, ikẹkọ ati idagbasoke, ati tita ọja maa n duro de awọn ọsẹ pupọ fun awọn fidio lati ọdọ awọn ile-iṣẹ ita tabi awọn olupese; tabi ki wọn koju ọpọlọpọ awọn irinṣẹ ti o nira lati lo, laisi eto ti a le maa tẹle nigbagbogbo laarin ile-iṣẹ naa. Ọna kọọkan n yọrisi aini iṣọkan ninu bi a ṣe n ṣafihan idanimọ ile-iṣẹ (branding) ati idaduro ninu awọn ipolongo tita."
         },
         "solution": {
           "title": "Ṣíṣe iṣẹ́ nílé-iṣẹ́ fúnra-ẹni láàárín ọ̀sẹ̀ kan náà",
@@ -460,12 +471,12 @@
         "label": "Ile-iṣẹ́ Iṣelọpọ",
         "title": "Ile-iṣẹ́ Iṣelọpọ ti Ẹka Pataki",
         "beforeAfter": {
-          "before": "$8,000 fún ìgbà ìyàwòrán kan",
-          "after": "Kirẹditi $200"
+          "before": "Ju wakati mẹ́rin lọ",
+          "after": "Iṣẹ́jú 30–60"
         },
         "challenge": {
           "title": "Awọn Eto Pataki fun Ẹka Iṣẹ́ Kan Pato, Ko si Eto ti a le Tun Lo",
-          "description": "Awọn onibara ti n ṣiṣẹ lori itan-aye, itọju ohun-ini fun iran ti mbọ, ile ati ilẹ, ati eto-ẹkọ nilo ki iṣẹ pari ni kiakia — ṣugbọn iṣẹ kọọkan maa n bẹrẹ lati ibẹrẹ patapata. Ko si bi a ṣe le mu ki iṣẹ pọ si tabi yara si fun awọn nkan bii gbigbe data sori ẹrọ, ṣiṣe ẹda ohun, ati lilo awọn aworan oni-nọmba (avatars) ti a ko ba ni ilana ti a ti ṣeto tẹlẹ fun gbigba iṣẹ ati fifunni iṣẹ naa."
+          "description": "Awọn onibara ti n beere fun kikọ itan-aye, titọju ohun-ini fun iran ti mbọ, iṣowo ile ati ilẹ, ati eto-ẹkọ maa n fẹ ki iṣẹ pari ni kiakia — ṣugbọn iṣẹ kọọkan a maa bẹrẹ lati ipilẹ patapata. Gbigbe iṣẹ lati ọwọ ẹni kan si ekeji ni gbogbo igba ti a ba pari apakan kan, pẹlu atunṣe ati iyipada nigbagbogbo ninu iwe-afọwọkọ, awọn aworan, ohun, fidio, orin, ati awọn irinṣẹ atunṣe, maa n dinku èrè ti a ba n ṣe lori iye iṣẹ ti a ṣe."
         },
         "solution": {
           "title": "Sọ Iṣẹ́ Fídíò Rẹ Di Ọjà",
@@ -493,7 +504,7 @@
         },
         "challenge": {
           "title": "Pípèsè iṣẹ́ fún àwọn oníbàárà ní ìwọ̀n gíga",
-          "description": "Gbigba iṣẹ́ lẹ́yìn àfihàn ètò jẹ́ ìdajì ọ̀nà nìkan. Àwọn iṣẹ́ tí a ń ṣe déédé fún oníbàárà nílò kí a parí wọn ní kíákíá, kí ìlànà fífi ọwọ́ sí i ṣe kedere, kí a sì ní èrè lórí iṣẹ́ kọ̀ọ̀kan — láìnílò láti bẹ̀rẹ̀ gbogbo ìlànà iṣẹ́ náà láti ìbẹ̀rẹ̀ pátápátá nígbà gbogbo."
+          "description": "Gbigba iṣẹ́ lẹ́yìn igbejade rẹ̀ jẹ́ ìdajì ìjà náà nìkan. Àwọn iṣẹ́ tí a ń ṣe nígbà gbogbo fún oníbàárà nílò kí a parí wọn kíákíá — ṣùgbọ́n bí a ṣe ń gbé iṣẹ́ láti ọwọ́ ẹni kan sí òmíràn fún ìpele kọ̀ọ̀kan, àti bí a ṣe ń tún àwọn fídíò ṣe léraléra láàárín àwọn ohun èlò ọ̀tọ̀ọ̀tọ̀ fún ṣíṣe àti ṣíṣe àtúnṣe, máa ń fa ìdàgbàsókè nínú gbogbo ìlànà iṣẹ́ náà."
         },
         "solution": {
           "title": "Iye iṣẹ́ tí a parí + Ifọwọ́sí oníbàárà",
@@ -1328,7 +1339,7 @@
       },
       {
         "question": "Bawo ni SceneFlow ṣe yàtọ̀ sí Gemini Studio tàbí Google Flow?",
-        "answer": "Gemini Studio ati Google Flow dojukọ ṣiṣẹda awọn fidio kukuru nipasẹ lilo awọn ilana tabi aṣẹ (prompt-and-generate). SceneFlow ṣajọpọ gbogbo ilana iṣẹ iṣelọpọ: awọn ipele ti a ṣeto pẹlu awọn ipilẹ ti a le ṣatunkọ, Reference Library ati Beat Frames fun iduroṣinṣin, Audience Resonance ṣaaju ṣiṣe iṣelọpọ ikẹhin (render) ti o n gba agbara pupọ, eto Mixer ati akojọpọ ṣiṣan (stream) ti n ṣiṣẹ funrararẹ, ati Screening Room fun iṣeduro didara ṣaaju titẹjade — gbogbo rẹ wa ninu ile-iṣẹ iṣelọpọ kan ti o pese itọsọna."
+        "answer": "Gemini Studio ati Google Flow da lori ṣiṣẹda awọn fidio kukuru nipasẹ lilo awọn ilana tabi aṣẹ (prompt-and-generate). SceneFlow n ṣajọ gbogbo ilana iṣelọpọ papọ: awọn ipele ti a ṣeto pẹlu awọn ipilẹ ti a le ṣatunkọ, Reference Library ati Beat Frames fun idaniloju pe iṣẹ naa wa ni ibamu, Audience Resonance ṣaaju ṣiṣe awọn iṣẹ ti o n gba agbara kọmputa pupọ (renders), eto Mixer ati akojọpọ fidio ti n ṣiṣẹ funrararẹ, ati Screening Room fun ayẹwo ati ifọwọsi ṣaaju titẹjade — gbogbo rẹ wa ni ibi iṣẹ kan ti o n pese itọsọna. Iye owo lilo awoṣe (model) jẹ bakanna boya o lo SceneFlow, awọn akọọlẹ tirẹ pẹlu olupese iṣẹ, tabi BYOK — SceneFlow n dinku akoko ti a n lo fun didakọ ati fifi sii (copy-paste), ṣiṣẹda leralera, ati akojọpọ fidio pẹlu ọwọ fun fidio kọọkan."
       },
       {
         "question": "Ṣé mo lè ṣàtúnṣe àwọn ìwé-ọ̀rọ̀, àwòrán, àti ohùn tí AI ti pèsè?",

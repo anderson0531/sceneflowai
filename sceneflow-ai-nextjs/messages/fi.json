@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Kuulostaako tutulta?",
     "title": "Rikkoutunut tapa vs. SceneFlow-tapa",
-    "subtitle": "Yhden videon julkaiseminen ei saisi vaatia viittä selainvälilehteä, kopioi ja liitä -työvaiheita eikä uuvuttavaa kehotteiden laatimista.",
+    "subtitle": "Kokeneet tuottajat: lopettakaa tuntien tuhlaaminen sisällön kopioimiseen ja liittämiseen käsikirjoitus-, kuva-, ääni-, video-, musiikki- ja editointityökalujen välillä. Uutta tekoälyvideoiden maailmassa: yksi ohjattu studio automatisoi koko prosessin, joten saat valmista jälkeä ilman kuuden eri sovelluksen opettelua.",
     "brokenWay": {
       "title": "Rikkoutunut tie",
-      "tagline": "Pirstaleinen. Manuaalinen. Uuvuttava.",
+      "tagline": "Pirstaleinen. Manuaalinen. Kolikkopelivideo.",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Käsikirjoitusluonnokset"
+          "name": "Skriptin luominen",
+          "category": "Luonnokset ilman yleisön vahvistusta"
         },
         {
-          "name": "Midjourney",
-          "category": "Yksittäiset kuvat"
+          "name": "Kuvanluonti",
+          "category": "Ruudut ja pysäytyskuvat erillisessä työkalussa"
         },
         {
-          "name": "ElevenLabs",
-          "category": "VO:n manuaalinen vienti"
+          "name": "Äänen tuottaminen",
+          "category": "Puheosuuksien manuaalinen vienti ja uudelleenäänitykset"
         },
         {
-          "name": "Premiere",
-          "category": "Manuaalinen kokoonpano"
+          "name": "Videoiden luominen",
+          "category": "Pelikoneen kaltaiset uudelleenarvonnat – kehote, luonti, hylkäys, toisto"
+        },
+        {
+          "name": "Musiikin tuottaminen",
+          "category": "Erillinen soundtrack-passi"
+        },
+        {
+          "name": "Videoiden editointi",
+          "category": "Manuaalinen kokoaminen, vienti ja skaalauksen viimeistely"
         }
       ],
-      "chaosLabel": "Viisi välilehteä. Yhteys katosi.",
+      "chaosLabel": "Kuusi välilehteä. Arvo uudelleen, kunnes jokin tärppää.",
       "painPoints": [
-        "Kopiointi ja liittäminen sovellusten välillä",
+        "Kopiointi ja liittäminen generointi- ja muokkaustyökalujen välillä",
+        "Videoiden luominen kuin hedelmäpelissä – yritä uudelleen, kunnes tärppää",
         "Kehotteisiin liittyvä väsymys ja uudelleenluontikierteet",
         "Ei yleisön tarkistusta ennen kuluttamista",
         "Versiokaaos vientiaineistoissa"
       ],
-      "timeLabel": "Tyypillinen projektin kesto",
-      "timeValue": "2–4 viikkoa"
+      "timeLabel": "Videota kohden (manuaalinen monitoimityökalupino)",
+      "timeValue": "Yli 4 tuntia"
     },
     "sceneflowWay": {
       "title": "SceneFlow-tapa",
-      "tagline": "Yksi studio. Hyväksy ennen renderöintiä.",
+      "tagline": "Yksi studio. Ohjattua automaatiota – tai valtavaa suorituskykyä, jos teknologiapino on jo tuttu.",
       "stages": [
         {
           "label": "Blueprint",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "Yksi projektitiedosto – ei välilehtien välillä hyppimistä",
       "benefits": [
-        "Ohjatut vaiheet – ei kehotemuotoilua",
-        "Kuvakäsikirjoituksen hyväksyntä ennen videon lopputekstejä",
+        "Ohjatut vaiheet – lopeta välilehtien välillä hyppely ja kontekstin menetys",
+        "Kuvakäsikirjoituksen hyväksyntä – lopeta sattumanvarainen uudelleenyrittäminen ennen videotuotannon kustannusten syntymistä",
         "Audience Resonance pistemäärä ennen raskasta renderöintiä",
-        "Julkaisuvalmis master samasta studiosta"
+        "Julkaisuvalmis master-versio 30–60 minuutissa, ei yli neljässä tunnissa"
       ],
-      "timeLabel": "Tyypillinen projektin kesto",
-      "timeValue": "2–4 päivää"
+      "timeLabel": "Videota kohden (sama toimitettava tuotos)",
+      "timeValue": "30–60 minuuttia"
     },
-    "comparisonCaption": "Yksi studio korvaa hajanaiset kehote- eli prompt-työkalut, manuaaliset muokkaukset ja alustojen väliset siirrot.",
-    "comparisonImageAlt": "Perinteisen tuotannon yleiskustannukset vs. SceneFlow-automaatiostudio – nopeampi reitti konseptista julkaisuvalmiiksi videoksi"
+    "comparisonCaption": "Yksi studio korvaa hajanaiset generointityökalut, videoiden toistuvat uudelleenluonnit ja manuaalisen editointikoosteen.",
+    "comparisonImageAlt": "Perinteisen tuotannon yleiskustannukset vs. SceneFlow-automaatiostudio – nopeampi reitti konseptista julkaisuvalmiiksi videoksi",
+    "costNote": "Sama tekoälybudjetti, vähemmän hukattua aikaa. Maksat malleista joka tapauksessa – joko SceneFlow-krediiteillä, oman palveluntarjoajan tilisi kautta tai BYOK-palvelulla. SceneFlow poistaa kopioi ja liitä -työvaiheen aiheuttaman lisävaivan, joten voit julkaista enemmän videoita samalla budjetilla.",
+    "proofLine": "Vahvistettu asuntokohteen esittelykierroksella: täysin manuaalinen prosessi yli 4 tuntia → sama lopputulos SceneFlow-ratkaisulla alle tunnissa."
   },
   "comparison": {
     "title": "Tuotantonopeus ilman hallinnollista taakkaa",
@@ -410,11 +421,11 @@
         },
         "challenge": {
           "title": "B-kuvamateriaalin pullonkaula",
-          "description": "Sinulla on vahva käsikirjoitus, mutta suurin osa ajastasi kuluu kuvamateriaalin etsimiseen, editointityön koordinointiin ja kohtausten välisen johdonmukaisuuden varmistamiseen. Tämä viivästys hidastaa julkaisutahtia ja heikentää yleisön sitoutumista."
+          "description": "Sinulla on vahva käsikirjoitus, mutta kuuden eri luonti- ja editointityökalun opettelu – tai juuttuminen loputtomiin videokierteisiin – hidastaa jokaista julkaisua. Tämä viivästys heikentää julkaisutahtia ja yleisön sitoutumista."
         },
         "solution": {
           "title": "Automatisoitu tarinankertoja",
-          "description": "Muuta käsikirjoitukset nopeasti tuotantovalmiiksi visuaaliseksi sisällöksi ja säilytä hahmojen sekä tyylin yhtenäisyys ensimmäisestä kohtauksesta julkaisuvalmiiseen lopputulokseen saakka.",
+          "description": "Ohjattua automatisointia käsikirjoituksesta julkaisuvalmiiseen master-versioon – ilman tarvetta opetella kuutta eri sovellusta. Säilytä hahmojen ja tyylin yhtenäisyys ensimmäisestä kohtauksesta aina sarjan tuotantoon saakka.",
           "features": [
             "Visuaalinen ilme, joka vastaa selkeästi käsikirjoituksen vaiheita",
             "Johdonmukaiset päähenkilöt kaikissa kohtauksissa",
@@ -437,7 +448,7 @@
         },
         "challenge": {
           "title": "Toimittajan työjono ja brändin suunnan lipsuminen",
-          "description": "Viestintä-, koulutus- ja markkinointitiimit joutuvat odottamaan viikkoja videoiden valmistumista toimistoilta tai palveluntarjoajilta. Jokainen kuvaus tuo mukanaan brändin epäjohdonmukaisuutta, yllättäviä laskuja ja hyväksyntäprosesseja, jotka viivästyttävät kampanjoita."
+          "description": "Viestintä-, koulutus- ja markkinointitiimit joutuvat odottamaan viikkoja videoiden valmistumista toimistoilta tai ulkopuolisilta toimittajilta – tai kamppailemaan hallitsemattoman työkalukirjon kanssa ilman yhtenäistä, toistettavaa sisäistä toimintatapaa. Molemmat vaihtoehdot johtavat brändin epäjohdonmukaisuuteen ja kampanjoiden viivästymiseen."
         },
         "solution": {
           "title": "Oman tuotannon valmistus saman viikon aikana",
@@ -460,12 +471,12 @@
         "label": "Tuotantopaja",
         "title": "Erikoistuotantoon keskittyvä yritys",
         "beforeAfter": {
-          "before": "8 000 $ / kuvauskerta",
-          "after": "200 dollarin saldo"
+          "before": "Yli 4 tuntia",
+          "after": "30–60 min"
         },
         "challenge": {
           "title": "Räätälöidyt toimialakohtaiset ratkaisut, ei toistettavaa järjestelmää",
-          "description": "Muistelmateosten, perintöprojektien, kiinteistöalan ja koulutuksen parissa toimivat asiakkaat tarvitsevat nopeaa toimitusta – mutta jokainen projekti aloitetaan alusta. Tiedostojen lataaminen, äänen kloonaus ja avatarit eivät skaalaudu ilman vakioitua prosessia, joka kattaa kaiken lähtötiedoista valmiiseen toimitukseen."
+          "description": "Muistelmateosten, perintötarinoiden, kiinteistöalan ja koulutuksen parissa toimivat asiakkaat tarvitsevat nopeaa toimitusta – mutta jokainen projekti aloitetaan alusta. Toimituskohtaiset siirrot ja jatkuva, sattumanvarainen uudelleenkokeilu – käsikirjoituksen, kuvien, puheen, videon, musiikin ja editointityökalujen välillä – syövät katteen volyymipohjaisessa toiminnassa."
         },
         "solution": {
           "title": "Tuotteista videopalvelusi",
@@ -493,7 +504,7 @@
         },
         "challenge": {
           "title": "Asiakastoimitukset laajassa mittakaavassa",
-          "description": "Tarjouskilpailun voittaminen on vasta puoli voittoa. Toistuva asiakastyö vaatii nopeaa läpimenoa, selkeitä hyväksyntäprosesseja ja katetta jokaisesta toimituksesta – ilman, että tuotantoprosessi täytyy rakentaa joka kerta alusta."
+          "description": "Tarjouskilpailun voittaminen on vasta puoli voittoa. Toistuva asiakastyö vaatii nopeaa läpimenoa, mutta yksittäisten tuotosten siirtely ja videoiden satunnainen uudelleenluominen – kun käytössä on erilliset työkalut sisällön luomiseen ja editointiin – hidastavat jokaista tarjousprosessin vaihetta."
         },
         "solution": {
           "title": "Läpivirtaus + asiakkaan hyväksyntä",
@@ -1328,7 +1339,7 @@
       },
       {
         "question": "Miten SceneFlow eroaa kohteista Gemini Studio tai Google Flow?",
-        "answer": "Gemini Studio ja Google Flow keskittyvät kehotteisiin perustuviin generoituihin leikkeisiin. SceneFlow yhdistää koko tuotannon työnkulun: jäsennellyt vaiheet ja muokattavat lähtötasot, yhdenmukaisuutta varmistavat Reference Library ja Beat Frames, Audience Resonance-vaiheen ennen kalliita renderöintejä, automatisoidun mikserin ja striimin kokoamisen sekä julkaisua edeltävän Screening Room-validoinnin – kaikki yhdessä ohjatussa studiossa."
+        "answer": "Gemini Studio ja Google Flow keskittyvät kehotteisiin perustuvaan videoiden luomiseen. SceneFlow yhdistää koko tuotantoprosessin: jäsennellyt vaiheet ja muokattavat lähtökohdat, yhtenäisyyttä tukevat Reference Library ja Beat Frames, Audience Resonance-vaiheen ennen kalliita renderöintejä, automatisoidun miksauksen ja striimin koostamisen sekä julkaisua edeltävän Screening Room-validoinnin – kaikki yhdessä ohjatussa studiossa. Mallien käyttökustannukset ovat samat riippumatta siitä, käytätkö SceneFlow-palvelua, omia palveluntarjoajatilejäsi vai BYOK-ratkaisua; SceneFlow kuitenkin säästää tunteja työtä videota kohden vähentämällä kopiointia ja liittämistä, uudelleenluontia sekä manuaalista videon koostamista."
       },
       {
         "question": "Voinko muokata tekoälyn luomia käsikirjoituksia, visuaalista sisältöä ja ääntä?",

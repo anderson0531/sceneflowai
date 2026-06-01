@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Sound familiar?",
     "title": "The Broken Way vs the SceneFlow Way",
-    "subtitle": "You should not need five tabs, copy-paste exports, and prompt fatigue just to ship one video.",
+    "subtitle": "Experienced producers: stop losing hours to copy-paste across script, image, voice, video, music, and edit tools. New to AI video: one guided studio automates the stack so you ship without learning six separate apps.",
     "brokenWay": {
       "title": "The Broken Way",
-      "tagline": "Fragmented. Manual. Exhausting.",
+      "tagline": "Fragmented. Manual. Slot-machine video.",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Script drafts"
+          "name": "Script generation",
+          "category": "Drafts without audience validation"
         },
         {
-          "name": "Midjourney",
-          "category": "One-off images"
+          "name": "Image generation",
+          "category": "Frames and stills in a separate tool"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Manual VO export"
+          "name": "Voice generation",
+          "category": "Manual voiceover export and re-takes"
         },
         {
-          "name": "Premiere",
-          "category": "Manual assembly"
+          "name": "Video generation",
+          "category": "Slot-machine re-rolls — prompt, generate, reject, repeat"
+        },
+        {
+          "name": "Music generation",
+          "category": "Separate soundtrack pass"
+        },
+        {
+          "name": "Video editing",
+          "category": "Manual assembly, export, and upscaling polish"
         }
       ],
-      "chaosLabel": "Five tabs. Lost context.",
+      "chaosLabel": "Six tabs. Re-roll until something sticks.",
       "painPoints": [
-        "Copy-paste between apps",
+        "Copy-paste between generation and edit tools",
+        "Slot-machine video generation — re-roll until something sticks",
         "Prompt fatigue and re-generation loops",
         "No audience check before you spend",
         "Version chaos across exports"
       ],
-      "timeLabel": "Typical project time",
-      "timeValue": "2–4 weeks"
+      "timeLabel": "Per video (manual multi-tool stack)",
+      "timeValue": "4+ hours"
     },
     "sceneflowWay": {
       "title": "The SceneFlow Way",
-      "tagline": "One studio. Approve before you render.",
+      "tagline": "One studio. Guided automation — or serious throughput if you already know the stack.",
       "stages": [
         {
           "label": "Blueprint",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "One project file — no tab juggling",
       "benefits": [
-        "Guided phases — not prompt engineering",
-        "Storyboard approval before video credits",
+        "Guided phases — stop tab juggling and context loss",
+        "Storyboard approval — stop slot-machine re-rolls before video spend",
         "Audience Resonance score before heavy render",
-        "Publish-ready master from one studio"
+        "Publish-ready master in 30–60 min, not 4+ hrs"
       ],
-      "timeLabel": "Typical project time",
-      "timeValue": "2–4 days"
+      "timeLabel": "Per video (same deliverable)",
+      "timeValue": "30–60 minutes"
     },
-    "comparisonCaption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
-    "comparisonImageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
+    "comparisonCaption": "One studio replaces fragmented generation tools, slot-machine video re-rolls, and manual edit assembly",
+    "comparisonImageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video",
+    "costNote": "Same AI spend, less wasted time. You pay for models either way — through SceneFlow credits, your own provider account, or BYOK. SceneFlow removes the copy-paste assembly tax so you can ship more videos with the same budget.",
+    "proofLine": "Validated on a residential listing tour: full manual stack 4+ hours → same deliverable in SceneFlow under an hour."
   },
   "comparison": {
     "title": "Production speed without the overhead",
@@ -415,11 +426,11 @@
         },
         "challenge": {
           "title": "The \"B-Roll\" Bottleneck",
-          "description": "You have a strong script, but most of your time goes to finding footage, coordinating edits, and chasing consistency between scenes. That delay slows publishing cadence and weakens audience retention."
+          "description": "You have a strong script, but learning six separate generation and edit tools — or getting stuck in slot-machine video loops — slows every upload. That delay weakens publishing cadence and audience retention."
         },
         "solution": {
           "title": "The Automated Storyteller",
-          "description": "Turn scripts into production-ready visuals quickly while keeping character and style continuity from first scene to publish-ready master.",
+          "description": "Guided automation from script to publish-ready master — no need to learn six separate apps. Keep character and style continuity from first scene through series production.",
           "features": [
             "Visuals that map cleanly to script beats",
             "Consistent protagonists across every scene",
@@ -442,7 +453,7 @@
         },
         "challenge": {
           "title": "Vendor Backlog & Brand Drift",
-          "description": "Comms, L&D, and marketing teams wait weeks for agency or vendor video. Every shoot brings inconsistent branding, unpredictable invoices, and approval chains that stall campaigns."
+          "description": "Comms, L&D, and marketing teams wait weeks for agency or vendor video — or face an overwhelming tool stack with no repeatable in-house system. Every path brings inconsistent branding and stalled campaigns."
         },
         "solution": {
           "title": "Same-Week In-House Production",
@@ -465,12 +476,12 @@
         "label": "Production Shop",
         "title": "The Niche Production Shop",
         "beforeAfter": {
-          "before": "$8K/shoot",
-          "after": "$200 credits"
+          "before": "4+ hrs",
+          "after": "30–60 min"
         },
         "challenge": {
           "title": "Custom Verticals, No Repeatable System",
-          "description": "Memoir, legacy, real estate, and education clients need fast turnaround — but every project starts from scratch. Uploads, voice clones, and avatars don't scale without a templated intake → delivery pipeline."
+          "description": "Memoir, legacy, real estate, and education clients need fast turnaround — but every project starts from scratch. Per-deliverable handoffs plus slot-machine video re-rolls across script, image, voice, video, music, and edit tools eat margin on volume."
         },
         "solution": {
           "title": "Productize Your Video Service",
@@ -498,7 +509,7 @@
         },
         "challenge": {
           "title": "Client Delivery at Scale",
-          "description": "Winning the pitch is only half the battle. Recurring client work needs fast turnaround, clear approval chains, and margin on every deliverable — without rebuilding production from scratch each time."
+          "description": "Winning the pitch is only half the battle. Recurring client work needs fast turnaround — but per-deliverable handoffs and slot-machine video re-rolls across separate generation and edit tools slow every pitch cycle."
         },
         "solution": {
           "title": "Throughput + Client Approval",
@@ -1338,7 +1349,7 @@
       },
       {
         "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio."
+        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio. Model usage cost is similar whether you use SceneFlow, your own provider accounts, or BYOK — SceneFlow saves hours of copy-paste, re-generation, and manual video assembly per video."
       },
       {
         "question": "Can I edit AI-generated scripts, visuals, and audio?",

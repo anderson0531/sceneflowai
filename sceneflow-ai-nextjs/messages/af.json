@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Klink dit bekend?",
     "title": "Die gebroke weg teenoor die SceneFlow-weg",
-    "subtitle": "Jy behoort nie vyf oortjies, kopieer-en-plak-aksies en uitputting weens opdragskryf nodig te hê net om een video te voltooi en vry te stel nie.",
+    "subtitle": "Ervare vervaardigers: hou op om ure te verspil aan kopieer-en-plak tussen skrif-, beeld-, stem-, video-, musiek- en redigeringshulpmiddels. Nuut met KI-video? Een begeleide ateljee outomatiseer die hele proses, sodat jy jou werk kan lewer sonder om ses afsonderlike toepassings te leer.",
     "brokenWay": {
       "title": "Die Gebroke Pad",
-      "tagline": "Gefragmenteerd. Handmatig. Uitputtend.",
+      "tagline": "Gefragmenteerd. Handmatig. Slotmasjienvideo.",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Draaiboekkonsepte"
+          "name": "Skripgenerering",
+          "category": "Konsepte sonder gehoorvalidasie"
         },
         {
-          "name": "Midjourney",
-          "category": "Eenmalige beelde"
+          "name": "Beeldgenerering",
+          "category": "Rame en stilbeelde in 'n aparte hulpmiddel"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Handmatige VO-uitvoer"
+          "name": "Stemgenerering",
+          "category": "Handmatige uitvoer en heropnames van stemopnames"
         },
         {
-          "name": "Premiere",
-          "category": "Handmatige montering"
+          "name": "Videogenerering",
+          "category": "Dobbelmasjien-herrolle — opdrag, genereer, verwerp, herhaal"
+        },
+        {
+          "name": "Musiekskepping",
+          "category": "Afsonderlike klankbaanpas"
+        },
+        {
+          "name": "Videoredigering",
+          "category": "Handmatige samestelling, uitvoer en verfyning vir opskaling"
         }
       ],
-      "chaosLabel": "Vyf oortjies. Konteks verlore.",
+      "chaosLabel": "Ses oortjies. Gooi weer totdat iets vaskleef.",
       "painPoints": [
-        "Kopieer en plak tussen toepassings",
+        "Kopieer en plak tussen genererings- en redigeerhulpmiddels",
+        "Videogenerering soos by 'n slotmasjien — probeer weer totdat iets werk.",
         "Uitputting weens opdragte en hergenereringslusse",
         "Geen verifiëring van die gehoor voordat jy geld bestee nie",
         "Weergawe-chaos by uitvoere"
       ],
-      "timeLabel": "Tipiese projekduur",
-      "timeValue": "2–4 weke"
+      "timeLabel": "Volgens video (handmatige stapeling van veeldoelige gereedskap)",
+      "timeValue": "Meer as 4 uur"
     },
     "sceneflowWay": {
       "title": "Die SceneFlow-manier",
-      "tagline": "Een ateljee. Keur goed voordat jy weergee.",
+      "tagline": "Een ateljee. Begeleide automatisering — of hoë deurset as jy reeds die tegnologiestapel ken.",
       "stages": [
         {
           "label": "Blueprint",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "Een projeklêer — geen gesukkel met oortjies nie",
       "benefits": [
-        "Begeleide fases — nie prompt-ingenieurswese nie",
-        "Goedkeuring van die storyboard voor die video-aftiteling",
+        "Begeleide fases — beëindig die geworstel met oortjies en verlies aan konteks",
+        "Goedkeuring van die storiebord — stop herhaalde pogings (soos by 'n slotmasjien) voordat videokoste aangegaan word.",
         "Audience Resonance telling voor swaar weergawe",
-        "Publikasiegereed meesteropname van een ateljee"
+        "Publikasiegereed meesterkopie in 30–60 minute, nie meer as 4 uur nie"
       ],
-      "timeLabel": "Tipiese projekduur",
-      "timeValue": "2–4 dae"
+      "timeLabel": "Per video (dieselfde lewerbare produk)",
+      "timeValue": "30–60 minute"
     },
-    "comparisonCaption": "Een ateljee vervang gefragmenteerde prompt-nutsmiddels, handmatige redigering en oordragte tussen verskeie platforms.",
-    "comparisonImageAlt": "Tradisionele produksie-bokoste teenoor die SceneFlow-geoutomatiseerde ateljee — vinniger van konsep tot publikasiegereed video"
+    "comparisonCaption": "Een ateljee vervang gefragmenteerde genereringshulpmiddels, die hergenerering van slotmasjien-video's en handmatige monteerwerk.",
+    "comparisonImageAlt": "Tradisionele produksie-bokoste teenoor die SceneFlow-geoutomatiseerde ateljee — vinniger van konsep tot publikasiegereed video",
+    "costNote": "Dieselfde KI-besteding, minder vermorste tyd. Jy betaal in elk geval vir modelle – hetsy deur SceneFlow-krediete, jou eie verskaffersrekening of BYOK. SceneFlow skakel die tydrowende \"kopieer-en-plak\"-samestellingsproses uit, sodat jy meer video's met dieselfde begroting kan lewer.",
+    "proofLine": "Geverifieer tydens 'n besigtigingstoer van 'n residensiële eiendom: volledige handmatige verwerking het meer as 4 uur geduur → dieselfde eindproduk in SceneFlow in minder as 'n uur."
   },
   "comparison": {
     "title": "Produksiespoed sonder die bokoste",
@@ -410,11 +421,11 @@
         },
         "challenge": {
           "title": "Die \"B-roll\"-bottelnek",
-          "description": "Jy het ’n sterk draaiboek, maar die meeste van jou tyd word in beslag geneem deur beeldmateriaal te soek, redigering te koördineer en te sorg vir konsekwentheid tussen tonele. Daardie vertraging vertraag jou publikasietempo en verswak die gehoor se betrokkenheid."
+          "description": "Jy het ’n sterk draaiboek, maar om ses afsonderlike skeppings- en redigeringshulpmiddels te leer – of om in eindelose, herhalende videosiklusse vasgevang te raak – vertraag elke oplaai. Daardie vertraging verswak jou publikasietempo en die vermoë om kykers te behou."
         },
         "solution": {
           "title": "Die Geoutomatiseerde Storieverteller",
-          "description": "Skakel draaiboeke vinnig om in produksiegereed beeldmateriaal, terwyl kontinuïteit van karakter en styl behou word – van die eerste toneel tot by die finale meesterweergawe wat gereed is vir publikasie.",
+          "description": "Begeleide automatisering van draaiboek tot publikasiegereed meesterlêer – jy hoef nie ses afsonderlike toepassings aan te leer nie. Handhaaf karakter- en stylkonsekwentheid, van die eerste toneel tot by die produksie van die reeks.",
           "features": [
             "Visuele elemente wat presies by die stappe van die draaiboek aansluit",
             "Konsekwente hoofkarakters in elke toneel",
@@ -437,7 +448,7 @@
         },
         "challenge": {
           "title": "Agterstand by verskaffers & afwyking van die handelsmerk",
-          "description": "Kommunikasie-, leer-en-ontwikkelings- en bemarkingspanne wag weke lank vir video's van agentskappe of verskaffers. Elke opnamesessie gaan gepaard met teenstrydige handelsmerktoepassing, onvoorspelbare fakture en goedkeuringsprosesse wat veldtogte vertraag."
+          "description": "Kommunikasie-, leer-en-ontwikkelings- en bemarkingspanne wag weke lank vir video's van agentskappe of verskaffers — of hulle word gekonfronteer met 'n oorweldigende verskeidenheid nutsmiddels sonder enige herhaalbare interne stelsel. Elke opsie lei tot inkonsekwente handelsmerkuitbeelding en veldtogte wat tot stilstand kom."
         },
         "solution": {
           "title": "Interne produksie binne dieselfde week",
@@ -460,12 +471,12 @@
         "label": "Produksiewerkswinkel",
         "title": "Die nismark-produksiewinkel",
         "beforeAfter": {
-          "before": "$8 000 per fotosessie",
-          "after": "$200-krediet"
+          "before": "4+ uur",
+          "after": "30–60 min."
         },
         "challenge": {
           "title": "Pasgemaakte vertikale oplossings, geen herhaalbare stelsel nie",
-          "description": "Kliënte in die sektore vir memoires, nalatenskap, vaste eiendom en onderwys benodig vinnige afhandeling — maar elke projek begin van voor af. Oplaaie, stemklone en avatars kan nie op skaal hanteer word sonder 'n gestandaardiseerde prosesvloei van ontvangs tot aflewering nie."
+          "description": "Kliënte in die sektore vir memoires, nalatenskappe, vaste eiendom en onderwys benodig vinnige omkeertye – maar elke projek begin van voor af. Die oorhandiging van individuele eindprodukte, tesame met die herhaalde aanpassings en veranderinge (soos by 'n dobbelmasjien) aan draaiboeke, beeldmateriaal, stemopnames, video's, musiek en redigeringsprosesse, vreet aan die winsmarges op hoë volumes."
         },
         "solution": {
           "title": "Verander jou videodiens in 'n produk",
@@ -493,7 +504,7 @@
         },
         "challenge": {
           "title": "Lewering aan kliënte op groot skaal",
-          "description": "Om die opdrag te wen, is slegs die helfte van die stryd. Herhalende werk vir kliënte vereis vinnige afhandeling, duidelike goedkeuringsprosesse en winsmarges op elke aflewerbare produk — sonder om die produksieproses elke keer van nuuts af op te bou."
+          "description": "Om die aanbieding te wen, is slegs die helfte van die stryd. Herhalende werk vir kliënte vereis vinnige afhandeling — maar die oordrag van individuele aflewerbares en die herhaalde generering van video's (soos by 'n slotmasjien) oor aparte skeppings- en redigeringshulpmiddels vertraag elke siklus."
         },
         "solution": {
           "title": "Deurset + Kliëntgoedkeuring",
@@ -1328,7 +1339,7 @@
       },
       {
         "question": "Hoe verskil SceneFlow van Gemini Studio of Google Flow?",
-        "answer": "Gemini Studio en Google Flow fokus op snitte wat deur middel van opdragte gegenereer word. SceneFlow integreer die volledige produksiewerkstroom: gestruktureerde fases met wysigbare basislyne, Reference Library en Beat Frames vir konsekwentheid, Audience Resonance voor koste-intensiewe weergawes, outomatiese meng- en stroomsamestelling, en Screening Room-validasie voor publikasie — alles in een begeleide ateljee."
+        "answer": "Gemini Studio en Google Flow fokus op snitte wat deur middel van instruksies gegenereer word. SceneFlow integreer die volledige produksiewerkstroom: gestruktureerde fases met wysigbare basislyne, Reference Library en Beat Frames vir konsekwentheid, Audience Resonance voor duur weergawe-prosesse (rendering), outomatiese meng- en stroomsamestelling, en Screening Room-validasie voor publikasie — alles in een begeleide ateljee. Die koste vir modelgebruik is soortgelyk, ongeag of jy SceneFlow, jou eie verskaffersrekeninge of BYOK gebruik — SceneFlow bespaar ure se kopieer-en-plak, hergenerering en handmatige videosamestelling per video."
       },
       {
         "question": "Kan ek KI-gegenereerde draaiboeke, beeldmateriaal en oudio redigeer?",

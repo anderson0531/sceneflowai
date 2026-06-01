@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Tanıdık geldi mi?",
     "title": "Hatalı Yöntem ile SceneFlow Yöntemi",
-    "subtitle": "Sadece tek bir video ortaya çıkarmak için beş sekme, kopyala-yapıştır işlemleri ve istem (prompt) hazırlama yorgunluğuyla uğraşmak zorunda kalmamalısınız.",
+    "subtitle": "Deneyimli yapımcılar: Senaryo, görsel, ses, video, müzik ve düzenleme araçları arasında kopyala-yapıştır yaparak saatlerinizi harcamayı bırakın. Yapay zeka destekli videolara yeni başlayanlar: Rehberlik sunan tek bir stüdyo, tüm süreci otomatikleştirir; böylece altı ayrı uygulamayı öğrenmek zorunda kalmadan işinizi tamamlayıp yayınlayabilirsiniz.",
     "brokenWay": {
       "title": "Kırık Yol",
-      "tagline": "Parçalı. Manuel. Yorucu.",
+      "tagline": "Parçalı. Manuel. Slot makinesi videosu.",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Senaryo taslakları"
+          "name": "Betik oluşturma",
+          "category": "Hedef kitle onayı almamış taslaklar"
         },
         {
-          "name": "Midjourney",
-          "category": "Tek seferlik görseller"
+          "name": "Görsel oluşturma",
+          "category": "Ayrı bir araçta kareler ve durağan görüntüler"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Manuel VO dışa aktarımı"
+          "name": "Ses üretimi",
+          "category": "Manuel seslendirme dışa aktarımı ve yeniden kayıtlar"
         },
         {
-          "name": "Premiere",
-          "category": "Manuel montaj"
+          "name": "Video oluşturma",
+          "category": "Slot makinesi tarzı yeniden denemeler — komut gir, üret, reddet, tekrarla"
+        },
+        {
+          "name": "Müzik üretimi",
+          "category": "Ayrı film müziği paketi"
+        },
+        {
+          "name": "Video düzenleme",
+          "category": "Manuel birleştirme, dışa aktarma ve ölçek büyütme iyileştirmeleri"
         }
       ],
-      "chaosLabel": "Beş sekme. Bağlam kayboldu.",
+      "chaosLabel": "Altı sekme. Bir şey tutana kadar yeniden dene.",
       "painPoints": [
-        "Uygulamalar arası kopyala-yapıştır",
+        "Oluşturma ve düzenleme araçları arasında kopyala-yapıştır",
+        "Slot makinesi tarzı video üretimi — tutan bir sonuç çıkana kadar tekrar dene",
         "İstem yorgunluğu ve yeniden oluşturma döngüleri",
         "Harcama yapmadan önce kitle kontrolü yok",
         "Dışa aktarımlarda sürüm karmaşası"
       ],
-      "timeLabel": "Tipik proje süresi",
-      "timeValue": "2–4 hafta"
+      "timeLabel": "Video başına (manuel çoklu araç yığını)",
+      "timeValue": "4 saatten fazla"
     },
     "sceneflowWay": {
       "title": "SceneFlow Yöntemi",
-      "tagline": "Tek bir stüdyo. Render almadan önce onaylayın.",
+      "tagline": "Tek bir stüdyo. Rehberli otomasyon; ya da teknolojilere zaten hakimseniz, yüksek iş hacmi.",
       "stages": [
         {
           "label": "Blueprint",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "Tek bir proje dosyası — sekmeler arasında gidip gelmek yok",
       "benefits": [
-        "Yönlendirmeli aşamalar — istem mühendisliği değil",
-        "Video jeneriği öncesinde storyboard onayı",
+        "Rehberli aşamalar — sekme karmaşasına ve bağlam kaybına son verin",
+        "Storyboard onayı — video harcaması yapmadan önce slot makinesi misali sürekli revizyon döngüsüne son verin",
         "Audience Resonance ağır render öncesi puan",
-        "Tek bir stüdyodan yayına hazır master"
+        "4 saatten fazla değil, 30–60 dakikada yayına hazır master"
       ],
-      "timeLabel": "Tipik proje süresi",
-      "timeValue": "2–4 gün"
+      "timeLabel": "Video başına (aynı teslimat)",
+      "timeValue": "30–60 dakika"
     },
-    "comparisonCaption": "Tek bir stüdyo; parçalı istem araçlarının, manuel düzenlemelerin ve platformlar arası iş teslimi süreçlerinin yerini alıyor.",
-    "comparisonImageAlt": "Geleneksel prodüksiyonun getirdiği ek yükler ile SceneFlow otomatik stüdyo karşılaştırması — konsept aşamasından yayına hazır videoya daha hızlı geçiş"
+    "comparisonCaption": "Tek bir stüdyo; parçalı üretim araçlarının, slot makinesi tarzı video yeniden oluşturma işlemlerinin ve manuel kurgu birleştirme süreçlerinin yerini alıyor.",
+    "comparisonImageAlt": "Geleneksel prodüksiyonun getirdiği ek yükler ile SceneFlow otomatik stüdyo karşılaştırması — konsept aşamasından yayına hazır videoya daha hızlı geçiş",
+    "costNote": "Aynı yapay zeka harcaması, daha az zaman kaybı. Modeller için ödemeyi ister SceneFlow kredileri, ister kendi sağlayıcı hesabınız, isterse de BYOK aracılığıyla yapın; sonuçta bir ödeme söz konusudur. SceneFlow, kopyala-yapıştır yöntemiyle birleştirme sürecinin getirdiği ek yükü ortadan kaldırarak aynı bütçeyle daha fazla video üretip yayınlamanızı sağlar.",
+    "proofLine": "Bir konut portföyü turunda doğrulandı: tamamen manuel işlem 4 saatten uzun sürerken → SceneFlow ile aynı çıktı bir saatten kısa sürede elde edildi."
   },
   "comparison": {
     "title": "Ek yük olmadan üretim hızı",
@@ -410,11 +421,11 @@
         },
         "challenge": {
           "title": "\"B-Roll\" Darboğazı",
-          "description": "Güçlü bir senaryonuz var; ancak vaktinizin büyük kısmı görüntü bulmaya, kurgu süreçlerini koordine etmeye ve sahneler arası tutarlılığı sağlamaya gidiyor. Bu gecikme, yayın sıklığını yavaşlatıyor ve izleyici bağlılığını zayıflatıyor."
+          "description": "Güçlü bir metniniz var; ancak altı farklı içerik oluşturma ve düzenleme aracını öğrenmek ya da slot makinesi tarzı video döngülerine takılıp kalmak, her bir yükleme işlemini yavaşlatıyor. Bu gecikme, yayın sıklığını ve izleyici bağlılığını zayıflatıyor."
         },
         "solution": {
           "title": "Otomatik Hikâye Anlatıcısı",
-          "description": "İlk sahneden yayına hazır nihai yapıma kadar karakter ve üslup bütünlüğünü koruyarak, senaryoları hızla prodüksiyona hazır görsellere dönüştürün.",
+          "description": "Senaryodan yayına hazır nihai yapıma kadar rehberli otomasyon; altı ayrı uygulamayı öğrenmenize gerek yok. İlk sahneden dizi yapımının sonuna kadar karakter ve üslup sürekliliğini koruyun.",
           "features": [
             "Senaryo akışındaki önemli anlarla net bir şekilde örtüşen görseller",
             "Her sahnede tutarlı başkahramanlar",
@@ -437,7 +448,7 @@
         },
         "challenge": {
           "title": "Tedarikçi İş Yığılması ve Marka Sapması",
-          "description": "İletişim, Eğitim ve Gelişim (L&D) ve pazarlama ekipleri, ajans veya tedarikçilerden gelecek videolar için haftalarca beklemek zorunda kalıyor. Her çekim; tutarsız marka yansıması, öngörülemeyen faturalar ve kampanyaları sekteye uğratan onay süreçlerini beraberinde getiriyor."
+          "description": "İletişim, Eğitim ve Gelişim (L&D) ve pazarlama ekipleri, ajans veya tedarikçilerden gelecek videolar için haftalarca bekliyor ya da tekrarlanabilir bir kurum içi sistemden yoksun, karmaşık ve bunaltıcı bir araç yığınıyla karşı karşıya kalıyor. Hangi yol seçilirse seçilsin, sonuç tutarsız bir marka imajı ve sekteye uğrayan kampanyalar oluyor."
         },
         "solution": {
           "title": "Aynı Hafta İçinde Firma İçi Üretim",
@@ -460,12 +471,12 @@
         "label": "Üretim Atölyesi",
         "title": "Niş Üretim Atölyesi",
         "beforeAfter": {
-          "before": "Çekim başına 8.000 $",
-          "after": "200 dolarlık kredi"
+          "before": "4+ saat",
+          "after": "30–60 dk."
         },
         "challenge": {
           "title": "Özel Sektör Odakları, Tekrarlanabilir Bir Sistem Yok",
-          "description": "Anı kitabı, miras kaydı, gayrimenkul ve eğitim alanındaki müşteriler hızlı teslimat bekler; ancak her proje sıfırdan başlar. Şablon tabanlı bir \"talep alma → teslimat\" iş akışı olmadan; yüklemeler, ses klonları ve avatarlar ölçeklendirilemez."
+          "description": "Anı, miras, gayrimenkul ve eğitim alanındaki müşteriler hızlı teslimat bekliyor; ancak her proje sıfırdan başlıyor. Teslimat bazlı iş devirlerinin yanı sıra senaryo, görsel, ses, video, müzik ve kurgu araçları arasında sürekli tekrarlanan (ve adeta bir slot makinesi gibi şansa dayalı sonuçlar veren) revizyon süreçleri, yüksek hacimli işlerdeki kâr marjını eritiyor."
         },
         "solution": {
           "title": "Video Hizmetinizi Ürüne Dönüştürün",
@@ -493,7 +504,7 @@
         },
         "challenge": {
           "title": "Geniş Ölçekte Müşteri Hizmeti Sunumu",
-          "description": "İşi kazanmak, sürecin yalnızca yarısıdır. Düzenli müşteri işleri; her seferinde üretim sürecini sıfırdan kurgulamaya gerek kalmadan hızlı teslimat, net onay süreçleri ve her bir teslimatta kâr marjı sağlanmasını gerektirir."
+          "description": "Sunumu kazanmak, işin yalnızca yarısıdır. Müşteriden gelen tekrarlayan işler hızlı teslimat gerektirir; ancak ayrı üretim ve düzenleme araçları arasında her bir teslimat için yapılan iş devirleri ve şans oyunlarındaki slot makinelerini andıran o bitmek bilmeyen video yeniden oluşturma süreçleri, her bir sunum döngüsünü yavaşlatır."
         },
         "solution": {
           "title": "İşlem Hacmi + Müşteri Onayı",
@@ -1328,7 +1339,7 @@
       },
       {
         "question": "SceneFlow, Gemini Studio veya Google Flow'den nasıl farklıdır?",
-        "answer": "Gemini Studio ve Google Flow, komutla oluşturulan (prompt-and-generate) kliplere odaklanır. SceneFlow; düzenlenebilir temel yapılandırmalara sahip yapılandırılmış aşamalar, tutarlılık sağlayan Reference Library ve Beat Frames, maliyetli render işlemlerinden önceki Audience Resonance, otomatik Mikser ve akış birleştirme ile yayın öncesi Screening Room doğrulama süreçlerini kapsayan eksiksiz bir prodüksiyon iş akışını tek bir rehberli stüdyo ortamında bir araya getirir."
+        "answer": "Gemini Studio ve Google Flow, komut tabanlı klip oluşturmaya odaklanır. SceneFlow; düzenlenebilir temel yapı taşlarına sahip yapılandırılmış aşamalar, tutarlılık sağlayan Reference Library ve Beat Frames, maliyetli render işlemlerinden önceki Audience Resonance aşaması, otomatik Mikser ve akış birleştirme ile yayın öncesi Screening Room doğrulama süreçlerini kapsayan eksiksiz bir prodüksiyon iş akışını tek bir rehberli stüdyo ortamında sunar. İster SceneFlow'yi, ister kendi sağlayıcı hesaplarınızı veya BYOK'ü kullanın, model kullanım maliyeti benzerdir; ancak SceneFlow, video başına saatlerce süren kopyala-yapıştır, yeniden oluşturma ve manuel video birleştirme işlemlerinden tasarruf etmenizi sağlar."
       },
       {
         "question": "Yapay zeka tarafından oluşturulan metinleri, görselleri ve sesleri düzenleyebilir miyim?",

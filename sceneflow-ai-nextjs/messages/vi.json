@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Nghe có vẻ quen không?",
     "title": "Cách làm lỗi thời so với cách làm theo SceneFlow",
-    "subtitle": "Bạn không nên phải mở năm thẻ trình duyệt, sao chép-dán dữ liệu xuất và kiệt sức vì viết câu lệnh (prompt) chỉ để hoàn thành một video.",
+    "subtitle": "Dành cho các nhà sản xuất dày dạn kinh nghiệm: đừng lãng phí hàng giờ để sao chép và dán nội dung qua lại giữa kịch bản, hình ảnh, giọng nói, video, âm nhạc và các công cụ chỉnh sửa. Nếu bạn mới làm quen với video AI: một studio tích hợp với quy trình hướng dẫn sẽ tự động hóa toàn bộ các bước, giúp bạn hoàn thiện sản phẩm mà không cần phải học cách sử dụng sáu ứng dụng riêng biệt.",
     "brokenWay": {
       "title": "Con đường của sự tan vỡ",
-      "tagline": "Rời rạc. Thủ công. Kiệt sức.",
+      "tagline": "Rời rạc. Thủ công. Video kiểu máy đánh bạc.",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Các bản nháp kịch bản"
+          "name": "Tạo kịch bản",
+          "category": "Các bản nháp chưa được kiểm chứng với đối tượng khán giả"
         },
         {
-          "name": "Midjourney",
-          "category": "Hình ảnh độc bản"
+          "name": "Tạo ảnh",
+          "category": "Các khung hình và ảnh tĩnh trong một công cụ riêng biệt"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Xuất VO thủ công"
+          "name": "Tạo giọng nói",
+          "category": "Xuất thủ công và thu âm lại phần lời thoại"
         },
         {
-          "name": "Premiere",
-          "category": "Lắp ráp thủ công"
+          "name": "Tạo video",
+          "category": "Quay lại kiểu máy đánh bạc — nhập lệnh, tạo kết quả, từ chối, lặp lại"
+        },
+        {
+          "name": "Tạo nhạc",
+          "category": "Gói nhạc phim riêng"
+        },
+        {
+          "name": "Chỉnh sửa video",
+          "category": "Hoàn thiện quy trình lắp ráp thủ công, xuất dữ liệu và nâng cấp chất lượng"
         }
       ],
-      "chaosLabel": "Năm thẻ. Mất ngữ cảnh.",
+      "chaosLabel": "Sáu tab. Thử lại cho đến khi có cái nào hiệu quả.",
       "painPoints": [
-        "Sao chép và dán giữa các ứng dụng",
+        "Sao chép và dán giữa các công cụ tạo và chỉnh sửa",
+        "Tạo video theo kiểu máy đánh bạc — quay lại nhiều lần cho đến khi có kết quả ưng ý.",
         "Sự mệt mỏi khi đặt câu lệnh và các vòng lặp tạo lại nội dung",
         "Không kiểm tra đối tượng trước khi chi tiêu",
         "Sự hỗn loạn về phiên bản trong các tệp xuất"
       ],
-      "timeLabel": "Thời gian thực hiện dự án điển hình",
-      "timeValue": "2–4 tuần"
+      "timeLabel": "Theo video (quy trình xếp chồng thủ công bằng đa công cụ)",
+      "timeValue": "Hơn 4 giờ"
     },
     "sceneflowWay": {
       "title": "Phương thức SceneFlow",
-      "tagline": "Một studio. Phê duyệt trước khi kết xuất.",
+      "tagline": "Một studio duy nhất. Tự động hóa có hướng dẫn — hoặc hiệu suất xử lý vượt trội nếu bạn đã am hiểu nền tảng công nghệ này.",
       "stages": [
         {
           "label": "Blueprint",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "Một tệp dự án duy nhất — không cần chuyển đổi qua lại giữa các thẻ.",
       "benefits": [
-        "Các giai đoạn có hướng dẫn — không phải kỹ thuật viết câu lệnh (prompt engineering)",
-        "Phê duyệt kịch bản phân cảnh trước phần ghi công video",
+        "Các giai đoạn có hướng dẫn — chấm dứt tình trạng chuyển đổi qua lại giữa các thẻ và mất ngữ cảnh",
+        "Phê duyệt kịch bản phân cảnh — chấm dứt việc liên tục làm lại từ đầu trước khi chi ngân sách cho video.",
         "Điểm Audience Resonance trước khi thực hiện kết xuất nặng",
-        "Bản master sẵn sàng phát hành từ một studio"
+        "Bản hoàn thiện sẵn sàng xuất bản trong 30–60 phút, thay vì hơn 4 giờ."
       ],
-      "timeLabel": "Thời gian thực hiện dự án điển hình",
-      "timeValue": "2–4 ngày"
+      "timeLabel": "Trên mỗi video (cùng một sản phẩm bàn giao)",
+      "timeValue": "30–60 phút"
     },
-    "comparisonCaption": "Một studio duy nhất thay thế cho các công cụ tạo prompt rời rạc, quy trình chỉnh sửa thủ công và việc chuyển giao công việc giữa nhiều nền tảng.",
-    "comparisonImageAlt": "Chi phí vận hành sản xuất truyền thống so với studio tự động hóa SceneFlow — rút ngắn thời gian từ khâu lên ý tưởng đến khi có video hoàn chỉnh sẵn sàng phát hành."
+    "comparisonCaption": "Một studio thay thế các công cụ tạo nội dung rời rạc, quy trình tạo lại video kiểu máy đánh bạc và việc lắp ghép chỉnh sửa thủ công.",
+    "comparisonImageAlt": "Chi phí vận hành sản xuất truyền thống so với studio tự động hóa SceneFlow — rút ngắn thời gian từ khâu lên ý tưởng đến khi có video hoàn chỉnh sẵn sàng phát hành.",
+    "costNote": "Chi phí AI không đổi, nhưng giảm thiểu thời gian lãng phí. Dù bằng cách nào — thông qua credit SceneFlow, tài khoản nhà cung cấp của riêng bạn hay BYOK — bạn vẫn phải trả phí cho các mô hình AI. SceneFlow loại bỏ gánh nặng thời gian khi phải lắp ghép thủ công (kiểu sao chép-dán), giúp bạn xuất bản được nhiều video hơn với cùng một mức ngân sách.",
+    "proofLine": "Đã được kiểm chứng qua quy trình thực hiện cho một bất động sản nhà ở: quy trình thủ công toàn diện mất hơn 4 giờ → kết quả tương đương được hoàn thành trong SceneFlow với thời gian chưa đầy một giờ."
   },
   "comparison": {
     "title": "Tốc độ sản xuất nhanh mà không tốn chi phí vận hành",
@@ -410,11 +421,11 @@
         },
         "challenge": {
           "title": "Điểm nghẽn về cảnh quay bổ trợ (B-roll)",
-          "description": "Bạn sở hữu một kịch bản xuất sắc, nhưng phần lớn thời gian lại bị tiêu tốn vào việc tìm kiếm tư liệu, điều phối khâu biên tập và đảm bảo sự nhất quán giữa các cảnh quay. Sự chậm trễ này làm giảm tần suất đăng tải và khiến khán giả khó duy trì sự quan tâm."
+          "description": "Bạn sở hữu một kịch bản xuất sắc, nhưng việc phải học cách sử dụng sáu công cụ tạo và chỉnh sửa riêng biệt — hay sa đà vào những vòng lặp video kiểu máy đánh bạc — lại làm chậm tiến độ đăng tải. Sự chậm trễ này làm suy giảm tần suất xuất bản cũng như khả năng giữ chân khán giả."
         },
         "solution": {
           "title": "Người kể chuyện tự động",
-          "description": "Nhanh chóng chuyển đổi kịch bản thành hình ảnh sẵn sàng cho khâu sản xuất, đồng thời duy trì sự nhất quán về nhân vật và phong cách từ cảnh đầu tiên cho đến bản hoàn thiện cuối cùng.",
+          "description": "Quy trình tự động hóa có hướng dẫn, từ khâu kịch bản đến bản hoàn thiện sẵn sàng phát hành — không cần phải học cách sử dụng sáu ứng dụng riêng biệt. Đảm bảo tính nhất quán về nhân vật và phong cách từ cảnh đầu tiên cho đến suốt quá trình sản xuất loạt phim.",
           "features": [
             "Hình ảnh khớp chính xác với các nhịp nội dung của kịch bản",
             "Các nhân vật chính nhất quán xuyên suốt mọi cảnh quay",
@@ -437,7 +448,7 @@
         },
         "challenge": {
           "title": "Tồn đọng công việc của nhà cung cấp & Sự chệch hướng thương hiệu",
-          "description": "Các bộ phận truyền thông, đào tạo & phát triển (L&D) và tiếp thị thường phải chờ đợi hàng tuần để nhận video từ các đơn vị cung cấp dịch vụ. Mỗi đợt quay phim đều dẫn đến tình trạng thiếu nhất quán về thương hiệu, chi phí khó lường và quy trình phê duyệt rườm rà làm đình trệ các chiến dịch."
+          "description": "Các bộ phận truyền thông, đào tạo & phát triển (L&D) và tiếp thị thường phải chờ hàng tuần để nhận video từ các đơn vị bên ngoài, hoặc phải đối mặt với hàng loạt công cụ phức tạp mà thiếu đi một quy trình nội bộ chuẩn hóa, có thể tái sử dụng. Dù chọn cách nào, kết quả vẫn là sự thiếu nhất quán về thương hiệu và tình trạng đình trệ của các chiến dịch."
         },
         "solution": {
           "title": "Sản xuất nội bộ trong tuần",
@@ -460,12 +471,12 @@
         "label": "Xưởng sản xuất",
         "title": "Xưởng sản xuất chuyên biệt",
         "beforeAfter": {
-          "before": "8.000 USD/buổi chụp",
-          "after": "Khoản tín dụng 200 USD"
+          "before": "Hơn 4 giờ",
+          "after": "30–60 phút"
         },
         "challenge": {
           "title": "Các giải pháp chuyên biệt theo ngành, không có quy trình có thể lặp lại",
-          "description": "Khách hàng trong các lĩnh vực hồi ký, lưu giữ di sản, bất động sản và giáo dục đều cần thời gian hoàn thành nhanh chóng — nhưng mỗi dự án lại phải bắt đầu từ con số không. Các quy trình như tải dữ liệu, tạo bản sao giọng nói và xây dựng hình ảnh đại diện (avatar) sẽ khó mở rộng quy mô nếu thiếu một quy trình chuẩn hóa, xuyên suốt từ khâu tiếp nhận yêu cầu đến khi bàn giao sản phẩm."
+          "description": "Các khách hàng trong lĩnh vực hồi ký, lưu giữ di sản, bất động sản và giáo dục đều cần thời gian hoàn thành nhanh chóng — nhưng mỗi dự án lại phải bắt đầu từ con số không. Quy trình bàn giao từng hạng mục cộng với việc phải liên tục làm lại các yếu tố như kịch bản, hình ảnh, giọng đọc, video, âm nhạc và khâu biên tập (giống như trò chơi máy đánh bạc đầy may rủi) đã bào mòn lợi nhuận thu được từ quy mô công việc."
         },
         "solution": {
           "title": "Biến dịch vụ video của bạn thành sản phẩm",
@@ -493,7 +504,7 @@
         },
         "challenge": {
           "title": "Triển khai dịch vụ khách hàng trên quy mô lớn",
-          "description": "Thắng thầu mới chỉ là một nửa chặng đường. Các dự án lặp lại từ khách hàng đòi hỏi tốc độ triển khai nhanh, quy trình phê duyệt rõ ràng và biên lợi nhuận đảm bảo trên từng sản phẩm bàn giao — mà không cần phải xây dựng lại quy trình sản xuất từ con số không mỗi lần thực hiện."
+          "description": "Thắng thầu mới chỉ là một nửa chặng đường. Các dự án khách hàng định kỳ đòi hỏi tốc độ triển khai nhanh chóng — tuy nhiên, quy trình bàn giao từng hạng mục cùng việc phải tạo lại video nhiều lần (như chơi máy đánh bạc) trên các công cụ tạo và chỉnh sửa riêng biệt lại đang làm chậm trễ mọi chu trình thực hiện."
         },
         "solution": {
           "title": "Khối lượng xử lý + Sự phê duyệt của khách hàng",
@@ -1328,7 +1339,7 @@
       },
       {
         "question": "SceneFlow khác biệt như thế nào so với Gemini Studio hoặc Google Flow?",
-        "answer": "Gemini Studio và Google Flow tập trung vào việc tạo video từ câu lệnh (prompt). SceneFlow tích hợp toàn bộ quy trình sản xuất: các giai đoạn có cấu trúc với các mốc tham chiếu (baseline) có thể chỉnh sửa, Reference Library và Beat Frames giúp đảm bảo tính nhất quán, Audience Resonance thực hiện trước các bước kết xuất (render) tốn kém tài nguyên, tính năng Mixer và lắp ghép luồng dữ liệu tự động, cùng bước xác thực Screening Room trước khi xuất bản — tất cả gói gọn trong một môi trường studio có hướng dẫn."
+        "answer": "Gemini Studio và Google Flow tập trung vào việc tạo video từ câu lệnh (prompt). SceneFlow tích hợp toàn bộ quy trình sản xuất: các giai đoạn có cấu trúc với các bản mẫu cơ sở có thể chỉnh sửa, Reference Library và Beat Frames giúp đảm bảo tính nhất quán, Audience Resonance thực hiện trước các bước kết xuất (render) tốn kém, tính năng Mixer và lắp ghép luồng dữ liệu tự động, cùng bước xác thực Screening Room trước khi xuất bản — tất cả gói gọn trong một môi trường studio có hướng dẫn. Chi phí sử dụng mô hình là tương đương nhau bất kể bạn dùng SceneFlow, tài khoản nhà cung cấp riêng hay BYOK — tuy nhiên, SceneFlow giúp tiết kiệm hàng giờ thao tác sao chép-dán, tạo lại nội dung và lắp ghép video thủ công cho mỗi video."
       },
       {
         "question": "Tôi có thể chỉnh sửa kịch bản, hình ảnh và âm thanh do AI tạo ra không?",

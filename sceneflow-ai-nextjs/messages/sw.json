@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Inasikika kuwa ya kawaida kwako?",
     "title": "Njia Iliyoharibika dhidi ya Njia ya SceneFlow",
-    "subtitle": "Hupaswi kuhitaji kufungua tabu tano, kunakili na kubandika matokeo ya kazi, na kuchoshwa na uandishi wa maelekezo (prompts) ili tu kukamilisha video moja.",
+    "subtitle": "Kwa watayarishaji wenye uzoefu: acheni kupoteza saa nyingi kwa kazi ya kunakili na kubandika kati ya maandishi, picha, sauti, video, muziki na zana za kuhariri. Kwa wanaoanza kutumia video za AI: studio moja inayokuongoza hurahisisha na kuunganisha hatua zote, hivyo kukuwezesha kukamilisha kazi bila kuhitaji kujifunza programu sita tofauti.",
     "brokenWay": {
       "title": "Njia Iliyovunjika",
-      "tagline": "Isiyounganishwa. Ya kufanywa kwa mikono. Yenye kuchosha.",
+      "tagline": "Imegawanyika vipande-vipande. Ya kuendeshwa kwa mkono. Video ya mashine ya kamari.",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Rasimu za hati"
+          "name": "Uundaji wa hati",
+          "category": "Rasimu ambazo hazijathibitishwa na hadhira"
         },
         {
-          "name": "Midjourney",
-          "category": "Picha za kipekee"
+          "name": "Uzalishaji wa picha",
+          "category": "Fremu na picha tuli katika zana tofauti"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Usafirishaji wa VO kwa mikono"
+          "name": "Uzalishaji wa sauti",
+          "category": "Usafirishaji wa sauti ya maelezo na kurekodi upya kwa njia ya mikono"
         },
         {
-          "name": "Premiere",
-          "category": "Uunganishaji wa mikono"
+          "name": "Uundaji wa video",
+          "category": "Mzunguko wa ziada wa mashine ya bahati nasibu — toa agizo, tengeneza, kataa, rudia"
+        },
+        {
+          "name": "Utengenezaji wa muziki",
+          "category": "Tiketi tofauti ya wimbo wa filamu"
+        },
+        {
+          "name": "Uhariri wa video",
+          "category": "Uunganishaji wa mikono, usafirishaji nje, na uboreshaji wa uwezo wa kuhimili ongezeko la mahitaji"
         }
       ],
-      "chaosLabel": "Tabu tano. Muktadha umepotea.",
+      "chaosLabel": "Tabu sita. Jaribu tena hadi kitu kifanikiwe.",
       "painPoints": [
-        "Nakili na ubandike kati ya programu",
+        "Kunakili na kubandika kati ya zana za kuzalisha na kuhariri",
+        "Uundaji wa video kwa mtindo wa mashine ya kamari — jaribu tena na tena hadi upate matokeo yanayofaa.",
         "Uchovu wa kutoa maelekezo na mzunguko wa kuzalisha upya",
         "Hakuna uhakiki wa hadhira kabla ya kutumia fedha",
         "Fujo za matoleo katika faili zinazotolewa"
       ],
-      "timeLabel": "Muda wa kawaida wa mradi",
-      "timeValue": "Wiki 2–4"
+      "timeLabel": "Kulingana na video (mpangilio wa zana nyingi za mkono)",
+      "timeValue": "Zaidi ya saa 4"
     },
     "sceneflowWay": {
       "title": "Njia ya SceneFlow",
-      "tagline": "Studio moja. Idhinisha kabla ya kutoa toleo la mwisho.",
+      "tagline": "Studio moja. Uendeshaji wa kiotomatiki unaoongozwa — au uwezo mkubwa wa kuchakata kazi iwapo tayari unaifahamu teknolojia hiyo.",
       "stages": [
         {
           "label": "⟦Muhula wa 3 wa SF⟧",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "Faili moja la mradi — hakuna kuhangaika na vichupo vingi",
       "benefits": [
-        "Hatua zinazoongozwa — si usanifu wa maelekezo (prompt engineering)",
-        "Uidhinishaji wa ubao wa michoro kabla ya orodha ya wahusika wa video",
+        "Hatua zinazoongozwa — komesha kuhangaika na tabu nyingi na kupoteza muktadha",
+        "Uidhinishaji wa mwongozo wa taswira (storyboard) — sitisha marekebisho ya mara kwa mara kabla ya kuanza kutumia fedha kwa ajili ya video.",
         "Alama ya Audience Resonance kabla ya uundaji wa picha wenye uzito mkubwa",
-        "Nakala kuu tayari kwa uchapishaji kutoka studio moja"
+        "Nakala kuu tayari kwa kuchapishwa ndani ya dakika 30–60, badala ya zaidi ya saa 4"
       ],
-      "timeLabel": "Muda wa kawaida wa mradi",
-      "timeValue": "Siku 2–4"
+      "timeLabel": "Kwa kila video (matokeo yaleyale)",
+      "timeValue": "Dakika 30–60"
     },
-    "comparisonCaption": "Studio moja inachukua nafasi ya zana za maelekezo (prompts) zisizounganishwa, uhariri wa mikono, na uhamishaji wa kazi kati ya mifumo mbalimbali.",
-    "comparisonImageAlt": "Gharama za kawaida za uzalishaji dhidi ya studio ya SceneFlow inayojiendesha — mchakato wa haraka zaidi kutoka hatua ya wazo hadi video iliyo tayari kuchapishwa"
+    "comparisonCaption": "Studio moja inachukua nafasi ya zana za uzalishaji zilizotawanyika, uundaji upya wa video kwa mtindo wa mashine ya kamari, na uunganishaji wa vipande vya video kwa mikono.",
+    "comparisonImageAlt": "Gharama za kawaida za uzalishaji dhidi ya studio ya SceneFlow inayojiendesha — mchakato wa haraka zaidi kutoka hatua ya wazo hadi video iliyo tayari kuchapishwa",
+    "costNote": "Gharama ileile ya AI, muda mchache unaopotea. Unalipia mifumo hiyo kwa njia yoyote ile — iwe ni kwa kutumia salio la SceneFlow, akaunti yako binafsi ya mtoa huduma, au BYOK. SceneFlow huondoa gharama ya ziada inayotokana na mchakato wa kuunganisha vipande kwa njia ya kunakili na kubandika, hivyo kukuwezesha kuzalisha video nyingi zaidi kwa bajeti ileile.",
+    "proofLine": "Imethibitishwa kupitia ziara ya ukaguzi wa nyumba: mchakato kamili wa mikono ulichukua zaidi ya saa 4 → matokeo hayo hayo yakipatikana ndani ya SceneFlow kwa muda usiozidi saa moja."
   },
   "comparison": {
     "title": "Kasi ya uzalishaji bila gharama za ziada za uendeshaji",
@@ -410,11 +421,11 @@
         },
         "challenge": {
           "title": "Kikwazo cha \"B-Roll\"",
-          "description": "Una hati nzuri ya kipindi, lakini muda wako mwingi unapotea kutafuta picha, kuratibu uhariri, na kuhakikisha kuna uwiano kati ya sehemu mbalimbali za video. Kuchelewa huko kunapunguza kasi ya kuchapisha maudhui na kudhoofisha uwezo wa kuendelea kuwavutia watazamaji."
+          "description": "Una hati nzuri ya maudhui, lakini kujifunza zana sita tofauti za kutengeneza na kuhariri — au kukwama katika mzunguko usioisha wa kutengeneza video — kunachelewesha kila hatua ya kupakia maudhui. Ucheleweshaji huo hudhoofisha mzunguko wa kuchapisha na uwezo wa kuwabakiza watazamaji."
         },
         "solution": {
           "title": "Msimulizi wa Hadithi wa Kiotomatiki",
-          "description": "Badilisha hati kuwa taswira tayari kwa uzalishaji kwa haraka, huku ukidumisha mwendelezo wa wahusika na mtindo kuanzia tukio la kwanza hadi toleo la mwisho lililo tayari kuchapishwa.",
+          "description": "Uendeshaji wa kazi wa kiotomatiki unaoongozwa, kuanzia muswada hadi toleo la mwisho tayari kwa kuchapishwa — hakuna haja ya kujifunza programu sita tofauti. Dumisha mwendelezo wa wahusika na mtindo kuanzia tukio la kwanza hadi katika utayarishaji wa mfululizo mzima.",
           "features": [
             "Taswira zinazoendana sawasawa na hatua za mtiririko wa hati",
             "Wahusika wakuu thabiti katika kila tukio",
@@ -437,7 +448,7 @@
         },
         "challenge": {
           "title": "Mrundikano wa Kazi kwa Wasambazaji na Kupoteza Mwelekeo wa Chapa",
-          "description": "Timu za mawasiliano, mafunzo na maendeleo (L&D), na masoko hulazimika kusubiri kwa wiki kadhaa ili kupata video kutoka kwa wakala au watoa huduma. Kila zoezi la utengenezaji wa video huleta changamoto kama vile kutokuwepo kwa uwiano katika utambulisho wa chapa, ankara zisizotabirika, na michakato mirefu ya uidhinishaji inayokwamisha kampeni."
+          "description": "Timu za mawasiliano, mafunzo na maendeleo (L&D), pamoja na masoko hulazimika kusubiri kwa wiki kadhaa ili kupata video kutoka kwa wakala au wauzaji wa nje — au hukabiliwa na wingi wa zana tata bila kuwa na mfumo thabiti wa ndani unaoweza kutumika mara kwa mara. Njia zote hizi husababisha kutokuwepo kwa uwiano katika utambulisho wa chapa na kukwama kwa kampeni."
         },
         "solution": {
           "title": "Uzalishaji wa Ndani ya Kampuni Ndani ya Wiki Hiyo Hiyo",
@@ -460,12 +471,12 @@
         "label": "Warsha ya Uzalishaji",
         "title": "Warsha ya Uzalishaji wa Bidhaa Maalum",
         "beforeAfter": {
-          "before": "$8,000 kwa kila kipindi cha upigaji picha/video",
-          "after": "Salio la $200"
+          "before": "Zaidi ya saa 4",
+          "after": "Dakika 30–60"
         },
         "challenge": {
           "title": "Sekta Maalum, Hakuna Mfumo Unaoweza Kurudiwa",
-          "description": "Wateja wanaohitaji huduma za kumbukumbu za maisha, urithi, sekta ya majengo, na elimu wanatarajia matokeo ya haraka — lakini kila mradi huanzia mwanzo kabisa. Michakato inayohusisha upakiaji wa data, uigaji wa sauti, na avata haiwezi kupanuliwa kwa ufanisi bila mfumo sanifu unaoongoza mchakato kuanzia hatua ya awali ya kupokea maelezo hadi hatua ya mwisho ya kukamilisha kazi."
+          "description": "Wateja wanaohitaji huduma za kumbukumbu binafsi, urithi, sekta ya majengo, na elimu wanataka kazi ikamilike haraka — lakini kila mradi huanza upya kabisa. Mchakato wa kukabidhiana kazi katika kila hatua, pamoja na marekebisho ya mara kwa mara na yasiyotabirika (kama bahati nasibu) kwenye maandishi, picha, sauti, video, muziki, na zana za uhariri, hupunguza faida inayotokana na wingi wa kazi."
         },
         "solution": {
           "title": "Badilisha huduma yako ya video kuwa bidhaa",
@@ -493,7 +504,7 @@
         },
         "challenge": {
           "title": "Utoaji wa huduma kwa wateja kwa kiwango kikubwa",
-          "description": "Kushinda zabuni ni nusu tu ya kazi yenyewe. Kazi za mara kwa mara kutoka kwa mteja zinahitaji utekelezaji wa haraka, taratibu za wazi za uidhinishaji, na faida katika kila kazi inayokamilishwa — bila kulazimika kuanza mchakato wa uzalishaji upya kuanzia mwanzo kila wakati."
+          "description": "Kufanikiwa katika uwasilishaji wa awali wa wazo ni nusu tu ya safari. Kazi za mara kwa mara za wateja zinahitaji kukamilishwa kwa haraka — lakini uhamishaji wa kazi katika kila hatua na mchakato wa kurudia-rudia uundaji wa video (kama bahati nasibu) kwa kutumia zana tofauti za kutengeneza na kuhariri, hupunguza kasi ya kila mzunguko wa kazi."
         },
         "solution": {
           "title": "Kiwango cha Uzalishaji + Idhini ya Mteja",
@@ -1328,7 +1339,7 @@
       },
       {
         "question": "Je, SceneFlow inatofautianaje na Gemini Studio au Google Flow?",
-        "answer": "Gemini Studio na Google Flow hujikita katika klipu zinazozalishwa kwa kutumia maelekezo (prompts). SceneFlow huunganisha mchakato mzima wa uzalishaji: hatua zilizopangwa zenye viwango vya msingi vinavyoweza kurekebishwa, Reference Library na Beat Frames kwa ajili ya kudumisha uwiano, Audience Resonance kabla ya hatua za gharama kubwa za uundaji wa mwisho (rendering), mfumo wa kiotomatiki wa kuchanganya sauti na kuunganisha mtiririko wa kazi, pamoja na uhakiki wa Screening Room kabla ya kuchapishwa — yote haya yakipatikana katika studio moja inayotoa mwongozo."
+        "answer": "Gemini Studio na Google Flow hujikita katika kuunda klipu kwa kutumia maelekezo (prompts). SceneFlow huunganisha mchakato mzima wa uzalishaji: hatua zilizopangwa zenye vipengele vya msingi vinavyoweza kuhaririwa, Reference Library na Beat Frames kwa ajili ya kudumisha uwiano na ubora thabiti, Audience Resonance kabla ya hatua za gharama kubwa za uundaji wa mwisho (rendering), mfumo wa kiotomatiki wa kuchanganya vipengele (Mixer) na kuunganisha mtiririko wa video, pamoja na uthibitishaji wa Screening Room kabla ya kuchapisha — yote haya katika studio moja inayotoa mwongozo. Gharama ya kutumia modeli ni sawa iwe unatumia SceneFlow, akaunti zako binafsi za mtoa huduma, au BYOK — hata hivyo, SceneFlow huokoa saa nyingi ambazo zingetumika katika kunakili na kubandika, kuunda upya, na kuunganisha video kwa mikono."
       },
       {
         "question": "Je, ninaweza kuhariri maandishi, picha, na sauti vilivyotengenezwa na AI?",

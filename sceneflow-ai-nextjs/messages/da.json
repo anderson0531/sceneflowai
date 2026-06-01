@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Lyder det bekendt?",
     "title": "Den fejlbehæftede metode kontra SceneFlow-metoden",
-    "subtitle": "Du bør ikke have brug for fem faner, eksport via kopier-og-sæt-ind og prompt-træthed bare for at færdiggøre én video.",
+    "subtitle": "Erfarne producere: Hold op med at spilde timer på at kopiere og indsætte indhold på tværs af manuskript, billeder, tale, video, musik og redigeringsværktøjer. Er du ny inden for AI-video? Et enkelt, guidet studie automatiserer hele processen, så du kan færdiggøre dit projekt uden at skulle lære seks forskellige apps at kende.",
     "brokenWay": {
       "title": "Den knuste vej",
-      "tagline": "Fragmenteret. Manuelt. Udmattende.",
+      "tagline": "Fragmenteret. Manuel. Spillemaskinevideo.",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Manuskriptudkast"
+          "name": "Generering af scripts",
+          "category": "Udkast uden validering hos målgruppen"
         },
         {
-          "name": "Midjourney",
-          "category": "Enkeltstående billeder"
+          "name": "Billedgenerering",
+          "category": "Frames og stillbilleder i et separat værktøj"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Manuel VO-eksport"
+          "name": "Stemmegenerering",
+          "category": "Manuel eksport af voiceover og genindspilninger"
         },
         {
-          "name": "Premiere",
-          "category": "Manuel montering"
+          "name": "Videogenerering",
+          "category": "Spillemaskine-agtige genforsøg – prompt, generér, afvis, gentag"
+        },
+        {
+          "name": "Musikgenerering",
+          "category": "Separat soundtrack-pas"
+        },
+        {
+          "name": "Videoredigering",
+          "category": "Manuel samling, eksport og finpudsning af opskalering"
         }
       ],
-      "chaosLabel": "Fem faner. Mistet kontekst.",
+      "chaosLabel": "Seks faner. Prøv igen, indtil noget hænger ved.",
       "painPoints": [
-        "Kopier og indsæt mellem apps",
+        "Kopiering og indsætning mellem genererings- og redigeringsværktøjer",
+        "Videogenerering efter spillemaskineprincippet – prøv igen, indtil noget hænger ved.",
         "Prompt-træthed og regenereringsløkker",
         "Ingen tjek af målgruppen, før du bruger penge",
         "Versionskaos på tværs af eksportfiler"
       ],
-      "timeLabel": "Typisk projekttid",
-      "timeValue": "2–4 uger"
+      "timeLabel": "Pr. video (manuel stak af multiværktøjer)",
+      "timeValue": "4+ timer"
     },
     "sceneflowWay": {
       "title": "SceneFlow-metoden",
-      "tagline": "Ét studie. Godkend, før du renderer.",
+      "tagline": "Ét studio. Guidet automatisering – eller høj produktivitet, hvis du allerede kender teknologistakken.",
       "stages": [
         {
           "label": "Blueprint",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "Én projektfil – slut med at jonglere med faner",
       "benefits": [
-        "Guidede faser – ikke prompt engineering",
-        "Godkendelse af storyboard før videocredits",
+        "Guidede faser – slut med at jonglere med faner og miste konteksten",
+        "Godkendelse af storyboard – undgå endeløse justeringsrunder, før der bruges penge på videoen",
         "Audience Resonance-score før tung rendering",
-        "Udgivelsesklart master fra ét studie"
+        "Publiseringsklar master på 30–60 minutter – ikke over 4 timer"
       ],
-      "timeLabel": "Typisk projekttid",
-      "timeValue": "2–4 dage"
+      "timeLabel": "Pr. video (samme leverance)",
+      "timeValue": "30–60 minutter"
     },
-    "comparisonCaption": "Ét samlet miljø erstatter fragmenterede prompt-værktøjer, manuelle rettelser og overleveringer på tværs af platforme.",
-    "comparisonImageAlt": "Traditionelle produktionsomkostninger vs. SceneFlow-automatiseret studie – hurtigere vej fra koncept til publiceringsklar video"
+    "comparisonCaption": "Ét studie erstatter fragmenterede genereringsværktøjer, gentagne video-genereringer (der minder om en spillemaskine) og manuel samling af klip.",
+    "comparisonImageAlt": "Traditionelle produktionsomkostninger vs. SceneFlow-automatiseret studie – hurtigere vej fra koncept til publiceringsklar video",
+    "costNote": "Samme AI-udgifter, mindre spildtid. Du betaler under alle omstændigheder for modellerne – enten via SceneFlow-credits, din egen udbyderkonto eller BYOK. SceneFlow eliminerer den tidsmæssige omkostning ved manuel sammensætning (copy-paste), så du kan færdiggøre flere videoer med det samme budget.",
+    "proofLine": "Valideret ved en fremvisning af en bolig: fuld manuel proces 4+ timer → samme resultat i SceneFlow på under en time."
   },
   "comparison": {
     "title": "Produktionshastighed uden overhead",
@@ -410,11 +421,11 @@
         },
         "challenge": {
           "title": "Flaskehalsen med B-roll",
-          "description": "Du har et stærkt manuskript, men størstedelen af din tid går med at finde optagelser, koordinere redigeringen og sikre sammenhæng mellem scenerne. Denne forsinkelse sænker udgivelsestakten og svækker publikums fastholdelse."
+          "description": "Du har et stærkt manuskript, men processen med at lære seks forskellige værktøjer til generering og redigering – eller at hænge fast i endeløse, repetitive videoloops – forsinker hver eneste upload. Denne forsinkelse svækker både udgivelsestakten og evnen til at fastholde publikum."
         },
         "solution": {
           "title": "Den automatiserede historiefortæller",
-          "description": "Omdan hurtigt manuskripter til produktionsklare billeder, samtidig med at kontinuiteten i karakterer og stil bevares fra første scene til den færdige master.",
+          "description": "Guidet automatisering fra manuskript til udgivelsesklart master-materiale – du behøver ikke at lære seks forskellige programmer at kende. Bevar kontinuiteten i karakterer og stil fra første scene til produktionen af hele serien.",
           "features": [
             "Visuelle elementer, der passer præcist til manuskriptets enkelte faser",
             "Konsistente hovedpersoner på tværs af alle scener",
@@ -437,7 +448,7 @@
         },
         "challenge": {
           "title": "Leverandør-backlog og brand-afvigelse",
-          "description": "Teams inden for kommunikation, læring og udvikling (L&D) samt marketing må vente ugevis på videoer fra bureauer eller leverandører. Hver optagelse medfører inkonsekvent branding, uforudsigelige fakturaer og godkendelsesprocesser, der bremser kampagnerne."
+          "description": "Teams inden for kommunikation, læring og udvikling (L&D) samt marketing må vente ugevis på videoer fra bureauer eller leverandører – eller også står de over for en uoverskuelig vifte af værktøjer uden et ensartet, gentageligt system internt. Uanset hvilken vej de vælger, fører det til inkonsekvent branding og kampagner, der går i stå."
         },
         "solution": {
           "title": "Intern produktion inden for samme uge",
@@ -460,12 +471,12 @@
         "label": "Produktionsværksted",
         "title": "Specialproduktionsvirksomheden",
         "beforeAfter": {
-          "before": "8.000 $ pr. optagelse",
-          "after": "Kredit på 200 $"
+          "before": "4+ timer",
+          "after": "30–60 min."
         },
         "challenge": {
           "title": "Skræddersyede vertikale løsninger, intet gentageligt system",
-          "description": "Kunder inden for erindringer, arv, ejendomshandel og uddannelse har brug for hurtig levering – men hvert projekt starter forfra. Uploads, stemmekloner og avatarer kan ikke skaleres uden en standardiseret proces fra modtagelse til levering."
+          "description": "Kunder inden for erindringer, familiearv, ejendomshandel og uddannelse har brug for hurtig levering – men hvert projekt starter forfra. Overleveringer for hvert enkelt leveranceelement samt uforudsigelige, gentagne justeringer på tværs af manuskript, billeder, speak, video, musik og redigeringsværktøjer udhuler avancen ved større volumener."
         },
         "solution": {
           "title": "Gør din videoydelse til et produkt",
@@ -493,7 +504,7 @@
         },
         "challenge": {
           "title": "Levering til kunder i stor skala",
-          "description": "At vinde pitchet er kun halvdelen af kampen. Tilbagevendende opgaver for kunder kræver hurtig eksekvering, klare godkendelsesprocesser og en sund avance på hver leverance – uden at produktionen skal bygges op fra bunden hver gang."
+          "description": "At vinde pitchet er kun halvdelen af kampen. Tilbagevendende kundeopgaver kræver hurtig eksekvering – men overleveringer for hvert enkelt leveranceelement og en tilfældighedspræget proces med at generere og redigere video på tværs af forskellige værktøjer bremser hver pitch-cyklus."
         },
         "solution": {
           "title": "Gennemløb + Kundegodkendelse",
@@ -1328,7 +1339,7 @@
       },
       {
         "question": "Hvordan adskiller SceneFlow sig fra Gemini Studio eller Google Flow?",
-        "answer": "Gemini Studio og Google Flow fokuserer på klip, der skabes ud fra prompts. SceneFlow samler hele produktionsworkflowet: strukturerede faser med redigerbare grundlag, Reference Library og Beat Frames for ensartethed, Audience Resonance før ressourcekrævende rendering, automatiseret mixer og sammensætning af streams samt validering via Screening Room før publicering – alt sammen i ét guidet studiemiljø."
+        "answer": "Gemini Studio og Google Flow fokuserer på klip, der skabes ud fra prompts. SceneFlow samler hele produktionsworkflowet: strukturerede faser med redigerbare grundlag, Reference Library og Beat Frames for ensartethed, Audience Resonance før omkostningstunge renderinger, automatiseret Mixer og sammensætning af streams samt validering via Screening Room før publicering – alt sammen i ét guidet studiemiljø. Omkostningerne til modelbrug er de samme, uanset om du benytter SceneFlow, dine egne konti hos udbydere eller BYOK – men SceneFlow sparer timevis af arbejde med kopiering/indsætning, genskabelse og manuel videosammensætning pr. video."
       },
       {
         "question": "Kan jeg redigere AI-genererede manuskripter, billedmateriale og lyd?",

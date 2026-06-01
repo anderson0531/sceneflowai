@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Îți sună cunoscut?",
     "title": "Abordarea defectuoasă vs. abordarea SceneFlow",
-    "subtitle": "Nu ar trebui să ai nevoie de cinci tab-uri, operațiuni de tip „copy-paste” și oboseală acumulată din cauza prompturilor doar pentru a finaliza un videoclip.",
+    "subtitle": "Producători cu experiență: nu mai pierdeți ore întregi cu operațiuni de tip „copy-paste” între instrumentele pentru scenariu, imagini, voce, video, muzică și editare. Sunteți la început cu videoclipurile generate prin AI? Un studio integrat și intuitiv automatizează întregul flux de lucru, permițându-vă să finalizați proiectele fără a fi nevoie să învățați să utilizați șase aplicații diferite.",
     "brokenWay": {
       "title": "Calea frântă",
-      "tagline": "Fragmentat. Manual. Epuizant.",
+      "tagline": "Fragmentat. Manual. Video de slot machine.",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Ciorne de scenariu"
+          "name": "Generare de scripturi",
+          "category": "Ciorne fără validare din partea publicului"
         },
         {
-          "name": "Midjourney",
-          "category": "Imagini unice"
+          "name": "Generare de imagini",
+          "category": "Cadre și imagini statice într-un instrument separat"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Export manual VO"
+          "name": "Generare vocală",
+          "category": "Export manual și reluări ale înregistrării vocale"
         },
         {
-          "name": "Premiere",
-          "category": "Asamblare manuală"
+          "name": "Generare video",
+          "category": "Re-generări de tip „slot machine” — prompt, generare, respingere, repetare"
+        },
+        {
+          "name": "Generare de muzică",
+          "category": "Trecere separată pentru coloana sonoră"
+        },
+        {
+          "name": "Editare video",
+          "category": "Asamblare manuală, export și finisare pentru scalare"
         }
       ],
-      "chaosLabel": "Cinci taburi. Context pierdut.",
+      "chaosLabel": "Șase tab-uri. Reîncarcă până când se lipește ceva.",
       "painPoints": [
-        "Copiere și lipire între aplicații",
+        "Copiere și lipire între instrumentele de generare și cele de editare",
+        "Generare video de tip „slot machine” — reîncearcă până când iese ceva bun.",
         "Oboseala legată de prompturi și ciclurile de regenerare",
         "Fără verificarea publicului înainte de a cheltui",
         "Haos al versiunilor în cadrul exporturilor"
       ],
-      "timeLabel": "Durata tipică a proiectului",
-      "timeValue": "2–4 săptămâni"
+      "timeLabel": "Conform videoclipului (stivă manuală de unelte multifuncționale)",
+      "timeValue": "Peste 4 ore"
     },
     "sceneflowWay": {
       "title": "Abordarea SceneFlow",
-      "tagline": "Un singur studio. Aprobă înainte de randare.",
+      "tagline": "Un singur studio. Automatizare asistată – sau un volum mare de lucru, dacă stăpânești deja tehnologiile.",
       "stages": [
         {
           "label": "Blueprint",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "Un singur fișier de proiect — fără jonglat între tab-uri",
       "benefits": [
-        "Etape ghidate — nu ingineria prompturilor",
-        "Aprobarea storyboard-ului înainte de genericul video",
+        "Etape ghidate — scapă de jonglatul cu tab-uri și de pierderea contextului",
+        "Aprobarea storyboard-ului – oprește reluările repetate (stil „slot machine”) înainte de a cheltui bugetul pentru video.",
         "Scor Audience Resonance înainte de randarea intensivă",
-        "Master gata de publicare, realizat într-un singur studio"
+        "Master gata de publicare în 30–60 de minute, nu în peste 4 ore"
       ],
-      "timeLabel": "Durata tipică a proiectului",
-      "timeValue": "2–4 zile"
+      "timeLabel": "Per videoclip (același livrabil)",
+      "timeValue": "30–60 de minute"
     },
-    "comparisonCaption": "O singură platformă înlocuiește instrumentele fragmentate pentru prompturi, editările manuale și transferurile între multiple platforme.",
-    "comparisonImageAlt": "Costurile indirecte ale producției tradiționale vs. studioul automatizat SceneFlow — trecere mai rapidă de la concept la videoclipul gata de publicare"
+    "comparisonCaption": "Un singur studio înlocuiește instrumentele de generare fragmentate, re-generările video de tip „slot machine” și asamblarea manuală a montajului.",
+    "comparisonImageAlt": "Costurile indirecte ale producției tradiționale vs. studioul automatizat SceneFlow — trecere mai rapidă de la concept la videoclipul gata de publicare",
+    "costNote": "Aceleași cheltuieli pentru AI, mai puțin timp irosit. Plătești pentru modele indiferent de metodă — fie prin credite SceneFlow, prin contul tău de la furnizor sau prin BYOK. SceneFlow elimină costul suplimentar asociat asamblării de tip „copy-paste”, permițându-ți să livrezi mai multe videoclipuri cu același buget.",
+    "proofLine": "Validat în cadrul unui tur de prezentare a unei locuințe: procesare manuală completă – peste 4 ore → același rezultat final în SceneFlow, în mai puțin de o oră."
   },
   "comparison": {
     "title": "Viteză de producție fără costuri suplimentare",
@@ -410,11 +421,11 @@
         },
         "challenge": {
           "title": "Blocajul legat de materialele B-roll",
-          "description": "Ai un scenariu solid, dar cea mai mare parte a timpului ți se duce pe căutarea materialelor video, coordonarea montajului și asigurarea coerenței între scene. Această întârziere încetinește ritmul de publicare și diminuează retenția publicului."
+          "description": "Ai un scenariu solid, dar procesul de învățare a șase instrumente diferite de generare și editare — sau blocarea în bucle video repetitive, asemănătoare jocurilor de noroc — încetinește fiecare încărcare. Această întârziere afectează ritmul de publicare și retenția publicului."
         },
         "solution": {
           "title": "Povestitorul automatizat",
-          "description": "Transformă rapid scenariile în elemente vizuale gata de producție, menținând în același timp continuitatea personajelor și a stilului, de la prima scenă până la varianta finală pregătită pentru publicare.",
+          "description": "Automatizare asistată, de la scenariu până la materialul final gata de publicare – fără a fi nevoie să înveți șase aplicații diferite. Menține continuitatea personajelor și a stilului, de la prima scenă și pe tot parcursul producției seriei.",
           "features": [
             "Elemente vizuale care corespund precis momentelor-cheie ale scenariului",
             "Protagoniști constanți în toate scenele",
@@ -437,7 +448,7 @@
         },
         "challenge": {
           "title": "Restanțe ale furnizorilor și îndepărtare de identitatea de brand",
-          "description": "Echipele de comunicare, L&D și marketing așteaptă săptămâni întregi pentru materialele video realizate de agenții sau furnizori. Fiecare sesiune de filmare aduce cu sine o identitate de brand inconsistentă, facturi imprevizibile și fluxuri de aprobare care blochează campaniile."
+          "description": "Echipele de comunicare, L&D și marketing așteaptă săptămâni întregi materialele video de la agenții sau furnizori — ori se confruntă cu un set copleșitor de instrumente, în lipsa unui sistem intern reproductibil. Ambele situații duc la o imagine de brand inconsistentă și la blocarea campaniilor."
         },
         "solution": {
           "title": "Producție internă în aceeași săptămână",
@@ -460,12 +471,12 @@
         "label": "Atelier de producție",
         "title": "Atelierul de producție de nișă",
         "beforeAfter": {
-          "before": "8.000 $ pe sesiune foto/filmare",
-          "after": "Credite în valoare de 200 $"
+          "before": "Peste 4 ore",
+          "after": "30–60 min."
         },
         "challenge": {
           "title": "Soluții verticale personalizate, fără un sistem reproductibil",
-          "description": "Clienții din domeniile memorii, moștenire (legacy), imobiliare și educație au nevoie de livrare rapidă, însă fiecare proiect pornește de la zero. Încărcările de date, clonele vocale și avatarurile nu pot fi gestionate la scară largă fără un flux de lucru standardizat, de la preluarea solicitării până la livrare."
+          "description": "Clienții din domeniile memorii, moștenire culturală, imobiliare și educație au nevoie de livrare rapidă, însă fiecare proiect pornește de la zero. Transferurile de lucru pentru fiecare livrabil, la care se adaugă procesele repetitive și imprevizibile de refacere a elementelor (scenariu, imagini, voce, video, muzică și editare), erodează marja de profitabilitate la volum mare."
         },
         "solution": {
           "title": "Transformă-ți serviciul video într-un produs",
@@ -493,7 +504,7 @@
         },
         "challenge": {
           "title": "Livrarea serviciilor către clienți la scară largă",
-          "description": "Câștigarea pitch-ului este doar jumătate din bătălie. Proiectele recurente pentru clienți necesită timpi de execuție rapizi, fluxuri clare de aprobare și marjă de profit pentru fiecare livrabil — totul fără a relua procesul de producție de la zero de fiecare dată."
+          "description": "Câștigarea pitch-ului este doar jumătate din bătălie. Proiectele recurente pentru clienți necesită o execuție rapidă, însă transferul materialelor pentru fiecare livrabil și procesul imprevizibil de regenerare a videoclipurilor — care implică trecerea între instrumente separate de generare și editare — încetinesc fiecare ciclu de lucru."
         },
         "solution": {
           "title": "Capacitate de procesare + Aprobarea clientului",
@@ -1328,7 +1339,7 @@
       },
       {
         "question": "Prin ce diferă SceneFlow de Gemini Studio sau Google Flow?",
-        "answer": "Gemini Studio și Google Flow se concentrează pe crearea de clipuri prin generare pe baza unor instrucțiuni (prompt-uri). SceneFlow reunește întregul flux de lucru de producție: etape structurate cu baze de referință editabile, Reference Library și Beat Frames pentru asigurarea consistenței, Audience Resonance înainte de randările costisitoare, funcții automate de mixare și asamblare a fluxului, precum și validarea Screening Room înainte de publicare — totul într-un studio ghidat."
+        "answer": "Gemini Studio și Google Flow se concentrează pe crearea de clipuri prin generare pe baza unor instrucțiuni (prompt-uri). SceneFlow reunește întregul flux de lucru de producție: etape structurate cu baze editabile, Reference Library și Beat Frames pentru asigurarea consistenței, Audience Resonance înainte de procesele costisitoare de randare, funcții automate de mixare și asamblare a fluxului video, precum și validare prin Screening Room înainte de publicare — totul într-un studio ghidat. Costul de utilizare a modelului este similar, indiferent dacă folosești SceneFlow, propriile conturi la furnizori sau BYOK; totuși, SceneFlow economisește ore întregi de operațiuni precum „copy-paste”, regenerare și asamblare manuală pentru fiecare videoclip."
       },
       {
         "question": "Pot edita scenariile, elementele vizuale și materialele audio generate de AI?",

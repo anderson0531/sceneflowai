@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Komt dit bekend voor?",
     "title": "De gebrekkige manier versus de SceneFlow-manier",
-    "subtitle": "Je zou geen vijf tabbladen, copy-paste-acties en prompt-vermoeidheid nodig moeten hebben om slechts één video op te leveren.",
+    "subtitle": "Ervaren producers: verspil geen uren meer aan kopiëren en plakken tussen tools voor scripts, beeld, voice-over, video, muziek en montage. Nieuw in AI-video: één begeleide studio automatiseert het hele proces, zodat je direct aan de slag kunt zonder zes aparte apps te hoeven leren.",
     "brokenWay": {
       "title": "De gebroken weg",
-      "tagline": "Gefragmenteerd. Handmatig. Uitputtend.",
+      "tagline": "Gefragmenteerd. Handmatig. Video van een gokkast.",
       "tools": [
         {
-          "name": "ChatGPT",
-          "category": "Conceptversies van het script"
+          "name": "Scriptgeneratie",
+          "category": "Concepten zonder validatie door het publiek"
         },
         {
-          "name": "Midjourney",
-          "category": "Unieke afbeeldingen"
+          "name": "Afbeeldingsgeneratie",
+          "category": "Frames en stills in een aparte tool"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Handmatige VO-export"
+          "name": "Stemgeneratie",
+          "category": "Handmatige export van voice-overs en opnieuw opnemen van fragmenten"
         },
         {
-          "name": "Premiere",
-          "category": "Handmatige montage"
+          "name": "Videogeneratie",
+          "category": "Gokkast-achtige herhalingen — prompt, genereer, verwerp, herhaal"
+        },
+        {
+          "name": "Muziekgeneratie",
+          "category": "Aparte soundtrackpas"
+        },
+        {
+          "name": "Videobewerking",
+          "category": "Handmatige assemblage, export en verfijning van de opschaling"
         }
       ],
-      "chaosLabel": "Vijf tabbladen. Context kwijt.",
+      "chaosLabel": "Zes tabbladen. Opnieuw proberen tot er iets blijft hangen.",
       "painPoints": [
-        "Kopiëren en plakken tussen apps",
+        "Kopiëren en plakken tussen generatie- en bewerkingstools",
+        "Videogeneratie volgens het gokkastprincipe — opnieuw proberen tot er iets aanslaat",
         "Promptmoeheid en regeneratielussen",
         "Geen controle van de doelgroep voordat je geld uitgeeft",
         "Versiechaos bij exports"
       ],
-      "timeLabel": "Gebruikelijke projectduur",
-      "timeValue": "2–4 weken"
+      "timeLabel": "Per video (handmatige stapeling van meerdere tools)",
+      "timeValue": "Meer dan 4 uur"
     },
     "sceneflowWay": {
       "title": "De SceneFlow-manier",
-      "tagline": "Eén studio. Goedkeuren voordat je rendert.",
+      "tagline": "Eén studio. Begeleide automatisering — of een hoge doorvoersnelheid als je de stack al kent.",
       "stages": [
         {
           "label": "Blueprint",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "Eén projectbestand — niet hoeven jongleren met tabbladen",
       "benefits": [
-        "Begeleide fasen – geen prompt engineering",
-        "Goedkeuring van het storyboard vóór de aftiteling van de video",
+        "Begeleide fasen — geen gedoe meer met tabbladen en verlies van context",
+        "Goedkeuring van het storyboard — voorkom kostbare herzieningen voordat de videoproductie van start gaat.",
         "Audience Resonance score vóór zware rendering",
-        "Publicatieklare master uit één studio"
+        "Publicatieklare master in 30–60 minuten, niet meer dan 4 uur"
       ],
-      "timeLabel": "Gebruikelijke projectduur",
-      "timeValue": "2–4 dagen"
+      "timeLabel": "Per video (hetzelfde opleverproduct)",
+      "timeValue": "30–60 minuten"
     },
-    "comparisonCaption": "Eén studio vervangt gefragmenteerde prompt-tools, handmatige aanpassingen en overdrachten tussen meerdere platforms.",
-    "comparisonImageAlt": "Traditionele productiekosten vs. SceneFlow-geautomatiseerde studio — sneller van concept naar publicatieklare video"
+    "comparisonCaption": "Eén studio vervangt gefragmenteerde generatietools, het herhaaldelijk genereren van video's en handmatige montage.",
+    "comparisonImageAlt": "Traditionele productiekosten vs. SceneFlow-geautomatiseerde studio — sneller van concept naar publicatieklare video",
+    "costNote": "Dezelfde AI-uitgaven, minder tijdverlies. Je betaalt hoe dan ook voor modellen — via SceneFlow-credits, je eigen account bij de aanbieder of BYOK. SceneFlow neemt de tijdrovende 'copy-paste'-montage weg, zodat je meer video's kunt opleveren met hetzelfde budget.",
+    "proofLine": "Gevalideerd aan de hand van een rondgang door een woning: volledig handmatig proces duurde meer dan 4 uur → hetzelfde eindresultaat in SceneFlow in minder dan een uur."
   },
   "comparison": {
     "title": "Productiesnelheid zonder overhead",
@@ -410,11 +421,11 @@
         },
         "challenge": {
           "title": "De 'B-roll'-flessenhals",
-          "description": "Je hebt een sterk script, maar het merendeel van je tijd gaat op aan het zoeken naar beeldmateriaal, het coördineren van de montage en het bewaken van de consistentie tussen scènes. Die vertraging vertraagt het publicatieritme en vermindert de betrokkenheid van het publiek."
+          "description": "Je hebt een sterk script, maar het moeten leren werken met zes verschillende tools voor generatie en montage — of verstrikt raken in eindeloze, repetitieve videoloops — vertraagt elke upload. Die vertraging ondermijnt je publicatieritme en de betrokkenheid van je publiek."
         },
         "solution": {
           "title": "De geautomatiseerde verhalenverteller",
-          "description": "Zet scripts snel om in productieklare visuals, met behoud van continuïteit in personages en stijl – van de eerste scène tot de definitieve master.",
+          "description": "Begeleide automatisering van script tot publicatieklaar eindproduct — je hoeft niet met zes verschillende apps te leren werken. Behoud de continuïteit van personages en stijl, van de eerste scène tot de productie van de hele serie.",
           "features": [
             "Beeldmateriaal dat naadloos aansluit op de momenten in het script",
             "Consistente hoofdpersonages in elke scène",
@@ -437,7 +448,7 @@
         },
         "challenge": {
           "title": "Achterstand bij leveranciers & Afwijking van het merk",
-          "description": "Communicatie-, L&D- en marketingteams wachten wekenlang op video's van bureaus of leveranciers. Elke opname leidt tot inconsistente branding, onvoorspelbare facturen en goedkeuringsprocessen die campagnes vertragen."
+          "description": "Communicatie-, L&D- en marketingteams wachten weken op video's van bureaus of leveranciers — of ze worden geconfronteerd met een overweldigende hoeveelheid tools, zonder een herhaalbaar intern proces. Beide scenario's leiden tot inconsistente branding en vertraagde campagnes."
         },
         "solution": {
           "title": "Interne productie binnen dezelfde week",
@@ -460,12 +471,12 @@
         "label": "Productiewerkplaats",
         "title": "De nicheproductiewerkplaats",
         "beforeAfter": {
-          "before": "$8.000 per shoot",
-          "after": "$200 aan tegoed"
+          "before": "4+ uur",
+          "after": "30–60 min."
         },
         "challenge": {
           "title": "Maatwerk per sector, geen herhaalbaar systeem",
-          "description": "Klanten in sectoren als memoires, nalatenschap, vastgoed en onderwijs hebben behoefte aan een snelle doorlooptijd, maar elk project begint weer bij nul. Uploads, stemklonen en avatars zijn niet schaalbaar zonder een gestandaardiseerde pipeline van intake tot oplevering."
+          "description": "Klanten in sectoren als memoires, nalatenschappen, vastgoed en onderwijs hebben behoefte aan een snelle doorlooptijd, maar elk project begint weer bij nul. De overdracht per eindproduct en het voortdurend opnieuw moeten genereren van video-elementen — van script en beeld tot voice-over, video, muziek en montage — vreten de marges op bij grotere volumes."
         },
         "solution": {
           "title": "Maak een product van je videodienst",
@@ -493,7 +504,7 @@
         },
         "challenge": {
           "title": "Dienstverlening aan klanten op grote schaal",
-          "description": "De pitch winnen is slechts het halve werk. Bij terugkerende opdrachten voor klanten zijn een snelle doorlooptijd, heldere goedkeuringsprocessen en een marge op elk eindproduct vereist — zonder dat het productieproces telkens opnieuw moet worden opgezet."
+          "description": "De pitch winnen is slechts het halve werk. Terugkerende opdrachten vereisen een snelle doorlooptijd, maar de overdracht per oplevering en het telkens opnieuw genereren van video's – waarbij gewisseld moet worden tussen losse tools voor creatie en montage – vertragen elke pitchcyclus."
         },
         "solution": {
           "title": "Doorloop + goedkeuring van de klant",
@@ -1328,7 +1339,7 @@
       },
       {
         "question": "Waarin verschilt SceneFlow van Gemini Studio of Google Flow?",
-        "answer": "Gemini Studio en Google Flow richten zich op clips die via prompts worden gegenereerd. SceneFlow bundelt de volledige productieworkflow: gestructureerde fasen met aanpasbare basislijnen, Reference Library en Beat Frames voor consistentie, Audience Resonance voorafgaand aan kostbare renders, geautomatiseerde Mixer- en stream-assemblage, en Screening Room-validatie vóór publicatie — alles in één begeleide studio-omgeving."
+        "answer": "Gemini Studio en Google Flow richten zich op clips die via prompts worden gegenereerd. SceneFlow bundelt de volledige productieworkflow: gestructureerde fasen met aanpasbare basisversies, Reference Library en Beat Frames voor consistentie, Audience Resonance voorafgaand aan kostbare renders, geautomatiseerde Mixer- en stream-assemblage, en Screening Room-validatie vóór publicatie — dit alles in één begeleide studio. De kosten voor modelgebruik zijn vergelijkbaar, ongeacht of u SceneFlow, uw eigen accounts bij aanbieders of BYOK gebruikt; SceneFlow bespaart echter uren aan kopiëren en plakken, opnieuw genereren en handmatige video-assemblage per video."
       },
       {
         "question": "Kan ik door AI gegenereerde scripts, beeldmateriaal en audio bewerken?",

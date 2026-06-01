@@ -8,7 +8,9 @@ import {
   Clock,
   Film,
   MessageSquare,
+  Music,
   Palette,
+  Scissors,
   Sparkles,
   Volume2,
   Workflow,
@@ -19,7 +21,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { getComparisonImageUrl } from '@/config/landing/landingVisualMedia'
 
-const BROKEN_TOOL_ICONS = [MessageSquare, Palette, Volume2, Film] as const
+const BROKEN_TOOL_ICONS = [MessageSquare, Palette, Volume2, Film, Music, Scissors] as const
 const SCENEFLOW_STAGE_COLORS = [
   'text-violet-400 bg-violet-500/20',
   'text-cyan-400 bg-cyan-500/20',
@@ -96,7 +98,7 @@ export function ToolStackSection() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
               {brokenTools.map((tool, index) => {
                 const Icon = BROKEN_TOOL_ICONS[index] ?? MessageSquare
                 return (
@@ -196,6 +198,16 @@ export function ToolStackSection() {
             </div>
           </motion.div>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.35 }}
+          className="max-w-3xl mx-auto text-center space-y-3"
+        >
+          <p className="text-sm text-slate-400">{t('costNote')}</p>
+          <p className="text-xs text-slate-500">{t('proofLine')}</p>
+        </motion.div>
       </div>
     </section>
   )

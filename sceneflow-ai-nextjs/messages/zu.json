@@ -204,41 +204,50 @@
   "toolStack": {
     "badge": "Ingabe kuzwakala kujwayelekile?",
     "title": "Indlela Engalungile uma iqhathaniswa nendlela ye-SceneFlow",
-    "subtitle": "Akufanele udinge amathebhu amahlanu, ukukopisha nokunamathisela amafayela, kanye nokukhathala ngenxa yokufaka imiyalelo ukuze nje ukhiphe ividiyo eyodwa.",
+    "subtitle": "Kubakhiqizi abanolwazi: yekani ukuchitha amahora amaningi nikopisha futhi ninamathisela phakathi kwemibhalo, izithombe, umsindo, amavidiyo, umculo namathuluzi okuhlela. Uma usanda kuqala ukusebenzisa amavidiyo e-AI: kukhona isitudiyo esisodwa esikuqondisayo futhi esenza yonke le nqubo ngokuzenzakalelayo, ukuze ukwazi ukuqeda umsebenzi wakho ngaphandle kokufunda izinhlelo zokusebenza eziyisithupha ezihlukene.",
     "brokenWay": {
       "title": "Indlela Ephukile",
-      "tagline": "Kuhlukanisiwe. Kwenziwa ngesandla. Kuyakhathaza.",
+      "tagline": "Kuhlukaniswe izingxenye. Kwenziwa ngesandla. Ividiyo yomshini wokugembula.",
       "tools": [
         {
-          "name": "I-ChatGPT",
-          "category": "Okusalungiswa kwemibhalo"
+          "name": "Ukukhiqizwa kombhalo",
+          "category": "Okusalungiswa okungaqinisekisiwe yizethameli"
         },
         {
-          "name": "Midjourney",
-          "category": "Izithombe ezenziwa kanye kuphela"
+          "name": "Ukukhiqizwa kwezithombe",
+          "category": "Amafreyimu nezithombe ezimile kuthuluzi elihlukile"
         },
         {
-          "name": "ElevenLabs",
-          "category": "Ukuthunyelwa kwe-VO ngesandla"
+          "name": "Ukukhiqizwa kwezwi",
+          "category": "Ukukhipha nokurekhoda kabusha amazwi achazayo ngesandla"
         },
         {
-          "name": "Premiere",
-          "category": "Ukuhlanganisa ngesandla"
+          "name": "Ukukhiqizwa kwamavidiyo",
+          "category": "Ukuzama kabusha komshini wokugembula — faka umyalo, khiqiza, ala, phinda"
+        },
+        {
+          "name": "Ukukhiqizwa komculo",
+          "category": "Iphasiphothi ehlukile yomculo"
+        },
+        {
+          "name": "Ukuhlela amavidiyo",
+          "category": "Ukuhlanganisa ngesandla, ukuthumela kwamanye amazwe, kanye nokucwengisiswa kwenqubo yokwandisa umthamo"
         }
       ],
-      "chaosLabel": "Amathebhu amahlanu. Umongo ulahlekile.",
+      "chaosLabel": "Amathebhu ayisithupha. Zama futhi kuze kube yilapho kukhona okuphumelelayo.",
       "painPoints": [
-        "Kopisha bese unamathisela phakathi kwezinhlelo zokusebenza",
+        "Ukukopisha nokunamathisela phakathi kwamathuluzi okukhiqiza nawokuhlela",
+        "Ukukhiqizwa kwamavidiyo ngendlela yomshini wokugembula — zama kaningi kuze kube yilapho kutholakala okusebenzekayo.",
         "Ukukhathala ngenxa yemiyalelo kanye nemijikelezo yokukhiqiza kabusha",
         "Akukho kuhlolwa kwezethameli ngaphambi kokuba uchithe imali.",
         "Isiphithiphithi sezinguqulo kuzo zonke izinto ezithunyelwayo"
       ],
-      "timeLabel": "Isikhathi esijwayelekile sephrojekthi",
-      "timeValue": "Amasonto angu-2–4"
+      "timeLabel": "Ngokwevidiyo (ukuhlanganiswa kwamathuluzi amaningi okusebenza ngesandla)",
+      "timeValue": "Amahora angaphezu kwama-4"
     },
     "sceneflowWay": {
       "title": "Indlela ye-SceneFlow",
-      "tagline": "Isitudiyo esisodwa. Gunyaza ngaphambi kokwenza i-render.",
+      "tagline": "Isitudiyo esisodwa. Ukuzenzakalela okuqondiswayo — noma ukusebenza ngejubane elikhulu uma usuwazi kakade uhlelo lobuchwepheshe obusetshenziswayo.",
       "stages": [
         {
           "label": "⟦Isikhathi Sesikole 3⟧",
@@ -259,16 +268,18 @@
       ],
       "syncLabel": "Ifayela lephrojekthi elilodwa — akukho ukushintshashintsha phakathi kwamathebhu",
       "benefits": [
-        "Izigaba eziqondiswayo — hhayi ukwakhiwa kwemiyalelo (prompt engineering)",
-        "Ukugunyazwa kwe-storyboard ngaphambi kwemininingwane yabadali bevidiyo",
+        "Izigaba eziqondiswayo — yeka ukushintshashintsha phakathi kwamathebhu nokulahlekelwa umongo",
+        "Ukugunyazwa kohlaka lwevidiyo — misa ukuphinda kwenziwe kabusha kwesigaba sevidiyo ngaphambi kokuba kuchithwe imali kuyo.",
         "Isikolo se-Audience Resonance ngaphambi kokwenziwa kwesithombe okunzima",
-        "Ifayela eliyinhloko elikulungele ukushicilelwa, elivela esitudiyo esisodwa"
+        "Inguqulo yokugcina elungele ukushicilelwa ngemizuzu engu-30–60, hhayi amahora angaphezu kwama-4"
       ],
-      "timeLabel": "Isikhathi esijwayelekile sephrojekthi",
-      "timeValue": "Izinsuku ezi-2–4"
+      "timeLabel": "Ngevidiyo ngayinye (umkhiqizo ofanayo)",
+      "timeValue": "Imizuzu engama-30–60"
     },
-    "comparisonCaption": "Isikhungo esisodwa sithatha indawo yamathuluzi okufaka imiyalelo (prompts) ahlukene, ukuhlela ngesandla, kanye nokudluliselwa komsebenzi phakathi kwezinkundla eziningi.",
-    "comparisonImageAlt": "Izindleko zokukhiqiza ngendlela evamile uma kuqhathaniswa nesitudiyo esisebenza ngokuzenzakalela — kusukela emcabangweni kuya kuvidiyo elungele ukushicilelwa ngokushesha okukhulu"
+    "comparisonCaption": "Isitudiyo esisodwa sithatha indawo yamathuluzi okukhiqiza ahlukene, ukuphinda kwenziwe amavidiyo ngendlela engahleliwe (njengomshini wokugembula), kanye nokuhlanganisa ukuhlela okwenziwa ngesandla.",
+    "comparisonImageAlt": "Izindleko zokukhiqiza ngendlela evamile uma kuqhathaniswa nesitudiyo esisebenza ngokuzenzakalela — kusukela emcabangweni kuya kuvidiyo elungele ukushicilelwa ngokushesha okukhulu",
+    "costNote": "Izindleko ze-AI zihlala zifana, kodwa isikhathi esichithwa ngize siyancipha. Ukhokhela amamodeli noma ngabe iyiphi indlela oyikhethayo — kungaba ngamakhredithi e-SceneFlow, i-akhawunti yakho yomhlinzeki, noma i-BYOK. I-SceneFlow iqeda izindleko ezengeziwe ezihambisana nenqubo yokukopisha nokunamathisela, okukuvumela ukuthi ukhiqize futhi ukhiphe amavidiyo amaningi ngesabelomali esifanayo.",
+    "proofLine": "Kuqinisekiswe ohambweni lokuhlola indlu efakwe ohlwini: inqubo ephelele eyenziwa ngesandla ithatha amahora angaphezu kwama-4 → umphumela ofanayo usebenzisa i-SceneFlow uthatha isikhathi esingaphansi kwehora."
   },
   "comparison": {
     "title": "Isivinini sokukhiqiza ngaphandle kwezindleko ezengeziwe",
@@ -410,11 +421,11 @@
         },
         "challenge": {
           "title": "Isithiyo Esihlobene Nama-B-Roll",
-          "description": "Unombhalo omuhle kakhulu, kodwa isikhathi sakho esiningi sidliwa ukufuna iziqeshana zevidiyo, ukulawula ukuhlelwa kwayo, kanye nokuqinisekisa ukuthi izigcawu ziyahambisana. Lokhu kubambezeleka kwehlisa ijubane lokushicilela futhi kwenza kube nzima ukugcina izethameli ziqhubeka nokubukela."
+          "description": "Unombhalo omuhle kakhulu, kodwa ukufunda amathuluzi ayisithupha ahlukene okudala nokuhlela — noma ukubambeka ekwenzeni amavidiyo aphindaphindeka ngendlela engapheli — kubambezela inqubo yokulayisha ividiyo ngayinye. Lokhu kubambezela kuphazamisa ukulandelana kokushicilela kanye nekhono lokugcina izethameli ziqhubeka nokubukela."
         },
         "solution": {
           "title": "Umxoxi Wezindaba Ozisebenzelayo",
-          "description": "Guqula imibhalo ibe yizithombe ezilungele ukukhiqizwa ngokushesha, ngenkathi ugcina ukuhambisana kwabalingiswa nesitayela kusukela esigcawini sokuqala kuya kumkhiqizo wokugcina olungele ukushicilelwa.",
+          "description": "Inqubo ezenzakalelayo eqondiswayo kusukela kumbhalo kuya kumkhiqizo wokugcina osekulungele ukushicilelwa — akukho sidingo sokufunda izinhlelo zokusebenza eziyisithupha ezihlukene. Gcina ukuhambisana kwabalingiswa nesitayela kusukela esigcawini sokuqala kuze kube sekupheleni kokukhiqizwa kochungechunge.",
           "features": [
             "Izithombe ezihambisana kahle nezigaba zombhalo",
             "Abalingiswa abaphambili abangaguquki kuzo zonke izigcawu",
@@ -437,7 +448,7 @@
         },
         "challenge": {
           "title": "Ukunqwabelana Kwemisebenzi Yomhlinzeki kanye Nokuchezuka Kwesithunzi Somkhiqizo",
-          "description": "Amaqembu ezokuxhumana, ezokuthuthukiswa kwabasebenzi (L&D), kanye nawokumaketha achitha amasonto elinde amavidiyo avela kuma-ejensi noma kubahlinzeki bezinsizakalo. Njalo uma kuqoshwa ividiyo, kuvela izinkinga ezifana nokungahambisani kwendlela yokubonisa uhlobo lomkhiqizo (branding), izikweletu ezingalindelekile, kanye nezinqubo zokugunyaza eziyinkimbinkimbi ezibambezela imikhankaso."
+          "description": "Amaqembu ezokuxhumana, ezokuqeqesha nokuthuthukiswa kwabasebenzi (L&D), kanye nawokumaketha achitha amasonto elinde amavidiyo avela ezinkampanini zangaphandle — noma abhekane nenqwaba yamathuluzi adidayo ngaphandle kohlelo oluzinzile olungasetshenziswa ngaphakathi enkampanini. Yonke le migwaqo iholela ekungabini bikho kokufana kwendlela yokwethula umkhiqizo (branding) kanye nokuma kwemikhankaso."
         },
         "solution": {
           "title": "Ukukhiqiza Ngaphakathi Enkampanini Phakathi Neviki Elilodwa",
@@ -460,12 +471,12 @@
         "label": "Indawo Yokukhiqiza",
         "title": "Isitolo Sokukhiqiza Okukhethekile",
         "beforeAfter": {
-          "before": "$8,000 ngeseshini yokuthatha izithombe/amavidiyo",
-          "after": "Amakhredithi angu-$200"
+          "before": "Amahora angaphezu kwama-4",
+          "after": "Imizuzu engama-30–60"
         },
         "challenge": {
           "title": "Izixazululo Eziklanyelwe Imikhakha Ethile, Akukho Sis-temu Esiphindekayo",
-          "description": "Amakhasimende ezinhlelo zezinkumbulo, ezokulondoloza ifa, ezokuthengiswa kwezindlu kanye nezemfundo adinga imiphumela esheshayo — kodwa iphrojekthi ngayinye iqala phansi sha. Ukulayishwa kwemininingwane, ukwenziwa kwamakhophi ezwi kanye nama-avatar akukwazi ukwenyuswa ngezinga elikhulu ngaphandle kwenqubo ehleliwe kusukela ekwamukelweni komsebenzi kuya ekulethweni kwawo."
+          "description": "Amakhasimende ezinhlelo zezinkumbulo, ukulondoloza umlando, ezindlu nomhlaba, kanye nezemfundo adinga imiphumela esheshayo — kodwa iphrojekthi ngayinye iqala phansi sha. Ukudluliselwa komsebenzi esigabeni ngasinye kanye nokubuyekezwa okuphindaphindwayo — okufana nokudlala imishini yokugembula — ezicini ezifana nombhalo, izithombe, izwi, ividiyo, umculo namathuluzi okuhlela, kunciphisa kakhulu inzuzo lapho kusebenza ngemisebenzi eminingi."
         },
         "solution": {
           "title": "Guqula Insizakalo Yakho Yamavidiyo Ibe Umkhiqizo",
@@ -493,7 +504,7 @@
         },
         "challenge": {
           "title": "Ukulethwa kwezinsizakalo kumakhasimende ngezinga elikhulu",
-          "description": "Ukunqoba isiphakamiso somsebenzi kuyingxenye nje yomzamo wonke. Umsebenzi wamakhasimende oqhubekayo udinga ukwenziwa ngokushesha, izinqubo ezicacile zokugunyazwa, kanye nenzuzo emsebenzini ngamunye olethwayo — ngaphandle kokuqala phansi inqubo yokukhiqiza njalo uma kwenziwa umsebenzi."
+          "description": "Ukunqoba isethulo sephrojekthi (pitch) kuyingxenye nje yomsebenzi. Imisebenzi yamakhasimende ephindaphindekayo idinga ukwenziwa ngokushesha — kodwa ukudluliselana umsebenzi kanye nokuzama ukuphinda ukhiqize ividiyo kaningi usebenzisa amathuluzi ahlukene okudala nokuhlela, kwenza inqubo yonke ihambe kancane."
         },
         "solution": {
           "title": "Umkhiqizo + Imvume Yekhasimende",
@@ -1328,7 +1339,7 @@
       },
       {
         "question": "Ihluke kanjani i-SceneFlow kwi-Gemini Studio noma kwi-Google Flow?",
-        "answer": "I-Gemini Studio ne-Google Flow zigxile ekuqanjweni kweziqeshana ngokusekelwe emiyalelweni. I-SceneFlow ihlanganisa yonke inqubo yokukhiqiza: izigaba ezihleliwe ezinemigomo eyisisekelo engashintshwa, i-Reference Library ne-Beat Frames zokuqinisekisa ukuhambisana kwekhwalithi, i-Audience Resonance ngaphambi kwenqubo ebiza kakhulu yokugcina umsebenzi (rendering), ukusetshenziswa kwe-Mixer nokuhlanganiswa kokusakazwa okuzenzakalelayo, kanye nokuqinisekiswa kwe-Screening Room ngaphambi kokushicilela — konke lokhu kwenziwa endaweni eyodwa eqondiswayo yokusebenzela."
+        "answer": "I-Gemini Studio ne-Google Flow zigxile ekukhiqizeni amavidiyo ngokusekelwe emiyaletweni (prompt-and-generate). I-SceneFlow ihlanganisa yonke inqubo yokukhiqiza: izigaba ezihleliwe ezinezisekelo ezingaguqulwa, i-Reference Library ne-Beat Frames zokuqinisekisa ukuhambisana kwekhwalithi, i-Audience Resonance ngaphambi kwenqubo ebiza kakhulu yokugcina ividiyo (rendering), ukuhlanganiswa okuzenzakalelayo kwezwi nesithombe (Mixer and stream assembly), kanye nokuqinisekiswa kwe-Screening Room ngaphambi kokushicilela — konke lokhu kwenziwa endaweni eyodwa eqondiswayo. Izindleko zokusebenzisa imodeli ziyafana kungakhathaliseki ukuthi usebenzisa i-SceneFlow, ama-akhawunti akho omhlinzeki, noma i-BYOK — kodwa i-SceneFlow yonga amahora amaningi okukopisha nokunamathisela, ukuphinda ukhiqize, nokuhlanganisa ividiyo ngesandla."
       },
       {
         "question": "Ingabe ngingakwazi ukuhlela imibhalo, izithombe, nomsindo okukhiqizwe yi-AI?",
