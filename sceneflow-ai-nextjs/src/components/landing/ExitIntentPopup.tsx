@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Sparkles, Gift, ArrowRight } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 
 const STORAGE_KEY = 'sceneflow_exit_intent_shown'
 const MIN_TIME_ON_PAGE = 10000 // 10 seconds before showing popup
@@ -11,14 +13,12 @@ const COOLDOWN_DAYS = 7 // Don't show again for 7 days after dismissing
 interface ExitIntentPopupProps {
   /** URL to redirect to on CTA click */
   ctaUrl?: string
-  /** CTA button text */
-  ctaText?: string
 }
 
 export default function ExitIntentPopup({ 
-  ctaUrl = '/dashboard',
-  ctaText = 'Start Exploring — $9'
+  ctaUrl = getSignupUrlForTier('explorer'),
 }: ExitIntentPopupProps) {
+  const t = useTranslations('exitIntent')
   const [isVisible, setIsVisible] = useState(false)
   const [email, setEmail] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -170,21 +170,20 @@ export default function ExitIntentPopup({
               <button
                 onClick={handleClose}
                 className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-slate-700/50"
-                aria-label="Close popup"
+                aria-label={t('closePopup')}
               >
                 <X className="w-5 h-5" />
               </button>
 
-              {/* Header with gradient */}
               <div className="bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-amber-500/20 px-6 pt-8 pb-6 text-center">
                 <div className="w-16 h-16 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Gift className="w-8 h-8 text-white" />
                 </div>
                 <h2 id="exit-intent-title" className="text-2xl font-bold text-white mb-2">
-                  Wait! Don&apos;t leave empty-handed
+                  {t('title')}
                 </h2>
                 <p className="text-gray-300 text-sm">
-                  Get exclusive early access and tips for AI-powered filmmaking
+                  {t('subtitle')}
                 </p>
               </div>
 
@@ -197,41 +196,34 @@ export default function ExitIntentPopup({
                     className="text-center py-6"
                   >
                     <Sparkles className="w-12 h-12 text-cyan-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-white mb-2">You&apos;re on the list!</h3>
+                    <h3 className="text-xl font-semibold text-white mb-2">{t('successTitle')}</h3>
                     <p className="text-gray-400 text-sm mb-4">
-                      Check your inbox for exclusive filmmaking tips and early access updates.
+                      {t('successSubtitle')}
                     </p>
                     <a
                       href={ctaUrl}
                       onClick={handleCTAClick}
                       className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-purple-700 transition-all"
                     >
-                      {ctaText}
+                      {t('ctaText')}
                       <ArrowRight className="w-4 h-4" />
                     </a>
                   </motion.div>
                 ) : (
                   <>
-                    {/* Benefits */}
                     <div className="space-y-3 my-6">
-                      <div className="flex items-center gap-3 text-sm">
-                        <div className="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                          <span className="text-cyan-400 text-xs">✓</span>
+                      {[0, 1, 2].map((index) => (
+                        <div key={index} className="flex items-center gap-3 text-sm">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                            index === 0 ? 'bg-cyan-500/20' : index === 1 ? 'bg-purple-500/20' : 'bg-amber-500/20'
+                          }`}>
+                            <span className={`text-xs ${
+                              index === 0 ? 'text-cyan-400' : index === 1 ? 'text-purple-400' : 'text-amber-400'
+                            }`}>✓</span>
+                          </div>
+                          <span className="text-gray-300">{t(`benefits.${index}`)}</span>
                         </div>
-                        <span className="text-gray-300">Weekly AI filmmaking tutorials</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm">
-                        <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                          <span className="text-purple-400 text-xs">✓</span>
-                        </div>
-                        <span className="text-gray-300">Early access to new features</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm">
-                        <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                          <span className="text-amber-400 text-xs">✓</span>
-                        </div>
-                        <span className="text-gray-300">Exclusive creator discounts</span>
-                      </div>
+                      ))}
                     </div>
 
                     {/* Email form */}
@@ -241,7 +233,7 @@ export default function ExitIntentPopup({
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          placeholder="Enter your email"
+                          placeholder={t('emailPlaceholder')}
                           required
                           className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
                         />
@@ -252,31 +244,29 @@ export default function ExitIntentPopup({
                         className="w-full py-3 bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       >
                         {isSubmitting ? (
-                          <span className="animate-pulse">Subscribing...</span>
+                          <span className="animate-pulse">{t('subscribing')}</span>
                         ) : (
                           <>
-                            Get Early Access
+                            {t('subscribe')}
                             <ArrowRight className="w-4 h-4" />
                           </>
                         )}
                       </button>
                     </form>
 
-                    {/* Alternative CTA */}
                     <div className="mt-4 text-center">
-                      <span className="text-gray-500 text-sm">or</span>
+                      <span className="text-gray-500 text-sm">{t('or')}</span>
                       <a
                         href={ctaUrl}
                         onClick={handleCTAClick}
                         className="block mt-2 text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors"
                       >
-                        Start creating now for just $9 →
+                        {t('startNow')}
                       </a>
                     </div>
 
-                    {/* Privacy note */}
                     <p className="text-xs text-gray-500 text-center mt-4">
-                      No spam, ever. Unsubscribe anytime.
+                      {t('privacy')}
                     </p>
                   </>
                 )}

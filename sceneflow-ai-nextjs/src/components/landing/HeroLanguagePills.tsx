@@ -5,11 +5,11 @@ import {
   type HeroVideoLocaleId,
 } from '@/config/landing/heroVideoLocales'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 type HeroLanguagePillsProps = {
   activeLocale: HeroVideoLocaleId
   onSelect: (id: HeroVideoLocaleId) => void
-  /** Subtle pulse on browser-suggested locale (first visit) */
   highlightLocale?: HeroVideoLocaleId | null
   size?: 'sm' | 'md'
   className?: string
@@ -22,6 +22,7 @@ export function HeroLanguagePills({
   size = 'md',
   className,
 }: HeroLanguagePillsProps) {
+  const t = useTranslations('hero')
   const sizeClasses = size === 'sm' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
 
   return (
@@ -35,12 +36,14 @@ export function HeroLanguagePills({
       <div
         className="flex flex-nowrap items-center justify-start sm:justify-center gap-2 min-w-min px-1 pb-0.5"
         role="group"
-        aria-label="Hero video language"
+        aria-label={t('languagePrompt')}
       >
         {HERO_VIDEO_LOCALES.map((locale) => {
           const isActive = activeLocale === locale.id
           const isDisabled = !locale.available
           const isHighlighted = highlightLocale === locale.id && !isActive
+          const label = t(`heroVideoLanguages.${locale.id}.label`)
+          const nativeLabel = t(`heroVideoLanguages.${locale.id}.nativeLabel`)
 
           return (
             <button
@@ -50,8 +53,8 @@ export function HeroLanguagePills({
               aria-pressed={isActive}
               aria-label={
                 isDisabled
-                  ? `${locale.label} — coming soon`
-                  : `Play hero video in ${locale.label}`
+                  ? `${label} — ${t('soon').toLowerCase()}`
+                  : `${t('playWithNarration')} — ${label}`
               }
               onClick={() => onSelect(locale.id)}
               className={cn(
@@ -66,11 +69,11 @@ export function HeroLanguagePills({
                   'animate-pulse ring-2 ring-cyan-400/40 ring-offset-1 ring-offset-black/50'
               )}
             >
-              <span className="hidden sm:inline">{locale.nativeLabel}</span>
-              <span className="sm:hidden">{locale.label}</span>
+              <span className="hidden sm:inline">{nativeLabel}</span>
+              <span className="sm:hidden">{label}</span>
               {isDisabled ? (
                 <span className="ml-1.5 text-[10px] uppercase tracking-wide text-gray-500">
-                  Soon
+                  {t('soon')}
                 </span>
               ) : null}
             </button>

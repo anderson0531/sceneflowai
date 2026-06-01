@@ -25,9 +25,10 @@
                 "gcp:deploy": "echo 'Deploy via Vercel (cloud export handled server-side).'",
                 "compliance-check": "node scripts/fastspring-compliance-check.js",
                 "test:watch": "vitest",
-    "i18n:build-en": "tsx scripts/build-landing-messages.ts",
-    "i18n:generate": "tsx scripts/build-landing-messages.ts && tsx scripts/generate-landing-locale-messages.ts",
-    "i18n:generate:offline": "tsx scripts/build-landing-messages.ts && tsx scripts/generate-landing-locale-messages.ts --offline"
+                "i18n:build-en": "tsx scripts/build-landing-messages.ts",
+                "i18n:generate": "tsx scripts/build-landing-messages.ts && tsx scripts/generate-landing-locale-messages.ts",
+                "i18n:generate:offline": "tsx scripts/build-landing-messages.ts && tsx scripts/generate-landing-locale-messages.ts --offline",
+                "i18n:translate-th": "tsx scripts/build-landing-messages.ts && tsx scripts/offline-translate-locale.ts --locale th"
         },
         "dependencies": {
                 "@ai-sdk/google": "^3.0.57",
@@ -129,6 +130,7 @@
                 "@types/react": "^19",
                 "@types/react-dom": "^19",
                 "@types/sequelize": "^4.28.20",
+                "@vitalets/google-translate-api": "^9.2.1",
                 "autoprefixer": "^10.4.19",
                 "eslint": "^9",
                 "eslint-config-next": "^15.5.9",

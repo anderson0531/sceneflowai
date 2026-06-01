@@ -5,6 +5,20 @@ import { getImagenSafetyFilterLevel, getImagenPersonGeneration } from './safety'
 
 let authClient: any = null
 
+function parseGoogleServiceAccountJson(raw: string): Record<string, unknown> {
+  try {
+    return JSON.parse(raw) as Record<string, unknown>
+  } catch {
+    // .env often stores private_key with literal newlines — escape them for JSON.parse
+    const fixed = raw.replace(
+      /("private_key"\s*:\s*")([\s\S]*?)("\s*,\s*"client_email")/,
+      (_match, start: string, keyBody: string, end: string) =>
+        `${start}${keyBody.replace(/\r?\n/g, '\\n')}${end}`
+    )
+    return JSON.parse(fixed) as Record<string, unknown>
+  }
+}
+
 /**
  * Get OAuth2 access token for Vertex AI API
  * Uses service account credentials from GOOGLE_APPLICATION_CREDENTIALS_JSON
@@ -23,7 +37,7 @@ export async function getVertexAIAuthToken(): Promise<string> {
   try {
     if (!authClient) {
       console.log('[Vertex AI Auth] Creating new auth client...')
-      const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+      const credentials = parseGoogleServiceAccountJson(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
       console.log('[Vertex AI Auth] Parsed credentials for project:', credentials.project_id)
       
       const auth = new GoogleAuth({

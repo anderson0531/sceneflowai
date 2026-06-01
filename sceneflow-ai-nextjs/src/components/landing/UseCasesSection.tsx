@@ -1,23 +1,31 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Video, Play, Sparkles, Volume2, VolumeX, Maximize2, User, Briefcase, Target, CheckCircle2, ArrowRight, Quote, X, Users, Store } from 'lucide-react';
 
 import { ProductionComparisonVisual } from './ProductionComparisonVisual';
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent';
-import {
-  getAudiencePathByPersonaId,
-  getDefaultCategoryIdForPersona,
-} from '@/config/landing/valuePropCopy';
+import { getDefaultCategoryIdForPersona } from '@/config/landing/valuePropCopy';
 
 type Persona = 'creator' | 'team' | 'productionShop' | 'agency';
 
-interface UseCasePersona {
-  id: Persona;
+const PERSONA_IDS: Persona[] = ['creator', 'team', 'productionShop', 'agency'];
+
+type PersonaCopy = {
   label: string;
   title: string;
+  beforeAfter: { before: string; after: string };
+  challenge: { title: string; description: string };
+  solution: { title: string; description: string; features: string[] };
+  win: string;
+  keyPhrases: string[];
+};
+
+interface UseCasePersona extends PersonaCopy {
+  id: Persona;
   icon: React.ElementType;
   gradient: string;
   bgGradient: string;
@@ -26,18 +34,6 @@ interface UseCasePersona {
   accentText: string;
   accentCheck: string;
   accentKeyPhrase: string;
-  beforeAfter: { before: string; after: string };
-  challenge: {
-    title: string;
-    description: string;
-  };
-  solution: {
-    title: string;
-    description: string;
-    features: string[];
-  };
-  win: string;
-  keyPhrases: string[];
   videoUrl?: string;
   imageUrl?: string;
 }
@@ -49,11 +45,28 @@ const PERSONA_HASH_MAP: Record<string, Persona> = {
   'use-cases-agency': 'agency',
 };
 
-const personas: UseCasePersona[] = [
-  {
-    id: 'creator',
-    label: 'Solo Creator',
-    title: 'The YouTube Creator',
+const PERSONA_IMAGE_URLS: Record<Persona, string> = {
+  creator: '/landing/use-cases/youtube-creator.jpg',
+  team: '/landing/use-cases/agency-pitch.jpg',
+  productionShop: '/landing/use-cases/youtube-creator.jpg',
+  agency: '/landing/use-cases/agency-pitch.jpg',
+};
+
+const PERSONA_STYLES: Record<
+  Persona,
+  Pick<
+    UseCasePersona,
+    | 'icon'
+    | 'gradient'
+    | 'bgGradient'
+    | 'accentBorder'
+    | 'accentDot'
+    | 'accentText'
+    | 'accentCheck'
+    | 'accentKeyPhrase'
+  >
+> = {
+  creator: {
     icon: Video,
     gradient: 'from-amber-500 to-orange-600',
     bgGradient: 'from-amber-500/10 to-orange-600/10',
@@ -62,28 +75,8 @@ const personas: UseCasePersona[] = [
     accentText: 'text-amber-400',
     accentCheck: 'text-amber-400',
     accentKeyPhrase: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
-    beforeAfter: { before: '40 hrs', after: '25 mins' },
-    challenge: {
-      title: 'The "B-Roll" Bottleneck',
-      description: 'You have a strong script, but most of your time goes to finding footage, coordinating edits, and chasing consistency between scenes. That delay slows publishing cadence and weakens audience retention.',
-    },
-    solution: {
-      title: 'The Automated Storyteller',
-      description: 'Turn scripts into production-ready visuals quickly while keeping character and style continuity from first scene to publish-ready master.',
-      features: [
-        'Visuals that map cleanly to script beats',
-        'Consistent protagonists across every scene',
-        'Scale to episode series with a shared reference library',
-      ],
-    },
-    win: 'Move from occasional uploads to a reliable production cadence with less overhead.',
-    keyPhrases: ['Faster Turnaround', 'Consistent Characters', 'Series-Ready Workflow'],
-    imageUrl: '/landing/use-cases/youtube-creator.jpg',
   },
-  {
-    id: 'team',
-    label: 'In-house Team',
-    title: 'The In-House Video Team',
+  team: {
     icon: Users,
     gradient: 'from-emerald-500 to-teal-600',
     bgGradient: 'from-emerald-500/10 to-teal-600/10',
@@ -92,29 +85,8 @@ const personas: UseCasePersona[] = [
     accentText: 'text-emerald-400',
     accentCheck: 'text-emerald-400',
     accentKeyPhrase: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30',
-    beforeAfter: { before: '6 wks', after: 'Same wk' },
-    challenge: {
-      title: 'Vendor Backlog & Brand Drift',
-      description: 'Comms, L&D, and marketing teams wait weeks for agency or vendor video. Every shoot brings inconsistent branding, unpredictable invoices, and approval chains that stall campaigns.',
-    },
-    solution: {
-      title: 'Same-Week In-House Production',
-      description: 'Assign staff to produce video on a predictable credit budget — with brand templates, approval before final render, and no crew days or open-ended edit cycles.',
-      features: [
-        'Replace vendor shoots with guided in-house workflows',
-        'Brand-safe templates and reference libraries',
-        'Visible credit spend and budget caps per project',
-        'Approve storyboards before paying for final video',
-      ],
-    },
-    win: 'Ship training, comms, and campaign video on your timeline — not the vendor\'s backlog.',
-    keyPhrases: ['Predictable Cost', 'Brand Control', 'Same-Week Turnaround'],
-    imageUrl: '/landing/use-cases/agency-pitch.jpg',
   },
-  {
-    id: 'productionShop',
-    label: 'Production Shop',
-    title: 'The Niche Production Shop',
+  productionShop: {
     icon: Store,
     gradient: 'from-violet-500 to-purple-600',
     bgGradient: 'from-violet-500/10 to-purple-600/10',
@@ -123,29 +95,8 @@ const personas: UseCasePersona[] = [
     accentText: 'text-violet-400',
     accentCheck: 'text-violet-400',
     accentKeyPhrase: 'bg-violet-500/20 text-violet-300 border border-violet-500/30',
-    beforeAfter: { before: '$8K/shoot', after: '$200 credits' },
-    challenge: {
-      title: 'Custom Verticals, No Repeatable System',
-      description: 'Memoir, legacy, real estate, and education clients need fast turnaround — but every project starts from scratch. Uploads, voice clones, and avatars don\'t scale without a templated intake → delivery pipeline.',
-    },
-    solution: {
-      title: 'Productize Your Video Service',
-      description: 'Build repeatable workflows for memoir studios and niche verticals. Template uploads, voice clones, avatars, and storyboard approval — customize per client and grow margin on volume.',
-      features: [
-        'Memoir templates with photo uploads, voice clones, and avatar hosts',
-        'Client intake tied to Blueprint and storyboard approval phases',
-        'White-label studio packages for legacy, tribute, and subscription video',
-        'Margin on credits instead of per-shoot overhead',
-      ],
-    },
-    win: 'Launch a video memoir or niche studio service with repeatable delivery — not a one-off freelance grind.',
-    keyPhrases: ['Memoir Templates', 'Voice & Avatar Identity', 'Repeatable Delivery'],
-    imageUrl: '/landing/use-cases/youtube-creator.jpg',
   },
-  {
-    id: 'agency',
-    label: 'Agency',
-    title: 'The Client Delivery Lead',
+  agency: {
     icon: Briefcase,
     gradient: 'from-cyan-500 to-blue-600',
     bgGradient: 'from-cyan-500/10 to-blue-600/10',
@@ -154,60 +105,40 @@ const personas: UseCasePersona[] = [
     accentText: 'text-cyan-400',
     accentCheck: 'text-cyan-400',
     accentKeyPhrase: 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30',
-    beforeAfter: { before: '3 wk delivery', after: '3 day delivery' },
-    challenge: {
-      title: 'Client Delivery at Scale',
-      description: 'Winning the pitch is only half the battle. Recurring client work needs fast turnaround, clear approval chains, and margin on every deliverable — without rebuilding production from scratch each time.',
-    },
-    solution: {
-      title: 'Throughput + Client Approval',
-      description: 'Move from pitch spec to recurring delivery with brand-safe controls, client review before final render, and predictable credit costs per project.',
-      features: [
-        'Fast pre-visualization for pitches and client sign-off',
-        'Reusable templates for recurring client formats',
-        'Budget visibility through every iteration',
-        'Scalable delivery without adding headcount',
-      ],
-    },
-    win: 'Deliver faster pitch cycles and recurring client work with less production risk and more margin.',
-    keyPhrases: ['Client Approvals', 'Delivery Throughput', 'Budget Predictability'],
-    imageUrl: '/landing/use-cases/agency-pitch.jpg',
-  },
-];
-
-const SEGMENT_CTAS: Record<Persona, { label: string; href: string; subtext?: string }> = {
-  creator: {
-    label: 'Start Your Production Test Flight',
-    href: getSignupUrlForTier('explorer'),
-    subtext: '$9 one-time • 750 credits • Full platform access',
-  },
-  team: {
-    label: 'Book a Team Walkthrough',
-    href: '/early-access',
-    subtext: 'See how in-house teams replace vendor cycles',
-  },
-  productionShop: {
-    label: 'Explore Vertical Templates',
-    href: '#production-verticals',
-    subtext: 'RE, education, docs, and more — see what you can productize',
-  },
-  agency: {
-    label: 'See Team Pricing',
-    href: '#pricing',
-    subtext: 'Plans for agencies and production shops at scale',
   },
 };
 
+const SEGMENT_CTA_HREFS: Record<Persona, string> = {
+  creator: getSignupUrlForTier('explorer'),
+  team: '/early-access',
+  productionShop: '#production-verticals',
+  agency: '#pricing',
+};
+
+function buildPersonas(t: ReturnType<typeof useTranslations<'useCases'>>): UseCasePersona[] {
+  return PERSONA_IDS.map((id) => {
+    const copy = t.raw(`personas.${id}`) as PersonaCopy;
+    return {
+      id,
+      ...copy,
+      ...PERSONA_STYLES[id],
+      imageUrl: PERSONA_IMAGE_URLS[id],
+    };
+  });
+}
+
 // Video Player Component with Controls
-const VideoPlayer = ({ 
-  persona, 
+const VideoPlayer = ({
+  persona,
   onExpandVideo,
-  onExpandImage 
-}: { 
-  persona: UseCasePersona; 
+  onExpandImage,
+}: {
+  persona: UseCasePersona;
   onExpandVideo: (url: string) => void;
   onExpandImage: (url: string) => void;
 }) => {
+  const t = useTranslations('useCases');
+  const tCommon = useTranslations('common');
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(true);
 
@@ -242,7 +173,7 @@ const VideoPlayer = ({
         </div>
         <div className="absolute bottom-4 left-4 flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-400 text-sm font-medium">Demo Coming Soon</span>
+          <span className="text-gray-400 text-sm font-medium">{t('ui.demoComingSoon')}</span>
         </div>
       </div>
     );
@@ -252,7 +183,16 @@ const VideoPlayer = ({
     <div className="relative w-full mx-auto group">
       <motion.div
         className="relative rounded-2xl overflow-hidden border-2 shadow-2xl cursor-pointer"
-        style={{ borderColor: persona.id === 'creator' ? 'rgba(245, 158, 11, 0.3)' : persona.id === 'team' ? 'rgba(16, 185, 129, 0.3)' : persona.id === 'productionShop' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(6, 182, 212, 0.3)' }}
+        style={{
+          borderColor:
+            persona.id === 'creator'
+              ? 'rgba(245, 158, 11, 0.3)'
+              : persona.id === 'team'
+                ? 'rgba(16, 185, 129, 0.3)'
+                : persona.id === 'productionShop'
+                  ? 'rgba(139, 92, 246, 0.3)'
+                  : 'rgba(6, 182, 212, 0.3)',
+        }}
         initial={{ opacity: 0, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
@@ -261,7 +201,7 @@ const VideoPlayer = ({
         layout
       >
         <div className={`absolute -inset-2 bg-gradient-to-r ${persona.bgGradient} rounded-2xl blur-xl -z-10 opacity-50`} />
-        
+
         <div className="aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
           {persona.videoUrl ? (
             <>
@@ -276,14 +216,15 @@ const VideoPlayer = ({
               >
                 <source src={`${persona.videoUrl}#t=0.1`} type="video/mp4" />
               </video>
-              
+
               <div className="absolute top-3 right-3">
-                <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${persona.gradient} text-white text-xs font-semibold shadow-lg`}>
+                <div
+                  className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${persona.gradient} text-white text-xs font-semibold shadow-lg`}
+                >
                   {persona.title}
                 </div>
               </div>
-              
-              {/* Play Overlay */}
+
               <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none">
                 <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
                   <Play className="w-8 h-8 text-white fill-white" />
@@ -294,14 +235,14 @@ const VideoPlayer = ({
                 <button
                   onClick={toggleMute}
                   className="p-2 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md transition-all text-white border border-white/10"
-                  aria-label={isMuted ? "Unmute" : "Mute"}
+                  aria-label={isMuted ? tCommon('unmute') : tCommon('mute')}
                 >
                   {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                 </button>
                 <button
                   onClick={handleExpand}
                   className="p-2 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md transition-all text-white border border-white/10"
-                  aria-label="Expand Video"
+                  aria-label={t('ui.expandVideo')}
                 >
                   <Maximize2 className="w-4 h-4" />
                 </button>
@@ -315,12 +256,13 @@ const VideoPlayer = ({
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute top-3 right-3">
-                <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${persona.gradient} text-white text-xs font-semibold shadow-lg`}>
+                <div
+                  className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${persona.gradient} text-white text-xs font-semibold shadow-lg`}
+                >
                   {persona.title}
                 </div>
               </div>
-              
-              {/* Expand Overlay */}
+
               <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors pointer-events-none">
                 <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
                   <Maximize2 className="w-8 h-8 text-white" />
@@ -331,7 +273,7 @@ const VideoPlayer = ({
                 <button
                   onClick={handleExpand}
                   className="p-2 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md transition-all text-white border border-white/10"
-                  aria-label="Expand Image"
+                  aria-label={t('ui.expandImage')}
                 >
                   <Maximize2 className="w-4 h-4" />
                 </button>
@@ -345,17 +287,18 @@ const VideoPlayer = ({
 };
 
 // Persona Card Component
-const PersonaCard = ({ 
-  persona, 
-  isActive, 
+const PersonaCard = ({
+  persona,
+  isActive,
   onExpandVideo,
-  onExpandImage 
-}: { 
-  persona: UseCasePersona; 
-  isActive: boolean; 
+  onExpandImage,
+}: {
+  persona: UseCasePersona;
+  isActive: boolean;
   onExpandVideo: (url: string) => void;
   onExpandImage: (url: string) => void;
 }) => {
+  const t = useTranslations('useCases');
   const Icon = persona.icon;
 
   return (
@@ -369,45 +312,55 @@ const PersonaCard = ({
           transition={{ duration: 0.4 }}
           className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start"
         >
-          {/* Left: Content */}
           <div className="space-y-6">
-            {/* Header */}
             <div className="flex items-center gap-4">
-              <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${persona.gradient} flex items-center justify-center shadow-lg`}>
+              <div
+                className={`w-14 h-14 rounded-xl bg-gradient-to-br ${persona.gradient} flex items-center justify-center shadow-lg`}
+              >
                 <Icon className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-sm text-gray-400 uppercase tracking-wider">Target Persona</p>
+                <p className="text-sm text-gray-400 uppercase tracking-wider">{t('ui.targetPersona')}</p>
                 <h3 className="text-2xl md:text-3xl font-bold text-white">{persona.title}</h3>
               </div>
             </div>
 
-            {/* Challenge */}
             <div className="bg-red-500/5 backdrop-blur-sm rounded-xl p-6 border border-red-500/20">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-2 h-2 rounded-full bg-red-500" />
-                <span className="text-red-400 text-sm font-semibold uppercase tracking-wide">The Challenge</span>
+                <span className="text-red-400 text-sm font-semibold uppercase tracking-wide">
+                  {t('ui.theChallenge')}
+                </span>
               </div>
               <h4 className="text-lg font-bold text-white mb-2">{persona.challenge.title}</h4>
               <p className="text-gray-400 text-base leading-relaxed">{persona.challenge.description}</p>
             </div>
 
-            {/* Solution */}
-            <div className={`bg-gradient-to-br ${persona.bgGradient} backdrop-blur-sm rounded-xl p-6 border ${persona.accentBorder}`}>
+            <div
+              className={`bg-gradient-to-br ${persona.bgGradient} backdrop-blur-sm rounded-xl p-6 border ${persona.accentBorder}`}
+            >
               <div className="flex items-center gap-2 mb-3">
                 <div className={`w-2 h-2 rounded-full ${persona.accentDot}`} />
-                <span className={`text-sm font-semibold uppercase tracking-wide ${persona.accentText}`}>The SceneFlow Solution</span>
+                <span className={`text-sm font-semibold uppercase tracking-wide ${persona.accentText}`}>
+                  {t('ui.sceneFlowSolution')}
+                </span>
               </div>
               <h4 className="text-lg font-bold text-white mb-2">{persona.solution.title}</h4>
               <p className="text-gray-300 text-base leading-relaxed mb-4">{persona.solution.description}</p>
-              
+
               <div className="space-y-2">
                 {persona.solution.features.map((feature, idx) => (
                   <div key={idx} className="flex items-start gap-2">
                     <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${persona.accentCheck}`} />
                     <span className="text-base text-gray-300">
-                      {feature.split('—').map((part, i) => 
-                        i === 0 ? <strong key={i} className="text-white">{part}</strong> : <span key={i}>—{part}</span>
+                      {feature.split('—').map((part, i) =>
+                        i === 0 ? (
+                          <strong key={i} className="text-white">
+                            {part}
+                          </strong>
+                        ) : (
+                          <span key={i}>—{part}</span>
+                        )
                       )}
                     </span>
                   </div>
@@ -415,46 +368,42 @@ const PersonaCard = ({
               </div>
             </div>
 
-            {/* Before/After ROI Table */}
             <div className="bg-gray-800/30 backdrop-blur-sm rounded-xl p-4 border border-gray-700/30">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-2 h-2 rounded-full bg-amber-500" />
-                <span className="text-amber-400 text-xs font-semibold uppercase tracking-wide">Before vs After</span>
+                <span className="text-amber-400 text-xs font-semibold uppercase tracking-wide">
+                  {t('ui.beforeVsAfter')}
+                </span>
               </div>
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
-                  <span className="text-xs text-gray-500 block mb-1">Before</span>
+                  <span className="text-xs text-gray-500 block mb-1">{t('ui.before')}</span>
                   <span className="text-base font-bold text-red-400">{persona.beforeAfter.before}</span>
                 </div>
                 <div className="p-2 flex items-center justify-center">
                   <span className="text-gray-600">→</span>
                 </div>
                 <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                  <span className="text-xs text-gray-500 block mb-1">After</span>
+                  <span className="text-xs text-gray-500 block mb-1">{t('ui.after')}</span>
                   <span className="text-base font-bold text-emerald-400">{persona.beforeAfter.after}</span>
                 </div>
               </div>
             </div>
 
-            {/* The Win - Quote Style */}
             <div className="relative p-6 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
               <Quote className="absolute top-4 left-4 w-8 h-8 text-emerald-500/30" />
               <div className="pl-8">
-                <p className="text-emerald-400 text-sm font-semibold uppercase tracking-wide mb-2">The "Win"</p>
-                <p className="text-white text-lg font-medium italic leading-relaxed">"{persona.win}"</p>
+                <p className="text-emerald-400 text-sm font-semibold uppercase tracking-wide mb-2">
+                  {t('ui.theWin')}
+                </p>
+                <p className="text-white text-lg font-medium italic leading-relaxed">&ldquo;{persona.win}&rdquo;</p>
               </div>
             </div>
           </div>
 
-          {/* Right: Asset + One-Take Badge (Agency only) */}
           <div className="space-y-6">
-            <VideoPlayer 
-              persona={persona} 
-              onExpandVideo={onExpandVideo} 
-              onExpandImage={onExpandImage}
-            />
-            
-            {/* One-Take Social Proof - Agency Only */}
+            <VideoPlayer persona={persona} onExpandVideo={onExpandVideo} onExpandImage={onExpandImage} />
+
             {persona.id === 'agency' && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -465,22 +414,16 @@ const PersonaCard = ({
                 <div className="flex items-start gap-3">
                   <Target className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm text-purple-300 font-medium mb-1">Frame-Anchored Continuity</p>
-                    <p className="text-sm text-gray-400">
-                      SceneFlow is the only tool that allows <span className="text-purple-400 font-semibold">Frame-Anchored</span> continuity, ensuring your client's product or character remains identical across every scene segment.
-                    </p>
+                    <p className="text-sm text-purple-300 font-medium mb-1">{t('ui.frameAnchoredTitle')}</p>
+                    <p className="text-sm text-gray-400">{t('ui.frameAnchoredDescription')}</p>
                   </div>
                 </div>
               </motion.div>
             )}
 
-            {/* Key Phrases */}
             <div className="flex flex-wrap gap-2">
               {persona.keyPhrases.map((phrase, idx) => (
-                <span
-                  key={idx}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium ${persona.accentKeyPhrase}`}
-                >
+                <span key={idx} className={`px-3 py-1.5 rounded-full text-sm font-medium ${persona.accentKeyPhrase}`}>
                   {phrase}
                 </span>
               ))}
@@ -493,10 +436,23 @@ const PersonaCard = ({
 };
 
 export default function UseCasesSection() {
-  const [activePersona, setActivePersona] = useState<Persona>('creator');
-  const [activeCategoryId, setActiveCategoryId] = useState<string>(
-    getDefaultCategoryIdForPersona('creator')
+  const t = useTranslations('useCases');
+  const tAudience = useTranslations('audiencePaths');
+
+  const personas = useMemo(() => buildPersonas(t), [t]);
+
+  const audiencePaths = useMemo(
+    () =>
+      tAudience.raw('paths') as Array<{
+        id: string;
+        label: string;
+        useCases: string[];
+      }>,
+    [tAudience]
   );
+
+  const [activePersona, setActivePersona] = useState<Persona>('creator');
+  const [activeCategoryId, setActiveCategoryId] = useState<string>(getDefaultCategoryIdForPersona('creator'));
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
@@ -516,15 +472,18 @@ export default function UseCasesSection() {
     setActiveCategoryId(getDefaultCategoryIdForPersona(activePersona));
   }, [activePersona]);
 
-  const activeAudiencePath = getAudiencePathByPersonaId(activePersona);
-  const activeCta = SEGMENT_CTAS[activePersona];
+  const activeLocalizedPath = audiencePaths.find((path) => path.id === activePersona);
+  const activeCta = {
+    label: t(`segmentCtas.${activePersona}.label`),
+    subtext: t(`segmentCtas.${activePersona}.subtext`),
+    href: SEGMENT_CTA_HREFS[activePersona],
+  };
   const isExternalSignup = activePersona === 'creator';
 
   return (
     <section id="use-cases" className="py-24 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 overflow-hidden scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header ... (keep same) */}
-        <motion.div 
+        <motion.div
           className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -533,23 +492,20 @@ export default function UseCasesSection() {
         >
           <div className="inline-flex items-center px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full mb-6">
             <User className="w-4 h-4 text-purple-400 mr-2" />
-            <span className="text-purple-300 text-sm font-medium">Production Applications</span>
+            <span className="text-purple-300 text-sm font-medium">{t('badge')}</span>
           </div>
-          
+
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Whatever Video You Can Imagine,{' '}
+            {t('title')}{' '}
             <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-cyan-400 bg-clip-text text-transparent">
-              Build It in SceneFlow
+              {t('titleAccent')}
             </span>
           </h2>
-          
-          <p className="text-gray-400 max-w-2xl mx-auto text-lg">
-            Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.
-          </p>
+
+          <p className="text-gray-400 max-w-2xl mx-auto text-lg">{t('subtitle')}</p>
         </motion.div>
 
-        {/* Use Cases - Moved below the header text and above the toggle */}
-        <motion.div 
+        <motion.div
           id="production-verticals"
           className="mb-20 mt-8"
           initial={{ opacity: 0, y: 20 }}
@@ -557,16 +513,18 @@ export default function UseCasesSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.1 }}
         >
-          {activeAudiencePath && (
+          {activeLocalizedPath && (
             <p className="text-center text-base text-gray-400 mb-4 max-w-2xl mx-auto">
-              <span className="text-gray-300 font-medium">Examples for {activeAudiencePath.label}:</span>{' '}
-              {activeAudiencePath.useCases.slice(0, 3).join(', ')}, and more.
+              <span className="text-gray-300 font-medium">
+                {tAudience('examplesFor', { label: activeLocalizedPath.label })}
+              </span>{' '}
+              {activeLocalizedPath.useCases.slice(0, 3).join(', ')}
+              {tAudience('andMore')}
             </p>
           )}
           <ProductionComparisonVisual initialCategoryId={activeCategoryId} />
         </motion.div>
 
-        {/* Toggle Selector ... (keep same) */}
         <motion.div
           className="flex justify-center mb-12 px-2"
           initial={{ opacity: 0, y: 20 }}
@@ -583,9 +541,10 @@ export default function UseCasesSection() {
                   onClick={() => setActivePersona(persona.id)}
                   className={`
                     flex items-center gap-2 px-4 py-2.5 rounded-xl text-base font-medium transition-all duration-300
-                    ${activePersona === persona.id
-                      ? `bg-gradient-to-r ${persona.gradient} text-white shadow-lg`
-                      : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
+                    ${
+                      activePersona === persona.id
+                        ? `bg-gradient-to-r ${persona.gradient} text-white shadow-lg`
+                        : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
                     }
                   `}
                 >
@@ -597,20 +556,18 @@ export default function UseCasesSection() {
           </div>
         </motion.div>
 
-        {/* Active Persona Content */}
         <div className="min-h-[600px]">
           {personas.map((persona) => (
-            <PersonaCard 
-              key={persona.id} 
-              persona={persona} 
-              isActive={activePersona === persona.id} 
+            <PersonaCard
+              key={persona.id}
+              persona={persona}
+              isActive={activePersona === persona.id}
               onExpandVideo={setExpandedVideo}
               onExpandImage={setExpandedImage}
             />
           ))}
         </div>
 
-        {/* Segment-specific CTA */}
         <motion.div
           className="text-center mt-12"
           initial={{ opacity: 0, y: 20 }}
@@ -620,7 +577,9 @@ export default function UseCasesSection() {
         >
           {isExternalSignup ? (
             <button
-              onClick={() => { window.location.href = activeCta.href }}
+              onClick={() => {
+                window.location.href = activeCta.href;
+              }}
               className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-amber-500 text-white font-semibold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
             >
               {activeCta.label}
@@ -635,24 +594,23 @@ export default function UseCasesSection() {
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           )}
-          {activeCta.subtext && (
-            <p className="text-gray-500 text-base mt-3">{activeCta.subtext}</p>
-          )}
+          {activeCta.subtext && <p className="text-gray-500 text-base mt-3">{activeCta.subtext}</p>}
           {activePersona !== 'creator' && (
             <p className="text-gray-600 text-sm mt-2">
-              Or{' '}
+              {t('ui.orPrefix')}{' '}
               <button
-                onClick={() => { window.location.href = getSignupUrlForTier('explorer') }}
+                onClick={() => {
+                  window.location.href = getSignupUrlForTier('explorer');
+                }}
                 className="text-purple-400 hover:text-purple-300 underline-offset-2 hover:underline"
               >
-                start with the $9 Explorer plan
+                {t('ui.orStartExplorer')}
               </button>
             </p>
           )}
         </motion.div>
       </div>
 
-      {/* Video Modal */}
       <AnimatePresence>
         {expandedVideo && (
           <motion.div
@@ -674,9 +632,9 @@ export default function UseCasesSection() {
                 className="absolute -top-12 right-0 text-white/70 hover:text-white flex items-center gap-2 text-sm font-medium transition-colors"
               >
                 <X className="w-5 h-5" />
-                Close Preview
+                {t('ui.closePreview')}
               </button>
-              
+
               <div className="w-full h-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black">
                 <video
                   src={expandedVideo}
@@ -692,7 +650,6 @@ export default function UseCasesSection() {
         )}
       </AnimatePresence>
 
-      {/* Image Modal */}
       <AnimatePresence>
         {expandedImage && (
           <motion.div
@@ -714,15 +671,11 @@ export default function UseCasesSection() {
                 className="absolute -top-12 right-0 text-white/70 hover:text-white flex items-center gap-2 text-sm font-medium transition-colors"
               >
                 <X className="w-5 h-5" />
-                Close Preview
+                {t('ui.closePreview')}
               </button>
-              
+
               <div className="relative w-full h-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                <img
-                  src={expandedImage}
-                  alt="Expanded view"
-                  className="w-full h-full object-contain"
-                />
+                <img src={expandedImage} alt="Expanded view" className="w-full h-full object-contain" />
               </div>
             </motion.div>
           </motion.div>

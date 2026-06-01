@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Check, 
@@ -23,7 +24,6 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
-import { MOR_FOOTER_LINE } from '@/config/landing/valuePropCopy'
 import { getBillingUrl } from '@/lib/billing/billingUrls'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { PricingTierGrid } from '@/components/landing/PricingTierGrid'
@@ -37,45 +37,48 @@ const creditCosts = {
   storage: 1,               // per GB/month
 }
 
+const PRESET_INDEX: Record<string, number> = {
+  commercial: 0,
+  short: 1,
+  episode: 2,
+  feature: 3,
+}
+
 // Project presets for calculator
 const projectPresets = [
   {
     id: 'commercial',
-    name: '30-sec Commercial',
     duration: 0.5,
     images: 10,
     videoClips: 5,
-    videoQuality: 'fast',
+    videoQuality: 'fast' as const,
     voiceMinutes: 0.5,
     storageGb: 2,
   },
   {
     id: 'short',
-    name: '2-min Short Film',
     duration: 2,
     images: 30,
     videoClips: 15,
-    videoQuality: 'fast',
+    videoQuality: 'fast' as const,
     voiceMinutes: 2,
     storageGb: 5,
   },
   {
     id: 'episode',
-    name: '10-min Episode',
     duration: 10,
     images: 80,
     videoClips: 50,
-    videoQuality: 'mixed',
+    videoQuality: 'mixed' as const,
     voiceMinutes: 10,
     storageGb: 15,
   },
   {
     id: 'feature',
-    name: '90-min Feature',
     duration: 90,
     images: 500,
     videoClips: 300,
-    videoQuality: 'quality',
+    videoQuality: 'quality' as const,
     voiceMinutes: 90,
     storageGb: 100,
   },
@@ -83,20 +86,19 @@ const projectPresets = [
 
 // Credit top-up packs
 const creditPacks = [
-  { credits: 2500, price: 25, label: 'Starter Pack', description: 'Perfect for quick revisions' },
-  { credits: 7500, price: 60, label: 'Scene Pack', description: 'Complete a short project' },
-  { credits: 25000, price: 180, label: 'Production Pack', description: 'Major film sequence' },
-  { credits: 100000, price: 600, label: 'Studio Pack', description: 'Full production capacity' },
+  { credits: 2500, price: 25 },
+  { credits: 7500, price: 60 },
+  { credits: 25000, price: 180 },
+  { credits: 100000, price: 600 },
 ]
 
 // BYOK Platform Fee: 20% of standard credits when using your own API keys
 const BYOK_PLATFORM_FEE_PERCENT = 0.20;
 const BYOK_SAVINGS_PERCENT = 80; // 80% savings on SceneFlow credits with BYOK
 
-// Explorer and subscription plans are sourced from tierCatalog.ts
-
 // Project Budget Calculator Component
 function ProjectBudgetCalculator() {
+  const t = useTranslations('pricing')
   const [selectedPreset, setSelectedPreset] = useState(projectPresets[1])
   const [showCustom, setShowCustom] = useState(false)
   const [customValues, setCustomValues] = useState({
@@ -141,6 +143,9 @@ function ProjectBudgetCalculator() {
   const creditSavings = totalStandardCredits - totalByokCredits
   const estimatedCost = (totalByokCredits / 1000) * 8 // Rough $8 per 1000 credits
 
+  const transparencyBody = t('calculator.transparency').replace(`${t('calculator.transparencyHighlight')} `, '')
+  const byokDisclaimerBody = t('calculator.byokDisclaimer').replace(`${t('calculator.byokDisclaimerHighlight')} `, '')
+
   return (
     <div className="bg-gray-900/60 backdrop-blur-sm rounded-2xl border border-gray-800 p-6 lg:p-8">
       <div className="flex items-center gap-3 mb-6">
@@ -148,8 +153,8 @@ function ProjectBudgetCalculator() {
           <Calculator className="w-5 h-5 text-emerald-400" />
         </div>
         <div>
-          <h3 className="dashboard-widget-title text-xl font-bold text-white">Project Budget Calculator</h3>
-          <p className="text-sm text-gray-400">Estimate credits before you start</p>
+          <h3 className="dashboard-widget-title text-xl font-bold text-white">{t('calculator.title')}</h3>
+          <p className="text-sm text-gray-400">{t('calculator.subtitle')}</p>
         </div>
       </div>
 
@@ -169,8 +174,10 @@ function ProjectBudgetCalculator() {
                 : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
             )}
           >
-            <div className="text-sm font-medium text-white mb-1">{preset.name}</div>
-            <div className="text-xs text-gray-400">{preset.duration} min</div>
+            <div className="text-sm font-medium text-white mb-1">
+              {t(`calculator.presets.${PRESET_INDEX[preset.id]}.name`)}
+            </div>
+            <div className="text-xs text-gray-400">{preset.duration} {t('calculator.minSuffix')}</div>
           </button>
         ))}
       </div>
@@ -181,7 +188,7 @@ function ProjectBudgetCalculator() {
         className="flex items-center gap-2 text-sm text-gray-400 hover:text-white mb-6"
       >
         <ChevronDown className={cn('w-4 h-4 transition-transform', showCustom && 'rotate-180')} />
-        Customize parameters
+        {t('calculator.customize')}
       </button>
 
       {/* Custom Sliders */}
@@ -195,7 +202,7 @@ function ProjectBudgetCalculator() {
           >
             <div>
               <label className="flex items-center justify-between text-sm text-gray-400 mb-2">
-                <span>Images to generate</span>
+                <span>{t('calculator.imagesLabel')}</span>
                 <span className="text-white font-medium">{customValues.images}</span>
               </label>
               <input
@@ -209,7 +216,7 @@ function ProjectBudgetCalculator() {
             </div>
             <div>
               <label className="flex items-center justify-between text-sm text-gray-400 mb-2">
-                <span>Video clips</span>
+                <span>{t('calculator.videoClipsLabel')}</span>
                 <span className="text-white font-medium">{customValues.videoClips}</span>
               </label>
               <input
@@ -223,7 +230,7 @@ function ProjectBudgetCalculator() {
             </div>
             <div>
               <label className="flex items-center justify-between text-sm text-gray-400 mb-2">
-                <span>Voiceover (minutes)</span>
+                <span>{t('calculator.voiceoverLabel')}</span>
                 <span className="text-white font-medium">{customValues.voiceMinutes}</span>
               </label>
               <input
@@ -243,16 +250,16 @@ function ProjectBudgetCalculator() {
       <div className="mb-6 p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
         <div className="flex items-center gap-2 mb-4">
           <Key className="w-4 h-4 text-purple-400" />
-          <span className="text-sm font-medium text-purple-400">Bring Your Own Key (BYOK)</span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300">Pro & Studio</span>
+          <span className="text-sm font-medium text-purple-400">{t('calculator.byokTitle')}</span>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300">{t('calculator.byokBadge')}</span>
         </div>
         <p className="text-xs text-gray-400 mb-4">
-          Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.
+          {t('calculator.byokDescription')}
         </p>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-300">Vertex AI (Images & Video)</span>
+              <span className="text-sm text-gray-300">{t('calculator.vertexToggle')}</span>
             </div>
             <button
               onClick={() => setByokVertexAI(!byokVertexAI)}
@@ -271,7 +278,7 @@ function ProjectBudgetCalculator() {
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-300">ElevenLabs (Voiceover)</span>
+              <span className="text-sm text-gray-300">{t('calculator.elevenLabsToggle')}</span>
             </div>
             <button
               onClick={() => setByokElevenLabs(!byokElevenLabs)}
@@ -297,53 +304,65 @@ function ProjectBudgetCalculator() {
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-gray-400">
               <ImageIcon className="w-4 h-4" />
-              <span>Image Generation</span>
-              {byokVertexAI && <span className="text-xs text-purple-400">(BYOK)</span>}
+              <span>{t('calculator.imageGeneration')}</span>
+              {byokVertexAI && <span className="text-xs text-purple-400">{t('calculator.byokTag')}</span>}
             </div>
             <div className="text-right">
               {byokVertexAI && (
                 <span className="text-xs text-gray-500 line-through mr-2">{calculateCredits.images.standard.toLocaleString()}</span>
               )}
-              <span className="text-white font-medium">{calculateCredits.images.byok.toLocaleString()} credits</span>
+              <span className="text-white font-medium">
+                {calculateCredits.images.byok.toLocaleString()} {t('creditTopUps.creditsUnit')}
+              </span>
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-gray-400">
               <Film className="w-4 h-4" />
-              <span>Video Generation</span>
-              {byokVertexAI && <span className="text-xs text-purple-400">(BYOK)</span>}
+              <span>{t('calculator.videoGeneration')}</span>
+              {byokVertexAI && <span className="text-xs text-purple-400">{t('calculator.byokTag')}</span>}
             </div>
             <div className="text-right">
               {byokVertexAI && (
                 <span className="text-xs text-gray-500 line-through mr-2">{calculateCredits.video.standard.toLocaleString()}</span>
               )}
-              <span className="text-white font-medium">{calculateCredits.video.byok.toLocaleString()} credits</span>
+              <span className="text-white font-medium">
+                {calculateCredits.video.byok.toLocaleString()} {t('creditTopUps.creditsUnit')}
+              </span>
             </div>
           </div>
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-gray-400">
               <Mic className="w-4 h-4" />
-              <span>Voiceover</span>
-              {byokElevenLabs && <span className="text-xs text-purple-400">(BYOK)</span>}
+              <span>{t('calculator.voiceover')}</span>
+              {byokElevenLabs && <span className="text-xs text-purple-400">{t('calculator.byokTag')}</span>}
             </div>
             <div className="text-right">
               {byokElevenLabs && (
                 <span className="text-xs text-gray-500 line-through mr-2">{calculateCredits.voice.standard.toLocaleString()}</span>
               )}
-              <span className="text-white font-medium">{calculateCredits.voice.byok.toLocaleString()} credits</span>
+              <span className="text-white font-medium">
+                {calculateCredits.voice.byok.toLocaleString()} {t('creditTopUps.creditsUnit')}
+              </span>
             </div>
           </div>
         </div>
 
         <div className="pt-4 border-t border-gray-700">
           <div className="flex items-center justify-between">
-            <span className="text-lg font-semibold text-white">Total Estimate</span>
+            <span className="text-lg font-semibold text-white">{t('calculator.totalEstimate')}</span>
             <div className="text-right">
               {hasByokEnabled && (
-                <div className="text-xs text-gray-500 line-through mb-1">{totalStandardCredits.toLocaleString()} credits</div>
+                <div className="text-xs text-gray-500 line-through mb-1">
+                  {totalStandardCredits.toLocaleString()} {t('creditTopUps.creditsUnit')}
+                </div>
               )}
-              <div className="text-2xl font-bold text-emerald-400">{totalByokCredits.toLocaleString()} credits</div>
-              <div className="text-sm text-gray-400">≈ ${estimatedCost.toFixed(2)} with top-ups</div>
+              <div className="text-2xl font-bold text-emerald-400">
+                {totalByokCredits.toLocaleString()} {t('creditTopUps.creditsUnit')}
+              </div>
+              <div className="text-sm text-gray-400">
+                ≈ ${estimatedCost.toFixed(2)} {t('calculator.withTopUps')}
+              </div>
             </div>
           </div>
           
@@ -351,11 +370,15 @@ function ProjectBudgetCalculator() {
           {hasByokEnabled && (
             <div className="mt-4 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-purple-300">SceneFlow credit savings</span>
-                <span className="text-lg font-bold text-purple-400">-{creditSavings.toLocaleString()} credits</span>
+                <span className="text-sm text-purple-300">{t('calculator.creditSavings')}</span>
+                <span className="text-lg font-bold text-purple-400">
+                  -{creditSavings.toLocaleString()} {t('creditTopUps.creditsUnit')}
+                </span>
               </div>
               <div className="text-xs text-gray-400 mt-1">
-                You save {Math.round((creditSavings / totalStandardCredits) * 100)}% on SceneFlow credits
+                {t('calculator.savePercent', {
+                  percent: Math.round((creditSavings / totalStandardCredits) * 100),
+                })}
               </div>
             </div>
           )}
@@ -366,7 +389,8 @@ function ProjectBudgetCalculator() {
       <div className="flex items-start gap-3 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
         <Info className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
         <div className="text-sm text-gray-300">
-          <span className="font-medium text-emerald-400">Full transparency:</span> You&apos;ll see real-time credit usage as you work. No surprises—adjust your project scope anytime.
+          <span className="font-medium text-emerald-400">{t('calculator.transparencyHighlight')}</span>{' '}
+          {transparencyBody}
         </div>
       </div>
       
@@ -375,8 +399,8 @@ function ProjectBudgetCalculator() {
         <div className="flex items-start gap-3 p-4 mt-4 rounded-lg bg-gray-800/50 border border-gray-700">
           <Info className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
           <div className="text-xs text-gray-400">
-            <span className="font-medium text-gray-300">BYOK Note:</span> Credit savings shown reflect SceneFlow platform credit reductions only. 
-            Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.
+            <span className="font-medium text-gray-300">{t('calculator.byokDisclaimerHighlight')}</span>{' '}
+            {byokDisclaimerBody}
           </div>
         </div>
       )}
@@ -385,6 +409,8 @@ function ProjectBudgetCalculator() {
 }
 
 export function PricingCredits() {
+  const t = useTranslations('pricing')
+  const tFooter = useTranslations('footer')
   const { data: session } = useSession()
 
   const handlePlanClick = useCallback((tierName: string) => {
@@ -394,6 +420,8 @@ export function PricingCredits() {
     }
     window.location.href = getSignupUrlForTier(tierName)
   }, [session])
+
+  const byokDescriptionParts = t('byok.description').split(t('byok.savingsHighlight'))
 
   return (
     <section id="pricing" className="relative py-24 md:py-32 overflow-hidden scroll-mt-20">
@@ -412,15 +440,15 @@ export function PricingCredits() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6">
             <Sparkles className="w-4 h-4 text-emerald-400" />
-            <span className="text-sm font-medium text-emerald-400">Usage-Based Pricing</span>
+            <span className="text-sm font-medium text-emerald-400">{t('badge')}</span>
           </div>
           
           <h2 className="landing-section-heading text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
-            Pay for What You Create
+            {t('title')}
           </h2>
           
           <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-8">
-            One base plan for platform access. Credits for AI generation. Top up when you need more. Full control, zero waste.
+            {t('subtitle')}
           </p>
         </motion.div>
 
@@ -438,16 +466,16 @@ export function PricingCredits() {
         >
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
             <div className="flex items-center gap-2">
-              <span className="text-gray-500 line-through text-lg">$2,000+</span>
-              <span className="text-xs text-gray-400">Traditional pre-vis</span>
+              <span className="text-gray-500 line-through text-lg">{t('valueAnchor.traditionalCost')}</span>
+              <span className="text-xs text-gray-400">{t('valueAnchor.traditionalLabel')}</span>
             </div>
-            <div className="hidden sm:block text-gray-600">vs</div>
+            <div className="hidden sm:block text-gray-600">{t('valueAnchor.vs')}</div>
             <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-amber-400">$49-149</span>
-              <span className="text-xs text-gray-400">SceneFlow monthly</span>
+              <span className="text-2xl font-bold text-amber-400">{t('valueAnchor.sceneFlowCost')}</span>
+              <span className="text-xs text-gray-400">{t('valueAnchor.sceneFlowLabel')}</span>
             </div>
             <div className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
-              <span className="text-xs font-semibold text-emerald-400">Save 90%+ per project</span>
+              <span className="text-xs font-semibold text-emerald-400">{t('valueAnchor.saveBadge')}</span>
             </div>
           </div>
         </motion.div>
@@ -463,29 +491,29 @@ export function PricingCredits() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 rounded-xl bg-gray-900/60 border border-gray-800">
               <Building2 className="w-6 h-6 text-emerald-400 shrink-0" />
               <div className="flex-1 text-left">
-                <div className="text-white font-medium">In-house team or institution?</div>
-                <div className="text-sm text-gray-400">Book a workflow walkthrough for comms, L&D, and marketing teams</div>
+                <div className="text-white font-medium">{t('teamCta.title')}</div>
+                <div className="text-sm text-gray-400">{t('teamCta.description')}</div>
               </div>
               <Button
                 variant="outline"
                 className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 shrink-0"
                 onClick={() => { window.location.href = '/early-access' }}
               >
-                Book Walkthrough
+                {t('teamCta.button')}
               </Button>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 rounded-xl bg-gray-900/60 border border-gray-800">
               <Users className="w-6 h-6 text-purple-400 shrink-0" />
               <div className="flex-1 text-left">
-                <div className="text-white font-medium">Agency or production shop?</div>
-                <div className="text-sm text-gray-400">Custom credits, SLA, and dedicated support at scale</div>
+                <div className="text-white font-medium">{t('agencyCta.title')}</div>
+                <div className="text-sm text-gray-400">{t('agencyCta.description')}</div>
               </div>
               <Button
                 variant="outline"
                 className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10 shrink-0"
                 onClick={() => { window.location.href = '/contact' }}
               >
-                Contact Sales
+                {t('agencyCta.button')}
               </Button>
             </div>
           </div>
@@ -508,44 +536,34 @@ export function PricingCredits() {
                       <Key className="w-6 h-6 text-purple-400" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-white">Bring Your Own Key</h3>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300">Pro & Studio Plans</span>
+                      <h3 className="text-2xl font-bold text-white">{t('byok.title')}</h3>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300">{t('byok.badge')}</span>
                     </div>
                   </div>
                   
                   <p className="text-gray-300 mb-6">
-                    Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to <span className="text-purple-400 font-semibold">80% on platform credits</span>.
+                    {byokDescriptionParts[0]}
+                    <span className="text-purple-400 font-semibold">{t('byok.savingsHighlight')}</span>
+                    {byokDescriptionParts[1]}
                   </p>
                   
                   <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
-                      <div>
-                        <span className="text-white font-medium">80% SceneFlow Credit Savings</span>
-                        <p className="text-sm text-gray-400">Pay only a 20% platform fee for orchestration & tools</p>
+                    {[0, 1, 2].map((index) => (
+                      <div key={index} className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="text-white font-medium">{t(`byok.benefits.${index}.title`)}</span>
+                          <p className="text-sm text-gray-400">{t(`byok.benefits.${index}.description`)}</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
-                      <div>
-                        <span className="text-white font-medium">Leverage Corporate Plans</span>
-                        <p className="text-sm text-gray-400">Use your existing Vertex AI or ElevenLabs volume discounts</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
-                      <div>
-                        <span className="text-white font-medium">Full Control</span>
-                        <p className="text-sm text-gray-400">Your keys, your billing, your cost management</p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
                 
                 {/* BYOK Providers */}
                 <div className="lg:w-1/2">
                   <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
-                    <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Supported Providers</h4>
+                    <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">{t('byok.supportedProviders')}</h4>
                     
                     <div className="space-y-4">
                       <div className="flex items-center justify-between p-4 rounded-lg bg-gray-900/50 border border-gray-700/50">
@@ -554,13 +572,13 @@ export function PricingCredits() {
                             <Film className="w-5 h-5 text-blue-400" />
                           </div>
                           <div>
-                            <div className="text-white font-medium">Google Vertex AI</div>
-                            <div className="text-xs text-gray-400">Imagen 4 & Veo 3.1</div>
+                            <div className="text-white font-medium">{t('byok.vertexName')}</div>
+                            <div className="text-xs text-gray-400">{t('byok.vertexDetail')}</div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm text-purple-400 font-medium">80% savings</div>
-                          <div className="text-xs text-gray-500">on images & video</div>
+                          <div className="text-sm text-purple-400 font-medium">{t('byok.savingsLabel')}</div>
+                          <div className="text-xs text-gray-500">{t('byok.onImagesVideo')}</div>
                         </div>
                       </div>
                       
@@ -570,22 +588,19 @@ export function PricingCredits() {
                             <Mic className="w-5 h-5 text-violet-400" />
                           </div>
                           <div>
-                            <div className="text-white font-medium">ElevenLabs</div>
-                            <div className="text-xs text-gray-400">Text-to-Speech & Voice Cloning</div>
+                            <div className="text-white font-medium">{t('byok.elevenLabsName')}</div>
+                            <div className="text-xs text-gray-400">{t('byok.elevenLabsDetail')}</div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-sm text-purple-400 font-medium">80% savings</div>
-                          <div className="text-xs text-gray-500">on voiceover</div>
+                          <div className="text-sm text-purple-400 font-medium">{t('byok.savingsLabel')}</div>
+                          <div className="text-xs text-gray-500">{t('byok.onVoiceover')}</div>
                         </div>
                       </div>
                     </div>
                     
                     <div className="mt-4 p-3 rounded-lg bg-gray-900/30 border border-gray-700/30">
-                      <p className="text-xs text-gray-400">
-                        <span className="text-gray-300 font-medium">Note:</span> Credit savings shown are SceneFlow platform savings. 
-                        Your actual total costs depend on your personal or corporate API pricing with each provider.
-                      </p>
+                      <p className="text-xs text-gray-400">{t('byok.note')}</p>
                     </div>
                   </div>
                 </div>
@@ -602,14 +617,14 @@ export function PricingCredits() {
           className="mb-20"
         >
           <div className="text-center mb-10">
-            <h3 className="text-2xl font-bold text-white mb-3">Need More Credits?</h3>
-            <p className="text-gray-400">Top up anytime. Credits never expire.</p>
+            <h3 className="text-2xl font-bold text-white mb-3">{t('creditTopUps.title')}</h3>
+            <p className="text-gray-400">{t('creditTopUps.subtitle')}</p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {creditPacks.map((pack, index) => (
               <motion.div
-                key={pack.label}
+                key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -619,13 +634,14 @@ export function PricingCredits() {
               >
                 <div className="flex items-center gap-2 mb-3">
                   <Zap className="w-5 h-5 text-amber-400" />
-                  <span className="font-semibold text-white">{pack.label}</span>
+                  <span className="font-semibold text-white">{t(`creditTopUps.packs.${index}.label`)}</span>
                 </div>
                 <div className="text-2xl font-bold text-white mb-1">
-                  {pack.credits.toLocaleString()} <span className="text-base text-gray-400 font-normal">credits</span>
+                  {pack.credits.toLocaleString()}{' '}
+                  <span className="text-base text-gray-400 font-normal">{t('creditTopUps.creditsUnit')}</span>
                 </div>
                 <div className="text-lg text-amber-400 font-medium mb-2">${pack.price}</div>
-                <div className="text-xs text-gray-500">{pack.description}</div>
+                <div className="text-xs text-gray-500">{t(`creditTopUps.packs.${index}.description`)}</div>
               </motion.div>
             ))}
           </div>
@@ -638,8 +654,8 @@ export function PricingCredits() {
           viewport={{ once: true }}
         >
           <div className="text-center mb-10">
-            <h3 className="text-2xl font-bold text-white mb-3">Estimate Your Project</h3>
-            <p className="text-gray-400">Know exactly what you&apos;ll pay before you commit</p>
+            <h3 className="text-2xl font-bold text-white mb-3">{t('calculator.sectionTitle')}</h3>
+            <p className="text-gray-400">{t('calculator.sectionSubtitle')}</p>
           </div>
           <ProjectBudgetCalculator />
         </motion.div>
@@ -654,19 +670,19 @@ export function PricingCredits() {
           <div className="inline-flex flex-wrap justify-center gap-6 text-sm text-gray-400">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-emerald-400" />
-              <span>Cancel anytime</span>
+              <span>{t('trust.cancelAnytime')}</span>
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-cyan-400" />
-              <span>14-day money-back guarantee</span>
+              <span>{t('trust.moneyBack')}</span>
             </div>
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-amber-400" />
-              <span>Credits never expire (Explorer pack)</span>
+              <span>{t('trust.creditsNeverExpire')}</span>
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-6 max-w-md mx-auto">
-            {MOR_FOOTER_LINE}
+            {tFooter('morLine')}
           </p>
         </motion.div>
       </div>

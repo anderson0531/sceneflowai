@@ -25,6 +25,20 @@ import {
   HERO_VIDEO_LOCALES,
   HERO_VIDEO_MULTILANG_HINT,
 } from '@/config/landing/heroVideoLocales'
+import {
+  USE_CASE_PERSONAS,
+  USE_CASE_PERSONA_UI,
+  USE_CASE_SEGMENT_CTAS,
+} from '@/config/landing/useCasePersonasCopy'
+import { ENGINEERING_TRUST_COPY } from '@/config/landing/engineeringTrustCopy'
+import { CORE_CAPABILITIES_COPY } from '@/config/landing/coreCapabilitiesCopy'
+import { EXIT_INTENT_COPY } from '@/config/landing/exitIntentCopy'
+import {
+  buildFeatureStoryboardMessageItems,
+  FEATURE_STORYBOARD_UI,
+} from '@/config/landing/featureStoryboardCopy'
+import { PRICING_LANDING_COPY } from '@/config/landing/pricingLandingCopy'
+import { getLandingPlans } from '@/lib/billing/tierCatalog'
 
 const FAQ_ITEMS = [
   {
@@ -80,6 +94,8 @@ const FAQ_ITEMS = [
 ] as const
 
 export function buildEnMessages() {
+  const { explorer: explorerPlan, subscriptions: subscriptionPlans } = getLandingPlans()
+
   return {
     metadata: {
       title: 'SceneFlow AI - AI-Powered Video Creation',
@@ -184,7 +200,10 @@ export function buildEnMessages() {
         sectors: '{count} SECTORS',
         demoComingSoon: 'Demo coming soon',
         selectExample: 'Select an example to preview its demo',
+        ...USE_CASE_PERSONA_UI,
       },
+      personas: USE_CASE_PERSONAS,
+      segmentCtas: USE_CASE_SEGMENT_CTAS,
       categories: VIDEO_CATEGORIES.map((cat) => ({
         id: cat.id,
         title: cat.title,
@@ -211,6 +230,34 @@ export function buildEnMessages() {
       viewDetails: 'View Details',
       beatFirst: BEAT_FIRST_CARD,
       screeningRoom: SCREENING_ROOM_COPY,
+      ui: FEATURE_STORYBOARD_UI,
+      items: buildFeatureStoryboardMessageItems().map((item) => ({
+        id: String(item.id),
+        title: item.title,
+        description: item.description,
+        keyFeatures: [...item.keyFeatures],
+        screenshotSlot: item.screenshotSlot,
+        videoSlot: item.videoSlot,
+      })),
+    },
+    engineeringTrust: ENGINEERING_TRUST_COPY,
+    coreCapabilities: CORE_CAPABILITIES_COPY,
+    exitIntent: EXIT_INTENT_COPY,
+    pricing: {
+      ...PRICING_LANDING_COPY,
+      plans: {
+        explorer: {
+          name: explorerPlan.name,
+          description: explorerPlan.description,
+          features: [...explorerPlan.features],
+        },
+        subscriptions: subscriptionPlans.map((plan) => ({
+          id: plan.id,
+          name: plan.name,
+          description: plan.description,
+          features: [...plan.features],
+        })),
+      },
     },
     faq: {
       badge: 'Got Questions?',
@@ -258,6 +305,7 @@ export function buildEnMessages() {
       play: 'Play',
       mute: 'Mute',
       unmute: 'Unmute',
+      expandVideo: 'Expand Video',
     },
   }
 }

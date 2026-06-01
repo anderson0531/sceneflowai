@@ -309,8 +309,153 @@
     "ui": {
       "useCases": "Use Cases",
       "sectors": "{count} SECTORS",
-      "demoComingSoon": "Demo coming soon",
-      "selectExample": "Select an example to preview its demo"
+      "demoComingSoon": "Demo Coming Soon",
+      "selectExample": "Select an example to preview its demo",
+      "targetPersona": "Target Persona",
+      "theChallenge": "The Challenge",
+      "sceneFlowSolution": "The SceneFlow Solution",
+      "beforeVsAfter": "Before vs After",
+      "before": "Before",
+      "after": "After",
+      "theWin": "The \"Win\"",
+      "frameAnchoredTitle": "Frame-Anchored Continuity",
+      "frameAnchoredDescription": "SceneFlow is the only tool that allows Frame-Anchored continuity, ensuring your client's product or character remains identical across every scene segment.",
+      "closePreview": "Close Preview",
+      "expandVideo": "Expand Video",
+      "expandImage": "Expand Image",
+      "orStartExplorer": "start with the $9 Explorer plan",
+      "orPrefix": "Or"
+    },
+    "personas": {
+      "creator": {
+        "label": "Solo Creator",
+        "title": "The YouTube Creator",
+        "beforeAfter": {
+          "before": "40 hrs",
+          "after": "25 mins"
+        },
+        "challenge": {
+          "title": "The \"B-Roll\" Bottleneck",
+          "description": "You have a strong script, but most of your time goes to finding footage, coordinating edits, and chasing consistency between scenes. That delay slows publishing cadence and weakens audience retention."
+        },
+        "solution": {
+          "title": "The Automated Storyteller",
+          "description": "Turn scripts into production-ready visuals quickly while keeping character and style continuity from first scene to publish-ready master.",
+          "features": [
+            "Visuals that map cleanly to script beats",
+            "Consistent protagonists across every scene",
+            "Scale to episode series with a shared reference library"
+          ]
+        },
+        "win": "Move from occasional uploads to a reliable production cadence with less overhead.",
+        "keyPhrases": [
+          "Faster Turnaround",
+          "Consistent Characters",
+          "Series-Ready Workflow"
+        ]
+      },
+      "team": {
+        "label": "In-house Team",
+        "title": "The In-House Video Team",
+        "beforeAfter": {
+          "before": "6 wks",
+          "after": "Same wk"
+        },
+        "challenge": {
+          "title": "Vendor Backlog & Brand Drift",
+          "description": "Comms, L&D, and marketing teams wait weeks for agency or vendor video. Every shoot brings inconsistent branding, unpredictable invoices, and approval chains that stall campaigns."
+        },
+        "solution": {
+          "title": "Same-Week In-House Production",
+          "description": "Assign staff to produce video on a predictable credit budget — with brand templates, approval before final render, and no crew days or open-ended edit cycles.",
+          "features": [
+            "Replace vendor shoots with guided in-house workflows",
+            "Brand-safe templates and reference libraries",
+            "Visible credit spend and budget caps per project",
+            "Approve storyboards before paying for final video"
+          ]
+        },
+        "win": "Ship training, comms, and campaign video on your timeline — not the vendor's backlog.",
+        "keyPhrases": [
+          "Predictable Cost",
+          "Brand Control",
+          "Same-Week Turnaround"
+        ]
+      },
+      "productionShop": {
+        "label": "Production Shop",
+        "title": "The Niche Production Shop",
+        "beforeAfter": {
+          "before": "$8K/shoot",
+          "after": "$200 credits"
+        },
+        "challenge": {
+          "title": "Custom Verticals, No Repeatable System",
+          "description": "Memoir, legacy, real estate, and education clients need fast turnaround — but every project starts from scratch. Uploads, voice clones, and avatars don't scale without a templated intake → delivery pipeline."
+        },
+        "solution": {
+          "title": "Productize Your Video Service",
+          "description": "Build repeatable workflows for memoir studios and niche verticals. Template uploads, voice clones, avatars, and storyboard approval — customize per client and grow margin on volume.",
+          "features": [
+            "Memoir templates with photo uploads, voice clones, and avatar hosts",
+            "Client intake tied to Blueprint and storyboard approval phases",
+            "White-label studio packages for legacy, tribute, and subscription video",
+            "Margin on credits instead of per-shoot overhead"
+          ]
+        },
+        "win": "Launch a video memoir or niche studio service with repeatable delivery — not a one-off freelance grind.",
+        "keyPhrases": [
+          "Memoir Templates",
+          "Voice & Avatar Identity",
+          "Repeatable Delivery"
+        ]
+      },
+      "agency": {
+        "label": "Agency",
+        "title": "The Client Delivery Lead",
+        "beforeAfter": {
+          "before": "3 wk delivery",
+          "after": "3 day delivery"
+        },
+        "challenge": {
+          "title": "Client Delivery at Scale",
+          "description": "Winning the pitch is only half the battle. Recurring client work needs fast turnaround, clear approval chains, and margin on every deliverable — without rebuilding production from scratch each time."
+        },
+        "solution": {
+          "title": "Throughput + Client Approval",
+          "description": "Move from pitch spec to recurring delivery with brand-safe controls, client review before final render, and predictable credit costs per project.",
+          "features": [
+            "Fast pre-visualization for pitches and client sign-off",
+            "Reusable templates for recurring client formats",
+            "Budget visibility through every iteration",
+            "Scalable delivery without adding headcount"
+          ]
+        },
+        "win": "Deliver faster pitch cycles and recurring client work with less production risk and more margin.",
+        "keyPhrases": [
+          "Client Approvals",
+          "Delivery Throughput",
+          "Budget Predictability"
+        ]
+      }
+    },
+    "segmentCtas": {
+      "creator": {
+        "label": "Start Your Production Test Flight",
+        "subtext": "$9 one-time • 750 credits • Full platform access"
+      },
+      "team": {
+        "label": "Book a Team Walkthrough",
+        "subtext": "See how in-house teams replace vendor cycles"
+      },
+      "productionShop": {
+        "label": "Explore Vertical Templates",
+        "subtext": "RE, education, docs, and more — see what you can productize"
+      },
+      "agency": {
+        "label": "See Team Pricing",
+        "subtext": "Plans for agencies and production shops at scale"
+      }
     },
     "categories": [
       {
@@ -523,6 +668,537 @@
       "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
       "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+    },
+    "ui": {
+      "screenshot": "Screenshot",
+      "video": "Video",
+      "featureVideo": "Feature Video",
+      "keyFeatures": "Key features",
+      "openScreenshot": "Open screenshot",
+      "openFeatureVideo": "Open feature video",
+      "expandImage": "Expand Image",
+      "closePreview": "Close Preview"
+    },
+    "items": [
+      {
+        "id": "1",
+        "title": "Intuitive UX + Full Creator Control",
+        "description": "Start fast with guided automation, then edit every generated output so teams keep creative control without losing speed.",
+        "keyFeatures": [
+          "Guided Studio workflow — from concept to export in one place",
+          "Edit every AI-generated beat, character, and line in place",
+          "Treatment variants — side-by-side compare for creative direction",
+          "Blueprint Collaborate — share links, section audio, and structured reviewer feedback"
+        ],
+        "screenshotSlot": "Insert screenshot: Blueprint editor with editable generated sections",
+        "videoSlot": "Insert 00:30 clip: UX flow from concept to editable output"
+      },
+      {
+        "id": "2",
+        "title": "Credit Budget Tracking + Vertex AI BYOK",
+        "description": "Track credit usage in real time, set practical production guardrails, and use Vertex AI BYOK for enterprise governance.",
+        "keyFeatures": [
+          "Real-time credit usage — by project and operation",
+          "Production guardrails — before costly generation runs",
+          "Vertex AI BYOK — enterprise billing and governance",
+          "Transparent rate cards — for TTS, video, and intelligence"
+        ],
+        "screenshotSlot": "Insert screenshot: credit usage panel and BYOK settings",
+        "videoSlot": "Insert 00:30 clip: budget dashboard and key configuration"
+      },
+      {
+        "id": "3",
+        "title": "Any Concept, One Production Workflow",
+        "description": "Use one reliable pipeline for training, podcasts, news, home sales videos, and cinematic content.",
+        "keyFeatures": [
+          "One pipeline — podcast, news, training, real estate, and cinematic formats",
+          "Project templates — Studio adapts to your source material",
+          "Same Blueprint → Script → Production path — regardless of genre",
+          "No tool-switching — from ideation through delivery"
+        ],
+        "screenshotSlot": "Insert screenshot: Split-view or grid showing Podcast, News, Real Estate, and Cinematic templates feeding into one unified SceneFlow pipeline UI.",
+        "videoSlot": "Insert 00:30 clip: \"Start with any source material...\" clicking New Project -> Podcast (UI adapts to audio), then showing split screen of News & Cinematic projects converging into the Blueprint editor."
+      },
+      {
+        "id": "4",
+        "title": "Smart Automation with Precision Edit Control",
+        "description": "The SceneFlow platform uses intelligence to automatically generate a professional baseline (series, blueprint, script, production prompts, and edits) while providing intelligent dialogs that give you full edit control with built-in guardrails.",
+        "keyFeatures": [
+          "AI baselines in one pass — series, blueprint, script, and production prompts",
+          "Intelligent edit dialogs — guardrails, not blind rewrites",
+          "Accept, refine, or reject — every suggestion stays under your control",
+          "Human-in-the-loop — at every phase of production"
+        ],
+        "screenshotSlot": "Insert screenshot: Intelligent dialog showing baseline generation with edit controls",
+        "videoSlot": "Insert 00:30 clip: AI baseline generation followed by user making precise edits"
+      },
+      {
+        "id": "5",
+        "title": "Shared Reference Library for Continuity",
+        "description": "Maintain consistent characters, wardrobe, voices, locations, and props across scenes and episodes with reusable references.",
+        "keyFeatures": [
+          "Reusable profiles — characters, wardrobe, voices, locations, and props",
+          "Cross-scene application — references flow into every generation",
+          "Visual consistency — same faces and tone in Imagen and Veo outputs",
+          "Franchise-scale continuity — built for multi-episode series"
+        ],
+        "screenshotSlot": "Insert screenshot: Reference library showing character and prop continuity",
+        "videoSlot": "Insert 00:30 clip: Applying references across multiple scenes"
+      },
+      {
+        "id": "6",
+        "title": "Express Generation Engine",
+        "description": "Auto-generate images and video segments concurrently. Express Storyboard lets you review and share audio-visual storyboards in minutes. Express Animatics renders full Ken Burns scenes in minutes, while Express Video delivers final video scenes in minutes instead of days.",
+        "keyFeatures": [
+          "Concurrent generation — images and video across scenes at once",
+          "Express Storyboard — shareable audio-visual previews in minutes",
+          "Express Animatics — Ken Burns motion from stills",
+          "Express Video — scene-level clips in minutes, not days"
+        ],
+        "screenshotSlot": "Insert screenshot: Express generation dashboard with Animatics and Video progress",
+        "videoSlot": "Insert 00:30 clip: Concurrent generation turning script into animatic then final video"
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance Editor",
+        "description": "Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint, and Script for maximum impact.",
+        "keyFeatures": [
+          "Target-audience scoring — with category breakdown",
+          "Section-tied recommendations — fix the right part of your story",
+          "One-click fixes and Guided Edit — precise rewrites, not guesswork",
+          "Production-ready threshold — know when to invest in full render"
+        ],
+        "screenshotSlot": "Insert screenshot: Resonance Editor with audience scoring and one-click fixes",
+        "videoSlot": "Insert 00:30 clip: Applying guided edits based on audience resonance score"
+      },
+      {
+        "id": "8",
+        "title": "Adaptive Translation (70+ Languages)",
+        "description": "Localize content at scale while preserving narrative intent and timeline alignment for multilingual delivery.",
+        "keyFeatures": [
+          "70+ languages — narration, dialogue, and copy at scale",
+          "Narrative intent preserved — meaning and timing stay aligned",
+          "Multi-language audio tracks — on the scene timeline",
+          "Export-ready packages — per locale for distribution"
+        ],
+        "screenshotSlot": "Insert screenshot: Multi-language timeline and translation settings",
+        "videoSlot": "Insert 00:30 clip: Instantly localizing a scene into multiple languages"
+      },
+      {
+        "id": "9",
+        "title": "Series Automation",
+        "description": "Define your universe once and generate cohesive multi-episode arcs. Shared Reference Library keeps characters and tone aligned across the season.",
+        "keyFeatures": [
+          "Define your universe once — characters, tone, and season arc",
+          "Cohesive episode outlines — auto-generated across the season",
+          "Continuity tracking — multi-episode seasons in alignment",
+          "Series-to-episode sync — into Blueprint Studio and Production"
+        ],
+        "screenshotSlot": "Insert screenshot: Series overview with auto-generated episode arcs",
+        "videoSlot": "Insert 00:30 clip: Concept expanding into a multi-episode season"
+      },
+      {
+        "id": "10",
+        "title": "Blueprint Automation",
+        "description": "Transform concepts into structured treatments with logline, beats, characters, and tone. Run Audience Resonance and collaborate before heavy rendering.",
+        "keyFeatures": [
+          "Generate → Review → Iterate → Start Production workflow",
+          "Concept to structure in minutes — logline, beats, characters, and tone",
+          "Audience Resonance scoring with 80+ target before Production",
+          "Collaborator share links — feedback synthesis into guided revision"
+        ],
+        "screenshotSlot": "Insert screenshot: Auto-generated Blueprint with story beats and character arcs",
+        "videoSlot": "Insert 00:30 clip: Turning a concept into a structured Blueprint"
+      },
+      {
+        "id": "11",
+        "title": "Production Automation",
+        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "keyFeatures": [
+          "Foundation — script, voices, scene audio, lock script",
+          "Express storyboard — direction and frames in minutes; gallery and share",
+          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
+          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
+        ],
+        "screenshotSlot": "Insert screenshot: Production dashboard showing script, Beat Frames, and Mixer",
+        "videoSlot": "Insert 00:30 clip: Foundation, Express storyboard, Beat Frames, and stream export"
+      },
+      {
+        "id": "12",
+        "title": "Final Cut Assembly",
+        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "keyFeatures": [
+          "Per-scene stream pick — Animatic, Video, language, version",
+          "Assembly presets — All Video, Hybrid, Custom mix",
+          "No timeline editing — creative changes stay in Production Mixer",
+          "One-click master export — stitched MP4 for Premiere"
+        ],
+        "screenshotSlot": "Insert screenshot: Final Cut assembly panel with per-scene stream pickers",
+        "videoSlot": "Insert 00:30 clip: Picking streams, previewing assembly, and exporting master"
+      },
+      {
+        "id": "13",
+        "title": "Premiere Distribution",
+        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
+        "keyFeatures": [
+          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
+          "Insights dashboard — Scoring, Biometric, and Visual tabs",
+          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
+          "Export bundles and vertical short-form clip plans"
+        ],
+        "screenshotSlot": "Insert screenshot: Premiere dashboard with insights and publish wizard",
+        "videoSlot": "Insert 00:30 clip: Screening insights, YouTube wizard, and export bundles"
+      },
+      {
+        "id": "14",
+        "title": "Audience Review and Analytics",
+        "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+        "keyFeatures": [
+          "Private review sessions — secure /s/ share links for stakeholders",
+          "Structured audience feedback — ratings and open items",
+          "Optional engagement analytics — with viewer consent before capture",
+          "Iterate from real data — refine Blueprint and script from reviewer insights"
+        ],
+        "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+        "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+      }
+    ]
+  },
+  "engineeringTrust": {
+    "badge": "Engineering & Security",
+    "title": "Built for",
+    "titleAccent": "Production Workloads",
+    "subtitle": "Startup-friendly architecture with Google Cloud components that support security, scale, and practical production delivery.",
+    "pillars": [
+      {
+        "id": "architecture",
+        "title": "Enterprise Architecture",
+        "description": "Built on Google Cloud infrastructure with scalable orchestration for production workloads and growing teams.",
+        "highlights": [
+          "Vertex AI for generation workflows",
+          "Imagen 4 and Veo 3.1 synthesis",
+          "ElevenLabs TTS integration",
+          "BYOK for enterprise billing control"
+        ]
+      },
+      {
+        "id": "security",
+        "title": "Security & Privacy",
+        "description": "Creative assets stay protected with encryption at rest, access controls, and privacy-first handling.",
+        "highlights": [
+          "Enterprise-ready cloud controls",
+          "AES-256 encryption",
+          "Designed with GDPR considerations",
+          "See our Privacy Policy for data handling"
+        ]
+      },
+      {
+        "id": "scale",
+        "title": "Scale & Reliability",
+        "description": "Global cloud delivery supports reliable render and review pipelines as your volume grows.",
+        "highlights": [
+          "Multi-region deployment",
+          "CDN-accelerated delivery",
+          "Automatic failover",
+          "Real-time monitoring"
+        ]
+      }
+    ],
+    "metrics": [
+      {
+        "value": "Global",
+        "label": "Cloud delivery"
+      },
+      {
+        "value": "Imagen 4",
+        "label": "Image generation"
+      },
+      {
+        "value": "256-bit",
+        "label": "Encryption"
+      },
+      {
+        "value": "24/7",
+        "label": "Monitoring"
+      }
+    ],
+    "vertexSection": {
+      "title": "Why Google Vertex AI?",
+      "subtitle": "The technical moat that matters",
+      "cards": [
+        {
+          "title": "Data Privacy",
+          "description": "Your scripts and creative assets are not used to train shared models, helping protect your IP and client work.",
+          "highlight": "not used to train shared models"
+        },
+        {
+          "title": "Built for Reliable Throughput",
+          "description": "Production-oriented infrastructure helps maintain stable generation workflows during high-demand cycles."
+        },
+        {
+          "title": "Reference-Aware Consistency",
+          "description": "SceneFlow uses reference-aware generation to improve consistency across characters, locations, and props from scene to scene."
+        }
+      ]
+    },
+    "partnership": {
+      "poweredBy": "Powered by Google Cloud with Vertex AI, Cloud Storage, and translation tooling",
+      "footnote": "SceneFlow AI runs on scalable Google Cloud infrastructure designed for startup growth and enterprise expectations."
+    },
+    "attribution": "— The SceneFlow Engineering Team"
+  },
+  "coreCapabilities": {
+    "audienceResonance": {
+      "badge": "Intelligence Layer",
+      "title": "Audience Resonance Editor",
+      "description": "Know your score before you invest in full renders. Target Audience Resonance scores Blueprint and script with actionable fixes — optimize every beat before Express and video generation.",
+      "bullets": [
+        "Determine your specific target audience",
+        "Get real-time score, analysis, and recommendations",
+        "One-click fixes to resolve narrative weaknesses",
+        "Guided Edit to optimize Episodes, Blueprint, and Script"
+      ],
+      "cta": "Analyze Your Script"
+    },
+    "express": {
+      "badge": "Hyper-Speed Production",
+      "title": "Sceneflow Express",
+      "description": "Auto-generate storyboards, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend.",
+      "items": [
+        {
+          "title": "Express Storyboard",
+          "desc": "Review and share audio and video storyboards in minutes vs hours.",
+          "time": "Minutes vs Hours"
+        },
+        {
+          "title": "Express Animatics",
+          "desc": "Render full Ken Burns animatic scenes with high-end voiceovers instantly.",
+          "time": "Minutes vs Hours"
+        },
+        {
+          "title": "Express Video",
+          "desc": "Orchestrate concurrent image and video generation for total scene delivery.",
+          "time": "Minutes vs Days"
+        }
+      ],
+      "cta": "Start Express Rendering"
+    }
+  },
+  "exitIntent": {
+    "title": "Wait! Don't leave empty-handed",
+    "subtitle": "Get exclusive early access and tips for AI-powered filmmaking",
+    "benefits": [
+      "Weekly AI filmmaking tutorials",
+      "Early access to new features",
+      "Exclusive creator discounts"
+    ],
+    "emailPlaceholder": "Enter your email",
+    "subscribe": "Get Early Access",
+    "subscribing": "Subscribing...",
+    "or": "or",
+    "startNow": "Start creating now for just $9 →",
+    "privacy": "No spam, ever. Unsubscribe anytime.",
+    "successTitle": "You're on the list!",
+    "successSubtitle": "Check your inbox for exclusive filmmaking tips and early access updates.",
+    "ctaText": "Start Exploring — $9",
+    "closePopup": "Close popup"
+  },
+  "pricing": {
+    "badge": "Usage-Based Pricing",
+    "title": "Pay for What You Create",
+    "subtitle": "One base plan for platform access. Credits for AI generation. Top up when you need more. Full control, zero waste.",
+    "valueAnchor": {
+      "traditionalCost": "$2,000+",
+      "traditionalLabel": "Traditional pre-vis",
+      "vs": "vs",
+      "sceneFlowCost": "$49-149",
+      "sceneFlowLabel": "SceneFlow monthly",
+      "saveBadge": "Save 90%+ per project"
+    },
+    "teamCta": {
+      "title": "In-house team or institution?",
+      "description": "Book a workflow walkthrough for comms, L&D, and marketing teams",
+      "button": "Book Walkthrough"
+    },
+    "agencyCta": {
+      "title": "Agency or production shop?",
+      "description": "Custom credits, SLA, and dedicated support at scale",
+      "button": "Contact Sales"
+    },
+    "byok": {
+      "title": "Bring Your Own Key",
+      "badge": "Pro & Studio Plans",
+      "description": "Already have API keys for Vertex AI or ElevenLabs? Use them with SceneFlow AI and save up to 80% on platform credits.",
+      "savingsHighlight": "80% on platform credits",
+      "benefits": [
+        {
+          "title": "80% SceneFlow Credit Savings",
+          "description": "Pay only a 20% platform fee for orchestration & tools"
+        },
+        {
+          "title": "Leverage Corporate Plans",
+          "description": "Use your existing Vertex AI or ElevenLabs volume discounts"
+        },
+        {
+          "title": "Full Control",
+          "description": "Your keys, your billing, your cost management"
+        }
+      ],
+      "supportedProviders": "Supported Providers",
+      "vertexName": "Google Vertex AI",
+      "vertexDetail": "Imagen 4 & Veo 3.1",
+      "elevenLabsName": "ElevenLabs",
+      "elevenLabsDetail": "Text-to-Speech & Voice Cloning",
+      "savingsLabel": "80% savings",
+      "onImagesVideo": "on images & video",
+      "onVoiceover": "on voiceover",
+      "note": "Credit savings shown are SceneFlow platform savings. Your actual total costs depend on your personal or corporate API pricing with each provider."
+    },
+    "creditTopUps": {
+      "title": "Need More Credits?",
+      "subtitle": "Top up anytime. Credits never expire.",
+      "packs": [
+        {
+          "label": "Starter Pack",
+          "description": "Perfect for quick revisions"
+        },
+        {
+          "label": "Scene Pack",
+          "description": "Complete a short project"
+        },
+        {
+          "label": "Production Pack",
+          "description": "Major film sequence"
+        },
+        {
+          "label": "Studio Pack",
+          "description": "Full production capacity"
+        }
+      ],
+      "creditsUnit": "credits"
+    },
+    "calculator": {
+      "sectionTitle": "Estimate Your Project",
+      "sectionSubtitle": "Know exactly what you'll pay before you commit",
+      "title": "Project Budget Calculator",
+      "subtitle": "Estimate credits before you start",
+      "customize": "Customize parameters",
+      "imagesLabel": "Images to generate",
+      "videoClipsLabel": "Video clips",
+      "voiceoverLabel": "Voiceover (minutes)",
+      "byokTitle": "Bring Your Own Key (BYOK)",
+      "byokBadge": "Pro & Studio",
+      "byokDescription": "Use your own API keys to save up to 80% on SceneFlow credits. You pay the AI providers directly at their rates.",
+      "vertexToggle": "Vertex AI (Images & Video)",
+      "elevenLabsToggle": "ElevenLabs (Voiceover)",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation",
+      "voiceover": "Voiceover",
+      "byokTag": "(BYOK)",
+      "totalEstimate": "Total Estimate",
+      "withTopUps": "with top-ups",
+      "creditSavings": "SceneFlow credit savings",
+      "savePercent": "You save {percent}% on SceneFlow credits",
+      "transparency": "Full transparency: You'll see real-time credit usage as you work. No surprises—adjust your project scope anytime.",
+      "transparencyHighlight": "Full transparency:",
+      "byokDisclaimer": "BYOK Note: Credit savings shown reflect SceneFlow platform credit reductions only. Your actual costs depend on your Vertex AI and ElevenLabs pricing plans. Corporate or high-volume API plans may offer additional savings.",
+      "byokDisclaimerHighlight": "BYOK Note:",
+      "presets": [
+        {
+          "id": "commercial",
+          "name": "30-sec Commercial"
+        },
+        {
+          "id": "short",
+          "name": "2-min Short Film"
+        },
+        {
+          "id": "episode",
+          "name": "10-min Episode"
+        },
+        {
+          "id": "feature",
+          "name": "90-min Feature"
+        }
+      ],
+      "minSuffix": "min"
+    },
+    "tierGrid": {
+      "productionTestFlight": "Production Test Flight",
+      "getStarted": "Get Started",
+      "startTestFlight": "Start Test Flight",
+      "loading": "Loading...",
+      "mostPopular": "Most Popular",
+      "creditsPerMonth": "Credits/mo",
+      "storage": "Storage",
+      "perMonth": "/month"
+    },
+    "trust": {
+      "cancelAnytime": "Cancel anytime",
+      "moneyBack": "14-day money-back guarantee",
+      "creditsNeverExpire": "Credits never expire (Explorer pack)"
+    },
+    "plans": {
+      "explorer": {
+        "name": "Explorer",
+        "description": "One-time purchase to try it out",
+        "features": [
+          "One-time purchase",
+          "750 credits (never expire)",
+          "5 GB storage (30 days)",
+          "Full platform access",
+          "MP4 export (any resolution)",
+          "AI voiceover (70+ languages)"
+        ]
+      },
+      "subscriptions": [
+        {
+          "id": "starter",
+          "name": "Starter",
+          "description": "For individual creators",
+          "features": [
+            "Full platform access",
+            "4,500 credits/month included",
+            "25 GB active storage",
+            "MP4 export (any resolution)",
+            "AI voiceover (70+ languages)",
+            "Email support"
+          ]
+        },
+        {
+          "id": "pro",
+          "name": "Pro",
+          "description": "For professional creators",
+          "features": [
+            "Everything in Starter, plus:",
+            "15,000 credits/month included",
+            "100 GB active storage",
+            "Veo 3.1 Quality (4K) access",
+            "Character Consistency Engine",
+            "Voice cloning",
+            "BYOK (Bring Your Own Key)",
+            "3 team seats",
+            "Priority support"
+          ]
+        },
+        {
+          "id": "studio",
+          "name": "Studio",
+          "description": "For teams & agencies",
+          "features": [
+            "Everything in Pro, plus:",
+            "75,000 credits/month included",
+            "500 GB active storage",
+            "Veo 3.1 4K Priority Queue",
+            "Unlimited Character Consistency",
+            "White-label exports",
+            "API access",
+            "10 team seats",
+            "Dedicated account manager",
+            "Enterprise SLA available on request"
+          ]
+        }
+      ]
     }
   },
   "faq": {
@@ -613,6 +1289,7 @@
     "pause": "Pause",
     "play": "Play",
     "mute": "Mute",
-    "unmute": "Unmute"
+    "unmute": "Unmute",
+    "expandVideo": "Expand Video"
   }
 }

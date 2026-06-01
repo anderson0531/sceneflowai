@@ -120,8 +120,8 @@
       "mt": false
     },
     "th": {
-      "tier": "A-reviewed",
-      "mt": false
+      "tier": "A-reviewed-full",
+      "mt": true
     },
     "vi": {
       "tier": "B-mt",

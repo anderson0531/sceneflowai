@@ -6,6 +6,8 @@ import { getVertexAIAuthToken } from './client'
 import { fetchWithRetry } from '../utils/retry'
 import { 
   getDefaultGeminiSafetySettings, 
+  getImagenPersonGeneration,
+  getImagenSafetyFilterLevel,
   type SafetySetting 
 } from './safety'
 import { 

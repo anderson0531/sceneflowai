@@ -2,9 +2,11 @@
 
 import { motion } from 'framer-motion'
 import { Sparkles } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { getComparisonImageUrl } from '@/config/landing/landingVisualMedia'
 
 export default function SlotMachineSection() {
+  const locale = useLocale()
   const t = useTranslations('comparison')
   return (
     <section id="comparison" className="py-20 sm:py-28 bg-gray-950 overflow-hidden scroll-mt-20">
@@ -27,8 +29,8 @@ export default function SlotMachineSection() {
             transition={{ duration: 0.8 }}
             className="rounded-2xl overflow-hidden shadow-[0_0_50px_-12px_rgba(6,182,212,0.3)] border border-cyan-500/20"
           >
-            <img 
-              src="https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_y6ocnvy6ocnvy6oc.jpeg" 
+            <img
+              src={getComparisonImageUrl(locale)}
               alt={t('imageAlt')}
               className="w-full h-auto object-cover"
             />

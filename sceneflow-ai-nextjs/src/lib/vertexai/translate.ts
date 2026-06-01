@@ -32,11 +32,14 @@ export interface TranslateResult {
  * @param options - Translation options (text, targetLanguage, sourceLanguage)
  * @returns Translated text and detected source language
  */
+/** Cloud Translation API requires us-central1 (not the app's VERTEX_LOCATION for Imagen/Veo). */
+const TRANSLATE_LOCATION = 'us-central1'
+
 export async function translateWithVertexAI(options: TranslateOptions): Promise<TranslateResult> {
   const { text, targetLanguage, sourceLanguage = 'en' } = options
   
   const projectId = (process.env.GCP_PROJECT_ID || process.env.VERTEX_PROJECT_ID || '').trim() || undefined
-  const location = (process.env.VERTEX_LOCATION || 'us-central1').trim()
+  const location = TRANSLATE_LOCATION
   
   if (!projectId) {
     throw new Error('GCP_PROJECT_ID or VERTEX_PROJECT_ID not configured')
@@ -194,21 +197,20 @@ export async function batchTranslateWithVertexAI(
   sourceLanguage: string = 'en'
 ): Promise<TranslateResult[]> {
   const projectId = (process.env.GCP_PROJECT_ID || process.env.VERTEX_PROJECT_ID || '').trim() || undefined
-  const location = (process.env.VERTEX_LOCATION || 'us-central1').trim()
-  
+  const location = TRANSLATE_LOCATION
+
   if (!projectId) {
     throw new Error('GCP_PROJECT_ID or VERTEX_PROJECT_ID not configured')
   }
-  
-  // Skip translation if target is English or same as source
+
   if (targetLanguage === 'en' || targetLanguage === sourceLanguage) {
     console.log('[Vertex Translate] Skipping batch translation - target is same as source')
-    return texts.map(text => ({ translatedText: text }))
+    return texts.map((text) => ({ translatedText: text }))
   }
-  
+
   console.log(`[Vertex Translate] Batch translating ${texts.length} texts to ${targetLanguage}`)
   console.log(`[Vertex Translate] Using Adaptive Translation LLM (location: ${location})`)
-  
+
   const accessToken = await getVertexAIAuthToken()
   
   // Vertex AI Adaptive Translation endpoint with location
@@ -280,7 +282,7 @@ async function batchTranslateWithStandardNMT(
   projectId: string,
   accessToken: string
 ): Promise<TranslateResult[]> {
-  const location = (process.env.VERTEX_LOCATION || 'us-central1').trim()
+  const location = TRANSLATE_LOCATION
   
   const endpoint = `https://translate.googleapis.com/v3/projects/${projectId}/locations/${location}:translateText`
   
