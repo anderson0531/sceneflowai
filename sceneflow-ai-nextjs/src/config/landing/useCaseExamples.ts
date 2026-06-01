@@ -43,7 +43,7 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         label: 'Residential Real Estate',
         description:
           'Imagine uploading your property images with your saved character reference and voice. Then instantly generating a professional listing walkthrough with your image and voice — in over 70 languages.',
-        videoSrc: '/demo/property-hospitality.mp4',
+        videoSrc: `${BLOB_DEMO}/Home%20Tour.mp4`,
       },
       {
         id: 'commercial-real-estate',
