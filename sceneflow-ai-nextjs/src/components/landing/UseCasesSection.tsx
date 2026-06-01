@@ -9,6 +9,7 @@ import { Video, Play, Sparkles, Volume2, VolumeX, Maximize2, User, Briefcase, Ta
 import { ProductionComparisonVisual } from './ProductionComparisonVisual';
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent';
 import { getDefaultCategoryIdForPersona } from '@/config/landing/valuePropCopy';
+import { USE_CASE_PERSONA_IMAGES } from '@/config/landing/landingVisualMedia';
 
 type Persona = 'creator' | 'team' | 'productionShop' | 'agency';
 
@@ -43,13 +44,6 @@ const PERSONA_HASH_MAP: Record<string, Persona> = {
   'use-cases-team': 'team',
   'use-cases-production-shop': 'productionShop',
   'use-cases-agency': 'agency',
-};
-
-const PERSONA_IMAGE_URLS: Record<Persona, string> = {
-  creator: '/landing/use-cases/youtube-creator.jpg',
-  team: '/landing/use-cases/agency-pitch.jpg',
-  productionShop: '/landing/use-cases/youtube-creator.jpg',
-  agency: '/landing/use-cases/agency-pitch.jpg',
 };
 
 const PERSONA_STYLES: Record<
@@ -122,7 +116,7 @@ function buildPersonas(t: ReturnType<typeof useTranslations<'useCases'>>): UseCa
       id,
       ...copy,
       ...PERSONA_STYLES[id],
-      imageUrl: PERSONA_IMAGE_URLS[id],
+      imageUrl: USE_CASE_PERSONA_IMAGES[id],
     };
   });
 }

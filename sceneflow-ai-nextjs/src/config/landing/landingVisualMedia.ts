@@ -17,6 +17,14 @@ export const COMPARISON_IMAGE_EN = blobUrl('Gemini_Generated_Image_y6ocnvy6ocnvy
 /** Thai comparison infographic (uploaded manually to Blob) */
 export const COMPARISON_IMAGE_TH = blobUrl('Gemini_Generated_Image_untyd1untyd1unty (1).jpeg')
 
+/** Use-case persona hero images (UseCasesSection) */
+export const USE_CASE_PERSONA_IMAGES = {
+  creator: '/landing/use-cases/youtube-creator.jpg',
+  team: blobUrl('Gemini_Generated_Image_w4oqphw4oqphw4oq.jpeg'),
+  productionShop: blobUrl('Gemini_Generated_Image_wm0332wm0332wm03.jpeg'),
+  agency: '/landing/use-cases/agency-pitch.jpg',
+} as const satisfies Record<'creator' | 'team' | 'productionShop' | 'agency', string>
+
 /** Thai walkthrough screenshots — ids 1–14 (upload to landing/storyboard/th/{id}.png) */
 const TH_FEATURE_STORYBOARD_SCREENSHOTS: Partial<Record<number, string>> = {
   1: blobUrl('landing/storyboard/th/1.png'),
