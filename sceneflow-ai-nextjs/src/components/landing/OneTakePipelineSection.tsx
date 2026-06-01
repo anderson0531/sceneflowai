@@ -29,7 +29,8 @@ export function OneTakePipelineSection() {
             </div>
           </div>
 
-          <p className="text-gray-300 leading-relaxed mb-8 max-w-3xl">{t('description')}</p>
+          <p className="text-gray-300 leading-relaxed mb-4 max-w-3xl">{t('intro')}</p>
+          <p className="text-gray-400 leading-relaxed mb-8 max-w-3xl">{t('description')}</p>
 
           <ol className="space-y-4">
             {steps.map((step, index) => (

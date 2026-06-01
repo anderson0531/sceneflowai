@@ -3,11 +3,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, PlayCircle, Clock3, Maximize2, X, Play, Pause, Volume2, VolumeX, Maximize, ChevronDown, ChevronUp, CheckCircle2, ExternalLink } from 'lucide-react';
 import NextImage from 'next/image';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect, useCallback } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { StudioVideoWatermark } from '@/components/landing/StudioVideoWatermark';
 import { CollaborationDemosPanel } from '@/components/landing/SamplesSection';
-import { FEATURE_DISPLAY_ORDER } from '@/config/landing/featureStoryboardCopy';
+import { FEATURE_CHAPTERS } from '@/config/landing/featureStoryboardCopy';
 import { FEATURE_STORYBOARD_MEDIA } from '@/config/landing/featureStoryboardMedia';
 import { getFeatureStoryboardScreenshot } from '@/config/landing/landingVisualMedia';
 
@@ -18,6 +18,11 @@ type FeatureStoryboardMessageItem = {
   keyFeatures: string[];
   screenshotSlot: string;
   videoSlot: string;
+  underTheHood?: {
+    title: string;
+    body: string;
+    bullets: string[];
+  };
 };
 
 type FeatureStoryboardItem = Omit<FeatureStoryboardMessageItem, 'id'> & {
@@ -188,6 +193,7 @@ function StoryboardCard({
   closeLabel,
   viewDetailsLabel,
   videoAriaLabels,
+  underTheHoodLabel,
 }: {
   item: FeatureStoryboardItem;
   onExpand: (url: string) => void;
@@ -196,6 +202,7 @@ function StoryboardCard({
   closeLabel: string;
   viewDetailsLabel: string;
   videoAriaLabels: VideoAriaLabels;
+  underTheHoodLabel: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -367,11 +374,78 @@ function StoryboardCard({
                   ))}
                 </ul>
               </div>
+
+              {item.underTheHood && (
+                <details className="mt-6 max-w-4xl rounded-xl border border-white/10 bg-slate-950/60 overflow-hidden group">
+                  <summary className="flex cursor-pointer items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-violet-300 hover:bg-white/5 list-none [&::-webkit-details-marker]:hidden">
+                    <span>{underTheHoodLabel}</span>
+                    <ChevronDown className="w-4 h-4 shrink-0 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <div className="px-4 pb-4 pt-1 border-t border-white/5">
+                    <p className="text-sm text-slate-400 mb-3">{item.underTheHood.body}</p>
+                    <ul className="space-y-2">
+                      {item.underTheHood.bullets.map((bullet) => (
+                        <li key={bullet} className="flex items-start gap-2 text-sm text-slate-300">
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 mt-0.5 text-violet-400" />
+                          {bullet}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </details>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </motion.article>
+  );
+}
+
+function WalkthroughChapter({
+  chapterId,
+  label,
+  isOpen,
+  onToggle,
+  expandLabel,
+  collapseLabel,
+  children,
+}: {
+  chapterId: string;
+  label: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  expandLabel: string;
+  collapseLabel: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div id={`walkthrough-chapter-${chapterId}`} className="rounded-2xl border border-white/10 bg-slate-900/30 overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-white/5 transition-colors"
+      >
+        <span className="text-base font-semibold text-white">{label}</span>
+        <span className="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-500">
+          {isOpen ? collapseLabel : expandLabel}
+          {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </span>
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.35 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 space-y-4 border-t border-white/5">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -404,9 +478,43 @@ export default function FeatureStoryboardSection() {
 
   const locale = useLocale();
 
-  const orderedItems = useMemo(() => {
+  const chapterLabels = t.raw('chapters') as Array<{
+    id: string;
+    label: string;
+    defaultExpanded: boolean;
+  }>;
+
+  const [openChapters, setOpenChapters] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(
+      FEATURE_CHAPTERS.map((chapter) => [
+        chapter.id,
+        chapter.defaultExpanded,
+      ])
+    )
+  );
+
+  const toggleChapter = useCallback((chapterId: string) => {
+    setOpenChapters((prev) => ({ ...prev, [chapterId]: !prev[chapterId] }));
+  }, []);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const chapterId = (event as CustomEvent<string>).detail;
+      if (!chapterId) return;
+      setOpenChapters((prev) => ({ ...prev, [chapterId]: true }));
+      window.setTimeout(() => {
+        document
+          .getElementById(`walkthrough-chapter-${chapterId}`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    };
+    window.addEventListener('sceneflow:expand-walkthrough-chapter', handler);
+    return () => window.removeEventListener('sceneflow:expand-walkthrough-chapter', handler);
+  }, []);
+
+  const itemsById = useMemo(() => {
     const rawItems = t.raw('items') as FeatureStoryboardMessageItem[];
-    const itemsById = new Map<number, FeatureStoryboardItem>(
+    return new Map<number, FeatureStoryboardItem>(
       rawItems.map((item) => {
         const id = Number(item.id);
         const media = FEATURE_STORYBOARD_MEDIA[id] ?? {};
@@ -418,16 +526,13 @@ export default function FeatureStoryboardSection() {
             keyFeatures: item.keyFeatures,
             screenshotSlot: item.screenshotSlot,
             videoSlot: item.videoSlot,
+            underTheHood: item.underTheHood,
             id,
             screenshotUrl: getFeatureStoryboardScreenshot(id, locale),
             videoUrl: media.videoUrl,
           },
         ];
       })
-    );
-
-    return FEATURE_DISPLAY_ORDER.map((id) => itemsById.get(id)).filter(
-      (item): item is FeatureStoryboardItem => !!item
     );
   }, [t, locale]);
 
@@ -456,19 +561,43 @@ export default function FeatureStoryboardSection() {
         </div>
 
         <div className="mt-20 pt-12 border-t border-white/10 space-y-4 max-w-7xl mx-auto">
-          <p className="text-sm font-medium uppercase tracking-wider text-slate-500 mb-6">{t('subheading')}</p>
-          {orderedItems.map((item) => (
-            <StoryboardCard
-              key={item.id}
-              item={item}
-              onExpand={setExpandedImage}
-              onExpandVideo={setExpandedVideo}
-              ui={ui}
-              closeLabel={t('close')}
-              viewDetailsLabel={t('viewDetails')}
-              videoAriaLabels={videoAriaLabels}
-            />
-          ))}
+          <div className="mb-6">
+            <p className="text-sm font-medium uppercase tracking-wider text-slate-500">{t('subheading')}</p>
+            <p className="mt-2 text-sm text-slate-400">{t('chapterHint')}</p>
+          </div>
+          {FEATURE_CHAPTERS.map((chapter) => {
+            const label =
+              chapterLabels.find((entry) => entry.id === chapter.id)?.label ?? chapter.label;
+            const chapterItems = chapter.cardIds
+              .map((id) => itemsById.get(id))
+              .filter((item): item is FeatureStoryboardItem => !!item);
+
+            return (
+              <WalkthroughChapter
+                key={chapter.id}
+                chapterId={chapter.id}
+                label={label}
+                isOpen={!!openChapters[chapter.id]}
+                onToggle={() => toggleChapter(chapter.id)}
+                expandLabel={t('expandChapter')}
+                collapseLabel={t('collapseChapter')}
+              >
+                {chapterItems.map((item) => (
+                  <StoryboardCard
+                    key={item.id}
+                    item={item}
+                    onExpand={setExpandedImage}
+                    onExpandVideo={setExpandedVideo}
+                    ui={ui}
+                    closeLabel={t('close')}
+                    viewDetailsLabel={t('viewDetails')}
+                    videoAriaLabels={videoAriaLabels}
+                    underTheHoodLabel={t('underTheHoodLabel')}
+                  />
+                ))}
+              </WalkthroughChapter>
+            );
+          })}
         </div>
       </div>
 

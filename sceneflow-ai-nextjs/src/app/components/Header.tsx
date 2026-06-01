@@ -175,7 +175,7 @@ export function Header() {
                   <DropdownMenuItem onClick={() => scrollToSection('use-cases')}>
                     {t('useCases')}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => scrollToSection('showrunner')}>
+                  <DropdownMenuItem onClick={() => scrollToSection('core-capabilities')}>
                     {t('audienceResonance')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => scrollToSection('engineering')}>
@@ -291,7 +291,7 @@ export function Header() {
                   <button onClick={() => scrollToSection('use-cases')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     {t('useCases')}
                   </button>
-                  <button onClick={() => scrollToSection('showrunner')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                  <button onClick={() => scrollToSection('core-capabilities')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     {t('audienceResonance')}
                   </button>
                   <button onClick={() => scrollToSection('pricing')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">

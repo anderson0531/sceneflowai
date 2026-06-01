@@ -4,6 +4,7 @@
  */
 import {
   AUDIENCE_PATHS,
+  AUDIENCE_PATH_MODES,
   FINAL_CTA_COPY,
   HERO_COPY,
   HOW_IT_WORKS_HEADER,
@@ -14,6 +15,7 @@ import {
   VP_STRIP_PILLS,
   WHY_SCENEFLOW,
 } from '@/config/landing/valuePropCopy'
+import { TOOL_STACK_COPY } from '@/config/landing/toolStackCopy'
 import {
   BEAT_FIRST_CARD,
   SCREENING_ROOM_COPY,
@@ -35,6 +37,8 @@ import { CORE_CAPABILITIES_COPY } from '@/config/landing/coreCapabilitiesCopy'
 import { EXIT_INTENT_COPY } from '@/config/landing/exitIntentCopy'
 import {
   buildFeatureStoryboardMessageItems,
+  FEATURE_CHAPTERS,
+  FEATURE_STORYBOARD_SECTION,
   FEATURE_STORYBOARD_UI,
 } from '@/config/landing/featureStoryboardCopy'
 import { PRICING_LANDING_COPY } from '@/config/landing/pricingLandingCopy'
@@ -59,7 +63,7 @@ const FAQ_ITEMS = [
   {
     question: 'How does Target Audience Resonance work now?',
     answer:
-      'Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering.',
+      'Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not post-publish retention data. You get section-level recommendations and one-click fixes at Series, Blueprint, and script review before heavy rendering.',
   },
   {
     question: 'Can I produce multilingual listing or marketing videos?',
@@ -150,6 +154,7 @@ export function buildEnMessages() {
       seeExamples: 'See examples',
       examplesFor: 'Examples for {label}:',
       andMore: ', and more.',
+      modes: AUDIENCE_PATH_MODES,
       paths: AUDIENCE_PATHS.map((p) => ({
         id: p.id,
         label: p.label,
@@ -166,6 +171,7 @@ export function buildEnMessages() {
       ...ONE_TAKE_PIPELINE,
       footerLine: 'Fewer slot-machine regenerations — approve visuals before final video spend',
     },
+    toolStack: TOOL_STACK_COPY,
     comparison: {
       ...SLOT_MACHINE_HEADER,
       caption:
@@ -225,7 +231,16 @@ export function buildEnMessages() {
       title: 'Platform Walkthrough',
       subtitle:
         'A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.',
-      subheading: 'Studio feature deep dive',
+      subheading: FEATURE_STORYBOARD_SECTION.subheading,
+      chapterHint: FEATURE_STORYBOARD_SECTION.chapterHint,
+      expandChapter: FEATURE_STORYBOARD_SECTION.expandChapter,
+      collapseChapter: FEATURE_STORYBOARD_SECTION.collapseChapter,
+      underTheHoodLabel: FEATURE_STORYBOARD_SECTION.underTheHood,
+      chapters: FEATURE_CHAPTERS.map((chapter) => ({
+        id: chapter.id,
+        label: chapter.label,
+        defaultExpanded: chapter.defaultExpanded,
+      })),
       close: 'Close',
       viewDetails: 'View Details',
       beatFirst: BEAT_FIRST_CARD,
@@ -238,6 +253,15 @@ export function buildEnMessages() {
         keyFeatures: [...item.keyFeatures],
         screenshotSlot: item.screenshotSlot,
         videoSlot: item.videoSlot,
+        ...(item.underTheHood
+          ? {
+              underTheHood: {
+                title: item.underTheHood.title,
+                body: item.underTheHood.body,
+                bullets: [...item.underTheHood.bullets],
+              },
+            }
+          : {}),
       })),
     },
     engineeringTrust: ENGINEERING_TRUST_COPY,

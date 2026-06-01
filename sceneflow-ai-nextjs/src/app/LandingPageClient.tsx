@@ -9,10 +9,10 @@ const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits
 
 const ValuePropStrip = dynamic(() => import('@/components/landing/ValuePropStrip').then(m => m.ValuePropStrip), { ssr: false })
 const AudiencePathStrip = dynamic(() => import('@/components/landing/AudiencePathStrip').then(m => m.AudiencePathStrip), { ssr: false })
+const ToolStackSection = dynamic(() => import('@/components/landing/ToolStackSection').then(m => m.ToolStackSection), { ssr: false })
 const InstitutionalRoiSection = dynamic(() => import('@/components/landing/InstitutionalRoiSection').then(m => m.InstitutionalRoiSection), { ssr: false })
 const WhySceneFlowSection = dynamic(() => import('@/components/landing/WhySceneFlowSection').then(m => m.WhySceneFlowSection), { ssr: false })
 const OneTakePipelineSection = dynamic(() => import('@/components/landing/OneTakePipelineSection').then(m => m.OneTakePipelineSection), { ssr: false })
-const SlotMachineSection = dynamic(() => import('@/components/landing/SlotMachineSection'), { ssr: false })
 const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
 const CoreCapabilitiesSection = dynamic(() => import('@/components/landing/CoreCapabilitiesSection').then(m => m.CoreCapabilitiesSection), { ssr: false })
@@ -38,13 +38,13 @@ export default function LandingPageClient() {
 
       <ValuePropStrip />
 
+      <ToolStackSection />
+
+      <HowItWorks />
+
       <WhySceneFlowSection />
 
       <OneTakePipelineSection />
-
-      <SlotMachineSection />
-
-      <HowItWorks />
 
       <UseCasesSection />
 

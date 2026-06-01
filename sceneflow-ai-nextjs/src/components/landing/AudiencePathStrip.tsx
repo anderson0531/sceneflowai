@@ -1,8 +1,10 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Video, Building2, Film, Briefcase, ArrowRight } from 'lucide-react'
+import { Video, Building2, Film, Briefcase, ArrowRight, Zap, Settings2 } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { cn } from '@/lib/utils'
 
 const ICONS = {
   video: Video,
@@ -12,6 +14,8 @@ const ICONS = {
 } as const
 
 const PATH_ICONS = ['video', 'building', 'film', 'briefcase'] as const
+
+type AudienceMode = 'automate' | 'engine'
 
 function handlePathClick(hash: string, e: React.MouseEvent<HTMLAnchorElement>) {
   e.preventDefault()
@@ -23,26 +27,67 @@ function handlePathClick(hash: string, e: React.MouseEvent<HTMLAnchorElement>) {
   document.getElementById('use-cases')?.scrollIntoView({ behavior: 'smooth' })
 }
 
+function handleEngineMode() {
+  window.dispatchEvent(
+    new CustomEvent('sceneflow:expand-walkthrough-chapter', { detail: 'advanced' })
+  )
+  document.getElementById('engineering')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 export function AudiencePathStrip() {
   const t = useTranslations('audiencePaths')
+  const [mode, setMode] = useState<AudienceMode>('automate')
   const paths = t.raw('paths') as Array<{
     id: string
     label: string
     outcome: string
     useCases: string[]
   }>
+  const modes = t.raw('modes') as Record<
+    AudienceMode,
+    { label: string; description: string }
+  >
 
   return (
     <section className="py-10 bg-slate-950 border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.p
-          className="text-center text-base font-medium text-gray-400 mb-6"
+          className="text-center text-base font-medium text-gray-400 mb-5"
           initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
           {t('prompt')}
         </motion.p>
+
+        <div className="flex flex-col sm:flex-row justify-center gap-2 mb-8 max-w-xl mx-auto">
+          {(Object.keys(modes) as AudienceMode[]).map((key) => {
+            const isActive = mode === key
+            const Icon = key === 'automate' ? Zap : Settings2
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => {
+                  setMode(key)
+                  if (key === 'engine') handleEngineMode()
+                }}
+                className={cn(
+                  'flex-1 rounded-xl border px-4 py-3 text-left transition-all',
+                  isActive
+                    ? 'border-purple-500/40 bg-purple-500/10'
+                    : 'border-white/10 bg-slate-900/40 hover:border-white/20'
+                )}
+              >
+                <span className="flex items-center gap-2 text-sm font-semibold text-white">
+                  <Icon className="w-4 h-4 text-purple-300" />
+                  {modes[key].label}
+                </span>
+                <span className="mt-1 block text-xs text-gray-400">{modes[key].description}</span>
+              </button>
+            )
+          })}
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {paths.map((path, index) => {

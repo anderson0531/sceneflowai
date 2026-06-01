@@ -125,6 +125,10 @@ export function HeroSection() {
     window.setTimeout(() => unmuteWithSound(), 450)
   }, [unmuteWithSound])
 
+  const scrollToToolStack = useCallback(() => {
+    document.getElementById('tool-stack')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+
   const openTheater = useCallback(() => {
     const video = videoRef.current
     if (video) {
@@ -344,8 +348,17 @@ export function HeroSection() {
               {t('subheadline')}
             </motion.p>
 
+            <motion.p
+              className="mt-4 max-w-xl mx-auto text-sm text-gray-500"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
+              {t('audienceMicroLine')}
+            </motion.p>
+
             <motion.div
-              className="mt-10 flex justify-center"
+              className="mt-10 flex flex-col sm:flex-row gap-3 justify-center items-stretch sm:items-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.35 }}
@@ -353,6 +366,14 @@ export function HeroSection() {
               <Button size="lg" className="w-full sm:w-auto" onClick={watchWhatsPossible}>
                 <Play className="mr-2 w-5 h-5" />
                 {t('ctaSecondary')}
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto border-white/20 text-gray-200 hover:bg-white/5"
+                onClick={scrollToToolStack}
+              >
+                {t('ctaToolStack')}
               </Button>
             </motion.div>
           </div>

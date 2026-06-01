@@ -7,6 +7,47 @@ import {
   WORKFLOW_PHASES,
 } from '@/config/landing/workflowPhaseCopy'
 
+export const FEATURE_STORYBOARD_SECTION = {
+  subheading: 'Explore the platform — start with essentials',
+  chapterHint: 'Four things to know today. Expand chapters when you want the full picture.',
+  expandChapter: 'Show features',
+  collapseChapter: 'Hide features',
+  underTheHood: 'Under the hood',
+} as const
+
+export const FEATURE_CHAPTERS = [
+  {
+    id: 'essentials',
+    label: 'Start here — what you get on day one',
+    cardIds: [1, 3, 4, 6],
+    defaultExpanded: true,
+  },
+  {
+    id: 'quality',
+    label: 'Make it land with your audience',
+    cardIds: [5, 7, 8, 9],
+    defaultExpanded: false,
+  },
+  {
+    id: 'production',
+    label: 'From approved beats to published master',
+    cardIds: [10, 11, 12, 13, 14],
+    defaultExpanded: false,
+  },
+  {
+    id: 'advanced',
+    label: 'For teams who want billing and governance',
+    cardIds: [2],
+    defaultExpanded: false,
+  },
+] as const
+
+export type FeatureStoryboardUnderTheHood = {
+  title: string
+  body: string
+  bullets: string[]
+}
+
 export type FeatureStoryboardMessageItem = {
   id: number
   title: string
@@ -14,6 +55,7 @@ export type FeatureStoryboardMessageItem = {
   keyFeatures: string[]
   screenshotSlot: string
   videoSlot: string
+  underTheHood?: FeatureStoryboardUnderTheHood
 }
 
 export const FEATURE_STORYBOARD_UI = {
@@ -45,15 +87,24 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
     },
     {
       id: 2,
-      title: 'Credit Budget Tracking + Vertex AI BYOK',
+      title: 'Credit Budget & Cost Control',
       description:
-        'Track credit usage in real time, set practical production guardrails, and use Vertex AI BYOK for enterprise governance.',
+        'Track credit usage in real time and set guardrails before expensive generation runs.',
       keyFeatures: [
         'Real-time credit usage — by project and operation',
         'Production guardrails — before costly generation runs',
-        'Vertex AI BYOK — enterprise billing and governance',
         'Transparent rate cards — for TTS, video, and intelligence',
+        'Budget visibility — for teams and solo creators',
       ],
+      underTheHood: {
+        title: 'Under the hood',
+        body: 'For production teams with existing cloud contracts:',
+        bullets: [
+          'Vertex AI BYOK — enterprise billing and governance',
+          'Provider toggles in the credit calculator',
+          'Transparent platform rate cards alongside your keys',
+        ],
+      },
       screenshotSlot: 'Insert screenshot: credit usage panel and BYOK settings',
       videoSlot: 'Insert 00:30 clip: budget dashboard and key configuration',
     },
@@ -194,4 +245,4 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
   ]
 }
 
-export const FEATURE_DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+export const FEATURE_DISPLAY_ORDER = [1, 3, 4, 6, 5, 7, 8, 9, 10, 11, 12, 13, 14, 2]

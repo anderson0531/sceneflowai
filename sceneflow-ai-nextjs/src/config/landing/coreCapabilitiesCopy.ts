@@ -13,6 +13,18 @@ export const CORE_CAPABILITIES_COPY = {
       'Guided Edit to optimize Episodes, Blueprint, and Script',
     ],
     cta: 'Analyze Your Script',
+    howWeScore: {
+      toggle: 'How we score',
+      title: 'How Audience Resonance works',
+      description:
+        'Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.',
+      bullets: [
+        'Scores Blueprint and script against your stated target audience',
+        'Section-level recommendations — not a black-box “trust us” number',
+        'Actionable one-click fixes and guided edit — not just a grade',
+        'Run before heavy render spend, not after publish',
+      ],
+    },
   },
   express: {
     badge: 'Hyper-Speed Production',

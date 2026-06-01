@@ -32,9 +32,11 @@
     "faq": "FAQ"
   },
   "hero": {
-    "headline": "Make professional video without a production team or a dozen apps.",
-    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.",
+    "headline": "Stop juggling five AI tabs. One studio takes you from idea to publish-ready video.",
+    "subheadline": "One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations. SceneFlow automates the busywork — script, storyboard, voice, and assembly — while you stay in control of every beat.",
+    "audienceMicroLine": "Built for creators who want results, and teams who want to see how it works.",
     "ctaSecondary": "Watch the 'What's Possible'",
+    "ctaToolStack": "See how it replaces your tool stack",
     "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
     "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
     "playWithNarration": "Play with narration",
@@ -97,6 +99,16 @@
     "seeExamples": "See examples",
     "examplesFor": "Examples for {label}:",
     "andMore": ", and more.",
+    "modes": {
+      "automate": {
+        "label": "Automate it",
+        "description": "Guided workflow — approve storyboards, ship faster"
+      },
+      "engine": {
+        "label": "Show me the engine",
+        "description": "Architecture, BYOK, and platform depth"
+      }
+    },
     "paths": [
       {
         "id": "creator",
@@ -171,10 +183,6 @@
       {
         "them": "No production pipeline or handoff",
         "us": "Script → streams → assembly → distribution in one app"
-      },
-      {
-        "them": "Complex model and settings surface",
-        "us": "Guided Studio UX with credits and BYOK guardrails"
       }
     ],
     "themHeader": "Typical clip-generation tools",
@@ -183,6 +191,7 @@
   "beatFirstPipeline": {
     "title": "Beat-First Video Pipeline",
     "subtitle": "Approve before you render — not slot-machine regeneration",
+    "intro": "No guess-and-check generations. You preview and approve the look before SceneFlow spends credits on final video.",
     "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
     "steps": [
       "Express storyboard — share audio-visual beats for review in minutes",
@@ -191,6 +200,75 @@
       "Production Mixer — timing, audio, and stream export to Final Cut assembly"
     ],
     "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+  },
+  "toolStack": {
+    "badge": "Sound familiar?",
+    "title": "The Broken Way vs the SceneFlow Way",
+    "subtitle": "You should not need five tabs, copy-paste exports, and prompt fatigue just to ship one video.",
+    "brokenWay": {
+      "title": "The Broken Way",
+      "tagline": "Fragmented. Manual. Exhausting.",
+      "tools": [
+        {
+          "name": "ChatGPT",
+          "category": "Script drafts"
+        },
+        {
+          "name": "Midjourney",
+          "category": "One-off images"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "Manual VO export"
+        },
+        {
+          "name": "Premiere",
+          "category": "Manual assembly"
+        }
+      ],
+      "chaosLabel": "Five tabs. Lost context.",
+      "painPoints": [
+        "Copy-paste between apps",
+        "Prompt fatigue and re-generation loops",
+        "No audience check before you spend",
+        "Version chaos across exports"
+      ],
+      "timeLabel": "Typical project time",
+      "timeValue": "2–4 weeks"
+    },
+    "sceneflowWay": {
+      "title": "The SceneFlow Way",
+      "tagline": "One studio. Approve before you render.",
+      "stages": [
+        {
+          "label": "Blueprint",
+          "detail": "Structured story plan"
+        },
+        {
+          "label": "References",
+          "detail": "Consistent characters"
+        },
+        {
+          "label": "Production",
+          "detail": "Voice + visuals"
+        },
+        {
+          "label": "Publish",
+          "detail": "One master MP4"
+        }
+      ],
+      "syncLabel": "One project file — no tab juggling",
+      "benefits": [
+        "Guided phases — not prompt engineering",
+        "Storyboard approval before video credits",
+        "Audience Resonance score before heavy render",
+        "Publish-ready master from one studio"
+      ],
+      "timeLabel": "Typical project time",
+      "timeValue": "2–4 days"
+    },
+    "comparisonCaption": "One studio replaces fragmented prompt tools, manual edits, and multi-platform handoffs",
+    "comparisonImageAlt": "Traditional production overhead vs SceneFlow automated studio — faster concept to publish-ready video"
   },
   "comparison": {
     "title": "Production speed without the overhead",
@@ -640,7 +718,33 @@
     "badge": "Guided Tour",
     "title": "Platform Walkthrough",
     "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Studio feature deep dive",
+    "subheading": "Explore the platform — start with essentials",
+    "chapterHint": "Four things to know today. Expand chapters when you want the full picture.",
+    "expandChapter": "Show features",
+    "collapseChapter": "Hide features",
+    "underTheHoodLabel": "Under the hood",
+    "chapters": [
+      {
+        "id": "essentials",
+        "label": "Start here — what you get on day one",
+        "defaultExpanded": true
+      },
+      {
+        "id": "quality",
+        "label": "Make it land with your audience",
+        "defaultExpanded": false
+      },
+      {
+        "id": "production",
+        "label": "From approved beats to published master",
+        "defaultExpanded": false
+      },
+      {
+        "id": "advanced",
+        "label": "For teams who want billing and governance",
+        "defaultExpanded": false
+      }
+    ],
     "close": "Close",
     "viewDetails": "View Details",
     "beatFirst": {
@@ -695,16 +799,25 @@
       },
       {
         "id": "2",
-        "title": "Credit Budget Tracking + Vertex AI BYOK",
-        "description": "Track credit usage in real time, set practical production guardrails, and use Vertex AI BYOK for enterprise governance.",
+        "title": "Credit Budget & Cost Control",
+        "description": "Track credit usage in real time and set guardrails before expensive generation runs.",
         "keyFeatures": [
           "Real-time credit usage — by project and operation",
           "Production guardrails — before costly generation runs",
-          "Vertex AI BYOK — enterprise billing and governance",
-          "Transparent rate cards — for TTS, video, and intelligence"
+          "Transparent rate cards — for TTS, video, and intelligence",
+          "Budget visibility — for teams and solo creators"
         ],
         "screenshotSlot": "Insert screenshot: credit usage panel and BYOK settings",
-        "videoSlot": "Insert 00:30 clip: budget dashboard and key configuration"
+        "videoSlot": "Insert 00:30 clip: budget dashboard and key configuration",
+        "underTheHood": {
+          "title": "Under the hood",
+          "body": "For production teams with existing cloud contracts:",
+          "bullets": [
+            "Vertex AI BYOK — enterprise billing and governance",
+            "Provider toggles in the credit calculator",
+            "Transparent platform rate cards alongside your keys"
+          ]
+        }
       },
       {
         "id": "3",
@@ -958,7 +1071,18 @@
         "One-click fixes to resolve narrative weaknesses",
         "Guided Edit to optimize Episodes, Blueprint, and Script"
       ],
-      "cta": "Analyze Your Script"
+      "cta": "Analyze Your Script",
+      "howWeScore": {
+        "toggle": "How we score",
+        "title": "How Audience Resonance works",
+        "description": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not vanity metrics or post-publish retention data. Recommendations are tied to specific script sections so you can fix issues before Express or video generation.",
+        "bullets": [
+          "Scores Blueprint and script against your stated target audience",
+          "Section-level recommendations — not a black-box “trust us” number",
+          "Actionable one-click fixes and guided edit — not just a grade",
+          "Run before heavy render spend, not after publish"
+        ]
+      }
     },
     "express": {
       "badge": "Hyper-Speed Production",
@@ -1220,7 +1344,7 @@
       },
       {
         "question": "How does Target Audience Resonance work now?",
-        "answer": "Director/Audience dual scoring has been deprecated. SceneFlow now uses Target Audience Resonance analysis at key points: Series, Blueprint, and script-level review in Production. You get actionable recommendations to optimize clarity, pacing, emotion, and audience fit before heavy rendering."
+        "answer": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not post-publish retention data. You get section-level recommendations and one-click fixes at Series, Blueprint, and script review before heavy rendering."
       },
       {
         "question": "Can I produce multilingual listing or marketing videos?",

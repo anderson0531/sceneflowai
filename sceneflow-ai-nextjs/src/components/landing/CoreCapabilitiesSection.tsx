@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Target, Zap, Sparkles, Clock, Globe, Film, ArrowRight } from 'lucide-react'
+import { Target, Zap, Sparkles, Clock, Globe, Film, ArrowRight, ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
@@ -19,13 +19,15 @@ export function CoreCapabilitiesSection() {
     text: t(`audienceResonance.bullets.${index}`),
   }))
 
+  const howWeScoreBullets = t.raw('audienceResonance.howWeScore.bullets') as string[]
+
   const expressItems = EXPRESS_ITEM_ICONS.map((icon, index) => ({
     icon,
     ...(t.raw(`express.items.${index}`) as { title: string; desc: string; time: string }),
   }))
 
   return (
-    <section className="py-24 bg-slate-950 relative overflow-hidden">
+    <section id="core-capabilities" className="py-24 bg-slate-950 relative overflow-hidden scroll-mt-20">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(120,119,198,0.1),transparent_50%)]" />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -60,6 +62,26 @@ export function CoreCapabilitiesSection() {
                 </li>
               ))}
             </ul>
+
+            <details className="mb-8 rounded-xl border border-white/10 bg-slate-900/50 overflow-hidden group">
+              <summary className="flex cursor-pointer items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-emerald-300 hover:bg-white/5 list-none [&::-webkit-details-marker]:hidden">
+                <span>{t('audienceResonance.howWeScore.toggle')}</span>
+                <ChevronDown className="w-4 h-4 shrink-0 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="px-4 pb-4 pt-1 border-t border-white/5">
+                <p className="text-sm text-slate-400 leading-relaxed mb-4">
+                  {t('audienceResonance.howWeScore.description')}
+                </p>
+                <ul className="space-y-2">
+                  {howWeScoreBullets.map((bullet) => (
+                    <li key={bullet} className="flex items-start gap-2 text-sm text-slate-300">
+                      <span className="text-emerald-400 mt-0.5">•</span>
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </details>
             
             <Button 
               onClick={() => { window.location.href = SIGNUP_URL }}

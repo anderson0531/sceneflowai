@@ -3,10 +3,24 @@
  */
 
 export const HERO_COPY = {
-  headline: 'Make professional video without a production team or a dozen apps.',
+  headline: 'Stop juggling five AI tabs. One studio takes you from idea to publish-ready video.',
   subheadline:
-    'One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations.',
+    'One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations. SceneFlow automates the busywork — script, storyboard, voice, and assembly — while you stay in control of every beat.',
+  audienceMicroLine:
+    'Built for creators who want results, and teams who want to see how it works.',
   ctaSecondary: "Watch the 'What's Possible'",
+  ctaToolStack: 'See how it replaces your tool stack',
+} as const
+
+export const AUDIENCE_PATH_MODES = {
+  automate: {
+    label: 'Automate it',
+    description: 'Guided workflow — approve storyboards, ship faster',
+  },
+  engine: {
+    label: 'Show me the engine',
+    description: 'Architecture, BYOK, and platform depth',
+  },
 } as const
 
 export const VP_STRIP_PILLS = [
@@ -119,6 +133,8 @@ export const INSTITUTIONAL_ROI = {
 export const ONE_TAKE_PIPELINE = {
   title: 'Beat-First Video Pipeline',
   subtitle: 'Approve before you render — not slot-machine regeneration',
+  intro:
+    'No guess-and-check generations. You preview and approve the look before SceneFlow spends credits on final video.',
   description:
     'SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.',
   steps: [
@@ -148,10 +164,6 @@ export const WHY_SCENEFLOW = {
     {
       them: 'No production pipeline or handoff',
       us: 'Script → streams → assembly → distribution in one app',
-    },
-    {
-      them: 'Complex model and settings surface',
-      us: 'Guided Studio UX with credits and BYOK guardrails',
     },
   ],
 } as const

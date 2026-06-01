@@ -17,7 +17,7 @@ export function FloatingNav() {
   const t = useTranslations('floatingNav')
   const sections = useMemo(
     () => [
-      { id: 'comparison', label: t('compare'), icon: Clock3 },
+      { id: 'tool-stack', label: t('compare'), icon: Clock3 },
       { id: 'how-it-works', label: t('howItWorks'), icon: Sparkles },
       { id: 'use-cases', label: t('useCases'), icon: Rocket },
       { id: 'feature-storyboard', label: t('platformWalkthrough'), icon: Film },
@@ -52,7 +52,7 @@ export function FloatingNav() {
     window.addEventListener('scroll', handleScroll, { passive: true })
     handleScroll() // Check initial state
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [sections])
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId)
