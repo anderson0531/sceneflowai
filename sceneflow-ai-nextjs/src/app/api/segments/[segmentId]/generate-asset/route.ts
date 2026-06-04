@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
-import { 
-  generateProductionVideo, 
-  waitForProductionVideoCompletion, 
-  downloadProductionVideo,
-  getEndpointStatus,
-  type ProductionVideoResult
-} from '@/lib/gemini/productionVideoClient'
-import { uploadImageToBlob, uploadVideoToBlob } from '@/lib/storage/blob'
-import { extractAndStoreLastFrame } from '@/lib/videoUtils'
+import { getEndpointStatus } from '@/lib/gemini/productionVideoClient'
+import { uploadImageToBlob } from '@/lib/storage/blob'
+import {
+  generateSegmentVideoCore,
+  SegmentVideoExtRefRequiredError,
+  SegmentVideoRateLimitError,
+} from '@/lib/video/generateSegmentVideo'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { isBeatFirstPipelineEnabled, isStoryboardApproved, getSceneBeats } from '@/lib/script/beatMigration'
@@ -16,26 +14,13 @@ import { compileBeatVideoPrompt } from '@/lib/scene/beatVideoPromptCompiler'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
-import { 
-  getMethodWithFallback, 
-  buildMethodSelectionContext,
-  VideoGenerationMethod,
-  MethodSelectionResult
-} from '@/lib/vision/intelligentMethodSelection'
-import { getQualityForMethod } from '@/lib/config/modelConfig'
-import { autoSanitizePrompt } from '@/utils/promptModerator'
-import { getVideoDurationFromBuffer } from '@/lib/video/serverVideoDuration'
-import { separateAudioStemsWithRetry, type StemSeparationResult } from '@/lib/audio/stemSeparation'
-import { computeSourceHash } from '@/lib/audio/stemJobs'
-import { extractVeoRaiDetailsFromErrorString } from '@/lib/vertexai/safety'
-import { appendFtvTransitionStabilityTokens } from '@/lib/vision/ftvTransitionStability'
 import {
-  FTV_MINIMAL_NATIVE_AUDIO_HINT,
-  narrowPromptForFtvFrameLock,
-  neutralizeFtvGuidePrompt,
-  extractSpeaksQuotedPerformCue,
-  normalizeVeoSuspiciousPunctuation,
-} from '@/lib/vision/ftvPromptNormalize'
+  VideoGenerationMethod,
+  type MethodSelectionResult,
+} from '@/lib/vision/intelligentMethodSelection'
+import type { StemSeparationResult } from '@/lib/audio/stemSeparation'
+import { autoSanitizePrompt } from '@/utils/promptModerator'
+import { extractVeoRaiDetailsFromErrorString } from '@/lib/vertexai/safety'
 
 export const maxDuration = 300 // 5 minutes for video generation
 export const runtime = 'nodejs'
@@ -182,490 +167,57 @@ export async function POST(
     let lastFrameUrl: string | null = null
     let veoVideoRef: string | undefined = undefined  // Store Veo video reference for video extension
     let veoVideoRefExpiry: string | undefined = undefined  // ISO timestamp when veoVideoRef expires (48 hours)
-    let methodSelectionResult: MethodSelectionResult | undefined = undefined  // Store method selection details
+    let methodSelectionResult: MethodSelectionResult | undefined = undefined
     let stemSeparation: StemSeparationResult | undefined = undefined
-    /** Filled after successful video download when ffprobe is available */
     let actualVideoDurationSeconds: number | null = null
     let requestedVideoDurationSeconds: number | undefined = undefined
 
     if (genType === 'T2V' || genType === 'I2V') {
-      // Video generation using Veo 3.1 (platform credentials)
       console.log('[Segment Asset Generation] Using Veo 3.1 for video generation')
-      
-      // Intelligent Method Selection
-      // Build context for method selection
-      const methodContext = buildMethodSelectionContext(
-        {
-          segmentId,
-          sequenceIndex: segmentIndex,
-          generatedPrompt: prompt,
-          isEstablishingShot,
-          references: {
-            startFrameUrl,
-            endFrameUrl,
-            characterIds: referenceImages?.filter(r => r.type === 'character').map((_, i) => `char-${i}`) || [],
-          }
-        },
-        { imageUrl: sceneImageUrl },
-        previousSegmentAssetUrl ? {
-          activeAssetUrl: previousSegmentAssetUrl,
-          takes: previousSegmentVeoRef ? [{ veoVideoRef: previousSegmentVeoRef }] : []
-        } : undefined,
-        totalSegments,
-        referenceImages?.filter(r => r.type === 'character').map(r => r.url) || []
-      )
-      
-      // Get optimal method (handles AUTO and validates user-selected methods)
-      const requestedMethod = (generationMethod || genType) as VideoGenerationMethod
-      methodSelectionResult = getMethodWithFallback(requestedMethod, methodContext)
-      let method = methodSelectionResult.method
-
-      // Hard guard: Veo FTV only interpolates when both URLs are present (native lastFrame).
-      if (method === 'FTV' && (!startFrameUrl?.trim?.() || !endFrameUrl?.trim?.())) {
-        const coerced: Exclude<VideoGenerationMethod, 'AUTO'> = startFrameUrl?.trim()
-          ? 'I2V'
-          : 'T2V'
-        console.warn(
-          `[Segment Asset Generation] FTV requested but missing start/end URL; coercing to ${coerced}`
-        )
-        method = coerced
-      }
-
-      console.log('[Segment Asset Generation] Requested method:', requestedMethod)
-      console.log('[Segment Asset Generation] Effective method:', method)
-      console.log('[Segment Asset Generation] Selection confidence:', methodSelectionResult.confidence)
-      console.log('[Segment Asset Generation] Reasoning:', methodSelectionResult.reasoning)
-      
-      if (methodSelectionResult.warnings) {
-        methodSelectionResult.warnings.forEach(w => console.warn('[Segment Asset Generation] Warning:', w))
-      }
-      
-      // Determine if this is an image-based generation method
-      // T2V: allow_all ONLY
-      // I2V, FTV, EXT, REF (with images): allow_adult ONLY
-      const isImageBasedMethod = method === 'I2V' || method === 'FTV' || method === 'EXT' || 
-        (method === 'REF' && referenceImages && referenceImages.length > 0)
-      
-      // Duration constraints:
-      // - FTV (interpolation) requires duration = 8
-      // - REF (reference images) requires duration = 8  
-      // - 1080p resolution requires duration = 8
-      // - Otherwise, snap to valid values: 4, 6, or 8
-      const requiresDuration8 = method === 'FTV' || 
-        (method === 'REF' && referenceImages && referenceImages.length > 0) ||
-        (resolution === '1080p')
-      
-      let effectiveDuration: 4 | 6 | 8 = 8
-      if (requiresDuration8) {
-        effectiveDuration = 8
-        if (duration && duration !== 8) {
-          console.log(`[Segment Asset Generation] Duration forced to 8s (required for ${method === 'FTV' ? 'FTV interpolation' : method === 'REF' ? 'reference images' : '1080p resolution'})`)
-        }
-      } else if (duration) {
-        // Snap to nearest valid value: 4, 6, or 8
-        if (duration <= 5) effectiveDuration = 4
-        else if (duration <= 7) effectiveDuration = 6
-        else effectiveDuration = 8
-      }
-      
-      // Build video generation options based on effective method
-      // FTV uses premium tier by default for better motion reasoning (user can override via UI)
-      const effectiveQualityTier = qualityTier || getQualityForMethod(method)
-      const videoOptions: any = {
-        aspectRatio: aspectRatio || '16:9',
-        resolution: resolution || '720p',
-        durationSeconds: effectiveDuration,
-        negativePrompt: negativePrompt,
-        personGeneration: isImageBasedMethod ? 'allow_adult' : 'allow_all',
-        quality: effectiveQualityTier
-      }
-      
-      console.log(`[Segment Asset Generation] personGeneration: ${videoOptions.personGeneration} (method: ${method}, isImageBased: ${isImageBasedMethod})`)
-      requestedVideoDurationSeconds = effectiveDuration
-      console.log(`[Segment Asset Generation] durationSeconds: ${effectiveDuration} (requested: ${duration || 'default'})`)
-      console.log(`[Segment Asset Generation] quality tier: ${effectiveQualityTier} (requested: ${qualityTier || 'auto'}, method: ${method})`)
-      
-      // Start Frame - used for I2V and FTV methods
-      if ((method === 'I2V' || method === 'FTV') && startFrameUrl) {
-        videoOptions.startFrame = startFrameUrl
-        console.log('[Segment Asset Generation] Using start frame for', method)
-      }
-      
-      // EXT (Extend) mode: True video extension using Veo's native capability
-      // Priority 1: Use sourceVideoUrl if provided (from Video Editor - user selected a specific take)
-      // Priority 2: Use previousSegmentVeoRef if available (auto-extend from previous segment)
-      // Priority 3: Fall back to I2V with the last frame as start frame
-      if (method === 'EXT') {
-        // Determine which veoVideoRef to use - explicit selection takes priority
-        const veoRefToUse = sourceVideoUrl || previousSegmentVeoRef
-        
-        if (veoRefToUse) {
-          // True video extension - use the Veo video reference from selected take or previous generation
-          // This only works if the video is still in Gemini's 2-day cache
-          videoOptions.sourceVideo = veoRefToUse
-          console.log('[Segment Asset Generation] Using TRUE EXT mode with Veo video reference:', veoRefToUse)
-          console.log('[Segment Asset Generation] Source:', sourceVideoUrl ? 'Video Editor selection' : 'Previous segment auto-chain')
-          // Note: When using sourceVideo, we don't need startFrame - Veo continues from where the video left off
-        } else if (startFrameUrl) {
-          // Fallback: No Veo reference available (video too old or from external source)
-          // Use I2V mode with the last frame as the start frame
-          videoOptions.startFrame = startFrameUrl
-          console.log('[Segment Asset Generation] EXT mode fallback: Using I2V with last frame (no valid veoVideoRef)')
-          console.log('[Segment Asset Generation] Tip: For seamless extension, generate videos back-to-back within 48 hours')
-        } else {
-          console.warn('[Segment Asset Generation] EXT mode requested but no veoVideoRef or startFrameUrl available')
-          console.warn('[Segment Asset Generation] Falling back to T2V mode')
-        }
-      } else if (method === 'FTV' && startFrameUrl) {
-          // Ensure startFrame is set for FTV
-          videoOptions.startFrame = startFrameUrl
-      } else if (method === 'I2V' && startFrameUrl) {
-          // Ensure startFrame is set for I2V
-          videoOptions.startFrame = startFrameUrl
-      }
-      
-      // End Frame - used for FTV (Frame-to-Video/Interpolation) mode
-      // FTV requires BOTH startFrame AND lastFrame for proper interpolation
-      // NOTE: Cannot use endFrame together with referenceImages per Veo 3.1 API constraints
-      if (method === 'FTV') {
-        if (endFrameUrl) {
-          videoOptions.lastFrame = endFrameUrl
-          console.log('[Segment Asset Generation] Using end frame for FTV interpolation')
-        } else {
-          // FTV without endFrame will behave like I2V - warn the user
-          console.warn('[Segment Asset Generation] WARNING: FTV mode requested but no endFrameUrl provided')
-          console.warn('[Segment Asset Generation] FTV requires both startFrame AND lastFrame for interpolation')
-          console.warn('[Segment Asset Generation] Falling back to I2V behavior (start frame only)')
-          // Add warning to method selection result for UI feedback
-          if (!methodSelectionResult.warnings) {
-            methodSelectionResult.warnings = []
-          }
-          methodSelectionResult.warnings.push(
-            'FTV mode requires an ending frame for interpolation. Without it, the video will animate from the start frame only (I2V behavior).'
-          )
-        }
-      }
-      
-      // Reference Images - used for REF method (up to 3 images for style/character consistency)
-      // IMPORTANT: referenceImages is T2V only - CANNOT be combined with startFrame (I2V)
-      // Per Veo 3.1 API: referenceImages guides T2V generation, it's NOT compatible with image parameter
-      if (method === 'REF' && referenceImages && referenceImages.length > 0) {
-        // Pass the full reference image objects to preserve type information
-        videoOptions.referenceImages = referenceImages.map(img => ({
-          url: img.url,
-          type: img.type  // 'style' or 'character' - videoClient will map to Veo's referenceType
-        }))
-        console.log('[Segment Asset Generation] Using', referenceImages.length, 'reference images (T2V mode)')
-        
-        // NOTE: Do NOT add startFrame here - referenceImages is T2V only, not compatible with I2V
-        // If user wants I2V with character consistency, they should use I2V mode without referenceImages
-      }
-      
-      // Send the user's text to Vertex as-is. Optional word substitutions are offered only
-      // after a content-policy failure (see catch handler) — reference/start/end frames often
-      // trigger filters even when the prompt is clean.
-
-      // Enhance prompt with guidePrompt for Veo 3.1 native voice/dialogue generation.
-      // FTV: narrow base text so it does not contradict keyframes; shrink audio boilerplate (RAI surface).
-      let enhancedPrompt =
-        method === 'FTV'
-          ? extractSpeaksQuotedPerformCue(prompt) ?? narrowPromptForFtvFrameLock(prompt)
-          : prompt
-      if (method === 'FTV' && !enhancedPrompt.trim()) {
-        enhancedPrompt = 'Natural motion and expression between the two keyframes.'
-      }
-
-      if (guidePrompt && guidePrompt.trim()) {
-        const gpRaw = guidePrompt.trim()
-        const gp = method === 'FTV' ? neutralizeFtvGuidePrompt(gpRaw) : gpRaw
-        if (gp) {
-          enhancedPrompt = enhancedPrompt.trim()
-            ? `${enhancedPrompt.trim()}\n\n${gp}`
-            : gp
-          if (method === 'FTV') {
-            enhancedPrompt += `\n\n${FTV_MINIMAL_NATIVE_AUDIO_HINT}`
-          } else {
-            enhancedPrompt +=
-              '\n\nInclude native synchronized audio (dialogue, ambience, and music) matching the descriptions above unless the scene should be silent.'
-          }
-          console.log(
-            '[Segment Asset Generation] Enhanced prompt with guidePrompt for native audio (raw text, no pre-sanitize)'
-          )
-          console.log('[Segment Asset Generation] Guide prompt length:', gp.length, 'chars')
-        }
-      }
-
-      // Legacy audio context — skip for FTV (duplicates scene/set mood and hurts policy match rate).
-      if (audioContext && method !== 'FTV') {
-        const atmosphericGuidance: string[] = []
-        
-        if (audioContext.emotionalTone) {
-          atmosphericGuidance.push(`Emotional atmosphere: ${audioContext.emotionalTone}`)
-        }
-        if (audioContext.suggestedAtmosphere) {
-          atmosphericGuidance.push(`Visual mood: ${audioContext.suggestedAtmosphere}`)
-        }
-        if (audioContext.hasNarration && audioContext.narrationText) {
-          atmosphericGuidance.push(`Scene accompanies narration about: ${audioContext.narrationText.slice(0, 100)}...`)
-        }
-        if (audioContext.dialogueBeat) {
-          atmosphericGuidance.push(`Dialogue moment: ${audioContext.dialogueBeat}`)
-        }
-        
-        if (atmosphericGuidance.length > 0) {
-          const atmosphericText = `[Audio-Visual Sync Context]\n${atmosphericGuidance.join('\n')}`
-          enhancedPrompt = `${enhancedPrompt}\n\n${atmosphericText}`
-          console.log('[Segment Asset Generation] Enhanced prompt with audio context')
-        }
-      }
-
-      enhancedPrompt = appendFtvTransitionStabilityTokens(
-        method === 'FTV' ? normalizeVeoSuspiciousPunctuation(enhancedPrompt) : enhancedPrompt,
-        method,
-        segmentIndex
-      )
-
-      console.log(
-        '[Segment Asset Generation] Full Veo prompt length:',
-        enhancedPrompt.length,
-        'chars (visual+motion + guide + context)'
-      )
-      
-      // Trigger video generation using Production Video Client
-      // IMPORTANT: For EXT mode with sourceVideo, we MUST use Gemini API
-      // Vertex AI does NOT support the video extension parameter - only Gemini API does
-      if (method === 'EXT' && videoOptions.sourceVideo) {
-        console.log('[Segment Asset Generation] EXT mode with sourceVideo - forcing Gemini API (Vertex AI does not support video extension)')
-        videoOptions.forceProvider = 'gemini'
-      }
-      
-      console.log('[Segment Asset Generation] Using Production Video Client for Veo 3.1')
       console.log('[Segment Asset Generation] Endpoint status:', JSON.stringify(getEndpointStatus()))
-      const veoResult = await generateProductionVideo(enhancedPrompt, videoOptions)
 
-      if (veoResult.status === 'FAILED') {
-        // Check if this is a rate limit error - return 429 instead of 500
-        if (veoResult.error?.toLowerCase().includes('rate limit')) {
-          const waitSeconds = (veoResult as any).estimatedWaitSeconds || 60
-          console.log('[Segment Asset Generation] Rate limited, returning 429 with retry after:', waitSeconds, 'seconds')
-          return NextResponse.json(
-            { 
-              error: veoResult.error,
-              retryAfter: waitSeconds,
-              isRateLimited: true
-            },
-            { status: 429 }
-          )
-        }
-        throw new Error(veoResult.error || 'Video generation failed')
-      }
+      const videoResult = await generateSegmentVideoCore({
+        segmentId,
+        projectId,
+        sceneId,
+        userId: String(session.user.id),
+        prompt,
+        negativePrompt,
+        genType,
+        generationMethod: generationMethod as VideoGenerationMethod | undefined,
+        startFrameUrl,
+        endFrameUrl,
+        sourceVideoUrl,
+        previousSegmentVeoRef,
+        previousSegmentAssetUrl,
+        referenceImages,
+        sceneImageUrl,
+        segmentIndex,
+        totalSegments,
+        duration,
+        aspectRatio,
+        resolution,
+        qualityTier,
+        guidePrompt,
+        isEstablishingShot,
+        audioContext,
+        existingStemSourceAudioUrl,
+        existingStemSourceHash,
+        existingStemStatus,
+        existingStemJobId,
+        requireVeoRefForExt:
+          generationMethod === 'EXT' && !sourceVideoUrl && !previousSegmentVeoRef,
+      })
 
-      // If video is queued/processing, wait for completion (up to 4 minutes)
-      let finalResult: ProductionVideoResult = veoResult
-      if (veoResult.status === 'QUEUED' || veoResult.status === 'PROCESSING') {
-        console.log('[Segment Asset Generation] Waiting for video completion...')
-        console.log('[Segment Asset Generation] Provider:', veoResult.provider, 'Region:', veoResult.region)
-        finalResult = await waitForProductionVideoCompletion(
-          veoResult.operationName!,
-          veoResult.provider, // Route to correct provider
-          240, // 4 minutes max wait
-          10   // Poll every 10 seconds
-        )
-        
-        // Check if Vertex AI returned a content policy error during polling
-        // NOTE: Gemini API fallback is NOT available for video generation
-        // Veo models only exist on Vertex AI, not on generativelanguage.googleapis.com
-        // For content policy errors, we return a clear error message
-        if (finalResult.status === 'FAILED' && finalResult.provider === 'vertex' && finalResult.error) {
-          const errorLower = finalResult.error.toLowerCase()
-          const isContentPolicyError = 
-            errorLower.includes('usage guidelines') ||
-            errorLower.includes('content policy') ||
-            errorLower.includes('safety') ||
-            errorLower.includes('policy violation') ||
-            errorLower.includes('blocked') ||
-            errorLower.includes('prohibited') ||
-            finalResult.error.includes('Code 3') // Vertex AI content policy error code
-          
-          if (isContentPolicyError) {
-            console.log('[Segment Asset Generation] Vertex AI content policy error - no alternative video API available')
-            console.log('[Segment Asset Generation] Original error:', finalResult.error)
-            throw new Error(
-              `Content Policy Violation: Vertex AI blocked this video request (see safety filters). ` +
-                `Details: ${finalResult.error}`
-            )
-          }
-        }
-      }
-
-      if (finalResult.status !== 'COMPLETED' || !finalResult.videoUrl) {
-        throw new Error(finalResult.error || 'Video generation did not complete')
-      }
-
-      // Handle file download if needed
-      let videoBuffer: Buffer | null = null
-      if (finalResult.videoUrl.startsWith('file:')) {
-        console.log('[Segment Asset Generation] Downloading video from Files API...')
-        console.log('[Segment Asset Generation] Provider:', finalResult.provider)
-        videoBuffer = await downloadProductionVideo(finalResult.videoUrl, finalResult.provider)
-        if (!videoBuffer) {
-          throw new Error('Failed to download video file')
-        }
-      } else if (finalResult.videoUrl.startsWith('data:video/')) {
-        // Handle inline base64 video data from Veo 3.1
-        console.log('[Segment Asset Generation] Processing inline base64 video data...')
-        const base64Match = finalResult.videoUrl.match(/^data:video\/[^;]+;base64,(.+)$/)
-        if (base64Match) {
-          videoBuffer = Buffer.from(base64Match[1], 'base64')
-          console.log('[Segment Asset Generation] Decoded video buffer size:', videoBuffer.length, 'bytes')
-        } else {
-          throw new Error('Invalid base64 video data format')
-        }
-      }
-
-      const probeAndLogDuration = async (buf: Buffer) => {
-        const sec = await getVideoDurationFromBuffer(buf)
-        if (sec != null) {
-          actualVideoDurationSeconds = sec
-          if (
-            requestedVideoDurationSeconds != null &&
-            Math.abs(sec - requestedVideoDurationSeconds) > 0.75
-          ) {
-            console.warn(
-              '[Segment Asset Generation] Output duration differs from request:',
-              { actualSeconds: sec, requestedSeconds: requestedVideoDurationSeconds }
-            )
-          }
-        }
-      }
-
-      // Upload video to blob storage
-      if (videoBuffer) {
-        await probeAndLogDuration(videoBuffer)
-        console.log('[Segment Asset Generation] Uploading video buffer to blob storage...')
-        assetUrl = await uploadVideoToBlob(
-          videoBuffer,
-          `segments/${segmentId}-${Date.now()}.mp4`
-        )
-        console.log('[Segment Asset Generation] Video uploaded to:', assetUrl.substring(0, 100))
-      } else if (finalResult.videoUrl.startsWith('http')) {
-        // Download from URL and re-upload to our storage
-        // Gemini Files API requires API key for authentication
-        let fetchUrl = finalResult.videoUrl
-        if (finalResult.videoUrl.includes('generativelanguage.googleapis.com')) {
-          const apiKey = process.env.GEMINI_API_KEY
-          if (apiKey) {
-            // Add API key if URL doesn't already have one
-            const url = new URL(finalResult.videoUrl)
-            if (!url.searchParams.has('key')) {
-              url.searchParams.set('key', apiKey)
-            }
-            fetchUrl = url.toString()
-          }
-        }
-        console.log('[Segment Asset Generation] Downloading video from:', fetchUrl.replace(/key=[^&]+/, 'key=API_KEY'))
-        const videoResponse = await fetch(fetchUrl)
-        if (!videoResponse.ok) {
-          console.error('[Segment Asset Generation] Video fetch failed:', videoResponse.status, videoResponse.statusText)
-          throw new Error(`Failed to fetch video from Veo: ${videoResponse.status}`)
-        }
-        const videoArrayBuffer = await videoResponse.arrayBuffer()
-        console.log('[Segment Asset Generation] Downloaded video size:', videoArrayBuffer.byteLength, 'bytes')
-        const fetchedBuf = Buffer.from(videoArrayBuffer)
-        await probeAndLogDuration(fetchedBuf)
-        assetUrl = await uploadVideoToBlob(
-          fetchedBuf,
-          `segments/${segmentId}-${Date.now()}.mp4`
-        )
-      } else {
-        // Use the URL directly if it's already a valid URL
-        assetUrl = finalResult.videoUrl
-      }
-      
-      assetType = 'video'
-      
-      // Store Veo video reference for future video extension
-      // This allows using Veo's native video extension with this video
-      veoVideoRef = finalResult.veoVideoRef
-      veoVideoRefExpiry = finalResult.veoVideoRefExpiry
-      if (veoVideoRef) {
-        console.log('[Segment Asset Generation] Stored Veo video reference:', veoVideoRef)
-        if (finalResult.veoVideoRefExpiry) {
-          console.log('[Segment Asset Generation] Veo reference expires:', finalResult.veoVideoRefExpiry)
-        }
-      }
-
-      // Extract last frame for I2V continuity
-      try {
-        lastFrameUrl = await extractAndStoreLastFrame(assetUrl, segmentId)
-        console.log('[Segment Asset Generation] Extracted last frame:', lastFrameUrl)
-      } catch (error) {
-        console.error('[Segment Asset Generation] Failed to extract last frame:', error)
-        // Continue without last frame - not critical
-      }
-
-      // Optional post-process: separate speech/background stems from generated video audio.
-      // Safe fallback: render pipeline still succeeds even if stems fail.
-      const stemFeatureEnabled = process.env.STEM_SEPARATION_ENABLED === 'true'
-      if (stemFeatureEnabled) {
-        try {
-          const stemStart = Date.now()
-          const sourceForStem = assetUrl
-          const sourceHash = computeSourceHash(sourceForStem)
-          if (
-            existingStemStatus === 'complete' &&
-            (existingStemSourceHash === sourceHash || existingStemSourceAudioUrl === sourceForStem)
-          ) {
-            stemSeparation = {
-              status: 'skipped',
-              provider: (process.env.STEM_SEPARATION_PROVIDER || 'none').toLowerCase(),
-              sourceHash,
-              sourceAudioUrl: sourceForStem,
-              jobId: existingStemJobId,
-              error: 'Stem separation skipped: source unchanged and already complete',
-            }
-          } else {
-            stemSeparation = await separateAudioStemsWithRetry(sourceForStem, {
-              maxAttempts: 3,
-              mode: (process.env.STEM_SEPARATION_MODE || 'async').toLowerCase() as 'sync' | 'async',
-              context: {
-                projectId,
-                sceneId,
-                segmentId,
-                userId: String(session.user.id),
-              },
-              model: process.env.DEMUCS_MODEL || 'htdemucs_ft',
-            })
-          }
-          const stemLatencyMs = Date.now() - stemStart
-          stemSeparation = {
-            ...stemSeparation,
-            sourceHash: stemSeparation.sourceHash || sourceHash,
-            sourceAudioUrl: stemSeparation.sourceAudioUrl || sourceForStem,
-            processingMs: stemSeparation.processingMs || stemLatencyMs,
-          }
-          console.log('[Segment Asset Generation] Stem metrics', {
-            segmentId,
-            status: stemSeparation.status,
-            provider: stemSeparation.provider,
-            latencyMs: stemLatencyMs,
-            fallback: stemSeparation.status !== 'complete',
-          })
-          if (stemSeparation.status !== 'complete') {
-            console.warn('[Segment Asset Generation] Stem separation fallback:', stemSeparation.error || stemSeparation.status)
-          } else {
-            console.log('[Segment Asset Generation] Stem separation complete')
-          }
-        } catch (stemError: any) {
-          stemSeparation = {
-            status: 'failed',
-            provider: (process.env.STEM_SEPARATION_PROVIDER || 'none').toLowerCase(),
-            error: stemError?.message || 'Stem separation failed unexpectedly',
-          }
-        }
-      } else {
-        stemSeparation = { status: 'skipped', provider: 'none' }
-      }
+      assetUrl = videoResult.assetUrl
+      assetType = videoResult.assetType
+      lastFrameUrl = videoResult.lastFrameUrl
+      veoVideoRef = videoResult.veoVideoRef
+      veoVideoRefExpiry = videoResult.veoVideoRefExpiry
+      methodSelectionResult = videoResult.methodSelection
+      stemSeparation = videoResult.stemSeparation
+      actualVideoDurationSeconds = videoResult.actualDurationSeconds ?? null
+      requestedVideoDurationSeconds = videoResult.requestedDurationSeconds
 
     } else if (genType === 'T2I') {
       // Image generation using Gemini API
@@ -712,6 +264,27 @@ export async function POST(
     })
   } catch (error: any) {
     console.error('[Segment Asset Generation] Error:', error)
+
+    if (error instanceof SegmentVideoRateLimitError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          retryAfter: error.retryAfter,
+          isRateLimited: true,
+        },
+        { status: 429 }
+      )
+    }
+
+    if (error instanceof SegmentVideoExtRefRequiredError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: 'VEO_EXT_REF_REQUIRED',
+        },
+        { status: 400 }
+      )
+    }
     
     // Parse and simplify Vertex AI error messages
     let errorMessage = error.message || 'Failed to generate asset'

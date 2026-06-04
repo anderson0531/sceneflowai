@@ -577,7 +577,15 @@ export interface SceneSegment {
   beatId?: string
   /** True when this segment continues a split dialogue beat via EXT. */
   veoTimelineContinuation?: boolean
-  
+  /** Veo 3.1 extension chain metadata (initial 8s clip + optional +7s EXT steps). */
+  videoChain?: {
+    partIndex: number
+    partCount: number
+    chainMethod: 'initial' | 'extension'
+    extensionSeconds?: number
+    extensionStep?: number
+  }
+
   // ============================================================================
   // Keyframe State Machine Fields
   // ============================================================================

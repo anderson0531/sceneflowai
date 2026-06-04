@@ -76,6 +76,31 @@ describe('deriveSegmentsFromBeats', () => {
     const continuation = result.segments.find((s) => s.veoTimelineContinuation)
     expect(continuation?.transitionType).toBe('CONTINUE')
     expect(continuation?.dialoguePortion?.partIndex).toBeGreaterThan(0)
+    expect(continuation?.generationMethod).toBe('EXT')
+    expect(continuation?.videoChain?.chainMethod).toBe('extension')
+  })
+
+  it('auto-splits long dialogue without manual extendBeatId', () => {
+    const longLine =
+      'This is a long spoken line that should exceed eight seconds of dialogue when read at a natural pace. '.repeat(
+        4
+      )
+    const result = deriveSegmentsFromBeats(
+      approvedScene([
+        {
+          beatId: 'bt_auto',
+          sequenceIndex: 0,
+          kind: 'dialogue',
+          character: 'Alex',
+          line: longLine,
+          lineId: 'ln_auto',
+        },
+      ])
+    )
+    expect(result.errors).toHaveLength(0)
+    expect(result.segments.length).toBeGreaterThan(1)
+    expect(result.segments[0].generationMethod).toBe('I2V')
+    expect(result.segments.some((s) => s.generationMethod === 'EXT')).toBe(true)
   })
 
   it('applyBeatSplitAndDerive updates scene beats and returns segments', () => {

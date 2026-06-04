@@ -496,6 +496,21 @@ export function SegmentStudio({
             </button>
           </div>
           <div className="flex items-center gap-1.5">
+            {(segment.videoChain?.partCount ?? 0) > 1 && (
+              <span
+                className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
+                title={
+                  segment.videoChain?.chainMethod === 'extension'
+                    ? `Continuous beat: +${segment.videoChain.extensionSeconds ?? 7}s per extension step`
+                    : 'Multi-part continuous beat'
+                }
+              >
+                Continuous
+                {segment.videoChain?.chainMethod === 'extension'
+                  ? ` +${segment.videoChain.extensionSeconds ?? 7}s`
+                  : ''}
+              </span>
+            )}
             {segment.generationMethod && (
               <span className={cn(
                 "text-[9px] font-bold px-1.5 py-0.5 rounded",
@@ -504,7 +519,9 @@ export function SegmentStudio({
                 segment.generationMethod === 'FTV' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
                 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
               )}>
-                {segment.generationMethod}
+                {segment.generationMethod === 'EXT' && segment.veoTimelineContinuation
+                  ? 'EXT (chain)'
+                  : segment.generationMethod}
               </span>
             )}
             <span className={cn("text-[9px] font-medium px-1.5 py-0.5 rounded", getStatusBadgeClasses(segment.status))}>

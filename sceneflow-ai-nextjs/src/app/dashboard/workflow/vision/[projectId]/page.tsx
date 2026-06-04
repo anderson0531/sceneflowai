@@ -2539,6 +2539,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         endFrameUrl?: string
         referenceImages?: Array<{ url: string; type: 'style' | 'character' }>
         guidePrompt?: string  // Voice/dialogue/SFX instructions for Veo 3.1 audio
+        previousSegmentVeoRef?: string
       }
     ) => {
       if (!project?.id) {
@@ -2584,7 +2585,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           prevSeg?.activeAssetUrl && prevSeg.assetType === 'video'
             ? prevSeg.activeAssetUrl
             : undefined
-        const previousSegmentVeoRef = prevSeg?.takes?.[0]?.veoVideoRef
+        const previousSegmentVeoRef =
+          options?.previousSegmentVeoRef ?? prevSeg?.takes?.[0]?.veoVideoRef
 
         const autoExtContinuation =
           segment.veoTimelineContinuation && previousSegmentVeoRef && !options?.generationMethod

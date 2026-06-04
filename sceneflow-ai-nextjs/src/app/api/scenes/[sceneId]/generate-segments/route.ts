@@ -2539,6 +2539,7 @@ function enforceMaxSegmentDuration(
                 estimated_duration: part.veoDuration,
                 assigned_dialogue_indices: [lineIdx],
                 veoTimelineContinuation: part.partIndex > 0,
+                generation_method: part.partIndex > 0 ? 'EXT' : seg.generation_method,
                 dialogue_text_excerpt: part.excerpt,
                 dialogue_part_index: part.partIndex,
                 dialogue_part_count: part.partCount,
@@ -2607,6 +2608,10 @@ function enforceMaxSegmentDuration(
         video_prompt_elements: seg.video_prompt_elements,
         assigned_dialogue_indices: partDialogue,
         veoTimelineContinuation: dialogueIndices.length <= 1 && numParts > 1 && i > 0,
+        generation_method:
+          dialogueIndices.length <= 1 && numParts > 1 && i > 0
+            ? 'EXT'
+            : seg.generation_method,
         emotional_beat: isFirstPart ? seg.emotional_beat : `${seg.emotional_beat} (continued)`,
         end_frame_description: isLastPart
           ? seg.end_frame_description

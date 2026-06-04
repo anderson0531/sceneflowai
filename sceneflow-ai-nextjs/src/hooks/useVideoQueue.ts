@@ -25,6 +25,11 @@ import type {
   VideoGenerationMethod,
 } from '@/components/vision/scene-production/types'
 import { useSegmentConfigs, type SegmentGuideContext } from './useSegmentConfig'
+import {
+  isVeoChainContinuation,
+  resolveVeoRefForExtension,
+  segmentHasVeoChain,
+} from '@/lib/video/veoChainQueue'
 
 export interface VideoQueueState {
   /** All queue items with their configs */
@@ -91,9 +96,12 @@ export function useVideoQueue(
       resolution?: '720p' | '1080p'
       generationMethod?: VideoGenerationMethod
       guidePrompt?: string
+      previousSegmentVeoRef?: string
     }
   ) => Promise<void>,
-  segmentGuideContext?: SegmentGuideContext
+  segmentGuideContext?: SegmentGuideContext,
+  /** Fresh segment list after each generate (for EXT veoVideoRef handoff). */
+  getSegments?: () => SceneSegment[]
 ): UseVideoQueueReturn {
   // QUARANTINE GUARD: Delay initialization by one frame to let module graph settle
   // This prevents TDZ errors from rapid re-renders during initial mount
@@ -274,7 +282,15 @@ export function useVideoQueue(
     }
     
     const { mode, priority, delayBetween, selectedIds, overrideConfigs } = options
-    const concurrency = options.concurrency || 1
+    const requestedConcurrency = options.concurrency || 1
+    const chainInBatch = queue.some((item) => {
+      const seg = segments.find((s) => s.segmentId === item.segmentId)
+      return seg && segmentHasVeoChain(seg)
+    })
+    const concurrency = chainInBatch ? 1 : requestedConcurrency
+    if (chainInBatch && requestedConcurrency > 1) {
+      toast.info('Veo extension chain detected — rendering parts one at a time')
+    }
     
     // Filter queue based on mode
     let itemsToProcess = queue.filter((item) => {
@@ -349,9 +365,25 @@ export function useVideoQueue(
         }
         
         const config = overrideConfigs?.get(item.segmentId) || item.config
+        const liveSegments = getSegments?.() ?? segments
+        const liveSegment = liveSegments.find((s) => s.segmentId === item.segmentId)
         
         try {
           let batchMethod = config.mode
+          if (liveSegment && isVeoChainContinuation(liveSegment)) {
+            const veoRef = resolveVeoRefForExtension(liveSegments, liveSegment)
+            if (veoRef) {
+              batchMethod = 'EXT'
+            } else if (batchMethod === 'EXT' || liveSegment.generationMethod === 'EXT') {
+              toast.error(
+                `Generate the previous part of this beat first (segment ${item.segmentId.slice(0, 6)}…). Veo extension references expire after ~2 days.`
+              )
+              failed++
+              setFailedCount(failed)
+              continue
+            }
+          }
+
           let startUrl = config.startFrameUrl?.trim() ? config.startFrameUrl : undefined
           let endUrl = config.endFrameUrl?.trim() ? config.endFrameUrl : undefined
           if (batchMethod === 'FTV' && (!startUrl || !endUrl)) {
@@ -365,6 +397,11 @@ export function useVideoQueue(
             batchMethod === 'FTV' || batchMethod === 'I2V' || batchMethod === 'EXT'
               ? 'I2V'
               : 'T2V'
+
+          const previousSegmentVeoRef =
+            liveSegment && batchMethod === 'EXT'
+              ? resolveVeoRefForExtension(liveSegments, liveSegment)
+              : undefined
           
           await onGenerate(
             sceneId,
@@ -373,14 +410,15 @@ export function useVideoQueue(
             {
               startFrameUrl: startUrl,
               endFrameUrl: endUrl,
-              sourceVideoUrl: config.sourceVideoUrl || undefined,
+              sourceVideoUrl: previousSegmentVeoRef || config.sourceVideoUrl || undefined,
               prompt: config.prompt,
               negativePrompt: config.negativePrompt || undefined,
-              duration: config.duration,
+              duration: batchMethod === 'EXT' ? 8 : config.duration,
               aspectRatio: config.aspectRatio,
-              resolution: config.resolution,
+              resolution: batchMethod === 'EXT' ? '720p' : config.resolution,
               generationMethod: batchMethod,
-              guidePrompt: config.guidePrompt,  // Voice/dialogue/SFX for Veo 3.1 audio
+              guidePrompt: config.guidePrompt,
+              previousSegmentVeoRef,
             }
           )
           
@@ -451,7 +489,7 @@ export function useVideoQueue(
     } else {
       toast.warning(`Rendered ${completed} segments, ${failed} failed`)
     }
-  }, [queue, sceneId, onGenerate, cancelRequested])
+  }, [queue, sceneId, onGenerate, cancelRequested, segments, getSegments])
   
   // Cancel rendering
   const cancelRendering = useCallback(() => {

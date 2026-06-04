@@ -3,10 +3,16 @@
  */
 
 import {
+  estimateSpokenDurationSeconds,
   planDialogueLineSplits,
   VEO_DIALOGUE_CLIP_MAX_SEC,
 } from '@/lib/scene/dialogueSegmentSplit'
 import { snapToVeoDuration } from '@/lib/scene/veoDuration'
+import {
+  planContinuousDialogueBeat,
+  shouldAutoSplitForExtensionChain,
+  type VeoChainPartPlan,
+} from '@/lib/scene/veoExtensionChain'
 import {
   applyBeatsToScene,
   getSceneBeats,
@@ -14,23 +20,13 @@ import {
 } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
+import type { VideoGenerationMethod } from '@/components/vision/scene-production/types'
 
 function mintSegmentId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return `seg_${crypto.randomUUID().slice(0, 12)}`
   }
   return `seg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
-}
-
-function beatDurationSeconds(beat: SceneBeat): number {
-  if (typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0) {
-    return snapToVeoDuration(beat.durationSeconds)
-  }
-  if (beat.kind === 'action') return 8
-  const spoken = beat.line?.trim() ?? ''
-  if (!spoken) return 8
-  const parts = planDialogueLineSplits(spoken, VEO_DIALOGUE_CLIP_MAX_SEC)
-  return parts[0]?.veoDuration ?? 8
 }
 
 function buildEndFramePrompt(beat: SceneBeat): string {
@@ -43,7 +39,7 @@ function buildEndFramePrompt(beat: SceneBeat): string {
   return `Character completes speaking gesture; subtle expression and body motion`
 }
 
-function buildVideoPrompt(beat: SceneBeat): string {
+function buildVideoPrompt(beat: SceneBeat, spokenText?: string): string {
   if (beat.kind === 'action') {
     return beat.actionDescription ?? 'Scene action unfolds with natural motion'
   }
@@ -51,8 +47,8 @@ function buildVideoPrompt(beat: SceneBeat): string {
     return `Visual backdrop for narration; atmospheric motion, no on-screen dialogue text`
   }
   const character = beat.character ?? 'Character'
-  const line = beat.line ?? ''
-  return `${character} speaks with natural lip sync: "${line.replace(/"/g, "'")}"`
+  const line = (spokenText ?? beat.line ?? '').replace(/"/g, "'")
+  return `${character} speaks with natural lip sync: "${line}"`
 }
 
 function beatToSegment(
@@ -64,11 +60,28 @@ function beatToSegment(
     partCount?: number
     excerpt?: string
     continuation?: boolean
+    duration?: number
+    generationMethod?: VideoGenerationMethod
+    chainPart?: VeoChainPartPlan
   } = {}
 ): { segment: SceneSegment; duration: number } {
-  const duration = beatDurationSeconds(beat)
-  const endTime = startTime + duration
   const spokenText = opts.excerpt ?? beat.line ?? ''
+  const duration =
+    opts.duration ??
+    opts.chainPart?.timelineSeconds ??
+    (beat.kind === 'action'
+      ? 8
+      : snapToVeoDuration(
+          typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
+            ? beat.durationSeconds
+            : estimateSpokenDurationSeconds(spokenText) || 8
+        ))
+  const endTime = startTime + duration
+
+  const generationMethod: VideoGenerationMethod =
+    opts.generationMethod ??
+    opts.chainPart?.method ??
+    'I2V'
 
   const segment: SceneSegment = {
     segmentId: mintSegmentId(),
@@ -91,7 +104,7 @@ function beatToSegment(
             },
           ]
         : [],
-    generationMethod: 'I2V',
+    generationMethod,
     references: {
       startFrameUrl: beat.storyboardImageUrl,
       endFrameUrl: undefined,
@@ -101,10 +114,22 @@ function beatToSegment(
     },
     startFramePrompt: beat.storyboardImagePrompt ?? beat.actionDescription ?? spokenText,
     endFramePrompt: buildEndFramePrompt(beat),
-    generatedPrompt: buildVideoPrompt({ ...beat, line: spokenText || beat.line }),
+    generatedPrompt: buildVideoPrompt(beat, spokenText),
     action: beat.actionDescription ?? '',
     beatId: beat.beatId,
     veoTimelineContinuation: opts.continuation ?? false,
+    ...(opts.chainPart
+      ? {
+          videoChain: {
+            partIndex: opts.chainPart.partIndex,
+            partCount: opts.chainPart.partCount,
+            chainMethod: opts.chainPart.chainMethod,
+            extensionSeconds:
+              opts.chainPart.chainMethod === 'extension' ? 7 : undefined,
+            extensionStep: opts.chainPart.extensionStep,
+          },
+        }
+      : {}),
     ...(opts.partCount && opts.partCount > 1
       ? {
           dialoguePortion: {
@@ -118,6 +143,83 @@ function beatToSegment(
   }
 
   return { segment, duration }
+}
+
+function resolveSplitExcerpts(beat: SceneBeat): string[] | null {
+  if (beat.splitRecommendation && beat.splitRecommendation.excerpts.length > 1) {
+    return beat.splitRecommendation.excerpts
+  }
+  const line = beat.line?.trim()
+  if (!line) return null
+  if (!shouldAutoSplitForExtensionChain(line, beat.durationSeconds)) {
+    return null
+  }
+  const chain = planContinuousDialogueBeat(line)
+  if (chain.parts.length <= 1) return null
+  return chain.parts.map((p) => p.excerpt)
+}
+
+function appendSegmentsFromBeat(
+  beat: SceneBeat,
+  segments: SceneSegment[],
+  startTime: number,
+  sequenceIndex: number
+): { startTime: number; sequenceIndex: number } {
+  const isSpoken = beat.kind === 'dialogue' || beat.kind === 'narration'
+  const line = beat.line?.trim() ?? ''
+
+  if (isSpoken && line && shouldAutoSplitForExtensionChain(line, beat.durationSeconds)) {
+    const chain = planContinuousDialogueBeat(line)
+    for (const part of chain.parts) {
+      const { segment, duration } = beatToSegment(beat, sequenceIndex, startTime, {
+        partIndex: part.partIndex,
+        partCount: part.partCount,
+        excerpt: part.excerpt,
+        continuation: part.partIndex > 0,
+        duration: part.timelineSeconds,
+        generationMethod: part.method,
+        chainPart: part,
+      })
+      segments.push(segment)
+      startTime += duration
+      sequenceIndex++
+    }
+    return { startTime, sequenceIndex }
+  }
+
+  const manualExcerpts =
+    beat.needsSplit && beat.splitRecommendation
+      ? beat.splitRecommendation.excerpts
+      : resolveSplitExcerpts(beat)
+
+  if (manualExcerpts && manualExcerpts.length > 1) {
+    const chain = planContinuousDialogueBeat(line)
+    const parts =
+      chain.parts.length === manualExcerpts.length
+        ? chain.parts
+        : chain.parts.slice(0, manualExcerpts.length)
+    for (let i = 0; i < manualExcerpts.length; i++) {
+      const part = parts[i]
+      const excerpt = manualExcerpts[i]
+      const { segment, duration } = beatToSegment(beat, sequenceIndex, startTime, {
+        partIndex: i,
+        partCount: manualExcerpts.length,
+        excerpt,
+        continuation: i > 0,
+        duration: part?.timelineSeconds,
+        generationMethod: part?.method ?? (i > 0 ? 'EXT' : 'I2V'),
+        chainPart: part,
+      })
+      segments.push(segment)
+      startTime += duration
+      sequenceIndex++
+    }
+    return { startTime, sequenceIndex }
+  }
+
+  const { segment, duration } = beatToSegment(beat, sequenceIndex, startTime)
+  segments.push(segment)
+  return { startTime: startTime + duration, sequenceIndex: sequenceIndex + 1 }
 }
 
 export interface DeriveSegmentsResult {
@@ -157,32 +259,9 @@ export function deriveSegmentsFromBeats(
   let sequenceIndex = 0
 
   for (const beat of beats) {
-    const isSpoken = beat.kind === 'dialogue' || beat.kind === 'narration'
-    const shouldSplit =
-      isSpoken &&
-      beat.needsSplit &&
-      beat.splitRecommendation &&
-      beat.splitRecommendation.excerpts.length > 1
-
-    if (shouldSplit && beat.splitRecommendation) {
-      const { excerpts, partCount } = beat.splitRecommendation
-      for (let i = 0; i < excerpts.length; i++) {
-        const { segment, duration } = beatToSegment(beat, sequenceIndex, startTime, {
-          partIndex: i,
-          partCount,
-          excerpt: excerpts[i],
-          continuation: i > 0,
-        })
-        segments.push(segment)
-        startTime += duration
-        sequenceIndex++
-      }
-    } else {
-      const { segment, duration } = beatToSegment(beat, sequenceIndex, startTime)
-      segments.push(segment)
-      startTime += duration
-      sequenceIndex++
-    }
+    const next = appendSegmentsFromBeat(beat, segments, startTime, sequenceIndex)
+    startTime = next.startTime
+    sequenceIndex = next.sequenceIndex
   }
 
   return { segments, errors }

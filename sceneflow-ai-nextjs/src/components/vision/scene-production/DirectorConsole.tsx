@@ -300,7 +300,14 @@ function DirectorConsoleRoot({
     updateConfig,
     processQueue,
     cancelRendering,
-  } = useVideoQueue(segments, sceneId, sceneImageUrl, onGenerate, segmentGuideContext)
+  } = useVideoQueue(
+    segments,
+    sceneId,
+    sceneImageUrl,
+    onGenerate,
+    segmentGuideContext,
+    () => productionData?.segments ?? EMPTY_SEGMENTS
+  )
   
   // Selected segment for DirectorDialog
   const [selectedSegment, setSelectedSegment] = useState<SceneSegment | null>(null)

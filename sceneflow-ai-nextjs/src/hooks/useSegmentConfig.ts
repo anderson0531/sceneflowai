@@ -18,6 +18,7 @@
  */
 
 import { useMemo } from 'react'
+import { resolveVeoRefForExtension } from '@/lib/video/veoChainQueue'
 import type { SceneSegment, VideoGenerationMethod } from '@/components/vision/scene-production/types'
 import type { VideoGenerationConfig, ApprovalStatus } from '@/components/vision/scene-production/types'
 import {
@@ -313,8 +314,31 @@ function generateVisualPrompt(segment: SceneSegment, sceneImageUrl?: string): st
  */
 function detectRecommendedMethod(
   segment: SceneSegment,
-  sceneImageUrl?: string
+  sceneImageUrl?: string,
+  allSegments?: SceneSegment[]
 ): VideoGenerationMethod {
+  if (
+    segment.veoTimelineContinuation ||
+    segment.generationMethod === 'EXT' ||
+    segment.videoChain?.chainMethod === 'extension'
+  ) {
+    const segments = allSegments ?? []
+    const partIndex =
+      segment.dialoguePortion?.partIndex ?? segment.videoChain?.partIndex ?? segment.sequenceIndex
+    if (partIndex > 0) {
+      const prev =
+        segments.find(
+          (s) =>
+            s.beatId === segment.beatId &&
+            (s.dialoguePortion?.partIndex === partIndex - 1 ||
+              s.videoChain?.partIndex === partIndex - 1)
+        ) ?? segments.find((s) => s.sequenceIndex === segment.sequenceIndex - 1)
+      if (prev?.takes?.[0]?.veoVideoRef?.trim()) {
+        return 'EXT'
+      }
+    }
+  }
+
   const masterSceneFrame =
     segment.sequenceIndex === 0 && sceneImageUrl?.trim()
       ? sceneImageUrl.trim()
@@ -533,7 +557,7 @@ export function useSegmentConfig(
   guideContext?: SegmentGuideContext
 ): SegmentConfigResult {
   return useMemo(() => {
-    const method = detectRecommendedMethod(segment, sceneImageUrl)
+    const method = detectRecommendedMethod(segment, sceneImageUrl, [segment])
     const confidence = calculateConfidence(segment, method)
     const approvalStatus = determineApprovalStatus(segment)
     
@@ -560,14 +584,20 @@ export function useSegmentConfig(
           )
         : ''
     
+    const extVeoRef =
+      method === 'EXT' ? resolveVeoRefForExtension([segment], segment) : undefined
+
     const config: VideoGenerationConfig = {
       mode: method,
       prompt,
       motionPrompt,
       visualPrompt,
       aspectRatio: '16:9',
-      resolution: '720p',
-      duration: Math.max(4, Math.min(8, Math.round(segment.endTime - segment.startTime))),
+      resolution: method === 'EXT' ? '720p' : '720p',
+      duration:
+        method === 'EXT'
+          ? 8
+          : Math.max(4, Math.min(8, Math.round(segment.endTime - segment.startTime))),
       negativePrompt: '',
       approvalStatus,
       confidence,
@@ -575,7 +605,11 @@ export function useSegmentConfig(
       // Asset URLs for generation
       startFrameUrl: resolvedStart,
       endFrameUrl: resolvedEnd,
-      sourceVideoUrl: segment.activeAssetUrl && segment.assetType === 'video' ? segment.activeAssetUrl : null,
+      sourceVideoUrl:
+        extVeoRef ??
+        (segment.activeAssetUrl && segment.assetType === 'video'
+          ? segment.activeAssetUrl
+          : null),
     }
     
     // Method labels for UI
@@ -633,7 +667,7 @@ export function useSegmentConfigs(
     )
     
     for (const segment of validSegments) {
-      const method = detectRecommendedMethod(segment, sceneImageUrl)
+      const method = detectRecommendedMethod(segment, sceneImageUrl, validSegments)
       const confidence = calculateConfidence(segment, method)
       const approvalStatus = determineApprovalStatus(segment)
       
@@ -657,6 +691,9 @@ export function useSegmentConfigs(
             )
           : ''
       
+      const extVeoRef =
+        method === 'EXT' ? resolveVeoRefForExtension(validSegments, segment) : undefined
+
       const config: VideoGenerationConfig = {
         mode: method,
         prompt,
@@ -664,14 +701,21 @@ export function useSegmentConfigs(
         visualPrompt,
         aspectRatio: '16:9',
         resolution: '720p',
-        duration: Math.max(4, Math.min(8, Math.round(segment.endTime - segment.startTime))),
+        duration:
+          method === 'EXT'
+            ? 8
+            : Math.max(4, Math.min(8, Math.round(segment.endTime - segment.startTime))),
         negativePrompt: '',
         approvalStatus,
         confidence,
         guidePrompt: guidePrompt || undefined,
         startFrameUrl: resolvedStart,
         endFrameUrl: resolvedEnd,
-        sourceVideoUrl: segment.activeAssetUrl && segment.assetType === 'video' ? segment.activeAssetUrl : null,
+        sourceVideoUrl:
+          extVeoRef ??
+          (segment.activeAssetUrl && segment.assetType === 'video'
+            ? segment.activeAssetUrl
+            : null),
       }
       
       const methodLabels: Record<VideoGenerationMethod, string> = {
