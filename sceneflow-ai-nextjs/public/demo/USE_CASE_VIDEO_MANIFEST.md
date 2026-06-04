@@ -30,7 +30,7 @@ Automation: [`scripts/fetch-use-case-demos.mjs`](../../scripts/fetch-use-case-de
 
 | Example ID | Label | Hash | Video | Source |
 |------------|-------|------|-------|--------|
-| `k12-higher-ed` | K-12 & Higher Ed | `#use-cases-knowledge-k12-higher-ed` | Ready — Living Wall (`Living Wall 4.mp4`) | SceneFlow demo |
+| `k12-higher-ed` | K-12 & Higher Ed | `#use-cases-knowledge-k12-higher-ed` | Ready — Astrophysics (`Astrophysics.mp4`) | SceneFlow demo |
 | `corporate-ld` | Corporate L&D | `#use-cases-knowledge-corporate-ld` | Ready — Blob | Pexels [8123969](https://www.pexels.com/video/business-people-brainstorming-on-a-meeting-8123969/) — RDNE Stock project |
 | `software-saas-tutorials` | Software SaaS Tutorials | `#use-cases-knowledge-software-saas-tutorials` | Ready — Blob | Pexels [4064869](https://www.pexels.com/video/man-hands-desk-laptop-4064869/) — cottonbro studio |
 | `niche-skill-tutoring` | Niche Skill Tutoring | `#use-cases-knowledge-niche-skill-tutoring` | Ready — Blob | Pexels [857167](https://www.pexels.com/video/baking-pastry-bread-857167/) — Vimeo (CC0) |

@@ -84,7 +84,7 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         label: 'K-12 & Higher Ed',
         description:
           "Imagine uploading lesson materials with your instructor's saved voice and character reference. Then instantly generating full curriculum modules your ESL and global campus students can watch in 70+ languages.",
-        videoSrc: `${BLOB_DEMO}/Living%20Wall%204.mp4`,
+        videoSrc: `${BLOB_DEMO}/Astrophysics.mp4`,
       },
       {
         id: 'corporate-ld',
