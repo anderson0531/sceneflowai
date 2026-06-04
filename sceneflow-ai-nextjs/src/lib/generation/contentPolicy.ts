@@ -49,10 +49,12 @@ export function getVeoPolicyMaxAttempts(): number {
   return Number.isFinite(n) && n >= 1 ? Math.min(n, 5) : 3
 }
 
-export function isKlingFallbackEnabled(): boolean {
+/** Fal.ai gateway for Kling models (platform pay-as-you-go). */
+export function isFalKlingFallbackEnabled(): boolean {
+  if (process.env.FAL_KLING_POLICY_FALLBACK_ENABLED === 'false') return false
   if (process.env.KLING_POLICY_FALLBACK_ENABLED === 'false') return false
-  return !!(
-    process.env.KLING_API_KEY ||
-    (process.env.KLING_ACCESS_KEY && process.env.KLING_SECRET_KEY)
-  )
+  return !!process.env.FAL_KEY?.trim()
 }
+
+/** @deprecated Use isFalKlingFallbackEnabled */
+export const isKlingFallbackEnabled = isFalKlingFallbackEnabled

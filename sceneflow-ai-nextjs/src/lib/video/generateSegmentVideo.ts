@@ -92,7 +92,8 @@ export interface GenerateSegmentVideoResult {
   actualDurationSeconds?: number | null
   methodSelection?: MethodSelectionResult
   stemSeparation?: StemSeparationResult
-  generationProvider?: 'vertex' | 'kling'
+  generationProvider?: 'vertex' | 'fal'
+  fallbackModelFamily?: 'kling'
   wasPolicyFallback?: boolean
   vertexPolicyAttempts?: number
 }
@@ -283,7 +284,8 @@ export async function generateSegmentVideoCore(
     segmentIndex
   )
 
-  let generationProvider: 'vertex' | 'kling' = 'vertex'
+  let generationProvider: 'vertex' | 'fal' = 'vertex'
+  let fallbackModelFamily: 'kling' | undefined
   let wasPolicyFallback = false
   let vertexPolicyAttempts = 0
 
@@ -300,6 +302,7 @@ export async function generateSegmentVideoCore(
     })
 
     generationProvider = genResult.generationProvider
+    fallbackModelFamily = genResult.fallbackModelFamily
     wasPolicyFallback = genResult.wasPolicyFallback
     vertexPolicyAttempts = genResult.vertexAttempts
 
@@ -323,7 +326,7 @@ export async function generateSegmentVideoCore(
       } else if (genResult.videoUrl.startsWith('file:')) {
         videoBuffer = await downloadProductionVideo(
           genResult.videoUrl.replace(/^file:/, ''),
-          generationProvider === 'kling' ? 'vertex' : 'vertex'
+          'vertex'
         )
       }
     }
@@ -412,6 +415,7 @@ export async function generateSegmentVideoCore(
     veoVideoRef: finalVeoRef,
     veoVideoRefExpiry: finalVeoRefExpiry,
     generationProvider,
+    fallbackModelFamily,
     wasPolicyFallback,
     vertexPolicyAttempts,
     requestedDurationSeconds: effectiveDuration,

@@ -113,7 +113,9 @@ export const IMAGE_CREDITS = {
   /** Frame generation (start/end frames) */
   FRAME_GENERATION: 10,
 
-  /** Kling image fallback after Vertex policy block (~$0.04–0.06) */
+  /** Fal-hosted Kling image fallback after Vertex policy block (~$0.04–0.06) */
+  FAL_KLING_IMAGE: 12,
+  /** @deprecated Use FAL_KLING_IMAGE */
   KLING_IMAGE: 12,
 } as const;
 
@@ -140,8 +142,11 @@ export const VIDEO_CREDITS = {
   VEO_REVISION: 100,
 
   /**
-   * Kling policy fallback video (~$0.50–0.80/5s) → 180 credits
+   * Fal-hosted Kling policy fallback video (~$0.50–0.80/5s) → 180 credits
    */
+  FAL_KLING_VIDEO_5S: 180,
+  FAL_KLING_VIDEO_10S: 320,
+  /** @deprecated Use FAL_KLING_VIDEO_* */
   KLING_VIDEO_5S: 180,
   KLING_VIDEO_10S: 320,
   
@@ -616,9 +621,9 @@ export const PROVIDER_COSTS_USD = {
   imagen_4: 0.04,
   veo_fast_8s: 0.75,
   veo_quality_4k_8s: 1.30,
-  kling_image: 0.05,
-  kling_video_5s: 0.65,
-  kling_video_10s: 1.10,
+  fal_kling_image: 0.05,
+  fal_kling_video_5s: 0.65,
+  fal_kling_video_10s: 1.10,
   topaz_upscale_min: 0.20,
   elevenlabs_1k_chars: 0.35,
   ffmpeg_render: 0.05,

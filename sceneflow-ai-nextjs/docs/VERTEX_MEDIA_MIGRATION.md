@@ -26,7 +26,7 @@ Production image and video generation uses **Vertex AI** (`aiplatform.googleapis
 
 ## Policy fallback
 
-After up to `VEO_POLICY_MAX_ATTEMPTS` (default 3) Vertex policy failures, platform **Kling** may run when `KLING_API_KEY` or `KLING_ACCESS_KEY` + `KLING_SECRET_KEY` is set. See `docs/KLING_POLICY_FALLBACK.md`.
+After up to `VEO_POLICY_MAX_ATTEMPTS` (default 3) Vertex policy failures, **Fal.ai-hosted Kling** may run when `FAL_KEY` is set. See [`docs/KLING_POLICY_FALLBACK.md`](./KLING_POLICY_FALLBACK.md).
 
 ## Verification
 

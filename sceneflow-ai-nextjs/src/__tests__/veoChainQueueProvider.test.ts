@@ -17,11 +17,11 @@ function seg(partial: Partial<SceneSegment> & { segmentId: string; sequenceIndex
 }
 
 describe('veoChainQueue provider awareness', () => {
-  it('rejects EXT ref when previous part used Kling', () => {
+  it('rejects EXT ref when previous part used Fal fallback', () => {
     const prev = seg({
       segmentId: 'a',
       sequenceIndex: 0,
-      generationProvider: 'kling',
+      generationProvider: 'fal',
       takes: [{ veoVideoRef: 'files/abc' }],
     })
     expect(priorSegmentSupportsVertexExt(prev)).toBe(false)

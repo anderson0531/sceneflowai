@@ -179,6 +179,7 @@ export async function POST(
         durationProbed: result.actualDurationSeconds,
         method: result.methodSelection?.method ?? method,
         generationProvider: result.generationProvider,
+        fallbackModelFamily: result.fallbackModelFamily,
         wasPolicyFallback: result.wasPolicyFallback,
       })
 

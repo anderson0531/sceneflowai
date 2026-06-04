@@ -9,21 +9,19 @@ import {
 } from '@/lib/vertexai/vertexImageClient'
 import {
   isVertexContentPolicyError,
-  isKlingFallbackEnabled,
+  isFalKlingFallbackEnabled,
   getVeoPolicyMaxAttempts,
   ContentPolicyExhaustedError,
 } from '@/lib/generation/contentPolicy'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
-import {
-  createKlingImageGeneration,
-  waitForKlingImageTask,
-  downloadKlingAsset,
-} from '@/lib/kling/client'
+import { runFalKlingImage } from '@/lib/fal/klingPolicyClient'
+import { FAL_KLING_FALLBACK_MODEL_FAMILY, getFalKlingImageModel } from '@/lib/fal/config'
 
-export type ImageGenerationProvider = 'vertex' | 'kling'
+export type ImageGenerationProvider = 'vertex' | 'fal'
 
 export interface VertexKlingImageResult extends VertexImageResult {
   generationProvider: ImageGenerationProvider
+  fallbackModelFamily?: typeof FAL_KLING_FALLBACK_MODEL_FAMILY
   wasPolicyFallback: boolean
   vertexAttempts: number
 }
@@ -54,32 +52,30 @@ export async function generateImageWithVertexKlingFallback(
     }
   }
 
-  if (!isKlingFallbackEnabled()) {
+  if (!isFalKlingFallbackEnabled()) {
     throw new ContentPolicyExhaustedError(lastError, maxAttempts, lastError)
   }
 
   try {
-    const taskId = await createKlingImageGeneration({
+    const buf = await runFalKlingImage({
       prompt,
       negative_prompt: options.negativePrompt,
       aspect_ratio: options.aspectRatio || '16:9',
     })
-    const done = await waitForKlingImageTask(taskId)
-    if (!done.imageUrl) throw new Error('Kling image completed without URL')
-    const buf = await downloadKlingAsset(done.imageUrl)
     return {
       imageBase64: buf.toString('base64'),
       mimeType: 'image/png',
       provider: 'vertex',
-      modelId: 'kling-image',
-      generationProvider: 'kling',
+      modelId: getFalKlingImageModel(),
+      generationProvider: 'fal',
+      fallbackModelFamily: FAL_KLING_FALLBACK_MODEL_FAMILY,
       wasPolicyFallback: true,
       vertexAttempts: maxAttempts,
     }
-  } catch (klingErr) {
-    const msg = klingErr instanceof Error ? klingErr.message : String(klingErr)
+  } catch (falErr) {
+    const msg = falErr instanceof Error ? falErr.message : String(falErr)
     throw new ContentPolicyExhaustedError(
-      `Vertex image policy exhausted; Kling failed: ${msg}`,
+      `Vertex image policy exhausted; Fal Kling failed: ${msg}`,
       maxAttempts,
       lastError
     )

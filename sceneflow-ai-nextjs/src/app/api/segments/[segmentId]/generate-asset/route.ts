@@ -171,7 +171,8 @@ export async function POST(
     let stemSeparation: StemSeparationResult | undefined = undefined
     let actualVideoDurationSeconds: number | null = null
     let requestedVideoDurationSeconds: number | undefined = undefined
-    let generationProvider: 'vertex' | 'kling' | undefined
+    let generationProvider: 'vertex' | 'fal' | undefined
+    let fallbackModelFamily: 'kling' | undefined
     let wasPolicyFallback: boolean | undefined
 
     if (genType === 'T2V' || genType === 'I2V') {
@@ -221,6 +222,7 @@ export async function POST(
       actualVideoDurationSeconds = videoResult.actualDurationSeconds ?? null
       requestedVideoDurationSeconds = videoResult.requestedDurationSeconds
       generationProvider = videoResult.generationProvider
+      fallbackModelFamily = videoResult.fallbackModelFamily
       wasPolicyFallback = videoResult.wasPolicyFallback
 
     } else if (genType === 'T2I') {
@@ -266,6 +268,7 @@ export async function POST(
       } : undefined,
       stemSeparation,
       generationProvider,
+      fallbackModelFamily,
       wasPolicyFallback,
     })
   } catch (error: any) {
