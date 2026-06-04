@@ -332,9 +332,11 @@ export async function generateProductionVideo(
   console.log('[Production Video] Configured projects:', getConfiguredProjectIds().length)
   console.log('[Production Video] Note: Gemini API does not support video - Vertex AI only')
   
-  // If forcing Gemini, skip Vertex AI
+  // Studio/Gemini API path retired — always Vertex for Veo (incl. EXT)
   if (forceProvider === 'gemini') {
-    return generateWithGemini(prompt, videoOptions)
+    console.warn(
+      '[Production Video] forceProvider=gemini is deprecated; using Vertex AI (see VERTEX_MEDIA_MIGRATION.md)'
+    )
   }
   
   // If USE_GEMINI_PRIMARY is true and Gemini is available, use it first

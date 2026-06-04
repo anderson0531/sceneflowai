@@ -81,6 +81,8 @@ export async function callVertexAIImagen(
     negativePrompt?: string
     quality?: 'max' | 'auto'  // Legacy Imagen quality setting
     modelQuality?: ModelQuality  // Model tier: fast or standard
+    /** Override model ID (e.g. imagen-4.0-fast-generate-001) */
+    modelId?: string
     personGeneration?: 'allow_adult' | 'allow_all' | 'dont_allow'
     referenceImages?: Array<{
       referenceId: number
@@ -104,7 +106,7 @@ export async function callVertexAIImagen(
   // Uses capability model for subject customization with reference images
   const hasReferenceImages = options.referenceImages && options.referenceImages.length > 0
   const quality = options.modelQuality || DEFAULT_IMAGE_QUALITY
-  const MODEL_ID = getImagenModel(quality, hasReferenceImages)
+  const MODEL_ID = options.modelId || getImagenModel(quality, hasReferenceImages)
   
   console.log(`[Imagen] Generating image with ${MODEL_ID} (quality: ${quality})...`)
   console.log('[Imagen] FULL Prompt:', prompt)

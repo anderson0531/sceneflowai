@@ -1,5 +1,19 @@
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 
+export type SegmentVideoProvider = 'vertex' | 'kling'
+
+/** True when a prior segment can supply a Vertex Veo ref for EXT (not Kling fallback). */
+export function priorSegmentSupportsVertexExt(
+  prev: SceneSegment | undefined
+): boolean {
+  if (!prev) return false
+  const provider = (prev as SceneSegment & { generationProvider?: SegmentVideoProvider })
+    .generationProvider
+  if (provider === 'kling') return false
+  const ref = prev.takes?.[0]?.veoVideoRef
+  return typeof ref === 'string' && ref.trim().length > 0
+}
+
 /** Segment is part of a Veo extension chain (not the initial clip). */
 export function isVeoChainContinuation(segment: SceneSegment): boolean {
   return (
@@ -42,6 +56,7 @@ export function resolveVeoRefForExtension(
   current: SceneSegment
 ): string | undefined {
   const prev = findPreviousChainSegment(segments, current)
+  if (!priorSegmentSupportsVertexExt(prev)) return undefined
   const ref = prev?.takes?.[0]?.veoVideoRef
   return typeof ref === 'string' && ref.trim() ? ref.trim() : undefined
 }

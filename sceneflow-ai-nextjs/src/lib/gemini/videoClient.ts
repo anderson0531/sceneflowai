@@ -232,6 +232,7 @@ export async function generateVideoWithVeo(
     duration: options.durationSeconds || 8,
     hasStartFrame: !!options.startFrame,
     hasLastFrame: !!options.lastFrame,
+    hasSourceVideo: !!options.sourceVideo,
     referenceImagesCount: options.referenceImages?.length || 0
   }))
 
@@ -260,20 +261,30 @@ export async function generateVideoWithVeo(
     console.log('[Veo Video] Added start frame for I2V generation, mimeType:', mimeType)
   }
 
-  // Note: Video extension (EXT mode) only works with Veo-generated videos that are still
-  // in Gemini's system (from a previous operation.response). For videos stored externally
-  // (like Vercel Blob), we use I2V with the last frame instead.
-  // The sourceVideoUrl option is kept for future use if we implement proper Veo operation chaining.
-  if (options.sourceVideoUrl) {
-    console.log('[Veo Video] sourceVideoUrl provided, but video extension only works with Veo-generated videos.')
-    console.log('[Veo Video] For external videos, use I2V with the last frame as startFrame instead.')
-    // Don't add video to instance - caller should extract last frame and use I2V
+  // EXT: extend a prior Veo output (Vertex resource name, GCS URI, or files/ ref from prior gen)
+  if (options.sourceVideo && !options.startFrame) {
+    const ref = options.sourceVideo
+    if (ref.startsWith('gs://')) {
+      instance.video = { gcsUri: ref, mimeType: 'video/mp4' }
+    } else if (ref.startsWith('http://') || ref.startsWith('https://')) {
+      instance.video = { uri: ref, mimeType: 'video/mp4' }
+    } else if (ref.startsWith('projects/')) {
+      instance.video = { name: ref }
+    } else if (ref.startsWith('files/')) {
+      instance.video = { uri: ref, mimeType: 'video/mp4' }
+    } else {
+      instance.video = { name: ref, mimeType: 'video/mp4' }
+    }
+    console.log('[Veo Video] EXT mode with source video ref:', ref.substring(0, 80))
+  } else if (options.sourceVideoUrl) {
+    console.log('[Veo Video] sourceVideoUrl legacy — use sourceVideo (Veo ref) for EXT on Vertex')
   }
 
   // Build parameters object
   // Note: For Veo 3 text-to-video, personGeneration must be 'allow_all'
   // For image-to-video, it should be 'allow_adult'
   const isImageToVideo = !!options.startFrame
+  const isEXT = !!options.sourceVideo && !options.startFrame
   const isFTV = !!options.startFrame && !!options.lastFrame
   
   // FTV Stability Constraints (March 2026):
@@ -314,10 +325,10 @@ export async function generateVideoWithVeo(
     isFTV,
   })
 
-  // Add resolution - FTV requires 720p for stability, others can use 1080p
-  if (isFTV) {
-    // FTV: Force 720p to prevent VRAM overflow
+  // Add resolution - FTV/EXT require 720p for stability
+  if (isFTV || isEXT) {
     parameters.resolution = '720p'
+    parameters.durationSeconds = 8
   } else if (options.resolution === '1080p') {
     parameters.resolution = '1080p'
   }

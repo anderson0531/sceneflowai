@@ -178,6 +178,8 @@ export async function POST(
         veoVideoRefExpiry: result.veoVideoRefExpiry,
         durationProbed: result.actualDurationSeconds,
         method: result.methodSelection?.method ?? method,
+        generationProvider: result.generationProvider,
+        wasPolicyFallback: result.wasPolicyFallback,
       })
 
       previousVeoRef = result.veoVideoRef

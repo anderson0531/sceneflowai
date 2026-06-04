@@ -101,6 +101,19 @@ export const IMAGEN_MODELS = {
   capability: 'imagen-3.0-capability-001',
 } as const;
 
+/** Imagen 4 on Vertex (text-only; no reference images) */
+export const IMAGEN_4_MODELS = {
+  fast: 'imagen-4.0-fast-generate-001',
+  standard: 'imagen-4.0-generate-001',
+  ultra: 'imagen-4.0-ultra-generate-001',
+} as const;
+
+export function getImagen4Model(quality: ImagenQualityTier = DEFAULT_IMAGEN_QUALITY): string {
+  if (quality === 'capability') return IMAGEN_4_MODELS.standard;
+  if (quality === 'standard') return IMAGEN_4_MODELS.standard;
+  return IMAGEN_4_MODELS.fast;
+}
+
 /** Default Imagen quality tier (cost-optimized) */
 export const DEFAULT_IMAGEN_QUALITY: ImagenQualityTier = 'fast';
 

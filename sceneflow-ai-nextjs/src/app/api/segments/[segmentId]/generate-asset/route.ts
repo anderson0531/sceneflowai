@@ -171,6 +171,8 @@ export async function POST(
     let stemSeparation: StemSeparationResult | undefined = undefined
     let actualVideoDurationSeconds: number | null = null
     let requestedVideoDurationSeconds: number | undefined = undefined
+    let generationProvider: 'vertex' | 'kling' | undefined
+    let wasPolicyFallback: boolean | undefined
 
     if (genType === 'T2V' || genType === 'I2V') {
       console.log('[Segment Asset Generation] Using Veo 3.1 for video generation')
@@ -218,6 +220,8 @@ export async function POST(
       stemSeparation = videoResult.stemSeparation
       actualVideoDurationSeconds = videoResult.actualDurationSeconds ?? null
       requestedVideoDurationSeconds = videoResult.requestedDurationSeconds
+      generationProvider = videoResult.generationProvider
+      wasPolicyFallback = videoResult.wasPolicyFallback
 
     } else if (genType === 'T2I') {
       // Image generation using Gemini API
@@ -261,6 +265,8 @@ export async function POST(
         warnings: methodSelectionResult.warnings,
       } : undefined,
       stemSeparation,
+      generationProvider,
+      wasPolicyFallback,
     })
   } catch (error: any) {
     console.error('[Segment Asset Generation] Error:', error)

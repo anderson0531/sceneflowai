@@ -112,6 +112,9 @@ export const IMAGE_CREDITS = {
   
   /** Frame generation (start/end frames) */
   FRAME_GENERATION: 10,
+
+  /** Kling image fallback after Vertex policy block (~$0.04–0.06) */
+  KLING_IMAGE: 12,
 } as const;
 
 // =============================================================================
@@ -135,6 +138,12 @@ export const VIDEO_CREDITS = {
    * Fast revision of existing scene (cheaper, uses caching)
    */
   VEO_REVISION: 100,
+
+  /**
+   * Kling policy fallback video (~$0.50–0.80/5s) → 180 credits
+   */
+  KLING_VIDEO_5S: 180,
+  KLING_VIDEO_10S: 320,
   
   /** 
    * Topaz AI Upscale - ~$0.20/min → 50 credits/min ($0.50, ~60% margin)
@@ -607,6 +616,9 @@ export const PROVIDER_COSTS_USD = {
   imagen_4: 0.04,
   veo_fast_8s: 0.75,
   veo_quality_4k_8s: 1.30,
+  kling_image: 0.05,
+  kling_video_5s: 0.65,
+  kling_video_10s: 1.10,
   topaz_upscale_min: 0.20,
   elevenlabs_1k_chars: 0.35,
   ffmpeg_render: 0.05,

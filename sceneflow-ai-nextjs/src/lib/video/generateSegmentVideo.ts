@@ -2,12 +2,10 @@
  * Shared Veo 3.1 segment video generation (used by generate-asset and generate-continuous).
  */
 
-import {
-  generateProductionVideo,
-  waitForProductionVideoCompletion,
-  downloadProductionVideo,
-  type ProductionVideoResult,
-} from '@/lib/gemini/productionVideoClient'
+import { downloadProductionVideo } from '@/lib/gemini/productionVideoClient'
+import { generateVideoWithVeoKlingFallback } from '@/lib/generation/veoWithKlingFallback'
+import { ContentPolicyExhaustedError } from '@/lib/generation/contentPolicy'
+import type { VideoGenerationOptions } from '@/lib/gemini/videoClient'
 import { uploadVideoToBlob } from '@/lib/storage/blob'
 import { extractAndStoreLastFrame } from '@/lib/videoUtils'
 import {
@@ -94,6 +92,9 @@ export interface GenerateSegmentVideoResult {
   actualDurationSeconds?: number | null
   methodSelection?: MethodSelectionResult
   stemSeparation?: StemSeparationResult
+  generationProvider?: 'vertex' | 'kling'
+  wasPolicyFallback?: boolean
+  vertexPolicyAttempts?: number
 }
 
 export async function generateSegmentVideoCore(
@@ -208,7 +209,6 @@ export async function generateSegmentVideoCore(
     const veoRefToUse = sourceVideoUrl || previousSegmentVeoRef
     if (veoRefToUse) {
       videoOptions.sourceVideo = veoRefToUse
-      videoOptions.forceProvider = 'gemini'
     } else if (requireVeoRefForExt) {
       throw new SegmentVideoExtRefRequiredError(
         'Veo extension requires the previous part’s video reference. Generate earlier parts in order within ~2 days, or regenerate the previous clip.'
@@ -283,64 +283,61 @@ export async function generateSegmentVideoCore(
     segmentIndex
   )
 
-  if (method === 'EXT' && videoOptions.sourceVideo) {
-    videoOptions.forceProvider = 'gemini'
-  }
+  let generationProvider: 'vertex' | 'kling' = 'vertex'
+  let wasPolicyFallback = false
+  let vertexPolicyAttempts = 0
 
-  const veoResult = await generateProductionVideo(
-    enhancedPrompt,
-    videoOptions as Parameters<typeof generateProductionVideo>[1]
-  )
+  let videoBuffer: Buffer | null = null
+  let finalVeoRef: string | undefined
+  let finalVeoRefExpiry: string | undefined
 
-  if (veoResult.status === 'FAILED') {
-    if (veoResult.error?.toLowerCase().includes('rate limit')) {
-      throw new SegmentVideoRateLimitError(
-        veoResult.error,
-        (veoResult as ProductionVideoResult & { estimatedWaitSeconds?: number })
-          .estimatedWaitSeconds || 60
-      )
+  try {
+    const genResult = await generateVideoWithVeoKlingFallback({
+      prompt: enhancedPrompt,
+      negativePrompt,
+      method,
+      videoOptions: videoOptions as VideoGenerationOptions,
+    })
+
+    generationProvider = genResult.generationProvider
+    wasPolicyFallback = genResult.wasPolicyFallback
+    vertexPolicyAttempts = genResult.vertexAttempts
+
+    if (genResult.status === 'FAILED') {
+      const err = genResult.error || 'Video generation failed'
+      if (err.toLowerCase().includes('rate limit')) {
+        throw new SegmentVideoRateLimitError(err, 60)
+      }
+      throw new Error(err)
     }
-    throw new Error(veoResult.error || 'Video generation failed')
-  }
 
-  let finalResult: ProductionVideoResult = veoResult
-  if (veoResult.status === 'QUEUED' || veoResult.status === 'PROCESSING') {
-    finalResult = await waitForProductionVideoCompletion(
-      veoResult.operationName!,
-      veoResult.provider,
-      240,
-      10
-    )
-    if (finalResult.status === 'FAILED' && finalResult.provider === 'vertex' && finalResult.error) {
-      const errorLower = finalResult.error.toLowerCase()
-      const isContentPolicyError =
-        errorLower.includes('usage guidelines') ||
-        errorLower.includes('content policy') ||
-        errorLower.includes('safety') ||
-        errorLower.includes('policy violation') ||
-        errorLower.includes('blocked') ||
-        errorLower.includes('prohibited') ||
-        finalResult.error.includes('Code 3')
-      if (isContentPolicyError) {
-        throw new Error(
-          `Content Policy Violation: Vertex AI blocked this video request (see safety filters). Details: ${finalResult.error}`
+    videoBuffer = genResult.videoBuffer ?? null
+    finalVeoRef = genResult.veoVideoRef
+    finalVeoRefExpiry = genResult.veoVideoRefExpiry
+
+    if (!videoBuffer && genResult.videoUrl) {
+      if (genResult.videoUrl.startsWith('data:video/')) {
+        const base64Match = genResult.videoUrl.match(/^data:video\/[^;]+;base64,(.+)$/)
+        if (!base64Match) throw new Error('Invalid base64 video data format')
+        videoBuffer = Buffer.from(base64Match[1], 'base64')
+      } else if (genResult.videoUrl.startsWith('file:')) {
+        videoBuffer = await downloadProductionVideo(
+          genResult.videoUrl.replace(/^file:/, ''),
+          generationProvider === 'kling' ? 'vertex' : 'vertex'
         )
       }
     }
+  } catch (e) {
+    if (e instanceof ContentPolicyExhaustedError) {
+      throw new Error(
+        `Content Policy Violation: ${e.message}`
+      )
+    }
+    throw e
   }
 
-  if (finalResult.status !== 'COMPLETED' || !finalResult.videoUrl) {
-    throw new Error(finalResult.error || 'Video generation did not complete')
-  }
-
-  let videoBuffer: Buffer | null = null
-  if (finalResult.videoUrl.startsWith('file:')) {
-    videoBuffer = await downloadProductionVideo(finalResult.videoUrl, finalResult.provider)
-    if (!videoBuffer) throw new Error('Failed to download video file')
-  } else if (finalResult.videoUrl.startsWith('data:video/')) {
-    const base64Match = finalResult.videoUrl.match(/^data:video\/[^;]+;base64,(.+)$/)
-    if (!base64Match) throw new Error('Invalid base64 video data format')
-    videoBuffer = Buffer.from(base64Match[1], 'base64')
+  if (!videoBuffer) {
+    throw new Error('Video generation did not produce output')
   }
 
   let actualVideoDurationSeconds: number | null = null
@@ -349,36 +346,11 @@ export async function generateSegmentVideoCore(
     if (sec != null) actualVideoDurationSeconds = sec
   }
 
-  let assetUrl: string
-  if (videoBuffer) {
-    await probeAndLogDuration(videoBuffer)
-    assetUrl = await uploadVideoToBlob(
-      videoBuffer,
-      `segments/${segmentId}-${Date.now()}.mp4`
-    )
-  } else if (finalResult.videoUrl.startsWith('http')) {
-    let fetchUrl = finalResult.videoUrl
-    if (finalResult.videoUrl.includes('generativelanguage.googleapis.com')) {
-      const apiKey = process.env.GEMINI_API_KEY
-      if (apiKey) {
-        const url = new URL(finalResult.videoUrl)
-        if (!url.searchParams.has('key')) url.searchParams.set('key', apiKey)
-        fetchUrl = url.toString()
-      }
-    }
-    const videoResponse = await fetch(fetchUrl)
-    if (!videoResponse.ok) {
-      throw new Error(`Failed to fetch video from Veo: ${videoResponse.status}`)
-    }
-    const fetchedBuf = Buffer.from(await videoResponse.arrayBuffer())
-    await probeAndLogDuration(fetchedBuf)
-    assetUrl = await uploadVideoToBlob(
-      fetchedBuf,
-      `segments/${segmentId}-${Date.now()}.mp4`
-    )
-  } else {
-    assetUrl = finalResult.videoUrl
-  }
+  await probeAndLogDuration(videoBuffer)
+  const assetUrl = await uploadVideoToBlob(
+    videoBuffer,
+    `segments/${segmentId}-${Date.now()}.mp4`
+  )
 
   let lastFrameUrl: string | null = null
   try {
@@ -437,8 +409,11 @@ export async function generateSegmentVideoCore(
     assetUrl,
     assetType: 'video',
     lastFrameUrl,
-    veoVideoRef: finalResult.veoVideoRef,
-    veoVideoRefExpiry: finalResult.veoVideoRefExpiry,
+    veoVideoRef: finalVeoRef,
+    veoVideoRefExpiry: finalVeoRefExpiry,
+    generationProvider,
+    wasPolicyFallback,
+    vertexPolicyAttempts,
     requestedDurationSeconds: effectiveDuration,
     actualDurationSeconds: actualVideoDurationSeconds,
     methodSelection: methodSelectionResult,
