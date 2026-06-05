@@ -19,7 +19,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { editImageWithInstruction } from '@/lib/imagen/editClient'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { moderatePrompt, createBlockedResponse, getUserModerationContext } from '@/lib/moderation'
 
 interface EditRequestBody {
   /** Edit mode: 'instruction' (only mode supported now) */
@@ -83,18 +82,6 @@ export async function POST(request: NextRequest) {
     console.log(`[Image Edit API] Processing instruction edit: "${instruction.substring(0, 50)}..."`)
     if (subjectReference) {
       console.log(`[Image Edit API] Using subject reference for identity preservation`)
-    }
-    
-    // Content moderation: Pre-screen prompts before generation
-    const moderationContext = await getUserModerationContext(userId, projectId)
-    const moderationResult = await moderatePrompt(instruction, moderationContext)
-    
-    if (!moderationResult.allowed) {
-      console.log(`[Image Edit API] Prompt blocked by moderation: ${moderationResult.reason}`)
-      return createBlockedResponse(
-        moderationResult.result!,
-        'Your edit request contains content that violates our content policy. Please revise and try again.'
-      )
     }
     
     const enrichedInstruction = subjectReference

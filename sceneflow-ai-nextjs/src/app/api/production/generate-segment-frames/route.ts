@@ -830,7 +830,7 @@ Render this scene in ${selectedStyle.name} style.`
       transitionType,
       anchorStatus,
       imageStrength: weights.imageStrength,
-      guidanceScale: weights.guidanceScale
+      guidanceScale: weights.guidanceScale,
     }
 
     console.log('[Generate Frames] Complete:', {

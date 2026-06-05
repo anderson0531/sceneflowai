@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadFileToGCS } from '@/lib/storage/gcsAssets'
 import { uploadAudioToBlob, useGcsForAudioUpload } from '@/lib/storage/uploadAudioToBlob'
-import { moderateUpload, createUploadBlockedResponse, getUserModerationContext } from '@/lib/moderation'
 
 export const runtime = 'nodejs'
 
@@ -9,13 +8,12 @@ export const runtime = 'nodejs'
  * Audio Upload API
  *
  * Default (ASSET_AUDIO_STORAGE unset or vercel-blob): Vercel Blob via shared helper.
- * Legacy (ASSET_AUDIO_STORAGE=gcs): Google Cloud Storage + Hive moderation.
+ * Legacy (ASSET_AUDIO_STORAGE=gcs): Google Cloud Storage.
  */
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File
-    const userId = (formData.get('userId') as string) || 'anonymous'
     const projectId = (formData.get('projectId') as string) || 'default'
 
     if (!file) {
@@ -54,15 +52,7 @@ export async function POST(request: NextRequest) {
       subcategory: 'sfx',
     })
 
-    const moderationContext = await getUserModerationContext(userId, projectId)
-    const moderationResult = await moderateUpload(result.url, file.type, moderationContext)
-
-    if (!moderationResult.allowed) {
-      console.log('[Audio Upload] Content blocked, deleting from GCS:', result.gcsPath)
-      return createUploadBlockedResponse(moderationResult.result)
-    }
-
-    console.log('[Audio Upload] Uploaded and moderated (GCS):', result.url)
+    console.log('[Audio Upload] Uploaded (GCS):', result.url)
 
     return NextResponse.json({
       success: true,

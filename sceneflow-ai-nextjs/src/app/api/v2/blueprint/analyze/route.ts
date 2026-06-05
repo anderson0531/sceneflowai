@@ -40,7 +40,6 @@ export async function POST(request: NextRequest) {
     // If variants requested >1, use batch generation to return multiple ideas in a single call
     if ((input.variants || 1) > 1) {
       const { items, provider, model } = await analyzeBlueprintV2Batch(input)
-      
       // Charge credits after successful generation
       await CreditService.charge(userId, BLUEPRINT_ANALYZE_CREDIT_COST, 'ai_usage', null, {
         operation: 'blueprint_analyze_v2',

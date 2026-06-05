@@ -14,15 +14,10 @@
  * @version 2.36
  */
 
-// =============================================================================
-// MODERATION BYPASS FLAG
-// Set to false to disable Hive moderation (useful for debugging or when Hive is down)
-// =============================================================================
-const HIVE_MODERATION_ENABLED = process.env.HIVE_MODERATION_ENABLED !== 'false';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { HiveModerationService, type HiveModerationResult } from '../../services/HiveModerationService';
-import { 
+import { isHiveModerationMasterEnabled } from './moderationFlags';
+import {
   shouldModerateGeneration, 
   MODERATION_REFUND_POLICY,
   MODERATION_SAMPLING,
@@ -32,6 +27,8 @@ import {
 import { ModerationEvent } from '../../models/ModerationEvent';
 import type { ContentType } from '../../models/ModerationEvent';
 import type { PlanTier } from '../credits/creditCosts';
+
+const HIVE_MODERATION_ENABLED = isHiveModerationMasterEnabled();
 
 // =============================================================================
 // TYPES
@@ -84,55 +81,10 @@ export interface ModerationMetrics {
  * @returns Whether the prompt is allowed
  */
 export async function moderatePrompt(
-  prompt: string,
-  context: ModerationContext
+  _prompt: string,
+  _context: ModerationContext
 ): Promise<PromptModerationResult> {
-  // TEMPORARILY DISABLED: Moderation services returning 403 errors
-  // TODO: Re-enable once API keys are fixed
-  console.log('[Moderation] Moderation temporarily disabled - allowing all prompts');
-  return { allowed: true, reason: 'Moderation temporarily disabled' };
-
-  /* Original moderation code - disabled until API keys fixed
-  const { userId, projectId, tier, priorViolations } = context;
-
-  // Always check prompts (text moderation is nearly free: $0.0005/1K chars)
-  try {
-    const result = await HiveModerationService.moderateText(prompt, {
-      userId,
-      projectId,
-      contentType: 'image_prompt', // Will be video_prompt for video
-      voiceType: 'stock',
-      logEvent: true,
-    });
-
-    if (!result.allowed) {
-      console.log(
-        `[Moderation] Prompt blocked for user ${userId}: ` +
-        `categories=${result.flaggedCategories.join(',')} score=${result.highestScore.toFixed(3)}`
-      );
-
-      // Update user violation count
-      await incrementUserViolations(userId);
-
-      return {
-        allowed: false,
-        result,
-        reason: `Content policy violation: ${result.flaggedCategories.join(', ')}`,
-        blocked: true,
-        refundCredits: 0, // No credits spent yet
-      };
-    }
-
-    return { allowed: true, result };
-  } catch (error) {
-    console.error('[Moderation] Prompt check error:', error);
-    // On error, allow with warning (fail open for prompts to avoid blocking legitimate users)
-    return {
-      allowed: true,
-      reason: 'Moderation check failed, allowing with logging',
-    };
-  }
-  */ // End of disabled moderation code
+  return { allowed: true, reason: 'Use POST /api/moderation/validate for paid validation' };
 }
 
 // =============================================================================
@@ -296,71 +248,11 @@ export async function moderateGeneratedContent(
  * @returns Whether the export is allowed
  */
 export async function moderateExport(
-  videoUrl: string,
-  audioUrl: string | null,
-  context: ModerationContext
+  _videoUrl: string,
+  _audioUrl: string | null,
+  _context: ModerationContext
 ): Promise<ContentModerationResult> {
-  const { userId, projectId, priorViolations } = context;
-
-  console.log(`[Moderation] Export gate check: user=${userId} project=${projectId}`);
-
-  try {
-    // Always check video
-    const videoResult = await HiveModerationService.moderateVideo(videoUrl, {
-      userId,
-      projectId,
-      contentType: 'video_prompt',
-      voiceType: 'stock',
-      logEvent: true,
-    });
-
-    if (!videoResult.allowed) {
-      console.log(
-        `[Moderation] Export blocked (video): categories=${videoResult.flaggedCategories.join(',')}`
-      );
-      await incrementUserViolations(userId);
-      return {
-        allowed: false,
-        result: videoResult,
-        shouldRefund: false, // No refund at export stage - content was already generated
-        refundPercentage: 0,
-      };
-    }
-
-    // Check audio if provided
-    if (audioUrl) {
-      const audioResult = await HiveModerationService.moderateAudio(audioUrl, {
-        userId,
-        projectId,
-        contentType: 'tts_script',
-        voiceType: 'stock',
-        logEvent: true,
-      });
-
-      if (!audioResult.allowed) {
-        console.log(
-          `[Moderation] Export blocked (audio): categories=${audioResult.flaggedCategories.join(',')}`
-        );
-        await incrementUserViolations(userId);
-        return {
-          allowed: false,
-          result: audioResult,
-          shouldRefund: false,
-          refundPercentage: 0,
-        };
-      }
-    }
-
-    return { allowed: true, shouldRefund: false };
-  } catch (error) {
-    console.error('[Moderation] Export gate error:', error);
-    // For exports, fail CLOSED (block on error)
-    // This is the last line of defense
-    return {
-      allowed: false,
-      shouldRefund: false,
-    };
-  }
+  return { allowed: true, shouldRefund: false };
 }
 
 // =============================================================================
@@ -377,87 +269,11 @@ export async function moderateExport(
  * @returns Whether the upload is allowed
  */
 export async function moderateUpload(
-  contentUrl: string | Buffer,
-  mimeType: string,
-  context: ModerationContext
+  _contentUrl: string | Buffer,
+  _mimeType: string,
+  _context: ModerationContext
 ): Promise<ContentModerationResult> {
-  // Bypass moderation if disabled
-  if (!HIVE_MODERATION_ENABLED) {
-    console.log('[Moderation] BYPASSED - Hive moderation disabled');
-    return { allowed: true, shouldRefund: false };
-  }
-
-  const { userId, projectId, priorViolations } = context;
-
-  console.log(`[Moderation] Upload check: user=${userId} type=${mimeType}`);
-
-  try {
-    let result: HiveModerationResult;
-
-    if (mimeType.startsWith('image/')) {
-      result = await HiveModerationService.moderateImage(contentUrl, {
-        userId,
-        projectId,
-        contentType: 'image_prompt',
-        voiceType: 'stock',
-        mimeType,
-        logEvent: true,
-      });
-    } else if (mimeType.startsWith('audio/')) {
-      // For audio buffers, we need to upload first then check
-      // For URLs, check directly
-      if (typeof contentUrl === 'string') {
-        result = await HiveModerationService.moderateAudio(contentUrl, {
-          userId,
-          projectId,
-          contentType: 'tts_script',
-          voiceType: 'stock',
-          mimeType,
-          logEvent: true,
-        });
-      } else {
-        // Buffer case - skip for now, will be caught at export
-        return { allowed: true, shouldRefund: false };
-      }
-    } else if (mimeType.startsWith('video/')) {
-      if (typeof contentUrl === 'string') {
-        result = await HiveModerationService.moderateVideo(contentUrl, {
-          userId,
-          projectId,
-          contentType: 'video_prompt',
-          voiceType: 'stock',
-          mimeType,
-          logEvent: true,
-        });
-      } else {
-        return { allowed: true, shouldRefund: false };
-      }
-    } else {
-      // Unknown type - allow but log
-      console.warn(`[Moderation] Unknown upload type: ${mimeType}`);
-      return { allowed: true, shouldRefund: false };
-    }
-
-    if (!result.allowed) {
-      console.log(
-        `[Moderation] Upload blocked: type=${mimeType} ` +
-        `categories=${result.flaggedCategories.join(',')}`
-      );
-      await incrementUserViolations(userId);
-      return {
-        allowed: false,
-        result,
-        shouldRefund: false, // No credits charged for uploads
-      };
-    }
-
-    return { allowed: true, result, shouldRefund: false };
-  } catch (error) {
-    console.error('[Moderation] Upload check error:', error);
-    // For uploads, fail CLOSED (block on error)
-    // External content is high risk
-    return { allowed: false, shouldRefund: false };
-  }
+  return { allowed: true, shouldRefund: false };
 }
 
 // =============================================================================
@@ -497,8 +313,7 @@ export async function getUserModerationContext(
   projectId?: string,
   tier: PlanTier = 'starter'
 ): Promise<ModerationContext> {
-  // Skip violation check if moderation is disabled
-  const priorViolations = HIVE_MODERATION_ENABLED 
+  const priorViolations = isHiveModerationMasterEnabled()
     ? await HiveModerationService.getUserViolationCount(userId, 24)
     : 0;
 

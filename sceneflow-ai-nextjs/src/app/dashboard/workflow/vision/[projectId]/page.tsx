@@ -131,6 +131,9 @@ import { getEdgeVoiceConfigForResolution } from '@/lib/tts/edgeTtsVoices'
 import { v4 as uuidv4 } from 'uuid'
 import { useProcessWithOverlay } from '@/hooks/useProcessWithOverlay'
 import { useOverlayStore } from '@/store/useOverlayStore'
+import { ModerationReportPanel } from '@/components/moderation/ModerationReportPanel'
+import { ModerationValidateButton } from '@/components/moderation/ModerationValidateButton'
+import type { ModerationReport } from '@/lib/moderation/moderationPipeline'
 import { useSidebarData, useSidebarQuickActions } from '@/hooks/useSidebarData'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { cn } from '@/lib/utils'
@@ -399,6 +402,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isSaving, setIsSaving] = useState(false)
   const [uploadingRef, setUploadingRef] = useState<Record<string, boolean>>({})
   const [validationWarnings, setValidationWarnings] = useState<Record<number, string>>({})
+  const [latestModerationReport, setLatestModerationReport] = useState<ModerationReport | null>(null)
   
   // Auto-migrate base64 images to blob storage when project loads
   // This runs in the background and updates media URLs without blocking
@@ -2707,7 +2711,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (!data.success) {
           throw new Error(data.error || 'Asset generation failed')
         }
-
         // SAFETY CHECK: If server returned base64 data, something is wrong
         // The server should always upload to blob storage and return a URL
         if (data.assetUrl?.startsWith('data:')) {
@@ -11560,6 +11563,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 approvingStoryboardFor={approvingStoryboardFor}
                 onRegenerateScript={handleRegenerateScript}
                 isRegeneratingScript={isRegeneratingScript}
+                onModerationReport={setLatestModerationReport}
               belowDashboardSlot={({ openGenerateAudio, openPromptBuilder }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate950/40 shadow-inner">
                   <div className="px-5 py-5">
@@ -12519,6 +12523,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Hive moderation warnings (copyright / NIL — informational) */}
+      {latestModerationReport && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-md">
+          <ModerationReportPanel
+            report={latestModerationReport}
+            onDismiss={() => setLatestModerationReport(null)}
+          />
+        </div>
+      )}
 
       {/* First-time onboarding tour */}
       <ProductionOnboarding />

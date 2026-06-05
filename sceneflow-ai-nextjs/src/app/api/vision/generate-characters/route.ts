@@ -163,7 +163,7 @@ async function generateCharacterImage(params: {
     `characters/char-${Date.now()}.png`,
     params.projectId
   )
-  
+
   return blobUrl
 }
 

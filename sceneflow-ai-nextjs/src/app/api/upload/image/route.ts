@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
-import { moderateUpload, createUploadBlockedResponse, getUserModerationContext } from '@/lib/moderation'
 
 export const runtime = 'nodejs'
 
@@ -9,10 +8,6 @@ export const runtime = 'nodejs'
  * 
  * Accepts image files and uploads them to Vercel Blob storage.
  * Used for uploading keyframe images (Start/End frames) from external sources.
- * 
- * Content Moderation:
- * - All uploads are moderated at 100% (external content is highest risk)
- * - Blocks NSFW, violence, hate symbols, etc.
  * 
  * @accepts image/png, image/jpeg, image/gif, image/webp
  * @maxSize 10MB
@@ -57,15 +52,6 @@ export async function POST(request: NextRequest) {
     })
 
     const imageUrl = blob.url
-
-    // Content moderation check (100% for uploads)
-    const moderationContext = await getUserModerationContext(userId, projectId)
-    const moderationResult = await moderateUpload(imageUrl, file.type, moderationContext)
-
-    if (!moderationResult.allowed) {
-      console.log('[Image Upload] Content blocked:', imageUrl)
-      return createUploadBlockedResponse(moderationResult.result)
-    }
 
     console.log('[Image Upload] Uploaded to Vercel Blob:', imageUrl)
 

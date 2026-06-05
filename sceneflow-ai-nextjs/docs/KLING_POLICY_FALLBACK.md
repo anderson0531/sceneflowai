@@ -54,3 +54,7 @@ Deprecated (no longer used): `KLING_API_KEY`, `KLING_ACCESS_KEY`, `KLING_SECRET_
 - `src/lib/generation/veoWithKlingFallback.ts`
 - `src/lib/generation/vertexImageWithKlingFallback.ts`
 - `src/lib/fal/klingPolicyClient.ts`
+
+## Content validation
+
+Fal/Kling output is not auto-moderated after upload. Users may run paid Hive validation on segment video via `POST /api/moderation/validate` (`stage: fal_video`, `source: segment_asset`). See [HIVE_MODERATION.md](./HIVE_MODERATION.md).

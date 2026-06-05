@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       `characters/char-${Date.now()}.png`,
       projectId || 'default'
     )
-    
+
     // AUTO-ANALYZE: Extract detailed description using Gemini Vision
     let visionDescription = null
     try {
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
       provider: 'gemini-api',
       storage: 'vercel-blob',
       creditsCharged: CREDIT_COST,
-      creditsBalance: newBalance
+      creditsBalance: newBalance,
     })
 
   } catch (error) {

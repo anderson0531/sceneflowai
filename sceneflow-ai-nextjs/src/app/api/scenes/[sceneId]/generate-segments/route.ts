@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
-import { moderatePrompt, getUserModerationContext, createBlockedResponse } from '@/lib/moderation'
 import {
   validateAndRepairTimelineDialogueCoverage,
   repairPhase1DirectionsTimeline,
@@ -473,17 +472,6 @@ export async function POST(
         segmentCountTarget,
       })
       
-      // Pre-screen content
-      const moderationContext = await getUserModerationContext('anonymous', projectId)
-      const promptModeration = await moderatePrompt(directionsPrompt, moderationContext)
-      
-      if (!promptModeration.allowed) {
-        return NextResponse.json(
-          { error: 'Content policy violation', flaggedCategories: promptModeration.result?.flaggedCategories || [] },
-          { status: 403 }
-        )
-      }
-      
       // Call Gemini for directions only
       const rawDirections = await callGeminiForSegmentDirections(directionsPrompt)
       const timelineLen = sceneData.combinedAudioTimeline.length
@@ -643,7 +631,6 @@ export async function POST(
       }
 
       const PROMPT_BATCH = 10
-      const moderationContext = await getUserModerationContext('anonymous', projectId)
 
       let rawSegments: IntelligentSegment[] = []
 
@@ -655,13 +642,6 @@ export async function POST(
           undefined,
           promptExtras
         )
-        const promptModeration = await moderatePrompt(promptsFromDirections, moderationContext)
-        if (!promptModeration.allowed) {
-          return NextResponse.json(
-            { error: 'Content policy violation', flaggedCategories: promptModeration.result?.flaggedCategories || [] },
-            { status: 403 }
-          )
-        }
         rawSegments = await callGeminiForPromptsFromDirections(promptsFromDirections)
       } else {
         console.log(
@@ -679,13 +659,6 @@ export async function POST(
             },
             promptExtras
           )
-          const promptModeration = await moderatePrompt(promptsFromDirections, moderationContext)
-          if (!promptModeration.allowed) {
-            return NextResponse.json(
-              { error: 'Content policy violation', flaggedCategories: promptModeration.result?.flaggedCategories || [] },
-              { status: 403 }
-            )
-          }
           const part = await callGeminiForPromptsFromDirections(promptsFromDirections)
           rawSegments.push(...part)
         }
@@ -737,23 +710,6 @@ export async function POST(
     
     // Generate intelligent segmentation prompt
     const prompt = generateIntelligentSegmentationPrompt(sceneData, durationConfig, minimumSegmentsRequired)
-
-    // Pre-screen prompt content before generation to prevent unfunded credits
-    // This runs at 100% coverage - text moderation is ~$0.0005/1K chars
-    const moderationContext = await getUserModerationContext('anonymous', projectId)
-    const promptModeration = await moderatePrompt(prompt, moderationContext)
-    
-    if (!promptModeration.allowed) {
-      console.warn(`[Scene Segmentation] Prompt blocked by moderation for scene ${sceneId}`)
-      return NextResponse.json(
-        {
-          error: 'Content policy violation',
-          message: 'The scene description contains content that violates our content policy. Please modify the scene and try again.',
-          flaggedCategories: promptModeration.result?.flaggedCategories || [],
-        },
-        { status: 403 }
-      )
-    }
 
     // Call Gemini for intelligent segmentation
     let rawSegments = await callGeminiForIntelligentSegmentation(prompt)

@@ -17,6 +17,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import OwnerCollabCard from './OwnerCollabCard';
 import PerConceptBadge from './PerConceptBadge';
 import ShareCollabModal from './ShareCollabModal';
+import { ModerationReportPanel } from '@/components/moderation/ModerationReportPanel';
+import { ModerationValidateButton } from '@/components/moderation/ModerationValidateButton';
+import type { ModerationReport } from '@/lib/moderation/moderationPipeline';
 // ProvenanceBanner removed from UI per request
 
 // Prevent duplicate concurrent requests and accidental rapid repeats
@@ -319,6 +322,7 @@ export default function ProjectIdeaTab() {
   });
   const [generatedIdeas, setGeneratedIdeas] = useState<ProjectIdea[]>([]);
   const [genError, setGenError] = useState<string>('');
+  const [blueprintModerationReport, setBlueprintModerationReport] = useState<ModerationReport | null>(null);
   // Direction/Storyboard will be triggered later in the workflow. Avoid auto-queuing here.
   const [selectedIdea, setSelectedIdea] = useState<ProjectIdea | null>(null);
   const [analysisComplete, setAnalysisComplete] = useState(false);
@@ -1932,7 +1936,23 @@ export default function ProjectIdeaTab() {
           {genError && (
             <div className="mt-3 text-sm text-red-400">{genError}</div>
           )}
-          
+          {currentProject?.id && analysisComplete && (
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <ModerationValidateButton
+                projectId={currentProject.id}
+                stage="blueprint"
+                source="project_treatment"
+                label="Validate treatment"
+                onReport={setBlueprintModerationReport}
+              />
+            </div>
+          )}
+          <ModerationReportPanel
+            report={blueprintModerationReport}
+            className="mt-3"
+            onDismiss={() => setBlueprintModerationReport(null)}
+          />
+
           <div className="mt-6 flex items-center justify-between gap-4 flex-wrap">
             {/* Left Group: Input/Audio */}
             <div className="flex items-center gap-4">

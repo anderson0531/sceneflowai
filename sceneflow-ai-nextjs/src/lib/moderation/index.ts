@@ -44,3 +44,43 @@ export {
   type PromptModerationResult,
   type ContentModerationResult,
 } from './withHiveModeration';
+
+export {
+  isHiveModerationMasterEnabled,
+  isStageModerationEnabled,
+  isPromptModerationEnabled,
+  isValidationApiEnabled,
+} from './moderationFlags';
+
+export {
+  requestModerationValidation,
+  getValidationCreditLabel,
+  MODERATION_CREDITS,
+  type ModerationValidateRequest,
+  type ModerationValidateResponse,
+} from './validateClient';
+
+export { resolveValidationContent, type ValidationContentSource } from './validationResolver';
+
+export {
+  runStageModeration,
+  mergeModerationReports,
+  moderatePromptText,
+  runBlueprintModeration,
+  runImageStageModeration,
+  aggregateScriptText,
+  reportHasWarnings,
+  reportIsBlocked,
+  type ModerationStage,
+  type ModerationCheckName,
+  type ModerationSeverity,
+  type ModerationCheckResult,
+  type ModerationReport,
+  type StageModerationContext,
+  type RunStageModerationInput,
+} from './moderationPipeline';
+
+export {
+  aggregateBlueprintInputText,
+  aggregateBlueprintOutputText,
+} from './blueprintText';

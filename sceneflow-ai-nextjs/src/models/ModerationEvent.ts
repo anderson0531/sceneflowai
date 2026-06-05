@@ -10,7 +10,28 @@
 import { DataTypes, Model, Optional } from 'sequelize'
 import { sequelize } from '../config/database'
 
-export type ContentType = 'tts_script' | 'clone_request' | 'image_prompt' | 'video_prompt'
+export type ContentType =
+  | 'tts_script'
+  | 'clone_request'
+  | 'image_prompt'
+  | 'video_prompt'
+  | 'blueprint_text'
+  | 'script_text'
+  | 'character_image'
+  | 'storyboard_image'
+  | 'fal_video'
+
+export type StageContentType = Extract<
+  ContentType,
+  'blueprint_text' | 'script_text' | 'character_image' | 'storyboard_image' | 'fal_video'
+>
+
+export type ModerationStageName =
+  | 'blueprint'
+  | 'script'
+  | 'character'
+  | 'storyboard'
+  | 'fal_video'
 export type ModerationAction = 'allowed' | 'blocked' | 'warning'
 export type VoiceType = 'stock' | 'cloned' | 'designed'
 
@@ -32,6 +53,8 @@ export interface ModerationEventAttributes {
   voice_type?: VoiceType | null   // For TTS-related moderation
   voice_id?: string | null        // ElevenLabs voice ID if applicable
   project_id?: string | null      // Associated project
+  stage?: ModerationStageName | null
+  report_json?: Record<string, unknown> | null
   
   // Thresholds used
   threshold_applied: number       // The threshold that was used (0.3 for cloned, 0.7 for stock)
@@ -42,7 +65,7 @@ export interface ModerationEventAttributes {
 
 export interface ModerationEventCreationAttributes extends Optional<
   ModerationEventAttributes,
-  'id' | 'content_preview' | 'category_scores' | 'voice_type' | 'voice_id' | 'project_id' | 'created_at'
+  'id' | 'content_preview' | 'category_scores' | 'voice_type' | 'voice_id' | 'project_id' | 'stage' | 'report_json' | 'created_at'
 > {}
 
 export class ModerationEvent extends Model<ModerationEventAttributes, ModerationEventCreationAttributes>
@@ -61,6 +84,8 @@ export class ModerationEvent extends Model<ModerationEventAttributes, Moderation
   declare voice_type: VoiceType | null | undefined
   declare voice_id: string | null | undefined
   declare project_id: string | null | undefined
+  declare stage: ModerationStageName | null | undefined
+  declare report_json: Record<string, unknown> | null | undefined
   
   declare threshold_applied: number
   
@@ -94,7 +119,17 @@ ModerationEvent.init(
       },
     },
     content_type: {
-      type: DataTypes.ENUM('tts_script', 'clone_request', 'image_prompt', 'video_prompt'),
+      type: DataTypes.ENUM(
+        'tts_script',
+        'clone_request',
+        'image_prompt',
+        'video_prompt',
+        'blueprint_text',
+        'script_text',
+        'character_image',
+        'storyboard_image',
+        'fal_video'
+      ),
       allowNull: false,
     },
     content_hash: {
@@ -133,6 +168,14 @@ ModerationEvent.init(
         model: 'projects',
         key: 'id',
       },
+    },
+    stage: {
+      type: DataTypes.STRING(32),
+      allowNull: true,
+    },
+    report_json: {
+      type: DataTypes.JSONB,
+      allowNull: true,
     },
     threshold_applied: {
       type: DataTypes.DECIMAL(3, 2),

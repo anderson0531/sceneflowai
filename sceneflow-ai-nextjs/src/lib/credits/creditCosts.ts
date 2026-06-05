@@ -311,6 +311,46 @@ export const BLUEPRINT_CREDITS = {
 } as const;
 
 // =============================================================================
+// HIVE MODERATION VALIDATION (user-initiated, opt-in)
+// =============================================================================
+
+export const MODERATION_CREDITS = {
+  /** Blueprint or script full-text Hive validation (40 credits = $0.40) */
+  TEXT_VALIDATE: 40,
+  /** Character / storyboard image validation incl. NIL checks (50 credits = $0.50) */
+  IMAGE_VALIDATE: 50,
+  /** Video clip validation — harmful visual frame sampling (120 credits = $1.20) */
+  VIDEO_VALIDATE: 120,
+  /** Optional media copyright search add-on for video validation */
+  COPYRIGHT_MEDIA_ADDON: 60,
+} as const
+
+export type ModerationValidationStage =
+  | 'blueprint'
+  | 'script'
+  | 'character'
+  | 'storyboard'
+  | 'fal_video'
+
+/** Credit cost for a user-initiated moderation validation request. */
+export function getModerationValidationCost(
+  stage: ModerationValidationStage,
+  options?: { includeCopyrightMedia?: boolean }
+): number {
+  if (stage === 'blueprint' || stage === 'script') {
+    return MODERATION_CREDITS.TEXT_VALIDATE
+  }
+  if (stage === 'character' || stage === 'storyboard') {
+    return MODERATION_CREDITS.IMAGE_VALIDATE
+  }
+  let cost = MODERATION_CREDITS.VIDEO_VALIDATE
+  if (options?.includeCopyrightMedia) {
+    cost += MODERATION_CREDITS.COPYRIGHT_MEDIA_ADDON
+  }
+  return cost
+}
+
+// =============================================================================
 // RENDERING / EXPORT
 // =============================================================================
 
@@ -637,7 +677,8 @@ export const PROVIDER_COSTS_USD = {
  * Hive AI Moderation Costs (Platform Overhead)
  * 
  * These costs are absorbed into our margin, not charged separately to users.
- * Rationale: Moderation is a trust/safety requirement, not a feature users "buy"
+ * Rationale: Internal margin analysis only. User-facing Hive validation is billed
+ * via MODERATION_CREDITS (see getModerationValidationCost).
  * 
  * Hybrid Smart Sampling Strategy reduces costs while maintaining 95%+ coverage:
  * - 100% prompt pre-screening (text is nearly free)

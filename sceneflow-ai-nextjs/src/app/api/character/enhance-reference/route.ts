@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
       `characters/enhanced-${characterId || 'char'}-${Date.now()}.png`,
       projectId || 'default'
     )
-    
+
     // STAGE 5: Auto-analyze the enhanced image for appearance description
     console.log(`[Enhance Reference] Stage 4: Analyzing enhanced result...`)
     let visionDescription = null
@@ -239,7 +239,7 @@ export async function POST(req: NextRequest) {
         originalScore: imageAnalysis.optimizationScore,
         issuesFixed: imageAnalysis.issues,
         improvements: getImprovementsSummary(imageAnalysis)
-      }
+      },
     })
 
   } catch (error) {

@@ -15,7 +15,6 @@ import {
   embedCharacterIdsInSceneBeats,
   migrateProjectToBeats,
 } from '@/lib/script/beatMigration'
-
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
 
@@ -594,7 +593,7 @@ export async function POST(request: NextRequest) {
           totalDuration: totalEstimatedDuration,
           partial: false,
           expectedScenes: allScenes.length,
-          projectId: projectId
+          projectId: projectId,
         })}\n\n`))
         
         controller.close()

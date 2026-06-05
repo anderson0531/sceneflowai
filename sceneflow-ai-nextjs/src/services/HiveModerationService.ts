@@ -40,7 +40,18 @@ const HIVE_MODELS = {
   visual: 'visual-moderation',
   text: 'text-moderation',
   audio: 'audio-moderation',
+  celebrity: 'celebrity-recognition',
+  likeness: 'likeness-detection',
+  mediaSearch: 'media-search',
 } as const;
+
+/** Curated trademark / franchise signals for blueprint/script warn-only checks. */
+const COPYRIGHT_TEXT_SIGNALS: Array<{ pattern: RegExp; label: string }> = [
+  { pattern: /\b(disney|marvel|pixar|star wars|harry potter|pokemon|nintendo|mickey mouse)\b/i, label: 'trademark/franchise' },
+  { pattern: /\b(copyright|trademark|®|™)\b/i, label: 'ip_marker' },
+  { pattern: /\b(looks like|resembles|in the style of|as seen in)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?/i, label: 'likeness_reference' },
+  { pattern: /\b(taylor swift|beyonc[eé]|elon musk|donald trump|barack obama|tom cruise|brad pitt)\b/i, label: 'celebrity_name' },
+];
 
 // =============================================================================
 // EXTENDED TYPES
@@ -401,6 +412,167 @@ export class HiveModerationService {
   }
 
   // ===========================================================================
+  // IP / NIL HELPERS
+  // ===========================================================================
+
+  /**
+   * Text copyright / NIL heuristics — warn-only unless always-block classes from Hive text scan.
+   */
+  static async moderateTextForCopyrightSignals(
+    text: string,
+    options: HiveModerationOptions
+  ): Promise<HiveModerationResult> {
+    const flagged: string[] = [];
+    const hiveClasses: HiveClassResult[] = [];
+
+    for (const { pattern, label } of COPYRIGHT_TEXT_SIGNALS) {
+      if (pattern.test(text)) {
+        flagged.push(label);
+        hiveClasses.push({ class: label, score: 0.75 });
+      }
+    }
+
+    if (this.isConfigured()) {
+      try {
+        const response = await fetch(HIVE_ENDPOINTS.text, {
+          method: 'POST',
+          headers: {
+            Authorization: this.getAuthHeader(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text_data: text.slice(0, 8000),
+            models: { [HIVE_MODELS.text]: {} },
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const parsed = this.parseHiveResponse(data, 'text');
+          for (const cls of parsed.hiveClasses || []) {
+            if (/trademark|copyright|brand|celebrity|likeness|ip_/i.test(cls.class) && cls.score > 0.4) {
+              flagged.push(cls.class);
+              hiveClasses.push(cls);
+            }
+          }
+          if (parsed.flaggedCategories.some((c) => HIVE_ALWAYS_BLOCK_CLASSES.some((b) => c.includes(b)))) {
+            return { ...parsed, allowed: false, action: 'blocked' };
+          }
+        }
+      } catch (err) {
+        console.warn('[HiveModeration] Copyright text Hive scan failed:', err);
+      }
+    }
+
+    const unique = [...new Set(flagged)];
+    return {
+      allowed: true,
+      action: unique.length > 0 ? 'warning' : 'allowed',
+      flaggedCategories: unique,
+      categoryScores: Object.fromEntries(unique.map((c) => [c, 0.75])),
+      highestScore: unique.length > 0 ? 0.75 : 0,
+      threshold: ADMIN_REVIEW.thresholds.adminReview,
+      hiveClasses,
+      confidence: unique.length > 0 ? 0.75 : 0,
+      autoDeleted: false,
+      heldForReview: false,
+    };
+  }
+
+  /**
+   * Celebrity recognition on reference portraits — warn-only.
+   */
+  static async recognizeCelebrities(
+    imageUrl: string,
+    options: HiveModerationOptions
+  ): Promise<HiveModerationResult> {
+    return this.runVisualSpecializedModel(imageUrl, HIVE_MODELS.celebrity, options, 'celebrity');
+  }
+
+  /**
+   * Likeness / IP detection on images — warn-only.
+   */
+  static async detectLikeness(
+    imageUrl: string,
+    options: HiveModerationOptions
+  ): Promise<HiveModerationResult> {
+    return this.runVisualSpecializedModel(imageUrl, HIVE_MODELS.likeness, options, 'likeness');
+  }
+
+  /**
+   * Media copyright search on video URL — warn-only (expensive).
+   */
+  static async searchMediaCopyright(
+    videoUrl: string,
+    options: HiveModerationOptions
+  ): Promise<HiveModerationResult> {
+    if (!this.isConfigured()) {
+      return this.createDefaultAllowResult('Hive AI not configured');
+    }
+
+    try {
+      const response = await fetch(HIVE_ENDPOINTS.visual, {
+        method: 'POST',
+        headers: {
+          Authorization: this.getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: videoUrl,
+          models: { [HIVE_MODELS.mediaSearch]: {} },
+        }),
+      });
+
+      if (!response.ok) {
+        return this.createDefaultAllowResult(`Media search API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return parseCopyrightMediaHiveResponse(data);
+    } catch (error) {
+      console.error('[HiveModeration] Media copyright search error:', error);
+      return this.createDefaultAllowResult(error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+
+  private static async runVisualSpecializedModel(
+    imageUrl: string,
+    modelId: string,
+    options: HiveModerationOptions,
+    kind: 'celebrity' | 'likeness'
+  ): Promise<HiveModerationResult> {
+    if (!this.isConfigured()) {
+      return this.createDefaultAllowResult('Hive AI not configured');
+    }
+
+    try {
+      const response = await fetch(HIVE_ENDPOINTS.visual, {
+        method: 'POST',
+        headers: {
+          Authorization: this.getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: imageUrl,
+          models: { [modelId]: {} },
+        }),
+      });
+
+      if (!response.ok) {
+        return this.createDefaultAllowResult(`${modelId} API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return kind === 'celebrity'
+        ? parseCelebrityHiveResponse(data)
+        : parseLikenessHiveResponse(data);
+    } catch (error) {
+      console.error(`[HiveModeration] ${modelId} error:`, error);
+      return this.createDefaultAllowResult(error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+
+  // ===========================================================================
   // RESPONSE PARSING
   // ===========================================================================
 
@@ -577,6 +749,61 @@ export class HiveModerationService {
   }
 
   /**
+   * Log stage moderation report to database (audit trail).
+   */
+  static async logStageModerationEvent(input: {
+    userId: string
+    contentType: ContentType
+    contentHash: string
+    stage: string
+    report: Record<string, unknown>
+    projectId?: string
+  }): Promise<void> {
+    const report = input.report as {
+      allowed?: boolean
+      action?: ModerationAction
+      checks?: Array<{ categories?: string[]; score?: number; severity?: string }>
+    }
+
+    const flaggedCategories = [
+      ...new Set(
+        (report.checks || []).flatMap((c) => c.categories || [])
+      ),
+    ]
+
+    const highestScore = Math.max(
+      0,
+      ...(report.checks || []).map((c) => c.score ?? 0)
+    )
+
+    const action: ModerationAction =
+      report.action === 'blocked' || report.allowed === false
+        ? 'blocked'
+        : report.action === 'warning'
+          ? 'warning'
+          : 'allowed'
+
+    try {
+      await ModerationEvent.create({
+        user_id: input.userId,
+        content_type: input.contentType,
+        content_hash: input.contentHash,
+        action,
+        flagged_categories: flaggedCategories,
+        category_scores: Object.fromEntries(
+          flaggedCategories.map((c) => [c, highestScore])
+        ),
+        project_id: input.projectId,
+        stage: input.stage as import('@/models/ModerationEvent').ModerationStageName,
+        report_json: input.report,
+        threshold_applied: ADMIN_REVIEW.thresholds.adminReview,
+      })
+    } catch (error) {
+      console.error('[HiveModeration] Failed to log stage moderation event:', error)
+    }
+  }
+
+  /**
    * Log moderation event to database
    */
   private static async logModerationEvent(
@@ -673,3 +900,98 @@ export class HiveModerationService {
 }
 
 export default HiveModerationService;
+
+// =============================================================================
+// IP RESPONSE PARSERS (exported for unit tests)
+// =============================================================================
+
+export function parseCelebrityHiveResponse(data: Record<string, unknown>): HiveModerationResult {
+  const hiveClasses = extractHiveClasses(data);
+  const matches = hiveClasses.filter((c) => c.score > 0.5);
+  const names = matches.map((c) => c.class);
+
+  return {
+    allowed: true,
+    action: names.length > 0 ? 'warning' : 'allowed',
+    flaggedCategories: names.length > 0 ? ['celebrity_match'] : [],
+    categoryScores: Object.fromEntries(names.map((n) => [n, matches.find((m) => m.class === n)?.score ?? 0.5])),
+    highestScore: matches[0]?.score ?? 0,
+    threshold: ADMIN_REVIEW.thresholds.adminReview,
+    hiveClasses: matches,
+    confidence: matches[0]?.score ?? 0,
+    autoDeleted: false,
+    heldForReview: false,
+    hiveRequestId: (data.id as string) || undefined,
+  };
+}
+
+export function parseLikenessHiveResponse(data: Record<string, unknown>): HiveModerationResult {
+  const hiveClasses = extractHiveClasses(data);
+  const matches = hiveClasses.filter((c) => c.score > 0.45);
+  const labels = matches.map((c) => c.class);
+
+  return {
+    allowed: true,
+    action: labels.length > 0 ? 'warning' : 'allowed',
+    flaggedCategories: labels.length > 0 ? ['likeness_match'] : [],
+    categoryScores: Object.fromEntries(labels.map((l) => [l, matches.find((m) => m.class === l)?.score ?? 0.5])),
+    highestScore: matches[0]?.score ?? 0,
+    threshold: ADMIN_REVIEW.thresholds.adminReview,
+    hiveClasses: matches,
+    confidence: matches[0]?.score ?? 0,
+    autoDeleted: false,
+    heldForReview: false,
+    hiveRequestId: (data.id as string) || undefined,
+  };
+}
+
+export function parseCopyrightMediaHiveResponse(data: Record<string, unknown>): HiveModerationResult {
+  const hiveClasses = extractHiveClasses(data);
+  const matches = hiveClasses.filter((c) => c.score > 0.4);
+  const labels = matches.length > 0 ? ['copyright_media_match'] : [];
+
+  return {
+    allowed: true,
+    action: labels.length > 0 ? 'warning' : 'allowed',
+    flaggedCategories: labels,
+    categoryScores: labels.length > 0 ? { copyright_media_match: matches[0]?.score ?? 0.5 } : {},
+    highestScore: matches[0]?.score ?? 0,
+    threshold: ADMIN_REVIEW.thresholds.adminReview,
+    hiveClasses: matches,
+    confidence: matches[0]?.score ?? 0,
+    autoDeleted: false,
+    heldForReview: false,
+    hiveRequestId: (data.id as string) || undefined,
+  };
+}
+
+function extractHiveClasses(data: Record<string, unknown>): HiveClassResult[] {
+  const hiveClasses: HiveClassResult[] = [];
+  const status = data.status as Record<string, unknown> | undefined;
+  const output = status?.output as Array<Record<string, unknown>> | undefined;
+
+  if (output && Array.isArray(output)) {
+    for (const item of output) {
+      const classes = item.classes as Array<Record<string, unknown>> | undefined;
+      if (classes && Array.isArray(classes)) {
+        for (const cls of classes) {
+          hiveClasses.push({
+            class: String(cls.class ?? cls.name ?? 'unknown'),
+            score: Number(cls.score ?? cls.confidence ?? 0),
+          });
+        }
+      }
+      const celebrities = item.celebrities as Array<Record<string, unknown>> | undefined;
+      if (celebrities && Array.isArray(celebrities)) {
+        for (const celeb of celebrities) {
+          hiveClasses.push({
+            class: String(celeb.name ?? celeb.class ?? 'celebrity'),
+            score: Number(celeb.score ?? celeb.confidence ?? 0.8),
+          });
+        }
+      }
+    }
+  }
+
+  return hiveClasses;
+}

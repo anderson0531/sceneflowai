@@ -72,6 +72,7 @@ import type {
   AnimaticRenderSettings,
 } from './types'
 import { DirectorDialog } from './DirectorDialog'
+import { ModerationValidateButton } from '@/components/moderation/ModerationValidateButton'
 // Dynamic import for VideoEditingDialog to prevent TDZ
 // VideoEditingDialog → VideoEditingDialogV2 is shared between DirectorConsole (chunk 4195)
 // and SegmentStudio (ScriptPanel chunk). When webpack's ModuleConcatenationPlugin scope-hoists
@@ -187,6 +188,8 @@ interface DirectorConsoleProps {
     frameType: 'start' | 'end',
     newFrameUrl: string
   ) => void
+  /** User-initiated Hive validation report callback */
+  onModerationReport?: (report: import('@/lib/moderation/moderationPipeline').ModerationReport) => void
   /** Character demographics for auto guide / Director dialog (falls back to scene.characters) */
   guideCharacters?: GuideCharacterDemographic[]
   /** Triggered when the user clicks 'Continue Shot' on a video production card */
@@ -245,6 +248,7 @@ function DirectorConsoleRoot({
   onGenerateAllAudio,
   isGeneratingAudio,
   onSaveEditedKeyframe,
+  onModerationReport,
   guideCharacters,
   children,
 }: DirectorConsoleProps & {
@@ -1321,6 +1325,19 @@ function DirectorConsoleRoot({
                           </TooltipTrigger>
                           <TooltipContent>Copy Prompt for External Generation</TooltipContent>
                         </Tooltip>
+                        {onModerationReport && projectId && segment.activeAssetUrl && item.status === 'complete' && (
+                          <ModerationValidateButton
+                            projectId={projectId}
+                            stage={segment.assetType === 'video' ? 'fal_video' : 'storyboard'}
+                            source="segment_asset"
+                            resourceId={item.segmentId}
+                            label="Validate"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2 text-slate-500 hover:text-indigo-300"
+                            onReport={onModerationReport}
+                          />
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
