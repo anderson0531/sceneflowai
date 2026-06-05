@@ -103,7 +103,7 @@ export default function PrivacyPolicyPage() {
             
             <h3 className="text-xl font-medium text-white mb-3 mt-6">4.1 Law Enforcement & Content Attribution</h3>
             <p className="text-gray-300 leading-relaxed">
-              We may disclose generation audit logs (user ID, prompts, content hashes, timestamps, moderation events) to law enforcement agencies upon valid legal request. Segment video may include SceneFlow provenance records for attribution. Studio content validation surfaces informational risk signals—it does not replace your responsibility for how content is published.
+              We may disclose generation audit logs (user ID, prompts, content hashes, timestamps, moderation events) to law enforcement agencies upon valid legal request. Segment video may include SceneFlow provenance records for attribution. Studio content validation surfaces informational risk signals—it does not replace your responsibility for how content is published. We also retain violation counters and suspension timestamps for enforcement actions and Merchant of Record audit purposes.
             </p>
           </section>
 

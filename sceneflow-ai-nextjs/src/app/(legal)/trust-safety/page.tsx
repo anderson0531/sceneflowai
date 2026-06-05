@@ -184,6 +184,41 @@ export default function TrustSafetyPage() {
           </section>
 
           <section>
+            <h2 className="text-2xl font-semibold text-white mb-4">E. Violation &amp; Enforcement Policy</h2>
+            <p className="text-gray-300 leading-relaxed mb-4">
+              This section describes how SceneFlow enforces content policies. It is incorporated by reference into our{' '}
+              <Link href="/terms" className="text-purple-400 hover:text-purple-300">Terms of Service</Link> (Section 10.1).
+            </p>
+
+            <h3 className="text-xl font-medium text-white mb-3">What Counts as a Violation</h3>
+            <ul className="list-disc pl-6 text-gray-300 space-y-2 mb-6">
+              <li>Confirmed block on a guarded generation path (pre-storage review failure)</li>
+              <li>Submission of prohibited content categories listed in our Terms of Service</li>
+              <li>Failed consent or speaker validation, or attempts to circumvent validation requirements</li>
+              <li>Continued generation of flagged content after Studio validation warnings (informational signals do not grant permission to publish)</li>
+            </ul>
+
+            <h3 className="text-xl font-medium text-white mb-3">Strike System</h3>
+            <ul className="list-disc pl-6 text-gray-300 space-y-2 mb-6">
+              <li>Each confirmed violation increments your account violation counters</li>
+              <li>Enforcement thresholds use a rolling twenty-four (24) hour window</li>
+              <li><strong>Three (3) violations in 24 hours:</strong> elevated review and increased moderation sampling</li>
+              <li><strong>Five (5) violations in 24 hours:</strong> twenty-four (24) hour temporary account suspension</li>
+              <li><strong>Repeat or egregious violations:</strong> permanent termination, feature restrictions, and law-enforcement referral where required</li>
+            </ul>
+
+            <h3 className="text-xl font-medium text-white mb-3">What We Log</h3>
+            <p className="text-gray-300 leading-relaxed mb-4">
+              Moderation and enforcement events may record prompts, scripts, generation path, generic block-reason categories, and provenance hashes at delivery. These records reflect Service-delivered output only—they do not cover modifications made after export in third-party editors.
+            </p>
+
+            <h3 className="text-xl font-medium text-white mb-3">Appeals</h3>
+            <p className="text-gray-300 leading-relaxed">
+              You may appeal a suspension by emailing abuse@sceneflowai.com within seven (7) days of notice. Reinstatement is not guaranteed. See our Terms of Service Section 12.2 for user liability and indemnification obligations.
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-2xl font-semibold text-white mb-4">Liability & Compliance</h2>
             
             <h3 className="text-xl font-medium text-white mb-3">Liability Shielding</h3>
@@ -193,6 +228,7 @@ export default function TrustSafetyPage() {
             <ul className="list-disc pl-6 text-gray-300 space-y-2 mb-6">
               <li>The content of prompts and scripts submitted to the platform</li>
               <li>How generated content is used, distributed, or published</li>
+              <li>Responsibility for content modified after export from SceneFlow (including in third-party editors); SceneFlow&apos;s provenance and audit records reflect Service-delivered output only</li>
               <li>Ensuring they have rights to clone any voices they upload</li>
               <li>Compliance with applicable laws in their jurisdiction</li>
             </ul>
@@ -247,6 +283,10 @@ export default function TrustSafetyPage() {
               <div className="flex items-start gap-3">
                 <span className="text-green-400 font-bold">✓</span>
                 <p><strong>Content provenance:</strong> Segment video receives signed hash metadata for forensic chain-of-custody.</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-green-400 font-bold">✓</span>
+                <p><strong>Violation enforcement:</strong> Documented strike thresholds, suspension, and termination for repeated policy violations.</p>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-green-400 font-bold">✓</span>

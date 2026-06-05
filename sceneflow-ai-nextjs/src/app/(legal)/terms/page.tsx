@@ -16,7 +16,7 @@ export default function TermsOfServicePage() {
         </Link>
         
         <h1 className="text-4xl font-bold text-white mb-2">Terms of Service</h1>
-        <p className="text-gray-400 mb-8">Last updated: May 6, 2026</p>
+        <p className="text-gray-400 mb-8">Last updated: June 5, 2026</p>
         
         <div className="prose prose-invert prose-purple max-w-none space-y-8">
           <section>
@@ -86,8 +86,11 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">7. AI-Generated Content Disclaimer</h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-gray-300 leading-relaxed mb-4">
               AI-generated content may contain errors, biases, or unexpected outputs. You are solely responsible for reviewing and approving all generated content before use. We do not guarantee the accuracy, appropriateness, or legal compliance of AI outputs.
+            </p>
+            <p className="text-gray-300 leading-relaxed">
+              AI outputs are provided for your review and editorial control. <strong>You are solely responsible for any modifications, edits, overlays, re-voicing, or other alterations made to Service output using third-party applications or tools after export or download.</strong> SceneFlow does not monitor or control post-export use.
             </p>
           </section>
 
@@ -139,6 +142,15 @@ export default function TermsOfServicePage() {
             <p className="text-gray-300 leading-relaxed">
               Violation of content policies may result in immediate account termination and reporting to law enforcement where appropriate.
             </p>
+            <h3 className="text-xl font-medium text-white mb-3 mt-6">10.1 Moderation Enforcement</h3>
+            <p className="text-gray-300 leading-relaxed">
+              The Service uses automated and manual enforcement, including violation strikes, temporary suspension, feature restrictions, and termination for cause. <strong>Repeated policy violations—including blocks on guarded generation paths and confirmed abuse—may result in enforcement action without refund.</strong> Full enforcement rules are in our{' '}
+              <Link href="/trust-safety" className="text-purple-400 hover:text-purple-300">Trust &amp; Safety Policy</Link>, incorporated by reference.
+            </p>
+            <h3 className="text-xl font-medium text-white mb-3 mt-6">10.2 Generation Routing</h3>
+            <p className="text-gray-300 leading-relaxed">
+              SceneFlow may route generation across multiple provider paths (including primary Google Vertex AI paths and alternate guarded paths) at its sole discretion. Routing does not guarantee successful generation. Alternate paths are subject to additional pre-storage review. You acknowledge that model availability, latency, and outputs may vary by path.
+            </p>
           </section>
 
           <section>
@@ -159,19 +171,26 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">12. Limitation of Liability</h2>
+            <h3 className="text-xl font-medium text-white mb-3">12.1 Limitation of Liability</h3>
             <p className="text-gray-300 leading-relaxed mb-4">
               TO THE MAXIMUM EXTENT PERMITTED BY LAW, SCENEFLOW AI AND LIFE FOCUS, LLC SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES. OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE 12 MONTHS PRECEDING THE CLAIM.
             </p>
-            <h3 className="text-xl font-medium text-white mb-3">User Liability for Generated Content</h3>
+            <p className="text-gray-300 leading-relaxed mb-4">
+              <strong>Service-Delivered Output Only.</strong> TO THE MAXIMUM EXTENT PERMITTED BY LAW, OUR OBLIGATIONS, WARRANTIES, AND LIABILITY RELATE ONLY TO CONTENT AS DELIVERED BY THE SERVICE AT THE TIME OF EXPORT OR DOWNLOAD. WE ARE NOT RESPONSIBLE FOR CLAIMS, HARM, OR LIABILITY ARISING FROM MODIFICATIONS, EDITS, COMBINATIONS, OR REPUBLICATION OF OUTPUT AFTER IT LEAVES THE SERVICE, INCLUDING VIA THIRD-PARTY EDITING OR PUBLISHING TOOLS (E.G., CAPCUT, ADOBE PREMIERE, SOCIAL PLATFORM EDITORS).
+            </p>
+            <h3 className="text-xl font-medium text-white mb-3">12.2 User Responsibility, Representations &amp; Indemnification</h3>
             <p className="text-gray-300 leading-relaxed">
-              YOU ARE SOLELY RESPONSIBLE FOR ALL CONTENT YOU GENERATE USING THE SERVICE. By using SceneFlow AI, you agree to indemnify and hold harmless Life Focus, LLC from any claims, damages, or legal actions arising from your use of generated content, including but not limited to claims of defamation, copyright infringement, privacy violations, or fraud. This liability transfer is a material condition of your use of the Service.
+              YOU ARE SOLELY RESPONSIBLE FOR ALL CONTENT YOU GENERATE, EXPORT, PUBLISH, OR DISTRIBUTE USING THE SERVICE, <strong>INCLUDING ANY SUBSEQUENT MODIFICATIONS, EDITS, OR ALTERATIONS YOU OR THIRD PARTIES MAKE AFTER EXPORT.</strong> You agree to indemnify, defend, and hold harmless Life Focus, LLC, its officers, directors, employees, and Merchant of Record partners from any claims, damages, losses, or legal actions arising from your content or its use, including defamation, copyright infringement, privacy violations, fraud, impersonation, and misrepresentation of the synthetic nature of media. <strong>You represent that you will not represent edited or composite content as unaltered Service output without clear disclosure to recipients.</strong> Provenance records and audit logs, where available, reflect Service-delivered state only. This indemnification is a material condition of your use of the Service.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">13. Termination</h2>
-            <p className="text-gray-300 leading-relaxed">
+            <p className="text-gray-300 leading-relaxed mb-4">
               We may suspend or terminate your account at any time for violation of these terms, particularly violations of voice cloning consent requirements or content moderation policies. Upon termination, your right to use the Service ceases immediately. Unused credits are non-refundable upon termination for cause.
+            </p>
+            <p className="text-gray-300 leading-relaxed">
+              Without limiting our discretion, <strong>five (5) or more confirmed content-policy violations within a rolling twenty-four (24) hour period may result in temporary account suspension.</strong> Sustained or egregious violations—including attempts to circumvent moderation, guarded-path blocks, or consent requirements—may result in permanent termination for cause and forfeiture of unused subscription credits.
             </p>
           </section>
 
