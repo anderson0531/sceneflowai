@@ -17,10 +17,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { HiveModerationService, type HiveModerationResult } from '../../services/HiveModerationService';
 import { isHiveModerationMasterEnabled } from './moderationFlags';
+import { recordUserModerationViolation } from './userModerationViolations';
 import {
   shouldModerateGeneration, 
   MODERATION_REFUND_POLICY,
-  MODERATION_SAMPLING,
   type ModerationContentType,
   type ModerationDecision,
 } from './moderationSampling';
@@ -200,8 +200,7 @@ export async function moderateGeneratedContent(
         `categories=${result.flaggedCategories.join(',')} score=${result.highestScore.toFixed(3)}`
       );
 
-      // Update user violations
-      await incrementUserViolations(userId);
+      await recordUserModerationViolation(userId);
 
       // Calculate refund based on violation history
       const refundPercentage = MODERATION_REFUND_POLICY.getRefundPercentage(priorViolations);
@@ -279,31 +278,6 @@ export async function moderateUpload(
 // =============================================================================
 // USER VIOLATION TRACKING
 // =============================================================================
-
-/**
- * Increment user's violation count
- */
-async function incrementUserViolations(userId: string): Promise<void> {
-  try {
-    // Get current count from recent events
-    const recentCount = await HiveModerationService.getUserViolationCount(
-      userId,
-      MODERATION_SAMPLING.violations.recentWindowHours
-    );
-
-    console.log(`[Moderation] User ${userId} violation count: ${recentCount + 1}`);
-
-    // Check if suspension is needed
-    const { shouldSuspend, reason } = await HiveModerationService.checkUserSuspension(userId);
-    
-    if (shouldSuspend) {
-      console.warn(`[Moderation] User ${userId} should be suspended: ${reason}`);
-      // TODO: Update user.moderation_suspended_until in database
-    }
-  } catch (error) {
-    console.error('[Moderation] Error updating violation count:', error);
-  }
-}
 
 /**
  * Get user's moderation context

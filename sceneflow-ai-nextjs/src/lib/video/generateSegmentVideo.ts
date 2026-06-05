@@ -5,6 +5,11 @@
 import { downloadProductionVideo } from '@/lib/gemini/productionVideoClient'
 import { generateVideoWithVeoKlingFallback } from '@/lib/generation/veoWithKlingFallback'
 import { ContentPolicyExhaustedError } from '@/lib/generation/contentPolicy'
+import {
+  moderateKlingVideoBuffer,
+  KlingSafetyGuardBlockedError,
+} from '@/lib/moderation/klingSafetyGuard'
+import { AssetProvenanceService } from '@/services/AssetProvenanceService'
 import type { VideoGenerationOptions } from '@/lib/gemini/videoClient'
 import { uploadVideoToBlob } from '@/lib/storage/blob'
 import { extractAndStoreLastFrame } from '@/lib/videoUtils'
@@ -95,7 +100,11 @@ export interface GenerateSegmentVideoResult {
   fallbackModelFamily?: 'kling'
   wasPolicyFallback?: boolean
   vertexPolicyAttempts?: number
+  provenanceId?: string
+  contentHash?: string
 }
+
+export { KlingSafetyGuardBlockedError } from '@/lib/moderation/klingSafetyGuard'
 
 export async function generateSegmentVideoCore(
   input: GenerateSegmentVideoInput
@@ -342,6 +351,28 @@ export async function generateSegmentVideoCore(
     throw new Error('Video generation did not produce output')
   }
 
+  // Kling fallback only: mandatory Hive audit before storage (Vertex path skips entirely).
+  if (generationProvider === 'fal') {
+    await moderateKlingVideoBuffer(videoBuffer, {
+      userId,
+      projectId,
+      sceneId,
+      segmentId,
+      segmentIndex,
+    })
+  }
+
+  const provenanceStamp = await AssetProvenanceService.stampVideoAsset({
+    videoBuffer,
+    userId,
+    projectId,
+    sceneId,
+    segmentId,
+    generationProvider,
+    wasPolicyFallback,
+    vertexPolicyAttempts: vertexPolicyAttempts,
+  })
+
   let actualVideoDurationSeconds: number | null = null
   const probeAndLogDuration = async (buf: Buffer) => {
     const sec = await getVideoDurationFromBuffer(buf)
@@ -351,8 +382,17 @@ export async function generateSegmentVideoCore(
   await probeAndLogDuration(videoBuffer)
   const assetUrl = await uploadVideoToBlob(
     videoBuffer,
-    `segments/${segmentId}-${Date.now()}.mp4`
+    `segments/${segmentId}-${Date.now()}.mp4`,
+    projectId,
+    provenanceStamp.gcsMetadata
   )
+
+  await AssetProvenanceService.attachAssetUrl(provenanceStamp.provenanceId, assetUrl)
+  await AssetProvenanceService.scheduleC2paSigning({
+    provenanceId: provenanceStamp.provenanceId,
+    assetUrl,
+    contentHash: provenanceStamp.contentHash,
+  })
 
   let lastFrameUrl: string | null = null
   try {
@@ -417,6 +457,8 @@ export async function generateSegmentVideoCore(
     fallbackModelFamily,
     wasPolicyFallback,
     vertexPolicyAttempts,
+    provenanceId: provenanceStamp.provenanceId,
+    contentHash: provenanceStamp.contentHash,
     requestedDurationSeconds: effectiveDuration,
     actualDurationSeconds: actualVideoDurationSeconds,
     methodSelection: methodSelectionResult,

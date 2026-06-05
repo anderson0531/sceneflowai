@@ -2,6 +2,8 @@
  * Unified Vertex / Veo content-policy detection for retry ladders and Kling fallback.
  */
 
+import { isContentBlockedError } from '@/lib/vertexai/safety'
+
 export class ContentPolicyExhaustedError extends Error {
   readonly attempts: number
   readonly lastError: string
@@ -37,7 +39,8 @@ const POLICY_MARKERS = [
 export function isVertexContentPolicyError(message: string | undefined | null): boolean {
   if (!message?.trim()) return false
   const low = message.toLowerCase()
-  return POLICY_MARKERS.some((m) => low.includes(m))
+  if (POLICY_MARKERS.some((m) => low.includes(m))) return true
+  return isContentBlockedError(new Error(message))
 }
 
 /** @deprecated Use isVertexContentPolicyError */

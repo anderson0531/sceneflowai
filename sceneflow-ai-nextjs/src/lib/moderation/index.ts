@@ -84,3 +84,13 @@ export {
   aggregateBlueprintInputText,
   aggregateBlueprintOutputText,
 } from './blueprintText';
+
+export {
+  moderateKlingVideoBuffer,
+  evaluateKlingHiveResult,
+  isKlingHiveGuardEnabled,
+  KlingSafetyGuardBlockedError,
+  type KlingSafetyGuardContext,
+} from './klingSafetyGuard';
+
+export { recordUserModerationViolation } from './userModerationViolations';

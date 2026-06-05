@@ -6,7 +6,10 @@ import {
   generateSegmentVideoCore,
   SegmentVideoExtRefRequiredError,
   SegmentVideoRateLimitError,
+  KlingSafetyGuardBlockedError,
 } from '@/lib/video/generateSegmentVideo'
+import { CreditService } from '@/services/CreditService'
+import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { isBeatFirstPipelineEnabled, isStoryboardApproved, getSceneBeats } from '@/lib/script/beatMigration'
@@ -174,6 +177,8 @@ export async function POST(
     let generationProvider: 'vertex' | 'fal' | undefined
     let fallbackModelFamily: 'kling' | undefined
     let wasPolicyFallback: boolean | undefined
+    let provenanceId: string | undefined
+    let contentHash: string | undefined
 
     if (genType === 'T2V' || genType === 'I2V') {
       console.log('[Segment Asset Generation] Using Veo 3.1 for video generation')
@@ -224,6 +229,20 @@ export async function POST(
       generationProvider = videoResult.generationProvider
       fallbackModelFamily = videoResult.fallbackModelFamily
       wasPolicyFallback = videoResult.wasPolicyFallback
+      provenanceId = videoResult.provenanceId
+      contentHash = videoResult.contentHash
+
+      if (wasPolicyFallback) {
+        const falCredits =
+          (requestedVideoDurationSeconds ?? duration ?? 5) >= 8
+            ? VIDEO_CREDITS.FAL_KLING_VIDEO_10S
+            : VIDEO_CREDITS.FAL_KLING_VIDEO_5S
+        await CreditService.charge(String(session.user.id), falCredits, 'ai_usage', projectId, {
+          operation: 'fal_kling_video',
+          segmentId,
+          generationProvider: 'fal',
+        })
+      }
 
     } else if (genType === 'T2I') {
       // Image generation using Gemini API
@@ -270,6 +289,8 @@ export async function POST(
       generationProvider,
       fallbackModelFamily,
       wasPolicyFallback,
+      provenanceId,
+      contentHash,
     })
   } catch (error: any) {
     console.error('[Segment Asset Generation] Error:', error)
@@ -292,6 +313,19 @@ export async function POST(
           code: 'VEO_EXT_REF_REQUIRED',
         },
         { status: 400 }
+      )
+    }
+
+    if (error instanceof KlingSafetyGuardBlockedError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: 'CONTENT_POLICY_VIOLATION',
+          blocked: true,
+          categories: error.flaggedCategories,
+          source: 'kling_hive_guard',
+        },
+        { status: 422 }
       )
     }
     

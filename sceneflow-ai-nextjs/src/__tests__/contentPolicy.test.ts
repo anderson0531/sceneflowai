@@ -27,6 +27,10 @@ describe('contentPolicy', () => {
     expect(isVertexContentPolicyError('quota exceeded')).toBe(false)
   })
 
+  it('detects bare safety-blocked errors via isContentBlockedError', () => {
+    expect(isVertexContentPolicyError('Request blocked by safety systems')).toBe(true)
+  })
+
   it('defaults policy max attempts to 3', () => {
     delete process.env.VEO_POLICY_MAX_ATTEMPTS
     expect(getVeoPolicyMaxAttempts()).toBe(3)

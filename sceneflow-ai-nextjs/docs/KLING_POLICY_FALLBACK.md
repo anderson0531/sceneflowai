@@ -57,4 +57,8 @@ Deprecated (no longer used): `KLING_API_KEY`, `KLING_ACCESS_KEY`, `KLING_SECRET_
 
 ## Content validation
 
-Fal/Kling output is not auto-moderated after upload. Users may run paid Hive validation on segment video via `POST /api/moderation/validate` (`stage: fal_video`, `source: segment_asset`). See [HIVE_MODERATION.md](./HIVE_MODERATION.md).
+Kling fallback output is **automatically moderated** via `KlingSafetyGuard` (Hive visual-moderation in blocking mode) before any blob upload when `KLING_HIVE_GUARD_ENABLED` is not `false` and Hive credentials are configured. Users may also run paid Hive validation on segment video via `POST /api/moderation/validate` (`stage: fal_video`, `source: segment_asset`). See [HIVE_MODERATION.md](./HIVE_MODERATION.md).
+
+| Variable | Purpose |
+|----------|---------|
+| `KLING_HIVE_GUARD_ENABLED` | Set `false` to disable mandatory Hive audit on Kling output (default: on when `FAL_KEY` + Hive configured) |

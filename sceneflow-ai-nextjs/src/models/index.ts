@@ -23,6 +23,7 @@ import CreditPricing from './CreditPricing'
 // Compliance Layer models
 import VoiceConsent from './VoiceConsent'
 import UserVoiceClone from './UserVoiceClone'
+import AssetProvenanceLog from './AssetProvenanceLog'
 import ModerationEvent from './ModerationEvent'
 import PaymentWebhookEvent from './PaymentWebhookEvent'
 
@@ -185,6 +186,7 @@ export {
   VoiceConsent,
   UserVoiceClone,
   ModerationEvent,
+  AssetProvenanceLog,
   PaymentWebhookEvent
 }
 
@@ -216,5 +218,6 @@ export default {
   VoiceConsent,
   UserVoiceClone,
   ModerationEvent,
+  AssetProvenanceLog,
   PaymentWebhookEvent
 }

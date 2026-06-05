@@ -2779,6 +2779,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               status: data.status === 'COMPLETE' ? 'COMPLETE' : 'GENERATING',
               assetType: data.assetType,
               activeAssetUrl: data.assetUrl,
+              generationProvider: data.generationProvider,
+              wasPolicyFallback: data.wasPolicyFallback,
+              provenanceId: data.provenanceId,
+              contentHash: data.contentHash,
               ...(data.assetType === 'video' && measuredDuration != null
                 ? { actualVideoDuration: measuredDuration }
                 : {}),

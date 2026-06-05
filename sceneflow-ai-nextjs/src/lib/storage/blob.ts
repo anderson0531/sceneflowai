@@ -53,7 +53,8 @@ export async function uploadImageToBlob(
 export async function uploadVideoToBlob(
   videoBuffer: Buffer,
   filename: string,
-  projectId: string = 'default'
+  projectId: string = 'default',
+  metadata?: Record<string, string>
 ): Promise<string> {
   // Dynamic import to avoid bundling @google-cloud/storage in client builds
   const { uploadToGCS } = await import('./gcsAssets')
@@ -64,6 +65,7 @@ export async function uploadVideoToBlob(
     subcategory: 'scenes',
     filename,
     contentType: 'video/mp4',
+    metadata,
   })
   
   return result.url
