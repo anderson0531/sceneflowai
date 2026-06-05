@@ -215,11 +215,11 @@
         "title": "Google-Native Safety",
         "description": "Every image and video generation runs through Google Vertex AI safety filters with thresholds tuned for professional creative workflows—not consumer-grade defaults.",
         "highlights": [
-          "Vertex RAI on Veo, Imagen, and Gemini generation",
+          "Vertex Responsible AI on Veo, Imagen, and Gemini generation",
           "Production-tuned harm thresholds for cinematic content",
           "Your creative assets are not used to train shared models"
         ],
-        "badge": "Vertex RAI"
+        "badge": "Vertex Responsible AI"
       },
       {
         "id": "extended-guardrails",
@@ -698,7 +698,7 @@
           {
             "id": "corporate-ld",
             "label": "Corporate L&D",
-            "description": "Imagine uploading compliance scripts with your trainer's saved voice and avatar. Then instantly rolling out consistent onboarding and safety training across every office — localized in 70+ languages."
+            "description": "Imagine uploading training slides with your L&D lead's saved voice. Then instantly publishing module videos—chain native +7 second extensions for long explainers, approve Beat Frames before render."
           },
           {
             "id": "software-saas-tutorials",
@@ -846,31 +846,21 @@
   "platformWalkthrough": {
     "badge": "Guided Tour",
     "title": "Platform Walkthrough",
-    "subtitle": "A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.",
-    "subheading": "Explore the platform — start with essentials",
-    "chapterHint": "Four things to know today. Expand chapters when you want the full picture.",
+    "subtitle": "Nine guided clips covering the full SceneFlow Studio workflow — from series planning through trust, safety, and publish-ready output.",
+    "subheading": "Nine guided clips — full pipeline in under 15 minutes",
+    "chapterHint": "Start with planning and continuity, then expand to produce and publish.",
     "expandChapter": "Show features",
     "collapseChapter": "Hide features",
     "underTheHoodLabel": "Under the hood",
     "chapters": [
       {
-        "id": "essentials",
-        "label": "Start here — what you get on day one",
+        "id": "start-here",
+        "label": "Start here — plan, continuity, and audience fit",
         "defaultExpanded": true
       },
       {
-        "id": "quality",
-        "label": "Make it land with your audience",
-        "defaultExpanded": false
-      },
-      {
-        "id": "production",
-        "label": "From approved beats to published master",
-        "defaultExpanded": false
-      },
-      {
-        "id": "advanced",
-        "label": "For teams who want billing and governance",
+        "id": "produce-publish",
+        "label": "Produce and publish — beats to master MP4",
         "defaultExpanded": false
       }
     ],
@@ -916,116 +906,16 @@
     "items": [
       {
         "id": "1",
-        "title": "Intuitive UX + Full Creator Control",
-        "description": "Start fast with guided automation, then edit every generated output so teams keep creative control without losing speed.",
+        "title": "Platform Overview",
+        "description": "One studio from idea to publish-ready video. Same pipeline for training, podcasts, news, and cinematic series — approve storyboards before final render spend.",
         "keyFeatures": [
-          "Guided Studio workflow — from concept to export in one place",
-          "Edit every AI-generated beat, character, and line in place",
-          "Treatment variants — side-by-side compare for creative direction",
-          "Blueprint Collaborate — share links, section audio, and structured reviewer feedback"
+          "Series → Blueprint → Production → Final Cut → Premiere",
+          "Beat-first approval — storyboard and Beat Frames before F2V",
+          "Google Vertex AI generation with native Veo extension chains",
+          "Trust & Safety guardrails and signed provenance on delivery"
         ],
-        "screenshotSlot": "Insert screenshot: Blueprint editor with editable generated sections",
-        "videoSlot": "Insert 00:30 clip: UX flow from concept to editable output"
-      },
-      {
-        "id": "2",
-        "title": "Credit Budget & Cost Control",
-        "description": "Track credit usage in real time and set guardrails before expensive generation runs.",
-        "keyFeatures": [
-          "Real-time credit usage — by project and operation",
-          "Production guardrails — before costly generation runs",
-          "Transparent rate cards — for TTS, video, and intelligence",
-          "Budget visibility — for teams and solo creators"
-        ],
-        "screenshotSlot": "Insert screenshot: credit usage panel and BYOK settings",
-        "videoSlot": "Insert 00:30 clip: budget dashboard and key configuration",
-        "underTheHood": {
-          "title": "Under the hood",
-          "body": "For production teams with existing cloud contracts:",
-          "bullets": [
-            "Vertex AI BYOK — enterprise billing and governance",
-            "Provider toggles in the credit calculator",
-            "Transparent platform rate cards alongside your keys"
-          ]
-        }
-      },
-      {
-        "id": "3",
-        "title": "Any Concept, One Production Workflow",
-        "description": "Use one reliable pipeline for training, podcasts, news, home sales videos, and cinematic content.",
-        "keyFeatures": [
-          "One pipeline — podcast, news, training, real estate, and cinematic formats",
-          "Project templates — Studio adapts to your source material",
-          "Same Blueprint → Script → Production path — regardless of genre",
-          "No tool-switching — from ideation through delivery"
-        ],
-        "screenshotSlot": "Insert screenshot: Split-view or grid showing Podcast, News, Real Estate, and Cinematic templates feeding into one unified SceneFlow pipeline UI.",
-        "videoSlot": "Insert 00:30 clip: \"Start with any source material...\" clicking New Project -> Podcast (UI adapts to audio), then showing split screen of News & Cinematic projects converging into the Blueprint editor."
-      },
-      {
-        "id": "4",
-        "title": "Smart Automation with Precision Edit Control",
-        "description": "The SceneFlow platform uses intelligence to automatically generate a professional baseline (series, blueprint, script, production prompts, and edits) while providing intelligent dialogs that give you full edit control with built-in guardrails.",
-        "keyFeatures": [
-          "AI baselines in one pass — series, blueprint, script, and production prompts",
-          "Intelligent edit dialogs — guardrails, not blind rewrites",
-          "Accept, refine, or reject — every suggestion stays under your control",
-          "Human-in-the-loop — at every phase of production"
-        ],
-        "screenshotSlot": "Insert screenshot: Intelligent dialog showing baseline generation with edit controls",
-        "videoSlot": "Insert 00:30 clip: AI baseline generation followed by user making precise edits"
-      },
-      {
-        "id": "5",
-        "title": "Shared Reference Library for Continuity",
-        "description": "Maintain consistent characters, wardrobe, voices, locations, and props across scenes and episodes with reusable references.",
-        "keyFeatures": [
-          "Reusable profiles — characters, wardrobe, voices, locations, and props",
-          "Cross-scene application — references flow into every generation",
-          "Visual consistency — same faces and tone in Imagen and Veo outputs",
-          "Franchise-scale continuity — built for multi-episode series"
-        ],
-        "screenshotSlot": "Insert screenshot: Reference library showing character and prop continuity",
-        "videoSlot": "Insert 00:30 clip: Applying references across multiple scenes"
-      },
-      {
-        "id": "6",
-        "title": "Express Generation Engine",
-        "description": "Auto-generate images and video segments concurrently. Express Storyboard lets you review and share audio-visual storyboards in minutes. Express Animatics renders full Ken Burns scenes in minutes, while Express Video delivers final video scenes in minutes instead of days.",
-        "keyFeatures": [
-          "Concurrent generation — images and video across scenes at once",
-          "Express Storyboard — shareable audio-visual previews in minutes",
-          "Express Animatics — Ken Burns motion from stills",
-          "Express Video — scene-level clips in minutes, not days"
-        ],
-        "screenshotSlot": "Insert screenshot: Express generation dashboard with Animatics and Video progress",
-        "videoSlot": "Insert 00:30 clip: Concurrent generation turning script into animatic then final video"
-      },
-      {
-        "id": "7",
-        "title": "Audience Resonance Editor",
-        "description": "Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint, and Script for maximum impact.",
-        "keyFeatures": [
-          "Target-audience scoring — with category breakdown",
-          "Section-tied recommendations — fix the right part of your story",
-          "One-click fixes and Guided Edit — precise rewrites, not guesswork",
-          "Production-ready threshold — know when to invest in full render"
-        ],
-        "screenshotSlot": "Insert screenshot: Resonance Editor with audience scoring and one-click fixes",
-        "videoSlot": "Insert 00:30 clip: Applying guided edits based on audience resonance score"
-      },
-      {
-        "id": "8",
-        "title": "Adaptive Translation (70+ Languages)",
-        "description": "Localize content at scale while preserving narrative intent and timeline alignment for multilingual delivery.",
-        "keyFeatures": [
-          "70+ languages — narration, dialogue, and copy at scale",
-          "Narrative intent preserved — meaning and timing stay aligned",
-          "Multi-language audio tracks — on the scene timeline",
-          "Export-ready packages — per locale for distribution"
-        ],
-        "screenshotSlot": "Insert screenshot: Multi-language timeline and translation settings",
-        "videoSlot": "Insert 00:30 clip: Instantly localizing a scene into multiple languages"
+        "screenshotSlot": "Insert screenshot: Landing hero + How It Works pipeline strip",
+        "videoSlot": "Insert 01:30 clip: Hero → new project → Blueprint resonance flash → Production beat-first → Final Cut → Premiere → Trust & Safety"
       },
       {
         "id": "9",
@@ -1054,6 +944,32 @@
         "videoSlot": "Insert 00:30 clip: Turning a concept into a structured Blueprint"
       },
       {
+        "id": "5",
+        "title": "Shared Reference Library for Continuity",
+        "description": "Maintain consistent characters, wardrobe, voices, locations, and props across scenes and episodes with reusable references.",
+        "keyFeatures": [
+          "Reusable profiles — characters, wardrobe, voices, locations, and props",
+          "Cross-scene application — references flow into every generation",
+          "Visual consistency — same faces and tone in Imagen and Veo outputs",
+          "Franchise-scale continuity — built for multi-episode series"
+        ],
+        "screenshotSlot": "Insert screenshot: Reference library showing character and prop continuity",
+        "videoSlot": "Insert 00:30 clip: Applying references across multiple scenes"
+      },
+      {
+        "id": "7",
+        "title": "Audience Resonance Editor",
+        "description": "Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint, and Script for maximum impact.",
+        "keyFeatures": [
+          "Target-audience scoring — with category breakdown",
+          "Section-tied recommendations — fix the right part of your story",
+          "One-click fixes and Guided Edit — precise rewrites, not guesswork",
+          "Production-ready threshold — know when to invest in full render"
+        ],
+        "screenshotSlot": "Insert screenshot: Resonance Editor with audience scoring and one-click fixes",
+        "videoSlot": "Insert 00:30 clip: Applying guided edits based on audience resonance score"
+      },
+      {
         "id": "11",
         "title": "Production Automation",
         "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
@@ -1064,7 +980,7 @@
           "Production Streams — review outputs, re-render stale beats, send to Final Cut"
         ],
         "screenshotSlot": "Insert screenshot: Production dashboard showing script, Beat Frames, and Mixer",
-        "videoSlot": "Insert 00:30 clip: Foundation, Express storyboard, Beat Frames, and stream export"
+        "videoSlot": "Insert 00:60 clip: Lock script → Express storyboard → Beat Frames → EXT chain (+7s) → send stream to Final Cut"
       },
       {
         "id": "12",
@@ -1087,23 +1003,25 @@
           "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
           "Insights dashboard — Scoring, Biometric, and Visual tabs",
           "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
+          "Export bundles and vertical short-form clip plans",
+          "Screening Room folded in — /s/ review links before publish"
         ],
         "screenshotSlot": "Insert screenshot: Premiere dashboard with insights and publish wizard",
-        "videoSlot": "Insert 00:30 clip: Screening insights, YouTube wizard, and export bundles"
+        "videoSlot": "Insert 00:45 clip: Master import → screening /s/ link → insights → YouTube wizard or export bundle"
       },
       {
-        "id": "14",
-        "title": "Audience Review and Analytics",
-        "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+        "id": "16",
+        "title": "Trust & Safety",
+        "description": "Layered guardrails on every generation path: Google Vertex AI safety, Extended Creative Services with Guardrails, optional Studio content validation, and signed provenance on segment video.",
         "keyFeatures": [
-          "Private review sessions — secure /s/ share links for stakeholders",
-          "Structured audience feedback — ratings and open items",
-          "Optional engagement analytics — with viewer consent before capture",
-          "Iterate from real data — refine Blueprint and script from reviewer insights"
+          "Google-native safety — Vertex Responsible AI on all generation",
+          "Guarded fallback — pre-storage review on alternate paths",
+          "Studio content validation — policy signals before heavy render",
+          "Violation enforcement — documented strikes and suspension thresholds",
+          "Signed provenance — content hashes and audit logs at delivery"
         ],
-        "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
-        "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
+        "screenshotSlot": "Insert screenshot: Trust & Safety landing section or Studio validation panel",
+        "videoSlot": "Insert 00:45 clip: Landing trust tiers → Studio validation signals → guarded-path block → provenance metadata → /trust-safety policy"
       }
     ]
   },

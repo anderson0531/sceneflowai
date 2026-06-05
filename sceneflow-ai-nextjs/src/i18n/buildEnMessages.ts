@@ -253,7 +253,7 @@ export function buildEnMessages() {
       badge: 'Guided Tour',
       title: 'Platform Walkthrough',
       subtitle:
-        'A complete guide to the SceneFlow AI Studio workflow, from collaboration reviews to final cinematic output.',
+        'Nine guided clips covering the full SceneFlow Studio workflow — from series planning through trust, safety, and publish-ready output.',
       subheading: FEATURE_STORYBOARD_SECTION.subheading,
       chapterHint: FEATURE_STORYBOARD_SECTION.chapterHint,
       expandChapter: FEATURE_STORYBOARD_SECTION.expandChapter,

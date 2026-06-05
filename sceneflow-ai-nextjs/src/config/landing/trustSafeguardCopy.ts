@@ -13,11 +13,11 @@ export const TRUST_SAFEGUARD_COPY = {
       description:
         'Every image and video generation runs through Google Vertex AI safety filters with thresholds tuned for professional creative workflows—not consumer-grade defaults.',
       highlights: [
-        'Vertex RAI on Veo, Imagen, and Gemini generation',
+        'Vertex Responsible AI on Veo, Imagen, and Gemini generation',
         'Production-tuned harm thresholds for cinematic content',
         'Your creative assets are not used to train shared models',
       ],
-      badge: 'Vertex RAI',
+      badge: 'Vertex Responsible AI',
     },
     {
       id: 'extended-guardrails',
