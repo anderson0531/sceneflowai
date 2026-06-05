@@ -74,7 +74,7 @@ SceneFlow AI has completed all compliance remediation following the Paddle rejec
 | Feature | Implementation | Status |
 |---------|---------------|--------|
 | Scene Recreation Blocking | `AIReviewService.ts` | ✅ Active |
-| Forensic Watermarking | Google SynthID via Veo 3.1 | ✅ Automatic |
+| Forensic Provenance | SceneFlow signed content hash + metadata on segment video; optional credentials embedding | ✅ Active |
 | Audio Copyright Filtering | Planned | ⏳ Future |
 
 ### Pillar 3: NIL Protection ✅ VERIFIED

@@ -36,6 +36,8 @@ Automation: [`scripts/fetch-use-case-demos.mjs`](../../scripts/fetch-use-case-de
 | `niche-skill-tutoring` | Niche Skill Tutoring | `#use-cases-knowledge-niche-skill-tutoring` | Ready — Blob | Pexels [857167](https://www.pexels.com/video/baking-pastry-bread-857167/) — Vimeo (CC0) |
 | `medical-patient-education` | Medical/Patient Education | `#use-cases-knowledge-medical-patient-education` | Ready — Blob | Pexels [7579341](https://www.pexels.com/video/doctor-talking-to-the-patient-7579341/) — cottonbro studio |
 | `video-memoirs` | Video Memoirs | `#use-cases-knowledge-video-memoirs` | Ready — `KITCHEN.mp4` (watermarked) | SceneFlow demo |
+| `continuous-dialogue-beat` | Continuous Beats | `#use-cases-knowledge-continuous-dialogue-beat` | Ready — Blob | Pexels [7413808](https://www.pexels.com/video/a-woman-standing-while-having-a-presentation-7413808/) — RDNE Stock project |
+| `trust-validation-workflow` | Moderation & Risk Mitigation | `#use-cases-knowledge-trust-validation-workflow` | Ready — Blob | Pexels [8123969](https://www.pexels.com/video/business-people-brainstorming-on-a-meeting-8123969/) — RDNE Stock project |
 
 ---
 
@@ -77,9 +79,8 @@ Automation: [`scripts/fetch-use-case-demos.mjs`](../../scripts/fetch-use-case-de
 
 | Status | Count |
 |--------|-------|
-| Ready | 24 |
-| Placeholder | 0 |
-| **Total examples** | **24** |
+| Ready | 26 |
+| **Total examples** | **26** |
 
 Blob path pattern: `demo/use-cases/{categoryId}/{exampleId}.mp4` on `xxavfkdhdebrqida.public.blob.vercel-storage.com`
 

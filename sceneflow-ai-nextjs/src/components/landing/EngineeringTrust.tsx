@@ -194,6 +194,16 @@ export function EngineeringTrust() {
             <span className="text-gray-300 text-base">{t('partnership.poweredBy')}</span>
           </div>
           <p className="text-gray-500 text-sm mt-3 max-w-lg mx-auto">{t('partnership.footnote')}</p>
+          <p className="text-gray-400 text-sm mt-4 max-w-2xl mx-auto">
+            {t('trustSafeguardLink')}{' '}
+            <button
+              type="button"
+              onClick={() => document.getElementById('trust-safety')?.scrollIntoView({ behavior: 'smooth' })}
+              className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2"
+            >
+              View Trust &amp; Safety
+            </button>
+          </p>
         </motion.div>
 
         <motion.div

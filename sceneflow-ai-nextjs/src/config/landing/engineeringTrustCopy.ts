@@ -78,5 +78,7 @@ export const ENGINEERING_TRUST_COPY = {
     footnote:
       'SceneFlow AI runs on scalable Google Cloud infrastructure designed for startup growth and enterprise expectations.',
   },
+  trustSafeguardLink:
+    'Layered trust: Google Vertex safety plus SceneFlow guardrails, validation, and provenance — see Trust & Safety below.',
   attribution: '— The SceneFlow Engineering Team',
 } as const

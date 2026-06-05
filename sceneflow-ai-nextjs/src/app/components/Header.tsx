@@ -178,6 +178,9 @@ export function Header() {
                   <DropdownMenuItem onClick={() => scrollToSection('core-capabilities')}>
                     {t('audienceResonance')}
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => scrollToSection('trust-safety')}>
+                    {t('trustSafety')}
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => scrollToSection('engineering')}>
                     {t('platformTrust')}
                   </DropdownMenuItem>
@@ -293,6 +296,10 @@ export function Header() {
                   </button>
                   <button onClick={() => scrollToSection('core-capabilities')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     {t('audienceResonance')}
+                  </button>
+                  <button onClick={() => scrollToSection('trust-safety')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                    <Shield className="w-4 h-4" />
+                    {t('trustSafety')}
                   </button>
                   <button onClick={() => scrollToSection('pricing')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Sparkles className="w-4 h-4 text-sf-primary" />

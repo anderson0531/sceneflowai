@@ -172,8 +172,8 @@ Create and manage multi-episode video series with AI-generated reference library
 - **Text Generation**: Google Gemini 2.5 Flash
 - **Image Generation**: Google Imagen 3
 - **Video Generation**: Google Veo 2
-- **Voice Synthesis**: ElevenLabs (multiple voices)
-- **Content Moderation**: Hive AI multi-layer protection
+- **Voice Synthesis**: Natural AI voice synthesis with stock and custom voices
+- **Content Moderation**: Layered guardrails—Google Vertex safety, Extended Creative Services with Guardrails, and optional Studio content validation
 
 ### Platform
 - **Frontend**: Next.js 15, React 19, TypeScript
@@ -245,14 +245,14 @@ Create and manage multi-episode video series with AI-generated reference library
 - **End-to-end workflow** (not just single-feature)
 - **Reference Library system** for series consistency
 - **Professional terminology** and workflow
-- **Enterprise-grade moderation** for safety
+- **Enterprise-grade trust stack** for safety and provenance
 - **Cloud rendering** for high-quality exports
 
 ---
 
 ## Security & Compliance
 
-- **Content Moderation**: Multi-layer AI moderation (Hive AI)
+- **Content Moderation**: Google-native safety, Extended Creative Services with Guardrails, and optional Studio content validation
 - **Data Privacy**: GDPR-compliant data handling
 - **Secure Storage**: Encrypted cloud storage
 - **User Authentication**: Enterprise SSO options

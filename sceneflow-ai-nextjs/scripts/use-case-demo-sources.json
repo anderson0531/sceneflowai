@@ -89,6 +89,26 @@
     "directDownloadUrl": "https://videos.pexels.com/video-files/4297074/4297074-uhd_3840_2160_25fps.mp4",
     "blobPath": "demo/use-cases/knowledge/video-memoirs.mp4"
   },
+  "continuous-dialogue-beat": {
+    "categoryId": "knowledge",
+    "label": "Continuous Beats",
+    "pexelsQuery": "presenter speaking monologue conference",
+    "pexelsVideoId": 7413808,
+    "pexelsUrl": "https://www.pexels.com/video/a-woman-standing-while-having-a-presentation-7413808/",
+    "pexelsAuthor": "RDNE Stock project",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/7413808/7413808-hd_1080_1920_24fps.mp4",
+    "blobPath": "demo/use-cases/knowledge/continuous-dialogue-beat.mp4"
+  },
+  "trust-validation-workflow": {
+    "categoryId": "knowledge",
+    "label": "Moderation & Risk Mitigation",
+    "pexelsQuery": "team reviewing creative storyboard planning",
+    "pexelsVideoId": 8123969,
+    "pexelsUrl": "https://www.pexels.com/video/business-people-brainstorming-on-a-meeting-8123969/",
+    "pexelsAuthor": "RDNE Stock project",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/8123969/8123969-hd_1080_1920_30fps.mp4",
+    "blobPath": "demo/use-cases/knowledge/trust-validation-workflow.mp4"
+  },
   "financial-market-recaps": {
     "categoryId": "jit",
     "label": "Financial & Market Recaps",

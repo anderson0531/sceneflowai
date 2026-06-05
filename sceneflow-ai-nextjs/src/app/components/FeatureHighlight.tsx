@@ -162,7 +162,7 @@ export function FeatureHighlight() {
       useCases: [
         'Quick Cuts: Generate individual shots from prompts',
         'Smooth Scenes: Use frame-anchoring for visual continuity',
-        'Extended Takes: Extend clips beyond initial duration'
+        'Extended Takes: Native Veo extension chains (+7s steps) for long dialogue beats'
       ],
       screenshotPlaceholder: {
         gradient: 'from-amber-500 to-amber-600',

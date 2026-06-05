@@ -10,6 +10,7 @@
     "more": "More",
     "useCases": "Use Cases",
     "audienceResonance": "Audience Resonance",
+    "trustSafety": "Trust & Safety",
     "platformTrust": "Platform & Trust",
     "faq": "FAQ",
     "signIn": "Sign In",
@@ -27,6 +28,7 @@
     "howItWorks": "How It Works",
     "useCases": "Use Cases",
     "platformWalkthrough": "Platform Walkthrough",
+    "trustSafety": "Trust & Safety",
     "platform": "Platform",
     "pricing": "Pricing",
     "faq": "FAQ"
@@ -197,9 +199,113 @@
       "Express storyboard — share audio-visual beats for review in minutes",
       "Beat Frames — lock start/end composition with Reference Library continuity",
       "F2V per beat — generate video from approved frames, not blind prompts",
+      "Continuous EXT chain — native +7s extension steps for long dialogue beats",
       "Production Mixer — timing, audio, and stream export to Final Cut assembly"
     ],
     "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
+  },
+  "trustSafeguard": {
+    "badge": "Trust & Safety",
+    "title": "Layered Guardrails for",
+    "titleAccent": "Creators & Platforms",
+    "subtitle": "Google-native safety on every generation, Extended Creative Services with Guardrails when policy limits apply, and additional moderation and risk mitigation across your Studio workflow.",
+    "tiers": [
+      {
+        "id": "google-native",
+        "title": "Google-Native Safety",
+        "description": "Every image and video generation runs through Google Vertex AI safety filters with thresholds tuned for professional creative workflows—not consumer-grade defaults.",
+        "highlights": [
+          "Vertex RAI on Veo, Imagen, and Gemini generation",
+          "Production-tuned harm thresholds for cinematic content",
+          "Your creative assets are not used to train shared models"
+        ],
+        "badge": "Vertex RAI"
+      },
+      {
+        "id": "extended-guardrails",
+        "title": "Extended Guardrails",
+        "description": "When the primary path is blocked by policy, Extended Creative Services with Guardrails can complete delivery—only after an additional content review pass before storage.",
+        "highlights": [
+          "Prompt adjustment and method retries on the primary Google path",
+          "Guarded fallback path with mandatory pre-storage review",
+          "Same content standards across primary and extended paths"
+        ],
+        "badge": "Guarded fallback"
+      },
+      {
+        "id": "validation-provenance",
+        "title": "Validation & Provenance",
+        "description": "Additional moderation and risk mitigation is available across Blueprint, script, storyboard, and segment video—using the same credit model as other Studio tools. Successful clips receive signed content provenance records.",
+        "highlights": [
+          "Content validation signals before heavy render spend",
+          "Signed content hash and provenance metadata on segment video",
+          "Audit logs, violation tracking, and abuse reporting for platform protection"
+        ],
+        "badge": "Content validation"
+      }
+    ],
+    "flowSteps": [
+      {
+        "label": "Primary",
+        "detail": "Google Vertex safety"
+      },
+      {
+        "label": "Extended",
+        "detail": "Guarded creative fallback"
+      },
+      {
+        "label": "Studio",
+        "detail": "Moderation & risk mitigation"
+      },
+      {
+        "label": "Forensic",
+        "detail": "Signed provenance"
+      }
+    ],
+    "morNote": "SceneFlow operates shared responsibility with our Merchant of Record: provider-scale safety from Google, platform guardrails and audit trails from SceneFlow—reducing risk for creators and the platform alike.",
+    "ctaPolicy": "Read Trust & Safety Policy",
+    "ctaPolicyHref": "/trust-safety",
+    "ctaStudio": "Explore in Studio"
+  },
+  "extendedScenes": {
+    "badge": "Continuous Beats",
+    "title": "Beyond the 8-Second Clip",
+    "titleAccent": "Native Veo Extension Chains",
+    "subtitle": "Break the single-clip wall with native Veo extension chains—approve the look first, then chain 7-second steps for monologues, explainers, and dialogue beats.",
+    "intro": "SceneFlow does not promise one unlimited render. It plans long beats as ordered chains: an initial clip up to 8 seconds, then native +7 second extension steps—with beat-first approval before you spend credits.",
+    "steps": [
+      {
+        "title": "8s initial clip",
+        "description": "Frame-to-video or image-to-video from approved Beat Frames locks composition before motion."
+      },
+      {
+        "title": "+7s extension steps",
+        "description": "Native Veo EXT continues the same angle and motion—ideal for uninterrupted dialogue within a beat."
+      },
+      {
+        "title": "Beat-first approval",
+        "description": "Long lines auto-split at storyboard review. You approve frames before the chain renders—not slot-machine regeneration."
+      },
+      {
+        "title": "Production Mixer finish",
+        "description": "Chain segments stitch into scene playback; elastic audio holds cover narration that runs longer than video."
+      }
+    ],
+    "stats": [
+      {
+        "value": "~15s",
+        "label": "Typical dialogue beat (8s + 1 extension)"
+      },
+      {
+        "value": "~29s",
+        "label": "Long monologue beat (8s + 3 extensions)"
+      },
+      {
+        "value": "Ordered",
+        "label": "Serial generation preserves continuity"
+      }
+    ],
+    "footnote": "Extension chains require the primary Google generation path and valid video references between steps (references expire after approximately 48 hours). Each API step remains within Veo duration limits—the total beat length comes from chaining, not a single long render."
   },
   "toolStack": {
     "badge": "Sound familiar?",
@@ -347,7 +453,7 @@
         "keyFeatures": [
           "Foundation — script, voices, scene audio, lock script",
           "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
+          "Beat Frames and continuous EXT chains — long dialogue via native +7s extensions",
           "Production Streams — review outputs, re-render stale beats, send to Final Cut"
         ],
         "optional": false
@@ -613,6 +719,16 @@
             "id": "video-memoirs",
             "label": "Video Memoirs",
             "description": "Imagine uploading family photos, interview audio, and scene notes with a saved narrator voice. Then instantly shaping chapter-based memoir videos — approve the storyboard before final render."
+          },
+          {
+            "id": "continuous-dialogue-beat",
+            "label": "Continuous Beats",
+            "description": "Imagine a 25-second monologue approved at storyboard review. SceneFlow chains an 8-second initial clip with native +7 second extension steps—same angle, ordered generation, no slot-machine re-rolls."
+          },
+          {
+            "id": "trust-validation-workflow",
+            "label": "Moderation & Risk Mitigation",
+            "description": "Run content validation on Blueprint and script before render spend. Review policy signals, lock Beat Frames, then generate—with Google-native safety on every generation path and signed provenance on segment video."
           }
         ]
       },
@@ -768,6 +884,7 @@
         "Express storyboard for review — share beats before heavy render",
         "Beat Frames lock composition — Reference Library continuity",
         "F2V per beat — generate video from approved frames",
+        "Continuous EXT chains — native +7s steps for long dialogue within a beat",
         "Mixer timing and streams — export to Final Cut assembly"
       ],
       "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
@@ -943,7 +1060,7 @@
         "keyFeatures": [
           "Foundation — script, voices, scene audio, lock script",
           "Express storyboard — direction and frames in minutes; gallery and share",
-          "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
+          "Beat Frames and continuous EXT chains — long dialogue via native +7s extensions",
           "Production Streams — review outputs, re-render stale beats, send to Final Cut"
         ],
         "screenshotSlot": "Insert screenshot: Production dashboard showing script, Beat Frames, and Mixer",
@@ -1071,6 +1188,7 @@
       "poweredBy": "Powered by Google Cloud with Vertex AI, Cloud Storage, and translation tooling",
       "footnote": "SceneFlow AI runs on scalable Google Cloud infrastructure designed for startup growth and enterprise expectations."
     },
+    "trustSafeguardLink": "Layered trust: Google Vertex safety plus SceneFlow guardrails, validation, and provenance — see Trust & Safety below.",
     "attribution": "— The SceneFlow Engineering Team"
   },
   "coreCapabilities": {
@@ -1114,7 +1232,7 @@
         },
         {
           "title": "Express Video",
-          "desc": "Orchestrate concurrent image and video generation for total scene delivery.",
+          "desc": "Orchestrate concurrent image and video generation—including native Veo extension chains for long dialogue beats.",
           "time": "Minutes vs Days"
         }
       ],
@@ -1382,6 +1500,18 @@
       {
         "question": "What can I realistically create with SceneFlow?",
         "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
+      },
+      {
+        "question": "How does SceneFlow handle clips longer than 8 seconds?",
+        "answer": "Veo generates 4–8 second clips per API step. SceneFlow chains native extension steps (+7 seconds each) after an approved initial clip—so a long dialogue beat can reach ~15–30 seconds or more as ordered segments, not one unlimited render. Beat-first approval splits long lines before you spend credits."
+      },
+      {
+        "question": "What moderation and risk mitigation is available?",
+        "answer": "Every generation runs through Google Vertex AI safety filters. When the primary path is blocked by policy, Extended Creative Services with Guardrails may complete delivery after an additional content review pass. Additional moderation and risk mitigation is available across Blueprint, script, storyboard, and segment video using the same credit model as other Studio tools. Segment video also receives signed content provenance records."
+      },
+      {
+        "question": "What happens if Google safety filters block my prompt?",
+        "answer": "SceneFlow retries with prompt adjustments and method changes on the primary Google path. If policy limits persist, Extended Creative Services with Guardrails may complete the clip after an additional review—subject to the same content standards. You are not charged for a completed clip when generation is blocked."
       }
     ]
   },

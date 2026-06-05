@@ -138,3 +138,41 @@ Place generated files in:
 - All videos should feel like they belong to the same "world" as the hero section
 - Dark, sophisticated backgrounds with vibrant accent lighting
 - Professional, not cartoonish—these are B2B/prosumer-facing visuals
+
+---
+
+## Use Case Demo: Continuous Beats (`continuous-dialogue-beat`)
+**File:** `demo/use-cases/knowledge/continuous-dialogue-beat.mp4`
+**Section:** Knowledge use cases — long monologue via Veo EXT chain
+
+### Veo 3.1 Prompt (initial 8s + extension chain)
+```
+Cinematic 8-second clip, 16:9, professional explainer:
+
+VISUAL: Medium shot of a confident presenter at a minimalist studio desk, soft key light, teal and purple accent rim. Same camera angle and wardrobe locked for extension chain. Presenter delivers a calm monologue to camera; subtle hand gestures; shallow depth of field.
+
+MOOD: Trustworthy, educational, premium SaaS marketing.
+
+AUDIO: Clear narration (no lip-sync required for stock placeholder); subtle ambient bed.
+
+NOTE: Chain +7s extensions with identical framing for 20–30s total; approve Beat Frames before render.
+```
+
+---
+
+## Use Case Demo: Moderation & Risk Mitigation (`trust-validation-workflow`)
+**File:** `demo/use-cases/knowledge/trust-validation-workflow.mp4`
+**Section:** Knowledge use cases — Blueprint → validation → Beat Frame approval
+
+### Veo 3.1 Prompt
+```
+Cinematic 8-second UI-forward b-roll, 16:9:
+
+VISUAL: Over-shoulder view of a creative director reviewing a storyboard grid on a large monitor. UI hints show validation signals and approved Beat Frames (abstract, no real brand logos). Team member points at a frame before clicking Approve. Dark studio environment with cyan/purple UI glow.
+
+MOOD: Professional, controlled workflow—not alarmist.
+
+AUDIO: Soft office ambience; no vendor names in on-screen copy.
+
+NOTE: Illustrates content validation before heavy render spend; pair with trust-safety landing section.
+```

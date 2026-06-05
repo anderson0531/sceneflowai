@@ -13,6 +13,8 @@ const ToolStackSection = dynamic(() => import('@/components/landing/ToolStackSec
 const InstitutionalRoiSection = dynamic(() => import('@/components/landing/InstitutionalRoiSection').then(m => m.InstitutionalRoiSection), { ssr: false })
 const WhySceneFlowSection = dynamic(() => import('@/components/landing/WhySceneFlowSection').then(m => m.WhySceneFlowSection), { ssr: false })
 const OneTakePipelineSection = dynamic(() => import('@/components/landing/OneTakePipelineSection').then(m => m.OneTakePipelineSection), { ssr: false })
+const ExtendedScenesSection = dynamic(() => import('@/components/landing/ExtendedScenesSection').then(m => m.ExtendedScenesSection), { ssr: false })
+const TrustSafeguardSection = dynamic(() => import('@/components/landing/TrustSafeguardSection').then(m => m.TrustSafeguardSection), { ssr: false })
 const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
 const CoreCapabilitiesSection = dynamic(() => import('@/components/landing/CoreCapabilitiesSection').then(m => m.CoreCapabilitiesSection), { ssr: false })
@@ -45,6 +47,10 @@ export default function LandingPageClient() {
       <WhySceneFlowSection />
 
       <OneTakePipelineSection />
+
+      <ExtendedScenesSection />
+
+      <TrustSafeguardSection />
 
       <UseCasesSection />
 

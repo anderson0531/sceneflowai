@@ -37,8 +37,8 @@ const differentiators = [
   {
     icon: Shield,
     title: "Enterprise-Grade Safety",
-    description: "Hive AI content moderation ensures every generation is policy-compliant. Create confidently.",
-    highlight: "Built-in moderation"
+    description: 'Layered guardrails—from Google-native safety through Extended Creative Services with Guardrails and optional Studio content validation. Create confidently.',
+    highlight: 'Built-in trust stack'
   }
 ]
 

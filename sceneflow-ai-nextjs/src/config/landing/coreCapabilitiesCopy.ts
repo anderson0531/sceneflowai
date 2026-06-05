@@ -44,7 +44,7 @@ export const CORE_CAPABILITIES_COPY = {
       },
       {
         title: 'Express Video',
-        desc: 'Orchestrate concurrent image and video generation for total scene delivery.',
+        desc: 'Orchestrate concurrent image and video generation—including native Veo extension chains for long dialogue beats.',
         time: 'Minutes vs Days',
       },
     ],

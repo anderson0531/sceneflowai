@@ -66,10 +66,10 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc pl-6 text-gray-300 space-y-2">
               <li><strong>User ID:</strong> Account identifier associated with each generation</li>
               <li><strong>Prompts/Scripts:</strong> Text input submitted for audio/video generation</li>
-              <li><strong>Audio Fingerprints:</strong> Unique identifiers for generated audio content</li>
+              <li><strong>Content hashes:</strong> Cryptographic fingerprints for segment video provenance records</li>
               <li><strong>Timestamps:</strong> Exact date and time of each generation</li>
-              <li><strong>Voice Identifiers:</strong> Record of which voice (stock or cloned) was used</li>
-              <li><strong>Watermark Data:</strong> Forensic watermark identifiers embedded in generated content</li>
+              <li><strong>Voice Identifiers:</strong> Record of which voice (stock or custom) was used</li>
+              <li><strong>Moderation events:</strong> Validation runs and policy actions where applicable</li>
             </ul>
           </section>
 
@@ -103,7 +103,7 @@ export default function PrivacyPolicyPage() {
             
             <h3 className="text-xl font-medium text-white mb-3 mt-6">4.1 Law Enforcement & Content Attribution</h3>
             <p className="text-gray-300 leading-relaxed">
-              We may disclose generation audit logs (User ID, prompts, audio fingerprints, timestamps) to law enforcement agencies upon valid legal request. All generated audio and video content includes forensic watermarks that enable content attribution. This watermarking allows us to trace generated content back to specific user accounts if the content is used for malicious purposes or reported for abuse.
+              We may disclose generation audit logs (user ID, prompts, content hashes, timestamps, moderation events) to law enforcement agencies upon valid legal request. Segment video may include SceneFlow provenance records for attribution. Studio content validation surfaces informational risk signals—it does not replace your responsibility for how content is published.
             </p>
           </section>
 

@@ -33,6 +33,8 @@ import {
   USE_CASE_SEGMENT_CTAS,
 } from '@/config/landing/useCasePersonasCopy'
 import { ENGINEERING_TRUST_COPY } from '@/config/landing/engineeringTrustCopy'
+import { TRUST_SAFEGUARD_COPY } from '@/config/landing/trustSafeguardCopy'
+import { EXTENDED_SCENES_COPY } from '@/config/landing/extendedScenesCopy'
 import { CORE_CAPABILITIES_COPY } from '@/config/landing/coreCapabilitiesCopy'
 import { EXIT_INTENT_COPY } from '@/config/landing/exitIntentCopy'
 import {
@@ -95,6 +97,21 @@ const FAQ_ITEMS = [
     answer:
       'Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production.',
   },
+  {
+    question: 'How does SceneFlow handle clips longer than 8 seconds?',
+    answer:
+      'Veo generates 4–8 second clips per API step. SceneFlow chains native extension steps (+7 seconds each) after an approved initial clip—so a long dialogue beat can reach ~15–30 seconds or more as ordered segments, not one unlimited render. Beat-first approval splits long lines before you spend credits.',
+  },
+  {
+    question: 'What moderation and risk mitigation is available?',
+    answer:
+      'Every generation runs through Google Vertex AI safety filters. When the primary path is blocked by policy, Extended Creative Services with Guardrails may complete delivery after an additional content review pass. Additional moderation and risk mitigation is available across Blueprint, script, storyboard, and segment video using the same credit model as other Studio tools. Segment video also receives signed content provenance records.',
+  },
+  {
+    question: 'What happens if Google safety filters block my prompt?',
+    answer:
+      'SceneFlow retries with prompt adjustments and method changes on the primary Google path. If policy limits persist, Extended Creative Services with Guardrails may complete the clip after an additional review—subject to the same content standards. You are not charged for a completed clip when generation is blocked.',
+  },
 ] as const
 
 export function buildEnMessages() {
@@ -113,6 +130,7 @@ export function buildEnMessages() {
       more: 'More',
       useCases: 'Use Cases',
       audienceResonance: 'Audience Resonance',
+      trustSafety: 'Trust & Safety',
       platformTrust: 'Platform & Trust',
       faq: 'FAQ',
       signIn: 'Sign In',
@@ -130,6 +148,7 @@ export function buildEnMessages() {
       howItWorks: 'How It Works',
       useCases: 'Use Cases',
       platformWalkthrough: 'Platform Walkthrough',
+      trustSafety: 'Trust & Safety',
       platform: 'Platform',
       pricing: 'Pricing',
       faq: 'FAQ',
@@ -171,6 +190,8 @@ export function buildEnMessages() {
       ...ONE_TAKE_PIPELINE,
       footerLine: 'Fewer slot-machine regenerations — approve visuals before final video spend',
     },
+    trustSafeguard: TRUST_SAFEGUARD_COPY,
+    extendedScenes: EXTENDED_SCENES_COPY,
     toolStack: TOOL_STACK_COPY,
     comparison: {
       ...SLOT_MACHINE_HEADER,

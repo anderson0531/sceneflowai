@@ -141,6 +141,7 @@ export const ONE_TAKE_PIPELINE = {
     'Express storyboard — share audio-visual beats for review in minutes',
     'Beat Frames — lock start/end composition with Reference Library continuity',
     'F2V per beat — generate video from approved frames, not blind prompts',
+    'Continuous EXT chain — native +7s extension steps for long dialogue beats',
     'Production Mixer — timing, audio, and stream export to Final Cut assembly',
   ],
 } as const

@@ -90,7 +90,7 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         id: 'corporate-ld',
         label: 'Corporate L&D',
         description:
-          "Imagine uploading compliance scripts with your trainer's saved voice and avatar. Then instantly rolling out consistent onboarding and safety training across every office — localized in 70+ languages.",
+          "Imagine uploading training slides with your L&D lead's saved voice. Then instantly publishing module videos—chain native +7 second extensions for long explainers, approve Beat Frames before render.",
         videoSrc: `${BLOB_DEMO}/demo/use-cases/knowledge/corporate-ld.mp4`,
       },
       {
@@ -120,6 +120,20 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         description:
           'Imagine uploading family photos, interview audio, and scene notes with a saved narrator voice. Then instantly shaping chapter-based memoir videos — approve the storyboard before final render.',
         videoSrc: `${BLOB_DEMO}/KITCHEN.mp4`,
+      },
+      {
+        id: 'continuous-dialogue-beat',
+        label: 'Continuous Beats',
+        description:
+          'Imagine a 25-second monologue approved at storyboard review. SceneFlow chains an 8-second initial clip with native +7 second extension steps—same angle, ordered generation, no slot-machine re-rolls.',
+        videoSrc: `${BLOB_DEMO}/demo/use-cases/knowledge/continuous-dialogue-beat.mp4`,
+      },
+      {
+        id: 'trust-validation-workflow',
+        label: 'Moderation & Risk Mitigation',
+        description:
+          'Run content validation on Blueprint and script before render spend. Review policy signals, lock Beat Frames, then generate—with Google-native safety on every generation path and signed provenance on segment video.',
+        videoSrc: `${BLOB_DEMO}/demo/use-cases/knowledge/trust-validation-workflow.mp4`,
       },
     ],
   },

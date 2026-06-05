@@ -126,7 +126,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">10. Content Moderation & Prohibited Content</h2>
             <p className="text-gray-300 leading-relaxed mb-4">
-              All content submitted to the Service, particularly scripts for voice synthesis, is subject to automated content moderation. The following content is strictly prohibited:
+              Content submitted to the Service is subject to layered moderation. All generation runs through Google Vertex AI safety filters. When the primary path is blocked by policy, Extended Creative Services with Guardrails may apply—with mandatory pre-storage review on alternate paths. Additional moderation and risk mitigation is available in Studio (informational validation signals). The following content is strictly prohibited:
             </p>
             <ul className="list-disc pl-6 text-gray-300 space-y-2 mb-4">
               <li>Hate speech, discriminatory content, or content promoting violence</li>
@@ -153,7 +153,7 @@ export default function TermsOfServicePage() {
               <li>Timestamps and voice identifiers used</li>
             </ul>
             <p className="text-gray-300 leading-relaxed">
-              These logs may be disclosed to law enforcement agencies upon valid legal request. All generated content carries forensic watermarks enabling content attribution.
+              These logs may be disclosed to law enforcement agencies upon valid legal request. Segment video may include SceneFlow provenance records (content hashes and signed metadata). Optional credentials embedding may apply when enabled. Provider-native watermarks may be present depending on upstream models.
             </p>
           </section>
 

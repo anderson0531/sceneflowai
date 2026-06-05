@@ -66,7 +66,7 @@ export const WORKFLOW_PHASES: WorkflowPhaseCopy[] = [
     keyFeatures: [
       'Foundation — script, voices, scene audio, lock script',
       'Express storyboard — direction and frames in minutes; gallery and share',
-      'Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams',
+      'Beat Frames and continuous EXT chains — long dialogue via native +7s extensions',
       'Production Streams — review outputs, re-render stale beats, send to Final Cut',
     ],
   },
@@ -133,6 +133,7 @@ export const BEAT_FIRST_CARD = {
     'Express storyboard for review — share beats before heavy render',
     'Beat Frames lock composition — Reference Library continuity',
     'F2V per beat — generate video from approved frames',
+    'Continuous EXT chains — native +7s steps for long dialogue within a beat',
     'Mixer timing and streams — export to Final Cut assembly',
   ],
   screenshotSlot: 'Insert screenshot: Beat Frames and storyboard approval before video generation',

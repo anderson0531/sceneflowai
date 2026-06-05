@@ -21,6 +21,7 @@ export function FloatingNav() {
       { id: 'how-it-works', label: t('howItWorks'), icon: Sparkles },
       { id: 'use-cases', label: t('useCases'), icon: Rocket },
       { id: 'feature-storyboard', label: t('platformWalkthrough'), icon: Film },
+      { id: 'trust-safety', label: t('trustSafety'), icon: Shield },
       { id: 'engineering', label: t('platform'), icon: Shield },
       { id: 'pricing', label: t('pricing'), icon: DollarSign },
       { id: 'faq', label: t('faq'), icon: HelpCircle },
