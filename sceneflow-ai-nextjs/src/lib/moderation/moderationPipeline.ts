@@ -444,7 +444,7 @@ export async function runStageModeration(
     contentType,
     contentHash: HiveModerationService.hashContent(contentForHash),
     stage,
-    report,
+    report: report as unknown as Record<string, unknown>,
     projectId: context.projectId,
   })
 
@@ -503,7 +503,7 @@ export async function moderatePromptText(
     contentType: 'image_prompt',
     contentHash: HiveModerationService.hashContent(prompt),
     stage: 'storyboard',
-    report,
+    report: report as unknown as Record<string, unknown>,
     projectId: context.projectId,
   })
 

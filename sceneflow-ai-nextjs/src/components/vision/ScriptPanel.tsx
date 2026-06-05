@@ -3032,6 +3032,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onScriptLockAdvance={onScriptLockAdvance}
                       onScriptLockRetreat={onScriptLockRetreat}
                       productionReadyChecklist={productionReadyChecklist}
+                      onModerationReport={onModerationReport}
                       onResyncAudioTiming={onResyncAudioTiming}
                       resyncingAudioSceneIndex={resyncingAudioSceneIndex}
                       projectTitle={projectTitle}
@@ -3673,6 +3674,7 @@ interface SceneCardProps {
   onScriptLockAdvance?: () => void
   onScriptLockRetreat?: () => void
   productionReadyChecklist?: ProductionReadyChecklist
+  onModerationReport?: (report: import('@/lib/moderation/moderationPipeline').ModerationReport) => void
 }
 
 async function downloadSceneAudioFile(
@@ -4058,6 +4060,7 @@ function SceneCard({
   projectTitle = '',
   projectLogline = '',
   visualStyle,
+  onModerationReport,
 }: SceneCardProps) {
   const isOutline = !scene.isExpanded && scene.summary
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<WorkflowStep | null>(
