@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Video, PlayCircle, Info, Play } from 'lucide-react';
+import { Video, PlayCircle, Info, Play, Maximize2, X } from 'lucide-react';
 import {
   VIDEO_CATEGORIES,
   buildUseCaseExampleHash,
@@ -14,6 +14,27 @@ import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 export { VIDEO_CATEGORIES } from '@/config/landing/useCaseExamples';
+
+function ThumbnailExpandButton({
+  onExpand,
+  expandLabel,
+  className,
+}: {
+  onExpand: (e: React.MouseEvent) => void;
+  expandLabel: string;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onExpand}
+      className={`rounded-lg bg-black/50 p-1.5 text-white/80 backdrop-blur-sm transition-colors hover:bg-black/70 hover:text-white ${className ?? ''}`}
+      aria-label={expandLabel}
+    >
+      <Maximize2 className="h-4 w-4" />
+    </button>
+  );
+}
 
 function UseCaseThumbnail({
   src,
@@ -62,12 +83,16 @@ function UseCaseVideoPreview({
   label,
   previewKey,
   demoComingSoonLabel,
+  expandLabel,
+  onExpandImage,
 }: {
   videoSrc: string;
   thumbnailSrc?: string;
   label: string;
   previewKey: string;
   demoComingSoonLabel: string;
+  expandLabel: string;
+  onExpandImage?: (url: string) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -103,10 +128,20 @@ function UseCaseVideoPreview({
               fallbackLabel={demoComingSoonLabel}
               onError={() => setPosterFailed(true)}
             />
+            {onExpandImage ? (
+              <ThumbnailExpandButton
+                expandLabel={expandLabel}
+                className="absolute top-2 right-2 z-20"
+                onExpand={(e) => {
+                  e.stopPropagation();
+                  onExpandImage(thumbnailSrc!);
+                }}
+              />
+            ) : null}
             <button
               type="button"
               onClick={handlePlay}
-              className="absolute inset-0 flex items-center justify-center bg-black/30 transition-colors hover:bg-black/40"
+              className="absolute inset-0 z-10 flex items-center justify-center bg-black/30 transition-colors hover:bg-black/40"
               aria-label={`Play demo: ${label}`}
             >
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 border border-white/20 backdrop-blur-sm">
@@ -176,6 +211,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
   }, [tCategories]);
 
   const videoPanelRef = useRef<HTMLDivElement>(null);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>(
     initialCategoryId ?? localizedCategories[0]?.id ?? VIDEO_CATEGORIES[0].id
   );
@@ -227,6 +263,15 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
     window.addEventListener('hashchange', syncFromHash);
     return () => window.removeEventListener('hashchange', syncFromHash);
   }, [syncFromHash]);
+
+  useEffect(() => {
+    if (!expandedImage) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setExpandedImage(null);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [expandedImage]);
 
   const activeCategoryData =
     localizedCategories.find((cat) => cat.id === activeCategory) ?? localizedCategories[0];
@@ -364,6 +409,8 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                               thumbnailSrc={activeExample.thumbnailSrc}
                               label={activeExample.label}
                               demoComingSoonLabel={tUi('demoComingSoon')}
+                              expandLabel={tUi('expandImage')}
+                              onExpandImage={setExpandedImage}
                             />
                           ) : activeExample.thumbnailSrc ? (
                             <div className="relative w-full aspect-video max-h-[400px] bg-slate-950">
@@ -372,6 +419,14 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                                 alt={activeExample.label}
                                 className="h-full w-full object-cover"
                                 fallbackLabel={tUi('demoComingSoon')}
+                              />
+                              <ThumbnailExpandButton
+                                expandLabel={tUi('expandImage')}
+                                className="absolute top-2 right-2 z-10"
+                                onExpand={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedImage(activeExample.thumbnailSrc!);
+                                }}
                               />
                               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 pointer-events-none">
                                 <p className="text-xs text-slate-300 uppercase tracking-wider">
@@ -408,12 +463,21 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                                 }`}
                               >
                                 {ex.thumbnailSrc ? (
-                                  <div className="aspect-video w-full overflow-hidden bg-slate-900">
+                                  <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
                                     <UseCaseThumbnail
                                       src={ex.thumbnailSrc}
                                       alt={ex.label}
                                       className="h-full w-full object-cover"
                                       fallbackLabel={ex.label}
+                                    />
+                                    <ThumbnailExpandButton
+                                      expandLabel={tUi('expandImage')}
+                                      className="absolute top-2 right-2 z-10"
+                                      onExpand={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setExpandedImage(ex.thumbnailSrc!);
+                                      }}
                                     />
                                   </div>
                                 ) : null}
@@ -462,6 +526,42 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
           </div>
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        {expandedImage ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setExpandedImage(null)}
+            className="fixed inset-0 z-[100] flex cursor-zoom-out items-center justify-center bg-black/90 p-4 backdrop-blur-md md:p-12"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative flex h-full w-full max-w-7xl items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setExpandedImage(null)}
+                className="absolute -top-12 right-0 flex items-center gap-2 text-sm font-medium text-white/70 transition-colors hover:text-white"
+              >
+                <X className="h-5 w-5" />
+                {tUi('closePreview')}
+              </button>
+              <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+                <img
+                  src={expandedImage}
+                  alt={tUi('expandImage')}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 };

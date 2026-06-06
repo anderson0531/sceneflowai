@@ -90,8 +90,17 @@ export function getLandingOutputFormatThumbnail(id: OutputFormatId): string {
   return LANDING_OUTPUT_FORMAT_THUMBNAILS[id]
 }
 
+/** Custom poster overrides — categoryId → exampleId → Blob path (without host) */
+export const USE_CASE_POSTER_OVERRIDES: Record<string, Record<string, string>> = {
+  knowledge: {
+    'k12-higher-ed': 'Gemini_Generated_Image_gdjshbgdjshbgdjs.jpeg',
+  },
+}
+
 /** Default poster URL for a use-case example */
 export function getUseCasePosterUrl(categoryId: string, exampleId: string): string {
+  const override = USE_CASE_POSTER_OVERRIDES[categoryId]?.[exampleId]
+  if (override) return blobUrl(override)
   return blobUrl(`demo/use-cases/${categoryId}/${exampleId}-poster.jpg`)
 }
 
