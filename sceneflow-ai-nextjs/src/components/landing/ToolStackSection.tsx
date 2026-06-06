@@ -20,6 +20,13 @@ import {
 import { useLocale, useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { getComparisonImageUrl } from '@/config/landing/landingVisualMedia'
+import {
+  SectionCollapseBody,
+  SectionCollapseToggle,
+  useLandingSectionCollapse,
+} from '@/components/landing/LandingSectionCollapse'
+
+const SECTION_ID = 'tool-stack'
 
 const BROKEN_TOOL_ICONS = [MessageSquare, Palette, Volume2, Film, Music, Scissors] as const
 const SCENEFLOW_STAGE_COLORS = [
@@ -34,6 +41,7 @@ export function ToolStackSection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
   const locale = useLocale()
   const t = useTranslations('toolStack')
+  const { isOpen } = useLandingSectionCollapse(SECTION_ID)
 
   const brokenTools = t.raw('brokenWay.tools') as Array<{ name: string; category: string }>
   const painPoints = t.raw('brokenWay.painPoints') as string[]
@@ -41,18 +49,25 @@ export function ToolStackSection() {
   const benefits = t.raw('sceneflowWay.benefits') as string[]
 
   return (
-    <section id="tool-stack" className="relative py-20 sm:py-24 overflow-hidden scroll-mt-20 bg-gray-950">
+    <section
+      id={SECTION_ID}
+      className={cn(
+        'relative overflow-hidden scroll-mt-20 bg-gray-950',
+        isOpen ? 'py-20 sm:py-24' : 'pt-20 pb-8 sm:pt-24 sm:pb-10'
+      )}
+    >
       <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(6,182,212,0.08),transparent_50%)]" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           ref={ref}
-          className="text-center mb-12 max-w-3xl mx-auto"
+          className="relative text-center mb-12 max-w-3xl mx-auto"
           initial={{ opacity: 0, y: 24 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
         >
+          <SectionCollapseToggle sectionId={SECTION_ID} className="absolute right-0 top-0" />
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 mb-5">
             <Zap className="w-4 h-4 text-cyan-400" />
             <span className="text-sm font-medium text-cyan-400">{t('badge')}</span>
@@ -61,6 +76,7 @@ export function ToolStackSection() {
           <p className="text-lg text-gray-400">{t('subtitle')}</p>
         </motion.div>
 
+        <SectionCollapseBody sectionId={SECTION_ID}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -208,6 +224,7 @@ export function ToolStackSection() {
           <p className="text-sm text-slate-400">{t('costNote')}</p>
           <p className="text-xs text-slate-500">{t('proofLine')}</p>
         </motion.div>
+        </SectionCollapseBody>
       </div>
     </section>
   )

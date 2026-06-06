@@ -1629,6 +1629,10 @@
       }
     ]
   },
+  "landingSections": {
+    "expandSection": "Show section",
+    "collapseSection": "Hide section"
+  },
   "finalCta": {
     "title": "Ready to test the full pipeline?",
     "subtitle": "Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.",

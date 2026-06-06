@@ -10,6 +10,14 @@ import { CollaborationDemosPanel } from '@/components/landing/SamplesSection';
 import { FEATURE_CHAPTERS } from '@/config/landing/featureStoryboardCopy';
 import { FEATURE_STORYBOARD_MEDIA } from '@/config/landing/featureStoryboardMedia';
 import { getFeatureStoryboardScreenshot } from '@/config/landing/landingVisualMedia';
+import {
+  SectionCollapseBody,
+  SectionCollapseToggle,
+  useLandingSectionCollapse,
+} from '@/components/landing/LandingSectionCollapse';
+import { cn } from '@/lib/utils';
+
+const SECTION_ID = 'feature-storyboard';
 
 type FeatureStoryboardMessageItem = {
   id: string;
@@ -453,6 +461,7 @@ export default function FeatureStoryboardSection() {
   const t = useTranslations('platformWalkthrough');
   const tUi = useTranslations('platformWalkthrough.ui');
   const tCommon = useTranslations('common');
+  const { isOpen } = useLandingSectionCollapse(SECTION_ID);
 
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
@@ -537,7 +546,13 @@ export default function FeatureStoryboardSection() {
   }, [t, locale]);
 
   return (
-    <section id="feature-storyboard" className="bg-slate-950 py-20 sm:py-24 relative scroll-mt-20 overflow-hidden">
+    <section
+      id={SECTION_ID}
+      className={cn(
+        'bg-slate-950 relative scroll-mt-20 overflow-hidden',
+        isOpen ? 'py-20 sm:py-24' : 'pt-20 pb-8 sm:pt-24 sm:pb-10'
+      )}
+    >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(16,185,129,0.08),transparent_45%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(6,182,212,0.06),transparent_45%)]" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
@@ -546,8 +561,9 @@ export default function FeatureStoryboardSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="mx-auto max-w-3xl text-center"
+          className="relative mx-auto max-w-3xl text-center"
         >
+          <SectionCollapseToggle sectionId={SECTION_ID} className="absolute right-0 top-0" />
           <p className="inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-purple-200">
             <Clock3 className="h-3.5 w-3.5" />
             {t('badge')}
@@ -556,6 +572,7 @@ export default function FeatureStoryboardSection() {
           <p className="mt-4 text-base text-slate-300">{t('subtitle')}</p>
         </motion.div>
 
+        <SectionCollapseBody sectionId={SECTION_ID}>
         <div className="mt-12">
           <CollaborationDemosPanel />
         </div>
@@ -599,6 +616,7 @@ export default function FeatureStoryboardSection() {
             );
           })}
         </div>
+        </SectionCollapseBody>
       </div>
 
       {/* Lightbox / Expand Modal (Image) */}

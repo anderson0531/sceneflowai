@@ -6,6 +6,14 @@ import { Maximize2, Monitor, Palette, Sparkles, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { getLandingOutputFormatThumbnail } from '@/config/landing/landingVisualMedia'
 import type { OutputFormatId } from '@/config/landing/outputFormatsCopy'
+import {
+  SectionCollapseBody,
+  SectionCollapseToggle,
+  useLandingSectionCollapse,
+} from '@/components/landing/LandingSectionCollapse'
+import { cn } from '@/lib/utils'
+
+const SECTION_ID = 'creative-range'
 
 type ArtStyleItem = {
   id: string
@@ -192,6 +200,7 @@ function OutputFormatCard({
 
 export function CreativeRangeSection() {
   const t = useTranslations('creativeRange')
+  const { isOpen } = useLandingSectionCollapse(SECTION_ID)
   const artItems = t.raw('artStyles.items') as ArtStyleItem[]
   const formatItems = t.raw('outputFormats.items') as Array<{
     id: OutputFormatId
@@ -205,15 +214,22 @@ export function CreativeRangeSection() {
   const closeLabel = t('ui.closePreview')
 
   return (
-    <section id="creative-range" className="relative scroll-mt-20 bg-slate-950 py-20 sm:py-24">
+    <section
+      id={SECTION_ID}
+      className={cn(
+        'relative scroll-mt-20 bg-slate-950',
+        isOpen ? 'py-20 sm:py-24' : 'pt-20 pb-8 sm:pt-24 sm:pb-10'
+      )}
+    >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(139,92,246,0.08),transparent_45%)]" />
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mb-14 text-center"
+          className="relative mb-14 text-center"
         >
+          <SectionCollapseToggle sectionId={SECTION_ID} className="absolute right-0 top-0" />
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-4 py-1.5 text-sm font-medium text-violet-300">
             <Sparkles className="h-4 w-4" />
             {t('badge')}
@@ -227,6 +243,7 @@ export function CreativeRangeSection() {
           </p>
         </motion.div>
 
+        <SectionCollapseBody sectionId={SECTION_ID}>
         <div id="art-styles" className="mb-16 scroll-mt-24">
           <div className="mb-6 flex items-center gap-2">
             <Palette className="h-5 w-5 text-violet-400" />
@@ -266,6 +283,7 @@ export function CreativeRangeSection() {
             {t('outputFormats.resolutionFootnote')}
           </p>
         </div>
+        </SectionCollapseBody>
       </div>
 
       <AnimatePresence>

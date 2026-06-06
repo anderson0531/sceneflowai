@@ -5,6 +5,14 @@ import { motion } from 'framer-motion'
 import { Shield, CheckCircle2, ArrowRight, FileSearch } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
+import {
+  SectionCollapseBody,
+  SectionCollapseToggle,
+  useLandingSectionCollapse,
+} from '@/components/landing/LandingSectionCollapse'
+import { cn } from '@/lib/utils'
+
+const SECTION_ID = 'trust-safety'
 
 const TIER_GRADIENTS = [
   'from-cyan-500/20 to-blue-600/10 border-cyan-500/25',
@@ -14,6 +22,7 @@ const TIER_GRADIENTS = [
 
 export function TrustSafeguardSection() {
   const t = useTranslations('trustSafeguard')
+  const { isOpen } = useLandingSectionCollapse(SECTION_ID)
   const tiers = t.raw('tiers') as Array<{
     id: string
     title: string
@@ -25,14 +34,21 @@ export function TrustSafeguardSection() {
   const signupUrl = getLoginUrl({ mode: 'signup' })
 
   return (
-    <section id="trust-safety" className="py-20 sm:py-24 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 scroll-mt-20">
+    <section
+      id={SECTION_ID}
+      className={cn(
+        'bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 scroll-mt-20',
+        isOpen ? 'py-20 sm:py-24' : 'pt-20 pb-8 sm:pt-24 sm:pb-10'
+      )}
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="relative text-center mb-12"
         >
+          <SectionCollapseToggle sectionId={SECTION_ID} className="absolute right-0 top-0" />
           <div className="inline-flex items-center px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full mb-4">
             <Shield className="w-4 h-4 text-cyan-400 mr-2" />
             <span className="text-cyan-300 text-sm font-medium">{t('badge')}</span>
@@ -46,6 +62,7 @@ export function TrustSafeguardSection() {
           <p className="text-gray-400 max-w-3xl mx-auto text-lg leading-relaxed">{t('subtitle')}</p>
         </motion.div>
 
+        <SectionCollapseBody sectionId={SECTION_ID}>
         <div className="flex flex-wrap justify-center gap-2 mb-10">
           {flowSteps.map((step, index) => (
             <div
@@ -109,6 +126,7 @@ export function TrustSafeguardSection() {
             <ArrowRight className="w-4 h-4" />
           </a>
         </div>
+        </SectionCollapseBody>
       </div>
     </section>
   )

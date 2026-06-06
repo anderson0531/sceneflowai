@@ -12,6 +12,7 @@ import {
   HelpCircle,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { useExpandLandingSection } from '@/components/landing/LandingSectionCollapse'
 
 export function FloatingNav() {
   const t = useTranslations('floatingNav')
@@ -29,6 +30,7 @@ export function FloatingNav() {
     ],
     [t]
   )
+  const expandSection = useExpandLandingSection()
   const [activeSection, setActiveSection] = useState('')
   const [isVisible, setIsVisible] = useState(false)
 
@@ -57,6 +59,7 @@ export function FloatingNav() {
   }, [sections])
 
   const scrollToSection = (sectionId: string) => {
+    expandSection(sectionId)
     const element = document.getElementById(sectionId)
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' })

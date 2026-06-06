@@ -28,6 +28,11 @@ function handlePathClick(hash: string, e: React.MouseEvent<HTMLAnchorElement>) {
 }
 
 function handleEngineMode() {
+  if (window.location.hash.slice(1) !== 'engineering') {
+    window.location.hash = 'engineering'
+  } else {
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
+  }
   window.dispatchEvent(
     new CustomEvent('sceneflow:expand-walkthrough-chapter', { detail: 'advanced' })
   )

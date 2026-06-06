@@ -4,6 +4,14 @@ import { motion } from 'framer-motion'
 import { Lightbulb, Film, Scissors, Rocket, ArrowRight, Clapperboard } from 'lucide-react'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
 import { useTranslations } from 'next-intl'
+import {
+  SectionCollapseBody,
+  SectionCollapseToggle,
+  useLandingSectionCollapse,
+} from '@/components/landing/LandingSectionCollapse'
+import { cn } from '@/lib/utils'
+
+const SECTION_ID = 'how-it-works'
 
 const PHASE_ICONS = [Clapperboard, Lightbulb, Film, Scissors, Rocket]
 const PHASE_COLORS = [
@@ -16,6 +24,7 @@ const PHASE_COLORS = [
 
 export function HowItWorks() {
   const t = useTranslations('howItWorks')
+  const { isOpen } = useLandingSectionCollapse(SECTION_ID)
   const phases = t.raw('phases') as Array<{
     stepLabel: string
     subtitle: string
@@ -33,17 +42,24 @@ export function HowItWorks() {
   }))
   
   return (
-    <section id="how-it-works" className="py-24 bg-slate-950 relative overflow-hidden">
+    <section
+      id={SECTION_ID}
+      className={cn(
+        'bg-slate-950 relative overflow-hidden scroll-mt-20',
+        isOpen ? 'py-24' : 'pt-24 pb-8'
+      )}
+    >
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(139,92,246,0.05),transparent_70%)]" />
       
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div 
-          className="text-center mb-16"
+          className="relative text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
+          <SectionCollapseToggle sectionId={SECTION_ID} className="absolute right-0 top-0" />
           <h2 className="landing-section-heading text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4">
             {t('title')}{' '}
             <span className="landing-gradient-text bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 bg-clip-text text-transparent">
@@ -58,6 +74,7 @@ export function HowItWorks() {
           </p>
         </motion.div>
 
+        <SectionCollapseBody sectionId={SECTION_ID}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 xl:gap-5">
           {steps.map((step, index) => {
             const Icon = step.icon
@@ -117,6 +134,7 @@ export function HowItWorks() {
             <ArrowRight className="w-5 h-5" />
           </a>
         </motion.div>
+        </SectionCollapseBody>
       </div>
     </section>
   )

@@ -15,6 +15,14 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
+import {
+  SectionCollapseBody,
+  SectionCollapseToggle,
+  useLandingSectionCollapse,
+} from '@/components/landing/LandingSectionCollapse'
+import { cn } from '@/lib/utils'
+
+const SECTION_ID = 'engineering'
 
 const PILLAR_ICONS = [Cpu, Shield, Globe] as const
 const METRIC_ICONS = [Server, Zap, Lock, Clock] as const
@@ -22,6 +30,7 @@ const VERTEX_CARD_ICONS = [Lock, Zap, Database] as const
 
 export function EngineeringTrust() {
   const t = useTranslations('engineeringTrust')
+  const { isOpen } = useLandingSectionCollapse(SECTION_ID)
 
   const pillars = PILLAR_ICONS.map((icon, index) => ({
     icon,
@@ -52,15 +61,22 @@ export function EngineeringTrust() {
   }))
 
   return (
-    <section id="engineering" className="py-16 sm:py-20 lg:py-24 bg-gradient-to-b from-slate-950 to-slate-900">
+    <section
+      id={SECTION_ID}
+      className={cn(
+        'bg-gradient-to-b from-slate-950 to-slate-900 scroll-mt-20',
+        isOpen ? 'py-16 sm:py-20 lg:py-24' : 'pt-16 pb-8 sm:pt-20 sm:pb-10'
+      )}
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="relative text-center mb-12"
         >
+          <SectionCollapseToggle sectionId={SECTION_ID} className="absolute right-0 top-0" />
           <div className="inline-flex items-center px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-4">
             <Shield className="w-4 h-4 text-emerald-400 mr-2" />
             <span className="text-emerald-300 text-sm font-medium">{t('badge')}</span>
@@ -74,6 +90,7 @@ export function EngineeringTrust() {
           <p className="text-gray-400 max-w-2xl mx-auto">{t('subtitle')}</p>
         </motion.div>
 
+        <SectionCollapseBody sectionId={SECTION_ID}>
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {pillars.map((pillar, index) => {
             const PillarIcon = pillar.icon
@@ -215,6 +232,7 @@ export function EngineeringTrust() {
         >
           <p className="text-gray-500 text-base italic">{t('attribution')}</p>
         </motion.div>
+        </SectionCollapseBody>
       </div>
     </section>
   )

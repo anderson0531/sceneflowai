@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { Header } from './components/Header'
 import { HeroSection } from './components/HeroSection'
 import { EngineeringTrust } from '@/components/landing/EngineeringTrust'
+import { LandingSectionCollapseProvider } from '@/components/landing/LandingSectionCollapse'
 
 const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
 
@@ -34,7 +35,6 @@ export default function LandingPageClient() {
   return (
     <div id="main-content" className="min-h-screen bg-gray-950 text-white overflow-x-hidden">
       <Header />
-      <FloatingNav />
       <FloatingCTA />
       <ExitIntentPopup />
 
@@ -44,33 +44,37 @@ export default function LandingPageClient() {
 
       <ValuePropStrip />
 
-      <CreativeRangeSection />
+      <LandingSectionCollapseProvider>
+        <FloatingNav />
 
-      <ToolStackSection />
+        <CreativeRangeSection />
 
-      <HowItWorks />
+        <ToolStackSection />
 
-      <WhySceneFlowSection />
+        <HowItWorks />
 
-      <OneTakePipelineSection />
+        <WhySceneFlowSection />
 
-      <ExtendedScenesSection />
+        <OneTakePipelineSection />
 
-      <TrustSafeguardSection />
+        <ExtendedScenesSection />
 
-      <UseCasesSection />
+        <TrustSafeguardSection />
 
-      <InstitutionalRoiSection />
+        <UseCasesSection />
 
-      <CoreCapabilitiesSection />
+        <InstitutionalRoiSection />
 
-      <FeatureStoryboardSection />
+        <CoreCapabilitiesSection />
 
-      <EngineeringTrust />
+        <FeatureStoryboardSection />
 
-      <PricingCredits />
+        <EngineeringTrust />
 
-      <FAQ />
+        <PricingCredits />
+
+        <FAQ />
+      </LandingSectionCollapseProvider>
 
       <FinalCTA />
 

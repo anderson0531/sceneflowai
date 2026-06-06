@@ -27,6 +27,13 @@ import { cn } from '@/lib/utils'
 import { getBillingUrl } from '@/lib/billing/billingUrls'
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent'
 import { PricingTierGrid } from '@/components/landing/PricingTierGrid'
+import {
+  SectionCollapseBody,
+  SectionCollapseToggle,
+  useLandingSectionCollapse,
+} from '@/components/landing/LandingSectionCollapse'
+
+const SECTION_ID = 'pricing'
 
 // Credit costs for calculator
 const creditCosts = {
@@ -411,6 +418,7 @@ function ProjectBudgetCalculator() {
 export function PricingCredits() {
   const t = useTranslations('pricing')
   const tFooter = useTranslations('footer')
+  const { isOpen } = useLandingSectionCollapse(SECTION_ID)
   const { data: session } = useSession()
 
   const handlePlanClick = useCallback((tierName: string) => {
@@ -424,7 +432,13 @@ export function PricingCredits() {
   const byokDescriptionParts = t('byok.description').split(t('byok.savingsHighlight'))
 
   return (
-    <section id="pricing" className="relative py-24 md:py-32 overflow-hidden scroll-mt-20">
+    <section
+      id={SECTION_ID}
+      className={cn(
+        'relative overflow-hidden scroll-mt-20',
+        isOpen ? 'py-24 md:py-32' : 'pt-24 pb-8 md:pt-32 md:pb-10'
+      )}
+    >
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.08),transparent_50%)]" />
@@ -436,8 +450,9 @@ export function PricingCredits() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="relative text-center mb-16"
         >
+          <SectionCollapseToggle sectionId={SECTION_ID} className="absolute right-0 top-0" />
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6">
             <Sparkles className="w-4 h-4 text-emerald-400" />
             <span className="text-sm font-medium text-emerald-400">{t('badge')}</span>
@@ -452,6 +467,7 @@ export function PricingCredits() {
           </p>
         </motion.div>
 
+        <SectionCollapseBody sectionId={SECTION_ID}>
         {/* Tier grid (Explorer + subscriptions) */}
         <div className="mb-12">
           <PricingTierGrid onSelectTier={handlePlanClick} />
@@ -685,6 +701,7 @@ export function PricingCredits() {
             {tFooter('morLine')}
           </p>
         </motion.div>
+        </SectionCollapseBody>
       </div>
     </section>
   )

@@ -46,6 +46,7 @@ import {
   FEATURE_STORYBOARD_UI,
 } from '@/config/landing/featureStoryboardCopy'
 import { PRICING_LANDING_COPY } from '@/config/landing/pricingLandingCopy'
+import { LANDING_SECTION_COLLAPSE_COPY } from '@/config/landing/landingSectionCollapseCopy'
 import { getLandingPlans } from '@/lib/billing/tierCatalog'
 
 const FAQ_ITEMS = [
@@ -317,6 +318,7 @@ export function buildEnMessages() {
       subtitle: 'Everything you need to know about SceneFlow AI',
       items: FAQ_ITEMS.map((f) => ({ question: f.question, answer: f.answer })),
     },
+    landingSections: LANDING_SECTION_COLLAPSE_COPY,
     finalCta: FINAL_CTA_COPY,
     footer: {
       description:

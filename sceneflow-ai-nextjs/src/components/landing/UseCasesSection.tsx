@@ -10,6 +10,14 @@ import { ProductionComparisonVisual } from './ProductionComparisonVisual';
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent';
 import { getDefaultCategoryIdForPersona } from '@/config/landing/valuePropCopy';
 import { USE_CASE_PERSONA_IMAGES } from '@/config/landing/landingVisualMedia';
+import {
+  SectionCollapseBody,
+  SectionCollapseToggle,
+  useLandingSectionCollapse,
+} from '@/components/landing/LandingSectionCollapse';
+import { cn } from '@/lib/utils';
+
+const SECTION_ID = 'use-cases';
 
 type Persona = 'creator' | 'team' | 'productionShop' | 'agency';
 
@@ -432,6 +440,7 @@ const PersonaCard = ({
 export default function UseCasesSection() {
   const t = useTranslations('useCases');
   const tAudience = useTranslations('audiencePaths');
+  const { isOpen } = useLandingSectionCollapse(SECTION_ID);
 
   const personas = useMemo(() => buildPersonas(t), [t]);
 
@@ -475,15 +484,22 @@ export default function UseCasesSection() {
   const isExternalSignup = activePersona === 'creator';
 
   return (
-    <section id="use-cases" className="py-24 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 overflow-hidden scroll-mt-20">
+    <section
+      id={SECTION_ID}
+      className={cn(
+        'bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 overflow-hidden scroll-mt-20',
+        isOpen ? 'py-24' : 'pt-24 pb-8'
+      )}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          className="text-center mb-12"
+          className="relative text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
+          <SectionCollapseToggle sectionId={SECTION_ID} className="absolute right-0 top-0" />
           <div className="inline-flex items-center px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full mb-6">
             <User className="w-4 h-4 text-purple-400 mr-2" />
             <span className="text-purple-300 text-sm font-medium">{t('badge')}</span>
@@ -502,6 +518,7 @@ export default function UseCasesSection() {
           </p>
         </motion.div>
 
+        <SectionCollapseBody sectionId={SECTION_ID}>
         <motion.div
           id="production-verticals"
           className="mb-20 mt-8"
@@ -606,6 +623,7 @@ export default function UseCasesSection() {
             </p>
           )}
         </motion.div>
+        </SectionCollapseBody>
       </div>
 
       <AnimatePresence>

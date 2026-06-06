@@ -5,6 +5,14 @@ import { Target, Zap, Sparkles, Clock, Globe, Film, ArrowRight, ChevronDown } fr
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import { getLoginUrl } from '@/lib/auth/postLoginRedirect'
+import {
+  SectionCollapseBody,
+  SectionCollapseToggle,
+  useLandingSectionCollapse,
+} from '@/components/landing/LandingSectionCollapse'
+import { cn } from '@/lib/utils'
+
+const SECTION_ID = 'core-capabilities'
 
 const SIGNUP_URL = getLoginUrl({ mode: 'signup' })
 
@@ -13,6 +21,7 @@ const EXPRESS_ITEM_ICONS = [Globe, Clock, Film] as const
 
 export function CoreCapabilitiesSection() {
   const t = useTranslations('coreCapabilities')
+  const { isOpen } = useLandingSectionCollapse(SECTION_ID)
 
   const arBullets = AR_BULLET_ICONS.map((icon, index) => ({
     icon,
@@ -27,10 +36,37 @@ export function CoreCapabilitiesSection() {
   }))
 
   return (
-    <section id="core-capabilities" className="py-24 bg-slate-950 relative overflow-hidden scroll-mt-20">
+    <section
+      id={SECTION_ID}
+      className={cn(
+        'bg-slate-950 relative overflow-hidden scroll-mt-20',
+        isOpen ? 'py-24' : 'pt-24 pb-8'
+      )}
+    >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(120,119,198,0.1),transparent_50%)]" />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="relative text-center mb-12 max-w-3xl mx-auto"
+        >
+          <SectionCollapseToggle sectionId={SECTION_ID} className="absolute right-0 top-0" />
+          <div className="flex flex-wrap justify-center gap-2 mb-4">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+              {t('audienceResonance.badge')}
+            </span>
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+              {t('express.badge')}
+            </span>
+          </div>
+          <h2 className="text-3xl md:text-4xl font-bold text-white">
+            {t('audienceResonance.title')} · {t('express.title')}
+          </h2>
+        </motion.div>
+
+        <SectionCollapseBody sectionId={SECTION_ID}>
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -136,6 +172,7 @@ export function CoreCapabilitiesSection() {
             </Button>
           </motion.div>
         </div>
+        </SectionCollapseBody>
       </div>
     </section>
   )
