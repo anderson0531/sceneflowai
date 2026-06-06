@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Video, PlayCircle, Info } from 'lucide-react';
+import { Video, PlayCircle, Info, Play } from 'lucide-react';
 import {
   VIDEO_CATEGORIES,
   buildUseCaseExampleHash,
@@ -14,6 +14,134 @@ import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 export { VIDEO_CATEGORIES } from '@/config/landing/useCaseExamples';
+
+function UseCaseThumbnail({
+  src,
+  alt,
+  className,
+  fallbackLabel,
+  onError,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  fallbackLabel?: string;
+  onError?: () => void;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <div
+        className={`flex h-full w-full items-center justify-center bg-slate-900 px-3 text-center ${className ?? ''}`}
+      >
+        <p className="text-[10px] uppercase tracking-wider text-slate-500">
+          {fallbackLabel ?? alt}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      loading="eager"
+      onError={() => {
+        setFailed(true);
+        onError?.();
+      }}
+    />
+  );
+}
+
+function UseCaseVideoPreview({
+  videoSrc,
+  thumbnailSrc,
+  label,
+  previewKey,
+  demoComingSoonLabel,
+}: {
+  videoSrc: string;
+  thumbnailSrc?: string;
+  label: string;
+  previewKey: string;
+  demoComingSoonLabel: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [posterFailed, setPosterFailed] = useState(false);
+
+  useEffect(() => {
+    setIsPlaying(false);
+    setPosterFailed(false);
+  }, [previewKey]);
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    const video = videoRef.current;
+    if (!video) return;
+    void video.play().catch(() => {});
+  }, [isPlaying, previewKey]);
+
+  const handlePlay = () => {
+    setIsPlaying(true);
+  };
+
+  const showPoster = Boolean(thumbnailSrc) && !posterFailed;
+
+  return (
+    <div className="relative w-full aspect-video max-h-[400px] bg-black">
+      {!isPlaying ? (
+        showPoster ? (
+          <>
+            <UseCaseThumbnail
+              src={thumbnailSrc!}
+              alt={label}
+              className="h-full w-full object-cover"
+              fallbackLabel={demoComingSoonLabel}
+              onError={() => setPosterFailed(true)}
+            />
+            <button
+              type="button"
+              onClick={handlePlay}
+              className="absolute inset-0 flex items-center justify-center bg-black/30 transition-colors hover:bg-black/40"
+              aria-label={`Play demo: ${label}`}
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black/50 border border-white/20 backdrop-blur-sm">
+                <Play className="h-7 w-7 fill-white text-white ml-0.5" />
+              </div>
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={handlePlay}
+            className="flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center"
+            aria-label={`Play demo: ${label}`}
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-cyan-500/20 border border-cyan-500/40">
+              <Play className="h-7 w-7 fill-cyan-300 text-cyan-300 ml-0.5" />
+            </div>
+            <p className="text-xs text-slate-500 uppercase tracking-wider">{demoComingSoonLabel}</p>
+            <p className="text-sm text-slate-400">{label}</p>
+          </button>
+        )
+      ) : (
+        <video
+          ref={videoRef}
+          src={videoSrc}
+          controls
+          muted
+          playsInline
+          preload="none"
+          className="h-full w-full object-contain"
+        />
+      )}
+    </div>
+  );
+}
 
 interface ProductionComparisonVisualProps {
   initialCategoryId?: string
@@ -230,24 +358,22 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                             </p>
                           </div>
                           {activeExample.videoSrc?.trim() ? (
-                            <video
-                              key={`${cat.id}-${activeExample.id}-${activeExample.videoSrc}`}
-                              src={activeExample.videoSrc}
-                              poster={activeExample.thumbnailSrc}
-                              controls
-                              muted
-                              playsInline
-                              preload="metadata"
-                              className="w-full aspect-video bg-black object-contain max-h-[400px]"
+                            <UseCaseVideoPreview
+                              previewKey={`${cat.id}-${activeExample.id}-${activeExample.videoSrc}`}
+                              videoSrc={activeExample.videoSrc}
+                              thumbnailSrc={activeExample.thumbnailSrc}
+                              label={activeExample.label}
+                              demoComingSoonLabel={tUi('demoComingSoon')}
                             />
                           ) : activeExample.thumbnailSrc ? (
                             <div className="relative w-full aspect-video max-h-[400px] bg-slate-950">
-                              <img
+                              <UseCaseThumbnail
                                 src={activeExample.thumbnailSrc}
                                 alt={activeExample.label}
                                 className="h-full w-full object-cover"
+                                fallbackLabel={tUi('demoComingSoon')}
                               />
-                              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
+                              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 pointer-events-none">
                                 <p className="text-xs text-slate-300 uppercase tracking-wider">
                                   {tUi('demoComingSoon')}
                                 </p>
@@ -283,11 +409,11 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                               >
                                 {ex.thumbnailSrc ? (
                                   <div className="aspect-video w-full overflow-hidden bg-slate-900">
-                                    <img
+                                    <UseCaseThumbnail
                                       src={ex.thumbnailSrc}
-                                      alt=""
+                                      alt={ex.label}
                                       className="h-full w-full object-cover"
-                                      loading="lazy"
+                                      fallbackLabel={ex.label}
                                     />
                                   </div>
                                 ) : null}

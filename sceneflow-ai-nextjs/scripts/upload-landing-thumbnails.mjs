@@ -8,12 +8,14 @@
  *   node scripts/upload-landing-thumbnails.mjs --dry-run
  *   node scripts/upload-landing-thumbnails.mjs --type art-styles --all
  *   node scripts/upload-landing-thumbnails.mjs --type output-formats --id 16x9
+ *   node scripts/upload-landing-thumbnails.mjs --type use-case-posters-from-video --all
  *
  * Requires BLOB_READ_WRITE_TOKEN in .env.local (unless --dry-run or --skip-upload)
  */
 
 import { put } from '@vercel/blob'
 import sharp from 'sharp'
+import { execFileSync } from 'child_process'
 import { config } from 'dotenv'
 import { existsSync, mkdirSync, readFileSync } from 'fs'
 import { dirname, join } from 'path'
@@ -22,6 +24,8 @@ import { fileURLToPath } from 'url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
 const TMP = join(ROOT, '.tmp/landing-thumbnails')
+const USE_CASE_CONFIG = join(ROOT, 'src/config/landing/useCaseExamples.ts')
+const BLOB_DEMO_BASE = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 
 config({ path: join(ROOT, '.env.local') })
 config({ path: join(ROOT, '.env.vercel.local') })
@@ -136,8 +140,101 @@ async function uploadFile(blobPath, localPath, dryRun, skipUpload) {
   return blob.url
 }
 
+function resolveFfmpeg() {
+  try {
+    execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' })
+    return 'ffmpeg'
+  } catch {
+    try {
+      const out = execFileSync('python3', [
+        '-c',
+        'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())',
+      ]).toString().trim()
+      if (out) return out
+    } catch {
+      /* ignore */
+    }
+  }
+  throw new Error('ffmpeg not found. Install ffmpeg or pip install imageio-ffmpeg.')
+}
+
+function parseUseCaseExamplesFromConfig() {
+  const configSrc = readFileSync(USE_CASE_CONFIG, 'utf8')
+  const examples = []
+  const blockRe = /ex\('([^']+)', \{([\s\S]*?)\n      \}\)/g
+  let match
+
+  while ((match = blockRe.exec(configSrc)) !== null) {
+    const categoryId = match[1]
+    const block = match[2]
+    const idMatch = block.match(/id: '([^']+)'/)
+    const videoMatch = block.match(/videoSrc: `\$\{BLOB_DEMO\}([^`]+)`/)
+    if (!idMatch) continue
+
+    examples.push({
+      categoryId,
+      exampleId: idMatch[1],
+      videoSrc: videoMatch ? `${BLOB_DEMO_BASE}${videoMatch[1]}` : null,
+    })
+  }
+
+  return examples
+}
+
+function extractPosterFrame(ffmpeg, videoUrl, posterPath) {
+  mkdirSync(dirname(posterPath), { recursive: true })
+  execFileSync(
+    ffmpeg,
+    ['-y', '-ss', '2', '-i', videoUrl, '-frames:v', '1', '-q:v', '2', posterPath],
+    { stdio: 'ignore' }
+  )
+}
+
+async function processUseCasePostersFromVideo({ dryRun, skipUpload, all, id, ffmpeg }) {
+  const examples = parseUseCaseExamplesFromConfig()
+  const items = all ? examples : examples.filter((ex) => ex.exampleId === id)
+
+  if (!all && !id) {
+    console.error('Use --all or --id {exampleId}')
+    process.exit(1)
+  }
+
+  console.log('\nUse case posters from video:')
+  for (const { categoryId, exampleId, videoSrc } of items) {
+    const blobPath = `demo/use-cases/${categoryId}/${exampleId}-poster.jpg`
+    const localPath = join(TMP, 'use-cases', categoryId, `${exampleId}-poster.jpg`)
+
+    if (!videoSrc?.trim()) {
+      console.error(`  skip ${exampleId}: no videoSrc in config`)
+      continue
+    }
+
+    if (dryRun) {
+      console.log(`  [dry-run] ${blobPath} <- ${videoSrc}`)
+      continue
+    }
+
+    console.log(`  ${categoryId}/${exampleId}`)
+    try {
+      extractPosterFrame(ffmpeg, videoSrc, localPath)
+    } catch (err) {
+      console.error(`  ERROR extracting frame for ${exampleId}: ${err.message}`)
+      continue
+    }
+
+    await uploadFile(blobPath, localPath, dryRun, skipUpload)
+  }
+}
+
 async function main() {
   const { dryRun, skipUpload, all, type, id } = parseArgs()
+  const needsFfmpeg = type === 'use-case-posters-from-video'
+  const ffmpeg = needsFfmpeg && !dryRun ? resolveFfmpeg() : null
+
+  if (type === 'use-case-posters-from-video') {
+    await processUseCasePostersFromVideo({ dryRun, skipUpload, all, id, ffmpeg })
+    return
+  }
 
   if (type === 'art-styles' || type === 'all') {
     const items = all ? ART_STYLES : ART_STYLES.filter((s) => s.id === id)
