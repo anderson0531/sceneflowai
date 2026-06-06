@@ -93,7 +93,12 @@ export function getLandingOutputFormatThumbnail(id: OutputFormatId): string {
 /** Custom poster overrides — categoryId → exampleId → Blob path (without host) */
 export const USE_CASE_POSTER_OVERRIDES: Record<string, Record<string, string>> = {
   knowledge: {
-    'k12-higher-ed': 'Gemini_Generated_Image_gdjshbgdjshbgdjs.jpeg',
+    'k12-higher-ed': 'Gemini_Generated_Image_oovxa2oovxa2oovx (1).jpeg',
+    'corporate-ld': 'Gemini_Generated_Image_m0cmafm0cmafm0cm.jpeg',
+    'software-saas-tutorials': 'Gemini_Generated_Image_8cmxu78cmxu78cmx.jpeg',
+    'niche-skill-tutoring': 'Gemini_Generated_Image_g7kb2tg7kb2tg7kb.jpeg',
+    'medical-patient-education': 'Gemini_Generated_Image_ccr7z0ccr7z0ccr7.jpeg',
+    'video-memoirs': 'Gemini_Generated_Image_j7adicj7adicj7ad.jpeg',
   },
 }
 

@@ -70,8 +70,6 @@ const USE_CASE_POSTERS = [
   ['knowledge', 'niche-skill-tutoring', 'Skill Tutoring', '0x3b82f6'],
   ['knowledge', 'medical-patient-education', 'Patient Education', '0x0284c7'],
   ['knowledge', 'video-memoirs', 'Video Memoirs', '0x0369a1'],
-  ['knowledge', 'continuous-dialogue-beat', 'Continuous Beats', '0x0891b2'],
-  ['knowledge', 'trust-validation-workflow', 'Trust Workflow', '0x0e7490'],
   ['jit', 'hyper-local-news', 'Hyper-Local News', '0xca8a04'],
   ['jit', 'financial-market-recaps', 'Market Recaps', '0xb45309'],
   ['jit', 'sports-commentary', 'Sports Commentary', '0xa16207'],
