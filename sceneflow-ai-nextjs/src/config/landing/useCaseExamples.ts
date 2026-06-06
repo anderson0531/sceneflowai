@@ -1,5 +1,6 @@
 import { ENTERTAINMENT_CATEGORY_QUALIFYING_STATEMENT } from '@/config/landing/entertainmentStatsCopy'
 import { getUseCasePosterUrl } from '@/config/landing/landingVisualMedia'
+import { isUseCaseVideoEnabled } from '@/config/landing/useCaseVideoStatus'
 
 export type UseCaseCategoryId =
   | 'entertainment'
@@ -15,6 +16,7 @@ export type UseCaseExample = {
   description: string
   videoSrc?: string
   thumbnailSrc?: string
+  videoEnabled?: boolean
 }
 
 export type UseCaseCategory = {
@@ -55,6 +57,7 @@ function ex(categoryId: UseCaseCategoryId, example: ExampleInput): UseCaseExampl
   return {
     ...example,
     thumbnailSrc: example.thumbnailSrc ?? getUseCasePosterUrl(categoryId, example.id),
+    videoEnabled: isUseCaseVideoEnabled(categoryId, example.id),
   }
 }
 
@@ -69,35 +72,35 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         label: 'YouTube TV Drama',
         description:
           'Imagine shipping 16:9 episodic drama on YouTube—where YouTube now holds 13.4% of U.S. TV viewing and over 35% of watch time happens on connected TV. SceneFlow helps creators grow that share with engaging alternative content: beat-first storyboards, Reference Library continuity, and publish-ready widescreen masters.',
-        videoSrc: `${BLOB_DEMO}/demo/use-cases/jit/true-crime-historical-docs.mp4`,
+        videoSrc: `${BLOB_DEMO}/demo/use-cases/entertainment/vertical-short-drama.mp4`,
       }),
       ex('entertainment', {
         id: 'animated-web-series',
         label: 'Animated Web Series',
         description:
           'Imagine locking stylized characters in your Reference Library once—then shipping serialized episodes in anime, Pixar, or Ghibli-inspired art with the consistency indie hits like Glitch Productions demand.',
-        videoSrc: `${BLOB_DEMO}/demo/use-cases/jit/sports-commentary.mp4`,
+        videoSrc: `${BLOB_DEMO}/demo/use-cases/entertainment/animated-web-series.mp4`,
       }),
       ex('entertainment', {
         id: 'episodic-youtube-series',
         label: 'Episodic YouTube Series',
         description:
           'Imagine auto-generated season arcs in Series Studio—episode outlines sync into Blueprint and Production so every face, voice, and beat stays aligned across a growing channel.',
-        videoSrc: `${BLOB_DEMO}/Series.mp4`,
+        videoSrc: `${BLOB_DEMO}/demo/use-cases/entertainment/episodic-youtube-series.mp4`,
       }),
       ex('entertainment', {
         id: 'creator-reality-competition',
         label: 'Creator Reality & Competition',
         description:
           'Imagine producing reality-scale creator competitions without a broadcast crew—multi-cam beats, stakeholder Screening Room reviews, and same-week turnaround from script to master MP4.',
-        videoSrc: `${BLOB_DEMO}/demo/use-cases/b2b/conference-event-promos.mp4`,
+        videoSrc: `${BLOB_DEMO}/demo/use-cases/entertainment/creator-reality-competition.mp4`,
       }),
       ex('entertainment', {
         id: 'ctv-ready-series',
         label: 'Vertical Mobile Drama',
         description:
           'Imagine photoreal 9:16 hooks and serialized mobile episodes built for scroll—approve Beat Frames before render, chain native extensions for emotional beats that stop the thumb. SceneFlow outputs vertical masters ready for YouTube Shorts and mobile feeds.',
-        videoSrc: `${BLOB_DEMO}/Demo.mp4`,
+        videoSrc: `${BLOB_DEMO}/demo/use-cases/entertainment/ctv-ready-series.mp4`,
       }),
     ],
   },
@@ -340,5 +343,5 @@ export function parseUseCaseExampleHash(
 }
 
 export function hasUseCaseExampleVideo(example: UseCaseExample): boolean {
-  return Boolean(example.videoSrc?.trim())
+  return Boolean(example.videoEnabled && example.videoSrc?.trim())
 }

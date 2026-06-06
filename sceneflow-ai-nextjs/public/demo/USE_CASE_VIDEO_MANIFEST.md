@@ -8,6 +8,8 @@ Example: `#use-cases-knowledge-k12-higher-ed`
 
 Config source: [`src/config/landing/useCaseExamples.ts`](../../src/config/landing/useCaseExamples.ts)
 
+Playback whitelist: [`src/config/landing/useCaseVideoStatus.ts`](../../src/config/landing/useCaseVideoStatus.ts)
+
 Automation: [`scripts/fetch-use-case-demos.mjs`](../../scripts/fetch-use-case-demos.mjs) + [`scripts/use-case-demo-sources.json`](../../scripts/use-case-demo-sources.json)
 
 Poster thumbnails: [`scripts/upload-landing-thumbnails.mjs`](../../scripts/upload-landing-thumbnails.mjs) (`--type use-case-posters --all`)
@@ -16,78 +18,78 @@ Blob path: `demo/use-cases/{categoryId}/{exampleId}-poster.jpg`
 
 **License:** Clips sourced from [Pexels](https://www.pexels.com/) under the [Pexels License](https://www.pexels.com/license/) (free for commercial use with attribution).
 
+**Playback:** Only examples with `USE_CASE_VIDEO_READY[category][id] = true` are playable on the landing page. All others show the poster thumbnail with a "Demo Coming Soon" overlay. `videoSrc` still points at the Blob path so enabling playback after upload is a one-line config change.
+
 ---
 
 ## Entertainment & Creator Series (`entertainment`)
 
-| Example ID | Label | Hash | Video | Poster |
-|------------|-------|------|-------|--------|
-| `vertical-short-drama` | YouTube TV Drama | `#use-cases-entertainment-vertical-short-drama` | Interim — jit clip | Ready — Blob |
-| `animated-web-series` | Animated Web Series | `#use-cases-entertainment-animated-web-series` | Interim | Ready — Blob |
-| `episodic-youtube-series` | Episodic YouTube Series | `#use-cases-entertainment-episodic-youtube-series` | Interim — Series.mp4 | Ready — Blob |
-| `creator-reality-competition` | Creator Reality & Competition | `#use-cases-entertainment-creator-reality-competition` | Interim | Ready — Blob |
-| `ctv-ready-series` | Vertical Mobile Drama | `#use-cases-entertainment-ctv-ready-series` | Interim — Demo.mp4 | Ready — Blob |
+| Example ID | Label | Hash | Video (Blob) | Playback |
+|------------|-------|------|--------------|----------|
+| `vertical-short-drama` | YouTube TV Drama | `#use-cases-entertainment-vertical-short-drama` | `demo/use-cases/entertainment/vertical-short-drama.mp4` | Thumbnail only |
+| `animated-web-series` | Animated Web Series | `#use-cases-entertainment-animated-web-series` | `demo/use-cases/entertainment/animated-web-series.mp4` | Thumbnail only |
+| `episodic-youtube-series` | Episodic YouTube Series | `#use-cases-entertainment-episodic-youtube-series` | `demo/use-cases/entertainment/episodic-youtube-series.mp4` | Thumbnail only |
+| `creator-reality-competition` | Creator Reality & Competition | `#use-cases-entertainment-creator-reality-competition` | `demo/use-cases/entertainment/creator-reality-competition.mp4` | Thumbnail only |
+| `ctv-ready-series` | Vertical Mobile Drama | `#use-cases-entertainment-ctv-ready-series` | `demo/use-cases/entertainment/ctv-ready-series.mp4` | Thumbnail only |
 
 ---
 
 ## Property, Spaces & Hospitality (`property`)
 
-| Example ID | Label | Hash | Video | Poster |
-|------------|-------|------|-------|--------|
-| `residential-real-estate` | Residential Real Estate | `#use-cases-property-residential-real-estate` | Ready — `/demo/property-hospitality.mp4` | SceneFlow demo |
-| `commercial-real-estate` | Commercial Real Estate | `#use-cases-property-commercial-real-estate` | Ready — Blob | Pexels [4193140](https://www.pexels.com/video/city-building-urban-city-life-4193140/) — Nino Souza |
-| `short-term-rentals` | Short-Term Rentals | `#use-cases-property-short-term-rentals` | Ready — Blob | Pexels [31960018](https://www.pexels.com/video/cozy-cabin-with-sunlight-streaming-inside-31960018/) — Gülru Sude |
-| `hospitality-tourism` | Hospitality & Tourism | `#use-cases-property-hospitality-tourism` | Ready — Blob | Pexels [7820468](https://www.pexels.com/video/woman-in-hotel-reception-area-7820468/) — Mikhail Nilov |
-| `museum-gallery-guides` | Museum & Gallery Guides | `#use-cases-property-museum-gallery-guides` | Ready — Blob | Pexels [6214424](https://www.pexels.com/video/artist-paiting-in-a-workshop-6214424/) — Taryn Elliott |
+| Example ID | Label | Hash | Video (Blob) | Playback |
+|------------|-------|------|--------------|----------|
+| `residential-real-estate` | Residential Real Estate | `#use-cases-property-residential-real-estate` | `Home Tour.mp4` | **Enabled** |
+| `commercial-real-estate` | Commercial Real Estate | `#use-cases-property-commercial-real-estate` | `demo/use-cases/property/commercial-real-estate.mp4` | Thumbnail only |
+| `short-term-rentals` | Short-Term Rentals | `#use-cases-property-short-term-rentals` | `demo/use-cases/property/short-term-rentals.mp4` | Thumbnail only |
+| `hospitality-tourism` | Hospitality & Tourism | `#use-cases-property-hospitality-tourism` | `demo/use-cases/property/hospitality-tourism.mp4` | Thumbnail only |
+| `museum-gallery-guides` | Museum & Gallery Guides | `#use-cases-property-museum-gallery-guides` | `demo/use-cases/property/museum-gallery-guides.mp4` | Thumbnail only |
 
 ---
 
 ## Knowledge, Training & Education (`knowledge`)
 
-| Example ID | Label | Hash | Video | Source |
-|------------|-------|------|-------|--------|
-| `k12-higher-ed` | K-12 & Higher Ed | `#use-cases-knowledge-k12-higher-ed` | Ready — Astrophysics (`Astrophysics.mp4`) | SceneFlow demo |
-| `corporate-ld` | Corporate L&D | `#use-cases-knowledge-corporate-ld` | Ready — Blob | Pexels [8123969](https://www.pexels.com/video/business-people-brainstorming-on-a-meeting-8123969/) — RDNE Stock project |
-| `software-saas-tutorials` | Software SaaS Tutorials | `#use-cases-knowledge-software-saas-tutorials` | Ready — Blob | Pexels [4064869](https://www.pexels.com/video/man-hands-desk-laptop-4064869/) — cottonbro studio |
-| `niche-skill-tutoring` | Niche Skill Tutoring | `#use-cases-knowledge-niche-skill-tutoring` | Ready — Blob | Pexels [857167](https://www.pexels.com/video/baking-pastry-bread-857167/) — Vimeo (CC0) |
-| `medical-patient-education` | Medical/Patient Education | `#use-cases-knowledge-medical-patient-education` | Ready — Blob | Pexels [7579341](https://www.pexels.com/video/doctor-talking-to-the-patient-7579341/) — cottonbro studio |
-| `video-memoirs` | Video Memoirs | `#use-cases-knowledge-video-memoirs` | Ready — `KITCHEN.mp4` (watermarked) | SceneFlow demo |
-| `continuous-dialogue-beat` | Continuous Beats | `#use-cases-knowledge-continuous-dialogue-beat` | Ready — Blob | Pexels [7413808](https://www.pexels.com/video/a-woman-standing-while-having-a-presentation-7413808/) — RDNE Stock project |
-| `trust-validation-workflow` | Moderation & Risk Mitigation | `#use-cases-knowledge-trust-validation-workflow` | Ready — Blob | Pexels [8123969](https://www.pexels.com/video/business-people-brainstorming-on-a-meeting-8123969/) — RDNE Stock project |
+| Example ID | Label | Hash | Video (Blob) | Playback |
+|------------|-------|------|--------------|----------|
+| `k12-higher-ed` | K-12 & Higher Ed | `#use-cases-knowledge-k12-higher-ed` | `Astrophysics.mp4` | **Enabled** |
+| `corporate-ld` | Corporate L&D | `#use-cases-knowledge-corporate-ld` | `demo/use-cases/knowledge/corporate-ld.mp4` | Thumbnail only |
+| `software-saas-tutorials` | Software SaaS Tutorials | `#use-cases-knowledge-software-saas-tutorials` | `demo/use-cases/knowledge/software-saas-tutorials.mp4` | Thumbnail only |
+| `niche-skill-tutoring` | Niche Skill Tutoring | `#use-cases-knowledge-niche-skill-tutoring` | `demo/use-cases/knowledge/niche-skill-tutoring.mp4` | Thumbnail only |
+| `medical-patient-education` | Medical/Patient Education | `#use-cases-knowledge-medical-patient-education` | `demo/use-cases/knowledge/medical-patient-education.mp4` | Thumbnail only |
+| `video-memoirs` | Video Memoirs | `#use-cases-knowledge-video-memoirs` | `KITCHEN.mp4` | **Enabled** |
 
 ---
 
 ## JIT Media & Information (`jit`)
 
-| Example ID | Label | Hash | Video | Source |
-|------------|-------|------|-------|--------|
-| `hyper-local-news` | Hyper-Local News | `#use-cases-jit-hyper-local-news` | Ready — `demo/signal.mp4` | SceneFlow demo |
-| `financial-market-recaps` | Financial & Market Recaps | `#use-cases-jit-financial-market-recaps` | Ready — Blob | Pexels [7578613](https://www.pexels.com/video/stock-market-movement-analysis-7578613/) — Tima Miroshnichenko |
-| `sports-commentary` | Sports Commentary | `#use-cases-jit-sports-commentary` | Ready — Blob | Pexels [4729196](https://www.pexels.com/video/drone-footage-of-audience-in-a-football-match-4729196/) — Tima Miroshnichenko |
-| `true-crime-historical-docs` | True Crime & Historical Docs | `#use-cases-jit-true-crime-historical-docs` | Ready — Blob | Pexels [3611037](https://www.pexels.com/video/static-footage-of-black-and-white-in-an-old-film-3611037/) — Luis Quintero |
-| `weather-emergency-alerts` | Weather & Emergency Alerts | `#use-cases-jit-weather-emergency-alerts` | Ready — Blob | Pexels [5404147](https://www.pexels.com/video/gloomy-sky-with-dark-clouds-5404147/) — Zuza Musial |
+| Example ID | Label | Hash | Video (Blob) | Playback |
+|------------|-------|------|--------------|----------|
+| `hyper-local-news` | Hyper-Local News | `#use-cases-jit-hyper-local-news` | `demo/signal.mp4` | **Enabled** |
+| `financial-market-recaps` | Financial & Market Recaps | `#use-cases-jit-financial-market-recaps` | `demo/use-cases/jit/financial-market-recaps.mp4` | Thumbnail only |
+| `sports-commentary` | Sports Commentary | `#use-cases-jit-sports-commentary` | `demo/use-cases/jit/sports-commentary.mp4` | Thumbnail only |
+| `true-crime-historical-docs` | True Crime & Historical Docs | `#use-cases-jit-true-crime-historical-docs` | `demo/use-cases/jit/true-crime-historical-docs.mp4` | Thumbnail only |
+| `weather-emergency-alerts` | Weather & Emergency Alerts | `#use-cases-jit-weather-emergency-alerts` | `demo/use-cases/jit/weather-emergency-alerts.mp4` | Thumbnail only |
 
 ---
 
 ## B2B Marketing & Sales (`b2b`)
 
-| Example ID | Label | Hash | Video | Source |
-|------------|-------|------|-------|--------|
-| `product-explainer-videos` | Product Explainer Videos | `#use-cases-b2b-product-explainer-videos` | Ready — `Demo.mp4` | SceneFlow demo |
-| `case-study-testimonials` | Case Study/Testimonials | `#use-cases-b2b-case-study-testimonials` | Ready — Blob | Pexels [5637284](https://www.pexels.com/video/man-in-business-suit-looking-at-camera-5637284/) — Sora Shimazaki |
-| `recruitment-branding` | Recruitment & Branding | `#use-cases-b2b-recruitment-branding` | Ready — Blob | Pexels [3246669](https://www.pexels.com/video/people-in-a-business-meeting-discussing-about-data-and-charts-on-the-table-3246669/) — fauxels |
-| `conference-event-promos` | Conference & Event Promos | `#use-cases-b2b-conference-event-promos` | Ready — Blob | Pexels [7413808](https://www.pexels.com/video/a-woman-standing-while-having-a-presentation-7413808/) — RDNE Stock project |
+| Example ID | Label | Hash | Video (Blob) | Playback |
+|------------|-------|------|--------------|----------|
+| `product-explainer-videos` | Product Explainer Videos | `#use-cases-b2b-product-explainer-videos` | `Demo.mp4` | **Enabled** |
+| `case-study-testimonials` | Case Study/Testimonials | `#use-cases-b2b-case-study-testimonials` | `demo/use-cases/b2b/case-study-testimonials.mp4` | Thumbnail only |
+| `recruitment-branding` | Recruitment & Branding | `#use-cases-b2b-recruitment-branding` | `demo/use-cases/b2b/recruitment-branding.mp4` | Thumbnail only |
+| `conference-event-promos` | Conference & Event Promos | `#use-cases-b2b-conference-event-promos` | `demo/use-cases/b2b/conference-event-promos.mp4` | Thumbnail only |
 
 ---
 
 ## Public Sector & Advocacy (`public`)
 
-| Example ID | Label | Hash | Video | Source |
-|------------|-------|------|-------|--------|
-| `ngo-impact-reports` | NGO Impact Reports | `#use-cases-public-ngo-impact-reports` | Ready — `NGO.mp4` | SceneFlow demo |
-| `public-health-announcements` | Public Health Announcements | `#use-cases-public-public-health-announcements` | Ready — Blob | Pexels [3197799](https://www.pexels.com/video/people-sitting-in-a-hospital-waiting-area-3197799/) — Andrey Kirievskiy |
-| `legal-insurance-explainers` | Legal & Insurance Explainers | `#use-cases-public-legal-insurance-explainers` | Ready — Blob | Pexels [7841671](https://www.pexels.com/video/a-man-signing-a-document-7841671/) — RDNE Stock project |
-| `religious-spiritual-teachings` | Religious & Spiritual Teachings | `#use-cases-public-religious-spiritual-teachings` | Ready — Blob | Pexels [10628779](https://www.pexels.com/video/a-priest-swinging-an-incense-burner-in-a-church-10628779/) — Ron Lach |
+| Example ID | Label | Hash | Video (Blob) | Playback |
+|------------|-------|------|--------------|----------|
+| `ngo-impact-reports` | NGO Impact Reports | `#use-cases-public-ngo-impact-reports` | `NGO.mp4` | **Enabled** |
+| `public-health-announcements` | Public Health Announcements | `#use-cases-public-public-health-announcements` | `demo/use-cases/public/public-health-announcements.mp4` | Thumbnail only |
+| `legal-insurance-explainers` | Legal & Insurance Explainers | `#use-cases-public-legal-insurance-explainers` | `demo/use-cases/public/legal-insurance-explainers.mp4` | Thumbnail only |
+| `religious-spiritual-teachings` | Religious & Spiritual Teachings | `#use-cases-public-religious-spiritual-teachings` | `demo/use-cases/public/religious-spiritual-teachings.mp4` | Thumbnail only |
 
 ---
 
@@ -95,12 +97,26 @@ Blob path: `demo/use-cases/{categoryId}/{exampleId}-poster.jpg`
 
 | Status | Count |
 |--------|-------|
-| Ready (video) | 26 |
-| Ready (poster) | 31 |
-| Entertainment examples | 5 |
-| **Total examples** | **31** |
+| Playback enabled (SceneFlow demos) | 6 |
+| Thumbnail only (stock / pending upload) | 23 |
+| **Total landing examples** | **29** |
 
-Blob path pattern: `demo/use-cases/{categoryId}/{exampleId}.mp4` on `xxavfkdhdebrqida.public.blob.vercel-storage.com`
+Blob host: `xxavfkdhdebrqida.public.blob.vercel-storage.com`
+
+Canonical video path pattern: `demo/use-cases/{categoryId}/{exampleId}.mp4`
+
+---
+
+## Enable playback after upload
+
+1. Upload the real demo to the Blob path listed in `videoSrc` (see `useCaseExamples.ts`).
+2. In [`useCaseVideoStatus.ts`](../../src/config/landing/useCaseVideoStatus.ts), add under the category:
+
+   ```typescript
+   'example-id': true,
+   ```
+
+3. Deploy. No `videoSrc` change is required if the file is at the canonical path.
 
 ---
 

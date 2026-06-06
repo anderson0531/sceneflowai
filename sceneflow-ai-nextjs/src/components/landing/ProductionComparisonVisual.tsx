@@ -205,6 +205,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
           ...ex,
           videoSrc: source?.videoSrc,
           thumbnailSrc: source?.thumbnailSrc,
+          videoEnabled: source?.videoEnabled,
         }
       }),
     }));
@@ -402,7 +403,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                               {activeExample.label}
                             </p>
                           </div>
-                          {activeExample.videoSrc?.trim() ? (
+                          {activeExample.videoEnabled && activeExample.videoSrc?.trim() ? (
                             <UseCaseVideoPreview
                               previewKey={`${cat.id}-${activeExample.id}-${activeExample.videoSrc}`}
                               videoSrc={activeExample.videoSrc}
