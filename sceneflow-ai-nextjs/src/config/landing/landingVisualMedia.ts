@@ -114,6 +114,13 @@ export const USE_CASE_POSTER_OVERRIDES: Record<string, Record<string, string>> =
     'medical-patient-education': 'Gemini_Generated_Image_ccr7z0ccr7z0ccr7.jpeg',
     'video-memoirs': 'Gemini_Generated_Image_j7adicj7adicj7ad.jpeg',
   },
+  jit: {
+    'hyper-local-news': 'Gemini_Generated_Image_3tqydw3tqydw3tqy.jpeg',
+    'financial-market-recaps': 'Gemini_Generated_Image_knk0yeknk0yeknk0.jpeg',
+    'sports-commentary': 'Gemini_Generated_Image_rphgjjrphgjjrphg.jpeg',
+    'true-crime-historical-docs': 'Gemini_Generated_Image_26270i26270i2627.jpeg',
+    'weather-emergency-alerts': 'Gemini_Generated_Image_6kqnqa6kqnqa6kqn.jpeg',
+  },
 }
 
 /** Default poster URL for a use-case example */
