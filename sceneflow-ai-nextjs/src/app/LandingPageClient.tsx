@@ -8,6 +8,10 @@ import { EngineeringTrust } from '@/components/landing/EngineeringTrust'
 const PricingCredits = dynamic(() => import('@/components/landing/PricingCredits'), { ssr: false })
 
 const ValuePropStrip = dynamic(() => import('@/components/landing/ValuePropStrip').then(m => m.ValuePropStrip), { ssr: false })
+const CreativeRangeSection = dynamic(
+  () => import('@/components/landing/CreativeRangeSection').then((m) => m.CreativeRangeSection),
+  { ssr: false }
+)
 const AudiencePathStrip = dynamic(() => import('@/components/landing/AudiencePathStrip').then(m => m.AudiencePathStrip), { ssr: false })
 const ToolStackSection = dynamic(() => import('@/components/landing/ToolStackSection').then(m => m.ToolStackSection), { ssr: false })
 const InstitutionalRoiSection = dynamic(() => import('@/components/landing/InstitutionalRoiSection').then(m => m.InstitutionalRoiSection), { ssr: false })
@@ -39,6 +43,8 @@ export default function LandingPageClient() {
       <AudiencePathStrip />
 
       <ValuePropStrip />
+
+      <CreativeRangeSection />
 
       <ToolStackSection />
 

@@ -37,14 +37,14 @@ export const AUDIENCE_PATHS = [
     label: 'Creator',
     outcome: 'Ship on schedule — stop rebuilding in every tool',
     useCases: [
+      'Vertical short drama & 9:16 hooks',
+      'Animated web series',
       'YouTube & episodic series',
       'Video podcasts & show clips',
-      'Hyper-local & JIT news',
       'Documentaries & docuseries',
-      'How-to & skill channels',
       'Sports recaps & commentary',
     ],
-    defaultCategoryId: 'jit',
+    defaultCategoryId: 'entertainment',
     icon: 'video' as const,
   },
   {

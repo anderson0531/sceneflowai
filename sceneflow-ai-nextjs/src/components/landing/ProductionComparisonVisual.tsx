@@ -22,6 +22,11 @@ interface ProductionComparisonVisualProps {
 export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComparisonVisualProps) => {
   const tUi = useTranslations('useCases.ui');
   const tCategories = useTranslations('useCases');
+  const entertainmentStats = tCategories.raw('entertainmentStats') as {
+    title: string
+    footnote: string
+    stats: Array<{ value: string; label: string }>
+  } | null
   const localizedCategories = useMemo(() => {
     const translated = tCategories.raw('categories') as Array<{
       id: string;
@@ -31,10 +36,14 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
     }>;
     return translated.map((cat) => ({
       ...cat,
-      examples: cat.examples.map((ex) => ({
-        ...ex,
-        videoSrc: getUseCaseExample(cat.id, ex.id)?.videoSrc,
-      })),
+      examples: cat.examples.map((ex) => {
+        const source = getUseCaseExample(cat.id, ex.id)
+        return {
+          ...ex,
+          videoSrc: source?.videoSrc,
+          thumbnailSrc: source?.thumbnailSrc,
+        }
+      }),
     }));
   }, [tCategories]);
 
@@ -187,6 +196,30 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                           </p>
                         ) : null}
 
+                        {cat.id === 'entertainment' && entertainmentStats ? (
+                          <div className="mb-4 rounded-lg border border-violet-500/20 bg-violet-950/30 p-3">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-violet-300 mb-3">
+                              {entertainmentStats.title}
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {entertainmentStats.stats.map((stat) => (
+                                <div
+                                  key={stat.label}
+                                  className="rounded-md bg-slate-950/60 px-2 py-2 text-center border border-white/5"
+                                >
+                                  <div className="text-sm font-bold text-violet-200">{stat.value}</div>
+                                  <div className="text-[10px] text-slate-500 leading-snug mt-0.5">
+                                    {stat.label}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <p className="mt-2 text-[10px] text-slate-500 leading-relaxed">
+                              {entertainmentStats.footnote}
+                            </p>
+                          </div>
+                        ) : null}
+
                         <div
                           ref={videoPanelRef}
                           className="mb-4 rounded-lg border border-cyan-500/20 bg-slate-950/80 overflow-hidden shadow-xl"
@@ -200,12 +233,26 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                             <video
                               key={`${cat.id}-${activeExample.id}-${activeExample.videoSrc}`}
                               src={activeExample.videoSrc}
+                              poster={activeExample.thumbnailSrc}
                               controls
                               muted
                               playsInline
                               preload="metadata"
                               className="w-full aspect-video bg-black object-contain max-h-[400px]"
                             />
+                          ) : activeExample.thumbnailSrc ? (
+                            <div className="relative w-full aspect-video max-h-[400px] bg-slate-950">
+                              <img
+                                src={activeExample.thumbnailSrc}
+                                alt={activeExample.label}
+                                className="h-full w-full object-cover"
+                              />
+                              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
+                                <p className="text-xs text-slate-300 uppercase tracking-wider">
+                                  {tUi('demoComingSoon')}
+                                </p>
+                              </div>
+                            </div>
                           ) : (
                             <div className="w-full aspect-video bg-slate-950 flex flex-col items-center justify-center gap-2 max-h-[400px] px-6 text-center">
                               <p className="text-xs text-slate-500 uppercase tracking-wider">
@@ -228,12 +275,23 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                                 href={`#${exampleHash}`}
                                 onClick={(e) => handleExampleClick(cat.id, ex.id, e)}
                                 aria-current={isActive ? 'true' : undefined}
-                                className={`relative p-3 rounded-lg border transition-all cursor-pointer h-full flex flex-col justify-start no-underline ${
+                                className={`relative rounded-lg border transition-all cursor-pointer h-full flex flex-col justify-start no-underline overflow-hidden ${
                                   isActive
                                     ? 'bg-cyan-500/10 border-cyan-500/40 shadow-lg shadow-cyan-900/20'
                                     : 'bg-slate-950/40 border-white/5 hover:border-white/10 hover:bg-slate-950/60'
                                 }`}
                               >
+                                {ex.thumbnailSrc ? (
+                                  <div className="aspect-video w-full overflow-hidden bg-slate-900">
+                                    <img
+                                      src={ex.thumbnailSrc}
+                                      alt=""
+                                      className="h-full w-full object-cover"
+                                      loading="lazy"
+                                    />
+                                  </div>
+                                ) : null}
+                                <div className="p-3 flex flex-col flex-1">
                                 <div className="flex items-center justify-between mb-2 gap-2">
                                   <span
                                     className={`text-sm font-semibold ${
@@ -258,6 +316,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                                 >
                                   {ex.description}
                                 </p>
+                                </div>
                               </a>
                             );
                           })}

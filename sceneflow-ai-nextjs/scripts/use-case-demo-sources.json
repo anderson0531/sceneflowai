@@ -208,5 +208,55 @@
     "pexelsAuthor": "Ron Lach",
     "directDownloadUrl": "https://videos.pexels.com/video-files/10628779/10628779-uhd_4096_2160_25fps.mp4",
     "blobPath": "demo/use-cases/public/religious-spiritual-teachings.mp4"
+  },
+  "vertical-short-drama": {
+    "categoryId": "entertainment",
+    "label": "Vertical Short Drama",
+    "pexelsQuery": "dramatic close up portrait emotional phone vertical",
+    "pexelsVideoId": 3611037,
+    "pexelsUrl": "https://www.pexels.com/video/static-footage-of-black-and-white-in-an-old-film-3611037/",
+    "pexelsAuthor": "Luis Quintero",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/3611037/3611037-hd_1920_1080_25fps.mp4",
+    "blobPath": "demo/use-cases/entertainment/vertical-short-drama.mp4"
+  },
+  "animated-web-series": {
+    "categoryId": "entertainment",
+    "label": "Animated Web Series",
+    "pexelsQuery": "colorful animation creative studio drawing",
+    "pexelsVideoId": 6214424,
+    "pexelsUrl": "https://www.pexels.com/video/artist-paiting-in-a-workshop-6214424/",
+    "pexelsAuthor": "Taryn Elliott",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/6214424/6214424-uhd_3840_2160_25fps.mp4",
+    "blobPath": "demo/use-cases/entertainment/animated-web-series.mp4"
+  },
+  "episodic-youtube-series": {
+    "categoryId": "entertainment",
+    "label": "Episodic YouTube Series",
+    "pexelsQuery": "youtube creator filming studio setup",
+    "pexelsVideoId": 4064869,
+    "pexelsUrl": "https://www.pexels.com/video/man-hands-desk-laptop-4064869/",
+    "pexelsAuthor": "cottonbro studio",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/4064869/4064869-uhd_4096_2160_25fps.mp4",
+    "blobPath": "demo/use-cases/entertainment/episodic-youtube-series.mp4"
+  },
+  "creator-reality-competition": {
+    "categoryId": "entertainment",
+    "label": "Creator Reality & Competition",
+    "pexelsQuery": "stage lights audience competition event",
+    "pexelsVideoId": 7413808,
+    "pexelsUrl": "https://www.pexels.com/video/a-woman-standing-while-having-a-presentation-7413808/",
+    "pexelsAuthor": "RDNE Stock project",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/7413808/7413808-hd_1920_1080_30fps.mp4",
+    "blobPath": "demo/use-cases/entertainment/creator-reality-competition.mp4"
+  },
+  "ctv-ready-series": {
+    "categoryId": "entertainment",
+    "label": "Connected TV Series",
+    "pexelsQuery": "living room smart tv watching streaming",
+    "pexelsVideoId": 31960018,
+    "pexelsUrl": "https://www.pexels.com/video/cozy-cabin-with-sunlight-streaming-inside-31960018/",
+    "pexelsAuthor": "Gülru Sude",
+    "directDownloadUrl": "https://videos.pexels.com/video-files/31960018/13617898_3840_2160_30fps.mp4",
+    "blobPath": "demo/use-cases/entertainment/ctv-ready-series.mp4"
   }
 }

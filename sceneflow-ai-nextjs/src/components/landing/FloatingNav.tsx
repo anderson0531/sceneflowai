@@ -18,6 +18,7 @@ export function FloatingNav() {
   const sections = useMemo(
     () => [
       { id: 'tool-stack', label: t('compare'), icon: Clock3 },
+      { id: 'creative-range', label: t('looksAndFormats'), icon: Sparkles },
       { id: 'how-it-works', label: t('howItWorks'), icon: Sparkles },
       { id: 'use-cases', label: t('useCases'), icon: Rocket },
       { id: 'feature-storyboard', label: t('platformWalkthrough'), icon: Film },

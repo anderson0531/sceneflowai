@@ -36,6 +36,8 @@ import { ENGINEERING_TRUST_COPY } from '@/config/landing/engineeringTrustCopy'
 import { TRUST_SAFEGUARD_COPY } from '@/config/landing/trustSafeguardCopy'
 import { EXTENDED_SCENES_COPY } from '@/config/landing/extendedScenesCopy'
 import { CORE_CAPABILITIES_COPY } from '@/config/landing/coreCapabilitiesCopy'
+import { CREATIVE_RANGE_COPY } from '@/config/landing/creativeRangeCopy'
+import { ENTERTAINMENT_STATS_COPY } from '@/config/landing/entertainmentStatsCopy'
 import { EXIT_INTENT_COPY } from '@/config/landing/exitIntentCopy'
 import {
   buildFeatureStoryboardMessageItems,
@@ -145,6 +147,7 @@ export function buildEnMessages() {
     },
     floatingNav: {
       compare: 'Compare',
+      looksAndFormats: 'Looks & Formats',
       howItWorks: 'How It Works',
       useCases: 'Use Cases',
       platformWalkthrough: 'Platform Walkthrough',
@@ -192,6 +195,7 @@ export function buildEnMessages() {
     },
     trustSafeguard: TRUST_SAFEGUARD_COPY,
     extendedScenes: EXTENDED_SCENES_COPY,
+    creativeRange: CREATIVE_RANGE_COPY,
     toolStack: TOOL_STACK_COPY,
     comparison: {
       ...SLOT_MACHINE_HEADER,
@@ -221,8 +225,9 @@ export function buildEnMessages() {
       title: 'Whatever Video You Can Imagine,',
       titleAccent: 'Build It in SceneFlow',
       subtitle:
-        'Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.',
+        'Entertainment and creator series, real-estate showcases, education, podcasts, news formats, and branded campaigns — one automated studio from concept to publish-ready master.',
       qualifyingStatement: USE_CASES_QUALIFYING_STATEMENT,
+      entertainmentStats: ENTERTAINMENT_STATS_COPY,
       ui: {
         useCases: 'Use Cases',
         sectors: '{count} SECTORS',

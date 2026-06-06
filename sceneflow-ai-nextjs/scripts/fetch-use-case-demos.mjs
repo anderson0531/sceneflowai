@@ -13,7 +13,7 @@
 import { put } from '@vercel/blob'
 import { execFileSync } from 'child_process'
 import { config } from 'dotenv'
-import { createWriteStream, mkdirSync, readFileSync, writeFileSync } from 'fs'
+import { createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import { pipeline } from 'stream/promises'
@@ -33,6 +33,8 @@ const args = process.argv.slice(2)
 const dryRun = args.includes('--dry-run')
 const skipUpload = args.includes('--skip-upload')
 const writeConfig = args.includes('--write-config')
+const writeThumbnails = args.includes('--write-thumbnails')
+const posterOnly = args.includes('--poster')
 const idFlagIndex = args.indexOf('--id')
 const singleId = idFlagIndex >= 0 ? args[idFlagIndex + 1] : null
 
@@ -152,6 +154,56 @@ function trimVideo(ffmpeg, inputPath, outputPath, seconds = CLIP_SECONDS) {
   )
 }
 
+function extractPosterFrame(ffmpeg, videoPath, posterPath) {
+  execFileSync(
+    ffmpeg,
+    ['-y', '-ss', '2', '-i', videoPath, '-frames:v', '1', '-q:v', '2', posterPath],
+    { stdio: 'ignore' }
+  )
+}
+
+function posterBlobPath(entry) {
+  return entry.blobPath.replace(/\.mp4$/, '-poster.jpg')
+}
+
+async function processPoster(exampleId, entry, ffmpeg) {
+  console.log(`\n=== poster: ${exampleId} ===`)
+  const tmpDir = join(ROOT, '.tmp/use-case-demos')
+  const trimmedPath = join(tmpDir, `${exampleId}.mp4`)
+  const posterPath = join(tmpDir, `${exampleId}-poster.jpg`)
+  const posterBlob = posterBlobPath(entry)
+
+  if (dryRun) {
+    console.log(`  blob: ${posterBlob}`)
+    return { exampleId, posterUrl: `${BLOB_DEMO_BASE}/${posterBlob}`, skipped: true }
+  }
+
+  if (!existsSync(trimmedPath)) {
+    throw new Error(`Missing ${trimmedPath} — run full fetch first`)
+  }
+
+  extractPosterFrame(ffmpeg, trimmedPath, posterPath)
+  let posterUrl
+  if (skipUpload) {
+    const localPublicPath = join(ROOT, 'public', posterBlob)
+    mkdirSync(dirname(localPublicPath), { recursive: true })
+    writeFileSync(localPublicPath, readFileSync(posterPath))
+    posterUrl = `${BLOB_DEMO_BASE}/${posterBlob}`
+  } else {
+    if (!BLOB_TOKEN) throw new Error('BLOB_READ_WRITE_TOKEN required unless --skip-upload')
+    const buffer = readFileSync(posterPath)
+    const blob = await put(posterBlob, buffer, {
+      access: 'public',
+      contentType: 'image/jpeg',
+      token: BLOB_TOKEN,
+      allowOverwrite: true,
+    })
+    posterUrl = blob.url
+  }
+  console.log(`  Poster: ${posterUrl}`)
+  return { exampleId, posterUrl, categoryId: entry.categoryId }
+}
+
 async function processEntry(exampleId, entry, sources, ffmpeg) {
   console.log(`\n=== ${exampleId} (${entry.label}) ===`)
 
@@ -264,7 +316,9 @@ async function main() {
     }
 
     try {
-      const result = await processEntry(exampleId, entry, sources, ffmpeg)
+      const result = posterOnly
+        ? await processPoster(exampleId, entry, ffmpeg)
+        : await processEntry(exampleId, entry, sources, ffmpeg)
       results.push(result)
     } catch (err) {
       console.error(`  ERROR: ${err.message}`)
@@ -287,7 +341,7 @@ async function main() {
     }
   }
 
-  if (writeConfig && !dryRun) {
+  if (writeConfig && !dryRun && !posterOnly) {
     const configPath = join(ROOT, 'src/config/landing/useCaseExamples.ts')
     let configSrc = readFileSync(configPath, 'utf8')
     let patched = 0
@@ -313,6 +367,35 @@ async function main() {
     if (patched > 0) {
       writeFileSync(configPath, configSrc)
       console.log(`\nPatched videoSrc for ${patched} examples in useCaseExamples.ts`)
+    }
+  }
+
+  if (writeThumbnails && !dryRun) {
+    const configPath = join(ROOT, 'src/config/landing/useCaseExamples.ts')
+    let configSrc = readFileSync(configPath, 'utf8')
+    let patched = 0
+
+    for (const r of results) {
+      if (!r.posterUrl || r.error) continue
+      const categoryId = r.categoryId ?? sources[r.exampleId]?.categoryId
+      if (!categoryId) continue
+      const pattern = new RegExp(
+        `(ex\\('${categoryId}', \\{\\s*id: '${r.exampleId.replace(/'/g, "\\'")}',[\\s\\S]*?)(\\n\\s*\\}\\),)`,
+        'm'
+      )
+      if (configSrc.includes(`id: '${r.exampleId}'`) && !configSrc.match(new RegExp(`id: '${r.exampleId}'[\\s\\S]*?thumbnailSrc:`))) {
+        const replacement = `$1\n        thumbnailSrc: '${r.posterUrl}'$2`
+        const next = configSrc.replace(pattern, replacement)
+        if (next !== configSrc) {
+          configSrc = next
+          patched++
+        }
+      }
+    }
+
+    if (patched > 0) {
+      writeFileSync(configPath, configSrc)
+      console.log(`\nPatched thumbnailSrc for ${patched} examples in useCaseExamples.ts`)
     }
   }
 

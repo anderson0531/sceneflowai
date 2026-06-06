@@ -1,13 +1,14 @@
 /**
- * Locale-aware landing visuals — walkthrough screenshots and comparison infographic.
- * English defaults live in featureStoryboardMedia.ts; Thai overrides on Vercel Blob.
+ * Locale-aware landing visuals — walkthrough screenshots, comparison infographic,
+ * art-style thumbnails, output-format previews, and use-case posters.
  */
 
 import { FEATURE_STORYBOARD_MEDIA } from '@/config/landing/featureStoryboardMedia'
+import type { OutputFormatId } from '@/config/landing/outputFormatsCopy'
 
 const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 
-function blobUrl(path: string): string {
+export function blobUrl(path: string): string {
   return `${BLOB_HOST}/${encodeURI(path)}`
 }
 
@@ -24,6 +25,62 @@ export const USE_CASE_PERSONA_IMAGES = {
   productionShop: blobUrl('Gemini_Generated_Image_wm0332wm0332wm03.jpeg'),
   agency: '/landing/use-cases/agency-pitch.jpg',
 } as const satisfies Record<'creator' | 'team' | 'productionShop' | 'agency', string>
+
+/** Art style preset ids — mirrors artStylePresets.ts */
+export type LandingArtStyleId =
+  | 'photorealistic'
+  | 'anime-90s'
+  | 'pixar'
+  | 'concept-art'
+  | 'ghibli'
+  | 'comic-book'
+  | 'oil-painting'
+  | 'digital-art'
+  | 'watercolor'
+  | 'sketch'
+
+const ART_STYLE_IDS: LandingArtStyleId[] = [
+  'photorealistic',
+  'anime-90s',
+  'pixar',
+  'concept-art',
+  'ghibli',
+  'comic-book',
+  'oil-painting',
+  'digital-art',
+  'watercolor',
+  'sketch',
+]
+
+/** Landing + Studio art style thumbnails on Vercel Blob */
+export const LANDING_ART_STYLE_THUMBNAILS: Record<LandingArtStyleId, string> =
+  Object.fromEntries(
+    ART_STYLE_IDS.map((id) => [id, blobUrl(`landing/art-styles/${id}.jpg`)])
+  ) as Record<LandingArtStyleId, string>
+
+export function getLandingArtStyleThumbnail(id: string): string | undefined {
+  if ((ART_STYLE_IDS as readonly string[]).includes(id)) {
+    return LANDING_ART_STYLE_THUMBNAILS[id as LandingArtStyleId]
+  }
+  return undefined
+}
+
+/** Output format preview images */
+export const LANDING_OUTPUT_FORMAT_THUMBNAILS: Record<OutputFormatId, string> = {
+  '16x9': blobUrl('landing/output-formats/16x9.jpg'),
+  '9x16': blobUrl('landing/output-formats/9x16.jpg'),
+  '1x1': blobUrl('landing/output-formats/1x1.jpg'),
+  '4x3': blobUrl('landing/output-formats/4x3.jpg'),
+}
+
+export function getLandingOutputFormatThumbnail(id: OutputFormatId): string {
+  return LANDING_OUTPUT_FORMAT_THUMBNAILS[id]
+}
+
+/** Default poster URL for a use-case example */
+export function getUseCasePosterUrl(categoryId: string, exampleId: string): string {
+  return blobUrl(`demo/use-cases/${categoryId}/${exampleId}-poster.jpg`)
+}
 
 /** Thai walkthrough screenshots — ids 1–14 (upload to landing/storyboard/th/{id}.png) */
 const TH_FEATURE_STORYBOARD_SCREENSHOTS: Partial<Record<number, string>> = {

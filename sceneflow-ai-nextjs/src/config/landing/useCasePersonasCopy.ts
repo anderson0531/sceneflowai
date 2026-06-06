@@ -46,12 +46,12 @@ export const USE_CASE_PERSONAS = {
     challenge: {
       title: 'The "B-Roll" Bottleneck',
       description:
-        'You have a strong script, but learning six separate generation and edit tools — or getting stuck in slot-machine video loops — slows every upload. That delay weakens publishing cadence and audience retention.',
+        'You have a strong script, but learning six separate generation and edit tools — or getting stuck in slot-machine video loops — slows every upload. Serialized YouTube hits and vertical short-drama cadences demand faster turnaround than fragmented AI tabs can deliver.',
     },
     solution: {
       title: 'The Automated Storyteller',
       description:
-        'Guided automation from script to publish-ready master — no need to learn six separate apps. Keep character and style continuity from first scene through series production.',
+        'Ship episodic series and scroll-stopping shorts from one studio — beat-first storyboards, Reference Library continuity, and publish-ready masters for the YouTube-led creator economy.',
       features: [
         'Visuals that map cleanly to script beats',
         'Consistent protagonists across every scene',

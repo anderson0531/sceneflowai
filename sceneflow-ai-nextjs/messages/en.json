@@ -25,6 +25,7 @@
   },
   "floatingNav": {
     "compare": "Compare",
+    "looksAndFormats": "Looks & Formats",
     "howItWorks": "How It Works",
     "useCases": "Use Cases",
     "platformWalkthrough": "Platform Walkthrough",
@@ -117,11 +118,11 @@
         "label": "Creator",
         "outcome": "Ship on schedule — stop rebuilding in every tool",
         "useCases": [
+          "Vertical short drama & 9:16 hooks",
+          "Animated web series",
           "YouTube & episodic series",
           "Video podcasts & show clips",
-          "Hyper-local & JIT news",
           "Documentaries & docuseries",
-          "How-to & skill channels",
           "Sports recaps & commentary"
         ]
       },
@@ -306,6 +307,143 @@
       }
     ],
     "footnote": "Extension chains require the primary Google generation path and valid video references between steps (references expire after approximately 48 hours). Each API step remains within Veo duration limits—the total beat length comes from chaining, not a single long render."
+  },
+  "creativeRange": {
+    "badge": "Creative Range",
+    "title": "Every Style, Every Screen",
+    "titleAccent": "Total creative flexibility",
+    "subtitle": "Lock your art direction and aspect ratio before you render—from photoreal vertical drama to painterly series, widescreen epics to 9:16 Shorts.",
+    "artStyles": {
+      "subsectionTitle": "Choose Your Look",
+      "footnote": "Same art styles available in Beat Frame and image generation dialogs.",
+      "popularBadge": "Popular",
+      "items": [
+        {
+          "id": "photorealistic",
+          "name": "Photorealistic",
+          "displayTitle": "Photorealism",
+          "description": "Professional photography style",
+          "tagline": "Highest commercial conversion",
+          "marketingBody": "Photorealism holds the highest commercial conversion rate and mainstream appeal. The massive boom in AI-generated vertical short dramas relies entirely on realistic characters to drive emotional tension, hook casual scrollers instantly, and mimic traditional prestige TV.",
+          "featured": true,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/photorealistic.jpg"
+        },
+        {
+          "id": "anime-90s",
+          "name": "Anime (90s)",
+          "displayTitle": "Anime",
+          "description": "Classic 90s anime style",
+          "tagline": "Internet-native engagement",
+          "marketingBody": "Anime possesses unparalleled internet-native fan engagement and cultural resonance, pulling in hundreds of millions of views globally. Because generative engines are heavily trained on this medium, models yield crisp line art, predictable framing, and clean cel-shading right out of the box.",
+          "featured": true,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/anime-90s.jpg"
+        },
+        {
+          "id": "pixar",
+          "name": "Pixar Animation",
+          "displayTitle": "3D Cinematic / Pixar-Inspired",
+          "description": "3D animated Pixar style",
+          "tagline": "Warmth that converts",
+          "marketingBody": "The soft, rounded geometry and expressive, oversized eyes of this style create an immediate sense of emotional warmth and psychological safety. It boasts exceptional click-through-rates for thumbnails and video hooks, making it a favorite for creators targeting broad demographics.",
+          "featured": true,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/pixar.jpg"
+        },
+        {
+          "id": "concept-art",
+          "name": "Concept Art",
+          "displayTitle": "Concept Art",
+          "description": "Game/film concept art",
+          "tagline": "Game and film keyframes with moody, production-ready lighting.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/concept-art.jpg"
+        },
+        {
+          "id": "ghibli",
+          "name": "Ghibli-esque",
+          "displayTitle": "Hand-Drawn / Ghibli-Style",
+          "description": "Studio Ghibli inspired",
+          "tagline": "Craft as luxury",
+          "marketingBody": "This style taps directly into a major creative movement prioritizing \"Craft as Luxury.\" Because watercolor textures, painterly backgrounds, and loose line work are inherently organic, minor AI glitches and structural fluidities look like deliberate artistic choices rather than machine errors.",
+          "featured": true,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/ghibli.jpg"
+        },
+        {
+          "id": "comic-book",
+          "name": "Comic Book",
+          "displayTitle": "Comic Book",
+          "description": "Comic book ink style",
+          "tagline": "Bold ink, halftone texture, and pop-art color for serial storytelling.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/comic-book.jpg"
+        },
+        {
+          "id": "oil-painting",
+          "name": "Oil Painting",
+          "displayTitle": "Oil Painting",
+          "description": "Classical oil painting",
+          "tagline": "Classical brushwork and rich pigment for timeless narrative weight.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/oil-painting.jpg"
+        },
+        {
+          "id": "digital-art",
+          "name": "Digital Art",
+          "displayTitle": "Digital Art",
+          "description": "Modern digital illustration",
+          "tagline": "Clean illustration lines and vibrant color for modern explainers.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/digital-art.jpg"
+        },
+        {
+          "id": "watercolor",
+          "name": "Watercolor",
+          "displayTitle": "Watercolor",
+          "description": "Soft watercolor painting",
+          "tagline": "Soft edges and flowing pigment for gentle, emotive scenes.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/watercolor.jpg"
+        },
+        {
+          "id": "sketch",
+          "name": "Sketch/Line Art",
+          "displayTitle": "Sketch/Line Art",
+          "description": "Pencil sketch style",
+          "tagline": "Detailed linework and pencil texture for storyboard-ready frames.",
+          "featured": false,
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/sketch.jpg"
+        }
+      ]
+    },
+    "outputFormats": {
+      "subsectionTitle": "Ship Every Screen",
+      "resolutionFootnote": "Export at 720p or 1080p where your project supports it — lock aspect ratio before you render.",
+      "items": [
+        {
+          "id": "16x9",
+          "label": "16:9 Widescreen",
+          "ratio": "16:9",
+          "description": "YouTube main, connected TV (35%+ of watch time), and episodic series — the format indie hits use to sit beside premium streaming apps."
+        },
+        {
+          "id": "9x16",
+          "label": "9:16 Vertical",
+          "ratio": "9:16",
+          "description": "Shorts, Reels, TikTok, and vertical short-drama formats — scroll-stopping hooks built for mobile-first audiences."
+        },
+        {
+          "id": "1x1",
+          "label": "1:1 Square",
+          "ratio": "1:1",
+          "description": "Feed-native hooks, carousel posts, and thumbnail-first compositions that stop the scroll in square grids."
+        },
+        {
+          "id": "4x3",
+          "label": "4:3 Classic",
+          "ratio": "4:3",
+          "description": "Training modules, legacy displays, and presentation-friendly frames when your audience expects a classic aspect."
+        }
+      ]
+    }
   },
   "toolStack": {
     "badge": "Sound familiar?",
@@ -500,8 +638,30 @@
     "badge": "Production Applications",
     "title": "Whatever Video You Can Imagine,",
     "titleAccent": "Build It in SceneFlow",
-    "subtitle": "Real-estate showcases, education, podcasts, news formats, branded campaigns, and cinematic stories — one automated studio from concept to publish-ready master.",
+    "subtitle": "Entertainment and creator series, real-estate showcases, education, podcasts, news formats, and branded campaigns — one automated studio from concept to publish-ready master.",
     "qualifyingStatement": "SceneFlow turns your source photos, uploads, and descriptions into narrated walkthrough videos — with optional voice and character presence you control. These are AI-altered presentations: realistic visualizations grounded in your materials, not live camera recordings. Review and approve every storyboard before publish; label outputs clearly so audiences know what they're watching.",
+    "entertainmentStats": {
+      "title": "The creator attention economy",
+      "footnote": "Sources: Nielsen, Digital i (industry reports). Market context—not SceneFlow performance data.",
+      "stats": [
+        {
+          "value": "13.4%",
+          "label": "YouTube share of U.S. TV viewing"
+        },
+        {
+          "value": "8.8%",
+          "label": "Netflix share (context)"
+        },
+        {
+          "value": "99.1 min",
+          "label": "Avg. daily YouTube per account (global)"
+        },
+        {
+          "value": "35%+",
+          "label": "YouTube watch time on connected TV"
+        }
+      ]
+    },
     "ui": {
       "useCases": "Use Cases",
       "sectors": "{count} SECTORS",
@@ -532,11 +692,11 @@
         },
         "challenge": {
           "title": "The \"B-Roll\" Bottleneck",
-          "description": "You have a strong script, but learning six separate generation and edit tools — or getting stuck in slot-machine video loops — slows every upload. That delay weakens publishing cadence and audience retention."
+          "description": "You have a strong script, but learning six separate generation and edit tools — or getting stuck in slot-machine video loops — slows every upload. Serialized YouTube hits and vertical short-drama cadences demand faster turnaround than fragmented AI tabs can deliver."
         },
         "solution": {
           "title": "The Automated Storyteller",
-          "description": "Guided automation from script to publish-ready master — no need to learn six separate apps. Keep character and style continuity from first scene through series production.",
+          "description": "Ship episodic series and scroll-stopping shorts from one studio — beat-first storyboards, Reference Library continuity, and publish-ready masters for the YouTube-led creator economy.",
           "features": [
             "Visuals that map cleanly to script beats",
             "Consistent protagonists across every scene",
@@ -654,6 +814,38 @@
       }
     },
     "categories": [
+      {
+        "id": "entertainment",
+        "title": "Entertainment & Creator Series",
+        "qualifyingStatement": "YouTube now rivals traditional TV for attention—indie animation studios and solo creators ship serialized hits with tens of millions of views per episode. SceneFlow gives you beat-first storyboards, Reference Library continuity, and publish-ready masters for the creator economy—not slot-machine clip tools.",
+        "examples": [
+          {
+            "id": "vertical-short-drama",
+            "label": "Vertical Short Drama",
+            "description": "Imagine photoreal characters in 9:16 \"one sentence, one drama\" hooks—approve Beat Frames before render, chain native extensions for emotional beats that stop the scroll."
+          },
+          {
+            "id": "animated-web-series",
+            "label": "Animated Web Series",
+            "description": "Imagine locking stylized characters in your Reference Library once—then shipping serialized episodes in anime, Pixar, or Ghibli-inspired art with the consistency indie hits like Glitch Productions demand."
+          },
+          {
+            "id": "episodic-youtube-series",
+            "label": "Episodic YouTube Series",
+            "description": "Imagine auto-generated season arcs in Series Studio—episode outlines sync into Blueprint and Production so every face, voice, and beat stays aligned across a growing channel."
+          },
+          {
+            "id": "creator-reality-competition",
+            "label": "Creator Reality & Competition",
+            "description": "Imagine producing reality-scale creator competitions without a broadcast crew—multi-cam beats, stakeholder Screening Room reviews, and same-week turnaround from script to master MP4."
+          },
+          {
+            "id": "ctv-ready-series",
+            "label": "Connected TV Series",
+            "description": "Imagine exporting 16:9 masters that sit beside premium apps on living-room TVs—over 35% of YouTube watch time happens on connected TV devices, and SceneFlow assembles publish-ready widescreen programs."
+          }
+        ]
+      },
       {
         "id": "property",
         "title": "Property, Spaces & Hospitality",

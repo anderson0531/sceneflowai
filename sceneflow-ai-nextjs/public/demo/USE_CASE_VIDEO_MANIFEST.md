@@ -10,13 +10,29 @@ Config source: [`src/config/landing/useCaseExamples.ts`](../../src/config/landin
 
 Automation: [`scripts/fetch-use-case-demos.mjs`](../../scripts/fetch-use-case-demos.mjs) + [`scripts/use-case-demo-sources.json`](../../scripts/use-case-demo-sources.json)
 
+Poster thumbnails: [`scripts/upload-landing-thumbnails.mjs`](../../scripts/upload-landing-thumbnails.mjs) (`--type use-case-posters --all`)
+
+Blob path: `demo/use-cases/{categoryId}/{exampleId}-poster.jpg`
+
 **License:** Clips sourced from [Pexels](https://www.pexels.com/) under the [Pexels License](https://www.pexels.com/license/) (free for commercial use with attribution).
+
+---
+
+## Entertainment & Creator Series (`entertainment`)
+
+| Example ID | Label | Hash | Video | Poster |
+|------------|-------|------|-------|--------|
+| `vertical-short-drama` | Vertical Short Drama | `#use-cases-entertainment-vertical-short-drama` | Interim — jit clip | Ready — Blob |
+| `animated-web-series` | Animated Web Series | `#use-cases-entertainment-animated-web-series` | Interim | Ready — Blob |
+| `episodic-youtube-series` | Episodic YouTube Series | `#use-cases-entertainment-episodic-youtube-series` | Interim — Series.mp4 | Ready — Blob |
+| `creator-reality-competition` | Creator Reality & Competition | `#use-cases-entertainment-creator-reality-competition` | Interim | Ready — Blob |
+| `ctv-ready-series` | Connected TV Series | `#use-cases-entertainment-ctv-ready-series` | Interim — Demo.mp4 | Ready — Blob |
 
 ---
 
 ## Property, Spaces & Hospitality (`property`)
 
-| Example ID | Label | Hash | Video | Source |
+| Example ID | Label | Hash | Video | Poster |
 |------------|-------|------|-------|--------|
 | `residential-real-estate` | Residential Real Estate | `#use-cases-property-residential-real-estate` | Ready — `/demo/property-hospitality.mp4` | SceneFlow demo |
 | `commercial-real-estate` | Commercial Real Estate | `#use-cases-property-commercial-real-estate` | Ready — Blob | Pexels [4193140](https://www.pexels.com/video/city-building-urban-city-life-4193140/) — Nino Souza |
@@ -79,8 +95,10 @@ Automation: [`scripts/fetch-use-case-demos.mjs`](../../scripts/fetch-use-case-de
 
 | Status | Count |
 |--------|-------|
-| Ready | 26 |
-| **Total examples** | **26** |
+| Ready (video) | 26 |
+| Ready (poster) | 31 |
+| Entertainment examples | 5 |
+| **Total examples** | **31** |
 
 Blob path pattern: `demo/use-cases/{categoryId}/{exampleId}.mp4` on `xxavfkdhdebrqida.public.blob.vercel-storage.com`
 
