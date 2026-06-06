@@ -127,6 +127,12 @@ export const USE_CASE_POSTER_OVERRIDES: Record<string, Record<string, string>> =
     'recruitment-branding': 'Gemini_Generated_Image_8nyw2m8nyw2m8nyw.jpeg',
     'conference-event-promos': 'Gemini_Generated_Image_tgut3ntgut3ntgut.jpeg',
   },
+  public: {
+    'ngo-impact-reports': 'Gemini_Generated_Image_9csdi79csdi79csd.jpeg',
+    'public-health-announcements': 'Gemini_Generated_Image_3zg6uk3zg6uk3zg6.jpeg',
+    'legal-insurance-explainers': 'Gemini_Generated_Image_eb8ioteb8ioteb8i.jpeg',
+    'religious-spiritual-teachings': 'Gemini_Generated_Image_gc1vstgc1vstgc1v.jpeg',
+  },
 }
 
 /** Default poster URL for a use-case example */
