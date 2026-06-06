@@ -58,7 +58,7 @@ const USE_CASE_POSTERS = [
   ['entertainment', 'animated-web-series', 'Animated Web Series', '0x7e22ce'],
   ['entertainment', 'episodic-youtube-series', 'Episodic YouTube', '0x6d28d9'],
   ['entertainment', 'creator-reality-competition', 'Creator Reality', '0x5b21b6'],
-  ['entertainment', 'ctv-ready-series', 'Connected TV', '0x4c1d95'],
+  ['entertainment', 'ctv-ready-series', 'Vertical Mobile Drama', '0x4c1d95'],
   ['property', 'residential-real-estate', 'Residential RE', '0x0e7490'],
   ['property', 'commercial-real-estate', 'Commercial RE', '0x155e75'],
   ['property', 'short-term-rentals', 'Short-Term Rentals', '0x0f766e'],

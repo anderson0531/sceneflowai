@@ -68,7 +68,7 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         id: 'vertical-short-drama',
         label: 'YouTube TV Drama',
         description:
-          'Imagine shipping 16:9 episodic drama on YouTube—where YouTube now holds 13.4% of U.S. TV viewing. SceneFlow helps creators grow that share with engaging alternative content: beat-first storyboards, Reference Library continuity, and publish-ready widescreen masters.',
+          'Imagine shipping 16:9 episodic drama on YouTube—where YouTube now holds 13.4% of U.S. TV viewing and over 35% of watch time happens on connected TV. SceneFlow helps creators grow that share with engaging alternative content: beat-first storyboards, Reference Library continuity, and publish-ready widescreen masters.',
         videoSrc: `${BLOB_DEMO}/demo/use-cases/jit/true-crime-historical-docs.mp4`,
       }),
       ex('entertainment', {
@@ -94,9 +94,9 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
       }),
       ex('entertainment', {
         id: 'ctv-ready-series',
-        label: 'Connected TV Series',
+        label: 'Vertical Mobile Drama',
         description:
-          'Imagine exporting 16:9 masters that sit beside premium apps on living-room TVs—over 35% of YouTube watch time happens on connected TV devices, and SceneFlow assembles publish-ready widescreen programs.',
+          'Imagine photoreal 9:16 hooks and serialized mobile episodes built for scroll—approve Beat Frames before render, chain native extensions for emotional beats that stop the thumb. SceneFlow outputs vertical masters ready for YouTube Shorts and mobile feeds.',
         videoSrc: `${BLOB_DEMO}/Demo.mp4`,
       }),
     ],

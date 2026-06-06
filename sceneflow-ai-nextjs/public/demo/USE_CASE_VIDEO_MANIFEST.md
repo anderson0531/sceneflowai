@@ -26,7 +26,7 @@ Blob path: `demo/use-cases/{categoryId}/{exampleId}-poster.jpg`
 | `animated-web-series` | Animated Web Series | `#use-cases-entertainment-animated-web-series` | Interim | Ready — Blob |
 | `episodic-youtube-series` | Episodic YouTube Series | `#use-cases-entertainment-episodic-youtube-series` | Interim — Series.mp4 | Ready — Blob |
 | `creator-reality-competition` | Creator Reality & Competition | `#use-cases-entertainment-creator-reality-competition` | Interim | Ready — Blob |
-| `ctv-ready-series` | Connected TV Series | `#use-cases-entertainment-ctv-ready-series` | Interim — Demo.mp4 | Ready — Blob |
+| `ctv-ready-series` | Vertical Mobile Drama | `#use-cases-entertainment-ctv-ready-series` | Interim — Demo.mp4 | Ready — Blob |
 
 ---
 

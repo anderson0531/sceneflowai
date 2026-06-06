@@ -38,6 +38,7 @@ export const AUDIENCE_PATHS = [
     outcome: 'Ship on schedule — stop rebuilding in every tool',
     useCases: [
       '16:9 YouTube TV drama',
+      '9:16 vertical mobile drama',
       'Animated web series',
       'YouTube & episodic series',
       'Video podcasts & show clips',
