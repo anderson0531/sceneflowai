@@ -9,7 +9,7 @@ import type { OutputFormatId } from '@/config/landing/outputFormatsCopy'
 const BLOB_HOST = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 
 export function blobUrl(path: string): string {
-  return `${BLOB_HOST}/${encodeURI(path)}`
+  return `${BLOB_HOST}/${path.split('/').map(encodeURIComponent).join('/')}`
 }
 
 /** English comparison infographic (SlotMachine section) */

@@ -53,6 +53,10 @@ function UseCaseThumbnail({
 }) {
   const [failed, setFailed] = useState(false);
 
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
   if (failed) {
     return (
       <div
@@ -67,6 +71,7 @@ function UseCaseThumbnail({
 
   return (
     <img
+      key={src}
       src={src}
       alt={alt}
       className={className}
@@ -105,6 +110,7 @@ function UseCaseConceptInset({
     >
       <div className="relative overflow-hidden rounded-md border-2 border-white/25 shadow-lg ring-1 ring-black/40">
         <UseCaseThumbnail
+          key={illustrationSrc}
           src={illustrationSrc}
           alt={`${label} — ${conceptLabel}`}
           className="aspect-video w-full object-cover"
@@ -157,6 +163,7 @@ function UseCaseDualMedia({
   return (
     <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
       <UseCaseThumbnail
+        key={primarySrc}
         src={primarySrc}
         alt={`${label} — ${videoPreviewLabel}`}
         className="h-full w-full object-cover"
@@ -231,6 +238,7 @@ function UseCaseVideoPreview({
         showPoster ? (
           <div className="relative h-full w-full">
             <UseCaseThumbnail
+              key={primaryPoster}
               src={primaryPoster!}
               alt={`${label} — ${videoPreviewLabel}`}
               className="h-full w-full object-cover"
@@ -277,6 +285,7 @@ function UseCaseVideoPreview({
         <video
           ref={videoRef}
           src={videoSrc}
+          poster={videoPosterSrc}
           controls
           muted
           playsInline
