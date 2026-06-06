@@ -121,6 +121,12 @@ export const USE_CASE_POSTER_OVERRIDES: Record<string, Record<string, string>> =
     'true-crime-historical-docs': 'Gemini_Generated_Image_26270i26270i2627.jpeg',
     'weather-emergency-alerts': 'Gemini_Generated_Image_6kqnqa6kqnqa6kqn.jpeg',
   },
+  b2b: {
+    'product-explainer-videos': 'Gemini_Generated_Image_7frt5j7frt5j7frt.jpeg',
+    'case-study-testimonials': 'Gemini_Generated_Image_kj255okj255okj25.jpeg',
+    'recruitment-branding': 'Gemini_Generated_Image_8nyw2m8nyw2m8nyw.jpeg',
+    'conference-event-promos': 'Gemini_Generated_Image_tgut3ntgut3ntgut.jpeg',
+  },
 }
 
 /** Default poster URL for a use-case example */
