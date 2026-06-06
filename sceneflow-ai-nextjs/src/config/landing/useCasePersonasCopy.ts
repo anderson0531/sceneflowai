@@ -15,6 +15,8 @@ export const USE_CASE_PERSONA_UI = {
   closePreview: 'Close Preview',
   expandVideo: 'Expand Video',
   expandImage: 'Expand Image',
+  conceptPreview: 'Use case concept',
+  videoPreview: 'Video preview',
   orStartExplorer: 'start with the $9 Explorer plan',
   orPrefix: 'Or',
 } as const

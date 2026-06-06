@@ -500,9 +500,9 @@ export default function UseCasesSection() {
           transition={{ duration: 0.6 }}
         >
           <SectionCollapseToggle sectionId={SECTION_ID} className="absolute right-0 top-0" />
-          <div className="inline-flex items-center px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full mb-6">
-            <User className="w-4 h-4 text-purple-400 mr-2" />
-            <span className="text-purple-300 text-sm font-medium">{t('badge')}</span>
+          <div className="inline-flex flex-row items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-full mb-6">
+            <User className="w-4 h-4 shrink-0 self-center text-purple-400" />
+            <span className="text-purple-300 text-sm font-medium leading-none">{t('badge')}</span>
           </div>
 
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">

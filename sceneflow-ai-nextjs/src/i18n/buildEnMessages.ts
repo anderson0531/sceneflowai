@@ -222,7 +222,7 @@ export function buildEnMessages() {
       })),
     },
     useCases: {
-      badge: 'Production Applications',
+      badge: 'Use Case Examples',
       title: 'Whatever Video You Can Imagine,',
       titleAccent: 'Build It in SceneFlow',
       subtitle:

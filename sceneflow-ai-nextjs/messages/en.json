@@ -640,7 +640,7 @@
     ]
   },
   "useCases": {
-    "badge": "Production Applications",
+    "badge": "Use Case Examples",
     "title": "Whatever Video You Can Imagine,",
     "titleAccent": "Build It in SceneFlow",
     "subtitle": "Entertainment and creator series, real-estate showcases, education, podcasts, news formats, and branded campaigns — one automated studio from concept to publish-ready master.",
@@ -684,6 +684,8 @@
       "closePreview": "Close Preview",
       "expandVideo": "Expand Video",
       "expandImage": "Expand Image",
+      "conceptPreview": "Use case concept",
+      "videoPreview": "Video preview",
       "orStartExplorer": "start with the $9 Explorer plan",
       "orPrefix": "Or"
     },

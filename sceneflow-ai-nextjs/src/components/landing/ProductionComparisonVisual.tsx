@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Video, PlayCircle, Info, Play, Maximize2, X } from 'lucide-react';
 import {
@@ -11,9 +12,10 @@ import {
   parseUseCaseExampleHash,
 } from '@/config/landing/useCaseExamples';
 import { useTranslations } from 'next-intl';
-import { useMemo } from 'react';
 
 export { VIDEO_CATEGORIES } from '@/config/landing/useCaseExamples';
+
+const IMAGE_PREVIEW_HISTORY_KEY = 'useCaseImagePreview';
 
 function ThumbnailExpandButton({
   onExpand,
@@ -77,22 +79,128 @@ function UseCaseThumbnail({
   );
 }
 
+function UseCaseConceptInset({
+  illustrationSrc,
+  label,
+  conceptLabel,
+  expandLabel,
+  size,
+  onExpandIllustration,
+}: {
+  illustrationSrc?: string;
+  label: string;
+  conceptLabel: string;
+  expandLabel: string;
+  size: 'preview' | 'card';
+  onExpandIllustration?: (url: string) => void;
+}) {
+  if (!illustrationSrc || !onExpandIllustration) return null;
+
+  const widthClass = size === 'preview' ? 'w-[28%] min-w-[88px]' : 'w-[22%] min-w-[64px]';
+
+  return (
+    <div
+      className={`pointer-events-auto absolute bottom-2 left-2 z-20 ${widthClass}`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="relative overflow-hidden rounded-md border-2 border-white/25 shadow-lg ring-1 ring-black/40">
+        <UseCaseThumbnail
+          src={illustrationSrc}
+          alt={`${label} — ${conceptLabel}`}
+          className="aspect-video w-full object-cover"
+          fallbackLabel={conceptLabel}
+        />
+        <span className="absolute top-1 left-1 max-w-[calc(100%-1.5rem)] truncate rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur-sm">
+          {conceptLabel}
+        </span>
+        <ThumbnailExpandButton
+          expandLabel={expandLabel}
+          className="absolute top-1 right-1 z-10"
+          onExpand={(e) => {
+            e.stopPropagation();
+            onExpandIllustration(illustrationSrc);
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function UseCaseDualMedia({
+  videoPosterSrc,
+  illustrationSrc,
+  label,
+  conceptLabel,
+  videoPreviewLabel,
+  expandLabel,
+  fallbackLabel,
+  size,
+  onExpandIllustration,
+  children,
+}: {
+  videoPosterSrc?: string;
+  illustrationSrc?: string;
+  label: string;
+  conceptLabel: string;
+  videoPreviewLabel: string;
+  expandLabel: string;
+  fallbackLabel: string;
+  size: 'preview' | 'card';
+  onExpandIllustration?: (url: string) => void;
+  children?: React.ReactNode;
+}) {
+  const [posterFailed, setPosterFailed] = useState(false);
+  const primarySrc = (!posterFailed && videoPosterSrc) || illustrationSrc;
+
+  if (!primarySrc) return null;
+
+  return (
+    <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
+      <UseCaseThumbnail
+        src={primarySrc}
+        alt={`${label} — ${videoPreviewLabel}`}
+        className="h-full w-full object-cover"
+        fallbackLabel={fallbackLabel}
+        onError={() => setPosterFailed(true)}
+      />
+      <span className="pointer-events-none absolute top-2 right-2 rounded bg-black/60 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white/80 backdrop-blur-sm">
+        {videoPreviewLabel}
+      </span>
+      <UseCaseConceptInset
+        illustrationSrc={illustrationSrc}
+        label={label}
+        conceptLabel={conceptLabel}
+        expandLabel={expandLabel}
+        size={size}
+        onExpandIllustration={onExpandIllustration}
+      />
+      {children}
+    </div>
+  );
+}
+
 function UseCaseVideoPreview({
   videoSrc,
-  thumbnailSrc,
+  videoPosterSrc,
+  illustrationSrc,
   label,
   previewKey,
   demoComingSoonLabel,
+  conceptLabel,
+  videoPreviewLabel,
   expandLabel,
-  onExpandImage,
+  onExpandIllustration,
 }: {
   videoSrc: string;
-  thumbnailSrc?: string;
+  videoPosterSrc?: string;
+  illustrationSrc?: string;
   label: string;
   previewKey: string;
   demoComingSoonLabel: string;
+  conceptLabel: string;
+  videoPreviewLabel: string;
   expandLabel: string;
-  onExpandImage?: (url: string) => void;
+  onExpandIllustration?: (url: string) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -114,30 +222,32 @@ function UseCaseVideoPreview({
     setIsPlaying(true);
   };
 
-  const showPoster = Boolean(thumbnailSrc) && !posterFailed;
+  const primaryPoster = (!posterFailed && videoPosterSrc) || illustrationSrc;
+  const showPoster = Boolean(primaryPoster);
 
   return (
     <div className="relative w-full aspect-video max-h-[400px] bg-black">
       {!isPlaying ? (
         showPoster ? (
-          <>
+          <div className="relative h-full w-full">
             <UseCaseThumbnail
-              src={thumbnailSrc!}
-              alt={label}
+              src={primaryPoster!}
+              alt={`${label} — ${videoPreviewLabel}`}
               className="h-full w-full object-cover"
               fallbackLabel={demoComingSoonLabel}
               onError={() => setPosterFailed(true)}
             />
-            {onExpandImage ? (
-              <ThumbnailExpandButton
-                expandLabel={expandLabel}
-                className="absolute top-2 right-2 z-20"
-                onExpand={(e) => {
-                  e.stopPropagation();
-                  onExpandImage(thumbnailSrc!);
-                }}
-              />
-            ) : null}
+            <span className="pointer-events-none absolute top-2 right-2 rounded bg-black/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/80 backdrop-blur-sm">
+              {videoPreviewLabel}
+            </span>
+            <UseCaseConceptInset
+              illustrationSrc={illustrationSrc}
+              label={label}
+              conceptLabel={conceptLabel}
+              expandLabel={expandLabel}
+              size="preview"
+              onExpandIllustration={onExpandIllustration}
+            />
             <button
               type="button"
               onClick={handlePlay}
@@ -148,7 +258,7 @@ function UseCaseVideoPreview({
                 <Play className="h-7 w-7 fill-white text-white ml-0.5" />
               </div>
             </button>
-          </>
+          </div>
         ) : (
           <button
             type="button"
@@ -178,6 +288,48 @@ function UseCaseVideoPreview({
   );
 }
 
+function ExpandedImageModal({
+  imageUrl,
+  closeLabel,
+  expandImageLabel,
+  onClose,
+}: {
+  imageUrl: string;
+  closeLabel: string;
+  expandImageLabel: string;
+  onClose: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      className="fixed inset-0 z-[100] flex cursor-zoom-out items-center justify-center bg-black/90 p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md md:p-12"
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="relative flex h-full w-full max-w-7xl flex-col items-center justify-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-0 right-0 z-10 flex items-center gap-2 rounded-lg bg-black/50 px-3 py-2 text-sm font-medium text-white/80 backdrop-blur-sm transition-colors hover:bg-black/70 hover:text-white md:top-4 md:right-4"
+        >
+          <X className="h-5 w-5" />
+          {closeLabel}
+        </button>
+        <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+          <img src={imageUrl} alt={expandImageLabel} className="h-full w-full object-contain" />
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 interface ProductionComparisonVisualProps {
   initialCategoryId?: string
 }
@@ -204,7 +356,8 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
         return {
           ...ex,
           videoSrc: source?.videoSrc,
-          thumbnailSrc: source?.thumbnailSrc,
+          illustrationSrc: source?.illustrationSrc,
+          videoPosterSrc: source?.videoPosterSrc,
           videoEnabled: source?.videoEnabled,
         }
       }),
@@ -213,6 +366,8 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
 
   const videoPanelRef = useRef<HTMLDivElement>(null);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+  const pushedHistoryRef = useRef(false);
   const [activeCategory, setActiveCategory] = useState<string>(
     initialCategoryId ?? localizedCategories[0]?.id ?? VIDEO_CATEGORIES[0].id
   );
@@ -221,6 +376,20 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
       localizedCategories[0]?.examples[0]?.id ??
       VIDEO_CATEGORIES[0].examples[0].id
   );
+
+  const closeExpandedImage = useCallback(() => {
+    setExpandedImage(null);
+    if (pushedHistoryRef.current) {
+      pushedHistoryRef.current = false;
+      window.history.back();
+    }
+  }, []);
+
+  const openExpandedImage = useCallback((url: string) => {
+    setExpandedImage(url);
+    window.history.pushState({ [IMAGE_PREVIEW_HISTORY_KEY]: true }, '');
+    pushedHistoryRef.current = true;
+  }, []);
 
   const selectExample = useCallback(
     (categoryId: string, exampleId: string, updateHash = true) => {
@@ -247,6 +416,10 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
   }, []);
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (initialCategoryId && localizedCategories.some((cat) => cat.id === initialCategoryId)) {
       const defaultExampleId = getDefaultExampleId(initialCategoryId);
       if (defaultExampleId) {
@@ -257,7 +430,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
         }
       }
     }
-  }, [initialCategoryId]);
+  }, [initialCategoryId, localizedCategories]);
 
   useEffect(() => {
     syncFromHash();
@@ -267,12 +440,30 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
 
   useEffect(() => {
     if (!expandedImage) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setExpandedImage(null);
+      if (e.key === 'Escape') closeExpandedImage();
     };
+
+    const onPopState = () => {
+      if (expandedImage) {
+        setExpandedImage(null);
+        pushedHistoryRef.current = false;
+      }
+    };
+
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [expandedImage]);
+    window.addEventListener('popstate', onPopState);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [expandedImage, closeExpandedImage]);
 
   const activeCategoryData =
     localizedCategories.find((cat) => cat.id === activeCategory) ?? localizedCategories[0];
@@ -286,15 +477,12 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
     selectExample(categoryId, defaultExampleId);
   };
 
-  const handleExampleClick = (
-    categoryId: string,
-    exampleId: string,
-    e: React.MouseEvent<HTMLAnchorElement>
-  ) => {
-    e.preventDefault();
+  const handleExampleClick = (categoryId: string, exampleId: string) => {
     selectExample(categoryId, exampleId);
     videoPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };
+
+  const hasVisualMedia = Boolean(activeExample.videoPosterSrc || activeExample.illustrationSrc);
 
   return (
     <div className="relative flex h-full min-h-[22rem] w-full flex-col mx-auto max-w-4xl">
@@ -310,9 +498,11 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
         <div className="flex min-h-0 flex-1 flex-col">
           {/* Header */}
           <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-slate-800/80 p-4">
-            <div className="flex items-center gap-2 text-cyan-300">
-              <PlayCircle className="w-5 h-5" />
-              <p className="text-sm font-semibold uppercase tracking-wider">{tUi('useCases')}</p>
+            <div className="flex flex-row items-center gap-2 text-cyan-300">
+              <PlayCircle className="h-5 w-5 shrink-0 self-center" />
+              <span className="text-sm font-semibold uppercase leading-none tracking-wider">
+                {tUi('useCases')}
+              </span>
             </div>
             <div className="text-xs text-slate-400 font-medium bg-slate-900 px-2 py-1 rounded border border-white/5">
               {tUi('sectors', { count: localizedCategories.length })}
@@ -407,34 +597,33 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                             <UseCaseVideoPreview
                               previewKey={`${cat.id}-${activeExample.id}-${activeExample.videoSrc}`}
                               videoSrc={activeExample.videoSrc}
-                              thumbnailSrc={activeExample.thumbnailSrc}
+                              videoPosterSrc={activeExample.videoPosterSrc}
+                              illustrationSrc={activeExample.illustrationSrc}
                               label={activeExample.label}
                               demoComingSoonLabel={tUi('demoComingSoon')}
+                              conceptLabel={tUi('conceptPreview')}
+                              videoPreviewLabel={tUi('videoPreview')}
                               expandLabel={tUi('expandImage')}
-                              onExpandImage={setExpandedImage}
+                              onExpandIllustration={openExpandedImage}
                             />
-                          ) : activeExample.thumbnailSrc ? (
-                            <div className="relative w-full aspect-video max-h-[400px] bg-slate-950">
-                              <UseCaseThumbnail
-                                src={activeExample.thumbnailSrc}
-                                alt={activeExample.label}
-                                className="h-full w-full object-cover"
-                                fallbackLabel={tUi('demoComingSoon')}
-                              />
-                              <ThumbnailExpandButton
-                                expandLabel={tUi('expandImage')}
-                                className="absolute top-2 right-2 z-10"
-                                onExpand={(e) => {
-                                  e.stopPropagation();
-                                  setExpandedImage(activeExample.thumbnailSrc!);
-                                }}
-                              />
-                              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 pointer-events-none">
+                          ) : hasVisualMedia ? (
+                            <UseCaseDualMedia
+                              videoPosterSrc={activeExample.videoPosterSrc}
+                              illustrationSrc={activeExample.illustrationSrc}
+                              label={activeExample.label}
+                              conceptLabel={tUi('conceptPreview')}
+                              videoPreviewLabel={tUi('videoPreview')}
+                              expandLabel={tUi('expandImage')}
+                              fallbackLabel={tUi('demoComingSoon')}
+                              size="preview"
+                              onExpandIllustration={openExpandedImage}
+                            >
+                              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-black/40">
                                 <p className="text-xs text-slate-300 uppercase tracking-wider">
                                   {tUi('demoComingSoon')}
                                 </p>
                               </div>
-                            </div>
+                            </UseCaseDualMedia>
                           ) : (
                             <div className="w-full aspect-video bg-slate-950 flex flex-col items-center justify-center gap-2 max-h-[400px] px-6 text-center">
                               <p className="text-xs text-slate-500 uppercase tracking-wider">
@@ -450,65 +639,61 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                             const isActive =
                               activeCategory === cat.id && activeExampleId === ex.id;
                             const exampleHash = buildUseCaseExampleHash(cat.id, ex.id);
+                            const exHasMedia = Boolean(ex.videoPosterSrc || ex.illustrationSrc);
 
                             return (
-                              <a
+                              <button
                                 key={ex.id}
-                                href={`#${exampleHash}`}
-                                onClick={(e) => handleExampleClick(cat.id, ex.id, e)}
+                                type="button"
+                                onClick={() => handleExampleClick(cat.id, ex.id)}
                                 aria-current={isActive ? 'true' : undefined}
-                                className={`relative rounded-lg border transition-all cursor-pointer h-full flex flex-col justify-start no-underline overflow-hidden ${
+                                className={`relative rounded-lg border transition-all cursor-pointer h-full flex flex-col justify-start text-left overflow-hidden ${
                                   isActive
                                     ? 'bg-cyan-500/10 border-cyan-500/40 shadow-lg shadow-cyan-900/20'
                                     : 'bg-slate-950/40 border-white/5 hover:border-white/10 hover:bg-slate-950/60'
                                 }`}
+                                data-hash={exampleHash}
                               >
-                                {ex.thumbnailSrc ? (
-                                  <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
-                                    <UseCaseThumbnail
-                                      src={ex.thumbnailSrc}
-                                      alt={ex.label}
-                                      className="h-full w-full object-cover"
-                                      fallbackLabel={ex.label}
-                                    />
-                                    <ThumbnailExpandButton
-                                      expandLabel={tUi('expandImage')}
-                                      className="absolute top-2 right-2 z-10"
-                                      onExpand={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        setExpandedImage(ex.thumbnailSrc!);
-                                      }}
-                                    />
-                                  </div>
+                                {exHasMedia ? (
+                                  <UseCaseDualMedia
+                                    videoPosterSrc={ex.videoPosterSrc}
+                                    illustrationSrc={ex.illustrationSrc}
+                                    label={ex.label}
+                                    conceptLabel={tUi('conceptPreview')}
+                                    videoPreviewLabel={tUi('videoPreview')}
+                                    expandLabel={tUi('expandImage')}
+                                    fallbackLabel={ex.label}
+                                    size="card"
+                                    onExpandIllustration={openExpandedImage}
+                                  />
                                 ) : null}
                                 <div className="p-3 flex flex-col flex-1">
-                                <div className="flex items-center justify-between mb-2 gap-2">
-                                  <span
-                                    className={`text-sm font-semibold ${
-                                      isActive ? 'text-cyan-300' : 'text-slate-300'
+                                  <div className="flex items-center justify-between mb-2 gap-2">
+                                    <span
+                                      className={`text-sm font-semibold ${
+                                        isActive ? 'text-cyan-300' : 'text-slate-300'
+                                      }`}
+                                    >
+                                      {ex.label}
+                                    </span>
+                                    <Info
+                                      className={`w-3.5 h-3.5 shrink-0 transition-opacity ${
+                                        isActive
+                                          ? 'opacity-100 text-cyan-400'
+                                          : 'opacity-30 text-slate-500'
+                                      }`}
+                                    />
+                                  </div>
+
+                                  <p
+                                    className={`text-sm mt-auto transition-colors duration-200 leading-relaxed ${
+                                      isActive ? 'text-slate-200' : 'text-slate-400'
                                     }`}
                                   >
-                                    {ex.label}
-                                  </span>
-                                  <Info
-                                    className={`w-3.5 h-3.5 shrink-0 transition-opacity ${
-                                      isActive
-                                        ? 'opacity-100 text-cyan-400'
-                                        : 'opacity-30 text-slate-500'
-                                    }`}
-                                  />
+                                    {ex.description}
+                                  </p>
                                 </div>
-
-                                <p
-                                  className={`text-sm mt-auto transition-colors duration-200 leading-relaxed ${
-                                    isActive ? 'text-slate-200' : 'text-slate-400'
-                                  }`}
-                                >
-                                  {ex.description}
-                                </p>
-                                </div>
-                              </a>
+                              </button>
                             );
                           })}
                         </div>
@@ -522,47 +707,26 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
           {/* Footer Instruction */}
           <div className="shrink-0 border-t border-white/10 bg-slate-950 p-2 text-center">
             <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">
-              Select an example to preview its demo
+              {tUi('selectExample')}
             </p>
           </div>
         </div>
       </motion.div>
 
-      <AnimatePresence>
-        {expandedImage ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setExpandedImage(null)}
-            className="fixed inset-0 z-[100] flex cursor-zoom-out items-center justify-center bg-black/90 p-4 backdrop-blur-md md:p-12"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="relative flex h-full w-full max-w-7xl items-center justify-center"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={() => setExpandedImage(null)}
-                className="absolute -top-12 right-0 flex items-center gap-2 text-sm font-medium text-white/70 transition-colors hover:text-white"
-              >
-                <X className="h-5 w-5" />
-                {tUi('closePreview')}
-              </button>
-              <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
-                <img
-                  src={expandedImage}
-                  alt={tUi('expandImage')}
-                  className="h-full w-full object-contain"
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      {isMounted &&
+        createPortal(
+          <AnimatePresence>
+            {expandedImage ? (
+              <ExpandedImageModal
+                imageUrl={expandedImage}
+                closeLabel={tUi('closePreview')}
+                expandImageLabel={tUi('expandImage')}
+                onClose={closeExpandedImage}
+              />
+            ) : null}
+          </AnimatePresence>,
+          document.body
+        )}
     </div>
   );
 };

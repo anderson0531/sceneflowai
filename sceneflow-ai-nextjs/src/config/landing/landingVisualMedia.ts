@@ -135,10 +135,15 @@ export const USE_CASE_POSTER_OVERRIDES: Record<string, Record<string, string>> =
   },
 }
 
-/** Default poster URL for a use-case example */
-export function getUseCasePosterUrl(categoryId: string, exampleId: string): string {
+/** Gemini-generated "imagine" illustration for a use-case example */
+export function getUseCaseIllustrationUrl(categoryId: string, exampleId: string): string {
   const override = USE_CASE_POSTER_OVERRIDES[categoryId]?.[exampleId]
   if (override) return blobUrl(override)
+  return blobUrl(`demo/use-cases/${categoryId}/${exampleId}-poster.jpg`)
+}
+
+/** ffmpeg-extracted video frame poster (actual video preview) */
+export function getUseCaseVideoPosterUrl(categoryId: string, exampleId: string): string {
   return blobUrl(`demo/use-cases/${categoryId}/${exampleId}-poster.jpg`)
 }
 

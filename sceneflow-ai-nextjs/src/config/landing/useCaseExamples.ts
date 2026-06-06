@@ -1,5 +1,8 @@
 import { ENTERTAINMENT_CATEGORY_QUALIFYING_STATEMENT } from '@/config/landing/entertainmentStatsCopy'
-import { getUseCasePosterUrl } from '@/config/landing/landingVisualMedia'
+import {
+  getUseCaseIllustrationUrl,
+  getUseCaseVideoPosterUrl,
+} from '@/config/landing/landingVisualMedia'
 import { isUseCaseVideoEnabled } from '@/config/landing/useCaseVideoStatus'
 
 export type UseCaseCategoryId =
@@ -15,7 +18,8 @@ export type UseCaseExample = {
   label: string
   description: string
   videoSrc?: string
-  thumbnailSrc?: string
+  illustrationSrc?: string
+  videoPosterSrc?: string
   videoEnabled?: boolean
 }
 
@@ -50,13 +54,14 @@ type ExampleInput = {
   label: string
   description: string
   videoSrc?: string
-  thumbnailSrc?: string
+  illustrationSrc?: string
 }
 
 function ex(categoryId: UseCaseCategoryId, example: ExampleInput): UseCaseExample {
   return {
     ...example,
-    thumbnailSrc: example.thumbnailSrc ?? getUseCasePosterUrl(categoryId, example.id),
+    illustrationSrc: example.illustrationSrc ?? getUseCaseIllustrationUrl(categoryId, example.id),
+    videoPosterSrc: getUseCaseVideoPosterUrl(categoryId, example.id),
     videoEnabled: isUseCaseVideoEnabled(categoryId, example.id),
   }
 }
