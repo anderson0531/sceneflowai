@@ -22,7 +22,7 @@ Blob path: `demo/use-cases/{categoryId}/{exampleId}-poster.jpg`
 
 | Example ID | Label | Hash | Video | Poster |
 |------------|-------|------|-------|--------|
-| `vertical-short-drama` | Vertical Short Drama | `#use-cases-entertainment-vertical-short-drama` | Interim — jit clip | Ready — Blob |
+| `vertical-short-drama` | YouTube TV Drama | `#use-cases-entertainment-vertical-short-drama` | Interim — jit clip | Ready — Blob |
 | `animated-web-series` | Animated Web Series | `#use-cases-entertainment-animated-web-series` | Interim | Ready — Blob |
 | `episodic-youtube-series` | Episodic YouTube Series | `#use-cases-entertainment-episodic-youtube-series` | Interim — Series.mp4 | Ready — Blob |
 | `creator-reality-competition` | Creator Reality & Competition | `#use-cases-entertainment-creator-reality-competition` | Interim | Ready — Blob |

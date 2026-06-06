@@ -54,7 +54,7 @@ const OUTPUT_FORMATS = [
 
 /** categoryId/exampleId poster placeholders for use-case picker tiles */
 const USE_CASE_POSTERS = [
-  ['entertainment', 'vertical-short-drama', 'Vertical Short Drama', '0x581c87'],
+  ['entertainment', 'vertical-short-drama', 'YouTube TV Drama', '0x581c87'],
   ['entertainment', 'animated-web-series', 'Animated Web Series', '0x7e22ce'],
   ['entertainment', 'episodic-youtube-series', 'Episodic YouTube', '0x6d28d9'],
   ['entertainment', 'creator-reality-competition', 'Creator Reality', '0x5b21b6'],

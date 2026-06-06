@@ -46,7 +46,7 @@ export const USE_CASE_PERSONAS = {
     challenge: {
       title: 'The "B-Roll" Bottleneck',
       description:
-        'You have a strong script, but learning six separate generation and edit tools — or getting stuck in slot-machine video loops — slows every upload. Serialized YouTube hits and vertical short-drama cadences demand faster turnaround than fragmented AI tabs can deliver.',
+        'You have a strong script, but learning six separate generation and edit tools — or getting stuck in slot-machine video loops — slows every upload. Serialized YouTube hits and YouTube TV drama cadences demand faster turnaround than fragmented AI tabs can deliver.',
     },
     solution: {
       title: 'The Automated Storyteller',

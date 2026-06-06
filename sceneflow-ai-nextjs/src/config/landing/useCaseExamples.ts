@@ -66,9 +66,9 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
     examples: [
       ex('entertainment', {
         id: 'vertical-short-drama',
-        label: 'Vertical Short Drama',
+        label: 'YouTube TV Drama',
         description:
-          'Imagine photoreal characters in 9:16 "one sentence, one drama" hooks—approve Beat Frames before render, chain native extensions for emotional beats that stop the scroll.',
+          'Imagine shipping 16:9 episodic drama on YouTube—where YouTube now holds 13.4% of U.S. TV viewing. SceneFlow helps creators grow that share with engaging alternative content: beat-first storyboards, Reference Library continuity, and publish-ready widescreen masters.',
         videoSrc: `${BLOB_DEMO}/demo/use-cases/jit/true-crime-historical-docs.mp4`,
       }),
       ex('entertainment', {
