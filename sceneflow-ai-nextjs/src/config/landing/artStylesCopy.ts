@@ -23,36 +23,36 @@ export const ART_STYLE_MARKETING_OVERRIDES: Record<
 > = {
   photorealistic: {
     displayTitle: 'Photorealism',
-    tagline: 'Highest commercial conversion',
+    tagline: 'Prestige longform realism',
     marketingBody:
-      'Photorealism holds the highest commercial conversion rate and mainstream appeal. The massive boom in AI-generated vertical short dramas relies entirely on realistic characters to drive emotional tension, hook casual scrollers instantly, and mimic traditional prestige TV.',
+      'Photorealism delivers the mainstream appeal prestige TV and documentary audiences expect. Lock realistic characters and lighting across chained beats so episodic drama and docuseries maintain emotional continuity from opener to finale.',
   },
   'anime-90s': {
     displayTitle: 'Anime',
-    tagline: 'Internet-native engagement',
+    tagline: 'Serialized narrative arcs',
     marketingBody:
-      'Anime possesses unparalleled internet-native fan engagement and cultural resonance, pulling in hundreds of millions of views globally. Because generative engines are heavily trained on this medium, models yield crisp line art, predictable framing, and clean cel-shading right out of the box.',
+      'Anime-style cel shading carries deep fan engagement across multi-episode web series and longform narrative arcs. Generative engines trained on this medium yield crisp line art and predictable framing — ideal for serialized production at scale.',
   },
   pixar: {
     displayTitle: '3D Cinematic / Pixar-Inspired',
-    tagline: 'Warmth that converts',
+    tagline: 'Emotional continuity across episodes',
     marketingBody:
-      'The soft, rounded geometry and expressive, oversized eyes of this style create an immediate sense of emotional warmth and psychological safety. It boasts exceptional click-through-rates for thumbnails and video hooks, making it a favorite for creators targeting broad demographics.',
+      'Soft, rounded geometry and expressive character design create emotional warmth that sustains viewers across a full season. Perfect for animated series, family longform, and branded storytelling where character consistency matters beat to beat.',
   },
   ghibli: {
     displayTitle: 'Hand-Drawn / Ghibli-Style',
     tagline: 'Craft as luxury',
     marketingBody:
-      'This style taps directly into a major creative movement prioritizing "Craft as Luxury." Because watercolor textures, painterly backgrounds, and loose line work are inherently organic, minor AI glitches and structural fluidities look like deliberate artistic choices rather than machine errors.',
+      'This style taps directly into a major creative movement prioritizing "Craft as Luxury." Watercolor textures and painterly backgrounds build handcrafted episodic worlds where organic imperfection reads as deliberate artistry across a longform series.',
   },
 }
 
 /** Optional one-liners for non-featured presets on landing */
 export const ART_STYLE_LANDING_TAGLINES: Partial<Record<string, string>> = {
-  'concept-art': 'Game and film keyframes with moody, production-ready lighting.',
-  'comic-book': 'Bold ink, halftone texture, and pop-art color for serial storytelling.',
-  'oil-painting': 'Classical brushwork and rich pigment for timeless narrative weight.',
-  'digital-art': 'Clean illustration lines and vibrant color for modern explainers.',
-  watercolor: 'Soft edges and flowing pigment for gentle, emotive scenes.',
-  sketch: 'Detailed linework and pencil texture for storyboard-ready frames.',
+  'concept-art': 'Film and series pre-vis keyframes with moody, production-ready lighting.',
+  'comic-book': 'Bold ink, halftone texture, and pop-art color for multi-episode serial storytelling.',
+  'oil-painting': 'Classical brushwork and rich pigment for documentary and historical longform.',
+  'digital-art': 'Stylized illustration for animated documentary and episodic explainer series.',
+  watercolor: 'Soft pigment washes for memoir, documentary, and contemplative longform.',
+  sketch: 'Detailed linework and pencil texture for storyboard-to-production longform beats.',
 }

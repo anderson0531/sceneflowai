@@ -26,20 +26,20 @@ export const OUTPUT_FORMATS: Array<{
     label: '9:16 Vertical',
     ratio: '9:16',
     description:
-      'Shorts, Reels, TikTok, and vertical short-drama formats — scroll-stopping hooks built for mobile-first audiences.',
+      'Vertical episodic drama and mobile-first serialized series — lock 9:16 before you render so every beat ships in the format binge audiences expect.',
   },
   {
     id: '1x1',
     label: '1:1 Square',
     ratio: '1:1',
     description:
-      'Feed-native hooks, carousel posts, and thumbnail-first compositions that stop the scroll in square grids.',
+      'Square episode clips, interview compilations, and chapter highlights pulled from a longform series — one aspect for feed-native episode libraries.',
   },
   {
     id: '4x3',
     label: '4:3 Classic',
     ratio: '4:3',
     description:
-      'Training modules, legacy displays, and presentation-friendly frames when your audience expects a classic aspect.',
+      'Training modules, documentary archives, and presentation-friendly frames when your audience expects a classic aspect for longform delivery.',
   },
 ]

@@ -52,10 +52,23 @@ const ART_STYLE_IDS: LandingArtStyleId[] = [
   'sketch',
 ]
 
-/** Landing + Studio art style thumbnails on Vercel Blob */
+/** Landing + Studio art style thumbnails on Vercel Blob (Gemini-generated) */
+const ART_STYLE_BLOB_PATHS: Record<LandingArtStyleId, string> = {
+  photorealistic: 'Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg',
+  'anime-90s': 'Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg',
+  pixar: 'Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg',
+  'concept-art': 'Gemini_Generated_Image_qlf261qlf261qlf2.jpeg',
+  ghibli: 'Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg',
+  'comic-book': 'Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg',
+  'oil-painting': 'Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg',
+  'digital-art': 'Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg',
+  watercolor: 'Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg',
+  sketch: 'Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg',
+}
+
 export const LANDING_ART_STYLE_THUMBNAILS: Record<LandingArtStyleId, string> =
   Object.fromEntries(
-    ART_STYLE_IDS.map((id) => [id, blobUrl(`landing/art-styles/${id}.jpg`)])
+    ART_STYLE_IDS.map((id) => [id, blobUrl(ART_STYLE_BLOB_PATHS[id])])
   ) as Record<LandingArtStyleId, string>
 
 export function getLandingArtStyleThumbnail(id: string): string | undefined {
@@ -65,12 +78,12 @@ export function getLandingArtStyleThumbnail(id: string): string | undefined {
   return undefined
 }
 
-/** Output format preview images */
+/** Output format preview images (Gemini-generated) */
 export const LANDING_OUTPUT_FORMAT_THUMBNAILS: Record<OutputFormatId, string> = {
-  '16x9': blobUrl('landing/output-formats/16x9.jpg'),
-  '9x16': blobUrl('landing/output-formats/9x16.jpg'),
-  '1x1': blobUrl('landing/output-formats/1x1.jpg'),
-  '4x3': blobUrl('landing/output-formats/4x3.jpg'),
+  '16x9': blobUrl('Gemini_Generated_Image_kna9rfkna9rfkna9.jpeg'),
+  '9x16': blobUrl('Gemini_Generated_Image_a35rxra35rxra35r.jpeg'),
+  '1x1': blobUrl('Gemini_Generated_Image_9ckg7o9ckg7o9ckg.jpeg'),
+  '4x3': blobUrl('Gemini_Generated_Image_gyodkzgyodkzgyod.jpeg'),
 }
 
 export function getLandingOutputFormatThumbnail(id: OutputFormatId): string {

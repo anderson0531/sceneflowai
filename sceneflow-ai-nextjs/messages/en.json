@@ -312,7 +312,11 @@
     "badge": "Creative Range",
     "title": "Every Style, Every Screen",
     "titleAccent": "Total creative flexibility",
-    "subtitle": "Lock your art direction and aspect ratio before you render—from photoreal vertical drama to painterly series, widescreen epics to 9:16 Shorts.",
+    "subtitle": "Lock your art direction and aspect ratio before you render—from photoreal episodic drama to painterly series, widescreen documentaries to vertical serialized longform.",
+    "ui": {
+      "expandImage": "Expand Image",
+      "closePreview": "Close Preview"
+    },
     "artStyles": {
       "subsectionTitle": "Choose Your Look",
       "footnote": "Same art styles available in Beat Frame and image generation dialogs.",
@@ -323,39 +327,39 @@
           "name": "Photorealistic",
           "displayTitle": "Photorealism",
           "description": "Professional photography style",
-          "tagline": "Highest commercial conversion",
-          "marketingBody": "Photorealism holds the highest commercial conversion rate and mainstream appeal. The massive boom in AI-generated vertical short dramas relies entirely on realistic characters to drive emotional tension, hook casual scrollers instantly, and mimic traditional prestige TV.",
+          "tagline": "Prestige longform realism",
+          "marketingBody": "Photorealism delivers the mainstream appeal prestige TV and documentary audiences expect. Lock realistic characters and lighting across chained beats so episodic drama and docuseries maintain emotional continuity from opener to finale.",
           "featured": true,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/photorealistic.jpg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_w5y03bw5y03bw5y0.jpeg"
         },
         {
           "id": "anime-90s",
           "name": "Anime (90s)",
           "displayTitle": "Anime",
           "description": "Classic 90s anime style",
-          "tagline": "Internet-native engagement",
-          "marketingBody": "Anime possesses unparalleled internet-native fan engagement and cultural resonance, pulling in hundreds of millions of views globally. Because generative engines are heavily trained on this medium, models yield crisp line art, predictable framing, and clean cel-shading right out of the box.",
+          "tagline": "Serialized narrative arcs",
+          "marketingBody": "Anime-style cel shading carries deep fan engagement across multi-episode web series and longform narrative arcs. Generative engines trained on this medium yield crisp line art and predictable framing — ideal for serialized production at scale.",
           "featured": true,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/anime-90s.jpg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_5qoasf5qoasf5qoa.jpeg"
         },
         {
           "id": "pixar",
           "name": "Pixar Animation",
           "displayTitle": "3D Cinematic / Pixar-Inspired",
           "description": "3D animated Pixar style",
-          "tagline": "Warmth that converts",
-          "marketingBody": "The soft, rounded geometry and expressive, oversized eyes of this style create an immediate sense of emotional warmth and psychological safety. It boasts exceptional click-through-rates for thumbnails and video hooks, making it a favorite for creators targeting broad demographics.",
+          "tagline": "Emotional continuity across episodes",
+          "marketingBody": "Soft, rounded geometry and expressive character design create emotional warmth that sustains viewers across a full season. Perfect for animated series, family longform, and branded storytelling where character consistency matters beat to beat.",
           "featured": true,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/pixar.jpg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_zi32rnzi32rnzi32.jpeg"
         },
         {
           "id": "concept-art",
           "name": "Concept Art",
           "displayTitle": "Concept Art",
           "description": "Game/film concept art",
-          "tagline": "Game and film keyframes with moody, production-ready lighting.",
+          "tagline": "Film and series pre-vis keyframes with moody, production-ready lighting.",
           "featured": false,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/concept-art.jpg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_qlf261qlf261qlf2.jpeg"
         },
         {
           "id": "ghibli",
@@ -363,54 +367,54 @@
           "displayTitle": "Hand-Drawn / Ghibli-Style",
           "description": "Studio Ghibli inspired",
           "tagline": "Craft as luxury",
-          "marketingBody": "This style taps directly into a major creative movement prioritizing \"Craft as Luxury.\" Because watercolor textures, painterly backgrounds, and loose line work are inherently organic, minor AI glitches and structural fluidities look like deliberate artistic choices rather than machine errors.",
+          "marketingBody": "This style taps directly into a major creative movement prioritizing \"Craft as Luxury.\" Watercolor textures and painterly backgrounds build handcrafted episodic worlds where organic imperfection reads as deliberate artistry across a longform series.",
           "featured": true,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/ghibli.jpg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_xojqsuxojqsuxojq.jpeg"
         },
         {
           "id": "comic-book",
           "name": "Comic Book",
           "displayTitle": "Comic Book",
           "description": "Comic book ink style",
-          "tagline": "Bold ink, halftone texture, and pop-art color for serial storytelling.",
+          "tagline": "Bold ink, halftone texture, and pop-art color for multi-episode serial storytelling.",
           "featured": false,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/comic-book.jpg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_ezhp8cezhp8cezhp.jpeg"
         },
         {
           "id": "oil-painting",
           "name": "Oil Painting",
           "displayTitle": "Oil Painting",
           "description": "Classical oil painting",
-          "tagline": "Classical brushwork and rich pigment for timeless narrative weight.",
+          "tagline": "Classical brushwork and rich pigment for documentary and historical longform.",
           "featured": false,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/oil-painting.jpg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7z9qm7z9qm7z9qm7.jpeg"
         },
         {
           "id": "digital-art",
           "name": "Digital Art",
           "displayTitle": "Digital Art",
           "description": "Modern digital illustration",
-          "tagline": "Clean illustration lines and vibrant color for modern explainers.",
+          "tagline": "Stylized illustration for animated documentary and episodic explainer series.",
           "featured": false,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/digital-art.jpg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_omdmt6omdmt6omdm.jpeg"
         },
         {
           "id": "watercolor",
           "name": "Watercolor",
           "displayTitle": "Watercolor",
           "description": "Soft watercolor painting",
-          "tagline": "Soft edges and flowing pigment for gentle, emotive scenes.",
+          "tagline": "Soft pigment washes for memoir, documentary, and contemplative longform.",
           "featured": false,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/watercolor.jpg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_7i1wus7i1wus7i1w.jpeg"
         },
         {
           "id": "sketch",
           "name": "Sketch/Line Art",
           "displayTitle": "Sketch/Line Art",
           "description": "Pencil sketch style",
-          "tagline": "Detailed linework and pencil texture for storyboard-ready frames.",
+          "tagline": "Detailed linework and pencil texture for storyboard-to-production longform beats.",
           "featured": false,
-          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/landing/art-styles/sketch.jpg"
+          "thumbnail": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Gemini_Generated_Image_bmbpbibmbpbibmbp.jpeg"
         }
       ]
     },
@@ -428,19 +432,19 @@
           "id": "9x16",
           "label": "9:16 Vertical",
           "ratio": "9:16",
-          "description": "Shorts, Reels, TikTok, and vertical short-drama formats — scroll-stopping hooks built for mobile-first audiences."
+          "description": "Vertical episodic drama and mobile-first serialized series — lock 9:16 before you render so every beat ships in the format binge audiences expect."
         },
         {
           "id": "1x1",
           "label": "1:1 Square",
           "ratio": "1:1",
-          "description": "Feed-native hooks, carousel posts, and thumbnail-first compositions that stop the scroll in square grids."
+          "description": "Square episode clips, interview compilations, and chapter highlights pulled from a longform series — one aspect for feed-native episode libraries."
         },
         {
           "id": "4x3",
           "label": "4:3 Classic",
           "ratio": "4:3",
-          "description": "Training modules, legacy displays, and presentation-friendly frames when your audience expects a classic aspect."
+          "description": "Training modules, documentary archives, and presentation-friendly frames when your audience expects a classic aspect for longform delivery."
         }
       ]
     }

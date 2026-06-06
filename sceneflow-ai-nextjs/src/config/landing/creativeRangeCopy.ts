@@ -7,7 +7,11 @@ export const CREATIVE_RANGE_COPY = {
   title: 'Every Style, Every Screen',
   titleAccent: 'Total creative flexibility',
   subtitle:
-    'Lock your art direction and aspect ratio before you render—from photoreal vertical drama to painterly series, widescreen epics to 9:16 Shorts.',
+    'Lock your art direction and aspect ratio before you render—from photoreal episodic drama to painterly series, widescreen documentaries to vertical serialized longform.',
+  ui: {
+    expandImage: 'Expand Image',
+    closePreview: 'Close Preview',
+  },
   artStyles: {
     ...ART_STYLES_SECTION_COPY,
     items: buildLandingArtStyleItems().map((item) => ({
