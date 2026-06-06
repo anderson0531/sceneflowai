@@ -99,6 +99,13 @@ export const USE_CASE_POSTER_OVERRIDES: Record<string, Record<string, string>> =
     'creator-reality-competition': 'Gemini_Generated_Image_ll16pfll16pfll16.jpeg',
     'ctv-ready-series': 'Gemini_Generated_Image_1xsg8i1xsg8i1xsg.jpeg',
   },
+  property: {
+    'residential-real-estate': 'Gemini_Generated_Image_f1hzzef1hzzef1hz.jpeg',
+    'commercial-real-estate': 'Gemini_Generated_Image_3tne8l3tne8l3tne.jpeg',
+    'short-term-rentals': 'Gemini_Generated_Image_1iy1n11iy1n11iy1.jpeg',
+    'hospitality-tourism': 'Gemini_Generated_Image_qvck0lqvck0lqvck.jpeg',
+    'museum-gallery-guides': 'Gemini_Generated_Image_cn3rfucn3rfucn3r.jpeg',
+  },
   knowledge: {
     'k12-higher-ed': 'Gemini_Generated_Image_oovxa2oovxa2oovx (1).jpeg',
     'corporate-ld': 'Gemini_Generated_Image_m0cmafm0cmafm0cm.jpeg',
