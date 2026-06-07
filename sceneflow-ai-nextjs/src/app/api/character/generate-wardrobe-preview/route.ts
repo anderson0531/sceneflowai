@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateImageWithGemini } from '@/lib/gemini/imageClient'
+import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -121,18 +121,20 @@ export async function POST(req: NextRequest) {
 
         console.log(`[Wardrobe Turnaround] Prompt: ${turnaroundPrompt.substring(0, 150)}...`)
 
-        const imageBase64 = await generateImageWithGemini(turnaroundPrompt, {
+        // Vertex Gemini Image supports 21:9 + reference images; Imagen capability rejects 21:9
+        const subjectDescription = buildWardrobeTurnaroundSubjectDescription(characterName)
+        const result = await generateImageWithGeminiStudio({
+          prompt: `${subjectDescription}\n\n${turnaroundPrompt}`,
           aspectRatio: WARDROBE_REFERENCE_ASPECT_RATIO,
-          numberOfImages: 1,
-          personGeneration: 'allow_adult',
+          modelTier: 'eco',
           referenceImages: [
             {
-              referenceId: 1,
               imageUrl: characterReferenceImageUrl,
-              subjectDescription: buildWardrobeTurnaroundSubjectDescription(characterName),
+              name: characterName,
             },
           ],
         })
+        const imageBase64 = `data:${result.mimeType};base64,${result.imageBase64}`
 
         const fullBodyUrl = await uploadReferenceLibraryBase64Image(
           imageBase64,
@@ -172,7 +174,7 @@ export async function POST(req: NextRequest) {
           characterId,
           wardrobeCount: successfulCount,
           imagesGenerated: successfulCount,
-          model: 'imagen-3-capability',
+          model: 'gemini-2.5-flash-image',
         })
         const breakdown = await CreditService.getCreditBreakdown(userId)
         newBalance = breakdown.total_credits

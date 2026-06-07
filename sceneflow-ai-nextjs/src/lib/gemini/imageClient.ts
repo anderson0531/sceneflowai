@@ -22,6 +22,20 @@ interface ReferenceImage {
   subjectDescription?: string
 }
 
+type ImagenAspectRatio = '1:1' | '9:16' | '16:9' | '4:3' | '3:4'
+
+/** Imagen predict API only accepts 1:1, 9:16, 16:9, 4:3, 3:4 */
+function resolveImagenAspectRatio(
+  ratio?: ImageGenerationOptions['aspectRatio']
+): ImagenAspectRatio {
+  const requested = ratio || '16:9'
+  if (requested === '1:1' || requested === '9:16' || requested === '16:9' || requested === '4:3' || requested === '3:4') {
+    return requested
+  }
+  if (requested === '2:3' || requested === '4:5') return '3:4'
+  return '16:9' // 21:9, 3:2, 5:4 → closest landscape
+}
+
 interface ImageGenerationOptions {
   aspectRatio?: '1:1' | '9:16' | '16:9' | '4:3' | '3:4' | '2:3' | '3:2' | '4:5' | '5:4' | '21:9'
   numberOfImages?: number
@@ -99,13 +113,20 @@ export async function generateImageWithGemini(
   
   console.log('[Vertex Imagen] Safety settings:', { safetySetting, personGeneration })
   
+  const imagenAspectRatio = resolveImagenAspectRatio(options.aspectRatio)
+  if (options.aspectRatio && options.aspectRatio !== imagenAspectRatio) {
+    console.log(
+      `[Vertex Imagen] Mapped unsupported aspect ratio ${options.aspectRatio} → ${imagenAspectRatio}`
+    )
+  }
+
   const requestBody: any = {
     instances: [{
       prompt: finalPrompt
     }],
     parameters: {
       sampleCount: options.numberOfImages || 1,
-      aspectRatio: options.aspectRatio || '16:9',
+      aspectRatio: imagenAspectRatio,
       safetySetting: safetySetting,
       personGeneration: personGeneration
     }
@@ -204,7 +225,7 @@ export async function generateImageWithGemini(
   }
   
   console.log('[Vertex Imagen] Config:', JSON.stringify({
-    aspectRatio: options.aspectRatio || '16:9',
+    aspectRatio: imagenAspectRatio,
     referenceImagesCount: options.referenceImages?.length || 0,
     model
   }))
