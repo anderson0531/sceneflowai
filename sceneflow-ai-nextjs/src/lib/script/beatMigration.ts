@@ -166,7 +166,7 @@ function getDialogueAudioEntries(
   return []
 }
 
-function isNarratorBeat(beat: SceneBeat): boolean {
+export function isNarratorBeat(beat: SceneBeat): boolean {
   if (beat.kind === 'narration') return true
   if (beat.characterId === NARRATOR_CHARACTER_ID) return true
   if (
@@ -622,6 +622,39 @@ export function applyDialogueStoryboardImageToScene(
   })
 
   return applyBeatsToScene(scene, beats)
+}
+
+/** Persist a beat-index storyboard image to beats[] and legacy dialogue[]. */
+export function applyBeatStoryboardImageToScene(
+  scene: Record<string, unknown>,
+  beatIndex: number,
+  imageUrl: string,
+  extras?: { imagePrompt?: string; imageGcsPath?: string }
+): Record<string, unknown> {
+  const beats = getSceneBeats(scene)
+  if (!beats[beatIndex]) return scene
+
+  beats[beatIndex] = {
+    ...beats[beatIndex],
+    storyboardImageUrl: imageUrl,
+    ...(extras?.imageGcsPath
+      ? { storyboardImageGcsPath: extras.imageGcsPath }
+      : {}),
+    ...(extras?.imagePrompt
+      ? { storyboardImagePrompt: extras.imagePrompt }
+      : {}),
+  }
+
+  const updated = applyBeatsToScene(scene, beats)
+  if (beatIndex === 0 && beats[0]?.kind === 'action') {
+    return {
+      ...updated,
+      imageUrl,
+      ...(extras?.imagePrompt ? { imagePrompt: extras.imagePrompt } : {}),
+      ...(extras?.imageGcsPath ? { imageGcsPath: extras.imageGcsPath } : {}),
+    }
+  }
+  return updated
 }
 
 export function getSceneBeats(scene: Record<string, unknown> | null | undefined): SceneBeat[] {

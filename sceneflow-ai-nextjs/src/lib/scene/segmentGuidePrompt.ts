@@ -417,10 +417,9 @@ export function composeGuidePromptFromElements(
     const truncatedNarration =
       words.length > 60 ? words.slice(0, 60).join(' ') + '...' : narrationText
 
-    const narratorDesc = voiceAnchor
-      ? `A narrator with ${voiceAnchor.toLowerCase()}`
-      : 'A professional narrator'
-    visualParts.push(`${narratorDesc} speaks the following voiceover: '${truncatedNarration}'`)
+    visualParts.push(
+      `Atmospheric visuals supporting voiceover mood (no on-screen narrator, no lip-sync). Voiceover context: '${truncatedNarration}'`
+    )
   }
 
   // SFX cues are excluded from Veo video prompts — sound design is handled outside native video gen.

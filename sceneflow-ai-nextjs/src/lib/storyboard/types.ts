@@ -151,6 +151,8 @@ export interface StoryboardFrameSlot {
   label: string
   kind: 'action' | 'dialogue' | 'narration' | 'custom'
   beatId?: string
+  /** Index into scene.beats[] for beat-first frame generation */
+  beatIndex?: number
   dialogueIndex?: number
   customFrameId?: string
   /** Image stored directly on this beat/line/frame — not a borrowed fallback. */
@@ -201,7 +203,8 @@ export function enumerateStoryboardFrameSlots(
 
   if (beats.length > 0) {
     let spokenIdx = 0
-    for (const beat of beats) {
+    for (let beatIndex = 0; beatIndex < beats.length; beatIndex++) {
+      const beat = beats[beatIndex]
       let ownImageUrl = isValidStoryboardMediaUrl(beat.storyboardImageUrl)
         ? beat.storyboardImageUrl!.trim()
         : undefined
@@ -237,6 +240,7 @@ export function enumerateStoryboardFrameSlots(
         label,
         kind: beat.kind,
         beatId: beat.beatId,
+        beatIndex,
         dialogueIndex,
         ownImageUrl,
         displayImageUrl,

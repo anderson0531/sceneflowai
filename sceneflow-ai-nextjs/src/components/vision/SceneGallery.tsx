@@ -64,6 +64,8 @@ interface SceneGalleryProps {
   onGenerateScene: (sceneIndex: number, prompt: string) => void | Promise<void>
   /** Generate a speaker-focused storyboard frame for a dialogue line. */
   onGenerateDialogueFrame?: (sceneIndex: number, dialogueIndex: number) => void | Promise<void>
+  /** Generate a beat-indexed storyboard frame (action or narration beats). */
+  onGenerateBeatFrame?: (sceneIndex: number, beatIndex: number) => void | Promise<void>
   onUploadDialogueFrame?: (sceneIndex: number, dialogueIndex: number, file: File) => void
   onAddStoryboardFrame?: (sceneIndex: number) => void | Promise<void>
   onDeleteStoryboardFrame?: (sceneIndex: number, frameId: string) => void | Promise<void>
@@ -144,6 +146,7 @@ export function SceneGallery({
   onOpenPromptBuilder,
   onGenerateScene,
   onGenerateDialogueFrame,
+  onGenerateBeatFrame,
   onUploadDialogueFrame,
   onAddStoryboardFrame,
   onDeleteStoryboardFrame,
@@ -827,6 +830,25 @@ export function SceneGallery({
                       })
                     }
                   } : undefined}
+                  onGenerateBeatFrame={onGenerateBeatFrame ? async (beatIdx) => {
+                    const key = `${idx}-beat-${beatIdx}`
+                    setGeneratingDialogueFrames((prev) => new Set(prev).add(key))
+                    try {
+                      await execute(async () => {
+                        await onGenerateBeatFrame(idx, beatIdx)
+                      }, {
+                        message: `Generating beat frame ${beatIdx + 1} for Scene ${idx + 1}...`,
+                        estimatedDuration: 15,
+                        operationType: 'image-generation',
+                      })
+                    } finally {
+                      setGeneratingDialogueFrames((prev) => {
+                        const next = new Set(prev)
+                        next.delete(key)
+                        return next
+                      })
+                    }
+                  } : undefined}
                   onUploadDialogueFrame={onUploadDialogueFrame ? (dialogueIdx, file) => onUploadDialogueFrame(idx, dialogueIdx, file) : undefined}
                   generatingDialogueFrames={generatingDialogueFrames}
                   onAddStoryboardFrame={onAddStoryboardFrame ? () => onAddStoryboardFrame(idx) : undefined}
@@ -1001,6 +1023,7 @@ interface SceneCardProps {
   onClick: () => void
   onGenerate: (prompt: string) => Promise<void>
   onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
+  onGenerateBeatFrame?: (beatIndex: number) => Promise<void>
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
   generatingDialogueFrames?: Set<string>
   onAddStoryboardFrame?: () => void | Promise<void>
@@ -1100,6 +1123,7 @@ function SceneCard({
   onClick,
   onGenerate,
   onGenerateDialogueFrame,
+  onGenerateBeatFrame,
   onUploadDialogueFrame,
   generatingDialogueFrames = new Set(),
   onAddStoryboardFrame,
@@ -1472,11 +1496,22 @@ function SceneCard({
                   }
 
                   const dialogueIdx = slot.dialogueIndex
+                  const beatIdx = slot.beatIndex
+                  const useBeatFrame =
+                    typeof beatIdx === 'number' &&
+                    (slot.kind === 'narration' || slot.kind === 'action')
+                  const isGeneratingBeatFrame =
+                    useBeatFrame &&
+                    generatingDialogueFrames.has(`${sceneIndex}-beat-${beatIdx}`)
                   const isGeneratingFrame =
+                    !useBeatFrame &&
                     typeof dialogueIdx === 'number' &&
                     generatingDialogueFrames.has(`${sceneIndex}-${dialogueIdx}`)
-                  const isEstablishingOnly =
-                    slot.kind === 'action' && typeof dialogueIdx !== 'number'
+                  const isLegacyEstablishingOnly =
+                    !useBeatFrame &&
+                    slot.kind === 'action' &&
+                    typeof dialogueIdx !== 'number' &&
+                    typeof beatIdx !== 'number'
 
                   return (
                     <div key={slot.key} className="flex-shrink-0 w-36">
@@ -1488,13 +1523,19 @@ function SceneCard({
                         isSelected={selectedFrameKey === slot.key}
                         onSelect={() => setSelectedFrameKey(slot.key)}
                         isGenerating={
-                          isEstablishingOnly ? isGenerating : isGeneratingFrame
+                          isLegacyEstablishingOnly
+                            ? isGenerating
+                            : useBeatFrame
+                              ? isGeneratingBeatFrame
+                              : isGeneratingFrame
                         }
                         compact
                         showBorder
                         label={slot.label}
                         onGenerate={() => {
-                          if (isEstablishingOnly) {
+                          if (useBeatFrame) {
+                            void onGenerateBeatFrame?.(beatIdx!)
+                          } else if (isLegacyEstablishingOnly) {
                             void onGenerate(prompt)
                           } else if (typeof dialogueIdx === 'number') {
                             void onGenerateDialogueFrame?.(dialogueIdx)
@@ -1502,7 +1543,7 @@ function SceneCard({
                         }}
                         onUpload={(file) => {
                           setSelectedFrameKey(slot.key)
-                          if (isEstablishingOnly) {
+                          if (isLegacyEstablishingOnly) {
                             onUpload?.(file)
                           } else if (typeof dialogueIdx === 'number') {
                             onUploadDialogueFrame?.(dialogueIdx, file)

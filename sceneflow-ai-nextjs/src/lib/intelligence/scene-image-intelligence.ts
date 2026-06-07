@@ -19,6 +19,7 @@
 
 import { generateText, generateTextCacheAware, type TextGenerationOptions } from '@/lib/vertexai/gemini'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
+import type { BeatKind } from '@/lib/script/segmentTypes'
 
 // =============================================================================
 // Types
@@ -93,6 +94,8 @@ export interface SceneImageIntelligenceRequest {
   filmContext?: FilmContext
   /** Detected scene type */
   sceneType: SceneType
+  /** Beat-first frame kind when generating a per-beat storyboard image */
+  beatKind?: BeatKind
   /** Structured scene direction metadata (preserved cues) */
   directionMetadata?: SceneDirectionMetadata
   /** Characters in this scene with wardrobe resolved */
@@ -454,6 +457,14 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   // Special instructions for credits/outro
   if (request.sceneType === 'credits') {
     prompt += `\n⚠️ CREDITS/OUTRO: Design a professional end credits card with elegant typography and genre-appropriate background.\n`
+  }
+
+  if (request.beatKind === 'action') {
+    prompt += `\n⚠️ SILENT ACTION BEAT: Illustrate a single cinematic still with NO dialogue, NO lip-sync, NO on-screen text. Focus on the visual direction in the scene action — shot composition, subject, motion, and mood.\n`
+  }
+
+  if (request.beatKind === 'narration') {
+    prompt += `\n⚠️ VOICEOVER BACKDROP: This frame supports off-screen narration. Show environment, subjects, and atmosphere ONLY. NO narrator character on screen, NO talking head, NO lip-sync, NO person speaking to camera.\n`
   }
   
   return prompt

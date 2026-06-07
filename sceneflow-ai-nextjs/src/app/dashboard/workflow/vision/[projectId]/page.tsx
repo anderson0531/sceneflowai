@@ -28,7 +28,13 @@ import {
 } from '@/lib/audio/cleanupAudio'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
 import { getBatchNarrationTtsText } from '@/lib/script/narration'
-import { applyBeatsToScene, applyDialogueStoryboardImageToScene, applyEstablishingImageToScene } from '@/lib/script/beatMigration'
+import {
+  applyBeatsToScene,
+  applyBeatStoryboardImageToScene,
+  applyDialogueStoryboardImageToScene,
+  applyEstablishingImageToScene,
+  ensureSceneBeats,
+} from '@/lib/script/beatMigration'
 import { toast } from 'sonner'
 
 // Dynamic import to break TDZ initialization chain - ScriptPanel imports heavy scene-production modules
@@ -8536,6 +8542,66 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleGenerateBeatFrameImage = async (sceneIdx: number, beatIdx: number) => {
+    const scene = script?.script?.scenes?.[sceneIdx]
+    if (!scene) {
+      try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
+      return
+    }
+
+    if (!batchGeneratingRef.current) {
+      overlayStore.show(`Beat frame — Scene ${sceneIdx + 1}, beat ${beatIdx + 1}`, 25, 'storyboard-production')
+    }
+    setGeneratingKeyframeSceneNumber(sceneIdx + 1)
+
+    try {
+      const response = await fetch('/api/scene/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex: sceneIdx,
+          frameType: 'beat',
+          beatIndex: beatIdx,
+          quality: imageQuality,
+          characterSelectionExplicit: true,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data?.error || 'Beat frame generation failed')
+      }
+
+      const updatedScenes = [...(script.script.scenes || [])]
+      updatedScenes[sceneIdx] = applyBeatStoryboardImageToScene(
+        updatedScenes[sceneIdx],
+        beatIdx,
+        data.imageUrl,
+        { imagePrompt: data.prompt || '' }
+      )
+
+      setScript({
+        ...script,
+        script: { ...script.script, scenes: updatedScenes },
+      })
+
+      const saved = await persistVisionScriptScenes(updatedScenes, 'handleGenerateBeatFrameImage')
+      if (!saved) {
+        try { const { toast } = require('sonner'); toast.error('Beat frame generated but failed to save') } catch {}
+        return
+      }
+
+      try { const { toast } = require('sonner'); toast.success('Beat frame generated!') } catch {}
+    } catch (error: any) {
+      console.error('Failed to generate beat frame:', error)
+      try { const { toast } = require('sonner'); toast.error(error?.message || 'Failed to generate beat frame') } catch {}
+    } finally {
+      if (!batchGeneratingRef.current) overlayStore.hide()
+      setGeneratingKeyframeSceneNumber(null)
+    }
+  }
+
   const handleGenerateDialogueFrameImage = async (sceneIdx: number, dialogueIdx: number) => {
     const scene = script?.script?.scenes?.[sceneIdx]
     const dialogueLine = scene?.dialogue?.[dialogueIdx]
@@ -11780,6 +11846,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onGenerateDialogueFrame={(sceneIdx, dialogueIdx) =>
                               handleGenerateDialogueFrameImage(sceneIdx, dialogueIdx)
                             }
+                            onGenerateBeatFrame={(sceneIdx, beatIdx) =>
+                              handleGenerateBeatFrameImage(sceneIdx, beatIdx)
+                            }
                             onUploadDialogueFrame={(sceneIdx, dialogueIdx, file) =>
                               handleUploadDialogueFrame(sceneIdx, dialogueIdx, file)
                             }
@@ -12291,13 +12360,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             }
           }
           
-          // Merge and sort scenes by sceneNumber
+          // Merge and sort scenes by sceneNumber; ensure beats[] for beat-first pipeline
           const allScenes = [...existingScenes, ...newScenes]
             .sort((a, b) => a.sceneNumber - b.sceneNumber)
-            .map((scene, idx) => ({
-              ...scene,
-              sceneNumber: idx + 1 // Renumber sequentially
-            }))
+            .map((scene, idx) =>
+              ensureSceneBeats({
+                ...scene,
+                sceneNumber: idx + 1,
+              } as Record<string, unknown>)
+            )
           
           // Update script state
           const currentScript = scriptRef.current || script

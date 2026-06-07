@@ -21,7 +21,8 @@ import {
   type PropContext,
   type LocationContext,
 } from '@/lib/intelligence/scene-image-intelligence'
-import { getSceneBeats } from '@/lib/script/beatMigration'
+import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
+import { NARRATOR_CHARACTER, type BeatKind } from '@/lib/script/segmentTypes'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 
 export const runtime = 'nodejs'
@@ -288,6 +289,7 @@ export async function POST(req: NextRequest) {
     let effectiveShotType = shotType
     let effectiveCameraAngle = cameraAngle
     let dialogueFrameContext = ''
+    let beatKindForIntelligence: BeatKind | undefined
     
     // Handle both legacy (selectedCharacters) and new (characters) formats
     // If excludeCharacters is true, ignore all character references for scene environment-only image
@@ -371,17 +373,25 @@ export async function POST(req: NextRequest) {
             ? { ...(dbSceneForSelection || {}), ...sceneOverride }
             : dbSceneForSelection
 
-        // Dialogue storyboard frame: select speaking character only
+        // Dialogue storyboard frame: select speaking character only (skip narrator)
         if (isDialogueFrame && sceneForSelection) {
           characterSelectionExplicit = true
           const dialogueLines = Array.isArray(sceneForSelection.dialogue) ? sceneForSelection.dialogue : []
           const line = dialogueLines[dialogueIndex!]
           if (line) {
             const speakerName = String(line.character || '').trim()
-            if (speakerName && allCharacters.length > 0) {
+            const isNarrationLine =
+              line.kind === 'narration' ||
+              line.characterId === 'narrator' ||
+              speakerName.toUpperCase() === NARRATOR_CHARACTER
+            if (isNarrationLine) {
+              characterObjects = []
+              beatKindForIntelligence = 'narration'
+            } else if (speakerName && allCharacters.length > 0) {
               const speakerLower = speakerName.toLowerCase()
               const speakerChar = allCharacters.find((c: any) => {
                 if (!c?.name) return false
+                if (c.type === 'narrator') return false
                 const nameLower = c.name.toLowerCase()
                 return nameLower === speakerLower || nameLower.includes(speakerLower) || speakerLower.includes(nameLower)
               })
@@ -396,18 +406,38 @@ export async function POST(req: NextRequest) {
           const beats = getSceneBeats(sceneForSelection as Record<string, unknown>)
           const beat = beats[beatIndex!]
           if (beat) {
+            beatKindForIntelligence = beat.kind
             if (beat.kind === 'action') {
               characterObjects = []
-              dialogueFrameContext = beat.actionDescription ?? ''
+              const actionText = beat.actionDescription?.trim() || 'Scene action unfolds'
+              dialogueFrameContext =
+                `Storyboard silent action frame. No dialogue, no lip-sync, no on-screen text. ` +
+                `Visual direction: ${actionText}. `
+              effectiveShotType = effectiveShotType || 'medium shot'
+            } else if (isNarratorBeat(beat)) {
+              characterObjects = []
+              const lineText = beat.line?.trim() || ''
+              dialogueFrameContext =
+                `Storyboard voiceover backdrop frame. NO narrator on screen, NO talking head, NO lip-sync. ` +
+                `Illustrate the visual scene and mood implied by this voiceover` +
+                (lineText ? `: "${lineText}"` : '') +
+                `. Show environment, subjects, and atmosphere only. `
+              effectiveShotType = effectiveShotType || 'wide shot'
             } else if (beat.character) {
               const speakerLower = beat.character.toLowerCase()
               const speakerChar = allCharacters.find((c: any) => {
                 if (!c?.name) return false
+                if (c.type === 'narrator') return false
                 const nameLower = c.name.toLowerCase()
                 return nameLower === speakerLower || nameLower.includes(speakerLower) || speakerLower.includes(nameLower)
               })
               if (speakerChar) characterObjects = [speakerChar]
-              dialogueFrameContext = beat.line ?? ''
+              const lineText = beat.line?.trim() || ''
+              const speakerName = beat.character.trim()
+              dialogueFrameContext =
+                `Storyboard dialogue frame. Focus on ${speakerName || 'the speaker'} delivering this line: "${lineText}". ` +
+                'Frame the speaking character prominently — medium close-up or over-the-shoulder — with scene continuity preserved. '
+              effectiveShotType = effectiveShotType || 'medium close-up'
             }
             console.log(`[Scene Image] Beat frame ${beatIndex}: kind=${beat.kind}`)
           }
@@ -524,7 +554,7 @@ export async function POST(req: NextRequest) {
       references = project.metadata?.visionPhase?.references || []  // Capture references
       
       if (scene) {
-        // Dialogue storyboard frame: focus on the speaking character
+        // Dialogue storyboard frame: focus on the speaking character (or backdrop for narration)
         if (isDialogueFrame) {
           const dialogueLines = Array.isArray(scene.dialogue) ? scene.dialogue : []
           const line = dialogueLines[dialogueIndex]
@@ -536,12 +566,30 @@ export async function POST(req: NextRequest) {
           }
           const speakerName = String(line.character || '').trim()
           const lineText = String(line.line ?? line.text ?? '').trim()
-          const voiceDir = line.voiceDirection ? ` (${line.voiceDirection})` : ''
-          dialogueFrameContext =
-            `Storyboard dialogue frame. Focus on ${speakerName || 'the speaker'} delivering this line${voiceDir}: "${lineText}". ` +
-            'Frame the speaking character prominently — medium close-up or over-the-shoulder — with scene continuity preserved. '
-          effectiveShotType = effectiveShotType || 'medium close-up'
-          effectiveCameraAngle = effectiveCameraAngle || 'eye level'
+          const isNarrationLine =
+            line.kind === 'narration' ||
+            line.characterId === 'narrator' ||
+            speakerName.toUpperCase() === NARRATOR_CHARACTER
+
+          if (isNarrationLine) {
+            beatKindForIntelligence = 'narration'
+            characterSelectionExplicit = true
+            characterObjects = []
+            dialogueFrameContext =
+              `Storyboard voiceover backdrop frame. NO narrator on screen, NO talking head, NO lip-sync. ` +
+              `Illustrate the visual scene and mood implied by this voiceover` +
+              (lineText ? `: "${lineText}"` : '') +
+              `. Show environment, subjects, and atmosphere only. `
+            effectiveShotType = effectiveShotType || 'wide shot'
+          } else {
+            beatKindForIntelligence = 'dialogue'
+            const voiceDir = line.voiceDirection ? ` (${line.voiceDirection})` : ''
+            dialogueFrameContext =
+              `Storyboard dialogue frame. Focus on ${speakerName || 'the speaker'} delivering this line${voiceDir}: "${lineText}". ` +
+              'Frame the speaking character prominently — medium close-up or over-the-shoulder — with scene continuity preserved. '
+            effectiveShotType = effectiveShotType || 'medium close-up'
+            effectiveCameraAngle = effectiveCameraAngle || 'eye level'
+          }
         } else if (isCustomFrame) {
           const customFrames = Array.isArray(scene.storyboardFrames) ? scene.storyboardFrames : []
           const customFrame = customFrames.find((f: any) => f?.id === customFrameId)
@@ -974,6 +1022,7 @@ export async function POST(req: NextRequest) {
         totalScenes: scenes.length,
         filmContext,
         sceneType,
+        beatKind: beatKindForIntelligence,
         directionMetadata,
         characters: characterContexts,
         props: propsToPassToAI,

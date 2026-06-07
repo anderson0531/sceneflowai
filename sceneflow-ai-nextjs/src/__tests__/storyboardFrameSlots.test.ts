@@ -39,14 +39,16 @@ describe('storyboard frame slots', () => {
 
     const slots = enumerateStoryboardFrameSlots(scene)
     const narrator = slots.find((s) => s.beatId === 'bt_narr')
+    // Leading action beat is excluded from playback timeline when followed by spoken beat
+    expect(narrator?.beatIndex).toBe(0)
     expect(narrator?.isPlaceholder).toBe(true)
     expect(narrator?.isMissing).toBe(false)
     expect(narrator?.ownImageUrl).toBeUndefined()
     expect(narrator?.displayImageUrl).toBe('https://example.com/establishing.jpg')
 
     const stats = countStoryboardFrameStats(scene)
-    expect(stats.withImage).toBe(1)
-    expect(stats.total).toBe(2)
+    expect(stats.withImage).toBe(0)
+    expect(stats.total).toBe(1)
     expect(stats.placeholders).toBe(1)
     expect(countStoryboardFramesNeedingGeneration(scene)).toBe(1)
     expect(countMissingStoryboardFrames(scene)).toBe(0)

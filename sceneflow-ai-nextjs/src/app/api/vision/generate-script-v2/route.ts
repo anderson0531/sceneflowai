@@ -15,6 +15,7 @@ import {
   embedCharacterIdsInSceneBeats,
   migrateProjectToBeats,
 } from '@/lib/script/beatMigration'
+import { ensureCinematicBookends } from '@/lib/script/cinematicBookends'
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
 
@@ -306,6 +307,21 @@ export async function POST(request: NextRequest) {
               
               // Post-process: consolidate any fragmented scenes
               allScenes = consolidateFragmentedScenes(allScenes)
+
+              const bookendsResult = ensureCinematicBookends(allScenes, {
+                title: treatment.title,
+                logline: treatment.logline,
+                genre: treatment.genre,
+                tone: treatment.tone,
+                author_writer: treatment.author_writer,
+              })
+              allScenes = bookendsResult.scenes
+              if (bookendsResult.injectedTitle || bookendsResult.injectedOutro) {
+                console.log('[Script Gen V2] Injected cinematic bookends:', {
+                  injectedTitle: bookendsResult.injectedTitle,
+                  injectedOutro: bookendsResult.injectedOutro,
+                })
+              }
               
               // Validate against subscription limit
               if (subscriptionMaxScenes && allScenes.length > subscriptionMaxScenes) {
@@ -1084,15 +1100,32 @@ OUTPUT FORMAT (JSON):
   "scenes": [
     {
       "sceneNumber": 1,
+      "heading": "INT. TITLE SEQUENCE - DAY",
+      "cinematicType": "title",
+      "characters": [],
+      "action": "Title sequence summary (legacy — reflected in action beats)",
+      "beats": [
+        {"kind": "action", "actionDescription": "Wide cinematic opening: atmospheric motif, slow drift, dramatic lighting..."},
+        {"kind": "action", "actionDescription": "Title card reveal: bold centered typography for '${treatment.title || 'FILM TITLE'}'..."},
+        {"kind": "action", "actionDescription": "Title holds then dissolves into opening atmosphere..."}
+      ],
+      "dialogue": [],
+      "creditLines": [{"name": "${treatment.title || 'Film Title'}", "role": "", "isPrimary": true}],
+      "visualDescription": "Cinematic title sequence, genre-appropriate motion graphics",
+      "duration": 20
+    },
+    {
+      "sceneNumber": 2,
       ${sceneHeadingExample},
       "characters": ["Character Name 1", "Character Name 2"],
       "action": "Summary scene action (legacy field — also reflected in action beats)",
       "narration": "Optional legacy narration summary",
       "beats": [
-        {"kind": "action", "actionDescription": "Wide establishing shot of the location..."},
-        {"kind": "narration", "character": "NARRATOR", "line": "Voiceover opening..."},
+        {"kind": "action", "actionDescription": "Wide establishing shot of the location, golden hour light..."},
+        {"kind": "narration", "character": "NARRATOR", "line": "[calm, measured] Voiceover opening..."},
+        {"kind": "action", "actionDescription": "Close-up: character's hands on the desk, shallow depth of field..."},
         {"kind": "dialogue", "character": "Character Name", "line": "[emotion] Dialogue..."},
-        {"kind": "action", "actionDescription": "Character reacts, close-up on hands..."},
+        {"kind": "action", "actionDescription": "Reaction shot: character turns toward window, concern on face..."},
         {"kind": "dialogue", "character": "Character Name", "line": "[emotion] Response..."}
       ],
       "dialogue": [
@@ -1102,23 +1135,51 @@ OUTPUT FORMAT (JSON):
       "duration": 75,
       "sfx": [{"time": 0, "description": "Sound effect"}],
       "music": {"description": "Background music mood"}
+    },
+    {
+      "sceneNumber": "N (final)",
+      "heading": "INT. CREDITS - DAY",
+      "cinematicType": "outro",
+      "characters": [],
+      "action": "Closing credits summary (legacy — reflected in action beats)",
+      "beats": [
+        {"kind": "action", "actionDescription": "Closing visual: lingering atmosphere from final story beat..."},
+        {"kind": "action", "actionDescription": "Credits roll: elegant scrolling typography over cinematic background..."},
+        {"kind": "action", "actionDescription": "End card: title logo holds, fade to black..."}
+      ],
+      "dialogue": [],
+      "creditLines": [{"name": "${treatment.author_writer || 'Creator'}", "role": "Written by", "isPrimary": false}],
+      "visualDescription": "Professional end credits sequence",
+      "duration": 25
     }
   ]
 }
 
+CINEMATIC BOOKENDS (MANDATORY):
+• Scene 1 MUST be the title sequence (cinematicType: "title", heading: "INT. TITLE SEQUENCE - DAY")
+• Final scene MUST be closing credits (cinematicType: "outro", heading: "INT. CREDITS - DAY")
+• Bookend scenes: characters: [], no dialogue beats, duration 15–30s (EXEMPT from 45s minimum)
+• Title/credits beats[]: 2–4 action beats each — opening motif, title/credits reveal, end card
+• Optional single narration beat in title sequence only — never dialogue in bookends
+• Bookend scenes do NOT count toward the ${sceneLimit} main content segment limit
+
 BEAT TIMELINE (CRITICAL — PRIMARY PRODUCTION SOURCE):
 • Each scene MUST include an ordered "beats" array mixing kind: "dialogue", "action", "narration"
-• Insert "action" beats between dialogue when visuals must change (reactions, inserts, B-roll, establishing)
+• Action beats are MANDATORY for visuals without spoken lines: reactions, inserts, B-roll, camera moves, environment changes, blocking without speech
+• NEVER put stage directions in "line" — they belong in actionDescription
+• Rhythm rule: no more than 2 consecutive spoken beats (dialogue or narration) without an intervening action beat
+• actionDescription format: shot type + subject + motion/mood (e.g., "Close-up: hands trembling on keyboard, shallow DOF, cool blue light")
+• One beat = one storyboard frame = one video segment — each action beat must be visually distinct from adjacent spoken beats
 • Target ~8–10 seconds per beat for video clip alignment
-• "action" beats use actionDescription only — NO spoken line
+• "action" beats use actionDescription only — NO spoken line, NO character field
 • "narration" beats use character "NARRATOR" with spoken line
 • "dialogue" beats must contain SPOKEN words with [emotion] tags — NO stage directions in line
 • beats[] order is the storyboard frame order (one frame per beat)
 • Keep legacy "dialogue" and "action" fields in sync with beats content
 
 IMPORTANT CONSTRAINTS:
-• Maximum ${sceneLimit} segments total (consolidate if needed)
-• Each segment MINIMUM 45 seconds
+• Maximum ${sceneLimit} main content segments (bookends excluded; consolidate if needed)
+• Each main content segment MINIMUM 45 seconds (title/credits bookends exempt)
 • Write the COMPLETE script from beginning to end
 • Do NOT duplicate dialogue or segments
 • Ensure "action" is specific to the events of the segment, NOT repeated across segments

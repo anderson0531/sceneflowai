@@ -155,6 +155,8 @@ describe('segmentGuidePrompt', () => {
 
     expect(composeGuidePromptFromElements(withEdit, {})).toContain("'Edited narration text.'")
     expect(composeGuidePromptFromElements(withoutEdit, {})).toContain("'Fallback narration text.'")
+    expect(composeGuidePromptFromElements(withEdit, {})).toContain('no on-screen narrator')
+    expect(composeGuidePromptFromElements(withEdit, {})).not.toContain('A narrator with')
   })
 
   it('omits SFX from composed guide prompt (sound design is outside Veo text)', () => {

@@ -7,6 +7,8 @@
  */
 
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
+import { isCinematicBookendScene } from '@/lib/script/cinematicBookends'
+import type { BeatKind, SceneBeat } from '@/lib/script/segmentTypes'
 
 export interface QAIssue {
   type: 'error' | 'warning' | 'info'
@@ -53,6 +55,26 @@ interface Scene {
   characters?: string[]
   duration?: number
   imageUrl?: string
+  cinematicType?: string
+  beats?: SceneBeat[]
+}
+
+function isSpokenBeatKind(kind: BeatKind): boolean {
+  return kind === 'dialogue' || kind === 'narration'
+}
+
+function countConsecutiveSpokenBeats(beats: SceneBeat[]): number {
+  let maxRun = 0
+  let currentRun = 0
+  for (const beat of beats) {
+    if (isSpokenBeatKind(beat.kind)) {
+      currentRun++
+      maxRun = Math.max(maxRun, currentRun)
+    } else {
+      currentRun = 0
+    }
+  }
+  return maxRun
 }
 
 /**
@@ -114,6 +136,70 @@ export function runScriptQA(
       totalDuration += scene.duration
     }
 
+    const isBookend = isCinematicBookendScene(scene as Record<string, unknown>)
+
+    // Duration minimum (main content scenes only)
+    if (!isBookend && scene.duration != null && scene.duration < 45) {
+      issues.push({
+        type: 'warning',
+        category: 'formatting',
+        sceneIndex: sceneIdx,
+        message: `Scene ${sceneNum} duration (${scene.duration}s) is below the 45s minimum for main content`,
+        suggestion: 'Expand scene content or consolidate with adjacent scenes',
+        autoFixable: false,
+      })
+    }
+
+    // Beat timeline validation
+    const beats = Array.isArray(scene.beats) ? scene.beats : []
+    if (!isBookend && beats.length === 0) {
+      issues.push({
+        type: 'error',
+        category: 'formatting',
+        sceneIndex: sceneIdx,
+        message: `Scene ${sceneNum} is missing beats[] — required for storyboard production`,
+        suggestion: 'Add an ordered beats array with action, dialogue, and narration beats',
+        autoFixable: false,
+      })
+    }
+
+    if (beats.length > 0) {
+      const consecutiveSpoken = countConsecutiveSpokenBeats(beats)
+      if (consecutiveSpoken >= 3) {
+        issues.push({
+          type: 'warning',
+          category: 'formatting',
+          sceneIndex: sceneIdx,
+          message: `Scene ${sceneNum} has ${consecutiveSpoken} consecutive spoken beats without an action beat`,
+          suggestion: 'Insert action beats between dialogue/narration to drive visual changes',
+          autoFixable: false,
+        })
+      }
+
+      beats.forEach((beat, beatIdx) => {
+        if (beat.kind === 'action' && beat.line?.trim()) {
+          issues.push({
+            type: 'warning',
+            category: 'formatting',
+            sceneIndex: sceneIdx,
+            message: `Scene ${sceneNum} action beat ${beatIdx + 1} has a spoken line — action beats must use actionDescription only`,
+            suggestion: 'Move spoken text to a dialogue or narration beat',
+            autoFixable: false,
+          })
+        }
+        if (isSpokenBeatKind(beat.kind) && !beat.line?.trim() && beat.actionDescription?.trim()) {
+          issues.push({
+            type: 'warning',
+            category: 'formatting',
+            sceneIndex: sceneIdx,
+            message: `Scene ${sceneNum} ${beat.kind} beat ${beatIdx + 1} has actionDescription but no line`,
+            suggestion: 'Use actionDescription on action beats; spoken beats need a line field',
+            autoFixable: false,
+          })
+        }
+      })
+    }
+
     // Validate dialogue
     if (scene.dialogue && Array.isArray(scene.dialogue)) {
       for (let dlgIdx = 0; dlgIdx < scene.dialogue.length; dlgIdx++) {
@@ -163,8 +249,11 @@ export function runScriptQA(
           })
         }
 
-        // Emotion tag validation
-        if (dialogueText && !hasEmotionTag(dialogueText)) {
+        // Emotion tag validation (skip narrator lines)
+        const isNarratorLine =
+          dlg.character?.toUpperCase() === 'NARRATOR' ||
+          (dlg as DialogueLine & { kind?: string }).kind === 'narration'
+        if (dialogueText && !isNarratorLine && !hasEmotionTag(dialogueText)) {
           missingEmotionTags++
           issues.push({
             type: 'warning',
