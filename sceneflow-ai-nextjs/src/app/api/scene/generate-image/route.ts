@@ -22,6 +22,7 @@ import {
   type LocationContext,
 } from '@/lib/intelligence/scene-image-intelligence'
 import { getSceneBeats } from '@/lib/script/beatMigration'
+import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120  // Increased for new AI image models
@@ -1164,8 +1165,8 @@ export async function POST(req: NextRequest) {
             // Find matching character reference for wardrobe info
             const matchingCharRef = characterReferences.find((cr: any) => cr.name === ref.subjectDescription || cr.referenceId === ref.referenceId)
             const isCostumeRef = matchingCharRef?.hasCostumeReference
-            const wardrobeLabel = isCostumeRef 
-              ? ' (COSTUME REFERENCE — wearing scene-specific outfit, preserve exactly)'
+            const wardrobeLabel = isCostumeRef
+              ? ' (TURNAROUND REFERENCE — 4-view costume sheet, preserve outfit exactly)'
               : matchingCharRef?.defaultWardrobe ? ` wearing ${matchingCharRef.defaultWardrobe}` : ''
             allReferenceImages.push({
               imageUrl: ref.imageUrl,
@@ -1205,7 +1206,7 @@ export async function POST(req: NextRequest) {
               
               // WARDROBE ANCHORING: Skip if character has costume reference (outfit visible in image)
               if (matchingCharRef?.hasCostumeReference) {
-                geminiPrompt += `\n  COSTUME: Character is shown wearing their scene-specific outfit in the reference image. Preserve this outfit EXACTLY as shown.`
+                geminiPrompt += `\n  ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}`
               } else if (matchingCharRef?.defaultWardrobe) {
                 geminiPrompt += `\n  WARDROBE: MUST be wearing EXACTLY "${matchingCharRef.defaultWardrobe}"`
                 if (matchingCharRef.wardrobeAccessories) {
@@ -1245,7 +1246,7 @@ export async function POST(req: NextRequest) {
               .filter((cr: any) => cr.referenceId && cr.hasCostumeReference)
               .map((cr: any) => cr.name)
             if (costumeRefNames.length > 0) {
-              geminiPrompt += `- COSTUME REFERENCE: ${costumeRefNames.join(', ')} — preserve outfit from reference image exactly\n`
+              geminiPrompt += `- TURNAROUND REFERENCE: ${costumeRefNames.join(', ')} — ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}\n`
             }
           }
           geminiPrompt += `- No dialogue captions, subtitles, or watermarks\n`

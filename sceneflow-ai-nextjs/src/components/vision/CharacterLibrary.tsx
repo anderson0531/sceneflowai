@@ -68,6 +68,7 @@ import {
 import type { EdgeVoiceConfig } from "@/types/vision";
 
 export interface CharacterLibraryProps {
+  projectId?: string;
   characters: any[];
   /** Script scenes for character detection */
   scenes?: any[];
@@ -154,7 +155,7 @@ interface CharacterWardrobe {
   createdAt: string;
   previewImageUrl?: string; // Legacy: AI-generated preview of character in this outfit
   headshotUrl?: string; // Portrait headshot (1:1) showing character face with outfit context
-  fullBodyUrl?: string; // Full body shot (3:4) showing complete outfit head to toe
+  fullBodyUrl?: string; // 4-view turnaround reference sheet (front, 3/4, profile, back)
   sceneNumbers?: number[]; // Scenes where this outfit is used (from script analysis)
   reason?: string; // AI explanation for why this outfit is needed
 }
@@ -232,9 +233,11 @@ interface CharacterCardProps {
     logline?: string;
     visualStyle?: string;
   };
+  projectId?: string;
 }
 
 export function CharacterLibrary({
+  projectId,
   characters,
   scenes = [],
   onRegenerateCharacter,
@@ -593,6 +596,7 @@ export function CharacterLibrary({
                   enableDrag={enableDrag}
                   onOpenCharacterPrompt={() => setPromptBuilderOpenFor(charId)}
                   screenplayContext={screenplayContext}
+                  projectId={projectId}
                 />
               );
             })}
@@ -757,6 +761,7 @@ const CharacterCard = ({
   enableDrag = false,
   onOpenCharacterPrompt,
   screenplayContext,
+  projectId,
 }: CharacterCardProps) => {
   const [imageError, setImageError] = useState(false); // Track if image failed to load
 
@@ -839,16 +844,10 @@ const CharacterCard = ({
     improvements: string[];
   } | null>(null);
 
-  // Wardrobe preview generation state
-  const [generatingPreviewFor, setGeneratingPreviewFor] = useState<
+  const [generatingWardrobeRefFor, setGeneratingWardrobeRefFor] = useState<
     string | null
   >(null);
   const [isGeneratingAllPreviews, setIsGeneratingAllPreviews] = useState(false);
-
-  // Costume reference generation state (uses /api/image/edit to create character-in-outfit reference)
-  const [generatingCostumeRefFor, setGeneratingCostumeRefFor] = useState<
-    string | null
-  >(null);
   const [uploadingWardrobeId, setUploadingWardrobeId] = useState<string | null>(
     null,
   );
@@ -1612,150 +1611,99 @@ const CharacterCard = ({
     }
   };
 
-  // Generate wardrobe preview images (headshot + full body)
-  const handleGenerateWardrobePreview = async (wardrobeId: string) => {
+  const buildWardrobeTurnaroundPayload = (wardrobe: CharacterWardrobe) => ({
+    projectId,
+    characterId,
+    wardrobeId: wardrobe.id,
+    characterName: character.name,
+    characterReferenceImageUrl: character.referenceImage,
+    appearanceDescription:
+      character.appearanceDescription ||
+      generateFallbackDescription(character),
+    wardrobeDescription: wardrobe.description,
+    wardrobeAccessories: wardrobe.accessories,
+    gender: character.gender,
+  });
+
+  const persistWardrobeTurnaround = (
+    wardrobe: CharacterWardrobe,
+    fullBodyUrl: string,
+    previewImageUrl?: string,
+  ) => {
+    onUpdateWardrobe?.(characterId, {
+      wardrobeId: wardrobe.id,
+      action: "update",
+      defaultWardrobe: wardrobe.description,
+      wardrobeAccessories: wardrobe.accessories,
+      fullBodyUrl,
+      previewImageUrl: previewImageUrl || fullBodyUrl,
+    });
+
+    if (expandedWardrobe?.id === wardrobe.id) {
+      setExpandedWardrobe({
+        ...expandedWardrobe,
+        fullBodyUrl,
+        previewImageUrl: previewImageUrl || fullBodyUrl,
+      });
+    }
+  };
+
+  const generateWardrobeTurnaround = async (wardrobeId: string) => {
     const wardrobe = wardrobes.find((w) => w.id === wardrobeId);
-    if (!wardrobe || !character.referenceImage) {
+    if (!wardrobe) return;
+
+    if (!character.referenceImage) {
       toast.error("Character reference image is required");
       return;
     }
 
-    setGeneratingPreviewFor(wardrobeId);
+    if (!wardrobe.description?.trim()) {
+      toast.error(
+        "Wardrobe needs a description first. Use Enhance to add details.",
+      );
+      return;
+    }
+
+    setGeneratingWardrobeRefFor(wardrobeId);
     try {
       const response = await fetch("/api/character/generate-wardrobe-preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          characterId,
-          wardrobeId,
-          characterName: character.name,
-          characterReferenceImageUrl: character.referenceImage,
-          appearanceDescription:
-            character.appearanceDescription ||
-            generateFallbackDescription(character),
-          wardrobeDescription: wardrobe.description,
-          wardrobeAccessories: wardrobe.accessories,
-          gender: character.gender, // Pass gender for pronoun usage in prompts
-        }),
+        body: JSON.stringify(buildWardrobeTurnaroundPayload(wardrobe)),
       });
 
       if (!response.ok) {
         const error = await response.json();
         if (error.code === "INSUFFICIENT_CREDITS") {
           toast.error(
-            `Insufficient credits. Need ${error.required} credits for headshot + full body.`,
+            `Insufficient credits. Need ${error.required} credits for turnaround reference.`,
           );
           return;
         }
-        throw new Error(error.error || "Preview generation failed");
+        throw new Error(error.error || "Turnaround generation failed");
       }
 
       const result = await response.json();
-
-      // Update wardrobe with headshot and full body URLs
-      onUpdateWardrobe?.(characterId, {
-        wardrobeId,
-        action: "update",
-        defaultWardrobe: wardrobe.description,
-        wardrobeAccessories: wardrobe.accessories,
-        headshotUrl: result.headshotUrl,
-        fullBodyUrl: result.fullBodyUrl,
-        // Legacy compatibility
-        previewImageUrl: result.previewImageUrl || result.fullBodyUrl,
-      });
-
-      toast.success("Wardrobe preview generated (headshot + full body)!");
+      persistWardrobeTurnaround(
+        wardrobe,
+        result.fullBodyUrl,
+        result.previewImageUrl,
+      );
+      toast.success("Turnaround reference generated!");
     } catch (error) {
-      console.error("[Wardrobe Preview] Error:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Preview generation failed",
-      );
-    } finally {
-      setGeneratingPreviewFor(null);
-    }
-  };
-
-  // Generate costume reference image using /api/image/edit
-  // This creates a character reference image wearing the specific outfit,
-  // which is then used as the character reference during scene image generation
-  // instead of text-based wardrobe descriptions
-  const handleGenerateCostumeReference = async (wardrobeId: string) => {
-    const wardrobe = wardrobes.find((w) => w.id === wardrobeId);
-    if (!wardrobe) return;
-
-    if (!character.referenceImage) {
-      toast.error(
-        "Character reference image is required to generate a costume reference",
-      );
-      return;
-    }
-
-    if (!wardrobe.description) {
-      toast.error(
-        "Wardrobe needs a description first. Use ✨ Enhance to add details.",
-      );
-      return;
-    }
-
-    setGeneratingCostumeRefFor(wardrobeId);
-    try {
-      // Build an edit instruction that changes the outfit while preserving identity
-      const instruction = `Change this person's clothing to: ${wardrobe.description}${wardrobe.accessories ? `. Accessories: ${wardrobe.accessories}` : ""}. Keep the exact same person, face, expression, pose, and background. Only change the outfit.`;
-
-      const response = await fetch("/api/image/edit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "instruction",
-          sourceImage: character.referenceImage,
-          instruction,
-          subjectReference: {
-            imageUrl: character.referenceImage,
-            description: character.appearanceDescription || character.name,
-          },
-          saveToBlob: true,
-          blobPrefix: `costume-ref-${characterId}`,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Costume reference generation failed");
-      }
-
-      const result = await response.json();
-
-      // Save the costume reference URL to the wardrobe's fullBodyUrl field
-      onUpdateWardrobe?.(characterId, {
-        wardrobeId,
-        action: "update",
-        defaultWardrobe: wardrobe.description,
-        wardrobeAccessories: wardrobe.accessories,
-        fullBodyUrl: result.imageUrl,
-      });
-
-      // Update expanded wardrobe dialog if showing this wardrobe
-      if (expandedWardrobe?.id === wardrobeId) {
-        setExpandedWardrobe({
-          ...expandedWardrobe,
-          fullBodyUrl: result.imageUrl,
-        });
-      }
-
-      toast.success(
-        "Costume reference created! This image will be used during scene generation.",
-      );
-    } catch (error) {
-      console.error("[Costume Reference] Error:", error);
+      console.error("[Wardrobe Turnaround] Error:", error);
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to generate costume reference",
+          : "Failed to generate turnaround reference",
       );
     } finally {
-      setGeneratingCostumeRefFor(null);
+      setGeneratingWardrobeRefFor(null);
     }
   };
+
+  const handleGenerateWardrobePreview = generateWardrobeTurnaround;
+  const handleGenerateCostumeReference = generateWardrobeTurnaround;
 
   const openWardrobeFilePicker = (wardrobeId: string) => {
     if (uploadingWardrobeId) return;
@@ -1836,12 +1784,14 @@ const CharacterCard = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          projectId,
           characterId,
           characterName: character.name,
           characterReferenceImageUrl: character.referenceImage,
           appearanceDescription:
             character.appearanceDescription ||
             generateFallbackDescription(character),
+          gender: character.gender,
           batch: true,
           wardrobes: wardrobesWithoutPreviews.map((w) => ({
             wardrobeId: w.id,
@@ -1855,35 +1805,30 @@ const CharacterCard = ({
         const error = await response.json();
         if (error.code === "INSUFFICIENT_CREDITS") {
           toast.error(
-            `Insufficient credits. Need ${error.required} credits for ${error.wardrobeCount} wardrobes (headshot + full body each).`,
+            `Insufficient credits. Need ${error.required} credits for ${error.wardrobeCount} turnaround reference(s).`,
           );
           return;
         }
-        throw new Error(error.error || "Batch preview generation failed");
+        throw new Error(error.error || "Batch turnaround generation failed");
       }
 
       const result = await response.json();
 
-      // Update each wardrobe with its headshot and full body URLs
       for (const item of result.results) {
         if (item.success) {
           const wardrobe = wardrobes.find((w) => w.id === item.wardrobeId);
           if (wardrobe) {
-            onUpdateWardrobe?.(characterId, {
-              wardrobeId: item.wardrobeId,
-              action: "update",
-              defaultWardrobe: wardrobe.description,
-              wardrobeAccessories: wardrobe.accessories,
-              headshotUrl: item.headshotUrl,
-              fullBodyUrl: item.fullBodyUrl,
-              previewImageUrl: item.previewImageUrl || item.fullBodyUrl,
-            });
+            persistWardrobeTurnaround(
+              wardrobe,
+              item.fullBodyUrl,
+              item.previewImageUrl,
+            );
           }
         }
       }
 
       toast.success(
-        `Generated ${result.successCount} wardrobe preview set(s) (headshot + full body)!`,
+        `Generated ${result.successCount} turnaround reference(s)!`,
       );
     } catch (error) {
       console.error("[Wardrobe Preview Batch] Error:", error);
@@ -2656,6 +2601,10 @@ const CharacterCard = ({
             </button>
             {wardrobeSectionExpanded && (
               <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 space-y-4">
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Turnaround references work best with neutral upright pose, flat even lighting,
+                  and a plain gray or white background. Uploads should show the full outfit clearly.
+                </p>
                 {/* Primary CTA: Analyze Script for Outfits (Automate) */}
                 {scenes &&
                   scenes.length > 0 &&
@@ -2943,7 +2892,7 @@ const CharacterCard = ({
                         }`}
                       >
                         {/* Large Image Format */}
-                        <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                        <div className="relative aspect-[21/9] bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                           {w.fullBodyUrl ||
                           w.headshotUrl ||
                           w.previewImageUrl ? (
@@ -2955,7 +2904,7 @@ const CharacterCard = ({
                                   w.previewImageUrl
                                 }
                                 alt={w.name}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain"
                               />
                               <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all opacity-0 hover:opacity-100 flex items-center justify-center gap-2">
                                 <button
@@ -2982,15 +2931,15 @@ const CharacterCard = ({
                                     e.stopPropagation();
                                     handleGenerateCostumeReference(w.id);
                                   }}
-                                  disabled={generatingCostumeRefFor === w.id}
+                                  disabled={generatingWardrobeRefFor === w.id}
                                   className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-green-600 dark:text-green-400 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm disabled:opacity-50"
                                   title={
                                     w.fullBodyUrl
-                                      ? "Regenerate costume reference"
-                                      : "Generate costume reference"
+                                      ? "Regenerate turnaround reference"
+                                      : "Generate turnaround reference"
                                   }
                                 >
-                                  {generatingCostumeRefFor === w.id ? (
+                                  {generatingWardrobeRefFor === w.id ? (
                                     <Loader className="w-4 h-4 animate-spin" />
                                   ) : (
                                     <ImageIcon className="w-4 h-4" />
@@ -3073,15 +3022,15 @@ const CharacterCard = ({
                                     e.stopPropagation();
                                     handleGenerateCostumeReference(w.id);
                                   }}
-                                  disabled={generatingCostumeRefFor === w.id}
+                                  disabled={generatingWardrobeRefFor === w.id}
                                   className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded shadow flex items-center gap-1"
                                 >
-                                {generatingCostumeRefFor === w.id ? (
+                                {generatingWardrobeRefFor === w.id ? (
                                   <Loader className="w-3 h-3 animate-spin" />
                                 ) : (
                                   <Sparkles className="w-3 h-3" />
                                 )}
-                                Generate Costume
+                                Generate Turnaround
                               </button>
                               </div>
                             </div>
@@ -3177,7 +3126,7 @@ const CharacterCard = ({
                         handleGenerateAllPreviews();
                       }}
                       disabled={
-                        isGeneratingAllPreviews || generatingPreviewFor !== null
+                        isGeneratingAllPreviews || !!generatingWardrobeRefFor
                       }
                       className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-purple-400 border border-purple-500/20 rounded-lg hover:bg-purple-500/10 disabled:opacity-50"
                     >
@@ -3189,7 +3138,7 @@ const CharacterCard = ({
                       ) : (
                         <>
                           <ImageIcon className="w-3 h-3" />
-                          Generate Previews (
+                          Generate Turnarounds (
                           {
                             wardrobes.filter(
                               (w) => !w.fullBodyUrl && !w.previewImageUrl,
@@ -3409,28 +3358,36 @@ const CharacterCard = ({
 
             {expandedWardrobe && (
               <div className="space-y-6 py-4">
-                {/* Full Body Studio Portrait / Costume Reference */}
+                {/* Turnaround reference sheet */}
                 <div className="flex justify-center">
-                  <div className="w-full max-w-sm space-y-2">
-                    <div className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <div className="w-full max-w-2xl space-y-2">
+                    <div className="flex flex-col items-center gap-1 text-sm font-medium text-gray-600 dark:text-gray-400">
                       {expandedWardrobe.fullBodyUrl ? (
                         <>
-                          <ImageIcon className="w-4 h-4 text-green-500" />
-                          <span className="text-green-600 dark:text-green-400">
-                            Costume Reference
-                          </span>
-                          <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-500 rounded-full">
-                            Used in generation
+                          <div className="flex items-center gap-2">
+                            <ImageIcon className="w-4 h-4 text-green-500" />
+                            <span className="text-green-600 dark:text-green-400">
+                              Turnaround Reference
+                            </span>
+                            <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-500 rounded-full">
+                              Used in generation
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-gray-500">
+                            Front · 3/4 · Profile · Back
                           </span>
                         </>
                       ) : (
                         <>
                           <Shirt className="w-4 h-4" />
-                          Wardrobe Preview
+                          <span>Turnaround Reference</span>
+                          <span className="text-[10px] text-gray-500">
+                            Front · 3/4 · Profile · Back — used in scene generation
+                          </span>
                         </>
                       )}
                     </div>
-                    <div className="aspect-[9/16] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <div className="aspect-[21/9] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                       {expandedWardrobe.fullBodyUrl ||
                       expandedWardrobe.previewImageUrl ? (
                         <>
@@ -3439,8 +3396,8 @@ const CharacterCard = ({
                               expandedWardrobe.fullBodyUrl ||
                               expandedWardrobe.previewImageUrl
                             }
-                            alt={`${expandedWardrobe.name} full body`}
-                            className="w-full h-full object-cover"
+                            alt={`${expandedWardrobe.name} turnaround`}
+                            className="w-full h-full object-contain"
                             onError={(e) => {
                               // Hide broken image and show placeholder
                               e.currentTarget.style.display = "none";
@@ -3459,12 +3416,12 @@ const CharacterCard = ({
                                   expandedWardrobe.id,
                                 );
                               }}
-                              disabled={generatingPreviewFor !== null}
+                              disabled={!!generatingWardrobeRefFor}
                               className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
                             >
-                              {generatingPreviewFor === expandedWardrobe.id
+                              {generatingWardrobeRefFor === expandedWardrobe.id
                                 ? "Generating..."
-                                : "Regenerate Preview"}
+                                : "Regenerate Turnaround"}
                             </button>
                           </div>
                         </>
@@ -3500,12 +3457,12 @@ const CharacterCard = ({
                                   expandedWardrobe.id,
                                 );
                               }}
-                            disabled={generatingPreviewFor !== null}
+                            disabled={!!generatingWardrobeRefFor}
                             className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
                           >
-                            {generatingPreviewFor === expandedWardrobe.id
+                            {generatingWardrobeRefFor === expandedWardrobe.id
                               ? "Generating..."
-                              : "Generate Preview"}
+                              : "Generate Turnaround"}
                           </button>
                           </div>
                         </div>
@@ -3663,10 +3620,10 @@ const CharacterCard = ({
                     handleGenerateCostumeReference(expandedWardrobe.id);
                   }
                 }}
-                disabled={generatingCostumeRefFor !== null}
+                disabled={!!generatingWardrobeRefFor}
                 className="border-green-500/50 text-green-600 dark:text-green-400 hover:bg-green-500/10"
               >
-                {generatingCostumeRefFor === expandedWardrobe?.id ? (
+                {generatingWardrobeRefFor === expandedWardrobe?.id ? (
                   <>
                     <Loader className="w-4 h-4 mr-2 animate-spin" />
                     Generating...
@@ -3675,8 +3632,8 @@ const CharacterCard = ({
                   <>
                     <ImageIcon className="w-4 h-4 mr-2" />
                     {expandedWardrobe?.fullBodyUrl
-                      ? "Regenerate Costume Ref"
-                      : "Generate Costume Ref"}
+                      ? "Regenerate Turnaround"
+                      : "Generate Turnaround"}
                   </>
                 )}
               </Button>

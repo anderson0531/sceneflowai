@@ -20,6 +20,7 @@ export interface CharacterWardrobe {
   accessories?: string
   previewImageUrl?: string
   headshotUrl?: string
+  /** Turnaround reference sheet (front, 3/4, profile, back) used as costume reference in generation */
   fullBodyUrl?: string
   sceneNumbers?: number[]
   isDefault: boolean

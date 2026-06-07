@@ -5,28 +5,31 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import {
+  WARDROBE_REFERENCE_ASPECT_RATIO,
+  buildWardrobeTurnaroundPrompt,
+  buildWardrobeTurnaroundSubjectDescription,
+} from '@/lib/character/wardrobeReferencePrompts'
 
 export const runtime = 'nodejs'
 export const maxDuration = 180
 
 /**
- * Generate Wardrobe Preview API
- * 
- * Generates a single full-body studio portrait of a character in a specific wardrobe.
- * Uses the character's reference image for facial consistency.
- * Based on script context, puts the character in role (expression, demeanor).
- * 
- * Credit cost: 5 credits per wardrobe (1 full-body image)
+ * Generate Wardrobe Turnaround Reference API
+ *
+ * Generates a 4-view costume turnaround sheet (front, 3/4, profile, back)
+ * for use as a production wardrobe reference in scene/frame generation.
+ *
+ * Credit cost: 5 credits per wardrobe (1 turnaround sheet)
  */
 
-const CREDIT_COST_PER_WARDROBE = IMAGE_CREDITS.GEMINI_EDIT // 5 credits for full body image
+const CREDIT_COST_PER_WARDROBE = IMAGE_CREDITS.GEMINI_EDIT
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Authenticate user
     const session = await getServerSession(authOptions)
     const userId = session?.user?.id || session?.user?.email
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required', code: 'AUTH_REQUIRED' },
@@ -35,7 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { 
+    const {
       characterId,
       projectId,
       wardrobeId,
@@ -44,15 +47,11 @@ export async function POST(req: NextRequest) {
       appearanceDescription,
       wardrobeDescription,
       wardrobeAccessories,
-      wardrobeReason, // AI analysis/reason for character state context
-      sceneNumbers,   // Scene numbers for context
-      gender,         // Character gender for pronoun usage in prompts
-      // For batch generation
+      gender,
       batch = false,
-      wardrobes = [] // Array of { wardrobeId, description, accessories, reason, sceneNumbers }
+      wardrobes = [],
     } = body
 
-    // Validate required fields
     if (!characterReferenceImageUrl) {
       return NextResponse.json({ error: 'Character reference image is required' }, { status: 400 })
     }
@@ -61,319 +60,156 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Character name is required' }, { status: 400 })
     }
 
-    // Determine what to generate
-    const wardrobesToGenerate = batch && wardrobes.length > 0
-      ? wardrobes
-      : wardrobeId && wardrobeDescription
-        ? [{ wardrobeId, description: wardrobeDescription, accessories: wardrobeAccessories, reason: wardrobeReason, sceneNumbers }]
-        : []
+    const wardrobesToGenerate =
+      batch && wardrobes.length > 0
+        ? wardrobes
+        : wardrobeId && wardrobeDescription
+          ? [
+              {
+                wardrobeId,
+                description: wardrobeDescription,
+                accessories: wardrobeAccessories,
+              },
+            ]
+          : []
 
     if (wardrobesToGenerate.length === 0) {
       return NextResponse.json({ error: 'At least one wardrobe is required' }, { status: 400 })
     }
 
-    // Calculate total credit cost (1 full-body image per wardrobe)
     const totalCreditCost = CREDIT_COST_PER_WARDROBE * wardrobesToGenerate.length
 
-    // 2. Pre-check credit balance
     const hasEnoughCredits = await CreditService.ensureCredits(userId, totalCreditCost)
     if (!hasEnoughCredits) {
       const breakdown = await CreditService.getCreditBreakdown(userId)
-      return NextResponse.json({
-        error: 'Insufficient credits',
-        code: 'INSUFFICIENT_CREDITS',
-        required: totalCreditCost,
-        balance: breakdown.total_credits,
-        perWardrobeCost: CREDIT_COST_PER_WARDROBE,
-        wardrobeCount: wardrobesToGenerate.length
-      }, { status: 402 })
+      return NextResponse.json(
+        {
+          error: 'Insufficient credits',
+          code: 'INSUFFICIENT_CREDITS',
+          required: totalCreditCost,
+          balance: breakdown.total_credits,
+          perWardrobeCost: CREDIT_COST_PER_WARDROBE,
+          wardrobeCount: wardrobesToGenerate.length,
+        },
+        { status: 402 }
+      )
     }
 
-    console.log(`[Wardrobe Preview] Generating ${wardrobesToGenerate.length} full-body portrait(s) for ${characterName}`)
+    console.log(
+      `[Wardrobe Turnaround] Generating ${wardrobesToGenerate.length} turnaround sheet(s) for ${characterName}`
+    )
 
-    // Generate previews for each wardrobe
     const results: Array<{
       wardrobeId: string
       fullBodyUrl: string
-      previewImageUrl: string // Legacy fallback
+      previewImageUrl: string
       success: boolean
       error?: string
     }> = []
 
     for (const wardrobe of wardrobesToGenerate) {
       try {
-        console.log(`[Wardrobe Preview] Generating medium shot for: ${wardrobe.wardrobeId}`)
-        
-        // Generate MEDIUM CLOSE-UP studio portrait using character reference with FACE_MESH
-        const mediumShotPrompt = buildMediumShotPrompt(
+        console.log(`[Wardrobe Turnaround] Generating sheet for: ${wardrobe.wardrobeId}`)
+
+        const turnaroundPrompt = buildWardrobeTurnaroundPrompt({
           characterName,
           appearanceDescription,
-          wardrobe.description,
-          wardrobe.accessories,
-          wardrobe.reason, // Pass reason for character state/expression context
-          gender // Pass gender for pronoun usage
-        )
-        
-        console.log(`[Wardrobe Preview] Medium shot prompt: ${mediumShotPrompt.substring(0, 150)}...`)
+          wardrobeDescription: wardrobe.description,
+          accessories: wardrobe.accessories,
+          gender,
+        })
 
-        const fullBodyBase64 = await generateImageWithGemini(mediumShotPrompt, {
-          aspectRatio: '9:16', // Tall portrait to match frame
+        console.log(`[Wardrobe Turnaround] Prompt: ${turnaroundPrompt.substring(0, 150)}...`)
+
+        const imageBase64 = await generateImageWithGemini(turnaroundPrompt, {
+          aspectRatio: WARDROBE_REFERENCE_ASPECT_RATIO,
           numberOfImages: 1,
           personGeneration: 'allow_adult',
-          // FACE_MESH enabled (default) for accurate facial consistency
-          referenceImages: [{
-            referenceId: 1,
-            imageUrl: characterReferenceImageUrl,
-            // Use [img-1] token per Google Imagen 3 docs for stronger identity binding
-            subjectDescription: `[img-1] is ${characterName}. Generate an image of [img-1] wearing the described outfit. The face must match [img-1] exactly.`
-          }]
+          referenceImages: [
+            {
+              referenceId: 1,
+              imageUrl: characterReferenceImageUrl,
+              subjectDescription: buildWardrobeTurnaroundSubjectDescription(characterName),
+            },
+          ],
         })
-        
+
         const fullBodyUrl = await uploadReferenceLibraryBase64Image(
-          fullBodyBase64,
-          `wardrobes/${characterId || 'char'}-${wardrobe.wardrobeId}-fullbody-${Date.now()}.png`,
+          imageBase64,
+          `wardrobes/${characterId || 'char'}-${wardrobe.wardrobeId}-turnaround-${Date.now()}.png`,
           projectId || 'default'
         )
-        
-        console.log(`[Wardrobe Preview] Full body generated: ${wardrobe.wardrobeId}`)
-        
+
+        console.log(`[Wardrobe Turnaround] Sheet generated: ${wardrobe.wardrobeId}`)
+
         results.push({
           wardrobeId: wardrobe.wardrobeId,
           fullBodyUrl,
-          previewImageUrl: fullBodyUrl, // Legacy compatibility
-          success: true
+          previewImageUrl: fullBodyUrl,
+          success: true,
         })
-        
-      } catch (error: any) {
-        console.error(`[Wardrobe Preview] Failed for ${wardrobe.wardrobeId}:`, error)
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Generation failed'
+        console.error(`[Wardrobe Turnaround] Failed for ${wardrobe.wardrobeId}:`, message)
         results.push({
           wardrobeId: wardrobe.wardrobeId,
           fullBodyUrl: '',
           previewImageUrl: '',
           success: false,
-          error: error.message || 'Generation failed'
+          error: message,
         })
       }
     }
 
-    // Count successful generations
-    const successfulCount = results.filter(r => r.success).length
+    const successfulCount = results.filter((r) => r.success).length
     const chargedCredits = CREDIT_COST_PER_WARDROBE * successfulCount
 
-    // 3. Charge credits for successful generations only
     let newBalance: number | undefined
     if (chargedCredits > 0) {
       try {
-        await CreditService.charge(
-          userId,
-          chargedCredits,
-          'ai_usage',
-          projectId || null,
-          { 
-            operation: 'generate_wardrobe_preview', 
-            characterId, 
-            wardrobeCount: successfulCount,
-            imagesGenerated: successfulCount, // 1 full-body image per wardrobe
-            model: 'imagen-3-capability' 
-          }
-        )
-        console.log(`[Wardrobe Preview] Charged ${chargedCredits} credits for ${successfulCount} wardrobe(s)`)
+        await CreditService.charge(userId, chargedCredits, 'ai_usage', projectId || null, {
+          operation: 'generate_wardrobe_turnaround',
+          characterId,
+          wardrobeCount: successfulCount,
+          imagesGenerated: successfulCount,
+          model: 'imagen-3-capability',
+        })
         const breakdown = await CreditService.getCreditBreakdown(userId)
         newBalance = breakdown.total_credits
-      } catch (chargeError: any) {
-        console.error('[Wardrobe Preview] Failed to charge credits:', chargeError)
+      } catch (chargeError: unknown) {
+        console.error('[Wardrobe Turnaround] Failed to charge credits:', chargeError)
       }
     }
-    
-    // Return results
+
     if (batch) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         success: true,
         results,
         successCount: successfulCount,
         failedCount: results.length - successfulCount,
         creditsCharged: chargedCredits,
-        creditsBalance: newBalance
+        creditsBalance: newBalance,
       })
-    } else {
-      // Single wardrobe response
-      const result = results[0]
-      if (result?.success) {
-        return NextResponse.json({ 
-          success: true, 
-          fullBodyUrl: result.fullBodyUrl,
-          previewImageUrl: result.previewImageUrl, // Legacy compatibility
-          wardrobeId: result.wardrobeId,
-          creditsCharged: chargedCredits,
-          creditsBalance: newBalance
-        })
-      } else {
-        return NextResponse.json({ 
-          error: result?.error || 'Generation failed' 
-        }, { status: 500 })
-      }
     }
 
+    const result = results[0]
+    if (result?.success) {
+      return NextResponse.json({
+        success: true,
+        fullBodyUrl: result.fullBodyUrl,
+        previewImageUrl: result.previewImageUrl,
+        wardrobeId: result.wardrobeId,
+        creditsCharged: chargedCredits,
+        creditsBalance: newBalance,
+      })
+    }
+
+    return NextResponse.json({ error: result?.error || 'Generation failed' }, { status: 500 })
   } catch (error) {
-    console.error('[Wardrobe Preview] Error:', error)
-    return NextResponse.json({ 
-      error: error instanceof Error ? error.message : 'Wardrobe preview generation failed' 
-    }, { status: 500 })
+    console.error('[Wardrobe Turnaround] Error:', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Wardrobe turnaround generation failed' },
+      { status: 500 }
+    )
   }
-}
-
-/**
- * Build a prompt for generating a MEDIUM CLOSE-UP shot (3:4)
- * Shows subject from waist up - optimized for wardrobe reference with facial accuracy
- * FACE_MESH works best with this framing since face is prominent in frame
- * Lower body (pants, shoes) maintained through wardrobe description for scene generation
- */
-function buildMediumShotPrompt(
-  characterName: string,
-  appearanceDescription?: string,
-  wardrobeDescription?: string,
-  accessories?: string,
-  reason?: string, // AI analysis for character state/expression context
-  gender?: string // Character's gender for pronoun usage
-): string {
-  // Determine pronouns based on gender
-  const isFemale = gender?.toLowerCase() === 'female' || gender?.toLowerCase() === 'woman'
-  const pronoun = isFemale ? 'She' : 'He'
-  const possessive = isFemale ? 'Her' : 'His'
-  
-  // Build a single flowing prompt - medium close-up for wardrobe reference with facial accuracy
-  const promptParts: string[] = []
-  
-  // Start with explicit medium close-up framing directive
-  promptParts.push('A medium close-up studio portrait showing the subject from the waist up')
-  
-  // Add character appearance description
-  if (appearanceDescription) {
-    // Extract key physical descriptors (first 1-2 sentences)
-    const appearanceBrief = appearanceDescription.split('.').slice(0, 2).join('.').trim()
-    if (appearanceBrief) {
-      promptParts.push(`of ${characterName}, ${appearanceBrief}`)
-    } else {
-      promptParts.push(`of ${characterName}`)
-    }
-  } else {
-    promptParts.push(`of ${characterName}`)
-  }
-  
-  // Parse wardrobe into structured outfit description
-  if (wardrobeDescription) {
-    const outfit = parseOutfitDescription(wardrobeDescription)
-    
-    // Build outfit description in natural language order (top to bottom)
-    const outfitItems: string[] = []
-    
-    if (outfit.outerwear) outfitItems.push(outfit.outerwear)
-    if (outfit.top) outfitItems.push(outfit.top)
-    if (outfit.bottom) outfitItems.push(outfit.bottom)
-    if (outfit.footwear) outfitItems.push(outfit.footwear)
-    if (outfit.other) outfitItems.push(outfit.other)
-    
-    if (outfitItems.length > 0) {
-      promptParts.push(`${pronoun} is wearing ${outfitItems.join(', ')}`)
-    } else {
-      // Fallback to original description if parsing didn't extract items
-      promptParts.push(`${pronoun} is wearing ${wardrobeDescription}`)
-    }
-  }
-  
-  // Add accessories in natural language
-  if (accessories) {
-    promptParts.push(`with ${accessories}`)
-  }
-  
-  // Extract character state/expression from reason (AI analysis)
-  if (reason) {
-    // Look for emotional/physical state descriptors in the analysis
-    const statePatterns = [
-      /emphasiz(?:ing|es?)\s+(?:his|her|their\s+)?([\w\s]+?)(?:\.|,|$)/i,
-      /convey(?:ing|s?)\s+(?:his|her|their\s+)?([\w\s]+?)(?:\.|,|$)/i,
-      /reflect(?:ing|s?)\s+(?:his|her|their\s+)?([\w\s]+?)(?:\.|,|$)/i,
-      /show(?:ing|s?)\s+(?:his|her|their\s+)?([\w\s]+?)(?:\.|,|$)/i,
-      /(exhaustion|weariness|determination|focus|desperation|confidence|anxiety)/i
-    ]
-    
-    for (const pattern of statePatterns) {
-      const match = reason.match(pattern)
-      if (match && match[1]) {
-        const state = match[1].trim().slice(0, 40) // Limit length
-        promptParts.push(`${possessive} expression and demeanor convey ${state}`)
-        break
-      }
-    }
-  }
-  
-  // Add pose and setting - crucial for full body framing
-  promptParts.push(`${pronoun} is standing with a relaxed posture against a textured gray studio backdrop`)
-  
-  // Technical photography directives for medium close-up
-  promptParts.push('Sharp focus, high-resolution photography, medium close-up framing showing face and upper body, portrait lens, cinematically lit')
-  
-  return promptParts.join('. ') + '.'
-}
-
-/**
- * Parse outfit description to extract specific clothing items
- * Helps structure the prompt for better full-body generation
- */
-function parseOutfitDescription(description: string): {
-  top?: string
-  bottom?: string
-  footwear?: string
-  outerwear?: string
-  other?: string
-} {
-  const result: {
-    top?: string
-    bottom?: string
-    footwear?: string
-    outerwear?: string
-    other?: string
-  } = {}
-  
-  const lower = description.toLowerCase()
-  const parts = description.split(/[,;.]/).map(s => s.trim()).filter(Boolean)
-  
-  // Keywords for categorization
-  const topKeywords = /shirt|blouse|top|tee|t-shirt|sweater|pullover|polo|tank|camisole|vest|cardigan/i
-  const bottomKeywords = /pants|trousers|jeans|skirt|shorts|slacks|leggings|chinos|khakis/i
-  const footwearKeywords = /shoes|boots|sneakers|heels|loafers|sandals|oxfords|flats|pumps|trainers|footwear/i
-  const outerwearKeywords = /jacket|coat|blazer|overcoat|parka|windbreaker|hoodie|raincoat|cardigan|cape/i
-  
-  const topParts: string[] = []
-  const bottomParts: string[] = []
-  const footwearParts: string[] = []
-  const outerwearParts: string[] = []
-  const otherParts: string[] = []
-  
-  for (const part of parts) {
-    if (footwearKeywords.test(part)) {
-      footwearParts.push(part)
-    } else if (outerwearKeywords.test(part)) {
-      outerwearParts.push(part)
-    } else if (bottomKeywords.test(part)) {
-      bottomParts.push(part)
-    } else if (topKeywords.test(part)) {
-      topParts.push(part)
-    } else {
-      otherParts.push(part)
-    }
-  }
-  
-  if (topParts.length > 0) result.top = topParts.join(', ')
-  if (bottomParts.length > 0) result.bottom = bottomParts.join(', ')
-  if (footwearParts.length > 0) result.footwear = footwearParts.join(', ')
-  if (outerwearParts.length > 0) result.outerwear = outerwearParts.join(', ')
-  if (otherParts.length > 0) result.other = otherParts.join(', ')
-  
-  // If no footwear was explicitly mentioned, add a hint
-  if (!result.footwear && !lower.includes('shoe') && !lower.includes('boot') && !lower.includes('foot')) {
-    result.footwear = 'appropriate footwear matching the outfit'
-  }
-  
-  return result
 }

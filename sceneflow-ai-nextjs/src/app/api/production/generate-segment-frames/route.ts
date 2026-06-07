@@ -17,6 +17,7 @@ import {
 import { artStylePresets } from '@/constants/artStylePresets'
 import type { TransitionType, ActionType, AnchorStatus } from '@/components/vision/scene-production/types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
+import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 
 export const maxDuration = 120 // 2 minutes for potentially generating both frames
 export const runtime = 'nodejs'
@@ -48,6 +49,7 @@ interface FrameGenerationRequest {
     age?: string
     wardrobe?: string
     referenceUrl?: string
+    hasCostumeReference?: boolean
   }>
   
   // Scene context for prompt enhancement
@@ -540,8 +542,15 @@ export async function POST(req: NextRequest) {
       for (const c of charRefs) {
         allReferenceImages.push({
           imageUrl: c.referenceUrl!,
-          name: c.name
+          name: c.hasCostumeReference
+            ? `${c.name} (turnaround costume reference)`
+            : c.name,
         })
+      }
+
+      const costumeRefChars = charRefs.filter((c) => c.hasCostumeReference)
+      if (costumeRefChars.length > 0 && startFramePrompt) {
+        startFramePrompt = `${startFramePrompt}\n\n${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}`
       }
       
       // Add location reference images (1 guaranteed slot)

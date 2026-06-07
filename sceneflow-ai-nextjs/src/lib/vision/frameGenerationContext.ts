@@ -122,6 +122,7 @@ export type FrameGenerationCharacterPayload = {
   ethnicity?: string
   age?: string
   wardrobe?: string
+  hasCostumeReference?: boolean
 }
 
 export type ResolveFrameGenerationContextArgs = {
@@ -191,6 +192,41 @@ export function pickReferenceUrlForCharacter(projectChar: any, scene: any): stri
   const fromWardrobe =
     resolved?.fullBodyUrl || resolved?.headshotUrl || resolved?.previewImageUrl
   return (typeof fromWardrobe === 'string' && fromWardrobe.trim()) ? fromWardrobe.trim() : base
+}
+
+function resolveWardrobeForCharacter(projectChar: any, scene: any): any | null {
+  const wardrobes = projectChar?.wardrobes
+  if (!Array.isArray(wardrobes) || wardrobes.length === 0) return null
+
+  const charId = projectChar?.id || projectChar?.name
+  const sceneWardrobes = scene?.characterWardrobes
+  let resolved: any = null
+
+  if (Array.isArray(sceneWardrobes) && charId) {
+    const override = sceneWardrobes.find(
+      (cw: any) => cw.characterId === charId || cw.characterId === projectChar?.id
+    )
+    if (override?.wardrobeId) {
+      resolved = wardrobes.find((w: any) => w.id === override.wardrobeId)
+    }
+  }
+
+  const sceneNum = typeof scene?.sceneNumber === 'number' ? scene.sceneNumber : undefined
+  if (!resolved && sceneNum != null) {
+    resolved = wardrobes.find(
+      (w: any) => Array.isArray(w.sceneNumbers) && w.sceneNumbers.includes(sceneNum)
+    )
+  }
+  if (!resolved) {
+    resolved = wardrobes.find((w: any) => w.isDefault)
+  }
+  return resolved || null
+}
+
+function hasCostumeTurnaroundReference(projectChar: any, scene: any): boolean {
+  const resolved = resolveWardrobeForCharacter(projectChar, scene)
+  const refUrl = pickReferenceUrlForCharacter(projectChar, scene)
+  return !!(resolved?.fullBodyUrl && refUrl === resolved.fullBodyUrl)
 }
 
 /** Wardrobe description for the resolved outfit (for text prompts), if any */
@@ -290,14 +326,20 @@ export function resolveFrameGenerationContext(args: ResolveFrameGenerationContex
     return (roleOrder[a.role || 'supporting'] ?? 2) - (roleOrder[b.role || 'supporting'] ?? 2)
   })
 
-  const charactersPayload: FrameGenerationCharacterPayload[] = sorted.map(c => ({
-    name: c.name,
-    appearance: c.appearanceDescription || c.description,
-    referenceUrl: pickReferenceUrlForCharacter(c, scene),
-    ethnicity: c.ethnicity,
-    age: c.age,
-    wardrobe: pickWardrobeDescriptionForCharacter(c, scene),
-  }))
+  const charactersPayload: FrameGenerationCharacterPayload[] = sorted.map(c => {
+    const hasCostumeReference = hasCostumeTurnaroundReference(c, scene)
+    return {
+      name: c.name,
+      appearance: c.appearanceDescription || c.description,
+      referenceUrl: pickReferenceUrlForCharacter(c, scene),
+      ethnicity: c.ethnicity,
+      age: c.age,
+      wardrobe: hasCostumeReference
+        ? undefined
+        : pickWardrobeDescriptionForCharacter(c, scene),
+      hasCostumeReference,
+    }
+  })
 
   const detectedObjects = findSceneObjects(sceneMatchText, objectReferences as any[], sceneNumber)
 

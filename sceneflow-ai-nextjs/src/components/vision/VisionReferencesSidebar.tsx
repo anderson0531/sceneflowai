@@ -1526,6 +1526,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           {/* Cast Tab Content */}
           {activeReferenceTab === 'cast' && (
             <CharacterLibrary
+              projectId={projectId}
               characters={characters}
               scenes={scenes}
               onRegenerateCharacter={onRegenerateCharacter}

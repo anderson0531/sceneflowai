@@ -18,6 +18,7 @@
  */
 
 import { generateText, generateTextCacheAware, type TextGenerationOptions } from '@/lib/vertexai/gemini'
+import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 
 // =============================================================================
 // Types
@@ -309,9 +310,9 @@ CRITICAL RULES:
    - If a character wears "a tailored navy suit with gold watch," the image must show EXACTLY that
    - Wardrobe descriptions override ANY clothing mentioned in the scene action text
    - Include the COMPLETE wardrobe description verbatim in the prompt
-   - COSTUME REFERENCE EXCEPTION: If a character has "COSTUME REFERENCE" noted, their reference image
-     already shows the correct outfit. Do NOT describe their clothing in text — just reference their
-     action, pose, and expression. The model will preserve the outfit from the reference image.
+   - COSTUME TURNAROUND REFERENCE: If a character has a costume turnaround reference, their image is a
+     4-view sheet. Use the front view for proportions; preserve outfit exactly. Do NOT describe clothing
+     in text or reproduce the turnaround layout or studio background in the scene.
 
 5. SCENE DIRECTION CUES: Use the provided lighting, framing, and atmosphere metadata to inform the composition:
    - Lighting mood and color temperature → set the image's lighting
@@ -385,7 +386,7 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
       
       // WARDROBE — handle costume reference vs text description
       if (char.hasCostumeReference) {
-        prompt += `   WARDROBE: COSTUME REFERENCE — Character's reference image already shows the correct scene-specific outfit. Do NOT describe clothing in text. Focus on action, pose, and expression only.\n`
+        prompt += `   WARDROBE: ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION} Do NOT describe clothing in text. Focus on action, pose, and expression only.\n`
       } else if (char.wardrobeDescription) {
         prompt += `   WARDROBE (MUST USE EXACTLY): ${char.wardrobeDescription}`
         if (char.wardrobeAccessories) {
