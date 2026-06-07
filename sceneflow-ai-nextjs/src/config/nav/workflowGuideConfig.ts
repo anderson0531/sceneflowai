@@ -72,12 +72,12 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
   },
   {
     id: 'storyboard-express',
-    title: 'Storyboard — Express & gallery',
+    title: 'Pre-vis — Express & gallery',
     icon: 'Image',
     iconColor: 'text-emerald-500',
     steps: [
-      { id: 'run-express', label: 'Build Storyboard (Express)', actionEventName: 'production:scene-gallery' },
-      { id: 'review-storyboard', label: 'Review storyboard gallery', actionEventName: 'production:scene-gallery' },
+      { id: 'run-express', label: 'Build Pre-vis (Express)', actionEventName: 'production:scene-gallery' },
+      { id: 'review-storyboard', label: 'Review pre-vis gallery', actionEventName: 'production:scene-gallery' },
       { id: 'collaborate-share', label: 'Share for review', actionEventName: 'production:share-link' },
       { id: 'review-animatic', label: 'Screening Room — Preview (live)', actionEventName: 'production:screening-room' },
     ],

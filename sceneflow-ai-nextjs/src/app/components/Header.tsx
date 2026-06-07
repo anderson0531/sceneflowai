@@ -147,7 +147,7 @@ export function Header() {
 
               {/* Platform Walkthrough Link */}
               <button
-                onClick={() => scrollToSection('feature-storyboard')}
+                onClick={() => scrollToSection('feature-pre-vis')}
                 className="flex items-center gap-1.5 px-4 py-2 text-gray-300 hover:text-white transition-colors cursor-pointer font-medium rounded-lg hover:bg-slate-800/50"
               >
                 <Film className="w-4 h-4" />
@@ -287,7 +287,7 @@ export function Header() {
                     <Workflow className="w-4 h-4" />
                     {t('workflow')}
                   </button>
-                  <button onClick={() => scrollToSection('feature-storyboard')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
+                  <button onClick={() => scrollToSection('feature-pre-vis')} className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">
                     <Film className="w-4 h-4" />
                     {t('platformWalkthrough')}
                   </button>

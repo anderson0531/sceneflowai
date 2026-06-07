@@ -5,6 +5,7 @@ import { Loader2, Upload } from 'lucide-react'
 import { trackCta } from '@/lib/analytics'
 import { validateScript, ValidationResult } from '@/lib/script/scriptValidator'
 import { parseScript, ParsedScript } from '@/lib/script/scriptParser'
+import { normalizeImportedScriptText } from '@/lib/script/fdxParser'
 import {
   assessScriptCompleteness,
   type CompletenessResult,
@@ -103,7 +104,8 @@ export function ScriptImportDialog({
           const { extractTextFromDocx } = await import('@/lib/upload/extractors')
           extractedText = await extractTextFromDocx(file)
         } else {
-          extractedText = await file.text()
+          const rawText = await file.text()
+          extractedText = normalizeImportedScriptText(rawText, file.name)
         }
 
         if (!extractedText.trim()) {

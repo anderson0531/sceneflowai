@@ -58,7 +58,7 @@ function resolveSectionFromHash(hash: string): CollapsibleLandingSectionId | und
     return id as CollapsibleLandingSectionId
   }
   if (id.startsWith('use-cases-')) return 'use-cases'
-  if (id.startsWith('walkthrough-chapter-')) return 'feature-storyboard'
+  if (id.startsWith('walkthrough-chapter-')) return 'feature-pre-vis'
   return undefined
 }
 

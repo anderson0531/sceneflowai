@@ -153,7 +153,7 @@ export function StoryboardReviewerIdentitySheet({
         <DialogHeader>
           <DialogTitle>Confirm your identity</DialogTitle>
           <DialogDescription className="text-gray-400">
-            Verify your email to submit storyboard feedback. You can watch the storyboard without
+            Verify your email to submit pre-vis feedback. You can watch the pre-vis without
             signing in.
           </DialogDescription>
         </DialogHeader>

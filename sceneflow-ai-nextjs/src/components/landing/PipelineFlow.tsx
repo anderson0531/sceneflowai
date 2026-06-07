@@ -52,7 +52,7 @@ const modules = [
     glowColor: 'shadow-cyan-500/20',
     textColor: 'text-cyan-400',
     tagline: 'Text-to-Animatic in minutes',
-    description: 'Generate consistent storyboards and animatics from your screenplay.',
+    description: 'Generate consistent pre-vis and animatics from your screenplay.',
     standaloneFeatures: [
       { icon: Palette, text: 'Imagen 4 & Veo 3 generation' },
       { icon: Users, text: 'Character consistency library' },

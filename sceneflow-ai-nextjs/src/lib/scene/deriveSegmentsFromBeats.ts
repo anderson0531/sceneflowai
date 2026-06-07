@@ -236,7 +236,7 @@ export function deriveSegmentsFromBeats(
   const errors: string[] = []
 
   if (options?.requireApproved !== false && !isStoryboardApproved(scene)) {
-    errors.push('Storyboard must be approved before deriving segments')
+    errors.push('Pre-vis must be approved before deriving segments')
     return { segments: [], errors }
   }
 

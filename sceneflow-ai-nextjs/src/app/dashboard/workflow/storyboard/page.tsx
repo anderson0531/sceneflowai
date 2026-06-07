@@ -119,11 +119,11 @@ export default function StoryboardPage() {
         }
       } else {
         const errorData = await response.json()
-        alert(`Failed to generate storyboard: ${errorData.error}`)
+        alert(`Failed to generate pre-vis: ${errorData.error}`)
       }
     } catch (error) {
       console.error('Error generating storyboard:', error)
-      alert('Failed to generate storyboard. Please try again.')
+      alert('Failed to generate pre-vis. Please try again.')
     } finally {
       setIsGenerating(false)
     }
@@ -173,8 +173,8 @@ export default function StoryboardPage() {
       const session = await CollaborationService.createSession(
         currentProject.id,
         'demo_user_001',
-        `Storyboard Review: ${currentProject.title}`,
-        `Review and provide feedback on the storyboard for ${currentProject.title}`,
+        `Pre-vis Review: ${currentProject.title}`,
+        `Review and provide feedback on the pre-vis for ${currentProject.title}`,
         scenes.map(scene => ({
           id: scene.id,
           title: `Scene ${scene.scene_number}`,
@@ -192,7 +192,7 @@ export default function StoryboardPage() {
       const shareLink = CollaborationService.generateShareLink(session.id)
       navigator.clipboard.writeText(shareLink)
       
-      alert('Storyboard collaboration link copied to clipboard!')
+      alert('Pre-vis collaboration link copied to clipboard!')
     } catch (error) {
       console.error('Error creating collaboration session:', error)
     }
@@ -253,8 +253,8 @@ export default function StoryboardPage() {
           <Film className="w-10 h-10 text-white" />
         </div>
         <h1 className="text-4xl font-bold text-gray-900 mb-2">Production</h1>
-        <p className="text-xl text-gray-600">Step 2: Storyboard & Visual Planning</p>
-        <p className="text-gray-500 mt-2">Transform your idea into a visual storyboard with AI-powered insights</p>
+        <p className="text-xl text-gray-600">Step 2: Pre-vis & Visual Planning</p>
+        <p className="text-gray-500 mt-2">Transform your idea into visual pre-vis with AI-powered insights</p>
       </div>
 
       {/* Progress Indicator */}
@@ -285,10 +285,10 @@ export default function StoryboardPage() {
             <Sparkles className="w-8 h-8 text-purple-600" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            Ready to Create Your Storyboard?
+            Ready to Create Your Pre-vis?
           </h3>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            Transform your selected idea into a detailed, scene-by-scene storyboard with professional cinematography guidance.
+            Transform your selected idea into a detailed, scene-by-scene pre-vis with professional cinematography guidance.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -302,7 +302,7 @@ export default function StoryboardPage() {
               ) : (
                 <Film className="w-4 h-4 mr-2" />
               )}
-              Generate Storyboard
+              Generate Pre-vis
             </Button>
             
             <Button
@@ -318,7 +318,7 @@ export default function StoryboardPage() {
           {!currentProject?.metadata?.selectedIdea && (
             <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-yellow-800 text-sm">
-                ⚠️ Please return to The Blueprint and select an idea before generating a storyboard.
+                ⚠️ Please return to The Blueprint and select an idea before generating pre-vis.
               </p>
               <Link href="/dashboard/studio/new-project">
                 <Button variant="outline" size="sm" className="mt-2 text-yellow-700 border-yellow-300 hover:bg-yellow-100">
@@ -341,7 +341,7 @@ export default function StoryboardPage() {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Your Storyboard</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Your Pre-vis</h2>
                 <p className="text-gray-600">
                   {scenes.length} scenes • {totalDuration}s total duration • {scenesWithImages} with visuals
                 </p>
@@ -430,7 +430,7 @@ export default function StoryboardPage() {
                   Collaboration Session Active
                 </h3>
                 <p className="text-green-700 text-sm">
-                  Share this link with your team to collect feedback on your storyboard.
+                  Share this link with your team to collect feedback on your pre-vis.
                 </p>
                 <p className="text-green-600 text-xs mt-1">
                   Session ID: {collaborationSession.id}
@@ -533,7 +533,7 @@ export default function StoryboardPage() {
               className="bg-white rounded-xl max-w-md w-full p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Storyboard Settings</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Pre-vis Settings</h3>
               
               <div className="space-y-4">
                 <div>

@@ -10,11 +10,11 @@ export interface GlossaryTerm {
 export const PRODUCTION_GLOSSARY: Record<string, GlossaryTerm> = {
   beat: {
     term: 'Beat',
-    definition: 'A script unit — dialogue, action, or narration — that drives storyboard and video cuts.',
+    definition: 'A script unit — dialogue, action, or narration — that drives pre-vis and video cuts.',
   },
   storyboardFrame: {
-    term: 'Storyboard Frame',
-    definition: 'Still image for a beat, usually created by Express or the storyboard gallery.',
+    term: 'Pre-vis Frame',
+    definition: 'Still image for a beat, usually created by Express or the pre-vis gallery.',
   },
   beatFrame: {
     term: 'Beat Frame',
@@ -26,7 +26,7 @@ export const PRODUCTION_GLOSSARY: Record<string, GlossaryTerm> = {
   },
   sceneReference: {
     term: 'Scene Reference',
-    definition: 'Environment or style anchor from the Reference Library — not a storyboard frame.',
+    definition: 'Environment or style anchor from the Reference Library — not a pre-vis frame.',
   },
   stream: {
     term: 'Stream',
@@ -34,7 +34,7 @@ export const PRODUCTION_GLOSSARY: Record<string, GlossaryTerm> = {
   },
   screeningRoom: {
     term: 'Screening Room',
-    definition: 'Preview (live) — storyboard frames timed with audio before you render an MP4.',
+    definition: 'Preview (live) — pre-vis frames timed with audio before you render an MP4.',
   },
   productionStreams: {
     term: 'Production Streams',

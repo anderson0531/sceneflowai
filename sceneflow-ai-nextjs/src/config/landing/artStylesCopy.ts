@@ -54,5 +54,5 @@ export const ART_STYLE_LANDING_TAGLINES: Partial<Record<string, string>> = {
   'oil-painting': 'Classical brushwork and rich pigment for documentary and historical longform.',
   'digital-art': 'Stylized illustration for animated documentary and episodic explainer series.',
   watercolor: 'Soft pigment washes for memoir, documentary, and contemplative longform.',
-  sketch: 'Detailed linework and pencil texture for storyboard-to-production longform beats.',
+  sketch: 'Detailed linework and pencil texture for pre-vis-to-production longform beats.',
 }

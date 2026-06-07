@@ -35,7 +35,7 @@ export const TRUST_SAFEGUARD_COPY = {
       id: 'validation-provenance',
       title: 'Validation & Provenance',
       description:
-        'Additional moderation and risk mitigation is available across Blueprint, script, storyboard, and segment video—using the same credit model as other Studio tools. Successful clips receive signed content provenance records.',
+        'Additional moderation and risk mitigation is available across Blueprint, script, pre-vis, and segment video—using the same credit model as other Studio tools. Successful clips receive signed content provenance records.',
       highlights: [
         'Content validation signals before heavy render spend',
         'Signed content hash and provenance metadata on segment video',

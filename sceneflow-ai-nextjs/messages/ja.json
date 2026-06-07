@@ -29,7 +29,8 @@
     "platformWalkthrough": "プラットフォームの概要と操作ガイド",
     "platform": "プラットフォーム",
     "pricing": "料金",
-    "faq": "よくある質問"
+    "faq": "よくある質問",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "5つものAIツールを使い分けるのはもうやめましょう。アイデア出しから公開可能な動画の完成まで、このスタジオひとつで完結します。",
@@ -192,9 +193,9 @@
     "title": "ビート先行型動画制作パイプライン",
     "subtitle": "レンダリング前に承認を — スロットマシンのような再生成ではなく",
     "intro": "手探りで生成を繰り返す必要はありません。SceneFlowが最終的な動画の生成にクレジットを消費する前に、仕上がりを確認し、承認することができます。",
-    "description": "SceneFlowは、各段階でのビジュアル承認プロセスを体系化しています。具体的には、レビュー用のExpress storyboard、構図を確定するBeat Frames、そしてビートごとのF2V（フレーム・ツー・ビデオ）です。これにより、ドリフトやハルシネーション（幻覚的な生成）でクレジットを浪費する前に、映像のルックを洗練させることができます。",
+    "description": "SceneFlowは、各段階でのビジュアル承認プロセスを体系化しています。具体的には、レビュー用のExpress Pre-vis、構図を確定するBeat Frames、そしてビートごとのF2V（フレーム・ツー・ビデオ）です。これにより、ドリフトやハルシネーション（幻覚的な生成）でクレジットを浪費する前に、映像のルックを洗練させることができます。",
     "steps": [
-      "Express storyboard — 映像付きのビートを共有し、数分でレビューを受ける",
+      "Express Pre-vis — 映像付きのビートを共有し、数分でレビューを受ける",
       "Beat Frames — Reference Libraryの連続性による開始／終了構成の固定",
       "F2V（フレーム・トゥ・ビデオ）— 闇雲なプロンプトではなく、承認済みフレームから動画を生成",
       "Production Mixer — Final Cutアセンブリへのタイミング、オーディオ、およびストリームの書き出し"
@@ -335,16 +336,16 @@
         "id": "生産",
         "stepLabel": "生産",
         "subtitle": "スクリプトからストリームへ",
-        "description": "「Script」および「Action」タブが、Foundation → Storyboard → Production → Final Cut の工程をガイドします。Express storyboard、Beat Frames、ミキサー、MP4ストリームを、ツールを切り替えることなく利用できます。",
+        "description": "「Script」および「Action」タブが、Foundation → pre-vis → Production → Final Cut の工程をガイドします。Express Pre-vis、Beat Frames、ミキサー、MP4ストリームを、ツールを切り替えることなく利用できます。",
         "keySteps": [
           "脚本、ボイス、およびシーン音声を確定する",
-          "Express storyboard — ギャラリーおよびレビュー用共有",
+          "Express Pre-vis — ギャラリーおよびレビュー用共有",
           "Beat Frames → ディレクターコンソール → レンダーストリーム",
           "完了したストリームを Final Cut に送信してください。"
         ],
         "keyFeatures": [
           "Foundation — 台本、ボイス、シーン音声、台本確定",
-          "Express storyboard — 方向とフレーム（分単位）、ギャラリー、共有",
+          "Express Pre-vis — 方向とフレーム（分単位）、ギャラリー、共有",
           "Beat Framesおよびミキサー — 開始/終了フレーム、ディレクターコンソール、MP4ストリームのレンダリング",
           "本番ストリーム — 出力結果の確認、古い（更新が必要な）ビートの再レンダリング、Final Cut への送信"
         ]
@@ -755,7 +756,7 @@
       "title": "ビート先行型動画制作パイプライン",
       "description": "F2V（映像生成）の前に、ストーリーボードの各シーン構成とBeat Framesを承認することで、ハルシネーションやビジュアルの乖離に起因する無駄な再生成を減らせます。レビューから最終クリップ完成まで、一貫したプロセスを実現します。",
       "keyFeatures": [
-        "Express storyboard レビュー用 — 高負荷なレンダリングの前にビートを共有",
+        "Express Pre-vis レビュー用 — 高負荷なレンダリングの前にビートを共有",
         "Beat Frames ロック構成 — Reference Library 連続性",
         "F2V（ビートごと） — 承認済みフレームから動画を生成",
         "ミキサーのタイミングとストリーム — Final Cut アセンブリへのエクスポート"
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Express生成エンジン",
-        "description": "画像とビデオセグメントを同時に自動生成します。「Express Storyboard」を使用すれば、音声と映像を含むストーリーボードを数分で確認・共有できます。「Express Animatics」は「ケン・バーンズ・エフェクト」を適用したシーンを数分でレンダリングし、「Express Video」は完成したビデオシーンを数日でなく数分で出力します。",
+        "description": "画像とビデオセグメントを同時に自動生成します。「Express Pre-vis」を使用すれば、音声と映像を含むストーリーボードを数分で確認・共有できます。「Express Animatics」は「ケン・バーンズ・エフェクト」を適用したシーンを数分でレンダリングし、「Express Video」は完成したビデオシーンを数日でなく数分で出力します。",
         "keyFeatures": [
           "同時生成 — 複数のシーンにわたる画像と動画の同時生成",
-          "Express Storyboard — 音声・映像付きプレビューを数分で作成・共有",
+          "Express Pre-vis — 音声・映像付きプレビューを数分で作成・共有",
           "Express Animatic — 静止画へのケン・バーンズ・エフェクト（動き）の適用",
           "Express Video — シーン単位のクリップを、数日ではなく数分で作成"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "生産自動化",
-        "description": "「Script」および「Action」タブが、Foundation → Storyboard → Production → Final Cut の工程をガイドします。Express storyboard、Beat Frames、ミキサー、MP4ストリームを、ツールを切り替えることなく利用できます。",
+        "description": "「Script」および「Action」タブが、Foundation → pre-vis → Production → Final Cut の工程をガイドします。Express Pre-vis、Beat Frames、ミキサー、MP4ストリームを、ツールを切り替えることなく利用できます。",
         "keyFeatures": [
           "Foundation — 台本、ボイス、シーン音声、台本確定",
-          "Express storyboard — 方向とフレーム（分単位）、ギャラリー、共有",
+          "Express Pre-vis — 方向とフレーム（分単位）、ギャラリー、共有",
           "Beat Framesおよびミキサー — 開始/終了フレーム、ディレクターコンソール、MP4ストリームのレンダリング",
           "本番ストリーム — 出力結果の確認、古い（更新が必要な）ビートの再レンダリング、Final Cut への送信"
         ],
         "screenshotSlot": "スクリーンショットを挿入：スクリプト、Beat Frames、ミキサーを表示した制作ダッシュボード",
-        "videoSlot": "00:30のクリップを挿入：Foundation、Express storyboard、Beat Frames、およびストリームエクスポート"
+        "videoSlot": "00:30のクリップを挿入：Foundation、Express Pre-vis、Beat Frames、およびストリームエクスポート"
       },
       {
         "id": "12",
@@ -1418,5 +1419,36 @@
     "mute": "ミュート",
     "unmute": "ミュートを解除",
     "expandVideo": "動画を拡大する"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

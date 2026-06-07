@@ -453,7 +453,7 @@ export function SceneGallery({
 
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(data.shareUrl)
-        toast.success('Storyboard link copied to clipboard!')
+        toast.success('Pre-vis link copied to clipboard!')
       } else {
         // Fallback if clipboard API is not available
         toast.success('Share link created!', {

@@ -32,9 +32,9 @@ const productActions = [
   },
   { 
     label: 'Visualizer', 
-    tagline: 'Storyboards',
+    tagline: 'Pre-vis',
     icon: <Wand2 className="w-5 h-5" />, 
-    href: '/dashboard/workflow/storyboard',
+    href: '/dashboard/workflow/pre-vis',
     color: 'bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 border border-blue-500/20'
   },
   { 

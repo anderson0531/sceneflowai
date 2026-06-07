@@ -29,7 +29,8 @@
     "platformWalkthrough": "平台导览",
     "platform": "平台",
     "pricing": "定价",
-    "faq": "常见问题"
+    "faq": "常见问题",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "无需制作团队或十几个应用，即可制作专业视频。",
@@ -192,9 +193,9 @@
     "title": "以节拍为先的视频制作流程",
     "subtitle": "渲染前先确认——切勿像老虎机那样随机生成",
     "intro": "无需反复尝试生成。在 SceneFlow 消耗点数制作最终视频之前，您可以先预览并确认视觉效果。",
-    "description": "SceneFlow 流程在每个环节都构建了视觉确认机制：先通过 Express storyboard 进行审阅，利用 Beat Frames 锁定构图，随后针对每个节拍执行 F2V（帧到视频）生成。这意味着你可以在消耗额度应对画面漂移或“幻觉”问题之前，先优化好视觉效果。",
+    "description": "SceneFlow 流程在每个环节都构建了视觉确认机制：先通过 Express Pre-vis 进行审阅，利用 Beat Frames 锁定构图，随后针对每个节拍执行 F2V（帧到视频）生成。这意味着你可以在消耗额度应对画面漂移或“幻觉”问题之前，先优化好视觉效果。",
     "steps": [
-      "Express storyboard — 分享音视频节拍，数分钟内即可完成审阅",
+      "Express Pre-vis — 分享音视频节拍，数分钟内即可完成审阅",
       "Beat Frames — 锁定起始/结束组合，并保持 Reference Library 连续性",
       "逐拍 F2V —— 基于已确认的画面帧生成视频，而非盲目依赖提示词。",
       "Production Mixer — 时序、音频及流导出至 Final Cut 组装"
@@ -335,16 +336,16 @@
         "id": "生产",
         "stepLabel": "生产",
         "subtitle": "脚本转数据流",
-        "description": "“脚本”与“动作”选项卡引导您完成从基础（Foundation）到分镜（Storyboard）、制作（Production）及最终输出（Final Cut）的全过程。涵盖 Express storyboard、Beat Frames、混音器（Mixer）及 MP4 流——无需切换工具。",
+        "description": "“脚本”与“动作”选项卡引导您完成从基础（Foundation）到分镜（pre-vis）、制作（Production）及最终输出（Final Cut）的全过程。涵盖 Express Pre-vis、Beat Frames、混音器（Mixer）及 MP4 流——无需切换工具。",
         "keySteps": [
           "锁定剧本、配音及场景音频",
-          "Express storyboard — 图库及分享以供审阅",
+          "Express Pre-vis — 图库及分享以供审阅",
           "Beat Frames → 导演控制台 → 渲染流",
           "将完成的数据流发送至 Final Cut"
         ],
         "keyFeatures": [
           "《基地》——剧本、配音、场景音频、定稿剧本",
-          "Express storyboard — 分钟级构图与取景；图库与分享",
+          "Express Pre-vis — 分钟级构图与取景；图库与分享",
           "Beat Frames 与 Mixer —— 起止帧、导演控制台、渲染 MP4 流",
           "生产流 —— 审查输出结果，重新渲染过时的节拍，发送至 Final Cut"
         ]
@@ -755,7 +756,7 @@
       "title": "以节拍为先的视频制作流程",
       "description": "在进入 F2V 阶段前先确认分镜节点与 Beat Frames，从而减少因“幻觉”或视觉漂移导致的盲目重生成。建立从审阅到最终成片的规范化流程。",
       "keyFeatures": [
-        "Express storyboard 待审阅 —— 在进行耗时的渲染之前分享节拍（beat）",
+        "Express Pre-vis 待审阅 —— 在进行耗时的渲染之前分享节拍（beat）",
         "Beat Frames 锁的构成 — Reference Library 连续性",
         "逐拍 F2V —— 基于已确认画面生成视频",
         "混频器时序与数据流 —— 导出至 Final Cut 组件"
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "快速生成引擎",
-        "description": "同步自动生成图像与视频片段。利用 Express Storyboard，您可在数分钟内审阅并分享视听分镜脚本。Express Animatic 可在数分钟内渲染出完整的 Ken Burns 风格场景，而 Express Video 则能将最终视频场景的制作周期从数天缩短至数分钟。",
+        "description": "同步自动生成图像与视频片段。利用 Express Pre-vis，您可在数分钟内审阅并分享视听分镜脚本。Express Animatic 可在数分钟内渲染出完整的 Ken Burns 风格场景，而 Express Video 则能将最终视频场景的制作周期从数天缩短至数分钟。",
         "keyFeatures": [
           "并发生成——同时生成跨场景的图像与视频",
-          "Express Storyboard —— 分钟级制作可分享的视听预览",
+          "Express Pre-vis —— 分钟级制作可分享的视听预览",
           "Express Animatics — 基于静态图像的 Ken Burns 动态效果",
           "Express Video —— 只需数分钟即可生成场景级片段，无需数日"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "生产自动化",
-        "description": "“脚本”与“动作”选项卡引导您完成从基础（Foundation）到分镜（Storyboard）、制作（Production）及最终输出（Final Cut）的全过程。涵盖 Express storyboard、Beat Frames、混音器（Mixer）及 MP4 流——无需切换工具。",
+        "description": "“脚本”与“动作”选项卡引导您完成从基础（Foundation）到分镜（pre-vis）、制作（Production）及最终输出（Final Cut）的全过程。涵盖 Express Pre-vis、Beat Frames、混音器（Mixer）及 MP4 流——无需切换工具。",
         "keyFeatures": [
           "《基地》——剧本、配音、场景音频、定稿剧本",
-          "Express storyboard — 分钟级构图与取景；图库与分享",
+          "Express Pre-vis — 分钟级构图与取景；图库与分享",
           "Beat Frames 与 Mixer —— 起止帧、导演控制台、渲染 MP4 流",
           "生产流 —— 审查输出结果，重新渲染过时的节拍，发送至 Final Cut"
         ],
         "screenshotSlot": "插入截图：显示脚本、Beat Frames 和混音器的制作仪表板",
-        "videoSlot": "插入 00:30 的片段：Foundation、Express storyboard、Beat Frames 以及流导出"
+        "videoSlot": "插入 00:30 的片段：Foundation、Express Pre-vis、Beat Frames 以及流导出"
       },
       {
         "id": "12",
@@ -1418,5 +1419,36 @@
     "mute": "静音",
     "unmute": "取消静音",
     "expandVideo": "展开视频"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

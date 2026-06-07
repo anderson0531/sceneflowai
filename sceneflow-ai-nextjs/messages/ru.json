@@ -29,7 +29,8 @@
     "platformWalkthrough": "Обзор платформы",
     "platform": "Платформа",
     "pricing": "Цены",
-    "faq": "Часто задаваемые вопросы"
+    "faq": "Часто задаваемые вопросы",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "Хватит переключаться между пятью вкладками с ИИ-сервисами. Одна студия позволит пройти путь от идеи до готового к публикации видео.",
@@ -192,9 +193,9 @@
     "title": "Процесс создания видео с упором на ритм",
     "subtitle": "Утверждайте до рендеринга — никакого случайного пересоздания",
     "intro": "Никаких генераций методом проб и ошибок. Вы просматриваете и утверждаете внешний вид, прежде чем SceneFlow потратит кредиты на создание финального видео.",
-    "description": "SceneFlow выстраивает процесс визуального согласования на каждом этапе: Express storyboard для просмотра, Beat Frames для фиксации композиции, а затем F2V для каждого бита. Вы дорабатываете визуальный ряд, прежде чем тратить кредиты на «дрейф» и галлюцинации.",
+    "description": "SceneFlow выстраивает процесс визуального согласования на каждом этапе: Express Pre-vis для просмотра, Beat Frames для фиксации композиции, а затем F2V для каждого бита. Вы дорабатываете визуальный ряд, прежде чем тратить кредиты на «дрейф» и галлюцинации.",
     "steps": [
-      "Express storyboard — делитесь аудиовизуальными битами для проверки за считанные минуты",
+      "Express Pre-vis — делитесь аудиовизуальными битами для проверки за считанные минуты",
       "Beat Frames — фиксация начала/конца композиции с преемственностью Reference Library",
       "F2V (кадр в видео) с привязкой к биту — создание видео на основе утвержденных кадров, а не слепых промптов.",
       "Production Mixer — тайминг, аудио и экспорт потока в сборку Final Cut"
@@ -335,16 +336,16 @@
         "id": "производство",
         "stepLabel": "Производство",
         "subtitle": "От сценария к потокам",
-        "description": "Вкладки Script и Action сопровождают процесс от Foundation и Storyboard до Production и Final Cut. Express storyboard, Beat Frames, микшер и потоки MP4 — всё это без переключения между инструментами.",
+        "description": "Вкладки Script и Action сопровождают процесс от Foundation и pre-vis до Production и Final Cut. Express Pre-vis, Beat Frames, микшер и потоки MP4 — всё это без переключения между инструментами.",
         "keySteps": [
           "Зафиксировать сценарий, озвучку и аудиодорожку сцены",
-          "Express storyboard — галерея и отправка на проверку",
+          "Express Pre-vis — галерея и отправка на проверку",
           "Beat Frames → Консоль режиссера → Поток рендеринга",
           "Отправить завершенные потоки на Final Cut"
         ],
         "keyFeatures": [
           "Foundation — сценарий, озвучивание, аудио сцены, финализация сценария",
-          "Express storyboard — направление и кадры с привязкой ко времени; галерея и обмен",
+          "Express Pre-vis — направление и кадры с привязкой ко времени; галерея и обмен",
           "Beat Frames и Mixer — начальные/конечные кадры, консоль режиссера, рендеринг MP4-потоков",
           "Производственные потоки — проверка результатов, повторный рендеринг устаревших битов, отправка в Final Cut"
         ]
@@ -755,7 +756,7 @@
       "title": "Процесс создания видео с упором на ритм",
       "description": "Утверждайте ключевые моменты раскадровки и Beat Frames до этапа F2V — это сократит число слепых перегенераций, вызванных «галлюцинациями» нейросети и визуальным дрейфом. Единый структурированный путь: от согласования до финального ролика.",
       "keyFeatures": [
-        "Express storyboard на проверку — делитесь битами перед тяжелым рендером",
+        "Express Pre-vis на проверку — делитесь битами перед тяжелым рендером",
         "Beat Frames состав блокировки — Reference Library непрерывность",
         "F2V (кадр в видео) для каждого бита — создание видео из утвержденных кадров",
         "Временные параметры и потоки микшера — экспорт в сборку Final Cut"
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Механизм генерации Express",
-        "description": "Автоматически и одновременно создавайте изображения и видеофрагменты. Express Storyboard позволяет просматривать аудиовизуальные раскадровки и делиться ими за считанные минуты. Express Storyboard формирует полноценные сцены в стиле «Кен Бернс» за минуты, а Express Video позволяет получить готовые видеофрагменты за минуты, а не за дни.",
+        "description": "Автоматически и одновременно создавайте изображения и видеофрагменты. Express Pre-vis позволяет просматривать аудиовизуальные раскадровки и делиться ими за считанные минуты. Express Pre-vis формирует полноценные сцены в стиле «Кен Бернс» за минуты, а Express Video позволяет получить готовые видеофрагменты за минуты, а не за дни.",
         "keyFeatures": [
           "Одновременная генерация — создание изображений и видео для разных сцен одновременно.",
-          "Express Storyboard — аудиовизуальные превью, которыми можно поделиться, всего за несколько минут.",
+          "Express Pre-vis — аудиовизуальные превью, которыми можно поделиться, всего за несколько минут.",
           "Express Animatics — эффект Кена Бернса (анимация статических изображений)",
           "Express Video — создание видеороликов (с разбивкой по сценам) за считанные минуты, а не дни."
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "Автоматизация производства",
-        "description": "Вкладки Script и Action сопровождают процесс от Foundation и Storyboard до Production и Final Cut. Express storyboard, Beat Frames, микшер и потоки MP4 — всё это без переключения между инструментами.",
+        "description": "Вкладки Script и Action сопровождают процесс от Foundation и pre-vis до Production и Final Cut. Express Pre-vis, Beat Frames, микшер и потоки MP4 — всё это без переключения между инструментами.",
         "keyFeatures": [
           "Foundation — сценарий, озвучивание, аудио сцены, финализация сценария",
-          "Express storyboard — направление и кадры с привязкой ко времени; галерея и обмен",
+          "Express Pre-vis — направление и кадры с привязкой ко времени; галерея и обмен",
           "Beat Frames и Mixer — начальные/конечные кадры, консоль режиссера, рендеринг MP4-потоков",
           "Производственные потоки — проверка результатов, повторный рендеринг устаревших битов, отправка в Final Cut"
         ],
         "screenshotSlot": "Вставить скриншот: панель управления производством, отображающая сценарий, Beat Frames и микшер.",
-        "videoSlot": "Вставка фрагмента (30 с): Foundation, Express storyboard, Beat Frames и экспорт потока"
+        "videoSlot": "Вставка фрагмента (30 с): Foundation, Express Pre-vis, Beat Frames и экспорт потока"
       },
       {
         "id": "12",
@@ -1418,5 +1419,36 @@
     "mute": "Отключить звук",
     "unmute": "Включить звук",
     "expandVideo": "Развернуть видео"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

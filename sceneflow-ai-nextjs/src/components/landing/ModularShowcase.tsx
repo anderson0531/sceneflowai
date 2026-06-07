@@ -93,7 +93,7 @@ const modules = [
     textColor: 'text-cyan-400',
     accentColor: 'cyan',
     standaloneValue: 'Text-to-Animatic in minutes',
-    standaloneDescription: 'Generate consistent storyboards and animatics using Google\'s Imagen 4 and Veo 3. Maintain character consistency across every frame.',
+    standaloneDescription: 'Generate consistent pre-vis and animatics using Google\'s Imagen 4 and Veo 3. Maintain character consistency across every frame.',
     standaloneFeatures: [
       { icon: Palette, text: 'Imagen 4 & Veo 3 generation' },
       { icon: Users, text: 'Character consistency library' },

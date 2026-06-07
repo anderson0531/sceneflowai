@@ -29,7 +29,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-2xl font-semibold text-white mb-4">2. Description of Service</h2>
             <p className="text-gray-300 leading-relaxed">
-              SceneFlow AI is an AI-powered filmmaking platform that enables users to create video content including scripts, storyboards, voice synthesis, and video generation. The Service uses artificial intelligence technologies from third-party providers including Google (Gemini, Imagen, Veo), and ElevenLabs.
+              SceneFlow AI is an AI-powered filmmaking platform that enables users to create video content including scripts, pre-visualization, voice synthesis, and video generation. The Service uses artificial intelligence technologies from third-party providers including Google (Gemini, Imagen, Veo), and ElevenLabs.
             </p>
           </section>
 

@@ -29,11 +29,12 @@
     "platformWalkthrough": "Platform Tanıtımı",
     "platform": "Platform",
     "pricing": "Fiyatlandırma",
-    "faq": "Sıkça Sorulan Sorular"
+    "faq": "Sıkça Sorulan Sorular",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "Beş farklı yapay zeka sekmesi arasında gidip gelmeyi bırakın. Tek bir stüdyo, sizi fikirden yayına hazır videoya taşır.",
-    "subheadline": "Fikirden yayına hazır nihai videoya kadar uzanan, rehberlik sunan tek bir stüdyo. Nihai video için ödeme yapmadan önce storyboard'unuzu görün; deneme yanılma yoluyla kredi harcamak yerine, görsel tarzı önceden onaylayın. SceneFlow; senaryo, storyboard, seslendirme ve kurgu gibi zaman alıcı işleri otomatikleştirirken, sürecin her aşamasında kontrol sizde kalır.",
+    "subheadline": "Fikirden yayına hazır nihai videoya kadar uzanan, rehberlik sunan tek bir stüdyo. Nihai video için ödeme yapmadan önce pre-vis'unuzu görün; deneme yanılma yoluyla kredi harcamak yerine, görsel tarzı önceden onaylayın. SceneFlow; senaryo, pre-vis, seslendirme ve kurgu gibi zaman alıcı işleri otomatikleştirirken, sürecin her aşamasında kontrol sizde kalır.",
     "audienceMicroLine": "Sonuç odaklı içerik üreticileri ve sistemin nasıl işlediğini görmek isteyen ekipler için geliştirildi.",
     "ctaSecondary": "'Nelerin Mümkün Olduğunu' İzleyin",
     "ctaToolStack": "Mevcut araç setinizin yerini nasıl aldığını görün.",
@@ -82,7 +83,7 @@
       },
       {
         "label": "Nihai Videodan Önce Onaylayın",
-        "detail": "Render almadan önce storyboard aşamalarını gözden geçirin."
+        "detail": "Render almadan önce pre-vis aşamalarını gözden geçirin."
       },
       {
         "label": "Önce Hikayeni Test Et",
@@ -102,7 +103,7 @@
     "modes": {
       "automate": {
         "label": "Otomatikleştirin",
-        "description": "Yönlendirmeli iş akışı — storyboard'ları onaylayın, daha hızlı hayata geçirin"
+        "description": "Yönlendirmeli iş akışı — pre-vis'ları onaylayın, daha hızlı hayata geçirin"
       },
       "engine": {
         "label": "Bana motoru göster.",
@@ -192,9 +193,9 @@
     "title": "Vuruş Odaklı Video İş Akışı",
     "subtitle": "Oluşturmadan önce onaylayın; şans oyunları makinesi tarzı rastgele yenileme değil.",
     "intro": "Deneme yanılma yoluyla üretim yapmaya gerek yok. SceneFlow nihai video için kredi harcamadan önce, görüntüyü önizler ve onaylarsınız.",
-    "description": "SceneFlow, görsel onay sürecini her aşamada yapılandırır: inceleme için Express storyboard, kompozisyonu sabitlemek için Beat Frames ve ardından her bir vuruş (beat) için F2V. Böylece, sapma (drift) ve halüsinasyonlar nedeniyle kredilerinizi boşa harcamadan önce görseli iyileştirirsiniz.",
+    "description": "SceneFlow, görsel onay sürecini her aşamada yapılandırır: inceleme için Express Pre-vis, kompozisyonu sabitlemek için Beat Frames ve ardından her bir vuruş (beat) için F2V. Böylece, sapma (drift) ve halüsinasyonlar nedeniyle kredilerinizi boşa harcamadan önce görseli iyileştirirsiniz.",
     "steps": [
-      "Express storyboard — Görsel-işitsel beat'leri dakikalar içinde incelemeye sunun",
+      "Express Pre-vis — Görsel-işitsel beat'leri dakikalar içinde incelemeye sunun",
       "Beat Frames — Reference Library sürekliliği ile başlangıç/bitiş kompozisyonunu kilitleme",
       "Vuruş başına F2V — körü körüne girilen komutlarla değil, onaylanmış karelerden video oluşturun",
       "Production Mixer — Final Cut montajına zamanlama, ses ve akış dışa aktarımı"
@@ -269,7 +270,7 @@
       "syncLabel": "Tek bir proje dosyası — sekmeler arasında gidip gelmek yok",
       "benefits": [
         "Rehberli aşamalar — sekme karmaşasına ve bağlam kaybına son verin",
-        "Storyboard onayı — video harcaması yapmadan önce slot makinesi misali sürekli revizyon döngüsüne son verin",
+        "pre-vis onayı — video harcaması yapmadan önce slot makinesi misali sürekli revizyon döngüsüne son verin",
         "Audience Resonance ağır render öncesi puan",
         "4 saatten fazla değil, 30–60 dakikada yayına hazır master"
       ],
@@ -290,7 +291,7 @@
   "howItWorks": {
     "title": "Konseptten yayına hazır videoya",
     "titleAccent": "Tek bir yönlendirmeli iş akışı",
-    "subtitle": "Seri seçime bağlıdır. Temel izlek Blueprint → Yapım → Final Cut → Premiere şeklindedir; bu süreçte storyboard, animatik, video ve ana MP4 aşamaları yer alır.",
+    "subtitle": "Seri seçime bağlıdır. Temel izlek Blueprint → Yapım → Final Cut → Premiere şeklindedir; bu süreçte pre-vis, animatik, video ve ana MP4 aşamaları yer alır.",
     "tagline": "Her adım ustalıkla otomatikleştirilmiştir. Her adım size tam kontrol sağlar.",
     "optionalBadge": "İsteğe bağlı",
     "optionalSuffix": " (isteğe bağlı)",
@@ -335,16 +336,16 @@
         "id": "üretim",
         "stepLabel": "Üretim",
         "subtitle": "Senaryodan Yayına",
-        "description": "Script ve Action sekmeleri; Foundation → Storyboard → Production → Final Cut sürecine rehberlik eder. Express storyboard, Beat Frames, Mixer ve MP4 akışları — araç değiştirmeye gerek kalmadan.",
+        "description": "Script ve Action sekmeleri; Foundation → pre-vis → Production → Final Cut sürecine rehberlik eder. Express Pre-vis, Beat Frames, Mixer ve MP4 akışları — araç değiştirmeye gerek kalmadan.",
         "keySteps": [
           "Senaryoyu, seslendirmeleri ve sahne seslerini sabitleyin",
-          "Express storyboard — galeri ve inceleme için paylaşım",
+          "Express Pre-vis — galeri ve inceleme için paylaşım",
           "Beat Frames → Yönetmen Konsolu → Render Akışı",
           "Tamamlanan akışları Final Cut'a gönderin."
         ],
         "keyFeatures": [
           "Foundation — senaryo, seslendirmeler, sahne sesi, senaryoyu kilitle",
-          "Express storyboard — dakikalar içinde yön ve kareler; galeri ve paylaşım",
+          "Express Pre-vis — dakikalar içinde yön ve kareler; galeri ve paylaşım",
           "Beat Frames ve Mikser — başlangıç/bitiş kareleri, Yönetmen Konsolu, MP4 akışlarını render etme",
           "Üretim Akışları — çıktıları incele, güncelliğini yitirmiş işleri yeniden işle, Final Cut'a gönder"
         ]
@@ -390,7 +391,7 @@
     "title": "Hayal edebileceğiniz her türlü video,",
     "titleAccent": "Bunu SceneFlow içinde oluşturun",
     "subtitle": "Gayrimenkul tanıtımları, eğitim içerikleri, podcast'ler, haber formatları, marka kampanyaları ve sinematik hikâyeler; konsept aşamasından yayına hazır nihai yapıma kadar tek bir otomatik stüdyo.",
-    "qualifyingStatement": "SceneFlow; kaynak fotoğraflarınızı, yüklediğiniz dosyaları ve açıklamaları, kontrol edebileceğiniz isteğe bağlı ses ve karakter unsurları içeren, anlatımlı tanıtım videolarına dönüştürür. Bunlar canlı kamera kayıtları değil, materyallerinize dayalı gerçekçi görselleştirmelerden oluşan ve yapay zeka ile işlenmiş sunumlardır. Yayınlamadan önce her bir taslak kurguyu (storyboard) inceleyip onaylayın ve izleyicilerin ne izlediklerini anlamaları için çıktıları net bir şekilde etiketleyin.",
+    "qualifyingStatement": "SceneFlow; kaynak fotoğraflarınızı, yüklediğiniz dosyaları ve açıklamaları, kontrol edebileceğiniz isteğe bağlı ses ve karakter unsurları içeren, anlatımlı tanıtım videolarına dönüştürür. Bunlar canlı kamera kayıtları değil, materyallerinize dayalı gerçekçi görselleştirmelerden oluşan ve yapay zeka ile işlenmiş sunumlardır. Yayınlamadan önce her bir taslak kurguyu (pre-vis) inceleyip onaylayın ve izleyicilerin ne izlediklerini anlamaları için çıktıları net bir şekilde etiketleyin.",
     "ui": {
       "useCases": "Kullanım Senaryoları",
       "sectors": "{count} SEKTÖR",
@@ -457,7 +458,7 @@
             "Tedarikçi çekimlerini, yönlendirmeli kurum içi iş akışlarıyla değiştirin.",
             "Marka standartlarına uygun şablonlar ve referans kütüphaneleri",
             "Proje bazında görünür kredi harcaması ve bütçe sınırları",
-            "Nihai video için ödeme yapmadan önce storyboard'ları onaylayın."
+            "Nihai video için ödeme yapmadan önce pre-vis'ları onaylayın."
           ]
         },
         "win": "Eğitim, iletişim ve kampanya videolarını tedarikçinin iş kuyruğuna göre değil, kendi takviminize göre hayata geçirin.",
@@ -480,10 +481,10 @@
         },
         "solution": {
           "title": "Video Hizmetinizi Ürüne Dönüştürün",
-          "description": "Anı stüdyoları ve niş sektörler için tekrarlanabilir iş akışları oluşturun. Şablon yüklemeleri, ses klonlama, avatarlar ve storyboard onayı gibi süreçleri her müşteriye göre özelleştirin ve işlem hacmiyle kâr marjınızı artırın.",
+          "description": "Anı stüdyoları ve niş sektörler için tekrarlanabilir iş akışları oluşturun. Şablon yüklemeleri, ses klonlama, avatarlar ve pre-vis onayı gibi süreçleri her müşteriye göre özelleştirin ve işlem hacmiyle kâr marjınızı artırın.",
           "features": [
             "Fotoğraf yükleme, ses klonlama ve avatar sunucular içeren anı kitabı şablonları",
-            "Müşteri kabul süreci, Blueprint ve storyboard onay aşamalarına bağlanmıştır.",
+            "Müşteri kabul süreci, Blueprint ve pre-vis onay aşamalarına bağlanmıştır.",
             "Anı, anma ve abonelik temelli videolar için beyaz etiketli stüdyo paketleri",
             "Çekim başına genel gider yerine, krediler üzerinden kâr marjı"
           ]
@@ -607,7 +608,7 @@
           {
             "id": "video anılar",
             "label": "Video Anılar",
-            "description": "Aile fotoğraflarını, röportaj kayıtlarını ve sahne notlarını, önceden kaydedilmiş bir anlatıcı sesiyle birlikte yüklediğinizi hayal edin. Ardından, bölüm bazlı anı videolarını anında şekillendirin ve nihai oluşturma işleminden önce hikâye akışını (storyboard) onaylayın."
+            "description": "Aile fotoğraflarını, röportaj kayıtlarını ve sahne notlarını, önceden kaydedilmiş bir anlatıcı sesiyle birlikte yüklediğinizi hayal edin. Ardından, bölüm bazlı anı videolarını anında şekillendirin ve nihai oluşturma işleminden önce hikâye akışını (pre-vis) onaylayın."
           }
         ]
       },
@@ -649,7 +650,7 @@
           {
             "id": "ürün tanıtım videoları",
             "label": "Ürün Tanıtım Videoları",
-            "description": "Markanızın kayıtlı sunucu sesi ve avatarı eşliğinde ürün kataloğu görsellerini yüklediğinizi hayal edin. Ardından, sinematik bir tanıtım videosu serisini anında oluşturun; render işlemine geçmeden önce ise storyboard'u onaylayın."
+            "description": "Markanızın kayıtlı sunucu sesi ve avatarı eşliğinde ürün kataloğu görsellerini yüklediğinizi hayal edin. Ardından, sinematik bir tanıtım videosu serisini anında oluşturun; render işlemine geçmeden önce ise pre-vis'u onaylayın."
           },
           {
             "id": "Vaka çalışması referansları",
@@ -753,19 +754,19 @@
     "viewDetails": "Ayrıntıları Görüntüle",
     "beatFirst": {
       "title": "Vuruş Odaklı Video İş Akışı",
-      "description": "F2V öncesinde storyboard aşamalarını ve Beat Frames'i onaylayın; böylece halüsinasyon ve görsel sapma kaynaklı, rastgele yeniden üretimler azalır. İncelemeden nihai klibe uzanan tek ve yapılandırılmış bir süreç.",
+      "description": "F2V öncesinde pre-vis aşamalarını ve Beat Frames'i onaylayın; böylece halüsinasyon ve görsel sapma kaynaklı, rastgele yeniden üretimler azalır. İncelemeden nihai klibe uzanan tek ve yapılandırılmış bir süreç.",
       "keyFeatures": [
-        "İnceleme için Express storyboard — ağır render işleminden önce beat'leri paylaşın",
+        "İnceleme için Express Pre-vis — ağır render işleminden önce beat'leri paylaşın",
         "Beat Frames kilit kompozisyonu — Reference Library süreklilik",
         "Vuruş başına F2V — onaylanmış karelerden video oluşturma",
         "Mikser zamanlaması ve akışları — Final Cut montajına aktarım"
       ],
-      "screenshotSlot": "Ekran görüntüsü ekleyin: Video oluşturulmadan önce Beat Frames ve storyboard onayı",
+      "screenshotSlot": "Ekran görüntüsü ekleyin: Video oluşturulmadan önce Beat Frames ve pre-vis onayı",
       "videoSlot": "00:30'luk klibi ekle: Vuruşların onaylanması, karelerin sabitlenmesi ve ardından F2V kliplerinin oluşturulması."
     },
     "screeningRoom": {
       "title": "İzleyici Değerlendirmesi ve Analitiği",
-      "description": "Paydaşlara yönelik özel /s/ paylaşım bağlantıları; manuel puanlar, yapılandırılmış geri bildirim ve izleyici onayıyla isteğe bağlı etkileşim analizlerini içerir. Yayın öncesinde Premiere aşamasında ve prodüksiyon storyboard önizlemesi için kullanılır.",
+      "description": "Paydaşlara yönelik özel /s/ paylaşım bağlantıları; manuel puanlar, yapılandırılmış geri bildirim ve izleyici onayıyla isteğe bağlı etkileşim analizlerini içerir. Yayın öncesinde Premiere aşamasında ve prodüksiyon pre-vis önizlemesi için kullanılır.",
       "keyFeatures": [
         "Özel inceleme oturumları — paydaşlar için güvenli paylaşım bağlantıları",
         "Yapılandırılmış izleyici geri bildirimi — derecelendirmeler ve açık uçlu maddeler",
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Hızlı Üretim Motoru",
-        "description": "Görüntüleri ve video bölümlerini eşzamanlı olarak otomatik oluşturun. Express Storyboard, görsel-işitsel taslakları (storyboard) dakikalar içinde incelemenize ve paylaşmanıza olanak tanır. Express Storyboard tam Ken Burns tarzı sahneleri dakikalar içinde işlerken, Express Video nihai video sahnelerini günler yerine dakikalar içinde sunar.",
+        "description": "Görüntüleri ve video bölümlerini eşzamanlı olarak otomatik oluşturun. Express Pre-vis, görsel-işitsel taslakları (pre-vis) dakikalar içinde incelemenize ve paylaşmanıza olanak tanır. Express Pre-vis tam Ken Burns tarzı sahneleri dakikalar içinde işlerken, Express Video nihai video sahnelerini günler yerine dakikalar içinde sunar.",
         "keyFeatures": [
           "Eş zamanlı üretim — farklı sahnelerde aynı anda görüntü ve video oluşturma",
-          "Express Storyboard — dakikalar içinde paylaşılabilir görsel-işitsel önizlemeler",
+          "Express Pre-vis — dakikalar içinde paylaşılabilir görsel-işitsel önizlemeler",
           "Express Animatics — Hareketsiz görüntülerden Ken Burns tarzı hareket",
           "Express Video — günler değil, dakikalar içinde sahne düzeyinde klipler"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "Üretim Otomasyonu",
-        "description": "Script ve Action sekmeleri; Foundation → Storyboard → Production → Final Cut sürecine rehberlik eder. Express storyboard, Beat Frames, Mixer ve MP4 akışları — araç değiştirmeye gerek kalmadan.",
+        "description": "Script ve Action sekmeleri; Foundation → pre-vis → Production → Final Cut sürecine rehberlik eder. Express Pre-vis, Beat Frames, Mixer ve MP4 akışları — araç değiştirmeye gerek kalmadan.",
         "keyFeatures": [
           "Foundation — senaryo, seslendirmeler, sahne sesi, senaryoyu kilitle",
-          "Express storyboard — dakikalar içinde yön ve kareler; galeri ve paylaşım",
+          "Express Pre-vis — dakikalar içinde yön ve kareler; galeri ve paylaşım",
           "Beat Frames ve Mikser — başlangıç/bitiş kareleri, Yönetmen Konsolu, MP4 akışlarını render etme",
           "Üretim Akışları — çıktıları incele, güncelliğini yitirmiş işleri yeniden işle, Final Cut'a gönder"
         ],
         "screenshotSlot": "Ekran görüntüsü ekleyin: Senaryo, Beat Frames ve Mikseri gösteren prodüksiyon paneli",
-        "videoSlot": "00:30'luk klip ekle: Foundation, Express storyboard, Beat Frames ve yayın dışa aktarımı"
+        "videoSlot": "00:30'luk klip ekle: Foundation, Express Pre-vis, Beat Frames ve yayın dışa aktarımı"
       },
       {
         "id": "12",
@@ -968,7 +969,7 @@
       {
         "id": "14",
         "title": "İzleyici Değerlendirmesi ve Analitiği",
-        "description": "Paydaşlara yönelik özel /s/ paylaşım bağlantıları; manuel puanlar, yapılandırılmış geri bildirim ve izleyici onayıyla isteğe bağlı etkileşim analizlerini içerir. Yayın öncesinde Premiere aşamasında ve prodüksiyon storyboard önizlemesi için kullanılır.",
+        "description": "Paydaşlara yönelik özel /s/ paylaşım bağlantıları; manuel puanlar, yapılandırılmış geri bildirim ve izleyici onayıyla isteğe bağlı etkileşim analizlerini içerir. Yayın öncesinde Premiere aşamasında ve prodüksiyon pre-vis önizlemesi için kullanılır.",
         "keyFeatures": [
           "Özel inceleme oturumları — paydaşlar için güvenli paylaşım bağlantıları",
           "Yapılandırılmış izleyici geri bildirimi — derecelendirmeler ve açık uçlu maddeler",
@@ -1090,11 +1091,11 @@
     "express": {
       "badge": "Ultra Hızlı Üretim",
       "title": "Sceneflow Express",
-      "description": "Storyboard'ları, animatikleri ve video akışlarını eşzamanlı olarak otomatik oluşturun. Dakikalar içinde senaryodan paylaşılabilir bir önizlemeye geçin ve ardından nihai F2V harcamasını yapmadan önce Beat Frames onayını verin.",
+      "description": "pre-vis'ları, animatikleri ve video akışlarını eşzamanlı olarak otomatik oluşturun. Dakikalar içinde senaryodan paylaşılabilir bir önizlemeye geçin ve ardından nihai F2V harcamasını yapmadan önce Beat Frames onayını verin.",
       "items": [
         {
           "title": "Hızlı Taslak Panosu",
-          "desc": "Sesli ve görüntülü storyboard'ları saatler yerine dakikalar içinde inceleyin ve paylaşın.",
+          "desc": "Sesli ve görüntülü pre-vis'ları saatler yerine dakikalar içinde inceleyin ve paylaşın.",
           "time": "Dakikalar ve Saatler"
         },
         {
@@ -1335,7 +1336,7 @@
     "items": [
       {
         "question": "SceneFlow iş akışı, fikirden yayınlanmaya hazır videoya kadar nasıl ilerliyor?",
-        "answer": "SceneFlow yapılandırılmış bir iş akışı kullanır: Seri (isteğe bağlı) → Blueprint → Yapım → Final Cut → Premiere. Blueprint, Audience Resonance aracılığıyla hikaye yapısını ve hedef kitleyi tanımlar. Yapım aşamasında senaryo, storyboard, beat videosu ve render alınmış sahne akışları oluşturulur. Final Cut, seçilen akışları tek bir ana MP4 dosyasında birleştirir; bu bir zaman çizelgesi düzenleyicisi değildir. Premiere ise gösterimleri, analiz içgörülerini, YouTube'da yayınlamayı ve dışa aktarma paketlerini yönetir."
+        "answer": "SceneFlow yapılandırılmış bir iş akışı kullanır: Seri (isteğe bağlı) → Blueprint → Yapım → Final Cut → Premiere. Blueprint, Audience Resonance aracılığıyla hikaye yapısını ve hedef kitleyi tanımlar. Yapım aşamasında senaryo, pre-vis, beat videosu ve render alınmış sahne akışları oluşturulur. Final Cut, seçilen akışları tek bir ana MP4 dosyasında birleştirir; bu bir zaman çizelgesi düzenleyicisi değildir. Premiere ise gösterimleri, analiz içgörülerini, YouTube'da yayınlamayı ve dışa aktarma paketlerini yönetir."
       },
       {
         "question": "SceneFlow, Gemini Studio veya Google Flow'den nasıl farklıdır?",
@@ -1355,7 +1356,7 @@
       },
       {
         "question": "Eğer Screening Room inceleme aşamasıysa, Premiere ne yapar?",
-        "answer": "Screening Room, Premiere içindeki inceleme arayüzüdür ve aynı zamanda prodüksiyon storyboard önizlemesi için kullanılır. /s/ bağlantılarını paylaşın, paydaş geri bildirimlerini ve (izleyici onayıyla) isteğe bağlı etkileşim analizlerini toplayın, puanlama ve görsel içgörüleri inceleyin; ardından YouTube sihirbazı aracılığıyla yayınlayın veya paketleri dışa aktarın."
+        "answer": "Screening Room, Premiere içindeki inceleme arayüzüdür ve aynı zamanda prodüksiyon pre-vis önizlemesi için kullanılır. /s/ bağlantılarını paylaşın, paydaş geri bildirimlerini ve (izleyici onayıyla) isteğe bağlı etkileşim analizlerini toplayın, puanlama ve görsel içgörüleri inceleyin; ardından YouTube sihirbazı aracılığıyla yayınlayın veya paketleri dışa aktarın."
       },
       {
         "question": "Teknik deneyime veya düzenleme deneyimine ihtiyacım var mı?",
@@ -1377,7 +1378,7 @@
   },
   "finalCta": {
     "title": "Tüm işlem hattını test etmeye hazır mısınız?",
-    "subtitle": "Konsept, storyboard, video ve nihai MP4 süreçlerini tek bir stüdyoda yürütün. 9 dolarlık Explorer planıyla başlayın ve \"önce ritim\" (beat-first) iş akışını bizzat deneyimleyin.",
+    "subtitle": "Konsept, pre-vis, video ve nihai MP4 süreçlerini tek bir stüdyoda yürütün. 9 dolarlık Explorer planıyla başlayın ve \"önce ritim\" (beat-first) iş akışını bizzat deneyimleyin.",
     "cta": "Stüdyonuzu 9 $'a hayata geçirin"
   },
   "footer": {
@@ -1418,5 +1419,36 @@
     "mute": "Sessize al",
     "unmute": "Sesi aç",
     "expandVideo": "Videoyu Genişlet"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

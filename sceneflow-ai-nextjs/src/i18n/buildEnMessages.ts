@@ -46,6 +46,7 @@ import {
   FEATURE_STORYBOARD_UI,
 } from '@/config/landing/featureStoryboardCopy'
 import { PRICING_LANDING_COPY } from '@/config/landing/pricingLandingCopy'
+import { PRE_VIS_ENGINE_COPY } from '@/config/landing/preVisEngineCopy'
 import { LANDING_SECTION_COLLAPSE_COPY } from '@/config/landing/landingSectionCollapseCopy'
 import { getLandingPlans } from '@/lib/billing/tierCatalog'
 
@@ -53,7 +54,7 @@ const FAQ_ITEMS = [
   {
     question: 'How does the SceneFlow workflow run from idea to publish-ready video?',
     answer:
-      'SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, storyboard, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles.',
+      'SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, pre-vis, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles.',
   },
   {
     question: 'How is SceneFlow different from Gemini Studio or Google Flow?',
@@ -78,7 +79,7 @@ const FAQ_ITEMS = [
   {
     question: 'What does Premiere do if Screening Room is the review phase?',
     answer:
-      'Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles.',
+      'Screening Room is the review surface inside Premiere — and for Production pre-vis preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles.',
   },
   {
     question: 'Do I need technical or editing experience?',
@@ -108,7 +109,7 @@ const FAQ_ITEMS = [
   {
     question: 'What moderation and risk mitigation is available?',
     answer:
-      'Every generation runs through Google Vertex AI safety filters. When the primary path is blocked by policy, Extended Creative Services with Guardrails may complete delivery after an additional content review pass. Additional moderation and risk mitigation is available across Blueprint, script, storyboard, and segment video using the same credit model as other Studio tools. Segment video also receives signed content provenance records.',
+      'Every generation runs through Google Vertex AI safety filters. When the primary path is blocked by policy, Extended Creative Services with Guardrails may complete delivery after an additional content review pass. Additional moderation and risk mitigation is available across Blueprint, script, pre-vis, and segment video using the same credit model as other Studio tools. Segment video also receives signed content provenance records.',
   },
   {
     question: 'What happens if Google safety filters block my prompt?',
@@ -151,6 +152,7 @@ export function buildEnMessages() {
       looksAndFormats: 'Looks & Formats',
       howItWorks: 'How It Works',
       useCases: 'Use Cases',
+      preVisEngine: 'Pre-Vis Engine',
       platformWalkthrough: 'Platform Walkthrough',
       trustSafety: 'Trust & Safety',
       platform: 'Platform',
@@ -295,6 +297,7 @@ export function buildEnMessages() {
     },
     engineeringTrust: ENGINEERING_TRUST_COPY,
     coreCapabilities: CORE_CAPABILITIES_COPY,
+    preVisEngine: PRE_VIS_ENGINE_COPY,
     exitIntent: EXIT_INTENT_COPY,
     pricing: {
       ...PRICING_LANDING_COPY,

@@ -29,11 +29,12 @@
     "platformWalkthrough": "Genomgång av plattformen",
     "platform": "Plattform",
     "pricing": "Prissättning",
-    "faq": "Vanliga frågor"
+    "faq": "Vanliga frågor",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "Sluta växla mellan fem olika AI-flikar. En enda studio tar dig från idé till publiceringsklar video.",
-    "subheadline": "En guidad studio som tar dig hela vägen från idé till publiceringsklar master. Se din storyboard innan du betalar för den färdiga videon – godkänn stilen istället för att slösa krediter på att gissa dig fram genom olika versioner. SceneFlow automatiserar rutinarbetet – manus, storyboard, röst och sammanställning – samtidigt som du behåller kontrollen över varje del av processen.",
+    "subheadline": "En guidad studio som tar dig hela vägen från idé till publiceringsklar master. Se din pre-vis innan du betalar för den färdiga videon – godkänn stilen istället för att slösa krediter på att gissa dig fram genom olika versioner. SceneFlow automatiserar rutinarbetet – manus, pre-vis, röst och sammanställning – samtidigt som du behåller kontrollen över varje del av processen.",
     "audienceMicroLine": "Skapat för kreatörer som vill ha resultat och team som vill se hur det fungerar.",
     "ctaSecondary": "Se ”What's Possible”",
     "ctaToolStack": "Se hur det ersätter din verktygsuppsättning",
@@ -82,7 +83,7 @@
       },
       {
         "label": "Godkänn före slutlig video",
-        "detail": "Granska storyboard-sekvenserna innan du renderar."
+        "detail": "Granska pre-vis-sekvenserna innan du renderar."
       },
       {
         "label": "Testa din berättelse först",
@@ -102,7 +103,7 @@
     "modes": {
       "automate": {
         "label": "Automatisera det",
-        "description": "Guidat arbetsflöde – godkänn storyboarder, leverera snabbare"
+        "description": "Guidat arbetsflöde – godkänn pre-viser, leverera snabbare"
       },
       "engine": {
         "label": "Visa mig motorn",
@@ -192,9 +193,9 @@
     "title": "Videoproduktionsflöde med fokus på takten",
     "subtitle": "Godkänn före rendering – inte slumpmässig återskapning",
     "intro": "Ingen generering genom gissningar och tester. Du förhandsgranskar och godkänner utseendet innan SceneFlow förbrukar krediter på den slutgiltiga videon.",
-    "description": "SceneFlow strukturerar det visuella godkännandet i varje steg: Express storyboard för granskning, Beat Frames för att låsa kompositionen, och därefter F2V per takt. Du finjusterar det visuella innan du förbrukar krediter på avvikelser och hallucinationer.",
+    "description": "SceneFlow strukturerar det visuella godkännandet i varje steg: Express Pre-vis för granskning, Beat Frames för att låsa kompositionen, och därefter F2V per takt. Du finjusterar det visuella innan du förbrukar krediter på avvikelser och hallucinationer.",
     "steps": [
-      "Express storyboard — dela audiovisuella beats för granskning på bara några minuter",
+      "Express Pre-vis — dela audiovisuella beats för granskning på bara några minuter",
       "Beat Frames — lås start-/slutkomposition med Reference Library-kontinuitet",
       "F2V per takt – skapa video utifrån godkända bildrutor, inte blinda prompter",
       "Production Mixer — timing, ljud och strömexport till Final Cut-montering"
@@ -269,7 +270,7 @@
       "syncLabel": "En enda projektfil – slipp krångla med flikar",
       "benefits": [
         "Guidade faser – slipp flikjonglering och förlust av kontext",
-        "Godkännande av storyboard – sätt stopp för kostsamma omarbetningar innan videoproduktionen drar igång.",
+        "Godkännande av pre-vis – sätt stopp för kostsamma omarbetningar innan videoproduktionen drar igång.",
         "Audience Resonance poäng före tung rendering",
         "Publiceringsklar master på 30–60 minuter, inte över 4 timmar"
       ],
@@ -290,7 +291,7 @@
   "howItWorks": {
     "title": "Från koncept till publiceringsklar video",
     "titleAccent": "En guidad pipeline",
-    "subtitle": "Serien är valfri. Kärnförloppet är Blueprint → Produktion → Final Cut → Premiere – med nivåerna storyboard, animatic, video och master-MP4 längs vägen.",
+    "subtitle": "Serien är valfri. Kärnförloppet är Blueprint → Produktion → Final Cut → Premiere – med nivåerna pre-vis, animatic, video och master-MP4 längs vägen.",
     "tagline": "Varje steg är skickligt automatiserat. Varje steg ger dig full kontroll.",
     "optionalBadge": "Valfritt",
     "optionalSuffix": " (valfritt)",
@@ -335,16 +336,16 @@
         "id": "produktion",
         "stepLabel": "Produktion",
         "subtitle": "Från manus till strömmar",
-        "description": "Flikarna Script och Action vägleder dig genom Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer och MP4-strömmar – du behöver inte växla mellan olika verktyg.",
+        "description": "Flikarna Script och Action vägleder dig genom Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer och MP4-strömmar – du behöver inte växla mellan olika verktyg.",
         "keySteps": [
           "Lås manus, röster och scenljud",
-          "Express storyboard — galleri och delning för granskning",
+          "Express Pre-vis — galleri och delning för granskning",
           "Beat Frames → Regikonsol → Renderingsström",
           "Skicka färdiga strömmar till Final Cut"
         ],
         "keyFeatures": [
           "Foundation – manus, röster, scenljud, lås manus",
-          "Express storyboard — riktning och bildrutor i minuter; galleri och dela",
+          "Express Pre-vis — riktning och bildrutor i minuter; galleri och dela",
           "Beat Frames och Mixer – start-/slutrutor, Director Console, rendera MP4-strömmar",
           "Produktionsflöden – granska resultat, rendera om inaktuella segment, skicka till Final Cut"
         ]
@@ -390,7 +391,7 @@
     "title": "Vilken video du än kan föreställa dig,",
     "titleAccent": "Bygg det i SceneFlow",
     "subtitle": "Fastighetspresentationer, utbildning, poddar, nyhetsformat, varumärkeskampanjer och filmiska berättelser – en automatiserad studio som hanterar allt från koncept till publiceringsklar master.",
-    "qualifyingStatement": "SceneFlow omvandlar dina källfoton, uppladdningar och beskrivningar till videor med berättarröst och genomgångar – där du själv väljer röst och karaktär. Det rör sig om AI-genererade presentationer: realistiska visualiseringar baserade på ditt material, snarare än liveinspelningar. Granska och godkänn varje storyboard före publicering och märk materialet tydligt så att publiken vet vad de tittar på.",
+    "qualifyingStatement": "SceneFlow omvandlar dina källfoton, uppladdningar och beskrivningar till videor med berättarröst och genomgångar – där du själv väljer röst och karaktär. Det rör sig om AI-genererade presentationer: realistiska visualiseringar baserade på ditt material, snarare än liveinspelningar. Granska och godkänn varje pre-vis före publicering och märk materialet tydligt så att publiken vet vad de tittar på.",
     "ui": {
       "useCases": "Användningsområden",
       "sectors": "{count} sektorer",
@@ -457,7 +458,7 @@
             "Ersätt externa fotograferingar med guidade interna arbetsflöden",
             "Varumärkessäkra mallar och referensbibliotek",
             "Synlig kreditförbrukning och budgettak per projekt",
-            "Godkänn storyboarden innan du betalar för den färdiga videon."
+            "Godkänn pre-visen innan du betalar för den färdiga videon."
           ]
         },
         "win": "Leverera utbildnings-, kommunikations- och kampanjvideor enligt din egen tidsplan – inte leverantörens kö.",
@@ -483,7 +484,7 @@
           "description": "Skapa repeterbara arbetsflöden för studior som producerar memoarer och för nischade branscher. Hantera mallar, röstkloner, avatarer och godkännande av bildmanus – anpassa för varje kund och öka marginalerna genom volym.",
           "features": [
             "Mallar för memoarer med bilduppladdning, röstkloning och avatarvärdar",
-            "Kundintag kopplat till Blueprint och faser för godkännande av storyboard",
+            "Kundintag kopplat till Blueprint och faser för godkännande av pre-vis",
             "White-label-studiopaket för videor om livsverk, hyllningar och prenumerationstjänster",
             "Marginal på krediter istället för omkostnader per inspelning"
           ]
@@ -649,7 +650,7 @@
           {
             "id": "produktförklarande videor",
             "label": "Produktförklarande videor",
-            "description": "Tänk dig att ladda upp produktbilder tillsammans med ditt varumärkes sparade presentatörsröst och avatar. Sedan skapar du omedelbart en filmisk serie med förklarande videor – och godkänner storyboarden innan renderingen påbörjas."
+            "description": "Tänk dig att ladda upp produktbilder tillsammans med ditt varumärkes sparade presentatörsröst och avatar. Sedan skapar du omedelbart en filmisk serie med förklarande videor – och godkänner pre-visen innan renderingen påbörjas."
           },
           {
             "id": "Kundutlåtanden från fallstudier",
@@ -753,19 +754,19 @@
     "viewDetails": "Visa detaljer",
     "beatFirst": {
       "title": "Videoproduktionsflöde med fokus på takten",
-      "description": "Godkänn storyboard-moment och Beat Frames före F2V – färre blinda återskapanden orsakade av hallucinationer och visuell avvikelse. Ett strukturerat arbetsflöde från granskning till färdigt klipp.",
+      "description": "Godkänn pre-vis-moment och Beat Frames före F2V – färre blinda återskapanden orsakade av hallucinationer och visuell avvikelse. Ett strukturerat arbetsflöde från granskning till färdigt klipp.",
       "keyFeatures": [
-        "Express storyboard för granskning – dela beats före tung rendering",
+        "Express Pre-vis för granskning – dela beats före tung rendering",
         "Beat Frames slussammansättning — Reference Library kontinuitet",
         "F2V per takt – generera video från godkända bildrutor",
         "Mixertiming och strömmar – export till Final Cut-assemblin"
       ],
-      "screenshotSlot": "Infoga skärmdump: Beat Frames och godkännande av storyboard före videogenerering",
+      "screenshotSlot": "Infoga skärmdump: Beat Frames och godkännande av pre-vis före videogenerering",
       "videoSlot": "Infoga klipp på 30 sekunder: Godkänna takter, låsa bildrutor och därefter generera F2V-klipp"
     },
     "screeningRoom": {
       "title": "Publikanalys och statistik",
-      "description": "Privata delningslänkar för intressenter – manuella bedömningar, strukturerad feedback och valfri analys av engagemang (med tittarens samtycke). Används i Premiere före publicering samt för förhandsgranskning av produktionsstoryboard.",
+      "description": "Privata delningslänkar för intressenter – manuella bedömningar, strukturerad feedback och valfri analys av engagemang (med tittarens samtycke). Används i Premiere före publicering samt för förhandsgranskning av produktionspre-vis.",
       "keyFeatures": [
         "Privata granskningssessioner – säkra delningslänkar för intressenter",
         "Strukturerad feedback från publiken – betyg och fritextsvar",
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Motor för snabb generering",
-        "description": "Generera automatiskt bilder och videosegment samtidigt. Med Express Storyboard kan du granska och dela audiovisuella bildmanus på bara några minuter. Express Animatic skapar kompletta Ken Burns-scener på några minuter, medan Express Video levererar färdiga videoscener på minuter i stället för dagar.",
+        "description": "Generera automatiskt bilder och videosegment samtidigt. Med Express Pre-vis kan du granska och dela audiovisuella bildmanus på bara några minuter. Express Animatic skapar kompletta Ken Burns-scener på några minuter, medan Express Video levererar färdiga videoscener på minuter i stället för dagar.",
         "keyFeatures": [
           "Samtidig generering – bilder och video för flera scener samtidigt",
-          "Express Storyboard – delbara audiovisuella förhandsvisningar på bara några minuter",
+          "Express Pre-vis – delbara audiovisuella förhandsvisningar på bara några minuter",
           "Express Animatics – Ken Burns-effekt (rörelse i stillbilder)",
           "Express Video – klipp på scennivå på några minuter, inte dagar"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "Produktionsautomation",
-        "description": "Flikarna Script och Action vägleder dig genom Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer och MP4-strömmar – du behöver inte växla mellan olika verktyg.",
+        "description": "Flikarna Script och Action vägleder dig genom Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer och MP4-strömmar – du behöver inte växla mellan olika verktyg.",
         "keyFeatures": [
           "Foundation – manus, röster, scenljud, lås manus",
-          "Express storyboard — riktning och bildrutor i minuter; galleri och dela",
+          "Express Pre-vis — riktning och bildrutor i minuter; galleri och dela",
           "Beat Frames och Mixer – start-/slutrutor, Director Console, rendera MP4-strömmar",
           "Produktionsflöden – granska resultat, rendera om inaktuella segment, skicka till Final Cut"
         ],
         "screenshotSlot": "Infoga skärmdump: Produktionspanel som visar manus, Beat Frames och mixer.",
-        "videoSlot": "Infoga klipp på 30 sekunder: Foundation, Express storyboard, Beat Frames och strömexport"
+        "videoSlot": "Infoga klipp på 30 sekunder: Foundation, Express Pre-vis, Beat Frames och strömexport"
       },
       {
         "id": "12",
@@ -968,7 +969,7 @@
       {
         "id": "14",
         "title": "Publikanalys och statistik",
-        "description": "Privata delningslänkar för intressenter – manuella bedömningar, strukturerad feedback och valfri analys av engagemang (med tittarens samtycke). Används i Premiere före publicering samt för förhandsgranskning av produktionsstoryboard.",
+        "description": "Privata delningslänkar för intressenter – manuella bedömningar, strukturerad feedback och valfri analys av engagemang (med tittarens samtycke). Används i Premiere före publicering samt för förhandsgranskning av produktionspre-vis.",
         "keyFeatures": [
           "Privata granskningssessioner – säkra delningslänkar för intressenter",
           "Strukturerad feedback från publiken – betyg och fritextsvar",
@@ -1090,11 +1091,11 @@
     "express": {
       "badge": "Produktion i extremt högt tempo",
       "title": "Sceneflow Express",
-      "description": "Generera automatiskt storyboards, animatics och videosekvenser parallellt. Gå från manus till en förhandsvisning som kan delas på bara några minuter – och godkänn sedan Beat Frames innan den slutgiltiga investeringen i produktionen (F2V).",
+      "description": "Generera automatiskt pre-vis, animatics och videosekvenser parallellt. Gå från manus till en förhandsvisning som kan delas på bara några minuter – och godkänn sedan Beat Frames innan den slutgiltiga investeringen i produktionen (F2V).",
       "items": [
         {
-          "title": "Express-storyboard",
-          "desc": "Granska och dela ljud- och videostoryboards på minuter istället för timmar.",
+          "title": "Express-pre-vis",
+          "desc": "Granska och dela ljud- och videopre-vis på minuter istället för timmar.",
           "time": "Minuter kontra timmar"
         },
         {
@@ -1335,7 +1336,7 @@
     "items": [
       {
         "question": "Hur ser arbetsflödet för SceneFlow ut, från idé till publiceringsklar video?",
-        "answer": "SceneFlow använder ett strukturerat arbetsflöde: Serie (valfritt) → Blueprint → Produktion → Final Cut → Premiere. Blueprint definierar berättelsestruktur och målgrupp med hjälp av Audience Resonance. Produktionen genererar manus, storyboard, beat-video och renderade scenströmmar. Final Cut sammanställer valda strömmar till en master-MP4 – det är inte en tidslinjebaserad redigerare. Premiere hanterar visningar, analysinsikter, publicering på YouTube och exportpaket."
+        "answer": "SceneFlow använder ett strukturerat arbetsflöde: Serie (valfritt) → Blueprint → Produktion → Final Cut → Premiere. Blueprint definierar berättelsestruktur och målgrupp med hjälp av Audience Resonance. Produktionen genererar manus, pre-vis, beat-video och renderade scenströmmar. Final Cut sammanställer valda strömmar till en master-MP4 – det är inte en tidslinjebaserad redigerare. Premiere hanterar visningar, analysinsikter, publicering på YouTube och exportpaket."
       },
       {
         "question": "På vilket sätt skiljer sig SceneFlow från Gemini Studio eller Google Flow?",
@@ -1355,7 +1356,7 @@
       },
       {
         "question": "Vad gör Premiere om Screening Room är granskningsfasen?",
-        "answer": "Screening Room är gränssnittet för granskning i Premiere – och används även för förhandsgranskning av produktionsstoryboards. Dela /s/-länkar, samla in feedback från intressenter och valfri analys av engagemang (med tittarens samtycke), granska poängsättning och visuella insikter, och publicera sedan via YouTube-guiden eller exportera paket."
+        "answer": "Screening Room är gränssnittet för granskning i Premiere – och används även för förhandsgranskning av produktionspre-vis. Dela /s/-länkar, samla in feedback från intressenter och valfri analys av engagemang (med tittarens samtycke), granska poängsättning och visuella insikter, och publicera sedan via YouTube-guiden eller exportera paket."
       },
       {
         "question": "Behöver jag teknisk erfarenhet eller erfarenhet av redigering?",
@@ -1377,7 +1378,7 @@
   },
   "finalCta": {
     "title": "Redo att testa hela pipelinen?",
-    "subtitle": "Gå från koncept till storyboard, video och master-MP4 i en och samma studio. Börja med planen för 9 $ Explorer och upplev arbetsflödet där takten står i centrum.",
+    "subtitle": "Gå från koncept till pre-vis, video och master-MP4 i en och samma studio. Börja med planen för 9 $ Explorer och upplev arbetsflödet där takten står i centrum.",
     "cta": "Starta din studio för 9 dollar"
   },
   "footer": {
@@ -1418,5 +1419,36 @@
     "mute": "Stäng av ljudet",
     "unmute": "Slå på ljudet",
     "expandVideo": "Expandera video"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

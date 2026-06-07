@@ -29,7 +29,8 @@
     "platformWalkthrough": "Platform-deurloop",
     "platform": "Platform",
     "pricing": "Prysbepaling",
-    "faq": "Gereelde vrae"
+    "faq": "Gereelde vrae",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "Hou op om tussen vyf KI-oortjies te wissel. Een ateljee neem jou van idee tot video wat gereed is vir publikasie.",
@@ -82,7 +83,7 @@
       },
       {
         "label": "Keur goed voor die finale video",
-        "detail": "Gaan die storyboard-momente na voordat jy dit weergee."
+        "detail": "Gaan die pre-vis-momente na voordat jy dit weergee."
       },
       {
         "label": "Toets eers jou storie",
@@ -192,9 +193,9 @@
     "title": "Video-werkvloei gebaseer op die ritme",
     "subtitle": "Keur goed voordat jy weergee — nie die hergenerering van 'n dobbelmasjien nie",
     "intro": "Geen generering deur raai-en-toets nie. Jy bekyk 'n voorskou en keur die voorkoms goed voordat SceneFlow krediete aan die finale video bestee.",
-    "description": "SceneFlow struktureer visuele goedkeuring by elke stap: Express storyboard vir hersiening, Beat Frames om die komposisie vas te slaan, en dan F2V per maatslag. Jy verfyn die voorkoms voordat jy krediete verspil aan afwykings en hallusinasies.",
+    "description": "SceneFlow struktureer visuele goedkeuring by elke stap: Express Pre-vis vir hersiening, Beat Frames om die komposisie vas te slaan, en dan F2V per maatslag. Jy verfyn die voorkoms voordat jy krediete verspil aan afwykings en hallusinasies.",
     "steps": [
-      "Express storyboard — deel oudiovisuele snitte binne minute vir hersiening",
+      "Express Pre-vis — deel oudiovisuele snitte binne minute vir hersiening",
       "Beat Frames — sluit begin/einde van samestelling vas met Reference Library-kontinuïteit",
       "F2V per maatslag — genereer video vanaf goedgekeurde rame, nie blinde opdragte nie",
       "Production Mixer — tydsberekening, oudio en stroomuitvoer na Final Cut-samestelling"
@@ -335,16 +336,16 @@
         "id": "produksie",
         "stepLabel": "Produksie",
         "subtitle": "Van draaiboek tot stroom",
-        "description": "Die \"Script\"- en \"Action\"-oortjies lei jou deur Foundation → Storyboard → Produksie → Final Cut. Express storyboard, Beat Frames, Mixer en MP4-strome – geen gewissel tussen gereedskap nie.",
+        "description": "Die \"Script\"- en \"Action\"-oortjies lei jou deur Foundation → pre-vis → Produksie → Final Cut. Express Pre-vis, Beat Frames, Mixer en MP4-strome – geen gewissel tussen gereedskap nie.",
         "keySteps": [
           "Finaliseer draaiboek, stemme en toneelklank",
-          "Express storyboard — galery en deel vir hersiening",
+          "Express Pre-vis — galery en deel vir hersiening",
           "Beat Frames → Regisseurskonsole → Weergawestroom",
           "Stuur voltooide strome na Final Cut"
         ],
         "keyFeatures": [
           "Foundation — draaiboek, stemme, toneelklank, sluit draaiboek",
-          "Express storyboard — rigting en rame in minute; galery en deel",
+          "Express Pre-vis — rigting en rame in minute; galery en deel",
           "Beat Frames en menger — begin-/eindrame, regisseurskonsole, lewer MP4-strome",
           "Produksiestrome — hersien uitsette, herskep verouderde \"beats\", stuur na Final Cut"
         ]
@@ -755,7 +756,7 @@
       "title": "Video-werkvloei gebaseer op die ritme",
       "description": "Keur storiabord-momente en Beat Frames goed vóór F2V — dit lei tot minder blinde hergenerasies as gevolg van hallusinasies en visuele afwyking. Een gestruktureerde proses van hersiening tot finale snit.",
       "keyFeatures": [
-        "Express storyboard vir hersiening — deel snitte voor swaar weergawe",
+        "Express Pre-vis vir hersiening — deel snitte voor swaar weergawe",
         "Beat Frames slot-samestelling — Reference Library kontinuïteit",
         "F2V per slag — genereer video vanaf goedgekeurde rame",
         "Mengertydsbepaling en -strome — uitvoer na Final Cut-samestelling"
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Vinnige Genereringsenjin",
-        "description": "Genereer beelde en videosegmente gelyktydig. Met Express Storyboard kan jy oudiovisuele storieborde binne minute nagaan en deel. Express Animatics genereer volledige Ken Burns-tonele binne minute, terwyl Express Video finale videotonele binne minute in plaas van dae lewer.",
+        "description": "Genereer beelde en videosegmente gelyktydig. Met Express Pre-vis kan jy oudiovisuele storieborde binne minute nagaan en deel. Express Animatics genereer volledige Ken Burns-tonele binne minute, terwyl Express Video finale videotonele binne minute in plaas van dae lewer.",
         "keyFeatures": [
           "Gelyktydige generering — beelde en video oor tonele heen, tegelyk",
-          "Express Storyboard — deelbare oudiovisuele voorskoue binne minute",
+          "Express Pre-vis — deelbare oudiovisuele voorskoue binne minute",
           "Express Animatics — Ken Burns-beweging vanaf stilbeelde",
           "Express Video — snitte op toneelvlak binne minute, nie dae nie"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "Produksie-outomatisering",
-        "description": "Die \"Script\"- en \"Action\"-oortjies lei jou deur Foundation → Storyboard → Produksie → Final Cut. Express storyboard, Beat Frames, Mixer en MP4-strome – geen gewissel tussen gereedskap nie.",
+        "description": "Die \"Script\"- en \"Action\"-oortjies lei jou deur Foundation → pre-vis → Produksie → Final Cut. Express Pre-vis, Beat Frames, Mixer en MP4-strome – geen gewissel tussen gereedskap nie.",
         "keyFeatures": [
           "Foundation — draaiboek, stemme, toneelklank, sluit draaiboek",
-          "Express storyboard — rigting en rame in minute; galery en deel",
+          "Express Pre-vis — rigting en rame in minute; galery en deel",
           "Beat Frames en menger — begin-/eindrame, regisseurskonsole, lewer MP4-strome",
           "Produksiestrome — hersien uitsette, herskep verouderde \"beats\", stuur na Final Cut"
         ],
         "screenshotSlot": "Voeg skermskoot in: Produksie-kontroleskerm wat die draaiboek, Beat Frames en die mengpaneel toon.",
-        "videoSlot": "Voeg 00:30-snit in: Foundation, Express storyboard, Beat Frames en stroomuitvoer"
+        "videoSlot": "Voeg 00:30-snit in: Foundation, Express Pre-vis, Beat Frames en stroomuitvoer"
       },
       {
         "id": "12",
@@ -1377,7 +1378,7 @@
   },
   "finalCta": {
     "title": "Gereed om die volledige pyplyn te toets?",
-    "subtitle": "Voltooi die hele proses – van konsep en storyboard tot video en finale MP4 – in een ateljee. Begin met die plan van $9 Explorer en sien die werkvloei, waar die ritme eerste kom, in aksie.",
+    "subtitle": "Voltooi die hele proses – van konsep en pre-vis tot video en finale MP4 – in een ateljee. Begin met die plan van $9 Explorer en sien die werkvloei, waar die ritme eerste kom, in aksie.",
     "cta": "Begin jou ateljee vir $9"
   },
   "footer": {
@@ -1418,5 +1419,36 @@
     "mute": "Stom",
     "unmute": "Ontdemp",
     "expandVideo": "Vergroot video"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

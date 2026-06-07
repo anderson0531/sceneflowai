@@ -153,7 +153,7 @@ type ScreeningType = 'storyboard' | 'pre-cut' | 'final-cut' | 'external'
 const TABS = [
   {
     id: 'storyboard',
-    label: 'Storyboard',
+    label: 'Pre-vis',
     icon: Film,
     description: 'Screenings from Animatic Editor',
   },

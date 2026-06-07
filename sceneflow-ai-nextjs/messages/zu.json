@@ -29,11 +29,12 @@
     "platformWalkthrough": "Ukubuka Kafushane Inkundla",
     "platform": "Inkundla",
     "pricing": "Amanani",
-    "faq": "Imibuzo Evame Ukubuzwa"
+    "faq": "Imibuzo Evame Ukubuzwa",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "Yeka ukuzama ukuphatha amathebhu amahlanu e-AI ngesikhathi esisodwa. Isitudiyo esisodwa sikusiza ukuthi usuke emcabangweni uze ube nevidiyo esilungele ukushicilelwa.",
-    "subheadline": "Isikhungo esisodwa esikuqondisayo kusukela emcabangweni kuya kumkhiqizo wokugcina osekulungele ukushicilelwa. Bona uhlaka lwevidiyo yakho (storyboard) ngaphambi kokuba ukhokhele ividiyo yokugcina — vumela ukubukeka kwayo kunokuchitha amakhredithi ekuzameni nokuqagela. I-SceneFlow yenza imisebenzi ephindaphindekayo ngokuzenzakalelayo — njengombhalo, uhlaka lwevidiyo, izwi, kanye nokuhlanganisa izingxenye — ngenkathi wena ulawula yonke ingxenye yenqubo.",
+    "subheadline": "Isikhungo esisodwa esikuqondisayo kusukela emcabangweni kuya kumkhiqizo wokugcina osekulungele ukushicilelwa. Bona uhlaka lwevidiyo yakho (pre-vis) ngaphambi kokuba ukhokhele ividiyo yokugcina — vumela ukubukeka kwayo kunokuchitha amakhredithi ekuzameni nokuqagela. I-SceneFlow yenza imisebenzi ephindaphindekayo ngokuzenzakalelayo — njengombhalo, uhlaka lwevidiyo, izwi, kanye nokuhlanganisa izingxenye — ngenkathi wena ulawula yonke ingxenye yenqubo.",
     "audienceMicroLine": "Yakhelwe abadali abafuna imiphumela, kanye namaqembu afuna ukubona ukuthi isebenza kanjani.",
     "ctaSecondary": "Buka okuthi 'Yini Engenzeka'",
     "ctaToolStack": "Bona indlela okuthatha ngayo indawo yeqoqo lakho lamathuluzi.",
@@ -82,7 +83,7 @@
       },
       {
         "label": "Vumela ngaphambi kwevidiyo yokugcina",
-        "detail": "Bukeza izigaba ze-storyboard ngaphambi kokwenza i-render."
+        "detail": "Bukeza izigaba ze-pre-vis ngaphambi kokwenza i-render."
       },
       {
         "label": "Hlola indaba yakho kuqala",
@@ -102,7 +103,7 @@
     "modes": {
       "automate": {
         "label": "Yenze isebenze ngokuzenzakalelayo",
-        "description": "Inqubo yomsebenzi eqondiswayo — vumela ama-storyboard, khipha umsebenzi ngokushesha"
+        "description": "Inqubo yomsebenzi eqondiswayo — vumela ama-pre-vis, khipha umsebenzi ngokushesha"
       },
       "engine": {
         "label": "Ngikhombise injini",
@@ -192,9 +193,9 @@
     "title": "Inqubo Yokukhiqiza Ividiyo Eqala Ngesigqi",
     "subtitle": "Vumela ngaphambi kokukhiqiza umphumela — hhayi ukuvuselela okufana nomshini wokugembula.",
     "intro": "Akukho ukukhiqiza ngokulinganisa nokuhlola. Uyabuka kuqala bese uvumela ukubukeka kwayo ngaphambi kokuba i-SceneFlow isebenzise amakhredithi kwividiyo yokugcina.",
-    "description": "I-SceneFlow ihlela inqubo yokugunyazwa kokubonakalayo esigabeni ngasinye: i-Express storyboard yokubuyekeza, i-Beat Frames yokukhiya ukwakheka, bese kuba yi-F2V esigqi ngasinye. Uyawulungisa umbonakalo ngaphambi kokuchitha amakhredithi ezintweni ezingahleliwe noma amaphutha okukhiqiza (hallucinations).",
+    "description": "I-SceneFlow ihlela inqubo yokugunyazwa kokubonakalayo esigabeni ngasinye: i-Express Pre-vis yokubuyekeza, i-Beat Frames yokukhiya ukwakheka, bese kuba yi-F2V esigqi ngasinye. Uyawulungisa umbonakalo ngaphambi kokuchitha amakhredithi ezintweni ezingahleliwe noma amaphutha okukhiqiza (hallucinations).",
     "steps": [
-      "Express storyboard — yabelana ngemigqoqo yomculo enezithombe ukuze ibuyekezwe ngemizuzu embalwa",
+      "Express Pre-vis — yabelana ngemigqoqo yomculo enezithombe ukuze ibuyekezwe ngemizuzu embalwa",
       "Beat Frames — vala ukwakheka kokuqala/kokuphela ngokuhambisana nokuqhubeka kwe-Reference Library",
       "I-F2V ngesigqi — khiqiza ividiyo usebenzisa ozimele (frames) abagunyaziwe, hhayi imiyalelo engacacile.",
       "Production Mixer — ukuhlelwa kwesikhathi, umsindo, nokuthunyelwa kokusakazwayo ukuze kuhlanganiswe ku-Final Cut"
@@ -290,7 +291,7 @@
   "howItWorks": {
     "title": "Kusukela emcabangweni kuya kuvidiyo esilungele ukushicilelwa",
     "titleAccent": "Umzila wamapayipi owodwa oqondiswayo",
-    "subtitle": "Uchungechunge luyakhetheka. Indlela eyinhloko ithi Blueprint → Ukukhiqiza → Final Cut → Premiere — okuhlanganisa izigaba ze-storyboard, i-animatic, ividiyo, kanye ne-master MP4 phakathi naleso sikhathi.",
+    "subtitle": "Uchungechunge luyakhetheka. Indlela eyinhloko ithi Blueprint → Ukukhiqiza → Final Cut → Premiere — okuhlanganisa izigaba ze-pre-vis, i-animatic, ividiyo, kanye ne-master MP4 phakathi naleso sikhathi.",
     "tagline": "Isinyathelo ngasinye senziwa ngokuzenzakalelayo ngobuchwepheshe obuphezulu. Isinyathelo ngasinye sikunikeza amandla aphelele okulawula.",
     "optionalBadge": "Ongakukhetha",
     "optionalSuffix": " (ongakukhetha)",
@@ -335,16 +336,16 @@
         "id": "ukukhiqiza",
         "stepLabel": "Ukukhiqiza",
         "subtitle": "Kusukela kumbhalo kuya ekusakazweni",
-        "description": "Amathebhu e-Script ne-Action aqondisa inqubo kusukela ku-Foundation → Storyboard → Production → Final Cut. Kuhlanganisa i-Express storyboard, i-Beat Frames, i-Mixer, kanye nemifudlana ye-MP4 — ngaphandle kokushintsha amathuluzi.",
+        "description": "Amathebhu e-Script ne-Action aqondisa inqubo kusukela ku-Foundation → pre-vis → Production → Final Cut. Kuhlanganisa i-Express Pre-vis, i-Beat Frames, i-Mixer, kanye nemifudlana ye-MP4 — ngaphandle kokushintsha amathuluzi.",
         "keySteps": [
           "Qinisekisa umbhalo, amazwi, kanye nomsindo wesigcawu",
-          "Express storyboard — igalari nokwabelana ukuze kubuyekezwe",
+          "Express Pre-vis — igalari nokwabelana ukuze kubuyekezwe",
           "Beat Frames → Ikhonsoli Yomqondisi → Ukusakaza Okukhiqiziwe",
           "Thumela imifudlana eqediwe ku-Final Cut"
         ],
         "keyFeatures": [
           "Foundation — umbhalo, amazwi, umsindo wesigcawu, ukuvala umbhalo",
-          "Express storyboard — isiqondiso namafreyimu ngemizuzu; igalari nokwabelana",
+          "Express Pre-vis — isiqondiso namafreyimu ngemizuzu; igalari nokwabelana",
           "Beat Frames ne-Mixer — amafreyimu okuqala/okugcina, i-Director Console, ukukhiqiza ama-stream e-MP4",
           "Imigudu Yokukhiqiza — hlola imiphumela, phinda ukhiqize imiculo (beats) engasasebenzi, thumela ku-Final Cut"
         ]
@@ -390,7 +391,7 @@
     "title": "Noma yiluphi uhlobo lwevidiyo ongayicabanga,",
     "titleAccent": "Yakha ngaphakathi kwe-SceneFlow",
     "subtitle": "Imibukiso yezindlu nezakhiwo, ezemfundo, ama-podcast, izinhlelo zezindaba, imikhankaso yemikhiqizo, kanye nezindaba ezixoxwa ngendlela yamafilimu — konke lokhu kwenziwa esitudiyo esisodwa esisebenza ngokuzenzakalelayo, kusukela emcabangweni wokuqala kuya kumkhiqizo wokugcina osethulungele ukushicilelwa.",
-    "qualifyingStatement": "I-SceneFlow iguqula izithombe zakho zokuqala, amafayela olayishiwe, kanye nezincazelo zibe amavidiyo achazayo abonisa indawo noma inqubo — okuhlanganisa inketho yezwi kanye nokuba khona kwabalingiswa okulawulwa nguwe. Lezi yizethulo ezilungiswe ubuchwepheshe be-AI: izithombe ezibonakala zingokoqobo futhi ezisekelwe ezintweni onazo, hhayi amavidiyo aqoshwe ngqo ngekhamera. Hlola futhi uvumele uhlaka lwevidiyo (storyboard) ngaphambi kokuyishicilela; bhala amagama acacile emikhiqizweni ukuze izethameli zazi ukuthi zibukani.",
+    "qualifyingStatement": "I-SceneFlow iguqula izithombe zakho zokuqala, amafayela olayishiwe, kanye nezincazelo zibe amavidiyo achazayo abonisa indawo noma inqubo — okuhlanganisa inketho yezwi kanye nokuba khona kwabalingiswa okulawulwa nguwe. Lezi yizethulo ezilungiswe ubuchwepheshe be-AI: izithombe ezibonakala zingokoqobo futhi ezisekelwe ezintweni onazo, hhayi amavidiyo aqoshwe ngqo ngekhamera. Hlola futhi uvumele uhlaka lwevidiyo (pre-vis) ngaphambi kokuyishicilela; bhala amagama acacile emikhiqizweni ukuze izethameli zazi ukuthi zibukani.",
     "ui": {
       "useCases": "Izimo Zokusetshenziswa",
       "sectors": "Imikhakha engu-{count}",
@@ -457,7 +458,7 @@
             "Faka esikhundleni sokusebenzisa abahlinzeki bangaphandle ukuthatha izithombe noma amavidiyo, izinqubo zangaphakathi eziqondiswayo.",
             "Izifanekiso nemitapo yolwazi ehambisana nemigomo yomkhiqizo",
             "Ukubonakala kokusetshenziswa kwekhredithi kanye nemikhawulo yesabelomali ngephrojekthi ngayinye",
-            "Vumela ama-storyboard ngaphambi kokukhokhela ividiyo yokugcina."
+            "Vumela ama-pre-vis ngaphambi kokukhokhela ividiyo yokugcina."
           ]
         },
         "win": "Khipha izinto zokuqeqesha, ezokuxhumana namavidiyo emikhankaso ngokohlelo lwakho — hhayi ngokulinda uhlu lwemisebenzi engakaqedwa yomphakeli.",
@@ -480,10 +481,10 @@
         },
         "solution": {
           "title": "Guqula Insizakalo Yakho Yamavidiyo Ibe Umkhiqizo",
-          "description": "Yakha izinqubo zomsebenzi eziphindaphindekayo zezitudiyo ezibhala izindaba zempilo (memoir studios) kanye nemikhakha ekhethekile yebhizinisi. Lokhu kubandakanya ukulayishwa kwama-template, ukwenziwa kwamakhophi amazwi, ama-avatar, kanye nokugunyazwa kwezinhlelo ezibonakalayo (storyboards) — yenza izinguquko ngokwezidingo zekhasimende ngalinye futhi wandise inzuzo ngokwandisa ivolumu yomsebenzi.",
+          "description": "Yakha izinqubo zomsebenzi eziphindaphindekayo zezitudiyo ezibhala izindaba zempilo (memoir studios) kanye nemikhakha ekhethekile yebhizinisi. Lokhu kubandakanya ukulayishwa kwama-template, ukwenziwa kwamakhophi amazwi, ama-avatar, kanye nokugunyazwa kwezinhlelo ezibonakalayo (pre-vis) — yenza izinguquko ngokwezidingo zekhasimende ngalinye futhi wandise inzuzo ngokwandisa ivolumu yomsebenzi.",
           "features": [
             "Izifanekiso zezindaba zempilo ezinezinketho zokulayisha izithombe, ukulingisa amazwi, kanye nabalingiswa bedijithali abethula okuqukethwe",
-            "Ukwamukelwa kwamakhasimende kuhlotshaniswa ne-Blueprint kanye nezigaba zokugunyazwa kwe-storyboard",
+            "Ukwamukelwa kwamakhasimende kuhlotshaniswa ne-Blueprint kanye nezigaba zokugunyazwa kwe-pre-vis",
             "Amaphakethe esitudiyo angenalo uphawu lomkhiqizi (white-label) ezinhlelweni zevidiyo ezigcina umlando, ezihlonipha abantu, kanye nezisekelwe ekubhaliseni.",
             "Inzuzo kuma-credit esikhundleni sezindleko ezengeziwe zokuqopha ngakunye"
           ]
@@ -607,7 +608,7 @@
           {
             "id": "izinkumbulo eziqoshiwe",
             "label": "Izinkumbulo Ezirekhodwe Ngevidiyo",
-            "description": "Cabanga ngokulayisha izithombe zomndeni, okuqoshiwe kwengxoxo, kanye namanothi ngezigcawu kanye nezwi lomlandisi elivele lilondoloziwe. Bese udala ngokushesha amavidiyo ezinkumbulo ahlukaniswe ngezahluko — futhi uvumele uhlaka lwevidiyo (storyboard) ngaphambi kokuba kukhiqizwe inguqulo yokugcina."
+            "description": "Cabanga ngokulayisha izithombe zomndeni, okuqoshiwe kwengxoxo, kanye namanothi ngezigcawu kanye nezwi lomlandisi elivele lilondoloziwe. Bese udala ngokushesha amavidiyo ezinkumbulo ahlukaniswe ngezahluko — futhi uvumele uhlaka lwevidiyo (pre-vis) ngaphambi kokuba kukhiqizwe inguqulo yokugcina."
           }
         ]
       },
@@ -649,7 +650,7 @@
           {
             "id": "amavidiyo achaza ngomkhiqizo",
             "label": "Amavidiyo achaza ngemikhiqizo",
-            "description": "Cabanga ulayisha izithombe zemikhiqizo kanye nezwi lomethuli kanye nesithombe esimele umuntu (avatar) okugcinwe kohlobo lwakho lwebhizinisi. Bese udala ngokushesha uchungechunge lwamavidiyo achazayo asezingeni le-cinema — vuma uhlaka lwevidiyo (storyboard) ngaphambi kokuba ukhiqize ividiyo yokugcina."
+            "description": "Cabanga ulayisha izithombe zemikhiqizo kanye nezwi lomethuli kanye nesithombe esimele umuntu (avatar) okugcinwe kohlobo lwakho lwebhizinisi. Bese udala ngokushesha uchungechunge lwamavidiyo achazayo asezingeni le-cinema — vuma uhlaka lwevidiyo (pre-vis) ngaphambi kokuba ukhiqize ividiyo yokugcina."
           },
           {
             "id": "Ubufakazi obusekelwe ezifundweni zecala",
@@ -753,19 +754,19 @@
     "viewDetails": "Buka imininingwane",
     "beatFirst": {
       "title": "Inqubo Yokukhiqiza Ividiyo Eqala Ngesigqi",
-      "description": "Vumela izigaba ze-storyboard kanye ne-Beat Frames ngaphambi kwesigaba se-F2V — lokhu kunciphisa ukwenziwa kabusha okungahleliwe okubangelwa amaphutha ohlelo (njengokuziqambela izinto noma ukuphambuka embonweni wokuqala). Kuyindlela eyodwa ehlelekile kusukela ekubuyekezweni kuya esiqeshini sokugcina.",
+      "description": "Vumela izigaba ze-pre-vis kanye ne-Beat Frames ngaphambi kwesigaba se-F2V — lokhu kunciphisa ukwenziwa kabusha okungahleliwe okubangelwa amaphutha ohlelo (njengokuziqambela izinto noma ukuphambuka embonweni wokuqala). Kuyindlela eyodwa ehlelekile kusukela ekubuyekezweni kuya esiqeshini sokugcina.",
       "keyFeatures": [
-        "Express storyboard ukuze kubuyekezwe — yabelana ngama-beat ngaphambi kokwenza i-render enzima",
+        "Express Pre-vis ukuze kubuyekezwe — yabelana ngama-beat ngaphambi kokwenza i-render enzima",
         "Beat Frames ukwakheka kokukhiya — Reference Library ukuqhubeka",
         "I-F2V ngesigqi ngasinye — dala ividiyo kusuka kuzinhlaka ezivunyiwe",
         "Isikhathi nemifudlana ye-mixer — ukuthumela ku-assembly ye-Final Cut"
       ],
-      "screenshotSlot": "Faka isithombe-skrini: Beat Frames kanye nokuvunywa kohlaka lwevidiyo (storyboard) ngaphambi kokwenziwa kwevidiyo.",
+      "screenshotSlot": "Faka isithombe-skrini: Beat Frames kanye nokuvunywa kohlaka lwevidiyo (pre-vis) ngaphambi kokwenziwa kwevidiyo.",
       "videoSlot": "Faka isiqeshana esithatha imizuzwana engama-30: Ukuvuma imiculo, ukukhiya amafreyimu, bese kukhiqizwa iziqeshana ze-F2V."
     },
     "screeningRoom": {
       "title": "Ukubuyekezwa kanye Nokuhlaziywa Kwabalaleli",
-      "description": "Izixhumanisi zokwabelana eziyimfihlo zababambiqhaza — okuhlanganisa amaphuzu afakwe ngesandla, impendulo ehleliwe, kanye nemininingwane yokuzibandakanya engakhethwa (ngemvume yombukeli). Kusetshenziswa ku-Premiere ngaphambi kokushicilelwa kanye nokubuka kuqala i-storyboard yokukhiqiza (production).",
+      "description": "Izixhumanisi zokwabelana eziyimfihlo zababambiqhaza — okuhlanganisa amaphuzu afakwe ngesandla, impendulo ehleliwe, kanye nemininingwane yokuzibandakanya engakhethwa (ngemvume yombukeli). Kusetshenziswa ku-Premiere ngaphambi kokushicilelwa kanye nokubuka kuqala i-pre-vis yokukhiqiza (production).",
       "keyFeatures": [
         "Izikhathi zokubuyekeza eziyimfihlo — izixhumanisi zokwabelana eziphephile zababambiqhaza",
         "Impendulo ehleliwe evela ezilalelini — izilinganiso kanye nezinto ezivulekile",
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Injini Yokukhiqiza Esheshayo",
-        "description": "Khiqiza izithombe nezingxenye zevidiyo ngokuzenzakalelayo nangesikhathi esisodwa. I-Express Storyboard ikuvumela ukuthi ubuyekeze futhi wabelane ngama-storyboard ahlanganisa umsindo nokubonwayo phakathi nemizuzu embalwa. I-Express Animatic ikhiqiza izigcawu eziphelele zesitayela sika-Ken Burns ngemizuzu, kanti i-Express Video ikhiqiza izigcawu zevidiyo zokugcina ngemizuzu esikhundleni sezinsuku.",
+        "description": "Khiqiza izithombe nezingxenye zevidiyo ngokuzenzakalelayo nangesikhathi esisodwa. I-Express Pre-vis ikuvumela ukuthi ubuyekeze futhi wabelane ngama-pre-vis ahlanganisa umsindo nokubonwayo phakathi nemizuzu embalwa. I-Express Animatic ikhiqiza izigcawu eziphelele zesitayela sika-Ken Burns ngemizuzu, kanti i-Express Video ikhiqiza izigcawu zevidiyo zokugcina ngemizuzu esikhundleni sezinsuku.",
         "keyFeatures": [
           "Ukukhiqiza okwenziwa ngesikhathi esisodwa — izithombe namavidiyo ezigcawini ezahlukene ngesikhathi esisodwa",
-          "I-Express Storyboard — ukubuka kuqala okuhlanganisa umsindo nokubonwayo okungabiwa nabanye, kuthatha imizuzu embalwa nje",
+          "I-Express Pre-vis — ukubuka kuqala okuhlanganisa umsindo nokubonwayo okungabiwa nabanye, kuthatha imizuzu embalwa nje",
           "I-Express Animatic — Ukunyakaza kohlobo lwe-Ken Burns ezithombeni ezimile",
           "I-Express Video — iziqeshana zezingxenye zevidiyo ngemizuzu, hhayi ngezinsuku"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "Ukuzenzakalela Kokukhiqiza",
-        "description": "Amathebhu e-Script ne-Action aqondisa inqubo kusukela ku-Foundation → Storyboard → Production → Final Cut. Kuhlanganisa i-Express storyboard, i-Beat Frames, i-Mixer, kanye nemifudlana ye-MP4 — ngaphandle kokushintsha amathuluzi.",
+        "description": "Amathebhu e-Script ne-Action aqondisa inqubo kusukela ku-Foundation → pre-vis → Production → Final Cut. Kuhlanganisa i-Express Pre-vis, i-Beat Frames, i-Mixer, kanye nemifudlana ye-MP4 — ngaphandle kokushintsha amathuluzi.",
         "keyFeatures": [
           "Foundation — umbhalo, amazwi, umsindo wesigcawu, ukuvala umbhalo",
-          "Express storyboard — isiqondiso namafreyimu ngemizuzu; igalari nokwabelana",
+          "Express Pre-vis — isiqondiso namafreyimu ngemizuzu; igalari nokwabelana",
           "Beat Frames ne-Mixer — amafreyimu okuqala/okugcina, i-Director Console, ukukhiqiza ama-stream e-MP4",
           "Imigudu Yokukhiqiza — hlola imiphumela, phinda ukhiqize imiculo (beats) engasasebenzi, thumela ku-Final Cut"
         ],
         "screenshotSlot": "Faka isithombe-skrini: Ideshibhodi yokukhiqiza ebonisa umbhalo, i-Beat Frames, kanye ne-Mixer.",
-        "videoSlot": "Faka isiqeshana esithatha imizuzwana engu-30: Foundation, Express storyboard, Beat Frames, kanye nokukhishwa kokusakazwayo"
+        "videoSlot": "Faka isiqeshana esithatha imizuzwana engu-30: Foundation, Express Pre-vis, Beat Frames, kanye nokukhishwa kokusakazwayo"
       },
       {
         "id": "12",
@@ -968,7 +969,7 @@
       {
         "id": "14",
         "title": "Ukubuyekezwa kanye Nokuhlaziywa Kwabalaleli",
-        "description": "Izixhumanisi zokwabelana eziyimfihlo zababambiqhaza — okuhlanganisa amaphuzu afakwe ngesandla, impendulo ehleliwe, kanye nemininingwane yokuzibandakanya engakhethwa (ngemvume yombukeli). Kusetshenziswa ku-Premiere ngaphambi kokushicilelwa kanye nokubuka kuqala i-storyboard yokukhiqiza (production).",
+        "description": "Izixhumanisi zokwabelana eziyimfihlo zababambiqhaza — okuhlanganisa amaphuzu afakwe ngesandla, impendulo ehleliwe, kanye nemininingwane yokuzibandakanya engakhethwa (ngemvume yombukeli). Kusetshenziswa ku-Premiere ngaphambi kokushicilelwa kanye nokubuka kuqala i-pre-vis yokukhiqiza (production).",
         "keyFeatures": [
           "Izikhathi zokubuyekeza eziyimfihlo — izixhumanisi zokwabelana eziphephile zababambiqhaza",
           "Impendulo ehleliwe evela ezilalelini — izilinganiso kanye nezinto ezivulekile",
@@ -1090,11 +1091,11 @@
     "express": {
       "badge": "Ukukhiqiza Okushesha Kakhulu",
       "title": "Sceneflow Express",
-      "description": "Dala ngokuzenzakalelayo ama-storyboard, ama-animatic, kanye nezigaba zevidiyo ngesikhathi esisodwa. Suka embhalweni uye ekubukeni kuqala okungabelwana ngakho emizuzwini embalwa — bese uvumela i-Beat Frames ngaphambi kokusebenzisa imali yokugcina ye-F2V.",
+      "description": "Dala ngokuzenzakalelayo ama-pre-vis, ama-animatic, kanye nezigaba zevidiyo ngesikhathi esisodwa. Suka embhalweni uye ekubukeni kuqala okungabelwana ngakho emizuzwini embalwa — bese uvumela i-Beat Frames ngaphambi kokusebenzisa imali yokugcina ye-F2V.",
       "items": [
         {
           "title": "Ibhodi Lezindaba Elisheshayo",
-          "desc": "Bukeza futhi wabelane ngama-storyboard omsindo nevidiyo ngemizuzu kunamahora.",
+          "desc": "Bukeza futhi wabelane ngama-pre-vis omsindo nevidiyo ngemizuzu kunamahora.",
           "time": "Imizuzu namaHora"
         },
         {
@@ -1335,7 +1336,7 @@
     "items": [
       {
         "question": "Inqubo yokusebenza ye-SceneFlow iqhubeka kanjani kusukela emcabangweni kuya kuvidiyo esilungele ukushicilelwa?",
-        "answer": "I-SceneFlow isebenzisa inqubo yokusebenza ehleliwe: Uchungechunge (ongakukhetha) → Blueprint → Ukukhiqiza → Final Cut → Premiere. I-Blueprint ichaza ukwakheka kwendaba kanye nezithameli ezihlosiwe ngokusebenzisa i-Audience Resonance. Isigaba sokukhiqiza sikhiqiza umbhalo, i-storyboard, ividiyo eyisisekelo (beat video), kanye nezingxenye zesigcawu ezicutshunguliwe (rendered scene streams). I-Final Cut ihlanganisa izingxenye ezikhethiwe zibe ifayela elilodwa elikhulu le-MP4 — akuyona ithuluzi lokuhlela ngokulandelana kwesikhathi (timeline editor). I-Premiere iphatha imibukiso, imininingwane ehlaziyiwe, ukushicilelwa ku-YouTube, kanye namaphakethe okukhipha umsebenzi."
+        "answer": "I-SceneFlow isebenzisa inqubo yokusebenza ehleliwe: Uchungechunge (ongakukhetha) → Blueprint → Ukukhiqiza → Final Cut → Premiere. I-Blueprint ichaza ukwakheka kwendaba kanye nezithameli ezihlosiwe ngokusebenzisa i-Audience Resonance. Isigaba sokukhiqiza sikhiqiza umbhalo, i-pre-vis, ividiyo eyisisekelo (beat video), kanye nezingxenye zesigcawu ezicutshunguliwe (rendered scene streams). I-Final Cut ihlanganisa izingxenye ezikhethiwe zibe ifayela elilodwa elikhulu le-MP4 — akuyona ithuluzi lokuhlela ngokulandelana kwesikhathi (timeline editor). I-Premiere iphatha imibukiso, imininingwane ehlaziyiwe, ukushicilelwa ku-YouTube, kanye namaphakethe okukhipha umsebenzi."
       },
       {
         "question": "Ihluke kanjani i-SceneFlow kwi-Gemini Studio noma kwi-Google Flow?",
@@ -1355,7 +1356,7 @@
       },
       {
         "question": "Yini eyenziwa yi-Premiere uma i-Screening Room kuyisigaba sokubuyekeza?",
-        "answer": "I-Screening Room yindawo yokubuyekeza engaphakathi kwe-Premiere — futhi isetshenziselwa ukubuka kuqala i-storyboard yokukhiqiza (production). Yabelana ngezixhumanisi ze-/s/, qoqa imibono yabathintekayo kanye nemininingwane yokusebenzisana (ngemvume yombukeli), buyekeza amaphuzu kanye nemininingwane ebonakalayo, bese ushicilela usebenzisa ithuluzi le-YouTube noma ukhiphe amaqoqo (bundles)."
+        "answer": "I-Screening Room yindawo yokubuyekeza engaphakathi kwe-Premiere — futhi isetshenziselwa ukubuka kuqala i-pre-vis yokukhiqiza (production). Yabelana ngezixhumanisi ze-/s/, qoqa imibono yabathintekayo kanye nemininingwane yokusebenzisana (ngemvume yombukeli), buyekeza amaphuzu kanye nemininingwane ebonakalayo, bese ushicilela usebenzisa ithuluzi le-YouTube noma ukhiphe amaqoqo (bundles)."
       },
       {
         "question": "Ingabe ngiyayidinga i-experience yezobuchwepheshe noma yokuhlela?",
@@ -1377,7 +1378,7 @@
   },
   "finalCta": {
     "title": "Usukulungele ukuhlola uhlelo lokusebenza oluphelele?",
-    "subtitle": "Qala ngomqondo → i-storyboard → ividiyo → ifayela le-MP4 lokugcina, konke endaweni eyodwa yokukhiqiza. Qala ngephakheji engu-$9 Explorer ukuze ubone indlela yokusebenza ebeka umculo (i-beat) phambili.",
+    "subtitle": "Qala ngomqondo → i-pre-vis → ividiyo → ifayela le-MP4 lokugcina, konke endaweni eyodwa yokukhiqiza. Qala ngephakheji engu-$9 Explorer ukuze ubone indlela yokusebenza ebeka umculo (i-beat) phambili.",
     "cta": "Qala isitudiyo sakho ngo-$9"
   },
   "footer": {
@@ -1418,5 +1419,36 @@
     "mute": "Thulisa",
     "unmute": "Vula umsindo",
     "expandVideo": "Khulisa ividiyo"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

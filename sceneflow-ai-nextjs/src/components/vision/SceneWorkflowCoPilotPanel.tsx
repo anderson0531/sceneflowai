@@ -57,7 +57,7 @@ export function SceneWorkflowCoPilotPanel({
       case 'directorsChair':
         return 'Regenerate Direction'
       case 'storyboardPreViz':
-        return 'Regenerate Storyboard'
+        return 'Regenerate Pre-vis'
       case 'callAction':
         return 'Regenerate Beats'
       default:
@@ -72,7 +72,7 @@ export function SceneWorkflowCoPilotPanel({
       case 'directorsChair':
         return 'Run Technical Review'
       case 'storyboardPreViz':
-        return 'Review Storyboard'
+        return 'Review Pre-vis'
       case 'callAction':
         return 'Review Beats'
       default:

@@ -34,7 +34,7 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
     id: 'welcome',
     title: 'Welcome to Production',
     description:
-      'SceneFlow is one continuous pipeline: Foundation → Storyboard → Production → Final Cut. You work in two tabs — Script and Action — with a clear next step at every stage.',
+      'SceneFlow is one continuous pipeline: Foundation → Pre-vis → Production → Final Cut. You work in two tabs — Script and Action — with a clear next step at every stage.',
     icon: <Sparkles className="w-6 h-6" />,
     tip: 'The Production Progress dashboard and co-pilot always show where you are and what is next.',
   },
@@ -49,12 +49,12 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'storyboard',
-    title: 'Step 2 - Storyboard',
+    title: 'Step 2 - Pre-vis',
     description:
-      'Use Build Storyboard (Express) for Direction → Audio → storyboard frames in ~10 minutes. Review in the gallery, share for approval, and preview in Screening Room — Preview (live).',
+      'Use Build Pre-vis (Express) for Direction → Audio → pre-vis frames in ~10 minutes. Review in the gallery, share for approval, and preview in Screening Room — Preview (live).',
     icon: <Frame className="w-6 h-6" />,
     workflowStep: 'dialogueAction',
-    tip: 'Storyboard Frame = still image per beat. Screening Room is live preview — not an exported MP4.',
+    tip: 'Pre-vis Frame = still image per beat. Screening Room is live preview — not an exported MP4.',
   },
   {
     id: 'action-tab',
@@ -63,7 +63,7 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
       'Beat Frames (start/end pairs for F2V) → Director Console video beats → Production Mixer → Production Streams — Export (MP4). One Output control syncs Animatic, Video, and language.',
     icon: <Clapperboard className="w-6 h-6" />,
     workflowStep: 'callAction',
-    tip: 'Do video work only in Action — the storyboard gallery no longer embeds a duplicate production panel.',
+    tip: 'Do video work only in Action — the pre-vis gallery no longer embeds a duplicate production panel.',
   },
   {
     id: 'mixer-streams',
@@ -87,7 +87,7 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
     description:
       'The dashboard tracks Script, Audio, Direction, Beat Frames, Video, and Render using beat-first rules. Click any scene to jump to it.',
     icon: <CheckCircle2 className="w-6 h-6" />,
-    tip: 'Share storyboard links early — approval converts to faster video production.',
+    tip: 'Share pre-vis links early — approval converts to faster video production.',
   },
 ]
 

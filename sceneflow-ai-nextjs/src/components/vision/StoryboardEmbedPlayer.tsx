@@ -48,7 +48,7 @@ export interface StoryboardEmbedPlayerProps {
   minHeight?: string
   /** Called when the shared-project API returns 404 (embed page uses this for notFound()). */
   onNotFound?: () => void
-  /** Show link to full /embed/storyboard route (landing card only). */
+  /** Show link to full /embed/pre-vis route (landing card only). */
   showExpandLink?: boolean
   /** Landing full-width embed: widen scene image and controls to fill the pane. */
   fullWidthEmbed?: boolean
@@ -139,7 +139,7 @@ export function StoryboardEmbedPlayer({
         fullWidthEmbed={fullWidthEmbed}
         expandHref={
           showExpandLink && slug.trim()
-            ? `/embed/storyboard/${encodeURIComponent(slug.trim())}`
+            ? `/embed/pre-vis/${encodeURIComponent(slug.trim())}`
             : undefined
         }
       />

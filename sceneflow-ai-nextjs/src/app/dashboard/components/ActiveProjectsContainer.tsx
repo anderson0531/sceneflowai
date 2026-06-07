@@ -67,7 +67,7 @@ function transformProject(project: DashboardProject, index: number) {
     const stepConfig: Record<string, { name: string; description: string; url: string }> = {
       blueprint: { 
         name: 'Production', 
-        description: 'Create visual storyboard for each scene',
+        description: 'Create visual pre-vis for each scene',
         url: `/dashboard/workflow/vision/${project.id}`
       },
       vision: { 
@@ -93,12 +93,12 @@ function transformProject(project: DashboardProject, index: number) {
       // Backward-compat aliases for older step keys
       ideation: {
         name: 'Production',
-        description: 'Create visual storyboard for each scene',
+        description: 'Create visual pre-vis for each scene',
         url: `/dashboard/workflow/vision/${project.id}`,
       },
       storyboard: {
         name: 'Production',
-        description: 'Create visual storyboard for each scene',
+        description: 'Create visual pre-vis for each scene',
         url: `/dashboard/workflow/vision/${project.id}`,
       },
       'scene-direction': {

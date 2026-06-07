@@ -93,10 +93,10 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
       id: 1,
       title: 'Platform Overview',
       description:
-        'One studio from idea to publish-ready video. Same pipeline for training, podcasts, news, and cinematic series — approve storyboards before final render spend.',
+        'One studio from idea to publish-ready video. Same pipeline for training, podcasts, news, and cinematic series — approve pre-vis before final render spend.',
       keyFeatures: [
         'Series → Blueprint → Production → Final Cut → Premiere',
-        'Beat-first approval — storyboard and Beat Frames before F2V',
+        'Beat-first approval — pre-vis and Beat Frames before F2V',
         'Google Vertex AI generation with native Veo extension chains',
         'Trust & Safety guardrails and signed provenance on delivery',
       ],
@@ -155,7 +155,7 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
       keyFeatures: [...production.keyFeatures],
       screenshotSlot: 'Insert screenshot: Production dashboard showing script, Beat Frames, and Mixer',
       videoSlot:
-        'Insert 00:60 clip: Lock script → Express storyboard → Beat Frames → EXT chain (+7s) → send stream to Final Cut',
+        'Insert 00:60 clip: Lock script → Express Pre-vis → Beat Frames → EXT chain (+7s) → send stream to Final Cut',
     },
     {
       id: 12,

@@ -260,7 +260,7 @@ export default function OutlineV2() {
         return { ...b, thumbnailUrl: b.thumbnailUrl || url, storyboardFrames: frames }
       })
       setBeats(updates as any)
-      toast.success('Storyboard images generated (first 5 scenes).')
+      toast.success('Pre-vis images generated (first 5 scenes).')
     } catch (e:any) {
       if (e?.name === 'AbortError') toast.error('Image generation timed out.')
       else toast.error(e?.message || 'Image generation failed')

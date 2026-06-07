@@ -18,7 +18,7 @@ const workflowSteps = [
   {
     id: 'storyboard' as WorkflowStep,
     title: 'Production',
-    description: 'Storyboard & Planning',
+    description: 'Pre-vis & Planning',
     icon: Layout,
     color: 'from-purple-500 to-purple-600',
     bgColor: 'bg-purple-500',

@@ -29,7 +29,8 @@
     "platformWalkthrough": "প্ল্যাটফর্ম পরিচিতি",
     "platform": "প্ল্যাটফর্ম",
     "pricing": "মূল্য",
-    "faq": "সচরাচর জিজ্ঞাসিত প্রশ্ন"
+    "faq": "সচরাচর জিজ্ঞাসিত প্রশ্ন",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "একাধিক AI ট্যাব নিয়ে আর ছোটাছুটি নয়; একটি স্টুডিওর মাধ্যমেই ধারণা থেকে শুরু করে প্রকাশ-উপযোগী ভিডিও তৈরি করুন।",
@@ -192,9 +193,9 @@
     "title": "বিট-কেন্দ্রিক ভিডিও পাইপলাইন",
     "subtitle": "রেন্ডার করার আগেই অনুমোদন নিন — স্লট-মেশিনের মতো বারবার নতুন করে তৈরি করা নয়।",
     "intro": "অনুমান-নির্ভর বা বারবার পরীক্ষা-নিরীক্ষা করে ভিডিও তৈরির প্রয়োজন নেই। চূড়ান্ত ভিডিওর জন্য SceneFlow ক্রেডিট খরচ করার আগেই আপনি এর রূপ দেখে নিতে এবং অনুমোদন দিতে পারবেন।",
-    "description": "SceneFlow প্রতিটি ধাপে ভিজ্যুয়াল অনুমোদনের প্রক্রিয়াটি সুবিন্যস্ত করে: পর্যালোচনার জন্য Express storyboard, কম্পোজিশন চূড়ান্ত করার জন্য Beat Frames এবং এরপর প্রতি বিটের জন্য F2V। 'ড্রিফট' (drift) ও 'হ্যালুসিনেশন'-এর (hallucinations) পেছনে ক্রেডিট খরচ করার আগেই আপনি দৃশ্যরূপটি পরিমার্জন করে নেন।",
+    "description": "SceneFlow প্রতিটি ধাপে ভিজ্যুয়াল অনুমোদনের প্রক্রিয়াটি সুবিন্যস্ত করে: পর্যালোচনার জন্য Express Pre-vis, কম্পোজিশন চূড়ান্ত করার জন্য Beat Frames এবং এরপর প্রতি বিটের জন্য F2V। 'ড্রিফট' (drift) ও 'হ্যালুসিনেশন'-এর (hallucinations) পেছনে ক্রেডিট খরচ করার আগেই আপনি দৃশ্যরূপটি পরিমার্জন করে নেন।",
     "steps": [
-      "Express storyboard — পর্যালোচনার জন্য কয়েক মিনিটের মধ্যেই অডিও-ভিজ্যুয়াল বিট শেয়ার করুন",
+      "Express Pre-vis — পর্যালোচনার জন্য কয়েক মিনিটের মধ্যেই অডিও-ভিজ্যুয়াল বিট শেয়ার করুন",
       "Beat Frames — Reference Library-এর ধারাবাহিকতা বজায় রেখে শুরু/শেষের কম্পোজিশন লক করা",
       "প্রতি বিটে F2V — অন্ধ প্রম্পটের পরিবর্তে অনুমোদিত ফ্রেম থেকে ভিডিও তৈরি করুন।",
       "Production Mixer — Final Cut অ্যাসেম্বলিতে টাইমিং, অডিও এবং স্ট্রিম এক্সপোর্ট"
@@ -335,16 +336,16 @@
         "id": "উৎপাদন",
         "stepLabel": "উৎপাদন",
         "subtitle": "স্ক্রিপ্ট থেকে স্ট্রিমিং",
-        "description": "'স্ক্রিপ্ট' (Script) এবং 'অ্যাকশন' (Action) ট্যাবগুলো Foundation → Storyboard → Production → Final Cut ধাপগুলোকে পরিচালনা করে। Express storyboard, Beat Frames, Mixer এবং MP4 স্ট্রিম—কোনো টুল পরিবর্তনের প্রয়োজন নেই।",
+        "description": "'স্ক্রিপ্ট' (Script) এবং 'অ্যাকশন' (Action) ট্যাবগুলো Foundation → pre-vis → Production → Final Cut ধাপগুলোকে পরিচালনা করে। Express Pre-vis, Beat Frames, Mixer এবং MP4 স্ট্রিম—কোনো টুল পরিবর্তনের প্রয়োজন নেই।",
         "keySteps": [
           "স্ক্রিপ্ট, কণ্ঠস্বর এবং দৃশ্যের অডিও চূড়ান্ত করুন",
-          "Express storyboard — গ্যালারি এবং পর্যালোচনার জন্য শেয়ার",
+          "Express Pre-vis — গ্যালারি এবং পর্যালোচনার জন্য শেয়ার",
           "Beat Frames → ডিরেক্টর কনসোল → রেন্ডার স্ট্রিম",
           "সম্পন্ন স্ট্রিমগুলো Final Cut-এ পাঠান।"
         ],
         "keyFeatures": [
           "ফাউন্ডেশন — চিত্রনাট্য, কণ্ঠস্বর, দৃশ্যের অডিও, চূড়ান্ত চিত্রনাট্য",
-          "Express storyboard — দিকনির্দেশনা ও ফ্রেম (মিনিটের হিসেবে); গ্যালারি ও শেয়ার",
+          "Express Pre-vis — দিকনির্দেশনা ও ফ্রেম (মিনিটের হিসেবে); গ্যালারি ও শেয়ার",
           "Beat Frames এবং মিক্সার — শুরু/শেষের ফ্রেম, ডিরেক্টর কনসোল, MP4 স্ট্রিম রেন্ডার করা",
           "প্রোডাকশন স্ট্রিম — আউটপুট পর্যালোচনা করুন, পুরনো বিট (stale beats) পুনরায় রেন্ডার করুন, Final Cut-এ পাঠান।"
         ]
@@ -755,7 +756,7 @@
       "title": "বিট-কেন্দ্রিক ভিডিও পাইপলাইন",
       "description": "F2V-এর আগে স্টোরিবোর্ড বিট এবং Beat Frames অনুমোদন করে নিন — এতে হ্যালুসিনেশন ও ভিজ্যুয়াল ড্রিফটের কারণে অন্ধভাবে পুনরায় তৈরির (blind regeneration) প্রয়োজন কমবে। পর্যালোচনা থেকে চূড়ান্ত ক্লিপ পর্যন্ত একটি সুবিন্যস্ত প্রক্রিয়া।",
       "keyFeatures": [
-        "পর্যালোচনার জন্য Express storyboard — ভারী রেন্ডারিংয়ের আগে বিটগুলো শেয়ার করুন",
+        "পর্যালোচনার জন্য Express Pre-vis — ভারী রেন্ডারিংয়ের আগে বিটগুলো শেয়ার করুন",
         "Beat Frames লক বিন্যাস — Reference Library ধারাবাহিকতা",
         "প্রতি বিটে F2V — অনুমোদিত ফ্রেম থেকে ভিডিও তৈরি করুন",
         "মিক্সারের সময়বিন্যাস ও স্ট্রিম — Final Cut অ্যাসেম্বলিতে রপ্তানি"
@@ -864,7 +865,7 @@
       {
         "id": "৬",
         "title": "এক্সপ্রেস জেনারেশন ইঞ্জিন",
-        "description": "একই সাথে ছবি এবং ভিডিওর অংশগুলো স্বয়ংক্রিয়ভাবে তৈরি করুন। 'এক্সপ্রেস স্টোরিবোর্ড' (Express Storyboard)-এর মাধ্যমে আপনি কয়েক মিনিটের মধ্যেই অডিও-ভিজ্যুয়াল স্টোরিবোর্ড পর্যালোচনা ও শেয়ার করতে পারবেন। 'এক্সপ্রেস স্টোরিবোর্ড' কয়েক মিনিটের মধ্যে সম্পূর্ণ 'কেন বার্নস' (Ken Burns) স্টাইলের দৃশ্য তৈরি করে দেয়, আর 'এক্সপ্রেস ভিডিও' (Express Video) কয়েক দিনের পরিবর্তে মাত্র কয়েক মিনিটেই চূড়ান্ত ভিডিও দৃশ্য প্রস্তুত করে দেয়।",
+        "description": "একই সাথে ছবি এবং ভিডিওর অংশগুলো স্বয়ংক্রিয়ভাবে তৈরি করুন। 'এক্সপ্রেস স্টোরিবোর্ড' (Express Pre-vis)-এর মাধ্যমে আপনি কয়েক মিনিটের মধ্যেই অডিও-ভিজ্যুয়াল স্টোরিবোর্ড পর্যালোচনা ও শেয়ার করতে পারবেন। 'এক্সপ্রেস স্টোরিবোর্ড' কয়েক মিনিটের মধ্যে সম্পূর্ণ 'কেন বার্নস' (Ken Burns) স্টাইলের দৃশ্য তৈরি করে দেয়, আর 'এক্সপ্রেস ভিডিও' (Express Video) কয়েক দিনের পরিবর্তে মাত্র কয়েক মিনিটেই চূড়ান্ত ভিডিও দৃশ্য প্রস্তুত করে দেয়।",
         "keyFeatures": [
           "একই সাথে তৈরি — বিভিন্ন দৃশ্য জুড়ে একই সময়ে ছবি ও ভিডিওর জেনারেশন",
           "এক্সপ্রেস স্টোরিবোর্ড — কয়েক মিনিটেই তৈরি করুন শেয়ারযোগ্য অডিও-ভিজ্যুয়াল প্রিভিউ।",
@@ -929,15 +930,15 @@
       {
         "id": "১১",
         "title": "উৎপাদন স্বয়ংক্রিয়করণ",
-        "description": "'স্ক্রিপ্ট' (Script) এবং 'অ্যাকশন' (Action) ট্যাবগুলো Foundation → Storyboard → Production → Final Cut ধাপগুলোকে পরিচালনা করে। Express storyboard, Beat Frames, Mixer এবং MP4 স্ট্রিম—কোনো টুল পরিবর্তনের প্রয়োজন নেই।",
+        "description": "'স্ক্রিপ্ট' (Script) এবং 'অ্যাকশন' (Action) ট্যাবগুলো Foundation → pre-vis → Production → Final Cut ধাপগুলোকে পরিচালনা করে। Express Pre-vis, Beat Frames, Mixer এবং MP4 স্ট্রিম—কোনো টুল পরিবর্তনের প্রয়োজন নেই।",
         "keyFeatures": [
           "ফাউন্ডেশন — চিত্রনাট্য, কণ্ঠস্বর, দৃশ্যের অডিও, চূড়ান্ত চিত্রনাট্য",
-          "Express storyboard — দিকনির্দেশনা ও ফ্রেম (মিনিটের হিসেবে); গ্যালারি ও শেয়ার",
+          "Express Pre-vis — দিকনির্দেশনা ও ফ্রেম (মিনিটের হিসেবে); গ্যালারি ও শেয়ার",
           "Beat Frames এবং মিক্সার — শুরু/শেষের ফ্রেম, ডিরেক্টর কনসোল, MP4 স্ট্রিম রেন্ডার করা",
           "প্রোডাকশন স্ট্রিম — আউটপুট পর্যালোচনা করুন, পুরনো বিট (stale beats) পুনরায় রেন্ডার করুন, Final Cut-এ পাঠান।"
         ],
         "screenshotSlot": "স্ক্রিনশট যুক্ত করুন: প্রোডাকশন ড্যাশবোর্ড যাতে স্ক্রিপ্ট, Beat Frames এবং মিক্সার দেখা যাচ্ছে।",
-        "videoSlot": "০০:৩০-এর ক্লিপ যুক্ত করুন: Foundation, Express storyboard, Beat Frames এবং স্ট্রিম এক্সপোর্ট"
+        "videoSlot": "০০:৩০-এর ক্লিপ যুক্ত করুন: Foundation, Express Pre-vis, Beat Frames এবং স্ট্রিম এক্সপোর্ট"
       },
       {
         "id": "১২",
@@ -1418,5 +1419,36 @@
     "mute": "নিঃশব্দ",
     "unmute": "শব্দ চালু করুন",
     "expandVideo": "ভিডিও বড় করুন"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

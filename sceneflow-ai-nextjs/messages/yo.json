@@ -29,11 +29,12 @@
     "platformWalkthrough": "Ìtọ́sọ́nà lórí bí a ṣe ń lo pèpéle náà",
     "platform": "Pẹpẹ",
     "pricing": "Ètò iye owó",
-    "faq": "Awọn ibeere ti a n beere nigbagbogbo"
+    "faq": "Awọn ibeere ti a n beere nigbagbogbo",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "Dẹ́kun lílo ọ̀pọ̀lọpọ̀ ojú-ìwé AI lẹ́ẹ̀kan náà. Ilé-iṣẹ́ kan ṣoṣo yóò mú ọ láti ìpele èrò títí dé ìpele fídíò tí ó ti ṣe tán fún títẹ́jáde.",
-    "subheadline": "Ile-iṣẹ iṣelọpọ kan ti yoo tọ ọ sọna lati ibẹrẹ ero titi de ipele ti fidio naa ti ṣetan patapata fun titẹjade. Wo bi fidio rẹ yoo ṣe ri (storyboard) ki o to sanwo fun fidio ikẹhin — fọwọsi irisi rẹ dipo ki o fi awọn kirediti rẹ ṣòfò lori ṣiṣe awọn idanwo ti ko ni idaniloju. SceneFlow n ṣe awọn iṣẹ ti o n gba akoko ati agbara — gẹgẹbi kikọ iwe-afọwọkọ, ṣiṣe aworan itan (storyboard), gbigbasilẹ ohun, ati akojọpọ awọn apakan — fun ọ laifọwọyi, lakoko ti iwọ n ṣakoso gbogbo igbesẹ iṣẹ naa.",
+    "subheadline": "Ile-iṣẹ iṣelọpọ kan ti yoo tọ ọ sọna lati ibẹrẹ ero titi de ipele ti fidio naa ti ṣetan patapata fun titẹjade. Wo bi fidio rẹ yoo ṣe ri (pre-vis) ki o to sanwo fun fidio ikẹhin — fọwọsi irisi rẹ dipo ki o fi awọn kirediti rẹ ṣòfò lori ṣiṣe awọn idanwo ti ko ni idaniloju. SceneFlow n ṣe awọn iṣẹ ti o n gba akoko ati agbara — gẹgẹbi kikọ iwe-afọwọkọ, ṣiṣe aworan itan (pre-vis), gbigbasilẹ ohun, ati akojọpọ awọn apakan — fun ọ laifọwọyi, lakoko ti iwọ n ṣakoso gbogbo igbesẹ iṣẹ naa.",
     "audienceMicroLine": "A ṣe é fún àwọn tó ń dá nǹkan sílẹ̀ tí wọ́n sì fẹ́ rí àbájáde, àti fún àwọn ẹgbẹ́ tó fẹ́ rí bí ó ṣe ń ṣiṣẹ́.",
     "ctaSecondary": "Wo 'Ohun ti o ṣee ṣe'",
     "ctaToolStack": "Wo bí ó ṣe ń rọ́pò àwọn irin-iṣẹ́ rẹ.",
@@ -82,7 +83,7 @@
       },
       {
         "label": "Fọwọ́ sí i kí wọ́n tó ṣe fídíò tó kẹ́yìn",
-        "detail": "Ṣe àtúnyẹ̀wò àwọn apá pàtàkì nínú àwòrán ìtàn (storyboard) kí o tó ṣe ìgbékalẹ̀ ìkẹyìn (render)."
+        "detail": "Ṣe àtúnyẹ̀wò àwọn apá pàtàkì nínú àwòrán ìtàn (pre-vis) kí o tó ṣe ìgbékalẹ̀ ìkẹyìn (render)."
       },
       {
         "label": "Ṣe àyẹ̀wò ìtàn rẹ kọ́kọ́",
@@ -102,7 +103,7 @@
     "modes": {
       "automate": {
         "label": "Ṣe é kí ó máa ṣiṣẹ́ fúnra rẹ̀",
-        "description": "Ilana iṣẹ́ tó ní ìtọ́sọ́nà — fọwọ́ sí àwọn àwòrán ìtàn (storyboards), parí iṣẹ́ kíákíá"
+        "description": "Ilana iṣẹ́ tó ní ìtọ́sọ́nà — fọwọ́ sí àwọn àwòrán ìtàn (pre-vis), parí iṣẹ́ kíákíá"
       },
       "engine": {
         "label": "Fi ẹ̀rọ náà hàn mí.",
@@ -192,9 +193,9 @@
     "title": "Ilana Ṣiṣe Fidio ti o bẹrẹ pẹlu Ilu",
     "subtitle": "Fọwọ́ sí i kí o tó ṣe é — kì í ṣe bíi ti ẹ̀rọ ayéyẹ́ tí àbájáde rẹ̀ kò ṣeé sọtẹ́lẹ̀.",
     "intro": "Ko si ṣiṣẹda nipasẹ ifoju-wọn-wo. Iwọ yoo wo awotẹlẹ ki o si fọwọsi irisi rẹ ṣaaju ki SceneFlow to lo awọn kirediti fun fidio ti o kẹhin.",
-    "description": "SceneFlow ṣeto ilana ifọwọsi fun irisi iṣẹ ni gbogbo ipele: Express storyboard fun ayẹwo, Beat Frames lati fi idi eto aworan mulẹ, lẹhinna F2V fun igba orin kọọkan. O ṣe atunṣe irisi rẹ ki o to lo awọn kirediti lori awọn aṣiṣe bii iyapa kuro ni itọsọna tabi awọn aworan ti ko tọna.",
+    "description": "SceneFlow ṣeto ilana ifọwọsi fun irisi iṣẹ ni gbogbo ipele: Express Pre-vis fun ayẹwo, Beat Frames lati fi idi eto aworan mulẹ, lẹhinna F2V fun igba orin kọọkan. O ṣe atunṣe irisi rẹ ki o to lo awọn kirediti lori awọn aṣiṣe bii iyapa kuro ni itọsọna tabi awọn aworan ti ko tọna.",
     "steps": [
-      "Express storyboard — pín àwọn orin (pẹ̀lú àwòrán tàbí fídíò) fún àyẹ̀wò láàrin ìṣẹ́jú díẹ̀",
+      "Express Pre-vis — pín àwọn orin (pẹ̀lú àwòrán tàbí fídíò) fún àyẹ̀wò láàrin ìṣẹ́jú díẹ̀",
       "Beat Frames — ti ìṣẹ̀dá ìbẹ̀rẹ̀/òpin mọ́ra pẹ̀lú ìtẹ̀síwájú Reference Library",
       "F2V fún ìlù kọ̀ọ̀kan — ṣẹ̀dá fídíò láti ara àwọn àwòrán tí a ti fọwọ́ sí, kì í ṣe láti ara àwọn ìtọ́ni tí a kò ní ìpìlẹ̀ tó péye fún.",
       "Production Mixer — ṣíṣe àtòpọ̀ àkókò, ohùn, àti fífi ṣíṣàn (stream) ránṣẹ́ sí ìlànà àpapọ̀ Final Cut"
@@ -290,7 +291,7 @@
   "howItWorks": {
     "title": "Láti ìpele èrò títí dé fídíò tí ó ti ṣe tán fún gbígbé jáde",
     "titleAccent": "Páìpùláìnì kan tí a ń darí",
-    "subtitle": "Ṣíṣe ti àwọn eré oní-apá (series) jẹ́ àṣàyàn lásán. Ọ̀nà pàtàkì náà ni Blueprint → Ṣíṣe iṣẹ́ náà (Production) → Final Cut → Premiere — pẹ̀lú àwọn ìpele bíi storyboard, animatic, fídíò, àti master MP4 ní ọ̀nà náà.",
+    "subtitle": "Ṣíṣe ti àwọn eré oní-apá (series) jẹ́ àṣàyàn lásán. Ọ̀nà pàtàkì náà ni Blueprint → Ṣíṣe iṣẹ́ náà (Production) → Final Cut → Premiere — pẹ̀lú àwọn ìpele bíi pre-vis, animatic, fídíò, àti master MP4 ní ọ̀nà náà.",
     "tagline": "A ti ṣeto gbogbo igbesẹ lati maa ṣiṣẹ funra rẹ pẹlu imọ-jinlẹ to peye. Gbogbo igbesẹ n fun ọ ni agbara lati ṣakoso ohun gbogbo patapata.",
     "optionalBadge": "Ti a le yan",
     "optionalSuffix": " (ti a le yan lati ṣe tabi rara)",
@@ -335,16 +336,16 @@
         "id": "iṣelọpọ",
         "stepLabel": "Ṣíṣe",
         "subtitle": "Láti Àkọsílẹ̀ sí Ìgbóhùn-sáfẹ́fẹ́",
-        "description": "Awọn taabu Script ati Action n ṣe amọna lati Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, ati awọn ṣiṣan MP4 — ko si iwulo lati yi irinṣẹ pada.",
+        "description": "Awọn taabu Script ati Action n ṣe amọna lati Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, ati awọn ṣiṣan MP4 — ko si iwulo lati yi irinṣẹ pada.",
         "keySteps": [
           "Ṣe àtúnṣe tó kẹ́yìn sí ìwé ìtàn, àwọn ohùn, àti ohùn ojú-ìṣẹ̀lẹ̀ náà.",
-          "Express storyboard — àkójọpọ̀ àwòrán àti pínpín fún àyẹ̀wò",
+          "Express Pre-vis — àkójọpọ̀ àwòrán àti pínpín fún àyẹ̀wò",
           "Beat Frames → Ibusọ Iṣakoso Oludari → Ṣiṣan Ṣiṣe-aworan",
           "Fi àwọn ṣíṣàn data tí ó ti parí ránṣẹ́ sí Final Cut"
         ],
         "keyFeatures": [
           "Foundation — ìwé ìtàn, àwọn ohùn, ohùn ìṣẹ̀lẹ̀, ìwé ìtàn tí a ti fọwọ́ sí",
-          "Express storyboard — itọsọna ati awọn fireemu ni iṣẹju; ibi-ifihan ati pinpin",
+          "Express Pre-vis — itọsọna ati awọn fireemu ni iṣẹju; ibi-ifihan ati pinpin",
           "Beat Frames àti Mixer — àwọn fírámù ìbẹ̀rẹ̀/òpin, Director Console, ṣíṣe àgbékalẹ̀ àwọn ṣíṣàn MP4",
           "Àwọn Ọ̀nà Ìṣelọ́pọ̀ — ṣàyẹ̀wò àwọn èso iṣẹ́, tún àwọn orin tí ó ti pẹ́ ṣe, fi ránṣẹ́ sí Final Cut"
         ]
@@ -390,7 +391,7 @@
     "title": "Fidio èyíkéyìí tí o lè fojú inú wò,",
     "titleAccent": "Kọ ọ́ ní SceneFlow",
     "subtitle": "Ifihan ile ati ilẹ, eto ẹkọ, awọn eto ohun (podcasts), awọn ọna gbigbe iroyin, awọn ipolongo ami-ọja, ati awọn itan ti a ṣe ni ọna sinima — gbogbo rẹ n waye ni ile-iṣẹ igbasilẹ kan ti n ṣiṣẹ funra rẹ, lati ibẹrẹ ero titi di igba ti iṣẹ naa yoo fi pari patapata ti yoo si ṣetan fun itẹjade.",
-    "qualifyingStatement": "SceneFlow n yi awọn fọto, awọn faili ti a gbe sori ẹrọ, ati awọn alaye rẹ pada si awọn fidio ti n ṣalaye ohun kan tabi ibi kan — pẹlu aṣayan lati fi ohun tabi awọn ohun kikọ kun un gẹgẹ bi o ṣe fẹ. Awọn fidio wọnyi jẹ eyiti a ti ṣatunṣe pẹlu imọ-ẹrọ AI: wọn jẹ aworan ti o dabi gidi ti a da lori awọn ohun elo rẹ, kii ṣe fidio ti a ya taara pẹlu kamẹra. Ṣe ayẹwo ati fọwọsi gbogbo ilana fidio (storyboard) ṣaaju ki o to gbe e jade; fi aami ti o han gbangba si awọn fidio ti o jade ki awọn oluwo le mọ ohun ti wọn n wo.",
+    "qualifyingStatement": "SceneFlow n yi awọn fọto, awọn faili ti a gbe sori ẹrọ, ati awọn alaye rẹ pada si awọn fidio ti n ṣalaye ohun kan tabi ibi kan — pẹlu aṣayan lati fi ohun tabi awọn ohun kikọ kun un gẹgẹ bi o ṣe fẹ. Awọn fidio wọnyi jẹ eyiti a ti ṣatunṣe pẹlu imọ-ẹrọ AI: wọn jẹ aworan ti o dabi gidi ti a da lori awọn ohun elo rẹ, kii ṣe fidio ti a ya taara pẹlu kamẹra. Ṣe ayẹwo ati fọwọsi gbogbo ilana fidio (pre-vis) ṣaaju ki o to gbe e jade; fi aami ti o han gbangba si awọn fidio ti o jade ki awọn oluwo le mọ ohun ti wọn n wo.",
     "ui": {
       "useCases": "Àwọn Ọ̀nà Lílo",
       "sectors": "Àwọn ẹ̀ka {count}",
@@ -457,7 +458,7 @@
             "Ṣe àtúnṣe ọ̀nà tí a fi ń ya àwòrán: dípò lílo àwọn oníṣẹ́ láti òde, lo àwọn ìlànà iṣẹ́ inú ilé tí ó ní ìtọ́sọ́nà.",
             "Àwọn àdàkọ àti àkójọpọ̀ ohun-ìtọ́kasí tí ó bá ìlànà àmì-ìdánimọ̀ ilé-iṣẹ́ mu",
             "Àfihàn lílo kirediti àti ààlà ìṣúná fún iṣẹ́ kọ̀ọ̀kan",
-            "Fọwọ́ sí àwọn àwòrán ìtàn (storyboards) kí o tó san owó fún fídíò tó parí."
+            "Fọwọ́ sí àwọn àwòrán ìtàn (pre-vis) kí o tó san owó fún fídíò tó parí."
           ]
         },
         "win": "Fi àwọn ohun ìdánilẹ́kọ̀ọ́, ìbánisọ̀rọ̀, àti fídíò ìpolongo ránṣẹ́ ní àkókò tí ìwọ fúnra rẹ yàn — kì í ṣe nígbà tí ó bá wù olùpèsè náà.",
@@ -480,10 +481,10 @@
         },
         "solution": {
           "title": "Sọ Iṣẹ́ Fídíò Rẹ Di Ọjà",
-          "description": "Ṣe agbekalẹ awọn ilana iṣẹ ti a le tun lo leralera fun awọn ile-iṣẹ ti n ṣiṣẹ lori itan-aye (memoir studios) ati awọn apa ọja pato miiran. Eyi pẹlu gbigbe awọn awoṣe (templates) sori ẹrọ, ṣiṣẹda ẹda ohun (voice clones), awọn aworan aṣoju oni-nọmba (avatars), ati gbigba ifọwọsi lori eto aworan itan (storyboard) — ṣe atunṣe wọn lati ba iwulo alabara kọọkan mu ki o si mu èrè pọ si nipasẹ jijẹ iye iṣẹ ti a n ṣe.",
+          "description": "Ṣe agbekalẹ awọn ilana iṣẹ ti a le tun lo leralera fun awọn ile-iṣẹ ti n ṣiṣẹ lori itan-aye (memoir studios) ati awọn apa ọja pato miiran. Eyi pẹlu gbigbe awọn awoṣe (templates) sori ẹrọ, ṣiṣẹda ẹda ohun (voice clones), awọn aworan aṣoju oni-nọmba (avatars), ati gbigba ifọwọsi lori eto aworan itan (pre-vis) — ṣe atunṣe wọn lati ba iwulo alabara kọọkan mu ki o si mu èrè pọ si nipasẹ jijẹ iye iṣẹ ti a n ṣe.",
           "features": [
             "Àwọn àpẹẹrẹ ìwé ìtàn-ayé pẹ̀lú àǹfààní láti gbé àwọn fọ́tò sí i, ṣíṣe àwòkọ́ṣe ohùn, àti lílo àwọn aṣojú oní-àwòrán (avatar) láti ṣe àfihàn.",
-            "Ilana gbigba onibara ti o ni ibatan si Blueprint ati awọn ipele ifọwọsi fun storyboard",
+            "Ilana gbigba onibara ti o ni ibatan si Blueprint ati awọn ipele ifọwọsi fun pre-vis",
             "Awọn idii iṣẹ́ fidio ti a le fi orukọ rẹ si fun itan-idile, ayẹyẹ ọlá, ati awọn fidio ti a n sanwo fun leralera.",
             "Èrè lórí àwọn kirediti dípò owó ìnáwó fún ìgbà ìyàwòrán kọ̀ọ̀kan"
           ]
@@ -607,7 +608,7 @@
           {
             "id": "Àkọsílẹ̀ ìrántí nípasẹ̀ fídíò",
             "label": "Àkọsílẹ̀ Ìrántí nípasẹ̀ Fídíò",
-            "description": "Foju wo pe o n gbe awọn fọto ẹbi, ohun ti a gbasilẹ lakoko ifọrọwanilẹnuwo, ati awọn akọsilẹ nipa awọn iṣẹlẹ sori ẹrọ, pẹlu ohun ẹni ti yoo sọ itan naa ti a ti gbasilẹ tẹlẹ. Lẹhinna, ki o le yara ṣeto awọn fidio itan-aye ti a pin si awọn apakan — ki o si fọwọsi eto bi fidio naa yoo ṣe lọ (storyboard) ki a to ṣe agbejade rẹ nikẹhin."
+            "description": "Foju wo pe o n gbe awọn fọto ẹbi, ohun ti a gbasilẹ lakoko ifọrọwanilẹnuwo, ati awọn akọsilẹ nipa awọn iṣẹlẹ sori ẹrọ, pẹlu ohun ẹni ti yoo sọ itan naa ti a ti gbasilẹ tẹlẹ. Lẹhinna, ki o le yara ṣeto awọn fidio itan-aye ti a pin si awọn apakan — ki o si fọwọsi eto bi fidio naa yoo ṣe lọ (pre-vis) ki a to ṣe agbejade rẹ nikẹhin."
           }
         ]
       },
@@ -649,7 +650,7 @@
           {
             "id": "Àwọn fídíò tí ń ṣàlàyé nípa ọjà",
             "label": "Awọn fidio ti n ṣalaye ọja",
-            "description": "Foju wo pe o n gbe awọn aworan ọja rẹ sori ẹrọ pẹlu ohun agbẹnusọ ati aworan oni-nọmba (avatar) ti a ti ṣeto tẹlẹ fun ami-iṣowo rẹ. Lẹhinna, ki o si ṣẹda awọn fidio alaye ti o ni didara giga lẹsẹkẹsẹ — ki o si fọwọsi eto aworan ati itan fidio naa (storyboard) ki o to pari rẹ patapata."
+            "description": "Foju wo pe o n gbe awọn aworan ọja rẹ sori ẹrọ pẹlu ohun agbẹnusọ ati aworan oni-nọmba (avatar) ti a ti ṣeto tẹlẹ fun ami-iṣowo rẹ. Lẹhinna, ki o si ṣẹda awọn fidio alaye ti o ni didara giga lẹsẹkẹsẹ — ki o si fọwọsi eto aworan ati itan fidio naa (pre-vis) ki o to pari rẹ patapata."
           },
           {
             "id": "Àwọn ẹ̀rí nípa ìwádìí ọ̀ràn kan",
@@ -753,19 +754,19 @@
     "viewDetails": "Wo àwọn kúlẹ̀kúlẹ̀",
     "beatFirst": {
       "title": "Ilana Ṣiṣe Fidio ti o bẹrẹ pẹlu Ilu",
-      "description": "Fọwọ́ sí àwọn ìgbésẹ̀ storyboard àti Beat Frames kí o tó dé ìpele F2V — èyí yóò dín àwọn ìgbìyànjú láti tún nǹkan ṣe láìní ìtọ́sọ́nà (tó máa ń wáyé nítorí àṣìṣe ìrònú ẹ̀rọ tàbí ìyàtọ̀ nínú ìrísí) kù. Ọ̀nà kan ṣoṣo tó ní ètò tó péye láti ìpele àyẹ̀wò títí dé ìpele fídíò tó parí.",
+      "description": "Fọwọ́ sí àwọn ìgbésẹ̀ pre-vis àti Beat Frames kí o tó dé ìpele F2V — èyí yóò dín àwọn ìgbìyànjú láti tún nǹkan ṣe láìní ìtọ́sọ́nà (tó máa ń wáyé nítorí àṣìṣe ìrònú ẹ̀rọ tàbí ìyàtọ̀ nínú ìrísí) kù. Ọ̀nà kan ṣoṣo tó ní ètò tó péye láti ìpele àyẹ̀wò títí dé ìpele fídíò tó parí.",
       "keyFeatures": [
-        "Express storyboard fún àyẹ̀wò — pín àwọn ìlù náà kí o tó ṣe ìgbékalẹ̀ ikẹyìn (render) tó nira",
+        "Express Pre-vis fún àyẹ̀wò — pín àwọn ìlù náà kí o tó ṣe ìgbékalẹ̀ ikẹyìn (render) tó nira",
         "Beat Frames ètò títìpa — Reference Library ìtẹ̀síwájú",
         "F2V fún ìlù kọ̀ọ̀kan — ṣẹ̀dá fídíò láti ara àwọn fúrémù tí a ti fọwọ́ sí",
         "Àkókò àti àwọn ṣíṣàn Mixer — gbigbe lọ sí àkópọ̀ Final Cut"
       ],
-      "screenshotSlot": "Fi àwòrán ojú-iboju (screenshot) yìí sí i: Beat Frames àti ìfọwọ́sí ètò ìtàn fídíò (storyboard) kí a tó ṣẹ̀dá fídíò náà.",
+      "screenshotSlot": "Fi àwòrán ojú-iboju (screenshot) yìí sí i: Beat Frames àti ìfọwọ́sí ètò ìtàn fídíò (pre-vis) kí a tó ṣẹ̀dá fídíò náà.",
       "videoSlot": "Fi fidio iṣẹ́jú-aaya 00:30 yii kun un: Fífọwọ́sí àwọn ìlù, títì àwọn fúrémù mọ́ra, àti ṣíṣe àwọn fidio F2V."
     },
     "screeningRoom": {
       "title": "Àyẹ̀wò àti Ìtúpalẹ̀ Èrò àwọn Olùwò",
-      "description": "Awọn ọna asopọ ikọkọ fun pinpin pẹlu awọn ti o ni ipa ninu iṣẹ naa — eyi pẹlu awọn ami-ayẹwo ti a fi ọwọ ṣe, awọn esi ti a ṣeto ni ọna pato, ati awọn iṣiro nipa bi awọn eniyan ṣe n ba iṣẹ naa ṣiṣẹ (ti a n ṣe pẹlu igbanilaaye awọn oluwo). A n lo wọn ni Premiere ṣaaju ki a to gbe iṣẹ naa jade fun gbogbo eniyan, ati fun ṣiṣe ayẹwo iṣaaju lori 'storyboard' iṣelọpọ.",
+      "description": "Awọn ọna asopọ ikọkọ fun pinpin pẹlu awọn ti o ni ipa ninu iṣẹ naa — eyi pẹlu awọn ami-ayẹwo ti a fi ọwọ ṣe, awọn esi ti a ṣeto ni ọna pato, ati awọn iṣiro nipa bi awọn eniyan ṣe n ba iṣẹ naa ṣiṣẹ (ti a n ṣe pẹlu igbanilaaye awọn oluwo). A n lo wọn ni Premiere ṣaaju ki a to gbe iṣẹ naa jade fun gbogbo eniyan, ati fun ṣiṣe ayẹwo iṣaaju lori 'pre-vis' iṣelọpọ.",
       "keyFeatures": [
         "Àwọn ìpàdé àtúnyẹ̀wò àkànṣe — àwọn ọ̀nà-ìsopọ̀ tó ní ààbò fún pínpín sí àwọn olùkópa pàtàkì",
         "Èsì láti ọ̀dọ̀ àwọn olùwò tàbí olùgbọ́ ní ọ̀nà tó ní ètò — àwọn ìṣirò tàbí ìwọ̀n àti àwọn àfikún ọ̀rọ̀",
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Ẹ̀rọ Ìṣẹ̀dá Yíyaránjú",
-        "description": "Ṣe agbejade awọn aworan ati awọn apakan fidio ni ẹẹkan naa. Express Storyboard n jẹ ki o ṣe ayẹwo ati pin awọn aworan itan ti o ni ohun ati aworan (audio-visual storyboards) laarin iṣẹju diẹ. Express Storyboard n ṣẹda awọn iṣẹlẹ aza Ken Burns ni kikun laarin iṣẹju diẹ, lakoko ti Express Video n pese awọn iṣẹlẹ fidio ti o ti pari laarin iṣẹju diẹ dipo awọn ọjọ.",
+        "description": "Ṣe agbejade awọn aworan ati awọn apakan fidio ni ẹẹkan naa. Express Pre-vis n jẹ ki o ṣe ayẹwo ati pin awọn aworan itan ti o ni ohun ati aworan (audio-visual pre-vis) laarin iṣẹju diẹ. Express Pre-vis n ṣẹda awọn iṣẹlẹ aza Ken Burns ni kikun laarin iṣẹju diẹ, lakoko ti Express Video n pese awọn iṣẹlẹ fidio ti o ti pari laarin iṣẹju diẹ dipo awọn ọjọ.",
         "keyFeatures": [
           "Ṣíṣe àwọn nǹkan ní àkókò kan náà — ṣíṣe àwọn àwòrán àti fídíò fún onírúurú ìṣẹ̀lẹ̀ ní ẹ̀ẹ̀kan náà.",
-          "Express Storyboard — àwọn àkópọ̀ ìwòran àti ohùn tí a lè pín pẹ̀lú ẹlòmíràn láàárín ìṣẹ́jú díẹ̀",
+          "Express Pre-vis — àwọn àkópọ̀ ìwòran àti ohùn tí a lè pín pẹ̀lú ẹlòmíràn láàárín ìṣẹ́jú díẹ̀",
           "Awọn Express Animatic — Iṣipopada iru ti Ken Burns lati awọn aworan aimọra",
           "Express Video — àwọn àkọsílẹ̀ fídíò oní-ìṣẹ̀lẹ̀ láàrin ìṣẹ́jú díẹ̀, kì í ṣe ọjọ́."
         ],
@@ -929,15 +930,15 @@
       {
         "id": "Mọ́kànlá",
         "title": "Ṣíṣe Ìgbékalẹ̀ Ìṣiṣẹ́ Àìní-àfọwọ́-kàn ní Ìgbà Ìṣelọ́pọ̀",
-        "description": "Awọn taabu Script ati Action n ṣe amọna lati Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, ati awọn ṣiṣan MP4 — ko si iwulo lati yi irinṣẹ pada.",
+        "description": "Awọn taabu Script ati Action n ṣe amọna lati Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, ati awọn ṣiṣan MP4 — ko si iwulo lati yi irinṣẹ pada.",
         "keyFeatures": [
           "Foundation — ìwé ìtàn, àwọn ohùn, ohùn ìṣẹ̀lẹ̀, ìwé ìtàn tí a ti fọwọ́ sí",
-          "Express storyboard — itọsọna ati awọn fireemu ni iṣẹju; ibi-ifihan ati pinpin",
+          "Express Pre-vis — itọsọna ati awọn fireemu ni iṣẹju; ibi-ifihan ati pinpin",
           "Beat Frames àti Mixer — àwọn fírámù ìbẹ̀rẹ̀/òpin, Director Console, ṣíṣe àgbékalẹ̀ àwọn ṣíṣàn MP4",
           "Àwọn Ọ̀nà Ìṣelọ́pọ̀ — ṣàyẹ̀wò àwọn èso iṣẹ́, tún àwọn orin tí ó ti pẹ́ ṣe, fi ránṣẹ́ sí Final Cut"
         ],
         "screenshotSlot": "Fi àwòrán ojú-iboju (screenshot) yìí sí i: Pátákó ìṣàkóso iṣẹ́ tó ń fi ìwé-ìtàn (script), Beat Frames, àti Mixer hàn.",
-        "videoSlot": "Fi àkọsílẹ̀ ìṣẹ́jú-àáyá 30 sí i: Foundation, Express storyboard, Beat Frames, àti ìfiránṣẹ́-jáde ṣíṣàn-wọlé (stream export)"
+        "videoSlot": "Fi àkọsílẹ̀ ìṣẹ́jú-àáyá 30 sí i: Foundation, Express Pre-vis, Beat Frames, àti ìfiránṣẹ́-jáde ṣíṣàn-wọlé (stream export)"
       },
       {
         "id": "12",
@@ -968,7 +969,7 @@
       {
         "id": "14",
         "title": "Àyẹ̀wò àti Ìtúpalẹ̀ Èrò àwọn Olùwò",
-        "description": "Awọn ọna asopọ ikọkọ fun pinpin pẹlu awọn ti o ni ipa ninu iṣẹ naa — eyi pẹlu awọn ami-ayẹwo ti a fi ọwọ ṣe, awọn esi ti a ṣeto ni ọna pato, ati awọn iṣiro nipa bi awọn eniyan ṣe n ba iṣẹ naa ṣiṣẹ (ti a n ṣe pẹlu igbanilaaye awọn oluwo). A n lo wọn ni Premiere ṣaaju ki a to gbe iṣẹ naa jade fun gbogbo eniyan, ati fun ṣiṣe ayẹwo iṣaaju lori 'storyboard' iṣelọpọ.",
+        "description": "Awọn ọna asopọ ikọkọ fun pinpin pẹlu awọn ti o ni ipa ninu iṣẹ naa — eyi pẹlu awọn ami-ayẹwo ti a fi ọwọ ṣe, awọn esi ti a ṣeto ni ọna pato, ati awọn iṣiro nipa bi awọn eniyan ṣe n ba iṣẹ naa ṣiṣẹ (ti a n ṣe pẹlu igbanilaaye awọn oluwo). A n lo wọn ni Premiere ṣaaju ki a to gbe iṣẹ naa jade fun gbogbo eniyan, ati fun ṣiṣe ayẹwo iṣaaju lori 'pre-vis' iṣelọpọ.",
         "keyFeatures": [
           "Àwọn ìpàdé àtúnyẹ̀wò àkànṣe — àwọn ọ̀nà-ìsopọ̀ tó ní ààbò fún pínpín sí àwọn olùkópa pàtàkì",
           "Èsì láti ọ̀dọ̀ àwọn olùwò tàbí olùgbọ́ ní ọ̀nà tó ní ètò — àwọn ìṣirò tàbí ìwọ̀n àti àwọn àfikún ọ̀rọ̀",
@@ -1090,11 +1091,11 @@
     "express": {
       "badge": "Ṣíṣe Ọjà ní Iyánjú Gíga",
       "title": "Sceneflow Express",
-      "description": "Ṣe agbekalẹ awọn storyboard, animatic, ati awọn apakan fidio ni ẹẹkan naa. Yipada lati inu iwe afọwọkọ (script) si awotẹlẹ ti a le pin pẹlu awọn ẹlomiran laarin iṣẹju diẹ — lẹhinna fọwọsi Beat Frames ki o to ṣe inawo ikẹhin fun F2V.",
+      "description": "Ṣe agbekalẹ awọn pre-vis, animatic, ati awọn apakan fidio ni ẹẹkan naa. Yipada lati inu iwe afọwọkọ (script) si awotẹlẹ ti a le pin pẹlu awọn ẹlomiran laarin iṣẹju diẹ — lẹhinna fọwọsi Beat Frames ki o to ṣe inawo ikẹhin fun F2V.",
       "items": [
         {
           "title": "Àwòrán Ìtàn Kíákíá",
-          "desc": "Ṣe àtúnyẹ̀wò àti pínpín àwọn àwòrán ìtàn (storyboards) tí ó ní ohùn àti fídíò láàrin ìṣẹ́jú díẹ̀ dípò kí ó gba wákàtí púpọ̀.",
+          "desc": "Ṣe àtúnyẹ̀wò àti pínpín àwọn àwòrán ìtàn (pre-vis) tí ó ní ohùn àti fídíò láàrin ìṣẹ́jú díẹ̀ dípò kí ó gba wákàtí púpọ̀.",
           "time": "Awọn iṣẹju ati awọn wakati"
         },
         {
@@ -1335,7 +1336,7 @@
     "items": [
       {
         "question": "Bawo ni ilana iṣẹ́ SceneFlow ṣe n lọ lati ipele imọ̀ràn titi de ipele ti fídíò yoo fi ṣetan fun titẹjade?",
-        "answer": "SceneFlow n lo ilana iṣẹ ti a ṣeto daradara: Ẹya itan tẹle-n-tẹle (ti a le yan lati fi kun tabi rara) → Blueprint → Ipele Ṣiṣe Fiimu → Final Cut → Premiere. Blueprint n ṣalaye eto itan ati awọn oluwo ti a fojusi pẹlu iranlọwọ Audience Resonance. Ipele ṣiṣe fiimu n pese iwe afọwọkọ, aworan itan (storyboard), fidio ti n ṣafihan ilu ati iyara (beat video), ati awọn apakan fiimu ti a ti ṣiṣẹ lori wọn (rendered scenes). Final Cut n ṣajọ awọn apakan ti a yan papọ lati di faili MP4 kan ṣoṣo ti o jẹ eyi ti o pari (master MP4) — kii ṣe ohun elo fun ṣiṣatunkọ lori laini akoko (timeline editor). Premiere n ṣakoso awọn iṣẹlẹ ifihan fiimu, itupalẹ data, gbigbe fiimu si YouTube, ati ṣiṣe awọn akojọpọ faili fun lilo ikẹhin."
+        "answer": "SceneFlow n lo ilana iṣẹ ti a ṣeto daradara: Ẹya itan tẹle-n-tẹle (ti a le yan lati fi kun tabi rara) → Blueprint → Ipele Ṣiṣe Fiimu → Final Cut → Premiere. Blueprint n ṣalaye eto itan ati awọn oluwo ti a fojusi pẹlu iranlọwọ Audience Resonance. Ipele ṣiṣe fiimu n pese iwe afọwọkọ, aworan itan (pre-vis), fidio ti n ṣafihan ilu ati iyara (beat video), ati awọn apakan fiimu ti a ti ṣiṣẹ lori wọn (rendered scenes). Final Cut n ṣajọ awọn apakan ti a yan papọ lati di faili MP4 kan ṣoṣo ti o jẹ eyi ti o pari (master MP4) — kii ṣe ohun elo fun ṣiṣatunkọ lori laini akoko (timeline editor). Premiere n ṣakoso awọn iṣẹlẹ ifihan fiimu, itupalẹ data, gbigbe fiimu si YouTube, ati ṣiṣe awọn akojọpọ faili fun lilo ikẹhin."
       },
       {
         "question": "Bawo ni SceneFlow ṣe yàtọ̀ sí Gemini Studio tàbí Google Flow?",
@@ -1355,7 +1356,7 @@
       },
       {
         "question": "Kí ni Premiere máa ń ṣe tí Screening Room bá jẹ́ ìpele àtúnyẹ̀wò?",
-        "answer": "Screening Room jẹ́ ojú-iṣẹ́ fún àtúnyẹ̀wò nínú Premiere — ó sì tún wà fún wíwo àwòrán ìtàn (storyboard) iṣẹ́ tó ń lọ lọ́wọ́. Pín àwọn ọna-asopọ̀ (links), gba èrò àwọn onípa àti àlàyé nípa bí àwọn ènìyàn ṣe ń bá iṣẹ́ náà lò (pẹ̀lú àṣẹ àwọn olùwò), ṣe àtúnyẹ̀wò àwọn àbájáde ìṣirò àti àwọn ìwòye lórí ìrísí iṣẹ́ náà, lẹ́yìn náà kí o gbé e jáde nípasẹ̀ ètò YouTube tàbí kí o kó àwọn fáìlì náà jọ fún lílò mìíràn."
+        "answer": "Screening Room jẹ́ ojú-iṣẹ́ fún àtúnyẹ̀wò nínú Premiere — ó sì tún wà fún wíwo àwòrán ìtàn (pre-vis) iṣẹ́ tó ń lọ lọ́wọ́. Pín àwọn ọna-asopọ̀ (links), gba èrò àwọn onípa àti àlàyé nípa bí àwọn ènìyàn ṣe ń bá iṣẹ́ náà lò (pẹ̀lú àṣẹ àwọn olùwò), ṣe àtúnyẹ̀wò àwọn àbájáde ìṣirò àti àwọn ìwòye lórí ìrísí iṣẹ́ náà, lẹ́yìn náà kí o gbé e jáde nípasẹ̀ ètò YouTube tàbí kí o kó àwọn fáìlì náà jọ fún lílò mìíràn."
       },
       {
         "question": "Ṣé mo nílò ìrírí nínú iṣẹ́ ìmọ̀-ẹ̀rọ tàbí ṣíṣe àtúnṣe?",
@@ -1377,7 +1378,7 @@
   },
   "finalCta": {
     "title": "Ṣé o ti ṣetán láti dán gbogbo ìlànà iṣẹ́ náà wò?",
-    "subtitle": "Ṣe gbogbo ilana lati ipele ero, ṣiṣe aworan itan (storyboard), ati ṣiṣe fidio titi de ipele MP4 ikẹhin ninu ile-iṣẹ kan ṣoṣo. Bẹrẹ pẹlu ètò $9 Explorer ki o si ri bi ilana iṣẹ ti o bẹrẹ pẹlu orin (beat) ṣe n ṣiṣẹ ni gidi.",
+    "subtitle": "Ṣe gbogbo ilana lati ipele ero, ṣiṣe aworan itan (pre-vis), ati ṣiṣe fidio titi de ipele MP4 ikẹhin ninu ile-iṣẹ kan ṣoṣo. Bẹrẹ pẹlu ètò $9 Explorer ki o si ri bi ilana iṣẹ ti o bẹrẹ pẹlu orin (beat) ṣe n ṣiṣẹ ni gidi.",
     "cta": "Bẹ̀rẹ̀ ilé-iṣẹ́ rẹ fún $9"
   },
   "footer": {
@@ -1418,5 +1419,36 @@
     "mute": "Pa ohùn",
     "unmute": "Mu ohùn pada",
     "expandVideo": "Mu Fidio Tobi"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

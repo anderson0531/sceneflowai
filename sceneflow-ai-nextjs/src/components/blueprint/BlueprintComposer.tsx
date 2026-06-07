@@ -6,6 +6,7 @@ import { Sparkles, Loader2, Upload, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { validateScript, ValidationResult } from '@/lib/script/scriptValidator'
 import { parseScript, ParsedScript, toVisionPhaseFormat, toTreatmentVariant } from '@/lib/script/scriptParser'
+import { normalizeImportedScriptText } from '@/lib/script/fdxParser'
 import { ScriptImportFeedback } from './ScriptImportFeedback'
 
 export interface ScriptImportResult {
@@ -57,7 +58,8 @@ export function BlueprintComposer({
         extractedText = await extractTextFromDocx(file)
       } else {
         // Plain text, fountain, fdx, etc.
-        extractedText = await file.text()
+        const rawText = await file.text()
+        extractedText = normalizeImportedScriptText(rawText, file.name)
       }
 
       if (!extractedText.trim()) {

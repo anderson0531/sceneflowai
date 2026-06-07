@@ -19,7 +19,7 @@ export const EXTENDED_SCENES_COPY = {
     },
     {
       title: 'Beat-first approval',
-      description: 'Long lines auto-split at storyboard review. You approve frames before the chain renders—not slot-machine regeneration.',
+      description: 'Long lines auto-split at pre-vis review. You approve frames before the chain renders—not slot-machine regeneration.',
     },
     {
       title: 'Production Mixer finish',

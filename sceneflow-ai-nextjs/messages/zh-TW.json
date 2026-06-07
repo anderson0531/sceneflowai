@@ -29,7 +29,8 @@
     "platformWalkthrough": "平台導覽",
     "platform": "平台",
     "pricing": "定價",
-    "faq": "常見問題"
+    "faq": "常見問題",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "別再同時切換五個 AI 網頁分頁了。只要一個工作室，就能帶你從構思一路完成可直接發布的影片。",
@@ -192,9 +193,9 @@
     "title": "以節拍為先的影片製作流程",
     "subtitle": "先確認再算圖——而非像吃角子老虎機那樣隨機重新生成",
     "intro": "無需盲目嘗試生成。在 SceneFlow 消耗點數製作最終影片之前，您可以先預覽並確認畫面效果。",
-    "description": "SceneFlow 針對視覺確認流程進行了結構化安排：先透過 Express storyboard 進行審閱，利用 Beat Frames 鎖定構圖，接著針對每個節拍（beat）執行 F2V。這讓您能在消耗點數處理畫面偏移（drift）或幻覺（hallucinations）問題之前，先完善視覺效果。",
+    "description": "SceneFlow 針對視覺確認流程進行了結構化安排：先透過 Express Pre-vis 進行審閱，利用 Beat Frames 鎖定構圖，接著針對每個節拍（beat）執行 F2V。這讓您能在消耗點數處理畫面偏移（drift）或幻覺（hallucinations）問題之前，先完善視覺效果。",
     "steps": [
-      "Express storyboard — 在幾分鐘內分享影音節拍以供審閱",
+      "Express Pre-vis — 在幾分鐘內分享影音節拍以供審閱",
       "Beat Frames — 鎖定起始/結束合成，並維持 Reference Library 的連續性",
       "逐拍 F2V — 根據已核准的影格生成影片，而非僅憑盲目提示詞。",
       "Production Mixer — 時序、音訊及串流匯出至 Final Cut 組裝"
@@ -335,16 +336,16 @@
         "id": "生產",
         "stepLabel": "生產",
         "subtitle": "從腳本到串流",
-        "description": "「腳本」與「動作」頁籤引導您完成從基礎、分鏡腳本、製作到 Final Cut 的流程。整合 Express storyboard、Beat Frames、混音器及 MP4 串流功能，無需切換工具。",
+        "description": "「腳本」與「動作」頁籤引導您完成從基礎、分鏡腳本、製作到 Final Cut 的流程。整合 Express Pre-vis、Beat Frames、混音器及 MP4 串流功能，無需切換工具。",
         "keySteps": [
           "鎖定劇本、配音及場景音訊",
-          "Express storyboard — 圖庫與分享以供審閱",
+          "Express Pre-vis — 圖庫與分享以供審閱",
           "Beat Frames → 導演控制台 → 渲染串流",
           "將完成的串流傳送至 Final Cut"
         ],
         "keyFeatures": [
           "Foundation — 劇本、配音、場景音訊、定稿劇本",
-          "Express storyboard — 數分鐘內完成方向設定與畫框配置；圖庫與分享功能",
+          "Express Pre-vis — 數分鐘內完成方向設定與畫框配置；圖庫與分享功能",
           "Beat Frames 與混音器 — 起始/結束影格、導演控制台、渲染 MP4 串流",
           "生產流程 — 檢視產出結果、重新算圖（render）過時的 Beat、傳送至 Final Cut"
         ]
@@ -755,7 +756,7 @@
       "title": "以節拍為先的影片製作流程",
       "description": "在進行 F2V（影片生成）之前，先確認分鏡節點與 Beat Frames——這能減少因 AI 幻覺或視覺漂移而導致的盲目重新生成。從審核到最終成片，流程井然有序。",
       "keyFeatures": [
-        "Express storyboard 待審核 —— 在進行耗時渲染前先分享 Beat",
+        "Express Pre-vis 待審核 —— 在進行耗時渲染前先分享 Beat",
         "Beat Frames 鎖定構成 — Reference Library 連續性",
         "F2V（逐拍）——根據核准的影格生成影片",
         "混音器時序與串流 — 匯出至 Final Cut 組件"
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "快速生成引擎",
-        "description": "同步自動生成影像與影片片段。Express Storyboard 讓您能在數分鐘內檢閱並分享影音分鏡腳本。Express Animatic 能在數分鐘內算圖產出完整的 Ken Burns 風格場景，而 Express Video 則能在數分鐘（而非數天）內產出最終影片場景。",
+        "description": "同步自動生成影像與影片片段。Express Pre-vis 讓您能在數分鐘內檢閱並分享影音分鏡腳本。Express Animatic 能在數分鐘內算圖產出完整的 Ken Burns 風格場景，而 Express Video 則能在數分鐘（而非數天）內產出最終影片場景。",
         "keyFeatures": [
           "同步生成——同時跨場景生成圖像與影片",
-          "Express Storyboard — 數分鐘內製作可分享的影音預覽",
+          "Express Pre-vis — 數分鐘內製作可分享的影音預覽",
           "Express Animatics — 靜態影像的 Ken Burns 動態效果",
           "Express Video — 只需數分鐘即可產出場景級短片，無需耗時數日"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "生產自動化",
-        "description": "「腳本」與「動作」頁籤引導您完成從基礎、分鏡腳本、製作到 Final Cut 的流程。整合 Express storyboard、Beat Frames、混音器及 MP4 串流功能，無需切換工具。",
+        "description": "「腳本」與「動作」頁籤引導您完成從基礎、分鏡腳本、製作到 Final Cut 的流程。整合 Express Pre-vis、Beat Frames、混音器及 MP4 串流功能，無需切換工具。",
         "keyFeatures": [
           "Foundation — 劇本、配音、場景音訊、定稿劇本",
-          "Express storyboard — 數分鐘內完成方向設定與畫框配置；圖庫與分享功能",
+          "Express Pre-vis — 數分鐘內完成方向設定與畫框配置；圖庫與分享功能",
           "Beat Frames 與混音器 — 起始/結束影格、導演控制台、渲染 MP4 串流",
           "生產流程 — 檢視產出結果、重新算圖（render）過時的 Beat、傳送至 Final Cut"
         ],
         "screenshotSlot": "插入螢幕截圖：顯示腳本、Beat Frames 與混音器的製作儀表板",
-        "videoSlot": "插入 00:30 的片段：Foundation、Express storyboard、Beat Frames 以及串流匯出"
+        "videoSlot": "插入 00:30 的片段：Foundation、Express Pre-vis、Beat Frames 以及串流匯出"
       },
       {
         "id": "12",
@@ -1418,5 +1419,36 @@
     "mute": "靜音",
     "unmute": "取消靜音",
     "expandVideo": "展開影片"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

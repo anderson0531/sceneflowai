@@ -39,7 +39,7 @@ export default function SharedStoryboardPage({ params }: { params: Promise<{ sha
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center text-white">
           <Loader className="w-12 h-12 animate-spin mx-auto mb-4" />
-          <p className="text-xl">Loading Storyboard...</p>
+          <p className="text-xl">Loading Pre-vis...</p>
           <p className="text-sm text-gray-400 mt-2">Powered by Sceneflow</p>
         </div>
       </div>

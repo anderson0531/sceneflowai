@@ -29,11 +29,12 @@
     "platformWalkthrough": "Rundgang durch die Plattform",
     "platform": "Plattform",
     "pricing": "Preise",
-    "faq": "Häufig gestellte Fragen"
+    "faq": "Häufig gestellte Fragen",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "Schluss mit dem Jonglieren von fünf KI-Tabs. Ein einziges Studio bringt dich von der Idee bis zum veröffentlichungsreifen Video.",
-    "subheadline": "Ein Studio, das Sie von der Idee bis zum veröffentlichungsreifen Master begleitet. Sehen Sie sich Ihr Storyboard an, bevor Sie für das fertige Video bezahlen – geben Sie den Look frei, anstatt Credits für mühsames Ausprobieren zu verschwenden. SceneFlow automatisiert die Routineaufgaben – Skript, Storyboard, Vertonung und Zusammenstellung –, während Sie die volle Kontrolle über jeden einzelnen Schritt behalten.",
+    "subheadline": "Ein Studio, das Sie von der Idee bis zum veröffentlichungsreifen Master begleitet. Sehen Sie sich Ihr pre-vis an, bevor Sie für das fertige Video bezahlen – geben Sie den Look frei, anstatt Credits für mühsames Ausprobieren zu verschwenden. SceneFlow automatisiert die Routineaufgaben – Skript, pre-vis, Vertonung und Zusammenstellung –, während Sie die volle Kontrolle über jeden einzelnen Schritt behalten.",
     "audienceMicroLine": "Entwickelt für Creator, die Ergebnisse erzielen wollen, und für Teams, die sehen möchten, wie es funktioniert.",
     "ctaSecondary": "Sehen Sie sich „What's Possible“ an.",
     "ctaToolStack": "Sehen Sie, wie es Ihren Tool-Stack ersetzt.",
@@ -82,7 +83,7 @@
       },
       {
         "label": "Vor dem finalen Video freigeben",
-        "detail": "Überprüfe die Storyboard-Abschnitte, bevor du renderst."
+        "detail": "Überprüfe die pre-vis-Abschnitte, bevor du renderst."
       },
       {
         "label": "Teste zuerst deine Geschichte",
@@ -102,7 +103,7 @@
     "modes": {
       "automate": {
         "label": "Automatisieren Sie es.",
-        "description": "Geführter Workflow – Storyboards freigeben, schneller veröffentlichen"
+        "description": "Geführter Workflow – pre-vis freigeben, schneller veröffentlichen"
       },
       "engine": {
         "label": "Zeigen Sie mir den Motor.",
@@ -192,9 +193,9 @@
     "title": "Beat-basierte Video-Pipeline",
     "subtitle": "Freigabe vor dem Rendern – statt Generierung nach dem Glücksspielprinzip",
     "intro": "Kein mühsames Ausprobieren nach dem Prinzip „Versuch und Irrtum“. Sie sehen sich eine Vorschau an und geben den Look frei, bevor SceneFlow Credits für das endgültige Video verbraucht.",
-    "description": "SceneFlow strukturiert die visuelle Freigabe in jedem Schritt: Express storyboard zur Durchsicht, Beat Frames zur Festlegung der Komposition, gefolgt von F2V pro Beat. Sie verfeinern den Look, bevor Sie Credits für Drift und Halluzinationen verbrauchen.",
+    "description": "SceneFlow strukturiert die visuelle Freigabe in jedem Schritt: Express Pre-vis zur Durchsicht, Beat Frames zur Festlegung der Komposition, gefolgt von F2V pro Beat. Sie verfeinern den Look, bevor Sie Credits für Drift und Halluzinationen verbrauchen.",
     "steps": [
-      "Express storyboard — Audiovisuelle Beats in Minuten zur Begutachtung teilen",
+      "Express Pre-vis — Audiovisuelle Beats in Minuten zur Begutachtung teilen",
       "Beat Frames — Fixierung der Start-/End-Zusammensetzung mit Reference Library-Kontinuität",
       "F2V pro Beat – Videos aus freigegebenen Frames generieren, statt aus blinden Prompts.",
       "Production Mixer — Timing, Audio und Stream-Export zur Final Cut-Montage"
@@ -269,7 +270,7 @@
       "syncLabel": "Eine Projektdatei – kein Jonglieren mit Tabs",
       "benefits": [
         "Geführte Phasen – Schluss mit Tab-Jonglage und Kontextverlust",
-        "Storyboard-Freigabe – Schluss mit dem „Glücksspiel“-Prinzip bei Überarbeitungen, bevor Videobudget investiert wird.",
+        "pre-vis-Freigabe – Schluss mit dem „Glücksspiel“-Prinzip bei Überarbeitungen, bevor Videobudget investiert wird.",
         "Audience Resonance Wert vor aufwendigem Rendering",
         "Veröffentlichungsreifes Master in 30–60 Minuten statt über 4 Stunden"
       ],
@@ -290,7 +291,7 @@
   "howItWorks": {
     "title": "Vom Konzept bis zum veröffentlichungsreifen Video",
     "titleAccent": "Eine geführte Pipeline",
-    "subtitle": "Die Serie ist optional. Der Kernpfad verläuft über Blueprint → Produktion → Final Cut → Premiere – mit den Stufen Storyboard, Animatic, Video und Master-MP4 im weiteren Verlauf.",
+    "subtitle": "Die Serie ist optional. Der Kernpfad verläuft über Blueprint → Produktion → Final Cut → Premiere – mit den Stufen pre-vis, Animatic, Video und Master-MP4 im weiteren Verlauf.",
     "tagline": "Jeder Schritt ist fachmännisch automatisiert. Jeder Schritt gibt Ihnen die volle Kontrolle.",
     "optionalBadge": "Optional",
     "optionalSuffix": " (optional)",
@@ -335,16 +336,16 @@
         "id": "Produktion",
         "stepLabel": "Produktion",
         "subtitle": "Vom Skript zum Stream",
-        "description": "Die Reiter „Script“ und „Action“ führen von Foundation über Storyboard und Produktion bis hin zu Final Cut. Express storyboard, Beat Frames, Mixer und MP4-Streams – kein Wechsel zwischen verschiedenen Tools erforderlich.",
+        "description": "Die Reiter „Script“ und „Action“ führen von Foundation über pre-vis und Produktion bis hin zu Final Cut. Express Pre-vis, Beat Frames, Mixer und MP4-Streams – kein Wechsel zwischen verschiedenen Tools erforderlich.",
         "keySteps": [
           "Skript, Stimmen und Szenen-Audio fixieren",
-          "Express storyboard — Galerie und Freigabe zur Überprüfung",
+          "Express Pre-vis — Galerie und Freigabe zur Überprüfung",
           "Beat Frames → Regiekonsole → Render-Stream",
           "Fertige Streams an Final Cut senden"
         ],
         "keyFeatures": [
           "Foundation – Drehbuch, Stimmen, Szenen-Audio, Drehbuch fixieren",
-          "Express storyboard — Richtung und Einzelbilder im Minutentakt; Galerie und Teilen",
+          "Express Pre-vis — Richtung und Einzelbilder im Minutentakt; Galerie und Teilen",
           "Beat Frames und Mixer — Start-/End-Frames, Director Console, MP4-Streams rendern",
           "Produktions-Streams — Ergebnisse überprüfen, veraltete Beats neu rendern, an Final Cut senden"
         ]
@@ -390,7 +391,7 @@
     "title": "Welches Video auch immer du dir vorstellen kannst,",
     "titleAccent": "Erstellen Sie es in SceneFlow",
     "subtitle": "Immobilienpräsentationen, Bildungsangebote, Podcasts, Nachrichtenformate, Marken-Kampagnen und filmische Geschichten – ein automatisiertes Studio, vom Konzept bis zum veröffentlichungsreifen Master.",
-    "qualifyingStatement": "SceneFlow verwandelt Ihre Ausgangsfotos, Uploads und Beschreibungen in kommentierte Rundgang-Videos – inklusive optionaler Sprachausgabe und Charakterdarstellung, die Sie steuern. Es handelt sich dabei um KI-generierte Präsentationen: realistische Visualisierungen auf der Basis Ihres Materials, keine Live-Kameraaufnahmen. Prüfen und genehmigen Sie jedes Storyboard vor der Veröffentlichung und kennzeichnen Sie die Ergebnisse eindeutig, damit das Publikum weiß, was es sieht.",
+    "qualifyingStatement": "SceneFlow verwandelt Ihre Ausgangsfotos, Uploads und Beschreibungen in kommentierte Rundgang-Videos – inklusive optionaler Sprachausgabe und Charakterdarstellung, die Sie steuern. Es handelt sich dabei um KI-generierte Präsentationen: realistische Visualisierungen auf der Basis Ihres Materials, keine Live-Kameraaufnahmen. Prüfen und genehmigen Sie jedes pre-vis vor der Veröffentlichung und kennzeichnen Sie die Ergebnisse eindeutig, damit das Publikum weiß, was es sieht.",
     "ui": {
       "useCases": "Anwendungsfälle",
       "sectors": "{count} Sektoren",
@@ -457,7 +458,7 @@
             "Ersetzen Sie externe Shootings durch geführte interne Workflows.",
             "Markenkonforme Vorlagen und Referenzbibliotheken",
             "Transparenter Credit-Verbrauch und Budgetobergrenzen pro Projekt",
-            "Storyboards vor der Bezahlung des fertigen Videos freigeben"
+            "pre-vis vor der Bezahlung des fertigen Videos freigeben"
           ]
         },
         "win": "Veröffentlichen Sie Schulungs-, Kommunikations- und Kampagnenvideos nach Ihrem Zeitplan – und nicht abhängig vom Backlog des Anbieters.",
@@ -480,10 +481,10 @@
         },
         "solution": {
           "title": "Verwandeln Sie Ihren Videoservice in ein Produkt",
-          "description": "Etablieren Sie wiederholbare Arbeitsabläufe für Anbieter von Biografie-Produktionen und spezialisierte Nischenmärkte. Ob Vorlagen-Uploads, Stimmklone, Avatare oder Storyboard-Freigaben – passen Sie die Prozesse individuell an jeden Kunden an und steigern Sie Ihre Margen durch Skalierung.",
+          "description": "Etablieren Sie wiederholbare Arbeitsabläufe für Anbieter von Biografie-Produktionen und spezialisierte Nischenmärkte. Ob Vorlagen-Uploads, Stimmklone, Avatare oder pre-vis-Freigaben – passen Sie die Prozesse individuell an jeden Kunden an und steigern Sie Ihre Margen durch Skalierung.",
           "features": [
             "Vorlagen für Memoiren mit Foto-Uploads, Stimmenklonen und Avatar-Moderatoren",
-            "Kundenaufnahme verknüpft mit Blueprint und den Phasen der Storyboard-Freigabe",
+            "Kundenaufnahme verknüpft mit Blueprint und den Phasen der pre-vis-Freigabe",
             "White-Label-Studio-Pakete für Legacy-, Tribute- und Abo-Videos",
             "Marge auf Credits statt Gemeinkosten pro Dreh"
           ]
@@ -607,7 +608,7 @@
           {
             "id": "Video-Memoiren",
             "label": "Video-Memoiren",
-            "description": "Stellen Sie sich vor, Sie laden Familienfotos, Interview-Audioaufnahmen und Szenennotizen hoch und kombinieren diese mit einer gespeicherten Erzählerstimme. So gestalten Sie im Handumdrehen kapitelweise Videos Ihrer Lebensgeschichte – und geben das Storyboard vor der finalen Videoberechnung frei."
+            "description": "Stellen Sie sich vor, Sie laden Familienfotos, Interview-Audioaufnahmen und Szenennotizen hoch und kombinieren diese mit einer gespeicherten Erzählerstimme. So gestalten Sie im Handumdrehen kapitelweise Videos Ihrer Lebensgeschichte – und geben das pre-vis vor der finalen Videoberechnung frei."
           }
         ]
       },
@@ -649,7 +650,7 @@
           {
             "id": "Produkt-Erklärvideos",
             "label": "Produkt-Erklärvideos",
-            "description": "Stellen Sie sich vor, Sie laden Produktfotos hoch und nutzen dabei die gespeicherte Moderatorenstimme sowie den Avatar Ihrer Marke. Anschließend erstellen Sie im Handumdrehen eine filmreife Serie von Erklärvideos – und geben das Storyboard frei, bevor das Rendering startet."
+            "description": "Stellen Sie sich vor, Sie laden Produktfotos hoch und nutzen dabei die gespeicherte Moderatorenstimme sowie den Avatar Ihrer Marke. Anschließend erstellen Sie im Handumdrehen eine filmreife Serie von Erklärvideos – und geben das pre-vis frei, bevor das Rendering startet."
           },
           {
             "id": "Erfahrungsberichte zu Fallstudien",
@@ -753,19 +754,19 @@
     "viewDetails": "Details anzeigen",
     "beatFirst": {
       "title": "Beat-basierte Video-Pipeline",
-      "description": "Storyboard-Abschnitte und Beat Frames vor der F2V-Generierung freigeben – weniger blinde Neu-Generierungen aufgrund von Halluzinationen und visuellem Drift. Ein strukturierter Ablauf von der Überprüfung bis zum fertigen Clip.",
+      "description": "pre-vis-Abschnitte und Beat Frames vor der F2V-Generierung freigeben – weniger blinde Neu-Generierungen aufgrund von Halluzinationen und visuellem Drift. Ein strukturierter Ablauf von der Überprüfung bis zum fertigen Clip.",
       "keyFeatures": [
-        "Express storyboard zur Überprüfung – Beats vor dem aufwendigen Rendering teilen",
+        "Express Pre-vis zur Überprüfung – Beats vor dem aufwendigen Rendering teilen",
         "Beat Frames Sperrenzusammensetzung — Reference Library Kontinuität",
         "F2V pro Beat – Video aus freigegebenen Einzelbildern generieren",
         "Mixer-Timing und -Streams – Export in die Final Cut-Assembly"
       ],
-      "screenshotSlot": "Screenshot einfügen: Beat Frames und Storyboard-Freigabe vor der Videogenerierung",
+      "screenshotSlot": "Screenshot einfügen: Beat Frames und pre-vis-Freigabe vor der Videogenerierung",
       "videoSlot": "Clip (00:30) einfügen: Beats freigeben, Frames fixieren und anschließend F2V-Clips generieren"
     },
     "screeningRoom": {
       "title": "Publikumsbewertung und Analysen",
-      "description": "Private /s/-Freigabelinks für Stakeholder – manuelle Bewertungen, strukturiertes Feedback und optionale Engagement-Analysen (mit Zustimmung der Betrachter). Einsatz in Premiere vor der Veröffentlichung sowie für die Vorschau des Produktions-Storyboards.",
+      "description": "Private /s/-Freigabelinks für Stakeholder – manuelle Bewertungen, strukturiertes Feedback und optionale Engagement-Analysen (mit Zustimmung der Betrachter). Einsatz in Premiere vor der Veröffentlichung sowie für die Vorschau des Produktions-pre-vis.",
       "keyFeatures": [
         "Private Review-Sitzungen – sichere Freigabelinks für Stakeholder",
         "Strukturiertes Feedback des Publikums – Bewertungen und offene Punkte",
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Express-Generierungs-Engine",
-        "description": "Generieren Sie automatisch und gleichzeitig Bilder und Videosegmente. Mit Express Storyboard können Sie audiovisuelle Storyboards innerhalb von Minuten überprüfen und teilen. Express Storyboard rendert vollständige Ken-Burns-Szenen in Minuten, während Express Video fertige Videoszenen in Minuten statt in Tagen liefert.",
+        "description": "Generieren Sie automatisch und gleichzeitig Bilder und Videosegmente. Mit Express Pre-vis können Sie audiovisuelle pre-vis innerhalb von Minuten überprüfen und teilen. Express Pre-vis rendert vollständige Ken-Burns-Szenen in Minuten, während Express Video fertige Videoszenen in Minuten statt in Tagen liefert.",
         "keyFeatures": [
           "Gleichzeitige Generierung – Bilder und Videos über mehrere Szenen hinweg zugleich",
-          "Express Storyboard – teilbare audiovisuelle Vorschauen in Minuten",
+          "Express Pre-vis – teilbare audiovisuelle Vorschauen in Minuten",
           "Express-Animatics – Ken-Burns-Effekt bei Standbildern",
           "Express Video – Clips auf Szenenebene in Minuten statt Tagen"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "Produktionsautomatisierung",
-        "description": "Die Reiter „Script“ und „Action“ führen von Foundation über Storyboard und Produktion bis hin zu Final Cut. Express storyboard, Beat Frames, Mixer und MP4-Streams – kein Wechsel zwischen verschiedenen Tools erforderlich.",
+        "description": "Die Reiter „Script“ und „Action“ führen von Foundation über pre-vis und Produktion bis hin zu Final Cut. Express Pre-vis, Beat Frames, Mixer und MP4-Streams – kein Wechsel zwischen verschiedenen Tools erforderlich.",
         "keyFeatures": [
           "Foundation – Drehbuch, Stimmen, Szenen-Audio, Drehbuch fixieren",
-          "Express storyboard — Richtung und Einzelbilder im Minutentakt; Galerie und Teilen",
+          "Express Pre-vis — Richtung und Einzelbilder im Minutentakt; Galerie und Teilen",
           "Beat Frames und Mixer — Start-/End-Frames, Director Console, MP4-Streams rendern",
           "Produktions-Streams — Ergebnisse überprüfen, veraltete Beats neu rendern, an Final Cut senden"
         ],
         "screenshotSlot": "Screenshot einfügen: Produktions-Dashboard mit Skript, Beat Frames und Mixer",
-        "videoSlot": "Clip (00:30) einfügen: Foundation, Express storyboard, Beat Frames und Stream-Export"
+        "videoSlot": "Clip (00:30) einfügen: Foundation, Express Pre-vis, Beat Frames und Stream-Export"
       },
       {
         "id": "12",
@@ -968,7 +969,7 @@
       {
         "id": "14",
         "title": "Publikumsbewertung und Analysen",
-        "description": "Private /s/-Freigabelinks für Stakeholder – manuelle Bewertungen, strukturiertes Feedback und optionale Engagement-Analysen (mit Zustimmung der Betrachter). Einsatz in Premiere vor der Veröffentlichung sowie für die Vorschau des Produktions-Storyboards.",
+        "description": "Private /s/-Freigabelinks für Stakeholder – manuelle Bewertungen, strukturiertes Feedback und optionale Engagement-Analysen (mit Zustimmung der Betrachter). Einsatz in Premiere vor der Veröffentlichung sowie für die Vorschau des Produktions-pre-vis.",
         "keyFeatures": [
           "Private Review-Sitzungen – sichere Freigabelinks für Stakeholder",
           "Strukturiertes Feedback des Publikums – Bewertungen und offene Punkte",
@@ -1090,11 +1091,11 @@
     "express": {
       "badge": "Hochgeschwindigkeitsproduktion",
       "title": "Sceneflow Express",
-      "description": "Generieren Sie Storyboards, Animatics und Video-Beats automatisch und simultan. Gelangen Sie in wenigen Minuten vom Skript zur teilbaren Vorschau – und geben Sie dann Beat Frames frei, bevor die endgültigen F2V-Ausgaben anfallen.",
+      "description": "Generieren Sie pre-vis, Animatics und Video-Beats automatisch und simultan. Gelangen Sie in wenigen Minuten vom Skript zur teilbaren Vorschau – und geben Sie dann Beat Frames frei, bevor die endgültigen F2V-Ausgaben anfallen.",
       "items": [
         {
-          "title": "Express-Storyboard",
-          "desc": "Überprüfen und teilen Sie Audio- und Video-Storyboards in Minuten statt Stunden.",
+          "title": "Express-pre-vis",
+          "desc": "Überprüfen und teilen Sie Audio- und Video-pre-vis in Minuten statt Stunden.",
           "time": "Minuten vs. Stunden"
         },
         {
@@ -1335,7 +1336,7 @@
     "items": [
       {
         "question": "Wie verläuft der SceneFlow-Workflow von der Idee bis zum veröffentlichungsreifen Video?",
-        "answer": "SceneFlow nutzt einen strukturierten Arbeitsablauf: Serie (optional) → Blueprint → Produktion → Final Cut → Premiere. Blueprint definiert gemeinsam mit Audience Resonance die Story-Struktur und die Zielgruppe. Die Produktion erstellt Skript, Storyboard, Beat-Video und gerenderte Szenen-Streams. Final Cut fügt ausgewählte Streams zu einer MP4-Masterdatei zusammen – es handelt sich dabei nicht um einen Timeline-Editor. Premiere wickelt Screenings, Analyse-Einblicke, die YouTube-Veröffentlichung sowie Export-Pakete ab."
+        "answer": "SceneFlow nutzt einen strukturierten Arbeitsablauf: Serie (optional) → Blueprint → Produktion → Final Cut → Premiere. Blueprint definiert gemeinsam mit Audience Resonance die Story-Struktur und die Zielgruppe. Die Produktion erstellt Skript, pre-vis, Beat-Video und gerenderte Szenen-Streams. Final Cut fügt ausgewählte Streams zu einer MP4-Masterdatei zusammen – es handelt sich dabei nicht um einen Timeline-Editor. Premiere wickelt Screenings, Analyse-Einblicke, die YouTube-Veröffentlichung sowie Export-Pakete ab."
       },
       {
         "question": "Wie unterscheidet sich SceneFlow von Gemini Studio oder Google Flow?",
@@ -1355,7 +1356,7 @@
       },
       {
         "question": "Was bewirkt Premiere, wenn Screening Room die Überprüfungsphase ist?",
-        "answer": "Screening Room ist die Review-Oberfläche innerhalb von Premiere – auch für die Vorschau von Produktions-Storyboards. Teilen Sie /s/-Links, sammeln Sie Feedback von Stakeholdern sowie optionale Engagement-Analysen (mit Zustimmung der Betrachter), prüfen Sie Bewertungen und visuelle Erkenntnisse und veröffentlichen Sie die Inhalte anschließend über den YouTube-Assistenten oder als Export-Pakete."
+        "answer": "Screening Room ist die Review-Oberfläche innerhalb von Premiere – auch für die Vorschau von Produktions-pre-vis. Teilen Sie /s/-Links, sammeln Sie Feedback von Stakeholdern sowie optionale Engagement-Analysen (mit Zustimmung der Betrachter), prüfen Sie Bewertungen und visuelle Erkenntnisse und veröffentlichen Sie die Inhalte anschließend über den YouTube-Assistenten oder als Export-Pakete."
       },
       {
         "question": "Benötige ich technische oder redaktionelle Erfahrung?",
@@ -1377,7 +1378,7 @@
   },
   "finalCta": {
     "title": "Bereit, die gesamte Pipeline zu testen?",
-    "subtitle": "Setze den gesamten Prozess – von Konzept und Storyboard bis hin zu Video und Master-MP4 – in einem einzigen Studio um. Starte mit dem 9-$-Tarif Explorer und erlebe den „Beat-first“-Workflow in der Praxis.",
+    "subtitle": "Setze den gesamten Prozess – von Konzept und pre-vis bis hin zu Video und Master-MP4 – in einem einzigen Studio um. Starte mit dem 9-$-Tarif Explorer und erlebe den „Beat-first“-Workflow in der Praxis.",
     "cta": "Starte dein Studio für 9 $"
   },
   "footer": {
@@ -1418,5 +1419,36 @@
     "mute": "Stummschalten",
     "unmute": "Stummschaltung aufheben",
     "expandVideo": "Video vergrößern"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

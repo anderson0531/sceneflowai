@@ -53,7 +53,7 @@ export const USE_CASE_PERSONAS = {
     solution: {
       title: 'The Automated Storyteller',
       description:
-        'Ship episodic series and scroll-stopping shorts from one studio — beat-first storyboards, Reference Library continuity, and publish-ready masters for the YouTube-led creator economy.',
+        'Ship episodic series and scroll-stopping shorts from one studio — beat-first pre-vis, Reference Library continuity, and publish-ready masters for the YouTube-led creator economy.',
       features: [
         'Visuals that map cleanly to script beats',
         'Consistent protagonists across every scene',
@@ -80,7 +80,7 @@ export const USE_CASE_PERSONAS = {
         'Replace vendor shoots with guided in-house workflows',
         'Brand-safe templates and reference libraries',
         'Visible credit spend and budget caps per project',
-        'Approve storyboards before paying for final video',
+        'Approve pre-vis before paying for final video',
       ],
     },
     win: 'Ship training, comms, and campaign video on your timeline — not the vendor\'s backlog.',
@@ -98,10 +98,10 @@ export const USE_CASE_PERSONAS = {
     solution: {
       title: 'Productize Your Video Service',
       description:
-        'Build repeatable workflows for memoir studios and niche verticals. Template uploads, voice clones, avatars, and storyboard approval — customize per client and grow margin on volume.',
+        'Build repeatable workflows for memoir studios and niche verticals. Template uploads, voice clones, avatars, and pre-vis approval — customize per client and grow margin on volume.',
       features: [
         'Memoir templates with photo uploads, voice clones, and avatar hosts',
-        'Client intake tied to Blueprint and storyboard approval phases',
+        'Client intake tied to Blueprint and pre-vis approval phases',
         'White-label studio packages for legacy, tribute, and subscription video',
         'Margin on credits instead of per-shoot overhead',
       ],

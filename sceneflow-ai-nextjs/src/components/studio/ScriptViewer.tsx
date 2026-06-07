@@ -852,7 +852,7 @@ export default function ScriptViewer({ fountainText }: { fountainText: string })
                     const synopsis = (blocks||[]).map(b=>b.text||'').join(' ').replace(/\s+/g,' ').trim().slice(0,300)
                     const selectedIdea = currentProject.metadata?.selectedIdea || {
                       id: `auto_${Date.now()}`,
-                      title: currentProject.title || 'Storyboard Draft',
+                      title: currentProject.title || 'Pre-vis Draft',
                       synopsis: synopsis || 'Auto-generated from script.',
                       scene_outline: outline.length? outline: ['Open on the central setting; introduce protagonist.'],
                       thumbnail_prompt: 'Cinematic still from the key moment',

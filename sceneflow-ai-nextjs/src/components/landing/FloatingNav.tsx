@@ -10,6 +10,7 @@ import {
   Film,
   DollarSign,
   HelpCircle,
+  Clapperboard,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useExpandLandingSection } from '@/components/landing/LandingSectionCollapse'
@@ -22,7 +23,8 @@ export function FloatingNav() {
       { id: 'creative-range', label: t('looksAndFormats'), icon: Sparkles },
       { id: 'how-it-works', label: t('howItWorks'), icon: Sparkles },
       { id: 'use-cases', label: t('useCases'), icon: Rocket },
-      { id: 'feature-storyboard', label: t('platformWalkthrough'), icon: Film },
+      { id: 'pre-vis-engine', label: t('preVisEngine'), icon: Clapperboard },
+      { id: 'feature-pre-vis', label: t('platformWalkthrough'), icon: Film },
       { id: 'trust-safety', label: t('trustSafety'), icon: Shield },
       { id: 'engineering', label: t('platform'), icon: Shield },
       { id: 'pricing', label: t('pricing'), icon: DollarSign },

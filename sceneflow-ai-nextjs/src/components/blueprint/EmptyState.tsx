@@ -210,7 +210,7 @@ export function NoScenesEmpty({ onGenerate }: { onGenerate: () => void }) {
     <EmptyState
       icon={Film}
       title="No scenes generated"
-      description="Generate scenes from your script to start building your storyboard."
+      description="Generate scenes from your script to start building your pre-vis."
       action={{
         label: 'Generate Scenes',
         onClick: onGenerate,

@@ -17,7 +17,7 @@ import {
 } from '@/components/landing/LandingSectionCollapse';
 import { cn } from '@/lib/utils';
 
-const SECTION_ID = 'feature-storyboard';
+const SECTION_ID = 'feature-pre-vis';
 
 type FeatureStoryboardMessageItem = {
   id: string;

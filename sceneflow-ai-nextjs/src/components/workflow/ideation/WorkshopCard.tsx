@@ -37,7 +37,7 @@ export function WorkshopCard(props: WorkshopCardProps) {
     { label: 'Branding & Compliance', key: 'sr_branding', multiline: true, rows: 3, placeholder: 'Voice/tone guardrails, logo/type, legal' },
     { label: 'Props & Continuity', key: 'sr_propsContinuity', multiline: true, rows: 2, placeholder: 'Hero props, wardrobe, must-match' },
     { label: 'Accessibility & Localization', key: 'sr_accessibility', multiline: true, rows: 2, placeholder: 'Captions style/language, alt text, VO variants' },
-    { label: 'Storyboard Hints', key: 'sr_storyboardHints', multiline: true, rows: 3, placeholder: 'Per-beat intents, coverage plan, B-roll, graphics, on-screen text buckets' },
+    { label: 'Pre-vis Hints', key: 'sr_storyboardHints', multiline: true, rows: 3, placeholder: 'Per-beat intents, coverage plan, B-roll, graphics, on-screen text buckets' },
   ] as const
 
   const computeReadiness = () => {
@@ -121,7 +121,7 @@ export function WorkshopCard(props: WorkshopCardProps) {
             setHasUnscoredChanges(true)
           }}
         />
-        <div className="mt-2 text-sm text-sf-text-secondary">Use your saved Creator Template to standardize structure across Concept, Storyboard, and Scene Direction.</div>
+        <div className="mt-2 text-sm text-sf-text-secondary">Use your saved Creator Template to standardize structure across Concept, Pre-vis, and Scene Direction.</div>
       </div>
 
       <div className="flex items-center justify-between mb-4">
@@ -229,8 +229,8 @@ export function WorkshopCard(props: WorkshopCardProps) {
       <div className="mt-6 card-elevated p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <div className="text-heading text-sm">Storyboard Readiness</div>
-            <div className="text-caption">Fill these to generate a professional storyboard.</div>
+            <div className="text-heading text-sm">Pre-vis Readiness</div>
+            <div className="text-caption">Fill these to generate professional pre-vis.</div>
           </div>
           <div className="flex items-center gap-2">
             <button 

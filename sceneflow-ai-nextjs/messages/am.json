@@ -29,11 +29,12 @@
     "platformWalkthrough": "የመድረኩ አጠቃላይ ጉብኝት",
     "platform": "መድረክ",
     "pricing": "የዋጋ አወጣጥ",
-    "faq": "ተደጋግመው የሚጠየቁ ጥያቄዎች"
+    "faq": "ተደጋግመው የሚጠየቁ ጥያቄዎች",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "አምስት የተለያዩ የAI ገጾችን (tabs) በአንድ ጊዜ ለማስተዳደር መሞከርዎን ያቁሙ። በአንድ ስቱዲዮ አማካኝነት ከሃሳብ ጀምሮ ለህትመት ዝግጁ የሆነ ቪዲዮ ማዘጋጀት ይችላሉ።",
-    "subheadline": "ከሃሳብ ጀምሮ ለህትመት ዝግጁ እስከሆነው የመጨረሻ ውጤት ድረስ የሚመራዎ አንድ የተቀናጀ ስቱዲዮ። የመጨረሻውን ቪዲዮ ከመክፈልዎ በፊት የስቶሪቦርድ (storyboard) ንድፍዎን ይመልከቱ፤ በሙከራ እና ስህተት ሂደት ክሬዲትዎን ከማባከን ይልቅ፣ የቪዲዮውን ገጽታ አስቀድመው ያጽድቁ። SceneFlow እንደ ስክሪፕት፣ ስቶሪቦርድ፣ የድምጽ ቅጂ እና የመሳሰሉትን አድካሚ ስራዎች በራስ-ሰር ሲያከናውን፣ እርስዎ ግን በእያንዳንዱ የሂደቱ ደረጃ ላይ ሙሉ ቁጥጥር ይኖርዎታል።",
+    "subheadline": "ከሃሳብ ጀምሮ ለህትመት ዝግጁ እስከሆነው የመጨረሻ ውጤት ድረስ የሚመራዎ አንድ የተቀናጀ ስቱዲዮ። የመጨረሻውን ቪዲዮ ከመክፈልዎ በፊት የስቶሪቦርድ (pre-vis) ንድፍዎን ይመልከቱ፤ በሙከራ እና ስህተት ሂደት ክሬዲትዎን ከማባከን ይልቅ፣ የቪዲዮውን ገጽታ አስቀድመው ያጽድቁ። SceneFlow እንደ ስክሪፕት፣ ስቶሪቦርድ፣ የድምጽ ቅጂ እና የመሳሰሉትን አድካሚ ስራዎች በራስ-ሰር ሲያከናውን፣ እርስዎ ግን በእያንዳንዱ የሂደቱ ደረጃ ላይ ሙሉ ቁጥጥር ይኖርዎታል።",
     "audienceMicroLine": "ውጤት ለሚፈልጉ ፈጣሪዎች እና አሰራሩን ማየት ለሚፈልጉ ቡድኖች የተዘጋጀ።",
     "ctaSecondary": "'ምን ማድረግ ይቻላል' (What's Possible) የሚለውን ይመልከቱ",
     "ctaToolStack": "የአሁኑን የመሳሪያዎች ስብስብዎ እንዴት እንደሚተካ ይመልከቱ።",
@@ -82,7 +83,7 @@
       },
       {
         "label": "ከመጨረሻው ቪዲዮ በፊት ያጽድቁ",
-        "detail": "ወደ 'ሬንደር' (render) ከማስገባትዎ በፊት የ'ስቶሪቦርድ' (storyboard) ክፍሎችን ይገምግሙ።"
+        "detail": "ወደ 'ሬንደር' (render) ከማስገባትዎ በፊት የ'ስቶሪቦርድ' (pre-vis) ክፍሎችን ይገምግሙ።"
       },
       {
         "label": "ታሪክዎን በመጀመሪያ ይፈትሹ",
@@ -102,7 +103,7 @@
     "modes": {
       "automate": {
         "label": "በራስ-ሰር እንዲሠራ አድርገው",
-        "description": "በሂደት የሚመራ አሰራር — የስቶሪቦርድ (storyboard) ማጽደቅ እና በፍጥነት ማጠናቀቅ"
+        "description": "በሂደት የሚመራ አሰራር — የስቶሪቦርድ (pre-vis) ማጽደቅ እና በፍጥነት ማጠናቀቅ"
       },
       "engine": {
         "label": "ሞተሩን አሳየኝ",
@@ -192,9 +193,9 @@
     "title": "በምት (Beat) ላይ የተመሰረተ የቪዲዮ ማቀነባበሪያ ሂደት",
     "subtitle": "ከማመንጨትዎ በፊት ያጽድቁት — እንደ ቁማር ማሽን በዘፈቀደ የሚፈጠር ሂደት አይሁን።",
     "intro": "በግምትና በሙከራ የሚደረግ የማመንጨት ሂደት የለም። SceneFlow ለመጨረሻው ቪዲዮ ክሬዲቶችን ከመጠቀሙ በፊት፣ ውጤቱን አስቀድመው ይመለከታሉ እንዲሁም ያጸድቃሉ።",
-    "description": "SceneFlow በእያንዳንዱ ደረጃ የእይታ ማረጋገጫ ሂደትን ያደራጃል፦ ለግምገማ Express storyboard፣ የአቀራረብ ቅርጽን (composition) ለመቆለፍ Beat Frames፣ ከዚያም በእያንዳንዱ 'ቢት' (beat) ላይ F2V። በዚህም፣ ከቁጥጥር ውጭ በሆኑ ለውጦች (drift) እና በስህተት በተፈጠሩ ምስሎች (hallucinations) ላይ ክሬዲት ከማባከንዎ በፊት የምስሉን ጥራት ያስተካክላሉ።",
+    "description": "SceneFlow በእያንዳንዱ ደረጃ የእይታ ማረጋገጫ ሂደትን ያደራጃል፦ ለግምገማ Express Pre-vis፣ የአቀራረብ ቅርጽን (composition) ለመቆለፍ Beat Frames፣ ከዚያም በእያንዳንዱ 'ቢት' (beat) ላይ F2V። በዚህም፣ ከቁጥጥር ውጭ በሆኑ ለውጦች (drift) እና በስህተት በተፈጠሩ ምስሎች (hallucinations) ላይ ክሬዲት ከማባከንዎ በፊት የምስሉን ጥራት ያስተካክላሉ።",
     "steps": [
-      "Express storyboard — ለግምገማ የሚሆኑ የሙዚቃ ቅንብሮችን (beats) በደቂቃዎች ውስጥ ያጋሩ",
+      "Express Pre-vis — ለግምገማ የሚሆኑ የሙዚቃ ቅንብሮችን (beats) በደቂቃዎች ውስጥ ያጋሩ",
       "Beat Frames — የቅንብር (composition) መጀመሪያ/መጨረሻን ከ Reference Library ቀጣይነት ጋር መቆለፍ",
       "F2V (በቢት) — በዘፈቀደ ትዕዛዞች (prompts) ሳይሆን፣ በተረጋገጡ የምስል ፍሬሞች (frames) ላይ በመመስረት ቪዲዮ ይፍጠሩ።",
       "Production Mixer — የጊዜ አወቃቀር፣ ኦዲዮ እና ስትሪም ወደ Final Cut ስብስብ (assembly) መላክ"
@@ -269,7 +270,7 @@
       "syncLabel": "አንድ የፕሮጀክት ፋይል — በበርካታ ትሮች (tabs) መካከል መመላለስ አያስፈልግም",
       "benefits": [
         "በሂደት የሚመሩ ደረጃዎች — በበርካታ ትሮች (tabs) መካከል የመመላለስ እና የአውድ መዘንጋት ችግርን ያስወግዱ",
-        "የስቶሪቦርድ (Storyboard) ማጽደቅ — ለቪዲዮ ወጪ ከማድረግዎ በፊት በዘፈቀደ የሚደረጉ ተደጋጋሚ ለውጦችን ያስቁሙ።",
+        "የስቶሪቦርድ (pre-vis) ማጽደቅ — ለቪዲዮ ወጪ ከማድረግዎ በፊት በዘፈቀደ የሚደረጉ ተደጋጋሚ ለውጦችን ያስቁሙ።",
         "Audience Resonance ከከባድ ሬንደር (heavy render) በፊት ያለው ውጤት",
         "ከ4 ሰዓታት በላይ ሳይሆን፣ ከ30 እስከ 60 ደቂቃዎች ውስጥ ለህትመት ዝግጁ የሆነ ዋና ቅጂ (master)"
       ],
@@ -290,7 +291,7 @@
   "howItWorks": {
     "title": "ከሃሳብ ጀምሮ ለህትመት ዝግጁ የሆነ ቪዲዮ",
     "titleAccent": "አንድ የሚመራ የቧንቧ መስመር",
-    "subtitle": "ተከታታይ (Series) አማራጭ ነው። ዋናው ሂደት Blueprint → Production → Final Cut → Premiere ሲሆን፣ በሂደቱ ውስጥ የstoryboard፣ animatic፣ video እና master MP4 ደረጃዎች ይካተታሉ።",
+    "subtitle": "ተከታታይ (Series) አማራጭ ነው። ዋናው ሂደት Blueprint → Production → Final Cut → Premiere ሲሆን፣ በሂደቱ ውስጥ የpre-vis፣ animatic፣ video እና master MP4 ደረጃዎች ይካተታሉ።",
     "tagline": "እያንዳንዱ ደረጃ በብቃት በራስ-ሰር የሚከናወን ነው። እያንዳንዱ ደረጃ ሙሉ ቁጥጥር ይሰጥዎታል።",
     "optionalBadge": "አማራጭ",
     "optionalSuffix": " (አማራጭ)",
@@ -335,16 +336,16 @@
         "id": "ምርት",
         "stepLabel": "ምርት",
         "subtitle": "ከስክሪፕት ወደ ስትሪም",
-        "description": "የScript እና Action ትሮች (tabs) ከFoundation → Storyboard → Production → Final Cut ባለው ሂደት ይመራዎታል። Express storyboard፣ Beat Frames፣ Mixer እና MP4 ስትሪሞችን ያለ መሳሪያ መቀያየር ይጠቀሙ።",
+        "description": "የScript እና Action ትሮች (tabs) ከFoundation → pre-vis → Production → Final Cut ባለው ሂደት ይመራዎታል። Express Pre-vis፣ Beat Frames፣ Mixer እና MP4 ስትሪሞችን ያለ መሳሪያ መቀያየር ይጠቀሙ።",
         "keySteps": [
           "ስክሪፕት፣ የድምፅ ቀረጻዎች እና የትዕይንት ኦዲዮን ማጽደቅና ማጠናቀቅ",
-          "Express storyboard — ጋለሪ እና ለግምገማ ማጋራት",
+          "Express Pre-vis — ጋለሪ እና ለግምገማ ማጋራት",
           "Beat Frames → የአመራር ኮንሶል → የማሳያ ዥረት (Render Stream)",
           "የተጠናቀቁትን ስትሪሞች (streams) ወደ Final Cut ይላኩ።"
         ],
         "keyFeatures": [
           "Foundation — ስክሪፕት፣ ድምፆች፣ የትዕይንት ድምፅ፣ ስክሪፕትን ማጽናት",
-          "Express storyboard — አቅጣጫ እና ፍሬሞች (በደቂቃዎች)፤ ጋለሪ እና ማጋራት",
+          "Express Pre-vis — አቅጣጫ እና ፍሬሞች (በደቂቃዎች)፤ ጋለሪ እና ማጋራት",
           "Beat Frames እና Mixer — የመነሻ/ማብቂያ ፍሬሞች፣ Director Console፣ የMP4 ዥረቶችን (streams) ማዘጋጀት (render)",
           "የምርት ፍሰቶች (Production Streams) — ውጤቶችን መገምገም፣ ጊዜ ያለፈባቸውን ቢቶች (beats) እንደገና ማዘጋጀት (re-render)፣ ወደ Final Cut መላክ"
         ]
@@ -390,7 +391,7 @@
     "title": "ማንኛውንም በዓይነ ሕሊናዎ የሚስሉት ቪዲዮ፣",
     "titleAccent": "በ SceneFlow ውስጥ ይገንቡት",
     "subtitle": "የሪል እስቴት ማስተዋወቂያዎች፣ ትምህርታዊ ይዘቶች፣ ፖድካስቶች፣ የዜና ቅርጸቶች፣ የምርት ስም ማስተዋወቂያ ዘመቻዎች እና ሲኒማዊ ታሪኮች — ከመጀመሪያው ሐሳብ አንስቶ ለሕትመት ዝግጁ እስከሆነው የመጨረሻ ውጤት ድረስ የሚያገለግል አንድ አውቶማቲክ ስቱዲዮ።",
-    "qualifyingStatement": "SceneFlow የእርስዎን የመጀመሪያ ፎቶዎች፣ የተሰቀሉ ፋይሎች እና መግለጫዎች ወደ ትረካ የታከለባቸው የማሳያ ቪዲዮዎች (walkthrough videos) ይለውጣል፤ በዚህ ሂደት ውስጥ የድምፅ እና የገጸ-ባህሪ አጠቃቀምን እርስዎ መቆጣጠር ይችላሉ። እነዚህ በቀጥታ በካሜራ የተቀረጹ ሳይሆኑ፣ በእርስዎ መረጃዎች ላይ የተመሰረቱ እና በሰው ሰራሽ አስተውሎት (AI) የተዘጋጁ እውነተኛ የሚመስሉ ምስላዊ ማሳያዎች ናቸው። ይዘቱን ለህዝብ ከማቅረብዎ በፊት እያንዳንዱን የቪዲዮ እቅድ (storyboard) ይገምግሙና ያጽድቁ፤ እንዲሁም ተመልካቾች ምን እየተመለከቱ እንደሆነ እንዲረዱ ውጤቶቹን በግልጽ ይሰይሙ።",
+    "qualifyingStatement": "SceneFlow የእርስዎን የመጀመሪያ ፎቶዎች፣ የተሰቀሉ ፋይሎች እና መግለጫዎች ወደ ትረካ የታከለባቸው የማሳያ ቪዲዮዎች (walkthrough videos) ይለውጣል፤ በዚህ ሂደት ውስጥ የድምፅ እና የገጸ-ባህሪ አጠቃቀምን እርስዎ መቆጣጠር ይችላሉ። እነዚህ በቀጥታ በካሜራ የተቀረጹ ሳይሆኑ፣ በእርስዎ መረጃዎች ላይ የተመሰረቱ እና በሰው ሰራሽ አስተውሎት (AI) የተዘጋጁ እውነተኛ የሚመስሉ ምስላዊ ማሳያዎች ናቸው። ይዘቱን ለህዝብ ከማቅረብዎ በፊት እያንዳንዱን የቪዲዮ እቅድ (pre-vis) ይገምግሙና ያጽድቁ፤ እንዲሁም ተመልካቾች ምን እየተመለከቱ እንደሆነ እንዲረዱ ውጤቶቹን በግልጽ ይሰይሙ።",
     "ui": {
       "useCases": "የአጠቃቀም ሁኔታዎች",
       "sectors": "{count} ዘርፎች",
@@ -457,7 +458,7 @@
             "በውጫዊ አቅራቢዎች የሚከናወኑ የምስል/ቪዲዮ ቀረጻዎችን፣ በውስጥ የሚከናወኑ እና መመሪያ የተካተተባቸው የስራ ሂደቶች በመተካት ይቀይሩ።",
             "ከብራንድ መርሆዎች ጋር የሚጣጣሙ አብነቶች እና የማጣቀሻ ቤተ-መጻሕፍት",
             "ለእያንዳንዱ ፕሮጀክት የሚታይ የክሬዲት ወጪ እና የበጀት ጣሪያዎች",
-            "ለዋናው ቪዲዮ ክፍያ ከመፈጸምዎ በፊት የስቶሪቦርዶችን (storyboards) ያጽድቁ።"
+            "ለዋናው ቪዲዮ ክፍያ ከመፈጸምዎ በፊት የስቶሪቦርዶችን (pre-vis) ያጽድቁ።"
           ]
         },
         "win": "ለስልጠና፣ ለኮሙኒኬሽን እና ለዘመቻ የሚሆኑ ቪዲዮዎችን በአቅራቢው የስራ ክምችት (backlog) ሳይሆን፣ በእርስዎ የጊዜ ሰሌዳ መሰረት ያቅርቡ።",
@@ -480,10 +481,10 @@
         },
         "solution": {
           "title": "የቪዲዮ አገልግሎትዎን ወደ ምርትነት ይለውጡት",
-          "description": "ለማስታወሻ (memoir) ስቱዲዮዎች እና ለተወሰኑ ልዩ የሥራ ዘርፎች ሊደገሙ የሚችሉ የስራ ሂደቶችን ይፍጠሩ። አብነቶችን (templates) መጫን፣ የድምፅ ቅጂዎችን (voice clones) ማዘጋጀት፣ አቫታሮችን እና የስቶሪቦርድ (storyboard) ማጽደቅ ሂደቶችን እንደየደንበኛው ፍላጎት በማበጀት፣ በስራ መጠን መጨመር አማካኝነት ትርፍዎን ያሳድጉ።",
+          "description": "ለማስታወሻ (memoir) ስቱዲዮዎች እና ለተወሰኑ ልዩ የሥራ ዘርፎች ሊደገሙ የሚችሉ የስራ ሂደቶችን ይፍጠሩ። አብነቶችን (templates) መጫን፣ የድምፅ ቅጂዎችን (voice clones) ማዘጋጀት፣ አቫታሮችን እና የስቶሪቦርድ (pre-vis) ማጽደቅ ሂደቶችን እንደየደንበኛው ፍላጎት በማበጀት፣ በስራ መጠን መጨመር አማካኝነት ትርፍዎን ያሳድጉ።",
           "features": [
             "ፎቶዎችን የመጫን፣ ድምፅን የመቅዳት (voice cloning) እና አቫታር አቅራቢዎችን የማካተት አማራጭ ያላቸው የማስታወሻ (memoir) አብነቶች",
-            "ከBlueprint እና ከስቶሪቦርድ (storyboard) ማጽደቂያ ምዕራፎች ጋር የተገናኘ የደንበኛ ምዝገባ ሂደት",
+            "ከBlueprint እና ከስቶሪቦርድ (pre-vis) ማጽደቂያ ምዕራፎች ጋር የተገናኘ የደንበኛ ምዝገባ ሂደት",
             "ለታሪክና ትዝታ (legacy)፣ ለክብር መግለጫ (tribute) እና ለደንበኝነት ምዝገባ (subscription) አገልግሎት የሚውሉ የቪዲዮ ስቱዲዮ ፓኬጆች (White-label)",
             "ለእያንዳንዱ ቀረጻ የሚውል ተጨማሪ ወጪ (overhead) ከማካተት ይልቅ፣ በክሬዲቶች ላይ የሚታከል ትርፍ (margin)"
           ]
@@ -607,7 +608,7 @@
           {
             "id": "የቪዲዮ ትዝታዎች",
             "label": "የቪዲዮ ትዝታዎች",
-            "description": "የቤተሰብ ፎቶዎችን፣ የቃለ-መጠይቅ ድምፅን እና የትዕይንት ማስታወሻዎችን፣ አስቀድሞ ከተቀዳ የትረካ ድምፅ ጋር ሲያዋህዱት በዓይነ ሕሊናዎ ይሳሉት። ከዚያም፣ በምዕራፍ የተከፋፈሉ የማስታወሻ ቪዲዮዎችን በፍጥነት ያዘጋጁ፤ እንዲሁም የመጨረሻው ቪዲዮ ከመሰራቱ በፊት የቪዲዮውን ዝርዝር ዕቅድ (storyboard) ይገምግሙና ያጽድቁ።"
+            "description": "የቤተሰብ ፎቶዎችን፣ የቃለ-መጠይቅ ድምፅን እና የትዕይንት ማስታወሻዎችን፣ አስቀድሞ ከተቀዳ የትረካ ድምፅ ጋር ሲያዋህዱት በዓይነ ሕሊናዎ ይሳሉት። ከዚያም፣ በምዕራፍ የተከፋፈሉ የማስታወሻ ቪዲዮዎችን በፍጥነት ያዘጋጁ፤ እንዲሁም የመጨረሻው ቪዲዮ ከመሰራቱ በፊት የቪዲዮውን ዝርዝር ዕቅድ (pre-vis) ይገምግሙና ያጽድቁ።"
           }
         ]
       },
@@ -649,7 +650,7 @@
           {
             "id": "ስለ ምርት የሚያብራሩ ቪዲዮዎች",
             "label": "የምርት ማብራሪያ ቪዲዮዎች",
-            "description": "የምርት ካታሎግ ምስሎችን፣ እንዲሁም ቀድሞ የተዘጋጀውን የምርት ስምዎ (brand) የአቅራቢ ድምፅ እና አቫታር (avatar) በመጠቀም፤ በቅጽበት ሲኒማዊ የማብራሪያ ቪዲዮዎችን መፍጠር እንደሚችሉ አስቡት። ቪዲዮውን ከመጨረሻው የማምረት ሂደት (rendering) በፊት የቪዲዮውን ዝርዝር እቅድ (storyboard) ማጽደቅም ይችላሉ።"
+            "description": "የምርት ካታሎግ ምስሎችን፣ እንዲሁም ቀድሞ የተዘጋጀውን የምርት ስምዎ (brand) የአቅራቢ ድምፅ እና አቫታር (avatar) በመጠቀም፤ በቅጽበት ሲኒማዊ የማብራሪያ ቪዲዮዎችን መፍጠር እንደሚችሉ አስቡት። ቪዲዮውን ከመጨረሻው የማምረት ሂደት (rendering) በፊት የቪዲዮውን ዝርዝር እቅድ (pre-vis) ማጽደቅም ይችላሉ።"
           },
           {
             "id": "የጉዳይ ጥናት ምስክርነቶች",
@@ -753,19 +754,19 @@
     "viewDetails": "ዝርዝር መረጃን ይመልከቱ",
     "beatFirst": {
       "title": "በምት (Beat) ላይ የተመሰረተ የቪዲዮ ማቀነባበሪያ ሂደት",
-      "description": "ወደ F2V ከመሸጋገርዎ በፊት የስትሪቦርድ (storyboard) ዋና ዋና ክፍሎችን እና Beat Framesን ያጽድቁ፤ ይህም በስህተት የመነጩ (hallucination) እና ከታቀደው ምስላዊ ይዘት የመውጣት (visual drift) ችግሮችን በመቀነስ፣ ያለአግባብ የሚደረጉ ድግግሞሾችን ያስቀራል። ከግምገማ እስከ መጨረሻው ቪዲዮ ድረስ አንድ ወጥ እና የተደራጀ የስራ ሂደት ይኖርዎታል።",
+      "description": "ወደ F2V ከመሸጋገርዎ በፊት የስትሪቦርድ (pre-vis) ዋና ዋና ክፍሎችን እና Beat Framesን ያጽድቁ፤ ይህም በስህተት የመነጩ (hallucination) እና ከታቀደው ምስላዊ ይዘት የመውጣት (visual drift) ችግሮችን በመቀነስ፣ ያለአግባብ የሚደረጉ ድግግሞሾችን ያስቀራል። ከግምገማ እስከ መጨረሻው ቪዲዮ ድረስ አንድ ወጥ እና የተደራጀ የስራ ሂደት ይኖርዎታል።",
       "keyFeatures": [
-        "ለግምገማ Express storyboard — ከባድ የሬንደር (render) ሂደት ከመጀመሩ በፊት ቢትሶቹን (beats) ያጋሩ",
+        "ለግምገማ Express Pre-vis — ከባድ የሬንደር (render) ሂደት ከመጀመሩ በፊት ቢትሶቹን (beats) ያጋሩ",
         "Beat Frames የመቆለፊያ አወቃቀር — Reference Library ቀጣይነት",
         "F2V በቢት (per beat) — ከጸደቁ ፍሬሞች ቪዲዮ ማመንጨት",
         "የማደባለቂያ (Mixer) የጊዜ አቆጣጠር እና የውሂብ ፍሰቶች — ወደ Final Cut ስብስብ (assembly) መላክ"
       ],
-      "screenshotSlot": "የስክሪን ሾት (screenshot) ያስገቡ፡ ቪዲዮ ከመፈጠሩ በፊት Beat Frames እና የስቶሪቦርድ (storyboard) ማጽደቅ።",
+      "screenshotSlot": "የስክሪን ሾት (screenshot) ያስገቡ፡ ቪዲዮ ከመፈጠሩ በፊት Beat Frames እና የስቶሪቦርድ (pre-vis) ማጽደቅ።",
       "videoSlot": "የ00:30 ቆይታ ያለው ክሊፕ አስገባ፡ የሙዚቃ ምቶች (beats) ማጽደቅ፣ ፍሬሞችን መቆለፍ፣ ከዚያም F2V ክሊፖችን ማመንጨት።"
     },
     "screeningRoom": {
       "title": "የታዳሚዎች ግምገማ እና ትንተና",
-      "description": "ለባለድርሻ አካላት የሚሆኑ የግል የማጋሪያ አገናኞች (links) — በእጅ የሚሰጡ ነጥቦች፣ የተደራጀ አስተያየት፣ እና ከተመልካቹ ፈቃድ ጋር የሚቀርቡ አማራጭ የተሳትፎ ትንታኔዎች። እነዚህ አገናኞች Premiere ላይ ከመታተሙ በፊት እንዲሁም ለምርት (production) ደረጃ የስትሪቦርድ (storyboard) ቅድመ-እይታ አገልግሎት ላይ ይውላሉ።",
+      "description": "ለባለድርሻ አካላት የሚሆኑ የግል የማጋሪያ አገናኞች (links) — በእጅ የሚሰጡ ነጥቦች፣ የተደራጀ አስተያየት፣ እና ከተመልካቹ ፈቃድ ጋር የሚቀርቡ አማራጭ የተሳትፎ ትንታኔዎች። እነዚህ አገናኞች Premiere ላይ ከመታተሙ በፊት እንዲሁም ለምርት (production) ደረጃ የስትሪቦርድ (pre-vis) ቅድመ-እይታ አገልግሎት ላይ ይውላሉ።",
       "keyFeatures": [
         "የግል የግምገማ ክፍለ-ጊዜዎች — ለባለድርሻ አካላት ደህንነታቸው የተጠበቁ የማጋሪያ አገናኞች",
         "የታዳሚዎች የተደራጀ አስተያየት — ደረጃዎች እና ክፍት ጥያቄዎች/ነጥቦች",
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "ፈጣን የማመንጨት ሞተር",
-        "description": "ምስሎችን እና የቪዲዮ ክፍሎችን በአንድ ጊዜ በራስ-ሰር ያመንጩ። Express Storyboard የድምፅ እና ምስል ጥምረት ያላቸውን የስቶሪቦርድ (storyboard) ረቂቆች በደቂቃዎች ውስጥ እንዲገመግሙ እና እንዲያጋሩ ያስችልዎታል። Express Storyboard ሙሉ የ\"Ken Burns\" አይነት ትዕይንቶችን በደቂቃዎች ውስጥ ሲያዘጋጅ፣ Express Video ደግሞ የመጨረሻዎቹን የቪዲዮ ትዕይንቶች ከቀናት ይልቅ በደቂቃዎች ውስጥ ያቀርባል።",
+        "description": "ምስሎችን እና የቪዲዮ ክፍሎችን በአንድ ጊዜ በራስ-ሰር ያመንጩ። Express Pre-vis የድምፅ እና ምስል ጥምረት ያላቸውን የስቶሪቦርድ (pre-vis) ረቂቆች በደቂቃዎች ውስጥ እንዲገመግሙ እና እንዲያጋሩ ያስችልዎታል። Express Pre-vis ሙሉ የ\"Ken Burns\" አይነት ትዕይንቶችን በደቂቃዎች ውስጥ ሲያዘጋጅ፣ Express Video ደግሞ የመጨረሻዎቹን የቪዲዮ ትዕይንቶች ከቀናት ይልቅ በደቂቃዎች ውስጥ ያቀርባል።",
         "keyFeatures": [
           "በተመሳሳይ ጊዜ ማመንጨት — በተለያዩ ትዕይንቶች ውስጥ ምስሎችን እና ቪዲዮዎችን በአንድ ጊዜ ማመንጨት",
-          "Express Storyboard — በደቂቃዎች ውስጥ ሊጋሩ የሚችሉ የድምፅ እና ምስል ቅድመ-እይታዎች",
+          "Express Pre-vis — በደቂቃዎች ውስጥ ሊጋሩ የሚችሉ የድምፅ እና ምስል ቅድመ-እይታዎች",
           "Express Animatics — ከስታቲክ ምስሎች የሚፈጠር የKen Burns አይነት እንቅስቃሴ",
           "Express Video — የትዕይንት ደረጃ ክሊፖች በደቂቃዎች ውስጥ፣ በቀናት ሳይሆን"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "የምርት አውቶሜሽን",
-        "description": "የScript እና Action ትሮች (tabs) ከFoundation → Storyboard → Production → Final Cut ባለው ሂደት ይመራዎታል። Express storyboard፣ Beat Frames፣ Mixer እና MP4 ስትሪሞችን ያለ መሳሪያ መቀያየር ይጠቀሙ።",
+        "description": "የScript እና Action ትሮች (tabs) ከFoundation → pre-vis → Production → Final Cut ባለው ሂደት ይመራዎታል። Express Pre-vis፣ Beat Frames፣ Mixer እና MP4 ስትሪሞችን ያለ መሳሪያ መቀያየር ይጠቀሙ።",
         "keyFeatures": [
           "Foundation — ስክሪፕት፣ ድምፆች፣ የትዕይንት ድምፅ፣ ስክሪፕትን ማጽናት",
-          "Express storyboard — አቅጣጫ እና ፍሬሞች (በደቂቃዎች)፤ ጋለሪ እና ማጋራት",
+          "Express Pre-vis — አቅጣጫ እና ፍሬሞች (በደቂቃዎች)፤ ጋለሪ እና ማጋራት",
           "Beat Frames እና Mixer — የመነሻ/ማብቂያ ፍሬሞች፣ Director Console፣ የMP4 ዥረቶችን (streams) ማዘጋጀት (render)",
           "የምርት ፍሰቶች (Production Streams) — ውጤቶችን መገምገም፣ ጊዜ ያለፈባቸውን ቢቶች (beats) እንደገና ማዘጋጀት (re-render)፣ ወደ Final Cut መላክ"
         ],
         "screenshotSlot": "የስክሪን ምስል አስገባ፡ ስክሪፕትን፣ Beat Framesን እና ሚክሰርን (Mixer) የሚያሳይ የምርት ዳሽቦርድ",
-        "videoSlot": "የ00:30 ርዝመት ያለው ክሊፕ አስገባ፡ Foundation፣ Express storyboard፣ Beat Frames እና የዥረት ኤክስፖርት (stream export)"
+        "videoSlot": "የ00:30 ርዝመት ያለው ክሊፕ አስገባ፡ Foundation፣ Express Pre-vis፣ Beat Frames እና የዥረት ኤክስፖርት (stream export)"
       },
       {
         "id": "12",
@@ -968,7 +969,7 @@
       {
         "id": "14",
         "title": "የታዳሚዎች ግምገማ እና ትንተና",
-        "description": "ለባለድርሻ አካላት የሚሆኑ የግል የማጋሪያ አገናኞች (links) — በእጅ የሚሰጡ ነጥቦች፣ የተደራጀ አስተያየት፣ እና ከተመልካቹ ፈቃድ ጋር የሚቀርቡ አማራጭ የተሳትፎ ትንታኔዎች። እነዚህ አገናኞች Premiere ላይ ከመታተሙ በፊት እንዲሁም ለምርት (production) ደረጃ የስትሪቦርድ (storyboard) ቅድመ-እይታ አገልግሎት ላይ ይውላሉ።",
+        "description": "ለባለድርሻ አካላት የሚሆኑ የግል የማጋሪያ አገናኞች (links) — በእጅ የሚሰጡ ነጥቦች፣ የተደራጀ አስተያየት፣ እና ከተመልካቹ ፈቃድ ጋር የሚቀርቡ አማራጭ የተሳትፎ ትንታኔዎች። እነዚህ አገናኞች Premiere ላይ ከመታተሙ በፊት እንዲሁም ለምርት (production) ደረጃ የስትሪቦርድ (pre-vis) ቅድመ-እይታ አገልግሎት ላይ ይውላሉ።",
         "keyFeatures": [
           "የግል የግምገማ ክፍለ-ጊዜዎች — ለባለድርሻ አካላት ደህንነታቸው የተጠበቁ የማጋሪያ አገናኞች",
           "የታዳሚዎች የተደራጀ አስተያየት — ደረጃዎች እና ክፍት ጥያቄዎች/ነጥቦች",
@@ -1094,7 +1095,7 @@
       "items": [
         {
           "title": "ፈጣን የታሪክ ሰሌዳ",
-          "desc": "የኦዲዮ እና የቪዲዮ ታሪክ-ቦርዶችን (storyboards) በሰዓታት ፋንታ በደቂቃዎች ውስጥ ይገምግሙ እና ያጋሩ።",
+          "desc": "የኦዲዮ እና የቪዲዮ ታሪክ-ቦርዶችን (pre-vis) በሰዓታት ፋንታ በደቂቃዎች ውስጥ ይገምግሙ እና ያጋሩ።",
           "time": "ደቂቃዎች ከሰዓታት ጋር ሲነጻጸሩ"
         },
         {
@@ -1335,7 +1336,7 @@
     "items": [
       {
         "question": "የSceneFlow የስራ ሂደት ከሃሳብ ጀምሮ ለህትመት ዝግጁ እስከሆነ ቪዲዮ ድረስ እንዴት ይከናወናል?",
-        "answer": "SceneFlow የተደራጀ የስራ ሂደት ይጠቀማል፡ ተከታታይ (አማራጭ) → Blueprint → ምርት (Production) → Final Cut → Premiere። Blueprint ከ Audience Resonance ጋር በመሆን የታሪኩን አወቃቀር እና የታለመውን ተመልካች ይወስናል። የምርት ሂደቱ (Production) ስክሪፕት፣ የስቶሪቦርድ (storyboard)፣ የቢት ቪዲዮ (beat video) እና የተሰሩ (rendered) የትዕይንት ክፍሎችን ያመነጫል። Final Cut የተመረጡትን ክፍሎች ወደ አንድ ዋና MP4 ፋይል ያዋህዳል፤ ይህ ሂደት የጊዜ መስመር (timeline) ላይ የሚሰራ ኤዲተር አይደለም። Premiere የፊልም ማሳያዎችን፣ የትንታኔ መረጃዎችን፣ በዩቲዩብ ማተምን እና ፋይሎችን ለተለያዩ አገልግሎቶች የማዘጋጀት (export bundles) ስራዎችን ያስተዳድራል።"
+        "answer": "SceneFlow የተደራጀ የስራ ሂደት ይጠቀማል፡ ተከታታይ (አማራጭ) → Blueprint → ምርት (Production) → Final Cut → Premiere። Blueprint ከ Audience Resonance ጋር በመሆን የታሪኩን አወቃቀር እና የታለመውን ተመልካች ይወስናል። የምርት ሂደቱ (Production) ስክሪፕት፣ የስቶሪቦርድ (pre-vis)፣ የቢት ቪዲዮ (beat video) እና የተሰሩ (rendered) የትዕይንት ክፍሎችን ያመነጫል። Final Cut የተመረጡትን ክፍሎች ወደ አንድ ዋና MP4 ፋይል ያዋህዳል፤ ይህ ሂደት የጊዜ መስመር (timeline) ላይ የሚሰራ ኤዲተር አይደለም። Premiere የፊልም ማሳያዎችን፣ የትንታኔ መረጃዎችን፣ በዩቲዩብ ማተምን እና ፋይሎችን ለተለያዩ አገልግሎቶች የማዘጋጀት (export bundles) ስራዎችን ያስተዳድራል።"
       },
       {
         "question": "SceneFlow ከ Gemini Studio ወይም ከ Google Flow የሚለየው እንዴት ነው?",
@@ -1355,7 +1356,7 @@
       },
       {
         "question": "Screening Room የግምገማው ምዕራፍ ከሆነ፣ Premiere ምን ያደርጋል?",
-        "answer": "Screening Room በ Premiere ውስጥ የሚገኝ ለግምገማ እና ለፕሮዳክሽን ስቶሪቦርድ (storyboard) ቅድመ-እይታ የሚያገለግል መድረክ ነው። የ/s/ ሊንኮችን ያጋሩ፣ ከባለድርሻ አካላት አስተያየት እና (ተመልካቾች ሲስማሙ) አማራጭ የተሳትፎ ትንታኔዎችን ይሰብስቡ፣ የውጤት አሰጣጥ (Scoring) እና የእይታ መረጃዎችን (visual insights) ይገምግሙ፤ ከዚያም በYouTube ዊዛርድ (wizard) በኩል ያትሙ ወይም ጥቅሎችን (bundles) ወደ ውጭ ይላኩ።"
+        "answer": "Screening Room በ Premiere ውስጥ የሚገኝ ለግምገማ እና ለፕሮዳክሽን ስቶሪቦርድ (pre-vis) ቅድመ-እይታ የሚያገለግል መድረክ ነው። የ/s/ ሊንኮችን ያጋሩ፣ ከባለድርሻ አካላት አስተያየት እና (ተመልካቾች ሲስማሙ) አማራጭ የተሳትፎ ትንታኔዎችን ይሰብስቡ፣ የውጤት አሰጣጥ (Scoring) እና የእይታ መረጃዎችን (visual insights) ይገምግሙ፤ ከዚያም በYouTube ዊዛርድ (wizard) በኩል ያትሙ ወይም ጥቅሎችን (bundles) ወደ ውጭ ይላኩ።"
       },
       {
         "question": "ቴክኒካዊ ወይም የአርትዖት ልምድ ያስፈልገኛል?",
@@ -1377,7 +1378,7 @@
   },
   "finalCta": {
     "title": "ሙሉውን የስራ ሂደት (pipeline) ለመፈተሽ ዝግጁ ነዎት?",
-    "subtitle": "ከሃሳብ (concept) ጀምሮ እስከ ስቶሪቦርድ (storyboard)፣ ቪዲዮ እና የመጨረሻው MP4 ፋይል ድረስ ያሉትን ሂደቶች በአንድ ስቱዲዮ ውስጥ ያከናውኑ። በ$9 Explorer እቅድ ይጀምሩ እና 'ቢት' (beat)ን በቅድሚያ የሚያስቀድመውን የስራ ሂደት በተግባር ይመልከቱ።",
+    "subtitle": "ከሃሳብ (concept) ጀምሮ እስከ ስቶሪቦርድ (pre-vis)፣ ቪዲዮ እና የመጨረሻው MP4 ፋይል ድረስ ያሉትን ሂደቶች በአንድ ስቱዲዮ ውስጥ ያከናውኑ። በ$9 Explorer እቅድ ይጀምሩ እና 'ቢት' (beat)ን በቅድሚያ የሚያስቀድመውን የስራ ሂደት በተግባር ይመልከቱ።",
     "cta": "ስቱዲዮዎን በ9 ዶላር ያስጀምሩ"
   },
   "footer": {
@@ -1418,5 +1419,36 @@
     "mute": "ድምፅ አጥፋ",
     "unmute": "ድምፅን መልሶ ማብራት",
     "expandVideo": "ቪዲዮውን አስፋ"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

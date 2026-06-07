@@ -61,6 +61,21 @@ const nextConfig = {
         destination: "/early-access",
         permanent: false,
       },
+      {
+        source: "/dashboard/workflow/storyboard",
+        destination: "/dashboard/workflow/pre-vis",
+        permanent: true,
+      },
+      {
+        source: "/share/storyboard/:path*",
+        destination: "/share/pre-vis/:path*",
+        permanent: true,
+      },
+      {
+        source: "/embed/storyboard/:path*",
+        destination: "/embed/pre-vis/:path*",
+        permanent: true,
+      },
     ];
   },
 };

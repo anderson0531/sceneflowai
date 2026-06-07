@@ -15,7 +15,7 @@
 
 | Resource | URL |
 |----------|-----|
-| Platform walkthrough (10 clips) | https://sceneflowai.studio/#feature-storyboard |
+| Platform walkthrough (10 clips) | https://sceneflowai.studio/#feature-pre-vis |
 | Trust & Safety | https://sceneflowai.studio/#trust-safety |
 | Terms & enforcement | https://sceneflowai.studio/terms |
 | Trust policy | https://sceneflowai.studio/trust-safety |

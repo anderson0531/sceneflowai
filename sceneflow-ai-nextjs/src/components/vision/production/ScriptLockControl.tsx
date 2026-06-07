@@ -50,7 +50,7 @@ export function ScriptLockControl({
           <p className="text-[11px] text-gray-400 mt-0.5">
             {isLocked
               ? 'Script is locked — unlock to edit or re-run Express.'
-              : 'Advance to Locked before Build Storyboard (Express).'}
+              : 'Advance to Locked before Build Pre-vis (Express).'}
           </p>
         )}
       </div>

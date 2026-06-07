@@ -25,7 +25,7 @@ export const guidanceContent: Record<WorkflowStep, {
   dialogueAction: {
     title: 'Script — Foundation',
     icon: <FileText className="w-5 h-5 text-sf-primary" />,
-    goal: 'Finalize script, audio, and references before storyboard and video production.',
+    goal: 'Finalize script, audio, and references before pre-vis and video production.',
     whyItMatters: 'Foundation work happens here: writing, Audience Resonance review, voice casting, and timeline prep. Lock the script when ready so Express and production stay stable.',
     howItWorks: [
       'Edit narration, dialogue, and action in the Script tab',
@@ -36,55 +36,55 @@ export const guidanceContent: Record<WorkflowStep, {
     toolsAndTips: [
       'Script Status: Draft → Reviewed → Locked (lock before Express)',
       'Production Ready checklist: voices, references, and script lock',
-      'Express: one project-level CTA for Direction → Audio → Storyboard frames',
+      'Express: one project-level CTA for Direction → Audio → Pre-vis frames',
       'Screening Room = live preview; Production Streams = finished MP4 exports',
     ],
     bestPractice: 'Complete Foundation (script lock + voices + key references) before running Express.',
-    tip: 'You only see Script and Action tabs — Direction, storyboard, and Beat Frames live inside those phases.',
+    tip: 'You only see Script and Action tabs — Direction, pre-vis, and Beat Frames live inside those phases.',
   },
   directorsChair: {
     title: 'Direction (in Script phase)',
     icon: <Film className="w-5 h-5 text-sf-primary" />,
-    goal: 'Define cinematic direction that feeds storyboard and Beat Frame generation.',
-    whyItMatters: 'Direction is generated automatically during Express or from the script. It drives camera, lighting, and blocking for consistent storyboard frames.',
+    goal: 'Define cinematic direction that feeds pre-vis and Beat Frame generation.',
+    whyItMatters: 'Direction is generated automatically during Express or from the script. It drives camera, lighting, and blocking for consistent pre-vis frames.',
     howItWorks: [
       'Express generates direction per scene, or generate manually from the script',
       'Review camera, lighting, talent blocking, and audio cues',
-      'Edit direction before re-running storyboard generation',
+      'Edit direction before re-running pre-vis generation',
     ],
     toolsAndTips: [
       'Direction lives in the Script tab workflow — no separate tab',
-      'Changes to direction may require regenerating storyboard frames',
+      'Changes to direction may require regenerating pre-vis frames',
     ],
-    bestPractice: 'Confirm direction matches your vision before building the storyboard.',
+    bestPractice: 'Confirm direction matches your vision before building pre-vis.',
     tip: 'Direction is an input to Express, not a separate production phase.',
   },
   storyboardPreViz: {
-    title: 'Storyboard — Storyboard phase',
+    title: 'Pre-vis — Pre-visualization phase',
     icon: <Camera className="w-5 h-5 text-sf-primary" />,
-    goal: 'Build storyboard frames for every beat and share for approval.',
-    whyItMatters: 'Storyboard frames are still images per beat — fast to change. Video and Beat Frames come later in the Action tab.',
+    goal: 'Build pre-vis frames for every beat and share for approval.',
+    whyItMatters: 'Pre-vis frames are still images per beat — fast to change. Video and Beat Frames come later in the Action tab.',
     howItWorks: [
-      'Run Build Storyboard (Express) at project level when script is locked',
-      'Review frames in the storyboard gallery; share link for stakeholder approval',
-      'Screening Room — Preview (live): storyboard timed with audio (not exported MP4)',
+      'Run Build Pre-vis (Express) at project level when script is locked',
+      'Review frames in the pre-vis gallery; share link for stakeholder approval',
+      'Screening Room — Preview (live): pre-vis timed with audio (not exported MP4)',
     ],
     toolsAndTips: [
-      'Storyboard Frame = still image for a beat (Express output)',
-      'Approve storyboard before opening Action tab video work',
-      'Gallery is the single storyboard truth — video production lives in Action',
+      'Pre-vis Frame = still image for a beat (Express output)',
+      'Approve pre-vis before opening Action tab video work',
+      'Gallery is the single pre-vis truth — video production lives in Action',
     ],
-    bestPractice: 'Share the storyboard for review before investing in Beat Frames and video.',
-    tip: 'Making storyboard changes is fast; re-rendering MP4 streams is slow.',
+    bestPractice: 'Share pre-vis for review before investing in Beat Frames and video.',
+    tip: 'Making pre-vis changes is fast; re-rendering MP4 streams is slow.',
   },
   segmentBuilder: {
     title: 'Beats (internal)',
     icon: <Layers className="w-5 h-5 text-sf-primary" />,
     goal: 'Understand how beats drive cuts — managed automatically in the beat-first pipeline.',
-    whyItMatters: 'Beats are script units (dialogue, narration, action). Express and production derive storyboard frames and beat clips from them.',
+    whyItMatters: 'Beats are script units (dialogue, narration, action). Express and production derive pre-vis frames and beat clips from them.',
     howItWorks: [
       'Beats are created from your script automatically',
-      'Storyboard frames attach to beats via Express',
+      'Pre-vis frames attach to beats via Express',
       'Action tab derives beat clips for Beat Frames and video generation',
     ],
     toolsAndTips: [
@@ -144,7 +144,7 @@ export function SceneWorkflowCoPilot({ activeStep, isCollapsed = false, onToggle
         <div className="px-4 pb-4 space-y-4 border-t border-gray-200 dark:border-gray-800">
           <div className="flex items-center gap-2 text-[11px] text-gray-500 uppercase tracking-wide">
             <Sparkles className="w-3.5 h-3.5" />
-            Foundation → Storyboard → Production → Final Cut
+            Foundation → Pre-vis → Production → Final Cut
           </div>
 
           <div>

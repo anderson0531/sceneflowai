@@ -455,7 +455,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
               >
                 <div className="flex items-center gap-2">
                   <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Storyboard</span>
+                  <span>Pre-vis</span>
                 </div>
                 <div className={cn(
                   "flex items-center gap-1 text-[10px] font-normal transition-opacity",
@@ -468,7 +468,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
                 </div>
               </button>
               <p className="text-[10px] text-slate-500 mt-1.5 pl-5">
-                Visual storyboard with AI generation
+                Visual pre-vis with AI generation
               </p>
             </div>
           )}

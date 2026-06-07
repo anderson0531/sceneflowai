@@ -29,11 +29,12 @@
     "platformWalkthrough": "Prezentare generală a platformei",
     "platform": "Platformă",
     "pricing": "Prețuri",
-    "faq": "Întrebări frecvente"
+    "faq": "Întrebări frecvente",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "Nu mai jongla cu cinci tab-uri AI. Un singur studio te poartă de la idee până la videoclipul gata de publicare.",
-    "subheadline": "Un studio integrat care te ghidează de la idee până la varianta finală, gata de publicare. Vizualizează storyboard-ul înainte de a plăti pentru videoclipul final — aprobă aspectul vizual în loc să irosești credite pe încercări bazate pe ghicite. SceneFlow automatizează sarcinile repetitive — scenariul, storyboard-ul, vocea și montajul — în timp ce tu păstrezi controlul asupra fiecărui detaliu.",
+    "subheadline": "Un studio integrat care te ghidează de la idee până la varianta finală, gata de publicare. Vizualizează pre-vis-ul înainte de a plăti pentru videoclipul final — aprobă aspectul vizual în loc să irosești credite pe încercări bazate pe ghicite. SceneFlow automatizează sarcinile repetitive — scenariul, pre-vis-ul, vocea și montajul — în timp ce tu păstrezi controlul asupra fiecărui detaliu.",
     "audienceMicroLine": "Creat pentru creatorii care doresc rezultate și pentru echipele care vor să vadă cum funcționează.",
     "ctaSecondary": "Urmărește „Ce este posibil”",
     "ctaToolStack": "Vezi cum înlocuiește setul tău de instrumente",
@@ -82,7 +83,7 @@
       },
       {
         "label": "Aprobare înainte de videoclipul final",
-        "detail": "Revizuiește secvențele din storyboard înainte de a efectua randarea."
+        "detail": "Revizuiește secvențele din pre-vis înainte de a efectua randarea."
       },
       {
         "label": "Testează-ți mai întâi povestea",
@@ -102,7 +103,7 @@
     "modes": {
       "automate": {
         "label": "Automatizează-l",
-        "description": "Flux de lucru asistat — aprobă storyboard-uri, livrează mai rapid"
+        "description": "Flux de lucru asistat — aprobă pre-vis-uri, livrează mai rapid"
       },
       "engine": {
         "label": "Arată-mi motorul",
@@ -192,9 +193,9 @@
     "title": "Flux de lucru video bazat pe ritm",
     "subtitle": "Aprobă înainte de randare — nu regenerare de tip „păcănele”",
     "intro": "Fără generări bazate pe încercări și erori. Vizualizezi și aprobi aspectul înainte ca SceneFlow să consume credite pentru videoclipul final.",
-    "description": "SceneFlow structurează aprobarea vizuală la fiecare etapă: Express storyboard pentru revizuire, Beat Frames pentru fixarea compoziției, apoi F2V pentru fiecare „beat”. Rafinezi aspectul vizual înainte de a consuma credite pe deriva și halucinațiile modelului.",
+    "description": "SceneFlow structurează aprobarea vizuală la fiecare etapă: Express Pre-vis pentru revizuire, Beat Frames pentru fixarea compoziției, apoi F2V pentru fiecare „beat”. Rafinezi aspectul vizual înainte de a consuma credite pe deriva și halucinațiile modelului.",
     "steps": [
-      "Express storyboard — partajează secvențe audio-vizuale pentru revizuire în câteva minute",
+      "Express Pre-vis — partajează secvențe audio-vizuale pentru revizuire în câteva minute",
       "Beat Frames — blocare început/sfârșit compoziție cu continuitate Reference Library",
       "F2V per beat — generează videoclipuri din cadre aprobate, nu din prompturi oarbe",
       "Production Mixer — sincronizare, audio și export de flux către ansamblul Final Cut"
@@ -269,7 +270,7 @@
       "syncLabel": "Un singur fișier de proiect — fără jonglat între tab-uri",
       "benefits": [
         "Etape ghidate — scapă de jonglatul cu tab-uri și de pierderea contextului",
-        "Aprobarea storyboard-ului – oprește reluările repetate (stil „slot machine”) înainte de a cheltui bugetul pentru video.",
+        "Aprobarea pre-vis-ului – oprește reluările repetate (stil „slot machine”) înainte de a cheltui bugetul pentru video.",
         "Scor Audience Resonance înainte de randarea intensivă",
         "Master gata de publicare în 30–60 de minute, nu în peste 4 ore"
       ],
@@ -290,7 +291,7 @@
   "howItWorks": {
     "title": "De la concept la videoclip gata de publicare",
     "titleAccent": "O conductă ghidată",
-    "subtitle": "Seria este opțională. Traseul principal este Blueprint → Producție → Final Cut → Premiere — incluzând, pe parcurs, etapele de storyboard, animatic, video și master MP4.",
+    "subtitle": "Seria este opțională. Traseul principal este Blueprint → Producție → Final Cut → Premiere — incluzând, pe parcurs, etapele de pre-vis, animatic, video și master MP4.",
     "tagline": "Fiecare etapă este automatizată cu expertiză. Fiecare etapă îți oferă control deplin.",
     "optionalBadge": "Opțional",
     "optionalSuffix": " (opțional)",
@@ -335,16 +336,16 @@
         "id": "producție",
         "stepLabel": "Producție",
         "subtitle": "De la scenariu la fluxuri",
-        "description": "Taburile Script și Action ghidează fluxul: Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer și fluxuri MP4 — fără a schimba instrumentele.",
+        "description": "Taburile Script și Action ghidează fluxul: Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer și fluxuri MP4 — fără a schimba instrumentele.",
         "keySteps": [
           "Blochează scenariul, vocile și sunetul scenei",
-          "Express storyboard — galerie și partajare pentru examinare",
+          "Express Pre-vis — galerie și partajare pentru examinare",
           "Beat Frames → Consolă regizor → Flux de randare",
           "Trimite fluxurile finalizate către Final Cut"
         ],
         "keyFeatures": [
           "Foundation — scenariu, voci, sunetul scenei, blocare scenariu",
-          "Express storyboard — direcție și cadre în minute; galerie și partajare",
+          "Express Pre-vis — direcție și cadre în minute; galerie și partajare",
           "Beat Frames și Mixer — cadre de început/sfârșit, consolă de regie, randare fluxuri MP4",
           "Fluxuri de producție — examinarea rezultatelor, re-randarea secvențelor (beats) învechite, trimiterea către Final Cut"
         ]
@@ -390,7 +391,7 @@
     "title": "Orice videoclip ți-ai putea imagina,",
     "titleAccent": "Construiește-l în SceneFlow",
     "subtitle": "Prezentări imobiliare, conținut educațional, podcasturi, formate de știri, campanii de brand și povești cinematografice — un singur studio automatizat, de la concept până la materialul final gata de publicare.",
-    "qualifyingStatement": "SceneFlow transformă fotografiile sursă, fișierele încărcate și descrierile în videoclipuri de prezentare narate, incluzând opțiuni pentru voce și prezența unor personaje pe care le poți controla. Este vorba despre prezentări modificate prin inteligență artificială – vizualizări realiste bazate pe materialele tale, nu înregistrări video directe. Revizuiește și aprobă fiecare scenariu vizual (storyboard) înainte de publicare și etichetează clar materialele rezultate, astfel încât publicul să știe exact ce urmărește.",
+    "qualifyingStatement": "SceneFlow transformă fotografiile sursă, fișierele încărcate și descrierile în videoclipuri de prezentare narate, incluzând opțiuni pentru voce și prezența unor personaje pe care le poți controla. Este vorba despre prezentări modificate prin inteligență artificială – vizualizări realiste bazate pe materialele tale, nu înregistrări video directe. Revizuiește și aprobă fiecare scenariu vizual (pre-vis) înainte de publicare și etichetează clar materialele rezultate, astfel încât publicul să știe exact ce urmărește.",
     "ui": {
       "useCases": "Cazuri de utilizare",
       "sectors": "{count} SECTOARE",
@@ -457,7 +458,7 @@
             "Înlocuiește ședințele foto realizate de furnizori cu fluxuri de lucru interne ghidate.",
             "Șabloane și biblioteci de referință conforme cu identitatea de brand",
             "Vizibilitate asupra consumului de credite și a limitelor bugetare per proiect",
-            "Aprobă storyboard-urile înainte de a plăti pentru videoclipul final."
+            "Aprobă pre-vis-urile înainte de a plăti pentru videoclipul final."
           ]
         },
         "win": "Lansează materiale de instruire, comunicări și videoclipuri de campanie conform propriului calendar — nu în funcție de lista de sarcini a furnizorului.",
@@ -480,10 +481,10 @@
         },
         "solution": {
           "title": "Transformă-ți serviciul video într-un produs",
-          "description": "Creează fluxuri de lucru reproductibile pentru studiourile specializate în memorii și pentru segmente de nișă. Încărcarea de șabloane, clonarea vocii, utilizarea avatarurilor și aprobarea storyboard-ului — personalizează totul pentru fiecare client și sporește marja de profit prin volum.",
+          "description": "Creează fluxuri de lucru reproductibile pentru studiourile specializate în memorii și pentru segmente de nișă. Încărcarea de șabloane, clonarea vocii, utilizarea avatarurilor și aprobarea pre-vis-ului — personalizează totul pentru fiecare client și sporește marja de profit prin volum.",
           "features": [
             "Șabloane pentru memorii, cu opțiuni de încărcare a fotografiilor, clonare a vocii și gazde sub formă de avatar",
-            "Preluarea clientului corelată cu Blueprint și cu etapele de aprobare a storyboard-ului",
+            "Preluarea clientului corelată cu Blueprint și cu etapele de aprobare a pre-vis-ului",
             "Pachete de studio „white-label” pentru conținut video de arhivă, omagial și pe bază de abonament",
             "Marjă aplicată creditelor, în loc de costuri indirecte per sesiune de filmare"
           ]
@@ -607,7 +608,7 @@
           {
             "id": "video-memorii",
             "label": "Memorii video",
-            "description": "Imaginează-ți că încarci fotografii de familie, înregistrări audio ale unor interviuri și notițe despre scene, alături de o voce de narator salvată. Apoi, creezi instantaneu videoclipuri de tip memoriu, structurate pe capitole — și aprobi scenariul vizual (storyboard-ul) înainte de generarea finală."
+            "description": "Imaginează-ți că încarci fotografii de familie, înregistrări audio ale unor interviuri și notițe despre scene, alături de o voce de narator salvată. Apoi, creezi instantaneu videoclipuri de tip memoriu, structurate pe capitole — și aprobi scenariul vizual (pre-vis-ul) înainte de generarea finală."
           }
         ]
       },
@@ -649,7 +650,7 @@
           {
             "id": "videoclipuri de prezentare a produselor",
             "label": "Videoclipuri explicative despre produse",
-            "description": "Imaginează-ți că încarci imagini din catalogul de produse, folosind vocea și avatarul salvate ale prezentatorului brandului tău. Apoi, generezi instantaneu o serie de videoclipuri explicative cu aspect cinematografic — și aprobi scenariul vizual (storyboard-ul) înainte de a realiza randarea finală."
+            "description": "Imaginează-ți că încarci imagini din catalogul de produse, folosind vocea și avatarul salvate ale prezentatorului brandului tău. Apoi, generezi instantaneu o serie de videoclipuri explicative cu aspect cinematografic — și aprobi scenariul vizual (pre-vis-ul) înainte de a realiza randarea finală."
           },
           {
             "id": "testimoniale studii de caz",
@@ -753,19 +754,19 @@
     "viewDetails": "Vezi detalii",
     "beatFirst": {
       "title": "Flux de lucru video bazat pe ritm",
-      "description": "Aprobă momentele cheie din storyboard și Beat Frames înainte de etapa F2V — astfel se reduc regenerările arbitrare cauzate de halucinații și de deviațiile vizuale. Un flux structurat, de la revizuire până la clipul final.",
+      "description": "Aprobă momentele cheie din pre-vis și Beat Frames înainte de etapa F2V — astfel se reduc regenerările arbitrare cauzate de halucinații și de deviațiile vizuale. Un flux structurat, de la revizuire până la clipul final.",
       "keyFeatures": [
-        "Express storyboard pentru revizuire — partajează beat-urile înainte de randarea complexă",
+        "Express Pre-vis pentru revizuire — partajează beat-urile înainte de randarea complexă",
         "Beat Frames compoziția blocării — Reference Library continuitate",
         "F2V per beat — generare de video din cadre aprobate",
         "Temporizarea și fluxurile mixerului — export către ansamblul Final Cut"
       ],
-      "screenshotSlot": "Inserare captură de ecran: Beat Frames și aprobarea storyboard-ului înainte de generarea videoclipului",
+      "screenshotSlot": "Inserare captură de ecran: Beat Frames și aprobarea pre-vis-ului înainte de generarea videoclipului",
       "videoSlot": "Inserare clip de 30 de secunde: aprobarea secvențelor, fixarea cadrelor, apoi generarea clipurilor F2V."
     },
     "screeningRoom": {
       "title": "Analiza și datele privind audiența",
-      "description": "Linkuri private de partajare pentru părțile interesate — evaluări manuale, feedback structurat și analize opționale privind implicarea, cu acordul vizualizatorului. Utilizate în Premiere înainte de publicare și pentru previzualizarea storyboard-ului de producție.",
+      "description": "Linkuri private de partajare pentru părțile interesate — evaluări manuale, feedback structurat și analize opționale privind implicarea, cu acordul vizualizatorului. Utilizate în Premiere înainte de publicare și pentru previzualizarea pre-vis-ului de producție.",
       "keyFeatures": [
         "Sesiuni private de revizuire — linkuri de partajare securizate pentru părțile interesate",
         "Feedback structurat din partea publicului — evaluări și secțiuni cu răspuns liber",
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Motor de generare rapidă",
-        "description": "Generează automat imagini și segmente video în mod simultan. Express Storyboard îți permite să revizuiești și să partajezi storyboard-uri audiovizuale în câteva minute. Express Storyboard-urile redau scene complete în stil Ken Burns în câteva minute, în timp ce Express Video livrează scene video finale în câteva minute, în loc de zile.",
+        "description": "Generează automat imagini și segmente video în mod simultan. Express Pre-vis îți permite să revizuiești și să partajezi pre-vis-uri audiovizuale în câteva minute. Express Pre-vis-urile redau scene complete în stil Ken Burns în câteva minute, în timp ce Express Video livrează scene video finale în câteva minute, în loc de zile.",
         "keyFeatures": [
           "Generare simultană — imagini și videoclipuri pentru mai multe scene în același timp",
-          "Express Storyboard — previzualizări audiovizuale gata de partajat în câteva minute",
+          "Express Pre-vis — previzualizări audiovizuale gata de partajat în câteva minute",
           "Express Animatics — Efect de mișcare Ken Burns aplicat imaginilor statice",
           "Express Video — clipuri la nivel de scenă în câteva minute, nu în câteva zile"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "Automatizarea producției",
-        "description": "Taburile Script și Action ghidează fluxul: Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer și fluxuri MP4 — fără a schimba instrumentele.",
+        "description": "Taburile Script și Action ghidează fluxul: Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer și fluxuri MP4 — fără a schimba instrumentele.",
         "keyFeatures": [
           "Foundation — scenariu, voci, sunetul scenei, blocare scenariu",
-          "Express storyboard — direcție și cadre în minute; galerie și partajare",
+          "Express Pre-vis — direcție și cadre în minute; galerie și partajare",
           "Beat Frames și Mixer — cadre de început/sfârșit, consolă de regie, randare fluxuri MP4",
           "Fluxuri de producție — examinarea rezultatelor, re-randarea secvențelor (beats) învechite, trimiterea către Final Cut"
         ],
         "screenshotSlot": "Inserează captură de ecran: Panoul de control al producției care afișează scenariul, Beat Frames și mixerul.",
-        "videoSlot": "Inserare clip de 00:30: Foundation, Express storyboard, Beat Frames și export flux"
+        "videoSlot": "Inserare clip de 00:30: Foundation, Express Pre-vis, Beat Frames și export flux"
       },
       {
         "id": "12",
@@ -968,7 +969,7 @@
       {
         "id": "14",
         "title": "Analiza și datele privind audiența",
-        "description": "Linkuri private de partajare pentru părțile interesate — evaluări manuale, feedback structurat și analize opționale privind implicarea, cu acordul vizualizatorului. Utilizate în Premiere înainte de publicare și pentru previzualizarea storyboard-ului de producție.",
+        "description": "Linkuri private de partajare pentru părțile interesate — evaluări manuale, feedback structurat și analize opționale privind implicarea, cu acordul vizualizatorului. Utilizate în Premiere înainte de publicare și pentru previzualizarea pre-vis-ului de producție.",
         "keyFeatures": [
           "Sesiuni private de revizuire — linkuri de partajare securizate pentru părțile interesate",
           "Feedback structurat din partea publicului — evaluări și secțiuni cu răspuns liber",
@@ -1090,11 +1091,11 @@
     "express": {
       "badge": "Producție de viteză extremă",
       "title": "Sceneflow Express",
-      "description": "Generează automat storyboard-uri, animatice și secvențe video simultan. Treci de la scenariu la o previzualizare gata de partajat în câteva minute — apoi aprobă Beat Frames înainte de alocarea bugetului final pentru producția video (F2V).",
+      "description": "Generează automat pre-vis-uri, animatice și secvențe video simultan. Treci de la scenariu la o previzualizare gata de partajat în câteva minute — apoi aprobă Beat Frames înainte de alocarea bugetului final pentru producția video (F2V).",
       "items": [
         {
-          "title": "Storyboard rapid",
-          "desc": "Revizuiește și partajează storyboard-uri audio și video în câteva minute, în loc de ore.",
+          "title": "pre-vis rapid",
+          "desc": "Revizuiește și partajează pre-vis-uri audio și video în câteva minute, în loc de ore.",
           "time": "Minute vs. ore"
         },
         {
@@ -1335,7 +1336,7 @@
     "items": [
       {
         "question": "Cum se desfășoară fluxul de lucru SceneFlow, de la idee până la videoclipul gata de publicare?",
-        "answer": "SceneFlow utilizează un flux de lucru structurat: Serie (opțional) → Blueprint → Producție → Final Cut → Premiere. Blueprint definește structura poveștii și publicul-țintă împreună cu Audience Resonance. Etapa de producție generează scenariul, storyboard-ul, „beat video”-ul și fluxurile de scene randate. Final Cut asamblează fluxurile selectate într-un fișier MP4 master — nefiind un editor de tip timeline. Premiere gestionează proiecțiile, datele analitice, publicarea pe YouTube și pachetele de export."
+        "answer": "SceneFlow utilizează un flux de lucru structurat: Serie (opțional) → Blueprint → Producție → Final Cut → Premiere. Blueprint definește structura poveștii și publicul-țintă împreună cu Audience Resonance. Etapa de producție generează scenariul, pre-vis-ul, „beat video”-ul și fluxurile de scene randate. Final Cut asamblează fluxurile selectate într-un fișier MP4 master — nefiind un editor de tip timeline. Premiere gestionează proiecțiile, datele analitice, publicarea pe YouTube și pachetele de export."
       },
       {
         "question": "Prin ce diferă SceneFlow de Gemini Studio sau Google Flow?",
@@ -1355,7 +1356,7 @@
       },
       {
         "question": "Ce face Premiere dacă Screening Room este etapa de revizuire?",
-        "answer": "Screening Room este interfața de revizuire din cadrul Premiere — utilizată și pentru previzualizarea storyboard-ului de producție. Partajează linkuri /s/, colectează feedback de la părțile interesate și date opționale privind implicarea (cu acordul privitorului), analizează scorurile și informațiile vizuale, apoi publică folosind asistentul YouTube sau exportă pachete de fișiere."
+        "answer": "Screening Room este interfața de revizuire din cadrul Premiere — utilizată și pentru previzualizarea pre-vis-ului de producție. Partajează linkuri /s/, colectează feedback de la părțile interesate și date opționale privind implicarea (cu acordul privitorului), analizează scorurile și informațiile vizuale, apoi publică folosind asistentul YouTube sau exportă pachete de fișiere."
       },
       {
         "question": "Am nevoie de experiență tehnică sau în editare?",
@@ -1377,7 +1378,7 @@
   },
   "finalCta": {
     "title": "Ești gata să testezi întregul flux de lucru?",
-    "subtitle": "Parcurge etapele – de la concept și storyboard până la video și fișierul MP4 final – într-un singur studio. Începe cu planul de 9 $ Explorer și descoperă fluxul de lucru bazat pe ritm (beat-first) în acțiune.",
+    "subtitle": "Parcurge etapele – de la concept și pre-vis până la video și fișierul MP4 final – într-un singur studio. Începe cu planul de 9 $ Explorer și descoperă fluxul de lucru bazat pe ritm (beat-first) în acțiune.",
     "cta": "Lansează-ți studioul pentru 9 $"
   },
   "footer": {
@@ -1418,5 +1419,36 @@
     "mute": "Mut",
     "unmute": "Activează sunetul",
     "expandVideo": "Extinde videoclipul"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

@@ -175,10 +175,10 @@ export function ExpressConfirmDialog({
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <Zap className="w-5 h-5 text-indigo-400" />
-            Run Build Storyboard (Express)
+            Run Build Pre-vis (Express)
           </DialogTitle>
           <DialogDescription className="text-gray-300">
-            Direction → Audio → storyboard frames for every scene (up to 3 scenes in parallel).
+            Direction → Audio → pre-vis frames for every scene (up to 3 scenes in parallel).
           </DialogDescription>
         </DialogHeader>
 
@@ -230,7 +230,7 @@ export function ExpressConfirmDialog({
                 <ImageIcon className="w-3.5 h-3.5 text-indigo-400" />
                 <span className="font-medium">3. Image</span>
                 <span className="text-gray-500">
-                  · {effectiveEstablishingCount} establishing + {effectiveDialogueFrameCount} storyboard frames
+                  · {effectiveEstablishingCount} establishing + {effectiveDialogueFrameCount} pre-vis frames
                 </span>
               </li>
             </ul>
@@ -308,7 +308,7 @@ export function ExpressConfirmDialog({
           <div className="space-y-2">
             <div className="text-sm font-medium text-gray-200">Art style</div>
             <p className="text-xs text-gray-400">
-              Applied to all storyboard frames and flows through video generation.
+              Applied to all pre-vis frames and flows through video generation.
             </p>
             <select
               value={artStyle}

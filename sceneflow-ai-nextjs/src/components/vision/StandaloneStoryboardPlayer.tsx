@@ -120,7 +120,7 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
       setSubmitSuccess(true)
       setIdentitySheetOpen(false)
       toast.success('Feedback submitted', {
-        description: `Recorded as storyboard v${reviewerStoryboardVersion} from ${identity.email}.`,
+        description: `Recorded as pre-vis v${reviewerStoryboardVersion} from ${identity.email}.`,
       })
       setTimeout(() => setSubmitSuccess(false), 4000)
     } catch (err: unknown) {

@@ -144,7 +144,7 @@ export async function POST(
       if (sceneRecord && !isStoryboardApproved(sceneRecord as Record<string, unknown>)) {
         return NextResponse.json(
           {
-            error: 'Storyboard must be approved before video generation',
+            error: 'Pre-vis must be approved before video generation',
             code: 'STORYBOARD_NOT_APPROVED',
           },
           { status: 403 }

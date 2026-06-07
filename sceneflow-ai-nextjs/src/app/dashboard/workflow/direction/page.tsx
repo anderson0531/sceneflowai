@@ -325,7 +325,7 @@ export default function DirectionPage() {
               <p className="text-yellow-800 text-sm">
                 ⚠️ Please complete the Production step before generating scene directions.
               </p>
-              <Link href="/dashboard/workflow/storyboard">
+              <Link href="/dashboard/workflow/pre-vis">
                 <Button variant="outline" size="sm" className="mt-2 text-yellow-700 border-yellow-300 hover:bg-yellow-100">
                   Go to Production
                 </Button>
@@ -460,7 +460,7 @@ export default function DirectionPage() {
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link href="/dashboard/workflow/storyboard">
+            <Link href="/dashboard/workflow/pre-vis">
               <Button variant="outline">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Production

@@ -27,7 +27,7 @@ export function ScriptImportOnboardingBanner({
           <h3 className="text-sm font-semibold text-white">Your script is loaded</h3>
           <p className="mt-1 text-sm text-slate-300">
             Run <strong className="font-medium text-cyan-300">Script Review</strong> to score
-            audience resonance, then open <strong className="font-medium text-cyan-300">Storyboard</strong>{' '}
+            audience resonance, then open <strong className="font-medium text-cyan-300">Pre-vis</strong>{' '}
             to optimize scenes before generating video.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -46,7 +46,7 @@ export function ScriptImportOnboardingBanner({
               className="border-slate-600 text-slate-200 hover:bg-slate-800"
             >
               <Clapperboard className="h-4 w-4 mr-1.5" />
-              Open Storyboard
+              Open Pre-vis
             </Button>
           </div>
         </div>

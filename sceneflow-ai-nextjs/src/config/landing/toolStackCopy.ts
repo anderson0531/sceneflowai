@@ -39,7 +39,7 @@ export const TOOL_STACK_COPY = {
     syncLabel: 'One project file — no tab juggling',
     benefits: [
       'Guided phases — stop tab juggling and context loss',
-      'Storyboard approval — stop slot-machine re-rolls before video spend',
+      'Pre-vis approval — stop slot-machine re-rolls before video spend',
       'Audience Resonance score before heavy render',
       'Publish-ready master in 30–60 min, not 4+ hrs',
     ],

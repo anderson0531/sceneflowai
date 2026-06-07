@@ -5,7 +5,7 @@
 export const HERO_COPY = {
   headline: 'Stop juggling five AI tabs. One studio takes you from idea to publish-ready video.',
   subheadline:
-    'One guided studio from idea to publish-ready master. See your storyboard before you pay for final video — approve the look instead of burning credits on guess-and-check generations. SceneFlow automates the busywork — script, storyboard, voice, and assembly — while you stay in control of every beat.',
+    'One guided studio from idea to publish-ready master. See your pre-vis before you pay for final video — approve the look instead of burning credits on guess-and-check generations. SceneFlow automates the busywork — script, pre-vis, voice, and assembly — while you stay in control of every beat.',
   audienceMicroLine:
     'Built for creators who want results, and teams who want to see how it works.',
   ctaSecondary: "Watch the 'What's Possible'",
@@ -15,7 +15,7 @@ export const HERO_COPY = {
 export const AUDIENCE_PATH_MODES = {
   automate: {
     label: 'Automate it',
-    description: 'Guided workflow — approve storyboards, ship faster',
+    description: 'Guided workflow — approve pre-vis, ship faster',
   },
   engine: {
     label: 'Show me the engine',
@@ -25,7 +25,7 @@ export const AUDIENCE_PATH_MODES = {
 
 export const VP_STRIP_PILLS = [
   { label: 'One Studio', detail: 'Concept to publish in one place' },
-  { label: 'Approve Before Final Video', detail: 'Review storyboard beats before you render' },
+  { label: 'Approve Before Final Video', detail: 'Review pre-vis beats before you render' },
   { label: 'Test Your Story First', detail: 'Know what lands before heavy spend' },
   { label: 'Publish-Ready Output', detail: 'Master MP4 + distribution bundles' },
 ] as const
@@ -137,9 +137,9 @@ export const ONE_TAKE_PIPELINE = {
   intro:
     'No guess-and-check generations. You preview and approve the look before SceneFlow spends credits on final video.',
   description:
-    'SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.',
+    'SceneFlow structures visual approval at every step: Express Pre-vis for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.',
   steps: [
-    'Express storyboard — share audio-visual beats for review in minutes',
+    'Express Pre-vis — share audio-visual beats for review in minutes',
     'Beat Frames — lock start/end composition with Reference Library continuity',
     'F2V per beat — generate video from approved frames, not blind prompts',
     'Continuous EXT chain — native +7s extension steps for long dialogue beats',
@@ -174,7 +174,7 @@ export const HOW_IT_WORKS_HEADER = {
   title: 'From concept to publish-ready video',
   titleAccent: 'One guided pipeline',
   subtitle:
-    'Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.',
+    'Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — pre-vis, animatic, video, and master MP4 tiers along the way.',
   tagline: 'Every step is expertly automated. Every step gives you full control.',
 } as const
 
@@ -187,7 +187,7 @@ export const SLOT_MACHINE_HEADER = {
 export const FINAL_CTA_COPY = {
   title: 'Ready to test the full pipeline?',
   subtitle:
-    'Run concept → storyboard → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.',
+    'Run concept → pre-vis → video → master MP4 in one studio. Start with the $9 Explorer plan and see the beat-first workflow in action.',
   cta: 'Launch Your Studio for $9',
 } as const
 

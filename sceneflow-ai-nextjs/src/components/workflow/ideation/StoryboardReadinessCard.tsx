@@ -60,7 +60,7 @@ const attributeConfig = {
   sr_branding: { label: 'Branding', icon: Shield, description: 'Brand guidelines and elements' },
   sr_propsContinuity: { label: 'Props & Continuity', icon: Puzzle, description: 'Object consistency' },
   sr_accessibility: { label: 'Accessibility', icon: Users, description: 'Inclusive design considerations' },
-  sr_storyboardHints: { label: 'Storyboard Hints', icon: Lightbulb, description: 'Additional guidance' }
+  sr_storyboardHints: { label: 'Pre-vis Hints', icon: Lightbulb, description: 'Additional guidance' }
 }
 
 export default function StoryboardReadinessCard() {
@@ -124,10 +124,10 @@ export default function StoryboardReadinessCard() {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-sf-text-primary">
-              Storyboard Readiness
+              Pre-vis Readiness
             </h3>
             <p className="text-sm text-sf-text-secondary">
-              Complete these attributes to generate your storyboard
+              Complete these attributes to generate your pre-vis
             </p>
           </div>
         </div>
@@ -192,7 +192,7 @@ export default function StoryboardReadinessCard() {
                 Template Applied: {templateState.templateSource}
               </h4>
               <p className="text-xs text-sf-text-secondary">
-                All storyboard readiness attributes have been automatically populated from this template, eliminating blank canvas paralysis.
+                All pre-vis readiness attributes have been automatically populated from this template, eliminating blank canvas paralysis.
               </p>
             </div>
             <button
@@ -210,7 +210,7 @@ export default function StoryboardReadinessCard() {
               className="mt-3 pt-3 border-t border-sf-primary/20"
             >
               <p className="text-xs text-sf-text-secondary">
-                This template provides a complete foundation for your storyboard, including:
+                This template provides a complete foundation for your pre-vis, including:
               </p>
               <ul className="mt-2 space-y-1">
                 <li className="text-xs text-sf-text-secondary flex items-center gap-2">
@@ -301,7 +301,7 @@ export default function StoryboardReadinessCard() {
       <div className="mt-6 flex items-center justify-between">
         <div className="text-sm text-sf-text-secondary">
           {completionPercentage === 100 ? (
-            <span className="text-green-500 font-medium">Ready for storyboard generation!</span>
+            <span className="text-green-500 font-medium">Ready for pre-vis generation!</span>
           ) : (
             <span>
               {totalAttributes - populatedAttributes} more attributes needed
@@ -318,7 +318,7 @@ export default function StoryboardReadinessCard() {
           
           {completionPercentage === 100 && (
             <button className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium">
-              Generate Storyboard
+              Generate Pre-vis
             </button>
           )}
         </div>

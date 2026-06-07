@@ -56,16 +56,16 @@ export const WORKFLOW_PHASES: WorkflowPhaseCopy[] = [
     stepLabel: 'Production',
     subtitle: 'Script to Streams',
     description:
-      'Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.',
+      'Script and Action tabs guide Foundation → Pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, and MP4 streams — no tool switching.',
     keySteps: [
       'Lock script, voices, and scene audio',
-      'Express storyboard — gallery and share for review',
+      'Express Pre-vis — gallery and share for review',
       'Beat Frames → Director Console → Render Stream',
       'Send finished streams to Final Cut',
     ],
     keyFeatures: [
       'Foundation — script, voices, scene audio, lock script',
-      'Express storyboard — direction and frames in minutes; gallery and share',
+      'Express Pre-vis — direction and frames in minutes; gallery and share',
       'Beat Frames and continuous EXT chains — long dialogue via native +7s extensions',
       'Production Streams — review outputs, re-render stale beats, send to Final Cut',
     ],
@@ -111,7 +111,7 @@ export const WORKFLOW_PHASES: WorkflowPhaseCopy[] = [
 export const SCREENING_ROOM_COPY = {
   title: 'Audience Review and Analytics',
   description:
-    'Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.',
+    'Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production pre-vis preview.',
   keyFeatures: [
     'Private review sessions — secure /s/ share links for stakeholders',
     'Structured audience feedback — ratings and open items',
@@ -128,15 +128,15 @@ export const BEAT_FIRST_CARD = {
   id: 15,
   title: 'Beat-First Video Pipeline',
   description:
-    'Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.',
+    'Approve pre-vis beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.',
   keyFeatures: [
-    'Express storyboard for review — share beats before heavy render',
+    'Express Pre-vis for review — share beats before heavy render',
     'Beat Frames lock composition — Reference Library continuity',
     'F2V per beat — generate video from approved frames',
     'Continuous EXT chains — native +7s steps for long dialogue within a beat',
     'Mixer timing and streams — export to Final Cut assembly',
   ],
-  screenshotSlot: 'Insert screenshot: Beat Frames and storyboard approval before video generation',
+  screenshotSlot: 'Insert screenshot: Beat Frames and pre-vis approval before video generation',
   videoSlot: 'Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips',
 } as const
 

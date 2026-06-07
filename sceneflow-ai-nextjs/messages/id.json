@@ -29,11 +29,12 @@
     "platformWalkthrough": "Panduan Platform",
     "platform": "Platform",
     "pricing": "Harga",
-    "faq": "Pertanyaan Umum"
+    "faq": "Pertanyaan Umum",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "Berhentilah beralih-alih di antara lima tab AI. Satu studio membawa Anda dari tahap ide hingga video yang siap dipublikasikan.",
-    "subheadline": "Sebuah studio terpandu yang membawa Anda dari tahap ide hingga video final siap tayang. Lihat storyboard Anda sebelum membayar video akhir—setujui tampilannya alih-alih menghabiskan kredit untuk proses pembuatan yang hanya mengandalkan coba-coba. SceneFlow mengotomatiskan tugas-tugas teknis—seperti naskah, storyboard, pengisian suara, dan perakitan—sementara Anda tetap memegang kendali penuh atas setiap bagiannya.",
+    "subheadline": "Sebuah studio terpandu yang membawa Anda dari tahap ide hingga video final siap tayang. Lihat pre-vis Anda sebelum membayar video akhir—setujui tampilannya alih-alih menghabiskan kredit untuk proses pembuatan yang hanya mengandalkan coba-coba. SceneFlow mengotomatiskan tugas-tugas teknis—seperti naskah, pre-vis, pengisian suara, dan perakitan—sementara Anda tetap memegang kendali penuh atas setiap bagiannya.",
     "audienceMicroLine": "Dibuat untuk kreator yang menginginkan hasil, dan tim yang ingin melihat cara kerjanya.",
     "ctaSecondary": "Saksikan 'What's Possible'",
     "ctaToolStack": "Lihat bagaimana solusi ini menggantikan rangkaian perangkat Anda.",
@@ -82,7 +83,7 @@
       },
       {
         "label": "Setujui Sebelum Video Final",
-        "detail": "Tinjau bagian-bagian storyboard sebelum melakukan rendering."
+        "detail": "Tinjau bagian-bagian pre-vis sebelum melakukan rendering."
       },
       {
         "label": "Uji Cerita Anda Terlebih Dahulu",
@@ -102,7 +103,7 @@
     "modes": {
       "automate": {
         "label": "Otomatisasikan hal itu",
-        "description": "Alur kerja terpandu — setujui storyboard, luncurkan lebih cepat"
+        "description": "Alur kerja terpandu — setujui pre-vis, luncurkan lebih cepat"
       },
       "engine": {
         "label": "Tunjukkan mesinnya kepada saya.",
@@ -192,9 +193,9 @@
     "title": "Alur Kerja Video Berbasis Ketukan",
     "subtitle": "Setujui sebelum melakukan rendering — bukan regenerasi ala mesin slot",
     "intro": "Tidak perlu lagi membuat video dengan metode coba-coba. Anda dapat meninjau dan menyetujui tampilannya sebelum SceneFlow menggunakan kredit untuk video akhir.",
-    "description": "SceneFlow mengatur persetujuan visual di setiap tahapan: Express storyboard untuk peninjauan, Beat Frames untuk mengunci komposisi, lalu F2V per *beat*. Anda menyempurnakan tampilan sebelum menghabiskan kredit untuk *drift* dan halusinasi.",
+    "description": "SceneFlow mengatur persetujuan visual di setiap tahapan: Express Pre-vis untuk peninjauan, Beat Frames untuk mengunci komposisi, lalu F2V per *beat*. Anda menyempurnakan tampilan sebelum menghabiskan kredit untuk *drift* dan halusinasi.",
     "steps": [
-      "Express storyboard — bagikan beat audio-visual untuk ditinjau dalam hitungan menit",
+      "Express Pre-vis — bagikan beat audio-visual untuk ditinjau dalam hitungan menit",
       "Beat Frames — mengunci awal/akhir komposisi dengan kontinuitas Reference Library",
       "F2V per ketukan — hasilkan video dari frame yang telah disetujui, bukan dari prompt buta",
       "Production Mixer — timing, audio, dan ekspor stream ke perakitan Final Cut"
@@ -269,7 +270,7 @@
       "syncLabel": "Satu file proyek — tidak perlu repot berpindah-pindah tab",
       "benefits": [
         "Tahapan terpandu — hentikan kerepotan berpindah-pindah tab dan hilangnya konteks",
-        "Persetujuan storyboard — hentikan proses revisi berulang-ulang sebelum anggaran video dikeluarkan.",
+        "Persetujuan pre-vis — hentikan proses revisi berulang-ulang sebelum anggaran video dikeluarkan.",
         "Skor Audience Resonance sebelum rendering berat",
         "Master siap terbit dalam 30–60 menit, bukan lebih dari 4 jam."
       ],
@@ -290,7 +291,7 @@
   "howItWorks": {
     "title": "Dari konsep hingga video siap tayang",
     "titleAccent": "Satu alur kerja terpandu",
-    "subtitle": "Seri bersifat opsional. Jalur utamanya adalah Blueprint → Produksi → Final Cut → Premiere — mencakup tingkatan storyboard, animatic, video, dan master MP4 di sepanjang prosesnya.",
+    "subtitle": "Seri bersifat opsional. Jalur utamanya adalah Blueprint → Produksi → Final Cut → Premiere — mencakup tingkatan pre-vis, animatic, video, dan master MP4 di sepanjang prosesnya.",
     "tagline": "Setiap langkah diotomatisasi secara ahli. Setiap langkah memberikan Anda kendali penuh.",
     "optionalBadge": "Opsional",
     "optionalSuffix": " (opsional)",
@@ -335,16 +336,16 @@
         "id": "produksi",
         "stepLabel": "Produksi",
         "subtitle": "Dari Naskah ke Tayangan",
-        "description": "Tab Script dan Action memandu alur Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, dan stream MP4 — tanpa perlu berganti alat.",
+        "description": "Tab Script dan Action memandu alur Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, dan stream MP4 — tanpa perlu berganti alat.",
         "keySteps": [
           "Kunci naskah, suara, dan audio adegan",
-          "Express storyboard — galeri dan berbagi untuk ditinjau",
+          "Express Pre-vis — galeri dan berbagi untuk ditinjau",
           "Beat Frames → Konsol Sutradara → Aliran Render",
           "Kirim stream yang telah selesai ke Final Cut"
         ],
         "keyFeatures": [
           "Foundation — naskah, pengisi suara, audio adegan, penguncian naskah",
-          "Express storyboard — arah dan bingkai dalam hitungan menit; galeri dan berbagi",
+          "Express Pre-vis — arah dan bingkai dalam hitungan menit; galeri dan berbagi",
           "Beat Frames dan Mixer — frame awal/akhir, Director Console, render stream MP4",
           "Alur Produksi — tinjau hasil, render ulang *beat* yang kedaluwarsa, kirim ke Final Cut"
         ]
@@ -390,7 +391,7 @@
     "title": "Video apa pun yang dapat Anda bayangkan,",
     "titleAccent": "Bangun di SceneFlow",
     "subtitle": "Presentasi properti, konten edukasi, siniar, format berita, kampanye merek, dan kisah sinematik — satu studio otomatis yang mencakup segalanya, mulai dari konsep hingga master siap tayang.",
-    "qualifyingStatement": "SceneFlow mengubah foto sumber, unggahan, dan deskripsi Anda menjadi video penelusuran (walkthrough) dengan narasi — lengkap dengan pilihan suara dan kehadiran karakter yang dapat Anda atur. Ini adalah presentasi yang dimodifikasi oleh AI: visualisasi realistis yang berbasis pada materi Anda, bukan rekaman kamera langsung. Tinjau dan setujui setiap storyboard sebelum dipublikasikan; beri label yang jelas pada hasil akhir agar audiens mengetahui apa yang sedang mereka tonton.",
+    "qualifyingStatement": "SceneFlow mengubah foto sumber, unggahan, dan deskripsi Anda menjadi video penelusuran (walkthrough) dengan narasi — lengkap dengan pilihan suara dan kehadiran karakter yang dapat Anda atur. Ini adalah presentasi yang dimodifikasi oleh AI: visualisasi realistis yang berbasis pada materi Anda, bukan rekaman kamera langsung. Tinjau dan setujui setiap pre-vis sebelum dipublikasikan; beri label yang jelas pada hasil akhir agar audiens mengetahui apa yang sedang mereka tonton.",
     "ui": {
       "useCases": "Kasus Penggunaan",
       "sectors": "{count} SEKTOR",
@@ -457,7 +458,7 @@
             "Gantikan sesi pemotretan oleh vendor dengan alur kerja internal yang terpandu.",
             "Templat dan pustaka referensi yang aman bagi merek",
             "Visibilitas penggunaan kredit dan batas anggaran per proyek",
-            "Setujui storyboard sebelum membayar video akhir."
+            "Setujui pre-vis sebelum membayar video akhir."
           ]
         },
         "win": "Rilis video pelatihan, komunikasi, dan kampanye sesuai jadwal Anda — bukan bergantung pada antrean pekerjaan vendor.",
@@ -480,10 +481,10 @@
         },
         "solution": {
           "title": "Jadikan Layanan Video Anda sebagai Produk",
-          "description": "Bangun alur kerja yang dapat direplikasi untuk studio memoar dan sektor vertikal khusus. Mulai dari unggahan templat, kloning suara, avatar, hingga persetujuan storyboard—sesuaikan untuk setiap klien dan tingkatkan margin melalui peningkatan volume.",
+          "description": "Bangun alur kerja yang dapat direplikasi untuk studio memoar dan sektor vertikal khusus. Mulai dari unggahan templat, kloning suara, avatar, hingga persetujuan pre-vis—sesuaikan untuk setiap klien dan tingkatkan margin melalui peningkatan volume.",
           "features": [
             "Templat memoar dengan fitur unggah foto, kloning suara, dan host avatar",
-            "Penerimaan klien dikaitkan dengan Blueprint dan tahapan persetujuan storyboard",
+            "Penerimaan klien dikaitkan dengan Blueprint dan tahapan persetujuan pre-vis",
             "Paket studio *white-label* untuk video kenangan, penghormatan, dan berbasis langganan",
             "Margin pada kredit, bukan biaya overhead per sesi pemotretan"
           ]
@@ -649,7 +650,7 @@
           {
             "id": "video penjelasan produk",
             "label": "Video Penjelasan Produk",
-            "description": "Bayangkan Anda mengunggah foto katalog produk, lalu menggunakan suara presenter dan avatar yang telah tersimpan untuk merek Anda. Kemudian, buatlah seri video penjelasan bergaya sinematik secara instan—dan setujui storyboard-nya sebelum melakukan rendering."
+            "description": "Bayangkan Anda mengunggah foto katalog produk, lalu menggunakan suara presenter dan avatar yang telah tersimpan untuk merek Anda. Kemudian, buatlah seri video penjelasan bergaya sinematik secara instan—dan setujui pre-vis-nya sebelum melakukan rendering."
           },
           {
             "id": "Testimoni studi kasus",
@@ -753,19 +754,19 @@
     "viewDetails": "Lihat Detail",
     "beatFirst": {
       "title": "Alur Kerja Video Berbasis Ketukan",
-      "description": "Setujui poin-poin storyboard dan Beat Frames sebelum tahap F2V — mengurangi regenerasi tanpa arah akibat halusinasi dan pergeseran visual. Satu alur terstruktur mulai dari peninjauan hingga klip akhir.",
+      "description": "Setujui poin-poin pre-vis dan Beat Frames sebelum tahap F2V — mengurangi regenerasi tanpa arah akibat halusinasi dan pergeseran visual. Satu alur terstruktur mulai dari peninjauan hingga klip akhir.",
       "keyFeatures": [
-        "Express storyboard untuk ditinjau — bagikan beat sebelum proses render berat",
+        "Express Pre-vis untuk ditinjau — bagikan beat sebelum proses render berat",
         "Beat Frames komposisi kunci — Reference Library kontinuitas",
         "F2V per ketukan — menghasilkan video dari frame yang telah disetujui",
         "Penentuan waktu dan aliran mixer — ekspor ke assembly Final Cut"
       ],
-      "screenshotSlot": "Sisipkan tangkapan layar: Beat Frames dan persetujuan storyboard sebelum pembuatan video",
+      "screenshotSlot": "Sisipkan tangkapan layar: Beat Frames dan persetujuan pre-vis sebelum pembuatan video",
       "videoSlot": "Sisipkan klip 00:30: Menyetujui beat, mengunci frame, lalu membuat klip F2V."
     },
     "screeningRoom": {
       "title": "Tinjauan dan Analisis Audiens",
-      "description": "Tautan berbagi privat (/s/) untuk pemangku kepentingan — mencakup penilaian manual, umpan balik terstruktur, dan analitik keterlibatan opsional (dengan persetujuan penonton). Digunakan pada Premiere sebelum publikasi dan untuk pratinjau storyboard produksi.",
+      "description": "Tautan berbagi privat (/s/) untuk pemangku kepentingan — mencakup penilaian manual, umpan balik terstruktur, dan analitik keterlibatan opsional (dengan persetujuan penonton). Digunakan pada Premiere sebelum publikasi dan untuk pratinjau pre-vis produksi.",
       "keyFeatures": [
         "Sesi tinjauan privat — tautan berbagi yang aman bagi pemangku kepentingan",
         "Umpan balik audiens yang terstruktur — penilaian dan poin terbuka",
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Mesin Pembangkit Ekspres",
-        "description": "Hasilkan gambar dan segmen video secara otomatis dan bersamaan. Express Storyboard memungkinkan Anda meninjau dan membagikan storyboard audiovisual dalam hitungan menit. Express Storyboard merender adegan Ken Burns secara utuh dalam hitungan menit, sementara Express Video menghasilkan adegan video akhir dalam hitungan menit, bukan berhari-hari.",
+        "description": "Hasilkan gambar dan segmen video secara otomatis dan bersamaan. Express Pre-vis memungkinkan Anda meninjau dan membagikan pre-vis audiovisual dalam hitungan menit. Express Pre-vis merender adegan Ken Burns secara utuh dalam hitungan menit, sementara Express Video menghasilkan adegan video akhir dalam hitungan menit, bukan berhari-hari.",
         "keyFeatures": [
           "Pembuatan serentak — gambar dan video di berbagai adegan secara bersamaan",
-          "Express Storyboard — pratinjau audiovisual yang dapat dibagikan dalam hitungan menit",
+          "Express Pre-vis — pratinjau audiovisual yang dapat dibagikan dalam hitungan menit",
           "Express Animatic — Efek gerakan Ken Burns pada gambar diam",
           "Express Video — klip tingkat adegan dalam hitungan menit, bukan hari"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "Otomatisasi Produksi",
-        "description": "Tab Script dan Action memandu alur Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, dan stream MP4 — tanpa perlu berganti alat.",
+        "description": "Tab Script dan Action memandu alur Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, dan stream MP4 — tanpa perlu berganti alat.",
         "keyFeatures": [
           "Foundation — naskah, pengisi suara, audio adegan, penguncian naskah",
-          "Express storyboard — arah dan bingkai dalam hitungan menit; galeri dan berbagi",
+          "Express Pre-vis — arah dan bingkai dalam hitungan menit; galeri dan berbagi",
           "Beat Frames dan Mixer — frame awal/akhir, Director Console, render stream MP4",
           "Alur Produksi — tinjau hasil, render ulang *beat* yang kedaluwarsa, kirim ke Final Cut"
         ],
         "screenshotSlot": "Sisipkan tangkapan layar: Dasbor produksi yang menampilkan naskah, Beat Frames, dan Mixer",
-        "videoSlot": "Sisipkan klip 00:30: Foundation, Express storyboard, Beat Frames, dan ekspor stream"
+        "videoSlot": "Sisipkan klip 00:30: Foundation, Express Pre-vis, Beat Frames, dan ekspor stream"
       },
       {
         "id": "12",
@@ -968,7 +969,7 @@
       {
         "id": "14",
         "title": "Tinjauan dan Analisis Audiens",
-        "description": "Tautan berbagi privat (/s/) untuk pemangku kepentingan — mencakup penilaian manual, umpan balik terstruktur, dan analitik keterlibatan opsional (dengan persetujuan penonton). Digunakan pada Premiere sebelum publikasi dan untuk pratinjau storyboard produksi.",
+        "description": "Tautan berbagi privat (/s/) untuk pemangku kepentingan — mencakup penilaian manual, umpan balik terstruktur, dan analitik keterlibatan opsional (dengan persetujuan penonton). Digunakan pada Premiere sebelum publikasi dan untuk pratinjau pre-vis produksi.",
         "keyFeatures": [
           "Sesi tinjauan privat — tautan berbagi yang aman bagi pemangku kepentingan",
           "Umpan balik audiens yang terstruktur — penilaian dan poin terbuka",
@@ -1090,11 +1091,11 @@
     "express": {
       "badge": "Produksi Berkecepatan Tinggi",
       "title": "Sceneflow Express",
-      "description": "Hasilkan storyboard, animatic, dan beat video secara otomatis dan bersamaan. Beralih dari naskah ke pratinjau yang siap dibagikan hanya dalam hitungan menit — lalu berikan persetujuan Beat Frames sebelum melakukan pengeluaran akhir untuk F2V.",
+      "description": "Hasilkan pre-vis, animatic, dan beat video secara otomatis dan bersamaan. Beralih dari naskah ke pratinjau yang siap dibagikan hanya dalam hitungan menit — lalu berikan persetujuan Beat Frames sebelum melakukan pengeluaran akhir untuk F2V.",
       "items": [
         {
-          "title": "Storyboard Ekspres",
-          "desc": "Tinjau dan bagikan storyboard audio dan video dalam hitungan menit, bukan jam.",
+          "title": "pre-vis Ekspres",
+          "desc": "Tinjau dan bagikan pre-vis audio dan video dalam hitungan menit, bukan jam.",
           "time": "Menit vs. Jam"
         },
         {
@@ -1335,7 +1336,7 @@
     "items": [
       {
         "question": "Bagaimana alur kerja SceneFlow berjalan, mulai dari tahap gagasan hingga video yang siap dipublikasikan?",
-        "answer": "SceneFlow menggunakan alur kerja terstruktur: Seri (opsional) → Blueprint → Produksi → Final Cut → Premiere. Blueprint menentukan struktur cerita dan target audiens bersama Audience Resonance. Tahap produksi menghasilkan naskah, storyboard, beat video, dan stream adegan yang telah dirender. Final Cut menggabungkan stream terpilih menjadi satu file master MP4 — bukan editor berbasis timeline. Premiere menangani pemutaran, wawasan analitik, publikasi YouTube, dan paket ekspor."
+        "answer": "SceneFlow menggunakan alur kerja terstruktur: Seri (opsional) → Blueprint → Produksi → Final Cut → Premiere. Blueprint menentukan struktur cerita dan target audiens bersama Audience Resonance. Tahap produksi menghasilkan naskah, pre-vis, beat video, dan stream adegan yang telah dirender. Final Cut menggabungkan stream terpilih menjadi satu file master MP4 — bukan editor berbasis timeline. Premiere menangani pemutaran, wawasan analitik, publikasi YouTube, dan paket ekspor."
       },
       {
         "question": "Apa perbedaan antara SceneFlow dan Gemini Studio atau Google Flow?",
@@ -1355,7 +1356,7 @@
       },
       {
         "question": "Apa yang dilakukan Premiere jika Screening Room merupakan tahap peninjauan?",
-        "answer": "Screening Room adalah antarmuka peninjauan di dalam Premiere — serta sarana pratinjau storyboard produksi. Bagikan tautan /s/, kumpulkan masukan dari pemangku kepentingan dan analitik keterlibatan opsional (dengan persetujuan penonton), tinjau wawasan Skor dan Visual, lalu publikasikan melalui wizard YouTube atau ekspor paket."
+        "answer": "Screening Room adalah antarmuka peninjauan di dalam Premiere — serta sarana pratinjau pre-vis produksi. Bagikan tautan /s/, kumpulkan masukan dari pemangku kepentingan dan analitik keterlibatan opsional (dengan persetujuan penonton), tinjau wawasan Skor dan Visual, lalu publikasikan melalui wizard YouTube atau ekspor paket."
       },
       {
         "question": "Apakah saya memerlukan pengalaman teknis atau penyuntingan?",
@@ -1377,7 +1378,7 @@
   },
   "finalCta": {
     "title": "Siap menguji pipeline secara menyeluruh?",
-    "subtitle": "Jalankan proses mulai dari konsep → storyboard → video → hingga master MP4 dalam satu studio. Mulailah dengan paket $9 Explorer dan saksikan langsung alur kerja yang mengutamakan *beat*.",
+    "subtitle": "Jalankan proses mulai dari konsep → pre-vis → video → hingga master MP4 dalam satu studio. Mulailah dengan paket $9 Explorer dan saksikan langsung alur kerja yang mengutamakan *beat*.",
     "cta": "Luncurkan studio Anda seharga $9"
   },
   "footer": {
@@ -1418,5 +1419,36 @@
     "mute": "Bisukan",
     "unmute": "Nyalakan suara",
     "expandVideo": "Perbesar Video"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

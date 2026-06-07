@@ -29,7 +29,8 @@
     "platformWalkthrough": "סקירה מודרכת של הפלטפורמה",
     "platform": "פלטפורמה",
     "pricing": "תמחור",
-    "faq": "שאלות נפוצות"
+    "faq": "שאלות נפוצות",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "תפסיק ללהטט בין חמש לשוניות AI. סטודיו אחד לוקח אותך משלב הרעיון ועד לסרטון מוכן לפרסום.",
@@ -192,9 +193,9 @@
     "title": "תהליך הפקת וידאו מבוסס-ביט",
     "subtitle": "אשר לפני הרינדור — לא יצירה מחדש בסגנון מכונת מזל",
     "intro": "אין צורך ביצירה בשיטת \"ניסוי וטעייה\". אתם צופים בתצוגה מקדימה ומאשרים את המראה לפני ש-SceneFlow משתמשת בקרדיטים להפקת הסרטון הסופי.",
-    "description": "SceneFlow מסדיר את תהליך האישור החזותי בכל שלב: Express storyboard לצורך סקירה, Beat Frames לקיבוע הקומפוזיציה, ולאחר מכן F2V לכל \"ביט\" (beat). כך אתם משכללים את המראה לפני שבזבזתם קרדיטים על סחיפה (drift) והזיות (hallucinations).",
+    "description": "SceneFlow מסדיר את תהליך האישור החזותי בכל שלב: Express Pre-vis לצורך סקירה, Beat Frames לקיבוע הקומפוזיציה, ולאחר מכן F2V לכל \"ביט\" (beat). כך אתם משכללים את המראה לפני שבזבזתם קרדיטים על סחיפה (drift) והזיות (hallucinations).",
     "steps": [
-      "Express storyboard — שתפו ביטים אודיו-ויזואליים לבדיקה תוך דקות",
+      "Express Pre-vis — שתפו ביטים אודיו-ויזואליים לבדיקה תוך דקות",
       "Beat Frames — נעילת הרכב ההתחלה/סיום עם רציפות Reference Library",
       "F2V לפי ביט (beat) — יצירת וידאו מפריימים מאושרים, ולא מהנחיות (prompts) עיוורות.",
       "Production Mixer — תזמון, שמע וייצוא זרם (stream) להרכבה ב-Final Cut"
@@ -269,7 +270,7 @@
       "syncLabel": "קובץ פרויקט אחד — ללא מעבר מתמיד בין לשוניות",
       "benefits": [
         "שלבים מונחים – סוף למעבר המתיש בין לשוניות ולאובדן ההקשר",
-        "אישור ה-Storyboard – עצירת סבבי תיקונים אינסופיים לפני ההשקעה בוידאו",
+        "אישור ה-pre-vis – עצירת סבבי תיקונים אינסופיים לפני ההשקעה בוידאו",
         "Audience Resonance ציון לפני רינדור כבד",
         "מאסטר מוכן לפרסום תוך 30–60 דקות, במקום למעלה מ-4 שעות"
       ],
@@ -335,16 +336,16 @@
         "id": "הפקה",
         "stepLabel": "הפקה",
         "subtitle": "מתסריט לסטרימינג",
-        "description": "הלשוניות Script ו-Action מלוות את התהליך: Foundation ← Storyboard ← Production ← Final Cut. Express storyboard, Beat Frames, Mixer וזרמי MP4 – ללא צורך במעבר בין כלים.",
+        "description": "הלשוניות Script ו-Action מלוות את התהליך: Foundation ← pre-vis ← Production ← Final Cut. Express Pre-vis, Beat Frames, Mixer וזרמי MP4 – ללא צורך במעבר בין כלים.",
         "keySteps": [
           "קיבוע התסריט, הקולות ואודיו הסצנה",
-          "Express storyboard — גלריה ושיתוף לצורך סקירה",
+          "Express Pre-vis — גלריה ושיתוף לצורך סקירה",
           "Beat Frames ← מסוף הבמאי ← זרם רינדור",
           "שלח זרמים שהושלמו ל-Final Cut"
         ],
         "keyFeatures": [
           "Foundation — תסריט, קולות, אודיו של הסצנה, נעילת תסריט",
-          "Express storyboard — כיוון ומסגרות בדקות; גלריה ושיתוף",
+          "Express Pre-vis — כיוון ומסגרות בדקות; גלריה ושיתוף",
           "Beat Frames ו-Mixer — פריימים להתחלה/סיום, קונסולת בימוי, רינדור זרמי MP4",
           "זרמי ייצור — סקירת תוצרים, רינדור מחדש של יחידות עיבוד (beats) לא-עדכניות, שליחה ל-Final Cut"
         ]
@@ -390,7 +391,7 @@
     "title": "כל סרטון שתוכלו לדמיין,",
     "titleAccent": "בנה זאת ב-SceneFlow",
     "subtitle": "הצגת נכסי נדל\"ן, תכנים לימודיים, פודקאסטים, פורמטים חדשותיים, קמפיינים ממותגים וסיפורים קולנועיים – אולפן אוטומטי אחד, משלב הרעיון ועד לקובץ הסופי המוכן לפרסום.",
-    "qualifyingStatement": "SceneFlow הופכת את תמונות המקור, הקבצים שהועלו והתיאורים שלכם לסרטוני סיור מודרכים – הכוללים קריינות ודמויות לבחירתכם ובשליטתכם. אלו הן מצגות שעברו עיבוד באמצעות בינה מלאכותית: הדמיות ריאליסטיות המבוססות על החומרים שלכם, ולא צילומים חיים במצלמה. יש לעבור על כל תסריט חזותי (storyboard) ולאשרו לפני הפרסום, וכן לסמן את התוצרים בבירור כדי שהקהל ידע במה הוא צופה.",
+    "qualifyingStatement": "SceneFlow הופכת את תמונות המקור, הקבצים שהועלו והתיאורים שלכם לסרטוני סיור מודרכים – הכוללים קריינות ודמויות לבחירתכם ובשליטתכם. אלו הן מצגות שעברו עיבוד באמצעות בינה מלאכותית: הדמיות ריאליסטיות המבוססות על החומרים שלכם, ולא צילומים חיים במצלמה. יש לעבור על כל תסריט חזותי (pre-vis) ולאשרו לפני הפרסום, וכן לסמן את התוצרים בבירור כדי שהקהל ידע במה הוא צופה.",
     "ui": {
       "useCases": "מקרי שימוש",
       "sectors": "{count} מגזרים",
@@ -607,7 +608,7 @@
           {
             "id": "זיכרונות מצולמים",
             "label": "זיכרונות מצולמים",
-            "description": "דמיינו שאתם מעלים תמונות משפחתיות, הקלטות ראיונות והערות על סצנות, לצד קריינות שמורה מראש. לאחר מכן, צרו באופן מיידי סרטוני זיכרונות המחולקים לפרקים – ואשרו את התסריט החזותי (storyboard) לפני העיבוד הסופי."
+            "description": "דמיינו שאתם מעלים תמונות משפחתיות, הקלטות ראיונות והערות על סצנות, לצד קריינות שמורה מראש. לאחר מכן, צרו באופן מיידי סרטוני זיכרונות המחולקים לפרקים – ואשרו את התסריט החזותי (pre-vis) לפני העיבוד הסופי."
           }
         ]
       },
@@ -755,7 +756,7 @@
       "title": "תהליך הפקת וידאו מבוסס-ביט",
       "description": "יש לאשר את שלבי הסטוריבורד ואת Beat Frames לפני שלב ה-F2V — כך מצטמצם הצורך ביצירה מחדש \"על עיוור\" עקב הזיות (hallucinations) או סטייה ויזואלית. מסלול אחד ומובנה, משלב הבחינה ועד לקליפ הסופי.",
       "keyFeatures": [
-        "Express storyboard לבדיקה — שיתוף ביטים לפני רינדור כבד",
+        "Express Pre-vis לבדיקה — שיתוף ביטים לפני רינדור כבד",
         "Beat Frames קיבוע הרכב — Reference Library רציפות",
         "F2V לפי פעימה — יצירת וידאו מפריימים מאושרים",
         "תזמון וזרמי המערבל — ייצוא למכלול Final Cut"
@@ -765,7 +766,7 @@
     },
     "screeningRoom": {
       "title": "סקירה וניתוח נתונים של הקהל",
-      "description": "קישורי שיתוף פרטיים עבור בעלי עניין – כוללים דירוגים ידניים, משוב מובנה ונתוני מעורבות (אופציונליים, בכפוף להסכמת הצופה). בשימוש ב-Premiere לפני הפרסום וכן לצורך תצוגה מקדימה של הסטוריבורד (Storyboard) בשלב ההפקה.",
+      "description": "קישורי שיתוף פרטיים עבור בעלי עניין – כוללים דירוגים ידניים, משוב מובנה ונתוני מעורבות (אופציונליים, בכפוף להסכמת הצופה). בשימוש ב-Premiere לפני הפרסום וכן לצורך תצוגה מקדימה של הסטוריבורד (pre-vis) בשלב ההפקה.",
       "keyFeatures": [
         "מפגשי סקירה פרטיים — קישורי שיתוף מאובטחים עבור בעלי עניין",
         "משוב מובנה מהקהל – דירוגים ושאלות פתוחות",
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "מנוע יצירה מהיר",
-        "description": "צור באופן אוטומטי תמונות וקטעי וידאו במקביל. Express Storyboard מאפשר לך לסקור ולשתף לוחות תסריט (storyboards) אור-קוליים בתוך דקות. Express Animatics מרנדר סצנות מלאות בסגנון Ken Burns בתוך דקות, בעוד ש-Express Video מספק סצנות וידאו סופיות בתוך דקות במקום ימים.",
+        "description": "צור באופן אוטומטי תמונות וקטעי וידאו במקביל. Express Pre-vis מאפשר לך לסקור ולשתף לוחות תסריט (pre-vis) אור-קוליים בתוך דקות. Express Animatics מרנדר סצנות מלאות בסגנון Ken Burns בתוך דקות, בעוד ש-Express Video מספק סצנות וידאו סופיות בתוך דקות במקום ימים.",
         "keyFeatures": [
           "יצירה במקביל – תמונות ווידאו על פני סצנות שונות בו-זמנית",
-          "Express Storyboard – תצוגות מקדימות אורקוליות הניתנות לשיתוף, תוך דקות ספורות",
+          "Express Pre-vis – תצוגות מקדימות אורקוליות הניתנות לשיתוף, תוך דקות ספורות",
           "Express Animatics — אפקט Ken Burns (תנועה בתמונות סטילס)",
           "Express Video – קטעי וידאו ברמת הסצנה בתוך דקות, לא ימים"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "אוטומציה של הייצור",
-        "description": "הלשוניות Script ו-Action מלוות את התהליך: Foundation ← Storyboard ← Production ← Final Cut. Express storyboard, Beat Frames, Mixer וזרמי MP4 – ללא צורך במעבר בין כלים.",
+        "description": "הלשוניות Script ו-Action מלוות את התהליך: Foundation ← pre-vis ← Production ← Final Cut. Express Pre-vis, Beat Frames, Mixer וזרמי MP4 – ללא צורך במעבר בין כלים.",
         "keyFeatures": [
           "Foundation — תסריט, קולות, אודיו של הסצנה, נעילת תסריט",
-          "Express storyboard — כיוון ומסגרות בדקות; גלריה ושיתוף",
+          "Express Pre-vis — כיוון ומסגרות בדקות; גלריה ושיתוף",
           "Beat Frames ו-Mixer — פריימים להתחלה/סיום, קונסולת בימוי, רינדור זרמי MP4",
           "זרמי ייצור — סקירת תוצרים, רינדור מחדש של יחידות עיבוד (beats) לא-עדכניות, שליחה ל-Final Cut"
         ],
         "screenshotSlot": "הוסף צילום מסך: לוח מחוונים של ההפקה המציג את התסריט, Beat Frames ואת המיקסר.",
-        "videoSlot": "הכנסת קטע באורך 00:30: Foundation, Express storyboard, Beat Frames וייצוא הזרם"
+        "videoSlot": "הכנסת קטע באורך 00:30: Foundation, Express Pre-vis, Beat Frames וייצוא הזרם"
       },
       {
         "id": "12",
@@ -968,7 +969,7 @@
       {
         "id": "14",
         "title": "סקירה וניתוח נתונים של הקהל",
-        "description": "קישורי שיתוף פרטיים עבור בעלי עניין – כוללים דירוגים ידניים, משוב מובנה ונתוני מעורבות (אופציונליים, בכפוף להסכמת הצופה). בשימוש ב-Premiere לפני הפרסום וכן לצורך תצוגה מקדימה של הסטוריבורד (Storyboard) בשלב ההפקה.",
+        "description": "קישורי שיתוף פרטיים עבור בעלי עניין – כוללים דירוגים ידניים, משוב מובנה ונתוני מעורבות (אופציונליים, בכפוף להסכמת הצופה). בשימוש ב-Premiere לפני הפרסום וכן לצורך תצוגה מקדימה של הסטוריבורד (pre-vis) בשלב ההפקה.",
         "keyFeatures": [
           "מפגשי סקירה פרטיים — קישורי שיתוף מאובטחים עבור בעלי עניין",
           "משוב מובנה מהקהל – דירוגים ושאלות פתוחות",
@@ -1418,5 +1419,36 @@
     "mute": "השתק",
     "unmute": "בטל השתקה",
     "expandVideo": "הגדל את הסרטון"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

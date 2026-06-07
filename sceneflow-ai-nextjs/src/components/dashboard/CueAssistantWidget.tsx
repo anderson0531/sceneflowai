@@ -32,8 +32,8 @@ const suggestedResponses = [
 const dashboardKnowledge = {
   tour: "Welcome to SceneFlow AI! Here's your dashboard tour:\n\n🎯 **Quick Actions**: Start new projects or continue existing ones\n💳 **Credit Status**: Monitor your AI generation credits\n📁 **Project Hub**: Manage your video projects\n⚙️ **Studio Utilities**: Access settings and tools\n\nReady to create your first video? Click 'Create New Project' to get started!",
   byok: "BYOK (Bring Your Own Key) configuration:\n\n1. Go to **Settings** → **BYOK Configuration**\n2. Add your Google Gemini API key for text generation\n3. Add your Google Veo API key for video generation\n4. This gives you direct control over costs and no rate limiting\n\nBenefits: Lower costs, better performance, full control over your AI providers.",
-  workflow: "SceneFlow AI has a 5-step workflow:\n\n1️⃣ **Series**: Showrunner Engine for multi-episode franchise management\n2️⃣ **Blueprint**: AI-powered concept generation and ideation\n3️⃣ **Production**: Visual storyboard and scene planning\n4️⃣ **Final Cut**: Stream assembly — pick streams, preview, export master\n5️⃣ **Premiere**: Screenings, share links, and distribution prep\n\nEach step builds on the previous one, creating a professional video production pipeline.",
-  credits: "Credits are consumed for AI operations:\n\n• **Ideation**: 10-25 credits per concept\n• **Storyboarding**: 50-100 credits per storyboard\n• **Scene Direction**: 25-50 credits per scene\n• **Video Generation**: 100-500 credits per video\n\nYour plan includes monthly credits, and you can purchase additional packs ($10 for 100 credits) as needed.",
+  workflow: "SceneFlow AI has a 5-step workflow:\n\n1️⃣ **Series**: Showrunner Engine for multi-episode franchise management\n2️⃣ **Blueprint**: AI-powered concept generation and ideation\n3️⃣ **Production**: Visual pre-vis and scene planning\n4️⃣ **Final Cut**: Stream assembly — pick streams, preview, export master\n5️⃣ **Premiere**: Screenings, share links, and distribution prep\n\nEach step builds on the previous one, creating a professional video production pipeline.",
+  credits: "Credits are consumed for AI operations:\n\n• **Ideation**: 10-25 credits per concept\n• **Pre-vis**: 50-100 credits per pre-vis\n• **Scene Direction**: 25-50 credits per scene\n• **Video Generation**: 100-500 credits per video\n\nYour plan includes monthly credits, and you can purchase additional packs ($10 for 100 credits) as needed.",
   social: "Social media video tips:\n\n📱 **Platform Optimization**:\n• Instagram: 15-60 seconds, vertical 9:16\n• TikTok: 15-60 seconds, vertical 9:16\n• YouTube: 15 seconds to 10+ minutes\n• LinkedIn: 30 seconds to 5 minutes\n\n🎬 **Content Strategy**:\n• Hook viewers in first 3 seconds\n• Use trending audio and hashtags\n• Include captions for accessibility\n• End with clear call-to-action",
   concept: "Concept refinement tips:\n\n🎯 **Core Premise**: Focus on one main idea that's clear and compelling\n📝 **Outline Structure**: Ensure logical flow from hook to conclusion\n🎨 **Style & Tone**: Match your target audience and platform\n⏱️ **Duration**: Consider platform requirements and audience attention span\n\nI can help you refine any aspect of your concept - just ask!"
 }
@@ -141,7 +141,7 @@ export function CueAssistantWidget() {
     if (p.includes('/dashboard/workflow/final-cut')) return 'finalcut'
     if (p.includes('/dashboard/workflow/premiere')) return 'premiere'
     if (p.startsWith('/dashboard/workflow/ideation')) return 'spark'
-    if (p.startsWith('/dashboard/workflow/storyboard')) return 'vision'
+    if (p.startsWith('/dashboard/workflow/storyboard') || p.startsWith('/dashboard/workflow/pre-vis')) return 'vision'
     if (p.startsWith('/dashboard/workflow/direction')) return 'director'
     if (p.startsWith('/dashboard/workflow/video-generation')) return 'screening'
     if (p.startsWith('/dashboard')) return 'dashboard'
@@ -322,7 +322,7 @@ export function CueAssistantWidget() {
         return "Spark Studio mode: Tell me to ‘rewrite my core premise’, ‘revise outline option 2’, or ‘improve my hook’ and I’ll produce concrete updates."
       }
       case 'vision':
-        return "Production mode: I can help refine your storyboard. Ask for shot lists, transitions, beat pacing, or visual motifs."
+        return "Production mode: I can help refine your pre-vis. Ask for shot lists, transitions, beat pacing, or visual motifs."
       case 'director':
         return "Director’s Chair mode: I can draft lensing, camera movement, lighting plans, and scene directions. Try ‘Suggest lenses and movement for Scene 3.’"
       case 'screening':
@@ -527,7 +527,7 @@ function ApplySuggestion({ content }: { content: string }) {
           <div className="font-medium mb-2">Apply to project</div>
           <div className="space-y-1">
             <label className="flex items-center gap-2"><input type="checkbox" checked={addNote} onChange={(e) => setAddNote(e.target.checked)} /> Add as note</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={addStoryboard} onChange={(e) => setAddStoryboard(e.target.checked)} /> Append to storyboard</label>
+            <label className="flex items-center gap-2"><input type="checkbox" checked={addStoryboard} onChange={(e) => setAddStoryboard(e.target.checked)} /> Append to pre-vis</label>
             <label className="flex items-center gap-2"><input type="checkbox" checked={addDirections} onChange={(e) => setAddDirections(e.target.checked)} /> Append to scene directions</label>
             <label className="flex items-center gap-2"><input type="checkbox" checked={addPrompts} onChange={(e) => setAddPrompts(e.target.checked)} /> Save as generation prompt</label>
           </div>

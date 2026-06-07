@@ -126,7 +126,7 @@ export function Sidebar() {
   // Use projectId from URL or currentProject
   const activeProjectId = projectIdFromUrl || currentProject?.id
   const studioHref = activeProjectId ? `/dashboard/studio/${activeProjectId}` : '/dashboard/studio/new-project'
-  const projectVisionHref = activeProjectId ? `/dashboard/workflow/vision/${activeProjectId}` : '/dashboard/workflow/storyboard'
+  const projectVisionHref = activeProjectId ? `/dashboard/workflow/vision/${activeProjectId}` : '/dashboard/workflow/pre-vis'
   
   const isActive = (href: string) => {
     if (href.startsWith('/dashboard/studio')) {

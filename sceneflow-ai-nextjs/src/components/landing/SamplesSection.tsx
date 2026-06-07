@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils'
 
 const WORKFLOW_BULLETS = [
   { icon: FileText, text: 'Blueprint section feedback and team chat' },
-  { icon: Share2, text: 'Shareable storyboard review links' },
+  { icon: Share2, text: 'Shareable pre-vis review links' },
   { icon: Star, text: 'Screening Room reactions from collaborators' },
 ] as const
 
@@ -46,8 +46,8 @@ const SAMPLE_STEPS = [
   {
     id: 'storyboard' as const,
     step: 2,
-    title: 'Interactive storyboard',
-    shortTitle: 'Storyboard',
+    title: 'Interactive pre-vis',
+    shortTitle: 'Pre-vis',
     caption: 'Per-scene audio and dialogue-synced frame cuts in one playable review.',
     icon: Clapperboard,
     accent: 'emerald',
@@ -113,11 +113,11 @@ export function CollaborationDemosPanel() {
           Real collaboration · Same project
         </div>
         <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-6">
-          Experience the collaborator journey — Blueprint, Storyboard, Screening Room
+          Experience the collaborator journey — Blueprint, Pre-vis, Screening Room
         </h3>
         <p className="text-lg text-slate-400 leading-relaxed">
           See how teammates and clients review your work at every stage: structured Blueprint
-          feedback, playable storyboard approval, and Screening Room reactions on the Express
+          feedback, playable pre-vis approval, and Screening Room reactions on the Express
           animatic — all on one sample project before you sign up.
         </p>
         <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 border border-white/10 text-base text-slate-300">
@@ -230,12 +230,12 @@ export function CollaborationDemosPanel() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-base font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
             >
-              Open interactive storyboard
+              Open interactive pre-vis
               <ExternalLink className="w-4 h-4" />
             </Link>
           ) : (
             <span className="inline-flex items-center gap-2 text-base text-slate-500">
-              Storyboard link unavailable
+              Pre-vis link unavailable
               <ArrowRight className="w-4 h-4" />
             </span>
           )}

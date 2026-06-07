@@ -144,9 +144,9 @@ const SCREENING_TABS = [
   },
   {
     id: 'storyboard',
-    label: 'Storyboard',
+    label: 'Pre-vis',
     icon: Film,
-    description: 'Animatic & storyboard screenings',
+    description: 'Animatic & pre-vis screenings',
     color: 'text-amber-400',
     bgColor: 'bg-amber-500/10',
   },
@@ -782,7 +782,7 @@ export default function ScreeningRoomDashboardPage() {
               <Link href="/dashboard/studio/new-project" className="block">
                 <button className="w-full flex items-center gap-3 px-4 py-3 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-lg transition-colors text-left">
                   <Film className="w-5 h-5 text-amber-400" />
-                  <span className="text-sm text-white flex-1">Create Storyboard Project</span>
+                  <span className="text-sm text-white flex-1">Create Pre-vis Project</span>
                   <ArrowRight className="w-4 h-4 text-gray-500" />
                 </button>
               </Link>

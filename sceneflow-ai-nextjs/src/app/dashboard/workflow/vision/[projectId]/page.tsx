@@ -2271,7 +2271,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         await handleScriptChange(updatedScript)
         const { toast } = require('sonner')
-        toast.success('Storyboard approved — beats and video are unlocked')
+        toast.success('Pre-vis approved — beats and video are unlocked')
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err)
         const { toast } = require('sonner')
@@ -8713,7 +8713,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     try {
       await persistVisionScriptScenes(updatedScenes)
-      try { const { toast } = require('sonner'); toast.success('Storyboard frame added') } catch {}
+      try { const { toast } = require('sonner'); toast.success('Pre-vis frame added') } catch {}
     } catch (error) {
       console.error('[handleAddStoryboardFrame] Failed to persist:', error)
       try { const { toast } = require('sonner'); toast.error('Failed to save new frame') } catch {}
@@ -8752,7 +8752,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           body: JSON.stringify({ urls: [imageUrl] }),
         }).catch((err) => console.warn('[handleDeleteStoryboardFrame] Blob cleanup failed:', err))
       }
-      try { const { toast } = require('sonner'); toast.success('Storyboard frame deleted') } catch {}
+      try { const { toast } = require('sonner'); toast.success('Pre-vis frame deleted') } catch {}
     } catch (error) {
       console.error('[handleDeleteStoryboardFrame] Failed to persist:', error)
       try { const { toast } = require('sonner'); toast.error('Failed to delete frame') } catch {}
@@ -8763,7 +8763,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const scene = script?.script?.scenes?.[sceneIdx]
     const frame = findStoryboardFrame(scene, frameId)
     if (!scene || !frame) {
-      try { const { toast } = require('sonner'); toast.error('Storyboard frame not found') } catch {}
+      try { const { toast } = require('sonner'); toast.error('Pre-vis frame not found') } catch {}
       return
     }
 

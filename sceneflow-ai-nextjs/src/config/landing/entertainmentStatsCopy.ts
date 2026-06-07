@@ -1,7 +1,7 @@
 /** Entertainment category market context — Nielsen / Digital i attribution. */
 
 export const ENTERTAINMENT_CATEGORY_QUALIFYING_STATEMENT =
-  'YouTube now rivals traditional TV for attention—indie animation studios and solo creators ship serialized hits with tens of millions of views per episode. SceneFlow gives you beat-first storyboards, Reference Library continuity, and publish-ready masters for the creator economy—not slot-machine clip tools.'
+  'YouTube now rivals traditional TV for attention—indie animation studios and solo creators ship serialized hits with tens of millions of views per episode. SceneFlow gives you beat-first pre-vis, Reference Library continuity, and publish-ready masters for the creator economy—not slot-machine clip tools.'
 
 export const ENTERTAINMENT_STATS_COPY = {
   title: 'The creator attention economy',

@@ -29,11 +29,12 @@
     "platformWalkthrough": "Platform Walkthrough",
     "platform": "Platform",
     "pricing": "Pricing",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "สร้างวิดีโอระดับมืออาชีพโดยไม่ต้องมีทีมโปรดักชันหรือแอปหลายสิบตัว",
-    "subheadline": "สตูดิโอแบบ guided จากไอเดียสู่ master ที่พร้อมเผยแพร่ ดู storyboard ก่อนจ่ายค่าวิดีโอฉบับสุดท้าย — อนุมัติลุคก่อน render แทนการเผา credits กับการ generate แบบเดา",
+    "subheadline": "สตูดิโอแบบ guided จากไอเดียสู่ master ที่พร้อมเผยแพร่ ดู pre-vis ก่อนจ่ายค่าวิดีโอฉบับสุดท้าย — อนุมัติลุคก่อน render แทนการเผา credits กับการ generate แบบเดา",
     "ctaSecondary": "ดู 'What's Possible'",
     "languagePrompt": "Hear the hero in your language — same pipeline, new markets",
     "multilangHint": "Hero dubs in 7 languages — full pipeline supports 70+ in Production.",
@@ -80,7 +81,7 @@
       },
       {
         "label": "Approve Before Final Video",
-        "detail": "Review storyboard beats before you render"
+        "detail": "Review pre-vis beats before you render"
       },
       {
         "label": "Test Your Story First",
@@ -183,9 +184,9 @@
   "beatFirstPipeline": {
     "title": "Beat-First Video Pipeline",
     "subtitle": "Approve before you render — not slot-machine regeneration",
-    "description": "SceneFlow structures visual approval at every step: Express storyboard for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
+    "description": "SceneFlow structures visual approval at every step: Express Pre-vis for review, Beat Frames to lock composition, then F2V per beat. You refine the look before burning credits on drift and hallucinations.",
     "steps": [
-      "Express storyboard — share audio-visual beats for review in minutes",
+      "Express Pre-vis — share audio-visual beats for review in minutes",
       "Beat Frames — lock start/end composition with Reference Library continuity",
       "F2V per beat — generate video from approved frames, not blind prompts",
       "Production Mixer — timing, audio, and stream export to Final Cut assembly"
@@ -201,7 +202,7 @@
   "howItWorks": {
     "title": "From concept to publish-ready video",
     "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — storyboard, animatic, video, and master MP4 tiers along the way.",
+    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — pre-vis, animatic, video, and master MP4 tiers along the way.",
     "tagline": "Every step is expertly automated. Every step gives you full control.",
     "optionalBadge": "Optional",
     "optionalSuffix": " (optional)",
@@ -248,16 +249,16 @@
         "id": "production",
         "stepLabel": "Production",
         "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "description": "Script and Action tabs guide Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, and MP4 streams — no tool switching.",
         "keySteps": [
           "Lock script, voices, and scene audio",
-          "Express storyboard — gallery and share for review",
+          "Express Pre-vis — gallery and share for review",
           "Beat Frames → Director Console → Render Stream",
           "Send finished streams to Final Cut"
         ],
         "keyFeatures": [
           "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
+          "Express Pre-vis — direction and frames in minutes; gallery and share",
           "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
           "Production Streams — review outputs, re-render stale beats, send to Final Cut"
         ],
@@ -372,7 +373,7 @@
             "Replace vendor shoots with guided in-house workflows",
             "Brand-safe templates and reference libraries",
             "Visible credit spend and budget caps per project",
-            "Approve storyboards before paying for final video"
+            "Approve pre-vis before paying for final video"
           ]
         },
         "win": "Ship training, comms, and campaign video on your timeline — not the vendor's backlog.",
@@ -395,10 +396,10 @@
         },
         "solution": {
           "title": "Productize Your Video Service",
-          "description": "Build repeatable workflows for memoir studios and niche verticals. Template uploads, voice clones, avatars, and storyboard approval — customize per client and grow margin on volume.",
+          "description": "Build repeatable workflows for memoir studios and niche verticals. Template uploads, voice clones, avatars, and pre-vis approval — customize per client and grow margin on volume.",
           "features": [
             "Memoir templates with photo uploads, voice clones, and avatar hosts",
-            "Client intake tied to Blueprint and storyboard approval phases",
+            "Client intake tied to Blueprint and pre-vis approval phases",
             "White-label studio packages for legacy, tribute, and subscription video",
             "Margin on credits instead of per-shoot overhead"
           ]
@@ -521,7 +522,7 @@
           {
             "id": "video-memoirs",
             "label": "Video Memoirs",
-            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated storyboard approval before final render."
+            "description": "Turn uploaded photos, interview audio, and scene notes into chapter-based memoir videos with narrated pre-vis approval before final render."
           }
         ]
       },
@@ -646,19 +647,19 @@
     "beatFirst": {
       "id": 15,
       "title": "Beat-First Video Pipeline",
-      "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+      "description": "Approve pre-vis beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
       "keyFeatures": [
-        "Express storyboard for review — share beats before heavy render",
+        "Express Pre-vis for review — share beats before heavy render",
         "Beat Frames lock composition — Reference Library continuity",
         "F2V per beat — generate video from approved frames",
         "Mixer timing and streams — export to Final Cut assembly"
       ],
-      "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
+      "screenshotSlot": "Insert screenshot: Beat Frames and pre-vis approval before video generation",
       "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
     },
     "screeningRoom": {
       "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production pre-vis preview.",
       "keyFeatures": [
         "Private review sessions — secure /s/ share links for stakeholders",
         "Structured audience feedback — ratings and open items",
@@ -748,10 +749,10 @@
       {
         "id": "6",
         "title": "Express Generation Engine",
-        "description": "สร้างภาพและวิดีโอส่วนต่างๆ โดยอัตโนมัติพร้อมกัน Express Storyboard ช่วยให้คุณสามารถตรวจสอบและแบ่งปันสตอรี่บอร์ดภาพและเสียงได้ภายในไม่กี่นาที Express Animatics เรนเดอร์ฉาก Ken Burns เต็มรูปแบบภายในไม่กี่นาที ในขณะที่ Express Video นำเสนอฉากวิดีโอสุดท้ายภายในไม่กี่นาทีแทนที่จะเป็นวัน",
+        "description": "สร้างภาพและวิดีโอส่วนต่างๆ โดยอัตโนมัติพร้อมกัน Express Pre-vis ช่วยให้คุณสามารถตรวจสอบและแบ่งปันสตอรี่บอร์ดภาพและเสียงได้ภายในไม่กี่นาที Express Animatics เรนเดอร์ฉาก Ken Burns เต็มรูปแบบภายในไม่กี่นาที ในขณะที่ Express Video นำเสนอฉากวิดีโอสุดท้ายภายในไม่กี่นาทีแทนที่จะเป็นวัน",
         "keyFeatures": [
           "การสร้างพร้อมกัน — รูปภาพและวิดีโอข้ามฉากพร้อมกัน",
-          "Express Storyboard — การแสดงตัวอย่างภาพและเสียงที่แชร์ได้ภายในไม่กี่นาที",
+          "Express Pre-vis — การแสดงตัวอย่างภาพและเสียงที่แชร์ได้ภายในไม่กี่นาที",
           "แสดง Animatics — Ken Burns การเคลื่อนไหวจากภาพนิ่ง",
           "Express Video — คลิประดับฉากใช้เวลาไม่กี่นาที ไม่ใช่หลายวัน"
         ],
@@ -787,14 +788,14 @@
       {
         "id": "15",
         "title": "Beat-First Video Pipeline",
-        "description": "Approve storyboard beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
+        "description": "Approve pre-vis beats and Beat Frames before F2V — fewer blind regenerations from hallucination and visual drift. One structured path from review to final clip.",
         "keyFeatures": [
-          "Express storyboard for review — share beats before heavy render",
+          "Express Pre-vis for review — share beats before heavy render",
           "Beat Frames lock composition — Reference Library continuity",
           "F2V per beat — generate video from approved frames",
           "Mixer timing and streams — export to Final Cut assembly"
         ],
-        "screenshotSlot": "Insert screenshot: Beat Frames and storyboard approval before video generation",
+        "screenshotSlot": "Insert screenshot: Beat Frames and pre-vis approval before video generation",
         "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
       },
       {
@@ -826,15 +827,15 @@
       {
         "id": "11",
         "title": "ระบบการผลิตอัตโนมัติ",
-        "description": "Script and Action tabs guide Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "description": "Script and Action tabs guide Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, and MP4 streams — no tool switching.",
         "keyFeatures": [
           "Foundation — script, voices, scene audio, lock script",
-          "Express storyboard — direction and frames in minutes; gallery and share",
+          "Express Pre-vis — direction and frames in minutes; gallery and share",
           "Beat Frames and Mixer — start/end frames, Director Console, render MP4 streams",
           "Production Streams — review outputs, re-render stale beats, send to Final Cut"
         ],
         "screenshotSlot": "แทรกภาพหน้าจอ: แดชบอร์ดการผลิตที่แสดงสคริปต์ Beat Frames และมิกเซอร์",
-        "videoSlot": "แทรกคลิป 00:30: Foundation, Express storyboard, Beat Frames และส่งออกสตรีม"
+        "videoSlot": "แทรกคลิป 00:30: Foundation, Express Pre-vis, Beat Frames และส่งออกสตรีม"
       },
       {
         "id": "12",
@@ -865,7 +866,7 @@
       {
         "id": "14",
         "title": "Audience Review and Analytics",
-        "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production storyboard preview.",
+        "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production pre-vis preview.",
         "keyFeatures": [
           "Private review sessions — secure /s/ share links for stakeholders",
           "Structured audience feedback — ratings and open items",
@@ -1241,7 +1242,7 @@
       },
       {
         "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production storyboard preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "answer": "Screening Room is the review surface inside Premiere — and for Production pre-vis preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
       },
       {
         "question": "Do I need technical or editing experience?",
@@ -1263,7 +1264,7 @@
   },
   "finalCta": {
     "title": "พร้อมทดสอบ pipeline เต็มรูปแบบหรือยัง?",
-    "subtitle": "รัน concept → storyboard → video → master MP4 ในสตูดิโอเดียว เริ่มด้วยแผน Explorer $9 และดู beat-first workflow",
+    "subtitle": "รัน concept → pre-vis → video → master MP4 ในสตูดิโอเดียว เริ่มด้วยแผน Explorer $9 และดู beat-first workflow",
     "cta": "เปิด Studio ของคุณใน $9"
   },
   "footer": {
@@ -1304,5 +1305,36 @@
     "mute": "ปิดเสียง",
     "unmute": "เปิดเสียง",
     "expandVideo": "Expand Video"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

@@ -29,11 +29,12 @@
     "platformWalkthrough": "Hướng dẫn sử dụng nền tảng",
     "platform": "Nền tảng",
     "pricing": "Bảng giá",
-    "faq": "Câu hỏi thường gặp"
+    "faq": "Câu hỏi thường gặp",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "Đừng tốn công chuyển đổi qua lại giữa năm tab AI nữa. Chỉ cần một studio duy nhất để đưa bạn từ ý tưởng đến video hoàn chỉnh, sẵn sàng đăng tải.",
-    "subheadline": "Một studio tích hợp hướng dẫn bạn từ khâu lên ý tưởng đến khi hoàn thiện video sẵn sàng để xuất bản. Xem trước kịch bản phân cảnh (storyboard) trước khi thanh toán cho video cuối cùng — hãy duyệt phong cách hình ảnh thay vì lãng phí lượt tạo video vào việc thử-và-sai. SceneFlow tự động hóa các công việc tốn thời gian — như viết kịch bản, dựng storyboard, lồng tiếng và lắp ghép — trong khi bạn vẫn nắm quyền kiểm soát từng chi tiết.",
+    "subheadline": "Một studio tích hợp hướng dẫn bạn từ khâu lên ý tưởng đến khi hoàn thiện video sẵn sàng để xuất bản. Xem trước kịch bản phân cảnh (pre-vis) trước khi thanh toán cho video cuối cùng — hãy duyệt phong cách hình ảnh thay vì lãng phí lượt tạo video vào việc thử-và-sai. SceneFlow tự động hóa các công việc tốn thời gian — như viết kịch bản, dựng pre-vis, lồng tiếng và lắp ghép — trong khi bạn vẫn nắm quyền kiểm soát từng chi tiết.",
     "audienceMicroLine": "Được xây dựng dành cho những nhà sáng tạo mong muốn đạt kết quả và các đội ngũ muốn tận mắt thấy cách thức hoạt động.",
     "ctaSecondary": "Xem video 'Những điều khả thi'",
     "ctaToolStack": "Khám phá cách giải pháp này thay thế bộ công cụ hiện tại của bạn.",
@@ -82,7 +83,7 @@
       },
       {
         "label": "Phê duyệt trước khi có video hoàn chỉnh",
-        "detail": "Xem lại các phân đoạn storyboard trước khi thực hiện render."
+        "detail": "Xem lại các phân đoạn pre-vis trước khi thực hiện render."
       },
       {
         "label": "Hãy thử nghiệm câu chuyện của bạn trước",
@@ -102,7 +103,7 @@
     "modes": {
       "automate": {
         "label": "Tự động hóa nó",
-        "description": "Quy trình làm việc có hướng dẫn — phê duyệt storyboard, đẩy nhanh tiến độ hoàn thiện"
+        "description": "Quy trình làm việc có hướng dẫn — phê duyệt pre-vis, đẩy nhanh tiến độ hoàn thiện"
       },
       "engine": {
         "label": "Cho tôi xem động cơ",
@@ -192,9 +193,9 @@
     "title": "Quy trình sản xuất video lấy nhịp điệu làm trọng tâm",
     "subtitle": "Phê duyệt trước khi kết xuất — thay vì tái tạo ngẫu nhiên kiểu máy đánh bạc",
     "intro": "Không cần tạo thử rồi kiểm tra lại nhiều lần. Bạn có thể xem trước và phê duyệt hình ảnh hiển thị trước khi SceneFlow sử dụng credit để tạo video hoàn chỉnh.",
-    "description": "SceneFlow thiết lập quy trình phê duyệt hình ảnh ở từng bước: Express storyboard để xem xét, Beat Frames để chốt bố cục, sau đó là F2V cho từng nhịp. Bạn tinh chỉnh hình ảnh trước khi tiêu tốn credit vào các lỗi trôi hình (drift) và ảo giác (hallucination).",
+    "description": "SceneFlow thiết lập quy trình phê duyệt hình ảnh ở từng bước: Express Pre-vis để xem xét, Beat Frames để chốt bố cục, sau đó là F2V cho từng nhịp. Bạn tinh chỉnh hình ảnh trước khi tiêu tốn credit vào các lỗi trôi hình (drift) và ảo giác (hallucination).",
     "steps": [
-      "Express storyboard — chia sẻ các bản beat kết hợp hình ảnh và âm thanh để đánh giá chỉ trong vài phút",
+      "Express Pre-vis — chia sẻ các bản beat kết hợp hình ảnh và âm thanh để đánh giá chỉ trong vài phút",
       "Beat Frames — khóa thành phần bắt đầu/kết thúc với tính liên tục của Reference Library",
       "F2V theo nhịp — tạo video từ các khung hình đã được duyệt, thay vì dùng câu lệnh (prompt) thiếu cơ sở.",
       "Production Mixer — định thời, âm thanh và xuất luồng sang khâu lắp ráp Final Cut"
@@ -290,7 +291,7 @@
   "howItWorks": {
     "title": "Từ ý tưởng đến video hoàn chỉnh sẵn sàng đăng tải",
     "titleAccent": "Một quy trình có hướng dẫn",
-    "subtitle": "Việc thực hiện theo chuỗi (series) là tùy chọn. Lộ trình cốt lõi là Blueprint → Sản xuất → Final Cut → Premiere — bao gồm các giai đoạn storyboard, animatic, video và master MP4 trong quá trình thực hiện.",
+    "subtitle": "Việc thực hiện theo chuỗi (series) là tùy chọn. Lộ trình cốt lõi là Blueprint → Sản xuất → Final Cut → Premiere — bao gồm các giai đoạn pre-vis, animatic, video và master MP4 trong quá trình thực hiện.",
     "tagline": "Mỗi bước đều được tự động hóa một cách chuyên nghiệp. Mỗi bước đều mang lại cho bạn quyền kiểm soát hoàn toàn.",
     "optionalBadge": "Tùy chọn",
     "optionalSuffix": " (tùy chọn)",
@@ -335,16 +336,16 @@
         "id": "sản xuất",
         "stepLabel": "Sản xuất",
         "subtitle": "Từ kịch bản đến luồng phát sóng",
-        "description": "Các thẻ Script và Action dẫn dắt quy trình từ Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer và các luồng MP4 — không cần chuyển đổi công cụ.",
+        "description": "Các thẻ Script và Action dẫn dắt quy trình từ Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer và các luồng MP4 — không cần chuyển đổi công cụ.",
         "keySteps": [
           "Chốt kịch bản, phần lồng tiếng và âm thanh hiện trường",
-          "Express storyboard — thư viện ảnh và chia sẻ để đánh giá",
+          "Express Pre-vis — thư viện ảnh và chia sẻ để đánh giá",
           "Beat Frames → Bảng điều khiển đạo diễn → Luồng kết xuất",
           "Gửi các luồng đã hoàn tất tới Final Cut"
         ],
         "keyFeatures": [
           "Foundation — kịch bản, giọng lồng tiếng, âm thanh cảnh quay, chốt kịch bản",
-          "Express storyboard — chỉ dẫn và khung hình trong vài phút; thư viện và chia sẻ",
+          "Express Pre-vis — chỉ dẫn và khung hình trong vài phút; thư viện và chia sẻ",
           "Beat Frames và Mixer — khung hình bắt đầu/kết thúc, Director Console, kết xuất luồng MP4",
           "Luồng sản xuất — xem xét kết quả đầu ra, kết xuất lại các nhịp (beat) đã cũ, gửi đến Final Cut"
         ]
@@ -390,7 +391,7 @@
     "title": "Bất kỳ video nào bạn có thể tưởng tượng,",
     "titleAccent": "Xây dựng trong SceneFlow",
     "subtitle": "Từ giới thiệu bất động sản, nội dung giáo dục, podcast, bản tin, chiến dịch thương hiệu cho đến các câu chuyện đậm chất điện ảnh — tất cả gói gọn trong một studio tự động hóa, xử lý từ khâu lên ý tưởng đến khi hoàn thiện sản phẩm sẵn sàng phát hành.",
-    "qualifyingStatement": "SceneFlow chuyển đổi ảnh gốc, tệp tải lên và nội dung mô tả của bạn thành các video giới thiệu có lời dẫn — cho phép tùy chọn giọng nói và sự xuất hiện của nhân vật theo ý muốn. Đây là các bài trình bày được tạo ra nhờ AI: hình ảnh trực quan sống động dựa trên tư liệu của bạn, chứ không phải cảnh quay trực tiếp từ máy ảnh. Hãy xem xét và phê duyệt từng kịch bản phân cảnh (storyboard) trước khi xuất bản, đồng thời dán nhãn rõ ràng cho sản phẩm để khán giả biết chính xác nội dung họ đang xem.",
+    "qualifyingStatement": "SceneFlow chuyển đổi ảnh gốc, tệp tải lên và nội dung mô tả của bạn thành các video giới thiệu có lời dẫn — cho phép tùy chọn giọng nói và sự xuất hiện của nhân vật theo ý muốn. Đây là các bài trình bày được tạo ra nhờ AI: hình ảnh trực quan sống động dựa trên tư liệu của bạn, chứ không phải cảnh quay trực tiếp từ máy ảnh. Hãy xem xét và phê duyệt từng kịch bản phân cảnh (pre-vis) trước khi xuất bản, đồng thời dán nhãn rõ ràng cho sản phẩm để khán giả biết chính xác nội dung họ đang xem.",
     "ui": {
       "useCases": "Các trường hợp sử dụng",
       "sectors": "{count} LĨNH VỰC",
@@ -483,7 +484,7 @@
           "description": "Xây dựng quy trình làm việc có thể tái sử dụng dành cho các studio chuyên về hồi ký và các lĩnh vực ngách. Từ việc tải lên mẫu, tạo bản sao giọng nói, hình đại diện (avatar) cho đến phê duyệt kịch bản phân cảnh — tất cả đều có thể tùy chỉnh theo từng khách hàng, giúp gia tăng biên lợi nhuận nhờ quy mô sản xuất.",
           "features": [
             "Các mẫu hồi ký hỗ trợ tải ảnh lên, tạo bản sao giọng nói và sử dụng nhân vật đại diện (avatar) làm người dẫn chuyện.",
-            "Quy trình tiếp nhận khách hàng gắn liền với Blueprint và các giai đoạn phê duyệt kịch bản phân cảnh (storyboard).",
+            "Quy trình tiếp nhận khách hàng gắn liền với Blueprint và các giai đoạn phê duyệt kịch bản phân cảnh (pre-vis).",
             "Các gói dịch vụ studio nhãn trắng dành cho video lưu giữ di sản, video tri ân và video theo mô hình đăng ký",
             "Biên lợi nhuận tính trên các khoản tín dụng thay vì chi phí chung cho mỗi buổi chụp"
           ]
@@ -649,7 +650,7 @@
           {
             "id": "Video giới thiệu sản phẩm",
             "label": "Video giới thiệu sản phẩm",
-            "description": "Hãy tưởng tượng bạn tải lên hình ảnh danh mục sản phẩm, kết hợp với giọng nói và hình ảnh đại diện (avatar) của người dẫn chương trình đã được lưu sẵn cho thương hiệu. Sau đó, bạn có thể tạo ngay một loạt video giải thích mang phong cách điện ảnh — và duyệt kịch bản phân cảnh (storyboard) trước khi tiến hành xuất video."
+            "description": "Hãy tưởng tượng bạn tải lên hình ảnh danh mục sản phẩm, kết hợp với giọng nói và hình ảnh đại diện (avatar) của người dẫn chương trình đã được lưu sẵn cho thương hiệu. Sau đó, bạn có thể tạo ngay một loạt video giải thích mang phong cách điện ảnh — và duyệt kịch bản phân cảnh (pre-vis) trước khi tiến hành xuất video."
           },
           {
             "id": "Ý kiến khách hàng về các nghiên cứu tình huống",
@@ -753,9 +754,9 @@
     "viewDetails": "Xem chi tiết",
     "beatFirst": {
       "title": "Quy trình sản xuất video lấy nhịp điệu làm trọng tâm",
-      "description": "Phê duyệt các phân đoạn storyboard và Beat Frames trước bước F2V — giúp giảm thiểu việc tạo lại nội dung một cách thiếu định hướng do lỗi \"ảo giác\" (hallucination) hoặc sai lệch hình ảnh. Tạo ra một quy trình thống nhất từ khâu đánh giá đến khi hoàn thiện video.",
+      "description": "Phê duyệt các phân đoạn pre-vis và Beat Frames trước bước F2V — giúp giảm thiểu việc tạo lại nội dung một cách thiếu định hướng do lỗi \"ảo giác\" (hallucination) hoặc sai lệch hình ảnh. Tạo ra một quy trình thống nhất từ khâu đánh giá đến khi hoàn thiện video.",
       "keyFeatures": [
-        "Express storyboard để xem xét — chia sẻ bản nháp (beat) trước khi thực hiện render nặng",
+        "Express Pre-vis để xem xét — chia sẻ bản nháp (beat) trước khi thực hiện render nặng",
         "Beat Frames cấu trúc khóa — Reference Library tính liên tục",
         "F2V theo nhịp — tạo video từ các khung hình đã được duyệt",
         "Thời gian và luồng của bộ trộn — xuất sang cụm Final Cut"
@@ -765,7 +766,7 @@
     },
     "screeningRoom": {
       "title": "Đánh giá và phân tích khán giả",
-      "description": "Các liên kết chia sẻ riêng tư dành cho các bên liên quan — bao gồm chấm điểm thủ công, phản hồi có cấu trúc và số liệu phân tích mức độ tương tác (tùy chọn và có sự đồng ý của người xem). Được sử dụng trong Premiere trước khi phát hành và để xem trước bảng phân cảnh (storyboard) giai đoạn sản xuất.",
+      "description": "Các liên kết chia sẻ riêng tư dành cho các bên liên quan — bao gồm chấm điểm thủ công, phản hồi có cấu trúc và số liệu phân tích mức độ tương tác (tùy chọn và có sự đồng ý của người xem). Được sử dụng trong Premiere trước khi phát hành và để xem trước bảng phân cảnh (pre-vis) giai đoạn sản xuất.",
       "keyFeatures": [
         "Các phiên đánh giá riêng tư — liên kết chia sẻ bảo mật dành cho các bên liên quan",
         "Phản hồi có cấu trúc từ khán giả — điểm đánh giá và các mục phản hồi mở",
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Công cụ tạo nhanh",
-        "description": "Tự động tạo đồng thời hình ảnh và các phân đoạn video. Express Storyboard cho phép bạn xem lại và chia sẻ các bảng phân cảnh có âm thanh và hình ảnh chỉ trong vài phút. Express Storyboard kết xuất các cảnh theo hiệu ứng Ken Burns trọn vẹn trong vài phút, trong khi Express Video tạo ra các cảnh video hoàn chỉnh chỉ trong vài phút thay vì mất nhiều ngày.",
+        "description": "Tự động tạo đồng thời hình ảnh và các phân đoạn video. Express Pre-vis cho phép bạn xem lại và chia sẻ các bảng phân cảnh có âm thanh và hình ảnh chỉ trong vài phút. Express Pre-vis kết xuất các cảnh theo hiệu ứng Ken Burns trọn vẹn trong vài phút, trong khi Express Video tạo ra các cảnh video hoàn chỉnh chỉ trong vài phút thay vì mất nhiều ngày.",
         "keyFeatures": [
           "Tạo đồng thời — hình ảnh và video trên nhiều cảnh cùng lúc",
-          "Express Storyboard — tạo bản xem thử kết hợp âm thanh và hình ảnh để chia sẻ chỉ trong vài phút.",
+          "Express Pre-vis — tạo bản xem thử kết hợp âm thanh và hình ảnh để chia sẻ chỉ trong vài phút.",
           "Express Animatics — Hiệu ứng chuyển động Ken Burns từ ảnh tĩnh",
           "Express Video — tạo các đoạn clip theo từng cảnh chỉ trong vài phút thay vì vài ngày."
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "Tự động hóa sản xuất",
-        "description": "Các thẻ Script và Action dẫn dắt quy trình từ Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer và các luồng MP4 — không cần chuyển đổi công cụ.",
+        "description": "Các thẻ Script và Action dẫn dắt quy trình từ Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer và các luồng MP4 — không cần chuyển đổi công cụ.",
         "keyFeatures": [
           "Foundation — kịch bản, giọng lồng tiếng, âm thanh cảnh quay, chốt kịch bản",
-          "Express storyboard — chỉ dẫn và khung hình trong vài phút; thư viện và chia sẻ",
+          "Express Pre-vis — chỉ dẫn và khung hình trong vài phút; thư viện và chia sẻ",
           "Beat Frames và Mixer — khung hình bắt đầu/kết thúc, Director Console, kết xuất luồng MP4",
           "Luồng sản xuất — xem xét kết quả đầu ra, kết xuất lại các nhịp (beat) đã cũ, gửi đến Final Cut"
         ],
         "screenshotSlot": "Chèn ảnh chụp màn hình: Bảng điều khiển sản xuất hiển thị kịch bản, Beat Frames và bộ trộn âm (Mixer).",
-        "videoSlot": "Chèn đoạn clip dài 30 giây: Foundation, Express storyboard, Beat Frames và xuất luồng"
+        "videoSlot": "Chèn đoạn clip dài 30 giây: Foundation, Express Pre-vis, Beat Frames và xuất luồng"
       },
       {
         "id": "12",
@@ -968,7 +969,7 @@
       {
         "id": "14",
         "title": "Đánh giá và phân tích khán giả",
-        "description": "Các liên kết chia sẻ riêng tư dành cho các bên liên quan — bao gồm chấm điểm thủ công, phản hồi có cấu trúc và số liệu phân tích mức độ tương tác (tùy chọn và có sự đồng ý của người xem). Được sử dụng trong Premiere trước khi phát hành và để xem trước bảng phân cảnh (storyboard) giai đoạn sản xuất.",
+        "description": "Các liên kết chia sẻ riêng tư dành cho các bên liên quan — bao gồm chấm điểm thủ công, phản hồi có cấu trúc và số liệu phân tích mức độ tương tác (tùy chọn và có sự đồng ý của người xem). Được sử dụng trong Premiere trước khi phát hành và để xem trước bảng phân cảnh (pre-vis) giai đoạn sản xuất.",
         "keyFeatures": [
           "Các phiên đánh giá riêng tư — liên kết chia sẻ bảo mật dành cho các bên liên quan",
           "Phản hồi có cấu trúc từ khán giả — điểm đánh giá và các mục phản hồi mở",
@@ -1090,11 +1091,11 @@
     "express": {
       "badge": "Sản xuất siêu tốc",
       "title": "Sceneflow Express",
-      "description": "Tự động tạo đồng thời storyboard, animatic và các nhịp video. Chuyển từ kịch bản sang bản xem thử có thể chia sẻ chỉ trong vài phút — sau đó phê duyệt Beat Frames trước khi thực hiện chi phí sản xuất video (F2V) cuối cùng.",
+      "description": "Tự động tạo đồng thời pre-vis, animatic và các nhịp video. Chuyển từ kịch bản sang bản xem thử có thể chia sẻ chỉ trong vài phút — sau đó phê duyệt Beat Frames trước khi thực hiện chi phí sản xuất video (F2V) cuối cùng.",
       "items": [
         {
           "title": "Bảng phân cảnh nhanh",
-          "desc": "Xem xét và chia sẻ các storyboard âm thanh và video chỉ trong vài phút thay vì hàng giờ.",
+          "desc": "Xem xét và chia sẻ các pre-vis âm thanh và video chỉ trong vài phút thay vì hàng giờ.",
           "time": "Phút và Giờ"
         },
         {
@@ -1335,7 +1336,7 @@
     "items": [
       {
         "question": "Quy trình làm việc SceneFlow diễn ra như thế nào, từ khâu lên ý tưởng cho đến khi có video sẵn sàng để xuất bản?",
-        "answer": "SceneFlow sử dụng quy trình làm việc có cấu trúc: Series (tùy chọn) → Blueprint → Sản xuất → Final Cut → Premiere. Blueprint xác định cấu trúc câu chuyện và đối tượng khán giả cùng với Audience Resonance. Giai đoạn sản xuất tạo ra kịch bản, bảng phân cảnh (storyboard), video nhịp điệu (beat video) và các luồng cảnh đã kết xuất (rendered scene streams). Final Cut ghép nối các luồng đã chọn thành một tệp MP4 tổng thể — đây không phải là công cụ chỉnh sửa dạng dòng thời gian (timeline editor). Premiere xử lý việc trình chiếu, phân tích dữ liệu, đăng tải lên YouTube và xuất các gói sản phẩm."
+        "answer": "SceneFlow sử dụng quy trình làm việc có cấu trúc: Series (tùy chọn) → Blueprint → Sản xuất → Final Cut → Premiere. Blueprint xác định cấu trúc câu chuyện và đối tượng khán giả cùng với Audience Resonance. Giai đoạn sản xuất tạo ra kịch bản, bảng phân cảnh (pre-vis), video nhịp điệu (beat video) và các luồng cảnh đã kết xuất (rendered scene streams). Final Cut ghép nối các luồng đã chọn thành một tệp MP4 tổng thể — đây không phải là công cụ chỉnh sửa dạng dòng thời gian (timeline editor). Premiere xử lý việc trình chiếu, phân tích dữ liệu, đăng tải lên YouTube và xuất các gói sản phẩm."
       },
       {
         "question": "SceneFlow khác biệt như thế nào so với Gemini Studio hoặc Google Flow?",
@@ -1355,7 +1356,7 @@
       },
       {
         "question": "Premiere thực hiện chức năng gì nếu Screening Room là giai đoạn đánh giá?",
-        "answer": "Screening Room là giao diện đánh giá nằm trong Premiere — đồng thời hỗ trợ xem trước storyboard trong giai đoạn sản xuất. Bạn có thể chia sẻ các liên kết /s/, thu thập phản hồi từ các bên liên quan và dữ liệu phân tích tương tác tùy chọn (khi có sự đồng ý của người xem), xem xét điểm số và thông tin chi tiết về hình ảnh, sau đó xuất bản qua trình hướng dẫn của YouTube hoặc xuất dưới dạng gói dữ liệu."
+        "answer": "Screening Room là giao diện đánh giá nằm trong Premiere — đồng thời hỗ trợ xem trước pre-vis trong giai đoạn sản xuất. Bạn có thể chia sẻ các liên kết /s/, thu thập phản hồi từ các bên liên quan và dữ liệu phân tích tương tác tùy chọn (khi có sự đồng ý của người xem), xem xét điểm số và thông tin chi tiết về hình ảnh, sau đó xuất bản qua trình hướng dẫn của YouTube hoặc xuất dưới dạng gói dữ liệu."
       },
       {
         "question": "Tôi có cần kinh nghiệm về kỹ thuật hoặc biên tập không?",
@@ -1377,7 +1378,7 @@
   },
   "finalCta": {
     "title": "Đã sẵn sàng kiểm thử toàn bộ quy trình chưa?",
-    "subtitle": "Thực hiện từ khâu lên ý tưởng, phân cảnh (storyboard), sản xuất video cho đến xuất file MP4 hoàn chỉnh – tất cả trong cùng một studio. Hãy bắt đầu với gói 9 USD (mã Explorer) để trải nghiệm quy trình làm việc chú trọng vào nhịp điệu (beat-first).",
+    "subtitle": "Thực hiện từ khâu lên ý tưởng, phân cảnh (pre-vis), sản xuất video cho đến xuất file MP4 hoàn chỉnh – tất cả trong cùng một studio. Hãy bắt đầu với gói 9 USD (mã Explorer) để trải nghiệm quy trình làm việc chú trọng vào nhịp điệu (beat-first).",
     "cta": "Ra mắt studio của bạn với giá 9 đô la"
   },
   "footer": {
@@ -1418,5 +1419,36 @@
     "mute": "Tắt tiếng",
     "unmute": "Bật tiếng",
     "expandVideo": "Mở rộng video"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

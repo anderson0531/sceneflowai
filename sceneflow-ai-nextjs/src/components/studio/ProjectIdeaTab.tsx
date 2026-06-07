@@ -1973,7 +1973,8 @@ export default function ProjectIdeaTab() {
                         const { extractTextFromDocx } = await import('@/lib/upload/extractors')
                         text = await extractTextFromDocx(file)
                       } else {
-                        text = await file.text()
+                        const { normalizeImportedScriptText } = await import('@/lib/script/fdxParser')
+                        text = normalizeImportedScriptText(await file.text(), file.name)
                       }
                       if (typeof text === 'string' && text.trim().length > 0) {
                         setProjectDescription(text.slice(0, 20000))

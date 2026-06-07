@@ -35,7 +35,7 @@ export function StoryboardReviewHeader({
       <div className="w-full sm:w-auto min-w-0 flex-1">
         <h1 className="text-base sm:text-lg font-semibold text-white truncate">{title}</h1>
         <div className="flex flex-wrap items-center gap-2 mt-0.5">
-          <p className="text-xs text-gray-400">Storyboard Review</p>
+          <p className="text-xs text-gray-400">Pre-vis Review</p>
           <span className="text-[11px] text-gray-500">
             v{storyboardVersion}
             {revisionLabel ? ` · ${revisionLabel}` : ''}

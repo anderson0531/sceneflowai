@@ -30,11 +30,11 @@ export const CORE_CAPABILITIES_COPY = {
     badge: 'Hyper-Speed Production',
     title: 'Sceneflow Express',
     description:
-      'Auto-generate storyboards, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend.',
+      'Auto-generate pre-vis, animatics, and video beats concurrently. Move from script to shareable preview in minutes — then approve Beat Frames before final F2V spend.',
     items: [
       {
-        title: 'Express Storyboard',
-        desc: 'Review and share audio and video storyboards in minutes vs hours.',
+        title: 'Express Pre-vis',
+        desc: 'Review and share audio and video pre-vis in minutes vs hours.',
         time: 'Minutes vs Hours',
       },
       {

@@ -86,7 +86,7 @@ export default function TrustSafetyPage() {
 
                 <div>
                   <h4 className="text-sm font-semibold text-cyan-300 uppercase tracking-wide mb-2">Tier 3 — Additional moderation and risk mitigation (Studio)</h4>
-                  <p>Creators may run content validation across Blueprint, script, storyboard, and segment video using the same credit model as other Studio tools. Validation surfaces policy and risk signals as informational warnings—it does not replace your editorial judgment or export review.</p>
+                  <p>Creators may run content validation across Blueprint, script, pre-vis, and segment video using the same credit model as other Studio tools. Validation surfaces policy and risk signals as informational warnings—it does not replace your editorial judgment or export review.</p>
                   <ul className="list-disc pl-6 mt-2 space-y-1">
                     <li>Automated text screening for harmful or high-risk language</li>
                     <li>Visual content review for generated images and video</li>

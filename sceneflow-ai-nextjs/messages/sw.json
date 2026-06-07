@@ -29,11 +29,12 @@
     "platformWalkthrough": "Mwongozo wa Matumizi ya Jukwaa",
     "platform": "Jukwaa",
     "pricing": "Bei",
-    "faq": "Maswali Yanayoulizwa Mara Kwa Mara"
+    "faq": "Maswali Yanayoulizwa Mara Kwa Mara",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "Acha kuhangaika na tabu tano tofauti za AI. Studio moja inakuwezesha kuanzia hatua ya wazo hadi video iliyo tayari kuchapishwa.",
-    "subheadline": "Studio moja inayokuongoza kuanzia hatua ya wazo hadi video ya mwisho iliyo tayari kuchapishwa. Tazama *storyboard* yako kabla ya kulipia video ya mwisho — idhinisha muonekano wake badala ya kupoteza *credits* kwa majaribio ya kubahatisha. SceneFlow hurahisisha na kufanya kazi za kawaida ziende zenyewe — kama vile uandishi wa muswada, *storyboard*, sauti, na uunganishaji wa vipengele — huku ukiwa na udhibiti kamili wa kila hatua.",
+    "subheadline": "Studio moja inayokuongoza kuanzia hatua ya wazo hadi video ya mwisho iliyo tayari kuchapishwa. Tazama *pre-vis* yako kabla ya kulipia video ya mwisho — idhinisha muonekano wake badala ya kupoteza *credits* kwa majaribio ya kubahatisha. SceneFlow hurahisisha na kufanya kazi za kawaida ziende zenyewe — kama vile uandishi wa muswada, *pre-vis*, sauti, na uunganishaji wa vipengele — huku ukiwa na udhibiti kamili wa kila hatua.",
     "audienceMicroLine": "Imeundwa kwa ajili ya wabunifu wanaotaka matokeo, na timu zinazotaka kuona jinsi inavyofanya kazi.",
     "ctaSecondary": "Tazama 'What's Possible'",
     "ctaToolStack": "Ona jinsi inavyochukua nafasi ya mkusanyiko wako wa zana.",
@@ -102,7 +103,7 @@
     "modes": {
       "automate": {
         "label": "Iweke ijiendeshe yenyewe",
-        "description": "Mchakato wa kazi unaoongozwa — idhinisha michoro ya awali (storyboards), kamilisha na kutoa kazi kwa haraka zaidi"
+        "description": "Mchakato wa kazi unaoongozwa — idhinisha michoro ya awali (pre-vis), kamilisha na kutoa kazi kwa haraka zaidi"
       },
       "engine": {
         "label": "Nionyeshe injini",
@@ -192,9 +193,9 @@
     "title": "Mchakato wa Uzalishaji wa Video Unaozingatia Mdundo Kwanza",
     "subtitle": "Thibitisha kabla ya kuzalisha matokeo ya mwisho — siyo kuzalisha upya kwa bahati nasibu.",
     "intro": "Hakuna tena mchakato wa kubahatisha na kujaribu ili kupata matokeo. Unakagua na kuidhinisha mwonekano kabla ya SceneFlow kutumia krediti kwa ajili ya video ya mwisho.",
-    "description": "SceneFlow hupanga utaratibu wa kuidhinisha vipengele vya kuona katika kila hatua: Express storyboard kwa ajili ya mapitio, Beat Frames ili kudhibiti mpangilio, kisha F2V kwa kila mpigo (beat). Unaboresha mwonekano kabla ya kutumia 'credits' kwa matokeo yasiyotarajiwa au makosa ya mfumo (drift na hallucinations).",
+    "description": "SceneFlow hupanga utaratibu wa kuidhinisha vipengele vya kuona katika kila hatua: Express Pre-vis kwa ajili ya mapitio, Beat Frames ili kudhibiti mpangilio, kisha F2V kwa kila mpigo (beat). Unaboresha mwonekano kabla ya kutumia 'credits' kwa matokeo yasiyotarajiwa au makosa ya mfumo (drift na hallucinations).",
     "steps": [
-      "Express storyboard — shiriki midundo yenye sauti na picha ili ikaguliwe ndani ya dakika chache",
+      "Express Pre-vis — shiriki midundo yenye sauti na picha ili ikaguliwe ndani ya dakika chache",
       "Beat Frames — funga muundo wa mwanzo/mwisho kwa mwendelezo wa Reference Library",
       "F2V kwa kila mpigo — tengeneza video kutoka kwenye fremu zilizoidhinishwa, badala ya maelekezo yasiyo na mwongozo mahususi.",
       "Production Mixer — muda, sauti, na usafirishaji wa mtiririko kwenda kwenye mkusanyiko wa Final Cut"
@@ -269,7 +270,7 @@
       "syncLabel": "Faili moja la mradi — hakuna kuhangaika na vichupo vingi",
       "benefits": [
         "Hatua zinazoongozwa — komesha kuhangaika na tabu nyingi na kupoteza muktadha",
-        "Uidhinishaji wa mwongozo wa taswira (storyboard) — sitisha marekebisho ya mara kwa mara kabla ya kuanza kutumia fedha kwa ajili ya video.",
+        "Uidhinishaji wa mwongozo wa taswira (pre-vis) — sitisha marekebisho ya mara kwa mara kabla ya kuanza kutumia fedha kwa ajili ya video.",
         "Alama ya Audience Resonance kabla ya uundaji wa picha wenye uzito mkubwa",
         "Nakala kuu tayari kwa kuchapishwa ndani ya dakika 30–60, badala ya zaidi ya saa 4"
       ],
@@ -290,7 +291,7 @@
   "howItWorks": {
     "title": "Kuanzia wazo hadi video iliyo tayari kuchapishwa",
     "titleAccent": "Mstari mmoja wa mtiririko ulioelekezwa",
-    "subtitle": "Mfululizo ni wa hiari. Njia kuu ni Blueprint → Uzalishaji → Final Cut → Premiere — ikijumuisha hatua za *storyboard*, *animatic*, video, na faili kuu la MP4.",
+    "subtitle": "Mfululizo ni wa hiari. Njia kuu ni Blueprint → Uzalishaji → Final Cut → Premiere — ikijumuisha hatua za *pre-vis*, *animatic*, video, na faili kuu la MP4.",
     "tagline": "Kila hatua imefanywa kujiendesha yenyewe kwa ustadi. Kila hatua inakupa udhibiti kamili.",
     "optionalBadge": "Hiari",
     "optionalSuffix": " (hiari)",
@@ -335,16 +336,16 @@
         "id": "uzalishaji",
         "stepLabel": "Uzalishaji",
         "subtitle": "Kutoka Hati hadi Utiririshaji",
-        "description": "Vichupo vya Script na Action huongoza mchakato kuanzia Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, na mitiririko ya MP4 — bila kuhitaji kubadili zana.",
+        "description": "Vichupo vya Script na Action huongoza mchakato kuanzia Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, na mitiririko ya MP4 — bila kuhitaji kubadili zana.",
         "keySteps": [
           "Thibitisha hati, sauti, na sauti ya eneo la tukio",
-          "Express storyboard — ghala na kushiriki kwa ajili ya mapitio",
+          "Express Pre-vis — ghala na kushiriki kwa ajili ya mapitio",
           "Beat Frames → Dashibodi ya Msimamizi → Mtiririko wa Utoaji",
           "Tuma mitiririko iliyokamilika kwa Final Cut"
         ],
         "keyFeatures": [
           "Foundation — hati, sauti, sauti ya tukio, funga hati",
-          "Express storyboard — mwelekeo na fremu kwa dakika; ghala na kushiriki",
+          "Express Pre-vis — mwelekeo na fremu kwa dakika; ghala na kushiriki",
           "Beat Frames na Mixer — fremu za kuanzia/kumalizia, Director Console, kutoa (render) mitiririko ya MP4",
           "Mitiririko ya Uzalishaji — kagua matokeo, tengeneza upya midundo iliyopitwa na wakati, tuma kwa Final Cut"
         ]
@@ -390,7 +391,7 @@
     "title": "Video yoyote unayoweza kuifikiria,",
     "titleAccent": "Ijenge katika SceneFlow",
     "subtitle": "Maonyesho ya mali isiyohamishika, elimu, podikasti, miundo ya habari, kampeni za chapa, na simulizi za sinema — studio moja inayojiendesha yenyewe, kuanzia hatua ya wazo hadi kazi iliyokamilika na tayari kuchapishwa.",
-    "qualifyingStatement": "SceneFlow hubadilisha picha zako asili, faili ulizopakia, na maelezo kuwa video za mwongozo zenye simulizi — huku ukidhibiti vipengele vya hiari kama vile sauti na uwepo wa wahusika. Hizi ni mawasilisho yaliyoboreshwa kwa kutumia Akili Bandia (AI): ni taswira halisi zinazotokana na nyenzo zako, na si rekodi za moja kwa moja za kamera. Hakiki na kuidhinisha kila mpangilio wa matukio (storyboard) kabla ya kuchapisha; weka lebo wazi kwenye video hizo ili watazamaji wafahamu kile wanachotazama.",
+    "qualifyingStatement": "SceneFlow hubadilisha picha zako asili, faili ulizopakia, na maelezo kuwa video za mwongozo zenye simulizi — huku ukidhibiti vipengele vya hiari kama vile sauti na uwepo wa wahusika. Hizi ni mawasilisho yaliyoboreshwa kwa kutumia Akili Bandia (AI): ni taswira halisi zinazotokana na nyenzo zako, na si rekodi za moja kwa moja za kamera. Hakiki na kuidhinisha kila mpangilio wa matukio (pre-vis) kabla ya kuchapisha; weka lebo wazi kwenye video hizo ili watazamaji wafahamu kile wanachotazama.",
     "ui": {
       "useCases": "Visa vya Matumizi",
       "sectors": "Sekta {count}",
@@ -480,10 +481,10 @@
         },
         "solution": {
           "title": "Badilisha huduma yako ya video kuwa bidhaa",
-          "description": "Tengeneza mifumo ya kazi inayoweza kurudiarudiwa kwa ajili ya studio za kutengeneza kumbukumbu za maisha na sekta maalum. Kuanzia upakiaji wa violezo, uundaji wa sauti zinazofanana na halisi (voice clones), na avata, hadi uidhinishaji wa mwongozo wa taswira (storyboard) — rekebisha huduma kulingana na mahitaji ya kila mteja na uongeze faida kupitia wingi wa kazi.",
+          "description": "Tengeneza mifumo ya kazi inayoweza kurudiarudiwa kwa ajili ya studio za kutengeneza kumbukumbu za maisha na sekta maalum. Kuanzia upakiaji wa violezo, uundaji wa sauti zinazofanana na halisi (voice clones), na avata, hadi uidhinishaji wa mwongozo wa taswira (pre-vis) — rekebisha huduma kulingana na mahitaji ya kila mteja na uongeze faida kupitia wingi wa kazi.",
           "features": [
             "Violezo vya kumbukumbu binafsi vyenye vipengele vya kupakia picha, kuiga sauti, na waongozaji wa kidijitali (avatars)",
-            "Mchakato wa kupokea wateja ukihusishwa na Blueprint na hatua za kuidhinisha ubao wa michoro (storyboard)",
+            "Mchakato wa kupokea wateja ukihusishwa na Blueprint na hatua za kuidhinisha ubao wa michoro (pre-vis)",
             "Vifurushi vya studio vya chapa nyeupe kwa ajili ya video za kumbukumbu ya historia ya maisha, video za heshima, na video za mfumo wa usajili",
             "Faida kwenye mikopo badala ya gharama za uendeshaji kwa kila kipindi cha upigaji picha"
           ]
@@ -649,7 +650,7 @@
           {
             "id": "Video za kuelezea bidhaa",
             "label": "Video za Kuelezea Bidhaa",
-            "description": "Hebu fikiria kupakia picha za orodha ya bidhaa pamoja na sauti ya mtangazaji na avatar iliyohifadhiwa ya chapa yako. Kisha, tengeneza papo hapo mfululizo wa video za ufafanuzi zenye ubora wa sinema — na uidhinishe mpangilio wa matukio (storyboard) kabla ya kukamilisha utengenezaji wa video hizo."
+            "description": "Hebu fikiria kupakia picha za orodha ya bidhaa pamoja na sauti ya mtangazaji na avatar iliyohifadhiwa ya chapa yako. Kisha, tengeneza papo hapo mfululizo wa video za ufafanuzi zenye ubora wa sinema — na uidhinishe mpangilio wa matukio (pre-vis) kabla ya kukamilisha utengenezaji wa video hizo."
           },
           {
             "id": "Shuhuda za uchambuzi wa kisa",
@@ -753,9 +754,9 @@
     "viewDetails": "Tazama maelezo",
     "beatFirst": {
       "title": "Mchakato wa Uzalishaji wa Video Unaozingatia Mdundo Kwanza",
-      "description": "Idhinisha vipengele vya *storyboard* na Beat Frames kabla ya hatua ya F2V — ili kupunguza uundaji upya usio na mwelekeo unaotokana na makosa ya mfumo (*hallucination*) na kupotea kwa mtiririko wa taswira. Fuata mkondo mmoja uliopangwa vizuri kuanzia hatua ya mapitio hadi klipu ya mwisho.",
+      "description": "Idhinisha vipengele vya *pre-vis* na Beat Frames kabla ya hatua ya F2V — ili kupunguza uundaji upya usio na mwelekeo unaotokana na makosa ya mfumo (*hallucination*) na kupotea kwa mtiririko wa taswira. Fuata mkondo mmoja uliopangwa vizuri kuanzia hatua ya mapitio hadi klipu ya mwisho.",
       "keyFeatures": [
-        "Express storyboard kwa ajili ya mapitio — shiriki midundo kabla ya mchakato mzito wa uundaji wa mwisho (rendering)",
+        "Express Pre-vis kwa ajili ya mapitio — shiriki midundo kabla ya mchakato mzito wa uundaji wa mwisho (rendering)",
         "Beat Frames muundo wa kufuli — Reference Library mwendelezo",
         "F2V kwa kila mpigo — tengeneza video kutoka kwa fremu zilizoidhinishwa",
         "Muda na mitiririko ya kichanganyaji — hamishia kwenye mkusanyiko wa Final Cut"
@@ -765,7 +766,7 @@
     },
     "screeningRoom": {
       "title": "Mapitio na Uchambuzi wa Hadhira",
-      "description": "Viungo vya faragha vya kushiriki na wadau — vinavyojumuisha alama zilizowekwa kwa mikono, maoni yaliyopangwa, na takwimu za hiari za ushiriki (kwa idhini ya mtazamaji). Hutumika katika Premiere kabla ya kuchapishwa na kwa ajili ya kuhakiki ubao wa hadithi (storyboard) wa hatua ya uzalishaji.",
+      "description": "Viungo vya faragha vya kushiriki na wadau — vinavyojumuisha alama zilizowekwa kwa mikono, maoni yaliyopangwa, na takwimu za hiari za ushiriki (kwa idhini ya mtazamaji). Hutumika katika Premiere kabla ya kuchapishwa na kwa ajili ya kuhakiki ubao wa hadithi (pre-vis) wa hatua ya uzalishaji.",
       "keyFeatures": [
         "Vikao vya tathmini vya faragha — viungo salama vya kushiriki kwa ajili ya wadau",
         "Maoni yaliyopangwa kutoka kwa hadhira — viwango na sehemu za maoni huru",
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Injini ya Uzalishaji wa Haraka",
-        "description": "Zalisha picha na sehemu za video kiotomatiki na kwa wakati mmoja. Express Storyboard hukuwezesha kukagua na kushiriki rasimu za video (storyboards) ndani ya dakika chache. Express Storyboard hutengeneza matukio kamili ya mtindo wa Ken Burns ndani ya dakika chache, huku Express Video ikitoa matukio ya mwisho ya video ndani ya dakika chache badala ya siku.",
+        "description": "Zalisha picha na sehemu za video kiotomatiki na kwa wakati mmoja. Express Pre-vis hukuwezesha kukagua na kushiriki rasimu za video (pre-vis) ndani ya dakika chache. Express Pre-vis hutengeneza matukio kamili ya mtindo wa Ken Burns ndani ya dakika chache, huku Express Video ikitoa matukio ya mwisho ya video ndani ya dakika chache badala ya siku.",
         "keyFeatures": [
           "Uzalishaji wa wakati mmoja — picha na video katika mandhari mbalimbali kwa mpigo",
-          "Express Storyboard — hakiki za sauti na picha zinazoweza kushirikiwa ndani ya dakika chache",
+          "Express Pre-vis — hakiki za sauti na picha zinazoweza kushirikiwa ndani ya dakika chache",
           "Express Animatics — Mwendo wa Ken Burns kutoka kwenye picha tuli",
           "Express Video — klipu za kiwango cha tukio ndani ya dakika chache, si siku nyingi."
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "Uendeshaji wa Uzalishaji kwa Njia ya Otomatiki",
-        "description": "Vichupo vya Script na Action huongoza mchakato kuanzia Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, na mitiririko ya MP4 — bila kuhitaji kubadili zana.",
+        "description": "Vichupo vya Script na Action huongoza mchakato kuanzia Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, na mitiririko ya MP4 — bila kuhitaji kubadili zana.",
         "keyFeatures": [
           "Foundation — hati, sauti, sauti ya tukio, funga hati",
-          "Express storyboard — mwelekeo na fremu kwa dakika; ghala na kushiriki",
+          "Express Pre-vis — mwelekeo na fremu kwa dakika; ghala na kushiriki",
           "Beat Frames na Mixer — fremu za kuanzia/kumalizia, Director Console, kutoa (render) mitiririko ya MP4",
           "Mitiririko ya Uzalishaji — kagua matokeo, tengeneza upya midundo iliyopitwa na wakati, tuma kwa Final Cut"
         ],
         "screenshotSlot": "Weka picha ya skrini: Dashibodi ya uzalishaji inayoonyesha hati, Beat Frames, na kifaa cha kuchanganya sauti (Mixer)",
-        "videoSlot": "Ingiza klipu ya sekunde 30: Foundation, Express storyboard, Beat Frames, na usafirishaji wa mtiririko"
+        "videoSlot": "Ingiza klipu ya sekunde 30: Foundation, Express Pre-vis, Beat Frames, na usafirishaji wa mtiririko"
       },
       {
         "id": "12",
@@ -968,7 +969,7 @@
       {
         "id": "14",
         "title": "Mapitio na Uchambuzi wa Hadhira",
-        "description": "Viungo vya faragha vya kushiriki na wadau — vinavyojumuisha alama zilizowekwa kwa mikono, maoni yaliyopangwa, na takwimu za hiari za ushiriki (kwa idhini ya mtazamaji). Hutumika katika Premiere kabla ya kuchapishwa na kwa ajili ya kuhakiki ubao wa hadithi (storyboard) wa hatua ya uzalishaji.",
+        "description": "Viungo vya faragha vya kushiriki na wadau — vinavyojumuisha alama zilizowekwa kwa mikono, maoni yaliyopangwa, na takwimu za hiari za ushiriki (kwa idhini ya mtazamaji). Hutumika katika Premiere kabla ya kuchapishwa na kwa ajili ya kuhakiki ubao wa hadithi (pre-vis) wa hatua ya uzalishaji.",
         "keyFeatures": [
           "Vikao vya tathmini vya faragha — viungo salama vya kushiriki kwa ajili ya wadau",
           "Maoni yaliyopangwa kutoka kwa hadhira — viwango na sehemu za maoni huru",
@@ -1090,7 +1091,7 @@
     "express": {
       "badge": "Uzalishaji wa Kasi ya Juu Sana",
       "title": "Sceneflow Express",
-      "description": "Tengeneza kiotomatiki vibao vya hadithi (storyboards), animatiki, na vipengele vya video kwa wakati mmoja. Badilisha hati kuwa onyesho la awali linaloweza kushirikiwa ndani ya dakika chache — kisha uidhinishe Beat Frames kabla ya matumizi ya mwisho ya F2V.",
+      "description": "Tengeneza kiotomatiki vibao vya hadithi (pre-vis), animatiki, na vipengele vya video kwa wakati mmoja. Badilisha hati kuwa onyesho la awali linaloweza kushirikiwa ndani ya dakika chache — kisha uidhinishe Beat Frames kabla ya matumizi ya mwisho ya F2V.",
       "items": [
         {
           "title": "Ubao wa Hadithi wa Haraka",
@@ -1335,7 +1336,7 @@
     "items": [
       {
         "question": "Je, mtiririko wa kazi wa SceneFlow unaendeshwaje kuanzia hatua ya wazo hadi video iliyo tayari kuchapishwa?",
-        "answer": "SceneFlow hutumia mtiririko wa kazi uliopangwa: Mfululizo (hiari) → Blueprint → Uzalishaji → Final Cut → Premiere. Blueprint hubainisha muundo wa hadithi na hadhira lengwa kwa kutumia Audience Resonance. Hatua ya uzalishaji hutengeneza hati, ubao wa hadithi (storyboard), video ya mwongozo wa midundo (beat video), na mitiririko ya matukio iliyokamilishwa (rendered scenes). Final Cut huunganisha mitiririko iliyochaguliwa kuwa faili moja kuu la MP4 — si zana ya kuhariri kwa mfumo wa 'timeline'. Premiere hushughulikia maonyesho, uchambuzi wa takwimu, uchapishaji kwenye YouTube, na vifurushi vya faili zilizotayarishwa kwa ajili ya matumizi ya mwisho."
+        "answer": "SceneFlow hutumia mtiririko wa kazi uliopangwa: Mfululizo (hiari) → Blueprint → Uzalishaji → Final Cut → Premiere. Blueprint hubainisha muundo wa hadithi na hadhira lengwa kwa kutumia Audience Resonance. Hatua ya uzalishaji hutengeneza hati, ubao wa hadithi (pre-vis), video ya mwongozo wa midundo (beat video), na mitiririko ya matukio iliyokamilishwa (rendered scenes). Final Cut huunganisha mitiririko iliyochaguliwa kuwa faili moja kuu la MP4 — si zana ya kuhariri kwa mfumo wa 'timeline'. Premiere hushughulikia maonyesho, uchambuzi wa takwimu, uchapishaji kwenye YouTube, na vifurushi vya faili zilizotayarishwa kwa ajili ya matumizi ya mwisho."
       },
       {
         "question": "Je, SceneFlow inatofautianaje na Gemini Studio au Google Flow?",
@@ -1355,7 +1356,7 @@
       },
       {
         "question": "Je, Premiere hufanya nini ikiwa Screening Room ndiyo awamu ya mapitio?",
-        "answer": "Screening Room ni kiolesura cha mapitio kilicho ndani ya Premiere — na hutumika pia kuhakiki ubao wa hadithi (storyboard) wa uzalishaji. Shiriki viungo vya /s/, kusanya maoni kutoka kwa wadau na takwimu za hiari za ushiriki (kwa idhini ya mtazamaji), kagua alama na maarifa ya taswira, kisha uchapishe kupitia zana ya YouTube au usafirishe vifurushi vya faili."
+        "answer": "Screening Room ni kiolesura cha mapitio kilicho ndani ya Premiere — na hutumika pia kuhakiki ubao wa hadithi (pre-vis) wa uzalishaji. Shiriki viungo vya /s/, kusanya maoni kutoka kwa wadau na takwimu za hiari za ushiriki (kwa idhini ya mtazamaji), kagua alama na maarifa ya taswira, kisha uchapishe kupitia zana ya YouTube au usafirishe vifurushi vya faili."
       },
       {
         "question": "Je, ninahitaji uzoefu wa kiufundi au wa kuhariri?",
@@ -1377,7 +1378,7 @@
   },
   "finalCta": {
     "title": "Je, uko tayari kujaribu mchakato mzima?",
-    "subtitle": "Tekeleza hatua zote—kuanzia wazo, uandaaji wa *storyboard* na video, hadi faili la mwisho la MP4—katika studio moja. Anza na kifurushi cha $9 Explorer na ujionee jinsi mtiririko wa kazi unaotanguliza mdundo unavyofanya kazi.",
+    "subtitle": "Tekeleza hatua zote—kuanzia wazo, uandaaji wa *pre-vis* na video, hadi faili la mwisho la MP4—katika studio moja. Anza na kifurushi cha $9 Explorer na ujionee jinsi mtiririko wa kazi unaotanguliza mdundo unavyofanya kazi.",
     "cta": "Anzisha studio yako kwa $9"
   },
   "footer": {
@@ -1418,5 +1419,36 @@
     "mute": "Zima sauti",
     "unmute": "Washa sauti",
     "expandVideo": "Panua video"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

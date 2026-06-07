@@ -446,7 +446,7 @@ export function ProjectCostCalculator({
             
             {productionType === 'animatic' && (
               <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-sm text-emerald-300">
-                <strong>Animatic Mode:</strong> Uses still frames with audio. Perfect for storyboarding, client previews, or podcast videos. Significantly lower credit cost.
+                <strong>Animatic Mode:</strong> Uses still frames with audio. Perfect for pre-vis, client previews, or podcast videos. Significantly lower credit cost.
               </div>
             )}
           </div>

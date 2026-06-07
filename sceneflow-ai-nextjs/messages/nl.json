@@ -29,11 +29,12 @@
     "platformWalkthrough": "Rondleiding door het platform",
     "platform": "Platform",
     "pricing": "Prijzen",
-    "faq": "Veelgestelde vragen"
+    "faq": "Veelgestelde vragen",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "Stop met het jongleren tussen vijf AI-tabbladen. Eén studio brengt je van idee naar een video die klaar is voor publicatie.",
-    "subheadline": "Eén studio die je begeleidt van idee tot publicatieklare master. Bekijk je storyboard voordat je betaalt voor de uiteindelijke video: keur de visuele stijl goed in plaats van credits te verspillen aan trial-and-error-generaties. SceneFlow automatiseert het tijdrovende werk – script, storyboard, voice-over en montage – terwijl jij de volledige controle behoudt over elk detail.",
+    "subheadline": "Eén studio die je begeleidt van idee tot publicatieklare master. Bekijk je pre-vis voordat je betaalt voor de uiteindelijke video: keur de visuele stijl goed in plaats van credits te verspillen aan trial-and-error-generaties. SceneFlow automatiseert het tijdrovende werk – script, pre-vis, voice-over en montage – terwijl jij de volledige controle behoudt over elk detail.",
     "audienceMicroLine": "Ontwikkeld voor makers die resultaten willen en teams die willen zien hoe het werkt.",
     "ctaSecondary": "Bekijk 'What's Possible'",
     "ctaToolStack": "Ontdek hoe het je toolstack vervangt",
@@ -82,7 +83,7 @@
       },
       {
         "label": "Goedkeuren vóór de definitieve video",
-        "detail": "Bekijk de storyboard-momenten na voordat je gaat renderen."
+        "detail": "Bekijk de pre-vis-momenten na voordat je gaat renderen."
       },
       {
         "label": "Test eerst je verhaal",
@@ -102,7 +103,7 @@
     "modes": {
       "automate": {
         "label": "Automatiseer het",
-        "description": "Begeleide workflow — keur storyboards goed, lever sneller op"
+        "description": "Begeleide workflow — keur pre-vis goed, lever sneller op"
       },
       "engine": {
         "label": "Laat me de motor zien",
@@ -192,9 +193,9 @@
     "title": "Videopijplijn op basis van beats",
     "subtitle": "Goedkeuren vóór het renderen — geen regeneratie à la een gokkast",
     "intro": "Geen generaties op basis van gokwerk. Je bekijkt een voorbeeld en keurt de uitstraling goed voordat SceneFlow credits verbruikt voor de uiteindelijke video.",
-    "description": "SceneFlow structureert de visuele goedkeuring in elke fase: Express storyboard voor beoordeling, Beat Frames om de compositie vast te leggen, en vervolgens F2V per beat. Je verfijnt de visuele stijl voordat je credits verspilt aan drift en hallucinaties.",
+    "description": "SceneFlow structureert de visuele goedkeuring in elke fase: Express Pre-vis voor beoordeling, Beat Frames om de compositie vast te leggen, en vervolgens F2V per beat. Je verfijnt de visuele stijl voordat je credits verspilt aan drift en hallucinaties.",
     "steps": [
-      "Express storyboard — deel audiovisuele beats binnen enkele minuten ter beoordeling",
+      "Express Pre-vis — deel audiovisuele beats binnen enkele minuten ter beoordeling",
       "Beat Frames — vergrendel begin-/eindsamenstelling met Reference Library-continuïteit",
       "F2V per beat — genereer video op basis van goedgekeurde frames, niet op basis van blinde prompts",
       "Production Mixer — timing, audio en stream-export naar Final Cut-assemblage"
@@ -269,7 +270,7 @@
       "syncLabel": "Eén projectbestand — niet hoeven jongleren met tabbladen",
       "benefits": [
         "Begeleide fasen — geen gedoe meer met tabbladen en verlies van context",
-        "Goedkeuring van het storyboard — voorkom kostbare herzieningen voordat de videoproductie van start gaat.",
+        "Goedkeuring van het pre-vis — voorkom kostbare herzieningen voordat de videoproductie van start gaat.",
         "Audience Resonance score vóór zware rendering",
         "Publicatieklare master in 30–60 minuten, niet meer dan 4 uur"
       ],
@@ -290,7 +291,7 @@
   "howItWorks": {
     "title": "Van concept tot publicatieklare video",
     "titleAccent": "Eén begeleide pijplijn",
-    "subtitle": "De serie is optioneel. Het kerntraject is Blueprint → Productie → Final Cut → Premiere — met onderweg de niveaus storyboard, animatic, video en master-MP4.",
+    "subtitle": "De serie is optioneel. Het kerntraject is Blueprint → Productie → Final Cut → Premiere — met onderweg de niveaus pre-vis, animatic, video en master-MP4.",
     "tagline": "Elke stap is vakkundig geautomatiseerd. Elke stap geeft u volledige controle.",
     "optionalBadge": "Optioneel",
     "optionalSuffix": " (optioneel)",
@@ -335,16 +336,16 @@
         "id": "productie",
         "stepLabel": "Productie",
         "subtitle": "Van script naar streams",
-        "description": "De tabbladen Script en Action leiden door Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer en MP4-streams — u hoeft niet van tool te wisselen.",
+        "description": "De tabbladen Script en Action leiden door Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer en MP4-streams — u hoeft niet van tool te wisselen.",
         "keySteps": [
           "Script, stemmen en scène-audio vastleggen",
-          "Express storyboard — galerij en delen voor beoordeling",
+          "Express Pre-vis — galerij en delen voor beoordeling",
           "Beat Frames → Regieconsole → Renderstream",
           "Stuur voltooide streams naar Final Cut"
         ],
         "keyFeatures": [
           "Foundation — script, stemmen, scène-audio, script vastleggen",
-          "Express storyboard — richting en frames in minuten; galerij en delen",
+          "Express Pre-vis — richting en frames in minuten; galerij en delen",
           "Beat Frames en Mixer — start-/eindframes, Director Console, MP4-streams renderen",
           "Productiestromen — uitvoer beoordelen, verouderde beats opnieuw renderen, naar Final Cut sturen"
         ]
@@ -390,7 +391,7 @@
     "title": "Welke video je je ook kunt voorstellen,",
     "titleAccent": "Bouw het in SceneFlow",
     "subtitle": "Vastgoedpresentaties, educatie, podcasts, nieuwsformats, merkcampagnes en filmische verhalen — één geautomatiseerde studio, van concept tot publicatieklare master.",
-    "qualifyingStatement": "SceneFlow zet uw bronfoto's, uploads en beschrijvingen om in video-rondleidingen met voice-over — inclusief optionele spraak en personages die u zelf beheert. Het gaat hier om door AI bewerkte presentaties: realistische visualisaties op basis van uw eigen materiaal, geen live camera-opnames. Controleer en keur elk storyboard goed voordat u het publiceert; voorzie het eindresultaat van een duidelijke aanduiding, zodat kijkers weten waar ze naar kijken.",
+    "qualifyingStatement": "SceneFlow zet uw bronfoto's, uploads en beschrijvingen om in video-rondleidingen met voice-over — inclusief optionele spraak en personages die u zelf beheert. Het gaat hier om door AI bewerkte presentaties: realistische visualisaties op basis van uw eigen materiaal, geen live camera-opnames. Controleer en keur elk pre-vis goed voordat u het publiceert; voorzie het eindresultaat van een duidelijke aanduiding, zodat kijkers weten waar ze naar kijken.",
     "ui": {
       "useCases": "Toepassingen",
       "sectors": "{count} SECTOREN",
@@ -457,7 +458,7 @@
             "Vervang fotoshoots door externe partijen door begeleide interne workflows.",
             "Merkconforme sjablonen en referentiebibliotheken",
             "Inzicht in kredietverbruik en budgetlimieten per project",
-            "Keur de storyboards goed voordat u voor de uiteindelijke video betaalt."
+            "Keur de pre-vis goed voordat u voor de uiteindelijke video betaalt."
           ]
         },
         "win": "Lever video's voor training, communicatie en campagnes op volgens jouw planning — niet die van de backlog van de leverancier.",
@@ -480,10 +481,10 @@
         },
         "solution": {
           "title": "Maak een product van je videodienst",
-          "description": "Creëer herhaalbare workflows voor studio's die memoires produceren en voor specifieke marktsegmenten. Van het uploaden van templates, stemklonen en avatars tot goedkeuring van storyboards: pas alles aan per klant en vergroot je marges door schaalvoordeel.",
+          "description": "Creëer herhaalbare workflows voor studio's die memoires produceren en voor specifieke marktsegmenten. Van het uploaden van templates, stemklonen en avatars tot goedkeuring van pre-vis: pas alles aan per klant en vergroot je marges door schaalvoordeel.",
           "features": [
             "Sjablonen voor levensverhalen met foto-uploads, stemklonen en avatar-hosts",
-            "Klantintake gekoppeld aan Blueprint en de fasen voor storyboardgoedkeuring",
+            "Klantintake gekoppeld aan Blueprint en de fasen voor pre-visgoedkeuring",
             "White-label studiopakketten voor video's rondom levensverhalen, eerbetonen en abonnementen",
             "Marge op credits in plaats van overhead per shoot"
           ]
@@ -607,7 +608,7 @@
           {
             "id": "videomemoires",
             "label": "Videomemoires",
-            "description": "Stel je voor dat je familiefoto's, audio-opnames van interviews en scène-aantekeningen uploadt, in combinatie met een opgeslagen vertelstem. Vervolgens creëer je in een handomdraai video-memoires die zijn opgedeeld in hoofdstukken — en keur je het storyboard goed vóór de uiteindelijke rendering."
+            "description": "Stel je voor dat je familiefoto's, audio-opnames van interviews en scène-aantekeningen uploadt, in combinatie met een opgeslagen vertelstem. Vervolgens creëer je in een handomdraai video-memoires die zijn opgedeeld in hoofdstukken — en keur je het pre-vis goed vóór de uiteindelijke rendering."
           }
         ]
       },
@@ -649,7 +650,7 @@
           {
             "id": "productuitlegvideo's",
             "label": "Productuitlegvideo's",
-            "description": "Stel je voor dat je productfoto's uploadt en daarbij de opgeslagen stem en avatar van je merk gebruikt. Vervolgens genereer je direct een filmische serie uitlegvideo's — en keur je het storyboard goed voordat je de video's rendert."
+            "description": "Stel je voor dat je productfoto's uploadt en daarbij de opgeslagen stem en avatar van je merk gebruikt. Vervolgens genereer je direct een filmische serie uitlegvideo's — en keur je het pre-vis goed voordat je de video's rendert."
           },
           {
             "id": "testimonials bij casestudy's",
@@ -753,19 +754,19 @@
     "viewDetails": "Details bekijken",
     "beatFirst": {
       "title": "Videopijplijn op basis van beats",
-      "description": "Keur storyboard-momenten en Beat Frames goed vóór F2V — dit leidt tot minder blinde regeneraties als gevolg van hallucinaties en visuele afwijkingen. Eén gestructureerd traject van beoordeling tot de uiteindelijke clip.",
+      "description": "Keur pre-vis-momenten en Beat Frames goed vóór F2V — dit leidt tot minder blinde regeneraties als gevolg van hallucinaties en visuele afwijkingen. Eén gestructureerd traject van beoordeling tot de uiteindelijke clip.",
       "keyFeatures": [
-        "Express storyboard ter beoordeling — deel beats vóór zware rendering",
+        "Express Pre-vis ter beoordeling — deel beats vóór zware rendering",
         "Beat Frames samenstelling van de vergrendeling — Reference Library continuïteit",
         "F2V per beat — genereer video op basis van goedgekeurde frames",
         "Mixertiming en -stromen — export naar Final Cut-assemblage"
       ],
-      "screenshotSlot": "Voeg screenshot in: Beat Frames en goedkeuring van het storyboard vóór het genereren van de video",
+      "screenshotSlot": "Voeg screenshot in: Beat Frames en goedkeuring van het pre-vis vóór het genereren van de video",
       "videoSlot": "Fragment van 00:30 invoegen: beats goedkeuren, frames vastzetten en vervolgens F2V-clips genereren"
     },
     "screeningRoom": {
       "title": "Beoordeling en analyses van het publiek",
-      "description": "Privé-deellinks (/s/) voor stakeholders — handmatige scores, gestructureerde feedback en optionele engagement-analytics (met toestemming van de kijker). Wordt gebruikt in Premiere vóór publicatie en voor de preview van het productie-storyboard.",
+      "description": "Privé-deellinks (/s/) voor stakeholders — handmatige scores, gestructureerde feedback en optionele engagement-analytics (met toestemming van de kijker). Wordt gebruikt in Premiere vóór publicatie en voor de preview van het productie-pre-vis.",
       "keyFeatures": [
         "Besloten beoordelingssessies — beveiligde deellinks voor stakeholders",
         "Gestructureerde feedback van het publiek — beoordelingen en open vragen",
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Express-generatiemodule",
-        "description": "Genereer automatisch en gelijktijdig afbeeldingen en videosegmenten. Met Express Storyboard kunt u audiovisuele storyboards binnen enkele minuten beoordelen en delen. Express Animatics rendert volledige Ken Burns-scènes in enkele minuten, terwijl Express Video definitieve videoscènes oplevert in minuten in plaats van dagen.",
+        "description": "Genereer automatisch en gelijktijdig afbeeldingen en videosegmenten. Met Express Pre-vis kunt u audiovisuele pre-vis binnen enkele minuten beoordelen en delen. Express Animatics rendert volledige Ken Burns-scènes in enkele minuten, terwijl Express Video definitieve videoscènes oplevert in minuten in plaats van dagen.",
         "keyFeatures": [
           "Gelijktijdige generatie — beelden en video voor meerdere scènes tegelijk",
-          "Express Storyboard — deelbare audiovisuele previews in enkele minuten",
+          "Express Pre-vis — deelbare audiovisuele previews in enkele minuten",
           "Express Animatics — Ken Burns-bewegingseffect op stilstaande beelden",
           "Express Video — clips op scèneniveau in minuten, niet in dagen"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "Productieautomatisering",
-        "description": "De tabbladen Script en Action leiden door Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer en MP4-streams — u hoeft niet van tool te wisselen.",
+        "description": "De tabbladen Script en Action leiden door Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer en MP4-streams — u hoeft niet van tool te wisselen.",
         "keyFeatures": [
           "Foundation — script, stemmen, scène-audio, script vastleggen",
-          "Express storyboard — richting en frames in minuten; galerij en delen",
+          "Express Pre-vis — richting en frames in minuten; galerij en delen",
           "Beat Frames en Mixer — start-/eindframes, Director Console, MP4-streams renderen",
           "Productiestromen — uitvoer beoordelen, verouderde beats opnieuw renderen, naar Final Cut sturen"
         ],
         "screenshotSlot": "Schermafbeelding invoegen: Productiedashboard met script, Beat Frames en mixer",
-        "videoSlot": "Fragment van 00:30 invoegen: Foundation, Express storyboard, Beat Frames en streamexport"
+        "videoSlot": "Fragment van 00:30 invoegen: Foundation, Express Pre-vis, Beat Frames en streamexport"
       },
       {
         "id": "12",
@@ -968,7 +969,7 @@
       {
         "id": "14",
         "title": "Beoordeling en analyses van het publiek",
-        "description": "Privé-deellinks (/s/) voor stakeholders — handmatige scores, gestructureerde feedback en optionele engagement-analytics (met toestemming van de kijker). Wordt gebruikt in Premiere vóór publicatie en voor de preview van het productie-storyboard.",
+        "description": "Privé-deellinks (/s/) voor stakeholders — handmatige scores, gestructureerde feedback en optionele engagement-analytics (met toestemming van de kijker). Wordt gebruikt in Premiere vóór publicatie en voor de preview van het productie-pre-vis.",
         "keyFeatures": [
           "Besloten beoordelingssessies — beveiligde deellinks voor stakeholders",
           "Gestructureerde feedback van het publiek — beoordelingen en open vragen",
@@ -1090,11 +1091,11 @@
     "express": {
       "badge": "Productie op topsnelheid",
       "title": "Sceneflow Express",
-      "description": "Genereer gelijktijdig automatisch storyboards, animatics en video-beats. Ga in enkele minuten van script naar een deelbare preview — en keur vervolgens Beat Frames goed vóór de definitieve F2V-uitgaven.",
+      "description": "Genereer gelijktijdig automatisch pre-vis, animatics en video-beats. Ga in enkele minuten van script naar een deelbare preview — en keur vervolgens Beat Frames goed vóór de definitieve F2V-uitgaven.",
       "items": [
         {
-          "title": "Express-storyboard",
-          "desc": "Beoordeel en deel audio- en videostoryboards in minuten in plaats van uren.",
+          "title": "Express-pre-vis",
+          "desc": "Beoordeel en deel audio- en videopre-vis in minuten in plaats van uren.",
           "time": "Minuten versus uren"
         },
         {
@@ -1335,7 +1336,7 @@
     "items": [
       {
         "question": "Hoe verloopt de SceneFlow-workflow van idee tot publicatieklare video?",
-        "answer": "SceneFlow hanteert een gestructureerde workflow: Serie (optioneel) → Blueprint → Productie → Final Cut → Premiere. Blueprint bepaalt de verhaalstructuur en doelgroep met behulp van Audience Resonance. De productiefase levert een script, storyboard, beatvideo en gerenderde scènestreams op. Final Cut voegt geselecteerde streams samen tot één master-MP4 — het is geen tijdlijn-editor. Premiere verzorgt vertoningen, analytische inzichten, publicatie op YouTube en exportbundels."
+        "answer": "SceneFlow hanteert een gestructureerde workflow: Serie (optioneel) → Blueprint → Productie → Final Cut → Premiere. Blueprint bepaalt de verhaalstructuur en doelgroep met behulp van Audience Resonance. De productiefase levert een script, pre-vis, beatvideo en gerenderde scènestreams op. Final Cut voegt geselecteerde streams samen tot één master-MP4 — het is geen tijdlijn-editor. Premiere verzorgt vertoningen, analytische inzichten, publicatie op YouTube en exportbundels."
       },
       {
         "question": "Waarin verschilt SceneFlow van Gemini Studio of Google Flow?",
@@ -1355,7 +1356,7 @@
       },
       {
         "question": "Wat doet Premiere als Screening Room de beoordelingsfase is?",
-        "answer": "Screening Room is de beoordelingsomgeving binnen Premiere — en dient ook voor het bekijken van productie-storyboards. Deel /s/-links, verzamel feedback van stakeholders en optionele betrokkenheidsanalyses (met toestemming van de kijker), bekijk scores en visuele inzichten, en publiceer vervolgens via de YouTube-wizard of exporteer bundels."
+        "answer": "Screening Room is de beoordelingsomgeving binnen Premiere — en dient ook voor het bekijken van productie-pre-vis. Deel /s/-links, verzamel feedback van stakeholders en optionele betrokkenheidsanalyses (met toestemming van de kijker), bekijk scores en visuele inzichten, en publiceer vervolgens via de YouTube-wizard of exporteer bundels."
       },
       {
         "question": "Heb ik technische of redactionele ervaring nodig?",
@@ -1377,7 +1378,7 @@
   },
   "finalCta": {
     "title": "Klaar om de volledige pipeline te testen?",
-    "subtitle": "Doorloop het hele proces – van concept en storyboard tot video en master-MP4 – in één studio. Begin met het abonnement van $9 (Explorer) en ervaar de 'beat-first'-workflow in de praktijk.",
+    "subtitle": "Doorloop het hele proces – van concept en pre-vis tot video en master-MP4 – in één studio. Begin met het abonnement van $9 (Explorer) en ervaar de 'beat-first'-workflow in de praktijk.",
     "cta": "Start je studio voor $9"
   },
   "footer": {
@@ -1418,5 +1419,36 @@
     "mute": "Dempen",
     "unmute": "Geluid inschakelen",
     "expandVideo": "Video uitvouwen"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

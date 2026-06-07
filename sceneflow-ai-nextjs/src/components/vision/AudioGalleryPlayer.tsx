@@ -340,7 +340,7 @@ export function AudioGalleryPlayer({
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-3">
             <Volume2 className="w-5 h-5 text-emerald-400" />
-            <span className="font-semibold text-white">Storyboard Player</span>
+            <span className="font-semibold text-white">Pre-vis Player</span>
             <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">
               Scene {currentSceneIndex + 1} of {scenes.length}
             </span>
@@ -649,7 +649,7 @@ export function AudioGalleryPlayer({
                               <ExternalLink className="w-3.5 h-3.5" />
                             </a>
                           </TooltipTrigger>
-                          <TooltipContent>Open full storyboard player</TooltipContent>
+                          <TooltipContent>Open full pre-vis player</TooltipContent>
                         </Tooltip>
                       )}
                     </>

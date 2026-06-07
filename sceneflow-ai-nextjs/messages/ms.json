@@ -29,7 +29,8 @@
     "platformWalkthrough": "Panduan Platform",
     "platform": "Platform",
     "pricing": "Penetapan Harga",
-    "faq": "Soalan Lazim"
+    "faq": "Soalan Lazim",
+    "preVisEngine": "Pre-Vis Engine"
   },
   "hero": {
     "headline": "Tidak perlu lagi menguruskan lima tab AI serentak. Satu studio membawa anda daripada idea hinggalah kepada video yang sedia untuk diterbitkan.",
@@ -192,9 +193,9 @@
     "title": "Aliran Kerja Video Berasaskan Rentak",
     "subtitle": "Luluskan sebelum anda melakukan render — bukannya penjanaan semula gaya mesin slot",
     "intro": "Tiada proses penjanaan secara cuba-jaya. Anda melihat pratonton dan meluluskan rupa bentuknya sebelum SceneFlow menggunakan kredit untuk video akhir.",
-    "description": "SceneFlow menyusun proses kelulusan visual pada setiap peringkat: Express storyboard untuk semakan, Beat Frames untuk mengunci komposisi, kemudian F2V bagi setiap rentak. Anda memperhalusi rupa visual sebelum menghabiskan kredit akibat hanyutan (drift) dan halusinasi.",
+    "description": "SceneFlow menyusun proses kelulusan visual pada setiap peringkat: Express Pre-vis untuk semakan, Beat Frames untuk mengunci komposisi, kemudian F2V bagi setiap rentak. Anda memperhalusi rupa visual sebelum menghabiskan kredit akibat hanyutan (drift) dan halusinasi.",
     "steps": [
-      "Express storyboard — kongsi segmen audio-visual untuk semakan dalam masa beberapa minit",
+      "Express Pre-vis — kongsi segmen audio-visual untuk semakan dalam masa beberapa minit",
       "Beat Frames — kunci komposisi mula/akhir dengan kesinambungan Reference Library",
       "F2V setiap rentak — jana video daripada bingkai yang diluluskan, bukan arahan teks tanpa panduan visual",
       "Production Mixer — pemasaan, audio, dan eksport strim ke pemasangan Final Cut"
@@ -335,16 +336,16 @@
         "id": "pengeluaran",
         "stepLabel": "Pengeluaran",
         "subtitle": "Daripada Skrip kepada Strim",
-        "description": "Tab Skrip dan Tindakan memandu Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, dan strim MP4 — tanpa perlu menukar alat.",
+        "description": "Tab Skrip dan Tindakan memandu Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, dan strim MP4 — tanpa perlu menukar alat.",
         "keySteps": [
           "Muktamadkan skrip, suara, dan audio babak",
-          "Express storyboard — galeri dan kongsi untuk semakan",
+          "Express Pre-vis — galeri dan kongsi untuk semakan",
           "Beat Frames → Konsol Pengarah → Strim Render",
           "Hantar strim yang telah selesai ke Final Cut"
         ],
         "keyFeatures": [
           "Foundation — skrip, suara, audio babak, kunci skrip",
-          "Express storyboard — arah dan bingkai dalam beberapa minit; galeri dan kongsi",
+          "Express Pre-vis — arah dan bingkai dalam beberapa minit; galeri dan kongsi",
           "Beat Frames dan Mixer — bingkai mula/akhir, Konsol Pengarah, render strim MP4",
           "Aliran Pengeluaran — semak hasil, jana semula *beat* yang lapuk, hantar ke Final Cut"
         ]
@@ -755,7 +756,7 @@
       "title": "Aliran Kerja Video Berasaskan Rentak",
       "description": "Luluskan segmen papan cerita dan Beat Frames sebelum F2V — ini mengurangkan penjanaan semula secara rambang akibat halusinasi dan penyimpangan visual. Satu laluan berstruktur daripada peringkat semakan hingga klip akhir.",
       "keyFeatures": [
-        "Express storyboard untuk semakan — kongsi *beat* sebelum proses *render* berat",
+        "Express Pre-vis untuk semakan — kongsi *beat* sebelum proses *render* berat",
         "Beat Frames komposisi kunci — Reference Library kesinambungan",
         "F2V setiap rentak — jana video daripada bingkai yang diluluskan",
         "Pemasaan dan aliran pengadun — eksport ke pemasangan Final Cut"
@@ -864,10 +865,10 @@
       {
         "id": "6",
         "title": "Enjin Penjanaan Ekspres",
-        "description": "Jana imej dan segmen video secara automatik dan serentak. Express Storyboard membolehkan anda menyemak dan berkongsi papan cerita audio-visual dalam masa beberapa minit. Express Storyboard menghasilkan babak gaya Ken Burns yang lengkap dalam masa beberapa minit, manakala Express Video menghasilkan babak video akhir dalam masa beberapa minit dan bukannya berhari-hari.",
+        "description": "Jana imej dan segmen video secara automatik dan serentak. Express Pre-vis membolehkan anda menyemak dan berkongsi papan cerita audio-visual dalam masa beberapa minit. Express Pre-vis menghasilkan babak gaya Ken Burns yang lengkap dalam masa beberapa minit, manakala Express Video menghasilkan babak video akhir dalam masa beberapa minit dan bukannya berhari-hari.",
         "keyFeatures": [
           "Penjanaan serentak — imej dan video merentas babak secara serentak",
-          "Express Storyboard — pratonton audio-visual yang boleh dikongsi dalam masa beberapa minit",
+          "Express Pre-vis — pratonton audio-visual yang boleh dikongsi dalam masa beberapa minit",
           "Express Animatic — Pergerakan Ken Burns daripada imej pegun",
           "Express Video — klip peringkat babak dalam masa beberapa minit, bukan berhari-hari"
         ],
@@ -929,15 +930,15 @@
       {
         "id": "11",
         "title": "Automasi Pengeluaran",
-        "description": "Tab Skrip dan Tindakan memandu Foundation → Storyboard → Production → Final Cut. Express storyboard, Beat Frames, Mixer, dan strim MP4 — tanpa perlu menukar alat.",
+        "description": "Tab Skrip dan Tindakan memandu Foundation → pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, dan strim MP4 — tanpa perlu menukar alat.",
         "keyFeatures": [
           "Foundation — skrip, suara, audio babak, kunci skrip",
-          "Express storyboard — arah dan bingkai dalam beberapa minit; galeri dan kongsi",
+          "Express Pre-vis — arah dan bingkai dalam beberapa minit; galeri dan kongsi",
           "Beat Frames dan Mixer — bingkai mula/akhir, Konsol Pengarah, render strim MP4",
           "Aliran Pengeluaran — semak hasil, jana semula *beat* yang lapuk, hantar ke Final Cut"
         ],
         "screenshotSlot": "Masukkan tangkapan skrin: Papan pemuka produksi yang memaparkan skrip, Beat Frames, dan Pengadun (Mixer)",
-        "videoSlot": "Masukkan klip 00:30: Foundation, Express storyboard, Beat Frames, dan eksport strim"
+        "videoSlot": "Masukkan klip 00:30: Foundation, Express Pre-vis, Beat Frames, dan eksport strim"
       },
       {
         "id": "12",
@@ -1355,7 +1356,7 @@
       },
       {
         "question": "Apakah yang dilakukan oleh Premiere jika Screening Room merupakan fasa semakan?",
-        "answer": "Screening Room ialah antara muka semakan di dalam Premiere — serta untuk pratonton papan cerita (storyboard) produksi. Kongsikan pautan /s/, kumpulkan maklum balas pihak berkepentingan dan analitis penglibatan pilihan (dengan kebenaran penonton), semak skor serta wawasan visual, kemudian terbitkan melalui wizard YouTube atau eksport sebagai pakej."
+        "answer": "Screening Room ialah antara muka semakan di dalam Premiere — serta untuk pratonton papan cerita (pre-vis) produksi. Kongsikan pautan /s/, kumpulkan maklum balas pihak berkepentingan dan analitis penglibatan pilihan (dengan kebenaran penonton), semak skor serta wawasan visual, kemudian terbitkan melalui wizard YouTube atau eksport sebagai pakej."
       },
       {
         "question": "Adakah saya memerlukan pengalaman teknikal atau penyuntingan?",
@@ -1418,5 +1419,36 @@
     "mute": "Senyapkan",
     "unmute": "Nyahbisukan",
     "expandVideo": "Besarkan Video"
+  },
+  "preVisEngine": {
+    "badge": "Creative Decision Engine",
+    "title": "Pre-Visualization Engine",
+    "subtitle": "Generating a fully voiced, scored, 40-minute audio-visual animatic in 15 minutes is not a workflow step — that is the product. In Hollywood, pre-vis takes weeks and costs hundreds of thousands of dollars. SceneFlow scales it to minutes and pocket change.",
+    "narrative": "In the film industry, a pre-vis is something you hand to a crew. Pre-vis is what you show studio executives, investors, and producers to get a project greenlit. SceneFlow elevates production from consumer creator tool to enterprise-grade pipeline asset.",
+    "pillars": [
+      {
+        "title": "The Ultimate Pitch Deck",
+        "description": "Upload a script and walk into a pitch meeting with a fully voiced, scored, multi-language pre-vis plus hard data from Audience Resonance. Give creators a data-backed, audio-visual cheat code to get their movies made."
+      },
+      {
+        "title": "Fail-Fast Pre-Production",
+        "description": "Traditional pre-vis requires 3D animators, pre-vis artists, and voice actors for weeks. If a scene does not work, tens of thousands of dollars are wasted. Iterate in 15 minutes before a single camera crew member is hired."
+      },
+      {
+        "title": "Financier Analytics",
+        "description": "Audience Resonance at upload appeals to the most risk-averse part of the industry: financiers. Show how pacing, tone, and dialogue align with target demographics before a single dollar is spent on production."
+      }
+    ],
+    "workflow": {
+      "title": "Script upload → greenlight-ready pre-vis",
+      "steps": [
+        "Upload industry-standard scripts (.fountain, .fdx, .txt)",
+        "Run Audience Resonance scoring on your target demographic",
+        "Generate Express Pre-vis — voiced, scored animatics in minutes",
+        "Share for stakeholder review before final video spend"
+      ]
+    },
+    "cta": "Start with Script Upload",
+    "ctaSubtext": "Bridge traditional filmmaking and generative AI"
   }
 }

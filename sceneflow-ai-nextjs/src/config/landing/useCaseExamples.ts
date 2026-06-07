@@ -34,7 +34,7 @@ const BLOB_DEMO = 'https://xxavfkdhdebrqida.public.blob.vercel-storage.com'
 
 /** Option C — universal qualifying statement for all use cases */
 export const USE_CASES_QUALIFYING_STATEMENT =
-  'SceneFlow turns your source photos, uploads, and descriptions into narrated walkthrough videos — with optional voice and character presence you control. These are AI-altered presentations: realistic visualizations grounded in your materials, not live camera recordings. Review and approve every storyboard before publish; label outputs clearly so audiences know what they\'re watching.'
+  'SceneFlow turns your source photos, uploads, and descriptions into narrated walkthrough videos — with optional voice and character presence you control. These are AI-altered presentations: realistic visualizations grounded in your materials, not live camera recordings. Review and approve every pre-vis before publish; label outputs clearly so audiences know what they\'re watching.'
 
 /** Option B — Property category reinforcement */
 export const PROPERTY_CATEGORY_QUALIFYING_STATEMENT =
@@ -76,7 +76,7 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         id: 'vertical-short-drama',
         label: 'YouTube TV Drama',
         description:
-          'Imagine shipping 16:9 episodic drama on YouTube—where YouTube now holds 13.4% of U.S. TV viewing and over 35% of watch time happens on connected TV. SceneFlow helps creators grow that share with engaging alternative content: beat-first storyboards, Reference Library continuity, and publish-ready widescreen masters.',
+          'Imagine shipping 16:9 episodic drama on YouTube—where YouTube now holds 13.4% of U.S. TV viewing and over 35% of watch time happens on connected TV. SceneFlow helps creators grow that share with engaging alternative content: beat-first pre-vis, Reference Library continuity, and publish-ready widescreen masters.',
         videoSrc: `${BLOB_DEMO}/demo/use-cases/entertainment/vertical-short-drama.mp4`,
       }),
       ex('entertainment', {
@@ -194,7 +194,7 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         id: 'video-memoirs',
         label: 'Video Memoirs',
         description:
-          'Imagine uploading family photos, interview audio, and scene notes with a saved narrator voice. Then instantly shaping chapter-based memoir videos — approve the storyboard before final render.',
+          'Imagine uploading family photos, interview audio, and scene notes with a saved narrator voice. Then instantly shaping chapter-based memoir videos — approve the pre-vis before final render.',
         videoSrc: `${BLOB_DEMO}/KITCHEN.mp4`,
       }),
     ],
@@ -248,7 +248,7 @@ export const VIDEO_CATEGORIES: UseCaseCategory[] = [
         id: 'product-explainer-videos',
         label: 'Product Explainer Videos',
         description:
-          "Imagine uploading product catalog shots with your brand's saved presenter voice and avatar. Then instantly generating a cinematic explainer series — approve the storyboard before you render.",
+          "Imagine uploading product catalog shots with your brand's saved presenter voice and avatar. Then instantly generating a cinematic explainer series — approve the pre-vis before you render.",
         videoSrc: `${BLOB_DEMO}/Demo.mp4`,
       }),
       ex('b2b', {

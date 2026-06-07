@@ -75,7 +75,7 @@ const workflowContext = {
   },
   storyboard: {
     suggestions: storyboardSuggestions,
-    context: "You're in Vision — the interactive storyboard. Let's refine your scenes for maximum visual impact and storytelling effectiveness."
+    context: "You're in Vision — the interactive pre-vis. Let's refine your scenes for maximum visual impact and storytelling effectiveness."
   }
 }
 
@@ -513,7 +513,7 @@ export function CueChatInterface({ onConceptUpdate, onGenerateIdeas, onSceneIter
           suggestions: [
             'Select your favorite idea',
             'Refine any concepts',
-            'Proceed to storyboarding'
+            'Proceed to pre-vis'
           ],
           completeness_score: 1.0,
           analysis: {

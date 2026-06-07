@@ -20,7 +20,7 @@ export function SpendingAnalyticsWidget({ usedCredits = 0 }: SpendingAnalyticsWi
   // Estimate breakdown based on typical usage patterns
   const topConsumers = [
     { name: 'Video Generation', credits: Math.round(thisMonth * 0.55), icon: <Video className="w-4 h-4 text-purple-400" /> },
-    { name: 'Storyboards', credits: Math.round(thisMonth * 0.25), icon: <Image className="w-4 h-4 text-blue-400" /> },
+    { name: 'Pre-vis', credits: Math.round(thisMonth * 0.25), icon: <Image className="w-4 h-4 text-blue-400" /> },
     { name: 'Voice Acting', credits: Math.round(thisMonth * 0.12), icon: <Mic className="w-4 h-4 text-green-400" /> },
     { name: 'Ideation', credits: Math.round(thisMonth * 0.08), icon: <Sparkles className="w-4 h-4 text-yellow-400" /> },
   ]

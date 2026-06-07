@@ -207,7 +207,7 @@ export function CreationScreeningRoom({ scenes, onClose, projectTitle }: Creatio
   }
 
   const currentLabel = currentScene?.heading || `Scene ${sceneIndex + 1}`
-  const currentClipLabel = currentSegment?.label || (currentSegment?.type === 'image' ? 'Storyboard' : `Clip ${segmentIndex + 1}`)
+  const currentClipLabel = currentSegment?.label || (currentSegment?.type === 'image' ? 'Pre-vis' : `Clip ${segmentIndex + 1}`)
 
   return (
     <div className="fixed inset-0 z-50 bg-black/90 text-white flex flex-col">

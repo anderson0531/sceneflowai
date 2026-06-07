@@ -112,7 +112,7 @@ export function AnimaticsStudio({ scenes, onClose }: AnimaticsStudioProps) {
     
     loadProject({
       id: 'animatics-project',
-      title: 'Storyboard Animatics',
+      title: 'Pre-vis Animatics',
       fps: 30,
       width: 1920,
       height: 1080,
