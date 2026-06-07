@@ -54,8 +54,10 @@ type Props = {
     visualStyle?: string
     duration?: string
     targetAudience?: string
-    variantCount?: number // Smart variant count based on complexity
-    hasStoryDirections?: boolean // Signals story direction options were selected (enables OOM-safe mode)
+    variantCount?: number
+    hasStoryDirections?: boolean
+    generateThreeDirections?: boolean
+    rigor?: 'fast' | 'balanced' | 'thorough'
     format?: string
     contentIntent?: ContentIntent
   }) => Promise<void>
@@ -300,6 +302,8 @@ export function BlueprintReimaginDialog({
   const [isGenerating, setIsGenerating] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showIdeation, setShowIdeation] = useState(!existingVariant)
+  const [generateThreeDirections, setGenerateThreeDirections] = useState(false)
+  const [rigor, setRigor] = useState<'fast' | 'balanced' | 'thorough'>('thorough')
   
   // Determine mode
   const isReimaginMode = !!existingVariant
@@ -368,10 +372,12 @@ export function BlueprintReimaginDialog({
     }
     
     const hasStoryDirections = selectedInstructions.length > 0 || customInstruction.trim().length > 0
-    const variantCount = hasStoryDirections ? 1 : 3
+    const variantCount = hasStoryDirections ? 1 : (generateThreeDirections ? 3 : 1)
     
     if (hasStoryDirections) {
       console.log('[BlueprintDialog] Story directions selected - using single variant mode to prevent OOM')
+    } else if (generateThreeDirections) {
+      console.log('[BlueprintDialog] Generating 3 creative directions')
     }
     
     const format = resolveProductionFormat(genre)
@@ -386,6 +392,8 @@ export function BlueprintReimaginDialog({
         targetAudience,
         variantCount,
         hasStoryDirections,
+        generateThreeDirections,
+        rigor,
         format,
         contentIntent,
       })
@@ -533,18 +541,50 @@ export function BlueprintReimaginDialog({
           </button>
           
           {showAdvanced && (
-            <div className="space-y-1.5">
-              <label className="text-xs text-gray-400">Visual Style</label>
-              <Select value={visualStyle} onValueChange={setVisualStyle}>
-                <SelectTrigger className="bg-slate-800/50 border-slate-700 text-sm">
-                  <SelectValue placeholder="Select visual style..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {VISUAL_STYLE_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs text-gray-400">Visual Style</label>
+                <Select value={visualStyle} onValueChange={setVisualStyle}>
+                  <SelectTrigger className="bg-slate-800/50 border-slate-700 text-sm">
+                    <SelectValue placeholder="Select visual style..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VISUAL_STYLE_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-gray-400">Generation Quality</label>
+                <Select value={rigor} onValueChange={(v) => setRigor(v as 'fast' | 'balanced' | 'thorough')}>
+                  <SelectTrigger className="bg-slate-800/50 border-slate-700 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="thorough">Thorough (default, highest quality)</SelectItem>
+                    <SelectItem value="balanced">Balanced (faster, full quality checklist)</SelectItem>
+                    <SelectItem value="fast">Fast (lighter blueprint, fastest)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={generateThreeDirections}
+                  onChange={(e) => setGenerateThreeDirections(e.target.checked)}
+                  disabled={selectedInstructions.length > 0 || customInstruction.trim().length > 0}
+                  className="mt-0.5 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500/50"
+                />
+                <span className="text-xs text-gray-400">
+                  Generate 3 creative directions (A/B/C style variants)
+                  {(selectedInstructions.length > 0 || customInstruction.trim().length > 0) && (
+                    <span className="block text-gray-500 mt-0.5">Unavailable when creative direction templates are selected</span>
+                  )}
+                </span>
+              </label>
             </div>
           )}
           

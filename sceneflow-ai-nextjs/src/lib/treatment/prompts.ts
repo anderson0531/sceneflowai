@@ -138,8 +138,9 @@ export function buildTreatmentPrompt(opts: {
   persona?: 'Narrator'|'Director' | null
   hasExplicitSettings?: boolean
   contentIntent?: ContentIntent
+  rigor?: 'fast' | 'balanced' | 'thorough'
 }) {
-  const { input, coreConcept, format, targetMinutes, styleHint, context, beatStructure, persona, hasExplicitSettings, contentIntent } = opts
+  const { input, coreConcept, format, targetMinutes, styleHint, context, beatStructure, persona, hasExplicitSettings, contentIntent, rigor = 'thorough' } = opts
   const intent = contentIntent ?? resolveContentIntent(context?.genre)
   const formatBlock = getFormatBlock(format)
   const formatSpecifics = getFormatSpecificBlocks(format, intent)
@@ -150,7 +151,7 @@ export function buildTreatmentPrompt(opts: {
     ? '\nVOICE: Write as an engaging, neutral narrator with professional tone.'
     : ''
   
-  const scoringChecklist = hasExplicitSettings 
+  const scoringChecklist = rigor === 'fast'
     ? buildLightweightChecklist(context?.genre, context?.targetAudience, context?.tone, intent)
     : buildScoringAwareChecklist({
         genre: context?.genre,

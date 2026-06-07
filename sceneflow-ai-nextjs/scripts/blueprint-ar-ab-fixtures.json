@@ -1,0 +1,26 @@
+[
+  {
+    "id": "thai-cooking-doc",
+    "input": "A documentary following a Thai grandmother in Chiang Mai who teaches her granddaughter traditional recipes passed down for four generations, exploring how food preserves culture as the city modernizes.",
+    "genre": "documentary",
+    "tone": "warm",
+    "targetAudience": "general",
+    "contentIntent": "informational"
+  },
+  {
+    "id": "startup-explainer",
+    "input": "An explainer video for a B2B SaaS platform that helps remote teams run async standups. Show the problem of meeting fatigue, introduce the product workflow, and end with a clear call to action for team leads.",
+    "genre": "explainer",
+    "tone": "professional",
+    "targetAudience": "professionals",
+    "contentIntent": "commercial"
+  },
+  {
+    "id": "thriller-short",
+    "input": "A woman discovers her new neighbor has been mirroring her daily routine. When she confronts him, she learns he is not stalking her — he is trying to warn her that someone else already is.",
+    "genre": "thriller",
+    "tone": "dark",
+    "targetAudience": "adults",
+    "contentIntent": "fiction"
+  }
+]

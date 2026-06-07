@@ -34,8 +34,44 @@ interface FilmTreatmentRequest {
   filmType?: 'micro_short'|'short_film'|'featurette'|'feature_length'|'epic'
   rigor?: 'fast'|'balanced'|'thorough'
   beatStructure?: BeatStructureKey
-  variants?: number // default 3
+  variants?: number // default 1 when explicit settings, else 3
   userName?: string  // User's name for "Created By" field
+  hasExplicitSettings?: boolean
+  /** Dev-only: override thinking budget for A/B validation (NODE_ENV=development only) */
+  debugThinkingBudget?: number
+}
+
+type RigorMode = 'fast' | 'balanced' | 'thorough'
+
+function getThinkingBudgetForRigor(rigor: RigorMode): number {
+  switch (rigor) {
+    case 'fast': return 0
+    case 'balanced': return 256
+    case 'thorough':
+    default: return 1024
+  }
+}
+
+function resolveThinkingBudget(rigor: RigorMode, debugOverride?: number): number {
+  if (process.env.NODE_ENV === 'development' && debugOverride !== undefined) {
+    return debugOverride
+  }
+  return getThinkingBudgetForRigor(rigor)
+}
+
+function shouldUseSyntheticCoreConcept(
+  rigor: RigorMode,
+  genre?: string,
+  tone?: string,
+  targetAudience?: string,
+  hasExplicitSettings?: boolean
+): boolean {
+  if (!genre || !tone) return false
+  const allThreeSettings = !!(genre && tone && targetAudience)
+  if (rigor === 'fast') return true
+  if (rigor === 'balanced') return allThreeSettings
+  // thorough: synthetic when user provided full explicit settings
+  return !!hasExplicitSettings && allThreeSettings
 }
 
 interface FilmTreatmentItem {
@@ -263,21 +299,21 @@ function autoDetectFilmStructure(
 }
 
 export async function POST(request: NextRequest) {
+  const requestStartMs = Date.now()
   try {
     const body: FilmTreatmentRequest = await request.json()
     const { input, targetAudience, keyMessage, tone, genre, duration, platform, userName } = body
     let { coreConcept } = body
+    const rigor: RigorMode = body.rigor || 'thorough'
+    const thinkingBudget = resolveThinkingBudget(rigor, body.debugThinkingBudget)
     
     // Check if explicit settings were provided (enables optimizations)
-    const hasExplicitSettings = !!(body as any).hasExplicitSettings || !!(genre && tone && targetAudience)
+    const hasExplicitSettings = !!body.hasExplicitSettings || !!(genre && tone && targetAudience)
     
-    // OPTIMIZATION: When user provides explicit settings, use fewer variants (they have clear intent)
-    const requestedVariants = body.variants || (hasExplicitSettings ? 1 : 3)
+    const requestedVariants = body.variants ?? 1
     const variantsCount = Math.max(1, Math.min(requestedVariants, 5))
     
-    if (hasExplicitSettings) {
-      console.log(`[Film Treatment] Explicit settings detected - using optimized flow (${variantsCount} variant(s))`)
-    }
+    console.log(`[Film Treatment] rigor=${rigor} thinkingBudget=${thinkingBudget} variants=${variantsCount}${hasExplicitSettings ? ' (explicit settings)' : ''}`)
     
     const format = body.format || resolveProductionFormat(genre) || 'short_film'
     const contentIntent: ContentIntent =
@@ -301,13 +337,15 @@ export async function POST(request: NextRequest) {
 
     // Vertex AI doesn't require API key check - uses service account credentials
 
-    // OPTIMIZATION: When user provides explicit settings (genre, tone, audience), we can build
-    // a lightweight core concept from those settings instead of calling the LLM
-    // This eliminates one LLM call and reduces memory usage
+    const coreConceptStartMs = Date.now()
     if (!coreConcept) {
-      if (hasExplicitSettings && genre && tone) {
-        // Build synthetic core concept from explicit settings - no LLM call needed
-        console.log('[Film Treatment] Building core concept from explicit settings (skipping LLM extraction)')
+      const useSynthetic =
+        rigor === 'fast' ||
+        shouldUseSyntheticCoreConcept(rigor, genre, tone, targetAudience, hasExplicitSettings)
+      if (useSynthetic) {
+        const effectiveGenre = genre || 'drama'
+        const effectiveTone = tone || 'professional'
+        console.log(`[Film Treatment] Building synthetic core concept (rigor=${rigor}, skipping LLM extraction)`)
         const narrativeStructure =
           contentIntent === 'fiction'
             ? 'three_act'
@@ -321,14 +359,14 @@ export async function POST(request: NextRequest) {
         coreConcept = {
           input_title: extractTitleFromInput(input),
           input_synopsis: input.slice(0, 500),
-          core_themes: extractThemesFromGenreTone(genre, tone),
+          core_themes: extractThemesFromGenreTone(effectiveGenre, effectiveTone),
           narrative_structure: narrativeStructure,
         }
       } else {
-        // No explicit settings - use full LLM extraction
-        coreConcept = await analyzeCoreConcept(input, { targetAudience, keyMessage, tone, genre, duration })
+        coreConcept = await analyzeCoreConcept(input, { targetAudience, keyMessage, tone, genre, duration }, thinkingBudget)
       }
     }
+    const coreConceptMs = Date.now() - coreConceptStartMs
 
     // Auto-detect film structure if not explicitly provided
     let effectiveBeatStructure = body.beatStructure
@@ -360,31 +398,43 @@ export async function POST(request: NextRequest) {
       targetMinutes: cappedTargetMinutes, 
       beatStructure: effectiveBeatStructure, 
       userName,
-      hasExplicitSettings
+      hasExplicitSettings,
+      rigor,
+      thinkingBudget,
     }
 
-    // Generate variants serially (keeps logs clearer); can parallelize later if needed
-    const variants: Array<{ id: string; label: string } & FilmTreatmentItem> = []
-    for (const cfg of variantConfigs) {
-      const v = await generateFilmTreatment(input, coreConcept!, { ...context, variantStyle: cfg.styleHint })
-      variants.push({ 
-        id: cfg.id, 
-        label: cfg.label, 
-        ...v,
-        // Explicitly preserve critical fields to ensure they're not stripped
-        beats: v.beats,
-        estimatedDurationMinutes: v.estimatedDurationMinutes,
-        total_duration_seconds: v.total_duration_seconds
+    const variantsStartMs = Date.now()
+    const variantResults = await Promise.all(
+      variantConfigs.map(async (cfg) => {
+        const v = await generateFilmTreatment(input, coreConcept!, { ...context, variantStyle: cfg.styleHint })
+        return {
+          id: cfg.id,
+          label: cfg.label,
+          ...v,
+          beats: v.beats,
+          estimatedDurationMinutes: v.estimatedDurationMinutes,
+          total_duration_seconds: v.total_duration_seconds,
+        }
       })
-    }
+    )
+    const variantsMs = Date.now() - variantsStartMs
+    const totalMs = Date.now() - requestStartMs
 
+    console.log('[Film Treatment] timing', {
+      coreConceptMs,
+      variantsMs,
+      variantCount: variantsCount,
+      rigor,
+      thinkingBudget,
+      totalMs,
+    })
 
+    const includeDebugTiming = request.headers.get('x-debug-timing') === '1'
     const responseData = {
       success: true,
-      data: variants[0],
-      variants,
+      data: variantResults[0],
+      variants: variantResults,
       message: 'Film treatment variants generated successfully',
-      // Include auto-detected structure info if applicable
       ...(autoDetectedStructure && {
         autoDetectedStructure: {
           structure: autoDetectedStructure.structure,
@@ -392,7 +442,12 @@ export async function POST(request: NextRequest) {
           confidence: autoDetectedStructure.confidence,
           reason: autoDetectedStructure.reason
         }
-      })
+      }),
+      ...(includeDebugTiming && {
+        debug: {
+          timing: { coreConceptMs, variantsMs, variantCount: variantsCount, rigor, thinkingBudget, totalMs },
+        },
+      }),
     }
 
     return NextResponse.json(responseData)
@@ -431,16 +486,18 @@ async function generateFilmTreatment(
     persona: (context as any)?.persona ?? null,
     hasExplicitSettings: context?.hasExplicitSettings,
     contentIntent: context?.contentIntent,
+    rigor: context?.rigor || 'thorough',
   }) + retryHint + strictJsonPromptSuffix
 
-  console.log('[Film Treatment] Calling Vertex AI Gemini...')
+  const thinkingBudget = context?.thinkingBudget ?? getThinkingBudgetForRigor(context?.rigor || 'thorough')
+  console.log(`[Film Treatment] Calling Vertex AI Gemini (thinkingBudget=${thinkingBudget})...`)
   
-  // Use Vertex AI instead of consumer Gemini API
   const result = await generateText(prompt, {
     model: 'gemini-2.5-flash',
     temperature: 0.3,
     topP: 0.9,
-    responseMimeType: 'application/json'
+    responseMimeType: 'application/json',
+    thinkingBudget,
   })
 
   if (!result?.text) {
@@ -584,7 +641,8 @@ async function generateFilmTreatment(
 
 async function analyzeCoreConcept(
   input: string,
-  context: any
+  context: any,
+  thinkingBudget: number = 1024
 ): Promise<CoreConceptData> {
   const prompt = `CRITICAL INSTRUCTIONS: Analyze the input and extract ONLY the core concept. Avoid copying text.
 
@@ -612,7 +670,8 @@ Respond with valid JSON only:
     model: 'gemini-2.5-flash',
     temperature: 0.3,
     topP: 0.9,
-    responseMimeType: 'application/json'
+    responseMimeType: 'application/json',
+    thinkingBudget,
   })
 
   if (!result?.text) {
