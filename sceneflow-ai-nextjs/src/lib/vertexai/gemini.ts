@@ -401,6 +401,20 @@ export async function generateWithVision(
   
   if (!response.ok) {
     const errorText = await response.text()
+    const isGemini3 = model.includes('3.0') || model.includes('3.1') || model.startsWith('gemini-3')
+    if (
+      response.status === 404 &&
+      isGemini3 &&
+      model !== 'gemini-2.5-flash' &&
+      !(options as { _isFallbackAttempt?: boolean })._isFallbackAttempt
+    ) {
+      console.warn(`[Vertex Gemini Vision] 404 for ${model}. Falling back to gemini-2.5-flash.`)
+      return generateWithVision(parts, {
+        ...options,
+        model: 'gemini-2.5-flash',
+        _isFallbackAttempt: true,
+      } as VisionGenerationOptions & { _isFallbackAttempt?: boolean })
+    }
     console.error('[Vertex Gemini Vision] Error:', errorText)
     throw new Error(`Vertex AI Vision error ${response.status}: ${errorText}`)
   }

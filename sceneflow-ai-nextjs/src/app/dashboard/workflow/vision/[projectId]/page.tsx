@@ -10594,6 +10594,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let buffer = ''
         let successScenes = 0
         let failedScenes = 0
+        let rateLimitToastShown = false
 
         while (true) {
           const { done, value } = await reader.read()
@@ -10616,9 +10617,22 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       applySceneImage(event.sceneIndex, event.imageUrl, event.dialogueIndex, event.beatIndex)
                     }
                   } else {
+                    const phaseError = event.error || 'phase failed'
                     setPhase(event.sceneIndex, event.phase, 'error', {
-                      error: event.error || 'phase failed',
+                      error: phaseError,
                     })
+                    const errLower = String(phaseError).toLowerCase()
+                    if (
+                      !rateLimitToastShown &&
+                      (errLower.includes('429') ||
+                        errLower.includes('resource_exhausted') ||
+                        errLower.includes('rate limit'))
+                    ) {
+                      rateLimitToastShown = true
+                      toast.error(
+                        'Vertex rate limit reached — wait a minute and retry Express.'
+                      )
+                    }
                   }
                   break
                 case 'complete':

@@ -189,6 +189,13 @@ export async function generateVertexGeminiImage(
       proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS
       return generateVertexGeminiImage(options, 0)
     }
+    if (response.status === 429 && retryCount < MAX_RETRIES) {
+      console.warn(
+        `[Vertex Gemini Image] Rate limit on ${model} (attempt ${retryCount + 1}/${MAX_RETRIES}). Backing off...`
+      )
+      await sleepWithBackoff(retryCount)
+      return generateVertexGeminiImage(options, retryCount + 1)
+    }
     // Pro preview models require allowlist access; fall back to GA flash-image model
     if (
       response.status === 404 &&

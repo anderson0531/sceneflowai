@@ -251,7 +251,14 @@ export async function POST(req: NextRequest) {
       customFrameId,  // Required when frameType === 'custom'
       /** In-memory scene snapshot (Express) merged over DB scene at sceneIndex */
       sceneOverride,
+      modelTier,
+      skipLikenessValidation = false,
     } = body
+
+    const resolvedModelTier =
+      modelTier === 'eco' || modelTier === 'designer' || modelTier === 'director'
+        ? modelTier
+        : undefined
     
     // Client explicitly chose characters (even if empty = no characters wanted); mutable for dialogue frames
     let characterSelectionExplicit = body.characterSelectionExplicit ?? false
@@ -1149,7 +1156,8 @@ export async function POST(req: NextRequest) {
     // Fall back to Vertex AI Imagen for non-reference image generation
     let base64Image: string | null = null
     let generationAttempt = 0
-    const maxGenerationAttempts = 2
+    const maxGenerationAttempts = 4
+    const rateLimitBackoffMs = [5000, 15000, 30000]
     // Use Gemini Studio when we have ANY reference images (characters, objects, OR location)
     const useGeminiStudio = imageReferences.length > 0 || objectImageReferences.length > 0 || (matchedLocationReference && matchedLocationReference.imageUrl)
     
@@ -1266,7 +1274,8 @@ export async function POST(req: NextRequest) {
             prompt: geminiPrompt,
             aspectRatio: '16:9',
             imageSize: quality === 'max' ? '2K' : '1K',
-            referenceImages: allReferenceImages
+            referenceImages: allReferenceImages,
+            ...(resolvedModelTier ? { modelTier: resolvedModelTier } : {}),
           })
           
           base64Image = result.imageBase64
@@ -1290,26 +1299,44 @@ export async function POST(req: NextRequest) {
         }
         
       } catch (error: any) {
-        console.error(`[Scene Image] Generation attempt ${generationAttempt} failed:`, error.message)
-        
-        // Check if error is related to reference image access
-        const isReferenceImageError = 
-          error.message?.toLowerCase().includes('reference') ||
-          error.message?.toLowerCase().includes('image') ||
-          error.message?.toLowerCase().includes('not found') ||
-          error.message?.toLowerCase().includes('access') ||
-          error.message?.toLowerCase().includes('permission')
-        
-        if (isReferenceImageError && generationAttempt < maxGenerationAttempts) {
-          // Wait longer before retry (exponential backoff)
-          const retryDelay = 1000 * Math.pow(2, generationAttempt - 1)
-          console.log(`[Scene Image] Reference image access error detected. Retrying after ${retryDelay}ms...`)
-          
-          await new Promise(resolve => setTimeout(resolve, retryDelay))
+        const errorMessage = error?.message || String(error)
+        console.error(`[Scene Image] Generation attempt ${generationAttempt} failed:`, errorMessage)
+
+        const errorLower = errorMessage.toLowerCase()
+        const isRateLimitError =
+          errorLower.includes('429') ||
+          errorLower.includes('resource_exhausted') ||
+          errorLower.includes('rate limit')
+
+        if (isRateLimitError && generationAttempt < maxGenerationAttempts) {
+          const retryDelay =
+            rateLimitBackoffMs[generationAttempt - 1] ??
+            rateLimitBackoffMs[rateLimitBackoffMs.length - 1]
+          console.log(
+            `[Scene Image] Vertex rate limit (attempt ${generationAttempt}/${maxGenerationAttempts}). Retrying after ${retryDelay}ms...`
+          )
+          await new Promise((resolve) => setTimeout(resolve, retryDelay))
           continue
         }
-        
-        // If not a reference image error, or max attempts reached, throw
+
+        const isReferenceImageError =
+          !isRateLimitError &&
+          (errorLower.includes('failed to download reference') ||
+            errorLower.includes('reference image') ||
+            (errorLower.includes('reference') &&
+              (errorLower.includes('not found') ||
+                errorLower.includes('access') ||
+                errorLower.includes('permission'))))
+
+        if (isReferenceImageError && generationAttempt < maxGenerationAttempts) {
+          const retryDelay = 1000 * Math.pow(2, generationAttempt - 1)
+          console.log(
+            `[Scene Image] Reference image access error. Retrying after ${retryDelay}ms...`
+          )
+          await new Promise((resolve) => setTimeout(resolve, retryDelay))
+          continue
+        }
+
         throw error
       }
     }
@@ -1326,9 +1353,9 @@ export async function POST(req: NextRequest) {
 
     console.log('[Scene Image] ✓ Image generated and uploaded')
 
-    // Validate character likeness (optional - informational only)
+    // Validate character likeness (optional - informational only; skipped during Express batch)
     let validation: any = null
-    if (characterObjects.length > 0) {
+    if (!skipLikenessValidation && characterObjects.length > 0) {
       console.log('[Scene Image] Validating character likeness...')
 
       // Determine which character to validate (prefer character mentioned in action/visualDesc)

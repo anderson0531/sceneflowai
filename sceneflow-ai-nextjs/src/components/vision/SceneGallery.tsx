@@ -13,7 +13,7 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, EyeOff, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin, FileText, ChevronDown, ChevronUp, GripVertical, Zap, Settings2, Tag, Plus, ArrowRight, Share2 } from 'lucide-react'
+import { Camera, Grid, List, RefreshCw, Edit, Loader, Printer, Clapperboard, Sparkles, Eye, EyeOff, X, Upload, Download, FolderPlus, ImagePlus, PenSquare, Wand2, Volume2, VolumeX, Play, Pause, SkipForward, SkipBack, Check, Globe, Users, Package, AlertCircle, CheckCircle2, MapPin, FileText, ChevronDown, ChevronUp, GripVertical, Zap, Settings2, Tag, Plus, Share2 } from 'lucide-react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -1172,11 +1172,7 @@ function SceneCard({
     }
   }, [scene, characters, objectReferences])
   
-  const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement
-    if (target.closest('[data-scene-production]')) {
-      return
-    }
+  const handleCardClick = () => {
     onClick()
   }
   
@@ -1530,35 +1526,6 @@ function SceneCard({
           <ExpressPhasePill label="Img" status={expressPhaseStatus.image} />
         </div>
       )}
-
-      <div
-        data-scene-production
-        className="mt-4 border-t border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-900/80 backdrop-blur-sm"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            Video production lives in the <span className="font-medium text-gray-700 dark:text-gray-200">Action</span> tab — Beat Frames, Mixer, and Production Streams — Export (MP4).
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="gap-2 border-purple-500/40 text-purple-200 hover:bg-purple-500/10"
-            onClick={() => {
-              window.dispatchEvent(
-                new CustomEvent('production:open-action-tab', {
-                  detail: { sceneId: sceneKey, sceneIndex: sceneNumber - 1 },
-                })
-              )
-            }}
-          >
-            <Clapperboard className="w-4 h-4" />
-            Open in Action tab
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Button>
-        </div>
-      </div>
     </div>
   )
 }

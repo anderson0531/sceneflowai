@@ -32,6 +32,16 @@ import { countStoryboardFramesNeedingGeneration } from '../storyboard/types'
 import type { SceneBeat } from '../script/segmentTypes'
 
 const EXPRESS_CONCURRENCY = 1 // Process one scene at a time for chain reference consistency
+const EXPRESS_BEAT_IMAGE_DELAY_MS = 2000
+
+const EXPRESS_IMAGE_OPTS = {
+  modelTier: 'eco' as const,
+  skipLikenessValidation: true,
+}
+
+function expressImageDelay(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, EXPRESS_BEAT_IMAGE_DELAY_MS))
+}
 
 export interface RunExpressParams {
   /** Already-loaded project. The orchestrator mutates `metadata.visionPhase.script` in-memory. */
@@ -319,6 +329,7 @@ async function runImagePhase(
             frameType: 'beat',
             beatIndex: beatIdx,
             sceneOverride: scene,
+            ...EXPRESS_IMAGE_OPTS,
           })
           persistBeatFrame(scene, beatIdx, result)
           lastImageUrl = result.imageUrl
@@ -343,6 +354,9 @@ async function runImagePhase(
             error: lastError,
             beatIndex: beatIdx,
           })
+        }
+        if (beatIdx < beats.length - 1) {
+          await expressImageDelay()
         }
       }
       scene.storyboardStatus = 'pending_review'
@@ -372,6 +386,7 @@ async function runImagePhase(
             artStyle,
             frameType: 'establishing',
             sceneOverride: scene,
+            ...EXPRESS_IMAGE_OPTS,
           })
           scene.imageUrl = result.imageUrl
           lastImageUrl = result.imageUrl
@@ -413,6 +428,7 @@ async function runImagePhase(
             frameType: 'dialogue',
             dialogueIndex: dialogueIdx,
             sceneOverride: scene,
+            ...EXPRESS_IMAGE_OPTS,
           })
           persistDialogueFrame(dialogueIdx, result)
           lastImageUrl = result.imageUrl

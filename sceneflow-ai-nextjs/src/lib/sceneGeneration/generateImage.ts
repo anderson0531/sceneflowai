@@ -45,6 +45,10 @@ export interface GenerateSceneImageParams {
   customFrameId?: string
   /** In-memory scene from Express orchestrator (merged over DB scene at sceneIndex). */
   sceneOverride?: Record<string, unknown>
+  /** Vertex image tier — Express uses `eco` for reliability. */
+  modelTier?: 'eco' | 'designer' | 'director'
+  /** Skip post-generation likeness validation (Express batch). */
+  skipLikenessValidation?: boolean
 }
 
 export class SceneImageGenerationError extends Error {
@@ -84,6 +88,8 @@ export async function generateSceneImage(
     beatIndex,
     customFrameId,
     sceneOverride,
+    modelTier,
+    skipLikenessValidation,
   } = params
 
   const headers: HeadersInit = {
@@ -118,6 +124,8 @@ export async function generateSceneImage(
       ...(typeof beatIndex === 'number' ? { beatIndex } : {}),
       ...(customFrameId ? { customFrameId } : {}),
       ...(sceneOverride ? { sceneOverride } : {}),
+      ...(modelTier ? { modelTier } : {}),
+      ...(skipLikenessValidation ? { skipLikenessValidation: true } : {}),
     }),
   })
 
