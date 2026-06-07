@@ -58,8 +58,10 @@ import type {
 } from "@/lib/voiceRecommendation";
 import {
   getCharacterVoiceRecommendations,
+  resolveCharacterGender,
   type ElevenLabsVoice,
 } from "@/lib/voiceRecommendation";
+import { enrichGeminiVoicesForScoring } from "@/lib/tts/geminiVoiceCatalog";
 import type { EdgeVoiceConfig } from "@/types/vision";
 
 export interface CharacterLibraryProps {
@@ -792,6 +794,7 @@ const CharacterCard = ({
   const [aiPromptText, setAiPromptText] = useState("");
   const [isGeneratingWardrobe, setIsGeneratingWardrobe] = useState(false);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
+  const [genderConfirmOpen, setGenderConfirmOpen] = useState(false);
   const [isAutoSelectingVoice, setIsAutoSelectingVoice] = useState(false);
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
   const voicePreviewAudioRef = React.useRef<HTMLAudioElement | null>(null);
@@ -967,7 +970,36 @@ const CharacterCard = ({
     toast.info("Re-run Auto or Select Voice to use Gemini TTS for this character.");
   };
 
-  const handleAutoVoice = async () => {
+  const handleAutoVoiceClick = () => {
+    if (!onUpdateCharacterVoice) {
+      toast.error("Voice update is not available.");
+      return;
+    }
+
+    const useGoogleTts =
+      ttsProvider === "google" || voiceAssignmentProvider === "google";
+    if (useGoogleTts) {
+      const { confidence } = resolveCharacterGender(characterContext);
+      if (confidence === "ambiguous") {
+        setGenderConfirmOpen(true);
+        return;
+      }
+    }
+
+    void handleAutoVoice();
+  };
+
+  const handleGenderConfirmForAutoVoice = (gender: "male" | "female" | "non-binary") => {
+    setGenderConfirmOpen(false);
+    if (gender !== "non-binary" && onUpdateCharacterAttributes) {
+      onUpdateCharacterAttributes(characterId, { gender });
+    }
+    const genderOverride =
+      gender === "non-binary" ? undefined : gender;
+    void handleAutoVoice(genderOverride);
+  };
+
+  const handleAutoVoice = async (genderOverride?: "male" | "female") => {
     if (!onUpdateCharacterVoice) {
       toast.error("Voice update is not available.");
       return;
@@ -999,16 +1031,24 @@ const CharacterCard = ({
           throw new Error("No Gemini voices are available right now.");
         }
 
+        const enrichedVoices = enrichGeminiVoicesForScoring(geminiVoices);
+        const scoringContext: CharacterContext = genderOverride
+          ? { ...characterContext, gender: genderOverride }
+          : characterContext;
+        const { gender: resolvedGender } = resolveCharacterGender(scoringContext);
+
         const recs = getCharacterVoiceRecommendations(
-          geminiVoices,
-          characterContext,
+          enrichedVoices,
+          resolvedGender
+            ? { ...scoringContext, gender: resolvedGender }
+            : scoringContext,
           screenplayContext as ScreenplayContext,
           1,
         );
         const recommendedVoiceId = recs[0]?.voiceId;
         selectedVoice =
-          geminiVoices.find((v) => v.id === recommendedVoiceId) ||
-          geminiVoices[0];
+          enrichedVoices.find((v) => v.id === recommendedVoiceId) ||
+          enrichedVoices[0];
 
         toast.success(
           `Auto selected: ${selectedVoice.name.replace(/ \((Gemini|Studio)\)/i, "")}`,
@@ -2262,7 +2302,7 @@ const CharacterCard = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleAutoVoice();
+                      handleAutoVoiceClick();
                     }}
                     disabled={isAutoSelectingVoice}
                     className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-60"
@@ -3142,6 +3182,45 @@ const CharacterCard = ({
           </div>
         </div>
         {/* Voice Selection */}
+        <Dialog open={genderConfirmOpen} onOpenChange={setGenderConfirmOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirm character gender for voice matching</DialogTitle>
+              <DialogDescription>
+                We couldn&apos;t confidently infer gender from {character.name || "this character"}&apos;s
+                profile. Pick one so Auto can match an appropriate Gemini voice.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setGenderConfirmOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleGenderConfirmForAutoVoice("non-binary")}
+              >
+                Non-binary
+              </Button>
+              <Button
+                type="button"
+                onClick={() => handleGenderConfirmForAutoVoice("female")}
+              >
+                Female
+              </Button>
+              <Button
+                type="button"
+                onClick={() => handleGenderConfirmForAutoVoice("male")}
+              >
+                Male
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         {useGeminiVoicePicker ? (
           <GeminiVoicePicker
             open={voiceDialogOpen}

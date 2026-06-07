@@ -321,11 +321,34 @@ function inferAgeFromDescription(description: string): 'young' | 'middle' | 'mat
 /**
  * Infer gender from character name using common name patterns
  */
+export type GenderConfidence = 'explicit' | 'inferred' | 'ambiguous'
+
+export interface ResolvedCharacterGender {
+  gender: 'male' | 'female' | null
+  confidence: GenderConfidence
+}
+
+/** Normalize gender strings from character data or voice API (MALE, man, Woman, etc.). */
+export function normalizeGender(value?: string): 'male' | 'female' | null {
+  if (!value) return null
+  const g = value.trim().toLowerCase()
+  if (g === 'male' || g === 'm' || g === 'man' || g === 'masculine' || g === 'boy') return 'male'
+  if (g === 'female' || g === 'f' || g === 'woman' || g === 'feminine' || g === 'girl') return 'female'
+  return null
+}
+
+function normalizeVoiceGender(voice: ElevenLabsVoice): 'male' | 'female' | null {
+  return (
+    normalizeGender(voice.gender) ||
+    normalizeGender(voice.labels?.gender)
+  )
+}
+
 function inferGenderFromName(name: string): 'male' | 'female' | null {
   const firstName = name.split(/[\s.]+/)[0]?.toLowerCase() || ''
-  
+
   // Common male names (partial list for high-confidence matches)
-  const maleNames = ['james', 'john', 'robert', 'michael', 'william', 'david', 'richard', 'joseph', 'thomas', 'charles', 'daniel', 'matthew', 'anthony', 'mark', 'donald', 'steven', 'paul', 'andrew', 'joshua', 'kenneth', 'kevin', 'brian', 'george', 'edward', 'ronald', 'timothy', 'jason', 'jeffrey', 'ryan', 'jacob', 'gary', 'nicholas', 'eric', 'jonathan', 'stephen', 'larry', 'justin', 'scott', 'brandon', 'benjamin', 'samuel', 'raymond', 'gregory', 'frank', 'alexander', 'patrick', 'jack', 'dennis', 'jerry', 'tyler', 'aaron', 'jose', 'adam', 'nathan', 'henry', 'douglas', 'zachary', 'peter', 'kyle', 'noah', 'ethan', 'jeremy', 'walter', 'christian', 'keith', 'roger', 'terry', 'austin', 'sean', 'gerald', 'carl', 'dylan', 'harold', 'jordan', 'jesse', 'bryan', 'lawrence', 'arthur', 'gabriel', 'bruce', 'logan', 'albert', 'willie', 'alan', 'eugene', 'russell', 'vincent', 'philip', 'bobby', 'johnny', 'bradley', 'dr']
+  const maleNames = ['james', 'john', 'robert', 'michael', 'william', 'david', 'richard', 'joseph', 'thomas', 'charles', 'daniel', 'matthew', 'anthony', 'mark', 'donald', 'steven', 'paul', 'andrew', 'joshua', 'kenneth', 'kevin', 'brian', 'george', 'edward', 'ronald', 'timothy', 'jason', 'jeffrey', 'ryan', 'jacob', 'gary', 'nicholas', 'eric', 'jonathan', 'stephen', 'larry', 'justin', 'scott', 'brandon', 'benjamin', 'samuel', 'raymond', 'gregory', 'frank', 'alexander', 'patrick', 'jack', 'dennis', 'jerry', 'tyler', 'aaron', 'jose', 'adam', 'nathan', 'henry', 'douglas', 'zachary', 'peter', 'kyle', 'noah', 'ethan', 'jeremy', 'walter', 'christian', 'keith', 'roger', 'terry', 'austin', 'sean', 'gerald', 'carl', 'dylan', 'harold', 'jordan', 'jesse', 'bryan', 'lawrence', 'arthur', 'gabriel', 'bruce', 'logan', 'albert', 'willie', 'alan', 'eugene', 'russell', 'vincent', 'philip', 'bobby', 'johnny', 'bradley', 'dr', 'marcus', 'thorne']
   
   // Common female names (partial list for high-confidence matches)
   const femaleNames = ['mary', 'patricia', 'jennifer', 'linda', 'elizabeth', 'barbara', 'susan', 'jessica', 'sarah', 'karen', 'lisa', 'nancy', 'betty', 'margaret', 'sandra', 'ashley', 'dorothy', 'kimberly', 'emily', 'donna', 'michelle', 'carol', 'amanda', 'melissa', 'deborah', 'stephanie', 'rebecca', 'sharon', 'laura', 'cynthia', 'kathleen', 'amy', 'angela', 'shirley', 'anna', 'brenda', 'pamela', 'emma', 'nicole', 'helen', 'samantha', 'katherine', 'christine', 'debra', 'rachel', 'carolyn', 'janet', 'catherine', 'maria', 'heather', 'diane', 'ruth', 'julie', 'olivia', 'joyce', 'virginia', 'victoria', 'kelly', 'lauren', 'christina', 'joan', 'evelyn', 'judith', 'megan', 'andrea', 'cheryl', 'hannah', 'jacqueline', 'martha', 'gloria', 'teresa', 'ann', 'sara', 'madison', 'frances', 'kathryn', 'janice', 'jean', 'abigail', 'alice', 'judy', 'sophia', 'grace', 'denise', 'amber', 'doris', 'marilyn', 'danielle', 'beverly', 'isabella', 'theresa', 'diana', 'natalie', 'brittany', 'charlotte', 'marie', 'kayla', 'alexis', 'lori']
@@ -348,31 +371,17 @@ function scoreVoiceForCharacter(
   const reasons: string[] = []
   const profileText = blendCharacterProfileForVoiceScoring(character)
 
-  // Infer gender if not provided
-  const voiceGender = voice.gender?.toLowerCase() || voice.labels?.gender?.toLowerCase()
-  let charGender = character.gender?.toLowerCase()
-  
-  // Try to infer gender from description or name
-  if (!charGender && profileText.trim()) {
-    const inferredFromDesc = inferGenderFromDescription(profileText)
-    if (inferredFromDesc) {
-      charGender = inferredFromDesc
-    }
-  }
-  if (!charGender && character.name) {
-    const inferredFromName = inferGenderFromName(character.name)
-    if (inferredFromName) {
-      charGender = inferredFromName
-    }
-  }
-  
+  const voiceGender = normalizeVoiceGender(voice)
+  const resolved = resolveCharacterGender(character)
+  const charGender = resolved.gender
+
   // Gender matching (high weight)
   if (voiceGender && charGender) {
     if (voiceGender === charGender) {
       score += 30
       reasons.push(`Gender match: ${voiceGender}`)
     } else {
-      score -= 20 // Penalty for mismatch
+      score -= 50 // Strong penalty — mismatched gender should not win when alternatives exist
     }
   }
 
@@ -484,12 +493,14 @@ function scoreVoiceForCharacter(
         const partialMatches = professionInfo.voiceStyles.filter(style => {
           // Check for partial/related keywords
           const relatedTerms: Record<string, string[]> = {
-            'authoritative': ['commanding', 'strong', 'powerful', 'confident'],
-            'warm': ['friendly', 'gentle', 'caring', 'compassionate'],
+            'authoritative': ['commanding', 'strong', 'powerful', 'confident', 'corporate', 'executive', 'gravelly', 'deep', 'stable', 'polished'],
+            'warm': ['friendly', 'gentle', 'caring', 'compassionate', 'engaging', 'resonant'],
             'mysterious': ['enigmatic', 'dark', 'intriguing', 'suspense'],
-            'intense': ['dramatic', 'powerful', 'fierce', 'passionate'],
-            'calm': ['soothing', 'relaxed', 'peaceful', 'serene'],
-            'articulate': ['clear', 'precise', 'eloquent', 'polished'],
+            'intense': ['dramatic', 'powerful', 'fierce', 'passionate', 'animated', 'dynamic'],
+            'calm': ['soothing', 'relaxed', 'peaceful', 'serene', 'steady', 'measured'],
+            'articulate': ['clear', 'precise', 'eloquent', 'polished', 'crisp', 'professional'],
+            'confident': ['corporate', 'stable', 'assured', 'firm', 'executive'],
+            'professional': ['corporate', 'crisp', 'steady', 'polished', 'clear'],
           }
           const related = relatedTerms[style] || []
           return related.some(r => voiceText.includes(r))
@@ -613,31 +624,17 @@ export function getCharacterVoiceRecommendations(
   screenplayContext?: ScreenplayContext,
   topN: number = 5
 ): VoiceRecommendation[] {
-  // Infer character gender for pre-filtering
-  const profileBlend = blendCharacterProfileForVoiceScoring(character)
-  let charGender = character.gender?.toLowerCase()
-  if (!charGender && profileBlend.trim()) {
-    const inferredFromDesc = inferGenderFromDescription(profileBlend)
-    if (inferredFromDesc) charGender = inferredFromDesc
-  }
-  if (!charGender && character.name) {
-    const inferredFromName = inferGenderFromName(character.name)
-    if (inferredFromName) charGender = inferredFromName
-  }
-  
-  // Pre-filter by gender for better recommendations (but keep fallback)
+  const { gender: charGender } = resolveCharacterGender(character)
+
+  // Hard gender filter: when gender is known and matching voices exist, never consider mismatches
   let candidateVoices = voices
   if (charGender) {
-    const genderFiltered = voices.filter(v => {
-      const voiceGender = v.gender?.toLowerCase() || v.labels?.gender?.toLowerCase()
-      return voiceGender === charGender
-    })
-    // Only use filtered list if we have enough candidates
-    if (genderFiltered.length >= topN) {
+    const genderFiltered = voices.filter((v) => normalizeVoiceGender(v) === charGender)
+    if (genderFiltered.length > 0) {
       candidateVoices = genderFiltered
     }
   }
-  
+
   const scored = candidateVoices.map(voice => {
     const { score, reasons, normalizedScore } = scoreVoiceForCharacter(voice, character, screenplayContext)
     return {
@@ -647,7 +644,7 @@ export function getCharacterVoiceRecommendations(
       rawScore: score,
       reasons,
       provider: 'elevenlabs' as const,
-      gender: voice.gender?.toLowerCase() || voice.labels?.gender?.toLowerCase(),
+      gender: normalizeVoiceGender(voice) || undefined,
       category: voice.category
     }
   })
@@ -746,6 +743,88 @@ export function searchVoicesIntelligently(
     .filter(s => s.totalScore > 0)
     .sort((a, b) => b.totalScore - a.totalScore)
     .map(s => s.voice)
+}
+
+/**
+ * Resolve character gender with confidence for UI and voice pre-filtering.
+ */
+export function resolveCharacterGender(character: CharacterContext): ResolvedCharacterGender {
+  const explicit = normalizeGender(character.gender)
+  if (explicit) {
+    return { gender: explicit, confidence: 'explicit' }
+  }
+
+  const profileBlend = blendCharacterProfileForVoiceScoring(character)
+  if (profileBlend.trim()) {
+    const weighted = inferGenderFromDescriptionWeighted(profileBlend)
+    if (weighted.gender) {
+      return { gender: weighted.gender, confidence: 'inferred' }
+    }
+  }
+
+  if (character.name) {
+    const fromName = inferGenderFromName(character.name)
+    if (fromName) {
+      return { gender: fromName, confidence: 'inferred' }
+    }
+  }
+
+  if (profileBlend.trim()) {
+    const legacy = inferGenderFromDescription(profileBlend)
+    if (legacy) {
+      return { gender: legacy, confidence: 'inferred' }
+    }
+  }
+
+  return { gender: null, confidence: 'ambiguous' }
+}
+
+/** Weighted pronoun analysis — subject cues outweigh object pronouns referring to other characters. */
+function inferGenderFromDescriptionWeighted(
+  description: string,
+): { gender: 'male' | 'female' | null; maleScore: number; femaleScore: number } {
+  const text = description
+
+  // Strong voice-profile cues
+  const voiceFemale = /\bfemale\s+voice\b|\bwoman'?s\s+voice\b|\bgirl'?s\s+voice\b|\bwoman\s+voice\b/i.test(text)
+  const voiceMale = /\bmale\s+voice\b|\bman'?s\s+voice\b|\bboy'?s\s+voice\b|\bman\s+voice\b/i.test(text)
+  if (voiceFemale && !voiceMale) return { gender: 'female', maleScore: 0, femaleScore: 10 }
+  if (voiceMale && !voiceFemale) return { gender: 'male', maleScore: 10, femaleScore: 0 }
+
+  let maleScore = 0
+  let femaleScore = 0
+
+  const subjectMale =
+    text.match(/\bhe\s+(?:is|was|are|has|have|had|will|would|can|could|represents?|embodies?|stands?|serves?|becomes?|remains?|feels?|seems?|acts?|works?|leads?)\b/gi) || []
+  const subjectFemale =
+    text.match(/\bshe\s+(?:is|was|are|has|have|had|will|would|can|could|represents?|embodies?|stands?|serves?|becomes?|remains?|feels?|seems?|acts?|works?|leads?)\b/gi) || []
+  maleScore += subjectMale.length * 3
+  femaleScore += subjectFemale.length * 3
+
+  const sentenceInitialMale = text.match(/(?:^|[.!?]\s+)He\b/g) || []
+  const sentenceInitialFemale = text.match(/(?:^|[.!?]\s+)She\b/g) || []
+  maleScore += sentenceInitialMale.length * 2
+  femaleScore += sentenceInitialFemale.length * 2
+
+  const possessiveMale = text.match(/\bhis\s+(?:own\s+)?(?:voice|role|character|presence|demeanor|personality|story|arc|journey)\b/gi) || []
+  const possessiveFemale = text.match(/\bher\s+(?:own\s+)?(?:voice|role|character|presence|demeanor|personality|story|arc|journey)\b/gi) || []
+  maleScore += possessiveMale.length * 2
+  femaleScore += possessiveFemale.length * 2
+
+  // Low-weight object pronouns (often refer to other characters, e.g. "her situation" about Maya)
+  const objectFemale = text.match(/\b(?:into|about|for|with|of|in)\s+(?:the\s+)?her\b/gi) || []
+  const objectMale = text.match(/\b(?:into|about|for|with|of|in)\s+(?:the\s+)?him\b/gi) || []
+  femaleScore += objectFemale.length
+  maleScore += objectMale.length
+
+  const legacy = inferGenderFromDescription(description)
+  if (legacy === 'male') maleScore += 1
+  if (legacy === 'female') femaleScore += 1
+
+  const margin = Math.abs(maleScore - femaleScore)
+  if (maleScore > femaleScore && margin >= 2) return { gender: 'male', maleScore, femaleScore }
+  if (femaleScore > maleScore && margin >= 2) return { gender: 'female', maleScore, femaleScore }
+  return { gender: null, maleScore, femaleScore }
 }
 
 /**

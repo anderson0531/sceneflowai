@@ -4,40 +4,13 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Play, Check, Loader2, Sparkles, Star, Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
+import { getGeminiVoicesForPicker } from '@/lib/tts/geminiVoiceCatalog'
+
+const GEMINI_PREMIUM_VOICES = getGeminiVoicesForPicker()
 
 export const GEMINI_VOICES = [
-  // Gemini Models (30 voices)
-  { id: 'gemini-Achernar', name: 'Achernar (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Achird', name: 'Achird (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Algenib', name: 'Algenib (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Algieba', name: 'Algieba (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Alnilam', name: 'Alnilam (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Aoede', name: 'Aoede (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Autonoe', name: 'Autonoe (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Callirrhoe', name: 'Callirrhoe (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Charon', name: 'Charon (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Despina', name: 'Despina (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Enceladus', name: 'Enceladus (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Erinome', name: 'Erinome (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Fenrir', name: 'Fenrir (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Gacrux', name: 'Gacrux (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Iapetus', name: 'Iapetus (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Kore', name: 'Kore (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Laomedeia', name: 'Laomedeia (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Leda', name: 'Leda (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Orus', name: 'Orus (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Pulcherrima', name: 'Pulcherrima (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Puck', name: 'Puck (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Rasalgethi', name: 'Rasalgethi (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Sadachbia', name: 'Sadachbia (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Sadaltager', name: 'Sadaltager (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Schedar', name: 'Schedar (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Sulafat', name: 'Sulafat (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Umbriel', name: 'Umbriel (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  { id: 'gemini-Vindemiatrix', name: 'Vindemiatrix (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Zephyr', name: 'Zephyr (Premium)', description: 'Expressive female voice supporting Audio Profiles and script markup tags.', gender: 'Female', category: 'Premium' },
-  { id: 'gemini-Zubenelgenubi', name: 'Zubenelgenubi (Premium)', description: 'Expressive male voice supporting Audio Profiles and script markup tags.', gender: 'Male', category: 'Premium' },
-  
+  ...GEMINI_PREMIUM_VOICES,
+
   // Journey Models (Deep Learning TTS) -> Storytellers
   { id: 'en-US-Journey-D', name: 'Marcus (Storyteller)', description: 'Deep, resonant, and authoritative. Best for dramatic narration and suspense.', gender: 'Male', category: 'Standard' },
   { id: 'en-US-Journey-F', name: 'Elena (Storyteller)', description: 'Clear, expressive, and engaging. Best for conversational and emotional reads.', gender: 'Female', category: 'Standard' },
