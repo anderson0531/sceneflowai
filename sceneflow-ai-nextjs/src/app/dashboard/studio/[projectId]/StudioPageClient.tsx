@@ -13,6 +13,7 @@ import { useCue } from "@/store/useCueStore";
 import ProjectIdeaTab from "@/components/studio/ProjectIdeaTab";
 import dynamic from 'next/dynamic';
 import { cn } from "@/lib/utils";
+import { getUserDisplayName } from '@/lib/user/displayName';
 import { BlueprintReimaginDialog } from '@/components/blueprint/BlueprintReimaginDialog'
 import { ScriptImportResult } from '@/components/blueprint/BlueprintComposer'
 import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
@@ -732,7 +733,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           rigor: opts?.rigor || 'thorough',
           variants: variantCount,
           // Pass user's name for "Created By" field
-          userName: session?.user?.name || undefined,
+          userName: getUserDisplayName(session?.user),
           // Pass dialog settings to enable optimizations (skip core concept, reduce prompt size)
           ...(opts?.genre && { genre: opts.genre }),
           ...(opts?.tone && { tone: opts.tone }),

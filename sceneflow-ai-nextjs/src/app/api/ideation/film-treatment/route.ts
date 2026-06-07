@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { getUserDisplayName } from '@/lib/user/displayName'
 import { strictJsonPromptSuffix, safeParseJsonFromText } from '@/lib/safeJson'
 import { analyzeDuration, normalizeDuration } from '@/lib/treatment/duration'
 import { buildTreatmentPrompt } from '@/lib/treatment/prompts'
@@ -302,7 +305,11 @@ export async function POST(request: NextRequest) {
   const requestStartMs = Date.now()
   try {
     const body: FilmTreatmentRequest = await request.json()
-    const { input, targetAudience, keyMessage, tone, genre, duration, platform, userName } = body
+    const { input, targetAudience, keyMessage, tone, genre, duration, platform } = body
+    const session = await getServerSession(authOptions)
+    const userName = session?.user
+      ? getUserDisplayName(session.user)
+      : body.userName
     let { coreConcept } = body
     const rigor: RigorMode = body.rigor || 'thorough'
     const thinkingBudget = resolveThinkingBudget(rigor, body.debugThinkingBudget)

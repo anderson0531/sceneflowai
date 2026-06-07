@@ -34,12 +34,12 @@ export const BLUEPRINT_REVIEW_SECTION_THEME: Record<
     Icon: Clapperboard,
     fieldLabel: 'text-purple-300',
     fieldCard: 'border-purple-500/20 bg-purple-500/8 border-l-purple-500/60',
-    fieldLabelStudio: 'text-purple-700 dark:text-purple-300',
+    fieldLabelStudio: 'text-purple-300',
     fieldCardStudio:
-      'border-purple-200/80 bg-purple-50/80 border-l-purple-500/70 dark:border-purple-500/20 dark:bg-purple-500/8 dark:border-l-purple-400/60',
+      'border-slate-700/60 bg-slate-800/50 border-l-purple-500/70',
     subsectionHeading: 'border-l-purple-500/70 bg-purple-500/10 text-purple-200',
     subsectionHeadingStudio:
-      'border-l-purple-500 bg-purple-50 text-purple-900 dark:bg-purple-500/10 dark:text-purple-200',
+      'border-l-purple-500 bg-slate-800/70 text-gray-100',
   },
   story: {
     borderL: 'border-l-sky-500/70',
@@ -51,12 +51,12 @@ export const BLUEPRINT_REVIEW_SECTION_THEME: Record<
     Icon: BookOpen,
     fieldLabel: 'text-sky-300',
     fieldCard: 'border-sky-500/20 bg-sky-500/8 border-l-sky-500/60',
-    fieldLabelStudio: 'text-sky-700 dark:text-sky-300',
+    fieldLabelStudio: 'text-sky-300',
     fieldCardStudio:
-      'border-sky-200/80 bg-sky-50/80 border-l-sky-500/70 dark:border-sky-500/20 dark:bg-sky-500/8 dark:border-l-sky-400/60',
+      'border-slate-700/60 bg-slate-800/50 border-l-sky-500/70',
     subsectionHeading: 'border-l-sky-500/70 bg-sky-500/10 text-sky-200',
     subsectionHeadingStudio:
-      'border-l-sky-500 bg-sky-50 text-sky-900 dark:bg-sky-500/10 dark:text-sky-200',
+      'border-l-sky-500 bg-slate-800/70 text-gray-100',
   },
   characters: {
     borderL: 'border-l-amber-500/70',
@@ -68,12 +68,12 @@ export const BLUEPRINT_REVIEW_SECTION_THEME: Record<
     Icon: Users,
     fieldLabel: 'text-amber-300',
     fieldCard: 'border-amber-500/20 bg-amber-500/8 border-l-amber-500/60',
-    fieldLabelStudio: 'text-amber-800 dark:text-amber-300',
+    fieldLabelStudio: 'text-amber-300',
     fieldCardStudio:
-      'border-amber-200/80 bg-amber-50/80 border-l-amber-500/70 dark:border-amber-500/20 dark:bg-amber-500/8 dark:border-l-amber-400/60',
+      'border-slate-700/60 bg-slate-800/50 border-l-amber-500/70',
     subsectionHeading: 'border-l-amber-500/70 bg-amber-500/10 text-amber-200',
     subsectionHeadingStudio:
-      'border-l-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:text-amber-200',
+      'border-l-amber-500 bg-slate-800/70 text-gray-100',
   },
   beats: {
     borderL: 'border-l-emerald-500/70',
@@ -85,12 +85,12 @@ export const BLUEPRINT_REVIEW_SECTION_THEME: Record<
     Icon: ListOrdered,
     fieldLabel: 'text-emerald-300',
     fieldCard: 'border-emerald-500/20 bg-emerald-500/8 border-l-emerald-500/60',
-    fieldLabelStudio: 'text-emerald-800 dark:text-emerald-300',
+    fieldLabelStudio: 'text-emerald-300',
     fieldCardStudio:
-      'border-emerald-200/80 bg-emerald-50/80 border-l-emerald-500/70 dark:border-emerald-500/20 dark:bg-emerald-500/8 dark:border-l-emerald-400/60',
+      'border-slate-700/60 bg-slate-800/50 border-l-emerald-500/70',
     subsectionHeading: 'border-l-emerald-500/70 bg-emerald-500/10 text-emerald-200',
     subsectionHeadingStudio:
-      'border-l-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-200',
+      'border-l-emerald-500 bg-slate-800/70 text-gray-100',
   },
   tone: {
     borderL: 'border-l-violet-500/70',
@@ -102,12 +102,12 @@ export const BLUEPRINT_REVIEW_SECTION_THEME: Record<
     Icon: Palette,
     fieldLabel: 'text-violet-300',
     fieldCard: 'border-violet-500/20 bg-violet-500/8 border-l-violet-500/60',
-    fieldLabelStudio: 'text-violet-700 dark:text-violet-300',
+    fieldLabelStudio: 'text-violet-300',
     fieldCardStudio:
-      'border-violet-200/80 bg-violet-50/80 border-l-violet-500/70 dark:border-violet-500/20 dark:bg-violet-500/8 dark:border-l-violet-400/60',
+      'border-slate-700/60 bg-slate-800/50 border-l-violet-500/70',
     subsectionHeading: 'border-l-violet-500/70 bg-violet-500/10 text-violet-200',
     subsectionHeadingStudio:
-      'border-l-violet-500 bg-violet-50 text-violet-900 dark:bg-violet-500/10 dark:text-violet-200',
+      'border-l-violet-500 bg-slate-800/70 text-gray-100',
   },
 }
 

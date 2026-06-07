@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { useGuideStore } from '@/store/useGuideStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -22,6 +23,7 @@ import { ReportType } from '@/lib/types/reports'
 import { BLUEPRINT_COPY } from '@/lib/blueprint/blueprintGlossary'
 import { formatBlueprintRuntime } from '@/lib/blueprint/formatBlueprintCore'
 import { BlueprintFieldCard, BlueprintSubsectionHeading } from '@/components/blueprint/BlueprintFieldCard'
+import { resolveAuthorWriterDisplay } from '@/lib/user/displayName'
 import { cn } from '@/lib/utils'
 
 export type TreatmentCardProps = {
@@ -46,6 +48,7 @@ export function TreatmentCard({
   onOpenCollaborate,
 }: TreatmentCardProps = {}) {
   const router = useRouter()
+  const { data: session } = useSession()
   const { guide } = useGuideStore()
   const { selectTreatmentVariant } = useGuideStore() as any
   const { setTreatmentVariants } = useGuideStore() as any
@@ -176,7 +179,7 @@ export function TreatmentCard({
     })()
     const flashIf = (key: string) => (wasJustAppliedActive && changedKeys.has(key) ? 'flash-highlight' : '')
     return (
-      <Card className="mt-4 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+      <Card className="mt-4 border-slate-700/60 bg-slate-900/40">
         <CardContent className="pt-6">
           <div className="w-full">
             <div className="sticky top-0 z-10 bg-gray-900/80 backdrop-blur supports-[backdrop-filter]:bg-gray-900/60 rounded-md">
@@ -510,7 +513,7 @@ export function TreatmentCard({
                         sectionId="core"
                         variant="studio"
                         label="Created by"
-                        value={v.author_writer || ''}
+                        value={resolveAuthorWriterDisplay(v.author_writer, session?.user)}
                         valueClassName={v.id === activeVariant.id ? flashIf('author_writer') : undefined}
                       />
                       <BlueprintFieldCard
@@ -710,21 +713,21 @@ export function TreatmentCard({
                         {v.character_descriptions.map((c, idx) => (
                           <details 
                             key={idx}
-                            className="group rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden"
+                            className="group rounded-lg border border-slate-700/60 bg-slate-800/50 overflow-hidden"
                           >
-                            <summary className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <summary className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-700/40 transition-colors">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center">
-                                  <span className="text-purple-700 dark:text-purple-300 text-sm font-bold">{c.name?.charAt(0) || '?'}</span>
+                                <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                                  <span className="text-purple-300 text-sm font-bold">{c.name?.charAt(0) || '?'}</span>
                                 </div>
                                 <div>
-                                  <div className="font-medium text-gray-900 dark:text-gray-100">{c.name}</div>
-                                  <div className="text-xs text-purple-600 dark:text-purple-400">{c.role || 'Character'}</div>
+                                  <div className="font-medium text-gray-100">{c.name}</div>
+                                  <div className="text-xs text-purple-400">{c.role || 'Character'}</div>
                                 </div>
                               </div>
                               <ChevronDown className="w-4 h-4 text-gray-400 group-open:rotate-180 transition-transform" />
                             </summary>
-                            <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700 space-y-3">
+                            <div className="px-4 pb-4 pt-2 border-t border-slate-700/60 space-y-3">
                               {/* Description */}
                               {c.description && (
                                 <div className="text-sm text-gray-700 dark:text-gray-300">{c.description}</div>
@@ -758,26 +761,26 @@ export function TreatmentCard({
                                   <div className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-2">Character Arc</div>
                                   <div className="flex items-center gap-2 text-xs">
                                     {c.arcStartingState && (
-                                      <div className="flex-1 p-2 rounded bg-white/60 dark:bg-gray-800/60">
-                                        <div className="text-[9px] text-gray-500 dark:text-gray-400 uppercase">Starting</div>
-                                        <div className="text-gray-700 dark:text-gray-300">{c.arcStartingState}</div>
+                                      <div className="flex-1 p-2 rounded bg-slate-900/60">
+                                        <div className="text-[9px] text-gray-400 uppercase">Starting</div>
+                                        <div className="text-gray-300">{c.arcStartingState}</div>
                                       </div>
                                     )}
                                     {c.arcShift && (
                                       <>
                                         <ArrowRight className="w-3 h-3 text-purple-400 flex-shrink-0" />
-                                        <div className="flex-1 p-2 rounded bg-white/60 dark:bg-gray-800/60">
-                                          <div className="text-[9px] text-gray-500 dark:text-gray-400 uppercase">Shift</div>
-                                          <div className="text-gray-700 dark:text-gray-300">{c.arcShift}</div>
+                                        <div className="flex-1 p-2 rounded bg-slate-900/60">
+                                          <div className="text-[9px] text-gray-400 uppercase">Shift</div>
+                                          <div className="text-gray-300">{c.arcShift}</div>
                                         </div>
                                       </>
                                     )}
                                     {c.arcEndingState && (
                                       <>
                                         <ArrowRight className="w-3 h-3 text-cyan-400 flex-shrink-0" />
-                                        <div className="flex-1 p-2 rounded bg-white/60 dark:bg-gray-800/60">
-                                          <div className="text-[9px] text-gray-500 dark:text-gray-400 uppercase">Ending</div>
-                                          <div className="text-gray-700 dark:text-gray-300">{c.arcEndingState}</div>
+                                        <div className="flex-1 p-2 rounded bg-slate-900/60">
+                                          <div className="text-[9px] text-gray-400 uppercase">Ending</div>
+                                          <div className="text-gray-300">{c.arcEndingState}</div>
                                         </div>
                                       </>
                                     )}

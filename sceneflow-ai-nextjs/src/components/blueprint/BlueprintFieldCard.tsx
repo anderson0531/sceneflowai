@@ -44,8 +44,8 @@ export function BlueprintFieldCard({
       <p
         className={cn(
           emphasis === 'prominent'
-            ? 'text-lg font-semibold text-gray-900 dark:text-gray-100 leading-snug'
-            : 'text-sm text-gray-900 dark:text-gray-100 leading-relaxed whitespace-pre-wrap',
+            ? 'text-lg font-semibold text-gray-100 leading-snug'
+            : 'text-sm text-gray-100 leading-relaxed whitespace-pre-wrap',
           valueClassName
         )}
       >

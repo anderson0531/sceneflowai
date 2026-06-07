@@ -72,6 +72,9 @@ export const authOptions: NextAuthOptions = {
               id: user.id?.toString?.() || credentials.email,
               email: user.email || credentials.email,
               name: displayName,
+              first_name: user.first_name || null,
+              last_name: user.last_name || null,
+              username: user.username || null,
             }
           }
           // If API responded with an auth error and demo is allowed, fallback
@@ -100,16 +103,25 @@ export const authOptions: NextAuthOptions = {
         token.id = (user as any).id
         token.name = user.name
         token.email = user.email
+        token.first_name = (user as any).first_name ?? null
+        token.last_name = (user as any).last_name ?? null
+        token.username = (user as any).username ?? null
       }
       return token
     },
     async session({ session, token }) {
       if (token) {
-        if (!session.user) (session as any).user = { id: token.id, name: token.name, email: token.email }
+        const userFields = {
+          id: token.id as string | undefined,
+          name: token.name as string | null,
+          email: token.email as string | null,
+          first_name: (token.first_name as string | null) ?? null,
+          last_name: (token.last_name as string | null) ?? null,
+          username: (token.username as string | null) ?? null,
+        }
+        if (!session.user) (session as any).user = userFields
         else {
-          ;(session.user as any).id = token.id
-          session.user.name = token.name as string | null
-          session.user.email = token.email as string | null
+          Object.assign(session.user as object, userFields)
         }
       }
       return session
