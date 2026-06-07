@@ -311,8 +311,9 @@ CRITICAL RULES:
    - Wardrobe descriptions override ANY clothing mentioned in the scene action text
    - Include the COMPLETE wardrobe description verbatim in the prompt
    - COSTUME TURNAROUND REFERENCE: If a character has a costume turnaround reference, their image is a
-     4-view sheet. Use the front view for proportions; preserve outfit exactly. Do NOT describe clothing
-     in text or reproduce the turnaround layout or studio background in the scene.
+     2-row sheet (headshot row for face identity, full-body row for outfit and pose). Use the front full-body
+     view for proportions; preserve outfit exactly. Do NOT describe clothing in text or reproduce the
+     turnaround layout or studio background in the scene.
 
 5. SCENE DIRECTION CUES: Use the provided lighting, framing, and atmosphere metadata to inform the composition:
    - Lighting mood and color temperature → set the image's lighting

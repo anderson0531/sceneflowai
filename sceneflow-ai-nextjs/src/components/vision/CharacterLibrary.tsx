@@ -155,7 +155,7 @@ interface CharacterWardrobe {
   createdAt: string;
   previewImageUrl?: string; // Legacy: AI-generated preview of character in this outfit
   headshotUrl?: string; // Portrait headshot (1:1) showing character face with outfit context
-  fullBodyUrl?: string; // 4-view turnaround reference sheet (front, 3/4, profile, back)
+  fullBodyUrl?: string; // 2-row turnaround sheet (headshot + full body, 4 views each)
   sceneNumbers?: number[]; // Scenes where this outfit is used (from script analysis)
   reason?: string; // AI explanation for why this outfit is needed
 }
@@ -2892,7 +2892,7 @@ const CharacterCard = ({
                         }`}
                       >
                         {/* Large Image Format */}
-                        <div className="relative aspect-[21/9] bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                        <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                           {w.fullBodyUrl ||
                           w.headshotUrl ||
                           w.previewImageUrl ? (
@@ -2935,8 +2935,8 @@ const CharacterCard = ({
                                   className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-green-600 dark:text-green-400 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm disabled:opacity-50"
                                   title={
                                     w.fullBodyUrl
-                                      ? "Regenerate turnaround reference"
-                                      : "Generate turnaround reference"
+                                      ? "Regenerate 2-row turnaround reference (headshot + full body)"
+                                      : "Generate 2-row turnaround reference (headshot + full body)"
                                   }
                                 >
                                   {generatingWardrobeRefFor === w.id ? (
@@ -3374,7 +3374,7 @@ const CharacterCard = ({
                             </span>
                           </div>
                           <span className="text-[10px] text-gray-500">
-                            Front · 3/4 · Profile · Back
+                            Headshot + Full Body · Front · 3/4 · Profile · Back
                           </span>
                         </>
                       ) : (
@@ -3382,12 +3382,12 @@ const CharacterCard = ({
                           <Shirt className="w-4 h-4" />
                           <span>Turnaround Reference</span>
                           <span className="text-[10px] text-gray-500">
-                            Front · 3/4 · Profile · Back — used in scene generation
+                            Headshot + Full Body · Front · 3/4 · Profile · Back — used in scene generation
                           </span>
                         </>
                       )}
                     </div>
-                    <div className="aspect-[21/9] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <div className="aspect-[4/3] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                       {expandedWardrobe.fullBodyUrl ||
                       expandedWardrobe.previewImageUrl ? (
                         <>

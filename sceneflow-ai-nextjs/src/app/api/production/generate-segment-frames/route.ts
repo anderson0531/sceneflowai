@@ -543,7 +543,7 @@ export async function POST(req: NextRequest) {
         allReferenceImages.push({
           imageUrl: c.referenceUrl!,
           name: c.hasCostumeReference
-            ? `${c.name} (turnaround costume reference)`
+            ? `${c.name} (2-row turnaround costume reference)`
             : c.name,
         })
       }

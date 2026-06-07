@@ -1166,7 +1166,7 @@ export async function POST(req: NextRequest) {
             const matchingCharRef = characterReferences.find((cr: any) => cr.name === ref.subjectDescription || cr.referenceId === ref.referenceId)
             const isCostumeRef = matchingCharRef?.hasCostumeReference
             const wardrobeLabel = isCostumeRef
-              ? ' (TURNAROUND REFERENCE — 4-view costume sheet, preserve outfit exactly)'
+              ? ' (TURNAROUND REFERENCE — 2-row costume sheet, headshot + full body, preserve outfit exactly)'
               : matchingCharRef?.defaultWardrobe ? ` wearing ${matchingCharRef.defaultWardrobe}` : ''
             allReferenceImages.push({
               imageUrl: ref.imageUrl,

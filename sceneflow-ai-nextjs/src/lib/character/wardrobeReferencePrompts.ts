@@ -2,12 +2,14 @@
  * Prompts and constants for wardrobe turnaround reference sheets used in Vision Production.
  */
 
-export const WARDROBE_REFERENCE_ASPECT_RATIO = '21:9' as const
+export const WARDROBE_REFERENCE_ASPECT_RATIO = '4:3' as const
 
-/** Downstream scene/frame generation: how to consume a 4-view turnaround ref image. */
+/** Downstream scene/frame generation: how to consume a 2-row turnaround ref image. */
 export const WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION =
-  'COSTUME TURNAROUND REFERENCE: The reference image is a 4-view turnaround sheet (front, three-quarter, profile, back). ' +
-  'Use the FRONT view for body proportions and pose in the scene. Preserve outfit details (fabric, color, accessories) EXACTLY as shown. ' +
+  'COSTUME TURNAROUND REFERENCE: The reference image is a 2-row turnaround sheet with eight views total. ' +
+  'TOP ROW (headshots): use for facial identity — match face, hair, and expression exactly. ' +
+  'BOTTOM ROW (full body): use for outfit, body proportions, and pose — use the FRONT full-body view for scene pose. ' +
+  'Preserve outfit details (fabric, color, accessories) EXACTLY as shown. ' +
   'Do NOT reproduce the turnaround layout, multi-view sheet, or neutral gray studio background in the scene.'
 
 export interface WardrobeTurnaroundPromptInput {
@@ -28,9 +30,10 @@ function getPronouns(gender?: string): { pronoun: string; possessive: string } {
 
 export function buildWardrobeTurnaroundSubjectDescription(characterName: string): string {
   return (
-    `[img-1] is ${characterName}. Generate a 4-view costume turnaround sheet of [img-1] wearing the described outfit. ` +
-    'Face, body proportions, and identity must match [img-1] exactly in every view. ' +
-    'The outfit must be identical across front, three-quarter, profile, and back views.'
+    `[img-1] is ${characterName}. Generate an 8-view costume turnaround sheet (2 rows × 4 columns) of [img-1] wearing the described outfit. ` +
+    'The TOP ROW headshots must match [img-1] face, hair, and identity exactly in every view. ' +
+    'Face, body proportions, and identity must match [img-1] exactly across all eight views. ' +
+    'The outfit must be identical across front, three-quarter, profile, and back views in both rows.'
   )
 }
 
@@ -85,20 +88,30 @@ export function parseOutfitDescription(description: string): {
   return result
 }
 
-/** Build prompt for a 4-view wardrobe turnaround reference sheet. */
+/** Build prompt for a 2-row (headshot + full body) wardrobe turnaround reference sheet. */
 export function buildWardrobeTurnaroundPrompt(input: WardrobeTurnaroundPromptInput): string {
   const { characterName, appearanceDescription, wardrobeDescription, accessories, gender } = input
   const { pronoun } = getPronouns(gender)
   const parts: string[] = []
 
   parts.push(
-    'Professional character costume turnaround reference sheet on a single horizontal layout with four full-body views of the same character in the identical outfit'
+    'Professional character costume turnaround reference sheet with TWO stacked horizontal rows and FOUR aligned columns'
   )
   parts.push(
-    'Views left to right: (1) front facing camera, (2) three-quarter view facing camera-left, (3) profile side view, (4) back view'
+    'Layout: TOP ROW (~30% of image height) = headshot turnaround; BOTTOM ROW (~70% of image height) = full-body turnaround'
   )
   parts.push(
-    'All four views aligned on a shared horizontal plane: eyes, nose, shoulders, and waistline at the same height across views'
+    'Columns left to right in BOTH rows: (1) front facing camera, (2) three-quarter view facing camera-left, (3) profile side view, (4) back view'
+  )
+  parts.push(
+    'Columns must be vertically aligned: front headshot directly above front full-body, same for three-quarter, profile, and back'
+  )
+
+  parts.push(
+    'TOP ROW (headshots): chest-up shoulders-and-head framing, neutral calm expression, face fully visible and unobscured, collar and upper garment visible for costume continuity'
+  )
+  parts.push(
+    'Headshot row: eyes, nose, and chin aligned at the same height across all four headshot views'
   )
 
   if (appearanceDescription) {
@@ -122,9 +135,9 @@ export function buildWardrobeTurnaroundPrompt(input: WardrobeTurnaroundPromptInp
     if (outfit.other) outfitItems.push(outfit.other)
 
     if (outfitItems.length > 0) {
-      parts.push(`${pronoun} is wearing ${outfitItems.join(', ')} in all four views`)
+      parts.push(`${pronoun} is wearing ${outfitItems.join(', ')} in all eight views`)
     } else {
-      parts.push(`${pronoun} is wearing ${wardrobeDescription} in all four views`)
+      parts.push(`${pronoun} is wearing ${wardrobeDescription} in all eight views`)
     }
   }
 
@@ -133,10 +146,13 @@ export function buildWardrobeTurnaroundPrompt(input: WardrobeTurnaroundPromptInp
   }
 
   parts.push(
-    'Pose: neutral upright standing A-pose, symmetrical relaxed posture, arms slightly away from body, feet shoulder-width apart, facing forward in front view'
+    'BOTTOM ROW (full body): neutral upright standing A-pose, symmetrical relaxed posture, arms slightly away from body, feet shoulder-width apart, facing forward in front view'
   )
   parts.push(
-    'No dynamic action poses, no twisted torso, no dramatic foreshortening, neutral calm expression'
+    'Full-body row: eyes, shoulders, and waistline aligned at the same height across all four full-body views'
+  )
+  parts.push(
+    'No dynamic action poses, no twisted torso, no dramatic foreshortening'
   )
   parts.push(
     'Lighting: flat diffuse neutral studio lighting, even illumination, no harsh shadows, no directional highlights, no colored rim lights'
@@ -148,7 +164,7 @@ export function buildWardrobeTurnaroundPrompt(input: WardrobeTurnaroundPromptInp
     'Image quality: ultra-sharp high resolution, no motion blur, no film grain, no compression artifacts, fabric textures and accessories clearly visible'
   )
   parts.push(
-    'Hair parted or styled so the face is unobscured; limbs held slightly away from the body for clear silhouette and outfit readability'
+    'Hair parted or styled so the face is unobscured; limbs held slightly away from the body for clear silhouette and outfit readability in the full-body row'
   )
 
   return parts.join('. ') + '.'

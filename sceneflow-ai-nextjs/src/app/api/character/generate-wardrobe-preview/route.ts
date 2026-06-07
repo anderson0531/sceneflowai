@@ -17,10 +17,10 @@ export const maxDuration = 180
 /**
  * Generate Wardrobe Turnaround Reference API
  *
- * Generates a 4-view costume turnaround sheet (front, 3/4, profile, back)
+ * Generates a 2-row costume turnaround sheet (headshot + full body, 4 views each)
  * for use as a production wardrobe reference in scene/frame generation.
  *
- * Credit cost: 5 credits per wardrobe (1 turnaround sheet)
+ * Credit cost: 5 credits per wardrobe (1 composite turnaround sheet)
  */
 
 const CREDIT_COST_PER_WARDROBE = IMAGE_CREDITS.GEMINI_EDIT
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
 
         console.log(`[Wardrobe Turnaround] Prompt: ${turnaroundPrompt.substring(0, 150)}...`)
 
-        // Vertex Gemini Image supports 21:9 + reference images; Imagen capability rejects 21:9
+        // Vertex Gemini Image supports 4:3 + reference images for 2-row turnaround sheets
         const subjectDescription = buildWardrobeTurnaroundSubjectDescription(characterName)
         const result = await generateImageWithGeminiStudio({
           prompt: `${subjectDescription}\n\n${turnaroundPrompt}`,
