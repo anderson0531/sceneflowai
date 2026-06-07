@@ -8960,10 +8960,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
         // Build updated scenes array with the new direction
         const updatedScenes = [...(script.script.scenes || [])]
-        updatedScenes[sceneIdx] = {
+        updatedScenes[sceneIdx] = ensureSceneBeats({
           ...updatedScenes[sceneIdx],
-          sceneDirection: data.sceneDirection
-        }
+          sceneDirection: data.sceneDirection,
+        } as Record<string, unknown>)
 
         // Build the updated script object
         const updatedScript = {
@@ -9104,10 +9104,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       setScript((currentScript: any) => {
         if (!currentScript?.script?.scenes) return currentScript
         const updatedScenes = [...currentScript.script.scenes]
-        updatedScenes[sceneIdx] = {
+        updatedScenes[sceneIdx] = ensureSceneBeats({
           ...updatedScenes[sceneIdx],
-          sceneDirection: data.sceneDirection
-        }
+          sceneDirection: data.sceneDirection,
+        } as Record<string, unknown>)
         const updatedScript = {
           ...currentScript,
           script: { ...currentScript.script, scenes: updatedScenes }
@@ -11406,16 +11406,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       let metadataToPersist: any = interimMetadata
       try {
         const { migrateProjectToSegmented } = await import('@/lib/script/migrateToSegmented')
+        const { migrateProjectToBeats } = await import('@/lib/script/beatMigration')
         const segmentResult = migrateProjectToSegmented(interimMetadata)
-        metadataToPersist = segmentResult.metadata
+        const beatResult = migrateProjectToBeats(segmentResult.metadata)
+        metadataToPersist = beatResult.metadata
         if (segmentResult.changed) {
           console.log('[saveScenesToDatabase] Re-derived segments:', {
             migratedSceneCount: segmentResult.migratedSceneCount,
             audioEntriesRewritten: segmentResult.audioEntriesRewritten,
           })
         }
+        if (beatResult.changed) {
+          console.log('[saveScenesToDatabase] Beat hydration:', {
+            migratedSceneCount: beatResult.migratedSceneCount,
+          })
+        }
       } catch (segErr) {
-        console.warn('[saveScenesToDatabase] Segment re-derivation failed; persisting flat shape only', segErr)
+        console.warn('[saveScenesToDatabase] Segment/beat re-derivation failed; persisting flat shape only', segErr)
       }
 
       const payload: Record<string, any> = {

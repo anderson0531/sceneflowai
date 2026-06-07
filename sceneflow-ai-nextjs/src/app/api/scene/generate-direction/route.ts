@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '../../../../models/Project'
 import { sequelize } from '../../../../config/database'
 import { generateSceneDirection } from '@/lib/sceneGeneration/generateDirection'
+import { ensureSceneBeats } from '@/lib/script/beatMigration'
 
 export const maxDuration = 300
 export const runtime = 'nodejs'
@@ -70,7 +71,9 @@ export async function POST(req: NextRequest) {
     }
 
     const updatedScenes = scriptScenes.map((s: any, idx: number) =>
-      idx === sceneIndex ? { ...s, sceneDirection } : s
+      idx === sceneIndex
+        ? ensureSceneBeats({ ...s, sceneDirection } as Record<string, unknown>)
+        : s
     )
 
     const updatedScript = script.script

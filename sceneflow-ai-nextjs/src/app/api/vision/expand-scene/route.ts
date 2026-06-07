@@ -6,6 +6,7 @@ import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen } from '@/lib/imagen/promptOptimizer'
 import { generateText } from '@/lib/vertexai/gemini'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
+import { ensureSceneBeats } from '@/lib/script/beatMigration'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -123,8 +124,9 @@ export async function POST(request: NextRequest) {
       .catch(err => console.error(`[Scene Image] Async generation failed:`, err))
 
     // Update the scene in the project metadata
-    const updatedScenes = scenes.map((s: any) => 
-      s.sceneNumber === sceneNumber ? expandedScene : s
+    const hydratedExpanded = ensureSceneBeats(expandedScene as Record<string, unknown>)
+    const updatedScenes = scenes.map((s: any) =>
+      s.sceneNumber === sceneNumber ? hydratedExpanded : s
     )
 
     const existingMetadata = project.metadata || {}
@@ -147,7 +149,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      scene: expandedScene
+      scene: hydratedExpanded
     })
   } catch (error: any) {
     console.error('[Expand Scene] Error:', error)

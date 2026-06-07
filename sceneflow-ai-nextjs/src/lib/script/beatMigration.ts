@@ -18,6 +18,22 @@ import {
 import { mintLineId } from '@/lib/script/segmentScript'
 
 const BEAT_MIGRATION_FLAG = 'beatsMigratedAt'
+const BEAT_DURATION_SEC = 8
+const MAX_DERIVED_BEATS = 12
+
+type SceneDirectionShape = {
+  sceneDescription?: string
+  camera?: { shots?: string[]; angle?: string; movement?: string; focus?: string }
+  lighting?: {
+    overallMood?: string
+    timeOfDay?: string
+    colorTemperature?: string
+    keyLight?: string
+  }
+  scene?: { location?: string; keyProps?: string[]; atmosphere?: string }
+  talent?: { blocking?: string; keyActions?: string[]; emotionalBeat?: string }
+  audio?: { priorities?: string; considerations?: string }
+}
 
 export function mintBeatId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -417,19 +433,178 @@ export function isAutoLeadingEstablishingBeat(
   return false
 }
 
-/**
- * Convert a legacy flat scene into an ordered beats[] timeline.
- * Order: optional establishing action → standalone narration → dialogue beats.
- */
-export function flatSceneToBeats(scene: Record<string, unknown>): SceneBeat[] {
-  if (Array.isArray(scene.beats) && scene.beats.length > 0) {
-    return normalizeBeatsForProduction(scene.beats as SceneBeat[])
+function getSceneDirection(scene: Record<string, unknown>): SceneDirectionShape | undefined {
+  const raw = scene.sceneDirection
+  return raw && typeof raw === 'object' ? (raw as SceneDirectionShape) : undefined
+}
+
+/** Target beat count from scene duration (~8s per beat). */
+export function computeTargetBeatCount(scene: Record<string, unknown>): number {
+  const duration =
+    typeof scene.duration === 'number' && scene.duration > 0 ? scene.duration : BEAT_DURATION_SEC
+  return Math.min(MAX_DERIVED_BEATS, Math.max(1, Math.round(duration / BEAT_DURATION_SEC)))
+}
+
+function pickIndexedItem<T>(items: T[], beatIndex: number, totalBeats: number): T | undefined {
+  if (items.length === 0) return undefined
+  if (items.length >= totalBeats) return items[beatIndex]
+  const idx = Math.floor((beatIndex / totalBeats) * items.length)
+  return items[Math.min(idx, items.length - 1)]
+}
+
+function buildLightingCue(direction: SceneDirectionShape | undefined, visualDescription: string): string {
+  const parts: string[] = []
+  if (direction?.lighting?.overallMood) parts.push(direction.lighting.overallMood)
+  if (direction?.lighting?.timeOfDay) parts.push(direction.lighting.timeOfDay)
+  if (direction?.lighting?.colorTemperature) parts.push(direction.lighting.colorTemperature)
+  if (visualDescription) parts.push(visualDescription)
+  return parts.join(', ').trim()
+}
+
+function buildSetContext(direction: SceneDirectionShape | undefined): string {
+  const parts: string[] = []
+  if (direction?.scene?.location) parts.push(direction.scene.location)
+  if (direction?.scene?.atmosphere) parts.push(direction.scene.atmosphere)
+  const props = direction?.scene?.keyProps
+  if (Array.isArray(props) && props.length > 0) {
+    parts.push(`Props: ${props.slice(0, 3).join(', ')}`)
+  }
+  return parts.filter(Boolean).join('. ').trim()
+}
+
+/** Derive action beats from sceneDirection / visual fields for action-only scenes. */
+export function deriveActionBeatsFromDirection(
+  scene: Record<string, unknown>,
+  targetBeats: number
+): SceneBeat[] {
+  const direction = getSceneDirection(scene)
+  const visualDescription = String(scene.visualDescription ?? '').trim()
+  const sceneDescription = String(direction?.sceneDescription ?? '').trim()
+  const shots = Array.isArray(direction?.camera?.shots)
+    ? direction!.camera!.shots!.map((s) => String(s).trim()).filter(Boolean)
+    : []
+  const keyActions = Array.isArray(direction?.talent?.keyActions)
+    ? direction!.talent!.keyActions!.map((s) => String(s).trim()).filter(Boolean)
+    : []
+  const blocking = String(direction?.talent?.blocking ?? '').trim()
+  const emotionalBeat = String(direction?.talent?.emotionalBeat ?? '').trim()
+  const setContext = buildSetContext(direction)
+  const lightingCue = buildLightingCue(direction, visualDescription)
+
+  const beats: SceneBeat[] = []
+  for (let i = 0; i < targetBeats; i++) {
+    const shot = pickIndexedItem(shots, i, targetBeats) ?? 'Medium shot'
+    const keyAction = pickIndexedItem(keyActions, i, targetBeats)
+    const momentParts: string[] = []
+    if (keyAction) momentParts.push(keyAction)
+    else if (blocking && targetBeats === 1) momentParts.push(blocking)
+    else if (sceneDescription) {
+      const sentences = sceneDescription.split(/(?<=[.!?])\s+/).filter(Boolean)
+      momentParts.push(pickIndexedItem(sentences, i, targetBeats) ?? sceneDescription)
+    } else if (blocking) momentParts.push(blocking)
+    if (emotionalBeat && i === targetBeats - 1) momentParts.push(emotionalBeat)
+
+    const actionParts = [`${shot}: ${momentParts.join(' ').trim() || 'Scene action unfolds'}`]
+    if (setContext) actionParts.push(setContext)
+    if (lightingCue) actionParts.push(lightingCue)
+
+    beats.push({
+      beatId: mintBeatId(),
+      sequenceIndex: i,
+      kind: 'action',
+      actionDescription: actionParts.join('. ').replace(/\.\s*\./g, '.').trim(),
+      storyboardImageUrl:
+        i === 0 && typeof scene.imageUrl === 'string' ? scene.imageUrl : undefined,
+      storyboardImagePrompt:
+        i === 0 && typeof scene.imagePrompt === 'string' ? scene.imagePrompt : undefined,
+      storyboardImageGcsPath:
+        i === 0 && typeof scene.imageGcsPath === 'string' ? scene.imageGcsPath : undefined,
+    })
   }
 
+  return normalizeBeatsForProduction(beats)
+}
+
+function needsDirectionBeatExpansion(
+  legacyBeats: SceneBeat[],
+  scene: Record<string, unknown>,
+  targetBeats: number
+): boolean {
+  if (legacyBeats.length === 0) return true
+  const spoken = legacyBeats.filter((b) => isSpokenBeatKind(b.kind))
+  if (spoken.length > 0) return legacyBeats.length < targetBeats
+  if (legacyBeats.length === 1 && legacyBeats[0].kind === 'action') {
+    const direction = getSceneDirection(scene)
+    const hasRichDirection =
+      (direction?.camera?.shots?.length ?? 0) > 1 ||
+      (direction?.talent?.keyActions?.length ?? 0) > 1 ||
+      !!direction?.sceneDescription
+    return hasRichDirection && targetBeats > 1
+  }
+  return legacyBeats.length < targetBeats
+}
+
+function appendDirectionActionBeats(
+  existing: SceneBeat[],
+  scene: Record<string, unknown>,
+  targetBeats: number
+): SceneBeat[] {
+  const needed = Math.max(0, targetBeats - existing.length)
+  if (needed === 0) return existing
+  const extra = deriveActionBeatsFromDirection(scene, needed)
+  const merged = [
+    ...existing,
+    ...extra.map((beat, offset) => ({
+      ...beat,
+      sequenceIndex: existing.length + offset,
+    })),
+  ]
+  return normalizeBeatsForProduction(merged)
+}
+
+/**
+ * Derive beats from scene content when beats[] is missing or invalid.
+ * Uses legacy fields first, then sceneDirection for duration-sized action timelines.
+ */
+export function deriveBeatsFromSceneContent(scene: Record<string, unknown>): SceneBeat[] {
+  const targetBeats = computeTargetBeatCount(scene)
+  const legacyBeats = buildLegacyBeats(scene)
+
+  if (needsDirectionBeatExpansion(legacyBeats, scene, targetBeats)) {
+    const spoken = legacyBeats.filter((b) => isSpokenBeatKind(b.kind))
+    if (spoken.length > 0) {
+      return appendDirectionActionBeats(legacyBeats, scene, targetBeats)
+    }
+    return deriveActionBeatsFromDirection(scene, targetBeats)
+  }
+
+  return legacyBeats
+}
+
+function tryParseExistingBeats(scene: Record<string, unknown>): SceneBeat[] {
+  if (!Array.isArray(scene.beats) || scene.beats.length === 0) return []
+  const parsed =
+    typeof (scene.beats[0] as Record<string, unknown>)?.kind === 'string'
+      ? parseLlmBeats(scene.beats as unknown[])
+      : normalizeBeatsForProduction(scene.beats as SceneBeat[])
+  return parsed.filter((beat) => {
+    if (beat.kind === 'action') return !!beat.actionDescription?.trim()
+    return !!beat.line?.trim()
+  })
+}
+
+/**
+ * Build beats from legacy flat fields (action, narration, dialogue).
+ * Does not read scene.beats[].
+ */
+function buildLegacyBeats(scene: Record<string, unknown>): SceneBeat[] {
   const beats: SceneBeat[] = []
   let seq = 0
 
-  const explicitAction = String(scene.action ?? '').trim()
+  const direction = getSceneDirection(scene)
+  const explicitAction = String(
+    scene.action ?? scene.visualDescription ?? direction?.sceneDescription ?? ''
+  ).trim()
 
   if (explicitAction) {
     beats.push({
@@ -470,6 +645,17 @@ export function flatSceneToBeats(scene: Record<string, unknown>): SceneBeat[] {
   }
 
   return normalizeBeatsForProduction(beats)
+}
+
+/**
+ * Convert a legacy flat scene into an ordered beats[] timeline.
+ * Order: optional establishing action → standalone narration → dialogue beats.
+ */
+export function flatSceneToBeats(scene: Record<string, unknown>): SceneBeat[] {
+  if (Array.isArray(scene.beats) && scene.beats.length > 0) {
+    return normalizeBeatsForProduction(scene.beats as SceneBeat[])
+  }
+  return buildLegacyBeats(scene)
 }
 
 /** Sync legacy dialogue[] / narration from beats for backward compatibility. */
@@ -739,17 +925,16 @@ export function migrateProjectToBeats(metadata: unknown): MigrateBeatsResult {
 
   for (let i = 0; i < scenes.length; i++) {
     const scene = scenes[i] as Record<string, unknown>
-    const hadBeats = Array.isArray(scene.beats) && scene.beats.length > 0
-    const baseBeats = hadBeats
-      ? normalizeBeatsForProduction(scene.beats as SceneBeat[])
-      : flatSceneToBeats(scene)
+    const parsed = tryParseExistingBeats(scene)
+    const hadValidBeats = parsed.length > 0
+    const baseBeats = hadValidBeats ? parsed : deriveBeatsFromSceneContent(scene)
     const hydratedBeats = hydrateBeatStoryboardMediaFromLegacy(scene, baseBeats)
     const nextScene = applyBeatsToScene(scene, hydratedBeats)
     const sceneChanged = JSON.stringify(scene) !== JSON.stringify(nextScene)
     if (sceneChanged) {
       scenes[i] = nextScene
       changed = true
-      if (!hadBeats) migratedSceneCount++
+      if (!hadValidBeats && baseBeats.length > 0) migratedSceneCount++
     }
   }
 
@@ -838,14 +1023,11 @@ export function parseLlmBeats(raw: unknown[]): SceneBeat[] {
   return normalizeBeatsForProduction(beats)
 }
 
-/** Ensure scene has beats — prefer LLM beats[], else derive from legacy fields. */
+/** Ensure scene has beats — prefer valid beats[], else derive from scene content. */
 export function ensureSceneBeats(scene: Record<string, unknown>): Record<string, unknown> {
-  if (Array.isArray(scene.beats) && scene.beats.length > 0) {
-    const parsed =
-      typeof (scene.beats[0] as Record<string, unknown>)?.kind === 'string'
-        ? parseLlmBeats(scene.beats as unknown[])
-        : normalizeBeatsForProduction(scene.beats as SceneBeat[])
+  const parsed = tryParseExistingBeats(scene)
+  if (parsed.length > 0) {
     return applyBeatsToScene(scene, parsed)
   }
-  return applyBeatsToScene(scene, flatSceneToBeats(scene))
+  return applyBeatsToScene(scene, deriveBeatsFromSceneContent(scene))
 }

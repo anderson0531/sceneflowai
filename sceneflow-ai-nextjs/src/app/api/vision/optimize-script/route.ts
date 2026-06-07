@@ -4,6 +4,7 @@ import { safeParseJsonFromText } from '@/lib/safeJson'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { loadContinuityContextForProject } from '@/lib/series/continuityContext'
+import { ensureSceneBeats } from '@/lib/script/beatMigration'
 
 export const maxDuration = 600 // 10min for large scripts with retries + parallel batches
 export const runtime = 'nodejs'
@@ -131,6 +132,12 @@ export async function POST(req: NextRequest) {
       }
     }
     
+    if (result?.optimizedScript?.scenes && Array.isArray(result.optimizedScript.scenes)) {
+      result.optimizedScript.scenes = result.optimizedScript.scenes.map((scene: Record<string, unknown>) =>
+        ensureSceneBeats(scene)
+      )
+    }
+
     return NextResponse.json({
       success: true,
       ...result,

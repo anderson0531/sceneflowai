@@ -8,6 +8,7 @@
 
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { isCinematicBookendScene } from '@/lib/script/cinematicBookends'
+import { ensureSceneBeats } from '@/lib/script/beatMigration'
 import type { BeatKind, SceneBeat } from '@/lib/script/segmentTypes'
 
 export interface QAIssue {
@@ -159,7 +160,7 @@ export function runScriptQA(
         sceneIndex: sceneIdx,
         message: `Scene ${sceneNum} is missing beats[] — required for storyboard production`,
         suggestion: 'Add an ordered beats array with action, dialogue, and narration beats',
-        autoFixable: false,
+        autoFixable: true,
       })
     }
 
@@ -432,6 +433,21 @@ export function autoFixScript(
         if (closeMatch) {
           dlg.character = closeMatch.name
           if (closeMatch.id) dlg.characterId = closeMatch.id
+          fixedCount++
+        }
+      }
+    }
+
+    if (
+      issue.category === 'formatting' &&
+      issue.message.includes('missing beats[]') &&
+      issue.sceneIndex !== undefined
+    ) {
+      const scene = fixedScenes[issue.sceneIndex]
+      if (scene) {
+        const hydrated = ensureSceneBeats(scene as Record<string, unknown>)
+        fixedScenes[issue.sceneIndex] = hydrated as Scene
+        if (Array.isArray((hydrated as Scene).beats) && (hydrated as Scene).beats!.length > 0) {
           fixedCount++
         }
       }

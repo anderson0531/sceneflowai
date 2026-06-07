@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { runScriptQA } from '@/lib/script/qualityAssurance'
+import { autoFixScript, runScriptQA } from '@/lib/script/qualityAssurance'
 
 describe('qualityAssurance beats', () => {
   const characters = [{ name: 'Sarah', id: 'char-1' }]
@@ -61,6 +61,27 @@ describe('qualityAssurance beats', () => {
       i.message.includes('consecutive spoken beats')
     )
     expect(consecutiveWarnings.length).toBe(1)
+  })
+
+  it('autoFixScript hydrates missing beats from scene content', () => {
+    const scenes = [
+      {
+        sceneNumber: 1,
+        heading: 'INT. OFFICE - NIGHT',
+        duration: 30,
+        visualDescription: 'Dim office, monitor glow.',
+        sceneDirection: {
+          sceneDescription: 'Marcus reviews footage late at night.',
+          camera: { shots: ['Wide Shot', 'Close-Up', 'Insert', 'Dutch Angle'] },
+        },
+        beats: [],
+      },
+    ]
+
+    const qa = runScriptQA(scenes as any, characters)
+    const { scenes: fixed, fixedCount } = autoFixScript(scenes as any, characters, qa)
+    expect(fixedCount).toBeGreaterThan(0)
+    expect((fixed[0] as any).beats?.length).toBeGreaterThan(0)
   })
 
   it('skips 45s duration warning for bookend scenes', () => {
