@@ -179,17 +179,19 @@ export async function POST(req: NextRequest) {
       console.warn('[Enhance Reference] Failed to detect aspect ratio, defaulting to 1:1', err)
     }
 
-    // STAGE 4: Generate enhanced image using Gemini Studio (not Imagen)
-    // Gemini 3 Pro Image Preview produces better enhancement results with native reference handling
-    console.log(`[Enhance Reference] Stage 3: Generating enhanced headshot with Gemini Studio...`)
+    // STAGE 4: Generate enhanced image via Vertex Gemini Image (multimodal reference)
+    // Use eco tier (gemini-2.5-flash-image GA) — pro preview requires project allowlist
+    console.log(`[Enhance Reference] Stage 3: Generating enhanced headshot with Vertex Gemini Image...`)
     const result = await generateImageWithGeminiStudio({
       prompt: enhancementPrompt,
       aspectRatio, // Maintain original aspect ratio
+      modelTier: 'eco',
       referenceImages: [{
         imageUrl: sourceImageUrl,
         name: characterName
       }]
     })
+    const modelUsed = 'gemini-2.5-flash-image'
     const base64Image = `data:${result.mimeType};base64,${result.imageBase64}`
     
     // Upload enhanced image to Vercel Blob
@@ -217,7 +219,7 @@ export async function POST(req: NextRequest) {
         CREDIT_COST,
         'ai_usage',
         projectId || null,
-        { operation: 'enhance_character_reference', characterId, model: 'gemini-3-pro-image-preview' }
+        { operation: 'enhance_character_reference', characterId, model: modelUsed }
       )
       console.log(`[Enhance Reference] Charged ${CREDIT_COST} credits to user ${userId}`)
       const breakdown = await CreditService.getCreditBreakdown(userId)
@@ -230,6 +232,7 @@ export async function POST(req: NextRequest) {
       success: true, 
       enhancedImageUrl,
       visionDescription,
+      model: modelUsed,
       iterationCount: iterationCount + 1,
       remainingIterations: 3 - (iterationCount + 1),
       creditsCharged: CREDIT_COST,

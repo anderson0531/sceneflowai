@@ -189,6 +189,17 @@ export async function generateVertexGeminiImage(
       proModelRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS
       return generateVertexGeminiImage(options, 0)
     }
+    // Pro preview models require allowlist access; fall back to GA flash-image model
+    if (
+      response.status === 404 &&
+      model !== GEMINI_IMAGE_TIER_CONFIG.eco.model &&
+      (errorText.includes('NOT_FOUND') || errorText.includes('not found'))
+    ) {
+      console.warn(
+        `[Vertex Gemini Image] Model ${model} unavailable (404), falling back to ${GEMINI_IMAGE_TIER_CONFIG.eco.model}`
+      )
+      return generateVertexGeminiImage({ ...options, modelTier: 'eco' }, 0)
+    }
     if (response.status === 503 && retryCount < MAX_RETRIES) {
       await sleepWithBackoff(retryCount)
       return generateVertexGeminiImage(options, retryCount + 1)
