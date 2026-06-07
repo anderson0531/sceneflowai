@@ -6,10 +6,11 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const { characterContext, screenplayContext, selectedInstructions } = await request.json() as {
+    const { characterContext, screenplayContext, selectedInstructions, wardrobeImageUrl } = await request.json() as {
       characterContext?: CharacterContext
       screenplayContext?: ScreenplayContext
       selectedInstructions?: string[]
+      wardrobeImageUrl?: string
     }
 
     if (!characterContext) {
@@ -35,7 +36,17 @@ Description: ${description || 'Not specified'}
 Traits/Attributes: ${attributes ? Object.entries(attributes).map(([k, v]) => `${k}: ${v}`).join(', ') : 'Not specified'}
 Backstory: ${backstory || 'Not specified'}`
 
-    if (referenceImage) {
+    const visionImageUrl =
+      wardrobeImageUrl?.startsWith('http')
+        ? wardrobeImageUrl
+        : referenceImage?.startsWith('http')
+          ? referenceImage
+          : undefined
+
+    if (wardrobeImageUrl?.startsWith('http')) {
+      prompt += `\n\nWARDROBE TURNAROUND IMAGE:
+A 2-row costume turnaround sheet is attached. Use ONLY the TOP ROW headshots for voice inference (ignore outfit/bottom row). Analyze facial structure, apparent age, ethnicity, and demeanor to infer vocal qualities.`
+    } else if (referenceImage) {
       prompt += `\n\nREFERENCE IMAGE:
 A visual reference of the character is attached. Analyze their facial structure, apparent age, ethnicity, and overall demeanor to infer vocal qualities that perfectly match their physical presence.`
     }
@@ -69,10 +80,10 @@ Synopsis: ${screenplayContext.synopsis || 'Not specified'}`
 
     let generatedText = ''
 
-    if (referenceImage && referenceImage.startsWith('http')) {
+    if (visionImageUrl) {
       try {
         console.log(`[Director Prompt] Generating with vision for "${name}"...`)
-        const imageResponse = await fetch(referenceImage)
+        const imageResponse = await fetch(visionImageUrl)
         if (!imageResponse.ok) {
           throw new Error(`Failed to fetch reference image: ${imageResponse.status}`)
         }

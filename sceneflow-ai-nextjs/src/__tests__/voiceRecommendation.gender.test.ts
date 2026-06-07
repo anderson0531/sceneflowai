@@ -119,4 +119,20 @@ describe('getCharacterVoiceRecommendations gender hard filter', () => {
     ]
     expect(topIds.some((id) => authoritativeMale.includes(id))).toBe(true)
   })
+
+  it('scores vision-style voiceDescription toward corporate authoritative male voices', () => {
+    const character: CharacterContext = {
+      name: 'Marcus Thorne',
+      gender: 'male',
+      voiceDescription:
+        'Confident, corporate, and highly stable authoritative male voice with polished executive delivery, crisp professional articulation, and resonant baritone timbre.',
+      description: MARCUS_THORNE_DESCRIPTION,
+    }
+
+    const recs = getCharacterVoiceRecommendations(geminiVoices, character, undefined, 1)
+    expect(recs[0].voiceId).not.toBe('gemini-Achernar')
+    const voice = geminiVoices.find((v) => v.id === recs[0].voiceId)
+    expect(voice?.gender?.toLowerCase()).toBe('male')
+    expect(recs[0].score).toBeGreaterThan(0)
+  })
 })

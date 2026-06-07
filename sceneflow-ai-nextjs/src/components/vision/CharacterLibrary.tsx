@@ -62,6 +62,10 @@ import {
   type ElevenLabsVoice,
 } from "@/lib/voiceRecommendation";
 import { enrichGeminiVoicesForScoring } from "@/lib/tts/geminiVoiceCatalog";
+import {
+  getWardrobeVoiceImageForCharacter,
+  type WardrobeVoiceAnalysisResult,
+} from "@/lib/character/wardrobeVoiceAnalysis";
 import type { EdgeVoiceConfig } from "@/types/vision";
 
 export interface CharacterLibraryProps {
@@ -876,6 +880,13 @@ const CharacterCard = ({
           ]
         : [];
 
+  const wardrobeVoiceRef = getWardrobeVoiceImageForCharacter({
+    wardrobes: character.wardrobes,
+    defaultWardrobe: character.defaultWardrobe,
+    wardrobeAccessories: character.wardrobeAccessories,
+  });
+  const hasWardrobeTurnaroundForVoice = !!wardrobeVoiceRef?.imageUrl;
+
   // Build character context for voice recommendations
   const characterContext: CharacterContext = {
     name: character.name || "Unknown",
@@ -970,6 +981,36 @@ const CharacterCard = ({
     toast.info("Re-run Auto or Select Voice to use Gemini TTS for this character.");
   };
 
+  const fetchWardrobeVoiceAnalysis = async (): Promise<WardrobeVoiceAnalysisResult | null> => {
+    const ref = getWardrobeVoiceImageForCharacter({
+      wardrobes: character.wardrobes,
+      defaultWardrobe: character.defaultWardrobe,
+      wardrobeAccessories: character.wardrobeAccessories,
+    });
+    if (!ref) {
+      toast.error("Generate a wardrobe turnaround reference before Auto Voice.");
+      return null;
+    }
+
+    const res = await fetch("/api/character/analyze-voice-from-wardrobe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        characterName: characterContext.name,
+        wardrobeImageUrl: ref.imageUrl,
+        wardrobeId: ref.wardrobe.id,
+        characterContext,
+        screenplayContext,
+      }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data?.error || "Wardrobe voice analysis failed.");
+    }
+    return data as WardrobeVoiceAnalysisResult;
+  };
+
   const handleAutoVoiceClick = () => {
     if (!onUpdateCharacterVoice) {
       toast.error("Voice update is not available.");
@@ -978,12 +1019,9 @@ const CharacterCard = ({
 
     const useGoogleTts =
       ttsProvider === "google" || voiceAssignmentProvider === "google";
-    if (useGoogleTts) {
-      const { confidence } = resolveCharacterGender(characterContext);
-      if (confidence === "ambiguous") {
-        setGenderConfirmOpen(true);
-        return;
-      }
+    if (useGoogleTts && !hasWardrobeTurnaroundForVoice) {
+      toast.error("Generate a wardrobe turnaround reference before Auto Voice.");
+      return;
     }
 
     void handleAutoVoice();
@@ -1015,7 +1053,40 @@ const CharacterCard = ({
 
     try {
       if (useGoogleTts) {
-        // 1) Select best Gemini base voice
+        let visionAnalysis: WardrobeVoiceAnalysisResult | null = null;
+        try {
+          visionAnalysis = await fetchWardrobeVoiceAnalysis();
+        } catch (analysisErr) {
+          console.warn("[Auto Voice] Wardrobe voice analysis failed:", analysisErr);
+          if (!genderOverride) {
+            const { confidence } = resolveCharacterGender(characterContext);
+            if (confidence === "ambiguous") {
+              setGenderConfirmOpen(true);
+              setIsAutoSelectingVoice(false);
+              return;
+            }
+          }
+        }
+
+        if (!visionAnalysis && !genderOverride) {
+          const { confidence } = resolveCharacterGender(characterContext);
+          if (confidence === "ambiguous") {
+            setGenderConfirmOpen(true);
+            setIsAutoSelectingVoice(false);
+            return;
+          }
+        }
+
+        if (visionAnalysis && onUpdateCharacterAttributes) {
+          onUpdateCharacterAttributes(characterId, {
+            gender: visionAnalysis.gender,
+            age: visionAnalysis.apparentAge,
+            ethnicity: visionAnalysis.ethnicity,
+            voiceDescription: visionAnalysis.voiceDescription,
+          });
+          toast.success("Matched voice profile from wardrobe turnaround.");
+        }
+
         const voicesRes = await fetch("/api/tts/google/voices", {
           cache: "no-store",
         });
@@ -1032,16 +1103,22 @@ const CharacterCard = ({
         }
 
         const enrichedVoices = enrichGeminiVoicesForScoring(geminiVoices);
-        const scoringContext: CharacterContext = genderOverride
-          ? { ...characterContext, gender: genderOverride }
-          : characterContext;
-        const { gender: resolvedGender } = resolveCharacterGender(scoringContext);
+        const scoringContext: CharacterContext = {
+          ...characterContext,
+          ...(genderOverride ? { gender: genderOverride } : {}),
+          ...(visionAnalysis
+            ? {
+                gender: visionAnalysis.gender,
+                age: visionAnalysis.apparentAge,
+                ethnicity: visionAnalysis.ethnicity,
+                voiceDescription: visionAnalysis.voiceDescription,
+              }
+            : {}),
+        };
 
         const recs = getCharacterVoiceRecommendations(
           enrichedVoices,
-          resolvedGender
-            ? { ...scoringContext, gender: resolvedGender }
-            : scoringContext,
+          scoringContext,
           screenplayContext as ScreenplayContext,
           1,
         );
@@ -1054,31 +1131,20 @@ const CharacterCard = ({
           `Auto selected: ${selectedVoice.name.replace(/ \((Gemini|Studio)\)/i, "")}`,
         );
 
-        try {
-          const promptRes = await fetch("/api/tts/google/director-prompt", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              characterContext,
-              screenplayContext,
-            }),
-          });
-          if (promptRes.ok) {
-            const promptData = await promptRes.json();
-            generatedPrompt = (promptData?.script || "").trim();
-            if (generatedPrompt) {
-              toast.success("Generated Voice Direction.");
-            }
-          }
-        } catch (promptErr) {
-          console.warn("[Auto Voice] Director prompt generation failed:", promptErr);
+        generatedPrompt =
+          visionAnalysis?.audioProfile?.trim() ||
+          character.voiceConfig?.prompt ||
+          "";
+
+        if (generatedPrompt) {
+          toast.success("Director's Note ready from wardrobe analysis.");
         }
 
         onUpdateCharacterVoice(characterId, {
           provider: "google",
           voiceId: selectedVoice.id,
           voiceName: selectedVoice.name,
-          prompt: generatedPrompt || character.voiceConfig?.prompt,
+          prompt: generatedPrompt,
         });
       } else if (!voiceAssignmentProvider) {
         const voicesRes = await fetch("/api/tts/elevenlabs/voices", {
@@ -1759,7 +1825,7 @@ const CharacterCard = ({
         result.fullBodyUrl,
         result.previewImageUrl,
       );
-      toast.success("Turnaround reference generated!");
+      toast.success("Turnaround ready — you can now run Auto Voice.");
     } catch (error) {
       console.error("[Wardrobe Turnaround] Error:", error);
       toast.error(
@@ -2284,6 +2350,16 @@ const CharacterCard = ({
                     Assign a Gemini voice so dialogue generation uses the correct engine and voice id.
                   </p>
                 )}
+                {useGeminiVoicePicker && !hasWardrobeTurnaroundForVoice ? (
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400 mb-2">
+                    Generate a wardrobe turnaround reference first — Auto Voice matches from that image.
+                  </p>
+                ) : null}
+                {useGeminiVoicePicker && hasWardrobeTurnaroundForVoice && character.voiceConfig ? (
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mb-2">
+                    Voice matched from wardrobe turnaround
+                  </p>
+                ) : null}
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={(e) => {
@@ -2304,11 +2380,17 @@ const CharacterCard = ({
                       e.stopPropagation();
                       handleAutoVoiceClick();
                     }}
-                    disabled={isAutoSelectingVoice}
+                    disabled={
+                      isAutoSelectingVoice ||
+                      ((useGeminiVoicePicker || ttsProvider === "google") &&
+                        !hasWardrobeTurnaroundForVoice)
+                    }
                     className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-60"
                     title={
                       useGeminiVoicePicker || ttsProvider === "google"
-                        ? "Auto select Gemini voice, generate Director's Note, and play test dialogue"
+                        ? hasWardrobeTurnaroundForVoice
+                          ? "Analyze wardrobe turnaround, auto select Gemini voice, and generate Director's Note"
+                          : "Generate wardrobe turnaround first"
                         : "Auto pick an ElevenLabs voice from character profile (same recommendations as the voice browser)"
                     }
                   >
@@ -3230,14 +3312,32 @@ const CharacterCard = ({
             selectedVoiceId={character.voiceConfig?.voiceId || ""}
             onSelectVoice={async (voiceId, voiceName) => {
               let prompt = character.voiceConfig?.prompt;
+              if (!prompt && hasWardrobeTurnaroundForVoice) {
+                try {
+                  const analysis = await fetchWardrobeVoiceAnalysis();
+                  if (analysis) {
+                    prompt = analysis.audioProfile;
+                    onUpdateCharacterAttributes?.(characterId, {
+                      gender: analysis.gender,
+                      age: analysis.apparentAge,
+                      ethnicity: analysis.ethnicity,
+                      voiceDescription: analysis.voiceDescription,
+                    });
+                  }
+                } catch (err) {
+                  console.warn("[Select Voice] Wardrobe voice analysis failed:", err);
+                }
+              }
               if (!prompt) {
                 try {
+                  const wardrobeRef = wardrobeVoiceRef?.imageUrl;
                   const promptRes = await fetch("/api/tts/google/director-prompt", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       characterContext,
                       screenplayContext,
+                      wardrobeImageUrl: wardrobeRef,
                     }),
                   });
                   if (promptRes.ok) {
