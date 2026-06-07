@@ -318,6 +318,7 @@ async function runImagePhase(
             artStyle,
             frameType: 'beat',
             beatIndex: beatIdx,
+            sceneOverride: scene,
           })
           persistBeatFrame(scene, beatIdx, result)
           lastImageUrl = result.imageUrl
@@ -370,6 +371,7 @@ async function runImagePhase(
             quality: options.imageQuality || 'auto',
             artStyle,
             frameType: 'establishing',
+            sceneOverride: scene,
           })
           scene.imageUrl = result.imageUrl
           lastImageUrl = result.imageUrl
@@ -410,6 +412,7 @@ async function runImagePhase(
             artStyle,
             frameType: 'dialogue',
             dialogueIndex: dialogueIdx,
+            sceneOverride: scene,
           })
           persistDialogueFrame(dialogueIdx, result)
           lastImageUrl = result.imageUrl

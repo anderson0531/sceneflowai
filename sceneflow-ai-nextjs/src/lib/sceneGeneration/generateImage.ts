@@ -43,6 +43,8 @@ export interface GenerateSceneImageParams {
   beatIndex?: number
   /** Id of scene.storyboardFrames entry when frameType is 'custom'. */
   customFrameId?: string
+  /** In-memory scene from Express orchestrator (merged over DB scene at sceneIndex). */
+  sceneOverride?: Record<string, unknown>
 }
 
 export class SceneImageGenerationError extends Error {
@@ -81,6 +83,7 @@ export async function generateSceneImage(
     dialogueIndex,
     beatIndex,
     customFrameId,
+    sceneOverride,
   } = params
 
   const headers: HeadersInit = {
@@ -114,6 +117,7 @@ export async function generateSceneImage(
       ...(typeof dialogueIndex === 'number' ? { dialogueIndex } : {}),
       ...(typeof beatIndex === 'number' ? { beatIndex } : {}),
       ...(customFrameId ? { customFrameId } : {}),
+      ...(sceneOverride ? { sceneOverride } : {}),
     }),
   })
 

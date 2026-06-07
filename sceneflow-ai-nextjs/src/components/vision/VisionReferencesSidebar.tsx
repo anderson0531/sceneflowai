@@ -25,14 +25,7 @@ import { ReadinessProgress, calculateProductionReadiness, ProductionReadinessSta
 import { SceneReferenceCard } from './SceneReferenceCard'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DetailedSceneDirection } from '@/types/scene-direction'
-
-function buildObjectReferencePrompt(ref: VisualReference): string {
-  const base = ref.generationPrompt?.trim() || ref.description?.trim() || ref.name
-  const studioStyle =
-    'Professional product photography, clean studio lighting with soft shadows, centered composition, high resolution, sharp focus, 8K quality, production reference image.'
-  if (base.includes('Professional product')) return base
-  return `${base}. ${studioStyle}`
-}
+import { buildObjectReferencePrompt } from '@/lib/vision/referenceExpressPrompts'
 
 // Extended scene type for Scene tab that includes sceneDirection
 interface SceneWithDirection {
@@ -133,6 +126,9 @@ interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'comp
   onUploadLocationImage?: (locationId: string, file: File) => void
   /** ID of location currently generating an image */
   generatingLocationId?: string | null
+  /** Batch-generate missing cast, location, and prop reference images */
+  onExpressGenerateReferences?: () => Promise<void>
+  isExpressGeneratingReferences?: boolean
 }
 
 interface ReferenceSectionProps {
@@ -1179,6 +1175,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     onGenerateLocationImageWithPrompt,
     onUploadLocationImage,
     generatingLocationId,
+    onExpressGenerateReferences,
+    isExpressGeneratingReferences = false,
   } = props
 
   const [transferOpen, setTransferOpen] = useState(false)
@@ -1391,6 +1389,16 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   const [showProTips, setShowProTips] = useState(false)
   const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'object' | 'locations'>('cast')
   const [objectRegenerateTarget, setObjectRegenerateTarget] = useState<VisualReference | null>(null)
+  const [referenceExpressDialogOpen, setReferenceExpressDialogOpen] = useState(false)
+
+  const referencesExpressStats = useMemo(() => {
+    const cast = characters.filter(
+      (c) => c.type !== 'narrator' && !c.referenceImage?.trim()
+    ).length
+    const locations = locationReferences.filter((l) => !l.imageUrl?.trim()).length
+    const props = objectReferences.filter((o) => !o.imageUrl?.trim()).length
+    return { cast, locations, props, total: cast + locations + props }
+  }, [characters, locationReferences, objectReferences])
 
   // Reference tabs matching ScriptPanel folder tab style (Storyboard removed - handled in main panel)
   // Scene tab now shows allScenes count (per-scene references) instead of just manual sceneReferences
@@ -1419,28 +1427,56 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
                 {seriesTitle}
               </span>
             ) : null}
-            {productionReadiness && (
-              <span
-                className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
-                  productionReadiness.isAudioReady
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                }`}
-              >
-                {productionReadiness.isAudioReady ? (
-                  <span className="flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    Ready
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {productionReadiness.totalCharacters - productionReadiness.voicesAssigned} voices
-                    needed
-                  </span>
-                )}
-              </span>
-            )}
+            <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+              {onExpressGenerateReferences && referencesExpressStats.total > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setReferenceExpressDialogOpen(true)}
+                      disabled={isExpressGeneratingReferences}
+                      className="h-7 text-xs relative overflow-hidden bg-gradient-to-r from-indigo-500/15 to-purple-500/15 border-indigo-500/40 hover:border-indigo-500/60"
+                    >
+                      {isExpressGeneratingReferences ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin text-indigo-300" />
+                      ) : (
+                        <Zap className="w-3.5 h-3.5 mr-1 text-indigo-300" />
+                      )}
+                      {isExpressGeneratingReferences
+                        ? 'Generating…'
+                        : `Express (${referencesExpressStats.total})`}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    Generate missing reference images: {referencesExpressStats.cast} cast,{' '}
+                    {referencesExpressStats.locations} locations, {referencesExpressStats.props} props
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {productionReadiness && (
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full ${
+                    productionReadiness.isAudioReady
+                      ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                      : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                  }`}
+                >
+                  {productionReadiness.isAudioReady ? (
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Ready
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {productionReadiness.totalCharacters - productionReadiness.voicesAssigned} voices
+                      needed
+                    </span>
+                  )}
+                </span>
+              )}
+            </div>
           </div>
           {seriesId && projectId ? (
             <div className="flex flex-wrap items-center gap-2">
@@ -1669,6 +1705,50 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
           })() : undefined}
         />
       )}
+
+      <Dialog open={referenceExpressDialogOpen} onOpenChange={setReferenceExpressDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Generate References (Express)</DialogTitle>
+            <DialogDescription>
+              Batch-generate {referencesExpressStats.total} missing reference image
+              {referencesExpressStats.total === 1 ? '' : 's'}:
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1 py-2">
+            {referencesExpressStats.cast > 0 && (
+              <li>• {referencesExpressStats.cast} cast character{referencesExpressStats.cast === 1 ? '' : 's'}</li>
+            )}
+            {referencesExpressStats.locations > 0 && (
+              <li>• {referencesExpressStats.locations} location{referencesExpressStats.locations === 1 ? '' : 's'}</li>
+            )}
+            {referencesExpressStats.props > 0 && (
+              <li>• {referencesExpressStats.props} prop{referencesExpressStats.props === 1 ? '' : 's'}</li>
+            )}
+          </ul>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReferenceExpressDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                setReferenceExpressDialogOpen(false)
+                if (!onExpressGenerateReferences) return
+                try {
+                  await onExpressGenerateReferences()
+                } catch (err) {
+                  console.error('[VisionReferencesSidebar] Reference Express failed:', err)
+                }
+              }}
+              disabled={isExpressGeneratingReferences}
+              className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
+            >
+              <Zap className="w-4 h-4 mr-1" />
+              Generate {referencesExpressStats.total}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {seriesId && projectId ? (
         <ReferenceTransferDialog

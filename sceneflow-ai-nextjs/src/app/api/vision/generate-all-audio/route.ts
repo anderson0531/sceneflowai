@@ -25,33 +25,24 @@ async function generateAndSaveMusicForScene(
     console.log(`[Batch Audio] Generating music for scene ${sceneIdx + 1}: ${description.substring(0, 50)}...`)
     
     // Generate music via our API endpoint, using saveToBlob to avoid payload limits
-    const musicResponse = await fetch(`${baseUrl}/api/tts/elevenlabs/music`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authCookie ? { Cookie: authCookie } : {}),
-      },
-      body: JSON.stringify({ 
-        text: description, 
+    const { generateMusicTrackServer } = await import('@/lib/audio/musicClient')
+    const result = await generateMusicTrackServer(
+      baseUrl,
+      {
+        text: description,
         duration: 30,
         saveToBlob: true,
         projectId,
-        sceneId: `scene-${sceneIdx}`
-      })
-    })
-    
-    if (!musicResponse.ok) {
-      const errorText = await musicResponse.text().catch(() => 'Unknown error')
-      console.error(`[Batch Audio] Music generation failed for scene ${sceneIdx + 1}:`, errorText)
-      return null
-    }
-    
-    const result = await musicResponse.json()
-    if (result.url) {
+        sceneId: `scene-${sceneIdx}`,
+      },
+      authCookie
+    )
+
+    if (result?.url) {
       console.log(`[Batch Audio] Music saved for scene ${sceneIdx + 1}: ${result.url}`)
       return result.url
     }
-    
+
     return null
   } catch (error: any) {
     console.error(`[Batch Audio] Music generation failed for scene ${sceneIdx + 1}:`, error?.message || String(error))

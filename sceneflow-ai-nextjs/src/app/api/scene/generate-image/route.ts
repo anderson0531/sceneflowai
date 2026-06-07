@@ -249,6 +249,8 @@ export async function POST(req: NextRequest) {
       dialogueIndex,  // Required when frameType === 'dialogue'
       beatIndex,  // Required when frameType === 'beat'
       customFrameId,  // Required when frameType === 'custom'
+      /** In-memory scene snapshot (Express) merged over DB scene at sceneIndex */
+      sceneOverride,
     } = body
     
     // Client explicitly chose characters (even if empty = no characters wanted); mutable for dialogue frames
@@ -356,7 +358,11 @@ export async function POST(req: NextRequest) {
         }
       } else if (projectId && typeof sceneIndex === 'number') {
         const scenesForSelection = project.metadata?.visionPhase?.script?.script?.scenes || []
-        const sceneForSelection = scenesForSelection[sceneIndex]
+        const dbSceneForSelection = scenesForSelection[sceneIndex]
+        const sceneForSelection =
+          sceneOverride && typeof sceneOverride === 'object'
+            ? { ...(dbSceneForSelection || {}), ...sceneOverride }
+            : dbSceneForSelection
 
         // Dialogue storyboard frame: select speaking character only
         if (isDialogueFrame && sceneForSelection) {
@@ -502,7 +508,11 @@ export async function POST(req: NextRequest) {
 
     if (project && typeof sceneIndex === 'number') {
       const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
-      const scene = scenes[sceneIndex]
+      const dbScene = scenes[sceneIndex]
+      const scene =
+        sceneOverride && typeof sceneOverride === 'object'
+          ? { ...(dbScene || {}), ...sceneOverride }
+          : dbScene
       sceneData = scene  // Capture for hash calculation
       references = project.metadata?.visionPhase?.references || []  // Capture references
       

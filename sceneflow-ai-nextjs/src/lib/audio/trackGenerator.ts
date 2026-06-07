@@ -111,29 +111,17 @@ export async function generateSFXAudio(params: GenerateSFXParams): Promise<{ mp3
 }
 
 /**
- * Generate background music using ElevenLabs
- * Uses saveToBlob to have server upload directly - avoids 4.5MB client payload limit
+ * Generate background music using Gemini Lyria via /api/tts/google/music.
  */
 export async function generateMusicAudio(description: string, duration: number, projectId?: string, sceneId?: string): Promise<{ mp3Url: string; duration: number }> {
-  const response = await fetch('/api/tts/elevenlabs/music', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text: description,
-      duration,
-      saveToBlob: true,  // Server-side upload bypasses client payload limits
-      projectId: projectId || 'default',
-      sceneId: sceneId || `music-${Date.now()}`
-    })
+  const { generateMusicTrack } = await import('@/lib/audio/musicClient')
+  const data = await generateMusicTrack({
+    text: description,
+    duration,
+    saveToBlob: true,
+    projectId: projectId || 'default',
+    sceneId: sceneId || `music-${Date.now()}`,
   })
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Music generation failed' }))
-    throw new Error(error.error || 'Music generation failed')
-  }
-
-  // Server returns the blob URL directly when saveToBlob=true
-  const data = await response.json()
 
   return {
     mp3Url: data.url,

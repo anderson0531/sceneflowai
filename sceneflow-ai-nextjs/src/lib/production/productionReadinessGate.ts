@@ -11,6 +11,14 @@ export interface ExpressGateResult {
   reasons: string[]
 }
 
+/** Vision characters use `referenceImage`; some callers pass `referenceImageUrl`. */
+export function resolveCharacterReferenceImageUrl(
+  character: { referenceImageUrl?: string; referenceImage?: string }
+): string | undefined {
+  const url = character.referenceImageUrl ?? character.referenceImage
+  return typeof url === 'string' && url.trim() ? url.trim() : undefined
+}
+
 export interface ProductionReadyChecklist {
   scriptLocked: boolean
   voicesReady: boolean
@@ -39,7 +47,7 @@ export function evaluateProductionReadyChecklist(input: {
   )
 
   const hasReferences =
-    input.characters.some((c) => !!c.referenceImageUrl) ||
+    input.characters.some((c) => !!resolveCharacterReferenceImageUrl(c)) ||
     (input.objectReferences?.length ?? 0) > 0 ||
     (input.locationReferences?.length ?? 0) > 0
 

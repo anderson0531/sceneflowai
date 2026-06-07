@@ -1921,25 +1921,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     try {
       const duration = scene.duration || 30
       // Use saveToBlob to have the server upload directly - avoids 4.5MB payload limit
-      const response = await fetch('/api/tts/elevenlabs/music', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          text: typeof music === 'string' ? music : music.description, 
-          duration,
-          saveToBlob: true,  // Server-side upload bypasses client payload limits
-          projectId: projectId || 'temp',
-          sceneId: `scene-${sceneIdx}`
-        })
+      const { generateMusicTrack } = await import('@/lib/audio/musicClient')
+      const data = await generateMusicTrack({
+        text: typeof music === 'string' ? music : music.description,
+        duration,
+        saveToBlob: true,
+        projectId: projectId || 'temp',
+        sceneId: `scene-${sceneIdx}`,
       })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.details || 'Music generation failed')
-      }
-
-      // Server returns the blob URL directly when saveToBlob=true
-      const data = await response.json()
       const audioUrl = data.url
       
       // Update scene with persistent audio URL
@@ -2222,32 +2211,14 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   // Quick play Music (generate and play immediately)
   const generateAndPlayMusic = async (description: string, duration: number = 30) => {
     try {
-      const response = await fetch('/api/tts/elevenlabs/music', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          text: description, 
-          duration,
-          saveToBlob: true,
-          projectId: projectId || 'temp',
-          sceneId: 'temp'
-        })
+      const { generateMusicTrack } = await import('@/lib/audio/musicClient')
+      const data = await generateMusicTrack({
+        text: description,
+        duration,
+        saveToBlob: true,
+        projectId: projectId || 'temp',
+        sceneId: 'temp',
       })
-      
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Music generation failed' }))
-        
-        // Handle 501 (Not Implemented) for Lyria API
-        if (response.status === 501) {
-          alert('Music generation is coming soon! Google Lyria RealTime API is currently in experimental preview.')
-          return
-        }
-        
-        throw new Error(error.details || error.error || 'Music generation failed')
-      }
-      
-      // Server returns the blob URL directly when saveToBlob=true
-      const data = await response.json()
       const audioUrl = data.url
       const audio = new Audio(audioUrl)
       

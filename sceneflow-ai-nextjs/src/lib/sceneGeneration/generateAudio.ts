@@ -76,23 +76,18 @@ async function generateMusicForScene(
       typeof scene.music === 'string' ? scene.music : scene.music?.description
     if (!description) return null
 
-    const musicResponse = await fetch(`${baseUrl}/api/tts/elevenlabs/music`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authCookie ? { Cookie: authCookie } : {}),
-      },
-      body: JSON.stringify({
+    const { generateMusicTrackServer } = await import('@/lib/audio/musicClient')
+    const result = await generateMusicTrackServer(
+      baseUrl,
+      {
         text: description,
         duration: 30,
         saveToBlob: true,
         projectId,
         sceneId: `scene-${sceneIdx}`,
-      }),
-    })
-
-    if (!musicResponse.ok) return null
-    const result = await musicResponse.json()
+      },
+      authCookie
+    )
     return result?.url ?? null
   } catch (error: any) {
     console.error(

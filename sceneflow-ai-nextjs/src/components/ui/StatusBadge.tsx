@@ -280,13 +280,15 @@ export interface ProductionReadinessState {
 }
 
 export function calculateProductionReadiness(
-  characters: Array<{ name: string; type?: string; voiceConfig?: any; referenceImageUrl?: string }>,
+  characters: Array<{ name: string; type?: string; voiceConfig?: any; referenceImageUrl?: string; referenceImage?: string }>,
   scenes: Array<{ sceneDirection?: any; imageUrl?: string; narrationAudioUrl?: string; dialogue?: Array<{ audioUrl?: string }> }>
 ): ProductionReadinessState {
   // Filter out narrator for voice requirements
   const speakingCharacters = characters.filter(c => c.type !== 'narrator')
   const voicesAssigned = speakingCharacters.filter(c => c.voiceConfig).length
-  const imagesGenerated = characters.filter(c => c.referenceImageUrl).length
+  const imagesGenerated = characters.filter(
+    (c) => !!(c.referenceImageUrl ?? c.referenceImage)?.trim()
+  ).length
   const charactersMissingVoices = speakingCharacters
     .filter(c => !c.voiceConfig)
     .map(c => c.name)

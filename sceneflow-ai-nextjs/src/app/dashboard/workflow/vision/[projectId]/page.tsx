@@ -4457,6 +4457,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [generatingSceneReferenceIndex, setGeneratingSceneReferenceIndex] = useState<number | null>(null)
   const [generatingSceneDirectionIndex, setGeneratingSceneDirectionIndex] = useState<number | null>(null)
   const [isGeneratingAllSceneReferences, setIsGeneratingAllSceneReferences] = useState(false)
+  const [isExpressGeneratingReferences, setIsExpressGeneratingReferences] = useState(false)
   
   // Keyframe State Machine - Frame step generation state
   const [generatingFrameForSegment, setGeneratingFrameForSegment] = useState<string | null>(null)
@@ -8087,6 +8088,148 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   /**
+   * Batch-generate missing Cast, Location, and Prop reference images (Express).
+   */
+  const handleExpressGenerateReferences = async () => {
+    const { buildCharacterReferencePrompt, buildObjectReferencePrompt } = await import(
+      '@/lib/vision/referenceExpressPrompts'
+    )
+
+    const castMissing = (characters || []).filter(
+      (c: { type?: string; referenceImage?: string }) =>
+        c.type !== 'narrator' && !c.referenceImage?.trim()
+    )
+    const locationsMissing = (locationReferences || []).filter((l) => !l.imageUrl?.trim())
+    const propsMissing = (objectReferences || []).filter((o) => !o.imageUrl?.trim())
+    const total = castMissing.length + locationsMissing.length + propsMissing.length
+
+    if (total === 0) {
+      try {
+        const { toast } = require('sonner')
+        toast.info('All reference images are already generated')
+      } catch {}
+      return
+    }
+
+    setIsExpressGeneratingReferences(true)
+    overlayStore.show(`Generating ${total} reference images`, total * 20, 'storyboard-production')
+
+    let completed = 0
+    let failures = 0
+
+    try {
+      for (const char of castMissing) {
+        const charId = char.id ?? String(characters.indexOf(char))
+        completed += 1
+        overlayStore.setStatus(`Cast: ${char.name} (${completed}/${total})`)
+        try {
+          await handleGenerateCharacter(charId, buildCharacterReferencePrompt(char))
+        } catch (err) {
+          failures += 1
+          console.error('[Express References] Character failed:', char.name, err)
+        }
+        if (completed < total) await new Promise((r) => setTimeout(r, 1000))
+      }
+
+      for (const location of locationsMissing) {
+        completed += 1
+        const locationLabel = location.location || 'Location'
+        overlayStore.setStatus(`Location: ${locationLabel} (${completed}/${total})`)
+        try {
+          const response = await fetch('/api/vision/generate-location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              projectId,
+              locationName: location.location,
+              intExt: location.intExt,
+              timeOfDay: location.timeOfDay,
+              description: location.description,
+              screenplayContext: {
+                genre: project?.genre,
+                tone:
+                  project?.tone ||
+                  project?.metadata?.filmTreatmentVariant?.tone_description,
+                setting: project?.metadata?.filmTreatmentVariant?.setting,
+                visualStyle:
+                  project?.metadata?.filmTreatmentVariant?.visual_style ||
+                  project?.metadata?.filmTreatmentVariant?.style,
+              },
+            }),
+          })
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({}))
+            throw new Error(error.error || 'Location generation failed')
+          }
+          const result = await response.json()
+          const updatedLocations = locationReferencesRef.current.map((ref) =>
+            ref.id === location.id
+              ? { ...ref, imageUrl: result.imageUrl, generationPrompt: result.prompt }
+              : ref
+          )
+          setLocationReferences(updatedLocations)
+          locationReferencesRef.current = updatedLocations
+          await persistLocationReferences(updatedLocations)
+        } catch (err) {
+          failures += 1
+          console.error('[Express References] Location failed:', locationLabel, err)
+        }
+        if (completed < total) await new Promise((r) => setTimeout(r, 1000))
+      }
+
+      for (const prop of propsMissing) {
+        completed += 1
+        overlayStore.setStatus(`Prop: ${prop.name} (${completed}/${total})`)
+        try {
+          const response = await fetch('/api/vision/generate-object', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: prop.name,
+              description: prop.description || prop.name,
+              prompt: buildObjectReferencePrompt(prop),
+              category: prop.category || 'other',
+            }),
+          })
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({}))
+            throw new Error(error.error || 'Prop generation failed')
+          }
+          const data = await response.json()
+          if (data.imageUrl) {
+            await handleUpdateReferenceImage('object', prop.id, data.imageUrl)
+          }
+        } catch (err) {
+          failures += 1
+          console.error('[Express References] Prop failed:', prop.name, err)
+        }
+        if (completed < total) await new Promise((r) => setTimeout(r, 1000))
+      }
+
+      const succeeded = total - failures
+      try {
+        const { toast } = require('sonner')
+        if (failures === 0) {
+          toast.success(`Generated ${succeeded} reference image${succeeded === 1 ? '' : 's'}!`)
+        } else if (succeeded > 0) {
+          toast.warning(`Generated ${succeeded} of ${total} references (${failures} failed)`)
+        } else {
+          toast.error('Reference generation failed')
+        }
+      } catch {}
+    } catch (error) {
+      console.error('[handleExpressGenerateReferences] Error:', error)
+      try {
+        const { toast } = require('sonner')
+        toast.error('Reference Express failed')
+      } catch {}
+    } finally {
+      setIsExpressGeneratingReferences(false)
+      overlayStore.hide()
+    }
+  }
+
+  /**
    * Generate all scene references sequentially
    */
   const handleGenerateAllSceneReferences = async () => {
@@ -10182,25 +10325,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log(`[Update Scene Audio] Generating music for Scene ${sceneIndex + 1}...`)
     
     // Use saveToBlob to have the server upload directly - avoids 4.5MB payload limit
-    const response = await fetch('/api/tts/elevenlabs/music', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        text: description, 
-        duration,
-        saveToBlob: true,  // Server-side upload bypasses client payload limits
-        projectId,
-        sceneId: `scene-${sceneIndex}`
-      })
+    const { generateMusicTrack } = await import('@/lib/audio/musicClient')
+    const data = await generateMusicTrack({
+      text: description,
+      duration,
+      saveToBlob: true,
+      projectId,
+      sceneId: `scene-${sceneIndex}`,
     })
-    
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.details || 'Music generation failed')
-    }
-    
-    // Server returns the blob URL directly when saveToBlob=true
-    const data = await response.json()
     const audioUrl = data.url
     
     // Update state with music URL
@@ -10446,6 +10578,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             includeMusic: !!options.includeMusic,
             includeSFX: !!options.includeSFX,
             regenerate: !!options.regenerate,
+            imageQuality,
           }),
         })
 
@@ -11838,6 +11971,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateLocationImageWithPrompt={handleGenerateLocationImageWithPrompt}
                 onUploadLocationImage={handleUploadLocationImage}
                 generatingLocationId={generatingLocationId}
+                onExpressGenerateReferences={handleExpressGenerateReferences}
+                isExpressGeneratingReferences={isExpressGeneratingReferences}
               />
             </div>
           </Panel>
