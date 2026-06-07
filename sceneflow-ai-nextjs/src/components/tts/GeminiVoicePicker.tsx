@@ -74,6 +74,10 @@ interface GeminiVoicePickerProps {
   onOpenChange: (open: boolean) => void
   selectedVoiceId?: string
   onSelectVoice: (voiceId: string, voiceName: string) => void
+  /** When true, only show gemini-* base voices (exclude Journey/Neural2/Studio) */
+  geminiOnly?: boolean
+  /** Adjust dialog copy for character voice assignment */
+  mode?: 'narrator' | 'character'
 }
 
 export function GeminiVoicePicker({
@@ -81,6 +85,8 @@ export function GeminiVoicePicker({
   onOpenChange,
   selectedVoiceId,
   onSelectVoice,
+  geminiOnly = false,
+  mode = 'narrator',
 }: GeminiVoicePickerProps) {
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null)
   const [isSynthesizing, setIsSynthesizing] = useState<string | null>(null)
@@ -173,8 +179,16 @@ export function GeminiVoicePicker({
     }
   }, [open])
 
+  const voicePool = useMemo(
+    () =>
+      geminiOnly
+        ? GEMINI_VOICES.filter((v) => v.id.startsWith('gemini-'))
+        : GEMINI_VOICES,
+    [geminiOnly],
+  )
+
   const filteredVoices = useMemo(() => {
-    return GEMINI_VOICES.filter(voice => {
+    return voicePool.filter(voice => {
       // Filter by category/tab
       if (filter === 'Favorites' && !favorites.includes(voice.id)) return false
       if (filter === 'Male' && voice.gender !== 'Male') return false
@@ -190,7 +204,7 @@ export function GeminiVoicePicker({
 
       return true
     })
-  }, [searchQuery, filter, favorites])
+  }, [searchQuery, filter, favorites, voicePool])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -200,12 +214,14 @@ export function GeminiVoicePicker({
             className="flex items-center gap-2 font-medium text-gray-200 text-lg"
           >
             <Sparkles className="w-5 h-5 text-cyan-400" />
-            Director's Note Voices
+            {mode === 'character' ? 'Gemini Character Voices' : "Director's Note Voices"}
           </DialogTitle>
           <DialogDescription 
             className="text-gray-400 mt-2"
           >
-            Select a professional narrator voice for your Director's Note.
+            {mode === 'character'
+              ? 'Select a Gemini 3.1 TTS base voice for this character. Pair with a Director\'s Note via Auto or voice settings.'
+              : "Select a professional narrator voice for your Director's Note."}
           </DialogDescription>
 
           <div className="mt-4 space-y-3">

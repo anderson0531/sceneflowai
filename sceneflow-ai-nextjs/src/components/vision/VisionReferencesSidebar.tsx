@@ -1535,7 +1535,6 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onApproveCharacter={onApproveCharacter}
               onUpdateCharacterAttributes={onUpdateCharacterAttributes}
               onUpdateCharacterVoice={onUpdateCharacterVoice}
-              onUpdateCharacterEdgeVoice={onUpdateCharacterEdgeVoice}
               onUpdateCharacterAppearance={onUpdateCharacterAppearance}
               onUpdateCharacterName={onUpdateCharacterName}
               onUpdateCharacterRole={onUpdateCharacterRole}
@@ -1544,7 +1543,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
               onAddCharacter={onAddCharacter}
               onRemoveCharacter={onRemoveCharacter}
               onEditCharacterImage={handleEditCharacterImage}
-              voiceAssignmentProvider="elevenlabs"
+              voiceAssignmentProvider="google"
               ttsProvider={ttsProvider}
               uploadingRef={uploadingRef}
               setUploadingRef={setUploadingRef}

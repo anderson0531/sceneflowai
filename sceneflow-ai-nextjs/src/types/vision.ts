@@ -110,6 +110,7 @@ export interface VisionVoiceConfig {
   stability?: number
   similarityBoost?: number
   languageCode?: string
+  /** Director's Note (Audio Profile) for Gemini TTS */
   prompt?: string
   voiceDescription?: string
 }

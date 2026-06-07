@@ -44,7 +44,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { upload } from "@vercel/blob/client";
 import { VoiceSelectionDialog } from "@/components/tts/VoiceSelectionDialog";
-import { EdgeVoicePicker } from "@/components/tts/EdgeVoicePicker";
+import { GeminiVoicePicker } from "@/components/tts/GeminiVoicePicker";
 import { NarratorVoicePicker } from "@/components/tts/NarratorVoicePicker";
 import { CharacterPromptBuilder } from "@/components/vision/CharacterPromptBuilder";
 import {
@@ -60,11 +60,6 @@ import {
   getCharacterVoiceRecommendations,
   type ElevenLabsVoice,
 } from "@/lib/voiceRecommendation";
-import {
-  resolveEdgeVoiceConfigForCharacter,
-  getEdgeVoiceConfigForLang,
-  getEdgeVoiceConfigForResolution,
-} from "@/lib/tts/edgeTtsVoices";
 import type { EdgeVoiceConfig } from "@/types/vision";
 
 export interface CharacterLibraryProps {
@@ -124,8 +119,8 @@ export interface CharacterLibraryProps {
   onEditCharacterImage?: (characterId: string, imageUrl: string) => void;
   ttsProvider: "google" | "elevenlabs";
   /**
-   * When set (e.g. `"elevenlabs"` in the Vision Reference Library), voice picker and Auto voice
-   * use this provider so dialogue TTS matches ElevenLabs even if global BYOK prefers Google.
+   * When set (e.g. `"google"` in the Vision Reference Library), voice picker and Auto voice
+   * use Gemini 3.1 TTS exclusively for character dialogue assignment.
    */
   voiceAssignmentProvider?: "google" | "elevenlabs";
   compact?: boolean;
@@ -221,6 +216,7 @@ interface CharacterCardProps {
   /** Callback to edit the character's reference image */
   onEditImage?: () => void;
   ttsProvider: "google" | "elevenlabs";
+  voiceAssignmentProvider?: "google" | "elevenlabs";
   voiceSectionExpanded?: boolean;
   onToggleVoiceSection?: () => void;
   enableDrag?: boolean;
@@ -576,7 +572,6 @@ export function CharacterLibrary({
                   expandedCharId={expandedSections[charId]}
                   onToggleExpand={handleToggleSection}
                   onUpdateCharacterVoice={onUpdateCharacterVoice}
-                  onUpdateCharacterEdgeVoice={onUpdateCharacterEdgeVoice}
                   onUpdateAppearance={onUpdateCharacterAppearance}
                   onUpdateCharacterName={onUpdateCharacterName}
                   onUpdateCharacterRole={onUpdateCharacterRole}
@@ -591,6 +586,7 @@ export function CharacterLibrary({
                       : undefined
                   }
                   ttsProvider={effectiveVoiceProvider}
+                  voiceAssignmentProvider={voiceAssignmentProvider}
                   voiceSectionExpanded={voiceSectionExpanded[charId] || false}
                   onToggleVoiceSection={() => handleToggleVoiceSection(charId)}
                   enableDrag={enableDrag}
@@ -756,6 +752,7 @@ const CharacterCard = ({
   onRemove,
   onEditImage,
   ttsProvider,
+  voiceAssignmentProvider,
   voiceSectionExpanded,
   onToggleVoiceSection,
   enableDrag = false,
@@ -795,16 +792,17 @@ const CharacterCard = ({
   const [aiPromptText, setAiPromptText] = useState("");
   const [isGeneratingWardrobe, setIsGeneratingWardrobe] = useState(false);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
-  const [edgeVoiceDialogOpen, setEdgeVoiceDialogOpen] = useState(false);
-  const [edgeEdgeLang, setEdgeEdgeLang] = useState("en");
   const [isAutoSelectingVoice, setIsAutoSelectingVoice] = useState(false);
-  const autoTestAudioRef = React.useRef<HTMLAudioElement | null>(null);
+  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
+  const voicePreviewAudioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  const useGeminiVoicePicker = voiceAssignmentProvider === "google";
 
   useEffect(() => {
     return () => {
-      if (autoTestAudioRef.current) {
-        autoTestAudioRef.current.pause();
-        autoTestAudioRef.current = null;
+      if (voicePreviewAudioRef.current) {
+        voicePreviewAudioRef.current.pause();
+        voicePreviewAudioRef.current = null;
       }
     };
   }, []);
@@ -875,46 +873,6 @@ const CharacterCard = ({
           ]
         : [];
 
-  const edgeVoiceConfigsByLang = useMemo(() => {
-    const merged: Record<string, EdgeVoiceConfig> = {
-      ...(character.edgeVoiceConfigByLang || {}),
-    };
-    if (
-      character.edgeVoiceConfig?.voiceId &&
-      !merged.en
-    ) {
-      merged.en = character.edgeVoiceConfig;
-    }
-    return merged;
-  }, [character.edgeVoiceConfigByLang, character.edgeVoiceConfig]);
-
-  const activeEdgeVoiceConfig = getEdgeVoiceConfigForResolution(
-    character,
-    edgeEdgeLang,
-  );
-
-  const handleAutoEdgeVoice = () => {
-    if (!onUpdateCharacterEdgeVoice) {
-      toast.error("Edge voice update is not available.");
-      return;
-    }
-    const resolved = resolveEdgeVoiceConfigForCharacter({
-      gender: character.gender,
-      lang: edgeEdgeLang,
-    });
-    onUpdateCharacterEdgeVoice(characterId, edgeEdgeLang, resolved);
-    toast.success(
-      `Edge fallback voice for ${edgeEdgeLang.toUpperCase()} set to ${resolved.voiceName}`,
-    );
-  };
-
-  const handleClearEdgeVoice = () => {
-    onUpdateCharacterEdgeVoice?.(characterId, edgeEdgeLang, null);
-    toast.success(
-      `Edge fallback voice for ${edgeEdgeLang.toUpperCase()} reset to auto`,
-    );
-  };
-
   // Build character context for voice recommendations
   const characterContext: CharacterContext = {
     name: character.name || "Unknown",
@@ -928,6 +886,87 @@ const CharacterCard = ({
     voiceDescription: character.voiceDescription,
   };
 
+  const playGeminiVoicePreview = async (
+    voiceId: string,
+    prompt?: string,
+    sampleText?: string,
+  ): Promise<boolean> => {
+    const text =
+      sampleText ||
+      (characterContext?.name
+        ? `${characterContext.name}: This is how I sound in this production.`
+        : "This is how I sound in this production.");
+
+    if (voicePreviewAudioRef.current) {
+      voicePreviewAudioRef.current.pause();
+      voicePreviewAudioRef.current = null;
+    }
+
+    const testRes = await fetch("/api/tts/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text,
+        voiceId,
+        ...(prompt ? { prompt } : {}),
+      }),
+    });
+
+    if (!testRes.ok) {
+      throw new Error("Failed to generate voice preview.");
+    }
+
+    const testBlob = await testRes.blob();
+    const testUrl = URL.createObjectURL(testBlob);
+    const audio = new Audio(testUrl);
+    voicePreviewAudioRef.current = audio;
+    audio.onended = () => {
+      URL.revokeObjectURL(testUrl);
+      if (voicePreviewAudioRef.current === audio) {
+        voicePreviewAudioRef.current = null;
+        setIsPlayingVoice(false);
+      }
+    };
+    audio.onerror = () => {
+      URL.revokeObjectURL(testUrl);
+      if (voicePreviewAudioRef.current === audio) {
+        voicePreviewAudioRef.current = null;
+        setIsPlayingVoice(false);
+      }
+    };
+    await audio.play();
+    setIsPlayingVoice(true);
+    return true;
+  };
+
+  const handlePlayAssignedVoice = async () => {
+    const vc = character.voiceConfig;
+    if (!vc?.voiceId) {
+      toast.error("Assign a voice first.");
+      return;
+    }
+
+    if (isPlayingVoice && voicePreviewAudioRef.current) {
+      voicePreviewAudioRef.current.pause();
+      voicePreviewAudioRef.current = null;
+      setIsPlayingVoice(false);
+      return;
+    }
+
+    if (vc.provider === "google" || vc.voiceId.startsWith("gemini-")) {
+      try {
+        await playGeminiVoicePreview(vc.voiceId, vc.prompt);
+      } catch (err) {
+        console.warn("[Voice Preview] Playback failed:", err);
+        toast.error("Could not play voice preview.");
+        setIsPlayingVoice(false);
+      }
+      return;
+    }
+
+    toast.info("Re-run Auto or Select Voice to use Gemini TTS for this character.");
+  };
+
   const handleAutoVoice = async () => {
     if (!onUpdateCharacterVoice) {
       toast.error("Voice update is not available.");
@@ -939,8 +978,11 @@ const CharacterCard = ({
     let generatedPrompt = "";
     let testAudioPlayed = false;
 
+    const useGoogleTts =
+      ttsProvider === "google" || voiceAssignmentProvider === "google";
+
     try {
-      if (ttsProvider === "google") {
+      if (useGoogleTts) {
         // 1) Select best Gemini base voice
         const voicesRes = await fetch("/api/tts/google/voices", {
           cache: "no-store",
@@ -998,7 +1040,7 @@ const CharacterCard = ({
           voiceName: selectedVoice.name,
           prompt: generatedPrompt || character.voiceConfig?.prompt,
         });
-      } else {
+      } else if (!voiceAssignmentProvider) {
         const voicesRes = await fetch("/api/tts/elevenlabs/voices", {
           cache: "no-store",
         });
@@ -1087,6 +1129,8 @@ const CharacterCard = ({
           voiceName: selectedVoice.name,
           prompt: character.voiceConfig?.prompt,
         });
+      } else {
+        throw new Error("Gemini TTS is required for character voice assignment.");
       }
 
       if (!selectedVoice) {
@@ -1098,49 +1142,35 @@ const CharacterCard = ({
           ? `${characterContext.name}: This is my automatically recommended voice profile test.`
           : "This is my automatically recommended voice profile test.";
 
-        const testRes = await fetch(
-          ttsProvider === "google" ? "/api/tts/google" : "/api/tts/elevenlabs",
-          {
+        if (useGoogleTts) {
+          testAudioPlayed = await playGeminiVoicePreview(
+            selectedVoice.id,
+            generatedPrompt || character.voiceConfig?.prompt,
+            sampleText,
+          );
+        } else {
+          const testRes = await fetch("/api/tts/elevenlabs", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(
-              ttsProvider === "google"
-                ? {
-                    text: sampleText,
-                    voiceId: selectedVoice.id,
-                    ...(generatedPrompt ? { prompt: generatedPrompt } : {}),
-                  }
-                : {
-                    text: sampleText,
-                    voiceId: selectedVoice.id,
-                  },
-            ),
-          },
-        );
-
-        if (!testRes.ok) {
-          throw new Error("Failed to generate test dialogue.");
+            body: JSON.stringify({
+              text: sampleText,
+              voiceId: selectedVoice.id,
+            }),
+          });
+          if (!testRes.ok) throw new Error("Failed to generate test dialogue.");
+          const testBlob = await testRes.blob();
+          const testUrl = URL.createObjectURL(testBlob);
+          const audio = new Audio(testUrl);
+          voicePreviewAudioRef.current = audio;
+          audio.onended = () => {
+            URL.revokeObjectURL(testUrl);
+            if (voicePreviewAudioRef.current === audio) {
+              voicePreviewAudioRef.current = null;
+            }
+          };
+          await audio.play();
+          testAudioPlayed = true;
         }
-
-        const testBlob = await testRes.blob();
-        const testUrl = URL.createObjectURL(testBlob);
-
-        if (autoTestAudioRef.current) {
-          autoTestAudioRef.current.pause();
-          autoTestAudioRef.current = null;
-        }
-        const audio = new Audio(testUrl);
-        autoTestAudioRef.current = audio;
-        audio.onended = () => {
-          URL.revokeObjectURL(testUrl);
-          if (autoTestAudioRef.current === audio) autoTestAudioRef.current = null;
-        };
-        audio.onerror = () => {
-          URL.revokeObjectURL(testUrl);
-          if (autoTestAudioRef.current === audio) autoTestAudioRef.current = null;
-        };
-        await audio.play();
-        testAudioPlayed = true;
       } catch (testErr) {
         console.warn("[Auto Voice] Test playback failed:", testErr);
       }
@@ -2115,7 +2145,7 @@ const CharacterCard = ({
         </div>
 
         {/* Status Indicators */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           {character.voiceConfig ? (
             <div className="bg-green-500/10 text-green-700 dark:text-green-400 text-[10px] px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-green-500/20 shadow-sm">
               <Mic className="w-3 h-3" /> <span>Voice</span>
@@ -2127,6 +2157,28 @@ const CharacterCard = ({
             >
               <AlertCircle className="w-3 h-3" /> <span>No Voice</span>
             </div>
+          )}
+          {character.voiceConfig?.voiceId && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePlayAssignedVoice();
+              }}
+              className="bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 text-[10px] px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-cyan-500/20 shadow-sm hover:bg-cyan-500/20 transition-colors"
+              title={
+                isPlayingVoice
+                  ? "Stop voice preview"
+                  : "Play assigned Gemini voice preview"
+              }
+            >
+              {isPlayingVoice ? (
+                <Loader className="w-3 h-3 animate-spin" />
+              ) : (
+                <Play className="w-3 h-3" />
+              )}
+              <span>{isPlayingVoice ? "Playing" : "Play"}</span>
+            </button>
           )}
           {character.referenceImage && (
             <div className="bg-blue-500/10 text-blue-700 dark:text-blue-400 text-[10px] px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-blue-500/20 shadow-sm">
@@ -2177,21 +2229,22 @@ const CharacterCard = ({
                 {character.voiceConfig?.voiceId ? (
                   <p
                     className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 font-mono truncate"
-                    title={`Scene dialogue uses ${character.voiceConfig.provider === "google" ? "Google TTS" : "ElevenLabs"} with this voice id`}
+                    title="Scene dialogue uses Gemini 3.1 TTS with this voice id"
                   >
-                    Dialogue TTS:{" "}
-                    {character.voiceConfig.provider === "google"
-                      ? "Google"
-                      : "ElevenLabs"}{" "}
-                    ·{" "}
+                    Gemini TTS ·{" "}
                     <span className="select-all">{character.voiceConfig.voiceId}</span>
+                    {character.voiceConfig.prompt ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 ml-1">
+                        · Director&apos;s Note
+                      </span>
+                    ) : null}
                   </p>
                 ) : (
                   <p className="text-[10px] text-amber-600 dark:text-amber-400 mb-2">
-                    Assign a voice so dialogue generation uses the correct engine and voice id.
+                    Assign a Gemini voice so dialogue generation uses the correct engine and voice id.
                   </p>
                 )}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -2214,8 +2267,8 @@ const CharacterCard = ({
                     disabled={isAutoSelectingVoice}
                     className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-60"
                     title={
-                      ttsProvider === "google"
-                        ? "Auto select Gemini voice, generate direction, and play test dialogue"
+                      useGeminiVoicePicker || ttsProvider === "google"
+                        ? "Auto select Gemini voice, generate Director's Note, and play test dialogue"
                         : "Auto pick an ElevenLabs voice from character profile (same recommendations as the voice browser)"
                     }
                   >
@@ -2226,93 +2279,28 @@ const CharacterCard = ({
                     )}
                     Auto
                   </button>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                      Edge fallback (per language)
-                    </p>
-                    <select
-                      value={edgeEdgeLang}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        setEdgeEdgeLang(e.target.value);
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-[10px] px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900"
-                    >
-                      {["en", "hi", "ar", "es", "th", "ja", "zh"].map((lang) => (
-                        <option key={lang} value={lang}>
-                          {lang.toUpperCase()}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {Object.keys(edgeVoiceConfigsByLang).length > 0 ? (
-                    <ul className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 space-y-0.5">
-                      {Object.entries(edgeVoiceConfigsByLang).map(([lang, cfg]) => (
-                        <li key={lang}>
-                          <span className="uppercase font-medium">{lang}</span>:{" "}
-                          <span className="text-emerald-600 dark:text-emerald-400">
-                            {cfg.voiceName}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2">
-                    {edgeEdgeLang.toUpperCase()}:{" "}
-                    {activeEdgeVoiceConfig?.voiceName ? (
-                      <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                        {activeEdgeVoiceConfig.voiceName}
-                      </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayAssignedVoice();
+                    }}
+                    disabled={!character.voiceConfig?.voiceId}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-400 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                    title={
+                      character.voiceConfig?.voiceId
+                        ? isPlayingVoice
+                          ? "Stop voice preview"
+                          : "Play assigned voice preview"
+                        : "Assign a voice first"
+                    }
+                  >
+                    {isPlayingVoice ? (
+                      <Loader className="w-4 h-4 animate-spin" />
                     ) : (
-                      <span>Auto (gender + language)</span>
+                      <Play className="w-4 h-4" />
                     )}
-                  </p>
-                  {activeEdgeVoiceConfig?.voiceId && (
-                    <p
-                      className="text-[10px] text-gray-400 dark:text-gray-500 mb-2 font-mono truncate"
-                      title={activeEdgeVoiceConfig.voiceId}
-                    >
-                      {activeEdgeVoiceConfig.voiceId}
-                    </p>
-                  )}
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEdgeVoiceDialogOpen(true);
-                      }}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
-                    >
-                      <Volume2 className="w-4 h-4" />
-                      Select Edge Voice
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAutoEdgeVoice();
-                      }}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750"
-                      title={`Auto-pick Edge voice for ${edgeEdgeLang.toUpperCase()} from character gender`}
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      Auto Edge
-                    </button>
-                  </div>
-                  {activeEdgeVoiceConfig?.voiceId && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleClearEdgeVoice();
-                      }}
-                      className="mt-2 w-full text-[11px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline"
-                    >
-                      Reset {edgeEdgeLang.toUpperCase()} to auto
-                    </button>
-                  )}
+                    Play
+                  </button>
                 </div>
               </div>
             )}
@@ -3153,48 +3141,73 @@ const CharacterCard = ({
             )}
           </div>
         </div>
-        {/* Voice Selection Dialog */}
-        <VoiceSelectionDialog
-          open={voiceDialogOpen}
-          onOpenChange={setVoiceDialogOpen}
-          provider={ttsProvider}
-          mode="character"
-          selectedVoiceId={character.voiceConfig?.voiceId || ""}
-          onSelectVoice={(voiceId, voiceName, prompt) => {
-            onUpdateCharacterVoice?.(characterId, {
-              provider: ttsProvider,
-              voiceId,
-              voiceName,
-              prompt: prompt || character.voiceConfig?.prompt,
-            });
-          }}
-          characterContext={characterContext}
-          screenplayContext={screenplayContext as ScreenplayContext}
-          characterAudioSampleUrl={character.voiceTrainingAudioUrl}
-          onVoiceDescriptionGenerated={(description) => {
-            onUpdateCharacterAttributes?.(characterId, {
-              voiceDescription: description,
-            });
-          }}
-          onVoiceTrainingAudioSaved={(audioUrl) => {
-            onUpdateCharacterAttributes?.(characterId, {
-              voiceTrainingAudioUrl: audioUrl,
-            });
-          }}
-        />
-
-        <EdgeVoicePicker
-          open={edgeVoiceDialogOpen}
-          onOpenChange={setEdgeVoiceDialogOpen}
-          defaultLanguage={edgeEdgeLang}
-          selectedVoiceId={activeEdgeVoiceConfig?.voiceId}
-          onSelectVoice={(voiceId, voiceName, lang) => {
-            onUpdateCharacterEdgeVoice?.(characterId, lang, { voiceId, voiceName });
-            toast.success(
-              `Edge fallback voice for ${lang.toUpperCase()} set to ${voiceName}`,
-            );
-          }}
-        />
+        {/* Voice Selection */}
+        {useGeminiVoicePicker ? (
+          <GeminiVoicePicker
+            open={voiceDialogOpen}
+            onOpenChange={setVoiceDialogOpen}
+            mode="character"
+            geminiOnly
+            selectedVoiceId={character.voiceConfig?.voiceId || ""}
+            onSelectVoice={async (voiceId, voiceName) => {
+              let prompt = character.voiceConfig?.prompt;
+              if (!prompt) {
+                try {
+                  const promptRes = await fetch("/api/tts/google/director-prompt", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      characterContext,
+                      screenplayContext,
+                    }),
+                  });
+                  if (promptRes.ok) {
+                    const promptData = await promptRes.json();
+                    prompt = (promptData?.script || "").trim() || prompt;
+                  }
+                } catch (err) {
+                  console.warn("[Select Voice] Director prompt generation failed:", err);
+                }
+              }
+              onUpdateCharacterVoice?.(characterId, {
+                provider: "google",
+                voiceId,
+                voiceName,
+                prompt,
+              });
+              toast.success(`Voice set to ${voiceName.replace(/ \(Premium\)/i, "")}`);
+            }}
+          />
+        ) : (
+          <VoiceSelectionDialog
+            open={voiceDialogOpen}
+            onOpenChange={setVoiceDialogOpen}
+            provider={ttsProvider}
+            mode="character"
+            selectedVoiceId={character.voiceConfig?.voiceId || ""}
+            onSelectVoice={(voiceId, voiceName, prompt) => {
+              onUpdateCharacterVoice?.(characterId, {
+                provider: ttsProvider,
+                voiceId,
+                voiceName,
+                prompt: prompt || character.voiceConfig?.prompt,
+              });
+            }}
+            characterContext={characterContext}
+            screenplayContext={screenplayContext as ScreenplayContext}
+            characterAudioSampleUrl={character.voiceTrainingAudioUrl}
+            onVoiceDescriptionGenerated={(description) => {
+              onUpdateCharacterAttributes?.(characterId, {
+                voiceDescription: description,
+              });
+            }}
+            onVoiceTrainingAudioSaved={(audioUrl) => {
+              onUpdateCharacterAttributes?.(characterId, {
+                voiceTrainingAudioUrl: audioUrl,
+              });
+            }}
+          />
+        )}
 
         {/* Approve Button - Show only if image exists and not approved */}
         {hasImage && !isApproved && (
