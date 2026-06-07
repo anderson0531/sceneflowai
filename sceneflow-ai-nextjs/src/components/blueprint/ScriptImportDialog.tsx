@@ -10,7 +10,7 @@ import {
   type CompletenessResult,
 } from '@/lib/script/scriptCompleteness'
 import { ScriptImportFeedback } from './ScriptImportFeedback'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import {
   Dialog,
   DialogContent,

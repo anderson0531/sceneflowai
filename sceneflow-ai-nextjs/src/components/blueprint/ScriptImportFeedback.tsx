@@ -31,7 +31,7 @@ import {
   hasErrorLevelGaps,
   hasImprovableGaps,
 } from '@/lib/script/scriptCompleteness'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 import { 
   Dialog, 
   DialogContent, 

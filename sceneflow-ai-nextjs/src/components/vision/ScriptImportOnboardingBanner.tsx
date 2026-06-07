@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { X, Clapperboard, Sparkles } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/Button'
 
 interface ScriptImportOnboardingBannerProps {
   onOpenScriptReview: () => void
