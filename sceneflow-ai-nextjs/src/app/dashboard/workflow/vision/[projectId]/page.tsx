@@ -123,6 +123,7 @@ const BYOKSettingsPanel = dynamic(
   { ssr: false }
 )
 import { NavigationWarningDialog } from '@/components/workflow/NavigationWarningDialog'
+import { ScriptImportOnboardingBanner } from '@/components/vision/ScriptImportOnboardingBanner'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { resolveFrameGenerationContext } from '@/lib/vision/frameGenerationContext'
 import { resolveQuickFrameActionPrompt } from '@/lib/vision/framePromptBaseline'
@@ -452,6 +453,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [directorReview, setDirectorReview] = useState<any>(null)
   const [audienceReview, setAudienceReview] = useState<any>(null)
   const [showReviewModal, setShowReviewModal] = useState(false)
+  const [isDismissingImportOnboarding, setIsDismissingImportOnboarding] = useState(false)
   const [isGeneratingReviews, setIsGeneratingReviews] = useState(false)
   const [reviewsOutdated, setReviewsOutdated] = useState(false)
 
@@ -461,7 +463,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       project.metadata as Record<string, unknown>
     ).audienceDefinition
   }, [project?.metadata])
-  
+
+  const showScriptImportOnboarding = useMemo(() => {
+    const meta = project?.metadata as Record<string, unknown> | undefined
+    if (!meta) return false
+    const visionPhase = meta.visionPhase as Record<string, unknown> | undefined
+    const isScriptImport =
+      meta.importSource === 'script-import' || visionPhase?.importSource === 'script-import'
+    if (!isScriptImport) return false
+    return !visionPhase?.importOnboardingDismissed
+  }, [project?.metadata])
+
   // Keep script and project refs in sync (avoids stale closures in async operations)
   useEffect(() => { scriptRef.current = script }, [script])
   useEffect(() => { projectRef.current = project }, [project])
@@ -511,6 +523,33 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     saveQueueRef.current = resultPromise.catch(() => null)
     return resultPromise
   }, [projectId])
+
+  const handleDismissImportOnboarding = useCallback(async () => {
+    if (!project?.id || isDismissingImportOnboarding) return
+    setIsDismissingImportOnboarding(true)
+    try {
+      const freshMetadata = { ...(projectRef.current || project)?.metadata }
+      const freshVisionPhase = { ...(freshMetadata.visionPhase || {}) }
+      freshVisionPhase.importOnboardingDismissed = true
+      freshMetadata.visionPhase = freshVisionPhase
+
+      setProject((prev: any) =>
+        prev ? { ...prev, metadata: freshMetadata } : prev
+      )
+      if (projectRef.current) {
+        projectRef.current = { ...projectRef.current, metadata: freshMetadata }
+      }
+
+      await serializedProjectSave(
+        { metadata: freshMetadata },
+        'dismiss-import-onboarding'
+      )
+    } catch (error) {
+      console.error('[Vision] Failed to dismiss import onboarding:', error)
+    } finally {
+      setIsDismissingImportOnboarding(false)
+    }
+  }, [project, isDismissingImportOnboarding, serializedProjectSave])
 
   const persistVisionScriptScenes = useCallback(async (
     updatedScenes: any[],
@@ -11284,6 +11323,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           {/* Main Content: Script with Scene Cards */}
           <Panel defaultSize={65} minSize={40} maxSize={80} className="min-w-0 overflow-hidden overflow-x-hidden">
             <div className="h-full overflow-y-auto px-4 pt-2 min-w-0 w-full overflow-x-hidden">
+              {showScriptImportOnboarding && (
+                <ScriptImportOnboardingBanner
+                  onOpenScriptReview={() => setShowReviewModal(true)}
+                  onOpenStoryboard={() => setShowSceneGallery(true)}
+                  onDismiss={handleDismissImportOnboarding}
+                  isDismissing={isDismissingImportOnboarding}
+                />
+              )}
               <ScriptPanel 
                 script={script}
                 onScriptChange={handleScriptChange}

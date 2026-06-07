@@ -15,7 +15,10 @@ import dynamic from 'next/dynamic';
 import { cn } from "@/lib/utils";
 import { getUserDisplayName } from '@/lib/user/displayName';
 import { BlueprintReimaginDialog } from '@/components/blueprint/BlueprintReimaginDialog'
-import { ScriptImportResult } from '@/components/blueprint/BlueprintComposer'
+import {
+  ScriptImportDialog,
+  type ScriptImportPayload,
+} from '@/components/blueprint/ScriptImportDialog'
 import { TreatmentHeroImage } from '@/components/treatment/TreatmentHeroImage'
 import { HeroImagePromptBuilder } from '@/components/treatment/HeroImagePromptBuilder'
 import { ImageEditModal } from '@/components/vision/ImageEditModal'
@@ -141,6 +144,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   
   // Reimagine dialog state for initial generation
   const [showReimaginDialog, setShowReimaginDialog] = useState(false)
+  const [showScriptImportDialog, setShowScriptImportDialog] = useState(false)
   const [isGen, setIsGen] = useState(false)
   const [genProgress, setGenProgress] = useState(0)
   const [isGeneratingHeroImage, setIsGeneratingHeroImage] = useState(false)
@@ -505,44 +509,42 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     handleAnalysisComplete,
   ])
 
-  // Handle script import from BlueprintComposer
-  const handleScriptImport = async (result: ScriptImportResult) => {
+  const handleScriptImport = async (result: ScriptImportPayload) => {
     try {
-      // Get or create user ID
-      let userId = localStorage.getItem('authUserId')
-      if (!userId) {
-        userId = crypto.randomUUID()
-        localStorage.setItem('authUserId', userId)
+      if (authStatus !== 'authenticated' || !session?.user?.id) {
+        const { toast } = await import('sonner')
+        toast.error('Sign in to import a script')
+        return
       }
-      
+
       const { toast } = await import('sonner')
       toast.info('Importing script...')
-      
-      // Create project from imported script via API
+
       const res = await fetch('/api/projects/from-script', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
           parsedScript: result.parsedScript,
-          visionPhase: result.visionPhase,
-          treatmentVariant: result.treatmentVariant
-        })
+          importCompletenessScore: result.importCompletenessScore,
+          importGapsResolved: result.importGapsResolved,
+        }),
       })
-      
+
       const data = await res.json()
-      
+
       if (data.success && data.project) {
-        toast.success(`Script imported! ${data.project.metadata?.sceneCount || 0} scenes, ${data.project.metadata?.characterCount || 0} characters`)
-        // Navigate to Vision/Production page
+        toast.success(
+          `Script imported! ${data.project.metadata?.sceneCount || 0} scenes, ${data.project.metadata?.characterCount || 0} characters`
+        )
         router.push(`/dashboard/workflow/vision/${data.project.id}`)
       } else {
         toast.error(data.error || 'Failed to import script')
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Script import error:', e)
       const { toast } = await import('sonner')
-      toast.error('Failed to import script: ' + (e?.message || 'Unknown error'))
+      const message = e instanceof Error ? e.message : 'Unknown error'
+      toast.error('Failed to import script: ' + message)
     }
   }
 
@@ -1431,59 +1433,7 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
                       <span className="text-gray-500 text-sm">or</span>
                       <Button
                         variant="outline"
-                        onClick={() => {
-                          // Trigger file input for script import
-                          const input = document.createElement('input')
-                          input.type = 'file'
-                          input.accept = '.txt,.md,.fountain,.fdx,.pdf,.docx'
-                          input.onchange = async (e) => {
-                            const file = (e.target as HTMLInputElement).files?.[0]
-                            if (!file) return
-                            
-                            const { toast } = await import('sonner')
-                            toast.info('Analyzing script...')
-                            
-                            try {
-                              let extractedText = ''
-                              
-                              if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-                                const { extractTextFromPdf } = await import('@/lib/upload/extractors')
-                                extractedText = await extractTextFromPdf(file)
-                              } else if (file.type.includes('wordprocessingml') || file.name.endsWith('.docx')) {
-                                const { extractTextFromDocx } = await import('@/lib/upload/extractors')
-                                extractedText = await extractTextFromDocx(file)
-                              } else {
-                                extractedText = await file.text()
-                              }
-                              
-                              if (!extractedText.trim()) {
-                                toast.error('Could not extract text from file')
-                                return
-                              }
-                              
-                              // Validate and parse
-                              const { validateScript } = await import('@/lib/script/scriptValidator')
-                              const { parseScript, toVisionPhaseFormat, toTreatmentVariant } = await import('@/lib/script/scriptParser')
-                              
-                              const validation = validateScript(extractedText)
-                              
-                              if (!validation.isValid) {
-                                toast.error(`Script format issues: ${validation.issues.map(i => i.message).join(', ')}`)
-                                return
-                              }
-                              
-                              const parsed = parseScript(extractedText, validation)
-                              const visionPhase = toVisionPhaseFormat(parsed)
-                              const treatmentVariant = toTreatmentVariant(parsed)
-                              
-                              // Proceed with import
-                              await handleScriptImport({ parsedScript: parsed, visionPhase, treatmentVariant })
-                            } catch (err: any) {
-                              toast.error('Failed to import script: ' + (err?.message || 'Unknown error'))
-                            }
-                          }
-                          input.click()
-                        }}
+                        onClick={() => setShowScriptImportDialog(true)}
                         className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white px-6 py-3 text-base"
                       >
                         <FileText className="w-5 h-5 mr-2" />
@@ -1630,6 +1580,12 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             variantCount: opts?.variantCount
           })
         }}
+      />
+
+      <ScriptImportDialog
+        open={showScriptImportDialog}
+        onOpenChange={setShowScriptImportDialog}
+        onImport={handleScriptImport}
       />
       
       {/* Hero Image Prompt Drawer (legacy) */}

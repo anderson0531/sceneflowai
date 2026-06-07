@@ -25,6 +25,12 @@ import {
   SAMPLE_SCREENPLAY_FORMAT 
 } from '@/lib/script/scriptValidator'
 import { ParsedScript } from '@/lib/script/scriptParser'
+import {
+  type CompletenessResult,
+  getCompletenessStatus,
+  hasErrorLevelGaps,
+  hasImprovableGaps,
+} from '@/lib/script/scriptCompleteness'
 import { Button } from '@/components/ui/button'
 import { 
   Dialog, 
@@ -36,29 +42,55 @@ import {
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 
+type ImportReadiness = 'blocked' | 'warning' | 'success'
+
 interface ScriptImportFeedbackProps {
   validation: ValidationResult | null
   parsedScript: ParsedScript | null
+  completeness?: CompletenessResult | null
+  gapFillSummary?: string | null
   isProcessing: boolean
   onProceed: () => void
   onCancel: () => void
-  onFixFormat?: () => void // AI-assisted format correction
+  onImagineGaps?: () => void
+  onFixFormat?: () => void // legacy alias; format errors use sample format only
+}
+
+function deriveImportReadiness(
+  validation: ValidationResult,
+  completeness: CompletenessResult | null | undefined
+): ImportReadiness {
+  const t = getValidationThresholds()
+  if (validation.confidence < t.ERROR) return 'blocked'
+  if (completeness && hasErrorLevelGaps(completeness.gaps)) return 'blocked'
+  if (validation.confidence < t.WARNING || (completeness && completeness.gaps.length > 0)) {
+    return 'warning'
+  }
+  return 'success'
 }
 
 export function ScriptImportFeedback({
   validation,
   parsedScript,
+  completeness,
+  gapFillSummary,
   isProcessing,
   onProceed,
   onCancel,
-  onFixFormat
+  onImagineGaps,
+  onFixFormat,
 }: ScriptImportFeedbackProps) {
   const [showIssues, setShowIssues] = useState(true)
+  const [showCompleteness, setShowCompleteness] = useState(true)
   const [showSample, setShowSample] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const status = validation ? getValidationStatus(validation.confidence) : null
   const thresholds = getValidationThresholds()
+  const formatStatus = validation ? getValidationStatus(validation.confidence) : null
+  const readiness = validation ? deriveImportReadiness(validation, completeness) : 'blocked'
+  const completenessStatus = completeness
+    ? getCompletenessStatus(completeness.completenessScore)
+    : null
 
   const handleCopySample = useCallback(() => {
     navigator.clipboard.writeText(SAMPLE_SCREENPLAY_FORMAT)
@@ -68,34 +100,35 @@ export function ScriptImportFeedback({
 
   if (!validation) return null
 
-  const statusConfig = {
+  const readinessConfig = {
     success: {
       icon: CheckCircle2,
       color: 'text-green-400',
       bgColor: 'bg-green-500/10',
       borderColor: 'border-green-500/30',
-      title: 'Script Ready for Import',
-      description: 'Your script has been validated and is ready to proceed to production.'
+      title: 'Import Readiness: Ready',
+      description: 'Format and content look good. Proceed to Vision with your script pre-loaded.',
     },
     warning: {
       icon: AlertTriangle,
       color: 'text-yellow-400',
       bgColor: 'bg-yellow-500/10',
       borderColor: 'border-yellow-500/30',
-      title: 'Script Needs Attention',
-      description: 'Your script can be imported but some elements may not parse correctly.'
+      title: 'Import Readiness: Review Recommended',
+      description:
+        'Your script can be imported, but format or content gaps may affect storyboard quality.',
     },
-    error: {
+    blocked: {
       icon: XCircle,
       color: 'text-red-400',
       bgColor: 'bg-red-500/10',
       borderColor: 'border-red-500/30',
-      title: 'Script Cannot Be Imported',
-      description: 'The script format is not compatible. Please review the issues below.'
-    }
+      title: 'Import Readiness: Cannot Proceed',
+      description: 'Fix critical format or content issues before importing.',
+    },
   }
 
-  const config = statusConfig[status || 'error']
+  const config = readinessConfig[readiness]
   const StatusIcon = config.icon
 
   return (
@@ -142,9 +175,9 @@ export function ScriptImportFeedback({
             transition={{ duration: 0.5, ease: 'easeOut' }}
             className={cn(
               'absolute inset-y-0 left-0 rounded-full',
-              status === 'success' && 'bg-green-500',
-              status === 'warning' && 'bg-yellow-500',
-              status === 'error' && 'bg-red-500'
+              formatStatus === 'success' && 'bg-green-500',
+              formatStatus === 'warning' && 'bg-yellow-500',
+              formatStatus === 'error' && 'bg-red-500'
             )}
           />
           {/* Threshold markers */}
@@ -191,7 +224,67 @@ export function ScriptImportFeedback({
         />
       </div>
 
-      {/* Issues Section */}
+      {/* Completeness Section */}
+      {completeness && (
+        <div className="space-y-3 border-t border-white/10 pt-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-white/80">Content Completeness</span>
+            <span
+              className={cn(
+                'text-lg font-bold',
+                completenessStatus === 'success' && 'text-green-400',
+                completenessStatus === 'warning' && 'text-yellow-400',
+                completenessStatus === 'error' && 'text-red-400'
+              )}
+            >
+              {completeness.completenessScore}%
+            </span>
+          </div>
+
+          {gapFillSummary && (
+            <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg px-3 py-2 text-sm text-purple-200">
+              <Sparkles className="inline w-4 h-4 mr-1.5 -mt-0.5" />
+              {gapFillSummary}
+            </div>
+          )}
+
+          {completeness.gaps.length > 0 && (
+            <>
+              <button
+                onClick={() => setShowCompleteness(!showCompleteness)}
+                className="flex items-center gap-2 text-sm font-medium text-white/80 hover:text-white transition-colors"
+              >
+                {showCompleteness ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                {completeness.gaps.length} Content Gap{completeness.gaps.length !== 1 ? 's' : ''}
+              </button>
+              <AnimatePresence>
+                {showCompleteness && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="space-y-2 overflow-hidden"
+                  >
+                    {completeness.gaps.map((gap, idx) => (
+                      <IssueCard
+                        key={`gap-${idx}`}
+                        issue={{
+                          type: gap.type,
+                          code: gap.code,
+                          message: gap.message,
+                          suggestion: gap.suggestion,
+                        }}
+                      />
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Format Issues Section */}
       {validation.issues.length > 0 && (
         <div className="space-y-3">
           <button
@@ -220,7 +313,7 @@ export function ScriptImportFeedback({
       )}
 
       {/* Suggestions */}
-      {validation.suggestions.length > 0 && status !== 'success' && (
+      {validation.suggestions.length > 0 && readiness !== 'success' && (
         <div className="bg-white/5 rounded-lg p-4 space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium text-white/80">
             <Info className="w-4 h-4" />
@@ -235,52 +328,42 @@ export function ScriptImportFeedback({
       )}
 
       {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-3 pt-2">
-        {status === 'error' && (
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 pt-2">
+        {readiness === 'blocked' && (
+          <Button variant="outline" onClick={() => setShowSample(true)} className="flex-1">
+            <FileText className="w-4 h-4 mr-2" />
+            View Sample Format
+          </Button>
+        )}
+
+        {readiness === 'warning' && (
           <>
-            <Button
-              variant="outline"
-              onClick={() => setShowSample(true)}
-              className="flex-1"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              View Sample Format
-            </Button>
-            {onFixFormat && (
+            {onImagineGaps && completeness && hasImprovableGaps(completeness.gaps) && (
               <Button
-                onClick={onFixFormat}
+                onClick={onImagineGaps}
                 disabled={isProcessing}
                 className="flex-1 bg-purple-600 hover:bg-purple-700"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                {isProcessing ? 'Fixing Format...' : 'Auto-Fix Format with AI'}
+                {isProcessing ? 'Imagining gaps...' : 'Let SceneFlow Imagine Gaps'}
               </Button>
             )}
-          </>
-        )}
-        
-        {status === 'warning' && (
-          <>
-            <Button
-              variant="outline"
-              onClick={() => setShowSample(true)}
-              className="flex-1"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              View Sample Format
-            </Button>
             <Button
               onClick={onProceed}
               disabled={isProcessing}
               className="flex-1 bg-yellow-600 hover:bg-yellow-700"
             >
-              {isProcessing ? 'Processing...' : 'Proceed Anyway'}
+              {isProcessing ? 'Creating Project...' : 'Proceed As-Is'}
               <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+            <Button variant="outline" onClick={() => setShowSample(true)} className="flex-1 sm:flex-none">
+              <FileText className="w-4 h-4 mr-2" />
+              Sample Format
             </Button>
           </>
         )}
-        
-        {status === 'success' && (
+
+        {readiness === 'success' && (
           <Button
             onClick={onProceed}
             disabled={isProcessing}
@@ -290,12 +373,20 @@ export function ScriptImportFeedback({
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         )}
-        
-        <Button
-          variant="ghost"
-          onClick={onCancel}
-          disabled={isProcessing}
-        >
+
+        {onFixFormat && readiness === 'blocked' && (
+          <Button
+            onClick={onFixFormat}
+            disabled={isProcessing}
+            variant="outline"
+            className="flex-1"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Auto-Fix Format
+          </Button>
+        )}
+
+        <Button variant="ghost" onClick={onCancel} disabled={isProcessing}>
           Cancel
         </Button>
       </div>
@@ -383,12 +474,15 @@ function StatCard({
   )
 }
 
+const ISSUE_TYPE_CONFIG = {
+  error: { icon: XCircle, color: 'text-red-400', bg: 'bg-red-500/10' },
+  warning: { icon: AlertTriangle, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+  info: { icon: Info, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+} as const
+
 function IssueCard({ issue }: { issue: { type: string; code: string; message: string; suggestion?: string } }) {
-  const config = {
-    error: { icon: XCircle, color: 'text-red-400', bg: 'bg-red-500/10' },
-    warning: { icon: AlertTriangle, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-    info: { icon: Info, color: 'text-blue-400', bg: 'bg-blue-500/10' }
-  }[issue.type as 'error' | 'warning' | 'info'] || config.error
+  const config =
+    ISSUE_TYPE_CONFIG[issue.type as keyof typeof ISSUE_TYPE_CONFIG] ?? ISSUE_TYPE_CONFIG.error
 
   const Icon = config.icon
 
