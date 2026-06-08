@@ -62,8 +62,12 @@ function resolveSectionFromHash(hash: string): CollapsibleLandingSectionId | und
   return undefined
 }
 
+function buildDefaultExpandedMap(): ExpandedMap {
+  return Object.fromEntries(COLLAPSIBLE_LANDING_SECTION_IDS.map((id) => [id, true]))
+}
+
 export function LandingSectionCollapseProvider({ children }: { children: ReactNode }) {
-  const [expanded, setExpanded] = useState<ExpandedMap>({})
+  const [expanded, setExpanded] = useState<ExpandedMap>(buildDefaultExpandedMap)
 
   const isOpen = useCallback(
     (sectionId: string) => expanded[sectionId] === true,
