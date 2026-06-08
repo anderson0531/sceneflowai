@@ -11,8 +11,10 @@ export type FeaturedArtStyleId = (typeof FEATURED_ART_STYLE_IDS)[number]
 
 export const ART_STYLES_SECTION_COPY = {
   subsectionTitle: 'Choose Your Look',
+  subsectionIntro:
+    'Your look is not a render preset—it is the voice of the script. Lock art style in Blueprint and every beat inherits that aesthetic.',
   footnote:
-    'Same art styles available in Beat Frame and image generation dialogs.',
+    'Locked in Blueprint Visual Foundation—carried through script, pre-vis, and final render.',
   popularBadge: 'Popular',
 } as const
 

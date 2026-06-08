@@ -5,9 +5,23 @@ import { buildLandingArtStyleItems } from '@/config/landing/landingArtStyles'
 export const CREATIVE_RANGE_COPY = {
   badge: 'Creative Range',
   title: 'Every Style, Every Screen',
-  titleAccent: 'Total creative flexibility',
+  titleAccent: 'Your creative DNA, locked in Blueprint',
   subtitle:
-    'Lock your art direction and aspect ratio before you render—from photoreal episodic drama to painterly series, widescreen documentaries to vertical serialized longform.',
+    'Blueprint is where your creative DNA locks in—art style, aspect ratio, tone, and core narrative. SceneFlow feeds those choices into treatment, Audience Resonance, and script generation so scene directions match your frame and your look from beat one—not as last-minute export settings.',
+  pillars: [
+    {
+      title: 'Form Follows Function (and Framing)',
+      description:
+        'Screen size dictates visual storytelling. A 9:16 vertical demands tighter blocking, faster hooks, and close-up-heavy direction—nothing like 16:9 widescreen staging. Lock aspect ratio in Blueprint so script generation writes scene directions that match the frame.',
+    },
+    {
+      title: 'Art Style Dictates the Prose',
+      description:
+        'Noir anime and Pixar 3D need different dialogue, atmosphere, and pacing. Choose your look in Blueprint and the LLM weaves that texture into the script\'s DNA—not as a filter applied after the fact.',
+    },
+  ],
+  blueprintTagline:
+    'Tone and core narrative complete the lock—Blueprint is the brain; Production is the muscle.',
   ui: {
     expandImage: 'Expand Image',
     closePreview: 'Close Preview',

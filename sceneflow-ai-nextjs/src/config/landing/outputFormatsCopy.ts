@@ -4,8 +4,10 @@ export type OutputFormatId = '16x9' | '9x16' | '1x1' | '4x3'
 
 export const OUTPUT_FORMATS_SECTION_COPY = {
   subsectionTitle: 'Ship Every Screen',
+  subsectionIntro:
+    'Framing is a storytelling choice, not an export checkbox. Blueprint assumes your aspect ratio before the first scene direction is written.',
   resolutionFootnote:
-    'Export at 720p or 1080p where your project supports it — lock aspect ratio before you render.',
+    'Chosen in Blueprint; script and scene direction assume this frame. Export at 720p or 1080p where your project supports it.',
 } as const
 
 export const OUTPUT_FORMATS: Array<{
@@ -19,14 +21,14 @@ export const OUTPUT_FORMATS: Array<{
     label: '16:9 Widescreen',
     ratio: '16:9',
     description:
-      'YouTube main, connected TV (35%+ of watch time), and episodic series — the format indie hits use to sit beside premium streaming apps.',
+      'YouTube main, connected TV, and episodic series—Blueprint writes widescreen scene direction and ensemble blocking for cinematic staging.',
   },
   {
     id: '9x16',
     label: '9:16 Vertical',
     ratio: '9:16',
     description:
-      'Vertical episodic drama and mobile-first serialized series — lock 9:16 before you render so every beat ships in the format binge audiences expect.',
+      'Vertical episodic drama and mobile-first series—Blueprint writes vertical-first blocking, tighter pacing, and close-up-heavy direction binge audiences expect.',
   },
   {
     id: '1x1',

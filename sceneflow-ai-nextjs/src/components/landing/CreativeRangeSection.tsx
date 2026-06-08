@@ -244,11 +244,45 @@ export function CreativeRangeSection() {
         </motion.div>
 
         <SectionCollapseBody sectionId={SECTION_ID}>
+        <div className="mb-12 grid gap-4 md:grid-cols-2">
+          {(t.raw('pillars') as Array<{ title: string; description: string }>).map(
+            (pillar, idx) => {
+              const Icon = idx === 0 ? Monitor : Palette
+              const iconColor = idx === 0 ? 'text-cyan-400' : 'text-violet-400'
+              const iconBg = idx === 0 ? 'bg-cyan-500/15' : 'bg-violet-500/15'
+              return (
+                <motion.div
+                  key={pillar.title}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.08 }}
+                  className="rounded-xl border border-white/10 bg-slate-900/60 p-5 hover:border-violet-500/25 transition-colors"
+                >
+                  <div
+                    className={`mb-3 flex h-9 w-9 items-center justify-center rounded-lg ${iconBg}`}
+                  >
+                    <Icon className={`h-4 w-4 ${iconColor}`} />
+                  </div>
+                  <h3 className="text-base font-semibold text-white">{pillar.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                    {pillar.description}
+                  </p>
+                </motion.div>
+              )
+            }
+          )}
+        </div>
+        <p className="mb-12 text-center text-sm text-violet-300/80">{t('blueprintTagline')}</p>
+
         <div id="art-styles" className="mb-16 scroll-mt-24">
-          <div className="mb-6 flex items-center gap-2">
+          <div className="mb-2 flex items-center gap-2">
             <Palette className="h-5 w-5 text-violet-400" />
             <h3 className="text-xl font-bold text-white">{t('artStyles.subsectionTitle')}</h3>
           </div>
+          <p className="mb-6 max-w-3xl text-sm leading-relaxed text-slate-400">
+            {t('artStyles.subsectionIntro')}
+          </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 md:gap-4">
             {artItems.map((item) => (
               <ArtStyleCard
@@ -265,10 +299,13 @@ export function CreativeRangeSection() {
         </div>
 
         <div id="output-formats" className="scroll-mt-24">
-          <div className="mb-6 flex items-center gap-2">
+          <div className="mb-2 flex items-center gap-2">
             <Monitor className="h-5 w-5 text-cyan-400" />
             <h3 className="text-xl font-bold text-white">{t('outputFormats.subsectionTitle')}</h3>
           </div>
+          <p className="mb-6 max-w-3xl text-sm leading-relaxed text-slate-400">
+            {t('outputFormats.subsectionIntro')}
+          </p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {formatItems.map((item) => (
               <OutputFormatCard
