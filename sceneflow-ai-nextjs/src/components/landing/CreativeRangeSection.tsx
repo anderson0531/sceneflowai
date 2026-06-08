@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Maximize2, Monitor, Palette, Sparkles, X } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -12,6 +12,7 @@ import {
   useLandingSectionCollapse,
 } from '@/components/landing/LandingSectionCollapse'
 import { cn } from '@/lib/utils'
+import { CREATIVE_RANGE_COPY } from '@/config/landing/creativeRangeCopy'
 
 const SECTION_ID = 'creative-range'
 
@@ -213,6 +214,18 @@ export function CreativeRangeSection() {
   const expandLabel = t('ui.expandImage')
   const closeLabel = t('ui.closePreview')
 
+  const pillars = useMemo(() => {
+    try {
+      const raw = t.raw('pillars')
+      if (Array.isArray(raw)) {
+        return raw as Array<{ title: string; description: string }>
+      }
+    } catch {
+      // Stale messages/en.json — fall back to canonical copy
+    }
+    return [...CREATIVE_RANGE_COPY.pillars]
+  }, [t])
+
   return (
     <section
       id={SECTION_ID}
@@ -245,7 +258,7 @@ export function CreativeRangeSection() {
 
         <SectionCollapseBody sectionId={SECTION_ID}>
         <div className="mb-12 grid gap-4 md:grid-cols-2">
-          {(t.raw('pillars') as Array<{ title: string; description: string }>).map(
+          {pillars.map(
             (pillar, idx) => {
               const Icon = idx === 0 ? Monitor : Palette
               const iconColor = idx === 0 ? 'text-cyan-400' : 'text-violet-400'
