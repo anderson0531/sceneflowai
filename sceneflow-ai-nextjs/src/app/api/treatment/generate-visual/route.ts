@@ -7,6 +7,7 @@ import { uploadToGCS } from '@/lib/storage/gcsAssets'
 import { DEFAULT_PROMPT_TEMPLATES, TREATMENT_VISUAL_CREDITS } from '@/types/treatment-visuals'
 import type { TreatmentMood, TreatmentVisuals, GeneratedImage, CharacterPortrait, ActAnchor } from '@/types/treatment-visuals'
 import type { FilmTreatmentData } from '@/lib/types/reports'
+import { blueprintAspectRatioToImageApi } from '@/lib/treatment/blueprintFoundation'
 
 interface GenerateVisualRequest {
   projectId: string
@@ -201,8 +202,11 @@ async function generateHeroImage(
     promptPreview: prompt.substring(0, 300) + '...'
   })
   
+  const heroAspectRatio = blueprintAspectRatioToImageApi(
+    (treatment as { aspectRatio?: string }).aspectRatio
+  )
   const base64Image = await generateImageWithGemini(prompt, {
-    aspectRatio: '16:9',
+    aspectRatio: heroAspectRatio,
     imageSize: '2K'
   })
   
@@ -221,7 +225,7 @@ async function generateHeroImage(
     url: result.url,
     prompt,
     generatedAt: new Date().toISOString(),
-    aspectRatio: '16:9',
+    aspectRatio: heroAspectRatio,
     status: 'ready' as const
   }
 }

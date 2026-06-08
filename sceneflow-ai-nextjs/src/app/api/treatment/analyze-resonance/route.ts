@@ -584,8 +584,14 @@ TREATMENT:
 Title: ${treatment.title || 'Untitled'}
 Logline: ${truncateText(treatment.logline, 300) || 'Not provided'}
 Genre: ${treatment.genre || 'Not specified'} | Tone: ${treatment.tone || 'Not specified'}
+Art Style: ${(treatment as any).artStyle || treatment.visual_style || 'Not specified'}
+Aspect Ratio: ${(treatment as any).aspectRatio || '16:9'}
 
 Synopsis: ${synopsis || 'Not provided'}
+
+SCORING NOTE: Evaluate pacing and commercial viability in context of the locked aspect ratio.
+Vertical (9:16) content may favor faster hooks and mobile-first pacing; widescreen (16:9) may favor cinematic build.
+Art style affects tone fidelity — score genre/tone fit against the stated visual aesthetic, not a generic script.
 
 Setting: ${truncateText(treatment.setting, 200) || 'Not specified'}
 Protagonist: ${truncateText(treatment.protagonist, 200) || 'Not specified'}

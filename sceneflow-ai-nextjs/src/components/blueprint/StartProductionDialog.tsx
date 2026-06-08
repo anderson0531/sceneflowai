@@ -71,6 +71,18 @@ export function StartProductionDialog({
                 {checklist.runtimeEstimate ?? '—'}
               </dd>
             </div>
+            <div className="rounded-lg bg-slate-800/50 p-3 border border-slate-700/50">
+              <dt className="text-xs text-gray-500">Art style</dt>
+              <dd className="text-sm font-semibold text-white truncate">
+                {checklist.artStyleLabel ?? '—'}
+              </dd>
+            </div>
+            <div className="rounded-lg bg-slate-800/50 p-3 border border-slate-700/50">
+              <dt className="text-xs text-gray-500">Aspect ratio</dt>
+              <dd className="text-lg font-semibold text-white">
+                {checklist.aspectRatioLabel ?? '—'}
+              </dd>
+            </div>
           </dl>
 
           {reasons.length > 0 && (

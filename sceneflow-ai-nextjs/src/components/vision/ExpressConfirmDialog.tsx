@@ -15,6 +15,7 @@ import { Zap, AlertCircle, Loader, Image as ImageIcon, Volume2, FileText, Langua
 import { IMAGE_CREDITS, AUDIO_CREDITS } from '@/lib/credits/creditCosts'
 import { getLanguageName, FLAG_EMOJIS } from '@/constants/languages'
 import { artStylePresets } from '@/constants/artStylePresets'
+import { getArtStylePresetName } from '@/lib/treatment/blueprintFoundation'
 import { countStoryboardFramesNeedingGeneration, countStoryboardFrameStats } from '@/lib/storyboard/types'
 
 export interface ExpressConfirmOptions {
@@ -36,6 +37,8 @@ interface ExpressConfirmDialogProps {
    *  calculation and is forwarded to the orchestrator so dialogue/narration
    *  are synthesized in this language. */
   language?: string
+  /** When set, art style is locked from Blueprint and cannot be changed here. */
+  lockedArtStyle?: string
   onConfirm: (options: ExpressConfirmOptions) => void
 }
 
@@ -51,21 +54,22 @@ export function ExpressConfirmDialog({
   scenes,
   isRunning = false,
   language = 'en',
+  lockedArtStyle,
   onConfirm,
 }: ExpressConfirmDialogProps) {
   const [includeMusic, setIncludeMusic] = useState(false)
   const [includeSFX, setIncludeSFX] = useState(false)
   const [regenerate, setRegenerate] = useState(false)
-  const [artStyle, setArtStyle] = useState('photorealistic')
+  const [artStyle, setArtStyle] = useState(lockedArtStyle || 'photorealistic')
 
   useEffect(() => {
     if (open) {
       setIncludeMusic(false)
       setIncludeSFX(false)
       setRegenerate(false)
-      setArtStyle('photorealistic')
+      setArtStyle(lockedArtStyle || 'photorealistic')
     }
-  }, [open])
+  }, [open, lockedArtStyle])
 
   const stats = useMemo(() => {
     const total = scenes.length
@@ -308,19 +312,27 @@ export function ExpressConfirmDialog({
           <div className="space-y-2">
             <div className="text-sm font-medium text-gray-200">Art style</div>
             <p className="text-xs text-gray-400">
-              Applied to all pre-vis frames and flows through video generation.
+              {lockedArtStyle
+                ? 'Locked in Blueprint — change foundation there to reimagine.'
+                : 'Applied to all pre-vis frames and flows through video generation.'}
             </p>
-            <select
-              value={artStyle}
-              onChange={(e) => setArtStyle(e.target.value)}
-              className="w-full text-sm rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-gray-100"
-            >
-              {artStylePresets.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {preset.name}
-                </option>
-              ))}
-            </select>
+            {lockedArtStyle ? (
+              <div className="rounded-lg border border-cyan-700/40 bg-cyan-900/20 px-3 py-2 text-sm text-cyan-100">
+                {getArtStylePresetName(lockedArtStyle)}
+              </div>
+            ) : (
+              <select
+                value={artStyle}
+                onChange={(e) => setArtStyle(e.target.value)}
+                className="w-full text-sm rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-gray-100"
+              >
+                {artStylePresets.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Cost summary */}

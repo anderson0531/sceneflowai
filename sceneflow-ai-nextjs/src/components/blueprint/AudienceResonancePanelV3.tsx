@@ -267,6 +267,8 @@ export function AudienceResonancePanelV3({
             genre: treatment.genre,
             tone_description: treatment.tone_description || treatment.tone,
             visual_style: treatment.visual_style,
+            artStyle: treatment.artStyle,
+            aspectRatio: treatment.aspectRatio,
             protagonist: treatment.protagonist,
             antagonist: treatment.antagonist,
             setting: treatment.setting,

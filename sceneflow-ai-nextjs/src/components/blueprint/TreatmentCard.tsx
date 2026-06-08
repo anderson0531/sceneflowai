@@ -25,6 +25,11 @@ import { formatBlueprintRuntime } from '@/lib/blueprint/formatBlueprintCore'
 import { BlueprintFieldCard, BlueprintSubsectionHeading } from '@/components/blueprint/BlueprintFieldCard'
 import { resolveAuthorWriterDisplay } from '@/lib/user/displayName'
 import { cn } from '@/lib/utils'
+import {
+  getArtStylePresetName,
+  resolveVariantArtStyle,
+  resolveVariantAspectRatio,
+} from '@/lib/treatment/blueprintFoundation'
 
 export type TreatmentCardProps = {
   onOpenBlueprintRefine?: (opts?: OpenBlueprintRefineOptions) => void
@@ -166,7 +171,7 @@ export function TreatmentCard({
       const after = activeVariant as any
       const keys: string[] = [
         'title','logline','genre','format_length','target_audience','author_writer','date',
-        'setting','protagonist','antagonist','tone','tone_description','style','visual_style','synopsis','content','themes','beats'
+        'setting','protagonist','antagonist','tone','tone_description','style','artStyle','aspectRatio','visual_style','synopsis','content','themes','beats'
       ]
       const changed = new Set<string>()
       for (const k of keys) {
@@ -602,10 +607,19 @@ export function TreatmentCard({
                       <BlueprintFieldCard
                         sectionId="tone"
                         variant="studio"
-                        label="Style / Visual style"
-                        value={v.style || v.visual_style || ''}
+                        label="Art style"
+                        value={getArtStylePresetName(resolveVariantArtStyle(v))}
                         valueClassName={
-                          v.id === activeVariant.id ? flashIf('style') || flashIf('visual_style') : undefined
+                          v.id === activeVariant.id ? flashIf('artStyle') || flashIf('visual_style') : undefined
+                        }
+                      />
+                      <BlueprintFieldCard
+                        sectionId="tone"
+                        variant="studio"
+                        label="Aspect ratio"
+                        value={resolveVariantAspectRatio(v)}
+                        valueClassName={
+                          v.id === activeVariant.id ? flashIf('aspectRatio') : undefined
                         }
                       />
                       <BlueprintFieldCard

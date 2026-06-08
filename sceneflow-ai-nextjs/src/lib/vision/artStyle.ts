@@ -1,4 +1,10 @@
 import { artStylePresets } from '@/constants/artStylePresets'
+import {
+  type BlueprintAspectRatio,
+  DEFAULT_ASPECT_RATIO,
+  resolveVariantArtStyle,
+  resolveVariantAspectRatio,
+} from '@/lib/treatment/blueprintFoundation'
 
 export function getArtStylePromptSuffix(artStyleId?: string | null): string {
   if (!artStyleId?.trim()) return artStylePresets[0]?.promptSuffix ?? ''
@@ -22,8 +28,30 @@ export function getArtStyleNegativeTerms(artStyleId?: string | null): string {
 
 export function resolveProjectArtStyle(metadata: unknown): string {
   if (!metadata || typeof metadata !== 'object') return 'photorealistic'
-  const visionPhase = (metadata as Record<string, unknown>).visionPhase
+  const meta = metadata as Record<string, unknown>
+  const variant = meta.filmTreatmentVariant
+  if (variant && typeof variant === 'object') {
+    return resolveVariantArtStyle(variant as Record<string, unknown>)
+  }
+  const visionPhase = meta.visionPhase
   if (!visionPhase || typeof visionPhase !== 'object') return 'photorealistic'
   const artStyle = (visionPhase as Record<string, unknown>).artStyle
   return typeof artStyle === 'string' && artStyle.trim() ? artStyle.trim() : 'photorealistic'
+}
+
+export function resolveProjectAspectRatio(metadata: unknown): BlueprintAspectRatio {
+  if (!metadata || typeof metadata !== 'object') return DEFAULT_ASPECT_RATIO
+  const meta = metadata as Record<string, unknown>
+  const variant = meta.filmTreatmentVariant
+  if (variant && typeof variant === 'object') {
+    return resolveVariantAspectRatio(variant as Record<string, unknown>)
+  }
+  const generationSettings = meta.generationSettings
+  if (generationSettings && typeof generationSettings === 'object') {
+    const ratio = (generationSettings as Record<string, unknown>).aspectRatio
+    if (typeof ratio === 'string') {
+      return resolveVariantAspectRatio({ aspectRatio: ratio })
+    }
+  }
+  return DEFAULT_ASPECT_RATIO
 }

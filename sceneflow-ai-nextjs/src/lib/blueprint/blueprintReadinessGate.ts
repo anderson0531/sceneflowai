@@ -3,6 +3,11 @@
  */
 
 import { READY_FOR_PRODUCTION_THRESHOLD_V3 } from '@/lib/types/audienceResonance'
+import {
+  getArtStylePresetName,
+  resolveVariantArtStyle,
+  resolveVariantAspectRatio,
+} from '@/lib/treatment/blueprintFoundation'
 import type {
   AudienceDefinition,
   PersistedBlueprintAudienceResonance,
@@ -17,6 +22,10 @@ export interface BlueprintReadyChecklist {
   beatsCount: number
   characterCount: number
   runtimeEstimate: string | null
+  artStyleSet: boolean
+  aspectRatioSet: boolean
+  artStyleLabel: string | null
+  aspectRatioLabel: string | null
   isBlueprintReady: boolean
   missingItems: string[]
 }
@@ -55,12 +64,24 @@ export function evaluateBlueprintReadyChecklist(input: {
         ? String(input.variant.format_length)
         : null
 
+  const artStyle = input.variant ? resolveVariantArtStyle(input.variant) : null
+  const aspectRatio = input.variant ? resolveVariantAspectRatio(input.variant) : null
+  const artStyleSet = !!artStyle
+  const aspectRatioSet = !!aspectRatio
+
   const blueprintGenerated = input.hasBlueprint
   const isBlueprintReady =
-    blueprintGenerated && audienceSaved && arRunAtLeastOnce && scoreAtTarget
+    blueprintGenerated &&
+    audienceSaved &&
+    arRunAtLeastOnce &&
+    scoreAtTarget &&
+    artStyleSet &&
+    aspectRatioSet
 
   const missingItems: string[] = []
   if (!blueprintGenerated) missingItems.push('Generate a Blueprint first')
+  if (!artStyleSet) missingItems.push('Select an art style in Visual Foundation')
+  if (!aspectRatioSet) missingItems.push('Select an aspect ratio in Visual Foundation')
   if (!audienceSaved) missingItems.push('Save your target audience')
   if (!arRunAtLeastOnce) missingItems.push('Run Audience Resonance at least once')
   if (!scoreAtTarget) {
@@ -78,6 +99,10 @@ export function evaluateBlueprintReadyChecklist(input: {
     beatsCount: beats.length,
     characterCount: characters.length,
     runtimeEstimate,
+    artStyleSet,
+    aspectRatioSet,
+    artStyleLabel: artStyle ? getArtStylePresetName(artStyle) : null,
+    aspectRatioLabel: aspectRatio,
     isBlueprintReady,
     missingItems,
   }
@@ -99,6 +124,12 @@ export function evaluateStartProductionGate(input: {
     }
   }
 
+  if (!checklist.artStyleSet) {
+    reasons.push('Select an art style in Blueprint Visual Foundation.')
+  }
+  if (!checklist.aspectRatioSet) {
+    reasons.push('Select an aspect ratio in Blueprint Visual Foundation.')
+  }
   if (!checklist.audienceSaved) {
     reasons.push('Save your target audience in the Resonance panel.')
   }

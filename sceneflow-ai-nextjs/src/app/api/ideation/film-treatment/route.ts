@@ -12,6 +12,13 @@ import {
 } from '@/lib/content/contentIntent'
 import { BEAT_STRUCTURES, type BeatStructureKey } from '@/lib/treatment/structures'
 import { repairTreatment } from '@/lib/treatment/validate'
+import {
+  DEFAULT_ART_STYLE,
+  DEFAULT_ASPECT_RATIO,
+  getArtStylePresetName,
+  isBlueprintAspectRatio,
+  resolveVariantArtStyle,
+} from '@/lib/treatment/blueprintFoundation'
 import { generateText } from '@/lib/vertexai/gemini'
 
 // Vercel function configuration - must match vercel.json
@@ -392,6 +399,11 @@ export async function POST(request: NextRequest) {
       { id: 'C', label: 'C', styleHint: 'Energetic, bold, high-contrast visuals, rhythmic editing' },
     ].slice(0, variantsCount)
 
+    const bodyArtStyle = (body as any).artStyle || (body as any).visualStyle
+    const bodyAspectRatio = (body as any).aspectRatio
+    const lockedArtStyle = bodyArtStyle ? resolveVariantArtStyle({ artStyle: bodyArtStyle, visual_style: bodyArtStyle }) : DEFAULT_ART_STYLE
+    const lockedAspectRatio = isBlueprintAspectRatio(bodyAspectRatio) ? bodyAspectRatio : DEFAULT_ASPECT_RATIO
+
     const context = { 
       targetAudience, 
       keyMessage, 
@@ -401,7 +413,9 @@ export async function POST(request: NextRequest) {
       platform, 
       format, 
       contentIntent,
-      visualStyle: (body as any).visualStyle,
+      artStyle: lockedArtStyle,
+      aspectRatio: lockedAspectRatio,
+      visualStyle: getArtStylePresetName(lockedArtStyle),
       targetMinutes: cappedTargetMinutes, 
       beatStructure: effectiveBeatStructure, 
       userName,
@@ -532,7 +546,9 @@ async function generateFilmTreatment(
     const result = {
       // Legacy minimal
       film_treatment: filmTreatmentText,
-      visual_style: parsed.visual_style || parsed.style || 'Professional visual style',
+      visual_style: parsed.visual_style || parsed.style || getArtStylePresetName(context?.artStyle || DEFAULT_ART_STYLE),
+      artStyle: context?.artStyle || DEFAULT_ART_STYLE,
+      aspectRatio: context?.aspectRatio || DEFAULT_ASPECT_RATIO,
       tone_description: parsed.tone_description || parsed.tone || 'Engaging and informative tone',
       target_audience: parsed.target_audience || 'General audience',
 

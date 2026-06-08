@@ -175,8 +175,13 @@ function SectionContent({
           <BlueprintFieldCard sectionId="tone" label="Style" value={String(variant.style || '')} />
           <BlueprintFieldCard
             sectionId="tone"
-            label="Visual style"
-            value={String(variant.visual_style || '')}
+            label="Art style"
+            value={String(variant.artStyle || variant.visual_style || '')}
+          />
+          <BlueprintFieldCard
+            sectionId="tone"
+            label="Aspect ratio"
+            value={String(variant.aspectRatio || '16:9')}
           />
           <BlueprintFieldCard sectionId="tone" label="Themes" value={themes} />
           {Array.isArray(variant.mood_references) && variant.mood_references.length > 0 ? (

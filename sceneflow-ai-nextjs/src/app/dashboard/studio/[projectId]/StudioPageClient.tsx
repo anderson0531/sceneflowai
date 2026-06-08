@@ -36,6 +36,8 @@ import {
   fetchActiveBlueprintShare,
 } from '@/lib/blueprint/createBlueprintShare'
 import { resolveBlueprintHeroImageUrl } from '@/lib/blueprint/resolveBlueprintHeroImage'
+import type { ReimagineFoundationField } from '@/components/vision/ReimagineFoundationDialog'
+import { normalizeVariantFoundation } from '@/lib/treatment/blueprintFoundation'
 import { toast } from 'sonner'
 import {
   createPersistedBlueprintAR,
@@ -144,6 +146,9 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
   
   // Reimagine dialog state for initial generation
   const [showReimaginDialog, setShowReimaginDialog] = useState(false)
+  const [showFoundationReimagineDialog, setShowFoundationReimagineDialog] = useState(false)
+  const [foundationFocus, setFoundationFocus] = useState<ReimagineFoundationField | undefined>()
+  const returnProductionProjectIdRef = useRef<string | null>(null)
   const [showScriptImportDialog, setShowScriptImportDialog] = useState(false)
   const [isGen, setIsGen] = useState(false)
   const [genProgress, setGenProgress] = useState(0)
@@ -183,6 +188,44 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     const id = selectedId || variants?.[0]?.id
     return variants?.find((v) => v.id === id) ?? variants?.[0] ?? null
   }, [guide])
+
+  const syncVariantToProductionProject = useCallback(
+    async (variant: Record<string, unknown>, productionProjectId: string) => {
+      try {
+        const res = await fetch(`/api/projects/${productionProjectId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metadata: {
+              filmTreatmentVariant: normalizeVariantFoundation(variant),
+            },
+          }),
+        })
+        if (!res.ok) throw new Error('Failed to sync variant to Production')
+        toast.success('Blueprint synced to Production — regenerate your script when ready.')
+        router.push(`/dashboard/workflow/vision/${productionProjectId}`)
+      } catch (error) {
+        console.error('[StudioPage] Production sync failed:', error)
+        toast.error('Blueprint updated, but Production sync failed')
+      }
+    },
+    [router]
+  )
+
+  useEffect(() => {
+    const reimagine = searchParams.get('reimagine')
+    if (reimagine !== 'foundation') return
+    const focus = searchParams.get('focus')
+    const returnId = searchParams.get('returnProjectId')
+    if (returnId) returnProductionProjectIdRef.current = returnId
+    if (focus === 'artStyle' || focus === 'aspectRatio') {
+      setFoundationFocus(focus)
+    }
+    if (activeTreatmentVariant) {
+      setShowFoundationReimagineDialog(true)
+      router.replace(`/dashboard/studio/${projectId}`, { scroll: false })
+    }
+  }, [searchParams, activeTreatmentVariant, projectId, router])
 
   const openBlueprintRefine = useCallback((opts?: OpenBlueprintRefineOptions) => {
     setBlueprintRefineRecs(opts?.resonanceRecommendations)
@@ -708,7 +751,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
     tone?: string;
     duration?: string;
     targetAudience?: string;
-    visualStyle?: string;
+    artStyle?: string;
+    aspectRatio?: string;
     hasStoryDirections?: boolean;
     generateThreeDirections?: boolean;
     format?: string;
@@ -740,7 +784,8 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
           ...(opts?.genre && { genre: opts.genre }),
           ...(opts?.tone && { tone: opts.tone }),
           ...(opts?.targetAudience && { targetAudience: opts.targetAudience }),
-          ...(opts?.visualStyle && { visualStyle: opts.visualStyle }),
+          ...(opts?.artStyle && { artStyle: opts.artStyle }),
+          ...(opts?.aspectRatio && { aspectRatio: opts.aspectRatio }),
           ...(opts?.contentIntent && { contentIntent: opts.contentIntent }),
           ...(opts?.format && { format: opts.format }),
           hasExplicitSettings
@@ -1556,6 +1601,41 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
 
       {/* Blueprint Reimagine Dialog for initial generation */}
       <BlueprintReimaginDialog
+        open={showFoundationReimagineDialog}
+        onClose={() => {
+          setShowFoundationReimagineDialog(false)
+          setFoundationFocus(undefined)
+          returnProductionProjectIdRef.current = null
+        }}
+        existingVariant={activeTreatmentVariant}
+        focusField={foundationFocus}
+        projectId={projectId}
+        onGenerate={async (input, opts) => {
+          setShowFoundationReimagineDialog(false)
+          await handleGenerateBlueprint(input, {
+            genre: opts?.genre,
+            tone: opts?.tone,
+            duration: opts?.duration,
+            targetAudience: opts?.targetAudience,
+            artStyle: opts?.artStyle,
+            aspectRatio: opts?.aspectRatio,
+            variantCount: 1,
+            rigor: opts?.rigor,
+            hasStoryDirections: opts?.hasStoryDirections,
+            format: opts?.format,
+            contentIntent: opts?.contentIntent,
+          })
+          const returnId = returnProductionProjectIdRef.current
+          const latestVariant = useGuideStore.getState().guide.treatmentVariants?.[0]
+          if (returnId && latestVariant) {
+            await syncVariantToProductionProject(latestVariant as Record<string, unknown>, returnId)
+          }
+          returnProductionProjectIdRef.current = null
+          setFoundationFocus(undefined)
+        }}
+      />
+
+      <BlueprintReimaginDialog
         open={showReimaginDialog}
         onClose={() => setShowReimaginDialog(false)}
         existingVariant={null}
@@ -1576,8 +1656,14 @@ export default function StudioPageClient({ projectId }: StudioPageClientProps) {
             tone: opts?.tone,
             duration: opts?.duration,
             targetAudience: opts?.targetAudience,
-            visualStyle: opts?.visualStyle,
-            variantCount: opts?.variantCount
+            artStyle: opts?.artStyle,
+            aspectRatio: opts?.aspectRatio,
+            variantCount: opts?.variantCount,
+            rigor: opts?.rigor,
+            hasStoryDirections: opts?.hasStoryDirections,
+            generateThreeDirections: opts?.generateThreeDirections,
+            format: opts?.format,
+            contentIntent: opts?.contentIntent,
           })
         }}
       />

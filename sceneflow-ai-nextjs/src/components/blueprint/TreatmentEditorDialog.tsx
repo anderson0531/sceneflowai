@@ -20,6 +20,13 @@ import {
   Film,
   RefreshCw
 } from 'lucide-react'
+import { BlueprintFoundationFields } from '@/components/blueprint/BlueprintFoundationFields'
+import {
+  type BlueprintAspectRatio,
+  getArtStylePresetName,
+  resolveVariantArtStyle,
+  resolveVariantAspectRatio,
+} from '@/lib/treatment/blueprintFoundation'
 
 // =============================================================================
 // TYPES & CONSTANTS
@@ -35,6 +42,8 @@ type Variant = {
   tone_description?: string
   style?: string
   visual_style?: string
+  artStyle?: string
+  aspectRatio?: BlueprintAspectRatio
   target_audience?: string
   genre?: string
   duration?: string
@@ -85,19 +94,6 @@ const TONE_OPTIONS = [
   { value: 'intense', label: 'Intense' },
   { value: 'hopeful', label: 'Hopeful' },
   { value: 'nostalgic', label: 'Nostalgic' },
-]
-
-const VISUAL_STYLE_OPTIONS = [
-  { value: 'cinematic', label: 'Cinematic' },
-  { value: 'documentary', label: 'Documentary' },
-  { value: 'noir', label: 'Film Noir' },
-  { value: 'vibrant', label: 'Vibrant & Colorful' },
-  { value: 'muted', label: 'Muted & Desaturated' },
-  { value: 'stylized', label: 'Stylized' },
-  { value: 'realistic', label: 'Hyper-Realistic' },
-  { value: 'vintage', label: 'Vintage/Retro' },
-  { value: 'neon', label: 'Neon/Cyberpunk' },
-  { value: 'minimalist', label: 'Minimalist' },
 ]
 
 const DURATION_OPTIONS = [
@@ -154,7 +150,9 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
       content: variant.synopsis || variant.content,
       genre: variant.genre || '',
       tone_description: variant.tone_description || '',
-      visual_style: variant.visual_style || '',
+      artStyle: resolveVariantArtStyle(variant),
+      aspectRatio: resolveVariantAspectRatio(variant),
+      visual_style: getArtStylePresetName(resolveVariantArtStyle(variant)),
       target_audience: variant.target_audience || '',
       duration: variant.duration || 'short_film'
     } : null)
@@ -222,7 +220,8 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
         draft.logline && `Logline: ${draft.logline}`,
         draft.genre && `Genre: ${draft.genre}`,
         draft.tone_description && `Tone: ${draft.tone_description}`,
-        draft.visual_style && `Visual Style: ${draft.visual_style}`,
+        draft.artStyle && `Art Style: ${getArtStylePresetName(draft.artStyle)}`,
+        draft.aspectRatio && `Aspect Ratio: ${draft.aspectRatio}`,
         draft.target_audience && `Audience: ${draft.target_audience}`,
         draft.synopsis && `Synopsis: ${draft.synopsis}`
       ].filter(Boolean).join('\n')
@@ -465,23 +464,22 @@ export default function TreatmentEditorDialog({ open, variant, onClose, onApply 
                       </Select>
                     </div>
 
-                    {/* Visual Style */}
-                    <div>
-                      <label className="text-xs font-medium text-gray-400 mb-1.5 block">Visual Style</label>
-                      <Select 
-                        value={draft?.visual_style || ''} 
-                        onValueChange={v => { onAnyChange(); setDraft(d => ({ ...d, visual_style: v })) }}
-                      >
-                        <SelectTrigger className="w-full border-gray-600 bg-gray-900 text-white">
-                          <SelectValue placeholder="Select style..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {VISUAL_STYLE_OPTIONS.map(opt => (
-                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <BlueprintFoundationFields
+                      artStyle={draft?.artStyle || resolveVariantArtStyle(draft || {})}
+                      aspectRatio={draft?.aspectRatio || resolveVariantAspectRatio(draft || {})}
+                      onArtStyleChange={(value) => {
+                        onAnyChange()
+                        setDraft((d) => ({
+                          ...d,
+                          artStyle: value,
+                          visual_style: getArtStylePresetName(value),
+                        }))
+                      }}
+                      onAspectRatioChange={(value) => {
+                        onAnyChange()
+                        setDraft((d) => ({ ...d, aspectRatio: value }))
+                      }}
+                    />
 
                     {/* Target Audience */}
                     <div>

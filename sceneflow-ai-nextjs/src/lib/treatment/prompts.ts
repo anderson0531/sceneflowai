@@ -6,6 +6,12 @@ import {
   getIntentPromptBlocks,
   resolveContentIntent,
 } from '@/lib/content/contentIntent'
+import {
+  buildFoundationPromptBlock,
+  getArtStylePresetName,
+  resolveVariantArtStyle,
+  resolveVariantAspectRatio,
+} from '@/lib/treatment/blueprintFoundation'
 
 type Format = ProductionFormat
 
@@ -169,6 +175,10 @@ export function buildTreatmentPrompt(opts: {
     ? `\n${formatSpecifics.antiFictionalizationRule}\n`
     : ''
 
+  const artStyle = context?.artStyle || resolveVariantArtStyle(context || {})
+  const aspectRatio = context?.aspectRatio || resolveVariantAspectRatio(context || {})
+  const foundationBlock = buildFoundationPromptBlock(artStyle, aspectRatio)
+
   return `CRITICAL INSTRUCTIONS: You are a professional ${formatSpecifics.personaLabel} showrunner.
 CONTENT INTENT: ${intent.toUpperCase()} — ${formatSpecifics.schemaFieldSemantics}
 TARGET RUNTIME: ~${targetMinutes} minutes (±10%).
@@ -194,7 +204,11 @@ CONTEXT:
 - Platform: ${context?.platform || 'YouTube & web'}
 - Tone: ${context?.tone || 'Professional'}
 - Genre: ${context?.genre || 'Documentary'}
-- Style Hint: ${styleHint || context?.visualStyle || 'N/A'}
+- Art Style: ${getArtStylePresetName(artStyle)}
+- Aspect Ratio: ${aspectRatio}
+- Style Hint: ${styleHint || context?.visualStyle || getArtStylePresetName(artStyle)}
+
+${foundationBlock}
 
 ${OUTPUT_RULES_BLOCK}
 

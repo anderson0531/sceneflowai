@@ -554,7 +554,8 @@ export interface SegmentConfigResult {
 export function useSegmentConfig(
   segment: SceneSegment,
   sceneImageUrl?: string,
-  guideContext?: SegmentGuideContext
+  guideContext?: SegmentGuideContext,
+  defaultAspectRatio: '16:9' | '9:16' | '1:1' | '4:3' = '16:9'
 ): SegmentConfigResult {
   return useMemo(() => {
     const method = detectRecommendedMethod(segment, sceneImageUrl, [segment])
@@ -592,7 +593,9 @@ export function useSegmentConfig(
       prompt,
       motionPrompt,
       visualPrompt,
-      aspectRatio: '16:9',
+      aspectRatio: defaultAspectRatio === '1:1' || defaultAspectRatio === '4:3'
+        ? '16:9'
+        : defaultAspectRatio,
       resolution: method === 'EXT' ? '720p' : '720p',
       duration:
         method === 'EXT'
@@ -637,7 +640,7 @@ export function useSegmentConfig(
       methodLabel: methodLabels[method],
       methodReason: methodReasons[method],
     }
-  }, [segment, sceneImageUrl, guideContext])
+  }, [segment, sceneImageUrl, guideContext, defaultAspectRatio])
 }
 
 /**
@@ -650,7 +653,8 @@ export function useSegmentConfigs(
   segments: SceneSegment[],
   sceneImageUrl?: string,
   skip?: boolean,
-  guideContext?: SegmentGuideContext
+  guideContext?: SegmentGuideContext,
+  defaultAspectRatio: '16:9' | '9:16' | '1:1' | '4:3' = '16:9'
 ): Map<string, SegmentConfigResult> {
   return useMemo(() => {
     // QUARANTINE GUARD: Skip all processing if told to
@@ -699,7 +703,9 @@ export function useSegmentConfigs(
         prompt,
         motionPrompt,
         visualPrompt,
-        aspectRatio: '16:9',
+        aspectRatio: defaultAspectRatio === '1:1' || defaultAspectRatio === '4:3'
+          ? '16:9'
+          : defaultAspectRatio,
         resolution: '720p',
         duration:
           method === 'EXT'
@@ -744,7 +750,7 @@ export function useSegmentConfigs(
     }
     
     return configMap
-  }, [segments, sceneImageUrl, skip, guideContext])
+  }, [segments, sceneImageUrl, skip, guideContext, defaultAspectRatio])
 }
 
 export default useSegmentConfig

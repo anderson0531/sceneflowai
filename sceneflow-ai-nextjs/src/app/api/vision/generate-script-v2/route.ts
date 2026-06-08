@@ -16,6 +16,12 @@ import {
   migrateProjectToBeats,
 } from '@/lib/script/beatMigration'
 import { ensureCinematicBookends } from '@/lib/script/cinematicBookends'
+import {
+  buildFoundationPromptBlock,
+  getArtStylePresetName,
+  resolveVariantArtStyle,
+  resolveVariantAspectRatio,
+} from '@/lib/treatment/blueprintFoundation'
 export const runtime = 'nodejs'
 export const maxDuration = 600  // 10 minutes for large script generation (requires Vercel Pro)
 
@@ -1053,6 +1059,14 @@ Synopsis:
 ${treatment.synopsis || treatment.content}
 ${characterList}
 ${storyBeatsText}
+
+${buildFoundationPromptBlock(resolveVariantArtStyle(treatment), resolveVariantAspectRatio(treatment))}
+
+=== VISUAL FOUNDATION (MANDATORY) ===
+Art Style: ${getArtStylePresetName(resolveVariantArtStyle(treatment))}
+Aspect Ratio: ${resolveVariantAspectRatio(treatment)}
+- Action beat descriptions MUST use shot language appropriate for ${resolveVariantAspectRatio(treatment)} framing.
+- Dialogue and atmosphere MUST reflect the locked ${getArtStylePresetName(resolveVariantArtStyle(treatment))} aesthetic.
 
 === SCRIPT GENERATION PHILOSOPHY ===
 

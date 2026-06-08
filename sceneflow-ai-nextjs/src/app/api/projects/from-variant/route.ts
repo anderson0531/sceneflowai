@@ -3,6 +3,11 @@ import '@/models' // Import all models to register them with Sequelize
 import Project from '@/models/Project'
 import User from '@/models/User'
 import { sequelize } from '@/config/database'
+import {
+  DEFAULT_ASPECT_RATIO,
+  resolveVariantArtStyle,
+  resolveVariantAspectRatio,
+} from '@/lib/treatment/blueprintFoundation'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -179,10 +184,14 @@ export async function POST(request: NextRequest) {
           charactersGenerated: false,
           scenesGenerated: false,
           script: null,
+          artStyle: resolveVariantArtStyle(variant),
           characters: variant.character_descriptions || [],
           scenes: [],
-          beatSheet: variant.act_breakdown || null
-        }
+          beatSheet: variant.act_breakdown || null,
+        },
+        generationSettings: {
+          aspectRatio: resolveVariantAspectRatio(variant) || DEFAULT_ASPECT_RATIO,
+        },
       }
     })
     

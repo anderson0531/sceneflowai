@@ -88,6 +88,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, PanelRightClose, PanelRight } from 'lucide-react'
 import { useStore } from '@/store/useStore'
+import { resolveProjectArtStyle, resolveProjectAspectRatio } from '@/lib/vision/artStyle'
+import {
+  ReimagineFoundationDialog,
+  type ReimagineFoundationField,
+} from '@/components/vision/ReimagineFoundationDialog'
+import { buildBlueprintReimagineUrl, resolveBlueprintProjectId } from '@/lib/blueprint/reimagineFoundationRoute'
 
 const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> = ({ size = 32, className, ...props }) => (
   <svg
@@ -685,6 +691,45 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }),
     [scriptLockStatus, productionReadyChecklist]
   )
+
+  const lockedArtStyle = useMemo(
+    () => resolveProjectArtStyle(project?.metadata),
+    [project?.metadata]
+  )
+
+  const lockedAspectRatio = useMemo(
+    () => resolveProjectAspectRatio(project?.metadata),
+    [project?.metadata]
+  )
+
+  const [foundationReimagineOpen, setFoundationReimagineOpen] = useState(false)
+  const [foundationReimagineField, setFoundationReimagineField] =
+    useState<ReimagineFoundationField>('artStyle')
+
+  const handleRefactorFoundation = useCallback(
+    (field: ReimagineFoundationField = 'artStyle') => {
+      setFoundationReimagineField(field)
+      setFoundationReimagineOpen(true)
+    },
+    []
+  )
+
+  const navigateToBlueprintReimagine = useCallback(() => {
+    const blueprintId = resolveBlueprintProjectId(
+      project?.metadata as Record<string, unknown> | undefined
+    )
+    if (!blueprintId) {
+      toast.error('No linked Blueprint project found. Open Blueprint from the project list.')
+      return
+    }
+    router.push(
+      buildBlueprintReimagineUrl({
+        blueprintProjectId: blueprintId,
+        productionProjectId: projectId,
+        focus: foundationReimagineField,
+      })
+    )
+  }, [project?.metadata, projectId, router, foundationReimagineField])
 
   const sceneProgressItems = useSceneProgressItems(
     script?.script?.scenes,
@@ -11722,6 +11767,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 isGeneratingReviews={isGeneratingReviews}
                 onShowReviews={() => setShowReviewModal(true)}
                 onShowTreatmentReview={() => setShowTreatmentReview(true)}
+                onRefactorFoundation={() => handleRefactorFoundation('artStyle')}
                 directorReview={directorReview}
                 audienceReview={audienceReview}
                 hasBYOK={!!byokSettings?.videoProvider}
@@ -11943,6 +11989,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             expressStatus={expressStatus}
                             expressGateBlocked={!expressGate.allowed}
                             expressGateReasons={expressGate.reasons}
+                            lockedArtStyle={lockedArtStyle}
                           />
                         </div>
                       )}
@@ -12811,6 +12858,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           />
         </div>
       )}
+
+      <ReimagineFoundationDialog
+        open={foundationReimagineOpen}
+        onOpenChange={setFoundationReimagineOpen}
+        field={foundationReimagineField}
+        currentArtStyle={lockedArtStyle}
+        currentAspectRatio={lockedAspectRatio}
+        onConfirm={navigateToBlueprintReimagine}
+      />
 
       {/* First-time onboarding tour */}
       <ProductionOnboarding />

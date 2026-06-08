@@ -7,12 +7,21 @@ import { Textarea } from '../ui/textarea'
 import { toast } from 'sonner'
 import { Wand2, Loader2, Palette, Save, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { BlueprintFoundationFields } from '@/components/blueprint/BlueprintFoundationFields'
+import {
+  type BlueprintAspectRatio,
+  getArtStylePresetName,
+  resolveVariantArtStyle,
+  resolveVariantAspectRatio,
+} from '@/lib/treatment/blueprintFoundation'
 
 type TreatmentVariant = {
   id: string
   tone?: string
   tone_description?: string
   visual_style?: string
+  artStyle?: string
+  aspectRatio?: BlueprintAspectRatio
   themes?: string[] | string
   [key: string]: any
 }
@@ -42,7 +51,8 @@ export function ToneStyleEditDialog({ open, variant, onClose, onApply, projectId
     if (variant) {
       setDraft({
         tone_description: variant.tone_description || variant.tone,
-        visual_style: variant.visual_style,
+        artStyle: resolveVariantArtStyle(variant),
+        aspectRatio: resolveVariantAspectRatio(variant),
         themes: variant.themes,
       })
       setHasChanges(false)
@@ -204,14 +214,15 @@ export function ToneStyleEditDialog({ open, variant, onClose, onApply, projectId
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs text-gray-400">Visual Style</label>
-              <Textarea
-                value={draft.visual_style || ''}
-                onChange={(e) => updateDraft('visual_style', e.target.value)}
-                className="min-h-[80px] bg-slate-800/50 border-slate-700"
-              />
-            </div>
+            <BlueprintFoundationFields
+              artStyle={draft.artStyle || resolveVariantArtStyle(draft)}
+              aspectRatio={draft.aspectRatio || resolveVariantAspectRatio(draft)}
+              onArtStyleChange={(value) => {
+                updateDraft('artStyle', value)
+                updateDraft('visual_style', getArtStylePresetName(value))
+              }}
+              onAspectRatioChange={(value) => updateDraft('aspectRatio', value)}
+            />
 
             <div className="space-y-1">
               <label className="text-xs text-gray-400">Themes (comma-separated)</label>

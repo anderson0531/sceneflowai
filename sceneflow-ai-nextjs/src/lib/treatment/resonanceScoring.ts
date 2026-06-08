@@ -44,6 +44,8 @@ export function treatmentToRefineVariant(treatment: Record<string, unknown>) {
     tone_description: treatment.tone_description || treatment.tone,
     style: treatment.style,
     visual_style: treatment.visual_style,
+    artStyle: treatment.artStyle,
+    aspectRatio: treatment.aspectRatio,
     themes: treatment.themes,
     mood_references: treatment.mood_references,
     beats: treatment.beats || [],

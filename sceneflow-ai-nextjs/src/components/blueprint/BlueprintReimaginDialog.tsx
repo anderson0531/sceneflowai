@@ -31,6 +31,16 @@ import {
   getIntentLabel,
   type ContentIntent,
 } from '@/lib/content/contentIntent'
+import {
+  BlueprintFoundationFields,
+  DEFAULT_ART_STYLE,
+  DEFAULT_ASPECT_RATIO,
+} from '@/components/blueprint/BlueprintFoundationFields'
+import {
+  type BlueprintAspectRatio,
+  resolveVariantArtStyle,
+  resolveVariantAspectRatio,
+} from '@/lib/treatment/blueprintFoundation'
 
 // =============================================================================
 // TYPES & CONSTANTS
@@ -51,7 +61,8 @@ type Props = {
   onGenerate: (input: string, opts?: { 
     genre?: string
     tone?: string
-    visualStyle?: string
+    artStyle?: string
+    aspectRatio?: BlueprintAspectRatio
     duration?: string
     targetAudience?: string
     variantCount?: number
@@ -64,6 +75,7 @@ type Props = {
   existingVariant?: any // For reimagine mode (editing existing)
   initialIdea?: IdeationConcept // Pre-populated from Ideation
   projectId?: string
+  focusField?: 'artStyle' | 'aspectRatio'
 }
 
 // Genre options with category grouping for better UX
@@ -109,19 +121,6 @@ const TONE_OPTIONS = [
   { value: 'intense', label: 'Intense' },
   { value: 'hopeful', label: 'Hopeful' },
   { value: 'nostalgic', label: 'Nostalgic' },
-]
-
-const VISUAL_STYLE_OPTIONS = [
-  { value: 'cinematic', label: 'Cinematic' },
-  { value: 'documentary', label: 'Documentary' },
-  { value: 'noir', label: 'Film Noir' },
-  { value: 'vibrant', label: 'Vibrant & Colorful' },
-  { value: 'muted', label: 'Muted & Desaturated' },
-  { value: 'stylized', label: 'Stylized' },
-  { value: 'realistic', label: 'Hyper-Realistic' },
-  { value: 'vintage', label: 'Vintage/Retro' },
-  { value: 'neon', label: 'Neon/Cyberpunk' },
-  { value: 'minimalist', label: 'Minimalist' },
 ]
 
 const DURATION_OPTIONS = [
@@ -282,7 +281,8 @@ export function BlueprintReimaginDialog({
   onGenerate,
   existingVariant,
   initialIdea,
-  projectId
+  projectId,
+  focusField,
 }: Props) {
   const { setTreatmentVariants } = useGuideStore()
   
@@ -290,7 +290,8 @@ export function BlueprintReimaginDialog({
   const [synopsis, setSynopsis] = useState('')
   const [genre, setGenre] = useState('')
   const [tone, setTone] = useState('')
-  const [visualStyle, setVisualStyle] = useState('')
+  const [artStyle, setArtStyle] = useState(DEFAULT_ART_STYLE)
+  const [aspectRatio, setAspectRatio] = useState<BlueprintAspectRatio>(DEFAULT_ASPECT_RATIO)
   const [duration, setDuration] = useState('short_film')
   const [targetAudience, setTargetAudience] = useState('')
   
@@ -316,7 +317,8 @@ export function BlueprintReimaginDialog({
       setSynopsis(existingVariant.synopsis || existingVariant.content || '')
       setGenre(existingVariant.genre || '')
       setTone(existingVariant.tone_description || existingVariant.tone || '')
-      setVisualStyle(existingVariant.visual_style || '')
+      setArtStyle(resolveVariantArtStyle(existingVariant))
+      setAspectRatio(resolveVariantAspectRatio(existingVariant))
       setDuration(existingVariant.duration || 'short_film')
       setTargetAudience(existingVariant.target_audience || '')
     } else if (initialIdea) {
@@ -387,7 +389,8 @@ export function BlueprintReimaginDialog({
       await onGenerate(buildInput(), {
         genre,
         tone,
-        visualStyle,
+        artStyle,
+        aspectRatio,
         duration,
         targetAudience,
         variantCount,
@@ -531,31 +534,34 @@ export function BlueprintReimaginDialog({
             </div>
           </div>
           
+          {/* Visual Foundation — art style + aspect ratio */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-300">
+              <Palette className="w-4 h-4 text-cyan-400" />
+              Visual Foundation
+              <span className="text-xs text-gray-500 font-normal">(locked at Blueprint)</span>
+            </label>
+            <BlueprintFoundationFields
+              artStyle={artStyle}
+              aspectRatio={aspectRatio}
+              onArtStyleChange={setArtStyle}
+              onAspectRatioChange={setAspectRatio}
+              highlightArtStyle={focusField === 'artStyle'}
+              highlightAspectRatio={focusField === 'aspectRatio'}
+            />
+          </div>
+
           {/* Advanced Settings Toggle */}
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-300 transition-colors"
           >
             {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            {showAdvanced ? 'Hide' : 'Show'} Visual Style Options
+            {showAdvanced ? 'Hide' : 'Show'} Advanced Options
           </button>
           
           {showAdvanced && (
             <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs text-gray-400">Visual Style</label>
-                <Select value={visualStyle} onValueChange={setVisualStyle}>
-                  <SelectTrigger className="bg-slate-800/50 border-slate-700 text-sm">
-                    <SelectValue placeholder="Select visual style..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {VISUAL_STYLE_OPTIONS.map(opt => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="space-y-1.5">
                 <label className="text-xs text-gray-400">Generation Quality</label>
                 <Select value={rigor} onValueChange={(v) => setRigor(v as 'fast' | 'balanced' | 'thorough')}>

@@ -1,4 +1,10 @@
 import { z } from 'zod'
+import {
+  BLUEPRINT_ASPECT_RATIOS,
+  DEFAULT_ART_STYLE,
+  DEFAULT_ASPECT_RATIO,
+  mapLegacyVisualStyle,
+} from '@/lib/treatment/blueprintFoundation'
 
 /**
  * Film-treatment JSON sometimes uses strings for protagonist/antagonist; Gemini sometimes returns
@@ -58,6 +64,8 @@ const TreatmentSchema = z.object({
     .transform((v) => (Array.isArray(v) ? v : []))
     .catch([] as z.infer<typeof BeatSchema>[]),
   visual_style: z.string().optional(),
+  artStyle: z.string().optional(),
+  aspectRatio: z.enum(['16:9', '9:16', '1:1', '4:3']).optional(),
   style: z.string().optional(),
   tone_description: z.string().optional(),
   tone: z.string().optional(),
@@ -104,6 +112,12 @@ export function repairTreatment(input: unknown): RepairedTreatment {
   }
   if (!parsed.visual_style && parsed.style) {
     parsed.visual_style = parsed.style
+  }
+  if (!parsed.artStyle) {
+    parsed.artStyle = mapLegacyVisualStyle(parsed.visual_style) ?? DEFAULT_ART_STYLE
+  }
+  if (!parsed.aspectRatio || !BLUEPRINT_ASPECT_RATIOS.includes(parsed.aspectRatio)) {
+    parsed.aspectRatio = DEFAULT_ASPECT_RATIO
   }
   return parsed
 }

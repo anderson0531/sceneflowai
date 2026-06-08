@@ -134,6 +134,8 @@ interface SceneGalleryProps {
   expressGateReasons?: string[]
   /** Called after successful Express to open storyboard player / share flow. */
   onExpressComplete?: () => void
+  /** Art style locked from Blueprint — Express uses this instead of a picker. */
+  lockedArtStyle?: string
 }
 
 const buildSceneKey = (scene: any, index: number) => scene.sceneId || scene.id || `scene-${index}`
@@ -182,6 +184,7 @@ export function SceneGallery({
   expressGateBlocked = false,
   expressGateReasons = [],
   onExpressComplete,
+  lockedArtStyle,
 }: SceneGalleryProps) {
   // Drag and drop sensors
   const sensors = useSensors(
@@ -941,6 +944,7 @@ export function SceneGallery({
           scenes={scenes}
           isRunning={isExpressRunning}
           language={selectedLanguage}
+          lockedArtStyle={lockedArtStyle}
           onConfirm={handleExpressConfirm}
         />
       )}
