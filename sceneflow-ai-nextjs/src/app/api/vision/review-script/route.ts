@@ -5,6 +5,13 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
 import { BLUEPRINT_CREDITS } from '@/lib/credits/creditCosts'
+import {
+  applyShowVsTellAutoCap,
+  buildScriptARShowVsTellGuidance,
+  calculateShowVsTellMetrics,
+  resolveNarrationPolicy,
+  type NarrationPolicy,
+} from '@/lib/script/narrationPolicy'
 
 export const maxDuration = 180
 export const runtime = 'nodejs'
@@ -64,44 +71,14 @@ interface ScriptReviewRequest {
     characters?: any[]
   }
   targetDemographic?: string
+  format?: string
+  contentIntent?: string
+  treatment?: { character_descriptions?: Array<{ name?: string; role?: string }> }
   /** Previous dimensional scores for hysteresis smoothing (prevents score volatility) */
   previousScores?: {
     overallScore: number
     categories: { name: string; score: number; weight: number }[]
   }
-}
-
-// Calculate Show vs Tell ratio from script content
-function calculateShowVsTellRatio(scenes: any[]): { ratio: number; narrationWords: number; actionWords: number; dialogueWords: number } {
-  let narrationWords = 0
-  let actionWords = 0
-  let dialogueWords = 0
-
-  for (const scene of scenes) {
-    // Count narration words
-    if (scene.narration) {
-      narrationWords += scene.narration.split(/\s+/).filter((w: string) => w.length > 0).length
-    }
-    
-    // Count action words
-    if (scene.action) {
-      actionWords += scene.action.split(/\s+/).filter((w: string) => w.length > 0).length
-    }
-    
-    // Count dialogue words
-    if (scene.dialogue && Array.isArray(scene.dialogue)) {
-      for (const d of scene.dialogue) {
-        if (d.line) {
-          dialogueWords += d.line.split(/\s+/).filter((w: string) => w.length > 0).length
-        }
-      }
-    }
-  }
-
-  const totalWords = narrationWords + actionWords + dialogueWords
-  const ratio = totalWords > 0 ? (narrationWords / totalWords) * 100 : 0
-
-  return { ratio, narrationWords, actionWords, dialogueWords }
 }
 
 export async function POST(req: NextRequest) {
@@ -110,7 +87,15 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions)
     const userId = session?.user?.id
 
-    const { projectId, script, previousScores, targetDemographic }: ScriptReviewRequest = await req.json()
+    const {
+      projectId,
+      script,
+      previousScores,
+      targetDemographic,
+      format,
+      contentIntent,
+      treatment,
+    }: ScriptReviewRequest = await req.json()
 
     if (!projectId || !script) {
       return NextResponse.json(
@@ -134,9 +119,20 @@ export async function POST(req: NextRequest) {
       return scene
     })
 
-    // Pre-calculate Show vs Tell ratio from cleaned scenes
-    const showVsTellMetrics = calculateShowVsTellRatio(cleanedScenes)
-    console.log('[Script Review] Show vs Tell metrics:', showVsTellMetrics)
+    const narrationPolicy = resolveNarrationPolicy({
+      format: format || 'short-film',
+      treatment: treatment ?? {
+        character_descriptions: (script.characters || []).map((c: { name?: string; role?: string }) => ({
+          name: c.name,
+          role: c.role,
+        })),
+      },
+      contentIntent,
+    })
+
+    // Pre-calculate Show vs Tell ratio from cleaned scenes (includes narrator dialogue/beats)
+    const showVsTellMetrics = calculateShowVsTellMetrics(cleanedScenes)
+    console.log('[Script Review] Show vs Tell metrics:', showVsTellMetrics, 'policy:', narrationPolicy.mode)
     
     // Generate deterministic seed from script content for reproducible scoring
     const seedContent = JSON.stringify({ title: script.title, logline: script.logline, sceneCount: script.scenes?.length })
@@ -168,7 +164,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate Audience Resonance review (replaces both director and audience)
-    const audienceResonance = await generateAudienceResonance(script, showVsTellMetrics, contentSeed, previousScores, cleanedScenes, targetDemographic)
+    const audienceResonance = await generateAudienceResonance(
+      script,
+      showVsTellMetrics,
+      contentSeed,
+      previousScores,
+      cleanedScenes,
+      targetDemographic,
+      narrationPolicy
+    )
 
     // =========================================================================
     // CREDIT CHARGE: Deduct credits after successful AI generation
@@ -222,8 +226,10 @@ async function generateAudienceResonance(
   contentSeed: number,
   previousScores?: ScriptReviewRequest['previousScores'],
   cleanedScenes?: any[],
-  targetDemographic?: string
+  targetDemographic?: string,
+  narrationPolicy?: NarrationPolicy
 ): Promise<AudienceResonanceReview> {
+  const policy = narrationPolicy ?? resolveNarrationPolicy({ format: 'short-film' })
   const sceneCount = script.scenes?.length || 0
   const characterCount = script.characters?.length || 0
   
@@ -243,27 +249,21 @@ async function generateAudienceResonance(
     return `Scene ${idx + 1}: ${heading}\nAction: ${action}\n${narration ? `Narration: ${narration}\n` : ''}${dialogueLines ? `Dialogue:\n  ${dialogueLines}${hasMoreDialogue ? '\n  ...' : ''}\n` : ''}`
   }).join('\n---\n') || 'No scenes available'
 
-  // Determine automatic score guidance based on narration ratio (soft caps, not hard limits)
-    // Relaxed caps: narration ratio influences ceiling but doesn't hard-block quality scripts
-    // from reaching 90+ when other dimensions are strong. Deductions still penalize narration.
-    let autoScoreCap = 100
-    let autoCapReason = ''
-    if (showVsTellMetrics.ratio > 40) {
-      autoScoreCap = 82
-      autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>40%). Consider reducing narration.`
-    } else if (showVsTellMetrics.ratio > 30) {
-      autoScoreCap = 92
-      autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>30%). Some narration reduction recommended.`
-    } else if (showVsTellMetrics.ratio > 20) {
-      autoScoreCap = 95
-      autoCapReason = `Narration comprises ${showVsTellMetrics.ratio.toFixed(1)}% of content (>20%). Minor narration adjustment may help.`
-    }
+  const { formatContext } = buildScriptARShowVsTellGuidance(policy)
+  const { autoScoreCap, autoCapReason } = applyShowVsTellAutoCap(
+    showVsTellMetrics.ratio,
+    policy
+  )
 
   const audienceContext = targetDemographic?.trim()
     ? `\nCRITICAL CONTEXT — TARGET AUDIENCE PROFILE:\n${targetDemographic.trim()}\n\nAnalyze this script SPECIFICALLY for the audience described above. Tailor all feedback, strengths, improvements, scene-level recommendations, and scores to how this audience would perceive narrative, pacing, themes, and cultural resonance.`
     : ''
 
   const prompt = `You are an expert screenplay analyst using a DEDUCTION-BASED RUBRIC system. Your job is to provide fair, constructive feedback that helps writers improve their scripts.${audienceContext}
+
+FORMAT / NARRATION CONTEXT:
+${formatContext}
+Narration policy mode: ${policy.mode}${policy.blueprintHasNarrator ? ' (Blueprint defines a Narrator character)' : ''}.
 
 SCORING RULES:
 1. Start at 100 and deduct points for genuine craft issues

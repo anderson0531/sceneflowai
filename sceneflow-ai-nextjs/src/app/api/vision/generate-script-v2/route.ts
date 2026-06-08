@@ -17,6 +17,15 @@ import {
 } from '@/lib/script/beatMigration'
 import { ensureCinematicBookends } from '@/lib/script/cinematicBookends'
 import {
+  buildBeatTimelineNarrationRules,
+  buildNarrationLegacyFieldHint,
+  buildNarrationPromptSection,
+  buildNarrationSchemaExample,
+  enforceNarrationPolicyOnScenes,
+  resolveNarrationPolicy,
+  type NarrationPolicy,
+} from '@/lib/script/narrationPolicy'
+import {
   buildFoundationPromptBlock,
   getArtStylePresetName,
   resolveVariantArtStyle,
@@ -221,6 +230,13 @@ export async function POST(request: NextRequest) {
         })}\n\n`))
 
         console.log(`[Script Gen V2] Starting single-pass generation for ${duration}s film with ${beatCount} story beats...`)
+
+        const narrationPolicy = resolveNarrationPolicy({
+          format: projectFormat,
+          treatment,
+          contentIntent,
+        })
+        console.log(`[Script Gen V2] Narration policy: mode=${narrationPolicy.mode}, allowPerScene=${narrationPolicy.allowPerSceneNarration}`)
         
         // Build the single-pass prompt
         const singlePassPrompt = buildSinglePassPrompt(
@@ -231,7 +247,8 @@ export async function POST(request: NextRequest) {
           maxSafetyScenes, 
           subscriptionMaxScenes,
           projectFormat,
-          contentIntent
+          contentIntent,
+          narrationPolicy
         )
         
         let retryCount = 0
@@ -328,6 +345,8 @@ export async function POST(request: NextRequest) {
                   injectedOutro: bookendsResult.injectedOutro,
                 })
               }
+
+              allScenes = enforceNarrationPolicyOnScenes(allScenes, narrationPolicy)
               
               // Validate against subscription limit
               if (subscriptionMaxScenes && allScenes.length > subscriptionMaxScenes) {
@@ -376,7 +395,9 @@ export async function POST(request: NextRequest) {
         }
     
         // Process characters and embed IDs (existing logic)
-        const dialogueChars = extractCharacters(allScenes)
+        const includeNarratorChars =
+          narrationPolicy.allowNarration || narrationPolicy.blueprintHasNarrator
+        const dialogueChars = extractCharacters(allScenes, includeNarratorChars)
         const existingCharNamesNormalized = existingCharacters.map((c: any) => 
           normalizeCharacterName(c.name || '')
         )
@@ -781,16 +802,7 @@ CRITICAL SCENE REQUIREMENTS:
 - If a story beat naturally spans multiple locations, that's multiple scenes
 - If characters are in the same place having one conversation, that's ONE scene
 
-NARRATION REQUIREMENTS (CRITICAL):
-- Each scene MUST include a "narration" field with captivating voiceover narration (1-2 sentences)
-- Use vivid, evocative language that engages the audience emotionally
-- Focus on: internal thoughts/emotions, thematic significance, foreshadowing, poetic atmosphere
-- DO NOT: repeat action description, use technical camera language, state obvious visuals, be generic
-- Examples:
-  ✓ GOOD: "In the dim glow of his monitor, Brian races against time. Each keystroke brings him closer to his dream—or his breaking point."
-  ✓ GOOD: "She had learned that silence could be louder than words, and tonight, it was deafening."
-  ✗ BAD: "Brian types on his computer." (Too literal)
-  ✗ BAD: "The scene takes place in an office." (States the obvious)
+NARRATION: Follow format-appropriate narration policy — visual-first formats use empty "narration" on main content scenes.
 
 SCRIPT FORMAT REQUIREMENTS (CRITICAL):
 - Include sound effects naturally in action description using SOUND OF, HEAR, etc.
@@ -934,10 +946,7 @@ Return JSON array:
   }
 ]
 
-NARRATION REQUIREMENTS (CRITICAL):
-- MUST include captivating "narration" field in EVERY scene (1-2 sentences)
-- Write engaging, emotionally resonant voiceover narration
-- Focus on storytelling, not technical description
+NARRATION: Follow format-appropriate narration policy — do not force voiceover on visual-first formats.
 
 SCRIPT FORMAT REQUIREMENTS (CRITICAL):
 - Include sound effects naturally in action using SOUND OF, HEAR, etc.
@@ -979,11 +988,17 @@ function buildSinglePassPrompt(
   maxSafetyScenes: number,
   subscriptionMaxScenes: number | null,
   format: string = 'narrative',
-  contentIntent?: string
+  contentIntent?: string,
+  narrationPolicy?: NarrationPolicy
 ): string {
   const intent = contentIntent || resolveContentIntentFromMetadata({ format, genre: treatment.genre })
+  const policy = narrationPolicy ?? resolveNarrationPolicy({ format, treatment, contentIntent })
   const scriptSettings = getSettingsForFormat(format)
   const constraintBlock = buildScriptConstraintPrompt(scriptSettings)
+  const narrationSection = buildNarrationPromptSection(policy)
+  const narrationSchemaLine = buildNarrationSchemaExample(policy)
+  const narrationLegacyHint = buildNarrationLegacyFieldHint(policy)
+  const beatTimelineNarrationRules = buildBeatTimelineNarrationRules(policy)
 
   // Dynamically set persona based on format/intent
   let persona = 'You are a master screenwriter. Write a complete, production-ready script'
@@ -1105,9 +1120,10 @@ TECHNICAL REQUIREMENTS:
 • CHARACTER NAMES: Copy-paste EXACTLY from the whitelist above - no variations!
   ✓ Correct: "Dr. Ben Anderson" (if that's the listed name)
   ✗ Wrong: "BEN", "Ben", "DR. BEN ANDERSON", "Doctor Ben Anderson"
-• Include "narration" field with captivating voiceover (if applicable to format)
 • Include "sfx" and "music" for atmosphere
 • Estimate realistic durations based on content
+
+${narrationSection}
 
 OUTPUT FORMAT (JSON):
 {
@@ -1133,10 +1149,10 @@ OUTPUT FORMAT (JSON):
       ${sceneHeadingExample},
       "characters": ["Character Name 1", "Character Name 2"],
       "action": "Summary scene action (legacy field — also reflected in action beats)",
-      "narration": "Optional legacy narration summary",
+      ${narrationLegacyHint}
       "beats": [
         {"kind": "action", "actionDescription": "Wide establishing shot of the location, golden hour light..."},
-        {"kind": "narration", "character": "NARRATOR", "line": "[calm, measured] Voiceover opening..."},
+        ${narrationSchemaLine}
         {"kind": "action", "actionDescription": "Close-up: character's hands on the desk, shallow depth of field..."},
         {"kind": "dialogue", "character": "Character Name", "line": "[emotion] Dialogue..."},
         {"kind": "action", "actionDescription": "Reaction shot: character turns toward window, concern on face..."},
@@ -1178,7 +1194,7 @@ CINEMATIC BOOKENDS (MANDATORY):
 • Bookend scenes do NOT count toward the ${sceneLimit} main content segment limit
 
 BEAT TIMELINE (CRITICAL — PRIMARY PRODUCTION SOURCE):
-• Each scene MUST include an ordered "beats" array mixing kind: "dialogue", "action", "narration"
+${beatTimelineNarrationRules}
 • Action beats are MANDATORY for visuals without spoken lines: reactions, inserts, B-roll, camera moves, environment changes, blocking without speech
 • NEVER put stage directions in "line" — they belong in actionDescription
 • Rhythm rule: no more than 2 consecutive spoken beats (dialogue or narration) without an intervening action beat
@@ -1186,7 +1202,6 @@ BEAT TIMELINE (CRITICAL — PRIMARY PRODUCTION SOURCE):
 • One beat = one storyboard frame = one video segment — each action beat must be visually distinct from adjacent spoken beats
 • Target ~8–10 seconds per beat for video clip alignment
 • "action" beats use actionDescription only — NO spoken line, NO character field
-• "narration" beats use character "NARRATOR" with spoken line
 • "dialogue" beats must contain SPOKEN words with [emotion] tags — NO stage directions in line
 • beats[] order is the storyboard frame order (one frame per beat)
 • Keep legacy "dialogue" and "action" fields in sync with beats content
@@ -1287,10 +1302,13 @@ function parseSinglePassResponse(response: string): { scenes: any[] } {
     scenes: parsedScenes.map((s: any, idx: number) => ({
       sceneNumber: s.sceneNumber || idx + 1,
       heading: s.heading || `SCENE ${idx + 1}`,
+      cinematicType: s.cinematicType,
       characters: s.characters || [],
       action: s.action || '',
       narration: s.narration || '',
+      beats: Array.isArray(s.beats) ? s.beats : undefined,
       dialogue: Array.isArray(s.dialogue) ? s.dialogue : [],
+      creditLines: Array.isArray(s.creditLines) ? s.creditLines : undefined,
       visualDescription: s.visualDescription || s.action || '',
       duration: Math.max(45, s.duration || 60), // Enforce minimum 45s
       sfx: Array.isArray(s.sfx) ? s.sfx : [],
@@ -2040,7 +2058,7 @@ function normalizeCharacterName(name: string): string {
   return toCanonicalName(name).toUpperCase()
 }
 
-function extractCharacters(scenes: any[]): any[] {
+function extractCharacters(scenes: any[], includeNarrator = true): any[] {
   const charMap = new Map()
   scenes.forEach((scene: any) => {
     scene.dialogue?.forEach((d: any) => {
@@ -2054,6 +2072,8 @@ function extractCharacters(scenes: any[]): any[] {
         const cleanName = d.character.replace(/\s*\([^)]*\)\s*/g, '').trim()
         
         const isNarrator = cleanName.toUpperCase().includes('NARRATOR')
+        if (isNarrator && !includeNarrator) return
+
         const dialogueSample = d.line ? d.line.substring(0, 100) + (d.line.length > 100 ? '...' : '') : ''
         
         charMap.set(normalizedName, {

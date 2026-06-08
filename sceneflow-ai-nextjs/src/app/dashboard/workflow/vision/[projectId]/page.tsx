@@ -5253,12 +5253,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           categories: currentAudienceReview.categories || []
         } : undefined
         
+        const filmTreatment = project?.metadata?.filmTreatmentVariant
         const response = await fetch('/api/vision/review-script', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             projectId,
             targetDemographic,
+            format:
+              project?.metadata?.format ||
+              filmTreatment?.format ||
+              'short-film',
+            contentIntent: project?.metadata?.contentIntent,
+            treatment: filmTreatment
+              ? {
+                  character_descriptions:
+                    filmTreatment.character_descriptions || characters,
+                }
+              : undefined,
             script: {
               title: currentScript.title,
               logline: currentScript.logline,
