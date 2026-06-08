@@ -1,19 +1,13 @@
 /**
- * Landing page sample project — collaboration demos (Blueprint, Storyboard, Screening Room).
- * Set share tokens/slugs when demo assets are ready; empty values show placeholders.
+ * Landing page sample project — interactive pre-vis demo on the Platform Walkthrough section.
+ * Set storyboardShareSlug when demo assets are ready; empty value shows placeholder UI.
  *
- * Blueprint setup (one-time):
- * 1. Open the demo project in Studio → Blueprint phase
- * 2. Create an active Blueprint share link
- * 3. Copy token from /blueprint/share/{token} and set blueprintShareToken below
+ * Pre-vis setup (one-time):
+ * 1. Open the demo project in Production and publish a public storyboard share link
+ * 2. Copy the slug from /{slug} and set storyboardShareSlug below
  *
- * Premiere Screening Room setup (one-time):
- * 1. Open the demo project in Premiere → publish a public Express animatic screening
- *    (use animaticVideoUrl below as the video source when creating the screening)
- * 2. Copy the premiere-* id from the share URL (/s/premiere-...) and set premiereScreeningId
- *
- * Note: screeningRoomShareSlug is the legacy Vision scene player (/share/screening-room/...).
- * The landing Screening tab uses Premiere AudiencePlayer via premiereScreeningId.
+ * Optional legacy fields (blueprintShareToken, premiereScreeningId) remain for dashboard
+ * setup or future landing sections — not used by the current landing pre-vis panel.
  */
 export const LANDING_SAMPLE = {
   projectTitle: 'The White House Waltz: A Controlled Thaw',
