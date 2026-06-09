@@ -17,7 +17,7 @@ import { getLanguageName, FLAG_EMOJIS } from '@/constants/languages'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { getArtStylePresetName } from '@/lib/treatment/blueprintFoundation'
 import { countStoryboardFramesNeedingGeneration, countStoryboardFrameStats } from '@/lib/storyboard/types'
-import { isTitleOrCinematicScene } from '@/lib/intelligence/beat-sequence-planner'
+import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 
 export interface ExpressConfirmOptions {
   includeMusic: boolean

@@ -3,7 +3,10 @@
  * prompts for every beat before parallel image generation.
  */
 
+import 'server-only'
+
 import { generateText, type TextGenerationOptions } from '@/lib/vertexai/gemini'
+import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import {
   detectSceneType,
   extractDirectionMetadata,
@@ -511,17 +514,7 @@ export function applyBeatKeyframePlansToScene(
   return { ...scene, beats }
 }
 
-/** Detect title/cinematic scenes that benefit from auto-generated score. */
-export function isTitleOrCinematicScene(scene: Record<string, unknown>): boolean {
-  if (scene.cinematicType === 'title' || scene.cinematicType === 'outro') return true
-  const heading = String(scene.heading ?? '').toLowerCase()
-  return (
-    heading.includes('title sequence') ||
-    heading.includes('title card') ||
-    heading.includes('opening title') ||
-    heading.includes('main title')
-  )
-}
+export { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 
 /** Ensure scene.music.description exists from direction audio cues. */
 export function ensureSceneMusicFromDirection(
