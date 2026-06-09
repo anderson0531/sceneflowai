@@ -34,6 +34,7 @@ import { generateSceneImage } from './generateImage'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
 import { getSceneBeats, applyBeatsToScene } from '../script/beatMigration'
 import { countStoryboardFramesNeedingGeneration } from '../storyboard/types'
+import { stampPreVisContentHash } from '../storyboard/preVisSync'
 import type { SceneBeat } from '../script/segmentTypes'
 import {
   planBeatSequence,
@@ -779,6 +780,7 @@ async function runImagePhase(
     if (hadFailure) {
       return { ok: false, skipped: false, imageUrl: lastImageUrl, error: lastError }
     }
+    Object.assign(scene, stampPreVisContentHash(scene))
     return { ok: true, skipped: false, imageUrl: lastImageUrl }
   } catch (err: any) {
     const error = err?.message || String(err)

@@ -27,6 +27,7 @@ import {
   removeStaleAudioUrlFromScene,
 } from '@/lib/audio/cleanupAudio'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
+import { stampPreVisContentHash, syncPreVisToScript } from '@/lib/storyboard/preVisSync'
 import { getBatchNarrationTtsText } from '@/lib/script/narration'
 import {
   applyBeatsToScene,
@@ -8462,7 +8463,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Update scene with image and workflow sync hashes
       const updatedScenes = [...(script.script.scenes || [])]
-      updatedScenes[sceneIdx] = {
+      updatedScenes[sceneIdx] = stampPreVisContentHash({
         ...applyEstablishingImageToScene(
           updatedScenes[sceneIdx],
           data.imageUrl,
@@ -8470,7 +8471,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         ),
         basedOnDirectionHash: data.basedOnDirectionHash,
         basedOnReferencesHash: data.basedOnReferencesHash,
-      }
+      })
       
       // Update local state
       setScript({
@@ -8579,11 +8580,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       const updatedScenes = [...(script.script.scenes || [])]
-      updatedScenes[sceneIdx] = applyBeatStoryboardImageToScene(
-        updatedScenes[sceneIdx],
-        beatIdx,
-        data.imageUrl,
-        { imagePrompt: data.prompt || '' }
+      updatedScenes[sceneIdx] = stampPreVisContentHash(
+        applyBeatStoryboardImageToScene(
+          updatedScenes[sceneIdx],
+          beatIdx,
+          data.imageUrl,
+          { imagePrompt: data.prompt || '' }
+        )
       )
 
       setScript({
@@ -10862,6 +10865,40 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [projectId, script, isExpressRunning, setShowSceneGallery, imageQuality]
   )
 
+  const handleSyncPreVisToScript = useCallback(
+    async (sceneIndex: number) => {
+      const scenes = script?.script?.scenes
+      if (!scenes?.[sceneIndex]) return
+
+      const { scene: synced, promptsUpdated } = syncPreVisToScript(scenes[sceneIndex], {
+        sceneNumber: sceneIndex + 1,
+        totalScenes: scenes.length,
+        filmTitle: project?.title,
+        artStyle: lockedArtStyle,
+      })
+
+      const updatedScenes = [...scenes]
+      updatedScenes[sceneIndex] = synced
+
+      setScript({
+        ...script,
+        script: { ...script.script, scenes: updatedScenes },
+      })
+      setScriptEditedAt(Date.now())
+
+      const saved = await persistVisionScriptScenes(updatedScenes, 'handleSyncPreVisToScript')
+      if (!saved) {
+        toast.error('Failed to save pre-vis sync')
+        return
+      }
+
+      toast.success(
+        `Updated ${promptsUpdated} frame prompt${promptsUpdated === 1 ? '' : 's'}. Run Express to regenerate images and audio.`
+      )
+    },
+    [script, project?.title, lockedArtStyle, persistVisionScriptScenes]
+  )
+
   /**
    * Per-scene Scene Express (mode=scene): fail-fast preflight, parallel audio+images,
    * per-scene checkpoint persist. Target <60s for a typical scene.
@@ -12099,6 +12136,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   onJumpToBookmark={handleJumpToBookmark}
                   onMarkWorkflowComplete={handleMarkWorkflowComplete}
                   onDismissStaleWarning={handleDismissStaleWarning}
+                  onSyncPreVisToScript={handleSyncPreVisToScript}
                 sceneReferences={sceneReferences}
                 objectReferences={objectReferences}
                 locationReferences={locationReferences}
@@ -12154,6 +12192,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onSaveEditedBeatFrame={handleSaveEditedBeatFrame}
                             onSaveEditedDialogueFrame={handleSaveEditedDialogueFrame}
                             onExpressSceneGenerate={handleExpressSceneGenerate}
+                            onSyncPreVisToScript={handleSyncPreVisToScript}
                             narrationVoice={narrationVoice}
                             productionReadyChecklist={productionReadyChecklist}
                             onOpenReferences={() => setRightSidebarVisible(true)}

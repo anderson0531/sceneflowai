@@ -2,28 +2,23 @@
  * Preserve storyboard image fields when merging stale/partial scene snapshots.
  */
 
-const STORYBOARD_IMAGE_FIELD_KEYS = [
+const DIALOGUE_STORYBOARD_URL_KEYS = ['storyboardImageUrl', 'storyboardImageGcsPath'] as const
+const DIALOGUE_STORYBOARD_PROMPT_KEYS = ['storyboardImagePrompt'] as const
+
+const BEAT_STORYBOARD_URL_KEYS = ['storyboardImageUrl', 'storyboardImageGcsPath'] as const
+const BEAT_STORYBOARD_PROMPT_KEYS = ['storyboardImagePrompt'] as const
+
+const SCENE_IMAGE_URL_KEYS = [
   'imageUrl',
   'imageGcsPath',
-  'imagePrompt',
   'imageGeneratedAt',
   'imageSource',
   'sceneReferenceImageUrl',
 ] as const
+const SCENE_IMAGE_PROMPT_KEYS = ['imagePrompt'] as const
 
-const DIALOGUE_STORYBOARD_KEYS = [
-  'storyboardImageUrl',
-  'storyboardImageGcsPath',
-  'storyboardImagePrompt',
-] as const
-
-const BEAT_STORYBOARD_KEYS = [
-  'storyboardImageUrl',
-  'storyboardImageGcsPath',
-  'storyboardImagePrompt',
-] as const
-
-const CUSTOM_FRAME_IMAGE_KEYS = ['imageUrl', 'imageGcsPath', 'imagePrompt'] as const
+const CUSTOM_FRAME_URL_KEYS = ['imageUrl', 'imageGcsPath'] as const
+const CUSTOM_FRAME_PROMPT_KEYS = ['imagePrompt'] as const
 
 /** True when a media URL is usable (not empty, not lite-mode placeholder). */
 export function isValidStoryboardMediaUrl(value: unknown): value is string {
@@ -52,16 +47,43 @@ function pickMediaUrl(incoming: unknown, canonical: unknown): string | undefined
   return undefined
 }
 
+function pickPromptText(incoming: unknown, canonical: unknown): string | undefined {
+  const inc = typeof incoming === 'string' && incoming.trim() ? incoming.trim() : undefined
+  const can = typeof canonical === 'string' && canonical.trim() ? canonical.trim() : undefined
+  return inc ?? can
+}
+
+function mergeMediaFields(
+  merged: Record<string, unknown>,
+  incoming: Record<string, unknown>,
+  canonical: Record<string, unknown>,
+  urlKeys: readonly string[],
+  promptKeys: readonly string[]
+): void {
+  for (const key of urlKeys) {
+    const next = pickMediaUrl(incoming[key], canonical[key])
+    if (next) merged[key] = next
+    else delete merged[key]
+  }
+  for (const key of promptKeys) {
+    const next = pickPromptText(incoming[key], canonical[key])
+    if (next) merged[key] = next
+    else delete merged[key]
+  }
+}
+
 function mergeDialogueLineMedia(canonLine: any, incomingLine: any): any {
   if (!incomingLine) return canonLine
   if (!canonLine) return incomingLine
 
   const merged = { ...incomingLine }
-  for (const key of DIALOGUE_STORYBOARD_KEYS) {
-    const next = pickMediaUrl(incomingLine[key], canonLine[key])
-    if (next) merged[key] = next
-    else delete merged[key]
-  }
+  mergeMediaFields(
+    merged,
+    incomingLine,
+    canonLine,
+    DIALOGUE_STORYBOARD_URL_KEYS,
+    DIALOGUE_STORYBOARD_PROMPT_KEYS
+  )
   return merged
 }
 
@@ -70,11 +92,13 @@ function mergeBeatMedia(canonBeat: any, incomingBeat: any): any {
   if (!canonBeat) return incomingBeat
 
   const merged = { ...incomingBeat }
-  for (const key of BEAT_STORYBOARD_KEYS) {
-    const next = pickMediaUrl(incomingBeat[key], canonBeat[key])
-    if (next) merged[key] = next
-    else delete merged[key]
-  }
+  mergeMediaFields(
+    merged,
+    incomingBeat,
+    canonBeat,
+    BEAT_STORYBOARD_URL_KEYS,
+    BEAT_STORYBOARD_PROMPT_KEYS
+  )
   return merged
 }
 
@@ -116,11 +140,13 @@ function mergeStoryboardFrames(canonFrames: any[] | undefined, incomingFrames: a
     if (!canonFrame) return incomingFrame
 
     const merged = { ...incomingFrame }
-    for (const key of CUSTOM_FRAME_IMAGE_KEYS) {
-      const next = pickMediaUrl(incomingFrame[key], canonFrame[key])
-      if (next) merged[key] = next
-      else delete merged[key]
-    }
+    mergeMediaFields(
+      merged,
+      incomingFrame,
+      canonFrame,
+      CUSTOM_FRAME_URL_KEYS,
+      CUSTOM_FRAME_PROMPT_KEYS
+    )
     return merged
   })
 }
@@ -270,11 +296,13 @@ export function mergeScenePreservingMedia(canonical: any, incoming: any): any {
 
   const merged: any = { ...incoming }
 
-  for (const key of STORYBOARD_IMAGE_FIELD_KEYS) {
-    const next = pickMediaUrl(incoming[key], canonical[key])
-    if (next) merged[key] = next
-    else delete merged[key]
-  }
+  mergeMediaFields(
+    merged,
+    incoming,
+    canonical,
+    SCENE_IMAGE_URL_KEYS,
+    SCENE_IMAGE_PROMPT_KEYS
+  )
 
   if (Array.isArray(incoming.dialogue)) {
     const canonDialogue = Array.isArray(canonical.dialogue) ? canonical.dialogue : []

@@ -851,6 +851,82 @@ export function applyBeatStoryboardImageToScene(
   return updated
 }
 
+/** Stable fingerprint of beat script text for pre-vis invalidation. */
+export function beatContentFingerprint(beat: SceneBeat): string {
+  if (beat.kind === 'action') {
+    return (beat.actionDescription ?? '').trim()
+  }
+  const character = (beat.character ?? '').trim().toUpperCase()
+  const line = (beat.line ?? '').trim()
+  return `${beat.kind}|${character}|${line}`
+}
+
+function beatMatchKey(beat: SceneBeat, index: number): string {
+  const character = (beat.character ?? '').trim().toUpperCase()
+  return `${index}|${beat.kind}|${character}`
+}
+
+export interface ReconcileBeatsResult {
+  beats: SceneBeat[]
+  /** Fingerprints before reconciliation keyed by beatId. */
+  priorFingerprints: Map<string, string>
+  /** Fingerprints after reconciliation keyed by beatId. */
+  newFingerprints: Map<string, string>
+}
+
+/**
+ * Reconcile existing beats with current script fields (heading, action, dialogue).
+ * Preserves beatIds and storyboard media when beat text is unchanged.
+ */
+export function reconcileBeatsWithScriptContent(
+  scene: Record<string, unknown>
+): ReconcileBeatsResult {
+  const existing = getSceneBeats(scene)
+  const derived = deriveBeatsFromSceneContent(scene)
+
+  const priorFingerprints = new Map<string, string>()
+  for (const beat of existing) {
+    priorFingerprints.set(beat.beatId, beatContentFingerprint(beat))
+  }
+
+  const existingByKey = new Map<string, SceneBeat>()
+  existing.forEach((beat, index) => {
+    existingByKey.set(beatMatchKey(beat, index), beat)
+  })
+
+  const reconciled: SceneBeat[] = derived.map((derivedBeat, index) => {
+    const key = beatMatchKey(derivedBeat, index)
+    const match = existingByKey.get(key)
+
+    if (match) {
+      return {
+        ...match,
+        sequenceIndex: index,
+        kind: derivedBeat.kind,
+        actionDescription: derivedBeat.actionDescription,
+        character: derivedBeat.character,
+        characterId: derivedBeat.characterId ?? match.characterId,
+        line: derivedBeat.line,
+        lineId: derivedBeat.lineId ?? match.lineId,
+      }
+    }
+
+    return {
+      ...derivedBeat,
+      beatId: mintBeatId(),
+      sequenceIndex: index,
+    }
+  })
+
+  const normalized = normalizeBeatsForProduction(reconciled)
+  const newFingerprints = new Map<string, string>()
+  for (const beat of normalized) {
+    newFingerprints.set(beat.beatId, beatContentFingerprint(beat))
+  }
+
+  return { beats: normalized, priorFingerprints, newFingerprints }
+}
+
 export function getSceneBeats(scene: Record<string, unknown> | null | undefined): SceneBeat[] {
   if (!scene) return []
   const beats =

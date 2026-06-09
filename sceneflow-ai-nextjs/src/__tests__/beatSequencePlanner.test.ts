@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildFallbackBeatPlans,
-  inferBeatRole,
   ensureSceneMusicFromDirection,
-  isTitleOrCinematicScene,
-} from '@/lib/intelligence/beat-sequence-planner'
+  inferBeatRole,
+} from '@/lib/intelligence/beat-sequence-planner-fallback'
+import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import { buildSceneImageCacheKey } from '@/lib/intelligence/scene-image-intelligence'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import { mintBeatId } from '@/lib/script/beatMigration'

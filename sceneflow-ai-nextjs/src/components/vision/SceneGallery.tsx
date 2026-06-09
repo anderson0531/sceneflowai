@@ -49,6 +49,7 @@ import {
   sceneHasPlayablePreVisAudio,
 } from '@/lib/storyboard/types'
 import { runSceneExpressPreflight } from '@/lib/sceneGeneration/sceneExpressPreflight'
+import { isPreVisStale } from '@/lib/storyboard/preVisSync'
 import { ProductionReadyBanner } from './production/ProductionReadyBanner'
 import type { ProductionReadyChecklist } from '@/lib/production/productionReadinessGate'
 
@@ -140,6 +141,8 @@ interface SceneGalleryProps {
   onExpressGenerate?: (options: ExpressConfirmOptions) => Promise<void> | void
   /** Per-scene fast Express (mode=scene). */
   onExpressSceneGenerate?: (sceneIndex: number, language: string) => Promise<void> | void
+  /** Sync pre-vis frame prompts to current script before regenerating. */
+  onSyncPreVisToScript?: (sceneIndex: number) => Promise<void> | void
   narrationVoice?: unknown
   productionReadyChecklist?: ProductionReadyChecklist
   /** Whether an Express run is currently in flight. */
@@ -202,6 +205,7 @@ export function SceneGallery({
   onUpdateSceneAudio,
   onExpressGenerate,
   onExpressSceneGenerate,
+  onSyncPreVisToScript,
   narrationVoice,
   productionReadyChecklist,
   isExpressRunning = false,
@@ -928,6 +932,9 @@ export function SceneGallery({
                       ? () => onExpressSceneGenerate(idx, selectedLanguage)
                       : undefined
                   }
+                  onSyncPreVisToScript={
+                    onSyncPreVisToScript ? () => onSyncPreVisToScript(idx) : undefined
+                  }
                   selectedLanguage={selectedLanguage}
                   narrationVoice={narrationVoice}
                   onExpressGateBlocked={handleExpressGateBlocked}
@@ -1137,6 +1144,7 @@ interface SceneCardProps {
     dialogueIndex?: number
   }) => void
   onExpressSceneGenerate?: () => void
+  onSyncPreVisToScript?: () => void | Promise<void>
   onExpressGateBlocked?: () => void
   expressGateBlocked?: boolean
   selectedLanguage?: string
@@ -1246,6 +1254,7 @@ function SceneCard({
   onUploadBeatFrame,
   onEditFrame,
   onExpressSceneGenerate,
+  onSyncPreVisToScript,
   onExpressGateBlocked,
   expressGateBlocked = false,
   selectedLanguage = 'en',
@@ -1322,6 +1331,8 @@ function SceneCard({
       isReady: sceneCharacters.length === 0 || charsWithRef.length === sceneCharacters.length,
     }
   }, [scene, characters, objectReferences])
+
+  const preVisStale = useMemo(() => isPreVisStale(scene), [scene])
 
   const sceneExpressPreflight = useMemo(
     () =>
@@ -1606,6 +1617,29 @@ function SceneCard({
                     {frameStats.missing > 0 ? ` · ${frameStats.missing} missing` : ''}
                     {frameStats.placeholders > 0 ? ` · ${frameStats.placeholders} placeholder` : ''}
                   </span>
+                  {preVisStale && onSyncPreVisToScript && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2 text-[10px] border-amber-500/50 text-amber-300 hover:bg-amber-500/15 disabled:opacity-50"
+                          disabled={isExpressRunning}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            void onSyncPreVisToScript()
+                          }}
+                        >
+                          <RefreshCw className="w-3 h-3 mr-0.5" />
+                          Update Frames
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        Script changed since last pre-vis — refresh prompts and enable regeneration
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                   {onExpressSceneGenerate && (
                     <Tooltip>
                       <TooltipTrigger asChild>

@@ -25,30 +25,14 @@ import type { BeatKind } from '@/lib/script/segmentTypes'
 // Types
 // =============================================================================
 
-export type SceneType = 'title' | 'establishing' | 'narrative' | 'montage' | 'outro' | 'credits'
+export type {
+  SceneType,
+  FilmContext,
+  SceneDirectionMetadata,
+} from '@/lib/intelligence/scene-direction-metadata'
+export { detectSceneType, extractDirectionMetadata } from '@/lib/intelligence/scene-direction-metadata'
 
-export interface FilmContext {
-  title?: string
-  logline?: string
-  genre?: string[]
-  tone?: string
-  visualStyle?: string
-}
-
-export interface SceneDirectionMetadata {
-  /** Extracted from scene direction - lighting mood, color temp, time of day */
-  lightingMood?: string
-  colorTemperature?: string
-  timeOfDay?: string
-  /** Framing hints extracted from camera direction */
-  framingHint?: string // e.g., 'close-up', 'wide shot', 'two-shot', 'over-the-shoulder'
-  /** Atmosphere / set dressing */
-  atmosphere?: string
-  /** Key props from scene direction */
-  keyProps?: string[]
-  /** Location description from scene direction */
-  locationDescription?: string
-}
+import type { FilmContext, SceneDirectionMetadata, SceneType } from '@/lib/intelligence/scene-direction-metadata'
 
 export interface CharacterContext {
   name: string
@@ -184,113 +168,6 @@ function setCachedResult(key: string, result: SceneImageIntelligenceResult): voi
     if (oldestKey) promptCache.delete(oldestKey)
   }
   promptCache.set(key, { result, timestamp: Date.now() })
-}
-
-// =============================================================================
-// Scene Type Detection
-// =============================================================================
-
-/**
- * Detect the scene type from the heading and action text.
- * This determines how the prompt should be composed.
- */
-export function detectSceneType(heading: string, action: string, sceneNumber: number, totalScenes?: number): SceneType {
-  const headingLower = (heading || '').toLowerCase()
-  const actionLower = (action || '').toLowerCase()
-  
-  // Title sequence detection
-  if (
-    headingLower.includes('title sequence') ||
-    headingLower.includes('title card') ||
-    headingLower.includes('opening title') ||
-    headingLower.includes('main title') ||
-    /\btitle\b/.test(headingLower) && sceneNumber <= 2
-  ) {
-    return 'title'
-  }
-  
-  // Credits / outro detection
-  if (
-    headingLower.includes('credits') ||
-    headingLower.includes('end title') ||
-    headingLower.includes('outro') ||
-    (totalScenes && sceneNumber === totalScenes && /\b(credits?|end|final)\b/.test(headingLower))
-  ) {
-    return 'credits'
-  }
-  
-  // Establishing shot detection
-  if (
-    headingLower.includes('establishing') ||
-    (headingLower.startsWith('ext.') && actionLower.length < 100 && !actionLower.includes('dialogue'))
-  ) {
-    return 'establishing'
-  }
-  
-  // Montage detection
-  if (
-    headingLower.includes('montage') ||
-    actionLower.includes('montage') ||
-    actionLower.includes('series of shots')
-  ) {
-    return 'montage'
-  }
-  
-  return 'narrative'
-}
-
-// =============================================================================
-// Scene Direction Metadata Extraction
-// =============================================================================
-
-/**
- * Extract useful visual cues from scene direction data.
- * Instead of stripping everything, we preserve information that helps
- * compose a better still image (lighting, framing, mood).
- */
-export function extractDirectionMetadata(sceneDirection: any): SceneDirectionMetadata {
-  if (!sceneDirection) return {}
-  
-  const metadata: SceneDirectionMetadata = {}
-  
-  // Extract lighting mood
-  if (sceneDirection.lighting) {
-    const lighting = sceneDirection.lighting
-    metadata.lightingMood = lighting.overallMood || undefined
-    metadata.colorTemperature = lighting.colorTemperature || undefined
-    metadata.timeOfDay = lighting.timeOfDay || undefined
-  }
-  
-  // Extract framing hint from camera direction
-  if (sceneDirection.camera) {
-    const camera = sceneDirection.camera
-    // Convert camera shots to a still-image framing hint
-    const shots = camera.shots || []
-    const shotsLower = shots.map((s: string) => s.toLowerCase()).join(' ')
-    
-    if (shotsLower.includes('close-up') || shotsLower.includes('closeup') || shotsLower.includes('close up')) {
-      metadata.framingHint = 'close-up'
-    } else if (shotsLower.includes('medium close') || shotsLower.includes('mcu')) {
-      metadata.framingHint = 'medium close-up'
-    } else if (shotsLower.includes('wide shot') || shotsLower.includes('wide angle') || shotsLower.includes('establishing')) {
-      metadata.framingHint = 'wide shot'
-    } else if (shotsLower.includes('two-shot') || shotsLower.includes('two shot')) {
-      metadata.framingHint = 'two-shot'
-    } else if (shotsLower.includes('over-the-shoulder') || shotsLower.includes('ots')) {
-      metadata.framingHint = 'over-the-shoulder'
-    } else if (shotsLower.includes('medium shot') || shotsLower.includes('medium')) {
-      metadata.framingHint = 'medium shot'
-    }
-  }
-  
-  // Extract atmosphere from scene direction
-  if (sceneDirection.scene) {
-    metadata.atmosphere = sceneDirection.scene.atmosphere || undefined
-    metadata.keyProps = sceneDirection.scene.keyProps || undefined
-    metadata.locationDescription = sceneDirection.scene.location || undefined
-  }
-  
-  return metadata
 }
 
 // =============================================================================

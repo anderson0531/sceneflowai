@@ -75,6 +75,7 @@ import { StoryboardReviewPanel } from './StoryboardReviewPanel'
 import { getSceneBeats, isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
 import { ExportDialog } from './ExportDialog'
 import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
+import { isPreVisStale } from '@/lib/storyboard/preVisSync'
 import { getKenBurnsConfig, generateKenBurnsKeyframes, type KenBurnsIntensity } from '@/lib/animation/kenBurns'
 import { SceneDirectionProvider } from '@/contexts/SceneDirectionContext'
 import { GenerateAudioDialog } from './GenerateAudioDialog'
@@ -323,6 +324,8 @@ interface ScriptPanelProps {
   // Workflow completion overrides
   onMarkWorkflowComplete?: (sceneIdx: number, stepKey: string, isComplete: boolean) => void
   onDismissStaleWarning?: (sceneIdx: number, stepKey: string) => void
+  /** Sync pre-vis frame prompts to current script before regenerating. */
+  onSyncPreVisToScript?: (sceneIdx: number) => void | Promise<void>
   // Reference Library - scene backdrops and props/objects for Opening Frame builder
   sceneReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
   objectReferences?: Array<{ id: string; name: string; description?: string; imageUrl?: string }>
@@ -631,7 +634,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null }: ScriptPanelProps) {
 
 
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
@@ -2977,6 +2980,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       }}
                       onMarkWorkflowComplete={onMarkWorkflowComplete}
                       onDismissStaleWarning={onDismissStaleWarning}
+                      onSyncPreVisToScript={onSyncPreVisToScript}
                       onGenerateSegmentFrames={onGenerateSegmentFrames}
                       onEditFrame={onEditFrame}
                       generatingFrameForSegment={generatingFrameForSegment}
@@ -3596,6 +3600,7 @@ interface SceneCardProps {
   // Workflow completion overrides
   onMarkWorkflowComplete?: (sceneIdx: number, stepKey: string, isComplete: boolean) => void
   onDismissStaleWarning?: (sceneIdx: number, stepKey: string) => void
+  onSyncPreVisToScript?: (sceneIdx: number) => void | Promise<void>
   // Keyframe State Machine - Frame step handlers
   onGenerateSegmentFrames?: (sceneId: string, segmentId: string, frameType: 'start' | 'end' | 'both', options?: { customPrompt?: string; negativePrompt?: string; usePreviousEndFrame?: boolean }) => Promise<{ startFrameUrl?: string; endFrameUrl?: string } | void>
   onEditFrame?: (sceneId: string, segmentId: string, frameType: 'start' | 'end', frameUrl: string) => void
@@ -3985,6 +3990,7 @@ function SceneCard({
   onNavigateScene,
   onMarkWorkflowComplete,
   onDismissStaleWarning,
+  onSyncPreVisToScript,
   onSelectTake,
   onDeleteTake,
   onGenerateSegmentFrames,
@@ -4215,7 +4221,8 @@ function SceneCard({
   const stepStaleness = useMemo(() => {
     return {
       directorsChair: isDirectionStale(scene) && !dismissedWarnings.directorsChair,
-      storyboardPreViz: isImageStale(scene) && !dismissedWarnings.storyboardPreViz
+      storyboardPreViz: isImageStale(scene) && !dismissedWarnings.storyboardPreViz,
+      preVisSync: isPreVisStale(scene) && !dismissedWarnings.preVisSync,
     }
   }, [scene, dismissedWarnings])
   
@@ -5269,20 +5276,26 @@ function SceneCard({
                   // Direction is now hidden, so show Direction stale warning on Frame tab too
                   const directionStale = activeWorkflowTab === 'storyboardPreViz' && stepStaleness.directorsChair
                   const imageStale = activeWorkflowTab === 'storyboardPreViz' && stepStaleness.storyboardPreViz
+                  const preVisStale = activeWorkflowTab === 'storyboardPreViz' && stepStaleness.preVisSync
                   
-                  if (!directionStale && !imageStale) return null
+                  if (!directionStale && !imageStale && !preVisStale) return null
                   
-                  // If both are stale, prioritize Direction (regenerate Direction first, then Frame)
-                  const staleStepKey = directionStale ? 'directorsChair' : 'storyboardPreViz'
+                  const staleStepKey = directionStale
+                    ? 'directorsChair'
+                    : preVisStale
+                      ? 'preVisSync'
+                      : 'storyboardPreViz'
                   
                   return (
                     <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
                       <div className="flex items-center gap-2 text-amber-300">
                         <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                         <span className="text-sm font-medium">
-                          {directionStale 
-                            ? 'Script has changed. Direction may be stale — regenerate before creating Frame.' 
-                            : 'Direction has changed. Consider regenerating Frame.'}
+                          {directionStale
+                            ? 'Script has changed. Direction may be stale — regenerate before creating Frame.'
+                            : preVisStale
+                              ? 'Script has changed since pre-vis was generated — update frame prompts before regenerating.'
+                              : 'Direction has changed. Consider regenerating Frame.'}
                         </span>
                         <div className="ml-auto flex items-center gap-2">
                           <button
@@ -5290,13 +5303,19 @@ function SceneCard({
                               e.stopPropagation()
                               if (directionStale && onGenerateSceneDirection) {
                                 onGenerateSceneDirection(sceneIdx)
+                              } else if (preVisStale && onSyncPreVisToScript) {
+                                void onSyncPreVisToScript(sceneIdx)
                               } else if (imageStale && onGenerateImage) {
                                 onGenerateImage(sceneIdx)
                               }
                             }}
                             className="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs rounded border border-amber-500/40 transition-colors"
                           >
-                            {directionStale ? 'Regenerate Direction' : 'Regenerate Frame'}
+                            {directionStale
+                              ? 'Regenerate Direction'
+                              : preVisStale
+                                ? 'Update Pre-vis Frames'
+                                : 'Regenerate Frame'}
                           </button>
                           {onDismissStaleWarning && (
                             <button

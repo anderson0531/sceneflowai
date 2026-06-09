@@ -105,6 +105,11 @@ export function StoryboardReviewPanel({
                   ? beat.actionDescription
                   : beat.line?.replace(/\[[^\]]*\]/g, '').trim()}
               </p>
+              {beat.storyboardImagePrompt?.trim() && (
+                <p className="text-[10px] text-gray-500 line-clamp-2 italic" title={beat.storyboardImagePrompt}>
+                  Prompt: {beat.storyboardImagePrompt}
+                </p>
+              )}
               {onRegenerateBeat && (
                 <button
                   type="button"
