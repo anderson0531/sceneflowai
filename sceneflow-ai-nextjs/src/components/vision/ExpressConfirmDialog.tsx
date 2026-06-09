@@ -17,6 +17,7 @@ import { getLanguageName, FLAG_EMOJIS } from '@/constants/languages'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { getArtStylePresetName } from '@/lib/treatment/blueprintFoundation'
 import { countStoryboardFramesNeedingGeneration, countStoryboardFrameStats } from '@/lib/storyboard/types'
+import { isTitleOrCinematicScene } from '@/lib/intelligence/beat-sequence-planner'
 
 export interface ExpressConfirmOptions {
   includeMusic: boolean
@@ -62,14 +63,19 @@ export function ExpressConfirmDialog({
   const [regenerate, setRegenerate] = useState(false)
   const [artStyle, setArtStyle] = useState(lockedArtStyle || 'photorealistic')
 
+  const hasTitleScene = useMemo(
+    () => scenes.some((scene) => isTitleOrCinematicScene(scene ?? {})),
+    [scenes]
+  )
+
   useEffect(() => {
     if (open) {
-      setIncludeMusic(false)
+      setIncludeMusic(hasTitleScene)
       setIncludeSFX(false)
       setRegenerate(false)
       setArtStyle(lockedArtStyle || 'photorealistic')
     }
-  }, [open, lockedArtStyle])
+  }, [open, lockedArtStyle, hasTitleScene])
 
   const stats = useMemo(() => {
     const total = scenes.length

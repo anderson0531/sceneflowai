@@ -96,6 +96,10 @@ export interface SceneImageIntelligenceRequest {
   sceneType: SceneType
   /** Beat-first frame kind when generating a per-beat storyboard image */
   beatKind?: BeatKind
+  beatIndex?: number
+  totalBeats?: number
+  beatAction?: string
+  beatRole?: string
   /** Structured scene direction metadata (preserved cues) */
   directionMetadata?: SceneDirectionMetadata
   /** Characters in this scene with wardrobe resolved */
@@ -141,18 +145,26 @@ interface CacheEntry {
 const promptCache = new Map<string, CacheEntry>()
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
-function getCacheKey(request: SceneImageIntelligenceRequest): string {
-  // Hash based on scene content + wardrobe selections + art style
+export function buildSceneImageCacheKey(request: SceneImageIntelligenceRequest): string {
   const parts = [
     request.sceneHeading,
-    request.sceneAction.substring(0, 200), // First 200 chars for stability
+    request.sceneAction.substring(0, 200),
     request.sceneNumber,
     request.sceneType,
     request.artStyle || 'photorealistic',
+    request.beatIndex ?? 'na',
+    request.totalBeats ?? 'na',
+    (request.beatAction ?? '').substring(0, 120),
+    request.beatRole ?? 'na',
+    request.beatKind ?? 'na',
     ...request.characters.map(c => `${c.name}:${c.wardrobeDescription || 'default'}`),
     request.referenceImageCount,
   ]
   return parts.join('|')
+}
+
+function getCacheKey(request: SceneImageIntelligenceRequest): string {
+  return buildSceneImageCacheKey(request)
 }
 
 function getCachedResult(key: string): SceneImageIntelligenceResult | null {
@@ -449,17 +461,22 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   // Art style
   prompt += `ART STYLE: ${request.artStyle || 'photorealistic'}\n`
   
-  // Special instructions for title sequences
-  if (request.sceneType === 'title' && request.filmContext?.title) {
-    prompt += `\n⚠️ TITLE SEQUENCE: This is a title card. The film title "${request.filmContext.title}" must be CENTERED and prominently displayed as the main visual element. Genre: ${request.filmContext.genre?.join(', ') || 'drama'}. Design a professional, genre-appropriate title card — NOT a starting frame with the title at the top.\n`
-  }
-  
-  // Special instructions for credits/outro
-  if (request.sceneType === 'credits') {
+  const allowsTitleTypography =
+    request.beatRole === 'title_reveal' ||
+    request.beatRole === 'credit' ||
+    (request.sceneType === 'credits' && request.beatRole !== 'opening')
+
+  if (allowsTitleTypography && request.filmContext?.title) {
+    prompt += `\n⚠️ TITLE/CARD BEAT: Centered typography for "${request.filmContext.title}" is required on this beat only. Design a professional, genre-appropriate title or credit card composition.\n`
+  } else if (request.sceneType === 'credits' && !request.beatRole) {
     prompt += `\n⚠️ CREDITS/OUTRO: Design a professional end credits card with elegant typography and genre-appropriate background.\n`
   }
 
-  if (request.beatKind === 'action') {
+  if (request.beatIndex !== undefined && request.totalBeats) {
+    prompt += `\nBEAT ${request.beatIndex + 1} of ${request.totalBeats}: This frame must differ visually from other beats in the sequence.\n`
+  }
+
+  if (request.beatKind === 'action' && !allowsTitleTypography) {
     prompt += `\n⚠️ SILENT ACTION BEAT: Illustrate a single cinematic still with NO dialogue, NO lip-sync, NO on-screen text. Focus on the visual direction in the scene action — shot composition, subject, motion, and mood.\n`
   }
 

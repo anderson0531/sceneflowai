@@ -40,6 +40,8 @@ export interface SceneBeat {
   voiceDirection?: string
   /** Silent visual beat description. */
   actionDescription?: string
+  /** Sequence role for keyframe planning (opening, title_reveal, etc.). */
+  beatRole?: string
   storyboardImageUrl?: string
   storyboardImagePrompt?: string
   storyboardImageGcsPath?: string

@@ -490,23 +490,31 @@ export function deriveActionBeatsFromDirection(
   const emotionalBeat = String(direction?.talent?.emotionalBeat ?? '').trim()
   const setContext = buildSetContext(direction)
   const lightingCue = buildLightingCue(direction, visualDescription)
+  const sentences = sceneDescription
+    ? sceneDescription.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 8)
+    : []
 
   const beats: SceneBeat[] = []
   for (let i = 0; i < targetBeats; i++) {
-    const shot = pickIndexedItem(shots, i, targetBeats) ?? 'Medium shot'
+    const shot =
+      shots.length >= targetBeats
+        ? shots[i]
+        : pickIndexedItem(shots, i, targetBeats) ?? 'Medium shot'
     const keyAction = pickIndexedItem(keyActions, i, targetBeats)
     const momentParts: string[] = []
     if (keyAction) momentParts.push(keyAction)
     else if (blocking && targetBeats === 1) momentParts.push(blocking)
-    else if (sceneDescription) {
-      const sentences = sceneDescription.split(/(?<=[.!?])\s+/).filter(Boolean)
+    else if (sentences.length >= targetBeats) {
+      momentParts.push(sentences[i])
+    } else if (sceneDescription) {
       momentParts.push(pickIndexedItem(sentences, i, targetBeats) ?? sceneDescription)
     } else if (blocking) momentParts.push(blocking)
     if (emotionalBeat && i === targetBeats - 1) momentParts.push(emotionalBeat)
 
+    const isBookendBeat = i === 0 || i === targetBeats - 1
     const actionParts = [`${shot}: ${momentParts.join(' ').trim() || 'Scene action unfolds'}`]
-    if (setContext) actionParts.push(setContext)
-    if (lightingCue) actionParts.push(lightingCue)
+    if (setContext && isBookendBeat) actionParts.push(setContext)
+    if (lightingCue && isBookendBeat) actionParts.push(lightingCue)
 
     beats.push({
       beatId: mintBeatId(),

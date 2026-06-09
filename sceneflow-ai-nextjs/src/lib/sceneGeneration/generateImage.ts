@@ -35,6 +35,8 @@ export interface GenerateSceneImageParams {
   skipObjectAutoDetection?: boolean
   /** Whether to use Gemini intelligence for prompt generation. */
   useAIPrompt?: boolean
+  /** Allow title typography on this beat frame (title_reveal / credit beats). */
+  allowTypography?: boolean
   /** Storyboard frame type: establishing, dialogue line, beat, or user custom cut. */
   frameType?: 'establishing' | 'dialogue' | 'custom' | 'beat'
   /** Index into scene.dialogue when frameType is 'dialogue'. */
@@ -83,6 +85,7 @@ export async function generateSceneImage(
     characterWardrobes,
     skipObjectAutoDetection,
     useAIPrompt,
+    allowTypography,
     frameType,
     dialogueIndex,
     beatIndex,
@@ -119,6 +122,7 @@ export async function generateSceneImage(
         ? { skipObjectAutoDetection }
         : {}),
       ...(typeof useAIPrompt === 'boolean' ? { useAIPrompt } : {}),
+      ...(typeof allowTypography === 'boolean' ? { allowTypography } : {}),
       ...(frameType ? { frameType } : {}),
       ...(typeof dialogueIndex === 'number' ? { dialogueIndex } : {}),
       ...(typeof beatIndex === 'number' ? { beatIndex } : {}),

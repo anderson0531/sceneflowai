@@ -119,4 +119,25 @@ describe('deriveBeatsFromSceneContent', () => {
     expect(beats[1].actionDescription).toContain('Over-the-Shoulder Insert')
     expect(beats[1].actionDescription).toContain('Clicks mouse rapidly')
   })
+
+  it('deriveActionBeatsFromDirection uses sequential sentences when enough for each beat', () => {
+    const beats = deriveActionBeatsFromDirection(
+      {
+        duration: 40,
+        sceneDirection: {
+          sceneDescription:
+            'Data points swirl in darkness. Biometric markers emerge. Neural pathways ignite. Chaos overwhelms the frame. A title card appears.',
+          camera: {
+            shots: ['Wide', 'ECU', 'Tracking', 'Wide', 'Static'],
+          },
+        },
+      },
+      5
+    )
+    expect(beats).toHaveLength(5)
+    expect(beats[0].actionDescription).toContain('Data points swirl')
+    expect(beats[1].actionDescription).toContain('Biometric markers')
+    expect(beats[2].actionDescription).toContain('Neural pathways')
+    expect(beats[0].actionDescription).not.toBe(beats[1].actionDescription)
+  })
 })

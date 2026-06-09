@@ -79,11 +79,14 @@ async function generateMusicForScene(
     if (!description) return null
 
     const { generateMusicTrackServer } = await import('@/lib/audio/musicClient')
+    const sceneDuration =
+      typeof scene.duration === 'number' && scene.duration > 0 ? scene.duration : 30
+
     const result = await generateMusicTrackServer(
       baseUrl,
       {
         text: description,
-        duration: 30,
+        duration: sceneDuration,
         saveToBlob: true,
         projectId,
         sceneId: `scene-${sceneIdx}`,

@@ -246,6 +246,7 @@ export async function POST(req: NextRequest) {
       locationReferences = [],  // NEW: Location references for environment consistency
       skipObjectAutoDetection = false,  // NEW: Skip auto-detection of objects (for batch mode)
       useAIPrompt = true,  // NEW: Use Gemini intelligence for prompt generation (default: true)
+      allowTypography = false,  // Title/credit beats may render on-screen text
       frameType = 'establishing',  // 'establishing' | 'dialogue' | 'custom' | 'beat'
       dialogueIndex,  // Required when frameType === 'dialogue'
       beatIndex,  // Required when frameType === 'beat'
@@ -625,6 +626,12 @@ export async function POST(req: NextRequest) {
         if (customPrompt && customPrompt.trim()) {
           fullSceneContext = customPrompt
           console.log('[Scene Image] Using custom prompt from ScenePromptBuilder')
+        } else if (isBeatFrame && sceneForSelection) {
+          const beats = getSceneBeats(sceneForSelection as Record<string, unknown>)
+          const beat = beats[beatIndex!]
+          const beatAction = beat?.actionDescription?.trim() || beat?.line?.trim() || ''
+          fullSceneContext = beatAction || scene.action || scene.visualDescription || scene.heading || ''
+          console.log('[Scene Image] Using beat-primary context for beat frame')
         } else if (sceneDirectionText && sceneDirectionText.trim()) {
           fullSceneContext = sceneDirectionText
           console.log('[Scene Image] Using enhanced Scene Direction as base context')
@@ -643,7 +650,7 @@ export async function POST(req: NextRequest) {
           console.log('[Scene Image] Using original script components (action/visualDescription)')
         }
         
-        if (dialogueFrameContext) {
+        if (dialogueFrameContext && !(customPrompt && customPrompt.trim())) {
           fullSceneContext = `${dialogueFrameContext}${fullSceneContext}`
         }
         
@@ -1015,6 +1022,11 @@ export async function POST(req: NextRequest) {
         locationsToPassToAI.filter((l: any) => l.hasReferenceImage).length
       
       // Call Gemini intelligence
+      const beatForIntelligence =
+        isBeatFrame && sceneData
+          ? getSceneBeats(sceneData as Record<string, unknown>)[beatIndex!]
+          : undefined
+
       const aiResult = await generateSceneImagePrompt({
         sceneHeading: sceneData.heading || '',
         sceneAction: fullSceneContext,
@@ -1023,6 +1035,10 @@ export async function POST(req: NextRequest) {
         filmContext,
         sceneType,
         beatKind: beatKindForIntelligence,
+        beatIndex: isBeatFrame ? beatIndex : undefined,
+        totalBeats: isBeatFrame ? getSceneBeats(sceneData as Record<string, unknown>).length : undefined,
+        beatAction: beatForIntelligence?.actionDescription || beatForIntelligence?.line,
+        beatRole: beatForIntelligence?.beatRole,
         directionMetadata,
         characters: characterContexts,
         props: propsToPassToAI,
@@ -1154,7 +1170,10 @@ export async function POST(req: NextRequest) {
     // Build character-specific negative prompts based on reference characteristics
     // NOTE: We focus on FACIAL/IDENTITY negatives only, not wardrobe negatives
     // Per Gemini docs: "Use positive descriptions instead of negatives" for better results
-    const baseNegativePrompt = 'elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance, text overlay, captions, subtitles, dialogue text, speech bubbles, text on image, watermark, logo text, title cards, intertitles, written words, typography overlay'
+    const typographyNegatives = allowTypography
+      ? ''
+      : 'text overlay, captions, subtitles, dialogue text, speech bubbles, text on image, watermark, logo text, title cards, intertitles, written words, typography overlay, '
+    const baseNegativePrompt = `elderly appearance, deeply wrinkled, aged beyond reference, geriatric, wrong age, different facial features, incorrect ethnicity, mismatched appearance, different person, celebrity likeness, child, teenager, youthful appearance, ${typographyNegatives}`.replace(/,\s*$/, '')
     
     const characterSpecificNegatives: string[] = []
     characterObjects.forEach((char: any) => {

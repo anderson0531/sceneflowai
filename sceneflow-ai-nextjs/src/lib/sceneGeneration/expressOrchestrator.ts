@@ -35,6 +35,13 @@ import { shouldScheduleStandaloneNarration } from '../script/narration'
 import { getSceneBeats, applyBeatsToScene } from '../script/beatMigration'
 import { countStoryboardFramesNeedingGeneration } from '../storyboard/types'
 import type { SceneBeat } from '../script/segmentTypes'
+import {
+  planBeatSequence,
+  applyBeatKeyframePlansToScene,
+  ensureSceneMusicFromDirection,
+  isTitleOrCinematicScene,
+  type BeatKeyframePlan,
+} from '../intelligence/beat-sequence-planner'
 
 const EXPRESS_CONCURRENCY = 1 // Process one scene at a time for chain reference consistency
 const EXPRESS_BEAT_IMAGE_DELAY_MS = 2000
@@ -182,6 +189,11 @@ async function runDirectionPhase(
   }
 }
 
+function resolveExpressIncludeMusic(scene: any, options: ExpressOptions): boolean {
+  if (options.includeMusic) return true
+  return isTitleOrCinematicScene(scene)
+}
+
 async function runAudioPhase(
   ctx: SceneRunContext,
   options: ExpressOptions,
@@ -192,6 +204,9 @@ async function runAudioPhase(
 ): Promise<{ ok: boolean; skipped: boolean; counts?: SceneAudioCounts; error?: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
   const language = options.language || 'en'
+
+  const musicReadyScene = ensureSceneMusicFromDirection(scene)
+  Object.assign(scene, musicReadyScene)
 
   if (!options.regenerate && !sceneNeedsAudio(scene, language)) {
     safeEmit(emit, {
@@ -243,7 +258,7 @@ async function runAudioPhase(
         number,
         { narration?: string; dialogue?: string[] }
       >,
-      includeMusic: !!options.includeMusic,
+      includeMusic: resolveExpressIncludeMusic(scene, options),
       includeSFX: !!options.includeSFX,
       baseUrl,
       authCookie,
@@ -286,7 +301,8 @@ async function generateSingleBeatImage(
   authCookie: string | undefined,
   emit: ExpressEmit,
   beatIdx: number,
-  artStyle: string
+  artStyle: string,
+  beatPlan?: BeatKeyframePlan
 ): Promise<{ imageUrl: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
   const result = await generateSceneImage({
@@ -299,6 +315,10 @@ async function generateSingleBeatImage(
     frameType: 'beat',
     beatIndex: beatIdx,
     sceneOverride: scene,
+    ...(beatPlan?.prompt ? { customPrompt: beatPlan.prompt, useAIPrompt: false } : {}),
+    ...(typeof beatPlan?.allowTypography === 'boolean'
+      ? { allowTypography: beatPlan.allowTypography }
+      : {}),
     ...EXPRESS_IMAGE_OPTS,
   })
   persistBeatFrame(scene, beatIdx, result)
@@ -324,9 +344,10 @@ async function runBeatImagesSceneMode(
   authCookie: string | undefined,
   emit: ExpressEmit,
   beats: SceneBeat[],
-  artStyle: string
+  artStyle: string,
+  beatPlansByIndex: Map<number, BeatKeyframePlan>
 ): Promise<{ hadFailure: boolean; lastError?: string; lastImageUrl?: string }> {
-  const { sceneIndex, sceneNumber, scene } = ctx
+  const { scene } = ctx
   const beatsToGenerate: number[] = []
   for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
     const beat = beats[beatIdx]
@@ -353,7 +374,8 @@ async function runBeatImagesSceneMode(
         authCookie,
         emit,
         probeIdx,
-        artStyle
+        artStyle,
+        beatPlansByIndex.get(probeIdx)
       )
       lastImageUrl = probe.imageUrl
       remaining = beatsToGenerate.slice(1)
@@ -387,7 +409,8 @@ async function runBeatImagesSceneMode(
             authCookie,
             emit,
             beatIdx,
-            artStyle
+            artStyle,
+            beatPlansByIndex.get(beatIdx)
           )
         } catch (err: any) {
           const error = err?.message || String(err)
@@ -468,9 +491,84 @@ function persistBeatFrame(scene: any, beatIndex: number, result: { imageUrl: str
   }
 }
 
+async function planSceneBeatKeyframes(
+  ctx: SceneRunContext,
+  options: ExpressOptions,
+  project: any,
+  emit: ExpressEmit,
+  beats: SceneBeat[],
+  artStyle: string
+): Promise<Map<number, BeatKeyframePlan>> {
+  const { sceneIndex, sceneNumber, scene } = ctx
+  const beatPlansByIndex = new Map<number, BeatKeyframePlan>()
+
+  safeEmit(emit, {
+    type: 'phase-start',
+    sceneIndex,
+    sceneNumber,
+    phase: 'image-plan',
+  })
+
+  try {
+    const visionPhase = project?.metadata?.visionPhase || {}
+    const treatment = visionPhase.treatment || project?.metadata?.treatmentPhase
+    const scenes =
+      project?.metadata?.visionPhase?.script?.script?.scenes ||
+      visionPhase?.script?.scenes ||
+      []
+    const planResult = await planBeatSequence({
+      scene,
+      beats,
+      sceneNumber,
+      totalScenes: Array.isArray(scenes) ? scenes.length : undefined,
+      filmContext: {
+        title: project?.metadata?.title || project?.title,
+        logline: treatment?.logline || treatment?.synopsis,
+        genre: treatment?.genre
+          ? Array.isArray(treatment.genre)
+            ? treatment.genre
+            : [treatment.genre]
+          : undefined,
+        tone: treatment?.tone,
+        visualStyle: treatment?.visualStyle,
+      },
+      artStyle,
+      projectId: options.projectId,
+    })
+    Object.assign(scene, applyBeatKeyframePlansToScene(scene, planResult.plans))
+    for (const plan of planResult.plans) {
+      beatPlansByIndex.set(plan.beatIndex, plan)
+    }
+    safeEmit(emit, {
+      type: 'phase-done',
+      sceneIndex,
+      sceneNumber,
+      phase: 'image-plan',
+      ok: true,
+    })
+    console.log(
+      `[expressOrchestrator] Planned ${planResult.plans.length} keyframes (AI: ${planResult.usedAI}) scene ${sceneNumber}`
+    )
+  } catch (err: unknown) {
+    const error = err instanceof Error ? err.message : String(err)
+    safeEmit(emit, {
+      type: 'phase-done',
+      sceneIndex,
+      sceneNumber,
+      phase: 'image-plan',
+      ok: false,
+      error,
+    })
+    console.warn(`[expressOrchestrator] Beat plan failed, continuing without plan: ${error}`)
+  }
+
+  return beatPlansByIndex
+}
+
 async function runImagePhase(
   ctx: SceneRunContext,
   options: ExpressOptions,
+  project: any,
   baseUrl: string,
   authCookie: string | undefined,
   emit: ExpressEmit
@@ -505,6 +603,15 @@ async function runImagePhase(
 
   try {
     if (useBeatPipeline) {
+      const beatPlansByIndex = await planSceneBeatKeyframes(
+        ctx,
+        options,
+        project,
+        emit,
+        beats,
+        artStyle
+      )
+
       if (getExpressMode(options) === 'scene') {
         const beatResult = await runBeatImagesSceneMode(
           ctx,
@@ -513,7 +620,8 @@ async function runImagePhase(
           authCookie,
           emit,
           beats,
-          artStyle
+          artStyle,
+          beatPlansByIndex
         )
         hadFailure = beatResult.hadFailure
         lastError = beatResult.lastError
@@ -524,6 +632,7 @@ async function runImagePhase(
           if (!options.regenerate && beat.storyboardImageUrl?.trim()) continue
 
           try {
+            const beatPlan = beatPlansByIndex.get(beatIdx)
             const result = await generateSceneImage({
               projectId: options.projectId,
               sceneIndex,
@@ -534,6 +643,10 @@ async function runImagePhase(
               frameType: 'beat',
               beatIndex: beatIdx,
               sceneOverride: scene,
+              ...(beatPlan?.prompt ? { customPrompt: beatPlan.prompt, useAIPrompt: false } : {}),
+              ...(typeof beatPlan?.allowTypography === 'boolean'
+                ? { allowTypography: beatPlan.allowTypography }
+                : {}),
               ...EXPRESS_IMAGE_OPTS,
             })
             persistBeatFrame(scene, beatIdx, result)
@@ -801,11 +914,11 @@ async function runScene(
   if (sceneMode) {
     ;[aRes, iRes] = await Promise.all([
       runAudioPhase(ctx, options, project, baseUrl, authCookie, emit),
-      runImagePhase(ctx, options, baseUrl, authCookie, emit),
+      runImagePhase(ctx, options, project, baseUrl, authCookie, emit),
     ])
   } else {
     aRes = await runAudioPhase(ctx, options, project, baseUrl, authCookie, emit)
-    iRes = await runImagePhase(ctx, options, baseUrl, authCookie, emit)
+    iRes = await runImagePhase(ctx, options, project, baseUrl, authCookie, emit)
   }
 
   if (aRes.skipped) phasesSkipped.push('audio')

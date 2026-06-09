@@ -9,7 +9,7 @@
 
 import type { DetailedSceneDirection } from '../../types/scene-direction'
 
-export type ExpressPhase = 'direction' | 'audio' | 'image'
+export type ExpressPhase = 'direction' | 'audio' | 'image-plan' | 'image'
 
 export type ExpressMode = 'batch' | 'scene'
 
