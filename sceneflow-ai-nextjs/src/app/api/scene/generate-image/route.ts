@@ -21,6 +21,7 @@ import {
   type PropContext,
   type LocationContext,
 } from '@/lib/intelligence/scene-image-intelligence'
+import { detectCharactersInText, resolveBeatSpeaker } from '@/lib/scene/characterDetection'
 import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
 import { NARRATOR_CHARACTER, type BeatKind } from '@/lib/script/segmentTypes'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
@@ -409,11 +410,24 @@ export async function POST(req: NextRequest) {
           if (beat) {
             beatKindForIntelligence = beat.kind
             if (beat.kind === 'action') {
-              characterObjects = []
-              const actionText = beat.actionDescription?.trim() || 'Scene action unfolds'
+              const actionText = beat.actionDescription?.trim() || ''
+              const actionContext = [
+                sceneForSelection?.heading || '',
+                sceneForSelection?.action || '',
+                actionText,
+              ].join(' ')
+              const detectedChars = detectCharactersInText(actionContext, allCharacters)
+              characterObjects = detectedChars
+              if (detectedChars.length > 0) {
+                console.log(
+                  `[Scene Image] Action beat: detected ${detectedChars.length} character(s) from action text:`,
+                  detectedChars.map((c: any) => c.name)
+                )
+              }
+              const displayAction = actionText || 'Scene action unfolds'
               dialogueFrameContext =
                 `Storyboard silent action frame. No dialogue, no lip-sync, no on-screen text. ` +
-                `Visual direction: ${actionText}. `
+                `Visual direction: ${displayAction}. `
               effectiveShotType = effectiveShotType || 'medium shot'
             } else if (isNarratorBeat(beat)) {
               characterObjects = []
@@ -424,17 +438,11 @@ export async function POST(req: NextRequest) {
                 (lineText ? `: "${lineText}"` : '') +
                 `. Show environment, subjects, and atmosphere only. `
               effectiveShotType = effectiveShotType || 'wide shot'
-            } else if (beat.character) {
-              const speakerLower = beat.character.toLowerCase()
-              const speakerChar = allCharacters.find((c: any) => {
-                if (!c?.name) return false
-                if (c.type === 'narrator') return false
-                const nameLower = c.name.toLowerCase()
-                return nameLower === speakerLower || nameLower.includes(speakerLower) || speakerLower.includes(nameLower)
-              })
+            } else if (beat.characterId || beat.character) {
+              const speakerChar = resolveBeatSpeaker(beat, allCharacters)
               if (speakerChar) characterObjects = [speakerChar]
               const lineText = beat.line?.trim() || ''
-              const speakerName = beat.character.trim()
+              const speakerName = (beat.character || speakerChar?.name || '').trim()
               dialogueFrameContext =
                 `Storyboard dialogue frame. Focus on ${speakerName || 'the speaker'} delivering this line: "${lineText}". ` +
                 'Frame the speaking character prominently — medium close-up or over-the-shoulder — with scene continuity preserved. '
@@ -460,34 +468,14 @@ export async function POST(req: NextRequest) {
             if (isNoTalentScene) {
               console.log('[Scene Image] No-talent scene detected (talent field says N/A) — skipping character auto-detection')
             } else {
-              // Extract character names from scene (heading, action, dialogue)
               const sceneText = [
                 scene.heading || '',
                 scene.action || '',
                 scene.visualDescription || '',
-                ...(scene.dialogue || []).map((d: any) => d.character || '')
-              ].join(' ').toLowerCase()
-              
-              // Match character names from scene text using STRICT matching:
-              // Require full name match OR full last-name word-boundary match (not 3-char fragments)
-              const detectedChars = allCharacters.filter((char: any) => {
-                if (!char.name) return false
-                const charNameLower = char.name.toLowerCase()
-                
-                // Strategy 1: Full name match (e.g., "Dr. Benjamin Anderson" in text)
-                if (sceneText.includes(charNameLower)) return true
-                
-                // Strategy 2: Word-boundary match on meaningful name parts (first name, last name)
-                // Skip titles (Dr., Mr., Mrs., etc.) and short words
-                const nameParts = charNameLower.split(/[\s.]+/).filter((part: string) => 
-                  part.length >= 4 && !['dr', 'mr', 'mrs', 'ms', 'prof', 'sir'].includes(part)
-                )
-                return nameParts.some((part: string) => {
-                  // Require full word boundary match — "Reed" matches "reed" but not "agreed" or "reeder"
-                  const wordBoundaryRegex = new RegExp(`\\b${part}\\b`)
-                  return wordBoundaryRegex.test(sceneText)
-                })
-              })
+                ...(scene.dialogue || []).map((d: any) => d.character || ''),
+              ].join(' ')
+
+              const detectedChars = detectCharactersInText(sceneText, allCharacters)
               
               if (detectedChars.length > 0) {
                 characterObjects = detectedChars
@@ -845,23 +833,21 @@ export async function POST(req: NextRequest) {
       // IMPORTANT: Include distinctive features (hair color, facial hair) that must be preserved!
       // e.g., "a Black man in his late 40s with salt-and-pepper hair and beard"
       let subjectTextDescription: string | undefined
-      if (hasReferenceImage && char.appearanceDescription) {
-        // Use extractDemographicAnchor which extracts ethnicity + age + hair/beard features
-        // This is critical - the subjectDescription must include features to preserve from reference
-        const extractedAnchor = extractDemographicAnchor(char.appearanceDescription)
-        if (extractedAnchor) {
-          subjectTextDescription = extractedAnchor
-          console.log(`[Scene Image] ${char.name} subjectDescription (with features): "${subjectTextDescription}"`)
-        } else {
-          // Fallback: use first sentence or first 60 chars
-          const firstSentence = char.appearanceDescription.split(/[.!?]/)[0].trim()
-          subjectTextDescription = firstSentence.length > 60 ? firstSentence.substring(0, 60) : firstSentence
-          console.log(`[Scene Image] ${char.name} subjectDescription (fallback): "${subjectTextDescription}"`)
-        }
+      const appearanceSource =
+        char.appearanceDescription || char.visionDescription || char.description || ''
+
+      if (hasReferenceImage && appearanceSource) {
+        subjectTextDescription =
+          extractDemographicAnchor(appearanceSource) ||
+          createVisualAnchorDescription(char, referenceId ?? idx + 1)
+        console.log(
+          `[Scene Image] ${char.name} subjectDescription: "${subjectTextDescription}"`
+        )
       } else if (hasReferenceImage) {
-        // No appearance description, use generic
-        subjectTextDescription = 'a person'
-        console.log(`[Scene Image] ${char.name} using generic subjectDescription: "${subjectTextDescription}"`)
+        subjectTextDescription = createVisualAnchorDescription(char, referenceId ?? idx + 1)
+        console.log(
+          `[Scene Image] ${char.name} subjectDescription (visual anchor): "${subjectTextDescription}"`
+        )
       }
       
       // linkingDescription for prompt: "a Black man in his late 40s [1]"

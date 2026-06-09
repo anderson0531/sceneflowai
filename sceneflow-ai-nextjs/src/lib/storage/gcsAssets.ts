@@ -132,15 +132,9 @@ export async function uploadToGCS(
     resumable: data.length > 5 * 1024 * 1024, // Resumable for files > 5MB
   })
   
-  // Make the file publicly readable for direct browser access
-  // This avoids signed URL signature issues and CORS problems
-  try {
-    await file.makePublic()
-    console.log(`[GCS Assets] Made file public: ${path}`)
-  } catch (publicError) {
-    console.warn(`[GCS Assets] Could not make file public (bucket may need IAM update): ${publicError}`)
-  }
-  
+  // Public access is configured at bucket level (uniform bucket-level access).
+  // Individual file.makePublic() is not needed and would cause an error on UBLA buckets.
+
   // Use public URL for direct browser access (no signature needed)
   const publicUrl = `https://storage.googleapis.com/${GCS_ASSETS_BUCKET}/${path}`
   
