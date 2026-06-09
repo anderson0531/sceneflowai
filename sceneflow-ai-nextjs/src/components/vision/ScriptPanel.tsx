@@ -64,10 +64,6 @@ import { SceneDirectionOptimizeDialog, type DirectionOptimizationConfig } from '
 import { Badge } from '@/components/ui/badge'
 import { WorkflowNextStepBanner, type WorkflowState } from './WorkflowNextStepBanner'
 import { buildWorkflowState } from '@/lib/production/sceneProgress'
-import type { ScriptLockStatus } from '@/lib/production/scriptLock'
-import type { ProductionReadyChecklist } from '@/lib/production/productionReadinessGate'
-import { ScriptLockControl } from './production/ScriptLockControl'
-import { ProductionReadyBanner } from './production/ProductionReadyBanner'
 import { toast } from 'sonner'
 import { ModerationValidateButton } from '@/components/moderation/ModerationValidateButton'
 import { saveAudioFile } from '@/lib/download/saveFile'
@@ -212,10 +208,6 @@ interface ScriptPanelProps {
   isGeneratingAudio?: boolean
   // NEW: Production readiness for workflow guards (disable actions until prerequisites met)
   productionReadiness?: ProductionReadiness
-  scriptLockStatus?: ScriptLockStatus
-  onScriptLockAdvance?: () => void
-  onScriptLockRetreat?: () => void
-  productionReadyChecklist?: ProductionReadyChecklist
   onPlayScript?: () => void
   // NEW: Scene management callbacks
   onAddScene?: (afterIndex?: number) => void
@@ -639,7 +631,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, scriptLockStatus = 'draft', onScriptLockAdvance, onScriptLockRetreat, productionReadyChecklist }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, timelineSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null }: ScriptPanelProps) {
 
 
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
@@ -3014,10 +3006,6 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       setOptimizeDialogScene={setOptimizeDialogScene}
                       setOptimizeDialogOpen={setOptimizeDialogOpen}
                       productionReadiness={productionReadiness}
-                      scriptLockStatus={scriptLockStatus}
-                      onScriptLockAdvance={onScriptLockAdvance}
-                      onScriptLockRetreat={onScriptLockRetreat}
-                      productionReadyChecklist={productionReadyChecklist}
                       onModerationReport={onModerationReport}
                       onResyncAudioTiming={onResyncAudioTiming}
                       resyncingAudioSceneIndex={resyncingAudioSceneIndex}
@@ -3656,10 +3644,6 @@ interface SceneCardProps {
   approvingStoryboardFor?: number | null
   // Production readiness for workflow guards (voices assigned, etc.)
   productionReadiness?: ProductionReadiness
-  scriptLockStatus?: ScriptLockStatus
-  onScriptLockAdvance?: () => void
-  onScriptLockRetreat?: () => void
-  productionReadyChecklist?: ProductionReadyChecklist
   onModerationReport?: (report: import('@/lib/moderation/moderationPipeline').ModerationReport) => void
 }
 
@@ -4030,10 +4014,6 @@ function SceneCard({
   setExpandedRecommendations,
   onAnalyzeScene,
   productionReadiness,
-  scriptLockStatus = 'draft',
-  onScriptLockAdvance,
-  onScriptLockRetreat,
-  productionReadyChecklist,
   analyzingSceneIndex,
   onOptimizeScene,
   optimizingSceneIndex,
@@ -4718,19 +4698,6 @@ function SceneCard({
                 )
               })}
             </div>
-          </div>
-        )}
-
-        {!isOutline && isWorkflowOpen && activeWorkflowTab === 'dialogueAction' && (
-          <div className="mt-2 space-y-2">
-            <ScriptLockControl
-              status={scriptLockStatus}
-              onAdvance={onScriptLockAdvance}
-              onRetreat={onScriptLockRetreat}
-            />
-            {productionReadyChecklist && (
-              <ProductionReadyBanner checklist={productionReadyChecklist} />
-            )}
           </div>
         )}
 

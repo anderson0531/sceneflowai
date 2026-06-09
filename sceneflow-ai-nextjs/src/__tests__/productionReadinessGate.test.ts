@@ -30,7 +30,6 @@ describe('resolveCharacterReferenceImageUrl', () => {
 
 describe('evaluateProductionReadyChecklist', () => {
   const baseInput = {
-    scriptLockStatus: 'locked' as const,
     scenes: [],
     objectReferences: [],
     locationReferences: [],
@@ -48,9 +47,26 @@ describe('evaluateProductionReadyChecklist', () => {
       ],
     })
     expect(checklist.hasReferences).toBe(true)
+    expect(checklist.isPreVisReady).toBe(true)
   })
 
-  it('canRunExpress allows when script locked, voices ready, and referenceImage set', () => {
+  it('voicesReady is true when there are no speaking characters (narrator-only)', () => {
+    const checklist = evaluateProductionReadyChecklist({
+      ...baseInput,
+      characters: [
+        {
+          name: 'Narrator',
+          type: 'narrator',
+          voiceConfig: { voiceId: 'gemini-achird' },
+          referenceImage: 'https://example.com/narrator.png',
+        },
+      ],
+    })
+    expect(checklist.voicesReady).toBe(true)
+    expect(checklist.isPreVisReady).toBe(true)
+  })
+
+  it('canRunExpress allows when voices ready and referenceImage set', () => {
     const checklist = evaluateProductionReadyChecklist({
       ...baseInput,
       characters: [
@@ -61,7 +77,7 @@ describe('evaluateProductionReadyChecklist', () => {
         },
       ],
     })
-    const gate = canRunExpress({ scriptLockStatus: 'locked', checklist })
+    const gate = canRunExpress({ checklist })
     expect(gate.allowed).toBe(true)
     expect(gate.reasons).toHaveLength(0)
   })
@@ -76,8 +92,23 @@ describe('evaluateProductionReadyChecklist', () => {
         },
       ],
     })
-    const gate = canRunExpress({ scriptLockStatus: 'locked', checklist })
+    const gate = canRunExpress({ checklist })
     expect(gate.allowed).toBe(false)
     expect(gate.reasons.some((r) => r.includes('reference'))).toBe(true)
+  })
+
+  it('canRunExpress blocks when speaking character is missing a voice', () => {
+    const checklist = evaluateProductionReadyChecklist({
+      ...baseInput,
+      characters: [
+        {
+          name: 'Marcus',
+          referenceImage: 'https://example.com/marcus.png',
+        },
+      ],
+    })
+    const gate = canRunExpress({ checklist })
+    expect(gate.allowed).toBe(false)
+    expect(gate.reasons.some((r) => r.includes('voice'))).toBe(true)
   })
 })

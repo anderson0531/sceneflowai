@@ -5,7 +5,6 @@
 
 import { shouldScheduleStandaloneNarration, sceneHasNarratorInDialogue } from '../script/narration'
 import { resolveCharacterReferenceImageUrl } from '../production/productionReadinessGate'
-import { isScriptLocked, type ScriptLockStatus } from '../production/scriptLock'
 import { countStoryboardFramesNeedingGeneration } from '../storyboard/types'
 
 export interface SceneExpressPreflightInput {
@@ -20,7 +19,6 @@ export interface SceneExpressPreflightInput {
   }>
   narrationVoice?: unknown
   language?: string
-  scriptLockStatus?: ScriptLockStatus
   regenerate?: boolean
 }
 
@@ -77,14 +75,9 @@ export function runSceneExpressPreflight(
     characters,
     narrationVoice,
     language = 'en',
-    scriptLockStatus,
     regenerate,
   } = input
   const errors: string[] = []
-
-  if (scriptLockStatus && !isScriptLocked(scriptLockStatus)) {
-    errors.push('Lock the script before running Express (Script tab → Script Status).')
-  }
 
   const sceneCharacterNames: string[] = Array.isArray(scene.characters)
     ? (scene.characters as string[])

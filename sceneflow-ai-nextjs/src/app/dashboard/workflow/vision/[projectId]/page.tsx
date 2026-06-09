@@ -56,7 +56,6 @@ import { SceneSelector } from '@/components/vision/SceneSelector'
 import { SceneProgressDashboard, type SceneProgressItem } from '@/components/vision/SceneProgressDashboard'
 import { ProductionOnboarding } from '@/components/vision/ProductionOnboarding'
 import { useSceneProgressItems } from '@/hooks/vision/useSceneProgressItems'
-import { useProductionScriptLock } from '@/hooks/vision/useProductionScriptLock'
 import {
   evaluateProductionReadyChecklist,
   canRunExpress,
@@ -664,32 +663,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }, [characters, script])
 
-  const {
-    scriptLockStatus,
-    nextStatus,
-    previousStatus,
-    buildMetadataPatch,
-  } = useProductionScriptLock(project?.metadata)
-
   const productionReadyChecklist = useMemo(
     () =>
       evaluateProductionReadyChecklist({
-        scriptLockStatus,
         characters: characters || [],
         scenes: script?.script?.scenes || [],
         objectReferences,
         locationReferences,
       }),
-    [scriptLockStatus, characters, script, objectReferences, locationReferences]
+    [characters, script, objectReferences, locationReferences]
   )
 
   const expressGate = useMemo(
     () =>
       canRunExpress({
-        scriptLockStatus,
         checklist: productionReadyChecklist,
       }),
-    [scriptLockStatus, productionReadyChecklist]
+    [productionReadyChecklist]
   )
 
   const lockedArtStyle = useMemo(
@@ -734,48 +724,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const sceneProgressItems = useSceneProgressItems(
     script?.script?.scenes,
     sceneProductionState
-  )
-
-  const handleScriptLockChange = useCallback(
-    async (status: typeof scriptLockStatus) => {
-      if (!projectId || !project) return
-      const patch = buildMetadataPatch(status)
-      try {
-        const existingMetadata = project.metadata || {}
-        const existingVision = (existingMetadata as Record<string, unknown>).visionPhase || {}
-        const response = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            metadata: {
-              ...existingMetadata,
-              visionPhase: {
-                ...(existingVision as Record<string, unknown>),
-                ...patch.visionPhase,
-              },
-            },
-          }),
-        })
-        if (!response.ok) throw new Error('Failed to update script lock')
-        setProject((prev: any) => {
-          if (!prev) return prev
-          const meta = { ...(prev.metadata || {}) }
-          const vision = { ...(meta.visionPhase || {}), ...patch.visionPhase }
-          return { ...prev, metadata: { ...meta, visionPhase: vision } }
-        })
-        toast.success(
-          status === 'locked'
-            ? 'Script locked for production'
-            : status === 'reviewed'
-            ? 'Script marked reviewed'
-            : 'Script unlocked'
-        )
-      } catch (err) {
-        console.error('[ScriptLock]', err)
-        toast.error('Could not update script status')
-      }
-    },
-    [projectId, project, buildMetadataPatch]
   )
 
   useEffect(() => {
@@ -11916,14 +11864,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateAllAudio={handleGenerateAllAudio}
                 isGeneratingAudio={isGeneratingAudio}
                 productionReadiness={productionReadiness}
-                scriptLockStatus={scriptLockStatus}
-                onScriptLockAdvance={
-                  nextStatus ? () => handleScriptLockChange(nextStatus) : undefined
-                }
-                onScriptLockRetreat={
-                  previousStatus ? () => handleScriptLockChange(previousStatus) : undefined
-                }
-                productionReadyChecklist={productionReadyChecklist}
                 projectTitle={projectTitle}
                 projectLogline={projectLogline}
                 projectDuration={projectDuration || undefined}
@@ -12215,7 +12155,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onSaveEditedDialogueFrame={handleSaveEditedDialogueFrame}
                             onExpressSceneGenerate={handleExpressSceneGenerate}
                             narrationVoice={narrationVoice}
-                            scriptLockStatus={scriptLockStatus}
+                            productionReadyChecklist={productionReadyChecklist}
+                            onOpenReferences={() => setRightSidebarVisible(true)}
                             onAddStoryboardFrame={handleAddStoryboardFrame}
                             onDeleteStoryboardFrame={handleDeleteStoryboardFrame}
                             onGenerateCustomFrame={handleGenerateCustomFrame}

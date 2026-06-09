@@ -34,12 +34,12 @@ export const guidanceContent: Record<WorkflowStep, {
       'Use Screening Room — Preview (live) to review the animatic before exporting MP4s',
     ],
     toolsAndTips: [
-      'Script Status: Draft → Reviewed → Locked (lock before Express)',
-      'Production Ready checklist: voices, references, and script lock',
+      'Pre-Vis ready checklist: assign voices and add references (shown in Pre-Visualization panel)',
+      'Express All Scenes: one project-level CTA for Direction → Audio → pre-vis frames',
       'Express: one project-level CTA for Direction → Audio → Pre-vis frames',
       'Screening Room = live preview; Production Streams = finished MP4 exports',
     ],
-    bestPractice: 'Complete Foundation (script lock + voices + key references) before running Express.',
+    bestPractice: 'Assign voices and key references before running Express — the Pre-Vis panel shows what is missing.',
     tip: 'You only see Script and Action tabs — Direction, pre-vis, and Beat Frames live inside those phases.',
   },
   directorsChair: {

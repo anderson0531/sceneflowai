@@ -1,9 +1,8 @@
 /**
- * Production Ready checklist + Express gate helpers.
+ * Pre-Vis Ready checklist + Express gate helpers.
  */
 
 import { calculateProductionReadiness } from '@/components/ui/StatusBadge'
-import { isScriptLocked, type ScriptLockStatus } from '@/lib/production/scriptLock'
 import { getStoryboardBeatProgress } from '@/lib/production/sceneProgress'
 
 export interface ExpressGateResult {
@@ -20,19 +19,20 @@ export function resolveCharacterReferenceImageUrl(
 }
 
 export interface ProductionReadyChecklist {
-  scriptLocked: boolean
   voicesReady: boolean
   hasReferences: boolean
   storyboardBeatsReady: boolean
   missingVoices: string[]
   storyboardBeatsComplete: number
   storyboardBeatsTotal: number
+  /** True when voices and references are ready for Express. */
+  isPreVisReady: boolean
+  /** @deprecated Use isPreVisReady */
   isProductionReady: boolean
 }
 
 export function evaluateProductionReadyChecklist(input: {
-  scriptLockStatus: ScriptLockStatus
-  characters: Array<{ name: string; type?: string; voiceConfig?: unknown; referenceImageUrl?: string }>
+  characters: Array<{ name: string; type?: string; voiceConfig?: unknown; referenceImageUrl?: string; referenceImage?: string }>
   scenes: Record<string, unknown>[]
   objectReferences?: unknown[]
   locationReferences?: unknown[]
@@ -51,34 +51,31 @@ export function evaluateProductionReadyChecklist(input: {
     (input.objectReferences?.length ?? 0) > 0 ||
     (input.locationReferences?.length ?? 0) > 0
 
-  const scriptLocked = isScriptLocked(input.scriptLockStatus)
   const voicesReady = readiness.isAudioReady
   const storyboardBeatsReady =
     storyboardTotals.total === 0 ||
     storyboardTotals.complete >= storyboardTotals.total
 
+  const isPreVisReady = voicesReady && hasReferences
+
   return {
-    scriptLocked,
     voicesReady,
     hasReferences,
     storyboardBeatsReady,
     missingVoices: readiness.charactersMissingVoices,
     storyboardBeatsComplete: storyboardTotals.complete,
     storyboardBeatsTotal: storyboardTotals.total,
-    isProductionReady: scriptLocked && voicesReady && hasReferences,
+    isPreVisReady,
+    isProductionReady: isPreVisReady,
   }
 }
 
 export function canRunExpress(input: {
-  scriptLockStatus: ScriptLockStatus
   checklist: ProductionReadyChecklist
   /** When true, warn but allow (soft gate). */
   softGate?: boolean
 }): ExpressGateResult {
   const reasons: string[] = []
-  if (!input.checklist.scriptLocked) {
-    reasons.push('Lock the script before running Express (Script tab → Script Status).')
-  }
   if (!input.checklist.voicesReady) {
     const missing = input.checklist.missingVoices.slice(0, 3).join(', ')
     reasons.push(

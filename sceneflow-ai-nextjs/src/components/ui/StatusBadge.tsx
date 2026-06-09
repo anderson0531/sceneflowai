@@ -309,7 +309,9 @@ export function calculateProductionReadiness(
     scenesWithImages,
     scenesWithAudio,
     charactersMissingVoices,
-    isAudioReady: voicesAssigned === speakingCharacters.length && speakingCharacters.length > 0,
+    isAudioReady:
+      speakingCharacters.length === 0 ||
+      voicesAssigned === speakingCharacters.length,
     isImageReady: scenesWithDirection > 0
   }
 }

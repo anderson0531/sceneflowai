@@ -42,16 +42,16 @@ const PRODUCTION_TOUR_STEPS: TourStep[] = [
     id: 'script-tab',
     title: 'Step 1 - Foundation (Script tab)',
     description:
-      'Write and refine your script, run Audience Resonance (85+ target), generate audio, and assign voices. Lock the script when ready — Express stays disabled until Foundation is complete.',
+      'Write and refine your script, run Audience Resonance (85+ target), generate audio, and assign voices. The Pre-Visualization panel shows what you need before Express.',
     icon: <FileText className="w-6 h-6" />,
     workflowStep: 'dialogueAction',
-    tip: 'Script Status: Draft → Reviewed → Locked. Production Ready checks voices and references.',
+    tip: 'Pre-Vis ready requires character voices and at least one reference in the Reference Library.',
   },
   {
     id: 'storyboard',
     title: 'Step 2 - Pre-vis',
     description:
-      'Use Build Pre-vis (Express) for Direction → Audio → pre-vis frames in ~10 minutes. Review in the gallery, share for approval, and preview in Screening Room — Preview (live).',
+      'Use Express All Scenes for Direction → Audio → pre-vis frames in ~10 minutes. Review in the gallery, share for approval, and preview in Screening Room — Preview (live).',
     icon: <Frame className="w-6 h-6" />,
     workflowStep: 'dialogueAction',
     tip: 'Pre-vis Frame = still image per beat. Screening Room is live preview — not an exported MP4.',

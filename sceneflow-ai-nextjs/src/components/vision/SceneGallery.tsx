@@ -42,7 +42,8 @@ import { Input } from '@/components/ui/Input'
 import { useStore } from '@/store/useStore'
 import { flattenSceneToStoryboardFrames, countStoryboardFrameStats, enumerateStoryboardFrameSlots, countStoryboardFramesNeedingGeneration } from '@/lib/storyboard/types'
 import { runSceneExpressPreflight } from '@/lib/sceneGeneration/sceneExpressPreflight'
-import type { ScriptLockStatus } from '@/lib/production/scriptLock'
+import { ProductionReadyBanner } from './production/ProductionReadyBanner'
+import type { ProductionReadyChecklist } from '@/lib/production/productionReadinessGate'
 
 export type ExpressPhase = 'direction' | 'audio' | 'image'
 export type ExpressPhaseStatus = 'pending' | 'running' | 'done' | 'error'
@@ -133,14 +134,16 @@ interface SceneGalleryProps {
   /** Per-scene fast Express (mode=scene). */
   onExpressSceneGenerate?: (sceneIndex: number, language: string) => Promise<void> | void
   narrationVoice?: unknown
-  scriptLockStatus?: ScriptLockStatus
+  productionReadyChecklist?: ProductionReadyChecklist
   /** Whether an Express run is currently in flight. */
   isExpressRunning?: boolean
   /** Per-scene phase progress map driven by SSE events. */
   expressStatus?: ExpressSceneStatusMap
-  /** When true, Express is blocked until script lock + production ready. */
+  /** When true, Express is blocked until Pre-Vis ready (voices + references). */
   expressGateBlocked?: boolean
   expressGateReasons?: string[]
+  /** Open Reference Library sidebar. */
+  onOpenReferences?: () => void
   /** Called after successful Express to open storyboard player / share flow. */
   onExpressComplete?: () => void
   /** Art style locked from Blueprint — Express uses this instead of a picker. */
@@ -193,14 +196,29 @@ export function SceneGallery({
   onExpressGenerate,
   onExpressSceneGenerate,
   narrationVoice,
-  scriptLockStatus,
+  productionReadyChecklist,
   isExpressRunning = false,
   expressStatus,
   expressGateBlocked = false,
   expressGateReasons = [],
+  onOpenReferences,
   onExpressComplete,
   lockedArtStyle,
 }: SceneGalleryProps) {
+  const preVisBannerRef = React.useRef<HTMLDivElement>(null)
+
+  const scrollToPreVisBanner = useCallback(() => {
+    preVisBannerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    preVisBannerRef.current?.classList.add('ring-2', 'ring-amber-400/60')
+    window.setTimeout(() => {
+      preVisBannerRef.current?.classList.remove('ring-2', 'ring-amber-400/60')
+    }, 2000)
+  }, [])
+
+  const handleExpressGateBlocked = useCallback(() => {
+    toast.error(expressGateReasons[0] || 'Complete the Pre-Vis ready checklist before Express.')
+    scrollToPreVisBanner()
+  }, [expressGateReasons, scrollToPreVisBanner])
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -352,7 +370,7 @@ export function SceneGallery({
     async (options: ExpressConfirmOptions) => {
       if (!onExpressGenerate) return
       if (expressGateBlocked) {
-        toast.error(expressGateReasons[0] || 'Complete Production Ready checklist before Express.')
+        handleExpressGateBlocked()
         return
       }
       setExpressDialogOpen(false)
@@ -362,7 +380,7 @@ export function SceneGallery({
         console.error('[SceneGallery] Express generate failed:', err)
       }
     },
-    [onExpressGenerate, selectedLanguage, expressGateBlocked, expressGateReasons]
+    [onExpressGenerate, selectedLanguage, expressGateBlocked, handleExpressGateBlocked]
   )
 
   // Compute a phase-level progress summary from the SSE-driven `expressStatus`
@@ -581,12 +599,17 @@ export function SceneGallery({
                   size="sm"
                   onClick={() => {
                     if (expressGateBlocked) {
-                      toast.error(expressGateReasons[0] || 'Complete Production Ready checklist before Express.')
+                      handleExpressGateBlocked()
+                      return
+                    }
+                    if (scenesNeedingExpress === 0) {
+                      toast.info('All scenes complete — open Express and enable Regenerate to redo.')
+                      setExpressDialogOpen(true)
                       return
                     }
                     setExpressDialogOpen(true)
                   }}
-                  disabled={isExpressRunning || (!expressGateBlocked && scenesNeedingExpress === 0)}
+                  disabled={isExpressRunning}
                   className="relative flex items-center gap-2 overflow-hidden bg-gradient-to-r from-indigo-500/15 to-purple-500/15 border-indigo-500/40 hover:border-indigo-500/60 hover:from-indigo-500/25 hover:to-purple-500/25"
                 >
                   {isExpressRunning ? (
@@ -599,9 +622,7 @@ export function SceneGallery({
                       ? expressProgress
                         ? `Express ${expressProgress.pct}%`
                         : 'Express running…'
-                      : expressGateBlocked
-                      ? 'Build Storyboard (locked)'
-                      : `Build Storyboard (${scenesNeedingExpress})`}
+                      : `Express All Scenes (${scenesNeedingExpress})`}
                   </span>
                   {isExpressRunning && expressProgress && (
                     <span
@@ -621,8 +642,10 @@ export function SceneGallery({
                   </ul>
                 ) : isExpressRunning && expressProgress ? (
                   `Direction → Audio → Storyboard • ${storyboardBeatProgress.complete}/${storyboardBeatProgress.total} beats • ${expressElapsedSec}s elapsed`
+                ) : scenesNeedingExpress === 0 ? (
+                  'All scenes complete — open Express and enable Regenerate to redo'
                 ) : (
-                  'Build Storyboard (Express): Direction → Audio → storyboard frames for every scene'
+                  'Express All Scenes: Direction → Audio → storyboard frames for every scene (~5–15 min)'
                 )}
               </TooltipContent>
             </Tooltip>
@@ -751,6 +774,17 @@ export function SceneGallery({
           )}
         </div>
       </div>
+
+      {productionReadyChecklist && (
+        <div ref={preVisBannerRef} className="mb-4 rounded-lg transition-shadow">
+          <ProductionReadyBanner
+            id="previs-ready-banner"
+            checklist={productionReadyChecklist}
+            onOpenReferences={onOpenReferences}
+            onOpenGenerateAudio={onOpenGenerateAudio}
+          />
+        </div>
+      )}
       
       {/* Audio Gallery Player - collapsible section */}
       {showAudioPlayer && scenesWithAudio > 0 && (
@@ -883,7 +917,7 @@ export function SceneGallery({
                   }
                   selectedLanguage={selectedLanguage}
                   narrationVoice={narrationVoice}
-                  scriptLockStatus={scriptLockStatus}
+                  onExpressGateBlocked={handleExpressGateBlocked}
                   expressGateBlocked={expressGateBlocked}
                   isExpressRunning={isExpressRunning}
                   expressElapsedSec={expressElapsedSec}
@@ -1090,10 +1124,10 @@ interface SceneCardProps {
     dialogueIndex?: number
   }) => void
   onExpressSceneGenerate?: () => void
+  onExpressGateBlocked?: () => void
+  expressGateBlocked?: boolean
   selectedLanguage?: string
   narrationVoice?: unknown
-  scriptLockStatus?: ScriptLockStatus
-  expressGateBlocked?: boolean
   isExpressRunning?: boolean
   expressElapsedSec?: number
   generatingDialogueFrames?: Set<string>
@@ -1199,10 +1233,10 @@ function SceneCard({
   onUploadBeatFrame,
   onEditFrame,
   onExpressSceneGenerate,
+  onExpressGateBlocked,
+  expressGateBlocked = false,
   selectedLanguage = 'en',
   narrationVoice,
-  scriptLockStatus,
-  expressGateBlocked = false,
   isExpressRunning = false,
   expressElapsedSec = 0,
   generatingDialogueFrames = new Set(),
@@ -1284,15 +1318,13 @@ function SceneCard({
         characters,
         narrationVoice,
         language: selectedLanguage,
-        scriptLockStatus,
       }),
-    [scene, sceneIndex, characters, narrationVoice, selectedLanguage, scriptLockStatus]
+    [scene, sceneIndex, characters, narrationVoice, selectedLanguage]
   )
 
   const sceneExpressDisabled =
-    expressGateBlocked ||
     isExpressRunning ||
-    !sceneExpressPreflight.ok ||
+    (!expressGateBlocked && !sceneExpressPreflight.ok) ||
     !!sceneExpressPreflight.nothingToDo
 
   const sceneExpressTooltip = !sceneExpressPreflight.ok
@@ -1572,6 +1604,10 @@ function SceneCard({
                           disabled={sceneExpressDisabled}
                           onClick={(e) => {
                             e.stopPropagation()
+                            if (expressGateBlocked && onExpressGateBlocked) {
+                              onExpressGateBlocked()
+                              return
+                            }
                             if (!sceneExpressPreflight.ok) {
                               toast.error(sceneExpressPreflight.errors[0])
                               return
