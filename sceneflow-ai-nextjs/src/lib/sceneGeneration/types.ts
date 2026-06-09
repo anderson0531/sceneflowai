@@ -108,6 +108,8 @@ export interface ExpressPhaseEvent {
   skipped?: boolean
 }
 
+export type ExpressThrottleLane = 'text' | 'image' | 'audio'
+
 export type ExpressEvent =
   | { type: 'start'; sceneCount: number }
   | { type: 'scene-start'; sceneIndex: number; sceneNumber: number }
@@ -115,6 +117,12 @@ export type ExpressEvent =
   | { type: 'preflight-failed'; sceneIndex: number; sceneNumber: number; errors: string[] }
   | { type: 'scene-persisted'; sceneIndex: number; sceneNumber: number }
   | ExpressPhaseEvent
+  | {
+      type: 'throttle'
+      lane: ExpressThrottleLane
+      max: number
+      cooldownMs?: number
+    }
   | { type: 'complete'; successScenes: number; failedScenes: number }
   | { type: 'error'; error: string }
 

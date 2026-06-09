@@ -1,11 +1,13 @@
 /**
  * Storyboard Express orchestrator.
  *
- * For each scene, runs Direction -> Audio -> Image sequentially.
- * Scenes are processed sequentially (one by one) to ensure chain reference
- * consistency, since the end frame of one scene/segment may be used as the
- * start frame of the next. All work is done against
- * an in-memory `scenes` array; the orchestrator does NOT touch the DB.
+ * Per scene: Direction first, then Audio and Image in parallel.
+ * Multiple scenes run concurrently (EXPRESS_SCENE_CONCURRENCY, default 3).
+ * A per-run ExpressTrafficCop caps global Vertex/TTS in-flight work and
+ * throttles lanes on 429 bursts. Partial beat/scene failures are acceptable.
+ *
+ * All work is done against an in-memory `scenes` array; the orchestrator
+ * does NOT touch the DB.
  *
  * Callers (e.g. `[api/vision/express/route.ts]`) are responsible for:
  *  - Loading the project once at the start.
@@ -17,6 +19,10 @@ import {
   processWithConcurrency,
   SCENE_EXPRESS_BEAT_CONCURRENCY,
 } from '../utils/concurrent-processor'
+import {
+  ExpressTrafficCop,
+  getExpressSceneConcurrency,
+} from './expressTrafficCop'
 import type {
   ExpressEmit,
   ExpressEvent,
@@ -44,16 +50,9 @@ import {
   type BeatKeyframePlan,
 } from '../intelligence/beat-sequence-planner'
 
-const EXPRESS_CONCURRENCY = 1 // Process one scene at a time for chain reference consistency
-const EXPRESS_BEAT_IMAGE_DELAY_MS = 2000
-
 const EXPRESS_IMAGE_OPTS = {
   modelTier: 'eco' as const,
   skipLikenessValidation: true,
-}
-
-function expressImageDelay(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, EXPRESS_BEAT_IMAGE_DELAY_MS))
 }
 
 export interface RunExpressParams {
@@ -148,7 +147,8 @@ function isRateLimitError(err: unknown): boolean {
 async function runDirectionPhase(
   ctx: SceneRunContext,
   options: ExpressOptions,
-  emit: ExpressEmit
+  emit: ExpressEmit,
+  trafficCop: ExpressTrafficCop
 ): Promise<{ ok: boolean; skipped: boolean; error?: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
   if (!options.regenerate && !sceneNeedsDirection(scene)) {
@@ -171,7 +171,9 @@ async function runDirectionPhase(
   })
 
   try {
-    const result = await generateSceneDirection({ scene, sceneIndex })
+    const result = await trafficCop.runInLane('text', () =>
+      generateSceneDirection({ scene, sceneIndex })
+    )
     scene.sceneDirection = result.sceneDirection
     safeEmit(emit, {
       type: 'phase-done',
@@ -206,7 +208,8 @@ async function runAudioPhase(
   project: any,
   baseUrl: string,
   authCookie: string | undefined,
-  emit: ExpressEmit
+  emit: ExpressEmit,
+  trafficCop: ExpressTrafficCop
 ): Promise<{ ok: boolean; skipped: boolean; counts?: SceneAudioCounts; error?: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
   const language = options.language || 'en'
@@ -253,23 +256,25 @@ async function runAudioPhase(
       return { ok: false, skipped: false, error: 'Narration voice not configured' }
     }
 
-    const result = await generateSceneAudio({
-      projectId: options.projectId,
-      sceneIndex,
-      scene,
-      characters,
-      narrationVoice,
-      language,
-      storedTranslations: storedTranslations as Record<
-        number,
-        { narration?: string; dialogue?: string[] }
-      >,
-      includeMusic: resolveExpressIncludeMusic(scene, options),
-      includeSFX: !!options.includeSFX,
-      baseUrl,
-      authCookie,
-      parallelMode: getExpressMode(options) === 'scene',
-    })
+    const result = await trafficCop.runInLane('audio', () =>
+      generateSceneAudio({
+        projectId: options.projectId,
+        sceneIndex,
+        scene,
+        characters,
+        narrationVoice,
+        language,
+        storedTranslations: storedTranslations as Record<
+          number,
+          { narration?: string; dialogue?: string[] }
+        >,
+        includeMusic: resolveExpressIncludeMusic(scene, options),
+        includeSFX: !!options.includeSFX,
+        baseUrl,
+        authCookie,
+        parallelMode: true,
+      })
+    )
 
     applyAudioAssetsToScene(scene, language, result)
 
@@ -306,12 +311,14 @@ async function generateSingleBeatImage(
   baseUrl: string,
   authCookie: string | undefined,
   emit: ExpressEmit,
+  trafficCop: ExpressTrafficCop,
   beatIdx: number,
   artStyle: string,
   beatPlan?: BeatKeyframePlan
 ): Promise<{ imageUrl: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
-  const result = await generateSceneImage({
+  const result = await trafficCop.runInLane('image', () =>
+    generateSceneImage({
     projectId: options.projectId,
     sceneIndex,
     baseUrl,
@@ -326,7 +333,8 @@ async function generateSingleBeatImage(
       ? { allowTypography: beatPlan.allowTypography }
       : {}),
     ...EXPRESS_IMAGE_OPTS,
-  })
+    })
+  )
   persistBeatFrame(scene, beatIdx, result)
   safeEmit(emit, {
     type: 'phase-done',
@@ -343,17 +351,18 @@ async function generateSingleBeatImage(
   return { imageUrl: result.imageUrl }
 }
 
-async function runBeatImagesSceneMode(
+async function runBeatImages(
   ctx: SceneRunContext,
   options: ExpressOptions,
   baseUrl: string,
   authCookie: string | undefined,
   emit: ExpressEmit,
+  trafficCop: ExpressTrafficCop,
   beats: SceneBeat[],
   artStyle: string,
   beatPlansByIndex: Map<number, BeatKeyframePlan>
 ): Promise<{ hadFailure: boolean; lastError?: string; lastImageUrl?: string }> {
-  const { scene } = ctx
+  const { scene, sceneIndex, sceneNumber } = ctx
   const beatsToGenerate: number[] = []
   for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
     const beat = beats[beatIdx]
@@ -379,6 +388,7 @@ async function runBeatImagesSceneMode(
         baseUrl,
         authCookie,
         emit,
+        trafficCop,
         probeIdx,
         artStyle,
         beatPlansByIndex.get(probeIdx)
@@ -414,6 +424,7 @@ async function runBeatImagesSceneMode(
             baseUrl,
             authCookie,
             emit,
+            trafficCop,
             beatIdx,
             artStyle,
             beatPlansByIndex.get(beatIdx)
@@ -502,6 +513,7 @@ async function planSceneBeatKeyframes(
   options: ExpressOptions,
   project: any,
   emit: ExpressEmit,
+  trafficCop: ExpressTrafficCop,
   beats: SceneBeat[],
   artStyle: string
 ): Promise<Map<number, BeatKeyframePlan>> {
@@ -522,25 +534,27 @@ async function planSceneBeatKeyframes(
       project?.metadata?.visionPhase?.script?.script?.scenes ||
       visionPhase?.script?.scenes ||
       []
-    const planResult = await planBeatSequence({
-      scene,
-      beats,
-      sceneNumber,
-      totalScenes: Array.isArray(scenes) ? scenes.length : undefined,
-      filmContext: {
-        title: project?.metadata?.title || project?.title,
-        logline: treatment?.logline || treatment?.synopsis,
-        genre: treatment?.genre
-          ? Array.isArray(treatment.genre)
-            ? treatment.genre
-            : [treatment.genre]
-          : undefined,
-        tone: treatment?.tone,
-        visualStyle: treatment?.visualStyle,
-      },
-      artStyle,
-      projectId: options.projectId,
-    })
+    const planResult = await trafficCop.runInLane('text', () =>
+      planBeatSequence({
+        scene,
+        beats,
+        sceneNumber,
+        totalScenes: Array.isArray(scenes) ? scenes.length : undefined,
+        filmContext: {
+          title: project?.metadata?.title || project?.title,
+          logline: treatment?.logline || treatment?.synopsis,
+          genre: treatment?.genre
+            ? Array.isArray(treatment.genre)
+              ? treatment.genre
+              : [treatment.genre]
+            : undefined,
+          tone: treatment?.tone,
+          visualStyle: treatment?.visualStyle,
+        },
+        artStyle,
+        projectId: options.projectId,
+      })
+    )
     Object.assign(scene, applyBeatKeyframePlansToScene(scene, planResult.plans))
     for (const plan of planResult.plans) {
       beatPlansByIndex.set(plan.beatIndex, plan)
@@ -571,13 +585,21 @@ async function planSceneBeatKeyframes(
   return beatPlansByIndex
 }
 
+async function generateLegacySceneImage(
+  trafficCop: ExpressTrafficCop,
+  params: Parameters<typeof generateSceneImage>[0]
+) {
+  return trafficCop.runInLane('image', () => generateSceneImage(params))
+}
+
 async function runImagePhase(
   ctx: SceneRunContext,
   options: ExpressOptions,
   project: any,
   baseUrl: string,
   authCookie: string | undefined,
-  emit: ExpressEmit
+  emit: ExpressEmit,
+  trafficCop: ExpressTrafficCop
 ): Promise<{ ok: boolean; skipped: boolean; imageUrl?: string; error?: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
   const beats = getSceneBeats(scene)
@@ -614,76 +636,25 @@ async function runImagePhase(
         options,
         project,
         emit,
+        trafficCop,
         beats,
         artStyle
       )
 
-      if (getExpressMode(options) === 'scene') {
-        const beatResult = await runBeatImagesSceneMode(
-          ctx,
-          options,
-          baseUrl,
-          authCookie,
-          emit,
-          beats,
-          artStyle,
-          beatPlansByIndex
-        )
-        hadFailure = beatResult.hadFailure
-        lastError = beatResult.lastError
-        lastImageUrl = beatResult.lastImageUrl ?? lastImageUrl
-      } else {
-        for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
-          const beat = beats[beatIdx]
-          if (!options.regenerate && beat.storyboardImageUrl?.trim()) continue
-
-          try {
-            const beatPlan = beatPlansByIndex.get(beatIdx)
-            const result = await generateSceneImage({
-              projectId: options.projectId,
-              sceneIndex,
-              baseUrl,
-              authCookie,
-              quality: options.imageQuality || 'auto',
-              artStyle,
-              frameType: 'beat',
-              beatIndex: beatIdx,
-              sceneOverride: scene,
-              ...(beatPlan?.prompt ? { customPrompt: beatPlan.prompt, useAIPrompt: false } : {}),
-              ...(typeof beatPlan?.allowTypography === 'boolean'
-                ? { allowTypography: beatPlan.allowTypography }
-                : {}),
-              ...EXPRESS_IMAGE_OPTS,
-            })
-            persistBeatFrame(scene, beatIdx, result)
-            lastImageUrl = result.imageUrl
-            safeEmit(emit, {
-              type: 'phase-done',
-              sceneIndex,
-              sceneNumber,
-              phase: 'image',
-              ok: true,
-              imageUrl: result.imageUrl,
-              beatIndex: beatIdx,
-            })
-          } catch (err: any) {
-            hadFailure = true
-            lastError = err?.message || String(err)
-            safeEmit(emit, {
-              type: 'phase-done',
-              sceneIndex,
-              sceneNumber,
-              phase: 'image',
-              ok: false,
-              error: lastError,
-              beatIndex: beatIdx,
-            })
-          }
-          if (beatIdx < beats.length - 1) {
-            await expressImageDelay()
-          }
-        }
-      }
+      const beatResult = await runBeatImages(
+        ctx,
+        options,
+        baseUrl,
+        authCookie,
+        emit,
+        trafficCop,
+        beats,
+        artStyle,
+        beatPlansByIndex
+      )
+      hadFailure = beatResult.hadFailure
+      lastError = beatResult.lastError
+      lastImageUrl = beatResult.lastImageUrl ?? lastImageUrl
       scene.storyboardStatus = 'pending_review'
       scene.storyboardApprovedAt = undefined
     } else {
@@ -702,7 +673,7 @@ async function runImagePhase(
 
       if (needsEstablishing) {
         try {
-          const result = await generateSceneImage({
+          const result = await generateLegacySceneImage(trafficCop, {
             projectId: options.projectId,
             sceneIndex,
             baseUrl,
@@ -743,7 +714,7 @@ async function runImagePhase(
         if (!options.regenerate && dialogue[dialogueIdx]?.storyboardImageUrl) continue
 
         try {
-          const result = await generateSceneImage({
+          const result = await generateLegacySceneImage(trafficCop, {
             projectId: options.projectId,
             sceneIndex,
             baseUrl,
@@ -807,7 +778,8 @@ async function runScene(
   project: any,
   baseUrl: string,
   authCookie: string | undefined,
-  emit: ExpressEmit
+  emit: ExpressEmit,
+  trafficCop: ExpressTrafficCop
 ): Promise<ExpressPerSceneSummary> {
   const { sceneIndex, sceneNumber } = ctx
   const phasesRun: ExpressPhase[] = []
@@ -884,7 +856,7 @@ async function runScene(
   }
 
   // Phase 1: Direction
-  const dRes = await runDirectionPhase(ctx, options, emit)
+  const dRes = await runDirectionPhase(ctx, options, emit, trafficCop)
   if (dRes.skipped) phasesSkipped.push('direction')
   else if (dRes.ok) phasesRun.push('direction')
   else phasesFailed.push('direction')
@@ -915,18 +887,10 @@ async function runScene(
     }
   }
 
-  let aRes: Awaited<ReturnType<typeof runAudioPhase>>
-  let iRes: Awaited<ReturnType<typeof runImagePhase>>
-
-  if (sceneMode) {
-    ;[aRes, iRes] = await Promise.all([
-      runAudioPhase(ctx, options, project, baseUrl, authCookie, emit),
-      runImagePhase(ctx, options, project, baseUrl, authCookie, emit),
-    ])
-  } else {
-    aRes = await runAudioPhase(ctx, options, project, baseUrl, authCookie, emit)
-    iRes = await runImagePhase(ctx, options, project, baseUrl, authCookie, emit)
-  }
+  const [aRes, iRes] = await Promise.all([
+    runAudioPhase(ctx, options, project, baseUrl, authCookie, emit, trafficCop),
+    runImagePhase(ctx, options, project, baseUrl, authCookie, emit, trafficCop),
+  ])
 
   if (aRes.skipped) phasesSkipped.push('audio')
   else if (aRes.ok) phasesRun.push('audio')
@@ -971,6 +935,12 @@ export async function runExpress(
 
   safeEmit(emit, { type: 'start', sceneCount: sceneIndices.length })
 
+  const trafficCop = new ExpressTrafficCop({
+    onThrottle: (lane, max, cooldownMs) => {
+      safeEmit(emit, { type: 'throttle', lane, max, cooldownMs })
+    },
+  })
+
   const tasks = sceneIndices.map((idx: number) => ({
     id: idx,
     execute: async () => {
@@ -984,7 +954,8 @@ export async function runExpress(
         project,
         baseUrl,
         authCookie,
-        emit
+        emit,
+        trafficCop
       )
       if (onSceneComplete) {
         await onSceneComplete(idx, result)
@@ -995,7 +966,7 @@ export async function runExpress(
 
   const results = await processWithConcurrency(
     tasks,
-    EXPRESS_CONCURRENCY,
+    getExpressSceneConcurrency(),
     undefined,
     /* retryFailures */ false
   )

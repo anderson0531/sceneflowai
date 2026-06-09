@@ -10682,10 +10682,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   /**
-   * Run the Storyboard Express pipeline (Direction → Audio → Image per scene,
-   * up to 3 scenes in parallel). Streams SSE events from /api/vision/express
-   * and updates `expressStatus` + `script` in-place per scene so no full
-   * page reload is needed.
+   * Run the Storyboard Express pipeline (Direction, then Audio ∥ Image per scene;
+   * multiple scenes in parallel per EXPRESS_SCENE_CONCURRENCY). A traffic cop
+   * throttles Vertex/TTS lanes on 429 bursts. Streams SSE from /api/vision/express
+   * and updates `expressStatus` + `script` in-place per scene.
    */
   const handleExpressGenerate = useCallback(
     async (options: ExpressConfirmOptions) => {
@@ -10825,6 +10825,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   toast.error(event.errors?.[0] || 'Express preflight failed')
                   break
                 case 'scene-persisted':
+                  break
+                case 'throttle':
+                  console.info(
+                    `[Express] Throttling ${event.lane} lane (max=${event.max}${event.cooldownMs ? `, cooldown ${event.cooldownMs}ms` : ''})`
+                  )
                   break
                 case 'error':
                   console.error('[Express] Stream error:', event.error)
@@ -11094,6 +11099,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 case 'scene-persisted':
                   scenePersisted = true
                   await refreshProjectScript()
+                  break
+                case 'throttle':
+                  console.info(
+                    `[Scene Express] Throttling ${event.lane} lane (max=${event.max}${event.cooldownMs ? `, cooldown ${event.cooldownMs}ms` : ''})`
+                  )
                   break
                 case 'complete':
                   successScenes = event.successScenes ?? 0

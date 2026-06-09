@@ -670,7 +670,7 @@ export function SceneGallery({
                 ) : scenesNeedingExpress === 0 ? (
                   'All scenes complete — open Express and enable Regenerate to redo'
                 ) : (
-                  'Express All Scenes: Direction → Audio → storyboard frames for every scene (~5–15 min)'
+                  'Express All Scenes: Direction → Audio → storyboard frames for every scene (~3–10 min, varies by beat count)'
                 )}
               </TooltipContent>
             </Tooltip>
