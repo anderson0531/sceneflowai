@@ -2,6 +2,11 @@
  * Client helper for Gemini Lyria music generation via /api/tts/google/music.
  */
 
+import {
+  LYRIA_RECITATION_ERROR_CODE,
+  LYRIA_RECITATION_USER_MESSAGE,
+} from '@/lib/audio/lyriaPromptAdapter'
+
 export interface GenerateMusicTrackParams {
   text: string
   duration?: number
@@ -14,6 +19,23 @@ export interface GenerateMusicTrackResult {
   url: string
   size?: number
   duration?: number
+}
+
+export class LyriaRecitationError extends Error {
+  readonly code = LYRIA_RECITATION_ERROR_CODE
+
+  constructor(message = LYRIA_RECITATION_USER_MESSAGE) {
+    super(message)
+    this.name = 'LyriaRecitationError'
+  }
+}
+
+function parseMusicApiError(payload: unknown): string {
+  const body = payload as { code?: string; error?: string; details?: string }
+  if (body.code === LYRIA_RECITATION_ERROR_CODE) {
+    return body.error || LYRIA_RECITATION_USER_MESSAGE
+  }
+  return body.error || body.details || 'Music generation failed'
 }
 
 export async function generateMusicTrack(
@@ -33,11 +55,11 @@ export async function generateMusicTrack(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}))
-    throw new Error(
-      (error as { details?: string; error?: string }).details ||
-        (error as { error?: string }).error ||
-        'Music generation failed'
-    )
+    const message = parseMusicApiError(error)
+    if ((error as { code?: string }).code === LYRIA_RECITATION_ERROR_CODE) {
+      throw new LyriaRecitationError(message)
+    }
+    throw new Error(message)
   }
 
   const data = await response.json()
@@ -76,7 +98,17 @@ export async function generateMusicTrackServer(
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error')
-      console.error('[generateMusicTrackServer] Failed:', errorText)
+      let parsed: { code?: string; error?: string } = {}
+      try {
+        parsed = JSON.parse(errorText) as { code?: string; error?: string }
+      } catch {
+        // keep empty parsed
+      }
+      const message =
+        parsed.code === LYRIA_RECITATION_ERROR_CODE
+          ? parsed.error || LYRIA_RECITATION_USER_MESSAGE
+          : errorText
+      console.error('[generateMusicTrackServer] Failed:', message)
       return null
     }
 

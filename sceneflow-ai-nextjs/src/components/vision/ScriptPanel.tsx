@@ -1933,12 +1933,23 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       if (!skipOverlay) {
         overlayStore?.hide()
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Music Generation] Error:', error)
       if (!skipOverlay) {
         overlayStore?.hide()
       }
-      toast.error(`Failed to generate music: ${error.message}`)
+      const { LyriaRecitationError } = await import('@/lib/audio/musicClient')
+      const message =
+        error instanceof LyriaRecitationError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : 'Music generation failed'
+      toast.error(
+        error instanceof LyriaRecitationError
+          ? message
+          : `Failed to generate music: ${message}`
+      )
     } finally {
       setGeneratingMusic(null)
     }
@@ -2232,9 +2243,20 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       }
       
       audio.play()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Music Playback] Error:', error)
-      alert(`Failed to play music: ${error.message}`)
+      const { LyriaRecitationError } = await import('@/lib/audio/musicClient')
+      const message =
+        error instanceof LyriaRecitationError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : 'Music generation failed'
+      if (error instanceof LyriaRecitationError) {
+        toast.error(message)
+      } else {
+        alert(`Failed to play music: ${message}`)
+      }
     }
   }
 

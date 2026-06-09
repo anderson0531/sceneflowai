@@ -227,6 +227,13 @@ Return JSON with this exact structure:
 
 REMEMBER: ALL dialogue must include [emotional tags] at the beginning.
 
+LYRIA MUSIC RULES (for optimizedScene.music):
+- 10-20 words ONLY
+- Instrumental only (no vocals/lyrics)
+- Format: [genre], [mood], [instruments], [tempo]
+- NO film titles, character names, or visual sync ("as the camera…")
+- NO narrative arcs or timestamps
+
 CRITICAL SUCCESS CRITERIA:
 - The rewritten dialogue must have DIFFERENT CONTENT, not just different wording
 - The changesSummary must describe STRUCTURAL changes (reordering, combining, adding/removing)

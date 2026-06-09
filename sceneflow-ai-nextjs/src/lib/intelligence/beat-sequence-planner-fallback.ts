@@ -8,6 +8,7 @@ import {
   type FilmContext,
   type SceneType,
 } from '@/lib/intelligence/scene-direction-metadata'
+import { adaptPromptForLyria } from '@/lib/audio/lyriaPromptAdapter'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 
@@ -247,6 +248,6 @@ export function ensureSceneMusicFromDirection(
 
   return {
     ...scene,
-    music: { description: `Cinematic score. ${description}` },
+    music: { description: adaptPromptForLyria(description) },
   }
 }

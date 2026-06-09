@@ -1105,7 +1105,8 @@ RULES:
 • NEVER use asterisks (*) or underscores (_) for emphasis in dialogue. Use ALL CAPS instead.
 • Escape quotes in JSON
 • Narration: 1 sentence max, or empty string "" if the scene works without it. Prefer showing through action over telling through narration
-• REWRITE dialogue substantially — don't just change emotion tags`
+• REWRITE dialogue substantially — don't just change emotion tags
+• LYRIA MUSIC RULES (for scene.music): 10-20 words ONLY, instrumental only, format [genre], [mood], [instruments], [tempo]; NO film titles, character names, visual sync, or narrative arcs`
 
   // Token budget: 3500 per scene + 5000 base
   const estimatedTokens = Math.min(32768, batchScenes.length * 3500 + 5000)

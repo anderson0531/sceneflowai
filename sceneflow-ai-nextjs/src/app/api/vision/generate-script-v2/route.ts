@@ -825,6 +825,13 @@ AUDIO FIELD REQUIREMENTS (CRITICAL FOR MOOD AND EMOTION):
 - Think cinematically: music and SFX should enhance the emotional storytelling
 - Descriptions should be 10-20 words, balancing specificity with creative interpretation
 
+LYRIA MUSIC RULES (for scene.music.description):
+- 10-20 words ONLY
+- Instrumental only (no vocals/lyrics)
+- Format: [genre], [mood], [instruments], [tempo]
+- NO film titles, character names, or visual sync ("as the camera…")
+- NO narrative arcs or timestamps
+
 CRITICAL JSON FORMATTING RULES:
 - Return ONLY valid JSON - no markdown, no explanations
 - Property names MUST be double-quoted
@@ -953,6 +960,13 @@ SCRIPT FORMAT REQUIREMENTS (CRITICAL):
 - Add separate "SFX: [description]" line after main action
 - Add separate "Music: [description]" line for background music
 - Keep audio descriptions concise
+
+LYRIA MUSIC RULES (for scene.music.description):
+- 10-20 words ONLY
+- Instrumental only (no vocals/lyrics)
+- Format: [genre], [mood], [instruments], [tempo]
+- NO film titles, character names, or visual sync ("as the camera…")
+- NO narrative arcs or timestamps
 
 CRITICAL JSON FORMATTING RULES:
 - Return ONLY valid JSON - no markdown, no explanations
@@ -1122,6 +1136,13 @@ TECHNICAL REQUIREMENTS:
   ✗ Wrong: "BEN", "Ben", "DR. BEN ANDERSON", "Doctor Ben Anderson"
 • Include "sfx" and "music" for atmosphere
 • Estimate realistic durations based on content
+
+LYRIA MUSIC RULES (for scene.music.description):
+- 10-20 words ONLY
+- Instrumental only (no vocals/lyrics)
+- Format: [genre], [mood], [instruments], [tempo]
+- NO film titles, character names, or visual sync ("as the camera…")
+- NO narrative arcs or timestamps
 
 ${narrationSection}
 
