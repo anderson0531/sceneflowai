@@ -26,6 +26,9 @@ export function mediaRichnessScore(scene: any): number {
       if (isValidStoryboardMediaUrl(line?.storyboardImageUrl)) score += 2
     }
   }
+  for (const beat of scene.beats || []) {
+    if (isValidStoryboardMediaUrl(beat?.storyboardImageUrl)) score += 2
+  }
   for (const frame of scene.storyboardFrames || []) {
     if (isValidStoryboardMediaUrl(frame?.imageUrl)) score += 1
   }

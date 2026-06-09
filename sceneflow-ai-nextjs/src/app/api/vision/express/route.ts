@@ -5,6 +5,11 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { runExpress } from '@/lib/sceneGeneration/expressOrchestrator'
 import type { ExpressEvent, ExpressOptions } from '@/lib/sceneGeneration/types'
+import {
+  auditStoryboardSceneMedia,
+  mergeExpressOrchestratedScenes,
+} from '@/lib/storyboard/mergeSceneMedia'
+import { resolveStoryboardScenes } from '@/lib/storyboard/resolveStoryboardScenes'
 
 export const runtime = 'nodejs'
 export const maxDuration = 600
@@ -19,6 +24,100 @@ interface ExpressRequest {
   imageQuality?: string
   mode?: 'batch' | 'scene'
   sceneIndices?: number[]
+}
+
+function injectResolvedScenesIntoProject(project: any, resolvedScenes: any[]): void {
+  if (!resolvedScenes.length) return
+  const metadata = project.metadata || {}
+  const visionPhase = metadata.visionPhase || {}
+  const nested = !!visionPhase?.script?.script?.scenes?.length
+
+  if (!metadata.visionPhase) metadata.visionPhase = visionPhase
+  if (!metadata.visionPhase.script) metadata.visionPhase.script = visionPhase.script || {}
+
+  if (nested) {
+    if (!metadata.visionPhase.script.script) metadata.visionPhase.script.script = {}
+    metadata.visionPhase.script.script.scenes = resolvedScenes
+  } else {
+    metadata.visionPhase.script.scenes = resolvedScenes
+  }
+
+  project.metadata = metadata
+}
+
+function getOrchestratedScenes(project: any): any[] {
+  const visionPhase = project.metadata?.visionPhase || {}
+  return (
+    visionPhase?.script?.script?.scenes ||
+    visionPhase?.script?.scenes ||
+    []
+  )
+}
+
+function getFreshDbScenes(freshVisionPhase: any): any[] {
+  return (
+    freshVisionPhase?.script?.script?.scenes ||
+    freshVisionPhase?.script?.scenes ||
+    []
+  )
+}
+
+async function persistExpressScenes(
+  projectId: string,
+  orchestratedProject: any,
+  options: ExpressOptions,
+  auditLabel?: string
+): Promise<void> {
+  const freshProject = await Project.findByPk(projectId)
+  if (!freshProject) return
+
+  const freshMetadata = freshProject.metadata || {}
+  const freshVisionPhase = freshMetadata.visionPhase || {}
+  const nested = !!freshVisionPhase?.script?.script?.scenes?.length
+
+  const freshDbScenes = getFreshDbScenes(freshVisionPhase)
+  const orchestratedScenes = getOrchestratedScenes(orchestratedProject)
+
+  if (auditLabel) {
+    console.log(`[Express] Storyboard audit ${auditLabel}:`, {
+      freshDb: auditStoryboardSceneMedia(freshDbScenes),
+      orchestrated: auditStoryboardSceneMedia(orchestratedScenes),
+    })
+  }
+
+  const mergedScenes = mergeExpressOrchestratedScenes(
+    orchestratedScenes,
+    freshDbScenes
+  )
+
+  if (auditLabel) {
+    console.log(`[Express] Storyboard audit after merge ${auditLabel}:`, {
+      merged: auditStoryboardSceneMedia(mergedScenes),
+    })
+  }
+
+  await freshProject.update({
+    metadata: {
+      ...freshMetadata,
+      visionPhase: {
+        ...freshVisionPhase,
+        artStyle: options.artStyle || freshVisionPhase.artStyle || 'photorealistic',
+        scenes: mergedScenes,
+        script: nested
+          ? {
+              ...freshVisionPhase.script,
+              script: {
+                ...freshVisionPhase.script?.script,
+                scenes: mergedScenes,
+              },
+            }
+          : {
+              ...freshVisionPhase.script,
+              scenes: mergedScenes,
+            },
+      },
+    },
+  })
 }
 
 export async function POST(req: NextRequest) {
@@ -64,6 +163,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 })
   }
 
+  // Merge fragmented storyboard storage before orchestrator reads scenes
+  const visionPhase = project.metadata?.visionPhase || {}
+  const resolvedScenes = resolveStoryboardScenes({
+    script: visionPhase.script,
+    visionPhaseScenes: visionPhase.scenes,
+  })
+  if (resolvedScenes.length > 0) {
+    injectResolvedScenesIntoProject(project, resolvedScenes)
+  }
+
   const protocol = req.headers.get('x-forwarded-proto') || 'http'
   const host = req.headers.get('host') || 'localhost:3000'
   const baseUrl = `${protocol}://${host}`
@@ -104,53 +213,35 @@ export async function POST(req: NextRequest) {
           baseUrl,
           authCookie,
           emit: send,
+          onSceneComplete: async (sceneIndex, summary) => {
+            if (!summary.ok) return
+            try {
+              await persistExpressScenes(projectId, project, options)
+              send({
+                type: 'scene-persisted',
+                sceneIndex,
+                sceneNumber: sceneIndex + 1,
+              })
+            } catch (persistErr: any) {
+              console.error(
+                `[Express] Checkpoint persist failed for scene ${sceneIndex + 1}:`,
+                persistErr?.message || persistErr
+              )
+            }
+          },
         })
 
-        // Single atomic DB write at the end
-        const freshProject = await Project.findByPk(projectId)
-        if (freshProject) {
-          const freshMetadata = freshProject.metadata || {}
-          const freshVisionPhase = freshMetadata.visionPhase || {}
-          const nested = !!freshVisionPhase?.script?.script?.scenes?.length
-          const orchestratedScenes =
-            project.metadata?.visionPhase?.script?.script?.scenes ||
-            project.metadata?.visionPhase?.script?.scenes ||
-            []
+        // Final atomic DB write — orchestrated scenes are canonical
+        await persistExpressScenes(
+          projectId,
+          project,
+          options,
+          'before final save'
+        )
 
-          await freshProject.update({
-            metadata: {
-              ...freshMetadata,
-              visionPhase: {
-                ...freshVisionPhase,
-                artStyle: options.artStyle || freshVisionPhase.artStyle || 'photorealistic',
-                script: nested
-                  ? {
-                      ...freshVisionPhase.script,
-                      script: {
-                        ...freshVisionPhase.script?.script,
-                        scenes: orchestratedScenes,
-                      },
-                    }
-                  : {
-                      ...freshVisionPhase.script,
-                      scenes: orchestratedScenes,
-                    },
-              },
-            },
-          })
-
-          console.log(
-            `[Express] Atomic DB update complete (mode=${options.mode}, success=${result.successScenes}, failed=${result.failedScenes})`
-          )
-
-          if (options.mode === 'scene' && sceneIndices?.length === 1) {
-            send({
-              type: 'scene-persisted',
-              sceneIndex: sceneIndices[0],
-              sceneNumber: sceneIndices[0] + 1,
-            })
-          }
-        }
+        console.log(
+          `[Express] Atomic DB update complete (mode=${options.mode}, success=${result.successScenes}, failed=${result.failedScenes})`
+        )
       } catch (error: any) {
         console.error('[Express] Orchestrator error:', error)
         send({ type: 'error', error: error?.message || String(error) })

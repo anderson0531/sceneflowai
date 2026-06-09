@@ -63,6 +63,11 @@ export interface RunExpressParams {
   baseUrl: string
   authCookie?: string
   emit: ExpressEmit
+  /** Optional hook invoked after each scene completes (used for checkpoint DB persist). */
+  onSceneComplete?: (
+    sceneIndex: number,
+    summary: ExpressPerSceneSummary
+  ) => void | Promise<void>
 }
 
 interface SceneRunContext {
@@ -956,7 +961,7 @@ async function runScene(
 export async function runExpress(
   params: RunExpressParams
 ): Promise<ExpressResult> {
-  const { project, options, baseUrl, authCookie, emit } = params
+  const { project, options, baseUrl, authCookie, emit, onSceneComplete } = params
   const { scenes } = getScenes(project)
 
   const sceneIndices =
@@ -968,8 +973,8 @@ export async function runExpress(
 
   const tasks = sceneIndices.map((idx: number) => ({
     id: idx,
-    execute: () =>
-      runScene(
+    execute: async () => {
+      const result = await runScene(
         {
           sceneIndex: idx,
           sceneNumber: idx + 1,
@@ -980,7 +985,12 @@ export async function runExpress(
         baseUrl,
         authCookie,
         emit
-      ),
+      )
+      if (onSceneComplete) {
+        await onSceneComplete(idx, result)
+      }
+      return result
+    },
   }))
 
   const results = await processWithConcurrency(

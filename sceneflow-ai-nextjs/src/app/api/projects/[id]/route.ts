@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { stripBase64FromMetadata, calculateBase64Size } from '@/lib/storage/mediaStorage'
-import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
+import { mergeSceneArraysForPersistence } from '@/lib/storyboard/mergeSceneMedia'
 
 // Increase timeout for large project updates
 export const maxDuration = 60 // 60 seconds timeout
@@ -289,99 +289,64 @@ export async function PUT(
               ...incomingScript.script
             }
             
-            // Deep merge scenes array - preserve fields like sceneDirection from existing scenes
-            // Use ID-based matching when available, fall back to index-based for legacy scenes
+            // Deep merge scenes array - preserve storyboard media and sceneDirection
             if (incomingScript.script.scenes && existingScript.script.scenes) {
               const existingScenes = existingScript.script.scenes
               const incomingScenes = incomingScript.script.scenes
-              
-              // Create a map of existing scenes by ID for quick lookup
-              const existingScenesById = new Map(
-                existingScenes
-                  .filter((s: any) => s.id || s.sceneId)
-                  .map((s: any) => [s.id || s.sceneId, s])
+              const deletedSceneIds = body.deletedSceneIds || []
+
+              const mergedScenes = mergeSceneArraysForPersistence(
+                existingScenes,
+                incomingScenes,
+                { deletedSceneIds }
               )
-              
-              mergedMetadata.visionPhase.script.script.scenes = incomingScenes.map((incomingScene: any, idx: number) => {
-                // For new scenes (like cinematic scenes), just return as-is
-                const incomingId = incomingScene.id || incomingScene.sceneId
-                
-                // If incoming scene has an ID that doesn't exist in existing scenes, it's new
-                if (incomingId && !existingScenesById.has(incomingId)) {
-                  // Check if it's a cinematic scene (starts with 'cinematic-')
-                  if (incomingId.startsWith('cinematic-')) {
-                    console.log('[Projects PUT] Preserving new cinematic scene:', incomingId)
-                    return incomingScene
-                  }
-                }
-                
-                // Try to find existing scene by ID first
-                let existingScene = incomingId ? existingScenesById.get(incomingId) : null
-                
-                // Fall back to index-based matching for legacy scenes without IDs
-                if (!existingScene && idx < existingScenes.length) {
-                  const existingAtIdx = existingScenes[idx]
-                  // Only use index match if existing scene also has no ID
-                  if (!existingAtIdx.id && !existingAtIdx.sceneId) {
-                    existingScene = existingAtIdx
-                  }
-                }
-                
-                if (!existingScene) return incomingScene
-                
-                // Merge scene data, preserving sceneDirection and storyboard media when incoming lacks them
-                const spread = {
-                  ...existingScene,
-                  ...incomingScene,
-                  sceneDirection: incomingScene.sceneDirection || existingScene.sceneDirection
-                }
-                return mergeScenePreservingMedia(existingScene, spread)
-              })
-              
-              // Preserve existing scenes NOT in incoming payload — UNLESS explicitly deleted.
-              // The client sends body.deletedSceneIds[] when a user intentionally removes a scene.
-              // Without this check, the preservation logic re-adds every scene the client removed.
-              const deletedSceneIds = new Set<string>(body.deletedSceneIds || [])
-              
-              const incomingScenesById = new Map(
-                incomingScenes
-                  .filter((s: any) => s.id || s.sceneId)
-                  .map((s: any) => [s.id || s.sceneId, s])
+
+              mergedMetadata.visionPhase.script.script.scenes = mergedScenes
+
+              const preservedScenesCount = Math.max(
+                0,
+                mergedScenes.length - incomingScenes.length
               )
-              
-              const preservedScenes = existingScenes.filter((existingScene: any) => {
-                const existingId = existingScene.id || existingScene.sceneId
-                if (!existingId) return false
-                // Don't preserve scenes the user explicitly deleted
-                if (deletedSceneIds.has(existingId)) {
-                  console.log('[Projects PUT] Scene explicitly deleted by user, skipping preservation:', existingId)
-                  return false
-                }
-                // Preserve scenes with IDs that aren't in the incoming payload (stale client protection)
-                return !incomingScenesById.has(existingId)
-              })
-              
-              if (preservedScenes.length > 0) {
-                console.log('[Projects PUT] Preserving existing scenes not in incoming payload:', 
-                  preservedScenes.map((s: any) => s.id || s.sceneId || `scene-${s.sceneNumber}`))
-                
-                // Append preserved scenes and re-sort by sceneNumber
-                mergedMetadata.visionPhase.script.script.scenes = [
-                  ...mergedMetadata.visionPhase.script.script.scenes,
-                  ...preservedScenes
-                ].sort((a: any, b: any) => (a.sceneNumber || 0) - (b.sceneNumber || 0))
-              }
-              
+
               console.log('[Projects PUT] Deep merged scenes:', {
                 existingScenesCount: existingScenes.length,
                 incomingScenesCount: incomingScenes.length,
-                preservedScenesCount: preservedScenes.length,
-                mergedScenesCount: mergedMetadata.visionPhase.script.script.scenes.length,
-                cinematicScenes: mergedMetadata.visionPhase.script.script.scenes.filter((s: any) => s.cinematicType).length,
-                mergedScenesWithDirection: mergedMetadata.visionPhase.script.script.scenes.filter((s: any) => !!s.sceneDirection).length
+                preservedScenesCount,
+                mergedScenesCount: mergedScenes.length,
+                cinematicScenes: mergedScenes.filter((s: any) => s.cinematicType).length,
+                mergedScenesWithDirection: mergedScenes.filter((s: any) => !!s.sceneDirection).length,
               })
+
+              // Keep legacy mirror in sync with canonical script scenes
+              mergedMetadata.visionPhase.scenes = mergedScenes
             }
           }
+        }
+
+        // Sync or deep-merge visionPhase.scenes legacy mirror (never shallow-replace)
+        const canonicalScriptScenes = mergedMetadata.visionPhase?.script?.script?.scenes
+        const incomingLegacyScenes = body.metadata.visionPhase?.scenes
+        const existingLegacyScenes = existingMetadata.visionPhase?.scenes
+
+        if (Array.isArray(canonicalScriptScenes) && canonicalScriptScenes.length > 0) {
+          mergedMetadata.visionPhase.scenes = canonicalScriptScenes
+        } else if (
+          Array.isArray(incomingLegacyScenes) &&
+          incomingLegacyScenes.length > 0 &&
+          Array.isArray(existingLegacyScenes) &&
+          existingLegacyScenes.length > 0
+        ) {
+          const mergedLegacyScenes = mergeSceneArraysForPersistence(
+            existingLegacyScenes,
+            incomingLegacyScenes,
+            { deletedSceneIds: body.deletedSceneIds || [] }
+          )
+          mergedMetadata.visionPhase.scenes = mergedLegacyScenes
+          console.log('[Projects PUT] Deep merged visionPhase.scenes (legacy mirror):', {
+            existingCount: existingLegacyScenes.length,
+            incomingCount: incomingLegacyScenes.length,
+            mergedCount: mergedLegacyScenes.length,
+          })
         }
         
         // CRITICAL: Deep merge characters to preserve referenceImage, voiceConfig, etc.

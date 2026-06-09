@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { mergeScenesForScriptSave } from '@/lib/audio/cleanupAudio'
 import {
+  mergeExpressOrchestratedScenes,
+  mergeSceneArraysForPersistence,
   mergeScenePreservingMedia,
   pickDialogueAudioEntry,
   storyboardBlobUrlTimestamp,
@@ -151,5 +153,171 @@ describe('mergeScenesForScriptSave media preservation', () => {
     const merged = mergeScenesForScriptSave(canonical, incoming)
     expect(merged[1].imageUrl).toBe('https://example.com/2.png')
     expect(merged[1].heading).toBe('B edited')
+  })
+})
+
+describe('mergeSceneArraysForPersistence', () => {
+  it('preserves beat storyboardImageUrl when express incoming scene omits it', () => {
+    const existing = [
+      {
+        id: 's2',
+        beats: [
+          {
+            beatId: 'bt_1',
+            kind: 'dialogue',
+            storyboardImageUrl: 'https://example.com/saved.jpg',
+          },
+        ],
+      },
+      {
+        id: 's3',
+        beats: [
+          {
+            beatId: 'bt_2',
+            kind: 'dialogue',
+            storyboardImageUrl: 'https://example.com/s3.jpg',
+          },
+        ],
+      },
+    ]
+    const incoming = [
+      { id: 's2', beats: [{ beatId: 'bt_1', kind: 'dialogue', line: 'Updated' }] },
+      {
+        id: 's4',
+        beats: [
+          {
+            beatId: 'bt_new',
+            kind: 'dialogue',
+            storyboardImageUrl: 'https://example.com/s4.jpg',
+          },
+        ],
+      },
+    ]
+
+    const merged = mergeSceneArraysForPersistence(existing, incoming)
+    expect(merged).toHaveLength(3)
+    expect(merged[0].beats[0].storyboardImageUrl).toBe('https://example.com/saved.jpg')
+    expect(merged[1].beats[0].storyboardImageUrl).toBe('https://example.com/s4.jpg')
+    expect(merged.find((s: any) => s.id === 's3')?.beats[0].storyboardImageUrl).toBe(
+      'https://example.com/s3.jpg'
+    )
+  })
+
+  it('preserves visionPhase.scenes dialogue frames when incoming legacy mirror omits them', () => {
+    const existing = [
+      {
+        id: 's2',
+        dialogue: [{ character: 'A', line: 'Hi', storyboardImageUrl: 'https://example.com/d0.png' }],
+      },
+    ]
+    const incoming = [{ id: 's2', dialogue: [{ character: 'A', line: 'Hi edited' }] }]
+
+    const merged = mergeSceneArraysForPersistence(existing, incoming)
+    expect(merged[0].dialogue[0].storyboardImageUrl).toBe('https://example.com/d0.png')
+    expect(merged[0].dialogue[0].line).toBe('Hi edited')
+  })
+})
+
+describe('mergeExpressOrchestratedScenes', () => {
+  it('keeps orchestrated beat frames and audio when fresh DB lacks them', () => {
+    const freshDb = [
+      {
+        id: 's2',
+        heading: 'Stale heading',
+        beats: [{ beatId: 'bt_1', kind: 'dialogue', line: 'Old' }],
+      },
+    ]
+    const orchestrated = [
+      {
+        id: 's2',
+        heading: 'Express heading',
+        beats: [
+          {
+            beatId: 'bt_1',
+            kind: 'dialogue',
+            line: 'New',
+            storyboardImageUrl: 'https://example.com/express-beat.jpg',
+          },
+        ],
+        narrationAudio: {
+          en: { url: 'https://example.com/narration.mp3', duration: 5 },
+        },
+      },
+    ]
+
+    const merged = mergeExpressOrchestratedScenes(orchestrated, freshDb)
+    expect(merged).toHaveLength(1)
+    expect(merged[0].heading).toBe('Express heading')
+    expect(merged[0].beats[0].storyboardImageUrl).toBe('https://example.com/express-beat.jpg')
+    expect(merged[0].narrationAudio.en.url).toBe('https://example.com/narration.mp3')
+  })
+
+  it('preserves orchestrated frames when stale DB has old direction but no new frames', () => {
+    const freshDb = [
+      {
+        id: 's3',
+        sceneDirection: { camera: 'old cam', scene: 'old scene', talent: 'old', segmentPromptBundle: [] },
+        imageUrl: 'https://example.com/stale-establishing.jpg',
+        beats: [{ beatId: 'bt_2', kind: 'dialogue', line: 'Stale' }],
+      },
+    ]
+    const orchestrated = [
+      {
+        id: 's3',
+        sceneDirection: {
+          camera: 'new cam',
+          scene: 'new scene',
+          talent: 'new',
+          segmentPromptBundle: [{ segmentId: 'seg-1' }],
+        },
+        imageUrl: 'https://example.com/new-establishing.jpg',
+        beats: [
+          {
+            beatId: 'bt_2',
+            kind: 'dialogue',
+            line: 'Fresh',
+            storyboardImageUrl: 'https://example.com/new-beat.jpg',
+          },
+        ],
+      },
+    ]
+
+    const merged = mergeExpressOrchestratedScenes(orchestrated, freshDb)
+    expect(merged[0].sceneDirection.camera).toBe('new cam')
+    expect(merged[0].imageUrl).toBe('https://example.com/new-establishing.jpg')
+    expect(merged[0].beats[0].storyboardImageUrl).toBe('https://example.com/new-beat.jpg')
+  })
+
+  it('keeps orchestrated beat frames when stale DB has a newer concurrent-save URL', () => {
+    const freshDb = [
+      {
+        id: 's2',
+        beats: [
+          {
+            beatId: 'bt_1',
+            storyboardImageUrl:
+              'https://x.public.blob.vercel-storage.com/images/frames/p/stale-save/1779527367355.jpeg',
+          },
+        ],
+      },
+    ]
+    const orchestrated = [
+      {
+        id: 's2',
+        beats: [
+          {
+            beatId: 'bt_1',
+            storyboardImageUrl:
+              'https://x.public.blob.vercel-storage.com/images/frames/p/express/1779500000000.jpeg',
+          },
+        ],
+      },
+    ]
+
+    const wrongMerge = mergeSceneArraysForPersistence(freshDb, orchestrated)
+    const expressMerge = mergeExpressOrchestratedScenes(orchestrated, freshDb)
+
+    expect(wrongMerge[0].beats[0].storyboardImageUrl).toContain('1779527367355')
+    expect(expressMerge[0].beats[0].storyboardImageUrl).toContain('1779500000000')
   })
 })

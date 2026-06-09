@@ -2,6 +2,8 @@
  * Preserve storyboard image fields when merging stale/partial scene snapshots.
  */
 
+import { mergeScenePreservingAudio } from '@/lib/audio/cleanupAudio'
+
 const DIALOGUE_STORYBOARD_URL_KEYS = ['storyboardImageUrl', 'storyboardImageGcsPath'] as const
 const DIALOGUE_STORYBOARD_PROMPT_KEYS = ['storyboardImagePrompt'] as const
 
@@ -326,15 +328,162 @@ export function mergeScenePreservingMedia(canonical: any, incoming: any): any {
   return merged
 }
 
+export interface MergeSceneArraysOptions {
+  deletedSceneIds?: string[]
+}
+
+/**
+ * Deep-merge incoming scene snapshots onto existing DB scenes.
+ * Preserves storyboard media, sceneDirection, and scenes missing from stale payloads.
+ */
+export function mergeSceneArraysForPersistence(
+  existingScenes: any[],
+  incomingScenes: any[],
+  options?: MergeSceneArraysOptions
+): any[] {
+  if (!Array.isArray(incomingScenes) || incomingScenes.length === 0) {
+    return Array.isArray(existingScenes) ? existingScenes : []
+  }
+  if (!Array.isArray(existingScenes) || existingScenes.length === 0) {
+    return incomingScenes
+  }
+
+  const existingScenesById = new Map(
+    existingScenes
+      .filter((s: any) => s.id || s.sceneId)
+      .map((s: any) => [s.id || s.sceneId, s])
+  )
+
+  const merged = incomingScenes.map((incomingScene: any, idx: number) => {
+    const incomingId = incomingScene.id || incomingScene.sceneId
+
+    if (incomingId && !existingScenesById.has(incomingId)) {
+      if (incomingId.startsWith('cinematic-')) {
+        return incomingScene
+      }
+    }
+
+    let existingScene = incomingId ? existingScenesById.get(incomingId) : null
+
+    if (!existingScene && idx < existingScenes.length) {
+      const existingAtIdx = existingScenes[idx]
+      if (!existingAtIdx.id && !existingAtIdx.sceneId) {
+        existingScene = existingAtIdx
+      }
+    }
+
+    if (!existingScene) return incomingScene
+
+    const spread = {
+      ...existingScene,
+      ...incomingScene,
+      sceneDirection: incomingScene.sceneDirection || existingScene.sceneDirection,
+    }
+    return mergeScenePreservingMedia(existingScene, spread)
+  })
+
+  const deletedSceneIds = new Set<string>(options?.deletedSceneIds || [])
+  const incomingScenesById = new Map(
+    incomingScenes
+      .filter((s: any) => s.id || s.sceneId)
+      .map((s: any) => [s.id || s.sceneId, s])
+  )
+
+  const preservedScenes = existingScenes.filter((existingScene: any) => {
+    const existingId = existingScene.id || existingScene.sceneId
+    if (!existingId) return false
+    if (deletedSceneIds.has(existingId)) return false
+    return !incomingScenesById.has(existingId)
+  })
+
+  if (preservedScenes.length === 0) return merged
+
+  return [...merged, ...preservedScenes].sort(
+    (a: any, b: any) => (a.sceneNumber || 0) - (b.sceneNumber || 0)
+  )
+}
+
+function findMatchingSceneInArray(
+  scenes: any[],
+  target: any,
+  index: number
+): any | null {
+  const targetId = target?.id || target?.sceneId
+  if (targetId) {
+    const byId = scenes.find((s) => (s?.id || s?.sceneId) === targetId)
+    if (byId) return byId
+  }
+  if (index < scenes.length) {
+    const atIdx = scenes[index]
+    if (!targetId && (!atIdx?.id && !atIdx?.sceneId)) return atIdx
+    if (targetId && (atIdx?.id || atIdx?.sceneId) === targetId) return atIdx
+  }
+  return null
+}
+
+/**
+ * Merge Express orchestrator output with a fresh DB snapshot.
+ * Orchestrated scenes are authoritative — stale concurrent DB writes must not
+ * overwrite direction/audio/images produced during the express run.
+ */
+export function mergeExpressOrchestratedScenes(
+  orchestratedScenes: any[],
+  freshDbScenes: any[]
+): any[] {
+  if (!Array.isArray(orchestratedScenes) || orchestratedScenes.length === 0) {
+    return Array.isArray(freshDbScenes) ? freshDbScenes : []
+  }
+  if (!Array.isArray(freshDbScenes) || freshDbScenes.length === 0) {
+    return orchestratedScenes
+  }
+
+  const merged = orchestratedScenes.map((orchScene, idx) => {
+    const freshScene = findMatchingSceneInArray(freshDbScenes, orchScene, idx)
+    if (!freshScene) return orchScene
+
+    const spread = {
+      ...freshScene,
+      ...orchScene,
+      sceneDirection: orchScene.sceneDirection || freshScene.sceneDirection,
+    }
+    const withMedia = mergeScenePreservingMedia(orchScene, spread)
+    return mergeScenePreservingAudio(orchScene, withMedia)
+  })
+
+  const orchestratedIds = new Set(
+    orchestratedScenes
+      .filter((s) => s?.id || s?.sceneId)
+      .map((s) => s.id || s.sceneId)
+  )
+
+  const preservedFromDb = freshDbScenes.filter((freshScene) => {
+    const id = freshScene?.id || freshScene?.sceneId
+    if (!id) return false
+    return !orchestratedIds.has(id)
+  })
+
+  if (preservedFromDb.length === 0) return merged
+
+  return [...merged, ...preservedFromDb].sort(
+    (a: any, b: any) => (a.sceneNumber || 0) - (b.sceneNumber || 0)
+  )
+}
+
 /** Audit helper — counts media fields per scene for debugging fragmented storage. */
 export function auditStoryboardSceneMedia(scenes: any[]): Array<{
   index: number
   sceneId?: string
   hasImageUrl: boolean
+  beatFrames: number
   dialogueFrames: number
   segmentDialogueFrames: number
 }> {
   return scenes.map((scene, index) => {
+    const beats = Array.isArray(scene?.beats) ? scene.beats : []
+    const beatFrames = beats.filter((b: any) =>
+      isValidStoryboardMediaUrl(b?.storyboardImageUrl)
+    ).length
+
     const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
     const dialogueFrames = dialogue.filter((d: any) =>
       isValidStoryboardMediaUrl(d?.storyboardImageUrl)
@@ -351,6 +500,7 @@ export function auditStoryboardSceneMedia(scenes: any[]): Array<{
       index,
       sceneId: scene?.id || scene?.sceneId,
       hasImageUrl: isValidStoryboardMediaUrl(scene?.imageUrl),
+      beatFrames,
       dialogueFrames,
       segmentDialogueFrames,
     }

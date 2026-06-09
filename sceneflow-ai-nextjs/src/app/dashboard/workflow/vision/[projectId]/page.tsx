@@ -615,6 +615,53 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     return true
   }, [characters, serializedProjectSave])
 
+  /** Reconcile script scenes from project metadata (same logic as loadProject media merge). */
+  const rehydrateScriptFromProject = useCallback(async (
+    proj: any,
+    options?: { mergeClientScenes?: boolean; repairIfRicher?: boolean }
+  ) => {
+    const visionPhase = proj?.metadata?.visionPhase
+    const loadedScript = visionPhase?.script
+    if (!loadedScript?.script) return
+
+    const dbCanonicalScenes = loadedScript.script.scenes || []
+    let baseScenes = dbCanonicalScenes
+
+    if (options?.mergeClientScenes) {
+      const clientScenes = scriptRef.current?.script?.scenes
+      if (Array.isArray(clientScenes) && clientScenes.length > 0) {
+        baseScenes = mergeScenesForScriptSave(dbCanonicalScenes, clientScenes)
+      }
+    }
+
+    const resolvedScenes = resolveStoryboardScenes({
+      script: {
+        ...loadedScript,
+        script: { ...loadedScript.script, scenes: baseScenes },
+      },
+      visionPhaseScenes: visionPhase?.scenes,
+    })
+    const useResolved =
+      totalStoryboardMediaScore(resolvedScenes) >
+      totalStoryboardMediaScore(baseScenes)
+    const finalScenes = useResolved ? resolvedScenes : baseScenes
+
+    const nextScript = {
+      ...loadedScript,
+      script: { ...loadedScript.script, scenes: finalScenes },
+    }
+    setScript(sanitizeScriptDialogueLines(nextScript))
+    setScriptEditedAt(Date.now())
+
+    if (options?.repairIfRicher) {
+      const dbScore = totalStoryboardMediaScore(dbCanonicalScenes)
+      const finalScore = totalStoryboardMediaScore(finalScenes)
+      if (finalScore > dbScore) {
+        await persistVisionScriptScenes(finalScenes, 'rehydrateScriptFromProject-repair')
+      }
+    }
+  }, [persistVisionScriptScenes])
+
   
   // Collapsible sidebar sections
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -5838,13 +5885,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               })
             }
             try {
-              await fetch(`/api/projects/${projectId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  metadata: finalMetadata
-                })
-              })
+              await serializedProjectSave(
+                { metadata: finalMetadata },
+                'loadProject-migration'
+              )
             } catch (error) {
               console.warn('[loadProject] Failed to save script migrations:', error)
             }
@@ -6199,20 +6243,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   }
                 : loadedScript
 
-              await fetch(`/api/projects/${projectId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+              await serializedProjectSave(
+                {
                   metadata: {
                     ...proj.metadata,
                     visionPhase: {
                       ...visionPhase,
                       scenes: finalScenes,
                       script: nextScript,
-                    }
-                  }
-                })
-              })
+                    },
+                  },
+                },
+                'loadProject-mediaRepair'
+              )
 
               if (nextScript) {
                 loadedScript = nextScript
@@ -8293,7 +8336,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     console.log('[handleGenerateSceneImage] selectedCharacters:', selectedCharacters)
     console.log('[handleGenerateSceneImage] options:', options)
     
-    const scene = script?.script?.scenes?.[sceneIdx]
+    const currentScript = scriptRef.current || script
+    const scene = currentScript?.script?.scenes?.[sceneIdx]
     console.log('[handleGenerateSceneImage] Scene found:', !!scene)
     console.log('[handleGenerateSceneImage] Scene fields:', scene ? {
       hasVisualDescription: !!scene.visualDescription,
@@ -8462,7 +8506,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
       
       // Update scene with image and workflow sync hashes
-      const updatedScenes = [...(script.script.scenes || [])]
+      const latestScript = scriptRef.current || script
+      const updatedScenes = [...(latestScript?.script?.scenes || [])]
       updatedScenes[sceneIdx] = stampPreVisContentHash({
         ...applyEstablishingImageToScene(
           updatedScenes[sceneIdx],
@@ -8475,37 +8520,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       
       // Update local state
       setScript({
-        ...script,
+        ...latestScript,
         script: {
-          ...script.script,
+          ...latestScript.script,
           scenes: updatedScenes
         }
       })
       
-      // Persist to database
-      // CRITICAL: Use current `characters` state instead of stale project.metadata.visionPhase.characters
-      // This prevents wardrobe updates from being overwritten by stale project metadata
-      const { characters: _staleCharacters, ...visionPhaseWithoutCharacters } = project?.metadata?.visionPhase || {}
-      await fetch(`/api/projects/${project?.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          metadata: {
-            ...project?.metadata,
-            visionPhase: {
-              ...visionPhaseWithoutCharacters,
-              characters: characters, // Use current state, not stale project.metadata
-              script: {
-                ...script,
-                script: {
-                  ...script.script,
-                  scenes: updatedScenes
-                }
-              }
-            }
-          }
-        })
-      })
+      const saved = await persistVisionScriptScenes(updatedScenes, 'handleGenerateSceneImage')
+      if (!saved) {
+        try { const { toast } = require('sonner'); toast.error('Scene image generated but failed to save') } catch {}
+        return
+      }
       
       try { const { toast } = require('sonner'); toast.success('Scene image generated!') } catch {}
     } catch (error) {
@@ -10846,11 +10872,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (refreshed.ok) {
             const data = await refreshed.json()
             const proj = data.project || data
-            const refreshedScript = proj?.metadata?.visionPhase?.script
-            if (refreshedScript) {
-              setScript(refreshedScript)
-              setScriptEditedAt(Date.now())
-            }
+            await rehydrateScriptFromProject(proj, {
+              mergeClientScenes: true,
+              repairIfRicher: true,
+            })
           }
         } catch (refreshErr) {
           console.warn('[Express] Failed to refresh project after run:', refreshErr)
@@ -10862,7 +10887,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setIsExpressRunning(false)
       }
     },
-    [projectId, script, isExpressRunning, setShowSceneGallery, imageQuality]
+    [projectId, script, isExpressRunning, setShowSceneGallery, imageQuality, rehydrateScriptFromProject]
   )
 
   const handleSyncPreVisToScript = useCallback(
@@ -10904,7 +10929,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
    * per-scene checkpoint persist. Target <60s for a typical scene.
    */
   const handleExpressSceneGenerate = useCallback(
-    async (sceneIndex: number, language: string) => {
+    async (
+      sceneIndex: number,
+      language: string,
+      options?: { regenerate?: boolean }
+    ) => {
       if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
       if (isExpressRunning) return
 
@@ -10970,11 +10999,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (refreshed.ok) {
             const data = await refreshed.json()
             const proj = data.project || data
-            const refreshedScript = proj?.metadata?.visionPhase?.script
-            if (refreshedScript) {
-              setScript(refreshedScript)
-              setScriptEditedAt(Date.now())
-            }
+            await rehydrateScriptFromProject(proj, {
+              mergeClientScenes: true,
+              repairIfRicher: true,
+            })
           }
         } catch (refreshErr) {
           console.warn('[Scene Express] Failed to refresh project:', refreshErr)
@@ -10993,7 +11021,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             artStyle: lockedArtStyle || 'photorealistic',
             includeMusic: false,
             includeSFX: true,
-            regenerate: false,
+            regenerate: !!options?.regenerate,
             imageQuality,
           }),
         })
@@ -11100,7 +11128,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setIsExpressRunning(false)
       }
     },
-    [projectId, script, isExpressRunning, lockedArtStyle, imageQuality]
+    [projectId, script, isExpressRunning, lockedArtStyle, imageQuality, rehydrateScriptFromProject]
   )
 
   // Delete specific audio from a scene
@@ -11715,6 +11743,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       const currentScript = scriptRef.current || script
       const existingMetadata = currentProject?.metadata || {}
       const existingVisionPhase = existingMetadata.visionPhase || {}
+
+      const canonicalScenes = currentScript?.script?.scenes || []
+      const mergedScenes =
+        canonicalScenes.length > 0 && updatedScenes.length > 0
+          ? mergeScenesForScriptSave(canonicalScenes, updatedScenes)
+          : updatedScenes
       
       const scriptUpdatedAt = new Date().toISOString()
       const interimMetadata = {
@@ -11725,10 +11759,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ...currentScript,
             script: {
               ...currentScript?.script,
-              scenes: updatedScenes
+              scenes: mergedScenes
             }
           },
-          scenes: updatedScenes,
+          scenes: mergedScenes,
           scriptUpdatedAt
         }
       }

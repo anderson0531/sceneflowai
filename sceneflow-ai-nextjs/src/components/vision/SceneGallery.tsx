@@ -37,7 +37,14 @@ import {
   ExpressConfirmDialog,
   type ExpressConfirmOptions,
 } from './ExpressConfirmDialog'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
 import { useStore } from '@/store/useStore'
 import {
@@ -140,7 +147,11 @@ interface SceneGalleryProps {
    */
   onExpressGenerate?: (options: ExpressConfirmOptions) => Promise<void> | void
   /** Per-scene fast Express (mode=scene). */
-  onExpressSceneGenerate?: (sceneIndex: number, language: string) => Promise<void> | void
+  onExpressSceneGenerate?: (
+    sceneIndex: number,
+    language: string,
+    options?: { regenerate?: boolean }
+  ) => Promise<void> | void
   /** Sync pre-vis frame prompts to current script before regenerating. */
   onSyncPreVisToScript?: (sceneIndex: number) => Promise<void> | void
   narrationVoice?: unknown
@@ -929,7 +940,7 @@ export function SceneGallery({
                   }}
                   onExpressSceneGenerate={
                     onExpressSceneGenerate
-                      ? () => onExpressSceneGenerate(idx, selectedLanguage)
+                      ? (opts) => onExpressSceneGenerate(idx, selectedLanguage, opts)
                       : undefined
                   }
                   onSyncPreVisToScript={
@@ -1143,7 +1154,7 @@ interface SceneCardProps {
     beatIndex?: number
     dialogueIndex?: number
   }) => void
-  onExpressSceneGenerate?: () => void
+  onExpressSceneGenerate?: (options?: { regenerate?: boolean }) => void
   onSyncPreVisToScript?: () => void | Promise<void>
   onExpressGateBlocked?: () => void
   expressGateBlocked?: boolean
@@ -1346,15 +1357,15 @@ function SceneCard({
     [scene, sceneIndex, characters, narrationVoice, selectedLanguage]
   )
 
+  const [sceneExpressRegenerateOpen, setSceneExpressRegenerateOpen] = useState(false)
+
   const sceneExpressDisabled =
-    isExpressRunning ||
-    (!expressGateBlocked && !sceneExpressPreflight.ok) ||
-    !!sceneExpressPreflight.nothingToDo
+    isExpressRunning || (!expressGateBlocked && !sceneExpressPreflight.ok)
 
   const sceneExpressTooltip = !sceneExpressPreflight.ok
     ? sceneExpressPreflight.errors[0]
     : sceneExpressPreflight.nothingToDo
-      ? 'Scene already complete — use Batch Express with Regenerate to redo'
+      ? 'Scene complete — click to regenerate'
       : '~60s — Vertex AI — Direction (if needed) → Audio + beats in parallel'
 
   const sceneExpressRunning =
@@ -1660,7 +1671,7 @@ function SceneCard({
                               return
                             }
                             if (sceneExpressPreflight.nothingToDo) {
-                              toast.info('Scene already complete')
+                              setSceneExpressRegenerateOpen(true)
                               return
                             }
                             void onExpressSceneGenerate()
@@ -1674,6 +1685,40 @@ function SceneCard({
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">{sceneExpressTooltip}</TooltipContent>
                     </Tooltip>
+                  )}
+                  {onExpressSceneGenerate && (
+                    <Dialog
+                      open={sceneExpressRegenerateOpen}
+                      onOpenChange={setSceneExpressRegenerateOpen}
+                    >
+                      <DialogContent className="max-w-md" onClick={(e) => e.stopPropagation()}>
+                        <DialogHeader>
+                          <DialogTitle>Regenerate Scene Express?</DialogTitle>
+                          <DialogDescription>
+                            Scene already has direction, audio, and pre-vis frames. This will
+                            regenerate them.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setSceneExpressRegenerateOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              setSceneExpressRegenerateOpen(false)
+                              void onExpressSceneGenerate({ regenerate: true })
+                            }}
+                          >
+                            Regenerate
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
                   )}
                   {onAddStoryboardFrame && (
                     <Button

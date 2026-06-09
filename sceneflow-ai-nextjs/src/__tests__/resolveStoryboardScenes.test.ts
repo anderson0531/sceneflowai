@@ -95,4 +95,35 @@ describe('resolveStoryboardScenes', () => {
     const resolved = resolveStoryboardScenes({ script, visionPhaseScenes })
     expect(resolved[0].imageUrl).toContain('1779527367355')
   })
+
+  it('merges beat storyboardImageUrl from legacy visionPhase.scenes into script.script.scenes', () => {
+    const script = {
+      script: {
+        scenes: [
+          {
+            id: 's2',
+            beats: [{ beatId: 'bt_1', kind: 'dialogue', line: 'Hello' }],
+            dialogue: [{ character: 'A', line: 'Hello' }],
+          },
+        ],
+      },
+    }
+    const visionPhaseScenes = [
+      {
+        id: 's2',
+        beats: [
+          {
+            beatId: 'bt_1',
+            kind: 'dialogue',
+            line: 'Hello',
+            storyboardImageUrl: 'https://example.com/beat-frame.png',
+          },
+        ],
+        dialogue: [{ character: 'A', line: 'Hello' }],
+      },
+    ]
+
+    const resolved = resolveStoryboardScenes({ script, visionPhaseScenes })
+    expect(resolved[0].beats[0].storyboardImageUrl).toBe('https://example.com/beat-frame.png')
+  })
 })

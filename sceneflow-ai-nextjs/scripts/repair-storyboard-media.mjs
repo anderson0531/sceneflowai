@@ -36,6 +36,9 @@ function isValidUrl(value) {
 function auditScenes(scenes, label) {
   if (!Array.isArray(scenes)) return { label, scenes: 0, rows: [] }
   const rows = scenes.map((scene, index) => {
+    const beatFrames = (scene?.beats || []).filter((b) =>
+      isValidUrl(b?.storyboardImageUrl)
+    ).length
     const dialogueFrames = (scene?.dialogue || []).filter((d) =>
       isValidUrl(d?.storyboardImageUrl)
     ).length
@@ -48,6 +51,7 @@ function auditScenes(scenes, label) {
     return {
       index,
       hasImageUrl: isValidUrl(scene?.imageUrl),
+      beatFrames,
       dialogueFrames,
       segmentFrames,
     }
@@ -108,7 +112,7 @@ async function main() {
     console.log(`--- ${audit.label} (${audit.scenes} scenes) ---`)
     for (const row of audit.rows) {
       console.log(
-        `  Scene ${row.index + 1}: establishing=${row.hasImageUrl} dialogueFrames=${row.dialogueFrames} segmentFrames=${row.segmentFrames}`
+        `  Scene ${row.index + 1}: establishing=${row.hasImageUrl} beatFrames=${row.beatFrames} dialogueFrames=${row.dialogueFrames} segmentFrames=${row.segmentFrames}`
       )
     }
   }
@@ -117,7 +121,7 @@ async function main() {
   console.log('\n--- After resolveStoryboardScenes ---')
   for (const row of auditStoryboardSceneMedia(resolved)) {
     console.log(
-      `  Scene ${row.index + 1}: establishing=${row.hasImageUrl} dialogueFrames=${row.dialogueFrames} segmentFrames=${row.segmentDialogueFrames}`
+      `  Scene ${row.index + 1}: establishing=${row.hasImageUrl} beatFrames=${row.beatFrames} dialogueFrames=${row.dialogueFrames} segmentFrames=${row.segmentDialogueFrames}`
     )
   }
 
@@ -130,6 +134,7 @@ async function main() {
     if (!c) return true
     return (
       r.hasImageUrl !== c.hasImageUrl ||
+      r.beatFrames !== c.beatFrames ||
       r.dialogueFrames !== c.dialogueFrames ||
       r.segmentDialogueFrames !== c.segmentDialogueFrames
     )
