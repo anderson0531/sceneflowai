@@ -5,6 +5,7 @@ import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, F
 import { Button } from '@/components/ui/Button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export interface SceneImageFrameProps {
   sceneIdx: number
@@ -21,7 +22,7 @@ export interface SceneImageFrameProps {
   onEdit?: (imageUrl: string) => void
   onDelete?: () => void
   onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => void
-  /** Compact mode for reference library - smaller frame */
+  /** Compact mode for storyboard strip — icon-only controls */
   compact?: boolean
   /** Show as a card with border */
   showBorder?: boolean
@@ -29,14 +30,142 @@ export interface SceneImageFrameProps {
   label?: string
 }
 
+function CompactIconButton({
+  onClick,
+  disabled,
+  title,
+  className,
+  children,
+}: {
+  onClick: (e: React.MouseEvent) => void
+  disabled?: boolean
+  title: string
+  className: string
+  children: React.ReactNode
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          className={`h-9 w-9 flex items-center justify-center rounded-full transition-colors disabled:opacity-50 ${className}`}
+        >
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="text-xs">
+        {title}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+function CompactActionBar({
+  hasImage,
+  imageUrl,
+  isGenerating,
+  onGenerate,
+  onUpload,
+  onEdit,
+  onDelete,
+  onAddToReferenceLibrary,
+  sceneNumber,
+  alwaysVisible = false,
+}: {
+  hasImage: boolean
+  imageUrl?: string | null
+  isGenerating?: boolean
+  onGenerate: () => void
+  onUpload: () => void
+  onEdit?: (imageUrl: string) => void
+  onDelete?: () => void
+  onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => void
+  sceneNumber: number
+  alwaysVisible?: boolean
+}) {
+  const iconClass = 'w-4 h-4 text-white'
+
+  return (
+    <div
+      className={`absolute inset-0 flex flex-wrap items-center justify-center gap-1.5 p-1.5 bg-black/50 ${
+        alwaysVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+      } transition-opacity`}
+    >
+      <CompactIconButton
+        onClick={(e) => {
+          e.stopPropagation()
+          onGenerate()
+        }}
+        disabled={isGenerating}
+        title={hasImage ? 'Regenerate' : 'Generate'}
+        className="bg-indigo-600/90 hover:bg-indigo-500"
+      >
+        {isGenerating ? (
+          <Loader2 className={`${iconClass} animate-spin`} />
+        ) : hasImage ? (
+          <RefreshCw className={iconClass} />
+        ) : (
+          <Sparkles className={iconClass} />
+        )}
+      </CompactIconButton>
+
+      {onEdit && hasImage && imageUrl && (
+        <CompactIconButton
+          onClick={(e) => {
+            e.stopPropagation()
+            onEdit(imageUrl)
+          }}
+          title="AI edit"
+          className="bg-purple-600/90 hover:bg-purple-500"
+        >
+          <Wand2 className={iconClass} />
+        </CompactIconButton>
+      )}
+
+      {onAddToReferenceLibrary && hasImage && imageUrl && (
+        <CompactIconButton
+          onClick={(e) => {
+            e.stopPropagation()
+            onAddToReferenceLibrary(imageUrl, `Scene ${sceneNumber} Reference`, sceneNumber)
+          }}
+          title="Save to library"
+          className="bg-cyan-600/90 hover:bg-cyan-500"
+        >
+          <FolderPlus className={iconClass} />
+        </CompactIconButton>
+      )}
+
+      <CompactIconButton
+        onClick={(e) => {
+          e.stopPropagation()
+          onUpload()
+        }}
+        title="Upload"
+        className="bg-emerald-600/90 hover:bg-emerald-500"
+      >
+        <Upload className={iconClass} />
+      </CompactIconButton>
+
+      {onDelete && (
+        <CompactIconButton
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete()
+          }}
+          title="Delete"
+          className="bg-red-600/90 hover:bg-red-500"
+        >
+          <Trash2 className={iconClass} />
+        </CompactIconButton>
+      )}
+    </div>
+  )
+}
+
 /**
  * SceneImageFrame - A frame-based component for scene reference images
- * 
- * Similar to CharacterCard image frames, this provides:
- * - Empty state with centered icon + Create/Upload buttons
- * - Populated state with hover overlay actions
- * - 16:9 aspect ratio for cinematic consistency
- * - Status badges for readiness state
  */
 export function SceneImageFrame({
   sceneIdx,
@@ -57,9 +186,9 @@ export function SceneImageFrame({
 }: SceneImageFrameProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isHovering, setIsHovering] = useState(false)
-  
+
   const hasImage = !!imageUrl
-  
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -71,14 +200,14 @@ export function SceneImageFrame({
     }
     e.target.value = ''
   }
-  
+
   const triggerUpload = () => {
     fileInputRef.current?.click()
   }
-  
+
   return (
-    <div 
-      className={`relative overflow-hidden rounded-lg ${
+    <div
+      className={`group relative overflow-hidden rounded-lg ${
         showBorder ? 'border border-slate-700/50' : ''
       } ${compact ? 'w-full' : ''} ${
         isSelected ? 'ring-2 ring-sf-primary border-sf-primary/60' : ''
@@ -101,7 +230,6 @@ export function SceneImageFrame({
         }
       }}
     >
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -109,158 +237,148 @@ export function SceneImageFrame({
         className="hidden"
         onChange={handleFileSelect}
       />
-      
-      {/* Image Container - 16:9 aspect ratio */}
-      <div className={`relative ${compact ? 'aspect-video' : 'aspect-video'} bg-slate-800/50`}>
+
+      <div className="relative aspect-video bg-slate-800/50">
         {hasImage ? (
           <>
-            {/* Scene Image */}
             <img
               src={imageUrl}
               alt={`Scene ${sceneNumber} reference`}
               className="w-full h-full object-cover"
             />
-            
-            {/* Status Badge */}
-            <div className="absolute top-2 right-2 z-10">
+
+            <div className="absolute top-1 right-1 z-10">
               {isPlaceholder ? (
-                <span className="text-xs px-2 py-1 bg-amber-500/20 text-amber-300 rounded-full flex items-center gap-1 backdrop-blur-sm">
-                  <AlertTriangle className="w-3 h-3" />
+                <span className="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded-full flex items-center gap-0.5 backdrop-blur-sm">
+                  <AlertTriangle className="w-2.5 h-2.5" />
                   Placeholder
                 </span>
               ) : (
-                <span className="text-xs px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center gap-1 backdrop-blur-sm">
-                  <CheckCircle2 className="w-3 h-3" />
+                <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center gap-0.5 backdrop-blur-sm">
+                  <CheckCircle2 className="w-2.5 h-2.5" />
                   Ready
                 </span>
               )}
             </div>
-            {isPlaceholder && (
+
+            {isPlaceholder && !compact && (
               <div className="absolute bottom-0 left-0 right-0 bg-amber-950/80 px-2 py-1">
                 <p className="text-[9px] text-amber-200/90 leading-tight">
                   Using anchor frame — generate a dedicated cut
                 </p>
               </div>
             )}
-            
-            {/* Hover Overlay with Actions */}
-            <AnimatePresence>
-              {isHovering && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute inset-0 bg-black/50 flex items-center justify-center gap-3"
-                >
-                  {/* Regenerate */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onGenerate()
-                    }}
-                    disabled={isGenerating}
-                    className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
-                    title="Generate new image"
-                  >
-                    {isGenerating ? (
-                      <Loader2 className="w-5 h-5 text-white animate-spin" />
-                    ) : (
-                      <RefreshCw className="w-5 h-5 text-white" />
-                    )}
-                  </button>
-                  
-                  {/* Edit */}
-                  {onEdit && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onEdit(imageUrl)
-                      }}
-                      className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
-                      title="Edit image"
-                    >
-                      <Wand2 className="w-5 h-5 text-white" />
-                    </button>
-                  )}
-                  
-                  {/* Add to Reference Library */}
-                  {onAddToReferenceLibrary && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onAddToReferenceLibrary(imageUrl, `Scene ${sceneNumber} Reference`, sceneNumber)
-                      }}
-                      className="p-3 bg-cyan-600/80 hover:bg-cyan-600 rounded-full transition-colors"
-                      title="Save to Reference Library"
-                    >
-                      <FolderPlus className="w-5 h-5 text-white" />
-                    </button>
-                  )}
-                  
-                  {/* Upload */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      triggerUpload()
-                    }}
-                    className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors"
-                    title="Upload image"
-                  >
-                    <Upload className="w-5 h-5 text-white" />
-                  </button>
 
-                  {onDelete && compact && (
+            {compact ? (
+              <CompactActionBar
+                hasImage
+                imageUrl={imageUrl}
+                isGenerating={isGenerating}
+                onGenerate={onGenerate}
+                onUpload={triggerUpload}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onAddToReferenceLibrary={onAddToReferenceLibrary}
+                sceneNumber={sceneNumber}
+              />
+            ) : (
+              <AnimatePresence>
+                {isHovering && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute inset-0 bg-black/50 flex items-center justify-center gap-3"
+                  >
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        onDelete()
+                        onGenerate()
                       }}
-                      className="p-3 bg-red-600/80 hover:bg-red-600 rounded-full transition-colors"
-                      title="Delete frame"
+                      disabled={isGenerating}
+                      className="p-3 bg-indigo-600/80 hover:bg-indigo-600 rounded-full transition-colors disabled:opacity-50"
+                      title="Generate new image"
                     >
-                      <Trash2 className="w-5 h-5 text-white" />
+                      {isGenerating ? (
+                        <Loader2 className="w-5 h-5 text-white animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-5 h-5 text-white" />
+                      )}
                     </button>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
-            {/* Generating Overlay */}
+
+                    {onEdit && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEdit(imageUrl)
+                        }}
+                        className="p-3 bg-purple-600/80 hover:bg-purple-600 rounded-full transition-colors"
+                        title="Edit image"
+                      >
+                        <Wand2 className="w-5 h-5 text-white" />
+                      </button>
+                    )}
+
+                    {onAddToReferenceLibrary && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onAddToReferenceLibrary(imageUrl, `Scene ${sceneNumber} Reference`, sceneNumber)
+                        }}
+                        className="p-3 bg-cyan-600/80 hover:bg-cyan-600 rounded-full transition-colors"
+                        title="Save to Reference Library"
+                      >
+                        <FolderPlus className="w-5 h-5 text-white" />
+                      </button>
+                    )}
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        triggerUpload()
+                      }}
+                      className="p-3 bg-emerald-600/80 hover:bg-emerald-600 rounded-full transition-colors"
+                      title="Upload image"
+                    >
+                      <Upload className="w-5 h-5 text-white" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            )}
+
             {isGenerating && (
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-2">
-                  <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
-                  <span className="text-xs text-white/80">Generating...</span>
-                </div>
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
+                <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
               </div>
             )}
           </>
+        ) : compact ? (
+          <div className="w-full h-full flex flex-col items-center justify-center">
+            <ImageIcon className="w-8 h-8 text-indigo-400/40 mb-1" />
+            <CompactActionBar
+              hasImage={false}
+              isGenerating={isGenerating}
+              onGenerate={onGenerate}
+              onUpload={triggerUpload}
+              onDelete={onDelete}
+              sceneNumber={sceneNumber}
+              alwaysVisible
+            />
+          </div>
         ) : (
-          /* Empty State */
           <div className="w-full h-full flex flex-col items-center justify-center p-4">
             <div className="relative mb-3">
-              {/* Decorative film frame border */}
               <div className="absolute -inset-2 border-2 border-dashed border-indigo-500/30 rounded-lg" />
-              <ImageIcon className={`${compact ? 'w-10 h-10' : 'w-12 h-12'} text-indigo-400/50`} />
+              <ImageIcon className="w-12 h-12 text-indigo-400/50" />
             </div>
-            
-            {!compact && (
-              <p className="text-sm text-gray-400 text-center mb-2">
-                No scene reference yet
-              </p>
-            )}
-            
-            <p className={`${compact ? 'text-[10px]' : 'text-xs'} text-gray-500 text-center mb-3 max-w-xs`}>
-              {compact 
-                ? 'Generate or upload a reference image'
-                : 'Create a reference image for scene consistency across production'
-              }
+            <p className="text-sm text-gray-400 text-center mb-2">No scene reference yet</p>
+            <p className="text-xs text-gray-500 text-center mb-3 max-w-xs">
+              Create a reference image for scene consistency across production
             </p>
-            
             <div className="flex items-center gap-2">
               <Button
-                size={compact ? 'sm' : 'default'}
                 onClick={(e) => {
                   e.stopPropagation()
                   onGenerate()
@@ -273,11 +391,9 @@ export function SceneImageFrame({
                 ) : (
                   <Sparkles className="w-4 h-4 mr-1" />
                 )}
-                {compact ? 'Create' : 'Generate'}
+                Generate
               </Button>
-              
               <Button
-                size={compact ? 'sm' : 'default'}
                 variant="outline"
                 onClick={(e) => {
                   e.stopPropagation()
@@ -288,26 +404,19 @@ export function SceneImageFrame({
                 <Upload className="w-4 h-4 mr-1" />
                 Upload
               </Button>
-
-              {onDelete && compact && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onDelete()
-                  }}
-                  className="border-red-700/50 text-red-400 hover:bg-red-950"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              )}
             </div>
           </div>
         )}
       </div>
-      
-      {/* Label Footer (optional) */}
+
+      {label && compact && (
+        <div className="px-1.5 py-1 bg-slate-800/50 border-t border-slate-700/50">
+          <p className="text-[9px] font-medium text-slate-400 truncate" title={label}>
+            {label}
+          </p>
+        </div>
+      )}
+
       {label && !compact && (
         <div className="px-3 py-2 bg-slate-800/50 border-t border-slate-700/50">
           <div className="flex items-center justify-between">

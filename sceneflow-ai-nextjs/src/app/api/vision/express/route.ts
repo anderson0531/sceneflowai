@@ -17,6 +17,8 @@ interface ExpressRequest {
   includeSFX?: boolean
   regenerate?: boolean
   imageQuality?: string
+  mode?: 'batch' | 'scene'
+  sceneIndices?: number[]
 }
 
 export async function POST(req: NextRequest) {
@@ -38,6 +40,8 @@ export async function POST(req: NextRequest) {
     includeSFX = false,
     regenerate = false,
     imageQuality,
+    mode = 'batch',
+    sceneIndices,
   } = body || {}
 
   if (!projectId) {
@@ -73,6 +77,10 @@ export async function POST(req: NextRequest) {
     includeSFX,
     regenerate,
     imageQuality,
+    mode: mode === 'scene' ? 'scene' : 'batch',
+    ...(Array.isArray(sceneIndices) && sceneIndices.length > 0
+      ? { sceneIndices }
+      : {}),
   }
 
   const encoder = new TextEncoder()
@@ -132,8 +140,16 @@ export async function POST(req: NextRequest) {
           })
 
           console.log(
-            `[Express] Atomic DB update complete (success=${result.successScenes}, failed=${result.failedScenes})`
+            `[Express] Atomic DB update complete (mode=${options.mode}, success=${result.successScenes}, failed=${result.failedScenes})`
           )
+
+          if (options.mode === 'scene' && sceneIndices?.length === 1) {
+            send({
+              type: 'scene-persisted',
+              sceneIndex: sceneIndices[0],
+              sceneNumber: sceneIndices[0] + 1,
+            })
+          }
         }
       } catch (error: any) {
         console.error('[Express] Orchestrator error:', error)

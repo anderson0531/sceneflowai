@@ -38,6 +38,8 @@ export interface GenerateSceneAudioParams {
   baseUrl: string
   /** Forward the inbound auth cookie so internal SFX charges find the user. */
   authCookie?: string
+  /** Scene Express: overlap narration + dialogue generation. */
+  parallelMode?: boolean
 }
 
 function findParentSegmentDurationSeconds(
@@ -177,6 +179,7 @@ export async function generateSceneAudio(
     includeSFX = false,
     baseUrl,
     authCookie,
+    parallelMode = false,
   } = params
 
   const assets: SceneAudioAsset[] = []
@@ -199,8 +202,9 @@ export async function generateSceneAudio(
   // streams (one keyed under `scene.narrationAudio[lang]` and one under
   // `scene.dialogueAudio[lang][i]`) we skip this legacy path whenever the
   // dialogue array already contains narrator lines.
-  const dialogueArr: any[] = Array.isArray(scene?.dialogue) ? scene.dialogue : []
   const hasNarratorInDialogue = sceneHasNarratorInDialogue(scene)
+
+  const runLegacyNarration = async () => {
   if (narrationVoice && !hasNarratorInDialogue) {
     const sceneTranslation = storedTranslations?.[sceneIndex]
     const storedNarration = sceneTranslation?.narration
@@ -242,7 +246,9 @@ export async function generateSceneAudio(
       }
     }
   }
+  }
 
+  const runDialogueAudio = async () => {
   // 2. Dialogue (per-line). Narrator lines (kind === 'narration' or
   //    characterId === 'narrator' or character === 'NARRATOR') live in the
   //    same `scene.dialogue` array under the integrated narrator-as-character
@@ -376,6 +382,14 @@ export async function generateSceneAudio(
       if (r.kind === 'narration') counts.narration += 1
       else counts.dialogue += 1
     }
+  }
+  }
+
+  if (parallelMode) {
+    await Promise.all([runLegacyNarration(), runDialogueAudio()])
+  } else {
+    await runLegacyNarration()
+    await runDialogueAudio()
   }
 
   // 3. Music

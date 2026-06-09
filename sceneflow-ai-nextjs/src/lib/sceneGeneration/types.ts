@@ -11,9 +11,15 @@ import type { DetailedSceneDirection } from '../../types/scene-direction'
 
 export type ExpressPhase = 'direction' | 'audio' | 'image'
 
+export type ExpressMode = 'batch' | 'scene'
+
 export interface ExpressOptions {
   /** Project to operate on. */
   projectId: string
+  /** `scene` = per-card fast path; `batch` = all-scenes toolbar (default). */
+  mode?: ExpressMode
+  /** When set, only run these scene indices (required for mode=scene). */
+  sceneIndices?: number[]
   /** Locale for audio generation. Defaults to 'en'. */
   language?: string
   /** Art style preset id (e.g. photorealistic, anime-90s). */
@@ -106,6 +112,8 @@ export type ExpressEvent =
   | { type: 'start'; sceneCount: number }
   | { type: 'scene-start'; sceneIndex: number; sceneNumber: number }
   | { type: 'scene-done'; sceneIndex: number; sceneNumber: number; ok: boolean; error?: string }
+  | { type: 'preflight-failed'; sceneIndex: number; sceneNumber: number; errors: string[] }
+  | { type: 'scene-persisted'; sceneIndex: number; sceneNumber: number }
   | ExpressPhaseEvent
   | { type: 'complete'; successScenes: number; failedScenes: number }
   | { type: 'error'; error: string }

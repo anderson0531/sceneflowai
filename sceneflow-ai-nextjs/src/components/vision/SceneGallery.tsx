@@ -41,6 +41,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/Input'
 import { useStore } from '@/store/useStore'
 import { flattenSceneToStoryboardFrames, countStoryboardFrameStats, enumerateStoryboardFrameSlots, countStoryboardFramesNeedingGeneration } from '@/lib/storyboard/types'
+import { runSceneExpressPreflight } from '@/lib/sceneGeneration/sceneExpressPreflight'
+import type { ScriptLockStatus } from '@/lib/production/scriptLock'
 
 export type ExpressPhase = 'direction' | 'audio' | 'image'
 export type ExpressPhaseStatus = 'pending' | 'running' | 'done' | 'error'
@@ -67,6 +69,9 @@ interface SceneGalleryProps {
   /** Generate a beat-indexed storyboard frame (action or narration beats). */
   onGenerateBeatFrame?: (sceneIndex: number, beatIndex: number) => void | Promise<void>
   onUploadDialogueFrame?: (sceneIndex: number, dialogueIndex: number, file: File) => void
+  onUploadBeatFrame?: (sceneIndex: number, beatIndex: number, file: File) => void
+  onSaveEditedBeatFrame?: (sceneIndex: number, beatIndex: number, newImageUrl: string) => void
+  onSaveEditedDialogueFrame?: (sceneIndex: number, dialogueIndex: number, newImageUrl: string) => void
   onAddStoryboardFrame?: (sceneIndex: number) => void | Promise<void>
   onDeleteStoryboardFrame?: (sceneIndex: number, frameId: string) => void | Promise<void>
   onGenerateCustomFrame?: (sceneIndex: number, frameId: string) => void | Promise<void>
@@ -125,6 +130,10 @@ interface SceneGalleryProps {
    * SSE request and updating script state from incoming events.
    */
   onExpressGenerate?: (options: ExpressConfirmOptions) => Promise<void> | void
+  /** Per-scene fast Express (mode=scene). */
+  onExpressSceneGenerate?: (sceneIndex: number, language: string) => Promise<void> | void
+  narrationVoice?: unknown
+  scriptLockStatus?: ScriptLockStatus
   /** Whether an Express run is currently in flight. */
   isExpressRunning?: boolean
   /** Per-scene phase progress map driven by SSE events. */
@@ -150,6 +159,9 @@ export function SceneGallery({
   onGenerateDialogueFrame,
   onGenerateBeatFrame,
   onUploadDialogueFrame,
+  onUploadBeatFrame,
+  onSaveEditedBeatFrame,
+  onSaveEditedDialogueFrame,
   onAddStoryboardFrame,
   onDeleteStoryboardFrame,
   onGenerateCustomFrame,
@@ -179,6 +191,9 @@ export function SceneGallery({
   onBatchGenerateEnd,
   onUpdateSceneAudio,
   onExpressGenerate,
+  onExpressSceneGenerate,
+  narrationVoice,
+  scriptLockStatus,
   isExpressRunning = false,
   expressStatus,
   expressGateBlocked = false,
@@ -218,10 +233,13 @@ export function SceneGallery({
   const [showStoryboardImages, setShowStoryboardImages] = useState(true)
   const [selectedLanguage, setSelectedLanguage] = useState('en')
   
-  // Edit modal state
+  type EditingFrame =
+    | { kind: 'establishing'; sceneIndex: number; imageUrl: string }
+    | { kind: 'beat'; sceneIndex: number; beatIndex: number; imageUrl: string }
+    | { kind: 'dialogue'; sceneIndex: number; dialogueIndex: number; imageUrl: string }
+
   const [editModalOpen, setEditModalOpen] = useState(false)
-  const [editingSceneIndex, setEditingSceneIndex] = useState<number | null>(null)
-  const [editingSceneImageUrl, setEditingSceneImageUrl] = useState<string>('')
+  const [editingFrame, setEditingFrame] = useState<EditingFrame | null>(null)
 
   // Express dialog state
   const [expressDialogOpen, setExpressDialogOpen] = useState(false)
@@ -512,7 +530,7 @@ export function SceneGallery({
       <div className="flex flex-wrap items-center justify-between gap-y-2 mb-6">
         <div className="flex items-center gap-2">
           <Clapperboard className="w-5 h-5 text-sf-primary" />
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Storyboard</h3>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-6 my-0">Pre-Visualization</h3>
           <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
             {scenes.length} {scenes.length === 1 ? 'scene' : 'scenes'}
           </span>
@@ -728,7 +746,7 @@ export function SceneGallery({
                   <X className="w-4 h-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Close Storyboard</TooltipContent>
+              <TooltipContent>Close Pre-Visualization</TooltipContent>
             </Tooltip>
           )}
         </div>
@@ -853,6 +871,22 @@ export function SceneGallery({
                     }
                   } : undefined}
                   onUploadDialogueFrame={onUploadDialogueFrame ? (dialogueIdx, file) => onUploadDialogueFrame(idx, dialogueIdx, file) : undefined}
+                  onUploadBeatFrame={onUploadBeatFrame ? (beatIdx, file) => onUploadBeatFrame(idx, beatIdx, file) : undefined}
+                  onEditFrame={(frame) => {
+                    setEditingFrame(frame)
+                    setEditModalOpen(true)
+                  }}
+                  onExpressSceneGenerate={
+                    onExpressSceneGenerate
+                      ? () => onExpressSceneGenerate(idx, selectedLanguage)
+                      : undefined
+                  }
+                  selectedLanguage={selectedLanguage}
+                  narrationVoice={narrationVoice}
+                  scriptLockStatus={scriptLockStatus}
+                  expressGateBlocked={expressGateBlocked}
+                  isExpressRunning={isExpressRunning}
+                  expressElapsedSec={expressElapsedSec}
                   generatingDialogueFrames={generatingDialogueFrames}
                   onAddStoryboardFrame={onAddStoryboardFrame ? () => onAddStoryboardFrame(idx) : undefined}
                   onDeleteStoryboardFrame={onDeleteStoryboardFrame ? (frameId) => onDeleteStoryboardFrame(idx, frameId) : undefined}
@@ -1001,17 +1035,35 @@ export function SceneGallery({
       <ImageEditModal
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
-        imageUrl={editingSceneImageUrl}
+        imageUrl={editingFrame?.imageUrl ?? ''}
         imageType="scene"
         objectReferences={objectReferences}
         onSave={(newImageUrl) => {
-          if (editingSceneIndex !== null && onSaveEditedScene) {
-            onSaveEditedScene(editingSceneIndex, newImageUrl)
+          if (editingFrame) {
+            if (editingFrame.kind === 'establishing' && onSaveEditedScene) {
+              onSaveEditedScene(editingFrame.sceneIndex, newImageUrl)
+            } else if (editingFrame.kind === 'beat' && onSaveEditedBeatFrame) {
+              onSaveEditedBeatFrame(editingFrame.sceneIndex, editingFrame.beatIndex, newImageUrl)
+            } else if (editingFrame.kind === 'dialogue' && onSaveEditedDialogueFrame) {
+              onSaveEditedDialogueFrame(
+                editingFrame.sceneIndex,
+                editingFrame.dialogueIndex,
+                newImageUrl
+              )
+            }
           }
           setEditModalOpen(false)
-          setEditingSceneIndex(null)
+          setEditingFrame(null)
         }}
-        title={editingSceneIndex !== null ? `Edit Scene ${editingSceneIndex + 1}` : 'Edit Scene'}
+        title={
+          editingFrame
+            ? editingFrame.kind === 'beat'
+              ? `Edit beat — Scene ${editingFrame.sceneIndex + 1}`
+              : editingFrame.kind === 'dialogue'
+                ? `Edit dialogue frame — Scene ${editingFrame.sceneIndex + 1}`
+                : `Edit Scene ${editingFrame.sceneIndex + 1}`
+            : 'Edit frame'
+        }
       />
     </div>
     </TooltipProvider>
@@ -1029,6 +1081,21 @@ interface SceneCardProps {
   onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
   onGenerateBeatFrame?: (beatIndex: number) => Promise<void>
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
+  onUploadBeatFrame?: (beatIndex: number, file: File) => void
+  onEditFrame?: (frame: {
+    kind: 'establishing' | 'beat' | 'dialogue'
+    sceneIndex: number
+    imageUrl: string
+    beatIndex?: number
+    dialogueIndex?: number
+  }) => void
+  onExpressSceneGenerate?: () => void
+  selectedLanguage?: string
+  narrationVoice?: unknown
+  scriptLockStatus?: ScriptLockStatus
+  expressGateBlocked?: boolean
+  isExpressRunning?: boolean
+  expressElapsedSec?: number
   generatingDialogueFrames?: Set<string>
   onAddStoryboardFrame?: () => void | Promise<void>
   onDeleteStoryboardFrame?: (frameId: string) => void | Promise<void>
@@ -1129,6 +1196,15 @@ function SceneCard({
   onGenerateDialogueFrame,
   onGenerateBeatFrame,
   onUploadDialogueFrame,
+  onUploadBeatFrame,
+  onEditFrame,
+  onExpressSceneGenerate,
+  selectedLanguage = 'en',
+  narrationVoice,
+  scriptLockStatus,
+  expressGateBlocked = false,
+  isExpressRunning = false,
+  expressElapsedSec = 0,
   generatingDialogueFrames = new Set(),
   onAddStoryboardFrame,
   onDeleteStoryboardFrame,
@@ -1199,6 +1275,38 @@ function SceneCard({
       isReady: sceneCharacters.length === 0 || charsWithRef.length === sceneCharacters.length,
     }
   }, [scene, characters, objectReferences])
+
+  const sceneExpressPreflight = useMemo(
+    () =>
+      runSceneExpressPreflight({
+        scene,
+        sceneIndex,
+        characters,
+        narrationVoice,
+        language: selectedLanguage,
+        scriptLockStatus,
+      }),
+    [scene, sceneIndex, characters, narrationVoice, selectedLanguage, scriptLockStatus]
+  )
+
+  const sceneExpressDisabled =
+    expressGateBlocked ||
+    isExpressRunning ||
+    !sceneExpressPreflight.ok ||
+    !!sceneExpressPreflight.nothingToDo
+
+  const sceneExpressTooltip = !sceneExpressPreflight.ok
+    ? sceneExpressPreflight.errors[0]
+    : sceneExpressPreflight.nothingToDo
+      ? 'Scene already complete — use Batch Express with Regenerate to redo'
+      : '~60s — Vertex AI — Direction (if needed) → Audio + beats in parallel'
+
+  const sceneExpressRunning =
+    isExpressRunning &&
+    !!expressPhaseStatus &&
+    (expressPhaseStatus.direction === 'running' ||
+      expressPhaseStatus.audio === 'running' ||
+      expressPhaseStatus.image === 'running')
   
   const handleCardClick = () => {
     onClick()
@@ -1453,6 +1561,37 @@ function SceneCard({
                     {frameStats.missing > 0 ? ` · ${frameStats.missing} missing` : ''}
                     {frameStats.placeholders > 0 ? ` · ${frameStats.placeholders} placeholder` : ''}
                   </span>
+                  {onExpressSceneGenerate && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2 text-[10px] border-amber-500/40 text-amber-400 hover:bg-amber-500/10 disabled:opacity-50"
+                          disabled={sceneExpressDisabled}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (!sceneExpressPreflight.ok) {
+                              toast.error(sceneExpressPreflight.errors[0])
+                              return
+                            }
+                            if (sceneExpressPreflight.nothingToDo) {
+                              toast.info('Scene already complete')
+                              return
+                            }
+                            void onExpressSceneGenerate()
+                          }}
+                        >
+                          <Zap className="w-3 h-3 mr-0.5" />
+                          {sceneExpressRunning
+                            ? `Express ${expressElapsedSec}s`
+                            : 'Express'}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">{sceneExpressTooltip}</TooltipContent>
+                    </Tooltip>
+                  )}
                   {onAddStoryboardFrame && (
                     <Button
                       type="button"
@@ -1547,12 +1686,41 @@ function SceneCard({
                         }}
                         onUpload={(file) => {
                           setSelectedFrameKey(slot.key)
-                          if (isLegacyEstablishingOnly) {
+                          if (useBeatFrame && onUploadBeatFrame) {
+                            onUploadBeatFrame(beatIdx!, file)
+                          } else if (isLegacyEstablishingOnly) {
                             onUpload?.(file)
                           } else if (typeof dialogueIdx === 'number') {
                             onUploadDialogueFrame?.(dialogueIdx, file)
                           }
                         }}
+                        onEdit={
+                          slot.displayImageUrl && !slot.isMissing
+                            ? (url) => {
+                                if (useBeatFrame && onEditFrame) {
+                                  onEditFrame({
+                                    kind: 'beat',
+                                    sceneIndex,
+                                    beatIndex: beatIdx!,
+                                    imageUrl: url,
+                                  })
+                                } else if (isLegacyEstablishingOnly && onEditFrame) {
+                                  onEditFrame({
+                                    kind: 'establishing',
+                                    sceneIndex,
+                                    imageUrl: url,
+                                  })
+                                } else if (typeof dialogueIdx === 'number' && onEditFrame) {
+                                  onEditFrame({
+                                    kind: 'dialogue',
+                                    sceneIndex,
+                                    dialogueIndex: dialogueIdx,
+                                    imageUrl: url,
+                                  })
+                                }
+                              }
+                            : undefined
+                        }
                       />
                     </div>
                   )

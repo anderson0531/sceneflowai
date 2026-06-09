@@ -8753,6 +8753,85 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleUploadBeatFrame = async (sceneIndex: number, beatIdx: number, file: File) => {
+    if (!script?.script?.scenes) return
+
+    try {
+      const uploadedUrl = await uploadAssetViaAPI(file, projectId)
+      const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
+        if (idx !== sceneIndex) return s
+        return applyBeatStoryboardImageToScene(s, beatIdx, uploadedUrl)
+      })
+
+      setScript((prev: any) => ({
+        ...prev,
+        script: { ...prev?.script, scenes: updatedScenes },
+      }))
+
+      const saved = await persistVisionScriptScenes(updatedScenes, 'handleUploadBeatFrame')
+      if (saved) {
+        try { const { toast } = require('sonner'); toast.success('Beat frame uploaded') } catch {}
+      } else {
+        try { const { toast } = require('sonner'); toast.error('Failed to save beat frame') } catch {}
+      }
+    } catch (error) {
+      console.error('[handleUploadBeatFrame] Error:', error)
+      try { const { toast } = require('sonner'); toast.error('Failed to upload beat frame') } catch {}
+    }
+  }
+
+  const handleSaveEditedBeatFrame = async (
+    sceneIndex: number,
+    beatIdx: number,
+    newImageUrl: string
+  ) => {
+    if (!script?.script?.scenes) return
+
+    const updatedScenes = script.script.scenes.map((s: any, idx: number) =>
+      idx === sceneIndex ? applyBeatStoryboardImageToScene(s, beatIdx, newImageUrl) : s
+    )
+
+    setScript((prev: any) => ({
+      ...prev,
+      script: { ...prev?.script, scenes: updatedScenes },
+    }))
+
+    try {
+      await persistVisionScriptScenes(updatedScenes, 'handleSaveEditedBeatFrame')
+      try { const { toast } = require('sonner'); toast.success('Beat frame updated') } catch {}
+    } catch (saveError) {
+      console.error('[handleSaveEditedBeatFrame] Failed to save:', saveError)
+      try { const { toast } = require('sonner'); toast.error('Failed to save edited beat frame') } catch {}
+    }
+  }
+
+  const handleSaveEditedDialogueFrame = async (
+    sceneIndex: number,
+    dialogueIdx: number,
+    newImageUrl: string
+  ) => {
+    if (!script?.script?.scenes) return
+
+    const updatedScenes = script.script.scenes.map((s: any, idx: number) =>
+      idx === sceneIndex
+        ? applyDialogueStoryboardImageToScene(s, dialogueIdx, newImageUrl)
+        : s
+    )
+
+    setScript((prev: any) => ({
+      ...prev,
+      script: { ...prev?.script, scenes: updatedScenes },
+    }))
+
+    try {
+      await persistVisionScriptScenes(updatedScenes, 'handleSaveEditedDialogueFrame')
+      try { const { toast } = require('sonner'); toast.success('Dialogue frame updated') } catch {}
+    } catch (saveError) {
+      console.error('[handleSaveEditedDialogueFrame] Failed to save:', saveError)
+      try { const { toast } = require('sonner'); toast.error('Failed to save edited dialogue frame') } catch {}
+    }
+  }
+
   const handleAddStoryboardFrame = async (sceneIdx: number) => {
     if (!script?.script?.scenes) return
 
@@ -10762,6 +10841,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   successScenes = event.successScenes ?? 0
                   failedScenes = event.failedScenes ?? 0
                   break
+                case 'preflight-failed':
+                  setPhase(event.sceneIndex, 'direction', 'error', {
+                    error: event.errors?.join(' ') || 'preflight failed',
+                  })
+                  toast.error(event.errors?.[0] || 'Express preflight failed')
+                  break
+                case 'scene-persisted':
+                  break
                 case 'error':
                   console.error('[Express] Stream error:', event.error)
                   toast.error(`Express error: ${event.error}`)
@@ -10824,7 +10911,211 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setIsExpressRunning(false)
       }
     },
-    [projectId, script, isExpressRunning, setShowSceneGallery]
+    [projectId, script, isExpressRunning, setShowSceneGallery, imageQuality]
+  )
+
+  /**
+   * Per-scene Scene Express (mode=scene): fail-fast preflight, parallel audio+images,
+   * per-scene checkpoint persist. Target <60s for a typical scene.
+   */
+  const handleExpressSceneGenerate = useCallback(
+    async (sceneIndex: number, language: string) => {
+      if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
+      if (isExpressRunning) return
+
+      setExpressStatus({
+        [sceneIndex]: { direction: 'pending', audio: 'pending', image: 'pending' },
+      })
+      setIsExpressRunning(true)
+
+      const setPhase = (
+        idx: number,
+        phase: ExpressPhase,
+        next: ExpressPhaseStatus,
+        extra?: Partial<ExpressSceneStatus>
+      ) => {
+        setExpressStatus((prev) => {
+          const current: ExpressSceneStatus =
+            prev[idx] ||
+            ({ direction: 'pending', audio: 'pending', image: 'pending' } as ExpressSceneStatus)
+          return { ...prev, [idx]: { ...current, [phase]: next, ...extra } }
+        })
+      }
+
+      const applySceneImage = (
+        idx: number,
+        imageUrl?: string,
+        dialogueIndex?: number,
+        beatIndex?: number
+      ) => {
+        if (!imageUrl) return
+        setScript((prev: any) => {
+          if (!prev?.script?.scenes) return prev
+          const scenes = [...prev.script.scenes]
+          if (!scenes[idx]) return prev
+          if (typeof beatIndex === 'number') {
+            const beats = [...(scenes[idx].beats || [])]
+            if (beats[beatIndex]) {
+              beats[beatIndex] = { ...beats[beatIndex], storyboardImageUrl: imageUrl }
+              scenes[idx] = {
+                ...applyBeatsToScene(scenes[idx], beats),
+                storyboardStatus: 'pending_review',
+              }
+            }
+          } else if (typeof dialogueIndex === 'number') {
+            const dialogue = [...(scenes[idx].dialogue || [])]
+            dialogue[dialogueIndex] = {
+              ...dialogue[dialogueIndex],
+              storyboardImageUrl: imageUrl,
+            }
+            scenes[idx] = { ...scenes[idx], dialogue }
+          } else {
+            scenes[idx] = { ...scenes[idx], imageUrl }
+          }
+          return { ...prev, script: { ...prev.script, scenes } }
+        })
+      }
+
+      const refreshProjectScript = async () => {
+        try {
+          const refreshed = await fetch(`/api/projects/${projectId}?_t=${Date.now()}`, {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' },
+          })
+          if (refreshed.ok) {
+            const data = await refreshed.json()
+            const proj = data.project || data
+            const refreshedScript = proj?.metadata?.visionPhase?.script
+            if (refreshedScript) {
+              setScript(refreshedScript)
+              setScriptEditedAt(Date.now())
+            }
+          }
+        } catch (refreshErr) {
+          console.warn('[Scene Express] Failed to refresh project:', refreshErr)
+        }
+      }
+
+      try {
+        const response = await fetch('/api/vision/express', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            mode: 'scene',
+            sceneIndices: [sceneIndex],
+            language: language || 'en',
+            artStyle: lockedArtStyle || 'photorealistic',
+            includeMusic: false,
+            includeSFX: true,
+            regenerate: false,
+            imageQuality,
+          }),
+        })
+
+        if (!response.ok || !response.body) {
+          const errText = await response.text().catch(() => '')
+          console.error('[Scene Express] Request failed:', response.status, errText)
+          toast.error(`Scene Express failed: ${response.status} ${errText.slice(0, 120)}`)
+          return
+        }
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        let successScenes = 0
+        let failedScenes = 0
+        let rateLimitToastShown = false
+        let scenePersisted = false
+        let lastSceneError: string | undefined
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            try {
+              const event = JSON.parse(line.slice(6))
+              switch (event.type) {
+                case 'phase-start':
+                  setPhase(event.sceneIndex, event.phase, 'running')
+                  break
+                case 'phase-done':
+                  if (event.ok) {
+                    setPhase(event.sceneIndex, event.phase, 'done')
+                    if (event.phase === 'image' && event.imageUrl) {
+                      applySceneImage(
+                        event.sceneIndex,
+                        event.imageUrl,
+                        event.dialogueIndex,
+                        event.beatIndex
+                      )
+                    }
+                  } else {
+                    const phaseError = event.error || 'phase failed'
+                    lastSceneError = phaseError
+                    setPhase(event.sceneIndex, event.phase, 'error', { error: phaseError })
+                    const errLower = String(phaseError).toLowerCase()
+                    if (
+                      !rateLimitToastShown &&
+                      (errLower.includes('429') ||
+                        errLower.includes('resource_exhausted') ||
+                        errLower.includes('rate limit'))
+                    ) {
+                      rateLimitToastShown = true
+                      toast.error('Vertex rate limited — wait ~60s and retry Scene Express.')
+                    }
+                  }
+                  break
+                case 'preflight-failed': {
+                  const preflightMsg = event.errors?.join(' ') || 'preflight failed'
+                  lastSceneError = preflightMsg
+                  setPhase(event.sceneIndex, 'direction', 'error', { error: preflightMsg })
+                  toast.error(event.errors?.[0] || 'Scene Express preflight failed')
+                  failedScenes = 1
+                  break
+                }
+                case 'scene-persisted':
+                  scenePersisted = true
+                  await refreshProjectScript()
+                  break
+                case 'complete':
+                  successScenes = event.successScenes ?? 0
+                  failedScenes = event.failedScenes ?? 0
+                  break
+                case 'error':
+                  console.error('[Scene Express] Stream error:', event.error)
+                  toast.error(`Scene Express error: ${event.error}`)
+                  break
+                default:
+                  break
+              }
+            } catch (parseErr) {
+              console.warn('[Scene Express] Failed to parse SSE event:', parseErr)
+            }
+          }
+        }
+
+        if (!scenePersisted && successScenes > 0) {
+          await refreshProjectScript()
+        }
+
+        if (failedScenes === 0 && successScenes > 0) {
+          toast.success(`Scene ${sceneIndex + 1} Express complete`)
+        } else if (failedScenes > 0 && lastSceneError && !rateLimitToastShown) {
+          toast.error(lastSceneError.slice(0, 200))
+        }
+      } catch (err: any) {
+        console.error('[Scene Express] Unexpected error:', err)
+        toast.error(`Scene Express error: ${err?.message || String(err)}`)
+      } finally {
+        setIsExpressRunning(false)
+      }
+    },
+    [projectId, script, isExpressRunning, lockedArtStyle, imageQuality]
   )
 
   // Delete specific audio from a scene
@@ -11917,6 +12208,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onUploadDialogueFrame={(sceneIdx, dialogueIdx, file) =>
                               handleUploadDialogueFrame(sceneIdx, dialogueIdx, file)
                             }
+                            onUploadBeatFrame={(sceneIdx, beatIdx, file) =>
+                              handleUploadBeatFrame(sceneIdx, beatIdx, file)
+                            }
+                            onSaveEditedBeatFrame={handleSaveEditedBeatFrame}
+                            onSaveEditedDialogueFrame={handleSaveEditedDialogueFrame}
+                            onExpressSceneGenerate={handleExpressSceneGenerate}
+                            narrationVoice={narrationVoice}
+                            scriptLockStatus={scriptLockStatus}
                             onAddStoryboardFrame={handleAddStoryboardFrame}
                             onDeleteStoryboardFrame={handleDeleteStoryboardFrame}
                             onGenerateCustomFrame={handleGenerateCustomFrame}

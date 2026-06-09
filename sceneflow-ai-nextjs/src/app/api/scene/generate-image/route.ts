@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
-import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
+import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
@@ -1200,25 +1200,27 @@ export async function POST(req: NextRequest) {
         objectImageReferences.map((o: any) => o.name))
     }
 
-    // Generate with Gemini
-    // Use Gemini Studio (gemini-3-pro-image-preview) for reference images - better character consistency
-    // Fall back to Vertex AI Imagen for non-reference image generation
+    // Vertex AI image generation (see docs/VERTEX_MEDIA_MIGRATION.md)
     let base64Image: string | null = null
+    let generationModelId = 'imagen-3.0-fast-generate-001'
+    let generationProvider: 'vertex' | 'fal' = 'vertex'
     let generationAttempt = 0
     const maxGenerationAttempts = 4
     const rateLimitBackoffMs = [5000, 15000, 30000]
-    // Use Gemini Studio when we have ANY reference images (characters, objects, OR location)
-    const useGeminiStudio = imageReferences.length > 0 || objectImageReferences.length > 0 || (matchedLocationReference && matchedLocationReference.imageUrl)
+    const useVertexGeminiImage =
+      imageReferences.length > 0 ||
+      objectImageReferences.length > 0 ||
+      (matchedLocationReference && matchedLocationReference.imageUrl)
     
     while (generationAttempt < maxGenerationAttempts) {
       try {
         generationAttempt++
         console.log(`[Scene Image] Generation attempt ${generationAttempt}/${maxGenerationAttempts}`)
         
-        if (useGeminiStudio) {
-          // Use Gemini 3 Pro Image Preview for reference image generation
-          // This passes reference images directly in the prompt for better character consistency
-          console.log('[Scene Image] Using Gemini Studio (gemini-3-pro-image-preview) for character reference images')
+        if (useVertexGeminiImage) {
+          console.log(
+            `[Scene Image] Using Vertex Gemini Image (tier=${resolvedModelTier || 'designer'}) for reference images`
+          )
           
           // Combine character, object, and location reference images
           // LABELED REFERENCES: Each image gets a descriptive role label so the model
@@ -1319,17 +1321,18 @@ export async function POST(req: NextRequest) {
           geminiPrompt += `- No dialogue captions, subtitles, or watermarks\n`
           geminiPrompt += `- Match props and environment to their reference images\n`
           
-          const result = await generateImageWithGeminiStudio({
+          const vertexResult = await generateImageWithVertexKlingFallback({
             prompt: geminiPrompt,
             aspectRatio: '16:9',
             imageSize: quality === 'max' ? '2K' : '1K',
             referenceImages: allReferenceImages,
             ...(resolvedModelTier ? { modelTier: resolvedModelTier } : {}),
           })
-          
-          base64Image = result.imageBase64
+
+          base64Image = vertexResult.imageBase64
+          generationModelId = vertexResult.modelId
+          generationProvider = vertexResult.generationProvider
         } else {
-          // Use Vertex AI Imagen for non-reference generation (faster, cheaper)
           console.log('[Scene Image] Using Vertex AI Imagen (no reference images)')
           // When excludeCharacters is true, force personGeneration to 'dont_allow' for scene reference images
           const effectivePersonGeneration = excludeCharacters ? 'dont_allow' : (personGeneration || 'allow_adult')
@@ -1458,7 +1461,7 @@ export async function POST(req: NextRequest) {
         CREDIT_COST,
         'ai_usage',
         projectId || null,
-        { operation: 'imagen_generate', sceneIndex, model: 'gemini-3-pro-image-preview' }
+        { operation: 'imagen_generate', sceneIndex, model: generationModelId }
       )
       creditsCharged = CREDIT_COST
       console.log(`[Scene Image] Charged ${CREDIT_COST} credits to user ${userId}`)
@@ -1480,9 +1483,9 @@ export async function POST(req: NextRequest) {
     const response: any = {
       success: true,
       imageUrl,
-      model: 'gemini-3-pro-image-preview',
+      model: generationModelId,
       quality: quality,
-      provider: 'gemini',
+      provider: generationProvider,
       storage: 'vercel-blob',
       // Include hashes for workflow sync tracking
       basedOnDirectionHash,
