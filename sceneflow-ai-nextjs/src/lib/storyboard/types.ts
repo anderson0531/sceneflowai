@@ -359,6 +359,71 @@ export function countMissingStoryboardFrames(scene: Record<string, unknown>): nu
   return enumerateStoryboardFrameSlots(scene).filter((s) => s.isMissing).length
 }
 
+/** True when scene has any narration, dialogue, beat, music, or SFX audio for the language. */
+export function sceneHasPlayablePreVisAudio(
+  scene: Record<string, unknown>,
+  language = 'en'
+): boolean {
+  if (resolveStandaloneNarrationUrl(scene, language)) return true
+
+  const dialogueAudio =
+    (scene.dialogueAudio as Record<string, Array<{ audioUrl?: string; url?: string }>> | undefined)?.[
+      language
+    ] ??
+    (scene.dialogueAudio as Record<string, Array<{ audioUrl?: string; url?: string }>> | undefined)?.en ??
+    (Array.isArray(scene.dialogueAudio) ? scene.dialogueAudio : [])
+  if (
+    Array.isArray(dialogueAudio) &&
+    dialogueAudio.some((entry) => !!(entry?.audioUrl || entry?.url))
+  ) {
+    return true
+  }
+
+  if (getSceneBeats(scene).some((beat) => !!beat.audioUrl?.trim())) return true
+
+  const musicUrl = scene.musicAudio || (scene.music as { url?: string } | undefined)?.url
+  if (typeof musicUrl === 'string' && musicUrl.trim()) return true
+
+  const sfxArray = scene.sfxAudio
+  if (Array.isArray(sfxArray) && sfxArray.some((sfx) => !!(typeof sfx === 'string' ? sfx : sfx?.url))) {
+    return true
+  }
+
+  return false
+}
+
+/** True when scene has beat/establishing images or audio suitable for inline pre-vis playback. */
+export function sceneHasPlayablePreVisContent(
+  scene: Record<string, unknown>,
+  language = 'en'
+): boolean {
+  if (countStoryboardFrameStats(scene).withImage > 0) return true
+  if (getEstablishingFrameUrl(scene)) return true
+  return sceneHasPlayablePreVisAudio(scene, language)
+}
+
+export function countPlayablePreVisScenes(
+  scenes: Record<string, unknown>[],
+  language = 'en'
+): number {
+  return scenes.filter((scene) => sceneHasPlayablePreVisContent(scene, language)).length
+}
+
+/** Best thumbnail for player scene strip (establishing, then first owned beat/dialogue frame). */
+export function getScenePlayableThumbnailUrl(
+  scene: Record<string, unknown>
+): string | undefined {
+  const establishing = getEstablishingFrameUrl(scene)
+  if (establishing) return establishing
+
+  const slots = enumerateStoryboardFrameSlots(scene)
+  const owned = slots.find((s) => s.ownImageUrl)
+  if (owned?.ownImageUrl) return owned.ownImageUrl
+
+  const displayed = slots.find((s) => s.displayImageUrl && !s.isMissing)
+  return displayed?.displayImageUrl
+}
+
 function getDialogueLineText(d: Record<string, unknown> | null | undefined): string {
   if (!d) return ''
   return String(d.line ?? d.text ?? '')

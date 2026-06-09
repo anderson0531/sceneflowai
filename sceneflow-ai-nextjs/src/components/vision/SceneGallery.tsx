@@ -40,7 +40,14 @@ import {
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
 import { useStore } from '@/store/useStore'
-import { flattenSceneToStoryboardFrames, countStoryboardFrameStats, enumerateStoryboardFrameSlots, countStoryboardFramesNeedingGeneration } from '@/lib/storyboard/types'
+import {
+  flattenSceneToStoryboardFrames,
+  countStoryboardFrameStats,
+  enumerateStoryboardFrameSlots,
+  countStoryboardFramesNeedingGeneration,
+  countPlayablePreVisScenes,
+  sceneHasPlayablePreVisAudio,
+} from '@/lib/storyboard/types'
 import { runSceneExpressPreflight } from '@/lib/sceneGeneration/sceneExpressPreflight'
 import { ProductionReadyBanner } from './production/ProductionReadyBanner'
 import type { ProductionReadyChecklist } from '@/lib/production/productionReadinessGate'
@@ -294,16 +301,15 @@ export function SceneGallery({
   const [publishNotes, setPublishNotes] = useState('')
   const [publishLoading, setPublishLoading] = useState(false)
   
-  // Count scenes with audio for Generate All Audio button display
-  const scenesWithAudio = useMemo(() => {
-    return scenes.filter(scene => 
-      scene.narrationAudio?.en?.url || 
-      scene.narrationAudioUrl || 
-      (scene.dialogueAudio?.en && scene.dialogueAudio.en.length > 0)
-    ).length
-  }, [scenes])
-  
-  const scenesWithoutAudio = scenes.length - scenesWithAudio
+  const playableSceneCount = useMemo(
+    () => countPlayablePreVisScenes(scenes, selectedLanguage),
+    [scenes, selectedLanguage]
+  )
+
+  const scenesWithAudio = useMemo(
+    () => scenes.filter((scene) => sceneHasPlayablePreVisAudio(scene, selectedLanguage)).length,
+    [scenes, selectedLanguage]
+  )
   
   // Detect available languages across all scenes
   const availableLanguages = useMemo(() => {
@@ -552,11 +558,15 @@ export function SceneGallery({
           <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
             {scenes.length} {scenes.length === 1 ? 'scene' : 'scenes'}
           </span>
-          {/* Audio status indicator */}
-          {scenesWithAudio > 0 && (
+          {playableSceneCount > 0 && (
             <span className="text-xs text-emerald-500 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded flex items-center gap-1">
-              <Volume2 className="w-3 h-3" />
-              {scenesWithAudio}/{scenes.length} audio
+              <Play className="w-3 h-3" />
+              {playableSceneCount}/{scenes.length} ready
+              {scenesWithAudio > 0 && (
+                <span className="text-emerald-600/80 dark:text-emerald-300/80">
+                  · {scenesWithAudio} audio
+                </span>
+              )}
             </span>
           )}
           <span
@@ -692,8 +702,7 @@ export function SceneGallery({
               </span>
             )}
           </div>
-          {/* Audio Player toggle - only show if scenes have audio */}
-          {scenesWithAudio > 0 && (
+          {playableSceneCount > 0 && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -709,7 +718,11 @@ export function SceneGallery({
                   <span>Player</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{showAudioPlayer ? 'Hide player' : 'Show player to preview scene audio'}</TooltipContent>
+              <TooltipContent>
+                {showAudioPlayer
+                  ? 'Hide player'
+                  : 'Preview available scenes — images and/or audio'}
+              </TooltipContent>
             </Tooltip>
           )}
           {/* Storyboard Images toggle */}
@@ -787,7 +800,7 @@ export function SceneGallery({
       )}
       
       {/* Audio Gallery Player - collapsible section */}
-      {showAudioPlayer && scenesWithAudio > 0 && (
+      {showAudioPlayer && playableSceneCount > 0 && (
         <div className="mb-6">
           <AudioGalleryPlayer
             scenes={scenes}

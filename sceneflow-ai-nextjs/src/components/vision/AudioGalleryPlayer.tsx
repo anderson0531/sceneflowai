@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
 import {
   getEstablishingFrameUrl,
+  getScenePlayableThumbnailUrl,
+  sceneHasPlayablePreVisAudio,
 } from '@/lib/storyboard/types'
 import { useStoryboardPlayback } from '@/hooks/useStoryboardPlayback'
 import {
@@ -689,11 +691,9 @@ export function AudioGalleryPlayer({
         )}>
           <div className="flex gap-2 overflow-x-auto pb-2 justify-center">
             {scenes.map((scene, idx) => {
-              const hasSceneAudio = scene.narrationAudio?.en?.url || scene.narrationAudioUrl || 
-                (scene.dialogueAudio?.en && scene.dialogueAudio.en.length > 0) ||
-                scene.musicAudio || scene.music?.url ||
-                (Array.isArray(scene.sfxAudio) && scene.sfxAudio.length > 0)
-              
+              const hasSceneAudio = sceneHasPlayablePreVisAudio(scene, selectedLanguage)
+              const thumbUrl = getScenePlayableThumbnailUrl(scene)
+
               return (
                 <button
                   key={idx}
@@ -706,9 +706,9 @@ export function AudioGalleryPlayer({
                       : "border-transparent hover:border-gray-500"
                   )}
                 >
-                  {scene.imageUrl ? (
+                  {thumbUrl ? (
                     <img
-                      src={scene.imageUrl}
+                      src={thumbUrl}
                       alt={`Scene ${idx + 1}`}
                       className="w-full h-full object-cover"
                     />
