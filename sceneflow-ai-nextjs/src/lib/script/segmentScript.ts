@@ -458,13 +458,14 @@ export function totalSceneDuration(segments: ScriptSegment[]): number {
 
 export function buildSegmentSfx(
   description: string,
-  options: { time?: number; sourceLineId?: string } = {}
+  options: { time?: number; sourceLineId?: string; sourceBeatId?: string } = {}
 ): SegmentSFX {
   return {
     sfxId: mintSfxId(),
     description: (description || '').trim(),
     time: options.time,
     sourceLineId: options.sourceLineId,
+    sourceBeatId: options.sourceBeatId,
   }
 }
 
@@ -504,6 +505,8 @@ function coerceSegmentSfxItem(raw: unknown, legacyIndex?: number): SegmentSFX | 
       time: typeof o.time === 'number' ? o.time : undefined,
       sourceLineId:
         typeof o.sourceLineId === 'string' ? o.sourceLineId : undefined,
+      sourceBeatId:
+        typeof o.sourceBeatId === 'string' ? o.sourceBeatId : undefined,
       legacyIndex:
         typeof o.legacyIndex === 'number' ? o.legacyIndex : legacyIndex,
     }

@@ -13,6 +13,7 @@ import {
   getSceneBeats,
   reconcileBeatsWithScriptContent,
 } from '@/lib/script/beatMigration'
+import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { generateSceneContentHash } from '@/lib/utils/contentHash'
 import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
@@ -143,6 +144,7 @@ export function syncPreVisToScript(
   }
 
   delete working[PRE_VIS_CONTENT_HASH_FIELD]
+  working = applyDerivedSfxToScene(working, getSceneBeats(working))
   working = {
     ...working,
     storyboardStatus: 'pending_review',

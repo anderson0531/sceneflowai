@@ -17,6 +17,7 @@ import {
   type StoryboardStatus,
 } from '@/lib/script/segmentTypes'
 import { mintLineId } from '@/lib/script/segmentScript'
+import { applyDerivedSfxToScene } from '@/lib/script/deriveSfxFromSceneContent'
 
 const BEAT_MIGRATION_FLAG = 'beatsMigratedAt'
 const BEAT_DURATION_SEC = 8
@@ -1146,7 +1147,10 @@ export function migrateProjectToBeats(metadata: unknown): MigrateBeatsResult {
     const hadValidBeats = parsed.length > 0
     const baseBeats = hadValidBeats ? parsed : deriveBeatsFromSceneContent(scene)
     const hydratedBeats = hydrateBeatStoryboardMediaFromLegacy(scene, baseBeats)
-    const nextScene = applyBeatsToScene(scene, hydratedBeats)
+    const nextScene = applyDerivedSfxToScene(
+      applyBeatsToScene(scene, hydratedBeats),
+      hydratedBeats
+    )
     const sceneChanged = JSON.stringify(scene) !== JSON.stringify(nextScene)
     if (sceneChanged) {
       scenes[i] = nextScene
@@ -1243,8 +1247,7 @@ export function parseLlmBeats(raw: unknown[]): SceneBeat[] {
 /** Ensure scene has beats — prefer valid beats[], else derive from scene content. */
 export function ensureSceneBeats(scene: Record<string, unknown>): Record<string, unknown> {
   const parsed = tryParseExistingBeats(scene)
-  if (parsed.length > 0) {
-    return applyBeatsToScene(scene, parsed)
-  }
-  return applyBeatsToScene(scene, deriveBeatsFromSceneContent(scene))
+  const beats = parsed.length > 0 ? parsed : deriveBeatsFromSceneContent(scene)
+  const withBeats = applyBeatsToScene(scene, beats)
+  return applyDerivedSfxToScene(withBeats, beats)
 }

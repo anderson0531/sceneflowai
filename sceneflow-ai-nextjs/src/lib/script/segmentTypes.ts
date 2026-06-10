@@ -92,6 +92,8 @@ export interface SegmentSFX {
   time?: number
   /** Optional dialogue lineId this SFX is anchored to (e.g. for ducking). */
   sourceLineId?: string
+  /** Optional storyboard beat this SFX is anchored to (beat-first pipeline). */
+  sourceBeatId?: string
   /**
    * Position of this cue in the legacy positional `scene.sfx[]` /
    * `scene.sfxAudio[]` arrays. Maintained during the back-compat window so

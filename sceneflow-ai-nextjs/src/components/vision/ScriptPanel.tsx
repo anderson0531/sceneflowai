@@ -6089,6 +6089,31 @@ function SceneCard({
                   {(() => {
                     const timelineBeats = getSceneBeats(scene)
                     if (timelineBeats.length === 0) return null
+                    const sceneSfxList = Array.isArray(scene.sfx) ? scene.sfx : []
+                    const sfxByBeatId = new Map<string, Array<{ description: string; idx: number }>>()
+                    sceneSfxList.forEach((raw: unknown, idx: number) => {
+                      const entry =
+                        typeof raw === 'string'
+                          ? { description: raw.trim() }
+                          : (raw as { description?: string; sourceBeatId?: string })
+                      const description = String(
+                        entry?.description ?? (typeof raw === 'string' ? raw : '')
+                      ).trim()
+                      const beatId = entry?.sourceBeatId
+                      if (!description || !beatId) return
+                      const list = sfxByBeatId.get(beatId) ?? []
+                      list.push({ description, idx })
+                      sfxByBeatId.set(beatId, list)
+                    })
+                    const parseInlineBeatSfx = (actionText?: string) => {
+                      if (!actionText?.trim()) return [] as string[]
+                      return actionText
+                        .split('\n')
+                        .map((line) => line.trim())
+                        .filter((line) => /^SFX:/i.test(line))
+                        .map((line) => line.replace(/^SFX:\s*/i, '').trim())
+                        .filter(Boolean)
+                    }
                     let spokenBeatCursor = 0
                     return (
                     <div className="bg-emerald-950 border-l-4 border-emerald-500 p-4 rounded-lg">
@@ -6187,6 +6212,15 @@ function SceneCard({
                       <div className="space-y-3">
                       {timelineBeats.map((beat) => {
                         if (beat.kind === 'action') {
+                          const beatSfx = sfxByBeatId.get(beat.beatId) ?? []
+                          const inlineSfx =
+                            beatSfx.length === 0 && sceneSfxList.length === 0
+                              ? parseInlineBeatSfx(beat.actionDescription)
+                              : []
+                          const sfxLabels = [
+                            ...beatSfx.map((s) => s.description),
+                            ...inlineSfx,
+                          ]
                           return (
                             <div
                               key={beat.beatId}
@@ -6205,6 +6239,19 @@ function SceneCard({
                               <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">
                                 {beat.actionDescription?.trim() || 'No action description'}
                               </p>
+                              {sfxLabels.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  {sfxLabels.map((label, sfxIdx) => (
+                                    <span
+                                      key={`${beat.beatId}-sfx-${sfxIdx}`}
+                                      className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/30"
+                                    >
+                                      <VolumeIcon className="w-3 h-3 shrink-0" />
+                                      SFX: {label.length > 56 ? `${label.slice(0, 56)}…` : label}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           )
                         }
@@ -6550,7 +6597,10 @@ function SceneCard({
                   
                   {/* SFX (legacy flat list) — hidden once segments own their own
                      SFX cues. Segment-scoped SFX render inside SegmentList. */}
-                  {scene.sfx && Array.isArray(scene.sfx) && scene.sfx.length > 0 && !(Array.isArray((scene as any).segments) && (scene as any).segments.length > 0) && (
+                  {scene.sfx && Array.isArray(scene.sfx) && scene.sfx.filter((sfx: any) => {
+                    if (typeof sfx === 'string') return true
+                    return !sfx?.sourceBeatId
+                  }).length > 0 && !(Array.isArray((scene as any).segments) && (scene as any).segments.length > 0) && (
                     <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                       <div className="flex items-center justify-between mb-3">
                         <button
@@ -6562,7 +6612,7 @@ function SceneCard({
                         >
                           <ChevronDown className={`w-4 h-4 text-amber-600 dark:text-amber-400 transition-transform ${sfxCollapsed ? '-rotate-90' : ''}`} />
                           <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                          <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Sound Effects ({scene.sfx.length})</span>
+                          <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Sound Effects ({scene.sfx.filter((sfx: any) => typeof sfx === 'string' || !sfx?.sourceBeatId).length})</span>
                         </button>
                       </div>
                       {!sfxCollapsed && (
@@ -6573,7 +6623,13 @@ function SceneCard({
                       )}
                       {!sfxCollapsed && (
                         <div className="space-y-2">
-                          {scene.sfx.map((sfx: any, sfxIdx: number) => (
+                          {scene.sfx
+                            .map((sfx: any, sfxIdx: number) => ({ sfx, sfxIdx }))
+                            .filter(
+                              ({ sfx }: { sfx: any }) =>
+                                typeof sfx === 'string' || !sfx?.sourceBeatId
+                            )
+                            .map(({ sfx, sfxIdx }: { sfx: any; sfxIdx: number }) => (
                             <LegacySfxCueRow
                               key={sfxIdx}
                               sceneIdx={sceneIdx}

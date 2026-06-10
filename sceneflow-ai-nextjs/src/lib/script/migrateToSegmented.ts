@@ -729,7 +729,18 @@ function assignSfxToLineSegments(
       }
     }
 
-    // 2) Legacy positional cue index maps to same dialogue index.
+    // 2) Beat-first: route by sourceBeatId when segment carries beatId (production sync).
+    if (cue.sourceBeatId) {
+      const segWithBeat = segments.find(
+        (seg) => (seg as { beatId?: string }).beatId === cue.sourceBeatId
+      )
+      if (segWithBeat) {
+        segWithBeat.sfx.push(cue)
+        continue
+      }
+    }
+
+    // 3) Legacy positional cue index maps to same dialogue index.
     if (typeof cue.legacyIndex === 'number' && byLegacyIndex.has(cue.legacyIndex)) {
       const lineId = byLegacyIndex.get(cue.legacyIndex)!
       const seg = firstSegmentByLineId.get(lineId)
@@ -739,7 +750,7 @@ function assignSfxToLineSegments(
       }
     }
 
-    // 3) Timeline-based routing when cue.time exists.
+    // 4) Timeline-based routing when cue.time exists.
     if (typeof cue.time === 'number') {
       let target = segments[0]
       for (const seg of segments) {
@@ -753,7 +764,7 @@ function assignSfxToLineSegments(
       continue
     }
 
-    // 4) Default script order: attach by modulo to preserve all cues.
+    // 5) Default script order: attach by modulo to preserve all cues.
     const fallbackIdx = Math.min(segments.length - 1, cue.legacyIndex ?? 0)
     segments[fallbackIdx]?.sfx.push(cue)
   }

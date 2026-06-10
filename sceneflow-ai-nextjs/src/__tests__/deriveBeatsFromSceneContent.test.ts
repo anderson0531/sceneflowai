@@ -80,6 +80,8 @@ describe('deriveBeatsFromSceneContent', () => {
 
     const beats = (updated as { beats: Array<{ kind: string }> }).beats
     expect(beats.length).toBe(4)
+    const sfx = (updated as { sfx?: Array<{ description?: string }> }).sfx ?? []
+    expect(sfx.length).toBeGreaterThanOrEqual(2)
   })
 
   it('falls back when beats array has invalid entries', () => {
