@@ -55,8 +55,8 @@ describe('storyboard frame slots', () => {
     expect(countMissingStoryboardFrames(scene)).toBe(0)
   })
 
-  it('prefers scene.imageUrl over stale action beat URL after establishing upload', () => {
-    const scene = {
+  it('uses beat stored URL for ownImageUrl; display falls back to scene.imageUrl when beat lacks image', () => {
+    const sceneWithStaleBeat = {
       imageUrl: 'https://example.com/new-establishing.jpg',
       beats: [
         {
@@ -69,10 +69,27 @@ describe('storyboard frame slots', () => {
       ],
     }
 
-    const slots = enumerateStoryboardFrameSlots(scene)
-    expect(slots[0]?.ownImageUrl).toBe('https://example.com/new-establishing.jpg')
-    expect(slots[0]?.isPlaceholder).toBe(false)
-    expect(countStoryboardFramesNeedingGeneration(scene)).toBe(0)
+    const slots = enumerateStoryboardFrameSlots(sceneWithStaleBeat)
+    expect(slots[0]?.ownImageUrl).toBe('https://example.com/old-establishing.jpg')
+    expect(slots[0]?.displayImageUrl).toBe('https://example.com/old-establishing.jpg')
+
+    const sceneNoBeatImage = {
+      imageUrl: 'https://example.com/new-establishing.jpg',
+      beats: [
+        {
+          beatId: 'bt_action',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide',
+        },
+      ],
+    }
+
+    const fallbackSlots = enumerateStoryboardFrameSlots(sceneNoBeatImage)
+    expect(fallbackSlots[0]?.ownImageUrl).toBeUndefined()
+    expect(fallbackSlots[0]?.displayImageUrl).toBe('https://example.com/new-establishing.jpg')
+    expect(fallbackSlots[0]?.isPlaceholder).toBe(true)
+    expect(countStoryboardFramesNeedingGeneration(sceneNoBeatImage)).toBe(1)
   })
 
   it('reflects beat-0 Express update on establishing display URLs immediately', () => {

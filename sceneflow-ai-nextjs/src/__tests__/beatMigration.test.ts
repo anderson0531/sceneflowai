@@ -7,6 +7,7 @@ import {
   ensureSceneBeats,
   getSceneBeats,
   getStoryboardTimelineBeats,
+  hydrateBeatStoryboardMediaFromLegacy,
   isAutoLeadingEstablishingBeat,
   migrateProjectToBeats,
   applyBeatStoryboardImageToScene,
@@ -177,6 +178,39 @@ describe('beatMigration', () => {
     expect(beats).toHaveLength(2)
     expect(beats[0].kind).toBe('action')
     expect(Array.isArray(updated.dialogue)).toBe(true)
+  })
+
+  it('hydrateBeatStoryboardMediaFromLegacy only applies scene.imageUrl to beat 0', () => {
+    const scene = {
+      imageUrl: 'https://example.com/establishing.jpg',
+      beats: [
+        {
+          beatId: 'bt_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide',
+        },
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 1,
+          kind: 'action',
+          actionDescription: 'Tracking',
+          storyboardImageUrl: 'https://example.com/tracking.jpg',
+        },
+        {
+          beatId: 'bt_2',
+          sequenceIndex: 2,
+          kind: 'action',
+          actionDescription: 'Close-up',
+          storyboardImageUrl: 'https://example.com/close.jpg',
+        },
+      ],
+    }
+
+    const hydrated = hydrateBeatStoryboardMediaFromLegacy(scene, scene.beats as SceneBeat[])
+    expect(hydrated[0].storyboardImageUrl).toBe('https://example.com/establishing.jpg')
+    expect(hydrated[1].storyboardImageUrl).toBe('https://example.com/tracking.jpg')
+    expect(hydrated[2].storyboardImageUrl).toBe('https://example.com/close.jpg')
   })
 
   it('hydrateBeatStoryboardMediaFromLegacy copies dialogue images onto beats', () => {

@@ -26,6 +26,7 @@ export interface UseStoryboardPlaybackOptions {
   scene: Record<string, unknown> | null | undefined
   language: string
   volume?: number
+  musicVolume?: number
   isMuted?: boolean
   onPlaybackEnd?: () => void
 }
@@ -105,6 +106,7 @@ export function useStoryboardPlayback({
   scene,
   language,
   volume = 0.8,
+  musicVolume = 0.15,
   isMuted = false,
   onPlaybackEnd,
 }: UseStoryboardPlaybackOptions): UseStoryboardPlaybackReturn {
@@ -256,7 +258,7 @@ export function useStoryboardPlayback({
   )
 
   const dialogueVolume = isMuted ? 0 : Math.min(1, volume * DIALOGUE_VOLUME_BOOST)
-  const musicVolume = isMuted ? 0 : volume * 0.1
+  const effectiveMusicVolume = isMuted ? 0 : volume * musicVolume
   const sfxVolume = isMuted ? 0 : volume * 0.5
 
   const {
@@ -276,7 +278,7 @@ export function useStoryboardPlayback({
     initialVolumes: {
       voiceover: dialogueVolume,
       dialogue: dialogueVolume,
-      music: musicVolume,
+      music: effectiveMusicVolume,
       sfx: sfxVolume,
     },
     initialEnabled: {
@@ -312,9 +314,9 @@ export function useStoryboardPlayback({
   useEffect(() => {
     setTrackVolume('voiceover', dialogueVolume)
     setTrackVolume('dialogue', dialogueVolume)
-    setTrackVolume('music', musicVolume)
+    setTrackVolume('music', effectiveMusicVolume)
     setTrackVolume('sfx', sfxVolume)
-  }, [dialogueVolume, musicVolume, sfxVolume, setTrackVolume])
+  }, [dialogueVolume, effectiveMusicVolume, sfxVolume, setTrackVolume])
 
   useEffect(() => {
     setTrackEnabled('music', !!scene?.musicAudio || !!(scene?.music as { url?: string } | undefined)?.url)

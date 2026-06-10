@@ -32,7 +32,6 @@ import {
   saveGalleryImageEffectPrefs,
   transformToCss,
   CROSSFADE_DURATION_MS,
-  GALLERY_KEN_BURNS_CYCLE_DURATION,
   type GalleryImageEffectPrefs,
 } from '@/lib/storyboard/storyboardImageEffects'
 import { StoryboardImageEffectControl } from '@/components/vision/StoryboardImageEffectControl'
@@ -60,6 +59,16 @@ function formatTime(seconds: number) {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
+const GALLERY_MUSIC_VOLUME_STORAGE_KEY = 'sceneflow-gallery-music-volume'
+const DEFAULT_GALLERY_MUSIC_VOLUME = 0.15
+
+function loadGalleryMusicVolume(): number {
+  if (typeof window === 'undefined') return DEFAULT_GALLERY_MUSIC_VOLUME
+  const raw = sessionStorage.getItem(GALLERY_MUSIC_VOLUME_STORAGE_KEY)
+  const parsed = raw != null ? Number(raw) : NaN
+  return Number.isFinite(parsed) && parsed >= 0 && parsed <= 1 ? parsed : DEFAULT_GALLERY_MUSIC_VOLUME
+}
+
 export function AudioGalleryPlayer({
   scenes,
   selectedLanguage,
@@ -75,11 +84,11 @@ export function AudioGalleryPlayer({
 }: AudioGalleryPlayerProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
   const [volume, setVolume] = useState(0.8)
+  const [musicVolume, setMusicVolume] = useState(loadGalleryMusicVolume)
   const [isMuted, setIsMuted] = useState(false)
   const [autoAdvance, setAutoAdvance] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [visualFrameKey, setVisualFrameKey] = useState(0)
-  const kenBurnsCycleOrigin = useRef(0)
   const lastImageUrlRef = useRef<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const autoAdvanceRef = useRef(autoAdvance)
@@ -121,6 +130,7 @@ export function AudioGalleryPlayer({
     scene: currentScene,
     language: selectedLanguage,
     volume,
+    musicVolume,
     isMuted,
     onPlaybackEnd: handlePlaybackEnd,
   })
@@ -143,8 +153,6 @@ export function AudioGalleryPlayer({
     currentVisualFrame?.imageUrl ?? getEstablishingFrameUrl(currentScene)
 
   const speakerLabel = currentVisualFrame?.character ?? currentVisualFrame?.label
-  const currentTimeRef = useRef(currentTime)
-  currentTimeRef.current = currentTime
   
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -171,6 +179,10 @@ export function AudioGalleryPlayer({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
 
+  useEffect(() => {
+    sessionStorage.setItem(GALLERY_MUSIC_VOLUME_STORAGE_KEY, String(musicVolume))
+  }, [musicVolume])
+
   // Reset Ken Burns direction when the visible frame changes
   useEffect(() => {
     const next =
@@ -179,11 +191,6 @@ export function AudioGalleryPlayer({
       (currentVisualFrame?.frameType === 'establishing' ? 0 : 50)
     setVisualFrameKey(prev => (prev === next ? prev : next))
   }, [currentSceneIndex, currentVisualFrame?.clipId, currentVisualFrame?.dialogueIndex, currentVisualFrame?.frameType])
-
-  // Reset Ken Burns cycle phase when dialogue frame changes
-  useEffect(() => {
-    kenBurnsCycleOrigin.current = currentTimeRef.current
-  }, [currentSceneIndex, currentVisualFrame?.clipId])
 
   // Crossfade between dialogue frames
   useEffect(() => {
@@ -234,11 +241,13 @@ export function AudioGalleryPlayer({
     !!(currentScene?.music as { url?: string } | undefined)?.url ||
     (Array.isArray(currentScene?.sfxAudio) && currentScene!.sfxAudio.length > 0)
 
-  // Image motion transform
+  // Image motion transform — one Ken Burns cycle per storyboard cut
   const kenBurnsProgress = useMemo(() => {
-    const cycleTime = currentTime - kenBurnsCycleOrigin.current
-    return computeKenBurnsProgress(cycleTime, GALLERY_KEN_BURNS_CYCLE_DURATION)
-  }, [currentTime, visualFrameKey])
+    const frameStart = currentVisualFrame?.startTime ?? 0
+    const frameDuration = Math.max(currentVisualFrame?.duration ?? sceneDuration, 2)
+    const cycleTime = Math.max(0, currentTime - frameStart)
+    return computeKenBurnsProgress(cycleTime, frameDuration)
+  }, [currentTime, currentVisualFrame?.startTime, currentVisualFrame?.duration, sceneDuration])
 
   const imageTransform = useMemo(() => {
     switch (imageEffectPrefs.mode) {
@@ -671,12 +680,22 @@ export function AudioGalleryPlayer({
                     </TooltipTrigger>
                     <TooltipContent>{isMuted ? 'Unmute' : 'Mute'}</TooltipContent>
                   </Tooltip>
+                  <span className="text-[10px] text-gray-500 shrink-0">Master</span>
                   <Slider
                     value={[volume * 100]}
                     onValueChange={([val]) => setVolume(val / 100)}
                     max={100}
                     step={1}
                     className="w-20"
+                  />
+                  <span className="text-[10px] text-gray-500 shrink-0">Music</span>
+                  <Slider
+                    value={[musicVolume * 100]}
+                    onValueChange={([val]) => setMusicVolume(val / 100)}
+                    max={100}
+                    step={1}
+                    className="w-16"
+                    title={`Music volume: ${Math.round(musicVolume * 100)}%`}
                   />
                 </div>
               </div>

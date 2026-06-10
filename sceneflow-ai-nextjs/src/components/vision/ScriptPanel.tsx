@@ -6085,8 +6085,12 @@ function SceneCard({
                     )
                   })()}
                   
-                  {/* Scene Beats — script timeline (dialogue, narration, action) that drives production beats */}
-                  {scene.dialogue && scene.dialogue.length > 0 && (
+                  {/* Scene Beats — full timeline (action, narration, dialogue) */}
+                  {(() => {
+                    const timelineBeats = getSceneBeats(scene)
+                    if (timelineBeats.length === 0) return null
+                    let spokenBeatCursor = 0
+                    return (
                     <div className="bg-emerald-950 border-l-4 border-emerald-500 p-4 rounded-lg">
                       <div className="flex items-center justify-between mb-3">
                         <button
@@ -6099,9 +6103,10 @@ function SceneCard({
                           <ChevronDown className={`w-4 h-4 text-emerald-400 transition-transform ${dialogueCollapsed ? '-rotate-90' : ''}`} />
                           <Users className="w-4 h-4 text-emerald-400" />
                           <span className="text-sm font-semibold text-gray-200">Scene Beats</span>
-                          <span className="text-xs text-gray-500">({scene.dialogue.length} {scene.dialogue.length === 1 ? 'beat' : 'beats'})</span>
+                          <span className="text-xs text-gray-500">({timelineBeats.length} {timelineBeats.length === 1 ? 'beat' : 'beats'})</span>
                         </button>
-                        {/* Voice Casting Quick View */}
+                        {/* Voice Casting Quick View — dialogue characters only */}
+                        {scene.dialogue && scene.dialogue.length > 0 && (
                         <div className="flex items-center gap-1">
                           {(() => {
                             // Get dialogue audio array for current language
@@ -6176,10 +6181,51 @@ function SceneCard({
                             </TooltipProvider>
                           )}
                         </div>
+                        )}
                       </div>
                       {!dialogueCollapsed && (
                       <div className="space-y-3">
-                      {scene.dialogue.map((d: any, i: number) => {
+                      {timelineBeats.map((beat) => {
+                        if (beat.kind === 'action') {
+                          return (
+                            <div
+                              key={beat.beatId}
+                              className="p-3 bg-amber-900/25 rounded-lg border border-amber-700/40"
+                            >
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-xs font-semibold uppercase tracking-wide text-amber-300">
+                                  Action
+                                </span>
+                                {beat.beatRole === 'title_reveal' && (
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                                    Title
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">
+                                {beat.actionDescription?.trim() || 'No action description'}
+                              </p>
+                            </div>
+                          )
+                        }
+
+                        const dialogueLines = Array.isArray(scene.dialogue) ? scene.dialogue : []
+                        let dialogueIndex = spokenBeatCursor
+                        if (beat.lineId?.trim()) {
+                          const byLineId = dialogueLines.findIndex(
+                            (entry: { lineId?: string }) => entry?.lineId === beat.lineId
+                          )
+                          if (byLineId >= 0) dialogueIndex = byLineId
+                        }
+                        spokenBeatCursor = Math.max(spokenBeatCursor + 1, dialogueIndex + 1)
+                        const d = dialogueLines[dialogueIndex] ?? {
+                          character: beat.character,
+                          line: beat.line,
+                          lineId: beat.lineId,
+                          kind: beat.kind,
+                          characterId: beat.characterId,
+                        }
+                        const i = dialogueIndex
                         const audioEntry = findDialogueAudioForLine(scene, {
                           language: selectedLanguage,
                           lineId: d.lineId,
@@ -6197,7 +6243,7 @@ function SceneCard({
                           : dialogueLineText
                         
                         return (
-                          <div key={i} className="p-3 bg-green-900/30 rounded-lg border border-green-700/30 hover:border-green-600/50 transition-colors">
+                          <div key={beat.beatId} className="p-3 bg-green-900/30 rounded-lg border border-green-700/30 hover:border-green-600/50 transition-colors">
                             <div className="flex items-start gap-3">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1.5">
@@ -6357,7 +6403,8 @@ function SceneCard({
                       </div>
                       )}
                     </div>
-                  )}
+                    )
+                  })()}
                   
                   {/* Background Music */}
                   {scene.music && (

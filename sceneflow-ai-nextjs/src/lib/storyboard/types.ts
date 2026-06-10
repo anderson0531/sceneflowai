@@ -173,6 +173,18 @@ export interface StoryboardFrameSlot {
   isMissing: boolean
 }
 
+function getRawBeatStoryboardUrl(
+  scene: Record<string, unknown>,
+  beat: SceneBeat
+): string | undefined {
+  const rawBeats = Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : []
+  const raw =
+    (beat.beatId && rawBeats.find((b) => b.beatId === beat.beatId)) ||
+    rawBeats[beat.sequenceIndex ?? -1]
+  const url = raw?.storyboardImageUrl?.trim()
+  return isValidStoryboardMediaUrl(url) ? url : undefined
+}
+
 function resolveDialogueIndexForBeatSlot(
   scene: Record<string, unknown>,
   beat: ReturnType<typeof getSceneBeats>[number],
@@ -215,9 +227,12 @@ export function enumerateStoryboardFrameSlots(
     let spokenIdx = 0
     for (let beatIndex = 0; beatIndex < beats.length; beatIndex++) {
       const beat = beats[beatIndex]
-      let ownImageUrl = isValidStoryboardMediaUrl(beat.storyboardImageUrl)
-        ? beat.storyboardImageUrl!.trim()
-        : undefined
+      let ownImageUrl =
+        beat.kind === 'action'
+          ? getRawBeatStoryboardUrl(scene, beat)
+          : isValidStoryboardMediaUrl(beat.storyboardImageUrl)
+            ? beat.storyboardImageUrl!.trim()
+            : undefined
       let dialogueIndex: number | undefined
 
       if (beat.kind !== 'action') {

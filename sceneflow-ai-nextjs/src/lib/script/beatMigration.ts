@@ -3,6 +3,7 @@
  */
 
 import { toCanonicalName } from '@/lib/character/canonical'
+import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 import {
   estimateSpokenDurationSeconds,
   planDialogueLineSplits,
@@ -101,31 +102,44 @@ export function hydrateBeatStoryboardMediaFromLegacy(
     : []
   let dialogueIdx = 0
 
-  return beats.map((beat) => {
+  return beats.map((beat, beatIndex) => {
     if (beat.kind === 'action') {
-      const sceneImageUrl = pickStoryboardString(scene.imageUrl)
       const beatImageUrl = pickStoryboardString(beat.storyboardImageUrl)
-      // scene.imageUrl is canonical for establishing shots (uploads update it first).
-      const storyboardImageUrl = sceneImageUrl || beatImageUrl
-      if (!storyboardImageUrl) return beat
-      return {
-        ...beat,
-        storyboardImageUrl,
-        storyboardImageGcsPath: pickStoryboardString(
-          sceneImageUrl && sceneImageUrl !== beatImageUrl
-            ? scene.imageGcsPath
-            : undefined,
-          beat.storyboardImageGcsPath,
-          scene.imageGcsPath
-        ),
-        storyboardImagePrompt: pickStoryboardString(
-          sceneImageUrl && sceneImageUrl !== beatImageUrl
-            ? scene.imagePrompt
-            : undefined,
-          beat.storyboardImagePrompt,
-          scene.imagePrompt
-        ),
+      if (beatImageUrl) {
+        return {
+          ...beat,
+          storyboardImageUrl: beatImageUrl,
+          storyboardImageGcsPath: pickStoryboardString(
+            beat.storyboardImageGcsPath,
+            scene.imageGcsPath
+          ),
+          storyboardImagePrompt: pickStoryboardString(
+            beat.storyboardImagePrompt,
+            scene.imagePrompt
+          ),
+        }
       }
+
+      // scene.imageUrl applies only to beat 0 (establishing) for legacy migration.
+      if (beatIndex === 0) {
+        const sceneImageUrl = pickStoryboardString(scene.imageUrl)
+        if (sceneImageUrl) {
+          return {
+            ...beat,
+            storyboardImageUrl: sceneImageUrl,
+            storyboardImageGcsPath: pickStoryboardString(
+              scene.imageGcsPath,
+              beat.storyboardImageGcsPath
+            ),
+            storyboardImagePrompt: pickStoryboardString(
+              scene.imagePrompt,
+              beat.storyboardImagePrompt
+            ),
+          }
+        }
+      }
+
+      return beat
     }
 
     if (!isSpokenBeatKind(beat.kind)) return beat
@@ -445,6 +459,45 @@ export function computeTargetBeatCount(scene: Record<string, unknown>): number {
   return Math.min(MAX_DERIVED_BEATS, Math.max(1, Math.round(duration / BEAT_DURATION_SEC)))
 }
 
+function isCreditsScene(scene: Record<string, unknown>): boolean {
+  if (scene.cinematicType === 'outro') return true
+  const heading = String(scene.heading ?? '').toLowerCase()
+  return (
+    heading.includes('credits') ||
+    heading.includes('outro') ||
+    heading.includes('end title')
+  )
+}
+
+/** Smarter beat target — avoids duration padding on dialogue/title scenes. */
+export function computeTargetBeatCountForScene(scene: Record<string, unknown>): number {
+  const existing = tryParseExistingBeats(scene)
+  if (existing.length > 0) return existing.length
+
+  const direction = getSceneDirection(scene)
+  const shots = Array.isArray(direction?.camera?.shots)
+    ? direction!.camera!.shots!.filter((s) => String(s).trim()).length
+    : 0
+
+  if (isTitleOrCinematicScene(scene) || isCreditsScene(scene)) {
+    if (shots > 0) return Math.min(shots, 4)
+    const duration =
+      typeof scene.duration === 'number' && scene.duration > 0 ? scene.duration : 20
+    return Math.min(4, Math.max(2, Math.round(duration / BEAT_DURATION_SEC)))
+  }
+
+  const legacyBeats = buildLegacyBeats(scene)
+  const spokenCount = legacyBeats.filter((b) => isSpokenBeatKind(b.kind)).length
+  if (spokenCount > 0) {
+    if (shots > legacyBeats.length) return Math.min(shots, MAX_DERIVED_BEATS)
+    return legacyBeats.length
+  }
+
+  const durationBased = computeTargetBeatCount(scene)
+  if (shots > 0) return Math.min(shots, durationBased, MAX_DERIVED_BEATS)
+  return durationBased
+}
+
 function pickIndexedItem<T>(items: T[], beatIndex: number, totalBeats: number): T | undefined {
   if (items.length === 0) return undefined
   if (items.length >= totalBeats) return items[beatIndex]
@@ -475,7 +528,8 @@ function buildSetContext(direction: SceneDirectionShape | undefined): string {
 /** Derive action beats from sceneDirection / visual fields for action-only scenes. */
 export function deriveActionBeatsFromDirection(
   scene: Record<string, unknown>,
-  targetBeats: number
+  targetBeats: number,
+  startIndex = 0
 ): SceneBeat[] {
   const direction = getSceneDirection(scene)
   const visualDescription = String(scene.visualDescription ?? '').trim()
@@ -494,39 +548,49 @@ export function deriveActionBeatsFromDirection(
     ? sceneDescription.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 8)
     : []
 
+  const totalSpan = startIndex + targetBeats
   const beats: SceneBeat[] = []
   for (let i = 0; i < targetBeats; i++) {
+    const globalIndex = startIndex + i
     const shot =
-      shots.length >= targetBeats
-        ? shots[i]
-        : pickIndexedItem(shots, i, targetBeats) ?? 'Medium shot'
-    const keyAction = pickIndexedItem(keyActions, i, targetBeats)
+      shots.length >= totalSpan
+        ? shots[globalIndex]
+        : pickIndexedItem(shots, globalIndex, totalSpan) ?? 'Medium shot'
+    const keyAction = pickIndexedItem(keyActions, globalIndex, totalSpan)
     const momentParts: string[] = []
     if (keyAction) momentParts.push(keyAction)
-    else if (blocking && targetBeats === 1) momentParts.push(blocking)
-    else if (sentences.length >= targetBeats) {
-      momentParts.push(sentences[i])
+    else if (blocking && i === Math.floor(targetBeats / 2)) momentParts.push(blocking)
+    else if (sentences.length >= totalSpan) {
+      momentParts.push(sentences[globalIndex])
+    } else if (sentences.length > 0) {
+      momentParts.push(pickIndexedItem(sentences, globalIndex, totalSpan) ?? sceneDescription)
     } else if (sceneDescription) {
-      momentParts.push(pickIndexedItem(sentences, i, targetBeats) ?? sceneDescription)
+      momentParts.push(sceneDescription)
     } else if (blocking) momentParts.push(blocking)
-    if (emotionalBeat && i === targetBeats - 1) momentParts.push(emotionalBeat)
+    if (emotionalBeat && globalIndex === totalSpan - 1) momentParts.push(emotionalBeat)
 
-    const isBookendBeat = i === 0 || i === targetBeats - 1
-    const actionParts = [`${shot}: ${momentParts.join(' ').trim() || 'Scene action unfolds'}`]
+    let momentText = momentParts.join(' ').trim() || 'Scene action unfolds'
+    const prev = beats[beats.length - 1]
+    if (prev?.actionDescription && prev.actionDescription.includes(momentText) && momentText.length < 40) {
+      momentText = `${momentText} (${shot})`
+    }
+
+    const isBookendBeat = globalIndex === 0 || globalIndex === totalSpan - 1
+    const actionParts = [`${shot}: ${momentText}`]
     if (setContext && isBookendBeat) actionParts.push(setContext)
     if (lightingCue && isBookendBeat) actionParts.push(lightingCue)
 
     beats.push({
       beatId: mintBeatId(),
-      sequenceIndex: i,
+      sequenceIndex: globalIndex,
       kind: 'action',
       actionDescription: actionParts.join('. ').replace(/\.\s*\./g, '.').trim(),
       storyboardImageUrl:
-        i === 0 && typeof scene.imageUrl === 'string' ? scene.imageUrl : undefined,
+        globalIndex === 0 && typeof scene.imageUrl === 'string' ? scene.imageUrl : undefined,
       storyboardImagePrompt:
-        i === 0 && typeof scene.imagePrompt === 'string' ? scene.imagePrompt : undefined,
+        globalIndex === 0 && typeof scene.imagePrompt === 'string' ? scene.imagePrompt : undefined,
       storyboardImageGcsPath:
-        i === 0 && typeof scene.imageGcsPath === 'string' ? scene.imageGcsPath : undefined,
+        globalIndex === 0 && typeof scene.imageGcsPath === 'string' ? scene.imageGcsPath : undefined,
     })
   }
 
@@ -539,8 +603,17 @@ function needsDirectionBeatExpansion(
   targetBeats: number
 ): boolean {
   if (legacyBeats.length === 0) return true
+
+  const existing = tryParseExistingBeats(scene)
+  if (existing.length > 0 && existing.length >= targetBeats) return false
+
   const spoken = legacyBeats.filter((b) => isSpokenBeatKind(b.kind))
-  if (spoken.length > 0) return legacyBeats.length < targetBeats
+  if (spoken.length > 0) {
+    const direction = getSceneDirection(scene)
+    const shotCount = direction?.camera?.shots?.length ?? 0
+    return shotCount > legacyBeats.length
+  }
+
   if (legacyBeats.length === 1 && legacyBeats[0].kind === 'action') {
     const direction = getSceneDirection(scene)
     const hasRichDirection =
@@ -559,7 +632,7 @@ function appendDirectionActionBeats(
 ): SceneBeat[] {
   const needed = Math.max(0, targetBeats - existing.length)
   if (needed === 0) return existing
-  const extra = deriveActionBeatsFromDirection(scene, needed)
+  const extra = deriveActionBeatsFromDirection(scene, needed, existing.length)
   const merged = [
     ...existing,
     ...extra.map((beat, offset) => ({
@@ -575,7 +648,12 @@ function appendDirectionActionBeats(
  * Uses legacy fields first, then sceneDirection for duration-sized action timelines.
  */
 export function deriveBeatsFromSceneContent(scene: Record<string, unknown>): SceneBeat[] {
-  const targetBeats = computeTargetBeatCount(scene)
+  const existing = tryParseExistingBeats(scene)
+  if (existing.length > 0) {
+    return existing
+  }
+
+  const targetBeats = computeTargetBeatCountForScene(scene)
   const legacyBeats = buildLegacyBeats(scene)
 
   if (needsDirectionBeatExpansion(legacyBeats, scene, targetBeats)) {
