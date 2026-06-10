@@ -148,7 +148,7 @@ interface SceneGalleryProps {
    */
   onExpressGenerate?: (options: ExpressConfirmOptions) => Promise<void> | void
   /** Upgrade draft storyboard frames to final quality (all scenes or one scene). */
-  onFinalizeStoryboard?: (sceneIndex?: number) => Promise<void> | void
+  onFinalizeStoryboard?: (sceneIndex?: number, language?: string) => Promise<void> | void
   /** Per-scene fast Express (mode=scene). */
   onExpressSceneGenerate?: (
     sceneIndex: number,
@@ -690,7 +690,7 @@ export function SceneGallery({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => void onFinalizeStoryboard()}
+                  onClick={() => void onFinalizeStoryboard(undefined, selectedLanguage)}
                   className="flex items-center gap-2 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10"
                 >
                   <Sparkles className="w-4 h-4" />
@@ -972,7 +972,9 @@ export function SceneGallery({
                       : undefined
                   }
                   onFinalizeScene={
-                    onFinalizeStoryboard ? () => onFinalizeStoryboard(idx) : undefined
+                    onFinalizeStoryboard
+                      ? () => onFinalizeStoryboard(idx, selectedLanguage)
+                      : undefined
                   }
                   onSyncPreVisToScript={
                     onSyncPreVisToScript ? () => onSyncPreVisToScript(idx) : undefined

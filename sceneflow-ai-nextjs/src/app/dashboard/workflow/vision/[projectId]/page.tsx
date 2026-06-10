@@ -11170,11 +11170,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   const handleFinalizeStoryboard = useCallback(
-    async (sceneIndex?: number) => {
+    async (sceneIndex?: number, language: string = 'en') => {
       if (isExpressRunning) return
       if (sceneIndex !== undefined) {
         toast.info(`Finalizing Scene ${sceneIndex + 1} frames for animatic and video…`)
-        await handleExpressSceneGenerate(sceneIndex, selectedLanguage, { finalizeOnly: true })
+        await handleExpressSceneGenerate(sceneIndex, language, { finalizeOnly: true })
         return
       }
       toast.info('Upgrading draft frames to Final quality for animatic and video…')
@@ -11184,7 +11184,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         regenerate: false,
         storyboardQuality: 'final',
         finalizeOnly: true,
-        language: selectedLanguage,
+        language,
         artStyle: lockedArtStyle || 'photorealistic',
       })
     },
@@ -11192,7 +11192,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       isExpressRunning,
       handleExpressSceneGenerate,
       handleExpressGenerate,
-      selectedLanguage,
       lockedArtStyle,
     ]
   )
