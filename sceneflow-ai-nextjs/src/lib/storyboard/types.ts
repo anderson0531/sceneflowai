@@ -11,6 +11,7 @@ import {
 } from '@/components/vision/scene-production/audioTrackBuilder'
 import { getSceneBeats, getStoryboardTimelineBeats } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
+import { resolveEffectiveStoryboardTier } from '@/lib/storyboard/storyboardQuality'
 import { NARRATOR_CHARACTER, NARRATOR_CHARACTER_ID } from '@/lib/script/segmentTypes'
 import { generateAliases, toCanonicalName } from '@/lib/character/canonical'
 import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
@@ -27,6 +28,7 @@ export interface DialogueStoryboardFrame {
   storyboardImageUrl?: string
   storyboardImagePrompt?: string
   storyboardImageGcsPath?: string
+  storyboardImageTier?: 'draft' | 'final'
 }
 
 export type StoryboardFrameType = 'establishing' | 'dialogue' | 'custom'
@@ -159,6 +161,8 @@ export interface StoryboardFrameSlot {
   ownImageUrl?: string
   /** URL shown in UI (own image, or borrowed establishing shot). */
   displayImageUrl?: string
+  /** draft | final — missing tier treated as draft */
+  imageTier?: 'draft' | 'final'
   isPlaceholder: boolean
   isMissing: boolean
 }
@@ -244,6 +248,9 @@ export function enumerateStoryboardFrameSlots(
         dialogueIndex,
         ownImageUrl,
         displayImageUrl,
+        imageTier: ownImageUrl
+          ? resolveEffectiveStoryboardTier(beat.storyboardImageTier)
+          : undefined,
         isPlaceholder: !ownImageUrl && !!displayImageUrl,
         isMissing: !ownImageUrl && !displayImageUrl,
       })

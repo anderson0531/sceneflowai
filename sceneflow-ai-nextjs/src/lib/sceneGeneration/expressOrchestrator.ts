@@ -49,10 +49,32 @@ import {
   isTitleOrCinematicScene,
   type BeatKeyframePlan,
 } from '../intelligence/beat-sequence-planner'
+import {
+  resolveStoryboardGeneration,
+  beatFrameNeedsGeneration,
+  dialogueFrameNeedsGeneration,
+  type StoryboardQuality,
+} from '../storyboard/storyboardQuality'
 
-const EXPRESS_IMAGE_OPTS = {
-  modelTier: 'eco' as const,
-  skipLikenessValidation: true,
+const EXPRESS_SKIP_LIKENESS = { skipLikenessValidation: true }
+
+function getExpressImageParams(options: ExpressOptions) {
+  const gen = resolveStoryboardGeneration({
+    storyboardQuality: options.storyboardQuality,
+    legacyImageQuality:
+      options.imageQuality === 'max' || options.imageQuality === 'auto'
+        ? options.imageQuality
+        : undefined,
+  })
+  return { ...gen, ...EXPRESS_SKIP_LIKENESS }
+}
+
+function getBeatGenerationContext(options: ExpressOptions) {
+  return {
+    storyboardQuality: (options.storyboardQuality ?? 'draft') as StoryboardQuality,
+    finalizeOnly: !!options.finalizeOnly,
+    regenerate: !!options.regenerate,
+  }
 }
 
 export interface RunExpressParams {
@@ -317,13 +339,15 @@ async function generateSingleBeatImage(
   beatPlan?: BeatKeyframePlan
 ): Promise<{ imageUrl: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
+  const imageParams = getExpressImageParams(options)
   const result = await trafficCop.runInLane('image', () =>
     generateSceneImage({
     projectId: options.projectId,
     sceneIndex,
     baseUrl,
     authCookie,
-    quality: options.imageQuality || 'auto',
+    quality: imageParams.quality,
+    storyboardQuality: imageParams.storyboardQuality,
     artStyle,
     frameType: 'beat',
     beatIndex: beatIdx,
@@ -332,10 +356,11 @@ async function generateSingleBeatImage(
     ...(typeof beatPlan?.allowTypography === 'boolean'
       ? { allowTypography: beatPlan.allowTypography }
       : {}),
-    ...EXPRESS_IMAGE_OPTS,
+    modelTier: imageParams.modelTier,
+    skipLikenessValidation: imageParams.skipLikenessValidation,
     })
   )
-  persistBeatFrame(scene, beatIdx, result)
+  persistBeatFrame(scene, beatIdx, result, imageParams.storyboardQuality)
   safeEmit(emit, {
     type: 'phase-done',
     sceneIndex,
@@ -346,7 +371,7 @@ async function generateSingleBeatImage(
     beatIndex: beatIdx,
   })
   console.log(
-    `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — vertex eco`
+    `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — ${imageParams.storyboardQuality} (${imageParams.modelTier})`
   )
   return { imageUrl: result.imageUrl }
 }
@@ -363,10 +388,11 @@ async function runBeatImages(
   beatPlansByIndex: Map<number, BeatKeyframePlan>
 ): Promise<{ hadFailure: boolean; lastError?: string; lastImageUrl?: string }> {
   const { scene, sceneIndex, sceneNumber } = ctx
+  const genCtx = getBeatGenerationContext(options)
   const beatsToGenerate: number[] = []
   for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
     const beat = beats[beatIdx]
-    if (!options.regenerate && beat.storyboardImageUrl?.trim()) continue
+    if (!beatFrameNeedsGeneration(beat, genCtx)) continue
     beatsToGenerate.push(beatIdx)
   }
 
@@ -491,12 +517,18 @@ async function runBeatImages(
   return { hadFailure: failedIndices.length > 0, lastError, lastImageUrl }
 }
 
-function persistBeatFrame(scene: any, beatIndex: number, result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null }) {
+function persistBeatFrame(
+  scene: any,
+  beatIndex: number,
+  result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null },
+  tier: StoryboardQuality
+) {
   const beats = getSceneBeats(scene)
   if (!beats[beatIndex]) return
   beats[beatIndex] = {
     ...beats[beatIndex],
     storyboardImageUrl: result.imageUrl,
+    storyboardImageTier: tier,
     ...(result.gcsPath ? { storyboardImageGcsPath: result.gcsPath } : {}),
     ...(result.imagePrompt ? { storyboardImagePrompt: result.imagePrompt } : {}),
   }
@@ -608,6 +640,7 @@ async function runImagePhase(
 
   const needsImages =
     options.regenerate ||
+    options.finalizeOnly ||
     (useBeatPipeline ? sceneNeedsBeatImages(scene) : sceneNeedsImage(scene))
 
   if (!needsImages) {
@@ -659,13 +692,20 @@ async function runImagePhase(
       scene.storyboardApprovedAt = undefined
     } else {
       const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
+      const imageParams = getExpressImageParams(options)
+      const genCtx = getBeatGenerationContext(options)
       const needsEstablishing = options.regenerate || sceneNeedsEstablishingImage(scene)
 
-      const persistDialogueFrame = (idx: number, result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null }) => {
+      const persistDialogueFrame = (
+        idx: number,
+        result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null },
+        tier: StoryboardQuality
+      ) => {
         if (!Array.isArray(scene.dialogue)) scene.dialogue = []
         scene.dialogue[idx] = {
           ...scene.dialogue[idx],
           storyboardImageUrl: result.imageUrl,
+          storyboardImageTier: tier,
           ...(result.gcsPath ? { storyboardImageGcsPath: result.gcsPath } : {}),
           ...(result.imagePrompt ? { storyboardImagePrompt: result.imagePrompt } : {}),
         }
@@ -678,11 +718,13 @@ async function runImagePhase(
             sceneIndex,
             baseUrl,
             authCookie,
-            quality: options.imageQuality || 'auto',
+            quality: imageParams.quality,
+            storyboardQuality: imageParams.storyboardQuality,
             artStyle,
             frameType: 'establishing',
             sceneOverride: scene,
-            ...EXPRESS_IMAGE_OPTS,
+            modelTier: imageParams.modelTier,
+            skipLikenessValidation: imageParams.skipLikenessValidation,
           })
           scene.imageUrl = result.imageUrl
           lastImageUrl = result.imageUrl
@@ -711,7 +753,7 @@ async function runImagePhase(
       }
 
       for (let dialogueIdx = 0; dialogueIdx < dialogue.length; dialogueIdx++) {
-        if (!options.regenerate && dialogue[dialogueIdx]?.storyboardImageUrl) continue
+        if (!dialogueFrameNeedsGeneration(dialogue[dialogueIdx] || {}, genCtx)) continue
 
         try {
           const result = await generateLegacySceneImage(trafficCop, {
@@ -719,14 +761,16 @@ async function runImagePhase(
             sceneIndex,
             baseUrl,
             authCookie,
-            quality: options.imageQuality || 'auto',
+            quality: imageParams.quality,
+            storyboardQuality: imageParams.storyboardQuality,
             artStyle,
             frameType: 'dialogue',
             dialogueIndex: dialogueIdx,
             sceneOverride: scene,
-            ...EXPRESS_IMAGE_OPTS,
+            modelTier: imageParams.modelTier,
+            skipLikenessValidation: imageParams.skipLikenessValidation,
           })
-          persistDialogueFrame(dialogueIdx, result)
+          persistDialogueFrame(dialogueIdx, result, imageParams.storyboardQuality)
           lastImageUrl = result.imageUrl
           safeEmit(emit, {
             type: 'phase-done',
@@ -852,6 +896,38 @@ async function runScene(
         phasesSkipped,
         phasesFailed,
       }
+    }
+  }
+
+  if (options.finalizeOnly) {
+    for (const phase of ['direction', 'audio'] as ExpressPhase[]) {
+      safeEmit(emit, {
+        type: 'phase-done',
+        sceneIndex,
+        sceneNumber,
+        phase,
+        ok: true,
+        skipped: true,
+      })
+      phasesSkipped.push(phase)
+    }
+
+    const iRes = await runImagePhase(ctx, options, project, baseUrl, authCookie, emit, trafficCop)
+    if (iRes.skipped) phasesSkipped.push('image')
+    else if (iRes.ok) phasesRun.push('image')
+    else phasesFailed.push('image')
+
+    const ok = phasesFailed.length === 0
+    const error = phasesFailed.length > 0 ? `Failed phases: ${phasesFailed.join(', ')}` : undefined
+    safeEmit(emit, { type: 'scene-done', sceneIndex, sceneNumber, ok, error })
+    return {
+      sceneIndex,
+      sceneNumber,
+      ok,
+      error,
+      phasesRun,
+      phasesSkipped,
+      phasesFailed,
     }
   }
 

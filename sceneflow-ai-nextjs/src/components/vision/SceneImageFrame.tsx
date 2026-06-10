@@ -28,6 +28,8 @@ export interface SceneImageFrameProps {
   showBorder?: boolean
   /** Label to display in header */
   label?: string
+  /** draft | final — shown when frame has its own image */
+  imageTier?: 'draft' | 'final'
 }
 
 function CompactIconButton({
@@ -183,6 +185,7 @@ export function SceneImageFrame({
   compact = false,
   showBorder = true,
   label = 'Scene Reference',
+  imageTier,
 }: SceneImageFrameProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isHovering, setIsHovering] = useState(false)
@@ -252,6 +255,14 @@ export function SceneImageFrame({
                 <span className="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded-full flex items-center gap-0.5 backdrop-blur-sm">
                   <AlertTriangle className="w-2.5 h-2.5" />
                   Placeholder
+                </span>
+              ) : imageTier === 'final' ? (
+                <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/25 text-emerald-300 rounded-full backdrop-blur-sm">
+                  Final
+                </span>
+              ) : imageTier === 'draft' ? (
+                <span className="text-[9px] px-1.5 py-0.5 bg-gray-500/25 text-gray-300 rounded-full backdrop-blur-sm">
+                  Draft
                 </span>
               ) : (
                 <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center gap-0.5 backdrop-blur-sm">

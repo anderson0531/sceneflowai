@@ -18,6 +18,7 @@ import {
   getSceneBeats,
   isStoryboardApproved,
 } from '@/lib/script/beatMigration'
+import { collectDraftStoryboardFrameWarnings } from '@/lib/storyboard/storyboardQuality'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { SceneSegment } from '@/components/vision/scene-production/types'
 import type { VideoGenerationMethod } from '@/components/vision/scene-production/types'
@@ -225,6 +226,8 @@ function appendSegmentsFromBeat(
 export interface DeriveSegmentsResult {
   segments: SceneSegment[]
   errors: string[]
+  /** Non-blocking quality notices (e.g. draft storyboard frames). */
+  warnings?: string[]
   /** Scene with updated beats (e.g. after split application). */
   updatedScene?: Record<string, unknown>
 }
@@ -264,7 +267,9 @@ export function deriveSegmentsFromBeats(
     sequenceIndex = next.sequenceIndex
   }
 
-  return { segments, errors }
+  const warnings = collectDraftStoryboardFrameWarnings(scene)
+
+  return { segments, errors, ...(warnings.length ? { warnings } : {}) }
 }
 
 /** Apply a dialogue split to beats and re-derive segments. */

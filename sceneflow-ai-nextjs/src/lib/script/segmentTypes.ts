@@ -45,6 +45,8 @@ export interface SceneBeat {
   storyboardImageUrl?: string
   storyboardImagePrompt?: string
   storyboardImageGcsPath?: string
+  /** draft = Express layout pass; final = hi-res for animatic & video */
+  storyboardImageTier?: 'draft' | 'final'
   audioUrl?: string
   durationSeconds?: number
   needsSplit?: boolean
@@ -74,6 +76,8 @@ export interface DialogueLine {
   storyboardImageUrl?: string
   storyboardImagePrompt?: string
   storyboardImageGcsPath?: string
+  /** draft = Express layout pass; final = hi-res for animatic & video */
+  storyboardImageTier?: 'draft' | 'final'
 }
 
 /**

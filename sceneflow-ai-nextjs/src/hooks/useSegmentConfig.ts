@@ -20,6 +20,11 @@
 import { useMemo } from 'react'
 import { resolveVeoRefForExtension } from '@/lib/video/veoChainQueue'
 import type { SceneSegment, VideoGenerationMethod } from '@/components/vision/scene-production/types'
+import {
+  collectDraftStoryboardFrameWarnings,
+  resolveEffectiveStoryboardTier,
+} from '@/lib/storyboard/storyboardQuality'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { VideoGenerationConfig, ApprovalStatus } from '@/components/vision/scene-production/types'
 import {
   buildDefaultBatchGuidePrompt,
@@ -546,6 +551,8 @@ export interface SegmentConfigResult {
   methodLabel: string
   /** Short description of why this method was chosen */
   methodReason: string
+  /** Soft warning when start frame is still draft quality */
+  qualityWarning?: string
 }
 
 /**
@@ -632,6 +639,17 @@ export function useSegmentConfig(
       EXT: 'Extends existing video seamlessly',
       REF: 'Character references guide generation',
     }
+
+    let qualityWarning: string | undefined
+    if (guideContext?.scene && segment.beatId && resolvedStart) {
+      const beat = getSceneBeats(guideContext.scene).find((b) => b.beatId === segment.beatId)
+      if (
+        beat?.storyboardImageUrl?.trim() &&
+        resolveEffectiveStoryboardTier(beat.storyboardImageTier) !== 'final'
+      ) {
+        qualityWarning = collectDraftStoryboardFrameWarnings(guideContext.scene)[0]
+      }
+    }
     
     return {
       config,
@@ -639,6 +657,7 @@ export function useSegmentConfig(
       isApproved: approvalStatus === 'user-approved',
       methodLabel: methodLabels[method],
       methodReason: methodReasons[method],
+      qualityWarning,
     }
   }, [segment, sceneImageUrl, guideContext, defaultAspectRatio])
 }

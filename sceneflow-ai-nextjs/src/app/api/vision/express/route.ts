@@ -22,6 +22,8 @@ interface ExpressRequest {
   includeSFX?: boolean
   regenerate?: boolean
   imageQuality?: string
+  storyboardQuality?: 'draft' | 'final'
+  finalizeOnly?: boolean
   mode?: 'batch' | 'scene'
   sceneIndices?: number[]
 }
@@ -139,6 +141,8 @@ export async function POST(req: NextRequest) {
     includeSFX = false,
     regenerate = false,
     imageQuality,
+    storyboardQuality,
+    finalizeOnly = false,
     mode = 'batch',
     sceneIndices,
   } = body || {}
@@ -186,6 +190,8 @@ export async function POST(req: NextRequest) {
     includeSFX,
     regenerate,
     imageQuality,
+    storyboardQuality,
+    finalizeOnly: !!finalizeOnly,
     mode: mode === 'scene' ? 'scene' : 'batch',
     ...(Array.isArray(sceneIndices) && sceneIndices.length > 0
       ? { sceneIndices }

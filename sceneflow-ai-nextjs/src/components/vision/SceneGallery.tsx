@@ -57,6 +57,7 @@ import {
 } from '@/lib/storyboard/types'
 import { runSceneExpressPreflight } from '@/lib/sceneGeneration/sceneExpressPreflight'
 import { isPreVisStale } from '@/lib/storyboard/preVisSync'
+import { countDraftStoryboardFrames } from '@/lib/storyboard/storyboardQuality'
 import { ProductionReadyBanner } from './production/ProductionReadyBanner'
 import type { ProductionReadyChecklist } from '@/lib/production/productionReadinessGate'
 
@@ -146,6 +147,8 @@ interface SceneGalleryProps {
    * SSE request and updating script state from incoming events.
    */
   onExpressGenerate?: (options: ExpressConfirmOptions) => Promise<void> | void
+  /** Upgrade draft storyboard frames to final quality (all scenes or one scene). */
+  onFinalizeStoryboard?: (sceneIndex?: number) => Promise<void> | void
   /** Per-scene fast Express (mode=scene). */
   onExpressSceneGenerate?: (
     sceneIndex: number,
@@ -215,6 +218,7 @@ export function SceneGallery({
   onBatchGenerateEnd,
   onUpdateSceneAudio,
   onExpressGenerate,
+  onFinalizeStoryboard,
   onExpressSceneGenerate,
   onSyncPreVisToScript,
   narrationVoice,
@@ -376,6 +380,11 @@ export function SceneGallery({
       return needsDirection || needsImage || needsAudio
     }).length
   }, [scenes, selectedLanguage])
+
+  const draftFrameCount = useMemo(
+    () => scenes.reduce((sum, scene) => sum + countDraftStoryboardFrames(scene), 0),
+    [scenes]
+  )
 
   const storyboardBeatProgress = useMemo(() => {
     return scenes.reduce(
@@ -675,6 +684,25 @@ export function SceneGallery({
               </TooltipContent>
             </Tooltip>
           )}
+          {onFinalizeStoryboard && draftFrameCount > 0 && !isExpressRunning && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void onFinalizeStoryboard()}
+                  className="flex items-center gap-2 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Finalize frames ({draftFrameCount})
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                Upgrade draft storyboard frames to Final quality for animatic preview and video
+                generation.
+              </TooltipContent>
+            </Tooltip>
+          )}
           {isExpressRunning && expressProgress && (
             <div className="flex items-center gap-1.5 rounded-md border border-indigo-500/40 bg-indigo-500/10 px-2 py-1 text-[11px] text-indigo-200">
               <span className="font-semibold">
@@ -943,6 +971,9 @@ export function SceneGallery({
                       ? (opts) => onExpressSceneGenerate(idx, selectedLanguage, opts)
                       : undefined
                   }
+                  onFinalizeScene={
+                    onFinalizeStoryboard ? () => onFinalizeStoryboard(idx) : undefined
+                  }
                   onSyncPreVisToScript={
                     onSyncPreVisToScript ? () => onSyncPreVisToScript(idx) : undefined
                   }
@@ -1155,6 +1186,7 @@ interface SceneCardProps {
     dialogueIndex?: number
   }) => void
   onExpressSceneGenerate?: (options?: { regenerate?: boolean }) => void
+  onFinalizeScene?: () => void
   onSyncPreVisToScript?: () => void | Promise<void>
   onExpressGateBlocked?: () => void
   expressGateBlocked?: boolean
@@ -1265,6 +1297,7 @@ function SceneCard({
   onUploadBeatFrame,
   onEditFrame,
   onExpressSceneGenerate,
+  onFinalizeScene,
   onSyncPreVisToScript,
   onExpressGateBlocked,
   expressGateBlocked = false,
@@ -1720,6 +1753,29 @@ function SceneCard({
                       </DialogContent>
                     </Dialog>
                   )}
+                  {onFinalizeScene && countDraftStoryboardFrames(scene) > 0 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2 text-[10px] border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-50"
+                          disabled={isExpressRunning}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            void onFinalizeScene()
+                          }}
+                        >
+                          <Sparkles className="w-3 h-3 mr-0.5" />
+                          Finalize
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        Upgrade draft frames to Final quality for animatic and video
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                   {onAddStoryboardFrame && (
                     <Button
                       type="button"
@@ -1803,6 +1859,7 @@ function SceneCard({
                         compact
                         showBorder
                         label={slot.label}
+                        imageTier={slot.ownImageUrl ? slot.imageTier : undefined}
                         onGenerate={() => {
                           if (useBeatFrame) {
                             void onGenerateBeatFrame?.(beatIdx!)

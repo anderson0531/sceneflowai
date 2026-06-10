@@ -10717,7 +10717,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
 
-      const applySceneImage = (sceneIndex: number, imageUrl?: string, dialogueIndex?: number, beatIndex?: number) => {
+      const applySceneImage = (
+        sceneIndex: number,
+        imageUrl?: string,
+        dialogueIndex?: number,
+        beatIndex?: number,
+        imageTier: 'draft' | 'final' = 'draft'
+      ) => {
         if (!imageUrl) return
         setScript((prev: any) => {
           if (!prev?.script?.scenes) return prev
@@ -10726,7 +10732,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (typeof beatIndex === 'number') {
             const beats = [...(scenes[sceneIndex].beats || [])]
             if (beats[beatIndex]) {
-              beats[beatIndex] = { ...beats[beatIndex], storyboardImageUrl: imageUrl }
+              beats[beatIndex] = {
+                ...beats[beatIndex],
+                storyboardImageUrl: imageUrl,
+                storyboardImageTier: imageTier,
+              }
               scenes[sceneIndex] = {
                 ...applyBeatsToScene(scenes[sceneIndex], beats),
                 storyboardStatus: 'pending_review',
@@ -10737,6 +10747,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             dialogue[dialogueIndex] = {
               ...dialogue[dialogueIndex],
               storyboardImageUrl: imageUrl,
+              storyboardImageTier: imageTier,
             }
             scenes[sceneIndex] = { ...scenes[sceneIndex], dialogue }
           } else {
@@ -10757,6 +10768,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             includeMusic: !!options.includeMusic,
             includeSFX: !!options.includeSFX,
             regenerate: !!options.regenerate,
+            storyboardQuality: options.storyboardQuality ?? 'draft',
+            finalizeOnly: !!options.finalizeOnly,
             imageQuality,
           }),
         })
@@ -10793,7 +10806,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   if (event.ok) {
                     setPhase(event.sceneIndex, event.phase, 'done')
                     if (event.phase === 'image' && event.imageUrl) {
-                      applySceneImage(event.sceneIndex, event.imageUrl, event.dialogueIndex, event.beatIndex)
+                      applySceneImage(
+                        event.sceneIndex,
+                        event.imageUrl,
+                        event.dialogueIndex,
+                        event.beatIndex,
+                        options.storyboardQuality ?? 'draft'
+                      )
                     }
                   } else {
                     const phaseError = event.error || 'phase failed'
@@ -10937,7 +10956,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     async (
       sceneIndex: number,
       language: string,
-      options?: { regenerate?: boolean }
+      options?: { regenerate?: boolean; finalizeOnly?: boolean }
     ) => {
       if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
       if (isExpressRunning) return
@@ -10961,6 +10980,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
 
+      const imageTier: 'draft' | 'final' = options?.finalizeOnly ? 'final' : 'draft'
+
       const applySceneImage = (
         idx: number,
         imageUrl?: string,
@@ -10975,7 +10996,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           if (typeof beatIndex === 'number') {
             const beats = [...(scenes[idx].beats || [])]
             if (beats[beatIndex]) {
-              beats[beatIndex] = { ...beats[beatIndex], storyboardImageUrl: imageUrl }
+              beats[beatIndex] = {
+                ...beats[beatIndex],
+                storyboardImageUrl: imageUrl,
+                storyboardImageTier: imageTier,
+              }
               scenes[idx] = {
                 ...applyBeatsToScene(scenes[idx], beats),
                 storyboardStatus: 'pending_review',
@@ -10986,6 +11011,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             dialogue[dialogueIndex] = {
               ...dialogue[dialogueIndex],
               storyboardImageUrl: imageUrl,
+              storyboardImageTier: imageTier,
             }
             scenes[idx] = { ...scenes[idx], dialogue }
           } else {
@@ -11027,6 +11053,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             includeMusic: false,
             includeSFX: false,
             regenerate: !!options?.regenerate,
+            storyboardQuality: options?.finalizeOnly ? 'final' : 'draft',
+            finalizeOnly: !!options?.finalizeOnly,
             imageQuality,
           }),
         })
@@ -11139,6 +11167,34 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     },
     [projectId, script, isExpressRunning, lockedArtStyle, imageQuality, rehydrateScriptFromProject]
+  )
+
+  const handleFinalizeStoryboard = useCallback(
+    async (sceneIndex?: number) => {
+      if (isExpressRunning) return
+      if (sceneIndex !== undefined) {
+        toast.info(`Finalizing Scene ${sceneIndex + 1} frames for animatic and video…`)
+        await handleExpressSceneGenerate(sceneIndex, selectedLanguage, { finalizeOnly: true })
+        return
+      }
+      toast.info('Upgrading draft frames to Final quality for animatic and video…')
+      await handleExpressGenerate({
+        includeMusic: false,
+        includeSFX: false,
+        regenerate: false,
+        storyboardQuality: 'final',
+        finalizeOnly: true,
+        language: selectedLanguage,
+        artStyle: lockedArtStyle || 'photorealistic',
+      })
+    },
+    [
+      isExpressRunning,
+      handleExpressSceneGenerate,
+      handleExpressGenerate,
+      selectedLanguage,
+      lockedArtStyle,
+    ]
   )
 
   // Delete specific audio from a scene
@@ -12320,6 +12376,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onOpenGenerateAudio={openGenerateAudio}
                             isGeneratingAudio={isGeneratingAudio}
                             onExpressGenerate={handleExpressGenerate}
+                            onFinalizeStoryboard={handleFinalizeStoryboard}
                             isExpressRunning={isExpressRunning}
                             expressStatus={expressStatus}
                             expressGateBlocked={!expressGate.allowed}

@@ -17,6 +17,8 @@ export interface GenerateSceneImageParams {
   authCookie?: string
   /** Image quality tier ('auto' | 'max'); passed through to Imagen/Gemini. */
   quality?: string
+  /** Storyboard quality tier — maps to modelTier + resolution. */
+  storyboardQuality?: 'draft' | 'final'
   /** Optional explicit person-generation policy. */
   personGeneration?: 'allow_adult' | 'dont_allow' | 'allow_all'
   /** Pass-through prompt builder fields. */
@@ -74,6 +76,7 @@ export async function generateSceneImage(
     baseUrl,
     authCookie,
     quality = 'auto',
+    storyboardQuality,
     personGeneration,
     customPrompt,
     artStyle,
@@ -107,6 +110,7 @@ export async function generateSceneImage(
       projectId,
       sceneIndex,
       quality,
+      ...(storyboardQuality ? { storyboardQuality } : {}),
       ...(personGeneration ? { personGeneration } : {}),
       ...(customPrompt ? { customPrompt } : {}),
       ...(artStyle ? { artStyle } : {}),

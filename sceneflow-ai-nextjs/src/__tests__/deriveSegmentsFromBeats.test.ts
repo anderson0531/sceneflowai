@@ -103,6 +103,23 @@ describe('deriveSegmentsFromBeats', () => {
     expect(result.segments.some((s) => s.generationMethod === 'EXT')).toBe(true)
   })
 
+  it('returns draft-frame warning when beats are not final', () => {
+    const result = deriveSegmentsFromBeats(
+      approvedScene([
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Test',
+          storyboardImageUrl: 'https://example.com/frame.jpg',
+          storyboardImageTier: 'draft',
+        },
+      ])
+    )
+    expect(result.errors).toHaveLength(0)
+    expect(result.warnings?.[0]).toMatch(/Finalize/i)
+  })
+
   it('applyBeatSplitAndDerive updates scene beats and returns segments', () => {
     const longLine =
       'We have to move now before they find us at the warehouse loading dock tonight. '.repeat(3)

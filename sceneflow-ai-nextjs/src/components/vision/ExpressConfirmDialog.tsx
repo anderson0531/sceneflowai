@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Zap, AlertCircle, Loader, Image as ImageIcon, Volume2, FileText, Languages } from 'lucide-react'
+import { Zap, AlertCircle, Loader, Image as ImageIcon, Volume2, FileText, Languages, Brush } from 'lucide-react'
 import { IMAGE_CREDITS, AUDIO_CREDITS } from '@/lib/credits/creditCosts'
 import { getLanguageName, FLAG_EMOJIS } from '@/constants/languages'
 import { artStylePresets } from '@/constants/artStylePresets'
@@ -27,6 +27,10 @@ export interface ExpressConfirmOptions {
   artStyle?: string
   /** Locale of dialogue / narration to generate. Defaults to 'en' upstream. */
   language?: string
+  /** Storyboard frame quality — Express defaults to draft. */
+  storyboardQuality?: 'draft' | 'final'
+  /** Upgrade pass: regenerate draft frames at final quality only. */
+  finalizeOnly?: boolean
 }
 
 interface ExpressConfirmDialogProps {
@@ -265,6 +269,17 @@ export function ExpressConfirmDialog({
             </div>
 
             <div className="flex items-start space-x-3 p-3 bg-gray-800/60 rounded-lg border border-gray-700/60">
+              <Brush className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
+              <div className="flex-1 text-sm text-gray-400">
+                <div className="font-medium text-gray-300">Storyboard quality: Draft</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Generates fast layout frames for review. Use Finalize frames afterward for
+                  hi-res photorealistic animatic and video generation.
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-3 p-3 bg-gray-800/60 rounded-lg border border-gray-700/60">
               <Volume2 className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
               <div className="flex-1 text-sm text-gray-400">
                 <div className="font-medium text-gray-300">Sound effects</div>
@@ -356,7 +371,16 @@ export function ExpressConfirmDialog({
             Cancel
           </Button>
           <Button
-            onClick={() => onConfirm({ includeMusic, includeSFX: false, regenerate, language, artStyle })}
+            onClick={() =>
+              onConfirm({
+                includeMusic,
+                includeSFX: false,
+                regenerate,
+                language,
+                artStyle,
+                storyboardQuality: 'draft',
+              })
+            }
             disabled={isRunning || nothingToRun}
             className="bg-indigo-600 hover:bg-indigo-700 text-white"
           >

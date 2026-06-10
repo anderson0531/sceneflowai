@@ -25,6 +25,11 @@ import { detectCharactersInText, resolveBeatSpeaker } from '@/lib/scene/characte
 import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
 import { NARRATOR_CHARACTER, type BeatKind } from '@/lib/script/segmentTypes'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
+import {
+  resolveStoryboardGeneration,
+  getFinalPhotorealisticPromptAnchor,
+} from '@/lib/storyboard/storyboardQuality'
+import { getArtStyleNegativeTerms } from '@/lib/vision/artStyle'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120  // Increased for new AI image models
@@ -255,13 +260,25 @@ export async function POST(req: NextRequest) {
       /** In-memory scene snapshot (Express) merged over DB scene at sceneIndex */
       sceneOverride,
       modelTier,
+      storyboardQuality,
       skipLikenessValidation = false,
     } = body
+
+    const resolvedGen = resolveStoryboardGeneration({
+      storyboardQuality:
+        storyboardQuality === 'final' || storyboardQuality === 'draft'
+          ? storyboardQuality
+          : undefined,
+      legacyImageQuality:
+        quality === 'max' || quality === 'auto' ? quality : undefined,
+    })
+    const effectiveImageSize = resolvedGen.imageSize
+    const effectiveImagenQuality = resolvedGen.imagenQuality
 
     const resolvedModelTier =
       modelTier === 'eco' || modelTier === 'designer' || modelTier === 'director'
         ? modelTier
-        : undefined
+        : resolvedGen.modelTier
     
     // Client explicitly chose characters (even if empty = no characters wanted); mutable for dialogue frames
     let characterSelectionExplicit = body.characterSelectionExplicit ?? false
@@ -1093,6 +1110,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const finalAnchor = getFinalPhotorealisticPromptAnchor(artStyle)
+    if (resolvedGen.storyboardQuality === 'final' && finalAnchor) {
+      optimizedPrompt = `${optimizedPrompt.trim()}. ${finalAnchor}`
+    }
+
     // Validate we have a prompt to send to the model
     if (!optimizedPrompt || !optimizedPrompt.trim()) {
       console.warn('[Scene Image] Missing scene description/prompt. projectId, sceneIndex, scenePrompt/customPrompt are required.')
@@ -1183,6 +1205,10 @@ export async function POST(req: NextRequest) {
     if (characterSpecificNegatives.length > 0) {
       const uniqueNegatives = [...new Set(characterSpecificNegatives)] // Remove duplicates
       negativePromptParts.push(...uniqueNegatives)
+    }
+    const styleNegativeTerms = getArtStyleNegativeTerms(artStyle)
+    if (styleNegativeTerms) {
+      negativePromptParts.push(styleNegativeTerms)
     }
     const finalNegativePrompt = negativePromptParts.join(', ')
     
@@ -1325,7 +1351,7 @@ export async function POST(req: NextRequest) {
           const vertexResult = await generateImageWithVertexKlingFallback({
             prompt: geminiPrompt,
             aspectRatio: '16:9',
-            imageSize: quality === 'max' ? '2K' : '1K',
+            imageSize: effectiveImageSize,
             referenceImages: allReferenceImages,
             ...(resolvedModelTier ? { modelTier: resolvedModelTier } : {}),
           })
@@ -1340,7 +1366,8 @@ export async function POST(req: NextRequest) {
           base64Image = await generateImageWithGemini(optimizedPrompt, {
             aspectRatio: '16:9',
             numberOfImages: 1,
-            imageSize: quality === 'max' ? '2K' : '1K',
+            imageSize: effectiveImageSize,
+            quality: effectiveImagenQuality,
             personGeneration: effectivePersonGeneration,
             negativePrompt: finalNegativePrompt
           })

@@ -34,8 +34,12 @@ export interface ExpressOptions {
    * skips a phase whose output is already present.
    */
   regenerate?: boolean
-  /** Optional image quality tier passthrough (e.g. 'draft' | 'standard'). */
+  /** Optional image quality tier passthrough (legacy 'auto' | 'max'). */
   imageQuality?: string
+  /** Storyboard frame quality: draft (Express default) or final (animatic/video). */
+  storyboardQuality?: 'draft' | 'final'
+  /** Upgrade pass — regenerate draft/missing frames at final quality only. */
+  finalizeOnly?: boolean
 }
 
 export interface SceneDirectionResult {
