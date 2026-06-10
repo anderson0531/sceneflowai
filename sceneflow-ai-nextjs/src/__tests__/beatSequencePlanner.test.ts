@@ -109,6 +109,34 @@ describe('beat sequence planner', () => {
     expect(nonTitle.length).toBeGreaterThanOrEqual(4)
   })
 
+  it('includes direction atmosphere and props on every title beat prompt', () => {
+    const scene = {
+      heading: 'INT. TITLE SEQUENCE - DAY',
+      action: 'Cinematic title sequence establishing data and identity themes.',
+      sceneDirection: auraDirection,
+      duration: 40,
+    }
+    const beats = buildTitleBeats()
+    const result = buildFallbackBeatPlans({
+      scene,
+      beats,
+      sceneNumber: 1,
+      totalScenes: 10,
+      filmContext: { title: "AURA'S ECHO" },
+      forceFallback: true,
+    })
+
+    for (const plan of result) {
+      expect(plan.prompt).toMatch(/Dense, luminous|luminous, increasingly chaotic/i)
+      expect(plan.prompt).toMatch(/digital fingerprints|retinal scans|recognition grids/i)
+      expect(plan.prompt).toMatch(/Abstract digital composition, no people/i)
+    }
+
+    const titleBeat = result.find((p) => p.beatRole === 'title_reveal')
+    expect(titleBeat?.prompt).toMatch(/Centered bold typography/i)
+    expect(titleBeat?.prompt).toMatch(/Deep blues, electric purples/i)
+  })
+
   it('maps camera shots 1:1 when shots match beat count', () => {
     const scene = {
       heading: 'INT. OFFICE - NIGHT',

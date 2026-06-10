@@ -55,6 +55,7 @@ import {
   dialogueFrameNeedsGeneration,
   type StoryboardQuality,
 } from '../storyboard/storyboardQuality'
+import { isStoryboardNoCharacterScene } from '../script/sceneClassification'
 
 const EXPRESS_SKIP_LIKENESS = { skipLikenessValidation: true }
 
@@ -340,6 +341,7 @@ async function generateSingleBeatImage(
 ): Promise<{ imageUrl: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
   const imageParams = getExpressImageParams(options)
+  const excludeCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
   const result = await trafficCop.runInLane('image', () =>
     generateSceneImage({
     projectId: options.projectId,
@@ -352,6 +354,7 @@ async function generateSingleBeatImage(
     frameType: 'beat',
     beatIndex: beatIdx,
     sceneOverride: scene,
+    ...(excludeCharacters ? { excludeCharacters: true, characterSelectionExplicit: true } : {}),
     ...(beatPlan?.prompt ? { customPrompt: beatPlan.prompt, useAIPrompt: false } : {}),
     ...(typeof beatPlan?.allowTypography === 'boolean'
       ? { allowTypography: beatPlan.allowTypography }

@@ -22,6 +22,7 @@ import {
   type LocationContext,
 } from '@/lib/intelligence/scene-image-intelligence'
 import { detectCharactersInText, resolveBeatSpeaker } from '@/lib/scene/characterDetection'
+import { isStoryboardNoCharacterScene } from '@/lib/script/sceneClassification'
 import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
 import { NARRATOR_CHARACTER, type BeatKind } from '@/lib/script/segmentTypes'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
@@ -248,7 +249,7 @@ export async function POST(req: NextRequest) {
       characterWardrobes = [], // NEW: Scene-level wardrobe overrides - array of { characterId, wardrobeId }
       sceneReferences = [],   // NEW: Scene backdrop references from Reference Library
       objectReferences = [],  // NEW: Prop/object references from Reference Library
-      excludeCharacters = false,  // NEW: Generate scene reference only (no people) for reference library
+      excludeCharacters: excludeCharactersParam = false,  // NEW: Generate scene reference only (no people) for reference library
       locationReferences = [],  // NEW: Location references for environment consistency
       skipObjectAutoDetection = false,  // NEW: Skip auto-detection of objects (for batch mode)
       useAIPrompt = true,  // NEW: Use Gemini intelligence for prompt generation (default: true)
@@ -310,9 +311,11 @@ export async function POST(req: NextRequest) {
     let dialogueFrameContext = ''
     let beatKindForIntelligence: BeatKind | undefined
     
+    let effectiveExcludeCharacters = excludeCharactersParam
+    
     // Handle both legacy (selectedCharacters) and new (characters) formats
     // If excludeCharacters is true, ignore all character references for scene environment-only image
-    const characterArray = excludeCharacters ? [] : (characters || selectedCharacters || [])
+    let characterArray = effectiveExcludeCharacters ? [] : (characters || selectedCharacters || [])
 
     console.log('[Scene Image] Generating scene image')
     console.log('[Scene Image] Selected characters:', characterArray.length)
@@ -344,13 +347,31 @@ export async function POST(req: NextRequest) {
       }
 
       const allCharacters = project.metadata?.visionPhase?.characters || []
+      const scenesForType = project.metadata?.visionPhase?.script?.script?.scenes || []
+      const filmTitleForDetection =
+        (project.metadata?.title as string | undefined) || project.title || undefined
       if (typeof sceneIndex === 'number') {
-        const scenesForResolution = project.metadata?.visionPhase?.script?.script?.scenes || []
+        const scenesForResolution = scenesForType
         const dbScene = scenesForResolution[sceneIndex]
         resolvedScene =
           sceneOverride && typeof sceneOverride === 'object'
             ? { ...(dbScene || {}), ...sceneOverride }
             : dbScene
+      }
+
+      const storyboardNoCharacterScene =
+        !!resolvedScene &&
+        isStoryboardNoCharacterScene(
+          resolvedScene as Record<string, unknown>,
+          (sceneIndex ?? 0) + 1,
+          scenesForType.length
+        )
+      if (storyboardNoCharacterScene) {
+        effectiveExcludeCharacters = true
+        characterObjects = []
+        characterSelectionExplicit = true
+        characterArray = []
+        console.log('[Scene Image] Title/credits/no-talent scene — excluding character references')
       }
       console.log('[Scene Image] DEBUG - characters in project:', allCharacters.length)
       console.log('[Scene Image] DEBUG - characters from DB:', allCharacters.map((c: any) => ({
@@ -428,14 +449,26 @@ export async function POST(req: NextRequest) {
           const beat = beats[beatIndex!]
           if (beat) {
             beatKindForIntelligence = beat.kind
-            if (beat.kind === 'action') {
+            if (storyboardNoCharacterScene) {
+              characterObjects = []
+              if (beat.kind === 'action') {
+                const actionText = beat.actionDescription?.trim() || ''
+                const displayAction = actionText || 'Scene action unfolds'
+                dialogueFrameContext =
+                  `Storyboard silent action frame. No dialogue, no lip-sync. ` +
+                  `Abstract/digital composition with NO people. Visual direction: ${displayAction}. `
+                effectiveShotType = effectiveShotType || 'medium shot'
+              }
+            } else if (beat.kind === 'action') {
               const actionText = beat.actionDescription?.trim() || ''
               const actionContext = [
                 resolvedScene?.heading || '',
                 resolvedScene?.action || '',
                 actionText,
               ].join(' ')
-              const detectedChars = detectCharactersInText(actionContext, allCharacters)
+              const detectedChars = detectCharactersInText(actionContext, allCharacters, {
+                excludeTexts: filmTitleForDetection ? [filmTitleForDetection] : [],
+              })
               characterObjects = detectedChars
               if (detectedChars.length > 0) {
                 console.log(
@@ -476,15 +509,10 @@ export async function POST(req: NextRequest) {
           console.log('[Scene Image] No characterObjects provided, attempting to auto-detect from scene')
           if (resolvedScene) {
             const scene = resolvedScene
-            // TALENT-AWARENESS: Check if this is a no-talent scene before auto-detecting
-            const talentText = [
-              scene.sceneDirection?.talent?.blocking || '',
-              scene.sceneDirection?.talent?.emotionalBeat || ''
-            ].join(' ')
-            const isNoTalentScene = /\b(n\/a|no\s+(live\s+)?actors?|no\s+talent|no\s+performers?)\b/i.test(talentText)
-            
-            if (isNoTalentScene) {
-              console.log('[Scene Image] No-talent scene detected (talent field says N/A) — skipping character auto-detection')
+            if (storyboardNoCharacterScene) {
+              console.log('[Scene Image] No-talent/title scene — skipping character auto-detection')
+              characterObjects = []
+              characterSelectionExplicit = true
             } else {
               const sceneText = [
                 scene.heading || '',
@@ -493,14 +521,20 @@ export async function POST(req: NextRequest) {
                 ...(scene.dialogue || []).map((d: any) => d.character || ''),
               ].join(' ')
 
-              const detectedChars = detectCharactersInText(sceneText, allCharacters)
-              
+              const detectedChars = detectCharactersInText(sceneText, allCharacters, {
+                excludeTexts: filmTitleForDetection ? [filmTitleForDetection] : [],
+              })
+
               if (detectedChars.length > 0) {
                 characterObjects = detectedChars
-                console.log(`[Scene Image] Auto-detected ${detectedChars.length} character(s) from scene:`, 
-                  detectedChars.map((c: any) => c.name))
+                console.log(
+                  `[Scene Image] Auto-detected ${detectedChars.length} character(s) from scene:`,
+                  detectedChars.map((c: any) => c.name)
+                )
               } else {
-                console.log('[Scene Image] No characters detected in scene text, proceeding without character references')
+                console.log(
+                  '[Scene Image] No characters detected in scene text, proceeding without character references'
+                )
               }
             }
           }
@@ -901,32 +935,39 @@ export async function POST(req: NextRequest) {
     let usedAIIntelligence = false
     
     if (customPrompt && customPrompt.trim()) {
+      let promptBody = customPrompt.trim()
+      if (allowTypography) {
+        promptBody =
+          'Abstract cinematic digital composition with NO people and NO character portraits. ' +
+          'Centered title typography is the primary subject. ' +
+          promptBody
+      }
       // User provided a custom prompt (likely from Prompt Builder, already optimized and possibly edited)
       // Only re-optimize if character references aren't already in the prompt
       const hasCharacterReferences = characterReferences.length > 0 && (() => {
         const hasReferencePattern = 
           characterReferences.some((ref: { name: string }) => {
             const namePattern = new RegExp(`character\\s+${ref.name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s+appears`, 'i')
-            return namePattern.test(customPrompt)
+            return namePattern.test(promptBody)
           }) &&
-          /must\s+match\s+their\s+reference\s+image/i.test(customPrompt)
+          /must\s+match\s+their\s+reference\s+image/i.test(promptBody)
         return hasReferencePattern
       })()
       
       if (hasCharacterReferences || characterReferences.length === 0) {
-        optimizedPrompt = customPrompt
+        optimizedPrompt = promptBody
         console.log('[Scene Image] Using custom prompt from Prompt Builder (preserving user edits)')
       } else {
         optimizedPrompt = optimizePromptForImagen({
-          sceneAction: customPrompt,
-          visualDescription: customPrompt,
+          sceneAction: promptBody,
+          visualDescription: promptBody,
           characterReferences: characterReferences,
           artStyle: artStyle || 'photorealistic',
           objectReferences: detectedObjectReferences
         })
         console.log('[Scene Image] Added character references to user-edited prompt (re-optimized)')
       }
-    } else if (excludeCharacters) {
+    } else if (effectiveExcludeCharacters) {
       // Scene reference mode: Focus on environment, props, lighting - no people
       const sceneReferencePrefix = `Cinematic establishing shot, empty scene composition. Focus on environment details, lighting, atmosphere, and props. NO PEOPLE in the frame. `
       const sceneReferenceSuffix = ` The image should serve as a reference for scene consistency - capturing the location, time of day, lighting mood, and key props without any characters.`
@@ -1362,7 +1403,9 @@ export async function POST(req: NextRequest) {
         } else {
           console.log('[Scene Image] Using Vertex AI Imagen (no reference images)')
           // When excludeCharacters is true, force personGeneration to 'dont_allow' for scene reference images
-          const effectivePersonGeneration = excludeCharacters ? 'dont_allow' : (personGeneration || 'allow_adult')
+          const effectivePersonGeneration = effectiveExcludeCharacters
+            ? 'dont_allow'
+            : personGeneration || 'allow_adult'
           base64Image = await generateImageWithGemini(optimizedPrompt, {
             aspectRatio: '16:9',
             numberOfImages: 1,

@@ -37,6 +37,26 @@ describe('detectCharactersInText', () => {
     const byLastName = detectCharactersInText('Reed examines the evidence', characters)
     expect(byLastName.map((c) => c.name)).toEqual(['Dr. Benjamin Reed'])
   })
+
+  it('does not match character name embedded in film title AURA\'S ECHO', () => {
+    const aura = { id: '1', name: 'Aura' }
+    const text =
+      "A fully CGI title sequence. The title 'AURA'S ECHO' is revealed in a digital realm."
+    const matches = detectCharactersInText(text, [aura], {
+      excludeTexts: ["AURA'S ECHO"],
+    })
+    expect(matches).toHaveLength(0)
+  })
+
+  it('still matches character when name appears outside excluded phrase', () => {
+    const aura = { id: '1', name: 'Aura' }
+    const text = 'Aura enters the neural network tunnel.'
+    const matches = detectCharactersInText(text, [aura], {
+      excludeTexts: ["AURA'S ECHO"],
+    })
+    expect(matches).toHaveLength(1)
+    expect(matches[0].name).toBe('Aura')
+  })
 })
 
 describe('resolveBeatSpeaker', () => {

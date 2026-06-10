@@ -138,6 +138,23 @@ function buildSetContext(scene: Record<string, unknown>, includeFull: boolean): 
   return parts.filter(Boolean).join('. ')
 }
 
+function buildTitleDirectionContext(
+  scene: Record<string, unknown>,
+  directionMeta: ReturnType<typeof extractDirectionMetadata>,
+  shotType: string
+): string {
+  const parts: string[] = []
+  if (directionMeta.atmosphere) parts.push(`Atmosphere: ${directionMeta.atmosphere}`)
+  if (directionMeta.lightingMood) parts.push(`Lighting: ${directionMeta.lightingMood}`)
+  if (directionMeta.colorTemperature) parts.push(`Color: ${directionMeta.colorTemperature}`)
+  if (directionMeta.locationDescription) parts.push(`Location: ${directionMeta.locationDescription}`)
+  if (directionMeta.keyProps?.length) parts.push(`Props: ${directionMeta.keyProps.join(', ')}`)
+  if (shotType) parts.push(`Camera: ${shotType}`)
+  const direction = getSceneDirection(scene)
+  if (direction?.audio?.priorities) parts.push(`Audio mood: ${direction.audio.priorities}`)
+  return parts.filter(Boolean).join('. ')
+}
+
 export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKeyframePlan[] {
   const { scene, beats, sceneNumber, totalScenes, filmContext, artStyle } = request
   const heading = String(scene.heading ?? '')
@@ -160,16 +177,21 @@ export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKe
 
     const frozenParts = [`${shotType}: ${moment}`]
     if (setContext) frozenParts.push(setContext)
-    if (directionMeta.atmosphere && beatIndex === 0) {
+    if (directionMeta.atmosphere && (beatIndex === 0 || sceneType === 'title')) {
       frozenParts.push(`Atmosphere: ${directionMeta.atmosphere}`)
     }
 
     const frozenMoment = frozenParts.join('. ').replace(/\.\s*\./g, '.').trim()
     const allowTypography = roleAllowsTypography(beatRole)
+    const titleDirectionContext =
+      sceneType === 'title' ? buildTitleDirectionContext(scene, directionMeta, shotType) : ''
 
     let prompt = `${style} cinematic storyboard still. ${frozenMoment}.`
+    if (titleDirectionContext) {
+      prompt += ` ${titleDirectionContext}. Abstract digital composition, no people, no character portraits.`
+    }
     if (allowTypography && filmTitle) {
-      prompt += ` Centered bold typography displaying "${filmTitle}" as the main visual element.`
+      prompt += ` Centered bold typography displaying "${filmTitle}" as the main visual element. Deep blues, electric purples, stark whites, with gold and amber accents.`
     } else if (beatRole === 'opening' || beatRole === 'progression' || beatRole === 'climax') {
       prompt += ' No on-screen text, no dialogue, no lip-sync. Single frozen F2V start frame.'
     } else if (beatRole === 'dissolve') {

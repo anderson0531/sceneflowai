@@ -163,6 +163,12 @@ export interface StoryboardFrameSlot {
   displayImageUrl?: string
   /** draft | final — missing tier treated as draft */
   imageTier?: 'draft' | 'final'
+  /** Planner-assigned beat role (title_reveal, opening, etc.). */
+  beatRole?: string
+  /** Planned or generated image prompt for this frame. */
+  storyboardImagePrompt?: string
+  /** Whether typography is allowed on this beat. */
+  allowTypography?: boolean
   isPlaceholder: boolean
   isMissing: boolean
 }
@@ -253,6 +259,9 @@ export function enumerateStoryboardFrameSlots(
           : undefined,
         isPlaceholder: !ownImageUrl && !!displayImageUrl,
         isMissing: !ownImageUrl && !displayImageUrl,
+        beatRole: beat.beatRole,
+        storyboardImagePrompt: beat.storyboardImagePrompt,
+        allowTypography: beat.beatRole === 'title_reveal' || beat.beatRole === 'credit',
       })
     }
 

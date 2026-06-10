@@ -137,6 +137,7 @@ const BYOKSettingsPanel = dynamic(
 import { NavigationWarningDialog } from '@/components/workflow/NavigationWarningDialog'
 import { ScriptImportOnboardingBanner } from '@/components/vision/ScriptImportOnboardingBanner'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
+import { isStoryboardNoCharacterScene } from '../../../../../lib/script/sceneClassification'
 import { resolveFrameGenerationContext } from '@/lib/vision/frameGenerationContext'
 import { resolveQuickFrameActionPrompt } from '@/lib/vision/framePromptBaseline'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
@@ -8384,23 +8385,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           sceneCharacters = [selectedCharacters]
         }
       } else {
-        // Auto-detect characters from scene using smart matching
-        // CRITICAL: Skip character detection for no-talent scenes (title sequences, VFX-only, etc.)
-        const talentText = scene.sceneDirection?.talent?.blocking || scene.sceneDirection?.talent?.emotionalBeat || ''
-        const isNoTalentScene = /\b(n\/a|no\s+(live\s+)?actors?|no\s+talent|no\s+performers?)\b/i.test(talentText)
-        
-        if (isNoTalentScene) {
-          console.log('[handleGenerateSceneImage] No-talent scene detected — skipping character auto-detection')
+        const scenes = script?.script?.scenes ?? []
+        const storyboardNoCharacterScene = isStoryboardNoCharacterScene(
+          scene,
+          sceneIdx + 1,
+          scenes.length
+        )
+
+        if (storyboardNoCharacterScene || options?.excludeCharacters) {
+          console.log('[handleGenerateSceneImage] Title/credits/no-talent scene — skipping character auto-detection')
           sceneCharacters = []
-          promptData.characterSelectionExplicit = true  // Treat as explicit empty selection
+          promptData.characterSelectionExplicit = true
         } else {
           const sceneText = [
             scene.heading || '',
             scene.action || '',
             scene.visualDescription || '',
-            ...(scene.dialogue || []).map((d: any) => d.character || '')
+            ...(scene.dialogue || []).map((d: any) => d.character || ''),
           ].join(' ')
-          
+
           sceneCharacters = findSceneCharacters(sceneText, characters)
         }
       }
@@ -8443,7 +8446,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         characters: options?.excludeCharacters ? [] : sceneCharacters,  // Skip characters if excludeCharacters
         quality: imageQuality,
         // Scene reference mode: no people, focus on environment
-        excludeCharacters: options?.excludeCharacters || false,
+        excludeCharacters:
+          options?.excludeCharacters ||
+          isStoryboardNoCharacterScene(scene, sceneIdx + 1, script?.script?.scenes?.length),
         // Signal that character selection was explicit (from dialog or no-talent detection)
         // When true, API will NOT auto-detect characters — empty array means "no characters wanted"
         characterSelectionExplicit: promptData.characterSelectionExplicit || false,

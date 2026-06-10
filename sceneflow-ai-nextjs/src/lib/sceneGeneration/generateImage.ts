@@ -35,6 +35,8 @@ export interface GenerateSceneImageParams {
   characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
   /** Skip auto-detection of object references when true. */
   skipObjectAutoDetection?: boolean
+  /** Generate scene reference only (no people) — title/credits/abstract scenes. */
+  excludeCharacters?: boolean
   /** Whether to use Gemini intelligence for prompt generation. */
   useAIPrompt?: boolean
   /** Allow title typography on this beat frame (title_reveal / credit beats). */
@@ -89,6 +91,7 @@ export async function generateSceneImage(
     skipObjectAutoDetection,
     useAIPrompt,
     allowTypography,
+    excludeCharacters,
     frameType,
     dialogueIndex,
     beatIndex,
@@ -127,6 +130,7 @@ export async function generateSceneImage(
         : {}),
       ...(typeof useAIPrompt === 'boolean' ? { useAIPrompt } : {}),
       ...(typeof allowTypography === 'boolean' ? { allowTypography } : {}),
+      ...(excludeCharacters ? { excludeCharacters: true } : {}),
       ...(frameType ? { frameType } : {}),
       ...(typeof dialogueIndex === 'number' ? { dialogueIndex } : {}),
       ...(typeof beatIndex === 'number' ? { beatIndex } : {}),

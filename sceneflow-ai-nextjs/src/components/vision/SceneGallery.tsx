@@ -1862,6 +1862,8 @@ function SceneCard({
                         showBorder
                         label={slot.label}
                         imageTier={slot.ownImageUrl ? slot.imageTier : undefined}
+                        beatRole={slot.beatRole}
+                        imagePrompt={slot.storyboardImagePrompt}
                         onGenerate={() => {
                           if (useBeatFrame) {
                             void onGenerateBeatFrame?.(beatIdx!)

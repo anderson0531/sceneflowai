@@ -30,6 +30,10 @@ export interface SceneImageFrameProps {
   label?: string
   /** draft | final — shown when frame has its own image */
   imageTier?: 'draft' | 'final'
+  /** Beat planner role (e.g. title_reveal, opening). */
+  beatRole?: string
+  /** Image generation prompt used for this frame. */
+  imagePrompt?: string
 }
 
 function CompactIconButton({
@@ -166,9 +170,16 @@ function CompactActionBar({
   )
 }
 
-/**
- * SceneImageFrame - A frame-based component for scene reference images
- */
+function formatBeatRoleLabel(beatRole?: string): string | null {
+  if (!beatRole) return null
+  if (beatRole === 'title_reveal') return 'Title'
+  if (beatRole === 'credit') return 'Credit'
+  if (beatRole === 'opening') return 'Opening'
+  if (beatRole === 'dissolve') return 'Dissolve'
+  if (beatRole === 'climax') return 'Climax'
+  if (beatRole === 'progression') return 'Progression'
+  return beatRole.replace(/_/g, ' ')
+}
 export function SceneImageFrame({
   sceneIdx,
   sceneNumber,
@@ -186,9 +197,13 @@ export function SceneImageFrame({
   showBorder = true,
   label = 'Scene Reference',
   imageTier,
+  beatRole,
+  imagePrompt,
 }: SceneImageFrameProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isHovering, setIsHovering] = useState(false)
+  const roleLabel = formatBeatRoleLabel(beatRole)
+  const promptPreview = imagePrompt?.trim()
 
   const hasImage = !!imageUrl
 
@@ -422,9 +437,36 @@ export function SceneImageFrame({
 
       {label && compact && (
         <div className="px-1.5 py-1 bg-slate-800/50 border-t border-slate-700/50">
-          <p className="text-[9px] font-medium text-slate-400 truncate" title={label}>
-            {label}
-          </p>
+          <div className="flex items-center gap-1 min-w-0">
+            {roleLabel && (
+              <span
+                className={`shrink-0 text-[8px] px-1 py-0.5 rounded ${
+                  beatRole === 'title_reveal'
+                    ? 'bg-violet-500/20 text-violet-300'
+                    : 'bg-slate-600/40 text-slate-300'
+                }`}
+              >
+                {roleLabel}
+              </span>
+            )}
+            <p className="text-[9px] font-medium text-slate-400 truncate" title={label}>
+              {label}
+            </p>
+          </div>
+          {promptPreview && (
+            <p
+              className="text-[8px] text-slate-500 line-clamp-2 italic mt-0.5 cursor-help"
+              title={promptPreview}
+              onClick={(e) => {
+                e.stopPropagation()
+                void navigator.clipboard.writeText(promptPreview).then(() => {
+                  toast.success('Prompt copied')
+                })
+              }}
+            >
+              Prompt: {promptPreview}
+            </p>
+          )}
         </div>
       )}
 
