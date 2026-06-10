@@ -179,6 +179,8 @@ export function buildEnMessages() {
       seeExamples: 'See examples',
       examplesFor: 'Examples for {label}:',
       andMore: ', and more.',
+      expandImage: 'Expand image',
+      closePreview: 'Close preview',
       modes: AUDIENCE_PATH_MODES,
       paths: AUDIENCE_PATHS.map((p) => ({
         id: p.id,

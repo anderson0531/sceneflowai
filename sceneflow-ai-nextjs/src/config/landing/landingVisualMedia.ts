@@ -18,15 +18,16 @@ export const COMPARISON_IMAGE_EN = blobUrl('Gemini_Generated_Image_y6ocnvy6ocnvy
 /** Thai comparison infographic (uploaded manually to Blob) */
 export const COMPARISON_IMAGE_TH = blobUrl('Gemini_Generated_Image_untyd1untyd1unty (1).jpeg')
 
-/** Use-case persona hero images (UseCasesSection) */
+/** Use-case persona hero images (UseCasesSection + AudiencePathStrip thumbnails) */
 export const USE_CASE_PERSONA_IMAGES = {
-  creator: '/landing/use-cases/youtube-creator.jpg',
-  team: blobUrl('Gemini_Generated_Image_w4oqphw4oqphw4oq.jpeg'),
-  productionShop: blobUrl('Gemini_Generated_Image_wm0332wm0332wm03.jpeg'),
-  agency: '/landing/use-cases/agency-pitch.jpg',
-  // TODO: swap for dedicated film-production hero when asset is ready
-  filmProduction: '/landing/use-cases/youtube-creator.jpg',
+  creator: blobUrl('Gemini_Generated_Image_1kppt81kppt81kpp.png'),
+  team: blobUrl('Gemini_Generated_Image_yes77lyes77lyes7.png'),
+  productionShop: blobUrl('Gemini_Generated_Image_vd4t2nvd4t2nvd4t.png'),
+  agency: blobUrl('Gemini_Generated_Image_pe490rpe490rpe49.png'),
+  filmProduction: blobUrl('Gemini_Generated_Image_iwztmjiwztmjiwzt.png'),
 } as const satisfies Record<'creator' | 'team' | 'productionShop' | 'agency' | 'filmProduction', string>
+
+export const AUDIENCE_PATH_THUMBNAILS = USE_CASE_PERSONA_IMAGES
 
 /** Art style preset ids — mirrors artStylePresets.ts */
 export type LandingArtStyleId =

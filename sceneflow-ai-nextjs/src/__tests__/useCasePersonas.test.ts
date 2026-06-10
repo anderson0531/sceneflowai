@@ -23,4 +23,11 @@ describe('filmProduction landing persona', () => {
   it('includes hero image placeholder for filmProduction', () => {
     expect(USE_CASE_PERSONA_IMAGES.filmProduction).toBeTruthy()
   })
+
+  it('maps all persona ids to Vercel Blob thumbnail URLs', () => {
+    const personaIds = ['creator', 'team', 'productionShop', 'agency', 'filmProduction'] as const
+    for (const id of personaIds) {
+      expect(USE_CASE_PERSONA_IMAGES[id]).toContain('public.blob.vercel-storage.com')
+    }
+  })
 })
