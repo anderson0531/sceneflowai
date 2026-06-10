@@ -65,7 +65,7 @@ describe('buildVeoSfxPrompt', () => {
     expect(negativePrompt).toContain('speech')
   })
 
-  it('uses minimal visual anchor', () => {
+  it('uses minimal visual anchor for ambient mode', () => {
     const { prompt } = buildVeoSfxPrompt('wind through trees')
     expect(prompt.toLowerCase()).toContain('black')
   })

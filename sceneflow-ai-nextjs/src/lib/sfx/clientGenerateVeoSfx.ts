@@ -1,6 +1,7 @@
 import { toast } from 'sonner'
 import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
+import type { VeoSfxPromptMode } from '@/lib/sfx/veoSfx'
 import { resolveVeoSfxDuration } from '@/lib/sfx/veoSfxDuration'
 
 export interface GenerateVeoSfxClientParams {
@@ -11,6 +12,7 @@ export interface GenerateVeoSfxClientParams {
   segmentDurationSeconds?: number
   durationOverride?: SfxDurationOverride
   hasExistingAudio?: boolean
+  promptMode?: VeoSfxPromptMode
 }
 
 export interface GenerateVeoSfxClientResult {
@@ -20,6 +22,7 @@ export interface GenerateVeoSfxClientResult {
     source: 'veo'
     clipDurationSeconds: number
     veoQuality: 'fast'
+    promptMode?: VeoSfxPromptMode
   }
 }
 
@@ -34,6 +37,7 @@ export async function dispatchGenerateVeoSfx(
     segmentDurationSeconds,
     durationOverride = 'auto',
     hasExistingAudio = false,
+    promptMode = 'ambient',
   } = params
 
   const clipDurationSeconds = resolveVeoSfxDuration({
@@ -41,8 +45,15 @@ export async function dispatchGenerateVeoSfx(
     override: durationOverride,
   })
 
+  const isActionBeat = promptMode === 'actionBeat'
   const toastId = toast.loading(
-    hasExistingAudio ? 'Re-generating Veo ambient SFX...' : 'Generating Veo ambient SFX...'
+    hasExistingAudio
+      ? isActionBeat
+        ? 'Re-generating action beat SFX...'
+        : 'Re-generating Veo ambient SFX...'
+      : isActionBeat
+        ? 'Generating action beat SFX...'
+        : 'Generating Veo ambient SFX...'
   )
 
   try {
@@ -55,6 +66,7 @@ export async function dispatchGenerateVeoSfx(
         sfxIndex,
         text,
         durationSeconds: clipDurationSeconds,
+        promptMode,
       }),
     })
 
@@ -86,9 +98,17 @@ export async function dispatchGenerateVeoSfx(
     }
 
     const resolvedClipDuration = data?.clipDurationSeconds ?? clipDurationSeconds
-    toast.success(hasExistingAudio ? 'Veo ambient SFX re-generated.' : 'Veo ambient SFX generated.', {
-      id: toastId,
-    })
+    const resolvedPromptMode = (data?.promptMode as VeoSfxPromptMode | undefined) ?? promptMode
+    toast.success(
+      hasExistingAudio
+        ? isActionBeat
+          ? 'Action beat SFX re-generated.'
+          : 'Veo ambient SFX re-generated.'
+        : isActionBeat
+          ? 'Action beat SFX generated.'
+          : 'Veo ambient SFX generated.',
+      { id: toastId }
+    )
 
     return {
       url,
@@ -97,11 +117,13 @@ export async function dispatchGenerateVeoSfx(
         source: 'veo',
         clipDurationSeconds: resolvedClipDuration,
         veoQuality: 'fast',
+        promptMode: resolvedPromptMode,
       },
     }
   } catch (error) {
     if ((error as Error)?.message !== 'Insufficient credits') {
-      toast.error(`Failed to generate Veo ambient SFX: ${(error as Error)?.message || 'Unknown error'}`, {
+      const label = isActionBeat ? 'action beat SFX' : 'Veo ambient SFX'
+      toast.error(`Failed to generate ${label}: ${(error as Error)?.message || 'Unknown error'}`, {
         id: toastId,
       })
     }

@@ -8,7 +8,7 @@ import {
   coerceSceneSfxFlatArray,
   mintSfxId,
 } from '@/lib/script/segmentScript'
-import type { BeatKind, SceneBeat } from '@/lib/script/segmentTypes'
+import type { SceneBeat } from '@/lib/script/segmentTypes'
 
 export interface SceneSfxCue {
   description: string
@@ -369,4 +369,80 @@ export function applyDerivedSfxToScene(
       ...(legacyIndex !== undefined ? { legacyIndex } : {}),
     })),
   }
+}
+
+const BEAT_SFX_DESCRIPTION_MAX = 200
+
+function truncateBeatSfxDescription(text: string): string {
+  const trimmed = text.trim().replace(/\s+/g, ' ')
+  if (trimmed.length <= BEAT_SFX_DESCRIPTION_MAX) return trimmed
+  return `${trimmed.slice(0, BEAT_SFX_DESCRIPTION_MAX - 1)}…`
+}
+
+export interface BeatSfxSlot {
+  sfxIndex: number
+  sfxId: string
+  description: string
+  sourceBeatId: string
+  /** True when a new cue was appended to scene.sfx. */
+  created: boolean
+}
+
+/** Find or append an sfx[] entry scoped to a storyboard beat. */
+export function resolveBeatSfxSlot(
+  scene: Record<string, unknown>,
+  beat: Pick<SceneBeat, 'beatId' | 'actionDescription' | 'kind'>
+): BeatSfxSlot {
+  if (beat.kind !== 'action') {
+    throw new Error('resolveBeatSfxSlot requires an action beat')
+  }
+
+  const actionText = String(beat.actionDescription ?? '').trim()
+  if (!actionText) {
+    throw new Error('Action beat has no description for SFX generation')
+  }
+
+  const existing = coerceSceneSfxFlatArray(scene.sfx)
+    .map((item, idx) => ({ cue: coerceExistingCue(item, idx), idx }))
+    .filter((row): row is { cue: SceneSfxCue; idx: number } => row.cue != null)
+
+  const match = existing.find((row) => row.cue.sourceBeatId === beat.beatId)
+  if (match) {
+    return {
+      sfxIndex: match.idx,
+      sfxId: match.cue.sfxId ?? mintSfxId(),
+      description: match.cue.description,
+      sourceBeatId: beat.beatId,
+      created: false,
+    }
+  }
+
+  const sfxIndex = existing.length
+  const sfxId = mintSfxId()
+  return {
+    sfxIndex,
+    sfxId,
+    description: truncateBeatSfxDescription(actionText),
+    sourceBeatId: beat.beatId,
+    created: true,
+  }
+}
+
+/** In-place upsert of beat-scoped sfx cue on a scene object (for PATCH / client). */
+export function upsertBeatSfxCueOnScene(
+  scene: Record<string, unknown>,
+  beat: Pick<SceneBeat, 'beatId' | 'actionDescription' | 'kind'>
+): BeatSfxSlot {
+  const slot = resolveBeatSfxSlot(scene, beat)
+  if (!slot.created) return slot
+
+  const list = coerceSceneSfxFlatArray(scene.sfx)
+  list.push({
+    description: slot.description,
+    sourceBeatId: slot.sourceBeatId,
+    sfxId: slot.sfxId,
+    legacyIndex: slot.sfxIndex,
+  })
+  scene.sfx = list
+  return slot
 }

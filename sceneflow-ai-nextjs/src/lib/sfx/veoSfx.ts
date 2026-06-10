@@ -15,6 +15,9 @@ import {
   resolveVeoSfxClipDuration,
   type VeoSfxClipDuration,
 } from '@/lib/sfx/veoSfxDuration'
+import { withVeoSfxRetries } from '@/lib/sfx/veoSfxRetry'
+
+export type VeoSfxPromptMode = 'ambient' | 'actionBeat'
 
 export interface BuildVeoSfxPromptResult {
   prompt: string
@@ -28,6 +31,8 @@ export interface GenerateVeoSfxParams {
   sfxIndex?: number
   /** Resolved clip length (4 | 6 | 8). */
   clipDurationSeconds?: VeoSfxClipDuration
+  /** ambient = black-frame cue; actionBeat = full action description T2V. */
+  promptMode?: VeoSfxPromptMode
 }
 
 export interface GenerateVeoSfxResult {
@@ -35,18 +40,11 @@ export interface GenerateVeoSfxResult {
   gcsPath: string
   clipDurationSeconds: VeoSfxClipDuration
   byteLength: number
+  promptMode: VeoSfxPromptMode
 }
 
-export function buildVeoSfxPrompt(description: string): BuildVeoSfxPromptResult {
-  const trimmed = (description || '').trim()
-  const prompt = [
-    'Solid black frame with no visible scene.',
-    `Continuous ambient sound design only: ${trimmed}.`,
-    'Realistic environmental and foley audio for the full clip.',
-    'No dialogue, no narration, no music, no singing, no speech.',
-  ].join(' ')
-
-  const negativePrompt = [
+function buildVeoSfxNegativePrompt(): string {
+  return [
     'dialogue',
     'speech',
     'talking',
@@ -59,8 +57,36 @@ export function buildVeoSfxPrompt(description: string): BuildVeoSfxPromptResult 
     'lip sync',
     'lips moving',
   ].join(', ')
+}
 
-  return { prompt, negativePrompt }
+export function buildVeoSfxPrompt(description: string): BuildVeoSfxPromptResult {
+  const trimmed = (description || '').trim()
+  const prompt = [
+    'Solid black frame with no visible scene.',
+    `Continuous ambient sound design only: ${trimmed}.`,
+    'Realistic environmental and foley audio for the full clip.',
+    'No dialogue, no narration, no music, no singing, no speech.',
+  ].join(' ')
+
+  return { prompt, negativePrompt: buildVeoSfxNegativePrompt() }
+}
+
+export function buildVeoActionBeatSfxPrompt(actionDescription: string): BuildVeoSfxPromptResult {
+  const trimmed = (actionDescription || '').trim()
+  const prompt = [
+    trimmed,
+    'Realistic native ambient sound and foley matching this scene.',
+    'No spoken dialogue, no narration, no music, no singing.',
+  ].join(' ')
+
+  return { prompt, negativePrompt: buildVeoSfxNegativePrompt() }
+}
+
+export function buildVeoSfxPromptForMode(
+  text: string,
+  mode: VeoSfxPromptMode = 'ambient'
+): BuildVeoSfxPromptResult {
+  return mode === 'actionBeat' ? buildVeoActionBeatSfxPrompt(text) : buildVeoSfxPrompt(text)
 }
 
 async function downloadVeoVideoBuffer(videoUrl: string): Promise<Buffer> {
@@ -81,31 +107,11 @@ async function downloadVeoVideoBuffer(videoUrl: string): Promise<Buffer> {
   return buffer
 }
 
-/**
- * Generates a low-cost Veo T2V clip, extracts audio, uploads MP3 to GCS.
- * Caller handles credit checking and charging.
- */
-export async function generateVeoSfxAudio(
-  params: GenerateVeoSfxParams
-): Promise<GenerateVeoSfxResult> {
-  const trimmedText = (params.text || '').trim()
-  if (!trimmedText) {
-    throw new Error('SFX prompt text is required')
-  }
-  if (!params.projectId) {
-    throw new Error('projectId is required')
-  }
-
-  const clipDurationSeconds: VeoSfxClipDuration =
-    params.clipDurationSeconds ?? resolveVeoSfxClipDuration(8)
-
-  const { prompt, negativePrompt } = buildVeoSfxPrompt(trimmedText)
-
-  console.log('[Veo SFX] Starting T2V ambient generation', {
-    clipDurationSeconds,
-    promptPreview: trimmedText.slice(0, 80),
-  })
-
+async function runVeoSfxGenerationAttempt(
+  prompt: string,
+  negativePrompt: string,
+  clipDurationSeconds: VeoSfxClipDuration
+): Promise<string> {
   const queued = await generateVideoWithVeo(prompt, {
     quality: 'fast',
     resolution: '720p',
@@ -123,7 +129,42 @@ export async function generateVeoSfxAudio(
     throw new Error(completed.error || 'Veo SFX generation failed')
   }
 
-  const videoBuffer = await downloadVeoVideoBuffer(completed.videoUrl)
+  return completed.videoUrl
+}
+
+/**
+ * Generates a low-cost Veo T2V clip, extracts audio, uploads MP3 to GCS.
+ * Caller handles credit checking and charging.
+ */
+export async function generateVeoSfxAudio(
+  params: GenerateVeoSfxParams
+): Promise<GenerateVeoSfxResult> {
+  const trimmedText = (params.text || '').trim()
+  if (!trimmedText) {
+    throw new Error('SFX prompt text is required')
+  }
+  if (!params.projectId) {
+    throw new Error('projectId is required')
+  }
+
+  const promptMode: VeoSfxPromptMode = params.promptMode ?? 'ambient'
+  const clipDurationSeconds: VeoSfxClipDuration =
+    params.clipDurationSeconds ?? resolveVeoSfxClipDuration(8)
+
+  const { prompt, negativePrompt } = buildVeoSfxPromptForMode(trimmedText, promptMode)
+
+  console.log('[Veo SFX] Starting T2V generation', {
+    promptMode,
+    clipDurationSeconds,
+    promptPreview: trimmedText.slice(0, 80),
+  })
+
+  const videoUrl = await withVeoSfxRetries(
+    () => runVeoSfxGenerationAttempt(prompt, negativePrompt, clipDurationSeconds),
+    { label: promptMode === 'actionBeat' ? 'Action beat SFX' : 'Ambient SFX' }
+  )
+
+  const videoBuffer = await downloadVeoVideoBuffer(videoUrl)
   const audioBuffer = await extractAudioFromVideoBuffer(videoBuffer)
 
   const id = params.sfxId || (params.sfxIndex !== undefined ? `idx${params.sfxIndex}` : 'cue')
@@ -138,6 +179,7 @@ export async function generateVeoSfxAudio(
     metadata: {
       provider: 'veo',
       veoQuality: 'fast',
+      promptMode,
       clipDurationSeconds: String(clipDurationSeconds),
       promptPreview: trimmedText.slice(0, 200),
     },
@@ -148,5 +190,6 @@ export async function generateVeoSfxAudio(
     gcsPath: upload.gcsPath,
     clipDurationSeconds,
     byteLength: audioBuffer.length,
+    promptMode,
   }
 }

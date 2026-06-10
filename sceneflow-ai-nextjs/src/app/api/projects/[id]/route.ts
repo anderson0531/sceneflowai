@@ -3,6 +3,7 @@ import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { stripBase64FromMetadata, calculateBase64Size } from '@/lib/storage/mediaStorage'
 import { mergeSceneArraysForPersistence } from '@/lib/storyboard/mergeSceneMedia'
+import { upsertBeatSfxCueOnScene } from '@/lib/script/deriveSfxFromSceneContent'
 
 // Increase timeout for large project updates
 export const maxDuration = 60 // 60 seconds timeout
@@ -564,14 +565,25 @@ export async function PATCH(
     
     // Handle atomic audio update
     if (body.atomicAudioUpdate) {
-      const { sceneIndex, audioType, audioUrl, sfxIndex, sfxAttribution } = body.atomicAudioUpdate
+      const {
+        sceneIndex,
+        audioType,
+        audioUrl,
+        sfxIndex: rawSfxIndex,
+        sfxAttribution,
+        beatId,
+        beatDescription,
+      } = body.atomicAudioUpdate
+
+      let sfxIndex = rawSfxIndex
       
       console.log('[Projects PATCH] Atomic audio update:', {
         projectId: id,
         sceneIndex,
         audioType,
         audioUrl: audioUrl?.substring(0, 60) + '...',
-        sfxIndex
+        sfxIndex,
+        beatId,
       })
       
       // Get fresh metadata from database
@@ -594,6 +606,17 @@ export async function PATCH(
       
       // Update the specific audio field atomically
       const scene = scenes[sceneIndex]
+
+      if (audioType === 'sfx' && typeof beatId === 'string' && beatId.trim()) {
+        const slot = upsertBeatSfxCueOnScene(scene, {
+          beatId: beatId.trim(),
+          actionDescription: String(beatDescription ?? '').trim(),
+          kind: 'action',
+        })
+        if (sfxIndex === undefined) {
+          sfxIndex = slot.sfxIndex
+        }
+      }
       
       if (audioType === 'music') {
         scene.musicAudio = audioUrl
@@ -603,10 +626,21 @@ export async function PATCH(
         if (!scene.sfxAudio) {
           scene.sfxAudio = []
         }
+        while (scene.sfxAudio.length <= sfxIndex) {
+          scene.sfxAudio.push(null)
+        }
         scene.sfxAudio[sfxIndex] = audioUrl
         
+        // Ensure sfx slot exists for beat upserts or positional writes
+        if (!Array.isArray(scene.sfx)) {
+          scene.sfx = []
+        }
+        while (scene.sfx.length <= sfxIndex) {
+          scene.sfx.push(null)
+        }
+        
         // Also update the sfx item if it exists
-        if (scene.sfx && scene.sfx[sfxIndex]) {
+        if (scene.sfx[sfxIndex]) {
           if (typeof scene.sfx[sfxIndex] === 'string') {
             scene.sfx[sfxIndex] = {
               description: scene.sfx[sfxIndex],

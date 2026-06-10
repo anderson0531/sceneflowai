@@ -41,6 +41,7 @@ import {
   resolveVeoSfxTargetSeconds,
   veoSfxCoversFullBeat,
 } from '@/lib/sfx/veoSfxDuration'
+import { ActionBeatSfxControls } from '@/components/vision/ActionBeatSfxControls'
 
 // Dynamic imports with ssr: false to prevent TDZ circular dependency issues
 // These components have complex initialization that can cause module load order problems
@@ -2064,7 +2065,8 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     audioType: 'sfx' | 'music',
     audioUrl: string,
     sfxIdx?: number,
-    sfxAttribution?: Record<string, unknown> | null
+    sfxAttribution?: Record<string, unknown> | null,
+    beatContext?: { beatId: string; beatDescription: string }
   ) => {
     // CRITICAL FIX: Use atomic server update instead of stale client state
     // The old approach used local `scenes` state which was stale and overwrote server-saved dialogue audio
@@ -2086,6 +2088,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       }
       if (audioType === 'sfx' && sfxIdx !== undefined && sfxAttribution !== undefined) {
         atomicAudioUpdate.sfxAttribution = sfxAttribution
+      }
+      if (audioType === 'sfx' && beatContext?.beatId) {
+        atomicAudioUpdate.beatId = beatContext.beatId
+        atomicAudioUpdate.beatDescription = beatContext.beatDescription
       }
 
       // Make atomic update to database via PATCH endpoint
@@ -6252,6 +6258,16 @@ function SceneCard({
                                   ))}
                                 </div>
                               )}
+                              <ActionBeatSfxControls
+                                beat={beat}
+                                scene={scene}
+                                sceneIdx={sceneIdx}
+                                projectId={projectId}
+                                segmentDurationSeconds={scene.duration}
+                                playingAudio={playingAudio}
+                                onPlayAudio={onPlayAudio}
+                                onSaveSfxAudio={onSaveSfxAudio}
+                              />
                             </div>
                           )
                         }

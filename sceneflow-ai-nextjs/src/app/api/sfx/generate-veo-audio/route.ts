@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 import { trackCost } from '@/lib/credits/costTracking'
-import { generateVeoSfxAudio } from '@/lib/sfx/veoSfx'
+import { generateVeoSfxAudio, type VeoSfxPromptMode } from '@/lib/sfx/veoSfx'
 import {
   resolveVeoSfxClipDuration,
   type VeoSfxClipDuration,
@@ -22,6 +22,11 @@ interface VeoSfxRequestBody {
   projectId?: string
   sfxId?: string
   sfxIndex?: number
+  promptMode?: VeoSfxPromptMode
+}
+
+function parsePromptMode(value: unknown): VeoSfxPromptMode {
+  return value === 'actionBeat' ? 'actionBeat' : 'ambient'
 }
 
 function toClipDuration(value: number | undefined): VeoSfxClipDuration {
@@ -64,12 +69,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const promptMode = parsePromptMode(body.promptMode)
+
     const result = await generateVeoSfxAudio({
       text,
       projectId,
       sfxId: body.sfxId,
       sfxIndex: body.sfxIndex,
       clipDurationSeconds,
+      promptMode,
     })
 
     try {
@@ -80,6 +88,7 @@ export async function POST(request: NextRequest) {
         sfxIndex: body.sfxIndex,
         clipDurationSeconds,
         promptPreview: text.slice(0, 100),
+        promptMode,
       })
       await trackCost(userId, 'veo_sfx', VEO_SFX_CREDIT_COST, {
         projectId,
@@ -98,6 +107,7 @@ export async function POST(request: NextRequest) {
       sfxIndex: body.sfxIndex,
       operation: 'veo_sfx',
       source: 'veo',
+      promptMode: result.promptMode,
     })
   } catch (error: any) {
     console.error('[Veo SFX] Error:', error?.message || String(error))
