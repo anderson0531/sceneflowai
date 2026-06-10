@@ -35,6 +35,10 @@ const nextConfig = {
   },
   reactStrictMode: true,
   serverExternalPackages: ["ffmpeg-static", "ffprobe-static"],
+  outputFileTracingIncludes: {
+    "/api/sfx/generate-veo-audio": ["./node_modules/ffmpeg-static/ffmpeg"],
+    "/api/tts/google/voice-clone": ["./node_modules/ffmpeg-static/ffmpeg"],
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

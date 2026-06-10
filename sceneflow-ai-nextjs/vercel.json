@@ -75,6 +75,10 @@
     },
     "src/app/api/blueprint/share/[token]/audio/generate/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/sfx/generate-veo-audio/route.ts": {
+      "maxDuration": 300,
+      "memory": 3009
     }
   },
   "crons": [

@@ -1,17 +1,8 @@
-import ffmpeg from 'fluent-ffmpeg'
 import { writeFile, readFile, unlink } from 'fs/promises'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { v4 as uuidv4 } from 'uuid'
-
-try {
-  const ffmpegStatic = eval('require')('ffmpeg-static')
-  if (ffmpegStatic) {
-    ffmpeg.setFfmpegPath(ffmpegStatic)
-  }
-} catch {
-  // Fallback to system ffmpeg
-}
+import { runFfmpeg } from '@/lib/ffmpeg/runFfmpeg'
 
 /**
  * Extract the audio track from an MP4 buffer as MP3 (discards video).
@@ -27,16 +18,19 @@ export async function extractAudioFromVideoBuffer(videoBuffer: Buffer): Promise<
   try {
     await writeFile(inputPath, videoBuffer)
 
-    await new Promise<void>((resolve, reject) => {
-      ffmpeg(inputPath)
-        .noVideo()
-        .audioCodec('libmp3lame')
-        .audioQuality(4)
-        .format('mp3')
-        .on('end', () => resolve())
-        .on('error', (err) => reject(err))
-        .save(outputPath)
-    })
+    await runFfmpeg([
+      '-y',
+      '-i',
+      inputPath,
+      '-vn',
+      '-acodec',
+      'libmp3lame',
+      '-q:a',
+      '4',
+      '-f',
+      'mp3',
+      outputPath,
+    ])
 
     const outputBuffer = await readFile(outputPath)
     if (!outputBuffer.length) {
