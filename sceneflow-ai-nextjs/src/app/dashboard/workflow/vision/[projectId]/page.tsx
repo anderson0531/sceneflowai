@@ -34,6 +34,7 @@ import {
   applyBeatStoryboardImageToScene,
   applyDialogueStoryboardImageToScene,
   applyEstablishingImageToScene,
+  applyExpressStoryboardImageToScene,
   ensureSceneBeats,
 } from '@/lib/script/beatMigration'
 import { toast } from 'sonner'
@@ -5649,9 +5650,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     () =>
       resolveStoryboardScenes({
         script,
-        visionPhaseScenes: project?.metadata?.visionPhase?.scenes,
+        visionPhaseScenes: isExpressRunning
+          ? undefined
+          : project?.metadata?.visionPhase?.scenes,
       }),
-    [script, project?.metadata?.visionPhase?.scenes]
+    [script, isExpressRunning, project?.metadata?.visionPhase?.scenes]
   )
   
   const sidebarProgressData = useMemo(() => {
@@ -10687,6 +10690,38 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }
 
   /**
+   * Apply Express SSE storyboard image updates (beats, dialogue, establishing).
+   */
+  const applyExpressSceneImage = useCallback(
+    (
+      sceneIndex: number,
+      imageUrl: string,
+      params?: {
+        dialogueIndex?: number
+        beatIndex?: number
+        imageTier?: 'draft' | 'final'
+        imagePrompt?: string
+        gcsPath?: string
+      }
+    ) => {
+      setScript((prev: any) => {
+        if (!prev?.script?.scenes?.[sceneIndex]) return prev
+        const scenes = [...prev.script.scenes]
+        scenes[sceneIndex] = applyExpressStoryboardImageToScene(scenes[sceneIndex], {
+          imageUrl,
+          beatIndex: params?.beatIndex,
+          dialogueIndex: params?.dialogueIndex,
+          imageTier: params?.imageTier,
+          imagePrompt: params?.imagePrompt,
+          imageGcsPath: params?.gcsPath,
+        })
+        return { ...prev, script: { ...prev.script, scenes } }
+      })
+    },
+    []
+  )
+
+  /**
    * Run the Storyboard Express pipeline (Direction, then Audio ∥ Image per scene;
    * multiple scenes in parallel per EXPRESS_SCENE_CONCURRENCY). A traffic cop
    * throttles Vertex/TTS lanes on 429 bursts. Streams SSE from /api/vision/express
@@ -10722,44 +10757,23 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         })
       }
 
-      const applySceneImage = (
-        sceneIndex: number,
-        imageUrl?: string,
-        dialogueIndex?: number,
-        beatIndex?: number,
-        imageTier: 'draft' | 'final' = 'draft'
-      ) => {
-        if (!imageUrl) return
-        setScript((prev: any) => {
-          if (!prev?.script?.scenes) return prev
-          const scenes = [...prev.script.scenes]
-          if (!scenes[sceneIndex]) return prev
-          if (typeof beatIndex === 'number') {
-            const beats = [...(scenes[sceneIndex].beats || [])]
-            if (beats[beatIndex]) {
-              beats[beatIndex] = {
-                ...beats[beatIndex],
-                storyboardImageUrl: imageUrl,
-                storyboardImageTier: imageTier,
-              }
-              scenes[sceneIndex] = {
-                ...applyBeatsToScene(scenes[sceneIndex], beats),
-                storyboardStatus: 'pending_review',
-              }
-            }
-          } else if (typeof dialogueIndex === 'number') {
-            const dialogue = [...(scenes[sceneIndex].dialogue || [])]
-            dialogue[dialogueIndex] = {
-              ...dialogue[dialogueIndex],
-              storyboardImageUrl: imageUrl,
-              storyboardImageTier: imageTier,
-            }
-            scenes[sceneIndex] = { ...scenes[sceneIndex], dialogue }
-          } else {
-            scenes[sceneIndex] = { ...scenes[sceneIndex], imageUrl }
+      const refreshProjectScript = async () => {
+        try {
+          const refreshed = await fetch(`/api/projects/${projectId}?_t=${Date.now()}`, {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' },
+          })
+          if (refreshed.ok) {
+            const data = await refreshed.json()
+            const proj = data.project || data
+            await rehydrateScriptFromProject(proj, {
+              mergeClientScenes: true,
+              repairIfRicher: true,
+            })
           }
-          return { ...prev, script: { ...prev.script, scenes } }
-        })
+        } catch (refreshErr) {
+          console.warn('[Express] Failed to refresh project after persist:', refreshErr)
+        }
       }
 
       try {
@@ -10811,13 +10825,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   if (event.ok) {
                     setPhase(event.sceneIndex, event.phase, 'done')
                     if (event.phase === 'image' && event.imageUrl) {
-                      applySceneImage(
-                        event.sceneIndex,
-                        event.imageUrl,
-                        event.dialogueIndex,
-                        event.beatIndex,
-                        options.storyboardQuality ?? 'draft'
-                      )
+                      applyExpressSceneImage(event.sceneIndex, event.imageUrl, {
+                        dialogueIndex: event.dialogueIndex,
+                        beatIndex: event.beatIndex,
+                        imageTier:
+                          event.imageTier ?? options.storyboardQuality ?? 'draft',
+                        imagePrompt: event.imagePrompt ?? undefined,
+                        gcsPath: event.gcsPath ?? undefined,
+                      })
                     }
                   } else {
                     const phaseError = event.error || 'phase failed'
@@ -10849,6 +10864,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   toast.error(event.errors?.[0] || 'Express preflight failed')
                   break
                 case 'scene-persisted':
+                  await refreshProjectScript()
                   break
                 case 'throttle':
                   console.info(
@@ -10916,7 +10932,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setIsExpressRunning(false)
       }
     },
-    [projectId, script, isExpressRunning, setShowSceneGallery, imageQuality, rehydrateScriptFromProject]
+    [projectId, script, isExpressRunning, setShowSceneGallery, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage]
   )
 
   const handleSyncPreVisToScript = useCallback(
@@ -10986,45 +11002,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
 
       const imageTier: 'draft' | 'final' = options?.finalizeOnly ? 'final' : 'draft'
-
-      const applySceneImage = (
-        idx: number,
-        imageUrl?: string,
-        dialogueIndex?: number,
-        beatIndex?: number
-      ) => {
-        if (!imageUrl) return
-        setScript((prev: any) => {
-          if (!prev?.script?.scenes) return prev
-          const scenes = [...prev.script.scenes]
-          if (!scenes[idx]) return prev
-          if (typeof beatIndex === 'number') {
-            const beats = [...(scenes[idx].beats || [])]
-            if (beats[beatIndex]) {
-              beats[beatIndex] = {
-                ...beats[beatIndex],
-                storyboardImageUrl: imageUrl,
-                storyboardImageTier: imageTier,
-              }
-              scenes[idx] = {
-                ...applyBeatsToScene(scenes[idx], beats),
-                storyboardStatus: 'pending_review',
-              }
-            }
-          } else if (typeof dialogueIndex === 'number') {
-            const dialogue = [...(scenes[idx].dialogue || [])]
-            dialogue[dialogueIndex] = {
-              ...dialogue[dialogueIndex],
-              storyboardImageUrl: imageUrl,
-              storyboardImageTier: imageTier,
-            }
-            scenes[idx] = { ...scenes[idx], dialogue }
-          } else {
-            scenes[idx] = { ...scenes[idx], imageUrl }
-          }
-          return { ...prev, script: { ...prev.script, scenes } }
-        })
-      }
 
       const refreshProjectScript = async () => {
         try {
@@ -11098,12 +11075,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   if (event.ok) {
                     setPhase(event.sceneIndex, event.phase, 'done')
                     if (event.phase === 'image' && event.imageUrl) {
-                      applySceneImage(
-                        event.sceneIndex,
-                        event.imageUrl,
-                        event.dialogueIndex,
-                        event.beatIndex
-                      )
+                      applyExpressSceneImage(event.sceneIndex, event.imageUrl, {
+                        dialogueIndex: event.dialogueIndex,
+                        beatIndex: event.beatIndex,
+                        imageTier: event.imageTier ?? imageTier,
+                        imagePrompt: event.imagePrompt ?? undefined,
+                        gcsPath: event.gcsPath ?? undefined,
+                      })
                     }
                   } else {
                     const phaseError = event.error || 'phase failed'
@@ -11171,7 +11149,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         setIsExpressRunning(false)
       }
     },
-    [projectId, script, isExpressRunning, lockedArtStyle, imageQuality, rehydrateScriptFromProject]
+    [projectId, script, isExpressRunning, lockedArtStyle, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage]
   )
 
   const handleFinalizeStoryboard = useCallback(

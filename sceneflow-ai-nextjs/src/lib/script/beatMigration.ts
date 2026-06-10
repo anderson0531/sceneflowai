@@ -818,12 +818,18 @@ export function applyDialogueStoryboardImageToScene(
   return applyBeatsToScene(scene, beats)
 }
 
+export interface BeatStoryboardImageExtras {
+  imagePrompt?: string
+  imageGcsPath?: string
+  imageTier?: 'draft' | 'final'
+}
+
 /** Persist a beat-index storyboard image to beats[] and legacy dialogue[]. */
 export function applyBeatStoryboardImageToScene(
   scene: Record<string, unknown>,
   beatIndex: number,
   imageUrl: string,
-  extras?: { imagePrompt?: string; imageGcsPath?: string }
+  extras?: BeatStoryboardImageExtras
 ): Record<string, unknown> {
   const beats = getSceneBeats(scene)
   if (!beats[beatIndex]) return scene
@@ -831,6 +837,7 @@ export function applyBeatStoryboardImageToScene(
   beats[beatIndex] = {
     ...beats[beatIndex],
     storyboardImageUrl: imageUrl,
+    ...(extras?.imageTier ? { storyboardImageTier: extras.imageTier } : {}),
     ...(extras?.imageGcsPath
       ? { storyboardImageGcsPath: extras.imageGcsPath }
       : {}),
@@ -849,6 +856,54 @@ export function applyBeatStoryboardImageToScene(
     }
   }
   return updated
+}
+
+/** Apply Express SSE / manual storyboard image updates to a single scene. */
+export function applyExpressStoryboardImageToScene(
+  scene: Record<string, unknown>,
+  params: {
+    imageUrl: string
+    beatIndex?: number
+    dialogueIndex?: number
+    imageTier?: 'draft' | 'final'
+    imagePrompt?: string
+    imageGcsPath?: string
+  }
+): Record<string, unknown> {
+  const { imageUrl, beatIndex, dialogueIndex, imageTier, imagePrompt, imageGcsPath } = params
+
+  if (typeof beatIndex === 'number') {
+    return {
+      ...applyBeatStoryboardImageToScene(scene, beatIndex, imageUrl, {
+        imagePrompt,
+        imageGcsPath,
+        imageTier,
+      }),
+      storyboardStatus: 'pending_review',
+    }
+  }
+
+  if (typeof dialogueIndex === 'number') {
+    const dialogue = [...(Array.isArray(scene.dialogue) ? (scene.dialogue as unknown[]) : [])]
+    const line = dialogue[dialogueIndex] as Record<string, unknown> | undefined
+    if (line) {
+      dialogue[dialogueIndex] = {
+        ...line,
+        storyboardImageUrl: imageUrl,
+        ...(imageTier ? { storyboardImageTier: imageTier } : {}),
+        ...(imagePrompt ? { storyboardImagePrompt: imagePrompt } : {}),
+        ...(imageGcsPath ? { storyboardImageGcsPath: imageGcsPath } : {}),
+      }
+    }
+    return { ...scene, dialogue, storyboardStatus: 'pending_review' }
+  }
+
+  return {
+    ...scene,
+    imageUrl,
+    ...(imagePrompt ? { imagePrompt } : {}),
+    ...(imageGcsPath ? { imageGcsPath } : {}),
+  }
 }
 
 /** Stable fingerprint of beat script text for pre-vis invalidation. */

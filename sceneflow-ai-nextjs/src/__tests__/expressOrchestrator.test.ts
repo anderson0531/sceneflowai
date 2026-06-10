@@ -50,6 +50,7 @@ vi.mock('@/lib/intelligence/beat-sequence-planner', () => ({
 
 import { runExpress } from '@/lib/sceneGeneration/expressOrchestrator'
 import type { ExpressEvent, ExpressPhase } from '@/lib/sceneGeneration/types'
+import { getSceneBeats } from '@/lib/script/beatMigration'
 
 function buildProject(sceneCount: number) {
   const scenes = Array.from({ length: sceneCount }, (_, i) => ({
@@ -57,9 +58,9 @@ function buildProject(sceneCount: number) {
     action: 'Action',
     dialogue: [{ character: 'ALICE', line: 'Hello', characterId: 'c1' }],
     beats: [
-      { kind: 'action', actionDescription: 'Beat A' },
-      { kind: 'dialogue', line: 'Hello' },
-      { kind: 'action', actionDescription: 'Beat C' },
+      { beatId: 'bt_a', kind: 'action', actionDescription: 'Beat A', sequenceIndex: 0 },
+      { beatId: 'bt_b', kind: 'dialogue', line: 'Hello', sequenceIndex: 1 },
+      { beatId: 'bt_c', kind: 'action', actionDescription: 'Beat C', sequenceIndex: 2 },
     ],
   }))
   return {
@@ -161,5 +162,24 @@ describe('runExpress', () => {
     })
 
     expect(imageCalls).toBe(3)
+  })
+
+  it('retains all beat storyboardImageUrl values after concurrent generation', async () => {
+    const project = buildProject(1)
+    const scene = project.metadata.visionPhase.script.script.scenes[0]
+
+    await runExpress({
+      project,
+      options: { projectId: 'p1', mode: 'batch', regenerate: true },
+      baseUrl: 'http://localhost',
+      emit: () => {},
+    })
+
+    const beats = getSceneBeats(scene)
+    expect(beats[0].storyboardImageUrl).toBe('https://example.com/beat-0.png')
+    expect(beats[1].storyboardImageUrl).toBe('https://example.com/beat-1.png')
+    const storedBeats = scene.beats as Array<{ storyboardImageUrl?: string }>
+    expect(storedBeats[2]?.storyboardImageUrl).toBe('https://example.com/beat-2.png')
+    expect(scene.imageUrl).toBe('https://example.com/beat-0.png')
   })
 })

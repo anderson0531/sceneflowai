@@ -260,6 +260,7 @@ export function SceneImageFrame({
         {hasImage ? (
           <>
             <img
+              key={imageUrl}
               src={imageUrl}
               alt={`Scene ${sceneNumber} reference`}
               className="w-full h-full object-cover"

@@ -9,6 +9,8 @@ import {
   getStoryboardTimelineBeats,
   isAutoLeadingEstablishingBeat,
   migrateProjectToBeats,
+  applyBeatStoryboardImageToScene,
+  applyExpressStoryboardImageToScene,
 } from '@/lib/script/beatMigration'
 import { VEO_DIALOGUE_CLIP_MAX_SEC } from '@/lib/scene/dialogueSegmentSplit'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
@@ -280,5 +282,67 @@ describe('beatMigration', () => {
     const beats = scenes[0].beats
     expect(beats[0].storyboardImageUrl).toBe('https://example.com/scene1-est.jpg')
     expect(beats[1].storyboardImageUrl).toBe('https://example.com/scene1-line.jpg')
+  })
+})
+
+describe('applyBeatStoryboardImageToScene', () => {
+  it('syncs scene.imageUrl when beat 0 is an action establishing shot', () => {
+    const scene = {
+      imageUrl: 'https://example.com/old.jpg',
+      beats: [
+        {
+          beatId: 'bt_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide opening',
+        },
+      ],
+    }
+
+    const updated = applyBeatStoryboardImageToScene(
+      scene,
+      0,
+      'https://example.com/new-establishing.jpg',
+      { imageTier: 'draft', imagePrompt: 'Wide digital void' }
+    )
+
+    expect(updated.imageUrl).toBe('https://example.com/new-establishing.jpg')
+    expect(updated.imagePrompt).toBe('Wide digital void')
+    expect(getSceneBeats(updated)[0].storyboardImageUrl).toBe(
+      'https://example.com/new-establishing.jpg'
+    )
+    expect(getSceneBeats(updated)[0].storyboardImageTier).toBe('draft')
+  })
+
+  it('does not overwrite scene.imageUrl for non-zero beats', () => {
+    const scene = {
+      imageUrl: 'https://example.com/establishing.jpg',
+      beats: [
+        {
+          beatId: 'bt_0',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide',
+          storyboardImageUrl: 'https://example.com/establishing.jpg',
+        },
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 1,
+          kind: 'action',
+          actionDescription: 'Tracking',
+        },
+      ],
+    }
+
+    const updated = applyExpressStoryboardImageToScene(scene, {
+      imageUrl: 'https://example.com/tracking.jpg',
+      beatIndex: 1,
+      imageTier: 'draft',
+    })
+
+    expect(updated.imageUrl).toBe('https://example.com/establishing.jpg')
+    const storedBeats = updated.beats as SceneBeat[]
+    expect(storedBeats[1].storyboardImageUrl).toBe('https://example.com/tracking.jpg')
+    expect(updated.storyboardStatus).toBe('pending_review')
   })
 })

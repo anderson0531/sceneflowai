@@ -5,6 +5,7 @@ import {
   countStoryboardFramesNeedingGeneration,
   enumerateStoryboardFrameSlots,
 } from '@/lib/storyboard/types'
+import { applyExpressStoryboardImageToScene } from '@/lib/script/beatMigration'
 
 describe('storyboard frame slots', () => {
   it('marks dialogue line as placeholder when only establishing image exists', () => {
@@ -72,5 +73,36 @@ describe('storyboard frame slots', () => {
     expect(slots[0]?.ownImageUrl).toBe('https://example.com/new-establishing.jpg')
     expect(slots[0]?.isPlaceholder).toBe(false)
     expect(countStoryboardFramesNeedingGeneration(scene)).toBe(0)
+  })
+
+  it('reflects beat-0 Express update on establishing display URLs immediately', () => {
+    const scene = {
+      imageUrl: 'https://example.com/old-establishing.jpg',
+      beats: [
+        {
+          beatId: 'bt_action',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Wide opening',
+        },
+        {
+          beatId: 'bt_action2',
+          sequenceIndex: 1,
+          kind: 'action',
+          actionDescription: 'Tracking',
+        },
+      ],
+    }
+
+    const updated = applyExpressStoryboardImageToScene(scene, {
+      imageUrl: 'https://example.com/new-establishing.jpg',
+      beatIndex: 0,
+      imageTier: 'draft',
+    })
+
+    const slots = enumerateStoryboardFrameSlots(updated)
+    expect(updated.imageUrl).toBe('https://example.com/new-establishing.jpg')
+    expect(slots[0]?.displayImageUrl).toBe('https://example.com/new-establishing.jpg')
+    expect(slots[1]?.displayImageUrl).toBe('https://example.com/new-establishing.jpg')
   })
 })

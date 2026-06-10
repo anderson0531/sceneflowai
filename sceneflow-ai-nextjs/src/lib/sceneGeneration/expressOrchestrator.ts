@@ -363,7 +363,7 @@ async function generateSingleBeatImage(
     skipLikenessValidation: imageParams.skipLikenessValidation,
     })
   )
-  persistBeatFrame(scene, beatIdx, result, imageParams.storyboardQuality)
+  await persistBeatFrame(scene, beatIdx, result, imageParams.storyboardQuality)
   safeEmit(emit, {
     type: 'phase-done',
     sceneIndex,
@@ -372,6 +372,9 @@ async function generateSingleBeatImage(
     ok: true,
     imageUrl: result.imageUrl,
     beatIndex: beatIdx,
+    imageTier: imageParams.storyboardQuality,
+    imagePrompt: result.imagePrompt ?? undefined,
+    gcsPath: result.gcsPath ?? undefined,
   })
   console.log(
     `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — ${imageParams.storyboardQuality} (${imageParams.modelTier})`
@@ -520,12 +523,15 @@ async function runBeatImages(
   return { hadFailure: failedIndices.length > 0, lastError, lastImageUrl }
 }
 
-function persistBeatFrame(
+/** Serialize in-memory beat persist so parallel generations do not drop sibling URLs. */
+const beatPersistChains = new WeakMap<object, Promise<void>>()
+
+function writeBeatFrameToScene(
   scene: any,
   beatIndex: number,
   result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null },
   tier: StoryboardQuality
-) {
+): void {
   const beats = getSceneBeats(scene)
   if (!beats[beatIndex]) return
   beats[beatIndex] = {
@@ -540,6 +546,26 @@ function persistBeatFrame(
   if (beatIndex === 0 && beats[0]?.kind === 'action') {
     scene.imageUrl = result.imageUrl
     if (result.imagePrompt) scene.imagePrompt = result.imagePrompt
+  }
+}
+
+async function persistBeatFrame(
+  scene: any,
+  beatIndex: number,
+  result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null },
+  tier: StoryboardQuality
+): Promise<void> {
+  const previous = beatPersistChains.get(scene) ?? Promise.resolve()
+  let release!: () => void
+  const gate = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  beatPersistChains.set(scene, previous.then(() => gate))
+  await previous
+  try {
+    writeBeatFrameToScene(scene, beatIndex, result, tier)
+  } finally {
+    release()
   }
 }
 

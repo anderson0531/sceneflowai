@@ -108,6 +108,10 @@ export interface ExpressPhaseEvent {
   dialogueIndex?: number
   /** Beat index when generating a beat storyboard frame. */
   beatIndex?: number
+  /** draft | final tier for storyboardImageTier on the frame. */
+  imageTier?: 'draft' | 'final'
+  imagePrompt?: string | null
+  gcsPath?: string | null
   /** Whether this phase was skipped because output already existed. */
   skipped?: boolean
 }
