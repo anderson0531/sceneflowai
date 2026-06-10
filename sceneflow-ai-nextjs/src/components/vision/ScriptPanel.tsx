@@ -3802,12 +3802,19 @@ function LegacySfxCueRow({
         <div className="flex items-center gap-2 flex-wrap">
           <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
           <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">SFX {sfxIdx + 1}</span>
-          {sfxAudio && (
+          {sfxAudio ? (
             <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
               <Volume2 className="w-3 h-3" />
               Audio Ready
             </span>
-          )}
+          ) : sfxDesc ? (
+            <span
+              className="text-xs px-2 py-0.5 bg-gray-500/15 text-gray-500 dark:text-gray-400 rounded"
+              title="Sound effects are included in Veo video segments during production"
+            >
+              SFX: {sfxDesc.length > 48 ? `${sfxDesc.slice(0, 48)}…` : sfxDesc} · Veo production
+            </span>
+          ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {sfxAudio && (
@@ -6421,7 +6428,8 @@ function SceneCard({
                       </div>
                       {!sfxCollapsed && (
                         <p className="text-xs text-amber-800/80 dark:text-amber-200/70 mb-2">
-                          Generated with <span className="font-medium">ElevenLabs</span> (~15 credits each).
+                          Animatic preview uses narration, dialogue, and music only. Sound effects are
+                          included in Veo video segments during production.
                         </p>
                       )}
                       {!sfxCollapsed && (

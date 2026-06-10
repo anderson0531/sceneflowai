@@ -303,6 +303,7 @@ export async function POST(req: NextRequest) {
 
     // Single unified project load for both character and scene data
     let project = null
+    let resolvedScene: any = null
     let characterObjects = characterArray
 
     // Filter out null/undefined values immediately
@@ -326,6 +327,14 @@ export async function POST(req: NextRequest) {
       }
 
       const allCharacters = project.metadata?.visionPhase?.characters || []
+      if (typeof sceneIndex === 'number') {
+        const scenesForResolution = project.metadata?.visionPhase?.script?.script?.scenes || []
+        const dbScene = scenesForResolution[sceneIndex]
+        resolvedScene =
+          sceneOverride && typeof sceneOverride === 'object'
+            ? { ...(dbScene || {}), ...sceneOverride }
+            : dbScene
+      }
       console.log('[Scene Image] DEBUG - characters in project:', allCharacters.length)
       console.log('[Scene Image] DEBUG - characters from DB:', allCharacters.map((c: any) => ({
         name: c.name,
@@ -368,17 +377,10 @@ export async function POST(req: NextRequest) {
           console.log('[Scene Image] Reloaded character objects from DB:', characterObjects.length)
         }
       } else if (projectId && typeof sceneIndex === 'number') {
-        const scenesForSelection = project.metadata?.visionPhase?.script?.script?.scenes || []
-        const dbSceneForSelection = scenesForSelection[sceneIndex]
-        const sceneForSelection =
-          sceneOverride && typeof sceneOverride === 'object'
-            ? { ...(dbSceneForSelection || {}), ...sceneOverride }
-            : dbSceneForSelection
-
         // Dialogue storyboard frame: select speaking character only (skip narrator)
-        if (isDialogueFrame && sceneForSelection) {
+        if (isDialogueFrame && resolvedScene) {
           characterSelectionExplicit = true
-          const dialogueLines = Array.isArray(sceneForSelection.dialogue) ? sceneForSelection.dialogue : []
+          const dialogueLines = Array.isArray(resolvedScene.dialogue) ? resolvedScene.dialogue : []
           const line = dialogueLines[dialogueIndex!]
           if (line) {
             const speakerName = String(line.character || '').trim()
@@ -403,17 +405,17 @@ export async function POST(req: NextRequest) {
               }
             }
           }
-        } else if (isBeatFrame && sceneForSelection) {
+        } else if (isBeatFrame && resolvedScene) {
           characterSelectionExplicit = true
-          const beats = getSceneBeats(sceneForSelection as Record<string, unknown>)
+          const beats = getSceneBeats(resolvedScene as Record<string, unknown>)
           const beat = beats[beatIndex!]
           if (beat) {
             beatKindForIntelligence = beat.kind
             if (beat.kind === 'action') {
               const actionText = beat.actionDescription?.trim() || ''
               const actionContext = [
-                sceneForSelection?.heading || '',
-                sceneForSelection?.action || '',
+                resolvedScene?.heading || '',
+                resolvedScene?.action || '',
                 actionText,
               ].join(' ')
               const detectedChars = detectCharactersInText(actionContext, allCharacters)
@@ -455,9 +457,8 @@ export async function POST(req: NextRequest) {
           console.log('[Scene Image] Proceeding with 0 characters as intended by user')
         } else {
           console.log('[Scene Image] No characterObjects provided, attempting to auto-detect from scene')
-          const scene = sceneForSelection
-          
-          if (scene) {
+          if (resolvedScene) {
+            const scene = resolvedScene
             // TALENT-AWARENESS: Check if this is a no-talent scene before auto-detecting
             const talentText = [
               scene.sceneDirection?.talent?.blocking || '',
@@ -533,12 +534,7 @@ export async function POST(req: NextRequest) {
     let references: any[] = []  // Store references for hash calculation
 
     if (project && typeof sceneIndex === 'number') {
-      const scenes = project.metadata?.visionPhase?.script?.script?.scenes || []
-      const dbScene = scenes[sceneIndex]
-      const scene =
-        sceneOverride && typeof sceneOverride === 'object'
-          ? { ...(dbScene || {}), ...sceneOverride }
-          : dbScene
+      const scene = resolvedScene
       sceneData = scene  // Capture for hash calculation
       references = project.metadata?.visionPhase?.references || []  // Capture references
       
@@ -614,8 +610,8 @@ export async function POST(req: NextRequest) {
         if (customPrompt && customPrompt.trim()) {
           fullSceneContext = customPrompt
           console.log('[Scene Image] Using custom prompt from ScenePromptBuilder')
-        } else if (isBeatFrame && sceneForSelection) {
-          const beats = getSceneBeats(sceneForSelection as Record<string, unknown>)
+        } else if (isBeatFrame && scene) {
+          const beats = getSceneBeats(scene as Record<string, unknown>)
           const beat = beats[beatIndex!]
           const beatAction = beat?.actionDescription?.trim() || beat?.line?.trim() || ''
           fullSceneContext = beatAction || scene.action || scene.visualDescription || scene.heading || ''

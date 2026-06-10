@@ -59,7 +59,6 @@ export function ExpressConfirmDialog({
   onConfirm,
 }: ExpressConfirmDialogProps) {
   const [includeMusic, setIncludeMusic] = useState(false)
-  const [includeSFX, setIncludeSFX] = useState(false)
   const [regenerate, setRegenerate] = useState(false)
   const [artStyle, setArtStyle] = useState(lockedArtStyle || 'photorealistic')
 
@@ -71,7 +70,6 @@ export function ExpressConfirmDialog({
   useEffect(() => {
     if (open) {
       setIncludeMusic(hasTitleScene)
-      setIncludeSFX(false)
       setRegenerate(false)
       setArtStyle(lockedArtStyle || 'photorealistic')
     }
@@ -157,17 +155,14 @@ export function ExpressConfirmDialog({
       Math.ceil((approxCharsPerScene / 1000) * AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS) *
       effectiveAudioScenes
     const music = includeMusic ? stats.scenesWithMusic * AUDIO_CREDITS.ELEVENLABS_MUSIC : 0
-    const sfx = includeSFX ? stats.totalSfxCues * AUDIO_CREDITS.ELEVENLABS_SFX : 0
-    return { image, audio, music, sfx, total: image + audio + music + sfx }
+    return { image, audio, music, sfx: 0, total: image + audio + music }
   }, [
     effectiveDialogueFrameCount,
     effectiveAudioScenes,
     stats.total,
     stats.totalDialogue,
     stats.scenesWithMusic,
-    stats.totalSfxCues,
     includeMusic,
-    includeSFX,
   ])
 
   const nothingToRun =
@@ -176,8 +171,7 @@ export function ExpressConfirmDialog({
     effectiveEstablishingCount === 0 &&
     effectiveDialogueFrameCount === 0 &&
     effectiveAudioScenes === 0 &&
-    !includeMusic &&
-    !includeSFX
+    !includeMusic
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -270,26 +264,15 @@ export function ExpressConfirmDialog({
               </label>
             </div>
 
-            <div className="flex items-start space-x-3 p-3 bg-gray-800 rounded-lg">
-              <Checkbox
-                id="express-sfx"
-                checked={includeSFX}
-                onCheckedChange={(checked) => setIncludeSFX(!!checked)}
-                disabled={isRunning || stats.totalSfxCues === 0}
-              />
-              <label
-                htmlFor="express-sfx"
-                className={`flex-1 text-sm cursor-pointer ${
-                  stats.totalSfxCues === 0 ? 'text-gray-500' : 'text-gray-200'
-                }`}
-              >
-                <div className="font-medium">Sound Effects (~15 credits each)</div>
-                <div className="text-xs text-gray-400">
-                  {stats.totalSfxCues > 0
-                    ? `${stats.totalSfxCues} SFX cue${stats.totalSfxCues === 1 ? '' : 's'} across all scenes`
-                    : 'No SFX cues yet'}
+            <div className="flex items-start space-x-3 p-3 bg-gray-800/60 rounded-lg border border-gray-700/60">
+              <Volume2 className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
+              <div className="flex-1 text-sm text-gray-400">
+                <div className="font-medium text-gray-300">Sound effects</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Sound effects are included in Veo video segments during production.
+                  Animatic preview uses narration, dialogue, and optional music only.
                 </div>
-              </label>
+              </div>
             </div>
 
             <div className="flex items-start space-x-3 p-3 bg-amber-900/20 border border-amber-600/30 rounded-lg">
@@ -352,9 +335,6 @@ export function ExpressConfirmDialog({
               {includeMusic && stats.scenesWithMusic > 0 && (
                 <div>· Music: {estimatedCredits.music} credits</div>
               )}
-              {includeSFX && stats.totalSfxCues > 0 && (
-                <div>· SFX: {estimatedCredits.sfx} credits</div>
-              )}
               <div className="text-sm font-semibold text-indigo-200 pt-1">
                 Total: ~{estimatedCredits.total} credits
               </div>
@@ -376,7 +356,7 @@ export function ExpressConfirmDialog({
             Cancel
           </Button>
           <Button
-            onClick={() => onConfirm({ includeMusic, includeSFX, regenerate, language, artStyle })}
+            onClick={() => onConfirm({ includeMusic, includeSFX: false, regenerate, language, artStyle })}
             disabled={isRunning || nothingToRun}
             className="bg-indigo-600 hover:bg-indigo-700 text-white"
           >

@@ -11025,7 +11025,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             language: language || 'en',
             artStyle: lockedArtStyle || 'photorealistic',
             includeMusic: false,
-            includeSFX: true,
+            includeSFX: false,
             regenerate: !!options?.regenerate,
             imageQuality,
           }),
