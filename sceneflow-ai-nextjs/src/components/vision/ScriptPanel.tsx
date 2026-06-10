@@ -14,7 +14,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video } from 'lucide-react'
+import { FileText, Edit, Eye, Sparkles, Loader, Loader2, Play, Square, Volume2, VolumeX, Image as ImageIcon, Wand2, ChevronRight, ChevronUp, ChevronLeft, Music, Volume as VolumeIcon, Upload, StopCircle, AlertTriangle, ChevronDown, Check, Pause, Download, Zap, Camera, RefreshCw, Plus, Trash2, GripVertical, Film, Users, Star, BarChart3, Clock, Image, Printer, Info, Clapperboard, CheckCircle, CheckCircle2, Circle, ArrowRight, Bookmark, BookmarkPlus, BookmarkCheck, BookMarked, Lightbulb, Maximize2, Expand, Bot, PenTool, FolderPlus, Pencil, Layers, List, Calculator, FileCheck, Lock, Copy, Languages, Globe, Library, ListVideo, Video, Waves } from 'lucide-react'
 import { SceneWorkflowCoPilot, type WorkflowStep } from './SceneWorkflowCoPilot'
 import { SceneWorkflowCoPilotPanel } from './SceneWorkflowCoPilotPanel'
 import { SceneProductionManager } from './scene-production/SceneProductionManager'
@@ -32,6 +32,15 @@ import {
   resolveSfxDuration,
   type SfxDurationOverride,
 } from '@/lib/elevenlabs/sfxDuration'
+import {
+  dispatchGenerateVeoSfx,
+  VEO_SFX_CREDIT_HINT,
+} from '@/lib/sfx/clientGenerateVeoSfx'
+import {
+  resolveAutoVeoSfxDuration,
+  resolveVeoSfxTargetSeconds,
+  veoSfxCoversFullBeat,
+} from '@/lib/sfx/veoSfxDuration'
 
 // Dynamic imports with ssr: false to prevent TDZ circular dependency issues
 // These components have complex initialization that can cause module load order problems
@@ -3698,7 +3707,9 @@ function LegacySfxCueRow({
   sfx,
   sfxIdx,
   sfxAudio,
+  sfxSourceMeta,
   projectId,
+  segmentDurationSeconds,
   playingAudio,
   onPlayAudio,
   onDeleteSceneAudio,
@@ -3708,7 +3719,9 @@ function LegacySfxCueRow({
   sfx: any
   sfxIdx: number
   sfxAudio: string | undefined
+  sfxSourceMeta?: Record<string, unknown> | null
   projectId?: string
+  segmentDurationSeconds?: number
   playingAudio: string | null
   onPlayAudio?: (audioUrl: string, label: string, sceneId?: string) => void
   onDeleteSceneAudio?: (
@@ -3725,14 +3738,19 @@ function LegacySfxCueRow({
     sfxAttribution?: Record<string, unknown> | null
   ) => Promise<void> | void
 }) {
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [isGeneratingElevenLabs, setIsGeneratingElevenLabs] = useState(false)
+  const [isGeneratingVeo, setIsGeneratingVeo] = useState(false)
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
   const sfxDesc: string = typeof sfx === 'string' ? sfx : (sfx?.description || '')
   const sfxIdValue: string | undefined =
     typeof sfx === 'object' && sfx ? sfx.sfxId : undefined
-  const autoSeconds = resolveAutoSfxDuration(undefined)
+  const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
+  const veoAutoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
+  const isGenerating = isGeneratingElevenLabs || isGeneratingVeo
+  const isVeoAmbient = sfxSourceMeta?.source === 'veo'
+  const showPartialVeoHint = !veoSfxCoversFullBeat(segmentDurationSeconds, durationPreset)
 
-  const handleGenerate = async () => {
+  const handleGenerateElevenLabs = async () => {
     if (!projectId) {
       toast.error('Project context is missing for SFX generation.')
       return
@@ -3741,10 +3759,13 @@ function LegacySfxCueRow({
       toast.info('Add a description for this SFX cue first.')
       return
     }
-    setIsGenerating(true)
+    setIsGeneratingElevenLabs(true)
     const toastId = toast.loading(sfxAudio ? 'Re-generating SFX...' : 'Generating SFX...')
     try {
-      const durationSeconds = resolveSfxDuration({ override: durationPreset })
+      const durationSeconds = resolveSfxDuration({
+        segmentDurationSeconds,
+        override: durationPreset,
+      })
       const response = await fetch('/api/tts/elevenlabs/sound-effects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3785,15 +3806,48 @@ function LegacySfxCueRow({
       console.error('[ScriptPanel] Legacy SFX generation failed:', error)
       toast.error(`Failed to generate SFX: ${error?.message || 'Unknown error'}`, { id: toastId })
     } finally {
-      setIsGenerating(false)
+      setIsGeneratingElevenLabs(false)
+    }
+  }
+
+  const handleGenerateVeo = async () => {
+    if (!projectId) {
+      toast.error('Project context is missing for SFX generation.')
+      return
+    }
+    if (!sfxDesc) {
+      toast.info('Add a description for this SFX cue first.')
+      return
+    }
+    setIsGeneratingVeo(true)
+    try {
+      const result = await dispatchGenerateVeoSfx({
+        projectId,
+        text: sfxDesc,
+        sfxId: sfxIdValue,
+        sfxIndex: sfxIdx,
+        segmentDurationSeconds,
+        durationOverride: durationPreset,
+        hasExistingAudio: !!sfxAudio,
+      })
+      await onSaveSfxAudio?.(sceneIdx, 'sfx', result.url, sfxIdx, result.attribution)
+    } catch (error: any) {
+      if ((error as Error)?.message !== 'Insufficient credits') {
+        console.error('[ScriptPanel] Legacy Veo SFX generation failed:', error)
+      }
+    } finally {
+      setIsGeneratingVeo(false)
     }
   }
 
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
-    { id: 'auto', label: `Auto (${Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)}s)` },
-    { id: 'short', label: 'Short 3s' },
+    {
+      id: 'auto',
+      label: `Auto (${Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)}s · Veo ${veoAutoSeconds}s)`,
+    },
+    { id: 'short', label: 'Short 3s / Veo 4s' },
     { id: 'medium', label: 'Medium 8s' },
-    { id: 'long', label: 'Long 15s' },
+    { id: 'long', label: 'Long 15s / Veo 8s max' },
   ]
 
   return (
@@ -3815,6 +3869,11 @@ function LegacySfxCueRow({
               SFX: {sfxDesc.length > 48 ? `${sfxDesc.slice(0, 48)}…` : sfxDesc} · Veo production
             </span>
           ) : null}
+          {isVeoAmbient && (
+            <span className="text-xs px-2 py-0.5 bg-violet-500/15 text-violet-600 dark:text-violet-300 rounded">
+              Veo ambient
+            </span>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {sfxAudio && (
@@ -3869,11 +3928,12 @@ function LegacySfxCueRow({
             className="h-8 bg-amber-600 hover:bg-amber-700 text-white border-0"
             onClick={(e) => {
               e.stopPropagation()
-              void handleGenerate()
+              void handleGenerateElevenLabs()
             }}
             disabled={isGenerating}
+            title="Short clip via ElevenLabs (~15 credits)"
           >
-            {isGenerating ? (
+            {isGeneratingElevenLabs ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
                 Generating...
@@ -3882,6 +3942,30 @@ function LegacySfxCueRow({
               <>
                 <Sparkles className="w-3.5 h-3.5 mr-1" />
                 {sfxAudio ? 'Re-generate' : 'Generate'}
+              </>
+            )}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 border-violet-400/60 text-violet-700 dark:text-violet-300 hover:bg-violet-100/60 dark:hover:bg-violet-900/30"
+            onClick={(e) => {
+              e.stopPropagation()
+              void handleGenerateVeo()
+            }}
+            disabled={isGenerating}
+            title={VEO_SFX_CREDIT_HINT}
+          >
+            {isGeneratingVeo ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                Veo...
+              </>
+            ) : (
+              <>
+                <Waves className="w-3.5 h-3.5 mr-1" />
+                Veo ambient
               </>
             )}
           </Button>
@@ -3913,6 +3997,14 @@ function LegacySfxCueRow({
           )
         })}
       </div>
+      {showPartialVeoHint && (
+        <p className="text-[11px] text-amber-800/80 dark:text-amber-200/70 mb-2">
+          Veo ambient covers up to 8s of this beat (Auto target{' '}
+          {resolveVeoSfxTargetSeconds({ segmentDurationSeconds, override: durationPreset })}s → {veoAutoSeconds}s
+          clip).
+        </p>
+      )}
+      <p className="text-[10px] text-violet-700/70 dark:text-violet-300/60 mb-2">{VEO_SFX_CREDIT_HINT}</p>
       <div className="text-sm text-gray-700 dark:text-gray-300 italic">{sfxDesc}</div>
     </div>
   )
@@ -6441,6 +6533,8 @@ function SceneCard({
                               sfx={sfx}
                               sfxIdx={sfxIdx}
                               sfxAudio={scene.sfxAudio?.[sfxIdx]}
+                              sfxSourceMeta={scene.sfxSourceMeta?.[sfxIdx]}
+                              segmentDurationSeconds={scene.duration}
                               projectId={projectId}
                               playingAudio={playingAudio}
                               onPlayAudio={onPlayAudio}

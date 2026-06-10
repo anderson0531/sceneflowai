@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Download, Loader2, Pause, Play, Sparkles, Trash2, Volume2 } from 'lucide-react'
+import { Download, Loader2, Pause, Play, Sparkles, Trash2, Volume2, Waves } from 'lucide-react'
 import { Volume2 as VolumeIcon } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'sonner'
@@ -12,11 +12,20 @@ import {
   resolveSfxDuration,
   type SfxDurationOverride,
 } from '@/lib/elevenlabs/sfxDuration'
+import {
+  dispatchGenerateVeoSfx,
+  VEO_SFX_CREDIT_HINT,
+} from '@/lib/sfx/clientGenerateVeoSfx'
+import {
+  resolveAutoVeoSfxDuration,
+  resolveVeoSfxTargetSeconds,
+  veoSfxCoversFullBeat,
+} from '@/lib/sfx/veoSfxDuration'
 
 /**
  * One SFX cue inside a segment. The cue's description is used to drive
- * ElevenLabs `sound-generation`; the resulting GCS URL is persisted via the
- * existing positional handlers (`scene.sfxAudio[idx]`,
+ * ElevenLabs `sound-generation` or Veo native-audio extraction; the resulting
+ * GCS URL is persisted via the existing positional handlers (`scene.sfxAudio[idx]`,
  * `onDeleteSceneAudio(sceneIdx, 'sfx', undefined, idx)`) using
  * `sfx.legacyIndex` so legacy data keeps working.
  */
@@ -66,15 +75,25 @@ export function SegmentSfxCard({
   onDeleteSceneAudio,
   onSaveSfxAudio,
 }: SegmentSfxCardProps) {
-  const [isGenerating, setIsGenerating] = useState(false)
+  const [isGeneratingElevenLabs, setIsGeneratingElevenLabs] = useState(false)
+  const [isGeneratingVeo, setIsGeneratingVeo] = useState(false)
   const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
   const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
+  const veoAutoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
+  const isGenerating = isGeneratingElevenLabs || isGeneratingVeo
 
   const legacyIdx = sfx.legacyIndex
   const audioUrl: string | undefined =
     legacyIdx !== undefined && Array.isArray(scene?.sfxAudio)
       ? scene.sfxAudio[legacyIdx]
       : undefined
+  const sfxSourceMeta =
+    legacyIdx !== undefined && Array.isArray(scene?.sfxSourceMeta)
+      ? scene.sfxSourceMeta[legacyIdx]
+      : undefined
+  const isVeoAmbient = sfxSourceMeta?.source === 'veo'
+  const showPartialVeoHint =
+    !veoSfxCoversFullBeat(segmentDurationSeconds, durationPreset)
 
   const dispatchDelete = () => {
     if (legacyIdx === undefined) return
@@ -82,7 +101,7 @@ export function SegmentSfxCard({
     onDeleteSceneAudio?.(sceneIdx, 'sfx', undefined, legacyIdx)
   }
 
-  const dispatchGenerate = async () => {
+  const dispatchGenerateElevenLabs = async () => {
     if (legacyIdx === undefined) {
       toast.error('SFX cue is not linked to a legacy index yet.')
       return
@@ -97,7 +116,7 @@ export function SegmentSfxCard({
       return
     }
 
-    setIsGenerating(true)
+    setIsGeneratingElevenLabs(true)
     const toastId = toast.loading(audioUrl ? 'Re-generating SFX...' : 'Generating SFX...')
     try {
       const durationSeconds = resolveSfxDuration({
@@ -149,7 +168,43 @@ export function SegmentSfxCard({
       console.error('[SegmentSfxCard] SFX generation failed:', error)
       toast.error(`Failed to generate SFX: ${error?.message || 'Unknown error'}`, { id: toastId })
     } finally {
-      setIsGenerating(false)
+      setIsGeneratingElevenLabs(false)
+    }
+  }
+
+  const dispatchGenerateVeo = async () => {
+    if (legacyIdx === undefined) {
+      toast.error('SFX cue is not linked to a legacy index yet.')
+      return
+    }
+    if (!projectId) {
+      toast.error('Project context is missing for SFX generation.')
+      return
+    }
+    const description = (sfx.description || '').trim()
+    if (!description) {
+      toast.info('Add a description for this SFX cue first.')
+      return
+    }
+
+    setIsGeneratingVeo(true)
+    try {
+      const result = await dispatchGenerateVeoSfx({
+        projectId,
+        text: description,
+        sfxId: sfx.sfxId,
+        sfxIndex: legacyIdx,
+        segmentDurationSeconds,
+        durationOverride: durationPreset,
+        hasExistingAudio: !!audioUrl,
+      })
+      await onSaveSfxAudio?.(sceneIdx, 'sfx', result.url, legacyIdx, result.attribution)
+    } catch (error: any) {
+      if ((error as Error)?.message !== 'Insufficient credits') {
+        console.error('[SegmentSfxCard] Veo SFX generation failed:', error)
+      }
+    } finally {
+      setIsGeneratingVeo(false)
     }
   }
 
@@ -159,12 +214,17 @@ export function SegmentSfxCard({
         <div className="flex items-center gap-2 flex-wrap">
           <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
           <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
-            SFX {positionInBeat + 1}
+            SFX {positionInSegment + 1}
           </span>
           {audioUrl && (
             <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
               <Volume2 className="w-3 h-3" />
               Audio Ready
+            </span>
+          )}
+          {isVeoAmbient && (
+            <span className="text-xs px-2 py-0.5 bg-violet-500/15 text-violet-600 dark:text-violet-300 rounded">
+              Veo ambient
             </span>
           )}
         </div>
@@ -225,11 +285,12 @@ export function SegmentSfxCard({
             className="h-8 bg-amber-600 hover:bg-amber-700 text-white border-0"
             onClick={(e) => {
               e.stopPropagation()
-              void dispatchGenerate()
+              void dispatchGenerateElevenLabs()
             }}
             disabled={isGenerating}
+            title="Short clip via ElevenLabs (~15 credits)"
           >
-            {isGenerating ? (
+            {isGeneratingElevenLabs ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
                 Generating...
@@ -241,14 +302,47 @@ export function SegmentSfxCard({
               </>
             )}
           </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 border-violet-400/60 text-violet-700 dark:text-violet-300 hover:bg-violet-100/60 dark:hover:bg-violet-900/30"
+            onClick={(e) => {
+              e.stopPropagation()
+              void dispatchGenerateVeo()
+            }}
+            disabled={isGenerating}
+            title={VEO_SFX_CREDIT_HINT}
+          >
+            {isGeneratingVeo ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                Veo...
+              </>
+            ) : (
+              <>
+                <Waves className="w-3.5 h-3.5 mr-1" />
+                Veo ambient
+              </>
+            )}
+          </Button>
         </div>
       </div>
       <DurationPresetChips
         value={durationPreset}
         autoSeconds={autoSeconds}
+        veoAutoSeconds={veoAutoSeconds}
         onChange={setDurationPreset}
         disabled={isGenerating}
       />
+      {showPartialVeoHint && (
+        <p className="text-[11px] text-amber-800/80 dark:text-amber-200/70 mb-2">
+          Veo ambient covers up to 8s of this beat (Auto target{' '}
+          {formatSeconds(resolveVeoSfxTargetSeconds({ segmentDurationSeconds, override: durationPreset }))}
+          s → {veoAutoSeconds}s clip).
+        </p>
+      )}
+      <p className="text-[10px] text-violet-700/70 dark:text-violet-300/60 mb-2">{VEO_SFX_CREDIT_HINT}</p>
       <div className="text-sm text-gray-700 dark:text-gray-300 italic">{sfx.description}</div>
     </div>
   )
@@ -257,16 +351,23 @@ export function SegmentSfxCard({
 interface DurationPresetChipsProps {
   value: SfxDurationOverride
   autoSeconds: number
+  veoAutoSeconds: number
   onChange: (next: SfxDurationOverride) => void
   disabled?: boolean
 }
 
-function DurationPresetChips({ value, autoSeconds, onChange, disabled }: DurationPresetChipsProps) {
+function DurationPresetChips({
+  value,
+  autoSeconds,
+  veoAutoSeconds,
+  onChange,
+  disabled,
+}: DurationPresetChipsProps) {
   const chips: Array<{ id: SfxDurationOverride; label: string }> = [
-    { id: 'auto', label: `Auto (${formatSeconds(autoSeconds)}s)` },
-    { id: 'short', label: 'Short 3s' },
+    { id: 'auto', label: `Auto (${formatSeconds(autoSeconds)}s · Veo ${veoAutoSeconds}s)` },
+    { id: 'short', label: 'Short 3s / Veo 4s' },
     { id: 'medium', label: 'Medium 8s' },
-    { id: 'long', label: 'Long 15s' },
+    { id: 'long', label: 'Long 15s / Veo 8s max' },
   ]
   return (
     <div className="flex flex-wrap items-center gap-1.5 mb-2">
