@@ -1499,7 +1499,7 @@ function SceneCard({
         </Tooltip>
       )}
       
-      {/* Character Avatars - Top Left (costume-aware) */}
+      {/* Character Avatars - Top Left (identity + wardrobe ref indicators) */}
       {scene.characters && scene.characters.length > 0 && (
         <div className="absolute top-2 left-2 flex gap-1">
           {scene.characters.slice(0, 3).map((charName: string, i: number) => {
@@ -1507,11 +1507,11 @@ function SceneCard({
             const hasRef = char?.referenceImage
             
             // Resolve costume image: wardrobe override → scene-number match → default → baseline
+            const hasIdentityRef = !!char?.referenceImage
             let avatarUrl = char?.referenceImage
-            let isCostumeImage = false
+            let hasWardrobeRef = false
             let wardrobeName = ''
             if (char?.wardrobes && char.wardrobes.length > 0) {
-              // Priority 1: Scene-level wardrobe override (from characterWardrobes mapping)
               const sceneWardrobeOverride = scene.characterWardrobes?.find(
                 (cw: any) => cw.characterId === char.id || cw.characterId === char.name
               )
@@ -1519,37 +1519,34 @@ function SceneCard({
               if (sceneWardrobeOverride?.wardrobeId) {
                 resolvedWardrobe = char.wardrobes.find((w: any) => w.id === sceneWardrobeOverride.wardrobeId)
               }
-              // Priority 2: Scene-number matched wardrobe
               if (!resolvedWardrobe && sceneNumber) {
                 resolvedWardrobe = char.wardrobes.find((w: any) => 
                   w.sceneNumbers && w.sceneNumbers.includes(sceneNumber)
                 )
               }
-              // Priority 3: Default wardrobe
               if (!resolvedWardrobe) {
                 resolvedWardrobe = char.wardrobes.find((w: any) => w.isDefault)
               }
-              // Priority 4: First wardrobe
               if (!resolvedWardrobe) {
                 resolvedWardrobe = char.wardrobes[0]
               }
-              // Use costume headshot (preferred for avatar) or full-body image
-              if (resolvedWardrobe) {
-                const costumeUrl = resolvedWardrobe.headshotUrl || resolvedWardrobe.fullBodyUrl
-                if (costumeUrl) {
-                  avatarUrl = costumeUrl
-                  isCostumeImage = true
-                  wardrobeName = resolvedWardrobe.name || ''
-                }
+              if (resolvedWardrobe?.fullBodyUrl) {
+                hasWardrobeRef = true
+                wardrobeName = resolvedWardrobe.name || ''
               }
             }
+            const hasDualRefs = hasIdentityRef && hasWardrobeRef
             
             return (
               <Tooltip key={i}>
                 <TooltipTrigger asChild>
                   <div 
                     className={`w-6 h-6 rounded-full overflow-hidden shadow-sm border-2 ${
-                      hasRef ? (isCostumeImage ? 'border-cyan-400' : 'border-emerald-400') : 'border-amber-400'
+                      hasDualRefs
+                        ? 'border-cyan-400'
+                        : hasRef
+                          ? 'border-emerald-400'
+                          : 'border-amber-400'
                     }`}
                   >
                     {avatarUrl ? (
@@ -1562,7 +1559,14 @@ function SceneCard({
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {charName}{isCostumeImage ? ` (${wardrobeName})` : hasRef ? '' : ' (no reference)'}
+                  {charName}
+                  {hasDualRefs
+                    ? ` — Identity ref + Wardrobe ref (${wardrobeName})`
+                    : hasWardrobeRef
+                      ? ` — Wardrobe ref (${wardrobeName})`
+                      : hasRef
+                        ? ' — Identity ref'
+                        : ' (no reference)'}
                 </TooltipContent>
               </Tooltip>
             )

@@ -842,19 +842,20 @@ export function FramePromptDialog({
     // Get selected location references
     const selectedLocationRefs = locationReferences.filter(loc => selectedLocationRefIds.includes(loc.id))
 
-    // Build selected characters with wardrobe-specific reference images
-    // When a wardrobe is selected and has a fullBody/headshot image, use that instead of the base portrait
+    // Build selected characters — identity portrait + optional wardrobe turnaround (separate refs)
     const dialogSelectedCharacters = selectedCharacters.map(c => {
       const charData = characters.find(ch => ch.name === c.name)
       const selectedWardrobeId = selectedWardrobes[c.name]
       const selectedWardrobe = selectedWardrobeId && charData?.wardrobes?.find(w => w.id === selectedWardrobeId)
-      
-      // Wardrobe image replaces base portrait (same character in correct outfit)
-      const wardrobeImageUrl = selectedWardrobe?.fullBodyUrl || selectedWardrobe?.headshotUrl
-      
+      const wardrobeReferenceUrl = selectedWardrobe?.fullBodyUrl
+      const identityUrl = c.referenceImageUrl
+
       return {
         ...c,
-        referenceImageUrl: wardrobeImageUrl || c.referenceImageUrl,
+        referenceImageUrl: identityUrl,
+        wardrobeReferenceUrl,
+        hasDualReferences: !!(identityUrl && wardrobeReferenceUrl),
+        hasCostumeReference: !!wardrobeReferenceUrl,
         wardrobe: selectedWardrobe?.description || c.wardrobe,
       }
     })

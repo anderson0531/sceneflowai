@@ -76,7 +76,9 @@ export function CharacterSelectionSection({
           wardrobeName: w.name,
           imageUrl: imgUrl,
           label: char.name,
-          sublabel: w.name,
+          sublabel: char.referenceImage
+            ? `${w.name} · Wardrobe ref`
+            : `${w.name} · Wardrobe ref (identity portrait missing)`,
           isSceneDefault: sceneWardrobes?.[char.name] === w.id,
         })
       }
@@ -91,7 +93,7 @@ export function CharacterSelectionSection({
         wardrobeName: undefined,
         imageUrl: char.referenceImage,
         label: char.name,
-        sublabel: 'Reference',
+        sublabel: 'Identity ref',
       })
     } else {
       // No images at all — fallback icon tile

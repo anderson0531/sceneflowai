@@ -18,6 +18,12 @@ import { artStylePresets } from '@/constants/artStylePresets'
 import type { TransitionType, ActionType, AnchorStatus } from '@/components/vision/scene-production/types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
+import {
+  buildIdentityReferenceLabel,
+  buildWardrobeReferenceLabel,
+  CHARACTER_IDENTITY_REFERENCE_INSTRUCTION,
+  WARDROBE_ONLY_REFERENCE_INSTRUCTION,
+} from '@/lib/character/characterReferenceAssembly'
 
 export const maxDuration = 120 // 2 minutes for potentially generating both frames
 export const runtime = 'nodejs'
@@ -49,6 +55,8 @@ interface FrameGenerationRequest {
     age?: string
     wardrobe?: string
     referenceUrl?: string
+    wardrobeReferenceUrl?: string
+    hasDualReferences?: boolean
     hasCostumeReference?: boolean
   }>
   
@@ -533,23 +541,44 @@ export async function POST(req: NextRequest) {
       const hasLocationRefs = locationReferences.filter(l => l.imageUrl).length > 0
       const maxCharRefs = hasLocationRefs ? 2 : 3
       
-      // Add character portrait references (up to maxCharRefs)
-      // SKIP for no-talent scenes — portrait images override text prompt instructions
-      const charRefs = isNoTalentSegment ? [] : characters.filter(c => c.referenceUrl).slice(0, maxCharRefs)
+      const charPool = isNoTalentSegment ? [] : characters.slice(0, maxCharRefs)
       if (isNoTalentSegment) {
-        console.log('[Generate Frames] No-talent scene detected — skipping character portrait references')
+        console.log('[Generate Frames] No-talent scene detected — skipping character references')
       }
-      for (const c of charRefs) {
+
+      for (const c of charPool) {
+        if (!c.referenceUrl || allReferenceImages.length >= MAX_GEMINI_REFERENCE_IMAGES) continue
         allReferenceImages.push({
-          imageUrl: c.referenceUrl!,
-          name: c.hasCostumeReference
-            ? `${c.name} (2-row turnaround costume reference)`
-            : c.name,
+          imageUrl: c.referenceUrl,
+          name: buildIdentityReferenceLabel(c.name),
         })
       }
 
-      const costumeRefChars = charRefs.filter((c) => c.hasCostumeReference)
-      if (costumeRefChars.length > 0 && startFramePrompt) {
+      for (const c of charPool) {
+        if (!c.wardrobeReferenceUrl || allReferenceImages.length >= MAX_GEMINI_REFERENCE_IMAGES) {
+          if (c.wardrobeReferenceUrl && allReferenceImages.length >= MAX_GEMINI_REFERENCE_IMAGES) {
+            console.warn(`[Generate Frames] Wardrobe ref dropped for ${c.name} — reference budget full`)
+          }
+          continue
+        }
+        allReferenceImages.push({
+          imageUrl: c.wardrobeReferenceUrl,
+          name: buildWardrobeReferenceLabel(c.name),
+        })
+      }
+
+      const dualRefChars = charPool.filter((c) => c.hasDualReferences)
+      const wardrobeOnlyChars = charPool.filter(
+        (c) => c.hasCostumeReference && !c.hasDualReferences && c.wardrobeReferenceUrl
+      )
+      if (dualRefChars.length > 0 && startFramePrompt) {
+        startFramePrompt = `${startFramePrompt}\n\nDUAL CHARACTER REFERENCES:\n${dualRefChars
+          .map(
+            (c) =>
+              `${c.name}: ${CHARACTER_IDENTITY_REFERENCE_INSTRUCTION} ${WARDROBE_ONLY_REFERENCE_INSTRUCTION}`
+          )
+          .join('\n')}`
+      } else if (wardrobeOnlyChars.length > 0 && startFramePrompt) {
         startFramePrompt = `${startFramePrompt}\n\n${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}`
       }
       
@@ -593,7 +622,7 @@ export async function POST(req: NextRequest) {
       
       if (!isPhotorealistic) {
         // Non-photorealistic: Style transformation is MANDATORY
-        if (charRefs.length > 0 && !isNoTalentSegment) {
+        if (charPool.length > 0 && !isNoTalentSegment) {
           geminiPrompt = `MANDATORY ART STYLE: ${selectedStyle.name.toUpperCase()}
 Style specification: ${selectedStyle.promptSuffix}
 
@@ -625,7 +654,7 @@ Render this scene in ${selectedStyle.name} style.`
         }
       } else {
         // Photorealistic: Exact appearance matching is the priority
-        if (charRefs.length > 0 && !isNoTalentSegment) {
+        if (charPool.length > 0 && !isNoTalentSegment) {
           geminiPrompt = `Generate a cinematic frame based on this description. The character(s) shown in the reference image(s) must appear in this scene with their exact appearance preserved.\n\n${startFramePrompt}\n\nIMPORTANT: Match the character's ethnicity, facial features, hair color/style, and facial hair exactly from the reference images.`
         } else if (referenceImageUrl) {
           geminiPrompt = `Generate a cinematic frame based on this description. Use the provided reference image for visual style and scene continuity.\n\n${startFramePrompt}`

@@ -4,6 +4,10 @@
  */
 
 import { findSceneCharacters, findSceneObjects } from '@/lib/character/matching'
+import {
+  resolveCharacterReferencePair,
+  resolveWardrobeForCharacter,
+} from '@/lib/character/characterReferenceAssembly'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 
@@ -118,11 +122,15 @@ export function findMatchingLocationReferences(
 export type FrameGenerationCharacterPayload = {
   name: string
   appearance?: string
+  /** Main character portrait for identity consistency */
   referenceUrl?: string
+  /** Wardrobe turnaround sheet for outfit consistency */
+  wardrobeReferenceUrl?: string
   ethnicity?: string
   age?: string
   wardrobe?: string
   hasCostumeReference?: boolean
+  hasDualReferences?: boolean
 }
 
 export type ResolveFrameGenerationContextArgs = {
@@ -157,76 +165,21 @@ export type ResolvedFrameGenerationContext = {
 }
 
 /**
- * Prefer scene-assigned or scene-matched wardrobe still (full body / headshot) over the default headshot
- * when resolving references for Quick Generate — aligns with scene image generation behavior.
+ * Main character portrait URL — always identity reference, never wardrobe turnaround.
  */
 export function pickReferenceUrlForCharacter(projectChar: any, scene: any): string | undefined {
-  const base = projectChar?.referenceImage
-  const wardrobes = projectChar?.wardrobes
-  if (!Array.isArray(wardrobes) || wardrobes.length === 0) return base
-
-  const charId = projectChar?.id || projectChar?.name
-  const sceneWardrobes = scene?.characterWardrobes
-  let resolved: any = null
-
-  if (Array.isArray(sceneWardrobes) && charId) {
-    const override = sceneWardrobes.find(
-      (cw: any) => cw.characterId === charId || cw.characterId === projectChar?.id
-    )
-    if (override?.wardrobeId) {
-      resolved = wardrobes.find((w: any) => w.id === override.wardrobeId)
-    }
-  }
-
-  const sceneNum = typeof scene?.sceneNumber === 'number' ? scene.sceneNumber : undefined
-  if (!resolved && sceneNum != null) {
-    resolved = wardrobes.find(
-      (w: any) => Array.isArray(w.sceneNumbers) && w.sceneNumbers.includes(sceneNum)
-    )
-  }
-
-  if (!resolved) {
-    resolved = wardrobes.find((w: any) => w.isDefault)
-  }
-
-  const fromWardrobe =
-    resolved?.fullBodyUrl || resolved?.headshotUrl || resolved?.previewImageUrl
-  return (typeof fromWardrobe === 'string' && fromWardrobe.trim()) ? fromWardrobe.trim() : base
+  const url = projectChar?.referenceImage
+  return typeof url === 'string' && url.trim() ? url.trim() : undefined
 }
 
-function resolveWardrobeForCharacter(projectChar: any, scene: any): any | null {
-  const wardrobes = projectChar?.wardrobes
-  if (!Array.isArray(wardrobes) || wardrobes.length === 0) return null
-
-  const charId = projectChar?.id || projectChar?.name
-  const sceneWardrobes = scene?.characterWardrobes
-  let resolved: any = null
-
-  if (Array.isArray(sceneWardrobes) && charId) {
-    const override = sceneWardrobes.find(
-      (cw: any) => cw.characterId === charId || cw.characterId === projectChar?.id
-    )
-    if (override?.wardrobeId) {
-      resolved = wardrobes.find((w: any) => w.id === override.wardrobeId)
-    }
-  }
-
-  const sceneNum = typeof scene?.sceneNumber === 'number' ? scene.sceneNumber : undefined
-  if (!resolved && sceneNum != null) {
-    resolved = wardrobes.find(
-      (w: any) => Array.isArray(w.sceneNumbers) && w.sceneNumbers.includes(sceneNum)
-    )
-  }
-  if (!resolved) {
-    resolved = wardrobes.find((w: any) => w.isDefault)
-  }
-  return resolved || null
-}
-
-function hasCostumeTurnaroundReference(projectChar: any, scene: any): boolean {
+/** Wardrobe turnaround URL when resolved wardrobe has fullBodyUrl. */
+export function pickWardrobeReferenceUrlForCharacter(
+  projectChar: any,
+  scene: any
+): string | undefined {
   const resolved = resolveWardrobeForCharacter(projectChar, scene)
-  const refUrl = pickReferenceUrlForCharacter(projectChar, scene)
-  return !!(resolved?.fullBodyUrl && refUrl === resolved.fullBodyUrl)
+  const url = resolved?.fullBodyUrl
+  return typeof url === 'string' && url.trim() ? url.trim() : undefined
 }
 
 /** Wardrobe description for the resolved outfit (for text prompts), if any */
@@ -326,18 +279,24 @@ export function resolveFrameGenerationContext(args: ResolveFrameGenerationContex
     return (roleOrder[a.role || 'supporting'] ?? 2) - (roleOrder[b.role || 'supporting'] ?? 2)
   })
 
-  const charactersPayload: FrameGenerationCharacterPayload[] = sorted.map(c => {
-    const hasCostumeReference = hasCostumeTurnaroundReference(c, scene)
+  const charactersPayload: FrameGenerationCharacterPayload[] = sorted.map((c) => {
+    const refPair = resolveCharacterReferencePair({ character: c, scene })
+    const hasDualReferences = refPair.hasDualReferences
+    const hasCostumeReference = !!refPair.wardrobeUrl
     return {
       name: c.name,
       appearance: c.appearanceDescription || c.description,
-      referenceUrl: pickReferenceUrlForCharacter(c, scene),
+      referenceUrl:
+        refPair.identityUrl ??
+        (refPair.hasWardrobeOnlyReference ? refPair.wardrobeUrl : undefined),
+      wardrobeReferenceUrl: refPair.wardrobeUrl,
       ethnicity: c.ethnicity,
       age: c.age,
       wardrobe: hasCostumeReference
         ? undefined
         : pickWardrobeDescriptionForCharacter(c, scene),
       hasCostumeReference,
+      hasDualReferences,
     }
   })
 

@@ -116,6 +116,10 @@ interface OptimizePromptParams {
     defaultWardrobe?: string    // Character's standard outfit (e.g., "tailored navy suit")
     wardrobeAccessories?: string // Character's accessories (e.g., "gold watch, leather briefcase")
     appearanceDescription?: string // AI-generated physical appearance (race, age, hair, skin tone)
+    hasDualReferences?: boolean
+    identityReferenceId?: number
+    wardrobeReferenceId?: number
+    hasWardrobeReference?: boolean
     /** Wardrobe collection for scene-specific selection */
     wardrobes?: Array<{
       id: string
@@ -649,6 +653,14 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     // the unique features of the reference image. Pure token binding is more accurate.
     const subjectWardrobeDescriptions: string[] = []
     characterRefs.forEach(ref => {
+      const fullRef = params.characterReferences!.find((r) => r.name === ref.name)
+      if (fullRef?.hasDualReferences && fullRef.wardrobeReferenceId && ref.linkingDescription) {
+        subjectWardrobeDescriptions.push(
+          `${ref.linkingDescription}, outfit from wardrobe reference [${fullRef.wardrobeReferenceId}]`
+        )
+        return
+      }
+
       if (ref.defaultWardrobe) {
         // Check if this character has a reference image (indicated by [N] pattern in linkingDescription)
         const hasReferenceImage = ref.linkingDescription?.includes('[') && ref.linkingDescription?.includes(']')

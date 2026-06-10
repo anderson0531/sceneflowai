@@ -2174,9 +2174,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     name: selected.name,
                     appearance: fullChar?.appearanceDescription || fullChar?.description,
                     referenceUrl: selected.referenceImageUrl || fullChar?.referenceImage,
+                    wardrobeReferenceUrl: selected.wardrobeReferenceUrl,
+                    hasDualReferences: selected.hasDualReferences,
+                    hasCostumeReference: selected.hasCostumeReference,
                     ethnicity: (fullChar as any)?.ethnicity,
                     age: (fullChar as any)?.age,
-                    wardrobe: (fullChar as any)?.defaultWardrobe || (fullChar as any)?.wardrobe,
+                    wardrobe: selected.wardrobe || (fullChar as any)?.defaultWardrobe || (fullChar as any)?.wardrobe,
                   }
                 })
               : options?.selectedCharacters?.length
@@ -2186,15 +2189,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       name: selected.name,
                       appearance: fullChar?.appearanceDescription || fullChar?.description,
                       referenceUrl: selected.referenceImageUrl || fullChar?.referenceImage,
+                      wardrobeReferenceUrl: selected.wardrobeReferenceUrl,
+                      hasDualReferences: selected.hasDualReferences,
+                      hasCostumeReference: selected.hasCostumeReference,
                       ethnicity: (fullChar as any)?.ethnicity,
                       age: (fullChar as any)?.age,
-                      wardrobe: (fullChar as any)?.defaultWardrobe || (fullChar as any)?.wardrobe,
+                      wardrobe: selected.wardrobe || (fullChar as any)?.defaultWardrobe || (fullChar as any)?.wardrobe,
                     }
                   })
                 : (resolvedAuto?.charactersPayload || []).map(c => ({
                     name: c.name,
                     appearance: c.appearance,
                     referenceUrl: c.referenceUrl,
+                    wardrobeReferenceUrl: c.wardrobeReferenceUrl,
+                    hasDualReferences: c.hasDualReferences,
+                    hasCostumeReference: c.hasCostumeReference,
                     ethnicity: c.ethnicity,
                     age: c.age,
                     wardrobe: c.wardrobe,

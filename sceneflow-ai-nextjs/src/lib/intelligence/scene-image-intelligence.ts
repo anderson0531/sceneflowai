@@ -19,6 +19,10 @@
 
 import { generateText, generateTextCacheAware, type TextGenerationOptions } from '@/lib/vertexai/gemini'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
+import {
+  CHARACTER_IDENTITY_REFERENCE_INSTRUCTION,
+  WARDROBE_ONLY_REFERENCE_INSTRUCTION,
+} from '@/lib/character/characterReferenceAssembly'
 import type { BeatKind } from '@/lib/script/segmentTypes'
 
 // =============================================================================
@@ -46,9 +50,13 @@ export interface CharacterContext {
   wardrobeAccessories?: string
   /** Whether this character has a reference image */
   hasReferenceImage: boolean
-  /** Reference index (1-based) for characters with reference images */
+  /** Reference index (1-based) for identity portrait when present */
   referenceIndex?: number
-  /** Whether the reference image is a costume reference (character wearing scene-specific outfit) */
+  identityReferenceIndex?: number
+  wardrobeReferenceIndex?: number
+  /** Both identity portrait and wardrobe turnaround are provided */
+  hasDualReferences?: boolean
+  /** Whether a wardrobe turnaround reference image exists */
   hasCostumeReference?: boolean
 }
 
@@ -191,21 +199,19 @@ CRITICAL RULES:
    - Do NOT describe a starting frame with the title at the top — center it like a movie poster or title card
    - Include atmospheric elements that establish the genre and tone
 
-3. CHARACTER REFERENCE IMAGES: When characters have reference images (indicated by "[N]" tokens):
+3. CHARACTER IDENTITY REFERENCES: When characters have identity reference images (indicated by "person [N]" tokens tied to identity ref index):
    - Use ONLY the token "person [N]" to refer to them — do NOT add text descriptions of their appearance
-   - The reference image defines their identity; adding text descriptions creates conflicts
-   - Focus the prompt on their ACTION, POSE, and WARDROBE in the scene
+   - The identity reference defines face, hair, skin tone, age, and body proportions
+   - Focus the prompt on their ACTION, POSE, and EXPRESSION in the scene
 
 4. WARDROBE CONSISTENCY (HIGHEST PRIORITY):
-   - Each character's wardrobe MUST appear EXACTLY as specified in the wardrobe description
-   - Do not vary, embellish, simplify, or omit any wardrobe detail
-   - If a character wears "a tailored navy suit with gold watch," the image must show EXACTLY that
-   - Wardrobe descriptions override ANY clothing mentioned in the scene action text
-   - Include the COMPLETE wardrobe description verbatim in the prompt
-   - COSTUME TURNAROUND REFERENCE: If a character has a costume turnaround reference, their image is a
-     2-row sheet (headshot row for face identity, full-body row for outfit and pose). Use the front full-body
-     view for proportions; preserve outfit exactly. Do NOT describe clothing in text or reproduce the
-     turnaround layout or studio background in the scene.
+   - Each character's wardrobe MUST appear EXACTLY as specified
+   - DUAL REFERENCES: When a character has BOTH identity ref [N] and wardrobe ref [M]:
+     * Identity ref [N] = face and body ONLY — ignore clothing in the identity image
+     * Wardrobe ref [M] = outfit ONLY from the turnaround bottom row — do NOT derive face from wardrobe sheet
+     * Do NOT describe clothing in text when wardrobe ref [M] is provided
+   - TEXT-ONLY WARDROBE: When no wardrobe reference image, include COMPLETE wardrobe description verbatim
+   - WARDROBE-ONLY REFERENCE (no identity portrait): ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}
 
 5. SCENE DIRECTION CUES: Use the provided lighting, framing, and atmosphere metadata to inform the composition:
    - Lighting mood and color temperature → set the image's lighting
@@ -270,16 +276,27 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   if (request.characters.length > 0) {
     prompt += `CHARACTERS IN SCENE:\n`
     request.characters.forEach((char, idx) => {
-      const refLabel = char.hasReferenceImage ? ` [Reference image provided as person [${char.referenceIndex}]]` : ' [No reference image — describe appearance in prompt]'
+      let refLabel = ' [No reference image — describe appearance in prompt]'
+      if (char.hasDualReferences && char.identityReferenceIndex && char.wardrobeReferenceIndex) {
+        refLabel = ` [Identity ref person [${char.identityReferenceIndex}]; Wardrobe ref [${char.wardrobeReferenceIndex}] — outfit from wardrobe ref only]`
+      } else if (char.identityReferenceIndex) {
+        refLabel = ` [Identity reference person [${char.identityReferenceIndex}]]`
+      } else if (char.wardrobeReferenceIndex) {
+        refLabel = ` [Wardrobe-only reference [${char.wardrobeReferenceIndex}]]`
+      } else if (char.hasReferenceImage && char.referenceIndex) {
+        refLabel = ` [Reference image person [${char.referenceIndex}]]`
+      }
       prompt += `${idx + 1}. ${char.name}${refLabel}\n`
       
       if (!char.hasReferenceImage && char.appearanceDescription) {
         prompt += `   Appearance: ${char.appearanceDescription}\n`
       }
       
-      // WARDROBE — handle costume reference vs text description
-      if (char.hasCostumeReference) {
-        prompt += `   WARDROBE: ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION} Do NOT describe clothing in text. Focus on action, pose, and expression only.\n`
+      if (char.hasDualReferences) {
+        prompt += `   IDENTITY: ${CHARACTER_IDENTITY_REFERENCE_INSTRUCTION}\n`
+        prompt += `   WARDROBE: ${WARDROBE_ONLY_REFERENCE_INSTRUCTION} Do NOT describe clothing in text.\n`
+      } else if (char.hasCostumeReference && char.wardrobeReferenceIndex) {
+        prompt += `   WARDROBE: ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION} Do NOT describe clothing in text.\n`
       } else if (char.wardrobeDescription) {
         prompt += `   WARDROBE (MUST USE EXACTLY): ${char.wardrobeDescription}`
         if (char.wardrobeAccessories) {

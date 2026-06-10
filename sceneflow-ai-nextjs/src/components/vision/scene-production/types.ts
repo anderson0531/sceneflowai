@@ -175,7 +175,12 @@ export type GenerationMode = 'scene-image' | 'keyframe' | 'video-clip' | 'backdr
  */
 export interface CharacterReference {
   name: string
+  /** Main character portrait for identity consistency */
   referenceImageUrl?: string
+  /** Wardrobe turnaround sheet for outfit consistency */
+  wardrobeReferenceUrl?: string
+  hasDualReferences?: boolean
+  hasCostumeReference?: boolean
   appearance?: string
   ethnicity?: string
   age?: string
