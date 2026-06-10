@@ -38,6 +38,10 @@ export const USE_CASE_SEGMENT_CTAS = {
     label: 'See Team Pricing',
     subtext: 'Plans for agencies and production shops at scale',
   },
+  filmProduction: {
+    label: 'Start Your Pre-Vis Test Flight',
+    subtext: '$9 one-time • Upload script → animatic in under 30 minutes',
+  },
 } as const
 
 export const USE_CASE_PERSONAS = {
@@ -131,6 +135,31 @@ export const USE_CASE_PERSONAS = {
     },
     win: 'Deliver faster pitch cycles and recurring client work with less production risk and more margin.',
     keyPhrases: ['Client Approvals', 'Delivery Throughput', 'Budget Predictability'],
+  },
+  filmProduction: {
+    label: 'Film Production',
+    title: 'The Film Producer',
+    beforeAfter: { before: 'Weeks of previz', after: '<30 mins' },
+    challenge: {
+      title: 'Slow Pre-Vis Before You Can Test the Story',
+      description:
+        'You have a script — but table reads, storyboard cycles, and fragmented previz tools delay investor pitches, audience tests, and greenlight decisions.',
+    },
+    solution: {
+      title: 'Script-First Interactive Pre-Visualization',
+      description:
+        'Upload your script (MDX, FDX, and other formats), optimize with Audience Resonance, and generate an interactive pre-visualization in under 30 minutes — in 70+ language options, with additional language overlays in under 5 minutes.',
+      features: [
+        'Upload & import scripts (MDX, FDX, and more)',
+        'Optimize with Audience Resonance',
+        'Interactive pre-vis in under 30 minutes',
+        '70+ languages + overlays in under 5 minutes',
+        'Revise and export script (MDX and other formats)',
+        'Screening Room for audience-testing the full animatic',
+      ],
+    },
+    win: 'Validate story and audience fit before principal photography — with a shareable animatic, not a weeks-long previz cycle.',
+    keyPhrases: ['Script-First Pre-Vis', 'Audience Resonance', 'Screening Room Testing'],
   },
 } as const
 

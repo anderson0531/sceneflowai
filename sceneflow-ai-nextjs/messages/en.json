@@ -116,6 +116,8 @@
     "paths": [
       {
         "id": "creator",
+        "hash": "use-cases-creator",
+        "icon": "video",
         "label": "Creator",
         "outcome": "Ship on schedule — stop rebuilding in every tool",
         "useCases": [
@@ -130,6 +132,8 @@
       },
       {
         "id": "team",
+        "hash": "use-cases-team",
+        "icon": "building",
         "label": "In-house team",
         "outcome": "Replace slow vendor cycles — control brand and budget",
         "useCases": [
@@ -143,6 +147,8 @@
       },
       {
         "id": "productionShop",
+        "hash": "use-cases-production-shop",
+        "icon": "film",
         "label": "Production shop",
         "outcome": "Productize a niche with repeatable intake → delivery",
         "useCases": [
@@ -156,6 +162,8 @@
       },
       {
         "id": "agency",
+        "hash": "use-cases-agency",
+        "icon": "briefcase",
         "label": "Agency",
         "outcome": "Faster pitches and scalable client delivery",
         "useCases": [
@@ -165,6 +173,21 @@
           "Event & conference promos",
           "Multi-language campaigns",
           "Property marketing for clients"
+        ]
+      },
+      {
+        "id": "filmProduction",
+        "hash": "use-cases-film-production",
+        "icon": "clapperboard",
+        "label": "Film Production",
+        "outcome": "Script to interactive animatic in under 30 minutes — test before you shoot",
+        "useCases": [
+          "Feature & indie previz",
+          "Investor pitch animatics",
+          "Audience Resonance optimization",
+          "70+ language pre-vis",
+          "Script import & export (MDX, FDX)",
+          "Screening Room audience tests"
         ]
       }
     ]
@@ -814,6 +837,36 @@
           "Delivery Throughput",
           "Budget Predictability"
         ]
+      },
+      "filmProduction": {
+        "label": "Film Production",
+        "title": "The Film Producer",
+        "beforeAfter": {
+          "before": "Weeks of previz",
+          "after": "<30 mins"
+        },
+        "challenge": {
+          "title": "Slow Pre-Vis Before You Can Test the Story",
+          "description": "You have a script — but table reads, storyboard cycles, and fragmented previz tools delay investor pitches, audience tests, and greenlight decisions."
+        },
+        "solution": {
+          "title": "Script-First Interactive Pre-Visualization",
+          "description": "Upload your script (MDX, FDX, and other formats), optimize with Audience Resonance, and generate an interactive pre-visualization in under 30 minutes — in 70+ language options, with additional language overlays in under 5 minutes.",
+          "features": [
+            "Upload & import scripts (MDX, FDX, and more)",
+            "Optimize with Audience Resonance",
+            "Interactive pre-vis in under 30 minutes",
+            "70+ languages + overlays in under 5 minutes",
+            "Revise and export script (MDX and other formats)",
+            "Screening Room for audience-testing the full animatic"
+          ]
+        },
+        "win": "Validate story and audience fit before principal photography — with a shareable animatic, not a weeks-long previz cycle.",
+        "keyPhrases": [
+          "Script-First Pre-Vis",
+          "Audience Resonance",
+          "Screening Room Testing"
+        ]
       }
     },
     "segmentCtas": {
@@ -832,6 +885,10 @@
       "agency": {
         "label": "See Team Pricing",
         "subtext": "Plans for agencies and production shops at scale"
+      },
+      "filmProduction": {
+        "label": "Start Your Pre-Vis Test Flight",
+        "subtext": "$9 one-time • Upload script → animatic in under 30 minutes"
       }
     },
     "categories": [

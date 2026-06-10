@@ -96,6 +96,22 @@ export const AUDIENCE_PATHS = [
     defaultCategoryId: 'b2b',
     icon: 'briefcase' as const,
   },
+  {
+    id: 'filmProduction',
+    hash: 'use-cases-film-production',
+    label: 'Film Production',
+    outcome: 'Script to interactive animatic in under 30 minutes — test before you shoot',
+    useCases: [
+      'Feature & indie previz',
+      'Investor pitch animatics',
+      'Audience Resonance optimization',
+      '70+ language pre-vis',
+      'Script import & export (MDX, FDX)',
+      'Screening Room audience tests',
+    ],
+    defaultCategoryId: 'entertainment',
+    icon: 'clapperboard' as const,
+  },
 ] as const
 
 export function getAudiencePathByPersonaId(personaId: string) {

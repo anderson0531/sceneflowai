@@ -182,6 +182,8 @@ export function buildEnMessages() {
       modes: AUDIENCE_PATH_MODES,
       paths: AUDIENCE_PATHS.map((p) => ({
         id: p.id,
+        hash: p.hash,
+        icon: p.icon,
         label: p.label,
         outcome: p.outcome,
         useCases: [...p.useCases],

@@ -4,7 +4,7 @@ import React, { useRef, useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { Video, Play, Sparkles, Volume2, VolumeX, Maximize2, User, Briefcase, Target, CheckCircle2, ArrowRight, Quote, X, Users, Store } from 'lucide-react';
+import { Video, Play, Sparkles, Volume2, VolumeX, Maximize2, User, Briefcase, Target, CheckCircle2, ArrowRight, Quote, X, Users, Store, Clapperboard } from 'lucide-react';
 
 import { ProductionComparisonVisual } from './ProductionComparisonVisual';
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent';
@@ -19,9 +19,9 @@ import { cn } from '@/lib/utils';
 
 const SECTION_ID = 'use-cases';
 
-type Persona = 'creator' | 'team' | 'productionShop' | 'agency';
+type Persona = 'creator' | 'team' | 'productionShop' | 'agency' | 'filmProduction';
 
-const PERSONA_IDS: Persona[] = ['creator', 'team', 'productionShop', 'agency'];
+const PERSONA_IDS: Persona[] = ['creator', 'team', 'productionShop', 'agency', 'filmProduction'];
 
 type PersonaCopy = {
   label: string;
@@ -52,6 +52,7 @@ const PERSONA_HASH_MAP: Record<string, Persona> = {
   'use-cases-team': 'team',
   'use-cases-production-shop': 'productionShop',
   'use-cases-agency': 'agency',
+  'use-cases-film-production': 'filmProduction',
 };
 
 const PERSONA_STYLES: Record<
@@ -108,6 +109,16 @@ const PERSONA_STYLES: Record<
     accentCheck: 'text-cyan-400',
     accentKeyPhrase: 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30',
   },
+  filmProduction: {
+    icon: Clapperboard,
+    gradient: 'from-rose-500 to-indigo-600',
+    bgGradient: 'from-rose-500/10 to-indigo-600/10',
+    accentBorder: 'border-rose-500/20',
+    accentDot: 'bg-rose-500',
+    accentText: 'text-rose-400',
+    accentCheck: 'text-rose-400',
+    accentKeyPhrase: 'bg-rose-500/20 text-rose-300 border border-rose-500/30',
+  },
 };
 
 const SEGMENT_CTA_HREFS: Record<Persona, string> = {
@@ -115,6 +126,15 @@ const SEGMENT_CTA_HREFS: Record<Persona, string> = {
   team: '/early-access',
   productionShop: '#production-verticals',
   agency: '#pricing',
+  filmProduction: getSignupUrlForTier('explorer'),
+};
+
+const PERSONA_VIDEO_BORDER_COLORS: Record<Persona, string> = {
+  creator: 'rgba(245, 158, 11, 0.3)',
+  team: 'rgba(16, 185, 129, 0.3)',
+  productionShop: 'rgba(139, 92, 246, 0.3)',
+  agency: 'rgba(6, 182, 212, 0.3)',
+  filmProduction: 'rgba(244, 63, 94, 0.3)',
 };
 
 function buildPersonas(t: ReturnType<typeof useTranslations<'useCases'>>): UseCasePersona[] {
@@ -186,14 +206,7 @@ const VideoPlayer = ({
       <motion.div
         className="relative rounded-2xl overflow-hidden border-2 shadow-2xl cursor-pointer"
         style={{
-          borderColor:
-            persona.id === 'creator'
-              ? 'rgba(245, 158, 11, 0.3)'
-              : persona.id === 'team'
-                ? 'rgba(16, 185, 129, 0.3)'
-                : persona.id === 'productionShop'
-                  ? 'rgba(139, 92, 246, 0.3)'
-                  : 'rgba(6, 182, 212, 0.3)',
+          borderColor: PERSONA_VIDEO_BORDER_COLORS[persona.id],
         }}
         initial={{ opacity: 0, scale: 0.95 }}
         whileInView={{ opacity: 1, scale: 1 }}
@@ -481,7 +494,7 @@ export default function UseCasesSection() {
     subtext: t(`segmentCtas.${activePersona}.subtext`),
     href: SEGMENT_CTA_HREFS[activePersona],
   };
-  const isExternalSignup = activePersona === 'creator';
+  const isExternalSignup = activePersona === 'creator' || activePersona === 'filmProduction';
 
   return (
     <section
@@ -609,7 +622,7 @@ export default function UseCasesSection() {
             </Link>
           )}
           {activeCta.subtext && <p className="text-gray-500 text-base mt-3">{activeCta.subtext}</p>}
-          {activePersona !== 'creator' && (
+          {activePersona !== 'creator' && activePersona !== 'filmProduction' && (
             <p className="text-gray-600 text-sm mt-2">
               {t('ui.orPrefix')}{' '}
               <button

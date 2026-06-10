@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Video, Building2, Film, Briefcase, ArrowRight, Zap, Settings2 } from 'lucide-react'
+import { Video, Building2, Film, Briefcase, Clapperboard, ArrowRight, Zap, Settings2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
@@ -11,9 +11,10 @@ const ICONS = {
   building: Building2,
   film: Film,
   briefcase: Briefcase,
+  clapperboard: Clapperboard,
 } as const
 
-const PATH_ICONS = ['video', 'building', 'film', 'briefcase'] as const
+type PathIcon = keyof typeof ICONS
 
 type AudienceMode = 'automate' | 'engine'
 
@@ -44,6 +45,8 @@ export function AudiencePathStrip() {
   const [mode, setMode] = useState<AudienceMode>('automate')
   const paths = t.raw('paths') as Array<{
     id: string
+    hash: string
+    icon: PathIcon
     label: string
     outcome: string
     useCases: string[]
@@ -94,16 +97,14 @@ export function AudiencePathStrip() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
           {paths.map((path, index) => {
-            const iconKey = PATH_ICONS[index] ?? 'video'
-            const Icon = ICONS[iconKey]
-            const hash = `use-cases-${path.id}`
+            const Icon = ICONS[path.icon] ?? Video
             return (
               <motion.a
                 key={path.id}
-                href={`#${hash}`}
-                onClick={(e) => handlePathClick(hash, e)}
+                href={`#${path.hash}`}
+                onClick={(e) => handlePathClick(path.hash, e)}
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}

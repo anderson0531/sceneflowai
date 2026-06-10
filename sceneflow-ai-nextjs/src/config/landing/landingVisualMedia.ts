@@ -24,7 +24,9 @@ export const USE_CASE_PERSONA_IMAGES = {
   team: blobUrl('Gemini_Generated_Image_w4oqphw4oqphw4oq.jpeg'),
   productionShop: blobUrl('Gemini_Generated_Image_wm0332wm0332wm03.jpeg'),
   agency: '/landing/use-cases/agency-pitch.jpg',
-} as const satisfies Record<'creator' | 'team' | 'productionShop' | 'agency', string>
+  // TODO: swap for dedicated film-production hero when asset is ready
+  filmProduction: '/landing/use-cases/youtube-creator.jpg',
+} as const satisfies Record<'creator' | 'team' | 'productionShop' | 'agency' | 'filmProduction', string>
 
 /** Art style preset ids — mirrors artStylePresets.ts */
 export type LandingArtStyleId =
