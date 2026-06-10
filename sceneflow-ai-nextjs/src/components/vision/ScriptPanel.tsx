@@ -41,7 +41,19 @@ import {
   resolveVeoSfxTargetSeconds,
   veoSfxCoversFullBeat,
 } from '@/lib/sfx/veoSfxDuration'
-import { ActionBeatSfxControls } from '@/components/vision/ActionBeatSfxControls'
+import { dispatchExpressVeoSfx } from '@/lib/sfx/clientExpressVeoSfx'
+import {
+  beatHasSfxAudio,
+  listSelectableActionBeats,
+} from '@/lib/sfx/resolveExpressVeoSfxItems'
+import {
+  ActionBeatSfxControls,
+  type ExpressBeatSfxStatus,
+} from '@/components/vision/ActionBeatSfxControls'
+import {
+  ExpressSfxConfirmDialog,
+  type ExpressSfxConfirmOptions,
+} from '@/components/vision/ExpressSfxConfirmDialog'
 
 // Dynamic imports with ssr: false to prevent TDZ circular dependency issues
 // These components have complex initialization that can cause module load order problems
@@ -4190,6 +4202,10 @@ function SceneCard({
   const [dialogueCollapsed, setDialogueCollapsed] = useState(false)
   const [musicCollapsed, setMusicCollapsed] = useState(false)
   const [sfxCollapsed, setSfxCollapsed] = useState(false)
+  const [selectedExpressBeatIds, setSelectedExpressBeatIds] = useState<Set<string>>(() => new Set())
+  const [expressSfxDialogOpen, setExpressSfxDialogOpen] = useState(false)
+  const [isExpressSfxRunning, setIsExpressSfxRunning] = useState(false)
+  const [expressBeatStatus, setExpressBeatStatus] = useState<Record<string, ExpressBeatSfxStatus>>({})
   const [sceneCastCollapsed, setSceneCastCollapsed] = useState(true) // Collapsed by default - wardrobe selection is advanced
   // Scene Image section: collapsed by default
   const [sceneImageCollapsed, setSceneImageCollapsed] = useState(true)
@@ -4224,6 +4240,81 @@ function SceneCard({
   
   // Manual workflow completion overrides (user marked as done)
   const workflowCompletions = scene.workflowCompletions || {}
+
+  const expressSfxBeatOptions = useMemo(() => {
+    const sceneRecord = scene as Record<string, unknown>
+    return listSelectableActionBeats(sceneRecord).map((beat) => ({
+      beatId: beat.beatId,
+      label:
+        beat.actionDescription.length > 72
+          ? `${beat.actionDescription.slice(0, 72)}…`
+          : beat.actionDescription,
+      hasAudio: beatHasSfxAudio(sceneRecord, {
+        beatId: beat.beatId,
+        actionDescription: beat.actionDescription,
+        kind: 'action',
+      }),
+    }))
+  }, [scene])
+
+  const selectedExpressCount = selectedExpressBeatIds.size
+
+  const toggleExpressBeatSelection = useCallback((beatId: string, selected: boolean) => {
+    setSelectedExpressBeatIds((prev) => {
+      const next = new Set(prev)
+      if (selected) next.add(beatId)
+      else next.delete(beatId)
+      return next
+    })
+  }, [])
+
+  const handleExpressSfxConfirm = useCallback(
+    async (options: ExpressSfxConfirmOptions) => {
+      if (!projectId || options.beatIds.length === 0) return
+
+      setIsExpressSfxRunning(true)
+      const statusSeed: Record<string, ExpressBeatSfxStatus> = {}
+      options.beatIds.forEach((beatId) => {
+        statusSeed[beatId] = 'pending'
+      })
+      setExpressBeatStatus(statusSeed)
+
+      try {
+        await dispatchExpressVeoSfx({
+          projectId,
+          sceneIndex: sceneIdx,
+          beatIds: options.beatIds,
+          segmentDurationSeconds: scene.duration,
+          durationOverride: options.durationOverride,
+          regenerate: options.regenerate,
+          onItemStart: (beatId) => {
+            setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'running' }))
+          },
+          onItemDone: async ({ beatId, sfxIndex, url, attribution }) => {
+            setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'done' }))
+            const beat = getSceneBeats(scene).find((entry) => entry.beatId === beatId)
+            await onSaveSfxAudio?.(
+              sceneIdx,
+              'sfx',
+              url,
+              sfxIndex,
+              attribution,
+              beat
+                ? { beatId, beatDescription: beat.actionDescription?.trim() ?? '' }
+                : undefined
+            )
+          },
+          onItemError: (beatId) => {
+            setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'error' }))
+          },
+        })
+      } finally {
+        setIsExpressSfxRunning(false)
+        setExpressSfxDialogOpen(false)
+      }
+    },
+    [projectId, sceneIdx, scene, onSaveSfxAudio]
+  )
   
   // Helper: Check if all audio is complete for a specific language
   // Script step auto-completes when narration + dialogue audio are generated
@@ -6136,6 +6227,32 @@ function SceneCard({
                           <span className="text-sm font-semibold text-gray-200">Scene Beats</span>
                           <span className="text-xs text-gray-500">({timelineBeats.length} {timelineBeats.length === 1 ? 'beat' : 'beats'})</span>
                         </button>
+                        {expressSfxBeatOptions.length > 0 && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs border-violet-400/60 text-violet-200 hover:bg-violet-900/30"
+                            disabled={isExpressSfxRunning}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setExpressSfxDialogOpen(true)
+                            }}
+                          >
+                            {isExpressSfxRunning ? (
+                              <>
+                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                Express SFX...
+                              </>
+                            ) : (
+                              <>
+                                <Zap className="w-3 h-3 mr-1" />
+                                Express SFX
+                                {selectedExpressCount > 0 ? ` (${selectedExpressCount})` : ''}
+                              </>
+                            )}
+                          </Button>
+                        )}
                         {/* Voice Casting Quick View — dialogue characters only */}
                         {scene.dialogue && scene.dialogue.length > 0 && (
                         <div className="flex items-center gap-1">
@@ -6265,6 +6382,11 @@ function SceneCard({
                                 projectId={projectId}
                                 segmentDurationSeconds={scene.duration}
                                 playingAudio={playingAudio}
+                                expressSelectable={expressSfxBeatOptions.length > 0}
+                                expressSelected={selectedExpressBeatIds.has(beat.beatId)}
+                                onExpressSelectedChange={toggleExpressBeatSelection}
+                                expressStatus={expressBeatStatus[beat.beatId]}
+                                isExpressRunning={isExpressSfxRunning}
                                 onPlayAudio={onPlayAudio}
                                 onSaveSfxAudio={onSaveSfxAudio}
                               />
@@ -7700,6 +7822,16 @@ function SceneCard({
             sceneFrameUrl={scene.imageUrl || null}
             onPromptChange={onSegmentPromptChange}
             onSegmentResize={onSegmentResize}
+          />
+
+          <ExpressSfxConfirmDialog
+            open={expressSfxDialogOpen}
+            onOpenChange={setExpressSfxDialogOpen}
+            beats={expressSfxBeatOptions}
+            initialBeatIds={Array.from(selectedExpressBeatIds)}
+            segmentDurationSeconds={scene.duration}
+            isRunning={isExpressSfxRunning}
+            onConfirm={handleExpressSfxConfirm}
           />
           
           {/* AI Co-Pilot Side Panel */}

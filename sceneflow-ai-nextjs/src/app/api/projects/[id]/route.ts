@@ -4,6 +4,7 @@ import { sequelize } from '@/config/database'
 import { stripBase64FromMetadata, calculateBase64Size } from '@/lib/storage/mediaStorage'
 import { mergeSceneArraysForPersistence } from '@/lib/storyboard/mergeSceneMedia'
 import { upsertBeatSfxCueOnScene } from '@/lib/script/deriveSfxFromSceneContent'
+import { persistSceneSfxAudioAtomic } from '@/lib/sfx/persistSceneSfxAudio'
 
 // Increase timeout for large project updates
 export const maxDuration = 60 // 60 seconds timeout
@@ -620,64 +621,27 @@ export async function PATCH(
       
       if (audioType === 'music') {
         scene.musicAudio = audioUrl
+        if (scenePath === 'nested') {
+          metadata.visionPhase.script.script.scenes = scenes
+        } else {
+          metadata.visionPhase.script.scenes = scenes
+        }
+        project.set('metadata', metadata)
+        project.changed('metadata', true)
+        await project.save()
         console.log(`[Projects PATCH] Updated musicAudio for scene ${sceneIndex}`)
       } else if (audioType === 'sfx' && sfxIndex !== undefined) {
-        // Ensure sfxAudio array exists
-        if (!scene.sfxAudio) {
-          scene.sfxAudio = []
-        }
-        while (scene.sfxAudio.length <= sfxIndex) {
-          scene.sfxAudio.push(null)
-        }
-        scene.sfxAudio[sfxIndex] = audioUrl
-        
-        // Ensure sfx slot exists for beat upserts or positional writes
-        if (!Array.isArray(scene.sfx)) {
-          scene.sfx = []
-        }
-        while (scene.sfx.length <= sfxIndex) {
-          scene.sfx.push(null)
-        }
-        
-        // Also update the sfx item if it exists
-        if (scene.sfx[sfxIndex]) {
-          if (typeof scene.sfx[sfxIndex] === 'string') {
-            scene.sfx[sfxIndex] = {
-              description: scene.sfx[sfxIndex],
-              audioUrl
-            }
-          } else {
-            scene.sfx[sfxIndex].audioUrl = audioUrl
-          }
-        }
-
-        // Parallel attribution metadata (plain-text export / compliance; not shown as hyperlinks in SFX UI)
-        if (sfxAttribution !== undefined) {
-          if (!Array.isArray(scene.sfxSourceMeta)) {
-            scene.sfxSourceMeta = []
-          }
-          while (scene.sfxSourceMeta.length <= sfxIndex) {
-            scene.sfxSourceMeta.push(null)
-          }
-          scene.sfxSourceMeta[sfxIndex] = sfxAttribution
-        }
-
+        await persistSceneSfxAudioAtomic({
+          projectId: id,
+          sceneIndex,
+          audioUrl,
+          sfxIndex,
+          sfxAttribution,
+          beatId: typeof beatId === 'string' ? beatId : undefined,
+          beatDescription: typeof beatDescription === 'string' ? beatDescription : undefined,
+        })
         console.log(`[Projects PATCH] Updated sfxAudio[${sfxIndex}] for scene ${sceneIndex}`)
       }
-      
-      // Update the scenes back to the correct location
-      if (scenePath === 'nested') {
-        metadata.visionPhase.script.script.scenes = scenes
-      } else {
-        metadata.visionPhase.script.scenes = scenes
-      }
-      
-      // Save atomically
-      project.set('metadata', metadata)
-      project.changed('metadata', true)
-      await project.save()
-      
-      console.log('[Projects PATCH] Atomic audio update saved successfully')
       
       return NextResponse.json({ 
         success: true, 

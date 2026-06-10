@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { Download, Loader2, Pause, Play, Volume2, Waves } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
+import { Checkbox } from '@/components/ui/checkbox'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
 import { resolveAutoSfxDuration } from '@/lib/elevenlabs/sfxDuration'
 import { saveAudioFile } from '@/lib/download/saveFile'
@@ -19,6 +20,8 @@ import {
   veoSfxCoversFullBeat,
 } from '@/lib/sfx/veoSfxDuration'
 
+export type ExpressBeatSfxStatus = 'pending' | 'running' | 'done' | 'error'
+
 export interface ActionBeatSfxControlsProps {
   beat: SceneBeat
   scene: Record<string, unknown>
@@ -26,6 +29,11 @@ export interface ActionBeatSfxControlsProps {
   projectId?: string
   segmentDurationSeconds?: number
   playingAudio: string | null
+  expressSelectable?: boolean
+  expressSelected?: boolean
+  onExpressSelectedChange?: (beatId: string, selected: boolean) => void
+  expressStatus?: ExpressBeatSfxStatus
+  isExpressRunning?: boolean
   onPlayAudio?: (audioUrl: string, label: string, sceneId?: string) => void
   onSaveSfxAudio?: (
     sceneIdx: number,
@@ -44,6 +52,11 @@ export function ActionBeatSfxControls({
   projectId,
   segmentDurationSeconds,
   playingAudio,
+  expressSelectable = false,
+  expressSelected = false,
+  onExpressSelectedChange,
+  expressStatus,
+  isExpressRunning = false,
   onPlayAudio,
   onSaveSfxAudio,
 }: ActionBeatSfxControlsProps) {
@@ -117,10 +130,23 @@ export function ActionBeatSfxControls({
     }
   }
 
+  const isBusy = isGenerating || isExpressRunning || expressStatus === 'running'
+
   return (
     <div className="mt-3 pt-3 border-t border-amber-700/30">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 flex-wrap">
+          {expressSelectable && (
+            <Checkbox
+              checked={expressSelected}
+              onCheckedChange={(checked) =>
+                onExpressSelectedChange?.(beat.beatId, checked === true)
+              }
+              disabled={isBusy || !actionText}
+              onClick={(e) => e.stopPropagation()}
+              className="border-violet-400/60 data-[state=checked]:bg-violet-600"
+            />
+          )}
           <Volume2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
           <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-300/90">
             Action SFX
@@ -134,6 +160,22 @@ export function ActionBeatSfxControls({
           {isVeoAction && (
             <span className="text-[10px] px-2 py-0.5 bg-violet-500/15 text-violet-300 rounded">
               Veo action
+            </span>
+          )}
+          {expressStatus === 'running' && (
+            <span className="text-[10px] px-2 py-0.5 bg-violet-500/20 text-violet-200 rounded flex items-center gap-1">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Express
+            </span>
+          )}
+          {expressStatus === 'done' && (
+            <span className="text-[10px] px-2 py-0.5 bg-green-500/20 text-green-400 rounded">
+              Done
+            </span>
+          )}
+          {expressStatus === 'error' && (
+            <span className="text-[10px] px-2 py-0.5 bg-red-500/20 text-red-300 rounded">
+              Failed
             </span>
           )}
         </div>
@@ -182,7 +224,7 @@ export function ActionBeatSfxControls({
               e.stopPropagation()
               void handleGenerate()
             }}
-            disabled={isGenerating || !actionText}
+            disabled={isBusy || !actionText}
             title={VEO_SFX_CREDIT_HINT}
           >
             {isGenerating ? (
@@ -207,7 +249,7 @@ export function ActionBeatSfxControls({
             <button
               key={chip.id}
               type="button"
-              disabled={isGenerating}
+              disabled={isBusy}
               onClick={(e) => {
                 e.stopPropagation()
                 setDurationPreset(chip.id)

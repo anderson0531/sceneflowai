@@ -17,6 +17,15 @@ import {
 } from '@/lib/sfx/veoSfxDuration'
 import { withVeoSfxRetries } from '@/lib/sfx/veoSfxRetry'
 
+function parsePositiveInt(value: string | undefined, fallback: number): number {
+  const n = Number(value ?? fallback)
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : fallback
+}
+
+export function getVeoSfxPollIntervalSeconds(): number {
+  return parsePositiveInt(process.env.VEO_SFX_POLL_INTERVAL_SECONDS, 5)
+}
+
 export type VeoSfxPromptMode = 'ambient' | 'actionBeat'
 
 export interface BuildVeoSfxPromptResult {
@@ -124,7 +133,11 @@ async function runVeoSfxGenerationAttempt(
     throw new Error(queued.error || 'Veo SFX generation failed to start')
   }
 
-  const completed = await waitForVideoCompletion(queued.operationName, 240, 10)
+  const completed = await waitForVideoCompletion(
+    queued.operationName,
+    240,
+    getVeoSfxPollIntervalSeconds()
+  )
   if (completed.status !== 'COMPLETED' || !completed.videoUrl) {
     throw new Error(completed.error || 'Veo SFX generation failed')
   }

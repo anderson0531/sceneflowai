@@ -79,6 +79,10 @@
     "src/app/api/sfx/generate-veo-audio/route.ts": {
       "maxDuration": 300,
       "memory": 3009
+    },
+    "src/app/api/sfx/express-veo/route.ts": {
+      "maxDuration": 600,
+      "memory": 3009
     }
   },
   "crons": [
