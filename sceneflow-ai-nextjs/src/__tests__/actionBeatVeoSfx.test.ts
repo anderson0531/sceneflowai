@@ -10,6 +10,7 @@ import {
   withVeoSfxRetries,
 } from '@/lib/sfx/veoSfxRetry'
 import {
+  readBeatSfxAudio,
   resolveBeatSfxSlot,
   upsertBeatSfxCueOnScene,
 } from '@/lib/script/deriveSfxFromSceneContent'
@@ -109,6 +110,66 @@ describe('resolveBeatSfxSlot', () => {
     expect(Array.isArray(scene.sfx)).toBe(true)
     expect((scene.sfx as unknown[]).length).toBe(1)
     expect((scene.sfx as Array<{ sourceBeatId?: string }>)[0].sourceBeatId).toBe('bt_elara')
+  })
+
+  it('assigns new slot index from raw array length when sfx has null holes', () => {
+    const scene = {
+      sfx: [
+        { description: 'a', sourceBeatId: 'bt_1', sfxId: 's1' },
+        null,
+        { description: 'c', sourceBeatId: 'bt_3', sfxId: 's3' },
+      ],
+    }
+    const slot = resolveBeatSfxSlot(scene, {
+      beatId: 'bt_5',
+      kind: 'action',
+      actionDescription: 'New beat action with footstep sounds on hardwood.',
+    })
+    expect(slot.sfxIndex).toBe(3)
+    expect(slot.created).toBe(true)
+  })
+
+  it('upsert writes cue at slot index not array tail when holes exist', () => {
+    const scene: Record<string, unknown> = {
+      sfx: [
+        { description: 'a', sourceBeatId: 'bt_1', sfxId: 's1' },
+        null,
+        { description: 'c', sourceBeatId: 'bt_3', sfxId: 's3' },
+      ],
+    }
+    const slot = upsertBeatSfxCueOnScene(scene, {
+      beatId: 'bt_5',
+      kind: 'action',
+      actionDescription: 'Door slams shut in the hallway with a loud bang.',
+    })
+    expect(slot.sfxIndex).toBe(3)
+    expect((scene.sfx as unknown[]).length).toBe(4)
+    expect((scene.sfx as Array<{ sourceBeatId?: string }>)[3]?.sourceBeatId).toBe('bt_5')
+  })
+
+  it('supports five sequential beat upserts with aligned indices', () => {
+    const scene: Record<string, unknown> = { sfx: [], sfxAudio: [] }
+    for (let i = 0; i < 5; i++) {
+      const beatId = `bt_${i}`
+      const slot = upsertBeatSfxCueOnScene(scene, {
+        beatId,
+        kind: 'action',
+        actionDescription: `Action ${i} with keyboard clicks and desk noise.`,
+      })
+      expect(slot.sfxIndex).toBe(i)
+      const audio = Array.isArray(scene.sfxAudio) ? [...scene.sfxAudio] : []
+      audio[slot.sfxIndex] = `https://example.com/${i}.mp3`
+      scene.sfxAudio = audio
+    }
+    expect((scene.sfx as unknown[]).length).toBe(5)
+    for (let i = 0; i < 5; i++) {
+      const slot = resolveBeatSfxSlot(scene, {
+        beatId: `bt_${i}`,
+        kind: 'action',
+        actionDescription: `Action ${i} with keyboard clicks and desk noise.`,
+      })
+      expect(readBeatSfxAudio(scene, slot)).toBe(`https://example.com/${i}.mp3`)
+    }
   })
 })
 

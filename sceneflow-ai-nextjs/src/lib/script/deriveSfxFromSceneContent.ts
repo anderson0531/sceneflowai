@@ -315,6 +315,74 @@ export function deriveSfxFromSceneContent(
   return assignSfxToBeats(descriptions, beats, scene)
 }
 
+interface SfxAudioBundle {
+  url: string
+  meta: unknown
+}
+
+function hasSfxAudioAtIndex(scene: Record<string, unknown>, idx: number): boolean {
+  const sfxAudio = Array.isArray(scene.sfxAudio) ? scene.sfxAudio : []
+  const url = sfxAudio[idx]
+  return typeof url === 'string' && url.trim().length > 0
+}
+
+function buildSfxAudioLookup(
+  scene: Record<string, unknown>,
+  existingWithIdx: Array<{ cue: SceneSfxCue; idx: number }>
+): Map<string, SfxAudioBundle> {
+  const sfxAudio = Array.isArray(scene.sfxAudio) ? scene.sfxAudio : []
+  const sfxSourceMeta = Array.isArray(scene.sfxSourceMeta) ? scene.sfxSourceMeta : []
+  const lookup = new Map<string, SfxAudioBundle>()
+
+  for (const { cue, idx } of existingWithIdx) {
+    const url = sfxAudio[idx]
+    if (typeof url !== 'string' || !url.trim()) continue
+    const bundle: SfxAudioBundle = { url, meta: sfxSourceMeta[idx] ?? null }
+    if (cue.sfxId) lookup.set(`sfxId:${cue.sfxId}`, bundle)
+    if (cue.sourceBeatId) lookup.set(`beatId:${cue.sourceBeatId}`, bundle)
+    lookup.set(`idx:${idx}`, bundle)
+  }
+
+  return lookup
+}
+
+function resolveSfxAudioBundle(
+  cue: SceneSfxCue,
+  newIndex: number,
+  lookup: Map<string, SfxAudioBundle>
+): SfxAudioBundle | undefined {
+  if (cue.sfxId) {
+    const byId = lookup.get(`sfxId:${cue.sfxId}`)
+    if (byId) return byId
+  }
+  if (cue.sourceBeatId) {
+    const byBeat = lookup.get(`beatId:${cue.sourceBeatId}`)
+    if (byBeat) return byBeat
+  }
+  if (cue.legacyIndex !== undefined) {
+    const byLegacy = lookup.get(`idx:${cue.legacyIndex}`)
+    if (byLegacy) return byLegacy
+  }
+  return lookup.get(`idx:${newIndex}`)
+}
+
+function remapSfxParallelArrays(
+  scene: Record<string, unknown>,
+  merged: SceneSfxCue[],
+  lookup: Map<string, SfxAudioBundle>
+): { sfxAudio: Array<string | null>; sfxSourceMeta: unknown[] } {
+  const sfxAudio: Array<string | null> = []
+  const sfxSourceMeta: unknown[] = []
+
+  merged.forEach((cue, newIndex) => {
+    const bundle = resolveSfxAudioBundle(cue, newIndex, lookup)
+    sfxAudio[newIndex] = bundle?.url ?? null
+    sfxSourceMeta[newIndex] = bundle?.meta ?? null
+  })
+
+  return { sfxAudio, sfxSourceMeta }
+}
+
 /**
  * Merge derived SFX into scene without duplicating descriptions.
  * Preserves user cues whose descriptions are not in the derived set.
@@ -324,18 +392,23 @@ export function applyDerivedSfxToScene(
   beats: SceneBeat[]
 ): Record<string, unknown> {
   const derived = deriveSfxFromSceneContent(scene, beats)
-  const existing = coerceSceneSfxFlatArray(scene.sfx)
-    .map((item, idx) => coerceExistingCue(item, idx))
-    .filter((c): c is SceneSfxCue => c != null)
+  const existingWithIdx = coerceSceneSfxFlatArray(scene.sfx)
+    .map((item, idx) => ({ cue: coerceExistingCue(item, idx), idx }))
+    .filter((row): row is { cue: SceneSfxCue; idx: number } => row.cue != null)
+  const existing = existingWithIdx.map((row) => row.cue)
 
   if (derived.length === 0) {
     return scene
   }
 
   const derivedKeys = new Set(derived.map((d) => normalizeDescription(d.description)))
-  const preserved = existing.filter(
-    (c) => !derivedKeys.has(normalizeDescription(c.description))
-  )
+  const preserved = existingWithIdx
+    .filter(({ cue, idx }) => {
+      if (!derivedKeys.has(normalizeDescription(cue.description))) return true
+      if (cue.sourceBeatId && hasSfxAudioAtIndex(scene, idx)) return true
+      return false
+    })
+    .map(({ cue }) => cue)
 
   const merged: SceneSfxCue[] = [...preserved]
   for (const cue of derived) {
@@ -358,16 +431,29 @@ export function applyDerivedSfxToScene(
     }
   }
 
+  const lookup = buildSfxAudioLookup(scene, existingWithIdx)
+  const { sfxAudio, sfxSourceMeta } = remapSfxParallelArrays(scene, merged, lookup)
+
   return {
     ...scene,
-    sfx: merged.map(({ description, time, sourceBeatId, sourceLineId, sfxId, legacyIndex }) => ({
-      description,
-      ...(time !== undefined ? { time } : {}),
-      ...(sourceBeatId ? { sourceBeatId } : {}),
-      ...(sourceLineId ? { sourceLineId } : {}),
-      ...(sfxId ? { sfxId } : {}),
-      ...(legacyIndex !== undefined ? { legacyIndex } : {}),
-    })),
+    sfx: merged.map(({ description, time, sourceBeatId, sourceLineId, sfxId, legacyIndex }, idx) => {
+      const bundle = resolveSfxAudioBundle(
+        { description, time, sourceBeatId, sourceLineId, sfxId, legacyIndex: legacyIndex ?? idx },
+        idx,
+        lookup
+      )
+      return {
+        description,
+        ...(time !== undefined ? { time } : {}),
+        ...(sourceBeatId ? { sourceBeatId } : {}),
+        ...(sourceLineId ? { sourceLineId } : {}),
+        ...(sfxId ? { sfxId } : {}),
+        legacyIndex: legacyIndex ?? idx,
+        ...(bundle?.url ? { audioUrl: bundle.url } : {}),
+      }
+    }),
+    sfxAudio,
+    sfxSourceMeta,
   }
 }
 
@@ -386,6 +472,43 @@ export interface BeatSfxSlot {
   sourceBeatId: string
   /** True when a new cue was appended to scene.sfx. */
   created: boolean
+}
+
+/** Next positional index in scene.sfx (uses raw array length, not filtered cue count). */
+export function nextSfxArrayIndex(scene: Record<string, unknown>): number {
+  return coerceSceneSfxFlatArray(scene.sfx).length
+}
+
+/** Read persisted beat SFX URL from sfxAudio[] or cue.audioUrl. */
+export function readBeatSfxAudio(
+  scene: Record<string, unknown>,
+  slot: Pick<BeatSfxSlot, 'sfxIndex' | 'sourceBeatId'>
+): string | undefined {
+  const sfxAudioList = Array.isArray(scene.sfxAudio) ? scene.sfxAudio : []
+  const fromArray = sfxAudioList[slot.sfxIndex]
+  if (typeof fromArray === 'string' && fromArray.trim()) return fromArray
+
+  const rawList = coerceSceneSfxFlatArray(scene.sfx)
+  const entry = rawList[slot.sfxIndex]
+  if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+    const audioUrl = (entry as Record<string, unknown>).audioUrl
+    if (typeof audioUrl === 'string' && audioUrl.trim()) return audioUrl
+  }
+
+  if (slot.sourceBeatId) {
+    for (let idx = 0; idx < rawList.length; idx++) {
+      const item = rawList[idx]
+      if (!item || typeof item !== 'object' || Array.isArray(item)) continue
+      const o = item as Record<string, unknown>
+      if (o.sourceBeatId !== slot.sourceBeatId) continue
+      const url = sfxAudioList[idx]
+      if (typeof url === 'string' && url.trim()) return url
+      const audioUrl = o.audioUrl
+      if (typeof audioUrl === 'string' && audioUrl.trim()) return audioUrl
+    }
+  }
+
+  return undefined
 }
 
 /** Find or append an sfx[] entry scoped to a storyboard beat. */
@@ -417,7 +540,7 @@ export function resolveBeatSfxSlot(
     }
   }
 
-  const sfxIndex = existing.length
+  const sfxIndex = nextSfxArrayIndex(scene)
   const sfxId = mintSfxId()
   return {
     sfxIndex,
@@ -436,13 +559,16 @@ export function upsertBeatSfxCueOnScene(
   const slot = resolveBeatSfxSlot(scene, beat)
   if (!slot.created) return slot
 
-  const list = coerceSceneSfxFlatArray(scene.sfx)
-  list.push({
+  const list = [...coerceSceneSfxFlatArray(scene.sfx)]
+  while (list.length <= slot.sfxIndex) {
+    list.push(null)
+  }
+  list[slot.sfxIndex] = {
     description: slot.description,
     sourceBeatId: slot.sourceBeatId,
     sfxId: slot.sfxId,
     legacyIndex: slot.sfxIndex,
-  })
+  }
   scene.sfx = list
   return slot
 }

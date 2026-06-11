@@ -55,9 +55,7 @@ export async function persistSceneSfxAudioAtomic(
       actionDescription: String(params.beatDescription ?? '').trim(),
       kind: 'action',
     })
-    if (sfxIndex === undefined) {
-      sfxIndex = slot.sfxIndex
-    }
+    sfxIndex = slot.sfxIndex
   }
 
   if (sfxIndex === undefined) {

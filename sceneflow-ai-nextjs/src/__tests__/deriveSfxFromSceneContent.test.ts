@@ -6,6 +6,8 @@ import {
   deriveSfxFromSceneContent,
   extractInlineSfxFromActionText,
   extractSfxDescriptionsFromAudioText,
+  readBeatSfxAudio,
+  resolveBeatSfxSlot,
 } from '@/lib/script/deriveSfxFromSceneContent'
 
 const marcusDirection = {
@@ -88,6 +90,46 @@ describe('deriveSfxFromSceneContent', () => {
     const once = applyDerivedSfxToScene(scene, beats)
     const twice = applyDerivedSfxToScene(once, beats)
     expect((twice.sfx as unknown[]).length).toBe((once.sfx as unknown[]).length)
+  })
+
+  it('remaps sfxAudio by sfxId after derive merge', () => {
+    const scene = {
+      duration: 30,
+      sceneDirection: marcusDirection,
+      sfx: [
+        { description: 'Mouse clicks', sourceBeatId: 'bt_a', sfxId: 'sfx_a', legacyIndex: 0 },
+        {
+          description: 'Reserved beat slot',
+          sourceBeatId: 'bt_b',
+          sfxId: 'sfx_b',
+          legacyIndex: 1,
+        },
+      ],
+      sfxAudio: ['https://example.com/a.mp3', 'https://example.com/b.mp3'],
+      beats: [
+        {
+          beatId: 'bt_a',
+          kind: 'action' as const,
+          sequenceIndex: 0,
+          actionDescription: 'Clicks mouse rapidly',
+        },
+        {
+          beatId: 'bt_b',
+          kind: 'action' as const,
+          sequenceIndex: 1,
+          actionDescription: 'Leans closer to screen',
+        },
+      ],
+    }
+    const beats = deriveBeatsFromSceneContent(scene)
+    const updated = applyDerivedSfxToScene(scene, beats)
+    const slotB = resolveBeatSfxSlot(updated, {
+      beatId: 'bt_b',
+      kind: 'action',
+      actionDescription: 'Leans closer to screen',
+    })
+    expect(readBeatSfxAudio(updated, slotB)).toBe('https://example.com/b.mp3')
+    expect((updated.sfxAudio as string[]).includes('https://example.com/a.mp3')).toBe(true)
   })
 })
 

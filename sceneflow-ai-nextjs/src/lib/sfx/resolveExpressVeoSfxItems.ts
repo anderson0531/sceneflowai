@@ -1,5 +1,9 @@
 import { getSceneBeats } from '@/lib/script/beatMigration'
-import { resolveBeatSfxSlot } from '@/lib/script/deriveSfxFromSceneContent'
+import {
+  readBeatSfxAudio,
+  resolveBeatSfxSlot,
+  upsertBeatSfxCueOnScene,
+} from '@/lib/script/deriveSfxFromSceneContent'
 import type {
   ExpressVeoSfxItem,
   ResolveExpressVeoSfxResult,
@@ -32,9 +36,7 @@ export function beatHasSfxAudio(
       actionDescription: beat.actionDescription,
       kind: 'action',
     })
-    const sfxAudioList = Array.isArray(scene.sfxAudio) ? scene.sfxAudio : []
-    const url = sfxAudioList[slot.sfxIndex]
-    return typeof url === 'string' && url.trim().length > 0
+    return !!readBeatSfxAudio(scene, slot)
   } catch {
     return false
   }
@@ -52,6 +54,12 @@ export function resolveExpressVeoSfxItems(
   const items: ExpressVeoSfxItem[] = []
   const skipped: ResolveExpressVeoSfxResult['skipped'] = []
   const errors: string[] = []
+  const workingScene: Record<string, unknown> = {
+    ...scene,
+    sfx: Array.isArray(scene.sfx) ? [...scene.sfx] : [],
+    sfxAudio: Array.isArray(scene.sfxAudio) ? [...scene.sfxAudio] : [],
+    sfxSourceMeta: Array.isArray(scene.sfxSourceMeta) ? [...scene.sfxSourceMeta] : [],
+  }
 
   for (const beatId of beatIds) {
     const beat = beatById.get(beatId)
@@ -66,19 +74,19 @@ export function resolveExpressVeoSfxItems(
       continue
     }
 
+    if (beatHasSfxAudio(scene, beat) && !regenerate) {
+      skipped.push({ beatId, reason: 'already has audio' })
+      continue
+    }
+
     let slot
     try {
-      slot = resolveBeatSfxSlot(scene, beat)
+      slot = upsertBeatSfxCueOnScene(workingScene, beat)
     } catch (err) {
       skipped.push({
         beatId,
         reason: err instanceof Error ? err.message : 'invalid beat slot',
       })
-      continue
-    }
-
-    if (beatHasSfxAudio(scene, beat) && !regenerate) {
-      skipped.push({ beatId, reason: 'already has audio' })
       continue
     }
 

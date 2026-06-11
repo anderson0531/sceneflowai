@@ -79,6 +79,24 @@ describe('resolveExpressVeoSfxItems', () => {
     expect(beats).toHaveLength(1)
     expect(beatHasSfxAudio(scene, { beatId: 'bt_action_1', kind: 'action' })).toBe(false)
   })
+
+  it('assigns distinct sfxIndex values for batch of new beats', () => {
+    const multiBeatScene = {
+      beats: [
+        { beatId: 'bt_a', kind: 'action', actionDescription: 'Wind through trees.' },
+        { beatId: 'bt_b', kind: 'action', actionDescription: 'Footsteps on gravel.' },
+        { beatId: 'bt_c', kind: 'action', actionDescription: 'Door creaking open.' },
+      ],
+      sfx: [],
+      sfxAudio: [],
+    } as Record<string, unknown>
+
+    const result = resolveExpressVeoSfxItems(multiBeatScene, ['bt_a', 'bt_b', 'bt_c'])
+    expect(result.items).toHaveLength(3)
+    const indices = result.items.map((item) => item.sfxIndex)
+    expect(new Set(indices).size).toBe(3)
+    expect(indices).toEqual([0, 1, 2])
+  })
 })
 
 describe('express Veo SFX credits', () => {

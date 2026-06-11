@@ -614,9 +614,7 @@ export async function PATCH(
           actionDescription: String(beatDescription ?? '').trim(),
           kind: 'action',
         })
-        if (sfxIndex === undefined) {
-          sfxIndex = slot.sfxIndex
-        }
+        sfxIndex = slot.sfxIndex
       }
       
       if (audioType === 'music') {

@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import type { SfxDurationOverride } from '@/lib/elevenlabs/sfxDuration'
 import { resolveAutoSfxDuration } from '@/lib/elevenlabs/sfxDuration'
 import { saveAudioFile } from '@/lib/download/saveFile'
-import { resolveBeatSfxSlot } from '@/lib/script/deriveSfxFromSceneContent'
+import { resolveBeatSfxSlot, readBeatSfxAudio } from '@/lib/script/deriveSfxFromSceneContent'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import {
   dispatchGenerateVeoSfx,
@@ -68,10 +68,8 @@ export function ActionBeatSfxControls({
     [scene, beat.beatId, beat.actionDescription]
   )
 
-  const sfxAudioList = Array.isArray(scene.sfxAudio) ? scene.sfxAudio : []
   const sfxSourceMetaList = Array.isArray(scene.sfxSourceMeta) ? scene.sfxSourceMeta : []
-  const sfxAudio =
-    typeof sfxAudioList[slot.sfxIndex] === 'string' ? sfxAudioList[slot.sfxIndex] : undefined
+  const sfxAudio = readBeatSfxAudio(scene, slot)
   const sfxSourceMeta = sfxSourceMetaList[slot.sfxIndex] as Record<string, unknown> | null | undefined
   const isVeoAction =
     sfxSourceMeta?.source === 'veo' && sfxSourceMeta?.promptMode === 'actionBeat'
