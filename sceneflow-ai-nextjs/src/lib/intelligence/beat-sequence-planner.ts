@@ -108,16 +108,16 @@ function validatePlans(plans: BeatKeyframePlan[], beatCount: number): BeatKeyfra
 }
 
 function buildPlannerSystemPrompt(): string {
-  return `You are a cinematic storyboard sequence planner. Plan DISTINCT frozen still-image keyframes for each beat in a scene — these are F2V (frame-to-video) START frames for Veo motion generation.
+  return `You are a cinematic keyframe sequence planner. Plan DISTINCT live-action film still / photograph keyframes for each beat in a scene — these are F2V (frame-to-video) START frames for Veo motion generation.
 
 CRITICAL RULES:
 1. Each beat gets ONE unique frozen moment — different subject, scale, composition, or story beat. Never repeat the same visual across beats.
-2. NO camera movement in prompts — describe a single illustrative still, not motion.
+2. NO camera movement in prompts — describe a single frozen photograph or film frame, not motion.
 3. Title typography ONLY on beats with beatRole "title_reveal" or "credit". All other beats: NO on-screen text.
 4. Map direction.camera.shots to beats when provided (beat 0 → shot 0, etc.).
 5. Follow the narrative arc: opening → progression → climax → title_reveal (if title scene) → dissolve.
 6. Include atmosphere, lighting, and key props from direction cues where relevant.
-7. Prompts must be Imagen-ready: 80-200 words, photorealistic/cinematic, art style applied.
+7. Prompts must be Imagen-ready: 80-200 words, photorealistic/cinematic, art style applied. When art style is photorealistic, use live-action cinematography language — NOT illustration, NOT storyboard sketch, NOT cartoon or anime. Populate negativeAdditions with anti-illustration terms (e.g. cartoon, anime, illustration, 3D render).
 
 Output JSON:
 {

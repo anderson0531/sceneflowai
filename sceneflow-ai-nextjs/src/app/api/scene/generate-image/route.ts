@@ -35,9 +35,9 @@ import {
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 import {
   resolveStoryboardGeneration,
-  getFinalPhotorealisticPromptAnchor,
+  getPhotorealisticPromptAnchor,
 } from '@/lib/storyboard/storyboardQuality'
-import { getArtStyleNegativeTerms } from '@/lib/vision/artStyle'
+import { getArtStyleNegativeTerms, getArtStylePromptSuffix } from '@/lib/vision/artStyle'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120  // Increased for new AI image models
@@ -1003,6 +1003,19 @@ export async function POST(req: NextRequest) {
         })
         console.log('[Scene Image] Added character references to user-edited prompt (re-optimized)')
       }
+
+      const effectiveArtStyle = artStyle || 'photorealistic'
+      if (effectiveArtStyle === 'photorealistic') {
+        const lower = optimizedPrompt.toLowerCase()
+        const hasRealismKeywords =
+          lower.includes('photorealistic') ||
+          lower.includes('live-action') ||
+          lower.includes('live action') ||
+          lower.includes('photograph')
+        if (!hasRealismKeywords) {
+          optimizedPrompt = `${optimizedPrompt.trim()}, ${getArtStylePromptSuffix(effectiveArtStyle)}`
+        }
+      }
     } else if (effectiveExcludeCharacters) {
       // Scene reference mode: Focus on environment, props, lighting - no people
       const sceneReferencePrefix = `Cinematic establishing shot, empty scene composition. Focus on environment details, lighting, atmosphere, and props. NO PEOPLE in the frame. `
@@ -1196,9 +1209,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const finalAnchor = getFinalPhotorealisticPromptAnchor(artStyle)
-    if (resolvedGen.storyboardQuality === 'final' && finalAnchor) {
-      optimizedPrompt = `${optimizedPrompt.trim()}. ${finalAnchor}`
+    const photorealisticAnchor = getPhotorealisticPromptAnchor(
+      resolvedGen.storyboardQuality,
+      artStyle
+    )
+    if (photorealisticAnchor) {
+      optimizedPrompt = `${optimizedPrompt.trim()}. ${photorealisticAnchor}`
     }
 
     // Validate we have a prompt to send to the model
@@ -1457,12 +1473,21 @@ export async function POST(req: NextRequest) {
           }
           geminiPrompt += `- No dialogue captions, subtitles, or watermarks\n`
           geminiPrompt += `- Match props and environment to their reference images\n`
-          
+          if ((artStyle || 'photorealistic').trim() === 'photorealistic') {
+            geminiPrompt +=
+              '- Output must look like a live-action photograph or film frame, NOT illustration, NOT storyboard sketch, NOT cartoon or anime\n'
+            const avoidTerms = getArtStyleNegativeTerms(artStyle)
+            if (avoidTerms) {
+              geminiPrompt += `- AVOID: ${avoidTerms}\n`
+            }
+          }
+
           const vertexResult = await generateImageWithVertexKlingFallback({
             prompt: geminiPrompt,
             aspectRatio: '16:9',
             imageSize: effectiveImageSize,
             referenceImages: allReferenceImages,
+            negativePrompt: finalNegativePrompt,
             ...(resolvedModelTier ? { modelTier: resolvedModelTier } : {}),
           })
 

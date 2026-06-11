@@ -186,7 +186,7 @@ export function buildFallbackBeatPlans(request: BeatSequencePlanRequest): BeatKe
     const titleDirectionContext =
       sceneType === 'title' ? buildTitleDirectionContext(scene, directionMeta, shotType) : ''
 
-    let prompt = `${style} cinematic storyboard still. ${frozenMoment}.`
+    let prompt = `${style} live-action film still, single frozen frame, cinematic photography. ${frozenMoment}.`
     if (titleDirectionContext) {
       prompt += ` ${titleDirectionContext}. Abstract digital composition, no people, no character portraits.`
     }

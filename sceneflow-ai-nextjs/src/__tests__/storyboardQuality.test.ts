@@ -4,6 +4,8 @@ import {
   beatFrameNeedsGeneration,
   collectDraftStoryboardFrameWarnings,
   resolveEffectiveStoryboardTier,
+  getPhotorealisticPromptAnchor,
+  getFinalPhotorealisticPromptAnchor,
 } from '@/lib/storyboard/storyboardQuality'
 
 describe('storyboardQuality', () => {
@@ -79,5 +81,23 @@ describe('storyboardQuality', () => {
     })
     expect(warnings).toHaveLength(1)
     expect(warnings[0]).toMatch(/Finalize/i)
+  })
+
+  it('returns draft photorealistic anchor for draft tier', () => {
+    const anchor = getPhotorealisticPromptAnchor('draft', 'photorealistic')
+    expect(anchor).toContain('live-action')
+    expect(anchor).toContain('no cartoon')
+    expect(anchor).not.toContain('natural skin texture and pores')
+  })
+
+  it('returns stronger final photorealistic anchor', () => {
+    const anchor = getPhotorealisticPromptAnchor('final', 'photorealistic')
+    expect(anchor).toContain('natural skin texture and pores')
+    expect(anchor).toContain('no anime')
+    expect(getFinalPhotorealisticPromptAnchor('photorealistic')).toBe(anchor)
+  })
+
+  it('returns empty anchor for non-photorealistic art styles', () => {
+    expect(getPhotorealisticPromptAnchor('final', 'anime-90s')).toBe('')
   })
 })

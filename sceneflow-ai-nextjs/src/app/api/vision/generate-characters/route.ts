@@ -139,7 +139,7 @@ function buildCharacterPrompt(character: any): string {
   const age = character.age ? `, ${character.age}` : ''
   const personality = character.personality ? `, ${character.personality} expression` : ''
   
-  return `Professional character reference sheet, full body portrait, ${baseDescription}${age}${personality}, neutral gray background, high detail, consistent lighting, front facing view, character design, concept art style, photorealistic, 8k quality`
+  return `Professional portrait photography, full body portrait, ${baseDescription}${age}${personality}, neutral studio background, high detail, consistent lighting, front facing view, photorealistic, 8k quality`
 }
 
 async function generateCharacterImage(params: {

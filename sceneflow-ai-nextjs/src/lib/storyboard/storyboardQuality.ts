@@ -54,9 +54,23 @@ export function resolveEffectiveStoryboardTier(
   return tier === 'final' ? 'final' : 'draft'
 }
 
-export function getFinalPhotorealisticPromptAnchor(artStyle?: string | null): string {
+const PHOTOREALISTIC_DRAFT_ANCHOR =
+  'live-action film still, photographed on real camera, no illustration, no cartoon'
+
+const PHOTOREALISTIC_FINAL_ANCHOR =
+  'live-action cinematography, photographed on real camera, natural skin texture and pores, realistic lighting, no illustration, no cartoon, no anime, no 3D render'
+
+export function getPhotorealisticPromptAnchor(
+  tier: StoryboardQuality = 'draft',
+  artStyle?: string | null
+): string {
   if ((artStyle || 'photorealistic').trim() !== 'photorealistic') return ''
-  return 'live-action cinematography, natural skin texture, no illustration'
+  return tier === 'final' ? PHOTOREALISTIC_FINAL_ANCHOR : PHOTOREALISTIC_DRAFT_ANCHOR
+}
+
+/** @deprecated Use getPhotorealisticPromptAnchor('final', artStyle) */
+export function getFinalPhotorealisticPromptAnchor(artStyle?: string | null): string {
+  return getPhotorealisticPromptAnchor('final', artStyle)
 }
 
 export interface BeatFrameGenerationContext {
