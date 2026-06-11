@@ -1394,7 +1394,7 @@ export async function POST(req: NextRequest) {
             } else if (matchingCharRef?.hasDualReferences) {
               label = buildWardrobeReferenceLabel(ref.characterName, refImageIndex)
             } else {
-              label = `Character reference ${refImageIndex}: ${ref.characterName} (wardrobe turnaround)`
+              label = `Character reference ${refImageIndex}: ${ref.characterName} (mannequin outfit sheet)`
             }
             allReferenceImages.push({
               imageUrl: ref.imageUrl,

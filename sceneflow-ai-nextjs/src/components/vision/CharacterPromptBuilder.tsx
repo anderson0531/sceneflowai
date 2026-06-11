@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/Button'
 import { Copy, Check, Info, RotateCcw } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { artStylePresets } from '@/constants/artStylePresets'
+import {
+  buildCharacterIdentityReferencePromptFromCharacter,
+} from '@/lib/character/characterReferencePrompts'
 
 interface CharacterPromptBuilderProps {
   open: boolean
@@ -56,39 +59,8 @@ export function CharacterPromptBuilder({
       setBasePrompt('')
       return
     }
-    
-    // Build a clean, non-repetitive prompt
-    // Priority: Use appearanceDescription if it exists (it's comprehensive)
-    // Otherwise, construct from individual attributes
-    
-    let constructed = ''
-    
-    if (character.appearanceDescription && character.appearanceDescription.trim().length > 50) {
-      // Use the comprehensive description, just prepend the name
-      const namePart = character.name ? `${character.name}, ` : ''
-      const ethnicityPart = character.ethnicity && !character.appearanceDescription.toLowerCase().includes(character.ethnicity.toLowerCase()) 
-        ? `${character.ethnicity}, ` 
-        : ''
-      constructed = `${namePart}${ethnicityPart}${character.appearanceDescription.trim()}`
-    } else {
-      // No comprehensive description, build from individual attributes
-      const parts: string[] = []
-      if (character.name) parts.push(character.name)
-      if (character.ethnicity) parts.push(character.ethnicity)
-      if (character.keyFeature) parts.push(character.keyFeature)
-      if (character.build) parts.push(`${character.build} build`)
-      if (character.hairColor && character.hairStyle) {
-        parts.push(`${character.hairColor} ${character.hairStyle} hair`)
-      } else if (character.hairColor) {
-        parts.push(`${character.hairColor} hair`)
-      } else if (character.hairStyle) {
-        parts.push(`${character.hairStyle} hair`)
-      }
-      if (character.eyeColor) parts.push(`${character.eyeColor} eyes`)
-      if (character.expression) parts.push(character.expression)
-      constructed = parts.filter(Boolean).join(', ')
-    }
-    
+
+    const constructed = buildCharacterIdentityReferencePromptFromCharacter(character)
     setBasePrompt(constructed)
     if (!hasUserEditedAdvanced) setAdvancedPrompt(constructed)
   }, [open, character, hasUserEditedAdvanced])
@@ -104,66 +76,11 @@ export function CharacterPromptBuilder({
   }, [open])
 
   const guidedPrompt = useMemo(() => {
-    const shotMap: Record<string, string> = {
-      'wide-shot': 'Wide shot',
-      'medium-shot': 'Medium shot',
-      'medium-close-up': 'Medium close-up',
-      'close-up': 'Close-up',
-      'extreme-close-up': 'Extreme close-up',
-      'over-shoulder': 'Over the shoulder'
-    }
-    const angleMap: Record<string, string> = {
-      'eye-level': 'eye level angle',
-      'low-angle': 'low angle view',
-      'high-angle': 'high angle view',
-      'birds-eye': "bird's eye view",
-      'dutch-angle': 'dutch angle'
-    }
-    const lightingMap: Record<string, string> = {
-      'natural': 'natural lighting',
-      'golden-hour': 'golden hour lighting',
-      'dramatic': 'dramatic cinematic lighting',
-      'soft': 'soft diffused lighting',
-      'harsh': 'harsh contrast lighting',
-      'backlit': 'backlit scene'
-    }
-    const parts: string[] = []
-    parts.push(`${shotMap[shotType] || shotType}`)
-    if (basePrompt) parts.push(`of ${basePrompt}`)
-    if (cameraAngle && cameraAngle !== 'eye-level') parts.push(angleMap[cameraAngle] || cameraAngle)
-    if (lighting) parts.push(lightingMap[lighting] || lighting)
-    if (additionalDetails) parts.push(additionalDetails)
-    
-    // Only add art style suffix if user explicitly selected a style AND
-    // the base prompt doesn't already contain key style terms
-    const stylePreset = artStyle ? artStylePresets.find(s => s.id === artStyle) : null
-    if (stylePreset) {
-      const existing = parts.join(', ').toLowerCase()
-      // Check if the primary style term is already present (e.g., "photorealistic", "anime", "comic")
-      const primaryTerm = stylePreset.id.split('-')[0] // e.g., "photorealistic", "anime", "comic"
-      const alreadyHasStyle = existing.includes(primaryTerm) || 
-                              existing.includes(stylePreset.name.toLowerCase())
-      if (!alreadyHasStyle) {
-        parts.push(stylePreset.promptSuffix)
-      }
-    }
-
-    // Normalize, dedupe, and resolve bidirectional style conflicts
-    const tokens = parts.join(', ').split(',').map(t => t.trim()).filter(Boolean)
-    const seen = new Set<string>()
-    const out: string[] = []
-    const photoTerms = ['photorealistic','photo','photograph','photography','8k','4k','realistic']
-    const artTerms = ['anime','cartoon','sketch','illustration','painting','drawing']
-    for (const t of tokens) {
-      const key = t.toLowerCase()
-      if (seen.has(key)) continue
-      if (artStyle && artStyle !== 'photorealistic' && photoTerms.some(term => key.includes(term))) continue
-      if (artStyle === 'photorealistic' && artTerms.some(term => key.includes(term))) continue
-      out.push(t)
-      seen.add(key)
-    }
-    return out.join(', ')
-  }, [shotType, cameraAngle, lighting, artStyle, additionalDetails, basePrompt])
+    const extras: string[] = []
+    if (additionalDetails.trim()) extras.push(additionalDetails.trim())
+    if (extras.length === 0) return basePrompt
+    return `${basePrompt}\n\n${extras.join('\n')}`
+  }, [basePrompt, additionalDetails])
 
   const finalPrompt = mode === 'advanced' ? advancedPrompt : guidedPrompt
 
@@ -218,10 +135,6 @@ export function CharacterPromptBuilder({
       setAdvancedPrompt(basePrompt)
       setHasUserEditedAdvanced(false)
     } else {
-      setShotType('close-up')
-      setCameraAngle('eye-level')
-      setLighting('natural')
-      setArtStyle('photorealistic')
       setAdditionalDetails('')
     }
   }

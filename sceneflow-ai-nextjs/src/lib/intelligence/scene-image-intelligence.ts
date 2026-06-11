@@ -208,7 +208,7 @@ CRITICAL RULES:
    - Each character's wardrobe MUST appear EXACTLY as specified
    - DUAL REFERENCES: When a character has BOTH identity ref [N] and wardrobe ref [M]:
      * Identity ref [N] = face and body ONLY — ignore clothing in the identity image
-     * Wardrobe ref [M] = outfit ONLY from the turnaround bottom row — do NOT derive face from wardrobe sheet
+     * Wardrobe ref [M] = outfit ONLY from the mannequin turnaround front view — do NOT derive face from wardrobe sheet
      * Do NOT describe clothing in text when wardrobe ref [M] is provided
    - TEXT-ONLY WARDROBE: When no wardrobe reference image, include COMPLETE wardrobe description verbatim
    - WARDROBE-ONLY REFERENCE (no identity portrait): ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}

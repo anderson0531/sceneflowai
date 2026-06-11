@@ -4,6 +4,7 @@ import UserProviderConfig from '@/models/UserProviderConfig'
 import { sequelize } from '@/config/database'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
+import { buildCharacterIdentityReferencePromptFromCharacter } from '@/lib/character/characterReferencePrompts'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -135,11 +136,7 @@ async function getUserImageProvider(userId: string) {
 }
 
 function buildCharacterPrompt(character: any): string {
-  const baseDescription = character.description || ''
-  const age = character.age ? `, ${character.age}` : ''
-  const personality = character.personality ? `, ${character.personality} expression` : ''
-  
-  return `Professional portrait photography, full body portrait, ${baseDescription}${age}${personality}, neutral studio background, high detail, consistent lighting, front facing view, photorealistic, 8k quality`
+  return buildCharacterIdentityReferencePromptFromCharacter(character)
 }
 
 async function generateCharacterImage(params: {

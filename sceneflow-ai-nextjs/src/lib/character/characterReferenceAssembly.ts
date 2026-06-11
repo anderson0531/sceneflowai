@@ -7,9 +7,9 @@ export const CHARACTER_IDENTITY_REFERENCE_INSTRUCTION =
   'Ignore clothing in this image if it differs from the scene wardrobe — outfit comes from the wardrobe reference or text.'
 
 export const WARDROBE_ONLY_REFERENCE_INSTRUCTION =
-  'WARDROBE REFERENCE: This is a 2-row costume turnaround sheet. Use the BOTTOM ROW front full-body view for outfit, fabric, color, and accessories ONLY. ' +
-  'Do NOT derive face or identity from this sheet — identity comes from the separate identity reference. ' +
-  'Do NOT reproduce the turnaround layout, multi-view sheet, or neutral gray studio background in the scene.'
+  'WARDROBE REFERENCE: This is a 1-row mannequin outfit turnaround sheet. Use the FRONT full-body view for outfit, fabric, color, and accessories ONLY. ' +
+  'Do NOT derive face, hair, skin tone, or identity from this sheet — identity comes from the separate identity reference. ' +
+  'Do NOT reproduce the turnaround layout, mannequin form, multi-view sheet, or neutral gray studio background in the scene.'
 
 export interface CharacterReferencePair {
   identityUrl?: string
@@ -142,7 +142,7 @@ export function buildWardrobeReferenceLabel(
   referenceIndex?: number
 ): string {
   const idx = referenceIndex != null ? ` ${referenceIndex}` : ''
-  return `Wardrobe reference${idx}: ${characterName} (2-row costume turnaround)`
+  return `Wardrobe reference${idx}: ${characterName} (1-row mannequin outfit sheet)`
 }
 
 export function buildDualReferenceLabels(

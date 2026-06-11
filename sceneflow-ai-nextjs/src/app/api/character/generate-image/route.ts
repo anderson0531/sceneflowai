@@ -8,6 +8,10 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { CreditService } from '@/services/CreditService'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
+import {
+  buildCharacterIdentityReferencePrompt,
+  promptHasIdentityReferenceAnchor,
+} from '@/lib/character/characterReferencePrompts'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120  // Increased for new AI image models
@@ -49,14 +53,19 @@ export async function POST(req: NextRequest) {
     
     const { prompt, projectId, characterId, quality = 'auto', artStyle, rawMode } = body
     
-    // Use user prompt directly - NO modifications
-    const finalPrompt = prompt?.trim() || ''
+    // Use user prompt directly unless we should normalize to identity headshot format
+    let finalPrompt = prompt?.trim() || ''
 
     if (!finalPrompt) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
-    // SIMPLIFIED: Just use the prompt as-is. No filtering, no optimization.
+    if (!rawMode && !promptHasIdentityReferenceAnchor(finalPrompt)) {
+      finalPrompt = buildCharacterIdentityReferencePrompt({
+        appearanceDescription: finalPrompt,
+      })
+    }
+
     const enhancedPrompt = finalPrompt
 
     console.log('[Character Image] ========== PROMPT COMPARISON ==========')

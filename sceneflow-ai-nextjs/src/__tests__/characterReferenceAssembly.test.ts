@@ -94,6 +94,7 @@ describe('characterReferenceAssembly', () => {
     expect(identityLine).toContain(CHARACTER_IDENTITY_REFERENCE_INSTRUCTION)
     expect(wardrobeLine).toContain(WARDROBE_ONLY_REFERENCE_INSTRUCTION)
     expect(identityLine).not.toContain('BOTTOM ROW')
-    expect(wardrobeLine).not.toContain('Ignore clothing')
+    expect(wardrobeLine).not.toContain('2-row')
+    expect(wardrobeLine.toLowerCase()).toContain('mannequin')
   })
 })

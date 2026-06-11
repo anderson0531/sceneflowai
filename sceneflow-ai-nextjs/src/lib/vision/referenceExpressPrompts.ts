@@ -1,4 +1,5 @@
 import type { VisualReference } from '@/types/visionReferences'
+import { buildCharacterIdentityReferencePromptFromCharacter } from '@/lib/character/characterReferencePrompts'
 
 export function buildCharacterReferencePrompt(character: {
   description?: string
@@ -6,15 +7,11 @@ export function buildCharacterReferencePrompt(character: {
   appearanceDescription?: string
   age?: string
   personality?: string
+  defaultWardrobe?: string
+  wardrobeAccessories?: string
+  wardrobes?: Array<{ description?: string; accessories?: string; isDefault?: boolean }>
 }): string {
-  const baseDescription =
-    character.appearanceDescription?.trim() ||
-    character.appearance?.trim() ||
-    character.description?.trim() ||
-    ''
-  const age = character.age ? `, ${character.age}` : ''
-  const personality = character.personality ? `, ${character.personality} expression` : ''
-  return `Professional portrait photography, full body portrait, ${baseDescription}${age}${personality}, neutral studio background, high detail, consistent lighting, front facing view, photorealistic, 8k quality`
+  return buildCharacterIdentityReferencePromptFromCharacter(character)
 }
 
 export function buildObjectReferencePrompt(ref: VisualReference): string {

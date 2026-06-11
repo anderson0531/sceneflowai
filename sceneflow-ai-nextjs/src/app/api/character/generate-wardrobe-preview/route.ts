@@ -17,7 +17,7 @@ export const maxDuration = 180
 /**
  * Generate Wardrobe Turnaround Reference API
  *
- * Generates a 2-row costume turnaround sheet (headshot + full body, 4 views each)
+ * Generates a 1-row faceless mannequin costume turnaround sheet (4 full-body views)
  * for use as a production wardrobe reference in scene/frame generation.
  *
  * Credit cost: 5 credits per wardrobe (1 composite turnaround sheet)
@@ -51,10 +51,6 @@ export async function POST(req: NextRequest) {
       batch = false,
       wardrobes = [],
     } = body
-
-    if (!characterReferenceImageUrl) {
-      return NextResponse.json({ error: 'Character reference image is required' }, { status: 400 })
-    }
 
     if (!characterName) {
       return NextResponse.json({ error: 'Character name is required' }, { status: 400 })
@@ -96,7 +92,7 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(
-      `[Wardrobe Turnaround] Generating ${wardrobesToGenerate.length} turnaround sheet(s) for ${characterName}`
+      `[Wardrobe Turnaround] Generating ${wardrobesToGenerate.length} mannequin sheet(s) for ${characterName}`
     )
 
     const results: Array<{
@@ -121,18 +117,11 @@ export async function POST(req: NextRequest) {
 
         console.log(`[Wardrobe Turnaround] Prompt: ${turnaroundPrompt.substring(0, 150)}...`)
 
-        // Vertex Gemini Image supports 4:3 + reference images for 2-row turnaround sheets
-        const subjectDescription = buildWardrobeTurnaroundSubjectDescription(characterName)
+        const subjectDescription = buildWardrobeTurnaroundSubjectDescription()
         const result = await generateImageWithGeminiStudio({
           prompt: `${subjectDescription}\n\n${turnaroundPrompt}`,
           aspectRatio: WARDROBE_REFERENCE_ASPECT_RATIO,
           modelTier: 'eco',
-          referenceImages: [
-            {
-              imageUrl: characterReferenceImageUrl,
-              name: characterName,
-            },
-          ],
         })
         const imageBase64 = `data:${result.mimeType};base64,${result.imageBase64}`
 

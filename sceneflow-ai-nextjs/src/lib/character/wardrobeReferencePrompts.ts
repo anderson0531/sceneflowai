@@ -2,18 +2,17 @@
  * Prompts and constants for wardrobe turnaround reference sheets used in Vision Production.
  */
 
-export const WARDROBE_REFERENCE_ASPECT_RATIO = '4:3' as const
+export const WARDROBE_REFERENCE_ASPECT_RATIO = '16:9' as const
 
-/** Downstream scene/frame generation: how to consume a 2-row turnaround ref image. */
+/** Downstream scene/frame generation: how to consume a 1-row mannequin outfit sheet. */
 export const WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION =
-  'COSTUME TURNAROUND REFERENCE: The reference image is a 2-row turnaround sheet with eight views total. ' +
-  'TOP ROW (headshots): use for facial identity — match face, hair, and expression exactly. ' +
-  'BOTTOM ROW (full body): use for outfit, body proportions, and pose — use the FRONT full-body view for scene pose. ' +
-  'Preserve outfit details (fabric, color, accessories) EXACTLY as shown. ' +
-  'Do NOT reproduce the turnaround layout, multi-view sheet, or neutral gray studio background in the scene.'
+  'COSTUME REFERENCE: The reference image is a single-row mannequin outfit turnaround (four full-body views). ' +
+  'Use the FRONT full-body view for fabric, color, fit, and accessories ONLY. ' +
+  'Do NOT derive face, hair, skin tone, or identity from this sheet — identity comes from the separate identity reference. ' +
+  'Do NOT reproduce the turnaround layout, mannequin form, multi-view sheet, or neutral gray studio background in the scene.'
 
 export interface WardrobeTurnaroundPromptInput {
-  characterName: string
+  characterName?: string
   appearanceDescription?: string
   wardrobeDescription?: string
   accessories?: string
@@ -28,12 +27,11 @@ function getPronouns(gender?: string): { pronoun: string; possessive: string } {
   }
 }
 
-export function buildWardrobeTurnaroundSubjectDescription(characterName: string): string {
+/** Opening line for mannequin-only wardrobe sheet generation (no character portrait input). */
+export function buildWardrobeTurnaroundSubjectDescription(): string {
   return (
-    `[img-1] is ${characterName}. Generate an 8-view costume turnaround sheet (2 rows × 4 columns) of [img-1] wearing the described outfit. ` +
-    'The TOP ROW headshots must match [img-1] face, hair, and identity exactly in every view. ' +
-    'Face, body proportions, and identity must match [img-1] exactly across all eight views. ' +
-    'The outfit must be identical across front, three-quarter, profile, and back views in both rows.'
+    'Generate a professional costume turnaround reference sheet showing ONLY the outfit on a faceless neutral mannequin. ' +
+    'No human face, no hair, no skin details, no character identity — outfit and garment construction only.'
   )
 }
 
@@ -88,42 +86,24 @@ export function parseOutfitDescription(description: string): {
   return result
 }
 
-/** Build prompt for a 2-row (headshot + full body) wardrobe turnaround reference sheet. */
+/** Build prompt for a 1-row faceless mannequin wardrobe turnaround reference sheet. */
 export function buildWardrobeTurnaroundPrompt(input: WardrobeTurnaroundPromptInput): string {
-  const { characterName, appearanceDescription, wardrobeDescription, accessories, gender } = input
+  const { wardrobeDescription, accessories, gender } = input
   const { pronoun } = getPronouns(gender)
   const parts: string[] = []
 
   parts.push(
-    'Professional character costume turnaround reference sheet with TWO stacked horizontal rows and FOUR aligned columns'
+    'Professional costume turnaround reference sheet with ONE horizontal row and FOUR aligned columns on a faceless neutral mannequin'
   )
   parts.push(
-    'Layout: TOP ROW (~30% of image height) = headshot turnaround; BOTTOM ROW (~70% of image height) = full-body turnaround'
+    'Layout: single row only — front facing camera, three-quarter view facing camera-left, profile side view, back view'
   )
   parts.push(
-    'Columns left to right in BOTH rows: (1) front facing camera, (2) three-quarter view facing camera-left, (3) profile side view, (4) back view'
+    'Mannequin: dull neutral gray featureless form with NO face, NO hair, NO skin texture, NO recognizable human identity'
   )
   parts.push(
-    'Columns must be vertically aligned: front headshot directly above front full-body, same for three-quarter, profile, and back'
+    'Full-body framing in all four views: neutral upright standing A-pose, arms slightly away from body, feet shoulder-width apart'
   )
-
-  parts.push(
-    'TOP ROW (headshots): chest-up shoulders-and-head framing, neutral calm expression, face fully visible and unobscured, collar and upper garment visible for costume continuity'
-  )
-  parts.push(
-    'Headshot row: eyes, nose, and chin aligned at the same height across all four headshot views'
-  )
-
-  if (appearanceDescription) {
-    const appearanceBrief = appearanceDescription.split('.').slice(0, 2).join('.').trim()
-    parts.push(
-      appearanceBrief
-        ? `Character: ${characterName}, ${appearanceBrief}`
-        : `Character: ${characterName}`
-    )
-  } else {
-    parts.push(`Character: ${characterName}`)
-  }
 
   if (wardrobeDescription) {
     const outfit = parseOutfitDescription(wardrobeDescription)
@@ -135,9 +115,9 @@ export function buildWardrobeTurnaroundPrompt(input: WardrobeTurnaroundPromptInp
     if (outfit.other) outfitItems.push(outfit.other)
 
     if (outfitItems.length > 0) {
-      parts.push(`${pronoun} is wearing ${outfitItems.join(', ')} in all eight views`)
+      parts.push(`The mannequin wears ${outfitItems.join(', ')} in all four views`)
     } else {
-      parts.push(`${pronoun} is wearing ${wardrobeDescription} in all eight views`)
+      parts.push(`The mannequin wears ${wardrobeDescription} in all four views`)
     }
   }
 
@@ -145,12 +125,6 @@ export function buildWardrobeTurnaroundPrompt(input: WardrobeTurnaroundPromptInp
     parts.push(`Accessories visible where appropriate: ${accessories}`)
   }
 
-  parts.push(
-    'BOTTOM ROW (full body): neutral upright standing A-pose, symmetrical relaxed posture, arms slightly away from body, feet shoulder-width apart, facing forward in front view'
-  )
-  parts.push(
-    'Full-body row: eyes, shoulders, and waistline aligned at the same height across all four full-body views'
-  )
   parts.push(
     'No dynamic action poses, no twisted torso, no dramatic foreshortening'
   )
@@ -164,7 +138,7 @@ export function buildWardrobeTurnaroundPrompt(input: WardrobeTurnaroundPromptInp
     'Image quality: ultra-sharp high resolution, no motion blur, no film grain, no compression artifacts, fabric textures and accessories clearly visible'
   )
   parts.push(
-    'Hair parted or styled so the face is unobscured; limbs held slightly away from the body for clear silhouette and outfit readability in the full-body row'
+    `${pronoun} outfit must be identical across front, three-quarter, profile, and back views`
   )
 
   return parts.join('. ') + '.'

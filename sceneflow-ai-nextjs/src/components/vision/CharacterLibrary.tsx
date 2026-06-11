@@ -47,6 +47,7 @@ import { VoiceSelectionDialog } from "@/components/tts/VoiceSelectionDialog";
 import { GeminiVoicePicker } from "@/components/tts/GeminiVoicePicker";
 import { NarratorVoicePicker } from "@/components/tts/NarratorVoicePicker";
 import { CharacterPromptBuilder } from "@/components/vision/CharacterPromptBuilder";
+import { buildCharacterIdentityReferencePromptFromCharacter } from "@/lib/character/characterReferencePrompts";
 import {
   AddCharacterModal,
   useOrphanCharacters,
@@ -156,7 +157,7 @@ interface CharacterWardrobe {
   createdAt: string;
   previewImageUrl?: string; // Legacy: AI-generated preview of character in this outfit
   headshotUrl?: string; // Portrait headshot (1:1) showing character face with outfit context
-  fullBodyUrl?: string; // 2-row turnaround sheet (headshot + full body, 4 views each)
+  fullBodyUrl?: string; // 1-row mannequin outfit turnaround (4 full-body views)
   sceneNumbers?: number[]; // Scenes where this outfit is used (from script analysis)
   reason?: string; // AI explanation for why this outfit is needed
 }
@@ -556,10 +557,8 @@ export function CharacterLibrary({
                   onGenerate={async () => {
                     setGeneratingChars((prev) => new Set(prev).add(charId));
                     try {
-                      // Use appearance description as prompt for generation
                       const promptToUse =
-                        char.appearanceDescription ||
-                        `${char.name || "Character"}`;
+                        buildCharacterIdentityReferencePromptFromCharacter(char);
                       await onGenerateCharacter(charId, promptToUse);
                     } finally {
                       // Clear loading state after generation completes
@@ -1788,11 +1787,6 @@ const CharacterCard = ({
     const wardrobe = wardrobes.find((w) => w.id === wardrobeId);
     if (!wardrobe) return;
 
-    if (!character.referenceImage) {
-      toast.error("Character reference image is required");
-      return;
-    }
-
     if (!wardrobe.description?.trim()) {
       toast.error(
         "Wardrobe needs a description first. Use Enhance to add details.",
@@ -1906,11 +1900,6 @@ const CharacterCard = ({
     );
     if (wardrobesWithoutPreviews.length === 0) {
       toast.info("All wardrobes already have previews");
-      return;
-    }
-
-    if (!character.referenceImage) {
-      toast.error("Character reference image is required");
       return;
     }
 
@@ -3002,7 +2991,7 @@ const CharacterCard = ({
                         }`}
                       >
                         {/* Large Image Format */}
-                        <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                        <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                           {w.fullBodyUrl ||
                           w.headshotUrl ||
                           w.previewImageUrl ? (
@@ -3045,8 +3034,8 @@ const CharacterCard = ({
                                   className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-green-600 dark:text-green-400 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm disabled:opacity-50"
                                   title={
                                     w.fullBodyUrl
-                                      ? "Regenerate 2-row turnaround reference (headshot + full body)"
-                                      : "Generate 2-row turnaround reference (headshot + full body)"
+                                      ? "Regenerate 1-row mannequin wardrobe turnaround"
+                                      : "Generate 1-row mannequin wardrobe turnaround"
                                   }
                                 >
                                   {generatingWardrobeRefFor === w.id ? (
