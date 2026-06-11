@@ -14,7 +14,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
 
-const VEO_SFX_CREDIT_COST = VIDEO_CREDITS.VEO_FAST
+const VEO_SFX_CREDIT_COST = VIDEO_CREDITS.VEO_LITE
 
 interface VeoSfxRequestBody {
   text?: string

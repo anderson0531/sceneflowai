@@ -21,7 +21,7 @@ export interface GenerateVeoSfxClientResult {
   attribution: {
     source: 'veo'
     clipDurationSeconds: number
-    veoQuality: 'fast'
+    veoQuality: 'lite'
     promptMode?: VeoSfxPromptMode
   }
 }
@@ -78,7 +78,7 @@ export async function dispatchGenerateVeoSfx(
         payload = null
       }
       if (response.status === 402) {
-        const need = payload?.creditsRequired ?? VIDEO_CREDITS.VEO_FAST
+        const need = payload?.creditsRequired ?? VIDEO_CREDITS.VEO_LITE
         const have = payload?.creditsAvailable
         toast.error(
           `Insufficient credits for Veo ambient SFX. Need ${need} credits${
@@ -122,7 +122,7 @@ export async function dispatchGenerateVeoSfx(
       attribution: {
         source: 'veo',
         clipDurationSeconds: resolvedClipDuration,
-        veoQuality: 'fast',
+        veoQuality: 'lite',
         promptMode: resolvedPromptMode,
       },
     }
@@ -137,4 +137,4 @@ export async function dispatchGenerateVeoSfx(
   }
 }
 
-export const VEO_SFX_CREDIT_HINT = `~${VIDEO_CREDITS.VEO_FAST} credits · up to 8s continuous`
+export const VEO_SFX_CREDIT_HINT = `~${VIDEO_CREDITS.VEO_LITE} credits · up to 8s continuous`

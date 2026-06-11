@@ -22,6 +22,7 @@ import {
 } from '@/lib/sfx/veoSfxDuration'
 import { withVeoSfxRetries } from '@/lib/sfx/veoSfxRetry'
 import { autoSanitizePrompt } from '@/utils/promptModerator'
+import { DEFAULT_VEO_SFX_QUALITY } from '@/lib/config/modelConfig'
 
 function parsePositiveInt(value: string | undefined, fallback: number): number {
   const n = Number(value ?? fallback)
@@ -33,6 +34,9 @@ export function getVeoSfxPollIntervalSeconds(): number {
 }
 
 export type VeoSfxPromptMode = 'ambient' | 'actionBeat'
+
+/** Veo tier used for SFX T2V (audio extracted from generated clip). */
+export const VEO_SFX_QUALITY = DEFAULT_VEO_SFX_QUALITY
 
 export interface BuildVeoSfxPromptResult {
   prompt: string
@@ -190,7 +194,7 @@ async function runVeoSfxGenerationAttempt(
   clipDurationSeconds: VeoSfxClipDuration
 ): Promise<string> {
   const queued = await generateVideoWithVeo(prompt, {
-    quality: 'fast',
+    quality: VEO_SFX_QUALITY,
     resolution: '720p',
     durationSeconds: clipDurationSeconds,
     aspectRatio: '16:9',
@@ -238,6 +242,7 @@ export async function generateVeoSfxAudio(
 
   console.log('[Veo SFX] Starting T2V generation', {
     promptMode,
+    veoQuality: VEO_SFX_QUALITY,
     clipDurationSeconds,
     sourceTextPreview: trimmedText.slice(0, 80),
     ...(audioCue ? { audioCue } : {}),
@@ -268,7 +273,7 @@ export async function generateVeoSfxAudio(
     contentType: 'audio/mpeg',
     metadata: {
       provider: 'veo',
-      veoQuality: 'fast',
+      veoQuality: VEO_SFX_QUALITY,
       promptMode,
       clipDurationSeconds: String(clipDurationSeconds),
       promptPreview: trimmedText.slice(0, 200),

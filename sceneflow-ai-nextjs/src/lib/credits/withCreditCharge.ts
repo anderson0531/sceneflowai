@@ -48,6 +48,7 @@ export type CreditOperation =
   | 'gemini_image_edit'
   // Video operations
   | 'veo_fast'
+  | 'veo_lite'
   | 'veo_max'
   | 'veo_revision'
   // Audio operations
@@ -113,6 +114,7 @@ const DEFAULT_CREDITS: Record<CreditOperation, number> = {
   gemini_image_edit: IMAGE_CREDITS.GEMINI_EDIT,
   // Video
   veo_fast: VIDEO_CREDITS.VEO_FAST,
+  veo_lite: VIDEO_CREDITS.VEO_LITE,
   veo_max: VIDEO_CREDITS.VEO_QUALITY_4K,
   veo_revision: VIDEO_CREDITS.VEO_REVISION,
   // Audio

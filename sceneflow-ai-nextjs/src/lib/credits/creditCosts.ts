@@ -129,6 +129,12 @@ export const VIDEO_CREDITS = {
    * Per 8-second clip
    */
   VEO_FAST: 150,
+
+  /**
+   * Veo 3.1 Lite (720p) - ~$0.40/8s → 75 credits ($0.75, ~50% margin)
+   * Per 8-second clip. Used for storyboard / action-beat SFX extraction.
+   */
+  VEO_LITE: 75,
   
   /** 
    * Veo 3.1 Quality (4K) - ~$1.30/8s → 250 credits ($2.50, ~48% margin)
@@ -660,6 +666,7 @@ export function estimateProjectCredits(params: {
 export const PROVIDER_COSTS_USD = {
   imagen_4: 0.04,
   veo_fast_8s: 0.75,
+  veo_lite_8s: 0.40,
   veo_quality_4k_8s: 1.30,
   fal_kling_image: 0.05,
   fal_kling_video_5s: 0.65,
@@ -839,6 +846,7 @@ export function calculateMargin(operation: keyof typeof PROVIDER_COSTS_USD, cred
 export const CREDIT_COSTS = {
   IMAGE_GENERATION: IMAGE_CREDITS.IMAGEN_4,
   VEO_FAST: VIDEO_CREDITS.VEO_FAST,
+  VEO_LITE: VIDEO_CREDITS.VEO_LITE,
   VEO_QUALITY_4K: VIDEO_CREDITS.VEO_QUALITY_4K,
   TOPAZ_UPSCALE: VIDEO_CREDITS.TOPAZ_UPSCALE_PER_MIN,
   ELEVENLABS: AUDIO_CREDITS.ELEVENLABS_PER_1K_CHARS,

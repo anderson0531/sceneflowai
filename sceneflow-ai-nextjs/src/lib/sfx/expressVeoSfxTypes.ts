@@ -32,7 +32,7 @@ export interface ExpressVeoSfxOptions {
 export interface ExpressVeoSfxAttribution {
   source: 'veo'
   clipDurationSeconds: number
-  veoQuality: 'fast'
+  veoQuality: 'lite'
   promptMode: 'actionBeat'
 }
 

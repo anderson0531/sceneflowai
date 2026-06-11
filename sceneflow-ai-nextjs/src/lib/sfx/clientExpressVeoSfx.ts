@@ -29,7 +29,7 @@ export interface DispatchExpressVeoSfxResult {
 }
 
 export function estimateExpressVeoSfxCredits(beatCount: number): number {
-  return VIDEO_CREDITS.VEO_FAST * beatCount
+  return VIDEO_CREDITS.VEO_LITE * beatCount
 }
 
 export async function dispatchExpressVeoSfx(

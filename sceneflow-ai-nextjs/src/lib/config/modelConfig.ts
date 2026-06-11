@@ -7,8 +7,9 @@
  * Pricing Reference (Jan 2026):
  * 
  * Veo Video Generation:
- * - veo-3.0-fast-generate-preview: ~$0.15-0.25/sec (Fast, 1080p)
- * - veo-3.1-generate-preview: ~$0.75/sec (Premium, 4K capable)
+ * - veo-3.1-lite-generate-001: ~$0.05/sec (Lite, 720p + audio, high-volume)
+ * - veo-3.1-fast-generate-001: ~$0.10/sec (Fast, 1080p)
+ * - veo-3.1-generate-001: ~$0.40/sec (Premium, 4K capable)
  * 
  * Imagen Image Generation:
  * - imagen-3.0-fast-generate-001: ~$0.02/image (Fast)
@@ -27,15 +28,21 @@ export type ModelQuality = 'fast' | 'standard';
 // VIDEO GENERATION MODELS (Veo)
 // =============================================================================
 
-export type VeoQualityTier = 'fast' | 'premium';
+export type VeoQualityTier = 'lite' | 'fast' | 'premium';
 
 export const VEO_MODELS = {
-  /** Veo 3.1 Fast - ~$0.20/sec, 1080p, faster generation, supports FTV (lastFrame) */
+  /** Veo 3.1 Lite - ~$0.05/sec, 720p, native audio; best for SFX / high-volume T2V */
+  lite: 'veo-3.1-lite-generate-001',
+
+  /** Veo 3.1 Fast - ~$0.10/sec, 1080p, faster generation, supports FTV (lastFrame) */
   fast: 'veo-3.1-fast-generate-001',
   
-  /** Veo 3.1 Premium - ~$0.75/sec, 4K capable, best quality, supports FTV (lastFrame) */
+  /** Veo 3.1 Premium - ~$0.40/sec, 4K capable, best quality, supports FTV (lastFrame) */
   premium: 'veo-3.1-generate-001',
 } as const;
+
+/** Default tier for Veo SFX (audio extracted from black-frame T2V) */
+export const DEFAULT_VEO_SFX_QUALITY: VeoQualityTier = 'lite';
 
 /** Default Veo quality tier (cost-optimized) */
 export const DEFAULT_VEO_QUALITY: VeoQualityTier = 'fast';
@@ -75,8 +82,9 @@ export function getQualityForMethod(method: string, requestedQuality?: VeoQualit
 
 /** Estimated cost per second for each Veo tier */
 export const VEO_COST_PER_SECOND = {
-  fast: 0.20,     // ~$0.15-0.25/sec average
-  premium: 0.75,  // ~$0.75/sec
+  lite: 0.05,     // ~$0.05/sec (720p + audio)
+  fast: 0.10,     // ~$0.10/sec (720p + audio)
+  premium: 0.40,  // ~$0.40/sec (720p/1080p + audio)
 } as const;
 
 /** Estimated cost for 8-second video */

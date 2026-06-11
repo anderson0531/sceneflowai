@@ -1,5 +1,5 @@
 import { JWT } from 'google-auth-library';
-import { getVeoModel, DEFAULT_VIDEO_QUALITY } from '@/lib/config/modelConfig';
+import { getVeoModel, DEFAULT_VIDEO_QUALITY, type VeoQualityTier } from '@/lib/config/modelConfig';
 import {
   getVeoSafetySetting,
   getVeoIncludeRaiReason,
@@ -168,7 +168,7 @@ interface VideoGenerationOptions {
   referenceImages?: ReferenceImage[] // Up to 3 for Veo 3.1
   sourceVideoUrl?: string // URL of video to extend (EXT mode) - Veo handles frame continuity automatically (legacy)
   sourceVideo?: string // Gemini Files API reference (e.g., "files/xxx") for video extension (EXT mode)
-  quality?: 'fast' | 'standard' // Video quality tier: fast (Veo 3.0 Fast) or standard (Veo 3.1)
+  quality?: VeoQualityTier | 'standard' // lite | fast | premium (standard → premium)
 }
 
 interface VideoGenerationResult {

@@ -13,7 +13,7 @@ import type {
 import { getExpressVeoSfxConcurrency, VeoSfxTrafficCop } from '@/lib/sfx/veoSfxTrafficCop'
 import { processWithConcurrency } from '@/lib/utils/concurrent-processor'
 
-const VEO_SFX_CREDIT_COST = VIDEO_CREDITS.VEO_FAST
+const VEO_SFX_CREDIT_COST = VIDEO_CREDITS.VEO_LITE
 
 function locateScene(
   project: { metadata?: Record<string, unknown> },
@@ -112,7 +112,7 @@ export async function runExpressVeoSfx(
             const attribution = {
               source: 'veo' as const,
               clipDurationSeconds: result.clipDurationSeconds,
-              veoQuality: 'fast' as const,
+              veoQuality: 'lite' as const,
               promptMode: 'actionBeat' as const,
             }
 

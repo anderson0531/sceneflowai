@@ -131,6 +131,10 @@ export function getEstimatedProviderCost(
     
     case 'veo_fast':
       return Math.ceil((metrics?.videoDurationSec ?? 8) / 8) * PROVIDER_COSTS_USD.veo_fast_8s
+
+    case 'veo_lite':
+    case 'veo_sfx':
+      return Math.ceil((metrics?.videoDurationSec ?? 8) / 8) * PROVIDER_COSTS_USD.veo_lite_8s
     
     case 'veo_quality':
       return Math.ceil((metrics?.videoDurationSec ?? 8) / 8) * PROVIDER_COSTS_USD.veo_quality_4k_8s

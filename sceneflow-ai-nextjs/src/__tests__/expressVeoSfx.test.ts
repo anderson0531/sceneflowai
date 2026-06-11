@@ -82,8 +82,8 @@ describe('resolveExpressVeoSfxItems', () => {
 })
 
 describe('express Veo SFX credits', () => {
-  it('estimates 150 credits per selected beat', () => {
-    expect(estimateExpressVeoSfxCredits(3)).toBe(VIDEO_CREDITS.VEO_FAST * 3)
+  it('estimates 75 credits per selected beat (Veo Lite)', () => {
+    expect(estimateExpressVeoSfxCredits(3)).toBe(VIDEO_CREDITS.VEO_LITE * 3)
   })
 })
 
