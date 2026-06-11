@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateTextCacheAware } from '@/lib/vertexai/gemini'
 import { logCacheEvent } from '@/lib/vertexai/cacheObservability'
 import { findMatchingCharacter } from '@/lib/character/matching'
+import {
+  copyPreservedSceneAudioFields,
+  formatMusicForPrompt,
+  formatSfxForPrompt,
+  type PreserveElement,
+} from '@/lib/audio/cleanupAudio'
 
 export const maxDuration = 60
 export const runtime = 'nodejs'
@@ -15,7 +21,7 @@ interface SceneRevisionRequest {
   customInstruction?: string
   /** Target audience profile + optional user direction */
   targetDemographic?: string
-  preserveElements?: ('narration' | 'dialogue' | 'music' | 'sfx')[]
+  preserveElements?: PreserveElement[]
   revisionDepth?: 'light' | 'moderate' | 'deep' // light=polish, moderate=rewrite, deep=restructure
   context: {
     characters: any[]
@@ -92,7 +98,7 @@ async function generateRevisedScene({
   selectedRecommendations: (string | { text: string; category?: string; impact?: 'structural' | 'polish' })[]
   customInstruction: string
   targetDemographic: string
-  preserveElements: string[]
+  preserveElements: PreserveElement[]
   revisionDepth: 'light' | 'moderate' | 'deep'
   context: any
 }): Promise<any> {
@@ -169,8 +175,8 @@ Action: ${currentScene.action || 'No action description'}
 Narration: ${currentScene.narration || 'No narration'}
 Dialogue:
 ${dialogueText}
-Music: ${currentScene.music || 'No music specified'}
-SFX: ${currentScene.sfx?.join(', ') || 'No sound effects'}
+Music: ${formatMusicForPrompt(currentScene.music)}
+SFX: ${formatSfxForPrompt(currentScene.sfx)}
 
 CONTEXT:
 Characters: ${characterNames}
@@ -370,39 +376,7 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
 
   try {
     const revisedScene = JSON.parse(jsonText)
-    
-    // Apply preservation rules
-    let finalScene = { ...currentScene, ...revisedScene }
-    if (revisedScene.visualDescription === undefined && currentScene.visualDescription) {
-      finalScene.visualDescription = currentScene.visualDescription
-    }
-    
-    if (preserveElements.includes('narration')) {
-      finalScene.narration = currentScene.narration
-    }
-    if (preserveElements.includes('dialogue')) {
-      finalScene.dialogue = currentScene.dialogue
-    }
-    if (preserveElements.includes('music')) {
-      finalScene.music = currentScene.music
-    }
-    if (preserveElements.includes('sfx')) {
-      finalScene.sfx = currentScene.sfx
-    }
-
-    if (finalScene.dialogue && Array.isArray(finalScene.dialogue) && context?.characters) {
-      finalScene.dialogue = finalScene.dialogue.map((d: any) => {
-        if (d.character) {
-          const match = findMatchingCharacter(d.character, context.characters)
-          if (match) {
-            return { ...d, character: match.name.toUpperCase() }
-          }
-        }
-        return d
-      })
-    }
-
-    return finalScene
+    return finalizeRevisedScene(revisedScene, currentScene, preserveElements, context)
 } catch (parseError) {
   console.error('[Scene Revision] JSON parse error:', parseError)
   console.error('[Scene Revision] Failed to parse text:', jsonText.substring(0, 500))
@@ -415,21 +389,7 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
       const retryParsed = JSON.parse(jsonObjectMatch[0])
       if (retryParsed.heading || retryParsed.dialogue || retryParsed.action) {
         console.log('[Scene Revision] Retry parse succeeded')
-        let finalScene = { ...currentScene, ...retryParsed }
-        
-        if (finalScene.dialogue && Array.isArray(finalScene.dialogue) && context?.characters) {
-          finalScene.dialogue = finalScene.dialogue.map((d: any) => {
-            if (d.character) {
-              const match = findMatchingCharacter(d.character, context.characters)
-              if (match) {
-                return { ...d, character: match.name.toUpperCase() }
-              }
-            }
-            return d
-          })
-        }
-        
-        return finalScene
+        return finalizeRevisedScene(retryParsed, currentScene, preserveElements, context)
       }
     }
   } catch (retryError) {
@@ -439,4 +399,45 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
   // If all parsing fails, throw so the client sees the error
   throw new Error('Failed to parse revised scene from AI response. The scene may be too complex for a single revision. Try again or edit the scene manually.')
 }
+}
+
+function finalizeRevisedScene(
+  revisedScene: any,
+  currentScene: any,
+  preserveElements: PreserveElement[],
+  context: any
+): any {
+  let finalScene = { ...currentScene, ...revisedScene }
+  if (revisedScene.visualDescription === undefined && currentScene.visualDescription) {
+    finalScene.visualDescription = currentScene.visualDescription
+  }
+
+  if (preserveElements.includes('narration')) {
+    finalScene.narration = currentScene.narration
+  }
+  if (preserveElements.includes('dialogue')) {
+    finalScene.dialogue = currentScene.dialogue
+  }
+  if (preserveElements.includes('music')) {
+    finalScene.music = currentScene.music
+  }
+  if (preserveElements.includes('sfx')) {
+    finalScene.sfx = currentScene.sfx
+  }
+
+  finalScene = copyPreservedSceneAudioFields(currentScene, finalScene, preserveElements)
+
+  if (finalScene.dialogue && Array.isArray(finalScene.dialogue) && context?.characters) {
+    finalScene.dialogue = finalScene.dialogue.map((d: any) => {
+      if (d.character) {
+        const match = findMatchingCharacter(d.character, context.characters)
+        if (match) {
+          return { ...d, character: match.name.toUpperCase() }
+        }
+      }
+      return d
+    })
+  }
+
+  return finalScene
 }

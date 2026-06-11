@@ -11,6 +11,11 @@ import { CurrentScenePanel } from './CurrentScenePanel'
 import { SceneComparisonPanel } from './SceneComparisonPanel'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { useOverlayStore } from '@/store/useOverlayStore'
+import type { PreserveElement } from '@/lib/audio/cleanupAudio'
+
+interface SceneEditorApplyOptions {
+  preserveElements?: PreserveElement[]
+}
 
 interface SceneEditorModalProps {
   isOpen: boolean
@@ -22,7 +27,7 @@ interface SceneEditorModalProps {
   previousScene?: any
   nextScene?: any
   script?: any
-  onApplyChanges: (sceneIndex: number, revisedScene: any) => void
+  onApplyChanges: (sceneIndex: number, revisedScene: any, options?: SceneEditorApplyOptions) => void
   // Initial instructions to pre-populate (from Apply Recommendations)
   initialInstructions?: string
 }
@@ -78,6 +83,15 @@ export function SceneEditorModal({
   
   const instructionCount = countInstructions(customInstruction)
   const canAddMoreInstructions = instructionCount < MAX_INSTRUCTIONS
+
+  const buildPreserveElements = useCallback((): PreserveElement[] => {
+    const preserveElements: PreserveElement[] = []
+    if (preserveNarration) preserveElements.push('narration')
+    if (preserveDialogue) preserveElements.push('dialogue')
+    if (preserveMusic) preserveElements.push('music')
+    if (preserveSfx) preserveElements.push('sfx')
+    return preserveElements
+  }, [preserveNarration, preserveDialogue, preserveMusic, preserveSfx])
 
   // Append instruction with numbered format
   const appendInstruction = (newText: string, recommendationId?: string) => {
@@ -167,11 +181,7 @@ export function SceneEditorModal({
     overlayStore.show(`Revising Scene ${sceneIndex + 1}...`, 20, 'scene-revision')
     
     try {
-      const preserveElements = []
-      if (preserveNarration) preserveElements.push('narration')
-      if (preserveDialogue) preserveElements.push('dialogue')
-      if (preserveMusic) preserveElements.push('music')
-      if (preserveSfx) preserveElements.push('sfx')
+      const preserveElements = buildPreserveElements()
 
       overlayStore.setProgress(15)
       overlayStore.setStatus('Analyzing instructions...')
@@ -245,7 +255,9 @@ export function SceneEditorModal({
     setRevisionHistory(newHistory)
     setCurrentHistoryIndex(newHistory.length - 1)
 
-    onApplyChanges(sceneIndex, revisedSceneWithMetadata)
+    onApplyChanges(sceneIndex, revisedSceneWithMetadata, {
+      preserveElements: buildPreserveElements(),
+    })
     onClose()
   }
 
@@ -490,6 +502,9 @@ export function SceneEditorModal({
                       Sound Effects
                     </label>
                   </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Preserves script text and existing generated audio for checked items.
+                  </p>
                 </div>
               </div>
             </div>

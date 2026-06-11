@@ -21,10 +21,11 @@ import { PanelGroup, Panel, PanelResizeHandle, ImperativePanelHandle } from 'rea
 import { upload } from '@vercel/blob/client'
 import debounce from 'lodash/debounce'
 import {
-  cleanupStaleAudio,
+  applySceneEditAudioPolicy,
   clearAllSceneAudio,
   mergeScenesForScriptSave,
   removeStaleAudioUrlFromScene,
+  type PreserveElement,
 } from '@/lib/audio/cleanupAudio'
 import { resolveStoryboardScenes, totalStoryboardMediaScore } from '@/lib/storyboard/resolveStoryboardScenes'
 import { stampPreVisContentHash, syncPreVisToScript } from '@/lib/storyboard/preVisSync'
@@ -10416,20 +10417,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const handleApplySceneChanges = async (sceneIndex: number, revisedScene: any) => {
+  const handleApplySceneChanges = async (
+    sceneIndex: number,
+    revisedScene: any,
+    options?: { preserveElements?: PreserveElement[] }
+  ) => {
     if (!script) return
 
     const updatedScenes = [...(script.script?.scenes || [])]
     const originalScene = updatedScenes[sceneIndex]
-    
-    // Clear ALL audio from BOTH original and revised scenes to catch all URLs
-    // The revised scene may not have audio URLs (editor doesn't copy them)
-    // So we need to get URLs from the original scene in the database
-    const { deletedUrls: originalDeletedUrls } = clearAllSceneAudio(originalScene)
-    const { cleanedScene, deletedUrls: revisedDeletedUrls } = clearAllSceneAudio(revisedScene)
-    
-    // Combine and dedupe URLs from both scenes
-    const allDeletedUrls = [...new Set([...originalDeletedUrls, ...revisedDeletedUrls])]
+
+    const { cleanedScene, deletedUrls: allDeletedUrls } = applySceneEditAudioPolicy(
+      originalScene,
+      revisedScene,
+      options?.preserveElements ?? []
+    )
     
     // Preserve audienceAnalysis from original scene and mark as optimized
     // so progressive analysis knows the scene was edited since last analysis
@@ -10513,7 +10515,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       // Show success message
       try {
         const { toast } = require('sonner')
-        toast.success('Scene changes applied - use Update Audio to regenerate audio')
+        if (allDeletedUrls.length > 0) {
+          toast.success('Scene changes applied — use Update Audio to regenerate invalidated tracks')
+        } else {
+          toast.success('Scene changes applied — existing audio preserved')
+        }
       } catch {}
       
       // Auto-regenerate scene direction in background (non-blocking)

@@ -7,6 +7,9 @@
 
 import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
 import { stripGhostStandaloneNarration } from '@/lib/script/narration'
+import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
+
+export type PreserveElement = 'narration' | 'dialogue' | 'music' | 'sfx'
 
 /** Scene-level fields that store generated audio references. */
 export const SCENE_AUDIO_FIELD_KEYS = [
@@ -23,8 +26,454 @@ export const SCENE_AUDIO_FIELD_KEYS = [
   'musicUrl',
   'musicDuration',
   'sfxAudio',
+  'sfxSourceMeta',
   'dialogueAudioGeneratedAt',
 ] as const
+
+const SFX_AUDIO_FIELD_KEYS = ['sfxAudio', 'sfxSourceMeta'] as const
+
+function dedupeUrls(urls: string[]): string[] {
+  return [...new Set(urls.filter((url) => url && typeof url === 'string'))]
+}
+
+/** Normalize scene music spec for change detection. */
+export function normalizeMusicSpec(music: unknown): string {
+  if (!music) return ''
+  if (typeof music === 'string') return music.trim()
+  if (typeof music === 'object' && music !== null) {
+    const description = (music as { description?: unknown }).description
+    return typeof description === 'string' ? description.trim() : ''
+  }
+  return ''
+}
+
+/** Ordered SFX cue descriptions for display / prompt serialization. */
+export function normalizeSfxSpecsOrdered(sfx: unknown): string[] {
+  return coerceSceneSfxFlatArray(sfx)
+    .map((item) => {
+      if (typeof item === 'string') return item.trim()
+      if (item && typeof item === 'object') {
+        return String(
+          (item as { description?: unknown; text?: unknown; name?: unknown }).description ??
+            (item as { text?: unknown }).text ??
+            (item as { name?: unknown }).name ??
+            ''
+        ).trim()
+      }
+      return ''
+    })
+    .filter(Boolean)
+}
+
+/** Sorted SFX descriptions for multiset comparison. */
+export function normalizeSfxSpecs(sfx: unknown): string[] {
+  return [...normalizeSfxSpecsOrdered(sfx)].sort()
+}
+
+export function formatMusicForPrompt(music: unknown): string {
+  const spec = normalizeMusicSpec(music)
+  return spec || 'No music specified'
+}
+
+export function formatSfxForPrompt(sfx: unknown): string {
+  const specs = normalizeSfxSpecsOrdered(sfx)
+  return specs.length > 0 ? specs.join(', ') : 'No sound effects'
+}
+
+function collectNarrationAudioUrls(scene: any, target: string[]): void {
+  if (scene?.narrationAudio && typeof scene.narrationAudio === 'object') {
+    for (const langAudio of Object.values(scene.narrationAudio)) {
+      if ((langAudio as { url?: string })?.url) target.push((langAudio as { url: string }).url)
+    }
+  }
+  if (scene?.narrationAudioUrl && !target.includes(scene.narrationAudioUrl)) {
+    target.push(scene.narrationAudioUrl)
+  }
+}
+
+function collectDescriptionAudioUrls(scene: any, target: string[]): void {
+  if (scene?.descriptionAudio && typeof scene.descriptionAudio === 'object') {
+    for (const langAudio of Object.values(scene.descriptionAudio)) {
+      if ((langAudio as { url?: string })?.url) target.push((langAudio as { url: string }).url)
+    }
+  }
+  if (scene?.descriptionAudioUrl && !target.includes(scene.descriptionAudioUrl)) {
+    target.push(scene.descriptionAudioUrl)
+  }
+}
+
+function collectMusicAudioUrls(scene: any, target: string[]): void {
+  if (scene?.musicAudio) target.push(scene.musicAudio)
+  if (scene?.music?.url) target.push(scene.music.url)
+  if (scene?.musicUrl && !target.includes(scene.musicUrl)) target.push(scene.musicUrl)
+}
+
+function collectSfxAudioUrls(scene: any, target: string[]): void {
+  if (Array.isArray(scene?.sfxAudio)) {
+    for (const sfxUrl of scene.sfxAudio) {
+      if (sfxUrl) target.push(sfxUrl)
+    }
+  }
+  for (const item of coerceSceneSfxFlatArray(scene?.sfx)) {
+    if (item && typeof item === 'object' && (item as { audioUrl?: string }).audioUrl) {
+      target.push((item as { audioUrl: string }).audioUrl)
+    }
+  }
+}
+
+function copyNarrationAudioFields(from: any, to: any): void {
+  if (from?.narrationAudio !== undefined) to.narrationAudio = from.narrationAudio
+  else delete to.narrationAudio
+  if (from?.narrationAudioUrl !== undefined) to.narrationAudioUrl = from.narrationAudioUrl
+  else delete to.narrationAudioUrl
+  if (from?.narrationDuration !== undefined) to.narrationDuration = from.narrationDuration
+  else delete to.narrationDuration
+  if (from?.narrationAudioGeneratedAt !== undefined) {
+    to.narrationAudioGeneratedAt = from.narrationAudioGeneratedAt
+  } else {
+    delete to.narrationAudioGeneratedAt
+  }
+}
+
+function copyDescriptionAudioFields(from: any, to: any): void {
+  if (from?.descriptionAudio !== undefined) to.descriptionAudio = from.descriptionAudio
+  else delete to.descriptionAudio
+  if (from?.descriptionAudioUrl !== undefined) to.descriptionAudioUrl = from.descriptionAudioUrl
+  else delete to.descriptionAudioUrl
+  if (from?.descriptionDuration !== undefined) to.descriptionDuration = from.descriptionDuration
+  else delete to.descriptionDuration
+  if (from?.descriptionAudioGeneratedAt !== undefined) {
+    to.descriptionAudioGeneratedAt = from.descriptionAudioGeneratedAt
+  } else {
+    delete to.descriptionAudioGeneratedAt
+  }
+}
+
+function copyMusicAudioFields(from: any, to: any): void {
+  if (from?.musicAudio !== undefined) to.musicAudio = from.musicAudio
+  else delete to.musicAudio
+  if (from?.musicUrl !== undefined) to.musicUrl = from.musicUrl
+  else delete to.musicUrl
+  if (from?.musicDuration !== undefined) to.musicDuration = from.musicDuration
+  else delete to.musicDuration
+  if (from?.music && typeof from.music === 'object') {
+    to.music = { ...(typeof to.music === 'object' && to.music ? to.music : {}), ...from.music }
+  }
+}
+
+function copySfxAudioFields(from: any, to: any): void {
+  for (const key of SFX_AUDIO_FIELD_KEYS) {
+    if (from?.[key] !== undefined) to[key] = from[key]
+    else delete to[key]
+  }
+  if (Array.isArray(from?.sfx) && Array.isArray(to?.sfx)) {
+    to.sfx = to.sfx.map((item: any, idx: number) => {
+      const originalItem = from.sfx[idx]
+      if (!originalItem || typeof originalItem !== 'object') return item
+      if (typeof item === 'string') {
+        return originalItem.audioUrl
+          ? { description: item, audioUrl: originalItem.audioUrl, ...(originalItem.audioDuration != null ? { audioDuration: originalItem.audioDuration } : {}) }
+          : item
+      }
+      if (item && typeof item === 'object' && originalItem.audioUrl) {
+        return { ...item, audioUrl: originalItem.audioUrl, ...(originalItem.audioDuration != null ? { audioDuration: originalItem.audioDuration } : {}) }
+      }
+      return item
+    })
+  }
+}
+
+function remapSfxAudioByDescription(originalScene: any, scene: any): void {
+  const originalSpecs = normalizeSfxSpecsOrdered(originalScene?.sfx)
+  const revisedSpecs = normalizeSfxSpecsOrdered(scene?.sfx)
+  if (originalSpecs.join('\0') === revisedSpecs.join('\0')) {
+    copySfxAudioFields(originalScene, scene)
+    return
+  }
+
+  const originalItems = coerceSceneSfxFlatArray(originalScene?.sfx)
+  const lookup = new Map<string, { url?: string; meta?: unknown; audioUrl?: string }>()
+  const sfxAudio = Array.isArray(originalScene?.sfxAudio) ? originalScene.sfxAudio : []
+  const sfxSourceMeta = Array.isArray(originalScene?.sfxSourceMeta) ? originalScene.sfxSourceMeta : []
+
+  originalItems.forEach((item, idx) => {
+    const description =
+      typeof item === 'string'
+        ? item.trim()
+        : String((item as { description?: unknown; text?: unknown; name?: unknown }).description ?? (item as { text?: unknown }).text ?? (item as { name?: unknown }).name ?? '').trim()
+    if (!description) return
+    lookup.set(description, {
+      url: typeof sfxAudio[idx] === 'string' ? sfxAudio[idx] : undefined,
+      meta: sfxSourceMeta[idx],
+      audioUrl: item && typeof item === 'object' ? (item as { audioUrl?: string }).audioUrl : undefined,
+    })
+  })
+
+  const nextSfxAudio: Array<string | null> = []
+  const nextSfxSourceMeta: unknown[] = []
+  const nextSfx = coerceSceneSfxFlatArray(scene?.sfx).map((item, idx) => {
+    const description =
+      typeof item === 'string'
+        ? item.trim()
+        : String((item as { description?: unknown; text?: unknown; name?: unknown }).description ?? (item as { text?: unknown }).text ?? (item as { name?: unknown }).name ?? '').trim()
+    const bundle = lookup.get(description)
+    nextSfxAudio[idx] = bundle?.url ?? null
+    nextSfxSourceMeta[idx] = bundle?.meta ?? null
+    if (typeof item === 'string') {
+      return bundle?.audioUrl ? { description: item, audioUrl: bundle.audioUrl } : item
+    }
+    if (item && typeof item === 'object' && bundle?.audioUrl) {
+      return { ...item, audioUrl: bundle.audioUrl }
+    }
+    return item
+  })
+
+  scene.sfx = nextSfx
+  scene.sfxAudio = nextSfxAudio
+  scene.sfxSourceMeta = nextSfxSourceMeta
+}
+
+function clearNarrationAudioFields(scene: any): void {
+  delete scene.narrationAudio
+  delete scene.narrationAudioUrl
+  delete scene.narrationDuration
+  delete scene.narrationAudioGeneratedAt
+}
+
+function clearDescriptionAudioFields(scene: any): void {
+  delete scene.descriptionAudio
+  delete scene.descriptionAudioUrl
+  delete scene.descriptionDuration
+  delete scene.descriptionAudioGeneratedAt
+}
+
+function clearMusicAudioFields(scene: any): void {
+  delete scene.musicAudio
+  delete scene.musicUrl
+  delete scene.musicDuration
+  if (scene.music && typeof scene.music === 'object') {
+    delete scene.music.url
+  }
+}
+
+function clearSfxAudioFields(scene: any): void {
+  for (const key of SFX_AUDIO_FIELD_KEYS) delete scene[key]
+  if (Array.isArray(scene.sfx)) {
+    scene.sfx = scene.sfx.map((item: any) => {
+      if (typeof item === 'string') return item
+      if (item && typeof item === 'object') {
+        const { audioUrl, audioDuration, ...rest } = item
+        return rest
+      }
+      return item
+    })
+  }
+}
+
+function copyDialogueAudioBundle(from: any, to: any): void {
+  if (from?.dialogueAudio !== undefined) to.dialogueAudio = from.dialogueAudio
+  else delete to.dialogueAudio
+  if (from?.dialogueAudioGeneratedAt !== undefined) {
+    to.dialogueAudioGeneratedAt = from.dialogueAudioGeneratedAt
+  } else {
+    delete to.dialogueAudioGeneratedAt
+  }
+  if (Array.isArray(from?.dialogue) && Array.isArray(to?.dialogue)) {
+    to.dialogue = to.dialogue.map((line: any, idx: number) => {
+      const originalLine = from.dialogue[idx]
+      if (!originalLine) return line
+      const next = { ...line }
+      if (originalLine.audioUrl) next.audioUrl = originalLine.audioUrl
+      else delete next.audioUrl
+      if (originalLine.url) next.url = originalLine.url
+      else delete next.url
+      if (originalLine.audioDuration != null) next.audioDuration = originalLine.audioDuration
+      else delete next.audioDuration
+      return next
+    })
+  }
+}
+
+function filterStaleDialogueAudio(originalScene: any, scene: any, deletedUrls: string[]): void {
+  const originalDialogueLines = (originalScene?.dialogue || []).map((d: any) => ({
+    character: d.character,
+    line: d.line || d.text || '',
+  }))
+  const revisedDialogueLines = (scene.dialogue || []).map((d: any) => ({
+    character: d.character,
+    line: d.line || d.text || '',
+  }))
+
+  if (!originalScene?.dialogueAudio) {
+    if (Array.isArray(scene.dialogue)) {
+      scene.dialogue = scene.dialogue.map((line: any) => {
+        if (!line?.audioUrl && !line?.url) return line
+        if (line.audioUrl) deletedUrls.push(line.audioUrl)
+        if (line.url) deletedUrls.push(line.url)
+        const { audioUrl, url, audioDuration, ...rest } = line
+        return rest
+      })
+    }
+    return
+  }
+
+  if (typeof originalScene.dialogueAudio === 'object' && !Array.isArray(originalScene.dialogueAudio)) {
+    scene.dialogueAudio = {}
+    for (const [language, audioArray] of Object.entries(originalScene.dialogueAudio)) {
+      if (!Array.isArray(audioArray)) continue
+      const keptAudio: any[] = []
+      for (const audio of audioArray as any[]) {
+        const dialogueIdx = audio.dialogueIndex
+        const originalLine = originalDialogueLines[dialogueIdx]
+        const revisedLine = revisedDialogueLines[dialogueIdx]
+        const shouldKeep =
+          revisedLine &&
+          originalLine &&
+          revisedLine.character === audio.character &&
+          originalLine.line === revisedLine.line
+        if (shouldKeep) {
+          keptAudio.push(audio)
+        } else if (audio.audioUrl) {
+          deletedUrls.push(audio.audioUrl)
+        }
+      }
+      if (keptAudio.length > 0) scene.dialogueAudio[language] = keptAudio
+    }
+    if (Object.keys(scene.dialogueAudio).length === 0) delete scene.dialogueAudio
+  } else if (Array.isArray(originalScene.dialogueAudio)) {
+    const keptAudio: any[] = []
+    for (const audio of originalScene.dialogueAudio) {
+      const dialogueIdx = audio.dialogueIndex
+      const originalLine = originalDialogueLines[dialogueIdx]
+      const revisedLine = revisedDialogueLines[dialogueIdx]
+      const shouldKeep =
+        revisedLine &&
+        originalLine &&
+        revisedLine.character === audio.character &&
+        originalLine.line === revisedLine.line
+      if (shouldKeep) keptAudio.push(audio)
+      else if (audio.audioUrl) deletedUrls.push(audio.audioUrl)
+    }
+    if (keptAudio.length > 0) scene.dialogueAudio = keptAudio
+    else delete scene.dialogueAudio
+  }
+
+  if (Array.isArray(scene.dialogue)) {
+    scene.dialogue = scene.dialogue.map((line: any, idx: number) => {
+      const originalLine = originalDialogueLines[idx]
+      const revisedLine = revisedDialogueLines[idx]
+      const shouldKeep =
+        revisedLine &&
+        originalLine &&
+        revisedLine.character === originalLine.character &&
+        revisedLine.line === originalLine.line
+      if (shouldKeep && originalScene.dialogue?.[idx]) {
+        const source = originalScene.dialogue[idx]
+        return {
+          ...line,
+          ...(source.audioUrl ? { audioUrl: source.audioUrl } : {}),
+          ...(source.url ? { url: source.url } : {}),
+          ...(source.audioDuration != null ? { audioDuration: source.audioDuration } : {}),
+        }
+      }
+      const next = { ...line }
+      if (next.audioUrl) {
+        if (!deletedUrls.includes(next.audioUrl)) deletedUrls.push(next.audioUrl)
+        delete next.audioUrl
+      }
+      if (next.url) {
+        if (!deletedUrls.includes(next.url)) deletedUrls.push(next.url)
+        delete next.url
+      }
+      delete next.audioDuration
+      return next
+    })
+  }
+}
+
+/** Copy generated audio fields from original when preserve flags are set (API belt-and-suspenders). */
+export function copyPreservedSceneAudioFields(
+  originalScene: any,
+  scene: any,
+  preserveElements: PreserveElement[] = []
+): any {
+  const preserve = new Set(preserveElements)
+  const next = { ...scene }
+  if (preserve.has('narration')) copyNarrationAudioFields(originalScene, next)
+  if (preserve.has('dialogue')) copyDialogueAudioBundle(originalScene, next)
+  if (preserve.has('music')) copyMusicAudioFields(originalScene, next)
+  if (preserve.has('sfx')) copySfxAudioFields(originalScene, next)
+  return next
+}
+
+/**
+ * Apply selective audio invalidation after a scene edit.
+ * Keeps generated audio when the element spec is unchanged or explicitly preserved.
+ */
+export function applySceneEditAudioPolicy(
+  originalScene: any,
+  revisedScene: any,
+  preserveElements: PreserveElement[] = []
+): CleanupResult {
+  const preserve = new Set(preserveElements)
+  const scene = { ...originalScene, ...revisedScene }
+  const deletedUrls: string[] = []
+
+  if (preserve.has('narration')) scene.narration = originalScene?.narration
+  if (preserve.has('dialogue')) scene.dialogue = originalScene?.dialogue
+  if (preserve.has('music')) scene.music = originalScene?.music
+  if (preserve.has('sfx')) scene.sfx = originalScene?.sfx
+
+  const narrationChanged =
+    String(originalScene?.narration ?? '').trim() !== String(scene.narration ?? '').trim()
+  if (preserve.has('narration') || !narrationChanged) {
+    copyNarrationAudioFields(originalScene, scene)
+  } else {
+    collectNarrationAudioUrls(originalScene, deletedUrls)
+    clearNarrationAudioFields(scene)
+  }
+
+  const originalDescription = originalScene?.description || originalScene?.action || ''
+  const revisedDescription = scene.description || scene.action || ''
+  if (originalDescription !== revisedDescription) {
+    collectDescriptionAudioUrls(originalScene, deletedUrls)
+    clearDescriptionAudioFields(scene)
+  } else {
+    copyDescriptionAudioFields(originalScene, scene)
+  }
+
+  if (preserve.has('dialogue')) {
+    copyDialogueAudioBundle(originalScene, scene)
+  } else {
+    filterStaleDialogueAudio(originalScene, scene, deletedUrls)
+  }
+
+  const musicChanged = normalizeMusicSpec(originalScene?.music) !== normalizeMusicSpec(scene.music)
+  if (preserve.has('music') || !musicChanged) {
+    copyMusicAudioFields(originalScene, scene)
+  } else {
+    collectMusicAudioUrls(originalScene, deletedUrls)
+    clearMusicAudioFields(scene)
+  }
+
+  const sfxSpecsChanged =
+    normalizeSfxSpecs(originalScene?.sfx).join('\0') !== normalizeSfxSpecs(scene.sfx).join('\0')
+  const sfxOrderChanged =
+    normalizeSfxSpecsOrdered(originalScene?.sfx).join('\0') !==
+    normalizeSfxSpecsOrdered(scene.sfx).join('\0')
+  if (preserve.has('sfx') || !sfxSpecsChanged) {
+    if (preserve.has('sfx') || !sfxOrderChanged) {
+      copySfxAudioFields(originalScene, scene)
+    } else {
+      remapSfxAudioByDescription(originalScene, scene)
+    }
+  } else {
+    collectSfxAudioUrls(originalScene, deletedUrls)
+    clearSfxAudioFields(scene)
+  }
+
+  return { cleanedScene: scene, deletedUrls: dedupeUrls(deletedUrls) }
+}
 
 /**
  * Result type for cleanupStaleAudio with URLs for deletion
