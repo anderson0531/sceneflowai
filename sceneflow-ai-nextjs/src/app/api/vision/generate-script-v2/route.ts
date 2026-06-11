@@ -25,6 +25,7 @@ import {
   resolveNarrationPolicy,
   type NarrationPolicy,
 } from '@/lib/script/narrationPolicy'
+import { adaptPromptForLyria, LYRIA_MUSIC_PROMPT_RULES } from '@/lib/audio/lyriaPromptAdapter'
 import {
   buildFoundationPromptBlock,
   getArtStylePresetName,
@@ -825,12 +826,7 @@ AUDIO FIELD REQUIREMENTS (CRITICAL FOR MOOD AND EMOTION):
 - Think cinematically: music and SFX should enhance the emotional storytelling
 - Descriptions should be 10-20 words, balancing specificity with creative interpretation
 
-LYRIA MUSIC RULES (for scene.music.description):
-- 10-20 words ONLY
-- Instrumental only (no vocals/lyrics)
-- Format: [genre], [mood], [instruments], [tempo]
-- NO film titles, character names, or visual sync ("as the camera…")
-- NO narrative arcs or timestamps
+${LYRIA_MUSIC_PROMPT_RULES}
 
 CRITICAL JSON FORMATTING RULES:
 - Return ONLY valid JSON - no markdown, no explanations
@@ -961,12 +957,7 @@ SCRIPT FORMAT REQUIREMENTS (CRITICAL):
 - Add separate "Music: [description]" line for background music
 - Keep audio descriptions concise
 
-LYRIA MUSIC RULES (for scene.music.description):
-- 10-20 words ONLY
-- Instrumental only (no vocals/lyrics)
-- Format: [genre], [mood], [instruments], [tempo]
-- NO film titles, character names, or visual sync ("as the camera…")
-- NO narrative arcs or timestamps
+${LYRIA_MUSIC_PROMPT_RULES}
 
 CRITICAL JSON FORMATTING RULES:
 - Return ONLY valid JSON - no markdown, no explanations
@@ -1137,12 +1128,7 @@ TECHNICAL REQUIREMENTS:
 • Include "sfx" and "music" for atmosphere
 • Estimate realistic durations based on content
 
-LYRIA MUSIC RULES (for scene.music.description):
-- 10-20 words ONLY
-- Instrumental only (no vocals/lyrics)
-- Format: [genre], [mood], [instruments], [tempo]
-- NO film titles, character names, or visual sync ("as the camera…")
-- NO narrative arcs or timestamps
+${LYRIA_MUSIC_PROMPT_RULES}
 
 ${narrationSection}
 
@@ -1893,7 +1879,9 @@ function parseBatch1(response: string, start: number, end: number): any {
                 description: sfx.description || ''
               })) : [],
               music: s.music ? {
-                description: s.music.description || '',
+                description: s.music.description?.trim()
+                  ? adaptPromptForLyria(s.music.description)
+                  : '',
                 duration: s.music.duration
               } : undefined,
               isExpanded: true
@@ -2059,7 +2047,9 @@ function parseScenes(response: string, start: number, end: number): any {
               description: sfx.description || ''
             })) : [],
             music: s.music ? {
-              description: s.music.description || '',
+              description: s.music.description?.trim()
+                ? adaptPromptForLyria(s.music.description)
+                : '',
               duration: s.music.duration
             } : undefined,
             isExpanded: true
