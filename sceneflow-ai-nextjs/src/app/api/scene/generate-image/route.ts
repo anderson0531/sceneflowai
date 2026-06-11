@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor } from '@/lib/imagen/promptOptimizer'
+import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
 import { generateDirectionHash, generateImageSourceHash } from '@/lib/utils/contentHash'
@@ -26,10 +26,13 @@ import { isStoryboardNoCharacterScene } from '@/lib/script/sceneClassification'
 import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
 import { NARRATOR_CHARACTER, type BeatKind } from '@/lib/script/segmentTypes'
 import {
+  buildDualReferenceNegativeTerms,
+  buildFramingAwareIdentityBlock,
   buildIdentityReferenceLabel,
   buildIdentityReferencePromptLine,
   buildWardrobeReferenceLabel,
   buildWardrobeReferencePromptLine,
+  DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
@@ -921,18 +924,15 @@ export async function POST(req: NextRequest) {
       const hasReferenceImage = !!(identityReferenceId || wardrobeReferenceId)
       const referenceId = identityReferenceId ?? wardrobeReferenceId
       
-      // Generate linking description for text-matching mode
-      // CRITICAL: subjectDescription should be a TEXT DESCRIPTION with KEY PHYSICAL FEATURES
-      // The [N] marker is just a reference tag in the prompt, NOT the subjectDescription
-      // Per Google docs: "subjectDescription": "a man with short hair" with prompt containing "a man with short hair [1]"
-      // 
-      // IMPORTANT: Include distinctive features (hair color, facial hair) that must be preserved!
-      // e.g., "a Black man in his late 40s with salt-and-pepper hair and beard"
+      // subjectTextDescription: metadata for structured API reference payload (not repeated in scene prompt)
+      // promptToken: reference-first binding for all prompt text — "person [N]" only when identity ref exists
       let subjectTextDescription: string | undefined
       const appearanceSource =
         char.appearanceDescription || char.visionDescription || char.description || ''
 
-      if (hasReferenceImage && appearanceSource) {
+      if (identityReferenceId) {
+        subjectTextDescription = char.name || 'person'
+      } else if (hasReferenceImage && appearanceSource) {
         subjectTextDescription =
           extractDemographicAnchor(appearanceSource) ||
           createVisualAnchorDescription(char, referenceId ?? idx + 1)
@@ -946,16 +946,18 @@ export async function POST(req: NextRequest) {
         )
       }
       
-      // linkingDescription for prompt: identity ref index when available
       const linkingRefId =
         identityReferenceId ?? (hasWardrobeOnlyReference ? wardrobeReferenceId : undefined)
-      const linkingDescription = linkingRefId
-        ? (subjectTextDescription ? `${subjectTextDescription} [${linkingRefId}]` : `person [${linkingRefId}]`)
+      const promptToken = linkingRefId
+        ? identityReferenceId
+          ? buildIdentityPromptToken(identityReferenceId)
+          : `person [${linkingRefId}]`
         : undefined
+      const linkingDescription = promptToken
       
       if (hasReferenceImage) {
         console.log(`[Scene Image] ${char.name} identityRef: ${identityReferenceId ?? 'none'}, wardrobeRef: ${wardrobeReferenceId ?? 'none'}`)
-        console.log(`[Scene Image] ${char.name} linkingDescription (for prompt): "${linkingDescription}"`)
+        console.log(`[Scene Image] ${char.name} promptToken (for prompt): "${promptToken}"`)
         console.log(`[Scene Image] ${char.name} subjectDescription (for API): "${subjectTextDescription}"`)
       } else {
         console.log(`[Scene Image] ${char.name} has no reference image, will use text description only`)
@@ -978,6 +980,7 @@ export async function POST(req: NextRequest) {
         hasDualReferences,
         hasWardrobeOnlyReference,
         linkingDescription,
+        promptToken,
         subjectTextDescription,
         appearanceDescription: char.appearanceDescription || char.visionDescription,
       }
@@ -1083,7 +1086,7 @@ export async function POST(req: NextRequest) {
       // Build character contexts with resolved wardrobes
       const characterContexts: CharacterContext[] = characterReferences.map((ref: any) => ({
         name: ref.name,
-        linkingDescription: ref.linkingDescription,
+        linkingDescription: ref.promptToken ?? ref.linkingDescription,
         appearanceDescription: ref.appearanceDescription,
         wardrobeDescription: ref.defaultWardrobe,
         wardrobeAccessories: ref.wardrobeAccessories,
@@ -1189,12 +1192,23 @@ export async function POST(req: NextRequest) {
       if (aiResult.usedAI && aiResult.prompt) {
         // AI intelligence succeeded — use the AI-generated prompt
         // Wrap it with the linking template for reference image binding
-        const charactersWithRefs = characterReferences.filter((ref: any) => ref.referenceId)
+        const charactersWithRefs = characterReferences.filter(
+          (ref: any) => ref.identityReferenceId || ref.wardrobeReferenceId
+        )
         
+        let aiPromptBody = aiResult.prompt
         if (charactersWithRefs.length > 0) {
-          // Use Google's recommended template structure for subject customization
-          const subjectIntroductions = charactersWithRefs.map((ref: any) => ref.linkingDescription).join(' and ')
-          optimizedPrompt = `Create an image about ${subjectIntroductions} to match the description: ${aiResult.prompt}`
+          aiPromptBody = sanitizePromptForIdentityRefs(aiPromptBody, charactersWithRefs)
+          const subjectIntroductions = charactersWithRefs
+            .map(
+              (ref: any) =>
+                ref.promptToken ??
+                (ref.identityReferenceId != null
+                  ? buildIdentityPromptToken(ref.identityReferenceId)
+                  : ref.linkingDescription)
+            )
+            .join(' and ')
+          optimizedPrompt = `Create an image about ${subjectIntroductions} to match the description: ${aiPromptBody}`
         } else {
           optimizedPrompt = aiResult.prompt
         }
@@ -1337,6 +1351,13 @@ export async function POST(req: NextRequest) {
     if (styleNegativeTerms) {
       negativePromptParts.push(styleNegativeTerms)
     }
+    const hasAnyDualRef = characterReferences.some((cr: any) => cr.hasDualReferences)
+    if (
+      hasAnyDualRef &&
+      (artStyle || 'photorealistic').trim() === 'photorealistic'
+    ) {
+      negativePromptParts.push(buildDualReferenceNegativeTerms())
+    }
     const finalNegativePrompt = negativePromptParts.join(', ')
     
     console.log(`[Scene Image] Negative prompt includes ${characterSpecificNegatives.length} character-specific exclusions (facial features only)`)
@@ -1425,9 +1446,17 @@ export async function POST(req: NextRequest) {
           // Build multimodal prompt with explicit per-image role instructions
           let geminiPrompt = `Generate a cinematic scene image. The following reference images are provided:\n\n`
           
-          // Character reference instructions with WARDROBE ANCHORING
+          // Character reference instructions
           if (imageReferences.length > 0) {
             geminiPrompt += `CHARACTER REFERENCES (${imageReferences.length}):\n`
+            const hasAnyDual = characterReferences.some((cr: any) => cr.hasDualReferences)
+            if (hasAnyDual) {
+              geminiPrompt += `${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n`
+              const framingBlock = buildFramingAwareIdentityBlock(effectiveShotType)
+              if (framingBlock) {
+                geminiPrompt += `${framingBlock}\n`
+              }
+            }
             imageReferences.forEach((ref) => {
               const matchingCharRef = characterReferences.find(
                 (cr: any) => cr.name === ref.characterName
@@ -1440,13 +1469,12 @@ export async function POST(req: NextRequest) {
                 geminiPrompt += `- Reference image ${ref.referenceId}: WARDROBE REFERENCE for ${ref.characterName}\n  ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}\n`
               }
             })
-            const hasAnyDual = characterReferences.some((cr: any) => cr.hasDualReferences)
             const hasIdentityOnly = characterReferences.some(
               (cr: any) => cr.identityImageUrl && !cr.hasDualReferences && !cr.hasWardrobeOnlyReference
             )
             if (hasAnyDual) {
               geminiPrompt +=
-                'When both identity and wardrobe references exist for a character, use identity for face/body and wardrobe for outfit only.\n\n'
+                'In the scene prompt, refer to characters with identity refs using ONLY "person [N]" tokens — no ethnicity, age, or appearance adjectives in text.\n\n'
             } else if (hasIdentityOnly) {
               geminiPrompt +=
                 'Use identity reference(s) for face, hair, skin tone, age, ethnicity, and body proportions only. Ignore clothing in identity reference images — outfit must come from wardrobe text in the scene prompt.\n\n'
@@ -1478,11 +1506,8 @@ export async function POST(req: NextRequest) {
             if (wardrobeReminders.length > 0) {
               geminiPrompt += `- WARDROBE MUST BE EXACT: ${wardrobeReminders.join('; ')}\n`
             }
-            const dualRefNames = characterReferences
-              .filter((cr: any) => cr.hasDualReferences)
-              .map((cr: any) => cr.name)
-            if (dualRefNames.length > 0) {
-              geminiPrompt += `- DUAL REFERENCES (${dualRefNames.join(', ')}): identity ref = face/body; wardrobe ref = outfit only\n`
+            if (hasAnyDualRef) {
+              geminiPrompt += `- ${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n`
             }
             const wardrobeOnlyNames = characterReferences
               .filter((cr: any) => cr.hasWardrobeOnlyReference)

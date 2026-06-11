@@ -21,6 +21,7 @@ import { generateText, generateTextCacheAware, type TextGenerationOptions } from
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 import {
   CHARACTER_IDENTITY_REFERENCE_INSTRUCTION,
+  DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
   WARDROBE_ONLY_REFERENCE_INSTRUCTION,
 } from '@/lib/character/characterReferenceAssembly'
 import type { BeatKind } from '@/lib/script/segmentTypes'
@@ -199,16 +200,16 @@ CRITICAL RULES:
    - Do NOT describe a starting frame with the title at the top — center it like a movie poster or title card
    - Include atmospheric elements that establish the genre and tone
 
-3. CHARACTER IDENTITY REFERENCES: When characters have identity reference images (indicated by "person [N]" tokens tied to identity ref index):
-   - Use ONLY the token "person [N]" to refer to them — do NOT add text descriptions of their appearance
-   - The identity reference defines face, hair, skin tone, age, and body proportions
-   - Focus the prompt on their ACTION, POSE, and EXPRESSION in the scene
+3. CHARACTER IDENTITY (PRIMARY): When characters have identity reference images (indicated by "person [N]" tokens tied to identity ref index):
+   - Use ONLY the token "person [N]" — NEVER add ethnicity, age, gender, hair color, or other appearance adjectives in the prompt
+   - The identity reference is the sole source of face, hair, skin tone, age, ethnicity, body proportions, and photorealistic rendering at ALL framing distances (wide, medium, close)
+   - Focus the prompt on ACTION, POSE, EXPRESSION, lighting, and environment only
+   - ${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}
 
-4. WARDROBE CONSISTENCY (HIGHEST PRIORITY):
-   - Each character's wardrobe MUST appear EXACTLY as specified
-   - DUAL REFERENCES: When a character has BOTH identity ref [N] and wardrobe ref [M]:
-     * Identity ref [N] = face and body ONLY — ignore clothing in the identity image
-     * Wardrobe ref [M] = outfit ONLY from the mannequin turnaround front view — do NOT derive face from wardrobe sheet
+4. WARDROBE (SECONDARY when dual refs exist):
+   - When BOTH identity ref [N] and wardrobe ref [M] exist:
+     * Identity ref [N] = PRIMARY for face, body, and photorealistic human rendering
+     * Wardrobe ref [M] = SECONDARY for outfit colors, fabric, cut, and accessories ONLY — never face, body type, or rendering style
      * Do NOT describe clothing in text when wardrobe ref [M] is provided
    - TEXT-ONLY WARDROBE: When no wardrobe reference image, include COMPLETE wardrobe description verbatim
    - WARDROBE-ONLY REFERENCE (no identity portrait): ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}
@@ -242,7 +243,7 @@ CRITICAL RULES:
 
 9. PROMPT STRUCTURE (in order):
    a. Scene framing instruction (e.g., "Cinematic medium shot" or "Wide establishing shot")
-   b. Subject & Wardrobe (exact wardrobe descriptions, using person [N] tokens for referenced characters)
+   b. Subject & Wardrobe (use person [N] identity tokens only — no appearance adjectives; wardrobe ref [M] is outfit-only when provided)
    c. Action/pose (what are the characters doing in this frozen moment)
    d. Environment & props (setting, key props, atmosphere)
    e. Lighting & mood (from scene direction metadata)
@@ -293,6 +294,7 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
       }
       
       if (char.hasDualReferences) {
+        prompt += `   ${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n`
         prompt += `   IDENTITY: ${CHARACTER_IDENTITY_REFERENCE_INSTRUCTION}\n`
         prompt += `   WARDROBE: ${WARDROBE_ONLY_REFERENCE_INSTRUCTION} Do NOT describe clothing in text.\n`
       } else if (char.hasCostumeReference && char.wardrobeReferenceIndex) {

@@ -92,6 +92,52 @@ export function extractDemographicAnchor(appearanceDescription: string): string 
   return null
 }
 
+/** Pure reference token for prompt text when an identity reference image exists. */
+export function buildIdentityPromptToken(refIndex: number): string {
+  return `person [${refIndex}]`
+}
+
+/**
+ * Strip appearance prose from AI-generated prompts when identity refs exist.
+ * Replaces character names with person [N] tokens and removes redundant demographic phrases.
+ */
+export function sanitizePromptForIdentityRefs(
+  prompt: string,
+  characterRefs: Array<{ name: string; promptToken?: string; identityReferenceId?: number }>
+): string {
+  let sanitized = prompt
+  for (const ref of characterRefs) {
+    const token =
+      ref.promptToken ??
+      (ref.identityReferenceId != null ? buildIdentityPromptToken(ref.identityReferenceId) : undefined)
+    if (!token) continue
+
+    const fullNamePattern = new RegExp(`\\b${ref.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
+    sanitized = sanitized.replace(fullNamePattern, token)
+
+    const firstName = ref.name.split(' ')[0]
+    if (firstName.length > 1) {
+      const firstNamePattern = new RegExp(`\\b${firstName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
+      sanitized = sanitized.replace(firstNamePattern, token)
+    }
+  }
+
+  // Remove common demographic anchor patterns that conflict with reference-first binding
+  sanitized = sanitized.replace(
+    /\b(a|an|the)\s+(Black|White|Asian|Hispanic|South Asian|Middle Eastern)\s+(man|woman|person)\s+(in\s+(?:her|his|their)\s+)?(?:late|early|mid)?\s*\d{0,2}s?\b/gi,
+    (match, _a, _eth, _gender, _age) => {
+      // Only strip if a person [N] token exists nearby in the prompt
+      return /\bperson\s*\[\d+\]/i.test(sanitized) ? 'person' : match
+    }
+  )
+  sanitized = sanitized.replace(
+    /\b(a|an)\s+(young|old|elderly)\s+(man|woman|person)\b/gi,
+    (match) => (/\bperson\s*\[\d+\]/i.test(sanitized) ? 'person' : match)
+  )
+
+  return sanitized.replace(/\s+/g, ' ').trim()
+}
+
 interface OptimizePromptParams {
   sceneAction: string
   visualDescription: string
@@ -112,7 +158,8 @@ interface OptimizePromptParams {
     imageUrl?: string        // HTTPS URL for prompt text (preferred)
     ethnicity?: string       // For ethnicity injection
     keyFeatures?: string[]   // Key physical characteristics to emphasize
-    linkingDescription?: string // Pre-computed linking text for text-matching
+    linkingDescription?: string // Pre-computed linking text for text-matching (legacy)
+    promptToken?: string // Reference-first token e.g. "person [1]" for prompt assembly
     defaultWardrobe?: string    // Character's standard outfit (e.g., "tailored navy suit")
     wardrobeAccessories?: string // Character's accessories (e.g., "gold watch, leather briefcase")
     appearanceDescription?: string // AI-generated physical appearance (race, age, hair, skin tone)
@@ -616,12 +663,15 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
         const descLower = (ref.description || '').toLowerCase()
         const isFemale = descLower.includes('woman') || descLower.includes('female')
         
-        // Use pre-computed linking description OR generate it
-        // This MUST match the subjectDescription passed to the Imagen API
-        const linkingDescription = ref.linkingDescription || generateLinkingDescription(ref.description)
-        
-        // Get wardrobe from the full character reference
         const fullRef = params.characterReferences!.find(r => r.name === ref.name)
+        // Reference-first: use promptToken when set, else linkingDescription
+        const promptToken =
+          fullRef?.promptToken ||
+          (fullRef?.identityReferenceId != null
+            ? buildIdentityPromptToken(fullRef.identityReferenceId)
+            : undefined)
+        const linkingDescription =
+          promptToken || ref.linkingDescription || generateLinkingDescription(ref.description)
         
         // Find scene-specific wardrobe (if sceneNumber provided)
         const sceneWardrobe = fullRef ? findWardrobeForScene(
@@ -635,7 +685,8 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
           firstName: ref.name.split(' ')[0],
           refId: ref.referenceId!,
           isFemale,
-          linkingDescription, // e.g., "person [1]" or "a young man with curly hair"
+          linkingDescription,
+          promptToken: promptToken || linkingDescription,
           // Use scene-specific wardrobe if found, otherwise fall back to legacy fields
           defaultWardrobe: sceneWardrobe?.description || fullRef?.defaultWardrobe,
           wardrobeAccessories: sceneWardrobe?.accessories || fullRef?.wardrobeAccessories,
@@ -654,24 +705,24 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     const subjectWardrobeDescriptions: string[] = []
     characterRefs.forEach(ref => {
       const fullRef = params.characterReferences!.find((r) => r.name === ref.name)
-      if (fullRef?.hasDualReferences && fullRef.wardrobeReferenceId && ref.linkingDescription) {
+      const token = ref.promptToken || ref.linkingDescription
+      if (fullRef?.hasDualReferences && fullRef.wardrobeReferenceId && token) {
         subjectWardrobeDescriptions.push(
-          `${ref.linkingDescription}, outfit from wardrobe reference [${fullRef.wardrobeReferenceId}]`
+          `${token}; clothing from wardrobe reference [${fullRef.wardrobeReferenceId}] only (not face, body, or rendering style)`
         )
         return
       }
 
       if (ref.defaultWardrobe) {
-        // Check if this character has a reference image (indicated by [N] pattern in linkingDescription)
-        const hasReferenceImage = ref.linkingDescription?.includes('[') && ref.linkingDescription?.includes(']')
+        // Check if this character has a reference image (indicated by [N] pattern)
+        const hasReferenceImage = token?.includes('[') && token?.includes(']')
         
-        let subjectClause = ref.linkingDescription
+        let subjectClause = token
         
         if (hasReferenceImage) {
           // REFERENCE-FIRST: Use ONLY the token binding, no text description
-          // The reference image should be the sole source of visual identity
-          subjectClause = ref.linkingDescription // e.g., just "person [1]"
-          console.log(`[Prompt Optimizer] Reference-first for ${ref.name}: using pure token "${ref.linkingDescription}" (no text anchor)`)
+          subjectClause = token
+          console.log(`[Prompt Optimizer] Reference-first for ${ref.name}: using pure token "${token}" (no text anchor)`)
         } else if (ref.appearanceDescription) {
           // No reference image: use full text description
           const sentences = ref.appearanceDescription.split(/[.!?]+/).filter(s => s.trim())
@@ -700,27 +751,25 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     // Clean up double spaces
     promptScene = promptScene.replace(/\s+/g, ' ').trim()
     
-    // PHASE 3: Replace character names with linking descriptions
+    // PHASE 3: Replace character names with reference tokens
     characterRefs.forEach(ref => {
+      const token = ref.promptToken || ref.linkingDescription
       const fullNamePattern = new RegExp(`\\b${ref.name}\\b`, 'gi')
-      promptScene = promptScene.replace(fullNamePattern, ref.linkingDescription)
+      promptScene = promptScene.replace(fullNamePattern, token)
       
       // Also replace first names only
       const firstNamePattern = new RegExp(`\\b${ref.firstName}\\b`, 'gi')
-      const replacement = ref.linkingDescription.includes('[') 
-        ? ref.linkingDescription 
+      const replacement = token.includes('[') 
+        ? token 
         : (ref.isFemale ? 'the woman' : 'the man')
       promptScene = promptScene.replace(firstNamePattern, replacement)
     })
     
     // PHASE 4: Assemble final prompt using Google's recommended template
-    // Google's docs recommend: "Create an image about SUBJECT [1] to match the description: a portrait of SUBJECT [1] ${PROMPT}"
-    // This structure helps the model better link the reference image to the character in the scene
     let prompt = ''
     
-    // Build the subject introductions for Google's template
-    // e.g., "a Black man in his late 40s with salt-and-pepper hair and beard [1]"
-    const subjectIntroductions = characterRefs.map(ref => ref.linkingDescription).join(' and ')
+    // Build the subject introductions for Google's template — reference-first tokens only
+    const subjectIntroductions = characterRefs.map(ref => ref.promptToken || ref.linkingDescription).join(' and ')
     
     // Use Google's recommended template structure for subject customization
     prompt += `Create an image about ${subjectIntroductions} to match the description: `

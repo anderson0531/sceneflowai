@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildDualReferenceLabels,
+  buildDualReferenceNegativeTerms,
+  buildFramingAwareIdentityBlock,
   buildIdentityReferencePromptLine,
   buildWardrobeReferencePromptLine,
   CHARACTER_IDENTITY_REFERENCE_INSTRUCTION,
+  DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
   resolveCharacterReferencePair,
   WARDROBE_ONLY_REFERENCE_INSTRUCTION,
 } from '@/lib/character/characterReferenceAssembly'
@@ -96,5 +99,29 @@ describe('characterReferenceAssembly', () => {
     expect(identityLine).not.toContain('BOTTOM ROW')
     expect(wardrobeLine).not.toContain('2-row')
     expect(wardrobeLine.toLowerCase()).toContain('mannequin')
+  })
+
+  it('DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK establishes identity PRIMARY and wardrobe SECONDARY', () => {
+    expect(DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK).toContain('PRIMARY')
+    expect(DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK).toContain('SECONDARY')
+    expect(DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK).toContain('photorealistic')
+    expect(DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK.toLowerCase()).toContain('mannequin')
+  })
+
+  it('buildFramingAwareIdentityBlock adds wide-shot reinforcement', () => {
+    expect(buildFramingAwareIdentityBlock('wide shot')).toContain('WIDE/ESTABLISHING')
+    expect(buildFramingAwareIdentityBlock('medium close-up')).toBe('')
+  })
+
+  it('buildDualReferenceNegativeTerms includes anti-mannequin and anti-cartoon terms', () => {
+    const terms = buildDualReferenceNegativeTerms()
+    expect(terms).toContain('mannequin')
+    expect(terms).toContain('cartoon')
+    expect(terms).toContain('turnaround sheet')
+  })
+
+  it('identity instruction marks PRIMARY and wardrobe instruction marks SECONDARY', () => {
+    expect(CHARACTER_IDENTITY_REFERENCE_INSTRUCTION).toContain('PRIMARY')
+    expect(WARDROBE_ONLY_REFERENCE_INSTRUCTION).toContain('SECONDARY')
   })
 })

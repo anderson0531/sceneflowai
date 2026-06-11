@@ -22,6 +22,7 @@ import {
   buildIdentityReferenceLabel,
   buildWardrobeReferenceLabel,
   CHARACTER_IDENTITY_REFERENCE_INSTRUCTION,
+  DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
   WARDROBE_ONLY_REFERENCE_INSTRUCTION,
 } from '@/lib/character/characterReferenceAssembly'
 
@@ -572,7 +573,7 @@ export async function POST(req: NextRequest) {
         (c) => c.hasCostumeReference && !c.hasDualReferences && c.wardrobeReferenceUrl
       )
       if (dualRefChars.length > 0 && startFramePrompt) {
-        startFramePrompt = `${startFramePrompt}\n\nDUAL CHARACTER REFERENCES:\n${dualRefChars
+        startFramePrompt = `${startFramePrompt}\n\nDUAL CHARACTER REFERENCES:\n${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n${dualRefChars
           .map(
             (c) =>
               `${c.name}: ${CHARACTER_IDENTITY_REFERENCE_INSTRUCTION} ${WARDROBE_ONLY_REFERENCE_INSTRUCTION}`

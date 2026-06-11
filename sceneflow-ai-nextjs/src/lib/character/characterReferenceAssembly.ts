@@ -3,13 +3,48 @@
  */
 
 export const CHARACTER_IDENTITY_REFERENCE_INSTRUCTION =
-  'IDENTITY REFERENCE: Match face, hair, skin tone, age, ethnicity, and body proportions from this image exactly. ' +
-  'Ignore clothing in this image if it differs from the scene wardrobe — outfit comes from the wardrobe reference or text.'
+  'IDENTITY REFERENCE (PRIMARY): Match face, hair, skin tone, age, ethnicity, body proportions, and photorealistic rendering style from this image exactly at all shot distances. ' +
+  'This image owns identity and realism — ignore clothing in this image if it differs from the scene wardrobe; outfit comes from the wardrobe reference or text.'
 
 export const WARDROBE_ONLY_REFERENCE_INSTRUCTION =
-  'WARDROBE REFERENCE: This is a 1-row mannequin outfit turnaround sheet. Use the FRONT full-body view for outfit, fabric, color, and accessories ONLY. ' +
-  'Do NOT derive face, hair, skin tone, or identity from this sheet — identity comes from the separate identity reference. ' +
+  'WARDROBE REFERENCE (SECONDARY): This is a 1-row mannequin outfit turnaround sheet. Use the FRONT full-body view for outfit, fabric, color, and accessories ONLY. ' +
+  'Do NOT derive face, hair, skin tone, body type, ethnicity, age, or rendering style from this sheet — identity and photorealism come from the separate identity reference. ' +
   'Do NOT reproduce the turnaround layout, mannequin form, multi-view sheet, or neutral gray studio background in the scene.'
+
+/** Global priority block injected before per-image lines when dual refs exist. */
+export const DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK =
+  'DUAL REFERENCE PRIORITY: Identity reference = PRIMARY for face, hair, skin, age, ethnicity, body proportions, and photorealistic human rendering at ALL shot distances (wide, medium, close). ' +
+  'Wardrobe reference = SECONDARY for outfit colors, fabric, cut, and accessories ONLY. ' +
+  'Never adopt mannequin form, faceless figure, turnaround sheet layout, gray studio background, illustration, or cartoon style from the wardrobe image.'
+
+const WIDE_SHOT_KEYWORDS = /\b(wide|establishing|full[- ]?body|long shot|master shot|extreme wide)\b/i
+
+/** Extra reinforcement for wide/establishing shots where wardrobe sheets visually dominate. */
+export function buildFramingAwareIdentityBlock(shotType?: string): string {
+  if (!shotType || !WIDE_SHOT_KEYWORDS.test(shotType)) {
+    return ''
+  }
+  return (
+    'WIDE/ESTABLISHING SHOT: Characters must remain photorealistic humans matching their identity reference at full distance — ' +
+    'do NOT let the wardrobe mannequin sheet define body type, face, skin, or rendering style. ' +
+    'Extract only outfit colors and garment shapes from the wardrobe reference.'
+  )
+}
+
+/** Negative prompt terms when dual refs + photorealistic mode. */
+export function buildDualReferenceNegativeTerms(): string {
+  return [
+    'mannequin',
+    'faceless figure',
+    'turnaround sheet',
+    'fashion illustration',
+    'cartoon',
+    'anime',
+    'storyboard sketch',
+    'illustrated character',
+    '3d render character',
+  ].join(', ')
+}
 
 export interface CharacterReferencePair {
   identityUrl?: string
