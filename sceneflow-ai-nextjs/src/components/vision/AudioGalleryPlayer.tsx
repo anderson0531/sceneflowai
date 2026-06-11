@@ -15,7 +15,8 @@ import { Slider } from '@/components/ui/slider'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { cn } from '@/lib/utils'
-import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
+import { resolvePreVisSceneDisplay } from '@/lib/storyboard/preVisSceneDisplay'
+import { PreVisSceneInfoPanel } from '@/components/vision/PreVisSceneInfoPanel'
 import {
   getEstablishingFrameUrl,
   getScenePlayableThumbnailUrl,
@@ -229,11 +230,10 @@ export function AudioGalleryPlayer({
     goToScene(currentSceneIndex - 1)
   }, [currentSceneIndex, goToScene])
 
-  const sceneHeading =
-    typeof currentScene?.heading === 'string'
-      ? currentScene.heading
-      : currentScene?.heading?.text
-  const formattedHeading = formatSceneHeading(sceneHeading) || sceneHeading || 'Untitled Scene'
+  const sceneDisplay = useMemo(
+    () => resolvePreVisSceneDisplay(currentScene, currentSceneIndex),
+    [currentScene, currentSceneIndex]
+  )
 
   const hasAudio =
     hasVoiceAudio ||
@@ -495,22 +495,21 @@ export function AudioGalleryPlayer({
             )}
           </div>
           
-          {/* Scene title below video in fullscreen or shared view */}
+          {/* Scene title + description below video in fullscreen or shared view */}
           {isFullscreen && !sharedCompact && (
-            <div className={cn("mt-4 text-center w-full max-w-7xl")}>
-              <span className="text-white/50 text-xs uppercase tracking-wide font-semibold">SCENE {currentSceneIndex + 1}</span>
-              <h2 className="text-white text-lg font-medium truncate mt-1">{formattedHeading}</h2>
-            </div>
+            <PreVisSceneInfoPanel
+              display={sceneDisplay}
+              variant="fullscreen"
+              totalScenes={scenes.length}
+            />
           )}
           {sharedCompact && (
-            <div className={cn('text-center w-full px-1', landingWide ? 'max-w-4xl mx-auto' : 'max-w-2xl mx-auto')}>
-              <span className="text-white/45 text-[10px] uppercase tracking-wider font-medium">
-                Scene {currentSceneIndex + 1}
-              </span>
-              <p className="text-white text-sm sm:text-base font-medium leading-snug mt-1 line-clamp-3 break-words">
-                {formattedHeading}
-              </p>
-            </div>
+            <PreVisSceneInfoPanel
+              display={sceneDisplay}
+              variant="compact"
+              totalScenes={scenes.length}
+              className={landingWide ? 'max-w-4xl mx-auto' : 'max-w-2xl mx-auto'}
+            />
           )}
           
           {/* Playback controls and info */}
@@ -518,13 +517,14 @@ export function AudioGalleryPlayer({
             "flex flex-col justify-between min-w-0 w-full",
             isFullscreen ? "max-w-7xl mt-3" : sharedCompact ? cn('mx-auto mt-2', landingWide ? 'max-w-4xl' : 'max-w-2xl') : "flex-1"
           )}>
-            {/* Scene info - hide in fullscreen / shared compact (heading shown above) */}
+            {/* Scene info - hide in fullscreen / shared compact (shown above video area) */}
             {(!isFullscreen && !isSharedView) && (
               <div>
-                <h4 className="text-sm font-semibold text-white mb-1">
-                  SCENE {currentSceneIndex + 1}
-                </h4>
-                <p className="text-sm text-gray-300 truncate">{formattedHeading}</p>
+                <PreVisSceneInfoPanel
+                  display={sceneDisplay}
+                  variant="inline"
+                  totalScenes={scenes.length}
+                />
                 {!hasAudio && (
                   <p className="text-xs text-amber-400 mt-2">No audio generated for this scene</p>
                 )}
