@@ -121,8 +121,8 @@ export function hydrateBeatStoryboardMediaFromLegacy(
         }
       }
 
-      // scene.imageUrl applies only to beat 0 (establishing) for legacy migration.
-      if (beatIndex === 0) {
+      // scene.imageUrl applies only to legacy auto-establishing beat 0.
+      if (beatIndex === 0 && isAutoLeadingEstablishingBeat(beat, scene, 0, beats)) {
         const sceneImageUrl = pickStoryboardString(scene.imageUrl)
         if (sceneImageUrl) {
           return {
@@ -430,14 +430,6 @@ export function isAutoLeadingEstablishingBeat(
   const desc = String(beat.actionDescription ?? '').trim()
   const fallback = deriveSceneActionFallbackText(scene)
   const hasImage = typeof scene.imageUrl === 'string' && scene.imageUrl.trim().length > 0
-
-  const beats = allBeats ?? (Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : [])
-  const nextBeat = beats[1]
-
-  // Any leading action immediately before a spoken beat is excluded from playback/slots.
-  if (nextBeat && isSpokenBeatKind(nextBeat.kind)) {
-    return true
-  }
 
   if (!desc || desc === 'Establishing shot') return true
 
@@ -1073,16 +1065,12 @@ export function getSceneBeats(scene: Record<string, unknown> | null | undefined)
   )
 }
 
-/** Beats used for storyboard frame slots and playback (drops auto-injected leading action). */
+/** Beats used for storyboard frame slots and playback (full beat timeline). */
 export function getStoryboardTimelineBeats(
   scene: Record<string, unknown> | null | undefined
 ): SceneBeat[] {
   if (!scene) return []
-  const beats = getSceneBeats(scene)
-  if (beats.length > 0 && isAutoLeadingEstablishingBeat(beats[0], scene, 0, beats)) {
-    return beats.slice(1)
-  }
-  return beats
+  return getSceneBeats(scene)
 }
 
 /** Map gallery timeline slot or beatId to raw getSceneBeats() index. */

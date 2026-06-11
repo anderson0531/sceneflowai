@@ -58,19 +58,19 @@ describe('buildBeatAlignedStoryboardSfxClips', () => {
       voiceEndTime: voiceClips[0].startTime + voiceClips[0].duration,
     })
 
-    expect(visualFrames[0].beatId).toBe('bt_a1')
+    expect(visualFrames[0].beatId).toBe('bt_est')
     expect(clips).toHaveLength(2)
     expect(clips[0].id).toBe('sfx-beat-bt_a1')
     expect(clips[0].url).toBe(SFX_A1)
     expect(clips[0].startTime).toBe(visualFrames.find((f) => f.beatId === 'bt_a1')!.startTime)
-    expect(clips[0].startTime).toBe(0)
+    expect(clips[0].startTime).toBeGreaterThan(0)
 
     const frameA2 = visualFrames.find((f) => f.beatId === 'bt_a2')!
     expect(clips[1].startTime).toBeCloseTo(frameA2.startTime, 1)
     expect(clips[1].startTime).toBeGreaterThan(4)
   })
 
-  it('aligns first audible SFX to first visible action beat when establishing is dropped', () => {
+  it('aligns first audible SFX to its action beat when establishing remains in timeline', () => {
     const scene = {
       imageUrl: 'https://example.com/est.jpg',
       dialogue: [{ character: 'Sarah', line: 'Hello.' }],
@@ -110,10 +110,10 @@ describe('buildBeatAlignedStoryboardSfxClips', () => {
       voiceEndTime: voiceClips[0].startTime + voiceClips[0].duration,
     })
 
-    expect(visualFrames[0].beatId).toBe('bt_a1')
+    expect(visualFrames[0].beatId).toBe('bt_est')
     expect(clips).toHaveLength(1)
-    expect(clips[0].startTime).toBe(visualFrames[0].startTime)
-    expect(clips[0].startTime).toBe(0)
+    expect(clips[0].startTime).toBe(visualFrames.find((f) => f.beatId === 'bt_a1')!.startTime)
+    expect(clips[0].startTime).toBeGreaterThan(0)
   })
 
   it('falls back to legacy even-spread when cues lack sourceBeatId', () => {

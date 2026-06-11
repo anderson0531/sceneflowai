@@ -5,7 +5,7 @@ import {
   countStoryboardFramesNeedingGeneration,
   enumerateStoryboardFrameSlots,
 } from '@/lib/storyboard/types'
-import { applyExpressStoryboardImageToScene } from '@/lib/script/beatMigration'
+import { applyExpressStoryboardImageToScene, getStoryboardTimelineBeats } from '@/lib/script/beatMigration'
 
 describe('storyboard frame slots', () => {
   it('marks dialogue line as placeholder when only establishing image exists', () => {
@@ -39,17 +39,20 @@ describe('storyboard frame slots', () => {
     }
 
     const slots = enumerateStoryboardFrameSlots(scene)
+    const action = slots.find((s) => s.beatId === 'bt_action')
     const narrator = slots.find((s) => s.beatId === 'bt_narr')
-    // Leading action beat is excluded from playback timeline when followed by spoken beat
-    expect(narrator?.beatIndex).toBe(0)
+    expect(slots).toHaveLength(2)
+    expect(action?.beatIndex).toBe(0)
+    expect(action?.ownImageUrl).toBe('https://example.com/establishing.jpg')
+    expect(narrator?.beatIndex).toBe(1)
     expect(narrator?.isPlaceholder).toBe(true)
     expect(narrator?.isMissing).toBe(false)
     expect(narrator?.ownImageUrl).toBeUndefined()
     expect(narrator?.displayImageUrl).toBe('https://example.com/establishing.jpg')
 
     const stats = countStoryboardFrameStats(scene)
-    expect(stats.withImage).toBe(0)
-    expect(stats.total).toBe(1)
+    expect(stats.withImage).toBe(1)
+    expect(stats.total).toBe(2)
     expect(stats.placeholders).toBe(1)
     expect(countStoryboardFramesNeedingGeneration(scene)).toBe(1)
     expect(countMissingStoryboardFrames(scene)).toBe(0)
@@ -121,5 +124,82 @@ describe('storyboard frame slots', () => {
     expect(updated.imageUrl).toBe('https://example.com/new-establishing.jpg')
     expect(slots[0]?.displayImageUrl).toBe('https://example.com/new-establishing.jpg')
     expect(slots[1]?.displayImageUrl).toBe('https://example.com/new-establishing.jpg')
+  })
+
+  it('includes all 8 beats in frame slots for directed action before dialogue', () => {
+    const beats = [
+      {
+        beatId: 'bt_0',
+        sequenceIndex: 0,
+        kind: 'action' as const,
+        actionDescription:
+          "CLOSE UP: Elara's hands, now visibly trembling, are clasped tightly on the cold table surface.",
+      },
+      {
+        beatId: 'bt_1',
+        sequenceIndex: 1,
+        kind: 'dialogue' as const,
+        character: 'ELARA VANCE',
+        line: "I'm telling you, it wasn't me!",
+        lineId: 'ln_1',
+      },
+      {
+        beatId: 'bt_2',
+        sequenceIndex: 2,
+        kind: 'action' as const,
+        actionDescription:
+          "OFF-SCREEN VOICE: A DETECTIVE'S voice cuts her off. A folder SLIDES onto the table.",
+      },
+      {
+        beatId: 'bt_3',
+        sequenceIndex: 3,
+        kind: 'action' as const,
+        actionDescription:
+          'INSERT SHOT: The folder opens to reveal crisp, high-resolution photographs.',
+      },
+      {
+        beatId: 'bt_4',
+        sequenceIndex: 4,
+        kind: 'dialogue' as const,
+        character: 'ELARA VANCE',
+        line: "No... that's not possible!",
+        lineId: 'ln_2',
+      },
+      {
+        beatId: 'bt_5',
+        sequenceIndex: 5,
+        kind: 'action' as const,
+        actionDescription:
+          'MEDIUM SHOT: Elara pushes the photos away, recoiling.',
+      },
+      {
+        beatId: 'bt_6',
+        sequenceIndex: 6,
+        kind: 'dialogue' as const,
+        character: 'ELARA VANCE',
+        line: 'You have to believe me!',
+        lineId: 'ln_3',
+      },
+      {
+        beatId: 'bt_7',
+        sequenceIndex: 7,
+        kind: 'action' as const,
+        actionDescription:
+          "CLOSE UP: The detective's hand taps the folder.",
+      },
+    ]
+
+    const scene = {
+      dialogue: [
+        { lineId: 'ln_1', character: 'ELARA VANCE', line: "I'm telling you, it wasn't me!" },
+        { lineId: 'ln_2', character: 'ELARA VANCE', line: "No... that's not possible!" },
+        { lineId: 'ln_3', character: 'ELARA VANCE', line: 'You have to believe me!' },
+      ],
+      beats,
+    }
+
+    expect(getStoryboardTimelineBeats(scene)).toHaveLength(8)
+    expect(enumerateStoryboardFrameSlots(scene)).toHaveLength(8)
+    expect(countStoryboardFramesNeedingGeneration(scene)).toBe(8)
   })
 })

@@ -48,7 +48,7 @@ describe('beatMigration', () => {
     expect(beats[0].kind).toBe('narration')
   })
 
-  it('getStoryboardTimelineBeats drops auto leading establishing action', () => {
+  it('getStoryboardTimelineBeats keeps all beats including legacy establishing action', () => {
     const scene = {
       imageUrl: 'https://example.com/est.jpg',
       dialogue: [
@@ -74,8 +74,36 @@ describe('beatMigration', () => {
     }
     expect(isAutoLeadingEstablishingBeat(scene.beats[0] as never, scene, 0, scene.beats as never)).toBe(true)
     const timeline = getStoryboardTimelineBeats(scene)
-    expect(timeline).toHaveLength(1)
-    expect(timeline[0].beatId).toBe('bt_1')
+    expect(timeline).toHaveLength(2)
+    expect(timeline[0].beatId).toBe('bt_auto')
+    expect(timeline[1].beatId).toBe('bt_1')
+  })
+
+  it('isAutoLeadingEstablishingBeat is false for directed action before dialogue', () => {
+    const scene = {
+      dialogue: [{ lineId: 'ln_1', character: 'Elara', line: 'Hello.' }],
+      beats: [
+        {
+          beatId: 'bt_close',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription:
+            "CLOSE UP: Elara's hands, now visibly trembling, are clasped tightly on the cold table surface.",
+        },
+        {
+          beatId: 'bt_1',
+          sequenceIndex: 1,
+          kind: 'dialogue',
+          character: 'Elara',
+          line: 'Hello.',
+          lineId: 'ln_1',
+        },
+      ],
+    }
+    expect(
+      isAutoLeadingEstablishingBeat(scene.beats[0] as never, scene, 0, scene.beats as never)
+    ).toBe(false)
+    expect(getStoryboardTimelineBeats(scene)).toHaveLength(2)
   })
 
   it('isAutoLeadingEstablishingBeat filters action when scene.action mirrors fallback blocking', () => {
@@ -180,7 +208,7 @@ describe('beatMigration', () => {
     expect(Array.isArray(updated.dialogue)).toBe(true)
   })
 
-  it('hydrateBeatStoryboardMediaFromLegacy only applies scene.imageUrl to beat 0', () => {
+  it('hydrateBeatStoryboardMediaFromLegacy only applies scene.imageUrl to auto-establishing beat 0', () => {
     const scene = {
       imageUrl: 'https://example.com/establishing.jpg',
       beats: [
@@ -188,7 +216,7 @@ describe('beatMigration', () => {
           beatId: 'bt_0',
           sequenceIndex: 0,
           kind: 'action',
-          actionDescription: 'Wide',
+          actionDescription: 'Establishing shot',
         },
         {
           beatId: 'bt_1',
@@ -243,7 +271,7 @@ describe('beatMigration', () => {
     }
 
     const beats = getSceneBeats(scene)
-    expect(beats[0].storyboardImageUrl).toBe('https://example.com/establishing.jpg')
+    expect(beats[0].storyboardImageUrl).toBeUndefined()
     expect(beats[1].storyboardImageUrl).toBe('https://example.com/dialogue.jpg')
   })
 
