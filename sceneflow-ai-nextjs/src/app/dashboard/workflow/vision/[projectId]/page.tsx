@@ -32,13 +32,24 @@ import { stampPreVisContentHash, syncPreVisToScript } from '@/lib/storyboard/pre
 import { getBatchNarrationTtsText } from '@/lib/script/narration'
 import {
   applyBeatsToScene,
+  applyBeatReferenceSelectionToScene,
   applyBeatStoryboardImageToScene,
   applyDialogueStoryboardImageToScene,
   applyEstablishingImageToScene,
   applyExpressStoryboardImageToScene,
   ensureSceneBeats,
+  getSceneBeats,
   resolveRawBeatIndex,
 } from '@/lib/script/beatMigration'
+import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
+import {
+  mapBeatReferenceSelectionForApi,
+  shouldUseExplicitBeatReferences,
+} from '@/lib/vision/beatFrameGenerationContext'
+import {
+  BeatReferenceSelectionDialog,
+  type BeatReferenceConfirmMode,
+} from '@/components/vision/BeatReferenceSelectionDialog'
 import { toast } from 'sonner'
 
 // Dynamic import to break TDZ initialization chain - ScriptPanel imports heavy scene-production modules
@@ -4513,6 +4524,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Batch generation state — when true, handleGenerateSceneImage suppresses per-scene overlays
   // (SceneGallery's handleGenerateAll provides its own batch overlay via useProcessWithOverlay)
   const batchGeneratingRef = useRef(false)
+
+  const [beatRefDialog, setBeatRefDialog] = useState<{ sceneIdx: number; beatId: string } | null>(null)
+  const [beatRefGenerating, setBeatRefGenerating] = useState(false)
   
   // Scene reference generation state (for Reference Library Scene tab)
   const [generatingSceneReferenceIndex, setGeneratingSceneReferenceIndex] = useState<number | null>(null)
@@ -8594,7 +8608,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const handleGenerateBeatFrameImage = async (sceneIdx: number, beatId: string) => {
+  const handleGenerateBeatFrameImage = async (
+    sceneIdx: number,
+    beatId: string,
+    referenceSelection?: BeatReferenceSelection
+  ) => {
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene) {
       try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
@@ -8612,6 +8630,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
     setGeneratingKeyframeSceneNumber(sceneIdx + 1)
 
+    const explicitRefs = referenceSelection
+      ? mapBeatReferenceSelectionForApi(
+          referenceSelection,
+          characters,
+          locationReferences,
+          objectReferences
+        )
+      : null
+
     try {
       const response = await fetch('/api/scene/generate-image', {
         method: 'POST',
@@ -8623,8 +8650,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           beatId,
           beatIndex: rawBeatIdx,
           quality: imageQuality,
-          characterSelectionExplicit: true,
-          characterWardrobes: scene.characterWardrobes || [],
+          characterWardrobes:
+            explicitRefs?.characterWardrobes ?? scene.characterWardrobes ?? [],
+          ...(explicitRefs
+            ? {
+                selectedCharacters: explicitRefs.selectedCharacters,
+                locationReferences: explicitRefs.locationReferences,
+                objectReferences: explicitRefs.objectReferences,
+                characterSelectionExplicit: explicitRefs.characterSelectionExplicit,
+                skipObjectAutoDetection: explicitRefs.skipObjectAutoDetection,
+              }
+            : {
+                characterSelectionExplicit: true,
+              }),
         }),
       })
 
@@ -8661,6 +8699,64 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     } finally {
       if (!batchGeneratingRef.current) overlayStore.hide()
       setGeneratingKeyframeSceneNumber(null)
+    }
+  }
+
+  const handleOpenBeatReferenceDialog = (sceneIdx: number, beatId: string) => {
+    setBeatRefDialog({ sceneIdx, beatId })
+  }
+
+  const handleRequestGenerateBeatFrame = async (sceneIdx: number, beatId: string) => {
+    const scene = script?.script?.scenes?.[sceneIdx]
+    if (!scene) {
+      toast.error('Scene not found')
+      return
+    }
+    const beat = getSceneBeats(scene).find((b) => b.beatId === beatId)
+    if (shouldUseExplicitBeatReferences(beat)) {
+      await handleGenerateBeatFrameImage(sceneIdx, beatId, beat!.referenceSelection)
+      return
+    }
+    setBeatRefDialog({ sceneIdx, beatId })
+  }
+
+  const handleBeatReferenceConfirm = async (
+    selection: BeatReferenceSelection,
+    mode: BeatReferenceConfirmMode
+  ) => {
+    if (!beatRefDialog || !script?.script?.scenes) return
+
+    const { sceneIdx, beatId } = beatRefDialog
+    const updatedScenes = [...script.script.scenes]
+    updatedScenes[sceneIdx] = applyBeatReferenceSelectionToScene(
+      updatedScenes[sceneIdx],
+      beatId,
+      selection
+    )
+
+    setScript({
+      ...script,
+      script: { ...script.script, scenes: updatedScenes },
+    })
+
+    const saved = await persistVisionScriptScenes(updatedScenes, 'handleBeatReferenceConfirm')
+    if (!saved) {
+      toast.error('Failed to save reference selection')
+      return
+    }
+
+    if (mode === 'save') {
+      setBeatRefDialog(null)
+      toast.success('Reference selection saved')
+      return
+    }
+
+    setBeatRefGenerating(true)
+    try {
+      await handleGenerateBeatFrameImage(sceneIdx, beatId, selection)
+      setBeatRefDialog(null)
+    } finally {
+      setBeatRefGenerating(false)
     }
   }
 
@@ -12310,8 +12406,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                               handleGenerateDialogueFrameImage(sceneIdx, dialogueIdx)
                             }
                             onGenerateBeatFrame={(sceneIdx, beatId) =>
-                              handleGenerateBeatFrameImage(sceneIdx, beatId)
+                              handleRequestGenerateBeatFrame(sceneIdx, beatId)
                             }
+                            onReviewBeatReferences={handleOpenBeatReferenceDialog}
+                            locationReferences={locationReferences}
+                            objectReferences={objectReferences}
                             onUploadDialogueFrame={(sceneIdx, dialogueIdx, file) =>
                               handleUploadDialogueFrame(sceneIdx, dialogueIdx, file)
                             }
@@ -13054,6 +13153,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         </div>
       )}
       
+      {beatRefDialog && (() => {
+        const scene = script?.script?.scenes?.[beatRefDialog.sceneIdx]
+        const beat = scene ? getSceneBeats(scene).find((b) => b.beatId === beatRefDialog.beatId) : undefined
+        if (!scene || !beat) return null
+        return (
+          <BeatReferenceSelectionDialog
+            open
+            onOpenChange={(open) => {
+              if (!open && !beatRefGenerating) setBeatRefDialog(null)
+            }}
+            scene={scene}
+            beat={beat}
+            sceneIndex={beatRefDialog.sceneIdx}
+            characters={characters}
+            locationReferences={locationReferences}
+            objectReferences={objectReferences}
+            filmTitle={project?.title}
+            initialSelection={beat.referenceSelection}
+            isGenerating={beatRefGenerating}
+            onConfirm={handleBeatReferenceConfirm}
+          />
+        )
+      })()}
+
       {/* BYOK Settings Panel */}
       <BYOKSettingsPanel
         isOpen={showBYOKSettings}

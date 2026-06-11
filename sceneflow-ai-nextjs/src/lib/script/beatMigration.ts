@@ -13,6 +13,7 @@ import {
   NARRATOR_CHARACTER,
   NARRATOR_CHARACTER_ID,
   type BeatKind,
+  type BeatReferenceSelection,
   type SceneBeat,
   type StoryboardStatus,
 } from '@/lib/script/segmentTypes'
@@ -927,6 +928,27 @@ export function applyBeatStoryboardImageToScene(
     }
   }
   return updated
+}
+
+/** Persist user-verified reference selection on a beat by beatId. */
+export function applyBeatReferenceSelectionToScene(
+  scene: Record<string, unknown>,
+  beatId: string,
+  selection: BeatReferenceSelection
+): Record<string, unknown> {
+  const beats = getSceneBeats(scene)
+  const beatIndex = beats.findIndex((b) => b.beatId === beatId)
+  if (beatIndex < 0) return scene
+
+  beats[beatIndex] = {
+    ...beats[beatIndex],
+    referenceSelection: {
+      ...selection,
+      resolvedAt: selection.resolvedAt || new Date().toISOString(),
+    },
+  }
+
+  return applyBeatsToScene(scene, beats)
 }
 
 /** Apply Express SSE / manual storyboard image updates to a single scene. */

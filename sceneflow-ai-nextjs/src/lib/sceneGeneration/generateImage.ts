@@ -47,6 +47,12 @@ export interface GenerateSceneImageParams {
   dialogueIndex?: number
   /** Index into scene.beats when frameType is 'beat'. */
   beatIndex?: number
+  /** Stable beat id when frameType is 'beat'. */
+  beatId?: string
+  /** Location references for environment consistency. */
+  locationReferences?: Array<Record<string, unknown>>
+  /** Prop/object references from Reference Library. */
+  objectReferences?: Array<Record<string, unknown>>
   /** Id of scene.storyboardFrames entry when frameType is 'custom'. */
   customFrameId?: string
   /** In-memory scene from Express orchestrator (merged over DB scene at sceneIndex). */
@@ -95,6 +101,9 @@ export async function generateSceneImage(
     frameType,
     dialogueIndex,
     beatIndex,
+    beatId,
+    locationReferences,
+    objectReferences,
     customFrameId,
     sceneOverride,
     modelTier,
@@ -134,6 +143,9 @@ export async function generateSceneImage(
       ...(frameType ? { frameType } : {}),
       ...(typeof dialogueIndex === 'number' ? { dialogueIndex } : {}),
       ...(typeof beatIndex === 'number' ? { beatIndex } : {}),
+      ...(beatId ? { beatId } : {}),
+      ...(locationReferences?.length ? { locationReferences } : {}),
+      ...(objectReferences?.length ? { objectReferences } : {}),
       ...(customFrameId ? { customFrameId } : {}),
       ...(sceneOverride ? { sceneOverride } : {}),
       ...(modelTier ? { modelTier } : {}),

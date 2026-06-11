@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle } from 'lucide-react'
+import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle, Tags } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
@@ -34,6 +34,8 @@ export interface SceneImageFrameProps {
   beatRole?: string
   /** Image generation prompt used for this frame. */
   imagePrompt?: string
+  /** Open beat reference review dialog (Pre-Vis storyboard). */
+  onReviewReferences?: () => void
 }
 
 function CompactIconButton({
@@ -77,6 +79,7 @@ function CompactActionBar({
   onEdit,
   onDelete,
   onAddToReferenceLibrary,
+  onReviewReferences,
   sceneNumber,
   alwaysVisible = false,
 }: {
@@ -88,6 +91,7 @@ function CompactActionBar({
   onEdit?: (imageUrl: string) => void
   onDelete?: () => void
   onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => void
+  onReviewReferences?: () => void
   sceneNumber: number
   alwaysVisible?: boolean
 }) {
@@ -116,6 +120,20 @@ function CompactActionBar({
           <Sparkles className={iconClass} />
         )}
       </CompactIconButton>
+
+      {onReviewReferences && (
+        <CompactIconButton
+          onClick={(e) => {
+            e.stopPropagation()
+            onReviewReferences()
+          }}
+          disabled={isGenerating}
+          title="References"
+          className="bg-slate-600/90 hover:bg-slate-500"
+        >
+          <Tags className={iconClass} />
+        </CompactIconButton>
+      )}
 
       {onEdit && hasImage && imageUrl && (
         <CompactIconButton
@@ -199,6 +217,7 @@ export function SceneImageFrame({
   imageTier,
   beatRole,
   imagePrompt,
+  onReviewReferences,
 }: SceneImageFrameProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isHovering, setIsHovering] = useState(false)
@@ -306,6 +325,7 @@ export function SceneImageFrame({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onAddToReferenceLibrary={onAddToReferenceLibrary}
+                onReviewReferences={onReviewReferences}
                 sceneNumber={sceneNumber}
               />
             ) : (
@@ -390,6 +410,7 @@ export function SceneImageFrame({
               onGenerate={onGenerate}
               onUpload={triggerUpload}
               onDelete={onDelete}
+              onReviewReferences={onReviewReferences}
               sceneNumber={sceneNumber}
               alwaysVisible
             />

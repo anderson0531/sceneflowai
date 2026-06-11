@@ -25,6 +25,15 @@ export interface BeatSplitRecommendation {
   excerpts: string[]
 }
 
+/** User-verified reference images for beat storyboard generation. */
+export interface BeatReferenceSelection {
+  characterIds: string[]
+  locationRefId?: string | null
+  objectRefIds: string[]
+  characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
+  resolvedAt?: string
+}
+
 /**
  * Atomic visual moment in a scene — source of truth for storyboard → segments.
  * Spoken beats (dialogue | narration) carry TTS; action beats are silent visuals.
@@ -55,6 +64,8 @@ export interface SceneBeat {
   lineId?: string
   /** When false, background music is muted for this beat's timeline window. Default: on. */
   musicEnabled?: boolean
+  /** Saved character/location/prop references for storyboard generation. */
+  referenceSelection?: BeatReferenceSelection
 }
 
 /**

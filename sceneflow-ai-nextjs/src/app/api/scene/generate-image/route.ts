@@ -482,13 +482,17 @@ export async function POST(req: NextRequest) {
             }
           }
         } else if (isBeatFrame && resolvedScene) {
-          characterSelectionExplicit = true
+          const clientVerifiedBeatRefs =
+            body.characterSelectionExplicit === true && skipObjectAutoDetection === true
+          if (!clientVerifiedBeatRefs) {
+            characterSelectionExplicit = true
+          }
           const beats = getSceneBeats(resolvedScene as Record<string, unknown>)
           const beat = beats[effectiveBeatIndex]
           if (beat) {
             beatKindForIntelligence = beat.kind
             if (storyboardNoCharacterScene) {
-              characterObjects = []
+              if (!clientVerifiedBeatRefs) characterObjects = []
               if (beat.kind === 'action') {
                 const actionText = beat.actionDescription?.trim() || ''
                 const displayAction = actionText || 'Scene action unfolds'
@@ -499,20 +503,22 @@ export async function POST(req: NextRequest) {
               }
             } else if (beat.kind === 'action') {
               const actionText = beat.actionDescription?.trim() || ''
-              const actionContext = [
-                resolvedScene?.heading || '',
-                resolvedScene?.action || '',
-                actionText,
-              ].join(' ')
-              const detectedChars = detectCharactersInText(actionContext, allCharacters, {
-                excludeTexts: filmTitleForDetection ? [filmTitleForDetection] : [],
-              })
-              characterObjects = detectedChars
-              if (detectedChars.length > 0) {
-                console.log(
-                  `[Scene Image] Action beat: detected ${detectedChars.length} character(s) from action text:`,
-                  detectedChars.map((c: any) => c.name)
-                )
+              if (!clientVerifiedBeatRefs) {
+                const actionContext = [
+                  resolvedScene?.heading || '',
+                  resolvedScene?.action || '',
+                  actionText,
+                ].join(' ')
+                const detectedChars = detectCharactersInText(actionContext, allCharacters, {
+                  excludeTexts: filmTitleForDetection ? [filmTitleForDetection] : [],
+                })
+                characterObjects = detectedChars
+                if (detectedChars.length > 0) {
+                  console.log(
+                    `[Scene Image] Action beat: detected ${detectedChars.length} character(s) from action text:`,
+                    detectedChars.map((c: any) => c.name)
+                  )
+                }
               }
               const displayAction = actionText || 'Scene action unfolds'
               dialogueFrameContext =
@@ -520,7 +526,7 @@ export async function POST(req: NextRequest) {
                 `Visual direction: ${displayAction}. `
               effectiveShotType = effectiveShotType || 'medium shot'
             } else if (isNarratorBeat(beat)) {
-              characterObjects = []
+              if (!clientVerifiedBeatRefs) characterObjects = []
               const lineText = beat.line?.trim() || ''
               dialogueFrameContext =
                 `Storyboard voiceover backdrop frame. NO narrator on screen, NO talking head, NO lip-sync. ` +
@@ -529,10 +535,12 @@ export async function POST(req: NextRequest) {
                 `. Show environment, subjects, and atmosphere only. `
               effectiveShotType = effectiveShotType || 'wide shot'
             } else if (beat.characterId || beat.character) {
-              const speakerChar = resolveBeatSpeaker(beat, allCharacters)
-              if (speakerChar) characterObjects = [speakerChar]
+              if (!clientVerifiedBeatRefs) {
+                const speakerChar = resolveBeatSpeaker(beat, allCharacters)
+                if (speakerChar) characterObjects = [speakerChar]
+              }
               const lineText = beat.line?.trim() || ''
-              const speakerName = (beat.character || speakerChar?.name || '').trim()
+              const speakerName = (beat.character || '').trim()
               dialogueFrameContext =
                 `Storyboard dialogue frame. Focus on ${speakerName || 'the speaker'} delivering this line: "${lineText}". ` +
                 'Frame the speaking character prominently — medium close-up or over-the-shoulder — with scene continuity preserved. '
@@ -741,6 +749,18 @@ export async function POST(req: NextRequest) {
     // Initialize variables to hold selected references
     let detectedObjectReferences = objectReferences || []
     let matchedLocationReference: any = locationReferences.length > 0 ? locationReferences[0] : null
+
+    if (
+      isBeatFrame &&
+      body.characterSelectionExplicit === true &&
+      skipObjectAutoDetection === true
+    ) {
+      console.log('[Scene Image] Beat frame using client-verified references', {
+        characters: characterObjects.map((c: any) => c?.name).filter(Boolean),
+        location: matchedLocationReference?.location || matchedLocationReference?.name,
+        objects: detectedObjectReferences.map((o: any) => o?.name).filter(Boolean),
+      })
+    }
     
     // Fetch available project references for the AI to choose from
     const projectObjectRefs = project?.metadata?.visionPhase?.references?.objectReferences || []

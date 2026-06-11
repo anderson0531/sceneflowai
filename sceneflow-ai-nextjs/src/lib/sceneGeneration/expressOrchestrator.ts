@@ -38,6 +38,10 @@ import { generateSceneDirection } from './generateDirection'
 import { generateSceneAudio, applyAudioAssetsToScene } from './generateAudio'
 import { generateSceneImage } from './generateImage'
 import { shouldScheduleStandaloneNarration } from '../script/narration'
+import {
+  mapBeatReferenceSelectionForApi,
+  shouldUseExplicitBeatReferences,
+} from '../vision/beatFrameGenerationContext'
 import { getSceneBeats, applyBeatsToScene } from '../script/beatMigration'
 import { countStoryboardFramesNeedingGeneration } from '../storyboard/types'
 import { stampPreVisContentHash } from '../storyboard/preVisSync'
@@ -331,6 +335,7 @@ function sceneNeedsBeatImages(scene: any): boolean {
 async function generateSingleBeatImage(
   ctx: SceneRunContext,
   options: ExpressOptions,
+  project: any,
   baseUrl: string,
   authCookie: string | undefined,
   emit: ExpressEmit,
@@ -342,6 +347,24 @@ async function generateSingleBeatImage(
   const { sceneIndex, sceneNumber, scene } = ctx
   const imageParams = getExpressImageParams(options)
   const excludeCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
+  const beats = getSceneBeats(scene)
+  const beat = beats[beatIdx]
+  const visionPhase = project?.metadata?.visionPhase || {}
+  const references = visionPhase.references || {}
+
+  let verifiedBeatRefs: ReturnType<typeof mapBeatReferenceSelectionForApi> | null = null
+  if (shouldUseExplicitBeatReferences(beat)) {
+    verifiedBeatRefs = mapBeatReferenceSelectionForApi(
+      beat.referenceSelection,
+      visionPhase.characters || [],
+      references.locationReferences || [],
+      references.objectReferences || []
+    )
+    console.log(
+      `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — using saved reference selection`
+    )
+  }
+
   const result = await trafficCop.runInLane('image', () =>
     generateSceneImage({
     projectId: options.projectId,
@@ -353,11 +376,24 @@ async function generateSingleBeatImage(
     artStyle,
     frameType: 'beat',
     beatIndex: beatIdx,
+    ...(beat?.beatId ? { beatId: beat.beatId } : {}),
     sceneOverride: scene,
-    ...(Array.isArray(scene.characterWardrobes) && scene.characterWardrobes.length > 0
+    ...(verifiedBeatRefs
+      ? {
+          selectedCharacters: verifiedBeatRefs.selectedCharacters,
+          locationReferences: verifiedBeatRefs.locationReferences,
+          objectReferences: verifiedBeatRefs.objectReferences,
+          characterWardrobes: verifiedBeatRefs.characterWardrobes,
+          characterSelectionExplicit: true,
+          skipObjectAutoDetection: true,
+        }
+      : {}),
+    ...(Array.isArray(scene.characterWardrobes) && scene.characterWardrobes.length > 0 && !verifiedBeatRefs
       ? { characterWardrobes: scene.characterWardrobes }
       : {}),
-    ...(excludeCharacters ? { excludeCharacters: true, characterSelectionExplicit: true } : {}),
+    ...(excludeCharacters && !verifiedBeatRefs
+      ? { excludeCharacters: true, characterSelectionExplicit: true }
+      : {}),
     ...(beatPlan?.prompt ? { customPrompt: beatPlan.prompt, useAIPrompt: false } : {}),
     ...(typeof beatPlan?.allowTypography === 'boolean'
       ? { allowTypography: beatPlan.allowTypography }
@@ -388,6 +424,7 @@ async function generateSingleBeatImage(
 async function runBeatImages(
   ctx: SceneRunContext,
   options: ExpressOptions,
+  project: any,
   baseUrl: string,
   authCookie: string | undefined,
   emit: ExpressEmit,
@@ -420,6 +457,7 @@ async function runBeatImages(
       const probe = await generateSingleBeatImage(
         ctx,
         options,
+        project,
         baseUrl,
         authCookie,
         emit,
@@ -456,6 +494,7 @@ async function runBeatImages(
           return await generateSingleBeatImage(
             ctx,
             options,
+            project,
             baseUrl,
             authCookie,
             emit,
@@ -709,6 +748,7 @@ async function runImagePhase(
       const beatResult = await runBeatImages(
         ctx,
         options,
+        project,
         baseUrl,
         authCookie,
         emit,

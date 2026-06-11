@@ -85,6 +85,8 @@ interface SceneGalleryProps {
   onGenerateDialogueFrame?: (sceneIndex: number, dialogueIndex: number) => void | Promise<void>
   /** Generate a beat-indexed storyboard frame (action or narration beats). */
   onGenerateBeatFrame?: (sceneIndex: number, beatId: string) => void | Promise<void>
+  /** Open beat reference review dialog without generating. */
+  onReviewBeatReferences?: (sceneIndex: number, beatId: string) => void
   onUploadDialogueFrame?: (sceneIndex: number, dialogueIndex: number, file: File) => void
   onUploadBeatFrame?: (sceneIndex: number, beatId: string, file: File) => void
   onSaveEditedBeatFrame?: (sceneIndex: number, beatId: string, newImageUrl: string) => void
@@ -129,6 +131,8 @@ interface SceneGalleryProps {
   onOpenPreview?: () => void
   /** Object/prop references from the reference library for consistent image generation */
   objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
+  /** Location references from the reference library. */
+  locationReferences?: Array<{ id: string; location: string; imageUrl?: string; description?: string }>
   /** Callback to open Generate Audio dialog */
   onOpenGenerateAudio?: () => void
   /** Whether audio generation is currently in progress */
@@ -185,6 +189,7 @@ export function SceneGallery({
   onGenerateScene,
   onGenerateDialogueFrame,
   onGenerateBeatFrame,
+  onReviewBeatReferences,
   onUploadDialogueFrame,
   onUploadBeatFrame,
   onSaveEditedBeatFrame,
@@ -210,6 +215,7 @@ export function SceneGallery({
   onOpenAssets,
   onOpenPreview,
   objectReferences,
+  locationReferences,
   onOpenGenerateAudio,
   isGeneratingAudio = false,
   onSaveEditedScene,
@@ -960,6 +966,9 @@ export function SceneGallery({
                       })
                     }
                   } : undefined}
+                  onReviewBeatReferences={
+                    onReviewBeatReferences ? (beatId) => onReviewBeatReferences(idx, beatId) : undefined
+                  }
                   onUploadDialogueFrame={onUploadDialogueFrame ? (dialogueIdx, file) => onUploadDialogueFrame(idx, dialogueIdx, file) : undefined}
                   onUploadBeatFrame={onUploadBeatFrame ? (beatId, file) => onUploadBeatFrame(idx, beatId, file) : undefined}
                   onEditFrame={(frame) => {
@@ -1020,6 +1029,7 @@ export function SceneGallery({
                   onEditSegmentFrame={onEditSegmentFrame}
                   characters={characters}
                   objectReferences={objectReferences}
+                  locationReferences={locationReferences}
                   showDragHandle={!!onReorderScenes}
                   onUpdateSceneAudio={onUpdateSceneAudio}
                   expressPhaseStatus={expressStatus?.[idx]}
@@ -1178,6 +1188,7 @@ interface SceneCardProps {
   onGenerate: (prompt: string) => Promise<void>
   onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
   onGenerateBeatFrame?: (beatId: string) => Promise<void>
+  onReviewBeatReferences?: (beatId: string) => void
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
   onUploadBeatFrame?: (beatId: string, file: File) => void
   onEditFrame?: (frame: {
@@ -1237,6 +1248,8 @@ interface SceneCardProps {
   characters?: any[]
   /** Object/prop references from reference library */
   objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
+  /** Location references from reference library */
+  locationReferences?: Array<{ id: string; location: string; imageUrl?: string; description?: string }>
   /** Whether to show the drag handle for reordering */
   showDragHandle?: boolean
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
@@ -1295,6 +1308,7 @@ function SceneCard({
   onGenerate,
   onGenerateDialogueFrame,
   onGenerateBeatFrame,
+  onReviewBeatReferences,
   onUploadDialogueFrame,
   onUploadBeatFrame,
   onEditFrame,
@@ -1329,6 +1343,7 @@ function SceneCard({
   onEditSegmentFrame,
   characters = [],
   objectReferences = [],
+  locationReferences = [],
   showDragHandle = false,
   onUpdateSceneAudio,
   expressPhaseStatus,
@@ -1877,6 +1892,11 @@ function SceneCard({
                             void onGenerateDialogueFrame?.(dialogueIdx)
                           }
                         }}
+                        onReviewReferences={
+                          useBeatFrame && beatId && onReviewBeatReferences
+                            ? () => onReviewBeatReferences(beatId)
+                            : undefined
+                        }
                         onUpload={(file) => {
                           setSelectedFrameKey(slot.key)
                           if (useBeatFrame && onUploadBeatFrame && beatId) {
