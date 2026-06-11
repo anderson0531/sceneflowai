@@ -16,6 +16,7 @@ import {
   type StoryboardVisualFrame,
 } from '@/lib/storyboard/types'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
+import { buildStoryboardMusicClips } from '@/lib/storyboard/musicPlayback'
 import {
   useTimelinePlayback,
   type AudioClip as TimelineAudioClip,
@@ -218,18 +219,18 @@ export function useStoryboardPlayback({
       }))
 
     if (activeScene) {
-      const musicUrl = activeScene.musicAudio || (activeScene.music as { url?: string } | undefined)?.url
-      if (typeof musicUrl === 'string' && musicUrl.trim()) {
-        clips.push({
-          id: 'music',
-          url: musicUrl.trim(),
-          startTime: 0,
-          duration: (activeScene.musicDuration as number | undefined) || sceneDuration,
-          trackType: 'music',
-          label: 'Background Music',
-          loop: true,
-        })
-      }
+      clips.push(
+        ...buildStoryboardMusicClips(activeScene, visualFrames, sceneDuration).map((clip) => ({
+          id: clip.id,
+          url: clip.url,
+          startTime: clip.startTime,
+          duration: clip.duration,
+          trimStart: clip.trimStart,
+          trackType: 'music' as const,
+          label: clip.label,
+          loop: clip.loop,
+        }))
+      )
 
       const voiceEndTime =
         voiceClips.length > 0

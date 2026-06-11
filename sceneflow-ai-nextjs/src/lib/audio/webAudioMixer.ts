@@ -11,10 +11,12 @@ export interface AudioSource {
   url: string
   startTime?: number  // Relative to scene start (in seconds)
   duration?: number  // Optional duration override
+  trimStart?: number  // Offset into the audio file (seconds)
 }
 
 export interface SceneAudioConfig {
-  music?: string  // Music URL - plays from scene start
+  music?: string  // Music URL - plays from scene start (legacy / no beats)
+  musicSegments?: AudioSource[]  // Beat-gated music windows (trimStart = offset into track)
   description?: string  // Scene description URL - plays before narration
   descriptionOffsetSeconds?: number
   narration?: string  // Narration URL - plays from scene start
@@ -178,8 +180,17 @@ export class WebAudioMixer {
     })
 
     try {
-      // Music can start loading/playing immediately
-      if (config.music) {
+      const musicSegmentPromises = (config.musicSegments || []).map((source) =>
+        this.loadAudioFile(source.url, 'music')
+          .then((buffer) => ({ source, buffer }))
+          .catch((error) => {
+            console.error('[WebAudioMixer] Music segment load failed for', source.url, error)
+            return null
+          })
+      )
+
+      // Legacy: one looping music track for the full scene
+      if (config.music && !config.musicSegments?.length) {
         console.log('[WebAudioMixer] Loading music:', config.music?.slice(-50))
         this.loadAudioFile(config.music, 'music')
           .then(musicBuffer => {
@@ -194,6 +205,8 @@ export class WebAudioMixer {
           .catch(error => {
             console.error('[WebAudioMixer] Music load/play failed:', error)
           })
+      } else if (config.musicSegments?.length) {
+        console.log('[WebAudioMixer] Scheduling beat-aligned music segments:', config.musicSegments.length)
       } else {
         console.log('[WebAudioMixer] No music URL in config')
       }
@@ -230,11 +243,13 @@ export class WebAudioMixer {
           })
       )
 
-      const [descriptionBuffer, narrationBuffer, dialogueResults, sfxResults] = await Promise.all([
+      const [descriptionBuffer, narrationBuffer, dialogueResults, sfxResults, musicSegmentResults] =
+        await Promise.all([
         descriptionPromise,
         narrationPromise,
         Promise.all(dialoguePromises),
-        Promise.all(sfxPromises)
+        Promise.all(sfxPromises),
+        Promise.all(musicSegmentPromises),
       ])
 
       const descriptionOffset = config.description ? Math.max(0, config.descriptionOffsetSeconds ?? 0) : 0
@@ -248,7 +263,7 @@ export class WebAudioMixer {
         hasNarration: !!narrationBuffer,
         hasDialogue: dialogueResults.filter(Boolean).length,
         hasSfx: sfxResults.filter(Boolean).length,
-        hasMusic: !!config.music
+        hasMusic: !!(config.music || (config.musicSegments && config.musicSegments.length > 0))
       })
 
       if (descriptionBuffer) {
@@ -346,6 +361,30 @@ export class WebAudioMixer {
         sfxCursor = startTime + buffer.duration + SFX_GAP_SECONDS
       })
 
+      const validMusicSegments = musicSegmentResults.filter(
+        (entry): entry is { source: AudioSource; buffer: AudioBuffer } => !!entry
+      )
+      validMusicSegments.forEach(({ source, buffer }, idx) => {
+        const startTime = Math.max(0, source.startTime ?? 0)
+        const trimStart = Math.max(0, source.trimStart ?? 0)
+        const maxPlayDuration = Math.max(0.1, buffer.duration - trimStart)
+        const playDuration = Math.min(
+          typeof source.duration === 'number' && source.duration > 0
+            ? source.duration
+            : maxPlayDuration,
+          maxPlayDuration
+        )
+
+        console.log(`[WebAudioMixer] Music segment ${idx + 1}/${validMusicSegments.length}:`, {
+          url: source.url.slice(-40),
+          startTime,
+          trimStart,
+          playDuration,
+        })
+
+        this.playAudioBuffer(buffer, 'music', startTime, false, trimStart, playDuration)
+      })
+
       // If no non-looping sources, use scene duration (for music-only scenes)
       // This handles the case where only music exists (looping)
       if (this.nonLoopingSources.size === 0) {
@@ -380,7 +419,9 @@ export class WebAudioMixer {
     buffer: AudioBuffer,
     type: AudioType,
     startTime: number,
-    loop: boolean = false
+    loop: boolean = false,
+    offset: number = 0,
+    playDuration?: number
   ): void {
     if (!this.audioContext || !this.masterGain) return
 
@@ -389,6 +430,13 @@ export class WebAudioMixer {
       console.warn(`[WebAudioMixer] No gain node for type: ${type}`)
       return
     }
+
+    const safeOffset = Math.max(0, Math.min(offset, Math.max(0, buffer.duration - 0.01)))
+    const maxDuration = Math.max(0.1, buffer.duration - safeOffset)
+    const effectiveDuration =
+      typeof playDuration === 'number' && playDuration > 0
+        ? Math.min(playDuration, maxDuration)
+        : maxDuration
 
     const source = this.audioContext.createBufferSource()
     source.buffer = buffer
@@ -403,7 +451,7 @@ export class WebAudioMixer {
 
     // Calculate absolute end time for non-looping sources
     if (!loop) {
-      const absoluteEndTime = absoluteStartTime + buffer.duration
+      const absoluteEndTime = absoluteStartTime + effectiveDuration
       this.nonLoopingSources.set(sourceId, { source, endTime: absoluteEndTime })
     }
 
@@ -425,7 +473,11 @@ export class WebAudioMixer {
     })
 
     try {
-      source.start(absoluteStartTime)
+      if (loop) {
+        source.start(absoluteStartTime, safeOffset)
+      } else {
+        source.start(absoluteStartTime, safeOffset, effectiveDuration)
+      }
     } catch (error) {
       console.error(`[WebAudioMixer] Error starting ${type} audio:`, error)
       this.sources.delete(sourceId)

@@ -914,6 +914,7 @@ export function buildStoryboardAudioRevision(
     if (beat.audioUrl?.trim()) {
       parts.push(`beat:${beat.beatId}:${beat.audioUrl.trim()}`)
     }
+    parts.push(`beat-music:${beat.beatId}:${beat.musicEnabled === false ? '0' : '1'}`)
   }
 
   if (typeof scene.musicAudio === 'string' && scene.musicAudio) {

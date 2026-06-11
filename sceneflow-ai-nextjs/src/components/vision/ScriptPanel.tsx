@@ -95,6 +95,9 @@ import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/repo
 import { flattenSceneToStoryboardFrames } from '@/lib/storyboard/types'
 import { StoryboardReviewPanel } from './StoryboardReviewPanel'
 import { getSceneBeats, isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
+import { buildBeatFirstPlaybackTimeline } from '@/lib/storyboard/types'
+import { buildStoryboardMusicClips } from '@/lib/storyboard/musicPlayback'
+import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
 import { ExportDialog } from './ExportDialog'
 import { isDirectionStale, isImageStale } from '@/lib/utils/contentHash'
 import { isPreVisStale } from '@/lib/storyboard/preVisSync'
@@ -1658,15 +1661,11 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                           (selectedLanguage === 'en' ? scene.dialogueAudio?.en : null) ||
                           (Array.isArray(scene.dialogueAudio) ? scene.dialogueAudio : null) || []).filter(Boolean)
     
-    // Music starts at scene beginning (concurrent with everything, loops)
-    // Check both musicAudio (new format) and music.url (legacy format)
+    // Resolve music URL (beat-gated scheduling applied after scene duration is known)
     const rawMusicUrl = scene.musicAudio || scene.music?.url
     let musicUrl: string | null = null
     if (rawMusicUrl) {
       musicUrl = await normalizeAudioUrl(rawMusicUrl)
-      if (musicUrl) {
-        config.music = musicUrl
-      }
     }
     
     // Scene description plays before narration when available
@@ -1799,6 +1798,24 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
     
     // Set scene duration for music-only scenes or to ensure music plays long enough
     config.sceneDuration = Math.max(totalDuration, scene.duration || 5)
+
+    if (musicUrl) {
+      const beatCount = getSceneBeats(scene).length
+      if (beatCount > 0) {
+        const { visualFrames } = buildBeatFirstPlaybackTimeline(scene, selectedLanguage)
+        const musicClips = buildStoryboardMusicClips(scene, visualFrames, config.sceneDuration)
+        if (musicClips.length > 0) {
+          config.musicSegments = musicClips.map((clip) => ({
+            url: clip.url,
+            startTime: clip.startTime,
+            duration: clip.duration,
+            trimStart: clip.trimStart,
+          }))
+        }
+      } else {
+        config.music = musicUrl
+      }
+    }
     
     return config
   }
@@ -1874,7 +1891,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       await new Promise(resolve => setTimeout(resolve, 3000))
 
       // Fade out looping music gracefully once everything else is done
-      if (audioConfig.music && audioMixerRef.current) {
+      if ((audioConfig.music || (audioConfig.musicSegments && audioConfig.musicSegments.length > 0)) && audioMixerRef.current) {
         await audioMixerRef.current.fadeOut(2000)
         audioMixerRef.current.stop()
       }
@@ -6211,6 +6228,7 @@ function SceneCard({
                         .map((line) => line.replace(/^SFX:\s*/i, '').trim())
                         .filter(Boolean)
                     }
+                    const hasSceneMusic = !!(scene.musicAudio || scene.music?.url)
                     let spokenBeatCursor = 0
                     return (
                     <div className="bg-emerald-950 border-l-4 border-emerald-500 p-4 rounded-lg">
@@ -6350,6 +6368,7 @@ function SceneCard({
                               className="p-3 bg-amber-900/25 rounded-lg border border-amber-700/40"
                             >
                               <div className="flex items-center gap-2 mb-1.5">
+                                <div className="flex items-center gap-2 min-w-0">
                                 <span className="text-xs font-semibold uppercase tracking-wide text-amber-300">
                                   Action
                                 </span>
@@ -6357,6 +6376,16 @@ function SceneCard({
                                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
                                     Title
                                   </span>
+                                )}
+                                </div>
+                                {hasSceneMusic && (
+                                  <BeatMusicToggle
+                                    beat={beat}
+                                    sceneIdx={sceneIdx}
+                                    scenes={scenes}
+                                    script={script}
+                                    onScriptChange={onScriptChange}
+                                  />
                                 )}
                               </div>
                               <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">
@@ -6432,6 +6461,7 @@ function SceneCard({
                             <div className="flex items-start gap-3">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1.5">
+                                  <div className="flex items-center gap-2 min-w-0 flex-1">
                                   <div className="text-sm font-semibold text-green-200">{d.character}</div>
                                   {/* Voice direction / parenthetical */}
                                   {(parenthetical || d.voiceDirection || d.emotion) && (
@@ -6444,6 +6474,16 @@ function SceneCard({
                                       <Volume2 className="w-3 h-3" />
                                       Ready
                                     </span>
+                                  )}
+                                  </div>
+                                  {hasSceneMusic && (
+                                    <BeatMusicToggle
+                                      beat={beat}
+                                      sceneIdx={sceneIdx}
+                                      scenes={scenes}
+                                      script={script}
+                                      onScriptChange={onScriptChange}
+                                    />
                                   )}
                                 </div>
                                 <div className="text-sm text-gray-200 leading-relaxed">"{lineWithoutParenthetical}"</div>

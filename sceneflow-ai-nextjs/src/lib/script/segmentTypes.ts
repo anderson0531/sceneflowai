@@ -53,6 +53,8 @@ export interface SceneBeat {
   splitRecommendation?: BeatSplitRecommendation
   /** Stable line id when this beat maps to a dialogue/narration line. */
   lineId?: string
+  /** When false, background music is muted for this beat's timeline window. Default: on. */
+  musicEnabled?: boolean
 }
 
 /**
