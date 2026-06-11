@@ -1803,7 +1803,16 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       const beatCount = getSceneBeats(scene).length
       if (beatCount > 0) {
         const { visualFrames } = buildBeatFirstPlaybackTimeline(scene, selectedLanguage)
-        const musicClips = buildStoryboardMusicClips(scene, visualFrames, config.sceneDuration)
+        const musicFileDuration = await resolveAudioDuration(
+          musicUrl,
+          scene.musicDuration ?? scene.music?.duration
+        )
+        const musicClips = buildStoryboardMusicClips(
+          scene,
+          visualFrames,
+          config.sceneDuration,
+          musicFileDuration
+        )
         if (musicClips.length > 0) {
           config.musicSegments = musicClips.map((clip) => ({
             url: clip.url,

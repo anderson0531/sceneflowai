@@ -16,7 +16,7 @@ import {
   type StoryboardVisualFrame,
 } from '@/lib/storyboard/types'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
-import { buildStoryboardMusicClips } from '@/lib/storyboard/musicPlayback'
+import { buildStoryboardMusicClips, resolveSceneMusicFileDuration } from '@/lib/storyboard/musicPlayback'
 import {
   useTimelinePlayback,
   type AudioClip as TimelineAudioClip,
@@ -219,8 +219,14 @@ export function useStoryboardPlayback({
       }))
 
     if (activeScene) {
+      const musicFileDuration = resolveSceneMusicFileDuration(activeScene, dynamicDurations)
       clips.push(
-        ...buildStoryboardMusicClips(activeScene, visualFrames, sceneDuration).map((clip) => ({
+        ...buildStoryboardMusicClips(
+          activeScene,
+          visualFrames,
+          sceneDuration,
+          musicFileDuration
+        ).map((clip) => ({
           id: clip.id,
           url: clip.url,
           startTime: clip.startTime,

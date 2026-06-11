@@ -4,6 +4,7 @@ import {
   buildBeatAlignedMusicClips,
   buildStoryboardMusicClips,
   isBeatMusicEnabled,
+  resolveMusicTrimStart,
 } from '@/lib/storyboard/musicPlayback'
 
 const SARAH_URL = 'https://example.com/sarah.mp3'
@@ -60,8 +61,15 @@ describe('isBeatMusicEnabled', () => {
   })
 })
 
+describe('resolveMusicTrimStart', () => {
+  it('wraps scene timeline offsets modulo file duration', () => {
+    expect(resolveMusicTrimStart(45, 30)).toBe(15)
+    expect(resolveMusicTrimStart(0, 30)).toBe(0)
+  })
+})
+
 describe('buildBeatAlignedMusicClips', () => {
-  it('emits one music clip per visible beat frame when all beats default on', () => {
+  it('emits looping clips with wrapped trimStart for each visible beat', () => {
     const scene = buildBeatScene()
     const { visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
       [SARAH_URL]: 3,
@@ -70,6 +78,7 @@ describe('buildBeatAlignedMusicClips', () => {
     const clips = buildBeatAlignedMusicClips(scene, visualFrames, {
       musicUrl: MUSIC_URL,
       sceneDuration: 20,
+      musicFileDuration: 30,
     })
 
     const framedBeats = visualFrames.filter((frame) => frame.beatId)
@@ -77,8 +86,17 @@ describe('buildBeatAlignedMusicClips', () => {
     expect(clips.every((clip) => clip.url === MUSIC_URL)).toBe(true)
     expect(clips[0].id).toBe(`music-${visualFrames[0].beatId}`)
     expect(clips[0].startTime).toBe(visualFrames[0].startTime)
-    expect(clips[0].trimStart).toBe(visualFrames[0].startTime)
-    expect(clips[0].loop).toBe(false)
+    expect(clips[0].trimStart).toBe(
+      resolveMusicTrimStart(visualFrames[0].startTime, 30)
+    )
+    expect(clips[0].loop).toBe(true)
+
+    const lastClip = clips[clips.length - 1]
+    const lastFrame = visualFrames.find((frame) => frame.beatId === lastClip.id.replace('music-', ''))
+    if (lastFrame && lastFrame.startTime >= 30) {
+      expect(lastClip.trimStart).toBe(lastFrame.startTime % 30)
+      expect(lastClip.loop).toBe(true)
+    }
   })
 
   it('skips beats with musicEnabled false', () => {
@@ -108,6 +126,7 @@ describe('buildBeatAlignedMusicClips', () => {
     const clips = buildBeatAlignedMusicClips(scene, visualFrames, {
       musicUrl: MUSIC_URL,
       sceneDuration: 12,
+      musicFileDuration: 30,
     })
 
     expect(clips).toHaveLength(1)
@@ -143,6 +162,7 @@ describe('buildBeatAlignedMusicClips', () => {
     const clips = buildBeatAlignedMusicClips(scene, visualFrames, {
       musicUrl: MUSIC_URL,
       sceneDuration: 10,
+      musicFileDuration: 30,
     })
 
     expect(clips).toHaveLength(0)
@@ -154,11 +174,36 @@ describe('buildBeatAlignedMusicClips', () => {
     const clips = buildBeatAlignedMusicClips(scene, [], {
       musicUrl: MUSIC_URL,
       sceneDuration: 30,
+      musicFileDuration: 30,
     })
 
     expect(clips).toHaveLength(1)
     expect(clips[0].startTime).toBe(0)
     expect(clips[0].duration).toBe(30)
+    expect(clips[0].loop).toBe(true)
+  })
+
+  it('wraps trimStart for a late beat beyond music file length', () => {
+    const clips = buildBeatAlignedMusicClips(
+      { beats: [{ beatId: 'bt_late', kind: 'action' }] },
+      [
+        {
+          clipId: 'action-bt_late',
+          beatId: 'bt_late',
+          frameType: 'establishing',
+          startTime: 45,
+          duration: 8,
+        },
+      ],
+      {
+        musicUrl: MUSIC_URL,
+        sceneDuration: 60,
+        musicFileDuration: 30,
+      }
+    )
+
+    expect(clips).toHaveLength(1)
+    expect(clips[0].trimStart).toBe(15)
     expect(clips[0].loop).toBe(true)
   })
 })

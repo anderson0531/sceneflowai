@@ -92,6 +92,26 @@ export interface UseTimelinePlaybackReturn {
 
 const DRIFT_THRESHOLD = 0.2 // Resync audio if drifts more than 200ms
 
+function computeClipAudioTime(
+  clip: AudioClip,
+  elapsed: number,
+  audioDuration: number
+): number {
+  const rawTime = elapsed - clip.startTime + (clip.trimStart || 0)
+  if (clip.loop && audioDuration > 0 && Number.isFinite(audioDuration)) {
+    return ((rawTime % audioDuration) + audioDuration) % audioDuration
+  }
+  return rawTime
+}
+
+function loopingDrift(audioTime: number, currentTime: number, audioDuration: number): number {
+  if (audioDuration <= 0) return Math.abs(currentTime - audioTime)
+  const direct = Math.abs(currentTime - audioTime)
+  const wrappedForward = Math.abs(currentTime - (audioTime + audioDuration))
+  const wrappedBackward = Math.abs(currentTime - (audioTime - audioDuration))
+  return Math.min(direct, wrappedForward, wrappedBackward)
+}
+
 // ============================================================================
 // Hook Implementation
 // ============================================================================
@@ -169,6 +189,9 @@ export function useTimelinePlayback({
         audio.preload = 'auto'
         audio.loop = clip.loop ?? false
         audioRefs.current.set(key, audio)
+      } else {
+        const audio = audioRefs.current.get(key)!
+        audio.loop = clip.loop ?? false
       }
     })
     
@@ -284,7 +307,8 @@ export function useTimelinePlayback({
       
       // Check if current time is within this clip's range
       if (elapsed >= clipStart && elapsed < clipEnd) {
-        const audioTime = elapsed - clipStart + (clip.trimStart || 0)
+        const audioDuration = audio.duration
+        const audioTime = computeClipAudioTime(clip, elapsed, audioDuration)
         
         if (audio.paused) {
           // Start playing from correct position
@@ -294,7 +318,9 @@ export function useTimelinePlayback({
           })
         } else {
           // Check for drift and correct if needed
-          const drift = Math.abs(audio.currentTime - audioTime)
+          const drift = clip.loop
+            ? loopingDrift(audioTime, audio.currentTime, audioDuration)
+            : Math.abs(audio.currentTime - audioTime)
           if (drift > DRIFT_THRESHOLD) {
             audio.currentTime = audioTime
           }
@@ -365,7 +391,8 @@ export function useTimelinePlayback({
         const clipEnd = clip.startTime + clip.duration
         
         if (newTime >= clipStart && newTime < clipEnd) {
-          audio.currentTime = newTime - clipStart + (clip.trimStart || 0)
+          const audioDuration = audio.duration
+          audio.currentTime = computeClipAudioTime(clip, newTime, audioDuration)
         }
       })
     }

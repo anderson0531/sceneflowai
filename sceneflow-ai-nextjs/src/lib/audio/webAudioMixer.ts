@@ -366,23 +366,24 @@ export class WebAudioMixer {
       )
       validMusicSegments.forEach(({ source, buffer }, idx) => {
         const startTime = Math.max(0, source.startTime ?? 0)
-        const trimStart = Math.max(0, source.trimStart ?? 0)
-        const maxPlayDuration = Math.max(0.1, buffer.duration - trimStart)
-        const playDuration = Math.min(
+        const trimStart =
+          buffer.duration > 0
+            ? ((source.trimStart ?? 0) % buffer.duration + buffer.duration) % buffer.duration
+            : Math.max(0, source.trimStart ?? 0)
+        const playDuration =
           typeof source.duration === 'number' && source.duration > 0
             ? source.duration
-            : maxPlayDuration,
-          maxPlayDuration
-        )
+            : Math.max(0.1, buffer.duration - trimStart)
 
         console.log(`[WebAudioMixer] Music segment ${idx + 1}/${validMusicSegments.length}:`, {
           url: source.url.slice(-40),
           startTime,
           trimStart,
           playDuration,
+          loop: true,
         })
 
-        this.playAudioBuffer(buffer, 'music', startTime, false, trimStart, playDuration)
+        this.playAudioBuffer(buffer, 'music', startTime, true, trimStart, playDuration, playDuration)
       })
 
       // If no non-looping sources, use scene duration (for music-only scenes)
@@ -421,7 +422,8 @@ export class WebAudioMixer {
     startTime: number,
     loop: boolean = false,
     offset: number = 0,
-    playDuration?: number
+    playDuration?: number,
+    loopWindowDuration?: number
   ): void {
     if (!this.audioContext || !this.masterGain) return
 
@@ -431,11 +433,15 @@ export class WebAudioMixer {
       return
     }
 
-    const safeOffset = Math.max(0, Math.min(offset, Math.max(0, buffer.duration - 0.01)))
+    const wrappedOffset =
+      buffer.duration > 0
+        ? ((offset % buffer.duration) + buffer.duration) % buffer.duration
+        : Math.max(0, offset)
+    const safeOffset = Math.max(0, Math.min(wrappedOffset, Math.max(0, buffer.duration - 0.01)))
     const maxDuration = Math.max(0.1, buffer.duration - safeOffset)
     const effectiveDuration =
       typeof playDuration === 'number' && playDuration > 0
-        ? Math.min(playDuration, maxDuration)
+        ? playDuration
         : maxDuration
 
     const source = this.audioContext.createBufferSource()
@@ -448,10 +454,16 @@ export class WebAudioMixer {
 
     // Calculate absolute start time
     const absoluteStartTime = this.sceneStartTime + startTime
+    const windowDuration =
+      loop && typeof loopWindowDuration === 'number' && loopWindowDuration > 0
+        ? loopWindowDuration
+        : !loop
+          ? effectiveDuration
+          : undefined
 
-    // Calculate absolute end time for non-looping sources
-    if (!loop) {
-      const absoluteEndTime = absoluteStartTime + effectiveDuration
+    // Track windowed loop segments as non-looping for completion timing
+    if (windowDuration != null) {
+      const absoluteEndTime = absoluteStartTime + windowDuration
       this.nonLoopingSources.set(sourceId, { source, endTime: absoluteEndTime })
     }
 
@@ -475,6 +487,9 @@ export class WebAudioMixer {
     try {
       if (loop) {
         source.start(absoluteStartTime, safeOffset)
+        if (windowDuration != null) {
+          source.stop(absoluteStartTime + windowDuration)
+        }
       } else {
         source.start(absoluteStartTime, safeOffset, effectiveDuration)
       }

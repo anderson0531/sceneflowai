@@ -6,6 +6,8 @@ import { getSceneBeats } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import type { StoryboardVisualFrame } from '@/lib/storyboard/types'
 
+export const DEFAULT_MUSIC_FILE_DURATION_SEC = 30
+
 export interface BeatAlignedMusicClip {
   id: string
   url: string
@@ -20,11 +22,22 @@ export interface BeatAlignedMusicClip {
 export interface BuildBeatAlignedMusicClipsOptions {
   musicUrl: string
   sceneDuration: number
+  /** Known music file length — used to wrap scene timeline offsets. Defaults to 30s. */
+  musicFileDuration?: number
 }
 
 /** Default on — only explicit false disables music for a beat. */
 export function isBeatMusicEnabled(beat: SceneBeat | undefined): boolean {
   return beat?.musicEnabled !== false
+}
+
+/** Wrap a scene timeline offset into the music file duration. */
+export function resolveMusicTrimStart(
+  sceneTimelineOffset: number,
+  musicFileDuration: number = DEFAULT_MUSIC_FILE_DURATION_SEC
+): number {
+  if (musicFileDuration <= 0) return Math.max(0, sceneTimelineOffset)
+  return sceneTimelineOffset % musicFileDuration
 }
 
 function resolveSceneMusicUrl(scene: Record<string, unknown>): string | undefined {
@@ -44,6 +57,7 @@ export function buildBeatAlignedMusicClips(
   options: BuildBeatAlignedMusicClipsOptions
 ): BeatAlignedMusicClip[] {
   const { musicUrl, sceneDuration } = options
+  const musicFileDuration = options.musicFileDuration ?? DEFAULT_MUSIC_FILE_DURATION_SEC
   if (!musicUrl.trim()) return []
 
   const beats = getSceneBeats(scene)
@@ -75,10 +89,10 @@ export function buildBeatAlignedMusicClips(
       url: musicUrl.trim(),
       startTime: frame.startTime,
       duration: frame.duration,
-      trimStart: frame.startTime,
+      trimStart: resolveMusicTrimStart(frame.startTime, musicFileDuration),
       trackType: 'music',
       label: 'Background Music',
-      loop: false,
+      loop: true,
     })
   }
 
@@ -89,9 +103,35 @@ export function buildBeatAlignedMusicClips(
 export function buildStoryboardMusicClips(
   scene: Record<string, unknown>,
   visualFrames: StoryboardVisualFrame[],
-  sceneDuration: number
+  sceneDuration: number,
+  musicFileDuration?: number
 ): BeatAlignedMusicClip[] {
   const musicUrl = resolveSceneMusicUrl(scene)
   if (!musicUrl) return []
-  return buildBeatAlignedMusicClips(scene, visualFrames, { musicUrl, sceneDuration })
+  return buildBeatAlignedMusicClips(scene, visualFrames, {
+    musicUrl,
+    sceneDuration,
+    musicFileDuration,
+  })
+}
+
+export function resolveSceneMusicFileDuration(
+  scene: Record<string, unknown>,
+  dynamicDurations: Record<string, number> = {}
+): number {
+  const musicUrl = resolveSceneMusicUrl(scene)
+  if (!musicUrl) return DEFAULT_MUSIC_FILE_DURATION_SEC
+
+  const probed = dynamicDurations[musicUrl]
+  if (typeof probed === 'number' && probed > 0) return probed
+
+  const sceneDuration = scene.musicDuration
+  if (typeof sceneDuration === 'number' && sceneDuration > 0) return sceneDuration
+
+  const musicObj = scene.music as { duration?: number } | undefined
+  if (typeof musicObj?.duration === 'number' && musicObj.duration > 0) {
+    return musicObj.duration
+  }
+
+  return DEFAULT_MUSIC_FILE_DURATION_SEC
 }
