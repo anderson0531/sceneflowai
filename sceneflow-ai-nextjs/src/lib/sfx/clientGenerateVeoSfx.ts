@@ -88,7 +88,13 @@ export async function dispatchGenerateVeoSfx(
         )
         throw new Error('Insufficient credits')
       }
-      throw new Error(payload?.error || `Veo SFX generation failed (HTTP ${response.status})`)
+      throw new Error(
+        (typeof payload?.error === 'string'
+          ? payload.error
+          : payload?.error != null
+            ? JSON.stringify(payload.error)
+            : null) || `Veo SFX generation failed (HTTP ${response.status})`
+      )
     }
 
     const data = await response.json()

@@ -8,14 +8,20 @@ import {
   generateVideoWithVeo,
   waitForVideoCompletion,
 } from '@/lib/gemini/videoClient'
+import {
+  isVeoDiagnosticLogEnabled,
+  summarizePromptForPolicyHeuristics,
+} from '@/lib/gemini/veoRequestDiagnostics'
 import { downloadProductionVideo } from '@/lib/gemini/productionVideoClient'
 import { uploadToGCS } from '@/lib/storage/gcsAssets'
 import { extractAudioFromVideoBuffer } from '@/lib/sfx/extractAudioFromVideo'
+import { extractInlineSfxFromActionText } from '@/lib/script/deriveSfxFromSceneContent'
 import {
   resolveVeoSfxClipDuration,
   type VeoSfxClipDuration,
 } from '@/lib/sfx/veoSfxDuration'
 import { withVeoSfxRetries } from '@/lib/sfx/veoSfxRetry'
+import { autoSanitizePrompt } from '@/utils/promptModerator'
 
 function parsePositiveInt(value: string | undefined, fallback: number): number {
   const n = Number(value ?? fallback)
@@ -40,7 +46,7 @@ export interface GenerateVeoSfxParams {
   sfxIndex?: number
   /** Resolved clip length (4 | 6 | 8). */
   clipDurationSeconds?: VeoSfxClipDuration
-  /** ambient = black-frame cue; actionBeat = full action description T2V. */
+  /** ambient = black-frame cue; actionBeat = distilled audio cue on black frame. */
   promptMode?: VeoSfxPromptMode
 }
 
@@ -80,15 +86,77 @@ export function buildVeoSfxPrompt(description: string): BuildVeoSfxPromptResult 
   return { prompt, negativePrompt: buildVeoSfxNegativePrompt() }
 }
 
-export function buildVeoActionBeatSfxPrompt(actionDescription: string): BuildVeoSfxPromptResult {
-  const trimmed = (actionDescription || '').trim()
-  const prompt = [
-    trimmed,
-    'Realistic native ambient sound and foley matching this scene.',
-    'No spoken dialogue, no narration, no music, no singing.',
-  ].join(' ')
+const ACTION_BEAT_AUDIO_CUE_MAX = 160
 
-  return { prompt, negativePrompt: buildVeoSfxNegativePrompt() }
+const SHOT_PREFIX =
+  /^(?:WIDE|MEDIUM|CLOSE(?:-UP)?|EXTREME(?:\s+WIDE|\s+CLOSE(?:-UP)?)?|OVER(?:-THE-SHOULDER)?|INSERT|DUTCH(?:\s+ANGLE)?|POV)\s+SHOT:\s*/i
+
+const EMOTIONAL_CLAUSE =
+  /\b(feels?|feeling|overwhelming|isolating|staring blankly|eyes wide|internal|emotionally|sense of dread)\b/i
+
+const PHYSICAL_CLAUSE =
+  /\b(mug|cup|glass|door|desk|chair|floor|roll|spill|knock|tap|click|crash|thud|scrap|scrape|footstep|keyboard|phone|wind|rain|hum|buzz|sizzle|slam|push|pull|drop|fall|tip|break|shatter|liquid|hardwood|tile|metal|wood)\b/i
+
+const AUDIO_CUE_NORMALIZATIONS: Array<[RegExp, string]> = [
+  [/\bspilling a dark stain\b/gi, 'liquid spilling on floor'],
+  [/\bdark stain\b/gi, 'liquid spreading on floor'],
+  [/\bcoffee stain\b/gi, 'coffee spreading on floor'],
+]
+
+function stripShotPrefix(text: string): string {
+  return text.replace(SHOT_PREFIX, '').trim()
+}
+
+function normalizeAudioCuePhrasing(text: string): string {
+  let out = text
+  for (const [pattern, replacement] of AUDIO_CUE_NORMALIZATIONS) {
+    out = out.replace(pattern, replacement)
+  }
+  return out.replace(/\s+/g, ' ').trim()
+}
+
+function splitIntoClauses(text: string): string[] {
+  return text
+    .split(/(?<=[.!?])\s+|;\s*/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
+function isPhysicalClause(clause: string): boolean {
+  if (EMOTIONAL_CLAUSE.test(clause)) return false
+  return PHYSICAL_CLAUSE.test(clause)
+}
+
+function truncateAudioCue(text: string): string {
+  if (text.length <= ACTION_BEAT_AUDIO_CUE_MAX) return text
+  return `${text.slice(0, ACTION_BEAT_AUDIO_CUE_MAX - 1)}…`
+}
+
+/** Derive a short sound-focused cue from a cinematic action beat description. */
+export function distillActionBeatAudioCue(actionDescription: string): string {
+  const trimmed = (actionDescription || '').trim()
+  if (!trimmed) return ''
+
+  const inlineSfx = extractInlineSfxFromActionText(trimmed)
+  if (inlineSfx.length > 0) {
+    return truncateAudioCue(normalizeAudioCuePhrasing(inlineSfx.join(', ')))
+  }
+
+  const withoutShot = stripShotPrefix(trimmed)
+  const clauses = splitIntoClauses(withoutShot)
+  const physical = clauses.filter(isPhysicalClause)
+
+  const cue = normalizeAudioCuePhrasing(
+    physical.length > 0 ? physical.join('. ') : clauses[0] || withoutShot
+  )
+
+  return truncateAudioCue(cue)
+}
+
+export function buildVeoActionBeatSfxPrompt(actionDescription: string): BuildVeoSfxPromptResult {
+  const audioCue = distillActionBeatAudioCue(actionDescription)
+  const { sanitizedPrompt } = autoSanitizePrompt(audioCue, { minSeverity: 'low' })
+  return buildVeoSfxPrompt(sanitizedPrompt || audioCue)
 }
 
 export function buildVeoSfxPromptForMode(
@@ -165,12 +233,21 @@ export async function generateVeoSfxAudio(
     params.clipDurationSeconds ?? resolveVeoSfxClipDuration(8)
 
   const { prompt, negativePrompt } = buildVeoSfxPromptForMode(trimmedText, promptMode)
+  const audioCue =
+    promptMode === 'actionBeat' ? distillActionBeatAudioCue(trimmedText) : undefined
 
   console.log('[Veo SFX] Starting T2V generation', {
     promptMode,
     clipDurationSeconds,
-    promptPreview: trimmedText.slice(0, 80),
+    sourceTextPreview: trimmedText.slice(0, 80),
+    ...(audioCue ? { audioCue } : {}),
+    prompt,
+    negativePromptLength: negativePrompt.length,
   })
+
+  if (isVeoDiagnosticLogEnabled()) {
+    console.log('[Veo SFX] policy heuristics (prompt):', summarizePromptForPolicyHeuristics(prompt))
+  }
 
   const videoUrl = await withVeoSfxRetries(
     () => runVeoSfxGenerationAttempt(prompt, negativePrompt, clipDurationSeconds),
