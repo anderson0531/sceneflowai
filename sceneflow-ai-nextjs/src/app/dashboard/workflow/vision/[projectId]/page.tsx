@@ -96,6 +96,7 @@ import {
   type ReimagineFoundationField,
 } from '@/components/vision/ReimagineFoundationDialog'
 import { buildBlueprintReimagineUrl, resolveBlueprintProjectId } from '@/lib/blueprint/reimagineFoundationRoute'
+import { VERTEX_QUOTA_EXHAUSTED_USER_MESSAGE } from '@/lib/vertexai/geminiTextFallback'
 
 const DirectorChairIcon: React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> = ({ size = 32, className, ...props }) => (
   <svg
@@ -10876,12 +10877,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       !rateLimitToastShown &&
                       (errLower.includes('429') ||
                         errLower.includes('resource_exhausted') ||
+                        errLower.includes('quota') ||
                         errLower.includes('rate limit'))
                     ) {
                       rateLimitToastShown = true
-                      toast.error(
-                        'Vertex rate limit reached — wait a minute and retry Express.'
-                      )
+                      toast.error(VERTEX_QUOTA_EXHAUSTED_USER_MESSAGE)
                     }
                   }
                   break
@@ -10905,7 +10905,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   break
                 case 'error':
                   console.error('[Express] Stream error:', event.error)
-                  toast.error(`Express error: ${event.error}`)
+                  {
+                    const streamErrLower = String(event.error || '').toLowerCase()
+                    const isQuotaError =
+                      streamErrLower.includes('429') ||
+                      streamErrLower.includes('resource_exhausted') ||
+                      streamErrLower.includes('quota')
+                    toast.error(
+                      isQuotaError ? VERTEX_QUOTA_EXHAUSTED_USER_MESSAGE : `Express error: ${event.error}`
+                    )
+                  }
                   break
                 default:
                   break

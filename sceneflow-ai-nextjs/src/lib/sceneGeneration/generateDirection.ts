@@ -31,7 +31,8 @@ export interface GenerateSceneDirectionParams {
 }
 
 async function callGemini(
-  prompt: string
+  prompt: string,
+  sceneIndex?: number
 ): Promise<{ text: string; finishReason?: string }> {
   const result = await generateText(prompt, {
     model: 'gemini-3.1-pro-preview',
@@ -40,6 +41,17 @@ async function callGemini(
     maxOutputTokens: 12000,
     responseMimeType: 'application/json',
   })
+  if (result.modelId && result.modelId !== 'gemini-3.1-pro-preview') {
+    console.log(
+      `[generateSceneDirection] Used fallback model ${result.modelId} for scene`,
+      sceneIndex
+    )
+  } else if (result.modelId) {
+    console.log(
+      `[generateSceneDirection] Completed via ${result.modelId} for scene`,
+      sceneIndex
+    )
+  }
   return { text: result.text, finishReason: result.finishReason }
 }
 
@@ -386,7 +398,7 @@ export async function generateSceneDirection(
   const prompt = buildSceneDirectionPrompt(scene)
 
   console.log('[generateSceneDirection] Calling Gemini for scene', sceneIndex)
-  const { text: responseText, finishReason } = await callGemini(prompt)
+  const { text: responseText, finishReason } = await callGemini(prompt, sceneIndex)
 
   if (finishReason === 'MAX_TOKENS') {
     console.warn(

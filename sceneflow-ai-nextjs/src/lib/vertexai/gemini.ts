@@ -4,6 +4,10 @@
 
 import { getVertexAIAuthToken } from './client'
 import { fetchWithRetry } from '../utils/retry'
+import {
+  getNextGeminiFallbackModel,
+  isGeminiQuotaError,
+} from './geminiTextFallback'
 import { 
   getDefaultGeminiSafetySettings, 
   getImagenPersonGeneration,
@@ -86,6 +90,12 @@ export interface TextGenerationResult {
   text: string
   finishReason?: string
   safetyRatings?: Array<{ category: string; probability: string }>
+  /** Resolved model id that produced the response (after any fallback). */
+  modelId?: string
+}
+
+type InternalTextGenerationOptions = TextGenerationOptions & {
+  _is404FallbackAttempt?: boolean
 }
 
 /**
@@ -96,11 +106,37 @@ export async function generateText(
   prompt: string,
   options: TextGenerationOptions = {}
 ): Promise<TextGenerationResult> {
+  const model = (options.model || 'gemini-3.1-pro-preview').trim()
+
+  try {
+    return await generateTextWithModel(prompt, options, model)
+  } catch (err) {
+    if (isGeminiQuotaError(err)) {
+      const nextModel = getNextGeminiFallbackModel(model)
+      if (nextModel) {
+        console.warn(`[Vertex Gemini] 429 on ${model}. Falling back to ${nextModel}.`)
+        const fallbackOptions: TextGenerationOptions = {
+          ...options,
+          model: nextModel,
+        }
+        if (nextModel.includes('2.5')) {
+          fallbackOptions.thinkingLevel = 'low'
+        }
+        return generateText(prompt, fallbackOptions)
+      }
+    }
+    throw err
+  }
+}
+
+async function generateTextWithModel(
+  prompt: string,
+  options: InternalTextGenerationOptions,
+  resolvedModel: string
+): Promise<TextGenerationResult> {
   const { projectId, location: defaultLocation } = getConfig();
-  
-  // 1. RESOLVE MODEL & DYNAMIC LOCATION
-  const rawModel = options.model || 'gemini-3.1-pro-preview'; 
-  const model = rawModel.trim();
+
+  const model = resolvedModel;
   const isGemini3 = model.includes('gemini-3');
   const isPreview = model.includes('preview');
 
@@ -188,14 +224,14 @@ export async function generateText(
   if (!isOk) {
     const errorText = await response.text(); 
     
-    if (status === 404 && isGemini3 && !(options as any)._isFallbackAttempt) {
+    if (status === 404 && isGemini3 && !options._is404FallbackAttempt) {
       console.warn(`[Vertex Gemini] 404 for ${model}. Falling back to 2.5-flash.`);
       return generateText(prompt, {
         ...options,
-        model: 'gemini-2.5-flash',
+        model: GEMINI_TEXT_MODELS_PREVIOUS['2.5-flash'],
         thinkingLevel: 'low',
-        _isFallbackAttempt: true
-      } as any);
+        _is404FallbackAttempt: true,
+      } as InternalTextGenerationOptions);
     }
     
     throw new Error(`Vertex AI error ${status}: ${errorText}`);
@@ -206,10 +242,11 @@ export async function generateText(
     ?.filter((part: any) => !part.thought)
     .map((part: any) => part.text).join('').trim();
 
-  return { 
-    text, 
-    safetyRatings: data.candidates?.[0]?.safetyRatings, 
-    finishReason: data.candidates?.[0]?.finishReason 
+  return {
+    text,
+    safetyRatings: data.candidates?.[0]?.safetyRatings,
+    finishReason: data.candidates?.[0]?.finishReason,
+    modelId: model,
   };
 }
 
