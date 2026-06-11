@@ -931,6 +931,26 @@ export function buildStoryboardAudioRevision(
   return parts.join('|')
 }
 
+/** Stable fingerprint of beat/establishing storyboard images — detects regen without audio changes. */
+export function buildStoryboardVisualRevision(
+  scene: Record<string, unknown> | null | undefined
+): string {
+  if (!scene) return ''
+
+  const parts: string[] = []
+
+  const establishingUrl =
+    typeof scene.imageUrl === 'string' ? scene.imageUrl.trim() : ''
+  if (establishingUrl) parts.push(`est:${establishingUrl}`)
+
+  for (const beat of getSceneBeats(scene)) {
+    const url = beat.storyboardImageUrl?.trim()
+    if (url) parts.push(`beat:${beat.beatId}:${url}`)
+  }
+
+  return parts.join('|')
+}
+
 /**
  * Build sequential voice clips (description → narration → dialogue) for storyboard playback.
  * Dialogue clip IDs use script dialogueIndex (not dialogueAudio array position).
@@ -1265,13 +1285,9 @@ export function buildBeatFirstPlaybackTimeline(
     line: win.line,
   }))
 
-  const aligned = alignPlaybackTimelineToFirstVoice(voiceClips, visualFrames)
   return {
-    voiceClips: extendVoiceClipsToVisualFrameDuration(
-      aligned.voiceClips,
-      aligned.visualFrames
-    ),
-    visualFrames: aligned.visualFrames,
+    voiceClips: extendVoiceClipsToVisualFrameDuration(voiceClips, visualFrames),
+    visualFrames,
   }
 }
 

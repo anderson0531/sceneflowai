@@ -354,6 +354,9 @@ async function generateSingleBeatImage(
     frameType: 'beat',
     beatIndex: beatIdx,
     sceneOverride: scene,
+    ...(Array.isArray(scene.characterWardrobes) && scene.characterWardrobes.length > 0
+      ? { characterWardrobes: scene.characterWardrobes }
+      : {}),
     ...(excludeCharacters ? { excludeCharacters: true, characterSelectionExplicit: true } : {}),
     ...(beatPlan?.prompt ? { customPrompt: beatPlan.prompt, useAIPrompt: false } : {}),
     ...(typeof beatPlan?.allowTypography === 'boolean'

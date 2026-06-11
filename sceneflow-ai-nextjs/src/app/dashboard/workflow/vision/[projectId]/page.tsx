@@ -36,6 +36,7 @@ import {
   applyEstablishingImageToScene,
   applyExpressStoryboardImageToScene,
   ensureSceneBeats,
+  resolveRawBeatIndex,
 } from '@/lib/script/beatMigration'
 import { toast } from 'sonner'
 
@@ -8591,15 +8592,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const handleGenerateBeatFrameImage = async (sceneIdx: number, beatIdx: number) => {
+  const handleGenerateBeatFrameImage = async (sceneIdx: number, beatId: string) => {
     const scene = script?.script?.scenes?.[sceneIdx]
     if (!scene) {
       try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
       return
     }
 
+    const rawBeatIdx = resolveRawBeatIndex(scene, { beatId })
+    if (rawBeatIdx === undefined) {
+      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
+      return
+    }
+
     if (!batchGeneratingRef.current) {
-      overlayStore.show(`Beat frame — Scene ${sceneIdx + 1}, beat ${beatIdx + 1}`, 25, 'storyboard-production')
+      overlayStore.show(`Beat frame — Scene ${sceneIdx + 1}`, 25, 'storyboard-production')
     }
     setGeneratingKeyframeSceneNumber(sceneIdx + 1)
 
@@ -8611,9 +8618,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           projectId,
           sceneIndex: sceneIdx,
           frameType: 'beat',
-          beatIndex: beatIdx,
+          beatId,
+          beatIndex: rawBeatIdx,
           quality: imageQuality,
           characterSelectionExplicit: true,
+          characterWardrobes: scene.characterWardrobes || [],
         }),
       })
 
@@ -8626,7 +8635,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       updatedScenes[sceneIdx] = stampPreVisContentHash(
         applyBeatStoryboardImageToScene(
           updatedScenes[sceneIdx],
-          beatIdx,
+          rawBeatIdx,
           data.imageUrl,
           { imagePrompt: data.prompt || '' }
         )
@@ -8747,14 +8756,21 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const handleUploadBeatFrame = async (sceneIndex: number, beatIdx: number, file: File) => {
+  const handleUploadBeatFrame = async (sceneIndex: number, beatId: string, file: File) => {
     if (!script?.script?.scenes) return
+
+    const scene = script.script.scenes[sceneIndex]
+    const rawBeatIdx = scene ? resolveRawBeatIndex(scene, { beatId }) : undefined
+    if (rawBeatIdx === undefined) {
+      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
+      return
+    }
 
     try {
       const uploadedUrl = await uploadAssetViaAPI(file, projectId)
       const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
         if (idx !== sceneIndex) return s
-        return applyBeatStoryboardImageToScene(s, beatIdx, uploadedUrl)
+        return applyBeatStoryboardImageToScene(s, rawBeatIdx, uploadedUrl)
       })
 
       setScript((prev: any) => ({
@@ -8776,13 +8792,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   const handleSaveEditedBeatFrame = async (
     sceneIndex: number,
-    beatIdx: number,
+    beatId: string,
     newImageUrl: string
   ) => {
     if (!script?.script?.scenes) return
 
+    const scene = script.script.scenes[sceneIndex]
+    const rawBeatIdx = scene ? resolveRawBeatIndex(scene, { beatId }) : undefined
+    if (rawBeatIdx === undefined) {
+      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
+      return
+    }
+
     const updatedScenes = script.script.scenes.map((s: any, idx: number) =>
-      idx === sceneIndex ? applyBeatStoryboardImageToScene(s, beatIdx, newImageUrl) : s
+      idx === sceneIndex ? applyBeatStoryboardImageToScene(s, rawBeatIdx, newImageUrl) : s
     )
 
     setScript((prev: any) => ({
@@ -12271,14 +12294,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onGenerateDialogueFrame={(sceneIdx, dialogueIdx) =>
                               handleGenerateDialogueFrameImage(sceneIdx, dialogueIdx)
                             }
-                            onGenerateBeatFrame={(sceneIdx, beatIdx) =>
-                              handleGenerateBeatFrameImage(sceneIdx, beatIdx)
+                            onGenerateBeatFrame={(sceneIdx, beatId) =>
+                              handleGenerateBeatFrameImage(sceneIdx, beatId)
                             }
                             onUploadDialogueFrame={(sceneIdx, dialogueIdx, file) =>
                               handleUploadDialogueFrame(sceneIdx, dialogueIdx, file)
                             }
-                            onUploadBeatFrame={(sceneIdx, beatIdx, file) =>
-                              handleUploadBeatFrame(sceneIdx, beatIdx, file)
+                            onUploadBeatFrame={(sceneIdx, beatId, file) =>
+                              handleUploadBeatFrame(sceneIdx, beatId, file)
                             }
                             onSaveEditedBeatFrame={handleSaveEditedBeatFrame}
                             onSaveEditedDialogueFrame={handleSaveEditedDialogueFrame}

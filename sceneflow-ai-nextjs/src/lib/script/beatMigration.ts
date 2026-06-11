@@ -1085,6 +1085,25 @@ export function getStoryboardTimelineBeats(
   return beats
 }
 
+/** Map gallery timeline slot or beatId to raw getSceneBeats() index. */
+export function resolveRawBeatIndex(
+  scene: Record<string, unknown>,
+  params: { beatId: string } | { timelineBeatIndex: number }
+): number | undefined {
+  const beats = getSceneBeats(scene)
+
+  if ('beatId' in params) {
+    const idx = beats.findIndex((beat) => beat.beatId === params.beatId)
+    return idx >= 0 ? idx : undefined
+  }
+
+  const timelineBeat = getStoryboardTimelineBeats(scene)[params.timelineBeatIndex]
+  if (!timelineBeat?.beatId) return undefined
+
+  const idx = beats.findIndex((beat) => beat.beatId === timelineBeat.beatId)
+  return idx >= 0 ? idx : undefined
+}
+
 export function getStoryboardStatus(
   scene: Record<string, unknown> | null | undefined
 ): StoryboardStatus {

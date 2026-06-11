@@ -95,7 +95,20 @@ export function resolveCharacterReferencePair(
     characterWardrobes,
     sceneIndex
   )
-  const wardrobeUrl = trimUrl(resolvedWardrobe?.fullBodyUrl)
+  const fullBodyUrl = trimUrl(resolvedWardrobe?.fullBodyUrl)
+  const portraitUrl = trimUrl(resolvedWardrobe?.portraitUrl as string | undefined)
+  let wardrobeUrl = fullBodyUrl
+
+  if (!wardrobeUrl && resolvedWardrobe && portraitUrl) {
+    console.warn(
+      `[CharacterRef] Wardrobe "${resolvedWardrobe.name ?? resolvedWardrobe.id ?? 'unknown'}" missing fullBodyUrl — falling back to portraitUrl (turnaround preferred for outfit consistency)`
+    )
+    wardrobeUrl = portraitUrl
+  } else if (resolvedWardrobe && !fullBodyUrl) {
+    console.warn(
+      `[CharacterRef] Wardrobe "${resolvedWardrobe.name ?? resolvedWardrobe.id ?? 'unknown'}" has no fullBodyUrl — dual identity/wardrobe split may be incomplete`
+    )
+  }
 
   const hasDualReferences = !!(identityUrl && wardrobeUrl)
   const hasWardrobeOnlyReference = !!(!identityUrl && wardrobeUrl)

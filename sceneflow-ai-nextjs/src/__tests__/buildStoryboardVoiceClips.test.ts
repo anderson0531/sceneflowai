@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { flatSceneToBeats } from '@/lib/script/beatMigration'
+import { flatSceneToBeats, resolveRawBeatIndex } from '@/lib/script/beatMigration'
 import {
   buildBeatFirstPlaybackTimeline,
   buildStoryboardVoiceClips,
@@ -1127,6 +1127,77 @@ describe('buildStoryboardVoiceClips', () => {
     expect(frame).toBeDefined()
     expect(voiceClips[0].duration).toBe(frame!.duration)
     expect(voiceClips[0].duration).toBeGreaterThan(4)
+  })
+
+  it('shows pre-voice action beats at t=0 instead of skipping to first dialogue', () => {
+    const scene = {
+      dialogue: [{ character: 'Sarah', line: 'Hello.' }],
+      beats: [
+        {
+          beatId: 'bt_a1',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Sarah enters the room',
+          storyboardImageUrl: 'https://example.com/a1.jpg',
+        },
+        {
+          beatId: 'bt_a2',
+          sequenceIndex: 1,
+          kind: 'action',
+          actionDescription: 'Sarah looks around',
+          storyboardImageUrl: 'https://example.com/a2.jpg',
+        },
+        {
+          beatId: 'bt_d1',
+          sequenceIndex: 2,
+          kind: 'dialogue',
+          character: 'Sarah',
+          line: 'Hello.',
+          storyboardImageUrl: 'https://example.com/d1.jpg',
+          audioUrl: SARAH_URL,
+          durationSeconds: 3,
+        },
+      ],
+    }
+
+    const { voiceClips, visualFrames } = buildBeatFirstPlaybackTimeline(scene, 'en', {
+      [SARAH_URL]: 3,
+    })
+
+    expect(visualFrames).toHaveLength(3)
+    expect(getCurrentStoryboardVisualFrame(visualFrames, 0)?.beatId).toBe('bt_a1')
+    expect(getCurrentStoryboardVisualFrame(visualFrames, 4.35)?.beatId).toBe('bt_a2')
+    expect(voiceClips[0].startTime).toBeGreaterThan(7)
+    expect(getCurrentStoryboardVisualFrame(visualFrames, voiceClips[0].startTime)?.beatId).toBe(
+      'bt_d1'
+    )
+  })
+})
+
+describe('resolveRawBeatIndex', () => {
+  it('maps timeline beatId to raw beat index when leading establishing is dropped', () => {
+    const scene = {
+      imageUrl: 'https://example.com/est.jpg',
+      beats: [
+        {
+          beatId: 'bt_est',
+          sequenceIndex: 0,
+          kind: 'action',
+          actionDescription: 'Establishing shot',
+          storyboardImageUrl: 'https://example.com/est.jpg',
+        },
+        {
+          beatId: 'bt_narr',
+          sequenceIndex: 1,
+          kind: 'narration',
+          character: 'NARRATOR',
+          line: 'Welcome.',
+        },
+      ],
+    }
+
+    expect(resolveRawBeatIndex(scene, { beatId: 'bt_narr' })).toBe(1)
+    expect(resolveRawBeatIndex(scene, { timelineBeatIndex: 0 })).toBe(1)
   })
 })
 

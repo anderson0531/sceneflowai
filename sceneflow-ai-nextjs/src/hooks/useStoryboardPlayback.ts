@@ -9,6 +9,7 @@ import { getSceneBeats } from '@/lib/script/beatMigration'
 import {
   buildBeatFirstPlaybackTimeline,
   buildStoryboardAudioRevision,
+  buildStoryboardVisualRevision,
   buildStoryboardVoiceClips,
   buildStoryboardVisualTimeline,
   getCurrentStoryboardVisualFrame,
@@ -120,6 +121,11 @@ export function useStoryboardPlayback({
     [scene, language]
   )
 
+  const sceneVisualRevision = useMemo(
+    () => buildStoryboardVisualRevision(scene),
+    [scene]
+  )
+
   const dynamicDurationKey = useMemo(
     () =>
       Object.entries(dynamicDurations)
@@ -167,7 +173,7 @@ export function useStoryboardPlayback({
     const activeScene = sceneRef.current
     if (!activeScene?.beats?.length) return null
     return buildBeatFirstPlaybackTimeline(activeScene, language, dynamicDurations)
-  }, [sceneAudioRevision, language, dynamicDurationKey])
+  }, [sceneAudioRevision, sceneVisualRevision, language, dynamicDurationKey])
 
   const voiceClips = useMemo(() => {
     const activeScene = sceneRef.current
@@ -175,7 +181,7 @@ export function useStoryboardPlayback({
       beatPlayback?.voiceClips ??
       (activeScene ? buildStoryboardVoiceClips(activeScene, language, dynamicDurations) : [])
     )
-  }, [beatPlayback, sceneAudioRevision, language, dynamicDurationKey])
+  }, [beatPlayback, sceneAudioRevision, sceneVisualRevision, language, dynamicDurationKey])
 
   const visualFrames = useMemo(() => {
     const activeScene = sceneRef.current
@@ -185,7 +191,7 @@ export function useStoryboardPlayback({
       language,
       dynamicDurations,
     })
-  }, [beatPlayback, voiceClips, language, dynamicDurationKey])
+  }, [beatPlayback, voiceClips, sceneVisualRevision, language, dynamicDurationKey])
 
   const sceneDuration = useMemo(() => {
     if (visualFrames.length > 0) {
@@ -302,7 +308,7 @@ export function useStoryboardPlayback({
   useEffect(() => {
     reset()
     prevClipTimelineKeyRef.current = ''
-  }, [sceneAudioRevision, reset])
+  }, [sceneAudioRevision, sceneVisualRevision, reset])
 
   useEffect(() => {
     const prev = prevClipTimelineKeyRef.current

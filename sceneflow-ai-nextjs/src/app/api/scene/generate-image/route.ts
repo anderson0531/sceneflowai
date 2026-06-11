@@ -263,7 +263,8 @@ export async function POST(req: NextRequest) {
       allowTypography = false,  // Title/credit beats may render on-screen text
       frameType = 'establishing',  // 'establishing' | 'dialogue' | 'custom' | 'beat'
       dialogueIndex,  // Required when frameType === 'dialogue'
-      beatIndex,  // Required when frameType === 'beat'
+      beatIndex,  // Required when frameType === 'beat' (unless beatId is provided)
+      beatId,  // Optional stable beat id when frameType === 'beat'
       customFrameId,  // Required when frameType === 'custom'
       /** In-memory scene snapshot (Express) merged over DB scene at sceneIndex */
       sceneOverride,
@@ -300,9 +301,13 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
-    if (isBeatFrame && (typeof beatIndex !== 'number' || beatIndex < 0)) {
+    if (
+      isBeatFrame &&
+      (typeof beatIndex !== 'number' || beatIndex < 0) &&
+      !(typeof beatId === 'string' && beatId.trim())
+    ) {
       return NextResponse.json(
-        { success: false, error: 'beatIndex is required when frameType is beat' },
+        { success: false, error: 'beatIndex or beatId is required when frameType is beat' },
         { status: 400 }
       )
     }
@@ -343,6 +348,10 @@ export async function POST(req: NextRequest) {
     console.log('[Scene Image] DEBUG - selectedCharacters[0]:', characterObjects[0] ? JSON.stringify(characterObjects[0]).substring(0, 200) : 'none')
     console.log('[Scene Image] DEBUG - projectId:', projectId)
 
+    let effectiveBeatIndex =
+      isBeatFrame && typeof beatIndex === 'number' && beatIndex >= 0 ? beatIndex : -1
+    let effectiveCharacterWardrobes = characterWardrobes
+
     if (projectId) {
       await sequelize.authenticate()
       project = await Project.findByPk(projectId, {
@@ -364,6 +373,28 @@ export async function POST(req: NextRequest) {
           sceneOverride && typeof sceneOverride === 'object'
             ? { ...(dbScene || {}), ...sceneOverride }
             : dbScene
+      }
+
+      if (
+        effectiveCharacterWardrobes.length === 0 &&
+        resolvedScene &&
+        Array.isArray(resolvedScene.characterWardrobes)
+      ) {
+        effectiveCharacterWardrobes = resolvedScene.characterWardrobes
+      }
+
+      if (isBeatFrame && resolvedScene) {
+        if (typeof beatId === 'string' && beatId.trim()) {
+          const beats = getSceneBeats(resolvedScene as Record<string, unknown>)
+          const idx = beats.findIndex((b) => b.beatId === beatId.trim())
+          if (idx >= 0) effectiveBeatIndex = idx
+        }
+        if (effectiveBeatIndex < 0) {
+          return NextResponse.json(
+            { success: false, error: 'Beat not found for beatIndex/beatId' },
+            { status: 400 }
+          )
+        }
       }
 
       const storyboardNoCharacterScene =
@@ -453,7 +484,7 @@ export async function POST(req: NextRequest) {
         } else if (isBeatFrame && resolvedScene) {
           characterSelectionExplicit = true
           const beats = getSceneBeats(resolvedScene as Record<string, unknown>)
-          const beat = beats[beatIndex!]
+          const beat = beats[effectiveBeatIndex]
           if (beat) {
             beatKindForIntelligence = beat.kind
             if (storyboardNoCharacterScene) {
@@ -507,7 +538,7 @@ export async function POST(req: NextRequest) {
                 'Frame the speaking character prominently — medium close-up or over-the-shoulder — with scene continuity preserved. '
               effectiveShotType = effectiveShotType || 'medium close-up'
             }
-            console.log(`[Scene Image] Beat frame ${beatIndex}: kind=${beat.kind}`)
+            console.log(`[Scene Image] Beat frame ${effectiveBeatIndex}: kind=${beat.kind}`)
           }
         } else if (characterSelectionExplicit) {
           console.log('[Scene Image] Character selection was explicit (from dialog or no-talent detection) — skipping auto-detect')
@@ -670,7 +701,7 @@ export async function POST(req: NextRequest) {
           console.log('[Scene Image] Using custom prompt from ScenePromptBuilder')
         } else if (isBeatFrame && scene) {
           const beats = getSceneBeats(scene as Record<string, unknown>)
-          const beat = beats[beatIndex!]
+          const beat = beats[effectiveBeatIndex]
           const beatAction = beat?.actionDescription?.trim() || beat?.line?.trim() || ''
           fullSceneContext = beatAction || scene.action || scene.visualDescription || scene.heading || ''
           console.log('[Scene Image] Using beat-primary context for beat frame')
@@ -738,7 +769,7 @@ export async function POST(req: NextRequest) {
       let effectiveAccessories = char.wardrobeAccessories
       
       const charId = char.id || char.name // Some characters may use name as ID
-      const sceneWardrobeOverride = characterWardrobes.find(
+      const sceneWardrobeOverride = effectiveCharacterWardrobes.find(
         (cw: { characterId: string; wardrobeId: string }) => cw.characterId === charId
       )
       
@@ -800,7 +831,7 @@ export async function POST(req: NextRequest) {
         character: char,
         scene: sceneData as Record<string, unknown>,
         sceneIndex,
-        characterWardrobes,
+        characterWardrobes: effectiveCharacterWardrobes,
       })
       const identityImageUrl = refPair.identityUrl
       const wardrobeImageUrl = refPair.wardrobeUrl
@@ -1078,7 +1109,7 @@ export async function POST(req: NextRequest) {
       // Call Gemini intelligence
       const beatForIntelligence =
         isBeatFrame && sceneData
-          ? getSceneBeats(sceneData as Record<string, unknown>)[beatIndex!]
+          ? getSceneBeats(sceneData as Record<string, unknown>)[effectiveBeatIndex]
           : undefined
 
       const aiResult = await generateSceneImagePrompt({
@@ -1089,7 +1120,7 @@ export async function POST(req: NextRequest) {
         filmContext,
         sceneType,
         beatKind: beatKindForIntelligence,
-        beatIndex: isBeatFrame ? beatIndex : undefined,
+        beatIndex: isBeatFrame ? effectiveBeatIndex : undefined,
         totalBeats: isBeatFrame ? getSceneBeats(sceneData as Record<string, unknown>).length : undefined,
         beatAction: beatForIntelligence?.actionDescription || beatForIntelligence?.line,
         beatRole: beatForIntelligence?.beatRole,
@@ -1374,9 +1405,15 @@ export async function POST(req: NextRequest) {
               }
             })
             const hasAnyDual = characterReferences.some((cr: any) => cr.hasDualReferences)
+            const hasIdentityOnly = characterReferences.some(
+              (cr: any) => cr.identityImageUrl && !cr.hasDualReferences && !cr.hasWardrobeOnlyReference
+            )
             if (hasAnyDual) {
               geminiPrompt +=
                 'When both identity and wardrobe references exist for a character, use identity for face/body and wardrobe for outfit only.\n\n'
+            } else if (hasIdentityOnly) {
+              geminiPrompt +=
+                'Use identity reference(s) for face, hair, skin tone, age, ethnicity, and body proportions only. Ignore clothing in identity reference images — outfit must come from wardrobe text in the scene prompt.\n\n'
             } else {
               geminiPrompt +=
                 'The character(s) MUST match the reference image(s) exactly — same face, ethnicity, age, hair, and facial features.\n\n'
