@@ -15,6 +15,7 @@ import {
   getCurrentStoryboardVisualFrame,
   type StoryboardVisualFrame,
 } from '@/lib/storyboard/types'
+import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
 import {
   useTimelinePlayback,
   type AudioClip as TimelineAudioClip,
@@ -230,33 +231,22 @@ export function useStoryboardPlayback({
         })
       }
 
-      const sfxArray = activeScene.sfxAudio
-      if (Array.isArray(sfxArray) && sfxArray.length > 0) {
-        const baseDuration =
-          voiceClips.length > 0
-            ? voiceClips[voiceClips.length - 1].startTime + voiceClips[voiceClips.length - 1].duration
-            : 5
-        sfxArray.forEach((sfx, idx) => {
-          const sfxUrl = typeof sfx === 'string' ? sfx : sfx?.url
-          if (!sfxUrl) return
-          const startTime =
-            typeof sfx === 'object' && sfx?.startTime != null
-              ? sfx.startTime
-              : idx * (baseDuration / Math.max(sfxArray.length, 1))
-          clips.push({
-            id: `sfx-${idx}`,
-            url: sfxUrl,
-            startTime,
-            duration: (typeof sfx === 'object' && sfx?.duration) || 3,
-            trackType: 'sfx',
-            label: (typeof sfx === 'object' && sfx?.description) || `Sound Effect ${idx + 1}`,
-          })
+      const voiceEndTime =
+        voiceClips.length > 0
+          ? voiceClips[voiceClips.length - 1].startTime + voiceClips[voiceClips.length - 1].duration
+          : undefined
+
+      clips.push(
+        ...buildBeatAlignedStoryboardSfxClips(activeScene, visualFrames, {
+          voiceEndTime,
+          sceneDuration,
+          dynamicDurations,
         })
-      }
+      )
     }
 
     return clips
-  }, [voiceClips, sceneDuration, sceneAudioRevision])
+  }, [voiceClips, visualFrames, sceneDuration, sceneAudioRevision, dynamicDurationKey])
 
   const visualClips = useMemo(
     () => storyboardFramesToVisualClips(visualFrames),
