@@ -70,7 +70,6 @@ const ScriptPanel = dynamic(
     )
   }
 )
-import { SceneSelector } from '@/components/vision/SceneSelector'
 import { SceneProgressDashboard, type SceneProgressItem } from '@/components/vision/SceneProgressDashboard'
 import { ProductionOnboarding } from '@/components/vision/ProductionOnboarding'
 import { useSceneProgressItems } from '@/hooks/vision/useSceneProgressItems'
@@ -1218,6 +1217,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [script?.script?.scenes])
+
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return
+      }
+
+      const hovered = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
+      const panel = findVisionScrollContainer(hovered)
+      if (!panel) return
+
+      const maxScrollTop = panel.scrollHeight - panel.clientHeight
+      if (maxScrollTop <= 0) return
+
+      const canScrollDown = e.deltaY > 0 && panel.scrollTop < maxScrollTop
+      const canScrollUp = e.deltaY < 0 && panel.scrollTop > 0
+      if (!canScrollDown && !canScrollUp) return
+
+      panel.scrollTop += e.deltaY
+      e.preventDefault()
+    }
+
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    return () => window.removeEventListener('wheel', handleWheel)
+  }, [])
 
   const handleBookmarkScene = useCallback(
     async (bookmark: SceneBookmark | null) => {
@@ -12377,6 +12402,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 />
                 </div>
               )}
+              <div className="flex-1 min-h-0 flex flex-col min-w-0">
               <ScriptPanel 
                 script={script}
                 onScriptChange={handleScriptChange}
@@ -12398,8 +12424,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 projectLogline={projectLogline}
                 projectDuration={projectDuration || undefined}
                 seriesInfo={seriesInfo}
-                timelineSlot={
-                  <>
+                productionProgressSlot={
                   <SceneProgressDashboard
                     scenes={sceneProgressItems}
                     selectedSceneId={
@@ -12421,105 +12446,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     }}
                     className="mb-3"
                   />
-                  <SceneSelector
-                    scenes={(script?.script?.scenes || []).map((scene: any, idx: number, allScenes: any[]) => {
-                      const sceneId = scene.id || scene.sceneId || `scene-${idx}`
-                      const isBookmarked = sceneBookmark?.sceneId === sceneId || sceneBookmark?.sceneNumber === idx + 1
-                      const productionData = sceneProductionState[sceneId]
-                      const segments = productionData?.segments || []
-                      
-                      // Calculate actual duration from segments if available
-                      let actualDuration = 0
-                      if (segments.length > 0) {
-                        const lastSegment = segments[segments.length - 1]
-                        if (lastSegment?.endTime) {
-                          actualDuration = lastSegment.endTime
-                        } else {
-                          // Sum up segment durations
-                          actualDuration = segments.reduce((sum: number, seg: any) => {
-                            const segDuration = (seg.endTime || 0) - (seg.startTime || 0)
-                            return sum + (segDuration > 0 ? segDuration : 0)
-                          }, 0)
-                        }
-                      }
-                      
-                      // Calculate start time by summing previous scene durations
-                      let startTime = 0
-                      for (let i = 0; i < idx; i++) {
-                        const prevScene = allScenes[i]
-                        const prevSceneId = prevScene.id || prevScene.sceneId || `scene-${i}`
-                        const prevProductionData = sceneProductionState[prevSceneId]
-                        const prevSegments = prevProductionData?.segments || []
-                        
-                        if (prevSegments.length > 0) {
-                          const lastPrevSeg = prevSegments[prevSegments.length - 1]
-                          if (lastPrevSeg?.endTime) {
-                            startTime += lastPrevSeg.endTime
-                          }
-                        } else {
-                          // Use estimated duration for scenes without segments
-                          startTime += prevScene.estimatedDuration || prevScene.duration || 15
-                        }
-                      }
-                      
-                      // Determine workflow status
-                      const hasScript = !!(scene.content || scene.dialog || scene.narration || scene.description)
-                      const hasDirection = !!(scene.direction || scene.sceneDirection || scene.cameraDirection)
-                      const hasFrame = !!scene.imageUrl
-                      const hasCallAction = segments.length > 0
-                      
-                      return {
-                        id: sceneId,
-                        sceneNumber: idx + 1,
-                        name: typeof scene.heading === 'string' ? scene.heading : scene.heading?.text || `Scene ${idx + 1}`,
-                        estimatedDuration: scene.estimatedDuration || scene.duration || 15,
-                        actualDuration: actualDuration > 0 ? actualDuration : undefined,
-                        startTime,
-                        status: segments.every((s: any) => s.status === 'complete' || s.status === 'COMPLETE')
-                          ? 'complete'
-                          : segments.some((s: any) => s.status === 'complete' || s.status === 'COMPLETE' || s.status === 'generating' || s.status === 'GENERATING')
-                          ? 'in-progress'
-                          : 'not-started',
-                        segmentCount: segments.length,
-                        hasImage: !!scene.imageUrl,
-                        hasAudio: !!(scene.narrationAudioUrl || scene.musicAudio),
-                        isBookmarked,
-                        hasScript,
-                        hasDirection,
-                        hasFrame,
-                        hasCallAction,
-                      }
-                    })}
-                    selectedSceneId={
-                      selectedSceneIndex !== null
-                        ? (script?.script?.scenes?.[selectedSceneIndex]?.id ||
-                           script?.script?.scenes?.[selectedSceneIndex]?.sceneId ||
-                           `scene-${selectedSceneIndex}`)
-                        : undefined
-                    }
-                    onSelectScene={(sceneId) => {
-                      const scenes = script?.script?.scenes || []
-                      const idx = scenes.findIndex(
-                        (s: any, i: number) =>
-                          (s.id || s.sceneId || `scene-${i}`) === sceneId
-                      )
-                      if (idx !== -1) {
-                        setSelectedSceneIndex(idx)
-                      }
-                    }}
-                    onPrevScene={() => {
-                      if (selectedSceneIndex !== null && selectedSceneIndex > 0) {
-                        setSelectedSceneIndex(selectedSceneIndex - 1)
-                      }
-                    }}
-                    onNextScene={() => {
-                      const scenes = script?.script?.scenes || []
-                      if (selectedSceneIndex !== null && selectedSceneIndex < scenes.length - 1) {
-                        setSelectedSceneIndex(selectedSceneIndex + 1)
-                      }
-                    }}
-                  />
-                  </>
                 }
                 onPlayScript={() => openScreeningRoomFromVisionUi()}
                 onAddScene={handleAddScene}
@@ -12828,6 +12754,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateReviews={handleGenerateReviews}
                 onOpenReviewModal={() => setShowReviewModal(true)}
               />
+              </div>
             </div>
           </Panel>
         </PanelGroup>
