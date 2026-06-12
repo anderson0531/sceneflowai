@@ -1479,7 +1479,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         </div>
 
         {activePanelTab === 'audience' ? (
-          <div className="flex-1 overflow-y-auto min-h-0 px-1">
+          <div data-vision-scroll-panel className="flex-1 overflow-y-auto min-h-0 px-1">
             <div className="flex items-center gap-2 mb-3">
               <Target className="w-5 h-5 text-purple-400 flex-shrink-0" />
               <h4 className="font-bold text-xl tracking-tight text-gray-900 dark:text-white leading-none">
@@ -1645,7 +1645,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         </div>
         
         {/* Tab Content - independent vertical scroll */}
-        <div className="flex-1 overflow-y-auto min-h-0 space-y-3">
+        <div data-vision-scroll-panel className="flex-1 overflow-y-auto min-h-0 space-y-3">
           {/* Cast Tab Content */}
           {activeReferenceTab === 'cast' && (
             <CharacterLibrary

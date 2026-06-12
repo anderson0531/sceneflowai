@@ -804,7 +804,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
   const [showScriptOverview, setShowScriptOverview] = useState(false)
   
   // Scene timeline visibility state - hidden (scene card navigation is primary)
-  const [showTimeline, setShowTimeline] = useState(false)
+  const [showTimeline, setShowTimeline] = useState(true)
   
   // Scene review modal state
   const [showSceneReviewModal, setShowSceneReviewModal] = useState(false)
@@ -2918,7 +2918,10 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
       </div>
       
       {/* Script Content - scrollable area containing storyboard and scenes */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-slate-950/20">
+      <div
+        data-vision-scroll-panel
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-slate-950/20"
+      >
         {/* Optional storyboard slot - now inside scrollable area */}
         {belowDashboardSlot && showStoryboard ? (
           <div className="px-6 pt-6">

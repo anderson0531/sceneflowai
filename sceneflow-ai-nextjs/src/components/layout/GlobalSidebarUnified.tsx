@@ -294,6 +294,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
         aria-hidden={!sidebarVisible}
       >
         <div
+          data-vision-scroll-panel
           className={cn(
             'w-64 h-full min-h-0 overflow-y-auto flex flex-col transition-opacity duration-200',
             sidebarVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'

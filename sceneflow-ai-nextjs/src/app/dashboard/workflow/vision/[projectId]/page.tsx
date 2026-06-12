@@ -405,6 +405,54 @@ interface Project {
   }
 }
 
+const VISION_SCROLL_PANEL_SELECTOR = '[data-vision-scroll-panel]'
+
+function isVerticallyScrollable(el: HTMLElement): boolean {
+  const { overflowY } = window.getComputedStyle(el)
+  if (overflowY !== 'auto' && overflowY !== 'scroll') return false
+  return el.scrollHeight > el.clientHeight + 1
+}
+
+function findVisionScrollContainer(start: HTMLElement | null): HTMLElement | null {
+  let el: HTMLElement | null = start
+  while (el) {
+    if (el.matches(VISION_SCROLL_PANEL_SELECTOR) && isVerticallyScrollable(el)) {
+      return el
+    }
+    if (isVerticallyScrollable(el)) {
+      return el
+    }
+    el = el.parentElement
+  }
+  return null
+}
+
+function resolveActiveVisionScrollPanel(pointer: { x: number; y: number }): HTMLElement | null {
+  const hovered = document.elementFromPoint(pointer.x, pointer.y) as HTMLElement | null
+  const fromPointer = findVisionScrollContainer(hovered)
+  if (fromPointer) return fromPointer
+
+  const active = document.activeElement as HTMLElement | null
+  const fromFocus = findVisionScrollContainer(active)
+  if (fromFocus) return fromFocus
+
+  return document.querySelector<HTMLElement>(VISION_SCROLL_PANEL_SELECTOR)
+}
+
+function scrollVisionPanel(
+  panel: HTMLElement,
+  direction: 'up' | 'down',
+  amount: number
+): boolean {
+  const maxScrollTop = panel.scrollHeight - panel.clientHeight
+  if (maxScrollTop <= 0) return false
+
+  const before = panel.scrollTop
+  const delta = direction === 'down' ? amount : -amount
+  panel.scrollBy({ top: delta, behavior: 'auto' })
+  return panel.scrollTop !== before
+}
+
 export default function VisionPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params)
   
@@ -1104,44 +1152,71 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     sceneElement?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [bookmarkedSceneIndex])
 
-  // Keyboard navigation for scenes (← → arrow keys, 1-9 number keys)
+  // Scene keyboard nav (← →, 1-9); vertical keys scroll the active panel column
   useEffect(() => {
+    const pointer = { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+    const handlePointerMove = (e: MouseEvent) => {
+      pointer.x = e.clientX
+      pointer.y = e.clientY
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is typing in an input/textarea
       const target = e.target as HTMLElement
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         return
       }
-      
+
       const scriptScenes = script?.script?.scenes || []
+      const isVerticalKey =
+        e.key === 'ArrowUp' ||
+        e.key === 'ArrowDown' ||
+        e.key === 'PageUp' ||
+        e.key === 'PageDown'
+
+      if (isVerticalKey) {
+        const panel = resolveActiveVisionScrollPanel(pointer)
+        if (panel) {
+          const pageAmount = Math.max(120, Math.floor(panel.clientHeight * 0.8))
+          const arrowAmount = 40
+          const amount =
+            e.key === 'PageUp' || e.key === 'PageDown' ? pageAmount : arrowAmount
+          const direction = e.key === 'ArrowUp' || e.key === 'PageUp' ? 'up' : 'down'
+          if (scrollVisionPanel(panel, direction, amount)) {
+            e.preventDefault()
+          }
+        }
+        return
+      }
+
       if (scriptScenes.length === 0) return
-      
-      // Arrow key navigation
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+
+      if (e.key === 'ArrowLeft') {
         e.preventDefault()
-        setSelectedSceneIndex(prev => {
+        setSelectedSceneIndex((prev) => {
           const current = prev ?? 0
           return Math.max(0, current - 1)
         })
-      } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      } else if (e.key === 'ArrowRight') {
         e.preventDefault()
-        setSelectedSceneIndex(prev => {
+        setSelectedSceneIndex((prev) => {
           const current = prev ?? 0
           return Math.min(scriptScenes.length - 1, current + 1)
         })
-      }
-      // Number keys 1-9 for quick jump to scene
-      else if (e.key >= '1' && e.key <= '9') {
-        const sceneNum = parseInt(e.key)
+      } else if (e.key >= '1' && e.key <= '9') {
+        const sceneNum = parseInt(e.key, 10)
         if (sceneNum <= scriptScenes.length) {
           e.preventDefault()
           setSelectedSceneIndex(sceneNum - 1)
         }
       }
     }
-    
+
+    window.addEventListener('mousemove', handlePointerMove, { passive: true })
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
   }, [script?.script?.scenes])
 
   const handleBookmarkScene = useCallback(
@@ -12290,7 +12365,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       <div className="flex-1 min-h-0 overflow-hidden overflow-x-hidden px-4 py-1 max-w-full min-w-0">
         <PanelGroup direction="horizontal" className="h-full max-w-full min-w-0 overflow-x-hidden">
           {/* Main Content: Script with Scene Cards */}
-          <Panel defaultSize={65} minSize={40} maxSize={80} className="min-w-0 min-h-0 overflow-hidden overflow-x-hidden flex flex-col">
+          <Panel defaultSize={65} minSize={40} maxSize={80} className="min-w-0 min-h-0 h-full overflow-hidden overflow-x-hidden flex flex-col">
             <div className="flex-1 min-h-0 flex flex-col overflow-hidden px-4 pt-2 min-w-0 w-full overflow-x-hidden">
               {showScriptImportOnboarding && (
                 <div className="shrink-0">
@@ -12646,7 +12721,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             defaultSize={15} 
             minSize={15} 
             maxSize={40} 
-            className={`min-w-0 min-h-0 overflow-hidden overflow-x-hidden transition-all duration-300 flex flex-col ${!rightSidebarVisible ? 'hidden' : ''}`}
+            className={`min-w-0 min-h-0 h-full overflow-hidden overflow-x-hidden transition-all duration-300 flex flex-col ${!rightSidebarVisible ? 'hidden' : ''}`}
           >
             <div className="flex-1 min-h-0 overflow-hidden overflow-x-hidden pl-6 min-w-0 relative flex flex-col">
               {/* Merge Duplicates Button */}
