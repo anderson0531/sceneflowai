@@ -49,10 +49,10 @@ export function StoryboardReviewPanel({
         <div>
           <h3 className="text-sm font-semibold text-gray-100 flex items-center gap-2">
             <ImageIcon className="w-4 h-4 text-indigo-400" />
-            Storyboard Review
+            Pre-Visualization Review
           </h3>
           <p className="text-xs text-gray-400 mt-0.5">
-            Approve frames before segment and video generation.
+            Approve Pre-Vis frames to unlock automated production.
           </p>
         </div>
         <span
@@ -138,7 +138,7 @@ export function StoryboardReviewPanel({
           className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
         >
           <Check className="w-4 h-4 mr-2" />
-          {isApproving ? 'Approving…' : 'Approve Storyboard'}
+          {isApproving ? 'Approving…' : 'Approve Pre-Vis'}
         </Button>
       )}
     </div>

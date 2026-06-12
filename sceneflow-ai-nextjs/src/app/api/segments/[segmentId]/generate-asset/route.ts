@@ -13,7 +13,8 @@ import { VIDEO_CREDITS } from '@/lib/credits/creditCosts'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { isBeatFirstPipelineEnabled, isStoryboardApproved, getSceneBeats } from '@/lib/script/beatMigration'
-import { compileBeatVideoPrompt } from '@/lib/scene/beatVideoPromptCompiler'
+import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import type { DetailedSceneDirection } from '@/types/scene-direction'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
@@ -156,7 +157,16 @@ export async function POST(
         const beat = beats.find((b) => b.beatId === beatId)
         if (beat) {
           const artStyleId = resolveProjectArtStyle(project?.metadata)
-          const compiled = compileBeatVideoPrompt(beat, { artStyleId })
+          const sceneDirection =
+            (sceneRecord as { sceneDirection?: unknown; detailedDirection?: unknown })
+              .sceneDirection ??
+            (sceneRecord as { detailedDirection?: unknown }).detailedDirection ??
+            null
+          const compiled = compileBeatVideoPromptFromDirection(
+            beat,
+            sceneDirection as DetailedSceneDirection | null,
+            { artStyleId }
+          )
           prompt = compiled.prompt
           negativePrompt = negativePrompt || compiled.negativePrompt
         }

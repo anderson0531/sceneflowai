@@ -7668,8 +7668,9 @@ function SceneCard({
                       )
                     })()}
                     
-                    {/* Fallback: SceneProductionDirector when no segments yet */}
-                    {!(sceneProductionData?.segments && sceneProductionData.segments.length > 0) && (
+                    {/* Fallback: SceneProductionDirector when no segments yet (legacy pipeline only) */}
+                    {!(sceneProductionData?.segments && sceneProductionData.segments.length > 0) &&
+                      !isBeatFirstPipelineEnabled() && (
                       <SceneProductionDirector
                         sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
                         sceneNumber={sceneNumber}

@@ -173,6 +173,14 @@ export interface SegmentFrameTimelineProps {
 // Helper Functions
 // ============================================================================
 
+function hasStartFrame(segment: SceneSegment): boolean {
+  return !!(segment.startFrameUrl || segment.references?.startFrameUrl)
+}
+
+function hasEndFrame(segment: SceneSegment): boolean {
+  return !!(segment.endFrameUrl || segment.references?.endFrameUrl)
+}
+
 function calculateTimelineStats(segments: SceneSegment[]) {
   const total = segments.length
   const fullyAnchored = segments.filter(s => 
@@ -240,6 +248,19 @@ export function SegmentFrameTimeline({
   filmContext,
 }: SegmentFrameTimelineProps) {
   const stats = useMemo(() => calculateTimelineStats(segments), [segments])
+
+  const segmentsNeedingEnd = useMemo(
+    () => segments.filter((s) => hasStartFrame(s) && !hasEndFrame(s)),
+    [segments]
+  )
+  const segmentsNeedingBoth = useMemo(
+    () => segments.filter((s) => !hasStartFrame(s) && !hasEndFrame(s)),
+    [segments]
+  )
+  const allHavePreVisStarts = useMemo(
+    () => segments.length > 0 && segments.every(hasStartFrame),
+    [segments]
+  )
   
   // Frame prompt dialog state
   const [framePromptDialogOpen, setFramePromptDialogOpen] = useState(false)
@@ -403,6 +424,42 @@ export function SegmentFrameTimeline({
     )
   }, [segments, onGenerateFrames, executeWithOverlay, sceneDirection])
 
+  const handleExpressEndFrames = useCallback(async () => {
+    const targets = segmentsNeedingEnd
+    if (targets.length === 0) return
+
+    await executeWithOverlay(
+      async () => {
+        let lastEndFrameUrl: string | undefined = undefined
+
+        for (let i = 0; i < segments.length; i++) {
+          const segment = segments[i]
+          if (!hasStartFrame(segment) || hasEndFrame(segment)) continue
+
+          const isContinuation = i > 0 && segment.transitionType !== 'CUT'
+
+          const result = await onGenerateFrames(segment.segmentId, 'end', {
+            usePreviousEndFrame: false,
+            previousEndFrameUrl: isContinuation ? lastEndFrameUrl : undefined,
+            sceneDirection,
+          })
+
+          if (result?.endFrameUrl) {
+            lastEndFrameUrl = result.endFrameUrl
+          } else if (segment.endFrameUrl || segment.references?.endFrameUrl) {
+            lastEndFrameUrl =
+              segment.endFrameUrl || segment.references?.endFrameUrl || undefined
+          }
+        }
+      },
+      {
+        message: `Express generating end frames (${targets.length})…`,
+        estimatedDuration: targets.length * 25,
+        operationType: 'keyframe-generation',
+      }
+    )
+  }, [segments, segmentsNeedingEnd, onGenerateFrames, executeWithOverlay, sceneDirection])
+
   // Handle delete segment
   const handleDeleteClick = useCallback((segmentId: string, index: number) => {
     setDeleteSegmentTarget({ segmentId, index })
@@ -479,18 +536,35 @@ export function SegmentFrameTimeline({
               </Badge>
             ) : null}
             
-            {/* Express Keyframe Generation button */}
-            {stats.total > 0 && (
+            {segmentsNeedingEnd.length > 0 && (
+              <Button
+                size="default"
+                variant="outline"
+                onClick={handleExpressEndFrames}
+                disabled={isGenerating}
+                className="h-10 px-5 text-sm font-semibold border-purple-500/50 text-purple-300 hover:bg-purple-500/10 hover:border-purple-400 shadow-md hover:shadow-lg transition-all"
+                title="Generate end frames from Pre-Vis start frames (AI edit)"
+              >
+                <Wand2 className="w-5 h-5 mr-2" />
+                Express End ({segmentsNeedingEnd.length})
+              </Button>
+            )}
+
+            {(!allHavePreVisStarts || segmentsNeedingBoth.length > 0) && stats.total > 0 && (
               <Button
                 size="default"
                 variant="outline"
                 onClick={handleExpress}
                 disabled={isGenerating}
                 className="h-10 px-5 text-sm font-semibold border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 hover:border-cyan-400 shadow-md hover:shadow-lg transition-all"
-                title="Auto-generate frames for all segments concurrently"
+                title={
+                  segmentsNeedingBoth.length > 0
+                    ? 'Generate start and end frames for segments missing both'
+                    : 'Auto-generate start and end frames for all segments'
+                }
               >
                 <Wand2 className="w-5 h-5 mr-2" />
-                Express
+                {segmentsNeedingBoth.length > 0 ? `Express Both (${segmentsNeedingBoth.length})` : 'Express'}
               </Button>
             )}
             
@@ -512,7 +586,15 @@ export function SegmentFrameTimeline({
         </div>
         
         {/* Stats Row - Inline */}
-        <div className="flex items-center gap-4 px-4 py-2 text-xs border-t border-cyan-500/10 bg-gray-900/30 mt-3">
+        <div className="flex items-center gap-4 px-4 py-2 text-xs border-t border-cyan-500/10 bg-gray-900/30 mt-3 flex-wrap">
+          {allHavePreVisStarts && (
+            <>
+              <span className="text-slate-500">
+                Starts locked from Pre-Vis — generate end frames to complete FTV pairs
+              </span>
+              <span className="text-slate-600">•</span>
+            </>
+          )}
           <span className="flex items-center gap-1.5 text-slate-400">
             <Clock className="w-3.5 h-3.5" />
             {stats.totalDuration.toFixed(1)}s total

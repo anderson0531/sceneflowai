@@ -106,6 +106,8 @@ interface DirectorDialogProps {
   ) => void
   /** Character demographics for guide / batch voice anchoring */
   guideCharacters?: GuideCharacterDemographic[]
+  /** When true, video prompt is read-only (beat-first: edit script or Pre-Vis instead) */
+  readOnlyPrompts?: boolean
 }
 
 // Map internal mode names to VideoGenerationMethod
@@ -137,6 +139,7 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   onClose,
   onSaveEditedKeyframe,
   guideCharacters = [],
+  readOnlyPrompts = false,
 }) => {
   const segmentGuideContext = useMemo<SegmentGuideContext | undefined>(() => {
     if (!scene) return undefined
@@ -1086,26 +1089,35 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <Label className="text-slate-300">Prompt Direction</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsDirectionDialogOpen(true)}
-                  className="h-6 px-2 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/30"
-                >
-                  <Wand2 className="w-3 h-3 mr-1" />
-                  AI Assistant
-                </Button>
+                {!readOnlyPrompts && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsDirectionDialogOpen(true)}
+                    className="h-6 px-2 text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/30"
+                  >
+                    <Wand2 className="w-3 h-3 mr-1" />
+                    AI Assistant
+                  </Button>
+                )}
               </div>
+              {readOnlyPrompts && (
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Derived from scene direction. Edit the script or regenerate Pre-Vis to change motion intent.
+                </p>
+              )}
               <Textarea 
                 value={mode === 'FRAME_TO_VIDEO' ? motionPrompt : visualPrompt}
                 onChange={(e) => {
+                  if (readOnlyPrompts) return
                   if (mode === 'FRAME_TO_VIDEO') {
                     setMotionPrompt(e.target.value)
                   } else {
                     setVisualPrompt(e.target.value)
                   }
                 }}
-                className="min-h-[120px] bg-slate-800/80 border-slate-700 text-slate-200 text-sm focus:border-indigo-500/50 transition-colors"
+                readOnly={readOnlyPrompts}
+                className="min-h-[120px] bg-slate-800/80 border-slate-700 text-slate-200 text-sm focus:border-indigo-500/50 transition-colors read-only:opacity-80 read-only:cursor-default"
                 placeholder="Enter prompt direction here..."
               />
               {isOptimizingForMode && (

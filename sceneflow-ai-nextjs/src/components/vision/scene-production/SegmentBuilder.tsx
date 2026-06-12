@@ -792,8 +792,8 @@ export function SegmentBuilder({
 
     if (isBeatFirstPipelineEnabled()) {
       if (!isStoryboardApproved(scene)) {
-        toast.error('Approve storyboard before creating segments', {
-          description: 'Review and approve all beat frames in the Storyboard Review panel.',
+        toast.error('Approve Pre-Vis before creating segments', {
+          description: 'Review and approve all beat frames in the Pre-Visualization Review panel.',
         })
         setIsAnalyzing(false)
         return
@@ -960,7 +960,7 @@ export function SegmentBuilder({
   const handleExtendBeat = useCallback(
     async (beatId: string) => {
       if (!isStoryboardApproved(scene)) {
-        toast.error('Approve storyboard before extending dialogue beats')
+        toast.error('Approve Pre-Vis before extending dialogue beats')
         return
       }
       setExtendingBeatId(beatId)
@@ -1658,7 +1658,7 @@ export function SegmentBuilder({
                     variant={hasExistingVideoAssets ? 'destructive' : 'default'}
                     title={
                       isBeatFirstPipelineEnabled() && !isStoryboardApproved(scene)
-                        ? 'Approve storyboard first'
+                        ? 'Approve Pre-Vis first'
                         : !hasSceneDirection && !isBeatFirstPipelineEnabled()
                           ? 'Generate scene direction first'
                           : undefined

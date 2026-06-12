@@ -39,6 +39,7 @@ import {
   applyExpressStoryboardImageToScene,
   ensureSceneBeats,
   getSceneBeats,
+  isBeatFirstPipelineEnabled,
   resolveRawBeatIndex,
 } from '@/lib/script/beatMigration'
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
@@ -2312,45 +2313,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     [script?.script?.scenes, sceneProductionState, characters, objectReferences, locationReferences, applySceneProductionUpdate]
   )
 
-  const handleApproveStoryboard = useCallback(
-    async (sceneIndex: number) => {
-      if (!project?.id || !script?.script?.scenes?.[sceneIndex]) return
-      const scene = script.script.scenes[sceneIndex]
-      const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
-      setApprovingStoryboardFor(sceneIndex)
-      try {
-        const response = await fetch(
-          `/api/scenes/${encodeURIComponent(sceneId)}/approve-storyboard`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId: project.id }),
-          }
-        )
-        const data = await response.json()
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to approve storyboard')
-        }
-        const updatedScript = JSON.parse(JSON.stringify(script))
-        updatedScript.script.scenes[sceneIndex] = {
-          ...updatedScript.script.scenes[sceneIndex],
-          storyboardStatus: 'approved',
-          storyboardApprovedAt: data.storyboardApprovedAt,
-        }
-        await handleScriptChange(updatedScript)
-        const { toast } = require('sonner')
-        toast.success('Pre-vis approved — beats and video are unlocked')
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err)
-        const { toast } = require('sonner')
-        toast.error(message)
-      } finally {
-        setApprovingStoryboardFor(null)
-      }
-    },
-    [project?.id, script, handleScriptChange]
-  )
-
   const handleInitializeSceneProduction = useCallback(
     async (sceneId: string, { targetDuration, generationOptions, segments: prePardsedSegments }: { targetDuration: number; generationOptions?: any; segments?: any[] }) => {
       if (!project?.id) {
@@ -2419,7 +2381,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         applySceneProductionUpdate(sceneId, () => productionData)
         try {
           const { toast } = require('sonner')
-          toast.success(`Created ${productionData.segments.length} beats from storyboard beats`)
+          toast.success(`Created ${productionData.segments.length} production beats from Pre-Vis`)
         } catch {}
         return
       }
@@ -2476,6 +2438,75 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     },
     [project?.id, applySceneProductionUpdate, script?.script?.scenes]
   )
+
+  const handleApproveStoryboard = useCallback(
+    async (sceneIndex: number) => {
+      if (!project?.id || !script?.script?.scenes?.[sceneIndex]) return
+      const scene = script.script.scenes[sceneIndex]
+      const sceneId = scene.id || scene.sceneId || `scene-${sceneIndex}`
+      setApprovingStoryboardFor(sceneIndex)
+      try {
+        const response = await fetch(
+          `/api/scenes/${encodeURIComponent(sceneId)}/approve-storyboard`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId: project.id }),
+          }
+        )
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to approve Pre-Vis')
+        }
+        const updatedScript = JSON.parse(JSON.stringify(script))
+        updatedScript.script.scenes[sceneIndex] = {
+          ...updatedScript.script.scenes[sceneIndex],
+          storyboardStatus: 'approved',
+          storyboardApprovedAt: data.storyboardApprovedAt,
+        }
+        await handleScriptChange(updatedScript)
+
+        if (isBeatFirstPipelineEnabled()) {
+          await handleInitializeSceneProduction(sceneId, { targetDuration: 8 })
+        }
+
+        toast.success('Pre-Vis approved — automated production is unlocked')
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err)
+        toast.error(message)
+      } finally {
+        setApprovingStoryboardFor(null)
+      }
+    },
+    [project?.id, script, handleScriptChange, handleInitializeSceneProduction]
+  )
+
+  const backfillDeriveAttemptedRef = useRef<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (!project?.id || !script?.script?.scenes || !isBeatFirstPipelineEnabled()) return
+
+    script.script.scenes.forEach((scene: Record<string, unknown>, idx: number) => {
+      const sceneId =
+        (scene.id as string) || (scene.sceneId as string) || `scene-${idx}`
+      if (scene.storyboardStatus !== 'approved') return
+
+      const production = sceneProductionState[sceneId]
+      if (production?.segments && production.segments.length > 0) return
+      if (backfillDeriveAttemptedRef.current.has(sceneId)) return
+
+      backfillDeriveAttemptedRef.current.add(sceneId)
+      void handleInitializeSceneProduction(sceneId, { targetDuration: 8 }).catch((err) => {
+        console.warn('[VisionPage] Backfill derive-segments failed for', sceneId, err)
+        backfillDeriveAttemptedRef.current.delete(sceneId)
+      })
+    })
+  }, [
+    project?.id,
+    script?.script?.scenes,
+    sceneProductionState,
+    handleInitializeSceneProduction,
+  ])
 
   const handleSegmentPromptChange = useCallback(
     (sceneId: string, segmentId: string, prompt: string) => {

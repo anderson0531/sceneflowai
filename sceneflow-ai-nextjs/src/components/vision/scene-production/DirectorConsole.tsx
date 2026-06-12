@@ -100,6 +100,7 @@ import { useVideoQueue } from '@/hooks/useVideoQueue'
 import { forceDownload } from '@/lib/utils'
 import type { SceneAudioData } from './GuidePromptEditor'
 import type { GuideCharacterDemographic } from '@/lib/scene/segmentGuidePrompt'
+import { isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
 import type { SegmentGuideContext } from '@/hooks/useSegmentConfig'
 
 function normalizeGuideCharacters(raw: unknown): GuideCharacterDemographic[] {
@@ -257,6 +258,7 @@ function DirectorConsoleRoot({
   // Use stable EMPTY_SEGMENTS constant to prevent TDZ render loops
   // productionData?.segments || [] creates a new array reference each render
   const segments = productionData?.segments ?? EMPTY_SEGMENTS
+  const beatFirstReadOnlyPrompts = isBeatFirstPipelineEnabled()
 
   const effectiveGuideCharacters = useMemo(
     () =>
@@ -1224,7 +1226,14 @@ function DirectorConsoleRoot({
                             {statusConfig.label}
                           </Badge>
                         </div>
-                        <p className="text-xs text-slate-400 mt-2 line-clamp-2">{item.config.prompt || 'No prompt configured'}</p>
+                        <p className="text-xs text-slate-400 mt-2 line-clamp-2">
+                          {item.config.prompt || 'No prompt configured'}
+                        </p>
+                        {beatFirstReadOnlyPrompts && (
+                          <p className="text-[10px] text-slate-500 mt-1">
+                            Auto-derived from direction — edit script or Pre-Vis to change
+                          </p>
+                        )}
                         <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
                           {segment.isUserUpload ? (
                             <>
@@ -1492,6 +1501,7 @@ function DirectorConsoleRoot({
           onGenerate={handleGenerateFromDialog}
           onSaveEditedKeyframe={onSaveEditedKeyframe}
           guideCharacters={effectiveGuideCharacters}
+          readOnlyPrompts={beatFirstReadOnlyPrompts}
         />
       )}
       

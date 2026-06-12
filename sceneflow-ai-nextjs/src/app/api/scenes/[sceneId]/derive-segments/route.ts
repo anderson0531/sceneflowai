@@ -7,7 +7,8 @@ import {
 } from '@/lib/scene/deriveSegmentsFromBeats'
 import { isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
 import { resolveProjectArtStyle } from '@/lib/vision/artStyle'
-import { compileBeatVideoPrompt } from '@/lib/scene/beatVideoPromptCompiler'
+import { compileBeatVideoPromptFromDirection } from '@/lib/scene/beatVideoPromptCompiler'
+import type { DetailedSceneDirection } from '@/types/scene-direction'
 import { getSceneBeats } from '@/lib/script/beatMigration'
 import {
   findSceneById,
@@ -94,13 +95,22 @@ export async function POST(
     }
 
     const beats = getSceneBeats(workingScene)
+    const sceneDirection =
+      (workingScene as { sceneDirection?: unknown; detailedDirection?: unknown })
+        .sceneDirection ??
+      (workingScene as { detailedDirection?: unknown }).detailedDirection ??
+      null
     const segments = result.segments.map((seg) => {
       const beat = beats.find((b) => b.beatId === seg.beatId)
       if (!beat) return seg
-      const compiled = compileBeatVideoPrompt(beat, {
-        artStyleId,
-        excerpt: seg.dialoguePortion?.excerpt,
-      })
+      const compiled = compileBeatVideoPromptFromDirection(
+        beat,
+        sceneDirection as DetailedSceneDirection | null,
+        {
+          artStyleId,
+          excerpt: seg.dialoguePortion?.excerpt,
+        }
+      )
       return {
         ...seg,
         generatedPrompt: compiled.prompt,
