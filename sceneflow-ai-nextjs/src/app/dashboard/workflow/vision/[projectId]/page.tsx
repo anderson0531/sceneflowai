@@ -12635,6 +12635,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   </div>
                 )}
               />
+              </div>
             </div>
           </Panel>
           
@@ -12754,7 +12755,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onGenerateReviews={handleGenerateReviews}
                 onOpenReviewModal={() => setShowReviewModal(true)}
               />
-              </div>
             </div>
           </Panel>
         </PanelGroup>
