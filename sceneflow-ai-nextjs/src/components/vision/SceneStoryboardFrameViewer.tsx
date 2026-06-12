@@ -23,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ImageEditModal } from './ImageEditModal'
 import { SceneImageFrame, type SceneImageFrameProps } from './SceneImageFrame'
 import type { ExpressPhaseStatus, ExpressSceneStatus } from './SceneGallery'
@@ -433,6 +433,7 @@ export function SceneStoryboardFrameViewer({
   }
 
   return (
+    <TooltipProvider>
     <div className="bg-slate-900/40 border border-slate-700/50 rounded-lg overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/40">
         <button
@@ -710,5 +711,6 @@ export function SceneStoryboardFrameViewer({
         }
       />
     </div>
+    </TooltipProvider>
   )
 }
