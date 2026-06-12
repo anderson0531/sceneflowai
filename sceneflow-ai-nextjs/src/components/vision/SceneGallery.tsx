@@ -1677,6 +1677,7 @@ function SceneCard({
             alwaysShowControls
             showBorder={false}
             promptLineClamp={4}
+            expandable
           />
         ) : (
           <div className="aspect-video flex flex-col items-center justify-center">

@@ -4275,7 +4275,6 @@ function SceneCard({
     scene.workflowCompletions?.['callAction'] ? 'callAction' : 'dialogueAction'
   )
   const [copilotPanelOpen, setCopilotPanelOpen] = useState(false)
-  const [isImageExpanded, setIsImageExpanded] = useState(false)
   const [directionBuilderOpen, setDirectionBuilderOpen] = useState(false)
   const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null)
   
