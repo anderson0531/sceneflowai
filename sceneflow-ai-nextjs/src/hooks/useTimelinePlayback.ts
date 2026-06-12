@@ -17,6 +17,10 @@
  */
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import {
+  computeMusicIntroFadeMultiplier,
+  type MusicIntroFadeConfig,
+} from '@/lib/storyboard/musicIntroFade'
 
 // ============================================================================
 // Types
@@ -62,6 +66,7 @@ export interface UseTimelinePlaybackOptions {
   visualClips: VisualClip[]
   initialVolumes?: Partial<TrackVolumes>
   initialEnabled?: Partial<TrackEnabled>
+  musicIntroFade?: MusicIntroFadeConfig
   onPlaybackEnd?: () => void
   onTimeUpdate?: (time: number, segmentId?: string) => void
 }
@@ -112,6 +117,41 @@ function loopingDrift(audioTime: number, currentTime: number, audioDuration: num
   return Math.min(direct, wrappedForward, wrappedBackward)
 }
 
+function computeEffectiveClipVolume(
+  clip: AudioClip,
+  elapsed: number,
+  baseVolume: number,
+  musicIntroFade: MusicIntroFadeConfig | undefined
+): number {
+  if (clip.trackType !== 'music' || !musicIntroFade?.enabled) {
+    return baseVolume
+  }
+  const sinceClipStart = elapsed - clip.startTime
+  const multiplier = computeMusicIntroFadeMultiplier(sinceClipStart, musicIntroFade)
+  return baseVolume * multiplier
+}
+
+function syncAudioClipAtTime(
+  clip: AudioClip,
+  elapsed: number,
+  audio: HTMLAudioElement,
+  trackEnabled: TrackEnabled,
+  trackVolumes: TrackVolumes,
+  musicIntroFade: MusicIntroFadeConfig | undefined
+): void {
+  const isEnabled = trackEnabled[clip.trackType]
+  const baseVolume = trackVolumes[clip.trackType]
+  const clipStart = clip.startTime
+  const clipEnd = clip.startTime + clip.duration
+
+  if (!isEnabled || elapsed < clipStart || elapsed >= clipEnd) {
+    audio.volume = 0
+    return
+  }
+
+  audio.volume = computeEffectiveClipVolume(clip, elapsed, baseVolume, musicIntroFade)
+}
+
 // ============================================================================
 // Hook Implementation
 // ============================================================================
@@ -122,6 +162,7 @@ export function useTimelinePlayback({
   visualClips,
   initialVolumes = {},
   initialEnabled = {},
+  musicIntroFade,
   onPlaybackEnd,
   onTimeUpdate,
 }: UseTimelinePlaybackOptions): UseTimelinePlaybackReturn {
@@ -156,6 +197,7 @@ export function useTimelinePlayback({
   const sceneDurationRef = useRef(sceneDuration)
   const onPlaybackEndRef = useRef(onPlaybackEnd)
   const onTimeUpdateRef = useRef(onTimeUpdate)
+  const musicIntroFadeRef = useRef(musicIntroFade)
   
   // Refs for play/pause stability - prevents callback recreation on every currentTime change
   const isPlayingRef = useRef(isPlaying)
@@ -170,6 +212,28 @@ export function useTimelinePlayback({
   useEffect(() => { isPlayingRef.current = isPlaying }, [isPlaying])
   useEffect(() => { currentTimeRef.current = currentTime }, [currentTime])
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
+  useEffect(() => { musicIntroFadeRef.current = musicIntroFade }, [musicIntroFade])
+
+  const applyVolumesAtElapsed = useCallback((elapsed: number) => {
+    const currentAudioClips = audioClipsRef.current
+    const currentTrackEnabled = trackEnabledRef.current
+    const currentTrackVolumes = trackVolumesRef.current
+    const fadeConfig = musicIntroFadeRef.current
+
+    currentAudioClips.forEach((clip) => {
+      const key = `${clip.id}:${clip.url}`
+      const audio = audioRefs.current.get(key)
+      if (!audio) return
+      syncAudioClipAtTime(
+        clip,
+        elapsed,
+        audio,
+        currentTrackEnabled,
+        currentTrackVolumes,
+        fadeConfig
+      )
+    })
+  }, [])
   
   // ============================================================================
   // Audio Element Management
@@ -267,6 +331,7 @@ export function useTimelinePlayback({
     const currentAudioClips = audioClipsRef.current
     const currentTrackEnabled = trackEnabledRef.current
     const currentTrackVolumes = trackVolumesRef.current
+    const fadeConfig = musicIntroFadeRef.current
     
     // Check if playback should end
     if (elapsed >= currentSceneDuration) {
@@ -292,10 +357,12 @@ export function useTimelinePlayback({
       if (!audio) return
       
       const isEnabled = currentTrackEnabled[clip.trackType]
-      const volume = currentTrackVolumes[clip.trackType]
+      const baseVolume = currentTrackVolumes[clip.trackType]
       
-      // Apply volume (0 if track disabled)
-      audio.volume = isEnabled ? volume : 0
+      // Apply volume (0 if track disabled); music intro fade ramps per clip start
+      audio.volume = isEnabled
+        ? computeEffectiveClipVolume(clip, elapsed, baseVolume, fadeConfig)
+        : 0
       
       if (!isEnabled) {
         if (!audio.paused) audio.pause()
@@ -395,10 +462,18 @@ export function useTimelinePlayback({
           audio.currentTime = computeClipAudioTime(clip, newTime, audioDuration)
         }
       })
+      applyVolumesAtElapsed(newTime)
     }
     
     onTimeUpdateRef.current?.(newTime, getCurrentVisualClip(newTime)?.segmentId)
-  }, [getCurrentVisualClip]) // Only stable dependency - uses refs for isPlaying
+  }, [getCurrentVisualClip, applyVolumesAtElapsed]) // Only stable dependency - uses refs for isPlaying
+  
+  // Refresh volumes when paused and fade/volume settings change
+  useEffect(() => {
+    if (!isPlayingRef.current) {
+      applyVolumesAtElapsed(currentTimeRef.current)
+    }
+  }, [trackVolumes, trackEnabled, musicIntroFade, applyVolumesAtElapsed])
   
   const reset = useCallback(() => {
     pause()

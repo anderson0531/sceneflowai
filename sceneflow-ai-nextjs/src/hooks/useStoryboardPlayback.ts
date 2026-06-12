@@ -17,6 +17,7 @@ import {
 } from '@/lib/storyboard/types'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
 import { buildStoryboardMusicClips, resolveSceneMusicFileDuration } from '@/lib/storyboard/musicPlayback'
+import type { MusicIntroFadeConfig } from '@/lib/storyboard/musicIntroFade'
 import {
   useTimelinePlayback,
   type AudioClip as TimelineAudioClip,
@@ -31,6 +32,7 @@ export interface UseStoryboardPlaybackOptions {
   volume?: number
   musicVolume?: number
   isMuted?: boolean
+  musicIntroFade?: MusicIntroFadeConfig
   onPlaybackEnd?: () => void
 }
 
@@ -111,6 +113,7 @@ export function useStoryboardPlayback({
   volume = 0.8,
   musicVolume = 0.15,
   isMuted = false,
+  musicIntroFade,
   onPlaybackEnd,
 }: UseStoryboardPlaybackOptions): UseStoryboardPlaybackReturn {
   const [dynamicDurations, setDynamicDurations] = useState<Record<string, number>>({})
@@ -290,6 +293,7 @@ export function useStoryboardPlayback({
       music: !!scene?.musicAudio || !!(scene?.music as { url?: string } | undefined)?.url,
       sfx: Array.isArray(scene?.sfxAudio) && scene!.sfxAudio.length > 0,
     },
+    musicIntroFade,
     onPlaybackEnd,
   })
 

@@ -24,6 +24,16 @@ import {
 } from '@/lib/storyboard/types'
 import { useStoryboardPlayback } from '@/hooks/useStoryboardPlayback'
 import {
+  clampMusicIntroFadeConfig,
+  DEFAULT_MUSIC_INTRO_FADE,
+  MUSIC_INTRO_FADE_DURATION_MAX,
+  MUSIC_INTRO_FADE_DURATION_MIN,
+  MUSIC_INTRO_FADE_START_MAX,
+  MUSIC_INTRO_FADE_START_MIN,
+  type MusicIntroFadeConfig,
+} from '@/lib/storyboard/musicIntroFade'
+import { Switch } from '@/components/ui/switch'
+import {
   computeKenBurnsProgress,
   computeKenBurnsTransform,
   computeLineZoomTransform,
@@ -61,7 +71,24 @@ function formatTime(seconds: number) {
 }
 
 const GALLERY_MUSIC_VOLUME_STORAGE_KEY = 'sceneflow-gallery-music-volume'
+const GALLERY_MUSIC_INTRO_FADE_STORAGE_KEY = 'sceneflow-gallery-music-intro-fade'
 const DEFAULT_GALLERY_MUSIC_VOLUME = 0.15
+
+function loadGalleryMusicIntroFade(): MusicIntroFadeConfig {
+  if (typeof window === 'undefined') return DEFAULT_MUSIC_INTRO_FADE
+  try {
+    const raw = sessionStorage.getItem(GALLERY_MUSIC_INTRO_FADE_STORAGE_KEY)
+    if (!raw) return DEFAULT_MUSIC_INTRO_FADE
+    return clampMusicIntroFadeConfig(JSON.parse(raw))
+  } catch {
+    return DEFAULT_MUSIC_INTRO_FADE
+  }
+}
+
+function saveGalleryMusicIntroFade(config: MusicIntroFadeConfig): void {
+  if (typeof window === 'undefined') return
+  sessionStorage.setItem(GALLERY_MUSIC_INTRO_FADE_STORAGE_KEY, JSON.stringify(config))
+}
 
 function loadGalleryMusicVolume(): number {
   if (typeof window === 'undefined') return DEFAULT_GALLERY_MUSIC_VOLUME
@@ -86,6 +113,7 @@ export function AudioGalleryPlayer({
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
   const [volume, setVolume] = useState(0.8)
   const [musicVolume, setMusicVolume] = useState(loadGalleryMusicVolume)
+  const [musicIntroFade, setMusicIntroFade] = useState<MusicIntroFadeConfig>(loadGalleryMusicIntroFade)
   const [isMuted, setIsMuted] = useState(false)
   const [autoAdvance, setAutoAdvance] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -133,6 +161,7 @@ export function AudioGalleryPlayer({
     volume,
     musicVolume,
     isMuted,
+    musicIntroFade,
     onPlaybackEnd: handlePlaybackEnd,
   })
 
@@ -183,6 +212,14 @@ export function AudioGalleryPlayer({
   useEffect(() => {
     sessionStorage.setItem(GALLERY_MUSIC_VOLUME_STORAGE_KEY, String(musicVolume))
   }, [musicVolume])
+
+  useEffect(() => {
+    saveGalleryMusicIntroFade(musicIntroFade)
+  }, [musicIntroFade])
+
+  const updateMusicIntroFade = useCallback((partial: Partial<MusicIntroFadeConfig>) => {
+    setMusicIntroFade((prev) => clampMusicIntroFadeConfig({ ...prev, ...partial }))
+  }, [])
 
   // Reset Ken Burns direction when the visible frame changes
   useEffect(() => {
@@ -697,6 +734,47 @@ export function AudioGalleryPlayer({
                     className="w-16"
                     title={`Music volume: ${Math.round(musicVolume * 100)}%`}
                   />
+                  <div className="flex items-center gap-1.5 shrink-0 border-l border-gray-600 pl-2 ml-1">
+                    <Switch
+                      checked={musicIntroFade.enabled}
+                      onCheckedChange={(enabled) => updateMusicIntroFade({ enabled })}
+                      className="scale-75"
+                      aria-label="Music intro fade"
+                    />
+                    <span className="text-[10px] text-gray-500 whitespace-nowrap">Intro fade</span>
+                    {musicIntroFade.enabled && (
+                      <>
+                        <span className="text-[10px] text-gray-500 shrink-0">Start</span>
+                        <Slider
+                          value={[Math.round(musicIntroFade.startLevel * 100)]}
+                          onValueChange={([val]) =>
+                            updateMusicIntroFade({
+                              startLevel: val / 100,
+                            })
+                          }
+                          min={MUSIC_INTRO_FADE_START_MIN * 100}
+                          max={MUSIC_INTRO_FADE_START_MAX * 100}
+                          step={5}
+                          className="w-12"
+                          title={`Intro start level: ${Math.round(musicIntroFade.startLevel * 100)}%`}
+                        />
+                        <span className="text-[10px] text-gray-500 shrink-0">
+                          {Math.round(musicIntroFade.durationSec)}s
+                        </span>
+                        <Slider
+                          value={[musicIntroFade.durationSec]}
+                          onValueChange={([val]) =>
+                            updateMusicIntroFade({ durationSec: val })
+                          }
+                          min={MUSIC_INTRO_FADE_DURATION_MIN}
+                          max={MUSIC_INTRO_FADE_DURATION_MAX}
+                          step={1}
+                          className="w-12"
+                          title={`Intro fade duration: ${musicIntroFade.durationSec}s`}
+                        />
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

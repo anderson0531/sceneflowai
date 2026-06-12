@@ -36,6 +36,14 @@ export interface SceneImageFrameProps {
   imagePrompt?: string
   /** Open beat reference review dialog (Pre-Vis storyboard). */
   onReviewReferences?: () => void
+  /** When false, hide generate/upload/edit controls (navigation + prompt only). */
+  showControls?: boolean
+  /** compact = small overlay buttons; comfortable = larger hero controls */
+  controlsVariant?: 'compact' | 'comfortable'
+  /** Keep action bar visible without hover (hero preview). */
+  alwaysShowControls?: boolean
+  /** Max lines for prompt preview in footer (hero uses more). */
+  promptLineClamp?: number
 }
 
 function CompactIconButton({
@@ -44,13 +52,16 @@ function CompactIconButton({
   title,
   className,
   children,
+  size = 'compact',
 }: {
   onClick: (e: React.MouseEvent) => void
   disabled?: boolean
   title: string
   className: string
   children: React.ReactNode
+  size?: 'compact' | 'comfortable'
 }) {
+  const sizeClass = size === 'comfortable' ? 'h-10 w-10' : 'h-7 w-7'
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -58,7 +69,7 @@ function CompactIconButton({
           type="button"
           onClick={onClick}
           disabled={disabled}
-          className={`h-9 w-9 flex items-center justify-center rounded-full transition-colors disabled:opacity-50 ${className}`}
+          className={`${sizeClass} flex items-center justify-center rounded-full transition-colors disabled:opacity-50 ${className}`}
         >
           {children}
         </button>
@@ -82,6 +93,7 @@ function CompactActionBar({
   onReviewReferences,
   sceneNumber,
   alwaysVisible = false,
+  controlsVariant = 'compact',
 }: {
   hasImage: boolean
   imageUrl?: string | null
@@ -94,14 +106,18 @@ function CompactActionBar({
   onReviewReferences?: () => void
   sceneNumber: number
   alwaysVisible?: boolean
+  controlsVariant?: 'compact' | 'comfortable'
 }) {
-  const iconClass = 'w-4 h-4 text-white'
+  const iconClass =
+    controlsVariant === 'comfortable' ? 'w-5 h-5 text-white' : 'w-3.5 h-3.5 text-white'
+  const buttonSize = controlsVariant === 'comfortable' ? 'comfortable' : 'compact'
 
   return (
     <div
       className={`absolute inset-0 flex flex-wrap items-center justify-center gap-1.5 p-1.5 bg-black/50 ${
         alwaysVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
       } transition-opacity`}
+      onClick={(e) => e.stopPropagation()}
     >
       <CompactIconButton
         onClick={(e) => {
@@ -111,6 +127,7 @@ function CompactActionBar({
         disabled={isGenerating}
         title={hasImage ? 'Regenerate' : 'Generate'}
         className="bg-indigo-600/90 hover:bg-indigo-500"
+        size={buttonSize}
       >
         {isGenerating ? (
           <Loader2 className={`${iconClass} animate-spin`} />
@@ -130,6 +147,7 @@ function CompactActionBar({
           disabled={isGenerating}
           title="References"
           className="bg-slate-600/90 hover:bg-slate-500"
+          size={buttonSize}
         >
           <Tags className={iconClass} />
         </CompactIconButton>
@@ -143,6 +161,7 @@ function CompactActionBar({
           }}
           title="AI edit"
           className="bg-purple-600/90 hover:bg-purple-500"
+          size={buttonSize}
         >
           <Wand2 className={iconClass} />
         </CompactIconButton>
@@ -156,6 +175,7 @@ function CompactActionBar({
           }}
           title="Save to library"
           className="bg-cyan-600/90 hover:bg-cyan-500"
+          size={buttonSize}
         >
           <FolderPlus className={iconClass} />
         </CompactIconButton>
@@ -168,6 +188,7 @@ function CompactActionBar({
         }}
         title="Upload"
         className="bg-emerald-600/90 hover:bg-emerald-500"
+        size={buttonSize}
       >
         <Upload className={iconClass} />
       </CompactIconButton>
@@ -180,6 +201,7 @@ function CompactActionBar({
           }}
           title="Delete"
           className="bg-red-600/90 hover:bg-red-500"
+          size={buttonSize}
         >
           <Trash2 className={iconClass} />
         </CompactIconButton>
@@ -218,11 +240,22 @@ export function SceneImageFrame({
   beatRole,
   imagePrompt,
   onReviewReferences,
+  showControls = true,
+  controlsVariant = 'compact',
+  alwaysShowControls = false,
+  promptLineClamp,
 }: SceneImageFrameProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isHovering, setIsHovering] = useState(false)
   const roleLabel = formatBeatRoleLabel(beatRole)
   const promptPreview = imagePrompt?.trim()
+  const useOverlayControls = compact || alwaysShowControls
+  const promptClampClass =
+    promptLineClamp === 4
+      ? 'line-clamp-4'
+      : promptLineClamp === 3
+        ? 'line-clamp-3'
+        : 'line-clamp-2'
 
   const hasImage = !!imageUrl
 
@@ -315,7 +348,7 @@ export function SceneImageFrame({
               </div>
             )}
 
-            {compact ? (
+            {showControls && useOverlayControls ? (
               <CompactActionBar
                 hasImage
                 imageUrl={imageUrl}
@@ -327,8 +360,10 @@ export function SceneImageFrame({
                 onAddToReferenceLibrary={onAddToReferenceLibrary}
                 onReviewReferences={onReviewReferences}
                 sceneNumber={sceneNumber}
+                alwaysVisible={alwaysShowControls || !compact}
+                controlsVariant={controlsVariant}
               />
-            ) : (
+            ) : showControls && !useOverlayControls ? (
               <AnimatePresence>
                 {isHovering && (
                   <motion.div
@@ -337,6 +372,7 @@ export function SceneImageFrame({
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15 }}
                     className="absolute inset-0 bg-black/50 flex items-center justify-center gap-3"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <button
                       onClick={(e) => {
@@ -353,6 +389,20 @@ export function SceneImageFrame({
                         <RefreshCw className="w-5 h-5 text-white" />
                       )}
                     </button>
+
+                    {onReviewReferences && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onReviewReferences()
+                        }}
+                        disabled={isGenerating}
+                        className="p-3 bg-slate-600/80 hover:bg-slate-600 rounded-full transition-colors disabled:opacity-50"
+                        title="References"
+                      >
+                        <Tags className="w-5 h-5 text-white" />
+                      </button>
+                    )}
 
                     {onEdit && (
                       <button
@@ -404,18 +454,21 @@ export function SceneImageFrame({
         ) : compact ? (
           <div className="w-full h-full flex flex-col items-center justify-center">
             <ImageIcon className="w-8 h-8 text-indigo-400/40 mb-1" />
-            <CompactActionBar
-              hasImage={false}
-              isGenerating={isGenerating}
-              onGenerate={onGenerate}
-              onUpload={triggerUpload}
-              onDelete={onDelete}
-              onReviewReferences={onReviewReferences}
-              sceneNumber={sceneNumber}
-              alwaysVisible
-            />
+            {showControls && (
+              <CompactActionBar
+                hasImage={false}
+                isGenerating={isGenerating}
+                onGenerate={onGenerate}
+                onUpload={triggerUpload}
+                onDelete={onDelete}
+                onReviewReferences={onReviewReferences}
+                sceneNumber={sceneNumber}
+                alwaysVisible
+                controlsVariant={controlsVariant}
+              />
+            )}
           </div>
-        ) : (
+        ) : showControls ? (
           <div className="w-full h-full flex flex-col items-center justify-center p-4">
             <div className="relative mb-3">
               <div className="absolute -inset-2 border-2 border-dashed border-indigo-500/30 rounded-lg" />
@@ -454,6 +507,11 @@ export function SceneImageFrame({
               </Button>
             </div>
           </div>
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center p-4">
+            <ImageIcon className="w-12 h-12 text-indigo-400/50" />
+            <p className="text-sm text-gray-400 text-center mt-2">No frame image</p>
+          </div>
         )}
       </div>
 
@@ -477,7 +535,7 @@ export function SceneImageFrame({
           </div>
           {promptPreview && (
             <p
-              className="text-[8px] text-slate-500 line-clamp-2 italic mt-0.5 cursor-help"
+              className={`text-[8px] text-slate-500 ${promptClampClass} italic mt-0.5 cursor-help`}
               title={promptPreview}
               onClick={(e) => {
                 e.stopPropagation()
@@ -494,10 +552,35 @@ export function SceneImageFrame({
 
       {label && !compact && (
         <div className="px-3 py-2 bg-slate-800/50 border-t border-slate-700/50">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">{label}</span>
-            <span className="text-xs text-slate-500">Scene {sceneNumber}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            {roleLabel && (
+              <span
+                className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded ${
+                  beatRole === 'title_reveal'
+                    ? 'bg-violet-500/20 text-violet-300'
+                    : 'bg-slate-600/40 text-slate-300'
+                }`}
+              >
+                {roleLabel}
+              </span>
+            )}
+            <span className="text-xs font-medium text-slate-400 truncate">{label}</span>
+            <span className="text-xs text-slate-500 ml-auto shrink-0">Scene {sceneNumber}</span>
           </div>
+          {promptPreview && (
+            <p
+              className={`text-[11px] text-slate-500 ${promptClampClass} italic mt-1.5 cursor-help`}
+              title={promptPreview}
+              onClick={(e) => {
+                e.stopPropagation()
+                void navigator.clipboard.writeText(promptPreview).then(() => {
+                  toast.success('Prompt copied')
+                })
+              }}
+            >
+              {promptPreview}
+            </p>
+          )}
         </div>
       )}
     </div>

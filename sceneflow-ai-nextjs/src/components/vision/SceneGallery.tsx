@@ -32,7 +32,7 @@ import { cn } from '@/lib/utils'
 import { formatSceneHeading, extractLocation } from '@/lib/script/formatSceneHeading'
 import { getStoryboardBeatProgress } from '@/lib/production/sceneProgress'
 import { ImageEditModal } from './ImageEditModal'
-import { SceneImageFrame } from './SceneImageFrame'
+import { SceneImageFrame, type SceneImageFrameProps } from './SceneImageFrame'
 import {
   ExpressConfirmDialog,
   type ExpressConfirmOptions,
@@ -54,6 +54,7 @@ import {
   countStoryboardFramesNeedingGeneration,
   countPlayablePreVisScenes,
   sceneHasPlayablePreVisAudio,
+  type StoryboardFrameSlot,
 } from '@/lib/storyboard/types'
 import { runSceneExpressPreflight } from '@/lib/sceneGeneration/sceneExpressPreflight'
 import { isPreVisStale } from '@/lib/storyboard/preVisSync'
@@ -1257,6 +1258,137 @@ interface SceneCardProps {
   expressPhaseStatus?: ExpressSceneStatus
 }
 
+interface StoryboardSlotHandlers {
+  sceneIndex: number
+  sceneNumber: number
+  prompt: string
+  isGenerating: boolean
+  generatingDialogueFrames: Set<string>
+  generatingCustomFrames: Set<string>
+  onGenerate: (prompt: string) => Promise<void>
+  onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
+  onGenerateBeatFrame?: (beatId: string) => Promise<void>
+  onReviewBeatReferences?: (beatId: string) => void
+  onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
+  onUploadBeatFrame?: (beatId: string, file: File) => void
+  onEditFrame?: SceneCardProps['onEditFrame']
+  onUpload?: (file: File) => void
+  onGenerateCustomFrame?: (frameId: string) => Promise<void>
+  onUploadCustomFrame?: (frameId: string, file: File) => void
+  onDeleteStoryboardFrame?: (frameId: string) => void | Promise<void>
+}
+
+function buildStoryboardSlotFrameProps(
+  slot: StoryboardFrameSlot,
+  handlers: StoryboardSlotHandlers
+): Omit<
+  SceneImageFrameProps,
+  'compact' | 'showControls' | 'controlsVariant' | 'alwaysShowControls' | 'onSelect' | 'isSelected' | 'showBorder' | 'promptLineClamp'
+> {
+  const {
+    sceneIndex,
+    sceneNumber,
+    prompt,
+    isGenerating,
+    generatingDialogueFrames,
+    generatingCustomFrames,
+    onGenerate,
+    onGenerateDialogueFrame,
+    onGenerateBeatFrame,
+    onReviewBeatReferences,
+    onUploadDialogueFrame,
+    onUploadBeatFrame,
+    onEditFrame,
+    onUpload,
+    onGenerateCustomFrame,
+    onUploadCustomFrame,
+    onDeleteStoryboardFrame,
+  } = handlers
+
+  if (slot.kind === 'custom') {
+    const genKey = `custom-${sceneIndex}-${slot.customFrameId}`
+    return {
+      sceneIdx: sceneIndex,
+      sceneNumber,
+      imageUrl: slot.displayImageUrl,
+      isPlaceholder: slot.isPlaceholder,
+      isGenerating: generatingCustomFrames.has(genKey),
+      label: slot.label,
+      onGenerate: () => void onGenerateCustomFrame?.(slot.customFrameId!),
+      onUpload: (file) => onUploadCustomFrame?.(slot.customFrameId!, file),
+      onDelete:
+        onDeleteStoryboardFrame && slot.customFrameId
+          ? () => {
+              if (slot.ownImageUrl && !window.confirm('Delete this storyboard frame?')) return
+              void onDeleteStoryboardFrame(slot.customFrameId!)
+            }
+          : undefined,
+    }
+  }
+
+  const dialogueIdx = slot.dialogueIndex
+  const beatId = slot.beatId
+  const useBeatFrame = !!beatId && (slot.kind === 'narration' || slot.kind === 'action')
+  const isGeneratingBeatFrame =
+    useBeatFrame && generatingDialogueFrames.has(`${sceneIndex}-beat-${beatId}`)
+  const isGeneratingFrame =
+    !useBeatFrame &&
+    typeof dialogueIdx === 'number' &&
+    generatingDialogueFrames.has(`${sceneIndex}-${dialogueIdx}`)
+  const isLegacyEstablishingOnly =
+    !useBeatFrame && slot.kind === 'action' && typeof dialogueIdx !== 'number' && !beatId
+
+  return {
+    sceneIdx: sceneIndex,
+    sceneNumber,
+    imageUrl: slot.isMissing ? undefined : slot.displayImageUrl,
+    isPlaceholder: slot.isPlaceholder,
+    isGenerating: isLegacyEstablishingOnly
+      ? isGenerating
+      : useBeatFrame
+        ? isGeneratingBeatFrame
+        : isGeneratingFrame,
+    label: slot.label,
+    imageTier: slot.ownImageUrl ? slot.imageTier : undefined,
+    beatRole: slot.beatRole,
+    imagePrompt: slot.storyboardImagePrompt,
+    onGenerate: () => {
+      if (useBeatFrame && beatId) {
+        void onGenerateBeatFrame?.(beatId)
+      } else if (isLegacyEstablishingOnly) {
+        void onGenerate(prompt)
+      } else if (typeof dialogueIdx === 'number') {
+        void onGenerateDialogueFrame?.(dialogueIdx)
+      }
+    },
+    onReviewReferences:
+      useBeatFrame && beatId && onReviewBeatReferences
+        ? () => onReviewBeatReferences(beatId)
+        : undefined,
+    onUpload: (file) => {
+      if (useBeatFrame && onUploadBeatFrame && beatId) {
+        onUploadBeatFrame(beatId, file)
+      } else if (isLegacyEstablishingOnly) {
+        onUpload?.(file)
+      } else if (typeof dialogueIdx === 'number') {
+        onUploadDialogueFrame?.(dialogueIdx, file)
+      }
+    },
+    onEdit:
+      slot.displayImageUrl && !slot.isMissing
+        ? (url) => {
+            if (useBeatFrame && onEditFrame && beatId) {
+              onEditFrame({ kind: 'beat', sceneIndex, beatId, imageUrl: url })
+            } else if (isLegacyEstablishingOnly && onEditFrame) {
+              onEditFrame({ kind: 'establishing', sceneIndex, imageUrl: url })
+            } else if (typeof dialogueIdx === 'number' && onEditFrame) {
+              onEditFrame({ kind: 'dialogue', sceneIndex, dialogueIndex: dialogueIdx, imageUrl: url })
+            }
+          }
+        : undefined,
+  }
+}
+
 // Sortable wrapper component for drag-and-drop
 function SortableSceneWrapper({ 
   id, 
@@ -1360,11 +1492,46 @@ function SceneCard({
     return frameSlots.find((slot) => slot.key === selectedFrameKey) ?? frameSlots[0]
   }, [frameSlots, selectedFrameKey])
 
-  const previewImageUrl =
-    previewSlot?.displayImageUrl ??
-    previewSlot?.ownImageUrl ??
-    scene.imageUrl ??
-    undefined
+  const slotHandlers = useMemo(
+    (): StoryboardSlotHandlers => ({
+      sceneIndex,
+      sceneNumber,
+      prompt,
+      isGenerating,
+      generatingDialogueFrames,
+      generatingCustomFrames,
+      onGenerate,
+      onGenerateDialogueFrame,
+      onGenerateBeatFrame,
+      onReviewBeatReferences,
+      onUploadDialogueFrame,
+      onUploadBeatFrame,
+      onEditFrame,
+      onUpload,
+      onGenerateCustomFrame,
+      onUploadCustomFrame,
+      onDeleteStoryboardFrame,
+    }),
+    [
+      sceneIndex,
+      sceneNumber,
+      prompt,
+      isGenerating,
+      generatingDialogueFrames,
+      generatingCustomFrames,
+      onGenerate,
+      onGenerateDialogueFrame,
+      onGenerateBeatFrame,
+      onReviewBeatReferences,
+      onUploadDialogueFrame,
+      onUploadBeatFrame,
+      onEditFrame,
+      onUpload,
+      onGenerateCustomFrame,
+      onUploadCustomFrame,
+      onDeleteStoryboardFrame,
+    ]
+  )
   
   // Compute reference status for this scene
   const referenceStatus = useMemo(() => {
@@ -1450,23 +1617,25 @@ function SceneCard({
         </div>
       )}
 
-      {/* Scene preview — read-only; use storyboard frame thumbnails for generate/upload */}
-      <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative">
-        {previewImageUrl ? (
-          <img 
-            src={previewImageUrl} 
-            alt={`Scene ${sceneNumber}${previewSlot?.label ? ` — ${previewSlot.label}` : ''}`}
-            className="w-full h-full object-cover"
+      {/* Selected frame hero — controls live here; thumbnails are navigation only */}
+      <div className="relative bg-gray-100 dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+        {previewSlot ? (
+          <SceneImageFrame
+            {...buildStoryboardSlotFrameProps(previewSlot, slotHandlers)}
+            showControls
+            controlsVariant="comfortable"
+            alwaysShowControls
+            showBorder={false}
+            promptLineClamp={4}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center">
+          <div className="aspect-video flex flex-col items-center justify-center">
             <Camera className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
-            <span className="text-xs text-gray-500 dark:text-gray-400">No image</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">No storyboard frames</span>
           </div>
         )}
-        
-        {/* Prominent loading overlay */}
-        {isGenerating && (
+
+        {isGenerating && !previewSlot && (
           <div className="absolute inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-10">
             <Loader className="w-12 h-12 animate-spin text-blue-400 mb-3" />
             <span className="text-sm text-white font-medium">Generating Scene...</span>
@@ -1649,12 +1818,6 @@ function SceneCard({
         {(() => {
           const frameStats = countStoryboardFrameStats(scene)
 
-          const handleDeleteCustom = (frameId: string, hasImage: boolean) => {
-            if (!onDeleteStoryboardFrame) return
-            if (hasImage && !window.confirm('Delete this storyboard frame?')) return
-            void onDeleteStoryboardFrame(frameId)
-          }
-
           return (
             <>
               <div className="flex items-center justify-between mb-2 gap-2">
@@ -1815,129 +1978,18 @@ function SceneCard({
                 </div>
               </div>
               <div className="flex gap-2 overflow-x-auto pb-1">
-                {frameSlots.map((slot) => {
-                  if (slot.kind === 'custom') {
-                    const genKey = `custom-${sceneIndex}-${slot.customFrameId}`
-                    const isGeneratingCustom = generatingCustomFrames.has(genKey)
-                    return (
-                      <div key={slot.key} className="flex-shrink-0 w-36">
-                        <SceneImageFrame
-                          sceneIdx={sceneIndex}
-                          sceneNumber={sceneNumber}
-                          imageUrl={slot.displayImageUrl}
-                          isPlaceholder={slot.isPlaceholder}
-                          isSelected={selectedFrameKey === slot.key}
-                          onSelect={() => setSelectedFrameKey(slot.key)}
-                          isGenerating={isGeneratingCustom}
-                          compact
-                          showBorder
-                          label={slot.label}
-                          onGenerate={() => void onGenerateCustomFrame?.(slot.customFrameId!)}
-                          onUpload={(file) => {
-                            setSelectedFrameKey(slot.key)
-                            onUploadCustomFrame?.(slot.customFrameId!, file)
-                          }}
-                          onDelete={() => handleDeleteCustom(slot.customFrameId!, !!slot.ownImageUrl)}
-                        />
-                      </div>
-                    )
-                  }
-
-                  const dialogueIdx = slot.dialogueIndex
-                  const beatId = slot.beatId
-                  const useBeatFrame =
-                    !!beatId &&
-                    (slot.kind === 'narration' || slot.kind === 'action')
-                  const isGeneratingBeatFrame =
-                    useBeatFrame &&
-                    generatingDialogueFrames.has(`${sceneIndex}-beat-${beatId}`)
-                  const isGeneratingFrame =
-                    !useBeatFrame &&
-                    typeof dialogueIdx === 'number' &&
-                    generatingDialogueFrames.has(`${sceneIndex}-${dialogueIdx}`)
-                  const isLegacyEstablishingOnly =
-                    !useBeatFrame &&
-                    slot.kind === 'action' &&
-                    typeof dialogueIdx !== 'number' &&
-                    !beatId
-
-                  return (
-                    <div key={slot.key} className="flex-shrink-0 w-36">
-                      <SceneImageFrame
-                        sceneIdx={sceneIndex}
-                        sceneNumber={sceneNumber}
-                        imageUrl={slot.isMissing ? undefined : slot.displayImageUrl}
-                        isPlaceholder={slot.isPlaceholder}
-                        isSelected={selectedFrameKey === slot.key}
-                        onSelect={() => setSelectedFrameKey(slot.key)}
-                        isGenerating={
-                          isLegacyEstablishingOnly
-                            ? isGenerating
-                            : useBeatFrame
-                              ? isGeneratingBeatFrame
-                              : isGeneratingFrame
-                        }
-                        compact
-                        showBorder
-                        label={slot.label}
-                        imageTier={slot.ownImageUrl ? slot.imageTier : undefined}
-                        beatRole={slot.beatRole}
-                        imagePrompt={slot.storyboardImagePrompt}
-                        onGenerate={() => {
-                          if (useBeatFrame && beatId) {
-                            void onGenerateBeatFrame?.(beatId)
-                          } else if (isLegacyEstablishingOnly) {
-                            void onGenerate(prompt)
-                          } else if (typeof dialogueIdx === 'number') {
-                            void onGenerateDialogueFrame?.(dialogueIdx)
-                          }
-                        }}
-                        onReviewReferences={
-                          useBeatFrame && beatId && onReviewBeatReferences
-                            ? () => onReviewBeatReferences(beatId)
-                            : undefined
-                        }
-                        onUpload={(file) => {
-                          setSelectedFrameKey(slot.key)
-                          if (useBeatFrame && onUploadBeatFrame && beatId) {
-                            onUploadBeatFrame(beatId, file)
-                          } else if (isLegacyEstablishingOnly) {
-                            onUpload?.(file)
-                          } else if (typeof dialogueIdx === 'number') {
-                            onUploadDialogueFrame?.(dialogueIdx, file)
-                          }
-                        }}
-                        onEdit={
-                          slot.displayImageUrl && !slot.isMissing
-                            ? (url) => {
-                                if (useBeatFrame && onEditFrame && beatId) {
-                                  onEditFrame({
-                                    kind: 'beat',
-                                    sceneIndex,
-                                    beatId,
-                                    imageUrl: url,
-                                  })
-                                } else if (isLegacyEstablishingOnly && onEditFrame) {
-                                  onEditFrame({
-                                    kind: 'establishing',
-                                    sceneIndex,
-                                    imageUrl: url,
-                                  })
-                                } else if (typeof dialogueIdx === 'number' && onEditFrame) {
-                                  onEditFrame({
-                                    kind: 'dialogue',
-                                    sceneIndex,
-                                    dialogueIndex: dialogueIdx,
-                                    imageUrl: url,
-                                  })
-                                }
-                              }
-                            : undefined
-                        }
-                      />
-                    </div>
-                  )
-                })}
+                {frameSlots.map((slot) => (
+                  <div key={slot.key} className="flex-shrink-0 w-36">
+                    <SceneImageFrame
+                      {...buildStoryboardSlotFrameProps(slot, slotHandlers)}
+                      showControls={false}
+                      compact
+                      showBorder
+                      isSelected={selectedFrameKey === slot.key}
+                      onSelect={() => setSelectedFrameKey(slot.key)}
+                    />
+                  </div>
+                ))}
               </div>
             </>
           )
