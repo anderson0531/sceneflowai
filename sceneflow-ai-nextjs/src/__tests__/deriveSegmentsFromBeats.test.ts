@@ -38,7 +38,31 @@ describe('deriveSegmentsFromBeats', () => {
     expect(result.segments[0].beatId).toBe('bt_1')
     expect(result.segments[0].generationMethod).toBe('I2V')
     expect(result.segments[0].references?.startFrameUrl).toContain('example.com')
+    expect(result.segments[0].startFrameUrl).toContain('example.com')
+    expect(result.segments[0].anchorStatus).toBe('start-locked')
     expect(result.segments[1].beatId).toBe('bt_2')
+  })
+
+  it('derives five segments with matching Pre-Vis start URLs for five beats', () => {
+    const beats: SceneBeat[] = Array.from({ length: 5 }, (_, i) => ({
+      beatId: `bt_${i + 1}`,
+      sequenceIndex: i,
+      kind: 'dialogue' as const,
+      character: 'Sarah',
+      line: `Line ${i + 1}.`,
+      lineId: `ln_${i + 1}`,
+      durationSeconds: 4,
+      storyboardImageUrl: `https://example.com/previz-beat-${i + 1}.jpg`,
+    }))
+    const result = deriveSegmentsFromBeats(approvedScene(beats))
+    expect(result.errors).toHaveLength(0)
+    expect(result.segments).toHaveLength(5)
+    result.segments.forEach((seg, i) => {
+      expect(seg.beatId).toBe(`bt_${i + 1}`)
+      expect(seg.startFrameUrl).toBe(`https://example.com/previz-beat-${i + 1}.jpg`)
+      expect(seg.references?.startFrameUrl).toBe(`https://example.com/previz-beat-${i + 1}.jpg`)
+      expect(seg.anchorStatus).toBe('start-locked')
+    })
   })
 
   it('rejects derivation when storyboard is not approved', () => {

@@ -84,6 +84,8 @@ function beatToSegment(
     opts.chainPart?.method ??
     'I2V'
 
+  const preVisStartUrl = beat.storyboardImageUrl?.trim() || undefined
+
   const segment: SceneSegment = {
     segmentId: mintSegmentId(),
     sequenceIndex,
@@ -94,6 +96,12 @@ function beatToSegment(
     takes: [],
     segmentDirection: null,
     transitionType: opts.continuation ? 'CONTINUE' : 'CUT',
+    ...(preVisStartUrl
+      ? {
+          startFrameUrl: preVisStartUrl,
+          anchorStatus: 'start-locked' as const,
+        }
+      : {}),
     dialogueLineIds: beat.lineId && beat.kind !== 'action' ? [beat.lineId] : [],
     dialogueLines:
       beat.kind !== 'action' && spokenText
@@ -107,7 +115,7 @@ function beatToSegment(
         : [],
     generationMethod,
     references: {
-      startFrameUrl: beat.storyboardImageUrl,
+      startFrameUrl: preVisStartUrl,
       endFrameUrl: undefined,
       characterIds: beat.characterId ? [beat.characterId] : [],
       sceneRefIds: [],

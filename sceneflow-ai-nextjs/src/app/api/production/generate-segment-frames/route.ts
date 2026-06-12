@@ -29,6 +29,20 @@ import {
 export const maxDuration = 120 // 2 minutes for potentially generating both frames
 export const runtime = 'nodejs'
 
+/** Pure decision for whether to preserve an existing Pre-Vis start frame. */
+export function resolveStartFrameGenerationPlan(params: {
+  frameType: 'start' | 'end' | 'both'
+  providedStartFrameUrl?: string | null
+  forceRegenerateStart?: boolean
+}): { skipStartGeneration: boolean; preservedStartUrl?: string } {
+  const preservedStartUrl = params.providedStartFrameUrl?.trim() || undefined
+  const skipStartGeneration =
+    !!preservedStartUrl &&
+    (params.frameType === 'both' ||
+      (params.frameType === 'start' && !params.forceRegenerateStart))
+  return { skipStartGeneration, preservedStartUrl }
+}
+
 interface FrameGenerationRequest {
   // Required fields
   sceneId: string
@@ -80,6 +94,8 @@ interface FrameGenerationRequest {
   customPrompt?: string          // User-edited prompt to use instead of actionPrompt
   negativePrompt?: string        // Elements to avoid in generation
   usePreviousEndFrame?: boolean  // Copy previous end frame as start frame (skip generation)
+  /** When true, regenerate start even if startFrameUrl (Pre-Vis) is already set */
+  forceRegenerateStart?: boolean
   
   // NEW: Visual setup from guided mode (for prompt construction)
   visualSetup?: {
@@ -313,7 +329,14 @@ export async function POST(req: NextRequest) {
       segmentContent,
       // Phase 11: Previous segment end frame for continuity chain
       previousSegmentEndFrameUrl,
+      forceRegenerateStart = false,
     } = body
+
+    const { skipStartGeneration, preservedStartUrl } = resolveStartFrameGenerationPlan({
+      frameType,
+      providedStartFrameUrl,
+      forceRegenerateStart,
+    })
     
     // Use custom prompt if provided, otherwise fall back to action prompt
     const effectivePrompt = customPrompt?.trim() || actionPrompt
@@ -368,7 +391,10 @@ export async function POST(req: NextRequest) {
     // ========================================================================
     // GENERATE START FRAME
     // ========================================================================
-    if (frameType === 'start' || frameType === 'both') {
+    if (skipStartGeneration && preservedStartUrl) {
+      console.log('[Generate Frames] Preserving existing Pre-Vis start frame')
+      startFramePrompt = 'Preserved from Pre-Vis beat frame'
+    } else if (frameType === 'start' || frameType === 'both') {
       console.log('[Generate Frames] Generating start frame...')
       
         // Check if user wants to use previous segment's end frame directly (seamless continuity)
@@ -849,19 +875,21 @@ Render this scene in ${selectedStyle.name} style.`
       console.log('[Generate Frames] End frame generated:', generatedEndFrameUrl)
     }
 
+    const resolvedStartFrameUrl = generatedStartFrameUrl ?? preservedStartUrl
+
     // Determine anchor status
     let anchorStatus: AnchorStatus = 'pending'
-    if (generatedStartFrameUrl || providedStartFrameUrl) {
+    if (resolvedStartFrameUrl) {
       anchorStatus = 'start-locked'
     }
-    if ((generatedStartFrameUrl || providedStartFrameUrl) && generatedEndFrameUrl) {
+    if (resolvedStartFrameUrl && generatedEndFrameUrl) {
       anchorStatus = 'fully-anchored'
     }
 
     const response: FrameGenerationResponse = {
       success: true,
       segmentId,
-      startFrameUrl: generatedStartFrameUrl,
+      startFrameUrl: resolvedStartFrameUrl,
       startFramePrompt,
       endFrameUrl: generatedEndFrameUrl,
       endFramePrompt,
@@ -875,7 +903,7 @@ Render this scene in ${selectedStyle.name} style.`
     console.log('[Generate Frames] Complete:', {
       segmentId,
       anchorStatus,
-      hasStartFrame: !!generatedStartFrameUrl,
+      hasStartFrame: !!resolvedStartFrameUrl,
       hasEndFrame: !!generatedEndFrameUrl
     })
 

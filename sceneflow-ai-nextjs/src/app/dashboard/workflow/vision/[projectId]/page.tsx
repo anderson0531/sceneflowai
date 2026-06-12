@@ -884,6 +884,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
     // Update local state immediately for responsive UI
     setScript(mergedScript)
+    scriptRef.current = mergedScript
     setScriptEditedAt(Date.now())
     
     // Guard: Don't save if projectId is invalid
@@ -2282,26 +2283,45 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             ...current,
             segments: current.segments.map(seg => 
               seg.segmentId === segmentId 
-                ? {
-                    ...seg,
-                    startFrameUrl: data.startFrameUrl || seg.startFrameUrl,
-                    endFrameUrl: data.endFrameUrl || seg.endFrameUrl,
-                    anchorStatus: data.anchorStatus || seg.anchorStatus,
-                    actionType: data.actionType || seg.actionType,
-                    transitionType: data.transitionType || seg.transitionType,
-                    references: {
-                      ...seg.references,
-                      startFrameUrl: data.startFrameUrl || seg.references?.startFrameUrl,
-                      endFrameUrl: data.endFrameUrl || seg.references?.endFrameUrl
+                ? (() => {
+                    const preservedStart =
+                      data.startFrameUrl ??
+                      seg.startFrameUrl ??
+                      seg.references?.startFrameUrl
+                    const preservedEnd =
+                      data.endFrameUrl ??
+                      seg.endFrameUrl ??
+                      seg.references?.endFrameUrl
+                    return {
+                      ...seg,
+                      startFrameUrl: preservedStart,
+                      endFrameUrl: preservedEnd,
+                      anchorStatus: data.anchorStatus || seg.anchorStatus,
+                      actionType: data.actionType || seg.actionType,
+                      transitionType: data.transitionType || seg.transitionType,
+                      references: {
+                        ...seg.references,
+                        startFrameUrl: preservedStart,
+                        endFrameUrl: preservedEnd,
+                      },
                     }
-                  }
+                  })()
                 : seg
             )
           }
         })
 
         toast.success(`Frame${frameType === 'both' ? 's' : ''} generated successfully`)
-        return { startFrameUrl: data.startFrameUrl, endFrameUrl: data.endFrameUrl }
+        return {
+          startFrameUrl:
+            data.startFrameUrl ??
+            segment.startFrameUrl ??
+            segment.references?.startFrameUrl,
+          endFrameUrl:
+            data.endFrameUrl ??
+            segment.endFrameUrl ??
+            segment.references?.endFrameUrl,
+        }
       } catch (error) {
         console.error('[VisionPage] Failed to generate segment frames:', error)
         toast.error(error instanceof Error ? error.message : 'Failed to generate frames')
@@ -2314,7 +2334,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   )
 
   const handleInitializeSceneProduction = useCallback(
-    async (sceneId: string, { targetDuration, generationOptions, segments: prePardsedSegments }: { targetDuration: number; generationOptions?: any; segments?: any[] }) => {
+    async (sceneId: string, { targetDuration, generationOptions, segments: prePardsedSegments, deriveFromBeats }: { targetDuration: number; generationOptions?: any; segments?: any[]; deriveFromBeats?: boolean }) => {
       if (!project?.id) {
         throw new Error('Project must be loaded before segmenting a scene.')
       }
@@ -2350,7 +2370,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         return
       }
 
-      const scenes = script?.script?.scenes ?? []
+      const scenes = scriptRef.current?.script?.scenes ?? script?.script?.scenes ?? []
       const sceneRecord = scenes.find(
         (s: any, i: number) => (s.id || s.sceneId || `scene-${i}`) === sceneId
       )
@@ -2359,7 +2379,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           ? (await import('@/lib/script/beatMigration')).isBeatFirstPipelineEnabled()
           : process.env.BEAT_FIRST_PIPELINE !== 'false'
 
-      if (beatFirst && sceneRecord?.storyboardStatus === 'approved') {
+      const shouldDeriveFromBeats =
+        beatFirst &&
+        (deriveFromBeats === true || sceneRecord?.storyboardStatus === 'approved')
+
+      if (shouldDeriveFromBeats) {
         const response = await fetch(
           `/api/scenes/${encodeURIComponent(sceneId)}/derive-segments`,
           {
@@ -2467,7 +2491,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         await handleScriptChange(updatedScript)
 
         if (isBeatFirstPipelineEnabled()) {
-          await handleInitializeSceneProduction(sceneId, { targetDuration: 8 })
+          await handleInitializeSceneProduction(sceneId, {
+            targetDuration: 8,
+            deriveFromBeats: true,
+          })
         }
 
         toast.success('Pre-Vis approved — automated production is unlocked')
@@ -2492,11 +2519,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (scene.storyboardStatus !== 'approved') return
 
       const production = sceneProductionState[sceneId]
-      if (production?.segments && production.segments.length > 0) return
+      const beatCount = getSceneBeats(scene).length
+      const segmentCount = production?.segments?.length ?? 0
+      const needsDerive =
+        segmentCount === 0 ||
+        (beatCount > 0 && segmentCount !== beatCount)
+
+      if (!needsDerive) return
       if (backfillDeriveAttemptedRef.current.has(sceneId)) return
 
       backfillDeriveAttemptedRef.current.add(sceneId)
-      void handleInitializeSceneProduction(sceneId, { targetDuration: 8 }).catch((err) => {
+      void handleInitializeSceneProduction(sceneId, {
+        targetDuration: 8,
+        deriveFromBeats: true,
+      }).catch((err) => {
         console.warn('[VisionPage] Backfill derive-segments failed for', sceneId, err)
         backfillDeriveAttemptedRef.current.delete(sceneId)
       })
