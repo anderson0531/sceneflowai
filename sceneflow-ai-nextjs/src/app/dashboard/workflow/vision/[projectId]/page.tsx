@@ -12231,7 +12231,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             size="sm"
             onClick={toggleRightSidebar}
             className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-            title={rightSidebarVisible ? "Hide Reference Library" : "Show Reference Library"}
+            title={rightSidebarVisible ? "Hide panel" : "Show panel"}
           >
             {rightSidebarVisible ? <PanelRightClose className="w-4 h-4" /> : <PanelRight className="w-4 h-4" />}
           </Button>
@@ -12773,6 +12773,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 generatingLocationId={generatingLocationId}
                 onExpressGenerateReferences={handleExpressGenerateReferences}
                 isExpressGeneratingReferences={isExpressGeneratingReferences}
+                audienceScores={sidebarReviewScores}
+                audienceReviewDetails={sidebarAudienceReviewDetails}
+                isGeneratingReviews={isGeneratingReviews}
+                onGenerateReviews={handleGenerateReviews}
+                onOpenReviewModal={() => setShowReviewModal(true)}
               />
             </div>
           </Panel>

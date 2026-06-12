@@ -132,42 +132,37 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   const [showNavigationWarning, setShowNavigationWarning] = useState(false)
   const [navigationTarget, setNavigationTarget] = useState<{ href: string; label: string }>({ href: '', label: '' })
 
-  /** Whole left rail hidden → main uses full width (persisted for different displays). */
+  /** Whole left rail hidden → main uses full width (persisted when user toggles). */
   const [sidebarVisible, setSidebarVisible] = useState(true)
+
+  const persistSidebarVisibility = useCallback((visible: boolean) => {
+    setSidebarVisible(visible)
+    try {
+      localStorage.setItem(SIDEBAR_VISIBILITY_KEY, visible ? '1' : '0')
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(SIDEBAR_VISIBILITY_KEY)
-      if (raw === '0') setSidebarVisible(false)
+      if (raw === '1') {
+        setSidebarVisible(true)
+      } else if (raw === '0') {
+        setSidebarVisible(false)
+      } else if (pathname.includes('/workflow/vision/')) {
+        setSidebarVisible(false)
+      } else {
+        setSidebarVisible(true)
+      }
     } catch {
       /* ignore */
     }
-  }, [])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(SIDEBAR_VISIBILITY_KEY, sidebarVisible ? '1' : '0')
-    } catch {
-      /* ignore */
-    }
-  }, [sidebarVisible])
+  }, [pathname])
 
   // Determine if currently in Production phase (Vision page)
   const isInProductionPhase = pathname.includes('/workflow/vision/')
-
-  // Track storyboard open/close state (broadcast by Vision page)
-  const [isStoryboardOpen, setIsStoryboardOpen] = useState(false)
-  useEffect(() => {
-    const handler = (e: CustomEvent<{ open: boolean }>) => {
-      setIsStoryboardOpen(e.detail.open)
-    }
-    window.addEventListener('production:storyboard-state' as any, handler)
-    return () => window.removeEventListener('production:storyboard-state' as any, handler)
-  }, [])
-  // Reset when navigating away from production
-  useEffect(() => {
-    if (!isInProductionPhase) setIsStoryboardOpen(false)
-  }, [isInProductionPhase])
 
   // Listen for workflow guide status updates (Blueprint, Final Cut, …)
   useEffect(() => {
@@ -309,7 +304,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-              onClick={() => setSidebarVisible(false)}
+              onClick={() => persistSidebarVisibility(false)}
               aria-label="Hide navigation sidebar"
               title="Hide sidebar (more space for content)"
             >
@@ -444,35 +439,6 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
             />
           )}
 
-          {/* Storyboard Section */}
-          {isInProductionPhase && (
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <button
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent('production:scene-gallery'))
-                }}
-                className="flex items-center justify-between w-full text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wider hover:text-gray-700 dark:hover:text-gray-300 transition-colors group"
-              >
-                <div className="flex items-center gap-2">
-                  <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Pre-vis</span>
-                </div>
-                <div className={cn(
-                  "flex items-center gap-1 text-[10px] font-normal transition-opacity",
-                  isStoryboardOpen
-                    ? "text-cyan-400 opacity-100"
-                    : "text-cyan-400 opacity-0 group-hover:opacity-100"
-                )}>
-                  <span>{isStoryboardOpen ? 'Close' : 'Open'}</span>
-                  <ChevronDown className={cn("w-3 h-3 transition-transform", isStoryboardOpen ? 'rotate-90' : 'rotate-[-90deg]')} />
-                </div>
-              </button>
-              <p className="text-[10px] text-slate-500 mt-1.5 pl-5">
-                Visual pre-vis with AI generation
-              </p>
-            </div>
-          )}
-
           {/* Credits Section - Always at bottom, pushed by flex-grow spacer */}
           <div className="flex-grow" />
           {config.sectionVisibility.credits && (
@@ -515,7 +481,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
       {!sidebarVisible && (
         <button
           type="button"
-          onClick={() => setSidebarVisible(true)}
+          onClick={() => persistSidebarVisibility(true)}
           className="absolute left-2 top-3 z-[35] flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-md transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
           aria-label="Show navigation sidebar"
           title="Show sidebar"

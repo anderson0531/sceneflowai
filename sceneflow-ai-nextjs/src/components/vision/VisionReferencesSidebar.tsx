@@ -4,7 +4,8 @@ import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid, MapPin, Zap, Settings2, Download, Share2 } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronUp, Images, Package, Users, Info, Maximize2, Sparkles, Film, BookOpen, Wand2, Loader2, Upload, Copy, CheckCircle2, AlertCircle, LayoutGrid, MapPin, Zap, Settings2, Download, Share2, Target } from 'lucide-react'
+import { ReviewScoresPanel, type AudienceReviewDetails, type ReviewScores } from '@/components/layout/ReviewScoresPanel'
 import { ReferenceTransferDialog } from '@/components/series/ReferenceTransferDialog'
 import type { ReferenceTransferDirection } from '@/types/series'
 import { toast } from 'sonner'
@@ -129,6 +130,12 @@ interface VisionReferencesSidebarProps extends Omit<CharacterLibraryProps, 'comp
   /** Batch-generate missing cast, location, and prop reference images */
   onExpressGenerateReferences?: () => Promise<void>
   isExpressGeneratingReferences?: boolean
+  /** Audience Resonance scores for Audience tab */
+  audienceScores?: ReviewScores
+  audienceReviewDetails?: AudienceReviewDetails | null
+  isGeneratingReviews?: boolean
+  onGenerateReviews?: () => void
+  onOpenReviewModal?: () => void
 }
 
 interface ReferenceSectionProps {
@@ -1177,6 +1184,11 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     generatingLocationId,
     onExpressGenerateReferences,
     isExpressGeneratingReferences = false,
+    audienceScores,
+    audienceReviewDetails,
+    isGeneratingReviews = false,
+    onGenerateReviews,
+    onOpenReviewModal,
   } = props
 
   const [transferOpen, setTransferOpen] = useState(false)
@@ -1387,7 +1399,20 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
 
   const [castOpen, setCastOpen] = useState(false)
   const [showProTips, setShowProTips] = useState(false)
+  const [activePanelTab, setActivePanelTab] = useState<'reference' | 'audience'>('reference')
   const [activeReferenceTab, setActiveReferenceTab] = useState<'cast' | 'object' | 'locations'>('cast')
+
+  useEffect(() => {
+    const handler = (e: CustomEvent<{ tab?: 'cast' | 'object' | 'locations' }>) => {
+      setActivePanelTab('reference')
+      const tab = e.detail?.tab
+      if (tab === 'cast' || tab === 'object' || tab === 'locations') {
+        setActiveReferenceTab(tab)
+      }
+    }
+    window.addEventListener('reference-library:open-tab' as any, handler)
+    return () => window.removeEventListener('reference-library:open-tab' as any, handler)
+  }, [])
   const [objectRegenerateTarget, setObjectRegenerateTarget] = useState<VisualReference | null>(null)
   const [referenceExpressDialogOpen, setReferenceExpressDialogOpen] = useState(false)
 
@@ -1408,10 +1433,70 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
     { key: 'object' as const, label: 'Props', icon: <Package className="w-3.5 h-3.5" />, count: objectReferences.length },
   ]
 
+  const panelTabs = [
+    { key: 'reference' as const, label: 'Reference', icon: <BookOpen className="w-3.5 h-3.5" /> },
+    {
+      key: 'audience' as const,
+      label: 'Audience',
+      icon: <Target className="w-3.5 h-3.5" />,
+      score: audienceScores?.audience ?? null,
+    },
+  ]
+
   return (
     <DndContext>
       <TooltipProvider delayDuration={300}>
       <div className="flex flex-col h-full">
+        {/* Top-level panel tabs: Reference | Audience */}
+        <div className="flex items-center border-b border-gray-700/50 mb-3 overflow-x-auto flex-shrink-0">
+          {panelTabs.map((tab) => {
+            const isActive = activePanelTab === tab.key
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActivePanelTab(tab.key)}
+                className={`
+                  relative px-3 py-2 text-xs font-medium rounded-t-lg transition-all mr-0.5 flex-shrink-0
+                  ${isActive
+                    ? 'bg-slate-800/80 text-white border-t border-x border-gray-600/50 -mb-px'
+                    : 'bg-slate-900/40 text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border-transparent'
+                  }
+                `}
+              >
+                <div className="flex items-center gap-1.5">
+                  {React.cloneElement(tab.icon as React.ReactElement, { className: `w-3 h-3 ${isActive ? 'text-sf-primary' : ''}` })}
+                  <span>{tab.label}</span>
+                  {'score' in tab && tab.score !== null && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${isActive ? 'bg-purple-500/20 text-purple-300' : 'bg-gray-700/50 text-gray-500'}`}>
+                      {tab.score}
+                    </span>
+                  )}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+
+        {activePanelTab === 'audience' ? (
+          <div className="flex-1 overflow-y-auto min-h-0 px-1">
+            <div className="flex items-center gap-2 mb-3">
+              <Target className="w-5 h-5 text-purple-400 flex-shrink-0" />
+              <h4 className="font-bold text-xl tracking-tight text-gray-900 dark:text-white leading-none">
+                Audience Resonance
+              </h4>
+            </div>
+            <ReviewScoresPanel
+              variant="embedded"
+              scores={audienceScores ?? { director: null, audience: null }}
+              reviewDetails={audienceReviewDetails}
+              isGenerating={isGeneratingReviews}
+              onGenerateReviews={onGenerateReviews}
+              onOpenReviewModal={onOpenReviewModal}
+            />
+          </div>
+        ) : (
+          <>
         {/* Title - h4 style */}
         <div className="flex flex-col gap-2 py-3 mb-2">
           <div className="flex items-center gap-2 flex-wrap">
@@ -1655,6 +1740,8 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
             </div>
           )}
         </div>
+          </>
+        )}
       </div>
       </TooltipProvider>
 

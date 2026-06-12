@@ -191,7 +191,7 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
     proTips: true,
     progress: true,
     quickActions: true,
-    reviewScores: true,
+    reviewScores: false,
     voiceSelector: false,
     screeningRoom: false, // Hidden in production phase
     projectStats: true,

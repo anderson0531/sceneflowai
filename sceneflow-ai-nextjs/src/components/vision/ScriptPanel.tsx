@@ -2692,6 +2692,36 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           
           {/* Action Buttons - Right Justified */}
           <div className="flex items-center gap-2">
+            {onToggleStoryboard && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onToggleStoryboard}
+                className={`flex items-center gap-2 ${
+                  showStoryboard
+                    ? 'border-cyan-500/50 bg-cyan-500/10 hover:bg-cyan-500/20'
+                    : 'border-cyan-500/30 hover:border-cyan-500/50 hover:bg-cyan-500/10'
+                }`}
+                title={showStoryboard ? 'Close Pre-Visualization' : 'Open Pre-Visualization'}
+              >
+                <Film className="w-4 h-4 text-cyan-400" />
+                <span className="text-sm hidden sm:inline">{showStoryboard ? 'Close' : 'Pre-Vis'}</span>
+              </Button>
+            )}
+
+            {onShowReviews && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onShowReviews}
+                className="flex items-center gap-2 border-purple-500/30 hover:border-purple-500/50 hover:bg-purple-500/10"
+                title="Edit script with audience resonance analysis and insights"
+              >
+                <FileText className="w-4 h-4 text-purple-400" />
+                <span className="text-sm hidden sm:inline">Script</span>
+              </Button>
+            )}
+
             {/* Budget Calculator Button */}
             <Button
               variant="outline"
