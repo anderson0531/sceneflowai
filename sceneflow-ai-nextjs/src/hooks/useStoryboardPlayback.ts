@@ -262,7 +262,7 @@ export function useStoryboardPlayback({
 
   const dialogueVolume = isMuted ? 0 : Math.min(1, volume * DIALOGUE_VOLUME_BOOST)
   const effectiveMusicVolume = isMuted ? 0 : volume * musicVolume
-  const sfxVolume = isMuted ? 0 : volume * 0.5
+  const sfxVolume = isMuted ? 0 : volume
 
   const {
     isPlaying,
