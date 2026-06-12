@@ -3,6 +3,8 @@ import {
   resolveQuickFrameActionPrompt,
   resolveAdvancedFramePromptBaseline,
   shouldInitializeFramePromptState,
+  buildPreVisEndFrameEditInstruction,
+  isVisualEndFrameDelta,
 } from '@/lib/vision/framePromptBaseline'
 
 describe('framePromptBaseline', () => {
@@ -50,6 +52,45 @@ describe('framePromptBaseline', () => {
         intelligentPrompt: '   ',
       })
     ).toBe('fallback prompt')
+  })
+
+  it('buildPreVisEndFrameEditInstruction uses start visual without scene-direction bloat', () => {
+    const startVisual =
+      'A shimmering, ethereal nebula of data points and glowing lines, slowly coalescing. Photorealistic rendering of digital space, 8K clarity.'
+    const instruction = buildPreVisEndFrameEditInstruction({
+      startFramePrompt: startVisual,
+      endFramePrompt:
+        'Subtle environmental motion while preserving composition: nebula coalescing further',
+    })
+    expect(instruction.startsWith('Edit start frame:')).toBe(true)
+    expect(instruction).toContain('ethereal nebula')
+    expect(instruction).not.toMatch(/Wide Shot/i)
+    expect(instruction).not.toMatch(/Dolly in/i)
+    expect(instruction).not.toMatch(/photorealistic, professional photography/i)
+  })
+
+  it('skips generic dialogue-gesture end delta', () => {
+    expect(
+      isVisualEndFrameDelta(
+        'Character completes speaking gesture; subtle expression and body motion'
+      )
+    ).toBe(false)
+    const instruction = buildPreVisEndFrameEditInstruction({
+      startFramePrompt: 'Sarah at the window, city lights behind her.',
+      endFramePrompt:
+        'Character completes speaking gesture; subtle expression and body motion',
+    })
+    expect(instruction).not.toContain('completes speaking gesture')
+    expect(instruction).toContain('Sarah at the window')
+  })
+
+  it('uses customPrompt as the edit anchor when provided', () => {
+    const instruction = buildPreVisEndFrameEditInstruction({
+      customPrompt: 'Nebula lines coalescing into a brighter core.',
+      startFramePrompt: 'ignored when custom is set',
+    })
+    expect(instruction).toContain('Nebula lines coalescing')
+    expect(instruction).not.toContain('ignored when custom')
   })
 
   it('initializes dialog state only when opening or context changes', () => {

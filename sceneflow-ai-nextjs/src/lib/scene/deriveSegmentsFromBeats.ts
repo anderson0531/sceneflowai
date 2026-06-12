@@ -30,11 +30,28 @@ function mintSegmentId(): string {
   return `seg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 }
 
+function shortenVisualPrompt(text: string, maxLen = 160): string {
+  const trimmed = text.replace(/\s+/g, ' ').trim()
+  if (trimmed.length <= maxLen) return trimmed
+  return `${trimmed.slice(0, maxLen).trim()}…`
+}
+
 function buildEndFramePrompt(beat: SceneBeat): string {
+  const startVisual =
+    beat.storyboardImagePrompt?.trim() ||
+    (beat.kind === 'action' ? beat.actionDescription?.trim() : undefined) ||
+    beat.line?.replace(/\[[^\]]*\]/g, '').trim()
+
   if (beat.kind === 'action') {
+    if (startVisual) {
+      return `Subtle visual progression while preserving composition: ${shortenVisualPrompt(startVisual)}`
+    }
     return `Motion completion: ${beat.actionDescription ?? 'subtle camera movement and action progress'}`
   }
   if (beat.kind === 'narration') {
+    if (startVisual) {
+      return `Subtle environmental motion while preserving composition: ${shortenVisualPrompt(startVisual)}`
+    }
     return `Visual progression matching narration mood; subtle environmental motion`
   }
   return `Character completes speaking gesture; subtle expression and body motion`

@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth'
 import { IMAGE_CREDITS } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
 import { trackCost } from '@/lib/credits/costTracking'
+import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBaseline'
 
 export const maxDuration = 60 // 1 minute for image generation
 export const runtime = 'nodejs'
@@ -77,7 +78,10 @@ export async function POST(
     console.log('[Generate End Frame] Segment prompt preview:', segmentPrompt.substring(0, 150))
     console.log('[Generate End Frame] Duration:', segmentDuration, 'seconds')
 
-    const instruction = buildEndFrameEditInstruction(segmentPrompt, segmentDuration)
+    const instruction = buildPreVisEndFrameEditInstruction({
+      startFramePrompt: segmentPrompt,
+      durationSeconds: segmentDuration,
+    })
     const identityRef = characterRefs.find(c => c.url && c.url !== startFrameUrl)?.url
 
     const result = await editImageWithGeminiStudio({
@@ -135,10 +139,3 @@ export async function POST(
   }
 }
 
-function buildEndFrameEditInstruction(segmentPrompt: string, durationSeconds: number): string {
-  return `After approximately ${durationSeconds} seconds of this segment, update the image to reflect:
-
-${segmentPrompt.trim()}
-
-Keep the same scene, characters, wardrobe, and environment continuity unless the action explicitly calls for a change. Show clear end-state poses and expressions that match the beat.`
-}

@@ -2142,6 +2142,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             previousEndFrameUrl,
             sceneImageUrl: scene?.imageUrl,
             startFrameUrl: segment.startFrameUrl || segment.references?.startFrameUrl,
+            startFramePrompt:
+              segment.startFramePrompt ?? segment.references?.startFrameDescription,
+            endFramePrompt:
+              segment.endFramePrompt ?? segment.references?.endFrameDescription,
+            beatId: segment.beatId,
             // NEW: User customization options from FramePromptDialog
             customPrompt: options?.customPrompt,
             negativePrompt: options?.negativePrompt,
@@ -2175,7 +2180,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   : undefined,
                 cameraMovement: segDir?.cameraMovement || segment.cameraMovement || undefined,
                 talentAction: segDir?.talentAction || undefined,
-                startFrameDescription: segDir?.keyframeStartDescription || undefined,
+                startFrameDescription:
+                  segment.startFramePrompt ||
+                  segDir?.keyframeStartDescription ||
+                  undefined,
               }
             })(),
             // CRITICAL: Pass scene direction for intelligent keyframe prompt building

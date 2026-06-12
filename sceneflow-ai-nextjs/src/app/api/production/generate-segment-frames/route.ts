@@ -5,7 +5,7 @@ import { generateImageWithGeminiStudio, editImageWithGeminiStudio } from '@/lib/
 import { uploadImageToBlob } from '@/lib/storage/blob'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { 
+import {
   inferActionType, 
   getActionWeights,
   buildEndFramePrompt,
@@ -14,6 +14,7 @@ import {
   buildKeyframePrompt,
   type KeyframeContext
 } from '@/lib/intelligence'
+import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBaseline'
 import { artStylePresets } from '@/constants/artStylePresets'
 import type { TransitionType, ActionType, AnchorStatus } from '@/components/vision/scene-production/types'
 import type { DetailedSceneDirection } from '@/types/scene-direction'
@@ -61,7 +62,12 @@ interface FrameGenerationRequest {
   previousEndFrameUrl?: string | null  // For CONTINUE transitions
   sceneImageUrl?: string | null         // Fallback reference
   startFrameUrl?: string | null         // Required for end frame generation
-  
+  /** Beat-level Pre-Vis visual prompt (storyboardImagePrompt) */
+  startFramePrompt?: string | null
+  /** Beat-level end-frame delta from derive-segments */
+  endFramePrompt?: string | null
+  beatId?: string | null
+
   // Character data for identity lock
   characters?: Array<{
     name: string
@@ -300,6 +306,9 @@ export async function POST(req: NextRequest) {
       previousEndFrameUrl,
       sceneImageUrl,
       startFrameUrl: providedStartFrameUrl,
+      startFramePrompt: providedStartFramePrompt,
+      endFramePrompt: providedEndFramePrompt,
+      beatId,
       characters = [],
       sceneContext = {},
       triggerReason,
@@ -725,10 +734,28 @@ Render this scene in ${selectedStyle.name} style.`
         )
       }
       
-      // Build enhanced end frame prompt using intelligence library
-      // Phase 8: Use segment direction keyframe end description if available
-      // Phase 11: Enrich with segment content context (dialogue, narration, action)
-      if (!customPrompt && segmentDir?.keyframeEndDescription && segmentDir.keyframeEndDescription.trim().length > 20) {
+      const usePreVisEditPath =
+        !!preservedStartUrl || !!providedStartFramePrompt?.trim()
+
+      // Pre-Vis anchored: minimal directed edit from start-frame visual (no scene-direction bloat)
+      if (customPrompt?.trim()) {
+        endFramePrompt = buildPreVisEndFrameEditInstruction({
+          customPrompt,
+          endFramePrompt: providedEndFramePrompt,
+          durationSeconds: duration,
+        })
+        console.log('[Generate Frames] Using custom Pre-Vis end frame edit')
+      } else if (usePreVisEditPath) {
+        endFramePrompt = buildPreVisEndFrameEditInstruction({
+          startFramePrompt: providedStartFramePrompt,
+          endFramePrompt: providedEndFramePrompt,
+          fallbackActionPrompt: effectivePrompt,
+          durationSeconds: duration,
+        })
+        console.log('[Generate Frames] Using Pre-Vis minimal end frame edit', {
+          beatId: beatId || 'n/a',
+        })
+      } else if (segmentDir?.keyframeEndDescription && segmentDir.keyframeEndDescription.trim().length > 20) {
         let keyframePrompt = segmentDir.keyframeEndDescription.trim()
         if (segmentDir.colorPalette && !keyframePrompt.toLowerCase().includes('color palette')) {
           keyframePrompt += ` Color palette: ${segmentDir.colorPalette}.`
@@ -838,13 +865,24 @@ Render this scene in ${selectedStyle.name} style.`
       }
 
       // End keyframe = directed edit of start frame (single source image) to reduce hallucinated scene changes
+      const isNoTalentSegment = isNoTalentFromSceneDirection(sceneDirection)
+      const hasDialogueCharacters =
+        (segmentContent?.dialogueLines?.length ?? 0) > 0 ||
+        characters.some((c) => c.referenceUrl)
+      const skipIdentityPortrait =
+        isNoTalentSegment ||
+        segmentDir?.isNoTalent === true ||
+        (usePreVisEditPath && !hasDialogueCharacters)
+
       let identityPortraitUrl: string | undefined
       const startRefStr = String(startFrameReference)
-      for (const c of characters) {
-        const url = c.referenceUrl
-        if (url && url !== startRefStr) {
-          identityPortraitUrl = url
-          break
+      if (!skipIdentityPortrait) {
+        for (const c of characters) {
+          const url = c.referenceUrl
+          if (url && url !== startRefStr) {
+            identityPortraitUrl = url
+            break
+          }
         }
       }
 

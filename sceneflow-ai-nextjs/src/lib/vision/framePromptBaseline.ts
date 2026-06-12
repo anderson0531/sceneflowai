@@ -71,3 +71,56 @@ export function shouldInitializeFramePromptState(args: FramePromptInitArgs): boo
   if (!args.wasOpen) return true
   return args.currentContextKey !== args.lastInitializedContextKey
 }
+
+const GENERIC_DIALOGUE_END_DELTA =
+  /character completes speaking gesture|subtle expression and body motion/i
+
+/**
+ * True when endFramePrompt is a visual progression hint (not generic dialogue gesture).
+ */
+export function isVisualEndFrameDelta(endFramePrompt?: string | null): boolean {
+  const text = normalize(endFramePrompt)
+  if (!text) return false
+  if (GENERIC_DIALOGUE_END_DELTA.test(text)) return false
+  return true
+}
+
+export interface PreVisEndFrameEditArgs {
+  startFramePrompt?: string | null
+  endFramePrompt?: string | null
+  customPrompt?: string | null
+  fallbackActionPrompt?: string | null
+  durationSeconds?: number
+}
+
+/**
+ * Minimal directed-edit instruction for Pre-Vis anchored end frames.
+ * Anchors on the start-frame visual description — no scene-direction bloat.
+ */
+export function buildPreVisEndFrameEditInstruction(
+  args: PreVisEndFrameEditArgs
+): string {
+  const startVisual =
+    normalize(args.customPrompt) ||
+    normalize(args.startFramePrompt) ||
+    stripDialoguePrompt(normalize(args.fallbackActionPrompt))
+
+  if (!startVisual) {
+    const dur =
+      typeof args.durationSeconds === 'number' && args.durationSeconds > 0
+        ? args.durationSeconds
+        : undefined
+    return dur != null
+      ? `Edit start frame: Show subtle visual progression after ~${dur}s while preserving composition, lighting, and environment.`
+      : 'Edit start frame: Show subtle visual progression while preserving composition, lighting, and environment.'
+  }
+
+  let instruction = `Edit start frame: ${startVisual}`
+
+  const endDelta = normalize(args.endFramePrompt)
+  if (endDelta && isVisualEndFrameDelta(endDelta) && endDelta !== startVisual) {
+    instruction += `\n\n${endDelta}`
+  }
+
+  return instruction
+}
