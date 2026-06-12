@@ -98,6 +98,7 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
   
   // Get sidebar config based on current path
   const config = useMemo(() => getSidebarConfigForPath(pathname), [pathname])
+  const isVisionProduction = pathname.includes('/dashboard/workflow/vision/')
   const projectId = useMemo(
     () =>
       getProjectIdFromPath(pathname) ||
@@ -490,7 +491,17 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
         </button>
       )}
 
-      <main className={cn('flex-1 overflow-y-auto overflow-x-hidden min-w-0 relative', !sidebarVisible && 'w-full')}>{children}</main>
+      <main
+        className={cn(
+          'flex-1 min-w-0 relative',
+          isVisionProduction
+            ? 'min-h-0 h-full overflow-hidden flex flex-col'
+            : 'overflow-y-auto overflow-x-hidden',
+          !sidebarVisible && 'w-full'
+        )}
+      >
+        {children}
+      </main>
 
       {/* Navigation Warning Dialog for backward navigation */}
       <NavigationWarningDialog
