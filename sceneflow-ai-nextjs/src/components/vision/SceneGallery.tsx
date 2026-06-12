@@ -338,7 +338,7 @@ export function SceneGallery({
 
   return (
     <TooltipProvider>
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 h-full overflow-y-auto">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex flex-wrap items-center justify-between gap-y-2 mb-6">
         <div className="flex items-center gap-2">
           <Clapperboard className="w-5 h-5 text-sf-primary" />

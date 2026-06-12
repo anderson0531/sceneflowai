@@ -12239,7 +12239,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     : null
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-gray-50 dark:bg-sf-background overflow-hidden overflow-x-hidden max-w-full">
+    <div className="flex-1 min-h-0 flex flex-col bg-gray-50 dark:bg-sf-background overflow-hidden overflow-x-hidden max-w-full">
       
       {/* Workflow Navigation Header */}
       <header className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 shrink-0">
@@ -12291,14 +12291,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         <PanelGroup direction="horizontal" className="h-full max-w-full min-w-0 overflow-x-hidden">
           {/* Main Content: Script with Scene Cards */}
           <Panel defaultSize={65} minSize={40} maxSize={80} className="min-w-0 min-h-0 overflow-hidden overflow-x-hidden flex flex-col">
-            <div className="h-full min-h-0 flex flex-col overflow-hidden px-4 pt-2 min-w-0 w-full overflow-x-hidden">
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden px-4 pt-2 min-w-0 w-full overflow-x-hidden">
               {showScriptImportOnboarding && (
+                <div className="shrink-0">
                 <ScriptImportOnboardingBanner
                   onOpenScriptReview={() => setShowReviewModal(true)}
                   onOpenStoryboard={() => setShowSceneGallery(true)}
                   onDismiss={handleDismissImportOnboarding}
                   isDismissing={isDismissingImportOnboarding}
                 />
+                </div>
               )}
               <ScriptPanel 
                 script={script}
@@ -12646,10 +12648,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             maxSize={40} 
             className={`min-w-0 min-h-0 overflow-hidden overflow-x-hidden transition-all duration-300 flex flex-col ${!rightSidebarVisible ? 'hidden' : ''}`}
           >
-            <div className="h-full min-h-0 overflow-hidden overflow-x-hidden pl-6 min-w-0 relative flex flex-col">
+            <div className="flex-1 min-h-0 overflow-hidden overflow-x-hidden pl-6 min-w-0 relative flex flex-col">
               {/* Merge Duplicates Button */}
               {findPotentialDuplicates(characters).length > 0 && (
-                <div className="mb-4 px-2">
+                <div className="mb-4 px-2 shrink-0">
                   <Button
                     onClick={() => {
                       const duplicates = findPotentialDuplicates(characters)

@@ -288,14 +288,14 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
     <div className="flex relative w-full h-[calc(100dvh-4rem)] overflow-hidden">
       <aside
         className={cn(
-          'shrink-0 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-full z-30 relative overflow-hidden transition-[width] duration-200 ease-out',
+          'shrink-0 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950/90 h-full min-h-0 z-30 relative overflow-hidden transition-[width] duration-200 ease-out',
           sidebarVisible ? 'w-64 border-r' : 'w-0 border-transparent'
         )}
         aria-hidden={!sidebarVisible}
       >
         <div
           className={cn(
-            'w-64 h-full overflow-y-auto flex flex-col transition-opacity duration-200',
+            'w-64 h-full min-h-0 overflow-y-auto flex flex-col transition-opacity duration-200',
             sidebarVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
           )}
         >

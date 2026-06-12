@@ -2697,7 +2697,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
 
   return (
     <>
-    <div className="relative rounded-3xl border border-slate-700/60 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900/60 h-full min-h-0 flex flex-col overflow-hidden shadow-[0_25px_80px_rgba(8,8,20,0.55)]">
+    <div className="relative rounded-3xl border border-slate-700/60 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-900/60 flex-1 min-h-0 flex flex-col overflow-hidden shadow-[0_25px_80px_rgba(8,8,20,0.55)]">
       <div className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sf-primary via-fuchsia-500 to-cyan-400 opacity-80" />
       {/* Header */}
       <div className="px-6 py-4 border-b border-white/10 flex-shrink-0 bg-slate-900/70 backdrop-blur rounded-t-3xl">

@@ -1446,7 +1446,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
   return (
     <DndContext>
       <TooltipProvider delayDuration={300}>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col flex-1 min-h-0">
         {/* Top-level panel tabs: Reference | Audience */}
         <div className="flex items-center border-b border-gray-700/50 mb-3 overflow-x-auto flex-shrink-0">
           {panelTabs.map((tab) => {
@@ -1498,7 +1498,7 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
         ) : (
           <>
         {/* Title - h4 style */}
-        <div className="flex flex-col gap-2 py-3 mb-2">
+        <div className="flex flex-col gap-2 py-3 mb-2 flex-shrink-0">
           <div className="flex items-center gap-2 flex-wrap">
             <BookOpen className="w-5 h-5 text-cyan-400 flex-shrink-0" />
             <h4 className="font-bold text-xl tracking-tight text-gray-900 dark:text-white leading-none">
@@ -1599,11 +1599,13 @@ export function VisionReferencesSidebar(props: VisionReferencesSidebarProps) {
 
         {/* Production Readiness Section - Collapsible */}
         {showProductionReadiness && productionReadiness && productionReadiness.totalScenes > 0 && (
-          <ProductionReadinessSection readiness={productionReadiness} />
+          <div className="flex-shrink-0">
+            <ProductionReadinessSection readiness={productionReadiness} />
+          </div>
         )}
         
         {/* Tab Navigation - matching ScriptPanel folder tab style */}
-        <div className="flex items-center border-b border-gray-700/50 mb-3 overflow-x-auto">
+        <div className="flex items-center border-b border-gray-700/50 mb-3 overflow-x-auto flex-shrink-0">
           <div className="flex items-center flex-shrink-0">
           {referenceTabs.map((tab) => {
             const isActive = activeReferenceTab === tab.key
