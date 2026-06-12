@@ -443,7 +443,7 @@ export function SceneImageFrame({
                   </motion.div>
                 )}
               </AnimatePresence>
-            )}
+            ) : null}
 
             {isGenerating && (
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
