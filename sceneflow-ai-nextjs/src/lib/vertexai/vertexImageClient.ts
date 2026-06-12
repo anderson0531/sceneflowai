@@ -299,7 +299,7 @@ export interface VertexImageEditOptions {
   referenceImage?: string
   aspectRatio?: GenerateVertexImageOptions['aspectRatio']
   imageSize?: '1K' | '2K'
-  editIntent?: 'default' | 'keyframeEnd'
+  editIntent?: 'default' | 'keyframeEnd' | 'preVisEdit'
   segmentDurationSeconds?: number
   modelTier?: VertexImageTier
   thinkingLevel?: VertexThinkingLevel
@@ -321,6 +321,10 @@ export async function editVertexImage(options: VertexImageEditOptions): Promise<
         ? `END keyframe of a ~${dur}s clip. Primary image is the START frame.`
         : `END keyframe. Primary image is the START frame.`
     editPrompt = `${durLine}\n\nDIRECTED EDIT:\n${options.instruction}\n\nPreserve scene, cast, and lighting continuity.`
+  } else if (intent === 'preVisEdit') {
+    editPrompt =
+      `PRE-VIS STORYBOARD EDIT:\n${options.instruction}\n\n` +
+      'Apply a minimal, localized change only. Preserve exact composition, framing, aspect ratio, character identities, and overall scene layout unless the instruction explicitly requires otherwise.'
   } else {
     editPrompt = `Edit this image: ${options.instruction}\nPreserve identity, framing, and lighting unless the edit requires otherwise.`
   }

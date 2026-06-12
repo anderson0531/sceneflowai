@@ -65,6 +65,8 @@ export interface ResolveCharacterReferencePairArgs {
   scene?: Record<string, unknown> | null
   sceneIndex?: number
   characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
+  /** When false, omit wardrobe turnaround images (use text descriptions only). Default true. */
+  includeWardrobeReferenceImages?: boolean
 }
 
 function trimUrl(value: unknown): string | undefined {
@@ -122,7 +124,13 @@ export function resolveWardrobeForCharacter(
 export function resolveCharacterReferencePair(
   args: ResolveCharacterReferencePairArgs
 ): CharacterReferencePair {
-  const { character, scene, sceneIndex, characterWardrobes } = args
+  const {
+    character,
+    scene,
+    sceneIndex,
+    characterWardrobes,
+    includeWardrobeReferenceImages = true,
+  } = args
   const identityUrl = trimUrl(character.referenceImage)
   const resolvedWardrobe = resolveWardrobeForCharacter(
     character,
@@ -132,17 +140,21 @@ export function resolveCharacterReferencePair(
   )
   const fullBodyUrl = trimUrl(resolvedWardrobe?.fullBodyUrl)
   const portraitUrl = trimUrl(resolvedWardrobe?.portraitUrl as string | undefined)
-  let wardrobeUrl = fullBodyUrl
+  let wardrobeUrl: string | undefined
 
-  if (!wardrobeUrl && resolvedWardrobe && portraitUrl) {
-    console.warn(
-      `[CharacterRef] Wardrobe "${resolvedWardrobe.name ?? resolvedWardrobe.id ?? 'unknown'}" missing fullBodyUrl — falling back to portraitUrl (turnaround preferred for outfit consistency)`
-    )
-    wardrobeUrl = portraitUrl
-  } else if (resolvedWardrobe && !fullBodyUrl) {
-    console.warn(
-      `[CharacterRef] Wardrobe "${resolvedWardrobe.name ?? resolvedWardrobe.id ?? 'unknown'}" has no fullBodyUrl — dual identity/wardrobe split may be incomplete`
-    )
+  if (includeWardrobeReferenceImages) {
+    wardrobeUrl = fullBodyUrl
+
+    if (!wardrobeUrl && resolvedWardrobe && portraitUrl) {
+      console.warn(
+        `[CharacterRef] Wardrobe "${resolvedWardrobe.name ?? resolvedWardrobe.id ?? 'unknown'}" missing fullBodyUrl — falling back to portraitUrl (turnaround preferred for outfit consistency)`
+      )
+      wardrobeUrl = portraitUrl
+    } else if (resolvedWardrobe && !fullBodyUrl) {
+      console.warn(
+        `[CharacterRef] Wardrobe "${resolvedWardrobe.name ?? resolvedWardrobe.id ?? 'unknown'}" has no fullBodyUrl — dual identity/wardrobe split may be incomplete`
+      )
+    }
   }
 
   const hasDualReferences = !!(identityUrl && wardrobeUrl)

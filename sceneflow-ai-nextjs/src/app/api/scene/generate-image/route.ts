@@ -274,6 +274,14 @@ export async function POST(req: NextRequest) {
       modelTier,
       storyboardQuality,
       skipLikenessValidation = false,
+      generationMode = 'default',
+      includeWardrobeReferenceImages = true,
+      fromDialog = false,
+      negativePrompt,
+      thinkingLevel,
+      visualSetup,
+      talentDirection,
+      wardrobeTextOverrides,
     } = body
 
     const resolvedGen = resolveStoryboardGeneration({
@@ -323,6 +331,13 @@ export async function POST(req: NextRequest) {
     
     let effectiveShotType = shotType
     let effectiveCameraAngle = cameraAngle
+    let effectiveLighting = lighting
+    if (generationMode === 'direct' && visualSetup && typeof visualSetup === 'object') {
+      const vs = visualSetup as Record<string, string>
+      if (vs.shotType) effectiveShotType = vs.shotType
+      if (vs.cameraAngle) effectiveCameraAngle = vs.cameraAngle
+      if (vs.lighting) effectiveLighting = vs.lighting
+    }
     let dialogueFrameContext = ''
     let beatKindForIntelligence: BeatKind | undefined
     
@@ -836,6 +851,12 @@ export async function POST(req: NextRequest) {
           }
         }
       }
+
+      const wardrobeOverrides = body.wardrobeTextOverrides as Record<string, string> | undefined
+      if (wardrobeOverrides && char.name && wardrobeOverrides[char.name]?.trim()) {
+        effectiveWardrobe = wardrobeOverrides[char.name].trim()
+        console.log(`[Scene Image] Using wardrobe text override for ${char.name}`)
+      }
       
       // Strip clothing descriptors if explicit wardrobe is set to prevent conflicts
       // Example: visionDescription says "wearing a blue suit" but defaultWardrobe says "casual jeans and t-shirt"
@@ -855,9 +876,10 @@ export async function POST(req: NextRequest) {
         scene: sceneData as Record<string, unknown>,
         sceneIndex,
         characterWardrobes: effectiveCharacterWardrobes,
+        includeWardrobeReferenceImages,
       })
       const identityImageUrl = refPair.identityUrl
-      const wardrobeImageUrl = refPair.wardrobeUrl
+      const wardrobeImageUrl = includeWardrobeReferenceImages ? refPair.wardrobeUrl : undefined
       const hasDualReferences = refPair.hasDualReferences
       const hasWardrobeOnlyReference = refPair.hasWardrobeOnlyReference
       const hasWardrobeReference = !!(wardrobeImageUrl)

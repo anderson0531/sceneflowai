@@ -86,12 +86,13 @@ interface SceneGalleryProps {
   onGenerateDialogueFrame?: (sceneIndex: number, dialogueIndex: number) => void | Promise<void>
   /** Generate a beat-indexed storyboard frame (action or narration beats). */
   onGenerateBeatFrame?: (sceneIndex: number, beatId: string) => void | Promise<void>
-  /** Open beat reference review dialog without generating. */
-  onReviewBeatReferences?: (sceneIndex: number, beatId: string) => void
+  /** Open Direct prompt builder for a storyboard frame slot. */
+  onDirectFrame?: (sceneIndex: number, slot: StoryboardFrameSlot) => void
   onUploadDialogueFrame?: (sceneIndex: number, dialogueIndex: number, file: File) => void
   onUploadBeatFrame?: (sceneIndex: number, beatId: string, file: File) => void
   onSaveEditedBeatFrame?: (sceneIndex: number, beatId: string, newImageUrl: string) => void
   onSaveEditedDialogueFrame?: (sceneIndex: number, dialogueIndex: number, newImageUrl: string) => void
+  onSaveEditedCustomFrame?: (sceneIndex: number, customFrameId: string, newImageUrl: string) => void
   onAddStoryboardFrame?: (sceneIndex: number) => void | Promise<void>
   onDeleteStoryboardFrame?: (sceneIndex: number, frameId: string) => void | Promise<void>
   onGenerateCustomFrame?: (sceneIndex: number, frameId: string) => void | Promise<void>
@@ -190,11 +191,12 @@ export function SceneGallery({
   onGenerateScene,
   onGenerateDialogueFrame,
   onGenerateBeatFrame,
-  onReviewBeatReferences,
+  onDirectFrame,
   onUploadDialogueFrame,
   onUploadBeatFrame,
   onSaveEditedBeatFrame,
   onSaveEditedDialogueFrame,
+  onSaveEditedCustomFrame,
   onAddStoryboardFrame,
   onDeleteStoryboardFrame,
   onGenerateCustomFrame,
@@ -288,6 +290,7 @@ export function SceneGallery({
     | { kind: 'establishing'; sceneIndex: number; imageUrl: string }
     | { kind: 'beat'; sceneIndex: number; beatId: string; imageUrl: string }
     | { kind: 'dialogue'; sceneIndex: number; dialogueIndex: number; imageUrl: string }
+    | { kind: 'custom'; sceneIndex: number; customFrameId: string; imageUrl: string }
 
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editingFrame, setEditingFrame] = useState<EditingFrame | null>(null)
@@ -967,8 +970,8 @@ export function SceneGallery({
                       })
                     }
                   } : undefined}
-                  onReviewBeatReferences={
-                    onReviewBeatReferences ? (beatId) => onReviewBeatReferences(idx, beatId) : undefined
+                  onDirectFrame={
+                    onDirectFrame ? (slot) => onDirectFrame(idx, slot) : undefined
                   }
                   onUploadDialogueFrame={onUploadDialogueFrame ? (dialogueIdx, file) => onUploadDialogueFrame(idx, dialogueIdx, file) : undefined}
                   onUploadBeatFrame={onUploadBeatFrame ? (beatId, file) => onUploadBeatFrame(idx, beatId, file) : undefined}
@@ -1146,7 +1149,36 @@ export function SceneGallery({
         onOpenChange={setEditModalOpen}
         imageUrl={editingFrame?.imageUrl ?? ''}
         imageType="scene"
+        aspectRatio="16:9"
         objectReferences={objectReferences}
+        subjectReference={(() => {
+          if (!editingFrame) return undefined
+          const scene = scenes[editingFrame.sceneIndex]
+          if (!scene) return undefined
+          if (editingFrame.kind === 'dialogue') {
+            const line = scene.dialogue?.[editingFrame.dialogueIndex]
+            const charName = line?.character
+            const char = characters.find((c) => c.name === charName)
+            if (char?.referenceImage) {
+              return {
+                imageUrl: char.referenceImage,
+                description: char.appearanceDescription || char.description || charName || 'Character',
+              }
+            }
+          }
+          if (editingFrame.kind === 'beat') {
+            const beat = scene.beats?.find((b: { beatId?: string }) => b.beatId === editingFrame.beatId)
+            const charName = beat?.character
+            const char = characters.find((c) => c.name === charName)
+            if (char?.referenceImage) {
+              return {
+                imageUrl: char.referenceImage,
+                description: char.appearanceDescription || char.description || charName || 'Character',
+              }
+            }
+          }
+          return undefined
+        })()}
         onSave={(newImageUrl) => {
           if (editingFrame) {
             if (editingFrame.kind === 'establishing' && onSaveEditedScene) {
@@ -1157,6 +1189,12 @@ export function SceneGallery({
               onSaveEditedDialogueFrame(
                 editingFrame.sceneIndex,
                 editingFrame.dialogueIndex,
+                newImageUrl
+              )
+            } else if (editingFrame.kind === 'custom' && onSaveEditedCustomFrame) {
+              onSaveEditedCustomFrame(
+                editingFrame.sceneIndex,
+                editingFrame.customFrameId,
                 newImageUrl
               )
             }
@@ -1170,7 +1208,9 @@ export function SceneGallery({
               ? `Edit beat — Scene ${editingFrame.sceneIndex + 1}`
               : editingFrame.kind === 'dialogue'
                 ? `Edit dialogue frame — Scene ${editingFrame.sceneIndex + 1}`
-                : `Edit Scene ${editingFrame.sceneIndex + 1}`
+                : editingFrame.kind === 'custom'
+                  ? `Edit custom frame — Scene ${editingFrame.sceneIndex + 1}`
+                  : `Edit Scene ${editingFrame.sceneIndex + 1}`
             : 'Edit frame'
         }
       />
@@ -1189,15 +1229,16 @@ interface SceneCardProps {
   onGenerate: (prompt: string) => Promise<void>
   onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
   onGenerateBeatFrame?: (beatId: string) => Promise<void>
-  onReviewBeatReferences?: (beatId: string) => void
+  onDirectFrame?: (slot: StoryboardFrameSlot) => void
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
   onUploadBeatFrame?: (beatId: string, file: File) => void
   onEditFrame?: (frame: {
-    kind: 'establishing' | 'beat' | 'dialogue'
+    kind: 'establishing' | 'beat' | 'dialogue' | 'custom'
     sceneIndex: number
     imageUrl: string
     beatId?: string
     dialogueIndex?: number
+    customFrameId?: string
   }) => void
   onExpressSceneGenerate?: (options?: { regenerate?: boolean }) => void
   onFinalizeScene?: () => void
@@ -1268,7 +1309,7 @@ interface StoryboardSlotHandlers {
   onGenerate: (prompt: string) => Promise<void>
   onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
   onGenerateBeatFrame?: (beatId: string) => Promise<void>
-  onReviewBeatReferences?: (beatId: string) => void
+  onDirectFrame?: (slot: StoryboardFrameSlot) => void
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
   onUploadBeatFrame?: (beatId: string, file: File) => void
   onEditFrame?: SceneCardProps['onEditFrame']
@@ -1295,7 +1336,7 @@ function buildStoryboardSlotFrameProps(
     onGenerate,
     onGenerateDialogueFrame,
     onGenerateBeatFrame,
-    onReviewBeatReferences,
+    onDirectFrame,
     onUploadDialogueFrame,
     onUploadBeatFrame,
     onEditFrame,
@@ -1314,8 +1355,20 @@ function buildStoryboardSlotFrameProps(
       isPlaceholder: slot.isPlaceholder,
       isGenerating: generatingCustomFrames.has(genKey),
       label: slot.label,
+      imagePrompt: slot.storyboardImagePrompt,
       onGenerate: () => void onGenerateCustomFrame?.(slot.customFrameId!),
+      onDirect: onDirectFrame ? () => onDirectFrame(slot) : undefined,
       onUpload: (file) => onUploadCustomFrame?.(slot.customFrameId!, file),
+      onEdit:
+        slot.displayImageUrl && onEditFrame && slot.customFrameId
+          ? (url) =>
+              onEditFrame({
+                kind: 'custom',
+                sceneIndex,
+                customFrameId: slot.customFrameId!,
+                imageUrl: url,
+              })
+          : undefined,
       onDelete:
         onDeleteStoryboardFrame && slot.customFrameId
           ? () => {
@@ -1361,10 +1414,7 @@ function buildStoryboardSlotFrameProps(
         void onGenerateDialogueFrame?.(dialogueIdx)
       }
     },
-    onReviewReferences:
-      useBeatFrame && beatId && onReviewBeatReferences
-        ? () => onReviewBeatReferences(beatId)
-        : undefined,
+    onDirect: onDirectFrame ? () => onDirectFrame(slot) : undefined,
     onUpload: (file) => {
       if (useBeatFrame && onUploadBeatFrame && beatId) {
         onUploadBeatFrame(beatId, file)
@@ -1440,7 +1490,7 @@ function SceneCard({
   onGenerate,
   onGenerateDialogueFrame,
   onGenerateBeatFrame,
-  onReviewBeatReferences,
+  onDirectFrame,
   onUploadDialogueFrame,
   onUploadBeatFrame,
   onEditFrame,
@@ -1503,7 +1553,7 @@ function SceneCard({
       onGenerate,
       onGenerateDialogueFrame,
       onGenerateBeatFrame,
-      onReviewBeatReferences,
+      onDirectFrame,
       onUploadDialogueFrame,
       onUploadBeatFrame,
       onEditFrame,
@@ -1522,7 +1572,7 @@ function SceneCard({
       onGenerate,
       onGenerateDialogueFrame,
       onGenerateBeatFrame,
-      onReviewBeatReferences,
+      onDirectFrame,
       onUploadDialogueFrame,
       onUploadBeatFrame,
       onEditFrame,

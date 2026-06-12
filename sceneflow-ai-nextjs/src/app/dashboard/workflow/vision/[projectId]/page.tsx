@@ -42,14 +42,16 @@ import {
   resolveRawBeatIndex,
 } from '@/lib/script/beatMigration'
 import type { BeatReferenceSelection } from '@/lib/script/segmentTypes'
+import type { StoryboardFrameSlot } from '@/lib/storyboard/types'
+import { mapBeatReferenceSelectionForApi } from '@/lib/vision/beatFrameGenerationContext'
 import {
-  mapBeatReferenceSelectionForApi,
-  shouldUseExplicitBeatReferences,
-} from '@/lib/vision/beatFrameGenerationContext'
+  GALLERY_DIRECT_GENERATE_OPTS,
+  GALLERY_MANUAL_GENERATE_OPTS,
+} from '@/lib/vision/galleryImageGeneration'
 import {
-  BeatReferenceSelectionDialog,
-  type BeatReferenceConfirmMode,
-} from '@/components/vision/BeatReferenceSelectionDialog'
+  PreVisFramePromptDialog,
+  type PreVisDirectGenerationOptions,
+} from '@/components/vision/PreVisFramePromptDialog'
 import { toast } from 'sonner'
 
 // Dynamic import to break TDZ initialization chain - ScriptPanel imports heavy scene-production modules
@@ -4525,8 +4527,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // (SceneGallery's handleGenerateAll provides its own batch overlay via useProcessWithOverlay)
   const batchGeneratingRef = useRef(false)
 
-  const [beatRefDialog, setBeatRefDialog] = useState<{ sceneIdx: number; beatId: string } | null>(null)
-  const [beatRefGenerating, setBeatRefGenerating] = useState(false)
+  const [preVisDirectDialog, setPreVisDirectDialog] = useState<{
+    sceneIdx: number
+    slot: StoryboardFrameSlot
+  } | null>(null)
+  const [preVisDirectGenerating, setPreVisDirectGenerating] = useState(false)
   
   // Scene reference generation state (for Reference Library Scene tab)
   const [generatingSceneReferenceIndex, setGeneratingSceneReferenceIndex] = useState<number | null>(null)
@@ -8483,6 +8488,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         characterSelectionExplicit: promptData.characterSelectionExplicit || false,
         // Wardrobe assignments — from prompt builder (explicit selection) or scene-level assignments (auto-fallback)
         characterWardrobes: promptData.characterWardrobes || scene.characterWardrobes || [],
+        ...GALLERY_MANUAL_GENERATE_OPTS,
       }
       console.log('[handleGenerateSceneImage] Request body:', JSON.stringify(requestBody).substring(0, 500))
       
@@ -8663,6 +8669,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             : {
                 characterSelectionExplicit: true,
               }),
+          ...GALLERY_MANUAL_GENERATE_OPTS,
         }),
       })
 
@@ -8702,61 +8709,161 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
-  const handleOpenBeatReferenceDialog = (sceneIdx: number, beatId: string) => {
-    setBeatRefDialog({ sceneIdx, beatId })
+  const handleRequestGenerateBeatFrame = async (sceneIdx: number, beatId: string) => {
+    await handleGenerateBeatFrameImage(sceneIdx, beatId)
   }
 
-  const handleRequestGenerateBeatFrame = async (sceneIdx: number, beatId: string) => {
-    const scene = script?.script?.scenes?.[sceneIdx]
+  const handleOpenDirectFrame = (sceneIdx: number, slot: StoryboardFrameSlot) => {
+    setPreVisDirectDialog({ sceneIdx, slot })
+  }
+
+  const handleDirectFrameGenerate = async (options: PreVisDirectGenerationOptions) => {
+    const { sceneIndex, slot } = options
+    const scene = script?.script?.scenes?.[sceneIndex]
     if (!scene) {
       toast.error('Scene not found')
       return
     }
-    const beat = getSceneBeats(scene).find((b) => b.beatId === beatId)
-    if (shouldUseExplicitBeatReferences(beat)) {
-      await handleGenerateBeatFrameImage(sceneIdx, beatId, beat!.referenceSelection)
-      return
+
+    setPreVisDirectGenerating(true)
+    if (!batchGeneratingRef.current) {
+      overlayStore.show(`Direct — Scene ${sceneIndex + 1}`, 25, 'storyboard-production')
     }
-    setBeatRefDialog({ sceneIdx, beatId })
-  }
+    setGeneratingKeyframeSceneNumber(sceneIndex + 1)
 
-  const handleBeatReferenceConfirm = async (
-    selection: BeatReferenceSelection,
-    mode: BeatReferenceConfirmMode
-  ) => {
-    if (!beatRefDialog || !script?.script?.scenes) return
-
-    const { sceneIdx, beatId } = beatRefDialog
-    const updatedScenes = [...script.script.scenes]
-    updatedScenes[sceneIdx] = applyBeatReferenceSelectionToScene(
-      updatedScenes[sceneIdx],
-      beatId,
-      selection
-    )
-
-    setScript({
-      ...script,
-      script: { ...script.script, scenes: updatedScenes },
-    })
-
-    const saved = await persistVisionScriptScenes(updatedScenes, 'handleBeatReferenceConfirm')
-    if (!saved) {
-      toast.error('Failed to save reference selection')
-      return
-    }
-
-    if (mode === 'save') {
-      setBeatRefDialog(null)
-      toast.success('Reference selection saved')
-      return
-    }
-
-    setBeatRefGenerating(true)
     try {
-      await handleGenerateBeatFrameImage(sceneIdx, beatId, selection)
-      setBeatRefDialog(null)
+      const selectedChars = options.selectedCharacterNames
+        .map((name) => characters.find((c) => c.name === name))
+        .filter(Boolean)
+
+      const explicitRefs = options.beatReferenceSelection
+        ? mapBeatReferenceSelectionForApi(
+            options.beatReferenceSelection,
+            characters,
+            locationReferences,
+            objectReferences
+          )
+        : null
+
+      const locRefs =
+        explicitRefs?.locationReferences?.length
+          ? explicitRefs.locationReferences
+          : options.locationRefId
+            ? locationReferences.filter((l) => l.id === options.locationRefId)
+            : []
+
+      const objRefs =
+        explicitRefs?.objectReferences?.length
+          ? explicitRefs.objectReferences
+          : objectReferences.filter((o) => options.objectRefIds.includes(o.id))
+
+      const payload: Record<string, unknown> = {
+        projectId,
+        sceneIndex,
+        quality: imageQuality,
+        ...GALLERY_DIRECT_GENERATE_OPTS,
+        customPrompt: options.customPrompt,
+        artStyle: options.artStyle,
+        shotType: options.visualSetup.shotType,
+        cameraAngle: options.visualSetup.cameraAngle,
+        lighting: options.visualSetup.lighting,
+        visualSetup: options.visualSetup,
+        talentDirection: options.talentDirection,
+        negativePrompt: options.negativePrompt,
+        modelTier: options.modelTier,
+        thinkingLevel: options.thinkingLevel,
+        wardrobeTextOverrides: options.wardrobeTextOverrides,
+        characterWardrobes: options.characterWardrobes,
+        characterSelectionExplicit: true,
+        characters: selectedChars,
+        locationReferences: locRefs,
+        objectReferences: objRefs,
+        skipObjectAutoDetection: explicitRefs?.skipObjectAutoDetection ?? true,
+      }
+
+      if (slot.beatId && (slot.kind === 'action' || slot.kind === 'narration')) {
+        const rawBeatIdx = resolveRawBeatIndex(scene, { beatId: slot.beatId })
+        payload.frameType = 'beat'
+        payload.beatId = slot.beatId
+        payload.beatIndex = rawBeatIdx
+        if (options.beatReferenceSelection) {
+          const updatedScenes = [...(script.script.scenes || [])]
+          updatedScenes[sceneIndex] = applyBeatReferenceSelectionToScene(
+            updatedScenes[sceneIndex],
+            slot.beatId,
+            options.beatReferenceSelection
+          )
+          setScript({ ...script, script: { ...script.script, scenes: updatedScenes } })
+        }
+      } else if (slot.kind === 'custom' && slot.customFrameId) {
+        payload.frameType = 'custom'
+        payload.customFrameId = slot.customFrameId
+      } else if (typeof slot.dialogueIndex === 'number') {
+        payload.frameType = 'dialogue'
+        payload.dialogueIndex = slot.dialogueIndex
+      } else {
+        payload.frameType = 'establishing'
+      }
+
+      const response = await fetch('/api/scene/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data?.error || 'Direct generation failed')
+      }
+
+      let updatedScenes = [...(script.script.scenes || [])]
+      if (payload.frameType === 'beat' && typeof payload.beatIndex === 'number') {
+        updatedScenes[sceneIndex] = stampPreVisContentHash(
+          applyBeatStoryboardImageToScene(
+            updatedScenes[sceneIndex],
+            payload.beatIndex as number,
+            data.imageUrl,
+            { imagePrompt: data.prompt || '' }
+          )
+        )
+      } else if (payload.frameType === 'dialogue') {
+        updatedScenes[sceneIndex] = applyDialogueStoryboardImageToScene(
+          updatedScenes[sceneIndex],
+          payload.dialogueIndex as number,
+          data.imageUrl,
+          { imagePrompt: data.prompt || '' }
+        )
+      } else if (payload.frameType === 'custom') {
+        const sceneCopy = { ...updatedScenes[sceneIndex] }
+        const frames = Array.isArray(sceneCopy.storyboardFrames) ? [...sceneCopy.storyboardFrames] : []
+        const frameIdx = frames.findIndex((f: { id?: string }) => f.id === slot.customFrameId)
+        if (frameIdx >= 0) {
+          frames[frameIdx] = {
+            ...frames[frameIdx],
+            imageUrl: data.imageUrl,
+            imagePrompt: data.prompt || '',
+          }
+          sceneCopy.storyboardFrames = frames
+        }
+        updatedScenes[sceneIndex] = sceneCopy
+      } else {
+        updatedScenes[sceneIndex] = stampPreVisContentHash(
+          applyEstablishingImageToScene(updatedScenes[sceneIndex], data.imageUrl, {
+            imagePrompt: data.prompt || '',
+          })
+        )
+      }
+
+      setScript({ ...script, script: { ...script.script, scenes: updatedScenes } })
+      await persistVisionScriptScenes(updatedScenes, 'handleDirectFrameGenerate')
+      setPreVisDirectDialog(null)
+      toast.success('Frame generated with Direct')
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Direct generation failed'
+      toast.error(message)
     } finally {
-      setBeatRefGenerating(false)
+      setPreVisDirectGenerating(false)
+      if (!batchGeneratingRef.current) overlayStore.hide()
+      setGeneratingKeyframeSceneNumber(null)
     }
   }
 
@@ -8790,6 +8897,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           dialogueIndex: dialogueIdx,
           quality: imageQuality,
           characterSelectionExplicit: true,
+          ...GALLERY_MANUAL_GENERATE_OPTS,
         }),
       })
 
@@ -8947,6 +9055,39 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }
 
+  const handleSaveEditedCustomFrame = async (
+    sceneIndex: number,
+    customFrameId: string,
+    newImageUrl: string
+  ) => {
+    if (!script?.script?.scenes) return
+
+    const updatedScenes = script.script.scenes.map((s: any, idx: number) => {
+      if (idx !== sceneIndex) return s
+      const sceneCopy = { ...s }
+      const frames = Array.isArray(sceneCopy.storyboardFrames) ? [...sceneCopy.storyboardFrames] : []
+      const frameIdx = frames.findIndex((f: { id?: string }) => f.id === customFrameId)
+      if (frameIdx >= 0) {
+        frames[frameIdx] = { ...frames[frameIdx], imageUrl: newImageUrl }
+        sceneCopy.storyboardFrames = frames
+      }
+      return sceneCopy
+    })
+
+    setScript((prev: any) => ({
+      ...prev,
+      script: { ...prev?.script, scenes: updatedScenes },
+    }))
+
+    try {
+      await persistVisionScriptScenes(updatedScenes, 'handleSaveEditedCustomFrame')
+      toast.success('Custom frame updated')
+    } catch (saveError) {
+      console.error('[handleSaveEditedCustomFrame] Failed to save:', saveError)
+      toast.error('Failed to save edited custom frame')
+    }
+  }
+
   const handleAddStoryboardFrame = async (sceneIdx: number) => {
     if (!script?.script?.scenes) return
 
@@ -9040,6 +9181,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           customFrameId: frameId,
           quality: imageQuality,
           characterSelectionExplicit: !!frame.character,
+          ...GALLERY_MANUAL_GENERATE_OPTS,
         }),
       })
 
@@ -12408,7 +12550,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onGenerateBeatFrame={(sceneIdx, beatId) =>
                               handleRequestGenerateBeatFrame(sceneIdx, beatId)
                             }
-                            onReviewBeatReferences={handleOpenBeatReferenceDialog}
+                            onDirectFrame={handleOpenDirectFrame}
                             locationReferences={locationReferences}
                             objectReferences={objectReferences}
                             onUploadDialogueFrame={(sceneIdx, dialogueIdx, file) =>
@@ -12419,6 +12561,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             }
                             onSaveEditedBeatFrame={handleSaveEditedBeatFrame}
                             onSaveEditedDialogueFrame={handleSaveEditedDialogueFrame}
+                            onSaveEditedCustomFrame={handleSaveEditedCustomFrame}
                             onExpressSceneGenerate={handleExpressSceneGenerate}
                             onSyncPreVisToScript={handleSyncPreVisToScript}
                             narrationVoice={narrationVoice}
@@ -13153,26 +13296,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         </div>
       )}
       
-      {beatRefDialog && (() => {
-        const scene = script?.script?.scenes?.[beatRefDialog.sceneIdx]
-        const beat = scene ? getSceneBeats(scene).find((b) => b.beatId === beatRefDialog.beatId) : undefined
-        if (!scene || !beat) return null
+      {preVisDirectDialog && (() => {
+        const scene = script?.script?.scenes?.[preVisDirectDialog.sceneIdx]
+        if (!scene) return null
         return (
-          <BeatReferenceSelectionDialog
+          <PreVisFramePromptDialog
             open
             onOpenChange={(open) => {
-              if (!open && !beatRefGenerating) setBeatRefDialog(null)
+              if (!open && !preVisDirectGenerating) setPreVisDirectDialog(null)
             }}
+            slot={preVisDirectDialog.slot}
             scene={scene}
-            beat={beat}
-            sceneIndex={beatRefDialog.sceneIdx}
+            sceneIndex={preVisDirectDialog.sceneIdx}
             characters={characters}
             locationReferences={locationReferences}
             objectReferences={objectReferences}
             filmTitle={project?.title}
-            initialSelection={beat.referenceSelection}
-            isGenerating={beatRefGenerating}
-            onConfirm={handleBeatReferenceConfirm}
+            lockedArtStyle={project?.metadata?.visionPhase?.artStyle as string | undefined}
+            isGenerating={preVisDirectGenerating}
+            onGenerate={handleDirectFrameGenerate}
           />
         )
       })()}

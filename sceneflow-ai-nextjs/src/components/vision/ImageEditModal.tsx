@@ -1,16 +1,8 @@
 /**
  * ImageEditModal - AI-powered image editing modal
- * 
- * Uses Gemini Studio for natural language image editing with character
- * identity preservation. When a subject reference is provided, the AI
- * will maintain the person's identity while applying the requested edits.
- * 
- * Features:
- * - Natural language edit instructions
- * - Character identity preservation via reference images
- * - Before/after comparison preview
- * 
- * @see /SCENEFLOW_AI_DESIGN_DOCUMENT.md for architecture decisions
+ *
+ * Uses Gemini multimodal edit on Vertex for natural language edits with
+ * optional identity reference preservation.
  */
 
 'use client'
@@ -49,6 +41,8 @@ interface ImageEditModalProps {
   }
   /** Object/prop references for visual consistency */
   objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
+  /** Output aspect ratio (defaults to 16:9 storyboard) */
+  aspectRatio?: '16:9' | '9:16' | '1:1' | '4:3' | '3:4'
   /** Called when edit is saved with new image URL */
   onSave: (newImageUrl: string) => void
   /** Optional custom title */
@@ -62,6 +56,7 @@ export function ImageEditModal({
   imageType,
   subjectReference,
   objectReferences,
+  aspectRatio = '16:9',
   onSave,
   title
 }: ImageEditModalProps) {
@@ -108,6 +103,9 @@ export function ImageEditModal({
           sourceImage: imageUrl,
           instruction: instruction.trim(),
           subjectReference,
+          aspectRatio,
+          imageSize: '1K',
+          modelTier: 'eco',
           objectReferences: selectedProps.length > 0 ? selectedProps : undefined,
           saveToBlob: true,
           blobPrefix: `edited-${imageType}`

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle, Tags } from 'lucide-react'
+import { ImageIcon, Sparkles, Upload, Wand2, Loader2, CheckCircle2, RefreshCw, FolderPlus, Trash2, AlertTriangle, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
@@ -18,6 +18,8 @@ export interface SceneImageFrameProps {
   onSelect?: () => void
   isGenerating?: boolean
   onGenerate: () => void
+  /** Open Direct prompt builder for this frame. */
+  onDirect?: () => void
   onUpload: (file: File) => void
   onEdit?: (imageUrl: string) => void
   onDelete?: () => void
@@ -34,7 +36,7 @@ export interface SceneImageFrameProps {
   beatRole?: string
   /** Image generation prompt used for this frame. */
   imagePrompt?: string
-  /** Open beat reference review dialog (Pre-Vis storyboard). */
+  /** @deprecated References moved into Direct prompt builder */
   onReviewReferences?: () => void
   /** When false, hide generate/upload/edit controls (navigation + prompt only). */
   showControls?: boolean
@@ -86,11 +88,11 @@ function CompactActionBar({
   imageUrl,
   isGenerating,
   onGenerate,
+  onDirect,
   onUpload,
   onEdit,
   onDelete,
   onAddToReferenceLibrary,
-  onReviewReferences,
   sceneNumber,
   alwaysVisible = false,
   controlsVariant = 'compact',
@@ -99,11 +101,11 @@ function CompactActionBar({
   imageUrl?: string | null
   isGenerating?: boolean
   onGenerate: () => void
+  onDirect?: () => void
   onUpload: () => void
   onEdit?: (imageUrl: string) => void
   onDelete?: () => void
   onAddToReferenceLibrary?: (imageUrl: string, name: string, sceneNumber: number) => void
-  onReviewReferences?: () => void
   sceneNumber: number
   alwaysVisible?: boolean
   controlsVariant?: 'compact' | 'comfortable'
@@ -138,18 +140,18 @@ function CompactActionBar({
         )}
       </CompactIconButton>
 
-      {onReviewReferences && (
+      {onDirect && (
         <CompactIconButton
           onClick={(e) => {
             e.stopPropagation()
-            onReviewReferences()
+            onDirect()
           }}
           disabled={isGenerating}
-          title="References"
-          className="bg-slate-600/90 hover:bg-slate-500"
+          title="Direct — prompt builder"
+          className="bg-amber-600/90 hover:bg-amber-500"
           size={buttonSize}
         >
-          <Tags className={iconClass} />
+          <SlidersHorizontal className={iconClass} />
         </CompactIconButton>
       )}
 
@@ -229,6 +231,7 @@ export function SceneImageFrame({
   onSelect,
   isGenerating = false,
   onGenerate,
+  onDirect,
   onUpload,
   onEdit,
   onDelete,
@@ -239,7 +242,6 @@ export function SceneImageFrame({
   imageTier,
   beatRole,
   imagePrompt,
-  onReviewReferences,
   showControls = true,
   controlsVariant = 'compact',
   alwaysShowControls = false,
@@ -354,11 +356,11 @@ export function SceneImageFrame({
                 imageUrl={imageUrl}
                 isGenerating={isGenerating}
                 onGenerate={onGenerate}
+                onDirect={onDirect}
                 onUpload={triggerUpload}
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onAddToReferenceLibrary={onAddToReferenceLibrary}
-                onReviewReferences={onReviewReferences}
                 sceneNumber={sceneNumber}
                 alwaysVisible={alwaysShowControls || !compact}
                 controlsVariant={controlsVariant}
@@ -390,17 +392,17 @@ export function SceneImageFrame({
                       )}
                     </button>
 
-                    {onReviewReferences && (
+                    {onDirect && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          onReviewReferences()
+                          onDirect()
                         }}
                         disabled={isGenerating}
-                        className="p-3 bg-slate-600/80 hover:bg-slate-600 rounded-full transition-colors disabled:opacity-50"
-                        title="References"
+                        className="p-3 bg-amber-600/80 hover:bg-amber-600 rounded-full transition-colors disabled:opacity-50"
+                        title="Direct — prompt builder"
                       >
-                        <Tags className="w-5 h-5 text-white" />
+                        <SlidersHorizontal className="w-5 h-5 text-white" />
                       </button>
                     )}
 
@@ -459,9 +461,9 @@ export function SceneImageFrame({
                 hasImage={false}
                 isGenerating={isGenerating}
                 onGenerate={onGenerate}
+                onDirect={onDirect}
                 onUpload={triggerUpload}
                 onDelete={onDelete}
-                onReviewReferences={onReviewReferences}
                 sceneNumber={sceneNumber}
                 alwaysVisible
                 controlsVariant={controlsVariant}
