@@ -12578,6 +12578,31 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 onRegenerateScript={handleRegenerateScript}
                 isRegeneratingScript={isRegeneratingScript}
                 onModerationReport={setLatestModerationReport}
+                onGenerateBeatFrame={handleRequestGenerateBeatFrame}
+                onGenerateDialogueFrame={handleGenerateDialogueFrameImage}
+                onUploadBeatFrame={handleUploadBeatFrame}
+                onUploadDialogueFrame={handleUploadDialogueFrame}
+                onSaveEditedBeatFrame={handleSaveEditedBeatFrame}
+                onSaveEditedDialogueFrame={handleSaveEditedDialogueFrame}
+                onSaveEditedCustomFrame={handleSaveEditedCustomFrame}
+                onSaveEditedStoryboardScene={handleSaveEditedScene}
+                onDirectFrame={handleOpenDirectFrame}
+                onAddStoryboardFrame={handleAddStoryboardFrame}
+                onDeleteStoryboardFrame={handleDeleteStoryboardFrame}
+                onGenerateCustomFrame={handleGenerateCustomFrame}
+                onUploadCustomFrame={handleUploadCustomFrame}
+                onUploadStoryboardScene={handleUploadScene}
+                onExpressSceneGenerate={handleExpressSceneGenerate}
+                onFinalizeStoryboardScene={handleFinalizeStoryboard}
+                expressStatus={expressStatus}
+                expressGateBlocked={!expressGate.allowed}
+                onExpressGateBlocked={() => {
+                  const { toast } = require('sonner')
+                  toast.error(expressGate.reasons[0] || 'Complete the Pre-Vis ready checklist before Express.')
+                  setRightSidebarVisible(true)
+                }}
+                isExpressRunning={isExpressRunning}
+                narrationVoice={narrationVoice}
               belowDashboardSlot={({ openGenerateAudio, openPromptBuilder }) => (
                 <div className="rounded-2xl border border-white/10 bg-slate950/40 shadow-inner">
                   <div className="px-5 py-5">
@@ -12588,113 +12613,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       >
                           <SceneGallery
                             scenes={storyboardGalleryScenes}
-                            characters={characters}
                             projectTitle={project?.title}
-                            onRegenerateScene={(index) => handleGenerateSceneImage(index)}
-                            onOpenPromptBuilder={openPromptBuilder}
-                            onGenerateScene={(sceneIdx, _prompt) => handleGenerateSceneImage(sceneIdx)}
-                            onGenerateDialogueFrame={(sceneIdx, dialogueIdx) =>
-                              handleGenerateDialogueFrameImage(sceneIdx, dialogueIdx)
-                            }
-                            onGenerateBeatFrame={(sceneIdx, beatId) =>
-                              handleRequestGenerateBeatFrame(sceneIdx, beatId)
-                            }
-                            onDirectFrame={handleOpenDirectFrame}
-                            locationReferences={locationReferences}
-                            objectReferences={objectReferences}
-                            onUploadDialogueFrame={(sceneIdx, dialogueIdx, file) =>
-                              handleUploadDialogueFrame(sceneIdx, dialogueIdx, file)
-                            }
-                            onUploadBeatFrame={(sceneIdx, beatId, file) =>
-                              handleUploadBeatFrame(sceneIdx, beatId, file)
-                            }
-                            onSaveEditedBeatFrame={handleSaveEditedBeatFrame}
-                            onSaveEditedDialogueFrame={handleSaveEditedDialogueFrame}
-                            onSaveEditedCustomFrame={handleSaveEditedCustomFrame}
-                            onExpressSceneGenerate={handleExpressSceneGenerate}
-                            onSyncPreVisToScript={handleSyncPreVisToScript}
-                            narrationVoice={narrationVoice}
+                            onClose={() => setShowSceneGallery(false)}
+                            onOpenGenerateAudio={openGenerateAudio}
                             productionReadyChecklist={productionReadyChecklist}
                             onOpenReferences={() => setRightSidebarVisible(true)}
-                            onAddStoryboardFrame={handleAddStoryboardFrame}
-                            onDeleteStoryboardFrame={handleDeleteStoryboardFrame}
-                            onGenerateCustomFrame={handleGenerateCustomFrame}
-                            onUploadCustomFrame={handleUploadCustomFrame}
-                            onUploadScene={handleUploadScene}
-                            onSaveEditedScene={handleSaveEditedScene}
-                            onReorderScenes={handleReorderScenes}
-                            onBatchGenerateStart={() => { batchGeneratingRef.current = true }}
-                            onBatchGenerateEnd={() => { batchGeneratingRef.current = false; overlayStore.hide() }}
-                            onUpdateSceneAudio={handleUpdateSceneAudio}
-                            onClose={() => setShowSceneGallery(false)}
-                            onAddToSceneLibrary={async (index, imageUrl) => {
-                              const scenes = normalizeScenes(script)
-                              const scene = scenes[index]
-                              if (scene && imageUrl) {
-                                const newReference: VisualReference = {
-                                  id: crypto.randomUUID(),
-                                  type: 'scene',
-                                  name: `Scene ${index + 1} Frame`,
-                                  description: scene.heading || scene.visualDescription || `Scene ${index + 1}`,
-                                  imageUrl,
-                                  createdAt: new Date().toISOString(),
-                                }
-                                const updatedSceneRefs = [...sceneReferences, newReference]
-                                setSceneReferences(updatedSceneRefs)
-                                
-                                // Save to database
-                                try {
-                                  const existingMetadata = project?.metadata || {}
-                                  const existingVisionPhase = existingMetadata.visionPhase || {}
-                                  
-                                  await fetch(`/api/projects/${projectId}`, {
-                                    method: 'PUT',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      metadata: {
-                                        ...existingMetadata,
-                                        visionPhase: {
-                                          ...existingVisionPhase,
-                                          references: {
-                                            sceneReferences: updatedSceneRefs,
-                                            objectReferences
-                                          }
-                                        }
-                                      }
-                                    })
-                                  })
-                                } catch (error) {
-                                  console.error('[onAddToSceneLibrary] Error saving:', error)
-                                }
-                                
-                                toast.success(`Added Scene ${index + 1} to Reference Library`)
-                              }
-                            }}
-                            sceneProductionState={sceneProductionState}
-                            productionReferences={{
-                              characters,
-                              sceneReferences,
-                              objectReferences,
-                            }}
-                            onInitializeProduction={(sceneId, options) =>
-                              handleInitializeSceneProduction(sceneId, options)
-                            }
-                            onSegmentPromptChange={(sceneId, segmentId, prompt) =>
-                              handleSegmentPromptChange(sceneId, segmentId, prompt)
-                            }
-                            onSegmentDialogueAssignmentChange={handleSegmentDialogueAssignmentChange}
-                            onSegmentActionChange={handleSegmentActionChange}
-                            onSegmentGenerate={(sceneId, segmentId, mode) =>
-                              handleSegmentGenerate(sceneId, segmentId, mode)
-                            }
-                            onSegmentUpload={(sceneId, segmentId, file) =>
-                              handleSegmentUpload(sceneId, segmentId, file)
-                            }
-                            onEditSegmentFrame={handleEditFrame}
-                            onOpenAssets={openGenerateAudio}
-                            onOpenPreview={() => openScreeningRoomFromVisionUi()}
-                            onOpenGenerateAudio={openGenerateAudio}
-                            isGeneratingAudio={isGeneratingAudio}
                             onExpressGenerate={handleExpressGenerate}
                             onFinalizeStoryboard={handleFinalizeStoryboard}
                             isExpressRunning={isExpressRunning}

@@ -322,6 +322,7 @@ export function SceneImageFrame({
               key={imageUrl}
               src={imageUrl}
               alt={`Scene ${sceneNumber} reference`}
+              loading={compact ? 'lazy' : 'eager'}
               className="w-full h-full object-cover"
             />
 
