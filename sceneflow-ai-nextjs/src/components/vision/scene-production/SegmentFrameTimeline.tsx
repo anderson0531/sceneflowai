@@ -19,7 +19,6 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { SegmentPairCard } from './SegmentPairCard'
-import { FramePromptDialog, type FrameGenerationOptions } from './FramePromptDialog'
 import { DeleteSegmentDialog } from './DeleteSegmentDialog'
 import { RegenerateSegmentsDialog } from './RegenerateSegmentsDialog'
 import { AddSegmentTypeDialog, type SegmentPurpose, type AdjacentSceneContext } from './AddSegmentTypeDialog'
@@ -93,40 +92,6 @@ export interface SegmentFrameTimelineProps {
   isGenerating: boolean
   generatingSegmentId?: string | null
   generatingPhase?: 'start' | 'end' | 'video'
-  characters?: Array<{
-    name: string
-    appearance?: string
-    referenceUrl?: string
-    ethnicity?: string
-    age?: string
-    wardrobe?: string
-    wardrobes?: Array<{
-      id: string
-      name: string
-      description: string
-      fullBodyUrl?: string
-      headshotUrl?: string
-    }>
-  }>
-  /** Object/prop references from the reference library for consistent image generation */
-  objectReferences?: Array<{
-    id: string
-    name: string
-    imageUrl: string
-    description?: string
-    importance?: 'critical' | 'secondary'
-  }>
-  /** Location references for environment/setting consistency */
-  locationReferences?: Array<{
-    id: string
-    location: string
-    locationDisplay: string
-    imageUrl: string
-    description?: string
-    sceneNumbers?: number[]
-  }>
-  /** Scene heading for location matching in the dialog */
-  sceneHeading?: string
   /** Scene direction for intelligent prompt building */
   sceneDirection?: DetailedSceneDirection | null
   /** Callback to trigger segment regeneration (returns Promise for overlay) */
@@ -233,10 +198,6 @@ export function SegmentFrameTimeline({
   isGenerating,
   generatingSegmentId,
   generatingPhase,
-  characters,
-  objectReferences,
-  locationReferences,
-  sceneHeading,
   sceneDirection,
   onResegment,
   onResegmentWithConfig,
@@ -262,13 +223,6 @@ export function SegmentFrameTimeline({
     [segments]
   )
   
-  // Frame prompt dialog state
-  const [framePromptDialogOpen, setFramePromptDialogOpen] = useState(false)
-  const [dialogSegment, setDialogSegment] = useState<SceneSegment | null>(null)
-  const [dialogSegmentIndex, setDialogSegmentIndex] = useState(0)
-  const [dialogFrameType, setDialogFrameType] = useState<'start' | 'end' | 'both'>('both')
-  const [dialogPreviousEndFrame, setDialogPreviousEndFrame] = useState<string | null>(null)
-  
   // Regenerate all segments dialog state
   const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false)
   
@@ -290,38 +244,6 @@ export function SegmentFrameTimeline({
     return prevSegment?.endFrameUrl || prevSegment?.references?.endFrameUrl || null
   }, [segments])
 
-  const frameResolverScene = useMemo(() => {
-    const h = sceneHeading || sceneData?.heading
-    const headingText = typeof h === 'string' ? h : (h as { text?: string } | undefined)?.text
-    return {
-      heading: headingText,
-      action: sceneData?.action,
-      visualDescription: (sceneData as { visualDescription?: string })?.visualDescription,
-      narration: sceneData?.narration,
-      dialogue: (sceneData?.dialogue || []).map((d: { character?: string; line?: string; text?: string }) => ({
-        character: d.character,
-        text: d.text || d.line,
-        line: d.line,
-      })),
-      sceneDirection: sceneDirection ?? sceneData?.sceneDirection,
-      sceneNumber,
-    }
-  }, [sceneHeading, sceneData, sceneDirection, sceneNumber])
-  
-  // Open the frame prompt dialog instead of generating directly
-  const openFramePromptDialog = useCallback((
-    segment: SceneSegment,
-    segmentIndex: number,
-    frameType: 'start' | 'end' | 'both'
-  ) => {
-    setDialogSegment(segment)
-    setDialogSegmentIndex(segmentIndex)
-    setDialogFrameType(frameType)
-    setDialogPreviousEndFrame(getPreviousEndFrame(segmentIndex))
-    setFramePromptDialogOpen(true)
-  }, [getPreviousEndFrame])
-  
-  // Handle generation from dialog
   const { execute: executeWithOverlay } = useProcessWithOverlay()
 
   // Quick generate bypassing the dialog
@@ -346,47 +268,6 @@ export function SegmentFrameTimeline({
       }
     )
   }, [onGenerateFrames, executeWithOverlay, sceneDirection, getPreviousEndFrame])
-  
-  const handleDialogGenerate = useCallback(async (options: FrameGenerationOptions) => {
-    setFramePromptDialogOpen(false)
-    
-    const frameLabel = options.frameType === 'both' ? 'start + end frames' : `${options.frameType} frame`
-    
-    await executeWithOverlay(
-      async () => {
-        await onGenerateFrames(options.segmentId, options.frameType, {
-          customPrompt: options.customPrompt,
-          negativePrompt: options.negativePrompt,
-          usePreviousEndFrame: options.usePreviousEndFrame,
-          previousEndFrameUrl: options.previousEndFrameUrl || undefined,
-          // CRITICAL: fromDialog=true means user explicitly chose references.
-          // Empty arrays = user chose NONE. Prevents auto-population from overriding.
-          fromDialog: options.fromDialog,
-          // Pass selected characters with reference images for identity lock
-          selectedCharacters: options.selectedCharacters?.map(c => ({
-            name: c.name,
-            referenceImageUrl: c.referenceImageUrl,
-          })),
-          // Pass visual setup for prompt construction
-          visualSetup: options.visualSetup,
-          // Pass art style for generation
-          artStyle: options.artStyle,
-          // Pass selected object/prop references
-          selectedObjectReferences: options.selectedObjectReferences,
-          // Pass selected location references
-          selectedLocationReferences: options.selectedLocationReferences,
-          // CRITICAL: Pass scene direction for intelligent prompt building
-          // Without this, the API falls back to PromptEnhancer which buries the action prompt
-          sceneDirection,
-        })
-      },
-      {
-        message: `Generating ${frameLabel}...`,
-        estimatedDuration: options.frameType === 'both' ? 45 : 25,
-        operationType: 'keyframe-generation'
-      }
-    )
-  }, [onGenerateFrames, executeWithOverlay, sceneDirection])
   
   const handleExpress = useCallback(async () => {
     // Process ALL segments sequentially for Express keyframe generation
@@ -656,7 +537,6 @@ export function SegmentFrameTimeline({
                     onGenerateStartFrame={() => quickGenerateFrame(segment, index, 'start')}
                     onGenerateEndFrame={() => quickGenerateFrame(segment, index, 'end')}
                     onGenerateBothFrames={() => quickGenerateFrame(segment, index, 'both')}
-                    onAdvancedFrameOptions={(frameType) => openFramePromptDialog(segment, index, frameType)}
                     onGenerateVideo={() => onGenerateVideo(segment.segmentId)}
                     onOpenDirectorConsole={onOpenDirectorConsole}
                     onEditFrame={onEditFrame ? (frameType, frameUrl) => onEditFrame(segment.segmentId, frameType, frameUrl) : undefined}
@@ -696,33 +576,6 @@ export function SegmentFrameTimeline({
           </Button>
         </div>
       )}
-      
-      {/* Frame Prompt Dialog */}
-      <FramePromptDialog
-        open={framePromptDialogOpen}
-        onOpenChange={setFramePromptDialogOpen}
-        segment={dialogSegment}
-        segmentIndex={dialogSegmentIndex}
-        frameType={dialogFrameType}
-        previousEndFrameUrl={dialogPreviousEndFrame}
-        sceneImageUrl={sceneImageUrl}
-        onGenerate={handleDialogGenerate}
-        isGenerating={isGenerating}
-        sceneDirection={sceneDirection}
-        characters={characters?.map(c => ({
-          name: c.name,
-          appearance: c.appearance,
-          referenceImage: c.referenceUrl,
-          ethnicity: c.ethnicity,
-          age: c.age,
-          wardrobe: c.wardrobe,
-          wardrobes: c.wardrobes,
-        }))}
-        objectReferences={objectReferences}
-        locationReferences={locationReferences}
-        sceneHeading={sceneHeading}
-        frameResolverScene={frameResolverScene}
-      />
       
       {/* Regenerate All Beats Confirmation Dialog */}
       <RegenerateSegmentsDialog

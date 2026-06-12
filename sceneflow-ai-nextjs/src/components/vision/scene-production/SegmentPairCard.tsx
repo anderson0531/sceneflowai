@@ -13,7 +13,6 @@ import {
   Clock,
   Scissors,
   Link2,
-  Pencil,
   RefreshCw,
   Upload,
   Download,
@@ -42,7 +41,6 @@ export interface SegmentPairCardProps {
   onGenerateStartFrame: () => void
   onGenerateEndFrame: () => void
   onGenerateBothFrames: () => void
-  onAdvancedFrameOptions: (frameType: 'start' | 'end' | 'both') => void
   onGenerateVideo: () => void
   onOpenDirectorConsole?: () => void
   onEditFrame?: (frameType: 'start' | 'end', frameUrl: string) => void
@@ -118,7 +116,6 @@ export function SegmentPairCard({
   onGenerateStartFrame,
   onGenerateEndFrame,
   onGenerateBothFrames,
-  onAdvancedFrameOptions,
   onGenerateVideo,
   onOpenDirectorConsole,
   onEditFrame,
@@ -329,24 +326,6 @@ export function SegmentPairCard({
                         </Tooltip>
                       )}
 
-                      {/* Advanced Settings */}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onAdvancedFrameOptions('start')
-                            }}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Advanced Options</TooltipContent>
-                      </Tooltip>
-
                       {/* Upload */}
                       {onUploadFrame && (
                         <Tooltip>
@@ -436,24 +415,6 @@ export function SegmentPairCard({
                         <TooltipContent>{false ? 'Regenerate' : 'Quick Generate'}</TooltipContent>
                       </Tooltip>
                       
-                      {/* Advanced Settings */}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onAdvancedFrameOptions('start')
-                            }}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Advanced Options</TooltipContent>
-                      </Tooltip>
-
                       {/* Upload */}
                       {onUploadFrame && (
                         <Tooltip>
@@ -587,24 +548,6 @@ export function SegmentPairCard({
                         </Tooltip>
                       )}
                       
-                      {/* Advanced Settings */}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onAdvancedFrameOptions('end')
-                            }}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Advanced Options</TooltipContent>
-                      </Tooltip>
-
                       {/* Upload */}
                       {onUploadFrame && (
                         <Tooltip>
@@ -694,24 +637,6 @@ export function SegmentPairCard({
                         <TooltipContent>{false ? 'Regenerate' : 'Quick Generate'}</TooltipContent>
                       </Tooltip>
                       
-                      {/* Advanced Settings */}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="h-10 w-10 rounded-full p-0 bg-slate-800/90 hover:bg-slate-700 text-slate-200 shadow-lg border border-slate-600/50"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onAdvancedFrameOptions('end')
-                            }}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Advanced Options</TooltipContent>
-                      </Tooltip>
-
                       {/* Upload */}
                       {onUploadFrame && (
                         <Tooltip>

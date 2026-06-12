@@ -156,7 +156,6 @@ import { NavigationWarningDialog } from '@/components/workflow/NavigationWarning
 import { ScriptImportOnboardingBanner } from '@/components/vision/ScriptImportOnboardingBanner'
 import { findSceneCharacters } from '../../../../../lib/character/matching'
 import { isStoryboardNoCharacterScene } from '../../../../../lib/script/sceneClassification'
-import { resolveFrameGenerationContext } from '@/lib/vision/frameGenerationContext'
 import { resolveQuickFrameActionPrompt } from '@/lib/vision/framePromptBaseline'
 import { toCanonicalName, generateAliases } from '@/lib/character/canonical'
 import { getEdgeVoiceConfigForResolution } from '@/lib/tts/edgeTtsVoices'
@@ -2118,15 +2117,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
         
         const fromDialog = options?.fromDialog === true
-        const resolvedAuto = fromDialog
-          ? null
-          : resolveFrameGenerationContext({
-              scene,
-              segment: segment as any,
-              projectCharacters: characters,
-              objectReferences,
-              locationReferences,
-            })
 
         const response = await fetch('/api/production/generate-segment-frames', {
           method: 'POST',
@@ -2223,17 +2213,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       wardrobe: selected.wardrobe || (fullChar as any)?.defaultWardrobe || (fullChar as any)?.wardrobe,
                     }
                   })
-                : (resolvedAuto?.charactersPayload || []).map(c => ({
-                    name: c.name,
-                    appearance: c.appearance,
-                    referenceUrl: c.referenceUrl,
-                    wardrobeReferenceUrl: c.wardrobeReferenceUrl,
-                    hasDualReferences: c.hasDualReferences,
-                    hasCostumeReference: c.hasCostumeReference,
-                    ethnicity: c.ethnicity,
-                    age: c.age,
-                    wardrobe: c.wardrobe,
-                  })),
+                : [],
             sceneContext: {
               heading: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,
               location: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,
@@ -2260,20 +2240,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     importance: 'critical' as const,
                     imageUrl: obj.imageUrl
                   }))
-                : resolvedAuto?.objectRefsForApi || [],
+                : [],
             locationReferences: fromDialog
               ? (options.selectedLocationReferences || []).map(loc => ({
                   name: loc.name,
                   description: loc.description,
                   imageUrl: loc.imageUrl
                 }))
-              : resolvedAuto?.locationRefsForApi?.length
-                ? resolvedAuto.locationRefsForApi.map(loc => ({
-                    name: loc.name,
-                    description: loc.description,
-                    imageUrl: loc.imageUrl
-                  }))
-                : undefined
+              : undefined
           })
         })
 

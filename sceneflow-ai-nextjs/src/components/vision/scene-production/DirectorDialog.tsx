@@ -108,6 +108,10 @@ interface DirectorDialogProps {
   guideCharacters?: GuideCharacterDemographic[]
   /** When true, video prompt is read-only (beat-first: edit script or Pre-Vis instead) */
   readOnlyPrompts?: boolean
+  /** Object/prop references for keyframe AI edit modal */
+  objectReferences?: Array<{ id: string; name: string; imageUrl: string; description?: string }>
+  /** Character references for optional identity preservation during keyframe edit */
+  characterReferences?: Array<{ name: string; referenceImage?: string; description?: string }>
 }
 
 // Map internal mode names to VideoGenerationMethod
@@ -140,6 +144,8 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
   onSaveEditedKeyframe,
   guideCharacters = [],
   readOnlyPrompts = false,
+  objectReferences = [],
+  characterReferences = [],
 }) => {
   const segmentGuideContext = useMemo<SegmentGuideContext | undefined>(() => {
     if (!scene) return undefined
@@ -1368,7 +1374,20 @@ export const DirectorDialog: React.FC<DirectorDialogProps> = ({
         }}
         imageUrl={keyframeEdit.url}
         imageType="scene"
+        aspectRatio="16:9"
         title={`Edit ${keyframeEdit.frameType === 'start' ? 'Start' : 'End'} Frame`}
+        objectReferences={objectReferences.filter((ref) => ref.imageUrl)}
+        subjectReference={(() => {
+          const firstLine = segment.dialogueLines?.find((d) => d.covered !== false)
+          const charName = firstLine?.character
+          if (!charName) return undefined
+          const char = characterReferences.find((c) => c.name === charName)
+          if (!char?.referenceImage) return undefined
+          return {
+            imageUrl: char.referenceImage,
+            description: char.description || charName,
+          }
+        })()}
         onSave={(newUrl) => {
           onSaveEditedKeyframe(sceneId, segment.segmentId, keyframeEdit.frameType, newUrl)
           setKeyframeEdit(null)

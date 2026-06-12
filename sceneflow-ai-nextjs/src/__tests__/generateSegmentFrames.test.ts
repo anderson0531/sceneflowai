@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { resolveStartFrameGenerationPlan } from '@/app/api/production/generate-segment-frames/route'
+import {
+  resolveEndFrameEditReferenceImage,
+  resolveStartFrameGenerationPlan,
+} from '@/app/api/production/generate-segment-frames/route'
 
 const PREVIZ_URL = 'https://example.com/previz-beat-1.jpg'
 
@@ -45,5 +48,19 @@ describe('resolveStartFrameGenerationPlan', () => {
     })
     expect(plan.skipStartGeneration).toBe(false)
     expect(plan.preservedStartUrl).toBeUndefined()
+  })
+})
+
+describe('resolveEndFrameEditReferenceImage', () => {
+  it('omits identity portrait even when characters have reference URLs', () => {
+    const ref = resolveEndFrameEditReferenceImage({
+      characters: [
+        { name: 'Sarah', referenceUrl: 'https://example.com/sarah-headshot.jpg' } as {
+          referenceUrl?: string
+        },
+      ],
+      startFrameReference: 'https://example.com/start-frame.jpg',
+    })
+    expect(ref).toBeUndefined()
   })
 })

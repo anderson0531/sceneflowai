@@ -2497,7 +2497,16 @@ export function SegmentPromptBuilder({
         }}
         imageUrl={keyframeEdit.url}
         imageType="scene"
+        aspectRatio="16:9"
         title={`Edit ${keyframeEdit.frameType === 'start' ? 'Start' : 'End'} Frame`}
+        objectReferences={objectReferences
+          .filter((ref) => ref.imageUrl)
+          .map((ref) => ({
+            id: ref.id,
+            name: ref.name,
+            imageUrl: ref.imageUrl!,
+            description: ref.description,
+          }))}
         subjectReference={keyframeSubjectRef}
         onSave={(newUrl) => {
           onSaveEditedKeyframe(keyframeEdit.frameType, newUrl)

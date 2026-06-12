@@ -3162,10 +3162,51 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
           }}
           imageUrl={editingImageData.url}
           imageType="scene"
+          aspectRatio="16:9"
           title={editingImageData.segmentId 
             ? `Edit ${editingImageData.frameType === 'start' ? 'Start' : 'End'} Frame`
             : undefined
           }
+          objectReferences={
+            editingImageData.segmentId
+              ? objectReferences
+                  ?.filter((ref) => ref.imageUrl)
+                  .map((ref) => ({
+                    id: ref.id,
+                    name: ref.name,
+                    imageUrl: ref.imageUrl!,
+                    description: ref.description,
+                  }))
+              : undefined
+          }
+          subjectReference={(() => {
+            if (!editingImageData.segmentId || editingImageData.sceneIdx === undefined) {
+              return undefined
+            }
+            const scene = scenes[editingImageData.sceneIdx]
+            if (!scene) return undefined
+            const sceneId =
+              scene.sceneId || scene.id || `scene-${editingImageData.sceneIdx}`
+            const prod = sceneProductionData[sceneId]
+            const segment = prod?.segments?.find(
+              (s) => s.segmentId === editingImageData.segmentId
+            )
+            const firstLine = segment?.dialogueLines?.find((d) => d.covered !== false)
+            const charName = firstLine?.character
+            if (!charName) return undefined
+            const char = characters.find((c) => c.name === charName)
+            const refUrl = (char as { referenceImage?: string; referenceUrl?: string })
+              ?.referenceImage || (char as { referenceUrl?: string })?.referenceUrl
+            if (!refUrl) return undefined
+            return {
+              imageUrl: refUrl,
+              description:
+                (char as { appearanceDescription?: string; description?: string })
+                  ?.appearanceDescription ||
+                (char as { description?: string })?.description ||
+                charName,
+            }
+          })()}
           onSave={(newImageUrl) => {
             // Check if this is a frame edit or scene image edit
             if (editingImageData.segmentId && editingImageData.sceneId && editingImageData.frameType) {
@@ -7036,29 +7077,6 @@ function SceneCard({
                             settings
                           ) : undefined
                         }
-                        characters={characters?.map(c => ({
-                          name: c.name,
-                          appearance: c.appearance || c.description,
-                          referenceImage: (c as any).referenceImage || (c as any).referenceUrl,
-                          ethnicity: (c as any).ethnicity,
-                          age: (c as any).age,
-                          wardrobe: (c as any).defaultWardrobe || (c as any).wardrobe,
-                          wardrobes: (c as any).wardrobes?.map((w: any) => ({
-                            id: w.id,
-                            name: w.name,
-                            description: w.description,
-                            fullBodyUrl: w.fullBodyUrl,
-                            headshotUrl: w.headshotUrl,
-                          })),
-                        }))}
-                        objectReferences={objectReferences?.map(obj => ({
-                          id: obj.id,
-                          name: obj.name,
-                          imageUrl: obj.imageUrl || '',
-                          description: obj.description,
-                        })) || []}
-                        locationReferences={locationReferences}
-                        sceneHeading={typeof scene.heading === 'string' ? scene.heading : scene.heading?.text}
                         sceneDirection={scene.detailedDirection || scene.sceneDirection}
                         sceneData={{
                           id: scene.id,
@@ -7465,29 +7483,6 @@ function SceneCard({
                               settings
                             ) : undefined
                           }
-                          characters={characters?.map(c => ({
-                            name: c.name,
-                          appearance: c.appearance || c.description,
-                          referenceImage: (c as any).referenceImage || (c as any).referenceUrl,
-                          ethnicity: (c as any).ethnicity,
-                            age: (c as any).age,
-                            wardrobe: (c as any).defaultWardrobe || (c as any).wardrobe,
-                            wardrobes: (c as any).wardrobes?.map((w: any) => ({
-                              id: w.id,
-                              name: w.name,
-                              description: w.description,
-                              fullBodyUrl: w.fullBodyUrl,
-                              headshotUrl: w.headshotUrl,
-                            })),
-                          }))}
-                          objectReferences={objectReferences?.map(obj => ({
-                            id: obj.id,
-                            name: obj.name,
-                            imageUrl: obj.imageUrl || '',
-                            description: obj.description,
-                          })) || []}
-                          locationReferences={locationReferences}
-                          sceneHeading={typeof scene.heading === 'string' ? scene.heading : scene.heading?.text}
                           sceneDirection={scene.detailedDirection || scene.sceneDirection}
                           sceneData={{
                             id: scene.id,

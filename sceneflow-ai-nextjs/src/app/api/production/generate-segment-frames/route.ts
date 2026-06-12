@@ -44,6 +44,17 @@ export function resolveStartFrameGenerationPlan(params: {
   return { skipStartGeneration, preservedStartUrl }
 }
 
+/**
+ * Automated end-frame edit uses the start frame as the sole source image.
+ * Character/object references belong in manual ImageEditModal refinement only.
+ */
+export function resolveEndFrameEditReferenceImage(_args: {
+  characters: Array<{ referenceUrl?: string }>
+  startFrameReference: string
+}): string | undefined {
+  return undefined
+}
+
 interface FrameGenerationRequest {
   // Required fields
   sceneId: string
@@ -864,36 +875,16 @@ Render this scene in ${selectedStyle.name} style.`
           `TEMPORAL CONTINUITY: Direct edit of the start frame — same beat continues; preserve wardrobe, props, and set unless the beat explicitly changes them.\n\n${endFramePrompt}`
       }
 
-      // End keyframe = directed edit of start frame (single source image) to reduce hallucinated scene changes
-      const isNoTalentSegment = isNoTalentFromSceneDirection(sceneDirection)
-      const hasDialogueCharacters =
-        (segmentContent?.dialogueLines?.length ?? 0) > 0 ||
-        characters.some((c) => c.referenceUrl)
-      const skipIdentityPortrait =
-        isNoTalentSegment ||
-        segmentDir?.isNoTalent === true ||
-        (usePreVisEditPath && !hasDialogueCharacters)
-
-      let identityPortraitUrl: string | undefined
-      const startRefStr = String(startFrameReference)
-      if (!skipIdentityPortrait) {
-        for (const c of characters) {
-          const url = c.referenceUrl
-          if (url && url !== startRefStr) {
-            identityPortraitUrl = url
-            break
-          }
-        }
-      }
-
-      console.log(
-        `[Generate Frames] End frame via edit API (keyframeEnd)${identityPortraitUrl ? ' + identity portrait' : ''}`
-      )
+      // End keyframe = directed edit of start frame only (no identity/object refs — manual edit handles those)
+      console.log('[Generate Frames] End frame via edit API (keyframeEnd, no reference images)')
 
       const endResult = await editImageWithGeminiStudio({
         sourceImage: startFrameReference,
         instruction: endFramePrompt,
-        referenceImage: identityPortraitUrl,
+        referenceImage: resolveEndFrameEditReferenceImage({
+          characters,
+          startFrameReference: String(startFrameReference),
+        }),
         aspectRatio: aspectRatio as '16:9' | '9:16' | '1:1',
         imageSize: modelTier === 'eco' ? '1K' : '2K',
         editIntent: 'keyframeEnd',
