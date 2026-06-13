@@ -36,7 +36,7 @@ function shortenVisualPrompt(text: string, maxLen = 160): string {
   return `${trimmed.slice(0, maxLen).trim()}…`
 }
 
-function buildEndFramePrompt(beat: SceneBeat): string {
+export function buildEndFramePrompt(beat: SceneBeat): string {
   const startVisual =
     beat.storyboardImagePrompt?.trim() ||
     (beat.kind === 'action' ? beat.actionDescription?.trim() : undefined) ||
@@ -102,6 +102,8 @@ function beatToSegment(
     'I2V'
 
   const preVisStartUrl = beat.storyboardImageUrl?.trim() || undefined
+  const preVisEndUrl = beat.storyboardEndImageUrl?.trim() || undefined
+  const fullyAnchored = !!(preVisStartUrl && preVisEndUrl)
 
   const segment: SceneSegment = {
     segmentId: mintSegmentId(),
@@ -116,9 +118,12 @@ function beatToSegment(
     ...(preVisStartUrl
       ? {
           startFrameUrl: preVisStartUrl,
-          anchorStatus: 'start-locked' as const,
+          anchorStatus: fullyAnchored
+            ? ('fully-anchored' as const)
+            : ('start-locked' as const),
         }
       : {}),
+    ...(preVisEndUrl ? { endFrameUrl: preVisEndUrl } : {}),
     dialogueLineIds: beat.lineId && beat.kind !== 'action' ? [beat.lineId] : [],
     dialogueLines:
       beat.kind !== 'action' && spokenText
@@ -133,13 +138,13 @@ function beatToSegment(
     generationMethod,
     references: {
       startFrameUrl: preVisStartUrl,
-      endFrameUrl: undefined,
+      endFrameUrl: preVisEndUrl,
       characterIds: beat.characterId ? [beat.characterId] : [],
       sceneRefIds: [],
       objectRefIds: [],
     },
     startFramePrompt: beat.storyboardImagePrompt ?? beat.actionDescription ?? spokenText,
-    endFramePrompt: buildEndFramePrompt(beat),
+    endFramePrompt: beat.storyboardEndImagePrompt ?? buildEndFramePrompt(beat),
     generatedPrompt: buildVideoPrompt(beat, spokenText),
     action: beat.actionDescription ?? '',
     beatId: beat.beatId,

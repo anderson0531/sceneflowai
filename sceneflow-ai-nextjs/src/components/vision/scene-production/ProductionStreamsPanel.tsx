@@ -605,7 +605,7 @@ export function ProductionStreamsPanel({
   onStreamTypeChange,
   disabled = false
 }: ProductionStreamsPanelProps) {
-  const [internalStreamTab, setInternalStreamTab] = useState<ProductionStreamType>('animatic')
+  const [internalStreamTab, setInternalStreamTab] = useState<ProductionStreamType>('video')
   const streamsPanelTab = controlledStreamType ?? internalStreamTab
   const setStreamsPanelTab = onStreamTypeChange ?? setInternalStreamTab
   const selectedStreamType = streamsPanelTab
@@ -668,15 +668,14 @@ export function ProductionStreamsPanel({
   )
   
   const currentStreams = useMemo(() => {
-    const list = selectedStreamType === 'animatic' ? animaticStreams : videoStreams
-    return [...list].sort((a, b) => {
+    return [...videoStreams].sort((a, b) => {
       const lang = a.language.localeCompare(b.language)
       if (lang !== 0) return lang
       const dv = (b.streamVersion ?? 1) - (a.streamVersion ?? 1)
       if (dv !== 0) return dv
       return new Date(b.completedAt || b.createdAt || 0).getTime() - new Date(a.completedAt || a.createdAt || 0).getTime()
     })
-  }, [animaticStreams, videoStreams, selectedStreamType])
+  }, [videoStreams])
   
   return (
     <div className="space-y-4">
@@ -708,44 +707,10 @@ export function ProductionStreamsPanel({
         )}
       </div>
 
-      {/* Animatic / Video toggle (synced with mixer output target when provided) */}
-      <Tabs
-        value={streamsPanelTab}
-        onValueChange={(v) => setStreamsPanelTab(v as ProductionStreamType)}
-        className="w-full"
-      >
-        <TabsList className="grid w-full max-w-md grid-cols-2 h-10 p-1 bg-slate-900/80 border border-slate-600/80 rounded-lg">
-          <TabsTrigger
-            value="animatic"
-            className="gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=inactive]:text-slate-400 rounded-md"
-          >
-            <Clapperboard className="w-4 h-4" />
-            Animatic
-            <span className="text-[10px] opacity-80 tabular-nums">({animaticStreams.length})</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="video"
-            className="gap-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=inactive]:text-slate-400 rounded-md"
-          >
-            <VideoIcon className="w-4 h-4" />
-            Video
-            <span className="text-[10px] opacity-80 tabular-nums">({videoStreams.length})</span>
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-
+      {/* Video exports for this scene */}
       <div className="flex items-center gap-2 text-xs text-slate-400">
-        {selectedStreamType === 'animatic' ? (
-          <>
-            <Clapperboard className="w-3.5 h-3.5 text-purple-400" />
-            <span>Showing <span className="text-purple-200 font-medium">Animatic</span> exports for this scene</span>
-          </>
-        ) : (
-          <>
-            <VideoIcon className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Showing <span className="text-indigo-200 font-medium">Video</span> exports for this scene</span>
-          </>
-        )}
+        <VideoIcon className="w-3.5 h-3.5 text-indigo-400" />
+        <span>Showing <span className="text-indigo-200 font-medium">Video</span> exports for this scene</span>
       </div>
 
       {onUploadStream && (
@@ -772,7 +737,7 @@ export function ProductionStreamsPanel({
               ) : (
                 <Upload className="w-4 h-4" />
               )}
-              {isUploadingStream ? 'Uploading…' : `Upload ${selectedStreamType === 'video' ? 'Video' : 'Animatic'} MP4`}
+              {isUploadingStream ? 'Uploading…' : 'Upload Video MP4'}
             </Button>
             <span className="text-xs text-slate-500">
               {selectedLanguageFlag} Mixer language: <span className="text-slate-300">{selectedLanguage}</span>

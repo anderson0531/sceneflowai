@@ -78,6 +78,9 @@ interface SceneGalleryProps {
   onOpenReferences?: () => void
   /** Art style locked from Blueprint — Express uses this instead of a picker. */
   lockedArtStyle?: string
+  onGenVideo?: () => void | Promise<void>
+  isGenVideoRunning?: boolean
+  exportedAnimaticUrl?: string | null
 }
 
 export function SceneGallery({
@@ -94,6 +97,9 @@ export function SceneGallery({
   expressGateReasons = [],
   onOpenReferences,
   lockedArtStyle,
+  onGenVideo,
+  isGenVideoRunning = false,
+  exportedAnimaticUrl,
 }: SceneGalleryProps) {
   const preVisBannerRef = React.useRef<HTMLDivElement>(null)
 
@@ -579,6 +585,9 @@ export function SceneGallery({
             availableLanguages={availableLanguages}
             onClose={() => setShowAudioPlayer(false)}
             onShare={handleShareStoryboard}
+            onGenVideo={onGenVideo}
+            isGenVideoRunning={isGenVideoRunning}
+            exportedAnimaticUrl={exportedAnimaticUrl}
           />
         </div>
       )}

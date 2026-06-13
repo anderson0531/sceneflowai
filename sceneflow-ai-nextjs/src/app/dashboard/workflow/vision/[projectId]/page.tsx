@@ -527,6 +527,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   /** When set, closing Screening Room navigates here (from `returnTo` query when opening from Premiere / Screening Room) */
   const [screeningRoomReturnTo, setScreeningRoomReturnTo] = useState<string | null>(null)
   const [showSceneGallery, setShowSceneGallery] = useState(false)
+  const [isGenVideoRunning, setIsGenVideoRunning] = useState(false)
   const [showDashboard, setShowDashboard] = useState(false)
   const [showNavigationWarning, setShowNavigationWarning] = useState(false)
   const [showTreatmentReview, setShowTreatmentReview] = useState(false)
@@ -8883,6 +8884,90 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     await handleGenerateBeatFrameImage(sceneIdx, beatId)
   }
 
+  const handleGenerateBeatEndFrameImage = async (sceneIdx: number, beatId: string) => {
+    const scene = script?.script?.scenes?.[sceneIdx]
+    if (!scene) {
+      try { const { toast } = require('sonner'); toast.error('Scene not found') } catch {}
+      return
+    }
+
+    const rawBeatIdx = resolveRawBeatIndex(scene, { beatId })
+    if (rawBeatIdx === undefined) {
+      try { const { toast } = require('sonner'); toast.error('Beat not found') } catch {}
+      return
+    }
+
+    const beats = getSceneBeats(scene)
+    const beat = beats[rawBeatIdx]
+    const startFrameUrl = beat?.storyboardImageUrl?.trim()
+    if (!startFrameUrl) {
+      try { const { toast } = require('sonner'); toast.error('Generate the start frame first') } catch {}
+      return
+    }
+
+    if (!batchGeneratingRef.current) {
+      overlayStore.show(`End frame — Scene ${sceneIdx + 1}`, 25, 'storyboard-production')
+    }
+    setGeneratingKeyframeSceneNumber(sceneIdx + 1)
+
+    try {
+      const response = await fetch('/api/scene/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          sceneIndex: sceneIdx,
+          frameType: 'beat',
+          frameRole: 'end',
+          beatId,
+          beatIndex: rawBeatIdx,
+          startFrameUrl,
+          quality: imageQuality,
+          characterSelectionExplicit: true,
+          ...GALLERY_MANUAL_GENERATE_OPTS,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data?.error || 'End frame generation failed')
+      }
+
+      const updatedScenes = [...(script.script.scenes || [])]
+      updatedScenes[sceneIdx] = stampPreVisContentHash(
+        applyBeatStoryboardImageToScene(
+          updatedScenes[sceneIdx],
+          rawBeatIdx,
+          data.imageUrl,
+          { imagePrompt: data.prompt || '', frameRole: 'end' }
+        )
+      )
+
+      setScript({
+        ...script,
+        script: { ...script.script, scenes: updatedScenes },
+      })
+
+      const saved = await persistVisionScriptScenes(updatedScenes, 'handleGenerateBeatEndFrameImage')
+      if (!saved) {
+        try { const { toast } = require('sonner'); toast.error('End frame generated but failed to save') } catch {}
+        return
+      }
+
+      try { const { toast } = require('sonner'); toast.success('End frame generated!') } catch {}
+    } catch (error: any) {
+      console.error('Failed to generate end frame:', error)
+      try { const { toast } = require('sonner'); toast.error(error?.message || 'Failed to generate end frame') } catch {}
+    } finally {
+      if (!batchGeneratingRef.current) overlayStore.hide()
+      setGeneratingKeyframeSceneNumber(null)
+    }
+  }
+
+  const handleRequestGenerateBeatEndFrame = async (sceneIdx: number, beatId: string) => {
+    await handleGenerateBeatEndFrameImage(sceneIdx, beatId)
+  }
+
   const handleOpenDirectFrame = (sceneIdx: number, slot: StoryboardFrameSlot) => {
     setPreVisDirectDialog({ sceneIdx, slot })
   }
@@ -11149,6 +11234,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         imageTier?: 'draft' | 'final'
         imagePrompt?: string
         gcsPath?: string
+        frameRole?: 'start' | 'end'
       }
     ) => {
       setScript((prev: any) => {
@@ -11161,6 +11247,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           imageTier: params?.imageTier,
           imagePrompt: params?.imagePrompt,
           imageGcsPath: params?.gcsPath,
+          frameRole: params?.frameRole,
         })
         return { ...prev, script: { ...prev.script, scenes } }
       })
@@ -11233,6 +11320,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             artStyle: options.artStyle || 'photorealistic',
             includeMusic: !!options.includeMusic,
             includeSFX: !!options.includeSFX,
+            includeEndFrames: !!options.includeEndFrames,
             regenerate: !!options.regenerate,
             storyboardQuality: options.storyboardQuality ?? 'draft',
             finalizeOnly: !!options.finalizeOnly,
@@ -11279,6 +11367,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                           event.imageTier ?? options.storyboardQuality ?? 'draft',
                         imagePrompt: event.imagePrompt ?? undefined,
                         gcsPath: event.gcsPath ?? undefined,
+                        frameRole: event.frameRole ?? 'start',
                       })
                     }
                   } else {
@@ -11432,7 +11521,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     async (
       sceneIndex: number,
       language: string,
-      options?: { regenerate?: boolean; finalizeOnly?: boolean }
+      options?: { regenerate?: boolean; finalizeOnly?: boolean; includeEndFrames?: boolean }
     ) => {
       if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
       if (isExpressRunning) return
@@ -11489,6 +11578,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             artStyle: lockedArtStyle || 'photorealistic',
             includeMusic: false,
             includeSFX: false,
+            includeEndFrames: !!options?.includeEndFrames,
             regenerate: !!options?.regenerate,
             storyboardQuality: options?.finalizeOnly ? 'final' : 'draft',
             finalizeOnly: !!options?.finalizeOnly,
@@ -11536,6 +11626,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         imageTier: event.imageTier ?? imageTier,
                         imagePrompt: event.imagePrompt ?? undefined,
                         gcsPath: event.gcsPath ?? undefined,
+                        frameRole: event.frameRole ?? 'start',
                       })
                     }
                   } else {
@@ -11633,6 +11724,93 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       lockedArtStyle,
     ]
   )
+
+  const exportedAnimaticUrl =
+    (project?.metadata as { exportedAnimaticUrl?: string } | undefined)?.exportedAnimaticUrl ?? null
+
+  const handleGenProjectVideo = useCallback(async () => {
+    if (!projectId || !script?.script?.scenes?.length || isGenVideoRunning) return
+    setIsGenVideoRunning(true)
+    toast.info('Queuing full-project animatic render…')
+
+    try {
+      const response = await fetch('/api/export/project-animatic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          projectTitle: project?.title || 'Project Animatic',
+          language: selectedLanguage || 'en',
+          resolution: '1080p',
+          scenes: script.script.scenes,
+          settings: {
+            kenBurnsIntensity: 'subtle',
+            transitionStyle: 'crossfade',
+            transitionDuration: 0.5,
+            includeSubtitles: false,
+            type: 'animatic',
+          },
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        throw new Error(data?.error || data?.details || 'Failed to queue animatic render')
+      }
+
+      const jobId = data.jobId as string
+      toast.success('Animatic render started — this may take a few minutes.')
+
+      const pollStart = Date.now()
+      const poll = async (): Promise<void> => {
+        if (Date.now() - pollStart > 30 * 60 * 1000) {
+          throw new Error('Animatic render timed out')
+        }
+        const statusRes = await fetch(`/api/export/animatics/${projectId}`)
+        if (!statusRes.ok) {
+          await new Promise((r) => setTimeout(r, 5000))
+          return poll()
+        }
+        const statusData = await statusRes.json()
+        const stream = (statusData.streams || []).find((s: { id: string }) => s.id === jobId)
+        if (stream?.status === 'complete' && stream.mp4Url) {
+          setProject((prev: any) =>
+            prev
+              ? {
+                  ...prev,
+                  metadata: {
+                    ...prev.metadata,
+                    exportedAnimaticUrl: stream.mp4Url,
+                    exportedAnimaticJobId: jobId,
+                  },
+                }
+              : prev
+          )
+          toast.success('Project animatic ready — open Premiere to screen it.')
+          return
+        }
+        if (stream?.status === 'failed') {
+          throw new Error(stream.error || 'Animatic render failed')
+        }
+        await new Promise((r) => setTimeout(r, 5000))
+        return poll()
+      }
+
+      await poll()
+    } catch (err: any) {
+      console.error('[Gen Video] Error:', err)
+      toast.error(err?.message || 'Failed to generate project animatic')
+    } finally {
+      setIsGenVideoRunning(false)
+    }
+  }, [
+    projectId,
+    project?.title,
+    script?.script?.scenes,
+    selectedLanguage,
+    isGenVideoRunning,
+    setProject,
+  ])
 
   // Delete specific audio from a scene
   const handleDeleteSceneAudio = async (
@@ -12603,6 +12781,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 isRegeneratingScript={isRegeneratingScript}
                 onModerationReport={setLatestModerationReport}
                 onGenerateBeatFrame={handleRequestGenerateBeatFrame}
+                onGenerateBeatEndFrame={handleRequestGenerateBeatEndFrame}
                 onGenerateDialogueFrame={handleGenerateDialogueFrameImage}
                 onUploadBeatFrame={handleUploadBeatFrame}
                 onUploadDialogueFrame={handleUploadDialogueFrame}
@@ -12649,6 +12828,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             expressGateBlocked={!expressGate.allowed}
                             expressGateReasons={expressGate.reasons}
                             lockedArtStyle={lockedArtStyle}
+                            onGenVideo={handleGenProjectVideo}
+                            isGenVideoRunning={isGenVideoRunning}
+                            exportedAnimaticUrl={exportedAnimaticUrl}
                           />
                         </div>
                       )}

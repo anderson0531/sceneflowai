@@ -60,6 +60,7 @@ import {
   type StoryboardQuality,
 } from '../storyboard/storyboardQuality'
 import { isStoryboardNoCharacterScene } from '../script/sceneClassification'
+import { buildEndFramePrompt } from '../scene/deriveSegmentsFromBeats'
 
 const EXPRESS_SKIP_LIKENESS = { skipLikenessValidation: true }
 
@@ -418,6 +419,84 @@ async function generateSingleBeatImage(
   console.log(
     `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — ${imageParams.storyboardQuality} (${imageParams.modelTier})`
   )
+
+  if (options.includeEndFrames && result.imageUrl) {
+    await generateSingleBeatEndImage(
+      ctx,
+      options,
+      project,
+      baseUrl,
+      authCookie,
+      emit,
+      trafficCop,
+      beatIdx,
+      artStyle,
+      result.imageUrl
+    )
+  }
+
+  return { imageUrl: result.imageUrl }
+}
+
+async function generateSingleBeatEndImage(
+  ctx: SceneRunContext,
+  options: ExpressOptions,
+  project: any,
+  baseUrl: string,
+  authCookie: string | undefined,
+  emit: ExpressEmit,
+  trafficCop: ExpressTrafficCop,
+  beatIdx: number,
+  artStyle: string,
+  startFrameUrl: string
+): Promise<{ imageUrl: string }> {
+  const { sceneIndex, sceneNumber, scene } = ctx
+  const imageParams = getExpressImageParams(options)
+  const beats = getSceneBeats(scene)
+  const beat = beats[beatIdx]
+  if (!beat) return { imageUrl: startFrameUrl }
+
+  const endPrompt = buildEndFramePrompt(beat)
+
+  const result = await trafficCop.runInLane('image', () =>
+    generateSceneImage({
+      projectId: options.projectId,
+      sceneIndex,
+      baseUrl,
+      authCookie,
+      quality: imageParams.quality,
+      storyboardQuality: imageParams.storyboardQuality,
+      artStyle,
+      frameType: 'beat',
+      frameRole: 'end',
+      startFrameUrl,
+      beatIndex: beatIdx,
+      ...(beat?.beatId ? { beatId: beat.beatId } : {}),
+      sceneOverride: scene,
+      customPrompt: endPrompt,
+      useAIPrompt: false,
+      modelTier: imageParams.modelTier,
+      skipLikenessValidation: imageParams.skipLikenessValidation,
+    })
+  )
+
+  await persistBeatEndFrame(scene, beatIdx, result, imageParams.storyboardQuality)
+  safeEmit(emit, {
+    type: 'phase-done',
+    sceneIndex,
+    sceneNumber,
+    phase: 'image',
+    ok: true,
+    imageUrl: result.imageUrl,
+    beatIndex: beatIdx,
+    frameRole: 'end',
+    imageTier: imageParams.storyboardQuality,
+    imagePrompt: result.imagePrompt ?? undefined,
+    gcsPath: result.gcsPath ?? undefined,
+  })
+  console.log(
+    `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} end frame — ${imageParams.storyboardQuality}`
+  )
   return { imageUrl: result.imageUrl }
 }
 
@@ -588,6 +667,45 @@ function writeBeatFrameToScene(
   if (beatIndex === 0 && beats[0]?.kind === 'action') {
     scene.imageUrl = result.imageUrl
     if (result.imagePrompt) scene.imagePrompt = result.imagePrompt
+  }
+}
+
+function writeBeatEndFrameToScene(
+  scene: any,
+  beatIndex: number,
+  result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null },
+  tier: StoryboardQuality
+): void {
+  const beats = getSceneBeats(scene)
+  if (!beats[beatIndex]) return
+  beats[beatIndex] = {
+    ...beats[beatIndex],
+    storyboardEndImageUrl: result.imageUrl,
+    storyboardEndImageTier: tier,
+    ...(result.gcsPath ? { storyboardEndImageGcsPath: result.gcsPath } : {}),
+    ...(result.imagePrompt ? { storyboardEndImagePrompt: result.imagePrompt } : {}),
+  }
+  const updated = applyBeatsToScene(scene, beats)
+  Object.assign(scene, updated)
+}
+
+async function persistBeatEndFrame(
+  scene: any,
+  beatIndex: number,
+  result: { imageUrl: string; gcsPath?: string | null; imagePrompt?: string | null },
+  tier: StoryboardQuality
+): Promise<void> {
+  const previous = beatPersistChains.get(scene) ?? Promise.resolve()
+  let release!: () => void
+  const gate = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  beatPersistChains.set(scene, previous.then(() => gate))
+  await previous
+  try {
+    writeBeatEndFrameToScene(scene, beatIndex, result, tier)
+  } finally {
+    release()
   }
 }
 

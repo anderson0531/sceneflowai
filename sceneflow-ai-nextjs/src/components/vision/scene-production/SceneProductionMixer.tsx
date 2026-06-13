@@ -530,20 +530,6 @@ function ProductionTargetSelector({
       <div className="flex gap-1 p-1 bg-gray-800/60 rounded-lg border border-gray-700/80">
         <button
           type="button"
-          onClick={() => onProductionTargetChange({ ...productionTarget, streamType: 'animatic' })}
-          disabled={disabled}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-            streamType === 'animatic'
-              ? 'bg-purple-600 text-white'
-              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/60'
-          )}
-        >
-          <Clapperboard className="w-3.5 h-3.5" />
-          Animatic
-        </button>
-        <button
-          type="button"
           onClick={() => onProductionTargetChange({ ...productionTarget, streamType: 'video' })}
           disabled={disabled || !videoGenerationAvailable}
           className={cn(
@@ -2971,23 +2957,16 @@ export function SceneProductionMixer({
   }, [segments])
 
   const previewSegments = useMemo(() => {
-    if (productionTarget.streamType === 'animatic') {
-      if (animaticPreviewSegments.length > 0) return animaticPreviewSegments
-      return renderedSegments
-    }
     if (videoSegments.length > 0) return videoSegments
     return renderedSegments
-  }, [productionTarget.streamType, animaticPreviewSegments, videoSegments, renderedSegments])
+  }, [videoSegments, renderedSegments])
 
   const nonEnglishBeatsMissingBackgroundStem = useMemo(() => {
     if (productionTarget.language === 'en') return 0
     return previewSegments.filter((seg) => !seg.stemSeparation?.backgroundStemUrl).length
   }, [previewSegments, productionTarget.language])
 
-  const previewPlaybackKind: 'video' | 'image-sequence' =
-    productionTarget.streamType === 'animatic' && animaticPreviewSegments.length > 0
-      ? 'image-sequence'
-      : 'video'
+  const previewPlaybackKind: 'video' | 'image-sequence' = 'video'
 
   // Playback timeline length (dialogue-aware segment durations, matches preview scrubber)
   const videoTotalDuration = useMemo(() => {
@@ -3450,8 +3429,7 @@ export function SceneProductionMixer({
   
   // === Local Render Handler ===
   const handleLocalRender = useCallback(async () => {
-    const renderingAnimatic = productionTarget.streamType === 'animatic'
-    const sourceSegments = renderingAnimatic ? previewSegments : videoSegments
+    const sourceSegments = videoSegments
     console.log('[LocalRender] Checking segments:', {
       totalSegments: segments.length,
       videoSegmentsCount: videoSegments.length,
@@ -3472,14 +3450,13 @@ export function SceneProductionMixer({
       const completeSegments = segments.filter(s => s.status === 'COMPLETE' && s.activeAssetUrl)
       const imageSegments = completeSegments.filter(s => s.assetType === 'image')
       
-      let errorMessage = renderingAnimatic
-        ? 'No keyframe/image segments available for Animatic render mode. Generate keyframes first.'
-        : 'No video segments available for Video render mode. '
-      if (!renderingAnimatic && imageSegments.length > 0) {
-        errorMessage += `Found ${imageSegments.length} image-only segment(s) - use Animatic mode for images, or upload/generate video content.`
-      } else if (!renderingAnimatic && completeSegments.length > 0) {
+      let errorMessage =
+        'No video segments available for Video render mode. '
+      if (imageSegments.length > 0) {
+        errorMessage += `Found ${imageSegments.length} image-only segment(s) — upload or generate video content.`
+      } else if (completeSegments.length > 0) {
         errorMessage += `Found ${completeSegments.length} segment(s) but they don't appear to be video. Check that your uploaded files are video format (mp4, webm, mov).`
-      } else if (!renderingAnimatic) {
+      } else {
         errorMessage += 'Generate or upload video content first.'
       }
       setRenderError(errorMessage)
@@ -3515,21 +3492,14 @@ export function SceneProductionMixer({
     try {
       const useStemDubbingPolicy = productionTarget.language !== 'en' && preserveBackgroundStem
       const segmentsForLocal = sourceSegments.map((seg, idx) => {
-        // Animatic: match ScenePreviewPlayer — imageDuration + end-frame crossfade in LocalRenderService
-        const duration = renderingAnimatic
-          ? (() => {
-              const raw =
-                seg.imageDuration ?? seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
-              return !Number.isFinite(raw) || raw <= 0 ? 4 : raw
-            })()
-          : (seg.actualVideoDuration ?? (seg.endTime - seg.startTime))
+        const duration = seg.actualVideoDuration ?? (seg.endTime - seg.startTime)
         const audioConfig = segmentAudioConfigs[seg.segmentId]
         const hasBackgroundStem = !!seg.stemSeparation?.backgroundStemUrl
-        // Include video audio if: config says includeAudio=true (default), OR config doesn't exist (default to include)
-        const includeVideoAudio = !renderingAnimatic && (audioConfig?.includeAudio ?? true) && (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)
-        const localAssetType: 'video' | 'image' =
-          renderingAnimatic ? 'image' : ((seg.assetType || 'video') as 'video' | 'image')
-        const endFrameUrl = renderingAnimatic ? animaticEndFrameUrl(seg) || undefined : undefined
+        const includeVideoAudio =
+          (audioConfig?.includeAudio ?? true) &&
+          (!useStemDubbingPolicy || includeSpeechStem || !hasBackgroundStem)
+        const localAssetType: 'video' | 'image' = (seg.assetType || 'video') as 'video' | 'image'
+        const endFrameUrl = undefined
         console.log('[LocalRender] Segment config:', {
           segmentId: seg.segmentId,
           actualVideoDuration: seg.actualVideoDuration,
@@ -3618,7 +3588,7 @@ export function SceneProductionMixer({
         })
       }
 
-      if (useStemDubbingPolicy && !renderingAnimatic) {
+      if (useStemDubbingPolicy) {
         videoSegments.forEach(seg => {
           const backgroundStemUrl = seg.stemSeparation?.backgroundStemUrl
           if (!backgroundStemUrl) return
@@ -4080,12 +4050,6 @@ export function SceneProductionMixer({
   
   // === Smart Render Handler (routes to local, server, or headless) ===
   const handleSmartRender = useCallback(async () => {
-    // Animatic target renders from keyframe/image sequence in-browser.
-    if (productionTarget.streamType === 'animatic') {
-      await handleLocalRender()
-      return
-    }
-
     const hasBurnIns = textOverlays.length > 0 || watermarkConfig.enabled
     const audioLongerThanVideo = maxAudioDuration > videoTotalDuration + 0.1
 

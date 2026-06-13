@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import RenderJob, { RenderJobStatus } from '@/models/RenderJob';
+import Project from '@/models/Project';
 
 interface CallbackPayload {
   jobId: string;
@@ -150,6 +151,22 @@ export async function POST(request: NextRequest) {
     }
 
     await job.update(updateData);
+
+    if (status === 'COMPLETED' && downloadUrl && job.render_type === 'project_animatic' && job.project_id) {
+      try {
+        const project = await Project.findByPk(job.project_id)
+        if (project) {
+          const metadata = { ...(project.metadata || {}) }
+          metadata.exportedAnimaticUrl = downloadUrl
+          metadata.exportedAnimaticJobId = jobId
+          metadata.exportedAnimaticLanguage = job.language || 'en'
+          await project.update({ metadata })
+          console.log(`[Render Callback] Saved exportedAnimaticUrl on project ${job.project_id}`)
+        }
+      } catch (metaErr) {
+        console.error('[Render Callback] Failed to update project animatic metadata:', metaErr)
+      }
+    }
 
     console.log(`[Render Callback] Job ${jobId} updated successfully to ${status}`);
 

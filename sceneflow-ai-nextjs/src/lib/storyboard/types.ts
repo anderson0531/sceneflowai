@@ -16,10 +16,14 @@ import { NARRATOR_CHARACTER, NARRATOR_CHARACTER_ID } from '@/lib/script/segmentT
 import { generateAliases, toCanonicalName } from '@/lib/character/canonical'
 import { resolveStandaloneNarrationUrl } from '@/lib/script/narration'
 import { isValidStoryboardMediaUrl } from '@/lib/storyboard/mergeSceneMedia'
+import { buildStoryboardMusicClips, resolveSceneMusicFileDuration } from '@/lib/storyboard/musicPlayback'
+import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
 
 const NARRATION_CLIP_BUFFER_SEC = 0.5
 const DIALOGUE_CLIP_BUFFER_SEC = 0.3
 const DEFAULT_CLIP_DURATION_SEC = 3
+/** Fade-to-black duration between scenes in playback and animatic export. */
+export const SCENE_FADE_TO_BLACK_SEC = 2
 /** Silent establishing/action beat hold when no durationSeconds is stored. */
 const DEFAULT_ACTION_BEAT_DURATION_SEC = 4
 
@@ -84,11 +88,15 @@ export interface StoryboardVisualFrame {
   dialogueIndex?: number
   beatId?: string
   imageUrl?: string
+  /** Optional end frame URL for in-beat cross-dissolve when present. */
+  endImageUrl?: string
   startTime: number
   duration: number
   label?: string
   character?: string
   line?: string
+  /** True when this is the last beat in a scene (triggers fade-to-black after). */
+  isSceneEnd?: boolean
 }
 
 function createStoryboardFrameId(): string {
@@ -152,6 +160,8 @@ export interface StoryboardFrameSlot {
   key: string
   label: string
   kind: 'action' | 'dialogue' | 'narration' | 'custom'
+  /** start = primary beat frame; end = optional motion/FTV end frame */
+  frameRole?: 'start' | 'end'
   beatId?: string
   /** Index into scene.beats[] for beat-first frame generation */
   beatIndex?: number
@@ -183,6 +193,67 @@ function getRawBeatStoryboardUrl(
     rawBeats[beat.sequenceIndex ?? -1]
   const url = raw?.storyboardImageUrl?.trim()
   return isValidStoryboardMediaUrl(url) ? url : undefined
+}
+
+function getRawBeatStoryboardEndUrl(
+  scene: Record<string, unknown>,
+  beat: SceneBeat
+): string | undefined {
+  const rawBeats = Array.isArray(scene.beats) ? (scene.beats as SceneBeat[]) : []
+  const raw =
+    (beat.beatId && rawBeats.find((b) => b.beatId === beat.beatId)) ||
+    rawBeats[beat.sequenceIndex ?? -1]
+  const url = raw?.storyboardEndImageUrl?.trim()
+  return isValidStoryboardMediaUrl(url) ? url : undefined
+}
+
+function buildBeatFrameSlot(
+  beat: SceneBeat,
+  beatIndex: number,
+  scene: Record<string, unknown>,
+  frameRole: 'start' | 'end',
+  opts: {
+    ownImageUrl?: string
+    displayImageUrl?: string
+    dialogueIndex?: number
+    establishingUrl?: string
+  }
+): StoryboardFrameSlot {
+  const baseLabel =
+    beat.kind === 'action'
+      ? beat.actionDescription?.trim()
+        ? `${beat.actionDescription.trim().slice(0, 36)}${beat.actionDescription.trim().length > 36 ? '…' : ''}`
+        : 'Action'
+      : beat.kind === 'narration'
+        ? 'Narrator'
+        : String(beat.character || 'Dialogue')
+
+  const roleSuffix = frameRole === 'end' ? ' (End)' : ' (Start)'
+  const ownImageUrl = opts.ownImageUrl
+  const displayImageUrl = opts.displayImageUrl
+
+  return {
+    key: frameRole === 'end' ? `${beat.beatId}-end` : beat.beatId,
+    label: `${baseLabel}${roleSuffix}`,
+    kind: beat.kind,
+    frameRole,
+    beatId: beat.beatId,
+    beatIndex,
+    dialogueIndex: opts.dialogueIndex,
+    ownImageUrl,
+    displayImageUrl,
+    imageTier: ownImageUrl
+      ? resolveEffectiveStoryboardTier(
+          frameRole === 'end' ? beat.storyboardEndImageTier : beat.storyboardImageTier
+        )
+      : undefined,
+    isPlaceholder: !ownImageUrl && !!displayImageUrl,
+    isMissing: !ownImageUrl && !displayImageUrl,
+    beatRole: beat.beatRole,
+    storyboardImagePrompt:
+      frameRole === 'end' ? beat.storyboardEndImagePrompt : beat.storyboardImagePrompt,
+    allowTypography: beat.beatRole === 'title_reveal' || beat.beatRole === 'credit',
+  }
 }
 
 function resolveDialogueIndexForBeatSlot(
@@ -251,33 +322,23 @@ export function enumerateStoryboardFrameSlots(
         displayImageUrl = getStoryboardFrameUrlForDialogueIndex(scene, dialogueIndex)
       }
 
-      const label =
-        beat.kind === 'action'
-          ? beat.actionDescription?.trim()
-            ? `${beat.actionDescription.trim().slice(0, 36)}${beat.actionDescription.trim().length > 36 ? '…' : ''}`
-            : 'Action'
-          : beat.kind === 'narration'
-            ? 'Narrator'
-            : String(beat.character || 'Dialogue')
+      slots.push(
+        buildBeatFrameSlot(beat, beatIndex, scene, 'start', {
+          ownImageUrl,
+          displayImageUrl,
+          dialogueIndex,
+          establishingUrl,
+        })
+      )
 
-      slots.push({
-        key: beat.beatId,
-        label,
-        kind: beat.kind,
-        beatId: beat.beatId,
-        beatIndex,
-        dialogueIndex,
-        ownImageUrl,
-        displayImageUrl,
-        imageTier: ownImageUrl
-          ? resolveEffectiveStoryboardTier(beat.storyboardImageTier)
-          : undefined,
-        isPlaceholder: !ownImageUrl && !!displayImageUrl,
-        isMissing: !ownImageUrl && !displayImageUrl,
-        beatRole: beat.beatRole,
-        storyboardImagePrompt: beat.storyboardImagePrompt,
-        allowTypography: beat.beatRole === 'title_reveal' || beat.beatRole === 'credit',
-      })
+      const endOwnImageUrl = getRawBeatStoryboardEndUrl(scene, beat)
+      slots.push(
+        buildBeatFrameSlot(beat, beatIndex, scene, 'end', {
+          ownImageUrl: endOwnImageUrl,
+          displayImageUrl: endOwnImageUrl,
+          dialogueIndex,
+        })
+      )
     }
 
     for (const frame of getOrderedStoryboardFrames(scene)) {
@@ -367,14 +428,19 @@ export function countStoryboardFrameStats(scene: Record<string, unknown>): {
   total: number
   missing: number
   placeholders: number
+  withEndImage: number
 } {
   const slots = enumerateStoryboardFrameSlots(scene)
-  const withImage = slots.filter((s) => !!s.ownImageUrl).length
+  const startSlots = slots.filter((s) => s.frameRole !== 'end')
+  const endSlots = slots.filter((s) => s.frameRole === 'end')
+  const withImage = startSlots.filter((s) => !!s.ownImageUrl).length
+  const withEndImage = endSlots.filter((s) => !!s.ownImageUrl).length
   return {
     withImage,
-    total: slots.length,
-    missing: slots.filter((s) => s.isMissing).length,
-    placeholders: slots.filter((s) => s.isPlaceholder).length,
+    total: startSlots.length,
+    missing: startSlots.filter((s) => s.isMissing).length,
+    placeholders: startSlots.filter((s) => s.isPlaceholder).length,
+    withEndImage,
   }
 }
 
@@ -1158,8 +1224,11 @@ export function buildBeatFirstPlaybackTimeline(
 ): { voiceClips: StoryboardAudioClip[]; visualFrames: StoryboardVisualFrame[] } {
   const beats = getStoryboardTimelineBeats(scene)
   const slots = enumerateStoryboardFrameSlots(scene, beats)
-  const slotByBeatId = new Map(
-    slots.filter((slot) => slot.beatId).map((slot) => [slot.beatId!, slot])
+  const startSlotByBeatId = new Map(
+    slots.filter((slot) => slot.beatId && slot.frameRole !== 'end').map((slot) => [slot.beatId!, slot])
+  )
+  const endSlotByBeatId = new Map(
+    slots.filter((slot) => slot.beatId && slot.frameRole === 'end').map((slot) => [slot.beatId!, slot])
   )
 
   let currentStartTime = 0
@@ -1171,6 +1240,8 @@ export function buildBeatFirstPlaybackTimeline(
     startTime: number
     duration: number
     imageUrl?: string
+    endImageUrl?: string
+    isSceneEnd?: boolean
     label: string
     character?: string
     line?: string
@@ -1178,9 +1249,13 @@ export function buildBeatFirstPlaybackTimeline(
     clipId: string
   }> = []
 
-  for (const beat of beats) {
-    const slot = slotByBeatId.get(beat.beatId)
+  for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
+    const beat = beats[beatIdx]
+    const slot = startSlotByBeatId.get(beat.beatId)
+    const endSlot = endSlotByBeatId.get(beat.beatId)
     const imageUrl = slot?.ownImageUrl ?? slot?.displayImageUrl
+    const endImageUrl = endSlot?.ownImageUrl
+    const isSceneEnd = beatIdx === beats.length - 1
 
     if (beat.kind === 'action') {
       const duration = resolveActionBeatDuration(beat)
@@ -1190,6 +1265,8 @@ export function buildBeatFirstPlaybackTimeline(
         startTime: currentStartTime,
         duration,
         imageUrl,
+        endImageUrl,
+        isSceneEnd,
         label: 'Action',
         line: beat.actionDescription,
         clipId: `action-${beat.beatId}`,
@@ -1224,6 +1301,8 @@ export function buildBeatFirstPlaybackTimeline(
         startTime: currentStartTime,
         duration,
         imageUrl,
+        endImageUrl,
+        isSceneEnd,
         label: isNarration ? 'Narrator' : beat.character || 'Dialogue',
         character: beat.character,
         line: beat.line,
@@ -1260,6 +1339,8 @@ export function buildBeatFirstPlaybackTimeline(
       startTime: currentStartTime,
       duration,
       imageUrl,
+      endImageUrl,
+      isSceneEnd,
       label: isNarration ? 'Narrator' : beat.character || 'Dialogue',
       character: beat.character,
       line: beat.line,
@@ -1276,14 +1357,16 @@ export function buildBeatFirstPlaybackTimeline(
     frameType: win.kind === 'action' ? 'establishing' : 'dialogue',
     dialogueIndex: win.dialogueIndex,
     imageUrl: win.imageUrl,
+    endImageUrl: win.endImageUrl,
     startTime: win.startTime,
     duration:
       index < windows.length - 1
         ? windows[index + 1].startTime - win.startTime
-        : win.duration,
+        : win.duration + (win.isSceneEnd ? SCENE_FADE_TO_BLACK_SEC : 0),
     label: win.label,
     character: win.character,
     line: win.line,
+    isSceneEnd: win.isSceneEnd,
   }))
 
   return {
@@ -1514,4 +1597,151 @@ export function buildBeatStoryboardVisualTimeline(
   }
 
   return frames
+}
+
+/** In-beat crossfade timing shared by player and cloud animatic export. */
+export const IN_BEAT_CROSSFADE_START_FRACTION = 0.35
+export const IN_BEAT_CROSSFADE_MAX_SEC = 1.5
+
+export interface ProjectAnimaticRenderSegment {
+  segmentId: string
+  sceneIndex: number
+  beatId?: string
+  imageUrl: string
+  startTime: number
+  duration: number
+}
+
+export interface ProjectAnimaticAudioClip {
+  url: string
+  startTime: number
+  duration: number
+  volume?: number
+  type?: 'narration' | 'dialogue' | 'music' | 'sfx'
+}
+
+export interface ProjectAnimaticTimeline {
+  totalDuration: number
+  segments: ProjectAnimaticRenderSegment[]
+  audioClips: ProjectAnimaticAudioClip[]
+}
+
+/**
+ * Full-project animatic timeline — mirrors Pre-Vis player ordering, durations,
+ * in-beat start/end pairs, and per-scene fade-to-black extension on the last beat.
+ */
+export function buildProjectAnimaticTimeline(
+  scenes: Record<string, unknown>[],
+  language: string,
+  dynamicDurations: Record<string, number> = {}
+): ProjectAnimaticTimeline {
+  let globalOffset = 0
+  const segments: ProjectAnimaticRenderSegment[] = []
+  const audioClips: ProjectAnimaticAudioClip[] = []
+
+  for (let sceneIndex = 0; sceneIndex < scenes.length; sceneIndex++) {
+    const scene = scenes[sceneIndex]
+    const { voiceClips, visualFrames } = buildBeatFirstPlaybackTimeline(
+      scene,
+      language,
+      dynamicDurations
+    )
+
+    const sceneDuration =
+      visualFrames.length > 0
+        ? visualFrames[visualFrames.length - 1].startTime +
+          visualFrames[visualFrames.length - 1].duration
+        : 0
+
+    for (const clip of voiceClips) {
+      if (!clip.url) continue
+      audioClips.push({
+        url: clip.url,
+        startTime: globalOffset + clip.startTime,
+        duration: clip.duration,
+        volume: 1,
+        type: clip.type === 'dialogue' ? 'dialogue' : 'narration',
+      })
+    }
+
+    const musicFileDuration = resolveSceneMusicFileDuration(scene, dynamicDurations)
+    for (const clip of buildStoryboardMusicClips(
+      scene,
+      visualFrames,
+      sceneDuration,
+      musicFileDuration
+    )) {
+      audioClips.push({
+        url: clip.url,
+        startTime: globalOffset + clip.startTime,
+        duration: clip.duration,
+        volume: 0.15,
+        type: 'music',
+      })
+    }
+
+    const voiceEndTime =
+      voiceClips.length > 0
+        ? voiceClips[voiceClips.length - 1].startTime + voiceClips[voiceClips.length - 1].duration
+        : undefined
+
+    for (const clip of buildBeatAlignedStoryboardSfxClips(scene, visualFrames, {
+      voiceEndTime,
+      sceneDuration,
+      dynamicDurations,
+    })) {
+      audioClips.push({
+        url: clip.url,
+        startTime: globalOffset + clip.startTime,
+        duration: clip.duration,
+        volume: 1,
+        type: 'sfx',
+      })
+    }
+
+    for (const frame of visualFrames) {
+      if (!frame.imageUrl) continue
+      const frameStart = globalOffset + frame.startTime
+      const frameDuration = frame.duration
+
+      if (frame.endImageUrl) {
+        const crossfadeDur = Math.min(IN_BEAT_CROSSFADE_MAX_SEC, frameDuration * 0.25)
+        const startDur = Math.max(0.5, frameDuration * IN_BEAT_CROSSFADE_START_FRACTION)
+        const endDur = Math.max(0.5, frameDuration - startDur + crossfadeDur)
+        segments.push({
+          segmentId: `s${sceneIndex}-${frame.clipId}-start`,
+          sceneIndex,
+          beatId: frame.beatId,
+          imageUrl: frame.imageUrl,
+          startTime: frameStart,
+          duration: startDur,
+        })
+        segments.push({
+          segmentId: `s${sceneIndex}-${frame.clipId}-end`,
+          sceneIndex,
+          beatId: frame.beatId,
+          imageUrl: frame.endImageUrl,
+          startTime: frameStart + startDur - crossfadeDur,
+          duration: endDur,
+        })
+      } else {
+        segments.push({
+          segmentId: `s${sceneIndex}-${frame.clipId}`,
+          sceneIndex,
+          beatId: frame.beatId,
+          imageUrl: frame.imageUrl,
+          startTime: frameStart,
+          duration: frameDuration,
+        })
+      }
+    }
+
+    globalOffset += sceneDuration
+  }
+
+  return {
+    totalDuration: globalOffset,
+    segments,
+    audioClips,
+  }
 }

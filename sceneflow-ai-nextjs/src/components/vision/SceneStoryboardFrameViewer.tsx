@@ -62,6 +62,7 @@ export interface SceneStoryboardFrameViewerProps {
   onGenerateScene?: (prompt: string) => Promise<void>
   onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
   onGenerateBeatFrame?: (beatId: string) => Promise<void>
+  onGenerateBeatEndFrame?: (beatId: string) => Promise<void>
   onDirectFrame?: (slot: StoryboardFrameSlot) => void
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
   onUploadBeatFrame?: (beatId: string, file: File) => void
@@ -70,7 +71,7 @@ export interface SceneStoryboardFrameViewerProps {
   onSaveEditedBeatFrame?: (beatId: string, imageUrl: string) => void
   onSaveEditedDialogueFrame?: (dialogueIndex: number, imageUrl: string) => void
   onSaveEditedCustomFrame?: (customFrameId: string, imageUrl: string) => void
-  onExpressSceneGenerate?: (options?: { regenerate?: boolean }) => void | Promise<void>
+  onExpressSceneGenerate?: (options?: { regenerate?: boolean; includeEndFrames?: boolean }) => void | Promise<void>
   onFinalizeScene?: () => void | Promise<void>
   onSyncPreVisToScript?: () => void | Promise<void>
   onAddStoryboardFrame?: () => void | Promise<void>
@@ -89,6 +90,7 @@ interface StoryboardSlotHandlers {
   onGenerate: (prompt: string) => Promise<void>
   onGenerateDialogueFrame?: (dialogueIndex: number) => Promise<void>
   onGenerateBeatFrame?: (beatId: string) => Promise<void>
+  onGenerateBeatEndFrame?: (beatId: string) => Promise<void>
   onDirectFrame?: (slot: StoryboardFrameSlot) => void
   onUploadDialogueFrame?: (dialogueIndex: number, file: File) => void
   onUploadBeatFrame?: (beatId: string, file: File) => void
@@ -123,6 +125,7 @@ function buildStoryboardSlotFrameProps(
     onGenerate,
     onGenerateDialogueFrame,
     onGenerateBeatFrame,
+    onGenerateBeatEndFrame,
     onDirectFrame,
     onUploadDialogueFrame,
     onUploadBeatFrame,
@@ -168,9 +171,13 @@ function buildStoryboardSlotFrameProps(
 
   const dialogueIdx = slot.dialogueIndex
   const beatId = slot.beatId
-  const useBeatFrame = !!beatId && (slot.kind === 'narration' || slot.kind === 'action')
+  const isEndBeatSlot = slot.frameRole === 'end' && !!beatId
+  const useBeatFrame = !!beatId && (slot.kind === 'narration' || slot.kind === 'action' || isEndBeatSlot)
   const isGeneratingBeatFrame =
-    useBeatFrame && generatingDialogueFrames.has(`${sceneIndex}-beat-${beatId}`)
+    useBeatFrame &&
+    generatingDialogueFrames.has(
+      isEndBeatSlot ? `${sceneIndex}-beat-end-${beatId}` : `${sceneIndex}-beat-${beatId}`
+    )
   const isGeneratingFrame =
     !useBeatFrame &&
     typeof dialogueIdx === 'number' &&
@@ -188,12 +195,14 @@ function buildStoryboardSlotFrameProps(
       : useBeatFrame
         ? isGeneratingBeatFrame
         : isGeneratingFrame,
-    label: slot.label,
+    label: isEndBeatSlot && slot.isMissing ? 'Add end frame' : slot.label,
     imageTier: slot.ownImageUrl ? slot.imageTier : undefined,
     beatRole: slot.beatRole,
     imagePrompt: slot.storyboardImagePrompt,
     onGenerate: () => {
-      if (useBeatFrame && beatId) {
+      if (isEndBeatSlot && beatId) {
+        void onGenerateBeatEndFrame?.(beatId)
+      } else if (useBeatFrame && beatId) {
         void onGenerateBeatFrame?.(beatId)
       } else if (isLegacyEstablishingOnly) {
         void onGenerate(prompt)
@@ -271,6 +280,7 @@ export function SceneStoryboardFrameViewer({
   onGenerateScene,
   onGenerateDialogueFrame,
   onGenerateBeatFrame,
+  onGenerateBeatEndFrame,
   onDirectFrame,
   onUploadDialogueFrame,
   onUploadBeatFrame,
@@ -292,6 +302,7 @@ export function SceneStoryboardFrameViewer({
   const [generatingDialogueFrames, setGeneratingDialogueFrames] = useState<Set<string>>(new Set())
   const [generatingCustomFrames, setGeneratingCustomFrames] = useState<Set<string>>(new Set())
   const [sceneExpressRegenerateOpen, setSceneExpressRegenerateOpen] = useState(false)
+  const [includeEndFramesForExpress, setIncludeEndFramesForExpress] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editingFrame, setEditingFrame] = useState<EditingFrame | null>(null)
 
@@ -383,6 +394,12 @@ export function SceneStoryboardFrameViewer({
             await wrapGenerate(key, () => onGenerateBeatFrame(beatId))
           }
         : undefined,
+      onGenerateBeatEndFrame: onGenerateBeatEndFrame
+        ? async (beatId) => {
+            const key = `${sceneIndex}-beat-end-${beatId}`
+            await wrapGenerate(key, () => onGenerateBeatEndFrame(beatId))
+          }
+        : undefined,
       onDirectFrame,
       onUploadDialogueFrame,
       onUploadBeatFrame,
@@ -416,6 +433,7 @@ export function SceneStoryboardFrameViewer({
       onGenerateScene,
       onGenerateDialogueFrame,
       onGenerateBeatFrame,
+      onGenerateBeatEndFrame,
       onDirectFrame,
       onUploadDialogueFrame,
       onUploadBeatFrame,
@@ -503,10 +521,23 @@ export function SceneStoryboardFrameViewer({
                   )}
                 >
                   {frameStats.withImage}/{frameStats.total}
+                  {frameStats.withEndImage > 0 ? ` · ${frameStats.withEndImage} end` : ''}
                   {frameStats.missing > 0 ? ` · ${frameStats.missing} missing` : ''}
                   {frameStats.placeholders > 0 ? ` · ${frameStats.placeholders} placeholder` : ''}
                 </span>
                 <div className="flex items-center gap-2 flex-wrap">
+                  {onExpressSceneGenerate && (
+                    <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-600"
+                        checked={includeEndFramesForExpress}
+                        onChange={(e) => setIncludeEndFramesForExpress(e.target.checked)}
+                        disabled={isExpressRunning}
+                      />
+                      End frames
+                    </label>
+                  )}
                   {preVisStale && onSyncPreVisToScript && (
                     <Button
                       type="button"
@@ -542,7 +573,7 @@ export function SceneStoryboardFrameViewer({
                               setSceneExpressRegenerateOpen(true)
                               return
                             }
-                            void onExpressSceneGenerate()
+                            void onExpressSceneGenerate({ includeEndFrames: includeEndFramesForExpress })
                           }}
                         >
                           <Zap className="w-3 h-3 mr-0.5" />
@@ -645,7 +676,7 @@ export function SceneStoryboardFrameViewer({
                 type="button"
                 onClick={() => {
                   setSceneExpressRegenerateOpen(false)
-                  void onExpressSceneGenerate({ regenerate: true })
+                  void onExpressSceneGenerate({ regenerate: true, includeEndFrames: includeEndFramesForExpress })
                 }}
               >
                 Regenerate

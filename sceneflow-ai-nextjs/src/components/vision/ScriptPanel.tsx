@@ -397,6 +397,7 @@ interface ScriptPanelProps {
   approvingStoryboardFor?: number | null
   // Per-scene storyboard frame viewer (Pre-Vis beat images)
   onGenerateBeatFrame?: (sceneIdx: number, beatId: string) => Promise<void>
+  onGenerateBeatEndFrame?: (sceneIdx: number, beatId: string) => Promise<void>
   onGenerateDialogueFrame?: (sceneIdx: number, dialogueIdx: number) => Promise<void>
   onUploadBeatFrame?: (sceneIdx: number, beatId: string, file: File) => void
   onUploadDialogueFrame?: (sceneIdx: number, dialogueIdx: number, file: File) => void
@@ -410,7 +411,7 @@ interface ScriptPanelProps {
   onGenerateCustomFrame?: (sceneIdx: number, frameId: string) => Promise<void>
   onUploadCustomFrame?: (sceneIdx: number, frameId: string, file: File) => void
   onUploadStoryboardScene?: (sceneIdx: number, file: File) => void
-  onExpressSceneGenerate?: (sceneIdx: number, language: string, options?: { regenerate?: boolean }) => Promise<void>
+  onExpressSceneGenerate?: (sceneIdx: number, language: string, options?: { regenerate?: boolean; includeEndFrames?: boolean }) => Promise<void>
   onFinalizeStoryboardScene?: (sceneIdx: number, language: string) => Promise<void>
   expressStatus?: import('./SceneGallery').ExpressSceneStatusMap
   expressGateBlocked?: boolean
@@ -682,7 +683,7 @@ function SortableSceneCard({ id, onAddScene, onDeleteScene, onEditScene, onGener
 }
 
 // Film context fix deployed v3 - 2025-02-20 with default projectTitle
-export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice }: ScriptPanelProps) {
+export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScene, onExpandAllScenes, onGenerateSceneImage, characters = [], projectId, visualStyle, validationWarnings = {}, validationInfo = {}, onDismissValidationWarning, onPlayAudio, onGenerateSceneAudio, onGenerateAllAudio, isGeneratingAudio, productionReadiness = undefined, onPlayScript, onAddScene, onDeleteScene, onReorderScenes, directorScore, audienceScore, onGenerateReviews, isGeneratingReviews, onShowReviews, onShowTreatmentReview, onRefactorFoundation, directorReview, audienceReview, onEditScene, onUpdateSceneAudio, onDeleteSceneAudio, onEnhanceSceneContext, onGenerateSceneScore, generatingScoreFor, getScoreColorClass, hasBYOK = false, onOpenBYOK, onGenerateSceneDirection, generatingDirectionFor, onGenerateAllCharacters, sceneProductionData = {}, sceneProductionReferences = {}, belowDashboardSlot, onInitializeSceneProduction, onSegmentPromptChange, onSegmentKeyframeChange, onSegmentDialogueAssignmentChange, onSegmentGenerate, onSegmentUpload, onLockSegment, onSegmentAnimaticSettingsChange, onRenderedSceneUrlChange, onProductionDataChange, onResetSegments, onAddSegment, onAddFullSegment, onDeleteSegment, onSegmentResize, onReorderSegments, onAudioClipChange, onCleanupStaleAudioUrl, onAddEstablishingShot, onEstablishingShotStyleChange, onBackdropVideoGenerated, onGenerateEndFrame, onEndFrameGenerated, sceneAudioTracks = {}, bookmarkedScene, onBookmarkScene, onJumpToBookmark, showStoryboard = true, onToggleStoryboard, showDashboard = false, onToggleDashboard, onOpenAssets, isGeneratingKeyframe = false, generatingKeyframeSceneNumber = null, selectedSceneIndex = null, onSelectSceneIndex, productionProgressSlot, onAddToReferenceLibrary, openScriptEditorWithInstruction = null, onClearScriptEditorInstruction, onMarkWorkflowComplete, onDismissStaleWarning, onSyncPreVisToScript, sceneReferences = [], objectReferences = [], locationReferences = [], onSelectTake, onDeleteTake, onGenerateSegmentFrames, onEditFrame, onUploadFrame, generatingFrameForSegment = null, generatingFramePhase = null, projectTitle = '', projectLogline = '', projectDuration, seriesInfo = null, storedTranslations, onSaveTranslations, onAnalyzeScene, analyzingSceneIndex = null, onOptimizeScene, optimizingSceneIndex = null, onResyncAudioTiming, resyncingAudioSceneIndex = null, onRegenerateScript, isRegeneratingScript = false, onModerationReport, onApproveStoryboard, approvingStoryboardFor = null, onGenerateBeatFrame, onGenerateBeatEndFrame, onGenerateDialogueFrame, onUploadBeatFrame, onUploadDialogueFrame, onSaveEditedBeatFrame, onSaveEditedDialogueFrame, onSaveEditedCustomFrame, onSaveEditedStoryboardScene, onDirectFrame, onAddStoryboardFrame, onDeleteStoryboardFrame, onGenerateCustomFrame, onUploadCustomFrame, onUploadStoryboardScene, onExpressSceneGenerate, onFinalizeStoryboardScene, expressStatus, expressGateBlocked = false, onExpressGateBlocked, isExpressRunning = false, narrationVoice }: ScriptPanelProps) {
 
 
   // CRITICAL: Get overlay store for generation blocking - must be at top level before any other hooks
@@ -3166,6 +3167,7 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
                       onApproveStoryboard={onApproveStoryboard}
                       approvingStoryboardFor={approvingStoryboardFor}
                       onGenerateBeatFrame={onGenerateBeatFrame}
+                      onGenerateBeatEndFrame={onGenerateBeatEndFrame}
                       onGenerateDialogueFrame={onGenerateDialogueFrame}
                       onUploadBeatFrame={onUploadBeatFrame}
                       onUploadDialogueFrame={onUploadDialogueFrame}
@@ -3860,6 +3862,7 @@ interface SceneCardProps {
   productionReadiness?: ProductionReadiness
   onModerationReport?: (report: import('@/lib/moderation/moderationPipeline').ModerationReport) => void
   onGenerateBeatFrame?: (sceneIdx: number, beatId: string) => Promise<void>
+  onGenerateBeatEndFrame?: (sceneIdx: number, beatId: string) => Promise<void>
   onGenerateDialogueFrame?: (sceneIdx: number, dialogueIdx: number) => Promise<void>
   onUploadBeatFrame?: (sceneIdx: number, beatId: string, file: File) => void
   onUploadDialogueFrame?: (sceneIdx: number, dialogueIdx: number, file: File) => void
@@ -3873,7 +3876,7 @@ interface SceneCardProps {
   onGenerateCustomFrame?: (sceneIdx: number, frameId: string) => Promise<void>
   onUploadCustomFrame?: (sceneIdx: number, frameId: string, file: File) => void
   onUploadStoryboardScene?: (sceneIdx: number, file: File) => void
-  onExpressSceneGenerate?: (sceneIdx: number, language: string, options?: { regenerate?: boolean }) => Promise<void>
+  onExpressSceneGenerate?: (sceneIdx: number, language: string, options?: { regenerate?: boolean; includeEndFrames?: boolean }) => Promise<void>
   onFinalizeStoryboardScene?: (sceneIdx: number, language: string) => Promise<void>
   expressStatus?: import('./SceneGallery').ExpressSceneStatusMap
   expressGateBlocked?: boolean
@@ -4354,6 +4357,7 @@ function SceneCard({
   visualStyle,
   onModerationReport,
   onGenerateBeatFrame,
+  onGenerateBeatEndFrame,
   onGenerateDialogueFrame,
   onUploadBeatFrame,
   onUploadDialogueFrame,
@@ -6414,6 +6418,11 @@ function SceneCard({
                         ? (beatId) => onGenerateBeatFrame(sceneIdx, beatId)
                         : undefined
                     }
+                    onGenerateBeatEndFrame={
+                      onGenerateBeatEndFrame
+                        ? (beatId) => onGenerateBeatEndFrame(sceneIdx, beatId)
+                        : undefined
+                    }
                     onDirectFrame={
                       onDirectFrame ? (slot) => onDirectFrame(sceneIdx, slot) : undefined
                     }
@@ -7229,294 +7238,6 @@ function SceneCard({
                   </div>
                 )}
 
-                {activeWorkflowTab === 'storyboardPreViz' && (
-                  <div className="space-y-4">
-                    {/* Keyframe State Machine - Show SegmentFrameTimeline when segments exist */}
-                    {sceneProductionData?.isSegmented && sceneProductionData.segments?.length > 0 ? (
-                      <SegmentFrameTimeline
-                        segments={sceneProductionData.segments}
-                        sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
-                        sceneNumber={sceneNumber}
-                        sceneImageUrl={scene.imageUrl}
-                        selectedSegmentIndex={selectedSegmentIndex}
-                        onSelectSegment={setSelectedSegmentIndex}
-                        onGenerateFrames={(segmentId, frameType, options) => 
-                          onGenerateSegmentFrames?.(
-                            scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                            segmentId,
-                            frameType,
-                            options
-                          ) ?? Promise.resolve()
-                        }
-                        onGenerateVideo={(segmentId) => 
-                          onSegmentGenerate?.(
-                            scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                            segmentId,
-                            'I2V'
-                          )
-                        }
-                        onEditFrame={(segmentId, frameType, frameUrl) => {
-                          // Use the callback prop from ScriptPanel where state is accessible
-                          onOpenFrameEditModal?.(
-                            sceneIdx,
-                            scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                            segmentId,
-                            frameType,
-                            frameUrl
-                          )
-                        }}
-                        onUploadFrame={(segmentId, frameType, file) => {
-                          onUploadFrame?.(
-                            scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                            segmentId,
-                            frameType,
-                            file
-                          )
-                        }}
-                        isGenerating={!!generatingFrameForSegment}
-                        generatingSegmentId={generatingFrameForSegment}
-                        generatingPhase={generatingFramePhase}
-                        onSegmentAnimaticSettingsChange={onSegmentAnimaticSettingsChange ? 
-                          (segmentId, settings) => onSegmentAnimaticSettingsChange(
-                            scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                            segmentId,
-                            settings
-                          ) : undefined
-                        }
-                        sceneDirection={scene.detailedDirection || scene.sceneDirection}
-                        sceneData={{
-                          id: scene.id,
-                          sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                          heading: scene.heading,
-                          action: scene.action,
-                          narration: scene.narration,
-                          dialogue: scene.dialogue,
-                          duration: scene.duration,
-                          narrationAudio: scene.narrationAudio,
-                          dialogueAudio: scene.dialogueAudio,
-                          sceneDirection: scene.detailedDirection || scene.sceneDirection,
-                        }}
-                        onAddSegment={(newSegment) => {
-                          console.log('[ScriptPanel] onAddSegment handler:', { sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`, newSegment, hasHandler: !!onAddFullSegment })
-                          if (onAddFullSegment) {
-                            onAddFullSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, newSegment)
-                          } else {
-                            console.error('[ScriptPanel] onAddFullSegment is undefined!')
-                          }
-                        }}
-                        onDeleteSegment={onDeleteSegment ? (segmentId) => {
-                          console.log('[ScriptPanel] onDeleteSegment called:', { sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId })
-                          onDeleteSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId)
-                        } : undefined}
-                        // Regenerate segments via API with audio duration for proper segment count
-                        onResegment={onInitializeSceneProduction ? async () => {
-                          const totalAudioDuration = computeSceneTotalAudioSecondsForSegmentation(scene)
-                          const narrationDuration =
-                            scene.narrationAudio?.en?.duration ||
-                            scene.narrationAudio?.['en-US']?.duration ||
-                            scene.narrationDuration ||
-                            0
-                          await onInitializeSceneProduction(
-                            scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                            {
-                              targetDuration: Math.max(scene.duration || 8, totalAudioDuration),
-                              generationOptions: {
-                                totalAudioDurationSeconds: totalAudioDuration,
-                                narrationDriven: Number(narrationDuration) > 0,
-                              },
-                            }
-                          )
-                        } : undefined}
-                      />
-                    ) : (
-                      /* Fallback: Simple single-frame viewer when no segments exist */
-                      <div className="space-y-4">
-                        {/* Initialize Beats CTA when scene image exists but no segments */}
-                        {scene.imageUrl && onInitializeSceneProduction && (
-                          <div className="flex items-center gap-4 p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-lg">
-                            <div className="flex-1">
-                              <h4 className="text-sm font-medium text-indigo-300">Ready for Frame Anchoring</h4>
-                              <p className="text-xs text-slate-400 mt-1">
-                                Initialize segments to unlock the Keyframe State Machine for Start/End frame generation.
-                              </p>
-                            </div>
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                const totalAudio = computeSceneTotalAudioSecondsForSegmentation(scene)
-                                onInitializeSceneProduction(scene.sceneId || scene.id || `scene-${sceneIdx}`, {
-                                  targetDuration: Math.max(scene.duration || 8, totalAudio),
-                                  generationOptions: {
-                                    totalAudioDurationSeconds: totalAudio,
-                                  },
-                                })
-                              }}
-                              className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                            >
-                              <Layers className="w-4 h-4 mr-2" />
-                              Initialize Beats
-                            </Button>
-                          </div>
-                        )}
-                        
-                        <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden border border-slate-700 group">
-                        {scene.imageUrl ? (
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <div className="relative w-full h-full cursor-pointer">
-                                <img 
-                                  src={scene.imageUrl} 
-                                  alt={`Scene ${sceneNumber} Frame`} 
-                                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                />
-                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded p-1 text-white">
-                                  <Maximize2 className="w-4 h-4" />
-                                </div>
-                              </div>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 border-none bg-black" aria-describedby={undefined}>
-                              <DialogTitle className="sr-only">Scene {sceneNumber} Frame</DialogTitle>
-                              <div className="relative w-full h-full flex items-center justify-center">
-                                <img 
-                                  src={scene.imageUrl} 
-                                  alt={`Scene ${sceneNumber} Frame Fullscreen`} 
-                                  className="max-w-full max-h-[90vh] object-contain"
-                                />
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        ) : (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-900">
-                            <ImageIcon className="w-12 h-12 mb-3 opacity-30" />
-                            <span className="text-sm font-medium">No frame generated</span>
-                            <p className="text-xs opacity-60 mt-1">Generate a scene image using the buttons below, or go to Scene tab</p>
-                          </div>
-                        )}
-                        
-                        {/* Overlay Actions */}
-                        <TooltipProvider>
-                          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                             <Tooltip>
-                               <TooltipTrigger asChild>
-                                 <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    className="bg-indigo-500/90 text-white hover:bg-indigo-500 w-10 h-10 p-0 border-0"
-                                    onClick={handleQuickGenerate}
-                                 >
-                                   <Zap className="w-4 h-4" />
-                                 </Button>
-                               </TooltipTrigger>
-                               <TooltipContent>Quick Generate</TooltipContent>
-                             </Tooltip>
-                             <Tooltip>
-                               <TooltipTrigger asChild>
-                                 <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0 border-0"
-                                    onClick={() => onOpenPromptBuilder?.(sceneIdx)}
-                                 >
-                                   <Wand2 className="w-4 h-4" />
-                                 </Button>
-                               </TooltipTrigger>
-                               <TooltipContent>Open Prompt Builder</TooltipContent>
-                             </Tooltip>
-                             <Tooltip>
-                               <TooltipTrigger asChild>
-                                 <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
-                                    onClick={() => {
-                                  const input = document.createElement('input');
-                                  input.type = 'file';
-                                  input.accept = 'image/*';
-                                  input.onchange = async (e) => {
-                                    const file = (e.target as HTMLInputElement).files?.[0];
-                                    if (file && onUploadKeyframe) {
-                                      await onUploadKeyframe(sceneIdx, file);
-                                    }
-                                  };
-                                  input.click();
-                                }}
-                                 >
-                                   <Upload className="w-4 h-4" />
-                                 </Button>
-                               </TooltipTrigger>
-                               <TooltipContent>Upload</TooltipContent>
-                             </Tooltip>
-                             {scene.imageUrl && (
-                               <>
-                                 <Tooltip>
-                                   <TooltipTrigger asChild>
-                                     <Button
-                                       size="sm"
-                                       variant="secondary"
-                                       className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
-                                       onClick={async () => {
-                                         try {
-                                           const response = await fetch(scene.imageUrl);
-                                           const blob = await response.blob();
-                                           const url = window.URL.createObjectURL(blob);
-                                           const a = document.createElement('a');
-                                           a.href = url;
-                                           a.download = `scene-${sceneNumber}-frame.png`;
-                                           document.body.appendChild(a);
-                                           a.click();
-                                           document.body.removeChild(a);
-                                           window.URL.revokeObjectURL(url);
-                                         } catch (error) {
-                                           console.error('Failed to download image:', error);
-                                         }
-                                       }}
-                                     >
-                                       <Download className="w-4 h-4" />
-                                     </Button>
-                                   </TooltipTrigger>
-                                   <TooltipContent>Download</TooltipContent>
-                                 </Tooltip>
-                                 {onEditImage && (
-                                   <Tooltip>
-                                     <TooltipTrigger asChild>
-                                       <Button
-                                         size="sm"
-                                         variant="secondary"
-                                         className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
-                                         onClick={() => onEditImage(scene.imageUrl, sceneIdx)}
-                                       >
-                                         <Pencil className="w-4 h-4" />
-                                       </Button>
-                                     </TooltipTrigger>
-                                     <TooltipContent>Edit Image</TooltipContent>
-                                   </Tooltip>
-                                 )}
-                                 {onAddToReferenceLibrary && (
-                                   <Tooltip>
-                                     <TooltipTrigger asChild>
-                                       <Button
-                                         size="sm"
-                                         variant="secondary"
-                                         className="bg-white/90 text-black hover:bg-white w-10 h-10 p-0"
-                                         onClick={async () => {
-                                           await onAddToReferenceLibrary(scene.imageUrl, `Scene ${sceneNumber} Frame`, sceneNumber);
-                                         }}
-                                       >
-                                         <FolderPlus className="w-4 h-4" />
-                                       </Button>
-                                     </TooltipTrigger>
-                                     <TooltipContent>Add to Library</TooltipContent>
-                                   </Tooltip>
-                                 )}
-                               </>
-                             )}
-                          </div>
-                        </TooltipProvider>
-                      </div>
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 {activeWorkflowTab === 'callAction' && (
                   <SceneDirectionProvider direction={scene.detailedDirection || scene.sceneDirection}>
@@ -7606,144 +7327,6 @@ function SceneCard({
                             Builder
                           </button>
                         </div>
-                      </div>
-                    )}
-                    
-                    {/* ==================== STORYBOARD BUILDER CONTAINER ==================== */}
-                    {/* Groups: Keyframe Generation + Storyboard Editor - simplified to 2-step workflow */}
-                    {sceneProductionData?.isSegmented && sceneProductionData.segments?.length > 0 && (
-                      <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
-                        <ProductionSectionHeader
-                          icon={Layers}
-                          title="Beat Frames"
-                          badge={sceneProductionData.segments?.length ?? 0}
-                          rightHint="Build start/end Beat Frames for Frame-to-Video"
-                          collapsible
-                          expanded={!storyboardBuilderCollapsed}
-                          onToggle={() => setStoryboardBuilderCollapsed(!storyboardBuilderCollapsed)}
-                        />
-                        <AnimatePresence>
-                          {!storyboardBuilderCollapsed && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="px-4 pb-4 space-y-4 border-t border-gray-700/50"
-                            >
-                        
-                        {/* Keyframe Generation */}
-                        <SegmentFrameTimeline
-                          segments={sceneProductionData.segments}
-                          sceneId={scene.sceneId || scene.id || `scene-${sceneIdx}`}
-                          sceneNumber={sceneNumber}
-                          sceneImageUrl={scene.imageUrl}
-                          selectedSegmentIndex={selectedSegmentIndex}
-                          onSelectSegment={setSelectedSegmentIndex}
-                          onGenerateFrames={(segmentId, frameType, options) => 
-                            onGenerateSegmentFrames?.(
-                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                              segmentId,
-                              frameType,
-                              options
-                            ) ?? Promise.resolve()
-                          }
-                          onGenerateVideo={(segmentId) => 
-                            onSegmentGenerate?.(
-                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                              segmentId,
-                              'I2V'
-                            )
-                          }
-                          onOpenDirectorConsole={() => {
-                            const consoleId = `director-console-${scene.sceneId || scene.id || `scene-${sceneIdx}`}`
-                            const consoleEl = document.getElementById(consoleId)
-                            if (consoleEl) {
-                              consoleEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                            }
-                          }}
-                          onEditFrame={(segmentId, frameType, frameUrl) => {
-                            onOpenFrameEditModal?.(
-                              sceneIdx,
-                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                              segmentId,
-                              frameType,
-                              frameUrl
-                            )
-                          }}
-                          onUploadFrame={(segmentId, frameType, file) => {
-                            onUploadFrame?.(
-                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                              segmentId,
-                              frameType,
-                              file
-                            )
-                          }}
-                          isGenerating={!!generatingFrameForSegment}
-                          generatingSegmentId={generatingFrameForSegment}
-                          generatingPhase={generatingFramePhase}
-                          onSegmentAnimaticSettingsChange={onSegmentAnimaticSettingsChange ? 
-                            (segmentId, settings) => onSegmentAnimaticSettingsChange(
-                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                              segmentId,
-                              settings
-                            ) : undefined
-                          }
-                          sceneDirection={scene.detailedDirection || scene.sceneDirection}
-                          sceneData={{
-                            id: scene.id,
-                            sceneId: scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                            heading: scene.heading,
-                            action: scene.action,
-                            narration: scene.narration,
-                            dialogue: scene.dialogue,
-                            duration: scene.duration,
-                            narrationAudio: scene.narrationAudio,
-                            dialogueAudio: scene.dialogueAudio,
-                            sceneDirection: scene.detailedDirection || scene.sceneDirection,
-                          }}
-                          onAddSegment={(newSegment) => {
-                            console.log('[ScriptPanel] onAddSegment handler (Storyboard Builder):', { sceneId: scene.sceneId || scene.id, newSegment })
-                            if (onAddFullSegment) {
-                              onAddFullSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, newSegment)
-                            }
-                          }}
-                          onDeleteSegment={onDeleteSegment ? (segmentId) => {
-                            onDeleteSegment(scene.sceneId || scene.id || `scene-${sceneIdx}`, segmentId)
-                          } : undefined}
-                          // Regenerate segments via API with audio duration for proper segment count
-                          onResegment={onInitializeSceneProduction ? async () => {
-                            const totalAudioDuration = computeSceneTotalAudioSecondsForSegmentation(scene)
-                            const narrationDuration =
-                              scene.narrationAudio?.en?.duration ||
-                              scene.narrationAudio?.['en-US']?.duration ||
-                              scene.narrationDuration ||
-                              0
-                            await onInitializeSceneProduction(
-                              scene.sceneId || scene.id || `scene-${sceneIdx}`,
-                              {
-                                targetDuration: Math.max(scene.duration || 8, totalAudioDuration),
-                                generationOptions: {
-                                  totalAudioDurationSeconds: totalAudioDuration,
-                                  narrationDriven: Number(narrationDuration) > 0,
-                                },
-                              }
-                            )
-                          } : undefined}
-                        />
-                    
-                    {sceneProductionData?.segments && sceneProductionData.segments.length > 0 && (
-                      <div className="p-3 bg-gray-800/40 border border-gray-700/50 rounded-lg">
-                        <p className="text-xs text-gray-400 leading-snug">
-                          After keyframes are ready, use{' '}
-                          <span className="text-purple-300 font-medium">Video Production</span> for beat video, then{' '}
-                          <span className="text-purple-300 font-medium">Production Mixer</span> to composite audio and render.
-                        </p>
-                      </div>
-                    )}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
                       </div>
                     )}
                     

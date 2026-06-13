@@ -19,6 +19,7 @@ interface ExpressRequest {
   language?: string
   artStyle?: string
   includeMusic?: boolean
+  includeEndFrames?: boolean
   includeSFX?: boolean
   regenerate?: boolean
   imageQuality?: string
@@ -139,6 +140,7 @@ export async function POST(req: NextRequest) {
     artStyle = 'photorealistic',
     includeMusic = false,
     includeSFX = false,
+    includeEndFrames = false,
     regenerate = false,
     imageQuality,
     storyboardQuality,
@@ -188,6 +190,7 @@ export async function POST(req: NextRequest) {
     artStyle,
     includeMusic,
     includeSFX,
+    includeEndFrames: !!includeEndFrames,
     regenerate,
     imageQuality,
     storyboardQuality,

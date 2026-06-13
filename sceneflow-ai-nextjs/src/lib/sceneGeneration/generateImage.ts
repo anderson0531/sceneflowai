@@ -55,6 +55,10 @@ export interface GenerateSceneImageParams {
   objectReferences?: Array<Record<string, unknown>>
   /** Id of scene.storyboardFrames entry when frameType is 'custom'. */
   customFrameId?: string
+  /** Beat frame role: start (default) or end (motion/FTV pair). */
+  frameRole?: 'start' | 'end'
+  /** Start frame URL when generating an end frame (image conditioning). */
+  startFrameUrl?: string
   /** In-memory scene from Express orchestrator (merged over DB scene at sceneIndex). */
   sceneOverride?: Record<string, unknown>
   /** Vertex image tier — Express uses `eco` for reliability. */
@@ -108,6 +112,8 @@ export async function generateSceneImage(
     sceneOverride,
     modelTier,
     skipLikenessValidation,
+    frameRole,
+    startFrameUrl,
   } = params
 
   const headers: HeadersInit = {
@@ -147,6 +153,8 @@ export async function generateSceneImage(
       ...(locationReferences?.length ? { locationReferences } : {}),
       ...(objectReferences?.length ? { objectReferences } : {}),
       ...(customFrameId ? { customFrameId } : {}),
+      ...(frameRole ? { frameRole } : {}),
+      ...(startFrameUrl ? { startFrameUrl } : {}),
       ...(sceneOverride ? { sceneOverride } : {}),
       ...(modelTier ? { modelTier } : {}),
       ...(skipLikenessValidation ? { skipLikenessValidation: true } : {}),

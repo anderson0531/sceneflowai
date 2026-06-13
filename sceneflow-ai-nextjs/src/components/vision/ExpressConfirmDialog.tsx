@@ -31,6 +31,8 @@ export interface ExpressConfirmOptions {
   storyboardQuality?: 'draft' | 'final'
   /** Upgrade pass: regenerate draft frames at final quality only. */
   finalizeOnly?: boolean
+  /** When true, Express also generates end frames per beat for FTV motion. */
+  includeEndFrames?: boolean
 }
 
 interface ExpressConfirmDialogProps {
@@ -63,6 +65,7 @@ export function ExpressConfirmDialog({
   onConfirm,
 }: ExpressConfirmDialogProps) {
   const [includeMusic, setIncludeMusic] = useState(false)
+  const [includeEndFrames, setIncludeEndFrames] = useState(false)
   const [regenerate, setRegenerate] = useState(false)
   const [artStyle, setArtStyle] = useState(lockedArtStyle || 'photorealistic')
 
@@ -74,6 +77,7 @@ export function ExpressConfirmDialog({
   useEffect(() => {
     if (open) {
       setIncludeMusic(hasTitleScene)
+      setIncludeEndFrames(false)
       setRegenerate(false)
       setArtStyle(lockedArtStyle || 'photorealistic')
     }
@@ -290,6 +294,25 @@ export function ExpressConfirmDialog({
               </div>
             </div>
 
+            <div className="flex items-start space-x-3 p-3 bg-gray-800 rounded-lg">
+              <Checkbox
+                id="express-end-frames"
+                checked={includeEndFrames}
+                onCheckedChange={(checked) => setIncludeEndFrames(!!checked)}
+                disabled={isRunning}
+              />
+              <label
+                htmlFor="express-end-frames"
+                className="flex-1 text-sm text-gray-200 cursor-pointer"
+              >
+                <div className="font-medium">Include end frames</div>
+                <div className="text-xs text-gray-400">
+                  Generate a start + end frame pair per beat for in-beat motion and Frame-to-Video.
+                  Off by default for a faster, lower-cost first cut.
+                </div>
+              </label>
+            </div>
+
             <div className="flex items-start space-x-3 p-3 bg-amber-900/20 border border-amber-600/30 rounded-lg">
               <Checkbox
                 id="express-regenerate"
@@ -379,6 +402,7 @@ export function ExpressConfirmDialog({
                 language,
                 artStyle,
                 storyboardQuality: 'draft',
+                includeEndFrames,
               })
             }
             disabled={isRunning || nothingToRun}

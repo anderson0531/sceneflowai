@@ -41,6 +41,9 @@ import {
   getPhotorealisticPromptAnchor,
 } from '@/lib/storyboard/storyboardQuality'
 import { getArtStyleNegativeTerms, getArtStylePromptSuffix } from '@/lib/vision/artStyle'
+import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
+import { buildEndFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
+import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBaseline'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120  // Increased for new AI image models
@@ -282,6 +285,8 @@ export async function POST(req: NextRequest) {
       visualSetup,
       talentDirection,
       wardrobeTextOverrides,
+      frameRole = 'start',
+      startFrameUrl,
     } = body
 
     const resolvedGen = resolveStoryboardGeneration({
@@ -412,6 +417,77 @@ export async function POST(req: NextRequest) {
             { success: false, error: 'Beat not found for beatIndex/beatId' },
             { status: 400 }
           )
+        }
+
+        if (frameRole === 'end') {
+          const beats = getSceneBeats(resolvedScene as Record<string, unknown>)
+          const beat = beats[effectiveBeatIndex]
+          if (!beat) {
+            return NextResponse.json(
+              { success: false, error: 'Beat not found for end frame generation' },
+              { status: 400 }
+            )
+          }
+          const resolvedStartUrl =
+            (typeof startFrameUrl === 'string' && startFrameUrl.trim()) ||
+            beat.storyboardImageUrl?.trim()
+          if (!resolvedStartUrl) {
+            return NextResponse.json(
+              { success: false, error: 'Start frame required before generating end frame' },
+              { status: 400 }
+            )
+          }
+
+          const endPrompt =
+            (typeof customPrompt === 'string' && customPrompt.trim()) ||
+            buildEndFramePrompt(beat)
+          const durationSeconds =
+            typeof beat.durationSeconds === 'number' && beat.durationSeconds > 0
+              ? beat.durationSeconds
+              : 8
+          const instruction = buildPreVisEndFrameEditInstruction({
+            startFramePrompt: beat.storyboardImagePrompt?.trim() || endPrompt,
+            durationSeconds,
+          })
+
+          const editResult = await editImageWithGeminiStudio({
+            sourceImage: resolvedStartUrl,
+            instruction,
+            aspectRatio: '16:9',
+            imageSize: '1K',
+            editIntent: 'keyframeEnd',
+            segmentDurationSeconds: durationSeconds,
+          })
+
+          const imageUrl = await uploadImageToBlob(
+            editResult.imageBase64,
+            `projects/${projectId}/scenes/${sceneIndex}/beats/${beat.beatId || effectiveBeatIndex}-end-${Date.now()}.png`
+          )
+
+          try {
+            await CreditService.charge(
+              userId!,
+              IMAGE_CREDITS.FRAME_GENERATION,
+              'ai_usage',
+              projectId || null,
+              { operation: 'beat_end_frame', sceneIndex, beatIndex: effectiveBeatIndex }
+            )
+          } catch (chargeError: unknown) {
+            console.error('[Scene Image] Failed to charge end-frame credits:', chargeError)
+          }
+
+          return NextResponse.json({
+            success: true,
+            imageUrl,
+            prompt: instruction,
+            frameType: 'beat',
+            frameRole: 'end',
+            beatIndex: effectiveBeatIndex,
+            model: 'gemini-image-edit',
+            provider: 'gemini',
+            storage: 'vercel-blob',
+            creditsCharged: IMAGE_CREDITS.FRAME_GENERATION,
+          })
         }
       }
 

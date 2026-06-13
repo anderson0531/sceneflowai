@@ -14,6 +14,7 @@ import {
   buildStoryboardVisualTimeline,
   getCurrentStoryboardVisualFrame,
   type StoryboardVisualFrame,
+  SCENE_FADE_TO_BLACK_SEC,
 } from '@/lib/storyboard/types'
 import { buildBeatAlignedStoryboardSfxClips } from '@/lib/storyboard/sfxPlayback'
 import { buildStoryboardMusicClips, resolveSceneMusicFileDuration } from '@/lib/storyboard/musicPlayback'
@@ -319,11 +320,20 @@ export function useStoryboardPlayback({
   }, [clipTimelineKey, seekTo])
 
   useEffect(() => {
+    const frame = getCurrentStoryboardVisualFrame(visualFrames, currentTime)
+    let duck = 1
+    if (frame?.isSceneEnd) {
+      const fadeStart = Math.max(0, frame.duration - SCENE_FADE_TO_BLACK_SEC)
+      const t = currentTime - frame.startTime
+      if (t >= fadeStart) {
+        duck = 1 - Math.min(1, (t - fadeStart) / SCENE_FADE_TO_BLACK_SEC) * 0.75
+      }
+    }
     setTrackVolume('voiceover', dialogueVolume)
     setTrackVolume('dialogue', dialogueVolume)
-    setTrackVolume('music', effectiveMusicVolume)
-    setTrackVolume('sfx', sfxVolume)
-  }, [dialogueVolume, effectiveMusicVolume, sfxVolume, setTrackVolume])
+    setTrackVolume('music', effectiveMusicVolume * duck)
+    setTrackVolume('sfx', sfxVolume * duck)
+  }, [dialogueVolume, effectiveMusicVolume, sfxVolume, setTrackVolume, visualFrames, currentTime])
 
   useEffect(() => {
     setTrackEnabled('music', !!scene?.musicAudio || !!(scene?.music as { url?: string } | undefined)?.url)

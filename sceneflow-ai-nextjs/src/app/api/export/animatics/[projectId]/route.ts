@@ -75,7 +75,7 @@ export async function GET(
     const renderJobs = await RenderJob.findAll({
       where: {
         project_id: projectId,
-        render_type: 'animatic',
+        render_type: ['animatic', 'project_animatic', 'scene_animatic'],
       },
       order: [['created_at', 'DESC']],
     })

@@ -9,7 +9,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Globe, X, Maximize, Minimize, Share2, ExternalLink } from 'lucide-react'
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Globe, X, Maximize, Minimize, Share2, ExternalLink, Film, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Slider } from '@/components/ui/slider'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -21,6 +21,7 @@ import {
   getEstablishingFrameUrl,
   getScenePlayableThumbnailUrl,
   sceneHasPlayablePreVisAudio,
+  SCENE_FADE_TO_BLACK_SEC,
 } from '@/lib/storyboard/types'
 import { useStoryboardPlayback } from '@/hooks/useStoryboardPlayback'
 import {
@@ -62,6 +63,10 @@ interface AudioGalleryPlayerProps {
   expandHref?: string
   /** Landing full-width embed: use full pane width for scene image and controls. */
   fullWidthEmbed?: boolean
+  /** Trigger full-project cloud animatic render (matches player timeline). */
+  onGenVideo?: () => void | Promise<void>
+  isGenVideoRunning?: boolean
+  exportedAnimaticUrl?: string | null
 }
 
 function formatTime(seconds: number) {
@@ -109,6 +114,9 @@ export function AudioGalleryPlayer({
   embedMode = false,
   expandHref,
   fullWidthEmbed = false,
+  onGenVideo,
+  isGenVideoRunning = false,
+  exportedAnimaticUrl,
 }: AudioGalleryPlayerProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
   const [volume, setVolume] = useState(0.8)
@@ -182,6 +190,42 @@ export function AudioGalleryPlayer({
   const displayImageUrl =
     currentVisualFrame?.imageUrl ?? getEstablishingFrameUrl(currentScene)
 
+  const BEAT_CROSSFADE_START_FRACTION = 0.35
+  const BEAT_CROSSFADE_MAX_SEC = 1.5
+
+  const inBeatVisual = useMemo(() => {
+    const frame = currentVisualFrame
+    if (!frame?.imageUrl) {
+      return { primaryUrl: displayImageUrl, overlayUrl: null as string | null, blend: 0, fadeBlack: 0 }
+    }
+    const frameStart = frame.startTime
+    const frameDuration = Math.max(frame.duration, 0.1)
+    const t = Math.max(0, currentTime - frameStart)
+    let primaryUrl = frame.imageUrl
+    let overlayUrl: string | null = null
+    let blend = 0
+
+    if (frame.endImageUrl) {
+      const crossfadeDur = Math.min(BEAT_CROSSFADE_MAX_SEC, frameDuration * 0.25)
+      const crossfadeStart = frameDuration * BEAT_CROSSFADE_START_FRACTION
+      if (t >= crossfadeStart) {
+        blend = Math.min(1, (t - crossfadeStart) / crossfadeDur)
+        overlayUrl = frame.imageUrl
+        primaryUrl = frame.endImageUrl
+      }
+    }
+
+    let fadeBlack = 0
+    if (frame.isSceneEnd) {
+      const fadeStart = Math.max(0, frameDuration - SCENE_FADE_TO_BLACK_SEC)
+      if (t >= fadeStart) {
+        fadeBlack = Math.min(1, (t - fadeStart) / SCENE_FADE_TO_BLACK_SEC)
+      }
+    }
+
+    return { primaryUrl, overlayUrl, blend, fadeBlack }
+  }, [currentVisualFrame, currentTime, displayImageUrl])
+
   const speakerLabel = currentVisualFrame?.character ?? currentVisualFrame?.label
   
   // Fullscreen toggle
@@ -230,9 +274,10 @@ export function AudioGalleryPlayer({
     setVisualFrameKey(prev => (prev === next ? prev : next))
   }, [currentSceneIndex, currentVisualFrame?.clipId, currentVisualFrame?.dialogueIndex, currentVisualFrame?.frameType])
 
-  // Crossfade between dialogue frames
+  // Crossfade between dialogue frames (inter-beat); in-beat start→end uses inBeatVisual
   useEffect(() => {
-    if (!displayImageUrl) {
+    const url = inBeatVisual.primaryUrl
+    if (!url) {
       lastImageUrlRef.current = null
       setCrossfadeFromUrl(null)
       return
@@ -240,16 +285,17 @@ export function AudioGalleryPlayer({
     const prev = lastImageUrlRef.current
     if (
       prev &&
-      prev !== displayImageUrl &&
-      imageEffectPrefs.mode === 'crossfade'
+      prev !== url &&
+      imageEffectPrefs.mode === 'crossfade' &&
+      !inBeatVisual.overlayUrl
     ) {
       setCrossfadeFromUrl(prev)
       const timer = setTimeout(() => setCrossfadeFromUrl(null), CROSSFADE_DURATION_MS)
-      lastImageUrlRef.current = displayImageUrl
+      lastImageUrlRef.current = url
       return () => clearTimeout(timer)
     }
-    lastImageUrlRef.current = displayImageUrl
-  }, [displayImageUrl, imageEffectPrefs.mode])
+    lastImageUrlRef.current = url
+  }, [inBeatVisual.primaryUrl, inBeatVisual.overlayUrl, imageEffectPrefs.mode])
   
   const goToScene = useCallback(
     (index: number) => {
@@ -395,6 +441,33 @@ export function AudioGalleryPlayer({
           </div>
           
           <div className="flex items-center gap-3">
+            {onGenVideo && !isSharedView && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isGenVideoRunning}
+                onClick={() => void onGenVideo()}
+                className="h-7 text-xs bg-indigo-900/40 border-indigo-500/40 hover:bg-indigo-800/50 hover:text-white"
+              >
+                {isGenVideoRunning ? (
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                ) : (
+                  <Film className="w-3.5 h-3.5 mr-1.5" />
+                )}
+                Gen Video
+              </Button>
+            )}
+            {exportedAnimaticUrl && !isSharedView && (
+              <a
+                href={exportedAnimaticUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Animatic
+              </a>
+            )}
             {/* Share button */}
             {onShare && !isSharedView && (
               <Button
@@ -489,12 +562,26 @@ export function AudioGalleryPlayer({
                   ? "max-w-3xl sm:max-w-4xl aspect-video shadow-lg"
                   : "max-w-[500px] aspect-video shadow-xl"
           )}>
-            {displayImageUrl ? (
+            {inBeatVisual.primaryUrl ? (
               <>
-                {crossfadeFromUrl && imageEffectPrefs.mode === 'crossfade' && (
+                {crossfadeFromUrl && imageEffectPrefs.mode === 'crossfade' && !inBeatVisual.overlayUrl && (
                   renderSceneImage(crossfadeFromUrl, 'previous')
                 )}
-                {renderSceneImage(displayImageUrl, 'current')}
+                {inBeatVisual.overlayUrl && inBeatVisual.blend > 0 && (
+                  <div
+                    className="absolute inset-0 z-[1]"
+                    style={{ opacity: 1 - inBeatVisual.blend }}
+                  >
+                    {renderSceneImage(inBeatVisual.overlayUrl, 'start-overlay')}
+                  </div>
+                )}
+                {renderSceneImage(inBeatVisual.primaryUrl, 'current')}
+                {inBeatVisual.fadeBlack > 0 && (
+                  <div
+                    className="absolute inset-0 bg-black z-[2] pointer-events-none"
+                    style={{ opacity: inBeatVisual.fadeBlack }}
+                  />
+                )}
               </>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-500">

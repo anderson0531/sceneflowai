@@ -894,6 +894,7 @@ export interface BeatStoryboardImageExtras {
   imagePrompt?: string
   imageGcsPath?: string
   imageTier?: 'draft' | 'final'
+  frameRole?: 'start' | 'end'
 }
 
 /** Persist a beat-index storyboard image to beats[] and legacy dialogue[]. */
@@ -905,6 +906,23 @@ export function applyBeatStoryboardImageToScene(
 ): Record<string, unknown> {
   const beats = getSceneBeats(scene)
   if (!beats[beatIndex]) return scene
+
+  const frameRole = extras?.frameRole ?? 'start'
+
+  if (frameRole === 'end') {
+    beats[beatIndex] = {
+      ...beats[beatIndex],
+      storyboardEndImageUrl: imageUrl,
+      ...(extras?.imageTier ? { storyboardEndImageTier: extras.imageTier } : {}),
+      ...(extras?.imageGcsPath
+        ? { storyboardEndImageGcsPath: extras.imageGcsPath }
+        : {}),
+      ...(extras?.imagePrompt
+        ? { storyboardEndImagePrompt: extras.imagePrompt }
+        : {}),
+    }
+    return applyBeatsToScene(scene, beats)
+  }
 
   beats[beatIndex] = {
     ...beats[beatIndex],
@@ -928,6 +946,21 @@ export function applyBeatStoryboardImageToScene(
     }
   }
   return updated
+}
+
+/** Remove the optional end frame from a beat. */
+export function clearBeatStoryboardEndImageFromScene(
+  scene: Record<string, unknown>,
+  beatIndex: number
+): Record<string, unknown> {
+  const beats = getSceneBeats(scene)
+  if (!beats[beatIndex]) return scene
+
+  const { storyboardEndImageUrl, storyboardEndImagePrompt, storyboardEndImageGcsPath, storyboardEndImageTier, ...rest } =
+    beats[beatIndex]
+  beats[beatIndex] = rest as SceneBeat
+
+  return applyBeatsToScene(scene, beats)
 }
 
 /** Persist user-verified reference selection on a beat by beatId. */
@@ -961,9 +994,11 @@ export function applyExpressStoryboardImageToScene(
     imageTier?: 'draft' | 'final'
     imagePrompt?: string
     imageGcsPath?: string
+    frameRole?: 'start' | 'end'
   }
 ): Record<string, unknown> {
-  const { imageUrl, beatIndex, dialogueIndex, imageTier, imagePrompt, imageGcsPath } = params
+  const { imageUrl, beatIndex, dialogueIndex, imageTier, imagePrompt, imageGcsPath, frameRole } =
+    params
 
   if (typeof beatIndex === 'number') {
     return {
@@ -971,6 +1006,7 @@ export function applyExpressStoryboardImageToScene(
         imagePrompt,
         imageGcsPath,
         imageTier,
+        frameRole,
       }),
       storyboardStatus: 'pending_review',
     }

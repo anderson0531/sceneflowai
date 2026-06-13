@@ -380,7 +380,7 @@ function DirectorConsoleRoot({
   const [streamRenderProgress, setStreamRenderProgress] = useState(0)
   const [isUploadingStream, setIsUploadingStream] = useState(false)
   const [streamUploadError, setStreamUploadError] = useState<string | null>(null)
-  const [productionTarget, setProductionTarget] = useState<ProductionTarget>({ streamType: 'animatic', language: 'en' })
+  const [productionTarget, setProductionTarget] = useState<ProductionTarget>({ streamType: 'video', language: 'en' })
   const [renderDialogMode, setRenderDialogMode] = useState<'video' | 'animatic'>('video')
   const [renderDialogAnimaticSettings, setRenderDialogAnimaticSettings] = useState<
     Partial<Omit<AnimaticRenderSettings, 'type'>> | undefined
@@ -639,46 +639,6 @@ function DirectorConsoleRoot({
   }, [onProductionDataChange, productionData])
   
   // === Production Streams Handlers ===
-  
-  const handleRenderAnimatic = useCallback(
-    async (language: string, resolution: '720p' | '1080p' | '4K', settings: AnimaticRenderSettings) => {
-      const languageInfo = SUPPORTED_LANGUAGES.find(l => l.code === language)
-      const nextVer = getNextProductionStreamVersion(productionStreams, language, 'animatic')
-      const streamId = `stream-animatic-${language}-v${nextVer}-${Date.now()}`
-      const newStream: ProductionStream = {
-        id: streamId,
-        streamType: 'animatic',
-        streamVersion: nextVer,
-        language,
-        languageLabel: languageInfo?.name || language,
-        status: 'rendering',
-        resolution,
-        createdAt: new Date().toISOString(),
-        renderSettings: settings,
-      }
-      const updatedStreams = [...productionStreams, newStream]
-      setProductionStreams(updatedStreams)
-      setRenderingStreamId(streamId)
-      setStreamRenderProgress(0)
-      setProductionTarget(prev => ({ ...prev, streamType: 'animatic', language }))
-      setRenderDialogMode('animatic')
-      setRenderDialogAnimaticSettings({
-        kenBurnsIntensity: settings.kenBurnsIntensity,
-        transitionStyle: settings.transitionStyle,
-        transitionDuration: settings.transitionDuration,
-        includeSubtitles: settings.includeSubtitles,
-        subtitleStyle: settings.subtitleStyle,
-      })
-      if (onProductionDataChange && productionData) {
-        onProductionDataChange({
-          ...productionData,
-          productionStreams: updatedStreams,
-        })
-      }
-      setIsRenderDialogOpen(true)
-    },
-    [productionStreams, productionData, onProductionDataChange]
-  )
   
   // Delete a production stream
   const handleDeleteStream = useCallback((streamId: string) => {
@@ -945,7 +905,7 @@ function DirectorConsoleRoot({
       onStreamTypeChange={(streamType) =>
         setProductionTarget((prev) => ({ ...prev, streamType }))
       }
-      onRenderAnimatic={handleRenderAnimatic}
+      onRenderAnimatic={undefined}
       onDeleteStream={handleDeleteStream}
       onReRenderStream={handleReRenderStream}
       onPreviewStream={handlePreviewStream}

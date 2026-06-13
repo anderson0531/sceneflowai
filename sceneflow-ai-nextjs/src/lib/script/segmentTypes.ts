@@ -56,6 +56,11 @@ export interface SceneBeat {
   storyboardImageGcsPath?: string
   /** draft = Express layout pass; final = hi-res for animatic & video */
   storyboardImageTier?: 'draft' | 'final'
+  /** Optional end frame for in-beat motion and FTV interpolation. */
+  storyboardEndImageUrl?: string
+  storyboardEndImagePrompt?: string
+  storyboardEndImageGcsPath?: string
+  storyboardEndImageTier?: 'draft' | 'final'
   audioUrl?: string
   durationSeconds?: number
   needsSplit?: boolean
