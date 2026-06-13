@@ -406,19 +406,10 @@ interface Project {
 
 const VISION_SCROLL_PANEL_SELECTOR = '[data-vision-scroll-panel]'
 
-function isVerticallyScrollable(el: HTMLElement): boolean {
-  const { overflowY } = window.getComputedStyle(el)
-  if (overflowY !== 'auto' && overflowY !== 'scroll') return false
-  return el.scrollHeight > el.clientHeight + 1
-}
-
-function findVisionScrollContainer(start: HTMLElement | null): HTMLElement | null {
+function findVisionScrollPanelMarker(start: HTMLElement | null): HTMLElement | null {
   let el: HTMLElement | null = start
   while (el) {
-    if (el.matches(VISION_SCROLL_PANEL_SELECTOR) && isVerticallyScrollable(el)) {
-      return el
-    }
-    if (isVerticallyScrollable(el)) {
+    if (el.matches(VISION_SCROLL_PANEL_SELECTOR)) {
       return el
     }
     el = el.parentElement
@@ -426,16 +417,51 @@ function findVisionScrollContainer(start: HTMLElement | null): HTMLElement | nul
   return null
 }
 
+function canScrollVertically(panel: HTMLElement, deltaY?: number): boolean {
+  const maxScrollTop = panel.scrollHeight - panel.clientHeight
+  if (maxScrollTop <= 0) return false
+  if (deltaY === undefined) return true
+  if (deltaY > 0) return panel.scrollTop < maxScrollTop
+  if (deltaY < 0) return panel.scrollTop > 0
+  return false
+}
+
+function findDefaultVisionScrollPanelFallback(pointer: { x: number; y: number }): HTMLElement | null {
+  const markers = Array.from(document.querySelectorAll<HTMLElement>(VISION_SCROLL_PANEL_SELECTOR))
+  if (markers.length === 0) return null
+
+  for (const marker of markers) {
+    const rect = marker.getBoundingClientRect()
+    if (
+      pointer.x >= rect.left &&
+      pointer.x <= rect.right &&
+      pointer.y >= rect.top &&
+      pointer.y <= rect.bottom
+    ) {
+      return marker
+    }
+  }
+
+  const main = document.querySelector('main')
+  for (const marker of markers) {
+    if (main?.contains(marker) && !marker.closest('aside')) {
+      return marker
+    }
+  }
+
+  return markers[0] ?? null
+}
+
 function resolveActiveVisionScrollPanel(pointer: { x: number; y: number }): HTMLElement | null {
   const hovered = document.elementFromPoint(pointer.x, pointer.y) as HTMLElement | null
-  const fromPointer = findVisionScrollContainer(hovered)
+  const fromPointer = findVisionScrollPanelMarker(hovered)
   if (fromPointer) return fromPointer
 
   const active = document.activeElement as HTMLElement | null
-  const fromFocus = findVisionScrollContainer(active)
+  const fromFocus = findVisionScrollPanelMarker(active)
   if (fromFocus) return fromFocus
 
-  return document.querySelector<HTMLElement>(VISION_SCROLL_PANEL_SELECTOR)
+  return findDefaultVisionScrollPanelFallback(pointer)
 }
 
 function scrollVisionPanel(
@@ -1180,8 +1206,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const amount =
             e.key === 'PageUp' || e.key === 'PageDown' ? pageAmount : arrowAmount
           const direction = e.key === 'ArrowUp' || e.key === 'PageUp' ? 'up' : 'down'
-          if (scrollVisionPanel(panel, direction, amount)) {
-            e.preventDefault()
+          const delta = direction === 'down' ? amount : -amount
+          if (canScrollVertically(panel, delta)) {
+            if (scrollVisionPanel(panel, direction, amount)) {
+              e.preventDefault()
+            }
           }
         }
         return
@@ -1217,32 +1246,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [script?.script?.scenes])
-
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-        return
-      }
-
-      const hovered = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
-      const panel = findVisionScrollContainer(hovered)
-      if (!panel) return
-
-      const maxScrollTop = panel.scrollHeight - panel.clientHeight
-      if (maxScrollTop <= 0) return
-
-      const canScrollDown = e.deltaY > 0 && panel.scrollTop < maxScrollTop
-      const canScrollUp = e.deltaY < 0 && panel.scrollTop > 0
-      if (!canScrollDown && !canScrollUp) return
-
-      panel.scrollTop += e.deltaY
-      e.preventDefault()
-    }
-
-    window.addEventListener('wheel', handleWheel, { passive: false })
-    return () => window.removeEventListener('wheel', handleWheel)
-  }, [])
 
   const handleBookmarkScene = useCallback(
     async (bookmark: SceneBookmark | null) => {
@@ -12339,7 +12342,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     : null
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col bg-gray-50 dark:bg-sf-background overflow-hidden overflow-x-hidden max-w-full">
+    <div className="h-full min-h-0 flex flex-col bg-gray-50 dark:bg-sf-background overflow-hidden overflow-x-hidden max-w-full">
       
       {/* Workflow Navigation Header */}
       <header className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 shrink-0">

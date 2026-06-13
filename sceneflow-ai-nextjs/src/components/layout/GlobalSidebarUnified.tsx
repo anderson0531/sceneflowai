@@ -501,7 +501,13 @@ export function GlobalSidebarUnified({ children }: GlobalSidebarProps) {
           !sidebarVisible && 'w-full'
         )}
       >
-        {children}
+        {isVisionProduction ? (
+          <div className="flex-1 min-h-0 h-full flex flex-col overflow-hidden">
+            {children}
+          </div>
+        ) : (
+          children
+        )}
       </main>
 
       {/* Navigation Warning Dialog for backward navigation */}
