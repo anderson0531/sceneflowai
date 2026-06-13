@@ -28,19 +28,9 @@ import { SegmentList } from './scene-production/SegmentList'
 import type { ScriptSegment } from '@/lib/script/segmentTypes'
 import { coerceDialogueLineText } from '@/lib/script/segmentScript'
 import {
-  resolveAutoSfxDuration,
   resolveSfxDuration,
   type SfxDurationOverride,
 } from '@/lib/elevenlabs/sfxDuration'
-import {
-  dispatchGenerateVeoSfx,
-  VEO_SFX_CREDIT_HINT,
-} from '@/lib/sfx/clientGenerateVeoSfx'
-import {
-  resolveAutoVeoSfxDuration,
-  resolveVeoSfxTargetSeconds,
-  veoSfxCoversFullBeat,
-} from '@/lib/sfx/veoSfxDuration'
 import { dispatchExpressVeoSfx } from '@/lib/sfx/clientExpressVeoSfx'
 import {
   beatHasSfxAudio,
@@ -54,6 +44,11 @@ import {
   ExpressSfxConfirmDialog,
   type ExpressSfxConfirmOptions,
 } from '@/components/vision/ExpressSfxConfirmDialog'
+import {
+  ExpressAudioConfirmDialog,
+  type ExpressAudioConfirmOptions,
+} from '@/components/vision/ExpressAudioConfirmDialog'
+import { processWithConcurrency } from '@/lib/utils/concurrent-processor'
 
 // Dynamic imports with ssr: false to prevent TDZ circular dependency issues
 // These components have complex initialization that can cause module load order problems
@@ -256,7 +251,7 @@ interface ScriptPanelProps {
   // NEW: Edit scene with pre-populated recommendations from analysis
   onEditSceneWithRecommendations?: (sceneIndex: number, recommendations: string[]) => void
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
-  onDeleteSceneAudio?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', dialogueIndex?: number, sfxIndex?: number) => void
+  onDeleteSceneAudio?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', dialogueIndex?: number, sfxIndex?: number, silent?: boolean) => void
   // NEW: Enhance scene context with AI-generated beat, character arc, and thematic context
   onEnhanceSceneContext?: (sceneIndex: number) => Promise<void>
   // NEW: Scene score generation props
@@ -3685,7 +3680,7 @@ interface SceneCardProps {
   onEditSceneWithRecommendations?: (sceneIndex: number) => void
   onUpdateSceneAudio?: (sceneIndex: number) => Promise<void>
   // NEW: Delete specific audio from scene
-  onDeleteSceneAudio?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', dialogueIndex?: number, sfxIndex?: number) => void
+  onDeleteSceneAudio?: (sceneIndex: number, audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx', dialogueIndex?: number, sfxIndex?: number, silent?: boolean) => void
   uploadAudio?: (
     sceneIdx: number,
     type: 'description' | 'narration' | 'dialogue' | 'sfx' | 'music',
@@ -3708,14 +3703,15 @@ interface SceneCardProps {
   generatingMusic?: number | null
   setGeneratingMusic?: (state: number | null) => void
   // Functions for generating and saving audio
-  generateMusic?: (sceneIdx: number) => Promise<void>
+  generateMusic?: (sceneIdx: number, skipOverlay?: boolean) => Promise<void>
   /** Persist a generated SFX URL through the project PATCH path. */
   onSaveSfxAudio?: (
     sceneIdx: number,
     audioType: 'sfx' | 'music',
     audioUrl: string,
     sfxIdx?: number,
-    sfxAttribution?: Record<string, unknown> | null
+    sfxAttribution?: Record<string, unknown> | null,
+    beatContext?: { beatId: string; beatDescription: string }
   ) => Promise<void> | void
   // NEW: Scene direction generation props
   onGenerateSceneDirection?: (sceneIdx: number) => Promise<void>
@@ -3795,7 +3791,7 @@ interface SceneCardProps {
   isBookmarked?: boolean
   onBookmarkToggle?: () => void
   bookmarkSaving?: boolean
-  overlayStore?: { show: (message: string, duration: number) => void; hide: () => void }
+  overlayStore?: { show: (message: string, duration: number, category?: string) => void; hide: () => void }
   projectId?: string
   onUploadKeyframe?: (sceneIdx: number, file: File) => Promise<void>
   // Single-scene-open control
@@ -3897,319 +3893,6 @@ async function downloadSceneAudioFile(
     console.error('[ScriptPanel] Audio download failed:', error)
     toast.error('Failed to save audio file')
   }
-}
-
-/**
- * One legacy (non-segmented) SFX cue row, with the same Auto / Short / Medium /
- * Long preset chips as `SegmentSfxCard`. Used inside `SceneCard` for scenes
- * that have not been migrated to the segmented script yet.
- */
-function LegacySfxCueRow({
-  sceneIdx,
-  sfx,
-  sfxIdx,
-  sfxAudio,
-  sfxSourceMeta,
-  projectId,
-  segmentDurationSeconds,
-  playingAudio,
-  onPlayAudio,
-  onDeleteSceneAudio,
-  onSaveSfxAudio,
-}: {
-  sceneIdx: number
-  sfx: any
-  sfxIdx: number
-  sfxAudio: string | undefined
-  sfxSourceMeta?: Record<string, unknown> | null
-  projectId?: string
-  segmentDurationSeconds?: number
-  playingAudio: string | null
-  onPlayAudio?: (audioUrl: string, label: string, sceneId?: string) => void
-  onDeleteSceneAudio?: (
-    sceneIndex: number,
-    audioType: 'description' | 'narration' | 'dialogue' | 'music' | 'sfx',
-    dialogueIndex?: number,
-    sfxIndex?: number
-  ) => void
-  onSaveSfxAudio?: (
-    sceneIdx: number,
-    audioType: 'sfx' | 'music',
-    audioUrl: string,
-    sfxIdx?: number,
-    sfxAttribution?: Record<string, unknown> | null
-  ) => Promise<void> | void
-}) {
-  const [isGeneratingElevenLabs, setIsGeneratingElevenLabs] = useState(false)
-  const [isGeneratingVeo, setIsGeneratingVeo] = useState(false)
-  const [durationPreset, setDurationPreset] = useState<SfxDurationOverride>('auto')
-  const sfxDesc: string = typeof sfx === 'string' ? sfx : (sfx?.description || '')
-  const sfxIdValue: string | undefined =
-    typeof sfx === 'object' && sfx ? sfx.sfxId : undefined
-  const autoSeconds = resolveAutoSfxDuration(segmentDurationSeconds)
-  const veoAutoSeconds = resolveAutoVeoSfxDuration(segmentDurationSeconds)
-  const isGenerating = isGeneratingElevenLabs || isGeneratingVeo
-  const isVeoAmbient = sfxSourceMeta?.source === 'veo'
-  const showPartialVeoHint = !veoSfxCoversFullBeat(segmentDurationSeconds, durationPreset)
-
-  const handleGenerateElevenLabs = async () => {
-    if (!projectId) {
-      toast.error('Project context is missing for SFX generation.')
-      return
-    }
-    if (!sfxDesc) {
-      toast.info('Add a description for this SFX cue first.')
-      return
-    }
-    setIsGeneratingElevenLabs(true)
-    const toastId = toast.loading(sfxAudio ? 'Re-generating SFX...' : 'Generating SFX...')
-    try {
-      const durationSeconds = resolveSfxDuration({
-        segmentDurationSeconds,
-        override: durationPreset,
-      })
-      const response = await fetch('/api/tts/elevenlabs/sound-effects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          sfxId: sfxIdValue,
-          sfxIndex: sfxIdx,
-          text: sfxDesc,
-          durationSeconds,
-        }),
-      })
-      if (!response.ok) {
-        let payload: any = null
-        try {
-          payload = await response.json()
-        } catch {
-          payload = null
-        }
-        if (response.status === 402) {
-          const need = payload?.creditsRequired
-          const have = payload?.creditsAvailable
-          toast.error(
-            `Insufficient credits for SFX generation${
-              typeof need === 'number' ? `. Need ${need} credits` : ''
-            }${typeof have === 'number' ? ` (available: ${have})` : ''}.`,
-            { id: toastId }
-          )
-          return
-        }
-        throw new Error(payload?.error || `SFX generation failed (HTTP ${response.status})`)
-      }
-      const data = await response.json()
-      const url: string | undefined = data?.url
-      if (!url) throw new Error('SFX response missing audio URL')
-      await onSaveSfxAudio?.(sceneIdx, 'sfx', url, sfxIdx, null)
-      toast.success(sfxAudio ? 'SFX re-generated.' : 'SFX generated.', { id: toastId })
-    } catch (error: any) {
-      console.error('[ScriptPanel] Legacy SFX generation failed:', error)
-      toast.error(`Failed to generate SFX: ${error?.message || 'Unknown error'}`, { id: toastId })
-    } finally {
-      setIsGeneratingElevenLabs(false)
-    }
-  }
-
-  const handleGenerateVeo = async () => {
-    if (!projectId) {
-      toast.error('Project context is missing for SFX generation.')
-      return
-    }
-    if (!sfxDesc) {
-      toast.info('Add a description for this SFX cue first.')
-      return
-    }
-    setIsGeneratingVeo(true)
-    try {
-      const result = await dispatchGenerateVeoSfx({
-        projectId,
-        text: sfxDesc,
-        sfxId: sfxIdValue,
-        sfxIndex: sfxIdx,
-        segmentDurationSeconds,
-        durationOverride: durationPreset,
-        hasExistingAudio: !!sfxAudio,
-      })
-      await onSaveSfxAudio?.(sceneIdx, 'sfx', result.url, sfxIdx, result.attribution)
-    } catch (error: any) {
-      if ((error as Error)?.message !== 'Insufficient credits') {
-        console.error('[ScriptPanel] Legacy Veo SFX generation failed:', error)
-      }
-    } finally {
-      setIsGeneratingVeo(false)
-    }
-  }
-
-  const chips: Array<{ id: SfxDurationOverride; label: string }> = [
-    {
-      id: 'auto',
-      label: `Auto (${Number.isInteger(autoSeconds) ? autoSeconds : autoSeconds.toFixed(1)}s · Veo ${veoAutoSeconds}s)`,
-    },
-    { id: 'short', label: 'Short 3s / Veo 4s' },
-    { id: 'medium', label: 'Medium 8s' },
-    { id: 'long', label: 'Long 15s / Veo 8s max' },
-  ]
-
-  return (
-    <div className="p-3 bg-amber-100/50 dark:bg-amber-950/30 rounded-lg border border-amber-300/50 dark:border-amber-700/50">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-          <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">SFX {sfxIdx + 1}</span>
-          {sfxAudio ? (
-            <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
-              <Volume2 className="w-3 h-3" />
-              Audio Ready
-            </span>
-          ) : sfxDesc ? (
-            <span
-              className="text-xs px-2 py-0.5 bg-gray-500/15 text-gray-500 dark:text-gray-400 rounded"
-              title="Sound effects are included in Veo video segments during production"
-            >
-              SFX: {sfxDesc.length > 48 ? `${sfxDesc.slice(0, 48)}…` : sfxDesc} · Veo production
-            </span>
-          ) : null}
-          {isVeoAmbient && (
-            <span className="text-xs px-2 py-0.5 bg-violet-500/15 text-violet-600 dark:text-violet-300 rounded">
-              Veo ambient
-            </span>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {sfxAudio && (
-            <>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onPlayAudio?.(sfxAudio, `sfx-${sfxIdx}`)
-                }}
-                className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
-                title="Play SFX"
-              >
-                {playingAudio === sfxAudio ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  void downloadSceneAudioFile(e, sfxAudio, {
-                    sceneNumber: sceneIdx + 1,
-                    track: 'sfx',
-                    index: sfxIdx,
-                  })
-                }}
-                className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-800 rounded"
-                title="Download SFX"
-              >
-                <Download className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (
-                    confirm(
-                      'Delete this sound effect? You can re-generate it from the cue description.'
-                    )
-                  ) {
-                    onDeleteSceneAudio?.(sceneIdx, 'sfx', undefined, sfxIdx)
-                  }
-                }}
-                className="p-1.5 hover:bg-red-200 dark:hover:bg-red-800/50 rounded text-red-500 dark:text-red-400"
-                title="Delete SFX Audio"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </>
-          )}
-          <Button
-            type="button"
-            size="sm"
-            className="h-8 bg-amber-600 hover:bg-amber-700 text-white border-0"
-            onClick={(e) => {
-              e.stopPropagation()
-              void handleGenerateElevenLabs()
-            }}
-            disabled={isGenerating}
-            title="Short clip via ElevenLabs (~15 credits)"
-          >
-            {isGeneratingElevenLabs ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-3.5 h-3.5 mr-1" />
-                {sfxAudio ? 'Re-generate' : 'Generate'}
-              </>
-            )}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8 border-violet-400/60 text-violet-700 dark:text-violet-300 hover:bg-violet-100/60 dark:hover:bg-violet-900/30"
-            onClick={(e) => {
-              e.stopPropagation()
-              void handleGenerateVeo()
-            }}
-            disabled={isGenerating}
-            title={VEO_SFX_CREDIT_HINT}
-          >
-            {isGeneratingVeo ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                Veo...
-              </>
-            ) : (
-              <>
-                <Waves className="w-3.5 h-3.5 mr-1" />
-                Veo ambient
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-      <div className="flex flex-wrap items-center gap-1.5 mb-2">
-        <span className="text-[10px] uppercase tracking-wide text-amber-700/80 dark:text-amber-300/70 mr-1">
-          Duration
-        </span>
-        {chips.map((chip) => {
-          const active = durationPreset === chip.id
-          return (
-            <button
-              key={chip.id}
-              type="button"
-              disabled={isGenerating}
-              onClick={(e) => {
-                e.stopPropagation()
-                setDurationPreset(chip.id)
-              }}
-              className={`text-[11px] leading-none px-2 py-1 rounded border transition-colors ${
-                active
-                  ? 'bg-amber-600 border-amber-600 text-white'
-                  : 'bg-transparent border-amber-400/60 text-amber-800 dark:text-amber-200 hover:bg-amber-200/50 dark:hover:bg-amber-800/40'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
-            >
-              {chip.label}
-            </button>
-          )
-        })}
-      </div>
-      {showPartialVeoHint && (
-        <p className="text-[11px] text-amber-800/80 dark:text-amber-200/70 mb-2">
-          Veo ambient covers up to 8s of this beat (Auto target{' '}
-          {resolveVeoSfxTargetSeconds({ segmentDurationSeconds, override: durationPreset })}s → {veoAutoSeconds}s
-          clip).
-        </p>
-      )}
-      <p className="text-[10px] text-violet-700/70 dark:text-violet-300/60 mb-2">{VEO_SFX_CREDIT_HINT}</p>
-      <div className="text-sm text-gray-700 dark:text-gray-300 italic">{sfxDesc}</div>
-    </div>
-  )
 }
 
 function SceneCard({
@@ -4395,8 +4078,6 @@ function SceneCard({
   const [resetSegmentsDialogOpen, setResetSegmentsDialogOpen] = useState(false)
   const [isResettingSegments, setIsResettingSegments] = useState(false)
   
-  // Generate All Audio confirmation dialog
-  const [generateAllAudioConfirmOpen, setGenerateAllAudioConfirmOpen] = useState(false)
   
   // Add Beat dialog state
   const [addSegmentDialogOpen, setAddSegmentDialogOpen] = useState(false)
@@ -4410,6 +4091,8 @@ function SceneCard({
   const [selectedExpressBeatIds, setSelectedExpressBeatIds] = useState<Set<string>>(() => new Set())
   const [expressSfxDialogOpen, setExpressSfxDialogOpen] = useState(false)
   const [isExpressSfxRunning, setIsExpressSfxRunning] = useState(false)
+  const [expressAudioDialogOpen, setExpressAudioDialogOpen] = useState(false)
+  const [isExpressAudioRunning, setIsExpressAudioRunning] = useState(false)
   const [expressBeatStatus, setExpressBeatStatus] = useState<Record<string, ExpressBeatSfxStatus>>({})
   const [sceneCastCollapsed, setSceneCastCollapsed] = useState(true) // Collapsed by default - wardrobe selection is advanced
   // Scene Image section: collapsed by default
@@ -4519,6 +4202,195 @@ function SceneCard({
       }
     },
     [projectId, sceneIdx, scene, onSaveSfxAudio]
+  )
+
+  // ---- Express Audio (dialogue + music + Veo SFX) ----
+  const getNarrationAudioUrlForLang = useCallback(
+    (lang: string): string | undefined => {
+      const sceneRecord = scene as Record<string, any>
+      if (sceneRecord.narrationAudio && sceneRecord.narrationAudio[lang]?.url) {
+        return sceneRecord.narrationAudio[lang].url
+      }
+      if (lang === 'en' && sceneRecord.narrationAudioUrl) {
+        return sceneRecord.narrationAudioUrl
+      }
+      return undefined
+    },
+    [scene]
+  )
+
+  const expressAudioSummary = useMemo(() => {
+    const lang = selectedLanguage
+    const dialogueLines: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
+    let dialogueTotal = 0
+    let dialogueMissing = 0
+    dialogueLines.forEach((d: any, i: number) => {
+      if (!d?.line || !d?.character) return
+      dialogueTotal++
+      const entry = findDialogueAudioForLine(scene, {
+        language: lang,
+        lineId: d.lineId,
+        dialogueIndex: i,
+        character: d.character,
+      })
+      if (!(entry?.audioUrl || entry?.url)) dialogueMissing++
+    })
+
+    const hasNarrationText = !!String(scene.narration || '').trim()
+    const narrationMissing = hasNarrationText && !getNarrationAudioUrlForLang(lang)
+
+    const hasMusic = !!scene.music
+    const musicMissing = hasMusic && !((scene as any).musicAudio || (scene as any).music?.url)
+
+    return {
+      dialogue: { total: dialogueTotal, missing: dialogueMissing },
+      narration: { present: hasNarrationText, missing: narrationMissing },
+      music: { present: hasMusic, missing: musicMissing },
+    }
+  }, [scene, selectedLanguage, getNarrationAudioUrlForLang])
+
+  const handleExpressAudioConfirm = useCallback(
+    async (options: ExpressAudioConfirmOptions) => {
+      if (!projectId) return
+      const lang = selectedLanguage
+      const isAll = options.scope === 'all'
+
+      setIsExpressAudioRunning(true)
+      overlayStore?.show(`Express Audio for Scene ${sceneIdx + 1}...`, 60, 'audio-generation')
+
+      try {
+        // Scope = All: delete existing audio for the selected types first.
+        if (isAll && onDeleteSceneAudio) {
+          const deletions: Promise<unknown>[] = []
+          if (options.includeDialogue) {
+            deletions.push(
+              Promise.resolve(onDeleteSceneAudio(sceneIdx, 'narration', undefined, undefined, true))
+            )
+            deletions.push(
+              Promise.resolve(onDeleteSceneAudio(sceneIdx, 'dialogue', -1, undefined, true))
+            )
+          }
+          if (options.includeMusic) {
+            deletions.push(
+              Promise.resolve(onDeleteSceneAudio(sceneIdx, 'music', undefined, undefined, true))
+            )
+          }
+          await Promise.all(deletions)
+          // Give deletions a moment to settle before regenerating.
+          await new Promise((resolve) => setTimeout(resolve, 400))
+        }
+
+        // ---- TTS lane: narration + dialogue lines (concurrency 3) ----
+        const ttsLane = async () => {
+          if (!options.includeDialogue || !onGenerateSceneAudio) return
+          const tasks: Array<{ id: string; execute: () => Promise<void> }> = []
+
+          const hasNarrationText = !!String(scene.narration || '').trim()
+          const narrationNeeded =
+            hasNarrationText && (isAll || !getNarrationAudioUrlForLang(lang))
+          if (narrationNeeded) {
+            tasks.push({
+              id: 'narration',
+              execute: async () => {
+                await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, lang)
+              },
+            })
+          }
+
+          const dialogueLines: any[] = Array.isArray(scene.dialogue) ? scene.dialogue : []
+          dialogueLines.forEach((d: any, i: number) => {
+            if (!d?.line || !d?.character) return
+            if (!isAll) {
+              const entry = findDialogueAudioForLine(scene, {
+                language: lang,
+                lineId: d.lineId,
+                dialogueIndex: i,
+                character: d.character,
+              })
+              if (entry?.audioUrl || entry?.url) return // already has audio
+            }
+            tasks.push({
+              id: `dialogue-${i}`,
+              execute: async () => {
+                await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i, lang)
+              },
+            })
+          })
+
+          if (tasks.length === 0) return
+          await processWithConcurrency(tasks, 3, undefined, false)
+        }
+
+        // ---- Music lane ----
+        const musicLane = async () => {
+          if (!options.includeMusic || !generateMusic || !scene.music) return
+          const musicMissing = !((scene as any).musicAudio || (scene as any).music?.url)
+          if (!isAll && !musicMissing) return
+          await generateMusic(sceneIdx, true)
+        }
+
+        // ---- Veo SFX lane ----
+        const sfxLane = async () => {
+          if (!options.includeSfx || options.sfxBeatIds.length === 0) return
+          await dispatchExpressVeoSfx({
+            projectId,
+            sceneIndex: sceneIdx,
+            beatIds: options.sfxBeatIds,
+            segmentDurationSeconds: scene.duration,
+            durationOverride: options.durationOverride,
+            regenerate: isAll,
+            onItemStart: (beatId) => {
+              setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'running' }))
+            },
+            onItemDone: async ({ beatId, sfxIndex, url, attribution }) => {
+              setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'done' }))
+              const beat = getSceneBeats(scene).find((entry) => entry.beatId === beatId)
+              await onSaveSfxAudio?.(
+                sceneIdx,
+                'sfx',
+                url,
+                sfxIndex,
+                attribution as unknown as Record<string, unknown> | null,
+                beat
+                  ? { beatId, beatDescription: beat.actionDescription?.trim() ?? '' }
+                  : undefined
+              )
+            },
+            onItemError: (beatId) => {
+              setExpressBeatStatus((prev) => ({ ...prev, [beatId]: 'error' }))
+            },
+          })
+        }
+
+        const results = await Promise.allSettled([ttsLane(), musicLane(), sfxLane()])
+        const failed = results.filter((r) => r.status === 'rejected')
+        if (failed.length === 0) {
+          toast.success(`Express Audio complete for Scene ${sceneIdx + 1}`)
+        } else {
+          toast.warning(
+            `Express Audio finished with ${failed.length} issue${failed.length === 1 ? '' : 's'} for Scene ${sceneIdx + 1}`
+          )
+        }
+      } catch (error) {
+        console.error('[ScriptPanel] Express Audio failed:', error)
+        toast.error('Express Audio failed')
+      } finally {
+        overlayStore?.hide()
+        setIsExpressAudioRunning(false)
+        setExpressAudioDialogOpen(false)
+      }
+    },
+    [
+      projectId,
+      sceneIdx,
+      scene,
+      selectedLanguage,
+      onGenerateSceneAudio,
+      generateMusic,
+      onDeleteSceneAudio,
+      onSaveSfxAudio,
+      getNarrationAudioUrlForLang,
+    ]
   )
   
   // Helper: Check if all audio is complete for a specific language
@@ -5786,149 +5658,7 @@ function SceneCard({
                           </Tooltip>
                         </TooltipProvider>
                       )}
-                      {/* Generate All Audio button with workflow guard */}
-                      {(() => {
-                        const voicesReady = productionReadiness?.isAudioReady ?? true
-                        const missingVoices = productionReadiness?.charactersMissingVoices || []
-                        const hasNarrationVoice = productionReadiness?.hasNarrationVoice ?? true
-                        const isDisabled = !voicesReady || !hasNarrationVoice
-                        
-                        const button = (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (!isDisabled) {
-                                setGenerateAllAudioConfirmOpen(true)
-                              }
-                            }}
-                            disabled={isDisabled}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md flex items-center gap-1.5 transition-all shadow-sm ${
-                              isDisabled 
-                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
-                                : 'bg-purple-600 hover:bg-purple-500 text-white'
-                            }`}
-                          >
-                            <Sparkles className="w-3 h-3" />
-                            Generate All Audio
-                            {isDisabled && <span className="ml-1 text-amber-400">⚠</span>}
-                          </button>
-                        )
-                        
-                        if (isDisabled) {
-                          return (
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  {button}
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom" className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
-                                  <div className="space-y-1">
-                                    <p className="font-medium text-amber-400 flex items-center gap-1.5">
-                                      <AlertTriangle className="w-3.5 h-3.5" />
-                                      Voice Setup Required
-                                    </p>
-                                    {!hasNarrationVoice && (
-                                      <p className="text-xs text-gray-300">• Assign a narrator voice</p>
-                                    )}
-                                    {missingVoices.length > 0 && (
-                                      <p className="text-xs text-gray-300">
-                                        • Assign voices to: {missingVoices.slice(0, 3).join(', ')}
-                                        {missingVoices.length > 3 && ` +${missingVoices.length - 3} more`}
-                                      </p>
-                                    )}
-                                    <p className="text-[10px] text-gray-500 pt-1">
-                                      Set up voices in the Reference Library sidebar
-                                    </p>
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )
-                        }
-                        
-                        return button
-                      })()}
-                      
-                      {/* Generate All Audio Confirmation Dialog */}
-                      <Dialog open={generateAllAudioConfirmOpen} onOpenChange={setGenerateAllAudioConfirmOpen}>
-                        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-md">
-                          <DialogHeader>
-                            <DialogTitle className="text-white flex items-center gap-2">
-                              <RefreshCw className="w-5 h-5 text-purple-400" />
-                              Regenerate All Audio
-                            </DialogTitle>
-                            <DialogDescription className="text-gray-400">
-                              This will delete all existing audio for Scene {sceneIdx + 1} and regenerate fresh audio for narration, dialogue, music, and sound effects.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mt-2">
-                            <p className="text-amber-200 text-sm flex items-start gap-2">
-                              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                              <span>Existing audio will be permanently deleted. Use this to update audio after script changes.</span>
-                            </p>
-                          </div>
-                          <div className="flex justify-end gap-3 mt-4">
-                            <button
-                              onClick={() => setGenerateAllAudioConfirmOpen(false)}
-                              className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={async () => {
-                                setGenerateAllAudioConfirmOpen(false)
-                                
-                                overlayStore?.show(`Regenerating all audio for Scene ${sceneIdx + 1}...`, 60, 'audio-generation')
-                                try {
-                                  // First, delete ALL existing audio for this scene (silently)
-                                  // This ensures fresh generation even for script updates
-                                  if (onDeleteSceneAudio) {
-                                    // Delete narration audio (always attempt to clear any orphaned audio)
-                                    await onDeleteSceneAudio(sceneIdx, 'narration', undefined, undefined, true)
-                                    // Delete ALL dialogue audio using -1 index (catches orphaned entries from removed dialogue lines)
-                                    await onDeleteSceneAudio(sceneIdx, 'dialogue', -1, undefined, true)
-                                    // Delete music audio
-                                    await onDeleteSceneAudio(sceneIdx, 'music', undefined, undefined, true)
-                                    // Delete ALL SFX audio using -1 index (catches orphaned entries from removed SFX)
-                                    await onDeleteSceneAudio(sceneIdx, 'sfx', undefined, -1, true)
-                                  }
-                                  
-                                  // Small delay to ensure deletions are processed
-                                  await new Promise(resolve => setTimeout(resolve, 500))
-                                  
-                                  // Now generate all audio fresh
-                                  // Generate narration
-                                  if (scene.narration && onGenerateSceneAudio) {
-                                    await onGenerateSceneAudio(sceneIdx, 'narration', undefined, undefined, selectedLanguage)
-                                  }
-                                  // Generate all dialogues
-                                  if (scene.dialogue && onGenerateSceneAudio) {
-                                    for (let i = 0; i < scene.dialogue.length; i++) {
-                                      const d = scene.dialogue[i]
-                                      if (d.line && d.character) {
-                                        await onGenerateSceneAudio(sceneIdx, 'dialogue', d.character, i, selectedLanguage)
-                                      }
-                                    }
-                                  }
-                                  // Generate music
-                                  if (scene.music) {
-                                    await generateMusic(sceneIdx, true)
-                                  }
-                                  // SFX: add via Upload or Browse sounds in the scene card (no batch generation)
-                                  overlayStore?.hide()
-                                } catch (error) {
-                                  console.error('[ScriptPanel] Generate all failed:', error)
-                                  overlayStore?.hide()
-                                  toast.error('Failed to generate some audio')
-                                }
-                              }}
-                              className="px-4 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-md transition-colors"
-                            >
-                              Regenerate All
-                            </button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                      {/* Audio generation has moved to the "Express Audio" button in the Scene Beats card */}
                       {/* Language Stream Selector */}
                       <div className="flex items-center gap-1.5">
                         <GroupedLanguageSelector
@@ -6540,32 +6270,83 @@ function SceneCard({
                           <span className="text-sm font-semibold text-gray-200">Scene Beats</span>
                           <span className="text-xs text-gray-500">({timelineBeats.length} {timelineBeats.length === 1 ? 'beat' : 'beats'})</span>
                         </button>
-                        {expressSfxBeatOptions.length > 0 && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs border-violet-400/60 text-violet-200 hover:bg-violet-900/30"
-                            disabled={isExpressSfxRunning}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setExpressSfxDialogOpen(true)
-                            }}
-                          >
-                            {isExpressSfxRunning ? (
-                              <>
-                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                Express SFX...
-                              </>
-                            ) : (
-                              <>
-                                <Zap className="w-3 h-3 mr-1" />
-                                Express SFX
-                                {selectedExpressCount > 0 ? ` (${selectedExpressCount})` : ''}
-                              </>
-                            )}
-                          </Button>
-                        )}
+                        {(() => {
+                          const hasAudioContent =
+                            (Array.isArray(scene.dialogue) && scene.dialogue.length > 0) ||
+                            !!String(scene.narration || '').trim() ||
+                            !!scene.music ||
+                            expressSfxBeatOptions.length > 0
+                          if (!hasAudioContent) return null
+
+                          const voicesReady = productionReadiness?.isAudioReady ?? true
+                          const hasNarrationVoice = productionReadiness?.hasNarrationVoice ?? true
+                          const missingVoices = productionReadiness?.charactersMissingVoices || []
+                          const isDisabled =
+                            isExpressAudioRunning || !voicesReady || !hasNarrationVoice
+
+                          const button = (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs border-violet-400/60 text-violet-200 hover:bg-violet-900/30"
+                              disabled={isDisabled}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (!isExpressAudioRunning && voicesReady && hasNarrationVoice) {
+                                  setExpressAudioDialogOpen(true)
+                                }
+                              }}
+                            >
+                              {isExpressAudioRunning ? (
+                                <>
+                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                  Express Audio...
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="w-3 h-3 mr-1" />
+                                  Express Audio
+                                  {(!voicesReady || !hasNarrationVoice) && (
+                                    <span className="ml-1 text-amber-400">⚠</span>
+                                  )}
+                                </>
+                              )}
+                            </Button>
+                          )
+
+                          if (!voicesReady || !hasNarrationVoice) {
+                            return (
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>{button}</TooltipTrigger>
+                                  <TooltipContent side="bottom" className="bg-gray-900 dark:bg-gray-800 text-white border border-gray-700 max-w-xs">
+                                    <div className="space-y-1">
+                                      <p className="font-medium text-amber-400 flex items-center gap-1.5">
+                                        <AlertTriangle className="w-3.5 h-3.5" />
+                                        Voice Setup Required
+                                      </p>
+                                      {!hasNarrationVoice && (
+                                        <p className="text-xs text-gray-300">• Assign a narrator voice</p>
+                                      )}
+                                      {missingVoices.length > 0 && (
+                                        <p className="text-xs text-gray-300">
+                                          • Assign voices to: {missingVoices.slice(0, 3).join(', ')}
+                                          {missingVoices.length > 3 && ` +${missingVoices.length - 3} more`}
+                                        </p>
+                                      )}
+                                      <p className="text-[10px] text-gray-500 pt-1">
+                                        Set up voices in the Reference Library sidebar
+                                      </p>
+                                    </div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )
+                          }
+
+                          return button
+                        })()}
                         {/* Voice Casting Quick View — dialogue characters only */}
                         {scene.dialogue && scene.dialogue.length > 0 && (
                         <div className="flex items-center gap-1">
@@ -7064,61 +6845,6 @@ function SceneCard({
                         <div className="text-sm text-gray-700 dark:text-gray-300 italic">
                           {typeof scene.music === 'string' ? scene.music : scene.music.description}
                         </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* SFX (legacy flat list) — hidden once segments own their own
-                     SFX cues. Segment-scoped SFX render inside SegmentList. */}
-                  {scene.sfx && Array.isArray(scene.sfx) && scene.sfx.filter((sfx: any) => {
-                    if (typeof sfx === 'string') return true
-                    return !sfx?.sourceBeatId
-                  }).length > 0 && !(Array.isArray((scene as any).segments) && (scene as any).segments.length > 0) && (
-                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                      <div className="flex items-center justify-between mb-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setSfxCollapsed(!sfxCollapsed)
-                          }}
-                          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                        >
-                          <ChevronDown className={`w-4 h-4 text-amber-600 dark:text-amber-400 transition-transform ${sfxCollapsed ? '-rotate-90' : ''}`} />
-                          <VolumeIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                          <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Sound Effects ({scene.sfx.filter((sfx: any) => typeof sfx === 'string' || !sfx?.sourceBeatId).length})</span>
-                        </button>
-                      </div>
-                      {!sfxCollapsed && (
-                        <p className="text-xs text-amber-800/80 dark:text-amber-200/70 mb-2">
-                          Animatic preview uses narration, dialogue, and music only. Sound effects are
-                          included in Veo video segments during production.
-                        </p>
-                      )}
-                      {!sfxCollapsed && (
-                        <div className="space-y-2">
-                          {scene.sfx
-                            .map((sfx: any, sfxIdx: number) => ({ sfx, sfxIdx }))
-                            .filter(
-                              ({ sfx }: { sfx: any }) =>
-                                typeof sfx === 'string' || !sfx?.sourceBeatId
-                            )
-                            .map(({ sfx, sfxIdx }: { sfx: any; sfxIdx: number }) => (
-                            <LegacySfxCueRow
-                              key={sfxIdx}
-                              sceneIdx={sceneIdx}
-                              sfx={sfx}
-                              sfxIdx={sfxIdx}
-                              sfxAudio={scene.sfxAudio?.[sfxIdx]}
-                              sfxSourceMeta={scene.sfxSourceMeta?.[sfxIdx]}
-                              segmentDurationSeconds={scene.duration}
-                              projectId={projectId}
-                              playingAudio={playingAudio}
-                              onPlayAudio={onPlayAudio}
-                              onDeleteSceneAudio={onDeleteSceneAudio}
-                              onSaveSfxAudio={onSaveSfxAudio}
-                            />
-                          ))}
-                              </div>
                       )}
                     </div>
                   )}
@@ -7696,6 +7422,18 @@ function SceneCard({
             segmentDurationSeconds={scene.duration}
             isRunning={isExpressSfxRunning}
             onConfirm={handleExpressSfxConfirm}
+          />
+
+          <ExpressAudioConfirmDialog
+            open={expressAudioDialogOpen}
+            onOpenChange={setExpressAudioDialogOpen}
+            beats={expressSfxBeatOptions}
+            dialogue={expressAudioSummary.dialogue}
+            narration={expressAudioSummary.narration}
+            music={expressAudioSummary.music}
+            segmentDurationSeconds={scene.duration}
+            isRunning={isExpressAudioRunning}
+            onConfirm={handleExpressAudioConfirm}
           />
           
           {/* AI Co-Pilot Side Panel */}
