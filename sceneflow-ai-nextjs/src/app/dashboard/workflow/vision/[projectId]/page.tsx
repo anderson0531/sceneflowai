@@ -1247,6 +1247,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     }
   }, [script?.script?.scenes])
 
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return
+      }
+
+      const panel = resolveActiveVisionScrollPanel({ x: e.clientX, y: e.clientY })
+      if (!panel || !canScrollVertically(panel, e.deltaY)) return
+
+      panel.scrollTop += e.deltaY
+      e.preventDefault()
+    }
+
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    return () => window.removeEventListener('wheel', handleWheel)
+  }, [])
+
   const handleBookmarkScene = useCallback(
     async (bookmark: SceneBookmark | null) => {
       if (!projectId) return
@@ -12324,7 +12342,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   if (!mounted || !project) {
     return (
-      <div className="h-screen flex items-center justify-center">
+      <div className="h-full min-h-0 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin h-8 w-8 border-4 border-sf-primary border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">{!mounted ? 'Initializing...' : 'Loading project...'}</p>
@@ -12405,7 +12423,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 />
                 </div>
               )}
-              <div className="flex-1 min-h-0 flex flex-col min-w-0">
+              <div className="flex-1 min-h-0 h-full flex flex-col min-w-0">
               <ScriptPanel 
                 script={script}
                 onScriptChange={handleScriptChange}
@@ -12653,7 +12671,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             maxSize={40} 
             className={`min-w-0 min-h-0 h-full overflow-hidden overflow-x-hidden transition-all duration-300 flex flex-col ${!rightSidebarVisible ? 'hidden' : ''}`}
           >
-            <div className="flex-1 min-h-0 overflow-hidden overflow-x-hidden pl-6 min-w-0 relative flex flex-col">
+            <div className="flex-1 min-h-0 h-full overflow-hidden overflow-x-hidden pl-6 min-w-0 relative flex flex-col">
               {/* Merge Duplicates Button */}
               {findPotentialDuplicates(characters).length > 0 && (
                 <div className="mb-4 px-2 shrink-0">
