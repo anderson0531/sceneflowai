@@ -64,7 +64,7 @@ interface AudioGalleryPlayerProps {
   /** Landing full-width embed: use full pane width for scene image and controls. */
   fullWidthEmbed?: boolean
   /** Trigger full-project cloud animatic render (matches player timeline). */
-  onGenVideo?: () => void | Promise<void>
+  onGenVideo?: (language: string) => void | Promise<void>
   isGenVideoRunning?: boolean
   exportedAnimaticUrl?: string | null
 }
@@ -446,7 +446,7 @@ export function AudioGalleryPlayer({
                 variant="outline"
                 size="sm"
                 disabled={isGenVideoRunning}
-                onClick={() => void onGenVideo()}
+                onClick={() => void onGenVideo(selectedLanguage)}
                 className="h-7 text-xs bg-indigo-900/40 border-indigo-500/40 hover:bg-indigo-800/50 hover:text-white"
               >
                 {isGenVideoRunning ? (

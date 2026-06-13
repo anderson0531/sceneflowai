@@ -78,7 +78,7 @@ interface SceneGalleryProps {
   onOpenReferences?: () => void
   /** Art style locked from Blueprint — Express uses this instead of a picker. */
   lockedArtStyle?: string
-  onGenVideo?: () => void | Promise<void>
+  onGenVideo?: (language: string) => void | Promise<void>
   isGenVideoRunning?: boolean
   exportedAnimaticUrl?: string | null
 }

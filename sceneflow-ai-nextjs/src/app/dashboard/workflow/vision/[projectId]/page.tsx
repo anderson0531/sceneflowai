@@ -11728,7 +11728,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const exportedAnimaticUrl =
     (project?.metadata as { exportedAnimaticUrl?: string } | undefined)?.exportedAnimaticUrl ?? null
 
-  const handleGenProjectVideo = useCallback(async () => {
+  const handleGenProjectVideo = useCallback(async (language: string = 'en') => {
     if (!projectId || !script?.script?.scenes?.length || isGenVideoRunning) return
     setIsGenVideoRunning(true)
     toast.info('Queuing full-project animatic render…')
@@ -11740,7 +11740,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         body: JSON.stringify({
           projectId,
           projectTitle: project?.title || 'Project Animatic',
-          language: selectedLanguage || 'en',
+          language: language || 'en',
           resolution: '1080p',
           scenes: script.script.scenes,
           settings: {
@@ -11807,7 +11807,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     projectId,
     project?.title,
     script?.script?.scenes,
-    selectedLanguage,
     isGenVideoRunning,
     setProject,
   ])
