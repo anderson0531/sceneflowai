@@ -7,7 +7,7 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Loader, Printer, Clapperboard, Sparkles, X, Zap, Tag } from 'lucide-react'
+import { Loader, Printer, Clapperboard, Sparkles, X, Play, Zap, Tag } from 'lucide-react'
 import { toast } from 'sonner'
 import { AudioGalleryPlayer } from './AudioGalleryPlayer'
 import { Button } from '@/components/ui/Button'
