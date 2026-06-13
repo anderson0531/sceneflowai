@@ -447,7 +447,7 @@ export function SceneStoryboardFrameViewer({
             <ChevronUp className="w-4 h-4 text-cyan-400" />
           )}
           <Clapperboard className="w-4 h-4 text-cyan-400" />
-          <span className="text-sm font-semibold text-gray-200">Storyboard Frames</span>
+          <span className="text-sm font-semibold text-gray-200">Pre-Vis Frames</span>
           {frameStats.total > 0 && (
             <span className="text-xs text-gray-500">
               ({frameStats.withImage}/{frameStats.total})
@@ -468,7 +468,7 @@ export function SceneStoryboardFrameViewer({
           {frameSlots.length === 0 ? (
             <div className="text-center py-6 text-gray-500 text-sm">
               <Camera className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-              <p>No storyboard frames yet.</p>
+              <p>No pre-vis frames yet.</p>
               {onExpressSceneGenerate && (
                 <Button
                   type="button"
@@ -491,31 +491,6 @@ export function SceneStoryboardFrameViewer({
             </div>
           ) : (
             <>
-              <div className="relative rounded-lg overflow-hidden bg-gray-800/50">
-                {previewSlot ? (
-                  <SceneImageFrame
-                    {...buildStoryboardSlotFrameProps(previewSlot, slotHandlers)}
-                    showControls
-                    controlsVariant="comfortable"
-                    alwaysShowControls
-                    showBorder={false}
-                    promptLineClamp={4}
-                    expandable
-                  />
-                ) : (
-                  <div className="aspect-video flex flex-col items-center justify-center">
-                    <Camera className="w-8 h-8 text-gray-600 mb-2" />
-                    <span className="text-xs text-gray-500">No storyboard frames</span>
-                  </div>
-                )}
-                {isGeneratingScene && !previewSlot && (
-                  <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-10">
-                    <Loader className="w-10 h-10 animate-spin text-blue-400 mb-2" />
-                    <span className="text-sm text-white">Generating...</span>
-                  </div>
-                )}
-              </div>
-
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <span
                   className={cn(
@@ -605,19 +580,55 @@ export function SceneStoryboardFrameViewer({
                 </div>
               </div>
 
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {frameSlots.map((slot) => (
-                  <div key={slot.key} className="flex-shrink-0 w-36">
-                    <SceneImageFrame
-                      {...buildStoryboardSlotFrameProps(slot, slotHandlers)}
-                      showControls={false}
-                      compact
-                      showBorder
-                      isSelected={selectedFrameKey === slot.key}
-                      onSelect={() => setSelectedFrameKey(slot.key)}
-                    />
+              <div className="flex gap-3 h-[min(32vh,300px)] min-h-[220px]">
+                <div className="w-[7.5rem] sm:w-36 shrink-0 flex flex-col gap-2 overflow-y-auto overscroll-contain pr-1">
+                  {frameSlots.map((slot) => (
+                    <div key={slot.key} className="shrink-0 w-full">
+                      <SceneImageFrame
+                        {...buildStoryboardSlotFrameProps(slot, slotHandlers)}
+                        showControls={false}
+                        compact
+                        showBorder
+                        isSelected={selectedFrameKey === slot.key}
+                        onSelect={() => setSelectedFrameKey(slot.key)}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex-1 min-w-0 min-h-0 rounded-lg overflow-hidden bg-gray-800/50 border border-slate-700/40 flex flex-col">
+                  <div
+                    className={cn(
+                      'relative flex-1 min-h-0 overflow-hidden',
+                      '[&_.group]:flex [&_.group]:h-full [&_.group]:flex-col',
+                      '[&_.aspect-video]:min-h-0 [&_.aspect-video]:flex-1 [&_.aspect-video]:!aspect-auto',
+                      '[&_.aspect-video_img]:h-full [&_.aspect-video_img]:w-full [&_.aspect-video_img]:object-contain'
+                    )}
+                  >
+                    {previewSlot ? (
+                      <SceneImageFrame
+                        {...buildStoryboardSlotFrameProps(previewSlot, slotHandlers)}
+                        showControls
+                        controlsVariant="comfortable"
+                        alwaysShowControls
+                        showBorder={false}
+                        promptLineClamp={2}
+                        expandable
+                      />
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center">
+                        <Camera className="w-8 h-8 text-gray-600 mb-2" />
+                        <span className="text-xs text-gray-500">No pre-vis frames</span>
+                      </div>
+                    )}
+                    {isGeneratingScene && !previewSlot && (
+                      <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-10">
+                        <Loader className="w-10 h-10 animate-spin text-blue-400 mb-2" />
+                        <span className="text-sm text-white">Generating...</span>
+                      </div>
+                    )}
                   </div>
-                ))}
+                </div>
               </div>
             </>
           )}
