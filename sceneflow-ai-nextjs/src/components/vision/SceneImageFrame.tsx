@@ -125,7 +125,9 @@ function CompactActionBar({
   return (
     <div
       className={`absolute inset-0 flex flex-wrap items-center justify-center gap-1.5 p-1.5 bg-black/50 ${
-        alwaysVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        alwaysVisible
+          ? 'opacity-100'
+          : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
       } transition-opacity`}
       onClick={(e) => e.stopPropagation()}
     >
@@ -261,7 +263,10 @@ export function SceneImageFrame({
   const [expandOpen, setExpandOpen] = useState(false)
   const roleLabel = formatBeatRoleLabel(beatRole)
   const promptPreview = imagePrompt?.trim()
-  const useOverlayControls = compact || alwaysShowControls
+  const useOverlayControls =
+    compact ||
+    alwaysShowControls ||
+    (showControls && controlsVariant === 'comfortable')
   const promptClampClass =
     promptLineClamp === 4
       ? 'line-clamp-4'
@@ -345,7 +350,9 @@ export function SceneImageFrame({
                       setExpandOpen(true)
                     }}
                     className={`absolute top-2 left-2 z-20 p-1.5 rounded-md bg-black/50 text-white transition-opacity hover:bg-black/70 ${
-                      alwaysShowControls ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      alwaysShowControls
+                        ? 'opacity-100'
+                        : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'
                     }`}
                     aria-label="Expand image"
                   >
@@ -400,7 +407,7 @@ export function SceneImageFrame({
                 onDelete={onDelete}
                 onAddToReferenceLibrary={onAddToReferenceLibrary}
                 sceneNumber={sceneNumber}
-                alwaysVisible={alwaysShowControls || !compact}
+                alwaysVisible={alwaysShowControls}
                 controlsVariant={controlsVariant}
               />
             ) : showControls && !useOverlayControls ? (

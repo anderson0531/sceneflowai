@@ -113,7 +113,6 @@ function buildStoryboardSlotFrameProps(
   | 'compact'
   | 'showControls'
   | 'controlsVariant'
-  | 'alwaysShowControls'
   | 'onSelect'
   | 'isSelected'
   | 'showBorder'
@@ -765,7 +764,6 @@ export function SceneStoryboardFrameViewer({
                           imagePrompt={undefined}
                           showControls
                           controlsVariant="comfortable"
-                          alwaysShowControls
                           showBorder={false}
                           expandable
                         />
