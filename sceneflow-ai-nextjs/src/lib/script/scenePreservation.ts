@@ -5,12 +5,8 @@
 import { getSceneBeats, normalizeBeatsForProduction } from '@/lib/script/beatMigration'
 import type { SceneBeat } from '@/lib/script/segmentTypes'
 import {
-  copyDescriptionAudioFields,
-  copyMusicAudioFields,
   copyPreservedSceneAudioFields,
-  copySfxAudioFields,
   normalizePreserveElements,
-  type PreserveElement,
   type PreserveElementInput,
 } from '@/lib/audio/cleanupAudio'
 
@@ -97,8 +93,7 @@ function preserveActionBeats(original: any, scene: any): void {
   if (original.visualDescription !== undefined) scene.visualDescription = original.visualDescription
   if (original.description !== undefined) scene.description = original.description
   scene.sfx = cloneJson(original.sfx ?? [])
-  copySfxAudioFields(original, scene)
-  copyDescriptionAudioFields(original, scene)
+  Object.assign(scene, copyPreservedSceneAudioFields(original, scene, ['actionBeats']))
 
   const originalBeats = getSceneBeats(original)
   const incomingBeats = getSceneBeats(scene)
@@ -117,7 +112,7 @@ function preserveActionBeats(original: any, scene: any): void {
 
 function preserveMusic(original: any, scene: any): void {
   scene.music = cloneJson(original.music)
-  copyMusicAudioFields(original, scene)
+  Object.assign(scene, copyPreservedSceneAudioFields(original, scene, ['music']))
 }
 
 function preserveBeatFrames(original: any, scene: any): void {
