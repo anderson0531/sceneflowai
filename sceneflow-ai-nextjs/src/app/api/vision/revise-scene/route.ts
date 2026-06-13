@@ -6,7 +6,8 @@ import {
   copyPreservedSceneAudioFields,
   formatMusicForPrompt,
   formatSfxForPrompt,
-  type PreserveElement,
+  normalizePreserveElements,
+  type PreserveElementInput,
 } from '@/lib/audio/cleanupAudio'
 
 export const maxDuration = 60
@@ -21,7 +22,7 @@ interface SceneRevisionRequest {
   customInstruction?: string
   /** Target audience profile + optional user direction */
   targetDemographic?: string
-  preserveElements?: PreserveElement[]
+  preserveElements?: PreserveElementInput[]
   revisionDepth?: 'light' | 'moderate' | 'deep' // light=polish, moderate=rewrite, deep=restructure
   context: {
     characters: any[]
@@ -98,7 +99,7 @@ async function generateRevisedScene({
   selectedRecommendations: (string | { text: string; category?: string; impact?: 'structural' | 'polish' })[]
   customInstruction: string
   targetDemographic: string
-  preserveElements: PreserveElement[]
+  preserveElements: PreserveElementInput[]
   revisionDepth: 'light' | 'moderate' | 'deep'
   context: any
 }): Promise<any> {
@@ -148,13 +149,21 @@ For each recommendation, make the necessary STRUCTURAL or CONTENT changes. Do NO
   }
 
   // Add preservation instructions
-  const preserveInstructions = preserveElements.map(element => {
+  const normalizedPreserve = normalizePreserveElements(preserveElements)
+  const preserveInstructions = normalizedPreserve.map((element) => {
     switch (element) {
-      case 'narration': return 'Keep the existing narration unchanged'
-      case 'dialogue': return 'Keep the existing dialogue unchanged'
-      case 'music': return 'Keep the existing music specification unchanged'
-      case 'sfx': return 'Keep the existing sound effects unchanged'
-      default: return ''
+      case 'dialogueBeats':
+        return 'Keep the existing dialogue lines unchanged'
+      case 'actionBeats':
+        return 'Keep the existing action/visual description and sound effects unchanged'
+      case 'music':
+        return 'Keep the existing music specification unchanged'
+      case 'sceneDirection':
+        return 'Keep the existing scene direction unchanged (do not rewrite blocking or camera notes)'
+      case 'beatFrames':
+        return 'Do not alter storyboard frame references (handled separately after revision)'
+      default:
+        return ''
     }
   }).filter(Boolean).join('. ')
 
@@ -404,25 +413,32 @@ Now rewrite the scene following all the rules, constraints, and formatting requi
 function finalizeRevisedScene(
   revisedScene: any,
   currentScene: any,
-  preserveElements: PreserveElement[],
+  preserveElements: PreserveElementInput[],
   context: any
 ): any {
+  const normalizedPreserve = normalizePreserveElements(preserveElements)
   let finalScene = { ...currentScene, ...revisedScene }
   if (revisedScene.visualDescription === undefined && currentScene.visualDescription) {
     finalScene.visualDescription = currentScene.visualDescription
   }
 
-  if (preserveElements.includes('narration')) {
-    finalScene.narration = currentScene.narration
-  }
-  if (preserveElements.includes('dialogue')) {
+  if (normalizedPreserve.includes('dialogueBeats')) {
     finalScene.dialogue = currentScene.dialogue
   }
-  if (preserveElements.includes('music')) {
+  if (normalizedPreserve.includes('actionBeats')) {
+    finalScene.action = currentScene.action
+    finalScene.visualDescription = currentScene.visualDescription
+    if (currentScene.description !== undefined) finalScene.description = currentScene.description
+    finalScene.sfx = currentScene.sfx
+  }
+  if (normalizedPreserve.includes('music')) {
     finalScene.music = currentScene.music
   }
-  if (preserveElements.includes('sfx')) {
-    finalScene.sfx = currentScene.sfx
+  if (normalizedPreserve.includes('sceneDirection')) {
+    finalScene.sceneDirection = currentScene.sceneDirection
+  }
+  if (preserveElements.includes('narration')) {
+    finalScene.narration = currentScene.narration
   }
 
   finalScene = copyPreservedSceneAudioFields(currentScene, finalScene, preserveElements)

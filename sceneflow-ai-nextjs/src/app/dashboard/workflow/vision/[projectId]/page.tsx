@@ -21,6 +21,11 @@ import { PanelGroup, Panel, PanelResizeHandle, ImperativePanelHandle } from 'rea
 import { upload } from '@vercel/blob/client'
 import debounce from 'lodash/debounce'
 import {
+  applyScenePreservation,
+  shouldRegenerateSceneDirection,
+  shouldSkipBeatRederivation,
+} from '@/lib/script/scenePreservation'
+import {
   applySceneEditAudioPolicy,
   clearAllSceneAudio,
   mergeScenesForScriptSave,
@@ -11031,11 +11036,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const updatedScenes = [...(script.script?.scenes || [])]
     const originalScene = updatedScenes[sceneIndex]
 
-    const { cleanedScene, deletedUrls: allDeletedUrls } = applySceneEditAudioPolicy(
+    const preserveElements = options?.preserveElements ?? []
+
+    const { cleanedScene: audioCleanedScene, deletedUrls: allDeletedUrls } = applySceneEditAudioPolicy(
       originalScene,
       revisedScene,
-      options?.preserveElements ?? []
+      preserveElements
     )
+
+    let cleanedScene = applyScenePreservation(originalScene, audioCleanedScene, preserveElements)
     
     // Preserve audienceAnalysis from original scene and mark as optimized
     // so progressive analysis knows the scene was edited since last analysis
@@ -11046,11 +11055,10 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     }
     
-    // Force this scene to be re-segmented from the freshly edited flat fields.
-    // Dropping `segments` makes `migrateProjectToSegmented` rebuild this
-    // scene's ScriptSegment[] (with new lineIds for any new sentences) and
-    // re-sync the production-state segments by stable segmentId.
-    cleanedScene.segments = undefined
+    // Force re-segmentation only when beats/frames are not preserved.
+    if (!shouldSkipBeatRederivation(preserveElements)) {
+      cleanedScene.segments = undefined
+    }
     updatedScenes[sceneIndex] = cleanedScene
 
     // Save to database FIRST
@@ -11126,11 +11134,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
       } catch {}
       
-      // Auto-regenerate scene direction in background (non-blocking)
-      // Scene content changed, so direction needs to be updated
-      // NOTE: The direction API saves server-side, so no client DB write races with us.
-      console.log(`[AutoDirection] Scene ${sceneIndex + 1} edited - triggering background direction regeneration`)
-      handleBackgroundDirectionGeneration(sceneIndex)
+      // Auto-regenerate scene direction unless direction is preserved
+      if (shouldRegenerateSceneDirection(preserveElements)) {
+        console.log(`[AutoDirection] Scene ${sceneIndex + 1} edited - triggering background direction regeneration`)
+        handleBackgroundDirectionGeneration(sceneIndex)
+      } else {
+        console.log(`[AutoDirection] Scene ${sceneIndex + 1} edited - skipping direction regeneration (preserved)`)
+      }
       
       // NOTE: Removed loadProject() call - it was causing race condition
       // where stale data would be reloaded before DB write completed.

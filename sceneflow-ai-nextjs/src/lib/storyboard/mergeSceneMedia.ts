@@ -7,8 +7,16 @@ import { mergeScenePreservingAudio } from '@/lib/audio/cleanupAudio'
 const DIALOGUE_STORYBOARD_URL_KEYS = ['storyboardImageUrl', 'storyboardImageGcsPath'] as const
 const DIALOGUE_STORYBOARD_PROMPT_KEYS = ['storyboardImagePrompt'] as const
 
-const BEAT_STORYBOARD_URL_KEYS = ['storyboardImageUrl', 'storyboardImageGcsPath'] as const
-const BEAT_STORYBOARD_PROMPT_KEYS = ['storyboardImagePrompt'] as const
+const BEAT_STORYBOARD_URL_KEYS = [
+  'storyboardImageUrl',
+  'storyboardImageGcsPath',
+  'storyboardEndImageUrl',
+  'storyboardEndImageGcsPath',
+] as const
+const BEAT_STORYBOARD_PROMPT_KEYS = [
+  'storyboardImagePrompt',
+  'storyboardEndImagePrompt',
+] as const
 
 const SCENE_IMAGE_URL_KEYS = [
   'imageUrl',

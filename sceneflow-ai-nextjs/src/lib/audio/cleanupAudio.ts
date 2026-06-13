@@ -9,7 +9,52 @@ import { mergeScenePreservingMedia } from '@/lib/storyboard/mergeSceneMedia'
 import { stripGhostStandaloneNarration } from '@/lib/script/narration'
 import { coerceSceneSfxFlatArray } from '@/lib/script/segmentScript'
 
-export type PreserveElement = 'narration' | 'dialogue' | 'music' | 'sfx'
+export type PreserveElement =
+  | 'dialogueBeats'
+  | 'actionBeats'
+  | 'music'
+  | 'sceneDirection'
+  | 'beatFrames'
+
+/** Legacy values accepted by revise-scene / older clients. */
+export type LegacyPreserveElement = 'narration' | 'dialogue' | 'sfx'
+
+export type PreserveElementInput = PreserveElement | LegacyPreserveElement
+
+/** Map legacy preserve flags to the new category model. */
+export function normalizePreserveElements(
+  elements: PreserveElementInput[] = []
+): PreserveElement[] {
+  const out = new Set<PreserveElement>()
+  for (const el of elements) {
+    switch (el) {
+      case 'dialogue':
+      case 'dialogueBeats':
+        out.add('dialogueBeats')
+        break
+      case 'sfx':
+      case 'actionBeats':
+        out.add('actionBeats')
+        break
+      case 'music':
+        out.add('music')
+        break
+      case 'sceneDirection':
+        out.add('sceneDirection')
+        break
+      case 'beatFrames':
+        out.add('beatFrames')
+        break
+      case 'narration':
+        break
+    }
+  }
+  return [...out]
+}
+
+function preservesLegacyNarration(elements: PreserveElementInput[]): boolean {
+  return elements.includes('narration')
+}
 
 /** Scene-level fields that store generated audio references. */
 export const SCENE_AUDIO_FIELD_KEYS = [
@@ -395,14 +440,14 @@ function filterStaleDialogueAudio(originalScene: any, scene: any, deletedUrls: s
 export function copyPreservedSceneAudioFields(
   originalScene: any,
   scene: any,
-  preserveElements: PreserveElement[] = []
+  preserveElements: PreserveElementInput[] = []
 ): any {
-  const preserve = new Set(preserveElements)
+  const preserve = new Set(normalizePreserveElements(preserveElements))
   const next = { ...scene }
-  if (preserve.has('narration')) copyNarrationAudioFields(originalScene, next)
-  if (preserve.has('dialogue')) copyDialogueAudioBundle(originalScene, next)
+  if (preservesLegacyNarration(preserveElements)) copyNarrationAudioFields(originalScene, next)
+  if (preserve.has('dialogueBeats')) copyDialogueAudioBundle(originalScene, next)
   if (preserve.has('music')) copyMusicAudioFields(originalScene, next)
-  if (preserve.has('sfx')) copySfxAudioFields(originalScene, next)
+  if (preserve.has('actionBeats')) copySfxAudioFields(originalScene, next)
   return next
 }
 
@@ -413,20 +458,20 @@ export function copyPreservedSceneAudioFields(
 export function applySceneEditAudioPolicy(
   originalScene: any,
   revisedScene: any,
-  preserveElements: PreserveElement[] = []
+  preserveElements: PreserveElementInput[] = []
 ): CleanupResult {
-  const preserve = new Set(preserveElements)
+  const preserve = new Set(normalizePreserveElements(preserveElements))
   const scene = { ...originalScene, ...revisedScene }
   const deletedUrls: string[] = []
 
-  if (preserve.has('narration')) scene.narration = originalScene?.narration
-  if (preserve.has('dialogue')) scene.dialogue = originalScene?.dialogue
+  if (preservesLegacyNarration(preserveElements)) scene.narration = originalScene?.narration
+  if (preserve.has('dialogueBeats')) scene.dialogue = originalScene?.dialogue
   if (preserve.has('music')) scene.music = originalScene?.music
-  if (preserve.has('sfx')) scene.sfx = originalScene?.sfx
+  if (preserve.has('actionBeats')) scene.sfx = originalScene?.sfx
 
   const narrationChanged =
     String(originalScene?.narration ?? '').trim() !== String(scene.narration ?? '').trim()
-  if (preserve.has('narration') || !narrationChanged) {
+  if (preservesLegacyNarration(preserveElements) || !narrationChanged) {
     copyNarrationAudioFields(originalScene, scene)
   } else {
     collectNarrationAudioUrls(originalScene, deletedUrls)
@@ -435,14 +480,20 @@ export function applySceneEditAudioPolicy(
 
   const originalDescription = originalScene?.description || originalScene?.action || ''
   const revisedDescription = scene.description || scene.action || ''
-  if (originalDescription !== revisedDescription) {
+  const actionBeatsPreserved = preserve.has('actionBeats')
+  if (actionBeatsPreserved) {
+    scene.action = originalScene?.action
+    scene.visualDescription = originalScene?.visualDescription
+    if (originalScene?.description !== undefined) scene.description = originalScene.description
+    copyDescriptionAudioFields(originalScene, scene)
+  } else if (originalDescription !== revisedDescription) {
     collectDescriptionAudioUrls(originalScene, deletedUrls)
     clearDescriptionAudioFields(scene)
   } else {
     copyDescriptionAudioFields(originalScene, scene)
   }
 
-  if (preserve.has('dialogue')) {
+  if (preserve.has('dialogueBeats')) {
     copyDialogueAudioBundle(originalScene, scene)
   } else {
     filterStaleDialogueAudio(originalScene, scene, deletedUrls)
@@ -461,8 +512,8 @@ export function applySceneEditAudioPolicy(
   const sfxOrderChanged =
     normalizeSfxSpecsOrdered(originalScene?.sfx).join('\0') !==
     normalizeSfxSpecsOrdered(scene.sfx).join('\0')
-  if (preserve.has('sfx') || !sfxSpecsChanged) {
-    if (preserve.has('sfx') || !sfxOrderChanged) {
+  if (actionBeatsPreserved || !sfxSpecsChanged) {
+    if (actionBeatsPreserved || !sfxOrderChanged) {
       copySfxAudioFields(originalScene, scene)
     } else {
       remapSfxAudioByDescription(originalScene, scene)

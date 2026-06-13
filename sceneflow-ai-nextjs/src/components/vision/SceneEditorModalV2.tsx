@@ -12,6 +12,12 @@ import { SceneComparisonPanel } from './SceneComparisonPanel'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
 import { useOverlayStore } from '@/store/useOverlayStore'
 import type { PreserveElement } from '@/lib/audio/cleanupAudio'
+import {
+  applyDeselectedSceneChanges,
+  buildEffectiveCandidateScene,
+  countSelectedChanges,
+  diffSceneChanges,
+} from '@/lib/script/sceneDiffChanges'
 
 interface SceneEditorApplyOptions {
   preserveElements?: PreserveElement[]
@@ -55,11 +61,15 @@ export function SceneEditorModal({
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false)
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false)
   
-  // Preservation options
-  const [preserveNarration, setPreserveNarration] = useState(false)
-  const [preserveDialogue, setPreserveDialogue] = useState(false)
+  // Preservation options (5 categories)
+  const [preserveDialogueBeats, setPreserveDialogueBeats] = useState(false)
+  const [preserveActionBeats, setPreserveActionBeats] = useState(false)
   const [preserveMusic, setPreserveMusic] = useState(false)
-  const [preserveSfx, setPreserveSfx] = useState(false)
+  const [preserveSceneDirection, setPreserveSceneDirection] = useState(false)
+  const [preserveBeatFrames, setPreserveBeatFrames] = useState(false)
+
+  // Per-change unselect in preview (empty = all selected)
+  const [deselectedChanges, setDeselectedChanges] = useState<Set<string>>(() => new Set())
 
   // Optimization state
   const [optimizedScene, setOptimizedScene] = useState<any | null>(null)
@@ -86,12 +96,19 @@ export function SceneEditorModal({
 
   const buildPreserveElements = useCallback((): PreserveElement[] => {
     const preserveElements: PreserveElement[] = []
-    if (preserveNarration) preserveElements.push('narration')
-    if (preserveDialogue) preserveElements.push('dialogue')
+    if (preserveDialogueBeats) preserveElements.push('dialogueBeats')
+    if (preserveActionBeats) preserveElements.push('actionBeats')
     if (preserveMusic) preserveElements.push('music')
-    if (preserveSfx) preserveElements.push('sfx')
+    if (preserveSceneDirection) preserveElements.push('sceneDirection')
+    if (preserveBeatFrames) preserveElements.push('beatFrames')
     return preserveElements
-  }, [preserveNarration, preserveDialogue, preserveMusic, preserveSfx])
+  }, [
+    preserveDialogueBeats,
+    preserveActionBeats,
+    preserveMusic,
+    preserveSceneDirection,
+    preserveBeatFrames,
+  ])
 
   // Append instruction with numbered format
   const appendInstruction = (newText: string, recommendationId?: string) => {
@@ -147,6 +164,12 @@ export function SceneEditorModal({
       // Set initial instructions if provided (from Apply Recommendations)
       setCustomInstruction(initialInstructions || '')
       setAppliedRecommendationIds([])
+      setPreserveDialogueBeats(false)
+      setPreserveActionBeats(false)
+      setPreserveMusic(false)
+      setPreserveSceneDirection(false)
+      setPreserveBeatFrames(false)
+      setDeselectedChanges(new Set())
     }
   }, [isOpen, scene, initialInstructions])
 
@@ -218,6 +241,7 @@ export function SceneEditorModal({
       const data = await response.json()
       setPreviewScene(data.revisedScene)
       syncSceneDescriptionFrom(data.revisedScene)
+      setDeselectedChanges(new Set())
       
       // Add to revision history
       const newHistory = [...revisionHistory.slice(0, currentHistoryIndex + 1), data.revisedScene]
@@ -237,6 +261,15 @@ export function SceneEditorModal({
     }
   }
 
+  const handleToggleChange = (key: string) => {
+    setDeselectedChanges((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
   const handleApplyChanges = () => {
     const sourceScene = previewScene || revisionHistory[currentHistoryIndex] || scene
     if (!sourceScene) return
@@ -244,11 +277,22 @@ export function SceneEditorModal({
     const cleanedDescription = sceneDescription?.trim() || ''
     const cleanedNarration = narrationText?.trim() || ''
 
-    // Simplified scene metadata (scores removed)
-    const revisedSceneWithMetadata = {
-      ...sourceScene,
-      visualDescription: cleanedDescription,
-      narration: cleanedNarration
+    let revisedSceneWithMetadata: any
+    if (showPreview && previewScene) {
+      revisedSceneWithMetadata = applyDeselectedSceneChanges(
+        scene,
+        buildEffectiveCandidateScene(sourceScene, {
+          visualDescription: cleanedDescription,
+          narration: cleanedNarration,
+        }),
+        deselectedChanges
+      )
+    } else {
+      revisedSceneWithMetadata = {
+        ...sourceScene,
+        visualDescription: cleanedDescription,
+        narration: cleanedNarration,
+      }
     }
 
     const newHistory = [...revisionHistory.slice(0, currentHistoryIndex + 1), revisedSceneWithMetadata]
@@ -285,6 +329,20 @@ export function SceneEditorModal({
   const descriptionChanged = normalizeDescription(scene.visualDescription) !== normalizeDescription(sceneDescription)
   const narrationChanged = normalizeDescription(scene.narration) !== normalizeDescription(narrationText)
   const hasAIChanges = customInstruction.trim().length > 0
+  const effectivePreviewScene = previewScene
+    ? buildEffectiveCandidateScene(previewScene, {
+        visualDescription: sceneDescription,
+        narration: narrationText,
+      })
+    : null
+  const previewChangeKeys = effectivePreviewScene
+    ? diffSceneChanges(scene, effectivePreviewScene)
+    : []
+  const { selected: selectedPreviewChanges } = countSelectedChanges(
+    previewChangeKeys,
+    deselectedChanges
+  )
+  const canApplyPreview = Boolean(previewScene) && selectedPreviewChanges > 0
   const changeStatusMessage = hasAIChanges
     ? 'Custom instruction ready'
     : descriptionChanged || narrationChanged
@@ -464,24 +522,24 @@ export function SceneEditorModal({
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                     Preserve Elements
                   </h4>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={preserveNarration}
-                        onChange={(e) => setPreserveNarration(e.target.checked)}
+                        checked={preserveDialogueBeats}
+                        onChange={(e) => setPreserveDialogueBeats(e.target.checked)}
                         className="rounded"
                       />
-                      Narration
+                      Dialogue beats (+ audio)
                     </label>
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={preserveDialogue}
-                        onChange={(e) => setPreserveDialogue(e.target.checked)}
+                        checked={preserveActionBeats}
+                        onChange={(e) => setPreserveActionBeats(e.target.checked)}
                         className="rounded"
                       />
-                      Dialogue
+                      Action beats (+ SFX audio)
                     </label>
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
@@ -495,15 +553,24 @@ export function SceneEditorModal({
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={preserveSfx}
-                        onChange={(e) => setPreserveSfx(e.target.checked)}
+                        checked={preserveSceneDirection}
+                        onChange={(e) => setPreserveSceneDirection(e.target.checked)}
                         className="rounded"
                       />
-                      Sound Effects
+                      Scene direction
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer sm:col-span-2">
+                      <input
+                        type="checkbox"
+                        checked={preserveBeatFrames}
+                        onChange={(e) => setPreserveBeatFrames(e.target.checked)}
+                        className="rounded"
+                      />
+                      Beat frames (start/end storyboard images)
                     </label>
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Preserves script text and existing generated audio for checked items.
+                    Preserved items keep their script text, audio, direction, and frame images unchanged through the edit.
                   </p>
                 </div>
               </div>
@@ -530,9 +597,11 @@ export function SceneEditorModal({
             ) : (
               <PreviewPanel
                 originalScene={scene}
-                previewScene={previewScene}
+                previewScene={effectivePreviewScene}
                 isGenerating={isGenerating}
                 changes={[]}
+                deselectedChanges={deselectedChanges}
+                onToggleChange={handleToggleChange}
               />
             )}
           </div>
@@ -582,7 +651,7 @@ export function SceneEditorModal({
                 <>
                   <Button
                     onClick={handleApplyChanges}
-                    disabled={(!previewScene && !descriptionChanged && !narrationChanged) || isGenerating}
+                    disabled={!canApplyPreview || isGenerating}
                     className="bg-sf-primary"
                   >
                     <Check className="w-4 h-4 mr-2" />
