@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildIdentityPromptToken,
+  filterCharactersForPromptRefs,
   optimizePromptForImagen,
   sanitizePromptForIdentityRefs,
 } from '@/lib/imagen/promptOptimizer'
@@ -45,5 +46,43 @@ describe('promptOptimizer reference-first binding', () => {
     )
     expect(sanitized).toContain('person [1]')
     expect(sanitized).not.toContain('Maria')
+  })
+
+  it('filterCharactersForPromptRefs keeps only characters referenced in prompt body', () => {
+    const refs = [
+      { name: 'Elara Vance', promptToken: 'person [1]', identityReferenceId: 1 },
+      { name: 'Marcus Thorne', promptToken: 'person [2]', identityReferenceId: 2 },
+      { name: 'Dr. Benjamin Reed', promptToken: 'person [3]', identityReferenceId: 3 },
+    ]
+    const body =
+      'Cinematic medium shot of person [1] standing frozen, looking down at a coffee table.'
+
+    const filtered = filterCharactersForPromptRefs(refs, body)
+    expect(filtered.map((r) => r.name)).toEqual(['Elara Vance'])
+  })
+
+  it('filterCharactersForPromptRefs falls back to full set when filter would drop everyone', () => {
+    const refs = [
+      { name: 'Elara Vance', promptToken: 'person [1]', identityReferenceId: 1 },
+      { name: 'Marcus Thorne', promptToken: 'person [2]', identityReferenceId: 2 },
+    ]
+    const filtered = filterCharactersForPromptRefs(
+      refs,
+      'Wide establishing shot of an empty apartment with no people tokens.'
+    )
+    expect(filtered).toEqual(refs)
+  })
+
+  it('filterCharactersForPromptRefs matches selectedCharacterNames from AI intelligence', () => {
+    const refs = [
+      { name: 'Elara Vance', promptToken: 'person [1]', identityReferenceId: 1 },
+      { name: 'Marcus Thorne', promptToken: 'person [2]', identityReferenceId: 2 },
+    ]
+    const filtered = filterCharactersForPromptRefs(
+      refs,
+      'Cinematic medium shot with no person tokens in body.',
+      ['Elara Vance']
+    )
+    expect(filtered.map((r) => r.name)).toEqual(['Elara Vance'])
   })
 })

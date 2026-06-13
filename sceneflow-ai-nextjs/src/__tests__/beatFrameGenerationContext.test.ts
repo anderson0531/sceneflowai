@@ -64,6 +64,34 @@ describe('resolveBeatFrameGenerationContext', () => {
     expect(resolved.locationRefId).not.toBe('loc-bedroom')
   })
 
+  it('does not include characters from full scene action when beat only names one', () => {
+    const scene = {
+      heading: "INT. ELARA'S APARTMENT - NIGHT",
+      action:
+        'Marcus enters with Dr. Reed. Elara walks through the living room while they talk.',
+    }
+    const resolved = resolveBeatFrameGenerationContext({
+      scene,
+      beat: actionBeat({
+        actionDescription:
+          'Elara walks slowly through her living room, her eyes scanning every detail.',
+      }),
+      projectCharacters: [
+        ...characters,
+        {
+          id: 'c3',
+          name: 'Dr. Benjamin Reed',
+          referenceImage: 'https://blob.example/reed.jpg',
+        },
+      ],
+      locationReferences: [],
+      objectReferences: [],
+    })
+
+    expect(resolved.characterIds).toEqual(['c1'])
+    expect(resolved.characterNames).toEqual(['Elara Vance'])
+  })
+
   it('detects multiple characters on action beats', () => {
     const scene = { heading: 'INT. LAB - DAY' }
     const resolved = resolveBeatFrameGenerationContext({

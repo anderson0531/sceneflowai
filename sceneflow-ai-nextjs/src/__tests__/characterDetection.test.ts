@@ -57,6 +57,24 @@ describe('detectCharactersInText', () => {
     expect(matches).toHaveLength(1)
     expect(matches[0].name).toBe('Aura')
   })
+
+  it('does not match characters named only in full scene action when beat context is scoped', () => {
+    const beatAction =
+      'Elara walks slowly through her living room, her eyes scanning every detail.'
+    const fullSceneAction =
+      'Marcus enters with Dr. Reed. Elara walks slowly through her living room.'
+    const heading = "INT. ELARA'S APARTMENT - NIGHT"
+
+    const fullContext = [heading, fullSceneAction, beatAction].join(' ')
+    expect(detectCharactersInText(fullContext, characters).map((c) => c.name)).toEqual(
+      expect.arrayContaining(['Elara Vance', 'Marcus Thorne', 'Dr. Benjamin Reed'])
+    )
+
+    const beatScopedContext = [heading, beatAction].join(' ')
+    expect(detectCharactersInText(beatScopedContext, characters).map((c) => c.name)).toEqual([
+      'Elara Vance',
+    ])
+  })
 })
 
 describe('resolveBeatSpeaker', () => {

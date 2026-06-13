@@ -99,9 +99,9 @@ function resolveBeatCharacters(
   if (isNoTalentSceneForFrames(scene)) return []
 
   if (beat.kind === 'action') {
+    // Beat-scoped only: do not scan full scene.action (other beats' characters leak in)
     const actionContext = [
       sceneHeadingText(scene),
-      scene?.action || '',
       beat.actionDescription || '',
     ].join(' ')
     return detectCharactersInText(actionContext, projectCharacters, {

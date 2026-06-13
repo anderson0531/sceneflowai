@@ -138,6 +138,56 @@ export function sanitizePromptForIdentityRefs(
   return sanitized.replace(/\s+/g, ' ').trim()
 }
 
+export interface CharacterRefForPromptFilter {
+  name: string
+  promptToken?: string
+  identityReferenceId?: number
+}
+
+/**
+ * Keep only characters whose person [N] token appears in the prompt body and/or
+ * whose name was selected by AI intelligence. Falls back to the full set when
+ * the filter would drop every character (avoids empty subject binding).
+ */
+export function filterCharactersForPromptRefs<T extends CharacterRefForPromptFilter>(
+  characterRefs: T[],
+  promptBody: string,
+  selectedCharacterNames?: string[]
+): T[] {
+  if (characterRefs.length === 0) return characterRefs
+
+  const bodyLower = promptBody.toLowerCase()
+  const selectedNamesLower = (selectedCharacterNames ?? [])
+    .map((name) => name.toLowerCase().trim())
+    .filter(Boolean)
+
+  const filtered = characterRefs.filter((ref) => {
+    const token =
+      ref.promptToken ??
+      (ref.identityReferenceId != null
+        ? buildIdentityPromptToken(ref.identityReferenceId)
+        : undefined)
+
+    if (token && bodyLower.includes(token.toLowerCase())) {
+      return true
+    }
+
+    if (selectedNamesLower.length > 0) {
+      const nameLower = ref.name.toLowerCase()
+      return selectedNamesLower.some(
+        (selected) =>
+          nameLower === selected ||
+          nameLower.includes(selected) ||
+          selected.includes(nameLower)
+      )
+    }
+
+    return false
+  })
+
+  return filtered.length > 0 ? filtered : characterRefs
+}
+
 interface OptimizePromptParams {
   sceneAction: string
   visualDescription: string

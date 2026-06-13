@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateImageWithGemini } from '@/lib/gemini/imageClient'
 import { generateImageWithVertexKlingFallback } from '@/lib/generation/vertexImageWithKlingFallback'
 import { uploadImageToBlob } from '@/lib/storage/blob'
-import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs } from '@/lib/imagen/promptOptimizer'
+import { optimizePromptForImagen, generateLinkingDescription, extractDemographicAnchor, buildIdentityPromptToken, sanitizePromptForIdentityRefs, filterCharactersForPromptRefs } from '@/lib/imagen/promptOptimizer'
 import { validateCharacterLikeness } from '@/lib/imagen/imageValidator'
 import { waitForGCSURIs, checkGCSURIAccessibility } from '@/lib/storage/gcsAccessibility'
 import { generateDirectionHash, generateImageSourceHash } from '@/lib/utils/contentHash'
@@ -598,9 +598,9 @@ export async function POST(req: NextRequest) {
             } else if (beat.kind === 'action') {
               const actionText = beat.actionDescription?.trim() || ''
               if (!clientVerifiedBeatRefs) {
+                // Beat-scoped only: do not scan full scene.action (other beats' characters leak in)
                 const actionContext = [
                   resolvedScene?.heading || '',
-                  resolvedScene?.action || '',
                   actionText,
                 ].join(' ')
                 const detectedChars = detectCharactersInText(actionContext, allCharacters, {
@@ -1090,6 +1090,8 @@ export async function POST(req: NextRequest) {
     
     let optimizedPrompt: string
     let usedAIIntelligence = false
+    /** Subset of characterReferences whose refs are sent to the image model (may be filtered after AI prompt). */
+    let characterReferencesForImages = characterReferences
     
     if (customPrompt && customPrompt.trim()) {
       let promptBody = customPrompt.trim()
@@ -1297,7 +1299,20 @@ export async function POST(req: NextRequest) {
         let aiPromptBody = aiResult.prompt
         if (charactersWithRefs.length > 0) {
           aiPromptBody = sanitizePromptForIdentityRefs(aiPromptBody, charactersWithRefs)
-          const subjectIntroductions = charactersWithRefs
+          const filteredForPrompt = filterCharactersForPromptRefs(
+            charactersWithRefs,
+            aiPromptBody,
+            aiResult.selectedCharacterNames
+          )
+          characterReferencesForImages = characterReferences.filter((ref: any) =>
+            filteredForPrompt.some((filtered) => filtered.name === ref.name)
+          )
+          if (filteredForPrompt.length < charactersWithRefs.length) {
+            console.log(
+              `[Scene Image] Filtered character refs for prompt/images: ${filteredForPrompt.map((r: any) => r.name).join(', ')} (dropped ${charactersWithRefs.length - filteredForPrompt.length})`
+            )
+          }
+          const subjectIntroductions = filteredForPrompt
             .map(
               (ref: any) =>
                 ref.promptToken ??
@@ -1387,7 +1402,7 @@ export async function POST(req: NextRequest) {
       characterName: string
     }> = []
 
-    for (const ref of characterReferences) {
+    for (const ref of characterReferencesForImages) {
       if (ref.identityReferenceId && ref.identityImageUrl) {
         imageReferences.push({
           referenceId: ref.identityReferenceId,
