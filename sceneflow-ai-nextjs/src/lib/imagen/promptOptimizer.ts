@@ -9,6 +9,7 @@
  */
 
 import { artStylePresets } from '@/constants/artStylePresets'
+import { buildCharacterHairDescription } from '@/lib/character/characterReferenceAssembly'
 
 /**
  * Extract demographic anchor (ethnicity + age + key features) from appearance description.
@@ -213,6 +214,9 @@ interface OptimizePromptParams {
     defaultWardrobe?: string    // Character's standard outfit (e.g., "tailored navy suit")
     wardrobeAccessories?: string // Character's accessories (e.g., "gold watch, leather briefcase")
     appearanceDescription?: string // AI-generated physical appearance (race, age, hair, skin tone)
+    hairStyle?: string
+    hairColor?: string
+    hairDescription?: string
     hasDualReferences?: boolean
     identityReferenceId?: number
     wardrobeReferenceId?: number
@@ -740,7 +744,13 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
           // Use scene-specific wardrobe if found, otherwise fall back to legacy fields
           defaultWardrobe: sceneWardrobe?.description || fullRef?.defaultWardrobe,
           wardrobeAccessories: sceneWardrobe?.accessories || fullRef?.wardrobeAccessories,
-          appearanceDescription: fullRef?.appearanceDescription
+          appearanceDescription: fullRef?.appearanceDescription,
+          hairDescription:
+            fullRef?.hairDescription ??
+            buildCharacterHairDescription({
+              hairStyle: fullRef?.hairStyle,
+              hairColor: fullRef?.hairColor,
+            }),
         }
       })
     
@@ -786,6 +796,9 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
         let wardrobeDesc = `${subjectClause}, wearing ${ref.defaultWardrobe}`
         if (ref.wardrobeAccessories) {
           wardrobeDesc += ` with ${ref.wardrobeAccessories}`
+        }
+        if (ref.hairDescription) {
+          wardrobeDesc += `, ${ref.hairDescription}`
         }
         subjectWardrobeDescriptions.push(wardrobeDesc)
       }

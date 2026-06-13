@@ -30,6 +30,7 @@ import {
   buildFramingAwareIdentityBlock,
   buildIdentityReferenceLabel,
   buildIdentityReferencePromptLine,
+  buildCharacterHairDescription,
   buildWardrobeReferenceLabel,
   buildWardrobeReferencePromptLine,
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
@@ -1001,6 +1002,8 @@ export async function POST(req: NextRequest) {
       }
       
       console.log(`[Scene Image] Extracted key features for ${char.name}:`, keyFeatures)
+
+      const hairDescription = buildCharacterHairDescription(char)
       
       // Build wardrobe description if available (using effective wardrobe, which may be overridden)
       // When a costume reference image exists, we minimize wardrobe text since the model sees it
@@ -1072,6 +1075,9 @@ export async function POST(req: NextRequest) {
         wardrobeImageUrl,
         ethnicity: char.ethnicity,
         keyFeatures: keyFeatures.length > 0 ? keyFeatures : undefined,
+        hairDescription,
+        hairStyle: char.hairStyle,
+        hairColor: char.hairColor,
         defaultWardrobe: hasWardrobeReference ? undefined : effectiveWardrobe,
         wardrobeAccessories: hasWardrobeReference ? undefined : effectiveAccessories,
         hasCostumeReference,
@@ -1190,6 +1196,7 @@ export async function POST(req: NextRequest) {
         appearanceDescription: ref.appearanceDescription,
         wardrobeDescription: ref.defaultWardrobe,
         wardrobeAccessories: ref.wardrobeAccessories,
+        hairDescription: ref.hairDescription,
         hasReferenceImage: !!ref.identityReferenceId || !!ref.wardrobeReferenceId,
         referenceIndex: ref.identityReferenceId ?? ref.wardrobeReferenceId,
         identityReferenceIndex: ref.identityReferenceId,

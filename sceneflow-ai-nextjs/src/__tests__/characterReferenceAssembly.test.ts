@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  buildCharacterHairDescription,
   buildDualReferenceLabels,
   buildDualReferenceNegativeTerms,
   buildFramingAwareIdentityBlock,
@@ -27,12 +28,13 @@ describe('characterReferenceAssembly', () => {
     ],
   }
 
-  it('returns dual references when portrait and wardrobe turnaround exist', () => {
+  it('returns identity only and never attaches wardrobe image URLs', () => {
     const pair = resolveCharacterReferencePair({ character: characterWithPortrait })
     expect(pair.identityUrl).toBe('https://example.com/portrait.jpg')
-    expect(pair.wardrobeUrl).toBe('https://example.com/turnaround.jpg')
-    expect(pair.hasDualReferences).toBe(true)
+    expect(pair.wardrobeUrl).toBeUndefined()
+    expect(pair.hasDualReferences).toBe(false)
     expect(pair.hasWardrobeOnlyReference).toBe(false)
+    expect(pair.resolvedWardrobe?.description).toBe('Navy suit')
   })
 
   it('returns portrait-only when no wardrobe turnaround', () => {
@@ -48,7 +50,7 @@ describe('characterReferenceAssembly', () => {
     expect(pair.hasDualReferences).toBe(false)
   })
 
-  it('returns wardrobe-only when portrait is missing', () => {
+  it('returns no wardrobe image when portrait is missing (text-only wardrobe)', () => {
     const pair = resolveCharacterReferencePair({
       character: {
         name: 'Alex',
@@ -62,12 +64,12 @@ describe('characterReferenceAssembly', () => {
       },
     })
     expect(pair.identityUrl).toBeUndefined()
-    expect(pair.wardrobeUrl).toBe('https://example.com/alex-turnaround.jpg')
-    expect(pair.hasWardrobeOnlyReference).toBe(true)
+    expect(pair.wardrobeUrl).toBeUndefined()
+    expect(pair.hasWardrobeOnlyReference).toBe(false)
     expect(pair.hasDualReferences).toBe(false)
   })
 
-  it('uses scene wardrobe override via characterWardrobes', () => {
+  it('resolves wardrobe text via characterWardrobes without attaching image', () => {
     const pair = resolveCharacterReferencePair({
       character: {
         id: 'char-1',
@@ -80,8 +82,16 @@ describe('characterReferenceAssembly', () => {
       },
       characterWardrobes: [{ characterId: 'char-1', wardrobeId: 'w2' }],
     })
-    expect(pair.wardrobeUrl).toBe('https://example.com/scene-outfit.jpg')
-    expect(pair.hasDualReferences).toBe(true)
+    expect(pair.wardrobeUrl).toBeUndefined()
+    expect(pair.hasDualReferences).toBe(false)
+    expect(pair.resolvedWardrobe?.id).toBe('w2')
+  })
+
+  it('buildCharacterHairDescription formats bald and colored styles', () => {
+    expect(buildCharacterHairDescription({ hairStyle: 'bald' })).toBe('bald head')
+    expect(
+      buildCharacterHairDescription({ hairStyle: 'swept back', hairColor: 'dark auburn' })
+    ).toBe('dark auburn swept back hair')
   })
 
   it('buildDualReferenceLabels distinguishes identity and wardrobe slots', () => {

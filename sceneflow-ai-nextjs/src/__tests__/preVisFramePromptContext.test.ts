@@ -30,13 +30,14 @@ describe('resolveCharacterReferencePair includeWardrobeReferenceImages', () => {
     expect(pair.resolvedWardrobe?.description).toBe('Navy suit')
   })
 
-  it('includes wardrobe URL when includeWardrobeReferenceImages is true (beat path default)', () => {
+  it('never attaches wardrobe URL even when includeWardrobeReferenceImages is true', () => {
     const pair = resolveCharacterReferencePair({
       character: characterWithPortrait,
       includeWardrobeReferenceImages: true,
     })
-    expect(pair.wardrobeUrl).toBe('https://example.com/turnaround.jpg')
-    expect(pair.hasDualReferences).toBe(true)
+    expect(pair.wardrobeUrl).toBeUndefined()
+    expect(pair.hasDualReferences).toBe(false)
+    expect(pair.resolvedWardrobe?.description).toBe('Navy suit')
   })
 })
 

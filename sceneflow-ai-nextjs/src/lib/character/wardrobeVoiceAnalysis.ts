@@ -85,22 +85,20 @@ export function buildWardrobeVoiceAnalysisPrompt(
   if (screenplay?.setting) screenplayLines.push(`Setting: ${screenplay.setting}`)
   if (screenplay?.title) screenplayLines.push(`Project: ${screenplay.title}`)
 
-  return `You are an expert voice casting director analyzing a character wardrobe turnaround reference image.
+  return `You are an expert voice casting director analyzing a character portrait reference image.
 
-IMAGE LAYOUT:
-The attached image is a 2-row costume turnaround sheet (8 views total).
-- TOP ROW: headshot views — use ONLY these for voice, gender, age, and ethnicity inference.
-- BOTTOM ROW: full-body outfit views — ignore for vocal qualities (outfit only).
+IMAGE:
+The attached image is a single character portrait (identity reference). Infer voice, gender, age, and ethnicity from the FACE only — ignore clothing for vocal qualities.
 
 CHARACTER: ${characterName}
 ${options?.characterDescription ? `Script context (disambiguation only): ${options.characterDescription}` : ''}
 ${screenplayLines.length > 0 ? `\nPRODUCTION CONTEXT:\n${screenplayLines.join('\n')}` : ''}
 
 TASK:
-From the TOP ROW headshots, infer how this character should sound in Gemini TTS and return a single JSON object.
+From the portrait, infer how this character should sound in Gemini TTS and return a single JSON object.
 
 REQUIREMENTS:
-1. "gender" must be exactly "male" or "female" based on visible presentation in the headshots.
+1. "gender" must be exactly "male" or "female" based on visible presentation in the portrait.
 2. "apparentAge" — short phrase (e.g. "late 40s", "mid 20s").
 3. "ethnicity" — optional, brief (e.g. "African American", "East Asian").
 4. "voiceDescription" — 200–600 characters describing vocal casting for voice matching. Use archetype vocabulary: authoritative, corporate, warm, gravelly, crisp, professional, resonant, confident, articulate, steady, polished, engaging, deep, bright, gentle, energetic, etc.

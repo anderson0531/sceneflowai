@@ -18,11 +18,8 @@
  */
 
 import { generateText, generateTextCacheAware, type TextGenerationOptions } from '@/lib/vertexai/gemini'
-import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 import {
-  CHARACTER_IDENTITY_REFERENCE_INSTRUCTION,
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
-  WARDROBE_ONLY_REFERENCE_INSTRUCTION,
 } from '@/lib/character/characterReferenceAssembly'
 import type { BeatKind } from '@/lib/script/segmentTypes'
 
@@ -49,6 +46,8 @@ export interface CharacterContext {
   wardrobeDescription?: string
   /** Wardrobe accessories */
   wardrobeAccessories?: string
+  /** Character hairstyle for consistency alongside identity reference */
+  hairDescription?: string
   /** Whether this character has a reference image */
   hasReferenceImage: boolean
   /** Reference index (1-based) for identity portrait when present */
@@ -201,18 +200,16 @@ CRITICAL RULES:
    - Include atmospheric elements that establish the genre and tone
 
 3. CHARACTER IDENTITY (PRIMARY): When characters have identity reference images (indicated by "person [N]" tokens tied to identity ref index):
-   - Use ONLY the token "person [N]" — NEVER add ethnicity, age, gender, hair color, or other appearance adjectives in the prompt
-   - The identity reference is the sole source of face, hair, skin tone, age, ethnicity, body proportions, and photorealistic rendering at ALL framing distances (wide, medium, close)
-   - Focus the prompt on ACTION, POSE, EXPRESSION, lighting, and environment only
+   - Use ONLY the token "person [N]" — NEVER add ethnicity, age, gender, or other appearance adjectives in the prompt
+   - The identity reference is the sole source of face, skin tone, age, ethnicity, body proportions, and photorealistic rendering at ALL framing distances (wide, medium, close)
+   - EXCEPTION — HAIR: When hairDescription is provided, include it verbatim in the prompt (e.g. "with {hairDescription}") for wardrobe/hairstyle consistency; do not add other appearance adjectives
+   - Focus the prompt on ACTION, POSE, EXPRESSION, lighting, and environment
    - ${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}
 
-4. WARDROBE (SECONDARY when dual refs exist):
-   - When BOTH identity ref [N] and wardrobe ref [M] exist:
-     * Identity ref [N] = PRIMARY for face, body, and photorealistic human rendering
-     * Wardrobe ref [M] = SECONDARY for outfit colors, fabric, cut, and accessories ONLY — never face, body type, or rendering style
-     * Do NOT describe clothing in text when wardrobe ref [M] is provided
-   - TEXT-ONLY WARDROBE: When no wardrobe reference image, include COMPLETE wardrobe description verbatim
-   - WARDROBE-ONLY REFERENCE (no identity portrait): ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}
+4. WARDROBE (TEXT-ONLY):
+   - Wardrobe is always text-only (no wardrobe reference images). Include COMPLETE wardrobe description verbatim when provided
+   - Include accessories when listed
+   - Combine with hairDescription when both are present
 
 5. SCENE DIRECTION CUES: Use the provided lighting, framing, and atmosphere metadata to inform the composition:
    - Lighting mood and color temperature → set the image's lighting
@@ -292,14 +289,12 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
       if (!char.hasReferenceImage && char.appearanceDescription) {
         prompt += `   Appearance: ${char.appearanceDescription}\n`
       }
+
+      if (char.hairDescription) {
+        prompt += `   HAIR (MUST MATCH): ${char.hairDescription}\n`
+      }
       
-      if (char.hasDualReferences) {
-        prompt += `   ${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n`
-        prompt += `   IDENTITY: ${CHARACTER_IDENTITY_REFERENCE_INSTRUCTION}\n`
-        prompt += `   WARDROBE: ${WARDROBE_ONLY_REFERENCE_INSTRUCTION} Do NOT describe clothing in text.\n`
-      } else if (char.hasCostumeReference && char.wardrobeReferenceIndex) {
-        prompt += `   WARDROBE: ${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION} Do NOT describe clothing in text.\n`
-      } else if (char.wardrobeDescription) {
+      if (char.wardrobeDescription) {
         prompt += `   WARDROBE (MUST USE EXACTLY): ${char.wardrobeDescription}`
         if (char.wardrobeAccessories) {
           prompt += ` | Accessories: ${char.wardrobeAccessories}`

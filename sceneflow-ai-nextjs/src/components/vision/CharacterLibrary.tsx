@@ -64,7 +64,6 @@ import {
 } from "@/lib/voiceRecommendation";
 import { enrichGeminiVoicesForScoring } from "@/lib/tts/geminiVoiceCatalog";
 import {
-  getWardrobeVoiceImageForCharacter,
   type WardrobeVoiceAnalysisResult,
 } from "@/lib/character/wardrobeVoiceAnalysis";
 import type { EdgeVoiceConfig } from "@/types/vision";
@@ -854,21 +853,6 @@ const CharacterCard = ({
     improvements: string[];
   } | null>(null);
 
-  const [generatingWardrobeRefFor, setGeneratingWardrobeRefFor] = useState<
-    string | null
-  >(null);
-  const [isGeneratingAllPreviews, setIsGeneratingAllPreviews] = useState(false);
-  const [uploadingWardrobeId, setUploadingWardrobeId] = useState<string | null>(
-    null,
-  );
-  const [pendingWardrobeUploadId, setPendingWardrobeUploadId] = useState<
-    string | null
-  >(null);
-  const wardrobeFileInputRef = useRef<HTMLInputElement>(null);
-
-  // Get wardrobes collection. Only synthesize legacy entry when:
-  // 1. character.wardrobes is empty/undefined AND
-  // 2. there's a meaningful legacy description to migrate
   const wardrobes: CharacterWardrobe[] =
     character.wardrobes && character.wardrobes.length > 0
       ? character.wardrobes
@@ -885,12 +869,9 @@ const CharacterCard = ({
           ]
         : [];
 
-  const wardrobeVoiceRef = getWardrobeVoiceImageForCharacter({
-    wardrobes: character.wardrobes,
-    defaultWardrobe: character.defaultWardrobe,
-    wardrobeAccessories: character.wardrobeAccessories,
-  });
-  const hasWardrobeTurnaroundForVoice = !!wardrobeVoiceRef?.imageUrl;
+  const hasCharacterReferenceForVoice =
+    typeof character.referenceImage === "string" &&
+    character.referenceImage.trim().startsWith("http");
 
   // Build character context for voice recommendations
   const characterContext: CharacterContext = {
@@ -987,13 +968,9 @@ const CharacterCard = ({
   };
 
   const fetchWardrobeVoiceAnalysis = async (): Promise<WardrobeVoiceAnalysisResult | null> => {
-    const ref = getWardrobeVoiceImageForCharacter({
-      wardrobes: character.wardrobes,
-      defaultWardrobe: character.defaultWardrobe,
-      wardrobeAccessories: character.wardrobeAccessories,
-    });
-    if (!ref) {
-      toast.error("Generate a wardrobe turnaround reference before Auto Voice.");
+    const imageUrl = character.referenceImage?.trim();
+    if (!imageUrl?.startsWith("http")) {
+      toast.error("Generate a character reference image before Auto Voice.");
       return null;
     }
 
@@ -1002,8 +979,7 @@ const CharacterCard = ({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         characterName: characterContext.name,
-        wardrobeImageUrl: ref.imageUrl,
-        wardrobeId: ref.wardrobe.id,
+        characterImageUrl: imageUrl,
         characterContext,
         screenplayContext,
       }),
@@ -1024,8 +1000,8 @@ const CharacterCard = ({
 
     const useGoogleTts =
       ttsProvider === "google" || voiceAssignmentProvider === "google";
-    if (useGoogleTts && !hasWardrobeTurnaroundForVoice) {
-      toast.error("Generate a wardrobe turnaround reference before Auto Voice.");
+    if (useGoogleTts && !hasCharacterReferenceForVoice) {
+      toast.error("Generate a character reference image before Auto Voice.");
       return;
     }
 
@@ -1089,7 +1065,7 @@ const CharacterCard = ({
             ethnicity: visionAnalysis.ethnicity,
             voiceDescription: visionAnalysis.voiceDescription,
           });
-          toast.success("Matched voice profile from wardrobe turnaround.");
+          toast.success("Matched voice profile from character reference.");
         }
 
         const voicesRes = await fetch("/api/tts/google/voices", {
@@ -1752,227 +1728,6 @@ const CharacterCard = ({
     }
   };
 
-  const buildWardrobeTurnaroundPayload = (wardrobe: CharacterWardrobe) => ({
-    projectId,
-    characterId,
-    wardrobeId: wardrobe.id,
-    characterName: character.name,
-    characterReferenceImageUrl: character.referenceImage,
-    appearanceDescription:
-      character.appearanceDescription ||
-      generateFallbackDescription(character),
-    wardrobeDescription: wardrobe.description,
-    wardrobeAccessories: wardrobe.accessories,
-    gender: character.gender,
-  });
-
-  const persistWardrobeTurnaround = (
-    wardrobe: CharacterWardrobe,
-    fullBodyUrl: string,
-    previewImageUrl?: string,
-  ) => {
-    onUpdateWardrobe?.(characterId, {
-      wardrobeId: wardrobe.id,
-      action: "update",
-      defaultWardrobe: wardrobe.description,
-      wardrobeAccessories: wardrobe.accessories,
-      fullBodyUrl,
-      previewImageUrl: previewImageUrl || fullBodyUrl,
-    });
-
-    if (expandedWardrobe?.id === wardrobe.id) {
-      setExpandedWardrobe({
-        ...expandedWardrobe,
-        fullBodyUrl,
-        previewImageUrl: previewImageUrl || fullBodyUrl,
-      });
-    }
-  };
-
-  const generateWardrobeTurnaround = async (wardrobeId: string) => {
-    const wardrobe = wardrobes.find((w) => w.id === wardrobeId);
-    if (!wardrobe) return;
-
-    if (!wardrobe.description?.trim()) {
-      toast.error(
-        "Wardrobe needs a description first. Use Enhance to add details.",
-      );
-      return;
-    }
-
-    setGeneratingWardrobeRefFor(wardrobeId);
-    try {
-      const response = await fetch("/api/character/generate-wardrobe-preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildWardrobeTurnaroundPayload(wardrobe)),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        if (error.code === "INSUFFICIENT_CREDITS") {
-          toast.error(
-            `Insufficient credits. Need ${error.required} credits for turnaround reference.`,
-          );
-          return;
-        }
-        throw new Error(error.error || "Turnaround generation failed");
-      }
-
-      const result = await response.json();
-      persistWardrobeTurnaround(
-        wardrobe,
-        result.fullBodyUrl,
-        result.previewImageUrl,
-      );
-      toast.success("Turnaround ready — you can now run Auto Voice.");
-    } catch (error) {
-      console.error("[Wardrobe Turnaround] Error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to generate turnaround reference",
-      );
-    } finally {
-      setGeneratingWardrobeRefFor(null);
-    }
-  };
-
-  const handleGenerateWardrobePreview = generateWardrobeTurnaround;
-  const handleGenerateCostumeReference = generateWardrobeTurnaround;
-
-  const openWardrobeFilePicker = (wardrobeId: string) => {
-    if (uploadingWardrobeId) return;
-    setPendingWardrobeUploadId(wardrobeId);
-    wardrobeFileInputRef.current?.click();
-  };
-
-  const handleUploadWardrobeImage = async (wardrobeId: string, file: File) => {
-    const wardrobe = wardrobes.find((w) => w.id === wardrobeId);
-    if (!wardrobe) return;
-
-    const sizeMB = file.size / (1024 * 1024);
-    if (sizeMB > 10) {
-      toast.error("Image too large. Please use images under 10MB.");
-      return;
-    }
-    if (sizeMB > 5) {
-      toast.warning(
-        `Large image (${sizeMB.toFixed(1)}MB). Consider using smaller images for better performance.`,
-      );
-    }
-
-    setUploadingWardrobeId(wardrobeId);
-    try {
-      const newBlob = await upload(file.name, file, {
-        access: "public",
-        handleUploadUrl: "/api/character/upload-url",
-      });
-
-      onUpdateWardrobe?.(characterId, {
-        wardrobeId,
-        action: "update",
-        defaultWardrobe: wardrobe.description,
-        wardrobeAccessories: wardrobe.accessories,
-        fullBodyUrl: newBlob.url,
-        previewImageUrl: newBlob.url,
-      });
-
-      if (expandedWardrobe?.id === wardrobeId) {
-        setExpandedWardrobe({
-          ...expandedWardrobe,
-          fullBodyUrl: newBlob.url,
-          previewImageUrl: newBlob.url,
-        });
-      }
-
-      toast.success("Wardrobe image uploaded!");
-    } catch (error) {
-      console.error("[Wardrobe Upload] Error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to upload wardrobe image",
-      );
-    } finally {
-      setUploadingWardrobeId(null);
-    }
-  };
-
-  // Generate all wardrobe previews
-  const handleGenerateAllPreviews = async () => {
-    const wardrobesWithoutPreviews = wardrobes.filter(
-      (w) => !w.fullBodyUrl && !w.previewImageUrl,
-    );
-    if (wardrobesWithoutPreviews.length === 0) {
-      toast.info("All wardrobes already have previews");
-      return;
-    }
-
-    setIsGeneratingAllPreviews(true);
-    try {
-      const response = await fetch("/api/character/generate-wardrobe-preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId,
-          characterId,
-          characterName: character.name,
-          characterReferenceImageUrl: character.referenceImage,
-          appearanceDescription:
-            character.appearanceDescription ||
-            generateFallbackDescription(character),
-          gender: character.gender,
-          batch: true,
-          wardrobes: wardrobesWithoutPreviews.map((w) => ({
-            wardrobeId: w.id,
-            description: w.description,
-            accessories: w.accessories,
-          })),
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        if (error.code === "INSUFFICIENT_CREDITS") {
-          toast.error(
-            `Insufficient credits. Need ${error.required} credits for ${error.wardrobeCount} turnaround reference(s).`,
-          );
-          return;
-        }
-        throw new Error(error.error || "Batch turnaround generation failed");
-      }
-
-      const result = await response.json();
-
-      for (const item of result.results) {
-        if (item.success) {
-          const wardrobe = wardrobes.find((w) => w.id === item.wardrobeId);
-          if (wardrobe) {
-            persistWardrobeTurnaround(
-              wardrobe,
-              item.fullBodyUrl,
-              item.previewImageUrl,
-            );
-          }
-        }
-      }
-
-      toast.success(
-        `Generated ${result.successCount} turnaround reference(s)!`,
-      );
-    } catch (error) {
-      console.error("[Wardrobe Preview Batch] Error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Batch preview generation failed",
-      );
-    } finally {
-      setIsGeneratingAllPreviews(false);
-    }
-  };
-
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: `character-reference-${characterId}`,
@@ -2349,14 +2104,14 @@ const CharacterCard = ({
                     Assign a Gemini voice so dialogue generation uses the correct engine and voice id.
                   </p>
                 )}
-                {useGeminiVoicePicker && !hasWardrobeTurnaroundForVoice ? (
+                {useGeminiVoicePicker && !hasCharacterReferenceForVoice ? (
                   <p className="text-[10px] text-amber-600 dark:text-amber-400 mb-2">
-                    Generate a wardrobe turnaround reference first — Auto Voice matches from that image.
+                    Generate a character reference image first — Auto Voice matches from the face.
                   </p>
                 ) : null}
-                {useGeminiVoicePicker && hasWardrobeTurnaroundForVoice && character.voiceConfig ? (
+                {useGeminiVoicePicker && hasCharacterReferenceForVoice && character.voiceConfig ? (
                   <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mb-2">
-                    Voice matched from wardrobe turnaround
+                    Voice matched from character reference
                   </p>
                 ) : null}
                 <div className="grid grid-cols-3 gap-2">
@@ -2382,14 +2137,14 @@ const CharacterCard = ({
                     disabled={
                       isAutoSelectingVoice ||
                       ((useGeminiVoicePicker || ttsProvider === "google") &&
-                        !hasWardrobeTurnaroundForVoice)
+                        !hasCharacterReferenceForVoice)
                     }
                     className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-60"
                     title={
                       useGeminiVoicePicker || ttsProvider === "google"
-                        ? hasWardrobeTurnaroundForVoice
-                          ? "Analyze wardrobe turnaround, auto select Gemini voice, and generate Director's Note"
-                          : "Generate wardrobe turnaround first"
+                        ? hasCharacterReferenceForVoice
+                          ? "Analyze character reference, auto select Gemini voice, and generate Director's Note"
+                          : "Generate character reference image first"
                         : "Auto pick an ElevenLabs voice from character profile (same recommendations as the voice browser)"
                     }
                   >
@@ -2975,26 +2730,9 @@ const CharacterCard = ({
                   </div>
                 ) : null}
 
-                {/* Large Image Wardrobe Cards */}
+                {/* Wardrobe cards (description-first — no turnaround images) */}
                 {wardrobes.length > 0 && (
-                  <div className="space-y-4">
-                    <input
-                      ref={wardrobeFileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      disabled={!!uploadingWardrobeId}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        const file = e.target.files?.[0];
-                        const wardrobeId = pendingWardrobeUploadId;
-                        if (file && wardrobeId) {
-                          handleUploadWardrobeImage(wardrobeId, file);
-                        }
-                        setPendingWardrobeUploadId(null);
-                        e.target.value = "";
-                      }}
-                    />
+                  <div className="space-y-3">
                     {wardrobes.map((w) => (
                       <div
                         key={w.id}
@@ -3004,172 +2742,85 @@ const CharacterCard = ({
                             : "bg-gray-50/50 dark:bg-gray-800/10 border-gray-200 dark:border-gray-700/50"
                         }`}
                       >
-                        {/* Large Image Format */}
-                        <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                          {w.fullBodyUrl ||
-                          w.headshotUrl ||
-                          w.previewImageUrl ? (
-                            <>
-                              <img
-                                src={
-                                  w.fullBodyUrl ||
-                                  w.headshotUrl ||
-                                  w.previewImageUrl
-                                }
-                                alt={w.name}
-                                className="w-full h-full object-contain"
-                              />
-                              <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all opacity-0 hover:opacity-100 flex items-center justify-center gap-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openWardrobeFilePicker(w.id);
-                                  }}
-                                  disabled={uploadingWardrobeId === w.id}
-                                  className="p-2 rounded-lg bg-emerald-600/90 text-white hover:bg-emerald-600 transition-colors shadow-sm disabled:opacity-50"
-                                  title={
-                                    uploadingWardrobeId === w.id
-                                      ? "Uploading..."
-                                      : "Upload Image"
-                                  }
-                                >
-                                  {uploadingWardrobeId === w.id ? (
-                                    <Loader className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <Upload className="w-4 h-4" />
-                                  )}
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleGenerateCostumeReference(w.id);
-                                  }}
-                                  disabled={generatingWardrobeRefFor === w.id}
-                                  className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-green-600 dark:text-green-400 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm disabled:opacity-50"
-                                  title={
-                                    w.fullBodyUrl
-                                      ? "Regenerate 1-row mannequin wardrobe turnaround"
-                                      : "Generate 1-row mannequin wardrobe turnaround"
-                                  }
-                                >
-                                  {generatingWardrobeRefFor === w.id ? (
-                                    <Loader className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <ImageIcon className="w-4 h-4" />
-                                  )}
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEnhanceWardrobe(w.id);
-                                  }}
-                                  disabled={enhancingWardrobeId === w.id}
-                                  className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-purple-600 dark:text-purple-400 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm disabled:opacity-50"
-                                  title="Enhance with AI"
-                                >
-                                  {enhancingWardrobeId === w.id ? (
-                                    <Loader className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <Wand2 className="w-4 h-4" />
-                                  )}
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingWardrobe(true);
-                                    setEditingWardrobeId(w.id);
-                                    setWardrobeText(w.description);
-                                    setAccessoriesText(w.accessories || "");
-                                    setShowAddWardrobeForm(false);
-                                  }}
-                                  className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-blue-600 dark:text-blue-400 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm"
-                                  title="Edit wardrobe"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                {wardrobes.length > 1 && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteWardrobe(w.id);
-                                    }}
-                                    className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-red-600 dark:text-red-400 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm"
-                                    title="Delete wardrobe"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                )}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setExpandedWardrobe(w);
-                                  }}
-                                  className="p-2 rounded-lg bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-800 transition-colors shadow-sm"
-                                  title="Expand details"
-                                >
-                                  <Maximize2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </>
-                          ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4">
-                              <Shirt className="w-12 h-12 text-gray-400" />
-                              <div className="flex flex-wrap items-center justify-center gap-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openWardrobeFilePicker(w.id);
-                                  }}
-                                  disabled={uploadingWardrobeId === w.id}
-                                  className="px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded shadow flex items-center gap-1 disabled:opacity-50"
-                                >
-                                  {uploadingWardrobeId === w.id ? (
-                                    <Loader className="w-3 h-3 animate-spin" />
-                                  ) : (
-                                    <Upload className="w-3 h-3" />
-                                  )}
-                                  Upload Image
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleGenerateCostumeReference(w.id);
-                                  }}
-                                  disabled={generatingWardrobeRefFor === w.id}
-                                  className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded shadow flex items-center gap-1"
-                                >
-                                {generatingWardrobeRefFor === w.id ? (
-                                  <Loader className="w-3 h-3 animate-spin" />
-                                ) : (
-                                  <Sparkles className="w-3 h-3" />
-                                )}
-                                Generate Turnaround
-                              </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Details below image */}
                         <div className="p-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-                              {w.name}
-                            </span>
-                            {w.isDefault && (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-700 dark:text-green-400 rounded">
-                                default
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div className="flex flex-wrap items-center gap-2 min-w-0">
+                              <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                                {w.name}
                               </span>
-                            )}
-                            {w.sceneNumbers && w.sceneNumbers.length > 0 && (
-                              <span className="text-[10px] text-blue-700 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
-                                Scenes {formatSceneRange(w.sceneNumbers)}
-                              </span>
-                            )}
+                              {w.isDefault && (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-700 dark:text-green-400 rounded">
+                                  default
+                                </span>
+                              )}
+                              {w.sceneNumbers && w.sceneNumbers.length > 0 && (
+                                <span className="text-[10px] text-blue-700 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">
+                                  Scenes {formatSceneRange(w.sceneNumbers)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEnhanceWardrobe(w.id);
+                                }}
+                                disabled={enhancingWardrobeId === w.id}
+                                className="p-1.5 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-500/10 disabled:opacity-50"
+                                title="Enhance with AI"
+                              >
+                                {enhancingWardrobeId === w.id ? (
+                                  <Loader className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Wand2 className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingWardrobe(true);
+                                  setEditingWardrobeId(w.id);
+                                  setWardrobeText(w.description);
+                                  setAccessoriesText(w.accessories || "");
+                                  setShowAddWardrobeForm(false);
+                                }}
+                                className="p-1.5 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                                title="Edit wardrobe"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                              {wardrobes.length > 1 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteWardrobe(w.id);
+                                  }}
+                                  className="p-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                                  title="Delete wardrobe"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedWardrobe(w);
+                                }}
+                                className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-500/10"
+                                title="Expand details"
+                              >
+                                <Maximize2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1.5">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
                             {w.description}
                           </p>
+                          {w.accessories && (
+                            <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-1.5">
+                              Accessories: {w.accessories}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -3228,40 +2879,6 @@ const CharacterCard = ({
                     </div>
                   )}
 
-                {/* Generate Previews — only when wardrobes exist */}
-                {wardrobes.length > 0 &&
-                  wardrobes.some(
-                    (w) => !w.fullBodyUrl && !w.previewImageUrl,
-                  ) && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleGenerateAllPreviews();
-                      }}
-                      disabled={
-                        isGeneratingAllPreviews || !!generatingWardrobeRefFor
-                      }
-                      className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] text-purple-400 border border-purple-500/20 rounded-lg hover:bg-purple-500/10 disabled:opacity-50"
-                    >
-                      {isGeneratingAllPreviews ? (
-                        <>
-                          <Loader className="w-3 h-3 animate-spin" />
-                          Generating Previews...
-                        </>
-                      ) : (
-                        <>
-                          <ImageIcon className="w-3 h-3" />
-                          Generate Turnarounds (
-                          {
-                            wardrobes.filter(
-                              (w) => !w.fullBodyUrl && !w.previewImageUrl,
-                            ).length
-                          }
-                          )
-                        </>
-                      )}
-                    </button>
-                  )}
               </div>
             )}
           </div>
@@ -3315,7 +2932,7 @@ const CharacterCard = ({
             selectedVoiceId={character.voiceConfig?.voiceId || ""}
             onSelectVoice={async (voiceId, voiceName) => {
               let prompt = character.voiceConfig?.prompt;
-              if (!prompt && hasWardrobeTurnaroundForVoice) {
+              if (!prompt && hasCharacterReferenceForVoice) {
                 try {
                   const analysis = await fetchWardrobeVoiceAnalysis();
                   if (analysis) {
@@ -3333,14 +2950,15 @@ const CharacterCard = ({
               }
               if (!prompt) {
                 try {
-                  const wardrobeRef = wardrobeVoiceRef?.imageUrl;
+                  const characterRef = character.referenceImage?.trim();
                   const promptRes = await fetch("/api/tts/google/director-prompt", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       characterContext,
                       screenplayContext,
-                      wardrobeImageUrl: wardrobeRef,
+                      characterImageUrl: characterRef,
+                      wardrobeImageUrl: characterRef,
                     }),
                   });
                   if (promptRes.ok) {
@@ -3553,119 +3171,6 @@ const CharacterCard = ({
 
             {expandedWardrobe && (
               <div className="space-y-6 py-4">
-                {/* Turnaround reference sheet */}
-                <div className="flex justify-center">
-                  <div className="w-full max-w-2xl space-y-2">
-                    <div className="flex flex-col items-center gap-1 text-sm font-medium text-gray-600 dark:text-gray-400">
-                      {expandedWardrobe.fullBodyUrl ? (
-                        <>
-                          <div className="flex items-center gap-2">
-                            <ImageIcon className="w-4 h-4 text-green-500" />
-                            <span className="text-green-600 dark:text-green-400">
-                              Turnaround Reference
-                            </span>
-                            <span className="text-[10px] px-1.5 py-0.5 bg-green-500/20 text-green-500 rounded-full">
-                              Used in generation
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-gray-500">
-                            Headshot + Full Body · Front · 3/4 · Profile · Back
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Shirt className="w-4 h-4" />
-                          <span>Turnaround Reference</span>
-                          <span className="text-[10px] text-gray-500">
-                            Headshot + Full Body · Front · 3/4 · Profile · Back — used in scene generation
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    <div className="aspect-[4/3] bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                      {expandedWardrobe.fullBodyUrl ||
-                      expandedWardrobe.previewImageUrl ? (
-                        <>
-                          <img
-                            src={
-                              expandedWardrobe.fullBodyUrl ||
-                              expandedWardrobe.previewImageUrl
-                            }
-                            alt={`${expandedWardrobe.name} turnaround`}
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                              // Hide broken image and show placeholder
-                              e.currentTarget.style.display = "none";
-                              e.currentTarget.nextElementSibling?.classList.remove(
-                                "hidden",
-                              );
-                            }}
-                          />
-                          <div className="hidden w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
-                            <Shirt className="w-12 h-12" />
-                            <span className="text-sm">Image unavailable</span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleGenerateWardrobePreview(
-                                  expandedWardrobe.id,
-                                );
-                              }}
-                              disabled={!!generatingWardrobeRefFor}
-                              className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
-                            >
-                              {generatingWardrobeRefFor === expandedWardrobe.id
-                                ? "Generating..."
-                                : "Regenerate Turnaround"}
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-400">
-                          <Shirt className="w-12 h-12" />
-                          <span className="text-sm">No preview</span>
-                          <div className="flex flex-wrap items-center justify-center gap-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openWardrobeFilePicker(expandedWardrobe.id);
-                              }}
-                              disabled={uploadingWardrobeId === expandedWardrobe.id}
-                              className="px-3 py-1.5 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-1"
-                            >
-                              {uploadingWardrobeId === expandedWardrobe.id ? (
-                                <>
-                                  <Loader className="w-3 h-3 animate-spin" />
-                                  Uploading...
-                                </>
-                              ) : (
-                                <>
-                                  <Upload className="w-3 h-3" />
-                                  Upload Image
-                                </>
-                              )}
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleGenerateWardrobePreview(
-                                  expandedWardrobe.id,
-                                );
-                              }}
-                            disabled={!!generatingWardrobeRefFor}
-                            className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
-                          >
-                            {generatingWardrobeRefFor === expandedWardrobe.id
-                              ? "Generating..."
-                              : "Generate Turnaround"}
-                          </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
                 {/* Description */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -3785,52 +3290,6 @@ const CharacterCard = ({
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  if (expandedWardrobe) {
-                    openWardrobeFilePicker(expandedWardrobe.id);
-                  }
-                }}
-                disabled={!!uploadingWardrobeId}
-                className="border-emerald-500/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
-              >
-                {uploadingWardrobeId === expandedWardrobe?.id ? (
-                  <>
-                    <Loader className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Image
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  if (expandedWardrobe) {
-                    handleGenerateCostumeReference(expandedWardrobe.id);
-                  }
-                }}
-                disabled={!!generatingWardrobeRefFor}
-                className="border-green-500/50 text-green-600 dark:text-green-400 hover:bg-green-500/10"
-              >
-                {generatingWardrobeRefFor === expandedWardrobe?.id ? (
-                  <>
-                    <Loader className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon className="w-4 h-4 mr-2" />
-                    {expandedWardrobe?.fullBodyUrl
-                      ? "Regenerate Turnaround"
-                      : "Generate Turnaround"}
-                  </>
-                )}
               </Button>
               <Button
                 onClick={() => setExpandedWardrobe(null)}

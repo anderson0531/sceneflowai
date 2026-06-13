@@ -13,7 +13,10 @@ export const maxDuration = 60
 
 interface AnalyzeVoiceFromWardrobeRequest {
   characterName: string
-  wardrobeImageUrl: string
+  /** Preferred: character identity portrait URL */
+  characterImageUrl?: string
+  /** Legacy fallback */
+  wardrobeImageUrl?: string
   wardrobeId?: string
   characterContext?: CharacterContext
   screenplayContext?: ScreenplayContext
@@ -27,15 +30,24 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json()) as AnalyzeVoiceFromWardrobeRequest
-    const { characterName, wardrobeImageUrl, wardrobeId, characterContext, screenplayContext } = body
+    const {
+      characterName,
+      characterImageUrl,
+      wardrobeImageUrl,
+      wardrobeId,
+      characterContext,
+      screenplayContext,
+    } = body
+
+    const imageUrl = characterImageUrl?.trim() || wardrobeImageUrl?.trim()
 
     if (!characterName?.trim()) {
       return NextResponse.json({ error: 'Character name is required' }, { status: 400 })
     }
 
-    if (!wardrobeImageUrl?.startsWith('http')) {
+    if (!imageUrl?.startsWith('http')) {
       return NextResponse.json(
-        { error: 'A valid wardrobe turnaround image URL (fullBodyUrl) is required' },
+        { error: 'A valid character reference image URL is required' },
         { status: 400 },
       )
     }
@@ -48,10 +60,10 @@ export async function POST(req: NextRequest) {
         undefined,
     })
 
-    const imageResponse = await fetch(wardrobeImageUrl)
+    const imageResponse = await fetch(imageUrl)
     if (!imageResponse.ok) {
       return NextResponse.json(
-        { error: `Failed to fetch wardrobe image: ${imageResponse.status}` },
+        { error: `Failed to fetch character image: ${imageResponse.status}` },
         { status: 400 },
       )
     }
@@ -60,7 +72,7 @@ export async function POST(req: NextRequest) {
     const base64Image = Buffer.from(imageBuffer).toString('base64')
     const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
 
-    console.log(`[Wardrobe Voice Analysis] Analyzing "${characterName}" from wardrobe image...`)
+    console.log(`[Character Voice Analysis] Analyzing "${characterName}" from portrait...`)
 
     const result = await generateWithVision(
       [
@@ -81,9 +93,9 @@ export async function POST(req: NextRequest) {
 
     const parsed = parseWardrobeVoiceAnalysisJson(result.text?.trim() || '')
     if (!parsed) {
-      console.error('[Wardrobe Voice Analysis] Failed to parse response:', result.text?.slice(0, 300))
+      console.error('[Character Voice Analysis] Failed to parse response:', result.text?.slice(0, 300))
       return NextResponse.json(
-        { error: 'Failed to parse voice analysis from wardrobe image' },
+        { error: 'Failed to parse voice analysis from character image' },
         { status: 502 },
       )
     }
@@ -91,10 +103,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ...parsed,
       wardrobeId,
-      wardrobeImageUrl,
+      characterImageUrl: imageUrl,
+      wardrobeImageUrl: imageUrl,
     })
   } catch (error: unknown) {
-    console.error('[Wardrobe Voice Analysis] Error:', error)
+    console.error('[Character Voice Analysis] Error:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Voice analysis failed' },
       { status: 500 },
