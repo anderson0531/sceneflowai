@@ -7,7 +7,7 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import { Loader, Printer, Clapperboard, Sparkles, X, Play, Pause, Zap, Tag } from 'lucide-react'
+import { Loader, Printer, Clapperboard, Sparkles, X, Zap, Tag } from 'lucide-react'
 import { toast } from 'sonner'
 import { AudioGalleryPlayer } from './AudioGalleryPlayer'
 import { Button } from '@/components/ui/Button'
@@ -117,7 +117,6 @@ export function SceneGallery({
   }, [expressGateReasons, scrollToPreVisBanner])
 
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
-  const [showAudioPlayer, setShowAudioPlayer] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('en')
 
   const [expressDialogOpen, setExpressDialogOpen] = useState(false)
@@ -505,29 +504,6 @@ export function SceneGallery({
               </span>
             )}
           </div>
-          {playableSceneCount > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={showAudioPlayer ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setShowAudioPlayer(!showAudioPlayer)}
-                  className={showAudioPlayer
-                    ? "flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-                    : "flex items-center gap-2"
-                  }
-                >
-                  {showAudioPlayer ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  <span>Player</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {showAudioPlayer
-                  ? 'Hide player'
-                  : 'Preview available scenes — images and/or audio'}
-              </TooltipContent>
-            </Tooltip>
-          )}
           {scenes.length > 0 && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -576,14 +552,13 @@ export function SceneGallery({
         </p>
       )}
 
-      {showAudioPlayer && playableSceneCount > 0 && (
+      {playableSceneCount > 0 && (
         <div className="mb-2">
           <AudioGalleryPlayer
             scenes={scenes}
             selectedLanguage={selectedLanguage}
             onLanguageChange={setSelectedLanguage}
             availableLanguages={availableLanguages}
-            onClose={() => setShowAudioPlayer(false)}
             onShare={handleShareStoryboard}
             onGenVideo={onGenVideo}
             isGenVideoRunning={isGenVideoRunning}

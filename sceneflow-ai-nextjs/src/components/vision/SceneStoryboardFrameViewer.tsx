@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Camera,
   Check,
@@ -235,6 +235,19 @@ function buildStoryboardSlotFrameProps(
   }
 }
 
+const THUMBNAIL_DRAG_THRESHOLD_PX = 5
+
+function formatBeatRoleLabel(beatRole?: string): string | null {
+  if (!beatRole) return null
+  if (beatRole === 'title_reveal') return 'Title'
+  if (beatRole === 'credit') return 'Credit'
+  if (beatRole === 'opening') return 'Opening'
+  if (beatRole === 'dissolve') return 'Dissolve'
+  if (beatRole === 'climax') return 'Climax'
+  if (beatRole === 'progression') return 'Progression'
+  return beatRole.replace(/_/g, ' ')
+}
+
 function ExpressPhasePill({ label, status }: { label: string; status: ExpressPhaseStatus }) {
   const cls = (() => {
     switch (status) {
@@ -305,6 +318,14 @@ export function SceneStoryboardFrameViewer({
   const [includeEndFramesForExpress, setIncludeEndFramesForExpress] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editingFrame, setEditingFrame] = useState<EditingFrame | null>(null)
+  const thumbnailScrollRef = useRef<HTMLDivElement>(null)
+  const thumbnailDragRef = useRef<{
+    pointerId: number
+    startY: number
+    startScrollTop: number
+    isDragging: boolean
+  } | null>(null)
+  const thumbnailDidDragRef = useRef(false)
 
   const frameSlots = useMemo(() => enumerateStoryboardFrameSlots(scene), [scene])
   const sceneBeats = useMemo(() => getSceneBeats(scene), [scene])
@@ -353,6 +374,59 @@ export function SceneStoryboardFrameViewer({
   const handleEditFrame = useCallback((frame: EditingFrame) => {
     setEditingFrame(frame)
     setEditModalOpen(true)
+  }, [])
+
+  const handleThumbnailPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return
+    const el = thumbnailScrollRef.current
+    if (!el) return
+
+    const state = {
+      pointerId: e.pointerId,
+      startY: e.clientY,
+      startScrollTop: el.scrollTop,
+      isDragging: false,
+    }
+    thumbnailDragRef.current = state
+    thumbnailDidDragRef.current = false
+
+    const onMove = (ev: PointerEvent) => {
+      if (ev.pointerId !== state.pointerId || !thumbnailScrollRef.current) return
+      const deltaY = ev.clientY - state.startY
+      if (!state.isDragging && Math.abs(deltaY) < THUMBNAIL_DRAG_THRESHOLD_PX) return
+      if (!state.isDragging) {
+        state.isDragging = true
+        thumbnailDidDragRef.current = true
+        document.body.style.userSelect = 'none'
+        thumbnailScrollRef.current.style.cursor = 'grabbing'
+      }
+      ev.preventDefault()
+      thumbnailScrollRef.current.scrollTop = state.startScrollTop - deltaY
+    }
+
+    const onUp = (ev: PointerEvent) => {
+      if (ev.pointerId !== state.pointerId) return
+      thumbnailDragRef.current = null
+      document.body.style.userSelect = ''
+      if (thumbnailScrollRef.current) {
+        thumbnailScrollRef.current.style.cursor = ''
+      }
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
+  }, [])
+
+  const handleThumbnailClickCapture = useCallback((e: React.MouseEvent) => {
+    if (thumbnailDidDragRef.current) {
+      e.preventDefault()
+      e.stopPropagation()
+      thumbnailDidDragRef.current = false
+    }
   }, [])
 
   const wrapGenerate = useCallback(
@@ -611,8 +685,13 @@ export function SceneStoryboardFrameViewer({
                 </div>
               </div>
 
-              <div className="flex gap-3 items-stretch max-h-[min(50vh,480px)]">
-                <div className="w-[30%] shrink-0 self-stretch grid grid-cols-2 content-start gap-2 overflow-y-auto overscroll-contain pr-1 max-h-full">
+              <div className="flex gap-3 items-start">
+                <div
+                  ref={thumbnailScrollRef}
+                  className="w-[30%] shrink-0 grid grid-cols-2 content-start gap-2 overflow-y-auto overscroll-contain pr-1 max-h-[min(50vh,480px)] cursor-grab active:cursor-grabbing"
+                  onPointerDown={handleThumbnailPointerDown}
+                  onClickCapture={handleThumbnailClickCapture}
+                >
                   {frameSlots.map((slot) => (
                     <div key={slot.key} className="w-full">
                       <SceneImageFrame
@@ -627,31 +706,70 @@ export function SceneStoryboardFrameViewer({
                   ))}
                 </div>
 
-                <div className="flex-1 min-w-0 rounded-lg overflow-hidden bg-gray-800/50 border border-slate-700/40">
-                  <div className="relative overflow-hidden">
-                    {previewSlot ? (
-                      <SceneImageFrame
-                        {...buildStoryboardSlotFrameProps(previewSlot, slotHandlers)}
-                        showControls
-                        controlsVariant="comfortable"
-                        alwaysShowControls
-                        showBorder={false}
-                        promptLineClamp={2}
-                        expandable
-                      />
-                    ) : (
-                      <div className="aspect-video flex flex-col items-center justify-center">
-                        <Camera className="w-8 h-8 text-gray-600 mb-2" />
-                        <span className="text-xs text-gray-500">No pre-vis frames</span>
-                      </div>
-                    )}
-                    {isGeneratingScene && !previewSlot && (
-                      <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-10">
-                        <Loader className="w-10 h-10 animate-spin text-blue-400 mb-2" />
-                        <span className="text-sm text-white">Generating...</span>
-                      </div>
-                    )}
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                  <div className="rounded-lg overflow-hidden bg-gray-800/50 border border-slate-700/40">
+                    <div className="relative overflow-hidden">
+                      {previewSlot ? (
+                        <SceneImageFrame
+                          {...buildStoryboardSlotFrameProps(previewSlot, slotHandlers)}
+                          label=""
+                          imagePrompt={undefined}
+                          showControls
+                          controlsVariant="comfortable"
+                          alwaysShowControls
+                          showBorder={false}
+                          expandable
+                        />
+                      ) : (
+                        <div className="aspect-video flex flex-col items-center justify-center">
+                          <Camera className="w-8 h-8 text-gray-600 mb-2" />
+                          <span className="text-xs text-gray-500">No pre-vis frames</span>
+                        </div>
+                      )}
+                      {isGeneratingScene && !previewSlot && (
+                        <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-10">
+                          <Loader className="w-10 h-10 animate-spin text-blue-400 mb-2" />
+                          <span className="text-sm text-white">Generating...</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
+                  {previewSlot && (
+                    <div className="px-2 pb-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {previewSlot.beatRole && (
+                          <span
+                            className={cn(
+                              'shrink-0 text-[10px] px-1.5 py-0.5 rounded',
+                              previewSlot.beatRole === 'title_reveal'
+                                ? 'bg-violet-500/20 text-violet-300'
+                                : 'bg-slate-600/40 text-slate-300'
+                            )}
+                          >
+                            {formatBeatRoleLabel(previewSlot.beatRole)}
+                          </span>
+                        )}
+                        <p className="text-sm font-semibold text-slate-200 truncate" title={previewSlot.label}>
+                          {previewSlot.label}
+                        </p>
+                      </div>
+                      {previewSlot.storyboardImagePrompt?.trim() && (
+                        <p
+                          className="mt-1.5 text-xs text-slate-400 leading-relaxed cursor-help"
+                          title={previewSlot.storyboardImagePrompt}
+                          onClick={() => {
+                            void navigator.clipboard
+                              .writeText(previewSlot.storyboardImagePrompt!.trim())
+                              .then(() => {
+                                toast.success('Prompt copied')
+                              })
+                          }}
+                        >
+                          {previewSlot.storyboardImagePrompt.trim()}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </>

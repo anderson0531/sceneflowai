@@ -426,6 +426,22 @@ function canScrollVertically(panel: HTMLElement, deltaY?: number): boolean {
   return false
 }
 
+function findNearestScrollableAncestor(
+  start: HTMLElement | null,
+  deltaY: number
+): HTMLElement | null {
+  let el: HTMLElement | null = start
+  while (el) {
+    const style = window.getComputedStyle(el)
+    const overflowY = style.overflowY
+    if ((overflowY === 'auto' || overflowY === 'scroll') && canScrollVertically(el, deltaY)) {
+      return el
+    }
+    el = el.parentElement
+  }
+  return null
+}
+
 function findDefaultVisionScrollPanelFallback(pointer: { x: number; y: number }): HTMLElement | null {
   const markers = Array.from(document.querySelectorAll<HTMLElement>(VISION_SCROLL_PANEL_SELECTOR))
   if (markers.length === 0) return null
@@ -1252,6 +1268,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     const handleWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return
+      }
+
+      const hovered = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
+      const nestedScrollable = findNearestScrollableAncestor(hovered, e.deltaY)
+      if (nestedScrollable) {
+        nestedScrollable.scrollTop += e.deltaY
+        e.preventDefault()
         return
       }
 
