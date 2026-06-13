@@ -68,6 +68,11 @@ import {
   type WardrobeVoiceAnalysisResult,
 } from "@/lib/character/wardrobeVoiceAnalysis";
 import type { EdgeVoiceConfig } from "@/types/vision";
+import {
+  DeferredImageSkeleton,
+  isDeferredImageUrl,
+  isDisplayableImageUrl,
+} from "@/components/vision/DeferredImageSkeleton";
 
 export interface CharacterLibraryProps {
   projectId?: string;
@@ -772,7 +777,8 @@ const CharacterCard = ({
     setImageError(false);
   }, [character.referenceImage]);
 
-  const hasImage = !!character.referenceImage && !imageError;
+  const hasImage = isDisplayableImageUrl(character.referenceImage) && !imageError;
+  const isDeferredImage = isDeferredImageUrl(character.referenceImage);
   const isApproved = character.imageApproved === true;
   const isCoreExpanded = expandedCharId === `${characterId}-core`;
   const isAppearanceExpanded = expandedCharId === `${characterId}-appear`;
@@ -1998,11 +2004,15 @@ const CharacterCard = ({
           <div className="flex items-center gap-3 min-w-0">
             {/* Small avatar thumbnail */}
             <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0">
-              {character.referenceImage && !imageError ? (
+              {isDeferredImage ? (
+                <DeferredImageSkeleton className="w-full h-full rounded-full" label={`Loading ${character.name}`} />
+              ) : hasImage ? (
                 <img
                   src={character.referenceImage}
                   alt={character.name}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                   onError={() => setImageError(true)}
                 />
               ) : (
@@ -2438,11 +2448,15 @@ const CharacterCard = ({
               <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 space-y-3">
                 {/* Image Section — overlay controls match Storyboard / Scene Gallery / Location Library (Quick, Prompt, Edit, Enhance, Upload) */}
                 <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 group rounded-md overflow-hidden">
-                  {character.referenceImage && !imageError ? (
+                  {isDeferredImage ? (
+                    <DeferredImageSkeleton className="w-full h-full" label={`Loading ${character.name}`} />
+                  ) : hasImage ? (
                     <img
                       src={character.referenceImage}
                       alt={character.name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
                       onError={() => setImageError(true)}
                     />
                   ) : (

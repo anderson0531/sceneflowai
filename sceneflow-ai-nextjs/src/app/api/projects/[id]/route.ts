@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Project from '@/models/Project'
 import { sequelize } from '@/config/database'
 import { stripBase64FromMetadata, calculateBase64Size } from '@/lib/storage/mediaStorage'
-import { mergeSceneArraysForPersistence } from '@/lib/storyboard/mergeSceneMedia'
+import { isValidStoryboardMediaUrl, mergeSceneArraysForPersistence } from '@/lib/storyboard/mergeSceneMedia'
 import { upsertBeatSfxCueOnScene } from '@/lib/script/deriveSfxFromSceneContent'
 import { persistSceneSfxAudioAtomic } from '@/lib/sfx/persistSceneSfxAudio'
 
@@ -11,6 +11,13 @@ export const maxDuration = 60 // 60 seconds timeout
 
 // UUID v4 regex pattern for validation
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+/** Prefer a real media URL; never let lite-mode 'deferred' overwrite existing images. */
+function pickPersistedMediaUrl(incoming: unknown, existing: unknown): string | undefined {
+  const inc = isValidStoryboardMediaUrl(incoming) ? String(incoming).trim() : undefined
+  const ex = isValidStoryboardMediaUrl(existing) ? String(existing).trim() : undefined
+  return inc ?? ex
+}
 
 export async function GET(
   request: NextRequest,
@@ -369,7 +376,10 @@ export async function PUT(
                 ...existingChar,
                 ...incomingChar,
                 // CRITICAL: Preserve these fields unless explicitly set in incoming
-                referenceImage: incomingChar.referenceImage ?? existingChar.referenceImage,
+                referenceImage: pickPersistedMediaUrl(
+                  incomingChar.referenceImage,
+                  existingChar.referenceImage
+                ),
                 voiceConfig: incomingChar.voiceConfig ?? existingChar.voiceConfig,
                 appearanceDescription: incomingChar.appearanceDescription ?? existingChar.appearanceDescription,
                 visionDescription: incomingChar.visionDescription ?? existingChar.visionDescription,
@@ -425,7 +435,11 @@ export async function PUT(
           let mergedSceneRefs = incomingSceneRefs.map((incomingRef: any) => {
             const existingRef = existingSceneRefMap.get(incomingRef.id)
             if (existingRef) {
-              return { ...existingRef, ...incomingRef }
+              return {
+                ...existingRef,
+                ...incomingRef,
+                imageUrl: pickPersistedMediaUrl(incomingRef.imageUrl, existingRef.imageUrl),
+              }
             }
             return incomingRef
           })
@@ -442,7 +456,11 @@ export async function PUT(
           let mergedObjectRefs = incomingObjectRefs.map((incomingRef: any) => {
             const existingRef = existingObjectRefMap.get(incomingRef.id)
             if (existingRef) {
-              return { ...existingRef, ...incomingRef }
+              return {
+                ...existingRef,
+                ...incomingRef,
+                imageUrl: pickPersistedMediaUrl(incomingRef.imageUrl, existingRef.imageUrl),
+              }
             }
             return incomingRef
           })
@@ -459,7 +477,11 @@ export async function PUT(
           let mergedLocationRefs = incomingLocationRefs.map((incomingRef: any) => {
             const existingRef = existingLocationRefMap.get(incomingRef.id)
             if (existingRef) {
-              return { ...existingRef, ...incomingRef }
+              return {
+                ...existingRef,
+                ...incomingRef,
+                imageUrl: pickPersistedMediaUrl(incomingRef.imageUrl, existingRef.imageUrl),
+              }
             }
             return incomingRef
           })

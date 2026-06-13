@@ -29,6 +29,11 @@ import { toast } from 'sonner'
 import { LocationReference } from '@/types/visionReferences'
 import { extractLocation } from '@/lib/script/formatSceneHeading'
 import { LocationPromptBuilder, LocationPromptPayload } from './LocationPromptBuilder'
+import {
+  DeferredImageSkeleton,
+  isDeferredImageUrl,
+  isDisplayableImageUrl,
+} from '@/components/vision/DeferredImageSkeleton'
 
 // Scene heading regex for INT/EXT extraction
 const SCENE_CODE_REGEX = /^(INT\.\/EXT\.|EXT\.\/INT\.|INT\.\/EXT|EXT\.\/INT|INT\. |EXT\. |INT\/EXT|EXT\/INT|INT\.|EXT\.|INT|EXT)\s*(.*)$/i
@@ -344,7 +349,8 @@ export function LocationLibrary({
             const isExpanded = expandedLocationId === loc.id
             const isGenerating = generatingLocationId === loc.id
             const isUploading = uploadingForId === loc.id
-            const hasImage = !!loc.imageUrl
+            const hasImage = isDisplayableImageUrl(loc.imageUrl)
+            const isDeferredImage = isDeferredImageUrl(loc.imageUrl)
 
             return (
               <div
@@ -452,12 +458,16 @@ export function LocationLibrary({
                     </div>
 
                     {/* Image Section — overlay controls match Storyboard / Scene Gallery (Quick, Prompt, Edit, Upload) */}
-                    {hasImage ? (
+                    {isDeferredImage ? (
+                      <DeferredImageSkeleton className="w-full aspect-video rounded-md" label={`Loading ${loc.location}`} />
+                    ) : hasImage ? (
                       <div className="relative aspect-video rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 group">
                         <img
                           src={loc.imageUrl}
                           alt={loc.location}
                           className="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
                         />
                         <button
                           type="button"

@@ -7,6 +7,11 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  DeferredImageSkeleton,
+  isDeferredImageUrl,
+  isDisplayableImageUrl,
+} from '@/components/vision/DeferredImageSkeleton'
 
 export interface SceneImageFrameProps {
   sceneIdx: number
@@ -264,7 +269,8 @@ export function SceneImageFrame({
         ? 'line-clamp-3'
         : 'line-clamp-2'
 
-  const hasImage = !!imageUrl
+  const hasImage = isDisplayableImageUrl(imageUrl) && !imageError
+  const isDeferred = isDeferredImageUrl(imageUrl)
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -316,13 +322,16 @@ export function SceneImageFrame({
       />
 
       <div className="relative aspect-video bg-slate-800/50">
-        {hasImage ? (
+        {isDeferred ? (
+          <DeferredImageSkeleton className="w-full h-full" label={`Loading ${label}`} />
+        ) : hasImage ? (
           <>
             <img
               key={imageUrl}
-              src={imageUrl}
+              src={imageUrl!}
               alt={`Scene ${sceneNumber} reference`}
               loading={compact ? 'lazy' : 'eager'}
+              decoding="async"
               className="w-full h-full object-cover"
             />
 

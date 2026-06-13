@@ -31,6 +31,11 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
+import {
+  DeferredImageSkeleton,
+  isDeferredImageUrl,
+  isDisplayableImageUrl,
+} from '@/components/vision/DeferredImageSkeleton'
 
 export interface SceneReferenceCardProps {
   /** Scene data object */
@@ -85,7 +90,8 @@ export function SceneReferenceCard({
   
   // Scene reference image only - NO fallback to storyboard image (imageUrl)
   const sceneRefImageUrl = scene.sceneReferenceImageUrl
-  const hasImage = !!sceneRefImageUrl
+  const hasImage = isDisplayableImageUrl(sceneRefImageUrl)
+  const isDeferredImage = isDeferredImageUrl(sceneRefImageUrl)
   const hasSceneDirection = !!scene.sceneDirection
   
   // Extract key info from scene direction for tooltip display
@@ -121,11 +127,15 @@ export function SceneReferenceCard({
       >
         {/* Scene Reference Image */}
         <div className="aspect-video bg-gray-100 dark:bg-gray-800 relative">
-          {hasImage ? (
+          {isDeferredImage ? (
+            <DeferredImageSkeleton className="w-full h-full" label={`Loading scene ${sceneNumber} reference`} />
+          ) : hasImage ? (
             <img 
               src={sceneRefImageUrl} 
               alt={`Scene ${sceneNumber} Reference`}
               className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center">

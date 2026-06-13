@@ -27,6 +27,11 @@ import { SceneReferenceCard } from './SceneReferenceCard'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { DetailedSceneDirection } from '@/types/scene-direction'
 import { buildObjectReferencePrompt } from '@/lib/vision/referenceExpressPrompts'
+import {
+  DeferredImageSkeleton,
+  isDeferredImageUrl,
+  isDisplayableImageUrl,
+} from '@/components/vision/DeferredImageSkeleton'
 
 // Extended scene type for Scene tab that includes sceneDirection
 interface SceneWithDirection {
@@ -304,8 +309,16 @@ function DraggableReferenceCard({
             onChange={handleFileUpload}
           />
 
-          {reference.imageUrl ? (
-            <img src={reference.imageUrl} alt={reference.name} className="w-full h-full object-cover" />
+          {isDeferredImageUrl(reference.imageUrl) ? (
+            <DeferredImageSkeleton className="w-full h-full" label={`Loading ${reference.name}`} />
+          ) : isDisplayableImageUrl(reference.imageUrl) ? (
+            <img
+              src={reference.imageUrl}
+              alt={reference.name}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
               <Images className="w-8 h-8 text-gray-400" />
@@ -552,7 +565,7 @@ function DraggableReferenceCard({
       </div>
 
       {/* Expanded View Dialog */}
-      {reference.imageUrl && (
+      {isDisplayableImageUrl(reference.imageUrl) && (
         <Dialog open={isExpanded} onOpenChange={setIsExpanded}>
           <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 bg-black border-none">
             <DialogHeader className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/70 to-transparent z-10">
