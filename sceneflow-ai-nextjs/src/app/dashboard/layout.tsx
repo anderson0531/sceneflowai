@@ -16,5 +16,5 @@ export default async function DashboardLayout({
     redirect(getLoginUrl({ returnUrl: '/dashboard' }))
   }
 
-  return <div className="max-w-full">{children}</div>
+  return <div className="max-w-full h-full min-h-0">{children}</div>
 }
