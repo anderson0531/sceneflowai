@@ -451,6 +451,35 @@ export function countStoryboardFramesNeedingGeneration(
   return enumerateStoryboardFrameSlots(scene).filter((s) => !s.ownImageUrl).length
 }
 
+/** Slots shown in the Scene Express frame checklist (end rows optional). */
+export function filterStoryboardSlotsForExpressChecklist(
+  slots: StoryboardFrameSlot[],
+  options: { includeEndFrames?: boolean } = {}
+): StoryboardFrameSlot[] {
+  return slots.filter((slot) => {
+    if (slot.frameRole === 'end' && !options.includeEndFrames) return false
+    return true
+  })
+}
+
+export function isStoryboardSlotSelected(
+  slot: Pick<StoryboardFrameSlot, 'key'>,
+  selectedKeys: Set<string>
+): boolean {
+  return selectedKeys.has(slot.key)
+}
+
+/** Count checklist rows that match the current selection set. */
+export function countSelectedExpressFrameSlots(
+  slots: StoryboardFrameSlot[],
+  selectedKeys: Set<string>,
+  options: { includeEndFrames?: boolean } = {}
+): number {
+  return filterStoryboardSlotsForExpressChecklist(slots, options).filter((slot) =>
+    isStoryboardSlotSelected(slot, selectedKeys)
+  ).length
+}
+
 /** Express scope: count start slots, and end slots when includeEndFrames is on. */
 export function countExpressFrameScope(
   scene: Record<string, unknown>,

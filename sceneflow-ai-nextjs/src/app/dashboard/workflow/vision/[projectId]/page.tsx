@@ -11727,11 +11727,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     async (
       sceneIndex: number,
       language: string,
-      options?: {
-        regenerate?: boolean
+      options?: import('@/components/vision/ExpressSceneConfirmDialog').ExpressSceneConfirmOptions & {
         finalizeOnly?: boolean
-        includeEndFrames?: boolean
-        missingFramesOnly?: boolean
       }
     ) => {
       if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
@@ -11810,8 +11807,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             includeMusic: false,
             includeSFX: false,
             includeEndFrames: !!options?.includeEndFrames,
-            missingFramesOnly: !!options?.missingFramesOnly,
-            regenerate: !!options?.regenerate,
+            missingFramesOnly: options?.scope === 'missing',
+            regenerate: options?.scope === 'selected',
+            framesOnly: options?.scope === 'selected',
+            ...(options?.selectedFrameKeys?.length
+              ? { selectedFrameKeys: options.selectedFrameKeys }
+              : {}),
             storyboardQuality: options?.finalizeOnly ? 'final' : 'draft',
             finalizeOnly: !!options?.finalizeOnly,
             imageQuality,

@@ -29,6 +29,8 @@ interface ExpressRequest {
   mode?: 'batch' | 'scene'
   sceneIndices?: number[]
   dialogueOnly?: boolean
+  framesOnly?: boolean
+  selectedFrameKeys?: string[]
 }
 
 function injectResolvedScenesIntoProject(project: any, resolvedScenes: any[]): void {
@@ -158,6 +160,8 @@ export async function POST(req: NextRequest) {
     mode = 'batch',
     sceneIndices,
     dialogueOnly = false,
+    framesOnly = false,
+    selectedFrameKeys,
   } = body || {}
 
   if (!projectId) {
@@ -208,6 +212,10 @@ export async function POST(req: NextRequest) {
     storyboardQuality,
     finalizeOnly: !!finalizeOnly,
     dialogueOnly: !!dialogueOnly,
+    framesOnly: !!framesOnly,
+    ...(Array.isArray(selectedFrameKeys) && selectedFrameKeys.length > 0
+      ? { selectedFrameKeys }
+      : {}),
     mode: mode === 'scene' ? 'scene' : 'batch',
     ...(Array.isArray(sceneIndices) && sceneIndices.length > 0
       ? { sceneIndices }

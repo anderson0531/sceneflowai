@@ -50,6 +50,10 @@ export interface ExpressOptions {
   missingFramesOnly?: boolean
   /** When true, skip direction/image; translate + dub dialogue/narration only. */
   dialogueOnly?: boolean
+  /** When true, skip direction and audio phases (frame regen pass). */
+  framesOnly?: boolean
+  /** Limit image generation to these storyboard slot keys. */
+  selectedFrameKeys?: string[]
 }
 
 export interface SceneDirectionResult {

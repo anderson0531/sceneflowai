@@ -14,17 +14,11 @@ import {
   Zap,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/Button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ImageEditModal } from './ImageEditModal'
+import {
+  ExpressSceneConfirmDialog,
+  type ExpressSceneConfirmOptions,
+} from './ExpressSceneConfirmDialog'
 import { SceneImageFrame, type SceneImageFrameProps } from './SceneImageFrame'
 import type { ExpressPhaseStatus, ExpressSceneStatus } from './SceneGallery'
 import {
@@ -37,6 +31,8 @@ import { runSceneExpressPreflight } from '@/lib/sceneGeneration/sceneExpressPref
 import { isPreVisStale } from '@/lib/storyboard/preVisSync'
 import { countDraftStoryboardFrames } from '@/lib/storyboard/storyboardQuality'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/Button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 type EditingFrame =
   | { kind: 'establishing'; sceneIndex: number; imageUrl: string }
@@ -71,11 +67,7 @@ export interface SceneStoryboardFrameViewerProps {
   onSaveEditedBeatFrame?: (beatId: string, imageUrl: string) => void
   onSaveEditedDialogueFrame?: (dialogueIndex: number, imageUrl: string) => void
   onSaveEditedCustomFrame?: (customFrameId: string, imageUrl: string) => void
-  onExpressSceneGenerate?: (options?: {
-    regenerate?: boolean
-    includeEndFrames?: boolean
-    missingFramesOnly?: boolean
-  }) => void | Promise<void>
+  onExpressSceneGenerate?: (options?: ExpressSceneConfirmOptions) => void | Promise<void>
   onFinalizeScene?: () => void | Promise<void>
   onSyncPreVisToScript?: () => void | Promise<void>
   onAddStoryboardFrame?: () => void | Promise<void>
@@ -329,9 +321,7 @@ export function SceneStoryboardFrameViewer({
   const [selectedFrameKey, setSelectedFrameKey] = useState<string | null>(null)
   const [generatingDialogueFrames, setGeneratingDialogueFrames] = useState<Set<string>>(new Set())
   const [generatingCustomFrames, setGeneratingCustomFrames] = useState<Set<string>>(new Set())
-  const [sceneExpressRegenerateOpen, setSceneExpressRegenerateOpen] = useState(false)
-  const [includeEndFramesForExpress, setIncludeEndFramesForExpress] = useState(false)
-  const [missingFramesOnlyForExpress, setMissingFramesOnlyForExpress] = useState(false)
+  const [expressSceneDialogOpen, setExpressSceneDialogOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editingFrame, setEditingFrame] = useState<EditingFrame | null>(null)
   const thumbnailScrollRef = useRef<HTMLDivElement>(null)
@@ -377,8 +367,20 @@ export function SceneStoryboardFrameViewer({
   const sceneExpressTooltip = !sceneExpressPreflight.ok
     ? sceneExpressPreflight.errors[0]
     : sceneExpressPreflight.nothingToDo
-      ? 'Scene complete — click to regenerate'
+      ? 'Scene complete — choose frames to regenerate'
       : '~60s — Vertex AI — Direction (if needed) → Audio + beats in parallel'
+
+  const openExpressSceneDialog = useCallback(() => {
+    if (expressGateBlocked && onExpressGateBlocked) {
+      onExpressGateBlocked()
+      return
+    }
+    if (!sceneExpressPreflight.ok) {
+      toast.error(sceneExpressPreflight.errors[0])
+      return
+    }
+    setExpressSceneDialogOpen(true)
+  }, [expressGateBlocked, onExpressGateBlocked, sceneExpressPreflight])
 
   const sceneExpressRunning =
     isExpressRunning &&
@@ -601,13 +603,7 @@ export function SceneStoryboardFrameViewer({
                   variant="outline"
                   className="mt-3 border-amber-500/40 text-amber-300"
                   disabled={sceneExpressDisabled}
-                  onClick={() => {
-                    if (expressGateBlocked && onExpressGateBlocked) {
-                      onExpressGateBlocked()
-                      return
-                    }
-                    void onExpressSceneGenerate()
-                  }}
+                  onClick={openExpressSceneDialog}
                 >
                   <Zap className="w-3.5 h-3.5 mr-1.5" />
                   Express Scene
@@ -633,30 +629,6 @@ export function SceneStoryboardFrameViewer({
                   {frameStats.placeholders > 0 ? ` · ${frameStats.placeholders} placeholder` : ''}
                 </span>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {onExpressSceneGenerate && (
-                    <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-600"
-                        checked={missingFramesOnlyForExpress}
-                        onChange={(e) => setMissingFramesOnlyForExpress(e.target.checked)}
-                        disabled={isExpressRunning}
-                      />
-                      Only missing
-                    </label>
-                  )}
-                  {onExpressSceneGenerate && (
-                    <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-600"
-                        checked={includeEndFramesForExpress}
-                        onChange={(e) => setIncludeEndFramesForExpress(e.target.checked)}
-                        disabled={isExpressRunning}
-                      />
-                      End frames
-                    </label>
-                  )}
                   {preVisStale && onSyncPreVisToScript && (
                     <Button
                       type="button"
@@ -679,24 +651,7 @@ export function SceneStoryboardFrameViewer({
                           size="sm"
                           className="h-7 text-[10px] border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
                           disabled={sceneExpressDisabled}
-                          onClick={() => {
-                            if (expressGateBlocked && onExpressGateBlocked) {
-                              onExpressGateBlocked()
-                              return
-                            }
-                            if (!sceneExpressPreflight.ok) {
-                              toast.error(sceneExpressPreflight.errors[0])
-                              return
-                            }
-                            if (sceneExpressPreflight.nothingToDo) {
-                              setSceneExpressRegenerateOpen(true)
-                              return
-                            }
-                            void onExpressSceneGenerate({
-                              includeEndFrames: includeEndFramesForExpress,
-                              missingFramesOnly: missingFramesOnlyForExpress,
-                            })
-                          }}
+                          onClick={openExpressSceneDialog}
                         >
                           <Zap className="w-3 h-3 mr-0.5" />
                           {sceneExpressRunning ? `Express ${expressElapsedSec}s` : 'Express'}
@@ -825,34 +780,16 @@ export function SceneStoryboardFrameViewer({
       )}
 
       {onExpressSceneGenerate && (
-        <Dialog open={sceneExpressRegenerateOpen} onOpenChange={setSceneExpressRegenerateOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Regenerate Scene Express?</DialogTitle>
-              <DialogDescription>
-                Scene already has direction, audio, and pre-vis frames. This will regenerate them.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setSceneExpressRegenerateOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={() => {
-                  setSceneExpressRegenerateOpen(false)
-                  void onExpressSceneGenerate({
-                    regenerate: true,
-                    includeEndFrames: includeEndFramesForExpress,
-                    missingFramesOnly: false,
-                  })
-                }}
-              >
-                Regenerate
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ExpressSceneConfirmDialog
+          open={expressSceneDialogOpen}
+          onOpenChange={setExpressSceneDialogOpen}
+          scene={scene}
+          isRunning={isExpressRunning}
+          onConfirm={(options) => {
+            setExpressSceneDialogOpen(false)
+            void onExpressSceneGenerate(options)
+          }}
+        />
       )}
 
       <ImageEditModal

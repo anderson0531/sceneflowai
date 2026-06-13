@@ -87,6 +87,28 @@ function getBeatGenerationContext(options: ExpressOptions) {
   }
 }
 
+function getSelectedFrameKeySet(options: ExpressOptions): Set<string> | null {
+  if (!options.selectedFrameKeys?.length) return null
+  return new Set(options.selectedFrameKeys)
+}
+
+function isBeatStartSlotSelected(beat: SceneBeat, selectedKeys: Set<string> | null): boolean {
+  if (!selectedKeys) return true
+  if (!beat.beatId) return false
+  return selectedKeys.has(beat.beatId)
+}
+
+function isBeatEndSlotSelected(beat: SceneBeat, selectedKeys: Set<string> | null): boolean {
+  if (!selectedKeys) return true
+  if (!beat.beatId) return false
+  return selectedKeys.has(`${beat.beatId}-end`)
+}
+
+function isLegacySlotSelected(key: string, selectedKeys: Set<string> | null): boolean {
+  if (!selectedKeys) return true
+  return selectedKeys.has(key)
+}
+
 export interface RunExpressParams {
   /** Already-loaded project. The orchestrator mutates `metadata.visionPhase.script` in-memory. */
   project: any
@@ -161,6 +183,33 @@ function sceneNeedsDialogueImages(scene: any): boolean {
 
 function sceneNeedsImage(scene: any): boolean {
   return sceneNeedsEstablishingImage(scene) || sceneNeedsDialogueImages(scene)
+}
+
+function sceneNeedsLegacyImages(scene: any, options: ExpressOptions): boolean {
+  const genCtx = getBeatGenerationContext(options)
+  const selectedKeys = getSelectedFrameKeySet(options)
+
+  if (isLegacySlotSelected('establishing', selectedKeys)) {
+    if (
+      beatFrameNeedsGeneration(
+        {
+          storyboardImageUrl: scene.imageUrl,
+          storyboardImageTier: scene.storyboardImageTier,
+        },
+        genCtx
+      )
+    ) {
+      return true
+    }
+  }
+
+  const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
+  for (let dialogueIdx = 0; dialogueIdx < dialogue.length; dialogueIdx++) {
+    if (!isLegacySlotSelected(`dialogue-${dialogueIdx}`, selectedKeys)) continue
+    if (dialogueFrameNeedsGeneration(dialogue[dialogueIdx] || {}, genCtx)) return true
+  }
+
+  return false
 }
 
 function getExpressMode(options: ExpressOptions): ExpressMode {
@@ -396,17 +445,22 @@ async function runAudioPhase(
 
 function sceneNeedsBeatImages(scene: any, options: ExpressOptions): boolean {
   const genCtx = getBeatGenerationContext(options)
+  const selectedKeys = getSelectedFrameKeySet(options)
   const beats = getSceneBeats(scene)
   for (const beat of beats) {
-    if (beatFrameNeedsGeneration(beat, genCtx)) return true
+    if (isBeatStartSlotSelected(beat, selectedKeys) && beatFrameNeedsGeneration(beat, genCtx)) {
+      return true
+    }
     if (
       options.includeEndFrames &&
+      isBeatEndSlotSelected(beat, selectedKeys) &&
       beat.storyboardImageUrl?.trim() &&
       beatEndFrameNeedsGeneration(beat, genCtx)
     ) {
       return true
     }
   }
+  if (selectedKeys) return false
   return countExpressFrameScope(scene, {
     includeEndFrames: options.includeEndFrames,
     regenerate: false,
@@ -605,9 +659,11 @@ async function runSupplementalEndFrames(
   }
 
   const endBeatsToGenerate: number[] = []
+  const selectedKeys = getSelectedFrameKeySet(options)
   for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
     if (skipBeatIndices.has(beatIdx)) continue
     const beat = beats[beatIdx]
+    if (!isBeatEndSlotSelected(beat, selectedKeys)) continue
     if (!beat.storyboardImageUrl?.trim()) continue
     if (!beatEndFrameNeedsGeneration(beat, genCtx)) continue
     endBeatsToGenerate.push(beatIdx)
@@ -716,9 +772,11 @@ async function runBeatImages(
 ): Promise<{ hadFailure: boolean; lastError?: string; lastImageUrl?: string }> {
   const { scene, sceneIndex, sceneNumber } = ctx
   const genCtx = getBeatGenerationContext(options)
+  const selectedKeys = getSelectedFrameKeySet(options)
   const beatsToGenerate: number[] = []
   for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
     const beat = beats[beatIdx]
+    if (!isBeatStartSlotSelected(beat, selectedKeys)) continue
     if (!beatFrameNeedsGeneration(beat, genCtx)) continue
     beatsToGenerate.push(beatIdx)
   }
@@ -1080,7 +1138,13 @@ async function runImagePhase(
   const needsImages =
     options.regenerate ||
     options.finalizeOnly ||
-    (useBeatPipeline ? sceneNeedsBeatImages(scene, options) : sceneNeedsImage(scene))
+    (options.selectedFrameKeys?.length
+      ? useBeatPipeline
+        ? sceneNeedsBeatImages(scene, options)
+        : sceneNeedsLegacyImages(scene, options)
+      : useBeatPipeline
+        ? sceneNeedsBeatImages(scene, options)
+        : sceneNeedsImage(scene))
 
   if (!needsImages) {
     safeEmit(emit, {
@@ -1135,7 +1199,10 @@ async function runImagePhase(
       const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
       const imageParams = getExpressImageParams(options)
       const genCtx = getBeatGenerationContext(options)
-      const needsEstablishing = options.regenerate || sceneNeedsEstablishingImage(scene)
+      const selectedKeys = getSelectedFrameKeySet(options)
+      const needsEstablishing =
+        (options.regenerate || sceneNeedsEstablishingImage(scene)) &&
+        isLegacySlotSelected('establishing', selectedKeys)
 
       const persistDialogueFrame = (
         idx: number,
@@ -1194,6 +1261,7 @@ async function runImagePhase(
       }
 
       for (let dialogueIdx = 0; dialogueIdx < dialogue.length; dialogueIdx++) {
+        if (!isLegacySlotSelected(`dialogue-${dialogueIdx}`, selectedKeys)) continue
         if (!dialogueFrameNeedsGeneration(dialogue[dialogueIdx] || {}, genCtx)) continue
 
         try {
@@ -1317,7 +1385,10 @@ async function runScene(
       }
     }
 
-    if (preflight.nothingToDo) {
+    if (
+      preflight.nothingToDo &&
+      !(options.framesOnly && (options.selectedFrameKeys?.length ?? 0) > 0)
+    ) {
       for (const phase of ['direction', 'audio', 'image'] as ExpressPhase[]) {
         safeEmit(emit, {
           type: 'phase-done',
@@ -1342,6 +1413,47 @@ async function runScene(
   }
 
   if (options.finalizeOnly) {
+    for (const phase of ['direction', 'audio'] as ExpressPhase[]) {
+      safeEmit(emit, {
+        type: 'phase-done',
+        sceneIndex,
+        sceneNumber,
+        phase,
+        ok: true,
+        skipped: true,
+      })
+      phasesSkipped.push(phase)
+    }
+
+    const iRes = await runImagePhase(
+      ctx,
+      options,
+      project,
+      baseUrl,
+      authCookie,
+      emit,
+      trafficCop,
+      rateLimitedFailures
+    )
+    if (iRes.skipped) phasesSkipped.push('image')
+    else if (iRes.ok) phasesRun.push('image')
+    else phasesFailed.push('image')
+
+    const ok = phasesFailed.length === 0
+    const error = phasesFailed.length > 0 ? `Failed phases: ${phasesFailed.join(', ')}` : undefined
+    safeEmit(emit, { type: 'scene-done', sceneIndex, sceneNumber, ok, error })
+    return {
+      sceneIndex,
+      sceneNumber,
+      ok,
+      error,
+      phasesRun,
+      phasesSkipped,
+      phasesFailed,
+    }
+  }
+
+  if (options.framesOnly) {
     for (const phase of ['direction', 'audio'] as ExpressPhase[]) {
       safeEmit(emit, {
         type: 'phase-done',

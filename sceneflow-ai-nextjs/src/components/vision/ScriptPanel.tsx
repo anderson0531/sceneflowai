@@ -48,6 +48,7 @@ import {
   ExpressAudioConfirmDialog,
   type ExpressAudioConfirmOptions,
 } from '@/components/vision/ExpressAudioConfirmDialog'
+import type { ExpressSceneConfirmOptions } from '@/components/vision/ExpressSceneConfirmDialog'
 import { processWithConcurrency } from '@/lib/utils/concurrent-processor'
 
 // Dynamic imports with ssr: false to prevent TDZ circular dependency issues
@@ -406,7 +407,11 @@ interface ScriptPanelProps {
   onGenerateCustomFrame?: (sceneIdx: number, frameId: string) => Promise<void>
   onUploadCustomFrame?: (sceneIdx: number, frameId: string, file: File) => void
   onUploadStoryboardScene?: (sceneIdx: number, file: File) => void
-  onExpressSceneGenerate?: (sceneIdx: number, language: string, options?: { regenerate?: boolean; includeEndFrames?: boolean; missingFramesOnly?: boolean }) => Promise<void>
+  onExpressSceneGenerate?: (
+    sceneIdx: number,
+    language: string,
+    options?: ExpressSceneConfirmOptions & { finalizeOnly?: boolean }
+  ) => Promise<void>
   onFinalizeStoryboardScene?: (sceneIdx: number, language: string) => Promise<void>
   expressStatus?: import('./SceneGallery').ExpressSceneStatusMap
   expressGateBlocked?: boolean
@@ -3872,7 +3877,11 @@ interface SceneCardProps {
   onGenerateCustomFrame?: (sceneIdx: number, frameId: string) => Promise<void>
   onUploadCustomFrame?: (sceneIdx: number, frameId: string, file: File) => void
   onUploadStoryboardScene?: (sceneIdx: number, file: File) => void
-  onExpressSceneGenerate?: (sceneIdx: number, language: string, options?: { regenerate?: boolean; includeEndFrames?: boolean; missingFramesOnly?: boolean }) => Promise<void>
+  onExpressSceneGenerate?: (
+    sceneIdx: number,
+    language: string,
+    options?: ExpressSceneConfirmOptions & { finalizeOnly?: boolean }
+  ) => Promise<void>
   onFinalizeStoryboardScene?: (sceneIdx: number, language: string) => Promise<void>
   expressStatus?: import('./SceneGallery').ExpressSceneStatusMap
   expressGateBlocked?: boolean
