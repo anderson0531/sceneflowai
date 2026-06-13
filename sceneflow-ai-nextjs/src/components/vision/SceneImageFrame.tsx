@@ -269,7 +269,7 @@ export function SceneImageFrame({
         ? 'line-clamp-3'
         : 'line-clamp-2'
 
-  const hasImage = isDisplayableImageUrl(imageUrl) && !imageError
+  const hasImage = isDisplayableImageUrl(imageUrl)
   const isDeferred = isDeferredImageUrl(imageUrl)
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
