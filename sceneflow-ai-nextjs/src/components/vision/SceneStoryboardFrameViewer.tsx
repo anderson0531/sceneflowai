@@ -71,7 +71,11 @@ export interface SceneStoryboardFrameViewerProps {
   onSaveEditedBeatFrame?: (beatId: string, imageUrl: string) => void
   onSaveEditedDialogueFrame?: (dialogueIndex: number, imageUrl: string) => void
   onSaveEditedCustomFrame?: (customFrameId: string, imageUrl: string) => void
-  onExpressSceneGenerate?: (options?: { regenerate?: boolean; includeEndFrames?: boolean }) => void | Promise<void>
+  onExpressSceneGenerate?: (options?: {
+    regenerate?: boolean
+    includeEndFrames?: boolean
+    missingFramesOnly?: boolean
+  }) => void | Promise<void>
   onFinalizeScene?: () => void | Promise<void>
   onSyncPreVisToScript?: () => void | Promise<void>
   onAddStoryboardFrame?: () => void | Promise<void>
@@ -248,7 +252,15 @@ function formatBeatRoleLabel(beatRole?: string): string | null {
   return beatRole.replace(/_/g, ' ')
 }
 
-function ExpressPhasePill({ label, status }: { label: string; status: ExpressPhaseStatus }) {
+function ExpressPhasePill({
+  label,
+  status,
+  rateLimited,
+}: {
+  label: string
+  status: ExpressPhaseStatus
+  rateLimited?: boolean
+}) {
   const cls = (() => {
     switch (status) {
       case 'running':
@@ -256,7 +268,9 @@ function ExpressPhasePill({ label, status }: { label: string; status: ExpressPha
       case 'done':
         return 'bg-emerald-500/30 text-emerald-200 border-emerald-400/40'
       case 'error':
-        return 'bg-rose-500/30 text-rose-200 border-rose-400/40'
+        return rateLimited
+          ? 'bg-amber-500/30 text-amber-200 border-amber-400/50'
+          : 'bg-rose-500/30 text-rose-200 border-rose-400/40'
       default:
         return 'bg-gray-700/40 text-gray-300 border-gray-500/40'
     }
@@ -267,9 +281,11 @@ function ExpressPhasePill({ label, status }: { label: string; status: ExpressPha
         'flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border',
         cls
       )}
+      title={rateLimited ? 'Rate limited after repeated 429 responses' : undefined}
     >
       {status === 'running' && <Loader className="w-2.5 h-2.5 animate-spin" />}
       {status === 'done' && <Check className="w-2.5 h-2.5" />}
+      {status === 'error' && rateLimited ? '429' : null}
       {label}
     </span>
   )
@@ -316,6 +332,7 @@ export function SceneStoryboardFrameViewer({
   const [generatingCustomFrames, setGeneratingCustomFrames] = useState<Set<string>>(new Set())
   const [sceneExpressRegenerateOpen, setSceneExpressRegenerateOpen] = useState(false)
   const [includeEndFramesForExpress, setIncludeEndFramesForExpress] = useState(false)
+  const [missingFramesOnlyForExpress, setMissingFramesOnlyForExpress] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editingFrame, setEditingFrame] = useState<EditingFrame | null>(null)
   const thumbnailScrollRef = useRef<HTMLDivElement>(null)
@@ -547,10 +564,27 @@ export function SceneStoryboardFrameViewer({
           )}
         </button>
         {expressPhaseStatus && (
-          <div className="flex items-center gap-1">
-            <ExpressPhasePill label="Dir" status={expressPhaseStatus.direction} />
-            <ExpressPhasePill label="Aud" status={expressPhaseStatus.audio} />
-            <ExpressPhasePill label="Img" status={expressPhaseStatus.image} />
+          <div className="flex items-center gap-1 flex-wrap">
+            <ExpressPhasePill
+              label="Dir"
+              status={expressPhaseStatus.direction}
+              rateLimited={expressPhaseStatus.rateLimitedPhases?.direction}
+            />
+            <ExpressPhasePill
+              label="Aud"
+              status={expressPhaseStatus.audio}
+              rateLimited={expressPhaseStatus.rateLimitedPhases?.audio}
+            />
+            <ExpressPhasePill
+              label="Img"
+              status={expressPhaseStatus.image}
+              rateLimited={expressPhaseStatus.rateLimitedPhases?.image}
+            />
+            {expressPhaseStatus.rateLimited && (
+              <span className="text-[10px] font-medium text-amber-300/90 px-1.5">
+                Rate limited
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -605,6 +639,18 @@ export function SceneStoryboardFrameViewer({
                       <input
                         type="checkbox"
                         className="rounded border-gray-600"
+                        checked={missingFramesOnlyForExpress}
+                        onChange={(e) => setMissingFramesOnlyForExpress(e.target.checked)}
+                        disabled={isExpressRunning}
+                      />
+                      Only missing
+                    </label>
+                  )}
+                  {onExpressSceneGenerate && (
+                    <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-600"
                         checked={includeEndFramesForExpress}
                         onChange={(e) => setIncludeEndFramesForExpress(e.target.checked)}
                         disabled={isExpressRunning}
@@ -647,7 +693,10 @@ export function SceneStoryboardFrameViewer({
                               setSceneExpressRegenerateOpen(true)
                               return
                             }
-                            void onExpressSceneGenerate({ includeEndFrames: includeEndFramesForExpress })
+                            void onExpressSceneGenerate({
+                              includeEndFrames: includeEndFramesForExpress,
+                              missingFramesOnly: missingFramesOnlyForExpress,
+                            })
                           }}
                         >
                           <Zap className="w-3 h-3 mr-0.5" />
@@ -794,7 +843,11 @@ export function SceneStoryboardFrameViewer({
                 type="button"
                 onClick={() => {
                   setSceneExpressRegenerateOpen(false)
-                  void onExpressSceneGenerate({ regenerate: true, includeEndFrames: includeEndFramesForExpress })
+                  void onExpressSceneGenerate({
+                    regenerate: true,
+                    includeEndFrames: includeEndFramesForExpress,
+                    missingFramesOnly: false,
+                  })
                 }}
               >
                 Regenerate

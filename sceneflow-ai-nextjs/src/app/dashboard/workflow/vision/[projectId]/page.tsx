@@ -11395,9 +11395,26 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const current: ExpressSceneStatus =
             prev[sceneIndex] ||
             ({ direction: 'pending', audio: 'pending', image: 'pending' } as ExpressSceneStatus)
+          const rateLimitedPhases = {
+            ...current.rateLimitedPhases,
+            ...(extra?.rateLimitedPhases ?? {}),
+          }
+          if (extra?.rateLimited) {
+            rateLimitedPhases[phase] = true
+          }
+          const rateLimited =
+            extra?.rateLimited ??
+            current.rateLimited ??
+            Object.values(rateLimitedPhases).some(Boolean)
           return {
             ...prev,
-            [sceneIndex]: { ...current, [phase]: next, ...extra },
+            [sceneIndex]: {
+              ...current,
+              [phase]: next,
+              ...extra,
+              rateLimited,
+              rateLimitedPhases,
+            },
           }
         })
       }
@@ -11432,6 +11449,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             includeMusic: !!options.includeMusic,
             includeSFX: !!options.includeSFX,
             includeEndFrames: !!options.includeEndFrames,
+            missingFramesOnly: !!options.missingFramesOnly,
             regenerate: !!options.regenerate,
             storyboardQuality: options.storyboardQuality ?? 'draft',
             finalizeOnly: !!options.finalizeOnly,
@@ -11452,6 +11470,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let successScenes = 0
         let failedScenes = 0
         let rateLimitToastShown = false
+        let regulatorToastShown = false
+        let rateLimitedFailureCount = 0
 
         while (true) {
           const { done, value } = await reader.read()
@@ -11469,7 +11489,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   break
                 case 'phase-done':
                   if (event.ok) {
-                    setPhase(event.sceneIndex, event.phase, 'done')
+                    setPhase(event.sceneIndex, event.phase, 'done', {
+                      ...(event.rateLimited
+                        ? { rateLimited: true, rateLimitedPhases: { [event.phase]: true } }
+                        : {}),
+                    })
                     if (event.phase === 'image' && event.imageUrl) {
                       applyExpressSceneImage(event.sceneIndex, event.imageUrl, {
                         dialogueIndex: event.dialogueIndex,
@@ -11485,11 +11509,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     const phaseError = event.error || 'phase failed'
                     setPhase(event.sceneIndex, event.phase, 'error', {
                       error: phaseError,
+                      ...(event.rateLimited
+                        ? { rateLimited: true, rateLimitedPhases: { [event.phase]: true } }
+                        : {}),
                     })
                     const errLower = String(phaseError).toLowerCase()
                     if (
                       !rateLimitToastShown &&
-                      (errLower.includes('429') ||
+                      (event.rateLimited ||
+                        errLower.includes('429') ||
                         errLower.includes('resource_exhausted') ||
                         errLower.includes('quota') ||
                         errLower.includes('rate limit'))
@@ -11502,6 +11530,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 case 'complete':
                   successScenes = event.successScenes ?? 0
                   failedScenes = event.failedScenes ?? 0
+                  rateLimitedFailureCount = event.rateLimitedFailures?.length ?? 0
                   break
                 case 'preflight-failed':
                   setPhase(event.sceneIndex, 'direction', 'error', {
@@ -11516,6 +11545,14 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   console.info(
                     `[Express] Throttling ${event.lane} lane (max=${event.max}${event.cooldownMs ? `, cooldown ${event.cooldownMs}ms` : ''})`
                   )
+                  break
+                case 'regulator':
+                  if (event.engaged && !regulatorToastShown) {
+                    regulatorToastShown = true
+                    toast.info('High demand — slowing generation to improve reliability', {
+                      duration: 6000,
+                    })
+                  }
                   break
                 case 'error':
                   console.error('[Express] Stream error:', event.error)
@@ -11554,10 +11591,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           })
         } else if (failedScenes > 0 && successScenes > 0) {
           toast.warning(
-            `Express finished — ${successScenes} ok, ${failedScenes} with errors`
+            `Express finished — ${successScenes} ok, ${failedScenes} with errors${
+              rateLimitedFailureCount > 0
+                ? ` (${rateLimitedFailureCount} rate limited — re-run with Only missing frames)`
+                : ''
+            }`
           )
         } else if (failedScenes > 0) {
-          toast.error(`Express failed for ${failedScenes} scene${failedScenes === 1 ? '' : 's'}`)
+          toast.error(
+            `Express failed for ${failedScenes} scene${failedScenes === 1 ? '' : 's'}${
+              rateLimitedFailureCount > 0
+                ? ` — ${rateLimitedFailureCount} item${rateLimitedFailureCount === 1 ? '' : 's'} hit rate limits`
+                : ''
+            }`
+          )
+        } else if (rateLimitedFailureCount > 0) {
+          toast.warning(
+            `Express complete with ${rateLimitedFailureCount} rate-limited item${rateLimitedFailureCount === 1 ? '' : 's'}. Re-run with Only missing frames to fill gaps.`
+          )
         }
 
         // Reload project to pick up direction/audio mutations the orchestrator
@@ -11632,7 +11683,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     async (
       sceneIndex: number,
       language: string,
-      options?: { regenerate?: boolean; finalizeOnly?: boolean; includeEndFrames?: boolean }
+      options?: {
+        regenerate?: boolean
+        finalizeOnly?: boolean
+        includeEndFrames?: boolean
+        missingFramesOnly?: boolean
+      }
     ) => {
       if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
       if (isExpressRunning) return
@@ -11652,7 +11708,27 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const current: ExpressSceneStatus =
             prev[idx] ||
             ({ direction: 'pending', audio: 'pending', image: 'pending' } as ExpressSceneStatus)
-          return { ...prev, [idx]: { ...current, [phase]: next, ...extra } }
+          const rateLimitedPhases = {
+            ...current.rateLimitedPhases,
+            ...(extra?.rateLimitedPhases ?? {}),
+          }
+          if (extra?.rateLimited) {
+            rateLimitedPhases[phase] = true
+          }
+          const rateLimited =
+            extra?.rateLimited ??
+            current.rateLimited ??
+            Object.values(rateLimitedPhases).some(Boolean)
+          return {
+            ...prev,
+            [idx]: {
+              ...current,
+              [phase]: next,
+              ...extra,
+              rateLimited,
+              rateLimitedPhases,
+            },
+          }
         })
       }
 
@@ -11690,6 +11766,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             includeMusic: false,
             includeSFX: false,
             includeEndFrames: !!options?.includeEndFrames,
+            missingFramesOnly: !!options?.missingFramesOnly,
             regenerate: !!options?.regenerate,
             storyboardQuality: options?.finalizeOnly ? 'final' : 'draft',
             finalizeOnly: !!options?.finalizeOnly,
@@ -11710,6 +11787,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         let successScenes = 0
         let failedScenes = 0
         let rateLimitToastShown = false
+        let regulatorToastShown = false
+        let rateLimitedFailureCount = 0
         let scenePersisted = false
         let lastSceneError: string | undefined
 
@@ -11729,7 +11808,11 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   break
                 case 'phase-done':
                   if (event.ok) {
-                    setPhase(event.sceneIndex, event.phase, 'done')
+                    setPhase(event.sceneIndex, event.phase, 'done', {
+                      ...(event.rateLimited
+                        ? { rateLimited: true, rateLimitedPhases: { [event.phase]: true } }
+                        : {}),
+                    })
                     if (event.phase === 'image' && event.imageUrl) {
                       applyExpressSceneImage(event.sceneIndex, event.imageUrl, {
                         dialogueIndex: event.dialogueIndex,
@@ -11743,11 +11826,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   } else {
                     const phaseError = event.error || 'phase failed'
                     lastSceneError = phaseError
-                    setPhase(event.sceneIndex, event.phase, 'error', { error: phaseError })
+                    setPhase(event.sceneIndex, event.phase, 'error', {
+                      error: phaseError,
+                      ...(event.rateLimited
+                        ? { rateLimited: true, rateLimitedPhases: { [event.phase]: true } }
+                        : {}),
+                    })
                     const errLower = String(phaseError).toLowerCase()
                     if (
                       !rateLimitToastShown &&
-                      (errLower.includes('429') ||
+                      (event.rateLimited ||
+                        errLower.includes('429') ||
                         errLower.includes('resource_exhausted') ||
                         errLower.includes('rate limit'))
                     ) {
@@ -11773,9 +11862,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     `[Scene Express] Throttling ${event.lane} lane (max=${event.max}${event.cooldownMs ? `, cooldown ${event.cooldownMs}ms` : ''})`
                   )
                   break
+                case 'regulator':
+                  if (event.engaged && !regulatorToastShown) {
+                    regulatorToastShown = true
+                    toast.info('High demand — slowing generation to improve reliability', {
+                      duration: 6000,
+                    })
+                  }
+                  break
                 case 'complete':
                   successScenes = event.successScenes ?? 0
                   failedScenes = event.failedScenes ?? 0
+                  rateLimitedFailureCount = event.rateLimitedFailures?.length ?? 0
                   break
                 case 'error':
                   console.error('[Scene Express] Stream error:', event.error)
@@ -11795,7 +11893,13 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         }
 
         if (failedScenes === 0 && successScenes > 0) {
-          toast.success(`Scene ${sceneIndex + 1} Express complete`)
+          if (rateLimitedFailureCount > 0) {
+            toast.warning(
+              `Scene ${sceneIndex + 1} Express complete with ${rateLimitedFailureCount} rate-limited item${rateLimitedFailureCount === 1 ? '' : 's'}. Re-run with Only missing frames.`
+            )
+          } else {
+            toast.success(`Scene ${sceneIndex + 1} Express complete`)
+          }
         } else if (failedScenes > 0 && lastSceneError && !rateLimitToastShown) {
           toast.error(lastSceneError.slice(0, 200))
         }

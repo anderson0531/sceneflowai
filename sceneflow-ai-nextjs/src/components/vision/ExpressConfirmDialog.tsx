@@ -16,7 +16,7 @@ import { IMAGE_CREDITS, AUDIO_CREDITS } from '@/lib/credits/creditCosts'
 import { getLanguageName, FLAG_EMOJIS } from '@/constants/languages'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { getArtStylePresetName } from '@/lib/treatment/blueprintFoundation'
-import { countStoryboardFramesNeedingGeneration, countStoryboardFrameStats } from '@/lib/storyboard/types'
+import { countExpressFrameScope, countStoryboardFrameStats } from '@/lib/storyboard/types'
 import { isTitleOrCinematicScene } from '@/lib/script/sceneClassification'
 
 export interface ExpressConfirmOptions {
@@ -33,6 +33,8 @@ export interface ExpressConfirmOptions {
   finalizeOnly?: boolean
   /** When true, Express also generates end frames per beat for FTV motion. */
   includeEndFrames?: boolean
+  /** When true, only fill frames with no stored image URL. */
+  missingFramesOnly?: boolean
 }
 
 interface ExpressConfirmDialogProps {
@@ -66,6 +68,7 @@ export function ExpressConfirmDialog({
 }: ExpressConfirmDialogProps) {
   const [includeMusic, setIncludeMusic] = useState(false)
   const [includeEndFrames, setIncludeEndFrames] = useState(false)
+  const [missingFramesOnly, setMissingFramesOnly] = useState(false)
   const [regenerate, setRegenerate] = useState(false)
   const [artStyle, setArtStyle] = useState(lockedArtStyle || 'photorealistic')
 
@@ -78,6 +81,7 @@ export function ExpressConfirmDialog({
     if (open) {
       setIncludeMusic(hasTitleScene)
       setIncludeEndFrames(false)
+      setMissingFramesOnly(false)
       setRegenerate(false)
       setArtStyle(lockedArtStyle || 'photorealistic')
     }
@@ -103,7 +107,7 @@ export function ExpressConfirmDialog({
       }
       if (!scene?.imageUrl) scenesNeedingImage += 1
 
-      const missingFrameCount = countStoryboardFramesNeedingGeneration(scene)
+      const missingFrameCount = countExpressFrameScope(scene, { includeEndFrames })
       if (missingFrameCount > 0) scenesNeedingDialogueFrames += 1
 
       const dialogue = Array.isArray(scene?.dialogue) ? scene.dialogue : []
@@ -135,17 +139,25 @@ export function ExpressConfirmDialog({
       totalSfxCues,
       scenesWithMusic,
     }
-  }, [scenes, language])
+  }, [scenes, language, includeEndFrames])
 
   const effectiveEstablishingCount = regenerate
     ? stats.total
     : stats.scenesNeedingImage
   const effectiveDialogueFrameCount = useMemo(() => {
     if (regenerate) {
-      return scenes.reduce((sum, scene) => sum + countStoryboardFrameStats(scene).total, 0)
+      return scenes.reduce(
+        (sum, scene) =>
+          sum +
+          countExpressFrameScope(scene, { includeEndFrames, regenerate: true }),
+        0
+      )
     }
-    return scenes.reduce((sum, scene) => sum + countStoryboardFramesNeedingGeneration(scene), 0)
-  }, [regenerate, scenes])
+    return scenes.reduce(
+      (sum, scene) => sum + countExpressFrameScope(scene, { includeEndFrames }),
+      0
+    )
+  }, [regenerate, scenes, includeEndFrames])
   const effectiveAudioScenes = regenerate ? stats.total : stats.scenesNeedingAudio
   const effectiveDirectionScenes = regenerate
     ? stats.total
@@ -313,11 +325,38 @@ export function ExpressConfirmDialog({
               </label>
             </div>
 
+            <div className="flex items-start space-x-3 p-3 bg-gray-800 rounded-lg">
+              <Checkbox
+                id="express-missing-frames"
+                checked={missingFramesOnly}
+                onCheckedChange={(checked) => {
+                  const next = !!checked
+                  setMissingFramesOnly(next)
+                  if (next) setRegenerate(false)
+                }}
+                disabled={isRunning}
+              />
+              <label
+                htmlFor="express-missing-frames"
+                className="flex-1 text-sm text-gray-200 cursor-pointer"
+              >
+                <div className="font-medium">Only missing frames</div>
+                <div className="text-xs text-gray-400">
+                  Skip frames that already have images. Useful when start frames are done and you
+                  only need end frames (enable Include end frames).
+                </div>
+              </label>
+            </div>
+
             <div className="flex items-start space-x-3 p-3 bg-amber-900/20 border border-amber-600/30 rounded-lg">
               <Checkbox
                 id="express-regenerate"
                 checked={regenerate}
-                onCheckedChange={(checked) => setRegenerate(!!checked)}
+                onCheckedChange={(checked) => {
+                  const next = !!checked
+                  setRegenerate(next)
+                  if (next) setMissingFramesOnly(false)
+                }}
                 disabled={isRunning}
               />
               <label
@@ -403,6 +442,7 @@ export function ExpressConfirmDialog({
                 artStyle,
                 storyboardQuality: 'draft',
                 includeEndFrames,
+                missingFramesOnly,
               })
             }
             disabled={isRunning || nothingToRun}

@@ -77,6 +77,8 @@ export interface BeatFrameGenerationContext {
   storyboardQuality?: StoryboardQuality
   finalizeOnly?: boolean
   regenerate?: boolean
+  /** When true, only fill slots with no stored image URL. */
+  missingOnly?: boolean
 }
 
 /** Whether a beat frame should be generated for the current Express pass. */
@@ -88,6 +90,10 @@ export function beatFrameNeedsGeneration(
   const effectiveTier = resolveEffectiveStoryboardTier(beat.storyboardImageTier)
   const targetQuality = ctx.storyboardQuality ?? 'draft'
 
+  if (ctx.missingOnly) {
+    return !url
+  }
+
   if (ctx.regenerate) return true
 
   if (ctx.finalizeOnly) {
@@ -96,6 +102,36 @@ export function beatFrameNeedsGeneration(
   }
 
   if (!url) return true
+  return effectiveTier !== targetQuality
+}
+
+/** Whether a beat end frame should be generated for the current Express pass. */
+export function beatEndFrameNeedsGeneration(
+  beat: Pick<
+    SceneBeat,
+    'storyboardImageUrl' | 'storyboardEndImageUrl' | 'storyboardEndImageTier'
+  >,
+  ctx: BeatFrameGenerationContext
+): boolean {
+  const startUrl = beat.storyboardImageUrl?.trim()
+  if (!startUrl) return false
+
+  const endUrl = beat.storyboardEndImageUrl?.trim()
+  const effectiveTier = resolveEffectiveStoryboardTier(beat.storyboardEndImageTier)
+  const targetQuality = ctx.storyboardQuality ?? 'draft'
+
+  if (ctx.missingOnly) {
+    return !endUrl
+  }
+
+  if (ctx.regenerate) return true
+
+  if (ctx.finalizeOnly) {
+    if (!endUrl) return true
+    return effectiveTier !== 'final'
+  }
+
+  if (!endUrl) return true
   return effectiveTier !== targetQuality
 }
 

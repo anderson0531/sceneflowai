@@ -23,7 +23,7 @@ const NARRATION_CLIP_BUFFER_SEC = 0.5
 const DIALOGUE_CLIP_BUFFER_SEC = 0.3
 const DEFAULT_CLIP_DURATION_SEC = 3
 /** Fade-to-black duration between scenes in playback and animatic export. */
-export const SCENE_FADE_TO_BLACK_SEC = 2
+export const SCENE_FADE_TO_BLACK_SEC = 1
 /** Silent establishing/action beat hold when no durationSeconds is stored. */
 const DEFAULT_ACTION_BEAT_DURATION_SEC = 4
 
@@ -449,6 +449,21 @@ export function countStoryboardFramesNeedingGeneration(
   scene: Record<string, unknown>
 ): number {
   return enumerateStoryboardFrameSlots(scene).filter((s) => !s.ownImageUrl).length
+}
+
+/** Express scope: count start slots, and end slots when includeEndFrames is on. */
+export function countExpressFrameScope(
+  scene: Record<string, unknown>,
+  options: { includeEndFrames?: boolean; regenerate?: boolean } = {}
+): number {
+  const slots = enumerateStoryboardFrameSlots(scene).filter((s) => {
+    if (s.frameRole === 'end' && !options.includeEndFrames) return false
+    return true
+  })
+  if (options.regenerate) {
+    return slots.length
+  }
+  return slots.filter((s) => !s.ownImageUrl).length
 }
 
 /** Frames with no image at all (not even a borrowed placeholder). */

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   resolveStoryboardGeneration,
   beatFrameNeedsGeneration,
+  beatEndFrameNeedsGeneration,
   collectDraftStoryboardFrameWarnings,
   resolveEffectiveStoryboardTier,
   getPhotorealisticPromptAnchor,
@@ -95,6 +96,51 @@ describe('storyboardQuality', () => {
     expect(anchor).toContain('natural skin texture and pores')
     expect(anchor).toContain('no anime')
     expect(getFinalPhotorealisticPromptAnchor('photorealistic')).toBe(anchor)
+  })
+
+  it('missingOnly skips beats that already have a start url', () => {
+    expect(
+      beatFrameNeedsGeneration(
+        {
+          storyboardImageUrl: 'https://example.com/a.jpg',
+          storyboardImageTier: 'draft',
+        },
+        { missingOnly: true, storyboardQuality: 'final' }
+      )
+    ).toBe(false)
+  })
+
+  it('missingOnly still generates beats without a start url', () => {
+    expect(
+      beatFrameNeedsGeneration(
+        { storyboardImageUrl: '', storyboardImageTier: 'draft' },
+        { missingOnly: true, storyboardQuality: 'draft' }
+      )
+    ).toBe(true)
+  })
+
+  it('end frame needs generation when start exists and end is missing', () => {
+    expect(
+      beatEndFrameNeedsGeneration(
+        {
+          storyboardImageUrl: 'https://example.com/start.jpg',
+          storyboardEndImageUrl: '',
+        },
+        { missingOnly: true }
+      )
+    ).toBe(true)
+  })
+
+  it('end frame skipped when start is missing', () => {
+    expect(
+      beatEndFrameNeedsGeneration(
+        {
+          storyboardImageUrl: '',
+          storyboardEndImageUrl: '',
+        },
+        { missingOnly: true }
+      )
+    ).toBe(false)
   })
 
   it('returns empty anchor for non-photorealistic art styles', () => {

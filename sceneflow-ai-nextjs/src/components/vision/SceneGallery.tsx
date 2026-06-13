@@ -48,6 +48,10 @@ export interface ExpressSceneStatus {
   image: ExpressPhaseStatus
   /** Optional human-readable error from the most recent failed phase. */
   error?: string
+  /** True when one or more phases failed due to rate limiting after retries. */
+  rateLimited?: boolean
+  /** Per-phase rate-limit flags for clearer highlighting. */
+  rateLimitedPhases?: Partial<Record<ExpressPhase, boolean>>
 }
 
 export type ExpressSceneStatusMap = Record<number, ExpressSceneStatus>

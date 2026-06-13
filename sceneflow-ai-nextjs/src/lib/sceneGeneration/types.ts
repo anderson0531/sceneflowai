@@ -42,6 +42,12 @@ export interface ExpressOptions {
   finalizeOnly?: boolean
   /** When true, Express also generates an end frame per beat (for FTV motion). Default false. */
   includeEndFrames?: boolean
+  /**
+   * When true, only generate frames that have no stored image URL — never
+   * re-tier or regenerate existing start/end frames. Mutually exclusive with
+   * `regenerate`.
+   */
+  missingFramesOnly?: boolean
 }
 
 export interface SceneDirectionResult {
@@ -82,11 +88,20 @@ export interface SceneAudioCounts {
   sfx: number
 }
 
+export interface SceneAudioFailure {
+  audioType: 'narration' | 'dialogue'
+  dialogueIndex?: number
+  error: string
+  rateLimited: boolean
+}
+
 export interface SceneAudioResult {
   /** Flat list of generated audio assets to merge back into the scene. */
   assets: SceneAudioAsset[]
   /** Count of each audio type generated. */
   counts: SceneAudioCounts
+  /** Per-line failures that did not abort the whole scene. */
+  failures?: SceneAudioFailure[]
 }
 
 export interface SceneImageResult {
@@ -118,9 +133,21 @@ export interface ExpressPhaseEvent {
   gcsPath?: string | null
   /** Whether this phase was skipped because output already existed. */
   skipped?: boolean
+  /** True when the failure was due to rate limiting after retries were exhausted. */
+  rateLimited?: boolean
 }
 
 export type ExpressThrottleLane = 'text' | 'image' | 'audio'
+
+export interface ExpressRateLimitedFailure {
+  sceneIndex: number
+  sceneNumber: number
+  phase: 'image' | 'audio'
+  beatIndex?: number
+  dialogueIndex?: number
+  frameRole?: 'start' | 'end'
+  error?: string
+}
 
 export type ExpressEvent =
   | { type: 'start'; sceneCount: number }
@@ -135,7 +162,18 @@ export type ExpressEvent =
       max: number
       cooldownMs?: number
     }
-  | { type: 'complete'; successScenes: number; failedScenes: number }
+  | {
+      type: 'regulator'
+      engaged: boolean
+      reason?: string
+      lanes: Record<ExpressThrottleLane, { max: number; inFlight: number }>
+    }
+  | {
+      type: 'complete'
+      successScenes: number
+      failedScenes: number
+      rateLimitedFailures?: ExpressRateLimitedFailure[]
+    }
   | { type: 'error'; error: string }
 
 export interface ExpressPerSceneSummary {

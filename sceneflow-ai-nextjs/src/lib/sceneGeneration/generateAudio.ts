@@ -18,7 +18,17 @@ import {
   NARRATOR_CHARACTER_ID,
 } from '../../lib/script/segmentTypes'
 import { getBatchNarrationTtsText, sceneHasNarratorInDialogue } from '../../lib/script/narration'
-import type { SceneAudioAsset, SceneAudioCounts, SceneAudioResult } from './types'
+import { processWithConcurrency } from '../utils/concurrent-processor'
+import { isRetryableError } from '../utils/retry'
+import type { ExpressTrafficCop } from './expressTrafficCop'
+import type { SceneAudioAsset, SceneAudioCounts, SceneAudioFailure, SceneAudioResult } from './types'
+
+const DIALOGUE_AUDIO_CONCURRENCY = 3
+
+function isRateLimitFailure(error: unknown, status?: number): boolean {
+  if (status === 429) return true
+  return isRetryableError(error, status)
+}
 
 export interface GenerateSceneAudioParams {
   projectId: string
@@ -40,6 +50,8 @@ export interface GenerateSceneAudioParams {
   authCookie?: string
   /** Scene Express: overlap narration + dialogue generation. */
   parallelMode?: boolean
+  /** When set, each TTS request acquires an audio lane slot. */
+  trafficCop?: ExpressTrafficCop
 }
 
 function findParentSegmentDurationSeconds(
@@ -183,9 +195,11 @@ export async function generateSceneAudio(
     baseUrl,
     authCookie,
     parallelMode = false,
+    trafficCop,
   } = params
 
   const assets: SceneAudioAsset[] = []
+  const failures: SceneAudioFailure[] = []
   const counts: SceneAudioCounts = {
     narration: 0,
     dialogue: 0,
@@ -216,20 +230,25 @@ export async function generateSceneAudio(
       const optimized = optimizeTextForTTS(narrationText)
 
       try {
-        const res = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            projectId,
-            sceneIndex,
-            audioType: 'narration',
-            text: optimized.text,
-            voiceConfig: narrationVoice,
-            language,
-            skipTranslation: !!storedNarration?.trim(),
-            skipDbUpdate: true,
-          }),
-        })
+        const fetchNarration = () =>
+          fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              projectId,
+              sceneIndex,
+              audioType: 'narration',
+              text: optimized.text,
+              voiceConfig: narrationVoice,
+              language,
+              skipTranslation: !!storedNarration?.trim(),
+              skipDbUpdate: true,
+            }),
+          })
+
+        const res = trafficCop
+          ? await trafficCop.runInLane('audio', fetchNarration)
+          : await fetchNarration()
         const data = await res.json().catch(() => null as any)
         if (data?.success && data.audioUrl) {
           assets.push({
@@ -240,11 +259,24 @@ export async function generateSceneAudio(
             voiceProvider: narrationVoice?.provider ?? null,
           })
           counts.narration += 1
+        } else if (!res.ok) {
+          const error = data?.error || `HTTP ${res.status}`
+          failures.push({
+            audioType: 'narration',
+            error,
+            rateLimited: isRateLimitFailure(error, res.status),
+          })
         }
       } catch (error: any) {
+        const errorMsg = error?.message || String(error)
+        failures.push({
+          audioType: 'narration',
+          error: errorMsg,
+          rateLimited: isRateLimitFailure(error),
+        })
         console.error(
           `[generateSceneAudio] Narration failed for scene ${sceneIndex + 1}:`,
-          error?.message || String(error)
+          errorMsg
         )
       }
     }
@@ -261,8 +293,9 @@ export async function generateSceneAudio(
   //    narrator audio in non-English languages never gets generated and the
   //    player falls back to English narration.
   if (Array.isArray(scene?.dialogue) && scene.dialogue.length > 0) {
-    const dialogueTasks = scene.dialogue.map(
-      async (dialogueLine: any, dialogueIndex: number) => {
+    const dialogueTasks = scene.dialogue.map((dialogueLine: any, dialogueIndex: number) => ({
+      id: dialogueIndex,
+      execute: async () => {
         const lineKind: 'narration' | 'dialogue' =
           dialogueLine?.kind === 'narration' ? 'narration' : 'dialogue'
         const isNarratorLine =
@@ -320,27 +353,32 @@ export async function generateSceneAudio(
           (character as { attributes?: { gender?: string } } | undefined)?.attributes?.gender
 
         try {
-          const res = await fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-              projectId,
-              sceneIndex,
-              audioType: 'dialogue',
-              text: optimized.text,
-              voiceConfig: resolvedVoice,
-              characterName: resolvedName,
-              characterId: resolvedCharacterId,
-              dialogueIndex,
-              lineId: dialogueLine.lineId,
-              lineKind,
-              language,
-              edgeVoiceConfig,
-              characterGender,
-              skipTranslation: !!storedDialogueLine,
-              skipDbUpdate: true,
-            }),
-          })
+          const fetchDialogue = () =>
+            fetch(`${baseUrl}/api/vision/generate-scene-audio`, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                projectId,
+                sceneIndex,
+                audioType: 'dialogue',
+                text: optimized.text,
+                voiceConfig: resolvedVoice,
+                characterName: resolvedName,
+                characterId: resolvedCharacterId,
+                dialogueIndex,
+                lineId: dialogueLine.lineId,
+                lineKind,
+                language,
+                edgeVoiceConfig,
+                characterGender,
+                skipTranslation: !!storedDialogueLine,
+                skipDbUpdate: true,
+              }),
+            })
+
+          const res = trafficCop
+            ? await trafficCop.runInLane('audio', fetchDialogue)
+            : await fetchDialogue()
           const data = await res.json().catch(() => null as any)
           if (data?.success && data.audioUrl) {
             return {
@@ -355,34 +393,56 @@ export async function generateSceneAudio(
               voiceProvider: resolvedVoice.provider ?? null,
             }
           }
+
+          const error = data?.error || `HTTP ${res.status}`
+          failures.push({
+            audioType: 'dialogue',
+            dialogueIndex,
+            error,
+            rateLimited: isRateLimitFailure(error, res.status),
+          })
         } catch (error: any) {
+          const errorMsg = error?.message || String(error)
+          failures.push({
+            audioType: 'dialogue',
+            dialogueIndex,
+            error: errorMsg,
+            rateLimited: isRateLimitFailure(error),
+          })
           console.error(
             `[generateSceneAudio] Dialogue failed for scene ${sceneIndex + 1} line ${dialogueIndex}:`,
-            error?.message || String(error)
+            errorMsg
           )
         }
         return null
-      }
+      },
+    }))
+
+    const dialogueResults = await processWithConcurrency(
+      dialogueTasks,
+      DIALOGUE_AUDIO_CONCURRENCY,
+      undefined,
+      false
     )
-    const dialogueResults = await Promise.all(dialogueTasks)
     for (const r of dialogueResults) {
-      if (!r) continue
+      if (r.status !== 'fulfilled' || !r.value) continue
+      const dialogueResult = r.value
       assets.push({
         audioType: 'dialogue',
-        dialogueIndex: r.dialogueIndex,
-        lineId: r.lineId,
-        kind: r.kind,
-        characterId: r.characterId,
-        character: r.character,
-        audioUrl: r.audioUrl,
-        durationSeconds: r.durationSeconds,
-        voiceId: r.voiceId,
-        voiceProvider: r.voiceProvider,
+        dialogueIndex: dialogueResult.dialogueIndex,
+        lineId: dialogueResult.lineId,
+        kind: dialogueResult.kind,
+        characterId: dialogueResult.characterId,
+        character: dialogueResult.character,
+        audioUrl: dialogueResult.audioUrl,
+        durationSeconds: dialogueResult.durationSeconds,
+        voiceId: dialogueResult.voiceId,
+        voiceProvider: dialogueResult.voiceProvider,
       })
       // Count narrator-as-dialogue lines as narration so the SSE counts
       // accurately reflect how many narration lines were generated, while
       // still storing them in the dialogueAudio array.
-      if (r.kind === 'narration') counts.narration += 1
+      if (dialogueResult.kind === 'narration') counts.narration += 1
       else counts.dialogue += 1
     }
   }
@@ -432,7 +492,7 @@ export async function generateSceneAudio(
     }
   }
 
-  return { assets, counts }
+  return { assets, counts, failures: failures.length > 0 ? failures : undefined }
 }
 
 /**

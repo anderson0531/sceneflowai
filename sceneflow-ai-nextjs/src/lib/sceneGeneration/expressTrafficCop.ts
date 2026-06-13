@@ -3,6 +3,7 @@
  *
  * Caps concurrent Vertex/TTS work across all scenes in a single `runExpress`
  * invocation. On 429 bursts, halves lane capacity and applies a short cooldown.
+ * When significant 429s occur, enters a regulated state with tighter global caps.
  */
 
 import { isRetryableError } from '../utils/retry'
@@ -18,8 +19,15 @@ export interface ExpressLaneSnapshot {
 
 export interface ExpressTrafficCopOptions {
   onThrottle?: (lane: ExpressLane, max: number, cooldownMs: number) => void
+  onRegulator?: (
+    engaged: boolean,
+    lanes: Record<ExpressLane, { max: number; inFlight: number }>,
+    reason?: string
+  ) => void
   laneMax?: Partial<Record<ExpressLane, number>>
   cooldownMs?: number
+  /** 429 count within the run that triggers regulated mode. */
+  rateLimitThreshold?: number
 }
 
 const EXPRESS_LANES: ExpressLane[] = ['text', 'image', 'audio']
@@ -48,26 +56,51 @@ function defaultLaneMax(lane: ExpressLane, overrides?: Partial<Record<ExpressLan
 interface LaneState {
   inFlight: number
   max: number
+  initialMax: number
   cooldownUntil: number | null
 }
 
 export class ExpressTrafficCop {
   private readonly lanes: Record<ExpressLane, LaneState>
   private readonly cooldownMs: number
+  private readonly regulatedCooldownMs: number
   private readonly onThrottle?: ExpressTrafficCopOptions['onThrottle']
+  private readonly onRegulator?: ExpressTrafficCopOptions['onRegulator']
   private readonly waiters: Record<ExpressLane, Array<() => void>>
+  private readonly rateLimitThreshold: number
+  private rateLimitCount = 0
+  private regulated = false
+  private lastRateLimitAt = 0
 
   constructor(options: ExpressTrafficCopOptions = {}) {
     this.cooldownMs = options.cooldownMs ?? parsePositiveInt(
       process.env.EXPRESS_RATE_LIMIT_COOLDOWN_MS,
       10_000
     )
+    this.regulatedCooldownMs = Math.max(this.cooldownMs, 20_000)
     this.onThrottle = options.onThrottle
+    this.onRegulator = options.onRegulator
+    this.rateLimitThreshold = options.rateLimitThreshold ?? 3
     this.waiters = { text: [], image: [], audio: [] }
     this.lanes = {
-      text: { inFlight: 0, max: defaultLaneMax('text', options.laneMax), cooldownUntil: null },
-      image: { inFlight: 0, max: defaultLaneMax('image', options.laneMax), cooldownUntil: null },
-      audio: { inFlight: 0, max: defaultLaneMax('audio', options.laneMax), cooldownUntil: null },
+      text: {
+        inFlight: 0,
+        max: defaultLaneMax('text', options.laneMax),
+        initialMax: defaultLaneMax('text', options.laneMax),
+        cooldownUntil: null,
+      },
+      image: {
+        inFlight: 0,
+        max: defaultLaneMax('image', options.laneMax),
+        initialMax: defaultLaneMax('image', options.laneMax),
+        cooldownUntil: null,
+      },
+      audio: {
+        inFlight: 0,
+        max: defaultLaneMax('audio', options.laneMax),
+        initialMax: defaultLaneMax('audio', options.laneMax),
+        cooldownUntil: null,
+      },
     }
   }
 
@@ -86,13 +119,58 @@ export class ExpressTrafficCop {
   }
 
   reportRateLimit(lane: ExpressLane): void {
+    this.rateLimitCount += 1
+    this.lastRateLimitAt = Date.now()
+
     const state = this.lanes[lane]
     state.max = Math.max(1, Math.floor(state.max / 2))
-    state.cooldownUntil = Date.now() + this.cooldownMs
+    state.cooldownUntil = Date.now() + (this.regulated ? this.regulatedCooldownMs : this.cooldownMs)
     console.warn(
-      `[ExpressTrafficCop] ${lane} throttled to max=${state.max}, cooldown ${this.cooldownMs}ms`
+      `[ExpressTrafficCop] ${lane} throttled to max=${state.max}, cooldown ${this.regulated ? this.regulatedCooldownMs : this.cooldownMs}ms (429 count=${this.rateLimitCount})`
     )
-    this.onThrottle?.(lane, state.max, this.cooldownMs)
+    this.onThrottle?.(lane, state.max, this.regulated ? this.regulatedCooldownMs : this.cooldownMs)
+
+    if (!this.regulated && this.rateLimitCount >= this.rateLimitThreshold) {
+      this.engageRegulator('significant 429 burst')
+    }
+  }
+
+  private engageRegulator(reason: string): void {
+    if (this.regulated) return
+    this.regulated = true
+    for (const lane of EXPRESS_LANES) {
+      const state = this.lanes[lane]
+      state.max = Math.max(1, Math.min(state.max, 2))
+      state.cooldownUntil = Date.now() + this.regulatedCooldownMs
+    }
+    console.warn(`[ExpressTrafficCop] Regulator engaged: ${reason}`)
+    this.emitRegulator(reason)
+  }
+
+  private tryRecoverRegulator(): void {
+    if (!this.regulated) return
+    const quietMs = Date.now() - this.lastRateLimitAt
+    if (quietMs < this.regulatedCooldownMs) return
+
+    this.regulated = false
+    for (const lane of EXPRESS_LANES) {
+      const state = this.lanes[lane]
+      state.max = Math.max(1, Math.floor(state.initialMax / 2))
+    }
+    console.info('[ExpressTrafficCop] Regulator disengaged after quiet period')
+    this.emitRegulator('quiet period')
+  }
+
+  private emitRegulator(reason?: string): void {
+    if (!this.onRegulator) return
+    const lanes = {} as Record<ExpressLane, { max: number; inFlight: number }>
+    for (const lane of EXPRESS_LANES) {
+      lanes[lane] = {
+        max: this.lanes[lane].max,
+        inFlight: this.lanes[lane].inFlight,
+      }
+    }
+    this.onRegulator(this.regulated, lanes, reason)
   }
 
   getSnapshot(): Record<ExpressLane, ExpressLaneSnapshot> {
@@ -108,8 +186,17 @@ export class ExpressTrafficCop {
     return out
   }
 
+  isRegulated(): boolean {
+    return this.regulated
+  }
+
+  getRateLimitCount(): number {
+    return this.rateLimitCount
+  }
+
   private async acquire(lane: ExpressLane): Promise<void> {
     while (true) {
+      this.tryRecoverRegulator()
       const state = this.lanes[lane]
       const now = Date.now()
 

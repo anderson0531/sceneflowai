@@ -20,6 +20,7 @@ interface ExpressRequest {
   artStyle?: string
   includeMusic?: boolean
   includeEndFrames?: boolean
+  missingFramesOnly?: boolean
   includeSFX?: boolean
   regenerate?: boolean
   imageQuality?: string
@@ -141,6 +142,7 @@ export async function POST(req: NextRequest) {
     includeMusic = false,
     includeSFX = false,
     includeEndFrames = false,
+    missingFramesOnly = false,
     regenerate = false,
     imageQuality,
     storyboardQuality,
@@ -191,6 +193,7 @@ export async function POST(req: NextRequest) {
     includeMusic,
     includeSFX,
     includeEndFrames: !!includeEndFrames,
+    missingFramesOnly: !!missingFramesOnly,
     regenerate,
     imageQuality,
     storyboardQuality,
