@@ -72,6 +72,7 @@ const ScriptPanel = dynamic(
 )
 import { SceneProgressDashboard, type SceneProgressItem } from '@/components/vision/SceneProgressDashboard'
 import { ProductionOnboarding } from '@/components/vision/ProductionOnboarding'
+import { VisionLoadingOverlay } from '@/components/vision/VisionLoadingOverlay'
 import { useSceneProgressItems } from '@/hooks/vision/useSceneProgressItems'
 import {
   evaluateProductionReadyChecklist,
@@ -102,7 +103,7 @@ import { Button, buttonVariants } from '@/components/ui/Button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, PanelRightClose, PanelRight } from 'lucide-react'
+import { Share2, ArrowRight, ArrowLeft, Play, Volume2, Image as ImageIcon, Copy, Check, X, Settings, Info, Users, ChevronDown, ChevronUp, ChevronRight, Eye, Sparkles, BarChart3, Save, Home, FolderOpen, Key, CreditCard, User, Bookmark, FileText, Coins, ExternalLink, CheckCircle2, Circle, Music, Video, PanelRightClose, PanelRight, Loader2 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
 import { resolveProjectArtStyle, resolveProjectAspectRatio } from '@/lib/vision/artStyle'
 import {
@@ -529,6 +530,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   const [isHydratingImages, setIsHydratingImages] = useState(false)
   const hydrationAttemptedRef = useRef(false)
   const pendingPersistAfterHydrationRef = useRef(false)
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false)
   // Debounce ref for audio clip persistence
   const audioClipPersistDebounceRef = useRef<NodeJS.Timeout | null>(null)
   
@@ -6096,6 +6098,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   }, [showSceneGallery])
 
   const loadProject = async (skipAutoGeneration: boolean = false) => {
+    setInitialLoadComplete(false)
     try {
       // Phase 1: lite mode strips base64 images for fast first paint
       const cacheBuster = `_t=${Date.now()}`
@@ -6142,25 +6145,35 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         if (skipLitePersist) pendingPersistAfterHydrationRef.current = true
       }
 
+      const queuePersist = (body: Record<string, any>, label: string) => {
+        if (skipLitePersist) {
+          markDeferredPersist()
+          return
+        }
+        void serializedProjectSave(body, label).catch((error) => {
+          console.warn(`[Load Project] Background save failed (${label}):`, error)
+        })
+      }
+
       setProject(proj)
       // Keep global store in sync so Final Cut / sidebar links that rely on `currentProject` work
       useStore.getState().setCurrentProject(proj)
       
-      // Fetch series info if project belongs to a series
+      // Fetch series info in background (non-blocking)
       if (proj.series_id) {
-        try {
-          const seriesRes = await fetch(`/api/series/${proj.series_id}`)
-          if (seriesRes.ok) {
+        void fetch(`/api/series/${proj.series_id}`)
+          .then(async (seriesRes) => {
+            if (!seriesRes.ok) return
             const seriesData = await seriesRes.json()
             setSeriesInfo({
               seriesTitle: seriesData.series?.title || seriesData.title || 'Untitled Series',
               episodeNumber: proj.episode_number || 1,
               seriesBibleVersion: seriesData.series?.production_bible?.version,
             })
-          }
-        } catch (seriesError) {
-          console.error('[Load Series] Failed to load series info:', seriesError)
-        }
+          })
+          .catch((seriesError) => {
+            console.error('[Load Series] Failed to load series info:', seriesError)
+          })
       } else {
         setSeriesInfo(null)
       }
@@ -6236,18 +6249,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                 migratedSceneCount: beatMigration.migratedSceneCount,
               })
             }
-            try {
-              if (skipLitePersist) {
-                markDeferredPersist()
-              } else {
-                await serializedProjectSave(
-                  { metadata: finalMetadata },
-                  'loadProject-migration'
-                )
-              }
-            } catch (error) {
-              console.warn('[loadProject] Failed to save script migrations:', error)
-            }
+            queuePersist({ metadata: finalMetadata }, 'loadProject-migration')
           }
           
           setScript(sanitizeScriptDialogueLines(finalScript))
@@ -6322,28 +6324,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               hasScript: !!visionPhase.script,
               sceneCount: visionPhase.script?.script?.scenes?.length || 0
             })
-            if (skipLitePersist) {
-              markDeferredPersist()
-            } else {
-              try {
-                await fetch(`/api/projects/${projectId}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    metadata: {
-                      ...proj.metadata,
-                      visionPhase: {
-                        ...visionPhase,
-                        characters: charactersWithRole
-                        // Note: script is preserved via ...visionPhase spread
-                      }
-                    }
-                  })
-                })
-              } catch (error) {
-                console.warn('[Load Project] Failed to save voice configs:', error)
-              }
-            }
+            queuePersist(
+              {
+                metadata: {
+                  ...proj.metadata,
+                  visionPhase: {
+                    ...visionPhase,
+                    characters: charactersWithRole,
+                  },
+                },
+              },
+              'loadProject-voiceConfigFix'
+            )
           }
 
           // MIGRATION: Ensure all characters have UUIDs
@@ -6362,28 +6354,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
               hasScript: !!visionPhase.script,
               sceneCount: visionPhase.script?.script?.scenes?.length || 0
             })
-            if (skipLitePersist) {
-              markDeferredPersist()
-            } else {
-              try {
-                await fetch(`/api/projects/${projectId}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    metadata: {
-                      ...proj.metadata,
-                      visionPhase: {
-                        ...visionPhase,
-                        characters: charactersWithIds
-                        // Note: script is preserved via ...visionPhase spread
-                      }
-                    }
-                  })
-                })
-              } catch (error) {
-                console.warn('[Load Project] Failed to save character IDs:', error)
-              }
-            }
+            queuePersist(
+              {
+                metadata: {
+                  ...proj.metadata,
+                  visionPhase: {
+                    ...visionPhase,
+                    characters: charactersWithIds,
+                  },
+                },
+              },
+              'loadProject-characterIdMigration'
+            )
           }
 
           // MIGRATION: Deduplicate wardrobes within each character
@@ -6438,27 +6420,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           
           if (needsWardrobeDedup) {
             console.log('[Load Project] Saving wardrobe deduplication')
-            if (skipLitePersist) {
-              markDeferredPersist()
-            } else {
-              try {
-                await fetch(`/api/projects/${projectId}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    metadata: {
-                      ...proj.metadata,
-                      visionPhase: {
-                        ...visionPhase,
-                        characters: charactersWithIds
-                      }
-                    }
-                  })
-                })
-              } catch (error) {
-                console.warn('[Load Project] Failed to save wardrobe dedup:', error)
-              }
-            }
+            queuePersist(
+              {
+                metadata: {
+                  ...proj.metadata,
+                  visionPhase: {
+                    ...visionPhase,
+                    characters: charactersWithIds,
+                  },
+                },
+              },
+              'loadProject-wardrobeDedup'
+            )
           }
 
           // Ensure narrator character exists so voice can be configured independently
@@ -6480,27 +6453,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             
                         // Save to visionPhase.narrationVoice for backward compatibility
             if (!visionPhase.narrationVoice || visionPhase.narrationVoice.voiceId !== narratorChar.voiceConfig.voiceId) {
-              if (skipLitePersist) {
-                markDeferredPersist()
-              } else {
-                try {
-                  await fetch(`/api/projects/${projectId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      metadata: {
-                        ...proj.metadata,
-                        visionPhase: {
-                          ...visionPhase,
-                          narrationVoice: narratorChar.voiceConfig
-                        }
-                      }
-                    })
-                  })
-                } catch (error) {
-                  console.warn('[Load Project] Failed to sync narration voice:', error)
-                }
-              }
+              queuePersist(
+                {
+                  metadata: {
+                    ...proj.metadata,
+                    visionPhase: {
+                      ...visionPhase,
+                      narrationVoice: narratorChar.voiceConfig,
+                    },
+                  },
+                },
+                'loadProject-narrationVoiceSync'
+              )
             }
           }
 
@@ -6511,27 +6475,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             setDescriptionVoice(finalDescriptionVoice)
 
             if (!visionPhase.descriptionVoice || visionPhase.descriptionVoice.voiceId !== descriptionChar.voiceConfig.voiceId) {
-              if (skipLitePersist) {
-                markDeferredPersist()
-              } else {
-                try {
-                  await fetch(`/api/projects/${projectId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      metadata: {
-                        ...proj.metadata,
-                        visionPhase: {
-                          ...visionPhase,
-                          descriptionVoice: descriptionChar.voiceConfig
-                        }
-                      }
-                    })
-                  })
-                } catch (error) {
-                  console.warn('[Load Project] Failed to sync description voice:', error)
-                }
-              }
+              queuePersist(
+                {
+                  metadata: {
+                    ...proj.metadata,
+                    visionPhase: {
+                      ...visionPhase,
+                      descriptionVoice: descriptionChar.voiceConfig,
+                    },
+                  },
+                },
+                'loadProject-descriptionVoiceSync'
+              )
             }
           }
         }
@@ -6608,69 +6563,42 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             )
 
           if (needsScenePersist) {
-            if (skipLitePersist) {
-              markDeferredPersist()
-              if (loadedScript) {
-                const nextScript = {
+            const nextScript = loadedScript
+              ? {
                   ...loadedScript,
                   script: {
                     ...loadedScript.script,
                     scenes: finalScenes,
                   },
                 }
-                loadedScript = nextScript
-                setScript(sanitizeScriptDialogueLines(nextScript))
-              }
-              setScenes(finalScenes)
-            } else {
-              try {
-                const nextScript = loadedScript
-                  ? {
-                      ...loadedScript,
-                      script: {
-                        ...loadedScript.script,
-                        scenes: finalScenes,
-                      },
-                    }
-                  : loadedScript
+              : loadedScript
 
-                await serializedProjectSave(
-                  {
-                    metadata: {
-                      ...proj.metadata,
-                      visionPhase: {
-                        ...visionPhase,
-                        scenes: finalScenes,
-                        script: nextScript,
-                      },
-                    },
-                  },
-                  'loadProject-mediaRepair'
-                )
-
-                if (nextScript) {
-                  loadedScript = nextScript
-                  setScript(sanitizeScriptDialogueLines(nextScript))
-                }
-
-                const syncedMetadata = {
-                  ...proj.metadata,
-                  visionPhase: {
-                    ...visionPhase,
-                    scenes: finalScenes,
-                    script: nextScript ?? loadedScript,
-                  },
-                }
-                const syncedProject = { ...proj, metadata: syncedMetadata }
-                projectRef.current = syncedProject
-                setProject(syncedProject)
-              } catch (error) {
-                console.warn('[Load Project] Failed to save scene audio/character/media fixes:', error)
-              }
+            if (nextScript) {
+              loadedScript = nextScript
+              setScript(sanitizeScriptDialogueLines(nextScript))
             }
-          }
+            setScenes(finalScenes)
 
-          setScenes(finalScenes)
+            const syncedMetadata = {
+              ...proj.metadata,
+              visionPhase: {
+                ...visionPhase,
+                scenes: finalScenes,
+                script: nextScript ?? loadedScript,
+              },
+            }
+            const syncedProject = { ...proj, metadata: syncedMetadata }
+            projectRef.current = syncedProject
+
+            queuePersist(
+              {
+                metadata: syncedMetadata,
+              },
+              'loadProject-mediaRepair'
+            )
+          } else {
+            setScenes(finalScenes)
+          }
         }
         
         // Handle case where there are no characters but narrationVoice exists
@@ -6713,27 +6641,18 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             correctedNarrationVoice.provider !== visionPhase.narrationVoice.provider
 
           if (narrationNeedsSave) {
-            if (skipLitePersist) {
-              markDeferredPersist()
-            } else {
-              try {
-                await fetch(`/api/projects/${projectId}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    metadata: {
-                      ...proj.metadata,
-                      visionPhase: {
-                        ...visionPhase,
-                        narrationVoice: correctedNarrationVoice
-                      }
-                    }
-                  })
-                })
-              } catch (error) {
-                console.warn('[Load Project] Failed to save narration voice config:', error)
-              }
-            }
+            queuePersist(
+              {
+                metadata: {
+                  ...proj.metadata,
+                  visionPhase: {
+                    ...visionPhase,
+                    narrationVoice: correctedNarrationVoice,
+                  },
+                },
+              },
+              'loadProject-narrationVoiceConfig'
+            )
           }
           
           setNarrationVoice(correctedNarrationVoice)
@@ -6781,6 +6700,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       console.error('Error message:', error instanceof Error ? error.message : String(error))
       // Don't throw - just log and show user-friendly message
       try { const { toast } = require('sonner'); toast.error('Failed to reload project data') } catch {}
+    } finally {
+      setInitialLoadComplete(true)
     }
   }
 
@@ -12707,14 +12628,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     return 'anonymous'
   }
 
-  if (!mounted || !project) {
+  if (!mounted || !project || !initialLoadComplete) {
     return (
-      <div className="h-full min-h-0 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-sf-primary border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">{!mounted ? 'Initializing...' : 'Loading project...'}</p>
-        </div>
-      </div>
+      <VisionLoadingOverlay
+        visible
+        title={!mounted ? 'Initializing' : 'Opening Production'}
+      />
     )
   }
 
@@ -12728,6 +12647,16 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
   return (
     <div className="h-full min-h-0 flex flex-col bg-gray-50 dark:bg-sf-background overflow-hidden overflow-x-hidden max-w-full">
+      {isHydratingImages && (
+        <div
+          className="fixed bottom-4 right-4 z-[80] flex items-center gap-2 rounded-full border border-gray-700 bg-gray-950/90 px-3 py-2 text-xs text-gray-200 shadow-lg backdrop-blur-sm"
+          role="status"
+          aria-live="polite"
+        >
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400" />
+          Loading images...
+        </div>
+      )}
       
       {/* Workflow Navigation Header */}
       <header className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 shrink-0">
