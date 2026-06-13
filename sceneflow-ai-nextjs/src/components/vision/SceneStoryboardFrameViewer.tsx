@@ -580,10 +580,10 @@ export function SceneStoryboardFrameViewer({
                 </div>
               </div>
 
-              <div className="flex gap-3 h-[min(32vh,300px)] min-h-[220px]">
-                <div className="w-[7.5rem] sm:w-36 shrink-0 flex flex-col gap-2 overflow-y-auto overscroll-contain pr-1">
+              <div className="flex gap-3 items-stretch max-h-[min(50vh,480px)]">
+                <div className="w-[30%] shrink-0 self-stretch grid grid-cols-2 content-start gap-2 overflow-y-auto overscroll-contain pr-1 max-h-full">
                   {frameSlots.map((slot) => (
-                    <div key={slot.key} className="shrink-0 w-full">
+                    <div key={slot.key} className="w-full">
                       <SceneImageFrame
                         {...buildStoryboardSlotFrameProps(slot, slotHandlers)}
                         showControls={false}
@@ -596,15 +596,8 @@ export function SceneStoryboardFrameViewer({
                   ))}
                 </div>
 
-                <div className="flex-1 min-w-0 min-h-0 rounded-lg overflow-hidden bg-gray-800/50 border border-slate-700/40 flex flex-col">
-                  <div
-                    className={cn(
-                      'relative flex-1 min-h-0 overflow-hidden',
-                      '[&_.group]:flex [&_.group]:h-full [&_.group]:flex-col',
-                      '[&_.aspect-video]:min-h-0 [&_.aspect-video]:flex-1 [&_.aspect-video]:!aspect-auto',
-                      '[&_.aspect-video_img]:h-full [&_.aspect-video_img]:w-full [&_.aspect-video_img]:object-contain'
-                    )}
-                  >
+                <div className="flex-1 min-w-0 rounded-lg overflow-hidden bg-gray-800/50 border border-slate-700/40">
+                  <div className="relative overflow-hidden">
                     {previewSlot ? (
                       <SceneImageFrame
                         {...buildStoryboardSlotFrameProps(previewSlot, slotHandlers)}
@@ -616,7 +609,7 @@ export function SceneStoryboardFrameViewer({
                         expandable
                       />
                     ) : (
-                      <div className="h-full flex flex-col items-center justify-center">
+                      <div className="aspect-video flex flex-col items-center justify-center">
                         <Camera className="w-8 h-8 text-gray-600 mb-2" />
                         <span className="text-xs text-gray-500">No pre-vis frames</span>
                       </div>
