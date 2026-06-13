@@ -1110,11 +1110,30 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   
   // Load stored translations from project metadata
   const storedTranslations = useMemo(() => {
-    return (project?.metadata?.visionPhase?.translations || {}) as Record<string, Record<number, { narration?: string; dialogue?: string[] }>>
+    return (project?.metadata?.visionPhase?.translations || {}) as Record<
+      string,
+      Record<
+        number,
+        {
+          heading?: string
+          description?: string
+          action?: string
+          narration?: string
+          dialogue?: string[]
+        }
+      >
+    >
   }, [project?.metadata?.visionPhase?.translations])
+
+  const playerLabelsByLanguage = useMemo(() => {
+    return (project?.metadata?.visionPhase?.playerLabels || {}) as Record<
+      string,
+      Record<string, string>
+    >
+  }, [project?.metadata?.visionPhase?.playerLabels])
   
   // Save translations callback
-  const handleSaveTranslations = useCallback(async (langCode: string, translations: Record<number, { narration?: string; dialogue?: string[] }>) => {
+  const handleSaveTranslations = useCallback(async (langCode: string, translations: Record<number, { heading?: string; description?: string; action?: string; narration?: string; dialogue?: string[] }>) => {
     try {
       const existingMetadata = project?.metadata || {}
       const existingVisionPhase = existingMetadata.visionPhase || {}
@@ -11463,6 +11482,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             regenerate: !!options.regenerate,
             storyboardQuality: options.storyboardQuality ?? 'draft',
             finalizeOnly: !!options.finalizeOnly,
+            dialogueOnly: !!options.dialogueOnly,
             imageQuality,
           }),
         })
@@ -11649,6 +11669,20 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       }
     },
     [projectId, script, isExpressRunning, setShowSceneGallery, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage]
+  )
+
+  const handleGenerateLanguageStream = useCallback(
+    async (language: string) => {
+      await handleExpressGenerate({
+        includeMusic: false,
+        includeSFX: false,
+        regenerate: true,
+        language,
+        dialogueOnly: true,
+        storyboardQuality: 'draft',
+      })
+    },
+    [handleExpressGenerate]
   )
 
   const handleSyncPreVisToScript = useCallback(
@@ -13063,6 +13097,9 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                             onGenVideo={handleGenProjectVideo}
                             isGenVideoRunning={isGenVideoRunning}
                             exportedAnimaticUrl={exportedAnimaticUrl}
+                            sceneTranslationsByLanguage={storedTranslations}
+                            playerLabelsByLanguage={playerLabelsByLanguage}
+                            onGenerateLanguage={handleGenerateLanguageStream}
                           />
                         </div>
                       )}

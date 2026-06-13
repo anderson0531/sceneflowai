@@ -48,6 +48,8 @@ export interface ExpressOptions {
    * `regenerate`.
    */
   missingFramesOnly?: boolean
+  /** When true, skip direction/image; translate + dub dialogue/narration only. */
+  dialogueOnly?: boolean
 }
 
 export interface SceneDirectionResult {

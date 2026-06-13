@@ -12,6 +12,8 @@ import { toast } from 'sonner'
 import { AudioGalleryPlayer } from './AudioGalleryPlayer'
 import { Button } from '@/components/ui/Button'
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
+import { getLanguageName, FLAG_EMOJIS } from '@/constants/languages'
+import type { PlayerLabelMap, SceneTranslation } from '@/lib/storyboard/playerTranslations'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { ReportType, StoryboardData } from '@/lib/types/reports'
@@ -26,6 +28,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/Input'
 import { useStore } from '@/store/useStore'
@@ -85,6 +88,12 @@ interface SceneGalleryProps {
   onGenVideo?: (language: string) => void | Promise<void>
   isGenVideoRunning?: boolean
   exportedAnimaticUrl?: string | null
+  /** Per-language scene text translations for overlay display. */
+  sceneTranslationsByLanguage?: Record<string, Record<number, SceneTranslation>>
+  /** Per-language UI label maps (Action, Narrator, Scene, etc.). */
+  playerLabelsByLanguage?: Record<string, PlayerLabelMap>
+  /** Generate dialogue/narration for a new language stream (Express dialogue-only). */
+  onGenerateLanguage?: (language: string) => Promise<void> | void
 }
 
 export function SceneGallery({
@@ -104,6 +113,9 @@ export function SceneGallery({
   onGenVideo,
   isGenVideoRunning = false,
   exportedAnimaticUrl,
+  sceneTranslationsByLanguage,
+  playerLabelsByLanguage,
+  onGenerateLanguage,
 }: SceneGalleryProps) {
   const preVisBannerRef = React.useRef<HTMLDivElement>(null)
 
@@ -122,6 +134,9 @@ export function SceneGallery({
 
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('en')
+  const [pendingLanguage, setPendingLanguage] = useState<string | null>(null)
+  const [languageGenDialogOpen, setLanguageGenDialogOpen] = useState(false)
+  const [languageGenLoading, setLanguageGenLoading] = useState(false)
 
   const [expressDialogOpen, setExpressDialogOpen] = useState(false)
   const [expressStartedAt, setExpressStartedAt] = useState<number | null>(null)
@@ -184,6 +199,41 @@ export function SceneGallery({
     if (langs.size === 0) langs.add('en')
     return Array.from(langs).sort()
   }, [scenes])
+
+  const handleLanguageSelect = useCallback(
+    (lang: string) => {
+      if (lang === selectedLanguage) return
+      if (availableLanguages.includes(lang)) {
+        setSelectedLanguage(lang)
+        return
+      }
+      setPendingLanguage(lang)
+      setLanguageGenDialogOpen(true)
+    },
+    [availableLanguages, selectedLanguage]
+  )
+
+  const handleConfirmLanguageGeneration = useCallback(async () => {
+    if (!pendingLanguage || !onGenerateLanguage) {
+      setLanguageGenDialogOpen(false)
+      return
+    }
+    setLanguageGenLoading(true)
+    try {
+      await onGenerateLanguage(pendingLanguage)
+      setSelectedLanguage(pendingLanguage)
+      setLanguageGenDialogOpen(false)
+      setPendingLanguage(null)
+    } catch (err) {
+      console.error('[SceneGallery] Language generation failed:', err)
+      toast.error('Failed to generate dialogue for this language')
+    } finally {
+      setLanguageGenLoading(false)
+    }
+  }, [onGenerateLanguage, pendingLanguage])
+
+  const activeSceneTranslations = sceneTranslationsByLanguage?.[selectedLanguage]
+  const activePlayerLabels = playerLabelsByLanguage?.[selectedLanguage]
 
   const scenesNeedingExpress = useMemo(() => {
     return scenes.filter((scene) => {
@@ -484,13 +534,32 @@ export function SceneGallery({
               </span>
             </div>
           )}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap justify-end">
+            {availableLanguages.length > 0 && (
+              <div className="flex items-center gap-1 flex-wrap max-w-[280px]">
+                {availableLanguages.map((lang) => (
+                  <button
+                    key={lang}
+                    type="button"
+                    onClick={() => handleLanguageSelect(lang)}
+                    className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
+                      selectedLanguage === lang
+                        ? 'bg-indigo-600/30 border-indigo-400/60 text-indigo-100'
+                        : 'bg-white/5 border-white/10 text-gray-300 hover:border-white/25'
+                    }`}
+                    title={getLanguageName(lang)}
+                  >
+                    {FLAG_EMOJIS[lang] ?? lang.toUpperCase()} {lang.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <div>
                   <GroupedLanguageSelector
                     value={selectedLanguage}
-                    onValueChange={setSelectedLanguage}
+                    onValueChange={handleLanguageSelect}
                     size="xs"
                     intent="generate"
                   />
@@ -498,8 +567,8 @@ export function SceneGallery({
               </TooltipTrigger>
               <TooltipContent>
                 {availableLanguages.includes(selectedLanguage)
-                  ? `Switch storyboard playback language`
-                  : `No audio in this language yet — run Express to generate`}
+                  ? 'Switch storyboard playback language'
+                  : 'No audio in this language yet — generate dialogue stream'}
               </TooltipContent>
             </Tooltip>
             {!availableLanguages.includes(selectedLanguage) && (
@@ -561,8 +630,10 @@ export function SceneGallery({
           <AudioGalleryPlayer
             scenes={scenes}
             selectedLanguage={selectedLanguage}
-            onLanguageChange={setSelectedLanguage}
+            onLanguageChange={handleLanguageSelect}
             availableLanguages={availableLanguages}
+            sceneTranslations={activeSceneTranslations}
+            playerLabels={activePlayerLabels}
             onShare={handleShareStoryboard}
             onGenVideo={onGenVideo}
             isGenVideoRunning={isGenVideoRunning}
@@ -609,6 +680,45 @@ export function SceneGallery({
           onConfirm={handleExpressConfirm}
         />
       )}
+
+      <Dialog open={languageGenDialogOpen} onOpenChange={setLanguageGenDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Generate {pendingLanguage ? getLanguageName(pendingLanguage) : 'language'} stream</DialogTitle>
+            <DialogDescription>
+              Translate scene text and generate dialogue/narration audio for this language. Existing music and sound
+              effects will be reused.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setLanguageGenDialogOpen(false)
+                setPendingLanguage(null)
+              }}
+              disabled={languageGenLoading || isExpressRunning}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmLanguageGeneration}
+              disabled={languageGenLoading || isExpressRunning || !onGenerateLanguage}
+            >
+              {languageGenLoading || isExpressRunning ? (
+                <>
+                  <Loader className="w-4 h-4 animate-spin mr-2" />
+                  Generating…
+                </>
+              ) : (
+                'Generate dialogue'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
         <DialogContent className="sm:max-w-md">

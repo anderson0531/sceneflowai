@@ -28,6 +28,7 @@ interface ExpressRequest {
   finalizeOnly?: boolean
   mode?: 'batch' | 'scene'
   sceneIndices?: number[]
+  dialogueOnly?: boolean
 }
 
 function injectResolvedScenesIntoProject(project: any, resolvedScenes: any[]): void {
@@ -77,6 +78,7 @@ async function persistExpressScenes(
 
   const freshMetadata = freshProject.metadata || {}
   const freshVisionPhase = freshMetadata.visionPhase || {}
+  const orchestratedVisionPhase = orchestratedProject?.metadata?.visionPhase || {}
   const nested = !!freshVisionPhase?.script?.script?.scenes?.length
 
   const freshDbScenes = getFreshDbScenes(freshVisionPhase)
@@ -105,6 +107,12 @@ async function persistExpressScenes(
       ...freshMetadata,
       visionPhase: {
         ...freshVisionPhase,
+        ...(orchestratedVisionPhase.translations
+          ? { translations: orchestratedVisionPhase.translations }
+          : {}),
+        ...(orchestratedVisionPhase.playerLabels
+          ? { playerLabels: orchestratedVisionPhase.playerLabels }
+          : {}),
         artStyle: options.artStyle || freshVisionPhase.artStyle || 'photorealistic',
         scenes: mergedScenes,
         script: nested
@@ -149,6 +157,7 @@ export async function POST(req: NextRequest) {
     finalizeOnly = false,
     mode = 'batch',
     sceneIndices,
+    dialogueOnly = false,
   } = body || {}
 
   if (!projectId) {
@@ -198,6 +207,7 @@ export async function POST(req: NextRequest) {
     imageQuality,
     storyboardQuality,
     finalizeOnly: !!finalizeOnly,
+    dialogueOnly: !!dialogueOnly,
     mode: mode === 'scene' ? 'scene' : 'batch',
     ...(Array.isArray(sceneIndices) && sceneIndices.length > 0
       ? { sceneIndices }

@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import type { PreVisSceneDisplay } from '@/lib/storyboard/preVisSceneDisplay'
+import type { PlayerLabelMap } from '@/lib/storyboard/playerTranslations'
 
 export type PreVisSceneInfoVariant = 'inline' | 'fullscreen' | 'compact'
 
@@ -10,6 +11,7 @@ interface PreVisSceneInfoPanelProps {
   variant: PreVisSceneInfoVariant
   totalScenes?: number
   className?: string
+  playerLabels?: PlayerLabelMap
 }
 
 export function PreVisSceneInfoPanel({
@@ -17,11 +19,15 @@ export function PreVisSceneInfoPanel({
   variant,
   totalScenes,
   className,
+  playerLabels,
 }: PreVisSceneInfoPanelProps) {
+  const sceneWord = playerLabels?.Scene ?? 'Scene'
+  const ofWord = playerLabels?.of ?? 'of'
+
   const eyebrow =
     totalScenes != null && totalScenes > 0
-      ? `Scene ${display.sceneNumber} of ${totalScenes}`
-      : `Scene ${display.sceneNumber}`
+      ? `${sceneWord} ${display.sceneNumber} ${ofWord} ${totalScenes}`
+      : `${sceneWord} ${display.sceneNumber}`
 
   if (variant === 'fullscreen') {
     return (

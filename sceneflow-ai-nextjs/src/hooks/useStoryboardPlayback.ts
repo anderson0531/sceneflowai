@@ -236,6 +236,7 @@ export function useStoryboardPlayback({
           startTime: clip.startTime,
           duration: clip.duration,
           trimStart: clip.trimStart,
+          fadeAnchorTime: clip.fadeAnchorTime,
           trackType: 'music' as const,
           label: clip.label,
           loop: clip.loop,

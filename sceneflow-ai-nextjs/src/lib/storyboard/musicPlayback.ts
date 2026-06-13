@@ -14,6 +14,8 @@ export interface BeatAlignedMusicClip {
   startTime: number
   duration: number
   trimStart?: number
+  /** Scene timeline time when intro fade begins (earliest music-enabled beat). */
+  fadeAnchorTime?: number
   trackType: 'music'
   label?: string
   loop?: boolean
@@ -78,18 +80,26 @@ export function buildBeatAlignedMusicClips(
   const beatById = new Map(beats.map((beat) => [beat.beatId, beat]))
   const clips: BeatAlignedMusicClip[] = []
 
-  for (const frame of visualFrames) {
-    if (!frame.beatId) continue
+  const enabledFrames = visualFrames.filter((frame) => {
+    if (!frame.beatId || frame.duration <= 0) return false
     const beat = beatById.get(frame.beatId)
-    if (!isBeatMusicEnabled(beat)) continue
-    if (frame.duration <= 0) continue
+    return isBeatMusicEnabled(beat)
+  })
 
+  const fadeAnchorTime =
+    enabledFrames.length > 0
+      ? Math.min(...enabledFrames.map((frame) => frame.startTime))
+      : 0
+
+  for (const frame of enabledFrames) {
+    const beat = beatById.get(frame.beatId!)
     clips.push({
       id: `music-${frame.beatId}`,
       url: musicUrl.trim(),
       startTime: frame.startTime,
       duration: frame.duration,
       trimStart: resolveMusicTrimStart(frame.startTime, musicFileDuration),
+      fadeAnchorTime,
       trackType: 'music',
       label: 'Background Music',
       loop: true,

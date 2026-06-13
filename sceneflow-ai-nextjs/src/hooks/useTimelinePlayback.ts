@@ -32,6 +32,8 @@ export interface AudioClip {
   startTime: number       // When clip starts in scene timeline (seconds)
   duration: number        // Clip duration (seconds)
   trimStart?: number      // Offset into the audio file (seconds)
+  /** For music: scene start time for intro fade (defaults to clip startTime). */
+  fadeAnchorTime?: number
   trackType: 'voiceover' | 'dialogue' | 'music' | 'sfx'
   label?: string          // e.g., character name for dialogue
   loop?: boolean          // For background music
@@ -126,8 +128,9 @@ function computeEffectiveClipVolume(
   if (clip.trackType !== 'music' || !musicIntroFade?.enabled) {
     return baseVolume
   }
-  const sinceClipStart = elapsed - clip.startTime
-  const multiplier = computeMusicIntroFadeMultiplier(sinceClipStart, musicIntroFade)
+  const fadeAnchor = clip.fadeAnchorTime ?? clip.startTime
+  const sinceFadeStart = elapsed - fadeAnchor
+  const multiplier = computeMusicIntroFadeMultiplier(sinceFadeStart, musicIntroFade)
   return baseVolume * multiplier
 }
 

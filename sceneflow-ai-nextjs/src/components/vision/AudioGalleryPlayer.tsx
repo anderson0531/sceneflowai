@@ -16,6 +16,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { GroupedLanguageSelector } from '@/components/vision/GroupedLanguageSelector'
 import { cn } from '@/lib/utils'
 import { resolvePreVisSceneDisplay } from '@/lib/storyboard/preVisSceneDisplay'
+import {
+  translatePlayerLabel,
+  type PlayerLabelMap,
+  type SceneTranslation,
+} from '@/lib/storyboard/playerTranslations'
 import { PreVisSceneInfoPanel } from '@/components/vision/PreVisSceneInfoPanel'
 import {
   getEstablishingFrameUrl,
@@ -67,6 +72,9 @@ interface AudioGalleryPlayerProps {
   onGenVideo?: (language: string) => void | Promise<void>
   isGenVideoRunning?: boolean
   exportedAnimaticUrl?: string | null
+  /** Per-scene translated script text for the active language. */
+  sceneTranslations?: Record<number, SceneTranslation>
+  playerLabels?: PlayerLabelMap
 }
 
 function formatTime(seconds: number) {
@@ -117,6 +125,8 @@ export function AudioGalleryPlayer({
   onGenVideo,
   isGenVideoRunning = false,
   exportedAnimaticUrl,
+  sceneTranslations,
+  playerLabels,
 }: AudioGalleryPlayerProps) {
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0)
   const [volume, setVolume] = useState(0.8)
@@ -226,7 +236,8 @@ export function AudioGalleryPlayer({
     return { primaryUrl, overlayUrl, blend, fadeBlack }
   }, [currentVisualFrame, currentTime, displayImageUrl])
 
-  const speakerLabel = currentVisualFrame?.character ?? currentVisualFrame?.label
+  const rawSpeakerLabel = currentVisualFrame?.character ?? currentVisualFrame?.label
+  const speakerLabel = translatePlayerLabel(rawSpeakerLabel, playerLabels)
   
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -314,8 +325,13 @@ export function AudioGalleryPlayer({
   }, [currentSceneIndex, goToScene])
 
   const sceneDisplay = useMemo(
-    () => resolvePreVisSceneDisplay(currentScene, currentSceneIndex),
-    [currentScene, currentSceneIndex]
+    () =>
+      resolvePreVisSceneDisplay(currentScene, currentSceneIndex, {
+        language: selectedLanguage,
+        sceneTranslation: sceneTranslations?.[currentSceneIndex],
+        playerLabels,
+      }),
+    [currentScene, currentSceneIndex, selectedLanguage, sceneTranslations, playerLabels]
   )
 
   const hasAudio =
@@ -590,7 +606,7 @@ export function AudioGalleryPlayer({
             )}
             
             {/* Watermark overlay */}
-            <div className="absolute top-4 right-4 pointer-events-none opacity-60 mix-blend-overlay">
+            <div className="absolute bottom-4 right-4 z-[3] pointer-events-none opacity-60 mix-blend-overlay">
               <span className="text-white font-bold tracking-widest uppercase" style={{ fontSize: isFullscreen ? '1.5rem' : '0.875rem' }}>
                 SceneFlow AI Studio
               </span>
@@ -611,7 +627,7 @@ export function AudioGalleryPlayer({
             
             {/* Current clip label overlay — speaker name only (no dialogue caption) */}
             {speakerLabel && (
-              <div className="absolute bottom-2 left-2 right-2 bg-black/70 rounded px-2 py-1">
+              <div className="absolute bottom-2 left-2 right-auto max-w-[70%] bg-black/70 rounded px-2 py-1 z-[2]">
                 <span className={cn("text-white", isFullscreen && !sharedCompact ? "text-base" : "text-xs")}>
                   {speakerLabel}
                 </span>
@@ -625,6 +641,7 @@ export function AudioGalleryPlayer({
               display={sceneDisplay}
               variant="fullscreen"
               totalScenes={scenes.length}
+              playerLabels={playerLabels}
             />
           )}
           {sharedCompact && (
@@ -633,6 +650,7 @@ export function AudioGalleryPlayer({
               variant="compact"
               totalScenes={scenes.length}
               className={landingWide ? 'max-w-4xl mx-auto' : 'max-w-2xl mx-auto'}
+              playerLabels={playerLabels}
             />
           )}
           
@@ -648,6 +666,7 @@ export function AudioGalleryPlayer({
                   display={sceneDisplay}
                   variant="inline"
                   totalScenes={scenes.length}
+                  playerLabels={playerLabels}
                 />
                 {!hasAudio && (
                   <p className="text-xs text-amber-400 mt-2">No audio generated for this scene</p>

@@ -35,6 +35,8 @@ export interface ExpressConfirmOptions {
   includeEndFrames?: boolean
   /** When true, only fill frames with no stored image URL. */
   missingFramesOnly?: boolean
+  /** When true, translate + dub dialogue/narration only (reuse music/SFX). */
+  dialogueOnly?: boolean
 }
 
 interface ExpressConfirmDialogProps {

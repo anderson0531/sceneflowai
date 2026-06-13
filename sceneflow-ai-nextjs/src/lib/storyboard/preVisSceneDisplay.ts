@@ -1,9 +1,16 @@
 import { formatSceneHeading } from '@/lib/script/formatSceneHeading'
+import type { PlayerLabelMap, SceneTranslation } from '@/lib/storyboard/playerTranslations'
 
 export interface PreVisSceneDisplay {
   titleLine: string
   description: string
   sceneNumber: number
+}
+
+export interface PreVisSceneDisplayOptions {
+  language?: string
+  sceneTranslation?: SceneTranslation
+  playerLabels?: PlayerLabelMap
 }
 
 function readSceneHeading(scene: Record<string, unknown>): string {
@@ -44,23 +51,32 @@ function readSceneDescription(scene: Record<string, unknown>): string {
 /** Combined scene title + description for Pre-Vis Player chrome. */
 export function resolvePreVisSceneDisplay(
   scene: Record<string, unknown> | null | undefined,
-  sceneIndex: number
+  sceneIndex: number,
+  options?: PreVisSceneDisplayOptions
 ): PreVisSceneDisplay {
   const sceneNumber = sceneIndex + 1
+  const sceneWord = options?.playerLabels?.SCENE ?? 'SCENE'
+  const untitled = options?.playerLabels?.['Untitled Scene'] ?? 'Untitled Scene'
+
   if (!scene) {
     return {
-      titleLine: `SCENE ${sceneNumber}: Untitled Scene`,
+      titleLine: `${sceneWord} ${sceneNumber}: ${untitled}`,
       description: '',
       sceneNumber,
     }
   }
 
-  const rawHeading = readSceneHeading(scene)
-  const formattedHeading = formatSceneHeading(rawHeading) || rawHeading || 'Untitled Scene'
+  const rawHeading =
+    options?.sceneTranslation?.heading ?? readSceneHeading(scene)
+  const formattedHeading =
+    formatSceneHeading(rawHeading) || rawHeading || untitled
+
+  const description =
+    options?.sceneTranslation?.description ?? readSceneDescription(scene)
 
   return {
-    titleLine: `SCENE ${sceneNumber}: ${formattedHeading}`,
-    description: readSceneDescription(scene),
+    titleLine: `${sceneWord} ${sceneNumber}: ${formattedHeading}`,
+    description,
     sceneNumber,
   }
 }

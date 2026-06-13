@@ -63,6 +63,7 @@ import {
 } from '../storyboard/storyboardQuality'
 import { isStoryboardNoCharacterScene } from '../script/sceneClassification'
 import { buildEndFramePrompt } from '../scene/deriveSegmentsFromBeats'
+import { ensureLanguageStreamTranslations } from '../storyboard/playerTranslations.server'
 
 const EXPRESS_SKIP_LIKENESS = { skipLikenessValidation: true }
 
@@ -281,7 +282,7 @@ async function runAudioPhase(
   const musicReadyScene = ensureSceneMusicFromDirection(scene)
   Object.assign(scene, musicReadyScene)
 
-  if (!options.regenerate && !sceneNeedsAudio(scene, language)) {
+  if (!options.regenerate && !options.dialogueOnly && !sceneNeedsAudio(scene, language)) {
     safeEmit(emit, {
       type: 'phase-done',
       sceneIndex,
@@ -331,8 +332,10 @@ async function runAudioPhase(
           number,
           { narration?: string; dialogue?: string[] }
         >,
-        includeMusic: resolveExpressIncludeMusic(scene, options),
-        includeSFX: !!options.includeSFX,
+        includeMusic: options.dialogueOnly
+          ? false
+          : resolveExpressIncludeMusic(scene, options),
+        includeSFX: options.dialogueOnly ? false : !!options.includeSFX,
         baseUrl,
         authCookie,
         parallelMode: true,
@@ -1379,6 +1382,49 @@ async function runScene(
     }
   }
 
+  if (options.dialogueOnly) {
+    for (const phase of ['direction', 'image'] as ExpressPhase[]) {
+      safeEmit(emit, {
+        type: 'phase-done',
+        sceneIndex,
+        sceneNumber,
+        phase,
+        ok: true,
+        skipped: true,
+      })
+      phasesSkipped.push(phase)
+    }
+
+    const aRes = await runAudioPhase(
+      ctx,
+      { ...options, regenerate: options.regenerate ?? true },
+      project,
+      baseUrl,
+      authCookie,
+      emit,
+      trafficCop,
+      rateLimitedFailures
+    )
+
+    if (aRes.skipped) phasesSkipped.push('audio')
+    else if (aRes.ok) phasesRun.push('audio')
+    else phasesFailed.push('audio')
+
+    const ok = phasesFailed.length === 0
+    const error = phasesFailed.length > 0 ? `Failed phases: ${phasesFailed.join(', ')}` : undefined
+    safeEmit(emit, { type: 'scene-done', sceneIndex, sceneNumber, ok, error })
+
+    return {
+      sceneIndex,
+      sceneNumber,
+      ok,
+      error,
+      phasesRun,
+      phasesSkipped,
+      phasesFailed,
+    }
+  }
+
   // Phase 1: Direction
   const dRes = await runDirectionPhase(ctx, options, emit, trafficCop)
   if (dRes.skipped) phasesSkipped.push('direction')
@@ -1476,6 +1522,10 @@ export async function runExpress(
       : scenes.map((_: any, idx: number) => idx)
 
   safeEmit(emit, { type: 'start', sceneCount: sceneIndices.length })
+
+  if (options.dialogueOnly && options.language && options.language !== 'en') {
+    await ensureLanguageStreamTranslations(project, scenes, options.language, sceneIndices)
+  }
 
   const rateLimitedFailures: ExpressRateLimitedFailure[] = []
 
