@@ -685,10 +685,10 @@ export function SceneStoryboardFrameViewer({
                 </div>
               </div>
 
-              <div className="flex gap-3 items-start">
+              <div className="relative">
                 <div
                   ref={thumbnailScrollRef}
-                  className="w-[30%] shrink-0 grid grid-cols-2 content-start gap-2 overflow-y-auto overscroll-contain pr-1 max-h-[min(50vh,480px)] cursor-grab active:cursor-grabbing"
+                  className="absolute left-0 top-0 bottom-0 w-[30%] grid grid-cols-2 content-start gap-2 overflow-y-auto overscroll-contain pr-1 cursor-grab active:cursor-grabbing"
                   onPointerDown={handleThumbnailPointerDown}
                   onClickCapture={handleThumbnailClickCapture}
                 >
@@ -706,7 +706,7 @@ export function SceneStoryboardFrameViewer({
                   ))}
                 </div>
 
-                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                <div className="ml-[calc(30%+0.75rem)] flex flex-col gap-2 min-w-0">
                   <div className="rounded-lg overflow-hidden bg-gray-800/50 border border-slate-700/40">
                     <div className="relative overflow-hidden">
                       {previewSlot ? (
