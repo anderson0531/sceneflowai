@@ -94,7 +94,7 @@ function buildLocationPrompt(
     if (lighting) parts.push(lighting)
   }
 
-  // Production quality modifiers — top/bottom opposite-view turnaround sheet
+  // Production quality modifiers — 4-angle 2x2 turnaround sheet
   parts.push(
     LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
     'Cinematic production design, professional film set quality',

@@ -273,13 +273,13 @@ Action/Framing: [shot type + frozen action for THIS beat; use person [N] tokens 
 For EACH reference image provided in the input, add one bullet using the exact Ref Image index from input:
 - SUBJECT REFERENCE (Ref Image [N]): Extract face shape, hair, skin tone, and physical identity only. Maintain organic human skin textures. Ignore clothing in this image if wardrobe ref exists.
 - WARDROBE REFERENCE (Ref Image [M]): Extract clothing design, color palette, and garments only. Completely ignore the mannequin/plastic base, stylized medium, turnaround sheet layout, and gray studio background. Translate these clothes onto the realistic human subject from the identity ref.
-- LOCATION REFERENCE (Ref Image [K]): Extract architectural layout, furniture placement, and color palette from two opposite wide views of the same set (reference may be stacked top/bottom or legacy side-by-side). Use as layout aid only — render ONE unified full-frame cinematic shot for this beat; NEVER reproduce the two-panel reference sheet, split-screen, diptych, or collage in the output. Choose the angle that best matches beat framing. Match lighting to Global Style Anchor.
+- LOCATION REFERENCE (Ref Image [K]): Extract architectural layout, furniture placement, and color palette from the 4 distinct angles of the same set (reference may be a 2x2 grid or legacy layout). Use as layout aid only — render ONE unified full-frame cinematic shot for this beat; NEVER reproduce the 2x2 grid, 4-panel layout, multi-panel reference sheet, split-screen, diptych, or collage in the output. Choose the angle that best matches beat framing. Match lighting to Global Style Anchor.
 - PROP REFERENCE (Ref Image [P]): Extract shape, material, color, and design of the named prop only.
 
 Omit mapping lines for references not used in this beat.
 
 [EXCLUSIONS & BOUNDARIES]
-Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, split-screen output, multi-panel layout, diptych, reference sheet collage, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).`
+Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, 2x2 grid output, 4-panel layout, split-screen output, multi-panel layout, diptych, reference sheet collage, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).`
 }
 
 /**

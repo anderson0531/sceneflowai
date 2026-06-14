@@ -121,7 +121,7 @@ export function LocationPromptBuilder({
       parts.push(`Visual style: ${screenplayContext.visualStyle}`)
     }
 
-    // Production quality — top/bottom opposite-view turnaround (no people)
+    // Production quality — 4-angle 2x2 turnaround (no people)
     parts.push(LOCATION_TURNAROUND_GENERATION_INSTRUCTION)
     parts.push('Cinematic production design, professional film set quality')
 
@@ -276,7 +276,7 @@ export function LocationPromptBuilder({
               <p className="font-medium mb-1">Environment Reference</p>
               <p className="text-blue-400/80">
                 Location images are generated <span className="font-medium">without people</span> as
-                stacked top/bottom turnaround references showing opposite wide views of the same set for
+                a 2x2 grid turnaround showing 4 distinct angles of the same set for
                 consistent scene environment references across your project.
               </p>
             </div>

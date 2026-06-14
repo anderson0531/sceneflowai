@@ -4,22 +4,21 @@
 
 export const LOCATION_REFERENCE_ASPECT_RATIO = '16:9' as const
 
-/** Generation: vertical two-panel sheet with opposite wide views (not side-by-side). */
+/** Generation: 2x2 grid with 4 distinct camera angles of the same location. */
 export const LOCATION_TURNAROUND_GENERATION_INSTRUCTION =
-  'Vertical two-panel location turnaround reference sheet stacked top and bottom, NOT side-by-side. ' +
-  'TOP panel: wide cinematic establishing shot of the location from one angle. ' +
-  'BOTTOM panel: wide cinematic establishing shot of the same location from the opposite facing angle (180-degree reverse view). ' +
-  'Both panels show the identical set with consistent furniture, layout, and color palette. ' +
-  'Empty scene with NO people or characters present.'
+  '2x2 grid location turnaround reference sheet showing 4 distinct, separate camera angles ' +
+  '(e.g., looking North, South, East, West) of the same location. ' +
+  'Do NOT generate 4 identical images. Each of the 4 panels must show a different facing view of the identical set ' +
+  'with consistent furniture, layout, and color palette. Empty scene with NO people or characters present.'
 
 /** Downstream beat/frame generation: how to consume a location turnaround sheet. */
 export const LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION =
-  'LOCATION REFERENCE: The reference image shows two opposite wide views of the same location ' +
-  '(stacked top/bottom, or legacy side-by-side). Use it as a layout aid only — extract architectural layout, ' +
+  'LOCATION REFERENCE: The reference image shows 4 distinct angles of the same location ' +
+  '(in a 2x2 grid, or legacy layouts). Use it as a layout aid only — extract architectural layout, ' +
   'furniture placement, and color palette. Choose the angle that best matches beat framing; infer unseen geometry ' +
-  'consistently from both views. Render ONE unified full-frame cinematic shot — NEVER reproduce the two-panel sheet, ' +
-  'split-screen, diptych, collage, or multi-panel reference layout in the output.'
+  'consistently from the views. Render ONE unified full-frame cinematic shot — NEVER reproduce the 2x2 grid, ' +
+  'multi-panel sheet, split-screen, diptych, collage, or reference layout in the output.'
 
 /** Shorter hint for intelligence user prompts. */
 export const LOCATION_TURNAROUND_USER_PROMPT_HINT =
-  'top/bottom opposite wide views of same set (or legacy side-by-side) — consumption is single cinematic frame only'
+  '4 distinct angles of same set (2x2 grid or legacy) — consumption is single cinematic frame only'
