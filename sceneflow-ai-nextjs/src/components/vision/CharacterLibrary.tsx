@@ -40,6 +40,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
@@ -791,10 +797,8 @@ const CharacterCard = ({
   const [editingName, setEditingName] = useState(false);
   const [nameText, setNameText] = useState("");
   const [editingRole, setEditingRole] = useState(false);
-  const [wardrobeSectionExpanded, setWardrobeSectionExpanded] = useState(false);
-  const [talentSectionExpanded, setTalentSectionExpanded] = useState(true);
-  const [voiceSectionExpandedLocal, setVoiceSectionExpandedLocal] =
-    useState(false);
+  type CharacterWorkflowTab = "identity" | "voice" | "wardrobe";
+  const [activeTab, setActiveTab] = useState<CharacterWorkflowTab>("identity");
   const [editingWardrobe, setEditingWardrobe] = useState(false);
   const [editingWardrobeId, setEditingWardrobeId] = useState<string | null>(
     null,
@@ -2164,149 +2168,62 @@ const CharacterCard = ({
           {character.description}
         </p>
 
-        {/* Subsections */}
-        <div className="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
-          {/* Voice Settings */}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setVoiceSectionExpandedLocal(!voiceSectionExpandedLocal);
-              }}
-              className="w-full flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
-            >
-              <div className="flex items-center gap-2 font-medium text-sm text-gray-900 dark:text-gray-100">
-                <Mic className="w-4 h-4 text-gray-500" />
-                Voice Settings
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-gray-500 px-2 py-0.5 bg-black/5 dark:bg-white/5 rounded">
-                  {character.voiceConfig
-                    ? character.voiceConfig.voiceName
-                    : "Required"}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 text-gray-500 transition-transform ${voiceSectionExpandedLocal ? "rotate-180" : ""}`}
-                />
-              </div>
-            </button>
-            {voiceSectionExpandedLocal && (
-              <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-                {character.voiceConfig?.voiceId ? (
-                  <p
-                    className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 font-mono truncate"
-                    title="Scene dialogue uses Gemini 3.1 TTS with this voice id"
-                  >
-                    Gemini TTS ·{" "}
-                    <span className="select-all">{character.voiceConfig.voiceId}</span>
-                    {character.voiceConfig.prompt ? (
-                      <span className="text-emerald-600 dark:text-emerald-400 ml-1">
-                        · Director&apos;s Note
-                      </span>
-                    ) : null}
-                  </p>
-                ) : (
-                  <p className="text-[10px] text-amber-600 dark:text-amber-400 mb-2">
-                    Assign a Gemini voice so dialogue generation uses the correct engine and voice id.
-                  </p>
+        {/* Workflow tabs: Identity → Voice → Wardrobe */}
+        <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) =>
+              setActiveTab(value as CharacterWorkflowTab)
+            }
+          >
+            <TabsList className="w-full grid grid-cols-3 h-9 bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 p-0.5">
+              <TabsTrigger
+                value="identity"
+                className="text-xs gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                Identity
+                {!hasImage && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"
+                    title="Reference image needed"
+                  />
                 )}
-                {useGeminiVoicePicker && !hasCharacterReferenceForVoice ? (
-                  <p className="text-[10px] text-amber-600 dark:text-amber-400 mb-2">
-                    Generate a character reference image first — Auto Voice matches from the face.
-                  </p>
-                ) : null}
-                {useGeminiVoicePicker && hasCharacterReferenceForVoice && character.voiceConfig ? (
-                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mb-2">
-                    Voice matched from character reference
-                  </p>
-                ) : null}
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setVoiceDialogOpen(true);
-                    }}
-                    className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                      character.voiceConfig
-                        ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40"
-                        : "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40"
-                    }`}
-                  >
-                    <Volume2 className="w-4 h-4" />
-                    Select Voice
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAutoVoiceClick();
-                    }}
-                    disabled={
-                      isAutoSelectingVoice ||
-                      ((useGeminiVoicePicker || ttsProvider === "google") &&
-                        !hasCharacterReferenceForVoice)
-                    }
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-60"
-                    title={
-                      useGeminiVoicePicker || ttsProvider === "google"
-                        ? hasCharacterReferenceForVoice
-                          ? "Analyze character reference, auto select Gemini voice, and generate Director's Note"
-                          : "Generate character reference image first"
-                        : "Auto pick an ElevenLabs voice from character profile (same recommendations as the voice browser)"
-                    }
-                  >
-                    {isAutoSelectingVoice ? (
-                      <Loader className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4" />
-                    )}
-                    Auto
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlayAssignedVoice();
-                    }}
-                    disabled={!character.voiceConfig?.voiceId}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-400 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 disabled:opacity-40 disabled:cursor-not-allowed"
-                    title={
-                      character.voiceConfig?.voiceId
-                        ? isPlayingVoice
-                          ? "Stop voice preview"
-                          : "Play assigned voice preview"
-                        : "Assign a voice first"
-                    }
-                  >
-                    {isPlayingVoice ? (
-                      <Loader className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Play className="w-4 h-4" />
-                    )}
-                    Play
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+              </TabsTrigger>
+              <TabsTrigger
+                value="voice"
+                className="text-xs gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Mic className="w-3.5 h-3.5" />
+                Voice
+                {!character.voiceConfig && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"
+                    title="Voice required"
+                  />
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="wardrobe"
+                className="text-xs gap-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Shirt className="w-3.5 h-3.5" />
+                Wardrobe
+                {wardrobes.length > 0 && (
+                  <span className="text-[10px] opacity-70 tabular-nums">
+                    ({wardrobes.length})
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Talent Reference */}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setTalentSectionExpanded(!talentSectionExpanded);
-              }}
-              className="w-full flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+            <TabsContent
+              value="identity"
+              className="mt-3 focus-visible:ring-0 space-y-3"
             >
-              <div className="flex items-center gap-2 font-medium text-sm text-gray-900 dark:text-gray-100">
-                <ImageIcon className="w-4 h-4 text-gray-500" />
-                Talent
-              </div>
-              <ChevronDown
-                className={`w-4 h-4 text-gray-500 transition-transform ${talentSectionExpanded ? "rotate-180" : ""}`}
-              />
-            </button>
-            {talentSectionExpanded && (
-              <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 space-y-3">
                 {/* Image Section — overlay controls match Storyboard / Scene Gallery / Location Library (Quick, Prompt, Edit, Enhance, Upload) */}
                 <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 group rounded-md overflow-hidden">
                   {isDeferredImage ? (
@@ -2552,29 +2469,115 @@ const CharacterCard = ({
                     </p>
                   )}
                 </div>
-              </div>
-            )}
-          </div>
+            </TabsContent>
 
-          {/* Wardrobes */}
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setWardrobeSectionExpanded(!wardrobeSectionExpanded);
-              }}
-              className="w-full flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+            <TabsContent
+              value="voice"
+              className="mt-3 focus-visible:ring-0 space-y-3"
             >
-              <div className="flex items-center gap-2 font-medium text-sm text-gray-900 dark:text-gray-100">
-                <Shirt className="w-4 h-4 text-gray-500" />
-                Character Wardrobes
+              {character.voiceConfig?.voiceId ? (
+                <p
+                  className="text-[10px] text-gray-500 dark:text-gray-400 font-mono truncate"
+                  title="Scene dialogue uses Gemini 3.1 TTS with this voice id"
+                >
+                  Gemini TTS ·{" "}
+                  <span className="select-all">{character.voiceConfig.voiceId}</span>
+                  {character.voiceConfig.prompt ? (
+                    <span className="text-emerald-600 dark:text-emerald-400 ml-1">
+                      · Director&apos;s Note
+                    </span>
+                  ) : null}
+                </p>
+              ) : (
+                <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                  Assign a Gemini voice so dialogue generation uses the correct engine and voice id.
+                </p>
+              )}
+              {useGeminiVoicePicker && !hasCharacterReferenceForVoice ? (
+                <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                  Generate a character reference image first — Auto Voice matches from the face.
+                </p>
+              ) : null}
+              {useGeminiVoicePicker && hasCharacterReferenceForVoice && character.voiceConfig ? (
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                  Voice matched from character reference
+                </p>
+              ) : null}
+              {character.voiceConfig?.voiceName && (
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  {character.voiceConfig.voiceName}
+                </p>
+              )}
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setVoiceDialogOpen(true);
+                  }}
+                  className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    character.voiceConfig
+                      ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40"
+                      : "bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+                  }`}
+                >
+                  <Volume2 className="w-4 h-4" />
+                  Select Voice
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAutoVoiceClick();
+                  }}
+                  disabled={
+                    isAutoSelectingVoice ||
+                    ((useGeminiVoicePicker || ttsProvider === "google") &&
+                      !hasCharacterReferenceForVoice)
+                  }
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-60"
+                  title={
+                    useGeminiVoicePicker || ttsProvider === "google"
+                      ? hasCharacterReferenceForVoice
+                        ? "Analyze character reference, auto select Gemini voice, and generate Director's Note"
+                        : "Generate character reference image first"
+                      : "Auto pick an ElevenLabs voice from character profile (same recommendations as the voice browser)"
+                  }
+                >
+                  {isAutoSelectingVoice ? (
+                    <Loader className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4" />
+                  )}
+                  Auto
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePlayAssignedVoice();
+                  }}
+                  disabled={!character.voiceConfig?.voiceId}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-400 hover:bg-cyan-100 dark:hover:bg-cyan-900/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={
+                    character.voiceConfig?.voiceId
+                      ? isPlayingVoice
+                        ? "Stop voice preview"
+                        : "Play assigned voice preview"
+                      : "Assign a voice first"
+                  }
+                >
+                  {isPlayingVoice ? (
+                    <Loader className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Play className="w-4 h-4" />
+                  )}
+                  Play
+                </button>
               </div>
-              <ChevronDown
-                className={`w-4 h-4 text-gray-500 transition-transform ${wardrobeSectionExpanded ? "rotate-180" : ""}`}
-              />
-            </button>
-            {wardrobeSectionExpanded && (
-              <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 space-y-4">
+            </TabsContent>
+
+            <TabsContent
+              value="wardrobe"
+              className="mt-3 focus-visible:ring-0 space-y-4 max-h-[420px] overflow-y-auto pr-1"
+            >
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">
                   Turnaround references work best with neutral upright pose, flat even lighting,
                   and a plain gray or white background. Uploads should show the full outfit clearly.
@@ -3029,9 +3032,8 @@ const CharacterCard = ({
                     </div>
                   )}
 
-              </div>
-            )}
-          </div>
+            </TabsContent>
+          </Tabs>
         </div>
         {/* Voice Selection */}
         <Dialog open={genderConfirmOpen} onOpenChange={setGenderConfirmOpen}>
