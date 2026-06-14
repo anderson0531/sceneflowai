@@ -3,9 +3,21 @@ import {
   getSceneExpressBeatConcurrency,
   runAdaptiveBeatPool,
 } from '@/lib/sceneGeneration/adaptiveBeatScheduler'
+import {
+  isExpressImageCanaryAbortError,
+  isTransientExpressImageError,
+} from '@/lib/sceneGeneration/expressImageErrors'
 
 function rateLimitError() {
   return new Error('HTTP 429: RESOURCE_EXHAUSTED')
+}
+
+function gatewayTimeoutError() {
+  const err = new Error('Scene image generation failed (HTTP 504)') as Error & {
+    status: number
+  }
+  err.status = 504
+  return err
 }
 
 function authError() {
@@ -184,5 +196,89 @@ describe('runAdaptiveBeatPool', () => {
     await promise
 
     expect(changes.some((c) => c.reason === 'increase')).toBe(true)
+  })
+
+  it('retries 504 gateway timeout like 429', async () => {
+    const attempts = new Map<number, number>()
+
+    const promise = runAdaptiveBeatPool(
+      [0],
+      async () => {
+        const n = (attempts.get(0) ?? 0) + 1
+        attempts.set(0, n)
+        if (n < 2) throw gatewayTimeoutError()
+      },
+      {
+        initialConcurrency: 1,
+        maxAttempts: 3,
+        baseBackoffMs: 100,
+        maxBackoffMs: 500,
+        isRetryable: isTransientExpressImageError,
+        isCanaryAbort: isExpressImageCanaryAbortError,
+      }
+    )
+
+    await vi.runAllTimersAsync()
+    const result = await promise
+
+    expect(result.succeeded.has(0)).toBe(true)
+    expect(result.aborted).toBeUndefined()
+    expect(attempts.get(0)).toBe(2)
+  })
+
+  it('does not canary abort on 504 and continues other beats', async () => {
+    const ran: number[] = []
+
+    const promise = runAdaptiveBeatPool(
+      [0, 1, 2],
+      async (beatIndex) => {
+        ran.push(beatIndex)
+        if (beatIndex === 0) throw gatewayTimeoutError()
+      },
+      {
+        initialConcurrency: 2,
+        maxAttempts: 1,
+        isRetryable: isTransientExpressImageError,
+        isCanaryAbort: isExpressImageCanaryAbortError,
+      }
+    )
+
+    await vi.runAllTimersAsync()
+    const result = await promise
+
+    expect(result.aborted).toBeUndefined()
+    expect(result.failed.has(0)).toBe(true)
+    expect(result.succeeded.has(1)).toBe(true)
+    expect(result.succeeded.has(2)).toBe(true)
+    expect(ran).toContain(1)
+    expect(ran).toContain(2)
+  })
+
+  it('fails queued beats on canary abort and drains in-flight at concurrency 2', async () => {
+    const ran: number[] = []
+
+    const promise = runAdaptiveBeatPool(
+      [0, 1, 2, 3, 4],
+      async (beatIndex) => {
+        ran.push(beatIndex)
+        if (beatIndex === 0) throw authError()
+      },
+      {
+        initialConcurrency: 2,
+        maxAttempts: 3,
+        isRetryable: isTransientExpressImageError,
+        isCanaryAbort: isExpressImageCanaryAbortError,
+      }
+    )
+
+    await vi.runAllTimersAsync()
+    const result = await promise
+
+    expect(result.aborted?.beatIndex).toBe(0)
+    expect(result.failed.has(0)).toBe(true)
+    expect(result.failed.has(2)).toBe(true)
+    expect(result.failed.has(3)).toBe(true)
+    expect(result.failed.has(4)).toBe(true)
+    expect(ran).toContain(1)
   })
 })

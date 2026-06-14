@@ -20,7 +20,13 @@ import {
   getSceneExpressBeatConcurrency,
   runAdaptiveBeatPool,
   type AdaptiveBeatPoolOptions,
+  type AdaptiveBeatPoolResult,
 } from './adaptiveBeatScheduler'
+import {
+  isExpressImageCanaryAbortError,
+  isExpressImageRateLimitError,
+  isTransientExpressImageError,
+} from './expressImageErrors'
 import {
   ExpressTrafficCop,
   getExpressSceneConcurrency,
@@ -238,7 +244,8 @@ function recordRateLimitedFailure(
 function buildAdaptiveBeatPoolOptions(emit: ExpressEmit): AdaptiveBeatPoolOptions {
   return {
     initialConcurrency: getSceneExpressBeatConcurrency(),
-    isRetryable: isRateLimitError,
+    isRetryable: isTransientExpressImageError,
+    isCanaryAbort: isExpressImageCanaryAbortError,
     onConcurrencyChange: (max, reason) => {
       if (reason === 'decrease') {
         safeEmit(emit, { type: 'throttle', lane: 'image', max })
@@ -246,6 +253,38 @@ function buildAdaptiveBeatPoolOptions(emit: ExpressEmit): AdaptiveBeatPoolOption
     },
     abortOnNonRetryableCanary: true,
   }
+}
+
+function emitOrphanBeatFailures(
+  emit: ExpressEmit,
+  ctx: SceneRunContext,
+  beatIndices: number[],
+  pool: AdaptiveBeatPoolResult,
+  frameRole: 'start' | 'end',
+  rateLimitedFailures: ExpressRateLimitedFailure[],
+  onBeatFailed?: (beatIdx: number) => void
+): string | undefined {
+  const { sceneIndex, sceneNumber } = ctx
+  let lastError: string | undefined
+
+  for (const beatIdx of beatIndices) {
+    if (pool.succeeded.has(beatIdx) || pool.failed.has(beatIdx)) continue
+    const err = pool.aborted?.error ?? new Error('Beat generation did not run')
+    onBeatFailed?.(beatIdx)
+    lastError = emitImageFailure(emit, ctx, err, beatIdx, frameRole)
+    if (isExpressImageRateLimitError(err)) {
+      recordRateLimitedFailure(rateLimitedFailures, {
+        sceneIndex,
+        sceneNumber,
+        phase: 'image',
+        beatIndex: beatIdx,
+        frameRole,
+        error: lastError,
+      })
+    }
+  }
+
+  return lastError
 }
 
 function emitImageFailure(
@@ -257,7 +296,7 @@ function emitImageFailure(
 ): string {
   const { sceneIndex, sceneNumber } = ctx
   const error = (err as any)?.message || String(err)
-  const rateLimited = isRateLimitError(err)
+  const rateLimited = isExpressImageRateLimitError(err)
   safeEmit(emit, {
     type: 'phase-done',
     sceneIndex,
@@ -714,7 +753,7 @@ async function runSupplementalEndFrames(
   for (const [beatIdx, err] of pool.failed) {
     hadFailure = true
     lastError = emitImageFailure(emit, ctx, err, beatIdx, 'end')
-    if (isRateLimitError(err)) {
+    if (isExpressImageRateLimitError(err)) {
       recordRateLimitedFailure(rateLimitedFailures, {
         sceneIndex,
         sceneNumber,
@@ -724,6 +763,19 @@ async function runSupplementalEndFrames(
         error: lastError,
       })
     }
+  }
+
+  const orphanError = emitOrphanBeatFailures(
+    emit,
+    ctx,
+    endBeatsToGenerate,
+    pool,
+    'end',
+    rateLimitedFailures
+  )
+  if (orphanError) {
+    hadFailure = true
+    lastError = orphanError
   }
 
   return { hadFailure, lastError, lastImageUrl }
@@ -783,7 +835,7 @@ async function runBeatImages(
       failedStartBeatIndices.add(beatIdx)
       hadFailure = true
       lastError = emitImageFailure(emit, ctx, err, beatIdx, 'start')
-      if (isRateLimitError(err)) {
+      if (isExpressImageRateLimitError(err)) {
         recordRateLimitedFailure(rateLimitedFailures, {
           sceneIndex,
           sceneNumber,
@@ -793,6 +845,20 @@ async function runBeatImages(
           error: lastError,
         })
       }
+    }
+
+    const orphanError = emitOrphanBeatFailures(
+      emit,
+      ctx,
+      beatsToGenerate,
+      pool,
+      'start',
+      rateLimitedFailures,
+      (beatIdx) => failedStartBeatIndices.add(beatIdx)
+    )
+    if (orphanError) {
+      hadFailure = true
+      lastError = orphanError
     }
   }
 

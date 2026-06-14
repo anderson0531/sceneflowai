@@ -56,6 +56,11 @@ import { getArtStyleNegativeTerms, getArtStylePromptSuffix } from '@/lib/vision/
 import { editImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
 import { buildEndFramePrompt } from '@/lib/scene/deriveSegmentsFromBeats'
 import { buildPreVisEndFrameEditInstruction } from '@/lib/vision/framePromptBaseline'
+import {
+  isExpressImageRateLimitError,
+  isTransientExpressImageError,
+  resolveExpressImageErrorStatus,
+} from '@/lib/sceneGeneration/expressImageErrors'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120  // Increased for new AI image models
@@ -1718,24 +1723,30 @@ export async function POST(req: NextRequest) {
         console.error(`[Scene Image] Generation attempt ${generationAttempt} failed:`, errorMessage)
 
         const errorLower = errorMessage.toLowerCase()
-        const isRateLimitError =
-          errorLower.includes('429') ||
-          errorLower.includes('resource_exhausted') ||
-          errorLower.includes('rate limit')
+        const isTransientError = isTransientExpressImageError(error)
+        const isRateLimitError = isExpressImageRateLimitError(error)
+        const status = resolveExpressImageErrorStatus(error)
 
-        if (isRateLimitError && generationAttempt < maxGenerationAttempts) {
+        if (isTransientError && generationAttempt < maxGenerationAttempts) {
           const retryDelay =
             rateLimitBackoffMs[generationAttempt - 1] ??
             rateLimitBackoffMs[rateLimitBackoffMs.length - 1]
+          const retryReason = isRateLimitError
+            ? 'Vertex rate limit'
+            : status === 504
+              ? 'Vertex transient error (504 gateway timeout)'
+              : status === 502 || status === 503
+                ? `Vertex transient error (HTTP ${status})`
+                : 'Vertex transient error'
           console.log(
-            `[Scene Image] Vertex rate limit (attempt ${generationAttempt}/${maxGenerationAttempts}). Retrying after ${retryDelay}ms...`
+            `[Scene Image] ${retryReason} (attempt ${generationAttempt}/${maxGenerationAttempts}). Retrying after ${retryDelay}ms...`
           )
           await new Promise((resolve) => setTimeout(resolve, retryDelay))
           continue
         }
 
         const isReferenceImageError =
-          !isRateLimitError &&
+          !isTransientError &&
           (errorLower.includes('failed to download reference') ||
             errorLower.includes('reference image') ||
             (errorLower.includes('reference') &&

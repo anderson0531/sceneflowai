@@ -53,7 +53,7 @@ const DEFAULT_RETRY_OPTIONS: Required<Omit<RetryOptions, 'operationName' | 'isRe
  */
 export function isRetryableError(error: any, status?: number): boolean {
   // Check HTTP status
-  if (status === 429 || status === 503 || status === 502) {
+  if (status === 429 || status === 502 || status === 503 || status === 504) {
     return true
   }
 
@@ -66,10 +66,16 @@ export function isRetryableError(error: any, status?: number): boolean {
   const lower = message.toLowerCase()
   const retryablePatterns = [
     '429',
+    '502',
+    '503',
+    '504',
     'RESOURCE_EXHAUSTED',
     'rate limit',
     'quota',
     'too many requests',
+    'gateway timeout',
+    'bad gateway',
+    'service unavailable',
     'temporarily unavailable',
     'UNAVAILABLE',
     'DEADLINE_EXCEEDED',
@@ -199,7 +205,12 @@ export async function fetchWithRetry(
       })
       
       // Check if response status indicates we should retry
-      if (response.status === 429 || response.status === 502 || response.status === 503) {
+      if (
+        response.status === 429 ||
+        response.status === 502 ||
+        response.status === 503 ||
+        response.status === 504
+      ) {
         const errorText = await response.text()
         const error: any = new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`)
         error.status = response.status

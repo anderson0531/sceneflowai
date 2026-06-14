@@ -36,6 +36,8 @@ export interface AdaptiveBeatPoolOptions {
   maxBackoffMs?: number
   successesToIncrease?: number
   isRetryable?: (err: unknown) => boolean
+  /** When set, only these errors trigger canary abort (auth/config). Defaults to !isRetryable. */
+  isCanaryAbort?: (err: unknown) => boolean
   onConcurrencyChange?: (next: number, reason: 'decrease' | 'increase') => void
   /** When true, abort the pool on the first non-retryable failure (canary). */
   abortOnNonRetryableCanary?: boolean
@@ -77,11 +79,14 @@ export async function runAdaptiveBeatPool(
     parseNonNegativeInt(process.env.SCENE_EXPRESS_BEAT_MAX_BACKOFF_MS, 15_000)
   const successesToIncrease = options.successesToIncrease ?? 3
   const isRetryable = options.isRetryable ?? isRetryableError
+  const isCanaryAbort =
+    options.isCanaryAbort ?? ((err: unknown) => !isRetryable(err))
   const abortOnNonRetryableCanary = options.abortOnNonRetryableCanary ?? true
 
   const succeeded = new Set<number>()
   const failed = new Map<number, unknown>()
   let aborted: AdaptiveBeatPoolResult['aborted']
+  let stopScheduling = false
 
   if (beatIndices.length === 0) {
     return { succeeded, failed }
@@ -117,11 +122,17 @@ export async function runAdaptiveBeatPool(
   }
 
   const handleFailure = (beatIndex: number, attempt: number, err: unknown): void => {
-    if (!canaryChecked && abortOnNonRetryableCanary && !isRetryable(err)) {
+    if (!canaryChecked && abortOnNonRetryableCanary && isCanaryAbort(err)) {
       canaryChecked = true
       aborted = { beatIndex, error: err }
       failed.set(beatIndex, err)
+      for (const entry of queue) {
+        if (!succeeded.has(entry.beatIndex) && !failed.has(entry.beatIndex)) {
+          failed.set(entry.beatIndex, err)
+        }
+      }
       queue.length = 0
+      stopScheduling = true
       return
     }
     canaryChecked = true
@@ -141,7 +152,6 @@ export async function runAdaptiveBeatPool(
   }
 
   const runEntry = async (entry: QueueEntry): Promise<void> => {
-    if (aborted) return
     try {
       await runOne(entry.beatIndex, entry.attempt)
       succeeded.add(entry.beatIndex)
@@ -156,10 +166,10 @@ export async function runAdaptiveBeatPool(
     }
   }
 
-  while ((queue.length > 0 || inFlight.size > 0) && !aborted) {
+  while (queue.length > 0 || inFlight.size > 0) {
     const now = Date.now()
 
-    while (inFlight.size < target && queue.length > 0) {
+    while (!stopScheduling && inFlight.size < target && queue.length > 0) {
       queue.sort((a, b) => a.readyAt - b.readyAt)
       const nextIdx = queue.findIndex((e) => e.readyAt <= now)
       if (nextIdx < 0) break
