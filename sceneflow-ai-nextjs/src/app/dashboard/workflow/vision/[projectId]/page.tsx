@@ -96,6 +96,18 @@ import type {
   ExpressPhaseStatus,
 } from '@/components/vision/SceneGallery'
 import type { ExpressConfirmOptions } from '@/components/vision/ExpressConfirmDialog'
+import {
+  ExpressBeatFrameProgressOverlay,
+  type ExpressOverlayPhase,
+} from '@/components/vision/ExpressBeatFrameProgressOverlay'
+import {
+  buildExpressBeatFrameItems,
+  hasFrameErrors,
+  slotKeyFromBeat,
+  updateBeatFrameItemStatus,
+  type ExpressBeatFrameItem,
+  type ExpressBeatFrameStatus,
+} from '@/lib/storyboard/expressBeatFrameProgress'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
 // Dynamic import to break TDZ chain - ScreeningRoomV2 → FullscreenPlayer → audioTrackBuilder
 const ScreeningRoomV2 = dynamic(
@@ -4706,6 +4718,15 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
   // Storyboard Express state — driven by SSE events from /api/vision/express
   const [isExpressRunning, setIsExpressRunning] = useState(false)
   const [expressStatus, setExpressStatus] = useState<ExpressSceneStatusMap>({})
+  const [expressBeatFrameOverlay, setExpressBeatFrameOverlay] = useState<{
+    visible: boolean
+    sceneNumber: number
+    items: ExpressBeatFrameItem[]
+    phases: Record<ExpressOverlayPhase, ExpressPhaseStatus>
+    startedAt: number | null
+    finished: boolean
+    preflightError?: string
+  } | null>(null)
   
   // Share functionality state
   const [isSharing, setIsSharing] = useState(false)
@@ -11734,10 +11755,84 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       if (!projectId || !script?.script?.scenes?.[sceneIndex]) return
       if (isExpressRunning) return
 
+      const sceneRecord = script.script.scenes[sceneIndex] as Record<string, unknown>
+      const sceneNumber =
+        typeof sceneRecord.sceneNumber === 'number' ? sceneRecord.sceneNumber : sceneIndex + 1
+      const imageTier: 'draft' | 'final' = options?.finalizeOnly ? 'final' : 'draft'
+
+      const isOverlayPhase = (phase: string): phase is ExpressOverlayPhase =>
+        phase === 'direction' ||
+        phase === 'audio' ||
+        phase === 'image-plan' ||
+        phase === 'image'
+
+      const mapToExpressPhase = (phase: string): ExpressPhase | null => {
+        if (phase === 'direction' || phase === 'audio' || phase === 'image') return phase
+        return null
+      }
+
+      const updateOverlayPhase = (phase: ExpressOverlayPhase, status: ExpressPhaseStatus) => {
+        setExpressBeatFrameOverlay((prev) =>
+          prev ? { ...prev, phases: { ...prev.phases, [phase]: status } } : prev
+        )
+      }
+
+      const updateOverlayBeatFrame = (
+        beatIndex: number,
+        frameRole: 'start' | 'end',
+        status: ExpressBeatFrameStatus,
+        error?: string
+      ) => {
+        const key = slotKeyFromBeat(sceneRecord, beatIndex, frameRole)
+        setExpressBeatFrameOverlay((prev) =>
+          prev
+            ? {
+                ...prev,
+                items: updateBeatFrameItemStatus(prev.items, key, status, error),
+              }
+            : prev
+        )
+      }
+
+      const finishBeatFrameOverlay = (opts?: { preflightError?: string }) => {
+        setExpressBeatFrameOverlay((prev) => {
+          if (!prev) return prev
+          const next = {
+            ...prev,
+            finished: true,
+            ...(opts?.preflightError ? { preflightError: opts.preflightError } : {}),
+          }
+          const shouldAutoClose = !opts?.preflightError && !hasFrameErrors(next.items)
+          if (shouldAutoClose) {
+            window.setTimeout(() => setExpressBeatFrameOverlay(null), 1500)
+          }
+          return next
+        })
+      }
+
       setExpressStatus({
         [sceneIndex]: { direction: 'pending', audio: 'pending', image: 'pending' },
       })
       setIsExpressRunning(true)
+      setExpressBeatFrameOverlay({
+        visible: true,
+        sceneNumber,
+        items: buildExpressBeatFrameItems(sceneRecord, {
+          selectedFrameKeys: options?.selectedFrameKeys,
+          includeEndFrames: options?.includeEndFrames,
+          scope: options?.scope,
+          finalizeOnly: options?.finalizeOnly,
+          storyboardQuality: imageTier,
+        }),
+        phases: {
+          direction: 'pending',
+          audio: 'pending',
+          'image-plan': 'pending',
+          image: 'pending',
+        },
+        startedAt: Date.now(),
+        finished: false,
+      })
 
       const setPhase = (
         idx: number,
@@ -11772,8 +11867,6 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           }
         })
       }
-
-      const imageTier: 'draft' | 'final' = options?.finalizeOnly ? 'final' : 'draft'
 
       const refreshProjectScript = async () => {
         try {
@@ -11823,6 +11916,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           const errText = await response.text().catch(() => '')
           console.error('[Scene Express] Request failed:', response.status, errText)
           toast.error(`Scene Express failed: ${response.status} ${errText.slice(0, 120)}`)
+          setExpressBeatFrameOverlay(null)
           return
         }
 
@@ -11848,16 +11942,29 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             try {
               const event = JSON.parse(line.slice(6))
               switch (event.type) {
-                case 'phase-start':
-                  setPhase(event.sceneIndex, event.phase, 'running')
+                case 'phase-start': {
+                  const expressPhase = mapToExpressPhase(event.phase)
+                  if (expressPhase) {
+                    setPhase(event.sceneIndex, expressPhase, 'running')
+                  }
+                  if (isOverlayPhase(event.phase)) {
+                    updateOverlayPhase(event.phase, 'running')
+                  }
                   break
+                }
                 case 'phase-done':
                   if (event.ok) {
-                    setPhase(event.sceneIndex, event.phase, 'done', {
-                      ...(event.rateLimited
-                        ? { rateLimited: true, rateLimitedPhases: { [event.phase]: true } }
-                        : {}),
-                    })
+                    const expressPhase = mapToExpressPhase(event.phase)
+                    if (expressPhase) {
+                      setPhase(event.sceneIndex, expressPhase, 'done', {
+                        ...(event.rateLimited
+                          ? { rateLimited: true, rateLimitedPhases: { [expressPhase]: true } }
+                          : {}),
+                      })
+                    }
+                    if (isOverlayPhase(event.phase) && event.beatIndex == null) {
+                      updateOverlayPhase(event.phase, 'done')
+                    }
                     if (event.phase === 'image' && event.imageUrl) {
                       applyExpressSceneImage(event.sceneIndex, event.imageUrl, {
                         dialogueIndex: event.dialogueIndex,
@@ -11868,15 +11975,36 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                         frameRole: event.frameRole ?? 'start',
                       })
                     }
+                    if (event.phase === 'image' && event.beatIndex != null) {
+                      updateOverlayBeatFrame(
+                        event.beatIndex,
+                        event.frameRole ?? 'start',
+                        'done'
+                      )
+                    }
                   } else {
                     const phaseError = event.error || 'phase failed'
                     lastSceneError = phaseError
-                    setPhase(event.sceneIndex, event.phase, 'error', {
-                      error: phaseError,
-                      ...(event.rateLimited
-                        ? { rateLimited: true, rateLimitedPhases: { [event.phase]: true } }
-                        : {}),
-                    })
+                    const expressPhase = mapToExpressPhase(event.phase)
+                    if (expressPhase) {
+                      setPhase(event.sceneIndex, expressPhase, 'error', {
+                        error: phaseError,
+                        ...(event.rateLimited
+                          ? { rateLimited: true, rateLimitedPhases: { [expressPhase]: true } }
+                          : {}),
+                      })
+                    }
+                    if (isOverlayPhase(event.phase) && event.beatIndex == null) {
+                      updateOverlayPhase(event.phase, 'error')
+                    }
+                    if (event.phase === 'image' && event.beatIndex != null) {
+                      updateOverlayBeatFrame(
+                        event.beatIndex,
+                        event.frameRole ?? 'start',
+                        'error',
+                        phaseError
+                      )
+                    }
                     const errLower = String(phaseError).toLowerCase()
                     if (
                       !rateLimitToastShown &&
@@ -11890,10 +12018,32 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     }
                   }
                   break
+                case 'frame-start':
+                  updateOverlayBeatFrame(
+                    event.beatIndex,
+                    event.frameRole ?? 'start',
+                    'running'
+                  )
+                  break
                 case 'preflight-failed': {
                   const preflightMsg = event.errors?.join(' ') || 'preflight failed'
                   lastSceneError = preflightMsg
                   setPhase(event.sceneIndex, 'direction', 'error', { error: preflightMsg })
+                  setExpressBeatFrameOverlay((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          finished: true,
+                          preflightError: preflightMsg,
+                          phases: {
+                            direction: 'error',
+                            audio: 'error',
+                            'image-plan': 'error',
+                            image: 'error',
+                          },
+                        }
+                      : prev
+                  )
                   toast.error(event.errors?.[0] || 'Scene Express preflight failed')
                   failedScenes = 1
                   break
@@ -11919,6 +12069,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   successScenes = event.successScenes ?? 0
                   failedScenes = event.failedScenes ?? 0
                   rateLimitedFailureCount = event.rateLimitedFailures?.length ?? 0
+                  finishBeatFrameOverlay()
                   break
                 case 'error':
                   console.error('[Scene Express] Stream error:', event.error)
@@ -11951,8 +12102,25 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       } catch (err: any) {
         console.error('[Scene Express] Unexpected error:', err)
         toast.error(`Scene Express error: ${err?.message || String(err)}`)
+        setExpressBeatFrameOverlay((prev) =>
+          prev
+            ? {
+                ...prev,
+                finished: true,
+                preflightError: err?.message || String(err),
+              }
+            : prev
+        )
       } finally {
         setIsExpressRunning(false)
+        setExpressBeatFrameOverlay((prev) => {
+          if (!prev || prev.finished) return prev
+          const next = { ...prev, finished: true }
+          if (!hasFrameErrors(next.items) && !next.preflightError) {
+            window.setTimeout(() => setExpressBeatFrameOverlay(null), 1500)
+          }
+          return next
+        })
       }
     },
     [projectId, script, isExpressRunning, lockedArtStyle, imageQuality, rehydrateScriptFromProject, applyExpressSceneImage]
@@ -14007,6 +14175,19 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
         currentAspectRatio={lockedAspectRatio}
         onConfirm={navigateToBlueprintReimagine}
       />
+
+      {expressBeatFrameOverlay?.visible && (
+        <ExpressBeatFrameProgressOverlay
+          visible={expressBeatFrameOverlay.visible}
+          sceneNumber={expressBeatFrameOverlay.sceneNumber}
+          items={expressBeatFrameOverlay.items}
+          phases={expressBeatFrameOverlay.phases}
+          startedAt={expressBeatFrameOverlay.startedAt}
+          finished={expressBeatFrameOverlay.finished}
+          preflightError={expressBeatFrameOverlay.preflightError}
+          onClose={() => setExpressBeatFrameOverlay(null)}
+        />
+      )}
 
       {/* First-time onboarding tour */}
       <ProductionOnboarding />

@@ -161,6 +161,13 @@ export type ExpressEvent =
   | { type: 'scene-done'; sceneIndex: number; sceneNumber: number; ok: boolean; error?: string }
   | { type: 'preflight-failed'; sceneIndex: number; sceneNumber: number; errors: string[] }
   | { type: 'scene-persisted'; sceneIndex: number; sceneNumber: number }
+  | {
+      type: 'frame-start'
+      sceneIndex: number
+      sceneNumber: number
+      beatIndex: number
+      frameRole?: 'start' | 'end'
+    }
   | ExpressPhaseEvent
   | {
       type: 'throttle'

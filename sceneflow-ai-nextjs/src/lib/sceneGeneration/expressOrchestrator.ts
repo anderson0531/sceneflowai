@@ -480,6 +480,13 @@ async function generateSingleBeatImage(
   beatPlan?: BeatKeyframePlan
 ): Promise<{ imageUrl: string }> {
   const { sceneIndex, sceneNumber, scene } = ctx
+  safeEmit(emit, {
+    type: 'frame-start',
+    sceneIndex,
+    sceneNumber,
+    beatIndex: beatIdx,
+    frameRole: 'start',
+  })
   const imageParams = getExpressImageParams(options)
   const excludeCharacters = isStoryboardNoCharacterScene(scene, sceneNumber)
   const beats = getSceneBeats(scene)
@@ -594,6 +601,14 @@ async function generateSingleBeatEndImage(
   const beats = getSceneBeats(scene)
   const beat = beats[beatIdx]
   if (!beat) return { imageUrl: startFrameUrl }
+
+  safeEmit(emit, {
+    type: 'frame-start',
+    sceneIndex,
+    sceneNumber,
+    beatIndex: beatIdx,
+    frameRole: 'end',
+  })
 
   const endPrompt = buildEndFramePrompt(beat)
 
