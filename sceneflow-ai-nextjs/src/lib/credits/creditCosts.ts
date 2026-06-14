@@ -113,6 +113,9 @@ export const IMAGE_CREDITS = {
   /** Frame generation (start/end frames) */
   FRAME_GENERATION: 10,
 
+  /** Scene/wardrobe character reference headshot (Gemini Pro Image 4K) */
+  SCENE_CHARACTER_HEADSHOT: 15,
+
   /** Fal-hosted Kling image fallback after Vertex policy block (~$0.04–0.06) */
   FAL_KLING_IMAGE: 12,
   /** @deprecated Use FAL_KLING_IMAGE */

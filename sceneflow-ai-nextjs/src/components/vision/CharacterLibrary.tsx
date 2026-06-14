@@ -161,7 +161,7 @@ interface CharacterWardrobe {
   isDefault: boolean;
   createdAt: string;
   previewImageUrl?: string; // Legacy: AI-generated preview of character in this outfit
-  headshotUrl?: string; // Portrait headshot (1:1) showing character face with outfit context
+  headshotUrl?: string; // 16:9 cinematic wardrobe reference showing character in outfit context
   fullBodyUrl?: string; // 1-row mannequin outfit turnaround (4 full-body views)
   sceneNumbers?: number[]; // Scenes where this outfit is used (from script analysis)
   reason?: string; // AI explanation for why this outfit is needed
@@ -2825,7 +2825,7 @@ const CharacterCard = ({
                         }`}
                       >
                         {w.headshotUrl && (
-                          <div className="relative aspect-[3/4] max-h-48 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                          <div className="relative aspect-video max-h-48 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                             <img
                               src={w.headshotUrl}
                               alt={`${character.name} — ${w.name} wardrobe reference`}
@@ -3297,7 +3297,7 @@ const CharacterCard = ({
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Wardrobe Reference Image
                   </h4>
-                  <div className="relative aspect-[3/4] max-w-xs mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                  <div className="relative aspect-video max-w-md mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                     {expandedWardrobe.headshotUrl ? (
                       <img
                         src={expandedWardrobe.headshotUrl}

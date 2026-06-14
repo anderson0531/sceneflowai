@@ -12,8 +12,12 @@ import {
 } from '@/lib/character/characterReferenceAssembly'
 import { stripDialoguePrompt } from '@/lib/vision/framePromptBaseline'
 
+export const SCENE_CHARACTER_HEADSHOT_ASPECT_RATIO = '16:9' as const
+export const SCENE_CHARACTER_HEADSHOT_IMAGE_SIZE = '4K' as const
+export const SCENE_CHARACTER_HEADSHOT_MODEL_TIER = 'designer' as const
+
 export const SCENE_CHARACTER_HEADSHOT_ANCHOR =
-  'Photorealistic waist-up character reference headshot for cinematic scene consistency.'
+  'Photorealistic cinematic 16:9 waist-up character reference for scene beat consistency.'
 
 /** Negative terms targeting physics violations and object hallucinations. */
 export const PHYSICS_HALLUCINATION_NEGATIVE_PROMPT =
@@ -118,7 +122,7 @@ export function mergePhysicsNegativePrompt(existing?: string | null): string {
   return [...new Set(parts.join(', ').split(/,\s*/).map((p) => p.trim()).filter(Boolean))].join(', ')
 }
 
-/** Build waist-up headshot prompt from identity + wardrobe + scene-directed appearance. */
+/** Build cinematic 16:9 waist-up reference prompt from identity + wardrobe + scene-directed appearance. */
 export function buildSceneCharacterHeadshotPrompt(input: SceneCharacterHeadshotInput): string {
   const directives = extractSceneAppearanceDirectives(input.beatAction, input.sceneAction)
   const hairAnchor =
@@ -137,7 +141,7 @@ export function buildSceneCharacterHeadshotPrompt(input: SceneCharacterHeadshotI
     '',
     `Character: ${input.characterName}.`,
     'Match face shape, skin tone, age, ethnicity, and bone structure exactly from the identity reference image.',
-    'Frame as waist-up portrait (head, shoulders, upper torso visible). Neutral soft studio background.',
+    'Frame as cinematic 16:9 medium shot — waist-up, head through upper torso visible, subject centered, neutral soft studio background.',
   ]
 
   const wardrobeParts = [input.wardrobeDescription?.trim(), input.wardrobeAccessories?.trim()].filter(
@@ -259,8 +263,9 @@ export async function generateSceneCharacterHeadshotImage(
   const prompt = buildSceneCharacterHeadshotPrompt(input)
   const result = await generateImageWithGeminiStudio({
     prompt,
-    aspectRatio: '3:4',
-    imageSize: '1K',
+    aspectRatio: SCENE_CHARACTER_HEADSHOT_ASPECT_RATIO,
+    imageSize: SCENE_CHARACTER_HEADSHOT_IMAGE_SIZE,
+    modelTier: SCENE_CHARACTER_HEADSHOT_MODEL_TIER,
     referenceImages: [
       {
         imageUrl: input.identityReferenceUrl,

@@ -13,7 +13,7 @@ import {
 export const runtime = 'nodejs'
 export const maxDuration = 120
 
-const CREDIT_COST = IMAGE_CREDITS.IMAGEN_3
+const CREDIT_COST = IMAGE_CREDITS.SCENE_CHARACTER_HEADSHOT
 
 interface GenerateSceneHeadshotRequest extends SceneCharacterHeadshotInput {
   projectId?: string

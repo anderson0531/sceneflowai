@@ -5,6 +5,9 @@ import {
   extractSceneAppearanceDirectives,
   mergePhysicsNegativePrompt,
   pickSceneHeadshotUrl,
+  SCENE_CHARACTER_HEADSHOT_ASPECT_RATIO,
+  SCENE_CHARACTER_HEADSHOT_IMAGE_SIZE,
+  SCENE_CHARACTER_HEADSHOT_MODEL_TIER,
   shouldGenerateSceneHeadshot,
 } from '@/lib/character/sceneCharacterHeadshot'
 
@@ -42,6 +45,16 @@ describe('buildSceneCharacterHeadshotPrompt', () => {
     expect(prompt).toContain('bruise')
     expect(prompt).toContain('do not restyle hair')
     expect(prompt).toContain('exhausted')
+    expect(prompt).toContain('16:9')
+    expect(prompt).toMatch(/cinematic 16:9 medium shot/i)
+  })
+})
+
+describe('scene character headshot generation settings', () => {
+  it('uses 16:9 4K designer tier for highest-quality reference images', () => {
+    expect(SCENE_CHARACTER_HEADSHOT_ASPECT_RATIO).toBe('16:9')
+    expect(SCENE_CHARACTER_HEADSHOT_IMAGE_SIZE).toBe('4K')
+    expect(SCENE_CHARACTER_HEADSHOT_MODEL_TIER).toBe('designer')
   })
 })
 
