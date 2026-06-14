@@ -27,11 +27,14 @@ import { isStoryboardNoCharacterScene } from '@/lib/script/sceneClassification'
 import { getSceneBeats, isNarratorBeat } from '@/lib/script/beatMigration'
 import { NARRATOR_CHARACTER, type BeatKind } from '@/lib/script/segmentTypes'
 import {
+  buildCharacterHairAnchor,
+  buildCharacterHairDescription,
   buildDualReferenceNegativeTerms,
   buildFramingAwareIdentityBlock,
+  buildHairCompositionLock,
+  buildHairStyleNegativeTerms,
   buildIdentityReferenceLabel,
   buildIdentityReferencePromptLine,
-  buildCharacterHairDescription,
   buildWardrobeReferenceLabel,
   buildWardrobeReferencePromptLine,
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
@@ -1019,7 +1022,23 @@ export async function POST(req: NextRequest) {
       
       console.log(`[Scene Image] Extracted key features for ${char.name}:`, keyFeatures)
 
-      const hairDescription = buildCharacterHairDescription(char)
+      const appearanceSource =
+        char.appearanceDescription || char.visionDescription || char.description || ''
+      const hairAnchor = buildCharacterHairAnchor({
+        hairStyle: char.hairStyle,
+        hairColor: char.hairColor,
+        appearanceDescription: appearanceSource,
+        visionDescription: char.visionDescription,
+      })
+      const hairDescription =
+        buildCharacterHairDescription(char) ??
+        (hairAnchor ? hairAnchor.replace(/ matching identity reference$/i, '') : undefined)
+
+      if (!char.hairStyle?.trim() && hairAnchor) {
+        console.warn(
+          `[Scene Image] ${char.name} missing hairStyle field; using hair anchor extracted from appearance metadata`
+        )
+      }
       
       // Build wardrobe description if available (using effective wardrobe, which may be overridden)
       // When a costume reference image exists, we minimize wardrobe text since the model sees it
@@ -1044,9 +1063,6 @@ export async function POST(req: NextRequest) {
       // subjectTextDescription: metadata for structured API reference payload (not repeated in scene prompt)
       // promptToken: reference-first binding for all prompt text — "person [N]" only when identity ref exists
       let subjectTextDescription: string | undefined
-      const appearanceSource =
-        char.appearanceDescription || char.visionDescription || char.description || ''
-
       if (identityReferenceId) {
         subjectTextDescription = char.name || 'person'
       } else if (hasReferenceImage && appearanceSource) {
@@ -1092,6 +1108,7 @@ export async function POST(req: NextRequest) {
         ethnicity: char.ethnicity,
         keyFeatures: keyFeatures.length > 0 ? keyFeatures : undefined,
         hairDescription,
+        hairAnchor,
         hairStyle: char.hairStyle,
         hairColor: char.hairColor,
         defaultWardrobe: hasWardrobeReference ? undefined : effectiveWardrobe,
@@ -1212,7 +1229,7 @@ export async function POST(req: NextRequest) {
         appearanceDescription: ref.appearanceDescription,
         wardrobeDescription: ref.defaultWardrobe,
         wardrobeAccessories: ref.wardrobeAccessories,
-        hairDescription: ref.hairDescription,
+        hairDescription: ref.hairAnchor ?? ref.hairDescription,
         hasReferenceImage: !!ref.identityReferenceId || !!ref.wardrobeReferenceId,
         referenceIndex: ref.identityReferenceId ?? ref.wardrobeReferenceId,
         identityReferenceIndex: ref.identityReferenceId,
@@ -1394,6 +1411,14 @@ export async function POST(req: NextRequest) {
       optimizedPrompt = `${optimizedPrompt.trim()}. ${photorealisticAnchor}`
     }
 
+    const personTokens = characterReferences
+      .map((ref: { promptToken?: string }) => ref.promptToken)
+      .filter((token): token is string => !!token)
+    const hairCompositionLock = buildHairCompositionLock(fullSceneContext, personTokens)
+    if (hairCompositionLock && !optimizedPrompt.includes('do not pull hair back')) {
+      optimizedPrompt = `${optimizedPrompt.trim()} ${hairCompositionLock}`.trim()
+    }
+
     // Validate we have a prompt to send to the model
     if (!optimizedPrompt || !optimizedPrompt.trim()) {
       console.warn('[Scene Image] Missing scene description/prompt. projectId, sceneIndex, scenePrompt/customPrompt are required.')
@@ -1479,6 +1504,14 @@ export async function POST(req: NextRequest) {
       if (char.appearanceDescription && char.appearanceDescription.toLowerCase().includes('smile')) {
         characterSpecificNegatives.push('frowning', 'sad expression', 'angry expression')
       }
+
+      const charRef = characterReferences.find((cr: { name?: string }) => cr.name === char.name)
+      characterSpecificNegatives.push(
+        ...buildHairStyleNegativeTerms(
+          char.hairStyle,
+          charRef?.hairDescription || charRef?.hairAnchor
+        )
+      )
       
       // REMOVED: Wardrobe-specific negatives - using positive reinforcement in prompt instead
       // Gemini docs recommend describing what you WANT, not what to avoid
@@ -1611,6 +1644,12 @@ export async function POST(req: NextRequest) {
               )
               if (ref.refRole === 'identity') {
                 geminiPrompt += `${buildIdentityReferencePromptLine(ref.characterName, ref.referenceId)}\n`
+                const hairLock =
+                  matchingCharRef?.hairAnchor ?? matchingCharRef?.hairDescription
+                if (hairLock) {
+                  geminiPrompt +=
+                    `  Hairstyle lock: ${hairLock} — do not restyle for framing or injuries.\n`
+                }
               } else if (matchingCharRef?.hasDualReferences) {
                 geminiPrompt += `${buildWardrobeReferencePromptLine(ref.characterName, ref.referenceId)}\n`
               } else {
@@ -1653,6 +1692,9 @@ export async function POST(req: NextRequest) {
           
           geminiPrompt += `CRITICAL REQUIREMENTS:\n`
           geminiPrompt += `- Preserve character identity from identity reference images exactly\n`
+          if (hairCompositionLock) {
+            geminiPrompt += `- ${hairCompositionLock}\n`
+          }
           if (cappedImageReferences.length > 0) {
             const wardrobeReminders = characterReferences
               .filter((cr: any) => cr.defaultWardrobe && !cr.hasWardrobeReference)

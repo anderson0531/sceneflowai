@@ -9,7 +9,11 @@
  */
 
 import { artStylePresets } from '@/constants/artStylePresets'
-import { buildCharacterHairDescription } from '@/lib/character/characterReferenceAssembly'
+import {
+  buildCharacterHairAnchor,
+  buildCharacterHairDescription,
+  buildHairCompositionLock,
+} from '@/lib/character/characterReferenceAssembly'
 
 /**
  * Extract demographic anchor (ethnicity + age + key features) from appearance description.
@@ -217,6 +221,7 @@ interface OptimizePromptParams {
     hairStyle?: string
     hairColor?: string
     hairDescription?: string
+    hairAnchor?: string
     hasDualReferences?: boolean
     identityReferenceId?: number
     wardrobeReferenceId?: number
@@ -751,40 +756,57 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
               hairStyle: fullRef?.hairStyle,
               hairColor: fullRef?.hairColor,
             }),
+          hairAnchor: buildCharacterHairAnchor({
+            hairStyle: fullRef?.hairStyle,
+            hairColor: fullRef?.hairColor,
+            appearanceDescription: fullRef?.appearanceDescription,
+          }),
         }
       })
     
+    const appendHairLockClause = (
+      clause: string,
+      ref: { hairAnchor?: string; hairDescription?: string },
+      hasReferenceImage: boolean
+    ): string => {
+      const hair = ref.hairAnchor ?? ref.hairDescription
+      if (!hair) return clause
+      if (hasReferenceImage) {
+        return `${clause}, hair: ${hair} (match identity reference exactly)`
+      }
+      return `${clause}, ${hair}`
+    }
+
     // PHASE 1: Build SUBJECT & WARDROBE section (placed FIRST)
     // REFERENCE-FIRST STRATEGY:
-    // - With reference image: Use ONLY "person [1]" - let the image define ALL visual identity
-    // - Without reference image: Full text description defines identity
-    // 
-    // IMPORTANT: Adding text descriptions alongside reference tokens creates conflict.
-    // The model tries to satisfy BOTH the text AND the image, which "smooths over"
-    // the unique features of the reference image. Pure token binding is more accurate.
+    // - With reference image: use person [N] token; face/body from image
+    // - Hairstyle lock text is allowed alongside identity refs (styling constraint, not identity prose)
     const subjectWardrobeDescriptions: string[] = []
     characterRefs.forEach(ref => {
       const fullRef = params.characterReferences!.find((r) => r.name === ref.name)
       const token = ref.promptToken || ref.linkingDescription
+      const hasReferenceImage = !!(token?.includes('[') && token?.includes(']'))
+
       if (fullRef?.hasDualReferences && fullRef.wardrobeReferenceId && token) {
         subjectWardrobeDescriptions.push(
-          `${token}; clothing from wardrobe reference [${fullRef.wardrobeReferenceId}] only (not face, body, or rendering style)`
+          appendHairLockClause(
+            `${token}; clothing from wardrobe reference [${fullRef.wardrobeReferenceId}] only (not face, body, or rendering style)`,
+            ref,
+            true
+          )
         )
         return
       }
 
       if (ref.defaultWardrobe) {
-        // Check if this character has a reference image (indicated by [N] pattern)
-        const hasReferenceImage = token?.includes('[') && token?.includes(']')
-        
         let subjectClause = token
         
         if (hasReferenceImage) {
-          // REFERENCE-FIRST: Use ONLY the token binding, no text description
           subjectClause = token
-          console.log(`[Prompt Optimizer] Reference-first for ${ref.name}: using pure token "${token}" (no text anchor)`)
+          console.log(
+            `[Prompt Optimizer] Reference-first for ${ref.name}: token "${token}" with hairstyle lock when available`
+          )
         } else if (ref.appearanceDescription) {
-          // No reference image: use full text description
           const sentences = ref.appearanceDescription.split(/[.!?]+/).filter(s => s.trim())
           const conciseAppearance = sentences.slice(0, 2).join('. ').trim()
           if (conciseAppearance) {
@@ -792,15 +814,15 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
             console.log(`[Prompt Optimizer] No reference image for ${ref.name}, using text description: "${conciseAppearance.substring(0, 60)}..."`)
           }
         }
-        
+
+        subjectClause = appendHairLockClause(subjectClause, ref, !!hasReferenceImage)
         let wardrobeDesc = `${subjectClause}, wearing ${ref.defaultWardrobe}`
         if (ref.wardrobeAccessories) {
           wardrobeDesc += ` with ${ref.wardrobeAccessories}`
         }
-        if (ref.hairDescription) {
-          wardrobeDesc += `, ${ref.hairDescription}`
-        }
         subjectWardrobeDescriptions.push(wardrobeDesc)
+      } else if (hasReferenceImage && (ref.hairAnchor || ref.hairDescription)) {
+        subjectWardrobeDescriptions.push(appendHairLockClause(token, ref, true))
       }
     })
     
@@ -813,6 +835,16 @@ export function optimizePromptForImagen(params: OptimizePromptParams, returnDeta
     promptScene = promptScene.replace(/\b(says?|said|exclaims?|asks?|replies?|responds?|whispers?|shouts?)\b/gi, '')
     // Clean up double spaces
     promptScene = promptScene.replace(/\s+/g, ' ').trim()
+
+    const compositionLock = buildHairCompositionLock(
+      cleanedAction,
+      characterRefs
+        .map((ref) => ref.promptToken || ref.linkingDescription)
+        .filter((token): token is string => !!token)
+    )
+    if (compositionLock) {
+      promptScene = `${promptScene} ${compositionLock}`.trim()
+    }
     
     // PHASE 3: Replace character names with reference tokens
     characterRefs.forEach(ref => {

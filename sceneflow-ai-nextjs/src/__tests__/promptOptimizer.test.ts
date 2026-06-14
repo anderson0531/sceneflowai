@@ -85,4 +85,57 @@ describe('promptOptimizer reference-first binding', () => {
     )
     expect(filtered.map((r) => r.name)).toEqual(['Elara Vance'])
   })
+
+  it('includes hair lock in Subject & Wardrobe when identity ref and hairStyle exist', () => {
+    const prompt = optimizePromptForImagen({
+      sceneAction:
+        'Close-up of person [1] with bloodshot eyes and a faint bruise on her left temple.',
+      visualDescription:
+        'Close-up of person [1] with bloodshot eyes and a faint bruise on her left temple.',
+      artStyle: 'photorealistic',
+      characterReferences: [
+        {
+          referenceId: 1,
+          name: 'Elara',
+          description: 'Woman in her early 30s',
+          identityReferenceId: 1,
+          promptToken: 'person [1]',
+          linkingDescription: 'person [1]',
+          defaultWardrobe: 'black compression top and leggings',
+          hairStyle: 'swept back ponytail',
+          hairColor: 'dark auburn',
+        },
+      ],
+    })
+
+    expect(prompt).toContain('Subject & Wardrobe:')
+    expect(prompt).toContain('hair: dark auburn swept back ponytail hair matching identity reference')
+    expect(prompt).toContain('match identity reference exactly')
+  })
+
+  it('adds composition lock for temple bruise beats', () => {
+    const prompt = optimizePromptForImagen({
+      sceneAction:
+        'person [1] face close-up with a purplish bruise forming on her left temple.',
+      visualDescription:
+        'person [1] face close-up with a purplish bruise forming on her left temple.',
+      artStyle: 'photorealistic',
+      characterReferences: [
+        {
+          referenceId: 1,
+          name: 'Elara',
+          description: 'Woman in her early 30s',
+          identityReferenceId: 1,
+          promptToken: 'person [1]',
+          linkingDescription: 'person [1]',
+          defaultWardrobe: 'black compression top',
+          hairStyle: 'loose waves',
+          hairColor: 'dark brown',
+        },
+      ],
+    })
+
+    expect(prompt).toContain('do not pull hair back')
+    expect(prompt).toContain('without changing hair placement')
+  })
 })

@@ -234,7 +234,8 @@ CRITICAL RULES:
 2. TITLE SEQUENCES: For title/credit beats, compose a CENTERED title card. The film title is the primary subject with genre-appropriate background. No people unless explicitly required.
 
 3. NO CONFLICTING TEXT WITH REFERENCES:
-   - When an identity reference exists (person [N]), NEVER describe face, skin, ethnicity, age, gender, hair, or body type in text — the reference image owns identity
+   - When an identity reference exists (person [N]), NEVER describe face, skin, ethnicity, age, gender, or body type in text — the reference image owns those
+   - When hairDescription is provided in input for a character with an identity ref, DO include a concise Hair lock in [SCENE COMPOSITION & BEAT] or Subject section — e.g. "person [1], hair: swept-back dark auburn ponytail (match identity reference exactly)"
    - When a wardrobe reference exists (Ref Image [M]), NEVER describe outfit colors, garments, or accessories in text — the wardrobe reference owns clothing
    - When a location reference exists, NEVER describe architectural layout, furniture placement, or room geometry in text — the location reference owns the set
    - When a prop reference exists, NEVER describe the prop's visual appearance in text — only name it and its narrative role/action
@@ -279,7 +280,9 @@ For EACH reference image provided in the input, add one bullet using the exact R
 Omit mapping lines for references not used in this beat.
 
 [EXCLUSIONS & BOUNDARIES]
-Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, 2x2 grid output, 4-panel layout, split-screen output, multi-panel layout, diptych, reference sheet collage, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).`
+Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, 2x2 grid output, 4-panel layout, split-screen output, multi-panel layout, diptych, reference sheet collage, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).
+
+8. FOREHEAD/TEMPLE INJURIES: When the beat describes a bruise, cut, or injury on the forehead or temple, preserve the character's reference hairstyle exactly — do NOT pull hair back or restyle to expose the injury. The injury must be visible without changing hair placement.`
 }
 
 /**
@@ -323,7 +326,7 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
       const hasWardrobeRef = !!char.wardrobeReferenceIndex
       const useAppearanceText = !char.hasReferenceImage && char.appearanceDescription
       const useWardrobeText = !hasWardrobeRef && char.wardrobeDescription
-      const useHairText = !hasIdentityRef && char.hairDescription
+      const useHairText = !!char.hairDescription
 
       let refLabel = ' [No reference image — describe appearance in prompt]'
       if (char.hasDualReferences && char.identityReferenceIndex && char.wardrobeReferenceIndex) {
@@ -343,7 +346,9 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
         prompt += `   Appearance: USE IDENTITY REF ONLY — do not describe face/body in prompt text\n`
       }
 
-      if (useHairText) {
+      if (useHairText && hasIdentityRef) {
+        prompt += `   Hair (lock — match identity ref): ${char.hairDescription}\n`
+      } else if (useHairText) {
         prompt += `   Hair (text-only): ${char.hairDescription}\n`
       }
       
