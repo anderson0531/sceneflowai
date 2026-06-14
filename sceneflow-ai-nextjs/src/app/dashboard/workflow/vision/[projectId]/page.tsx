@@ -2245,6 +2245,12 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
       selectedCharacters?: Array<{
         name: string
         referenceImageUrl?: string
+        sceneHeadshotUrl?: string
+        wardrobeReferenceUrl?: string
+        hasDualReferences?: boolean
+        hasCostumeReference?: boolean
+        emotion?: string
+        selectedWardrobeId?: string
       }>
       /** Visual setup options (from guided mode) */
       visualSetup?: {
@@ -2377,12 +2383,17 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                     name: selected.name,
                     appearance: fullChar?.appearanceDescription || fullChar?.description,
                     referenceUrl: selected.referenceImageUrl || fullChar?.referenceImage,
+                    sceneHeadshotUrl: selected.sceneHeadshotUrl,
                     wardrobeReferenceUrl: selected.wardrobeReferenceUrl,
                     hasDualReferences: selected.hasDualReferences,
                     hasCostumeReference: selected.hasCostumeReference,
                     ethnicity: (fullChar as any)?.ethnicity,
                     age: (fullChar as any)?.age,
-                    wardrobe: selected.wardrobe || (fullChar as any)?.defaultWardrobe || (fullChar as any)?.wardrobe,
+                    emotion: selected.emotion,
+                    selectedWardrobeId: selected.selectedWardrobeId,
+                    hairStyle: (fullChar as any)?.hairStyle,
+                    hairColor: (fullChar as any)?.hairColor,
+                    characterRecord: fullChar as Record<string, unknown> | undefined,
                   }
                 })
               : options?.selectedCharacters?.length
@@ -2392,15 +2403,24 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                       name: selected.name,
                       appearance: fullChar?.appearanceDescription || fullChar?.description,
                       referenceUrl: selected.referenceImageUrl || fullChar?.referenceImage,
+                      sceneHeadshotUrl: selected.sceneHeadshotUrl,
                       wardrobeReferenceUrl: selected.wardrobeReferenceUrl,
                       hasDualReferences: selected.hasDualReferences,
                       hasCostumeReference: selected.hasCostumeReference,
                       ethnicity: (fullChar as any)?.ethnicity,
                       age: (fullChar as any)?.age,
-                      wardrobe: selected.wardrobe || (fullChar as any)?.defaultWardrobe || (fullChar as any)?.wardrobe,
+                      emotion: selected.emotion,
+                      selectedWardrobeId: selected.selectedWardrobeId,
+                      hairStyle: (fullChar as any)?.hairStyle,
+                      hairColor: (fullChar as any)?.hairColor,
+                      characterRecord: fullChar as Record<string, unknown> | undefined,
                     }
                   })
                 : [],
+            sceneIndex: script?.script?.scenes?.findIndex((s: any) =>
+              (s.id || s.sceneId || `scene-${script?.script?.scenes?.indexOf(s)}`) === sceneId
+            ),
+            sceneRecord: scene as Record<string, unknown> | undefined,
             sceneContext: {
               heading: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,
               location: typeof scene?.heading === 'string' ? scene.heading : scene?.heading?.text,

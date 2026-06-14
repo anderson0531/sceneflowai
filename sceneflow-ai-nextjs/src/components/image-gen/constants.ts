@@ -204,6 +204,12 @@ export const NEGATIVE_PROMPT_PRESETS: readonly NegativePromptPreset[] = [
     label: 'Motion Blur',
     value: 'motion blur, camera shake, unfocused, blurry movement, ghosting',
   },
+  {
+    id: 'physics',
+    label: 'Physics & Hallucinations',
+    value:
+      'floating objects, missing limbs, physically impossible anatomy, multiple limbs, floating chairs, sitting without a chair, chairs on tables, hallucinated objects, impossible physics, mutated bodies, deformed furniture',
+  },
 ] as const
 
-export const DEFAULT_NEGATIVE_PRESETS = ['quality', 'text']
+export const DEFAULT_NEGATIVE_PRESETS = ['quality', 'text', 'physics']

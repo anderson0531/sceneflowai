@@ -62,7 +62,9 @@ describe('framePromptBaseline', () => {
       endFramePrompt:
         'Subtle environmental motion while preserving composition: nebula coalescing further',
     })
-    expect(instruction.startsWith('Edit start frame:')).toBe(true)
+    expect(instruction).toContain('DO NOT hallucinate new objects')
+    expect(instruction).toContain('Maintain absolute physics and visual continuity')
+    expect(instruction).toContain('Edit start frame:')
     expect(instruction).toContain('ethereal nebula')
     expect(instruction).not.toMatch(/Wide Shot/i)
     expect(instruction).not.toMatch(/Dolly in/i)

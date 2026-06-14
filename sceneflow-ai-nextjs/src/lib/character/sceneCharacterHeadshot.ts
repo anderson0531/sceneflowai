@@ -1,0 +1,368 @@
+/**
+ * Scene-specific character headshot generation for beat frame consistency.
+ * Combines identity reference + scene wardrobe + beat-directed appearance (makeup, bruises, hair).
+ */
+
+import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageClient'
+import { uploadImageToBlob } from '@/lib/storage/blob'
+import {
+  buildCharacterHairAnchor,
+  buildCharacterHairDescription,
+  resolveWardrobeForCharacter,
+} from '@/lib/character/characterReferenceAssembly'
+import { stripDialoguePrompt } from '@/lib/vision/framePromptBaseline'
+
+export const SCENE_CHARACTER_HEADSHOT_ANCHOR =
+  'Photorealistic waist-up character reference headshot for cinematic scene consistency.'
+
+/** Negative terms targeting physics violations and object hallucinations. */
+export const PHYSICS_HALLUCINATION_NEGATIVE_PROMPT =
+  'floating objects, missing limbs, physically impossible anatomy, multiple limbs, floating chairs, sitting without a chair, chairs on tables, hallucinated objects, impossible physics, mutated bodies, deformed furniture, objects defying gravity, clipping geometry'
+
+const MAKEUP_PATTERN =
+  /\b(makeup|lipstick|eyeliner|mascara|foundation|contour|blush|cosmetic|smudged makeup|runny mascara)\b/i
+const INJURY_PATTERN =
+  /\b(bruise|contusion|laceration|cut|scar|black eye|swelling|wound|injury|gash|scratch|bloodshot|split lip|bandage|stitches)\b/i
+const HAIR_CHANGE_PATTERN =
+  /\b(hair (?:pulled back|tied|in a bun|in a ponytail|down|wet|disheveled|mussed)|ponytail|topknot|slicked back|loose waves)\b/i
+
+export interface SceneAppearanceDirectives {
+  makeup?: string
+  injuries?: string
+  hairNotes?: string
+  hasSceneSpecificChanges: boolean
+}
+
+export interface SceneCharacterHeadshotInput {
+  characterName: string
+  identityReferenceUrl: string
+  wardrobeDescription?: string
+  wardrobeAccessories?: string
+  beatAction?: string
+  sceneAction?: string
+  emotion?: string
+  hairStyle?: string
+  hairColor?: string
+  appearanceDescription?: string
+  /** Existing wardrobe headshot — reused when no beat-specific appearance changes */
+  existingWardrobeHeadshotUrl?: string
+}
+
+export interface SimplifiedBeatFramePromptInput {
+  beatAction: string
+  characters: Array<{ name: string; referenceIndex: number; emotion?: string }>
+  artStyleSuffix?: string
+  locationRefLine?: string
+}
+
+export interface ResolveSceneHeadshotCharacterInput {
+  name: string
+  referenceUrl?: string
+  sceneHeadshotUrl?: string
+  wardrobe?: string
+  wardrobeAccessories?: string
+  emotion?: string
+  hairStyle?: string
+  hairColor?: string
+  appearance?: string
+  /** Full character record for wardrobe resolution */
+  characterRecord?: Record<string, unknown>
+  scene?: Record<string, unknown> | null
+  sceneIndex?: number
+  selectedWardrobeId?: string
+}
+
+/** Extract makeup, injury, and hair notes from beat/scene text for headshot generation. */
+export function extractSceneAppearanceDirectives(
+  beatAction?: string,
+  sceneAction?: string
+): SceneAppearanceDirectives {
+  const source = `${beatAction || ''} ${sceneAction || ''}`.trim()
+  if (!source) {
+    return { hasSceneSpecificChanges: false }
+  }
+
+  const sentences = source
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  const makeupParts: string[] = []
+  const injuryParts: string[] = []
+  const hairParts: string[] = []
+
+  for (const sentence of sentences) {
+    if (MAKEUP_PATTERN.test(sentence)) makeupParts.push(sentence)
+    if (INJURY_PATTERN.test(sentence)) injuryParts.push(sentence)
+    if (HAIR_CHANGE_PATTERN.test(sentence)) hairParts.push(sentence)
+  }
+
+  const makeup = makeupParts.length ? makeupParts.join(' ') : undefined
+  const injuries = injuryParts.length ? injuryParts.join(' ') : undefined
+  const hairNotes = hairParts.length ? hairParts.join(' ') : undefined
+
+  return {
+    makeup,
+    injuries,
+    hairNotes,
+    hasSceneSpecificChanges: !!(makeup || injuries || hairNotes),
+  }
+}
+
+export function mergePhysicsNegativePrompt(existing?: string | null): string {
+  const parts = [PHYSICS_HALLUCINATION_NEGATIVE_PROMPT]
+  const trimmed = existing?.trim()
+  if (trimmed) parts.push(trimmed)
+  return [...new Set(parts.join(', ').split(/,\s*/).map((p) => p.trim()).filter(Boolean))].join(', ')
+}
+
+/** Build waist-up headshot prompt from identity + wardrobe + scene-directed appearance. */
+export function buildSceneCharacterHeadshotPrompt(input: SceneCharacterHeadshotInput): string {
+  const directives = extractSceneAppearanceDirectives(input.beatAction, input.sceneAction)
+  const hairAnchor =
+    buildCharacterHairAnchor({
+      hairStyle: input.hairStyle,
+      hairColor: input.hairColor,
+      appearanceDescription: input.appearanceDescription,
+    }) ??
+    buildCharacterHairDescription({
+      hairStyle: input.hairStyle,
+      hairColor: input.hairColor,
+    })
+
+  const lines = [
+    SCENE_CHARACTER_HEADSHOT_ANCHOR,
+    '',
+    `Character: ${input.characterName}.`,
+    'Match face shape, skin tone, age, ethnicity, and bone structure exactly from the identity reference image.',
+    'Frame as waist-up portrait (head, shoulders, upper torso visible). Neutral soft studio background.',
+  ]
+
+  const wardrobeParts = [input.wardrobeDescription?.trim(), input.wardrobeAccessories?.trim()].filter(
+    Boolean
+  ) as string[]
+  if (wardrobeParts.length) {
+    lines.push('', `Wearing: ${wardrobeParts.join('. ')}.`)
+  }
+
+  if (hairAnchor) {
+    lines.push(`Hairstyle: ${hairAnchor}.`)
+  } else if (directives.hairNotes) {
+    lines.push(`Hairstyle: ${directives.hairNotes}.`)
+  }
+
+  if (directives.makeup) {
+    lines.push(`Makeup: ${directives.makeup}.`)
+  }
+  if (directives.injuries) {
+    lines.push(
+      `Visible injuries/marks: ${directives.injuries}. Preserve reference hairstyle — do not restyle hair to expose injuries.`
+    )
+  }
+
+  if (input.emotion?.trim()) {
+    lines.push(`Expression/emotion: ${input.emotion.trim()}.`)
+  }
+
+  lines.push(
+    '',
+    'Output a single photorealistic human reference image. No text, watermarks, turnaround sheets, or mannequins.'
+  )
+
+  return lines.join('\n')
+}
+
+/** Simplified beat start-frame prompt — references wardrobe headshot only; includes directed emotion. */
+export function buildSimplifiedBeatFramePrompt(input: SimplifiedBeatFramePromptInput): string {
+  const subjects =
+    input.characters.map((c) => `person [${c.referenceIndex}]`).join(' and ') || 'the subject'
+  const action = stripDialoguePrompt(input.beatAction.trim())
+  const emotionLines = input.characters
+    .filter((c) => c.emotion?.trim())
+    .map((c) => `${c.name}: ${c.emotion!.trim()}`)
+
+  const lines = [
+    `Cinematic film frame featuring ${subjects}.`,
+    `Action: ${action}`,
+  ]
+
+  if (emotionLines.length) {
+    lines.push(`Directed emotion: ${emotionLines.join('; ')}.`)
+  }
+
+  lines.push(
+    'Match each character\'s wardrobe, hairstyle, makeup, and any injuries exactly from their wardrobe reference image. Do not describe clothing or costume in text.'
+  )
+
+  if (input.locationRefLine?.trim()) {
+    lines.push(input.locationRefLine.trim())
+  }
+  if (input.artStyleSuffix?.trim()) {
+    lines.push(`Style: ${input.artStyleSuffix.trim()}`)
+  }
+
+  return lines.join('\n')
+}
+
+export function resolveWardrobeTextForCharacter(
+  character: Record<string, unknown>,
+  scene?: Record<string, unknown> | null,
+  sceneIndex?: number,
+  selectedWardrobeId?: string
+): { description?: string; accessories?: string; headshotUrl?: string } {
+  let resolved = resolveWardrobeForCharacter(character, scene, undefined, sceneIndex)
+
+  if (selectedWardrobeId && Array.isArray(character.wardrobes)) {
+    const picked = (character.wardrobes as Record<string, unknown>[]).find(
+      (w) => w.id === selectedWardrobeId
+    )
+    if (picked) resolved = picked
+  }
+
+  if (!resolved) {
+    const legacy = character.defaultWardrobe as string | undefined
+    return legacy ? { description: legacy } : {}
+  }
+
+  return {
+    description: resolved.description as string | undefined,
+    accessories: resolved.accessories as string | undefined,
+    headshotUrl: resolved.headshotUrl as string | undefined,
+  }
+}
+
+/** Decide whether to reuse an existing wardrobe headshot or generate a scene-specific one. */
+export function shouldGenerateSceneHeadshot(
+  input: SceneCharacterHeadshotInput
+): boolean {
+  if (!input.identityReferenceUrl?.trim()) return false
+  const directives = extractSceneAppearanceDirectives(input.beatAction, input.sceneAction)
+  if (directives.hasSceneSpecificChanges) return true
+  if (input.emotion?.trim()) return true
+  if (input.wardrobeDescription?.trim() && !input.existingWardrobeHeadshotUrl) return true
+  return false
+}
+
+export function pickSceneHeadshotUrl(input: SceneCharacterHeadshotInput): string | undefined {
+  if (input.existingWardrobeHeadshotUrl && !shouldGenerateSceneHeadshot(input)) {
+    return input.existingWardrobeHeadshotUrl
+  }
+  return undefined
+}
+
+export async function generateSceneCharacterHeadshotImage(
+  input: SceneCharacterHeadshotInput
+): Promise<{ imageBase64: string; prompt: string }> {
+  const prompt = buildSceneCharacterHeadshotPrompt(input)
+  const result = await generateImageWithGeminiStudio({
+    prompt,
+    aspectRatio: '3:4',
+    imageSize: '1K',
+    referenceImages: [
+      {
+        imageUrl: input.identityReferenceUrl,
+        name: `Identity: ${input.characterName}`,
+      },
+    ],
+    negativePrompt: mergePhysicsNegativePrompt(),
+  })
+  return { imageBase64: result.imageBase64, prompt }
+}
+
+export async function generateAndUploadSceneCharacterHeadshot(
+  input: SceneCharacterHeadshotInput,
+  uploadPath: string
+): Promise<{ imageUrl: string; prompt: string; generated: boolean }> {
+  const cached = pickSceneHeadshotUrl(input)
+  if (cached) {
+    return { imageUrl: cached, prompt: 'Reused wardrobe headshot reference', generated: false }
+  }
+
+  const { imageBase64, prompt } = await generateSceneCharacterHeadshotImage(input)
+  const imageUrl = await uploadImageToBlob(imageBase64, uploadPath)
+  return { imageUrl, prompt, generated: true }
+}
+
+/** Resolve scene headshot URLs for beat frame generation (generate when needed). */
+export async function resolveSceneHeadshotsForBeatCharacters(args: {
+  characters: ResolveSceneHeadshotCharacterInput[]
+  beatAction: string
+  sceneAction?: string
+  uploadPathPrefix: string
+}): Promise<
+  Array<{
+    name: string
+    sceneHeadshotUrl?: string
+    emotion?: string
+    generated: boolean
+  }>
+> {
+  const results: Array<{
+    name: string
+    sceneHeadshotUrl?: string
+    emotion?: string
+    generated: boolean
+  }> = []
+
+  for (const char of args.characters) {
+    if (!char.referenceUrl?.trim()) {
+      results.push({ name: char.name, generated: false })
+      continue
+    }
+
+    if (char.sceneHeadshotUrl?.trim()) {
+      results.push({
+        name: char.name,
+        sceneHeadshotUrl: char.sceneHeadshotUrl.trim(),
+        emotion: char.emotion,
+        generated: false,
+      })
+      continue
+    }
+
+    const record = char.characterRecord ?? {}
+    const wardrobe = resolveWardrobeTextForCharacter(
+      record,
+      char.scene,
+      char.sceneIndex,
+      char.selectedWardrobeId
+    )
+
+    const headshotInput: SceneCharacterHeadshotInput = {
+      characterName: char.name,
+      identityReferenceUrl: char.referenceUrl,
+      wardrobeDescription: char.wardrobe || wardrobe.description,
+      wardrobeAccessories: char.wardrobeAccessories || wardrobe.accessories,
+      beatAction: args.beatAction,
+      sceneAction: args.sceneAction,
+      emotion: char.emotion,
+      hairStyle: char.hairStyle,
+      hairColor: char.hairColor,
+      appearanceDescription: char.appearance,
+      existingWardrobeHeadshotUrl: wardrobe.headshotUrl,
+    }
+
+    const cached = pickSceneHeadshotUrl(headshotInput)
+    if (cached) {
+      results.push({
+        name: char.name,
+        sceneHeadshotUrl: cached,
+        emotion: char.emotion,
+        generated: false,
+      })
+      continue
+    }
+
+    const safeName = char.name.replace(/[^a-z0-9_-]+/gi, '-').toLowerCase()
+    const uploadPath = `${args.uploadPathPrefix}/${safeName}-scene-headshot-${Date.now()}.png`
+    const uploaded = await generateAndUploadSceneCharacterHeadshot(headshotInput, uploadPath)
+    results.push({
+      name: char.name,
+      sceneHeadshotUrl: uploaded.imageUrl,
+      emotion: char.emotion,
+      generated: uploaded.generated,
+    })
+  }
+
+  return results
+}

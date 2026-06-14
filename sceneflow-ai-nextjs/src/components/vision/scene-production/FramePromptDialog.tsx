@@ -842,21 +842,31 @@ export function FramePromptDialog({
     // Get selected location references
     const selectedLocationRefs = locationReferences.filter(loc => selectedLocationRefIds.includes(loc.id))
 
-    // Build selected characters — identity portrait + optional wardrobe turnaround (separate refs)
+    // Build selected characters — scene wardrobe headshot is the sole beat-frame reference
     const dialogSelectedCharacters = selectedCharacters.map(c => {
       const charData = characters.find(ch => ch.name === c.name)
       const selectedWardrobeId = selectedWardrobes[c.name]
       const selectedWardrobe = selectedWardrobeId && charData?.wardrobes?.find(w => w.id === selectedWardrobeId)
-      const wardrobeReferenceUrl = selectedWardrobe?.fullBodyUrl
       const identityUrl = c.referenceImageUrl
+      const sceneHeadshotUrl = selectedWardrobe?.headshotUrl
+      const segmentEmotion =
+        segment?.dialogueLines
+          ?.filter((d) => d.character?.toLowerCase() === c.name.toLowerCase())
+          .map((d) => d.emotion)
+          .filter(Boolean)
+          .pop() || segment?.segmentDirection?.emotionalBeat
 
       return {
         ...c,
         referenceImageUrl: identityUrl,
-        wardrobeReferenceUrl,
-        hasDualReferences: !!(identityUrl && wardrobeReferenceUrl),
-        hasCostumeReference: !!wardrobeReferenceUrl,
-        wardrobe: selectedWardrobe?.description || c.wardrobe,
+        sceneHeadshotUrl,
+        wardrobeReferenceUrl: sceneHeadshotUrl ? undefined : selectedWardrobe?.fullBodyUrl,
+        hasDualReferences: !!(identityUrl && selectedWardrobe?.fullBodyUrl && !sceneHeadshotUrl),
+        hasCostumeReference: !!(sceneHeadshotUrl || selectedWardrobe?.fullBodyUrl),
+        wardrobe: undefined,
+        wardrobeAccessories: undefined,
+        selectedWardrobeId: selectedWardrobeId || selectedWardrobe?.id,
+        emotion: typeof segmentEmotion === 'string' ? segmentEmotion : undefined,
       }
     })
 

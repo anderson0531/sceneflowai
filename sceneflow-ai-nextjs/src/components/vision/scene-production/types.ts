@@ -177,6 +177,8 @@ export interface CharacterReference {
   name: string
   /** Main character portrait for identity consistency */
   referenceImageUrl?: string
+  /** Scene-specific wardrobe headshot (waist-up) — sole ref for beat frames when set */
+  sceneHeadshotUrl?: string
   /** Wardrobe turnaround sheet for outfit consistency */
   wardrobeReferenceUrl?: string
   hasDualReferences?: boolean
@@ -185,6 +187,10 @@ export interface CharacterReference {
   ethnicity?: string
   age?: string
   wardrobe?: string
+  wardrobeAccessories?: string
+  /** Directed emotion for this beat */
+  emotion?: string
+  selectedWardrobeId?: string
   /** Priority in scene - used when API has reference limits */
   priority?: 'protagonist' | 'speaking' | 'supporting' | 'background'
   /** Whether this character is speaking in the current segment */

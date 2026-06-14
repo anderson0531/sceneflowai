@@ -27,6 +27,11 @@ import {
   WARDROBE_ONLY_REFERENCE_INSTRUCTION,
 } from '@/lib/character/characterReferenceAssembly'
 import { buildLocationReferenceLabel, buildLocationReferencePromptLine } from '@/lib/vision/locationReferencePrompts'
+import {
+  buildSimplifiedBeatFramePrompt,
+  mergePhysicsNegativePrompt,
+  resolveSceneHeadshotsForBeatCharacters,
+} from '@/lib/character/sceneCharacterHeadshot'
 
 export const maxDuration = 120 // 2 minutes for potentially generating both frames
 export const runtime = 'nodejs'
@@ -54,6 +59,25 @@ export function resolveEndFrameEditReferenceImage(_args: {
   startFrameReference: string
 }): string | undefined {
   return undefined
+}
+
+/** Extract directed emotion for a character from segment dialogue / emotional arc. */
+export function resolveCharacterEmotionForBeat(
+  characterName: string,
+  segmentContent?: FrameGenerationRequest['segmentContent']
+): string | undefined {
+  if (!segmentContent) return undefined
+
+  const dialogueEmotions = (segmentContent.dialogueLines || [])
+    .filter((line) => line.character?.toLowerCase() === characterName.toLowerCase())
+    .map((line) => line.emotion?.trim())
+    .filter(Boolean) as string[]
+
+  if (dialogueEmotions.length) {
+    return dialogueEmotions[dialogueEmotions.length - 1]
+  }
+
+  return segmentContent.emotionalArc?.end?.trim() || segmentContent.emotionalArc?.start?.trim()
 }
 
 interface FrameGenerationRequest {
@@ -87,11 +111,24 @@ interface FrameGenerationRequest {
     ethnicity?: string
     age?: string
     wardrobe?: string
+    wardrobeAccessories?: string
     referenceUrl?: string
+    /** Pre-generated scene wardrobe headshot — skips on-the-fly generation */
+    sceneHeadshotUrl?: string
     wardrobeReferenceUrl?: string
     hasDualReferences?: boolean
     hasCostumeReference?: boolean
+    emotion?: string
+    hairStyle?: string
+    hairColor?: string
+    characterRecord?: Record<string, unknown>
+    selectedWardrobeId?: string
   }>
+  
+  /** Scene index (0-based) for wardrobe resolution */
+  sceneIndex?: number
+  /** Full scene record for wardrobe resolution */
+  sceneRecord?: Record<string, unknown> | null
   
   // Scene context for prompt enhancement
   sceneContext?: {
@@ -351,7 +388,11 @@ export async function POST(req: NextRequest) {
       // Phase 11: Previous segment end frame for continuity chain
       previousSegmentEndFrameUrl,
       forceRegenerateStart = false,
+      sceneIndex,
+      sceneRecord,
     } = body
+
+    const mergedNegativePrompt = mergePhysicsNegativePrompt(negativePrompt)
 
     const { skipStartGeneration, preservedStartUrl } = resolveStartFrameGenerationPlan({
       frameType,
@@ -529,13 +570,7 @@ export async function POST(req: NextRequest) {
           )
         }
         
-        // Append negative prompt to main prompt (Gemini doesn't have native negative prompt support)
-        if (negativePrompt) {
-          startFramePrompt = `${startFramePrompt}\n\nAvoid: ${negativePrompt}`
-          console.log('[Generate Frames] Added negative prompt:', negativePrompt.substring(0, 100))
-        }
-        
-        console.log('[Generate Frames] Start frame prompt:', startFramePrompt.substring(0, 150))
+        console.log('[Generate Frames] Start frame prompt (pre-headshot):', startFramePrompt.substring(0, 150))
       
       // Prepare reference images
       // The scene image already contains characters in context - use it as the SINGLE reference
@@ -594,7 +629,67 @@ export async function POST(req: NextRequest) {
         console.log('[Generate Frames] No-talent scene detected — skipping character references')
       }
 
+      // Resolve scene-specific wardrobe headshots (identity + wardrobe + beat appearance)
+      const sceneHeadshotResults =
+        charPool.length > 0 && !isNoTalentSegment
+          ? await resolveSceneHeadshotsForBeatCharacters({
+              characters: charPool.map((c) => ({
+                name: c.name,
+                referenceUrl: c.referenceUrl,
+                sceneHeadshotUrl: c.sceneHeadshotUrl,
+                wardrobe: c.wardrobe,
+                wardrobeAccessories: c.wardrobeAccessories,
+                emotion: c.emotion ?? resolveCharacterEmotionForBeat(c.name, segmentContent),
+                hairStyle: c.hairStyle,
+                hairColor: c.hairColor,
+                appearance: c.appearance,
+                characterRecord: c.characterRecord,
+                scene: sceneRecord,
+                sceneIndex,
+                selectedWardrobeId: c.selectedWardrobeId,
+              })),
+              beatAction: effectivePrompt,
+              sceneAction: sceneContext?.heading || sceneContext?.location,
+              uploadPathPrefix: `scenes/${sceneId}/segments/${segmentId}/scene-headshots`,
+            })
+          : []
+
+      const sceneHeadshotByName = new Map(
+        sceneHeadshotResults.map((r) => [r.name, r.sceneHeadshotUrl])
+      )
+
+      if (sceneHeadshotResults.some((r) => r.generated)) {
+        console.log(
+          '[Generate Frames] Generated scene wardrobe headshots:',
+          sceneHeadshotResults.filter((r) => r.generated).map((r) => r.name).join(', ')
+        )
+      }
+
+      // Simplified beat prompt when scene headshots are available (reference-first, emotion only)
+      const headshotChars = charPool.filter((c) => sceneHeadshotByName.get(c.name))
+      if (headshotChars.length > 0 && !customPrompt) {
+        const simplifiedCharacters = headshotChars.map((c, idx) => ({
+          name: c.name,
+          referenceIndex: idx + 1,
+          emotion: c.emotion ?? resolveCharacterEmotionForBeat(c.name, segmentContent),
+        }))
+        startFramePrompt = buildSimplifiedBeatFramePrompt({
+          beatAction: effectivePrompt,
+          characters: simplifiedCharacters,
+          artStyleSuffix: `Cinematic quality, 8K, ${selectedStyle.promptSuffix}`,
+        })
+        console.log('[Generate Frames] Using simplified beat frame prompt (wardrobe reference-first)')
+      }
+
       for (const c of charPool) {
+        const sceneHeadshotUrl = sceneHeadshotByName.get(c.name)
+        if (sceneHeadshotUrl && allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
+          allReferenceImages.push({
+            imageUrl: sceneHeadshotUrl,
+            name: `Wardrobe reference: ${c.name} (scene headshot)`,
+          })
+          continue
+        }
         if (!c.referenceUrl || allReferenceImages.length >= MAX_GEMINI_REFERENCE_IMAGES) continue
         allReferenceImages.push({
           imageUrl: c.referenceUrl,
@@ -602,7 +697,9 @@ export async function POST(req: NextRequest) {
         })
       }
 
+      // Legacy wardrobe turnaround refs only when no scene headshot was resolved
       for (const c of charPool) {
+        if (sceneHeadshotByName.get(c.name)) continue
         if (!c.wardrobeReferenceUrl || allReferenceImages.length >= MAX_GEMINI_REFERENCE_IMAGES) {
           if (c.wardrobeReferenceUrl && allReferenceImages.length >= MAX_GEMINI_REFERENCE_IMAGES) {
             console.warn(`[Generate Frames] Wardrobe ref dropped for ${c.name} — reference budget full`)
@@ -615,9 +712,15 @@ export async function POST(req: NextRequest) {
         })
       }
 
-      const dualRefChars = charPool.filter((c) => c.hasDualReferences)
+      const dualRefChars = charPool.filter(
+        (c) => c.hasDualReferences && !sceneHeadshotByName.get(c.name)
+      )
       const wardrobeOnlyChars = charPool.filter(
-        (c) => c.hasCostumeReference && !c.hasDualReferences && c.wardrobeReferenceUrl
+        (c) =>
+          c.hasCostumeReference &&
+          !c.hasDualReferences &&
+          c.wardrobeReferenceUrl &&
+          !sceneHeadshotByName.get(c.name)
       )
       if (dualRefChars.length > 0 && startFramePrompt) {
         startFramePrompt = `${startFramePrompt}\n\nDUAL CHARACTER REFERENCES:\n${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n${dualRefChars
@@ -628,6 +731,11 @@ export async function POST(req: NextRequest) {
           .join('\n')}`
       } else if (wardrobeOnlyChars.length > 0 && startFramePrompt) {
         startFramePrompt = `${startFramePrompt}\n\n${WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION}`
+      }
+
+      if (mergedNegativePrompt && startFramePrompt && !startFramePrompt.includes('Avoid:')) {
+        startFramePrompt = `${startFramePrompt}\n\nAvoid: ${mergedNegativePrompt}`
+        console.log('[Generate Frames] Added negative prompt:', mergedNegativePrompt.substring(0, 100))
       }
       
       // Add location reference images (1 guaranteed slot)
@@ -725,7 +833,7 @@ Render this scene in ${selectedStyle.name} style.`
         referenceImages: allReferenceImages.length > 0 ? allReferenceImages : undefined,
         modelTier,
         thinkingLevel,
-        negativePrompt
+        negativePrompt: mergedNegativePrompt
       })
       startImageDataUrl = result.imageBase64
       
@@ -901,7 +1009,7 @@ Render this scene in ${selectedStyle.name} style.`
         segmentDurationSeconds: duration,
         modelTier,
         thinkingLevel,
-        negativePrompt,
+        negativePrompt: mergedNegativePrompt,
       })
       const endImageDataUrl = endResult.imageBase64
 

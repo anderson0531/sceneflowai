@@ -93,6 +93,11 @@ export interface PreVisEndFrameEditArgs {
   durationSeconds?: number
 }
 
+const END_FRAME_CONTINUITY_PREAMBLE =
+  'Edit the start frame image to reflect movement that aligns with the beat action. ' +
+  'DO NOT hallucinate new objects, DO NOT change the background, and DO NOT alter character core appearance. ' +
+  'Maintain absolute physics and visual continuity.'
+
 /**
  * Minimal directed-edit instruction for Pre-Vis anchored end frames.
  * Anchors on the start-frame visual description — no scene-direction bloat.
@@ -110,16 +115,18 @@ export function buildPreVisEndFrameEditInstruction(
       typeof args.durationSeconds === 'number' && args.durationSeconds > 0
         ? args.durationSeconds
         : undefined
-    return dur != null
-      ? `Edit start frame: Show subtle visual progression after ~${dur}s while preserving composition, lighting, and environment.`
-      : 'Edit start frame: Show subtle visual progression while preserving composition, lighting, and environment.'
+    const fallback =
+      dur != null
+        ? `Show subtle visual progression after ~${dur}s while preserving composition, lighting, and environment.`
+        : 'Show subtle visual progression while preserving composition, lighting, and environment.'
+    return `${END_FRAME_CONTINUITY_PREAMBLE}\n\nEdit start frame: ${fallback}`
   }
 
-  let instruction = `Edit start frame: ${startVisual}`
+  let instruction = `${END_FRAME_CONTINUITY_PREAMBLE}\n\nEdit start frame: ${startVisual}`
 
   const endDelta = normalize(args.endFramePrompt)
   if (endDelta && isVisualEndFrameDelta(endDelta) && endDelta !== startVisual) {
-    instruction += `\n\n${endDelta}`
+    instruction += `\n\nMovement delta: ${endDelta}`
   }
 
   return instruction

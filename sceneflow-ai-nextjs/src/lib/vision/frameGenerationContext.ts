@@ -124,13 +124,20 @@ export type FrameGenerationCharacterPayload = {
   appearance?: string
   /** Main character portrait for identity consistency */
   referenceUrl?: string
+  /** Scene wardrobe headshot — preferred sole character reference for beat frames */
+  sceneHeadshotUrl?: string
   /** Wardrobe turnaround sheet for outfit consistency */
   wardrobeReferenceUrl?: string
   ethnicity?: string
   age?: string
   wardrobe?: string
+  wardrobeAccessories?: string
   hasCostumeReference?: boolean
   hasDualReferences?: boolean
+  emotion?: string
+  selectedWardrobeId?: string
+  hairStyle?: string
+  hairColor?: string
 }
 
 export type ResolveFrameGenerationContextArgs = {
@@ -281,22 +288,33 @@ export function resolveFrameGenerationContext(args: ResolveFrameGenerationContex
 
   const charactersPayload: FrameGenerationCharacterPayload[] = sorted.map((c) => {
     const refPair = resolveCharacterReferencePair({ character: c, scene })
-    const hasDualReferences = refPair.hasDualReferences
-    const hasCostumeReference = !!refPair.wardrobeUrl
+    const resolvedWardrobe = resolveWardrobeForCharacter(c, scene)
+    const wardrobeHeadshotUrl =
+      typeof resolvedWardrobe?.headshotUrl === 'string' && resolvedWardrobe.headshotUrl.trim()
+        ? resolvedWardrobe.headshotUrl.trim()
+        : undefined
+    const hasSceneHeadshot = !!wardrobeHeadshotUrl
+    const hasDualReferences = refPair.hasDualReferences && !hasSceneHeadshot
+    const hasCostumeReference = !!refPair.wardrobeUrl && !hasSceneHeadshot
     return {
       name: c.name,
       appearance: c.appearanceDescription || c.description,
-      referenceUrl:
-        refPair.identityUrl ??
-        (refPair.hasWardrobeOnlyReference ? refPair.wardrobeUrl : undefined),
-      wardrobeReferenceUrl: refPair.wardrobeUrl,
+      referenceUrl: refPair.identityUrl,
+      sceneHeadshotUrl: wardrobeHeadshotUrl,
+      wardrobeReferenceUrl: hasSceneHeadshot ? undefined : refPair.wardrobeUrl,
       ethnicity: c.ethnicity,
       age: c.age,
-      wardrobe: hasCostumeReference
+      wardrobe: hasSceneHeadshot || hasCostumeReference
         ? undefined
         : pickWardrobeDescriptionForCharacter(c, scene),
+      wardrobeAccessories: hasSceneHeadshot
+        ? undefined
+        : (resolvedWardrobe?.accessories as string | undefined),
       hasCostumeReference,
       hasDualReferences,
+      selectedWardrobeId: resolvedWardrobe?.id as string | undefined,
+      hairStyle: c.hairStyle,
+      hairColor: c.hairColor,
     }
   })
 
