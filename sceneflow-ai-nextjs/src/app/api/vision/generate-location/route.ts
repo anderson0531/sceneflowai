@@ -93,13 +93,14 @@ function buildLocationPrompt(
     if (lighting) parts.push(lighting)
   }
 
-  // Production quality modifiers
+  // Production quality modifiers — turnaround reference sheet
   parts.push(
+    'Split-screen turnaround reference image showing two different cinematic angles of the same location side-by-side',
+    'Left panel and right panel depict the identical set from two distinct camera angles with consistent furniture, layout, and color palette',
     'Empty scene with NO people or characters present',
     'Cinematic production design, professional film set quality',
-    'Wide establishing shot showing the full environment',
     'High resolution, sharp focus, detailed textures',
-    'Film production location reference photograph'
+    'Film production location reference photograph for visual consistency across scenes'
   )
 
   return parts.filter(Boolean).join('. ') + '.'

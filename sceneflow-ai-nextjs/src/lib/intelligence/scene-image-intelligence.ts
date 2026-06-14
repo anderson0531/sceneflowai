@@ -66,11 +66,15 @@ export interface PropContext {
   category?: string
   importance?: string
   hasReferenceImage: boolean
+  /** 1-based index when a prop reference image will be sent inline */
+  referenceIndex?: number
 }
 
 export interface LocationContext {
   name: string
   hasReferenceImage: boolean
+  /** 1-based index when a location reference image will be sent inline */
+  referenceIndex?: number
 }
 
 export interface SceneImageIntelligenceRequest {
@@ -159,6 +163,39 @@ function getCacheKey(request: SceneImageIntelligenceRequest): string {
   return buildSceneImageCacheKey(request)
 }
 
+/**
+ * Assign 1-based Ref Image indices to props and locations in the same order
+ * they are attached during image generation (after all character refs).
+ */
+export function assignPropAndLocationReferenceIndices(
+  characters: CharacterContext[],
+  props: PropContext[],
+  locations: LocationContext[] = []
+): { props: PropContext[]; locations: LocationContext[] } {
+  let nextIndex = characters.reduce((max, c) => {
+    const indices = [
+      c.identityReferenceIndex,
+      c.wardrobeReferenceIndex,
+      c.referenceIndex,
+    ].filter((n): n is number => typeof n === 'number')
+    return Math.max(max, ...indices, 0)
+  }, 0)
+
+  const propsWithIndices = props.map((prop) => {
+    if (!prop.hasReferenceImage) return prop
+    nextIndex += 1
+    return { ...prop, referenceIndex: nextIndex }
+  })
+
+  const locationsWithIndices = locations.map((loc) => {
+    if (!loc.hasReferenceImage) return loc
+    nextIndex += 1
+    return { ...loc, referenceIndex: nextIndex }
+  })
+
+  return { props: propsWithIndices, locations: locationsWithIndices }
+}
+
 function getCachedResult(key: string): SceneImageIntelligenceResult | null {
   const entry = promptCache.get(key)
   if (!entry) return null
@@ -187,66 +224,61 @@ function setCachedResult(key: string, result: SceneImageIntelligenceResult): voi
  * This is the core intelligence that replaces the rules-based prompt builder.
  */
 function buildSystemPrompt(): string {
-  return `You are a cinematic image prompt specialist. Your job is to take a screenplay scene description and generate a single, optimized prompt for an AI image generation model (Gemini 3 Pro / Imagen) that creates one illustrative still image representing the scene.
+  return `You are a cinematic image prompt specialist. Your job is to take a screenplay scene or beat description and generate a single, structured prompt for an AI image generation model (Gemini 3 Pro / Imagen) that creates one illustrative still image.
 
 CRITICAL RULES:
 
-1. ILLUSTRATIVE FRAME: Generate a prompt for ONE representative moment that best captures the scene's essence. NOT a starting frame, NOT an ending frame — the most visually compelling, story-telling moment. Think of it as the frame a film critic would choose for a review.
+1. ILLUSTRATIVE FRAME: Generate a prompt for ONE frozen moment that best captures the beat/scene essence — the most visually compelling story-telling frame. NOT a sequence, NOT camera movement.
 
-2. TITLE SEQUENCES: For title scenes, compose a CENTERED title card composition:
-   - The film title should be prominently displayed, CENTERED in the frame
-   - Use genre-appropriate background imagery and professional typography treatment
-   - Do NOT describe a starting frame with the title at the top — center it like a movie poster or title card
-   - Include atmospheric elements that establish the genre and tone
+2. TITLE SEQUENCES: For title/credit beats, compose a CENTERED title card. The film title is the primary subject with genre-appropriate background. No people unless explicitly required.
 
-3. CHARACTER IDENTITY (PRIMARY): When characters have identity reference images (indicated by "person [N]" tokens tied to identity ref index):
-   - Use ONLY the token "person [N]" — NEVER add ethnicity, age, gender, or other appearance adjectives in the prompt
-   - The identity reference is the sole source of face, skin tone, age, ethnicity, body proportions, and photorealistic rendering at ALL framing distances (wide, medium, close)
-   - EXCEPTION — HAIR: When hairDescription is provided, include it verbatim in the prompt (e.g. "with {hairDescription}") for wardrobe/hairstyle consistency; do not add other appearance adjectives
-   - Focus the prompt on ACTION, POSE, EXPRESSION, lighting, and environment
+3. NO CONFLICTING TEXT WITH REFERENCES:
+   - When an identity reference exists (person [N]), NEVER describe face, skin, ethnicity, age, gender, hair, or body type in text — the reference image owns identity
+   - When a wardrobe reference exists (Ref Image [M]), NEVER describe outfit colors, garments, or accessories in text — the wardrobe reference owns clothing
+   - When a location reference exists, NEVER describe architectural layout, furniture placement, or room geometry in text — the location reference owns the set
+   - When a prop reference exists, NEVER describe the prop's visual appearance in text — only name it and its narrative role/action
    - ${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}
 
-4. WARDROBE (TEXT-ONLY):
-   - Wardrobe is always text-only (no wardrobe reference images). Include COMPLETE wardrobe description verbatim when provided
-   - Include accessories when listed
-   - Combine with hairDescription when both are present
+4. REFERENCE SELECTION: Intelligently select which characters, props, and location match the beat action and scene direction:
+   - Include only characters visible or implied in THIS beat
+   - Select the location that matches the scene heading and beat action
+   - Include props that appear in the beat or are marked critical/important
 
-5. SCENE DIRECTION CUES: Use the provided lighting, framing, and atmosphere metadata to inform the composition:
-   - Lighting mood and color temperature → set the image's lighting
-   - Framing hint → set the camera angle/distance
-   - Atmosphere → set the overall feeling
-   - Key props → ensure they are visible in the scene
-
-6. PROP AND LOCATION REFERENCES: When reference images exist for props or locations:
-   - Mention the prop/location by name so the model can match it to the reference image
-   - Props marked as "critical" should be prominently visible
-
-7. STATIC IMAGE OPTIMIZATION:
-   - Describe a FROZEN MOMENT, not a sequence of actions
-   - Remove all camera movement language (dolly, pan, track, zoom)
-   - Remove all sound/audio references
-   - Remove dialogue text (it would render as text on the image)
+5. STATIC IMAGE OPTIMIZATION:
+   - Describe a FROZEN MOMENT — no dolly, pan, track, zoom
+   - Remove all sound/audio and dialogue text (except title typography on title beats)
    - Convert sequential actions to a single pose/position
 
-8. OUTPUT FORMAT: Return ONLY a JSON object with these fields:
+6. OUTPUT FORMAT: Return ONLY a JSON object:
    {
-     "prompt": "The optimized image generation prompt (800 chars max)",
-     "reasoning": "Brief explanation of your composition choices (100 chars max)",
-     "negativeAdditions": ["any", "specific", "things", "to", "avoid"],
-     "selectedCharacterNames": ["Name 1", "Name 2"], // Array of character names from the input that should be included
-     "selectedPropNames": ["Prop 1"], // Array of prop names from the input that should be included
-     "selectedLocationName": "Location Name" // A single location name from the input, if appropriate for the scene type. Omit for title sequences.
+     "prompt": "Multi-line structured prompt using EXACT section headers below",
+     "reasoning": "Brief explanation of composition and reference choices (100 chars max)",
+     "negativeAdditions": ["mannequin geometry", "plastic skin", "etc"],
+     "selectedCharacterNames": ["Name 1"],
+     "selectedPropNames": ["Prop 1"],
+     "selectedLocationName": "Location Name"
    }
 
-9. PROMPT STRUCTURE (in order):
-   a. Scene framing instruction (e.g., "Cinematic medium shot" or "Wide establishing shot")
-   b. Subject & Wardrobe (use person [N] identity tokens only — no appearance adjectives; wardrobe ref [M] is outfit-only when provided)
-   c. Action/pose (what are the characters doing in this frozen moment)
-   d. Environment & props (setting, key props, atmosphere)
-   e. Lighting & mood (from scene direction metadata)
-   f. Technical quality suffix (photorealistic, cinematic, etc.)
+7. PROMPT STRUCTURE — the "prompt" field MUST use these exact section headers in order (preserve newlines):
 
-10. AVOID: dialogue text, captions, subtitles, watermarks, UI overlays, text rendering on the image (except for title sequences where the title text IS the subject).`
+[GLOBAL STYLE ANCHOR]
+Master Style: [art style + photorealistic/cinematic quality from input]
+Lighting & Camera: [lighting mood, color temperature, time of day, lens/framing from direction cues]
+
+[SCENE COMPOSITION & BEAT]
+Action/Framing: [shot type + frozen action for THIS beat; use person [N] tokens for characters with identity refs; name props by label only]
+
+[REFERENCE IMAGE MAPPING]
+For EACH reference image provided in the input, add one bullet using the exact Ref Image index from input:
+- SUBJECT REFERENCE (Ref Image [N]): Extract face shape, hair, skin tone, and physical identity only. Maintain organic human skin textures. Ignore clothing in this image if wardrobe ref exists.
+- WARDROBE REFERENCE (Ref Image [M]): Extract clothing design, color palette, and garments only. Completely ignore the mannequin/plastic base, stylized medium, turnaround sheet layout, and gray studio background. Translate these clothes onto the realistic human subject from the identity ref.
+- LOCATION REFERENCE (Ref Image [K]): Extract architectural layout, furniture, and color palette. If the reference is a turnaround/split-screen location sheet, treat both panels as the same set from two angles — match layout consistently. Match lighting to Global Style Anchor.
+- PROP REFERENCE (Ref Image [P]): Extract shape, material, color, and design of the named prop only.
+
+Omit mapping lines for references not used in this beat.
+
+[EXCLUSIONS & BOUNDARIES]
+Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).`
 }
 
 /**
@@ -266,42 +298,64 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   // Scene metadata
   prompt += `SCENE ${request.sceneNumber}${request.totalScenes ? ` of ${request.totalScenes}` : ''}: ${request.sceneHeading}\n`
   prompt += `Scene Type: ${request.sceneType.toUpperCase()}\n\n`
+
+  // Beat-first focus when generating per-beat frames
+  if (request.beatAction) {
+    prompt += `BEAT ACTION (PRIMARY — compose this frame for THIS moment):\n${request.beatAction}\n`
+    if (request.beatIndex !== undefined && request.totalBeats) {
+      prompt += `Beat ${request.beatIndex + 1} of ${request.totalBeats}\n`
+    }
+    if (request.beatRole) {
+      prompt += `Beat Role: ${request.beatRole}\n`
+    }
+    prompt += '\n'
+  }
   
-  // Scene action (raw text)
-  prompt += `SCENE ACTION:\n${request.sceneAction}\n\n`
+  // Scene action (context — beat action takes priority when present)
+  prompt += `SCENE CONTEXT:\n${request.sceneAction}\n\n`
   
-  // Characters with wardrobe
+  // Characters with reference mapping — suppress text that conflicts with reference images
   if (request.characters.length > 0) {
-    prompt += `CHARACTERS IN SCENE:\n`
+    prompt += `CHARACTERS (select only those relevant to the beat action):\n`
     request.characters.forEach((char, idx) => {
+      const hasIdentityRef = !!char.identityReferenceIndex
+      const hasWardrobeRef = !!char.wardrobeReferenceIndex
+      const useAppearanceText = !char.hasReferenceImage && char.appearanceDescription
+      const useWardrobeText = !hasWardrobeRef && char.wardrobeDescription
+      const useHairText = !hasIdentityRef && char.hairDescription
+
       let refLabel = ' [No reference image — describe appearance in prompt]'
       if (char.hasDualReferences && char.identityReferenceIndex && char.wardrobeReferenceIndex) {
-        refLabel = ` [Identity ref person [${char.identityReferenceIndex}]; Wardrobe ref [${char.wardrobeReferenceIndex}] — outfit from wardrobe ref only]`
+        refLabel = ` [Identity Ref Image [${char.identityReferenceIndex}]; Wardrobe Ref Image [${char.wardrobeReferenceIndex}]]`
       } else if (char.identityReferenceIndex) {
-        refLabel = ` [Identity reference person [${char.identityReferenceIndex}]]`
+        refLabel = ` [Identity Ref Image [${char.identityReferenceIndex}] — person [${char.identityReferenceIndex}] in prompt]`
       } else if (char.wardrobeReferenceIndex) {
-        refLabel = ` [Wardrobe-only reference [${char.wardrobeReferenceIndex}]]`
+        refLabel = ` [Wardrobe Ref Image [${char.wardrobeReferenceIndex}] only]`
       } else if (char.hasReferenceImage && char.referenceIndex) {
-        refLabel = ` [Reference image person [${char.referenceIndex}]]`
+        refLabel = ` [Ref Image [${char.referenceIndex}] — person [${char.referenceIndex}] in prompt]`
       }
       prompt += `${idx + 1}. ${char.name}${refLabel}\n`
       
-      if (!char.hasReferenceImage && char.appearanceDescription) {
-        prompt += `   Appearance: ${char.appearanceDescription}\n`
+      if (useAppearanceText) {
+        prompt += `   Appearance (text-only): ${char.appearanceDescription}\n`
+      } else if (hasIdentityRef) {
+        prompt += `   Appearance: USE IDENTITY REF ONLY — do not describe face/body in prompt text\n`
       }
 
-      if (char.hairDescription) {
-        prompt += `   HAIR (MUST MATCH): ${char.hairDescription}\n`
+      if (useHairText) {
+        prompt += `   Hair (text-only): ${char.hairDescription}\n`
       }
       
-      if (char.wardrobeDescription) {
-        prompt += `   WARDROBE (MUST USE EXACTLY): ${char.wardrobeDescription}`
+      if (useWardrobeText) {
+        prompt += `   Wardrobe (text-only): ${char.wardrobeDescription}`
         if (char.wardrobeAccessories) {
           prompt += ` | Accessories: ${char.wardrobeAccessories}`
         }
         prompt += '\n'
+      } else if (hasWardrobeRef) {
+        prompt += `   Wardrobe: USE WARDROBE REF ONLY — do not describe outfit in prompt text\n`
       } else {
-        prompt += `   WARDROBE: Not specified (use scene context)\n`
+        prompt += `   Wardrobe: Not specified (use scene context sparingly)\n`
       }
     })
     prompt += '\n'
@@ -309,30 +363,42 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
   
   // Reference images summary
   if (request.referenceImageCount > 0) {
-    prompt += `REFERENCE IMAGES: ${request.referenceImageCount} reference image(s) will be provided inline (characters, location, props)\n\n`
+    prompt += `REFERENCE IMAGES: ${request.referenceImageCount} inline reference image(s) will accompany this prompt (characters, location, props). Map each in [REFERENCE IMAGE MAPPING] using the Ref Image indices listed above.\n\n`
   }
   
-  // Props
+  // Props — include index when known; suppress visual description when ref exists
   if (request.props.length > 0) {
-    prompt += `KEY PROPS:\n`
+    prompt += `PROPS (select only those visible or critical in this beat):\n`
     request.props.forEach(prop => {
-      const ref = prop.hasReferenceImage ? ' [reference image provided]' : ''
-      const imp = prop.importance === 'critical' ? ' ⚠️ CRITICAL' : prop.importance === 'important' ? ' (important)' : ''
-      prompt += `- ${prop.name}${prop.description ? `: ${prop.description}` : ''}${imp}${ref}\n`
+      const refIndex = prop.referenceIndex ? `Ref Image [${prop.referenceIndex}]` : 'reference image provided'
+      const ref = prop.hasReferenceImage ? ` [${refIndex}]` : ''
+      const imp = prop.importance === 'critical' ? ' CRITICAL' : prop.importance === 'important' ? ' (important)' : ''
+      if (prop.hasReferenceImage) {
+        prompt += `- ${prop.name}${imp}${ref} — visual appearance from ref only; name in action only\n`
+      } else {
+        prompt += `- ${prop.name}${prop.description ? `: ${prop.description}` : ''}${imp}${ref}\n`
+      }
     })
     prompt += '\n'
   }
   
-  // Location
+  // Location — include index when known
   if (request.availableLocations && request.availableLocations.length > 0) {
-    prompt += `AVAILABLE LOCATIONS (select at most one if it matches the scene heading/action):\n`
+    prompt += `LOCATIONS (select at most one matching scene heading and beat action):\n`
     request.availableLocations.forEach(loc => {
-      prompt += `- ${loc.name}${loc.hasReferenceImage ? ' [reference image provided]' : ''}\n`
+      if (loc.hasReferenceImage && loc.referenceIndex) {
+        prompt += `- ${loc.name} [Location Ref Image [${loc.referenceIndex}] — may be turnaround/split-screen showing two angles of same set]\n`
+      } else if (loc.hasReferenceImage) {
+        prompt += `- ${loc.name} [location reference image provided]\n`
+      } else {
+        prompt += `- ${loc.name}\n`
+      }
     })
     prompt += '\n'
   }
   
-  // Scene direction metadata (preserved useful cues)
+  // Scene direction metadata — lighting/framing only; omit set description when location refs exist
+  const hasLocationRef = request.availableLocations?.some(l => l.hasReferenceImage)
   if (request.directionMetadata) {
     const dm = request.directionMetadata
     const cues: string[] = []
@@ -342,10 +408,12 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
     if (dm.timeOfDay) cues.push(`Time of Day: ${dm.timeOfDay}`)
     if (dm.atmosphere) cues.push(`Atmosphere: ${dm.atmosphere}`)
     if (dm.keyProps?.length) cues.push(`Direction Props: ${dm.keyProps.join(', ')}`)
-    if (dm.locationDescription) cues.push(`Set: ${dm.locationDescription}`)
+    if (dm.locationDescription && !hasLocationRef) {
+      cues.push(`Set: ${dm.locationDescription}`)
+    }
     
     if (cues.length > 0) {
-      prompt += `SCENE DIRECTION CUES:\n${cues.join('\n')}\n\n`
+      prompt += `SCENE DIRECTION CUES (lighting/framing only${hasLocationRef ? '; set geometry comes from location ref' : ''}):\n${cues.join('\n')}\n\n`
     }
   }
   
@@ -358,21 +426,21 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
     (request.sceneType === 'credits' && request.beatRole !== 'opening')
 
   if (allowsTitleTypography && request.filmContext?.title) {
-    prompt += `\n⚠️ TITLE/CARD BEAT: Centered typography for "${request.filmContext.title}" is required on this beat only. Design a professional, genre-appropriate title or credit card composition.\n`
+    prompt += `\nTITLE/CARD BEAT: Centered typography for "${request.filmContext.title}" is required on this beat only. Design a professional, genre-appropriate title or credit card composition.\n`
   } else if (request.sceneType === 'credits' && !request.beatRole) {
-    prompt += `\n⚠️ CREDITS/OUTRO: Design a professional end credits card with elegant typography and genre-appropriate background.\n`
+    prompt += `\nCREDITS/OUTRO: Design a professional end credits card with elegant typography and genre-appropriate background.\n`
   }
 
-  if (request.beatIndex !== undefined && request.totalBeats) {
+  if (request.beatIndex !== undefined && request.totalBeats && !request.beatAction) {
     prompt += `\nBEAT ${request.beatIndex + 1} of ${request.totalBeats}: This frame must differ visually from other beats in the sequence.\n`
   }
 
   if (request.beatKind === 'action' && !allowsTitleTypography) {
-    prompt += `\n⚠️ SILENT ACTION BEAT: Illustrate a single cinematic still with NO dialogue, NO lip-sync, NO on-screen text. Focus on the visual direction in the scene action — shot composition, subject, motion, and mood.\n`
+    prompt += `\nSILENT ACTION BEAT: Illustrate a single cinematic still with NO dialogue, NO lip-sync, NO on-screen text. Focus on shot composition, subject, motion, and mood.\n`
   }
 
   if (request.beatKind === 'narration') {
-    prompt += `\n⚠️ VOICEOVER BACKDROP: This frame supports off-screen narration. Show environment, subjects, and atmosphere ONLY. NO narrator character on screen, NO talking head, NO lip-sync, NO person speaking to camera.\n`
+    prompt += `\nVOICEOVER BACKDROP: Show environment, subjects, and atmosphere ONLY. NO narrator on screen, NO talking head, NO lip-sync.\n`
   }
   
   return prompt
@@ -402,7 +470,7 @@ export async function generateSceneImagePrompt(
   
   console.log(`[Scene Image Intelligence] Generating AI prompt for scene ${request.sceneNumber} (type: ${request.sceneType})`)
   console.log(`[Scene Image Intelligence] Characters: ${request.characters.map(c => `${c.name}(ref:${c.hasReferenceImage})`).join(', ')}`)
-  console.log(`[Scene Image Intelligence] Reference images: ${request.referenceImageCount}, Props: ${request.props.length}, Location: ${request.location?.name || 'none'}`)
+  console.log(`[Scene Image Intelligence] Reference images: ${request.referenceImageCount}, Props: ${request.props.length}, Locations: ${request.availableLocations?.length ?? 0}`)
   
   try {
     const systemPrompt = buildSystemPrompt()
@@ -451,11 +519,15 @@ export async function generateSceneImagePrompt(
     // Sanitize: ensure no dangerous content slipped through
     let finalPrompt = parsed.prompt.trim()
     
-    // Ensure the prompt doesn't exceed 1200 chars (leave room for reference instructions)
-    if (finalPrompt.length > 1200) {
-      const truncated = finalPrompt.substring(0, 1200)
-      const lastPeriod = truncated.lastIndexOf('.')
-      finalPrompt = lastPeriod > 800 ? truncated.substring(0, lastPeriod + 1) : truncated
+    // Structured prompts are longer — preserve section headers; truncate only if excessive
+    const MAX_PROMPT_CHARS = 2400
+    if (finalPrompt.length > MAX_PROMPT_CHARS) {
+      const truncated = finalPrompt.substring(0, MAX_PROMPT_CHARS)
+      const lastSection = truncated.lastIndexOf('\n[')
+      finalPrompt =
+        lastSection > MAX_PROMPT_CHARS * 0.6
+          ? truncated.substring(0, lastSection).trimEnd()
+          : truncated.trimEnd()
     }
     
     const intelligenceResult: SceneImageIntelligenceResult = {

@@ -8,6 +8,7 @@ import {
   generateSceneImagePrompt,
   detectSceneType,
   extractDirectionMetadata,
+  assignPropAndLocationReferenceIndices,
   type CharacterContext,
   type PropContext,
   type LocationContext,
@@ -145,10 +146,17 @@ export async function POST(req: NextRequest) {
       hasReferenceImage: !!matchedLocationReference.imageUrl,
     }] : [])
 
+    const { props: propsWithIndices, locations: locationsWithIndices } =
+      assignPropAndLocationReferenceIndices(
+        characterContexts,
+        propsToPassToAI,
+        locationsToPassToAI
+      )
+
     const totalAvailableRefImages = 
       characterContexts.filter(r => r.hasReferenceImage).length +
-      propsToPassToAI.filter((o: any) => o.hasReferenceImage).length +
-      locationsToPassToAI.filter((l: any) => l.hasReferenceImage).length
+      propsWithIndices.filter((o) => o.hasReferenceImage).length +
+      locationsWithIndices.filter((l) => l.hasReferenceImage).length
 
     // 5. Film Context and Scene Type
     const treatment = project.metadata?.visionPhase?.treatment || project.metadata?.treatmentPhase
@@ -172,8 +180,8 @@ export async function POST(req: NextRequest) {
       sceneType,
       directionMetadata,
       characters: characterContexts,
-      props: propsToPassToAI,
-      availableLocations: locationsToPassToAI,
+      props: propsWithIndices,
+      availableLocations: locationsWithIndices,
       artStyle: artStyle || 'photorealistic',
       referenceImageCount: totalAvailableRefImages,
       projectId

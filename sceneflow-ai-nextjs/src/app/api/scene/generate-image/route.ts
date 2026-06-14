@@ -17,6 +17,7 @@ import {
   generateSceneImagePrompt,
   detectSceneType,
   extractDirectionMetadata,
+  assignPropAndLocationReferenceIndices,
   type CharacterContext,
   type PropContext,
   type LocationContext,
@@ -1235,6 +1236,13 @@ export async function POST(req: NextRequest) {
         name: matchedLocationReference.location || matchedLocationReference.name || 'Unknown location',
         hasReferenceImage: !!matchedLocationReference.imageUrl,
       }] : [])
+
+      const { props: propsWithIndices, locations: locationsWithIndices } =
+        assignPropAndLocationReferenceIndices(
+          characterContexts,
+          propsToPassToAI,
+          locationsToPassToAI
+        )
       
       // Count total reference images that MIGHT be sent (will be refined after AI selects)
       // We'll update this count later, but for the prompt, we just let it know how many are available
@@ -1246,8 +1254,8 @@ export async function POST(req: NextRequest) {
             sum + (r.identityReferenceId ? 1 : 0) + (r.wardrobeReferenceId ? 1 : 0),
           0
         ) +
-        propsToPassToAI.filter((o: any) => o.hasReferenceImage).length +
-        locationsToPassToAI.filter((l: any) => l.hasReferenceImage).length
+        propsWithIndices.filter((o) => o.hasReferenceImage).length +
+        locationsWithIndices.filter((l) => l.hasReferenceImage).length
       
       // Call Gemini intelligence
       const beatForIntelligence =
@@ -1269,8 +1277,8 @@ export async function POST(req: NextRequest) {
         beatRole: beatForIntelligence?.beatRole,
         directionMetadata,
         characters: characterContexts,
-        props: propsToPassToAI,
-        availableLocations: locationsToPassToAI,
+        props: propsWithIndices,
+        availableLocations: locationsWithIndices,
         artStyle: artStyle || 'photorealistic',
         referenceImageCount: totalAvailableRefImages,
       })
@@ -1612,7 +1620,7 @@ export async function POST(req: NextRequest) {
           
           // Location reference instructions
           if (matchedLocationReference && matchedLocationReference.imageUrl) {
-            geminiPrompt += `LOCATION REFERENCE: The environment/setting MUST match the "${matchedLocationReference.location}" reference image — same architectural style, color palette, lighting conditions, and spatial layout.\n\n`
+            geminiPrompt += `LOCATION REFERENCE: The environment/setting MUST match the "${matchedLocationReference.location}" reference image — same architectural layout, furniture placement, color palette, and spatial geometry. If the reference is a split-screen turnaround showing two angles of the same location, treat both panels as the same set and match layout consistently. Match lighting to the scene prompt Global Style Anchor.\n\n`
           }
           
           geminiPrompt += `SCENE PROMPT:\n${optimizedPrompt}\n\n`
