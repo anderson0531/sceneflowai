@@ -46,6 +46,8 @@ export interface SceneCharacterHeadshotInput {
   appearanceDescription?: string
   /** Existing wardrobe headshot — reused when no beat-specific appearance changes */
   existingWardrobeHeadshotUrl?: string
+  /** When true, always generate a fresh image (skip cache reuse) */
+  forceRegenerate?: boolean
 }
 
 export interface SimplifiedBeatFramePromptInput {
@@ -244,6 +246,7 @@ export function shouldGenerateSceneHeadshot(
 }
 
 export function pickSceneHeadshotUrl(input: SceneCharacterHeadshotInput): string | undefined {
+  if (input.forceRegenerate) return undefined
   if (input.existingWardrobeHeadshotUrl && !shouldGenerateSceneHeadshot(input)) {
     return input.existingWardrobeHeadshotUrl
   }

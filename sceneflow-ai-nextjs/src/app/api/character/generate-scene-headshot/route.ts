@@ -19,6 +19,7 @@ interface GenerateSceneHeadshotRequest extends SceneCharacterHeadshotInput {
   projectId?: string
   characterId?: string
   uploadPath?: string
+  forceRegenerate?: boolean
 }
 
 export async function POST(req: NextRequest) {
@@ -45,6 +46,7 @@ export async function POST(req: NextRequest) {
       characterName,
       identityReferenceUrl,
       uploadPath,
+      forceRegenerate,
       ...headshotFields
     } = body
 
@@ -58,10 +60,11 @@ export async function POST(req: NextRequest) {
     const headshotInput: SceneCharacterHeadshotInput = {
       characterName: characterName.trim(),
       identityReferenceUrl: identityReferenceUrl.trim(),
+      forceRegenerate: forceRegenerate === true,
       ...headshotFields,
     }
 
-    const cachedUrl = pickSceneHeadshotUrl(headshotInput)
+    const cachedUrl = forceRegenerate ? undefined : pickSceneHeadshotUrl(headshotInput)
     if (cachedUrl) {
       return NextResponse.json({
         success: true,

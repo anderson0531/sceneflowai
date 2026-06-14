@@ -29,6 +29,7 @@ import {
   Zap,
   Settings2,
   Camera,
+  ImagePlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
@@ -821,6 +822,9 @@ const CharacterCard = ({
   const [enhancingWardrobeId, setEnhancingWardrobeId] = useState<string | null>(
     null,
   ); // Which wardrobe is being AI-enhanced
+  const [generatingWardrobeImageId, setGeneratingWardrobeImageId] = useState<
+    string | null
+  >(null);
 
   // Script analysis for wardrobes state
   const [isAnalyzingScript, setIsAnalyzingScript] = useState(false);
@@ -1621,6 +1625,84 @@ const CharacterCard = ({
       );
     } finally {
       setEnhancingWardrobeId(null);
+    }
+  };
+
+  const handleGenerateWardrobeImage = async (wardrobe: CharacterWardrobe) => {
+    if (!character.referenceImage?.trim()?.startsWith("http")) {
+      toast.error("Generate a character identity reference image first");
+      return;
+    }
+    if (!wardrobe.description?.trim()) {
+      toast.error("Add an outfit description before generating a wardrobe image");
+      return;
+    }
+
+    setGeneratingWardrobeImageId(wardrobe.id);
+    try {
+      const sceneAction = [wardrobe.description, wardrobe.accessories]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      const uploadPath = `characters/${projectId || "default"}/${characterId}/wardrobes/${wardrobe.id}/headshot-${Date.now()}.png`;
+
+      const response = await fetch("/api/character/generate-scene-headshot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId,
+          characterId,
+          characterName: character.name,
+          identityReferenceUrl: character.referenceImage,
+          wardrobeDescription: wardrobe.description,
+          wardrobeAccessories: wardrobe.accessories,
+          appearanceDescription:
+            character.appearanceDescription || generateFallbackDescription(character),
+          hairStyle: character.hairStyle,
+          hairColor: character.hairColor,
+          sceneAction,
+          existingWardrobeHeadshotUrl: wardrobe.headshotUrl,
+          forceRegenerate: !!wardrobe.headshotUrl,
+          uploadPath,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        if (error.code === "INSUFFICIENT_CREDITS") {
+          toast.error(`Insufficient credits. Need ${error.required} credits.`);
+          return;
+        }
+        throw new Error(error.error || "Failed to generate wardrobe image");
+      }
+
+      const { imageUrl } = await response.json();
+      if (!imageUrl) {
+        throw new Error("No image URL returned");
+      }
+
+      onUpdateWardrobe?.(characterId, {
+        wardrobeId: wardrobe.id,
+        headshotUrl: imageUrl,
+        action: "update",
+      });
+
+      if (expandedWardrobe?.id === wardrobe.id) {
+        setExpandedWardrobe({ ...expandedWardrobe, headshotUrl: imageUrl });
+      }
+
+      toast.success(
+        wardrobe.headshotUrl
+          ? "Wardrobe reference image regenerated"
+          : "Wardrobe reference image generated",
+      );
+    } catch (error) {
+      console.error("[Wardrobe Image] Error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to generate wardrobe image",
+      );
+    } finally {
+      setGeneratingWardrobeImageId(null);
     }
   };
 
@@ -2730,7 +2812,7 @@ const CharacterCard = ({
                   </div>
                 ) : null}
 
-                {/* Wardrobe cards (description-first — no turnaround images) */}
+                {/* Wardrobe cards with optional waist-up reference preview */}
                 {wardrobes.length > 0 && (
                   <div className="space-y-3">
                     {wardrobes.map((w) => (
@@ -2742,6 +2824,21 @@ const CharacterCard = ({
                             : "bg-gray-50/50 dark:bg-gray-800/10 border-gray-200 dark:border-gray-700/50"
                         }`}
                       >
+                        {w.headshotUrl && (
+                          <div className="relative aspect-[3/4] max-h-48 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                            <img
+                              src={w.headshotUrl}
+                              alt={`${character.name} — ${w.name} wardrobe reference`}
+                              className="w-full h-full object-cover object-top"
+                              loading="lazy"
+                            />
+                            {generatingWardrobeImageId === w.id && (
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                <Loader className="w-6 h-6 animate-spin text-white" />
+                              </div>
+                            )}
+                          </div>
+                        )}
                         <div className="p-3">
                           <div className="flex items-start justify-between gap-2 mb-2">
                             <div className="flex flex-wrap items-center gap-2 min-w-0">
@@ -2760,6 +2857,30 @@ const CharacterCard = ({
                               )}
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleGenerateWardrobeImage(w);
+                                }}
+                                disabled={
+                                  generatingWardrobeImageId === w.id ||
+                                  !hasCharacterReferenceForVoice
+                                }
+                                className="p-1.5 rounded-lg text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 disabled:opacity-50"
+                                title={
+                                  !hasCharacterReferenceForVoice
+                                    ? "Generate character identity reference first"
+                                    : w.headshotUrl
+                                      ? "Regenerate wardrobe reference image"
+                                      : "Generate wardrobe reference image"
+                                }
+                              >
+                                {generatingWardrobeImageId === w.id ? (
+                                  <Loader className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <ImagePlus className="w-3.5 h-3.5" />
+                                )}
+                              </button>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -3171,6 +3292,35 @@ const CharacterCard = ({
 
             {expandedWardrobe && (
               <div className="space-y-6 py-4">
+                {/* Wardrobe reference image */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Wardrobe Reference Image
+                  </h4>
+                  <div className="relative aspect-[3/4] max-w-xs mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                    {expandedWardrobe.headshotUrl ? (
+                      <img
+                        src={expandedWardrobe.headshotUrl}
+                        alt={`${character.name} — ${expandedWardrobe.name}`}
+                        className="w-full h-full object-cover object-top"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 p-4 text-center">
+                        <ImagePlus className="w-8 h-8 mb-2 opacity-50" />
+                        <span className="text-xs">
+                          No wardrobe reference yet — generate from outfit description
+                        </span>
+                      </div>
+                    )}
+                    {generatingWardrobeImageId === expandedWardrobe.id && (
+                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center">
+                        <Loader className="w-8 h-8 animate-spin text-white mb-2" />
+                        <span className="text-xs text-white">Generating...</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Description */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -3260,7 +3410,29 @@ const CharacterCard = ({
               </div>
             )}
 
-            <DialogFooter className="flex gap-2">
+            <DialogFooter className="flex flex-wrap gap-2">
+              {expandedWardrobe && (
+                <Button
+                  onClick={() => handleGenerateWardrobeImage(expandedWardrobe)}
+                  disabled={
+                    generatingWardrobeImageId === expandedWardrobe.id ||
+                    !hasCharacterReferenceForVoice
+                  }
+                  className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                  title={
+                    !hasCharacterReferenceForVoice
+                      ? "Generate character identity reference first"
+                      : undefined
+                  }
+                >
+                  {generatingWardrobeImageId === expandedWardrobe.id ? (
+                    <Loader className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <ImagePlus className="w-4 h-4 mr-2" />
+                  )}
+                  {expandedWardrobe.headshotUrl ? "Regenerate Image" : "Generate Image"}
+                </Button>
+              )}
               {expandedWardrobe && !expandedWardrobe.isDefault && (
                 <Button
                   variant="outline"

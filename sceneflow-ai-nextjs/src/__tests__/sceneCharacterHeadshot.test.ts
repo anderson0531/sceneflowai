@@ -82,6 +82,31 @@ describe('scene headshot reuse vs generation', () => {
     expect(shouldGenerateSceneHeadshot(input)).toBe(true)
     expect(pickSceneHeadshotUrl(input)).toBeUndefined()
   })
+
+  it('forceRegenerate bypasses cached wardrobe headshot', () => {
+    const input = {
+      characterName: 'Sarah',
+      identityReferenceUrl: 'https://example.com/sarah.jpg',
+      wardrobeDescription: 'Navy suit',
+      existingWardrobeHeadshotUrl: 'https://example.com/wardrobe-headshot.jpg',
+      beatAction: 'She enters the room calmly.',
+      forceRegenerate: true,
+    }
+    expect(pickSceneHeadshotUrl(input)).toBeUndefined()
+  })
+})
+
+describe('makeup from wardrobe description via sceneAction', () => {
+  it('includes makeup from outfit text passed as sceneAction', () => {
+    const prompt = buildSceneCharacterHeadshotPrompt({
+      characterName: 'Sarah',
+      identityReferenceUrl: 'https://example.com/sarah.jpg',
+      wardrobeDescription: 'Charcoal blazer, white blouse',
+      sceneAction: 'Natural makeup with subtle red lipstick and light contour.',
+    })
+    expect(prompt).toMatch(/Makeup:/i)
+    expect(prompt).toMatch(/lipstick/i)
+  })
 })
 
 describe('mergePhysicsNegativePrompt', () => {
