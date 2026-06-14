@@ -161,7 +161,7 @@ interface CharacterWardrobe {
   isDefault: boolean;
   createdAt: string;
   previewImageUrl?: string; // Legacy: AI-generated preview of character in this outfit
-  headshotUrl?: string; // 16:9 cinematic wardrobe reference showing character in outfit context
+  headshotUrl?: string; // 16:9 diptych: close-up face + full-body wardrobe
   fullBodyUrl?: string; // 1-row mannequin outfit turnaround (4 full-body views)
   sceneNumbers?: number[]; // Scenes where this outfit is used (from script analysis)
   reason?: string; // AI explanation for why this outfit is needed
@@ -3295,7 +3295,7 @@ const CharacterCard = ({
                 {/* Wardrobe reference image */}
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Wardrobe Reference Image
+                    Wardrobe Reference (Face + Full Body)
                   </h4>
                   <div className="relative aspect-video max-w-md mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                     {expandedWardrobe.headshotUrl ? (
@@ -3308,7 +3308,7 @@ const CharacterCard = ({
                       <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 p-4 text-center">
                         <ImagePlus className="w-8 h-8 mb-2 opacity-50" />
                         <span className="text-xs">
-                          No wardrobe reference yet — generate from outfit description
+                          No wardrobe reference yet — generate a close-up + full-body diptych from the outfit description
                         </span>
                       </div>
                     )}

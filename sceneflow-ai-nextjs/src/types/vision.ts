@@ -19,8 +19,9 @@ export interface CharacterWardrobe {
   description: string
   accessories?: string
   previewImageUrl?: string
+  /** 16:9 diptych reference (close-up face + full-body wardrobe) for beat frame generation */
   headshotUrl?: string
-  /** 2-row turnaround sheet (headshot + full body, 4 views each) used as costume reference in generation */
+  /** Mannequin outfit turnaround sheet (legacy; used when headshotUrl is absent) */
   fullBodyUrl?: string
   sceneNumbers?: number[]
   isDefault: boolean

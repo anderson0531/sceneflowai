@@ -2,13 +2,16 @@ import { describe, expect, it } from 'vitest'
 import {
   buildSceneCharacterHeadshotPrompt,
   buildSimplifiedBeatFramePrompt,
+  DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT,
   extractSceneAppearanceDirectives,
+  mergeBeatFrameNegativePrompt,
   mergePhysicsNegativePrompt,
   pickSceneHeadshotUrl,
   SCENE_CHARACTER_HEADSHOT_ASPECT_RATIO,
   SCENE_CHARACTER_HEADSHOT_IMAGE_SIZE,
   SCENE_CHARACTER_HEADSHOT_MODEL_TIER,
   shouldGenerateSceneHeadshot,
+  WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
 } from '@/lib/character/sceneCharacterHeadshot'
 
 describe('extractSceneAppearanceDirectives', () => {
@@ -30,7 +33,7 @@ describe('extractSceneAppearanceDirectives', () => {
 })
 
 describe('buildSceneCharacterHeadshotPrompt', () => {
-  it('includes wardrobe and injury directives without restyling hair', () => {
+  it('includes diptych layout with close-up and full-body panels', () => {
     const prompt = buildSceneCharacterHeadshotPrompt({
       characterName: 'Sarah',
       identityReferenceUrl: 'https://example.com/sarah.jpg',
@@ -46,7 +49,11 @@ describe('buildSceneCharacterHeadshotPrompt', () => {
     expect(prompt).toContain('do not restyle hair')
     expect(prompt).toContain('exhausted')
     expect(prompt).toContain('16:9')
-    expect(prompt).toMatch(/cinematic 16:9 medium shot/i)
+    expect(prompt).toMatch(/diptych/i)
+    expect(prompt).toMatch(/LEFT panel/i)
+    expect(prompt).toMatch(/RIGHT panel/i)
+    expect(prompt).toMatch(/close-up/i)
+    expect(prompt).toMatch(/full-length/i)
   })
 })
 
@@ -59,7 +66,7 @@ describe('scene character headshot generation settings', () => {
 })
 
 describe('buildSimplifiedBeatFramePrompt', () => {
-  it('uses person tokens and emotion without wardrobe text', () => {
+  it('uses person tokens, diptych consumption, and emotion without wardrobe text', () => {
     const prompt = buildSimplifiedBeatFramePrompt({
       beatAction: 'Sarah leans against the counter, arms crossed.',
       characters: [{ name: 'Sarah', referenceIndex: 1, emotion: 'defiant' }],
@@ -67,8 +74,17 @@ describe('buildSimplifiedBeatFramePrompt', () => {
     })
     expect(prompt).toContain('person [1]')
     expect(prompt).toContain('defiant')
-    expect(prompt).toContain('wardrobe reference image')
+    expect(prompt).toMatch(/LEFT panel/i)
+    expect(prompt).toMatch(/RIGHT panel/i)
     expect(prompt).not.toMatch(/wearing/i)
+  })
+})
+
+describe('WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION', () => {
+  it('is exported with left/right panel guidance', () => {
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/LEFT panel/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/RIGHT panel/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/diptych/i)
   })
 })
 
@@ -127,5 +143,15 @@ describe('mergePhysicsNegativePrompt', () => {
     const merged = mergePhysicsNegativePrompt('blurry, low quality')
     expect(merged).toMatch(/floating chairs/i)
     expect(merged).toMatch(/blurry/i)
+  })
+})
+
+describe('mergeBeatFrameNegativePrompt', () => {
+  it('includes diptych reproduction terms alongside physics negatives', () => {
+    const merged = mergeBeatFrameNegativePrompt('blurry')
+    expect(merged).toMatch(/floating chairs/i)
+    expect(merged).toMatch(/diptych/i)
+    expect(merged).toMatch(/blurry/i)
+    expect(DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT).toMatch(/split-screen output/i)
   })
 })

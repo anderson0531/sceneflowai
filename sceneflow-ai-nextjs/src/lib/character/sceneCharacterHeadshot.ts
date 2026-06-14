@@ -17,11 +17,22 @@ export const SCENE_CHARACTER_HEADSHOT_IMAGE_SIZE = '4K' as const
 export const SCENE_CHARACTER_HEADSHOT_MODEL_TIER = 'designer' as const
 
 export const SCENE_CHARACTER_HEADSHOT_ANCHOR =
-  'Photorealistic cinematic 16:9 waist-up character reference for scene beat consistency.'
+  'Photorealistic cinematic 16:9 character wardrobe reference diptych for scene beat consistency.'
+
+/** How beat frame generation should consume a wardrobe diptych reference image. */
+export const WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION =
+  'WARDROBE CHARACTER REFERENCE (diptych): LEFT panel = face, hair, skin tone, makeup, injuries, expression. ' +
+  'RIGHT panel = full-body wardrobe, footwear, fit, and accessories. ' +
+  'Use left panel for identity; use right panel for outfit. ' +
+  'Render a single seamless cinematic scene — do NOT reproduce the two-panel split, diptych layout, or reference sheet collage.'
 
 /** Negative terms targeting physics violations and object hallucinations. */
 export const PHYSICS_HALLUCINATION_NEGATIVE_PROMPT =
   'floating objects, missing limbs, physically impossible anatomy, multiple limbs, floating chairs, sitting without a chair, chairs on tables, hallucinated objects, impossible physics, mutated bodies, deformed furniture, objects defying gravity, clipping geometry'
+
+/** Negative terms to prevent beat frames from reproducing the reference diptych layout. */
+export const DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT =
+  'split-screen output, diptych, two-panel layout, reference sheet collage, side-by-side panels'
 
 const MAKEUP_PATTERN =
   /\b(makeup|lipstick|eyeliner|mascara|foundation|contour|blush|cosmetic|smudged makeup|runny mascara)\b/i
@@ -122,7 +133,14 @@ export function mergePhysicsNegativePrompt(existing?: string | null): string {
   return [...new Set(parts.join(', ').split(/,\s*/).map((p) => p.trim()).filter(Boolean))].join(', ')
 }
 
-/** Build cinematic 16:9 waist-up reference prompt from identity + wardrobe + scene-directed appearance. */
+/** Merge physics + diptych reproduction negatives for beat frame generation. */
+export function mergeBeatFrameNegativePrompt(existing?: string | null): string {
+  return mergePhysicsNegativePrompt(
+    [DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT, existing].filter(Boolean).join(', ')
+  )
+}
+
+/** Build cinematic 16:9 diptych reference prompt from identity + wardrobe + scene-directed appearance. */
 export function buildSceneCharacterHeadshotPrompt(input: SceneCharacterHeadshotInput): string {
   const directives = extractSceneAppearanceDirectives(input.beatAction, input.sceneAction)
   const hairAnchor =
@@ -141,7 +159,10 @@ export function buildSceneCharacterHeadshotPrompt(input: SceneCharacterHeadshotI
     '',
     `Character: ${input.characterName}.`,
     'Match face shape, skin tone, age, ethnicity, and bone structure exactly from the identity reference image.',
-    'Frame as cinematic 16:9 medium shot — waist-up, head through upper torso visible, subject centered, neutral soft studio background.',
+    '',
+    'Layout: horizontal two-panel diptych, equal width, same real human in both panels, neutral soft studio background.',
+    'LEFT panel (50% width): tight close-up — face and hair fill the panel; match identity reference exactly; show makeup, injuries, and expression.',
+    'RIGHT panel (50% width): full-length front-facing standing pose — head to feet visible; wearing the specified wardrobe and accessories; relaxed neutral stand.',
   ]
 
   const wardrobeParts = [input.wardrobeDescription?.trim(), input.wardrobeAccessories?.trim()].filter(
@@ -172,7 +193,8 @@ export function buildSceneCharacterHeadshotPrompt(input: SceneCharacterHeadshotI
 
   lines.push(
     '',
-    'Output a single photorealistic human reference image. No text, watermarks, turnaround sheets, or mannequins.'
+    'Output one 16:9 diptych reference sheet with exactly two photorealistic panels side by side.',
+    'No text labels, watermarks, mannequins, multi-view turnaround grids, or 4-panel sheets.'
   )
 
   return lines.join('\n')
@@ -197,7 +219,7 @@ export function buildSimplifiedBeatFramePrompt(input: SimplifiedBeatFramePromptI
   }
 
   lines.push(
-    'Match each character\'s wardrobe, hairstyle, makeup, and any injuries exactly from their wardrobe reference image. Do not describe clothing or costume in text.'
+    'Match each character from their wardrobe diptych reference: LEFT panel for face, hair, skin, makeup, and injuries; RIGHT panel for full-body wardrobe and accessories. Do not describe clothing or costume in text.'
   )
 
   if (input.locationRefLine?.trim()) {

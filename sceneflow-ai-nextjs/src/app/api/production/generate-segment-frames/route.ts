@@ -29,8 +29,9 @@ import {
 import { buildLocationReferenceLabel, buildLocationReferencePromptLine } from '@/lib/vision/locationReferencePrompts'
 import {
   buildSimplifiedBeatFramePrompt,
-  mergePhysicsNegativePrompt,
+  mergeBeatFrameNegativePrompt,
   resolveSceneHeadshotsForBeatCharacters,
+  WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
 } from '@/lib/character/sceneCharacterHeadshot'
 
 export const maxDuration = 120 // 2 minutes for potentially generating both frames
@@ -392,7 +393,7 @@ export async function POST(req: NextRequest) {
       sceneRecord,
     } = body
 
-    const mergedNegativePrompt = mergePhysicsNegativePrompt(negativePrompt)
+    const mergedNegativePrompt = mergeBeatFrameNegativePrompt(negativePrompt)
 
     const { skipStartGeneration, preservedStartUrl } = resolveStartFrameGenerationPlan({
       frameType,
@@ -678,7 +679,8 @@ export async function POST(req: NextRequest) {
           characters: simplifiedCharacters,
           artStyleSuffix: `Cinematic quality, 8K, ${selectedStyle.promptSuffix}`,
         })
-        console.log('[Generate Frames] Using simplified beat frame prompt (wardrobe reference-first)')
+        startFramePrompt = `${startFramePrompt}\n\n${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}`
+        console.log('[Generate Frames] Using simplified beat frame prompt (wardrobe diptych reference-first)')
       }
 
       for (const c of charPool) {
