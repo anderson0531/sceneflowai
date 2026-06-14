@@ -15,10 +15,12 @@
  *    resolves.
  */
 
+import { processWithConcurrency } from '../utils/concurrent-processor'
 import {
-  processWithConcurrency,
-  SCENE_EXPRESS_BEAT_CONCURRENCY,
-} from '../utils/concurrent-processor'
+  getSceneExpressBeatConcurrency,
+  runAdaptiveBeatPool,
+  type AdaptiveBeatPoolOptions,
+} from './adaptiveBeatScheduler'
 import {
   ExpressTrafficCop,
   getExpressSceneConcurrency,
@@ -231,6 +233,19 @@ function recordRateLimitedFailure(
   entry: ExpressRateLimitedFailure
 ): void {
   failures.push(entry)
+}
+
+function buildAdaptiveBeatPoolOptions(emit: ExpressEmit): AdaptiveBeatPoolOptions {
+  return {
+    initialConcurrency: getSceneExpressBeatConcurrency(),
+    isRetryable: isRateLimitError,
+    onConcurrencyChange: (max, reason) => {
+      if (reason === 'decrease') {
+        safeEmit(emit, { type: 'throttle', lane: 'image', max })
+      }
+    },
+    abortOnNonRetryableCanary: true,
+  }
 }
 
 function emitImageFailure(
@@ -561,26 +576,6 @@ async function generateSingleBeatImage(
     `[expressOrchestrator] Beat ${beatIdx + 1} scene ${sceneNumber} — ${imageParams.storyboardQuality} (${imageParams.modelTier})`
   )
 
-  if (options.includeEndFrames && result.imageUrl) {
-    const genCtx = getBeatGenerationContext(options)
-    const updatedBeats = getSceneBeats(scene)
-    const updatedBeat = updatedBeats[beatIdx]
-    if (updatedBeat && beatEndFrameNeedsGeneration(updatedBeat, genCtx)) {
-      await generateSingleBeatEndImage(
-        ctx,
-        options,
-        project,
-        baseUrl,
-        authCookie,
-        emit,
-        trafficCop,
-        beatIdx,
-        artStyle,
-        result.imageUrl
-      )
-    }
-  }
-
   return { imageUrl: result.imageUrl }
 }
 
@@ -665,7 +660,7 @@ async function runSupplementalEndFrames(
   beats: SceneBeat[],
   artStyle: string,
   genCtx: ReturnType<typeof getBeatGenerationContext>,
-  skipBeatIndices: Set<number>,
+  failedStartBeatIndices: Set<number>,
   rateLimitedFailures: ExpressRateLimitedFailure[]
 ): Promise<{ hadFailure: boolean; lastError?: string; lastImageUrl?: string }> {
   const { scene, sceneIndex, sceneNumber } = ctx
@@ -676,7 +671,7 @@ async function runSupplementalEndFrames(
   const endBeatsToGenerate: number[] = []
   const selectedKeys = getSelectedFrameKeySet(options)
   for (let beatIdx = 0; beatIdx < beats.length; beatIdx++) {
-    if (skipBeatIndices.has(beatIdx)) continue
+    if (failedStartBeatIndices.has(beatIdx)) continue
     const beat = beats[beatIdx]
     if (!isBeatEndSlotSelected(beat, selectedKeys)) continue
     if (!beat.storyboardImageUrl?.trim()) continue
@@ -691,81 +686,43 @@ async function runSupplementalEndFrames(
   let lastImageUrl = scene.imageUrl as string | undefined
   let lastError: string | undefined
   let hadFailure = false
-  let concurrency = SCENE_EXPRESS_BEAT_CONCURRENCY
 
-  const runEndBatch = async (indices: number[], limit: number) => {
-    const tasks = indices.map((beatIdx) => ({
-      id: beatIdx,
-      execute: async () => {
-        const startUrl = getSceneBeats(scene)[beatIdx]?.storyboardImageUrl?.trim()
-        if (!startUrl) return { imageUrl: startUrl }
-        return generateSingleBeatEndImage(
-          ctx,
-          options,
-          project,
-          baseUrl,
-          authCookie,
-          emit,
-          trafficCop,
-          beatIdx,
-          artStyle,
-          startUrl
-        )
-      },
-    }))
-    return processWithConcurrency(tasks, limit, undefined, false)
-  }
-
-  let results = await runEndBatch(endBeatsToGenerate, concurrency)
-  let failedIndices = results
-    .filter((r) => r.status === 'rejected')
-    .map((r) => r.id as number)
-
-  for (const r of results) {
-    if (r.status === 'fulfilled' && r.value?.imageUrl) {
-      lastImageUrl = r.value.imageUrl
-    }
-    if (r.status === 'rejected') {
-      hadFailure = true
-      lastError = emitImageFailure(emit, ctx, r.error, r.id as number, 'end')
-      if (isRateLimitError(r.error)) {
-        recordRateLimitedFailure(rateLimitedFailures, {
-          sceneIndex,
-          sceneNumber,
-          phase: 'image',
-          beatIndex: r.id as number,
-          frameRole: 'end',
-          error: lastError,
-        })
+  const pool = await runAdaptiveBeatPool(
+    endBeatsToGenerate,
+    async (beatIdx) => {
+      const startUrl = getSceneBeats(scene)[beatIdx]?.storyboardImageUrl?.trim()
+      if (!startUrl) {
+        throw new Error(`Missing start frame URL for beat ${beatIdx + 1}`)
       }
-    }
-  }
-
-  const rateLimited = results.some(
-    (r) => r.status === 'rejected' && isRateLimitError(r.error)
+      const result = await generateSingleBeatEndImage(
+        ctx,
+        options,
+        project,
+        baseUrl,
+        authCookie,
+        emit,
+        trafficCop,
+        beatIdx,
+        artStyle,
+        startUrl
+      )
+      lastImageUrl = result.imageUrl
+    },
+    buildAdaptiveBeatPoolOptions(emit)
   )
-  if (rateLimited && failedIndices.length > 0) {
-    concurrency = Math.max(1, Math.floor(concurrency / 2))
-    results = await runEndBatch(failedIndices, concurrency)
-    for (const r of results) {
-      if (r.status === 'fulfilled' && r.value?.imageUrl) {
-        lastImageUrl = r.value.imageUrl
-        hadFailure = false
-      }
-      if (r.status === 'rejected') {
-        hadFailure = true
-        lastError = emitImageFailure(emit, ctx, r.error, r.id as number, 'end')
-        if (isRateLimitError(r.error)) {
-          recordRateLimitedFailure(rateLimitedFailures, {
-            sceneIndex,
-            sceneNumber,
-            phase: 'image',
-            beatIndex: r.id as number,
-            frameRole: 'end',
-            error: lastError,
-          })
-        }
-      }
+
+  for (const [beatIdx, err] of pool.failed) {
+    hadFailure = true
+    lastError = emitImageFailure(emit, ctx, err, beatIdx, 'end')
+    if (isRateLimitError(err)) {
+      recordRateLimitedFailure(rateLimitedFailures, {
+        sceneIndex,
+        sceneNumber,
+        phase: 'image',
+        beatIndex: beatIdx,
+        frameRole: 'end',
+        error: lastError,
+      })
     }
   }
 
@@ -796,18 +753,16 @@ async function runBeatImages(
     beatsToGenerate.push(beatIdx)
   }
 
-  const generatedStartIndices = new Set<number>()
   let lastImageUrl = scene.imageUrl as string | undefined
   let lastError: string | undefined
   let hadFailure = false
+  const failedStartBeatIndices = new Set<number>()
 
   if (beatsToGenerate.length > 0) {
-    let remaining = [...beatsToGenerate]
-
-    if (beatsToGenerate.length >= 3) {
-      const probeIdx = beatsToGenerate[0]
-      try {
-        const probe = await generateSingleBeatImage(
+    const pool = await runAdaptiveBeatPool(
+      beatsToGenerate,
+      async (beatIdx) => {
+        const result = await generateSingleBeatImage(
           ctx,
           options,
           project,
@@ -815,131 +770,28 @@ async function runBeatImages(
           authCookie,
           emit,
           trafficCop,
-          probeIdx,
+          beatIdx,
           artStyle,
-          beatPlansByIndex.get(probeIdx)
+          beatPlansByIndex.get(beatIdx)
         )
-        lastImageUrl = probe.imageUrl
-        generatedStartIndices.add(probeIdx)
-        remaining = beatsToGenerate.slice(1)
-      } catch (err: any) {
-        lastError = emitImageFailure(emit, ctx, err, probeIdx, 'start')
-        hadFailure = true
-        if (isRateLimitError(err)) {
-          recordRateLimitedFailure(rateLimitedFailures, {
-            sceneIndex,
-            sceneNumber,
-            phase: 'image',
-            beatIndex: probeIdx,
-            frameRole: 'start',
-            error: lastError,
-          })
-        }
-        return { hadFailure: true, lastError, lastImageUrl }
-      }
-    }
-
-    let concurrency = SCENE_EXPRESS_BEAT_CONCURRENCY
-
-    const runBatch = async (indices: number[], limit: number) => {
-      const tasks = indices.map((beatIdx) => ({
-        id: beatIdx,
-        execute: async () => {
-          const result = await generateSingleBeatImage(
-            ctx,
-            options,
-            project,
-            baseUrl,
-            authCookie,
-            emit,
-            trafficCop,
-            beatIdx,
-            artStyle,
-            beatPlansByIndex.get(beatIdx)
-          )
-          generatedStartIndices.add(beatIdx)
-          return result
-        },
-      }))
-      return processWithConcurrency(tasks, limit, undefined, false)
-    }
-
-    let results = await runBatch(remaining, concurrency)
-    let failedIndices = results
-      .filter((r) => r.status === 'rejected')
-      .map((r) => r.id as number)
-
-    for (const r of results) {
-      if (r.status === 'fulfilled' && r.value?.imageUrl) {
-        lastImageUrl = r.value.imageUrl
-      }
-      if (r.status === 'rejected') {
-        hadFailure = true
-        lastError = emitImageFailure(emit, ctx, r.error, r.id as number, 'start')
-        if (isRateLimitError(r.error)) {
-          recordRateLimitedFailure(rateLimitedFailures, {
-            sceneIndex,
-            sceneNumber,
-            phase: 'image',
-            beatIndex: r.id as number,
-            frameRole: 'start',
-            error: lastError,
-          })
-        }
-      }
-    }
-
-    const rateLimited = results.some(
-      (r) => r.status === 'rejected' && isRateLimitError(r.error)
+        lastImageUrl = result.imageUrl
+      },
+      buildAdaptiveBeatPoolOptions(emit)
     )
 
-    if (rateLimited && failedIndices.length > 0) {
-      concurrency = Math.max(1, Math.floor(concurrency / 2))
-      results = await runBatch(failedIndices, concurrency)
-      failedIndices = results
-        .filter((r) => r.status === 'rejected')
-        .map((r) => r.id as number)
-      for (const r of results) {
-        if (r.status === 'fulfilled' && r.value?.imageUrl) {
-          lastImageUrl = r.value.imageUrl
-          hadFailure = false
-        }
-        if (r.status === 'rejected') {
-          hadFailure = true
-          lastError = emitImageFailure(emit, ctx, r.error, r.id as number, 'start')
-          if (isRateLimitError(r.error)) {
-            recordRateLimitedFailure(rateLimitedFailures, {
-              sceneIndex,
-              sceneNumber,
-              phase: 'image',
-              beatIndex: r.id as number,
-              frameRole: 'start',
-              error: lastError,
-            })
-          }
-        }
-      }
-    }
-
-    if (hadFailure && failedIndices.length > remaining.length / 2) {
-      const endResult = await runSupplementalEndFrames(
-        ctx,
-        options,
-        project,
-        baseUrl,
-        authCookie,
-        emit,
-        trafficCop,
-        getSceneBeats(scene),
-        artStyle,
-        genCtx,
-        generatedStartIndices,
-        rateLimitedFailures
-      )
-      return {
-        hadFailure: true,
-        lastError: endResult.lastError ?? lastError,
-        lastImageUrl: endResult.lastImageUrl ?? lastImageUrl,
+    for (const [beatIdx, err] of pool.failed) {
+      failedStartBeatIndices.add(beatIdx)
+      hadFailure = true
+      lastError = emitImageFailure(emit, ctx, err, beatIdx, 'start')
+      if (isRateLimitError(err)) {
+        recordRateLimitedFailure(rateLimitedFailures, {
+          sceneIndex,
+          sceneNumber,
+          phase: 'image',
+          beatIndex: beatIdx,
+          frameRole: 'start',
+          error: lastError,
+        })
       }
     }
   }
@@ -955,7 +807,7 @@ async function runBeatImages(
     getSceneBeats(scene),
     artStyle,
     genCtx,
-    generatedStartIndices,
+    failedStartBeatIndices,
     rateLimitedFailures
   )
 
