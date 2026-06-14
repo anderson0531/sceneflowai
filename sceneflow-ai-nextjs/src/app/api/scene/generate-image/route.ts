@@ -1669,7 +1669,7 @@ export async function POST(req: NextRequest) {
           geminiPrompt += `- Match props and environment to their reference images\n`
           if (cappedLocationReference?.imageUrl) {
             geminiPrompt +=
-              '- Location background: use exactly ONE of the 4 turnaround angles (North, East, South, or West) from the location reference — never the full 2x2 sheet and never more than one panel\n'
+              '- Location background: use exactly ONE of the 4 turnaround angles (Forward, Left, Back, or Right) from the location reference — never the full 2x2 sheet and never more than one panel\n'
           }
           if ((artStyle || 'photorealistic').trim() === 'photorealistic') {
             geminiPrompt +=
