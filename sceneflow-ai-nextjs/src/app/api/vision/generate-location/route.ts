@@ -5,6 +5,7 @@ import { generateImageWithGeminiStudio } from '@/lib/gemini/geminiStudioImageCli
 import { uploadReferenceLibraryBase64Image } from '@/lib/storage/referenceLibraryStorage'
 import { getCreditCost } from '@/lib/credits/creditCosts'
 import { CreditService } from '@/services/CreditService'
+import { LOCATION_TURNAROUND_GENERATION_INSTRUCTION } from '@/lib/vision/locationReferencePrompts'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -93,11 +94,9 @@ function buildLocationPrompt(
     if (lighting) parts.push(lighting)
   }
 
-  // Production quality modifiers — turnaround reference sheet
+  // Production quality modifiers — top/bottom opposite-view turnaround sheet
   parts.push(
-    'Split-screen turnaround reference image showing two different cinematic angles of the same location side-by-side',
-    'Left panel and right panel depict the identical set from two distinct camera angles with consistent furniture, layout, and color palette',
-    'Empty scene with NO people or characters present',
+    LOCATION_TURNAROUND_GENERATION_INSTRUCTION,
     'Cinematic production design, professional film set quality',
     'High resolution, sharp focus, detailed textures',
     'Film production location reference photograph for visual consistency across scenes'

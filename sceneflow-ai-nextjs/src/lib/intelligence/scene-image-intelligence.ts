@@ -21,6 +21,7 @@ import { generateText, generateTextCacheAware, type TextGenerationOptions } from
 import {
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
 } from '@/lib/character/characterReferenceAssembly'
+import { LOCATION_TURNAROUND_USER_PROMPT_HINT } from '@/lib/vision/locationReferencePrompts'
 import type { BeatKind } from '@/lib/script/segmentTypes'
 
 // =============================================================================
@@ -272,13 +273,13 @@ Action/Framing: [shot type + frozen action for THIS beat; use person [N] tokens 
 For EACH reference image provided in the input, add one bullet using the exact Ref Image index from input:
 - SUBJECT REFERENCE (Ref Image [N]): Extract face shape, hair, skin tone, and physical identity only. Maintain organic human skin textures. Ignore clothing in this image if wardrobe ref exists.
 - WARDROBE REFERENCE (Ref Image [M]): Extract clothing design, color palette, and garments only. Completely ignore the mannequin/plastic base, stylized medium, turnaround sheet layout, and gray studio background. Translate these clothes onto the realistic human subject from the identity ref.
-- LOCATION REFERENCE (Ref Image [K]): Extract architectural layout, furniture, and color palette. If the reference is a turnaround/split-screen location sheet, treat both panels as the same set from two angles — match layout consistently. Match lighting to Global Style Anchor.
+- LOCATION REFERENCE (Ref Image [K]): Extract architectural layout, furniture placement, and color palette from two opposite wide views of the same set (reference may be stacked top/bottom or legacy side-by-side). Use as layout aid only — render ONE unified full-frame cinematic shot for this beat; NEVER reproduce the two-panel reference sheet, split-screen, diptych, or collage in the output. Choose the angle that best matches beat framing. Match lighting to Global Style Anchor.
 - PROP REFERENCE (Ref Image [P]): Extract shape, material, color, and design of the named prop only.
 
 Omit mapping lines for references not used in this beat.
 
 [EXCLUSIONS & BOUNDARIES]
-Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).`
+Strictly Avoid: Mannequin geometry, plastic skin, cartoon style, 3D render aesthetics, canvas textures, turnaround sheet layout, split-screen output, multi-panel layout, diptych, reference sheet collage, faceless figures, or artistic blending of reference mediums. Maintain 100% photographic realism when art style is photorealistic. No dialogue captions, subtitles, or watermarks (except centered title typography on title beats).`
 }
 
 /**
@@ -387,7 +388,7 @@ function buildUserPrompt(request: SceneImageIntelligenceRequest): string {
     prompt += `LOCATIONS (select at most one matching scene heading and beat action):\n`
     request.availableLocations.forEach(loc => {
       if (loc.hasReferenceImage && loc.referenceIndex) {
-        prompt += `- ${loc.name} [Location Ref Image [${loc.referenceIndex}] — may be turnaround/split-screen showing two angles of same set]\n`
+        prompt += `- ${loc.name} [Location Ref Image [${loc.referenceIndex}] — ${LOCATION_TURNAROUND_USER_PROMPT_HINT}]\n`
       } else if (loc.hasReferenceImage) {
         prompt += `- ${loc.name} [location reference image provided]\n`
       } else {

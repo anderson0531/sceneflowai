@@ -38,6 +38,7 @@ import {
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
+import { LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/vision/locationReferencePrompts'
 import {
   resolveStoryboardGeneration,
   getPhotorealisticPromptAnchor,
@@ -1620,7 +1621,7 @@ export async function POST(req: NextRequest) {
           
           // Location reference instructions
           if (matchedLocationReference && matchedLocationReference.imageUrl) {
-            geminiPrompt += `LOCATION REFERENCE: The environment/setting MUST match the "${matchedLocationReference.location}" reference image — same architectural layout, furniture placement, color palette, and spatial geometry. If the reference is a split-screen turnaround showing two angles of the same location, treat both panels as the same set and match layout consistently. Match lighting to the scene prompt Global Style Anchor.\n\n`
+            geminiPrompt += `${LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION} Environment: "${matchedLocationReference.location}". Match lighting to the scene prompt Global Style Anchor.\n\n`
           }
           
           geminiPrompt += `SCENE PROMPT:\n${optimizedPrompt}\n\n`

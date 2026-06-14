@@ -9,6 +9,7 @@ import { Copy, Check, Info, RotateCcw } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { artStylePresets } from '@/constants/artStylePresets'
 import { LocationReference } from '@/types/visionReferences'
+import { LOCATION_TURNAROUND_GENERATION_INSTRUCTION } from '@/lib/vision/locationReferencePrompts'
 
 export interface LocationPromptPayload {
   location: LocationReference
@@ -120,10 +121,8 @@ export function LocationPromptBuilder({
       parts.push(`Visual style: ${screenplayContext.visualStyle}`)
     }
 
-    // Production quality — turnaround two-shot reference (no people)
-    parts.push('Split-screen turnaround reference image showing two different cinematic angles of the same location side-by-side')
-    parts.push('Left panel and right panel depict the identical set from two distinct camera angles with consistent furniture, layout, and color palette')
-    parts.push('Empty scene with NO people or characters present')
+    // Production quality — top/bottom opposite-view turnaround (no people)
+    parts.push(LOCATION_TURNAROUND_GENERATION_INSTRUCTION)
     parts.push('Cinematic production design, professional film set quality')
 
     const constructed = parts.filter(Boolean).join('. ')
@@ -168,12 +167,10 @@ export function LocationPromptBuilder({
       'neon': 'neon lighting',
     }
     const parts: string[] = []
-    parts.push('Split-screen turnaround reference image showing two different cinematic angles of the same location side-by-side')
     parts.push(shotMap[shotType] || shotType)
     if (basePrompt) parts.push(`of ${basePrompt}`)
     if (cameraAngle && cameraAngle !== 'eye-level') parts.push(angleMap[cameraAngle] || cameraAngle)
     if (lighting) parts.push(lightingMap[lighting] || lighting)
-    parts.push('Left panel and right panel depict the identical set from two distinct camera angles with consistent furniture, layout, and color palette')
     if (additionalDetails) parts.push(additionalDetails)
 
     // Art style
@@ -279,7 +276,7 @@ export function LocationPromptBuilder({
               <p className="font-medium mb-1">Environment Reference</p>
               <p className="text-blue-400/80">
                 Location images are generated <span className="font-medium">without people</span> as
-                split-screen turnaround references showing two angles of the same set for
+                stacked top/bottom turnaround references showing opposite wide views of the same set for
                 consistent scene environment references across your project.
               </p>
             </div>
