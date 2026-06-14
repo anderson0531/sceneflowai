@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { generateText } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
 import {
+  distillAppearanceNotesFromText,
+  extractAppearanceNotesFromSceneText,
   formatSceneForWardrobeAnalysis,
   sceneIncludesCharacter,
   type WardrobeAnalysisSceneInput,
@@ -40,6 +42,59 @@ interface WardrobeSuggestion {
   sceneNumbers: number[]
   reason: string
   confidence: number
+}
+
+/** Merge beat-derived appearance notes into suggestions when AI omitted them. */
+function enrichSuggestionsWithBeatAppearanceNotes(
+  suggestions: WardrobeSuggestion[],
+  characterScenes: WardrobeAnalysisSceneInput[],
+  characterName: string
+): WardrobeSuggestion[] {
+  if (characterScenes.length === 0) return suggestions
+
+  const sceneAppearanceMap = new Map<number, string>()
+  for (const scene of characterScenes) {
+    const rawNotes = extractAppearanceNotesFromSceneText(scene, characterName)
+    const distilled = rawNotes
+      .map((n) => distillAppearanceNotesFromText(n))
+      .filter(Boolean) as string[]
+    if (distilled.length > 0) {
+      sceneAppearanceMap.set(scene.sceneNumber, distilled.join('; '))
+    }
+  }
+
+  if (sceneAppearanceMap.size === 0) return suggestions
+
+  const enriched = suggestions.map((s) => ({ ...s }))
+
+  for (const [sceneNum, notes] of sceneAppearanceMap) {
+    const matching = enriched.filter((s) => s.sceneNumbers?.includes(sceneNum))
+    const withNotes = matching.find((s) => s.appearanceNotes?.trim())
+
+    if (withNotes) continue
+
+    if (matching.length > 0) {
+      const target = matching[0]
+      target.appearanceNotes = notes
+      if (!target.reason.toLowerCase().includes('bruise') && !target.reason.toLowerCase().includes('bloodshot')) {
+        target.reason = `${target.reason} Beat-level appearance: ${notes}.`.trim()
+      }
+    } else if (enriched.length > 0) {
+      const nearest = enriched.find((s) => s.sceneNumbers?.includes(sceneNum)) ?? enriched[0]
+      nearest.appearanceNotes = notes
+    } else {
+      enriched.push({
+        name: `Scene ${sceneNum} — Distressed Look`,
+        description: 'Same outfit as baseline — appearance change only',
+        appearanceNotes: notes,
+        sceneNumbers: [sceneNum],
+        reason: `Beat-level appearance details detected: ${notes}`,
+        confidence: 0.75,
+      })
+    }
+  }
+
+  return enriched
 }
 
 /**
@@ -130,6 +185,18 @@ IMPORTANT RULES — APPEARANCE CHANGES (makeup, hair, injuries):
 7. Put ALL makeup, hair state, and injury details in appearanceNotes — NOT only in reason. appearanceNotes is used for reference image generation.
 8. Read beat-level lines carefully — close-ups often describe bruises, bloodshot eyes, and makeup that scene summaries omit.
 
+EXAMPLE — beat close-up with injury (must capture in appearanceNotes):
+Beat text: "CLOSE UP: Elara's hands trembling on the table. Her eyes are bloodshot, a faint bruise forming on her temple."
+Correct output for that scene:
+{
+  "name": "Interrogation — Distressed",
+  "description": "(same outfit as interrogation scene)",
+  "appearanceNotes": "Bloodshot eyes, faint bruise forming on left temple, visible distress",
+  "sceneNumbers": [4],
+  "reason": "Beat close-up describes injury and exhaustion not in scene summary",
+  "confidence": 0.9
+}
+
 For each DISTINCT wardrobe/look needed, provide:
 - name: A descriptive name (e.g., "Office Attire", "Interrogation — Distressed")
 - description: Detailed outfit description for image generation (fabrics, colors, style, fit)
@@ -187,6 +254,12 @@ Respond with valid JSON only:
         !existingNames.includes(s.name.toLowerCase())
       )
     }
+
+    suggestions = enrichSuggestionsWithBeatAppearanceNotes(
+      suggestions,
+      characterScenes,
+      character.name
+    )
 
     suggestions.sort((a, b) => {
       const aFirst = Math.min(...(a.sceneNumbers || [999]))
