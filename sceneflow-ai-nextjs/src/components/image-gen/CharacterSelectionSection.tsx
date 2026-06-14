@@ -4,6 +4,7 @@ import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { Users, Check, ChevronDown, ChevronUp, Shirt, Info } from 'lucide-react'
+import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
 import type { CharacterSelectionProps } from './types'
 
 function normalizeSceneWardrobeMap(
@@ -27,52 +28,37 @@ function wardrobeImageUrl(wardrobe: { headshotUrl?: string; fullBodyUrl?: string
   return wardrobe.headshotUrl || wardrobe.fullBodyUrl
 }
 
-/**
- * Unified character & wardrobe reference selection for image generation dialogs.
- *
- * Displays a grid of reference image tiles (matching Location & Props pattern):
- * - Identity headshot tile when referenceImage exists
- * - One tile per wardrobe that has a costume reference image (fullBodyUrl or headshotUrl)
- * - Characters without any images get a fallback icon tile
- * - Selection tracks both character name AND wardrobe ID for precise costume locking
- *
- * Collapsible with header showing selected count badge when closed.
- */
-export function CharacterSelectionSection({
-  characters,
-  selectedCharacterNames,
-  onSelectionChange,
-  selectedWardrobes,
-  onWardrobeChange,
-  sceneWardrobes,
-  isCollapsed,
-  onToggleCollapsed,
-  noTalentHint,
-  className,
-}: CharacterSelectionProps) {
-  const sceneWardrobeByName = normalizeSceneWardrobeMap(sceneWardrobes, characters)
+interface ReferenceTile {
+  characterName: string
+  wardrobeId?: string
+  wardrobeName?: string
+  imageUrl?: string
+  label: string
+  sublabel: string
+  isSceneDefault?: boolean
+  tileKind: 'identity' | 'wardrobe' | 'fallback'
+}
 
-  // Filter out narrator/voiceover-only characters — they have no visual representation
-  const visualCharacters = characters.filter(c => {
-    return c.type !== 'narrator' && c.type !== 'description'
-  })
+interface CharacterGroup {
+  characterName: string
+  identityTile?: ReferenceTile
+  wardrobeTiles: ReferenceTile[]
+  fallbackTile?: ReferenceTile
+}
 
-  if (visualCharacters.length === 0) return null
-
-  interface ReferenceTile {
-    characterName: string
-    wardrobeId?: string
-    wardrobeName?: string
-    imageUrl?: string
-    label: string
-    sublabel: string
-    isSceneDefault?: boolean
-    tileKind: 'identity' | 'wardrobe' | 'fallback'
-  }
-
-  const tiles: ReferenceTile[] = []
+function buildCharacterGroups(
+  visualCharacters: CharacterSelectionProps['characters'],
+  sceneWardrobeByName: Record<string, string>,
+  scene?: Record<string, unknown>,
+  sceneIndex?: number
+): CharacterGroup[] {
+  const groups: CharacterGroup[] = []
 
   for (const char of visualCharacters) {
+    const resolvedSceneWardrobeId =
+      resolveWardrobeIdForCharacterInScene(char as Record<string, unknown>, scene ?? null, sceneIndex) ??
+      sceneWardrobeByName[char.name]
+
     const wardrobesWithImages = (char.wardrobes || []).filter((w) => wardrobeImageUrl(w as any))
 
     const seenImageUrls = new Set<string>()
@@ -83,42 +69,101 @@ export function CharacterSelectionSection({
       return true
     })
 
+    const group: CharacterGroup = {
+      characterName: char.name,
+      wardrobeTiles: [],
+    }
+
     if (char.referenceImage) {
-      tiles.push({
+      group.identityTile = {
         characterName: char.name,
         imageUrl: char.referenceImage,
         label: char.name,
         sublabel: 'Identity headshot',
         tileKind: 'identity',
+      }
+    }
+
+    for (const w of uniqueWardrobesWithImages) {
+      const imgUrl = wardrobeImageUrl(w as any)
+      const hasDiptych = !!(w as any).headshotUrl
+      group.wardrobeTiles.push({
+        characterName: char.name,
+        wardrobeId: w.id,
+        wardrobeName: w.name,
+        imageUrl: imgUrl,
+        label: char.name,
+        sublabel: hasDiptych ? `${w.name} · Diptych ref` : `${w.name} · Wardrobe ref`,
+        isSceneDefault: resolvedSceneWardrobeId === w.id,
+        tileKind: 'wardrobe',
       })
     }
 
-    if (uniqueWardrobesWithImages.length > 0) {
-      for (const w of uniqueWardrobesWithImages) {
-        const imgUrl = wardrobeImageUrl(w as any)
-        const hasDiptych = !!(w as any).headshotUrl
-        tiles.push({
-          characterName: char.name,
-          wardrobeId: w.id,
-          wardrobeName: w.name,
-          imageUrl: imgUrl,
-          label: char.name,
-          sublabel: hasDiptych
-            ? `${w.name} · Diptych ref`
-            : `${w.name} · Wardrobe ref`,
-          isSceneDefault: sceneWardrobeByName[char.name] === w.id,
-          tileKind: 'wardrobe',
-        })
-      }
-    } else if (!char.referenceImage) {
-      tiles.push({
+    if (!group.identityTile && group.wardrobeTiles.length === 0) {
+      group.fallbackTile = {
         characterName: char.name,
         imageUrl: undefined,
         label: char.name,
         sublabel: char.wardrobes?.length ? 'No costume images' : 'No reference',
         tileKind: 'fallback',
-      })
+      }
     }
+
+    groups.push(group)
+  }
+
+  return groups
+}
+
+function buildFlatTiles(groups: CharacterGroup[]): ReferenceTile[] {
+  const tiles: ReferenceTile[] = []
+  for (const group of groups) {
+    if (group.identityTile) tiles.push(group.identityTile)
+    tiles.push(...group.wardrobeTiles)
+    if (group.fallbackTile) tiles.push(group.fallbackTile)
+  }
+  return tiles
+}
+
+/**
+ * Unified character & wardrobe reference selection for image generation dialogs.
+ */
+export function CharacterSelectionSection({
+  characters,
+  selectedCharacterNames,
+  onSelectionChange,
+  selectedWardrobes,
+  onWardrobeChange,
+  sceneWardrobes,
+  scene,
+  sceneIndex,
+  layout = 'grouped',
+  isCollapsed,
+  onToggleCollapsed,
+  noTalentHint,
+  className,
+}: CharacterSelectionProps) {
+  const sceneWardrobeByName = normalizeSceneWardrobeMap(sceneWardrobes, characters)
+
+  const visualCharacters = characters.filter((c) => {
+    return c.type !== 'narrator' && c.type !== 'description'
+  })
+
+  if (visualCharacters.length === 0) return null
+
+  const characterGroups = buildCharacterGroups(visualCharacters, sceneWardrobeByName, scene, sceneIndex)
+  const flatTiles = buildFlatTiles(characterGroups)
+
+  const resolveSceneWardrobeId = (characterName: string): string | undefined => {
+    const char = visualCharacters.find((c) => c.name === characterName)
+    if (!char) return sceneWardrobeByName[characterName]
+    return (
+      resolveWardrobeIdForCharacterInScene(
+        char as Record<string, unknown>,
+        scene ?? null,
+        sceneIndex
+      ) ?? sceneWardrobeByName[characterName]
+    )
   }
 
   const isTileSelected = (tile: ReferenceTile): boolean => {
@@ -140,7 +185,7 @@ export function CharacterSelectionSection({
 
     if (tile.tileKind === 'identity') {
       if (isCurrentlySelected) {
-        onSelectionChange(selectedCharacterNames.filter(n => n !== tile.characterName))
+        onSelectionChange(selectedCharacterNames.filter((n) => n !== tile.characterName))
         if (onWardrobeChange) {
           onWardrobeChange(tile.characterName, '')
         }
@@ -149,19 +194,15 @@ export function CharacterSelectionSection({
           onSelectionChange([...selectedCharacterNames, tile.characterName])
         }
         if (onWardrobeChange) {
-          const sceneDefaultId = sceneWardrobeByName[tile.characterName]
-          if (sceneDefaultId) {
-            onWardrobeChange(tile.characterName, sceneDefaultId)
-          } else {
-            onWardrobeChange(tile.characterName, '')
-          }
+          const sceneWardrobeId = resolveSceneWardrobeId(tile.characterName)
+          onWardrobeChange(tile.characterName, sceneWardrobeId || '')
         }
       }
       return
     }
 
     if (isCurrentlySelected) {
-      onSelectionChange(selectedCharacterNames.filter(n => n !== tile.characterName))
+      onSelectionChange(selectedCharacterNames.filter((n) => n !== tile.characterName))
       if (onWardrobeChange && tile.wardrobeId) {
         onWardrobeChange(tile.characterName, '')
       }
@@ -177,8 +218,68 @@ export function CharacterSelectionSection({
     }
   }
 
+  const renderTile = (tile: ReferenceTile, idx: number, sizeClass?: string) => {
+    const isSelected = isTileSelected(tile)
+    const aspectClass = tile.tileKind === 'wardrobe' ? 'aspect-video' : 'aspect-[3/4]'
+
+    return (
+      <button
+        key={`${tile.characterName}-${tile.tileKind}-${tile.wardrobeId || 'identity'}-${idx}`}
+        type="button"
+        onClick={() => handleTileClick(tile)}
+        className={cn(
+          'relative rounded-lg overflow-hidden border-2 transition-all',
+          aspectClass,
+          sizeClass,
+          isSelected
+            ? 'border-cyan-500 ring-2 ring-cyan-500/30'
+            : 'border-slate-700 hover:border-slate-500'
+        )}
+        title={`${tile.label}${tile.wardrobeName ? ` — ${tile.wardrobeName}` : ''} (${tile.sublabel})`}
+      >
+        {tile.imageUrl ? (
+          <img src={tile.imageUrl} alt={tile.label} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-slate-700 flex items-center justify-center">
+            <Users className="w-8 h-8 text-slate-500" />
+          </div>
+        )}
+        {isSelected && (
+          <div className="absolute top-1 right-1 w-5 h-5 bg-cyan-500 rounded-full flex items-center justify-center">
+            <Check className="w-3 h-3 text-white" />
+          </div>
+        )}
+        {tile.tileKind === 'identity' && (
+          <div className="absolute top-1 left-1">
+            <Badge variant="secondary" className="text-[8px] bg-cyan-600/80 text-white border-0 px-1 py-0">
+              Identity
+            </Badge>
+          </div>
+        )}
+        {tile.isSceneDefault && (
+          <div className="absolute top-1 left-1">
+            <Badge variant="secondary" className="text-[8px] bg-purple-500/80 text-white border-0 px-1 py-0">
+              Scene
+            </Badge>
+          </div>
+        )}
+        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 pt-4">
+          <p className="text-[10px] text-white font-medium truncate">{tile.label}</p>
+          {tile.sublabel && (
+            <p className="text-[9px] text-slate-300 truncate">{tile.sublabel}</p>
+          )}
+        </div>
+      </button>
+    )
+  }
+
   const selectedCount = selectedCharacterNames.length
   const isCollapsedState = isCollapsed ?? false
+
+  const footerCopy =
+    layout === 'grouped'
+      ? 'Row 1 = who is in the shot. Row 2 = which outfit (scene look auto-selected).'
+      : 'Identity headshots are always included when a character is selected. Wardrobe refs control outfit only.'
 
   return (
     <div className={cn('space-y-3 p-3 rounded border border-slate-700 bg-slate-800/50', className)}>
@@ -236,68 +337,63 @@ export function CharacterSelectionSection({
             </div>
           )}
 
-          <div className="grid grid-cols-4 gap-2">
-            {tiles.map((tile, idx) => {
-              const isSelected = isTileSelected(tile)
-              const aspectClass =
-                tile.tileKind === 'wardrobe' ? 'aspect-video' : 'aspect-[3/4]'
-              return (
-                <button
-                  key={`${tile.characterName}-${tile.tileKind}-${tile.wardrobeId || 'identity'}-${idx}`}
-                  type="button"
-                  onClick={() => handleTileClick(tile)}
-                  className={cn(
-                    'relative rounded-lg overflow-hidden border-2 transition-all',
-                    aspectClass,
-                    isSelected
-                      ? 'border-cyan-500 ring-2 ring-cyan-500/30'
-                      : 'border-slate-700 hover:border-slate-500'
-                  )}
-                  title={`${tile.label}${tile.wardrobeName ? ` — ${tile.wardrobeName}` : ''} (${tile.sublabel})`}
-                >
-                  {tile.imageUrl ? (
-                    <img
-                      src={tile.imageUrl}
-                      alt={tile.label}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-slate-700 flex items-center justify-center">
-                      <Users className="w-8 h-8 text-slate-500" />
+          {layout === 'grouped' ? (
+            <div className="space-y-0">
+              {characterGroups.map((group, groupIdx) => {
+                const isCharSelected = selectedCharacterNames.includes(group.characterName)
+                const activeWardrobeId = selectedWardrobes?.[group.characterName]
+                const activeWardrobe = group.wardrobeTiles.find((w) => w.wardrobeId === activeWardrobeId)
+
+                return (
+                  <div
+                    key={group.characterName}
+                    className={cn(
+                      'pb-3 mb-3',
+                      groupIdx < characterGroups.length - 1 && 'border-b border-slate-700/60'
+                    )}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-xs font-semibold text-slate-200">{group.characterName}</p>
+                      {isCharSelected && (
+                        <Badge variant="secondary" className="text-[9px] bg-cyan-500/20 text-cyan-300 border-0">
+                          In shot
+                        </Badge>
+                      )}
                     </div>
-                  )}
-                  {isSelected && (
-                    <div className="absolute top-1 right-1 w-5 h-5 bg-cyan-500 rounded-full flex items-center justify-center">
-                      <Check className="w-3 h-3 text-white" />
-                    </div>
-                  )}
-                  {tile.tileKind === 'identity' && (
-                    <div className="absolute top-1 left-1">
-                      <Badge variant="secondary" className="text-[8px] bg-cyan-600/80 text-white border-0 px-1 py-0">
-                        Identity
-                      </Badge>
-                    </div>
-                  )}
-                  {tile.isSceneDefault && (
-                    <div className="absolute top-1 left-1">
-                      <Badge variant="secondary" className="text-[8px] bg-purple-500/80 text-white border-0 px-1 py-0">
-                        Default
-                      </Badge>
-                    </div>
-                  )}
-                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 pt-4">
-                    <p className="text-[10px] text-white font-medium truncate">{tile.label}</p>
-                    {tile.sublabel && (
-                      <p className="text-[9px] text-slate-300 truncate">{tile.sublabel}</p>
+
+                    {group.identityTile && (
+                      <div className="mb-2">
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-1.5">Identity</p>
+                        <div className="w-24">{renderTile(group.identityTile, 0)}</div>
+                      </div>
+                    )}
+
+                    {group.wardrobeTiles.length > 0 && (
+                      <div>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-1.5">
+                          Wardrobe
+                          {activeWardrobe?.wardrobeName ? ` · ${activeWardrobe.wardrobeName}` : ''}
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {group.wardrobeTiles.map((tile, idx) => renderTile(tile, idx))}
+                        </div>
+                      </div>
+                    )}
+
+                    {group.fallbackTile && (
+                      <div className="w-24">{renderTile(group.fallbackTile, 0)}</div>
                     )}
                   </div>
-                </button>
-              )
-            })}
-          </div>
-          <p className="text-[10px] text-slate-500">
-            Identity headshots are always included when a character is selected. Wardrobe refs control outfit only.
-          </p>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-2">
+              {flatTiles.map((tile, idx) => renderTile(tile, idx))}
+            </div>
+          )}
+
+          <p className="text-[10px] text-slate-500">{footerCopy}</p>
         </>
       )}
     </div>

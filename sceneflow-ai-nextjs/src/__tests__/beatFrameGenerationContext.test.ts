@@ -143,4 +143,55 @@ describe('resolveBeatFrameGenerationContext', () => {
 
     expect(resolved.characterIds).toEqual(['c2'])
   })
+
+  it('auto-selects wardrobe from scene.characterWardrobes', () => {
+    const scene = {
+      heading: 'INT. KITCHEN - DAY',
+      characterWardrobes: [{ characterId: 'c1', wardrobeId: 'w-kitchen' }],
+    }
+    const resolved = resolveBeatFrameGenerationContext({
+      scene,
+      sceneIndex: 0,
+      beat: actionBeat(),
+      projectCharacters: [
+        {
+          id: 'c1',
+          name: 'Elara Vance',
+          referenceImage: 'https://blob.example/elara.jpg',
+          wardrobes: [
+            { id: 'w-kitchen', name: 'Morning robe', isDefault: false },
+            { id: 'w-default', name: 'Casual', isDefault: true },
+          ],
+        },
+      ],
+      locationReferences: [],
+      objectReferences: [],
+    })
+
+    expect(resolved.characterWardrobes).toEqual([{ characterId: 'c1', wardrobeId: 'w-kitchen' }])
+  })
+
+  it('auto-selects wardrobe via sceneNumbers when no scene override', () => {
+    const scene = { heading: 'INT. LAB - DAY' }
+    const resolved = resolveBeatFrameGenerationContext({
+      scene,
+      sceneIndex: 3,
+      beat: actionBeat({ actionDescription: 'Elara scans the console' }),
+      projectCharacters: [
+        {
+          id: 'c1',
+          name: 'Elara Vance',
+          referenceImage: 'https://blob.example/elara.jpg',
+          wardrobes: [
+            { id: 'w-scene4', name: 'Scene 4', sceneNumbers: [4], isDefault: false },
+            { id: 'w-default', name: 'Default', isDefault: true },
+          ],
+        },
+      ],
+      locationReferences: [],
+      objectReferences: [],
+    })
+
+    expect(resolved.characterWardrobes).toEqual([{ characterId: 'c1', wardrobeId: 'w-scene4' }])
+  })
 })

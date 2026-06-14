@@ -9,6 +9,7 @@ import {
   CHARACTER_IDENTITY_REFERENCE_INSTRUCTION,
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
   resolveCharacterReferencePair,
+  resolveWardrobeIdForCharacterInScene,
   WARDROBE_ONLY_REFERENCE_INSTRUCTION,
 } from '@/lib/character/characterReferenceAssembly'
 
@@ -123,6 +124,19 @@ describe('characterReferenceAssembly', () => {
     })
     expect(pair.wardrobeDiptychUrl).toBe('https://example.com/elara-diptych-picked.jpg')
     expect(pair.resolvedWardrobe?.id).toBe('w-picked')
+  })
+
+  it('resolveWardrobeIdForCharacterInScene returns id from resolver', () => {
+    const id = resolveWardrobeIdForCharacterInScene(
+      {
+        id: 'c1',
+        name: 'Alex',
+        wardrobes: [{ id: 'w1', sceneNumbers: [2], isDefault: false }],
+      },
+      {},
+      1
+    )
+    expect(id).toBe('w1')
   })
 
   it('returns portrait-only when no wardrobe turnaround', () => {

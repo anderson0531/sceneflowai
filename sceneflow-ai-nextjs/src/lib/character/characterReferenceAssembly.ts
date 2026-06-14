@@ -244,6 +244,18 @@ export function resolveWardrobeForCharacter(
   return resolved
 }
 
+/** Resolve wardrobe id for a character in the current scene (override → sceneNumbers → scene override → default). */
+export function resolveWardrobeIdForCharacterInScene(
+  character: Record<string, unknown>,
+  scene?: Record<string, unknown> | null,
+  sceneIndex?: number,
+  characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
+): string | undefined {
+  const resolved = resolveWardrobeForCharacter(character, scene, characterWardrobes, sceneIndex)
+  const id = resolved?.id
+  return typeof id === 'string' && id.trim() ? id.trim() : undefined
+}
+
 export function resolveCharacterReferencePair(
   args: ResolveCharacterReferencePairArgs
 ): CharacterReferencePair {

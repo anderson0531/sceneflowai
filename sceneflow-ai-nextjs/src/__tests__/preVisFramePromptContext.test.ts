@@ -81,4 +81,91 @@ describe('resolvePreVisFramePromptContext', () => {
     expect(ctx.seedPrompt).toContain('Wide lab')
     expect(ctx.visualSetup.shotType).toBeTruthy()
   })
+
+  it('auto-selects wardrobe from scene.characterWardrobes on beat frames', () => {
+    const ctx = resolvePreVisFramePromptContext({
+      slot,
+      scene: {
+        ...scene,
+        characterWardrobes: [{ characterId: 'c1', wardrobeId: 'w-scene' }],
+      },
+      sceneIndex: 0,
+      projectCharacters: [
+        {
+          id: 'c1',
+          name: 'Alex',
+          referenceImage: 'https://example.com/alex.jpg',
+          wardrobes: [
+            { id: 'w-scene', name: 'Lab coat', description: 'White coat', isDefault: false },
+            { id: 'w-default', name: 'Casual', description: 'Jeans', isDefault: true },
+          ],
+        },
+      ],
+      locationReferences: [],
+      objectReferences: [],
+    })
+    expect(ctx.selectedWardrobes.Alex).toBe('w-scene')
+  })
+
+  it('auto-selects wardrobe via sceneNumbers when no scene override', () => {
+    const ctx = resolvePreVisFramePromptContext({
+      slot,
+      scene,
+      sceneIndex: 3,
+      projectCharacters: [
+        {
+          id: 'c1',
+          name: 'Alex',
+          referenceImage: 'https://example.com/alex.jpg',
+          wardrobes: [
+            {
+              id: 'w-scene4',
+              name: 'Scene 4 look',
+              description: 'Hospital gown',
+              sceneNumbers: [4],
+              isDefault: false,
+            },
+            { id: 'w-default', name: 'Casual', description: 'Jeans', isDefault: true },
+          ],
+        },
+      ],
+      locationReferences: [],
+      objectReferences: [],
+    })
+    expect(ctx.selectedWardrobes.Alex).toBe('w-scene4')
+  })
+
+  it('auto-selects wardrobe for dialogue speaker', () => {
+    const dialogueSlot: StoryboardFrameSlot = {
+      key: 'dialogue-0',
+      label: 'Dialogue',
+      kind: 'dialogue',
+      dialogueIndex: 0,
+      isPlaceholder: false,
+      isMissing: false,
+    }
+    const ctx = resolvePreVisFramePromptContext({
+      slot: dialogueSlot,
+      scene: {
+        heading: 'INT. LAB - DAY',
+        dialogue: [{ character: 'Alex', line: 'Something is wrong.' }],
+        characterWardrobes: [{ characterId: 'c1', wardrobeId: 'w-lab' }],
+      },
+      sceneIndex: 0,
+      projectCharacters: [
+        {
+          id: 'c1',
+          name: 'Alex',
+          referenceImage: 'https://example.com/alex.jpg',
+          wardrobes: [
+            { id: 'w-lab', name: 'Lab coat', description: 'White coat', isDefault: false },
+          ],
+        },
+      ],
+      locationReferences: [],
+      objectReferences: [],
+    })
+    expect(ctx.selectedCharacterNames).toEqual(['Alex'])
+    expect(ctx.selectedWardrobes.Alex).toBe('w-lab')
+  })
 })

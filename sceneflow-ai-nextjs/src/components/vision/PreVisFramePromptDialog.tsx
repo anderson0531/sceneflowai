@@ -207,7 +207,7 @@ export function PreVisFramePromptDialog({
         <DialogHeader>
           <DialogTitle>Direct — {slot.label}</DialogTitle>
           <DialogDescription>
-            Scene {sceneIndex + 1} · Guided prompt builder with text-first wardrobe descriptions.
+            Scene {sceneIndex + 1} · Guided prompt builder with character and wardrobe references.
           </DialogDescription>
         </DialogHeader>
 
@@ -228,6 +228,9 @@ export function PreVisFramePromptDialog({
                   setSelectedWardrobes((prev) => ({ ...prev, [name]: wardrobeId }))
                 }
                 sceneWardrobes={Array.isArray(scene.characterWardrobes) ? scene.characterWardrobes : []}
+                scene={scene}
+                sceneIndex={sceneIndex}
+                layout="grouped"
                 isCollapsed={talentSectionCollapsed}
                 onToggleCollapsed={() => setTalentSectionCollapsed((p) => !p)}
               />

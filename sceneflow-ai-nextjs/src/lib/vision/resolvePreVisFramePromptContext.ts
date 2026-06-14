@@ -12,6 +12,7 @@ import type { DetailedSceneDirection } from '@/types/scene-direction'
 import type { LocationReference, VisualReference } from '@/types/visionReferences'
 import type { TalentDirection, VisualSetup } from '@/components/image-gen/types'
 import { resolveBeatFrameGenerationContext } from '@/lib/vision/beatFrameGenerationContext'
+import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
 
 export interface PreVisFramePromptContext {
   frameLabel: string
@@ -88,6 +89,24 @@ function buildWardrobeTextMap(
   return overrides
 }
 
+function fillSelectedWardrobesForCharacters(
+  characterNames: string[],
+  projectCharacters: Array<Record<string, unknown>>,
+  scene: Record<string, unknown>,
+  sceneIndex: number,
+  existing: Record<string, string> = {}
+): Record<string, string> {
+  const selectedWardrobes = { ...existing }
+  for (const name of characterNames) {
+    if (selectedWardrobes[name]) continue
+    const char = projectCharacters.find((c) => c.name === name)
+    if (!char) continue
+    const wardrobeId = resolveWardrobeIdForCharacterInScene(char, scene, sceneIndex)
+    if (wardrobeId) selectedWardrobes[name] = wardrobeId
+  }
+  return selectedWardrobes
+}
+
 export function resolvePreVisFramePromptContext(args: {
   slot: StoryboardFrameSlot
   scene: Record<string, unknown>
@@ -113,7 +132,12 @@ export function resolvePreVisFramePromptContext(args: {
     const frame = frames.find((f) => f.id === slot.customFrameId)
     const charName = typeof frame?.character === 'string' ? frame.character : ''
     const selectedCharacterNames = charName ? [charName] : []
-    const selectedWardrobes: Record<string, string> = {}
+    const selectedWardrobes = fillSelectedWardrobesForCharacters(
+      selectedCharacterNames,
+      projectCharacters,
+      scene,
+      sceneIndex
+    )
     return {
       frameLabel: slot.label,
       seedPrompt: slot.storyboardImagePrompt || String(frame?.line || frame?.label || ''),
@@ -137,6 +161,7 @@ export function resolvePreVisFramePromptContext(args: {
       const auto = resolveBeatFrameGenerationContext({
         scene,
         beat,
+        sceneIndex,
         projectCharacters: projectCharacters as Array<{ id?: string; name?: string; referenceImage?: string }>,
         locationReferences,
         objectReferences,
@@ -156,6 +181,13 @@ export function resolvePreVisFramePromptContext(args: {
         const char = projectCharacters.find((c) => c.id === cw.characterId)
         if (char?.name) selectedWardrobes[String(char.name)] = cw.wardrobeId
       }
+      const filledWardrobes = fillSelectedWardrobesForCharacters(
+        selectedCharacterNames,
+        projectCharacters,
+        scene,
+        sceneIndex,
+        selectedWardrobes
+      )
       return {
         frameLabel: slot.label,
         seedPrompt:
@@ -169,11 +201,11 @@ export function resolvePreVisFramePromptContext(args: {
         artStyle,
         negativePrompt,
         selectedCharacterNames,
-        selectedWardrobes,
+        selectedWardrobes: filledWardrobes,
         wardrobeTextOverrides: buildWardrobeTextMap(
           selectedCharacterNames,
           projectCharacters,
-          selectedWardrobes
+          filledWardrobes
         ),
         locationRefId: saved?.locationRefId ?? auto.locationRefId ?? null,
         objectRefIds: saved?.objectRefIds?.length ? saved.objectRefIds : auto.objectRefIds,
@@ -188,7 +220,12 @@ export function resolvePreVisFramePromptContext(args: {
     const line = Array.isArray(scene.dialogue) ? scene.dialogue[dialogueIdx] : null
     const speakerName = line?.character || ''
     const selectedCharacterNames = speakerName ? [speakerName] : []
-    const selectedWardrobes: Record<string, string> = {}
+    const selectedWardrobes = fillSelectedWardrobesForCharacters(
+      selectedCharacterNames,
+      projectCharacters,
+      scene,
+      sceneIndex
+    )
     return {
       frameLabel: slot.label,
       seedPrompt:
@@ -216,7 +253,12 @@ export function resolvePreVisFramePromptContext(args: {
   ].join(' ')
   const detected = findSceneCharacters(sceneText, projectCharacters as Parameters<typeof findSceneCharacters>[1])
   const selectedCharacterNames = detected.map((c) => c.name).filter(Boolean) as string[]
-  const selectedWardrobes: Record<string, string> = {}
+  const selectedWardrobes = fillSelectedWardrobesForCharacters(
+    selectedCharacterNames,
+    projectCharacters,
+    scene,
+    sceneIndex
+  )
 
   return {
     frameLabel: slot.label || 'Establishing',

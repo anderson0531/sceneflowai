@@ -13,6 +13,7 @@ import {
   findMatchingLocationReferences,
   isNoTalentSceneForFrames,
 } from '@/lib/vision/frameGenerationContext'
+import { resolveWardrobeIdForCharacterInScene } from '@/lib/character/characterReferenceAssembly'
 
 export type LocationMatchConfidence = 'heading' | 'direction' | 'weak' | 'none'
 
@@ -28,7 +29,8 @@ export type ResolvedBeatFrameContext = BeatReferenceSelection & {
 export type ResolveBeatFrameGenerationContextArgs = {
   scene: Record<string, unknown>
   beat: SceneBeat
-  projectCharacters: Array<{ id?: string; name?: string; type?: string; referenceImage?: string }>
+  sceneIndex?: number
+  projectCharacters: Array<{ id?: string; name?: string; type?: string; referenceImage?: string; wardrobes?: unknown[] }>
   locationReferences: LocationReference[]
   objectReferences: VisualReference[]
   filmTitle?: string
@@ -119,18 +121,30 @@ function resolveBeatCharacters(
 
 function buildCharacterWardrobes(
   scene: Record<string, unknown>,
-  characterIds: string[]
+  characterIds: string[],
+  projectCharacters: ResolveBeatFrameGenerationContextArgs['projectCharacters'],
+  sceneIndex?: number
 ): Array<{ characterId: string; wardrobeId: string }> {
-  const overrides = Array.isArray(scene?.characterWardrobes)
-    ? (scene.characterWardrobes as Array<{ characterId: string; wardrobeId: string }>)
-    : []
-  return overrides.filter((cw) => characterIds.includes(cw.characterId))
+  const result: Array<{ characterId: string; wardrobeId: string }> = []
+  for (const charId of characterIds) {
+    const char = projectCharacters.find((c) => c.id === charId || c.name === charId)
+    if (!char) continue
+    const wardrobeId = resolveWardrobeIdForCharacterInScene(
+      char as Record<string, unknown>,
+      scene,
+      sceneIndex
+    )
+    if (wardrobeId) {
+      result.push({ characterId: charId, wardrobeId })
+    }
+  }
+  return result
 }
 
 export function resolveBeatFrameGenerationContext(
   args: ResolveBeatFrameGenerationContextArgs
 ): ResolvedBeatFrameContext {
-  const { scene, beat, projectCharacters, locationReferences, objectReferences, filmTitle } = args
+  const { scene, beat, sceneIndex, projectCharacters, locationReferences, objectReferences, filmTitle } = args
   const warnings: string[] = []
 
   const matchedChars = resolveBeatCharacters(scene, beat, projectCharacters, filmTitle)
@@ -163,7 +177,7 @@ export function resolveBeatFrameGenerationContext(
   const detectedObjects = findSceneObjects(matchText, objectReferences as any[], sceneNumber)
   const objectRefIds = detectedObjects.map((o) => o.id).filter(Boolean) as string[]
 
-  const characterWardrobes = buildCharacterWardrobes(scene, characterIds)
+  const characterWardrobes = buildCharacterWardrobes(scene, characterIds, projectCharacters, sceneIndex)
 
   return {
     characterIds,
