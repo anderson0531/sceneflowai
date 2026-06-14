@@ -29,6 +29,8 @@ import {
 import { buildLocationReferenceLabel, buildLocationReferencePromptLine } from '@/lib/vision/locationReferencePrompts'
 import {
   buildSimplifiedBeatFramePrompt,
+  buildWardrobeDiptychCharacterConsumptionLine,
+  buildWardrobeDiptychReferenceLabel,
   mergeBeatFrameNegativePrompt,
   resolveSceneHeadshotsForBeatCharacters,
   WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
@@ -679,7 +681,10 @@ export async function POST(req: NextRequest) {
           characters: simplifiedCharacters,
           artStyleSuffix: `Cinematic quality, 8K, ${selectedStyle.promptSuffix}`,
         })
-        startFramePrompt = `${startFramePrompt}\n\n${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}`
+        const perCharacterDiptychLines = headshotChars
+          .map((c) => buildWardrobeDiptychCharacterConsumptionLine(c.name))
+          .join('\n')
+        startFramePrompt = `${startFramePrompt}\n\n${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}\n${perCharacterDiptychLines}`
         console.log('[Generate Frames] Using simplified beat frame prompt (wardrobe diptych reference-first)')
       }
 
@@ -688,7 +693,7 @@ export async function POST(req: NextRequest) {
         if (sceneHeadshotUrl && allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
           allReferenceImages.push({
             imageUrl: sceneHeadshotUrl,
-            name: `Wardrobe reference: ${c.name} (scene headshot)`,
+            name: buildWardrobeDiptychReferenceLabel(c.name),
           })
           continue
         }

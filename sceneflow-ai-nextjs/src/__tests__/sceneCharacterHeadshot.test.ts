@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   buildSceneCharacterHeadshotPrompt,
   buildSimplifiedBeatFramePrompt,
+  buildWardrobeDiptychCharacterConsumptionLine,
+  buildWardrobeDiptychReferenceLabel,
+  DIPTYCH_GENERATION_NEGATIVE_PROMPT,
   DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT,
   extractSceneAppearanceDirectives,
   mergeBeatFrameNegativePrompt,
@@ -34,7 +37,7 @@ describe('extractSceneAppearanceDirectives', () => {
 })
 
 describe('buildSceneCharacterHeadshotPrompt', () => {
-  it('includes diptych layout with close-up and full-body panels', () => {
+  it('includes diptych layout with strict LEFT=identity and RIGHT=wardrobe sections', () => {
     const prompt = buildSceneCharacterHeadshotPrompt({
       characterName: 'Sarah',
       identityReferenceUrl: 'https://example.com/sarah.jpg',
@@ -51,10 +54,18 @@ describe('buildSceneCharacterHeadshotPrompt', () => {
     expect(prompt).toContain('exhausted')
     expect(prompt).toContain('16:9')
     expect(prompt).toMatch(/diptych/i)
-    expect(prompt).toMatch(/LEFT panel/i)
-    expect(prompt).toMatch(/RIGHT panel/i)
+    expect(prompt).toMatch(/LEFT panel.*IDENTITY/i)
+    expect(prompt).toMatch(/RIGHT panel.*WARDROBE/i)
+    expect(prompt).toMatch(/NO clothing/i)
     expect(prompt).toMatch(/close-up/i)
     expect(prompt).toMatch(/full-length/i)
+
+    const leftIdx = prompt.indexOf('LEFT panel')
+    const rightIdx = prompt.indexOf('RIGHT panel')
+    const wearingIdx = prompt.indexOf('Wearing:')
+    expect(leftIdx).toBeGreaterThan(-1)
+    expect(rightIdx).toBeGreaterThan(leftIdx)
+    expect(wearingIdx).toBeGreaterThan(rightIdx)
   })
 })
 
@@ -67,7 +78,7 @@ describe('scene character headshot generation settings', () => {
 })
 
 describe('buildSimplifiedBeatFramePrompt', () => {
-  it('uses person tokens, diptych consumption, and emotion without wardrobe text', () => {
+  it('uses person tokens, strict diptych panel roles, and emotion without wardrobe text', () => {
     const prompt = buildSimplifiedBeatFramePrompt({
       beatAction: 'Sarah leans against the counter, arms crossed.',
       characters: [{ name: 'Sarah', referenceIndex: 1, emotion: 'defiant' }],
@@ -77,15 +88,38 @@ describe('buildSimplifiedBeatFramePrompt', () => {
     expect(prompt).toContain('defiant')
     expect(prompt).toMatch(/LEFT panel/i)
     expect(prompt).toMatch(/RIGHT panel/i)
+    expect(prompt).toMatch(/copy outfit from the RIGHT panel/i)
+    expect(prompt).toMatch(/NEVER derive face/i)
     expect(prompt).not.toMatch(/wearing/i)
   })
 })
 
 describe('WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION', () => {
-  it('is exported with left/right panel guidance', () => {
-    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/LEFT panel/i)
-    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/RIGHT panel/i)
-    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/diptych/i)
+  it('is exported with strict left/right panel guidance', () => {
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/CRITICAL/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/LEFT half.*identity/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/RIGHT half.*wardrobe/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/NEVER derive face/i)
+    expect(WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION).toMatch(/NEVER derive clothing/i)
+  })
+})
+
+describe('buildWardrobeDiptychReferenceLabel', () => {
+  it('labels diptych refs with LEFT=identity and RIGHT=wardrobe', () => {
+    expect(buildWardrobeDiptychReferenceLabel('Elara')).toBe(
+      'Diptych ref: Elara — LEFT=identity face, RIGHT=wardrobe outfit'
+    )
+  })
+})
+
+describe('buildWardrobeDiptychCharacterConsumptionLine', () => {
+  it('returns per-character panel consumption guidance', () => {
+    expect(buildWardrobeDiptychCharacterConsumptionLine('Elara')).toMatch(
+      /LEFT panel for face\/identity only/
+    )
+    expect(buildWardrobeDiptychCharacterConsumptionLine('Elara')).toMatch(
+      /RIGHT panel for outfit/i
+    )
   })
 })
 
@@ -178,6 +212,12 @@ describe('mergePhysicsNegativePrompt', () => {
     expect(merged).toMatch(/floating chairs/i)
     expect(merged).toMatch(/blurry/i)
   })
+
+  it('includes diptych generation negatives when provided', () => {
+    const merged = mergePhysicsNegativePrompt(DIPTYCH_GENERATION_NEGATIVE_PROMPT)
+    expect(merged).toMatch(/clothing in close-up/i)
+    expect(merged).toMatch(/identity mismatch between panels/i)
+  })
 })
 
 describe('mergeBeatFrameNegativePrompt', () => {
@@ -185,7 +225,9 @@ describe('mergeBeatFrameNegativePrompt', () => {
     const merged = mergeBeatFrameNegativePrompt('blurry')
     expect(merged).toMatch(/floating chairs/i)
     expect(merged).toMatch(/diptych/i)
+    expect(merged).toMatch(/outfit in close-up/i)
     expect(merged).toMatch(/blurry/i)
     expect(DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT).toMatch(/split-screen output/i)
+    expect(DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT).toMatch(/mismatched identity between panels/i)
   })
 })

@@ -21,18 +21,32 @@ export const SCENE_CHARACTER_HEADSHOT_ANCHOR =
 
 /** How beat frame generation should consume a wardrobe diptych reference image. */
 export const WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION =
-  'WARDROBE CHARACTER REFERENCE (diptych): LEFT panel = face, hair, skin tone, makeup, injuries, expression. ' +
-  'RIGHT panel = full-body wardrobe, footwear, fit, and accessories. ' +
-  'Use left panel for identity; use right panel for outfit. ' +
-  'Render a single seamless cinematic scene — do NOT reproduce the two-panel split, diptych layout, or reference sheet collage.'
-
-/** Negative terms targeting physics violations and object hallucinations. */
-export const PHYSICS_HALLUCINATION_NEGATIVE_PROMPT =
-  'floating objects, missing limbs, physically impossible anatomy, multiple limbs, floating chairs, sitting without a chair, chairs on tables, hallucinated objects, impossible physics, mutated bodies, deformed furniture, objects defying gravity, clipping geometry'
+  'CRITICAL — WARDROBE CHARACTER REFERENCE (diptych): ' +
+  'LEFT half = identity source of truth (face, hair, skin tone, age, ethnicity, makeup, injuries, expression). ' +
+  'RIGHT half = wardrobe source of truth (garments, footwear, accessories, fit, fabric, color). ' +
+  'NEVER derive face or identity from the RIGHT panel. NEVER derive clothing or outfit from the LEFT panel. ' +
+  'Render one seamless cinematic scene — do NOT reproduce the two-panel split, diptych layout, or reference sheet collage.'
 
 /** Negative terms to prevent beat frames from reproducing the reference diptych layout. */
 export const DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT =
-  'split-screen output, diptych, two-panel layout, reference sheet collage, side-by-side panels'
+  'split-screen output, diptych, two-panel layout, reference sheet collage, side-by-side panels, outfit in close-up, face from full-body panel, mismatched identity between panels'
+
+/** Negative terms when generating the wardrobe diptych reference itself. */
+export const DIPTYCH_GENERATION_NEGATIVE_PROMPT =
+  'outfit visible in left panel, clothing in close-up, different face between panels, identity mismatch between panels, full-body framing in left panel'
+
+/** Reference image label for beat frame attachment. */
+export function buildWardrobeDiptychReferenceLabel(characterName: string): string {
+  return `Diptych ref: ${characterName} — LEFT=identity face, RIGHT=wardrobe outfit`
+}
+
+/** Per-character consumption line appended to beat frame prompts. */
+export function buildWardrobeDiptychCharacterConsumptionLine(characterName: string): string {
+  return `${characterName}: use LEFT panel for face/identity only, RIGHT panel for outfit/wardrobe only.`
+}
+/** Negative terms targeting physics violations and object hallucinations. */
+export const PHYSICS_HALLUCINATION_NEGATIVE_PROMPT =
+  'floating objects, missing limbs, physically impossible anatomy, multiple limbs, floating chairs, sitting without a chair, chairs on tables, hallucinated objects, impossible physics, mutated bodies, deformed furniture, objects defying gravity, clipping geometry'
 
 const MAKEUP_PATTERN =
   /\b(makeup|lipstick|eyeliner|mascara|foundation|contour|blush|cosmetic|smudged makeup|runny mascara)\b/i
@@ -165,44 +179,59 @@ export function buildSceneCharacterHeadshotPrompt(input: SceneCharacterHeadshotI
   const lines = [
     SCENE_CHARACTER_HEADSHOT_ANCHOR,
     '',
-    `Character: ${input.characterName}.`,
-    'Match face shape, skin tone, age, ethnicity, and bone structure exactly from the identity reference image.',
+    `Character: ${input.characterName}. Same real human in both panels.`,
     '',
-    'Layout: horizontal two-panel diptych, equal width, same real human in both panels, neutral soft studio background.',
-    'LEFT panel (50% width): tight close-up — face and hair fill the panel; match identity reference exactly; show makeup, injuries, and expression.',
-    'RIGHT panel (50% width): full-length front-facing standing pose — head to feet visible; wearing the specified wardrobe and accessories; relaxed neutral stand.',
+    'Layout: horizontal two-panel diptych, equal width, neutral soft studio background.',
+    '',
+    'LEFT panel (50% width) — IDENTITY close-up:',
+    'Match the identity reference image exactly: face shape, skin tone, age, ethnicity, bone structure.',
+    'Tight crop — face and hair fill the panel; neck only. NO clothing, NO outfit details visible.',
   ]
+
+  const leftPanelDetails: string[] = []
+  if (hairAnchor) {
+    leftPanelDetails.push(`Hairstyle: ${hairAnchor}.`)
+  } else if (directives.hairNotes) {
+    leftPanelDetails.push(`Hairstyle: ${directives.hairNotes}.`)
+  }
+  if (directives.makeup) {
+    leftPanelDetails.push(`Makeup: ${directives.makeup}.`)
+  }
+  if (directives.injuries) {
+    leftPanelDetails.push(
+      `Visible injuries/marks: ${directives.injuries}. Preserve reference hairstyle — do not restyle hair to expose injuries.`
+    )
+  }
+  if (
+    input.appearanceNotes?.trim() &&
+    !directives.makeup &&
+    !directives.injuries &&
+    !directives.hairNotes
+  ) {
+    leftPanelDetails.push(`Scene appearance: ${input.appearanceNotes.trim()}.`)
+  } else if (input.appearanceNotes?.trim()) {
+    leftPanelDetails.push(`Scene appearance (continuity): ${input.appearanceNotes.trim()}.`)
+  }
+  if (input.emotion?.trim()) {
+    leftPanelDetails.push(`Expression/emotion: ${input.emotion.trim()}.`)
+  }
+  if (leftPanelDetails.length) {
+    lines.push(...leftPanelDetails)
+  }
+
+  lines.push(
+    '',
+    'RIGHT panel (50% width) — WARDROBE full body:',
+    'Full-length front-facing standing pose — head to feet visible; relaxed neutral stand.',
+    'This panel exists solely to show the complete outfit. Face must match the LEFT panel.',
+    'Do NOT use this panel for identity in downstream frames — wardrobe fidelity only (fabric, color, fit, footwear, accessories).'
+  )
 
   const wardrobeParts = [input.wardrobeDescription?.trim(), input.wardrobeAccessories?.trim()].filter(
     Boolean
   ) as string[]
   if (wardrobeParts.length) {
-    lines.push('', `Wearing: ${wardrobeParts.join('. ')}.`)
-  }
-
-  if (hairAnchor) {
-    lines.push(`Hairstyle: ${hairAnchor}.`)
-  } else if (directives.hairNotes) {
-    lines.push(`Hairstyle: ${directives.hairNotes}.`)
-  }
-
-  if (directives.makeup) {
-    lines.push(`Makeup: ${directives.makeup}.`)
-  }
-  if (directives.injuries) {
-    lines.push(
-      `Visible injuries/marks: ${directives.injuries}. Preserve reference hairstyle — do not restyle hair to expose injuries.`
-    )
-  }
-
-  if (input.appearanceNotes?.trim() && !directives.makeup && !directives.injuries && !directives.hairNotes) {
-    lines.push(`Scene appearance: ${input.appearanceNotes.trim()}.`)
-  } else if (input.appearanceNotes?.trim()) {
-    lines.push(`Scene appearance (continuity): ${input.appearanceNotes.trim()}.`)
-  }
-
-  if (input.emotion?.trim()) {
-    lines.push(`Expression/emotion: ${input.emotion.trim()}.`)
+    lines.push(`Wearing: ${wardrobeParts.join('. ')}.`)
   }
 
   lines.push(
@@ -233,7 +262,9 @@ export function buildSimplifiedBeatFramePrompt(input: SimplifiedBeatFramePromptI
   }
 
   lines.push(
-    'Match each character from their wardrobe diptych reference: LEFT panel for face, hair, skin, makeup, and injuries; RIGHT panel for full-body wardrobe and accessories. Do not describe clothing or costume in text.'
+    'Match each character from their wardrobe diptych reference: LEFT panel for face, hair, skin, makeup, and injuries ONLY; RIGHT panel for full-body wardrobe and accessories ONLY.',
+    'Do not describe clothing or costume in text — copy outfit from the RIGHT panel of each character diptych reference.',
+    'NEVER derive face/identity from the RIGHT panel. NEVER derive clothing from the LEFT panel.'
   )
 
   if (input.locationRefLine?.trim()) {
@@ -311,7 +342,7 @@ export async function generateSceneCharacterHeadshotImage(
         name: `Identity: ${input.characterName}`,
       },
     ],
-    negativePrompt: mergePhysicsNegativePrompt(),
+    negativePrompt: mergePhysicsNegativePrompt(DIPTYCH_GENERATION_NEGATIVE_PROMPT),
   })
   return { imageBase64: result.imageBase64, prompt }
 }

@@ -2601,8 +2601,9 @@ const CharacterCard = ({
               className="mt-3 focus-visible:ring-0 space-y-4 max-h-[420px] overflow-y-auto pr-1"
             >
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">
-                  Turnaround references work best with neutral upright pose, flat even lighting,
-                  and a plain gray or white background. Uploads should show the full outfit clearly.
+                  Reference is a diptych — close-up for identity, full-body for outfit. Turnaround
+                  references work best with neutral upright pose, flat even lighting, and a plain
+                  gray or white background.
                 </p>
                 {/* Primary CTA: Analyze Script for Outfits (Automate) */}
                 {scenes &&
