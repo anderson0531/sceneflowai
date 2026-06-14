@@ -59,6 +59,8 @@ export interface SceneCharacterHeadshotInput {
   hairStyle?: string
   hairColor?: string
   appearanceDescription?: string
+  /** Makeup, hair state, visible injuries/marks for this wardrobe look */
+  appearanceNotes?: string
   /** Existing wardrobe headshot — reused when no beat-specific appearance changes */
   existingWardrobeHeadshotUrl?: string
   /** When true, always generate a fresh image (skip cache reuse) */
@@ -140,9 +142,15 @@ export function mergeBeatFrameNegativePrompt(existing?: string | null): string {
   )
 }
 
+/** Build merged scene/appearance context for directive extraction. */
+function mergeAppearanceContext(input: SceneCharacterHeadshotInput): string {
+  return [input.sceneAction, input.appearanceNotes].filter(Boolean).join(' ').trim()
+}
+
 /** Build cinematic 16:9 diptych reference prompt from identity + wardrobe + scene-directed appearance. */
 export function buildSceneCharacterHeadshotPrompt(input: SceneCharacterHeadshotInput): string {
-  const directives = extractSceneAppearanceDirectives(input.beatAction, input.sceneAction)
+  const appearanceContext = mergeAppearanceContext(input)
+  const directives = extractSceneAppearanceDirectives(input.beatAction, appearanceContext)
   const hairAnchor =
     buildCharacterHairAnchor({
       hairStyle: input.hairStyle,
@@ -185,6 +193,12 @@ export function buildSceneCharacterHeadshotPrompt(input: SceneCharacterHeadshotI
     lines.push(
       `Visible injuries/marks: ${directives.injuries}. Preserve reference hairstyle — do not restyle hair to expose injuries.`
     )
+  }
+
+  if (input.appearanceNotes?.trim() && !directives.makeup && !directives.injuries && !directives.hairNotes) {
+    lines.push(`Scene appearance: ${input.appearanceNotes.trim()}.`)
+  } else if (input.appearanceNotes?.trim()) {
+    lines.push(`Scene appearance (continuity): ${input.appearanceNotes.trim()}.`)
   }
 
   if (input.emotion?.trim()) {
@@ -237,7 +251,7 @@ export function resolveWardrobeTextForCharacter(
   scene?: Record<string, unknown> | null,
   sceneIndex?: number,
   selectedWardrobeId?: string
-): { description?: string; accessories?: string; headshotUrl?: string } {
+): { description?: string; accessories?: string; headshotUrl?: string; appearanceNotes?: string } {
   let resolved = resolveWardrobeForCharacter(character, scene, undefined, sceneIndex)
 
   if (selectedWardrobeId && Array.isArray(character.wardrobes)) {
@@ -256,6 +270,7 @@ export function resolveWardrobeTextForCharacter(
     description: resolved.description as string | undefined,
     accessories: resolved.accessories as string | undefined,
     headshotUrl: resolved.headshotUrl as string | undefined,
+    appearanceNotes: resolved.appearanceNotes as string | undefined,
   }
 }
 
@@ -264,10 +279,12 @@ export function shouldGenerateSceneHeadshot(
   input: SceneCharacterHeadshotInput
 ): boolean {
   if (!input.identityReferenceUrl?.trim()) return false
-  const directives = extractSceneAppearanceDirectives(input.beatAction, input.sceneAction)
+  const appearanceContext = mergeAppearanceContext(input)
+  const directives = extractSceneAppearanceDirectives(input.beatAction, appearanceContext)
   if (directives.hasSceneSpecificChanges) return true
   if (input.emotion?.trim()) return true
   if (input.wardrobeDescription?.trim() && !input.existingWardrobeHeadshotUrl) return true
+  if (input.appearanceNotes?.trim() && !input.existingWardrobeHeadshotUrl) return true
   return false
 }
 
@@ -369,6 +386,7 @@ export async function resolveSceneHeadshotsForBeatCharacters(args: {
       hairStyle: char.hairStyle,
       hairColor: char.hairColor,
       appearanceDescription: char.appearance,
+      appearanceNotes: wardrobe.appearanceNotes,
       existingWardrobeHeadshotUrl: wardrobe.headshotUrl,
     }
 

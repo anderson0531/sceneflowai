@@ -220,6 +220,7 @@ interface CharacterWardrobe {
   headshotUrl?: string  // Headshot preview (shoulders-up)
   fullBodyUrl?: string  // Full body preview (head-to-toe)
   sceneNumbers?: number[]  // Which scenes this wardrobe applies to
+  appearanceNotes?: string  // Makeup, hair state, visible injuries/marks
   isDefault: boolean
   createdAt: string
 }
@@ -5192,6 +5193,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     headshotUrl?: string;
     fullBodyUrl?: string;
     sceneNumbers?: number[];
+    appearanceNotes?: string;
     reason?: string;
     action?: 'add' | 'update' | 'delete' | 'setDefault';
   }) => {
@@ -5230,6 +5232,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
             description: wardrobe.defaultWardrobe,
             accessories: wardrobe.wardrobeAccessories,
             sceneNumbers: wardrobe.sceneNumbers,
+            appearanceNotes: wardrobe.appearanceNotes,
             reason: wardrobe.reason,
             isDefault: wardrobes.length === 0, // First wardrobe is default
             createdAt: new Date().toISOString()
@@ -5247,6 +5250,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
                   ...(wardrobe.headshotUrl ? { headshotUrl: wardrobe.headshotUrl } : {}),
                   ...(wardrobe.fullBodyUrl ? { fullBodyUrl: wardrobe.fullBodyUrl } : {}),
                   ...(wardrobe.sceneNumbers ? { sceneNumbers: wardrobe.sceneNumbers } : {}),
+                  ...(wardrobe.appearanceNotes !== undefined ? { appearanceNotes: wardrobe.appearanceNotes } : {}),
                   ...(wardrobe.reason ? { reason: wardrobe.reason } : {})
                 }
               : w
@@ -5348,6 +5352,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
     description: string;
     accessories?: string;
     sceneNumbers: number[];
+    appearanceNotes?: string;
     reason: string;
   }>) => {
     try {
@@ -5362,6 +5367,7 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
           description: w.description,
           accessories: w.accessories,
           sceneNumbers: w.sceneNumbers,
+          appearanceNotes: w.appearanceNotes,
           reason: w.reason,
           isDefault: idx === 0, // First wardrobe is default
           createdAt: new Date().toISOString()

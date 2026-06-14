@@ -110,6 +110,7 @@ export interface CharacterLibraryProps {
       headshotUrl?: string;
       fullBodyUrl?: string;
       sceneNumbers?: number[];
+      appearanceNotes?: string;
       reason?: string;
       action?: "add" | "update" | "delete" | "setDefault";
     },
@@ -122,6 +123,7 @@ export interface CharacterLibraryProps {
       description: string;
       accessories?: string;
       sceneNumbers: number[];
+      appearanceNotes?: string;
       reason: string;
     }>,
   ) => void;
@@ -164,6 +166,7 @@ interface CharacterWardrobe {
   headshotUrl?: string; // 16:9 diptych: close-up face + full-body wardrobe
   fullBodyUrl?: string; // 1-row mannequin outfit turnaround (4 full-body views)
   sceneNumbers?: number[]; // Scenes where this outfit is used (from script analysis)
+  appearanceNotes?: string; // Makeup, hair state, visible injuries/marks
   reason?: string; // AI explanation for why this outfit is needed
 }
 
@@ -207,6 +210,7 @@ interface CharacterCardProps {
       fullBodyUrl?: string;
       previewImageUrl?: string;
       sceneNumbers?: number[];
+      appearanceNotes?: string;
       reason?: string;
       action?: "add" | "update" | "delete" | "setDefault";
     },
@@ -219,6 +223,7 @@ interface CharacterCardProps {
       description: string;
       accessories?: string;
       sceneNumbers: number[];
+      appearanceNotes?: string;
       reason: string;
     }>,
   ) => void;
@@ -836,6 +841,7 @@ const CharacterCard = ({
       sceneNumbers: number[];
       reason: string;
       confidence: number;
+      appearanceNotes?: string;
     }>
   >([]);
 
@@ -1363,6 +1369,21 @@ const CharacterCard = ({
               )
               .map((d: any) => d.line)
               .join(" "),
+            beats: Array.isArray(s.beats)
+              ? s.beats.map((b: any) => ({
+                  kind: b.kind,
+                  character: b.character,
+                  line: b.line,
+                  actionDescription: b.actionDescription,
+                }))
+              : undefined,
+            segments: Array.isArray(s.segments)
+              ? s.segments.map((seg: any) => ({
+                  segmentDirection: seg.segmentDirection,
+                  startFrameDescription: seg.startFrameDescription,
+                  endFrameDescription: seg.endFrameDescription,
+                }))
+              : undefined,
           })),
           screenplayContext: {
             genre: screenplayContext?.genre,
@@ -1407,6 +1428,7 @@ const CharacterCard = ({
       wardrobeAccessories: suggestion.accessories,
       wardrobeName: suggestion.name,
       sceneNumbers: suggestion.sceneNumbers,
+      appearanceNotes: suggestion.appearanceNotes,
       reason: suggestion.reason,
       action: "add",
     });
@@ -1428,6 +1450,7 @@ const CharacterCard = ({
           description: s.description,
           accessories: s.accessories,
           sceneNumbers: s.sceneNumbers,
+          appearanceNotes: s.appearanceNotes,
           reason: s.reason,
         })),
       );
@@ -1656,6 +1679,7 @@ const CharacterCard = ({
           identityReferenceUrl: character.referenceImage,
           wardrobeDescription: wardrobe.description,
           wardrobeAccessories: wardrobe.accessories,
+          appearanceNotes: wardrobe.appearanceNotes,
           appearanceDescription:
             character.appearanceDescription || generateFallbackDescription(character),
           hairStyle: character.hairStyle,
@@ -2563,7 +2587,7 @@ const CharacterCard = ({
                   wardrobeSuggestions.length === 0 && (
                     <div className="text-center py-3">
                       <p className="text-xs text-gray-400 mb-2">
-                        Analyze your script to determine which outfits{" "}
+                        Analyze your script to determine which outfits and looks{" "}
                         {character.name} needs across scenes.
                       </p>
                       <button
@@ -2576,7 +2600,7 @@ const CharacterCard = ({
                         title="Analyze script to determine wardrobes needed for each scene range"
                       >
                         <FileText className="w-4 h-4" />
-                        <span>Analyze Script for Outfits</span>
+                        <span>Analyze Script for Outfits & Looks</span>
                         <span className="text-[10px] opacity-75">
                           ({scenes.length} scenes)
                         </span>
@@ -2639,6 +2663,11 @@ const CharacterCard = ({
                               <p className="text-[11px] text-gray-600 dark:text-gray-400 line-clamp-2">
                                 {suggestion.description}
                               </p>
+                              {suggestion.appearanceNotes && (
+                                <p className="text-[10px] text-purple-600 dark:text-purple-400 mt-1 line-clamp-2">
+                                  Look: {suggestion.appearanceNotes}
+                                </p>
+                              )}
                               <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 italic">
                                 {suggestion.reason}
                               </p>
@@ -3371,6 +3400,21 @@ const CharacterCard = ({
                     </h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                       {expandedWardrobe.accessories}
+                    </p>
+                  </div>
+                )}
+
+                {/* Scene appearance (makeup, hair, injuries) */}
+                {expandedWardrobe.appearanceNotes && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Scene Appearance
+                    </h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 border border-purple-100 dark:border-purple-800/40">
+                      {expandedWardrobe.appearanceNotes}
+                    </p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                      Makeup, hair, and injury details from script analysis — applied to the close-up panel when generating the wardrobe reference.
                     </p>
                   </div>
                 )}

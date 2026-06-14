@@ -3,6 +3,11 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { generateText } from '@/lib/vertexai/gemini'
 import { safeParseJsonFromText } from '@/lib/safeJson'
+import {
+  formatSceneForWardrobeAnalysis,
+  sceneIncludesCharacter,
+  type WardrobeAnalysisSceneInput,
+} from '@/lib/character/wardrobeAnalysis'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -18,13 +23,7 @@ interface SuggestWardrobesRequest {
       sceneNumbers?: number[]
     }>
   }
-  scenes: Array<{
-    sceneNumber: number
-    heading?: string
-    action?: string
-    visualDescription?: string
-    dialogue?: string
-  }>
+  scenes: WardrobeAnalysisSceneInput[]
   screenplayContext?: {
     genre?: string
     tone?: string
@@ -37,6 +36,7 @@ interface WardrobeSuggestion {
   name: string
   description: string
   accessories?: string
+  appearanceNotes?: string
   sceneNumbers: number[]
   reason: string
   confidence: number
@@ -72,18 +72,9 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Wardrobe Suggestion] Analyzing ${scenes.length} scenes for ${character.name}`)
 
-    // Build scene context for AI analysis
-    // Only include scenes where the character appears (has dialogue or is mentioned)
-    const characterScenes = scenes.filter(s => {
-      const sceneText = [
-        s.heading,
-        s.action,
-        s.visualDescription,
-        s.dialogue
-      ].filter(Boolean).join(' ').toLowerCase()
-      
-      return sceneText.includes(character.name.toLowerCase())
-    })
+    const characterScenes = scenes.filter((s) =>
+      sceneIncludesCharacter(s, character.name)
+    )
 
     if (characterScenes.length === 0) {
       console.log(`[Wardrobe Suggestion] Character ${character.name} not found in any scenes`)
@@ -94,22 +85,15 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    const sceneContext = characterScenes.map(s => {
-      const parts = []
-      parts.push(`Scene ${s.sceneNumber}:`)
-      if (s.heading) parts.push(`Location: ${s.heading}`)
-      if (s.action) parts.push(`Action: ${s.action}`)
-      if (s.visualDescription) parts.push(`Visual: ${s.visualDescription}`)
-      if (s.dialogue) parts.push(`Dialogue: ${s.dialogue}`)
-      return parts.join('\n')
-    }).join('\n\n---\n\n')
+    const sceneContext = characterScenes
+      .map((s) => formatSceneForWardrobeAnalysis(s, character.name))
+      .join('\n\n---\n\n')
 
     const existingWardrobesList = character.existingWardrobes?.length
       ? `\n\nExisting wardrobes (already defined - DO NOT suggest these again):\n${character.existingWardrobes.map(w => `- ${w.name}${w.sceneNumbers?.length ? ` (Scenes ${w.sceneNumbers.join(', ')})` : ''}`).join('\n')}`
       : ''
 
-    // Use Vertex AI Gemini to analyze script for wardrobe requirements
-    const analysisPrompt = `You are a costume designer analyzing a film script to determine what wardrobes/outfits a character needs across different scenes.
+    const analysisPrompt = `You are a costume designer and makeup/hair continuity supervisor analyzing a film script to determine what wardrobes and character looks ${character.name} needs across different scenes.
 
 CHARACTER: ${character.name}
 Role: ${character.role || 'Supporting'}
@@ -121,28 +105,38 @@ Tone: ${screenplayContext?.tone || 'Neutral'}
 Setting: ${screenplayContext?.setting || 'Contemporary'}
 Logline: ${screenplayContext?.logline || 'Not specified'}
 
-SCENES WHERE ${character.name.toUpperCase()} APPEARS:
+SCENES WHERE ${character.name.toUpperCase()} APPEARS (including beat-level detail):
 ${sceneContext}
 ${existingWardrobesList}
 
-TASK: Analyze the script and determine what DISTINCT wardrobes/outfits ${character.name} needs.
+TASK: Analyze the script and determine what DISTINCT wardrobes/outfits AND character looks ${character.name} needs.
 
-IMPORTANT RULES:
+IMPORTANT RULES — OUTFIT CHANGES:
 1. If the character appears in similar locations/contexts throughout, they may only need 1 outfit
 2. Only suggest multiple outfits if there are CLEAR wardrobe changes indicated by:
    - Different times of day (e.g., morning pajamas vs daytime clothes vs evening formal)
    - Different contexts (work vs home vs special event)
    - Explicit costume changes mentioned in action
    - Significant time jumps between scenes
-3. Group consecutive scenes that would logically use the same outfit
+3. Group consecutive scenes that would logically use the same outfit AND look
 4. Be practical - not every scene needs a different outfit
 
-For each DISTINCT wardrobe needed, provide:
-- name: A descriptive name (e.g., "Office Attire", "Evening Gown", "Casual Home")
+IMPORTANT RULES — APPEARANCE CHANGES (makeup, hair, injuries):
+5. Detect DISTINCT character looks when makeup, hairstyle, or visible injuries/marks change:
+   - Makeup: natural, smudged, formal, runny mascara, lipstick, contour, etc.
+   - Hair: pulled back, in a bun, wet, disheveled, loose, slicked back, etc.
+   - Injuries/marks: bruises, cuts, bloodshot eyes, swelling, bandages, black eyes, etc.
+6. When ONLY appearance changes (same outfit), create a SEPARATE wardrobe variant with the SAME description and accessories but distinct appearanceNotes and sceneNumbers (e.g., "Interrogation — Distressed")
+7. Put ALL makeup, hair state, and injury details in appearanceNotes — NOT only in reason. appearanceNotes is used for reference image generation.
+8. Read beat-level lines carefully — close-ups often describe bruises, bloodshot eyes, and makeup that scene summaries omit.
+
+For each DISTINCT wardrobe/look needed, provide:
+- name: A descriptive name (e.g., "Office Attire", "Interrogation — Distressed")
 - description: Detailed outfit description for image generation (fabrics, colors, style, fit)
 - accessories: Key accessories (jewelry, watch, glasses, bag, etc.)
-- sceneNumbers: Array of scene numbers where this outfit is worn
-- reason: Brief explanation of why this outfit is needed (context/story reason)
+- appearanceNotes: Makeup, hair state, visible injuries/marks for this look (omit if baseline/neutral)
+- sceneNumbers: Array of scene numbers where this outfit AND look apply
+- reason: Brief explanation of why this outfit/look for these scenes
 - confidence: 0-1 how confident this wardrobe is necessary
 
 Respond with valid JSON only:
@@ -152,12 +146,13 @@ Respond with valid JSON only:
       "name": "string",
       "description": "string (detailed for image generation)",
       "accessories": "string (optional)",
+      "appearanceNotes": "string (optional — makeup, hair, injuries for image gen)",
       "sceneNumbers": [1, 2, 3],
-      "reason": "string (why this outfit for these scenes)",
+      "reason": "string (why this outfit/look for these scenes)",
       "confidence": 0.9
     }
   ],
-  "analysis": "Brief overall analysis of the character's wardrobe needs"
+  "analysis": "Brief overall analysis of the character's wardrobe and look needs"
 }`
 
     const result = await generateText(analysisPrompt, {
@@ -166,7 +161,6 @@ Respond with valid JSON only:
       responseMimeType: 'application/json',
     })
 
-    // Parse JSON from response using safe parser
     let suggestions: WardrobeSuggestion[] = []
     let analysis = ''
     
@@ -176,6 +170,7 @@ Respond with valid JSON only:
         name: s.name,
         description: s.description,
         accessories: s.accessories || undefined,
+        appearanceNotes: s.appearanceNotes || undefined,
         sceneNumbers: s.sceneNumbers || [],
         reason: s.reason || '',
         confidence: s.confidence || 0.7
@@ -186,7 +181,6 @@ Respond with valid JSON only:
       console.error('[Wardrobe Suggestion] Raw response:', result.text)
     }
 
-    // Filter out suggestions that match existing wardrobes
     if (character.existingWardrobes?.length) {
       const existingNames = character.existingWardrobes.map(w => w.name.toLowerCase())
       suggestions = suggestions.filter(s => 
@@ -194,7 +188,6 @@ Respond with valid JSON only:
       )
     }
 
-    // Sort by scene number (earliest appearance first) then by confidence
     suggestions.sort((a, b) => {
       const aFirst = Math.min(...(a.sceneNumbers || [999]))
       const bFirst = Math.min(...(b.sceneNumbers || [999]))

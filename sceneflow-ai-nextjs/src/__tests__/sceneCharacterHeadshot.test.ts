@@ -7,6 +7,7 @@ import {
   mergeBeatFrameNegativePrompt,
   mergePhysicsNegativePrompt,
   pickSceneHeadshotUrl,
+  resolveWardrobeTextForCharacter,
   SCENE_CHARACTER_HEADSHOT_ASPECT_RATIO,
   SCENE_CHARACTER_HEADSHOT_IMAGE_SIZE,
   SCENE_CHARACTER_HEADSHOT_MODEL_TIER,
@@ -135,6 +136,39 @@ describe('makeup from wardrobe description via sceneAction', () => {
     })
     expect(prompt).toMatch(/Makeup:/i)
     expect(prompt).toMatch(/lipstick/i)
+  })
+})
+
+describe('appearanceNotes on wardrobe reference generation', () => {
+  it('includes bruise from appearanceNotes without beatAction', () => {
+    const prompt = buildSceneCharacterHeadshotPrompt({
+      characterName: 'Elara',
+      identityReferenceUrl: 'https://example.com/elara.jpg',
+      wardrobeDescription: 'Dark grey sweater, black trousers',
+      appearanceNotes: 'Bloodshot eyes, faint bruise forming on left temple',
+    })
+    expect(prompt).toMatch(/bruise/i)
+    expect(prompt).toMatch(/bloodshot/i)
+    expect(prompt).toMatch(/Scene appearance/i)
+  })
+
+  it('resolveWardrobeTextForCharacter returns appearanceNotes from wardrobe', () => {
+    const resolved = resolveWardrobeTextForCharacter(
+      {
+        wardrobes: [
+          {
+            id: 'w1',
+            isDefault: true,
+            description: 'Dark grey sweater',
+            appearanceNotes: 'Bloodshot eyes, bruise on temple',
+            sceneNumbers: [4],
+          },
+        ],
+      },
+      null,
+      3
+    )
+    expect(resolved.appearanceNotes).toMatch(/bruise/i)
   })
 })
 

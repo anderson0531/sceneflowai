@@ -24,6 +24,8 @@ export interface CharacterWardrobe {
   /** Mannequin outfit turnaround sheet (legacy; used when headshotUrl is absent) */
   fullBodyUrl?: string
   sceneNumbers?: number[]
+  /** Makeup, hair state, visible injuries/marks for this wardrobe look */
+  appearanceNotes?: string
   isDefault: boolean
   createdAt: string
 }
