@@ -46,7 +46,7 @@ export function LocationPromptBuilder({
   screenplayContext
 }: LocationPromptBuilderProps) {
   // Guided selections — defaults optimized for location establishing shots
-  const [shotType, setShotType] = useState('wide-shot')
+  const [shotType, setShotType] = useState('extreme-wide')
   const [cameraAngle, setCameraAngle] = useState('eye-level')
   const [lighting, setLighting] = useState('natural')
   const [artStyle, setArtStyle] = useState('')
@@ -121,7 +121,7 @@ export function LocationPromptBuilder({
       parts.push(`Visual style: ${screenplayContext.visualStyle}`)
     }
 
-    // Production quality — 4-angle 2x2 turnaround (no people)
+    // Production quality — single extreme-wide establishing shot (no people)
     parts.push(LOCATION_TURNAROUND_GENERATION_INSTRUCTION)
     parts.push('Cinematic production design, professional film set quality')
 
@@ -276,8 +276,8 @@ export function LocationPromptBuilder({
               <p className="font-medium mb-1">Environment Reference</p>
               <p className="text-blue-400/80">
                 Location images are generated <span className="font-medium">without people</span> as
-                a 2x2 grid turnaround showing 4 distinct angles of the same set for
-                consistent scene environment references across your project.
+                a single extreme-wide establishing shot for consistent scene environment
+                references across your project.
               </p>
             </div>
           </div>
