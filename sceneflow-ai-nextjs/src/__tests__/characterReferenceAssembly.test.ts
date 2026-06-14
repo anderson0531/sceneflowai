@@ -32,9 +32,97 @@ describe('characterReferenceAssembly', () => {
     const pair = resolveCharacterReferencePair({ character: characterWithPortrait })
     expect(pair.identityUrl).toBe('https://example.com/portrait.jpg')
     expect(pair.wardrobeUrl).toBeUndefined()
+    expect(pair.wardrobeDiptychUrl).toBeUndefined()
+    expect(pair.hasWardrobeDiptych).toBe(false)
     expect(pair.hasDualReferences).toBe(false)
     expect(pair.hasWardrobeOnlyReference).toBe(false)
     expect(pair.resolvedWardrobe?.description).toBe('Navy suit')
+  })
+
+  it('returns scene-matched wardrobe diptych when includeWardrobeDiptych is set', () => {
+    const pair = resolveCharacterReferencePair({
+      character: {
+        id: 'char-1',
+        name: 'Elara',
+        referenceImage: 'https://example.com/portrait.jpg',
+        wardrobes: [
+          {
+            id: 'w-scene',
+            name: 'Scene 4 look',
+            description: 'Hospital gown',
+            sceneNumbers: [4],
+            headshotUrl: 'https://example.com/elara-diptych-scene4.jpg',
+            fullBodyUrl: 'https://example.com/elara-turnaround.jpg',
+            isDefault: false,
+          },
+          {
+            id: 'w-default',
+            name: 'Default',
+            description: 'Casual',
+            headshotUrl: 'https://example.com/elara-diptych-default.jpg',
+            isDefault: true,
+          },
+        ],
+      },
+      sceneIndex: 3,
+      includeWardrobeDiptych: true,
+    })
+    expect(pair.wardrobeDiptychUrl).toBe('https://example.com/elara-diptych-scene4.jpg')
+    expect(pair.hasWardrobeDiptych).toBe(true)
+    expect(pair.resolvedWardrobe?.id).toBe('w-scene')
+  })
+
+  it('does not attach diptych for wrong scene when sceneNumbers do not match', () => {
+    const pair = resolveCharacterReferencePair({
+      character: {
+        id: 'char-1',
+        name: 'Elara',
+        referenceImage: 'https://example.com/portrait.jpg',
+        wardrobes: [
+          {
+            id: 'w-scene',
+            name: 'Scene 4 look',
+            sceneNumbers: [4],
+            headshotUrl: 'https://example.com/elara-diptych-scene4.jpg',
+            isDefault: false,
+          },
+        ],
+      },
+      sceneIndex: 1,
+      includeWardrobeDiptych: true,
+    })
+    expect(pair.wardrobeDiptychUrl).toBeUndefined()
+    expect(pair.hasWardrobeDiptych).toBe(false)
+  })
+
+  it('prefers characterWardrobes override for diptych selection', () => {
+    const pair = resolveCharacterReferencePair({
+      character: {
+        id: 'char-1',
+        name: 'Elara',
+        referenceImage: 'https://example.com/portrait.jpg',
+        wardrobes: [
+          {
+            id: 'w-scene',
+            name: 'Scene 4 look',
+            sceneNumbers: [4],
+            headshotUrl: 'https://example.com/elara-diptych-scene4.jpg',
+            isDefault: false,
+          },
+          {
+            id: 'w-picked',
+            name: 'User picked',
+            headshotUrl: 'https://example.com/elara-diptych-picked.jpg',
+            isDefault: false,
+          },
+        ],
+      },
+      sceneIndex: 3,
+      characterWardrobes: [{ characterId: 'char-1', wardrobeId: 'w-picked' }],
+      includeWardrobeDiptych: true,
+    })
+    expect(pair.wardrobeDiptychUrl).toBe('https://example.com/elara-diptych-picked.jpg')
+    expect(pair.resolvedWardrobe?.id).toBe('w-picked')
   })
 
   it('returns portrait-only when no wardrobe turnaround', () => {

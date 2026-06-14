@@ -6,6 +6,27 @@ import { cn } from '@/lib/utils'
 import { Users, Check, ChevronDown, ChevronUp, Shirt, Info } from 'lucide-react'
 import type { CharacterSelectionProps } from './types'
 
+function normalizeSceneWardrobeMap(
+  sceneWardrobes: CharacterSelectionProps['sceneWardrobes'],
+  characters: CharacterSelectionProps['characters']
+): Record<string, string> {
+  if (!sceneWardrobes) return {}
+  if (!Array.isArray(sceneWardrobes)) return sceneWardrobes
+
+  const map: Record<string, string> = {}
+  for (const cw of sceneWardrobes) {
+    const char = characters.find(
+      (c) => (c as { id?: string }).id === cw.characterId || c.name === cw.characterId
+    )
+    if (char?.name) map[char.name] = cw.wardrobeId
+  }
+  return map
+}
+
+function wardrobeImageUrl(wardrobe: { headshotUrl?: string; fullBodyUrl?: string }): string | undefined {
+  return wardrobe.headshotUrl || wardrobe.fullBodyUrl
+}
+
 /**
  * Unified character & wardrobe reference selection for image generation dialogs.
  *
@@ -29,6 +50,8 @@ export function CharacterSelectionSection({
   noTalentHint,
   className,
 }: CharacterSelectionProps) {
+  const sceneWardrobeByName = normalizeSceneWardrobeMap(sceneWardrobes, characters)
+
   // Filter out narrator/voiceover-only characters — they have no visual representation
   const visualCharacters = characters.filter(c => {
     return c.type !== 'narrator' && c.type !== 'description'
@@ -50,14 +73,12 @@ export function CharacterSelectionSection({
   const tiles: ReferenceTile[] = []
 
   for (const char of visualCharacters) {
-    const wardrobesWithImages = (char.wardrobes || []).filter(
-      (w) => (w as any).fullBodyUrl || (w as any).headshotUrl
-    )
+    const wardrobesWithImages = (char.wardrobes || []).filter((w) => wardrobeImageUrl(w as any))
 
     const seenImageUrls = new Set<string>()
     const uniqueWardrobesWithImages = wardrobesWithImages.filter((w) => {
-      const imgUrl = (w as any).fullBodyUrl || (w as any).headshotUrl
-      if (seenImageUrls.has(imgUrl)) return false
+      const imgUrl = wardrobeImageUrl(w as any)
+      if (!imgUrl || seenImageUrls.has(imgUrl)) return false
       seenImageUrls.add(imgUrl)
       return true
     })
@@ -74,15 +95,18 @@ export function CharacterSelectionSection({
 
     if (uniqueWardrobesWithImages.length > 0) {
       for (const w of uniqueWardrobesWithImages) {
-        const imgUrl = (w as any).fullBodyUrl || (w as any).headshotUrl
+        const imgUrl = wardrobeImageUrl(w as any)
+        const hasDiptych = !!(w as any).headshotUrl
         tiles.push({
           characterName: char.name,
           wardrobeId: w.id,
           wardrobeName: w.name,
           imageUrl: imgUrl,
           label: char.name,
-          sublabel: `${w.name} · Wardrobe ref`,
-          isSceneDefault: sceneWardrobes?.[char.name] === w.id,
+          sublabel: hasDiptych
+            ? `${w.name} · Diptych ref`
+            : `${w.name} · Wardrobe ref`,
+          isSceneDefault: sceneWardrobeByName[char.name] === w.id,
           tileKind: 'wardrobe',
         })
       }
@@ -125,7 +149,7 @@ export function CharacterSelectionSection({
           onSelectionChange([...selectedCharacterNames, tile.characterName])
         }
         if (onWardrobeChange) {
-          const sceneDefaultId = sceneWardrobes?.[tile.characterName]
+          const sceneDefaultId = sceneWardrobeByName[tile.characterName]
           if (sceneDefaultId) {
             onWardrobeChange(tile.characterName, sceneDefaultId)
           } else {
@@ -181,7 +205,7 @@ export function CharacterSelectionSection({
       {!isCollapsedState && (
         <>
           <p className="text-xs text-slate-400">
-            Identity headshots define face and body. Wardrobe refs define outfit only.
+            Identity headshots define face and body. Diptych refs: close-up for identity, full-body for outfit.
           </p>
 
           {noTalentHint && (

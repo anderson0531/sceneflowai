@@ -49,6 +49,9 @@ export function buildDualReferenceNegativeTerms(): string {
 export interface CharacterReferencePair {
   identityUrl?: string
   wardrobeUrl?: string
+  /** Scene-matched 16:9 diptych (LEFT=identity close-up, RIGHT=wardrobe full-body) */
+  wardrobeDiptychUrl?: string
+  hasWardrobeDiptych: boolean
   hasDualReferences: boolean
   /** Wardrobe-only (no portrait): single turnaround drives both via legacy instruction */
   hasWardrobeOnlyReference: boolean
@@ -65,8 +68,10 @@ export interface ResolveCharacterReferencePairArgs {
   scene?: Record<string, unknown> | null
   sceneIndex?: number
   characterWardrobes?: Array<{ characterId: string; wardrobeId: string }>
-  /** Deprecated/inert: wardrobe images are never attached; wardrobe is text-only. Kept for API compatibility. */
+  /** Deprecated/inert: legacy turnaround images are never attached. Kept for API compatibility. */
   includeWardrobeReferenceImages?: boolean
+  /** Attach scene-matched wardrobe diptych (headshotUrl) when available */
+  includeWardrobeDiptych?: boolean
 }
 
 function trimUrl(value: unknown): string | undefined {
@@ -226,7 +231,14 @@ export function resolveWardrobeForCharacter(
   }
 
   if (!resolved) {
-    resolved = (wardrobes as Record<string, unknown>[]).find((w) => w.isDefault === true) ?? null
+    const fallback = (wardrobes as Record<string, unknown>[]).find((w) => w.isDefault === true) ?? null
+    if (fallback) {
+      const charName = (character.name || charId) as string
+      console.warn(
+        `[Wardrobe] No scene-specific wardrobe for ${charName} (sceneIndex=${sceneIndex ?? 'unknown'}); falling back to isDefault "${fallback.name ?? fallback.id}"`
+      )
+      resolved = fallback
+    }
   }
 
   return resolved
@@ -240,6 +252,7 @@ export function resolveCharacterReferencePair(
     scene,
     sceneIndex,
     characterWardrobes,
+    includeWardrobeDiptych = false,
   } = args
   const identityUrl = trimUrl(character.referenceImage)
   const resolvedWardrobe = resolveWardrobeForCharacter(
@@ -248,8 +261,12 @@ export function resolveCharacterReferencePair(
     characterWardrobes,
     sceneIndex
   )
-  // Wardrobe is text-only: never attach turnaround/mannequin images to generation.
+  // Legacy turnaround/mannequin sheets are never attached.
   const wardrobeUrl: string | undefined = undefined
+  const wardrobeDiptychUrl = includeWardrobeDiptych
+    ? trimUrl(resolvedWardrobe?.headshotUrl)
+    : undefined
+  const hasWardrobeDiptych = !!wardrobeDiptychUrl
 
   const hasDualReferences = false
   const hasWardrobeOnlyReference = false
@@ -257,6 +274,8 @@ export function resolveCharacterReferencePair(
   return {
     identityUrl,
     wardrobeUrl,
+    wardrobeDiptychUrl,
+    hasWardrobeDiptych,
     hasDualReferences,
     hasWardrobeOnlyReference,
     resolvedWardrobe: resolvedWardrobe

@@ -49,11 +49,16 @@ export function prioritizeReferenceImages(
 }
 
 export function buildCharacterReferenceEntries(
-  imageReferences: Array<{ imageUrl: string; refRole: 'identity' | 'wardrobe'; characterName: string }>,
-  characterReferences: Array<{ name: string; hasDualReferences?: boolean }>,
+  imageReferences: Array<{
+    imageUrl: string
+    refRole: 'identity' | 'wardrobe' | 'wardrobe-diptych'
+    characterName: string
+  }>,
+  characterReferences: Array<{ name: string; hasDualReferences?: boolean; hasWardrobeDiptych?: boolean }>,
   buildIdentityLabel: (name: string, index: number) => string,
   buildWardrobeLabel: (name: string, index: number) => string,
-  startIndex: number
+  startIndex: number,
+  buildDiptychLabel?: (name: string) => string
 ): PrioritizedReferenceImage[] {
   const entries: PrioritizedReferenceImage[] = []
   let refImageIndex = startIndex
@@ -62,7 +67,11 @@ export function buildCharacterReferenceEntries(
     refImageIndex++
     const matchingCharRef = characterReferences.find((cr) => cr.name === ref.characterName)
     let label: string
-    if (ref.refRole === 'identity') {
+    if (ref.refRole === 'wardrobe-diptych') {
+      label = buildDiptychLabel
+        ? buildDiptychLabel(ref.characterName)
+        : `Diptych ref: ${ref.characterName} — LEFT=identity face, RIGHT=wardrobe outfit`
+    } else if (ref.refRole === 'identity') {
       label = buildIdentityLabel(ref.characterName, refImageIndex)
     } else if (matchingCharRef?.hasDualReferences) {
       label = buildWardrobeLabel(ref.characterName, refImageIndex)
@@ -72,7 +81,7 @@ export function buildCharacterReferenceEntries(
     entries.push({
       imageUrl: ref.imageUrl,
       name: label,
-      role: ref.refRole === 'identity' ? 'identity' : 'wardrobe',
+      role: ref.refRole === 'identity' || ref.refRole === 'wardrobe-diptych' ? 'identity' : 'wardrobe',
     })
   }
 

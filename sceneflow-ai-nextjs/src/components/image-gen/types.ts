@@ -95,8 +95,8 @@ export interface CharacterSelectionProps extends SectionProps {
   /** Per-character wardrobe selection */
   selectedWardrobes?: Record<string, string>
   onWardrobeChange?: (characterName: string, wardrobeId: string) => void
-  /** Scene-level wardrobe assignments to determine default */
-  sceneWardrobes?: Record<string, string>
+  /** Scene-level wardrobe assignments to determine default (record or array form) */
+  sceneWardrobes?: Record<string, string> | Array<{ characterId: string; wardrobeId: string }>
   /** Show reference quality hints based on shot type */
   hasCharacterReferences?: boolean
   /** Hint that this is a no-talent segment (shows info text but still allows selection) */

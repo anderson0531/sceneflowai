@@ -234,7 +234,9 @@ export function PreVisFramePromptDialog({
 
               {selectedCharacterNames.length > 0 && (
                 <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3 space-y-2">
-                  <p className="text-xs font-medium text-slate-300">Wardrobe text (sent to model — not image refs)</p>
+                  <p className="text-xs font-medium text-slate-300">
+                    Wardrobe text override (optional — diptych ref image is sent when available)
+                  </p>
                   {selectedCharacterNames.map((name) => (
                     <div key={name}>
                       <label className="text-[10px] text-slate-500">{name}</label>

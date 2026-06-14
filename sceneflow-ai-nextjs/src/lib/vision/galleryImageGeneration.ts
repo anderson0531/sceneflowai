@@ -7,5 +7,6 @@ export const GALLERY_MANUAL_GENERATE_OPTS = {
 export const GALLERY_DIRECT_GENERATE_OPTS = {
   generationMode: 'direct' as const,
   includeWardrobeReferenceImages: false,
+  includeWardrobeDiptych: true,
   fromDialog: true,
 }

@@ -40,6 +40,12 @@ import {
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
+import {
+  buildWardrobeDiptychCharacterConsumptionLine,
+  buildWardrobeDiptychReferenceLabel,
+  DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT,
+  WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION,
+} from '@/lib/character/sceneCharacterHeadshot'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 import {
   buildLocationReferencePromptLine,
@@ -299,6 +305,7 @@ export async function POST(req: NextRequest) {
       skipLikenessValidation = false,
       generationMode = 'default',
       includeWardrobeReferenceImages = true,
+      includeWardrobeDiptych = false,
       fromDialog = false,
       negativePrompt,
       thinkingLevel,
@@ -966,22 +973,29 @@ export async function POST(req: NextRequest) {
         }
       }
       
-      // Identity + wardrobe references are separate images when both exist
+      // Identity + wardrobe references — diptych replaces separate identity when available
       const refPair = resolveCharacterReferencePair({
         character: char,
         scene: sceneData as Record<string, unknown>,
         sceneIndex,
         characterWardrobes: effectiveCharacterWardrobes,
         includeWardrobeReferenceImages,
+        includeWardrobeDiptych: includeWardrobeDiptych === true,
       })
-      const identityImageUrl = refPair.identityUrl
+      const hasWardrobeDiptych = refPair.hasWardrobeDiptych
+      const wardrobeDiptychUrl = refPair.wardrobeDiptychUrl
+      const identityImageUrl = hasWardrobeDiptych ? undefined : refPair.identityUrl
       const wardrobeImageUrl = includeWardrobeReferenceImages ? refPair.wardrobeUrl : undefined
       const hasDualReferences = refPair.hasDualReferences
       const hasWardrobeOnlyReference = refPair.hasWardrobeOnlyReference
-      const hasWardrobeReference = !!(wardrobeImageUrl)
+      const hasWardrobeReference = !!(wardrobeImageUrl || hasWardrobeDiptych)
       const hasCostumeReference = hasWardrobeReference
 
-      if (hasDualReferences) {
+      if (hasWardrobeDiptych) {
+        console.log(
+          `[Scene Image] ✓ Wardrobe diptych for ${char.name}: LEFT=identity face, RIGHT=wardrobe outfit`
+        )
+      } else if (hasDualReferences) {
         console.log(
           `[Scene Image] ✓ Dual references for ${char.name}: identity portrait + wardrobe turnaround`
         )
@@ -1050,20 +1064,25 @@ export async function POST(req: NextRequest) {
           wardrobeDescription += `, ${effectiveAccessories}`
         }
         console.log(`[Scene Image] ${char.name} wardrobe (text): ${wardrobeDescription}`)
+      } else if (effectiveWardrobe && hasWardrobeDiptych) {
+        wardrobeDescription =
+          ', copy outfit from the RIGHT panel of their wardrobe diptych reference only — do not describe clothing in text'
+        console.log(`[Scene Image] ${char.name} wardrobe (diptych ref): text minimized`)
       } else if (effectiveWardrobe && hasWardrobeReference) {
         wardrobeDescription = ', wearing the outfit shown in their wardrobe reference image'
         console.log(`[Scene Image] ${char.name} wardrobe (image ref): text minimized`)
       }
 
+      const diptychReferenceId = wardrobeDiptychUrl ? ++gcsRefIndex : undefined
       const identityReferenceId = identityImageUrl ? ++gcsRefIndex : undefined
       const wardrobeReferenceId = wardrobeImageUrl ? ++gcsRefIndex : undefined
-      const hasReferenceImage = !!(identityReferenceId || wardrobeReferenceId)
-      const referenceId = identityReferenceId ?? wardrobeReferenceId
+      const hasReferenceImage = !!(diptychReferenceId || identityReferenceId || wardrobeReferenceId)
+      const referenceId = diptychReferenceId ?? identityReferenceId ?? wardrobeReferenceId
       
       // subjectTextDescription: metadata for structured API reference payload (not repeated in scene prompt)
       // promptToken: reference-first binding for all prompt text — "person [N]" only when identity ref exists
       let subjectTextDescription: string | undefined
-      if (identityReferenceId) {
+      if (diptychReferenceId || identityReferenceId) {
         subjectTextDescription = char.name || 'person'
       } else if (hasReferenceImage && appearanceSource) {
         subjectTextDescription =
@@ -1080,16 +1099,20 @@ export async function POST(req: NextRequest) {
       }
       
       const linkingRefId =
-        identityReferenceId ?? (hasWardrobeOnlyReference ? wardrobeReferenceId : undefined)
+        diptychReferenceId ??
+        identityReferenceId ??
+        (hasWardrobeOnlyReference ? wardrobeReferenceId : undefined)
       const promptToken = linkingRefId
-        ? identityReferenceId
-          ? buildIdentityPromptToken(identityReferenceId)
+        ? diptychReferenceId || identityReferenceId
+          ? buildIdentityPromptToken(linkingRefId)
           : `person [${linkingRefId}]`
         : undefined
       const linkingDescription = promptToken
       
       if (hasReferenceImage) {
-        console.log(`[Scene Image] ${char.name} identityRef: ${identityReferenceId ?? 'none'}, wardrobeRef: ${wardrobeReferenceId ?? 'none'}`)
+        console.log(
+          `[Scene Image] ${char.name} diptychRef: ${diptychReferenceId ?? 'none'}, identityRef: ${identityReferenceId ?? 'none'}, wardrobeRef: ${wardrobeReferenceId ?? 'none'}`
+        )
         console.log(`[Scene Image] ${char.name} promptToken (for prompt): "${promptToken}"`)
         console.log(`[Scene Image] ${char.name} subjectDescription (for API): "${subjectTextDescription}"`)
       } else {
@@ -1098,11 +1121,13 @@ export async function POST(req: NextRequest) {
       
       return {
         referenceId,
+        diptychReferenceId,
         identityReferenceId,
         wardrobeReferenceId,
         name: char.name,
         description: `${description}${ageClause}${wardrobeDescription}`,
-        imageUrl: identityImageUrl ?? wardrobeImageUrl,
+        imageUrl: wardrobeDiptychUrl ?? identityImageUrl ?? wardrobeImageUrl,
+        wardrobeDiptychImageUrl: wardrobeDiptychUrl,
         identityImageUrl,
         wardrobeImageUrl,
         ethnicity: char.ethnicity,
@@ -1114,6 +1139,7 @@ export async function POST(req: NextRequest) {
         defaultWardrobe: hasWardrobeReference ? undefined : effectiveWardrobe,
         wardrobeAccessories: hasWardrobeReference ? undefined : effectiveAccessories,
         hasCostumeReference,
+        hasWardrobeDiptych,
         hasDualReferences,
         hasWardrobeOnlyReference,
         linkingDescription,
@@ -1419,6 +1445,19 @@ export async function POST(req: NextRequest) {
       optimizedPrompt = `${optimizedPrompt.trim()} ${hairCompositionLock}`.trim()
     }
 
+    const diptychCharacters = characterReferences.filter(
+      (cr: { hasWardrobeDiptych?: boolean }) => cr.hasWardrobeDiptych
+    )
+    if (diptychCharacters.length > 0) {
+      const perCharacterDiptychLines = diptychCharacters
+        .map((cr: { name: string }) => buildWardrobeDiptychCharacterConsumptionLine(cr.name))
+        .join('\n')
+      optimizedPrompt = `${optimizedPrompt.trim()}\n\n${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}\n${perCharacterDiptychLines}`
+      console.log(
+        `[Scene Image] Appended wardrobe diptych consumption for: ${diptychCharacters.map((cr: { name: string }) => cr.name).join(', ')}`
+      )
+    }
+
     // Validate we have a prompt to send to the model
     if (!optimizedPrompt || !optimizedPrompt.trim()) {
       console.warn('[Scene Image] Missing scene description/prompt. projectId, sceneIndex, scenePrompt/customPrompt are required.')
@@ -1453,11 +1492,21 @@ export async function POST(req: NextRequest) {
       referenceId: number
       imageUrl: string
       subjectDescription: string
-      refRole: 'identity' | 'wardrobe'
+      refRole: 'identity' | 'wardrobe' | 'wardrobe-diptych'
       characterName: string
     }> = []
 
     for (const ref of characterReferencesForImages) {
+      if (ref.diptychReferenceId && ref.wardrobeDiptychImageUrl) {
+        imageReferences.push({
+          referenceId: ref.diptychReferenceId,
+          imageUrl: ref.wardrobeDiptychImageUrl,
+          subjectDescription: ref.subjectTextDescription || `${ref.name} wardrobe diptych`,
+          refRole: 'wardrobe-diptych',
+          characterName: ref.name,
+        })
+        continue
+      }
       if (ref.identityReferenceId && ref.identityImageUrl) {
         imageReferences.push({
           referenceId: ref.identityReferenceId,
@@ -1528,11 +1577,15 @@ export async function POST(req: NextRequest) {
       negativePromptParts.push(styleNegativeTerms)
     }
     const hasAnyDualRef = characterReferences.some((cr: any) => cr.hasDualReferences)
+    const hasAnyDiptychRef = characterReferences.some((cr: any) => cr.hasWardrobeDiptych)
     if (
       hasAnyDualRef &&
       (artStyle || 'photorealistic').trim() === 'photorealistic'
     ) {
       negativePromptParts.push(buildDualReferenceNegativeTerms())
+    }
+    if (hasAnyDiptychRef) {
+      negativePromptParts.push(DIPTYCH_REPRODUCTION_NEGATIVE_PROMPT)
     }
     const finalNegativePrompt = negativePromptParts.join(', ')
     
@@ -1580,7 +1633,8 @@ export async function POST(req: NextRequest) {
             characterReferences,
             buildIdentityReferenceLabel,
             buildWardrobeReferenceLabel,
-            0
+            0,
+            buildWardrobeDiptychReferenceLabel
           )
           const propRefEntries = buildPropReferenceEntries(
             objectImageReferences,
@@ -1630,7 +1684,10 @@ export async function POST(req: NextRequest) {
           // Character reference instructions
           if (cappedImageReferences.length > 0) {
             geminiPrompt += `CHARACTER REFERENCES (${cappedImageReferences.length}):\n`
-            const hasAnyDual = characterReferences.some((cr: any) => cr.hasDualReferences)
+            const hasAnyDiptych = characterReferences.some((cr: any) => cr.hasWardrobeDiptych)
+            if (hasAnyDiptych) {
+              geminiPrompt += `${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}\n`
+            }
             if (hasAnyDual) {
               geminiPrompt += `${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n`
               const framingBlock = buildFramingAwareIdentityBlock(effectiveShotType)
@@ -1642,7 +1699,16 @@ export async function POST(req: NextRequest) {
               const matchingCharRef = characterReferences.find(
                 (cr: any) => cr.name === ref.characterName
               )
-              if (ref.refRole === 'identity') {
+              if (ref.refRole === 'wardrobe-diptych') {
+                geminiPrompt += `- Reference image ${ref.referenceId}: ${buildWardrobeDiptychReferenceLabel(ref.characterName)}\n`
+                geminiPrompt += `  ${buildWardrobeDiptychCharacterConsumptionLine(ref.characterName)}\n`
+                const hairLock =
+                  matchingCharRef?.hairAnchor ?? matchingCharRef?.hairDescription
+                if (hairLock) {
+                  geminiPrompt +=
+                    `  Hairstyle lock: ${hairLock} — do not restyle for framing or injuries.\n`
+                }
+              } else if (ref.refRole === 'identity') {
                 geminiPrompt += `${buildIdentityReferencePromptLine(ref.characterName, ref.referenceId)}\n`
                 const hairLock =
                   matchingCharRef?.hairAnchor ?? matchingCharRef?.hairDescription
@@ -1657,9 +1723,16 @@ export async function POST(req: NextRequest) {
               }
             })
             const hasIdentityOnly = characterReferences.some(
-              (cr: any) => cr.identityImageUrl && !cr.hasDualReferences && !cr.hasWardrobeOnlyReference
+              (cr: any) =>
+                cr.identityImageUrl &&
+                !cr.hasDualReferences &&
+                !cr.hasWardrobeOnlyReference &&
+                !cr.hasWardrobeDiptych
             )
-            if (hasAnyDual) {
+            if (hasAnyDiptych) {
+              geminiPrompt +=
+                'Wardrobe diptych refs: LEFT panel = face/identity only; RIGHT panel = outfit/wardrobe only. Do not describe clothing in text — copy outfit from the RIGHT panel.\n\n'
+            } else if (hasAnyDual) {
               geminiPrompt +=
                 'In the scene prompt, refer to characters with identity refs using ONLY "person [N]" tokens — no ethnicity, age, or appearance adjectives in text.\n\n'
             } else if (hasIdentityOnly) {

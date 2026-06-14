@@ -388,16 +388,6 @@ export async function resolveSceneHeadshotsForBeatCharacters(args: {
       continue
     }
 
-    if (char.sceneHeadshotUrl?.trim()) {
-      results.push({
-        name: char.name,
-        sceneHeadshotUrl: char.sceneHeadshotUrl.trim(),
-        emotion: char.emotion,
-        generated: false,
-      })
-      continue
-    }
-
     const record = char.characterRecord ?? {}
     const wardrobe = resolveWardrobeTextForCharacter(
       record,
@@ -405,6 +395,24 @@ export async function resolveSceneHeadshotsForBeatCharacters(args: {
       char.sceneIndex,
       char.selectedWardrobeId
     )
+    const sceneMatchedHeadshotUrl = wardrobe.headshotUrl?.trim()
+
+    if (char.sceneHeadshotUrl?.trim()) {
+      const passedUrl = char.sceneHeadshotUrl.trim()
+      if (sceneMatchedHeadshotUrl && passedUrl !== sceneMatchedHeadshotUrl) {
+        console.warn(
+          `[Scene Headshot] Stale sceneHeadshotUrl for ${char.name}; using scene-matched wardrobe diptych instead`
+        )
+      } else {
+        results.push({
+          name: char.name,
+          sceneHeadshotUrl: passedUrl,
+          emotion: char.emotion,
+          generated: false,
+        })
+        continue
+      }
+    }
 
     const headshotInput: SceneCharacterHeadshotInput = {
       characterName: char.name,
