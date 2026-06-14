@@ -160,26 +160,15 @@ export async function callVertexAIImagen(
         const sourceUrl = ref.imageUrl || ref.gcsUri
         console.log(`[Imagen] Downloading image from: ${sourceUrl?.substring(0, 60)}...`)
         try {
-          if (sourceUrl?.startsWith('http://') || sourceUrl?.startsWith('https://')) {
-            // Direct HTTP download and base64 encode
-            const imageResponse = await fetch(sourceUrl)
-            if (!imageResponse.ok) {
-              throw new Error(`HTTP ${imageResponse.status}: ${imageResponse.statusText}`)
-            }
-            const imageBuffer = await imageResponse.arrayBuffer()
-            base64Data = Buffer.from(imageBuffer).toString('base64')
-            console.log(`[Imagen] Downloaded and encoded ${base64Data.length} base64 chars from HTTP URL`)
-          } else if (sourceUrl?.startsWith('gs://')) {
-            // GCS URL - import dynamically to avoid dependency if not needed
-            const { downloadImageAsBase64 } = await import('@/lib/storage/gcs')
-            base64Data = await downloadImageAsBase64(sourceUrl)
-            console.log(`[Imagen] Downloaded and encoded ${base64Data.length} base64 chars from GCS`)
-          } else {
-            throw new Error(`Unsupported URL scheme: ${sourceUrl}`)
-          }
+          const { fetchReferenceImageAsBase64 } = await import('@/lib/storage/fetchReferenceImage')
+          const downloaded = await fetchReferenceImageAsBase64(sourceUrl!, {
+            label: ref.subjectDescription || `reference ${ref.referenceId}`,
+          })
+          base64Data = downloaded.base64
+          console.log(`[Imagen] Downloaded and encoded ${base64Data.length} base64 chars`)
         } catch (error: any) {
           console.error(`[Imagen] Failed to download reference image:`, error.message)
-          throw new Error(`Failed to download reference image: ${error.message}`)
+          throw error
         }
       }
       

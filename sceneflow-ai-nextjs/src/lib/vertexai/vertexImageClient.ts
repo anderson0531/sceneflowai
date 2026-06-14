@@ -6,6 +6,7 @@
 
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 import { callVertexAIImagen } from '@/lib/vertexai/client'
+import { fetchReferenceImageAsBase64 } from '@/lib/storage/fetchReferenceImage'
 import {
   getImagenModel,
   getImagen4Model,
@@ -83,11 +84,9 @@ async function buildMultimodalParts(
     let mimeType = ref.mimeType || 'image/jpeg'
 
     if (!base64Data && ref.imageUrl) {
-      const response = await fetch(ref.imageUrl)
-      if (!response.ok) throw new Error(`Failed to download reference: HTTP ${response.status}`)
-      const contentType = response.headers.get('content-type')
-      if (contentType) mimeType = contentType.split(';')[0].trim()
-      base64Data = Buffer.from(await response.arrayBuffer()).toString('base64')
+      const downloaded = await fetchReferenceImageAsBase64(ref.imageUrl, { label: ref.name })
+      base64Data = downloaded.base64
+      mimeType = downloaded.mimeType
     }
 
     if (!base64Data) continue

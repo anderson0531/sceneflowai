@@ -40,6 +40,13 @@ import {
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
 import { LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/vision/locationReferencePrompts'
 import {
+  MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
+  buildCharacterReferenceEntries,
+  buildLocationReferenceEntry,
+  buildPropReferenceEntries,
+  prioritizeReferenceImages,
+} from '@/lib/vision/referenceLimits'
+import {
   resolveStoryboardGeneration,
   getPhotorealisticPromptAnchor,
 } from '@/lib/storyboard/storyboardQuality'
@@ -1496,7 +1503,8 @@ export async function POST(req: NextRequest) {
       .filter((obj: any) => obj.imageUrl)
       .map((obj: any) => ({
         imageUrl: obj.imageUrl,
-        name: obj.name || 'prop'
+        name: obj.name || 'prop',
+        importance: obj.importance,
       }))
     
     if (objectImageReferences.length > 0) {
@@ -1526,49 +1534,53 @@ export async function POST(req: NextRequest) {
             `[Scene Image] Using Vertex Gemini Image (tier=${resolvedModelTier || 'designer'}) for reference images`
           )
           
-          // Combine character, object, and location reference images
-          // LABELED REFERENCES: Each image gets a descriptive role label so the model
-          // knows what each reference image represents (character vs prop vs location)
-          const allReferenceImages: Array<{imageUrl: string; name: string}> = []
-          let refImageIndex = 0
-          
-          // Characters first (identity refs, then wardrobe refs — order matches imageReferences)
-          imageReferences.forEach((ref) => {
-            refImageIndex++
-            const matchingCharRef = characterReferences.find(
-              (cr: any) => cr.name === ref.characterName
+          // Combine character, object, and location reference images (priority-capped)
+          const characterRefEntries = buildCharacterReferenceEntries(
+            imageReferences,
+            characterReferences,
+            buildIdentityReferenceLabel,
+            buildWardrobeReferenceLabel,
+            0
+          )
+          const propRefEntries = buildPropReferenceEntries(
+            objectImageReferences,
+            characterRefEntries.length
+          )
+          const locationRefEntry = buildLocationReferenceEntry(
+            matchedLocationReference,
+            characterRefEntries.length + propRefEntries.length
+          )
+          const allPrioritizedRefs = [
+            ...characterRefEntries,
+            ...propRefEntries,
+            ...(locationRefEntry ? [locationRefEntry] : []),
+          ]
+          const { selected: selectedReferenceImages, dropped: droppedReferenceImages } =
+            prioritizeReferenceImages(allPrioritizedRefs, MAX_VERTEX_GEMINI_REFERENCE_IMAGES)
+
+          if (droppedReferenceImages.length > 0) {
+            console.log(
+              `[Scene Image] Dropped ${droppedReferenceImages.length} reference image(s) (cap=${MAX_VERTEX_GEMINI_REFERENCE_IMAGES}):`,
+              droppedReferenceImages.map((r) => r.name).join(', ')
             )
-            let label: string
-            if (ref.refRole === 'identity') {
-              label = buildIdentityReferenceLabel(ref.characterName, refImageIndex)
-            } else if (matchingCharRef?.hasDualReferences) {
-              label = buildWardrobeReferenceLabel(ref.characterName, refImageIndex)
-            } else {
-              label = `Character reference ${refImageIndex}: ${ref.characterName} (mannequin outfit sheet)`
-            }
-            allReferenceImages.push({
-              imageUrl: ref.imageUrl,
-              name: label,
-            })
-          })
-          
-          // Props/objects second
-          objectImageReferences.forEach((obj: any) => {
-            refImageIndex++
-            allReferenceImages.push({
-              imageUrl: obj.imageUrl,
-              name: `Prop reference ${refImageIndex}: ${obj.name}`
-            })
-          })
-          
-          // Location last
-          if (matchedLocationReference && matchedLocationReference.imageUrl) {
-            refImageIndex++
-            allReferenceImages.push({
-              imageUrl: matchedLocationReference.imageUrl,
-              name: `Location reference ${refImageIndex}: ${matchedLocationReference.location}`
-            })
           }
+
+          const allReferenceImages = selectedReferenceImages.map((ref) => ({
+            imageUrl: ref.imageUrl,
+            name: ref.name,
+          }))
+          const selectedReferenceUrls = new Set(selectedReferenceImages.map((ref) => ref.imageUrl))
+          const cappedObjectImageReferences = objectImageReferences.filter((obj) =>
+            selectedReferenceUrls.has(obj.imageUrl)
+          )
+          const cappedLocationReference =
+            matchedLocationReference?.imageUrl &&
+            selectedReferenceUrls.has(matchedLocationReference.imageUrl)
+              ? matchedLocationReference
+              : null
+          const cappedImageReferences = imageReferences.filter((ref) =>
+            selectedReferenceUrls.has(ref.imageUrl)
+          )
           
           console.log(`[Scene Image] Labeled reference images: ${allReferenceImages.map(r => r.name).join(', ')}`)
           
@@ -1576,8 +1588,8 @@ export async function POST(req: NextRequest) {
           let geminiPrompt = `Generate a cinematic scene image. The following reference images are provided:\n\n`
           
           // Character reference instructions
-          if (imageReferences.length > 0) {
-            geminiPrompt += `CHARACTER REFERENCES (${imageReferences.length}):\n`
+          if (cappedImageReferences.length > 0) {
+            geminiPrompt += `CHARACTER REFERENCES (${cappedImageReferences.length}):\n`
             const hasAnyDual = characterReferences.some((cr: any) => cr.hasDualReferences)
             if (hasAnyDual) {
               geminiPrompt += `${DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK}\n`
@@ -1586,7 +1598,7 @@ export async function POST(req: NextRequest) {
                 geminiPrompt += `${framingBlock}\n`
               }
             }
-            imageReferences.forEach((ref) => {
+            cappedImageReferences.forEach((ref) => {
               const matchingCharRef = characterReferences.find(
                 (cr: any) => cr.name === ref.characterName
               )
@@ -1614,21 +1626,21 @@ export async function POST(req: NextRequest) {
           }
           
           // Object reference instructions
-          if (objectImageReferences.length > 0) {
-            const objectNames = objectImageReferences.map((o: any) => o.name).join(', ')
+          if (cappedObjectImageReferences.length > 0) {
+            const objectNames = cappedObjectImageReferences.map((o: any) => o.name).join(', ')
             geminiPrompt += `PROP REFERENCES: Include these specific props/objects matching their reference images: ${objectNames}.\n\n`
           }
           
           // Location reference instructions
-          if (matchedLocationReference && matchedLocationReference.imageUrl) {
-            geminiPrompt += `${LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION} Environment: "${matchedLocationReference.location}". Match lighting to the scene prompt Global Style Anchor.\n\n`
+          if (cappedLocationReference?.imageUrl) {
+            geminiPrompt += `${LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION} Environment: "${cappedLocationReference.location}". Match lighting to the scene prompt Global Style Anchor.\n\n`
           }
           
           geminiPrompt += `SCENE PROMPT:\n${optimizedPrompt}\n\n`
           
           geminiPrompt += `CRITICAL REQUIREMENTS:\n`
           geminiPrompt += `- Preserve character identity from identity reference images exactly\n`
-          if (imageReferences.length > 0) {
+          if (cappedImageReferences.length > 0) {
             const wardrobeReminders = characterReferences
               .filter((cr: any) => cr.defaultWardrobe && !cr.hasWardrobeReference)
               .map((cr: any) => `${cr.name}: "${cr.defaultWardrobe}"`)

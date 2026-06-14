@@ -153,16 +153,15 @@ export async function generateImageWithGemini(
       if (!base64Data && ref.imageUrl) {
         console.log(`[Vertex Imagen] Downloading reference ${ref.referenceId} from: ${ref.imageUrl.substring(0, 60)}...`)
         try {
-          const imageResponse = await fetch(ref.imageUrl)
-          if (!imageResponse.ok) {
-            throw new Error(`HTTP ${imageResponse.status}: ${imageResponse.statusText}`)
-          }
-          const imageBuffer = await imageResponse.arrayBuffer()
-          base64Data = Buffer.from(imageBuffer).toString('base64')
+          const { fetchReferenceImageAsBase64 } = await import('@/lib/storage/fetchReferenceImage')
+          const downloaded = await fetchReferenceImageAsBase64(ref.imageUrl, {
+            label: ref.subjectDescription || `reference ${ref.referenceId}`,
+          })
+          base64Data = downloaded.base64
           console.log(`[Vertex Imagen] Downloaded and encoded ${base64Data.length} base64 chars`)
         } catch (error: any) {
           console.error(`[Vertex Imagen] Failed to download reference image:`, error.message)
-          throw new Error(`Failed to download reference image: ${error.message}`)
+          throw error
         }
       }
       

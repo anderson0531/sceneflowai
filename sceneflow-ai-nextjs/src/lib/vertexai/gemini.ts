@@ -554,12 +554,11 @@ export async function generateImage(
       // Download from URL if needed
       if (!base64Data && ref.imageUrl) {
         console.log(`[Vertex Imagen] Downloading reference from: ${ref.imageUrl.substring(0, 50)}...`)
-        const imageResponse = await fetch(ref.imageUrl)
-        if (!imageResponse.ok) {
-          throw new Error(`Failed to download reference image: ${imageResponse.status}`)
-        }
-        const imageBuffer = await imageResponse.arrayBuffer()
-        base64Data = Buffer.from(imageBuffer).toString('base64')
+        const { fetchReferenceImageAsBase64 } = await import('@/lib/storage/fetchReferenceImage')
+        const downloaded = await fetchReferenceImageAsBase64(ref.imageUrl, {
+          label: ref.subjectDescription || `reference ${ref.referenceId}`,
+        })
+        base64Data = downloaded.base64
       }
       
       if (!base64Data) {
