@@ -38,7 +38,9 @@ import {
   resolveCharacterReferencePair,
 } from '@/lib/character/characterReferenceAssembly'
 import { WARDROBE_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/character/wardrobeReferencePrompts'
-import { LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION } from '@/lib/vision/locationReferencePrompts'
+import {
+  buildLocationReferencePromptLine,
+} from '@/lib/vision/locationReferencePrompts'
 import {
   MAX_VERTEX_GEMINI_REFERENCE_IMAGES,
   buildCharacterReferenceEntries,
@@ -1633,7 +1635,13 @@ export async function POST(req: NextRequest) {
           
           // Location reference instructions
           if (cappedLocationReference?.imageUrl) {
-            geminiPrompt += `${LOCATION_TURNAROUND_CONSUMPTION_INSTRUCTION} Environment: "${cappedLocationReference.location}". Match lighting to the scene prompt Global Style Anchor.\n\n`
+            const locationRefIndex = selectedReferenceImages.findIndex((ref) => ref.role === 'location')
+            const refIndex = locationRefIndex >= 0 ? locationRefIndex + 1 : selectedReferenceImages.length
+            const locationName =
+              cappedLocationReference.location ||
+              cappedLocationReference.name ||
+              'Location'
+            geminiPrompt += `${buildLocationReferencePromptLine(locationName, refIndex)} Environment: "${locationName}". Match lighting to the scene prompt Global Style Anchor.\n\n`
           }
           
           geminiPrompt += `SCENE PROMPT:\n${optimizedPrompt}\n\n`
@@ -1659,6 +1667,10 @@ export async function POST(req: NextRequest) {
           }
           geminiPrompt += `- No dialogue captions, subtitles, or watermarks\n`
           geminiPrompt += `- Match props and environment to their reference images\n`
+          if (cappedLocationReference?.imageUrl) {
+            geminiPrompt +=
+              '- Location background: use exactly ONE of the 4 turnaround angles (North, East, South, or West) from the location reference — never the full 2x2 sheet and never more than one panel\n'
+          }
           if ((artStyle || 'photorealistic').trim() === 'photorealistic') {
             geminiPrompt +=
               '- Output must look like a live-action photograph or film frame, NOT illustration, NOT storyboard sketch, NOT cartoon or anime\n'

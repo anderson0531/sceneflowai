@@ -1,3 +1,5 @@
+import { buildLocationReferenceLabel } from '@/lib/vision/locationReferencePrompts'
+
 export const MAX_VERTEX_GEMINI_REFERENCE_IMAGES = 8
 
 export type ReferencePriorityRole =
@@ -103,9 +105,10 @@ export function buildLocationReferenceEntry(
 ): PrioritizedReferenceImage | null {
   if (!location?.imageUrl) return null
   const refImageIndex = startIndex + 1
+  const locationName = location.location || location.name || 'Location'
   return {
     imageUrl: location.imageUrl,
-    name: `Location reference ${refImageIndex}: ${location.location || location.name || 'Location'}`,
+    name: buildLocationReferenceLabel(locationName, refImageIndex),
     role: 'location',
   }
 }

@@ -26,6 +26,7 @@ import {
   DUAL_REFERENCE_GLOBAL_PRIORITY_BLOCK,
   WARDROBE_ONLY_REFERENCE_INSTRUCTION,
 } from '@/lib/character/characterReferenceAssembly'
+import { buildLocationReferenceLabel, buildLocationReferencePromptLine } from '@/lib/vision/locationReferencePrompts'
 
 export const maxDuration = 120 // 2 minutes for potentially generating both frames
 export const runtime = 'nodejs'
@@ -635,7 +636,7 @@ export async function POST(req: NextRequest) {
         if (allReferenceImages.length < MAX_GEMINI_REFERENCE_IMAGES) {
           allReferenceImages.push({
             imageUrl: loc.imageUrl!,
-            name: `Location: ${loc.name}`
+            name: buildLocationReferenceLabel(loc.name, allReferenceImages.length + 1),
           })
         }
       }
@@ -705,6 +706,15 @@ Render this scene in ${selectedStyle.name} style.`
           geminiPrompt = `Generate a cinematic frame based on this description. The character(s) shown in the reference image(s) must appear in this scene with their exact appearance preserved.\n\n${startFramePrompt}\n\nIMPORTANT: Match the character's ethnicity, facial features, hair color/style, and facial hair exactly from the reference images.`
         } else if (referenceImageUrl) {
           geminiPrompt = `Generate a cinematic frame based on this description. Use the provided reference image for visual style and scene continuity.\n\n${startFramePrompt}`
+        }
+      }
+
+      if (locationRefs.length > 0) {
+        const loc = locationRefs[0]
+        const locRefIndex =
+          allReferenceImages.findIndex((ref) => ref.imageUrl === loc.imageUrl) + 1
+        if (locRefIndex > 0) {
+          geminiPrompt += `\n\n${buildLocationReferencePromptLine(loc.name, locRefIndex)}`
         }
       }
       
