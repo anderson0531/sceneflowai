@@ -1684,6 +1684,7 @@ export async function POST(req: NextRequest) {
           // Character reference instructions
           if (cappedImageReferences.length > 0) {
             geminiPrompt += `CHARACTER REFERENCES (${cappedImageReferences.length}):\n`
+            const hasAnyDual = characterReferences.some((cr: any) => cr.hasDualReferences)
             const hasAnyDiptych = characterReferences.some((cr: any) => cr.hasWardrobeDiptych)
             if (hasAnyDiptych) {
               geminiPrompt += `${WARDROBE_DIPTYCH_CONSUMPTION_INSTRUCTION}\n`
