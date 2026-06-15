@@ -11,7 +11,7 @@ import {
   getUseCaseExample,
   parseUseCaseExampleHash,
 } from '@/config/landing/useCaseExamples';
-import { getUseCaseExampleNarrationUrl } from '@/config/landing/landingVisualMedia';
+import { getUseCaseExampleNarrationUrl, getUseCaseExampleStoryUrl } from '@/config/landing/landingVisualMedia';
 import { useTranslations } from 'next-intl';
 import { ExpandedImageModal } from '@/components/landing/ExpandedImageModal';
 
@@ -198,6 +198,67 @@ function UseCaseIllustrationFrame({
   );
 }
 
+function ExampleStoryButton({
+  storyKey,
+  src,
+  hearLabel,
+  pauseLabel,
+  comingSoonLabel,
+}: {
+  storyKey: string;
+  src: string;
+  hearLabel: string;
+  pauseLabel: string;
+  comingSoonLabel: string;
+}) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    setIsPlaying(false);
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  }, [storyKey, src]);
+
+  const togglePlayback = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    } else {
+      void audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    }
+  }, [isPlaying]);
+
+  return (
+    <>
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="none"
+        onEnded={() => setIsPlaying(false)}
+        onPause={() => setIsPlaying(false)}
+      />
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          togglePlayback();
+        }}
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-purple-500/40 bg-gradient-to-r from-purple-500/15 to-cyan-500/15 px-2.5 py-1 text-[11px] font-semibold text-purple-200 transition-colors hover:border-purple-400/60 hover:from-purple-500/25 hover:to-cyan-500/25 hover:text-white"
+        aria-label={isPlaying ? pauseLabel : hearLabel}
+      >
+        {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+        {isPlaying ? pauseLabel : hearLabel}
+      </button>
+    </>
+  );
+}
+
 interface ProductionComparisonVisualProps {
   initialCategoryId?: string
 }
@@ -331,6 +392,8 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
 
   const activeNarrationSrc = getUseCaseExampleNarrationUrl(activeCategory, activeExample.id);
   const activeNarrationKey = `${activeCategory}-${activeExample.id}`;
+  const activeStorySrc = getUseCaseExampleStoryUrl(activeCategory, activeExample.id);
+  const activeStoryKey = `${activeCategory}-${activeExample.id}-story`;
 
   return (
     <div className="relative flex h-full min-h-[22rem] w-full flex-col mx-auto max-w-4xl">
@@ -436,10 +499,17 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                           ref={videoPanelRef}
                           className="mb-4 rounded-lg border border-cyan-500/20 bg-slate-950/80 overflow-hidden shadow-xl"
                         >
-                          <div className="border-b border-white/5 bg-slate-900/80 px-3 py-2">
-                            <p className="text-xs font-medium text-cyan-300/90 truncate">
+                          <div className="border-b border-white/5 bg-slate-900/80 px-3 py-2 flex items-center justify-between gap-2">
+                            <p className="text-xs font-medium text-cyan-300/90 truncate min-w-0">
                               {activeExample.label}
                             </p>
+                            <ExampleStoryButton
+                              storyKey={activeStoryKey}
+                              src={activeStorySrc}
+                              hearLabel={tUi('hearStory')}
+                              pauseLabel={tUi('pauseStory')}
+                              comingSoonLabel={tUi('storyComingSoon')}
+                            />
                           </div>
                           <UseCaseIllustrationFrame
                             illustrationSrc={activeIllustrationSrc}

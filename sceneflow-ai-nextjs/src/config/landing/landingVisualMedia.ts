@@ -242,6 +242,11 @@ export function getUseCaseExampleNarrationUrl(categoryId: string, exampleId: str
   return `/audio/use-case-narration/${categoryId}/${exampleId}.mp3`
 }
 
+/** Cinematic multi-character "Hear the Story" MP3 for a use-case example */
+export function getUseCaseExampleStoryUrl(categoryId: string, exampleId: string): string {
+  return `/audio/use-case-story/${categoryId}/${exampleId}.mp3`
+}
+
 /** Thai walkthrough screenshots — ids 1–14 (upload to landing/storyboard/th/{id}.png) */
 const TH_FEATURE_STORYBOARD_SCREENSHOTS: Partial<Record<number, string>> = {
   1: blobUrl('landing/storyboard/th/1.png'),
