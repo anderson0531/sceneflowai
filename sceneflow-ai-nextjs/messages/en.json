@@ -102,6 +102,10 @@
     "prompt": "Who are you? Pick your path",
     "showDetails": "Show details",
     "hideDetails": "Hide details",
+    "showSummary": "Show summary",
+    "hideSummary": "Hide summary",
+    "showExample": "Show example",
+    "hideExample": "Hide example",
     "seeExamples": "See examples",
     "examplesFor": "Examples for {label}:",
     "andMore": ", and more.",
@@ -136,7 +140,14 @@
           "Video podcasts & show clips",
           "Documentaries & docuseries",
           "Sports recaps & commentary"
-        ]
+        ],
+        "example": {
+          "challengeTitle": "The \"B-Roll\" Bottleneck",
+          "challengeDescription": "You have a strong script, but learning six separate generation and edit tools — or getting stuck in slot-machine video loops — slows every upload. Serialized YouTube hits and YouTube TV drama cadences demand faster turnaround than fragmented AI tabs can deliver.",
+          "solutionTitle": "The Automated Storyteller",
+          "solutionDescription": "Ship episodic series and scroll-stopping shorts from one studio — beat-first pre-vis, Reference Library continuity, and publish-ready masters for the YouTube-led creator economy.",
+          "win": "Move from occasional uploads to a reliable production cadence with less overhead."
+        }
       },
       {
         "id": "team",
@@ -152,7 +163,14 @@
           "HR recruitment & culture",
           "K-12 / higher-ed lessons",
           "Public health & safety updates"
-        ]
+        ],
+        "example": {
+          "challengeTitle": "Vendor Backlog & Brand Drift",
+          "challengeDescription": "Comms, L&D, and marketing teams wait weeks for agency or vendor video — or face an overwhelming tool stack with no repeatable in-house system. Every path brings inconsistent branding and stalled campaigns.",
+          "solutionTitle": "Same-Week In-House Production",
+          "solutionDescription": "Assign staff to produce video on a predictable credit budget — with brand templates, approval before final render, and no crew days or open-ended edit cycles.",
+          "win": "Ship training, comms, and campaign video on your timeline — not the vendor's backlog."
+        }
       },
       {
         "id": "productionShop",
@@ -168,7 +186,14 @@
           "White-label studio templates",
           "Real estate & hospitality tours",
           "Subscription video services"
-        ]
+        ],
+        "example": {
+          "challengeTitle": "Custom Verticals, No Repeatable System",
+          "challengeDescription": "Memoir, legacy, real estate, and education clients need fast turnaround — but every project starts from scratch. Per-deliverable handoffs plus slot-machine video re-rolls across script, image, voice, video, music, and edit tools eat margin on volume.",
+          "solutionTitle": "Productize Your Video Service",
+          "solutionDescription": "Build repeatable workflows for memoir studios and niche verticals. Template uploads, voice clones, avatars, and pre-vis approval — customize per client and grow margin on volume.",
+          "win": "Launch a video memoir or niche studio service with repeatable delivery — not a one-off freelance grind."
+        }
       },
       {
         "id": "agency",
@@ -184,15 +209,22 @@
           "Event & conference promos",
           "Multi-language campaigns",
           "Property marketing for clients"
-        ]
+        ],
+        "example": {
+          "challengeTitle": "Client Delivery at Scale",
+          "challengeDescription": "Winning the pitch is only half the battle. Recurring client work needs fast turnaround — but per-deliverable handoffs and slot-machine video re-rolls across separate generation and edit tools slow every pitch cycle.",
+          "solutionTitle": "Throughput + Client Approval",
+          "solutionDescription": "Move from pitch spec to recurring delivery with brand-safe controls, client review before final render, and predictable credit costs per project.",
+          "win": "Deliver faster pitch cycles and recurring client work with less production risk and more margin."
+        }
       },
       {
         "id": "filmProduction",
         "hash": "use-cases-film-production",
         "icon": "clapperboard",
         "label": "Film Production",
-        "outcome": "Script to interactive animatic in under 30 minutes — test before you shoot",
-        "narrative": "Previz and audience testing used to mean weeks of storyboards, temp VO, and expensive guesswork before cameras roll. SceneFlow takes your script to an interactive animatic in under 30 minutes — optimize with Audience Resonance, screen it in the Screening Room, and commit budget only when the story lands.",
+        "outcome": "Script to an interactive animatic you can screen and test before you shoot",
+        "narrative": "Previz and audience testing used to mean weeks of storyboards, temp VO, and expensive guesswork before cameras roll. SceneFlow takes your script to an interactive animatic with Express pre-vis — optimize with Audience Resonance, screen it in the Screening Room, and commit budget only when the story lands.",
         "useCases": [
           "Feature & indie previz",
           "Investor pitch animatics",
@@ -200,7 +232,14 @@
           "70+ language pre-vis",
           "Script import & export (MDX, FDX)",
           "Screening Room audience tests"
-        ]
+        ],
+        "example": {
+          "challengeTitle": "Slow Pre-Vis Before You Can Test the Story",
+          "challengeDescription": "You have a script — but table reads, storyboard cycles, and fragmented previz tools delay investor pitches, audience tests, and greenlight decisions.",
+          "solutionTitle": "Script-First Interactive Pre-Visualization",
+          "solutionDescription": "Upload your script (MDX, FDX, and other formats), optimize with Audience Resonance, and generate an interactive pre-vis to screen and test — with Express concurrent generation across beats, in 70+ language options, and fast multi-language overlays.",
+          "win": "Validate story and audience fit before principal photography — with a shareable animatic, not a weeks-long previz cycle."
+        }
       }
     ]
   },
@@ -921,12 +960,12 @@
         },
         "solution": {
           "title": "Script-First Interactive Pre-Visualization",
-          "description": "Upload your script (MDX, FDX, and other formats), optimize with Audience Resonance, and generate an interactive pre-visualization in under 30 minutes — in 70+ language options, with additional language overlays in under 5 minutes.",
+          "description": "Upload your script (MDX, FDX, and other formats), optimize with Audience Resonance, and generate an interactive pre-vis to screen and test — with Express concurrent generation across beats, in 70+ language options, and fast multi-language overlays.",
           "features": [
             "Upload & import scripts (MDX, FDX, and more)",
             "Optimize with Audience Resonance",
-            "Interactive pre-vis in under 30 minutes",
-            "70+ languages + overlays in under 5 minutes",
+            "Express pre-vis animatic for review and stakeholder sign-off",
+            "70+ languages with fast multi-language overlays",
             "Revise and export script (MDX and other formats)",
             "Screening Room for audience-testing the full animatic"
           ]
@@ -958,7 +997,7 @@
       },
       "filmProduction": {
         "label": "Start Your Pre-Vis Test Flight",
-        "subtext": "$9 one-time • Upload script → animatic in under 30 minutes"
+        "subtext": "$9 one-time • Upload script → interactive animatic for review"
       }
     },
     "categories": [

@@ -40,7 +40,7 @@ export const USE_CASE_SEGMENT_CTAS = {
   },
   filmProduction: {
     label: 'Start Your Pre-Vis Test Flight',
-    subtext: '$9 one-time • Upload script → animatic in under 30 minutes',
+    subtext: '$9 one-time • Upload script → interactive animatic for review',
   },
 } as const
 
@@ -148,12 +148,12 @@ export const USE_CASE_PERSONAS = {
     solution: {
       title: 'Script-First Interactive Pre-Visualization',
       description:
-        'Upload your script (MDX, FDX, and other formats), optimize with Audience Resonance, and generate an interactive pre-visualization in under 30 minutes — in 70+ language options, with additional language overlays in under 5 minutes.',
+        'Upload your script (MDX, FDX, and other formats), optimize with Audience Resonance, and generate an interactive pre-vis to screen and test — with Express concurrent generation across beats, in 70+ language options, and fast multi-language overlays.',
       features: [
         'Upload & import scripts (MDX, FDX, and more)',
         'Optimize with Audience Resonance',
-        'Interactive pre-vis in under 30 minutes',
-        '70+ languages + overlays in under 5 minutes',
+        'Express pre-vis animatic for review and stakeholder sign-off',
+        '70+ languages with fast multi-language overlays',
         'Revise and export script (MDX and other formats)',
         'Screening Room for audience-testing the full animatic',
       ],

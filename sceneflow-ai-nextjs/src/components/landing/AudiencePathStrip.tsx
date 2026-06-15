@@ -20,6 +20,7 @@ import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { ExpandedImageModal } from '@/components/landing/ExpandedImageModal'
 import {
+  AUDIENCE_PATH_EXAMPLE_NARRATION,
   AUDIENCE_PATH_NARRATION,
   AUDIENCE_PATH_THUMBNAILS,
   getAudiencePathThumbnailStyle,
@@ -167,11 +168,51 @@ function NarrationButton({
   )
 }
 
+type PathExample = {
+  challengeTitle: string
+  challengeDescription: string
+  solutionTitle: string
+  solutionDescription: string
+  win: string
+}
+
+type ExpandedPanels = {
+  summary: boolean
+  example: boolean
+}
+
+function CollapsiblePanel({
+  id,
+  isOpen,
+  children,
+}: {
+  id: string
+  isOpen: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <AnimatePresence initial={false}>
+      {isOpen ? (
+        <motion.div
+          id={id}
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="overflow-hidden"
+        >
+          {children}
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  )
+}
+
 export function AudiencePathStrip() {
   const t = useTranslations('audiencePaths')
   const [mode, setMode] = useState<AudienceMode>('automate')
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
-  const [expandedPaths, setExpandedPaths] = useState<Record<string, boolean>>({})
+  const [expandedPanels, setExpandedPanels] = useState<Record<string, ExpandedPanels>>({})
   const paths = t.raw('paths') as Array<{
     id: string
     hash: string
@@ -180,15 +221,24 @@ export function AudiencePathStrip() {
     outcome: string
     narrative: string
     useCases: string[]
+    example: PathExample
   }>
   const modes = t.raw('modes') as Record<
     AudienceMode,
     { label: string; description: string }
   >
 
-  const isPathExpanded = (id: string) => expandedPaths[id] === true
-  const togglePathDetails = (id: string) => {
-    setExpandedPaths((prev) => ({ ...prev, [id]: !prev[id] }))
+  const getPanels = (id: string): ExpandedPanels =>
+    expandedPanels[id] ?? { summary: false, example: false }
+
+  const togglePanel = (id: string, panel: keyof ExpandedPanels) => {
+    setExpandedPanels((prev) => {
+      const current = prev[id] ?? { summary: false, example: false }
+      return {
+        ...prev,
+        [id]: { ...current, [panel]: !current[panel] },
+      }
+    })
   }
 
   return (
@@ -237,7 +287,9 @@ export function AudiencePathStrip() {
             const Icon = ICONS[path.icon] ?? Video
             const thumbnail =
               AUDIENCE_PATH_THUMBNAILS[path.id as UseCasePersonaId] ?? undefined
-            const detailsOpen = isPathExpanded(path.id)
+            const panels = getPanels(path.id)
+            const summaryOpen = panels.summary
+            const exampleOpen = panels.example
             return (
               <motion.div
                 key={path.id}
@@ -270,44 +322,81 @@ export function AudiencePathStrip() {
                     />
                   </div>
                   <p className="text-sm text-gray-400 leading-relaxed">{path.outcome}</p>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      togglePathDetails(path.id)
-                    }}
-                    aria-expanded={detailsOpen}
-                    aria-controls={`path-details-${path.id}`}
-                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors text-left"
-                  >
-                    {detailsOpen ? (
-                      <>
-                        {t('hideDetails')}
-                        <ChevronUp className="h-4 w-4 shrink-0" />
-                      </>
-                    ) : (
-                      <>
-                        {t('showDetails')}
-                        <ChevronDown className="h-4 w-4 shrink-0" />
-                      </>
-                    )}
-                  </button>
-                  <AnimatePresence initial={false}>
-                    {detailsOpen && (
-                      <motion.div
-                        id={`path-details-${path.id}`}
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="overflow-hidden"
+                  <div className="mt-3 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          togglePanel(path.id, 'summary')
+                        }}
+                        aria-expanded={summaryOpen}
+                        aria-controls={`path-summary-${path.id}`}
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors text-left"
                       >
-                        <p className="mt-3 text-sm leading-relaxed text-gray-300">
-                          {path.narrative}
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                        {summaryOpen ? (
+                          <>
+                            {t('hideSummary')}
+                            <ChevronUp className="h-4 w-4 shrink-0" />
+                          </>
+                        ) : (
+                          <>
+                            {t('showSummary')}
+                            <ChevronDown className="h-4 w-4 shrink-0" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <CollapsiblePanel id={`path-summary-${path.id}`} isOpen={summaryOpen}>
+                      <p className="text-sm leading-relaxed text-gray-300">{path.narrative}</p>
+                    </CollapsiblePanel>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          togglePanel(path.id, 'example')
+                        }}
+                        aria-expanded={exampleOpen}
+                        aria-controls={`path-example-${path.id}`}
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors text-left"
+                      >
+                        {exampleOpen ? (
+                          <>
+                            {t('hideExample')}
+                            <ChevronUp className="h-4 w-4 shrink-0" />
+                          </>
+                        ) : (
+                          <>
+                            {t('showExample')}
+                            <ChevronDown className="h-4 w-4 shrink-0" />
+                          </>
+                        )}
+                      </button>
+                      <NarrationButton
+                        src={
+                          AUDIENCE_PATH_EXAMPLE_NARRATION[path.id as UseCasePersonaId] || undefined
+                        }
+                        playLabel={t('playNarration')}
+                        pauseLabel={t('pauseNarration')}
+                        comingSoonLabel={t('narrationComingSoon')}
+                      />
+                    </div>
+                    <CollapsiblePanel id={`path-example-${path.id}`} isOpen={exampleOpen}>
+                      <div className="space-y-3 text-sm leading-relaxed text-gray-300">
+                        <div>
+                          <p className="font-semibold text-red-300/90">{path.example.challengeTitle}</p>
+                          <p className="mt-1">{path.example.challengeDescription}</p>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-emerald-300/90">{path.example.solutionTitle}</p>
+                          <p className="mt-1">{path.example.solutionDescription}</p>
+                        </div>
+                        <p className="italic text-gray-400">{path.example.win}</p>
+                      </div>
+                    </CollapsiblePanel>
+                  </div>
                 </div>
               </motion.div>
             )

@@ -183,6 +183,10 @@ export function buildEnMessages() {
       prompt: 'Who are you? Pick your path',
       showDetails: 'Show details',
       hideDetails: 'Hide details',
+      showSummary: 'Show summary',
+      hideSummary: 'Hide summary',
+      showExample: 'Show example',
+      hideExample: 'Hide example',
       seeExamples: 'See examples',
       examplesFor: 'Examples for {label}:',
       andMore: ', and more.',
@@ -192,15 +196,25 @@ export function buildEnMessages() {
       pauseNarration: 'Pause narration',
       narrationComingSoon: 'Narration coming soon',
       modes: AUDIENCE_PATH_MODES,
-      paths: AUDIENCE_PATHS.map((p) => ({
-        id: p.id,
-        hash: p.hash,
-        icon: p.icon,
-        label: p.label,
-        outcome: p.outcome,
-        narrative: p.narrative,
-        useCases: [...p.useCases],
-      })),
+      paths: AUDIENCE_PATHS.map((p) => {
+        const persona = USE_CASE_PERSONAS[p.id as keyof typeof USE_CASE_PERSONAS]
+        return {
+          id: p.id,
+          hash: p.hash,
+          icon: p.icon,
+          label: p.label,
+          outcome: p.outcome,
+          narrative: p.narrative,
+          useCases: [...p.useCases],
+          example: {
+            challengeTitle: persona.challenge.title,
+            challengeDescription: persona.challenge.description,
+            solutionTitle: persona.solution.title,
+            solutionDescription: persona.solution.description,
+            win: persona.win,
+          },
+        }
+      }),
     },
     whySceneFlow: {
       ...WHY_SCENEFLOW,

@@ -108,9 +108,9 @@ export const AUDIENCE_PATHS = [
     id: 'filmProduction',
     hash: 'use-cases-film-production',
     label: 'Film Production',
-    outcome: 'Script to interactive animatic in under 30 minutes — test before you shoot',
+    outcome: 'Script to an interactive animatic you can screen and test before you shoot',
     narrative:
-      'Previz and audience testing used to mean weeks of storyboards, temp VO, and expensive guesswork before cameras roll. SceneFlow takes your script to an interactive animatic in under 30 minutes — optimize with Audience Resonance, screen it in the Screening Room, and commit budget only when the story lands.',
+      'Previz and audience testing used to mean weeks of storyboards, temp VO, and expensive guesswork before cameras roll. SceneFlow takes your script to an interactive animatic with Express pre-vis — optimize with Audience Resonance, screen it in the Screening Room, and commit budget only when the story lands.',
     useCases: [
       'Feature & indie previz',
       'Investor pitch animatics',

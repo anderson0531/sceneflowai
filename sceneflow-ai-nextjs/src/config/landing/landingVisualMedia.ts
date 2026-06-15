@@ -89,6 +89,15 @@ export const AUDIENCE_PATH_NARRATION = {
   filmProduction: '/audio/role-narration/filmProduction.mp3',
 } as const satisfies Record<'creator' | 'team' | 'productionShop' | 'agency' | 'filmProduction', string>
 
+/** Role example narration audio (AudiencePathStrip "Show example" play buttons) */
+export const AUDIENCE_PATH_EXAMPLE_NARRATION = {
+  creator: '/audio/role-example-narration/creator.mp3',
+  team: '/audio/role-example-narration/team.mp3',
+  productionShop: '/audio/role-example-narration/productionShop.mp3',
+  agency: '/audio/role-example-narration/agency.mp3',
+  filmProduction: '/audio/role-example-narration/filmProduction.mp3',
+} as const satisfies Record<'creator' | 'team' | 'productionShop' | 'agency' | 'filmProduction', string>
+
 /** Landing section narration audio (section heading play buttons) */
 export const SECTION_NARRATION_AUDIO = {
   'creative-range': '/audio/section-narration/creative-range.mp3',
