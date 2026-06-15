@@ -132,31 +132,6 @@ export function getDefaultCategoryIdForPersona(personaId: string): string {
   return getAudiencePathByPersonaId(personaId)?.defaultCategoryId ?? 'property'
 }
 
-export const INSTITUTIONAL_ROI = {
-  title: 'Replace vendor shoots with predictable in-house production',
-  subtitle:
-    'Comms, L&D, and marketing teams of 1–5 can ship same-week video without agency retainers or open-ended edit cycles.',
-  comparisons: [
-    {
-      label: 'Traditional vendor shoot + edit',
-      cost: '$5,000–$15,000',
-      timeline: '4–8 weeks',
-    },
-    {
-      label: 'SceneFlow in-house workflow',
-      cost: '$50–$500 in credits',
-      timeline: 'Same week',
-    },
-  ],
-  bullets: [
-    'Brand-safe templates and approval before final render',
-    'Budget caps with visible credit spend per project',
-    'No crew days, no edit back-and-forth on every revision',
-  ],
-  ctaPrimary: 'Book a team walkthrough',
-  ctaSecondary: 'See pricing',
-} as const
-
 export const ONE_TAKE_PIPELINE = {
   title: 'Beat-First Video Pipeline',
   subtitle: 'Approve before you render — not slot-machine regeneration',

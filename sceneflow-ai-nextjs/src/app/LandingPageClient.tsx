@@ -15,7 +15,6 @@ const CreativeRangeSection = dynamic(
 )
 const AudiencePathStrip = dynamic(() => import('@/components/landing/AudiencePathStrip').then(m => m.AudiencePathStrip), { ssr: false })
 const ToolStackSection = dynamic(() => import('@/components/landing/ToolStackSection').then(m => m.ToolStackSection), { ssr: false })
-const InstitutionalRoiSection = dynamic(() => import('@/components/landing/InstitutionalRoiSection').then(m => m.InstitutionalRoiSection), { ssr: false })
 const WhySceneFlowSection = dynamic(() => import('@/components/landing/WhySceneFlowSection').then(m => m.WhySceneFlowSection), { ssr: false })
 const OneTakePipelineSection = dynamic(() => import('@/components/landing/OneTakePipelineSection').then(m => m.OneTakePipelineSection), { ssr: false })
 const ExtendedScenesSection = dynamic(() => import('@/components/landing/ExtendedScenesSection').then(m => m.ExtendedScenesSection), { ssr: false })
@@ -65,8 +64,6 @@ export default function LandingPageClient() {
         <TrustSafeguardSection />
 
         <UseCasesSection />
-
-        <InstitutionalRoiSection />
 
         <CoreCapabilitiesSection />
 

@@ -8,7 +8,6 @@ import {
   FINAL_CTA_COPY,
   HERO_COPY,
   HOW_IT_WORKS_HEADER,
-  INSTITUTIONAL_ROI,
   MOR_FOOTER_LINE,
   ONE_TAKE_PIPELINE,
   SLOT_MACHINE_HEADER,
@@ -218,12 +217,6 @@ export function buildEnMessages() {
           description: ex.description,
         })),
       })),
-    },
-    institutionalRoi: {
-      badge: 'For in-house teams & institutions',
-      ...INSTITUTIONAL_ROI,
-      typicalCost: 'Typical cost',
-      timeline: 'Timeline',
     },
     platformWalkthrough: {
       badge: 'Under the hood',
