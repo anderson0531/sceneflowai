@@ -10,6 +10,8 @@ import {
   SectionCollapseToggle,
   useLandingSectionCollapse,
 } from '@/components/landing/LandingSectionCollapse'
+import { SectionNarrationButton } from '@/components/landing/SectionNarrationButton'
+import { SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia'
 import { cn } from '@/lib/utils'
 
 const SECTION_ID = 'core-capabilities'
@@ -61,9 +63,12 @@ export function CoreCapabilitiesSection() {
               {t('express.badge')}
             </span>
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-white">
-            {t('audienceResonance.title')} · {t('express.title')}
-          </h2>
+          <div className="flex items-center justify-center gap-3">
+            <h2 className="text-3xl md:text-4xl font-bold text-white">
+              {t('audienceResonance.title')} · {t('express.title')}
+            </h2>
+            <SectionNarrationButton src={SECTION_NARRATION_AUDIO[SECTION_ID]} />
+          </div>
         </motion.div>
 
         <SectionCollapseBody sectionId={SECTION_ID}>

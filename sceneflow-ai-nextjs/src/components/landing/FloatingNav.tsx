@@ -9,7 +9,6 @@ import {
   Rocket,
   Film,
   DollarSign,
-  HelpCircle,
   Clapperboard,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -28,7 +27,6 @@ export function FloatingNav() {
       { id: 'trust-safety', label: t('trustSafety'), icon: Shield },
       { id: 'engineering', label: t('platform'), icon: Shield },
       { id: 'pricing', label: t('pricing'), icon: DollarSign },
-      { id: 'faq', label: t('faq'), icon: HelpCircle },
     ],
     [t]
   )

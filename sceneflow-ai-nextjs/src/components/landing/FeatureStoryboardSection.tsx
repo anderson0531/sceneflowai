@@ -18,6 +18,8 @@ import {
   SectionCollapseToggle,
   useLandingSectionCollapse,
 } from '@/components/landing/LandingSectionCollapse';
+import { SectionNarrationButton } from '@/components/landing/SectionNarrationButton';
+import { SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia';
 import { cn } from '@/lib/utils';
 
 const SECTION_ID = 'feature-pre-vis';
@@ -442,7 +444,10 @@ export default function FeatureStoryboardSection() {
             <Clock3 className="h-3.5 w-3.5" />
             {t('badge')}
           </p>
-          <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">{t('title')}</h2>
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">{t('title')}</h2>
+            <SectionNarrationButton src={SECTION_NARRATION_AUDIO[SECTION_ID]} />
+          </div>
           <p className="mt-4 text-base text-slate-300">{t('subtitle')}</p>
         </motion.div>
 

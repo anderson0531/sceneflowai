@@ -107,6 +107,11 @@ export const SECTION_NARRATION_AUDIO = {
   'extended-scenes': '/audio/section-narration/extended-scenes.mp3',
   'trust-safety': '/audio/section-narration/trust-safety.mp3',
   'use-cases': '/audio/section-narration/use-cases.mp3',
+  'core-capabilities': '/audio/section-narration/core-capabilities.mp3',
+  'pre-vis-engine': '/audio/section-narration/pre-vis-engine.mp3',
+  'feature-pre-vis': '/audio/section-narration/feature-pre-vis.mp3',
+  engineering: '/audio/section-narration/engineering.mp3',
+  pricing: '/audio/section-narration/pricing.mp3',
 } as const
 
 export type SectionNarrationAudioId = keyof typeof SECTION_NARRATION_AUDIO

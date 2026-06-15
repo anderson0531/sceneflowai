@@ -12,6 +12,11 @@ export type SectionNarrationId =
   | 'extended-scenes'
   | 'trust-safety'
   | 'use-cases'
+  | 'core-capabilities'
+  | 'pre-vis-engine'
+  | 'feature-pre-vis'
+  | 'engineering'
+  | 'pricing'
 
 export type SectionNarration = {
   id: SectionNarrationId
@@ -63,5 +68,35 @@ export const SECTION_NARRATIONS: SectionNarration[] = [
     label: 'Whatever Video You Can Imagine',
     script:
       "Whatever you're trying to make, you can build it in SceneFlow. Episodic series and creator shows. Real-estate and property tours. Training, education, and how-tos. Podcasts, news formats, and timely market or sports recaps. Branded campaigns, case studies, and product explainers. Even public-service and advocacy messages. A solo creator can turn forty hours of work into twenty-five minutes. An in-house team can bring weeks of vendor backlog down to the very same week. A production shop can productize an entire service. An agency can go from a three-week delivery, to just three days. And a film team can take a script all the way to an interactive pre-visualization, in dozens of languages, in under thirty minutes. One automated studio, from concept to a publish-ready master.",
+  },
+  {
+    id: 'core-capabilities',
+    label: 'Audience Resonance Analysis · Sceneflow Express',
+    script:
+      "SceneFlow gives you two superpowers before you ever spend on final video. First, Audience Resonance Analysis. Define your target audience in Blueprint, and SceneFlow scores your script for clarity, pacing, emotional arc, and persona fit — with section-level recommendations and one-click fixes, not a black-box grade. You know what lands before you invest in heavy renders. Second, Sceneflow Express. Auto-generate pre-vis, animatics, and video beats concurrently — move from script to a shareable preview in minutes, approve Beat Frames, then generate final video from frames you have already locked. Intelligence plus speed, in one studio.",
+  },
+  {
+    id: 'pre-vis-engine',
+    label: 'Pre-Visualization Engine',
+    script:
+      "In traditional filmmaking, pre-visualization takes weeks and a small army of artists. SceneFlow's Pre-Visualization Engine changes that equation. Upload your script, run Audience Resonance against your target demographic, and generate a fully voiced, scored animatic you can screen for investors, producers, and test audiences — with Express concurrent generation across beats. Fail fast in pre-production: iterate scenes, test story fit, and get stakeholder sign-off before a single camera rolls. For financiers, hard resonance data backs every creative decision. This is enterprise-grade pre-vis, scaled to the speed of modern production.",
+  },
+  {
+    id: 'feature-pre-vis',
+    label: 'Detailed Platform Walkthrough',
+    script:
+      "SceneFlow is not a single tool — it is a guided production pipeline. This walkthrough takes you under the hood: from Series and Blueprint, where you lock your story, audience, and visual style, through Production, where script, pre-vis, voice, and scene video are generated beat by beat, to Screening Room, where you preview, assemble a master, collect feedback, and publish. Every phase is editable. Every phase gives you approval before the next spend. Whether you are a solo creator or an in-house team, you will see exactly how one studio replaces the fragmented tool stack — and how automation keeps you in control at every step.",
+  },
+  {
+    id: 'engineering',
+    label: 'Built for Production Workloads',
+    script:
+      "SceneFlow is built for real production workloads, not hobbyist clip generation. The architecture runs on Google Cloud with Vertex AI, Imagen, and Veo synthesis — scalable orchestration that grows with your team. Security and privacy are first-class: encryption at rest, access controls, and privacy-first handling of your creative assets. Enterprise teams get BYOK for billing control, audit logs, and signed content provenance on every generated clip. Whether you are shipping weekly episodes or running an in-house video team, the platform is engineered for reliability, scale, and the trust your stakeholders expect.",
+  },
+  {
+    id: 'pricing',
+    label: 'Pay for What You Create',
+    script:
+      "SceneFlow pricing is designed for clarity, not surprise. One base plan gives you full platform access. Credits power AI generation — script, pre-vis, voice, and video — and you top up only when you need more. No hidden per-seat surprises, no paying for tools you do not use. Compare that to traditional pre-vis at thousands of dollars per project, or agency retainers that stretch timelines. With SceneFlow, you see credit spend at every workflow phase, cap budgets per project, and scale from a nine-dollar Explorer test flight to team plans with BYOK. Pay for what you create — and keep every dollar accountable.",
   },
 ]

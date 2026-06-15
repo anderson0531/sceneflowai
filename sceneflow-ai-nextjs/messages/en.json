@@ -12,7 +12,6 @@
     "audienceResonance": "Audience Resonance",
     "trustSafety": "Trust & Safety",
     "platformTrust": "Platform & Trust",
-    "faq": "FAQ",
     "signIn": "Sign In",
     "startProject": "Start a Project",
     "dashboard": "Dashboard",
@@ -32,8 +31,7 @@
     "platformWalkthrough": "Platform Walkthrough",
     "trustSafety": "Trust & Safety",
     "platform": "Platform",
-    "pricing": "Pricing",
-    "faq": "FAQ"
+    "pricing": "Pricing"
   },
   "hero": {
     "headline": "Stop juggling five AI tabs. One studio takes you from idea to publish-ready video.",
@@ -1327,7 +1325,7 @@
       },
       {
         "id": "7",
-        "title": "Audience Resonance Editor",
+        "title": "Audience Resonance Analysis",
         "description": "Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint, and Script for maximum impact.",
         "keyFeatures": [
           "Target-audience scoring — with category breakdown",
@@ -1467,7 +1465,7 @@
   "coreCapabilities": {
     "audienceResonance": {
       "badge": "Intelligence Layer",
-      "title": "Audience Resonance Editor",
+      "title": "Audience Resonance Analysis",
       "description": "Know your score before you invest in full renders. Target Audience Resonance scores Blueprint and script with actionable fixes — optimize every beat before Express and video generation.",
       "bullets": [
         "Determine your specific target audience",
@@ -1760,65 +1758,6 @@
       ]
     }
   },
-  "faq": {
-    "badge": "Got Questions?",
-    "title": "Frequently Asked Questions",
-    "subtitle": "Everything you need to know about SceneFlow AI",
-    "items": [
-      {
-        "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Screening Room. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, pre-vis, beat video, and rendered scene streams in the Shoot tab. Screening Room previews scene videos, assembles a master MP4, runs shareable screenings, and publishes to YouTube or export bundles."
-      },
-      {
-        "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
-        "answer": "Gemini Studio and Google Flow focus on prompt-and-generate clips. SceneFlow bundles the full production workflow: structured phases with editable baselines, Reference Library and Beat Frames for consistency, Audience Resonance before expensive renders, automated Mixer and stream assembly, and Screening Room validation before publish — all in one guided studio. Model usage cost is similar whether you use SceneFlow, your own provider accounts, or BYOK — SceneFlow saves hours of copy-paste, re-generation, and manual video assembly per video."
-      },
-      {
-        "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Master assembly in Screening Room only stitches finished streams — creative changes stay upstream in Production."
-      },
-      {
-        "question": "How does Target Audience Resonance work now?",
-        "answer": "Audience Resonance combines narrative-structure analysis (clarity, pacing, emotional arc) with target-persona fit against the audience you define in Blueprint — not post-publish retention data. You get section-level recommendations and one-click fixes at Series, Blueprint, and script review before heavy rendering."
-      },
-      {
-        "question": "Can I produce multilingual listing or marketing videos?",
-        "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
-      },
-      {
-        "question": "What does Screening Room do?",
-        "answer": "Screening Room is the finishing surface inside Production: preview rendered scene streams, assemble a master MP4, share /s/ review links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review insights, then publish via YouTube wizard or export bundles."
-      },
-      {
-        "question": "Do I need technical or editing experience?",
-        "answer": "No. SceneFlow is built for non-technical creators and teams. You start with guided inputs and editable AI baselines at each phase — not complex prompt engineering or multi-tool stacks."
-      },
-      {
-        "question": "How does the Explorer Plan work?",
-        "answer": "For $9, you get 750 credits to test the full workflow with a one-time purchase. It is designed as a practical test flight so you can run real concept-to-video tasks before choosing a monthly plan."
-      },
-      {
-        "question": "How are credits and BYOK handled?",
-        "answer": "Credits are tracked in-platform so teams can manage budget by workflow phase. Pro and Studio plans also support Bring Your Own Key (BYOK) for supported providers, giving additional cost control for organizations with existing provider contracts."
-      },
-      {
-        "question": "What can I realistically create with SceneFlow?",
-        "answer": "Teams use SceneFlow for real estate tours, education content, podcasts with visual storytelling, news explainers, branded campaigns, and cinematic episode series. The same workflow supports short-form and long-form production."
-      },
-      {
-        "question": "How does SceneFlow handle clips longer than 8 seconds?",
-        "answer": "Veo generates 4–8 second clips per API step. SceneFlow chains native extension steps (+7 seconds each) after an approved initial clip—so a long dialogue beat can reach ~15–30 seconds or more as ordered segments, not one unlimited render. Beat-first approval splits long lines before you spend credits."
-      },
-      {
-        "question": "What moderation and risk mitigation is available?",
-        "answer": "Every generation runs through Google Vertex AI safety filters. When the primary path is blocked by policy, Extended Creative Services with Guardrails may complete delivery after an additional content review pass. Additional moderation and risk mitigation is available across Blueprint, script, pre-vis, and segment video using the same credit model as other Studio tools. Segment video also receives signed content provenance records."
-      },
-      {
-        "question": "What happens if Google safety filters block my prompt?",
-        "answer": "SceneFlow retries with prompt adjustments and method changes on the primary Google path. If policy limits persist, Extended Creative Services with Guardrails may complete the clip after an additional review—subject to the same content standards. You are not charged for a completed clip when generation is blocked."
-      }
-    ]
-  },
   "landingSections": {
     "expandSection": "Show section",
     "collapseSection": "Hide section"
@@ -1837,7 +1776,6 @@
       "features": "Features",
       "pricing": "Pricing",
       "howItWorks": "How It Works",
-      "faq": "FAQ",
       "gettingStarted": "Getting Started",
       "privacy": "Privacy Policy",
       "terms": "Terms of Service",

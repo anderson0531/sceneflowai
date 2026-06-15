@@ -16,12 +16,10 @@ export function Footer() {
       { name: t('links.features'), href: '#features' },
       { name: t('links.pricing'), href: '#pricing' },
       { name: t('links.howItWorks'), href: '#how-it-works' },
-      { name: t('links.faq'), href: '#faq' },
     ],
     resources: [
       { name: t('links.gettingStarted'), href: '#how-it-works' },
       { name: t('links.pricing'), href: '#pricing' },
-      { name: t('links.faq'), href: '#faq' },
     ],
     legal: [
       { name: t('links.privacy'), href: '/privacy' },

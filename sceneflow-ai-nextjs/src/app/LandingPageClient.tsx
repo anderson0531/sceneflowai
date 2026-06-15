@@ -31,7 +31,6 @@ const FeatureStoryboardSection = dynamic(() => import('@/components/landing/Feat
 const FloatingNav = dynamic(() => import('@/components/landing/FloatingNav'), { ssr: false })
 const FloatingCTA = dynamic(() => import('@/components/landing/FloatingCTA'), { ssr: false })
 const ExitIntentPopup = dynamic(() => import('@/components/landing/ExitIntentPopup'), { ssr: false })
-import { FAQ } from './components/FAQ'
 import { FinalCTA } from './components/FinalCTA'
 import { Footer } from './components/Footer'
 
@@ -78,8 +77,6 @@ export default function LandingPageClient() {
         <EngineeringTrust />
 
         <PricingCredits />
-
-        <FAQ />
       </LandingSectionCollapseProvider>
 
       <FinalCTA />

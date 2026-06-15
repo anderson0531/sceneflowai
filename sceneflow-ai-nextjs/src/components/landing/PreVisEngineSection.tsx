@@ -11,6 +11,8 @@ import {
   SectionCollapseToggle,
   useLandingSectionCollapse,
 } from '@/components/landing/LandingSectionCollapse'
+import { SectionNarrationButton } from '@/components/landing/SectionNarrationButton'
+import { SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia'
 import { cn } from '@/lib/utils'
 
 const SECTION_ID = 'pre-vis-engine'
@@ -47,7 +49,10 @@ export function PreVisEngineSection() {
             <Clapperboard className="w-3.5 h-3.5" />
             {t('badge')}
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">{t('title')}</h2>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-white">{t('title')}</h2>
+            <SectionNarrationButton src={SECTION_NARRATION_AUDIO[SECTION_ID]} />
+          </div>
           <p className="text-lg text-slate-400 leading-relaxed mb-4">{t('subtitle')}</p>
           <p className="text-base text-slate-500 leading-relaxed">{t('narrative')}</p>
         </motion.div>

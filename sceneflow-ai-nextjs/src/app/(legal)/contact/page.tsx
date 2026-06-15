@@ -112,7 +112,7 @@ export default function ContactPage() {
             <ul className="space-y-3 text-gray-300">
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-1">•</span>
-                <span>Check our <Link href="#faq" className="text-purple-400 hover:underline">FAQ section</Link> for quick answers to common questions.</span>
+                <span>Review the platform walkthrough on our landing page for an overview of how SceneFlow works.</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-1">•</span>

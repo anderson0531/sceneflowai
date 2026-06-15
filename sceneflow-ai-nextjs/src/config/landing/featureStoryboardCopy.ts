@@ -135,7 +135,7 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
     },
     {
       id: 7,
-      title: 'Audience Resonance Editor',
+      title: 'Audience Resonance Analysis',
       description:
         'Determine your target audience to get instant scoring, analysis, and recommendations. Apply one-click fixes or use Guided Edits to perfectly optimize your Episodes, Blueprint, and Script for maximum impact.',
       keyFeatures: [

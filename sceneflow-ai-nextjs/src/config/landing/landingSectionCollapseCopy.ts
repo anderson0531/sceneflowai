@@ -19,7 +19,6 @@ export const COLLAPSIBLE_LANDING_SECTION_IDS = [
   'feature-pre-vis',
   'engineering',
   'pricing',
-  'faq',
 ] as const
 
 export type CollapsibleLandingSectionId = (typeof COLLAPSIBLE_LANDING_SECTION_IDS)[number]
@@ -44,5 +43,4 @@ export const LANDING_HASH_TO_SECTION: Record<string, CollapsibleLandingSectionId
   'feature-storyboard': 'feature-pre-vis',
   engineering: 'engineering',
   pricing: 'pricing',
-  faq: 'faq',
 }

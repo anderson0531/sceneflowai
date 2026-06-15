@@ -184,10 +184,6 @@ export function Header() {
                   <DropdownMenuItem onClick={() => scrollToSection('engineering')}>
                     {t('platformTrust')}
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => scrollToSection('faq')}>
-                    {t('faq')}
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </nav>
@@ -305,8 +301,6 @@ export function Header() {
                     <Sparkles className="w-4 h-4 text-sf-primary" />
                     {t('plansPricing')}
                   </button>
-                  
-                  <button onClick={() => scrollToSection('faq')} className="text-gray-300 hover:text-white hover:bg-slate-800/50 transition-colors cursor-pointer font-medium text-base text-left py-3 px-3 rounded-lg">{t('faq')}</button>
                   
                   {/* Divider */}
                   <div className="border-t border-gray-800/50 my-2" />

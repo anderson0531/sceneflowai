@@ -32,6 +32,8 @@ import {
   SectionCollapseToggle,
   useLandingSectionCollapse,
 } from '@/components/landing/LandingSectionCollapse'
+import { SectionNarrationButton } from '@/components/landing/SectionNarrationButton'
+import { SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia'
 
 const SECTION_ID = 'pricing'
 
@@ -458,9 +460,12 @@ export function PricingCredits() {
             <span className="text-sm font-medium text-emerald-400">{t('badge')}</span>
           </div>
           
-          <h2 className="landing-section-heading text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
-            {t('title')}
-          </h2>
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <h2 className="landing-section-heading text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+              {t('title')}
+            </h2>
+            <SectionNarrationButton src={SECTION_NARRATION_AUDIO[SECTION_ID]} />
+          </div>
           
           <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-8">
             {t('subtitle')}
