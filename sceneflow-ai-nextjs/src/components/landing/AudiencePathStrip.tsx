@@ -7,7 +7,6 @@ import {
   Film,
   Briefcase,
   Clapperboard,
-  ArrowRight,
   Zap,
   Settings2,
   Maximize2,
@@ -34,16 +33,6 @@ const ICONS = {
 type PathIcon = keyof typeof ICONS
 
 type AudienceMode = 'automate' | 'engine'
-
-function handlePathClick(hash: string, e: React.MouseEvent<HTMLAnchorElement>) {
-  e.preventDefault()
-  if (window.location.hash.slice(1) !== hash) {
-    window.location.hash = hash
-  } else {
-    window.dispatchEvent(new HashChangeEvent('hashchange'))
-  }
-  document.getElementById('use-cases')?.scrollIntoView({ behavior: 'smooth' })
-}
 
 function handleEngineMode() {
   if (window.location.hash.slice(1) !== 'engineering') {
@@ -129,11 +118,10 @@ function NarrationButton({
       <button
         type="button"
         disabled
-        className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-800/60 px-3 py-1.5 text-xs font-medium text-gray-500 cursor-not-allowed opacity-60"
+        className="inline-flex shrink-0 items-center justify-center rounded-full border border-white/10 p-1.5 text-gray-500 cursor-not-allowed opacity-40"
         aria-label={comingSoonLabel}
       >
-        <Play className="h-3.5 w-3.5 shrink-0" />
-        {comingSoonLabel}
+        <Play className="h-4 w-4" />
       </button>
     )
   }
@@ -153,15 +141,10 @@ function NarrationButton({
           e.stopPropagation()
           togglePlayback()
         }}
-        className="mt-3 inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-300 hover:border-cyan-400/50 hover:bg-cyan-500/20 transition-colors"
+        className="inline-flex shrink-0 items-center justify-center rounded-full border border-cyan-500/30 bg-cyan-500/10 p-1.5 text-cyan-300 hover:border-cyan-400/50 hover:bg-cyan-500/20 transition-colors"
         aria-label={isPlaying ? pauseLabel : playLabel}
       >
-        {isPlaying ? (
-          <Pause className="h-3.5 w-3.5 shrink-0" />
-        ) : (
-          <Play className="h-3.5 w-3.5 shrink-0" />
-        )}
-        {isPlaying ? pauseLabel : playLabel}
+        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
       </button>
     </>
   )
@@ -261,14 +244,14 @@ export function AudiencePathStrip() {
                       <Icon className="w-4 h-4 text-purple-300" />
                     </div>
                     <span className="text-base font-semibold text-white">{path.label}</span>
+                    <NarrationButton
+                      src={AUDIENCE_PATH_NARRATION[path.id as UseCasePersonaId] || undefined}
+                      playLabel={t('playNarration')}
+                      pauseLabel={t('pauseNarration')}
+                      comingSoonLabel={t('narrationComingSoon')}
+                    />
                   </div>
                   <p className="text-sm text-gray-400 leading-relaxed">{path.outcome}</p>
-                  <NarrationButton
-                    src={AUDIENCE_PATH_NARRATION[path.id as UseCasePersonaId] || undefined}
-                    playLabel={t('playNarration')}
-                    pauseLabel={t('pauseNarration')}
-                    comingSoonLabel={t('narrationComingSoon')}
-                  />
                   <button
                     type="button"
                     onClick={(e) => {
@@ -307,14 +290,6 @@ export function AudiencePathStrip() {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                  <motion.a
-                    href={`#${path.hash}`}
-                    onClick={(e) => handlePathClick(path.hash, e)}
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-purple-400 group-hover:text-purple-300"
-                  >
-                    {t('seeExamples')}
-                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                  </motion.a>
                 </div>
               </motion.div>
             )
