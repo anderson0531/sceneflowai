@@ -9,7 +9,8 @@ import { Video, Play, Sparkles, Volume2, VolumeX, Maximize2, User, Briefcase, Ta
 import { ProductionComparisonVisual } from './ProductionComparisonVisual';
 import { getSignupUrlForTier } from '@/lib/billing/checkoutIntent';
 import { getDefaultCategoryIdForPersona } from '@/config/landing/valuePropCopy';
-import { USE_CASE_PERSONA_IMAGES } from '@/config/landing/landingVisualMedia';
+import { USE_CASE_PERSONA_IMAGES, SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia';
+import { SectionNarrationButton } from '@/components/landing/SectionNarrationButton';
 import {
   SectionCollapseBody,
   SectionCollapseToggle,
@@ -518,12 +519,15 @@ export default function UseCasesSection() {
             <span className="text-purple-300 text-sm font-medium leading-none">{t('badge')}</span>
           </div>
 
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
-            {t('title')}{' '}
-            <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-cyan-400 bg-clip-text text-transparent">
-              {t('titleAccent')}
-            </span>
-          </h2>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
+              {t('title')}{' '}
+              <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-cyan-400 bg-clip-text text-transparent">
+                {t('titleAccent')}
+              </span>
+            </h2>
+            <SectionNarrationButton src={SECTION_NARRATION_AUDIO[SECTION_ID]} />
+          </div>
 
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">{t('subtitle')}</p>
           <p className="text-slate-400 max-w-3xl mx-auto text-sm leading-relaxed mt-4">

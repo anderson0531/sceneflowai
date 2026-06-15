@@ -308,9 +308,8 @@
   "extendedScenes": {
     "badge": "Continuous Beats",
     "title": "Beyond the 8-Second Clip",
-    "titleAccent": "Native Veo Extension Chains",
-    "subtitle": "Break the single-clip wall with native Veo extension chains—approve the look first, then chain 7-second steps for monologues, explainers, and dialogue beats.",
-    "intro": "SceneFlow does not promise one unlimited render. It plans long beats as ordered chains: an initial clip up to 8 seconds, then native +7 second extension steps—with beat-first approval before you spend credits.",
+    "subtitle": "Break past the single-clip wall—approve the look first, then extend your scene step by step into seamless monologues, explainers, and dialogue beats.",
+    "intro": "SceneFlow does not promise one unlimited render. It plans long beats as ordered sequences: an initial clip up to 8 seconds, then continuous +7 second extension steps—with beat-first approval before you spend credits.",
     "steps": [
       {
         "title": "8s initial clip",
@@ -318,7 +317,7 @@
       },
       {
         "title": "+7s extension steps",
-        "description": "Native Veo EXT continues the same angle and motion—ideal for uninterrupted dialogue within a beat."
+        "description": "Each step continues the same angle and motion—ideal for uninterrupted dialogue within a beat."
       },
       {
         "title": "Beat-first approval",

@@ -19,12 +19,13 @@ import {
 } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
-import { getComparisonImageUrl } from '@/config/landing/landingVisualMedia'
+import { getComparisonImageUrl, SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia'
 import {
   SectionCollapseBody,
   SectionCollapseToggle,
   useLandingSectionCollapse,
 } from '@/components/landing/LandingSectionCollapse'
+import { SectionNarrationButton } from '@/components/landing/SectionNarrationButton'
 
 const SECTION_ID = 'tool-stack'
 
@@ -72,7 +73,10 @@ export function ToolStackSection() {
             <Zap className="w-4 h-4 text-cyan-400" />
             <span className="text-sm font-medium text-cyan-400">{t('badge')}</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">{t('title')}</h2>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">{t('title')}</h2>
+            <SectionNarrationButton src={SECTION_NARRATION_AUDIO[SECTION_ID]} />
+          </div>
           <p className="text-lg text-gray-400">{t('subtitle')}</p>
         </motion.div>
 

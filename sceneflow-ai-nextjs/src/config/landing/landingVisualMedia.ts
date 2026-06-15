@@ -29,6 +29,57 @@ export const USE_CASE_PERSONA_IMAGES = {
 
 export const AUDIENCE_PATH_THUMBNAILS = USE_CASE_PERSONA_IMAGES
 
+export type AudiencePathPersonaId =
+  'creator' | 'team' | 'productionShop' | 'agency' | 'filmProduction'
+
+export type AudiencePathThumbnailStyle = {
+  /** CSS object-position, e.g. '50% 20%' */
+  objectPosition?: string
+  /** Aspect ratio Tailwind class for the frame */
+  aspectClass?: string
+  /** object-fit below sm breakpoint (default: 'contain') */
+  mobileObjectFit?: 'contain' | 'cover'
+  /** object-fit at sm+ (default: 'cover') */
+  objectFit?: 'contain' | 'cover'
+}
+
+const DEFAULT_AUDIENCE_PATH_THUMBNAIL_STYLE = {
+  aspectClass: 'aspect-[4/3]',
+  mobileObjectFit: 'contain' as const,
+  objectFit: 'cover' as const,
+}
+
+export const AUDIENCE_PATH_THUMBNAIL_STYLES: Record<
+  AudiencePathPersonaId,
+  AudiencePathThumbnailStyle
+> = {
+  creator: { objectPosition: '50% 15%' },
+  team: { objectPosition: '50% 20%' },
+  productionShop: { objectPosition: '50% 18%' },
+  agency: { objectPosition: '50% 15%' },
+  filmProduction: { objectPosition: '50% 20%' },
+}
+
+export type ResolvedAudiencePathThumbnailStyle = {
+  aspectClass: string
+  mobileObjectFit: 'contain' | 'cover'
+  objectFit: 'contain' | 'cover'
+  objectPosition?: string
+}
+
+export function getAudiencePathThumbnailStyle(
+  id: AudiencePathPersonaId
+): ResolvedAudiencePathThumbnailStyle {
+  const overrides = AUDIENCE_PATH_THUMBNAIL_STYLES[id]
+  return {
+    aspectClass: overrides.aspectClass ?? DEFAULT_AUDIENCE_PATH_THUMBNAIL_STYLE.aspectClass,
+    mobileObjectFit:
+      overrides.mobileObjectFit ?? DEFAULT_AUDIENCE_PATH_THUMBNAIL_STYLE.mobileObjectFit,
+    objectFit: overrides.objectFit ?? DEFAULT_AUDIENCE_PATH_THUMBNAIL_STYLE.objectFit,
+    objectPosition: overrides.objectPosition,
+  }
+}
+
 /** Role narration audio (AudiencePathStrip play buttons) */
 export const AUDIENCE_PATH_NARRATION = {
   creator: '/audio/role-narration/creator.mp3',
@@ -37,6 +88,19 @@ export const AUDIENCE_PATH_NARRATION = {
   agency: '/audio/role-narration/agency.mp3',
   filmProduction: '/audio/role-narration/filmProduction.mp3',
 } as const satisfies Record<'creator' | 'team' | 'productionShop' | 'agency' | 'filmProduction', string>
+
+/** Landing section narration audio (section heading play buttons) */
+export const SECTION_NARRATION_AUDIO = {
+  'creative-range': '/audio/section-narration/creative-range.mp3',
+  'tool-stack': '/audio/section-narration/tool-stack.mp3',
+  'why-sceneflow': '/audio/section-narration/why-sceneflow.mp3',
+  'beat-first-pipeline': '/audio/section-narration/beat-first-pipeline.mp3',
+  'extended-scenes': '/audio/section-narration/extended-scenes.mp3',
+  'trust-safety': '/audio/section-narration/trust-safety.mp3',
+  'use-cases': '/audio/section-narration/use-cases.mp3',
+} as const
+
+export type SectionNarrationAudioId = keyof typeof SECTION_NARRATION_AUDIO
 
 /** Art style preset ids — mirrors artStylePresets.ts */
 export type LandingArtStyleId =

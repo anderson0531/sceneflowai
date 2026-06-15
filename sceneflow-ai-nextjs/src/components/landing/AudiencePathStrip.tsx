@@ -19,7 +19,12 @@ import { useCallback, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { ExpandedImageModal } from '@/components/landing/ExpandedImageModal'
-import { AUDIENCE_PATH_NARRATION, AUDIENCE_PATH_THUMBNAILS } from '@/config/landing/landingVisualMedia'
+import {
+  AUDIENCE_PATH_NARRATION,
+  AUDIENCE_PATH_THUMBNAILS,
+  getAudiencePathThumbnailStyle,
+  type ResolvedAudiencePathThumbnailStyle,
+} from '@/config/landing/landingVisualMedia'
 import type { UseCasePersonaId } from '@/config/landing/useCasePersonasCopy'
 
 const ICONS = {
@@ -50,22 +55,34 @@ function PathThumbnail({
   src,
   alt,
   expandLabel,
+  thumbnailStyle,
   onExpand,
 }: {
   src: string
   alt: string
   expandLabel: string
+  thumbnailStyle: ResolvedAudiencePathThumbnailStyle
   onExpand: (url: string) => void
 }) {
+  const { aspectClass, mobileObjectFit, objectFit, objectPosition } = thumbnailStyle
+
   return (
     <div
-      className="group relative aspect-[4/3] w-full cursor-zoom-in overflow-hidden bg-slate-800"
+      className={cn(
+        'group relative w-full cursor-zoom-in overflow-hidden bg-slate-800',
+        aspectClass
+      )}
       onClick={() => onExpand(src)}
     >
       <img
         src={src}
         alt={alt}
-        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+        className={cn(
+          'h-full w-full transition-transform duration-700 group-hover:scale-[1.02] sm:group-hover:scale-105',
+          mobileObjectFit === 'contain' ? 'object-contain' : 'object-cover',
+          objectFit === 'cover' ? 'sm:object-cover' : 'sm:object-contain'
+        )}
+        style={objectPosition ? { objectPosition } : undefined}
         loading="lazy"
       />
       <button
@@ -233,6 +250,7 @@ export function AudiencePathStrip() {
                 {thumbnail ? (
                   <PathThumbnail
                     src={thumbnail}
+                    thumbnailStyle={getAudiencePathThumbnailStyle(path.id as UseCasePersonaId)}
                     alt={`${path.label} — SceneFlow path preview`}
                     expandLabel={t('expandImage')}
                     onExpand={setExpandedImage}

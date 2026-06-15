@@ -8,6 +8,8 @@ import {
   SectionCollapseToggle,
   useLandingSectionCollapse,
 } from '@/components/landing/LandingSectionCollapse'
+import { SectionNarrationButton } from '@/components/landing/SectionNarrationButton'
+import { SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia'
 import { cn } from '@/lib/utils'
 
 const SECTION_ID = 'beat-first-pipeline'
@@ -41,7 +43,10 @@ export function OneTakePipelineSection() {
               <p className="text-xs font-semibold uppercase tracking-wider text-violet-300 mb-1">
                 {t('subtitle')}
               </p>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white">{t('title')}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl sm:text-3xl font-bold text-white">{t('title')}</h2>
+                <SectionNarrationButton src={SECTION_NARRATION_AUDIO[SECTION_ID]} />
+              </div>
             </div>
           </div>
         </motion.div>

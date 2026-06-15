@@ -8,6 +8,8 @@ import {
   SectionCollapseToggle,
   useLandingSectionCollapse,
 } from '@/components/landing/LandingSectionCollapse'
+import { SectionNarrationButton } from '@/components/landing/SectionNarrationButton'
+import { SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia'
 import { cn } from '@/lib/utils'
 
 const SECTION_ID = 'why-sceneflow'
@@ -33,7 +35,10 @@ export function WhySceneFlowSection() {
           className="relative text-center mb-12"
         >
           <SectionCollapseToggle sectionId={SECTION_ID} className="absolute right-0 top-0" />
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">{t('title')}</h2>
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">{t('title')}</h2>
+            <SectionNarrationButton src={SECTION_NARRATION_AUDIO[SECTION_ID]} />
+          </div>
           <p className="text-gray-400 max-w-2xl mx-auto">{t('subtitle')}</p>
         </motion.div>
 

@@ -10,6 +10,8 @@ import {
   SectionCollapseToggle,
   useLandingSectionCollapse,
 } from '@/components/landing/LandingSectionCollapse'
+import { SectionNarrationButton } from '@/components/landing/SectionNarrationButton'
+import { SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia'
 import { cn } from '@/lib/utils'
 
 const SECTION_ID = 'trust-safety'
@@ -53,12 +55,15 @@ export function TrustSafeguardSection() {
             <Shield className="w-4 h-4 text-cyan-400 mr-2" />
             <span className="text-cyan-300 text-sm font-medium">{t('badge')}</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            {t('title')}{' '}
-            <span className="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
-              {t('titleAccent')}
-            </span>
-          </h2>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">
+              {t('title')}{' '}
+              <span className="bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+                {t('titleAccent')}
+              </span>
+            </h2>
+            <SectionNarrationButton src={SECTION_NARRATION_AUDIO[SECTION_ID]} />
+          </div>
           <p className="text-gray-400 max-w-3xl mx-auto text-lg leading-relaxed">{t('subtitle')}</p>
         </motion.div>
 

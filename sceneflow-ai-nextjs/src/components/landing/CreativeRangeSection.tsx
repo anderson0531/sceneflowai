@@ -11,6 +11,8 @@ import {
   SectionCollapseToggle,
   useLandingSectionCollapse,
 } from '@/components/landing/LandingSectionCollapse'
+import { SectionNarrationButton } from '@/components/landing/SectionNarrationButton'
+import { SECTION_NARRATION_AUDIO } from '@/config/landing/landingVisualMedia'
 import { cn } from '@/lib/utils'
 import { CREATIVE_RANGE_COPY } from '@/config/landing/creativeRangeCopy'
 
@@ -247,9 +249,12 @@ export function CreativeRangeSection() {
             <Sparkles className="h-4 w-4" />
             {t('badge')}
           </div>
-          <h2 className="landing-section-heading text-3xl font-bold text-white sm:text-4xl md:text-5xl">
-            {t('title')}
-          </h2>
+          <div className="flex items-center justify-center gap-3">
+            <h2 className="landing-section-heading text-3xl font-bold text-white sm:text-4xl md:text-5xl">
+              {t('title')}
+            </h2>
+            <SectionNarrationButton src={SECTION_NARRATION_AUDIO[SECTION_ID]} />
+          </div>
           <p className="mt-2 text-lg text-violet-300/90">{t('titleAccent')}</p>
           <p className="mx-auto mt-4 max-w-3xl text-base leading-relaxed text-slate-400">
             {t('subtitle')}
