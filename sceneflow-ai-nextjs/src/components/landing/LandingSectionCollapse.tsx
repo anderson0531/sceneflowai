@@ -62,18 +62,8 @@ function resolveSectionFromHash(hash: string): CollapsibleLandingSectionId | und
   return undefined
 }
 
-/** Sections that load collapsed on first paint (detailed / secondary content). */
-export const DEFAULT_COLLAPSED_LANDING_SECTION_IDS = new Set<CollapsibleLandingSectionId>([
-  'feature-pre-vis',
-])
-
 function buildDefaultExpandedMap(): ExpandedMap {
-  return Object.fromEntries(
-    COLLAPSIBLE_LANDING_SECTION_IDS.map((id) => [
-      id,
-      !DEFAULT_COLLAPSED_LANDING_SECTION_IDS.has(id),
-    ])
-  )
+  return Object.fromEntries(COLLAPSIBLE_LANDING_SECTION_IDS.map((id) => [id, false]))
 }
 
 export function LandingSectionCollapseProvider({ children }: { children: ReactNode }) {

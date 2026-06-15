@@ -25,7 +25,7 @@ export const FEATURE_CHAPTERS = [
     id: 'start-here',
     label: 'Start here — plan, continuity, and audience fit',
     cardIds: [1, 9, 10, 5, 7],
-    defaultExpanded: true,
+    defaultExpanded: false,
   },
   {
     id: 'produce-publish',

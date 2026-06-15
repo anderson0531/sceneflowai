@@ -1177,7 +1177,7 @@
       {
         "id": "start-here",
         "label": "Start here — plan, continuity, and audience fit",
-        "defaultExpanded": true
+        "defaultExpanded": false
       },
       {
         "id": "produce-publish",
