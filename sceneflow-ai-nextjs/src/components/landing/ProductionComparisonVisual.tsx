@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Video, PlayCircle, Info, Play, Maximize2, X } from 'lucide-react';
+import { Video, PlayCircle, Info, Play, Maximize2 } from 'lucide-react';
 import {
   VIDEO_CATEGORIES,
   buildUseCaseExampleHash,
@@ -12,6 +12,7 @@ import {
   parseUseCaseExampleHash,
 } from '@/config/landing/useCaseExamples';
 import { useTranslations } from 'next-intl';
+import { ExpandedImageModal } from '@/components/landing/ExpandedImageModal';
 
 export { VIDEO_CATEGORIES } from '@/config/landing/useCaseExamples';
 
@@ -297,48 +298,6 @@ function UseCaseVideoPreview({
   );
 }
 
-function ExpandedImageModal({
-  imageUrl,
-  closeLabel,
-  expandImageLabel,
-  onClose,
-}: {
-  imageUrl: string;
-  closeLabel: string;
-  expandImageLabel: string;
-  onClose: () => void;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      className="fixed inset-0 z-[100] flex cursor-zoom-out items-center justify-center bg-black/90 p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md md:p-12"
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="relative flex h-full w-full max-w-7xl flex-col items-center justify-center"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-0 right-0 z-10 flex items-center gap-2 rounded-lg bg-black/50 px-3 py-2 text-sm font-medium text-white/80 backdrop-blur-sm transition-colors hover:bg-black/70 hover:text-white md:top-4 md:right-4"
-        >
-          <X className="h-5 w-5" />
-          {closeLabel}
-        </button>
-        <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
-          <img src={imageUrl} alt={expandImageLabel} className="h-full w-full object-contain" />
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
 interface ProductionComparisonVisualProps {
   initialCategoryId?: string
 }
@@ -450,13 +409,6 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
   useEffect(() => {
     if (!expandedImage) return;
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeExpandedImage();
-    };
-
     const onPopState = () => {
       if (expandedImage) {
         setExpandedImage(null);
@@ -464,15 +416,12 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
       }
     };
 
-    document.addEventListener('keydown', onKey);
     window.addEventListener('popstate', onPopState);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', onKey);
       window.removeEventListener('popstate', onPopState);
     };
-  }, [expandedImage, closeExpandedImage]);
+  }, [expandedImage]);
 
   const activeCategoryData =
     localizedCategories.find((cat) => cat.id === activeCategory) ?? localizedCategories[0];

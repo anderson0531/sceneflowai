@@ -11,13 +11,13 @@ import {
   Zap,
   Settings2,
   Maximize2,
-  X,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
+import { ExpandedImageModal } from '@/components/landing/ExpandedImageModal'
 import { AUDIENCE_PATH_THUMBNAILS } from '@/config/landing/landingVisualMedia'
 import type { UseCasePersonaId } from '@/config/landing/useCasePersonasCopy'
 
@@ -257,37 +257,12 @@ export function AudiencePathStrip() {
 
       <AnimatePresence>
         {expandedImage ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setExpandedImage(null)}
-            className="fixed inset-0 z-[100] flex cursor-zoom-out items-center justify-center bg-black/90 p-4 backdrop-blur-md md:p-12"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="relative flex h-full w-full max-w-7xl items-center justify-center"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={() => setExpandedImage(null)}
-                className="absolute -top-12 right-0 flex items-center gap-2 text-sm font-medium text-white/70 transition-colors hover:text-white"
-              >
-                <X className="h-5 w-5" />
-                {t('closePreview')}
-              </button>
-              <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
-                <img
-                  src={expandedImage}
-                  alt=""
-                  className="h-full w-full object-contain"
-                />
-              </div>
-            </motion.div>
-          </motion.div>
+          <ExpandedImageModal
+            imageUrl={expandedImage}
+            closeLabel={t('closePreview')}
+            expandImageLabel={t('expandImage')}
+            onClose={() => setExpandedImage(null)}
+          />
         ) : null}
       </AnimatePresence>
     </section>
