@@ -398,6 +398,14 @@ export function SceneGallery({
   return (
     <TooltipProvider>
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div className="mb-4 rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-4 py-3 text-sm text-cyan-100/90">
+        <p className="font-medium text-cyan-200">Recommended: Express scene by scene</p>
+        <p className="text-xs text-cyan-100/70 mt-1">
+          Use Express on each scene card for checkpoints — avoids costly redos when characters or references change.
+          Project-wide Express All is available as an advanced option below.
+        </p>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-y-2 mb-6">
         <div className="flex items-center gap-2">
           <Clapperboard className="w-5 h-5 text-sf-primary" />
@@ -462,19 +470,19 @@ export function SceneGallery({
                     setExpressDialogOpen(true)
                   }}
                   disabled={isExpressRunning}
-                  className="relative flex items-center gap-2 overflow-hidden bg-gradient-to-r from-indigo-500/15 to-purple-500/15 border-indigo-500/40 hover:border-indigo-500/60 hover:from-indigo-500/25 hover:to-purple-500/25"
+                  className="relative flex items-center gap-2 overflow-hidden border-gray-600/60 text-gray-300 hover:border-indigo-500/40 hover:text-indigo-200"
                 >
                   {isExpressRunning ? (
                     <Loader className="w-4 h-4 animate-spin text-indigo-300" />
                   ) : (
-                    <Zap className="w-4 h-4 text-indigo-300" />
+                    <Zap className="w-4 h-4 text-indigo-300/80" />
                   )}
                   <span>
                     {isExpressRunning
                       ? expressProgress
                         ? `Express ${expressProgress.pct}%`
                         : 'Express running…'
-                      : `Express All Scenes (${scenesNeedingExpress})`}
+                      : `Express All — advanced (${scenesNeedingExpress})`}
                   </span>
                   {isExpressRunning && expressProgress && (
                     <span
@@ -497,7 +505,7 @@ export function SceneGallery({
                 ) : scenesNeedingExpress === 0 ? (
                   'All scenes complete — open Express and enable Regenerate to redo'
                 ) : (
-                  'Express All Scenes: Direction → Audio → storyboard frames for every scene (~3–10 min, varies by beat count)'
+                  'Advanced: runs all scenes at once (~3–10+ min, higher credit cost). Prefer per-scene Express on scene cards.'
                 )}
               </TooltipContent>
             </Tooltip>

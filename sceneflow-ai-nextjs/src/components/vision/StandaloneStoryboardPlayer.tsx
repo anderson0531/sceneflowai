@@ -12,7 +12,7 @@ import {
   type SceneFeedbackState,
 } from '@/lib/storyboard/feedbackChips'
 import { StoryboardReviewHeader } from './storyboard-review/StoryboardReviewHeader'
-import { StoryboardReviewPanel } from './storyboard-review/StoryboardReviewPanel'
+import { UnifiedPlayerFeedbackPanel } from '@/components/screening-room/UnifiedPlayerFeedbackPanel'
 import {
   StoryboardReviewerIdentitySheet,
   type ReviewerIdentity,
@@ -172,14 +172,16 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
           </div>
         </div>
 
-        <div className="hidden lg:flex w-80 xl:w-96 shrink-0 bg-gray-900 border-l border-gray-800 flex-col overflow-y-auto p-4">
-          <StoryboardReviewPanel
+        <div className="hidden lg:flex w-80 xl:w-96 shrink-0 flex-col overflow-hidden">
+          <UnifiedPlayerFeedbackPanel
+            mode="collect"
             sceneIndex={currentSceneIndex}
-            feedback={currentFeedback}
+            sceneFeedback={currentFeedback}
             audienceAnalysis={currentScene?.audienceAnalysis}
             onRatingChange={(rating) => updateFeedback({ rating })}
             onCommentChange={(comment) => updateFeedback({ comment })}
             onTagsChange={(tags) => updateFeedback({ tags })}
+            className="h-full"
           />
         </div>
       </div>
@@ -204,9 +206,10 @@ export function StandaloneStoryboardPlayer({ projectData, shareToken }: Standalo
             mobilePanelOpen ? 'max-h-[70vh] overflow-y-auto px-4 pb-4' : 'max-h-0'
           )}
         >
-          <StoryboardReviewPanel
+          <UnifiedPlayerFeedbackPanel
+            mode="collect"
             sceneIndex={currentSceneIndex}
-            feedback={currentFeedback}
+            sceneFeedback={currentFeedback}
             audienceAnalysis={currentScene?.audienceAnalysis}
             onRatingChange={(rating) => updateFeedback({ rating })}
             onCommentChange={(comment) => updateFeedback({ comment })}

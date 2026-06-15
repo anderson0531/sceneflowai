@@ -109,9 +109,9 @@ import {
   type ExpressBeatFrameStatus,
 } from '@/lib/storyboard/expressBeatFrameProgress'
 import { GenerationProgress } from '@/components/vision/GenerationProgress'
-// Dynamic import to break TDZ chain - ScreeningRoomV2 → FullscreenPlayer → audioTrackBuilder
-const ScreeningRoomV2 = dynamic(
-  () => import('@/components/vision/ScreeningRoomV2').then(mod => ({ default: mod.ScreeningRoomV2 })),
+// Dynamic import to break TDZ chain - ScreeningRoom shell → FullscreenPlayer → audioTrackBuilder
+const ProductionScreeningRoomShell = dynamic(
+  () => import('@/components/screening-room/ProductionScreeningRoomShell').then(mod => ({ default: mod.ProductionScreeningRoomShell })),
   { ssr: false }
 )
 import { ImageQualitySelector } from '@/components/vision/ImageQualitySelector'
@@ -13436,7 +13436,8 @@ export default function VisionPage({ params }: { params: Promise<{ projectId: st
 
       {/* Screening Room V2 (Full-screen overlay) */}
       {isPlayerOpen && script && (
-        <ScreeningRoomV2
+        <ProductionScreeningRoomShell
+          variant="overlay"
           script={script}
           characters={characters}
           onClose={handleCloseScreeningRoom}

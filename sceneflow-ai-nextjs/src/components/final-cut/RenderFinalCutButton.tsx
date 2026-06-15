@@ -276,7 +276,7 @@ export function RenderFinalCutButton({
         duration: 14000,
         action: onOpenPremiere
           ? {
-              label: 'Open Premiere',
+              label: 'Open Publish',
               onClick: onOpenPremiere,
             }
           : {

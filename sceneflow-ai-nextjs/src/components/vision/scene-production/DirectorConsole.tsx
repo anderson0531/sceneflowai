@@ -1002,7 +1002,7 @@ function DirectorConsoleRoot({
           }
           import('sonner').then(({ toast }) => {
             toast.success('Stream rendered', {
-              description: 'Review the MP4 in Production Streams or send to Final Cut.',
+              description: 'Review the MP4 in Streams or open Screening Room.',
               action: {
                 label: 'Play in Streams',
                 onClick: () => setStreamsCollapsed(false),
@@ -1075,7 +1075,7 @@ function DirectorConsoleRoot({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 p-2 sm:p-3 border-b border-gray-700/40">
           <ProductionSectionHeader
             icon={Film}
-            title="Video Generation"
+            title="Footage"
             badge={`${statusCounts.rendered}/${statusCounts.total}`}
             rightHint="Generate video clips from Beat Frames using AI"
             className="flex-1 min-w-0 border-0 p-0"
@@ -1383,7 +1383,7 @@ function DirectorConsoleRoot({
         <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
           <ProductionSectionHeader
             icon={Clapperboard}
-            title="Production Mixer"
+            title="Mixer"
             rightHint="Render final scene with audio"
             collapsible
             expanded={!mixerCollapsed}
@@ -1407,7 +1407,7 @@ function DirectorConsoleRoot({
       <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
         <ProductionSectionHeader
           icon={ListVideo}
-          title="Production Streams — Export (MP4)"
+          title="Streams — Export (MP4)"
           badge={productionStreams.length}
           rightHint="Finished MP4 library — not live preview"
           collapsible

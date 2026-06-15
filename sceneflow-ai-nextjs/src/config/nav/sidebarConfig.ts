@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 /**
  * Workflow phase identifiers matching the production pipeline
  */
-export type WorkflowPhase = 'blueprint' | 'production' | 'final-cut' | 'premiere' | 'dashboard' | 'settings'
+export type WorkflowPhase = 'blueprint' | 'production' | 'screening-room' | 'final-cut' | 'premiere' | 'dashboard' | 'settings'
 
 /**
  * Status of a workflow step
@@ -100,13 +100,11 @@ export interface WorkflowSidebarConfig {
 // ============================================================================
 
 function makeWorkflowSteps(
-  currentPhase: 'blueprint' | 'production' | 'final-cut' | 'premiere'
+  currentPhase: 'blueprint' | 'production'
 ): WorkflowStep[] {
   const phases: { id: string; label: string; href: (pid: string) => string }[] = [
     { id: 'blueprint', label: 'Blueprint', href: (pid) => `/dashboard/studio/${pid}` },
     { id: 'production', label: 'Production', href: (pid) => `/dashboard/workflow/vision/${pid}` },
-    { id: 'final-cut', label: 'Final Cut', href: (pid) => `/dashboard/workflow/final-cut?projectId=${pid}` },
-    { id: 'premiere', label: 'Premiere', href: (pid) => `/dashboard/workflow/premiere?projectId=${pid}` },
   ]
   const currentIndex = phases.findIndex((p) => p.id === currentPhase)
   return phases.map((p, i) => ({
@@ -175,14 +173,14 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
     { id: 'references', label: 'References', icon: 'ImageIcon', isComplete: false },
     { id: 'scene-images', label: 'Scene Images', icon: 'ImageIcon', isComplete: false, progress: 0 },
     { id: 'audio', label: 'Audio', icon: 'Music', isComplete: false, progress: 0 },
-    { id: 'video-export', label: 'Video Export', icon: 'Video', isComplete: false, badge: 'Soon' },
+    { id: 'video-export', label: 'Video Export', icon: 'Video', isComplete: false, progress: 0 },
   ],
   quickActions: [
     { id: 'goto-bookmark', label: 'Go to Bookmark', icon: 'Bookmark', iconColor: 'text-amber-500', action: 'event', eventName: 'production:goto-bookmark' },
-    { id: 'scene-gallery', label: 'Open Storyboard', icon: 'ImageIcon', iconColor: 'text-cyan-400', action: 'event', eventName: 'production:scene-gallery' },
+    { id: 'scene-gallery', label: 'Open Pre-Vis', icon: 'ImageIcon', iconColor: 'text-cyan-400', action: 'event', eventName: 'production:scene-gallery' },
     { id: 'screening-room', label: 'Screening Room', icon: 'Play', iconColor: 'text-green-500', action: 'event', eventName: 'production:screening-room' },
-    { id: 'update-reviews', label: 'Update Review Scores', icon: 'BarChart3', iconColor: 'text-purple-500', action: 'event', eventName: 'production:update-reviews' },
-    { id: 'review-analysis', label: 'Review Analysis', icon: 'FileText', iconColor: 'text-blue-500', action: 'event', eventName: 'production:review-analysis' },
+    { id: 'update-reviews', label: 'Audience Resonance', icon: 'BarChart3', iconColor: 'text-purple-500', action: 'event', eventName: 'production:update-reviews' },
+    { id: 'review-analysis', label: 'Script Review', icon: 'FileText', iconColor: 'text-blue-500', action: 'event', eventName: 'production:review-analysis' },
     { id: 'settings', label: 'Settings', icon: 'Settings', iconColor: 'text-gray-400', action: 'navigate', href: '/dashboard/settings/profile' },
   ],
   sectionVisibility: {
@@ -211,61 +209,23 @@ export const productionSidebarConfig: WorkflowSidebarConfig = {
   },
 }
 
-// ============================================================================
-// FINAL CUT PHASE CONFIG
-// ============================================================================
-
-export const finalCutSidebarConfig: WorkflowSidebarConfig = {
-  phase: 'final-cut',
+export const screeningRoomSidebarConfig: WorkflowSidebarConfig = {
+  phase: 'screening-room',
   showWorkflowStepper: true,
-  workflowSteps: makeWorkflowSteps('final-cut'),
+  workflowSteps: makeWorkflowSteps('production'),
   progressItems: [
-    { id: 'streams-ready', label: 'Streams ready', icon: 'Video', isComplete: false, progress: 0 },
+    { id: 'streams-ready', label: 'Scene streams ready', icon: 'Video', isComplete: false, progress: 0 },
     { id: 'assembly', label: 'Assembly configured', icon: 'Film', isComplete: false },
-    { id: 'export', label: 'Master exported', icon: 'Download', isComplete: false },
-  ],
-  quickActions: [
-    { id: 'open-assembly', label: 'Open Assembly', icon: 'Layers', iconColor: 'text-violet-400', action: 'event', eventName: 'final-cut:open-assembly' },
-    { id: 'render-final-cut', label: 'Render Final Cut', icon: 'Film', iconColor: 'text-sf-primary', action: 'event', eventName: 'final-cut:render' },
-    { id: 'screening-room', label: 'Continue to Premiere', icon: 'Play', iconColor: 'text-green-500', action: 'event', eventName: 'finalcut:screening-room' },
-  ],
-  sectionVisibility: {
-    workflow: true,
-    workflowGuide: true,
-    proTips: true,
-    progress: true,
-    quickActions: true,
-    reviewScores: true,
-    screeningRoom: true,
-    projectStats: true,
-    credits: true,
-  },
-  sectionDefaults: {
-    workflow: false,
-    workflowGuide: true,
-    proTips: false,
-    progress: false,
-    quickActions: false,
-    reviewScores: false,
-    screeningRoom: false,
-    projectStats: false,
-    credits: false,
-  },
-}
-
-export const premiereSidebarConfig: WorkflowSidebarConfig = {
-  phase: 'premiere',
-  showWorkflowStepper: true,
-  workflowSteps: makeWorkflowSteps('premiere'),
-  progressItems: [
-    { id: 'master-ready', label: 'Master ready', icon: 'Film', isComplete: false },
+    { id: 'master-export', label: 'Master exported', icon: 'Download', isComplete: false },
     { id: 'screenings', label: 'Screenings', icon: 'Play', isComplete: false },
-    { id: 'published', label: 'Published', icon: 'Download', isComplete: false },
+    { id: 'published', label: 'Published', icon: 'Upload', isComplete: false },
   ],
   quickActions: [
-    { id: 'create-screening', label: 'Create Screening', icon: 'Play', iconColor: 'text-violet-400', action: 'event', eventName: 'premiere:create-screening' },
-    { id: 'review-insights', label: 'Review Insights', icon: 'BarChart3', iconColor: 'text-cyan-400', action: 'event', eventName: 'premiere:review-insights' },
-    { id: 'publish-youtube', label: 'Publish YouTube', icon: 'Video', iconColor: 'text-red-400', action: 'event', eventName: 'premiere:open-publish' },
+    { id: 'open-preview', label: 'Preview Scenes', icon: 'Play', iconColor: 'text-green-400', action: 'event', eventName: 'screening-room:preview' },
+    { id: 'open-assemble', label: 'Assemble Master', icon: 'Layers', iconColor: 'text-violet-400', action: 'event', eventName: 'screening-room:assemble' },
+    { id: 'create-screening', label: 'Create Screening', icon: 'Users', iconColor: 'text-cyan-400', action: 'event', eventName: 'screening-room:create-screening' },
+    { id: 'publish-youtube', label: 'Publish YouTube', icon: 'Video', iconColor: 'text-red-400', action: 'event', eventName: 'screening-room:publish' },
+    { id: 'back-production', label: 'Back to Production', icon: 'ArrowLeft', iconColor: 'text-gray-400', action: 'navigate', href: '/dashboard/workflow/vision' },
   ],
   sectionVisibility: {
     workflow: true,
@@ -335,15 +295,16 @@ export const dashboardSidebarConfig: WorkflowSidebarConfig = {
  * Get sidebar config based on current pathname
  */
 export function getSidebarConfigForPath(pathname: string): WorkflowSidebarConfig {
+  if (pathname.includes('/dashboard/workflow/screening-room')) {
+    return screeningRoomSidebarConfig
+  }
   if (pathname.includes('/dashboard/workflow/vision/')) {
     return productionSidebarConfig
   }
-  if (pathname.includes('/dashboard/workflow/premiere')) {
-    return premiereSidebarConfig
-  }
-  if (pathname.includes('/dashboard/workflow/generation/') ||
-      pathname.includes('/dashboard/workflow/final-cut')) {
-    return finalCutSidebarConfig
+  if (pathname.includes('/dashboard/workflow/premiere') ||
+      pathname.includes('/dashboard/workflow/final-cut') ||
+      pathname.includes('/dashboard/workflow/generation/')) {
+    return screeningRoomSidebarConfig
   }
   if (pathname.includes('/dashboard/studio/') || pathname.includes('/dashboard/workflow/ideation/')) {
     return blueprintSidebarConfig
@@ -357,9 +318,11 @@ export function getSidebarConfigForPath(pathname: string): WorkflowSidebarConfig
 export function getProjectIdFromPath(pathname: string): string | null {
   // Match patterns like /dashboard/workflow/vision/[projectId] or /dashboard/studio/[projectId]
   const patterns = [
+    /\/dashboard\/workflow\/screening-room/,
     /\/dashboard\/workflow\/vision\/([^\/]+)/,
     /\/dashboard\/workflow\/generation\/([^\/]+)/,
     /\/dashboard\/workflow\/premiere\/([^\/]+)/,
+    /\/dashboard\/workflow\/final-cut/,
     /\/dashboard\/studio\/([^\/]+)/,
     /\/dashboard\/workflow\/ideation\/([^\/]+)/,
   ]

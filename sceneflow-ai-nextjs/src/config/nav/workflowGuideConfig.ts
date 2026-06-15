@@ -72,37 +72,37 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
   },
   {
     id: 'storyboard-express',
-    title: 'Pre-vis — Express & gallery',
+    title: 'Pre-Vis — Scene by scene',
     icon: 'Image',
     iconColor: 'text-emerald-500',
     steps: [
-      { id: 'run-express', label: 'Build Pre-vis (Express)', actionEventName: 'production:scene-gallery' },
+      { id: 'run-express-scene', label: 'Express per scene (recommended)', description: 'Checkpoint after each scene to avoid massive redos', actionEventName: 'production:scene-gallery' },
       { id: 'review-storyboard', label: 'Review pre-vis gallery', actionEventName: 'production:scene-gallery' },
       { id: 'collaborate-share', label: 'Share for review', actionEventName: 'production:share-link' },
-      { id: 'review-animatic', label: 'Screening Room — Preview (live)', actionEventName: 'production:screening-room' },
+      { id: 'review-animatic', label: 'Pre-Vis player preview', actionEventName: 'production:scene-gallery' },
     ],
   },
   {
-    id: 'production-action',
-    title: 'Production — Action tab',
+    id: 'production-shoot',
+    title: 'Production — Shoot tab',
     icon: 'Video',
     iconColor: 'text-red-500',
     steps: [
       { id: 'generate-beat-frames', label: 'Build Beat Frames (start/end)', actionEventName: 'production:generate-frames' },
-      { id: 'create-video', label: 'Generate beat video (Director Console)', actionEventName: 'production:generate-video' },
-      { id: 'mix-scene', label: 'Preview in Production Mixer', actionEventName: 'production:edit-video' },
+      { id: 'create-video', label: 'Generate beat video (Footage)', actionEventName: 'production:generate-video' },
+      { id: 'mix-scene', label: 'Preview in Mixer', actionEventName: 'production:edit-video' },
       { id: 'render-stream', label: 'Render Stream (export dialog)', actionEventName: 'production:mark-complete' },
     ],
   },
   {
     id: 'production-streams',
-    title: 'Production Streams — Export (MP4)',
+    title: 'Streams — Export (MP4)',
     icon: 'Play',
     iconColor: 'text-green-500',
     steps: [
       { id: 'review-streams', label: 'Review finished MP4s', actionEventName: 'production:edit-video' },
       { id: 'rerender-stale', label: 'Re-render when beats change', description: 'Update available badge' },
-      { id: 'send-final-cut', label: 'Send to Final Cut', actionEventName: 'production:mark-complete' },
+      { id: 'open-screening-room', label: 'Open Screening Room', actionEventName: 'production:screening-room' },
     ],
   },
   {
@@ -119,70 +119,45 @@ export const productionWorkflowGroups: WorkflowGroup[] = [
   },
 ]
 
-export const finalCutWorkflowGroups: WorkflowGroup[] = [
+export const screeningRoomWorkflowGroups: WorkflowGroup[] = [
   {
-    id: 'pick-streams',
-    title: 'Pick streams per scene',
-    icon: 'Film',
-    iconColor: 'text-purple-500',
+    id: 'preview',
+    title: 'Preview scene videos',
+    icon: 'Play',
+    iconColor: 'text-green-500',
     steps: [
-      { id: 'select-stream-type', label: 'Choose Animatic or Video', description: 'Per scene — or apply an assembly preset', actionEventName: 'final-cut:open-assembly' },
-      { id: 'select-language', label: 'Pick language stream', description: 'Mix EN, ES, and other languages across scenes', actionEventName: 'final-cut:open-assembly' },
-      { id: 'review-duration', label: 'Review assembly duration', description: 'Scenes auto-align in script order' },
+      { id: 'preview-scenes', label: 'Play rendered scene streams', actionEventName: 'screening-room:preview' },
+      { id: 'share-preview', label: 'Share preview link', description: 'Collaborate or seek approval before publish' },
     ],
   },
   {
     id: 'assemble',
-    title: 'Preview assembly',
-    icon: 'Clapperboard',
-    iconColor: 'text-cyan-500',
+    title: 'Assemble master',
+    icon: 'Film',
+    iconColor: 'text-purple-500',
     steps: [
-      { id: 'preview-assembly', label: 'Preview full program', description: 'Read-only monitor — creative edits stay in Production Mixer' },
-      { id: 'export-master', label: 'Render Final Cut master', description: 'Stitch selected streams into one MP4', actionEventName: 'final-cut:render' },
-    ],
-  },
-  {
-    id: 'premiere-export',
-    title: 'Premiere handoff',
-    icon: 'Sparkles',
-    iconColor: 'text-amber-500',
-    steps: [
-      { id: 'share-premiere', label: 'Continue to Premiere', description: 'Screenings, share links, and distribution prep', actionEventName: 'final-cut:open-premiere' },
-    ],
-  },
-]
-
-export const premiereWorkflowGroups: WorkflowGroup[] = [
-  {
-    id: 'screen',
-    title: 'Screen your master',
-    icon: 'Play',
-    iconColor: 'text-violet-500',
-    steps: [
-      { id: 'master-ready', label: 'Confirm Final Cut master', description: 'Export from Final Cut first', actionEventName: 'premiere:open-final-cut' },
-      { id: 'create-screening', label: 'Create screening & share /s/ link', actionEventName: 'premiere:create-screening' },
-    ],
-  },
-  {
-    id: 'insights',
-    title: 'Review feedback',
-    icon: 'BarChart3',
-    iconColor: 'text-cyan-500',
-    steps: [
-      { id: 'review-insights', label: 'Scoring · Biometric · Visual', actionEventName: 'premiere:review-insights' },
+      { id: 'select-stream-type', label: 'Choose Animatic or Video per scene', actionEventName: 'screening-room:assemble' },
+      { id: 'select-language', label: 'Pick language stream', description: 'Mix languages across scenes' },
+      { id: 'export-master', label: 'Render master MP4', actionEventName: 'screening-room:assemble' },
     ],
   },
   {
     id: 'publish',
-    title: 'Publish & export',
+    title: 'Publish & distribute',
     icon: 'Youtube',
     iconColor: 'text-red-500',
     steps: [
-      { id: 'publish-youtube', label: 'YouTube publish wizard', actionEventName: 'premiere:open-publish' },
-      { id: 'export-bundle', label: 'Export bundle or short-form cuts', actionEventName: 'premiere:export-settings' },
+      { id: 'create-screening', label: 'Create screening & share /s/ link', actionEventName: 'screening-room:create-screening' },
+      { id: 'review-insights', label: 'Review feedback insights', actionEventName: 'screening-room:publish' },
+      { id: 'publish-youtube', label: 'YouTube publish wizard', actionEventName: 'screening-room:publish' },
+      { id: 'export-bundle', label: 'Export bundle or short-form cuts', actionEventName: 'screening-room:publish' },
     ],
   },
 ]
+
+// Legacy groups retained for reference during migration.
+export const finalCutWorkflowGroups: WorkflowGroup[] = screeningRoomWorkflowGroups
+export const premiereWorkflowGroups: WorkflowGroup[] = screeningRoomWorkflowGroups
 
 // =============================================================================
 // BLUEPRINT PHASE WORKFLOW GUIDE
@@ -296,8 +271,9 @@ export const blueprintWorkflowGroups: WorkflowGroup[] = [
 export const workflowGuideConfig: Record<WorkflowPhase, WorkflowGroup[]> = {
   blueprint: blueprintWorkflowGroups,
   production: productionWorkflowGroups,
-  'final-cut': finalCutWorkflowGroups,
-  premiere: premiereWorkflowGroups,
+  'screening-room': screeningRoomWorkflowGroups,
+  'final-cut': screeningRoomWorkflowGroups,
+  premiere: screeningRoomWorkflowGroups,
   dashboard: [],
   settings: [],
 }

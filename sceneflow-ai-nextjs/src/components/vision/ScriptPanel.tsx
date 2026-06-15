@@ -2732,6 +2732,19 @@ export function ScriptPanel({ script, onScriptChange, isGenerating, onExpandScen
               </Button>
             )}
 
+            {onPlayScript && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onPlayScript}
+                className="flex items-center gap-2 border-green-500/30 hover:border-green-500/50 hover:bg-green-500/10"
+                title="Open Screening Room — preview scene videos, assemble master, and publish"
+              >
+                <Play className="w-4 h-4 text-green-400" />
+                <span className="text-sm hidden sm:inline">Screening Room</span>
+              </Button>
+            )}
+
             {onShowReviews && (
               <Button
                 variant="outline"
@@ -4565,7 +4578,7 @@ function SceneCard({
     { key: 'dialogueAction', label: 'Script', icon: <FileText className="w-4 h-4" />, description: 'Write and edit your scene script' },
     // Direction (directorsChair) is hidden - auto-generated from Script, accessible via Frame dialog and Export
     // Frame (storyboardPreViz) merged into Action for unified production workflow
-    { key: 'callAction', label: 'Action', icon: <Clapperboard className="w-4 h-4" />, description: 'Build storyboard and produce video' }
+    { key: 'callAction', label: 'Shoot', icon: <Clapperboard className="w-4 h-4" />, description: 'Generate and edit the full-motion video for this scene' }
   ], [])
   
   // Update active workflow tab when completions change if we haven't manually switched
@@ -7135,7 +7148,7 @@ function SceneCard({
                                 >
                                   <ProductionSectionHeader
                                     icon={Clapperboard}
-                                    title="Production Mixer"
+                                    title="Mixer"
                                     rightHint="Render final scene with audio"
                                     collapsible
                                     expanded={!slots.mixerCollapsed}
@@ -7160,7 +7173,7 @@ function SceneCard({
                               <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
                                 <ProductionSectionHeader
                                   icon={ListVideo}
-                                  title="Production Streams"
+                                  title="Streams"
                                   badge={slots.streamCount}
                                   rightHint="Animatic and stitched video exports"
                                   collapsible

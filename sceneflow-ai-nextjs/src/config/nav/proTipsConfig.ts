@@ -140,106 +140,50 @@ export const proTipsConfig: Record<WorkflowPhase, ProTip[]> = {
   ],
 
   // ============================================================================
-  // FINAL CUT PHASE TIPS
+  // SCREENING ROOM TIPS (replaces Final Cut + Premiere)
   // ============================================================================
-  'final-cut': [
+  'screening-room': [
     {
-      id: 'apply-preset',
-      phase: 'final-cut',
-      title: 'Start with a preset',
-      description: 'All Video, Hybrid, or Custom mix per scene',
-      actionLabel: 'Open Assembly',
-      actionEventName: 'final-cut:open-assembly',
+      id: 'preview-scenes',
+      phase: 'screening-room',
+      title: 'Preview scene videos',
+      description: 'Play rendered streams in Screening Room',
+      actionLabel: 'Open preview',
+      actionEventName: 'screening-room:preview',
       priority: 1,
     },
     {
-      id: 'preview-assembly',
-      phase: 'final-cut',
-      title: 'Preview the full program',
-      description: 'Scenes play in script order — read-only',
-      actionLabel: 'Play Preview',
-      actionEventName: 'finalcut:preview-all',
+      id: 'assemble-master',
+      phase: 'screening-room',
+      title: 'Assemble master',
+      description: 'Pick streams per scene and render one MP4',
+      actionLabel: 'Open assemble',
+      actionEventName: 'screening-room:assemble',
       priority: 2,
     },
     {
-      id: 'missing-streams',
-      phase: 'final-cut',
-      title: 'Missing a stream?',
-      description: 'Render in Production Mixer, then return',
-      actionLabel: 'Go to Production',
-      actionEventName: 'final-cut:open-production',
-      priority: 3,
-    },
-    {
-      id: 'render-master',
-      phase: 'final-cut',
-      title: 'Render master MP4',
-      description: 'Stitch selected streams for Premiere',
-      actionLabel: 'Render Final Cut',
-      actionEventName: 'final-cut:render',
-      priority: 4,
-    },
-    {
-      id: 'premiere-handoff',
-      phase: 'final-cut',
-      title: 'Continue to Premiere',
-      description: 'Screenings and share after export',
-      actionLabel: 'Open Premiere',
-      actionEventName: 'final-cut:open-premiere',
-      priority: 5,
-    },
-  ],
-
-  // ============================================================================
-  // PREMIERE PHASE TIPS
-  // ============================================================================
-  premiere: [
-    {
       id: 'create-screening',
-      phase: 'premiere',
+      phase: 'screening-room',
       title: 'Create a screening',
       description: 'Share /s/ link with reviewers',
       actionLabel: 'Create screening',
-      actionEventName: 'premiere:create-screening',
-      priority: 1,
-    },
-    {
-      id: 'review-insights',
-      phase: 'premiere',
-      title: 'Review insights',
-      description: 'Scoring, biometric, and visual tabs',
-      actionLabel: 'Open insights',
-      actionEventName: 'premiere:review-insights',
-      priority: 2,
-    },
-    {
-      id: 'publish-youtube',
-      phase: 'premiere',
-      title: 'Publish to YouTube',
-      description: 'Localized metadata + SceneFlow CTA',
-      actionLabel: 'Open publish',
-      actionEventName: 'premiere:open-publish',
+      actionEventName: 'screening-room:create-screening',
       priority: 3,
     },
     {
-      id: 'short-form',
-      phase: 'premiere',
-      title: 'Short-form cuts',
-      description: '9:16 for Shorts, Reels, TikTok',
-      actionLabel: 'Generate clips',
-      actionEventName: 'premiere:export-settings',
+      id: 'publish-youtube',
+      phase: 'screening-room',
+      title: 'Publish to YouTube',
+      description: 'Localized metadata + SceneFlow CTA',
+      actionLabel: 'Open publish',
+      actionEventName: 'screening-room:publish',
       priority: 4,
     },
-    {
-      id: 'export-bundle',
-      phase: 'premiere',
-      title: 'Export bundle',
-      description: 'ZIP with master, thumbnail, metadata',
-      actionLabel: 'Export bundle',
-      actionEventName: 'premiere:export-settings',
-      priority: 5,
-    },
   ],
+
+  // Legacy phase keys — empty during migration (redirect to Screening Room).
+  'final-cut': [],
+  premiere: [],
 
   // Dashboard and settings don't have pro tips
   dashboard: [],

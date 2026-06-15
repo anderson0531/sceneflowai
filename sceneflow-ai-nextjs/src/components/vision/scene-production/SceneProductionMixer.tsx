@@ -4099,7 +4099,7 @@ export function SceneProductionMixer({
             <Film className="w-5 h-5 text-purple-400" />
           </div>
           <div>
-            <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Production Mixer</h3>
+            <h3 className="!text-lg !leading-normal !mb-0 font-semibold text-white">Mixer</h3>
             <p className="text-xs text-gray-400">
               Mix segment video or animatic keyframes with dialogue, music, and SFX — then export from the footer.
             </p>

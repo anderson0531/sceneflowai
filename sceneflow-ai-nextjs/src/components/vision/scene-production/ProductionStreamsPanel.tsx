@@ -686,7 +686,7 @@ export function ProductionStreamsPanel({
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-sm font-medium text-white tracking-tight">
-                Production Streams — Export (MP4)
+                Streams — Export (MP4)
               </h3>
               {productionStreams.length > 0 && (
                 <span className="px-2 py-0.5 text-xs font-medium bg-purple-500/20 text-purple-200 rounded-md border border-purple-500/25">
@@ -798,7 +798,7 @@ export function ProductionStreamsPanel({
       {selectedStreamType === 'animatic' && (
         <div className="p-3 bg-gray-800/25 rounded-lg border border-gray-700/60">
           <p className="text-xs text-gray-400 text-center">
-            New animatic exports: use <span className="text-purple-300 font-medium">Render</span> in the Production Mixer footer, or <span className="text-purple-300 font-medium">Upload</span> above. Rename streams with the pencil icon.
+            New animatic exports: use <span className="text-purple-300 font-medium">Render</span> in the Mixer footer, or <span className="text-purple-300 font-medium">Upload</span> above. Rename streams with the pencil icon.
           </p>
         </div>
       )}
@@ -806,7 +806,7 @@ export function ProductionStreamsPanel({
       {selectedStreamType === 'video' && videoGenerationAvailable && (
         <div className="p-3 bg-gray-800/25 rounded-lg border border-gray-700/60">
           <p className="text-xs text-gray-400 text-center">
-            New stitched video exports: use <span className="text-indigo-300 font-medium">Render</span> in the Production Mixer footer, or <span className="text-indigo-300 font-medium">Upload</span> above.
+            New stitched video exports: use <span className="text-indigo-300 font-medium">Render</span> in the Mixer footer, or <span className="text-indigo-300 font-medium">Upload</span> above.
           </p>
         </div>
       )}

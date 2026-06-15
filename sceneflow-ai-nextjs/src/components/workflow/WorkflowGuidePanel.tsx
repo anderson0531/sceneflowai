@@ -281,8 +281,9 @@ export function WorkflowGuidePanel({
   const phaseDisplayName: Record<WorkflowPhase, string> = {
     blueprint: 'Blueprint',
     production: 'Production',
-    'final-cut': 'Final Cut',
-    premiere: 'Premiere',
+    'screening-room': 'Screening Room',
+    'final-cut': 'Screening Room',
+    premiere: 'Screening Room',
     dashboard: 'Dashboard',
     settings: 'Settings'
   }

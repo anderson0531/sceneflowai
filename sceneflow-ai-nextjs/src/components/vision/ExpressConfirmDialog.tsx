@@ -201,10 +201,11 @@ export function ExpressConfirmDialog({
         <DialogHeader>
           <DialogTitle className="text-white flex items-center gap-2">
             <Zap className="w-5 h-5 text-indigo-400" />
-            Run Build Pre-vis (Express)
+            Express All Scenes (advanced)
           </DialogTitle>
           <DialogDescription className="text-gray-300">
-            Direction → Audio → pre-vis frames for every scene (up to 3 scenes in parallel).
+            Runs Direction → Audio → pre-vis frames for every scene in parallel (up to 3 at a time).
+            This is a long, credit-heavy run — per-scene Express on each scene card is recommended for checkpoints.
           </DialogDescription>
         </DialogHeader>
 
