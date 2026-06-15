@@ -13,12 +13,14 @@ import {
   Maximize2,
   ChevronDown,
   ChevronUp,
+  Play,
+  Pause,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { ExpandedImageModal } from '@/components/landing/ExpandedImageModal'
-import { AUDIENCE_PATH_THUMBNAILS } from '@/config/landing/landingVisualMedia'
+import { AUDIENCE_PATH_NARRATION, AUDIENCE_PATH_THUMBNAILS } from '@/config/landing/landingVisualMedia'
 import type { UseCasePersonaId } from '@/config/landing/useCasePersonasCopy'
 
 const ICONS = {
@@ -97,6 +99,74 @@ function PathThumbnail({
   )
 }
 
+function NarrationButton({
+  src,
+  playLabel,
+  pauseLabel,
+  comingSoonLabel,
+}: {
+  src: string | undefined
+  playLabel: string
+  pauseLabel: string
+  comingSoonLabel: string
+}) {
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  const togglePlayback = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio || !src) return
+    if (isPlaying) {
+      audio.pause()
+      setIsPlaying(false)
+    } else {
+      void audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false))
+    }
+  }, [isPlaying, src])
+
+  if (!src) {
+    return (
+      <button
+        type="button"
+        disabled
+        className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-800/60 px-3 py-1.5 text-xs font-medium text-gray-500 cursor-not-allowed opacity-60"
+        aria-label={comingSoonLabel}
+      >
+        <Play className="h-3.5 w-3.5 shrink-0" />
+        {comingSoonLabel}
+      </button>
+    )
+  }
+
+  return (
+    <>
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="none"
+        onEnded={() => setIsPlaying(false)}
+        onPause={() => setIsPlaying(false)}
+      />
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          togglePlayback()
+        }}
+        className="mt-3 inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-300 hover:border-cyan-400/50 hover:bg-cyan-500/20 transition-colors"
+        aria-label={isPlaying ? pauseLabel : playLabel}
+      >
+        {isPlaying ? (
+          <Pause className="h-3.5 w-3.5 shrink-0" />
+        ) : (
+          <Play className="h-3.5 w-3.5 shrink-0" />
+        )}
+        {isPlaying ? pauseLabel : playLabel}
+      </button>
+    </>
+  )
+}
+
 export function AudiencePathStrip() {
   const t = useTranslations('audiencePaths')
   const [mode, setMode] = useState<AudienceMode>('automate')
@@ -108,6 +178,7 @@ export function AudiencePathStrip() {
     icon: PathIcon
     label: string
     outcome: string
+    narrative: string
     useCases: string[]
   }>
   const modes = t.raw('modes') as Record<
@@ -192,6 +263,12 @@ export function AudiencePathStrip() {
                     <span className="text-base font-semibold text-white">{path.label}</span>
                   </div>
                   <p className="text-sm text-gray-400 leading-relaxed">{path.outcome}</p>
+                  <NarrationButton
+                    src={AUDIENCE_PATH_NARRATION[path.id as UseCasePersonaId] || undefined}
+                    playLabel={t('playNarration')}
+                    pauseLabel={t('pauseNarration')}
+                    comingSoonLabel={t('narrationComingSoon')}
+                  />
                   <button
                     type="button"
                     onClick={(e) => {
@@ -224,19 +301,9 @@ export function AudiencePathStrip() {
                         transition={{ duration: 0.3 }}
                         className="overflow-hidden"
                       >
-                        <ul
-                          className="mt-3 flex flex-wrap gap-2"
-                          aria-label={t('examplesFor', { label: path.label })}
-                        >
-                          {path.useCases.map((useCase) => (
-                            <li
-                              key={useCase}
-                              className="px-2.5 py-1 rounded-md text-xs sm:text-sm leading-snug text-gray-300 bg-slate-800/80 border border-white/10"
-                            >
-                              {useCase}
-                            </li>
-                          ))}
-                        </ul>
+                        <p className="mt-3 text-sm leading-relaxed text-gray-300">
+                          {path.narrative}
+                        </p>
                       </motion.div>
                     )}
                   </AnimatePresence>

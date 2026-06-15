@@ -36,6 +36,8 @@ export const AUDIENCE_PATHS = [
     hash: 'use-cases-creator',
     label: 'Creator',
     outcome: 'Ship on schedule — stop rebuilding in every tool',
+    narrative:
+      'You have the story, but every episode means re-exporting assets, re-prompting in new tabs, and hoping continuity holds. SceneFlow connects Series, Blueprint, and Production in one studio — so you approve the look in pre-vis, generate scene by scene, and ship consistent episodes on schedule instead of rebuilding from scratch.',
     useCases: [
       '16:9 YouTube TV drama',
       '9:16 vertical mobile drama',
@@ -53,6 +55,8 @@ export const AUDIENCE_PATHS = [
     hash: 'use-cases-team',
     label: 'In-house team',
     outcome: 'Replace slow vendor cycles — control brand and budget',
+    narrative:
+      'Internal video requests pile up while agency quotes stretch timelines and brand guidelines drift in every revision round. SceneFlow puts L&D, comms, and product explainers in one guided workflow — your team owns the script, pre-vis, and master output without renting a studio or waiting on vendors.',
     useCases: [
       'Corporate L&D & compliance',
       'Internal comms & town halls',
@@ -69,6 +73,8 @@ export const AUDIENCE_PATHS = [
     hash: 'use-cases-production-shop',
     label: 'Production shop',
     outcome: 'Productize a niche with repeatable intake → delivery',
+    narrative:
+      'Custom video work is profitable until every client becomes a one-off — new tools, new handoffs, and margins that vanish in rework. SceneFlow turns your niche into a product: repeatable intake, white-label templates, voice-cloned narration, and a clear path from brief to delivered MP4.',
     useCases: [
       'Video memoir packages',
       'Legacy & tribute videos',
@@ -85,6 +91,8 @@ export const AUDIENCE_PATHS = [
     hash: 'use-cases-agency',
     label: 'Agency',
     outcome: 'Faster pitches and scalable client delivery',
+    narrative:
+      'Winning the pitch means showing the idea — not describing it — but pre-viz and localization eat the margin before the contract is signed. SceneFlow gets client-ready pre-viz in front of stakeholders fast, then scales delivery across campaigns and 70+ languages without rebuilding the pipeline per account.',
     useCases: [
       'Client pitch pre-viz',
       'Product launch campaigns',
@@ -101,6 +109,8 @@ export const AUDIENCE_PATHS = [
     hash: 'use-cases-film-production',
     label: 'Film Production',
     outcome: 'Script to interactive animatic in under 30 minutes — test before you shoot',
+    narrative:
+      'Previz and audience testing used to mean weeks of storyboards, temp VO, and expensive guesswork before cameras roll. SceneFlow takes your script to an interactive animatic in under 30 minutes — optimize with Audience Resonance, screen it in the Screening Room, and commit budget only when the story lands.',
     useCases: [
       'Feature & indie previz',
       'Investor pitch animatics',

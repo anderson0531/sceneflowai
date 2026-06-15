@@ -188,6 +188,9 @@ export function buildEnMessages() {
       andMore: ', and more.',
       expandImage: 'Expand image',
       closePreview: 'Close preview',
+      playNarration: 'Play narration',
+      pauseNarration: 'Pause narration',
+      narrationComingSoon: 'Narration coming soon',
       modes: AUDIENCE_PATH_MODES,
       paths: AUDIENCE_PATHS.map((p) => ({
         id: p.id,
@@ -195,6 +198,7 @@ export function buildEnMessages() {
         icon: p.icon,
         label: p.label,
         outcome: p.outcome,
+        narrative: p.narrative,
         useCases: [...p.useCases],
       })),
     },

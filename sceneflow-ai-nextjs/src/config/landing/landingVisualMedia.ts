@@ -29,6 +29,15 @@ export const USE_CASE_PERSONA_IMAGES = {
 
 export const AUDIENCE_PATH_THUMBNAILS = USE_CASE_PERSONA_IMAGES
 
+/** Role narration audio (AudiencePathStrip play buttons) */
+export const AUDIENCE_PATH_NARRATION = {
+  creator: '/audio/role-narration/creator.mp3',
+  team: '/audio/role-narration/team.mp3',
+  productionShop: '/audio/role-narration/productionShop.mp3',
+  agency: '/audio/role-narration/agency.mp3',
+  filmProduction: '/audio/role-narration/filmProduction.mp3',
+} as const satisfies Record<'creator' | 'team' | 'productionShop' | 'agency' | 'filmProduction', string>
+
 /** Art style preset ids — mirrors artStylePresets.ts */
 export type LandingArtStyleId =
   | 'photorealistic'
