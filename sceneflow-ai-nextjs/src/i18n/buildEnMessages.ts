@@ -263,7 +263,7 @@ export function buildEnMessages() {
         useCases: 'Use Cases',
         sectors: '{count} SECTORS',
         demoComingSoon: 'Demo coming soon',
-        selectExample: 'Select an example to preview its demo',
+        selectExample: 'SELECT A USE CASE TO LEARN MORE',
         ...USE_CASE_PERSONA_UI,
       },
       personas: USE_CASE_PERSONAS,
