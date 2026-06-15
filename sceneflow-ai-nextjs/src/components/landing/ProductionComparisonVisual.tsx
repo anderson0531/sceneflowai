@@ -217,16 +217,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
       qualifyingStatement?: string;
       examples: Array<{ id: string; label: string; description: string }>;
     }>;
-    return translated.map((cat) => ({
-      ...cat,
-      examples: cat.examples.map((ex) => {
-        const source = getUseCaseExample(cat.id, ex.id)
-        return {
-          ...ex,
-          illustrationSrc: source?.illustrationSrc,
-        }
-      }),
-    }));
+    return translated;
   }, [tCategories]);
 
   const videoPanelRef = useRef<HTMLDivElement>(null);
@@ -325,6 +316,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
   const activeExample =
     activeCategoryData.examples.find((ex) => ex.id === activeExampleId) ??
     activeCategoryData.examples[0];
+  const activeIllustrationSrc = getUseCaseExample(activeCategory, activeExample.id)?.illustrationSrc;
 
   const handleCategoryClick = (categoryId: string) => {
     const defaultExampleId = getDefaultExampleId(categoryId);
@@ -450,7 +442,7 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                             </p>
                           </div>
                           <UseCaseIllustrationFrame
-                            illustrationSrc={activeExample.illustrationSrc}
+                            illustrationSrc={activeIllustrationSrc}
                             label={activeExample.label}
                             expandLabel={tUi('expandImage')}
                             fallbackLabel={activeExample.label}
@@ -473,22 +465,14 @@ export const ProductionComparisonVisual = ({ initialCategoryId }: ProductionComp
                                 type="button"
                                 onClick={() => handleExampleClick(cat.id, ex.id)}
                                 aria-current={isActive ? 'true' : undefined}
-                                className={`relative rounded-lg border transition-all cursor-pointer h-full flex flex-col justify-start text-left overflow-hidden ${
+                                className={`relative rounded-lg border p-3 transition-all cursor-pointer h-full flex flex-col justify-start text-left ${
                                   isActive
                                     ? 'bg-cyan-500/10 border-cyan-500/40 shadow-lg shadow-cyan-900/20'
                                     : 'bg-slate-950/40 border-white/5 hover:border-white/10 hover:bg-slate-950/60'
                                 }`}
                                 data-hash={exampleHash}
                               >
-                                {ex.illustrationSrc ? (
-                                  <UseCaseIllustrationFrame
-                                    illustrationSrc={ex.illustrationSrc}
-                                    label={ex.label}
-                                    expandLabel={tUi('expandImage')}
-                                    fallbackLabel={ex.label}
-                                  />
-                                ) : null}
-                                <div className="p-3 flex flex-col flex-1">
+                                <div className="flex flex-col flex-1">
                                   <div className="flex items-center justify-between mb-2 gap-2">
                                     <span
                                       className={`text-sm font-semibold ${
