@@ -223,6 +223,11 @@ export function getUseCaseVideoPosterUrl(categoryId: string, exampleId: string):
   return blobUrl(`demo/use-cases/${categoryId}/${exampleId}-poster.jpg`)
 }
 
+/** Local narration MP3 for a use-case example preview */
+export function getUseCaseExampleNarrationUrl(categoryId: string, exampleId: string): string {
+  return `/audio/use-case-narration/${categoryId}/${exampleId}.mp3`
+}
+
 /** Thai walkthrough screenshots — ids 1–14 (upload to landing/storyboard/th/{id}.png) */
 const TH_FEATURE_STORYBOARD_SCREENSHOTS: Partial<Record<number, string>> = {
   1: blobUrl('landing/storyboard/th/1.png'),
