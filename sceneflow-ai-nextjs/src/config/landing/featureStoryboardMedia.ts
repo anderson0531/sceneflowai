@@ -36,14 +36,10 @@ export const FEATURE_STORYBOARD_MEDIA: Record<
       'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-27%20at%2011.15.48.png',
     videoUrl: `${BLOB}/walkthrough/Production.mp4`,
   },
-  12: {
+  /** 14 — Screening Room (preview, assemble, publish) */
+  14: {
     screenshotUrl:
-      'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2015.30.48.png',
-    videoUrl: `${BLOB}/walkthrough/FinalCut.mp4`,
-  },
-  13: {
-    screenshotUrl:
-      'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-18%20at%2017.09.15.png',
+      'https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png',
     videoUrl: `${BLOB}/walkthrough/Premiere.mp4`,
   },
   /** 16 — Trust & Safety */

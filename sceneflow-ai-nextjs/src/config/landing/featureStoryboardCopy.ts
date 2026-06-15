@@ -6,18 +6,19 @@
  */
 import {
   WORKFLOW_PHASES,
+  SCREENING_ROOM_COPY,
 } from '@/config/landing/workflowPhaseCopy'
 
 export const FEATURE_STORYBOARD_SECTION = {
-  subheading: 'Nine guided clips — full pipeline in under 15 minutes',
-  chapterHint: 'Start with planning and continuity, then expand to produce and publish.',
+  subheading: 'Under the hood — guided clips for technical reviewers',
+  chapterHint: 'Expand for series planning, reference continuity, production depth, and trust & safety.',
   expandChapter: 'Show features',
   collapseChapter: 'Hide features',
   underTheHood: 'Under the hood',
 } as const
 
-/** Walkthrough card IDs shown on landing (10 clips). */
-export const WALKTHROUGH_CARD_IDS = [1, 9, 10, 5, 7, 11, 12, 13, 16] as const
+/** Walkthrough card IDs shown on landing (detailed / under-the-hood set). */
+export const WALKTHROUGH_CARD_IDS = [1, 9, 10, 5, 7, 11, 14, 16] as const
 
 export const FEATURE_CHAPTERS = [
   {
@@ -28,8 +29,8 @@ export const FEATURE_CHAPTERS = [
   },
   {
     id: 'produce-publish',
-    label: 'Produce and publish — beats to master MP4',
-    cardIds: [11, 12, 13, 16],
+    label: 'Produce and publish — Shoot tab to Screening Room',
+    cardIds: [11, 14, 16],
     defaultExpanded: false,
   },
 ] as const
@@ -85,8 +86,6 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
   const series = WORKFLOW_PHASES[0]
   const blueprint = WORKFLOW_PHASES[1]
   const production = WORKFLOW_PHASES[2]
-  const finalCut = WORKFLOW_PHASES[3]
-  const premiere = WORKFLOW_PHASES[4]
 
   return [
     {
@@ -95,14 +94,14 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
       description:
         'One studio from idea to publish-ready video. Same pipeline for training, podcasts, news, and cinematic series — approve pre-vis before final render spend.',
       keyFeatures: [
-        'Series → Blueprint → Production → Final Cut → Premiere',
+        'Series → Blueprint → Production → Screening Room',
         'Beat-first approval — pre-vis and Beat Frames before F2V',
         'Google Vertex AI generation with native Veo extension chains',
         'Trust & Safety guardrails and signed provenance on delivery',
       ],
-      screenshotSlot: 'Insert screenshot: Landing hero + How It Works pipeline strip',
+      screenshotSlot: 'Insert screenshot: Landing hero + simplified walkthrough strip',
       videoSlot:
-        'Insert 01:30 clip: Hero → new project → Blueprint resonance flash → Production beat-first → Final Cut → Premiere → Trust & Safety',
+        'Insert 01:30 clip: Hero → new project → Blueprint → Production Shoot → Screening Room → Publish',
     },
     {
       id: 9,
@@ -153,29 +152,17 @@ export function buildFeatureStoryboardMessageItems(): FeatureStoryboardMessageIt
       title: 'Production Automation',
       description: production.description,
       keyFeatures: [...production.keyFeatures],
-      screenshotSlot: 'Insert screenshot: Production dashboard showing script, Beat Frames, and Mixer',
+      screenshotSlot: 'Insert screenshot: Production dashboard showing Script tab, Shoot tab, and Pre-Vis',
       videoSlot:
-        'Insert 00:60 clip: Lock script → Express Pre-vis → Beat Frames → EXT chain (+7s) → send stream to Final Cut',
+        'Insert 00:60 clip: Lock script → Express Pre-vis per scene → Shoot Footage → Mixer → Streams',
     },
     {
-      id: 12,
-      title: 'Final Cut Assembly',
-      description: finalCut.description,
-      keyFeatures: [...finalCut.keyFeatures],
-      screenshotSlot: 'Insert screenshot: Final Cut assembly panel with per-scene stream pickers',
-      videoSlot: 'Insert 00:30 clip: Picking streams, previewing assembly, and exporting master',
-    },
-    {
-      id: 13,
-      title: 'Premiere Distribution',
-      description: premiere.description,
-      keyFeatures: [
-        ...premiere.keyFeatures,
-        'Screening Room folded in — /s/ review links before publish',
-      ],
-      screenshotSlot: 'Insert screenshot: Premiere dashboard with insights and publish wizard',
-      videoSlot:
-        'Insert 00:45 clip: Master import → screening /s/ link → insights → YouTube wizard or export bundle',
+      id: 14,
+      title: SCREENING_ROOM_COPY.title,
+      description: SCREENING_ROOM_COPY.description,
+      keyFeatures: [...SCREENING_ROOM_COPY.keyFeatures],
+      screenshotSlot: SCREENING_ROOM_COPY.screenshotSlot,
+      videoSlot: SCREENING_ROOM_COPY.videoSlot,
     },
     TRUST_SAFETY_WALKTHROUGH,
   ]

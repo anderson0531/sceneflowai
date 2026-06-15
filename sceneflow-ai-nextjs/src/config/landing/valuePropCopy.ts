@@ -159,7 +159,7 @@ export const ONE_TAKE_PIPELINE = {
     'Beat Frames — lock start/end composition with Reference Library continuity',
     'F2V per beat — generate video from approved frames, not blind prompts',
     'Continuous EXT chain — native +7s extension steps for long dialogue beats',
-    'Production Mixer — timing, audio, and stream export to Final Cut assembly',
+    'Production Mixer — timing, audio, and stream export to Screening Room',
   ],
 } as const
 
@@ -190,7 +190,7 @@ export const HOW_IT_WORKS_HEADER = {
   title: 'From concept to publish-ready video',
   titleAccent: 'One guided pipeline',
   subtitle:
-    'Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — pre-vis, animatic, video, and master MP4 tiers along the way.',
+    'Series is optional. The core path is Blueprint → Production → Screening Room — pre-vis, animatic, scene video, and master MP4 along the way.',
   tagline: 'Every step is expertly automated. Every step gives you full control.',
 } as const
 

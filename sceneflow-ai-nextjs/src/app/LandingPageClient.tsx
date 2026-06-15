@@ -20,7 +20,10 @@ const WhySceneFlowSection = dynamic(() => import('@/components/landing/WhySceneF
 const OneTakePipelineSection = dynamic(() => import('@/components/landing/OneTakePipelineSection').then(m => m.OneTakePipelineSection), { ssr: false })
 const ExtendedScenesSection = dynamic(() => import('@/components/landing/ExtendedScenesSection').then(m => m.ExtendedScenesSection), { ssr: false })
 const TrustSafeguardSection = dynamic(() => import('@/components/landing/TrustSafeguardSection').then(m => m.TrustSafeguardSection), { ssr: false })
-const HowItWorks = dynamic(() => import('./components/HowItWorks').then(m => m.HowItWorks), { ssr: false })
+const SimpleWalkthroughSection = dynamic(
+  () => import('@/components/landing/SimpleWalkthroughSection').then((m) => m.SimpleWalkthroughSection),
+  { ssr: false }
+)
 const UseCasesSection = dynamic(() => import('@/components/landing/UseCasesSection'), { ssr: false })
 const CoreCapabilitiesSection = dynamic(() => import('@/components/landing/CoreCapabilitiesSection').then(m => m.CoreCapabilitiesSection), { ssr: false })
 const PreVisEngineSection = dynamic(() => import('@/components/landing/PreVisEngineSection').then(m => m.PreVisEngineSection), { ssr: false })
@@ -52,7 +55,7 @@ export default function LandingPageClient() {
 
         <ToolStackSection />
 
-        <HowItWorks />
+        <SimpleWalkthroughSection />
 
         <WhySceneFlowSection />
 

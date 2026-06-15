@@ -228,7 +228,7 @@
       "Beat Frames — lock start/end composition with Reference Library continuity",
       "F2V per beat — generate video from approved frames, not blind prompts",
       "Continuous EXT chain — native +7s extension steps for long dialogue beats",
-      "Production Mixer — timing, audio, and stream export to Final Cut assembly"
+      "Production Mixer — timing, audio, and stream export to Screening Room"
     ],
     "footerLine": "Fewer slot-machine regenerations — approve visuals before final video spend"
   },
@@ -578,7 +578,7 @@
   "howItWorks": {
     "title": "From concept to publish-ready video",
     "titleAccent": "One guided pipeline",
-    "subtitle": "Series is optional. The core path is Blueprint → Production → Final Cut → Premiere — pre-vis, animatic, video, and master MP4 tiers along the way.",
+    "subtitle": "Series is optional. The core path is Blueprint → Production → Screening Room — pre-vis, animatic, scene video, and master MP4 along the way.",
     "tagline": "Every step is expertly automated. Every step gives you full control.",
     "optionalBadge": "Optional",
     "optionalSuffix": " (optional)",
@@ -624,59 +624,118 @@
       {
         "id": "production",
         "stepLabel": "Production",
-        "subtitle": "Script to Streams",
-        "description": "Script and Action tabs guide Foundation → Pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "subtitle": "Script to Screening Room",
+        "description": "Script and Shoot tabs guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
         "keySteps": [
           "Lock script, voices, and scene audio",
-          "Express Pre-vis — gallery and share for review",
-          "Beat Frames → Director Console → Render Stream",
-          "Send finished streams to Final Cut"
+          "Pre-Vis scene by scene — gallery and share for review",
+          "Shoot tab — Footage → Mixer → Streams per scene",
+          "Screening Room — preview, assemble master, publish"
         ],
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express Pre-vis — direction and frames in minutes; gallery and share",
-          "Beat Frames and continuous EXT chains — long dialogue via native +7s extensions",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
+          "Foundation — script, voices, scene audio, Audience Resonance",
+          "Pre-Vis — direction, audio, and beat frames per scene with share links",
+          "Shoot — Footage, Mixer, and Streams without leaving Production",
+          "Screening Room — scene preview, master assembly, screenings, and YouTube publish"
         ],
         "optional": false
       },
       {
-        "id": "final-cut",
-        "stepLabel": "Final Cut",
-        "subtitle": "Stream Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "id": "screening-room",
+        "stepLabel": "Screening Room",
+        "subtitle": "Preview · Assemble · Publish",
+        "description": "One finishing surface inside Production: preview scene videos, stitch streams into a master MP4, run shareable screenings with analytics, and publish to YouTube or export bundles.",
         "keySteps": [
-          "Pick streams per scene — preset or custom mix",
-          "Preview full program in script order",
-          "Export one master MP4 for Premiere"
-        ],
-        "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
-        ],
-        "optional": false
-      },
-      {
-        "id": "premiere",
-        "stepLabel": "Premiere",
-        "subtitle": "Distribution Hub",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
-        "keySteps": [
+          "Preview rendered scene streams in sequence",
+          "Assemble master — pick Animatic or Video per scene",
           "Create screening and share /s/ link",
-          "Review Scoring, engagement, and visual insights",
-          "YouTube wizard or export bundle"
+          "Review insights and publish to YouTube"
         ],
         "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans"
+          "Scene-video playback — mirrors Pre-Vis player UX with rendered streams",
+          "Assembly presets — All Video, Hybrid, or custom per-scene mix",
+          "Shareable screenings — /s/ links with scoring and structured feedback",
+          "YouTube wizard, short-form exports, and distribution bundles"
         ],
         "optional": false
       }
     ]
+  },
+  "simpleWalkthrough": {
+    "badge": "How it works",
+    "title": "From concept to publish-ready video",
+    "titleAccent": "in seven guided steps",
+    "subtitle": "Start with an idea or script, optimize with Blueprint and Audience Resonance, visualize with Pre-Vis, shoot scene video, test in Screening Room, and publish — all in one studio.",
+    "tagline": "Every step is expertly automated. Every step gives you full control.",
+    "showDetails": "Show details",
+    "hideDetails": "Hide details",
+    "readyTitle": "Ready to test the full pipeline?",
+    "explorerCta": "Start with Explorer — $9",
+    "steps": [
+      {
+        "id": "concept",
+        "stepLabel": "Start with your Concept or Existing Script",
+        "shortDescription": "Begin with a natural-language concept or import your screenplay — Fountain, Final Draft, or paste your script.",
+        "detailedDescription": "SceneFlow accepts ideas in plain language or structured script formats. The AI helps expand concepts into treatments and can import existing screenplays so you never start from a blank page.",
+        "media": "screenshot",
+        "screenshotSlot": "Insert screenshot: New project concept input or script import dialog"
+      },
+      {
+        "id": "blueprint",
+        "stepLabel": "Optimize your concept with Blueprint",
+        "shortDescription": "Transform ideas into a structured treatment — logline, beats, characters, and tone — before heavy rendering.",
+        "detailedDescription": "Blueprint automatically crafts a comprehensive story outline. Refine character arcs, plot beats, and narrative tone with intelligent suggestions. Collaborator share links let stakeholders review before Production.",
+        "media": "video"
+      },
+      {
+        "id": "audience-resonance",
+        "stepLabel": "Optimize your script with Audience Resonance",
+        "shortDescription": "Score your script for target-audience fit and apply scene-by-scene recommendations with one-click fixes.",
+        "detailedDescription": "Audience Resonance (AR) critically analyzes your script against the audience you define. Get section-level scores, actionable recommendations, and Guided Edits — auto-apply fixes per scene or make global script changes from the AR dialog.",
+        "media": "video"
+      },
+      {
+        "id": "pre-vis",
+        "stepLabel": "Visualize and test with Pre-Visualization",
+        "shortDescription": "Generate dialogue audio and beat frames scene by scene. Share animatics for approval before final video spend.",
+        "detailedDescription": "Pre-Vis Studio generates direction, audio, and beat frames per scene — checkpoints that minimize costly redos when characters or tone change. Share the player for collaboration; the full animatic can be your final deliverable for many projects.",
+        "media": "previs-player"
+      },
+      {
+        "id": "shoot",
+        "stepLabel": "Shoot your production",
+        "shortDescription": "Generate beat-level video, mix audio and overlays, and export full scene streams — Footage, Mixer, and Streams in one Shoot tab.",
+        "detailedDescription": "The Shoot tab in Production is your on-set: generate video from approved Pre-Vis frames (Footage), fine-tune timing, watermarks, and audio in the Mixer, then render complete scene MP4s in Streams.",
+        "media": "video",
+        "subPoints": [
+          "Footage — beat-by-beat video generation from Pre-Vis start and end frames",
+          "Mixer — watermark, text overlay, and audio timing per scene",
+          "Streams — full rendered scene video (all beats) ready for Screening Room"
+        ]
+      },
+      {
+        "id": "screening-room",
+        "stepLabel": "Test your production with Screening Room",
+        "shortDescription": "Preview scene videos in sequence, assemble a master MP4, and run shareable screenings with structured feedback.",
+        "detailedDescription": "Screening Room mirrors the Pre-Vis player UX but plays rendered scene streams. Pick Animatic or Video per scene, stitch a master, share /s/ review links, and triage timestamped feedback before publish.",
+        "media": "video"
+      },
+      {
+        "id": "publish",
+        "stepLabel": "Publish",
+        "shortDescription": "Distribute your master to YouTube, export short-form cuts, and track audience insights from one finishing surface.",
+        "detailedDescription": "From Screening Room, run the YouTube publishing wizard, create social short-form exports, and download distribution bundles. Analytics and reviewer feedback stay in one place — no handoff to separate tools.",
+        "media": "video"
+      }
+    ],
+    "ui": {
+      "screenshot": "Screenshot",
+      "video": "Video",
+      "expandImage": "Expand Image",
+      "closePreview": "Close Preview",
+      "openScreenshot": "Open screenshot",
+      "openFeatureVideo": "Open feature video"
+    }
   },
   "useCases": {
     "badge": "Use Case Examples",
@@ -1106,11 +1165,11 @@
     "timeline": "Timeline"
   },
   "platformWalkthrough": {
-    "badge": "Guided Tour",
-    "title": "Platform Walkthrough",
-    "subtitle": "Nine guided clips covering the full SceneFlow Studio workflow — from series planning through trust, safety, and publish-ready output.",
-    "subheading": "Nine guided clips — full pipeline in under 15 minutes",
-    "chapterHint": "Start with planning and continuity, then expand to produce and publish.",
+    "badge": "Under the hood",
+    "title": "Detailed Platform Walkthrough",
+    "subtitle": "Expand for guided clips on series planning, reference continuity, production depth, Screening Room, and trust & safety — for technical reviewers and deeper dives.",
+    "subheading": "Under the hood — guided clips for technical reviewers",
+    "chapterHint": "Expand for series planning, reference continuity, production depth, and trust & safety.",
     "expandChapter": "Show features",
     "collapseChapter": "Hide features",
     "underTheHoodLabel": "Under the hood",
@@ -1122,7 +1181,7 @@
       },
       {
         "id": "produce-publish",
-        "label": "Produce and publish — beats to master MP4",
+        "label": "Produce and publish — Shoot tab to Screening Room",
         "defaultExpanded": false
       }
     ],
@@ -1137,19 +1196,19 @@
         "Beat Frames lock composition — Reference Library continuity",
         "F2V per beat — generate video from approved frames",
         "Continuous EXT chains — native +7s steps for long dialogue within a beat",
-        "Mixer timing and streams — export to Final Cut assembly"
+        "Mixer timing and streams — open Screening Room to assemble and publish"
       ],
       "screenshotSlot": "Insert screenshot: Beat Frames and pre-vis approval before video generation",
       "videoSlot": "Insert 00:30 clip: Approving beats, locking frames, then generating F2V clips"
     },
     "screeningRoom": {
-      "title": "Audience Review and Analytics",
-      "description": "Private /s/ share links for stakeholders — manual scores, structured feedback, and optional engagement analytics with viewer consent. Used in Premiere before publish and for Production pre-vis preview.",
+      "title": "Screening Room",
+      "description": "Preview scene videos, assemble a master, and publish — all from Production. Private /s/ share links for stakeholders with structured feedback and optional engagement analytics.",
       "keyFeatures": [
-        "Private review sessions — secure /s/ share links for stakeholders",
-        "Structured audience feedback — ratings and open items",
-        "Optional engagement analytics — with viewer consent before capture",
-        "Iterate from real data — refine Blueprint and script from reviewer insights"
+        "Scene-video preview — play rendered streams in sequence",
+        "Master assembly — pick Animatic or Video per scene and render one MP4",
+        "Shareable screenings — secure /s/ links with scoring and feedback triage",
+        "Publish — YouTube wizard, short-form exports, and distribution bundles"
       ],
       "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
       "screenshotUrl": "https://xxavfkdhdebrqida.public.blob.vercel-storage.com/Screenshot%202026-05-19%20at%2018.29.48.png",
@@ -1171,13 +1230,13 @@
         "title": "Platform Overview",
         "description": "One studio from idea to publish-ready video. Same pipeline for training, podcasts, news, and cinematic series — approve pre-vis before final render spend.",
         "keyFeatures": [
-          "Series → Blueprint → Production → Final Cut → Premiere",
+          "Series → Blueprint → Production → Screening Room",
           "Beat-first approval — pre-vis and Beat Frames before F2V",
           "Google Vertex AI generation with native Veo extension chains",
           "Trust & Safety guardrails and signed provenance on delivery"
         ],
-        "screenshotSlot": "Insert screenshot: Landing hero + How It Works pipeline strip",
-        "videoSlot": "Insert 01:30 clip: Hero → new project → Blueprint resonance flash → Production beat-first → Final Cut → Premiere → Trust & Safety"
+        "screenshotSlot": "Insert screenshot: Landing hero + simplified walkthrough strip",
+        "videoSlot": "Insert 01:30 clip: Hero → new project → Blueprint → Production Shoot → Screening Room → Publish"
       },
       {
         "id": "9",
@@ -1234,42 +1293,28 @@
       {
         "id": "11",
         "title": "Production Automation",
-        "description": "Script and Action tabs guide Foundation → Pre-vis → Production → Final Cut. Express Pre-vis, Beat Frames, Mixer, and MP4 streams — no tool switching.",
+        "description": "Script and Shoot tabs guide Foundation → Pre-Vis → Footage → Mixer → Streams. Scene-by-scene checkpoints minimize redos; Screening Room handles preview, assembly, and publishing.",
         "keyFeatures": [
-          "Foundation — script, voices, scene audio, lock script",
-          "Express Pre-vis — direction and frames in minutes; gallery and share",
-          "Beat Frames and continuous EXT chains — long dialogue via native +7s extensions",
-          "Production Streams — review outputs, re-render stale beats, send to Final Cut"
+          "Foundation — script, voices, scene audio, Audience Resonance",
+          "Pre-Vis — direction, audio, and beat frames per scene with share links",
+          "Shoot — Footage, Mixer, and Streams without leaving Production",
+          "Screening Room — scene preview, master assembly, screenings, and YouTube publish"
         ],
-        "screenshotSlot": "Insert screenshot: Production dashboard showing script, Beat Frames, and Mixer",
-        "videoSlot": "Insert 00:60 clip: Lock script → Express Pre-vis → Beat Frames → EXT chain (+7s) → send stream to Final Cut"
+        "screenshotSlot": "Insert screenshot: Production dashboard showing Script tab, Shoot tab, and Pre-Vis",
+        "videoSlot": "Insert 00:60 clip: Lock script → Express Pre-vis per scene → Shoot Footage → Mixer → Streams"
       },
       {
-        "id": "12",
-        "title": "Final Cut Assembly",
-        "description": "Stitch finished Production streams into one master MP4. Pick Animatic or Video and language per scene — no timeline editing; creative changes stay in Production Mixer.",
+        "id": "14",
+        "title": "Screening Room",
+        "description": "Preview scene videos, assemble a master, and publish — all from Production. Private /s/ share links for stakeholders with structured feedback and optional engagement analytics.",
         "keyFeatures": [
-          "Per-scene stream pick — Animatic, Video, language, version",
-          "Assembly presets — All Video, Hybrid, Custom mix",
-          "No timeline editing — creative changes stay in Production Mixer",
-          "One-click master export — stitched MP4 for Premiere"
+          "Scene-video preview — play rendered streams in sequence",
+          "Master assembly — pick Animatic or Video per scene and render one MP4",
+          "Shareable screenings — secure /s/ links with scoring and feedback triage",
+          "Publish — YouTube wizard, short-form exports, and distribution bundles"
         ],
-        "screenshotSlot": "Insert screenshot: Final Cut assembly panel with per-scene stream pickers",
-        "videoSlot": "Insert 00:30 clip: Picking streams, previewing assembly, and exporting master"
-      },
-      {
-        "id": "13",
-        "title": "Premiere Distribution",
-        "description": "Screen your master with audience analytics, then publish to YouTube with localized metadata or export bundles for Shorts, Reels, and TikTok.",
-        "keyFeatures": [
-          "Shareable Screening Room — /s/ links with scoring and optional engagement analytics (viewer consent)",
-          "Insights dashboard — Scoring, Biometric, and Visual tabs",
-          "YouTube wizard — thumbnail, localized title/description, SceneFlow CTA",
-          "Export bundles and vertical short-form clip plans",
-          "Screening Room folded in — /s/ review links before publish"
-        ],
-        "screenshotSlot": "Insert screenshot: Premiere dashboard with insights and publish wizard",
-        "videoSlot": "Insert 00:45 clip: Master import → screening /s/ link → insights → YouTube wizard or export bundle"
+        "screenshotSlot": "Insert screenshot: Screening Room analytics and reviewer feedback panel",
+        "videoSlot": "Insert 00:30 clip: Hosting a review session and gathering engagement data"
       },
       {
         "id": "16",
@@ -1674,7 +1719,7 @@
     "items": [
       {
         "question": "How does the SceneFlow workflow run from idea to publish-ready video?",
-        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, pre-vis, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles."
+        "answer": "SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Screening Room. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, pre-vis, beat video, and rendered scene streams in the Shoot tab. Screening Room previews scene videos, assembles a master MP4, runs shareable screenings, and publishes to YouTube or export bundles."
       },
       {
         "question": "How is SceneFlow different from Gemini Studio or Google Flow?",
@@ -1682,7 +1727,7 @@
       },
       {
         "question": "Can I edit AI-generated scripts, visuals, and audio?",
-        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production."
+        "answer": "Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Master assembly in Screening Room only stitches finished streams — creative changes stay upstream in Production."
       },
       {
         "question": "How does Target Audience Resonance work now?",
@@ -1693,8 +1738,8 @@
         "answer": "Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences."
       },
       {
-        "question": "What does Premiere do if Screening Room is the review phase?",
-        "answer": "Screening Room is the review surface inside Premiere — and for Production pre-vis preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles."
+        "question": "What does Screening Room do?",
+        "answer": "Screening Room is the finishing surface inside Production: preview rendered scene streams, assemble a master MP4, share /s/ review links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review insights, then publish via YouTube wizard or export bundles."
       },
       {
         "question": "Do I need technical or editing experience?",
@@ -1736,7 +1781,7 @@
     "cta": "Launch Your Studio for $9"
   },
   "footer": {
-    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.",
+    "description": "End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Screening Room.",
     "product": "Product",
     "resources": "Resources",
     "legal": "Legal",

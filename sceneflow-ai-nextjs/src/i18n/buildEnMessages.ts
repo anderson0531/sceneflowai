@@ -48,13 +48,18 @@ import {
 import { PRICING_LANDING_COPY } from '@/config/landing/pricingLandingCopy'
 import { PRE_VIS_ENGINE_COPY } from '@/config/landing/preVisEngineCopy'
 import { LANDING_SECTION_COLLAPSE_COPY } from '@/config/landing/landingSectionCollapseCopy'
+import {
+  SIMPLE_WALKTHROUGH_HEADER,
+  SIMPLE_WALKTHROUGH_STEPS,
+  SIMPLE_WALKTHROUGH_UI,
+} from '@/config/landing/simpleWalkthroughCopy'
 import { getLandingPlans } from '@/lib/billing/tierCatalog'
 
 const FAQ_ITEMS = [
   {
     question: 'How does the SceneFlow workflow run from idea to publish-ready video?',
     answer:
-      'SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Final Cut → Premiere. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, pre-vis, beat video, and rendered scene streams. Final Cut assembles selected streams into one master MP4 — not a timeline editor. Premiere handles screenings, analytics insights, YouTube publish, and export bundles.',
+      'SceneFlow uses a structured workflow: Series (optional) → Blueprint → Production → Screening Room. Blueprint defines story structure and target audience with Audience Resonance. Production generates script, pre-vis, beat video, and rendered scene streams in the Shoot tab. Screening Room previews scene videos, assembles a master MP4, runs shareable screenings, and publishes to YouTube or export bundles.',
   },
   {
     question: 'How is SceneFlow different from Gemini Studio or Google Flow?',
@@ -64,7 +69,7 @@ const FAQ_ITEMS = [
   {
     question: 'Can I edit AI-generated scripts, visuals, and audio?',
     answer:
-      'Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Final Cut only stitches finished streams — creative changes stay upstream in Production.',
+      'Yes. All generated output remains editable. You can rewrite scripts, adjust scene direction, regenerate specific beats, tune voiceover, and refine timing in the Production Mixer. Master assembly in Screening Room only stitches finished streams — creative changes stay upstream in Production.',
   },
   {
     question: 'How does Target Audience Resonance work now?',
@@ -77,9 +82,9 @@ const FAQ_ITEMS = [
       'Yes. You can generate and localize videos in 70+ languages with aligned timing workflows. Teams typically create one master cut, then produce language variants for global buyers, customers, or regional audiences.',
   },
   {
-    question: 'What does Premiere do if Screening Room is the review phase?',
+    question: 'What does Screening Room do?',
     answer:
-      'Screening Room is the review surface inside Premiere — and for Production pre-vis preview. Share /s/ links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review Scoring and Visual insights, then publish via YouTube wizard or export bundles.',
+      'Screening Room is the finishing surface inside Production: preview rendered scene streams, assemble a master MP4, share /s/ review links, collect stakeholder feedback and optional engagement analytics (with viewer consent), review insights, then publish via YouTube wizard or export bundles.',
   },
   {
     question: 'Do I need technical or editing experience?',
@@ -227,6 +232,19 @@ export function buildEnMessages() {
         optional: p.optional ?? false,
       })),
     },
+    simpleWalkthrough: {
+      ...SIMPLE_WALKTHROUGH_HEADER,
+      steps: SIMPLE_WALKTHROUGH_STEPS.map((step) => ({
+        id: step.id,
+        stepLabel: step.stepLabel,
+        shortDescription: step.shortDescription,
+        detailedDescription: step.detailedDescription,
+        media: step.media,
+        ...(step.subPoints ? { subPoints: [...step.subPoints] } : {}),
+        ...(step.screenshotSlot ? { screenshotSlot: step.screenshotSlot } : {}),
+      })),
+      ui: SIMPLE_WALKTHROUGH_UI,
+    },
     useCases: {
       badge: 'Use Case Examples',
       title: 'Whatever Video You Can Imagine,',
@@ -262,10 +280,10 @@ export function buildEnMessages() {
       timeline: 'Timeline',
     },
     platformWalkthrough: {
-      badge: 'Guided Tour',
-      title: 'Platform Walkthrough',
+      badge: 'Under the hood',
+      title: 'Detailed Platform Walkthrough',
       subtitle:
-        'Nine guided clips covering the full SceneFlow Studio workflow — from series planning through trust, safety, and publish-ready output.',
+        'Expand for guided clips on series planning, reference continuity, production depth, Screening Room, and trust & safety — for technical reviewers and deeper dives.',
       subheading: FEATURE_STORYBOARD_SECTION.subheading,
       chapterHint: FEATURE_STORYBOARD_SECTION.chapterHint,
       expandChapter: FEATURE_STORYBOARD_SECTION.expandChapter,
@@ -329,7 +347,7 @@ export function buildEnMessages() {
     finalCta: FINAL_CTA_COPY,
     footer: {
       description:
-        'End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Final Cut → Premiere.',
+        'End-to-end automated video production — from concept to publish-ready master. One guided studio: Blueprint → Production → Screening Room.',
       product: 'Product',
       resources: 'Resources',
       legal: 'Legal',
