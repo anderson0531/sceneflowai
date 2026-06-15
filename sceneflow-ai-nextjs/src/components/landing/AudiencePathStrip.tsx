@@ -12,6 +12,8 @@ import {
   Settings2,
   Maximize2,
   X,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
@@ -99,6 +101,7 @@ export function AudiencePathStrip() {
   const t = useTranslations('audiencePaths')
   const [mode, setMode] = useState<AudienceMode>('automate')
   const [expandedImage, setExpandedImage] = useState<string | null>(null)
+  const [expandedPaths, setExpandedPaths] = useState<Record<string, boolean>>({})
   const paths = t.raw('paths') as Array<{
     id: string
     hash: string
@@ -111,6 +114,11 @@ export function AudiencePathStrip() {
     AudienceMode,
     { label: string; description: string }
   >
+
+  const isPathExpanded = (id: string) => expandedPaths[id] === true
+  const togglePathDetails = (id: string) => {
+    setExpandedPaths((prev) => ({ ...prev, [id]: !prev[id] }))
+  }
 
   return (
     <section className="py-10 bg-slate-950 border-b border-white/5">
@@ -158,6 +166,7 @@ export function AudiencePathStrip() {
             const Icon = ICONS[path.icon] ?? Video
             const thumbnail =
               AUDIENCE_PATH_THUMBNAILS[path.id as UseCasePersonaId] ?? undefined
+            const detailsOpen = isPathExpanded(path.id)
             return (
               <motion.div
                 key={path.id}
@@ -175,11 +184,7 @@ export function AudiencePathStrip() {
                     onExpand={setExpandedImage}
                   />
                 ) : null}
-                <motion.a
-                  href={`#${path.hash}`}
-                  onClick={(e) => handlePathClick(path.hash, e)}
-                  className="flex flex-col flex-1 p-4"
-                >
+                <div className="flex flex-col flex-1 p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/20 border border-white/10 flex items-center justify-center">
                       <Icon className="w-4 h-4 text-purple-300" />
@@ -187,24 +192,63 @@ export function AudiencePathStrip() {
                     <span className="text-base font-semibold text-white">{path.label}</span>
                   </div>
                   <p className="text-sm text-gray-400 leading-relaxed">{path.outcome}</p>
-                  <ul
-                    className="mt-3 flex flex-wrap gap-2"
-                    aria-label={t('examplesFor', { label: path.label })}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      togglePathDetails(path.id)
+                    }}
+                    aria-expanded={detailsOpen}
+                    aria-controls={`path-details-${path.id}`}
+                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors text-left"
                   >
-                    {path.useCases.map((useCase) => (
-                      <li
-                        key={useCase}
-                        className="px-2.5 py-1 rounded-md text-xs sm:text-sm leading-snug text-gray-300 bg-slate-800/80 border border-white/10"
+                    {detailsOpen ? (
+                      <>
+                        {t('hideDetails')}
+                        <ChevronUp className="h-4 w-4 shrink-0" />
+                      </>
+                    ) : (
+                      <>
+                        {t('showDetails')}
+                        <ChevronDown className="h-4 w-4 shrink-0" />
+                      </>
+                    )}
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {detailsOpen && (
+                      <motion.div
+                        id={`path-details-${path.id}`}
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
                       >
-                        {useCase}
-                      </li>
-                    ))}
-                  </ul>
-                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-purple-400 group-hover:text-purple-300">
+                        <ul
+                          className="mt-3 flex flex-wrap gap-2"
+                          aria-label={t('examplesFor', { label: path.label })}
+                        >
+                          {path.useCases.map((useCase) => (
+                            <li
+                              key={useCase}
+                              className="px-2.5 py-1 rounded-md text-xs sm:text-sm leading-snug text-gray-300 bg-slate-800/80 border border-white/10"
+                            >
+                              {useCase}
+                            </li>
+                          ))}
+                        </ul>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <motion.a
+                    href={`#${path.hash}`}
+                    onClick={(e) => handlePathClick(path.hash, e)}
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-purple-400 group-hover:text-purple-300"
+                  >
                     {t('seeExamples')}
                     <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                  </span>
-                </motion.a>
+                  </motion.a>
+                </div>
               </motion.div>
             )
           })}

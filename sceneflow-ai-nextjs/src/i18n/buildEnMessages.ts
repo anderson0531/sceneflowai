@@ -181,6 +181,8 @@ export function buildEnMessages() {
     },
     audiencePaths: {
       prompt: 'Who are you? Pick your path',
+      showDetails: 'Show details',
+      hideDetails: 'Hide details',
       seeExamples: 'See examples',
       examplesFor: 'Examples for {label}:',
       andMore: ', and more.',
