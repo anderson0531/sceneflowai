@@ -20,7 +20,6 @@ import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { ExpandedImageModal } from '@/components/landing/ExpandedImageModal'
 import {
-  AUDIENCE_PATH_EXAMPLE_NARRATION,
   AUDIENCE_PATH_NARRATION,
   AUDIENCE_PATH_THUMBNAILS,
   getAudiencePathThumbnailStyle,
@@ -177,8 +176,7 @@ type PathExample = {
 }
 
 type ExpandedPanels = {
-  summary: boolean
-  example: boolean
+  details: boolean
 }
 
 function CollapsiblePanel({
@@ -229,14 +227,14 @@ export function AudiencePathStrip() {
   >
 
   const getPanels = (id: string): ExpandedPanels =>
-    expandedPanels[id] ?? { summary: false, example: false }
+    expandedPanels[id] ?? { details: false }
 
-  const togglePanel = (id: string, panel: keyof ExpandedPanels) => {
+  const toggleDetails = (id: string) => {
     setExpandedPanels((prev) => {
-      const current = prev[id] ?? { summary: false, example: false }
+      const current = prev[id] ?? { details: false }
       return {
         ...prev,
-        [id]: { ...current, [panel]: !current[panel] },
+        [id]: { details: !current.details },
       }
     })
   }
@@ -288,8 +286,7 @@ export function AudiencePathStrip() {
             const thumbnail =
               AUDIENCE_PATH_THUMBNAILS[path.id as UseCasePersonaId] ?? undefined
             const panels = getPanels(path.id)
-            const summaryOpen = panels.summary
-            const exampleOpen = panels.example
+            const detailsOpen = panels.details
             return (
               <motion.div
                 key={path.id}
@@ -323,68 +320,31 @@ export function AudiencePathStrip() {
                   </div>
                   <p className="text-sm text-gray-400 leading-relaxed">{path.outcome}</p>
                   <div className="mt-3 flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          togglePanel(path.id, 'summary')
-                        }}
-                        aria-expanded={summaryOpen}
-                        aria-controls={`path-summary-${path.id}`}
-                        className="inline-flex items-center gap-1.5 text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors text-left"
-                      >
-                        {summaryOpen ? (
-                          <>
-                            {t('hideSummary')}
-                            <ChevronUp className="h-4 w-4 shrink-0" />
-                          </>
-                        ) : (
-                          <>
-                            {t('showSummary')}
-                            <ChevronDown className="h-4 w-4 shrink-0" />
-                          </>
-                        )}
-                      </button>
-                    </div>
-                    <CollapsiblePanel id={`path-summary-${path.id}`} isOpen={summaryOpen}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleDetails(path.id)
+                      }}
+                      aria-expanded={detailsOpen}
+                      aria-controls={`path-details-${path.id}`}
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors text-left"
+                    >
+                      {detailsOpen ? (
+                        <>
+                          {t('hideDetails')}
+                          <ChevronUp className="h-4 w-4 shrink-0" />
+                        </>
+                      ) : (
+                        <>
+                          {t('showDetails')}
+                          <ChevronDown className="h-4 w-4 shrink-0" />
+                        </>
+                      )}
+                    </button>
+                    <CollapsiblePanel id={`path-details-${path.id}`} isOpen={detailsOpen}>
                       <p className="text-sm leading-relaxed text-gray-300">{path.narrative}</p>
-                    </CollapsiblePanel>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          togglePanel(path.id, 'example')
-                        }}
-                        aria-expanded={exampleOpen}
-                        aria-controls={`path-example-${path.id}`}
-                        className="inline-flex items-center gap-1.5 text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors text-left"
-                      >
-                        {exampleOpen ? (
-                          <>
-                            {t('hideExample')}
-                            <ChevronUp className="h-4 w-4 shrink-0" />
-                          </>
-                        ) : (
-                          <>
-                            {t('showExample')}
-                            <ChevronDown className="h-4 w-4 shrink-0" />
-                          </>
-                        )}
-                      </button>
-                      <NarrationButton
-                        src={
-                          AUDIENCE_PATH_EXAMPLE_NARRATION[path.id as UseCasePersonaId] || undefined
-                        }
-                        playLabel={t('playNarration')}
-                        pauseLabel={t('pauseNarration')}
-                        comingSoonLabel={t('narrationComingSoon')}
-                      />
-                    </div>
-                    <CollapsiblePanel id={`path-example-${path.id}`} isOpen={exampleOpen}>
-                      <div className="space-y-3 text-sm leading-relaxed text-gray-300">
+                      <div className="mt-4 space-y-3 text-sm leading-relaxed text-gray-300">
                         <div>
                           <p className="font-semibold text-red-300/90">{path.example.challengeTitle}</p>
                           <p className="mt-1">{path.example.challengeDescription}</p>
