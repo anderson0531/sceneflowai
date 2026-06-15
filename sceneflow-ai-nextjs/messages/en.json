@@ -108,6 +108,9 @@
     "playNarration": "Play narration",
     "pauseNarration": "Pause narration",
     "narrationComingSoon": "Narration coming soon",
+    "hearStory": "Hear the Story",
+    "pauseStory": "Pause story",
+    "storyComingSoon": "Story coming soon",
     "modes": {
       "automate": {
         "label": "Automate it",

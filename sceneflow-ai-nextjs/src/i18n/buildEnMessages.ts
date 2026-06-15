@@ -120,6 +120,9 @@ export function buildEnMessages() {
       playNarration: 'Play narration',
       pauseNarration: 'Pause narration',
       narrationComingSoon: 'Narration coming soon',
+      hearStory: 'Hear the Story',
+      pauseStory: 'Pause story',
+      storyComingSoon: 'Story coming soon',
       modes: AUDIENCE_PATH_MODES,
       paths: AUDIENCE_PATHS.map((p) => {
         const persona = USE_CASE_PERSONAS[p.id as keyof typeof USE_CASE_PERSONAS]

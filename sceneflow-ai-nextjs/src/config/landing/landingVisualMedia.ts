@@ -89,6 +89,15 @@ export const AUDIENCE_PATH_NARRATION = {
   filmProduction: '/audio/role-narration/filmProduction.mp3',
 } as const satisfies Record<'creator' | 'team' | 'productionShop' | 'agency' | 'filmProduction', string>
 
+/** Cinematic multi-character "Hear the Story" audio (AudiencePathStrip story buttons) */
+export const AUDIENCE_PATH_STORY = {
+  creator: '/audio/role-story/creator.mp3',
+  team: '/audio/role-story/team.mp3',
+  productionShop: '/audio/role-story/productionShop.mp3',
+  agency: '/audio/role-story/agency.mp3',
+  filmProduction: '/audio/role-story/filmProduction.mp3',
+} as const satisfies Record<'creator' | 'team' | 'productionShop' | 'agency' | 'filmProduction', string>
+
 /** Landing section narration audio (section heading play buttons) */
 export const SECTION_NARRATION_AUDIO = {
   'creative-range': '/audio/section-narration/creative-range.mp3',

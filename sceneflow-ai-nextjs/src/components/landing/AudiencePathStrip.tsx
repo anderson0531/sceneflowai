@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils'
 import { ExpandedImageModal } from '@/components/landing/ExpandedImageModal'
 import {
   AUDIENCE_PATH_NARRATION,
+  AUDIENCE_PATH_STORY,
   AUDIENCE_PATH_THUMBNAILS,
   getAudiencePathThumbnailStyle,
   type ResolvedAudiencePathThumbnailStyle,
@@ -162,6 +163,70 @@ function NarrationButton({
         aria-label={isPlaying ? pauseLabel : playLabel}
       >
         {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+      </button>
+    </>
+  )
+}
+
+function StoryButton({
+  src,
+  hearLabel,
+  pauseLabel,
+  comingSoonLabel,
+}: {
+  src: string | undefined
+  hearLabel: string
+  pauseLabel: string
+  comingSoonLabel: string
+}) {
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  const togglePlayback = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio || !src) return
+    if (isPlaying) {
+      audio.pause()
+      setIsPlaying(false)
+    } else {
+      void audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false))
+    }
+  }, [isPlaying, src])
+
+  if (!src) {
+    return (
+      <button
+        type="button"
+        disabled
+        className="inline-flex items-center gap-2 self-start rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-gray-500 cursor-not-allowed opacity-50"
+        aria-label={comingSoonLabel}
+      >
+        <Clapperboard className="h-3.5 w-3.5" />
+        {comingSoonLabel}
+      </button>
+    )
+  }
+
+  return (
+    <>
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="none"
+        onEnded={() => setIsPlaying(false)}
+        onPause={() => setIsPlaying(false)}
+      />
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          togglePlayback()
+        }}
+        className="inline-flex items-center gap-2 self-start rounded-full border border-purple-500/40 bg-gradient-to-r from-purple-500/15 to-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-purple-200 transition-colors hover:border-purple-400/60 hover:from-purple-500/25 hover:to-cyan-500/25 hover:text-white"
+        aria-label={isPlaying ? pauseLabel : hearLabel}
+      >
+        {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+        {isPlaying ? pauseLabel : hearLabel}
       </button>
     </>
   )
@@ -319,6 +384,14 @@ export function AudiencePathStrip() {
                     />
                   </div>
                   <p className="text-sm text-gray-400 leading-relaxed">{path.outcome}</p>
+                  <div className="mt-3">
+                    <StoryButton
+                      src={AUDIENCE_PATH_STORY[path.id as UseCasePersonaId] || undefined}
+                      hearLabel={t('hearStory')}
+                      pauseLabel={t('pauseStory')}
+                      comingSoonLabel={t('storyComingSoon')}
+                    />
+                  </div>
                   <div className="mt-3 flex flex-col gap-2">
                     <button
                       type="button"

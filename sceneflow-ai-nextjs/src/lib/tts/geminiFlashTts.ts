@@ -5,7 +5,7 @@
 
 import { getVertexAIAuthToken } from '@/lib/vertexai/client'
 import { finalizeTextForGoogleTts } from '@/lib/tts/textOptimizer'
-import { buildGeminiTtsPrompt } from '@/lib/tts/geminiTtsPrompt'
+import { buildGeminiTtsPrompt, type GeminiTtsAudioType } from '@/lib/tts/geminiTtsPrompt'
 import {
   DEFAULT_BLUEPRINT_GEMINI_VOICE,
   DEFAULT_GEMINI_TTS_MODEL,
@@ -25,6 +25,10 @@ export type SynthesizeGeminiFlashMp3Params = {
   /** e.g. gemini-Kore */
   voiceId: string
   directorNotes?: string
+  /** Prompt style for the TTS performance. Defaults to 'narration'. */
+  audioType?: GeminiTtsAudioType
+  /** Per-line acting cues woven into the TTS prompt. */
+  deliveryCues?: string[]
   languageCode?: string
   modelName?: string
   timeoutMs?: number
@@ -81,8 +85,9 @@ export async function synthesizeGeminiFlashMp3(
     input: {
       text: sanitizedText,
       prompt: buildGeminiTtsPrompt({
-        audioType: 'narration',
+        audioType: params.audioType ?? 'narration',
         voicePrompt: params.directorNotes,
+        deliveryCues: params.deliveryCues,
       }),
     },
     voice: {
