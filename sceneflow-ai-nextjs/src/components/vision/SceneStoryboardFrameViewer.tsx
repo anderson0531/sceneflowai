@@ -74,6 +74,8 @@ export interface SceneStoryboardFrameViewerProps {
   onDeleteStoryboardFrame?: (frameId: string) => void | Promise<void>
   onGenerateCustomFrame?: (frameId: string) => Promise<void>
   onUploadCustomFrame?: (frameId: string, file: File) => void
+  /** When true, skip accordion header — used inside Script tab Pre-Vis panel */
+  hideOuterChrome?: boolean
 }
 
 interface StoryboardSlotHandlers {
@@ -316,6 +318,7 @@ export function SceneStoryboardFrameViewer({
   onDeleteStoryboardFrame,
   onGenerateCustomFrame,
   onUploadCustomFrame,
+  hideOuterChrome = false,
 }: SceneStoryboardFrameViewerProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [selectedFrameKey, setSelectedFrameKey] = useState<string | null>(null)
@@ -544,7 +547,12 @@ export function SceneStoryboardFrameViewer({
 
   return (
     <TooltipProvider>
-    <div className="bg-slate-900/40 border border-slate-700/50 rounded-lg overflow-hidden">
+    <div className={cn(
+      hideOuterChrome
+        ? 'space-y-3'
+        : 'bg-slate-900/40 border border-slate-700/50 rounded-lg overflow-hidden'
+    )}>
+      {!hideOuterChrome && (
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/40">
         <button
           type="button"
@@ -557,7 +565,7 @@ export function SceneStoryboardFrameViewer({
             <ChevronUp className="w-4 h-4 text-cyan-400" />
           )}
           <Clapperboard className="w-4 h-4 text-cyan-400" />
-          <span className="text-sm font-semibold text-gray-200">Pre-Vis Frames</span>
+          <span className="text-sm font-semibold text-gray-200">Pre-Vis</span>
           {frameStats.total > 0 && (
             <span className="text-xs text-gray-500">
               ({frameStats.withImage}/{frameStats.total})
@@ -589,9 +597,34 @@ export function SceneStoryboardFrameViewer({
           </div>
         )}
       </div>
+      )}
 
-      {!collapsed && (
-        <div className="p-4 space-y-3">
+      {(hideOuterChrome || !collapsed) && (
+        <div className={cn(hideOuterChrome ? 'space-y-3' : 'p-4 space-y-3')}>
+          {hideOuterChrome && expressPhaseStatus && (
+            <div className="flex items-center gap-1 flex-wrap justify-end">
+              <ExpressPhasePill
+                label="Dir"
+                status={expressPhaseStatus.direction}
+                rateLimited={expressPhaseStatus.rateLimitedPhases?.direction}
+              />
+              <ExpressPhasePill
+                label="Aud"
+                status={expressPhaseStatus.audio}
+                rateLimited={expressPhaseStatus.rateLimitedPhases?.audio}
+              />
+              <ExpressPhasePill
+                label="Img"
+                status={expressPhaseStatus.image}
+                rateLimited={expressPhaseStatus.rateLimitedPhases?.image}
+              />
+              {expressPhaseStatus.rateLimited && (
+                <span className="text-[10px] font-medium text-amber-300/90 px-1.5">
+                  Rate limited
+                </span>
+              )}
+            </div>
+          )}
           {frameSlots.length === 0 ? (
             <div className="text-center py-6 text-gray-500 text-sm">
               <Camera className="w-8 h-8 mx-auto mb-2 text-gray-600" />

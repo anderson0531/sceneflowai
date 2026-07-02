@@ -64,6 +64,7 @@ const DirectorWorkflow = dynamic(
 import { AUDIO_ALIGNMENT_BUFFERS, getLanguagePlaybackOffset, calculateSuggestedOffset, findDialogueAudioForLine } from './scene-production/audioTrackBuilder'
 import type { SceneProductionData, SceneProductionReferences, SegmentKeyframeSettings, SceneSegment } from './scene-production/types'
 import { Button } from '@/components/ui/Button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { CuratedVoice } from '@/lib/tts/voices'
@@ -92,6 +93,10 @@ import { ReportType, StoryboardData, SceneDirectionData } from '@/lib/types/repo
 import { flattenSceneToStoryboardFrames } from '@/lib/storyboard/types'
 import { StoryboardReviewPanel } from './StoryboardReviewPanel'
 import { getSceneBeats, isBeatFirstPipelineEnabled } from '@/lib/script/beatMigration'
+import {
+  countStoryboardFrameStats,
+  enumerateStoryboardFrameSlots,
+} from '@/lib/storyboard/types'
 import { buildBeatFirstPlaybackTimeline } from '@/lib/storyboard/types'
 import { buildStoryboardMusicClips } from '@/lib/storyboard/musicPlayback'
 import { BeatMusicToggle } from '@/components/vision/BeatMusicToggle'
@@ -4103,20 +4108,68 @@ function SceneCard({
   
   // Add Beat dialog state
   const [addSegmentDialogOpen, setAddSegmentDialogOpen] = useState(false)
-  
-  // Collapsible section states
-  const [descriptionCollapsed, setDescriptionCollapsed] = useState(false)
-  const [narrationCollapsed, setNarrationCollapsed] = useState(false)
-  const [dialogueCollapsed, setDialogueCollapsed] = useState(false)
-  const [musicCollapsed, setMusicCollapsed] = useState(false)
-  const [sfxCollapsed, setSfxCollapsed] = useState(false)
+
+  type SceneScriptTab = 'direction' | 'narration' | 'wardrobe' | 'previs' | 'beats' | 'music'
+  const [activeSceneTab, setActiveSceneTab] = useState<SceneScriptTab>('direction')
+
+  const sceneBeatsForTabs = useMemo(() => getSceneBeats(scene), [scene])
+  const frameSlotsForTabs = useMemo(() => enumerateStoryboardFrameSlots(scene), [scene])
+  const preVisFrameStats = useMemo(() => countStoryboardFrameStats(scene), [scene])
+
+  const hasDirectionTab = !!(
+    scene.visualDescription ||
+    scene.action ||
+    scene.summary ||
+    scene.heading ||
+    scene.sceneDirection
+  )
+  const hasNarrationTab = !!(
+    scene.narration &&
+    !(Array.isArray((scene as any).segments) && (scene as any).segments.length > 0)
+  )
+  const sceneWardrobeCharacters = useMemo(() => {
+    if (!scene.dialogue?.length || !characters?.length) return [] as typeof characters
+    const sceneCharacterNames = Array.from(
+      new Set(scene.dialogue.map((d: { character?: string }) => d.character))
+    ) as string[]
+    return sceneCharacterNames
+      .map((name) => characters.find((c) => c.name.toLowerCase() === name.toLowerCase()))
+      .filter(
+        (c): c is (typeof characters)[number] =>
+          !!c && !!c.wardrobes && c.wardrobes.length > 1
+      )
+  }, [scene.dialogue, characters])
+  const hasWardrobeTab = sceneWardrobeCharacters.length > 0
+  const hasPreVisTab = frameSlotsForTabs.length > 0 || sceneBeatsForTabs.length > 0
+  const hasBeatsTab = sceneBeatsForTabs.length > 0
+  const hasMusicTab = !!scene.music
+
+  const availableSceneTabs = useMemo(() => {
+    const tabs: SceneScriptTab[] = []
+    if (hasDirectionTab) tabs.push('direction')
+    if (hasNarrationTab) tabs.push('narration')
+    if (hasWardrobeTab) tabs.push('wardrobe')
+    if (hasPreVisTab) tabs.push('previs')
+    if (hasBeatsTab) tabs.push('beats')
+    if (hasMusicTab) tabs.push('music')
+    return tabs
+  }, [hasDirectionTab, hasNarrationTab, hasWardrobeTab, hasPreVisTab, hasBeatsTab, hasMusicTab])
+
+  useEffect(() => {
+    if (availableSceneTabs.length === 0) return
+    if (!availableSceneTabs.includes(activeSceneTab)) {
+      setActiveSceneTab(
+        availableSceneTabs.includes('direction') ? 'direction' : availableSceneTabs[0]
+      )
+    }
+  }, [sceneIdx, availableSceneTabs, activeSceneTab])
+
   const [selectedExpressBeatIds, setSelectedExpressBeatIds] = useState<Set<string>>(() => new Set())
   const [expressSfxDialogOpen, setExpressSfxDialogOpen] = useState(false)
   const [isExpressSfxRunning, setIsExpressSfxRunning] = useState(false)
   const [expressAudioDialogOpen, setExpressAudioDialogOpen] = useState(false)
   const [isExpressAudioRunning, setIsExpressAudioRunning] = useState(false)
   const [expressBeatStatus, setExpressBeatStatus] = useState<Record<string, ExpressBeatSfxStatus>>({})
-  const [sceneCastCollapsed, setSceneCastCollapsed] = useState(true) // Collapsed by default - wardrobe selection is advanced
   // Scene Image section: collapsed by default
   const [sceneImageCollapsed, setSceneImageCollapsed] = useState(true)
   // Production workflow container collapse states
@@ -5691,20 +5744,6 @@ function SceneCard({
                           className="bg-gray-800 border-blue-500/30 text-gray-200"
                         />
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setDescriptionCollapsed(!descriptionCollapsed || !narrationCollapsed || !dialogueCollapsed || !musicCollapsed || !sfxCollapsed)
-                          setNarrationCollapsed(!descriptionCollapsed || !narrationCollapsed || !dialogueCollapsed || !musicCollapsed || !sfxCollapsed)
-                          setDialogueCollapsed(!descriptionCollapsed || !narrationCollapsed || !dialogueCollapsed || !musicCollapsed || !sfxCollapsed)
-                          setMusicCollapsed(!descriptionCollapsed || !narrationCollapsed || !dialogueCollapsed || !musicCollapsed || !sfxCollapsed)
-                          setSfxCollapsed(!descriptionCollapsed || !narrationCollapsed || !dialogueCollapsed || !musicCollapsed || !sfxCollapsed)
-                        }}
-                        className="px-2 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-md flex items-center gap-1 transition-all"
-                      >
-                        <ChevronDown className={`w-3 h-3 transition-transform ${descriptionCollapsed && narrationCollapsed && dialogueCollapsed ? 'rotate-180' : ''}`} />
-                        {descriptionCollapsed && narrationCollapsed && dialogueCollapsed ? 'Expand All' : 'Collapse All'}
-                      </button>
                     </div>
                   </div>
                   
@@ -5743,74 +5782,112 @@ function SceneCard({
                       </div>
                     </div>
                   )}
-                  
-                  {/* Scene Direction (visual/camera/lighting/talent/audio directions) */}
+
+                  {availableSceneTabs.length > 0 && (
+                    <Tabs
+                      value={activeSceneTab}
+                      onValueChange={(v) => setActiveSceneTab(v as SceneScriptTab)}
+                      className="w-full"
+                    >
+                      <div className="overflow-x-auto pb-1 -mx-1 px-1">
+                        <TabsList className="inline-flex h-auto w-max min-w-0 flex-nowrap gap-0.5 p-1">
+                          {hasDirectionTab && (
+                            <TabsTrigger value="direction" className="text-xs gap-1.5 px-2.5 py-1.5">
+                              <Film className="w-3.5 h-3.5 shrink-0" />
+                              Direction
+                            </TabsTrigger>
+                          )}
+                          {hasNarrationTab && (
+                            <TabsTrigger value="narration" className="text-xs gap-1.5 px-2.5 py-1.5">
+                              <Volume2 className="w-3.5 h-3.5 shrink-0" />
+                              Narration
+                            </TabsTrigger>
+                          )}
+                          {hasWardrobeTab && (
+                            <TabsTrigger value="wardrobe" className="text-xs gap-1.5 px-2.5 py-1.5">
+                              <Users className="w-3.5 h-3.5 shrink-0" />
+                              Wardrobe
+                              <span className="text-[10px] opacity-60">({sceneWardrobeCharacters.length})</span>
+                            </TabsTrigger>
+                          )}
+                          {hasPreVisTab && (
+                            <TabsTrigger value="previs" className="text-xs gap-1.5 px-2.5 py-1.5">
+                              <Clapperboard className="w-3.5 h-3.5 shrink-0" />
+                              Pre-Vis
+                              {preVisFrameStats.total > 0 && (
+                                <span className="text-[10px] opacity-60">
+                                  ({preVisFrameStats.withImage}/{preVisFrameStats.total})
+                                </span>
+                              )}
+                            </TabsTrigger>
+                          )}
+                          {hasBeatsTab && (
+                            <TabsTrigger value="beats" className="text-xs gap-1.5 px-2.5 py-1.5">
+                              <List className="w-3.5 h-3.5 shrink-0" />
+                              Beats
+                              <span className="text-[10px] opacity-60">({sceneBeatsForTabs.length})</span>
+                            </TabsTrigger>
+                          )}
+                          {hasMusicTab && (
+                            <TabsTrigger value="music" className="text-xs gap-1.5 px-2.5 py-1.5">
+                              <Music className="w-3.5 h-3.5 shrink-0" />
+                              Music
+                            </TabsTrigger>
+                          )}
+                        </TabsList>
+                      </div>
+
+                  {/* Direction */}
+                  {hasDirectionTab && (
+                  <TabsContent value="direction" className="mt-3 focus-visible:outline-none">
                   {(() => {
                     const sceneDescription = scene.visualDescription || scene.action || scene.summary || scene.heading
                     const sceneDir = scene.sceneDirection
                     const hasDirection = !!sceneDir
                     const isGeneratingDirection = generatingDirectionFor === sceneIdx
 
-                    // Don't show if no description AND no direction
-                    if (!sceneDescription && !hasDirection) return null
-
                     return (
                       <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                        <div className="flex items-center justify-between mb-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setDescriptionCollapsed(!descriptionCollapsed)
-                            }}
-                            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                          >
-                            <ChevronDown className={`w-4 h-4 text-blue-600 dark:text-blue-400 transition-transform ${descriptionCollapsed ? '-rotate-90' : ''}`} />
-                            <Film className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                            <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Scene Direction</span>
-                            {hasDirection && (
-                              <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded flex items-center gap-1">
-                                <Sparkles className="w-3 h-3" />
-                                Enhanced
-                              </span>
-                            )}
-                          </button>
-                          <div className="flex items-center gap-1">
-                            {/* Direct Scene Button - shows when direction exists */}
-                            {hasDirection && onOpenDirectionOptimize && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  onOpenDirectionOptimize(sceneIdx)
-                                }}
-                                disabled={isGeneratingDirection || isOptimizingDirection}
-                                className="text-xs px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
-                                title="Direct and refine scene for professional video production"
-                              >
-                                <Wand2 className="w-3 h-3" />
-                                Direct
-                              </button>
-                            )}
+                        <div className="flex items-center justify-end gap-1 mb-2">
+                          {hasDirection && (
+                            <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded flex items-center gap-1 mr-auto">
+                              <Sparkles className="w-3 h-3" />
+                              Enhanced
+                            </span>
+                          )}
+                          {hasDirection && onOpenDirectionOptimize && (
                             <button
-                              onClick={async (e) => {
+                              onClick={(e) => {
                                 e.stopPropagation()
-                                if (!onGenerateSceneDirection) return
-                                await onGenerateSceneDirection(sceneIdx)
+                                onOpenDirectionOptimize(sceneIdx)
                               }}
-                              disabled={isGeneratingDirection}
-                              className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
-                              title="Generate detailed scene direction for camera, lighting, talent, and audio"
+                              disabled={isGeneratingDirection || isOptimizingDirection}
+                              className="text-xs px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
+                              title="Direct and refine scene for professional video production"
                             >
-                              {isGeneratingDirection ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <Sparkles className="w-3 h-3" />
-                              )}
-                              {hasDirection ? 'Update' : 'Generate'}
+                              <Wand2 className="w-3 h-3" />
+                              Direct
                             </button>
-                          </div>
+                          )}
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              if (!onGenerateSceneDirection) return
+                              await onGenerateSceneDirection(sceneIdx)
+                            }}
+                            disabled={isGeneratingDirection}
+                            className="text-xs px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded disabled:opacity-50 flex items-center gap-1"
+                            title="Generate detailed scene direction for camera, lighting, talent, and audio"
+                          >
+                            {isGeneratingDirection ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Sparkles className="w-3 h-3" />
+                            )}
+                            {hasDirection ? 'Update' : 'Generate'}
+                          </button>
                         </div>
-                        {!descriptionCollapsed && (
-                          <div className="space-y-3">
+                        <div className="space-y-3">
                             {/* Scene Description — plain-language narrative of what happens */}
                             {hasDirection && sceneDir.sceneDescription && (
                               <div className="text-sm text-gray-200 leading-relaxed bg-slate-800/50 rounded-md p-3 border border-slate-700/50">
@@ -5888,39 +5965,29 @@ function SceneCard({
                               </div>
                             )}
                           </div>
-                        )}
                       </div>
                     )
                   })()}
+                  </TabsContent>
+                  )}
 
-                  {/* Scene Narration — hidden when the scene has segmented script
-                     content (narration is now rendered inline as Narrator
-                     dialog cards inside each segment). */}
-                  {scene.narration && !(Array.isArray((scene as any).segments) && (scene as any).segments.length > 0) && (() => {
+                  {/* Narration */}
+                  {hasNarrationTab && (
+                  <TabsContent value="narration" className="mt-3 focus-visible:outline-none">
+                  {(() => {
                     const narrationUrl = scene.narrationAudio?.[selectedLanguage]?.url || (selectedLanguage === 'en' ? scene.narrationAudioUrl : undefined)
                     
                     return (
                     <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                      <div className="flex items-center justify-between mb-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setNarrationCollapsed(!narrationCollapsed)
-                          }}
-                          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                        >
-                          <ChevronDown className={`w-4 h-4 text-purple-600 dark:text-purple-400 transition-transform ${narrationCollapsed ? '-rotate-90' : ''}`} />
-                          <Volume2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                          <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">Scene Narration</span>
-                          {narrationUrl && (
-                            <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
-                              <Volume2 className="w-3 h-3" />
-                              {scene.narrationAudio?.[selectedLanguage]?.duration 
-                                ? `${scene.narrationAudio[selectedLanguage].duration.toFixed(1)}s`
-                                : 'Ready'}
-                            </span>
-                          )}
-                        </button>
+                      <div className="flex items-center justify-end gap-2 mb-2">
+                        {narrationUrl && (
+                          <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1 mr-auto">
+                            <Volume2 className="w-3 h-3" />
+                            {scene.narrationAudio?.[selectedLanguage]?.duration 
+                              ? `${scene.narrationAudio[selectedLanguage].duration.toFixed(1)}s`
+                              : 'Ready'}
+                          </span>
+                        )}
                         {narrationUrl ? (
                           <div className="flex items-center gap-2">
                             <button
@@ -6038,44 +6105,24 @@ function SceneCard({
                           </div>
                         )}
                       </div>
-                      {!narrationCollapsed && (
-                        <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
-                          "{scene.narration}"
-                        </div>
-                      )}
+                      <div className="text-sm text-gray-700 dark:text-gray-300 italic leading-relaxed">
+                        "{scene.narration}"
+                      </div>
                     </div>
                   )
                   })()}
-                  
-                  {/* Scene Cast & Wardrobe Selection */}
-                  {scene.dialogue && scene.dialogue.length > 0 && characters && characters.length > 0 && (() => {
-                    // Get unique character names from dialogue
-                    const sceneCharacterNames = Array.from(new Set(scene.dialogue.map((d: any) => d.character))) as string[]
-                    // Find matching characters from character library
-                    const sceneCharacters = sceneCharacterNames
-                      .map(name => characters.find(c => c.name.toLowerCase() === name.toLowerCase()))
-                      .filter((c): c is NonNullable<typeof c> => c !== undefined && c.wardrobes && c.wardrobes.length > 1)
-                    
-                    // Only show if there are characters with multiple wardrobes
-                    if (sceneCharacters.length === 0) return null
+                  </TabsContent>
+                  )}
+
+                  {/* Wardrobe */}
+                  {hasWardrobeTab && (
+                  <TabsContent value="wardrobe" className="mt-3 focus-visible:outline-none">
+                  {(() => {
+                    const sceneCharacters = sceneWardrobeCharacters
                     
                     return (
                       <div className="bg-violet-950 border-l-4 border-violet-500 p-4 rounded-lg">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setSceneCastCollapsed(!sceneCastCollapsed)
-                          }}
-                          className="flex items-center gap-2 hover:opacity-80 transition-opacity w-full"
-                        >
-                          <ChevronDown className={`w-4 h-4 text-violet-400 transition-transform ${sceneCastCollapsed ? '-rotate-90' : ''}`} />
-                          <Users className="w-4 h-4 text-violet-400" />
-                          <span className="text-sm font-semibold text-gray-200">Scene Wardrobe</span>
-                          <span className="text-xs text-gray-500">({sceneCharacters.length} {sceneCharacters.length === 1 ? 'character' : 'characters'} with costume options)</span>
-                        </button>
-                        
-                        {!sceneCastCollapsed && (
-                          <div className="mt-3 space-y-2">
+                        <div className="mt-0 space-y-2">
                             {sceneCharacters.map((character) => {
                               // Get current wardrobe assignment for this scene
                               const sceneWardrobe = scene.characterWardrobes?.find((cw: any) => cw.characterId === character.id)
@@ -6134,12 +6181,17 @@ function SceneCard({
                               Select different wardrobes for characters in this scene. Changes affect image generation.
                             </p>
                           </div>
-                        )}
                       </div>
                     )
                   })()}
-                  
+                  </TabsContent>
+                  )}
+
+                  {/* Pre-Vis */}
+                  {hasPreVisTab && (
+                  <TabsContent value="previs" className="mt-3 focus-visible:outline-none">
                   <SceneStoryboardFrameViewer
+                    hideOuterChrome
                     scene={scene}
                     sceneIndex={sceneIdx}
                     sceneNumber={sceneNumber}
@@ -6245,11 +6297,14 @@ function SceneCard({
                         : undefined
                     }
                   />
+                  </TabsContent>
+                  )}
 
-                  {/* Scene Beats — full timeline (action, narration, dialogue) */}
+                  {/* Beats */}
+                  {hasBeatsTab && (
+                  <TabsContent value="beats" className="mt-3 focus-visible:outline-none">
                   {(() => {
-                    const timelineBeats = getSceneBeats(scene)
-                    if (timelineBeats.length === 0) return null
+                    const timelineBeats = sceneBeatsForTabs
                     const sceneSfxList = Array.isArray(scene.sfx) ? scene.sfx : []
                     const sfxByBeatId = new Map<string, Array<{ description: string; idx: number }>>()
                     sceneSfxList.forEach((raw: unknown, idx: number) => {
@@ -6279,19 +6334,7 @@ function SceneCard({
                     let spokenBeatCursor = 0
                     return (
                     <div className="bg-emerald-950 border-l-4 border-emerald-500 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setDialogueCollapsed(!dialogueCollapsed)
-                          }}
-                          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                        >
-                          <ChevronDown className={`w-4 h-4 text-emerald-400 transition-transform ${dialogueCollapsed ? '-rotate-90' : ''}`} />
-                          <Users className="w-4 h-4 text-emerald-400" />
-                          <span className="text-sm font-semibold text-gray-200">Scene Beats</span>
-                          <span className="text-xs text-gray-500">({timelineBeats.length} {timelineBeats.length === 1 ? 'beat' : 'beats'})</span>
-                        </button>
+                      <div className="flex items-center justify-end gap-2 mb-3 flex-wrap">
                         {(() => {
                           const hasAudioContent =
                             (Array.isArray(scene.dialogue) && scene.dialogue.length > 0) ||
@@ -6447,7 +6490,6 @@ function SceneCard({
                         </div>
                         )}
                       </div>
-                      {!dialogueCollapsed && (
                       <div className="space-y-3">
                       {timelineBeats.map((beat) => {
                         if (beat.kind === 'action') {
@@ -6724,32 +6766,23 @@ function SceneCard({
                         )
                       })}
                       </div>
-                      )}
                     </div>
                     )
                   })()}
-                  
-                  {/* Background Music */}
-                  {scene.music && (
+                  </TabsContent>
+                  )}
+
+                  {/* Music */}
+                  {hasMusicTab && (
+                  <TabsContent value="music" className="mt-3 focus-visible:outline-none">
                     <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                      <div className="flex items-center justify-between mb-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setMusicCollapsed(!musicCollapsed)
-                          }}
-                          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                        >
-                          <ChevronDown className={`w-4 h-4 text-purple-600 dark:text-purple-400 transition-transform ${musicCollapsed ? '-rotate-90' : ''}`} />
-                          <Music className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                          <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">Background Music</span>
-                          {scene.musicAudio && (
-                            <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1">
-                              <Volume2 className="w-3 h-3" />
-                              Audio Ready
-                            </span>
-                          )}
-                        </button>
+                      <div className="flex items-center justify-end gap-2 mb-2">
+                        {scene.musicAudio && (
+                          <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-400 rounded flex items-center gap-1 mr-auto">
+                            <Volume2 className="w-3 h-3" />
+                            Audio Ready
+                          </span>
+                        )}
                         {scene.musicAudio ? (
                           <div className="flex items-center gap-2">
                             <button
@@ -6863,13 +6896,16 @@ function SceneCard({
                           </div>
                         )}
                       </div>
-                      {!musicCollapsed && (
-                        <div className="text-sm text-gray-700 dark:text-gray-300 italic">
-                          {typeof scene.music === 'string' ? scene.music : scene.music.description}
-                        </div>
-                      )}
+                      <div className="text-sm text-gray-700 dark:text-gray-300 italic">
+                        {typeof scene.music === 'string' ? scene.music : scene.music.description}
+                      </div>
                     </div>
+                  </TabsContent>
                   )}
+
+                    </Tabs>
+                  )}
+
                   </div>
                 )}
 
