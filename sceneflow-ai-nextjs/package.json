@@ -88,6 +88,7 @@
                 "inngest": "^4.2.6",
                 "jsonwebtoken": "^9.0.2",
                 "jszip": "^3.10.1",
+                "lamejs": "^1.2.1",
                 "lodash": "^4.17.21",
                 "lucide-react": "^0.539.0",
                 "next": "^16.2.2",

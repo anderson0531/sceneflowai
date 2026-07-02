@@ -98,6 +98,7 @@ export function ProductionWorkspaceSheet({
               userId={userId}
               videoUrl={exportedVideoUrl}
               projectTitle={projectTitle}
+              metadata={metadata}
             />
           ) : null}
         </div>

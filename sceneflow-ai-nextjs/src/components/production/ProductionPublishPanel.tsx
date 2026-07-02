@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import {
   Download,
@@ -9,9 +9,30 @@ import {
   Link as LinkIcon,
   ExternalLink,
   CheckCircle2,
+  Globe,
+  AlertCircle,
+  Info,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
+import {
+  buildLanguageAudioTrack,
+  getAvailablePublishLanguages,
+  getLanguageDisplayName,
+} from '@/lib/publish/buildLanguageAudioTrack'
+import {
+  stitchAudioTrack,
+  uploadAudioTrackBlob,
+  AudioTrackTooLongError,
+} from '@/lib/publish/stitchAudioTrack'
+import type { FinalCutSelection } from '@/lib/types/finalCut'
+
+export interface AudioTrackPublishResult {
+  languageCode: string
+  status: 'uploaded' | 'manual_required' | 'error'
+  audioUrl: string
+  error?: string
+}
 
 export interface ProductionPublishPanelProps {
   projectId: string
@@ -19,7 +40,10 @@ export interface ProductionPublishPanelProps {
   videoUrl?: string | null
   title?: string
   projectTitle?: string
+  metadata?: unknown
 }
+
+type PublishPhase = 'idle' | 'stitching' | 'uploading' | 'publishing'
 
 export function ProductionPublishPanel({
   projectId,
@@ -27,14 +51,19 @@ export function ProductionPublishPanel({
   videoUrl,
   title,
   projectTitle,
+  metadata,
 }: ProductionPublishPanelProps) {
   const [youtubeConnected, setYoutubeConnected] = useState(false)
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [isDownloading, setIsDownloading] = useState(false)
-  const [isPublishing, setIsPublishing] = useState(false)
+  const [publishPhase, setPublishPhase] = useState<PublishPhase>('idle')
+  const [publishProgress, setPublishProgress] = useState(0)
+  const [publishStatusText, setPublishStatusText] = useState('')
   const [showYoutubeConfig, setShowYoutubeConfig] = useState(false)
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [audioTrackResults, setAudioTrackResults] = useState<AudioTrackPublishResult[]>([])
+  const [selectedMlaLanguages, setSelectedMlaLanguages] = useState<string[]>([])
   const [youtubeConfig, setYoutubeConfig] = useState({
     title: title || projectTitle || 'My SceneFlow Production',
     description: '',
@@ -42,9 +71,24 @@ export function ProductionPublishPanel({
     language: 'en',
   })
 
+  const masterLanguage = useMemo(() => {
+    const stored = (metadata as { finalCut?: FinalCutSelection } | null)?.finalCut?.language
+    return stored || 'en'
+  }, [metadata])
+
+  const availableLanguages = useMemo(
+    () => getAvailablePublishLanguages(metadata),
+    [metadata]
+  )
+
+  const mlaCandidateLanguages = useMemo(
+    () => availableLanguages.filter((l) => l !== masterLanguage),
+    [availableLanguages, masterLanguage]
+  )
+
   useEffect(() => {
-    setYoutubeConfig((c) => ({ ...c, title: title || projectTitle || c.title }))
-  }, [title, projectTitle])
+    setYoutubeConfig((c) => ({ ...c, title: title || projectTitle || c.title, language: masterLanguage }))
+  }, [title, projectTitle, masterLanguage])
 
   useEffect(() => {
     if (!userId) {
@@ -65,6 +109,12 @@ export function ProductionPublishPanel({
     }
     const returnTo = `${window.location.pathname}${window.location.search}`
     window.location.href = `/api/publish/youtube/auth?userId=${encodeURIComponent(userId)}&returnTo=${encodeURIComponent(returnTo)}`
+  }
+
+  const toggleMlaLanguage = (lang: string) => {
+    setSelectedMlaLanguages((prev) =>
+      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
+    )
   }
 
   const handleDownload = async () => {
@@ -88,8 +138,47 @@ export function ProductionPublishPanel({
 
   const handlePublishToYoutube = async () => {
     if (!videoUrl || !userId) return
-    setIsPublishing(true)
+
+    setPublishPhase('stitching')
+    setPublishProgress(0)
+    setPublishStatusText('Preparing audio tracks…')
+    setAudioTrackResults([])
+    setPublishedUrl(null)
+
+    const projectLike = { id: projectId, metadata }
+    const preparedTracks: Array<{ languageCode: string; audioUrl: string }> = []
+
     try {
+      for (let i = 0; i < selectedMlaLanguages.length; i++) {
+        const lang = selectedMlaLanguages[i]
+        const label = getLanguageDisplayName(lang)
+        setPublishStatusText(`Stitching ${label} audio (${i + 1}/${selectedMlaLanguages.length})…`)
+
+        const plan = buildLanguageAudioTrack(projectLike, lang)
+        if (plan.clips.length === 0) {
+          toast.warning(`No ${label} audio clips found — skipping`)
+          continue
+        }
+
+        const blob = await stitchAudioTrack({
+          clips: plan.clips,
+          totalDuration: plan.totalDuration,
+          onProgress: (pct) => {
+            const base = (i / selectedMlaLanguages.length) * 70
+            setPublishProgress(Math.round(base + (pct / selectedMlaLanguages.length) * 0.7))
+          },
+        })
+
+        setPublishPhase('uploading')
+        setPublishStatusText(`Uploading ${label} audio…`)
+        const audioUrl = await uploadAudioTrackBlob(blob, projectId, lang)
+        preparedTracks.push({ languageCode: lang, audioUrl })
+      }
+
+      setPublishPhase('publishing')
+      setPublishProgress(80)
+      setPublishStatusText('Uploading video to YouTube…')
+
       const res = await fetch('/api/publish/youtube/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -99,18 +188,43 @@ export function ProductionPublishPanel({
           title: youtubeConfig.title,
           description: youtubeConfig.description,
           privacyStatus: youtubeConfig.privacyStatus,
-          language: youtubeConfig.language,
+          language: masterLanguage,
+          audioTracks: preparedTracks,
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Upload failed')
+
       setPublishedUrl(data.url)
+      setAudioTrackResults(data.audioTracks || [])
       setShowYoutubeConfig(false)
-      toast.success('Published to YouTube')
-    } catch (err: any) {
-      toast.error(err?.message || 'YouTube publish failed')
+      setPublishProgress(100)
+
+      const uploaded = (data.audioTracks || []).filter(
+        (t: AudioTrackPublishResult) => t.status === 'uploaded'
+      ).length
+      const manual = (data.audioTracks || []).filter(
+        (t: AudioTrackPublishResult) => t.status === 'manual_required'
+      ).length
+
+      if (uploaded > 0 && manual === 0) {
+        toast.success(`Published to YouTube with ${uploaded} audio track${uploaded > 1 ? 's' : ''}`)
+      } else if (manual > 0) {
+        toast.success('Video published — some audio tracks need manual upload in YouTube Studio')
+      } else {
+        toast.success('Published to YouTube')
+      }
+    } catch (err: unknown) {
+      if (err instanceof AudioTrackTooLongError) {
+        toast.error(err.message)
+      } else {
+        const message = err instanceof Error ? err.message : 'YouTube publish failed'
+        toast.error(message)
+      }
     } finally {
-      setIsPublishing(false)
+      setPublishPhase('idle')
+      setPublishStatusText('')
+      setPublishProgress(0)
     }
   }
 
@@ -129,10 +243,13 @@ export function ProductionPublishPanel({
         await navigator.clipboard.writeText(url)
         toast.success('Screening room link copied')
       }
-    } catch (err: any) {
-      toast.error(err?.message || 'Could not create share link')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Could not create share link'
+      toast.error(message)
     }
   }, [projectId])
+
+  const isPublishing = publishPhase !== 'idle'
 
   return (
     <div className="space-y-5">
@@ -142,7 +259,8 @@ export function ProductionPublishPanel({
           Publish
         </h2>
         <p className="text-sm text-zinc-400 mt-1">
-          Download your production render, share a screening room link, or publish to YouTube.
+          Download your production render, share a screening room link, or publish to YouTube with
+          multi-language audio tracks.
         </p>
       </div>
 
@@ -248,18 +366,74 @@ export function ProductionPublishPanel({
               <option value="unlisted">Unlisted</option>
               <option value="public">Public</option>
             </select>
-            <Button
-              className="w-full bg-red-600 hover:bg-red-700"
-              disabled={!videoUrl || isPublishing}
-              onClick={handlePublishToYoutube}
-            >
-              {isPublishing ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
+
+            {/* MLA language selection */}
+            {mlaCandidateLanguages.length > 0 ? (
+              <div className="rounded-lg border border-zinc-700/60 bg-zinc-900/40 p-3 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-white">
+                  <Globe className="w-4 h-4 text-blue-400" />
+                  Multi-Language Audio (MLA)
+                </div>
+                <p className="text-xs text-zinc-400">
+                  Upload one video with the {getLanguageDisplayName(masterLanguage)} master audio,
+                  then attach dubbed tracks for other languages. Requires YouTube advanced features.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {mlaCandidateLanguages.map((lang) => {
+                    const selected = selectedMlaLanguages.includes(lang)
+                    return (
+                      <button
+                        key={lang}
+                        type="button"
+                        onClick={() => toggleMlaLanguage(lang)}
+                        className={cn(
+                          'px-2.5 py-1 rounded-md text-xs font-medium border transition-colors',
+                          selected
+                            ? 'bg-blue-500/20 border-blue-400/50 text-blue-200'
+                            : 'bg-zinc-800 border-zinc-600 text-zinc-400 hover:text-white'
+                        )}
+                      >
+                        {getLanguageDisplayName(lang)}
+                      </button>
+                    )
+                  })}
+                </div>
+                {selectedMlaLanguages.length > 0 ? (
+                  <p className="text-xs text-zinc-500 flex items-start gap-1.5">
+                    <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    Audio tracks are stitched from your TTS clips and aligned to the master video
+                    timeline. If YouTube MLA is not enabled on your channel, you can download the
+                    files and upload manually in Studio.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {isPublishing ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-zinc-300">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {publishStatusText || 'Publishing…'}
+                </div>
+                <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-red-500 transition-all duration-300"
+                    style={{ width: `${publishProgress}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <Button
+                className="w-full bg-red-600 hover:bg-red-700"
+                disabled={!videoUrl}
+                onClick={handlePublishToYoutube}
+              >
                 <Youtube className="w-4 h-4 mr-2" />
-              )}
-              Upload to YouTube
-            </Button>
+                {selectedMlaLanguages.length > 0
+                  ? `Upload Video + ${selectedMlaLanguages.length} Audio Track${selectedMlaLanguages.length > 1 ? 's' : ''}`
+                  : 'Upload to YouTube'}
+              </Button>
+            )}
           </div>
         ) : null}
 
@@ -272,6 +446,59 @@ export function ProductionPublishPanel({
           >
             View on YouTube <ExternalLink className="w-3 h-3" />
           </a>
+        ) : null}
+
+        {/* MLA track results */}
+        {audioTrackResults.length > 0 ? (
+          <div className="space-y-2 pt-2 border-t border-zinc-700">
+            <p className="text-xs font-medium text-zinc-300">Audio track results</p>
+            {audioTrackResults.map((track) => (
+              <div
+                key={track.languageCode}
+                className="rounded-md border border-zinc-700/60 bg-zinc-900/50 p-2.5 text-xs"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-white">
+                    {getLanguageDisplayName(track.languageCode)}
+                  </span>
+                  {track.status === 'uploaded' ? (
+                    <span className="text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Attached
+                    </span>
+                  ) : track.status === 'manual_required' ? (
+                    <span className="text-amber-400 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> Manual upload
+                    </span>
+                  ) : (
+                    <span className="text-red-400 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> Failed
+                    </span>
+                  )}
+                </div>
+                {track.status === 'manual_required' ? (
+                  <div className="mt-2 text-zinc-400 space-y-1">
+                    <p>Upload in YouTube Studio:</p>
+                    <ol className="list-decimal list-inside space-y-0.5 text-zinc-500">
+                      <li>Open your video → Languages</li>
+                      <li>Add {getLanguageDisplayName(track.languageCode)}</li>
+                      <li>Click Add next to Dub → Select file</li>
+                      <li>Upload the MP3 below → Publish</li>
+                    </ol>
+                    <a
+                      href={track.audioUrl}
+                      download={`${youtubeConfig.title}-${track.languageCode}.mp3`}
+                      className="inline-flex items-center gap-1 text-blue-300 hover:text-blue-200 mt-1"
+                    >
+                      <Download className="w-3 h-3" /> Download {track.languageCode} audio track
+                    </a>
+                  </div>
+                ) : null}
+                {track.status === 'error' && track.error ? (
+                  <p className="mt-1 text-red-400/80">{track.error}</p>
+                ) : null}
+              </div>
+            ))}
+          </div>
         ) : null}
       </div>
     </div>
